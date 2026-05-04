@@ -62,8 +62,7 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
                                         const std::string& cache_base_path) {
   std::unique_ptr<Downloaders::Impl> impl(new Downloaders::Impl());
 
-  const bool use_logging_debug_function = true;
-  impl->curl_ = CurlHttpClient(use_logging_debug_function);
+  impl->curl_ = CurlHttpClient(/*use_logging_debug_function=*/true);
   impl->retrying_http_client_ = RetryingServerErrorHttpClient(
       *impl->curl_, 10, std::chrono::milliseconds(5000));
 

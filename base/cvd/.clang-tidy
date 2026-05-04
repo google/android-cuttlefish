@@ -2,6 +2,7 @@
 # `parse_headers` bazel feature.
 
 Checks: &checks >-
+  bugprone-argument-comment,
   clang-analyzer-*,
   clang-diagnostic-*,
   -clang-diagnostic-pragma-once-outside-header,
