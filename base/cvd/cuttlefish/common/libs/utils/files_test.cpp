@@ -24,7 +24,6 @@
 #include "absl/cleanup/cleanup.h"
 #include "absl/strings/str_cat.h"
 
-#include "cuttlefish/common/libs/utils/files_test_helper.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
@@ -98,89 +97,6 @@ TEST_F(FilesTests, MoveDirectoryContents) {
   EXPECT_THAT(FileExists(dst_dir_ + "/file1.txt"), IsTrue());
   EXPECT_THAT(FileExists(dst_dir_ + "/sub_dir/file2.txt"), IsTrue());
 }
-
-TEST_P(EmulateAbsolutePathBase, NoHomeNoPwd) {
-  const bool follow_symlink = false;
-  auto emulated_absolute_path =
-      EmulateAbsolutePath({.current_working_dir = std::nullopt,
-                           .home_dir = std::nullopt,
-                           .path_to_convert = input_path_,
-                           .follow_symlink = follow_symlink});
-
-  ASSERT_TRUE(emulated_absolute_path.ok())
-      << emulated_absolute_path.error().Trace();
-  ASSERT_EQ(*emulated_absolute_path, expected_path_);
-}
-
-INSTANTIATE_TEST_SUITE_P(
-    CommonUtilsTest, EmulateAbsolutePathBase,
-    testing::Values(InputOutput{.path_to_convert_ = "/", .expected_ = "/"},
-                    InputOutput{.path_to_convert_ = "", .expected_ = ""},
-                    InputOutput{.path_to_convert_ = "/a/b/c/",
-                                .expected_ = "/a/b/c"},
-                    InputOutput{.path_to_convert_ = "/a", .expected_ = "/a"}));
-
-TEST_P(EmulateAbsolutePathWithPwd, NoHomeYesPwd) {
-  const bool follow_symlink = false;
-  auto emulated_absolute_path =
-      EmulateAbsolutePath({.current_working_dir = current_dir_,
-                           .home_dir = "/a/b/c",
-                           .path_to_convert = input_path_,
-                           .follow_symlink = follow_symlink});
-
-  ASSERT_TRUE(emulated_absolute_path.ok())
-      << emulated_absolute_path.error().Trace();
-  ASSERT_EQ(*emulated_absolute_path, expected_path_);
-}
-
-INSTANTIATE_TEST_SUITE_P(
-    CommonUtilsTest, EmulateAbsolutePathWithPwd,
-    testing::Values(InputOutput{.path_to_convert_ = "",
-                                .working_dir_ = "/x/y/z",
-                                .expected_ = ""},
-                    InputOutput{.path_to_convert_ = "a",
-                                .working_dir_ = "/x/y/z",
-                                .expected_ = "/x/y/z/a"},
-                    InputOutput{.path_to_convert_ = ".",
-                                .working_dir_ = "/x/y/z",
-                                .expected_ = "/x/y/z"},
-                    InputOutput{.path_to_convert_ = "..",
-                                .working_dir_ = "/x/y/z",
-                                .expected_ = "/x/y"},
-                    InputOutput{.path_to_convert_ = "./k/../../t/./q",
-                                .working_dir_ = "/x/y/z",
-                                .expected_ = "/x/y/t/q"}));
-
-TEST_P(EmulateAbsolutePathWithHome, YesHomeNoPwd) {
-  const bool follow_symlink = false;
-  auto emulated_absolute_path =
-      EmulateAbsolutePath({.current_working_dir = std::nullopt,
-                           .home_dir = home_dir_,
-                           .path_to_convert = input_path_,
-                           .follow_symlink = follow_symlink});
-
-  ASSERT_TRUE(emulated_absolute_path.ok())
-      << emulated_absolute_path.error().Trace();
-  ASSERT_EQ(*emulated_absolute_path, expected_path_);
-}
-
-INSTANTIATE_TEST_SUITE_P(
-    CommonUtilsTest, EmulateAbsolutePathWithHome,
-    testing::Values(InputOutput{.path_to_convert_ = "~",
-                                .home_dir_ = "/x/y/z",
-                                .expected_ = "/x/y/z"},
-                    InputOutput{.path_to_convert_ = "~/a",
-                                .home_dir_ = "/x/y/z",
-                                .expected_ = "/x/y/z/a"},
-                    InputOutput{.path_to_convert_ = "~/.",
-                                .home_dir_ = "/x/y/z",
-                                .expected_ = "/x/y/z"},
-                    InputOutput{.path_to_convert_ = "~/..",
-                                .home_dir_ = "/x/y/z",
-                                .expected_ = "/x/y"},
-                    InputOutput{.path_to_convert_ = "~/k/../../t/./q",
-                                .home_dir_ = "/x/y/z",
-                                .expected_ = "/x/y/t/q"}));
 
 TEST(FilesTest, PathWithCustomEnv) {
   const std::string env_name = "TEST_PATH";

@@ -167,17 +167,12 @@ Result<cvd_common::Envs> GetEnvs(const CommandRequest& request) {
     // As the end-user may override HOME, this could be a relative path
     // to client's pwd, or may include "~" which is the client's actual
     // home directory.
-    auto client_pwd = CurrentDirectory();
     const auto given_home_dir = envs["HOME"];
     // Substituting ~ is not supported by cvd
     CF_EXPECT(!absl::StartsWith(given_home_dir, "~") &&
                   !absl::StartsWith(given_home_dir, "~/"),
               "The HOME directory should not start with ~");
-    envs["HOME"] = CF_EXPECT(
-        EmulateAbsolutePath({.current_working_dir = client_pwd,
-                             .home_dir = CF_EXPECT(SystemWideUserHome()),
-                             .path_to_convert = given_home_dir,
-                             .follow_symlink = false}));
+    envs["HOME"] = AbsolutePath(given_home_dir);
   }
   return envs;
 }
