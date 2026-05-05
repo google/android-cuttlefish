@@ -23,7 +23,6 @@
 #include <cctype>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <limits>
 #include <memory>
 #include <string>
@@ -304,7 +303,7 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   if (!flags.config_file.empty()) {
     auto subrequest =
         CF_EXPECT(CreateLoadCommand(request, subcmd_args, flags.config_file));
-    CF_EXPECT(command_executor_.ExecuteOne(subrequest, std::cerr));
+    CF_EXPECT(command_executor_.ExecuteOne(subrequest));
     return {};
   }
 
@@ -329,7 +328,7 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
 
   if (flags.start) {
     auto start_cmd = CF_EXPECT(CreateStartCommand(group, subcmd_args, envs));
-    CF_EXPECT(command_executor_.ExecuteOne(start_cmd, std::cerr));
+    CF_EXPECT(command_executor_.ExecuteOne(start_cmd));
 
     if (CF_EXPECT(IsDefaultGroup(request))) {
       // For backward compatibility, we add extra symlink in system wide home
