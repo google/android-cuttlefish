@@ -84,8 +84,7 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
     : command_sequence_executor_(this->request_handlers_) {
   request_handlers_.emplace_back(NewCvdCacheCommandHandler());
 
-  request_handlers_.emplace_back(
-      NewCvdCreateCommandHandler(instance_manager, command_sequence_executor_));
+  request_handlers_.emplace_back(NewCvdCreateCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdDisplayCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdEnvCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdFetchCommandHandler());

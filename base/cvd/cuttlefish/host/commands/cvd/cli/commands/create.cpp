@@ -40,9 +40,10 @@
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/load_configs.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
@@ -200,10 +201,8 @@ Result<bool> IsDefaultGroup(const CommandRequest& request) {
 
 class CvdCreateCommandHandler : public CvdCommandHandler {
  public:
-  CvdCreateCommandHandler(InstanceManager& instance_manager,
-                          CommandSequenceExecutor& command_executor)
-      : instance_manager_(instance_manager),
-        command_executor_(command_executor) {}
+  CvdCreateCommandHandler(InstanceManager& instance_manager)
+      : instance_manager_(instance_manager) {}
 
   Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override { return {"create"}; }
@@ -218,7 +217,6 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
   Result<void> CreateSymlinks(const LocalInstanceGroup& group);
 
   InstanceManager& instance_manager_;
-  CommandSequenceExecutor& command_executor_;
 };
 
 Result<LocalInstanceGroup> CvdCreateCommandHandler::CreateGroup(
@@ -296,9 +294,11 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   CreateFlags flags = CF_EXPECT(ParseCommandFlags(envs, subcmd_args));
 
   if (!flags.config_file.empty()) {
-    auto subrequest =
+    CommandRequest subrequest =
         CF_EXPECT(CreateLoadCommand(request, subcmd_args, flags.config_file));
-    CF_EXPECT(command_executor_.ExecuteOne(subrequest));
+    std::unique_ptr<CvdCommandHandler> load_handler =
+        NewLoadConfigsCommand(instance_manager_);
+    CF_EXPECT(load_handler->Handle(subrequest));
     return {};
   }
 
@@ -322,8 +322,11 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
   if (flags.start) {
-    auto start_cmd = CF_EXPECT(CreateStartCommand(group, subcmd_args, envs));
-    CF_EXPECT(command_executor_.ExecuteOne(start_cmd));
+    CommandRequest start_cmd =
+        CF_EXPECT(CreateStartCommand(group, subcmd_args, envs));
+    std::unique_ptr<CvdCommandHandler> start_handler =
+        NewCvdStartCommandHandler(instance_manager_);
+    CF_EXPECT(start_handler->Handle(start_cmd));
 
     if (CF_EXPECT(IsDefaultGroup(request))) {
       // For backward compatibility, we add extra symlink in system wide home
@@ -351,8 +354,8 @@ Result<std::string> CvdCreateCommandHandler::DetailedHelp(
 }
 
 std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(
-    InstanceManager& instance_manager, CommandSequenceExecutor& executor) {
-  return std::make_unique<CvdCreateCommandHandler>(instance_manager, executor);
+    InstanceManager& instance_manager) {
+  return std::make_unique<CvdCreateCommandHandler>(instance_manager);
 }
 
 }  // namespace cuttlefish
