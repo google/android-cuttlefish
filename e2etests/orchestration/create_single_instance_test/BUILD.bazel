@@ -16,6 +16,6 @@ load("def.bzl", "create_single_instance_test")
 
 create_single_instance_test(
     name = "create_single_instance_test_test",
-    build_id = "13625421",
+    build_id = "15150359",
     build_target = "aosp_cf_x86_64_only_phone-userdebug",
 )
