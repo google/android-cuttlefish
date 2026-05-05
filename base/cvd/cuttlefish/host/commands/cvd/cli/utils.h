@@ -48,6 +48,11 @@ Result<Command> ConstructCvdHelpCommand(const std::string& bin_file,
                                         const cvd_common::Args& _args,
                                         const CommandRequest& request);
 
+Result<Command> ConstructSiblingHelpCommand(
+    const std::string& bin_name,
+    const cvd_common::Envs& env,
+    const cvd_common::Args& subcmd_args);
+
 // Constructs a command for cvd non-start-op
 struct ConstructNonHelpForm {
   std::string bin_file;
