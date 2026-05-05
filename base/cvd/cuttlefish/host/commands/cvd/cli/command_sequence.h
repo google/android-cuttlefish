@@ -30,13 +30,11 @@ class CommandSequenceExecutor {
   CommandSequenceExecutor(
       const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers);
 
-  Result<void> ExecuteOne(const CommandRequest&, std::ostream& report);
+  Result<void> ExecuteOne(const CommandRequest&);
 
-  std::vector<std::string> CmdList() const;
   Result<CvdCommandHandler*> GetHandler(const CommandRequest& request);
 
  private:
   const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers_;
-  std::vector<CvdCommandHandler*> handler_stack_;
 };
 }  // namespace cuttlefish

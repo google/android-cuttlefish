@@ -167,7 +167,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
 
     if (!cvd_flags.fetch_cvd_flags.empty()) {
       auto fetch_cmd = CF_EXPECT(BuildFetchCmd(request, cvd_flags));
-      auto fetch_res = executor_.ExecuteOne(fetch_cmd, std::cerr);
+      auto fetch_res = executor_.ExecuteOne(fetch_cmd);
       if (!fetch_res.ok()) {
         group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
         // TODO: b/471069557 - diagnose unused
@@ -183,7 +183,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
     auto start_cmd = CF_EXPECT(BuildStartCommand(request, cvd_flags, group));
-    CF_EXPECT(executor_.ExecuteOne(start_cmd, std::cerr));
+    CF_EXPECT(executor_.ExecuteOne(start_cmd));
     return {};
   }
 

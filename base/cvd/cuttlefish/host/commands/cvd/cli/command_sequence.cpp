@@ -15,11 +15,11 @@
 
 #include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 
+#include <iostream>
 #include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 #include "absl/strings/str_replace.h"
@@ -80,27 +80,13 @@ CommandSequenceExecutor::CommandSequenceExecutor(
     const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers)
     : server_handlers_(server_handlers) {}
 
-Result<void> CommandSequenceExecutor::ExecuteOne(const CommandRequest& request,
-                                                 std::ostream& report) {
-  report << FormattedCommand(request);
+Result<void> CommandSequenceExecutor::ExecuteOne(
+    const CommandRequest& request) {
+  std::cerr << FormattedCommand(request);
 
   auto handler = CF_EXPECT(RequestHandler(request, server_handlers_));
-  handler_stack_.push_back(handler);
   CF_EXPECT(handler->Handle(request));
-  handler_stack_.pop_back();
   return {};
-}
-
-std::vector<std::string> CommandSequenceExecutor::CmdList() const {
-  std::unordered_set<std::string> subcmds;
-  for (const auto& handler : server_handlers_) {
-    auto&& cmds_list = handler->CmdList();
-    for (const auto& cmd : cmds_list) {
-      subcmds.insert(cmd);
-    }
-  }
-  // duplication removed
-  return std::vector<std::string>{subcmds.begin(), subcmds.end()};
 }
 
 Result<CvdCommandHandler*> CommandSequenceExecutor::GetHandler(
