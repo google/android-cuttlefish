@@ -18,14 +18,13 @@
 
 #include <memory>
 
-#include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 
 std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(
-    InstanceManager& instance_manager, CommandSequenceExecutor& executor);
+    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish
 
