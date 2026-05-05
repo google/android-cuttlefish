@@ -41,7 +41,7 @@
 namespace cuttlefish {
 
 Result<void> CheckProcessExitedNormally(siginfo_t infop,
-                                        const int expected_exit_code) {
+                                        int expected_exit_code) {
   if (infop.si_code == CLD_EXITED && infop.si_status == expected_exit_code) {
     return {};
   }
