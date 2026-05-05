@@ -795,11 +795,7 @@ func (c *HostOrchestratorClientImpl) CVDStatus(groupName, instanceName string) (
 	res := &hoapi.CVDStatusResponse{}
 	rb := c.HTTPHelper.NewGetRequest(path)
 
-	op := &hoapi.Operation{}
-	if err := rb.JSONResDo(op); err != nil {
-		return nil, err
-	}
-	if err := c.waitForOperation(op.Name, res); err != nil {
+	if err := rb.JSONResDo(res); err != nil {
 		return nil, err
 	}
 	return res, nil
