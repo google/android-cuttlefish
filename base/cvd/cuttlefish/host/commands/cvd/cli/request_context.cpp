@@ -23,7 +23,6 @@
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/bugreport.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/cache.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/clear.h"
@@ -80,8 +79,7 @@ std::vector<std::string> GetPossibleCommands(
 }  //  namespace
 
 RequestContext::RequestContext(InstanceManager& instance_manager,
-                               InstanceLockFileManager& lock_file_manager)
-    : command_sequence_executor_(this->request_handlers_) {
+                               InstanceLockFileManager& lock_file_manager) {
   request_handlers_.emplace_back(NewCvdCacheCommandHandler());
 
   request_handlers_.emplace_back(NewCvdCreateCommandHandler(instance_manager));

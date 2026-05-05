@@ -20,7 +20,6 @@
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
@@ -36,7 +35,6 @@ class RequestContext {
 
  private:
   std::vector<std::unique_ptr<CvdCommandHandler>> request_handlers_;
-  CommandSequenceExecutor command_sequence_executor_;
 };
 
 Result<CvdCommandHandler*> RequestHandler(
