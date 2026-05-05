@@ -28,8 +28,9 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/fetch.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -71,9 +72,8 @@ Result<LoadFlags> GetLoadFlags(const CommandRequest& request) {
 
 class LoadConfigsCommand : public CvdCommandHandler {
  public:
-  LoadConfigsCommand(CommandSequenceExecutor& executor,
-                     InstanceManager& instance_manager)
-      : executor_(executor), instance_manager_(instance_manager) {}
+  LoadConfigsCommand(InstanceManager& instance_manager)
+      : instance_manager_(instance_manager) {}
   ~LoadConfigsCommand() = default;
 
   Result<void> Handle(const CommandRequest& request) override {
@@ -165,8 +165,10 @@ class LoadConfigsCommand : public CvdCommandHandler {
     CF_EXPECT(std::move(mkdir_res));
 
     if (!cvd_flags.fetch_cvd_flags.empty()) {
-      auto fetch_cmd = CF_EXPECT(BuildFetchCmd(request, cvd_flags));
-      auto fetch_res = executor_.ExecuteOne(fetch_cmd);
+      CommandRequest fetch_cmd = CF_EXPECT(BuildFetchCmd(request, cvd_flags));
+      std::unique_ptr<CvdCommandHandler> fetch_handler =
+          NewCvdFetchCommandHandler();
+      Result<void> fetch_res = fetch_handler->Handle(fetch_cmd);
       if (!fetch_res.ok()) {
         group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
         // TODO: b/471069557 - diagnose unused
@@ -181,8 +183,11 @@ class LoadConfigsCommand : public CvdCommandHandler {
     group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
-    auto start_cmd = CF_EXPECT(BuildStartCommand(request, cvd_flags, group));
-    CF_EXPECT(executor_.ExecuteOne(start_cmd));
+    CommandRequest start_cmd =
+        CF_EXPECT(BuildStartCommand(request, cvd_flags, group));
+    std::unique_ptr<CvdCommandHandler> start_handler =
+        NewCvdStartCommandHandler(instance_manager_);
+    CF_EXPECT(start_handler->Handle(start_cmd));
     return {};
   }
 
@@ -251,16 +256,15 @@ class LoadConfigsCommand : public CvdCommandHandler {
 
   static constexpr char kLoadSubCmd[] = "load";
 
-  CommandSequenceExecutor& executor_;
   InstanceManager& instance_manager_;
 };
 
 }  // namespace
 
 std::unique_ptr<CvdCommandHandler> NewLoadConfigsCommand(
-    CommandSequenceExecutor& executor, InstanceManager& instance_manager) {
+    InstanceManager& instance_manager) {
   return std::unique_ptr<CvdCommandHandler>(
-      new LoadConfigsCommand(executor, instance_manager));
+      new LoadConfigsCommand(instance_manager));
 }
 
 }  // namespace cuttlefish

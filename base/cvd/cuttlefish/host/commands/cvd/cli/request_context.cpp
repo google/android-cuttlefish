@@ -97,8 +97,7 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
   request_handlers_.emplace_back(
       NewCvdHelpHandler(this->request_handlers_));
   request_handlers_.emplace_back(NewLintCommand());
-  request_handlers_.emplace_back(
-      NewLoadConfigsCommand(command_sequence_executor_, instance_manager));
+  request_handlers_.emplace_back(NewLoadConfigsCommand(instance_manager));
   request_handlers_.emplace_back(NewLoginCommand());
   request_handlers_.emplace_back(
       NewCvdDevicePowerBtnCommandHandler(instance_manager));
