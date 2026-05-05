@@ -116,6 +116,13 @@ func startFakeBuildAPIServer(port int, state *State) error {
 		})
 		log.Println(http.ListenAndServe(address, nil))
 	}()
-	_, err := net.DialTimeout("tcp", address, 30*time.Second)
+	var err error
+	for range 3 {
+		time.Sleep(5 * time.Second)
+		_, err = net.DialTimeout("tcp", address, 5*time.Millisecond)
+		if err == nil {
+			break
+		}
+	}
 	return err
 }
