@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -168,10 +169,13 @@ Result<std::string> CvdBugreportCommandHandler::DetailedHelp(
   Command command = CF_EXPECT(ConstructSiblingHelpCommand(
       kHostBugreportBin, request.Env(), request.SubcommandArguments()));
   std::string stdout;
-  int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, nullptr);
+  std::string stderr;
+  int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, &stderr);
   // gflags returns exit code 1 when --help is given
-  CF_EXPECTF(res == 0 || res == 1,
-             "Failed to execute bugreport binary, exit code: {}", res);
+  if (res != 0 && res != 1) {
+    std::cerr << stderr;
+    return CF_ERRF("Failed to execute bugreport binary, exit code: {}", res);
+  }
   return stdout;
 }
 

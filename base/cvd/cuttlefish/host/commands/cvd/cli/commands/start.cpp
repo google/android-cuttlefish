@@ -539,10 +539,13 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
   Command command = CF_EXPECT(ConstructSiblingHelpCommand(
       "cvd_internal_start", envs, request.SubcommandArguments()));
   std::string stdout;
-  int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, nullptr);
+  std::string stderr;
+  int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, &stderr);
   // gflags returns exit code 1 when --help is given
-  CF_EXPECTF(res == 0 || res == 1,
-             "Failed to execute start binary, exit code: {}", res);
+  if (res != 0 && res != 1) {
+    std::cerr << stderr;
+    return CF_ERRF("Failed to execute start binary, exit code: {}", res);
+  }
   return stdout;
 }
 
