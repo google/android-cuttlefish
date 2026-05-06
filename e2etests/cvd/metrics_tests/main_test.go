@@ -50,13 +50,13 @@ func TestMetrics(t *testing.T) {
 
 	var metricsdir string
 	err := func() error {
-		output, _, err := c.RunCmd(c.TargetBin(), "fleet")
+		res, err := c.RunCmd(c.TargetBin(), "fleet")
 		if err != nil {
 			return fmt.Errorf("failed to run `cvd fleet`")
 		}
 
 		re := regexp.MustCompile(`"metrics_dir" : "(.*)",`)
-		matches := re.FindStringSubmatch(output)
+		matches := re.FindStringSubmatch(res.Stdout)
 		if len(matches) != 2 {
 			return fmt.Errorf("failed to find metrics directory.")
 		}

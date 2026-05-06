@@ -52,11 +52,11 @@ func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 				t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %w", err)
 			}
 
-			if _, _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-ctl", "--list-devices"); err != nil {
+			if _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-ctl", "--list-devices"); err != nil {
 				t.Fatalf("v4l2-ctl --list-devices failed: %w", err)
 			}
 
-			if _, _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-compliance", "-d1", "-s"); err != nil {
+			if _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-compliance", "-d1", "-s"); err != nil {
 				t.Fatalf("v4l2-compliance failed: %w", err)
 			}
 		})

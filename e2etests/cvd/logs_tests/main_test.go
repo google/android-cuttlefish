@@ -49,10 +49,11 @@ func TestPrintLogs(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			stdOut, _, err := c.RunCmd(c.TargetBin(), "logs")
+			res, err := c.RunCmd(c.TargetBin(), "logs")
 			if err != nil {
 				t.Fatal(err)
 			}
+			stdOut := res.Stdout
 
 			listedNames := []string{}
 			lines := strings.Split(stdOut, "\n")
@@ -61,9 +62,9 @@ func TestPrintLogs(t *testing.T) {
 				if len(fields) != 2 {
 					t.Errorf("line %q does not match format '<NAME> <PATH>'", line)
 				}
-				_, stderr, err := c.RunCmd("stat", fields[1])
+				res, err := c.RunCmd("stat", fields[1])
 				if err != nil {
-					t.Fatal(stderr)
+					t.Fatal(res.Stderr)
 				}
 				listedNames = append(listedNames, fields[0])
 			}
@@ -74,10 +75,11 @@ func TestPrintLogs(t *testing.T) {
 				}
 			}
 
-			stdOut, _, err = c.RunCmd(c.TargetBin(), "logs", "--print", "launcher.log")
+			res, err = c.RunCmd(c.TargetBin(), "logs", "--print", "launcher.log")
 			if err != nil {
 				t.Fatal(err)
 			}
+			stdOut = res.Stdout
 			if len(stdOut) == 0 {
 				t.Fatalf("empty launcher.log")
 			}
