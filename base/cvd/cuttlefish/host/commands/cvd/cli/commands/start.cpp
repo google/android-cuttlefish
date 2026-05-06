@@ -480,7 +480,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
                   "information won't show in the UI: "
                << conn_res.error();
   }
-  LOG(INFO) << "launch command: " << launch_command;
+  VLOG(0) << "launch command: " << launch_command;
 
   CF_EXPECT(subprocess_waiter_.Setup(launch_command));
 
