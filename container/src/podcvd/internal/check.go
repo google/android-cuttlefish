@@ -17,14 +17,28 @@ package internal
 import (
 	"fmt"
 	"log"
-	"os"
+	"os/exec"
+	"os/user"
 	"syscall"
 )
 
 func CheckDeviceAccessible() error {
+	u, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("failed to get current user: %w", err)
+	}
+	username := u.Username
+
 	// Try to start Podman socket on-demand
 	ensurePodmanSocketRunning()
 
+	// Verify user is registered in /etc/podcvd.users
+	if _, err = readUserCidrFromConfig(username); err != nil {
+		log.Printf("User setup is incomplete. Please execute `podcvd-setup` to configure necessary permissions and network ranges.")
+		return fmt.Errorf("user %q is not registered in /etc/podcvd.users: %w", username, err)
+	}
+
+	// Check device permissions
 	devices := []string{
 		"/dev/kvm",
 		"/dev/net/tun",
@@ -35,17 +49,15 @@ func CheckDeviceAccessible() error {
 	const W_OK = 2
 	for _, device := range devices {
 		if err := syscall.Access(device, R_OK|W_OK); err != nil {
-			username := os.Getenv("USER")
-			if username == "" {
-				username = "${USER}"
-			}
-			log.Printf("please try executing `sudo setfacl -m u:%s:rw %s`", username, device)
-			return fmt.Errorf("device %q is not accessible: %w", device, err)
+			log.Printf("User setup is incomplete. Please execute `podcvd-setup` to configure necessary permissions.")
+			return fmt.Errorf("device %q is not accessible (permission denied): %w", device, err)
 		}
 	}
 	return nil
 }
 
 func ensurePodmanSocketRunning() {
-	_ = exec.Command("systemctl", "--user", "start", "podman.socket").Run()
+	if err := exec.Command("systemctl", "--user", "start", "podman.socket").Run(); err != nil {
+		log.Printf("Warning: failed to start podman.socket dynamically: %v", err)
+	}
 }

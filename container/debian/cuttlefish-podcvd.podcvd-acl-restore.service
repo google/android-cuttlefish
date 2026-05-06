@@ -1,0 +1,12 @@
+[Unit]
+Description=Restore KVM and vhost ACLs for podcvd users
+After=udev.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/cuttlefish-podcvd/bin/restore-acls.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

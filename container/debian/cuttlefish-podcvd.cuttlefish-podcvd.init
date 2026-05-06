@@ -29,7 +29,7 @@
 if [ -f /etc/default/cuttlefish-podcvd ]; then
     . /etc/default/cuttlefish-podcvd
 fi
-podcvd_cidr=${podcvd_cidr:-192.168.80.0/24}
+podcvd_cidr=${podcvd_cidr:-192.168.80.0/20}
 
 podcvd_ifname="podcvd"
 
