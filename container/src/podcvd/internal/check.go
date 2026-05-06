@@ -22,6 +22,9 @@ import (
 )
 
 func CheckDeviceAccessible() error {
+	// Try to start Podman socket on-demand
+	ensurePodmanSocketRunning()
+
 	devices := []string{
 		"/dev/kvm",
 		"/dev/net/tun",
@@ -41,4 +44,8 @@ func CheckDeviceAccessible() error {
 		}
 	}
 	return nil
+}
+
+func ensurePodmanSocketRunning() {
+	_ = exec.Command("systemctl", "--user", "start", "podman.socket").Run()
 }
