@@ -190,9 +190,8 @@ Result<std::set<std::string>> PreservingOnResume(
             "Restoring from snapshot requires not creating OS disks");
   if (creating_os_disk) {
     // not snapshot restore, must be --resume
-    LOG(INFO) << "Requested resuming a previous session (the default behavior) "
-              << "but the base images have changed under the overlay, making "
-              << "the overlay incompatible. Wiping the overlay files.";
+    VLOG(0) << "Trying to resume previous session, but base images have "
+                 "changed.  Wiping overlay files.";
     if (InSandbox()) {
       return {{"launcher.log"}};
     } else {
