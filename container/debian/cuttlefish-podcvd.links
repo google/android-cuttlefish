@@ -1,1 +1,2 @@
 /usr/lib/cuttlefish-podcvd/bin/podcvd /usr/bin/podcvd
+/usr/lib/cuttlefish-podcvd/bin/podcvd-setup /usr/bin/podcvd-setup
