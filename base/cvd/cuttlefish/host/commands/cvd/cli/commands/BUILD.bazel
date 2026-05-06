@@ -359,6 +359,12 @@ cf_cc_library(
     name = "start",
     srcs = ["start.cpp"],
     hdrs = ["start.h"],
+    local_defines = select({
+        "//cuttlefish/host/commands/cvd:all_host_substitutions_enabled": [
+            "CUTTLEFISH_ENABLE_ALL_HOST_SUBSTITUTIONS_BY_DEFAULT",
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
