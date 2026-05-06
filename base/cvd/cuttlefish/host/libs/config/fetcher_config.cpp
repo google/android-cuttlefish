@@ -125,7 +125,7 @@ bool FetcherConfig::LoadFromFile(const std::string& file) {
 
   auto base_dir = android::base::Dirname(file);
   if (base_dir != "." && dictionary_.isMember(kCvdFiles)) {
-    LOG(INFO) << "Adjusting cvd_file paths to directory: " << base_dir;
+    VLOG(0) << "Adjusting cvd_file paths to directory: " << base_dir;
     for (const auto& member_name : dictionary_[kCvdFiles].getMemberNames()) {
       dictionary_[kCvdFiles][base_dir + "/" + member_name] =
           dictionary_[kCvdFiles][member_name];
