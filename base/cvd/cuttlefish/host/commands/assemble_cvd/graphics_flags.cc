@@ -501,14 +501,14 @@ Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
             gpu_vhost_user_mode_arg == kGpuVhostUserModeOff);
   if (gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto) {
     if (gpu_mode == GpuMode::GuestSwiftshader) {
-      LOG(INFO) << "GPU vhost user auto mode: not needed for --gpu_mode="
-                << GpuModeString(gpu_mode) << ". Not enabling vhost user gpu.";
+      VLOG(0) << "GPU vhost user auto mode: not needed for --gpu_mode="
+              << GpuModeString(gpu_mode) << ". Not enabling vhost user gpu.";
       return false;
     }
 
     if (!VmManagerIsCrosvm(vmm)) {
-      LOG(INFO) << "GPU vhost user auto mode: not yet supported with " << vmm
-                << ". Not enabling vhost user gpu.";
+      VLOG(0) << "GPU vhost user auto mode: not yet supported with " << vmm
+              << ". Not enabling vhost user gpu.";
       return false;
     }
 
@@ -517,13 +517,13 @@ Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
     // in a separate process with a VMM prebuilt. See b/200592498.
     const auto host_arch = HostArch();
     if (host_arch == Arch::Arm64) {
-      LOG(INFO) << "GPU vhost user auto mode: detected arm64 host. Enabling "
-                   "vhost user gpu.";
+      VLOG(0) << "GPU vhost user auto mode: detected arm64 host. Enabling "
+                 "vhost user gpu.";
       return true;
     }
 
-    LOG(INFO) << "GPU vhost user auto mode: not needed. Not enabling vhost "
-                 "user gpu.";
+    VLOG(0) << "GPU vhost user auto mode: not needed. Not enabling vhost "
+               "user gpu.";
     return false;
   }
 
