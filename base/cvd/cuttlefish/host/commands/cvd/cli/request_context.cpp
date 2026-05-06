@@ -39,6 +39,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/login.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/logs.h"
 
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/power_btn.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/powerwash.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/remove.h"
@@ -101,6 +102,7 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
       NewCvdDevicePowerBtnCommandHandler(instance_manager));
   request_handlers_.emplace_back(
       NewCvdDevicePowerwashCommandHandler(instance_manager));
+  request_handlers_.emplace_back(NewCvdMonitorCommandHandler(instance_manager));
   request_handlers_.emplace_back(
       NewCvdDeviceRestartCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewRemoveCvdCommandHandler(instance_manager));

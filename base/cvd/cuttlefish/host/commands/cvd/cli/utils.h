@@ -64,6 +64,12 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
 // The function does not verify that.
 std::string NoGroupMessage(const CommandRequest& request);
 
+struct TerminalSize {
+  int rows;
+  int columns;
+};
+Result<TerminalSize> GetTerminalSize();
+
 class TerminalColors {
  public:
   TerminalColors(bool is_tty): is_tty_(is_tty){}

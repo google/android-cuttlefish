@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 
+#include <sys/ioctl.h>
+#include <unistd.h>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -169,6 +171,13 @@ std::string NoGroupMessage(const CommandRequest& request) {
                      fmt::join(request.SubcommandArguments(), " "),
                      colors.Reset(), colors.BoldRed(), "no device",
                      colors.Reset());
+}
+
+Result<TerminalSize> GetTerminalSize() {
+  struct winsize w;
+  CF_EXPECT(ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1,
+            "Failed to get terminal size: " << strerror(errno));
+  return TerminalSize{.rows = w.ws_row, .columns = w.ws_col};
 }
 
 }  // namespace cuttlefish
