@@ -6,11 +6,6 @@ symlinks {
 }
 
 symlinks {
-  target: "/usr/lib/cuttlefish-common/bin/allocd_client"
-  link_name: "bin/allocd_client"
-}
-
-symlinks {
   target: "/usr/lib/cuttlefish-common/bin/assemble_cvd"
   link_name: "bin/assemble_cvd"
 }
