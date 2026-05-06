@@ -27,7 +27,7 @@ func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 		target string
 	}{
 		{
-			branch: "git_main",
+			branch: "15346462", // TODO(b/510415749)
 			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
 		},
 	}
