@@ -27,7 +27,7 @@ USER_CONFIG="/etc/podcvd.users"
 username="${USER:-$(id -un)}"
 
 # 1. Read default CIDR from /etc/default/cuttlefish-podcvd or fallback
-podcvd_cidr="192.168.80.0/20"
+podcvd_cidr="192.168.112.0/20"
 if [ -f /etc/default/cuttlefish-podcvd ]; then
     # Source the config file to get podcvd_cidr if defined
     # (Suppress errors if it's not a valid shell script)
