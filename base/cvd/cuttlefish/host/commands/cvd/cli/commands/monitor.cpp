@@ -41,6 +41,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
@@ -184,6 +185,9 @@ class CvdMonitorCommandHandler : public CvdCommandHandler {
 
     CF_EXPECT(isatty(0),
               "The monitor command requires an interactive terminal.");
+
+    std::vector<std::string> args = request.SubcommandArguments();
+    CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
 
     auto [instance, unused] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request),

@@ -37,6 +37,7 @@ struct LogsCmdOptions {
     return {
         GflagsCompatFlag("print", print_target)
             .Alias({FlagAliasMode::kFlagConsumesFollowing, "-p"}),
+        UnexpectedArgumentGuard(),
     };
   }
 };

@@ -66,6 +66,7 @@ cf_cc_library(
     srcs = ["clear.cpp"],
     hdrs = ["clear.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
@@ -161,6 +162,7 @@ cf_cc_library(
     srcs = ["fleet.cpp"],
     hdrs = ["fleet.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
@@ -281,6 +283,7 @@ cf_cc_library(
     srcs = ["power_btn.cpp"],
     hdrs = ["power_btn.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
@@ -316,6 +319,7 @@ cf_cc_library(
     srcs = ["remove.cpp"],
     hdrs = ["remove.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",

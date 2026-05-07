@@ -23,6 +23,7 @@
 
 #include <json/value.h>
 
+#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -69,8 +70,7 @@ Result<void> CvdFleetCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   std::vector<std::string> args = request.SubcommandArguments();
-
-
+  CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
 
   auto all_groups = CF_EXPECT(instance_manager_.FindGroups({}));
   Json::Value groups_json(Json::arrayValue);

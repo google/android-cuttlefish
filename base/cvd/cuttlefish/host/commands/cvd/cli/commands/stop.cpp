@@ -70,6 +70,7 @@ Result<StopFlags> ParseCommandFlags(cvd_common::Args& args) {
   std::vector<Flag> flags = {
       GflagsCompatFlag("wait_for_launcher", flag_values.wait_for_launcher_secs),
       GflagsCompatFlag("clear_instance_dirs", flag_values.clear_instance_dirs),
+      UnexpectedArgumentGuard(),
   };
   CF_EXPECT(ConsumeFlags(flags, args));
   return flag_values;

@@ -18,7 +18,9 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
+#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
@@ -40,6 +42,8 @@ class CvdDevicePowerBtnCommandHandler : public CvdCommandHandler {
 
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
+    std::vector<std::string> args = request.SubcommandArguments();
+    CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
     auto [instance, _] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                   "Unable to select an instance");
