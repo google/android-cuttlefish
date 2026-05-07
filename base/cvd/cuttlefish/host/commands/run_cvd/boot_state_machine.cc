@@ -193,9 +193,9 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
     }
     if (!IsRestoring(config)) {
       if (exit_code == RunnerExitCodes::kSuccess) {
-        LOG(INFO) << kBootCompletedMessage;
+        VLOG(0) << kBootCompletedMessage;
       } else {
-        LOG(INFO) << kBootFailedMessage;
+        LOG(ERROR) << kBootFailedMessage;
       }
     }
     std::exit(exit_code);
