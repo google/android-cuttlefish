@@ -267,7 +267,9 @@ func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 	if err := errors.Join(errs...); err != nil {
 		return err
 	}
-	combinedRes := cvdFleetResponse{}
+	combinedRes := cvdFleetResponse{
+		Groups: []any{},
+	}
 	for res := range resCh {
 		combinedRes.Groups = append(combinedRes.Groups, res.Groups...)
 	}
