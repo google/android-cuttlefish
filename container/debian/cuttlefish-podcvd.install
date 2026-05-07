@@ -3,3 +3,4 @@ src/podcvd/gemini-extension.json /usr/lib/cuttlefish-podcvd/cuttlefish-mcp-serve
 src/podcvd/podcvd /usr/lib/cuttlefish-podcvd/bin/
 debian/podcvd-setup /usr/lib/cuttlefish-podcvd/bin/
 debian/restore-acls.sh /usr/lib/cuttlefish-podcvd/bin/
+debian/podcvd.users /etc/

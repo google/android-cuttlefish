@@ -25,6 +25,11 @@ if [ -f "$USER_CONFIG" ]; then
             continue
         fi
 
+        # Ignore comment lines starting with '#'
+        if [[ "$user" == \#* ]]; then
+            continue
+        fi
+
         if ! id "$user" &>/dev/null; then
             echo "User '$user' not found on system. Skipping."
             continue
