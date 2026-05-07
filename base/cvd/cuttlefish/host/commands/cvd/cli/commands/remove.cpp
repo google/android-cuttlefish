@@ -23,6 +23,7 @@
 
 #include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
@@ -59,6 +60,7 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
+    CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, subcmd_args));
 
     if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
       return CF_ERR(NoGroupMessage(request));

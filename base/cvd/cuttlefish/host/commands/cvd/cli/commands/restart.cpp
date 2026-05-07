@@ -54,6 +54,7 @@ struct RestartOptions {
     return {
         GflagsCompatFlag("wait_for_launcher", wait_for_launcher_seconds),
         GflagsCompatFlag("boot_timeout", boot_timeout_seconds),
+        UnexpectedArgumentGuard(),
     };
   }
 };
