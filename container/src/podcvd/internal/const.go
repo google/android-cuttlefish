@@ -19,6 +19,7 @@ var imageName = "us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orche
 const (
 	portOperatorHttps = 1443
 	ifName            = "podcvd"
+	podcvdRootDir     = "/var/tmp/podcvd"
 )
 
 const (

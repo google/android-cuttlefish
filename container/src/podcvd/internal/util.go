@@ -26,9 +26,9 @@ import (
 	"github.com/docker/docker/api/types/filters"
 )
 
-func CuttlefishContainerManager() (libcfcontainer.CuttlefishContainerManager, error) {
+func CuttlefishContainerManager(sockAddr string) (libcfcontainer.CuttlefishContainerManager, error) {
 	ccmOpts := libcfcontainer.CuttlefishContainerManagerOpts{
-		SockAddr: libcfcontainer.RootlessPodmanSocketAddr(),
+		SockAddr: sockAddr,
 	}
 	return libcfcontainer.NewCuttlefishContainerManager(ccmOpts)
 }

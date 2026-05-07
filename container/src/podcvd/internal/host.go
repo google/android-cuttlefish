@@ -295,10 +295,6 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 	if productOut == "" {
 		productOut = currentDir
 	}
-	podcvdRootDir := "/var/tmp/podcvd"
-	if err := os.MkdirAll(podcvdRootDir, 0777); err != nil {
-		return "", fmt.Errorf("failed to create podcvd root dir: %w", err)
-	}
 	podcvdHomeDir := filepath.Join(podcvdRootDir, strconv.Itoa(os.Getuid()), attemptID)
 	if err := os.MkdirAll(podcvdHomeDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create podcvd home dir: %w", err)
