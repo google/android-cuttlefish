@@ -63,6 +63,7 @@ func Main(args []string) error {
 	if err := waitSocketRunning(sockfilePath); err != nil {
 		return err
 	}
+	os.Setenv("DOCKER_HOST", socketPath)
 	ccm, err := CuttlefishContainerManager(socketPath)
 	if err != nil {
 		return err
