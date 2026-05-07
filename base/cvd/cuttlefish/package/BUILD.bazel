@@ -33,6 +33,7 @@ package_files(
         "cuttlefish-common/bin/cvd_internal_start": "//cuttlefish/host/commands/start:cvd_internal_start",
         "cuttlefish-common/bin/cvd_internal_status": "//cuttlefish/host/commands/status:cvd_internal_status",
         "cuttlefish-common/bin/cvd_internal_stop": "//cuttlefish/host/commands/stop:cvd_internal_stop",
+        "cuttlefish-common/bin/cvd_refresh_groups": "//cuttlefish/host/commands/refresh_groups:cvd_refresh_groups",
         "cuttlefish-common/bin/cvd_send_id_disclosure": "//cuttlefish/host/commands/cvd_send_id_disclosure",
         "cuttlefish-common/bin/cvd_send_sms": "//cuttlefish/host/commands/cvd_send_sms",
         "cuttlefish-common/bin/cvd_update_location": "//cuttlefish/host/commands/cvd_update_location",

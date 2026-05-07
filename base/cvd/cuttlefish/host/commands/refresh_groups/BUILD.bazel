@@ -1,0 +1,10 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_binary(
+    name = "cvd_refresh_groups",
+    srcs = ["cvd_refresh_groups.cc"],
+)

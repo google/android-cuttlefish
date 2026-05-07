@@ -27,6 +27,8 @@ case "$1" in
 
     setcap cap_net_admin,cap_net_bind_service,cap_net_raw=+ep \
         /usr/lib/cuttlefish-common/bin/cvdalloc
+    setcap cap_setgid=+ep \
+        /usr/lib/cuttlefish-common/bin/cvd_refresh_groups
     ;;
 esac
 
