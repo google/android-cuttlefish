@@ -16,13 +16,13 @@
 
 #pragma once
 
+#include <json/json.h>
+
 #include <chrono>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <json/json.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
@@ -73,6 +73,9 @@ class LocalInstance {
   Result<std::vector<std::string>> ListRecordings();
   Result<void> StartRecording(std::chrono::seconds launcher_timeout);
   Result<void> StopRecording(std::chrono::seconds launcher_timeout);
+
+  // Return list of filenames of instance-level log files.
+  Result<std::vector<std::string>> LogsFilenames() const;
 
  private:
   LocalInstance(std::shared_ptr<cvd::InstanceGroup> group_proto,
