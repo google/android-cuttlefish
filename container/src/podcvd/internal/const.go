@@ -17,8 +17,9 @@ package internal
 var imageName = "us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:nightly"
 
 const (
-	portOperatorHttps = 1443
-	ifName            = "podcvd"
+	portOperatorHttps       = 1443
+	portOperatorHttpsOnHost = 11443
+	ifName                  = "podcvd"
 )
 
 const (

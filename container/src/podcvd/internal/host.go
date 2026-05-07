@@ -328,7 +328,9 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 			return "", err
 		}
 		containerHostCfg.PortBindings = nat.PortMap{}
-		appendPortBindingRange(containerHostCfg.PortBindings, ip, "tcp", portOperatorHttps, portOperatorHttps)
+		containerHostCfg.PortBindings[nat.Port(fmt.Sprintf("%d/tcp", portOperatorHttps))] = []nat.PortBinding{
+			{HostIP: ip, HostPort: fmt.Sprintf("%d", portOperatorHttpsOnHost)},
+		}
 		appendPortBindingRange(containerHostCfg.PortBindings, ip, "tcp", 6520, 6529)
 		appendPortBindingRange(containerHostCfg.PortBindings, ip, "tcp", 15550, 15599)
 		appendPortBindingRange(containerHostCfg.PortBindings, ip, "udp", 15550, 15599)
@@ -371,7 +373,7 @@ func ensureOperatorHealthy(ip string) error {
 	var lastErr error
 	for i := 1; i <= retryCount; i++ {
 		time.Sleep(retryInterval)
-		resp, err := client.Get(fmt.Sprintf("https://%s:%d/devices", ip, portOperatorHttps))
+		resp, err := client.Get(fmt.Sprintf("https://%s:%d/devices", ip, portOperatorHttpsOnHost))
 		if err != nil {
 			lastErr = fmt.Errorf("failed to check health of operator: %w", err)
 			continue
