@@ -597,7 +597,6 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     }
 
     if ((*read_result)->event == monitor::Event::BootCompleted) {
-      LOG(INFO) << "Virtual device booted successfully";
       state_ |= kGuestBootCompleted;
       if (!instance_.vcpu_config_path().empty()) {
         auto res = WattsonRebalanceThreads(instance_.id());
