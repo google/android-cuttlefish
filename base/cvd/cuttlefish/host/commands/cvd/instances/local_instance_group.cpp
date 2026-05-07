@@ -16,6 +16,9 @@
 
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 
+#include <android-base/file.h>
+#include <json/json.h>
+
 #include <algorithm>
 #include <functional>
 #include <iterator>
@@ -24,10 +27,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
 #include "absl/strings/str_join.h"
-#include <json/json.h>
-
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -131,8 +131,7 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Builder::Build() {
     product_out_paths.emplace_back(ProductDirFromBase(base_dir_, i));
   }
 
-  group_proto_.set_product_out_path(
-      absl::StrJoin(product_out_paths, ","));
+  group_proto_.set_product_out_path(absl::StrJoin(product_out_paths, ","));
   return CF_EXPECT(LocalInstanceGroup::Create(group_proto_));
 }
 
@@ -202,6 +201,15 @@ std::string LocalInstanceGroup::ProductDir(int instance_index) const {
 std::string LocalInstanceGroup::BaseDir() const {
   // The base directory is always the parent of the home directory
   return android::base::Dirname(HomeDir());
+}
+
+std::vector<std::string> LocalInstanceGroup::LogsFilenames() const {
+  return {
+      AssemblyDir() + "/assemble_cvd.log",
+      AssemblyDir() + "/cuttlefish_config.json",
+      ArtifactsDir() + "/fetch.log",
+      MetricsDir() + "/metrics.log",
+  };
 }
 
 Result<Json::Value> LocalInstanceGroup::FetchStatus(
