@@ -29,7 +29,7 @@ Execute following commands to install `cuttlefish-podcvd` and setup your
 machine.
 ```
 sudo apt install cuttlefish-podcvd
-/usr/lib/cuttlefish-podcvd/bin/cuttlefish-podcvd-prerequisites.sh
+podcvd-setup
 ```
 
 Now it's available to execute `podcvd help` or `podcvd create` as you could

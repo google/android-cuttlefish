@@ -502,7 +502,7 @@ jobs:
       run: |
         tar -xvf debs_amd64.tar
         sudo apt install -y ./cuttlefish-podcvd_*.deb
-        /usr/lib/cuttlefish-podcvd/bin/cuttlefish-podcvd-prerequisites.sh
+        /usr/lib/cuttlefish-podcvd/bin/podcvd-setup
     - name: Download docker image
       uses: actions/download-artifact@v7
       with:
