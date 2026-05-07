@@ -428,7 +428,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
 
     auto environment =
         const_cast<const CuttlefishConfig&>(config).ForDefaultEnvironment();
-    LOG(INFO) << "Path for instance UDS: " << config.instances_uds_dir();
+    VLOG(0) << "Path for instance UDS: " << config.instances_uds_dir();
 
     for (const auto& instance : config.Instances()) {
       std::string vsock_dir = fmt::format("{}/vsock_{}_{}", TempDir(),
