@@ -44,6 +44,7 @@ ipv4_bridge=${ipv4_bridge:-1}
 ipv6_bridge=${ipv4_bridge:-1}
 dns_servers=${dns_servers:-8.8.8.8,8.8.4.4}
 dns6_servers=${dns6_servers:-2001:4860:4860::8888,2001:4860:4860::8844}
+cuttlefish_run_dir="/run/cuttlefish"
 
 if [ -z ${bridge_interface} ]; then
   create_bridges=1
@@ -96,7 +97,7 @@ start_dnsmasq() {
 # $1 = interface to stop on
 stop_dnsmasq() {
     if [ -f /var/run/cuttlefish-dnsmasq-"${1}".pid ]; then
-        kill $(cat /var/run/cuttlefish-dnsmasq-"${1}".pid)
+        kill $(cat /var/run/cuttlefish-dnsmasq-"${1}".pid) || /bin/true
     fi
 }
 
@@ -110,9 +111,88 @@ create_tap() {
 # Destroy a tap interface
 # $1 = tap name
 destroy_tap() {
-    ip link set dev "${1}" down
-    ip link delete "${1}"
+    ip link set dev "${1}" down || /bin/true
+    ip link delete "${1}" || /bin/true
 }
+
+setup_nftables() {
+    mkdir -p "$cuttlefish_run_dir"
+
+    # Ensure nftables tables and chains exist.
+    nft add table ip cuttlefish_nat
+    nft add chain ip cuttlefish_nat postrouting '{ type nat hook postrouting priority 100 ; }'
+
+    nft add table bridge cuttlefish_bridge
+    nft add chain bridge cuttlefish_bridge prerouting '{ type filter hook prerouting priority -250 ; }'
+    nft add chain bridge cuttlefish_bridge forward '{ type filter hook forward priority 0 ; }'
+}
+
+delete_nftables() {
+    nft delete table ip cuttlefish_nat || /bin/true
+    nft delete table bridge cuttlefish_bridge || /bin/true
+}
+
+
+manage_nft_rule() {
+    local op="$1"
+    local type="$2"
+    local id="$3"
+    local contents="$4"
+
+    local family=""
+    local table=""
+    local chain=""
+    local handle_file=""
+    local handle=""
+
+    case "$type" in
+        masq)
+            family="ip"
+            table="cuttlefish_nat"
+            chain="postrouting"
+            ;;
+        broute4|broute6)
+            family="bridge"
+            table="cuttlefish_bridge"
+            chain="prerouting"
+            ;;
+        forward4|forward6)
+            family="bridge"
+            table="cuttlefish_bridge"
+            chain="forward"
+            ;;
+    esac
+
+    if [ -z "$family" ] || [ -z "$table" ] || [ -z "$chain" ]; then
+        echo "Unknown rule type: $type"
+        return 1
+    fi
+
+    handle_file="${cuttlefish_run_dir}/${type}-${id}.handle"
+
+    if [ "$op" = "add" ]; then
+        if [ -z "$contents" ]; then
+            echo "Contents required for add operation"
+            return 1
+        fi
+        # Add the rule and store the handle.
+        handle=$(nft -a -e add rule "$family" "$table" "$chain" "$contents" | awk '/# handle/ {print $NF}')
+        echo "$handle" > "$handle_file"
+    elif [ "$op" = "delete" ]; then
+        if [ -f "$handle_file" ]; then
+            # Find the handle file and use it to clean things up.
+            handle=$(cat "$handle_file")
+            nft delete rule "$family" "$table" "$chain" handle "$handle" || /bin/true
+            rm "$handle_file"
+        else
+            echo "Handle file not found: $handle_file"
+        fi
+    else
+        echo "Unknown operation: $op"
+        return 1
+    fi
+}
+
 
 # Create a tap interface
 # The tap device will have the IP address and DHCP server running on it, and
@@ -135,7 +215,7 @@ create_interface() {
     if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
         ip -6 addr add "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${tap}"
     fi
-    "${iptables}" -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+    manage_nft_rule add masq "${tap}" "ip saddr ${network} masquerade"
 }
 
 # Destroy a tap interface
@@ -152,10 +232,10 @@ destroy_interface() {
     ipv6_prefix="${4}"
     ipv6_prefix_length="${5}"
 
-    "${iptables}" -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
-    ip addr del "${gateway}${netmask}" dev "${tap}"
+    manage_nft_rule delete masq "${tap}"
+    ip addr del "${gateway}${netmask}" dev "${tap}" || /bin/true
     if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
-        ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${tap}"
+        ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${tap}" || /bin/true
     fi
     destroy_tap "${tap}"
 }
@@ -181,12 +261,12 @@ create_bridged_interfaces() {
         ip link set dev "${tap}" master "${2}"
         if [ "${create_bridges}" != "1" ]; then
             if [ "$ipv4_bridge" != "1" ]; then
-                $ebtables -t broute -A BROUTING -p ipv4 --in-if  "${tap}" -j DROP
-                $ebtables -t filter -A FORWARD  -p ipv4 --out-if "${tap}" -j DROP
+                manage_nft_rule add broute4 "${tap}" "iifname ${tap} ether type ip meta broute set 1 accept"
+                manage_nft_rule add forward4 "${tap}" "oifname ${tap} ether type ip drop"
             fi
             if [ "$ipv6_bridge" != "1" ]; then
-                $ebtables -t broute -A BROUTING -p ipv6 --in-if  "${tap}" -j DROP
-                $ebtables -t filter -A FORWARD  -p ipv6 --out-if "${tap}" -j DROP
+                manage_nft_rule add broute6 "${tap}" "iifname ${tap} ether type ip6 meta broute set 1 accept"
+                manage_nft_rule add forward6 "${tap}" "oifname ${tap} ether type ip6 drop"
             fi
         fi
     done
@@ -204,7 +284,7 @@ create_bridged_interfaces() {
         start_dnsmasq \
           "${2}" "${gateway}" "${dhcp_range}" \
           "${ipv6_prefix}" "${ipv6_prefix_length}"
-        "${iptables}" -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+        manage_nft_rule add masq "br-${2}" "ip saddr ${network} masquerade"
     fi
 }
 
@@ -221,30 +301,30 @@ destroy_bridged_interfaces() {
         network="${1}.0${netmask}"
         ipv6_prefix="${4}"
         ipv6_prefix_length="${5}"
-        "${iptables}" -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
+        manage_nft_rule delete masq "br-${2}"
         stop_dnsmasq "${2}"
         if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
-            ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_len}" dev "${2}"
+            ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_len}" dev "${2}" || /bin/true
         fi
-        ip addr del "${gateway}${netmask}" dev "${2}"
+        ip addr del "${gateway}${netmask}" dev "${2}" || /bin/true
     fi
     for i in $(seq ${num_cvd_accounts}); do
         tap="$(printf ${3}-%02d $i)"
         if [ "${create_bridges}" != "1" ]; then
             if [ "$ipv4_bridge" != "1" ]; then
-                $ebtables -t filter -D FORWARD  -p ipv4 --out-if "${tap}" -j DROP
-                $ebtables -t broute -D BROUTING -p ipv4 --in-if  "${tap}" -j DROP
+                manage_nft_rule delete forward4 "${tap}"
+                manage_nft_rule delete broute4 "${tap}"
             fi
             if [ "$ipv6_bridge" != "1" ]; then
-                $ebtables -t filter -D FORWARD  -p ipv6 --out-if "${tap}" -j DROP
-                $ebtables -t broute -D BROUTING -p ipv6 --in-if  "${tap}" -j DROP
+                manage_nft_rule delete forward6 "${tap}"
+                manage_nft_rule delete broute6 "${tap}"
             fi
         fi
         destroy_tap "${tap}"
     done
     if [ "${create_bridges}" = "1" ]; then
-        ip link set dev "${2}" down
-        ip link delete "${2}"
+        ip link set dev "${2}" down || /bin/true
+        ip link delete "${2}" || /bin/true
     fi
 }
 
@@ -252,6 +332,9 @@ start() {
     # Enable ip forwarding
     echo 1 > /proc/sys/net/ipv4/ip_forward
     echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
+
+    setup_nftables
+
 
     # Ethernet
     # 192.168.98.X for cvd-ebr and cvd-etap-XX
@@ -333,6 +416,7 @@ stop() {
             destroy_interface $tap 192.168.95 $(($i - 64))
         fi
     done
+    delete_nftables
 }
 
 usage() {
