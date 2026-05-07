@@ -174,16 +174,12 @@ Result<void> UnpackRamdisk(const std::string& original_ramdisk_path,
   CF_EXPECT(EnsureDirectoryExists(ramdisk_stage_dir));
 
   SharedFD input = SharedFD::Open(original_ramdisk_path + kCpioExt, O_RDONLY);
-  int cpio_status;
-  do {
-    LOG(ERROR) << "Running";
-    cpio_status = Command(CpioBinary())
-                      .AddParameter("-idu")
-                      .SetWorkingDirectory(ramdisk_stage_dir)
-                      .RedirectStdIO(Subprocess::StdIOChannel::kStdIn, input)
-                      .Start()
-                      .Wait();
-  } while (cpio_status == 0);
+  Command(CpioBinary())
+      .AddParameter("-idu")
+      .SetWorkingDirectory(ramdisk_stage_dir)
+      .RedirectStdIO(Subprocess::StdIOChannel::kStdIn, input)
+      .Start()
+      .Wait();
   return {};
 }
 
