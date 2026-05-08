@@ -66,16 +66,6 @@ CommandRequestBuilder CommandRequestBuilder::AddArguments(
   return AddArguments(std::vector<std::string_view>(args));
 }
 
-CommandRequestBuilder& CommandRequestBuilder::AddSelectorArguments(
-    std::initializer_list<std::string_view> args) & {
-  return AddSelectorArguments(std::vector<std::string_view>(args));
-}
-
-CommandRequestBuilder CommandRequestBuilder::AddSelectorArguments(
-    std::initializer_list<std::string_view> args) && {
-  return AddSelectorArguments(std::vector<std::string_view>(args));
-}
-
 CommandRequestBuilder& CommandRequestBuilder::SetEnv(cvd_common::Envs env) & {
   env_ = std::move(env);
   return *this;
@@ -99,10 +89,8 @@ CommandRequestBuilder CommandRequestBuilder::AddEnvVar(std::string key,
 }
 
 Result<CommandRequest> CommandRequestBuilder::Build() && {
-  return CommandRequest(
-      std::move(args_), std::move(env_),
-      CF_EXPECT(selector::ParseCommonSelectorArguments(selector_args_),
-                "Failed to parse selector arguments"));
+  return CommandRequest(std::move(args_), std::move(env_),
+                        std::move(selector_options_));
 }
 
 }  // namespace cuttlefish

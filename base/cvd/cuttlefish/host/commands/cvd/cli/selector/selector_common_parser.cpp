@@ -36,19 +36,6 @@
 namespace cuttlefish {
 namespace selector {
 
-std::vector<std::string> SelectorOptions::AsArgs() const {
-  std::vector<std::string> ret;
-  if (group_name) {
-    ret.push_back(
-        fmt::format("--{}={}", SelectorFlags::kGroupName, *group_name));
-  }
-  if (instance_names) {
-    ret.push_back(fmt::format("--{}={}", SelectorFlags::kInstanceName,
-                              absl::StrJoin(*instance_names, ",")));
-  }
-  return ret;
-}
-
 Result<std::string> HandleGroupName(const std::string& group_name) {
   CF_EXPECTF(IsValidGroupName(group_name), "Invalid group name: {}",
              group_name);

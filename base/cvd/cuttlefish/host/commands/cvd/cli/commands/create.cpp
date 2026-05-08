@@ -45,6 +45,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/load_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -149,13 +150,15 @@ Result<CommandRequest> CreateLoadCommand(const CommandRequest& request,
 Result<CommandRequest> CreateStartCommand(const LocalInstanceGroup& group,
                                           const cvd_common::Args& args,
                                           const cvd_common::Envs& envs) {
-  return CF_EXPECT(
-      CommandRequestBuilder()
-          .SetEnv(envs)
-          .AddArguments({"cvd", "start"})
-          .AddArguments(args)
-          .AddSelectorArguments({"--group_name", group.GroupName()})
-          .Build());
+  selector::SelectorOptions selector_options{
+      .group_name = group.GroupName(),
+  };
+  return CF_EXPECT(CommandRequestBuilder()
+                       .SetEnv(envs)
+                       .AddArguments({"cvd", "start"})
+                       .AddArguments(args)
+                       .SetSelectorOptions(std::move(selector_options))
+                       .Build());
 }
 
 Result<cvd_common::Envs> GetEnvs(const CommandRequest& request) {

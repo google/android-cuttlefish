@@ -28,7 +28,8 @@ TEST(FrontlineParserTest, SelectorArgs) {
   auto result = ExtractCvdArgs(input);
 
   EXPECT_THAT(result, IsOk());
-  ASSERT_EQ(*result, std::vector<std::string>{"--instance_name=1"});
+  ASSERT_TRUE(result->instance_names.has_value());
+  ASSERT_EQ(result->instance_names.value(), std::vector<std::string>{"1"});
   ASSERT_EQ(input, (std::vector<std::string>{"cvd", "status"}));
 }
 
