@@ -110,7 +110,7 @@ Result<void> CreateLegacySymlinks(
                              "launcher.log",
                              "logcat",
                              "metrics.log",
-                             "modem_simulator.log",
+                             kLogNameModemSimulator,
                              "crosvm_openwrt.log",
                              "crosvm_openwrt_boot.log"};
   for (const auto& log_file : log_files) {
@@ -245,7 +245,7 @@ Result<std::set<std::string>> PreservingOnResume(
     preserving.insert(kLogNameKernel);
     preserving.insert("launcher.log");
     preserving.insert("logcat");
-    preserving.insert("modem_simulator.log");
+    preserving.insert(kLogNameModemSimulator);
     preserving.insert("crosvm_openwrt.log");
     preserving.insert("crosvm_openwrt_boot.log");
     preserving.insert("metrics.log");
