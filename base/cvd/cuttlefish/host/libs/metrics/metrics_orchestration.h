@@ -25,11 +25,6 @@
 
 namespace cuttlefish {
 
-inline constexpr std::string_view kMetricsEnabledNotice =
-    "This will automatically send diagnostic information to "
-    "Google, such as crash reports and usage data from the host "
-    "machine managing the Android Virtual Device.";
-
 struct MetricsInput {
   std::string metrics_directory;
 };
