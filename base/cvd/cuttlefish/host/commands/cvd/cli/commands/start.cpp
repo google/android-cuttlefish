@@ -391,7 +391,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(ConsumeDaemonModeFlag(subcmd_args));
   subcmd_args.push_back("--daemon=true");
 
-  auto group =
+  LocalInstanceGroup group =
       CF_EXPECT(selector::SelectGroup(instance_manager_, request),
                 "Failed to select group to start, did you mean 'cvd create'?");
 
@@ -450,7 +450,15 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   listener_handle.reset();
 
-  if (!isatty(0)) {
+  // show user a more succinct output
+  if (isatty(0)) {
+    std::vector<std::string> instance_names;
+    for (const auto& instance : group.Instances()) {
+      instance_names.push_back(instance.name());
+    }
+    std::cout << fmt::format("group:{}|instance(s):{}\n", group.GroupName(),
+                             absl::StrJoin(instance_names, ","));
+  } else {
     auto group_json = CF_EXPECT(group.FetchStatus());
     std::cout << group_json.toStyledString();
   }
