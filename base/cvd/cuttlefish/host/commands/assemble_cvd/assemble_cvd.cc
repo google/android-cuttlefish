@@ -614,10 +614,17 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   FetcherConfigs fetcher_configs =
       FetcherConfigs::ReadFromDirectories(system_image_dir.AsVector());
 
+  AndroidBuilds android_builds =
+      CF_EXPECT(FindAndroidBuilds(system_image_dir, fetcher_configs));
+
+  VLOG(0) << android_builds;
+
   InitramfsPathFlag initramfs_path =
       InitramfsPathFlag::FromGlobalGflags(fetcher_configs);
   KernelPathFlag kernel_path = KernelPathFlag::FromGlobalGflags(fetcher_configs);
 
+  BootImageFlag boot_image =
+      CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds));
   SuperImageFlag super_image =
       SuperImageFlag::FromGlobalGflags(system_image_dir);
 
@@ -644,14 +651,6 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
     }
     return 1;  // For parity with gflags
   }
-
-  AndroidBuilds android_builds =
-      CF_EXPECT(FindAndroidBuilds(system_image_dir, fetcher_configs));
-
-  VLOG(0) << android_builds;
-
-  BootImageFlag boot_image =
-      CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds));
 
   CF_EXPECT(VerifyConditionsOnSnapshotRestore(FLAGS_snapshot_path),
             "The conditions for --snapshot_path=<dir> do not meet.");
