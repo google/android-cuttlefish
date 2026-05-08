@@ -27,7 +27,6 @@
 #include <iterator>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -98,16 +97,7 @@ void Flag::ValidateAlias(const FlagAlias& alias) {
   if (alias.mode == FlagAliasMode::kFlagConsumesFollowing) {
     CHECK(!HasAlias({FlagAliasMode::kFlagExact, alias.name}))
         << "Overlapping flag aliases for " << alias.name;
-    CHECK(!HasAlias({FlagAliasMode::kFlagConsumesArbitrary, alias.name}))
-        << "Overlapping flag aliases for " << alias.name;
   } else if (alias.mode == FlagAliasMode::kFlagExact) {
-    CHECK(!HasAlias({FlagAliasMode::kFlagConsumesFollowing, alias.name}))
-        << "Overlapping flag aliases for " << alias.name;
-    CHECK(!HasAlias({FlagAliasMode::kFlagConsumesArbitrary, alias.name}))
-        << "Overlapping flag aliases for " << alias.name;
-  } else if (alias.mode == FlagAliasMode::kFlagConsumesArbitrary) {
-    CHECK(!HasAlias({FlagAliasMode::kFlagExact, alias.name}))
-        << "Overlapping flag aliases for " << alias.name;
     CHECK(!HasAlias({FlagAliasMode::kFlagConsumesFollowing, alias.name}))
         << "Overlapping flag aliases for " << alias.name;
   }
@@ -151,10 +141,6 @@ Flag Flag::Setter(std::function<Result<void>(const FlagMatch&)> setter) && {
   return *this;
 }
 
-static bool LikelyFlag(const std::string& next_arg) {
-  return absl::StartsWith(next_arg, "-");
-}
-
 Result<bool> ParseBool(std::string_view value, std::string_view name) {
   bool result;
   CF_EXPECTF(absl::SimpleAtob(value, &result),
@@ -178,17 +164,6 @@ Result<Flag::FlagProcessResult> Flag::Process(
   for (auto& alias : aliases_) {
     auto normalized_alias = absl::StrReplaceAll(alias.name, {{"-", "_"}});
     switch (alias.mode) {
-      case FlagAliasMode::kFlagConsumesArbitrary:
-        if (normalized_arg != normalized_alias) {
-          continue;
-        }
-        if (!next_arg || LikelyFlag(*next_arg)) {
-          CF_EXPECTF((*setter_)({arg, ""}), "Processing \"{}\" failed", arg);
-          return FlagProcessResult::kFlagConsumed;
-        }
-        CF_EXPECTF((*setter_)({arg, *next_arg}),
-                   "Processing \"{}\" \"{}\" failed", arg, *next_arg);
-        return FlagProcessResult::kFlagConsumedOnlyFollowing;
       case FlagAliasMode::kFlagConsumesFollowing:
         if (normalized_arg != normalized_alias) {
           continue;
@@ -231,9 +206,6 @@ Result<void> Flag::Parse(std::vector<std::string>& arguments) const {
         break;
       case FlagProcessResult::kFlagConsumedWithFollowing:
         arguments.erase(arguments.begin() + i, arguments.begin() + i + 2);
-        break;
-      case FlagProcessResult::kFlagConsumedOnlyFollowing:
-        arguments.erase(arguments.begin() + i + 1, arguments.begin() + i + 2);
         break;
       case FlagProcessResult::kFlagSkip:
         i++;
@@ -450,9 +422,6 @@ Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
         break;
       case Flag::FlagProcessResult::kFlagConsumedWithFollowing:
         args.erase(args.begin(), args.begin() + 2);
-        break;
-      case Flag::FlagProcessResult::kFlagConsumedOnlyFollowing:
-        args.erase(args.begin() + 1, args.begin() + 2);
         break;
     }
   }
