@@ -29,9 +29,9 @@
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
-#include "cuttlefish/host/libs/metrics/enabled.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
+#include "cuttlefish/host/libs/metrics/notification.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -80,6 +80,7 @@ Result<void> RunMetrics(
 }  // namespace
 
 void GatherFetchStartMetrics(const FetchFlags& fetch_flags) {
+  DisplayPrivacyNotice();
   const MetricsInput metrics_input =
       GetFetchMetricsInput(fetch_flags.target_directory);
   Result<void> metrics_setup_result =
@@ -90,9 +91,6 @@ void GatherFetchStartMetrics(const FetchFlags& fetch_flags) {
     return;
   }
 
-  if (AreMetricsEnabled()) {
-    LOG(INFO) << kMetricsEnabledNotice;
-  }
   Result<void> run_metrics_result = RunMetrics(metrics_input, fetch_flags);
   if (!run_metrics_result.ok()) {
     VLOG(0) << fmt::format(

@@ -17,12 +17,26 @@
 
 #include <iostream>
 #include <string>
+#include <string_view>
 
 #include <android-base/macros.h>
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
+namespace {
+
+constexpr std::string_view kFirstAnswerPrompt =
+    "Automatically send diagnostic information to Google from this Android "
+    "Virtual Device.";
+constexpr std::string_view kResponsePrompt = " (Y/n)?:";
+constexpr std::string_view kMustAnswerPrompt =
+    "Must accept/reject anonymous usage statistics reporting.";
+constexpr std::string_view kAdjustmentNotice =
+    "You can adjust the permission for sending diagnostic information to "
+    "Google by running \"--report_anonymous_usage_stats=n\"\n";
+
+}  // namespace
 
 std::string ValidateMetricsConfirmation(std::string use_metrics) {
   if (use_metrics.empty()) {
@@ -41,26 +55,23 @@ std::string ValidateMetricsConfirmation(std::string use_metrics) {
   char ch = !use_metrics.empty() ? tolower(use_metrics.at(0)) : -1;
   if (ch != 'n') {
     if (use_metrics.empty()) {
-      std::cout << "\nAutomatically send diagnostic information to Google from "
-                   "this Android Virtual "
-                   "Device. You can adjust this permission by running \"--report_anonymous_usage_stats=n\". (Y/n)?:";
-    } else {
-      std::cout << "You can adjust the permission for sending diagnostic "
-                   "information to Google by running \"--report_anonymous_usage_stats=n\"\n";
+      std::cout << kFirstAnswerPrompt << kResponsePrompt;
     }
   }
-  for (;;) {
+  std::string result;
+  while (result.empty()) {
     switch (ch) {
       case 0:
       case '\r':
       case '\n':
       case 'y':
-        return "y";
+        result = "y";
+        break;
       case 'n':
-        return "n";
+        result = "n";
+        break;
       default:
-        std::cout << "Must accept/reject anonymous usage statistics reporting "
-                     "(Y/n): ";
+        std::cout << kMustAnswerPrompt << kResponsePrompt;
         FALLTHROUGH_INTENDED;
       case -1:
         std::cin.get(ch);
@@ -72,7 +83,8 @@ std::string ValidateMetricsConfirmation(std::string use_metrics) {
         ch = tolower(ch);
     }
   }
-  return "";
+  std::cout << kAdjustmentNotice;
+  return result;
 }
 
 }  // namespace cuttlefish
