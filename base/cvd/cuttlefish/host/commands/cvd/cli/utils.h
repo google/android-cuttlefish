@@ -30,7 +30,7 @@
 namespace cuttlefish {
 
 Result<void> CheckProcessExitedNormally(siginfo_t infop,
-                                        int expected_exit_code = 0);
+                                        const int expected_exit_code = 0);
 
 struct ConstructCommandParam {
   const std::string& bin_path;
