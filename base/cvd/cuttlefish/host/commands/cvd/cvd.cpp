@@ -41,12 +41,13 @@ Cvd::Cvd(InstanceManager& instance_manager,
 Result<void> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
     const std::unordered_map<std::string, std::string>& env,
-    const std::vector<std::string>& selector_args) {
-  CommandRequest request = CF_EXPECT(CommandRequestBuilder()
-                                         .AddArguments(cvd_process_args)
-                                         .SetEnv(env)
-                                         .AddSelectorArguments(selector_args)
-                                         .Build());
+    selector::SelectorOptions selector_args) {
+  CommandRequest request =
+      CF_EXPECT(CommandRequestBuilder()
+                    .AddArguments(cvd_process_args)
+                    .SetEnv(env)
+                    .SetSelectorOptions(std::move(selector_args))
+                    .Build());
 
   RequestContext context(instance_manager_, lock_file_manager_);
   auto handler = CF_EXPECT(context.Handler(request));
@@ -66,9 +67,9 @@ Result<void> Cvd::HandleCvdCommand(
   if (args.size() == 1ul) {
     args = cvd_common::Args{"cvd", "help"};
   }
-  std::vector<std::string> selector_args = CF_EXPECT(ExtractCvdArgs(args));
+  selector::SelectorOptions selector_args = CF_EXPECT(ExtractCvdArgs(args));
   // TODO(schuffelen): Deduplicate cvd process split.
-  CF_EXPECT(HandleCommand(args, env, selector_args));
+  CF_EXPECT(HandleCommand(args, env, std::move(selector_args)));
   return {};
 }
 

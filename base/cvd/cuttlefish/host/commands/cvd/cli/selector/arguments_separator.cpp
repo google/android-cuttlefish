@@ -51,7 +51,7 @@ Result<SeparatedArguments> SeparateArguments(
 
   // Mutates `args` to remove selector arguments
   SelectorOptions selectors = CF_EXPECT(ParseCommonSelectorArguments(args));
-  output.cvd_args = selectors.AsArgs();
+  output.cvd_args = std::move(selectors);
 
   if (!args.empty()) {
     output.sub_cmd = args[0];

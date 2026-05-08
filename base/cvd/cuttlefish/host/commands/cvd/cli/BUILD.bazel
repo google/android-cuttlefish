@@ -24,6 +24,7 @@ cf_cc_library(
     deps = [
         ":types",
         "//cuttlefish/host/commands/cvd/cli/selector:arguments_separator",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/result",
         "//libbase",
     ],
@@ -114,6 +115,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:creation_analyzer",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",

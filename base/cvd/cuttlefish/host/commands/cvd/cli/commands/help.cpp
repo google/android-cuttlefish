@@ -150,7 +150,7 @@ class CvdHelpHandler : public CvdCommandHandler {
                       .AddArguments(args)
                       .AddArguments({"--help"})
                       .SetEnv(request.Env())
-                      .AddSelectorArguments(request.Selectors().AsArgs())
+                      .SetSelectorOptions(request.Selectors())
                       .Build());
 
     std::stringstream help_message;

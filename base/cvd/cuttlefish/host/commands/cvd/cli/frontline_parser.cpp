@@ -30,7 +30,7 @@ namespace cuttlefish {
 using selector::SeparateArguments;
 using selector::SeparatedArguments;
 
-Result<cvd_common::Args> ExtractCvdArgs(cvd_common::Args& args) {
+Result<selector::SelectorOptions> ExtractCvdArgs(cvd_common::Args& args) {
   CF_EXPECT(!args.empty());
 
   SeparatedArguments separated_arguments = CF_EXPECT(SeparateArguments(args));
