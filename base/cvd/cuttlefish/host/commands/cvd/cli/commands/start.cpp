@@ -41,6 +41,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 
+#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -535,9 +536,22 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
       selector::SelectGroup(instance_manager_, request);
   if (group_res.ok()) {
     envs["HOME"] = group_res.value().HomeDir();
+  } else if (Contains(envs, "HOME")) {
+    if (envs["HOME"].empty()) {
+      envs.erase("HOME");
+    } else {
+      envs["HOME"] = AbsolutePath(envs.at("HOME"));
+    }
   }
-  Command command = CF_EXPECT(ConstructSiblingHelpCommand(
-      "cvd_internal_start", envs, request.SubcommandArguments()));
+  auto android_host_out =
+      CF_EXPECT(AndroidHostPath(envs),
+                "\nTry running this command from the same directory as the "
+                "downloaded or fetched host tools.");
+  const auto bin = CF_EXPECT(FindStartBin(android_host_out));
+
+  Command command = CF_EXPECT(ConstructCvdHelpCommand(
+      bin, envs, request.SubcommandArguments(), request));
+  LOG(INFO) << "help command: " << command;
   std::string stdout;
   int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, nullptr);
   // gflags returns exit code 1 when --help is given

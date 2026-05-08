@@ -165,8 +165,10 @@ bool CvdBugreportCommandHandler::RequiresDeviceExists() const { return true; }
 
 Result<std::string> CvdBugreportCommandHandler::DetailedHelp(
     const CommandRequest& request) const {
-  Command command = CF_EXPECT(ConstructSiblingHelpCommand(
-      kHostBugreportBin, request.Env(), request.SubcommandArguments()));
+  std::string android_host_out = CF_EXPECT(AndroidHostPath(request.Env()));
+  Command command = CF_EXPECT(
+      ConstructCvdHelpCommand(kHostBugreportBin, request.Env(),
+                              request.SubcommandArguments(), request));
   std::string stdout;
   int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, nullptr);
   // gflags returns exit code 1 when --help is given

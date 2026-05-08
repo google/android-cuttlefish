@@ -25,7 +25,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
 #include "absl/strings/str_cat.h"
 #include "fmt/format.h"
 #include "fmt/ranges.h"  // NOLINT(misc-include-cleaner): version difference
@@ -106,34 +105,6 @@ Result<Command> ConstructCvdHelpCommand(
   };
   Command help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   return help_command;
-}
-
-Result<Command> ConstructSiblingHelpCommand(
-    const std::string& bin_name,
-    const cvd_common::Envs& env,
-    const cvd_common::Args& subcmd_args) {
-  std::string exec_dir = android::base::GetExecutableDirectory();
-
-  std::string bin_path = exec_dir + "/" + bin_name;
-  CF_EXPECTF(FileExists(bin_path),
-             "Could not find {} in executable directory '{}'", bin_name,
-             exec_dir);
-
-  Command command(bin_name);
-  command.SetExecutable(bin_path);
-  for (const auto& [var, value]: env) {
-    if (var == kAndroidHostOut || var == kAndroidSoongHostOut) {
-      // These variables will cause cvd_internal_start to find the wrong
-      // assemble_cvd binary. $HOME could cause the same problem, but we need
-      // that one to find the correct image paths.
-      continue;
-    }
-    command.AddEnvironmentVariable(var, value);
-  }
-  for (const std::string& arg: subcmd_args) {
-    command.AddParameter(arg);
-  }
-  return command;
 }
 
 Result<Command> ConstructCvdGenericNonHelpCommand(
