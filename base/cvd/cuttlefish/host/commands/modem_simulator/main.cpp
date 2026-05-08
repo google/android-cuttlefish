@@ -28,6 +28,7 @@
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/modem_simulator/modem_simulator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 
 // we can start multiple modems simultaneously; each modem
 // will listen to one server fd for incoming sms/phone call
@@ -67,7 +68,7 @@ int ModemSimulatorMain(int argc, char** argv) {
   auto config = CuttlefishConfig::Get();
   auto instance = config->ForDefaultInstance();
 
-  auto modem_log_path = instance.PerInstanceLogPath("modem_simulator.log");
+  auto modem_log_path = instance.PerInstanceLogPath(kLogNameModemSimulator);
 
   {
     auto log_path = instance.launcher_log_path();

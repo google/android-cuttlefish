@@ -19,5 +19,6 @@ namespace cuttlefish {
 
 // Per instance log names.
 inline constexpr char kLogNameKernel[] = "kernel.log";
+inline constexpr char kLogNameModemSimulator[] = "modem_simulator.log";
 
 }  // namespace cuttlefish

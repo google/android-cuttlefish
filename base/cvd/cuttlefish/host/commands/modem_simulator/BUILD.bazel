@@ -167,6 +167,7 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/modem_simulator:modem_simulator_class",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/log_names",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
