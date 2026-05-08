@@ -58,7 +58,7 @@ std::set<std::string> FallbackDirs() {
   paths.insert(parent_path + "/cuttlefish_assembly");
 
   std::unique_ptr<DIR, int(*)(DIR*)> dir(opendir(parent_path.c_str()), closedir);
-  if (!dir.get()) {
+  if (!dir) {
     return paths;
   }
 
