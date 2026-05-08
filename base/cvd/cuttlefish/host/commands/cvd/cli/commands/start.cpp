@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -449,8 +450,10 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   listener_handle.reset();
 
-  auto group_json = CF_EXPECT(group.FetchStatus());
-  std::cout << group_json.toStyledString();
+  if (!isatty(0)) {
+    auto group_json = CF_EXPECT(group.FetchStatus());
+    std::cout << group_json.toStyledString();
+  }
 
   return {};
 }
