@@ -43,7 +43,7 @@ namespace {
 
 using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 
-constexpr char kMetricsLogName[] = "metrics.log";
+constexpr char kMetricsLogName[] = "metrics_v2.log";
 
 std::chrono::milliseconds GetEpochTime() {
   auto now = std::chrono::system_clock::now().time_since_epoch();
