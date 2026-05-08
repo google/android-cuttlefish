@@ -30,6 +30,7 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -147,7 +148,7 @@ void TakeHostBugreport(const CuttlefishConfig* config, WritableZip& archive) {
                    << result.error().FormatForEnv(/* color = */ false);
       }
     } else {
-      save("kernel.log");
+      save(kLogNameKernel);
       save("launcher.log");
       save("logcat");
       save("metrics.log");

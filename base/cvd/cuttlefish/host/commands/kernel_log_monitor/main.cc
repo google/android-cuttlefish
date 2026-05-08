@@ -36,6 +36,7 @@
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 
 DEFINE_int32(log_pipe_fd, -1,
              "A file descriptor representing a (UNIX) socket from which to "
@@ -102,7 +103,7 @@ int KernelLogMonitorMain(int argc, char** argv) {
     return 2;
   }
 
-  KernelLogServer klog{pipe, instance.PerInstanceLogPath("kernel.log")};
+  KernelLogServer klog{pipe, instance.PerInstanceLogPath(kLogNameKernel)};
 
   for (auto subscriber_fd: subscriber_fds) {
     if (subscriber_fd->IsOpen()) {
