@@ -68,6 +68,7 @@
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/log_string_to_dir.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/pretty/vector.h"
@@ -105,7 +106,7 @@ Result<void> SaveConfig(const CuttlefishConfig& tmp_config_obj) {
 Result<void> CreateLegacySymlinks(
     const CuttlefishConfig::InstanceSpecific& instance,
     const CuttlefishConfig::EnvironmentSpecific& environment) {
-  std::string log_files[] = {"kernel.log",
+  std::string log_files[] = {kLogNameKernel,
                              "launcher.log",
                              "logcat",
                              "metrics.log",
@@ -241,7 +242,7 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("oemlock_insecure");
   // Preserve logs if restoring from a snapshot.
   if (!snapshot_path.empty()) {
-    preserving.insert("kernel.log");
+    preserving.insert(kLogNameKernel);
     preserving.insert("launcher.log");
     preserving.insert("logcat");
     preserving.insert("modem_simulator.log");

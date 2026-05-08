@@ -1,0 +1,12 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "log_names",
+    hdrs = [
+        "log_names.h",
+    ],
+)

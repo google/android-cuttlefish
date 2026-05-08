@@ -258,6 +258,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/selector",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:instance_manager",
+        "//cuttlefish/host/libs/log_names",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log:check",

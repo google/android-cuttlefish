@@ -71,6 +71,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config/defaults",
         "//cuttlefish/host/libs/config/fastboot",
         "//cuttlefish/host/libs/feature:inject",
+        "//cuttlefish/host/libs/log_names",
         "//cuttlefish/posix:symlink",
         "//cuttlefish/pretty:vector",
         "//libbase",

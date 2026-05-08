@@ -48,6 +48,7 @@
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -193,7 +194,8 @@ class CvdMonitorCommandHandler : public CvdCommandHandler {
         CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                   "Unable to select an instance");
 
-    std::string kernel_log = instance.instance_dir() + "/logs/kernel.log";
+    std::string kernel_log =
+        absl::StrCat(instance.instance_dir(), "/logs/", kLogNameKernel);
     std::string launcher_log = instance.instance_dir() + "/logs/launcher.log";
     std::string logcat = instance.instance_dir() + "/logs/logcat";
 
@@ -220,7 +222,7 @@ class CvdMonitorCommandHandler : public CvdCommandHandler {
       LogMonitorDisplay display(width);
 
       display.DrawFile(launcher_fd, "launcher.log");
-      display.DrawFile(kernel_fd, "kernel.log");
+      display.DrawFile(kernel_fd, kLogNameKernel);
       display.DrawFile(logcat_fd, "logcat");
 
       std::cout << display.Finalize() << std::flush;
