@@ -25,14 +25,15 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
 #include "absl/strings/str_cat.h"
+#include "android-base/file.h"
 #include "fmt/format.h"
 #include "fmt/ranges.h"  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -55,9 +56,21 @@ Result<void> CheckProcessExitedNormally(siginfo_t infop,
   }
 }
 
+static Command FixGroupsIfNecessary(const std::string& command_name,
+                                    const std::string& bin_path) {
+  if (InGroup("cvdnetwork") && InGroup("kvm")) {
+    return Command(command_name).SetExecutable(bin_path);
+  }
+  const std::string refresh_groups =
+      android::base::GetExecutableDirectory() + "/cvd_refresh_groups";
+  return Command("cvd_refresh_groups")
+      .SetExecutable(refresh_groups)
+      .AddParameter(bin_path)
+      .AddParameter(command_name);
+}
+
 Result<Command> ConstructCommand(const ConstructCommandParam& param) {
-  Command command(param.command_name);
-  command.SetExecutable(param.bin_path);
+  Command command = FixGroupsIfNecessary(param.command_name, param.bin_path);
   for (const std::string& arg : param.args) {
     command.AddParameter(arg);
   }
