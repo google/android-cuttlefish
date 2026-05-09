@@ -60,7 +60,7 @@ class ControlEnvProxyServer : public CommandSource {
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override { return {}; }
 
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   GrpcSocketCreator& grpc_socket_;
 };
 

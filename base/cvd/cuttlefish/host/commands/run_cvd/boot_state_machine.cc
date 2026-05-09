@@ -640,7 +640,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
   AutoSetup<ProcessLeader>::Type& process_leader_;
   KernelLogPipeProvider& kernel_log_pipe_provider_;
   const vm_manager::VmManager& vm_manager_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
 
   std::thread boot_event_handler_;
   std::thread restore_complete_handler_;

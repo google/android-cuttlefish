@@ -202,7 +202,7 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
     return CF_ERR("Failed to initialize Ti50 emulator");
   }
 
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   LogTeeCreator& log_tee_;
 
   std::unique_ptr<ProxyServer> socket_proxy_;

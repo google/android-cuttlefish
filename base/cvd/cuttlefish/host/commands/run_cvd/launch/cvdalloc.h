@@ -50,7 +50,7 @@ class Cvdalloc : public vm_manager::VmmDependencyCommand {
   Result<void> IsUsable() const;
   StopperResult Stop();
 
-  const CuttlefishConfig::InstanceSpecific &instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   SharedFD socket_, their_socket_;
   std::mutex availability_mutex_;
   CvdallocStatus status_;

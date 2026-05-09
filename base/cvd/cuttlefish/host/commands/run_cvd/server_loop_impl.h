@@ -99,7 +99,7 @@ class ServerLoopImpl : public ServerLoop,
   Result<void> TakeCrosvmGuestSnapshot(const Json::Value&);
 
   const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
 
   /*
    * This is needed to get the run_cvd side socket pair connected to

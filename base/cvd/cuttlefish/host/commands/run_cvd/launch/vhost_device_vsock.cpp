@@ -64,7 +64,7 @@ class VhostDeviceVsock : public vm_manager::VmmDependencyCommand {
   Result<void> ResultSetup() override { return {}; }
 
   LogTeeCreator& log_tee_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   const CuttlefishConfig& cfconfig_;
 };
 

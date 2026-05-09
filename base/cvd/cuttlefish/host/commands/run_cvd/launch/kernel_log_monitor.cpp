@@ -111,7 +111,7 @@ class KernelLogMonitor : public CommandSource,
   }
 
   int number_of_event_pipes_ = 0;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   SharedFD fifo_;
   std::vector<SharedFD> event_pipe_write_ends_;
   std::vector<SharedFD> event_pipe_read_ends_;

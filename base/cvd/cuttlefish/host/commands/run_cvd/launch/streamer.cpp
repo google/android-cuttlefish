@@ -191,7 +191,7 @@ class StreamerSockets : public virtual SetupFeature {
   }
 
   const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   InputConnectionsProvider& input_connections_provider_;
   SharedFD frames_server_;
   SharedFD audio_server_;
@@ -289,7 +289,7 @@ class WebRtcServer : public virtual CommandSource,
   }
 
   const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   StreamerSockets& sockets_;
   KernelLogPipeProvider& log_pipe_provider_;
   const CustomActionConfigProvider& custom_action_config_;

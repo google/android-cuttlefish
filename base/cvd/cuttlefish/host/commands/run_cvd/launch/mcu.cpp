@@ -114,7 +114,7 @@ class Mcu : public vm_manager::VmmDependencyCommand {
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
 
   std::string mcu_dir_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   LogTeeCreator& log_tee_;
 };
 
