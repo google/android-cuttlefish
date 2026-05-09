@@ -215,7 +215,7 @@ class NetsimServer : public CommandSource {
  private:
   std::vector<Device> devices_;
   const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
 };
 
 }  // namespace

@@ -51,7 +51,7 @@ class WmediumdServer : public vm_manager::VmmDependencyCommand {
   Result<void> ResultSetup() override;
 
   const CuttlefishConfig::EnvironmentSpecific& environment_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   LogTeeCreator& log_tee_;
   GrpcSocketCreator& grpc_socket_;
   std::string config_path_;

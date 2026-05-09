@@ -187,7 +187,7 @@ class OpenWrt : public CommandSource {
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::EnvironmentSpecific& environment_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   LogTeeCreator& log_tee_;
   WmediumdServer& wmediumd_server_;
   Cvdalloc& cvdalloc_;

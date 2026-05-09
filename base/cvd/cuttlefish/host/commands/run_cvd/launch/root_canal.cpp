@@ -136,7 +136,7 @@ class RootCanal : public CommandSource {
   Result<void> ResultSetup() override { return {}; }
 
   const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   LogTeeCreator& log_tee_;
 };
 

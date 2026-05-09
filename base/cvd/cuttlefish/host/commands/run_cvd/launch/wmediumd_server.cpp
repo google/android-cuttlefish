@@ -69,7 +69,7 @@ class ValidateWmediumdService : public SetupFeature {
  private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::EnvironmentSpecific& environment_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
 };
 
 }  // namespace

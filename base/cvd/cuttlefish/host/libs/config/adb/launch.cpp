@@ -75,7 +75,7 @@ class AdbHelper {
   }
 
  private:
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   const AdbConfig& config_;
 };
 
@@ -217,7 +217,7 @@ class SocketVsockProxy : public CommandSource, public KernelLogPipeConsumer {
 
   const AdbHelper& helper_;
   const CuttlefishConfig& cuttlefish_config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   KernelLogPipeProvider& log_pipe_provider_;
   SharedFD kernel_log_pipe_;
 };
