@@ -337,7 +337,12 @@ cf_cc_library(
         "notification.h",
     ],
     deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/directories",
         "//cuttlefish/host/libs/metrics:enabled",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@fmt",
     ],
 )
 

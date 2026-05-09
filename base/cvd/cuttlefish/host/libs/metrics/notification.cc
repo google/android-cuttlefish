@@ -17,12 +17,22 @@
 #include "cuttlefish/host/libs/metrics/notification.h"
 
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <string_view>
 
+#include "absl/log/log.h"
+#include "fmt/format.h"
+
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/libs/directories/xdg.h"
 #include "cuttlefish/host/libs/metrics/enabled.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
+
+constexpr std::string_view kNoticeFilename = "PRIVACY_NOTICE.txt";
 
 constexpr std::string_view kTermsAndPrivacyNotice =
     "By using this Android Virtual Device, you agree to Google Terms of "
@@ -35,12 +45,40 @@ constexpr std::string_view kMetricsEnabledNotice =
     "crash reports and usage data from the host machine managing the Android "
     "Virtual Device.";
 
+Result<std::string> GetNoticeFilepath() {
+  return fmt::format("{}/{}", CF_EXPECT(CvdDataHome()), kNoticeFilename);
+}
+
+Result<void> WriteNoticeFile(const std::string& contents) {
+  CF_EXPECT(WriteCvdDataFile(kNoticeFilename, contents));
+  return {};
+}
+
+std::string GetNoticeMessage() {
+  std::stringstream result;
+  result << kTermsAndPrivacyNotice << std::endl;
+  if (AreMetricsEnabled()) {
+    result << kMetricsEnabledNotice << std::endl;
+  }
+  return result.str();
+}
+
 }  // namespace
 
 void DisplayPrivacyNotice() {
-  std::cout << kTermsAndPrivacyNotice << std::endl;
-  if (AreMetricsEnabled()) {
-    std::cout << kMetricsEnabledNotice << std::endl;
+  Result<std::string> filepath_result = GetNoticeFilepath();
+  if (!filepath_result.ok()) {
+    VLOG(0) << "Failed generating notice filepath: " << filepath_result.error();
+  } else if (FileExists(*filepath_result)) {
+    return;
+  }
+
+  const std::string notice_message = GetNoticeMessage();
+  std::cout << notice_message;
+
+  Result<void> write_result = WriteNoticeFile(notice_message);
+  if (!write_result.ok()) {
+    VLOG(0) << "Failed writing notice file: " << write_result.error();
   }
 }
 
