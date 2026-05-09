@@ -677,7 +677,7 @@ Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
                       const bool default_value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return fmt::format("{}", fmt::join(value, ",")); })
-      .Setter([&name, &value,
+      .Setter([name, &value,
                default_value](const FlagMatch& match) -> Result<void> {
         if (match.value.empty()) {
           value.clear();
