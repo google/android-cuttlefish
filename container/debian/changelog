@@ -1,8 +1,13 @@
-cuttlefish-container (1.54.0) UNRELEASED; urgency=medium
+cuttlefish-container (1.54.0) unstable; urgency=medium
 
-  * 
+  * Start development on 1.54.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2455
+  * Add crun as dependency of cuttlefish-podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2458
+  * Introduce bsdtar wrapper to fix bsdtar issue on podcvd fetch by @0405ysj in https://github.com/google/android-cuttlefish/pull/2465
+  * Expose CF home dir via rw bind mount of container instance on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2466
+  * Update dependency of cuttlefish-podcvd to use podman(>=4.4) for pasta by @0405ysj in https://github.com/google/android-cuttlefish/pull/2475
+  * Update release procedure of cuttlefish-podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2476
 
- -- Chad Reynolds <chadreynolds@google.com>  Thu, 23 Apr 2026 16:34:38 -0700
+ -- Jason Macnak <natsu@google.com>  Thu, 30 Apr 2026 20:09:42 +0000
 
 cuttlefish-container (1.53.0) unstable; urgency=medium
 

@@ -1,8 +1,35 @@
-cuttlefish-common (1.54.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.54.0) unstable; urgency=medium
 
-  * 
+  * Start development on 1.54.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2455
+  * Replace usage of android::base::Readlink by @jemoreira in https://github.com/google/android-cuttlefish/pull/2453
+  * CF host debian package deployment should be in advance of on-premise server image by @0405ysj in https://github.com/google/android-cuttlefish/pull/2447
+  * Install linux-headers/linux-image although not having backports. by @0405ysj in https://github.com/google/android-cuttlefish/pull/2459
+  * Clean up simple_device reference implementation and start using emulated_camera_splane implementation. by @ser-io in https://github.com/google/android-cuttlefish/pull/2451
+  * Consolidate Bazel modules in frontend and fix build by @Databean in https://github.com/google/android-cuttlefish/pull/2435
+  * Revert "Do not preserve owner user/group when extracting tar archive" by @Databean in https://github.com/google/android-cuttlefish/pull/2463
+  * Gather data for fetch metrics (but do not transmit) V2 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2391
+  * Port: "Add radio desktop apex to legacy boot config" by @ser-io in https://github.com/google/android-cuttlefish/pull/2468
+  * Introduce E2E tests on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2300
+  * Metrics gathering for cvd invocation sources (version 2) by @cjreynol in https://github.com/google/android-cuttlefish/pull/2471
+  * Add const char* and std::string_view overloads for StringFromEnv by @Databean in https://github.com/google/android-cuttlefish/pull/2472
+  * Always use Hyperdisk for ARM machine types. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2479
+  * Replace some uses of android::base::unique_fd with SharedFD by @jemoreira in https://github.com/google/android-cuttlefish/pull/2473
+  * Replace usages of android::base::Realpath by @jemoreira in https://github.com/google/android-cuttlefish/pull/2446
+  * Detect stockouts on ARM machine types in GCE. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2478
+  * Cleanup disk if it can't be attached. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2480
+  * Update metrics protos with expanded fields by @cjreynol in https://github.com/google/android-cuttlefish/pull/2486
+  * Name the disk when attaching it. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2483
+  * Remove default for -arch and make it mandatory. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2481
+  * Make -arch mandatory across all tools. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2485
+  * Install image with docker pull as well as load. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2482
+  * Detect failures in GCE operation wait functions. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2470
+  * Correct argument order in cleanupDetachDisk. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2484
+  * Pass through the path to the iptables binary. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2460
+  * Lift requirement that devices have bootconfig by @Databean in https://github.com/google/android-cuttlefish/pull/2474
+  * `cvd create` detects and fails when creating already existing group by @jemoreira in https://github.com/google/android-cuttlefish/pull/2492
+  * Transmit new metrics data by @cjreynol in https://github.com/google/android-cuttlefish/pull/2493
 
- -- Chad Reynolds <chadreynolds@google.com>  Thu, 23 Apr 2026 16:34:16 -0700
+ -- Jason Macnak <natsu@google.com>  Thu, 30 Apr 2026 20:07:39 +0000
 
 cuttlefish-common (1.53.0) unstable; urgency=medium
 

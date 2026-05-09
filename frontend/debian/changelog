@@ -1,8 +1,10 @@
-cuttlefish-frontend (1.54.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.54.0) unstable; urgency=medium
 
-  * 
+  * Start development on 1.54.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2455
+  * Consolidate Bazel modules in frontend and fix build by @Databean in https://github.com/google/android-cuttlefish/pull/2435
+  * Added host orchestrator endpoint for cvd status by @SuperStrongDinosaur in https://github.com/google/android-cuttlefish/pull/2395
 
- -- Chad Reynolds <chadreynolds@google.com>  Thu, 23 Apr 2026 16:35:08 -0700
+ -- Jason Macnak <natsu@google.com>  Thu, 30 Apr 2026 20:10:45 +0000
 
 cuttlefish-frontend (1.53.0) unstable; urgency=medium
 
