@@ -51,6 +51,11 @@ func TestLaunchCvd(t *testing.T) {
 			branch: "aosp-android12-gsi",
 			target: "aosp_cf_x86_64_phone-userdebug",
 		},
+		{
+			name:   "Aosp11GsiPhone",
+			branch: "aosp-android11-gsi",
+			target: "aosp_cf_x86_64_only_phone-userdebug",
+		},
 	}
 	c := e2etests.TestContext{}
 	for _, tc := range testcases {
