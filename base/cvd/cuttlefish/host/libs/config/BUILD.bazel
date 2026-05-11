@@ -130,6 +130,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:guest_renderer_preload",
         "//cuttlefish/host/libs/config:secure_hals",
         "//cuttlefish/host/libs/config:vmm_mode",
+        "//cuttlefish/host/libs/log_names",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

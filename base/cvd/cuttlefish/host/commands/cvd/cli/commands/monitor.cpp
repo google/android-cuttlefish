@@ -196,7 +196,8 @@ class CvdMonitorCommandHandler : public CvdCommandHandler {
 
     std::string kernel_log =
         absl::StrCat(instance.instance_dir(), "/logs/", kLogNameKernel);
-    std::string launcher_log = instance.instance_dir() + "/logs/launcher.log";
+    std::string launcher_log =
+        absl::StrCat(instance.instance_dir(), "/logs/", kLogNameLauncher);
     std::string logcat =
         absl::StrCat(instance.instance_dir(), "/logs/", kLogNameLogcat);
 
@@ -222,7 +223,7 @@ class CvdMonitorCommandHandler : public CvdCommandHandler {
       }
       LogMonitorDisplay display(width);
 
-      display.DrawFile(launcher_fd, "launcher.log");
+      display.DrawFile(launcher_fd, kLogNameLauncher);
       display.DrawFile(kernel_fd, kLogNameKernel);
       display.DrawFile(logcat_fd, kLogNameLogcat);
 
