@@ -7,7 +7,7 @@
 
 bazel_dep(name = "abseil-cpp", version = "20260107.0")
 bazel_dep(name = "aspect_bazel_lib", version = "2.19.3")
-bazel_dep(name = "aspect_rules_lint", version = "1.4.4", dev_dependency = True)
+bazel_dep(name = "aspect_rules_lint", version = "2.5.2", dev_dependency = True)
 bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
 bazel_dep(name = "brotli")
