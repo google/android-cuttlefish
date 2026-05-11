@@ -107,7 +107,7 @@ Result<void> CreateLegacySymlinks(
     const CuttlefishConfig::InstanceSpecific& instance,
     const CuttlefishConfig::EnvironmentSpecific& environment) {
   std::string log_files[] = {kLogNameKernel,
-                             "launcher.log",
+                             kLogNameLauncher,
                              kLogNameLogcat,
                              "metrics.log",
                              kLogNameModemSimulator,
@@ -182,7 +182,7 @@ Result<std::set<std::string>> PreservingOnResume(
   const bool resume_requested = FLAGS_resume || !snapshot_path.empty();
   if (!resume_requested) {
     if (InSandbox()) {
-      return {{"launcher.log"}};
+      return {{kLogNameLauncher}};
     } else {
       return {};
     }
@@ -194,7 +194,7 @@ Result<std::set<std::string>> PreservingOnResume(
     VLOG(0) << "Trying to resume previous session, but base images have "
                  "changed.  Wiping overlay files.";
     if (InSandbox()) {
-      return {{"launcher.log"}};
+      return {{kLogNameLauncher}};
     } else {
       return {};
     }
@@ -243,7 +243,7 @@ Result<std::set<std::string>> PreservingOnResume(
   // Preserve logs if restoring from a snapshot.
   if (!snapshot_path.empty()) {
     preserving.insert(kLogNameKernel);
-    preserving.insert("launcher.log");
+    preserving.insert(kLogNameLauncher);
     preserving.insert(kLogNameLogcat);
     preserving.insert(kLogNameModemSimulator);
     preserving.insert("crosvm_openwrt.log");
@@ -252,7 +252,7 @@ Result<std::set<std::string>> PreservingOnResume(
     preserving.insert("userdata.img");
   }
   if (InSandbox()) {
-    preserving.insert("launcher.log");  // Created before `assemble_cvd` runs
+    preserving.insert(kLogNameLauncher);  // Created before `assemble_cvd` runs
   }
   for (int i = 0; i < modem_simulator_count; i++) {
     std::stringstream ss;
@@ -266,7 +266,8 @@ Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
   SharedFD log_file;
   if (InSandbox()) {
     log_file = SharedFD::Open(
-        runtime_dir_parent + "/instances/cvd-1/logs/launcher.log",
+        absl::StrCat(runtime_dir_parent, "/instances/cvd-1/logs/",
+                     kLogNameLauncher),
         O_WRONLY | O_APPEND);
   } else {
     while (runtime_dir_parent[runtime_dir_parent.size() - 1] == '/') {
