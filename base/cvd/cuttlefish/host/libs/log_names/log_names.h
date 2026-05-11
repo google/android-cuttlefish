@@ -18,6 +18,7 @@
 namespace cuttlefish {
 
 // Per instance log names.
+inline constexpr char kLogNameCrosvmOpenWrt[] = "crosvm_openwrt.log";
 inline constexpr char kLogNameKernel[] = "kernel.log";
 inline constexpr char kLogNameLauncher[] = "launcher.log";
 inline constexpr char kLogNameLogcat[] = "logcat";
