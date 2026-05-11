@@ -22,4 +22,6 @@ namespace cuttlefish {
 
 void DisplayPrivacyNotice();
 
+void DisplayAdjustmentNotice();
+
 }  // namespace cuttlefish

@@ -22,6 +22,7 @@
 #include <android-base/macros.h>
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/metrics/notification.h"
 
 namespace cuttlefish {
 namespace {
@@ -32,9 +33,6 @@ constexpr std::string_view kFirstAnswerPrompt =
 constexpr std::string_view kResponsePrompt = " (Y/n)?:";
 constexpr std::string_view kMustAnswerPrompt =
     "Must accept/reject anonymous usage statistics reporting.";
-constexpr std::string_view kAdjustmentNotice =
-    "You can adjust the permission for sending diagnostic information to "
-    "Google by running \"--report_anonymous_usage_stats=n\"\n";
 
 }  // namespace
 
@@ -83,7 +81,7 @@ std::string ValidateMetricsConfirmation(std::string use_metrics) {
         ch = tolower(ch);
     }
   }
-  std::cout << kAdjustmentNotice;
+  DisplayAdjustmentNotice();
   return result;
 }
 

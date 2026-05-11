@@ -33,6 +33,7 @@ namespace cuttlefish {
 namespace {
 
 constexpr std::string_view kNoticeFilename = "PRIVACY_NOTICE.txt";
+constexpr std::string_view kAdjustmentFilename = "ADJUST_PERMISSIONS.txt";
 
 constexpr std::string_view kTermsAndPrivacyNotice =
     "By using this Android Virtual Device, you agree to Google Terms of "
@@ -45,12 +46,25 @@ constexpr std::string_view kMetricsEnabledNotice =
     "crash reports and usage data from the host machine managing the Android "
     "Virtual Device.";
 
+constexpr std::string_view kAdjustmentNotice =
+    "You can adjust the permission for sending diagnostic information to "
+    "Google by running \"--report_anonymous_usage_stats=n\"\n";
+
 Result<std::string> GetNoticeFilepath() {
   return fmt::format("{}/{}", CF_EXPECT(CvdDataHome()), kNoticeFilename);
 }
 
+Result<std::string> GetAdjustmentFilepath() {
+  return fmt::format("{}/{}", CF_EXPECT(CvdDataHome()), kAdjustmentFilename);
+}
+
 Result<void> WriteNoticeFile(const std::string& contents) {
   CF_EXPECT(WriteCvdDataFile(kNoticeFilename, contents));
+  return {};
+}
+
+Result<void> WriteAdjustmentFile(const std::string& contents) {
+  CF_EXPECT(WriteCvdDataFile(kAdjustmentFilename, contents));
   return {};
 }
 
@@ -79,6 +93,24 @@ void DisplayPrivacyNotice() {
   Result<void> write_result = WriteNoticeFile(notice_message);
   if (!write_result.ok()) {
     VLOG(0) << "Failed writing notice file: " << write_result.error();
+  }
+}
+
+void DisplayAdjustmentNotice() {
+  Result<std::string> filepath_result = GetAdjustmentFilepath();
+  if (!filepath_result.ok()) {
+    VLOG(0) << "Failed generating adjustment filepath: "
+            << filepath_result.error();
+  } else if (FileExists(*filepath_result)) {
+    return;
+  }
+
+  std::cout << kAdjustmentNotice;
+
+  Result<void> write_result =
+      WriteAdjustmentFile(std::string(kAdjustmentNotice));
+  if (!write_result.ok()) {
+    VLOG(0) << "Failed writing adjustment file: " << write_result.error();
   }
 }
 
