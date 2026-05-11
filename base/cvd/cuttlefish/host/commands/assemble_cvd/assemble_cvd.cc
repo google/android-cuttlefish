@@ -112,7 +112,7 @@ Result<void> CreateLegacySymlinks(
                              "metrics.log",
                              kLogNameModemSimulator,
                              kLogNameCrosvmOpenWrt,
-                             "crosvm_openwrt_boot.log"};
+                             kLogNameCrosvmOpenWrtBoot};
   for (const auto& log_file : log_files) {
     auto symlink_location = instance.PerInstancePath(log_file);
     auto log_target = "logs/" + log_file;  // Relative path
@@ -247,7 +247,7 @@ Result<std::set<std::string>> PreservingOnResume(
     preserving.insert(kLogNameLogcat);
     preserving.insert(kLogNameModemSimulator);
     preserving.insert(kLogNameCrosvmOpenWrt);
-    preserving.insert("crosvm_openwrt_boot.log");
+    preserving.insert(kLogNameCrosvmOpenWrtBoot);
     preserving.insert("metrics.log");
     preserving.insert("userdata.img");
   }
