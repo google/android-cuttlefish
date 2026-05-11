@@ -145,8 +145,8 @@ class ConfigFlagImpl : public ConfigFlag {
       }
     }
     std::map<std::string, std::vector<std::string>> flags;
-    LOG(INFO) << "Launching CVD using --config='"
-              << VectorizedFlagValue(configs_) << "'.";
+    VLOG(0) << "Launching CVD using --config='" << VectorizedFlagValue(configs_)
+            << "'";
     for (size_t i = 0; i < configs_.size(); ++i) {
       Result<Json::Value> config_values_res =
           config_reader_.ReadConfig(configs_[i]);
