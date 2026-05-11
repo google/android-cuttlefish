@@ -108,7 +108,7 @@ Result<void> CreateLegacySymlinks(
     const CuttlefishConfig::EnvironmentSpecific& environment) {
   std::string log_files[] = {kLogNameKernel,
                              "launcher.log",
-                             "logcat",
+                             kLogNameLogcat,
                              "metrics.log",
                              kLogNameModemSimulator,
                              "crosvm_openwrt.log",
@@ -244,7 +244,7 @@ Result<std::set<std::string>> PreservingOnResume(
   if (!snapshot_path.empty()) {
     preserving.insert(kLogNameKernel);
     preserving.insert("launcher.log");
-    preserving.insert("logcat");
+    preserving.insert(kLogNameLogcat);
     preserving.insert(kLogNameModemSimulator);
     preserving.insert("crosvm_openwrt.log");
     preserving.insert("crosvm_openwrt_boot.log");

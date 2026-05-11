@@ -58,6 +58,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/log_names",
     ],
 )
 
