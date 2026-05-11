@@ -150,7 +150,7 @@ void TakeHostBugreport(const CuttlefishConfig* config, WritableZip& archive) {
     } else {
       save(kLogNameKernel);
       save("launcher.log");
-      save("logcat");
+      save(kLogNameLogcat);
       save("metrics.log");
     }
 

@@ -19,6 +19,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 
 namespace cuttlefish {
 
@@ -64,7 +65,7 @@ std::string LauncherMonitorSocketPath(
 }
 
 std::string LogcatPath(const CuttlefishConfig::InstanceSpecific& ins) {
-  return AbsolutePath(ins.PerInstanceLogPath("logcat"));
+  return AbsolutePath(ins.PerInstanceLogPath(kLogNameLogcat));
 }
 
 std::string LogcatPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
