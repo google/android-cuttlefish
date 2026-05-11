@@ -445,9 +445,9 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       CF_EXPECT(CreateLegacySymlinks(instance, environment));
     }
 
-    if (log->LinkAtCwd(config.AssemblyPath("assemble_cvd.log"))) {
+    if (log->LinkAtCwd(config.AssemblyPath(kLogNameAssembleCvd))) {
       LOG(ERROR) << "Unable to persist assemble_cvd log at "
-                 << config.AssemblyPath("assemble_cvd.log") << ": "
+                 << config.AssemblyPath(kLogNameAssembleCvd) << ": "
                  << log->StrError();
     }
 

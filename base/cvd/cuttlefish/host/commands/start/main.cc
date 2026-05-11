@@ -45,6 +45,7 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/posix/symlink.h"
 
 namespace cuttlefish {
@@ -182,10 +183,10 @@ Result<void> LinkLogs2InstanceDir(
   CF_EXPECT(Symlink(config_path, instance.PerInstanceLogPath(
                                      android::base::Basename(config_path))));
 
-  std::string assemble_cvd_logs = config.AssemblyPath("assemble_cvd.log");
+  std::string assemble_cvd_logs = config.AssemblyPath(kLogNameAssembleCvd);
   if (FileExists(assemble_cvd_logs)) {
     CF_EXPECT(Symlink(assemble_cvd_logs,
-                      instance.PerInstanceLogPath("assemble_cvd.log")));
+                      instance.PerInstanceLogPath(kLogNameAssembleCvd)));
   }
 
   std::string images_dir = instance.images_dir();

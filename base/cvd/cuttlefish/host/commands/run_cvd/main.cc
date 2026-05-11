@@ -78,6 +78,7 @@
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/inject.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/metrics/metrics_receiver.h"
 #include "cuttlefish/host/libs/version/version.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
@@ -230,7 +231,7 @@ void ConfigureLogs(const CuttlefishConfig& config,
 
   if (!FileHasContent(log_path)) {
     std::ofstream launcher_log_ofstream(log_path.c_str());
-    auto assembly_path = config.AssemblyPath("assemble_cvd.log");
+    auto assembly_path = config.AssemblyPath(kLogNameAssembleCvd);
     std::ifstream assembly_log_ifstream(assembly_path);
     if (assembly_log_ifstream) {
       auto assemble_log = ReadFile(assembly_path);
