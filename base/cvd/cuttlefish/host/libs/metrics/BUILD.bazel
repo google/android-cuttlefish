@@ -344,6 +344,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/metrics:enabled",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
