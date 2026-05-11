@@ -22,19 +22,16 @@
 #include <android-base/macros.h>
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/metrics/notification.h"
 
 namespace cuttlefish {
 namespace {
 
 constexpr std::string_view kFirstAnswerPrompt =
     "Automatically send diagnostic information to Google from this Android "
-    "Virtual Device.";
-constexpr std::string_view kResponsePrompt = " (Y/n)?:";
+    "Virtual Device. (Y/n)?:";
 constexpr std::string_view kMustAnswerPrompt =
-    "Must accept/reject anonymous usage statistics reporting.";
-constexpr std::string_view kAdjustmentNotice =
-    "You can adjust the permission for sending diagnostic information to "
-    "Google by running \"--report_anonymous_usage_stats=n\"\n";
+    "Must accept/reject anonymous usage statistics reporting. ";
 
 }  // namespace
 
@@ -55,7 +52,7 @@ std::string ValidateMetricsConfirmation(std::string use_metrics) {
   char ch = !use_metrics.empty() ? tolower(use_metrics.at(0)) : -1;
   if (ch != 'n') {
     if (use_metrics.empty()) {
-      std::cout << kFirstAnswerPrompt << kResponsePrompt;
+      std::cout << kFirstAnswerPrompt;
     }
   }
   std::string result;
@@ -71,7 +68,7 @@ std::string ValidateMetricsConfirmation(std::string use_metrics) {
         result = "n";
         break;
       default:
-        std::cout << kMustAnswerPrompt << kResponsePrompt;
+        std::cout << kMustAnswerPrompt << kFirstAnswerPrompt;
         FALLTHROUGH_INTENDED;
       case -1:
         std::cin.get(ch);
@@ -83,7 +80,7 @@ std::string ValidateMetricsConfirmation(std::string use_metrics) {
         ch = tolower(ch);
     }
   }
-  std::cout << kAdjustmentNotice;
+  DisplayAdjustmentNoticeOnce();
   return result;
 }
 
