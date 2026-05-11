@@ -23,11 +23,11 @@
 #include <string>
 #include <vector>
 
-#include "absl/strings/str_split.h"
-#include <gflags/gflags.h>
-#include <json/value.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_split.h"
+#include "gflags/gflags.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
@@ -42,9 +42,10 @@ DEFINE_int32(log_pipe_fd, -1,
              "A file descriptor representing a (UNIX) socket from which to "
              "read the logs. If -1 is given the socket is created according to "
              "the instance configuration");
-DEFINE_string(subscriber_fds, "",
-             "A comma separated list of file descriptors (most likely pipes) to"
-             " send kernel log events to.");
+DEFINE_string(
+    subscriber_fds, "",
+    "A comma separated list of file descriptors (most likely pipes) to"
+    " send kernel log events to.");
 
 namespace cuttlefish::monitor {
 namespace {
@@ -52,7 +53,7 @@ namespace {
 std::vector<SharedFD> SubscribersFromCmdline() {
   // Validate the parameter
   std::string fd_list = FLAGS_subscriber_fds;
-  for (auto c: fd_list) {
+  for (auto c : fd_list) {
     if (c != ',' && (c < '0' || c > '9')) {
       LOG(ERROR) << "Invalid file descriptor list: " << fd_list;
       std::exit(1);
@@ -61,7 +62,7 @@ std::vector<SharedFD> SubscribersFromCmdline() {
 
   std::vector<std::string> fds = absl::StrSplit(FLAGS_subscriber_fds, ',');
   std::vector<SharedFD> shared_fds;
-  for (auto& fd_str: fds) {
+  for (auto& fd_str : fds) {
     auto fd = std::stoi(fd_str);
     auto shared_fd = SharedFD::Dup(fd);
     close(fd);
@@ -84,8 +85,7 @@ int KernelLogMonitorMain(int argc, char** argv) {
   auto subscriber_fds = SubscribersFromCmdline();
 
   // Disable default handling of SIGPIPE
-  struct sigaction new_action {
-  }, old_action{};
+  struct sigaction new_action{}, old_action{};
   new_action.sa_handler = SIG_IGN;
   sigaction(SIGPIPE, &new_action, &old_action);
 
@@ -105,7 +105,7 @@ int KernelLogMonitorMain(int argc, char** argv) {
 
   KernelLogServer klog{pipe, instance.PerInstanceLogPath(kLogNameKernel)};
 
-  for (auto subscriber_fd: subscriber_fds) {
+  for (auto subscriber_fd : subscriber_fds) {
     if (subscriber_fd->IsOpen()) {
       klog.SubscribeToEvents([subscriber_fd](Json::Value message) {
         if (!WriteEvent(subscriber_fd, message)) {

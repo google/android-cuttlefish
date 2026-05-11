@@ -1,4 +1,5 @@
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
+load("@aspect_rules_lint//format:defs.bzl", "format_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -26,6 +27,13 @@ cf_cc_binary(
         "@gflags",
         "@jsoncpp",
     ],
+)
+
+format_test(
+    name = "kernel_log_monitor_format_test",
+    cc = "//tools/format:clang_format",
+    disable_git_attribute_checks = True,
+    srcs = ["main.cc"],
 )
 
 cf_cc_library(
