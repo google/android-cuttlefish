@@ -35,6 +35,7 @@
 #include "cuttlefish/host/libs/config/openwrt_args.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
 #include "cuttlefish/result/result.h"
 
@@ -138,7 +139,7 @@ class OpenWrt : public CommandSource {
 
     auto boot_logs_path =
         instance_.PerInstanceLogPath("crosvm_openwrt_boot.log");
-    auto logs_path = instance_.PerInstanceLogPath("crosvm_openwrt.log");
+    auto logs_path = instance_.PerInstanceLogPath(kLogNameCrosvmOpenWrt);
     ap_cmd.AddSerialConsoleReadOnly(boot_logs_path);
     ap_cmd.AddHvcReadOnly(logs_path);
 
