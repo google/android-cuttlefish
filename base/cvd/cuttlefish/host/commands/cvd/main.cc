@@ -41,7 +41,6 @@
 #include "cuttlefish/host/commands/cvd/cvd.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
-#include "cuttlefish/host/libs/vm_manager/host_configuration.h"
 #include "cuttlefish/posix/strerror.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "cuttlefish/host/commands/cvd/metrics/cvd_metrics_api.h"
@@ -200,22 +199,6 @@ std::string ColoredUrl(const std::string& url) {
   return output;
 }
 
-bool ValidateHostConfiguration() {
-  // Validate the host before attempting to access directories.
-  std::vector<std::string> config_commands;
-  bool valid = vm_manager::ValidateHostConfiguration(&config_commands);
-  if (!valid) {
-    std::cerr << "Validation of host configuration failed." << std::endl;
-    std::cerr << "Execute the following commands:" << std::endl;
-    for (const auto& cmd : config_commands) {
-      std::cerr << "    " << cmd << std::endl;
-    }
-    std::cerr << "You may need to logout for the changes to take effect"
-              << std::endl;
-  }
-  return valid;
-}
-
 }  // namespace
 
 }  // namespace cuttlefish
@@ -238,9 +221,6 @@ int main(int argc, char** argv) {
   }
   cuttlefish::LogToStderrAndFiles(log_files, "", metadata_level, verbosity);
 
-  if (!cuttlefish::ValidateHostConfiguration()) {
-    return -1;
-  }
   auto result = cuttlefish::CvdMain(std::move(all_args));
   if (result.ok()) {
     return 0;

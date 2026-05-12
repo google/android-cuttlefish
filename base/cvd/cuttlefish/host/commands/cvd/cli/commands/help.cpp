@@ -93,7 +93,7 @@ class CvdHelpHandler : public CvdCommandHandler {
 
   std::string SummaryHelp() const override { return kSummaryHelpText; }
 
-
+  bool RequiresHostConfiguration() const override { return false; }
 
   Result<std::string> DetailedHelp(const CommandRequest& request) const override {
     return kDetailedHelpText;

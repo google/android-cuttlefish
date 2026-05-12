@@ -34,6 +34,7 @@ class CvdCommandHandler {
   // used for command help text
   virtual std::string SummaryHelp() const = 0;
   virtual bool RequiresDeviceExists() const;
+  virtual bool RequiresHostConfiguration() const { return true; }
   virtual Result<std::string> DetailedHelp(const CommandRequest&) const = 0;
 };
 
