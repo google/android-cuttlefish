@@ -64,7 +64,7 @@ std::string SelectionMenu(const std::vector<LocalInstanceGroup>& groups) {
   //      <a> instance0.device_name() (id: instance_id)
   //      <b> instance1.device_name() (id: instance_id)
   std::stringstream ss;
-  ss << "Multiple instance groups found, please choose one:" << std::endl;
+  ss << "Multiple groups found, please choose one:" << std::endl;
   int group_idx = 0;
   for (const auto& group : groups) {
     fmt::print(ss, "  [{}] : {} (created: {})\n", group_idx, group.GroupName(),
@@ -130,18 +130,6 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
   return CF_ERR("TODO CJR implement");
 }
 
-Result<LocalInstanceGroup> FindGroupOrDefault(
-    const InstanceDatabase::Filter& filter,
-    const InstanceManager& instance_manager) {
-  if (filter.Empty()) {
-    return CF_EXPECT(GetDefaultGroup(instance_manager));
-  }
-  std::vector<LocalInstanceGroup> groups =
-      CF_EXPECT(instance_manager.FindGroups(filter));
-  CF_EXPECT_EQ(groups.size(), 1u, "groups.size() = " << groups.size());
-  return groups.front();
-}
-
 Result<std::pair<LocalInstance, LocalInstanceGroup>> FindDefaultInstance(
     const InstanceManager& instance_manager) {
   const LocalInstanceGroup group = CF_EXPECT(GetDefaultGroup(instance_manager));
@@ -167,14 +155,17 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceOrDefault(
 
 Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
                                        const CommandRequest& request) {
-  const bool has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
-  CF_EXPECT(std::move(has_groups), "No instance groups available");
-  InstanceDatabase::Filter filter =
+  const InstanceDatabase::Filter filter =
       CF_EXPECT(BuildFilterFromSelectors(request.Selectors()));
-  Result<LocalInstanceGroup> group_selection_result =
-      FindGroupOrDefault(filter, instance_manager);
-  if (group_selection_result.ok()) {
-    return CF_EXPECT(std::move(group_selection_result));
+  std::vector<LocalInstanceGroup> groups;
+  if (filter.Empty()) {
+    groups = CF_EXPECT(instance_manager.FindGroups({}));  // trying to default
+  } else {
+    groups = CF_EXPECT(instance_manager.FindGroups(filter));
+  }
+  CF_EXPECT(!groups.empty(), "No instance groups available");
+  if (groups.size() == 1) {
+    return groups.front();
   }
   CF_EXPECT(isatty(0),
             "Multiple groups found. Narrow the selection with selector "
