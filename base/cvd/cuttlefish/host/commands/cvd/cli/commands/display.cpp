@@ -65,7 +65,6 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
       : instance_manager_{instance_manager} {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
     const cvd_common::Envs& env = request.Env();
 
     std::vector<std::string> subcmd_args = request.SubcommandArguments();

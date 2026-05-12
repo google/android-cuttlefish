@@ -91,8 +91,6 @@ Result<void> RunCacheCleanup(const BuildApiFlags& build_api_flags) {
 }
 
 Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
-
   std::vector<std::string> args = request.SubcommandArguments();
   const FetchFlags flags = CF_EXPECT(FetchFlags::Parse(args));
   CF_EXPECT(EnsureDirectoryExists(flags.target_directory));

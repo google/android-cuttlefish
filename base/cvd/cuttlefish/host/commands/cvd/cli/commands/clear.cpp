@@ -54,7 +54,6 @@ CvdClearCommandHandler::CvdClearCommandHandler(
     : instance_manager_(instance_manager) {}
 
 Result<void> CvdClearCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
   std::vector<std::string> args = request.SubcommandArguments();
   CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
   CF_EXPECT(instance_manager_.Clear());

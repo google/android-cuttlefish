@@ -108,10 +108,7 @@ CvdStopCommandHandler::CvdStopCommandHandler(InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
 Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
   std::vector<std::string> cmd_args = request.SubcommandArguments();
-
-
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_ERR(NoGroupMessage(request));

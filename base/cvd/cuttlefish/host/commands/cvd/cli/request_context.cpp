@@ -22,11 +22,11 @@
 
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
+#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/bugreport.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/cache.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/clear.h"
-
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/create.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/display.h"
@@ -38,7 +38,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/load_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/login.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/logs.h"
-
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/power_btn.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/powerwash.h"
@@ -58,6 +57,10 @@
 namespace cuttlefish {
 
 namespace {
+
+bool CanHandle(const CvdCommandHandler& handler, const CommandRequest& request) {
+  return Contains(handler.CmdList(), request.Subcommand());
+}
 
 std::vector<std::string> GetPossibleCommands(
     const CommandRequest& request,
@@ -127,7 +130,7 @@ Result<CvdCommandHandler*> RequestHandler(
     const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers) {
   std::vector<CvdCommandHandler*> compatible_handlers;
   for (auto& handler : handlers) {
-    if (CF_EXPECT(handler->CanHandle(request))) {
+    if (CanHandle(*handler, request)) {
       compatible_handlers.push_back(handler.get());
     }
   }

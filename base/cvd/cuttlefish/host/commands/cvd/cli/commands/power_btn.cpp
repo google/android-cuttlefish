@@ -41,7 +41,6 @@ class CvdDevicePowerBtnCommandHandler : public CvdCommandHandler {
       : instance_manager_{instance_manager} {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
     std::vector<std::string> args = request.SubcommandArguments();
     CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
     auto [instance, _] =

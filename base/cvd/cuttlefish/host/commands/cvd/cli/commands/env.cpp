@@ -57,7 +57,6 @@ class CvdEnvCommandHandler : public CvdCommandHandler {
       : instance_manager_{instance_manager} {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
 
     // --help and cvd env help are intercepted

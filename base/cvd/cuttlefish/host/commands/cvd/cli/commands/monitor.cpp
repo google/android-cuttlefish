@@ -182,8 +182,6 @@ class CvdMonitorCommandHandler : public CvdCommandHandler {
       : instance_manager_{instance_manager} {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-
     CF_EXPECT(isatty(0),
               "The monitor command requires an interactive terminal.");
 

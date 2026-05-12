@@ -79,8 +79,6 @@ class CvdHelpHandler : public CvdCommandHandler {
       : request_handlers_(request_handlers) {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-
     std::vector<std::string> args = request.SubcommandArguments();
     if (args.empty()) {
       std::cout << TopLevelHelp();

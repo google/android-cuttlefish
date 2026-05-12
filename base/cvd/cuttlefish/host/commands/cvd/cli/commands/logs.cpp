@@ -73,8 +73,6 @@ class CvdLogsHandler : public CvdCommandHandler {
       : instance_manager_(instance_manager) {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-
     auto [instance, _] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                   "Unable to select an instance");

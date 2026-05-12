@@ -75,8 +75,6 @@ class CvdSnapshotCommandHandler : public CvdCommandHandler {
       : instance_manager_{instance_manager} {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-
     std::string subcmd = request.Subcommand();
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
 
