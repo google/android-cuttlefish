@@ -66,8 +66,6 @@ Result<Oauth2ConsentRequest> ParseFlags(std::vector<std::string>& args) {
 class CvdLoginCommand : public CvdCommandHandler {
  public:
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-
     std::vector<std::string> args = request.SubcommandArguments();
     const Oauth2ConsentRequest oauth2_request = CF_EXPECT(ParseFlags(args));
     if (!IsPopulated(oauth2_request)) {

@@ -58,7 +58,6 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
   bool RequiresDeviceExists() const override { return true; }
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
     CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, subcmd_args));
 

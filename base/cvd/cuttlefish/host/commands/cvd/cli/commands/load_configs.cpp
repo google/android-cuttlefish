@@ -78,9 +78,6 @@ class LoadConfigsCommand : public CvdCommandHandler {
   ~LoadConfigsCommand() = default;
 
   Result<void> Handle(const CommandRequest& request) override {
-    bool can_handle_request = CF_EXPECT(CanHandle(request));
-    CF_EXPECT_EQ(can_handle_request, true);
-
     LoadFlags load_flags = CF_EXPECT(GetLoadFlags(request));
     EnvironmentSpecification env_spec =
         CF_EXPECT(GetEnvironmentSpecification(load_flags));

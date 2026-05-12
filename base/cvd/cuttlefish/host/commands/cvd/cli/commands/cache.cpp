@@ -105,8 +105,6 @@ class CvdCacheCommandHandler : public CvdCommandHandler {
 };
 
 Result<void> CvdCacheCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
-
   CacheArguments arguments =
       CF_EXPECT(ProcessArguments(request.SubcommandArguments()));
   std::string cache_directory = PerUserCacheDir();

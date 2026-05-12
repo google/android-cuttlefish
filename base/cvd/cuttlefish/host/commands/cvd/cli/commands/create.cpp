@@ -289,9 +289,7 @@ Result<void> CvdCreateCommandHandler::CreateSymlinks(
 }
 
 Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
-
 
   cvd_common::Envs envs = CF_EXPECT(GetEnvs(request));
   CreateFlags flags = CF_EXPECT(ParseCommandFlags(envs, subcmd_args));

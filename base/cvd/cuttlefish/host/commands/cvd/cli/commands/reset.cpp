@@ -114,7 +114,6 @@ class CvdResetCommandHandler : public CvdCommandHandler {
       : instance_manager_(instance_manager) {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
     auto options = CF_EXPECT(ParseResetFlags(subcmd_args));
 

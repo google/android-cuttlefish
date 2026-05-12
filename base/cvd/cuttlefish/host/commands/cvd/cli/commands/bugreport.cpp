@@ -111,8 +111,6 @@ CvdBugreportCommandHandler::CvdBugreportCommandHandler(
     : instance_manager_(instance_manager) {}
 
 Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
-
   std::vector<std::string> cmd_args = request.SubcommandArguments();
   cvd_common::Envs env = request.Env();
 

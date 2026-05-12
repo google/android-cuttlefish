@@ -67,8 +67,6 @@ class CvdFleetCommandHandler : public CvdCommandHandler {
 };
 
 Result<void> CvdFleetCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
-
   std::vector<std::string> args = request.SubcommandArguments();
   CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
 

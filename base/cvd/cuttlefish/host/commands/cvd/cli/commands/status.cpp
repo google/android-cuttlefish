@@ -140,8 +140,6 @@ CvdStatusCommandHandler::CvdStatusCommandHandler(
     : instance_manager_(instance_manager) {}
 
 Result<void> CvdStatusCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
-
   std::vector<std::string> cmd_args = request.SubcommandArguments();
   StatusCommandOptions flags = CF_EXPECT(ParseFlags(cmd_args));
 
