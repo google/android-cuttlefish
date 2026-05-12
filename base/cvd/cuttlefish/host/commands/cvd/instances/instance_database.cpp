@@ -204,10 +204,10 @@ Result<bool> InstanceDatabase::RemoveInstanceGroup(
 
 Result<std::vector<LocalInstanceGroup>> InstanceDatabase::FindGroups(
     const Filter& filter) const {
-  return viewer_.WithSharedLock<std::vector<LocalInstanceGroup>>(
+  return CF_EXPECT(viewer_.WithSharedLock<std::vector<LocalInstanceGroup>>(
       [&filter](const cvd::PersistentData& data) {
         return FindGroups(data, filter);
-      });
+      }));
 }
 
 std::vector<LocalInstanceGroup> InstanceDatabase::FindGroups(

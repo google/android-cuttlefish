@@ -102,7 +102,7 @@ InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager,
 Result<std::pair<LocalInstance, LocalInstanceGroup>>
 InstanceManager::FindInstanceWithGroup(
     const InstanceDatabase::Filter& filter) const {
-  return instance_db_.FindInstanceWithGroup(filter);
+  return CF_EXPECT(instance_db_.FindInstanceWithGroup(filter));
 }
 
 Result<bool> InstanceManager::HasInstanceGroups() const {
@@ -287,7 +287,7 @@ Result<void> InstanceManager::ResetAndClearInstanceDirs() {
 
 Result<std::vector<LocalInstanceGroup>> InstanceManager::FindGroups(
     const InstanceDatabase::Filter& filter) const {
-  return instance_db_.FindGroups(filter);
+  return CF_EXPECT(instance_db_.FindGroups(filter));
 }
 
 Result<LocalInstanceGroup> InstanceManager::FindGroup(
