@@ -494,11 +494,6 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
 
   CF_EXPECT(subprocess_waiter_.Setup(launch_command));
 
-  LOG(INFO)
-      << "By using this Android Virtual Device, you agree to Google Terms of "
-         "Service (https://policies.google.com/terms). The Google Privacy "
-         "Policy (https://policies.google.com/privacy) describes how Google "
-         "handles information generated as you use Google services.";
   GatherVmStartMetrics(group);
 
   // NOLINTNEXTLINE(misc-include-cleaner)

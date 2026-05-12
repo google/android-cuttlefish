@@ -17,10 +17,10 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/libs/metrics:device_event_type",
-        "//cuttlefish/host/libs/metrics:enabled",
         "//cuttlefish/host/libs/metrics:guest_metrics",
         "//cuttlefish/host/libs/metrics:metrics_conversion",
         "//cuttlefish/host/libs/metrics:metrics_orchestration",
+        "//cuttlefish/host/libs/metrics:notification",
         "//cuttlefish/host/libs/metrics:parsed_flags",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
@@ -81,9 +81,9 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
-        "//cuttlefish/host/libs/metrics:enabled",
         "//cuttlefish/host/libs/metrics:metrics_conversion",
         "//cuttlefish/host/libs/metrics:metrics_orchestration",
+        "//cuttlefish/host/libs/metrics:notification",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
@@ -325,6 +325,24 @@ cf_cc_library(
         "//external_proto:cf_log_cc_proto",
         "@fmt",
         "@protobuf",
+    ],
+)
+
+cf_cc_library(
+    name = "notification",
+    srcs = [
+        "notification.cc",
+    ],
+    hdrs = [
+        "notification.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/directories",
+        "//cuttlefish/host/libs/metrics:enabled",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@fmt",
     ],
 )
 
