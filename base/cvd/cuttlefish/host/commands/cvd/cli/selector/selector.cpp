@@ -130,6 +130,14 @@ Result<LocalInstanceGroup> PromptUserForGroup(
   }
 }
 
+Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
+    const InstanceManager& instance_manager, const CommandRequest& request,
+    InstanceDatabase::Filter filter) {
+  // TODO CJR: adapt or clone PromptUserForGroup logic, but only allow instance
+  // selection
+  return CF_ERR("TODO CJR implement");
+}
+
 Result<LocalInstanceGroup> FindGroupOrDefault(
     const InstanceDatabase::Filter& filter,
     const InstanceManager& instance_manager) {
@@ -187,10 +195,24 @@ Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
     const InstanceManager& instance_manager, const CommandRequest& request) {
+  const bool has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
+  CF_EXPECT(std::move(has_groups), "No instance groups available");
+  // TODO CJR: can we have an instance group with no instances?
+  //    or do I need to check for that?
   InstanceDatabase::Filter filter =
       CF_EXPECT(BuildFilterFromSelectors(request.Selectors(), request.Env()));
 
-  return CF_EXPECT(FindInstanceOrDefault(filter, instance_manager));
+  Result<std::pair<LocalInstance, LocalInstanceGroup>>
+      instance_selection_result =
+          CF_EXPECT(FindInstanceOrDefault(filter, instance_manager));
+  if (instance_selection_result.ok()) {
+    return CF_EXPECT(std::move(instance_selection_result));
+  }
+  CF_EXPECT(isatty(0),
+            "Multiple instances found.  Narrow the selection with selector "
+            "arguments or run in an interactive terminal");
+  return CF_EXPECT(
+      PromptUserForInstance(instance_manager, request, std::move(filter)));
 }
 
 }  // namespace selector
