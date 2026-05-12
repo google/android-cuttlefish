@@ -29,7 +29,6 @@
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -46,7 +45,7 @@ Result<LocalInstanceGroup> GetDefaultGroup(
 }
 
 Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
-    const SelectorOptions& selectors, const cvd_common::Envs& env) {
+    const SelectorOptions& selectors) {
   InstanceDatabase::Filter filter;
   filter.group_name = selectors.group_name;
   if (selectors.instance_names) {
@@ -56,13 +55,6 @@ Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
       filter.instance_names.insert(per_instance_name);
     }
   }
-  auto it = env.find(kCuttlefishInstanceEnvVarName);
-  if (it != env.end()) {
-    unsigned id;
-    std::string cuttlefish_instance = it->second;
-    CF_EXPECT(absl::SimpleAtoi(cuttlefish_instance, &id));
-  }
-
   return filter;
 }
 
@@ -177,9 +169,8 @@ Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
                                        const CommandRequest& request) {
   const bool has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
   CF_EXPECT(std::move(has_groups), "No instance groups available");
-  const SelectorOptions& selector_options = request.Selectors();
   InstanceDatabase::Filter filter =
-      CF_EXPECT(BuildFilterFromSelectors(selector_options, request.Env()));
+      CF_EXPECT(BuildFilterFromSelectors(request.Selectors()));
   Result<LocalInstanceGroup> group_selection_result =
       FindGroupOrDefault(filter, instance_manager);
   if (group_selection_result.ok()) {
@@ -199,7 +190,7 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
   // TODO CJR: can we have an instance group with no instances?
   //    or do I need to check for that?
   InstanceDatabase::Filter filter =
-      CF_EXPECT(BuildFilterFromSelectors(request.Selectors(), request.Env()));
+      CF_EXPECT(BuildFilterFromSelectors(request.Selectors()));
 
   Result<std::pair<LocalInstance, LocalInstanceGroup>>
       instance_selection_result =
