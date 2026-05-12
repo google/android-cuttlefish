@@ -121,10 +121,6 @@ void ModemSimulator::DispatchCommand(const Client& client,
 }
 
 void ModemSimulator::OnFirstClientConnected() {
-  if (misc_service_) {
-    misc_service_->TimeUpdate();
-  }
-
   if (network_service_) {
     network_service_->OnVoiceRegisterStateChanged();
     network_service_->OnDataRegisterStateChanged();
