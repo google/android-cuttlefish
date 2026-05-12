@@ -151,6 +151,18 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> FindDefaultInstance(
   return std::make_pair(instances.front(), group);
 }
 
+Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceOrDefault(
+    const InstanceDatabase::Filter& filter,
+    const InstanceManager& instance_manager) {
+  if (filter.Empty()) {
+    return CF_EXPECT(FindDefaultInstance(instance_manager));
+  }
+  std::vector<std::pair<LocalInstance, LocalInstanceGroup>> instances =
+      CF_EXPECT(instance_manager.FindInstances(filter));
+  CF_EXPECT_EQ(instances.size(), 1u, "instances.size() = " << instances.size());
+  return instances.front();
+}
+
 }  // namespace
 
 Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
@@ -178,9 +190,7 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
   InstanceDatabase::Filter filter =
       CF_EXPECT(BuildFilterFromSelectors(request.Selectors(), request.Env()));
 
-  return filter.Empty()
-             ? CF_EXPECT(FindDefaultInstance(instance_manager))
-             : CF_EXPECT(instance_manager.FindInstanceWithGroup(filter));
+  return CF_EXPECT(FindInstanceOrDefault(filter, instance_manager));
 }
 
 }  // namespace selector

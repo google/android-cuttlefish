@@ -254,6 +254,35 @@ InstanceDatabase::FindInstanceWithGroup(const Filter& filter) const {
       });
 }
 
+Result<std::vector<std::pair<LocalInstance, LocalInstanceGroup>>>
+InstanceDatabase::FindInstances(const Filter& filter) const {
+  CF_EXPECT_LE(filter.instance_names.size(), 1u,
+               "Can't find single instance when multiple names specified: "
+                   << filter.instance_names.size());
+  return viewer_.WithSharedLock<
+      std::vector<std::pair<LocalInstance, LocalInstanceGroup>>>(
+      [&filter](const auto& data)
+          -> Result<std::vector<std::pair<LocalInstance, LocalInstanceGroup>>> {
+        std::vector<std::pair<LocalInstance, LocalInstanceGroup>> result;
+        for (const auto& group : data.instance_groups()) {
+          if (!GroupMatches(group, filter)) {
+            continue;
+          }
+          for (int i = 0; i < group.instances_size(); ++i) {
+            const auto& instance = group.instances(i);
+            if (!InstanceMatches(instance, filter)) {
+              continue;
+            }
+            LocalInstanceGroup local_group =
+                CF_EXPECT(LocalInstanceGroup::Create(group));
+            result.push_back(
+                std::make_pair(local_group.Instances()[i], local_group));
+          }
+        }
+        return result;
+      });
+}
+
 Result<std::vector<LocalInstanceGroup>> InstanceDatabase::InstanceGroups()
     const {
   return viewer_.WithSharedLock<std::vector<LocalInstanceGroup>>(
