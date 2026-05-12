@@ -106,7 +106,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 	subcommand := cvdArgs.SubCommandArgs[0]
 	switch subcommand {
 	case "create":
-		if err := CreateCuttlefishHost(ccm, cvdArgs.CommonArgs); err != nil {
+		if err := CreateCuttlefishHost(ccm, cvdArgs); err != nil {
 			return err
 		}
 	default:
