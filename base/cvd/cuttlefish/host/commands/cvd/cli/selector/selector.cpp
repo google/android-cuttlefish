@@ -27,8 +27,10 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
 
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 
 namespace cuttlefish {
@@ -51,7 +53,6 @@ Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
       filter.instance_names.insert(per_instance_name);
     }
   }
-
   return filter;
 }
 
@@ -112,8 +113,7 @@ Result<int> PromptForSelection(const int max_selection) {
 }
 
 Result<LocalInstanceGroup> PromptUserForGroup(
-    const InstanceManager& instance_manager, const CommandRequest& request,
-    InstanceDatabase::Filter filter) {
+    const InstanceManager& instance_manager) {
   const std::vector<LocalInstanceGroup> groups =
       CF_EXPECT(instance_manager.FindGroups({}));
   std::cout << GroupDisplay(groups, DisplayBehavior::LabelGroup);
@@ -127,10 +127,9 @@ Result<LocalInstanceGroup> PromptUserForGroup(
 }
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
-    const InstanceManager& instance_manager, const CommandRequest& request,
-    InstanceDatabase::Filter filter) {
+    const InstanceManager& instance_manager) {
   const LocalInstanceGroup group =
-      CF_EXPECT(PromptUserForGroup(instance_manager, request, filter));
+      CF_EXPECT(PromptUserForGroup(instance_manager));
   const std::vector<LocalInstance>& instances = group.Instances();
   if (instances.size() == 1) {
     fmt::print(std::cout,
@@ -161,11 +160,10 @@ Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
   if (groups.size() == 1) {
     return groups.front();
   }
-  CF_EXPECT(isatty(0),
-            "Multiple groups found. Narrow the selection with selector "
-            "arguments or run in an interactive terminal.");
-  return CF_EXPECT(
-      PromptUserForGroup(instance_manager, request, std::move(filter)));
+  CF_EXPECT(
+      isatty(0),
+      "Multiple groups found. Narrow the selection with selector arguments.");
+  return CF_EXPECT(PromptUserForGroup(instance_manager));
 }
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
@@ -182,9 +180,8 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
   }
   CF_EXPECT(isatty(0),
             "Multiple instances found.  Narrow the selection with selector "
-            "arguments or run in an interactive terminal");
-  return CF_EXPECT(
-      PromptUserForInstance(instance_manager, request, std::move(filter)));
+            "arguments.");
+  return CF_EXPECT(PromptUserForInstance(instance_manager));
 }
 
 }  // namespace selector
