@@ -89,7 +89,7 @@ std::string SelectionMenu(const std::vector<LocalInstanceGroup>& groups) {
 
 Result<LocalInstanceGroup> PromptUserForGroup(
     const InstanceManager& instance_manager, const CommandRequest& request,
-    const cvd_common::Envs& envs, InstanceDatabase::Filter filter) {
+    InstanceDatabase::Filter filter) {
   // show the menu and let the user choose
   std::vector<LocalInstanceGroup> groups =
       CF_EXPECT(instance_manager.FindGroups({}));
@@ -177,7 +177,6 @@ Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
                                        const CommandRequest& request) {
   const bool has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
   CF_EXPECT(std::move(has_groups), "No instance groups available");
-  const cvd_common::Envs& env = request.Env();
   const SelectorOptions& selector_options = request.Selectors();
   InstanceDatabase::Filter filter =
       CF_EXPECT(BuildFilterFromSelectors(selector_options, request.Env()));
@@ -190,7 +189,7 @@ Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
             "Multiple groups found. Narrow the selection with selector "
             "arguments or run in an interactive terminal.");
   return CF_EXPECT(
-      PromptUserForGroup(instance_manager, request, env, std::move(filter)));
+      PromptUserForGroup(instance_manager, request, std::move(filter)));
 }
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
