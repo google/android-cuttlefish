@@ -87,7 +87,7 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {"display"}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

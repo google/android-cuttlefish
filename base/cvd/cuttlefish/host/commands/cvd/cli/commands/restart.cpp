@@ -83,7 +83,7 @@ class CvdDeviceRestartCommandHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {kRestartCmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

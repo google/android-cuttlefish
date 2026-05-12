@@ -43,7 +43,7 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {"remove", "rm"}; }
 
-  Result<std::string> SummaryHelp() const override {
+  std::string SummaryHelp() const override {
     return "Remove devices and artifacts from the system.";
   }
 

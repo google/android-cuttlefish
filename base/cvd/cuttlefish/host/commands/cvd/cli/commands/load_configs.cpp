@@ -194,7 +194,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {kLoadSubCmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

@@ -133,7 +133,7 @@ class CvdResetCommandHandler : public CvdCommandHandler {
   }
   cvd_common::Args CmdList() const override { return {kResetSubcmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

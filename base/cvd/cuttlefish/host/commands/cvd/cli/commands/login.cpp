@@ -90,7 +90,7 @@ class CvdLoginCommand : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {"login"}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

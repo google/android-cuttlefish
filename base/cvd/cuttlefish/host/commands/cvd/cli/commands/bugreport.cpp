@@ -92,7 +92,7 @@ class CvdBugreportCommandHandler : public CvdCommandHandler {
 
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override;
-  Result<std::string> SummaryHelp() const override;
+  std::string SummaryHelp() const override;
 
   bool RequiresDeviceExists() const override;
   Result<std::string> DetailedHelp(const CommandRequest& request) const override;
@@ -157,7 +157,7 @@ std::vector<std::string> CvdBugreportCommandHandler::CmdList() const {
   return {"bugreport", "host_bugreport", "cvd_host_bugreport"};
 }
 
-Result<std::string> CvdBugreportCommandHandler::SummaryHelp() const {
+std::string CvdBugreportCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 

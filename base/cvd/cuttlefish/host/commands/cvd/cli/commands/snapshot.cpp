@@ -101,7 +101,7 @@ class CvdSnapshotCommandHandler : public CvdCommandHandler {
     return {"suspend", "resume", "snapshot_take"};
   }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 
