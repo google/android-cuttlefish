@@ -18,10 +18,24 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/result/result.h"
+
 namespace cuttlefish {
 namespace vm_manager {
 
-bool ValidateHostConfiguration(std::vector<std::string>* config_commands);
+// Represents an action required to configure the host for Cuttlefish.
+struct HostConfigurationAction {
+  // The command to execute to automatically apply the fix, expressed a list of
+  // strings that can be given to execvp.
+  //
+  // If empty, manual intervention is required.
+  std::vector<std::string> command;
+  // A human-readable description of the purpose of this action or the issue it
+  // fixes.
+  std::string description;
+};
+
+Result<std::vector<HostConfigurationAction>> ValidateHostConfiguration();
 
 } // namespace vm_manager
 } // namespace cuttlefish

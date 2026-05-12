@@ -510,3 +510,18 @@ cf_cc_library(
         "@jsoncpp",
     ],
 )
+
+cf_cc_library(
+    name = "setup",
+    srcs = ["setup.cc"],
+    hdrs = ["setup.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/libs/vm_manager",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)

@@ -114,9 +114,16 @@ Result<std::string> SystemWideUserHome() {
 }
 
 Result<std::string> CurrentUserName() {
-  char buf[LOGIN_NAME_MAX + 1];
-  CF_EXPECT(getlogin_r(buf, sizeof(buf)) == 0, strerror(errno));
-  return std::string(buf);
+  uid_t uid = getuid();
+  struct passwd pwd;
+  struct passwd* result;
+  long val = sysconf(_SC_GETPW_R_SIZE_MAX);
+  size_t bufsize = (val == -1) ? 16384 : val;
+  std::vector<char> buffer(bufsize);
+  int s = getpwuid_r(uid, &pwd, buffer.data(), buffer.size(), &result);
+  CF_EXPECT(s == 0, "getpwuid_r failed: " << strerror(s));
+  CF_EXPECT(result != nullptr, "User not found for uid " << uid);
+  return std::string(pwd.pw_name);
 }
 
 } // namespace cuttlefish

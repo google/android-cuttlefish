@@ -16,12 +16,12 @@
 
 #include "cuttlefish/host/libs/vm_manager/host_configuration.h"
 
+#include <sys/utsname.h>
+
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <sys/utsname.h>
-#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/container.h"
 #include "cuttlefish/common/libs/utils/users.h"
@@ -30,20 +30,27 @@ namespace cuttlefish {
 namespace vm_manager {
 namespace {
 
-__attribute__((unused)) bool UserInGroup(
-    const std::string& group, std::vector<std::string>* config_commands) {
-  if (!InGroup(group)) {
-    LOG(ERROR) << "User must be a member of " << group;
-    config_commands->push_back("# Add your user to the " + group + " group:");
-    config_commands->push_back("sudo usermod -aG " + group + " $USER");
-    return false;
+template <typename T>
+void PushOptional(std::vector<T>& vec, std::optional<T> opt) {
+  if (opt) {
+    vec.push_back(std::move(*opt));
   }
-  return true;
 }
 
-constexpr std::pair<int,int> invalid_linux_version = std::pair<int,int>();
+Result<std::optional<HostConfigurationAction>> PutUserInGroup(
+    const std::string& group) {
+  if (InGroup(group)) {
+    return std::nullopt;
+  }
+  std::string username =
+      CF_EXPECT(CurrentUserName(), "Failed to get current username");
+  return HostConfigurationAction{
+      .command = {"sudo", "usermod", "-aG", group, username},
+      .description = "Add your user to the " + group + " group",
+  };
+}
 
-__attribute__((unused)) std::pair<int, int> GetLinuxVersion() {
+Result<std::pair<int, int>> GetLinuxVersion() {
   struct utsname info;
   if (!uname(&info)) {
     char* digit = strtok(info.release, "+.-");
@@ -54,38 +61,30 @@ __attribute__((unused)) std::pair<int, int> GetLinuxVersion() {
       return std::pair<int,int>{major, minor};
     }
   }
-  LOG(ERROR) << "Failed to detect Linux kernel version";
-  return invalid_linux_version;
+  return CF_ERR("Failed to detect Linux kernel version");
 }
 
-__attribute__((unused)) bool LinuxVersionAtLeast(
-    std::vector<std::string>* config_commands,
+Result<std::optional<HostConfigurationAction>> EnforceLinuxVersionAtLeast(
     const std::pair<int, int>& version, int major, int minor) {
   if (version.first > major ||
       (version.first == major && version.second >= minor)) {
-    return true;
+    return std::nullopt;
   }
 
-  LOG(ERROR) << "Kernel version must be >=" << major << "." << minor
-             << ", have " << version.first << "." << version.second;
-  config_commands->push_back("# Please upgrade your kernel to >=" +
-                             std::to_string(major) + "." +
-                             std::to_string(minor));
-  return false;
+  return HostConfigurationAction{
+      .command = {},
+      .description = "Please upgrade your kernel to >= " +
+                     std::to_string(major) + "." + std::to_string(minor),
+  };
 }
 
 } // namespace
 
-bool ValidateHostConfiguration(std::vector<std::string>* config_commands) {
-#ifdef __APPLE__
-  (void)config_commands;
-  return true;
-#else
+Result<std::vector<HostConfigurationAction>> ValidateHostConfiguration() {
+  std::vector<HostConfigurationAction> actions;
+#ifndef __APPLE__
   // if we can't detect the kernel version, just fail
-  auto version = GetLinuxVersion();
-  if (version == invalid_linux_version) {
-    return false;
-  }
+  std::pair<int, int> version = CF_EXPECT(GetLinuxVersion());
 
   // Checking host configuration via GID or group name on rootless container
   // instance is hard as user namespace is separated from the host.
@@ -93,28 +92,28 @@ bool ValidateHostConfiguration(std::vector<std::string>* config_commands) {
     // TODO(seungjaeyoo): Validate access on actual resources like devices
     // rather than group name, which is applicable for all host environments
     // including container.
-    return LinuxVersionAtLeast(config_commands, version, 4, 8);
+    PushOptional(actions, CF_EXPECT(EnforceLinuxVersionAtLeast(version, 4, 8)));
+    return actions;
   }
 
   // the check for cvdnetwork needs to happen even if the user is not in kvm, so
   // we can't just say UserInGroup("kvm") && UserInGroup("cvdnetwork")
-  auto in_cvdnetwork = UserInGroup("cvdnetwork", config_commands);
+  PushOptional(actions, CF_EXPECT(PutUserInGroup("cvdnetwork")));
 
   // if we're in the virtaccess group this is likely to be a CrOS environment.
-  auto is_cros = InGroup("virtaccess");
+  bool is_cros = InGroup("virtaccess");
   if (is_cros) {
     // relax the minimum kernel requirement slightly, as chromeos-4.4 has the
     // needed backports to enable vhost_vsock
-    auto linux_ver_4_4 = LinuxVersionAtLeast(config_commands, version, 4, 4);
-    return in_cvdnetwork && linux_ver_4_4;
+    PushOptional(actions, CF_EXPECT(EnforceLinuxVersionAtLeast(version, 4, 4)));
   } else {
     // this is regular Linux, so use the Debian group name and be more
     // conservative with the kernel version check.
-    auto in_kvm = UserInGroup("kvm", config_commands);
-    auto linux_ver_4_8 = LinuxVersionAtLeast(config_commands, version, 4, 8);
-    return in_cvdnetwork && in_kvm && linux_ver_4_8;
+    PushOptional(actions, CF_EXPECT(PutUserInGroup("kvm")));
+    PushOptional(actions, CF_EXPECT(EnforceLinuxVersionAtLeast(version, 4, 8)));
   }
 #endif
+  return actions;
 }
 
 } // namespace vm_manager

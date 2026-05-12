@@ -18,12 +18,17 @@
 
 #include <errno.h>
 #include <sys/utsname.h>
+#include <string>
+#include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/str_join.h"
+#include "fmt/ranges.h"
 
 #include "allocd/alloc_utils.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/vm_manager/host_configuration.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -59,15 +64,24 @@ Result<void> ValidateTapDevices(
 }
 
 Result<void> ValidateHostConfiguration() {
-#ifdef __ANDROID__
-  std::vector<std::string> config_commands;
-  CF_EXPECTF(vm_manager::ValidateHostConfiguration(&config_commands),
-             "Validation of user configuration failed.\n"
-             "Execute the following to correctly configure: \n[{}]\n",
-             "You may need to logout for the changes to take effect.\n",
-             fmt::join(config_commands, "\n"));
-#endif
-  return {};
+  std::vector<vm_manager::HostConfigurationAction> actions =
+      CF_EXPECT(vm_manager::ValidateHostConfiguration());
+  if (actions.empty()) {
+    return {};
+  }
+  std::vector<std::string> error_msgs;
+  for (const vm_manager::HostConfigurationAction& action : actions) {
+    if (!action.description.empty()) {
+      error_msgs.push_back("# " + action.description);
+    }
+    if (!action.command.empty()) {
+      error_msgs.push_back(absl::StrJoin(action.command, " "));
+    }
+  }
+  return CF_ERRF(
+      "Validation of user configuration failed.\n"
+      "Execute the following to correctly configure: \n[{}]\n",
+      fmt::join(error_msgs, "\n"));
 }
 
 Result<void> ValidateHostKernel() {
