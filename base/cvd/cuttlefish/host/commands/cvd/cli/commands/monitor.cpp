@@ -239,7 +239,7 @@ class CvdMonitorCommandHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {kMonitorCmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
   bool RequiresDeviceExists() const override { return true; }
 

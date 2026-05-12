@@ -33,7 +33,7 @@ class CvdCommandHandler {
   // returns the list of subcommand it can handle
   virtual cvd_common::Args CmdList() const = 0;
   // used for command help text
-  virtual Result<std::string> SummaryHelp() const = 0;
+  virtual std::string SummaryHelp() const = 0;
   virtual bool RequiresDeviceExists() const;
   virtual Result<std::string> DetailedHelp(const CommandRequest&) const = 0;
 };

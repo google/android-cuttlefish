@@ -209,7 +209,7 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
 
   Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override { return {"create"}; }
-  Result<std::string> SummaryHelp() const override;
+  std::string SummaryHelp() const override;
 
   Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 
@@ -345,7 +345,7 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-Result<std::string> CvdCreateCommandHandler::SummaryHelp() const {
+std::string CvdCreateCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 

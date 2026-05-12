@@ -76,7 +76,7 @@ class CvdEnvCommandHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {"env"}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

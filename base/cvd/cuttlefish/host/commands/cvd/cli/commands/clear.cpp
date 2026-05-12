@@ -40,7 +40,7 @@ class CvdClearCommandHandler : public CvdCommandHandler {
 
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {kClearCmd}; }
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
   bool RequiresDeviceExists() const override { return true; }
   Result<std::string> DetailedHelp(const CommandRequest& request) const override;

@@ -83,7 +83,7 @@ class CvdHelpHandler : public CvdCommandHandler {
 
     std::vector<std::string> args = request.SubcommandArguments();
     if (args.empty()) {
-      std::cout << CF_EXPECT(TopLevelHelp());
+      std::cout << TopLevelHelp();
     } else {
       std::cout << CF_EXPECT(SubCommandHelp(request));
     }
@@ -93,7 +93,7 @@ class CvdHelpHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {"help"}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 
@@ -107,13 +107,13 @@ class CvdHelpHandler : public CvdCommandHandler {
     return CF_EXPECT(std::move(builder).Build());
   }
 
-  Result<std::string> TopLevelHelp() {
+  std::string TopLevelHelp() {
     std::stringstream help_message;
     help_message << kHelpIntroText;
 
     for (const auto& handler : request_handlers_) {
       if (!handler->RequiresDeviceExists()) {
-        CF_EXPECT(PrintHandler(help_message, *handler));
+        PrintHandler(help_message, *handler);
       }
     }
 
@@ -122,18 +122,17 @@ class CvdHelpHandler : public CvdCommandHandler {
                     "information):\n";
     for (const auto& handler : request_handlers_) {
       if (handler->RequiresDeviceExists()) {
-        CF_EXPECT(PrintHandler(help_message, *handler));
+        PrintHandler(help_message, *handler);
       }
     }
 
     return help_message.str();
   }
 
-  Result<void> PrintHandler(std::stringstream& help_message,
+  void PrintHandler(std::stringstream& help_message,
                             const CvdCommandHandler& handler) const {
     help_message << "\t" << absl::StrJoin(handler.CmdList(), ", ") << " - ";
-    help_message << CF_EXPECT(handler.SummaryHelp()) << "\n\n";
-    return {};
+    help_message << handler.SummaryHelp() << "\n\n";
   }
 
   Result<std::string> SubCommandHelp(const CommandRequest& request) {

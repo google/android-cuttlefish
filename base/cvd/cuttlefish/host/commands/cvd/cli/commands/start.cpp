@@ -251,7 +251,7 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   std::vector<std::string> CmdList() const override {
     return {"start", "launch_cvd"};
   }
-  Result<std::string> SummaryHelp() const override {
+  std::string SummaryHelp() const override {
     return "Start a Cuttlefish virtual device or environment";
   }
 

@@ -75,7 +75,7 @@ class CvdVersionHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {"version"}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 
