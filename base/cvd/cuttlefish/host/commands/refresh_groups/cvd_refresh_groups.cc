@@ -14,8 +14,9 @@
 // limitations under the License.
 
 #include <grp.h>
-#include <limits.h>
+#include <pwd.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 /**
@@ -40,12 +41,13 @@ int main(int argc, char** argv) {
             "Usage: cvd_refresh_groups <file> <argv[0]> [argv<N> ...]\n");
     return 1;
   }
-  char user[LOGIN_NAME_MAX];
-  if (getlogin_r(user, sizeof(user))) {
-    perror("getlogin_r failed");
+  uid_t uid = getuid();
+  struct passwd* pw = getpwuid(uid);
+  if (!pw) {
+    perror("getpwuid failed");
     return 1;
   }
-  if (initgroups(user, getgid())) {
+  if (initgroups(pw->pw_name, getgid())) {
     perror("initgroups failed");
     return 1;
   }
