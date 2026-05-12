@@ -321,6 +321,7 @@ void NetworkService::HandleRadioPower(const Client& client, std::string& command
         auto sim_status = sim_service_->GetSimStatus();
         OnSimStatusChanged(sim_status);
       }
+      misc_service_->TimeUpdate();
       break;
     default:
       client.SendCommandResponse(kCmeErrorOperationNotSupported);
