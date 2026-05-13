@@ -251,7 +251,7 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   std::vector<std::string> CmdList() const override {
     return {"start", "launch_cvd"};
   }
-  Result<std::string> SummaryHelp() const override {
+  std::string SummaryHelp() const override {
     return "Start a Cuttlefish virtual device or environment";
   }
 
@@ -377,8 +377,6 @@ static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
 }
 
 Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
-
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
   CF_EXPECT(!GetConfigPath(subcmd_args).has_value(),
             "The 'start' command doesn't accept --config_file, did you mean "

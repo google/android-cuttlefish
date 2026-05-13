@@ -46,8 +46,6 @@ Usage: cvd lint /path/to/input.json
 class LintCommandHandler : public CvdCommandHandler {
  public:
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-
     std::vector<std::string> args = request.SubcommandArguments();
     auto working_directory = CurrentDirectory();
     const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
@@ -60,7 +58,7 @@ class LintCommandHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {kLintSubCmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

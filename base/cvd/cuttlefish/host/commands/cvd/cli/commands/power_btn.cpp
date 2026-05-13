@@ -41,7 +41,6 @@ class CvdDevicePowerBtnCommandHandler : public CvdCommandHandler {
       : instance_manager_{instance_manager} {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
     std::vector<std::string> args = request.SubcommandArguments();
     CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
     auto [instance, _] =
@@ -53,7 +52,7 @@ class CvdDevicePowerBtnCommandHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {kPowerBtnCmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

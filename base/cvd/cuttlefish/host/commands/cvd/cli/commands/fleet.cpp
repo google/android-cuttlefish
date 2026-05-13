@@ -49,7 +49,7 @@ class CvdFleetCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {kFleetSubcmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 
@@ -67,8 +67,6 @@ class CvdFleetCommandHandler : public CvdCommandHandler {
 };
 
 Result<void> CvdFleetCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
-
   std::vector<std::string> args = request.SubcommandArguments();
   CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
 

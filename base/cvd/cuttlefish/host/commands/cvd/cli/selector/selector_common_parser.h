@@ -32,7 +32,6 @@ struct SelectorOptions {
   bool HasOptions() const {
     return group_name.has_value() || instance_names.has_value();
   }
-  std::vector<std::string> AsArgs() const;
 };
 
 // Parses and consumes the selector arguments from the given argument list

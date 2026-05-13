@@ -121,7 +121,7 @@ class CvdStatusCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"status", "cvd_status"}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 
@@ -140,8 +140,6 @@ CvdStatusCommandHandler::CvdStatusCommandHandler(
     : instance_manager_(instance_manager) {}
 
 Result<void> CvdStatusCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
-
   std::vector<std::string> cmd_args = request.SubcommandArguments();
   StatusCommandOptions flags = CF_EXPECT(ParseFlags(cmd_args));
 

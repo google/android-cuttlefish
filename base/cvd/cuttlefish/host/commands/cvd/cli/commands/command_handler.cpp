@@ -16,15 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 
-#include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/result/result.h"
-
 namespace cuttlefish {
-
-Result<bool> CvdCommandHandler::CanHandle(const CommandRequest& request) const {
-  return Contains(CmdList(), request.Subcommand());
-}
 
 bool CvdCommandHandler::RequiresDeviceExists() const { return false; }
 

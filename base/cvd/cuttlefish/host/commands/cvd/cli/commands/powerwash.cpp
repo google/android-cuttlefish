@@ -66,8 +66,6 @@ class CvdDevicePowerwashCommandHandler : public CvdCommandHandler {
       : instance_manager_{instance_manager} {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-
     PowerwashOptions options;
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
     CF_EXPECT(ConsumeFlags(options.Flags(), subcmd_args));
@@ -83,7 +81,7 @@ class CvdDevicePowerwashCommandHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {kPowerwashCmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

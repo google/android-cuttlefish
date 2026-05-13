@@ -182,8 +182,6 @@ class CvdMonitorCommandHandler : public CvdCommandHandler {
       : instance_manager_{instance_manager} {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-
     CF_EXPECT(isatty(0),
               "The monitor command requires an interactive terminal.");
 
@@ -239,7 +237,7 @@ class CvdMonitorCommandHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {kMonitorCmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
   bool RequiresDeviceExists() const override { return true; }
 

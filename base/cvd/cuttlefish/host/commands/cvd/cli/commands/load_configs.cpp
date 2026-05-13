@@ -33,6 +33,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
@@ -77,9 +78,6 @@ class LoadConfigsCommand : public CvdCommandHandler {
   ~LoadConfigsCommand() = default;
 
   Result<void> Handle(const CommandRequest& request) override {
-    bool can_handle_request = CF_EXPECT(CanHandle(request));
-    CF_EXPECT_EQ(can_handle_request, true);
-
     LoadFlags load_flags = CF_EXPECT(GetLoadFlags(request));
     EnvironmentSpecification env_spec =
         CF_EXPECT(GetEnvironmentSpecification(load_flags));
@@ -193,7 +191,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {kLoadSubCmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 
@@ -224,6 +222,9 @@ class LoadConfigsCommand : public CvdCommandHandler {
         fmt::format("--system_image_dir={}", group.ProductOutPath());
     env.erase(kAndroidProductOut);
 
+    selector::SelectorOptions selector_options = cvd_flags.selector_flags;
+    selector_options.group_name = group.GroupName();
+
     return CF_EXPECT(
         CommandRequestBuilder()
             .SetEnv(env)
@@ -233,8 +234,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
              */
             .AddArguments({"cvd", "start", "--daemon", system_build_arg})
             .AddArguments(cvd_flags.launch_cvd_flags)
-            .AddSelectorArguments(cvd_flags.selector_flags)
-            .AddSelectorArguments({"--group_name", group.GroupName()})
+            .SetSelectorOptions(std::move(selector_options))
             .Build());
   }
 

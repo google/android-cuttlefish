@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/result/result.h"
@@ -29,7 +30,7 @@ namespace cuttlefish {
 
 struct CvdFlags {
   std::vector<std::string> launch_cvd_flags;
-  std::vector<std::string> selector_flags;
+  selector::SelectorOptions selector_flags;
   std::vector<std::string> fetch_cvd_flags;
   std::string target_directory;
 };

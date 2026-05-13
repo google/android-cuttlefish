@@ -82,7 +82,7 @@ class CvdStopCommandHandler : public CvdCommandHandler {
 
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"stop", "stop_cvd"}; }
-  Result<std::string> SummaryHelp() const override;
+  std::string SummaryHelp() const override;
 
   bool RequiresDeviceExists() const override { return true; }
   Result<std::string> DetailedHelp(const CommandRequest& request) const override;
@@ -108,10 +108,7 @@ CvdStopCommandHandler::CvdStopCommandHandler(InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
 Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
   std::vector<std::string> cmd_args = request.SubcommandArguments();
-
-
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_ERR(NoGroupMessage(request));
@@ -136,7 +133,7 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-Result<std::string> CvdStopCommandHandler::SummaryHelp() const {
+std::string CvdStopCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 

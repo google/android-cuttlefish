@@ -58,7 +58,6 @@ class CvdVersionHandler : public CvdCommandHandler {
   CvdVersionHandler() = default;
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
     const bool json_formatted =
         CF_EXPECT(ProcessArguments(request.SubcommandArguments()));
     const VersionIdentifiers version_ids = GetVersionIds();
@@ -75,7 +74,7 @@ class CvdVersionHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {"version"}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

@@ -65,7 +65,6 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
       : instance_manager_{instance_manager} {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
     const cvd_common::Envs& env = request.Env();
 
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
@@ -87,7 +86,7 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {"display"}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

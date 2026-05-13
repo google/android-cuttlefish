@@ -40,7 +40,7 @@ class CvdClearCommandHandler : public CvdCommandHandler {
 
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {kClearCmd}; }
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
   bool RequiresDeviceExists() const override { return true; }
   Result<std::string> DetailedHelp(const CommandRequest& request) const override;
@@ -54,7 +54,6 @@ CvdClearCommandHandler::CvdClearCommandHandler(
     : instance_manager_(instance_manager) {}
 
 Result<void> CvdClearCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
   std::vector<std::string> args = request.SubcommandArguments();
   CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
   CF_EXPECT(instance_manager_.Clear());

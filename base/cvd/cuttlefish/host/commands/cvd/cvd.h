@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/result/result.h"
@@ -33,7 +34,7 @@ class Cvd {
   Result<void> HandleCommand(
       const std::vector<std::string>& cvd_process_args,
       const std::unordered_map<std::string, std::string>& env,
-      const std::vector<std::string>& selector_args);
+      selector::SelectorOptions selector_args);
 
   Result<void> HandleCvdCommand(
       const std::vector<std::string>& all_args,

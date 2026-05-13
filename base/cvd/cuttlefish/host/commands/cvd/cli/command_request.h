@@ -79,26 +79,17 @@ class CommandRequestBuilder {
   CommandRequestBuilder AddArguments(
       std::initializer_list<std::string_view>) &&;
 
-  template <typename T>
-  CommandRequestBuilder& AddSelectorArguments(T&& args) & {
-    for (auto&& arg : args) {
-      selector_args_.emplace_back(arg);
-    }
+  CommandRequestBuilder& SetSelectorOptions(
+      selector::SelectorOptions selectors) & {
+    selector_options_ = std::move(selectors);
     return *this;
   }
 
-  template <typename T>
-  CommandRequestBuilder AddSelectorArguments(T&& args) && {
-    for (auto&& arg : args) {
-      selector_args_.emplace_back(arg);
-    }
+  CommandRequestBuilder SetSelectorOptions(
+      selector::SelectorOptions selectors) && {
+    selector_options_ = std::move(selectors);
     return *this;
   }
-
-  CommandRequestBuilder& AddSelectorArguments(
-      std::initializer_list<std::string_view>) &;
-  CommandRequestBuilder AddSelectorArguments(
-      std::initializer_list<std::string_view>) &&;
 
   CommandRequestBuilder& SetEnv(cvd_common::Envs) &;
   CommandRequestBuilder SetEnv(cvd_common::Envs) &&;
@@ -111,7 +102,7 @@ class CommandRequestBuilder {
  private:
   cvd_common::Args args_;
   cvd_common::Envs env_;
-  cvd_common::Args selector_args_;
+  selector::SelectorOptions selector_options_;
 };
 
 }  // namespace cuttlefish

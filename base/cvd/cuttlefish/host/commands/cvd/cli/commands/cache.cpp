@@ -99,14 +99,12 @@ class CvdCacheCommandHandler : public CvdCommandHandler {
  public:
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"cache"}; }
-  Result<std::string> SummaryHelp() const override;
+  std::string SummaryHelp() const override;
 
   Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 };
 
 Result<void> CvdCacheCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
-
   CacheArguments arguments =
       CF_EXPECT(ProcessArguments(request.SubcommandArguments()));
   std::string cache_directory = PerUserCacheDir();
@@ -149,7 +147,7 @@ Result<void> CvdCacheCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-Result<std::string> CvdCacheCommandHandler::SummaryHelp() const {
+std::string CvdCacheCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 

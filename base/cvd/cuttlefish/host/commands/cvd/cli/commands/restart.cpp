@@ -65,8 +65,6 @@ class CvdDeviceRestartCommandHandler : public CvdCommandHandler {
       : instance_manager_{instance_manager} {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-
     RestartOptions options;
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
     CF_EXPECT(ConsumeFlags(options.Flags(), subcmd_args));
@@ -83,7 +81,7 @@ class CvdDeviceRestartCommandHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {kRestartCmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

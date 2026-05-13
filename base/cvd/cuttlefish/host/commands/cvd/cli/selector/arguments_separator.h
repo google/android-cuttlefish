@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -27,7 +28,7 @@ namespace selector {
 
 struct SeparatedArguments {
   std::string prog_path;
-  std::vector<std::string> cvd_args;
+  SelectorOptions cvd_args;
   std::optional<std::string> sub_cmd;
   std::vector<std::string> sub_cmd_args;
 };

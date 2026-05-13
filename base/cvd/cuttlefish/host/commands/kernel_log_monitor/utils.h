@@ -15,8 +15,9 @@
  */
 #pragma once
 
-#include <json/json.h>
 #include <optional>
+
+#include "json/json.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"

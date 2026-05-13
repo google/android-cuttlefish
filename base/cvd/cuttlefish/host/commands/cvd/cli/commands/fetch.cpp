@@ -47,7 +47,7 @@ class CvdFetchCommandHandler : public CvdCommandHandler {
  public:
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"fetch", "fetch_cvd"}; }
-  Result<std::string> SummaryHelp() const override;
+  std::string SummaryHelp() const override;
 
   Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 };
@@ -91,8 +91,6 @@ Result<void> RunCacheCleanup(const BuildApiFlags& build_api_flags) {
 }
 
 Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
-
   std::vector<std::string> args = request.SubcommandArguments();
   const FetchFlags flags = CF_EXPECT(FetchFlags::Parse(args));
   CF_EXPECT(EnsureDirectoryExists(flags.target_directory));
@@ -119,7 +117,7 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-Result<std::string> CvdFetchCommandHandler::SummaryHelp() const {
+std::string CvdFetchCommandHandler::SummaryHelp() const {
   return "Retrieve build artifacts based on branch and target names";
 }
 

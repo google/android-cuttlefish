@@ -144,8 +144,6 @@ class ScreenRecordingCommandHandler : public CvdCommandHandler {
       : instance_manager_{instance_manager} {}
 
   Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-
     const std::vector<std::string>& args = request.SubcommandArguments();
     RecordingFlags flags = CF_EXPECT(ParseArgs(args));
 
@@ -162,7 +160,7 @@ class ScreenRecordingCommandHandler : public CvdCommandHandler {
 
   cvd_common::Args CmdList() const override { return {kScreenRecordingCmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
+  std::string SummaryHelp() const override { return kSummaryHelpText; }
 
 
 

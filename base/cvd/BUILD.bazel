@@ -12,7 +12,10 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-exports_files([".clang-tidy"])
+exports_files([
+    ".clang-format",
+    ".clang-tidy",
+])
 
 genrule(
     name = "build_compilation_mode_txt",

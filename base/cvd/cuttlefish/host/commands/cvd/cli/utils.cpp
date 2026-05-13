@@ -196,9 +196,10 @@ std::string_view TerminalColors::Cyan() const {
 
 std::string NoGroupMessage(const CommandRequest& request) {
   TerminalColors colors(isatty(1));
-  return fmt::format("Command `{}{}{}` is not applicable: {}{}{}", colors.Red(),
+  return fmt::format("{}Command `{}{}{}{}` is not applicable: {}{}{}",
+                     colors.Reset(), colors.Red(), request.Subcommand(),
                      fmt::join(request.SubcommandArguments(), " "),
-                     colors.Reset(), colors.BoldRed(), "no device",
+                     colors.Reset(), colors.BoldRed(), "no devices present",
                      colors.Reset());
 }
 
