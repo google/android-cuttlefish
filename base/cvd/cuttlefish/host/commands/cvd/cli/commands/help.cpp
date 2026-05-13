@@ -70,93 +70,88 @@ Example usage:
   cvd help <command> - displays more detailed help for the specific command
 )";
 
+void PrintHandler(std::stringstream& help_message,
+                  const CvdCommandHandler& handler) {
+  help_message << "\t" << absl::StrJoin(handler.CmdList(), ", ") << " - ";
+  help_message << handler.SummaryHelp() << "\n\n";
+}
+
+Result<CommandRequest> GetLookupRequest(const std::string& arg) {
+  auto builder = CommandRequestBuilder().AddArguments({"cvd", arg});
+  return CF_EXPECT(std::move(builder).Build());
+}
+
 }  // namespace
 
-class CvdHelpHandler : public CvdCommandHandler {
- public:
-  CvdHelpHandler(
-      const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers)
-      : request_handlers_(request_handlers) {}
+CvdHelpHandler::CvdHelpHandler(
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers)
+    : request_handlers_(request_handlers) {}
 
-  Result<void> Handle(const CommandRequest& request) override {
-    std::vector<std::string> args = request.SubcommandArguments();
-    if (args.empty()) {
-      std::cout << TopLevelHelp();
-    } else {
-      std::cout << CF_EXPECT(SubCommandHelp(request));
+Result<void> CvdHelpHandler::Handle(const CommandRequest& request) {
+  std::vector<std::string> args = request.SubcommandArguments();
+  if (args.empty()) {
+    std::cout << TopLevelHelp();
+  } else {
+    std::cout << CF_EXPECT(SubCommandHelp(request));
+  }
+
+  return {};
+}
+
+cvd_common::Args CvdHelpHandler::CmdList() const { return {"help"}; }
+
+std::string CvdHelpHandler::SummaryHelp() const { return kSummaryHelpText; }
+
+bool CvdHelpHandler::RequiresHostConfiguration() const { return false; }
+
+Result<std::string> CvdHelpHandler::DetailedHelp(
+    const CommandRequest& request) const {
+  return kDetailedHelpText;
+}
+
+std::string CvdHelpHandler::TopLevelHelp() {
+  std::stringstream help_message;
+  help_message << kHelpIntroText;
+
+  for (const auto& handler : request_handlers_) {
+    if (!handler->RequiresDeviceExists()) {
+      PrintHandler(help_message, *handler);
     }
-
-    return {};
   }
 
-  cvd_common::Args CmdList() const override { return {"help"}; }
-
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
-
-  bool RequiresHostConfiguration() const override { return false; }
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kDetailedHelpText;
-  }
-
- private:
-  Result<CommandRequest> GetLookupRequest(const std::string& arg) {
-    auto builder = CommandRequestBuilder().AddArguments({"cvd", arg});
-    return CF_EXPECT(std::move(builder).Build());
-  }
-
-  std::string TopLevelHelp() {
-    std::stringstream help_message;
-    help_message << kHelpIntroText;
-
-    for (const auto& handler : request_handlers_) {
-      if (!handler->RequiresDeviceExists()) {
-        PrintHandler(help_message, *handler);
-      }
+  help_message << kSelectorOptionsText;
+  help_message << "\nDevice-Specific Commands (cvd help <command> for more "
+                  "information):\n";
+  for (const auto& handler : request_handlers_) {
+    if (handler->RequiresDeviceExists()) {
+      PrintHandler(help_message, *handler);
     }
-
-    help_message << kSelectorOptionsText;
-    help_message << "\nDevice-Specific Commands (cvd help <command> for more "
-                    "information):\n";
-    for (const auto& handler : request_handlers_) {
-      if (handler->RequiresDeviceExists()) {
-        PrintHandler(help_message, *handler);
-      }
-    }
-
-    return help_message.str();
   }
 
-  void PrintHandler(std::stringstream& help_message,
-                            const CvdCommandHandler& handler) const {
-    help_message << "\t" << absl::StrJoin(handler.CmdList(), ", ") << " - ";
-    help_message << handler.SummaryHelp() << "\n\n";
-  }
+  return help_message.str();
+}
 
-  Result<std::string> SubCommandHelp(const CommandRequest& request) {
-    const std::vector<std::string>& args = request.SubcommandArguments();
-    CF_EXPECT(
-        !args.empty(),
-        "Cannot process subcommand help without valid subcommand argument");
-    CommandRequest lookup_request = CF_EXPECT(GetLookupRequest(args.front()));
-    auto handler = CF_EXPECT(RequestHandler(lookup_request, request_handlers_));
+Result<std::string> CvdHelpHandler::SubCommandHelp(
+    const CommandRequest& request) {
+  const std::vector<std::string>& args = request.SubcommandArguments();
+  CF_EXPECT(!args.empty(),
+            "Cannot process subcommand help without valid subcommand argument");
+  CommandRequest lookup_request = CF_EXPECT(GetLookupRequest(args.front()));
+  auto handler = CF_EXPECT(RequestHandler(lookup_request, request_handlers_));
 
-    // Create new command with "<subcmd> --help" instead of "help <subcmd>"
-    CommandRequest subcmd_request =
-        CF_EXPECT(CommandRequestBuilder()
-                      .AddArguments(args)
-                      .AddArguments({"--help"})
-                      .SetEnv(request.Env())
-                      .SetSelectorOptions(request.Selectors())
-                      .Build());
+  // Create new command with "<subcmd> --help" instead of "help <subcmd>"
+  CommandRequest subcmd_request =
+      CF_EXPECT(CommandRequestBuilder()
+                    .AddArguments(args)
+                    .AddArguments({"--help"})
+                    .SetEnv(request.Env())
+                    .SetSelectorOptions(request.Selectors())
+                    .Build());
 
-    std::stringstream help_message;
-    help_message << CF_EXPECT(handler->DetailedHelp(subcmd_request)) << std::endl;
-    return help_message.str();
-  }
-
-  const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers_;
-};
+  std::stringstream help_message;
+  help_message << CF_EXPECT(handler->DetailedHelp(subcmd_request)) << std::endl;
+  return help_message.str();
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdHelpHandler(
     const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers) {

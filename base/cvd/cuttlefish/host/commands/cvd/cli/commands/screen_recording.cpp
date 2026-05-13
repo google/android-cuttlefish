@@ -137,59 +137,59 @@ Result<void> ListRecordings(const LocalInstanceGroup& group,
 
   return {};
 }
-
-class ScreenRecordingCommandHandler : public CvdCommandHandler {
- public:
-  ScreenRecordingCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_{instance_manager} {}
-
-  Result<void> Handle(const CommandRequest& request) override {
-    const std::vector<std::string>& args = request.SubcommandArguments();
-    RecordingFlags flags = CF_EXPECT(ParseArgs(args));
-
-    auto [group, instances] = CF_EXPECT(SelectInstances(request));
-
-    if (flags.subcmd == kListSubcmd) {
-      CF_EXPECT(ListRecordings(group, instances));
-    } else {
-      CF_EXPECT(StartStopRecording(flags, instances));
-    }
-
-    return {};
-  }
-
-  cvd_common::Args CmdList() const override { return {kScreenRecordingCmd}; }
-
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
-
-
-
-  bool RequiresDeviceExists() const override { return true; }
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kDetailedHelpText;
-  }
-
- private:
-  Result<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>
-  SelectInstances(const CommandRequest& request) {
-    if (request.Selectors().instance_names.has_value()) {
-      auto [instance, group] =
-          CF_EXPECT(selector::SelectInstance(instance_manager_, request));
-      return std::pair<LocalInstanceGroup, std::vector<LocalInstance>>(
-          group, {instance});
-    } else {
-      LocalInstanceGroup group =
-          CF_EXPECT(selector::SelectGroup(instance_manager_, request));
-      return std::pair<LocalInstanceGroup, std::vector<LocalInstance>>(
-          group, group.Instances());
-    }
-  }
-
-  InstanceManager& instance_manager_;
-};
-
 }  // namespace
+
+ScreenRecordingCommandHandler::ScreenRecordingCommandHandler(
+    InstanceManager& instance_manager)
+    : instance_manager_{instance_manager} {}
+
+Result<void> ScreenRecordingCommandHandler::Handle(
+    const CommandRequest& request) {
+  const std::vector<std::string>& args = request.SubcommandArguments();
+  RecordingFlags flags = CF_EXPECT(ParseArgs(args));
+
+  auto [group, instances] = CF_EXPECT(SelectInstances(request));
+
+  if (flags.subcmd == kListSubcmd) {
+    CF_EXPECT(ListRecordings(group, instances));
+  } else {
+    CF_EXPECT(StartStopRecording(flags, instances));
+  }
+
+  return {};
+}
+
+cvd_common::Args ScreenRecordingCommandHandler::CmdList() const {
+  return {kScreenRecordingCmd};
+}
+
+std::string ScreenRecordingCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
+
+bool ScreenRecordingCommandHandler::RequiresDeviceExists() const {
+  return true;
+}
+
+Result<std::string> ScreenRecordingCommandHandler::DetailedHelp(
+    const CommandRequest& request) const {
+  return kDetailedHelpText;
+}
+
+Result<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>
+ScreenRecordingCommandHandler::SelectInstances(const CommandRequest& request) {
+  if (request.Selectors().instance_names.has_value()) {
+    auto [instance, group] =
+        CF_EXPECT(selector::SelectInstance(instance_manager_, request));
+    return std::pair<LocalInstanceGroup, std::vector<LocalInstance>>(
+        group, {instance});
+  } else {
+    LocalInstanceGroup group =
+        CF_EXPECT(selector::SelectGroup(instance_manager_, request));
+    return std::pair<LocalInstanceGroup, std::vector<LocalInstance>>(
+        group, group.Instances());
+  }
+}
 
 std::unique_ptr<CvdCommandHandler> NewScreenRecordingCommandHandler(
     InstanceManager& instance_manager) {
@@ -198,4 +198,3 @@ std::unique_ptr<CvdCommandHandler> NewScreenRecordingCommandHandler(
 }
 
 }  // namespace cuttlefish
-

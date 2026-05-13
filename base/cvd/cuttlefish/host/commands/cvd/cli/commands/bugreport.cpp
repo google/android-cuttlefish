@@ -18,7 +18,6 @@
 
 #include <stdlib.h>
 
-#include <functional>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -36,7 +35,6 @@
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
-#include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
@@ -50,6 +48,7 @@
 namespace cuttlefish {
 namespace {
 
+constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
 constexpr char kSummaryHelpText[] =
     "Run cvd bugreport --help for command description";
 
@@ -85,26 +84,7 @@ Result<void> AddFetchLogIfPresent(const LocalInstanceGroup& instance_group,
   CF_EXPECT(WritableZip::Finalize(std::move(archive)));
   return {};
 }
-
-class CvdBugreportCommandHandler : public CvdCommandHandler {
- public:
-  CvdBugreportCommandHandler(InstanceManager& instance_manager);
-
-  Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override;
-  std::string SummaryHelp() const override;
-
-  bool RequiresDeviceExists() const override;
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
-
- private:
-  InstanceManager& instance_manager_;
-  using BinGeneratorType = std::function<Result<std::string>(
-      const std::string& host_artifacts_path)>;
-  std::unique_ptr<InterruptibleTerminal> terminal_ = nullptr;
-
-  static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
-};
+}  // namespace
 
 CvdBugreportCommandHandler::CvdBugreportCommandHandler(
     InstanceManager& instance_manager)
@@ -159,7 +139,6 @@ std::string CvdBugreportCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
-
 bool CvdBugreportCommandHandler::RequiresDeviceExists() const { return true; }
 
 Result<std::string> CvdBugreportCommandHandler::DetailedHelp(
@@ -176,8 +155,6 @@ Result<std::string> CvdBugreportCommandHandler::DetailedHelp(
   }
   return stdout;
 }
-
-}  // namespace
 
 std::unique_ptr<CvdCommandHandler> NewCvdBugreportCommandHandler(
     InstanceManager& instance_manager) {

@@ -17,14 +17,33 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <vector>
 
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+
+class CvdCreateCommandHandler : public CvdCommandHandler {
+ public:
+  CvdCreateCommandHandler(InstanceManager& instance_manager)
+      : instance_manager_(instance_manager) {}
+
+  Result<void> Handle(const CommandRequest& request) override;
+  std::vector<std::string> CmdList() const override { return {"create"}; }
+  std::string SummaryHelp() const override;
+
+  Result<std::string> DetailedHelp(
+      const CommandRequest& request) const override;
+
+ private:
+  InstanceManager& instance_manager_;
+};
 
 std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(
     InstanceManager& instance_manager);
 
 }  // namespace cuttlefish
-

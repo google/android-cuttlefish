@@ -24,9 +24,9 @@
 #include <utility>
 #include <vector>
 
-#include "absl/strings/strip.h"
 #include <json/value.h>
 #include "absl/strings/numbers.h"
+#include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -114,26 +114,18 @@ Result<StatusCommandOptions> ParseFlags(cvd_common::Args& args) {
 
 }  // namespace
 
-class CvdStatusCommandHandler : public CvdCommandHandler {
- public:
-  CvdStatusCommandHandler(InstanceManager& instance_manager);
+cvd_common::Args CvdStatusCommandHandler::CmdList() const {
+  return {"status", "cvd_status"};
+}
 
-  Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override { return {"status", "cvd_status"}; }
+std::string CvdStatusCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
 
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
-
-
-
-  bool RequiresDeviceExists() const override { return true; }
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kDetailedHelpText;
-  }
-
- private:
-  InstanceManager& instance_manager_;
-};
+Result<std::string> CvdStatusCommandHandler::DetailedHelp(
+    const CommandRequest&) const {
+  return kDetailedHelpText;
+}
 
 CvdStatusCommandHandler::CvdStatusCommandHandler(
     InstanceManager& instance_manager)

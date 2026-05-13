@@ -69,97 +69,89 @@ QEMU:
 
 )";
 
-class CvdSnapshotCommandHandler : public CvdCommandHandler {
- public:
-  CvdSnapshotCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_{instance_manager} {}
-
-  Result<void> Handle(const CommandRequest& request) override {
-    std::string subcmd = request.Subcommand();
-    std::vector<std::string> subcmd_args = request.SubcommandArguments();
-
-    std::stringstream ss;
-    for (const auto& arg : subcmd_args) {
-      ss << arg << " ";
-    }
-    VLOG(0) << "Calling new handler with " << subcmd << ": " << ss.str();
-
-    // may modify subcmd_args by consuming in parsing
-    Command command =
-        CF_EXPECT(GenerateCommand(request, subcmd, subcmd_args, request.Env()));
-
-    siginfo_t infop;  // NOLINT(misc-include-cleaner)
-    command.Start().Wait(&infop, WEXITED);
-
-    CF_EXPECT(CheckProcessExitedNormally(infop));
-    return {};
-  }
-
-  cvd_common::Args CmdList() const override {
-    return {"suspend", "resume", "snapshot_take"};
-  }
-
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
-
-
-
-  bool RequiresDeviceExists() const override { return true; }
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kDetailedHelpText;
-  }
-
- private:
-  Result<Command> GenerateCommand(const CommandRequest& request,
-                                  const std::string& subcmd,
-                                  cvd_common::Args& subcmd_args,
-                                  cvd_common::Envs envs) {
-    // create a string that is comma-separated instance IDs
-    auto instance_group =
-        CF_EXPECT(selector::SelectGroup(instance_manager_, request));
-
-    const auto& home = instance_group.HomeDir();
-    const auto& android_host_out = instance_group.HostArtifactsPath();
-    auto cvd_snapshot_bin_path =
-        android_host_out + "/bin/" + CF_EXPECT(GetBin(android_host_out));
-    const std::string& snapshot_util_cmd = subcmd;
-    cvd_common::Args cvd_snapshot_args{"--subcmd=" + snapshot_util_cmd};
-    cvd_snapshot_args.insert(cvd_snapshot_args.end(), subcmd_args.begin(),
-                             subcmd_args.end());
-    // This helps snapshot_util find CuttlefishConfig and figure out
-    // the instance ids
-    envs["HOME"] = home;
-    envs[kAndroidHostOut] = android_host_out;
-    envs[kAndroidSoongHostOut] = android_host_out;
-
-    std::cerr << "HOME=" << home << " " << kAndroidHostOut << "="
-              << android_host_out << " " << kAndroidSoongHostOut << "="
-              << android_host_out << " " << cvd_snapshot_bin_path << " ";
-    for (const auto& arg : cvd_snapshot_args) {
-      std::cerr << arg << " ";
-    }
-
-    ConstructCommandParam construct_cmd_param{
-        .bin_path = cvd_snapshot_bin_path,
-        .home = home,
-        .args = cvd_snapshot_args,
-        .envs = envs,
-        .working_dir = CurrentDirectory(),
-        .command_name = android::base::Basename(cvd_snapshot_bin_path),
-    };
-    Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
-    return command;
-  }
-
-  Result<std::string> GetBin(const std::string& host_artifacts_path) const {
-    return CF_EXPECT(HostToolTarget(host_artifacts_path).GetSnapshotBinName());
-  }
-
-  InstanceManager& instance_manager_;
-  std::vector<std::string> cvd_snapshot_operations_;
-};
+Result<std::string> GetBin(const std::string& host_artifacts_path) {
+  return CF_EXPECT(HostToolTarget(host_artifacts_path).GetSnapshotBinName());
+}
 
 }  // namespace
+
+CvdSnapshotCommandHandler::CvdSnapshotCommandHandler(
+    InstanceManager& instance_manager)
+    : instance_manager_{instance_manager} {}
+
+Result<void> CvdSnapshotCommandHandler::Handle(const CommandRequest& request) {
+  std::string subcmd = request.Subcommand();
+  std::vector<std::string> subcmd_args = request.SubcommandArguments();
+
+  std::stringstream ss;
+  for (const auto& arg : subcmd_args) {
+    ss << arg << " ";
+  }
+  VLOG(0) << "Calling new handler with " << subcmd << ": " << ss.str();
+
+  // may modify subcmd_args by consuming in parsing
+  Command command =
+      CF_EXPECT(GenerateCommand(request, subcmd, subcmd_args, request.Env()));
+
+  siginfo_t infop;  // NOLINT(misc-include-cleaner)
+  command.Start().Wait(&infop, WEXITED);
+
+  CF_EXPECT(CheckProcessExitedNormally(infop));
+  return {};
+}
+
+cvd_common::Args CvdSnapshotCommandHandler::CmdList() const {
+  return {"suspend", "resume", "snapshot_take"};
+}
+
+std::string CvdSnapshotCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
+
+Result<std::string> CvdSnapshotCommandHandler::DetailedHelp(
+    const CommandRequest& request) const {
+  return kDetailedHelpText;
+}
+
+Result<Command> CvdSnapshotCommandHandler::GenerateCommand(
+    const CommandRequest& request, const std::string& subcmd,
+    cvd_common::Args& subcmd_args, cvd_common::Envs envs) {
+  // create a string that is comma-separated instance IDs
+  auto instance_group =
+      CF_EXPECT(selector::SelectGroup(instance_manager_, request));
+
+  const auto& home = instance_group.HomeDir();
+  const auto& android_host_out = instance_group.HostArtifactsPath();
+  auto cvd_snapshot_bin_path =
+      android_host_out + "/bin/" + CF_EXPECT(GetBin(android_host_out));
+  const std::string& snapshot_util_cmd = subcmd;
+  cvd_common::Args cvd_snapshot_args{"--subcmd=" + snapshot_util_cmd};
+  cvd_snapshot_args.insert(cvd_snapshot_args.end(), subcmd_args.begin(),
+                           subcmd_args.end());
+  // This helps snapshot_util find CuttlefishConfig and figure out
+  // the instance ids
+  envs["HOME"] = home;
+  envs[kAndroidHostOut] = android_host_out;
+  envs[kAndroidSoongHostOut] = android_host_out;
+
+  std::cerr << "HOME=" << home << " " << kAndroidHostOut << "="
+            << android_host_out << " " << kAndroidSoongHostOut << "="
+            << android_host_out << " " << cvd_snapshot_bin_path << " ";
+  for (const auto& arg : cvd_snapshot_args) {
+    std::cerr << arg << " ";
+  }
+
+  ConstructCommandParam construct_cmd_param{
+      .bin_path = cvd_snapshot_bin_path,
+      .home = home,
+      .args = cvd_snapshot_args,
+      .envs = envs,
+      .working_dir = CurrentDirectory(),
+      .command_name = android::base::Basename(cvd_snapshot_bin_path),
+  };
+  Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
+  return command;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdSnapshotCommandHandler(
     InstanceManager& instance_manager) {

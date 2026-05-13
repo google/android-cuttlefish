@@ -47,56 +47,55 @@ Usage:
 using vm_manager::HostConfigurationAction;
 using vm_manager::ValidateHostConfiguration;
 
-class CvdSetupHandler : public CvdCommandHandler {
- public:
-  CvdSetupHandler() = default;
+}  // namespace
 
-  Result<void> Handle(const CommandRequest& request) override {
-    std::vector<HostConfigurationAction> actions =
-        CF_EXPECT(ValidateHostConfiguration());
-    if (actions.empty()) {
-      std::cout << "Host configuration is already valid. No setup required."
-                << std::endl;
-      return {};
-    }
-
-    std::cout << "Applying host configuration fixes..." << std::endl;
-    for (const HostConfigurationAction& action : actions) {
-      if (!action.description.empty()) {
-        std::cout << "Purpose: " << action.description << std::endl;
-      }
-      if (action.command.empty()) {
-        std::cout
-            << "Manual intervention required (no automated command available)."
-            << std::endl;
-        continue;
-      }
-
-      std::cout << "Running: " << absl::StrJoin(action.command, " ")
-                << std::endl;
-      const int status = Execute(action.command);
-      CF_EXPECTF(status == 0, "Failed to execute command: `{}`, exit code: {}",
-                 absl::StrJoin(action.command, " "), status);
-    }
-
-    std::cout << "Setup completed successfully." << std::endl;
+Result<void> CvdSetupHandler::Handle(const CommandRequest& request) {
+  std::vector<HostConfigurationAction> actions =
+      CF_EXPECT(ValidateHostConfiguration());
+  if (actions.empty()) {
+    std::cout << "Host configuration is already valid. No setup required."
+              << std::endl;
     return {};
   }
 
-  cvd_common::Args CmdList() const override { return {"setup"}; }
+  std::cout << "Applying host configuration fixes..." << std::endl;
+  for (const HostConfigurationAction& action : actions) {
+    if (!action.description.empty()) {
+      std::cout << "Purpose: " << action.description << std::endl;
+    }
+    if (action.command.empty()) {
+      std::cout
+          << "Manual intervention required (no automated command available)."
+          << std::endl;
+      continue;
+    }
 
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
-
-  bool RequiresDeviceExists() const override { return false; }
-
-  bool RequiresHostConfiguration() const override { return false; }
-
-  Result<std::string> DetailedHelp(const CommandRequest&) const override {
-    return kDetailedHelpText;
+    std::cout << "Running: " << absl::StrJoin(action.command, " ") << std::endl;
+    const int status = Execute(action.command);
+    CF_EXPECTF(status == 0, "Failed to execute command: `{}`, exit code: {}",
+               absl::StrJoin(action.command, " "), status);
   }
-};
 
-}  // namespace
+  std::cout << "Setup completed successfully." << std::endl;
+  return {};
+}
+
+cvd_common::Args CvdSetupHandler::CmdList() const { return {"setup"}; }
+
+std::string CvdSetupHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
+
+bool CvdSetupHandler::RequiresDeviceExists() const { return false; }
+
+bool CvdSetupHandler::RequiresHostConfiguration() const {
+  return false;
+}
+
+Result<std::string> CvdSetupHandler::DetailedHelp(
+    const CommandRequest&) const {
+  return kDetailedHelpText;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdSetupHandler() {
   return std::unique_ptr<CvdCommandHandler>(new CvdSetupHandler());

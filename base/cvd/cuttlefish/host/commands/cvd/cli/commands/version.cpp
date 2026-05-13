@@ -52,38 +52,31 @@ Result<bool> ProcessArguments(
              fmt::join(subcommand_arguments, " "));
   return json_formatted;
 }
-
-class CvdVersionHandler : public CvdCommandHandler {
- public:
-  CvdVersionHandler() = default;
-
-  Result<void> Handle(const CommandRequest& request) override {
-    const bool json_formatted =
-        CF_EXPECT(ProcessArguments(request.SubcommandArguments()));
-    const VersionIdentifiers version_ids = GetVersionIds();
-    if (json_formatted) {
-      Json::Value json_output(Json::objectValue);
-      json_output["package_version"] = version_ids.package;
-      json_output["version_control_id"] = version_ids.version_control;
-      std::cout << json_output.toStyledString();
-    } else {
-      std::cout << version_ids.ToPrettyString();
-    }
-    return {};
-  }
-
-  cvd_common::Args CmdList() const override { return {"version"}; }
-
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
-
-
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kSummaryHelpText;
-  }
-};
-
 }  // namespace
+
+Result<void> CvdVersionHandler::Handle(const CommandRequest& request) {
+  const bool json_formatted =
+      CF_EXPECT(ProcessArguments(request.SubcommandArguments()));
+  const VersionIdentifiers version_ids = GetVersionIds();
+  if (json_formatted) {
+    Json::Value json_output(Json::objectValue);
+    json_output["package_version"] = version_ids.package;
+    json_output["version_control_id"] = version_ids.version_control;
+    std::cout << json_output.toStyledString();
+  } else {
+    std::cout << version_ids.ToPrettyString();
+  }
+  return {};
+}
+
+cvd_common::Args CvdVersionHandler::CmdList() const { return {"version"}; }
+
+std::string CvdVersionHandler::SummaryHelp() const { return kSummaryHelpText; }
+
+Result<std::string> CvdVersionHandler::DetailedHelp(
+    const CommandRequest& request) const {
+  return kSummaryHelpText;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdVersionHandler() {
   return std::unique_ptr<CvdCommandHandler>(new CvdVersionHandler());

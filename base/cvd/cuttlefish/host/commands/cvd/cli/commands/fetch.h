@@ -22,6 +22,16 @@
 
 namespace cuttlefish {
 
+class CvdFetchCommandHandler : public CvdCommandHandler {
+ public:
+  Result<void> Handle(const CommandRequest& request) override;
+  cvd_common::Args CmdList() const override;
+
+  std::string SummaryHelp() const override;
+  Result<std::string> DetailedHelp(
+      const CommandRequest& request) const override;
+};
+
 std::unique_ptr<CvdCommandHandler> NewCvdFetchCommandHandler();
 
 }  // namespace cuttlefish

@@ -40,6 +40,8 @@
 namespace cuttlefish {
 namespace {
 
+constexpr char kCvdEnvBin[] = "cvd_internal_env";
+
 constexpr char kSummaryHelpText[] =
     R"(Enumerate + Query APIs for all gRPC services made available by this virtual device instance)";
 
@@ -51,95 +53,88 @@ cvd env ls $SERVICE_NAME $METHOD_NAME - list information on input + output messa
 cvd env type $SERVICE_NAME $REQUEST_MESSAGE_TYPE - outputs the proto the specified request message type
 )";
 
-class CvdEnvCommandHandler : public CvdCommandHandler {
- public:
-  CvdEnvCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_{instance_manager} {}
-
-  Result<void> Handle(const CommandRequest& request) override {
-    std::vector<std::string> subcmd_args = request.SubcommandArguments();
-
-    // --help and cvd env help are intercepted
-    bool is_help = request.SubcommandArguments().empty();
-
-    Command command =
-        is_help ? CF_EXPECT(HelpCommand(request))
-                : CF_EXPECT(NonHelpCommand(request));
-
-    siginfo_t infop;  // NOLINT(misc-include-cleaner)
-    command.Start().Wait(&infop, WEXITED);
-
-    CF_EXPECT(CheckProcessExitedNormally(infop));
-    return {};
+Result<Command> HelpCommand(const CommandRequest& request) {
+  cvd_common::Envs envs_copy = request.Env();
+  std::vector<std::string> help_args = request.SubcommandArguments();
+  if (help_args.empty()) {
+    help_args.push_back("--help");
   }
+  envs_copy[kAndroidHostOut] = CF_EXPECT(AndroidHostPath(request.Env()));
+  return CF_EXPECT(
+      ConstructCvdHelpCommand(kCvdEnvBin, envs_copy, help_args, request));
+}
 
-  cvd_common::Args CmdList() const override { return {"env"}; }
+Result<Command> NonHelpCommand(InstanceManager& instance_manager,
+                               const CommandRequest& request) {
+  auto [instance, group] =
+      CF_EXPECT(selector::SelectInstance(instance_manager, request));
+  const auto& home = group.Proto().home_directory();
 
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
+  const std::string& android_host_out = group.Proto().host_artifacts_path();
+  const std::string cvd_env_bin_path =
+      absl::StrCat(android_host_out, "/bin/", kCvdEnvBin);
+  const std::string internal_device_name = absl::StrCat("cvd-", instance.id());
 
+  const cvd_common::Args& subcmd_args = request.SubcommandArguments();
+  cvd_common::Args cvd_env_args{internal_device_name};
+  cvd_env_args.insert(cvd_env_args.end(), subcmd_args.begin(),
+                      subcmd_args.end());
 
-
-  bool RequiresDeviceExists() const override { return true; }
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    Result<Command> help_cmd_res = HelpCommand(request);
-    if (!help_cmd_res.ok()) {
-      // Couldn't find an underlying binary to defer to for help
-      return kDetailedHelpText;
-    }
-    std::string stdout;
-    int res = RunWithManagedStdio(std::move(help_cmd_res.value()), nullptr,
-                                  &stdout, nullptr);
-    // gflags returns exit code 1 when --help is given
-    CF_EXPECTF(res == 0 || res == 1,
-               "Failed to execute internal env binary, exit code: {}", res);
-    return stdout;
-  }
-
- private:
-  Result<Command> HelpCommand(const CommandRequest& request) const {
-    cvd_common::Envs envs_copy = request.Env();
-    std::vector<std::string> help_args = request.SubcommandArguments();
-    if (help_args.empty()) {
-      help_args.push_back("--help");
-    }
-    envs_copy[kAndroidHostOut] = CF_EXPECT(AndroidHostPath(request.Env()));
-    return CF_EXPECT(
-        ConstructCvdHelpCommand(kCvdEnvBin, envs_copy, help_args, request));
-  }
-
-  Result<Command> NonHelpCommand(const CommandRequest& request) {
-    auto [instance, group] =
-        CF_EXPECT(selector::SelectInstance(instance_manager_, request));
-    const auto& home = group.Proto().home_directory();
-
-    const std::string& android_host_out = group.Proto().host_artifacts_path();
-    const std::string cvd_env_bin_path =
-        absl::StrCat(android_host_out, "/bin/", kCvdEnvBin);
-    const std::string internal_device_name =
-        absl::StrCat("cvd-", instance.id());
-
-    const cvd_common::Args& subcmd_args = request.SubcommandArguments();
-    cvd_common::Args cvd_env_args{internal_device_name};
-    cvd_env_args.insert(cvd_env_args.end(), subcmd_args.begin(),
-                        subcmd_args.end());
-
-    return CF_EXPECT(
-        ConstructCvdGenericNonHelpCommand({.bin_file = kCvdEnvBin,
-                                           .envs = request.Env(),
-                                           .cmd_args = cvd_env_args,
-                                           .android_host_out = android_host_out,
-                                           .home = home,
-                                           .verbose = true},
-                                          request));
-  }
-
-  InstanceManager& instance_manager_;
-
-  static constexpr char kCvdEnvBin[] = "cvd_internal_env";
-};
+  return CF_EXPECT(
+      ConstructCvdGenericNonHelpCommand({.bin_file = kCvdEnvBin,
+                                         .envs = request.Env(),
+                                         .cmd_args = cvd_env_args,
+                                         .android_host_out = android_host_out,
+                                         .home = home,
+                                         .verbose = true},
+                                        request));
+}
 
 }  // namespace
+
+CvdEnvCommandHandler::CvdEnvCommandHandler(InstanceManager& instance_manager)
+    : instance_manager_{instance_manager} {}
+
+Result<void> CvdEnvCommandHandler::Handle(const CommandRequest& request) {
+  std::vector<std::string> subcmd_args = request.SubcommandArguments();
+
+  // --help and cvd env help are intercepted
+  bool is_help = request.SubcommandArguments().empty();
+
+  Command command = is_help
+                        ? CF_EXPECT(HelpCommand(request))
+                        : CF_EXPECT(NonHelpCommand(instance_manager_, request));
+
+  siginfo_t infop;  // NOLINT(misc-include-cleaner)
+  command.Start().Wait(&infop, WEXITED);
+
+  CF_EXPECT(CheckProcessExitedNormally(infop));
+  return {};
+}
+
+cvd_common::Args CvdEnvCommandHandler::CmdList() const { return {"env"}; }
+
+std::string CvdEnvCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
+
+bool CvdEnvCommandHandler::RequiresDeviceExists() const { return true; }
+
+Result<std::string> CvdEnvCommandHandler::DetailedHelp(
+    const CommandRequest& request) const {
+  Result<Command> help_cmd_res = HelpCommand(request);
+  if (!help_cmd_res.ok()) {
+    // Couldn't find an underlying binary to defer to for help
+    return kDetailedHelpText;
+  }
+  std::string stdout;
+  int res = RunWithManagedStdio(std::move(help_cmd_res.value()), nullptr,
+                                &stdout, nullptr);
+  // gflags returns exit code 1 when --help is given
+  CF_EXPECTF(res == 0 || res == 1,
+             "Failed to execute internal env binary, exit code: {}", res);
+  return stdout;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdEnvCommandHandler(
     InstanceManager& instance_manager) {

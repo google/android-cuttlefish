@@ -17,14 +17,32 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
+
+class InstanceManager;
+
+class CvdClearCommandHandler : public CvdCommandHandler {
+ public:
+  CvdClearCommandHandler(InstanceManager& instance_manager);
+
+  Result<void> Handle(const CommandRequest& request) override;
+  cvd_common::Args CmdList() const override;
+
+  bool RequiresDeviceExists() const override { return true; }
+
+  std::string SummaryHelp() const override;
+  Result<std::string> DetailedHelp(
+      const CommandRequest& request) const override;
+
+ private:
+  InstanceManager& instance_manager_;
+};
 
 std::unique_ptr<CvdCommandHandler> NewCvdClearCommandHandler(
     InstanceManager& instance_manager);
 
 }  // namespace cuttlefish
-

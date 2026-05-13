@@ -176,81 +176,79 @@ void ClearLastNLines(int n) {
   }
 }
 
-class CvdMonitorCommandHandler : public CvdCommandHandler {
- public:
-  CvdMonitorCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_{instance_manager} {}
+}  // namespace
 
-  Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(isatty(0),
-              "The monitor command requires an interactive terminal.");
+CvdMonitorCommandHandler::CvdMonitorCommandHandler(
+    InstanceManager& instance_manager)
+    : instance_manager_{instance_manager} {}
 
-    std::vector<std::string> args = request.SubcommandArguments();
-    CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
+Result<void> CvdMonitorCommandHandler::Handle(const CommandRequest& request) {
+  CF_EXPECT(isatty(0), "The monitor command requires an interactive terminal.");
 
-    auto [instance, unused] =
-        CF_EXPECT(selector::SelectInstance(instance_manager_, request),
-                  "Unable to select an instance");
+  std::vector<std::string> args = request.SubcommandArguments();
+  CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
 
-    std::string kernel_log =
-        absl::StrCat(instance.instance_dir(), "/logs/", kLogNameKernel);
-    std::string launcher_log =
-        absl::StrCat(instance.instance_dir(), "/logs/", kLogNameLauncher);
-    std::string logcat =
-        absl::StrCat(instance.instance_dir(), "/logs/", kLogNameLogcat);
+  auto [instance, unused] =
+      CF_EXPECT(selector::SelectInstance(instance_manager_, request),
+                "Unable to select an instance");
 
-    SharedFD kernel_fd;
-    SharedFD launcher_fd;
-    SharedFD logcat_fd;
+  std::string kernel_log =
+      absl::StrCat(instance.instance_dir(), "/logs/", kLogNameKernel);
+  std::string launcher_log =
+      absl::StrCat(instance.instance_dir(), "/logs/", kLogNameLauncher);
+  std::string logcat =
+      absl::StrCat(instance.instance_dir(), "/logs/", kLogNameLogcat);
 
-    while (true) {
-      if (!kernel_fd->IsOpen()) {
-        kernel_fd = SharedFD::Open(kernel_log, O_RDONLY);
-      }
-      if (!launcher_fd->IsOpen()) {
-        launcher_fd = SharedFD::Open(launcher_log, O_RDONLY);
-      }
-      if (!logcat_fd->IsOpen()) {
-        logcat_fd = SharedFD::Open(logcat, O_RDONLY);
-      }
+  SharedFD kernel_fd;
+  SharedFD launcher_fd;
+  SharedFD logcat_fd;
 
-      Result<TerminalSize> term_size_result = GetTerminalSize();
-      int width = 79;  // Default fallback width (80 - 1)
-      if (term_size_result.ok()) {
-        width = term_size_result->columns - 1;
-      }
-      LogMonitorDisplay display(width);
-
-      display.DrawFile(launcher_fd, kLogNameLauncher);
-      display.DrawFile(kernel_fd, kLogNameKernel);
-      display.DrawFile(logcat_fd, kLogNameLogcat);
-
-      std::cout << display.Finalize() << std::flush;
-
-      // Wait a bit before clearing and redrawing
-      std::this_thread::sleep_for(std::chrono::milliseconds(50));
-      ClearLastNLines(display.TotalLinesDrawn());
+  while (true) {
+    if (!kernel_fd->IsOpen()) {
+      kernel_fd = SharedFD::Open(kernel_log, O_RDONLY);
+    }
+    if (!launcher_fd->IsOpen()) {
+      launcher_fd = SharedFD::Open(launcher_log, O_RDONLY);
+    }
+    if (!logcat_fd->IsOpen()) {
+      logcat_fd = SharedFD::Open(logcat, O_RDONLY);
     }
 
-    return {};
+    Result<TerminalSize> term_size_result = GetTerminalSize();
+    int width = 79;  // Default fallback width (80 - 1)
+    if (term_size_result.ok()) {
+      width = term_size_result->columns - 1;
+    }
+    LogMonitorDisplay display(width);
+
+    display.DrawFile(launcher_fd, kLogNameLauncher);
+    display.DrawFile(kernel_fd, kLogNameKernel);
+    display.DrawFile(logcat_fd, kLogNameLogcat);
+
+    std::cout << display.Finalize() << std::flush;
+
+    // Wait a bit before clearing and redrawing
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    ClearLastNLines(display.TotalLinesDrawn());
   }
 
-  cvd_common::Args CmdList() const override { return {kMonitorCmd}; }
+  return {};
+}
 
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
+cvd_common::Args CvdMonitorCommandHandler::CmdList() const {
+  return {kMonitorCmd};
+}
 
-  bool RequiresDeviceExists() const override { return true; }
+std::string CvdMonitorCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
 
-  Result<std::string> DetailedHelp(
-      const CommandRequest& request) const override {
-    return kDetailedHelpText;
-  }
+bool CvdMonitorCommandHandler::RequiresDeviceExists() const { return true; }
 
- private:
-  InstanceManager& instance_manager_;
-};
-
-}  // namespace
+Result<std::string> CvdMonitorCommandHandler::DetailedHelp(
+    const CommandRequest& request) const {
+  return kDetailedHelpText;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdMonitorCommandHandler(
     InstanceManager& instance_manager) {

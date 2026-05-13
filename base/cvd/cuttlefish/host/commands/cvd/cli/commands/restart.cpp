@@ -59,43 +59,44 @@ struct RestartOptions {
   }
 };
 
-class CvdDeviceRestartCommandHandler : public CvdCommandHandler {
- public:
-  CvdDeviceRestartCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_{instance_manager} {}
-
-  Result<void> Handle(const CommandRequest& request) override {
-    RestartOptions options;
-    std::vector<std::string> subcmd_args = request.SubcommandArguments();
-    CF_EXPECT(ConsumeFlags(options.Flags(), subcmd_args));
-
-    auto [instance, unused] =
-        CF_EXPECT(selector::SelectInstance(instance_manager_, request),
-                  "Unable to select an instance");
-
-    CF_EXPECT(instance.Restart(
-        std::chrono::seconds(options.wait_for_launcher_seconds),
-        std::chrono::seconds(options.boot_timeout_seconds)));
-    return {};
-  }
-
-  cvd_common::Args CmdList() const override { return {kRestartCmd}; }
-
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
-
-
-
-  bool RequiresDeviceExists() const override { return true; }
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kDetailedHelpText;
-  }
-
- private:
-  InstanceManager& instance_manager_;
-};
-
 }  // namespace
+
+CvdDeviceRestartCommandHandler::CvdDeviceRestartCommandHandler(
+    InstanceManager& instance_manager)
+    : instance_manager_{instance_manager} {}
+
+Result<void> CvdDeviceRestartCommandHandler::Handle(
+    const CommandRequest& request) {
+  RestartOptions options;
+  std::vector<std::string> subcmd_args = request.SubcommandArguments();
+  CF_EXPECT(ConsumeFlags(options.Flags(), subcmd_args));
+
+  auto [instance, unused] =
+      CF_EXPECT(selector::SelectInstance(instance_manager_, request),
+                "Unable to select an instance");
+
+  CF_EXPECT(
+      instance.Restart(std::chrono::seconds(options.wait_for_launcher_seconds),
+                       std::chrono::seconds(options.boot_timeout_seconds)));
+  return {};
+}
+
+cvd_common::Args CvdDeviceRestartCommandHandler::CmdList() const {
+  return {kRestartCmd};
+}
+
+std::string CvdDeviceRestartCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
+
+bool CvdDeviceRestartCommandHandler::RequiresDeviceExists() const {
+  return true;
+}
+
+Result<std::string> CvdDeviceRestartCommandHandler::DetailedHelp(
+    const CommandRequest& request) const {
+  return kDetailedHelpText;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdDeviceRestartCommandHandler(
     InstanceManager& instance_manager) {

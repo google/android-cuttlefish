@@ -34,65 +34,58 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-namespace {
+RemoveCvdCommandHandler::RemoveCvdCommandHandler(
+    InstanceManager& instance_manager)
+    : instance_manager_(instance_manager) {}
 
-class RemoveCvdCommandHandler : public CvdCommandHandler {
- public:
-  RemoveCvdCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_(instance_manager) {}
+cvd_common::Args RemoveCvdCommandHandler::CmdList() const {
+  return {"remove", "rm"};
+}
 
-  cvd_common::Args CmdList() const override { return {"remove", "rm"}; }
+std::string RemoveCvdCommandHandler::SummaryHelp() const {
+  return "Remove devices and artifacts from the system.";
+}
 
-  std::string SummaryHelp() const override {
-    return "Remove devices and artifacts from the system.";
+Result<std::string> RemoveCvdCommandHandler::DetailedHelp(
+    const CommandRequest& request) const {
+  return "Removes selected devices from the system.\n\n"
+         "Running devices are stopped first. Deletes build and runtime "
+         "artifacts, including log files and images (only if downloaded by "
+         "cvd itself)";
+}
+
+bool RemoveCvdCommandHandler::RequiresDeviceExists() const { return true; }
+
+Result<void> RemoveCvdCommandHandler::Handle(const CommandRequest& request) {
+  std::vector<std::string> subcmd_args = request.SubcommandArguments();
+  CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, subcmd_args));
+
+  if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
+    return CF_ERR(NoGroupMessage(request));
+  }
+  auto group = CF_EXPECT(selector::SelectGroup(instance_manager_, request));
+
+  Result<void> stop_res = StopGroup(group);
+  if (!stop_res.ok()) {
+    LOG(ERROR) << stop_res.error();
+    LOG(ERROR) << "Unable to stop devices first, run `cvd reset` to forcibly "
+                  "kill any remaining device processes.";
   }
 
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return "Removes selected devices from the system.\n\n"
-           "Running devices are stopped first. Deletes build and runtime "
-           "artifacts, including log files and images (only if downloaded by "
-           "cvd itself)";
-  }
+  CF_EXPECT(instance_manager_.RemoveInstanceGroup(group));
 
+  return {};
+}
 
-  bool RequiresDeviceExists() const override { return true; }
-
-  Result<void> Handle(const CommandRequest& request) override {
-    std::vector<std::string> subcmd_args = request.SubcommandArguments();
-    CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, subcmd_args));
-
-    if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
-      return CF_ERR(NoGroupMessage(request));
-    }
-    auto group = CF_EXPECT(selector::SelectGroup(instance_manager_, request));
-
-    auto stop_res = StopGroup(group, request);
-    if (!stop_res.ok()) {
-      LOG(ERROR) << stop_res.error();
-      LOG(ERROR) << "Unable to stop devices first, run `cvd reset` to forcibly "
-                    "kill any remaining device processes.";
-    }
-
-    CF_EXPECT(instance_manager_.RemoveInstanceGroup(group));
-
+Result<void> RemoveCvdCommandHandler::StopGroup(
+    LocalInstanceGroup& group) const {
+  if (!group.HasActiveInstances()) {
     return {};
   }
-
- private:
-  Result<void> StopGroup(LocalInstanceGroup& group,
-                         const CommandRequest& request) const {
-    if (!group.HasActiveInstances()) {
-      return {};
-    }
-    CF_EXPECT(instance_manager_.StopInstanceGroup(
-        group, std::chrono::seconds(5), InstanceDirActionOnStop::Clear));
-    return {};
-  }
-
-  InstanceManager& instance_manager_;
-};
-
-}  // namespace
+  CF_EXPECT(instance_manager_.StopInstanceGroup(
+      group, std::chrono::seconds(5), InstanceDirActionOnStop::Clear));
+  return {};
+}
 
 std::unique_ptr<CvdCommandHandler> NewRemoveCvdCommandHandler(
     InstanceManager& instance_manager) {
