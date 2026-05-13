@@ -48,6 +48,10 @@ Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
   return filter;
 }
 
+// TODO CJR: move the prompt down to the bottom, make the selection menu a
+// constant string
+// TODO CJR: or maybe I make the user select the group and then only display the
+// instances?
 std::string SelectionMenu(const std::vector<LocalInstanceGroup>& groups) {
   // Multiple instance groups found, please choose one:
   //   [i] : group_name (created: TIME)
@@ -83,9 +87,12 @@ Result<LocalInstanceGroup> PromptUserForGroup(
 
   TerminalColors colors(isatty(2));
   while (true) {
+    // TODO CJR: allow two prompts if instance prompting
     std::string input_line = CF_EXPECT(terminal_->ReadLine());
     int selection = -1;
     std::string chosen_group_name;
+    // TODO CJR: pull out the validation logic into a separate helper, including
+    // the group/instance search
     if (absl::SimpleAtoi(input_line, &selection)) {
       const int n_groups = groups.size();
       if (n_groups <= selection || selection < 0) {
@@ -115,8 +122,6 @@ Result<LocalInstanceGroup> PromptUserForGroup(
 Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
     const InstanceManager& instance_manager, const CommandRequest& request,
     InstanceDatabase::Filter filter) {
-  // TODO CJR: adapt or clone PromptUserForGroup logic, but only allow instance
-  // selection
   return CF_ERR("TODO CJR implement");
 }
 
