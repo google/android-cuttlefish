@@ -67,55 +67,49 @@ Result<void> PrintLog(const std::string& filename) {
   return CF_ERR("execlp failed: " << strerror(errno));
 }
 
-class CvdLogsHandler : public CvdCommandHandler {
- public:
-  CvdLogsHandler(InstanceManager& instance_manager)
-      : instance_manager_(instance_manager) {}
+}  // namespace
 
-  Result<void> Handle(const CommandRequest& request) override {
-    auto [instance, _] =
-        CF_EXPECT(selector::SelectInstance(instance_manager_, request),
-                  "Unable to select an instance");
+CvdLogsHandler::CvdLogsHandler(InstanceManager& instance_manager)
+    : instance_manager_(instance_manager) {}
 
-    LogsCmdOptions opts;
-    std::vector<std::string> args = request.SubcommandArguments();
-    CF_EXPECT(ConsumeFlags(opts.Flags(), args));
+Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
+  auto [instance, _] =
+      CF_EXPECT(selector::SelectInstance(instance_manager_, request),
+                "Unable to select an instance");
 
-    std::string dir = instance.instance_dir();
-    std::string logs_dir = dir + "/logs";
-    if (!FileExists(logs_dir)) {
-      VLOG(0) << "Logs directory `" << logs_dir << "` does not exist.";
-      LOG(INFO) << "There are no logs files available";
-      return {};
-    }
-    CF_EXPECT(IsDirectory(logs_dir));
+  LogsCmdOptions opts;
+  std::vector<std::string> args = request.SubcommandArguments();
+  CF_EXPECT(ConsumeFlags(opts.Flags(), args));
 
-    if (opts.print_target.empty()) {
-      CF_EXPECT(PrintLogsList(logs_dir));
-      return {};
-    }
+  std::string dir = instance.instance_dir();
+  std::string logs_dir = dir + "/logs";
+  if (!FileExists(logs_dir)) {
+    VLOG(0) << "Logs directory `" << logs_dir << "` does not exist.";
+    LOG(INFO) << "There are no logs files available";
+    return {};
+  }
+  CF_EXPECT(IsDirectory(logs_dir));
 
-    std::string print_target = logs_dir + "/" + opts.print_target;
-    CF_EXPECT(FileExists(print_target));
-    CF_EXPECT(PrintLog(print_target));
+  if (opts.print_target.empty()) {
+    CF_EXPECT(PrintLogsList(logs_dir));
     return {};
   }
 
-  cvd_common::Args CmdList() const override { return {"logs"}; }
+  std::string print_target = logs_dir + "/" + opts.print_target;
+  CF_EXPECT(FileExists(print_target));
+  CF_EXPECT(PrintLog(print_target));
+  return {};
+}
 
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
+cvd_common::Args CvdLogsHandler::CmdList() const { return {"logs"}; }
 
-  bool RequiresDeviceExists() const override { return true; }
+std::string CvdLogsHandler::SummaryHelp() const { return kSummaryHelpText; }
 
-  Result<std::string> DetailedHelp(const CommandRequest&) const override {
-    return kDetailedHelpText;
-  }
+bool CvdLogsHandler::RequiresDeviceExists() const { return true; }
 
- private:
-  InstanceManager& instance_manager_;
-};
-
-}  // namespace
+Result<std::string> CvdLogsHandler::DetailedHelp(const CommandRequest&) const {
+  return kDetailedHelpText;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdLogsHandler(
     InstanceManager& instance_manager) {

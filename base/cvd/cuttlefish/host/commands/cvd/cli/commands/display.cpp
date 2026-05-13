@@ -42,6 +42,9 @@
 
 namespace cuttlefish {
 namespace {
+
+constexpr char kDisplayBin[] = "cvd_internal_display";
+
 constexpr char kSummaryHelpText[] =
     R"(Enables hotplug/unplug of displays from running cuttlefish virtual devices)";
 
@@ -59,93 +62,91 @@ Commands:
                         Captures a screenshot of the given display.
 )";
 
-class CvdDisplayCommandHandler : public CvdCommandHandler {
- public:
-  CvdDisplayCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_{instance_manager} {}
+Result<Command> BuildCommand(InstanceManager& instance_manager,
+                             const CommandRequest& request,
+                             cvd_common::Args& subcmd_args,
+                             cvd_common::Envs envs) {
+  // test if there is --instance_num flag
+  int instance_num = -1;
+  Flag instance_num_flag = GflagsCompatFlag("instance_num", instance_num);
 
-  Result<void> Handle(const CommandRequest& request) override {
-    const cvd_common::Envs& env = request.Env();
+  CF_EXPECT(ConsumeFlags({instance_num_flag}, subcmd_args));
 
-    std::vector<std::string> subcmd_args = request.SubcommandArguments();
-    if (subcmd_args.empty()) {
-      // Also print help when given no arguments
-      std::cerr << kDetailedHelpText;
-      return {};
-    }
+  auto [instance, group] =
+      instance_num >= 0
+          ? CF_EXPECT(instance_manager.FindInstanceWithGroup(
+                {.instance_id = instance_num}))
+          : CF_EXPECT(selector::SelectInstance(instance_manager, request));
+  const auto& home = group.Proto().home_directory();
 
-    // may modify subcmd_args by consuming in parsing
-    Command command = CF_EXPECT(BuildCommand(request, subcmd_args, env));
+  const std::string& android_host_out = group.Proto().host_artifacts_path();
+  const std::string cvd_display_bin_path =
+      absl::StrCat(android_host_out, "/bin/", kDisplayBin);
 
-    siginfo_t infop;  // NOLINT(misc-include-cleaner)
-    command.Start().Wait(&infop, WEXITED);
+  cvd_common::Args cvd_env_args{subcmd_args};
+  cvd_env_args.push_back(absl::StrCat("--instance_num=", instance.id()));
+  envs["HOME"] = home;
+  envs[kAndroidHostOut] = android_host_out;
+  envs[kAndroidSoongHostOut] = android_host_out;
 
-    CF_EXPECT(CheckProcessExitedNormally(infop));
+  std::stringstream command_to_issue;
+  std::cerr << "HOME=" << home << " " << kAndroidHostOut << "="
+            << android_host_out << " " << kAndroidSoongHostOut << "="
+            << android_host_out << " " << cvd_display_bin_path << " ";
+  for (const auto& arg : cvd_env_args) {
+    std::cerr << arg << " ";
+  }
+
+  ConstructCommandParam construct_cmd_param{.bin_path = cvd_display_bin_path,
+                                            .home = home,
+                                            .args = cvd_env_args,
+                                            .envs = std::move(envs),
+                                            .working_dir = CurrentDirectory(),
+                                            .command_name = kDisplayBin};
+  Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
+  return command;
+}
+}  // namespace
+
+CvdDisplayCommandHandler::CvdDisplayCommandHandler(
+    InstanceManager& instance_manager)
+    : instance_manager_{instance_manager} {}
+
+Result<void> CvdDisplayCommandHandler::Handle(const CommandRequest& request) {
+  const cvd_common::Envs& env = request.Env();
+
+  std::vector<std::string> subcmd_args = request.SubcommandArguments();
+  if (subcmd_args.empty()) {
+    // Also print help when given no arguments
+    std::cerr << kDetailedHelpText;
     return {};
   }
 
-  cvd_common::Args CmdList() const override { return {"display"}; }
+  // may modify subcmd_args by consuming in parsing
+  Command command =
+      CF_EXPECT(BuildCommand(instance_manager_, request, subcmd_args, env));
 
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
+  siginfo_t infop;  // NOLINT(misc-include-cleaner)
+  command.Start().Wait(&infop, WEXITED);
 
+  CF_EXPECT(CheckProcessExitedNormally(infop));
+  return {};
+}
 
+cvd_common::Args CvdDisplayCommandHandler::CmdList() const {
+  return {"display"};
+}
 
-  bool RequiresDeviceExists() const override { return true; }
+std::string CvdDisplayCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
 
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kDetailedHelpText;
-  }
+bool CvdDisplayCommandHandler::RequiresDeviceExists() const { return true; }
 
- private:
-  Result<Command> BuildCommand(const CommandRequest& request,
-                               cvd_common::Args& subcmd_args,
-                               cvd_common::Envs envs) {
-    // test if there is --instance_num flag
-    int instance_num = -1;
-    Flag instance_num_flag = GflagsCompatFlag("instance_num", instance_num);
-
-    CF_EXPECT(ConsumeFlags({instance_num_flag}, subcmd_args));
-
-    auto [instance, group] =
-        instance_num >= 0
-            ? CF_EXPECT(instance_manager_.FindInstanceWithGroup(
-                  {.instance_id = instance_num}))
-            : CF_EXPECT(selector::SelectInstance(instance_manager_, request));
-    const auto& home = group.Proto().home_directory();
-
-    const std::string& android_host_out = group.Proto().host_artifacts_path();
-    const std::string cvd_display_bin_path =
-        absl::StrCat(android_host_out, "/bin/", kDisplayBin);
-
-    cvd_common::Args cvd_env_args{subcmd_args};
-    cvd_env_args.push_back(absl::StrCat("--instance_num=", instance.id()));
-    envs["HOME"] = home;
-    envs[kAndroidHostOut] = android_host_out;
-    envs[kAndroidSoongHostOut] = android_host_out;
-
-    std::stringstream command_to_issue;
-    std::cerr << "HOME=" << home << " " << kAndroidHostOut << "="
-              << android_host_out << " " << kAndroidSoongHostOut << "="
-              << android_host_out << " " << cvd_display_bin_path << " ";
-    for (const auto& arg : cvd_env_args) {
-      std::cerr << arg << " ";
-    }
-
-    ConstructCommandParam construct_cmd_param{.bin_path = cvd_display_bin_path,
-                                              .home = home,
-                                              .args = cvd_env_args,
-                                              .envs = std::move(envs),
-                                              .working_dir = CurrentDirectory(),
-                                              .command_name = kDisplayBin};
-    Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
-    return command;
-  }
-
-  InstanceManager& instance_manager_;
-  static constexpr char kDisplayBin[] = "cvd_internal_display";
-};
-
-}  // namespace
+Result<std::string> CvdDisplayCommandHandler::DetailedHelp(
+    const CommandRequest& request) const {
+  return kDetailedHelpText;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdDisplayCommandHandler(
     InstanceManager& instance_manager) {

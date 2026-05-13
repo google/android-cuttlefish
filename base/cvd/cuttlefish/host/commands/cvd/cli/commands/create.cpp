@@ -200,29 +200,8 @@ Result<bool> IsDefaultGroup(const CommandRequest& request) {
          !request.Selectors().HasOptions();
 }
 
-}  // namespace
-
-class CvdCreateCommandHandler : public CvdCommandHandler {
- public:
-  CvdCreateCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_(instance_manager) {}
-
-  Result<void> Handle(const CommandRequest& request) override;
-  std::vector<std::string> CmdList() const override { return {"create"}; }
-  std::string SummaryHelp() const override;
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
-
- private:
-  Result<LocalInstanceGroup> CreateGroup(const cvd_common::Args& subcmd_args,
-                                         const cvd_common::Envs& envs,
-                                         const CommandRequest& request);
-  Result<void> CreateSymlinks(const LocalInstanceGroup& group);
-
-  InstanceManager& instance_manager_;
-};
-
-Result<LocalInstanceGroup> CvdCreateCommandHandler::CreateGroup(
+Result<LocalInstanceGroup> CreateGroup(
+    InstanceManager& instance_manager,
     const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
     const CommandRequest& request) {
   GroupCreationInfo creation_info = CF_EXPECT(AnalyzeCreation({
@@ -231,18 +210,17 @@ Result<LocalInstanceGroup> CvdCreateCommandHandler::CreateGroup(
       .selectors = request.Selectors(),
   }));
 
-  auto groups = CF_EXPECT(instance_manager_.FindGroups(
+  auto groups = CF_EXPECT(instance_manager.FindGroups(
       {.group_name = creation_info.group_creation_params.group_name}));
   CF_EXPECTF(groups.empty(), "Group named '{}' already exists",
              creation_info.group_creation_params.group_name);
-  return instance_manager_.CreateInstanceGroup(
+  return instance_manager.CreateInstanceGroup(
       std::move(creation_info.group_creation_params),
       std::move(creation_info.group_directories));
 }
 
 // For backward compatibility, we add extra symlink in home dir
-Result<void> CvdCreateCommandHandler::CreateSymlinks(
-    const LocalInstanceGroup& group) {
+Result<void> CreateSymlinks(const LocalInstanceGroup& group) {
   auto system_wide_home = CF_EXPECT(SystemWideUserHome());
   CF_EXPECT(EnsureDirectoryExists(group.HomeDir()));
   auto smallest_id = std::numeric_limits<unsigned>::max();
@@ -251,20 +229,20 @@ Result<void> CvdCreateCommandHandler::CreateSymlinks(
     smallest_id = std::min(smallest_id, instance.id());
     std::string instance_home_dir = fmt::format(
         "{}/cuttlefish/instances/cvd-{}", group.HomeDir(), instance.id());
-    if(!FileExists(instance_home_dir)) {
+    if (!FileExists(instance_home_dir)) {
       // Legacy launchers create cuttlefish_runtime.{$ID}
-      instance_home_dir = fmt::format(
-          "{}/cuttlefish_runtime.{}", group.HomeDir(), instance.id());
+      instance_home_dir = fmt::format("{}/cuttlefish_runtime.{}",
+                                      group.HomeDir(), instance.id());
     }
     CF_EXPECT(EnsureSymlink(instance_home_dir,
                             fmt::format("{}/cuttlefish_runtime.{}",
                                         system_wide_home, instance.id())));
     std::string cuttlefish_home_dir = group.HomeDir() + "/cuttlefish";
-    if(FileExists(cuttlefish_home_dir)) {
+    if (FileExists(cuttlefish_home_dir)) {
       // Legacy Cuttlefish launchers don't create this directory so no need to
       // create a corresponding symlink in that case.
-      CF_EXPECT(EnsureSymlink(cuttlefish_home_dir,
-                              system_wide_home + "/cuttlefish"));
+      CF_EXPECT(
+          EnsureSymlink(cuttlefish_home_dir, system_wide_home + "/cuttlefish"));
     }
   }
   // create cuttlefish_runtime to cuttlefish_runtime.id
@@ -287,6 +265,8 @@ Result<void> CvdCreateCommandHandler::CreateSymlinks(
   CF_EXPECT(EnsureSymlink(instance_runtime_dir, runtime_dir_link));
   return {};
 }
+
+}  // namespace
 
 Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
@@ -317,7 +297,8 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   // CreationAnalyzer needs these to be set in the environment
   envs[kAndroidHostOut] = AbsolutePath(flags.host_path);
   envs[kAndroidProductOut] = AbsolutePath(flags.product_path);
-  auto group = CF_EXPECT(CreateGroup(subcmd_args, envs, request));
+  auto group =
+      CF_EXPECT(CreateGroup(instance_manager_, subcmd_args, envs, request));
 
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
@@ -347,8 +328,6 @@ std::string CvdCreateCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
-
-
 Result<std::string> CvdCreateCommandHandler::DetailedHelp(
     const CommandRequest& request) const {
   return kDetailedHelpText;
@@ -360,4 +339,3 @@ std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(
 }
 
 }  // namespace cuttlefish
-

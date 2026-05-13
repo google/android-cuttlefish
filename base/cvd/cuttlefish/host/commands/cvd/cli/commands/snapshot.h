@@ -17,11 +17,38 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+
+class CommandRequest;
+
+class CvdSnapshotCommandHandler : public CvdCommandHandler {
+ public:
+  CvdSnapshotCommandHandler(InstanceManager& instance_manager);
+
+  Result<void> Handle(const CommandRequest& request) override;
+  cvd_common::Args CmdList() const override;
+
+  std::string SummaryHelp() const override;
+  bool RequiresDeviceExists() const override { return true; }
+  Result<std::string> DetailedHelp(
+      const CommandRequest& request) const override;
+
+ private:
+  Result<Command> GenerateCommand(const CommandRequest& request,
+                                  const std::string& subcmd,
+                                  cvd_common::Args& subcmd_args,
+                                  cvd_common::Envs envs);
+
+  InstanceManager& instance_manager_;
+};
 
 std::unique_ptr<CvdCommandHandler> NewCvdSnapshotCommandHandler(
     InstanceManager& instance_manager);

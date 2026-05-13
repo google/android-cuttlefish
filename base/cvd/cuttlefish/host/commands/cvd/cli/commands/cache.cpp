@@ -95,14 +95,7 @@ Result<CacheArguments> ProcessArguments(
   return result;
 }
 
-class CvdCacheCommandHandler : public CvdCommandHandler {
- public:
-  Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override { return {"cache"}; }
-  std::string SummaryHelp() const override;
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
-};
+}  // namespace
 
 Result<void> CvdCacheCommandHandler::Handle(const CommandRequest& request) {
   CacheArguments arguments =
@@ -147,6 +140,8 @@ Result<void> CvdCacheCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
+cvd_common::Args CvdCacheCommandHandler::CmdList() const { return {"cache"}; }
+
 std::string CvdCacheCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
@@ -170,8 +165,6 @@ Example usage:
 )",
                      kDefaultCacheSizeGb);
 }
-
-}  // namespace
 
 std::unique_ptr<CvdCommandHandler> NewCvdCacheCommandHandler() {
   return std::unique_ptr<CvdCommandHandler>(new CvdCacheCommandHandler());

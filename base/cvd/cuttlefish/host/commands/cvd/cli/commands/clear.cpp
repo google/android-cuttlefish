@@ -34,20 +34,7 @@ constexpr char kClearCmd[] = "clear";
 constexpr char kSummaryHelpText[] =
     "Clears the instance database, stopping any running instances first.";
 
-class CvdClearCommandHandler : public CvdCommandHandler {
- public:
-  CvdClearCommandHandler(InstanceManager& instance_manager);
-
-  Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override { return {kClearCmd}; }
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
-
-  bool RequiresDeviceExists() const override { return true; }
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
-
- private:
-  InstanceManager& instance_manager_;
-};
+}  // namespace
 
 CvdClearCommandHandler::CvdClearCommandHandler(
     InstanceManager& instance_manager)
@@ -60,12 +47,16 @@ Result<void> CvdClearCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
+cvd_common::Args CvdClearCommandHandler::CmdList() const { return {kClearCmd}; }
+
+std::string CvdClearCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
+
 Result<std::string> CvdClearCommandHandler::DetailedHelp(
     const CommandRequest& request) const {
   return kSummaryHelpText;
 }
-
-}  // namespace
 
 std::unique_ptr<CvdCommandHandler> NewCvdClearCommandHandler(
     InstanceManager& instance_manager) {
@@ -74,4 +65,3 @@ std::unique_ptr<CvdCommandHandler> NewCvdClearCommandHandler(
 }
 
 }  // namespace cuttlefish
-

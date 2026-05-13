@@ -63,47 +63,43 @@ Result<Oauth2ConsentRequest> ParseFlags(std::vector<std::string>& args) {
   return oauth2_request;
 }
 
-class CvdLoginCommand : public CvdCommandHandler {
- public:
-  Result<void> Handle(const CommandRequest& request) override {
-    std::vector<std::string> args = request.SubcommandArguments();
-    const Oauth2ConsentRequest oauth2_request = CF_EXPECT(ParseFlags(args));
-    if (!IsPopulated(oauth2_request)) {
-      std::cout << CF_EXPECT(DetailedHelp(request)) << std::endl;
-      return {};
-    }
+}  // namespace
 
-    CurlGlobalInit init;
-    std::unique_ptr<HttpClient> http_client =
-        CurlHttpClient(/*use_logging_debug_function=*/true);
-    CF_EXPECT(http_client.get(), "Failed to create a http client");
-
-    if (!oauth2_request.is_ssh) {
-      std::cout << "Using SSH? Please run this command again with `--ssh`.\n";
-    }
-    CF_EXPECT(Oauth2Login(*http_client, oauth2_request));
-
+Result<void> CvdLoginCommand::Handle(const CommandRequest& request) {
+  std::vector<std::string> args = request.SubcommandArguments();
+  const Oauth2ConsentRequest oauth2_request = CF_EXPECT(ParseFlags(args));
+  if (!IsPopulated(oauth2_request)) {
+    std::cout << CF_EXPECT(DetailedHelp(request)) << std::endl;
     return {};
   }
 
-  cvd_common::Args CmdList() const override { return {"login"}; }
+  CurlGlobalInit init;
+  std::unique_ptr<HttpClient> http_client =
+      CurlHttpClient(/*use_logging_debug_function=*/true);
+  CF_EXPECT(http_client.get(), "Failed to create a http client");
 
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
-
-
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    std::string google_appendix;
-    if (IsGoogleCorp()) {
-      google_appendix =
-          "\nIf running on corp, use the wrapper script in "
-          "google3/cloud/android/login";
-    }
-    return kHelpMessage + google_appendix;
+  if (!oauth2_request.is_ssh) {
+    std::cout << "Using SSH? Please run this command again with `--ssh`.\n";
   }
-};
+  CF_EXPECT(Oauth2Login(*http_client, oauth2_request));
 
-}  // namespace
+  return {};
+}
+
+cvd_common::Args CvdLoginCommand::CmdList() const { return {"login"}; }
+
+std::string CvdLoginCommand::SummaryHelp() const { return kSummaryHelpText; }
+
+Result<std::string> CvdLoginCommand::DetailedHelp(
+    const CommandRequest& request) const {
+  std::string google_appendix;
+  if (IsGoogleCorp()) {
+    google_appendix =
+        "\nIf running on corp, use the wrapper script in "
+        "google3/cloud/android/login";
+  }
+  return kHelpMessage + google_appendix;
+}
 
 /** Create a credentials file */
 std::unique_ptr<CvdCommandHandler> NewLoginCommand() {

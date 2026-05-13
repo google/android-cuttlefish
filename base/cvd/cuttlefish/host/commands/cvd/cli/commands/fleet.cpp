@@ -32,6 +32,8 @@
 
 namespace cuttlefish {
 
+constexpr char kFleetSubcmd[] = "fleet";
+
 constexpr char kSummaryHelpText[] =
     R"(lists active devices with relevant information)";
 
@@ -41,30 +43,22 @@ usage: cvd fleet [--help]
   cvd fleet will list the active devices with information.
 )";
 
-class CvdFleetCommandHandler : public CvdCommandHandler {
- public:
-  CvdFleetCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_(instance_manager) {}
+CvdFleetCommandHandler::CvdFleetCommandHandler(
+    InstanceManager& instance_manager)
+    : instance_manager_(instance_manager) {}
 
-  Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override { return {kFleetSubcmd}; }
+cvd_common::Args CvdFleetCommandHandler::CmdList() const {
+  return {kFleetSubcmd};
+}
 
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
+std::string CvdFleetCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
 
-
-
-  bool RequiresDeviceExists() const override { return true; }
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kHelpMessage;
-  }
-
- private:
-  InstanceManager& instance_manager_;
-
-  static constexpr char kFleetSubcmd[] = "fleet";
-
-};
+Result<std::string> CvdFleetCommandHandler::DetailedHelp(
+    const CommandRequest& request) const {
+  return kHelpMessage;
+}
 
 Result<void> CvdFleetCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
@@ -82,8 +76,6 @@ Result<void> CvdFleetCommandHandler::Handle(const CommandRequest& request) {
 
   return {};
 }
-
-
 
 std::unique_ptr<CvdCommandHandler> NewCvdFleetCommandHandler(
     InstanceManager& instance_manager) {

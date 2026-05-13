@@ -35,12 +35,12 @@
 #include <utility>
 #include <vector>
 
-#include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -59,7 +59,6 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
-#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/operator_client.h"
 #include "cuttlefish/host/commands/cvd/instances/stop.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -242,54 +241,18 @@ Result<std::unique_ptr<OperatorControlConn>> PreregisterGroup(
   return operator_conn;
 }
 
-class CvdStartCommandHandler : public CvdCommandHandler {
- public:
-  CvdStartCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_(instance_manager) {}
+Result<void> CvdResetGroup(const LocalInstanceGroup& group) {
+  // We can't run stop_cvd here. It may hang forever, and doesn't make sense
+  // to interrupt it.
+  const auto& instances = group.Instances();
+  CF_EXPECT(!instances.empty());
+  const auto& first_instance = *instances.begin();
+  CF_EXPECT(ForcefullyStopGroup(first_instance.id()));
+  return {};
+}
 
-  Result<void> Handle(const CommandRequest& request) override;
-  std::vector<std::string> CmdList() const override {
-    return {"start", "launch_cvd"};
-  }
-  std::string SummaryHelp() const override {
-    return "Start a Cuttlefish virtual device or environment";
-  }
-
-  bool RequiresDeviceExists() const override { return true; }
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
-
- private:
-  Result<void> LaunchDevice(Command command, LocalInstanceGroup& group,
-                            const cvd_common::Envs& envs,
-                            const CommandRequest& request);
-
-  Result<void> LaunchDeviceInterruptible(Command command,
-                                         LocalInstanceGroup& group,
-                                         const cvd_common::Envs& envs,
-                                         const CommandRequest& request);
-
-  Result<Command> ConstructCvdNonHelpCommand(const std::string& bin_file,
-                                             const LocalInstanceGroup& group,
-                                             const cvd_common::Args& args,
-                                             const cvd_common::Envs& envs,
-                                             const CommandRequest& request);
-
-  struct GroupAndLockFiles {
-    LocalInstanceGroup group;
-    std::vector<InstanceLockFile> lock_files;
-  };
-
-  Result<void> UpdateEnvs(cvd_common::Envs& envs,
-                          const LocalInstanceGroup& group);
-
-  Result<std::string> FindStartBin(const std::string& android_host_out) const;
-
-  InstanceManager& instance_manager_;
-  SubprocessWaiter subprocess_waiter_;
-};
-
-Result<void> CvdStartCommandHandler::UpdateEnvs(
-    cvd_common::Envs& envs, const LocalInstanceGroup& group) {
+Result<void> UpdateEnvs(cvd_common::Envs& envs,
+                        const LocalInstanceGroup& group) {
   CF_EXPECT(!group.Instances().empty());
   envs[kCuttlefishInstanceEnvVarName] =
       std::to_string(group.Instances()[0].id());
@@ -306,10 +269,15 @@ Result<void> CvdStartCommandHandler::UpdateEnvs(
   return {};
 }
 
-Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
-    const std::string& bin_file, const LocalInstanceGroup& group,
-    const cvd_common::Args& args, const cvd_common::Envs& envs,
-    const CommandRequest& request) {
+Result<std::string> FindStartBin(const std::string& android_host_out) {
+  return CF_EXPECT(HostToolTarget(android_host_out).GetStartBinName());
+}
+
+Result<Command> ConstructCvdNonHelpCommand(const std::string& bin_file,
+                                           const LocalInstanceGroup& group,
+                                           const cvd_common::Args& args,
+                                           const cvd_common::Envs& envs,
+                                           const CommandRequest& request) {
   auto bin_path = group.HostArtifactsPath();
   CF_EXPECTF(PotentiallyHostArtifactsPath(bin_path),
              "ANDROID_HOST_OUT, \"{}\" is not a tool directory", bin_path);
@@ -329,10 +297,11 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
   return non_help_command;
 }
 
-Result<std::string> CvdStartCommandHandler::FindStartBin(
-    const std::string& android_host_out) const {
-  return CF_EXPECT(HostToolTarget(android_host_out).GetStartBinName());
-}
+}  // namespace
+
+CvdStartCommandHandler::CvdStartCommandHandler(
+    InstanceManager& instance_manager)
+    : instance_manager_(instance_manager) {}
 
 static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
   Flag flag =
@@ -464,14 +433,8 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-static Result<void> CvdResetGroup(const LocalInstanceGroup& group) {
-  // We can't run stop_cvd here. It may hang forever, and doesn't make sense
-  // to interrupt it.
-  const auto& instances = group.Instances();
-  CF_EXPECT(!instances.empty());
-  const auto& first_instance = *instances.begin();
-  CF_EXPECT(ForcefullyStopGroup(first_instance.id()));
-  return {};
+cvd_common::Args CvdStartCommandHandler::CmdList() const {
+  return {"start", "launch_cvd"};
 }
 
 Result<void> CvdStartCommandHandler::LaunchDevice(
@@ -557,8 +520,6 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
   }
   return stdout;
 }
-
-}  // namespace
 
 std::unique_ptr<CvdCommandHandler> NewCvdStartCommandHandler(
     InstanceManager& instance_manager) {

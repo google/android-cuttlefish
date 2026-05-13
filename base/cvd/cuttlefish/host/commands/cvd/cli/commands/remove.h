@@ -20,8 +20,27 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 
 namespace cuttlefish {
+
+class RemoveCvdCommandHandler : public CvdCommandHandler {
+ public:
+  RemoveCvdCommandHandler(InstanceManager& instance_manager);
+
+  Result<void> Handle(const CommandRequest& request) override;
+  cvd_common::Args CmdList() const override;
+
+  std::string SummaryHelp() const override;
+  bool RequiresDeviceExists() const override;
+  Result<std::string> DetailedHelp(
+      const CommandRequest& request) const override;
+
+ private:
+  Result<void> StopGroup(LocalInstanceGroup& group) const;
+
+  InstanceManager& instance_manager_;
+};
 
 std::unique_ptr<CvdCommandHandler> NewRemoveCvdCommandHandler(
     InstanceManager& instance_manager);

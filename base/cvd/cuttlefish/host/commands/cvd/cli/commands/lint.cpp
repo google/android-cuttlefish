@@ -31,6 +31,8 @@
 namespace cuttlefish {
 namespace {
 
+constexpr char kLintSubCmd[] = "lint";
+
 constexpr char kSummaryHelpText[] =
     R"(error checks the input virtual device json config file)";
 
@@ -43,39 +45,31 @@ Usage: cvd lint /path/to/input.json
 
 }  // namespace
 
-class LintCommandHandler : public CvdCommandHandler {
- public:
-  Result<void> Handle(const CommandRequest& request) override {
-    std::vector<std::string> args = request.SubcommandArguments();
-    auto working_directory = CurrentDirectory();
-    const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
+Result<void> LintCommandHandler::Handle(const CommandRequest& request) {
+  std::vector<std::string> args = request.SubcommandArguments();
+  auto working_directory = CurrentDirectory();
+  const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
 
-    std::cout << "Lint of flags and config \"" << config_path
-              << "\" succeeded\n";
+  std::cout << "Lint of flags and config \"" << config_path << "\" succeeded\n";
 
-    return {};
-  }
+  return {};
+}
 
-  cvd_common::Args CmdList() const override { return {kLintSubCmd}; }
+cvd_common::Args LintCommandHandler::CmdList() const { return {kLintSubCmd}; }
 
-  std::string SummaryHelp() const override { return kSummaryHelpText; }
+std::string LintCommandHandler::SummaryHelp() const { return kSummaryHelpText; }
 
+Result<std::string> LintCommandHandler::DetailedHelp(
+    const CommandRequest& request) const {
+  return kDetailedHelpText;
+}
 
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kDetailedHelpText;
-  }
-
- private:
-  Result<std::string> ValidateConfig(std::vector<std::string>& args,
-                                     const std::string& working_directory) {
-    const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
-    CF_EXPECT(GetEnvironmentSpecification(flags));
-    return flags.config_path;
-  }
-
-  static constexpr char kLintSubCmd[] = "lint";
-};
+Result<std::string> LintCommandHandler::ValidateConfig(
+    std::vector<std::string>& args, const std::string& working_directory) {
+  const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
+  CF_EXPECT(GetEnvironmentSpecification(flags));
+  return flags.config_path;
+}
 
 std::unique_ptr<CvdCommandHandler> NewLintCommand() {
   return std::unique_ptr<CvdCommandHandler>(new LintCommandHandler());
