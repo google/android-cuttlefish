@@ -50,16 +50,6 @@ if [ -z ${bridge_interface} ]; then
   create_bridges=1
 fi
 
-# Newer distros prefer nft, but broute is not supported, so use
-# the legacy ebtables instead
-ebtables=$(which ebtables-legacy)
-# If there's no ebtables-legacy, it's probably an older distro,
-# and ebtables should support broute directly
-ebtables=${ebtables:-ebtables}
-# Similarly for iptables
-iptables=$(which iptables-legacy)
-iptables=${iptables:-iptables}
-
 # Make sure these directories exist, since they are used multiple times
 mkdir -p /run /var/run
 
