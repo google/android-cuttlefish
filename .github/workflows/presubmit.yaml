@@ -13,6 +13,9 @@ concurrency:
   # previous runs are cancelled when a new run is started
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   buildozer:
     runs-on: ubuntu-22.04

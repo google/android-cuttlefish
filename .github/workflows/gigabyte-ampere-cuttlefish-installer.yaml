@@ -9,6 +9,9 @@ on:
     branchs:
       - '**'
 
+permissions:
+  contents: read
+
 jobs:
   check-install-gigabyte-package-deb-job:
     runs-on: ubuntu-22.04-arm
