@@ -35,11 +35,11 @@ podcvd-setup
 Now it's available to execute `podcvd help` or `podcvd create` as you could
 execute `cvd help` or `cvd create` after installing `cuttlefish-base`.
 
-### cuttlefish-mcp-server
+### Skill for agents
 
-cuttlefish-mcp-server requires additional setup beyond podcvd.
+Installing skill requires additional setup beyond podcvd.
 
-Execute `gemini extensions install /usr/lib/cuttlefish-podcvd/cuttlefish-mcp-server/`.
+For Gemini CLI, execute `gemini skills link /usr/lib/cuttlefish-podcvd/skill`.
 
 ## Development guide
 
@@ -54,12 +54,3 @@ describes how to build `cuttlefish-podcvd` debian package.
 
 Execute `sudo apt install ./cuttlefish-podcvd_*.deb` to install it on your
 machine.
-
-### Manually build cuttlefish_mcp_server
-
-Execute `go build ./cmd/cuttlefish_mcp_server` from `container/src/podcvd`
-directory.
-
-### Test cuttlefish_mcp_server on your local machine
-
-Execute `gemini extensions install container/src/podcvd`.
