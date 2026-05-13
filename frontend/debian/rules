@@ -38,6 +38,7 @@ override_dh_installinit:
 .PHONY: override_dh_installsystemd
 override_dh_installsystemd:
 	dh_installsystemd --name=cuttlefish-operator
+	dh_installsystemd --name=cuttlefish-host_orchestrator
 	dh_installsystemd
 
 .PHONY: override_dh_auto_clean
