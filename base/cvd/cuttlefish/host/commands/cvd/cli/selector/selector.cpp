@@ -34,16 +34,6 @@ namespace cuttlefish {
 namespace selector {
 namespace {
 
-Result<LocalInstanceGroup> GetDefaultGroup(
-    const InstanceManager& instance_manager) {
-  const std::vector<LocalInstanceGroup> all_groups =
-      CF_EXPECT(instance_manager.FindGroups({}));
-  CF_EXPECTF(all_groups.size() == 1,
-             "There are {} instance groups, unable to pick one",
-             all_groups.size());
-  return all_groups.front();
-}
-
 Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
     const SelectorOptions& selectors) {
   InstanceDatabase::Filter filter;
@@ -130,27 +120,6 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
   return CF_ERR("TODO CJR implement");
 }
 
-Result<std::pair<LocalInstance, LocalInstanceGroup>> FindDefaultInstance(
-    const InstanceManager& instance_manager) {
-  const LocalInstanceGroup group = CF_EXPECT(GetDefaultGroup(instance_manager));
-  const std::vector<LocalInstance> instances = group.Instances();
-  CF_EXPECT_EQ(instances.size(), 1u,
-               "Default instance is the single instance in the default group.");
-  return std::make_pair(instances.front(), group);
-}
-
-Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceOrDefault(
-    const InstanceDatabase::Filter& filter,
-    const InstanceManager& instance_manager) {
-  if (filter.Empty()) {
-    return CF_EXPECT(FindDefaultInstance(instance_manager));
-  }
-  std::vector<std::pair<LocalInstance, LocalInstanceGroup>> instances =
-      CF_EXPECT(instance_manager.FindInstances(filter));
-  CF_EXPECT_EQ(instances.size(), 1u, "instances.size() = " << instances.size());
-  return instances.front();
-}
-
 }  // namespace
 
 Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
@@ -158,8 +127,8 @@ Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
   const InstanceDatabase::Filter filter =
       CF_EXPECT(BuildFilterFromSelectors(request.Selectors()));
   std::vector<LocalInstanceGroup> groups;
-  if (filter.Empty()) {
-    groups = CF_EXPECT(instance_manager.FindGroups({}));  // trying to default
+  if (filter.Empty()) {  // try to default
+    groups = CF_EXPECT(instance_manager.FindGroups({}));
   } else {
     groups = CF_EXPECT(instance_manager.FindGroups(filter));
   }
@@ -176,18 +145,17 @@ Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
     const InstanceManager& instance_manager, const CommandRequest& request) {
-  const bool has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
-  CF_EXPECT(std::move(has_groups), "No instance groups available");
-  // TODO CJR: can we have an instance group with no instances?
-  //    or do I need to check for that?
-  InstanceDatabase::Filter filter =
+  const InstanceDatabase::Filter filter =
       CF_EXPECT(BuildFilterFromSelectors(request.Selectors()));
-
-  Result<std::pair<LocalInstance, LocalInstanceGroup>>
-      instance_selection_result =
-          CF_EXPECT(FindInstanceOrDefault(filter, instance_manager));
-  if (instance_selection_result.ok()) {
-    return CF_EXPECT(std::move(instance_selection_result));
+  std::vector<std::pair<LocalInstance, LocalInstanceGroup>> instances;
+  if (filter.Empty()) {  // try to default
+    instances = CF_EXPECT(instance_manager.FindInstances({}));
+  } else {
+    instances = CF_EXPECT(instance_manager.FindInstances(filter));
+  }
+  CF_EXPECT(!instances.empty(), "No instances available");
+  if (instances.size() == 1) {
+    return instances.front();
   }
   CF_EXPECT(isatty(0),
             "Multiple instances found.  Narrow the selection with selector "
