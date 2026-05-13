@@ -185,6 +185,26 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "gflags_xml_parser",
+    srcs = ["gflags_xml_parser.cpp"],
+    hdrs = ["gflags_xml_parser.h"],
+    features = ["-layering_check"],
+    deps = [
+        "//cuttlefish/result",
+        "@libxml2",
+    ],
+)
+
+cf_cc_test(
+    name = "gflags_xml_parser_test",
+    srcs = ["gflags_xml_parser_test.cpp"],
+    deps = [
+        ":gflags_xml_parser",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
     name = "host_info",
     srcs = ["host_info.cpp"],
     hdrs = ["host_info.h"],
