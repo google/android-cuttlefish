@@ -40,8 +40,8 @@ namespace {
 
 using Subprocess::StdIOChannel::kStdErr;
 
-Command NewCommand(const std::string& socket_path) {
-  Command cmd(VhostUserMediaEmulatedCameraSPlaneBinary());
+Command NewCommand(const std::string& binary_path, const std::string& socket_path) {
+  Command cmd(binary_path);
   cmd.AddParameter("--socket-path=", socket_path);
   cmd.AddParameter("--verbosity=", "debug");
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
@@ -57,7 +57,18 @@ class VhostUserMediaDevices : public CommandSource {
   Result<std::vector<MonitorCommand>> Commands() override {
     std::vector<MonitorCommand> commands;
     for (int index = 0; index < instance_.media_configs().size(); index++) {
-      Command cmd = NewCommand(instance_.media_socket_path(index));
+      auto config = instance_.media_configs()[index];
+      std::string binary_path;
+      if (config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane) {
+        binary_path = VhostUserMediaEmulatedCameraMPlaneBinary();
+      } else if (config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane) {
+        binary_path = VhostUserMediaEmulatedCameraSPlaneBinary();
+      } else if (config.type == CuttlefishConfig::MediaType::kV4l2Proxy) {
+        continue;
+      } else {
+        CF_EXPECT(false, "unknown media type");
+      }
+      Command cmd = NewCommand(binary_path, instance_.media_socket_path(index));
       Command cmd_log_tee = CF_EXPECT(
           log_tee_.CreateLogTee(cmd, "vhu_media_simple_device", kStdErr), "Failed to create log tee command for media device");
       commands.emplace_back(std::move(cmd));
