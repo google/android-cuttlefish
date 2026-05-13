@@ -29,7 +29,8 @@
 
 namespace cuttlefish {
 
-static constexpr char kMediaTypeV4l2EmulatedCamera[] = "v4l2_emulated_camera";
+static constexpr char kMediaTypeV4l2EmulatedCameraSPlane[] = "v4l2_emulated_camera_splane";
+static constexpr char kMediaTypeV4l2EmulatedCameraMPlane[] = "v4l2_emulated_camera_mplane";
 static constexpr char kMediaTypeV4l2Proxy[] = "v4l2_proxy";
 
 Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
@@ -50,8 +51,10 @@ Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
   auto type_it = props.find("type");
   CF_EXPECT(type_it != props.end(), "Missing media type");
   CuttlefishConfig::MediaType type { CuttlefishConfig::MediaType::kUnknown };
-  if (type_it->second == kMediaTypeV4l2EmulatedCamera) {
-    type = CuttlefishConfig::MediaType::kV4l2EmulatedCamera;
+  if (type_it->second == kMediaTypeV4l2EmulatedCameraSPlane) {
+    type = CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane;
+  } else if (type_it->second == kMediaTypeV4l2EmulatedCameraMPlane) {
+    type = CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane;
   } else if (type_it->second == kMediaTypeV4l2Proxy) {
     type = CuttlefishConfig::MediaType::kV4l2Proxy;
   } else {

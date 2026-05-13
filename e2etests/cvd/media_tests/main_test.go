@@ -23,17 +23,24 @@ import (
 
 func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 	testcases := []struct {
-		branch string
-		target string
+		branch     string
+		target     string
+		cameraType string
 	}{
 		{
-			branch: "15346462", // TODO(b/510415749)
-			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+			branch:     "15346462", // TODO(b/510415749)
+			target:     "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+			cameraType: "v4l2_emulated_camera_splane",
+		},
+		{
+			branch:     "15346462", // TODO(b/510415749)
+			target:     "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+			cameraType: "v4l2_emulated_camera_mplane",
 		},
 	}
 	c := e2etests.TestContext{}
 	for _, tc := range testcases {
-		t.Run(fmt.Sprintf("BUILD=%s/%s", tc.branch, tc.target), func(t *testing.T) {
+		t.Run(fmt.Sprintf("BUILD=%s/%s/TYPE=%s", tc.branch, tc.target, tc.cameraType), func(t *testing.T) {
 			c.SetUp(t)
 			defer c.TearDown()
 
@@ -44,7 +51,7 @@ func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if err := c.CVDCreate(e2etests.CreateArgs{Args: []string{"--media=type=v4l2_emulated_camera"}}); err != nil {
+			if err := c.CVDCreate(e2etests.CreateArgs{Args: []string{fmt.Sprintf("--media=type=%s", tc.cameraType)}}); err != nil {
 				t.Fatal(err)
 			}
 
