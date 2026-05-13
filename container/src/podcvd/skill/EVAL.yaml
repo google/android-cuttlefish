@@ -1,0 +1,62 @@
+suite_name: podcvd
+timeout_seconds: 600
+max_tool_calls: 80
+
+cases:
+  - name: podcvd_lifecycle_single_create_and_reset
+    prompt: >
+      Create a single Cuttlefish instance group. Sequentially perform these multi-layered verifications:
+      1. Extract the assigned group name, ADB connection address, and truncated base Web UI URL.
+      2. Execute fleet to ensure the group is actively registered.
+      3. Execute `adb devices -l` to confirm the ADB device is attached.
+      4. Execute a `curl` command targeting the base Web UI URL to verify dashboard accessibility.
+      Finally, perform a global clear to reset all states globally.
+    skills: [podcvd]
+    rubric: |
+      The LLM evaluator must verify that the agent strictly follows this complete end-to-end agentic sequence:
+      1. Creation: Executes `scripts/podcvd_executor.sh create` with mandatory flags `--vhost_user_vsock=true` and `--report_anonymous_usage_stats=n`. Direct `podcvd` usage is prohibited.
+      2. Extraction: Parses outputs to explicitly display connection details. The evaluator must enforce the exact structural Formats below, while treating the Example Values strictly as illustrative references:
+         - Group Name ➔ Format: simple identifier string (Example Value: `cvd_1`)
+         - ADB Connection ➔ Format: `IP:PORT` (Example Value: `192.168.80.1:6520`)
+         - Web UI Endpoint ➔ Format: `https://IP:PORT` strictly stripping all specific internal paths (Example Value: `https://192.168.80.1:11443`)
+      3. Fleet Verification: Executes `scripts/podcvd_executor.sh fleet` to confirm active registration.
+      4. ADB Bridge Verification: Executes `adb devices -l` to explicitly confirm the Cuttlefish instance is attached as a valid device.
+      5. Application Verification: Executes a `curl` command against the extracted Web UI endpoint to verify HTTP reachability.
+      6. Reset: Executes `scripts/podcvd_executor.sh clear` to purge all resources globally.
+    expect_keywords_any:
+      - "scripts/podcvd_executor.sh"
+      - "--vhost_user_vsock=true"
+      - "--report_anonymous_usage_stats=n"
+      - "fleet"
+      - "adb"
+      - "curl"
+      - "clear"
+
+  - name: podcvd_lifecycle_bulk_create_and_dynamic_teardown
+    prompt: >
+      Create two Cuttlefish instance groups in parallel. Sequentially perform these verifications for both distinct groups:
+      1. Report their identifiers, ADB addresses, and truncated Web UI URLs.
+      2. Execute fleet to monitor their active registration.
+      3. Execute `adb devices -l` to confirm both ADB connection states are present.
+      4. Execute `curl` requests to verify that both Web UI endpoints are network-accessible.
+      Finally, remove both groups concurrently by dynamically injecting their extracted identifiers.
+    skills: [podcvd]
+    rubric: |
+      The LLM evaluator must verify native task concurrency, multi-layered checks, and dynamic state injection:
+      1. Bulk Creation: Launches two independent `scripts/podcvd_executor.sh create` commands concurrently using native agent capabilities. Mandatory flags must be applied.
+      2. Extraction: Parses outputs to display distinct access details for each group. The evaluator must enforce the required Formats below without deviation, treating Example Values strictly as illustrative placeholders:
+         - Group Name ➔ Format: simple identifier string (Example Value: `cvd_1`)
+         - ADB Connection ➔ Format: `IP:PORT` using standard ADB port (Example Value: `192.168.80.1:6520`)
+         - Web UI Endpoint ➔ Format: `https://IP:PORT` using standard Web UI port (Example Value: `https://192.168.80.1:11443`)
+      3. Fleet Monitoring: Executes `scripts/podcvd_executor.sh fleet`.
+      4. ADB Bridge Monitoring: Executes `adb devices -l` to confirm multiple distinct IP:port attachments.
+      5. Network Monitoring: Executes `curl` commands to proactively verify that both independent Web UI dashboards respond.
+      6. Dynamic Teardown: Concurrently launches independent `remove` commands. The agent MUST dynamically inject the actual group name strings extracted from the creation steps into the `--group_name` arguments (Format: `--group_name=<dynamically_parsed_string>`, Example Value: `--group_name=cvd_1`). Hardcoding target strings is strictly forbidden.
+    expect_keywords_any:
+      - "scripts/podcvd_executor.sh"
+      - "--vhost_user_vsock=true"
+      - "--report_anonymous_usage_stats=n"
+      - "fleet"
+      - "adb"
+      - "curl"
+      - "remove"

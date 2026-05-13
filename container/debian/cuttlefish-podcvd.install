@@ -4,3 +4,4 @@ src/podcvd/podcvd /usr/lib/cuttlefish-podcvd/bin/
 debian/podcvd-setup /usr/lib/cuttlefish-podcvd/bin/
 debian/restore-acls.sh /usr/lib/cuttlefish-podcvd/bin/
 debian/podcvd.users /etc/
+src/podcvd/skill /usr/lib/cuttlefish-podcvd/
