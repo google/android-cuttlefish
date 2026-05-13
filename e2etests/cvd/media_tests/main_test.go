@@ -44,7 +44,7 @@ func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if err := c.CVDCreate(e2etests.CreateArgs{Args: []string{"--media=type=v4l2_emulated_camera"}}); err != nil {
+			if err := c.CVDCreate(e2etests.CreateArgs{Args: []string{"--media=type=v4l2_emulated_camera_splane"}}); err != nil {
 				t.Fatal(err)
 			}
 

@@ -26,11 +26,12 @@ constexpr const char kMediaFlag[] = "media";
 constexpr const char kMediaHelp[] =
     "Comma separated key=value pairs of media device properties. Supported "
     "properties:\n"
-    " 'type': optional, defaults to 'v4l2_emulated_camera', supported values:\n"
-    "    'v4l2_emulated_camera': emulated media capture device\n"
+    " 'type': optional, defaults to 'v4l2_emulated_camera_splane', supported values:\n"
+    "    'v4l2_emulated_camera_splane': emulated media capture device (single-plane)\n"
+    "    'v4l2_emulated_camera_mplane': emulated media capture device (multi-plane)\n"
     "    'v4l2_proxy': proxy a host V4L2 device into the guest\n "
     "Example usage:\n"
-    "  --media=type=v4l2_emulated_camera\n";
+    "  --media=type=v4l2_emulated_camera_splane\n";
 
 Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
     const std::string& flag);
