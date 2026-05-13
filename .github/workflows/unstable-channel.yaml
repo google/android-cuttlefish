@@ -5,6 +5,9 @@ on:
     branches:
       - 'version-[0-9]+.[0-9]+-dev'
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     if: github.repository_owner == 'google'

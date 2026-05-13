@@ -8,6 +8,9 @@ on:
     branchs:
       - '**'
 
+permissions:
+  contents: read
+
 jobs:
   build-cidata-iso-job:
     runs-on: ubuntu-22.04
