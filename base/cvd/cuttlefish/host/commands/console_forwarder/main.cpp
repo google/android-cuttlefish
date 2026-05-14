@@ -14,20 +14,26 @@
  * limitations under the License.
  */
 
-#include <termios.h>
-#include <stdlib.h>
+#include <asm/ioctls.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 #include <condition_variable>
 #include <deque>
+#include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
-#include <gflags/gflags.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
@@ -85,6 +91,7 @@ class ConsoleForwarder {
     CHECK_EQ(unlockpt(pty), 0) << StrError(errno);
 
     int packet_mode_enabled = 1;
+    // NOLINTNEXTLINE(misc-include-cleaner)
     CHECK_EQ(ioctl(pty, TIOCPKT, &packet_mode_enabled), 0) << StrError(errno);
 
     auto pty_dev_name = ptsname(pty);
