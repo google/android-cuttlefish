@@ -199,6 +199,23 @@ std::string ColoredUrl(const std::string& url) {
   return output;
 }
 
+void InitializeLogs(std::vector<std::string>& all_args) {
+  LogSeverity verbosity = CvdVerbosityOption(all_args);
+  MetadataLevel metadata_level =
+      isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
+
+  std::vector<std::string> log_files;
+  if (EnsureDirectoryExists(CvdUserLogDir(), 0777).ok()) {
+    log_files.push_back(GetCvdLogFileName(CvdUserLogDir()));
+  } else {
+    std::cerr << "File logging disabled, could not create " << CvdUserLogDir()
+              << std::endl;
+  }
+  LogToStderrAndFiles(log_files, "", metadata_level, verbosity);
+
+  (void)PruneLogsDirectory(CvdUserLogDir());
+}
+
 }  // namespace
 
 }  // namespace cuttlefish
@@ -206,22 +223,11 @@ std::string ColoredUrl(const std::string& url) {
 int main(int argc, char** argv) {
   srand(time(NULL));
 
-  cuttlefish::cvd_common::Args all_args = cuttlefish::ArgsToVec(argc, argv);
-  cuttlefish::LogSeverity verbosity =
-      cuttlefish::CvdVerbosityOption(all_args);
-  // set verbosity for this process
-  cuttlefish::MetadataLevel metadata_level =
-      isatty(0) ? cuttlefish::MetadataLevel::ONLY_MESSAGE
-                : cuttlefish::MetadataLevel::FULL;
+  std::vector<std::string> all_args = cuttlefish::ArgsToVec(argc, argv);
 
-  std::optional<std::string> log_file = cuttlefish::GetCvdLogFile();
-  std::vector<std::string> log_files;
-  if (log_file) {
-    log_files.push_back(*log_file);
-  }
-  cuttlefish::LogToStderrAndFiles(log_files, "", metadata_level, verbosity);
+  cuttlefish::InitializeLogs(all_args);
 
-  auto result = cuttlefish::CvdMain(std::move(all_args));
+  cuttlefish::Result<void> result = cuttlefish::CvdMain(std::move(all_args));
   if (result.ok()) {
     return 0;
   } else {

@@ -56,10 +56,26 @@ cf_cc_library(
     name = "log_files",
     srcs = ["log_files.cpp"],
     hdrs = ["log_files.h"],
+    clang_format_enabled = True,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "log_files_test",
+    srcs = ["log_files_test.cpp"],
+    clang_format_enabled = True,
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/cvd/cli:log_files",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/cleanup",
     ],
 )
 
