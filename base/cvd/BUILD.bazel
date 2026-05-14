@@ -34,6 +34,7 @@ filegroup(
         "//cuttlefish/common/libs/transport:.clang-tidy",
         "//cuttlefish/host:.clang-tidy",
         "//cuttlefish/host/commands/assemble_cvd/android_build:.clang-tidy",
+        "//cuttlefish/host/commands/console_forwarder:.clang-tidy",
         "//cuttlefish/host/commands/cvd/cli/commands:.clang-tidy",
         "//cuttlefish/host/commands/kernel_log_monitor:.clang-tidy",
         "//cuttlefish/host/commands/mkenvimage_slim:.clang-tidy",
