@@ -466,7 +466,7 @@ Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {
     std::exit(1);
     return {};
   };
-  return Flag()
+  return Flag("help")
       .Alias({FlagAliasMode::kFlagExact, "-help"})
       .Alias({FlagAliasMode::kFlagExact, "--help"})
       .Setter(setter);
@@ -498,7 +498,7 @@ static Result<void> GflagsCompatBoolFlagSetter(const std::string& name,
 }
 
 static Flag GflagsCompatBoolFlagBase(const std::string& name) {
-  return Flag()
+  return Flag(name)
       .Alias({FlagAliasMode::kFlagPrefix, "-" + name + "="})
       .Alias({FlagAliasMode::kFlagPrefix, "--" + name + "="})
       .Alias({FlagAliasMode::kFlagExact, "-" + name})
@@ -530,7 +530,7 @@ Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out, bool& value,
 }
 
 Flag InvalidFlagGuard() {
-  return Flag()
+  return Flag("_invalid_flag_guard_")
       .UnvalidatedAlias({FlagAliasMode::kFlagPrefix, "-"})
       .Help(
           "This executable only supports the flags in `-help`. Positional "
@@ -541,7 +541,7 @@ Flag InvalidFlagGuard() {
 }
 
 Flag UnexpectedArgumentGuard() {
-  return Flag()
+  return Flag("_unexpected_argument_guard_")
       .UnvalidatedAlias({FlagAliasMode::kFlagPrefix, ""})
       .Help(
           "This executable only supports the flags in `-help`. Positional "
@@ -552,7 +552,7 @@ Flag UnexpectedArgumentGuard() {
 }
 
 Flag GflagsCompatFlag(const std::string& name) {
-  return Flag()
+  return Flag(name)
       .Alias({FlagAliasMode::kFlagPrefix, "-" + name + "="})
       .Alias({FlagAliasMode::kFlagPrefix, "--" + name + "="})
       .Alias({FlagAliasMode::kFlagConsumesFollowing, "-" + name})

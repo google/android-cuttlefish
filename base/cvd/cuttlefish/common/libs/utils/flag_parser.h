@@ -71,6 +71,8 @@ struct FlagMatch {
 
 class Flag {
  public:
+  explicit Flag(std::string name) : name_(std::move(name)) {}
+
   /* Add an alias that triggers matches and calls to the `Setter` function. */
   Flag& Alias(const FlagAlias& alias) &;
   Flag Alias(const FlagAlias& alias) &&;
@@ -84,6 +86,8 @@ class Flag {
    */
   Flag& Setter(std::function<Result<void>(const FlagMatch&)>) &;
   Flag Setter(std::function<Result<void>(const FlagMatch&)>) &&;
+
+  const std::string& name() const { return name_; }
 
   /* Examines a list of arguments, removing any matches from the list and
    * invoking the `Setter` for every match. Returns `false` if the callback ever
@@ -121,6 +125,7 @@ class Flag {
   friend Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
                                               std::vector<std::string>&);
 
+  std::string name_;
   std::vector<FlagAlias> aliases_;
   std::optional<std::string> help_;
   std::optional<std::function<std::string()>> getter_;

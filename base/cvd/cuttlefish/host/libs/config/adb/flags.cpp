@@ -40,8 +40,9 @@ namespace {
 class AdbConfigFlagImpl : public AdbConfigFlag {
  public:
   INJECT(AdbConfigFlagImpl(AdbConfig& config, ConfigFlag& config_flag))
-      : config_(config), config_flag_(config_flag) {
-    mode_flag_ = GflagsCompatFlag("adb_mode").Help(mode_help);
+      : config_(config),
+        config_flag_(config_flag),
+        mode_flag_(GflagsCompatFlag("adb_mode").Help(mode_help)) {
     mode_flag_.Getter([this]() {
       std::stringstream modes;
       for (const auto& mode : config_.Modes()) {
