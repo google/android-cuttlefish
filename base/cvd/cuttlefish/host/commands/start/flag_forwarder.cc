@@ -27,11 +27,11 @@
 
 #include "absl/strings/strip.h"
 #include <gflags/gflags.h>
-#include <libxml/parser.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/gflags_xml_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 
@@ -110,37 +110,7 @@ std::map<std::string, std::string> CurrentFlagsToTypes() {
   return name_to_type;
 }
 
-/**
- * Returns a pointer to the child of `node` with name `name`.
- *
- * For example, invoking `xmlChildWithName(<foo><bar>abc</bar></foo>, "foo")`
- * will return <bar>abc</bar>.
- */
-xmlNodePtr xmlChildWithName(xmlNodePtr node, const std::string& name) {
-  for (xmlNodePtr child = node->children; child != nullptr; child = child->next) {
-    if (child->type != XML_ELEMENT_NODE) {
-      continue;
-    }
-    if (std::strcmp((const char*) child->name, name.c_str()) == 0) {
-      return child;
-    }
-  }
-  LOG(WARNING) << "no child with name " << name;
-  return nullptr;
-}
 
-/**
- * Returns a string with the content of an xml node.
- *
- * For example, calling `xmlContent(<bar>abc</bar>)` will return "abc".
- */
-std::string xmlContent(xmlNodePtr node) {
-  if (node == nullptr || node->children == NULL
-      || node->children->type != xmlElementType::XML_TEXT_NODE) {
-    return "";
-  }
-  return std::string((char*) node->children->content);
-}
 
 template<typename T>
 T FromString(const std::string& str) {
@@ -212,28 +182,21 @@ std::vector<gflags::CommandLineFlagInfo> FlagsForSubprocess(std::string helpxml_
   // Hack to try to filter out log messages that come before the xml
   helpxml_output = helpxml_output.substr(xml_begin);
 
-  xmlDocPtr doc = xmlReadMemory(helpxml_output.c_str(), helpxml_output.size(),
-                                NULL, NULL, 0);
-  if (doc == NULL) {
-    LOG(FATAL) << "Could not parse xml of subprocess `--helpxml`";
-  }
-  xmlNodePtr root_element = xmlDocGetRootElement(doc);
+  auto parse_result = ParseGflagsXmlHelp(helpxml_output);
+  CHECK(parse_result.ok()) << "Could not parse xml of subprocess `--helpxml`: "
+                           << parse_result.error();
+
   std::vector<gflags::CommandLineFlagInfo> flags;
-  for (xmlNodePtr flag = root_element->children; flag != nullptr; flag = flag->next) {
-    if (std::strcmp((const char*) flag->name, "flag") != 0) {
-      continue;
-    }
+  for (const auto& flag_desc : *parse_result) {
     gflags::CommandLineFlagInfo flag_info;
-    flag_info.name = xmlContent(xmlChildWithName(flag, "name"));
-    flag_info.type = xmlContent(xmlChildWithName(flag, "type"));
-    flag_info.filename = xmlContent(xmlChildWithName(flag, "file"));
-    flag_info.description = xmlContent(xmlChildWithName(flag, "meaning"));
-    flag_info.current_value = xmlContent(xmlChildWithName(flag, "current"));
-    flag_info.default_value = xmlContent(xmlChildWithName(flag, "default"));
+    flag_info.name = flag_desc.name;
+    flag_info.type = flag_desc.type;
+    flag_info.filename = flag_desc.file;
+    flag_info.description = flag_desc.meaning;
+    flag_info.current_value = flag_desc.current_value;
+    flag_info.default_value = flag_desc.default_value;
     flags.emplace_back(std::move(flag_info));
   }
-  xmlFree(doc);
-  xmlCleanupParser();
   return flags;
 }
 
