@@ -81,6 +81,9 @@ class InstanceDatabase {
   Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceWithGroup(
       const Filter& filter) const;
 
+  Result<std::vector<std::pair<LocalInstance, LocalInstanceGroup>>>
+  FindInstances(const Filter& filter) const;
+
  private:
   template <typename T>
   Result<T> ExactlyOne(Result<std::vector<T>>&& container_result) const {

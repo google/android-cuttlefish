@@ -78,6 +78,9 @@ class InstanceManager {
   Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceWithGroup(
       const InstanceDatabase::Filter& filter) const;
 
+  Result<std::vector<std::pair<LocalInstance, LocalInstanceGroup>>>
+  FindInstances(const InstanceDatabase::Filter& filter) const;
+
   // Stops the device by asking it over the control socket. If launcher_timeout
   // has a value, it will wait for at most that time before returning an error.
   Result<void> StopInstanceGroup(

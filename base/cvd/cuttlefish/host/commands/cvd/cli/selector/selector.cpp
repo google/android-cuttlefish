@@ -29,24 +29,13 @@
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace selector {
 namespace {
 
-Result<LocalInstanceGroup> GetDefaultGroup(
-    const InstanceManager& instance_manager) {
-  const std::vector<LocalInstanceGroup> all_groups =
-      CF_EXPECT(instance_manager.FindGroups({}));
-  CF_EXPECTF(all_groups.size() == 1,
-             "There are {} instance groups, unable to pick one",
-             all_groups.size());
-  return all_groups.front();
-}
-
 Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
-    const SelectorOptions& selectors, const cvd_common::Envs& env) {
+    const SelectorOptions& selectors) {
   InstanceDatabase::Filter filter;
   filter.group_name = selectors.group_name;
   if (selectors.instance_names) {
@@ -56,23 +45,20 @@ Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
       filter.instance_names.insert(per_instance_name);
     }
   }
-  auto it = env.find(kCuttlefishInstanceEnvVarName);
-  if (it != env.end()) {
-    unsigned id;
-    std::string cuttlefish_instance = it->second;
-    CF_EXPECT(absl::SimpleAtoi(cuttlefish_instance, &id));
-  }
-
   return filter;
 }
 
+// TODO CJR: move the prompt down to the bottom, make the selection menu a
+// constant string
+// TODO CJR: or maybe I make the user select the group and then only display the
+// instances?
 std::string SelectionMenu(const std::vector<LocalInstanceGroup>& groups) {
   // Multiple instance groups found, please choose one:
   //   [i] : group_name (created: TIME)
   //      <a> instance0.device_name() (id: instance_id)
   //      <b> instance1.device_name() (id: instance_id)
   std::stringstream ss;
-  ss << "Multiple instance groups found, please choose one:" << std::endl;
+  ss << "Multiple groups found, please choose one:" << std::endl;
   int group_idx = 0;
   for (const auto& group : groups) {
     fmt::print(ss, "  [{}] : {} (created: {})\n", group_idx, group.GroupName(),
@@ -89,7 +75,7 @@ std::string SelectionMenu(const std::vector<LocalInstanceGroup>& groups) {
 
 Result<LocalInstanceGroup> PromptUserForGroup(
     const InstanceManager& instance_manager, const CommandRequest& request,
-    const cvd_common::Envs& envs, InstanceDatabase::Filter filter) {
+    InstanceDatabase::Filter filter) {
   // show the menu and let the user choose
   std::vector<LocalInstanceGroup> groups =
       CF_EXPECT(instance_manager.FindGroups({}));
@@ -101,9 +87,12 @@ Result<LocalInstanceGroup> PromptUserForGroup(
 
   TerminalColors colors(isatty(2));
   while (true) {
+    // TODO CJR: allow two prompts if instance prompting
     std::string input_line = CF_EXPECT(terminal_->ReadLine());
     int selection = -1;
     std::string chosen_group_name;
+    // TODO CJR: pull out the validation logic into a separate helper, including
+    // the group/instance search
     if (absl::SimpleAtoi(input_line, &selection)) {
       const int n_groups = groups.size();
       if (n_groups <= selection || selection < 0) {
@@ -130,57 +119,54 @@ Result<LocalInstanceGroup> PromptUserForGroup(
   }
 }
 
-Result<LocalInstanceGroup> FindGroupOrDefault(
-    const InstanceDatabase::Filter& filter,
-    const InstanceManager& instance_manager) {
-  if (filter.Empty()) {
-    return CF_EXPECT(GetDefaultGroup(instance_manager));
-  }
-  std::vector<LocalInstanceGroup> groups =
-      CF_EXPECT(instance_manager.FindGroups(filter));
-  CF_EXPECT_EQ(groups.size(), 1u, "groups.size() = " << groups.size());
-  return groups.front();
-}
-
-Result<std::pair<LocalInstance, LocalInstanceGroup>> FindDefaultInstance(
-    const InstanceManager& instance_manager) {
-  const LocalInstanceGroup group = CF_EXPECT(GetDefaultGroup(instance_manager));
-  const std::vector<LocalInstance> instances = group.Instances();
-  CF_EXPECT_EQ(instances.size(), 1u,
-               "Default instance is the single instance in the default group.");
-  return std::make_pair(instances.front(), group);
+Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
+    const InstanceManager& instance_manager, const CommandRequest& request,
+    InstanceDatabase::Filter filter) {
+  return CF_ERR("TODO CJR implement");
 }
 
 }  // namespace
 
 Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
                                        const CommandRequest& request) {
-  const bool has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
-  CF_EXPECT(std::move(has_groups), "No instance groups available");
-  const cvd_common::Envs& env = request.Env();
-  const SelectorOptions& selector_options = request.Selectors();
-  InstanceDatabase::Filter filter =
-      CF_EXPECT(BuildFilterFromSelectors(selector_options, request.Env()));
-  Result<LocalInstanceGroup> group_selection_result =
-      FindGroupOrDefault(filter, instance_manager);
-  if (group_selection_result.ok()) {
-    return CF_EXPECT(std::move(group_selection_result));
+  const InstanceDatabase::Filter filter =
+      CF_EXPECT(BuildFilterFromSelectors(request.Selectors()));
+  std::vector<LocalInstanceGroup> groups;
+  if (filter.Empty()) {  // try to default
+    groups = CF_EXPECT(instance_manager.FindGroups({}));
+  } else {
+    groups = CF_EXPECT(instance_manager.FindGroups(filter));
+  }
+  CF_EXPECT(!groups.empty(), "No instance groups available");
+  if (groups.size() == 1) {
+    return groups.front();
   }
   CF_EXPECT(isatty(0),
             "Multiple groups found. Narrow the selection with selector "
             "arguments or run in an interactive terminal.");
   return CF_EXPECT(
-      PromptUserForGroup(instance_manager, request, env, std::move(filter)));
+      PromptUserForGroup(instance_manager, request, std::move(filter)));
 }
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
     const InstanceManager& instance_manager, const CommandRequest& request) {
-  InstanceDatabase::Filter filter =
-      CF_EXPECT(BuildFilterFromSelectors(request.Selectors(), request.Env()));
-
-  return filter.Empty()
-             ? CF_EXPECT(FindDefaultInstance(instance_manager))
-             : CF_EXPECT(instance_manager.FindInstanceWithGroup(filter));
+  const InstanceDatabase::Filter filter =
+      CF_EXPECT(BuildFilterFromSelectors(request.Selectors()));
+  std::vector<std::pair<LocalInstance, LocalInstanceGroup>> instances;
+  if (filter.Empty()) {  // try to default
+    instances = CF_EXPECT(instance_manager.FindInstances({}));
+  } else {
+    instances = CF_EXPECT(instance_manager.FindInstances(filter));
+  }
+  CF_EXPECT(!instances.empty(), "No instances available");
+  if (instances.size() == 1) {
+    return instances.front();
+  }
+  CF_EXPECT(isatty(0),
+            "Multiple instances found.  Narrow the selection with selector "
+            "arguments or run in an interactive terminal");
+  return CF_EXPECT(
+      PromptUserForInstance(instance_manager, request, std::move(filter)));
 }
 
 }  // namespace selector

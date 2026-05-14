@@ -105,6 +105,11 @@ InstanceManager::FindInstanceWithGroup(
   return CF_EXPECT(instance_db_.FindInstanceWithGroup(filter));
 }
 
+Result<std::vector<std::pair<LocalInstance, LocalInstanceGroup>>>
+InstanceManager::FindInstances(const InstanceDatabase::Filter& filter) const {
+  return CF_EXPECT(instance_db_.FindInstances(filter));
+}
+
 Result<bool> InstanceManager::HasInstanceGroups() const {
   return !CF_EXPECT(instance_db_.IsEmpty());
 }
