@@ -497,7 +497,7 @@ static Result<void> GflagsCompatBoolFlagSetter(const std::string& name,
   return CF_ERRF("Unexpected key \"{}\" for \"{}\"", match.key, name);
 }
 
-static Flag GflagsCompatBoolFlagBase(const std::string& name) {
+Flag GflagsCompatBoolFlag(const std::string& name) {
   return Flag(name)
       .Alias({FlagAliasMode::kFlagPrefix, "-" + name + "="})
       .Alias({FlagAliasMode::kFlagPrefix, "--" + name + "="})
@@ -526,7 +526,7 @@ Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out, bool& value,
     out << "</AllFlags>" << std::flush;
     return CF_ERR("Requested early exit");
   };
-  return GflagsCompatBoolFlagBase(name).Setter(setter);
+  return GflagsCompatBoolFlag(name).Setter(setter);
 }
 
 Flag InvalidFlagGuard() {
@@ -621,7 +621,7 @@ Flag GflagsCompatFlag(const std::string& name, size_t& value) {
 }
 
 Flag GflagsCompatFlag(const std::string& name, bool& value) {
-  return GflagsCompatBoolFlagBase(name)
+  return GflagsCompatBoolFlag(name)
       .Getter([&value]() { return fmt::format("{}", value); })
       .Setter([name, &value](const FlagMatch& match) {
         return GflagsCompatBoolFlagSetter(name, value, match);
