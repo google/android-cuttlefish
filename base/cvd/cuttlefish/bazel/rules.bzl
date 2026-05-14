@@ -14,19 +14,21 @@
 
 load("@aspect_rules_lint//format:defs.bzl", "format_test")
 load("@cc_compatibility_proxy//:proxy.bzl", "cc_binary", "cc_library", "cc_test")
-load("//:build_variables.bzl", BUILD_VAR_COPTS = "COPTS")
+load("//:build_variables.bzl", BUILD_VAR_COPTS = "COPTS", BUILD_VAR_LINKOPTS = "LINKOPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 visibility(["//..."])
 
 COPTS = BUILD_VAR_COPTS
+LINKOPTS = BUILD_VAR_LINKOPTS
 
-def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, **kwargs):
+def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, linkopts, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
     cc_binary(
         name = name,
         copts = (copts or []) + COPTS,
+        linkopts = (linkopts or []) + LINKOPTS,
         **kwargs,
     )
     if clang_format_enabled:
@@ -51,6 +53,7 @@ cf_cc_binary = macro(
         "clang_format_enabled": attr.bool(configurable = False, default = False, doc = "Decide if a corresponding format_test target is generated"),
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
+        "linkopts": attr.string_list(configurable = False, default = []),
     },
     implementation = _cf_cc_binary_implementation,
 )

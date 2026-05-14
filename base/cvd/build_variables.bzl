@@ -4,3 +4,6 @@ COPTS = [
     "-ftrivial-auto-var-init=zero",
     "-DNODISCARD_EXPECTED",
 ]
+
+LINKOPTS = [
+]
