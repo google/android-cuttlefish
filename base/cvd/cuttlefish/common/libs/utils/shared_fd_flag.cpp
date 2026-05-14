@@ -39,9 +39,6 @@ static Result<void> Set(const FlagMatch& match, SharedFD& out) {
   return {};
 }
 
-Flag SharedFDFlag(SharedFD& out) {
-  return Flag().Setter([&](const FlagMatch& mat) { return Set(mat, out); });
-}
 Flag SharedFDFlag(const std::string& name, SharedFD& out) {
   return GflagsCompatFlag(name).Setter(
       [&out](const FlagMatch& mat) { return Set(mat, out); });
