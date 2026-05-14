@@ -113,19 +113,18 @@ class ConfigFlagImpl : public ConfigFlag {
       : config_reader_(cr),
         system_image_dir_flag_(s),
         configs_(s.Size(), kDefaultConfig),
-        is_default_(true) {
-    auto help =
-        "Config preset name. Will automatically set flag fields using the "
-        "values from this file of presets. See "
-        "device/google/cuttlefish/shared/config/config_*.json for possible "
-        "values.";
-    auto getter = [this]() { return VectorizedFlagValue(configs_); };
-    auto setter = [this](const FlagMatch& m) -> Result<void> {
-      CF_EXPECT(ChooseConfigs(m.value));
-      return {};
-    };
-    flag_ = GflagsCompatFlag("config").Help(help).Getter(getter).Setter(setter);
-  }
+        is_default_(true),
+        flag_(
+            GflagsCompatFlag("config")
+                .Help("Config preset name. Will automatically set flag fields "
+                      "using the values from this file of presets. See "
+                      "device/google/cuttlefish/shared/config/config_*.json "
+                      "for possible values.")
+                .Getter([this]() { return VectorizedFlagValue(configs_); })
+                .Setter([this](const FlagMatch& m) -> Result<void> {
+                  CF_EXPECT(ChooseConfigs(m.value));
+                  return {};
+                })) {}
 
   std::string Name() const override { return "ConfigFlagImpl"; }
   std::unordered_set<FlagFeature*> Dependencies() const override {

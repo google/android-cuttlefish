@@ -305,7 +305,7 @@ CvdStartCommandHandler::CvdStartCommandHandler(
 
 static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
   Flag flag =
-      Flag()
+      Flag("daemon")
           .Alias({FlagAliasMode::kFlagPrefix, "-daemon="})
           .Alias({FlagAliasMode::kFlagPrefix, "--daemon="})
           .Alias({FlagAliasMode::kFlagExact, "-daemon"})
