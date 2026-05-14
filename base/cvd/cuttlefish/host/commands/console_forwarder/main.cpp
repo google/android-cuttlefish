@@ -42,11 +42,9 @@
 #include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/posix/strerror.h"
 
-DEFINE_int32(console_in_fd,
-             -1,
+DEFINE_int32(console_in_fd, -1,
              "File descriptor for the console's input channel");
-DEFINE_int32(console_out_fd,
-             -1,
+DEFINE_int32(console_out_fd, -1,
              "File descriptor for the console's output channel");
 
 namespace cuttlefish {
@@ -77,6 +75,7 @@ class ConsoleForwarder {
     // reading the console's output and input from the client.
     ReadLoop();
   }
+
  private:
   SharedFD OpenPTY() {
     // Remove any stale symlink to a pts device
@@ -137,8 +136,9 @@ class ConsoleForwarder {
           bytes_written =
               fd->Write(buf_ptr->data() + bytes_written, bytes_to_write);
           if (bytes_written < 0) {
-            // It is expected for writes to the PTY to fail if nothing is connected
-            if(fd->GetErrno() != EAGAIN) {
+            // It is expected for writes to the PTY to fail if nothing is
+            // connected
+            if (fd->GetErrno() != EAGAIN) {
               LOG(ERROR) << "Error writing to fd: " << fd->StrError();
             }
 
@@ -176,7 +176,8 @@ class ConsoleForwarder {
 
       Select(&read_set, nullptr, &error_set, nullptr);
       if (read_set.IsSet(console_out_)) {
-        std::shared_ptr<std::vector<char>> buf_ptr = std::make_shared<std::vector<char>>(4096);
+        std::shared_ptr<std::vector<char>> buf_ptr =
+            std::make_shared<std::vector<char>>(4096);
         auto bytes_read = console_out_->Read(buf_ptr->data(), buf_ptr->size());
         // This is likely unrecoverable, so exit here
         CHECK(bytes_read > 0) << "Error reading from console output: "
@@ -189,7 +190,8 @@ class ConsoleForwarder {
         EnqueueWrite(buf_ptr, kernel_log_);
       }
       if (read_set.IsSet(client_fd) || error_set.IsSet(client_fd)) {
-        std::shared_ptr<std::vector<char>> buf_ptr = std::make_shared<std::vector<char>>(4096);
+        std::shared_ptr<std::vector<char>> buf_ptr =
+            std::make_shared<std::vector<char>>(4096);
         auto bytes_read = client_fd->Read(buf_ptr->data(), buf_ptr->size());
         if (bytes_read <= 0) {
           // If this happens, it's usually because the PTY controller went away
