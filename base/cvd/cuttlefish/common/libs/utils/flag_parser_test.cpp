@@ -35,13 +35,13 @@ namespace cuttlefish {
 
 TEST(FlagParser, DuplicateAlias) {
   FlagAlias alias = {FlagAliasMode::kFlagExact, "--flag"};
-  ASSERT_DEATH({ Flag().Alias(alias).Alias(alias); }, "Duplicate flag alias");
+  ASSERT_DEATH({ Flag("flag").Alias(alias).Alias(alias); }, "Duplicate flag alias");
 }
 
 TEST(FlagParser, ConflictingAlias) {
   FlagAlias exact_alias = {FlagAliasMode::kFlagExact, "--flag"};
   FlagAlias following_alias = {FlagAliasMode::kFlagConsumesFollowing, "--flag"};
-  ASSERT_DEATH({ Flag().Alias(exact_alias).Alias(following_alias); },
+  ASSERT_DEATH({ Flag("flag").Alias(exact_alias).Alias(following_alias); },
                "Overlapping flag aliases");
 }
 
@@ -106,7 +106,7 @@ std::optional<std::map<std::string, std::string>> flagXml(const Flag& f) {
 }
 
 TEST(FlagParser, GflagsIncompatibleFlag) {
-  auto flag = Flag().Alias({FlagAliasMode::kFlagExact, "--flag"});
+  auto flag = Flag("flag").Alias({FlagAliasMode::kFlagExact, "--flag"});
   ASSERT_FALSE(flagXml(flag));
 }
 
