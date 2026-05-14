@@ -34,6 +34,10 @@ func TestCvdCreate(t *testing.T) {
 			branch: "git_main",
 			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
 		},
+		{
+			branch: "git_main",
+			target: "aosp_cf_x86_64_auto-trunk_staging-userdebug",
+		},
 	}
 	c := e2etests.TestContext{}
 	for _, tc := range testcases {

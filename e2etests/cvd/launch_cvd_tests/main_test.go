@@ -51,6 +51,16 @@ func TestLaunchCvd(t *testing.T) {
 			branch: "aosp-android12-gsi",
 			target: "aosp_cf_x86_64_phone-userdebug",
 		},
+		{
+			name:   "GitMainAuto",
+			branch: "git_main",
+			target: "aosp_cf_x86_64_auto-trunk_staging-userdebug",
+		},
+		{
+			name:   "Car16Auto",
+			branch: "git_android16-car-release",
+			target: "aosp_cf_x86_64_auto-userdebug",
+		},
 	}
 	c := e2etests.TestContext{}
 	for _, tc := range testcases {
