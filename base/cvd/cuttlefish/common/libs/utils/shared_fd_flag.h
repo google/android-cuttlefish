@@ -22,7 +22,6 @@
 
 namespace cuttlefish {
 
-Flag SharedFDFlag(SharedFD& out);
 Flag SharedFDFlag(const std::string& name, SharedFD& out);
 
 }  // namespace cuttlefish
