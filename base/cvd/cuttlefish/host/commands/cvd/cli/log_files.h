@@ -16,10 +16,17 @@
 
 #pragma once
 
-#include <optional>
+#include <chrono>
 #include <string>
 
+#include "cuttlefish/result/result.h"
+
 namespace cuttlefish {
+
+inline constexpr size_t kCvdRetainLogFilesNum = 30;
+
+/** A user-specific directory where log files from `cvd` are stored. */
+std::string CvdUserLogDir();
 
 /**
  * Returns the path to a new timestamped log file for the
@@ -27,6 +34,12 @@ namespace cuttlefish {
  * like cvd_YYYYMMDD_HHMMSS.ms.log. If the logs directory cannot be created, the
  * function returns std::nullopt.
  */
-std::optional<std::string> GetCvdLogFile();
+std::string GetCvdLogFileName(const std::string& log_dir = CvdUserLogDir(),
+                              std::chrono::system_clock::time_point now =
+                                  std::chrono::system_clock::now());
+
+/** Prunes the logs directory keeping only the most recent log files. */
+Result<void> PruneLogsDirectory(const std::string& log_dir = CvdUserLogDir(),
+                                size_t retain = kCvdRetainLogFilesNum);
 
 }  // namespace cuttlefish
