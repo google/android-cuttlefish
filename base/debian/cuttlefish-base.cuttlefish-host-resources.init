@@ -87,7 +87,7 @@ start_dnsmasq() {
 # $1 = interface to stop on
 stop_dnsmasq() {
     if [ -f /var/run/cuttlefish-dnsmasq-"${1}".pid ]; then
-        kill $(cat /var/run/cuttlefish-dnsmasq-"${1}".pid) || /bin/true
+        kill $(cat /var/run/cuttlefish-dnsmasq-"${1}".pid)
     fi
 }
 
@@ -101,8 +101,8 @@ create_tap() {
 # Destroy a tap interface
 # $1 = tap name
 destroy_tap() {
-    ip link set dev "${1}" down || /bin/true
-    ip link delete "${1}" || /bin/true
+    ip link set dev "${1}" down
+    ip link delete "${1}"
 }
 
 setup_nftables() {
@@ -118,8 +118,8 @@ setup_nftables() {
 }
 
 delete_nftables() {
-    nft delete table ip cuttlefish_nat || /bin/true
-    nft delete table bridge cuttlefish_bridge || /bin/true
+    nft delete table ip cuttlefish_nat
+    nft delete table bridge cuttlefish_bridge
 }
 
 
@@ -172,7 +172,7 @@ manage_nft_rule() {
         if [ -f "$handle_file" ]; then
             # Find the handle file and use it to clean things up.
             handle=$(cat "$handle_file")
-            nft delete rule "$family" "$table" "$chain" handle "$handle" || /bin/true
+            nft delete rule "$family" "$table" "$chain" handle "$handle"
             rm "$handle_file"
         else
             echo "Handle file not found: $handle_file"
@@ -223,9 +223,9 @@ destroy_interface() {
     ipv6_prefix_length="${5}"
 
     manage_nft_rule delete masq "${tap}"
-    ip addr del "${gateway}${netmask}" dev "${tap}" || /bin/true
+    ip addr del "${gateway}${netmask}" dev "${tap}"
     if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
-        ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${tap}" || /bin/true
+        ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${tap}"
     fi
     destroy_tap "${tap}"
 }
@@ -294,9 +294,9 @@ destroy_bridged_interfaces() {
         manage_nft_rule delete masq "br-${2}"
         stop_dnsmasq "${2}"
         if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
-            ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_len}" dev "${2}" || /bin/true
+            ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_len}" dev "${2}"
         fi
-        ip addr del "${gateway}${netmask}" dev "${2}" || /bin/true
+        ip addr del "${gateway}${netmask}" dev "${2}"
     fi
     for i in $(seq ${num_cvd_accounts}); do
         tap="$(printf ${3}-%02d $i)"
@@ -313,8 +313,8 @@ destroy_bridged_interfaces() {
         destroy_tap "${tap}"
     done
     if [ "${create_bridges}" = "1" ]; then
-        ip link set dev "${2}" down || /bin/true
-        ip link delete "${2}" || /bin/true
+        ip link set dev "${2}" down
+        ip link delete "${2}"
     fi
 }
 
