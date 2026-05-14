@@ -186,6 +186,7 @@ Flag UnexpectedArgumentGuard();
 // "-flag *", "--flag *", support for other types. The value passed in the flag
 // is saved to the defined reference.
 Flag GflagsCompatFlag(const std::string& name);
+Flag GflagsCompatBoolFlag(const std::string& name);
 Flag GflagsCompatFlag(const std::string& name, std::string& value);
 Flag GflagsCompatFlag(const std::string& name, int32_t& value);
 Flag GflagsCompatFlag(const std::string& name, size_t& value);
