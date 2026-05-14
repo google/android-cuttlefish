@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/strip.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
 #include "fmt/ranges.h"  // NOLINT(misc-include-cleaner): version difference
@@ -33,6 +34,8 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/gflags_xml_parser.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -184,6 +187,54 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
       .command_name = request_form.bin_file
   };
   return CF_EXPECT(ConstructCommand(construct_cmd_param));
+}
+
+Result<std::vector<Flag>> GetSiblingCommandFlags(const std::string& bin_name,
+                                                 const cvd_common::Envs& env,
+                                                 cvd_common::Args args) {
+  // Remove help-like flags to ensure --helpxml takes effect
+  std::erase_if(args, [](std::string_view arg) {
+    if (!absl::ConsumePrefix(&arg, "-")) {
+      // Must have at least one "-"
+      return false;
+    }
+    // May have another "-"
+    (void)absl::ConsumePrefix(&arg, "-");
+    return arg.starts_with("help") || arg == "version" || arg == "h";
+  });
+  args.emplace_back("-helpxml");
+  Command command =
+      CF_EXPECT(ConstructSiblingHelpCommand(bin_name, env, args));
+  std::string stdout;
+  std::string stderr;
+  int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, &stderr);
+  // gflags returns exit code 1 when --help is given
+  if (res != 0 && res != 1) {
+    return CF_ERRF("Failed to execute start binary, exit code: {}, stderr: {}",
+                   res, stderr);
+  }
+  std::vector<GflagDescription> gflag_descs =
+      CF_EXPECT(ParseGflagsXmlHelp(stdout));
+  std::vector<Flag> flags;
+  for (const GflagDescription& desc : gflag_descs) {
+    if (desc.name != "help" &&
+        android::base::Basename(desc.file).starts_with("gflags")) {
+      // Skip gflags-specific flags. Reporting these flags is quite noisy and
+      // adds little to no value in the context of cvd.
+      continue;
+    }
+    flags
+        .emplace_back(desc.type.starts_with("bool")
+                          ? GflagsCompatBoolFlag(desc.name)
+                          : GflagsCompatFlag(desc.name))
+        // Add setter and getter that won't crash
+        .Setter([](const FlagMatch& match) -> Result<void> { return {}; })
+        // The getter always returns the current value reported by the internal
+        // binary so the help message is accurate.
+        .Getter([value = desc.current_value]() { return value; })
+        .Help(desc.meaning);
+  }
+  return flags;
 }
 
 static constexpr char kTerminalBoldRed[] = "\033[0;1;31m";
