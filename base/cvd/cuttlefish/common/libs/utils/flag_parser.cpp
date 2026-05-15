@@ -300,19 +300,18 @@ bool Flag::WriteGflagsCompatXml(std::ostream& out) const {
 }
 
 std::ostream& operator<<(std::ostream& out, const Flag& flag) {
-  out << "[";
   for (auto it = flag.aliases_.begin(); it != flag.aliases_.end(); it++) {
     if (it != flag.aliases_.begin()) {
       out << ", ";
     }
     out << *it;
   }
-  out << "]\n";
+  out << "\n";
   if (flag.help_) {
-    out << "(" << *flag.help_ << ")\n";
+    out << "  " << *flag.help_ << "\n";
   }
   if (flag.getter_) {
-    out << "(Current value: \"" << (*flag.getter_)() << "\")\n";
+    out << "  Current value: \"" << (*flag.getter_)() << "\"\n";
   }
   return out;
 }
