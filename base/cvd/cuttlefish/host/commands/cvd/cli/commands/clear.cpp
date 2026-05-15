@@ -54,7 +54,7 @@ std::string CvdClearCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdClearCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kSummaryHelpText;
 }
 

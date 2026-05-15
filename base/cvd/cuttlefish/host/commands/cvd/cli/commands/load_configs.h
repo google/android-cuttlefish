@@ -35,8 +35,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override;
   std::string SummaryHelp() const override;
-  Result<std::string> DetailedHelp(
-      const CommandRequest& request) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) override;
 
  private:
   Result<void> LoadGroup(const CommandRequest& request,

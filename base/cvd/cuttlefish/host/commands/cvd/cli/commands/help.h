@@ -38,7 +38,7 @@ class CvdHelpHandler : public CvdCommandHandler {
   std::string SummaryHelp() const override;
   bool RequiresHostConfiguration() const override;
   Result<std::string> DetailedHelp(
-      const CommandRequest& request) const override;
+      const CommandRequest& request) override;
 
  private:
   std::string TopLevelHelp();

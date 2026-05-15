@@ -35,8 +35,7 @@ class ScreenRecordingCommandHandler : public CvdCommandHandler {
 
   std::string SummaryHelp() const override;
   bool RequiresDeviceExists() const override;
-  Result<std::string> DetailedHelp(
-      const CommandRequest& request) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) override;
 
  private:
   Result<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>

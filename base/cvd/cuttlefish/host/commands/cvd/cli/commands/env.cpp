@@ -121,7 +121,7 @@ std::string CvdEnvCommandHandler::SummaryHelp() const {
 bool CvdEnvCommandHandler::RequiresDeviceExists() const { return true; }
 
 Result<std::string> CvdEnvCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   Result<Command> help_cmd_res = HelpCommand(request);
   if (!help_cmd_res.ok()) {
     // Couldn't find an underlying binary to defer to for help

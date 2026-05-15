@@ -144,7 +144,7 @@ std::string CvdBugreportCommandHandler::SummaryHelp() const {
 bool CvdBugreportCommandHandler::RequiresDeviceExists() const { return true; }
 
 Result<std::string> CvdBugreportCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   Command command = CF_EXPECT(ConstructSiblingHelpCommand(
       kHostBugreportBin, request.Env(), request.SubcommandArguments()));
   std::string stdout;

@@ -318,7 +318,7 @@ Result<std::vector<Flag>> GetCvdInternalStartFlags(
   const std::vector<std::string> to_remove = {
       "daemon", "instance_nums", "num_instances", "base_instance_num"};
   std::erase_if(flags,
-                [&to_remove](Flag f) { return Contains(to_remove, f.name()); });
+                [&to_remove](Flag f) { return Contains(to_remove, f.Name()); });
   return flags;
 }
 
@@ -521,7 +521,7 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
 }
 
 Result<std::string> CvdStartCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   cvd_common::Args args = request.SubcommandArguments();
   std::vector<Flag> own_flags = BuildOwnFlags();
   CF_EXPECT(ConsumeFlags(own_flags, args));
@@ -540,7 +540,7 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
 
   // Make sure the flags are in alphabetical order
   std::sort(flags.begin(), flags.end(),
-            [](auto f1, auto f2) { return f1.name() < f2.name(); });
+            [](auto f1, auto f2) { return f1.Name() < f2.Name(); });
 
   std::stringstream ss;
   ss << SummaryHelp() << "\n\n";
@@ -551,7 +551,7 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
   return ss.str();
 }
 
-std::vector<Flag> CvdStartCommandHandler::BuildOwnFlags() const {
+std::vector<Flag> CvdStartCommandHandler::BuildOwnFlags() {
   return {GflagsCompatFlag("host_substitutions", own_flags_.host_substitutions)
               .Help("Comma separated list of files to replace in the host "
                     "artifacts from the android build with artifacts from the "

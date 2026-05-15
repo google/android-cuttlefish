@@ -35,8 +35,7 @@ class CvdClearCommandHandler : public CvdCommandHandler {
   bool RequiresDeviceExists() const override { return true; }
 
   std::string SummaryHelp() const override;
-  Result<std::string> DetailedHelp(
-      const CommandRequest& request) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) override;
 
  private:
   InstanceManager& instance_manager_;

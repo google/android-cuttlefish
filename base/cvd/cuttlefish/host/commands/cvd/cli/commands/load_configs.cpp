@@ -251,7 +251,7 @@ cvd_common::Args LoadConfigsCommand::CmdList() const { return {kLoadSubCmd}; }
 std::string LoadConfigsCommand::SummaryHelp() const { return kSummaryHelpText; }
 
 Result<std::string> LoadConfigsCommand::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kDetailedHelpText;
 }
 
