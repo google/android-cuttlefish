@@ -26,6 +26,17 @@ cc_library(
     visibility = ["//visibility:private"],
 )
 
+cc_shared_library(
+    name = "libbase_shared",
+    shared_lib_name = "libcuttlefish_libbase.so",
+    deps = [
+        ":libbase",
+    ],
+    dynamic_deps = [
+        "//:fmt_shared",
+    ],
+)
+
 cc_library(
     name = "libbase",
     srcs = [

@@ -105,6 +105,19 @@ cf_cc_test(
     ],
 )
 
+cc_shared_library(
+    name = "files_shared",
+    shared_lib_name = "libcuttlefish_files.so",
+    deps = [
+        ":files",
+        ":users",
+        "//cuttlefish/common/libs/utils:in_sandbox",
+        "//cuttlefish/posix:rename",
+        "//cuttlefish/posix:symlink",
+    ],
+    dynamic_deps = ["//cuttlefish/common/libs/fs:fs_shared"],
+)
+
 cf_cc_library(
     name = "files",
     srcs = ["files.cpp"],
