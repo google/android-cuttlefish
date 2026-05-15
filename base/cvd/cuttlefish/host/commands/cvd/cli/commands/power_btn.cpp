@@ -65,7 +65,7 @@ bool CvdDevicePowerBtnCommandHandler::RequiresDeviceExists() const {
 }
 
 Result<std::string> CvdDevicePowerBtnCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kSummaryHelpText;
 }
 

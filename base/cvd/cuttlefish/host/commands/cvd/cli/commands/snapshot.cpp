@@ -109,7 +109,7 @@ std::string CvdSnapshotCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdSnapshotCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kDetailedHelpText;
 }
 

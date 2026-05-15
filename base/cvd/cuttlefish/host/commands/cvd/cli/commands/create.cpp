@@ -329,7 +329,7 @@ std::string CvdCreateCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdCreateCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kDetailedHelpText;
 }
 

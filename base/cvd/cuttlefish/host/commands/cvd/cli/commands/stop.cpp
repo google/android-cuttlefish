@@ -113,7 +113,7 @@ std::string CvdStopCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdStopCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kDetailedHelpText;
 }
 

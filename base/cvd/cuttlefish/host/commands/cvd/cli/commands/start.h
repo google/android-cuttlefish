@@ -39,8 +39,7 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   }
 
   bool RequiresDeviceExists() const override { return true; }
-  Result<std::string> DetailedHelp(
-      const CommandRequest& request) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) override;
 
  private:
   Result<void> LaunchDevice(Command command, LocalInstanceGroup& group,
@@ -53,11 +52,11 @@ class CvdStartCommandHandler : public CvdCommandHandler {
                                          const CommandRequest& request);
 
   // Flags handled by `cvd start` itself, not cvd_internal_start.
-  std::vector<Flag> BuildOwnFlags() const;
+  std::vector<Flag> BuildOwnFlags();
 
   InstanceManager& instance_manager_;
   SubprocessWaiter subprocess_waiter_;
-  mutable struct {
+  struct {
     std::vector<std::string> host_substitutions;
   } own_flags_;
 };

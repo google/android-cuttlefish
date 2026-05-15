@@ -91,7 +91,7 @@ cvd_common::Args CvdLoginCommand::CmdList() const { return {"login"}; }
 std::string CvdLoginCommand::SummaryHelp() const { return kSummaryHelpText; }
 
 Result<std::string> CvdLoginCommand::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   std::string google_appendix;
   if (IsGoogleCorp()) {
     google_appendix =

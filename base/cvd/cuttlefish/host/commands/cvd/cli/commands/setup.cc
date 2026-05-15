@@ -92,8 +92,7 @@ bool CvdSetupHandler::RequiresHostConfiguration() const {
   return false;
 }
 
-Result<std::string> CvdSetupHandler::DetailedHelp(
-    const CommandRequest&) const {
+Result<std::string> CvdSetupHandler::DetailedHelp(const CommandRequest&) {
   return kDetailedHelpText;
 }
 

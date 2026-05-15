@@ -38,8 +38,7 @@ class CvdSnapshotCommandHandler : public CvdCommandHandler {
 
   std::string SummaryHelp() const override;
   bool RequiresDeviceExists() const override { return true; }
-  Result<std::string> DetailedHelp(
-      const CommandRequest& request) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) override;
 
  private:
   Result<Command> GenerateCommand(const CommandRequest& request,
