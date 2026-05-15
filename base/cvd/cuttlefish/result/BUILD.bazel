@@ -1,3 +1,4 @@
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
@@ -24,6 +25,22 @@ cf_cc_library(
         "//libbase",
         "@abseil-cpp//absl/log",
         "@fmt",
+    ],
+)
+
+cc_shared_library(
+    name = "result_shared",
+    dynamic_deps = [
+        "//libbase:libbase_shared",
+        "//:absl_shared",
+    ],
+    shared_lib_name = "libcuttlefish_result.so",
+    user_link_flags = [
+        "-Wl,-rpath,$ORIGIN/",
+    ],
+    deps = [
+        ":error_type",
+        ":result",
     ],
 )
 
