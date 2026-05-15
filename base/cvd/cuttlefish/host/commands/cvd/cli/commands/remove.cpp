@@ -47,7 +47,7 @@ std::string RemoveCvdCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> RemoveCvdCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return "Removes selected devices from the system.\n\n"
          "Running devices are stopped first. Deletes build and runtime "
          "artifacts, including log files and images (only if downloaded by "

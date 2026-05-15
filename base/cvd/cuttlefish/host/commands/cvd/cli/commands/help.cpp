@@ -105,7 +105,7 @@ std::string CvdHelpHandler::SummaryHelp() const { return kSummaryHelpText; }
 bool CvdHelpHandler::RequiresHostConfiguration() const { return false; }
 
 Result<std::string> CvdHelpHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kDetailedHelpText;
 }
 

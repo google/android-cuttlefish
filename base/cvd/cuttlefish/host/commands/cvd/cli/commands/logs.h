@@ -18,8 +18,7 @@ class CvdLogsHandler : public CvdCommandHandler {
 
   std::string SummaryHelp() const override;
   bool RequiresDeviceExists() const override;
-  Result<std::string> DetailedHelp(
-      const CommandRequest& request) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) override;
 
  private:
   InstanceManager& instance_manager_;

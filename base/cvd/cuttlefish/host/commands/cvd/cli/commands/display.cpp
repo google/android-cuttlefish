@@ -144,7 +144,7 @@ std::string CvdDisplayCommandHandler::SummaryHelp() const {
 bool CvdDisplayCommandHandler::RequiresDeviceExists() const { return true; }
 
 Result<std::string> CvdDisplayCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kDetailedHelpText;
 }
 

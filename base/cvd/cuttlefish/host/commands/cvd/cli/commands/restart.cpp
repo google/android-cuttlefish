@@ -94,7 +94,7 @@ bool CvdDeviceRestartCommandHandler::RequiresDeviceExists() const {
 }
 
 Result<std::string> CvdDeviceRestartCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kDetailedHelpText;
 }
 

@@ -36,7 +36,7 @@ class CvdSetupHandler : public CvdCommandHandler {
   std::string SummaryHelp() const override;
   bool RequiresDeviceExists() const override;
   bool RequiresHostConfiguration() const override;
-  Result<std::string> DetailedHelp(const CommandRequest&) const override;
+  Result<std::string> DetailedHelp(const CommandRequest&) override;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdSetupHandler();

@@ -521,7 +521,7 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
 }
 
 Result<std::string> CvdStartCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   cvd_common::Args args = request.SubcommandArguments();
   std::vector<Flag> own_flags = BuildOwnFlags();
   CF_EXPECT(ConsumeFlags(own_flags, args));
@@ -551,7 +551,7 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
   return ss.str();
 }
 
-std::vector<Flag> CvdStartCommandHandler::BuildOwnFlags() const {
+std::vector<Flag> CvdStartCommandHandler::BuildOwnFlags() {
   return {GflagsCompatFlag("host_substitutions", own_flags_.host_substitutions)
               .Help("Comma separated list of files to replace in the host "
                     "artifacts from the android build with artifacts from the "

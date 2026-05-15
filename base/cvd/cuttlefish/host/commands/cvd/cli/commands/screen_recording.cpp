@@ -172,7 +172,7 @@ bool ScreenRecordingCommandHandler::RequiresDeviceExists() const {
 }
 
 Result<std::string> ScreenRecordingCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kDetailedHelpText;
 }
 

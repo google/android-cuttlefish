@@ -142,7 +142,7 @@ std::string CvdResetCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdResetCommandHandler::DetailedHelp(
-    const CommandRequest& /*request*/) const {
+    const CommandRequest& /*request*/) {
   return kDetailedHelpText;
 }
 

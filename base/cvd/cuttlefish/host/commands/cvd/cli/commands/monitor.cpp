@@ -246,7 +246,7 @@ std::string CvdMonitorCommandHandler::SummaryHelp() const {
 bool CvdMonitorCommandHandler::RequiresDeviceExists() const { return true; }
 
 Result<std::string> CvdMonitorCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kDetailedHelpText;
 }
 

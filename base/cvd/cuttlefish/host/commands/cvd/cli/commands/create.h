@@ -36,8 +36,7 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
   std::vector<std::string> CmdList() const override { return {"create"}; }
   std::string SummaryHelp() const override;
 
-  Result<std::string> DetailedHelp(
-      const CommandRequest& request) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) override;
 
  private:
   InstanceManager& instance_manager_;
