@@ -225,5 +225,9 @@ std::string VhostUserMediaEmulatedCameraSPlaneBinary() {
   return HostBinaryPath("vhu_media_emulated_camera_splane");
 }
 
+std::string VhostUserMediaEmulatedCameraMPlaneBinary() {
+  return HostBinaryPath("vhu_media_emulated_camera_mplane");
+}
+
 }  // namespace cuttlefish
 
