@@ -27,6 +27,19 @@ cf_cc_library(
     ],
 )
 
+cc_shared_library(
+    name = "result_shared",
+    shared_lib_name = "libcuttlefish_result.so",
+    deps = [
+        ":result",
+        ":error_type",
+    ],
+    dynamic_deps = [
+        "//libbase:libbase_shared",
+        "//:absl_shared"
+    ],
+)
+
 cf_cc_library(
     name = "result",
     hdrs = ["result.h"],

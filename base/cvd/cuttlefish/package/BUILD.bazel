@@ -132,6 +132,10 @@ package_files(
         "cuttlefish-common/usr/share/webrtc/assets/js/gamepad.js": "//cuttlefish/host/frontend/webrtc/html_client:js/gamepad.js",
         "cuttlefish-common/usr/share/webrtc/assets/js/rootcanal.js": "//cuttlefish/host/frontend/webrtc/html_client:js/rootcanal.js",
         "cuttlefish-common/usr/share/webrtc/assets/js/touch.js": "//cuttlefish/host/frontend/webrtc/html_client:js/touch.js",
+        "cuttlefish-common/lib64/libcuttlefish_result.so": "//cuttlefish/result:result_shared",
+        "cuttlefish-common/lib64/libcuttlefish_files.so": "//cuttlefish/common/libs/utils:files_shared",
+        "cuttlefish-common/lib64/libcuttlefish_fs.so": "//cuttlefish/common/libs/fs:fs_shared",
+        "cuttlefish-common/lib64/libcuttlefish_libbase.so": "//libbase:libbase_shared",
     },
     visibility = ["//:android_cuttlefish"],
 )

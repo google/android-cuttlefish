@@ -78,3 +78,46 @@ cc_import(
     shared_library = ":gfxstream_backend",
     visibility = ["//visibility:public"],
 )
+
+cc_shared_library(
+    name = "absl_shared",
+    shared_lib_name = "libcuttlefish_absl.so",
+    deps = [
+        "@abseil-cpp//absl/base",
+        "@abseil-cpp//absl/cleanup",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/debugging:stacktrace",
+        "@abseil-cpp//absl/debugging:symbolize",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/flags:parse",
+        "@abseil-cpp//absl/hash",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/log:globals",
+        "@abseil-cpp//absl/log:initialize",
+        "@abseil-cpp//absl/numeric:int128",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:cord",
+        "@abseil-cpp//absl/strings:internal",
+        "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/synchronization",
+        "@abseil-cpp//absl/time",
+    ],
+    exports_filter = [
+        "@abseil-cpp//:__subpackages__",
+    ],
+)
+
+cc_shared_library(
+    name = "fmt_shared",
+    shared_lib_name = "libcuttlefish_fmt.so",
+    deps = [
+        "@fmt//:fmt",
+    ],
+    exports_filter = [
+        "@fmt//:__subpackages__",
+    ],
+)

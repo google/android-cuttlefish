@@ -17,6 +17,21 @@ cf_cc_library(
     ],
 )
 
+cc_shared_library(
+    name = "fs_shared",
+    shared_lib_name = "libcuttlefish_fs.so",
+    deps = [
+        ":fs",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/posix:strerror",
+    ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//cuttlefish/result:result_shared",
+        "//libbase:libbase_shared",
+    ],
+)
+
 cf_cc_library(
     name = "fs",
     srcs = [
