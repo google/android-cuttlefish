@@ -17,6 +17,7 @@
 #pragma once
 
 #include <chrono>
+#include <optional>
 #include <string>
 
 #include "cuttlefish/result/result.h"
@@ -41,5 +42,12 @@ std::string GetCvdLogFileName(const std::string& log_dir = CvdUserLogDir(),
 /** Prunes the logs directory keeping only the most recent log files. */
 Result<void> PruneLogsDirectory(const std::string& log_dir = CvdUserLogDir(),
                                 size_t retain = kCvdRetainLogFilesNum);
+
+/**
+ * Returns the path to the previous log file (second most recent) in the log
+ * directory. If fewer than 2 log files exist, returns std::nullopt.
+ */
+Result<std::optional<std::string>> GetPreviousLogFile(
+    const std::string& log_dir = CvdUserLogDir());
 
 }  // namespace cuttlefish

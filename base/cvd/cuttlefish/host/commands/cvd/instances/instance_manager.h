@@ -57,6 +57,8 @@ class InstanceManager {
   };
   InstanceManager(InstanceLockFileManager&, InstanceDatabase& instance_db);
 
+  const InstanceDatabase& GetInstanceDatabase() const { return instance_db_; }
+
   Result<bool> HasInstanceGroups() const;
   Result<LocalInstanceGroup> CreateInstanceGroup(
       InstanceGroupParams group_params, GroupDirectories group_directories);

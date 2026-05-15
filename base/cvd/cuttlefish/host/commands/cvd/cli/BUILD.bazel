@@ -79,6 +79,18 @@ cf_cc_library(
     ],
 )
 
+cf_cc_library(
+    name = "log_tail",
+    srcs = ["log_tail.cpp"],
+    hdrs = ["log_tail.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:cord",
+    ],
+)
+
 cf_cc_test(
     name = "log_files_test",
     srcs = ["log_files_test.cpp"],
@@ -118,6 +130,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:help_format",
         "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli/commands:bug",
         "//cuttlefish/host/commands/cvd/cli/commands:bugreport",
         "//cuttlefish/host/commands/cvd/cli/commands:cache",
         "//cuttlefish/host/commands/cvd/cli/commands:clear",

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,35 +20,27 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<void> RunHostBugreportCommand(const std::string& android_host_out,
-                                     const std::string& home,
-                                     cvd_common::Envs env,
-                                     const std::vector<std::string>& args,
-                                     const std::string& working_dir);
-
-class CvdBugreportCommandHandler : public CvdCommandHandler {
+class CvdBugCommandHandler : public CvdCommandHandler {
  public:
-  CvdBugreportCommandHandler(InstanceManager& instance_manager);
+  CvdBugCommandHandler(const InstanceDatabase& instance_db);
 
   Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override;
+  std::vector<std::string> CmdList() const override;
   std::string SummaryHelp() const override;
-
-  bool RequiresDeviceExists() const override;
   Result<std::string> DetailedHelp(const CommandRequest& request) override;
 
  private:
-  InstanceManager& instance_manager_;
+  const InstanceDatabase& instance_db_;
 };
 
-std::unique_ptr<CvdCommandHandler> NewCvdBugreportCommandHandler(
-    InstanceManager& instance_manager);
+std::unique_ptr<CvdCommandHandler> NewCvdBugCommandHandler(
+    const InstanceDatabase& instance_db);
 
 }  // namespace cuttlefish

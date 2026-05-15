@@ -86,4 +86,22 @@ Result<void> PruneLogsDirectory(const std::string& log_dir, size_t retain) {
   return {};
 }
 
+Result<std::optional<std::string>> GetPreviousLogFile(
+    const std::string& log_dir) {
+  if (!DirectoryExists(log_dir)) {
+    return std::nullopt;
+  }
+  std::vector<std::string> log_files =
+      CF_EXPECTF(DirectoryContents(log_dir),
+                 "Failed to list log directory: '{}'", log_dir);
+  std::erase_if(log_files, IsNotLogFile);
+  std::sort(log_files.begin(), log_files.end());
+
+  if (log_files.size() < 2) {
+    return std::nullopt;
+  }
+
+  return log_dir + "/" + log_files[log_files.size() - 2];
+}
+
 }  // namespace cuttlefish

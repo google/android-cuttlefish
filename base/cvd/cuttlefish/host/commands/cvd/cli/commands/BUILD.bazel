@@ -15,6 +15,32 @@ exports_files([
 ])
 
 cf_cc_library(
+    name = "bug",
+    srcs = ["bug.cpp"],
+    hdrs = ["bug.h"],
+    clang_format_enabled = True,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
+        "//cuttlefish/common/libs/utils:users",
+        ":bugreport",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:log_files",
+        "//cuttlefish/host/commands/cvd/cli:log_tail",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/version",
+        "//cuttlefish/result",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "bugreport",
     srcs = ["bugreport.cpp"],
     hdrs = ["bugreport.h"],
@@ -254,6 +280,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:log_tail",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
@@ -265,7 +292,6 @@ cf_cc_library(
         "//libbase",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:cord",
         "@fmt",
     ],
 )

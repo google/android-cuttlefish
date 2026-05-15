@@ -88,6 +88,27 @@ Result<void> AddFetchLogIfPresent(const LocalInstanceGroup& instance_group,
 }
 }  // namespace
 
+Result<void> RunHostBugreportCommand(const std::string& android_host_out,
+                                     const std::string& home,
+                                     cvd_common::Envs env,
+                                     const std::vector<std::string>& args,
+                                     const std::string& working_dir) {
+  env["HOME"] = home;
+  env[kAndroidHostOut] = android_host_out;
+  const std::string bin_path =
+      absl::StrCat(android_host_out, "/bin/", kHostBugreportBin);
+
+  ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
+                                            .home = home,
+                                            .args = args,
+                                            .envs = env,
+                                            .working_dir = working_dir,
+                                            .command_name = kHostBugreportBin};
+  Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
+  (void)command.Start().Wait();
+  return {};
+}
+
 CvdBugreportCommandHandler::CvdBugreportCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
@@ -106,24 +127,9 @@ Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
       CF_EXPECT(selector::SelectGroup(instance_manager_, request));
   std::string android_host_out = instance_group.HostArtifactsPath();
   std::string home = instance_group.HomeDir();
-  env["HOME"] = home;
-  env[kAndroidHostOut] = android_host_out;
-  const std::string bin_path =
-      absl::StrCat(android_host_out, "/bin/", kHostBugreportBin);
 
-  ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
-                                            .home = home,
-                                            .args = cmd_args,
-                                            .envs = env,
-                                            .working_dir = CurrentDirectory(),
-                                            .command_name = kHostBugreportBin};
-  Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
-
-  // Wait for the command to finish but ignore the result. The command will fail
-  // for reasons like the device failing to initialize the home directory or
-  // errors during fetch, which are still debuggable states that require a
-  // report.
-  (void)command.Start().Wait();
+  CF_EXPECT(RunHostBugreportCommand(android_host_out, home, env, cmd_args,
+                                    CurrentDirectory()));
 
   auto result = AddFetchLogIfPresent(instance_group, output_file);
   if (!result.ok()) {

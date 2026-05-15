@@ -24,6 +24,7 @@
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/bug.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/bugreport.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/cache.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/clear.h"
@@ -94,6 +95,8 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
   request_handlers_.emplace_back(NewCvdFetchCommandHandler());
   request_handlers_.emplace_back(NewCvdFleetCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdClearCommandHandler(instance_manager));
+  request_handlers_.emplace_back(
+      NewCvdBugCommandHandler(instance_manager.GetInstanceDatabase()));
   request_handlers_.emplace_back(
       NewCvdBugreportCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdStopCommandHandler(instance_manager));
