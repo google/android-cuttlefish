@@ -147,7 +147,7 @@ std::string CvdCacheCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdCacheCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return fmt::format(R"(usage: cvd cache <action> [<flag>...]
 
 Example usage:

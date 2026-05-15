@@ -60,7 +60,7 @@ cvd_common::Args LintCommandHandler::CmdList() const { return {kLintSubCmd}; }
 std::string LintCommandHandler::SummaryHelp() const { return kSummaryHelpText; }
 
 Result<std::string> LintCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kDetailedHelpText;
 }
 

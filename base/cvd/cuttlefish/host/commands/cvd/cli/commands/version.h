@@ -34,8 +34,7 @@ class CvdVersionHandler : public CvdCommandHandler {
   cvd_common::Args CmdList() const override;
 
   std::string SummaryHelp() const override;
-  Result<std::string> DetailedHelp(
-      const CommandRequest& request) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) override;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdVersionHandler();

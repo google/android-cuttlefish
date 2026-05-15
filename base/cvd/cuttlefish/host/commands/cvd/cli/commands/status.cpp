@@ -123,7 +123,7 @@ std::string CvdStatusCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdStatusCommandHandler::DetailedHelp(
-    const CommandRequest&) const {
+    const CommandRequest&) {
   return kDetailedHelpText;
 }
 

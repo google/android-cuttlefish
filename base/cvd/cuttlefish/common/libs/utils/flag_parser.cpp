@@ -300,19 +300,18 @@ bool Flag::WriteGflagsCompatXml(std::ostream& out) const {
 }
 
 std::ostream& operator<<(std::ostream& out, const Flag& flag) {
-  out << "[";
   for (auto it = flag.aliases_.begin(); it != flag.aliases_.end(); it++) {
     if (it != flag.aliases_.begin()) {
       out << ", ";
     }
     out << *it;
   }
-  out << "]\n";
+  out << "\n";
   if (flag.help_) {
-    out << "(" << *flag.help_ << ")\n";
+    out << "  " << *flag.help_ << "\n";
   }
   if (flag.getter_) {
-    out << "(Current value: \"" << (*flag.getter_)() << "\")\n";
+    out << "  Current value: \"" << (*flag.getter_)() << "\"\n";
   }
   return out;
 }
@@ -466,7 +465,7 @@ Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {
     std::exit(1);
     return {};
   };
-  return Flag()
+  return Flag("help")
       .Alias({FlagAliasMode::kFlagExact, "-help"})
       .Alias({FlagAliasMode::kFlagExact, "--help"})
       .Setter(setter);
@@ -497,8 +496,8 @@ static Result<void> GflagsCompatBoolFlagSetter(const std::string& name,
   return CF_ERRF("Unexpected key \"{}\" for \"{}\"", match.key, name);
 }
 
-static Flag GflagsCompatBoolFlagBase(const std::string& name) {
-  return Flag()
+Flag GflagsCompatBoolFlag(const std::string& name) {
+  return Flag(name)
       .Alias({FlagAliasMode::kFlagPrefix, "-" + name + "="})
       .Alias({FlagAliasMode::kFlagPrefix, "--" + name + "="})
       .Alias({FlagAliasMode::kFlagExact, "-" + name})
@@ -526,11 +525,11 @@ Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out, bool& value,
     out << "</AllFlags>" << std::flush;
     return CF_ERR("Requested early exit");
   };
-  return GflagsCompatBoolFlagBase(name).Setter(setter);
+  return GflagsCompatBoolFlag(name).Setter(setter);
 }
 
 Flag InvalidFlagGuard() {
-  return Flag()
+  return Flag("_invalid_flag_guard_")
       .UnvalidatedAlias({FlagAliasMode::kFlagPrefix, "-"})
       .Help(
           "This executable only supports the flags in `-help`. Positional "
@@ -541,7 +540,7 @@ Flag InvalidFlagGuard() {
 }
 
 Flag UnexpectedArgumentGuard() {
-  return Flag()
+  return Flag("_unexpected_argument_guard_")
       .UnvalidatedAlias({FlagAliasMode::kFlagPrefix, ""})
       .Help(
           "This executable only supports the flags in `-help`. Positional "
@@ -552,7 +551,7 @@ Flag UnexpectedArgumentGuard() {
 }
 
 Flag GflagsCompatFlag(const std::string& name) {
-  return Flag()
+  return Flag(name)
       .Alias({FlagAliasMode::kFlagPrefix, "-" + name + "="})
       .Alias({FlagAliasMode::kFlagPrefix, "--" + name + "="})
       .Alias({FlagAliasMode::kFlagConsumesFollowing, "-" + name})
@@ -621,7 +620,7 @@ Flag GflagsCompatFlag(const std::string& name, size_t& value) {
 }
 
 Flag GflagsCompatFlag(const std::string& name, bool& value) {
-  return GflagsCompatBoolFlagBase(name)
+  return GflagsCompatBoolFlag(name)
       .Getter([&value]() { return fmt::format("{}", value); })
       .Setter([name, &value](const FlagMatch& match) {
         return GflagsCompatBoolFlagSetter(name, value, match);

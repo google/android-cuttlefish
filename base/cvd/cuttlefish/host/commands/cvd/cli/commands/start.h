@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 
+#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -34,12 +35,11 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override;
   std::string SummaryHelp() const override {
-    return "Start a Cuttlefish virtual device or environment";
+    return "Start all Cuttlefish Instances in a group";
   }
 
   bool RequiresDeviceExists() const override { return true; }
-  Result<std::string> DetailedHelp(
-      const CommandRequest& request) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) override;
 
  private:
   Result<void> LaunchDevice(Command command, LocalInstanceGroup& group,
@@ -51,8 +51,14 @@ class CvdStartCommandHandler : public CvdCommandHandler {
                                          const cvd_common::Envs& envs,
                                          const CommandRequest& request);
 
+  // Flags handled by `cvd start` itself, not cvd_internal_start.
+  std::vector<Flag> BuildOwnFlags();
+
   InstanceManager& instance_manager_;
   SubprocessWaiter subprocess_waiter_;
+  struct {
+    std::vector<std::string> host_substitutions;
+  } own_flags_;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdStartCommandHandler(

@@ -56,7 +56,7 @@ std::string CvdFleetCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdFleetCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kHelpMessage;
 }
 

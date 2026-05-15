@@ -84,7 +84,7 @@ static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
 
   ParsedFlags parsed_flags;
 
-  Flag y_flag = Flag()
+  Flag y_flag = Flag("yes")
                     .Alias({FlagAliasMode::kFlagExact, "-y"})
                     .Alias({FlagAliasMode::kFlagExact, "--yes"})
                     .Setter([&parsed_flags](const FlagMatch&) -> Result<void> {
@@ -142,7 +142,7 @@ std::string CvdResetCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdResetCommandHandler::DetailedHelp(
-    const CommandRequest& /*request*/) const {
+    const CommandRequest& /*request*/) {
   return kDetailedHelpText;
 }
 

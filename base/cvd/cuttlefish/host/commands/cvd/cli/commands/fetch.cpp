@@ -119,7 +119,7 @@ std::string CvdFetchCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdFetchCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   std::vector<std::string> args = {"--help"};
   // TODO: b/389119573 - Should return the help text instead of printing it
   CF_EXPECT(FetchFlags::Parse(args));

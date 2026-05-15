@@ -74,7 +74,7 @@ cvd_common::Args CvdVersionHandler::CmdList() const { return {"version"}; }
 std::string CvdVersionHandler::SummaryHelp() const { return kSummaryHelpText; }
 
 Result<std::string> CvdVersionHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kSummaryHelpText;
 }
 

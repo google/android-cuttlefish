@@ -107,7 +107,7 @@ std::string CvdLogsHandler::SummaryHelp() const { return kSummaryHelpText; }
 
 bool CvdLogsHandler::RequiresDeviceExists() const { return true; }
 
-Result<std::string> CvdLogsHandler::DetailedHelp(const CommandRequest&) const {
+Result<std::string> CvdLogsHandler::DetailedHelp(const CommandRequest&) {
   return kDetailedHelpText;
 }
 
