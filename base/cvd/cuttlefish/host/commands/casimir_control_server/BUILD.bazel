@@ -12,6 +12,12 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//:fmt_shared",
+        "//cuttlefish/result:result_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         ":libcasimir",
         ":libcasimir_control_server",

@@ -9,6 +9,10 @@ cf_cc_binary(
     srcs = [
         "health.cpp",
     ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",

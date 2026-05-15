@@ -11,6 +11,11 @@ cf_cc_binary(
         "parser.cc",
         "parser.h",
     ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//cuttlefish/result:result_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:flag_parser",

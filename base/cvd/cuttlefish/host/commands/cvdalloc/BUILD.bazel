@@ -48,6 +48,11 @@ cf_cc_binary(
     srcs = [
         "cvdalloc.cpp",
     ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//cuttlefish/result:result_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         ":interface",
         ":privilege",

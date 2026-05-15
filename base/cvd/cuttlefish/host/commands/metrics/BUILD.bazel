@@ -51,6 +51,13 @@ cf_cc_binary(
         "host_receiver.h",
         "metrics.cc",
     ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//cuttlefish/common/libs/utils:files_shared",
+        "//cuttlefish/common/libs/fs:fs_shared",
+        "//cuttlefish/result:result_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -129,6 +136,10 @@ cf_cc_binary(
     name = "metrics_transmitter",
     srcs = [
         "metrics_transmitter.cc",
+    ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//cuttlefish/result:result_shared",
     ],
     deps = [
         "//cuttlefish/common/libs/utils:tee_logging",

@@ -314,6 +314,13 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//cuttlefish/common/libs/fs:fs_shared",
+        "//cuttlefish/common/libs/utils:files_shared",
+        "//cuttlefish/result:result_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         ":libcuttlefish_webrtc_adb_handler",
         ":libcuttlefish_webrtc_audio_handler",
