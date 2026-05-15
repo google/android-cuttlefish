@@ -41,13 +41,17 @@ func ParseCvdArgs(allArgs []string) *CvdArgs {
 	fs.BoolVar(&commonArgs.Help, "help", false, "Print help message")
 	fs.StringVar(&commonArgs.Verbosity, "verbosity", "", "Verbosity level of the command")
 	fs.Parse(allArgs)
+	subcommandArgs := fs.Args()
+	if len(subcommandArgs) > 0 {
+		subcommandArgs[0] = mapSubcommand(subcommandArgs[0])
+	}
 	return &CvdArgs{
 		CommonArgs: &commonArgs,
 		// Golang's standard library 'flag' stops parsing just before the first
 		// non-flag argument. As the command 'cvd' expects only selector and driver
 		// options before the subcommand argument, 'subcommandArgs' should be empty
 		// or starting with subcommand name.
-		SubCommandArgs: fs.Args(),
+		SubCommandArgs: subcommandArgs,
 		flagSet:        fs,
 	}
 }
@@ -105,4 +109,20 @@ func (a *CvdArgs) GetStringFlagValueOnSubCommandArgs(flagName string) string {
 		}
 	}
 	return ""
+}
+
+func mapSubcommand(subcmd string) string {
+	aliases := map[string]string{
+		"fetch_cvd":          "fetch",
+		"host_bugreport":     "bugreport",
+		"cvd_host_bugreport": "bugreport",
+		"stop_cvd":           "stop",
+		"rm":                 "remove",
+		"launch_cvd":         "start",
+		"cvd_status":         "status",
+	}
+	if mapped, exists := aliases[subcmd]; exists {
+		return mapped
+	}
+	return subcmd
 }

@@ -103,4 +103,3 @@ func readUserCidrFromConfig(username string) (string, error) {
 	}
 	return "", fmt.Errorf("user %q not found in /etc/podcvd.users", username)
 }
-
