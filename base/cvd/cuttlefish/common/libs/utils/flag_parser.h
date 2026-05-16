@@ -194,6 +194,18 @@ Flag GflagsCompatFlag(const std::string& name, bool& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<std::string>& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
                       bool default_value);
+// Indicates when to assign std::nullopt to the std::optional backing the flag.
+enum class CoerceToNullopt {
+  None, // When the flag is not present in the arguments
+  UnsetKeyword, // When the flag has the "unset" special value.
+  EmptyString, // When the flag has an empty value (`--flag "" or `--flag=`)
+};
+Flag GflagsCompatFlag(
+    const std::string& name, std::optional<std::string>& value,
+    CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(
+    const std::string& name, std::optional<std::vector<std::string>>& value,
+    CoerceToNullopt opt = CoerceToNullopt::None);
 
 // e.g. cvd start --help, cvd stop -help, cvd fleet -h
 Result<bool> HasHelpFlag(const std::vector<std::string>& args);
