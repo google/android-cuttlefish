@@ -17,11 +17,8 @@
 #pragma once
 
 #include <memory>
-#include <sstream>
 #include <string>
-#include <vector>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -29,25 +26,6 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-class LogMonitorDisplay {
- public:
-  LogMonitorDisplay(size_t width);
-
-  void DrawFile(SharedFD fd, const std::string& title);
-
-  std::string Finalize();
-
-  int TotalLinesDrawn() const;
-
- private:
-  void DrawBorderedText(const std::vector<std::string>& lines,
-                        const std::string& title);
-
-  size_t width_;
-  std::stringstream ss_;
-  int total_lines_drawn_;
-};
 
 class CvdMonitorCommandHandler : public CvdCommandHandler {
  public:

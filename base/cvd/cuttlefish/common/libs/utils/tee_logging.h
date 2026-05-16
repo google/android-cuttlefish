@@ -40,6 +40,8 @@ enum class LogSeverity : int {
 std::string FromSeverity(LogSeverity severity);
 Result<LogSeverity> ToSeverity(const std::string& value);
 
+std::string StripColorCodes(const std::string& str);
+
 LogSeverity ConsoleSeverity();
 LogSeverity LogFileSeverity();
 
