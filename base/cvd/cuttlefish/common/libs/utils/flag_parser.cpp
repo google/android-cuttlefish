@@ -25,6 +25,7 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -59,6 +60,105 @@ constexpr std::array help_str_opts{
     "helpon",
     "helpmatch",
 };
+
+bool ShouldBeNullOpt(std::string_view value, CoerceToNullopt opt) {
+  switch (opt) {
+    case CoerceToNullopt::None:
+      return false;
+    case CoerceToNullopt::UnsetKeyword:
+      return value == "unset";
+    case CoerceToNullopt::EmptyString:
+      return value.empty();
+  };
+}
+
+std::string NullOptValue(CoerceToNullopt opt) {
+  switch (opt) {
+    case CoerceToNullopt::None:
+      return "[not set]";
+    case CoerceToNullopt::UnsetKeyword:
+      return "unset";
+    case CoerceToNullopt::EmptyString:
+      return "";
+  }
+}
+
+template <typename T>
+std::string FlagValueToString(const T& value) {
+  return fmt::format("{}", value);
+}
+
+template <typename T>
+Result<T> ParseFlagValue(std::string_view str);
+
+// Setting and getting strings
+template <>
+std::string FlagValueToString<std::string>(const std::string& value) {
+  return fmt::format("{}", value);
+}
+template <>
+Result<std::string> ParseFlagValue<std::string>(std::string_view str) {
+  return std::string(str);
+}
+
+// Setter for bool, default getter is fine
+template<>
+Result<bool> ParseFlagValue<bool>(std::string_view str) {
+  return CF_EXPECT(ParseBool(str, "flag"));
+}
+
+// Getter and Setter for std::vector
+template <typename T>
+std::string FlagValueToString(const std::vector<T>& values) {
+  std::vector<std::string> strings;
+  strings.reserve(values.size());
+  for (const T& value : values) {
+    strings.emplace_back(FlagValueToString(value));
+  }
+  return absl::StrJoin(strings, ",");
+}
+// Need an extra function to share between vector specializations because
+// partial template specializations are not allowed in C++.
+template <typename T>
+Result<std::vector<T>> ParseFlagVectorValue(std::string_view str, T default_value) {
+  if (str.empty()) {
+    return {};
+  }
+  std::vector<std::string_view> elements = absl::StrSplit(str, ',');
+  std::vector<T> parsed;
+  parsed.reserve(elements.size());
+  for (std::string_view element : elements) {
+    if (element.empty()) {
+      parsed.push_back(default_value);
+    } else {
+      parsed.push_back(CF_EXPECT(ParseFlagValue<T>(element)));
+    }
+  }
+  return parsed;
+}
+template <>
+Result<std::vector<std::string>> ParseFlagValue(std::string_view str) {
+  return CF_EXPECT(ParseFlagVectorValue<std::string>(str, ""));
+}
+
+// Getter and Setter for std::optional
+template <typename T>
+std::string FlagValueToString(const std::optional<T>& value,
+                              CoerceToNullopt opt) {
+  if (!value.has_value()) {
+    return NullOptValue(opt);
+  }
+  return FlagValueToString(*value);
+}
+template <typename T>
+Result<std::optional<T>> ParseFlagOptionalValue(std::string_view str,
+                                                CoerceToNullopt opt) {
+  if (ShouldBeNullOpt(str, opt)) {
+    return std::nullopt;
+  } else {
+    return CF_EXPECT(ParseFlagValue<T>(str));
+  }
+}
 
 }  // namespace
 
@@ -632,11 +732,8 @@ Flag GflagsCompatFlag(const std::string& name,
   return GflagsCompatFlag(name)
       .Getter([&value]() { return absl::StrJoin(value, ","); })
       .Setter([&value](const FlagMatch& match) -> Result<void> {
-        if (match.value.empty()) {
-          value.clear();
-          return {};
-        }
-        value = absl::StrSplit(match.value, ',');
+        value =
+            CF_EXPECT(ParseFlagValue<std::vector<std::string>>(match.value));
         return {};
       });
 }
@@ -644,26 +741,34 @@ Flag GflagsCompatFlag(const std::string& name,
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
                       const bool default_value) {
   return GflagsCompatFlag(name)
-      .Getter([&value]() { return fmt::format("{}", fmt::join(value, ",")); })
+      .Getter([&value]() { return FlagValueToString(value); })
       .Setter([name, &value,
                default_value](const FlagMatch& match) -> Result<void> {
-        if (match.value.empty()) {
-          value.clear();
-          return {};
-        }
-        std::vector<std::string_view> str_vals =
-            absl::StrSplit(match.value, ',');
-        value.clear();
-        std::vector<bool> output_vals;
-        output_vals.reserve(str_vals.size());
-        for (const auto& str_val : str_vals) {
-          if (str_val.empty()) {
-            output_vals.push_back(default_value);
-          } else {
-            output_vals.push_back(CF_EXPECT(ParseBool(str_val, name)));
-          }
-        }
-        value = output_vals;
+        value = CF_EXPECT(ParseFlagVectorValue(match.value, default_value));
+        return {};
+      });
+}
+
+Flag GflagsCompatFlag(const std::string& name,
+                      std::optional<std::string>& value,
+                      CoerceToNullopt opt) {
+  return GflagsCompatFlag(name)
+      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
+      .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
+        value =
+            CF_EXPECT(ParseFlagOptionalValue<std::string>(match.value, opt));
+        return {};
+      });
+}
+
+Flag GflagsCompatFlag(const std::string& name,
+                      std::optional<std::vector<std::string>>& value,
+                      CoerceToNullopt opt) {
+  return GflagsCompatFlag(name)
+      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
+      .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
+        value = CF_EXPECT(
+            ParseFlagOptionalValue<std::vector<std::string>>(match.value, opt));
         return {};
       });
 }

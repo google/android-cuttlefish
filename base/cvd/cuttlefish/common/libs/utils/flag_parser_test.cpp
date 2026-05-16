@@ -424,4 +424,180 @@ TEST(FlagParser, ConsumesConstrainedSeparated) {
   EXPECT_EQ(name, "abc");
 }
 
+TEST(FlagParser, OptionalStringFlag_DefaultOptNotPresent) {
+  std::optional<std::string> value;
+
+  // Default options: None
+  auto flag_default = GflagsCompatFlag("myflag", value);
+
+  // Not present, should remain default (nullopt)
+  value = std::nullopt;
+  ASSERT_THAT(flag_default.Parse({}), IsOk());
+  ASSERT_FALSE(value.has_value());
+}
+
+TEST(FlagParser, OptionalStringFlag_DefaultOptPresent) {
+  std::optional<std::string> value;
+
+  // Default options: None
+  auto flag_default = GflagsCompatFlag("myflag", value);
+
+  // Present with value
+  value = std::nullopt;
+  ASSERT_THAT(flag_default.Parse({"--myflag=foo"}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_EQ(*value, "foo");
+}
+
+TEST(FlagParser, OptionalStringFlag_DefaultOptEmtpyFlag) {
+  std::optional<std::string> value;
+
+  // Default options: None
+  auto flag_default = GflagsCompatFlag("myflag", value);
+
+  // Present with empty value
+  value = std::nullopt;
+  ASSERT_THAT(flag_default.Parse({"--myflag="}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_EQ(*value, "");
+}
+
+TEST(FlagParser, OptionalStringFlag_EmptyOptEmtpyFlag) {
+  std::optional<std::string> value;
+
+  // With EmptyString option
+  auto flag_empty_string = GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
+
+  // Present with empty value -> should be nullopt
+  value = "before";
+  ASSERT_THAT(flag_empty_string.Parse({"--myflag="}), IsOk());
+  ASSERT_FALSE(value.has_value());
+}
+
+TEST(FlagParser, OptionalStringFlag_EmptyOptPresent) {
+  std::optional<std::string> value;
+
+  // With EmptyString option
+  auto flag_empty_string = GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
+
+  // Present with value -> should be value
+  value = std::nullopt;
+  ASSERT_THAT(flag_empty_string.Parse({"--myflag=bar"}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_EQ(*value, "bar");
+}
+
+TEST(FlagParser, OptionalStringFlag_UnsetOptUnsetValue) {
+  std::optional<std::string> value;
+
+  // With UnsetKeyword option
+  auto flag_unset = GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
+
+  // Present with "unset" -> should be nullopt
+  value = "before";
+  ASSERT_THAT(flag_unset.Parse({"--myflag=unset"}), IsOk());
+  ASSERT_FALSE(value.has_value());
+}
+
+TEST(FlagParser, OptionalStringFlag_UnsetOptOtherValue) {
+  std::optional<std::string> value;
+
+  // With UnsetKeyword option
+  auto flag_unset = GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
+
+  // Present with other value -> should be value
+  value = std::nullopt;
+  ASSERT_THAT(flag_unset.Parse({"--myflag=baz"}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_EQ(*value, "baz");
+}
+
+TEST(FlagParser, OptionalStringVectorFlag_DefaultOptNotPresent) {
+  std::optional<std::vector<std::string>> value;
+
+  // Default options: None
+  auto flag_default = GflagsCompatFlag("myflag", value);
+
+  // Not present, should remain default (nullopt)
+  value = std::nullopt;
+  ASSERT_THAT(flag_default.Parse({}), IsOk());
+  ASSERT_FALSE(value.has_value());
+}
+
+TEST(FlagParser, OptionalStringVectorFlag_DefaultOptPresent) {
+  std::optional<std::vector<std::string>> value;
+
+  // Default options: None
+  auto flag_default = GflagsCompatFlag("myflag", value);
+
+  // Present with value
+  value = std::nullopt;
+  ASSERT_THAT(flag_default.Parse({"--myflag=foo,bar"}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_EQ(*value, std::vector<std::string>({"foo", "bar"}));
+}
+
+TEST(FlagParser, OptionalStringVectorFlag_DefaultOptEmptyValue) {
+  std::optional<std::vector<std::string>> value;
+
+  // Default options: None
+  auto flag_default = GflagsCompatFlag("myflag", value);
+
+  // Present with empty value (should be empty vector, not nullopt, because opt is None)
+  value = std::nullopt;
+  ASSERT_THAT(flag_default.Parse({"--myflag="}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_TRUE(value->empty());
+}
+
+TEST(FlagParser, OptionalStringVectorFlag_EmptyOptEmptyValue) {
+  std::optional<std::vector<std::string>> value;
+
+  // With EmptyString option
+  auto flag_empty_string = GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
+
+  // Present with empty value -> should be nullopt
+  value = std::vector<std::string>{"before"};
+  ASSERT_THAT(flag_empty_string.Parse({"--myflag="}), IsOk());
+  ASSERT_FALSE(value.has_value());
+}
+
+TEST(FlagParser, OptionalStringVectorFlag_EmptyOptPresent) {
+  std::optional<std::vector<std::string>> value;
+
+  // With EmptyString option
+  auto flag_empty_string = GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
+
+  // Present with value -> should be value
+  value = std::nullopt;
+  ASSERT_THAT(flag_empty_string.Parse({"--myflag=bar,baz"}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_EQ(*value, std::vector<std::string>({"bar", "baz"}));
+}
+
+TEST(FlagParser, OptionalStringVectorFlag_UnsetOptUnsetValue) {
+  std::optional<std::vector<std::string>> value;
+
+  // With UnsetKeyword option
+  auto flag_unset = GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
+
+  // Present with "unset" -> should be nullopt
+  value = std::vector<std::string>{"before"};
+  ASSERT_THAT(flag_unset.Parse({"--myflag=unset"}), IsOk());
+  ASSERT_FALSE(value.has_value());
+}
+
+TEST(FlagParser, OptionalStringVectorFlag_UnsetOptPresent) {
+  std::optional<std::vector<std::string>> value;
+
+  // With UnsetKeyword option
+  auto flag_unset = GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
+
+  // Present with other value -> should be value
+  value = std::nullopt;
+  ASSERT_THAT(flag_unset.Parse({"--myflag=baz"}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_EQ(*value, std::vector<std::string>({"baz"}));
+}
+
 }  // namespace cuttlefish
