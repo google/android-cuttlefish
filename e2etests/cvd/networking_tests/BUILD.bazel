@@ -1,0 +1,21 @@
+load("@rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "networking_tests",
+    size = "large",
+    srcs = ["main_test.go"],
+    data = [
+        "main_test.go",
+        "//:debian_substitution_marker",
+    ],
+    env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(rlocationpath //:debian_substitution_marker)"},
+    tags = [
+        "exclusive",
+        "external",
+        "no-sandbox",
+        "supports-graceful-termination",
+    ],
+    deps = [
+        "//cvd/common",
+    ],
+)
