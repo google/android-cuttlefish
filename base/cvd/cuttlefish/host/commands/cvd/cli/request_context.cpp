@@ -38,7 +38,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/load_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/login.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/logs.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/power_btn.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/powerwash.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/remove.h"

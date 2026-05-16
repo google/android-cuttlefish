@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/display.h"
 
 #include <cstddef>
 #include <string>
@@ -35,7 +35,7 @@ TEST(LogMonitorDisplayTest, DrawFileValid) {
   LogMonitorDisplay display(40);
   display.DrawFile(fd, "test.log");
 
-  std::string output = display.Finalize();
+  std::string output = display.Finalize().output;
   EXPECT_TRUE(absl::StrContains(output, "+--test.log "));
   EXPECT_TRUE(
       absl::StrContains(output, "|line1                                 |"));
@@ -53,7 +53,7 @@ TEST(LogMonitorDisplayTest, DrawFileInvalid) {
   LogMonitorDisplay display(40);
   display.DrawFile(fd, "test.log");
 
-  std::string output = display.Finalize();
+  std::string output = display.Finalize().output;
   EXPECT_TRUE(absl::StrContains(output, "+--test.log "));
   EXPECT_TRUE(
       absl::StrContains(output, "|Failed to read test.log: File not open|"));
@@ -65,14 +65,10 @@ TEST(LogMonitorDisplayTest, TotalLinesDrawn) {
   SharedFD fd = SharedFD::MemfdCreateWithData("test_log", "line1\n");
   LogMonitorDisplay display(40);
 
-  EXPECT_EQ(display.TotalLinesDrawn(), 0);
-
   display.DrawFile(fd, "test.log");
-  EXPECT_EQ(display.TotalLinesDrawn(),
-            11);  // 10 lines of content + 1 top border
-
-  display.Finalize();
-  EXPECT_EQ(display.TotalLinesDrawn(), 12);  // +1 bottom border
+  int total_lines_drawn = display.Finalize().total_lines_drawn;
+  // 10 lines of content + 1 top border + 1 bottom border
+  EXPECT_EQ(total_lines_drawn, 12);
 }
 
 TEST(LogMonitorDisplayTest, DrawFileLastNLinesOrder) {
@@ -86,7 +82,7 @@ TEST(LogMonitorDisplayTest, DrawFileLastNLinesOrder) {
   LogMonitorDisplay display(40);
   display.DrawFile(fd, "test.log");
 
-  std::string output = display.Finalize();
+  std::string output = display.Finalize().output;
 
   // Should contain line3 to line12
   for (int i = 3; i <= 12; ++i) {
@@ -123,7 +119,7 @@ TEST(LogMonitorDisplayTest, DrawFileLinesAcrossChunks) {
   LogMonitorDisplay display(80);
   display.DrawFile(fd, "test.log");
 
-  std::string output = display.Finalize();
+  std::string output = display.Finalize().output;
 
   // Verify all lines are present
   for (int i = 1; i <= 10; ++i) {
