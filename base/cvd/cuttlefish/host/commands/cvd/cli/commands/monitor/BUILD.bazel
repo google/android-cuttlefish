@@ -1,0 +1,171 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+
+package(
+    default_visibility = ["//cuttlefish/host/commands/cvd/cli:__subpackages__"],
+)
+
+cf_cc_library(
+    name = "ansi_codes",
+    srcs = ["ansi_codes.cc"],
+    hdrs = ["ansi_codes.h"],
+    clang_format_enabled = True,
+    deps = [
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
+    name = "command_handler",
+    srcs = ["command_handler.cc"],
+    hdrs = ["command_handler.h"],
+    clang_format_enabled = True,
+    deps = [
+        ":ansi_codes",
+        ":display",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:instance_manager",
+        "//cuttlefish/host/libs/log_names",
+        "//cuttlefish/result",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
+    name = "display",
+    srcs = ["display.cc"],
+    hdrs = ["display.h"],
+    clang_format_enabled = True,
+    deps = [
+        ":kernel",
+        ":launcher",
+        ":log_tee",
+        ":logcat",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/log_names",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:cord",
+    ],
+)
+
+cf_cc_test(
+    name = "display_test",
+    srcs = ["display_test.cc"],
+    clang_format_enabled = True,
+    deps = [
+        ":display",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
+    name = "kernel",
+    srcs = ["kernel.cc"],
+    hdrs = ["kernel.h"],
+    clang_format_enabled = True,
+    deps = [
+        ":ansi_codes",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "kernel_test",
+    srcs = ["kernel_test.cc"],
+    clang_format_enabled = True,
+    deps = [
+        ":kernel",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
+    name = "launcher",
+    srcs = ["launcher.cc"],
+    hdrs = ["launcher.h"],
+    clang_format_enabled = True,
+    deps = [
+        ":ansi_codes",
+        ":verbosity",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "launcher_test",
+    srcs = ["launcher_test.cc"],
+    clang_format_enabled = True,
+    deps = [
+        ":launcher",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
+    name = "log_tee",
+    srcs = ["log_tee.cc"],
+    hdrs = ["log_tee.h"],
+    clang_format_enabled = True,
+    deps = [
+        ":ansi_codes",
+        ":verbosity",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "log_tee_test",
+    srcs = ["log_tee_test.cc"],
+    clang_format_enabled = True,
+    deps = [
+        ":log_tee",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
+    name = "logcat",
+    srcs = ["logcat.cc"],
+    hdrs = ["logcat.h"],
+    clang_format_enabled = True,
+    deps = [
+        ":ansi_codes",
+        ":verbosity",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "logcat_test",
+    srcs = ["logcat_test.cc"],
+    clang_format_enabled = True,
+    deps = [
+        ":logcat",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
+    name = "verbosity",
+    srcs = ["verbosity.cc"],
+    hdrs = ["verbosity.h"],
+    clang_format_enabled = True,
+    deps = [
+        ":ansi_codes",
+    ],
+)

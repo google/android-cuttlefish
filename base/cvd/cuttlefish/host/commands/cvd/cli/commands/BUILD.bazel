@@ -245,41 +245,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "monitor",
-    srcs = ["monitor.cpp"],
-    hdrs = ["monitor.h"],
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/host/commands/cvd/cli:command_request",
-        "//cuttlefish/host/commands/cvd/cli:types",
-        "//cuttlefish/host/commands/cvd/cli:utils",
-        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
-        "//cuttlefish/host/commands/cvd/cli/selector",
-        "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/commands/cvd/instances:instance_manager",
-        "//cuttlefish/host/libs/log_names",
-        "//cuttlefish/result",
-        "//libbase",
-        "@abseil-cpp//absl/log:check",
-        "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:cord",
-        "@fmt",
-    ],
-)
-
-cf_cc_test(
-    name = "monitor_test",
-    srcs = ["monitor_test.cpp"],
-    deps = [
-        ":monitor",
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/result:result_matchers",
-        "@abseil-cpp//absl/strings",
-    ],
-)
-
-cf_cc_library(
     name = "power_btn",
     srcs = ["power_btn.cpp"],
     hdrs = ["power_btn.h"],

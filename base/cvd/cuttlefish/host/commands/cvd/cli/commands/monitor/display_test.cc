@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/display.h"
 
 #include <cstddef>
 #include <string>
