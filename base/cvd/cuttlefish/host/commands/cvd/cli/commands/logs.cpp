@@ -12,7 +12,6 @@
 #include <vector>
 
 #include "absl/log/log.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -42,8 +41,8 @@ struct LogsCmdOptions {
   }
 };
 
-Result<void> PrintLogsList(const std::string& dir) {
-  auto callback = [](const std::string& filename) -> Result<void> {
+void PrintLogsList(const std::vector<std::string>& filenames) {
+  for (auto& filename : filenames) {
     std::string basename = android::base::Basename(filename);
     std::cout << basename;
     std::cout << " ";
@@ -55,10 +54,23 @@ Result<void> PrintLogsList(const std::string& dir) {
     }
     std::cout << filename;
     std::cout << std::endl;
-    return {};
   };
-  CF_EXPECT(WalkDirectory(dir, callback));
-  return {};
+}
+
+std::vector<std::string> RemoveInaccessibleFilenames(
+    std::vector<std::string> filenames) {
+  auto removed_begin = std::remove_if(
+      filenames.begin(), filenames.end(), [](const std::string& v) {
+        bool accessible = access(v.c_str(), F_OK) == 0;
+        if (!accessible) {
+          std::string basename = android::base::Basename(v);
+          VLOG(0) << "Logs file `" << basename << "` not found at \"" << v
+                  << "\"";
+        }
+        return !accessible;
+      });
+  filenames.erase(removed_begin, filenames.end());
+  return filenames;
 }
 
 Result<void> PrintLog(const std::string& filename) {
@@ -73,7 +85,7 @@ CvdLogsHandler::CvdLogsHandler(InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
 Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
-  auto [instance, _] =
+  auto [instance, group] =
       CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                 "Unable to select an instance");
 
@@ -81,23 +93,43 @@ Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
   CF_EXPECT(ConsumeFlags(opts.Flags(), args));
 
-  std::string dir = instance.instance_dir();
-  std::string logs_dir = dir + "/logs";
-  if (!FileExists(logs_dir)) {
-    VLOG(0) << "Logs directory `" << logs_dir << "` does not exist.";
-    LOG(INFO) << "There are no logs files available";
-    return {};
+  std::vector<std::string> logs_filenames;
+  auto group_names = RemoveInaccessibleFilenames(group.LogsFilenames());
+  logs_filenames.insert(logs_filenames.end(), group_names.begin(),
+                        group_names.end());
+  auto ins_names =
+      RemoveInaccessibleFilenames(CF_EXPECT(instance.LogsFilenames()));
+  // Avoid inserting instance log names that are already fetched at group level.
+  for (auto ins_filename : ins_names) {
+    std::string base = android::base::Basename(ins_filename);
+    auto p = [base](const auto& v) {
+      return base == android::base::Basename(v);
+    };
+    auto it = std::find_if(group_names.begin(), group_names.end(), p);
+    if (it == group_names.end()) {
+      logs_filenames.push_back(ins_filename);
+    }
   }
-  CF_EXPECT(IsDirectory(logs_dir));
 
   if (opts.print_target.empty()) {
-    CF_EXPECT(PrintLogsList(logs_dir));
+    if (logs_filenames.empty()) {
+      LOG(INFO) << "There are no log files available";
+    } else {
+      PrintLogsList(logs_filenames);
+    }
     return {};
   }
 
-  std::string print_target = logs_dir + "/" + opts.print_target;
-  CF_EXPECT(FileExists(print_target));
-  CF_EXPECT(PrintLog(print_target));
+  for (auto& filename : logs_filenames) {
+    std::string basename = android::base::Basename(filename);
+    if (basename == opts.print_target) {
+      CF_EXPECT(PrintLog(filename));
+      return {};
+    }
+  };
+
+  CF_EXPECTF(false, "Not found `{}` logs", opts.print_target);
+
   return {};
 }
 
