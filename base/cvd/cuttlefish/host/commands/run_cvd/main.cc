@@ -126,9 +126,13 @@ class InstanceLifecycle : public LateInjected {
     // One of the setup features can consume most output, so print this early.
     DiagnosticInformation::PrintAll(diagnostics_);
 
-    CF_EXPECT(SetupFeature::RunSetup(setup_features_));
+    {
+      CF_EXPECT(SetupFeature::RunSetup(setup_features_));
+    }
 
-    CF_EXPECT(server_loop_.Run());
+    {
+      CF_EXPECT(server_loop_.Run());
+    }
 
     return {};
   }

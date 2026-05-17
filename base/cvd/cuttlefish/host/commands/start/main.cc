@@ -46,6 +46,7 @@
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/posix/symlink.h"
 
 namespace cuttlefish {
@@ -207,6 +208,9 @@ Result<void> LinkLogs2InstanceDir(
 
 int CvdInternalStartMain(int argc, char** argv) {
   LogToStderr();
+
+  CF_TRACE("cvd_internal_start");
+
   std::vector<std::string> args(argv + 1, argv + argc);
 
   std::vector<std::string> assemble_args;
@@ -293,15 +297,18 @@ int CvdInternalStartMain(int argc, char** argv) {
 
   auto assembler_input = WriteFiles(AvailableFilesReport());
   std::string assembler_output;
-  auto assemble_ret =
-      InvokeAssembler(assembler_input, assembler_output,
-                      forwarder.ArgvForSubprocess(AssemblerPath(), args));
+  {
+    CF_TRACE("Running assemble_cvd");
+    auto assemble_ret =
+        InvokeAssembler(assembler_input, assembler_output,
+                        forwarder.ArgvForSubprocess(AssemblerPath(), args));
 
-  if (assemble_ret != 0) {
-    LOG(ERROR) << "assemble_cvd returned " << assemble_ret;
-    return assemble_ret;
-  } else {
-    VLOG(0) << "assemble_cvd exited successfully.";
+    if (assemble_ret != 0) {
+      LOG(ERROR) << "assemble_cvd returned " << assemble_ret;
+      return assemble_ret;
+    } else {
+      VLOG(0) << "assemble_cvd exited successfully.";
+    }
   }
 
   std::string conf_path;
@@ -327,11 +334,13 @@ int CvdInternalStartMain(int argc, char** argv) {
     setenv(kCuttlefishInstanceEnvVarName, instance.id().c_str(),
            /* overwrite */ 1);
 
+    CF_TRACE("Running run_cvd: %s", instance.instance_name().c_str());
     auto run_proc = StartRunner(std::move(runner_stdin), instance,
                                 forwarder.ArgvForSubprocess(RunnerPath()));
     runners.push_back(std::move(run_proc));
   }
 
+  CF_TRACE("WaitForRunCvd");
   bool run_cvd_failure = false;
   for (auto& run_proc : runners) {
     auto run_ret = run_proc.Wait();

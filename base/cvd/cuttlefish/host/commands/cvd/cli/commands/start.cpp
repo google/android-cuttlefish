@@ -67,6 +67,7 @@
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
 
@@ -440,6 +441,7 @@ cvd_common::Args CvdStartCommandHandler::CmdList() const {
 Result<void> CvdStartCommandHandler::LaunchDevice(
     Command launch_command, LocalInstanceGroup& group,
     const cvd_common::Envs& envs, const CommandRequest& request) {
+  CF_TRACE("LaunchDevice");
   // Don't destroy the returned object until after the devices have started, it
   // holds a connection to the orchestrator that ensures the devices remain
   // pre-registered there. If the connection is lost before the devices register
@@ -480,6 +482,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
 Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
     Command command, LocalInstanceGroup& group, const cvd_common::Envs& envs,
     const CommandRequest& request) {
+  CF_TRACE("LaunchDeviceInterruptible");
   // cvd_internal_start uses the config from the previous invocation to
   // determine the default value for the -report_anonymous_usage_stats flag so
   // we symlink that to the group's home directory, this link will be
@@ -502,6 +505,7 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
 
 Result<std::string> CvdStartCommandHandler::DetailedHelp(
     const CommandRequest& request) const {
+  CF_TRACE("cvd start help");
   cvd_common::Envs envs = request.Env();
   Result<LocalInstanceGroup> group_res =
       selector::SelectGroup(instance_manager_, request);

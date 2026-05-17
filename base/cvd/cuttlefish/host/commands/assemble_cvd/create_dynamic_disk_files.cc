@@ -59,6 +59,7 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -98,6 +99,7 @@ Result<void> CreateDynamicDiskFiles(
     const FetcherConfigs& fetcher_configs, const CuttlefishConfig& config,
     AndroidBuilds& android_builds, const BootImageFlag& boot_image,
     const SystemImageDirFlag& system_image_dirs) {
+  CF_TRACE("CreateDynamicDiskFiles");
   std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files =
       InstanceImageFiles(config, boot_image);
   size_t instance_index = 0;

@@ -23,6 +23,7 @@
 
 #include "absl/log/log.h"
 
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -49,6 +50,7 @@ SetupFeature::~SetupFeature() {}
             "Dependency issue detected, not performing any setup.");
   // TODO(b/189153501): This can potentially be parallelized.
   for (auto& feature : ordered_features) {
+    CF_TRACE("FeatureSetup %s", feature->Name().c_str());
     VLOG(0) << "Running setup for " << feature->Name();
     CF_EXPECT(feature->ResultSetup(), "Setup failed for " << feature->Name());
   }

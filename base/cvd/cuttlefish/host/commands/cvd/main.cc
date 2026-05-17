@@ -41,6 +41,7 @@
 #include "cuttlefish/host/commands/cvd/cvd.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/posix/strerror.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "cuttlefish/host/commands/cvd/metrics/cvd_metrics_api.h"
@@ -124,6 +125,8 @@ void IncreaseFileLimit() {
 }
 
 Result<void> CvdMain(cvd_common::Args all_args) {
+  CF_TRACE("CvdMain");
+
   if (!isatty(0)) {
     LOG(INFO) << GetVersionIds().ToString();
   }

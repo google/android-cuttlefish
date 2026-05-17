@@ -1,0 +1,49 @@
+From 45c2b6299505b133fdce117649f457e36640d824 Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Fri, 15 May 2026 11:28:54 -0700
+Subject: [PATCH 1/4] Disable Android components to avoid extra dependencies
+
+---
+ bazel/rules.bzl | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/bazel/rules.bzl b/bazel/rules.bzl
+index 6195465a67..a3e367cde8 100644
+--- a/bazel/rules.bzl
++++ b/bazel/rules.bzl
+@@ -13,9 +13,7 @@
+ # limitations under the License.
+ 
+ load("@perfetto//bazel:proto_gen.bzl", "proto_descriptor_gen", "proto_gen")
+-load("@perfetto//bazel:run_ait_with_adb.bzl", "android_instrumentation_test")
+ load("@perfetto_cfg//:perfetto_cfg.bzl", "PERFETTO_CONFIG")
+-load("@rules_android//android:rules.bzl", "android_binary", "android_library")
+ 
+ # +----------------------------------------------------------------------------+
+ # | Base C++ rules.                                                            |
+@@ -113,11 +111,11 @@ def perfetto_jspb_proto_library(**kwargs):
+ # +----------------------------------------------------------------------------+
+ def perfetto_android_binary(**kwargs):
+     if not _rule_override("android_binary", **kwargs):
+-        android_binary(**kwargs)
++        return
+ 
+ def perfetto_android_library(**kwargs):
+     if not _rule_override("android_library", **kwargs):
+-        android_library(**kwargs)
++        return
+ 
+ def perfetto_android_jni_library(**kwargs):
+     if not _rule_override("android_jni_library", **kwargs):
+@@ -171,7 +169,7 @@ def _perfetto_android_jni_library(
+ 
+ def perfetto_android_instrumentation_test(**kwargs):
+     if not _rule_override("android_instrumentation_test", **kwargs):
+-        android_instrumentation_test(**kwargs)
++        return
+ 
+ # +----------------------------------------------------------------------------+
+ # | Misc rules.                                                                |
+-- 
+2.54.0.563.g4f69b47b94-goog
+

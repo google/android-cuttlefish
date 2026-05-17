@@ -1,0 +1,39 @@
+From 8ae64deaf5cb13bcdfb87d576b6d207a2fef13df Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Fri, 15 May 2026 11:33:40 -0700
+Subject: [PATCH 3/4] Expose shutdown in perfetto_c
+
+---
+ include/perfetto/public/abi/producer_abi.h | 3 +++
+ src/shared_lib/producer.cc                 | 4 ++++
+ 2 files changed, 7 insertions(+)
+
+diff --git a/include/perfetto/public/abi/producer_abi.h b/include/perfetto/public/abi/producer_abi.h
+index 8899d0098e..e43da137c5 100644
+--- a/include/perfetto/public/abi/producer_abi.h
++++ b/include/perfetto/public/abi/producer_abi.h
+@@ -79,6 +79,9 @@ PERFETTO_SDK_EXPORT void PerfettoProducerActivateTriggers(
+     const char* trigger_names[],
+     uint32_t ttl_ms);
+ 
++
++PERFETTO_SDK_EXPORT void PerfettoProducerShutdown(void);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/src/shared_lib/producer.cc b/src/shared_lib/producer.cc
+index 06599f97e1..8f90bedb2d 100644
+--- a/src/shared_lib/producer.cc
++++ b/src/shared_lib/producer.cc
+@@ -81,3 +81,7 @@ void PerfettoProducerActivateTriggers(const char* trigger_names[],
+   }
+   perfetto::Tracing::ActivateTriggers(triggers, ttl_ms);
+ }
++
++void PerfettoProducerShutdown(void) {
++  perfetto::Tracing::Shutdown();
++}
+-- 
+2.54.0.563.g4f69b47b94-goog
+

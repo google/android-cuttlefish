@@ -37,6 +37,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/build_api_zip.h"
@@ -64,10 +65,15 @@ Result<void> FetchArtifact::DownloadTo(std::string local_path) {
       fmt::format("{}/{}", fetch_build_context_.target_directory_, local_path);
 
   if (downloaded_path_.empty()) {
-    std::string downloaded =
-        CF_EXPECT(fetch_build_context_.fetch_context_.build_api_.DownloadFile(
-            fetch_build_context_.build_, fetch_build_context_.target_directory_,
-            artifact_name_));
+    std::string downloaded;
+
+    {
+      CF_TRACE("Download: %s", artifact_name_.c_str());
+      downloaded =
+          CF_EXPECT(fetch_build_context_.fetch_context_.build_api_.DownloadFile(
+              fetch_build_context_.build_,
+              fetch_build_context_.target_directory_, artifact_name_));
+    }
     size_t size = FileSize(downloaded);
     std::string download_phase = fmt::format("Downloaded '{}'", artifact_name_);
     fetch_build_context_.trace_.CompletePhase(download_phase, size);
@@ -104,6 +110,8 @@ Result<void> FetchArtifact::ExtractAll() {
 }
 
 Result<void> FetchArtifact::ExtractAll(const std::string& local_path) {
+  CF_TRACE("ExtractAll: %s", artifact_name_.c_str());
+
   ReadableZip* zip = CF_EXPECT(AsZip());
   size_t entries = CF_EXPECT(zip->NumEntries());
   for (uint64_t i = 0; i < entries; i++) {

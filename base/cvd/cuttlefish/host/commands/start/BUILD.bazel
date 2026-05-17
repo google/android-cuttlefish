@@ -32,6 +32,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:host_tools_version",
         "//cuttlefish/host/libs/config:instance_nums",
+        "//cuttlefish/host/libs/tracing",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
         "@abseil-cpp//absl/base:no_destructor",
