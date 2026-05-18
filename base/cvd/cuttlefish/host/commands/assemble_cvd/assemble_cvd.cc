@@ -109,7 +109,7 @@ Result<void> CreateLegacySymlinks(
   std::string log_files[] = {kLogNameKernel,
                              kLogNameLauncher,
                              kLogNameLogcat,
-                             "metrics.log",
+                             kLogNameMetrics,
                              kLogNameModemSimulator,
                              kLogNameCrosvmOpenWrt,
                              kLogNameCrosvmOpenWrtBoot};
@@ -248,7 +248,7 @@ Result<std::set<std::string>> PreservingOnResume(
     preserving.insert(kLogNameModemSimulator);
     preserving.insert(kLogNameCrosvmOpenWrt);
     preserving.insert(kLogNameCrosvmOpenWrtBoot);
-    preserving.insert("metrics.log");
+    preserving.insert(kLogNameMetrics);
     preserving.insert("userdata.img");
   }
   if (InSandbox()) {
