@@ -16,38 +16,34 @@
 
 #include "cuttlefish/host/commands/cvd/cli/frontline_parser.h"
 
-#include <optional>
 #include <string>
 #include <vector>
 
 #include <android-base/file.h>
 
-#include "cuttlefish/host/commands/cvd/cli/selector/arguments_separator.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 
-using selector::SeparateArguments;
-using selector::SeparatedArguments;
-
 Result<selector::SelectorOptions> ExtractCvdArgs(cvd_common::Args& args) {
   CF_EXPECT(!args.empty());
+  // Remove the first argument before parsing selectors
+  std::string program = args[0];
+  args.erase(args.begin());
 
-  SeparatedArguments separated_arguments = CF_EXPECT(SeparateArguments(args));
+  // Parse and remove selector options from the beginning of args. This ensures
+  // the selectors are found before the subcommand.
+  selector::SelectorOptions selector_options;
+  std::vector<Flag> selector_flags =
+      selector::BuildCommonSelectorFlags(selector_options);
+  CF_EXPECT(ConsumeFlagsConstrained(selector_flags, args));
 
-  cvd_common::Args new_exec_args{separated_arguments.prog_path};
+  // Re-insert program into arguments
+  args.insert(args.begin(), program);
 
-  const std::optional<std::string>& sub_cmd = separated_arguments.sub_cmd;
-  if (sub_cmd) {
-    new_exec_args.push_back(*sub_cmd);
-  }
-
-  const cvd_common::Args& sub_cmd_args{separated_arguments.sub_cmd_args};
-  new_exec_args.insert(new_exec_args.end(), sub_cmd_args.begin(),
-                       sub_cmd_args.end());
-
-  args = new_exec_args;
-  return separated_arguments.cvd_args;
+  return selector_options;
 }
 
 }  // namespace cuttlefish

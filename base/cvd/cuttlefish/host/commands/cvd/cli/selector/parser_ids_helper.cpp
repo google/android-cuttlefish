@@ -31,7 +31,7 @@ InstanceIdTest::InstanceIdTest() {
     envs_[kCuttlefishInstanceEnvVarName] = cuttlefish_instance.value();
   }
   cmd_args_ = absl::StrSplit(GetParam().cmd_args, ' ', absl::SkipEmpty());
-  selector_args_ = absl::StrSplit(GetParam().selector_args, ' ', absl::SkipEmpty());
+  selector_opts_ = GetParam().selector_opts;
   expected_ids_ = GetParam().expected_ids;
   expected_result_ = GetParam().expected_result;
   requested_num_instances_ = GetParam().requested_num_instances;
