@@ -10,6 +10,20 @@ This skill fully orchestrates the lifecycle of Cuttlefish instances and their gr
 > [!WARNING]
 > **Exclusive ADB Connection Control**: This skill internally manages all required ADB connections when creating, removing, or clearing instances. You **MUST NOT** invoke external skills, MCP servers, or secondary tools to establish ADB connections to these Cuttlefish instances, as doing so will cause system conflicts.
 
+> [!WARNING]
+> **Strict Isolation from `cvd`**: `podcvd` and standard `cvd` do not share state or information. Mixing their usage will cause inconsistent states and system errors.
+> * **MUST NOT** use standard `cvd` commands if this `podcvd` skill has been used in the environment.
+> * **MUST NOT** use this `podcvd` skill if standard `cvd` was previously used to manage instances.
+> * **Why Instances May Seem Missing**: Because they do not share state, instances created via standard `cvd` will **not** be visible to `podcvd` (e.g., `podcvd fleet` will show no instances), and vice versa. If you cannot find an expected Cuttlefish instance, verify which tool was used to create it.
+
+## Prerequisites
+
+* **Package Requirement**: `podcvd` is delivered via the `cuttlefish-podcvd` Debian package.
+* **Initial Setup**: To use `podcvd` successfully, the `podcvd-setup` binary (installed with the package) **MUST** be executed at least once after installation to perform the necessary initialization.
+* **Required Build Artifacts**: Launching Cuttlefish instances requires appropriate Cuttlefish host tools (host binaries and libraries) and Android device images (such as system.img, boot.img, and vendor.img):
+  * **Inside an Android Workspace**: You must initialize the environment (e.g., `lunch <target>`) and build the required targets (e.g., `m`) to ensure that valid Cuttlefish host tools (inside `ANDROID_HOST_OUT`) and Android device images (inside `ANDROID_PRODUCT_OUT`) are generated.
+  * **Outside an Android Workspace**: If you are not in an active build environment, you must ensure that compatible, pre-built Cuttlefish host tools and Android device images are already present in the working directory or are otherwise accessible via the relevant environment paths (like `ANDROID_HOST_OUT` and `ANDROID_PRODUCT_OUT`).
+
 ## Mandatory Execution Rule (Critical)
 
 You **MUST NOT** call the `podcvd` binary directly.
@@ -73,6 +87,13 @@ Only assemble custom command lines if the user explicitly requests non-standard 
 ./scripts/podcvd_executor.sh [podcvd_flags...] <subcommand> [subcommand_flags...]
 ```
 
+To understand advanced setup options and detailed command usage, you should query the tool's built-in help directly:
+```bash
+./scripts/podcvd_executor.sh help
+# or for specific subcommands:
+./scripts/podcvd_executor.sh <subcommand> --help
+```
+
 ## Integrated Web UI Monitoring Tip (Highly Recommended)
 
 Executing the `create` or `fleet` subcommands returns a JSON output containing instance configuration details. Within this JSON, you will find a **`web_access`** field.
@@ -86,3 +107,11 @@ If the JSON output returns:
 ```
 You must truncate the path and provide the user with this exact link:
 **`https://192.168.80.1:1443`**
+
+## Current Limitations & Temporarily Unsupported Features (Critical)
+
+Please be aware of the following **current** technical limitations when operating Cuttlefish instances via `podcvd`. Note that these features are actively being worked on and may be supported in future updates:
+
+* **Temporarily Unimplemented Subcommands**: Some `cvd` subcommands listed in the help output are not yet fully implemented and will explicitly return errors if executed in the current container environment.
+* **GPU Acceleration Not Yet Supported**: GPU hardware acceleration is **not yet supported**. Instances currently run with software rendering.
+* **Temporarily Restricted Filesystem Flag Support**: Flag support for custom filesystem paths is currently highly restricted. While paths residing within standard `ANDROID_HOST_OUT` and `ANDROID_PRODUCT_OUT` are exceptionally handled and fully supported, specifying advanced flags to point to any other custom directory paths (for example, setting custom kernel image paths outside these pre-configured directories) will likely fail. Avoid using advanced filesystem/path-redirection flags for non-standard paths until support is fully introduced.
