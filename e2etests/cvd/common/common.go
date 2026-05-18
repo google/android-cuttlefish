@@ -341,6 +341,14 @@ func (tc *TestContext) GetMetricsDir() (string, error) {
 	return metricsdir, nil
 }
 
+func (tc *TestContext) GetSyspropString(key string) (string, error) {
+	res, err := tc.RunCmd("adb", "shell", "getprop", key)
+	if err != nil {
+		return "", fmt.Errorf("failed to get sysprop %s: %w", key, err)
+	}
+	return strings.TrimSpace(res.Stdout), nil
+}
+
 // Creates a standard environment for an e2etests.
 func (tc *TestContext) SetUp(t *testing.T) {
 	tc.t = t
