@@ -190,16 +190,16 @@ Result<void> LinkLogs2InstanceDir(
   }
 
   std::string images_dir = instance.images_dir();
-  std::string fetch_log = fmt::format("{}/{}", images_dir, "fetch.log");
+  std::string fetch_log = fmt::format("{}/{}", images_dir, kLogNameFetch);
   if (!FileExists(fetch_log)) {
     // The fetch.log file can be in the same directory as the downloaded
     // instances or its parent directory if --target_subdirectory was used.
     fetch_log =
-        fmt::format("{}/{}", android::base::Dirname(images_dir), "fetch.log");
+        fmt::format("{}/{}", android::base::Dirname(images_dir), kLogNameFetch);
   }
   if (FileExists(fetch_log)) {
     CF_EXPECT(Symlink(AbsolutePath(fetch_log),
-                      instance.PerInstanceLogPath("fetch.log")));
+                      instance.PerInstanceLogPath(kLogNameFetch)));
   }
 
   return {};

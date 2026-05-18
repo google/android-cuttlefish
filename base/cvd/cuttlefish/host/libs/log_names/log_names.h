@@ -22,6 +22,7 @@ inline constexpr char kLogNameAssembleCvd[] = "assemble_cvd.log";
 inline constexpr char kLogNameBuildInfo[] = "build_info.log";
 inline constexpr char kLogNameCrosvmOpenWrt[] = "crosvm_openwrt.log";
 inline constexpr char kLogNameCrosvmOpenWrtBoot[] = "crosvm_openwrt_boot.log";
+inline constexpr char kLogNameFetch[] = "fetch.log";
 inline constexpr char kLogNameKernel[] = "kernel.log";
 inline constexpr char kLogNameLauncher[] = "launcher.log";
 inline constexpr char kLogNameLogcat[] = "logcat";
