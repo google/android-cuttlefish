@@ -278,6 +278,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/cvd/version",
+        "//cuttlefish/host/libs/log_names",
         "//cuttlefish/host/libs/metrics:enabled",
         "//cuttlefish/host/libs/metrics:host_metrics",
         "//cuttlefish/host/libs/metrics:metrics_conversion",

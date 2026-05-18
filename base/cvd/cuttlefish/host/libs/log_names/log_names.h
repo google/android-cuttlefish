@@ -27,6 +27,7 @@ inline constexpr char kLogNameKernel[] = "kernel.log";
 inline constexpr char kLogNameLauncher[] = "launcher.log";
 inline constexpr char kLogNameLogcat[] = "logcat";
 inline constexpr char kLogNameMetrics[] = "metrics.log";
+inline constexpr char kLogNameMetricsV2[] = "metrics_v2.log";
 inline constexpr char kLogNameModemSimulator[] = "modem_simulator.log";
 
 }  // namespace cuttlefish
