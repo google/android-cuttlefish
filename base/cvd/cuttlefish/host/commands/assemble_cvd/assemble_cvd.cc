@@ -481,7 +481,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     CF_EXPECT(Symlink(first_instance, double_legacy_instance_dir));
   }
 
-  CF_EXPECT(LogStringToDir(config->Instances()[0], "build_info.log",
+  CF_EXPECT(LogStringToDir(config->Instances()[0], kLogNameBuildInfo,
                            absl::StrCat(Pretty(android_builds))));
 
   CF_EXPECT(CreateDynamicDiskFiles(fetcher_configs, *config, android_builds,
