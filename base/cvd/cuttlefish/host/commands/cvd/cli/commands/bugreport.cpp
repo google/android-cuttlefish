@@ -41,6 +41,7 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
 #include "cuttlefish/result/result.h"
@@ -66,21 +67,22 @@ Result<std::string> OutputFileFromArgs(cvd_common::Args args) {
 
 Result<void> AddFetchLogIfPresent(const LocalInstanceGroup& instance_group,
                                   const std::string& output_file) {
-  std::string fetch_log_path = instance_group.ProductOutPath() + "/fetch.log";
+  std::string fetch_log_path =
+      instance_group.ProductOutPath() + "/" + kLogNameFetch;
   if (!FileExists(fetch_log_path)) {
     // The fetch log is in the parent of the host artifacts path when cvd create
     // --config_file was used.
     fetch_log_path =
-        android::base::Dirname(instance_group.HostArtifactsPath()) +
-        "/fetch.log";
+        android::base::Dirname(instance_group.HostArtifactsPath()) + "/" +
+        kLogNameFetch;
   }
   if (!FileExists(fetch_log_path)) {
     // There will be no fetch log when running from local sources
     return {};
   }
-  LOG(INFO) << "Attaching fetch.log to report";
+  LOG(INFO) << "Attaching " << kLogNameFetch << " to report";
   WritableZip archive = CF_EXPECT(ZipOpenReadWrite(output_file));
-  CF_EXPECT(AddFileAt(archive, fetch_log_path, "fetch.log"));
+  CF_EXPECT(AddFileAt(archive, fetch_log_path, kLogNameFetch));
   CF_EXPECT(WritableZip::Finalize(std::move(archive)));
   return {};
 }

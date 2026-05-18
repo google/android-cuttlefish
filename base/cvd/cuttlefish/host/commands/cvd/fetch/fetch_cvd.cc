@@ -47,6 +47,7 @@
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
@@ -512,7 +513,7 @@ Result<FetchResult> Fetch(const FetchFlags& flags,
 }  // namespace
 
 std::string GetFetchLogsFileName(const std::string& target_directory) {
-  return target_directory + "/fetch.log";
+  return target_directory + "/" + kLogNameFetch;
 }
 
 Result<FetchResult> FetchCvdMain(const FetchFlags& flags) {
