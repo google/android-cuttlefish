@@ -30,7 +30,6 @@
 #include <memory>
 #include <optional>
 #include <set>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -53,7 +52,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/fetch/substitute.h"
@@ -74,18 +72,6 @@
 
 namespace cuttlefish {
 namespace {
-
-constexpr char kCommandDescription[] =
-    R"(The `cvd start` command applies to the instance group, not specific instances
-because Cuttlefish instances in the same group must all be started (and stopped)
-in unisom. The group to be started is chosen using the standar selector flags.
-
-Flags that modify individual instances accept a comma separated list of values.
-If the number of values in one of these flags is less than the number of
-instances, then the last instances in the group will default to the first value
-in the list (as a result a single value provided applies to all instances). The
-empty string is interpreted as a valid value, to force a particular instance to
-use its intended default value the special value "unset" must be given.)";
 
 std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
   size_t initial_size = args.size();
@@ -521,34 +507,32 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
   return {};
 }
 
-Result<std::string> CvdStartCommandHandler::DetailedHelp(
+std::vector<std::string> CvdStartCommandHandler::Description() const {
+  return {
+      "The `cvd start` command applies to the instance group, not specific "
+      "instances because Cuttlefish instances in the same group must all be "
+      "started (and stopped) in unisom. The group to be started is chosen "
+      "using the standard selector flags.",
+      "Flags that modify individual instances accept a comma separated list of "
+      "values. If the number of values in one of these flags is less than the "
+      "number of instances, then the last instances in the group will default "
+      "to the first value in the list (as a result a single value provided "
+      "applies to all instances). The empty string is interpreted as a valid "
+      "value, to force a particular instance to use its intended default value "
+      "the special value \"unset\" must be given."};
+}
+
+Result<std::vector<Flag>> CvdStartCommandHandler::Flags(
     const CommandRequest& request) {
-  cvd_common::Args args = request.SubcommandArguments();
   std::vector<Flag> own_flags = BuildOwnFlags();
-  CF_EXPECT(ConsumeFlags(own_flags, args));
 
   std::vector<Flag> internal_flags = CF_EXPECT(GetCvdInternalStartFlags(
       request.SubcommandArguments(), cvd_common::Envs()));
 
-  selector::SelectorOptions selector_options = request.Selectors();
-  std::vector<Flag> selector_flags =
-      selector::BuildCommonSelectorFlags(selector_options);
-
-  std::vector<Flag> flags = std::move(selector_flags);
-  flags.insert(flags.end(), own_flags.begin(), own_flags.end());
+  std::vector<Flag> flags = std::move(own_flags);
   flags.insert(flags.end(), internal_flags.begin(), internal_flags.end());
 
-  // Make sure the flags are in alphabetical order
-  std::sort(flags.begin(), flags.end(),
-            [](auto f1, auto f2) { return f1.Name() < f2.Name(); });
-
-  std::stringstream ss;
-  ss << SummaryHelp() << "\n\n";
-  ss << kCommandDescription << "\n\n";
-  for (const Flag& flag : flags) {
-    ss << flag << std::endl;
-  }
-  return ss.str();
+  return flags;
 }
 
 std::vector<Flag> CvdStartCommandHandler::BuildOwnFlags() {
