@@ -31,6 +31,7 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -205,10 +206,10 @@ std::string LocalInstanceGroup::BaseDir() const {
 
 std::vector<std::string> LocalInstanceGroup::LogsFilenames() const {
   return {
-      AssemblyDir() + "/assemble_cvd.log",
+      AssemblyDir() + "/" + kLogNameAssembleCvd,
       AssemblyDir() + "/cuttlefish_config.json",
-      ArtifactsDir() + "/fetch.log",
-      MetricsDir() + "/metrics.log",
+      ArtifactsDir() + "/" + kLogNameFetch,
+      MetricsDir() + "/" + kLogNameMetrics,
   };
 }
 
