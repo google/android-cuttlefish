@@ -83,9 +83,12 @@ cf_cc_library(
     hdrs = ["command_handler.h"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -430,7 +433,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/host/commands/cvd/cli/selector",
-        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",

@@ -425,10 +425,10 @@ std::ostream& operator<<(std::ostream& out, const Flag& flag) {
   }
   out << "\n";
   if (flag.help_) {
-    out << "  " << *flag.help_ << "\n";
+    out <<  *flag.help_ << "\n";
   }
   if (flag.getter_) {
-    out << "  Current value: \"" << (*flag.getter_)() << "\"\n";
+    out << "Current value: \"" << (*flag.getter_)() << "\"\n";
   }
   return out;
 }
