@@ -518,14 +518,15 @@ int SharedFD::Fchdir(SharedFD shared_fd) {
 
 Result<SharedFD> SharedFD::Fifo(const std::string& path, mode_t mode) {
   struct stat st {};
-  if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) == 0) {
-    CF_EXPECTF(TEMP_FAILURE_RETRY(remove(path.c_str())) == 0,
-               "Failed to delete old file at '{}': '{}'", path,
+  if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) != 0) {
+    CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
+               "Failed to mkfifo('{}', {:o}): {}", path, mode,
                ::cuttlefish::StrError(errno));
+  } else {
+    CF_EXPECTF(S_ISFIFO(st.st_mode),
+               "File at '{}' exists but is not a FIFO", path);
   }
 
-  CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
-             "Failed to mkfifo('{}', {:o})", path, mode);
   auto ret = Open(path, O_RDWR);
   CF_EXPECTF(ret->IsOpen(), "Failed to open '{}': '{}'", path, ret->StrError());
   return ret;
