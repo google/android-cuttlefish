@@ -285,13 +285,13 @@ func (tc *TestContext) CVDPowerwash() error {
 	return nil
 }
 
-// Common parameters for `cvd load`.
+// Common parameters for `cvd create --config_file`.
 type LoadArgs struct {
 	LoadConfig string
 }
 
-// Performs `cvd load`.
-func (tc *TestContext) CVDLoad(load LoadArgs) error {
+// Performs `cvd create --config_file`.
+func (tc *TestContext) CVDCreateWithConfigFile(load LoadArgs) error {
 	configpath := path.Join(tc.tempdir, "cvd_load_config.json")
 
 	log.Printf("Writing config to %s", configpath)
@@ -302,21 +302,21 @@ func (tc *TestContext) CVDLoad(load LoadArgs) error {
 		return err
 	}
 
-	log.Printf("Creating instance(s) via `cvd load`...")
+	log.Printf("Creating instance(s) via `cvd create --config_file`...")
 	loadCmd := []string{
 		tc.TargetBin(),
-		"load",
-		configpath,
+		"create",
+		"--config_file=" + configpath,
 	}
 	credentialArg := os.Getenv("CREDENTIAL_SOURCE")
 	if credentialArg != "" {
 		loadCmd = append(loadCmd, fmt.Sprintf("--credential_source=%s", credentialArg))
 	}
 	if _, err := tc.RunCmd(loadCmd...); err != nil {
-		log.Printf("Failed to perform `cvd load`: %w", err)
+		log.Printf("Failed to perform `cvd create --config_file`: %w", err)
 		return err
 	}
-	log.Printf("Created instance(s) via `cvd load`!")
+	log.Printf("Created instance(s) via `cvd create --config_file`!")
 
 	tc.Cleanup(func() { tc.CVDStop() })
 	return nil
