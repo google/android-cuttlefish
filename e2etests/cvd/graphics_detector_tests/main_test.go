@@ -44,8 +44,8 @@ func TestLaunchingWithAutoEnablesGfxstream(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get EGL sysprop: %w", err)
 	}
-	if gl_driver != "angle" {
-		t.Errorf(`"ro.hardware.egl" was "%s"; expected "angle"`, gl_driver)
+	if gl_driver != "emulation" {
+		t.Errorf(`"ro.hardware.egl" was "%s"; expected "emulation"`, gl_driver)
 	}
 
 	vk_driver, err := c.GetSyspropString("ro.hardware.vulkan")
