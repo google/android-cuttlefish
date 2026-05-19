@@ -94,6 +94,7 @@ class ProcessMonitor {
   pid_t monitor_;
   std::optional<transport::SharedFdChannel> parent_channel_;
   std::optional<transport::SharedFdChannel> child_channel_;
+  SharedFD child_sock_;
 
   /*
    * The lock that should be acquired when multiple threads
