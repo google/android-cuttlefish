@@ -1,4 +1,3 @@
-load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
@@ -15,24 +14,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
-    ],
-)
-
-cc_shared_library(
-    name = "fs_shared",
-    dynamic_deps = [
-        "//:absl_shared",
-        "//cuttlefish/result:result_shared",
-        "//libbase:libbase_shared",
-    ],
-    shared_lib_name = "libcuttlefish_fs.so",
-    user_link_flags = [
-        "-Wl,-rpath,$ORIGIN/",
-    ],
-    deps = [
-        ":fs",
-        "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/posix:strerror",
     ],
 )
 
