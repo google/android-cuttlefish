@@ -1,4 +1,3 @@
-load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
@@ -103,22 +102,6 @@ cf_cc_test(
     deps = [
         ":environment",
         "@abseil-cpp//absl/cleanup",
-    ],
-)
-
-cc_shared_library(
-    name = "files_shared",
-    dynamic_deps = ["//cuttlefish/common/libs/fs:fs_shared"],
-    shared_lib_name = "libcuttlefish_files.so",
-    user_link_flags = [
-        "-Wl,-rpath,$ORIGIN/",
-    ],
-    deps = [
-        ":files",
-        ":users",
-        "//cuttlefish/common/libs/utils:in_sandbox",
-        "//cuttlefish/posix:rename",
-        "//cuttlefish/posix:symlink",
     ],
 )
 

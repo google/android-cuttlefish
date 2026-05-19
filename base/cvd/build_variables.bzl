@@ -6,6 +6,4 @@ COPTS = [
 ]
 
 LINKOPTS = [
-    "-Wl,-rpath,$ORIGIN/../lib64",
-    "-Wl,-rpath,$ORIGIN/../lib",
 ]

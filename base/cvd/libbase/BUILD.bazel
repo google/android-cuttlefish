@@ -1,5 +1,5 @@
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
+
 load("//:build_variables.bzl", "COPTS")
 
 package(
@@ -24,20 +24,6 @@ cc_library(
     copts = ["-D_POSIX_C_SOURCE=200112"],
     features = ["-use_header_modules"],
     visibility = ["//visibility:private"],
-)
-
-cc_shared_library(
-    name = "libbase_shared",
-    dynamic_deps = [
-        "//:fmt_shared",
-    ],
-    shared_lib_name = "libcuttlefish_libbase.so",
-    user_link_flags = [
-        "-Wl,-rpath,$ORIGIN/",
-    ],
-    deps = [
-        ":libbase",
-    ],
 )
 
 cc_library(
