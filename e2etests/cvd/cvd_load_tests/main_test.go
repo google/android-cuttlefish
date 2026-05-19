@@ -142,7 +142,7 @@ func TestCvdLoad(t *testing.T) {
 			c.SetUp(t)
 			defer c.TearDown()
 
-			err := c.CVDLoad(e2etests.LoadArgs{
+			err := c.CVDCreateWithConfigFile(e2etests.LoadArgs{
 				LoadConfig: tc.loadconfig,
 			})
 			if err != nil {
