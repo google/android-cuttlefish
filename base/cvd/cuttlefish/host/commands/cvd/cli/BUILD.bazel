@@ -41,6 +41,18 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "help_format",
+    srcs = ["help_format.cpp"],
+    hdrs = ["help_format.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
     name = "interruptible_terminal",
     srcs = ["interruptible_terminal.cpp"],
     hdrs = ["interruptible_terminal.h"],
