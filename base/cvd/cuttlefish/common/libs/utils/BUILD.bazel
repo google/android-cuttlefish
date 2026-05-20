@@ -323,6 +323,27 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "semver",
+    srcs = ["semver.cpp"],
+    hdrs = ["semver.h"],
+    deps = [
+        "//cuttlefish/result",
+        "//cuttlefish/result:expect",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "semver_test",
+    srcs = ["semver_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:semver",
+        "//cuttlefish/result:result_matchers",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "shared_fd_flag",
     srcs = ["shared_fd_flag.cpp"],
     hdrs = ["shared_fd_flag.h"],
