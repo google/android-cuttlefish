@@ -29,8 +29,13 @@
 namespace cuttlefish {
 namespace {
 
+constexpr char kRawTextMark[] = "_RAW_TEXT:";
+
 std::vector<std::string> WrapAroundLine(std::string_view str,
                                         size_t max_line_length) {
+  if (absl::ConsumePrefix(&str, kRawTextMark)) {
+    return {std::string(str)};
+  }
   std::vector<std::string> ret;
   size_t total_word_sizes = 0;
   std::vector<std::string_view> line;
@@ -98,6 +103,10 @@ std::string FormatFlagsHelp(const std::vector<Flag>& flags,
     ss << "\n";
   }
   return ss.str();
+}
+
+std::string MarkAsRawText(std::string_view str) {
+  return absl::StrCat(kRawTextMark, str);
 }
 
 }  // namespace cuttlefish

@@ -19,6 +19,7 @@
 #include <stddef.h>
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -40,5 +41,8 @@ std::string FormatHelpText(const std::vector<std::string>& text,
 // except when necessary to avoid splitting a word.
 std::string FormatFlagsHelp(const std::vector<Flag>& flags,
                             size_t max_line_width = kDefaultMaxLineWidth);
+
+// Marks a string as raw text so that FormatHelpText doesn't modify it.
+std::string MarkAsRawText(std::string_view str);
 
 }  // namespace cuttlefish
