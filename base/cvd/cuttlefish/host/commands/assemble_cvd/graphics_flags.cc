@@ -30,6 +30,8 @@
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/host_info.h"
+#include "cuttlefish/common/libs/utils/semver.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
@@ -52,12 +54,30 @@ namespace {
 struct CommonState {
   const VmmMode vmm_mode;
   const GuestConfig& guest_config;
+  const HostInfo host_info;
   const gfxstream::proto::GraphicsAvailability& graphics_availability;
 };
 
 bool IsLikelySoftwareRenderer(const std::string& renderer) {
   const std::string lower_renderer = absl::AsciiStrToLower(renderer);
   return lower_renderer.find("llvmpipe") != std::string::npos;
+}
+
+bool IsAmdGpu(const gfxstream::proto::GraphicsAvailability& availability) {
+  return (availability.has_egl() &&
+          ((availability.egl().has_gles2_availability() &&
+            availability.egl().gles2_availability().has_vendor() &&
+            availability.egl().gles2_availability().vendor().find("AMD") !=
+                std::string::npos) ||
+           (availability.egl().has_gles3_availability() &&
+            availability.egl().gles3_availability().has_vendor() &&
+            availability.egl().gles3_availability().vendor().find("AMD") !=
+                std::string::npos))) ||
+         (availability.has_vulkan() &&
+          !availability.vulkan().physical_devices().empty() &&
+          availability.vulkan().physical_devices(0).has_name() &&
+          availability.vulkan().physical_devices(0).name().find("AMD") !=
+              std::string::npos);
 }
 
 using MeetsRequirementFunc = std::function<bool(const CommonState& common)>;
@@ -71,7 +91,10 @@ struct RequirementWithReason {
 const std::unordered_map<GpuMode, std::vector<RequirementWithReason>>&
 GetGpuModeRequirementsMap() {
   const RequirementWithReason kHostIsNonArm{
-      .func = [](const CommonState&) { return HostArch() != Arch::Arm64; },
+      .func =
+          [](const CommonState& common) {
+            return common.host_info.arch != Arch::Arm64;
+          },
       .success_explanation = "The host is not ARM64.",
       .failure_explanation =
           "The host is ARM64. Not enabling accelerated modes on ARM64 until "
@@ -172,6 +195,30 @@ GetGpuModeRequirementsMap() {
           "Consider enabling --gpu_mode=gfxstream_guest_angle_host_swiftshader "
           "for host software rendering which has a vetted software renderer.",
   };
+  const RequirementWithReason kHostVulkanMemoryCanBeMappedIntoKvm{
+      .func =
+          [](const CommonState& common) {
+            // Issue only reported on AMD so far.
+            if (!IsAmdGpu(common.graphics_availability)) {
+              return true;
+            }
+
+            auto semver_result = ParseSemVer(common.host_info.release);
+            if (!semver_result.ok()) {
+              return false;
+            }
+            SemVer semver = *semver_result;
+            return semver.major >= 6 && semver.minor >= 13;
+          },
+      .success_explanation =
+          "The host's KVM should be able to map GPU memory into the guest.",
+      .failure_explanation =
+          "The host's KVM is likely unable to map GPU memory into the guest's "
+          "address space (see "
+          "https://lore.kernel.org/all/"
+          "20241010182427.1434605-1-seanjc@google.com/). "
+          "Please ensure your host release is at least 6.13.",
+  };
   static const auto* kGpuModeRequirements =
       new std::unordered_map<GpuMode, std::vector<RequirementWithReason>>{
           {
@@ -202,6 +249,7 @@ GetGpuModeRequirementsMap() {
                   kHostIsNonArm,
                   kHostVulkanAvailable,
                   kHostVulkanIsNonSoftwareRenderer,
+                  kHostVulkanMemoryCanBeMappedIntoKvm,
                   kNotUsingHostQemu,
               },
           },
@@ -452,6 +500,7 @@ Result<GpuMode> SelectGpuMode(
   const CommonState common = {
       .vmm_mode = vmm,
       .guest_config = guest_config,
+      .host_info = GetHostInfo(),
       .graphics_availability = graphics_availability,
   };
   if (gpu_mode_arg != GpuMode::Auto) {
@@ -558,23 +607,6 @@ Result<GuestRendererPreload> SelectGuestRendererPreload(
 
 #endif
 
-bool IsAmdGpu(const gfxstream::proto::GraphicsAvailability& availability) {
-  return (availability.has_egl() &&
-          ((availability.egl().has_gles2_availability() &&
-            availability.egl().gles2_availability().has_vendor() &&
-            availability.egl().gles2_availability().vendor().find("AMD") !=
-                std::string::npos) ||
-           (availability.egl().has_gles3_availability() &&
-            availability.egl().gles3_availability().has_vendor() &&
-            availability.egl().gles3_availability().vendor().find("AMD") !=
-                std::string::npos))) ||
-         (availability.has_vulkan() &&
-          !availability.vulkan().physical_devices().empty() &&
-          availability.vulkan().physical_devices(0).has_name() &&
-          availability.vulkan().physical_devices(0).name().find("AMD") !=
-              std::string::npos);
-}
-
 const std::string kGfxstreamTransportAsg = "virtio-gpu-asg";
 const std::string kGfxstreamTransportPipe = "virtio-gpu-pipe";
 
@@ -630,17 +662,6 @@ Result<void> SetGfxstreamFlags(
   // which introduced a backward incompatible change (b/267483000).
   if (guest_config.android_version_number == "11.0.0") {
     gfxstream_transport = kGfxstreamTransportPipe;
-  }
-
-  if (IsAmdGpu(availability)) {
-    // KVM does not support mapping host graphics buffers into the guest because
-    // the AMD GPU driver uses TTM memory. More info in
-    // https://lore.kernel.org/all/20230911021637.1941096-1-stevensd@google.com
-    //
-    // TODO(b/254721007): replace with a kernel version check after KVM patches
-    // land.
-    CF_EXPECT(gpu_mode != GpuMode::GfxstreamGuestAngle,
-              "--gpu_mode=gfxstream_guest_angle is broken on AMD GPUs.");
   }
 
   std::unordered_map<std::string, bool> features;
