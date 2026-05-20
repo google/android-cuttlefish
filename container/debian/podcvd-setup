@@ -131,4 +131,31 @@ else
     sudo usermod --add-subuids "$id_range" --add-subgids "$id_range" "$username"
 fi
 
+# 8. Add users to groups owning device nodes
+echo "Adding user to the device node owning groups..."
+devices=("/dev/kvm" "/dev/vhost-net" "/dev/vhost-vsock")
+groups_to_add=()
+for dev in "${devices[@]}"; do
+    if [ ! -e "$dev" ]; then
+        echo "Error: Required device $dev does not exist."
+        exit 1
+    fi
+    group=$(stat -c "%G" "$dev")
+    if [[ -z "$group" || "$group" == "root" ]]; then
+        echo "Error: Invalid group name of $dev to add user into the group."
+        exit 1
+    fi
+    if ! id -nG "$username" | grep -qw "$group"; then
+        groups_to_add+=("$group")
+    fi
+done
+if [ ${#groups_to_add[@]} -gt 0 ]; then
+    unique_groups=($(echo "${groups_to_add[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+    for unique_group in "${unique_groups[@]}"; do
+        sudo usermod -aG "$unique_group" "$username"
+    done
+    echo "Warning: Please reboot the machine (or log out and log back in) before using podcvd."
+    echo "Your current session does not have active membership in all required device groups."
+fi
+
 echo "Setup complete! You can now run 'podcvd'."
