@@ -172,29 +172,6 @@ Json::Value OverrideToJson(const std::string& key,
   return leaf;
 }
 
-std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
-  std::vector<Flag> flags;
-  flags.emplace_back(
-      GflagsCompatFlag("credential_source", load_flags.credential_source));
-  flags.emplace_back(GflagsCompatFlag("project_id", load_flags.project_id));
-  flags.emplace_back(
-      GflagsCompatFlag("base_directory", load_flags.base_dir)
-          .Help(
-              "Parent directory for artifacts and runtime files. Defaults to " +
-              CvdDir() + "<uid>/<timestamp>."));
-  flags.emplace_back(GflagsCompatFlagOverride("override", load_flags.overrides)
-                         .Help("Use --override=<config_identifier>:<new_value> "
-                               "to override config values"));
-  return flags;
-}
-
-void MakeAbsolute(std::string& path, const std::string& working_dir) {
-  if (!path.empty() && path[0] == '/') {
-    return;
-  }
-  path.insert(0, working_dir + "/");
-}
-
 Result<Json::Value> ParseJsonFile(const std::string& file_path) {
   CF_EXPECTF(FileExists(file_path),
              "Provided file \"{}\" to cvd command does not exist", file_path);
@@ -266,6 +243,32 @@ EnvironmentSpecification FillEmptyInstanceNames(
 
 }  // namespace
 
+std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags) {
+  std::vector<Flag> flags;
+  flags.emplace_back(
+      GflagsCompatFlag("credential_source", load_flags.credential_source)
+          .Help("Source of credentials to access the Android Build Server API. "
+                "Can be left empty in most cases, see the help for `login` and "
+                "`fetch` for details."));
+  flags.emplace_back(GflagsCompatFlag("project_id", load_flags.project_id)
+                         .Help("Google Cloud Project ID for Android Build "
+                               "Server API access and quotas."));
+  flags.emplace_back(
+      GflagsCompatFlag("base_directory", load_flags.base_dir)
+          .Help(fmt::format(
+              "Parent directory for artifacts and runtime files. When not "
+              "provided a new directory under {}/{} will be created.",
+              CvdDir(), getuid())));
+  flags.emplace_back(
+      GflagsCompatFlagOverride("override", load_flags.overrides)
+          .Help(
+              "Override or add new properties to the group specification. This "
+              "flag may appear multiple times to affect different properties. "
+              "The format is `--override=<path.to.property>:<value>`. "
+              "Forexample: `--override=instance.0.vm.cpus=16`."));
+  return flags;
+}
+
 Result<InstanceManager::GroupDirectories> GetGroupCreationDirectories(
     const std::string& parent_directory,
     const EnvironmentSpecification& env_spec) {
@@ -335,26 +338,12 @@ std::ostream& operator<<(std::ostream& out, const Override& override) {
   return out;
 }
 
-Result<LoadFlags> GetFlags(std::vector<std::string>& args,
-                           const std::string& working_directory) {
-  LoadFlags load_flags;
-  auto flags = GetFlagsVector(load_flags);
-  CF_EXPECT(ConsumeFlags(flags, args));
-  CF_EXPECT(
-      !args.empty(),
-      "No arguments provided to cvd command, please provide path to json file");
-
-  if (!load_flags.base_dir.empty()) {
-    MakeAbsolute(load_flags.base_dir, working_directory);
-  }
-
-  load_flags.config_path = args.front();
-  MakeAbsolute(load_flags.config_path, working_directory);
+Result<void> ValidateCvdLoadFlags(LoadFlags& load_flags) {
+  auto working_directory = CurrentDirectory();
 
   if (!load_flags.credential_source.empty()) {
     for (const auto& flag : load_flags.overrides) {
-      CF_EXPECT(!absl::StartsWith(flag.config_path,
-                                           kCredentialSourceOverride),
+      CF_EXPECT(!absl::StartsWith(flag.config_path, kCredentialSourceOverride),
                 "Specifying both --override=fetch.credential_source and the "
                 "--credential_source flag is not allowed.");
     }
@@ -364,22 +353,21 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
   }
   if (!load_flags.project_id.empty()) {
     for (const auto& flag : load_flags.overrides) {
-      CF_EXPECT(
-          !absl::StartsWith(flag.config_path, kProjectIDOverride),
-          "Specifying both --override=fetch.project_id and the "
-          "--project_id flag is not allowed.");
+      CF_EXPECT(!absl::StartsWith(flag.config_path, kProjectIDOverride),
+                "Specifying both --override=fetch.project_id and the "
+                "--project_id flag is not allowed.");
     }
     load_flags.overrides.emplace_back(
         Override{.config_path = std::string(kProjectIDOverride),
                  .new_value = load_flags.project_id});
   }
-  return load_flags;
+  return {};
 }
 
 Result<EnvironmentSpecification> GetEnvironmentSpecification(
-    const LoadFlags& flags) {
+    const std::string& config_path, const std::vector<Override>& overrides) {
   Json::Value json_configs =
-      CF_EXPECT(GetOverriddenConfig(flags.config_path, flags.overrides));
+      CF_EXPECT(GetOverriddenConfig(config_path, overrides));
 
   EnvironmentSpecification env_spec =
       CF_EXPECT(ValidateCfConfigs(json_configs));

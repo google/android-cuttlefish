@@ -198,7 +198,7 @@ cf_cc_library(
     srcs = ["lint.cpp"],
     hdrs = ["lint.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
