@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
@@ -47,8 +47,7 @@ Usage: cvd lint /path/to/input.json
 
 Result<void> LintCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
-  auto working_directory = CurrentDirectory();
-  const auto config_path = CF_EXPECT(ValidateConfig(args, working_directory));
+  const auto config_path = CF_EXPECT(ValidateConfig(args));
 
   std::cout << "Lint of flags and config \"" << config_path << "\" succeeded\n";
 
@@ -65,10 +64,17 @@ Result<std::string> LintCommandHandler::DetailedHelp(
 }
 
 Result<std::string> LintCommandHandler::ValidateConfig(
-    std::vector<std::string>& args, const std::string& working_directory) {
-  const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
-  CF_EXPECT(GetEnvironmentSpecification(flags));
-  return flags.config_path;
+    std::vector<std::string>& args) {
+  LoadFlags load_flags;
+  std::vector<Flag> flags = BuildCvdLoadFlags(load_flags);
+  CF_EXPECT(ConsumeFlags(flags, args));
+  CF_EXPECT(
+      !args.empty(),
+      "No arguments provided to cvd command, please provide path to json file");
+  std::string& config_path = args.front();
+  CF_EXPECT(ValidateCvdLoadFlags(load_flags));
+  CF_EXPECT(GetEnvironmentSpecification(config_path, load_flags.overrides));
+  return config_path;
 }
 
 std::unique_ptr<CvdCommandHandler> NewLintCommand() {

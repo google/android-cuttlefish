@@ -27,10 +27,12 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/fetch.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
@@ -52,26 +54,8 @@ namespace {
 constexpr char kLoadSubCmd[] = "load";
 
 constexpr char kSummaryHelpText[] =
-    R"(Loads the given JSON configuration file and launches devices based on the options provided)";
+    "Creates and starts an instance group from a JSON configuration file";
 
-constexpr char kDetailedHelpText[] = R"(
-Warning: This command is deprecated, use cvd create --config_file instead.
-
-Usage:
-cvd load <config_filepath> [--override=<key>:<value>]
-
-Reads the fields in the JSON configuration file and translates them to corresponding start command and flags.
-
-Optionally fetches remote artifacts prior to launching the cuttlefish environment.
-
-The --override flag can be used to give new values for properties in the config file without needing to edit the file directly.  Convenient for one-off invocations.
-)";
-
-Result<LoadFlags> GetLoadFlags(const CommandRequest& request) {
-  std::vector<std::string> args = request.SubcommandArguments();
-  auto working_directory = CurrentDirectory();
-  return CF_EXPECT(GetFlags(args, working_directory));
-}
 
 Result<CommandRequest> BuildFetchCmd(const CommandRequest& request,
                                      const CvdFlags& cvd_flags) {
@@ -133,9 +117,17 @@ LoadConfigsCommand::LoadConfigsCommand(InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
 Result<void> LoadConfigsCommand::Handle(const CommandRequest& request) {
-  LoadFlags load_flags = CF_EXPECT(GetLoadFlags(request));
+  std::vector<std::string> args = request.SubcommandArguments();
+  std::vector<Flag> flags = CF_EXPECT(Flags(request));
+  CF_EXPECT(ConsumeFlags(flags, args));
+  CF_EXPECT(
+      !args.empty(),
+      "No arguments provided to cvd command, please provide path to json file");
+  std::string& config_path = args.front();
+  CF_EXPECT(ValidateCvdLoadFlags(flags_));
+
   EnvironmentSpecification env_spec =
-      CF_EXPECT(GetEnvironmentSpecification(load_flags));
+      CF_EXPECT(GetEnvironmentSpecification(config_path, flags_.overrides));
 
   std::mutex group_creation_mtx;
   // Have to use the group name because LocalInstanceGroup can't be default
@@ -181,7 +173,7 @@ Result<void> LoadConfigsCommand::Handle(const CommandRequest& request) {
   group_creation_mtx.lock();
   // Don't use CF_EXPECT here or the mutex will be left locked.
   auto group_res =
-      CreateGroup(instance_manager_, load_flags.base_dir, env_spec);
+      CreateGroup(instance_manager_, flags_.base_dir, env_spec);
   if (group_res.ok()) {
     // Have to initialize the group_name variable before releasing the mutex.
     group_name = (*group_res).GroupName();
@@ -250,9 +242,71 @@ cvd_common::Args LoadConfigsCommand::CmdList() const { return {kLoadSubCmd}; }
 
 std::string LoadConfigsCommand::SummaryHelp() const { return kSummaryHelpText; }
 
-Result<std::string> LoadConfigsCommand::DetailedHelp(
+std::vector<std::string> LoadConfigsCommand::Description() const {
+  return {
+      "This command is an alias of `cvd create --config_file=<config_filepath> "
+      "[--override=<key>:<value>]...`, provided for convenience and backwards "
+      "compatibility.",
+
+      "Usage:",
+
+      "    cvd load <config_filepath> [--override=<key>:<value>]",
+
+      "Creates and starts a new instance group from a specification file. An "
+      "example specification file looks like:",
+
+      MarkAsRawText(R"(  {
+    "instances": [
+      {
+        "name": "ins-1",
+        "disk": {
+          "default_build": "@ab/aosp-android-latest-release/aosp_cf_x86_64_only_phone-userdebug"
+        },
+        "vm": {
+          "cpus": 8,
+          "memory_mb": 2048
+        }
+      },
+      {
+        "name": "ins-2",
+        "disk": {
+          "default_build": "/path/to/android/build"
+        }
+      }
+    ]
+  })"),
+
+      "A complete reference of the specification file format can be found in "
+      "https://github.com/google/android-cuttlefish/blob/main/base/cvd/"
+      "cuttlefish/host/commands/cvd/cli/parser/load_config.proto.",
+
+      "While most config file properties are self explanatory, the build "
+      "properties (default_build, kernel.build, bootloader.build, etc) require "
+      "more explanation. These properties support two types of values:",
+
+      MarkAsRawText(
+          R"( - "@ab/<branch_or_build_id>[/<target>[{<filepath>}]]"
+ - "<absolute_path>")"),
+
+      "If the build value starts with \"@ab\", cvd will fetch the specified "
+      "Android build target from the Android build servers. By default it will "
+      "download the cuttlefish host package archive or the images zip as "
+      "needed, but for more advanced use cases the file to download from the "
+      "server can be specified with the <filepath> optional parameter in curly "
+      "braces. For more information on build fetching and caching operations "
+      "refer to `cvd help fetch`.",
+
+      "Alternatively, the build value may point to an absolute path (starts "
+      "with '/') in the filesystem where the Android source code has been "
+      "checked out and a Cuttlefish target has been built. This is "
+      "particularly useful for rapid iteration during development in "
+      "combination with incremental builds and the `cvd stop` and `cvd start` "
+      "subcommands."};
+}
+
+Result<std::vector<Flag>> LoadConfigsCommand::Flags(
     const CommandRequest& request) {
-  return kDetailedHelpText;
+  return BuildCvdLoadFlags(flags_);
 }
 
 std::unique_ptr<CvdCommandHandler> NewLoadConfigsCommand(

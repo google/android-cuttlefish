@@ -44,17 +44,17 @@ std::ostream& operator<<(std::ostream& out, const Override& override);
 
 struct LoadFlags {
   std::vector<Override> overrides;
-  std::string config_path;
   std::string credential_source;
   std::string project_id;
   std::string base_dir;
 };
 
-Result<LoadFlags> GetFlags(std::vector<std::string>& args,
-                           const std::string& working_directory);
+std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags);
+
+Result<void> ValidateCvdLoadFlags(LoadFlags& load_flags);
 
 Result<cvd::config::EnvironmentSpecification> GetEnvironmentSpecification(
-    const LoadFlags& flags);
+    const std::string& config_path, const std::vector<Override>& overrides);
 
 Result<InstanceManager::GroupDirectories> GetGroupCreationDirectories(
     const std::string& parent_directory,

@@ -34,8 +34,7 @@ class LintCommandHandler : public CvdCommandHandler {
   Result<std::string> DetailedHelp(const CommandRequest& request) override;
 
  private:
-  Result<std::string> ValidateConfig(std::vector<std::string>& args,
-                                     const std::string& working_directory);
+  Result<std::string> ValidateConfig(std::vector<std::string>& args);
 };
 
 std::unique_ptr<CvdCommandHandler> NewLintCommand();
