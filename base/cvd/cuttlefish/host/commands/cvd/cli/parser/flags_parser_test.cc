@@ -24,6 +24,7 @@
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
+#include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 
@@ -174,116 +175,131 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
       << "netsim_uwb flag is missing or wrongly formatted";
 }
 
-TEST(CvdLoadFlagsTest, CredentialSourceGetterSetter) {
+TEST(CvdLoadFlagsTest, CredentialSourceSetter) {
   LoadFlags load_flags;
 
-  // Test Setter
-  {
-    auto flags = BuildCvdLoadFlags(load_flags);
-    std::vector<std::string> args = {"--credential_source=first_val"};
-    auto result = ConsumeFlags(flags, args);
-    ASSERT_TRUE(result.ok()) << result.error().Trace();
+  auto flags = BuildCvdLoadFlags(load_flags);
+  std::vector<std::string> args = {"--credential_source=foo"};
+  auto result = ConsumeFlags(flags, args);
+  ASSERT_TRUE(result.ok()) << result.error().Trace();
 
-    ASSERT_EQ(load_flags.overrides.size(), 1);
-    EXPECT_EQ(load_flags.overrides[0].config_path, "fetch.credential_source");
-    EXPECT_EQ(load_flags.overrides[0].new_value, "first_val");
-  }
-
-  // Test Getter (should return "first_val" now)
-  {
-    auto flags = BuildCvdLoadFlags(load_flags);
-    auto flag_it = std::find_if(flags.begin(), flags.end(), [](const Flag& f) {
-      return f.Name() == "credential_source";
-    });
-    ASSERT_NE(flag_it, flags.end());
-
-    std::stringstream ss;
-    ss << *flag_it;
-    EXPECT_NE(ss.str().find("Current value: \"first_val\""), std::string::npos)
-        << "Help text was: " << ss.str();
-  }
-
-  // Test Setter again (should append and override)
-  {
-    auto flags = BuildCvdLoadFlags(load_flags);
-    std::vector<std::string> args = {"--credential_source=second_val"};
-    auto result = ConsumeFlags(flags, args);
-    ASSERT_TRUE(result.ok()) << result.error().Trace();
-
-    ASSERT_EQ(load_flags.overrides.size(), 2);
-    EXPECT_EQ(load_flags.overrides[1].config_path, "fetch.credential_source");
-    EXPECT_EQ(load_flags.overrides[1].new_value, "second_val");
-  }
-
-  // Test Getter again (should return "second_val" because it searches from the end)
-  {
-    auto flags = BuildCvdLoadFlags(load_flags);
-    auto flag_it = std::find_if(flags.begin(), flags.end(), [](const Flag& f) {
-      return f.Name() == "credential_source";
-    });
-    ASSERT_NE(flag_it, flags.end());
-
-    std::stringstream ss;
-    ss << *flag_it;
-    EXPECT_NE(ss.str().find("Current value: \"second_val\""), std::string::npos)
-        << "Help text was: " << ss.str();
-  }
+  ASSERT_EQ(load_flags.overrides.size(), 1);
+  EXPECT_EQ(load_flags.overrides.count("fetch.credential_source"), 1);
+  EXPECT_EQ(load_flags.overrides["fetch.credential_source"], "foo");
 }
 
-TEST(CvdLoadFlagsTest, ProjectIDGetterSetter) {
+TEST(CvdLoadFlagsTest, CredentialSourceGetter) {
+  LoadFlags load_flags;
+  load_flags.overrides["fetch.credential_source"] = "bar";
+
+  auto flags = BuildCvdLoadFlags(load_flags);
+  auto flag_it = std::find_if(flags.begin(), flags.end(), [](const Flag& f) {
+    return f.Name() == "credential_source";
+  });
+  ASSERT_NE(flag_it, flags.end());
+
+  std::stringstream ss;
+  ss << *flag_it;
+  EXPECT_NE(ss.str().find("Current value: \"bar\""), std::string::npos)
+      << "Help text was: " << ss.str();
+}
+
+TEST(CvdLoadFlagsTest, CredentialSourceDuplicated) {
   LoadFlags load_flags;
 
-  // Test Setter
-  {
-    auto flags = BuildCvdLoadFlags(load_flags);
-    std::vector<std::string> args = {"--project_id=first_project"};
-    auto result = ConsumeFlags(flags, args);
-    ASSERT_TRUE(result.ok()) << result.error().Trace();
+  auto flags = BuildCvdLoadFlags(load_flags);
+  std::vector<std::string> args = {"--credential_source=first_val",
+                                   "--credential_source=second_val"};
+  auto result = ConsumeFlags(flags, args);
+  EXPECT_THAT(result, IsError());
+}
 
-    ASSERT_EQ(load_flags.overrides.size(), 1);
-    EXPECT_EQ(load_flags.overrides[0].config_path, "fetch.project_id");
-    EXPECT_EQ(load_flags.overrides[0].new_value, "first_project");
-  }
+TEST(CvdLoadFlagsTest, ProjectIDSetter) {
+  LoadFlags load_flags;
 
-  // Test Getter
-  {
-    auto flags = BuildCvdLoadFlags(load_flags);
-    auto flag_it = std::find_if(flags.begin(), flags.end(), [](const Flag& f) {
-      return f.Name() == "project_id";
-    });
-    ASSERT_NE(flag_it, flags.end());
+  auto flags = BuildCvdLoadFlags(load_flags);
+  std::vector<std::string> args = {"--project_id=foo"};
+  auto result = ConsumeFlags(flags, args);
+  ASSERT_TRUE(result.ok()) << result.error().Trace();
 
-    std::stringstream ss;
-    ss << *flag_it;
-    EXPECT_NE(ss.str().find("Current value: \"first_project\""), std::string::npos)
-        << "Help text was: " << ss.str();
-  }
+  ASSERT_EQ(load_flags.overrides.size(), 1);
+  EXPECT_EQ(load_flags.overrides.count("fetch.project_id"), 1);
+  EXPECT_EQ(load_flags.overrides["fetch.project_id"], "foo");
+}
 
-  // Test Setter again
-  {
-    auto flags = BuildCvdLoadFlags(load_flags);
-    std::vector<std::string> args = {"--project_id=second_project"};
-    auto result = ConsumeFlags(flags, args);
-    ASSERT_TRUE(result.ok()) << result.error().Trace();
+TEST(CvdLoadFlagsTest, ProjectIDGetter) {
+  LoadFlags load_flags;
+  load_flags.overrides["fetch.project_id"] = "bar";
 
-    ASSERT_EQ(load_flags.overrides.size(), 2);
-    EXPECT_EQ(load_flags.overrides[1].config_path, "fetch.project_id");
-    EXPECT_EQ(load_flags.overrides[1].new_value, "second_project");
-  }
+  auto flags = BuildCvdLoadFlags(load_flags);
+  auto flag_it = std::find_if(flags.begin(), flags.end(), [](const Flag& f) {
+    return f.Name() == "project_id";
+  });
+  ASSERT_NE(flag_it, flags.end());
 
-  // Test Getter again
-  {
-    auto flags = BuildCvdLoadFlags(load_flags);
-    auto flag_it = std::find_if(flags.begin(), flags.end(), [](const Flag& f) {
-      return f.Name() == "project_id";
-    });
-    ASSERT_NE(flag_it, flags.end());
+  std::stringstream ss;
+  ss << *flag_it;
+  EXPECT_NE(ss.str().find("Current value: \"bar\""),
+            std::string::npos)
+      << "Help text was: " << ss.str();
+}
 
-    std::stringstream ss;
-    ss << *flag_it;
-    EXPECT_NE(ss.str().find("Current value: \"second_project\""), std::string::npos)
-        << "Help text was: " << ss.str();
-  }
+TEST(CvdLoadFlagsTest, ProjectIDDuplicated) {
+  LoadFlags load_flags;
+
+  auto flags = BuildCvdLoadFlags(load_flags);
+  std::vector<std::string> args = {"--project_id=first_project",
+                                   "--project_id=second_project"};
+  auto result = ConsumeFlags(flags, args);
+  EXPECT_FALSE(result.ok()) << "Expected duplicate flag to fail";
+}
+
+TEST(CvdLoadFlagsTest, CredentialSourceConflictWithOverride) {
+  LoadFlags load_flags;
+  auto flags = BuildCvdLoadFlags(load_flags);
+  std::vector<std::string> args = {
+      "--override=fetch.credential_source:override_val",
+      "--credential_source=flag_val"};
+  auto result = ConsumeFlags(flags, args);
+  EXPECT_FALSE(result.ok()) << "Expected override followed by flag to fail";
+}
+
+TEST(CvdLoadFlagsTest, OverrideConflictWithCredentialSource) {
+  LoadFlags load_flags;
+  auto flags = BuildCvdLoadFlags(load_flags);
+  std::vector<std::string> args = {
+      "--credential_source=flag_val",
+      "--override=fetch.credential_source:override_val"};
+  auto result = ConsumeFlags(flags, args);
+  EXPECT_FALSE(result.ok()) << "Expected flag followed by override to fail";
+}
+
+TEST(CvdLoadFlagsTest, ProjectIDConflictWithOverride) {
+  LoadFlags load_flags;
+  auto flags = BuildCvdLoadFlags(load_flags);
+  std::vector<std::string> args = {
+      "--override=fetch.project_id:override_project",
+      "--project_id=flag_project"};
+  auto result = ConsumeFlags(flags, args);
+  EXPECT_FALSE(result.ok()) << "Expected override followed by flag to fail";
+}
+
+TEST(CvdLoadFlagsTest, OverrideConflictWithProjectID) {
+  LoadFlags load_flags;
+  auto flags = BuildCvdLoadFlags(load_flags);
+  std::vector<std::string> args = {
+      "--project_id=flag_project",
+      "--override=fetch.project_id:override_project"};
+  auto result = ConsumeFlags(flags, args);
+  EXPECT_FALSE(result.ok()) << "Expected flag followed by override to fail";
+}
+
+TEST(CvdLoadFlagsTest, DuplicateOverridesFail) {
+  LoadFlags load_flags;
+  auto flags = BuildCvdLoadFlags(load_flags);
+  std::vector<std::string> args = {"--override=fetch.credential_source:val1", "--override=fetch.credential_source:val2"};
+  auto result = ConsumeFlags(flags, args);
+  EXPECT_FALSE(result.ok()) << "Expected duplicate overrides to fail";
 }
 
 }  // namespace cuttlefish

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <ostream>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -35,22 +35,16 @@ struct CvdFlags {
   std::string target_directory;
 };
 
-struct Override {
-  std::string config_path;
-  std::string new_value;
-};
-
-std::ostream& operator<<(std::ostream& out, const Override& override);
-
 struct LoadFlags {
-  std::vector<Override> overrides;
+  std::map<std::string, std::string> overrides;
   std::string base_dir;
 };
 
 std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags);
 
 Result<cvd::config::EnvironmentSpecification> GetEnvironmentSpecification(
-    const std::string& config_path, const std::vector<Override>& overrides);
+    const std::string& config_path,
+    const std::map<std::string, std::string>& overrides);
 
 Result<InstanceManager::GroupDirectories> GetGroupCreationDirectories(
     const std::string& parent_directory,

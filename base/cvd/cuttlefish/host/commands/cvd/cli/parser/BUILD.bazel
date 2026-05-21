@@ -92,6 +92,7 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/result:result_matchers",
         "//libbase",
     ],
 )
