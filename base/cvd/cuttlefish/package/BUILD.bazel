@@ -136,7 +136,6 @@ package_files(
         "cuttlefish-common/lib64/libcuttlefish_result.so": "//cuttlefish/result:result_shared",
         "cuttlefish-common/lib64/libcuttlefish_files.so": "//cuttlefish/common/libs/utils:files_shared",
         "cuttlefish-common/lib64/libcuttlefish_fs.so": "//cuttlefish/common/libs/fs:fs_shared",
-        "cuttlefish-common/lib64/libcuttlefish_libbase.so": "//libbase:libbase_shared",
         "cuttlefish-common/lib64/libcuttlefish_absl.so": "//:absl_shared",
         "cuttlefish-common/lib64/libcuttlefish_fmt.so": "//:fmt_shared",
     },
