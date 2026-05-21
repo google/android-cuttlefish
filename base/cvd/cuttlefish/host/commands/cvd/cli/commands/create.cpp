@@ -25,6 +25,7 @@
 #include <cstring>
 #include <limits>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -44,6 +45,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/load_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -62,33 +64,9 @@ using selector::AnalyzeCreation;
 using selector::GroupCreationInfo;
 
 constexpr char kSummaryHelpText[] =
-    "Create a Cuttlefish virtual device or environment";
+    "Create a Cuttlefish instance group";
 
-constexpr char kDetailedHelpText[] =
-    R"""(
-Usage:
-cvd create [--product_path=PATH] [--host_path=PATH] [--[no]start] [START_ARGS]
-cvd create --config_file=PATH [--[no]start]
 
-Creates and starts a new cuttlefish instance group.
-
---host_path=PATH     The path to the directory containing the Cuttlefish Host
-                     Artifacts. Defaults to the value of $ANDROID_HOST_OUT,
-                     $HOME or the current directory.
-
---product_path=PATH  The path(s) to the directory containing the Cuttlefish
-                     Guest Images. Defaults to the value of
-                     $ANDROID_PRODUCT_OUT, $HOME or the current directory.
-
---[no]start          Whether to start the instance group. True by default.
---config_file=PATH   Path to an environment config file to be loaded.
-
---acquire_file_lock  If the flag is given, the cvd server attempts to acquire
-                     the instance lock file lock. (default: true)
-
-All other arguments are passed verbatim to cvd start, for a list of supported
-arguments run `cvd start --help`.
-)""";
 
 std::string DefaultHostPath(const cvd_common::Envs& envs) {
   for (const auto& key : {kAndroidHostOut, kAndroidSoongHostOut, "HOME"}) {
@@ -110,30 +88,6 @@ std::string DefaultProductPath(const cvd_common::Envs& envs) {
   return CurrentDirectory();
 }
 
-struct CreateFlags {
-  std::string host_path;
-  std::string product_path;
-  bool start;
-  std::string config_file;
-};
-
-Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
-                                      cvd_common::Args& args) {
-  CreateFlags flag_values{
-      .host_path = DefaultHostPath(envs),
-      .product_path = DefaultProductPath(envs),
-      .start = true,
-      .config_file = "",
-  };
-  std::vector<Flag> flags = {
-      GflagsCompatFlag("host_path", flag_values.host_path),
-      GflagsCompatFlag("product_path", flag_values.product_path),
-      GflagsCompatFlag("start", flag_values.start),
-      GflagsCompatFlag("config_file", flag_values.config_file),
-  };
-  CF_EXPECT(ConsumeFlags(flags, args));
-  return flag_values;
-}
 
 Result<CommandRequest> CreateLoadCommand(const CommandRequest& request,
                                          cvd_common::Args& args,
@@ -267,24 +221,31 @@ Result<void> CreateSymlinks(const LocalInstanceGroup& group) {
 
 }  // namespace
 
+CvdCreateCommandHandler::CvdCreateCommandHandler(
+    InstanceManager& instance_manager)
+    : instance_manager_(instance_manager) {}
+
 Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
 
   cvd_common::Envs envs = CF_EXPECT(GetEnvs(request));
-  CreateFlags flags = CF_EXPECT(ParseCommandFlags(envs, subcmd_args));
 
-  if (!flags.config_file.empty()) {
-    CommandRequest subrequest =
-        CF_EXPECT(CreateLoadCommand(request, subcmd_args, flags.config_file));
+  CF_EXPECT(ConsumeFlags(ConfigFileModeFlags(), subcmd_args));
+
+  if (!own_flags_.config_file.empty()) {
+    CommandRequest subrequest = CF_EXPECT(
+        CreateLoadCommand(request, subcmd_args, own_flags_.config_file));
     std::unique_ptr<CvdCommandHandler> load_handler =
         NewLoadConfigsCommand(instance_manager_);
     CF_EXPECT(load_handler->Handle(subrequest));
     return {};
   }
 
+  CF_EXPECT(ConsumeFlags(FlagModeFlags(request.Env()), subcmd_args));
+
   // Validate the host artifacts path before proceeding
   (void)CF_EXPECT(
-      HostToolTarget(flags.host_path).GetStartBinName(),
+      HostToolTarget(own_flags_.host_path).GetStartBinName(),
       "\nCould not find the required host tools to launch a device.\n\n"
       "If you already have the host tools and devices images downloaded use "
       "the `--host_path` and `--product_path` flags.\nSee `cvd help create` "
@@ -294,15 +255,15 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
       "If you are building Android from source, try running `lunch <target>; "
       "m` to set up your environment and build the images.");
   // CreationAnalyzer needs these to be set in the environment
-  envs[kAndroidHostOut] = AbsolutePath(flags.host_path);
-  envs[kAndroidProductOut] = AbsolutePath(flags.product_path);
+  envs[kAndroidHostOut] = AbsolutePath(own_flags_.host_path);
+  envs[kAndroidProductOut] = AbsolutePath(own_flags_.product_path);
   auto group =
       CF_EXPECT(CreateGroup(instance_manager_, subcmd_args, envs, request));
 
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
-  if (flags.start) {
+  if (own_flags_.start) {
     CommandRequest start_cmd =
         CF_EXPECT(CreateStartCommand(group, subcmd_args, envs));
     std::unique_ptr<CvdCommandHandler> start_handler =
@@ -327,9 +288,93 @@ std::string CvdCreateCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
-Result<std::string> CvdCreateCommandHandler::DetailedHelp(
-    const CommandRequest& request) {
-  return kDetailedHelpText;
+Result<std::string> CvdCreateCommandHandler::DetailedHelp(const CommandRequest& request) {
+  std::stringstream ss;
+
+  ss << "cvd create - " << SummaryHelp() << "\n";
+  ss << "\n";
+
+  ss << FormatHelpText({
+      HelpParagraph("Usage:"),
+
+      HelpParagraph::Raw("  cvd create --config_file=PATH [LOAD_ARGS]"),
+      HelpParagraph::Raw("  cvd create [--product_path=PATH] "
+                         "[--host_path=PATH] [--[no]start] [START_ARGS]"),
+
+      HelpParagraph(
+          "The `cvd create` command operates in one of two distinct modes "
+          "depending on whether the `--config_file` flag is provided."),
+
+      HelpParagraph("ENVIRONMENT SPECIFICATION FILE MODE"),
+
+      HelpParagraph("This mode executes when `--config_file` is provided"),
+  });
+  ss << FormatHelpText(LoadConfigsCommand::CommonCommandDescription());
+
+  ss << FormatFlagsHelp(ConfigFileModeFlags());
+  ss << FormatFlagsHelp(
+      (CF_EXPECT(LoadConfigsCommand(instance_manager_).Flags(request))));
+
+  ss << FormatHelpText({
+      HelpParagraph("FLAG-BASED MODE"),
+
+      HelpParagraph("When `--config_file` is NOT specified, `cvd create` "
+                    "creates a local instance group using the host tools and "
+                    "guest images provided via flags."),
+
+      HelpParagraph(
+          "By default, the instances in the group are started immediately. "
+          "This behavior can be controlled with the `--start` flag; passing "
+          "`--nostart` will create the group in a stopped state, allowing it "
+          "to be started later with `cvd start`."),
+
+      HelpParagraph(
+          "The `--host_path` and `--product_path` flags specify where to find "
+          "the Cuttlefish host tools and guest images, respectively. Their "
+          "default values are designed to make `cvd create` 'just work' in "
+          "common development environments. They default to the values of "
+          "`$ANDROID_HOST_OUT` and `$ANDROID_PRODUCT_OUT` (typically set after "
+          "running `lunch` in an Android build environment), falling back to "
+          "`$HOME` or the current directory. This allows launching a locally "
+          "built Cuttlefish target or a target downloaded to the current "
+          "directory without additional configuration."),
+  });
+
+  ss << FormatFlagsHelp(ConfigFileModeFlags());
+
+  ss << FormatHelpText({HelpParagraph(
+      "The following flags control how the instances are started (unless "
+      "--nostart is provided):")});
+
+  ss << FormatFlagsHelp(
+      (CF_EXPECT(CvdStartCommandHandler(instance_manager_).Flags(request))));
+
+  return ss.str();
+}
+
+std::vector<Flag> CvdCreateCommandHandler::ConfigFileModeFlags() {
+  own_flags_.config_file = "";
+  return {GflagsCompatFlag("config_file", own_flags_.config_file)
+              .Help("Path to an environment config file to be loaded.")};
+}
+
+std::vector<Flag> CvdCreateCommandHandler::FlagModeFlags(
+    const cvd_common::Envs& env) {
+  own_flags_.host_path = DefaultHostPath(env);
+  own_flags_.product_path = DefaultProductPath(env);
+  own_flags_.start = true;
+  return {
+      GflagsCompatFlag("host_path", own_flags_.host_path)
+          .Help("The path to the directory containing the Cuttlefish Host "
+                "Artifacts. Defaults to the value of $ANDROID_HOST_OUT, "
+                "$HOME or the current directory."),
+      GflagsCompatFlag("product_path", own_flags_.product_path)
+          .Help("The path(s) to the directory containing the Cuttlefish "
+                "Guest Images. Defaults to the value of "
+                "$ANDROID_PRODUCT_OUT, $HOME or the current directory."),
+      GflagsCompatFlag("start", own_flags_.start)
+          .Help("Whether to start the instance group."),
+  };
 }
 
 std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(

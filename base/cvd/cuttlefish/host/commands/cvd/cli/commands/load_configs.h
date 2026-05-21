@@ -39,6 +39,8 @@ class LoadConfigsCommand : public CvdCommandHandler {
   std::vector<HelpParagraph> Description() const override;
   Result<std::vector<Flag>> Flags(const CommandRequest&) override;
 
+  static std::vector<HelpParagraph> CommonCommandDescription();
+
  private:
   Result<void> LoadGroup(const CommandRequest& request,
                          LocalInstanceGroup& group, CvdFlags cvd_flags);
