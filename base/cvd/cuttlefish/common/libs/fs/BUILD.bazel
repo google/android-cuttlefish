@@ -23,7 +23,6 @@ cc_shared_library(
     dynamic_deps = [
         "//:absl_shared",
         "//cuttlefish/result:result_shared",
-        "//libbase:libbase_shared",
     ],
     shared_lib_name = "libcuttlefish_fs.so",
     user_link_flags = [

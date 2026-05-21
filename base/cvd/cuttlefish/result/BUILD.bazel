@@ -31,8 +31,12 @@ cf_cc_library(
 cc_shared_library(
     name = "result_shared",
     dynamic_deps = [
-        "//libbase:libbase_shared",
         "//:absl_shared",
+        "//:fmt_shared",
+    ],
+    exports_filter = [
+        "//libbase:libbase",
+        "//libbase:libbase_posix_strerror",
     ],
     shared_lib_name = "libcuttlefish_result.so",
     user_link_flags = [
