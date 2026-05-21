@@ -44,7 +44,8 @@ ipv4_bridge=${ipv4_bridge:-1}
 ipv6_bridge=${ipv4_bridge:-1}
 dns_servers=${dns_servers:-8.8.8.8,8.8.4.4}
 dns6_servers=${dns6_servers:-2001:4860:4860::8888,2001:4860:4860::8844}
-cuttlefish_run_dir="/run/cuttlefish"
+
+readonly CUTTLEFISH_RUN_DIR="/run/cuttlefish"
 
 if [ -z ${bridge_interface} ]; then
   create_bridges=1
@@ -106,7 +107,7 @@ destroy_tap() {
 }
 
 setup_nftables() {
-    mkdir -p "$cuttlefish_run_dir"
+    mkdir -p "$CUTTLEFISH_RUN_DIR"
 
     # Ensure nftables tables and chains exist.
     nft add table ip cuttlefish_nat
@@ -132,8 +133,6 @@ manage_nft_rule() {
     local family=""
     local table=""
     local chain=""
-    local handle_file=""
-    local handle=""
 
     case "$type" in
         masq)
@@ -158,7 +157,10 @@ manage_nft_rule() {
         return 1
     fi
 
-    handle_file="${cuttlefish_run_dir}/${type}-${id}.handle"
+    local handle_file=""
+    local handle=""
+
+    handle_file="${CUTTLEFISH_RUN_DIR}/${type}-${id}.handle"
 
     case "$op" in
         add)
