@@ -71,35 +71,39 @@ bool IsLocalBuild(std::string path) {
 }
 
 Flag GflagsCompatFlagOverride(const std::string& name,
-                              std::vector<Override>& values) {
+                              std::map<std::string, std::string>& overrides) {
   return GflagsCompatFlag(name)
-      .Getter([&values]() {
-        return absl::StrJoin(values, ",", absl::StreamFormatter());
+      .Getter([&overrides]() {
+        std::vector<std::string> formatted;
+        for (const auto& [k, v] : overrides) {
+          formatted.push_back(fmt::format("({}=\"{}\")", k, v));
+        }
+        return absl::StrJoin(formatted, ",");
       })
-      .Setter([&values](const FlagMatch& match) -> Result<void> {
+      .Setter([&overrides](const FlagMatch& match) -> Result<void> {
         size_t separator_index = match.value.find(kOverrideSeparator);
         CF_EXPECTF(separator_index != std::string::npos,
                    "Unable to find separator \"{}\" in input \"{}\"",
                    kOverrideSeparator, match.value);
-        auto result =
-            Override{.config_path = match.value.substr(0, separator_index),
-                     .new_value = match.value.substr(separator_index + 1)};
-        CF_EXPECTF(!result.config_path.empty(),
+        auto property_path = match.value.substr(0, separator_index);
+        auto new_value = match.value.substr(separator_index + 1);
+        CF_EXPECTF(overrides.count(property_path) == 0,
+                   "Property \"{}\" is already overridden", property_path);
+        CF_EXPECTF(!property_path.empty(),
                    "Config path before the separator \"{}\" cannot be empty in "
                    "input \"{}\"",
                    kOverrideSeparator, match.value);
-        CF_EXPECTF(!result.new_value.empty(),
+        CF_EXPECTF(!new_value.empty(),
                    "New value after the separator \"{}\" cannot be empty in "
                    "input \"{}\"",
                    kOverrideSeparator, match.value);
-        CF_EXPECTF(result.config_path.front() != '.' &&
-                       result.config_path.back() != '.',
+        CF_EXPECTF(property_path.front() != '.' && property_path.back() != '.',
                    "Config path \"{}\" must not start or end with dot",
-                   result.config_path);
-        CF_EXPECTF(result.config_path.find("..") == std::string::npos,
+                   property_path);
+        CF_EXPECTF(property_path.find("..") == std::string::npos,
                    "Config path \"{}\" cannot contain two consecutive dots",
-                   result.config_path);
-        values.emplace_back(result);
+                   property_path);
+        overrides[property_path] = new_value;
         return {};
       });
 }
@@ -204,14 +208,11 @@ std::optional<std::string> GetSystemHostPath(
 
 Result<Json::Value> GetOverriddenConfig(
     const std::string& config_path,
-    const std::vector<Override>& override_flags) {
+    const std::map<std::string, std::string>& override_flags) {
   Json::Value result = CF_EXPECT(ParseJsonFile(config_path));
 
-  if (!override_flags.empty()) {
-    for (const auto& flag : override_flags) {
-      MergeTwoJsonObjs(result,
-                       OverrideToJson(flag.config_path, flag.new_value));
-    }
+  for (const auto& [key, val] : override_flags) {
+    MergeTwoJsonObjs(result, OverrideToJson(key, val));
   }
 
   return result;
@@ -246,22 +247,32 @@ EnvironmentSpecification FillEmptyInstanceNames(
 std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags) {
   std::vector<Flag> flags;
   flags.emplace_back(
+      GflagsCompatFlagOverride("override", load_flags.overrides)
+          .Help(
+              "Override or add new properties to the group specification. This "
+              "flag may appear multiple times to affect different properties. "
+              "The format is `--override=<path.to.property>:<value>`. "
+              "For example: `--override=instance.0.vm.cpus=16`."));
+  flags.emplace_back(
       GflagsCompatFlag("credential_source")
           .Help("Source of credentials to access the Android Build Server API. "
                 "Can be left empty in most cases, see the help for `login` and "
                 "`fetch` for details.")
           .Setter([&load_flags](const FlagMatch& match) -> Result<void> {
-            load_flags.overrides.push_back(
-                Override{.config_path = std::string(kCredentialSourceOverride),
-                         .new_value = match.value});
+            CF_EXPECTF(load_flags.overrides.count(
+                           std::string(kCredentialSourceOverride)) == 0,
+                       "Specifying both --override={} and the "
+                       "--credential_source flag is not allowed.",
+                       kCredentialSourceOverride);
+            load_flags.overrides[std::string(kCredentialSourceOverride)] =
+                match.value;
             return {};
           })
           .Getter([&load_flags]() -> std::string {
-            for (auto it = load_flags.overrides.rbegin();
-                 it != load_flags.overrides.rend(); ++it) {
-              if (it->config_path == kCredentialSourceOverride) {
-                return it->new_value;
-              }
+            auto it = load_flags.overrides.find(
+                std::string(kCredentialSourceOverride));
+            if (it != load_flags.overrides.end()) {
+              return it->second;
             }
             return "";
           }));
@@ -270,17 +281,19 @@ std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags) {
           .Help("Google Cloud Project ID for Android Build "
                 "Server API access and quotas.")
           .Setter([&load_flags](const FlagMatch& match) -> Result<void> {
-            load_flags.overrides.push_back(
-                Override{.config_path = std::string(kProjectIDOverride),
-                         .new_value = match.value});
+            CF_EXPECTF(load_flags.overrides.count(
+                           std::string(kProjectIDOverride)) == 0,
+                       "Specifying both --override={} and the --project_id "
+                       "flag is not allowed.",
+                       kProjectIDOverride);
+            load_flags.overrides[std::string(kProjectIDOverride)] = match.value;
             return {};
           })
           .Getter([&load_flags]() -> std::string {
-            for (auto it = load_flags.overrides.rbegin();
-                 it != load_flags.overrides.rend(); ++it) {
-              if (it->config_path == kProjectIDOverride) {
-                return it->new_value;
-              }
+            auto it =
+                load_flags.overrides.find(std::string(kProjectIDOverride));
+            if (it != load_flags.overrides.end()) {
+              return it->second;
             }
             return "";
           }));
@@ -290,13 +303,6 @@ std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags) {
               "Parent directory for artifacts and runtime files. When not "
               "provided a new directory under {}/{} will be created.",
               CvdDir(), getuid())));
-  flags.emplace_back(
-      GflagsCompatFlagOverride("override", load_flags.overrides)
-          .Help(
-              "Override or add new properties to the group specification. This "
-              "flag may appear multiple times to affect different properties. "
-              "The format is `--override=<path.to.property>:<value>`. "
-              "Forexample: `--override=instance.0.vm.cpus=16`."));
   return flags;
 }
 
@@ -363,14 +369,11 @@ Result<CvdFlags> ParseCvdConfigs(const EnvironmentSpecification& env_spec,
   return flags;
 }
 
-std::ostream& operator<<(std::ostream& out, const Override& override) {
-  fmt::print(out, "(config_path=\"{}\", new_value=\"{}\")",
-             override.config_path, override.new_value);
-  return out;
-}
+
 
 Result<EnvironmentSpecification> GetEnvironmentSpecification(
-    const std::string& config_path, const std::vector<Override>& overrides) {
+    const std::string& config_path,
+    const std::map<std::string, std::string>& overrides) {
   Json::Value json_configs =
       CF_EXPECT(GetOverriddenConfig(config_path, overrides));
 
