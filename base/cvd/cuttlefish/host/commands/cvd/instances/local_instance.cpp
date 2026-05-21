@@ -275,12 +275,21 @@ Result<SharedFD> LocalInstance::GetLauncherMonitor(
 }
 
 Result<std::vector<std::string>> LocalInstance::LogsFilenames() const {
+  if (!FileExists(instance_dir())) {
+    VLOG(0) << "Instance directory \"" << instance_dir() << "\" does not exist";
+    return {};
+  }
+  std::string logs_dir = instance_dir() + "/logs";
+  if (!FileExists(logs_dir)) {
+    VLOG(0) << "Instance logs directory \"" << logs_dir << "\" does not exist";
+    return {};
+  }
   std::vector<std::string> result = {};
   auto callback = [&result](const std::string& filename) -> Result<void> {
     result.push_back(filename);
     return {};
   };
-  CF_EXPECT(WalkDirectory(instance_dir() + "/logs", callback));
+  CF_EXPECT(WalkDirectory(logs_dir, callback));
   return result;
 }
 
