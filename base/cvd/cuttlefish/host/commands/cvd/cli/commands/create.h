@@ -29,17 +29,26 @@ namespace cuttlefish {
 
 class CvdCreateCommandHandler : public CvdCommandHandler {
  public:
-  CvdCreateCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_(instance_manager) {}
+  CvdCreateCommandHandler(InstanceManager& instance_manager);
 
   Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override { return {"create"}; }
   std::string SummaryHelp() const override;
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) override;
+  Result<std::string> DetailedHelp(const CommandRequest&) override;
 
  private:
+  struct CreateFlags {
+    std::string host_path;
+    std::string product_path;
+    bool start;
+    std::string config_file;
+  };
+
+  std::vector<Flag> ConfigFileModeFlags();
+  std::vector<Flag> FlagModeFlags(const cvd_common::Envs& env);
+
   InstanceManager& instance_manager_;
+  CreateFlags own_flags_;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(

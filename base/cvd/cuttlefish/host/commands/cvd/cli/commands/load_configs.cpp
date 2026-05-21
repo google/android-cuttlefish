@@ -252,7 +252,14 @@ std::vector<HelpParagraph> LoadConfigsCommand::Description() const {
 
   description.emplace_back(
       "    cvd load <config_filepath> [--override=<key>:<value>]");
+  std::vector<HelpParagraph> common_description = CommonCommandDescription();
+  description.insert(description.end(), common_description.begin(),
+                     common_description.end());
+  return description;
+}
 
+std::vector<HelpParagraph> LoadConfigsCommand::CommonCommandDescription() {
+  std::vector<HelpParagraph> description;
   description.emplace_back(
       "Creates and starts a new instance group from a specification file. An "
       "example specification file looks like:");
