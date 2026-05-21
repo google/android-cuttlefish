@@ -124,7 +124,6 @@ Result<void> LoadConfigsCommand::Handle(const CommandRequest& request) {
       !args.empty(),
       "No arguments provided to cvd command, please provide path to json file");
   std::string& config_path = args.front();
-  CF_EXPECT(ValidateCvdLoadFlags(flags_));
 
   EnvironmentSpecification env_spec =
       CF_EXPECT(GetEnvironmentSpecification(config_path, flags_.overrides));

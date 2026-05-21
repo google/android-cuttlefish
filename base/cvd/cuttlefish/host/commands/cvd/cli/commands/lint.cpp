@@ -72,7 +72,6 @@ Result<std::string> LintCommandHandler::ValidateConfig(
       !args.empty(),
       "No arguments provided to cvd command, please provide path to json file");
   std::string& config_path = args.front();
-  CF_EXPECT(ValidateCvdLoadFlags(load_flags));
   CF_EXPECT(GetEnvironmentSpecification(config_path, load_flags.overrides));
   return config_path;
 }

@@ -246,13 +246,44 @@ EnvironmentSpecification FillEmptyInstanceNames(
 std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags) {
   std::vector<Flag> flags;
   flags.emplace_back(
-      GflagsCompatFlag("credential_source", load_flags.credential_source)
+      GflagsCompatFlag("credential_source")
           .Help("Source of credentials to access the Android Build Server API. "
                 "Can be left empty in most cases, see the help for `login` and "
-                "`fetch` for details."));
-  flags.emplace_back(GflagsCompatFlag("project_id", load_flags.project_id)
-                         .Help("Google Cloud Project ID for Android Build "
-                               "Server API access and quotas."));
+                "`fetch` for details.")
+          .Setter([&load_flags](const FlagMatch& match) -> Result<void> {
+            load_flags.overrides.push_back(
+                Override{.config_path = std::string(kCredentialSourceOverride),
+                         .new_value = match.value});
+            return {};
+          })
+          .Getter([&load_flags]() -> std::string {
+            for (auto it = load_flags.overrides.rbegin();
+                 it != load_flags.overrides.rend(); ++it) {
+              if (it->config_path == kCredentialSourceOverride) {
+                return it->new_value;
+              }
+            }
+            return "";
+          }));
+  flags.emplace_back(
+      GflagsCompatFlag("project_id")
+          .Help("Google Cloud Project ID for Android Build "
+                "Server API access and quotas.")
+          .Setter([&load_flags](const FlagMatch& match) -> Result<void> {
+            load_flags.overrides.push_back(
+                Override{.config_path = std::string(kProjectIDOverride),
+                         .new_value = match.value});
+            return {};
+          })
+          .Getter([&load_flags]() -> std::string {
+            for (auto it = load_flags.overrides.rbegin();
+                 it != load_flags.overrides.rend(); ++it) {
+              if (it->config_path == kProjectIDOverride) {
+                return it->new_value;
+              }
+            }
+            return "";
+          }));
   flags.emplace_back(
       GflagsCompatFlag("base_directory", load_flags.base_dir)
           .Help(fmt::format(
@@ -336,32 +367,6 @@ std::ostream& operator<<(std::ostream& out, const Override& override) {
   fmt::print(out, "(config_path=\"{}\", new_value=\"{}\")",
              override.config_path, override.new_value);
   return out;
-}
-
-Result<void> ValidateCvdLoadFlags(LoadFlags& load_flags) {
-  auto working_directory = CurrentDirectory();
-
-  if (!load_flags.credential_source.empty()) {
-    for (const auto& flag : load_flags.overrides) {
-      CF_EXPECT(!absl::StartsWith(flag.config_path, kCredentialSourceOverride),
-                "Specifying both --override=fetch.credential_source and the "
-                "--credential_source flag is not allowed.");
-    }
-    load_flags.overrides.emplace_back(
-        Override{.config_path = std::string(kCredentialSourceOverride),
-                 .new_value = load_flags.credential_source});
-  }
-  if (!load_flags.project_id.empty()) {
-    for (const auto& flag : load_flags.overrides) {
-      CF_EXPECT(!absl::StartsWith(flag.config_path, kProjectIDOverride),
-                "Specifying both --override=fetch.project_id and the "
-                "--project_id flag is not allowed.");
-    }
-    load_flags.overrides.emplace_back(
-        Override{.config_path = std::string(kProjectIDOverride),
-                 .new_value = load_flags.project_id});
-  }
-  return {};
 }
 
 Result<EnvironmentSpecification> GetEnvironmentSpecification(

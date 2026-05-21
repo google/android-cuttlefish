@@ -44,14 +44,10 @@ std::ostream& operator<<(std::ostream& out, const Override& override);
 
 struct LoadFlags {
   std::vector<Override> overrides;
-  std::string credential_source;
-  std::string project_id;
   std::string base_dir;
 };
 
 std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags);
-
-Result<void> ValidateCvdLoadFlags(LoadFlags& load_flags);
 
 Result<cvd::config::EnvironmentSpecification> GetEnvironmentSpecification(
     const std::string& config_path, const std::vector<Override>& overrides);
