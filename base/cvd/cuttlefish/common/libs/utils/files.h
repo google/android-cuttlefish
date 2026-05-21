@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "cuttlefish/result/result.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 bool FileExists(const std::string& path, bool follow_symlinks = true);
@@ -109,5 +110,7 @@ std::vector<std::string> Path(const std::string& env_name = "PATH");
 
 Result<std::string> Search(const std::vector<std::string>& path,
                            std::string_view name);
+
+Result<SharedFD> CreateOrReuseAndDrainFifo(const std::string& path, mode_t mode);
 
 }  // namespace cuttlefish

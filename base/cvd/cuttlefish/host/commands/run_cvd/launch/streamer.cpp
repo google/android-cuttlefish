@@ -17,7 +17,6 @@
 
 #include <errno.h>
 #include <sys/socket.h>
-#include <unistd.h>
 
 #include <sstream>
 #include <string>
@@ -31,6 +30,7 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
 #include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
@@ -178,12 +178,9 @@ class StreamerSockets : public virtual SetupFeature {
         instance_.PerInstanceInternalPath("confui_fifo_vm.in"),
         instance_.PerInstanceInternalPath("confui_fifo_vm.out"),
     };
-    for (const auto& path : fifo_files) {
-      unlink(path.c_str());
-    }
     std::vector<SharedFD> fds;
     for (const auto& path : fifo_files) {
-      fds.emplace_back(CF_EXPECT(SharedFD::Fifo(path, 0660)));
+      fds.emplace_back(CF_EXPECT(CreateOrReuseAndDrainFifo(path, 0660)));
     }
     confui_in_fd_ = fds[0];
     confui_out_fd_ = fds[1];

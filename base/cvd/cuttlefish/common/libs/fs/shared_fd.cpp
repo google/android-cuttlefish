@@ -518,32 +518,16 @@ int SharedFD::Fchdir(SharedFD shared_fd) {
 
 Result<SharedFD> SharedFD::Fifo(const std::string& path, mode_t mode) {
   struct stat st {};
-  bool existed = false;
-  if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) != 0) {
-    CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
-               "Failed to mkfifo('{}', {:o}): {}", path, mode,
+  if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) == 0) {
+    CF_EXPECTF(TEMP_FAILURE_RETRY(remove(path.c_str())) == 0,
+               "Failed to delete old file at '{}': '{}'", path,
                ::cuttlefish::StrError(errno));
-  } else {
-    CF_EXPECTF(S_ISFIFO(st.st_mode),
-               "File at '{}' exists but is not a FIFO", path);
-    existed = true;
   }
 
+  CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
+             "Failed to mkfifo('{}', {:o})", path, mode);
   auto ret = Open(path, O_RDWR);
   CF_EXPECTF(ret->IsOpen(), "Failed to open '{}': '{}'", path, ret->StrError());
-
-  if (existed) {
-    int flags = ret->Fcntl(F_GETFL, 0);
-    if (flags >= 0) {
-      ret->Fcntl(F_SETFL, flags | O_NONBLOCK);
-      char buf[4096];
-      while (ret->Read(buf, sizeof(buf)) > 0) {
-        // Reading while there is data to read
-      }
-      ret->Fcntl(F_SETFL, flags);
-    }
-  }
-
   return ret;
 }
 

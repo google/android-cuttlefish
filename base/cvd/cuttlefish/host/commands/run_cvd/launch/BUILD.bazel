@@ -34,6 +34,7 @@ cf_cc_library(
     hdrs = ["bluetooth_connector.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
@@ -150,6 +151,7 @@ cf_cc_library(
     hdrs = ["gnss_grpc_proxy.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -291,6 +293,7 @@ cf_cc_library(
     hdrs = ["nfc_connector.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
@@ -386,6 +389,8 @@ cf_cc_library(
     srcs = ["secure_env.cpp"],
     hdrs = ["secure_env.h"],
     deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -402,6 +407,7 @@ cf_cc_library(
     hdrs = ["sensors_simulator.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd/launch:sensors_socket_pair",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -441,6 +447,7 @@ cf_cc_library(
     hdrs = ["streamer.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd:reporting",
         "//cuttlefish/host/commands/run_cvd/launch:enable_multitouch",
@@ -509,6 +516,7 @@ cf_cc_library(
     hdrs = ["uwb_connector.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
