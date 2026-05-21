@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -54,7 +55,7 @@ Result<MonitorCommand> SecureEnv(
   };
   std::vector<SharedFD> fifos;
   for (const auto& path : fifo_paths) {
-    fifos.emplace_back(CF_EXPECT(SharedFD::Fifo(path, 0660)));
+    fifos.emplace_back(CF_EXPECT(CreateOrReuseAndDrainFifo(path, 0660)));
   }
   command.AddParameter("-keymaster_fd_out=", fifos[0]);
   command.AddParameter("-keymaster_fd_in=", fifos[1]);

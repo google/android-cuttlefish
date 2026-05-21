@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -43,7 +44,7 @@ Result<std::optional<MonitorCommand>> GnssGrpcProxyServer(
       instance.PerInstanceInternalPath("locationhvc_fifo_vm.out"),
   };
   for (const auto& path : fifo_paths) {
-    fifos.emplace_back(CF_EXPECT(SharedFD::Fifo(path, 0660)));
+    fifos.emplace_back(CF_EXPECT(CreateOrReuseAndDrainFifo(path, 0660)));
   }
 
   auto gnss_grpc_proxy_cmd =
