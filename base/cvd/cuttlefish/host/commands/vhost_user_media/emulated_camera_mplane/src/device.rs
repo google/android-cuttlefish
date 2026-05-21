@@ -64,27 +64,30 @@ enum BufferState {
     },
 }
 
+/// Information about a single plane of a multi-planar buffer.
+struct Plane {
+    /// Backing memory file descriptor.
+    fd: MemFdBuffer,
+    /// Offset that can be used to map the plane's memory.
+    offset: u32,
+}
+
 /// Information about a single buffer.
 struct Buffer {
     /// Current state of the buffer.
     state: BufferState,
     /// V4L2 representation of this buffer to be sent to the guest when requested.
     v4l2_buffer: V4l2Buffer,
-    /// Backing storage for the buffer.
-    fd: MemFdBuffer,
-    /// Offset that can be used to map the buffer.
-    ///
-    /// Cached from `v4l2_buffer` to avoid doing a match.
-    offset: u32,
+    /// Backing storage and offsets for the planes of the buffer.
+    planes: [Plane; 3],
 }
 
 impl Buffer {
-    fn new(v4l2_buffer: V4l2Buffer, fd: MemFdBuffer, offset: u32) -> Self {
+    fn new(v4l2_buffer: V4l2Buffer, planes: [Plane; 3]) -> Self {
         Self {
             state: BufferState::New,
             v4l2_buffer,
-            fd,
-            offset,
+            planes,
         }
     }
 
@@ -93,15 +96,32 @@ impl Buffer {
         let mut flags = self.v4l2_buffer.flags();
         match state {
             BufferState::New => {
-                *self.v4l2_buffer.get_first_plane_mut().bytesused = 0;
+                let planes = self.v4l2_buffer.planes_with_backing_iter_mut();
+                if let V4l2PlanesWithBackingMut::Mmap(mut planes) = planes {
+                    *planes.next().unwrap().bytesused = 0;
+                    *planes.next().unwrap().bytesused = 0;
+                    *planes.next().unwrap().bytesused = 0;
+                }
                 flags &= !BufferFlags::QUEUED;
             }
             BufferState::Incoming => {
-                *self.v4l2_buffer.get_first_plane_mut().bytesused = 0;
+                let planes = self.v4l2_buffer.planes_with_backing_iter_mut();
+                if let V4l2PlanesWithBackingMut::Mmap(mut planes) = planes {
+                    *planes.next().unwrap().bytesused = 0;
+                    *planes.next().unwrap().bytesused = 0;
+                    *planes.next().unwrap().bytesused = 0;
+                }
                 flags |= BufferFlags::QUEUED;
             }
             BufferState::Outgoing { sequence } => {
-                *self.v4l2_buffer.get_first_plane_mut().bytesused = BUFFER_SIZE;
+                {
+                    let planes = self.v4l2_buffer.planes_with_backing_iter_mut();
+                    if let V4l2PlanesWithBackingMut::Mmap(mut planes) = planes {
+                        *planes.next().unwrap().bytesused = WIDTH * HEIGHT;
+                        *planes.next().unwrap().bytesused = WIDTH * HEIGHT / 4;
+                        *planes.next().unwrap().bytesused = WIDTH * HEIGHT / 4;
+                    }
+                }
                 self.v4l2_buffer.set_sequence(sequence);
                 self.v4l2_buffer.set_timestamp(bindings::timeval {
                     tv_sec: (sequence + 1) as bindings::__time_t / 1000,
@@ -136,19 +156,26 @@ impl VirtioMediaDeviceSession for EmulatedCameraSession {
 }
 
 impl EmulatedCameraSession {
-    fn write_pattern<W: std::io::Write>(iteration: u64, sink: W) -> IoctlResult<()> {
-        let mut writer = BufWriter::new(sink);
+    fn write_pattern<WY: std::io::Write, WU: std::io::Write, WV: std::io::Write>(
+        iteration: u64,
+        mut sink_y: WY,
+        mut sink_u: WU,
+        mut sink_v: WV,
+    ) -> IoctlResult<()> {
+        let mut writer_y = BufWriter::new(&mut sink_y);
+        let mut writer_u = BufWriter::new(&mut sink_u);
+        let mut writer_v = BufWriter::new(&mut sink_v);
         let y = (iteration % 256) as u8;
         let u = ((iteration + 64) % 256) as u8;
         let v = ((iteration + 128) % 256) as u8;
         for _ in 0..(WIDTH * HEIGHT) {
-            writer.write_all(&[y]).map_err(|_| libc::EIO)?;
+            writer_y.write_all(&[y]).map_err(|_| libc::EIO)?;
         }
         for _ in 0..(WIDTH * HEIGHT / 4) {
-            writer.write_all(&[u]).map_err(|_| libc::EIO)?;
+            writer_u.write_all(&[u]).map_err(|_| libc::EIO)?;
         }
         for _ in 0..(WIDTH * HEIGHT / 4) {
-            writer.write_all(&[v]).map_err(|_| libc::EIO)?;
+            writer_v.write_all(&[v]).map_err(|_| libc::EIO)?;
         }
         Ok(())
     }
@@ -161,13 +188,21 @@ impl EmulatedCameraSession {
         while let Some(buf_id) = self.queued_buffers.pop_front() {
             let iteration = self.iteration;
             let buffer = self.buffers.get_mut(buf_id).ok_or(libc::EIO)?;
-            buffer
-                .fd
-                .as_file()
-                .seek(SeekFrom::Start(0))
-                .map_err(|_| libc::EIO)?;
 
-            Self::write_pattern(iteration, buffer.fd.as_file())?;
+            for plane in &mut buffer.planes {
+                plane
+                    .fd
+                    .as_file()
+                    .seek(SeekFrom::Start(0))
+                    .map_err(|_| libc::EIO)?;
+            }
+
+            Self::write_pattern(
+                iteration,
+                buffer.planes[0].fd.as_file(),
+                buffer.planes[1].fd.as_file(),
+                buffer.planes[2].fd.as_file(),
+            )?;
 
             buffer.set_state(BufferState::Outgoing {
                 sequence: iteration as u32,
@@ -245,7 +280,9 @@ where
         self.active_session = None;
 
         for buffer in &session.buffers {
-            self.mmap_manager.unregister_buffer(buffer.offset);
+            for plane in &buffer.planes {
+                self.mmap_manager.unregister_buffer(plane.offset);
+            }
         }
     }
 
@@ -268,10 +305,15 @@ where
         let buffer = session
             .buffers
             .iter_mut()
-            .find(|b| b.offset == offset)
+            .find(|b| b.planes.iter().any(|p| p.offset == offset))
+            .ok_or(libc::EINVAL)?;
+        let plane = buffer
+            .planes
+            .iter()
+            .find(|p| p.offset == offset)
             .ok_or(libc::EINVAL)?;
         let rw = (flags & VIRTIO_MEDIA_MMAP_FLAG_RW) != 0;
-        let fd = buffer.fd.as_file().as_fd();
+        let fd = plane.fd.as_file().as_fd();
         let (guest_addr, size) = self
             .mmap_manager
             .create_mapping(offset, fd, rw)
@@ -287,11 +329,10 @@ where
     }
 }
 
-const PIXELFORMAT: u32 = PixelFormat::from_fourcc(b"YU12").to_u32();
+const PIXELFORMAT: u32 = PixelFormat::from_fourcc(b"YM12").to_u32();
 const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 const FRAME_RATE: u32 = 30;
-const BUFFER_SIZE: u32 = WIDTH * HEIGHT * 3 / 2;
 
 const INPUTS: [bindings::v4l2_input; 1] = [bindings::v4l2_input {
     index: 0,
@@ -488,40 +529,87 @@ where
         let count = std::cmp::min(count, 32);
 
         for buffer in &session.buffers {
-            self.mmap_manager.unregister_buffer(buffer.offset);
+            for plane in &buffer.planes {
+                self.mmap_manager.unregister_buffer(plane.offset);
+            }
         }
 
+        let size_y = (WIDTH * HEIGHT) as u64;
+        let size_u = (WIDTH * HEIGHT / 4) as u64;
+        let size_v = (WIDTH * HEIGHT / 4) as u64;
+
         session.buffers = (0..count)
-            .map(|i| {
-                MemFdBuffer::new(BUFFER_SIZE as u64)
-                    .map_err(|e| {
-                        log::error!("failed to allocate MMAP buffers: {:#}", e);
-                        libc::ENOMEM
-                    })
-                    .and_then(|fd| {
-                        let offset = self
-                            .mmap_manager
-                            .register_buffer(None, BUFFER_SIZE)
-                            .map_err(|_| libc::EINVAL)?;
+            .map(|i| -> std::result::Result<Buffer, i32> {
+                let fd_y = MemFdBuffer::new(size_y).map_err(|e| {
+                    log::error!("failed to allocate MMAP buffer Y: {:#}", e);
+                    libc::ENOMEM
+                })?;
+                let fd_u = MemFdBuffer::new(size_u).map_err(|e| {
+                    log::error!("failed to allocate MMAP buffer U: {:#}", e);
+                    libc::ENOMEM
+                })?;
+                let fd_v = MemFdBuffer::new(size_v).map_err(|e| {
+                    log::error!("failed to allocate MMAP buffer V: {:#}", e);
+                    libc::ENOMEM
+                })?;
+                let offset_y = self
+                    .mmap_manager
+                    .register_buffer(None, size_y as u32)
+                    .map_err(|_| libc::EINVAL)?;
+                let offset_u = self
+                    .mmap_manager
+                    .register_buffer(None, size_u as u32)
+                    .map_err(|_| libc::EINVAL)?;
+                let offset_v = self
+                    .mmap_manager
+                    .register_buffer(None, size_v as u32)
+                    .map_err(|_| libc::EINVAL)?;
 
-                        let mut v4l2_buffer = V4l2Buffer::new(queue, i, MemoryType::Mmap);
-                        if let V4l2PlanesWithBackingMut::Mmap(mut planes) =
-                            v4l2_buffer.planes_with_backing_iter_mut()
-                        {
-                            // SAFETY: every buffer has at least one plane.
-                            let mut plane = planes.next().unwrap();
-                            plane.set_mem_offset(offset);
-                            *plane.length = BUFFER_SIZE;
-                        } else {
-                            // SAFETY: we have just set the buffer type to MMAP. Reaching this point means a bug in
-                            // the code.
-                            panic!()
-                        }
-                        v4l2_buffer.set_field(BufferField::None);
-                        v4l2_buffer.set_flags(BufferFlags::TIMESTAMP_MONOTONIC);
+                let planes_structs = [
+                    Plane {
+                        fd: fd_y,
+                        offset: offset_y,
+                    },
+                    Plane {
+                        fd: fd_u,
+                        offset: offset_u,
+                    },
+                    Plane {
+                        fd: fd_v,
+                        offset: offset_v,
+                    },
+                ];
 
-                        Ok(Buffer::new(v4l2_buffer, fd, offset))
-                    })
+                let mut v4l2_buffer = V4l2Buffer::new(queue, i, MemoryType::Mmap);
+                // TODO(b/520129053): The v4l2r crate's `set_num_planes()` doesn't allow sizing-up.
+                // So we directly set the plane count to 3 on the raw buffer so that the plane
+                // iterator yields all 3 planes (Y, U, V).
+                unsafe {
+                    (*v4l2_buffer.as_mut_ptr()).length = 3;
+                }
+                if let V4l2PlanesWithBackingMut::Mmap(mut planes) =
+                    v4l2_buffer.planes_with_backing_iter_mut()
+                {
+                    let mut plane = planes.next().unwrap();
+                    plane.set_mem_offset(offset_y);
+                    *plane.length = size_y as u32;
+
+                    let mut plane = planes.next().unwrap();
+                    plane.set_mem_offset(offset_u);
+                    *plane.length = size_u as u32;
+
+                    let mut plane = planes.next().unwrap();
+                    plane.set_mem_offset(offset_v);
+                    *plane.length = size_v as u32;
+                } else {
+                    // SAFETY: we have just set the buffer type to MMAP. Reaching this point means a bug in
+                    // the code.
+                    panic!()
+                }
+                v4l2_buffer.set_field(BufferField::None);
+                v4l2_buffer.set_flags(BufferFlags::TIMESTAMP_MONOTONIC);
+
+                Ok(Buffer::new(v4l2_buffer, planes_structs))
             })
             .collect::<std::result::Result<_, _>>()?;
 
