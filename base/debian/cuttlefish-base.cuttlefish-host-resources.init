@@ -160,31 +160,27 @@ manage_nft_rule() {
 
     handle_file="${cuttlefish_run_dir}/${type}-${id}.handle"
 
-    case "$op" in
-        add)
-            if [ -z "$contents" ]; then
-                echo "Contents required for add operation"
-                return 1
-            fi
-            # Add the rule and store the handle.
-            handle=$(nft -j -e add rule "$family" "$table" "$chain" "$contents" | jq -r '.nftables[] | select(has("add")) | .add.rule.handle')
-            echo "$handle" > "$handle_file"
-            ;;
-        delete)
-            if [ -f "$handle_file" ]; then
-                # Find the handle file and use it to clean things up.
-                handle=$(< "$handle_file")
-                nft delete rule "$family" "$table" "$chain" handle "$handle"
-                rm "$handle_file"
-            else
-                echo "Handle file not found: $handle_file"
-            fi
-            ;;
-        *)
-            echo "Unknown operation: $op"
+    if [ "$op" = "add" ]; then
+        if [ -z "$contents" ]; then
+            echo "Contents required for add operation"
             return 1
-            ;;
-    esac
+        fi
+        # Add the rule and store the handle.
+        handle=$(nft -a -e add rule "$family" "$table" "$chain" "$contents" | awk '/# handle/ {print $NF}')
+        echo "$handle" > "$handle_file"
+    elif [ "$op" = "delete" ]; then
+        if [ -f "$handle_file" ]; then
+            # Find the handle file and use it to clean things up.
+            handle=$(cat "$handle_file")
+            nft delete rule "$family" "$table" "$chain" handle "$handle"
+            rm "$handle_file"
+        else
+            echo "Handle file not found: $handle_file"
+        fi
+    else
+        echo "Unknown operation: $op"
+        return 1
+    fi
 }
 
 
