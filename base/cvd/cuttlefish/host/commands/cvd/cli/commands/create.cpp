@@ -34,6 +34,7 @@
 #include <fmt/format.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_join.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -48,6 +49,7 @@
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_constants.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -219,6 +221,37 @@ Result<void> CreateSymlinks(const LocalInstanceGroup& group) {
   return {};
 }
 
+// The create subcommand uses the selector flags in a different way than other
+// subcommands, so the default help message is not appropriate. Ideally, create
+// should just use different flag objects with the same name, but selector flags
+// are parsed before calling the handler's functions so this is not possible.
+// The other option would be to use differently named flags altogether, but that
+// would break backwards compatibility at this point.
+// This function produces the same flags with different help message.
+std::vector<Flag> BuildSelectorFlagsForCreateHelp(
+    const selector::SelectorOptions& selectors) {
+  return {
+      GflagsCompatFlag(selector::SelectorFlags::kGroupName)
+          .Getter([selectors]() { return selectors.group_name.value_or(""); })
+          .Help("Name of the group to be created. The command will fail if a "
+                "group with that name already exists. A new name of the form "
+                "'cvd-<n>' guaranteed to not exist yet will be generated if "
+                "not provided."),
+      GflagsCompatFlag(selector::SelectorFlags::kInstanceName)
+          .Getter([selectors]() -> std::string {
+            return absl::StrJoin(
+                selectors.instance_names.value_or(std::vector<std::string>()),
+                ",");
+          })
+          .Help("Comma separated list of instance names. When provided, this "
+                "flag determines the number of instaces to have in the group, "
+                "so it must match the --num_instances flag. Valid names will "
+                "be generated automaticlally if no value is provided. "
+                "Instances in the same group must have different names, but "
+                "can share names with instances from other groups"),
+  };
+}
+
 }  // namespace
 
 CvdCreateCommandHandler::CvdCreateCommandHandler(
@@ -340,7 +373,8 @@ Result<std::string> CvdCreateCommandHandler::DetailedHelp(const CommandRequest& 
           "directory without additional configuration."),
   });
 
-  ss << FormatFlagsHelp(ConfigFileModeFlags());
+  ss << FormatFlagsHelp(BuildSelectorFlagsForCreateHelp(request.Selectors()));
+  ss << FormatFlagsHelp(FlagModeFlags(request.Env()));
 
   ss << FormatHelpText({HelpParagraph(
       "The following flags control how the instances are started (unless "
