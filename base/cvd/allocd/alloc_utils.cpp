@@ -28,6 +28,7 @@
 #include "absl/strings/str_format.h"
 
 #include "allocd/alloc_driver.h"
+#include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -158,6 +159,11 @@ bool CreateTap(std::string_view name) {
 
 #ifdef __linux__
 Result<void> ValidateTapInterfaceIsUsable(const std::string& interface_name) {
+  CF_EXPECT(NetworkInterfaceExists(interface_name),
+             "Tap interface does not exist. Ensure "
+             "\"cuttlefish-host-resources.service\" is running (start with "
+             "\"sudo systemctl start cuttlefish-host-resources.service\").");
+
   constexpr auto kTunTapDev = "/dev/net/tun";
 
   auto tap_fd = SharedFD::Open(kTunTapDev, O_RDWR | O_NONBLOCK);
@@ -170,8 +176,8 @@ Result<void> ValidateTapInterfaceIsUsable(const std::string& interface_name) {
   strncpy(ifr.ifr_name, interface_name.c_str(), IFNAMSIZ);
 
   int err = tap_fd->Ioctl(TUNSETIFF, &ifr);
-  CF_EXPECTF(err == 0, "Unable to connect to {} tap interface: {}",
-             interface_name, tap_fd->StrError());
+  CF_EXPECTF(err == 0, "Unable to connect to tap interface: {}",
+             tap_fd->StrError());
 
   return {};
 }
