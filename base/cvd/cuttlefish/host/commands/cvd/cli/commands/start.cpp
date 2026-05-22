@@ -528,7 +528,7 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
   CF_EXPECT(ConsumeFlags(own_flags, args));
 
   std::vector<Flag> internal_flags = CF_EXPECT(GetCvdInternalStartFlags(
-      request.SubcommandArguments(), request.Env()));
+      request.SubcommandArguments(), cvd_common::Envs()));
 
   selector::SelectorOptions selector_options = request.Selectors();
   std::vector<Flag> selector_flags =
