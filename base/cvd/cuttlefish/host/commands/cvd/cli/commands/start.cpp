@@ -527,7 +527,7 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
   CF_EXPECT(ConsumeFlags(own_flags, args));
 
   std::vector<Flag> internal_flags = CF_EXPECT(GetCvdInternalStartFlags(
-      request.SubcommandArguments(), request.Env()));
+      request.SubcommandArguments(), cvd_common::Envs()));
 
   std::vector<Flag> flags = std::move(own_flags);
   flags.insert(flags.end(), internal_flags.begin(), internal_flags.end());
