@@ -527,14 +527,8 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
   std::vector<Flag> own_flags = BuildOwnFlags();
   CF_EXPECT(ConsumeFlags(own_flags, args));
 
-  cvd_common::Envs envs = request.Env();
-  Result<LocalInstanceGroup> group_res =
-      selector::SelectGroup(instance_manager_, request);
-  if (group_res.ok()) {
-    envs["HOME"] = group_res.value().HomeDir();
-  }
-  std::vector<Flag> internal_flags =
-      CF_EXPECT(GetCvdInternalStartFlags(request.SubcommandArguments(), envs));
+  std::vector<Flag> internal_flags = CF_EXPECT(GetCvdInternalStartFlags(
+      request.SubcommandArguments(), request.Env()));
 
   selector::SelectorOptions selector_options = request.Selectors();
   std::vector<Flag> selector_flags =
