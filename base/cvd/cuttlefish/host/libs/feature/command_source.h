@@ -30,7 +30,7 @@ struct MonitorCommand {
   Command command;
   bool is_critical;
 
-  MonitorCommand(Command command, bool is_critical = true)
+  MonitorCommand(Command command, bool is_critical = false)
       : command(std::move(command)), is_critical(is_critical) {}
 };
 
