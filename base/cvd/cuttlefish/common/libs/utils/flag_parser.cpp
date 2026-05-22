@@ -241,6 +241,15 @@ Flag Flag::Setter(std::function<Result<void>(const FlagMatch&)> setter) && {
   return *this;
 }
 
+Flag& Flag::AddValidator(std::function<Result<void>()> validator) & {
+  validators_.emplace_back(std::move(validator));
+  return *this;
+}
+Flag Flag::AddValidator(std::function<Result<void>()> validator) && {
+  validators_.emplace_back(std::move(validator));
+  return *this;
+}
+
 Result<bool> ParseBool(std::string_view value, std::string_view name) {
   bool result;
   CF_EXPECTF(absl::SimpleAtob(value, &result),
@@ -270,20 +279,20 @@ Result<Flag::FlagProcessResult> Flag::Process(
         }
         CF_EXPECTF(next_arg.has_value(), "Expected an argument after \"{}\"",
                    arg);
-        CF_EXPECTF((*setter_)({arg, *next_arg}),
+        CF_EXPECTF(SetAndValidate({arg, *next_arg}),
                    "Processing \"{}\" \"{}\" failed", arg, *next_arg);
         return FlagProcessResult::kFlagConsumedWithFollowing;
       case FlagAliasMode::kFlagExact:
         if (normalized_arg != normalized_alias) {
           continue;
         }
-        CF_EXPECTF((*setter_)({arg, arg}), "Processing \"{}\" failed", arg);
+        CF_EXPECTF(SetAndValidate({arg, arg}), "Processing \"{}\" failed", arg);
         return FlagProcessResult::kFlagConsumed;
       case FlagAliasMode::kFlagPrefix:
         if (!absl::StartsWith(normalized_arg, normalized_alias)) {
           continue;
         }
-        CF_EXPECTF((*setter_)({alias.name, arg.substr(alias.name.size())}),
+        CF_EXPECTF(SetAndValidate({alias.name, arg.substr(alias.name.size())}),
                    "Processing \"{}\" failed", arg);
         return FlagProcessResult::kFlagConsumed;
       default:
@@ -291,6 +300,14 @@ Result<Flag::FlagProcessResult> Flag::Process(
     }
   }
   return FlagProcessResult::kFlagSkip;
+}
+
+Result<void> Flag::SetAndValidate(const FlagMatch& match) const {
+  CF_EXPECT((*setter_)(match));
+  for (auto& validator: validators_) {
+    CF_EXPECT(validator());
+  }
+  return {};
 }
 
 Result<void> Flag::Parse(std::vector<std::string>& arguments) const {
