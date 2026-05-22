@@ -207,6 +207,9 @@ func (tc *TestContext) CVDCreate(args CreateArgs) error {
 	createCmd := []string{tc.TargetBin(), "--verbosity=DEBUG", "create"}
 	createCmd = append(createCmd, "--report_anonymous_usage_stats=y")
 	createCmd = append(createCmd, "--undefok=report_anonymous_usage_stats")
+	if os.Getenv("DISABLE_CROSVM_SANDBOX") == "true" {
+		createCmd = append(createCmd, "--enable_sandbox=false")
+	}
 	if len(args.Args) > 0 {
 		createCmd = append(createCmd, args.Args...)
 	}
