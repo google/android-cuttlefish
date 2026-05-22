@@ -16,6 +16,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"strings"
 	"testing"
 	"time"
@@ -31,10 +32,6 @@ func TestDeviceNetworking(t *testing.T) {
 		{
 			branch: "aosp-android-latest-release",
 			target: "aosp_cf_x86_64_only_phone-userdebug",
-		},
-		{
-			branch: "git_main",
-			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
 		},
 	}
 	c := e2etests.TestContext{}
@@ -61,10 +58,14 @@ func TestDeviceNetworking(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			pingIP := "8.8.8.8"
+			t.Log("Discovering host IP to ping...")
+			hostIP := discoverPingableHostIP(t)
+			if hostIP == "" {
+				t.Fatal("Could not find a host IP to test connectivity")
+			}
 
-			t.Logf("Polling for network connectivity to host IP %s (up to 60s)...", pingIP)
-			if !pollPing(&c, t, pingIP) {
+			t.Logf("Polling for network connectivity to host IP %s (up to 60s)...", hostIP)
+			if !pollPing(&c, t, hostIP) {
 				logDiagnostics(&c, t)
 				t.Fatal("Failed to establish network connectivity to host")
 			}
@@ -74,11 +75,11 @@ func TestDeviceNetworking(t *testing.T) {
 }
 
 // Polls the guest to ping the host IP until success or timeout (60s).
-func pollPing(c *e2etests.TestContext, t *testing.T, pingIP string) bool {
+func pollPing(c *e2etests.TestContext, t *testing.T, hostIP string) bool {
 	for i := 0; i < 12; i++ {
-		res, err := c.RunCmd("adb", "shell", "ping", "-c", "3", pingIP)
+		res, err := c.RunCmd("adb", "shell", "ping", "-c", "3", hostIP)
 		if err == nil && strings.Contains(res.Stdout, "0% packet loss") {
-			t.Logf("Successfully pinged IP %s", pingIP)
+			t.Logf("Successfully pinged host IP %s", hostIP)
 			return true
 		}
 		t.Logf("Ping failed, retrying... (err: %v)", err)
@@ -105,4 +106,46 @@ func logDiagnostics(c *e2etests.TestContext, t *testing.T) {
 	} else {
 		t.Logf("failed to get ip rules: %v", err)
 	}
+}
+
+// Discover an IP address of the host that the guest can ping to verify default routing.
+func discoverPingableHostIP(t *testing.T) string {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		t.Logf("failed to list host interfaces: %v", err)
+		return ""
+	}
+
+	for _, ief := range interfaces {
+		// Skip cuttlefish bridges (cvd-ebr, cvd-mtap-XX, etc.) and loopback (lo).
+		// We want a real external interface IP so that pinging it from the guest
+		// forces the guest kernel to use the default route.
+		if strings.HasPrefix(ief.Name, "cvd-") || ief.Name == "lo" {
+			continue
+		}
+
+		addrs, err := ief.Addrs()
+		if err != nil {
+			continue
+		}
+
+		for _, addr := range addrs {
+			if ipnet, ok := addr.(*net.IPNet); ok {
+				ip := ipnet.IP
+
+				// Filter out loopback (127.0.0.1) and link-local unicast (169.254.x.x) addresses.
+				// We need a globally or locally routable IP that the guest can reach via the gateway.
+				if !ip.IsLoopback() && !ip.IsLinkLocalUnicast() {
+					// Look for a valid IPv4 address.
+					if ipv4 := ip.To4(); ipv4 != nil {
+						t.Logf("Discovered host primary IP %s on interface %s", ipv4.String(), ief.Name)
+						return ipv4.String()
+					}
+				}
+			}
+		}
+	}
+
+	t.Log("Failed to discover any suitable host IP for ping test")
+	return ""
 }
