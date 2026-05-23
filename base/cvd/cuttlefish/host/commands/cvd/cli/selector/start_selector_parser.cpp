@@ -65,6 +65,8 @@ StartSelectorParser::StartSelectorParser(
   }
 }
 
+// Verify that, if given, the number of instances is the same accross
+// --num_instances, --instance_names and --instance_nums.
 Result<unsigned> StartSelectorParser::VerifyNumOfInstances(
     const VerifyNumOfInstancesParam& params,
     const unsigned default_n_instances) const {
