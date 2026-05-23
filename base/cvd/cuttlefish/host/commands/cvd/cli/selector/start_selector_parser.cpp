@@ -89,7 +89,6 @@ std::optional<std::vector<unsigned>>
 StartSelectorParser::InstanceFromEnvironment(
     const InstanceFromEnvParam& params) {
   const auto& cuttlefish_instance_env = params.cuttlefish_instance_env;
-  const auto& vsoc_suffix = params.vsoc_suffix;
   const auto& num_instances = params.num_instances;
 
   // see the logic in cuttlefish::InstanceFromEnvironment()
@@ -98,9 +97,6 @@ StartSelectorParser::InstanceFromEnvironment(
   std::optional<unsigned> base;
   if (cuttlefish_instance_env) {
     base = *cuttlefish_instance_env;
-  }
-  if (!base && vsoc_suffix) {
-    base = *vsoc_suffix;
   }
   if (!base) {
     return {};
@@ -170,7 +166,6 @@ StartSelectorParser::HandleInstanceIds(
   const auto& base_instance_num = instance_id_params.base_instance_num;
   const auto& cuttlefish_instance_env =
       instance_id_params.cuttlefish_instance_env;
-  const auto& vsoc_suffix = instance_id_params.vsoc_suffix;
 
   // calculate and/or verify the number of instances
   unsigned num_instances =
@@ -185,7 +180,6 @@ StartSelectorParser::HandleInstanceIds(
     // std::nullopt is returned.
     auto instance_ids = InstanceFromEnvironment(
         {.cuttlefish_instance_env = cuttlefish_instance_env,
-         .vsoc_suffix = vsoc_suffix,
          .num_instances = num_instances});
     if (instance_ids) {
       return ParsedInstanceIdsOpt(*instance_ids);
