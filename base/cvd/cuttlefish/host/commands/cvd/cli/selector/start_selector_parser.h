@@ -53,7 +53,6 @@ class StartSelectorParser {
     return instance_ids_;
   }
   unsigned RequestedNumInstances() const { return requested_num_instances_; }
-  bool UseCvdalloc() const { return use_cvdalloc_; }
 
  private:
   StartSelectorParser(const SelectorOptions& selector_options,
@@ -135,7 +134,6 @@ class StartSelectorParser {
    */
   std::vector<unsigned> instance_ids_;
   unsigned requested_num_instances_;
-  bool use_cvdalloc_;
 
   // temporarily keeps the leftover of the input cmd_args
   SelectorOptions selector_options_;
