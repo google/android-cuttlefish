@@ -31,11 +31,13 @@ class SensorsHandler {
   ~SensorsHandler();
 
   void HandleMessage(double x, double y, double z);
+  void HandleLowLatencyOffBodyDetectMessage(double value);
   int Subscribe(std::function<void(const uint8_t*, size_t)> send_to_client);
   void UnSubscribe(int subscriber_id);
 
  private:
   Result<void> RefreshSensors(double x, double y, double z);
+  Result<void> RefreshLowLatencyOffBodyDetect(double value);
   Result<std::string> GetSensorsData();
   void UpdateSensorsUi();
 

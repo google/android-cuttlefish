@@ -39,6 +39,7 @@ class SensorsSimulator {
   SensorsSimulator(bool is_auto);
   // Update sensor values based on new rotation status.
   void RefreshSensors(double x, double y, double z);
+  void UpdateLowLatencyOffBodyDetect(double value);
 
   // Return a string with serialized sensors data in ascending order of
   // sensor id. A bitmask is used to specify which sensors to include.
