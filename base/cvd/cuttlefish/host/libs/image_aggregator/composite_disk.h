@@ -29,6 +29,8 @@ namespace cuttlefish {
 /** File representing a virtual disk made of separate component files.  */
 class CompositeDiskImage : public DiskImage {
  public:
+  CompositeDiskImage(CompositeDisk);
+
   static Result<CompositeDiskImage> OpenExisting(Reader&);
   static Result<CompositeDiskImage> OpenExisting(const std::string& path);
 
@@ -51,7 +53,6 @@ class CompositeDiskImage : public DiskImage {
   }
 
  private:
-  CompositeDiskImage(CompositeDisk);
   CompositeDisk cdisk_;
 };
 

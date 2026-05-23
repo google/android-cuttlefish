@@ -377,6 +377,7 @@ cf_cc_library(
     hdrs = ["string.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
