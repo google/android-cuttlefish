@@ -22,7 +22,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -30,10 +29,8 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/numbers.h"
 
-#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_option_parser_utils.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 
 namespace cuttlefish {
@@ -66,47 +63,6 @@ StartSelectorParser::StartSelectorParser(
   if (instance_names_opt) {
     num_instance_names_opt_ = instance_names_opt->size();
   }
-}
-
-namespace {
-
-std::optional<unsigned> TryFromCuttlefishInstance(
-    const cvd_common::Envs& envs) {
-  if (!Contains(envs, kCuttlefishInstanceEnvVarName)) {
-    return std::nullopt;
-  }
-  const auto cuttlefish_instance = envs.at(kCuttlefishInstanceEnvVarName);
-  if (cuttlefish_instance.empty()) {
-    return std::nullopt;
-  }
-  auto parsed = ParsePositiveNumber(cuttlefish_instance);
-  return parsed.ok() ? std::optional(*parsed) : std::nullopt;
-}
-
-}  // namespace
-
-std::optional<std::vector<unsigned>>
-StartSelectorParser::InstanceFromEnvironment(
-    const InstanceFromEnvParam& params) {
-  const auto& cuttlefish_instance_env = params.cuttlefish_instance_env;
-  const auto& num_instances = params.num_instances;
-
-  // see the logic in cuttlefish::InstanceFromEnvironment()
-  // defined in host/libs/config/cuttlefish_config.cpp
-  std::vector<unsigned> nums;
-  std::optional<unsigned> base;
-  if (cuttlefish_instance_env) {
-    base = *cuttlefish_instance_env;
-  }
-  if (!base) {
-    return {};
-  }
-  // this is guaranteed by the caller
-  // assert(num_instances != std::nullopt);
-  for (unsigned i = 0; i != *num_instances; i++) {
-    nums.emplace_back(base.value() + i);
-  }
-  return nums;
 }
 
 Result<unsigned> StartSelectorParser::VerifyNumOfInstances(
@@ -164,8 +120,6 @@ StartSelectorParser::HandleInstanceIds(
     const InstanceIdsParams& instance_id_params) {
   const auto& instance_nums = instance_id_params.instance_nums;
   const auto& base_instance_num = instance_id_params.base_instance_num;
-  const auto& cuttlefish_instance_env =
-      instance_id_params.cuttlefish_instance_env;
 
   // calculate and/or verify the number of instances
   unsigned num_instances =
@@ -175,15 +129,6 @@ StartSelectorParser::HandleInstanceIds(
           .instance_nums_flag = instance_nums}));
 
   if (!instance_nums && !base_instance_num) {
-    // num_instances is given. if non-std::nullopt is returned,
-    // the base is also figured out. If base can't be figured out,
-    // std::nullopt is returned.
-    auto instance_ids = InstanceFromEnvironment(
-        {.cuttlefish_instance_env = cuttlefish_instance_env,
-         .num_instances = num_instances});
-    if (instance_ids) {
-      return ParsedInstanceIdsOpt(*instance_ids);
-    }
     // the return value, n_instances is the "desired/requested" instances
     // When instance_ids set isn't figured out, n_instances is not meant to
     // be always zero; it could be any natural number.
@@ -226,7 +171,7 @@ Result<void> StartSelectorParser::ParseOptions() {
       .num_instances = std::move(num_instances),
       .instance_nums = std::move(instance_nums),
       .base_instance_num = std::move(base_instance_num),
-      .cuttlefish_instance_env = TryFromCuttlefishInstance(envs_)};
+  };
   auto parsed_ids = CF_EXPECT(HandleInstanceIds(instance_nums_param));
   requested_num_instances_ = parsed_ids.GetNumOfInstances();
   instance_ids_ = parsed_ids.GetInstanceIds();
