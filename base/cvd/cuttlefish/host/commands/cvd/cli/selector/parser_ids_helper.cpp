@@ -20,16 +20,10 @@
 
 #include "absl/strings/str_split.h"
 
-#include "cuttlefish/host/libs/config/config_constants.h"
-
 namespace cuttlefish {
 namespace selector {
 
 InstanceIdTest::InstanceIdTest() {
-  auto cuttlefish_instance = GetParam().cuttlefish_instance;
-  if (cuttlefish_instance) {
-    envs_[kCuttlefishInstanceEnvVarName] = cuttlefish_instance.value();
-  }
   cmd_args_ = absl::StrSplit(GetParam().cmd_args, ' ', absl::SkipEmpty());
   selector_opts_ = GetParam().selector_opts;
   expected_ids_ = GetParam().expected_ids;

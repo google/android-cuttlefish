@@ -15,7 +15,6 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -30,7 +29,6 @@ namespace selector {
 struct InstanceIdTestInput {
   std::string cmd_args;
   SelectorOptions selector_opts;
-  std::optional<std::string> cuttlefish_instance;
   std::vector<unsigned> expected_ids;
   unsigned requested_num_instances;
   bool expected_result;

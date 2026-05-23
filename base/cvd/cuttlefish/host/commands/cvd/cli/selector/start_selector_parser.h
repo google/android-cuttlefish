@@ -61,7 +61,6 @@ class StartSelectorParser {
     std::optional<std::string> num_instances;
     std::optional<std::string> instance_nums;
     std::optional<std::string> base_instance_num;
-    std::optional<unsigned> cuttlefish_instance_env;
   };
 
   class ParsedInstanceIdsOpt {
@@ -84,13 +83,6 @@ class StartSelectorParser {
    */
   Result<ParsedInstanceIdsOpt> HandleInstanceIds(
       const InstanceIdsParams& instance_id_params);
-
-  struct InstanceFromEnvParam {
-    std::optional<unsigned> cuttlefish_instance_env;
-    std::optional<unsigned> num_instances;
-  };
-  std::optional<std::vector<unsigned>> InstanceFromEnvironment(
-      const InstanceFromEnvParam& params);
 
   struct VerifyNumOfInstancesParam {
     std::optional<std::string> num_instances_flag;

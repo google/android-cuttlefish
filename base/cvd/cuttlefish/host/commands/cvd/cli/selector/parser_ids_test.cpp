@@ -15,8 +15,8 @@
 
 #include <gtest/gtest.h>
 
-#include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/parser_ids_helper.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -36,42 +36,26 @@ TEST_P(InstanceIdTest, InstanceIdCalculation) {
 INSTANTIATE_TEST_SUITE_P(
     CvdParser, InstanceIdTest,
     testing::Values(
-        InstanceIdTestInput{.cuttlefish_instance = std::nullopt,
-                            .expected_ids = {},
-                            .requested_num_instances = 1,
-                            .expected_result = true},
-        InstanceIdTestInput{.cuttlefish_instance = "8",
-                            .expected_ids = std::vector<unsigned>{8},
+        InstanceIdTestInput{.expected_ids = {},
                             .requested_num_instances = 1,
                             .expected_result = true},
         InstanceIdTestInput{.cmd_args = "--num_instances=2",
                             .expected_ids = {},
                             .requested_num_instances = 2,
                             .expected_result = true},
-        InstanceIdTestInput{.cmd_args = "--num_instances=2",
-                            .cuttlefish_instance = "8",
-                            .expected_ids = std::vector<unsigned>{8, 9},
-                            .requested_num_instances = 2,
-                            .expected_result = true},
-        InstanceIdTestInput{
-            .cmd_args = "--base_instance_num=10 --num_instances=2",
-            .cuttlefish_instance = "8",
-            .expected_ids = std::vector<unsigned>{10, 11},
-            .requested_num_instances = 2,
-            .expected_result = true},
         InstanceIdTestInput{.cmd_args = "--instance_nums 2",
-                            .cuttlefish_instance = std::nullopt,
+
                             .expected_ids = std::vector<unsigned>{2},
                             .requested_num_instances = 1,
                             .expected_result = true},
         InstanceIdTestInput{.cmd_args = "--instance_nums 2,5,6",
-                            .cuttlefish_instance = std::nullopt,
+
                             .expected_ids = std::vector<unsigned>{2, 5, 6},
                             .requested_num_instances = 3,
                             .expected_result = true},
         InstanceIdTestInput{
             .cmd_args = "--instance_nums 2,5,6 --num_instances=3",
-            .cuttlefish_instance = std::nullopt,
+
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = true},
@@ -80,7 +64,7 @@ INSTANTIATE_TEST_SUITE_P(
             .selector_opts = SelectorOptions{.instance_names =
                                                  std::vector<std::string>{
                                                      "c-1", "c-2", "c-3"}},
-            .cuttlefish_instance = std::nullopt,
+
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = true},
@@ -88,21 +72,21 @@ INSTANTIATE_TEST_SUITE_P(
             .selector_opts = SelectorOptions{.instance_names =
                                                  std::vector<std::string>{
                                                      "c-1", "c-3", "c-5"}},
-            .cuttlefish_instance = std::nullopt,
+
             .expected_ids = {},
             .requested_num_instances = 3,
             .expected_result = true},
         // CUTTLEFISH_INSTANCE should be ignored
         InstanceIdTestInput{
             .cmd_args = "--instance_nums 2,5,6 --num_instances=3",
-            .cuttlefish_instance = "8",
+
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = true},
         // instance_nums and num_instances mismatch
         InstanceIdTestInput{
             .cmd_args = "--instance_nums 2,5,6 --num_instances=7",
-            .cuttlefish_instance = std::nullopt,
+
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = false},
@@ -112,14 +96,14 @@ INSTANTIATE_TEST_SUITE_P(
             .selector_opts =
                 SelectorOptions{
                     .instance_names = std::vector<std::string>{"c-1", "c-3"}},
-            .cuttlefish_instance = std::nullopt,
+
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = false},
         // --base_instance_num is not allowed with --instance_nums
         InstanceIdTestInput{
             .cmd_args = "--instance_nums 2,5,6 --base_instance_num=7",
-            .cuttlefish_instance = std::nullopt,
+
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = false}));
