@@ -32,24 +32,14 @@ namespace selector {
  * @return any parsing successfully and actually happened
  */
 template <typename T>
-Result<void> FilterSelectorFlag(std::vector<std::string>& args,
-                                const std::string& flag_name,
-                                std::optional<T>& value_opt) {
-  value_opt = std::nullopt;
-  const size_t args_initial_size = args.size();
-  if (args_initial_size == 0) {
-    return {};
-  }
-
-  T value;
-  CF_EXPECT(ConsumeFlags({GflagsCompatFlag(flag_name, value)}, args),
+Result<std::optional<T>> FilterSelectorFlag(std::vector<std::string>& args,
+                                            const std::string& flag_name) {
+  std::optional<T> value_opt;
+  CF_EXPECT(ConsumeFlags(
+                {GflagsCompatFlag(flag_name, value_opt, CoerceToNullopt::None)},
+                args),
             "Failed to parse --" << flag_name);
-  if (args.size() == args_initial_size) {
-    // not consumed
-    return {};
-  }
-  value_opt = value;
-  return {};
+  return value_opt;
 }
 
 }  // namespace selector
