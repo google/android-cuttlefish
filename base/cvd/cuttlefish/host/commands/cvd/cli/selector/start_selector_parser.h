@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <sys/types.h>
 
 #include <optional>
@@ -23,7 +24,6 @@
 #include <utility>
 #include <vector>
 
-#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
@@ -45,19 +45,15 @@ namespace selector {
 class StartSelectorParser {
  public:
   static Result<StartSelectorParser> ConductSelectFlagsParser(
-      const SelectorOptions& selector_options, const cvd_common::Args& cmd_args,
-      const cvd_common::Envs& envs);
-  std::optional<std::string> GroupName() const;
-  std::optional<std::vector<std::string>> PerInstanceNames() const;
-  const std::vector<unsigned>& InstanceIds() const {
-    return instance_ids_;
-  }
+      const std::optional<std::vector<std::string>>& instance_names_opt,
+      const cvd_common::Args& cmd_args, const cvd_common::Envs& envs);
+  const std::vector<unsigned>& InstanceIds() const { return instance_ids_; }
   unsigned RequestedNumInstances() const { return requested_num_instances_; }
 
  private:
-  StartSelectorParser(const SelectorOptions& selector_options,
-                      const cvd_common::Args& cmd_args,
-                      const cvd_common::Envs& envs);
+  StartSelectorParser(
+      const std::optional<std::vector<std::string>>& instance_names_opt,
+      const cvd_common::Args& cmd_args, const cvd_common::Envs& envs);
 
   Result<void> ParseOptions();
 
@@ -100,7 +96,7 @@ class StartSelectorParser {
 
   struct VerifyNumOfInstancesParam {
     std::optional<std::string> num_instances_flag;
-    std::optional<std::vector<std::string>> instance_names;
+    std::optional<size_t> num_instance_names;
     std::optional<std::string> instance_nums_flag;
   };
 
@@ -123,8 +119,7 @@ class StartSelectorParser {
   std::vector<unsigned> instance_ids_;
   unsigned requested_num_instances_;
 
-  SelectorOptions selector_options_;
-
+  std::optional<size_t> num_instance_names_opt_;
   // temporarily keeps the leftover of the input cmd_args
   cvd_common::Args cmd_args_;
   cvd_common::Envs envs_;

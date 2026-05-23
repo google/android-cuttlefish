@@ -118,7 +118,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/host/commands/cvd/cli:types",
-        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_option_parser_utils",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:instance_nums",

@@ -31,7 +31,6 @@
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_option_parser_utils.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -53,25 +52,20 @@ static Result<unsigned> ParsePositiveNumber(std::string_view token) {
 }
 
 Result<StartSelectorParser> StartSelectorParser::ConductSelectFlagsParser(
-    const SelectorOptions& selector_options, const cvd_common::Args& cmd_args,
-    const cvd_common::Envs& envs) {
-  StartSelectorParser parser(selector_options, cmd_args, envs);
+    const std::optional<std::vector<std::string>>& instance_names_opt,
+    const cvd_common::Args& cmd_args, const cvd_common::Envs& envs) {
+  StartSelectorParser parser(instance_names_opt, cmd_args, envs);
   CF_EXPECT(parser.ParseOptions(), "selector option flag parsing failed.");
   return {std::move(parser)};
 }
 
 StartSelectorParser::StartSelectorParser(
-    const SelectorOptions& selector_options, const cvd_common::Args& cmd_args,
-    const cvd_common::Envs& envs)
-    : selector_options_(selector_options), cmd_args_(cmd_args), envs_(envs) {}
-
-std::optional<std::string> StartSelectorParser::GroupName() const {
-  return selector_options_.group_name;
-}
-
-std::optional<std::vector<std::string>> StartSelectorParser::PerInstanceNames()
-    const {
-  return selector_options_.instance_names;
+    const std::optional<std::vector<std::string>>& instance_names_opt,
+    const cvd_common::Args& cmd_args, const cvd_common::Envs& envs)
+    : cmd_args_(cmd_args), envs_(envs) {
+  if (instance_names_opt) {
+    num_instance_names_opt_ = instance_names_opt->size();
+  }
 }
 
 namespace {
@@ -123,15 +117,15 @@ Result<unsigned> StartSelectorParser::VerifyNumOfInstances(
     const VerifyNumOfInstancesParam& params,
     const unsigned default_n_instances) const {
   const auto& num_instances_flag = params.num_instances_flag;
-  const auto& instance_names = params.instance_names;
+  const auto& num_instance_names = params.num_instance_names;
   const auto& instance_nums_flag = params.instance_nums_flag;
 
   std::optional<unsigned> num_instances;
   if (num_instances_flag) {
     num_instances = CF_EXPECT(ParsePositiveNumber(*num_instances_flag));
   }
-  if (instance_names && !instance_names->empty()) {
-    auto implied_n_instances = instance_names->size();
+  if (num_instance_names.value_or(0) > 0) {
+    auto implied_n_instances = *num_instance_names;
     if (num_instances) {
       CF_EXPECT_EQ(*num_instances, static_cast<unsigned>(implied_n_instances),
                    "The number of instances requested by --num_instances "
@@ -182,7 +176,7 @@ StartSelectorParser::HandleInstanceIds(
   unsigned num_instances =
       CF_EXPECT(VerifyNumOfInstances(VerifyNumOfInstancesParam{
           .num_instances_flag = instance_id_params.num_instances,
-          .instance_names = PerInstanceNames(),
+          .num_instance_names = num_instance_names_opt_,
           .instance_nums_flag = instance_nums}));
 
   if (!instance_nums && !base_instance_num) {

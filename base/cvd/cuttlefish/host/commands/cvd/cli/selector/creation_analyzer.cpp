@@ -45,7 +45,8 @@ class CreationAnalyzer {
 
  private:
   CreationAnalyzer(const CreationAnalyzerParam& param,
-                   StartSelectorParser&& selector_options_parser);
+                   StartSelectorParser&& selector_options_parser,
+                   SelectorOptions selector_options);
 
   Result<std::vector<InstanceParams>> AnalyzeInstances();
 
@@ -65,21 +66,25 @@ class CreationAnalyzer {
 
   // internal, temporary
   StartSelectorParser selector_options_parser_;
+  SelectorOptions selector_options_;
 };
 
 Result<CreationAnalyzer> CreationAnalyzer::Create(
     const CreationAnalyzerParam& param) {
   auto selector_options_parser =
       CF_EXPECT(StartSelectorParser::ConductSelectFlagsParser(
-          param.selectors, param.cmd_args, param.envs));
-  return CreationAnalyzer(param, std::move(selector_options_parser));
+          param.selectors.instance_names, param.cmd_args, param.envs));
+  return CreationAnalyzer(param, std::move(selector_options_parser),
+                          param.selectors);
 }
 
 CreationAnalyzer::CreationAnalyzer(
     const CreationAnalyzerParam& param,
-    StartSelectorParser&& selector_options_parser)
+    StartSelectorParser&& selector_options_parser,
+    SelectorOptions selector_options)
     : envs_(param.envs),
-      selector_options_parser_{std::move(selector_options_parser)} {}
+      selector_options_parser_{std::move(selector_options_parser)},
+      selector_options_(selector_options) {}
 
 Result<std::vector<InstanceParams>> CreationAnalyzer::AnalyzeInstances() {
   // As this test was done earlier, this line must not fail
@@ -91,7 +96,7 @@ Result<std::vector<InstanceParams>> CreationAnalyzer::AnalyzeInstances() {
   }
 
   std::optional<std::vector<std::string>> instance_names_opt =
-      selector_options_parser_.PerInstanceNames();
+      selector_options_.instance_names;
   if (instance_names_opt) {
     CF_EXPECT_EQ(instance_names_opt.value().size(), n_instances,
                  "Number of instance names provided doesn't match number of "
@@ -107,7 +112,7 @@ Result<std::vector<InstanceParams>> CreationAnalyzer::AnalyzeInstances() {
 Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo() {
   InstanceGroupParams group_params;
   group_params.instances = CF_EXPECT(AnalyzeInstances());
-  group_params.group_name = selector_options_parser_.GroupName().value_or("");
+  group_params.group_name = selector_options_.group_name.value_or("");
   InstanceManager::GroupDirectories group_directories{
       .home = CF_EXPECT(AnalyzeHome()),
       .host_artifacts_path = CF_EXPECT(AndroidHostPath(envs_)),

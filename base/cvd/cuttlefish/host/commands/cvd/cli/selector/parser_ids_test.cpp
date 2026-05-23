@@ -23,7 +23,7 @@ namespace selector {
 
 TEST_P(InstanceIdTest, InstanceIdCalculation) {
   auto parser = StartSelectorParser::ConductSelectFlagsParser(
-      selector_opts_, cmd_args_, envs_);
+      selector_opts_.instance_names, cmd_args_, envs_);
 
   ASSERT_EQ(parser.ok(), expected_result_);
   if (!expected_result_) {
