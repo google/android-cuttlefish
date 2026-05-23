@@ -59,7 +59,6 @@ namespace cuttlefish {
 namespace {
 
 using selector::AnalyzeCreation;
-using selector::CreationAnalyzerParam;
 using selector::GroupCreationInfo;
 
 constexpr char kSummaryHelpText[] =
