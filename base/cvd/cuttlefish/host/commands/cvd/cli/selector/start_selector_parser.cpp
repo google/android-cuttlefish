@@ -31,7 +31,6 @@
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_option_parser_utils.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -56,21 +55,15 @@ static Result<unsigned> ParsePositiveNumber(std::string_view token) {
 Result<StartSelectorParser> StartSelectorParser::ConductSelectFlagsParser(
     const SelectorOptions& selector_options, const cvd_common::Args& cmd_args,
     const cvd_common::Envs& envs) {
-  const std::string system_wide_home = CF_EXPECT(SystemWideUserHome());
-  StartSelectorParser parser(system_wide_home, selector_options, cmd_args,
-                             envs);
+  StartSelectorParser parser(selector_options, cmd_args, envs);
   CF_EXPECT(parser.ParseOptions(), "selector option flag parsing failed.");
   return {std::move(parser)};
 }
 
 StartSelectorParser::StartSelectorParser(
-    const std::string& system_wide_user_home,
     const SelectorOptions& selector_options, const cvd_common::Args& cmd_args,
     const cvd_common::Envs& envs)
-    : client_user_home_{system_wide_user_home},
-      selector_options_(selector_options),
-      cmd_args_(cmd_args),
-      envs_(envs) {}
+    : selector_options_(selector_options), cmd_args_(cmd_args), envs_(envs) {}
 
 std::optional<std::string> StartSelectorParser::GroupName() const {
   return selector_options_.group_name;
