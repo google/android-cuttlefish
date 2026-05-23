@@ -222,11 +222,11 @@ Result<std::vector<int32_t>> InstanceNumsCalculator::CalculateFromFlags() {
     instance_nums_opt = instance_nums_;
   }
   // exactly one of these two should be given
-  CF_EXPECT(!instance_nums_opt || !base_instance_num_,
+  CF_EXPECT(!(instance_nums_opt && base_instance_num_),
+            "InstanceNums and BaseInstanceNum are mutually exclusive");
+  CF_EXPECT(instance_nums_opt || base_instance_num_,
             "At least one of --instance_nums or --base_instance_num"
                 << "should be given to call CalculateFromFlags()");
-  CF_EXPECT(instance_nums_opt || base_instance_num_,
-            "InstanceNums and BaseInstanceNum are mutually exclusive");
 
   if (instance_nums_opt) {
     if (num_instances_) {
