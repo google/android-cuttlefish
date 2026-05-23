@@ -85,19 +85,7 @@ class StartSelectorParser {
   };
 
   /*
-   * CF_ERR is meant to be an error:
-   *  For example, --num_instances != |--instance_nums|.
-   *
-   * On the contrary, std::nullopt inside Result is not necessary one.
-   * std::nullopt inside Result means that with the given information,
-   * the instance_ids_ cannot be yet figured out, so the task is deferred
-   * to CreationAnaylizer or so, which has more contexts. For example,
-   * if no option at all is given, it is not an error; however, the
-   * StartSelectorParser alone cannot figure out the list of instance ids. The
-   * InstanceDatabase, UniqueResourceAllocator, InstanceLockFileManager will be
-   * involved to automatically generate the valid, numeric instance ids.
-   * If that's the case, Result{std::nullopt} could be returned.
-   *
+   * Returns the number of instances and maybe the instance ids.
    */
   Result<ParsedInstanceIdsOpt> HandleInstanceIds(
       const InstanceIdsParams& instance_id_params);
@@ -135,8 +123,9 @@ class StartSelectorParser {
   std::vector<unsigned> instance_ids_;
   unsigned requested_num_instances_;
 
-  // temporarily keeps the leftover of the input cmd_args
   SelectorOptions selector_options_;
+
+  // temporarily keeps the leftover of the input cmd_args
   cvd_common::Args cmd_args_;
   cvd_common::Envs envs_;
 };
