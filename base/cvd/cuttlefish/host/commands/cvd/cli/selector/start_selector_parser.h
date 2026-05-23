@@ -56,8 +56,7 @@ class StartSelectorParser {
   bool UseCvdalloc() const { return use_cvdalloc_; }
 
  private:
-  StartSelectorParser(const std::string& system_wide_user_home,
-                      const SelectorOptions& selector_options,
+  StartSelectorParser(const SelectorOptions& selector_options,
                       const cvd_common::Args& cmd_args,
                       const cvd_common::Envs& envs);
 
@@ -139,7 +138,6 @@ class StartSelectorParser {
   bool use_cvdalloc_;
 
   // temporarily keeps the leftover of the input cmd_args
-  const std::string client_user_home_;
   SelectorOptions selector_options_;
   cvd_common::Args cmd_args_;
   cvd_common::Envs envs_;
