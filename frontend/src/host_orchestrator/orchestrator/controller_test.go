@@ -66,6 +66,21 @@ func TestGetCVDLogsIsHandled(t *testing.T) {
 	}
 }
 
+func TestGetCVDIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/cvds/foo/bar", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
 func TestGetOperationIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("GET", "/operations/foo", nil)
