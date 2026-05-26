@@ -34,6 +34,9 @@ podcvd_cidr=${podcvd_cidr:-192.168.112.0/20}
 podcvd_ifname="podcvd"
 
 start() {
+    modprobe vhost_net || true
+    modprobe vhost_vsock || true
+
     ip link add "${podcvd_ifname}" type dummy
     ip link set "${podcvd_ifname}" up
     ip route add local "${podcvd_cidr}" dev "${podcvd_ifname}"

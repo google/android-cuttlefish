@@ -99,11 +99,17 @@ echo "${username}:${assigned_range}" | sudo tee -a "$USER_CONFIG" > /dev/null
 
 echo "Successfully allocated range $assigned_range to user '$username'."
 
-# 5. Apply ACLs immediately (requires sudo)
-echo "Configuring device permissions..."
-sudo setfacl -m "u:$username:rw" /dev/kvm
-sudo setfacl -m "u:$username:rw" /dev/vhost-net
-sudo setfacl -m "u:$username:rw" /dev/vhost-vsock
+# 5. Add udev rule for applying ACLs and triggers immediately. (requires sudo)
+echo "Configuring custom udev rules for applying ACLs for user '$username'..."
+cat <<EOF | sudo tee /etc/udev/rules.d/99-podcvd-acls-$username.rules > /dev/null
+KERNEL=="kvm", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
+KERNEL=="vhost-net", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
+KERNEL=="vhost-vsock", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
+EOF
+sudo udevadm control --reload-rules
+sudo udevadm trigger --action=change /dev/kvm
+sudo udevadm trigger --action=change /dev/vhost-net
+sudo udevadm trigger --action=change /dev/vhost-vsock
 
 # 6. Enable rootless podman socket for the user (runs as unprivileged user)
 echo "Starting Podman user service..."

@@ -520,8 +520,6 @@ jobs:
           containers-storage:localhost/cuttlefish-orchestration:latest
     - name: Run cvd e2e test for podcvd
       run: |
-        # Grant permission on devices as it's hard to grant on test env
-        sudo chmod 666 /dev/kvm /dev/vhost-net /dev/vhost-vsock
         cd e2etests
         bazel test \
           //cvd/cvd_powerwash_tests \
