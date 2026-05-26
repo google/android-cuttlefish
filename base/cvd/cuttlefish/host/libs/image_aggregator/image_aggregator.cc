@@ -116,6 +116,8 @@ class CompositeDiskBuilder {
  public:
   CompositeDiskBuilder(bool read_only) : read_only_(read_only) {}
 
+  const std::vector<PartitionInfo>& Partitions() const { return partitions_; }
+
   Result<void> AppendPartition(ImagePartition source) {
     uint64_t size = CF_EXPECT(ExpandedStorageSize(source.image_file_path));
     auto aligned_size = AlignToPartitionSize(size);
@@ -329,7 +331,8 @@ Result<void> AggregateImage(const std::vector<ImagePartition>& partitions,
              "Could not write GPT beginning to '{}': {}", output_path,
              output->StrError());
 
-  for (auto& disk : partitions) {
+  for (const auto& partition_info : builder.Partitions()) {
+    const auto& disk = partition_info.source;
     SharedFD disk_fd = SharedFD::Open(disk.image_file_path, O_RDONLY);
     CF_EXPECTF(disk_fd->IsOpen(), "{}", disk_fd->StrError());
 
