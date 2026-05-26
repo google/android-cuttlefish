@@ -23,7 +23,7 @@ cf_cc_library(
     hdrs = ["frontline_parser.h"],
     deps = [
         ":types",
-        "//cuttlefish/host/commands/cvd/cli/selector:arguments_separator",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/result",
         "//libbase",
@@ -35,6 +35,7 @@ cf_cc_test(
     srcs = ["frontline_parser_test.cpp"],
     deps = [
         "//cuttlefish/host/commands/cvd/cli:frontline_parser",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/result:result_matchers",
     ],
 )

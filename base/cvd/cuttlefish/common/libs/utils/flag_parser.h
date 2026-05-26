@@ -86,6 +86,13 @@ class Flag {
    */
   Flag& Setter(std::function<Result<void>(const FlagMatch&)>) &;
   Flag Setter(std::function<Result<void>(const FlagMatch&)>) &&;
+  /* Add a callback to validate the parsed flag value. These callbacks are
+   * guaranteed to be called after Setter succeeds in the same order they are
+   * added. Validation stops when one validator callback fails, remaining
+   * callbacks are not executed.
+   */
+  Flag& AddValidator(std::function<Result<void>()>) &;
+  Flag AddValidator(std::function<Result<void>()>) &&;
 
   const std::string& Name() const { return name_; }
 
@@ -115,6 +122,7 @@ class Flag {
   Result<FlagProcessResult> Process(
       const std::string& argument,
       const std::optional<std::string>& next_arg) const;
+  Result<void> SetAndValidate(const FlagMatch&) const;
 
   bool HasAlias(const FlagAlias&) const;
 
@@ -130,6 +138,7 @@ class Flag {
   std::optional<std::string> help_;
   std::optional<std::function<std::string()>> getter_;
   std::optional<std::function<Result<void>(const FlagMatch&)>> setter_;
+  std::vector<std::function<Result<void>()>> validators_;
 };
 
 std::ostream& operator<<(std::ostream&, const Flag&);
@@ -194,6 +203,18 @@ Flag GflagsCompatFlag(const std::string& name, bool& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<std::string>& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
                       bool default_value);
+// Indicates when to assign std::nullopt to the std::optional backing the flag.
+enum class CoerceToNullopt {
+  None, // When the flag is not present in the arguments
+  UnsetKeyword, // When the flag has the "unset" special value.
+  EmptyString, // When the flag has an empty value (`--flag "" or `--flag=`)
+};
+Flag GflagsCompatFlag(
+    const std::string& name, std::optional<std::string>& value,
+    CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(
+    const std::string& name, std::optional<std::vector<std::string>>& value,
+    CoerceToNullopt opt = CoerceToNullopt::None);
 
 // e.g. cvd start --help, cvd stop -help, cvd fleet -h
 Result<bool> HasHelpFlag(const std::vector<std::string>& args);

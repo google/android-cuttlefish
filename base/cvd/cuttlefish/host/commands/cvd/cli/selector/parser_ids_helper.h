@@ -21,6 +21,7 @@
 
 #include <gtest/gtest.h>
 
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
@@ -28,7 +29,7 @@ namespace selector {
 
 struct InstanceIdTestInput {
   std::string cmd_args;
-  std::string selector_args;
+  SelectorOptions selector_opts;
   std::optional<std::string> cuttlefish_instance;
   std::vector<unsigned> expected_ids;
   unsigned requested_num_instances;
@@ -43,7 +44,7 @@ class InstanceIdTest : public testing::TestWithParam<InstanceIdTestInput> {
   unsigned requested_num_instances_;
   std::vector<unsigned> expected_ids_;
   cvd_common::Args cmd_args_;
-  cvd_common::Args selector_args_;
+  SelectorOptions selector_opts_;
   cvd_common::Envs envs_;
 };
 

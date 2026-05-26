@@ -5,17 +5,6 @@ package(
 )
 
 cf_cc_library(
-    name = "arguments_separator",
-    srcs = ["arguments_separator.cpp"],
-    hdrs = ["arguments_separator.h"],
-    deps = [
-        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
-        "//cuttlefish/result",
-        "//libbase",
-    ],
-)
-
-cf_cc_library(
     name = "creation_analyzer",
     srcs = ["creation_analyzer.cpp"],
     hdrs = ["creation_analyzer.h"],
@@ -53,6 +42,7 @@ cf_cc_library(
     srcs = ["parser_ids_helper.cpp"],
     hdrs = ["parser_ids_helper.h"],
     deps = [
+        ":selector_common_parser",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
@@ -68,30 +58,6 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/cli/selector:parser_ids_helper",
         "//cuttlefish/host/commands/cvd/cli/selector:start_selector_parser",
         "//libbase",
-    ],
-)
-
-cf_cc_library(
-    name = "parser_names_helper",
-    testonly = True,
-    srcs = ["parser_names_helper.cpp"],
-    hdrs = ["parser_names_helper.h"],
-    deps = [
-        "//cuttlefish/host/commands/cvd/cli:types",
-        "//libbase",
-        "@abseil-cpp//absl/strings",
-        "@googletest//:gtest",
-    ],
-)
-
-cf_cc_test(
-    name = "parser_names_test",
-    srcs = ["parser_names_test.cpp"],
-    deps = [
-        "//cuttlefish/host/commands/cvd/cli/selector:parser_names_helper",
-        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
-        "//cuttlefish/host/commands/cvd/cli/selector:start_selector_parser",
-        "//cuttlefish/result:result_matchers",
     ],
 )
 
@@ -125,7 +91,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances:device_name",
         "//cuttlefish/result",
         "//libbase",
-        "@abseil-cpp//absl/strings",
     ],
 )
 

@@ -53,6 +53,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/fetch/substitute.h"
@@ -77,7 +78,7 @@ namespace {
 constexpr char kCommandDescription[] =
     R"(The `cvd start` command applies to the instance group, not specific instances
 because Cuttlefish instances in the same group must all be started (and stopped)
-in unisom.
+in unisom. The group to be started is chosen using the standar selector flags.
 
 Flags that modify individual instances accept a comma separated list of values.
 If the number of values in one of these flags is less than the number of
@@ -526,16 +527,15 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
   std::vector<Flag> own_flags = BuildOwnFlags();
   CF_EXPECT(ConsumeFlags(own_flags, args));
 
-  cvd_common::Envs envs = request.Env();
-  Result<LocalInstanceGroup> group_res =
-      selector::SelectGroup(instance_manager_, request);
-  if (group_res.ok()) {
-    envs["HOME"] = group_res.value().HomeDir();
-  }
-  std::vector<Flag> internal_flags =
-      CF_EXPECT(GetCvdInternalStartFlags(request.SubcommandArguments(), envs));
+  std::vector<Flag> internal_flags = CF_EXPECT(GetCvdInternalStartFlags(
+      request.SubcommandArguments(), cvd_common::Envs()));
 
-  std::vector<Flag> flags = std::move(own_flags);
+  selector::SelectorOptions selector_options = request.Selectors();
+  std::vector<Flag> selector_flags =
+      selector::BuildCommonSelectorFlags(selector_options);
+
+  std::vector<Flag> flags = std::move(selector_flags);
+  flags.insert(flags.end(), own_flags.begin(), own_flags.end());
   flags.insert(flags.end(), internal_flags.begin(), internal_flags.end());
 
   // Make sure the flags are in alphabetical order

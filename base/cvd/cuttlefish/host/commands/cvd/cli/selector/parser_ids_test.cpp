@@ -22,13 +22,8 @@ namespace cuttlefish {
 namespace selector {
 
 TEST_P(InstanceIdTest, InstanceIdCalculation) {
-  auto selector_options_res = ParseCommonSelectorArguments(selector_args_);
-  ASSERT_TRUE(selector_options_res.ok());
-  if (!expected_result_) {
-    return;
-  }
   auto parser = StartSelectorParser::ConductSelectFlagsParser(
-      *selector_options_res, cmd_args_, envs_);
+      selector_opts_, cmd_args_, envs_);
 
   ASSERT_EQ(parser.ok(), expected_result_);
   if (!expected_result_) {
@@ -82,16 +77,21 @@ INSTANTIATE_TEST_SUITE_P(
             .expected_result = true},
         InstanceIdTestInput{
             .cmd_args = "--instance_nums 2,5,6 --num_instances=3",
-            .selector_args = "--instance_name=c-1,c-3,c-5",
+            .selector_opts = SelectorOptions{.instance_names =
+                                                 std::vector<std::string>{
+                                                     "c-1", "c-2", "c-3"}},
             .cuttlefish_instance = std::nullopt,
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
             .expected_result = true},
-        InstanceIdTestInput{.selector_args = "--instance_name=c-1,c-3,c-5",
-                            .cuttlefish_instance = std::nullopt,
-                            .expected_ids = {},
-                            .requested_num_instances = 3,
-                            .expected_result = true},
+        InstanceIdTestInput{
+            .selector_opts = SelectorOptions{.instance_names =
+                                                 std::vector<std::string>{
+                                                     "c-1", "c-3", "c-5"}},
+            .cuttlefish_instance = std::nullopt,
+            .expected_ids = {},
+            .requested_num_instances = 3,
+            .expected_result = true},
         // CUTTLEFISH_INSTANCE should be ignored
         InstanceIdTestInput{
             .cmd_args = "--instance_nums 2,5,6 --num_instances=3",
@@ -109,7 +109,9 @@ INSTANTIATE_TEST_SUITE_P(
         // --instance_name requested 2 instances while instance_nums 3.
         InstanceIdTestInput{
             .cmd_args = "--num_instances=3 --instance_nums 2,5,6",
-            .selector_args = "--instance_name=c-1,c-3",
+            .selector_opts =
+                SelectorOptions{
+                    .instance_names = std::vector<std::string>{"c-1", "c-3"}},
             .cuttlefish_instance = std::nullopt,
             .expected_ids = std::vector<unsigned>{2, 5, 6},
             .requested_num_instances = 3,
