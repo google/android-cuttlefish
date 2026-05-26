@@ -48,7 +48,7 @@ class AdbHelper {
   }
 
   std::string ConnectorTcpArg() const {
-    return "0.0.0.0:" + std::to_string(instance_.adb_host_port());
+    return "127.0.0.1:" + std::to_string(instance_.adb_host_port());
   }
 
   std::string ConnectorVsockArg() const {
