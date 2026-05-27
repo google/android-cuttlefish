@@ -37,7 +37,7 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   std::string SummaryHelp() const override {
     return "Start all Cuttlefish Instances in a group";
   }
-  std::vector<std::string> Description() const override;
+  std::vector<HelpParagraph> Description() const override;
   Result<std::vector<Flag>> Flags(const CommandRequest&) override;
 
   bool RequiresDeviceExists() const override { return true; }

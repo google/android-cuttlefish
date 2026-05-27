@@ -20,6 +20,7 @@
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
@@ -36,12 +37,7 @@ class CvdCommandHandler {
   virtual std::string SummaryHelp() const = 0;
   virtual bool RequiresDeviceExists() const;
   virtual Result<std::string> DetailedHelp(const CommandRequest&);
-  // Each string returned by Description() is treated as a paragraph. The
-  // default implementation of DetailedHelp will visually separate each
-  // paragraph. That implementation will also split each paragraph in lines not
-  // longer than 80 characters, so implementations of Description() don't need
-  // to (and probably shouldn't) use line breaks for formatting.
-  virtual std::vector<std::string> Description() const;
+  virtual std::vector<HelpParagraph> Description() const;
   virtual Result<std::vector<Flag>> Flags(const CommandRequest&);
 
   virtual bool RequiresHostConfiguration() const { return true; }

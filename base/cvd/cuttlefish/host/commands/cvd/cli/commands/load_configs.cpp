@@ -241,20 +241,23 @@ cvd_common::Args LoadConfigsCommand::CmdList() const { return {kLoadSubCmd}; }
 
 std::string LoadConfigsCommand::SummaryHelp() const { return kSummaryHelpText; }
 
-std::vector<std::string> LoadConfigsCommand::Description() const {
-  return {
+std::vector<HelpParagraph> LoadConfigsCommand::Description() const {
+  std::vector<HelpParagraph> description;
+  description.emplace_back(
       "This command is an alias of `cvd create --config_file=<config_filepath> "
       "[--override=<key>:<value>]...`, provided for convenience and backwards "
-      "compatibility.",
+      "compatibility.");
 
-      "Usage:",
+  description.emplace_back("Usage:");
 
-      "    cvd load <config_filepath> [--override=<key>:<value>]",
+  description.emplace_back(
+      "    cvd load <config_filepath> [--override=<key>:<value>]");
 
+  description.emplace_back(
       "Creates and starts a new instance group from a specification file. An "
-      "example specification file looks like:",
+      "example specification file looks like:");
 
-      MarkAsRawText(R"(  {
+  description.emplace_back(HelpParagraph::Raw(R"(  {
     "instances": [
       {
         "name": "ins-1",
@@ -273,34 +276,39 @@ std::vector<std::string> LoadConfigsCommand::Description() const {
         }
       }
     ]
-  })"),
+  })"));
 
+  description.emplace_back(
       "A complete reference of the specification file format can be found in "
       "https://github.com/google/android-cuttlefish/blob/main/base/cvd/"
-      "cuttlefish/host/commands/cvd/cli/parser/load_config.proto.",
+      "cuttlefish/host/commands/cvd/cli/parser/load_config.proto.");
 
+  description.emplace_back(
       "While most config file properties are self explanatory, the build "
       "properties (default_build, kernel.build, bootloader.build, etc) require "
-      "more explanation. These properties support two types of values:",
+      "more explanation. These properties support two types of values:");
 
-      MarkAsRawText(
-          R"( - "@ab/<branch_or_build_id>[/<target>[{<filepath>}]]"
- - "<absolute_path>")"),
+  description.emplace_back(HelpParagraph::Raw(
+      R"( - "@ab/<branch_or_build_id>[/<target>[{<filepath>}]]"
+ - "<absolute_path>")"));
 
+  description.emplace_back(
       "If the build value starts with \"@ab\", cvd will fetch the specified "
       "Android build target from the Android build servers. By default it will "
       "download the cuttlefish host package archive or the images zip as "
       "needed, but for more advanced use cases the file to download from the "
       "server can be specified with the <filepath> optional parameter in curly "
       "braces. For more information on build fetching and caching operations "
-      "refer to `cvd help fetch`.",
+      "refer to `cvd help fetch`.");
 
+  description.emplace_back(
       "Alternatively, the build value may point to an absolute path (starts "
       "with '/') in the filesystem where the Android source code has been "
       "checked out and a Cuttlefish target has been built. This is "
       "particularly useful for rapid iteration during development in "
       "combination with incremental builds and the `cvd stop` and `cvd start` "
-      "subcommands."};
+      "subcommands.");
+  return description;
 }
 
 Result<std::vector<Flag>> LoadConfigsCommand::Flags(

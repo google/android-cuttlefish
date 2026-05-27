@@ -427,6 +427,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:help_format",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",

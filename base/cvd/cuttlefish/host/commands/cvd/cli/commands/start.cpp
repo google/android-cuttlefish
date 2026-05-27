@@ -51,6 +51,7 @@
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
@@ -507,19 +508,22 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
   return {};
 }
 
-std::vector<std::string> CvdStartCommandHandler::Description() const {
-  return {
+std::vector<HelpParagraph> CvdStartCommandHandler::Description() const {
+  std::vector<HelpParagraph> description;
+  description.emplace_back(
       "The `cvd start` command applies to the instance group, not specific "
       "instances because Cuttlefish instances in the same group must all be "
       "started (and stopped) in unisom. The group to be started is chosen "
-      "using the standard selector flags.",
+      "using the standard selector flags.");
+  description.emplace_back(
       "Flags that modify individual instances accept a comma separated list of "
       "values. If the number of values in one of these flags is less than the "
       "number of instances, then the last instances in the group will default "
       "to the first value in the list (as a result a single value provided "
       "applies to all instances). The empty string is interpreted as a valid "
       "value, to force a particular instance to use its intended default value "
-      "the special value \"unset\" must be given."};
+      "the special value \"unset\" must be given.");
+  return description;
 }
 
 Result<std::vector<Flag>> CvdStartCommandHandler::Flags(

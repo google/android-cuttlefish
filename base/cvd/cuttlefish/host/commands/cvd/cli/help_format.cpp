@@ -29,13 +29,8 @@
 namespace cuttlefish {
 namespace {
 
-constexpr char kRawTextMark[] = "_RAW_TEXT:";
-
 std::vector<std::string> WrapAroundLine(std::string_view str,
                                         size_t max_line_length) {
-  if (absl::ConsumePrefix(&str, kRawTextMark)) {
-    return {std::string(str)};
-  }
   std::vector<std::string> ret;
   size_t total_word_sizes = 0;
   std::vector<std::string_view> line;
@@ -71,15 +66,30 @@ std::vector<std::string> GetFlagHelpMessage(const Flag& flag) {
 
 }  // namespace
 
-std::string FormatHelpText(const std::vector<std::string>& text,
+HelpParagraph HelpParagraph::Raw(std::string text) {
+  return HelpParagraph(std::move(text), Style::Raw);
+}
+
+HelpParagraph::HelpParagraph(std::string text)
+    : text_(std::move(text)), style_(Style::Wrapped) {}
+HelpParagraph::HelpParagraph(std::string text, Style style)
+    : text_(std::move(text)), style_(style) {}
+
+std::string HelpParagraph::Formatted(size_t max_line_width) const {
+  switch(style_) {
+    case Style::Wrapped:
+      return absl::StrJoin(WrapAroundLine(text_, max_line_width), "\n");
+    case Style::Raw:
+      return text_;
+  }
+}
+
+std::string FormatHelpText(const std::vector<HelpParagraph>& text,
                            size_t max_line_width) {
   std::stringstream ss;
-  for (const std::string& paragraph : text) {
-    for (std::string_view line : WrapAroundLine(paragraph, max_line_width)) {
-      ss << line << "\n";
-    }
+  for (const HelpParagraph& paragraph : text) {
     // Empty line after paragraphs
-    ss << "\n";
+    ss << paragraph.Formatted(max_line_width) << "\n\n";
   }
   return ss.str();
 }
@@ -91,22 +101,15 @@ std::string FormatFlagsHelp(const std::vector<Flag>& flags,
     std::vector<std::string> help_lines = GetFlagHelpMessage(flag);
     CHECK(!help_lines.empty())
         << "Flag produced empty help message: " << flag.Name();
-    // The first line contains the --flag=value examples, don't indent or wrap
-    // those.
-    ss << help_lines.front() << "\n";
-    for (size_t i = 1; i < help_lines.size(); ++i) {
-      for (std::string_view l :
-           WrapAroundLine(help_lines[i], max_line_width - 4)) {
-        ss << "    " << l << "\n";
+    for (std::string_view line : help_lines) {
+      for (std::string_view wrapped_line :
+           WrapAroundLine(line, max_line_width - 4)) {
+        ss << "    " << wrapped_line << "\n";
       }
     }
     ss << "\n";
   }
   return ss.str();
-}
-
-std::string MarkAsRawText(std::string_view str) {
-  return absl::StrCat(kRawTextMark, str);
 }
 
 }  // namespace cuttlefish
