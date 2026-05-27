@@ -34,7 +34,7 @@ namespace cuttlefish {
 
 bool CvdCommandHandler::RequiresDeviceExists() const { return false; }
 
-std::vector<std::string> CvdCommandHandler::Description() const { return {}; }
+std::vector<HelpParagraph> CvdCommandHandler::Description() const { return {}; }
 
 Result<std::vector<Flag>> CvdCommandHandler::Flags(const CommandRequest&) {
   return {};

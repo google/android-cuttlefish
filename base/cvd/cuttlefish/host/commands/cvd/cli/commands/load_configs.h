@@ -20,6 +20,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
@@ -35,7 +36,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override;
   std::string SummaryHelp() const override;
-  std::vector<std::string> Description() const override;
+  std::vector<HelpParagraph> Description() const override;
   Result<std::vector<Flag>> Flags(const CommandRequest&) override;
 
  private:

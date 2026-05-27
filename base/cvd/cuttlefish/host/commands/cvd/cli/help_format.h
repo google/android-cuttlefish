@@ -19,7 +19,6 @@
 #include <stddef.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -28,12 +27,32 @@ namespace cuttlefish {
 
 constexpr size_t kDefaultMaxLineWidth = 80;
 
+class HelpParagraph {
+ public:
+  static HelpParagraph Raw(std::string text);
+
+  explicit HelpParagraph(std::string);
+
+  std::string Formatted(size_t max_line_width) const;
+
+ private:
+  enum class Style {
+    Wrapped,
+    Raw,
+  };
+
+  HelpParagraph(std::string, Style style);
+
+  std::string text_;
+  Style style_;
+};
+
 // Formats text (typically a command description) to be displayed in the
 // terminal. Each string in the input is considered to be a different paragraph
 // and should not contain line changes. Each paragraph will be broken into lines
 // of at most max_line_width columns without splitting individual words. An
 // empty line will be added after each paragraph.
-std::string FormatHelpText(const std::vector<std::string>& text,
+std::string FormatHelpText(const std::vector<HelpParagraph>& text,
                            size_t max_line_width = kDefaultMaxLineWidth);
 
 // Formats the help messages of a list of flags to be displayed in the terminal.
@@ -41,8 +60,4 @@ std::string FormatHelpText(const std::vector<std::string>& text,
 // except when necessary to avoid splitting a word.
 std::string FormatFlagsHelp(const std::vector<Flag>& flags,
                             size_t max_line_width = kDefaultMaxLineWidth);
-
-// Marks a string as raw text so that FormatHelpText doesn't modify it.
-std::string MarkAsRawText(std::string_view str);
-
 }  // namespace cuttlefish
