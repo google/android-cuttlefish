@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>
@@ -36,7 +37,7 @@ struct CvdFlags {
 };
 
 struct LoadFlags {
-  std::map<std::string, std::string> overrides;
+  std::map<std::string, std::string, std::less<void>> overrides;
   std::string base_dir;
 };
 
@@ -44,7 +45,7 @@ std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags);
 
 Result<cvd::config::EnvironmentSpecification> GetEnvironmentSpecification(
     const std::string& config_path,
-    const std::map<std::string, std::string>& overrides);
+    const std::map<std::string, std::string, std::less<void>>& overrides);
 
 Result<InstanceManager::GroupDirectories> GetGroupCreationDirectories(
     const std::string& parent_directory,
