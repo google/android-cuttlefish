@@ -431,6 +431,10 @@ GetNeededVhostUserGpuHostRendererFeatures(
 }
 
 #ifndef __APPLE__
+
+// TODO(b/503397840): remove after default updated.
+bool EnableHostRenderingByDefault() { return false; }
+
 std::vector<GpuMode> GetGpuModeCandidates(const GuestConfig& guest_config) {
   if (!guest_config.gpu_mode_candidates.empty()) {
     VLOG(0) << "GPU mode candidates provided by guest.";
@@ -445,13 +449,22 @@ std::vector<GpuMode> GetGpuModeCandidates(const GuestConfig& guest_config) {
     gpu_mode_candidates.push_back(GpuMode::DrmVirgl);
   }
 
-  gpu_mode_candidates.push_back(GpuMode::Gfxstream);
-  gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngle);
-  gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostSwiftshader);
-  gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostLavapipe);
-  gpu_mode_candidates.push_back(GpuMode::GuestSwiftshader);
+  if (EnableHostRenderingByDefault()) {
+    gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngle);
+    gpu_mode_candidates.push_back(GpuMode::Gfxstream);
+    gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostSwiftshader);
+    gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostLavapipe);
+    gpu_mode_candidates.push_back(GpuMode::GuestSwiftshader);
+  } else {
+    gpu_mode_candidates.push_back(GpuMode::GuestSwiftshader);
+    gpu_mode_candidates.push_back(GpuMode::Gfxstream);
+    gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngle);
+    gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostSwiftshader);
+    gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostLavapipe);
+  }
 
   gpu_mode_candidates.push_back(GpuMode::None);
+
   return gpu_mode_candidates;
 }
 
