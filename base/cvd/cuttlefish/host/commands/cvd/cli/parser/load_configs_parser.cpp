@@ -23,8 +23,8 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
+#include <functional>
 #include <optional>
-#include <ostream>
 #include <set>
 #include <sstream>
 #include <stack>
@@ -70,8 +70,9 @@ bool IsLocalBuild(std::string path) {
   return absl::StartsWith(path, "/");
 }
 
-Flag GflagsCompatFlagOverride(const std::string& name,
-                              std::map<std::string, std::string>& overrides) {
+Flag GflagsCompatFlagOverride(
+    const std::string& name,
+    std::map<std::string, std::string, std::less<void>>& overrides) {
   return GflagsCompatFlag(name)
       .Getter([&overrides]() {
         std::vector<std::string> formatted;
@@ -208,7 +209,7 @@ std::optional<std::string> GetSystemHostPath(
 
 Result<Json::Value> GetOverriddenConfig(
     const std::string& config_path,
-    const std::map<std::string, std::string>& override_flags) {
+    const std::map<std::string, std::string, std::less<void>>& override_flags) {
   Json::Value result = CF_EXPECT(ParseJsonFile(config_path));
 
   for (const auto& [key, val] : override_flags) {
@@ -259,18 +260,17 @@ std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags) {
                 "Can be left empty in most cases, see the help for `login` and "
                 "`fetch` for details.")
           .Setter([&load_flags](const FlagMatch& match) -> Result<void> {
-            CF_EXPECTF(load_flags.overrides.count(
-                           std::string(kCredentialSourceOverride)) == 0,
-                       "Specifying both --override={} and the "
-                       "--credential_source flag is not allowed.",
-                       kCredentialSourceOverride);
-            load_flags.overrides[std::string(kCredentialSourceOverride)] =
-                match.value;
+            CF_EXPECTF(
+                load_flags.overrides.count(kCredentialSourceOverride) == 0,
+                "Specifying both --override={} and the "
+                "--credential_source flag is not allowed.",
+                kCredentialSourceOverride);
+            load_flags.overrides.emplace(kCredentialSourceOverride,
+                                         match.value);
             return {};
           })
           .Getter([&load_flags]() -> std::string {
-            auto it = load_flags.overrides.find(
-                std::string(kCredentialSourceOverride));
+            auto it = load_flags.overrides.find(kCredentialSourceOverride);
             if (it != load_flags.overrides.end()) {
               return it->second;
             }
@@ -281,17 +281,16 @@ std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags) {
           .Help("Google Cloud Project ID for Android Build "
                 "Server API access and quotas.")
           .Setter([&load_flags](const FlagMatch& match) -> Result<void> {
-            CF_EXPECTF(load_flags.overrides.count(
-                           std::string(kProjectIDOverride)) == 0,
+            CF_EXPECTF(load_flags.overrides.count(kProjectIDOverride) == 0,
                        "Specifying both --override={} and the --project_id "
                        "flag is not allowed.",
                        kProjectIDOverride);
-            load_flags.overrides[std::string(kProjectIDOverride)] = match.value;
+            load_flags.overrides.emplace(kProjectIDOverride, match.value);
             return {};
           })
           .Getter([&load_flags]() -> std::string {
             auto it =
-                load_flags.overrides.find(std::string(kProjectIDOverride));
+                load_flags.overrides.find(kProjectIDOverride);
             if (it != load_flags.overrides.end()) {
               return it->second;
             }
@@ -369,11 +368,9 @@ Result<CvdFlags> ParseCvdConfigs(const EnvironmentSpecification& env_spec,
   return flags;
 }
 
-
-
 Result<EnvironmentSpecification> GetEnvironmentSpecification(
     const std::string& config_path,
-    const std::map<std::string, std::string>& overrides) {
+    const std::map<std::string, std::string, std::less<void>>& overrides) {
   Json::Value json_configs =
       CF_EXPECT(GetOverriddenConfig(config_path, overrides));
 
