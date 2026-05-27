@@ -45,14 +45,9 @@ func Main(args []string) error {
 	subcommand := cvdArgs.SubCommandArgs[0]
 	if cvdArgs.HasHelpFlagOnSubCommandArgs() {
 		switch subcommand {
-		case "cache", "clear", "create", "display", "env", "fetch", "fleet", "help", "lint", "load", "login", "powerbtn", "powerwash", "remove", "reset", "restart", "resume", "screen_recording", "snapshot_take", "status", "stop", "suspend", "version":
+		case "bugreport", "cache", "clear", "create", "display", "env", "fetch", "fleet", "help", "lint", "load", "login", "powerbtn", "powerwash", "remove", "reset", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend", "version":
 			cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
 			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
-				return err
-			}
-		case "bugreport", "start":
-			cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
-			if err := ExecHelpCmdOnDisposableHost(ccm, cvdArgs); err != nil {
 				return err
 			}
 		default:

@@ -126,47 +126,6 @@ func ExecFetchCmdOnDisposableHost(ccm libcfcontainer.CuttlefishContainerManager,
 	return nil
 }
 
-func ExecHelpCmdOnDisposableHost(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
-	if err := pullContainerImage(ccm); err != nil {
-		return err
-	}
-	containerCfg := &container.Config{
-		Env: []string{
-			"ANDROID_HOST_OUT=/host_out",
-		},
-		Image: imageName,
-		Labels: map[string]string{
-			labelCreatedBy: valueCreatedBy,
-		},
-	}
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
-	}
-	hostOut := os.Getenv("ANDROID_HOST_OUT")
-	if hostOut == "" {
-		hostOut = currentDir
-	}
-	containerHostCfg := &container.HostConfig{
-		Binds: []string{
-			fmt.Sprintf("%s:/host_out:O", hostOut),
-		},
-	}
-	containerID, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, "")
-	if err != nil {
-		return fmt.Errorf("failed to create and start container: %w", err)
-	}
-	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
-	args = append(args, cvdArgs.SubCommandArgs...)
-	if err := ccm.ExecOnContainer(context.Background(), containerID, args, os.Stdin, os.Stdout, os.Stderr); err != nil {
-		return fmt.Errorf("failed to execute help command on the container: %w", err)
-	}
-	if err := ccm.StopAndRemoveContainer(context.Background(), containerID); err != nil {
-		return fmt.Errorf("failed to stop and remove container: %w", err)
-	}
-	return nil
-}
-
 func pullContainerImage(ccm libcfcontainer.CuttlefishContainerManager) error {
 	if exists, err := ccm.ImageExists(context.Background(), imageName); err != nil {
 		return err
