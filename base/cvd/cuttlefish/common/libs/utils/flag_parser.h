@@ -95,6 +95,7 @@ class Flag {
   Flag AddValidator(std::function<Result<void>()>) &&;
 
   const std::string& Name() const { return name_; }
+  bool operator<(const Flag& other) const { return Name() < other.Name(); }
 
   /* Examines a list of arguments, removing any matches from the list and
    * invoking the `Setter` for every match. Returns `false` if the callback ever
