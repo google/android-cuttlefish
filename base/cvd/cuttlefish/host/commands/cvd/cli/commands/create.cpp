@@ -48,6 +48,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/num_instances_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_constants.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -155,25 +156,6 @@ Result<bool> IsDefaultGroup(const CommandRequest& request) {
          !request.Selectors().HasOptions();
 }
 
-Result<LocalInstanceGroup> CreateGroup(
-    InstanceManager& instance_manager,
-    const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
-    const CommandRequest& request) {
-  GroupCreationInfo creation_info = CF_EXPECT(AnalyzeCreation({
-      .cmd_args = subcmd_args,
-      .envs = envs,
-      .selectors = request.Selectors(),
-  }));
-
-  auto groups = CF_EXPECT(instance_manager.FindGroups(
-      {.group_name = creation_info.group_creation_params.group_name}));
-  CF_EXPECTF(groups.empty(), "Group named '{}' already exists",
-             creation_info.group_creation_params.group_name);
-  return instance_manager.CreateInstanceGroup(
-      std::move(creation_info.group_creation_params),
-      std::move(creation_info.group_directories));
-}
-
 // For backward compatibility, we add extra symlink in home dir
 Result<void> CreateSymlinks(const LocalInstanceGroup& group) {
   auto system_wide_home = CF_EXPECT(SystemWideUserHome());
@@ -274,7 +256,8 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
     return {};
   }
 
-  CF_EXPECT(ConsumeFlags(FlagModeFlags(request.Env()), subcmd_args));
+  CF_EXPECT(ConsumeFlags(FlagModeFlags(request.Env(), request.Selectors()),
+                         subcmd_args));
 
   // Validate the host artifacts path before proceeding
   (void)CF_EXPECT(
@@ -317,11 +300,33 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
+Result<LocalInstanceGroup> CvdCreateCommandHandler::CreateGroup(
+    InstanceManager& instance_manager,
+    const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
+    const CommandRequest& request) {
+  GroupCreationInfo creation_info = CF_EXPECT(AnalyzeCreation({
+      .envs = envs,
+      .selectors = request.Selectors(),
+      .num_instances = num_instances_parser_.NumInstances(),
+      .instance_ids = num_instances_parser_.InstanceIds(),
+  }));
+
+  auto groups = CF_EXPECT(instance_manager.FindGroups(
+      {.group_name = creation_info.group_creation_params.group_name}));
+  CF_EXPECTF(groups.empty(), "Group named '{}' already exists",
+             creation_info.group_creation_params.group_name);
+  return instance_manager.CreateInstanceGroup(
+      std::move(creation_info.group_creation_params),
+      std::move(creation_info.group_directories));
+}
+
+
 std::string CvdCreateCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
-Result<std::string> CvdCreateCommandHandler::DetailedHelp(const CommandRequest& request) {
+Result<std::string> CvdCreateCommandHandler::DetailedHelp(
+    const CommandRequest& request) {
   std::stringstream ss;
 
   ss << "cvd create - " << SummaryHelp() << "\n";
@@ -374,7 +379,7 @@ Result<std::string> CvdCreateCommandHandler::DetailedHelp(const CommandRequest& 
   });
 
   ss << FormatFlagsHelp(BuildSelectorFlagsForCreateHelp(request.Selectors()));
-  ss << FormatFlagsHelp(FlagModeFlags(request.Env()));
+  ss << FormatFlagsHelp(FlagModeFlags(request.Env(), request.Selectors()));
 
   ss << FormatHelpText({HelpParagraph(
       "The following flags control how the instances are started (unless "
@@ -393,22 +398,24 @@ std::vector<Flag> CvdCreateCommandHandler::ConfigFileModeFlags() {
 }
 
 std::vector<Flag> CvdCreateCommandHandler::FlagModeFlags(
-    const cvd_common::Envs& env) {
+    const cvd_common::Envs& env, const selector::SelectorOptions& selector_options) {
   own_flags_.host_path = DefaultHostPath(env);
   own_flags_.product_path = DefaultProductPath(env);
   own_flags_.start = true;
-  return {
+  std::vector<Flag> flags = num_instances_parser_.Flags(selector_options);
+  flags.emplace_back(
       GflagsCompatFlag("host_path", own_flags_.host_path)
           .Help("The path to the directory containing the Cuttlefish Host "
                 "Artifacts. Defaults to the value of $ANDROID_HOST_OUT, "
-                "$HOME or the current directory."),
+                "$HOME or the current directory."));
+  flags.emplace_back(
       GflagsCompatFlag("product_path", own_flags_.product_path)
           .Help("The path(s) to the directory containing the Cuttlefish "
                 "Guest Images. Defaults to the value of "
-                "$ANDROID_PRODUCT_OUT, $HOME or the current directory."),
-      GflagsCompatFlag("start", own_flags_.start)
-          .Help("Whether to start the instance group."),
-  };
+                "$ANDROID_PRODUCT_OUT, $HOME or the current directory."));
+  flags.emplace_back(GflagsCompatFlag("start", own_flags_.start)
+                         .Help("Whether to start the instance group."));
+  return flags;
 }
 
 std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(
