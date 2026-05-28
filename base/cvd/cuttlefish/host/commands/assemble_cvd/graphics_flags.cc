@@ -456,8 +456,8 @@ std::vector<GpuMode> GetGpuModeCandidates(const GuestConfig& guest_config) {
     gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostLavapipe);
     gpu_mode_candidates.push_back(GpuMode::GuestSwiftshader);
   } else {
-    gpu_mode_candidates.push_back(GpuMode::GuestSwiftshader);
     gpu_mode_candidates.push_back(GpuMode::Gfxstream);
+    gpu_mode_candidates.push_back(GpuMode::GuestSwiftshader);
     gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngle);
     gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostSwiftshader);
     gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostLavapipe);
