@@ -321,6 +321,14 @@ func (i *Instance) Stop() error {
 	return err
 }
 
+func (i *Instance) Start(opts StartOptions) error {
+	args := i.selectorArgs()
+	args = append(args, "start", "--report_anonymous_usage_stats=y")
+	args = append(args, opts.toArgs()...)
+	_, err := i.cli.exec(CVDBin, args...)
+	return err
+}
+
 type DisplayAddOpts struct {
 	Width         int
 	Height        int
