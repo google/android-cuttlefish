@@ -22,6 +22,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/num_instances_parser.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/result/result.h"
 
@@ -45,10 +46,16 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
   };
 
   std::vector<Flag> ConfigFileModeFlags();
-  std::vector<Flag> FlagModeFlags(const cvd_common::Envs& env);
+  std::vector<Flag> FlagModeFlags(const cvd_common::Envs& env,
+                                  const selector::SelectorOptions&);
+  Result<LocalInstanceGroup> CreateGroup(
+      InstanceManager& instance_manager,
+      const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
+      const CommandRequest& request);
 
   InstanceManager& instance_manager_;
   CreateFlags own_flags_;
+  selector::NumInstancesParser num_instances_parser_;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(
