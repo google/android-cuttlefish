@@ -80,7 +80,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds/{group}/{name}",
 		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &removeCvdCommand{}))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}/:start",
-		httpHandler(newStartCVDHandler(c.Config, c.OperationManager))).Methods("POST")
+		httpHandler(newStartCVDInstanceHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:stop",
 		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &stopCvdInstanceCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerwash",
@@ -499,16 +499,16 @@ func (h *displayScreenshotHandler) Handle(r *http.Request) (interface{}, error) 
 	return NewDisplayScreenshotAction(opts).Run()
 }
 
-type startCVDHandler struct {
+type startCVDInstanceHandler struct {
 	Config Config
 	OM     OperationManager
 }
 
-func newStartCVDHandler(c Config, om OperationManager) *startCVDHandler {
-	return &startCVDHandler{Config: c, OM: om}
+func newStartCVDInstanceHandler(c Config, om OperationManager) *startCVDInstanceHandler {
+	return &startCVDInstanceHandler{Config: c, OM: om}
 }
 
-func (h *startCVDHandler) Handle(r *http.Request) (interface{}, error) {
+func (h *startCVDInstanceHandler) Handle(r *http.Request) (interface{}, error) {
 	req := &apiv1.StartCVDRequest{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
@@ -516,14 +516,15 @@ func (h *startCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	}
 	vars := mux.Vars(r)
 	group := vars["group"]
-	opts := StartCVDActionOpts{
+	name := vars["name"]
+	opts := StartCVDInstanceActionOpts{
 		Request:          req,
-		Selector:         cvd.GroupSelector{Name: group},
+		Selector:         cvd.InstanceSelector{GroupName: group, Name: name},
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
 	}
-	return NewStartCVDAction(opts).Run()
+	return NewStartCVDInstanceAction(opts).Run()
 }
 
 type getCVDLogsHandler struct {

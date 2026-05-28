@@ -25,24 +25,24 @@ import (
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
-type StartCVDActionOpts struct {
+type StartCVDInstanceActionOpts struct {
 	Request          *apiv1.StartCVDRequest
-	Selector         cvd.GroupSelector
+	Selector         cvd.InstanceSelector
 	Paths            IMPaths
 	OperationManager OperationManager
 	ExecContext      exec.ExecContext
 }
 
-type StartCVDAction struct {
+type StartCVDInstanceAction struct {
 	req      *apiv1.StartCVDRequest
-	selector cvd.GroupSelector
+	selector cvd.InstanceSelector
 	paths    IMPaths
 	om       OperationManager
 	cvdCLI   *cvd.CLI
 }
 
-func NewStartCVDAction(opts StartCVDActionOpts) *StartCVDAction {
-	return &StartCVDAction{
+func NewStartCVDInstanceAction(opts StartCVDInstanceActionOpts) *StartCVDInstanceAction {
+	return &StartCVDInstanceAction{
 		req:      opts.Request,
 		selector: opts.Selector,
 		paths:    opts.Paths,
@@ -51,7 +51,7 @@ func NewStartCVDAction(opts StartCVDActionOpts) *StartCVDAction {
 	}
 }
 
-func (a *StartCVDAction) Run() (apiv1.Operation, error) {
+func (a *StartCVDInstanceAction) Run() (apiv1.Operation, error) {
 	if err := ValidateStartCVDRequest(a.req); err != nil {
 		return apiv1.Operation{}, err
 	}
@@ -77,8 +77,8 @@ func (a *StartCVDAction) Run() (apiv1.Operation, error) {
 	return op, nil
 }
 
-func (a *StartCVDAction) exec(opts cvd.StartOptions) (*apiv1.EmptyResponse, error) {
-	if err := a.cvdCLI.LazySelectGroup(a.selector).Start(opts); err != nil {
+func (a *StartCVDInstanceAction) exec(opts cvd.StartOptions) (*apiv1.EmptyResponse, error) {
+	if err := a.cvdCLI.LazySelectInstance(a.selector).Start(opts); err != nil {
 		return nil, operator.NewInternalError("cvd start failed", err)
 	}
 	return &apiv1.EmptyResponse{}, nil
