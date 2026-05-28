@@ -61,6 +61,24 @@ constexpr std::array help_str_opts{
     "helpmatch",
 };
 
+template <typename T>
+std::optional<T> ParseInteger(const std::string& value) {
+  if (value.empty()) {
+    return {};
+  }
+  const char* base = value.c_str();
+  char* end = nullptr;
+  errno = 0;
+  auto r = strtoll(base, &end, /* auto-detect */ 0);
+  if (errno != 0 || end != base + value.size()) {
+    return {};
+  }
+  if (static_cast<T>(r) != r) {
+    return {};
+  }
+  return r;
+}
+
 bool ShouldBeNullOpt(std::string_view value, CoerceToNullopt opt) {
   switch (opt) {
     case CoerceToNullopt::None:
@@ -101,6 +119,16 @@ Result<std::string> ParseFlagValue<std::string>(std::string_view str) {
   return std::string(str);
 }
 
+// Setter for unsigned and size_t, default getter works
+template<>
+Result<size_t> ParseFlagValue<size_t>(std::string_view str) {
+  return CF_EXPECT(ParseInteger<size_t>(std::string(str)));
+}
+template<>
+Result<unsigned> ParseFlagValue<unsigned>(std::string_view str) {
+  return CF_EXPECT(ParseInteger<unsigned>(std::string(str)));
+}
+
 // Setter for bool, default getter is fine
 template<>
 Result<bool> ParseFlagValue<bool>(std::string_view str) {
@@ -139,6 +167,10 @@ Result<std::vector<T>> ParseFlagVectorValue(std::string_view str, T default_valu
 template <>
 Result<std::vector<std::string>> ParseFlagValue(std::string_view str) {
   return CF_EXPECT(ParseFlagVectorValue<std::string>(str, ""));
+}
+template <>
+Result<std::vector<unsigned>> ParseFlagValue(std::string_view str) {
+  return CF_EXPECT(ParseFlagVectorValue<unsigned>(str, 0));
 }
 
 // Getter and Setter for std::optional
@@ -685,24 +717,6 @@ Flag GflagsCompatFlag(const std::string& name, std::string& value) {
 }
 
 template <typename T>
-std::optional<T> ParseInteger(const std::string& value) {
-  if (value.empty()) {
-    return {};
-  }
-  const char* base = value.c_str();
-  char* end = nullptr;
-  errno = 0;
-  auto r = strtoll(base, &end, /* auto-detect */ 0);
-  if (errno != 0 || end != base + value.size()) {
-    return {};
-  }
-  if (static_cast<T>(r) != r) {
-    return {};
-  }
-  return r;
-}
-
-template <typename T>
 static Flag GflagsCompatNumericFlagGeneric(const std::string& name, T& value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return std::to_string(value); })
@@ -778,6 +792,26 @@ Flag GflagsCompatFlag(const std::string& name,
       });
 }
 
+Flag GflagsCompatFlag(const std::string& name, std::optional<size_t>& value,
+                      CoerceToNullopt opt) {
+  return GflagsCompatFlag(name)
+      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
+      .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
+        value = CF_EXPECT(ParseFlagOptionalValue<size_t>(match.value, opt));
+        return {};
+      });
+}
+
+Flag GflagsCompatFlag(const std::string& name, std::optional<unsigned>& value,
+                      CoerceToNullopt opt) {
+  return GflagsCompatFlag(name)
+      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
+      .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
+        value = CF_EXPECT(ParseFlagOptionalValue<unsigned>(match.value, opt));
+        return {};
+      });
+}
+
 Flag GflagsCompatFlag(const std::string& name,
                       std::optional<std::vector<std::string>>& value,
                       CoerceToNullopt opt) {
@@ -786,6 +820,18 @@ Flag GflagsCompatFlag(const std::string& name,
       .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
         value = CF_EXPECT(
             ParseFlagOptionalValue<std::vector<std::string>>(match.value, opt));
+        return {};
+      });
+}
+
+Flag GflagsCompatFlag(const std::string& name,
+                      std::optional<std::vector<unsigned>>& value,
+                      CoerceToNullopt opt) {
+  return GflagsCompatFlag(name)
+      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
+      .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
+        value = CF_EXPECT(
+            ParseFlagOptionalValue<std::vector<unsigned>>(match.value, opt));
         return {};
       });
 }
