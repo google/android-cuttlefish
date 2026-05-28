@@ -16,6 +16,17 @@
 
 set -e
 
+# Execute this script with sudo again, with passing username as an argument.
+if [ "$(id -u)" -ne 0 ]; then
+    username="${USER:-$(id -un)}"
+    if [ -n "$1" ] && [ "$1" != "$username" ]; then
+        echo "Error: Cannot setup for another user ('$1') when running as regular user."
+        exit 1
+    fi
+    echo "Requesting sudo privileges to setup podcvd for user '$username'..."
+    exec sudo "$0" "$username"
+fi
+
 setup_cidr() {
     # Read default CIDR from /etc/default/cuttlefish-podcvd or fallback
     local podcvd_cidr="192.168.112.0/20"
@@ -77,32 +88,32 @@ setup_cidr() {
         exit 1
     fi
 
-    # Save registration (requires sudo for /etc)
+    # Save registration
     echo "Registering IP range..."
     if [ ! -f "$USER_CONFIG" ]; then
-        sudo touch "$USER_CONFIG"
-        sudo chmod 644 "$USER_CONFIG"
+        touch "$USER_CONFIG"
+        chmod 644 "$USER_CONFIG"
     fi
 
     # Remove existing entry if re-running, then append the new one
-    sudo sed -i "/^${username}:/d" "$USER_CONFIG"
-    echo "${username}:${assigned_range}" | sudo tee -a "$USER_CONFIG" > /dev/null
+    sed -i "/^${username}:/d" "$USER_CONFIG"
+    echo "${username}:${assigned_range}" >> "$USER_CONFIG"
 
     echo "Successfully allocated range $assigned_range to user '$username'."
 }
 
 setup_device_permissions() {
-    # Add udev rule for applying ACLs and triggers immediately. (requires sudo)
+    # Add udev rule for applying ACLs and triggers immediately.
     echo "Configuring custom udev rules for applying ACLs for user '$username'..."
-    cat <<EOF | sudo tee /etc/udev/rules.d/99-podcvd-acls-$username.rules > /dev/null
+    cat <<EOF > /etc/udev/rules.d/99-podcvd-acls-$username.rules
 KERNEL=="kvm", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
 KERNEL=="vhost-net", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
 KERNEL=="vhost-vsock", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
 EOF
-    sudo udevadm control --reload-rules
-    sudo udevadm trigger --action=change /dev/kvm
-    sudo udevadm trigger --action=change /dev/vhost-net
-    sudo udevadm trigger --action=change /dev/vhost-vsock
+    udevadm control --reload-rules
+    udevadm trigger --action=change /dev/kvm
+    udevadm trigger --action=change /dev/vhost-net
+    udevadm trigger --action=change /dev/vhost-vsock
 }
 
 setup_rootless_podman() {
@@ -124,23 +135,24 @@ setup_rootless_podman() {
         local start_id=$(awk -F: '{print $2 + $3}' /etc/subuid /etc/subgid 2>/dev/null | sort -n | tail -1)
         start_id="${start_id:-100000}"
         local id_range="$start_id-$((start_id + 65535))"
-        sudo usermod --add-subuids "$id_range" --add-subgids "$id_range" "$username"
+        usermod --add-subuids "$id_range" --add-subgids "$id_range" "$username"
     fi
 
-    # Migrate subuid/subgid setting into rootless podman (runs as unprivileged user)
+    # Migrate subuid/subgid setting into rootless podman
     echo "Migrating subuid/subgid setting into rootless podman..."
-    podman system migrate
+    sudo -H -u "$username" podman system migrate
 }
 
-# Safety check: Ensure the script is NOT run directly as root/sudo
-if [ "$(id -u)" -eq 0 ]; then
-    echo "Error: Please run this script as a regular user (without sudo)."
-    echo "The script will request sudo privileges internally when needed."
+USER_CONFIG="/etc/podcvd.users"
+username="${1:-${SUDO_USER:-$(id -un)}}"
+if [ -z "$username" ] || ! id "$username" >/dev/null 2>&1; then
+    echo "Error: User '$username' does not exist."
     exit 1
 fi
-
-USER_CONFIG="/etc/podcvd.users"
-username="${USER:-$(id -un)}"
+if [ "$(id -u "$username")" -eq 0 ]; then
+    echo "Error: Target user cannot be root."
+    exit 1
+fi
 
 setup_cidr
 setup_device_permissions
