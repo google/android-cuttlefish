@@ -111,12 +111,7 @@ sudo udevadm trigger --action=change /dev/kvm
 sudo udevadm trigger --action=change /dev/vhost-net
 sudo udevadm trigger --action=change /dev/vhost-vsock
 
-# 6. Enable rootless podman socket for the user (runs as unprivileged user)
-echo "Starting Podman user service..."
-podman system migrate
-systemctl --user enable --now podman.socket
-
-# 7. Configure subordinate UIDs/GIDs for rootless Podman
+# 6. Configure subordinate UIDs/GIDs for rootless Podman
 has_subuids=false
 if [ -f /etc/subuid ] && [ -f /etc/subgid ]; then
     subuid_size=$(grep "^${username}:" /etc/subuid | cut -d: -f3)
@@ -136,5 +131,9 @@ else
     id_range="$start_id-$((start_id + 65535))"
     sudo usermod --add-subuids "$id_range" --add-subgids "$id_range" "$username"
 fi
+
+# 7. Migrate subuid/subgid setting into rootless podman (runs as unprivileged user)
+echo "Migrating subuid/subgid setting into rootless podman..."
+podman system migrate
 
 echo "Setup complete! You can now run 'podcvd'."

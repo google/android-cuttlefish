@@ -57,7 +57,7 @@ func CheckDeviceAccessible() error {
 }
 
 func ensurePodmanSocketRunning() {
-	if err := exec.Command("systemctl", "--user", "start", "podman.socket").Run(); err != nil {
-		log.Printf("Warning: failed to start podman.socket dynamically: %v", err)
+	if err := exec.Command("systemctl", "--user", "enable", "--now", "podman.socket").Run(); err != nil {
+		log.Printf("Warning: failed to enable podman.socket dynamically: %v", err)
 	}
 }
