@@ -16,6 +16,122 @@
 
 set -e
 
+setup_cidr() {
+    # Read default CIDR from /etc/default/cuttlefish-podcvd or fallback
+    local podcvd_cidr="192.168.112.0/20"
+    if [ -f /etc/default/cuttlefish-podcvd ]; then
+        # Source the config file to get podcvd_cidr if defined
+        # (Suppress errors if it's not a valid shell script)
+        . /etc/default/cuttlefish-podcvd 2>/dev/null || true
+    fi
+
+    # Parse the CIDR
+    local ip mask a b c d
+    IFS='/ ' read -r ip mask <<< "$podcvd_cidr"
+    IFS='.' read -r a b c d <<< "$ip"
+
+    # Validate that $ip is a valid IPv4 address
+    if [[ ! $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || \
+       [ "$a" -lt 0 ] || [ "$a" -gt 255 ] || \
+       [ "$b" -lt 0 ] || [ "$b" -gt 255 ] || \
+       [ "$c" -lt 0 ] || [ "$c" -gt 255 ] || \
+       [ "$d" -lt 0 ] || [ "$d" -gt 255 ]; then
+        echo "Error: Invalid IPv4 address '$ip' parsed from $podcvd_cidr."
+        exit 1
+    fi
+
+    if [ "$mask" -lt 16 ] || [ "$mask" -gt 24 ]; then
+        echo "Error: Unsupported subnet mask /$mask in $podcvd_cidr. Must be between 16 and 24."
+        exit 1
+    fi
+
+    # Calculate range of the third octet for allocation
+    local num_subnets=$(( 2 ** (24 - mask) ))
+    local start_subnet=$(( c & ~ (num_subnets - 1) ))
+    local end_subnet=$(( start_subnet + num_subnets - 1 ))
+
+    # Check if the user is already registered
+    local assigned_range=""
+    if [ -f "$USER_CONFIG" ]; then
+        local existing_range=$(grep "^${username}:" "$USER_CONFIG" | cut -d: -f2)
+        if [ -n "$existing_range" ]; then
+            echo "User '$username' is already registered with range $existing_range. Re-applying setup..."
+            assigned_range="$existing_range"
+        fi
+    fi
+
+    # If not registered, find the first available /24 subnet
+    if [ -z "$assigned_range" ]; then
+        for ((i=start_subnet; i<=end_subnet; i++)); do
+            local candidate="${a}.${b}.${i}.0/24"
+            # Check if this candidate is already taken using grep
+            if [ ! -f "$USER_CONFIG" ] || ! grep -q ":${candidate}$" "$USER_CONFIG"; then
+                assigned_range="$candidate"
+                break
+            fi
+        done
+    fi
+
+    if [ -z "$assigned_range" ]; then
+        echo "Error: No available IP ranges left on this host (maximum of $num_subnets users reached)."
+        exit 1
+    fi
+
+    # Save registration (requires sudo for /etc)
+    echo "Registering IP range..."
+    if [ ! -f "$USER_CONFIG" ]; then
+        sudo touch "$USER_CONFIG"
+        sudo chmod 644 "$USER_CONFIG"
+    fi
+
+    # Remove existing entry if re-running, then append the new one
+    sudo sed -i "/^${username}:/d" "$USER_CONFIG"
+    echo "${username}:${assigned_range}" | sudo tee -a "$USER_CONFIG" > /dev/null
+
+    echo "Successfully allocated range $assigned_range to user '$username'."
+}
+
+setup_device_permissions() {
+    # Add udev rule for applying ACLs and triggers immediately. (requires sudo)
+    echo "Configuring custom udev rules for applying ACLs for user '$username'..."
+    cat <<EOF | sudo tee /etc/udev/rules.d/99-podcvd-acls-$username.rules > /dev/null
+KERNEL=="kvm", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
+KERNEL=="vhost-net", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
+KERNEL=="vhost-vsock", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
+EOF
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger --action=change /dev/kvm
+    sudo udevadm trigger --action=change /dev/vhost-net
+    sudo udevadm trigger --action=change /dev/vhost-vsock
+}
+
+setup_rootless_podman() {
+    # Configure subordinate UIDs/GIDs for rootless Podman
+    local has_subuids=false
+    if [ -f /etc/subuid ] && [ -f /etc/subgid ]; then
+        local subuid_size=$(grep "^${username}:" /etc/subuid | cut -d: -f3)
+        local subgid_size=$(grep "^${username}:" /etc/subgid | cut -d: -f3)
+        if [ -n "$subuid_size" ] && [ "$subuid_size" -ge 65536 ] && \
+           [ -n "$subgid_size" ] && [ "$subgid_size" -ge 65536 ]; then
+            has_subuids=true
+        fi
+    fi
+
+    if [ "$has_subuids" = true ]; then
+        echo "User '$username' already has sufficient subuid/subgid ranges configured. Skipping."
+    else
+        echo "Configuring subordinate UIDs/GIDs for '$username'..."
+        local start_id=$(awk -F: '{print $2 + $3}' /etc/subuid /etc/subgid 2>/dev/null | sort -n | tail -1)
+        start_id="${start_id:-100000}"
+        local id_range="$start_id-$((start_id + 65535))"
+        sudo usermod --add-subuids "$id_range" --add-subgids "$id_range" "$username"
+    fi
+
+    # Migrate subuid/subgid setting into rootless podman (runs as unprivileged user)
+    echo "Migrating subuid/subgid setting into rootless podman..."
+    podman system migrate
+}
+
 # Safety check: Ensure the script is NOT run directly as root/sudo
 if [ "$(id -u)" -eq 0 ]; then
     echo "Error: Please run this script as a regular user (without sudo)."
@@ -26,114 +142,8 @@ fi
 USER_CONFIG="/etc/podcvd.users"
 username="${USER:-$(id -un)}"
 
-# 1. Read default CIDR from /etc/default/cuttlefish-podcvd or fallback
-podcvd_cidr="192.168.112.0/20"
-if [ -f /etc/default/cuttlefish-podcvd ]; then
-    # Source the config file to get podcvd_cidr if defined
-    # (Suppress errors if it's not a valid shell script)
-    . /etc/default/cuttlefish-podcvd 2>/dev/null || true
-fi
-
-# Parse the CIDR
-IFS='/ ' read -r ip mask <<< "$podcvd_cidr"
-IFS='.' read -r a b c d <<< "$ip"
-
-# Validate that $ip is a valid IPv4 address
-if [[ ! $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || \
-   [ "$a" -lt 0 ] || [ "$a" -gt 255 ] || \
-   [ "$b" -lt 0 ] || [ "$b" -gt 255 ] || \
-   [ "$c" -lt 0 ] || [ "$c" -gt 255 ] || \
-   [ "$d" -lt 0 ] || [ "$d" -gt 255 ]; then
-    echo "Error: Invalid IPv4 address '$ip' parsed from $podcvd_cidr."
-    exit 1
-fi
-
-if [ "$mask" -lt 16 ] || [ "$mask" -gt 24 ]; then
-    echo "Error: Unsupported subnet mask /$mask in $podcvd_cidr. Must be between 16 and 24."
-    exit 1
-fi
-
-# Calculate range of the third octet for allocation
-num_subnets=$(( 2 ** (24 - mask) ))
-start_subnet=$(( c & ~ (num_subnets - 1) ))
-end_subnet=$(( start_subnet + num_subnets - 1 ))
-
-# 2. Check if the user is already registered
-assigned_range=""
-if [ -f "$USER_CONFIG" ]; then
-    existing_range=$(grep "^${username}:" "$USER_CONFIG" | cut -d: -f2)
-    if [ -n "$existing_range" ]; then
-        echo "User '$username' is already registered with range $existing_range. Re-applying setup..."
-        assigned_range="$existing_range"
-    fi
-fi
-
-# 3. If not registered, find the first available /24 subnet
-if [ -z "$assigned_range" ]; then
-    for ((i=start_subnet; i<=end_subnet; i++)); do
-        candidate="${a}.${b}.${i}.0/24"
-
-        # Check if this candidate is already taken using grep
-        if [ ! -f "$USER_CONFIG" ] || ! grep -q ":${candidate}$" "$USER_CONFIG"; then
-            assigned_range="$candidate"
-            break
-        fi
-    done
-fi
-
-if [ -z "$assigned_range" ]; then
-    echo "Error: No available IP ranges left on this host (maximum of $num_subnets users reached)."
-    exit 1
-fi
-
-# 4. Save registration (requires sudo for /etc)
-echo "Registering IP range..."
-if [ ! -f "$USER_CONFIG" ]; then
-    sudo touch "$USER_CONFIG"
-    sudo chmod 644 "$USER_CONFIG"
-fi
-
-# Remove existing entry if re-running, then append the new one
-sudo sed -i "/^${username}:/d" "$USER_CONFIG"
-echo "${username}:${assigned_range}" | sudo tee -a "$USER_CONFIG" > /dev/null
-
-echo "Successfully allocated range $assigned_range to user '$username'."
-
-# 5. Add udev rule for applying ACLs and triggers immediately. (requires sudo)
-echo "Configuring custom udev rules for applying ACLs for user '$username'..."
-cat <<EOF | sudo tee /etc/udev/rules.d/99-podcvd-acls-$username.rules > /dev/null
-KERNEL=="kvm", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
-KERNEL=="vhost-net", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
-KERNEL=="vhost-vsock", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
-EOF
-sudo udevadm control --reload-rules
-sudo udevadm trigger --action=change /dev/kvm
-sudo udevadm trigger --action=change /dev/vhost-net
-sudo udevadm trigger --action=change /dev/vhost-vsock
-
-# 6. Configure subordinate UIDs/GIDs for rootless Podman
-has_subuids=false
-if [ -f /etc/subuid ] && [ -f /etc/subgid ]; then
-    subuid_size=$(grep "^${username}:" /etc/subuid | cut -d: -f3)
-    subgid_size=$(grep "^${username}:" /etc/subgid | cut -d: -f3)
-    if [ -n "$subuid_size" ] && [ "$subuid_size" -ge 65536 ] && \
-       [ -n "$subgid_size" ] && [ "$subgid_size" -ge 65536 ]; then
-        has_subuids=true
-    fi
-fi
-
-if [ "$has_subuids" = true ]; then
-    echo "User '$username' already has sufficient subuid/subgid ranges configured. Skipping."
-else
-    echo "Configuring subordinate UIDs/GIDs for '$username'..."
-    start_id=$(awk -F: '{print $2 + $3}' /etc/subuid /etc/subgid 2>/dev/null | sort -n | tail -1)
-    start_id="${start_id:-100000}"
-    id_range="$start_id-$((start_id + 65535))"
-    sudo usermod --add-subuids "$id_range" --add-subgids "$id_range" "$username"
-fi
-
-# 7. Migrate subuid/subgid setting into rootless podman (runs as unprivileged user)
-echo "Migrating subuid/subgid setting into rootless podman..."
-podman system migrate
+setup_cidr
+setup_device_permissions
+setup_rootless_podman
 
 echo "Setup complete! You can now run 'podcvd'."
