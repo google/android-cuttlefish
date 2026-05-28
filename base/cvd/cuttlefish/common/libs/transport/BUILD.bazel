@@ -14,6 +14,7 @@ cf_cc_library(
         "channel.h",
         "channel_sharedfd.h",
     ],
+    clang_format_enabled = True,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
