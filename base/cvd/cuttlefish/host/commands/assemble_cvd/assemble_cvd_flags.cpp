@@ -48,7 +48,7 @@ DEFINE_string(refresh_rate_hz, "60", "Screen refresh rate in Hertz");
 DEFINE_string(overlays, "",
               "List of displays to overlay. Format is: 'vm_index:display_index "
               "vm_index2:display_index2 [...]'");
-DEFINE_string(extra_bootconfig_args, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
+DEFINE_vec(extra_bootconfig_args, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
               "Space-separated list of extra bootconfig args. "
               "Note: overwriting an existing bootconfig argument "
               "requires ':=' instead of '='.");
