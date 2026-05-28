@@ -1,8 +1,8 @@
-cuttlefish-integration-gigabyte-arm64 (1.54.0) UNRELEASED; urgency=medium
+cuttlefish-integration-gigabyte-arm64 (1.54.0) unstable; urgency=medium
 
-  * 
+ * Start development on 1.54.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2455
 
- -- Chad Reynolds <chadreynolds@google.com>  Thu, 23 Apr 2026 16:34:55 -0700
+ -- 3405691582 <dsk@google.com>  Thu, 28 May 2026 17:44:18 +0000
 
 cuttlefish-integration-gigabyte-arm64 (1.53.0) unstable; urgency=medium
 
