@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"sync"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
@@ -49,6 +50,19 @@ func newDevice(id string, conn *JSONUnix, port int, privateData interface{}) *De
 		return nil
 	}
 	proxy := httputil.NewSingleHostReverseProxy(url)
+	originalDirector := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		originalDirector(req)
+		// Strip unnecessary headers keeping headers size under 4KB (libwebsockets default) if possible.
+		// https://libwebsockets.org/git/libwebsockets/tree/include/libwebsockets/lws-context-vhost.h?h=v3.1-stable#n339
+		req.Header.Del("Cookie")
+		req.Header.Del("Authorization")
+		for v := range req.Header {
+			if strings.HasPrefix(v, "X-") {
+				req.Header.Del(v)
+			}
+		}
+	}
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		log.Printf("request %q failed: proxy error: %v", r.Method+" "+r.URL.Path, err)
 		w.Header().Add("x-cutf-proxy", "op-device")
