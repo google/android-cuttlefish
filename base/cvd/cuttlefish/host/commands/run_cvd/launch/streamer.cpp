@@ -233,7 +233,7 @@ class WebRtcServer : public virtual CommandSource,
     // legacy port.
     Command sig_proxy(WebRtcSigServerProxyBinary());
     sig_proxy.AddParameter("-server_port=", config_.sig_server_proxy_port());
-    commands.emplace_back(std::move(sig_proxy));
+    commands.emplace_back(std::move(sig_proxy), /* is_critical= */ false);
 
     auto stopper = [webrtc_controller = webrtc_controller_]() mutable {
       (void)webrtc_controller.SendStopRecordingCommand();
