@@ -173,7 +173,8 @@ func pullContainerImage(ccm libcfcontainer.CuttlefishContainerManager) error {
 	} else if exists {
 		return nil
 	}
-	return ccm.PullImage(context.Background(), imageName)
+	log.Printf("Pulling container image %q...\n", imageName)
+	return ccm.PullImage(context.Background(), imageName, os.Stderr)
 }
 
 func cvdDataHome() (string, error) {

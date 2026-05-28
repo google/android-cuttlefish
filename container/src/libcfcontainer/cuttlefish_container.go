@@ -26,8 +26,10 @@ import (
 	"dario.cat/mergo"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/moby/term"
 )
 
 type CuttlefishContainerManager interface {
@@ -35,7 +37,7 @@ type CuttlefishContainerManager interface {
 	// Check whether an image with the given name exists on the container engine or not
 	ImageExists(ctx context.Context, name string) (bool, error)
 	// Pull the container image
-	PullImage(ctx context.Context, name string) error
+	PullImage(ctx context.Context, name string, progressWriter io.Writer) error
 	// Create and start a container instance
 	CreateAndStartContainer(ctx context.Context, additionalConfig *container.Config, additionalHostConfig *container.HostConfig, name string) (string, error)
 	// Execute a command on a running container instance
@@ -89,15 +91,24 @@ func (m *CuttlefishContainerManagerImpl) ImageExists(ctx context.Context, name s
 	return false, nil
 }
 
-func (m *CuttlefishContainerManagerImpl) PullImage(ctx context.Context, name string) error {
+func (m *CuttlefishContainerManagerImpl) PullImage(ctx context.Context, name string, progressWriter io.Writer) error {
 	reader, err := m.cli.ImagePull(ctx, name, image.PullOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to request pulling docker image %q: %w", name, err)
 	}
 	defer reader.Close()
-	// Caller of ImagePull should handle its output to complete actual ImagePull operation.
-	// Details in https://pkg.go.dev/github.com/docker/docker/client#Client.ImagePull.
-	if _, err := io.Copy(io.Discard, reader); err != nil {
+
+	if progressWriter == nil {
+		progressWriter = io.Discard
+	}
+	var fd uintptr
+	var isTerminal bool
+	if f, ok := progressWriter.(interface{ Fd() uintptr }); ok {
+		fd = f.Fd()
+		isTerminal = term.IsTerminal(fd)
+	}
+	err = jsonmessage.DisplayJSONMessagesStream(reader, progressWriter, fd, isTerminal, nil)
+	if err != nil {
 		return fmt.Errorf("failed to pull docker image %q: %w", name, err)
 	}
 	return nil
