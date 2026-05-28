@@ -64,9 +64,8 @@ Result<void> Substitute(const std::string& target,
 
   CF_EXPECT(EnsureDirectoryExists(android::base::Dirname(full_link_name)));
 
-  if (FileExists(full_link_name)) {
-    CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", StrError(errno));
-  }
+  int unlink_res = unlink(full_link_name.c_str());
+  CF_EXPECTF(unlink_res == 0 || errno == ENOENT, "{}", StrError(errno));
 
   CF_EXPECT(Symlink(target, full_link_name));
   return {};
