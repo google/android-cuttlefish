@@ -17,17 +17,18 @@
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <algorithm>
-#include <cerrno>
-#include <cstdlib>
-#include <cstring>
+#include <concepts>
 #include <functional>
 #include <iostream>
 #include <iterator>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -132,7 +133,9 @@ std::string FlagValueToString(const std::vector<T>& values) {
   return absl::StrJoin(strings, ",");
 }
 // Need an extra function to share between vector specializations because
-// partial template specializations are not allowed in C++.
+// partial template specializations are not allowed in C++. It could be named
+// ParseFlagValue too and just be an overload but using a different name makes
+// it clear which implementation the compiler is choosing.
 template <typename T>
 Result<std::vector<T>> ParseFlagVectorValue(std::string_view str, T default_value) {
   if (str.empty()) {
@@ -176,6 +179,115 @@ Result<std::optional<T>> ParseFlagOptionalValue(std::string_view str,
   } else {
     return CF_EXPECT(ParseFlagValue<T>(str));
   }
+}
+
+// Template versions of the GflagsCompatFlag functions to reduce duplication
+template <std::integral T>
+static Flag GflagsCompatFlagImpl(const std::string& name, T& value) {
+  return GflagsCompatFlag(name)
+      .Getter([&value]() { return std::to_string(value); })
+      .Setter([&value](const FlagMatch& match) -> Result<void> {
+        if constexpr (std::is_unsigned_v<T>) {
+          CF_EXPECTF(absl::SimpleAtoi<T>(match.value, &value),
+                     "Failed to parse \"{}\" as an unsigned integer",
+                     match.value);
+        } else {
+          CF_EXPECTF(absl::SimpleAtoi<T>(match.value, &value),
+                     "Failed to parse \"{}\" as an integer", match.value);
+        }
+        return {};
+      });
+}
+
+template <typename T>
+Flag GflagsCompatFlagImpl(const std::string& name, std::vector<T>& value,
+                          const T default_value) {
+  return GflagsCompatFlag(name)
+      .Getter([&value]() { return FlagValueToString(value); })
+      .Setter([name, &value,
+               default_value](const FlagMatch& match) -> Result<void> {
+        value = CF_EXPECT(ParseFlagVectorValue(match.value, default_value));
+        return {};
+      });
+}
+
+template <typename T>
+Flag GflagsCompatFlagImpl(const std::string& name, std::optional<T>& value,
+                          CoerceToNullopt opt) {
+  return GflagsCompatFlag(name)
+      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
+      .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
+        value = CF_EXPECT(ParseFlagOptionalValue<T>(match.value, opt));
+        return {};
+      });
+}
+
+std::string XmlEscape(const std::string& s) {
+  return absl::StrReplaceAll(s, {{"<", "&lt;"}, {">", "&gt;"}});
+}
+
+struct Separated {
+  std::vector<std::string> args_before_mark;
+  std::vector<std::string> args_after_mark;
+};
+Separated SeparateByEndOfOptionMark(std::vector<std::string> args) {
+  std::vector<std::string> args_before_mark;
+  std::vector<std::string> args_after_mark;
+
+  auto itr = std::find(args.begin(), args.end(), "--");
+  bool has_mark = (itr != args.end());
+  if (!has_mark) {
+    args_before_mark = std::move(args);
+  } else {
+    args_before_mark.insert(args_before_mark.end(), args.begin(), itr);
+    args_after_mark.insert(args_after_mark.end(), itr + 1, args.end());
+  }
+
+  return Separated{
+      .args_before_mark = std::move(args_before_mark),
+      .args_after_mark = std::move(args_after_mark),
+  };
+}
+
+Result<void> ConsumeFlagsImpl(const std::vector<Flag>& flags,
+                                     std::vector<std::string>& args) {
+  for (const auto& flag : flags) {
+    CF_EXPECT(flag.Parse(args));
+  }
+  return {};
+}
+
+Result<void> ConsumeFlagsImpl(const std::vector<Flag>& flags,
+                                     std::vector<std::string>&& args) {
+  for (const auto& flag : flags) {
+    CF_EXPECT(flag.Parse(args));
+  }
+  return {};
+}
+
+Result<void> GflagsCompatBoolFlagSetter(const std::string& name,
+                                               bool& value,
+                                               const FlagMatch& match) {
+  const auto& key = match.key;
+  if (key == "-" + name || key == "--" + name) {
+    value = true;
+    return {};
+  } else if (key == "-no" + name || key == "--no" + name) {
+    value = false;
+    return {};
+  } else if (key == "-" + name + "=" || key == "--" + name + "=") {
+    if (match.value == "true") {
+      value = true;
+      return {};
+    } else if (match.value == "false") {
+      value = false;
+      return {};
+    } else {
+      return CF_ERRF("Unexpected boolean value \"{}\" for \{}\"", match.value,
+                     name);
+    }
+  }
+  return CF_ERRF("Unexpected key \"{}\" for \"{}\"", match.key, name);
 }
 
 }  // namespace
@@ -363,10 +475,6 @@ bool Flag::HasAlias(const FlagAlias& test) const {
   return false;
 }
 
-static std::string XmlEscape(const std::string& s) {
-  return absl::StrReplaceAll(s, {{"<", "&lt;"}, {">", "&gt;"}});
-}
-
 bool Flag::WriteGflagsCompatXml(std::ostream& out) const {
   std::unordered_set<std::string> name_guesses;
   for (const auto& alias : aliases_) {
@@ -458,45 +566,6 @@ std::vector<std::string> ArgsToVec(int argc, char** argv) {
     args.push_back(argv[i]);
   }
   return args;
-}
-
-struct Separated {
-  std::vector<std::string> args_before_mark;
-  std::vector<std::string> args_after_mark;
-};
-static Separated SeparateByEndOfOptionMark(std::vector<std::string> args) {
-  std::vector<std::string> args_before_mark;
-  std::vector<std::string> args_after_mark;
-
-  auto itr = std::find(args.begin(), args.end(), "--");
-  bool has_mark = (itr != args.end());
-  if (!has_mark) {
-    args_before_mark = std::move(args);
-  } else {
-    args_before_mark.insert(args_before_mark.end(), args.begin(), itr);
-    args_after_mark.insert(args_after_mark.end(), itr + 1, args.end());
-  }
-
-  return Separated{
-      .args_before_mark = std::move(args_before_mark),
-      .args_after_mark = std::move(args_after_mark),
-  };
-}
-
-static Result<void> ConsumeFlagsImpl(const std::vector<Flag>& flags,
-                                     std::vector<std::string>& args) {
-  for (const auto& flag : flags) {
-    CF_EXPECT(flag.Parse(args));
-  }
-  return {};
-}
-
-static Result<void> ConsumeFlagsImpl(const std::vector<Flag>& flags,
-                                     std::vector<std::string>&& args) {
-  for (const auto& flag : flags) {
-    CF_EXPECT(flag.Parse(args));
-  }
-  return {};
 }
 
 Result<void> ConsumeFlags(const std::vector<Flag>& flags,
@@ -606,31 +675,6 @@ Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {
       .Setter(setter);
 }
 
-static Result<void> GflagsCompatBoolFlagSetter(const std::string& name,
-                                               bool& value,
-                                               const FlagMatch& match) {
-  const auto& key = match.key;
-  if (key == "-" + name || key == "--" + name) {
-    value = true;
-    return {};
-  } else if (key == "-no" + name || key == "--no" + name) {
-    value = false;
-    return {};
-  } else if (key == "-" + name + "=" || key == "--" + name + "=") {
-    if (match.value == "true") {
-      value = true;
-      return {};
-    } else if (match.value == "false") {
-      value = false;
-      return {};
-    } else {
-      return CF_ERRF("Unexpected boolean value \"{}\" for \{}\"", match.value,
-                     name);
-    }
-  }
-  return CF_ERRF("Unexpected key \"{}\" for \"{}\"", match.key, name);
-}
-
 Flag GflagsCompatBoolFlag(const std::string& name) {
   return Flag(name)
       .Alias({FlagAliasMode::kFlagPrefix, "-" + name + "="})
@@ -702,38 +746,12 @@ Flag GflagsCompatFlag(const std::string& name, std::string& value) {
       });
 }
 
-template <typename T>
-static Flag GflagsCompatNumericFlagGeneric(const std::string& name, T& value) {
-  return GflagsCompatFlag(name)
-      .Getter([&value]() { return std::to_string(value); })
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
-        CF_EXPECTF(absl::SimpleAtoi<T>(match.value, &value),
-                           "Failed to parse \"{}\" as an integer", match.value);
-        return {};
-      });
-}
-
 Flag GflagsCompatFlag(const std::string& name, int32_t& value) {
-  return GflagsCompatNumericFlagGeneric(name, value);
-}
-
-template <typename T>
-static Flag GflagsCompatUnsignedNumericFlagGeneric(const std::string& name,
-                                                   T& value) {
-  return GflagsCompatFlag(name)
-      .Getter([&value]() { return std::to_string(value); })
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
-        T result;
-        CF_EXPECTF(absl::SimpleAtoi(match.value, &result),
-                   "Failed to parse \"{}\" as an unsigned integer",
-                   match.value);
-        value = result;
-        return {};
-      });
+  return GflagsCompatFlagImpl(name, value);
 }
 
 Flag GflagsCompatFlag(const std::string& name, size_t& value) {
-  return GflagsCompatUnsignedNumericFlagGeneric(name, value);
+  return GflagsCompatFlagImpl(name, value);
 }
 
 Flag GflagsCompatFlag(const std::string& name, bool& value) {
@@ -746,80 +764,40 @@ Flag GflagsCompatFlag(const std::string& name, bool& value) {
 
 Flag GflagsCompatFlag(const std::string& name,
                       std::vector<std::string>& value) {
-  return GflagsCompatFlag(name)
-      .Getter([&value]() { return absl::StrJoin(value, ","); })
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
-        value =
-            CF_EXPECT(ParseFlagValue<std::vector<std::string>>(match.value));
-        return {};
-      });
+  return GflagsCompatFlagImpl<std::string>(name, value, "");
 }
 
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
                       const bool default_value) {
-  return GflagsCompatFlag(name)
-      .Getter([&value]() { return FlagValueToString(value); })
-      .Setter([name, &value,
-               default_value](const FlagMatch& match) -> Result<void> {
-        value = CF_EXPECT(ParseFlagVectorValue(match.value, default_value));
-        return {};
-      });
+  return GflagsCompatFlagImpl(name, value, default_value);
 }
 
 Flag GflagsCompatFlag(const std::string& name,
                       std::optional<std::string>& value,
                       CoerceToNullopt opt) {
-  return GflagsCompatFlag(name)
-      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
-      .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
-        value =
-            CF_EXPECT(ParseFlagOptionalValue<std::string>(match.value, opt));
-        return {};
-      });
+  return GflagsCompatFlagImpl(name, value, opt);
 }
 
 Flag GflagsCompatFlag(const std::string& name, std::optional<size_t>& value,
                       CoerceToNullopt opt) {
-  return GflagsCompatFlag(name)
-      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
-      .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
-        value = CF_EXPECT(ParseFlagOptionalValue<size_t>(match.value, opt));
-        return {};
-      });
+  return GflagsCompatFlagImpl(name, value, opt);
 }
 
 Flag GflagsCompatFlag(const std::string& name, std::optional<unsigned>& value,
                       CoerceToNullopt opt) {
-  return GflagsCompatFlag(name)
-      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
-      .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
-        value = CF_EXPECT(ParseFlagOptionalValue<unsigned>(match.value, opt));
-        return {};
-      });
+  return GflagsCompatFlagImpl(name, value, opt);
 }
 
 Flag GflagsCompatFlag(const std::string& name,
                       std::optional<std::vector<std::string>>& value,
                       CoerceToNullopt opt) {
-  return GflagsCompatFlag(name)
-      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
-      .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
-        value = CF_EXPECT(
-            ParseFlagOptionalValue<std::vector<std::string>>(match.value, opt));
-        return {};
-      });
+  return GflagsCompatFlagImpl(name, value, opt);
 }
 
 Flag GflagsCompatFlag(const std::string& name,
                       std::optional<std::vector<unsigned>>& value,
                       CoerceToNullopt opt) {
-  return GflagsCompatFlag(name)
-      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
-      .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
-        value = CF_EXPECT(
-            ParseFlagOptionalValue<std::vector<unsigned>>(match.value, opt));
-        return {};
-      });
+  return GflagsCompatFlagImpl(name, value, opt);
 }
 
 Result<bool> HasHelpFlag(const std::vector<std::string>& args) {
