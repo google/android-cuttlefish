@@ -89,7 +89,7 @@ cf_cc_test(
     name = "flags_parser_test",
     srcs = ["flags_parser_test.cc"],
     deps = [
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//cuttlefish/result:result_matchers",
@@ -152,8 +152,8 @@ cf_cc_library(
     hdrs = ["load_configs_parser.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_flags_validator",
         "//cuttlefish/host/commands/cvd/cli/parser:fetch_config_parser",

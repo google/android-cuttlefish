@@ -24,8 +24,8 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
-#include "cuttlefish/common/libs/utils/shared_fd_flag.h"
+#include "cuttlefish/flag_parser/flag_parser.h"
+#include "cuttlefish/flag_parser/shared_fd_flag.h"
 #include "cuttlefish/host/libs/config/logging.h"
 
 namespace cuttlefish {

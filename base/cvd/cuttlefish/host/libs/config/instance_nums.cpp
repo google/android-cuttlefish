@@ -29,7 +29,7 @@
 #include <gflags/gflags.h>
 #include "absl/strings/numbers.h"
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag_parser.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/result/result.h"
 

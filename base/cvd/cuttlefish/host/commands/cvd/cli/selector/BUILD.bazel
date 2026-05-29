@@ -41,7 +41,7 @@ cf_cc_library(
     hdrs = ["num_instances_parser.h"],
     deps = [
         ":selector_common_parser",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/result",
     ],
 )
@@ -52,7 +52,7 @@ cf_cc_test(
     deps = [
         ":num_instances_parser",
         ":selector_common_parser",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
@@ -83,7 +83,7 @@ cf_cc_library(
     hdrs = ["selector_common_parser.h"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_constants",
         "//cuttlefish/host/commands/cvd/instances:device_name",

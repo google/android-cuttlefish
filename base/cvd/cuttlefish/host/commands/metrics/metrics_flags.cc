@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/base64.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag_parser.h"
 #include "cuttlefish/host/libs/metrics/metrics_environment.h"
 #include "cuttlefish/result/result.h"
 

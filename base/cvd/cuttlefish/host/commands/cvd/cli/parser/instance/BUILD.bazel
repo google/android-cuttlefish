@@ -114,8 +114,8 @@ cf_cc_test(
     srcs = ["graphics_configs_test.cc"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
-        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//cuttlefish/result:result_matchers",

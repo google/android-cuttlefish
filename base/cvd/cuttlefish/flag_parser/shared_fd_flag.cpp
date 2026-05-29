@@ -13,15 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
+#include "cuttlefish/flag_parser/shared_fd_flag.h"
 
+#include <unistd.h>
+
+#include <functional>
 #include <string>
 
+#include "absl/strings/numbers.h"
+
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag_parser.h"
 
 namespace cuttlefish {
 
-Flag SharedFDFlag(const std::string& name, SharedFD& out);
+static Result<void> Set(const FlagMatch& match, SharedFD& out) {
+  int raw_fd;
+  CF_EXPECTF(absl::SimpleAtoi(match.value, &raw_fd),
+             "Failed to parse value \"{}\" for fd flag \"{}\"", match.value,
+             match.key);
+  out = SharedFD::Dup(raw_fd);
+  if (out->IsOpen()) {
+    close(raw_fd);
+  }
+  return {};
+}
+
+Flag SharedFDFlag(const std::string& name, SharedFD& out) {
+  return GflagsCompatFlag(name).Setter(
+      [&out](const FlagMatch& mat) { return Set(mat, out); });
+}
 
 }  // namespace cuttlefish

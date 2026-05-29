@@ -23,7 +23,7 @@ cf_cc_library(
         ":ansi_codes",
         ":display",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",

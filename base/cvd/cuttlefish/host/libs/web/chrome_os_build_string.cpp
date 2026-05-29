@@ -26,7 +26,7 @@
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag_parser.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

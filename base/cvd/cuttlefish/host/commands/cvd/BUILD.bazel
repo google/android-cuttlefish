@@ -12,7 +12,7 @@ cf_cc_library(
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:frontline_parser",
         "//cuttlefish/host/commands/cvd/cli:nesting_commands",
@@ -33,7 +33,7 @@ cf_cc_binary(
         ":libcvd",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/cvd/cli:log_files",

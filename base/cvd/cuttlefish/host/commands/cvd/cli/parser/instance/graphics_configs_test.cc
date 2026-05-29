@@ -25,7 +25,7 @@
 #include <gtest/gtest.h>
 
 #include "cuttlefish/common/libs/utils/base64.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag_parser.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"

@@ -22,7 +22,7 @@
 
 #include "absl/strings/numbers.h"
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag_parser.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
