@@ -183,7 +183,7 @@ Result<std::optional<T>> ParseFlagOptionalValue(std::string_view str,
 
 // Template versions of the GflagsCompatFlag functions to reduce duplication
 template <std::integral T>
-static Flag GflagsCompatFlagImpl(const std::string& name, T& value) {
+Flag GflagsCompatFlagImpl(const std::string& name, T& value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return std::to_string(value); })
       .Setter([&value](const FlagMatch& match) -> Result<void> {
