@@ -28,8 +28,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:config_utils",
@@ -87,8 +87,8 @@ cf_cc_library(
     hdrs = ["custom_actions.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:config_utils",
@@ -184,7 +184,7 @@ cf_cc_library(
     hdrs = ["display.h"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
@@ -346,7 +346,7 @@ cf_cc_library(
     hdrs = ["instance_nums.h"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/result",
         "//libbase",
@@ -443,7 +443,7 @@ cf_cc_library(
     hdrs = ["touchpad.h"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
         "//libbase",
@@ -467,7 +467,7 @@ cf_cc_library(
     hdrs = ["media.h"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
         "//libbase",

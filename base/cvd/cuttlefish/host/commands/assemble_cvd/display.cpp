@@ -21,7 +21,7 @@
 #include <fruit/fruit.h>
 #include "absl/log/log.h"
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag_parser.h"
 #include "cuttlefish/host/libs/config/display.h"
 
 namespace cuttlefish {

@@ -54,7 +54,7 @@ cf_cc_binary(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/metrics:events",
         "//cuttlefish/host/commands/metrics:utils",
@@ -100,7 +100,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/metrics:metrics_environment",
         "//cuttlefish/result",
     ],

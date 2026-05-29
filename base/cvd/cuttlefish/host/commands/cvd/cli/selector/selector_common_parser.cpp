@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_constants.h"
 #include "cuttlefish/host/commands/cvd/instances/device_name.h"
 #include "cuttlefish/result/result.h"
