@@ -228,6 +228,20 @@ Result<std::vector<std::string>> GenerateVmFlags(
   std::set<std::string> used_names =
       GatherFlagNamesUsedInEnvironmentConfig(cfg);
   std::vector<std::string> flags = {};
+
+  // flags.push_back(GenerateInstanceFlag(kFlagVmManager, cfg, VmManager));
+  // flags.push_back(GenerateInstanceFlag(kFlagCpus, cfg, Cpus));
+  // flags.push_back(GenerateInstanceFlag(kFlagMemoryMb, cfg, MemoryMb));
+  // flags.push_back(GenerateInstanceFlag(kFlagUseSdcard, cfg, UseSdcard));
+  // flags.push_back(CF_EXPECT(
+  //     ResultInstanceFlag(kFlagSetupWizardMode, cfg, SetupWizardMode)));
+  // flags.push_back(GenerateInstanceFlag(kFlagUuid, cfg, Uuid));
+  flags.push_back(GenerateInstanceFlag(kFlagEnableSandbox, cfg, EnableSandbox));
+  // flags.push_back(GenerateInstanceFlag(kFlagCrosvmSimpleMediaDevice, cfg,
+  //                                      SimpleMediaDevice));
+  // flags.emplace_back(
+  //     GenerateInstanceFlag(kFlagCrosvmV4l2Proxy, cfg, V4l2Proxy));
+
   if (used_names.contains(kFlagVmManager)) {
     flags.push_back(GenerateInstanceFlag(kFlagVmManager, cfg, VmManager));
   }
@@ -247,10 +261,10 @@ Result<std::vector<std::string>> GenerateVmFlags(
   if (used_names.contains(kFlagUuid)) {
     flags.push_back(GenerateInstanceFlag(kFlagUuid, cfg, Uuid));
   }
-  if (used_names.contains(kFlagEnableSandbox)) {
-    flags.push_back(
-        GenerateInstanceFlag(kFlagEnableSandbox, cfg, EnableSandbox));
-  }
+  // if (used_names.contains(kFlagEnableSandbox)) {
+  //   flags.push_back(
+  //       GenerateInstanceFlag(kFlagEnableSandbox, cfg, EnableSandbox));
+  // }
   if (used_names.contains(kFlagCrosvmSimpleMediaDevice)) {
     flags.push_back(GenerateInstanceFlag(kFlagCrosvmSimpleMediaDevice, cfg,
                                          SimpleMediaDevice));
