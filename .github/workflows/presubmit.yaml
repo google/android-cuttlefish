@@ -522,6 +522,7 @@ jobs:
       run: |
         cd e2etests
         bazel test \
+          //cvd/bugreport_tests \
           //cvd/cvd_powerwash_tests \
           //cvd/display_tests \
           //cvd/env_tests \

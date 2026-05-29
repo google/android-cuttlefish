@@ -15,17 +15,20 @@
 package internal
 
 import (
+	"archive/tar"
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
 
 	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
+	"github.com/google/uuid"
 )
 
 func Main(args []string) error {
@@ -174,6 +177,41 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 		}
 		if err := ConnectAdb(ccm, *instanceGroup); err != nil {
 			return err
+		}
+	case "bugreport":
+		hostOutputPath := cvdArgs.GetStringFlagValueOnSubCommandArgs("output")
+		if hostOutputPath == "" {
+			hostOutputPath = "host_bugreport.zip"
+		}
+		absHostOutputPath, err := filepath.Abs(hostOutputPath)
+		if err != nil {
+			return fmt.Errorf("failed to resolve absolute path for %q: %w", hostOutputPath, err)
+		}
+		containerOutputPath := filepath.Join("/tmp", fmt.Sprintf("bugreport-%s.zip", uuid.New().String()))
+		cvdArgs.ReplaceFlagValueOnSubCommandArgs("output", containerOutputPath)
+		args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
+		args = append(args, cvdArgs.SubCommandArgs...)
+		if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, os.Stdout, os.Stderr); err != nil {
+			return fmt.Errorf("failed to execute cvd bugreport in the container: %w", err)
+		}
+		defer ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), []string{"rm", containerOutputPath}, nil, nil, nil)
+		tarStream, _, err := ccm.GetClient().CopyFromContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), containerOutputPath)
+		if err != nil {
+			return fmt.Errorf("failed to copy bugreport from container: %w", err)
+		}
+		defer tarStream.Close()
+		tr := tar.NewReader(tarStream)
+		header, err := tr.Next()
+		if err != nil {
+			return fmt.Errorf("failed to read tar header: %w", err)
+		}
+		outFile, err := os.OpenFile(absHostOutputPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, header.FileInfo().Mode())
+		if err != nil {
+			return fmt.Errorf("failed to create output file: %w", err)
+		}
+		defer outFile.Close()
+		if _, err := io.Copy(outFile, tr); err != nil {
+			return fmt.Errorf("failed to extract bugreport content: %w", err)
 		}
 	default:
 		if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, os.Stdout, os.Stderr); err != nil {

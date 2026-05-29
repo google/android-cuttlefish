@@ -111,6 +111,32 @@ func (a *CvdArgs) GetStringFlagValueOnSubCommandArgs(flagName string) string {
 	return ""
 }
 
+func (a *CvdArgs) ReplaceFlagValueOnSubCommandArgs(flagName, newValue string) {
+	flags := make(map[string]struct{})
+	flags["-"+flagName] = struct{}{}
+	flags["--"+flagName] = struct{}{}
+
+	for idx, arg := range a.SubCommandArgs {
+		if _, exists := flags[arg]; exists {
+			if idx+1 < len(a.SubCommandArgs) && !strings.HasPrefix(a.SubCommandArgs[idx+1], "-") {
+				a.SubCommandArgs[idx+1] = newValue
+				return
+			}
+			a.SubCommandArgs[idx] = fmt.Sprintf("-%s=%s", flagName, newValue)
+			return
+		}
+		splitArg := strings.SplitN(arg, "=", 2)
+		if len(splitArg) == 2 {
+			if _, exists := flags[splitArg[0]]; exists {
+				a.SubCommandArgs[idx] = fmt.Sprintf("%s=%s", splitArg[0], newValue)
+				return
+			}
+		}
+	}
+
+	a.SubCommandArgs = append(a.SubCommandArgs, fmt.Sprintf("-%s=%s", flagName, newValue))
+}
+
 func mapSubcommand(subcmd string) string {
 	aliases := map[string]string{
 		"fetch_cvd":          "fetch",
