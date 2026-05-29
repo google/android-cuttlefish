@@ -61,24 +61,6 @@ constexpr std::array help_str_opts{
     "helpmatch",
 };
 
-template <typename T>
-std::optional<T> ParseInteger(const std::string& value) {
-  if (value.empty()) {
-    return {};
-  }
-  const char* base = value.c_str();
-  char* end = nullptr;
-  errno = 0;
-  auto r = strtoll(base, &end, /* auto-detect */ 0);
-  if (errno != 0 || end != base + value.size()) {
-    return {};
-  }
-  if (static_cast<T>(r) != r) {
-    return {};
-  }
-  return r;
-}
-
 bool ShouldBeNullOpt(std::string_view value, CoerceToNullopt opt) {
   switch (opt) {
     case CoerceToNullopt::None:
@@ -122,11 +104,15 @@ Result<std::string> ParseFlagValue<std::string>(std::string_view str) {
 // Setter for unsigned and size_t, default getter works
 template<>
 Result<size_t> ParseFlagValue<size_t>(std::string_view str) {
-  return CF_EXPECT(ParseInteger<size_t>(std::string(str)));
+  size_t value;
+  CF_EXPECT(absl::SimpleAtoi(str, &value));
+  return value;
 }
 template<>
 Result<unsigned> ParseFlagValue<unsigned>(std::string_view str) {
-  return CF_EXPECT(ParseInteger<unsigned>(std::string(str)));
+  unsigned value;
+  CF_EXPECT(absl::SimpleAtoi(str, &value));
+  return value;
 }
 
 // Setter for bool, default getter is fine
@@ -721,7 +707,7 @@ static Flag GflagsCompatNumericFlagGeneric(const std::string& name, T& value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return std::to_string(value); })
       .Setter([&value](const FlagMatch& match) -> Result<void> {
-        value = CF_EXPECTF(ParseInteger<T>(match.value),
+        CF_EXPECTF(absl::SimpleAtoi<T>(match.value, &value),
                            "Failed to parse \"{}\" as an integer", match.value);
         return {};
       });
