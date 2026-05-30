@@ -238,7 +238,7 @@ int DisplayMain(int argc, char** argv) {
       {"screenshot", DoScreenshot},  //
   };
 
-  auto args = ArgsToVec(argc - 1, argv + 1);
+  std::vector<std::string> args(argv + 1, argv + argc);
   if (args.empty()) {
     args.push_back("help");
   }

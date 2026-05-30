@@ -223,7 +223,7 @@ void InitializeLogs(std::vector<std::string>& all_args) {
 int main(int argc, char** argv) {
   srand(time(NULL));
 
-  std::vector<std::string> all_args = cuttlefish::ArgsToVec(argc, argv);
+  std::vector<std::string> all_args(argv, argv + argc);
 
   cuttlefish::InitializeLogs(all_args);
 

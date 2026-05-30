@@ -578,7 +578,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   // fetcher_config.json will be searched for in the system image directory.
   (void) CF_EXPECT(ReadInputFiles());
 
-  auto args = ArgsToVec(argc - 1, argv + 1);
+  std::vector<std::string> args(argv+1, argv + argc);
 
   bool help = false;
   std::string help_str;

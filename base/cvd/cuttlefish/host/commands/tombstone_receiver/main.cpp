@@ -70,8 +70,7 @@ int TombstoneReceiverMain(int argc, char** argv) {
   flags.emplace_back(HelpFlag(flags));
   flags.emplace_back(UnexpectedArgumentGuard());
 
-  std::vector<std::string> args =
-      ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
+  std::vector<std::string> args(argv + 1, argv + argc);  // Skip argv[0]
   auto parse_res = ConsumeFlags(flags, args);
   CHECK(parse_res.ok()) << "Could not process command line flags. "
                         << parse_res.error();

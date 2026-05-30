@@ -177,8 +177,7 @@ FlagVaules GetFlagValues(int argc, char** argv) {
   bool helpxml = false;
   flags.emplace_back(HelpXmlFlag(flags, std::cout, helpxml));
   flags.emplace_back(UnexpectedArgumentGuard());
-  std::vector<std::string> args =
-      ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
+  std::vector<std::string> args(argv + 1, argv + argc);  // Skip argv[0]
   auto parse_res = ConsumeFlags(flags, args);
   CHECK(parse_res.ok() || helpxml) << "Could not process command line flags.";
 
