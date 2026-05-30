@@ -117,7 +117,7 @@ Result<int> RunProcessRestarter(std::vector<std::string> args) {
 int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   auto result = cuttlefish::RunProcessRestarter(
-      cuttlefish::ArgsToVec(argc - 1, argv + 1));
+      std::vector<std::string>(argv + 1, argv + argc));
   if (!result.ok()) {
     VLOG(0) << result.error();
     return EXIT_FAILURE;

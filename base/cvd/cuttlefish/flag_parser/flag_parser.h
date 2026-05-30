@@ -144,8 +144,6 @@ class Flag {
 
 std::ostream& operator<<(std::ostream&, const Flag&);
 
-std::vector<std::string> ArgsToVec(int argc, char** argv);
-
 Result<bool> ParseBool(std::string_view value, std::string_view name);
 Result<int> ParseInt(const std::string& value, std::string_view name);
 

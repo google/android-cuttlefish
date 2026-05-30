@@ -71,7 +71,7 @@ Flag CleanupSnapshotPathFlag(bool& cleanup) {
 }  // namespace
 
 Result<Parsed> Parse(int argc, char** argv) {
-  auto args = ArgsToVec(argc, argv);
+  std::vector<std::string> args(argv, argv + argc);
   auto parsed = CF_EXPECT(Parse(args));
   return parsed;
 }

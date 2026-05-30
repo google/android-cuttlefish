@@ -37,11 +37,6 @@
 
 namespace cuttlefish {
 
-/*
- * Does what ArgsToVec(int argc, char**) from flag_parser.h does
- * without argc.
- */
-std::vector<std::string> ArgsToVec(char** argv);
 std::unordered_map<std::string, std::string> EnvpToMap(char** envp);
 
 enum class StopperResult {
