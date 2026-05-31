@@ -24,7 +24,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
@@ -45,7 +47,7 @@ func Main(args []string) error {
 	subcommand := cvdArgs.SubCommandArgs[0]
 	if cvdArgs.HasHelpFlagOnSubCommandArgs() {
 		switch subcommand {
-		case "bugreport", "cache", "clear", "create", "display", "env", "fetch", "fleet", "help", "lint", "load", "login", "powerbtn", "powerwash", "remove", "reset", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend", "version":
+		case "bugreport", "cache", "clear", "create", "display", "env", "fetch", "fleet", "help", "lint", "load", "login", "logs", "powerbtn", "powerwash", "remove", "reset", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend", "version":
 			cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
 			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
 				return err
@@ -58,7 +60,7 @@ func Main(args []string) error {
 			return err
 		}
 		switch subcommand {
-		case "bugreport", "create", "display", "env", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
+		case "bugreport", "create", "display", "env", "logs", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
 			if err := handleSubcommandsForSingleInstanceGroup(ccm, cvdArgs); err != nil {
 				return err
 			}
@@ -180,6 +182,43 @@ func handleBugreportExecution(ccm libcfcontainer.CuttlefishContainerManager, cvd
 	return nil
 }
 
+func formatLogsList(output string) string {
+	lines := strings.Split(output, "\n")
+	for i, line := range lines {
+		parts := strings.SplitN(line, " ", 2)
+		if len(parts) == 2 && strings.HasPrefix(parts[1], "/") {
+			lines[i] = fmt.Sprintf("%-29s %s", parts[0], parts[1])
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+func handleLogsExecution(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
+	args = append(args, cvdArgs.SubCommandArgs...)
+	if cvdArgs.GetStringFlagValueOnSubCommandArgs("print") != "" || cvdArgs.GetStringFlagValueOnSubCommandArgs("p") != "" {
+		return ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, os.Stdout, os.Stderr)
+	}
+
+	var stdoutBuf bytes.Buffer
+	if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, os.Stderr); err != nil {
+		return err
+	}
+	inspectRes, err := ccm.GetClient().ContainerInspect(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
+	if err != nil {
+		return fmt.Errorf("failed to inspect container: %w", err)
+	}
+	attemptID := inspectRes.Config.Labels["attempt_id"]
+	podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
+	regex := regexp.MustCompile(`/var/tmp/cvd/[0-9]+/[0-9]+/home`)
+	translatedOutput := regex.ReplaceAllString(stdoutBuf.String(), podcvdHomeDir)
+	if Isatty(os.Stdout.Fd()) {
+		translatedOutput = formatLogsList(translatedOutput)
+	}
+	_, err = os.Stdout.WriteString(translatedOutput)
+	return err
+}
+
 func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	subcommand := cvdArgs.SubCommandArgs[0]
 	switch subcommand {
@@ -219,6 +258,8 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 		return handleCreateOrStartExecution(ccm, cvdArgs)
 	case "bugreport":
 		return handleBugreportExecution(ccm, cvdArgs)
+	case "logs":
+		return handleLogsExecution(ccm, cvdArgs)
 	default:
 		args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 		args = append(args, cvdArgs.SubCommandArgs...)

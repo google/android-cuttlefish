@@ -22,6 +22,8 @@ import (
 	"os"
 	"strings"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
 
 	"github.com/docker/docker/api/types/container"
@@ -102,4 +104,9 @@ func readUserCidrFromConfig(username string) (string, error) {
 		return "", err
 	}
 	return "", fmt.Errorf("user %q not found in /etc/podcvd.users", username)
+}
+
+func Isatty(fd uintptr) bool {
+	_, err := unix.IoctlGetTermios(int(fd), unix.TCGETS)
+	return err == nil
 }
