@@ -100,6 +100,86 @@ func disconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, groupName stri
 	return DisconnectAdb(ccm, *instanceGroup)
 }
 
+func handleCreateOrStartExecution(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
+	args = append(args, cvdArgs.SubCommandArgs...)
+
+	var stdoutBuf bytes.Buffer
+	if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, os.Stderr); err != nil {
+		return err
+	}
+	var res map[string]any
+	if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
+		return fmt.Errorf("failed to unmarshal json: %w", err)
+	}
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
+	if err != nil {
+		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
+	}
+	ip, exists := groupNameIpAddrMap[cvdArgs.CommonArgs.GroupName]
+	if !exists {
+		return fmt.Errorf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
+	}
+	inspectRes, err := ccm.GetClient().ContainerInspect(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
+	if err != nil {
+		return fmt.Errorf("failed to inspect container: %w", err)
+	}
+	attemptID := inspectRes.Config.Labels["attempt_id"]
+	podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
+	UpdateCvdGroupJsonRaw(res, podcvdHomeDir, ip)
+	stdout, err := json.MarshalIndent(res, "", "        ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal json: %w", err)
+	}
+	os.Stdout.Write(stdout)
+	instanceGroup, err := ParseInstanceGroup(string(stdout), cvdArgs.CommonArgs.GroupName)
+	if err != nil {
+		return err
+	}
+	if err := ConnectAdb(ccm, *instanceGroup); err != nil {
+		return err
+	}
+	return nil
+}
+
+func handleBugreportExecution(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+	hostOutputPath := cvdArgs.GetStringFlagValueOnSubCommandArgs("output")
+	if hostOutputPath == "" {
+		hostOutputPath = "host_bugreport.zip"
+	}
+	absHostOutputPath, err := filepath.Abs(hostOutputPath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve absolute path for %q: %w", hostOutputPath, err)
+	}
+	containerOutputPath := filepath.Join("/tmp", fmt.Sprintf("bugreport-%s.zip", uuid.New().String()))
+	cvdArgs.ReplaceFlagValueOnSubCommandArgs("output", containerOutputPath)
+	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
+	args = append(args, cvdArgs.SubCommandArgs...)
+	if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, os.Stdout, os.Stderr); err != nil {
+		return fmt.Errorf("failed to execute cvd bugreport in the container: %w", err)
+	}
+	defer ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), []string{"rm", containerOutputPath}, nil, nil, nil)
+	tarStream, _, err := ccm.GetClient().CopyFromContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), containerOutputPath)
+	if err != nil {
+		return fmt.Errorf("failed to copy bugreport from container: %w", err)
+	}
+	defer tarStream.Close()
+	tr := tar.NewReader(tarStream)
+	header, err := tr.Next()
+	if err != nil {
+		return fmt.Errorf("failed to read tar header: %w", err)
+	}
+	outFile, err := os.OpenFile(absHostOutputPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, header.FileInfo().Mode())
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %w", err)
+	}
+	defer outFile.Close()
+	if _, err := io.Copy(outFile, tr); err != nil {
+		return fmt.Errorf("failed to extract bugreport content: %w", err)
+	}
+	return nil
+}
+
 func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	subcommand := cvdArgs.SubCommandArgs[0]
 	switch subcommand {
@@ -134,81 +214,14 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 			return DeleteCuttlefishHost(ccm, cvdArgs.CommonArgs.GroupName)
 		}
 	}
-	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
-	args = append(args, cvdArgs.SubCommandArgs...)
 	switch subcommand {
 	case "create", "start":
-		var stdoutBuf bytes.Buffer
-		if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, os.Stderr); err != nil {
-			return err
-		}
-		var res map[string]any
-		if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
-			return fmt.Errorf("failed to unmarshal json: %w", err)
-		}
-		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
-		if err != nil {
-			return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
-		}
-		ip, exists := groupNameIpAddrMap[cvdArgs.CommonArgs.GroupName]
-		if !exists {
-			return fmt.Errorf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
-		}
-		inspectRes, err := ccm.GetClient().ContainerInspect(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
-		if err != nil {
-			return fmt.Errorf("failed to inspect container: %w", err)
-		}
-		attemptID := inspectRes.Config.Labels["attempt_id"]
-		podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
-		UpdateCvdGroupJsonRaw(res, podcvdHomeDir, ip)
-		stdout, err := json.MarshalIndent(res, "", "        ")
-		if err != nil {
-			return fmt.Errorf("failed to marshal json: %w", err)
-		}
-		os.Stdout.Write(stdout)
-		instanceGroup, err := ParseInstanceGroup(string(stdout), cvdArgs.CommonArgs.GroupName)
-		if err != nil {
-			return err
-		}
-		if err := ConnectAdb(ccm, *instanceGroup); err != nil {
-			return err
-		}
+		return handleCreateOrStartExecution(ccm, cvdArgs)
 	case "bugreport":
-		hostOutputPath := cvdArgs.GetStringFlagValueOnSubCommandArgs("output")
-		if hostOutputPath == "" {
-			hostOutputPath = "host_bugreport.zip"
-		}
-		absHostOutputPath, err := filepath.Abs(hostOutputPath)
-		if err != nil {
-			return fmt.Errorf("failed to resolve absolute path for %q: %w", hostOutputPath, err)
-		}
-		containerOutputPath := filepath.Join("/tmp", fmt.Sprintf("bugreport-%s.zip", uuid.New().String()))
-		cvdArgs.ReplaceFlagValueOnSubCommandArgs("output", containerOutputPath)
+		return handleBugreportExecution(ccm, cvdArgs)
+	default:
 		args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 		args = append(args, cvdArgs.SubCommandArgs...)
-		if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, os.Stdout, os.Stderr); err != nil {
-			return fmt.Errorf("failed to execute cvd bugreport in the container: %w", err)
-		}
-		defer ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), []string{"rm", containerOutputPath}, nil, nil, nil)
-		tarStream, _, err := ccm.GetClient().CopyFromContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), containerOutputPath)
-		if err != nil {
-			return fmt.Errorf("failed to copy bugreport from container: %w", err)
-		}
-		defer tarStream.Close()
-		tr := tar.NewReader(tarStream)
-		header, err := tr.Next()
-		if err != nil {
-			return fmt.Errorf("failed to read tar header: %w", err)
-		}
-		outFile, err := os.OpenFile(absHostOutputPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, header.FileInfo().Mode())
-		if err != nil {
-			return fmt.Errorf("failed to create output file: %w", err)
-		}
-		defer outFile.Close()
-		if _, err := io.Copy(outFile, tr); err != nil {
-			return fmt.Errorf("failed to extract bugreport content: %w", err)
-		}
-	default:
 		if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, os.Stdout, os.Stderr); err != nil {
 			return err
 		}
