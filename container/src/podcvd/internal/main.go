@@ -46,46 +46,38 @@ func Main(args []string) error {
 
 	subcommand := cvdArgs.SubCommandArgs[0]
 	if cvdArgs.HasHelpFlagOnSubCommandArgs() {
-		switch subcommand {
-		case "bugreport", "cache", "clear", "create", "display", "env", "fetch", "fleet", "help", "lint", "load", "login", "logs", "powerbtn", "powerwash", "remove", "reset", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend", "version":
-			cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
-			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
-				return err
-			}
-		default:
-			return fmt.Errorf("unknown subcommand %q", subcommand)
-		}
-	} else {
-		if err := CheckDeviceAccessible(); err != nil {
+		cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
+		return handleToolingSubcommands(ccm, cvdArgs)
+	}
+	if err := CheckDeviceAccessible(); err != nil {
+		return err
+	}
+	switch subcommand {
+	case "bugreport", "create", "display", "env", "logs", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
+		if err := handleSubcommandsForSingleInstanceGroup(ccm, cvdArgs); err != nil {
 			return err
 		}
-		switch subcommand {
-		case "bugreport", "create", "display", "env", "logs", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
-			if err := handleSubcommandsForSingleInstanceGroup(ccm, cvdArgs); err != nil {
-				return err
-			}
-		case "clear", "reset":
-			if err := clearAllCuttlefishHosts(ccm); err != nil {
-				return err
-			}
-		case "fleet":
-			if err := fleetAllCuttlefishHosts(ccm); err != nil {
-				return err
-			}
-		case "help", "lint", "login", "version":
-			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
-				return err
-			}
-		case "fetch":
-			if err := ExecFetchCmdOnDisposableHost(ccm, cvdArgs); err != nil {
-				return err
-			}
-		case "cache", "load", "monitor", "setup":
-			// TODO(seungjaeyoo): Support other subcommands of cvd as well.
-			return fmt.Errorf("subcommand %q is not implemented yet", subcommand)
-		default:
-			return fmt.Errorf("unknown subcommand %q", subcommand)
+	case "clear", "reset":
+		if err := clearAllCuttlefishHosts(ccm); err != nil {
+			return err
 		}
+	case "fleet":
+		if err := fleetAllCuttlefishHosts(ccm); err != nil {
+			return err
+		}
+	case "help", "lint", "login", "version":
+		if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
+			return err
+		}
+	case "fetch":
+		if err := ExecFetchCmdOnDisposableHost(ccm, cvdArgs); err != nil {
+			return err
+		}
+	case "cache", "load", "monitor", "setup":
+		// TODO(seungjaeyoo): Support other subcommands of cvd as well.
+		return fmt.Errorf("subcommand %q is not implemented yet", subcommand)
+	default:
+		return fmt.Errorf("unknown subcommand %q", subcommand)
 	}
 	return nil
 }
