@@ -77,7 +77,7 @@ virtio_snd_chmap_info GetVirtioSndChmapInfo(
   return info;
 }
 
-inline constexpr const char* GetDirectionString(
+constexpr const char* GetDirectionString(
     AudioStreamSettings::Direction direction) {
   switch (direction) {
     case AudioStreamSettings::Direction::Capture:
