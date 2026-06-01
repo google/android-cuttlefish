@@ -184,7 +184,10 @@ func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ct
 	}
 	defer attachRes.Close()
 	if stdin != nil {
-		go io.Copy(attachRes.Conn, stdin)
+		go func() {
+			io.Copy(attachRes.Conn, stdin)
+			attachRes.CloseWrite()
+		}()
 	}
 	stdcopy.StdCopy(stdout, stderr, attachRes.Reader)
 
