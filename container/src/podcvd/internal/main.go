@@ -72,7 +72,7 @@ func Main(args []string) error {
 			if err := fleetAllCuttlefishHosts(ccm); err != nil {
 				return err
 			}
-		case "help", "login", "version":
+		case "help", "lint", "login", "version":
 			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
 				return err
 			}
@@ -80,7 +80,7 @@ func Main(args []string) error {
 			if err := ExecFetchCmdOnDisposableHost(ccm, cvdArgs); err != nil {
 				return err
 			}
-		case "cache", "lint":
+		case "cache", "load", "monitor", "setup":
 			// TODO(seungjaeyoo): Support other subcommands of cvd as well.
 			return fmt.Errorf("subcommand %q is not implemented yet", subcommand)
 		default:
@@ -372,10 +372,39 @@ func handleToolingSubcommands(ccm libcfcontainer.CuttlefishContainerManager, cvd
 	if err := CreateToolingHost(ccm); err != nil {
 		return err
 	}
+	subcommand := cvdArgs.SubCommandArgs[0]
+	switch subcommand {
+	case "lint":
+		if err := handleLintExecution(ccm, cvdArgs); err != nil {
+			return err
+		}
+	default:
+		args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
+		args = append(args, cvdArgs.SubCommandArgs...)
+		if err := ccm.ExecOnContainer(context.Background(), ToolingContainerName, args, os.Stdin, os.Stdout, os.Stderr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func handleLintExecution(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+	if len(cvdArgs.SubCommandArgs) < 2 {
+		return fmt.Errorf("missing JSON config file path")
+	}
+	configPath := cvdArgs.SubCommandArgs[1]
+	file, err := os.Open(configPath)
+	if err != nil {
+		return fmt.Errorf("failed to open config file %q: %w", configPath, err)
+	}
+	defer file.Close()
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
-	args = append(args, cvdArgs.SubCommandArgs...)
-	if err := ccm.ExecOnContainer(context.Background(), ToolingContainerName, args, os.Stdin, os.Stdout, os.Stderr); err != nil {
+	args = append(args, "lint", "/dev/stdin")
+	var stdoutBuf bytes.Buffer
+	if err := ccm.ExecOnContainer(context.Background(), ToolingContainerName, args, file, &stdoutBuf, os.Stderr); err != nil {
 		return err
 	}
+	output := strings.ReplaceAll(stdoutBuf.String(), "/dev/stdin", configPath)
+	os.Stdout.WriteString(output)
 	return nil
 }
