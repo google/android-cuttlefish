@@ -43,7 +43,6 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 
-#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -636,16 +635,6 @@ bool WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
     }
   }
   return true;
-}
-
-Flag VerbosityFlag(LogSeverity& value) {
-  return GflagsCompatFlag("verbosity")
-      .Getter([&value]() { return FromSeverity(value); })
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
-        value = CF_EXPECT(ToSeverity(match.value));
-        return {};
-      })
-      .Help("Used to set the verbosity level for logging.");
 }
 
 Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {

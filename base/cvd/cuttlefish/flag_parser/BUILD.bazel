@@ -9,7 +9,6 @@ cf_cc_library(
     srcs = ["flag_parser.cpp"],
     hdrs = ["flag_parser.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
@@ -28,7 +27,6 @@ cf_cc_test(
     deps = [
         ":flag_parser",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "//libbase",

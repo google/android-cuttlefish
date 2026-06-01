@@ -28,7 +28,6 @@
 #include <gtest/gtest.h>
 #include <libxml/parser.h>
 
-#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -326,44 +325,6 @@ TEST(FlagParser, InvalidIntFlag) {
   ASSERT_THAT(flag.Parse({"--myflag=def"}), IsError());
   ASSERT_THAT(flag.Parse({"-myflag", "abc"}), IsError());
   ASSERT_THAT(flag.Parse({"--myflag", "def"}), IsError());
-}
-
-TEST(FlagParser, VerbosityFlag) {
-  LogSeverity value = LogSeverity::Verbose;
-  auto flag = VerbosityFlag(value);
-  ASSERT_THAT(flag.Parse({"-verbosity=DEBUG"}), IsOk());
-  ASSERT_EQ(value, LogSeverity::Debug);
-  ASSERT_THAT(flag.Parse({"--verbosity=INFO"}), IsOk());
-  ASSERT_EQ(value, LogSeverity::Info);
-  ASSERT_THAT(flag.Parse({"--verbosity=WARNING"}), IsOk());
-  ASSERT_EQ(value, LogSeverity::Warning);
-  ASSERT_THAT(flag.Parse({"--verbosity=ERROR"}), IsOk());
-  ASSERT_EQ(value, LogSeverity::Error);
-  ASSERT_THAT(flag.Parse({"--verbosity=FATAL"}), IsOk());
-  ASSERT_EQ(value, LogSeverity::Fatal);
-  ASSERT_THAT(flag.Parse({"--verbosity=VERBOSE"}), IsOk());
-  ASSERT_EQ(value, LogSeverity::Verbose);
-}
-
-TEST(FlagParser, InvalidVerbosityFlag) {
-  LogSeverity value = LogSeverity::Verbose;
-  auto flag = VerbosityFlag(value);
-  ASSERT_THAT(flag.Parse({"-verbosity"}), IsError());
-  ASSERT_EQ(value, LogSeverity::Verbose);
-  ASSERT_THAT(flag.Parse({"--verbosity"}), IsError());
-  ASSERT_EQ(value, LogSeverity::Verbose);
-  ASSERT_THAT(flag.Parse({"-verbosity="}), IsError());
-  ASSERT_EQ(value, LogSeverity::Verbose);
-  ASSERT_THAT(flag.Parse({"--verbosity="}), IsError());
-  ASSERT_EQ(value, LogSeverity::Verbose);
-  ASSERT_THAT(flag.Parse({"-verbosity=not_a_severity"}), IsError());
-  ASSERT_EQ(value, LogSeverity::Verbose);
-  ASSERT_THAT(flag.Parse({"--verbosity=not_a_severity"}), IsError());
-  ASSERT_EQ(value, LogSeverity::Verbose);
-  ASSERT_THAT(flag.Parse({"-verbosity", "not_a_severity"}), IsError());
-  ASSERT_EQ(value, LogSeverity::Verbose);
-  ASSERT_THAT(flag.Parse({"--verbosity", "not_a_severity"}), IsError());
-  ASSERT_EQ(value, LogSeverity::Verbose);
 }
 
 TEST(FlagParser, InvalidFlagGuard) {
