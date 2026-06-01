@@ -121,6 +121,31 @@ Result<void> UpdateSensorsHal(const std::string& sensors_data,
   return {};
 }
 
+SensorsMask HostEnabledSensors(DeviceType device_type) {
+  switch (device_type) {
+    case DeviceType::Foldable:
+      return (1 << kAccelerationId) | (1 << kGyroscopeId) | (1 << kMagneticId) |
+             (1 << kTemperatureId) | (1 << kProximityId) | (1 << kLightId) |
+             (1 << kPressureId) | (1 << kHumidityId) | (1 << kHingeAngle0Id);
+    case DeviceType::Auto:
+      return (1 << kAccelerationId) | (1 << kGyroscopeId) |
+             (1 << kUncalibGyroscopeId) | (1 << kUncalibAccelerationId);
+    case DeviceType::Wear:
+      return (1 << kAccelerationId) | (1 << kGyroscopeId) | (1 << kMagneticId) |
+             (1 << kTemperatureId) | (1 << kProximityId) | (1 << kLightId) |
+             (1 << kPressureId) | (1 << kHumidityId) |
+             (1 << kSensorHandleLowLatencyOffBodyDetect);
+    case DeviceType::Desktop:
+      return (1 << kAccelerationId) | (1 << kGyroscopeId) | (1 << kMagneticId) |
+             (1 << kTemperatureId) | (1 << kProximityId) | (1 << kLightId) |
+             (1 << kPressureId) | (1 << kHumidityId) | (1 << kHingeAngle0Id);
+    default:
+      return (1 << kAccelerationId) | (1 << kGyroscopeId) | (1 << kMagneticId) |
+             (1 << kTemperatureId) | (1 << kProximityId) | (1 << kLightId) |
+             (1 << kPressureId) | (1 << kHumidityId);
+  }
+}
+
 }  // namespace
 
 SensorsHalProxy::SensorsHalProxy(SharedFD control_from_guest_fd,
@@ -135,32 +160,7 @@ SensorsHalProxy::SensorsHalProxy(SharedFD control_from_guest_fd,
       data_channel_(std::move(data_from_guest_fd), std::move(data_to_guest_fd)),
       kernel_events_fd_(std::move(kernel_events_fd)),
       sensors_simulator_(sensors_simulator) {
-  SensorsMask host_enabled_sensors;
-  switch (device_type) {
-    case DeviceType::Foldable:
-      host_enabled_sensors =
-          (1 << kAccelerationId) | (1 << kGyroscopeId) | (1 << kMagneticId) |
-          (1 << kTemperatureId) | (1 << kProximityId) | (1 << kLightId) |
-          (1 << kPressureId) | (1 << kHumidityId) | (1 << kHingeAngle0Id);
-      break;
-    case DeviceType::Auto:
-      host_enabled_sensors = (1 << kAccelerationId) | (1 << kGyroscopeId) |
-                             (1 << kUncalibGyroscopeId) |
-                             (1 << kUncalibAccelerationId);
-      break;
-    case DeviceType::Wear:
-      host_enabled_sensors = (1 << kAccelerationId) | (1 << kGyroscopeId) |
-                             (1 << kMagneticId) | (1 << kTemperatureId) |
-                             (1 << kProximityId) | (1 << kLightId) |
-                             (1 << kPressureId) | (1 << kHumidityId) |
-                             (1 << kSensorHandleLowLatencyOffBodyDetect);
-      break;
-    default:
-      host_enabled_sensors = (1 << kAccelerationId) | (1 << kGyroscopeId) |
-                             (1 << kMagneticId) | (1 << kTemperatureId) |
-                             (1 << kProximityId) | (1 << kLightId) |
-                             (1 << kPressureId) | (1 << kHumidityId);
-  }
+  const SensorsMask host_enabled_sensors = HostEnabledSensors(device_type);
 
   req_responder_thread_ = std::thread([this, host_enabled_sensors] {
     while (running_) {

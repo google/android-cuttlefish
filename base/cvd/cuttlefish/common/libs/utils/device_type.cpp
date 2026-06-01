@@ -38,6 +38,8 @@ DeviceType ParseDeviceType(std::string_view type_name) {
     return DeviceType::Minidroid;
   } else if (type_name == "go") {
     return DeviceType::Go;
+  } else if (type_name == "desktop") {
+    return DeviceType::Desktop;
   } else {
     return DeviceType::Unknown;
   }
@@ -61,6 +63,8 @@ std::string_view DeviceTypeToStringView(DeviceType device_type) {
       return "minidroid";
     case DeviceType::Go:
       return "go";
+    case DeviceType::Desktop:
+      return "desktop";
   }
 }
 
