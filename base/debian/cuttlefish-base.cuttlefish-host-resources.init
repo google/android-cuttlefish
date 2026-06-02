@@ -41,7 +41,7 @@ num_cvd_accounts=${num_cvd_accounts:-10}
 wifi_bridge_interface=${bridge_interface:-cvd-wbr}
 ethernet_bridge_interface=${bridge_interface:-cvd-ebr}
 ipv4_bridge=${ipv4_bridge:-1}
-ipv6_bridge=${ipv4_bridge:-1}
+ipv6_bridge=${ipv6_bridge:-1}
 dns_servers=${dns_servers:-8.8.8.8,8.8.4.4}
 dns6_servers=${dns6_servers:-2001:4860:4860::8888,2001:4860:4860::8844}
 
