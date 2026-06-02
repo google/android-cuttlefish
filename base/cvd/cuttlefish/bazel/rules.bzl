@@ -14,8 +14,11 @@
 
 load("@aspect_rules_lint//format:defs.bzl", "format_test")
 load("@cc_compatibility_proxy//:proxy.bzl", "cc_binary", "cc_library", "cc_test")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+load("@rules_shell//shell:sh_library.bzl", "sh_library")
 load("//:build_variables.bzl", BUILD_VAR_COPTS = "COPTS", BUILD_VAR_LINKOPTS = "LINKOPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//tools/lint:linters.bzl", "shellcheck_test")
 
 visibility(["//..."])
 
@@ -129,4 +132,46 @@ cf_cc_test = macro(
         "deps": attr.label_list(configurable = False),
     },
     implementation = _cf_cc_test_implementation,
+)
+
+def _cf_sh_binary_implementation(name, shellcheck_enabled, **kwargs):
+    sh_binary(
+        name = name,
+        **kwargs,
+    )
+    if shellcheck_enabled:
+        shellcheck_test(
+            name = name + "_shellcheck",
+            srcs = [":" + name],
+            tags = ["shellcheck"],
+            visibility = ["//visibility:private"],
+        )
+
+cf_sh_binary = macro(
+    inherit_attrs = sh_binary,
+    attrs = {
+        "shellcheck_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding shellcheck_test target is generated"),
+    },
+    implementation = _cf_sh_binary_implementation,
+)
+
+def _cf_sh_library_implementation(name, shellcheck_enabled, **kwargs):
+    sh_library(
+        name = name,
+        **kwargs,
+    )
+    if shellcheck_enabled:
+        shellcheck_test(
+            name = name + "_shellcheck",
+            srcs = [":" + name],
+            tags = ["shellcheck"],
+            visibility = ["//visibility:private"],
+        )
+
+cf_sh_library = macro(
+    inherit_attrs = sh_library,
+    attrs = {
+        "shellcheck_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding shellcheck_test target is generated"),
+    },
+    implementation = _cf_sh_library_implementation,
 )
