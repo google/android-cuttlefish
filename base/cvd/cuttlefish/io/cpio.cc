@@ -146,7 +146,8 @@ Result<CpioReader::EntriesMap> CpioReader::Parse(const ReaderSeeker& reader) {
   }
 }
 
-Result<CpioReader::EntriesMap> CpioReader::ParseNewc(const ReaderSeeker& reader) {
+Result<CpioReader::EntriesMap> CpioReader::ParseNewc(
+    const ReaderSeeker& reader) {
   EntriesMap entries;
   uint64_t offset = 0;
   while (true) {
@@ -189,7 +190,8 @@ Result<CpioReader::EntriesMap> CpioReader::ParseNewc(const ReaderSeeker& reader)
   return entries;
 }
 
-Result<CpioReader::EntriesMap> CpioReader::ParseOdc(const ReaderSeeker& reader) {
+Result<CpioReader::EntriesMap> CpioReader::ParseOdc(
+    const ReaderSeeker& reader) {
   EntriesMap entries;
   uint64_t offset = 0;
   while (true) {
