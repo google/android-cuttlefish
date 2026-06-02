@@ -10,6 +10,7 @@ cf_cc_library(
     name = "key_equals_value",
     srcs = ["key_equals_value.cc"],
     hdrs = ["key_equals_value.h"],
+    clang_format_enabled = True,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
@@ -21,6 +22,7 @@ cf_cc_library(
 cf_cc_test(
     name = "key_equals_value_test",
     srcs = ["key_equals_value_test.cc"],
+    clang_format_enabled = True,
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/result",
