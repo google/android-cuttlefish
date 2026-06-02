@@ -23,7 +23,7 @@
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/flag_parser/flag_parser.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 
 namespace cuttlefish {
 

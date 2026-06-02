@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/flag_parser/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 
 #include <stdint.h>
 
@@ -76,7 +77,7 @@ TEST(FlagParser, NormalizedStringFlag) {
 
 std::optional<std::map<std::string, std::string>> flagXml(const Flag& f) {
   std::stringstream xml_stream;
-  if (!f.WriteGflagsCompatXml(xml_stream)) {
+  if (!WriteGflagsCompatXml(f, xml_stream)) {
     return {};
   }
   auto xml = xml_stream.str();

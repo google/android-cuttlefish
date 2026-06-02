@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/flag_parser/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
 
 namespace cuttlefish {
 

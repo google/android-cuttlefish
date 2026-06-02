@@ -15,6 +15,8 @@
  */
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
+#include "cuttlefish/flag_parser/flag.h"
 
 #include <string>
 #include <string_view>

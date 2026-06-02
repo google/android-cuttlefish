@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,31 +14,29 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include <stdint.h>
+#include "cuttlefish/flag_parser/parser.h"
 
 #include <string>
-#include <vector>
+#include <string_view>
 
-#include "cuttlefish/flag_parser/flag.h"
+#include "absl/strings/numbers.h"
+
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-struct Parser {
-  static Result<Parser> ConsumeAndParse(std::vector<std::string>&);
+Result<bool> ParseBool(std::string_view value, std::string_view name) {
+  bool result;
+  CF_EXPECTF(absl::SimpleAtob(value, &result),
+             "Failed to parse value \"{}\" for {}", value, name);
+  return result;
+}
 
-  bool ignore_sigtstp = false;
-  bool when_dumped = false;
-  bool when_killed = false;
-  bool when_exited_with_failure = false;
-  /*
-   * TODO(288166029): if the flag is not given, do not restart
-   * with the exit code of -1 or 255.
-   */
-  int32_t when_exited_with_code = -1;
-  std::string first_time_argument;
-};
+Result<int> ParseInt(const std::string& value, std::string_view name) {
+  int result;
+  CF_EXPECTF(absl::SimpleAtoi(value, &result),
+             "Failed to parse value \"{}\" as integer for \"{}\"", value, name);
+  return result;
+}
 
 }  // namespace cuttlefish
