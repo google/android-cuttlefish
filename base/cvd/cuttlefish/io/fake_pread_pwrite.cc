@@ -22,7 +22,8 @@
 
 namespace cuttlefish {
 
-Result<uint64_t> FakePRead(ReaderSeeker& reader_seeker, void* buf, uint64_t count, uint64_t offset) {
+Result<uint64_t> FakePRead(ReaderSeeker& reader_seeker, void* buf,
+                           uint64_t count, uint64_t offset) {
   size_t original_offset = CF_EXPECT(reader_seeker.SeekCur(0));
   CF_EXPECT(reader_seeker.SeekSet(offset));
   Result<size_t> read_res = reader_seeker.Read(buf, count);
