@@ -21,11 +21,16 @@
 #include <algorithm>
 #include <functional>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <shared_mutex>
+#include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
+#include "cuttlefish/io/filesystem.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 

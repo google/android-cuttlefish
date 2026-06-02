@@ -16,12 +16,19 @@
 #include "cuttlefish/io/cpio.h"
 
 #include <endian.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 #include <charconv>
+#include <memory>
+#include <string>
 #include <string_view>
+#include <system_error>
+#include <utility>
 
 #include "cuttlefish/common/libs/utils/size_utils.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/io/read_window_view.h"
 #include "cuttlefish/result/expect.h"

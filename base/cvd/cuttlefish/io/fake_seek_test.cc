@@ -15,8 +15,11 @@
 
 #include "cuttlefish/io/fake_seek.h"
 
-#include <string>
-#include <string_view>
+#include <stdint.h>
+#include <string.h>
+
+#include <algorithm>
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

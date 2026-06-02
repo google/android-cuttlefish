@@ -16,11 +16,12 @@
 #include "cuttlefish/io/shared_fd.h"
 
 #include <stdint.h>
-#include <unistd.h>
+#include <stdio.h>
 
 #include <utility>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 

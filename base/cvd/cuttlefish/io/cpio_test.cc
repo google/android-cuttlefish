@@ -15,14 +15,20 @@
 
 #include "cuttlefish/io/cpio.h"
 
-#include <gtest/gtest.h>
+#include <stdint.h>
+
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 #include "cuttlefish/io/in_memory.h"
-#include "cuttlefish/io/read_exact.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/string.h"
+#include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {

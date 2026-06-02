@@ -15,8 +15,6 @@
 
 #include "cuttlefish/io/default_visitor.h"
 
-#include <stdint.h>
-
 #include "cuttlefish/io/concat.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_window_view.h"
