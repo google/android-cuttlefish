@@ -21,6 +21,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <string_view>
 
 #include "absl/log/log.h"
 
@@ -30,100 +31,88 @@ namespace cuttlefish {
 namespace webrtc_streaming {
 
 namespace {
-static constexpr sensors::SensorsMask kUiSupportedSensors =
+static constexpr sensors::SensorsMask kMotionSensors =
     (1 << sensors::kAccelerationId) | (1 << sensors::kGyroscopeId) |
     (1 << sensors::kMagneticId) | (1 << sensors::kRotationVecId);
 }  // namespace
 
 SensorsHandler::SensorsHandler(SharedFD sensors_fd)
-    : channel_(transport::SharedFdChannel(sensors_fd, sensors_fd)) {
-  auto refresh_result = RefreshSensors(0, 0, 0);
-  if (!refresh_result.ok()) {
-    LOG(ERROR) << "Failed to refresh sensors: " << refresh_result.error();
-  }
-}
+    : channel_(transport::SharedFdChannel(sensors_fd, sensors_fd)) {}
 
 SensorsHandler::~SensorsHandler() {}
 
-Result<void> SensorsHandler::RefreshSensors(const double x, const double y,
-                                            const double z) {
-  std::stringstream ss;
-  ss << x << sensors::INNER_DELIM << y << sensors::INNER_DELIM << z;
-  auto msg = ss.str();
-  auto size = msg.size();
-  auto cmd = sensors::kUpdateRotationVec;
-  auto request = CF_EXPECT(transport::CreateMessage(cmd, size),
-                           "Failed to allocate message for cmd: "
-                               << cmd << " with size: " << size << " bytes. ");
-  memcpy(request->payload, msg.data(), size);
+Result<void> SensorsHandler::SendCommand(uint32_t cmd,
+                                         std::string_view payload) {
+  size_t size = payload.size();
+  transport::ManagedMessage request = CF_EXPECT(
+      transport::CreateMessage(cmd, size),
+      "Failed to allocate message for cmd: " << cmd << " with size: " << size
+                                             << " bytes. ");
+  memcpy(request->payload, payload.data(), size);
   CF_EXPECT(channel_.SendRequest(*request),
             "Can't send request for cmd: " << cmd);
   return {};
 }
 
-Result<std::string> SensorsHandler::GetSensorsData() {
-  auto msg = std::to_string(kUiSupportedSensors);
-  auto size = msg.size();
-  auto cmd = sensors::kGetSensorsData;
-  auto request = CF_EXPECT(transport::CreateMessage(cmd, size),
-                           "Failed to allocate message for cmd: "
-                               << cmd << " with size: " << size << " bytes. ");
-  memcpy(request->payload, msg.data(), size);
-  CF_EXPECT(channel_.SendRequest(*request),
-            "Can't send request for cmd: " << cmd);
-  auto response =
+Result<void> SensorsHandler::SetMotion(const double x, const double y,
+                                       const double z) {
+  std::stringstream ss;
+  ss << x << sensors::INNER_DELIM << y << sensors::INNER_DELIM << z;
+  CF_EXPECT(SendCommand(sensors::kUpdateRotationVec, ss.str()));
+  NotifyMotionUpdated();
+  return {};
+}
+
+Result<void> SensorsHandler::SetHingeAngle(const double angle) {
+  CF_EXPECT(SendCommand(sensors::kUpdateHingeAngle, std::to_string(angle)));
+  return {};
+}
+
+Result<std::string> SensorsHandler::GetSensorsData(sensors::SensorsMask mask) {
+  CF_EXPECT(SendCommand(sensors::kGetSensorsData, std::to_string(mask)));
+  transport::ManagedMessage response =
       CF_EXPECT(channel_.ReceiveMessage(), "Couldn't receive message.");
-  cmd = response->command;
-  auto is_response = response->is_response;
+  uint32_t cmd = response->command;
+  bool is_response = response->is_response;
   CF_EXPECT((cmd == sensors::kGetSensorsData) && is_response,
             "Unexpected cmd: " << cmd << ", response: " << is_response);
   return std::string(reinterpret_cast<const char*>(response->payload),
                      response->payload_size);
 }
 
-// Get new sensor values and send them to client.
-void SensorsHandler::HandleMessage(const double x, const double y, const double z) {
-  auto refresh_result = RefreshSensors(x, y, z);
-  if (!refresh_result.ok()) {
-    LOG(ERROR) << "Failed to refresh sensors: " << refresh_result.error();
-    return;
-  }
-  UpdateSensorsUi();
-}
-
-int SensorsHandler::Subscribe(std::function<void(const uint8_t*, size_t)> send_to_client) {
+int SensorsHandler::AddMotionUpdatedCallback(MotionUpdatedCallback callback) {
   int subscriber_id = ++last_client_channel_id_;
   {
     std::lock_guard<std::mutex> lock(subscribers_mtx_);
-    client_channels_[subscriber_id] = send_to_client;
+    client_channels_[subscriber_id] = callback;
   }
 
   // Send device's initial state to the new client.
-  auto result = GetSensorsData();
+  Result<std::string> result = GetSensorsData(kMotionSensors);
   if (!result.ok()) {
     LOG(ERROR) << "Failed to get sensors data: " << result.error();
     return subscriber_id;
   }
-  auto new_sensors_data = std::move(result.value());
+  std::string new_sensors_data = std::move(result.value());
   const uint8_t* message =
       reinterpret_cast<const uint8_t*>(new_sensors_data.c_str());
-  send_to_client(message, new_sensors_data.size());
+  callback(message, new_sensors_data.size());
 
   return subscriber_id;
 }
 
-void SensorsHandler::UnSubscribe(int subscriber_id) {
+void SensorsHandler::RemoveMotionUpdatedCallback(int subscriber_id) {
   std::lock_guard<std::mutex> lock(subscribers_mtx_);
   client_channels_.erase(subscriber_id);
 }
 
-void SensorsHandler::UpdateSensorsUi() {
-  auto result = GetSensorsData();
+void SensorsHandler::NotifyMotionUpdated() {
+  Result<std::string> result = GetSensorsData(kMotionSensors);
   if (!result.ok()) {
     LOG(ERROR) << "Failed to get sensors data: " << result.error();
     return;
   }
-  auto new_sensors_data = std::move(result.value());
+  std::string new_sensors_data = std::move(result.value());
   const uint8_t* message =
       reinterpret_cast<const uint8_t*>(new_sensors_data.c_str());
   std::lock_guard<std::mutex> lock(subscribers_mtx_);

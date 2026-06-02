@@ -178,9 +178,11 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     CF_EXPECT(OnSwitchEvent(SW_LID, !lid_open));
     return {};
   }
-  void OnHingeAngleChange(int /*hinge_angle*/) override {
-    // TODO(b/181157794) Propagate hinge angle sensor data using a custom
-    // Sensor HAL.
+  void OnHingeAngleChange(int hinge_angle) override {
+    Result<void> result = sensors_handler_.SetHingeAngle(hinge_angle);
+    if (!result.ok()) {
+      LOG(ERROR) << "Failed to set hinge angle: " << result.error();
+    }
   }
   Result<void> OnPowerButton(bool button_down) override {
     CF_EXPECT(OnKeyboardEvent(KEY_POWER, button_down));
@@ -239,12 +241,12 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   void OnSensorsChannelOpen(std::function<bool(const uint8_t *, size_t)>
                                 sensors_message_sender) override {
     sensors_subscription_id =
-        sensors_handler_.Subscribe(sensors_message_sender);
+        sensors_handler_.AddMotionUpdatedCallback(sensors_message_sender);
     VLOG(1) << "Sensors channel open";
   }
 
   void OnSensorsChannelClosed() override {
-    sensors_handler_.UnSubscribe(sensors_subscription_id);
+    sensors_handler_.RemoveMotionUpdatedCallback(sensors_subscription_id);
   }
 
   void OnSensorsMessage(const uint8_t *msg, size_t size) override {
@@ -264,7 +266,10 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
         << "Y rotation value must be a double";
     CHECK(absl::SimpleAtod(xyz.at(2), &z))
         << "Z rotation value must be a double";
-    sensors_handler_.HandleMessage(x, y, z);
+    Result<void> result = sensors_handler_.SetMotion(x, y, z);
+    if (!result.ok()) {
+      LOG(ERROR) << "Failed to set motion: " << result.error();
+    }
   }
 
   void OnLightsChannelOpen(

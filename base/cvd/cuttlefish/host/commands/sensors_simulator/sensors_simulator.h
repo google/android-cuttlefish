@@ -17,6 +17,7 @@
 #pragma once
 
 #include <chrono>
+#include <functional>
 #include <mutex>
 #include <string>
 
@@ -37,8 +38,15 @@ struct SensorsData {
 class SensorsSimulator {
  public:
   SensorsSimulator(bool is_auto);
-  // Update sensor values based on new rotation status.
-  void RefreshSensors(double x, double y, double z);
+
+  using SensorsChangedCallback = std::function<void(SensorsMask)>;
+  // Registers a callback invoked whenever one or more sensors in |mask| are
+  // updated.
+  void SetSensorsChangedCallback(SensorsMask mask,
+                                 SensorsChangedCallback callback);
+
+  void SetMotion(double x, double y, double z);
+  void SetHingeAngle(float angle);
 
   // Return a string with serialized sensors data in ascending order of
   // sensor id. A bitmask is used to specify which sensors to include.
@@ -49,7 +57,11 @@ class SensorsSimulator {
   std::string GetSensorsData(const SensorsMask mask);
 
  private:
+  void NotifySensorsChanged(SensorsMask changed);
+
   std::mutex sensors_data_mtx_;
+  SensorsMask sensors_changed_mask_ = 0;
+  SensorsChangedCallback sensors_changed_callback_;
   SensorsData sensors_data_[kMaxSensorId + 1];
   Eigen::Matrix3d current_rotation_matrix_;
   std::chrono::time_point<std::chrono::high_resolution_clock>

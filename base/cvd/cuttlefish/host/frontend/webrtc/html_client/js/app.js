@@ -183,14 +183,14 @@ class DeviceControlApp {
         document.getElementById('record_video_btn'),
         enabled => this.#onVideoCaptureToggle(enabled));
 
+    this.#showDeviceUI();
+
     // Enable non-ADB buttons, these buttons use data channels to communicate
     // with the host, so they're ready to go as soon as the webrtc connection is
     // established.
     this.#getControlPanelButtons()
         .filter(b => !b.dataset.adb)
         .forEach(b => b.disabled = false);
-
-    this.#showDeviceUI();
   }
 
   #addAudioStream(stream_id, audioPlaybackCtrl) {
@@ -352,18 +352,10 @@ class DeviceControlApp {
               'control-panel-custom-buttons');
           element.dataset.adb = true;
         } else if (button.device_states) {
-          // This button corresponds to variable hardware device state(s).
-          let element = createControlPanelButton(
+          createControlPanelButton(
               button.title, button.icon_name,
               this.#getCustomDeviceStateButtonCb(button.device_states),
               'control-panel-custom-buttons');
-          for (const device_state of button.device_states) {
-            // hinge_angle is currently injected via an adb shell command that
-            // triggers a guest binary.
-            if ('hinge_angle_value' in device_state) {
-              element.dataset.adb = true;
-            }
-          }
         } else {
           // This button's command is handled by custom action server.
           createControlPanelButton(
@@ -738,8 +730,6 @@ class DeviceControlApp {
     let index = 0;
     return e => {
       if (e.type == 'mousedown') {
-        // Reset any overridden device state.
-        adbShell('cmd device_state state reset');
         // Send a device_state message for the current state.
         let message = {
           command: 'device_state',
@@ -754,11 +744,6 @@ class DeviceControlApp {
         let hingeAngle = null;
         if ('hinge_angle_value' in states[index]) {
           hingeAngle = states[index].hinge_angle_value;
-          // TODO(b/181157794): Use a custom Sensor HAL for hinge_angle
-          // injection instead of this guest binary.
-          adbShell(
-              '/vendor/bin/cuttlefish_sensor_injection hinge_angle ' +
-              states[index].hinge_angle_value);
         }
         // Update the Device Details view.
         this.#updateDeviceStateDetails(lidSwitchOpen, hingeAngle);
