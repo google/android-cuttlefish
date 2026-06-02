@@ -83,16 +83,10 @@ Result<std::string> ParseFlagValue<std::string>(std::string_view str) {
   return std::string(str);
 }
 
-// Setter for unsigned and size_t, default getter works
-template<>
-Result<size_t> ParseFlagValue<size_t>(std::string_view str) {
-  size_t value;
-  CF_EXPECT(absl::SimpleAtoi(str, &value));
-  return value;
-}
-template<>
-Result<unsigned> ParseFlagValue<unsigned>(std::string_view str) {
-  unsigned value;
+// Setter for integral types, default getter is fine
+template <std::integral T>
+Result<T> ParseFlagValue(std::string_view str) {
+  T value;
   CF_EXPECT(absl::SimpleAtoi(str, &value));
   return value;
 }
