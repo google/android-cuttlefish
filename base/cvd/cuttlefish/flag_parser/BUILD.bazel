@@ -9,12 +9,10 @@ cf_cc_library(
     srcs = [
         "flag.cpp",
         "gflags_compat.cpp",
-        "parser.cpp",
     ],
     hdrs = [
         "flag.h",
         "gflags_compat.h",
-        "parser.h",
     ],
     deps = [
         "//cuttlefish/result",
