@@ -201,9 +201,8 @@ std::string XmlEscape(const std::string& s) {
   return absl::StrReplaceAll(s, {{"<", "&lt;"}, {">", "&gt;"}});
 }
 
-Result<void> GflagsCompatBoolFlagSetter(const std::string& name,
-                                                bool& value,
-                                                const FlagMatch& match) {
+Result<void> GflagsCompatBoolFlagSetter(const std::string& name, bool& value,
+                                        const FlagMatch& match) {
   const auto& key = match.key;
   if (key == "-" + name || key == "--" + name) {
     value = true;
@@ -212,6 +211,36 @@ Result<void> GflagsCompatBoolFlagSetter(const std::string& name,
     value = false;
     return {};
   } else if (key == "-" + name + "=" || key == "--" + name + "=") {
+    if (match.value == "true") {
+      value = true;
+      return {};
+    } else if (match.value == "false") {
+      value = false;
+      return {};
+    } else {
+      return CF_ERRF("Unexpected boolean value \"{}\" for \"{}\"", match.value,
+                     name);
+    }
+  }
+  return CF_ERRF("Unexpected key \"{}\" for \"{}\"", match.key, name);
+}
+
+Result<void> GflagsCompatBoolFlagSetter(const std::string& name,
+                                        std::optional<bool>& value,
+                                        const FlagMatch& match,
+                                        CoerceToNullopt opt) {
+  const auto& key = match.key;
+  if (key == "-" + name || key == "--" + name) {
+    value = true;
+    return {};
+  } else if (key == "-no" + name || key == "--no" + name) {
+    value = false;
+    return {};
+  } else if (key == "-" + name + "=" || key == "--" + name + "=") {
+    if (ShouldBeNullOpt(match.value, opt)) {
+      value = std::nullopt;
+      return {};
+    }
     if (match.value == "true") {
       value = true;
       return {};
@@ -403,6 +432,11 @@ Flag GflagsCompatFlag(const std::string& name,
   return GflagsCompatFlagImpl(name, value, opt);
 }
 
+Flag GflagsCompatFlag(const std::string& name, std::optional<int>& value,
+                      CoerceToNullopt opt) {
+  return GflagsCompatFlagImpl(name, value, opt);
+}
+
 Flag GflagsCompatFlag(const std::string& name, std::optional<size_t>& value,
                       CoerceToNullopt opt) {
   return GflagsCompatFlagImpl(name, value, opt);
@@ -411,6 +445,20 @@ Flag GflagsCompatFlag(const std::string& name, std::optional<size_t>& value,
 Flag GflagsCompatFlag(const std::string& name, std::optional<unsigned>& value,
                       CoerceToNullopt opt) {
   return GflagsCompatFlagImpl(name, value, opt);
+}
+
+Flag GflagsCompatFlag(const std::string& name, std::optional<int64_t>& value,
+                      CoerceToNullopt opt) {
+  return GflagsCompatFlagImpl(name, value, opt);
+}
+
+Flag GflagsCompatFlag(const std::string& name, std::optional<bool>& value,
+                      CoerceToNullopt opt) {
+  return GflagsCompatBoolFlag(name)
+      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
+      .Setter([name, &value, opt](const FlagMatch& match) {
+        return GflagsCompatBoolFlagSetter(name, value, match, opt);
+      });
 }
 
 Flag GflagsCompatFlag(const std::string& name,

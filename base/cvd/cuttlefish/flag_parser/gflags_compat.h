@@ -52,10 +52,19 @@ Flag GflagsCompatFlag(
     const std::string& name, std::optional<std::string>& value,
     CoerceToNullopt opt = CoerceToNullopt::None);
 Flag GflagsCompatFlag(
+    const std::string& name, std::optional<int>& value,
+    CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(
     const std::string& name, std::optional<size_t>& value,
     CoerceToNullopt opt = CoerceToNullopt::None);
 Flag GflagsCompatFlag(
     const std::string& name, std::optional<unsigned>& value,
+    CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(
+    const std::string& name, std::optional<int64_t>& value,
+    CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(
+    const std::string& name, std::optional<bool>& value,
     CoerceToNullopt opt = CoerceToNullopt::None);
 
 Flag GflagsCompatFlag(
