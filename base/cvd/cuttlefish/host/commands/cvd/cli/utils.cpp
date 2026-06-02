@@ -15,6 +15,8 @@
  */
 
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
+#include "cuttlefish/flag_parser/flag.h"
 
 #include <sys/ioctl.h>
 #include <unistd.h>

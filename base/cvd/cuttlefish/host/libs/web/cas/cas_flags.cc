@@ -24,7 +24,9 @@
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/flag_parser/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
+#include "cuttlefish/flag_parser/parser.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
