@@ -93,9 +93,6 @@ type CreateBugReportOpts struct {
 type InstancesClient interface {
 	// Lists currently running devices.
 	ListCVDs() ([]*hoapi.CVD, error)
-	// Calls cvd fetch in the remote host, the downloaded artifacts can be used to create a CVD later.
-	// If not empty, the provided credentials will be used by the host orchestrator to access the build api.
-	FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds BuildAPICreds) (*hoapi.FetchArtifactsResponse, error)
 	// Create a new device with artifacts from the build server or previously uploaded by the user.
 	// If not empty, the provided credentials will be used to download necessary artifacts from the build api.
 	CreateCVD(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.CreateCVDResponse, error)
@@ -391,25 +388,6 @@ func (c *HostOrchestratorClientImpl) waitForOperation(name string, res any) erro
 func (c *HostOrchestratorClientImpl) waitForOperationOpts(name string, res any, retryOpts RetryOptions) error {
 	path := "/operations/" + name + "/:wait"
 	return c.HTTPHelper.NewPostRequest(path, nil).JSONResDoWithRetries(res, retryOpts)
-}
-
-func (c *HostOrchestratorClientImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds BuildAPICreds) (*hoapi.FetchArtifactsResponse, error) {
-	var op hoapi.Operation
-	rb := c.HTTPHelper.NewPostRequest("/artifacts", req)
-	creds.ApplyToHTTPRequest(rb)
-	if err := rb.JSONResDo(&op); err != nil {
-		return nil, err
-	}
-
-	res := &hoapi.FetchArtifactsResponse{}
-	if err := c.waitForOperationOpts(op.Name, &res, RetryOptions{
-		StatusCodes: []int{http.StatusServiceUnavailable, http.StatusGatewayTimeout},
-		RetryDelay:  30 * time.Second,
-		MaxWait:     10 * time.Minute,
-	}); err != nil {
-		return nil, err
-	}
-	return res, nil
 }
 
 func (c *HostOrchestratorClientImpl) createCVDOp(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.Operation, error) {
