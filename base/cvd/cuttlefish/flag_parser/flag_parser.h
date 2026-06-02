@@ -220,7 +220,5 @@ Flag GflagsCompatFlag(
     const std::string& name, std::optional<std::vector<unsigned>>& value,
     CoerceToNullopt opt = CoerceToNullopt::None);
 
-// e.g. cvd start --help, cvd stop -help, cvd fleet -h
-Result<bool> HasHelpFlag(const std::vector<std::string>& args);
 
 }  // namespace cuttlefish
