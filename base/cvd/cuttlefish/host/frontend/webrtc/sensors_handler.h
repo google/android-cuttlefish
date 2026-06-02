@@ -18,8 +18,10 @@
 
 #include <functional>
 #include <mutex>
+#include <string_view>
 #include <unordered_map>
 
+#include "cuttlefish/common/libs/sensors/sensors.h"
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 
 namespace cuttlefish {
@@ -27,19 +29,23 @@ namespace webrtc_streaming {
 
 class SensorsHandler {
  public:
+  using MotionUpdatedCallback = std::function<void(const uint8_t*, size_t)>;
+
   explicit SensorsHandler(SharedFD sensors_fd);
   ~SensorsHandler();
 
-  void HandleMessage(double x, double y, double z);
-  int Subscribe(std::function<void(const uint8_t*, size_t)> send_to_client);
-  void UnSubscribe(int subscriber_id);
+  Result<void> SetMotion(double x, double y, double z);
+  Result<void> SetHingeAngle(double angle);
+
+  int AddMotionUpdatedCallback(MotionUpdatedCallback callback);
+  void RemoveMotionUpdatedCallback(int subscriber_id);
 
  private:
-  Result<void> RefreshSensors(double x, double y, double z);
-  Result<std::string> GetSensorsData();
-  void UpdateSensorsUi();
+  Result<void> SendCommand(uint32_t cmd, std::string_view payload);
+  Result<std::string> GetSensorsData(sensors::SensorsMask mask);
+  void NotifyMotionUpdated();
 
-  std::unordered_map<int, std::function<void(const uint8_t*, size_t)>> client_channels_;
+  std::unordered_map<int, MotionUpdatedCallback> client_channels_;
   int last_client_channel_id_ = -1;
   std::mutex subscribers_mtx_;
   transport::SharedFdChannel channel_;

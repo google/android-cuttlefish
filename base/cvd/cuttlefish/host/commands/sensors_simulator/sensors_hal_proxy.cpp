@@ -16,6 +16,9 @@
 
 #include "cuttlefish/host/commands/sensors_simulator/sensors_hal_proxy.h"
 
+#include <mutex>
+#include <string>
+
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 
@@ -34,6 +37,13 @@ static constexpr SensorsMask kContinuousModeSensors =
     (1 << kAccelerationId) | (1 << kGyroscopeId) | (1 << kMagneticId) |
     (1 << kPressureId) | (1 << kUncalibGyroscopeId) |
     (1 << kUncalibAccelerationId) | (1 << kLightId);
+
+/*
+  On-change sensors are only reported to the guest when their value changes
+  (and once after the guest HAL (re)starts), instead of being streamed every
+  cycle like the continuous mode sensors above.
+*/
+static constexpr SensorsMask kOnChangeSensors = (1 << kHingeAngle0Id);
 
 Result<std::string> SensorIdToName(int id) {
   switch (id) {
@@ -72,10 +82,10 @@ Result<std::string> SensorIdToName(int id) {
 
 Result<void> SendResponseHelper(transport::SharedFdChannel& channel,
                                 const std::string& msg) {
-  auto size = msg.size();
-  auto cmd = sensors::kUpdateHal;
-  auto response = CF_EXPECT(transport::CreateMessage(cmd, msg.size()),
-                            "Failed to allocate message.");
+  size_t size = msg.size();
+  int cmd = sensors::kUpdateHal;
+  transport::ManagedMessage response = CF_EXPECT(
+      transport::CreateMessage(cmd, msg.size()), "Failed to allocate message.");
   std::memcpy(response->payload, msg.data(), size);
   CF_EXPECT(channel.SendResponse(*response), "Can't update sensor HAL.");
   return {};
@@ -84,12 +94,12 @@ Result<void> SendResponseHelper(transport::SharedFdChannel& channel,
 Result<void> ProcessHalRequest(transport::SharedFdChannel& channel,
                                std::atomic<bool>& hal_activated,
                                uint32_t mask) {
-  auto request =
+  transport::ManagedMessage request =
       CF_EXPECT(channel.ReceiveMessage(), "Couldn't receive message.");
   std::string payload(reinterpret_cast<const char*>(request->payload),
                       request->payload_size);
   if (payload.rfind("list-sensors", 0) == 0) {
-    auto msg = std::to_string(mask) + END_OF_MSG;
+    std::string msg = std::to_string(mask) + END_OF_MSG;
     CF_EXPECT(SendResponseHelper(channel, msg));
     hal_activated = true;
   }
@@ -107,7 +117,7 @@ Result<void> UpdateSensorsHal(const std::string& sensors_data,
   while (mask) {
     if (mask & 1) {
       CF_EXPECT(static_cast<bool>(sensors_data_stream >> report));
-      auto result = SensorIdToName(id);
+      Result<std::string> result = SensorIdToName(id);
       if (result.ok()) {
         reports.push_back(result.value() + INNER_DELIM + report + END_OF_MSG);
       }
@@ -162,6 +172,10 @@ SensorsHalProxy::SensorsHalProxy(SharedFD control_from_guest_fd,
       sensors_simulator_(sensors_simulator) {
   const SensorsMask host_enabled_sensors = HostEnabledSensors(device_type);
 
+  sensors_simulator_.SetSensorsChangedCallback(
+      host_enabled_sensors & kOnChangeSensors,
+      [this](SensorsMask changed) { ReportToGuest(changed); });
+
   req_responder_thread_ = std::thread([this, host_enabled_sensors] {
     while (running_) {
       auto result = ProcessHalRequest(control_channel_, hal_activated_,
@@ -174,24 +188,14 @@ SensorsHalProxy::SensorsHalProxy(SharedFD control_from_guest_fd,
   });
   data_reporter_thread_ = std::thread([this, host_enabled_sensors] {
     while (running_) {
-      if (hal_activated_) {
-        SensorsMask host_update_sensors =
-            host_enabled_sensors & kContinuousModeSensors;
-        auto sensors_data =
-            sensors_simulator_.GetSensorsData(host_update_sensors);
-        auto result =
-            UpdateSensorsHal(sensors_data, data_channel_, host_update_sensors);
-        if (!result.ok()) {
-          running_ = false;
-          LOG(ERROR) << result.error();
-        }
-      }
+      ReportToGuest(host_enabled_sensors & kContinuousModeSensors);
       std::this_thread::sleep_for(std::chrono::milliseconds(kIntervalMs));
     }
   });
   reboot_monitor_thread_ = std::thread([this] {
     while (kernel_events_fd_->IsOpen()) {
-      auto read_result = monitor::ReadEvent(kernel_events_fd_);
+      Result<std::optional<monitor::ReadEventResult>> read_result =
+          monitor::ReadEvent(kernel_events_fd_);
       CHECK(read_result.ok()) << read_result.error();
       CHECK(read_result->has_value()) << "EOF in kernel log monitor";
       if ((*read_result)->event == monitor::Event::BootloaderLoaded) {
@@ -199,6 +203,19 @@ SensorsHalProxy::SensorsHalProxy(SharedFD control_from_guest_fd,
       }
     }
   });
+}
+
+void SensorsHalProxy::ReportToGuest(SensorsMask mask) {
+  if (!hal_activated_ || !mask) {
+    return;
+  }
+  std::string sensors_data = sensors_simulator_.GetSensorsData(mask);
+  std::lock_guard<std::mutex> lock(report_mtx_);
+  Result<void> result = UpdateSensorsHal(sensors_data, data_channel_, mask);
+  if (!result.ok()) {
+    running_ = false;
+    LOG(ERROR) << result.error();
+  }
 }
 
 }  // namespace sensors

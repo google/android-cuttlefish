@@ -60,7 +60,13 @@ Result<void> ProcessWebrtcRequest(transport::SharedFdChannel& channel,
       CF_EXPECT((ss >> y >> delimiter) && (delimiter == INNER_DELIM),
                 kReqMisFormatted);
       CF_EXPECT(static_cast<bool>(ss >> z), kReqMisFormatted);
-      sensors_simulator.RefreshSensors(x, y, z);
+      sensors_simulator.SetMotion(x, y, z);
+      break;
+    }
+    case kUpdateHingeAngle: {
+      float angle;
+      CF_EXPECT(static_cast<bool>(ss >> angle), kReqMisFormatted);
+      sensors_simulator.SetHingeAngle(angle);
       break;
     }
     case kGetSensorsData: {

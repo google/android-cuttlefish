@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/sensors_simulator/sensors_simulator.h"
 
 #include <cmath>
+#include <utility>
 
 namespace cuttlefish {
 namespace sensors {
@@ -28,7 +29,7 @@ constexpr float kLight = 1000.0f;       // lux
 constexpr float kPressure = 1013.25f;   // hpa
 constexpr float kHumidity = 40.0f;      // percent
 constexpr float kHingeAngle0 = 180.0f;  // degree
-constexpr double kG = 9.80665;  // meter per second^2
+constexpr double kG = 9.80665;          // meter per second^2
 const Eigen::Vector3d kMagneticField{0, 5.9, -48.4};
 inline double ToRadians(double x) { return x * M_PI / 180; }
 
@@ -96,7 +97,7 @@ SensorsSimulator::SensorsSimulator(bool is_auto)
       last_event_timestamp_(std::chrono::high_resolution_clock::now()),
       is_auto_(is_auto) {
   // Initialize sensors_data_ based on rotation vector = (0, 0, 0)
-  RefreshSensors(0, 0, 0);
+  SetMotion(0, 0, 0);
   // Set constant values for the sensors that are independent of rotation vector
   sensors_data_[kTemperatureId].f = kTemperature;
   sensors_data_[kProximityId].f = kProximity;
@@ -106,30 +107,61 @@ SensorsSimulator::SensorsSimulator(bool is_auto)
   sensors_data_[kHingeAngle0Id].f = kHingeAngle0;
 }
 
-void SensorsSimulator::RefreshSensors(double x, double y, double z) {
-  auto rotation_matrix_update = GetRotationMatrix(x, y, z);
-  auto acc_update = CalculateAcceleration(rotation_matrix_update, is_auto_);
-  auto mgn_update = CalculateMagnetometer(rotation_matrix_update);
+void SensorsSimulator::SetSensorsChangedCallback(
+    SensorsMask mask, SensorsChangedCallback callback) {
+  sensors_changed_mask_ = mask;
+  sensors_changed_callback_ = std::move(callback);
+}
 
-  std::lock_guard<std::mutex> lock(sensors_data_mtx_);
-  auto current_time = std::chrono::high_resolution_clock::now();
-  auto duration = current_time - last_event_timestamp_;
-  last_event_timestamp_ = current_time;
+void SensorsSimulator::NotifySensorsChanged(SensorsMask changed) {
+  SensorsMask relevant = changed & sensors_changed_mask_;
+  if (sensors_changed_callback_ && relevant) {
+    sensors_changed_callback_(relevant);
+  }
+}
 
-  auto gyro_update = CalculateGyroscope(duration, current_rotation_matrix_,
-                                        rotation_matrix_update);
+void SensorsSimulator::SetMotion(double x, double y, double z) {
+  Eigen::Matrix3d rotation_matrix_update = GetRotationMatrix(x, y, z);
+  Eigen::Vector3d acc_update =
+      CalculateAcceleration(rotation_matrix_update, is_auto_);
+  Eigen::Vector3d mgn_update = CalculateMagnetometer(rotation_matrix_update);
 
-  current_rotation_matrix_ = rotation_matrix_update;
+  {
+    std::lock_guard<std::mutex> lock(sensors_data_mtx_);
+    auto current_time = std::chrono::high_resolution_clock::now();
+    auto duration = current_time - last_event_timestamp_;
+    last_event_timestamp_ = current_time;
 
-  sensors_data_[kRotationVecId].v << x, y, z;
-  sensors_data_[kAccelerationId].v = acc_update;
-  sensors_data_[kGyroscopeId].v = gyro_update;
-  sensors_data_[kMagneticId].v = mgn_update;
+    Eigen::Vector3d gyro_update = CalculateGyroscope(
+        duration, current_rotation_matrix_, rotation_matrix_update);
 
-  // Copy the calibrated sensor data over for uncalibrated sensor support
-  sensors_data_[kUncalibAccelerationId].v = acc_update;
-  sensors_data_[kUncalibGyroscopeId].v = gyro_update;
-  sensors_data_[kUncalibMagneticId].v = mgn_update;
+    current_rotation_matrix_ = rotation_matrix_update;
+
+    sensors_data_[kRotationVecId].v << x, y, z;
+    sensors_data_[kAccelerationId].v = acc_update;
+    sensors_data_[kGyroscopeId].v = gyro_update;
+    sensors_data_[kMagneticId].v = mgn_update;
+
+    // Copy the calibrated sensor data over for uncalibrated sensor support
+    sensors_data_[kUncalibAccelerationId].v = acc_update;
+    sensors_data_[kUncalibGyroscopeId].v = gyro_update;
+    sensors_data_[kUncalibMagneticId].v = mgn_update;
+  }
+  NotifySensorsChanged((1 << kRotationVecId) | (1 << kAccelerationId) |
+                       (1 << kGyroscopeId) | (1 << kMagneticId) |
+                       (1 << kUncalibAccelerationId) |
+                       (1 << kUncalibGyroscopeId) | (1 << kUncalibMagneticId));
+}
+
+void SensorsSimulator::SetHingeAngle(float angle) {
+  {
+    std::lock_guard<std::mutex> lock(sensors_data_mtx_);
+    if (sensors_data_[kHingeAngle0Id].f == angle) {
+      return;
+    }
+    sensors_data_[kHingeAngle0Id].f = angle;
+  }
+  NotifySensorsChanged(1 << kHingeAngle0Id);
 }
 
 std::string SensorsSimulator::GetSensorsData(const SensorsMask mask) {

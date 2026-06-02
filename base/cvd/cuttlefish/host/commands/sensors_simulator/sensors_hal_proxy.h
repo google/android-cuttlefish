@@ -17,6 +17,7 @@
 #pragma once
 
 #include <atomic>
+#include <mutex>
 #include <thread>
 
 #include "cuttlefish/common/libs/sensors/sensors.h"
@@ -37,6 +38,8 @@ class SensorsHalProxy {
                   SensorsSimulator& sensors_simulator, DeviceType device_type);
 
  private:
+  void ReportToGuest(SensorsMask mask);
+
   std::thread req_responder_thread_;
   std::thread data_reporter_thread_;
   std::thread reboot_monitor_thread_;
@@ -46,6 +49,7 @@ class SensorsHalProxy {
   SensorsSimulator& sensors_simulator_;
   std::atomic<bool> hal_activated_ = false;
   std::atomic<bool> running_ = true;
+  std::mutex report_mtx_;
 };
 
 }  // namespace sensors
