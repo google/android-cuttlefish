@@ -14,30 +14,6 @@
 
 package v1
 
-type FetchArtifactsRequest struct {
-	AndroidCIBundle *AndroidCIBundle `json:"android_ci_bundle"`
-}
-
-type FetchArtifactsResponse struct {
-	AndroidCIBundle *AndroidCIBundle `json:"android_ci_bundle"`
-}
-
-type ArtifactsBundleType int64
-
-const (
-	MainBundleType ArtifactsBundleType = iota
-	KernelBundleType
-	BootloaderBundleType
-	SystemImageBundleType
-)
-
-type AndroidCIBundle struct {
-	// If omitted, defaults to branch "aosp-android-latest-release" and target `aosp_cf_x86_64_only_phone-userdebug`.
-	Build *AndroidCIBuild `json:"build,omitempty"`
-	// If omitted, it defaults to the `main` bundle type.
-	Type ArtifactsBundleType `json:"type"`
-}
-
 // Prefix for specifying image directory ID while creating CVD with CreateCVDRequest.EnvConfig.
 const EnvConfigImageDirectoriesVar = "@image_dirs"
 
@@ -49,44 +25,10 @@ type CreateCVDRequest struct {
 	// NOTE: Using this as a black box for now as its content is unstable. Use the test configs pointed
 	// above as reference to build your config object.
 	EnvConfig map[string]interface{} `json:"env_config"`
-
-	// [DEPRECATED]. Use `EnvConfig` field.
-	CVD *CVD `json:"cvd"`
-	// [DEPRECATED]. Use `EnvConfig` field.
-	// Use to create multiple homogeneous instances.
-	AdditionalInstancesNum uint32 `json:"additional_instances_num,omitempty"`
 }
 
 type CreateCVDResponse struct {
 	CVDs []*CVD `json:"cvds"`
-}
-
-// Represents a build from ci.android.com.
-type AndroidCIBuild struct {
-	// The branch name. If omitted the passed `BuildID` will determine the branch.
-	Branch string `json:"branch"`
-	// Uniquely identifies a branch's snapshot. If empty, the latest green snapshot of the used branch will
-	// be used.
-	BuildID string `json:"build_id"`
-	// A string to determine the specific device product and flavor
-	Target string `json:"target"`
-}
-
-type AndroidCIBuildSource struct {
-	// Main build. If omitted, defaults to branch "aosp-android-latest-release" and target `aosp_cf_x86_64_only_phone-userdebug`.
-	MainBuild *AndroidCIBuild `json:"main_build,omitempty"`
-	// Uses this specific kernel build target if set.
-	KernelBuild *AndroidCIBuild `json:"kernel_build,omitempty"`
-	// Uses this specific bootloader build target if set.
-	BootloaderBuild *AndroidCIBuild `json:"bootloader_build,omitempty"`
-	// Uses this specific system image build target if set.
-	SystemImageBuild *AndroidCIBuild `json:"system_image_build,omitempty"`
-}
-
-// Represents the artifacts source to build the CVD.
-type BuildSource struct {
-	// A build from ci.android.com
-	AndroidCIBuildSource *AndroidCIBuildSource `json:"android_ci_build_source,omitempty"`
 }
 
 type ListOperationsResponse struct {
@@ -106,8 +48,6 @@ type CVD struct {
 	Group string `json:"group"`
 	// [Output Only] Identifier within a group.
 	Name string `json:"name"`
-	// [Input Only]
-	BuildSource *BuildSource `json:"build_source,omitempty"`
 	// [Output Only]
 	Status string `json:"status"`
 	// [Output Only]

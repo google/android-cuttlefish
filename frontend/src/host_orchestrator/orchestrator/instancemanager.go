@@ -15,12 +15,8 @@
 package orchestrator
 
 import (
-	"bytes"
-	"context"
 	"fmt"
-	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
@@ -57,10 +53,8 @@ func CvdGroupToAPIObject(group *cvd.Group) []*apiv1.CVD {
 
 func CvdInstanceToAPIObject(instance *cvd.Instance, group string) *apiv1.CVD {
 	return &apiv1.CVD{
-		Group: group,
-		Name:  instance.Name,
-		// TODO(b/259725479): Update when `cvd fleet` prints out build information.
-		BuildSource:    &apiv1.BuildSource{},
+		Group:          group,
+		Name:           instance.Name,
 		Status:         instance.Status(),
 		Displays:       instance.Displays(),
 		WebRTCDeviceID: instance.WebRTCDeviceID(),
@@ -226,18 +220,4 @@ func (v *HostValidator) Validate() error {
 		return operator.NewInternalError("Nested virtualization is not enabled.", nil)
 	}
 	return nil
-}
-
-func runAcloudSetup(execContext hoexec.ExecContext, artifactsRootDir, artifactsDir string) {
-	run := func(cmd *exec.Cmd) {
-		var b bytes.Buffer
-		cmd.Stdout = &b
-		cmd.Stderr = &b
-		err := cmd.Run()
-		if err != nil {
-			log.Println("runAcloudSetup failed with error: " + b.String())
-		}
-	}
-	// Creates symbolic link `acloud_link` which points to the passed device artifacts directory.
-	go run(execContext(context.TODO(), "ln", "-s", artifactsDir, artifactsRootDir+"/acloud_link"))
 }
