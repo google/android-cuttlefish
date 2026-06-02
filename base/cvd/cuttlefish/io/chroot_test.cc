@@ -15,16 +15,18 @@
 
 #include "cuttlefish/io/chroot.h"
 
-#include <string>
+#include <memory>
 #include <string_view>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "cuttlefish/io/copy.h"
+#include "cuttlefish/io/filesystem.h"
 #include "cuttlefish/io/in_memory.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/string.h"
+#include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {

@@ -20,6 +20,7 @@
 #include <algorithm>
 
 #include "cuttlefish/io/fake_seek.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 

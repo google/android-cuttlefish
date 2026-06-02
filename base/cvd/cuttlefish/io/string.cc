@@ -15,10 +15,12 @@
 
 #include "cuttlefish/io/string.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/expect.h"

@@ -15,6 +15,7 @@
 
 #include "cuttlefish/io/in_memory.h"
 
+#include <memory>
 #include <string>
 #include <string_view>
 
@@ -22,6 +23,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {

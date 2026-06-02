@@ -16,13 +16,13 @@
 #include "cuttlefish/io/copy.h"
 
 #include <memory>
-#include <string>
 #include <vector>
 
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
 #include "cuttlefish/io/in_memory.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/result/result_matchers.h"
 

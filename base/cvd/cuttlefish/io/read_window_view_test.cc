@@ -15,7 +15,7 @@
 
 #include "cuttlefish/io/read_window_view.h"
 
-#include <string>
+#include <memory>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -24,7 +24,6 @@
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result_matchers.h"
-#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace {

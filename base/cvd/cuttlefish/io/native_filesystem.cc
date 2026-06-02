@@ -16,12 +16,17 @@
 #include "cuttlefish/io/native_filesystem.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdint.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
+#include <memory>
+#include <string>
 #include <string_view>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/expect.h"

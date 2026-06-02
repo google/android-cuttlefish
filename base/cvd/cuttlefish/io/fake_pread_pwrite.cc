@@ -13,10 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/io/io.h"
-
+#include <stddef.h>
 #include <stdint.h>
 
+#include <utility>
+
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
