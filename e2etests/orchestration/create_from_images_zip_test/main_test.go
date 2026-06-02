@@ -89,7 +89,6 @@ func TestCreateInstance(t *testing.T) {
 			{
 				Group:          "foo",
 				Name:           "1",
-				BuildSource:    &hoapi.BuildSource{},
 				Status:         "Running",
 				Displays:       []string{"720 x 1280 ( 320 )"},
 				WebRTCDeviceID: "cvd-1",
