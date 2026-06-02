@@ -86,7 +86,6 @@ func TestListCVDsSucceeds(t *testing.T) {
 		{
 			Group:          "foo",
 			Name:           "1",
-			BuildSource:    &apiv1.BuildSource{},
 			Status:         "Running",
 			Displays:       []string{"720 x 1280 ( 320 )"},
 			WebRTCDeviceID: "cvd-1",
@@ -96,7 +95,6 @@ func TestListCVDsSucceeds(t *testing.T) {
 		{
 			Group:          "bar",
 			Name:           "1",
-			BuildSource:    &apiv1.BuildSource{},
 			Status:         "Running",
 			Displays:       []string{"720 x 1280 ( 320 )"},
 			WebRTCDeviceID: "cvd-1",
