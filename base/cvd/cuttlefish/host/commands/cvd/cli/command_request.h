@@ -105,4 +105,7 @@ class CommandRequestBuilder {
   selector::SelectorOptions selector_options_;
 };
 
+// e.g. cvd start --help, cvd stop -help, cvd fleet -h
+Result<bool> HasHelpFlag(const std::vector<std::string>& args);
+
 }  // namespace cuttlefish
