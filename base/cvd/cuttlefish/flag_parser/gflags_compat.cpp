@@ -36,7 +36,6 @@
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/flag_parser/parser.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -94,7 +93,9 @@ Result<T> ParseFlagValue(std::string_view str) {
 // Setter for bool, default getter is fine
 template<>
 Result<bool> ParseFlagValue<bool>(std::string_view str) {
-  return CF_EXPECT(ParseBool(str, "flag"));
+  bool result;
+  CF_EXPECT(absl::SimpleAtob(str, &result));
+  return result;
 }
 
 // Getter and Setter for std::vector
