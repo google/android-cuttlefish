@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <memory>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -34,6 +35,11 @@ namespace cuttlefish {
 namespace selector {
 namespace {
 
+enum class DisplayBehavior {
+  LabelGroup,
+  LabelInstance,
+};
+
 Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
     const SelectorOptions& selectors) {
   InstanceDatabase::Filter filter;
@@ -49,67 +55,75 @@ Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
   return filter;
 }
 
-std::string SelectionMenu(const std::vector<LocalInstanceGroup>& groups) {
-  // Multiple instance groups found, please choose one:
-  //   [i] : group_name (created: TIME)
-  //      <a> instance0.device_name() (id: instance_id)
-  //      <b> instance1.device_name() (id: instance_id)
-  std::stringstream ss;
-  ss << "Multiple instance groups found, please choose one:" << std::endl;
-  int group_idx = 0;
-  for (const auto& group : groups) {
-    fmt::print(ss, "  [{}] : {} (created: {})\n", group_idx, group.GroupName(),
-               Format(group.StartTime()));
-    for (const auto& instance : group.Instances()) {
-      fmt::print(ss, "    {}-{} (id : {})\n", group.GroupName(),
-                 instance.Name(), instance.Id());
+std::string GroupDisplay(const std::vector<LocalInstanceGroup>& groups,
+                         const DisplayBehavior behavior) {
+  std::stringstream result;
+  int group_index = 0;
+  for (const LocalInstanceGroup& group : groups) {
+    if (behavior == DisplayBehavior::LabelGroup) {
+      fmt::print(result, "[{}] - ", group_index);
     }
-    group_idx++;
+    fmt::print(result, "{} (created: {})\n", group.GroupName(),
+               Format(group.StartTime()));
+
+    int instance_index = 0;
+    for (const LocalInstance& instance : group.Instances()) {
+      result << "\t";
+      if (behavior == DisplayBehavior::LabelInstance) {
+        fmt::print(result, "[{}] - ", instance_index);
+      }
+      fmt::print(result, "{}-{} (id : {})\n", group.GroupName(),
+                 instance.Name(), instance.Id());
+
+      instance_index++;
+    }
+
+    group_index++;
   }
-  return ss.str();
+  return result.str();
+}
+
+Result<int> PromptForSelection(const int max_selection) {
+  std::unique_ptr<InterruptibleTerminal> terminal =
+      std::make_unique<InterruptibleTerminal>();
+
+  TerminalColors colors(isatty(2));
+
+  int selection = -1;
+  while (selection < 0 || selection > max_selection) {
+    fmt::print(std::cout, "\nSelect {}[0,{}]{}: ", colors.Cyan(), max_selection,
+               colors.Reset());
+    std::cout << std::flush;
+    std::string input_line = CF_EXPECT(terminal->ReadLine());
+    if (!absl::SimpleAtoi(input_line, &selection)) {
+      selection = -1;
+      fmt::print(std::cerr, "Selection \"{}{}{}\" is not a valid.\n",
+                 colors.BoldRed(), input_line, colors.Reset());
+      continue;
+    }
+    if (selection > max_selection) {
+      fmt::print(std::cerr,
+                 "Selection \"{}{}{}\" is beyond the allowed range.\n",
+                 colors.BoldRed(), selection, colors.Reset());
+      continue;
+    }
+  }
+  return selection;
 }
 
 Result<LocalInstanceGroup> PromptUserForGroup(
     const InstanceManager& instance_manager, const CommandRequest& request,
     InstanceDatabase::Filter filter) {
-  // show the menu and let the user choose
-  std::vector<LocalInstanceGroup> groups =
+  const std::vector<LocalInstanceGroup> groups =
       CF_EXPECT(instance_manager.FindGroups({}));
-  std::string menu = SelectionMenu(groups);
+  std::cout << GroupDisplay(groups, DisplayBehavior::LabelGroup);
 
-  std::cout << menu << "\n";
-  std::unique_ptr<InterruptibleTerminal> terminal_ =
-      std::make_unique<InterruptibleTerminal>();
+  const int selection = CF_EXPECT(PromptForSelection(groups.size() - 1));
+  auto group_filter = InstanceDatabase::Filter{
+      .group_name = groups[selection].GroupName(),
+  };
 
-  TerminalColors colors(isatty(2));
-  while (true) {
-    std::string input_line = CF_EXPECT(terminal_->ReadLine());
-    int selection = -1;
-    std::string chosen_group_name;
-    if (absl::SimpleAtoi(input_line, &selection)) {
-      const int n_groups = groups.size();
-      if (n_groups <= selection || selection < 0) {
-        fmt::print(std::cerr,
-                   "\n  Selection {}{}{} is beyond the range {}[0, {}]{}\n\n",
-                   colors.BoldRed(), selection, colors.Reset(), colors.Cyan(),
-                   n_groups - 1, colors.Reset());
-        continue;
-      }
-      chosen_group_name = groups[selection].GroupName();
-    } else {
-      chosen_group_name = std::string(absl::StripAsciiWhitespace(input_line));
-    }
-
-    filter.group_name = chosen_group_name;
-    Result<LocalInstanceGroup> instance_group_result =
-        instance_manager.FindGroup(filter);
-    if (instance_group_result.ok()) {
-      return instance_group_result;
-    }
-    fmt::print(std::cerr,
-               "\n  Failed to find a group whose name is {}\"{}\"{}\n\n",
-               colors.BoldRed(), chosen_group_name, colors.Reset());
-  }
+  return CF_EXPECT(instance_manager.FindGroup(group_filter));
 }
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
