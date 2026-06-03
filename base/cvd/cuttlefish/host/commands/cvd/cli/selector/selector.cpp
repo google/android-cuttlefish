@@ -129,7 +129,24 @@ Result<LocalInstanceGroup> PromptUserForGroup(
 Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
     const InstanceManager& instance_manager, const CommandRequest& request,
     InstanceDatabase::Filter filter) {
-  return CF_ERR("TODO(chadreynolds): implement in follow-up commit");
+  const LocalInstanceGroup group =
+      CF_EXPECT(PromptUserForGroup(instance_manager, request, filter));
+  const std::vector<LocalInstance>& instances = group.Instances();
+  if (instances.size() == 1) {
+    fmt::print(std::cout,
+               "Single instance in group {}, defaulting to that choice.\n",
+               group.GroupName());
+    return std::pair(instances.front(), group);
+  }
+
+  std::cout << GroupDisplay({group}, DisplayBehavior::LabelInstance);
+
+  const int selection = CF_EXPECT(PromptForSelection(instances.size() - 1));
+  auto instance_filter = InstanceDatabase::Filter{
+      .group_name = group.GroupName(),
+      .instance_names = {instances[selection].Name()},
+  };
+  return CF_EXPECT(instance_manager.FindInstanceWithGroup(instance_filter));
 }
 
 }  // namespace
