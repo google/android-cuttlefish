@@ -186,7 +186,7 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
 
   if (res != 0) {
     LOG(ERROR) << "Status tool exited with code " << res;
-    instance.set_state(cvd::INSTANCE_STATE_UNREACHABLE);
+    instance.SetState(cvd::INSTANCE_STATE_UNREACHABLE);
     instance_status_json["warning"] = "cvd status failed";
   }
   OverrideInstanceJson(instance, instance_status_json);

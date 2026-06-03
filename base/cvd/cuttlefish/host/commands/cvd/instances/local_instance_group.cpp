@@ -147,7 +147,7 @@ bool LocalInstanceGroup::HasActiveInstances() const {
 
 void LocalInstanceGroup::SetAllStates(cvd::InstanceState state) {
   for (auto& instance : Instances()) {
-    instance.set_state(state);
+    instance.SetState(state);
   }
 }
 

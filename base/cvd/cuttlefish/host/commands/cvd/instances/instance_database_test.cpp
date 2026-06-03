@@ -387,9 +387,9 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
 
   auto instance_group = *(std::move(group_res));
   auto& instance1 = instance_group.Instances()[0];
-  instance1.set_state(cvd::INSTANCE_STATE_STARTING);
+  instance1.SetState(cvd::INSTANCE_STATE_STARTING);
   auto& instance2 = instance_group.Instances()[1];
-  instance2.set_state(cvd::INSTANCE_STATE_STARTING);
+  instance2.SetState(cvd::INSTANCE_STATE_STARTING);
 
   auto update_res = db.UpdateInstanceGroup(instance_group);
   ASSERT_TRUE(update_res.ok())
