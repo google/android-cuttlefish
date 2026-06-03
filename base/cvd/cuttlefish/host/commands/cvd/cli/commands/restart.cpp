@@ -72,9 +72,25 @@ Result<void> CvdDeviceRestartCommandHandler::Handle(
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
   CF_EXPECT(ConsumeFlags(options.Flags(), subcmd_args));
 
-  auto [instance, unused] =
+  auto [instance, group] =
       CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                 "Unable to select an instance");
+
+  const auto& instances = group.Instances();
+  if (!instances.empty() && instance.Id() == instances[0].Id()) {
+    bool other_active = false;
+    for (const auto& inst : instances) {
+      if (inst.Id() != instance.Id() && inst.IsActive()) {
+        other_active = true;
+        break;
+      }
+    }
+    CF_EXPECTF(
+        !other_active,
+        "Restarting the first instance (ID: {}) is not allowed "
+        "while other instances are running. Restart the entire group instead.",
+        instance.Id());
+  }
 
   CF_EXPECT(
       instance.Restart(std::chrono::seconds(options.wait_for_launcher_seconds),
