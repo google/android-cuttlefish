@@ -43,7 +43,7 @@ TEST(LocalinstanceTest, Fields) {
   auto& instance = *instances.cbegin();
 
   EXPECT_EQ(instance.Id(), 3);
-  EXPECT_EQ(instance.name(), "phone");
+  EXPECT_EQ(instance.Name(), "phone");
   EXPECT_EQ(parent_group.Proto().name(), "super");
 }
 

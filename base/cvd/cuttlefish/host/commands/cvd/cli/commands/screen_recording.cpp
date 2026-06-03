@@ -96,7 +96,7 @@ Result<void> StartStopRecording(const RecordingFlags& flags,
             : instance.StopRecording(std::chrono::seconds(flags.timeout));
     if (!result.ok()) {
       LOG(ERROR) << "Failed to " << flags.subcmd
-                 << " screen recording for instance " << instance.name() << ": "
+                 << " screen recording for instance " << instance.Name() << ": "
                  << result.error();
       some_failed = true;
     }
@@ -113,8 +113,8 @@ Result<void> ListRecordings(const LocalInstanceGroup& group,
   Json::Value output(Json::arrayValue);
   for (LocalInstance& instance : instances) {
     Json::Value instance_json;
-    instance_json["instance_name"] = instance.name();
-    instance_json["group_name"] = instance.name();
+    instance_json["instance_name"] = instance.Name();
+    instance_json["group_name"] = instance.Name();
     Json::Value recordings_array(Json::arrayValue);
     std::vector<std::string> recordings;
     Result<std::vector<std::string>> result = instance.ListRecordings();
@@ -122,7 +122,7 @@ Result<void> ListRecordings(const LocalInstanceGroup& group,
       recordings = std::move(*result);
     } else {
       LOG(ERROR) << "Failed to list screen recording for instance "
-                 << instance.name() << ": " << result.error();
+                 << instance.Name() << ": " << result.error();
       some_failed = true;
     }
     for (const std::string& recording : recordings) {

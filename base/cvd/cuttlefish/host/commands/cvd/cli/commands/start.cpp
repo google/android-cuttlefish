@@ -142,7 +142,7 @@ Result<std::vector<std::string>> ReplaceEmptyWebRTCDeviceIds(
     if (webrtc_ids[i].empty()) {
       std::string generated_id =
           fmt::format("{}-{}-{}", group.GroupName(),
-                      group.Instances()[i].name(), group.Instances()[i].Id());
+                      group.Instances()[i].Name(), group.Instances()[i].Id());
       webrtc_ids[i] = generated_id;
       // In the unlikely case that a provided device id matches one of the
       // generated ones append _{n} to the generated one, with n starting at 1
@@ -398,7 +398,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   if (isatty(0)) {
     std::vector<std::string> instance_names;
     for (const auto& instance : group.Instances()) {
-      instance_names.push_back(instance.name());
+      instance_names.push_back(instance.Name());
     }
     std::cout << fmt::format("group:{}|instance(s):{}\n", group.GroupName(),
                              absl::StrJoin(instance_names, ","));

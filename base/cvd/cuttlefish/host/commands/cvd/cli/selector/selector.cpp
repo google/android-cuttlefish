@@ -80,7 +80,7 @@ std::string SelectionMenu(const std::vector<LocalInstanceGroup>& groups) {
     char instance_idx = 'a';
     for (const auto& instance : group.Instances()) {
       fmt::print(ss, "    <{}> {}-{} (id : {})\n", instance_idx++,
-                 group.GroupName(), instance.name(), instance.Id());
+                 group.GroupName(), instance.Name(), instance.Id());
     }
     group_idx++;
   }
