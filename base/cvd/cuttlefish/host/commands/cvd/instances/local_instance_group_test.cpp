@@ -70,7 +70,7 @@ TEST_F(LocalInstanceGroupUnitTest, SearchById) {
     auto instance_res = group_res->FindInstanceById(valid_id);
     ASSERT_THAT(instance_res, IsOk());
     auto& instance = *instance_res;
-    ASSERT_EQ(instance.id(), valid_id);
+    ASSERT_EQ(instance.Id(), valid_id);
   }
 
   // invalid search

@@ -310,8 +310,8 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
 
   ASSERT_TRUE(result1.ok());
   ASSERT_TRUE(result7.ok());
-  ASSERT_EQ(result1->first.id(), 1);
-  ASSERT_EQ(result7->first.id(), 7);
+  ASSERT_EQ(result1->first.Id(), 1);
+  ASSERT_EQ(result7->first.Id(), 7);
   ASSERT_FALSE(result_invalid.ok());
 }
 
@@ -398,8 +398,8 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
   auto find_res = db.FindGroup({.group_name = "grp1"});
   ASSERT_TRUE(find_res.ok()) << find_res.error().Message();
 
-  EXPECT_EQ(find_res->Instances()[0].id(), 1);
-  EXPECT_EQ(find_res->Instances()[1].id(), 2);
+  EXPECT_EQ(find_res->Instances()[0].Id(), 1);
+  EXPECT_EQ(find_res->Instances()[1].Id(), 2);
   EXPECT_EQ(find_res->Instances()[0].state(), cvd::INSTANCE_STATE_STARTING);
   EXPECT_EQ(find_res->Instances()[1].state(), cvd::INSTANCE_STATE_STARTING);
 }

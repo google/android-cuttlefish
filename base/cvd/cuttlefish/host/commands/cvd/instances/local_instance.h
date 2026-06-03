@@ -37,7 +37,7 @@ class LocalInstance {
   LocalInstance(LocalInstance&&) = default;
   LocalInstance& operator=(const LocalInstance&) = default;
 
-  uint32_t id() const { return instance_proto_->id(); }
+  uint32_t Id() const { return instance_proto_->id(); }
   const std::string& name() const { return instance_proto_->name(); }
   cvd::InstanceState state() const { return instance_proto_->state(); }
   void set_state(cvd::InstanceState state);

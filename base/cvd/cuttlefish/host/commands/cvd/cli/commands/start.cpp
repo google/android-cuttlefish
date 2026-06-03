@@ -143,7 +143,7 @@ Result<std::vector<std::string>> ReplaceEmptyWebRTCDeviceIds(
     if (webrtc_ids[i].empty()) {
       std::string generated_id =
           fmt::format("{}-{}-{}", group.GroupName(),
-                      group.Instances()[i].name(), group.Instances()[i].id());
+                      group.Instances()[i].name(), group.Instances()[i].Id());
       webrtc_ids[i] = generated_id;
       // In the unlikely case that a provided device id matches one of the
       // generated ones append _{n} to the generated one, with n starting at 1
@@ -193,7 +193,7 @@ static Result<void> UpdateInstanceArgs(cvd_common::Args& args,
 
   std::vector<unsigned> ids;
   for (const auto& instance : group.Instances()) {
-    ids.push_back(instance.id());
+    ids.push_back(instance.Id());
   }
   auto first_id = *ids.begin();
   bool have_consecutive_ids = true;
@@ -248,7 +248,7 @@ Result<void> CvdResetGroup(const LocalInstanceGroup& group) {
   const auto& instances = group.Instances();
   CF_EXPECT(!instances.empty());
   const auto& first_instance = *instances.begin();
-  CF_EXPECT(ForcefullyStopGroup(first_instance.id()));
+  CF_EXPECT(ForcefullyStopGroup(first_instance.Id()));
   return {};
 }
 
@@ -256,7 +256,7 @@ Result<void> UpdateEnvs(cvd_common::Envs& envs,
                         const LocalInstanceGroup& group) {
   CF_EXPECT(!group.Instances().empty());
   envs[kCuttlefishInstanceEnvVarName] =
-      std::to_string(group.Instances()[0].id());
+      std::to_string(group.Instances()[0].Id());
 
   envs["HOME"] = group.HomeDir();
   envs[kAndroidHostOut] = group.HostArtifactsPath();

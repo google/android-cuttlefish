@@ -63,11 +63,11 @@ void LocalInstance::set_state(cvd::InstanceState state) {
 
 std::string LocalInstance::instance_dir() const {
   std::string to_ret = fmt::format("{}/cuttlefish/instances/cvd-{}",
-                                   group_proto_->home_directory(), id());
+                                   group_proto_->home_directory(), Id());
   if (!FileExists(to_ret)) {
     // Legacy launchers create cuttlefish_runtime.{$ID}
     to_ret = fmt::format("{}/cuttlefish_runtime.{}",
-                         group_proto_->home_directory(), id());
+                         group_proto_->home_directory(), Id());
   }
   return to_ret;
 }
@@ -76,12 +76,12 @@ int LocalInstance::adb_port() const {
   // The instance id is zero for a very short time between the load and create
   // commands. The adb_port property should not be accessed during that time,
   // but return an invalid port number just in case.
-  if (id() == 0) {
+  if (Id() == 0) {
     return 0;
   }
   // run_cvd picks this port from the instance id and doesn't provide a flag
   // to change in cvd_internal_flag
-  return BASE_ADB_PORT + id() - BASE_INSTANCE_ID;
+  return BASE_ADB_PORT + Id() - BASE_INSTANCE_ID;
 }
 
 std::string LocalInstance::assembly_dir() const {
@@ -123,7 +123,7 @@ Result<void> LocalInstance::PressPowerBtn() {
       CuttlefishConfig::GetFromFile(instance_dir() + "/cuttlefish_config.json");
   CF_EXPECT_EQ(config->vm_manager(), VmmMode::kCrosvm,
                "powerbtn not supported in vm manager " << config->vm_manager());
-  auto instance = config->ForInstance(id());
+  auto instance = config->ForInstance(Id());
 
   Command command = Command(instance.crosvm_binary())
                         .AddParameter("powerbtn")
@@ -138,7 +138,7 @@ Result<void> LocalInstance::PressPowerBtnLegacy() {
   Command cmd(
       CF_EXPECT(HostToolTarget(host_artifacts_path()).GetPowerBtnBinPath()));
 
-  cmd.AddParameter("--instance_num=", id());
+  cmd.AddParameter("--instance_num=", Id());
   cmd.SetEnvironment({});
   AddEnvironmentForInstance(cmd, *this);
 
@@ -250,7 +250,7 @@ Result<const CuttlefishConfig*> LocalInstance::LoadConfig() {
 Result<const CuttlefishConfig::InstanceSpecific>
 LocalInstance::GetInstanceConfig() {
   const CuttlefishConfig* config = CF_EXPECT(LoadConfig());
-  return config->ForInstance(id());
+  return config->ForInstance(Id());
 }
 
 Result<SharedFD> LocalInstance::GetLauncherMonitor(
@@ -263,7 +263,7 @@ Result<SharedFD> LocalInstance::GetLauncherMonitor(
   if (config.isMember("instances_uds_dir") &&
       config["instances_uds_dir"].isString()) {
     uds_dir =
-        fmt::format("{}/cvd-{}", config["instances_uds_dir"].asString(), id());
+        fmt::format("{}/cvd-{}", config["instances_uds_dir"].asString(), Id());
   }
   std::string monitor_path = uds_dir + "/launcher_monitor.sock";
   SharedFD monitor = SharedFD::SocketLocalClient(monitor_path, false,

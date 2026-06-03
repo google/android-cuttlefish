@@ -163,17 +163,17 @@ Result<void> CreateSymlinks(const LocalInstanceGroup& group) {
   auto smallest_id = std::numeric_limits<unsigned>::max();
   for (const auto& instance : group.Instances()) {
     // later on, we link cuttlefish_runtime to cuttlefish_runtime.smallest_id
-    smallest_id = std::min(smallest_id, instance.id());
+    smallest_id = std::min(smallest_id, instance.Id());
     std::string instance_home_dir = fmt::format(
-        "{}/cuttlefish/instances/cvd-{}", group.HomeDir(), instance.id());
+        "{}/cuttlefish/instances/cvd-{}", group.HomeDir(), instance.Id());
     if (!FileExists(instance_home_dir)) {
       // Legacy launchers create cuttlefish_runtime.{$ID}
       instance_home_dir = fmt::format("{}/cuttlefish_runtime.{}",
-                                      group.HomeDir(), instance.id());
+                                      group.HomeDir(), instance.Id());
     }
     CF_EXPECT(EnsureSymlink(instance_home_dir,
                             fmt::format("{}/cuttlefish_runtime.{}",
-                                        system_wide_home, instance.id())));
+                                        system_wide_home, instance.Id())));
     std::string cuttlefish_home_dir = group.HomeDir() + "/cuttlefish";
     if (FileExists(cuttlefish_home_dir)) {
       // Legacy Cuttlefish launchers don't create this directory so no need to
