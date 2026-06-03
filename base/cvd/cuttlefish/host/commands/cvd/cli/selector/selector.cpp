@@ -77,10 +77,9 @@ std::string SelectionMenu(const std::vector<LocalInstanceGroup>& groups) {
   for (const auto& group : groups) {
     fmt::print(ss, "  [{}] : {} (created: {})\n", group_idx, group.GroupName(),
                Format(group.StartTime()));
-    char instance_idx = 'a';
     for (const auto& instance : group.Instances()) {
-      fmt::print(ss, "    <{}> {}-{} (id : {})\n", instance_idx++,
-                 group.GroupName(), instance.Name(), instance.Id());
+      fmt::print(ss, "    {}-{} (id : {})\n", group.GroupName(),
+                 instance.Name(), instance.Id());
     }
     group_idx++;
   }
