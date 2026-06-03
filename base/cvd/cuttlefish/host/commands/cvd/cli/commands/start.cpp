@@ -31,14 +31,12 @@
 #include <optional>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 
@@ -318,42 +316,12 @@ CvdStartCommandHandler::CvdStartCommandHandler(
     : instance_manager_(instance_manager) {}
 
 static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
+  bool daemon = true;
   Flag flag =
-      Flag("daemon")
-          .Alias({FlagAliasMode::kFlagPrefix, "-daemon="})
-          .Alias({FlagAliasMode::kFlagPrefix, "--daemon="})
-          .Alias({FlagAliasMode::kFlagExact, "-daemon"})
-          .Alias({FlagAliasMode::kFlagExact, "--daemon"})
-          .Alias({FlagAliasMode::kFlagExact, "-nodaemon"})
-          .Alias({FlagAliasMode::kFlagExact, "--nodaemon"})
-          .Setter([](const FlagMatch& match) -> Result<void> {
-            static constexpr char kPossibleCmds[] =
-                "\"cvd start\" or \"launch_cvd\"";
-            if (match.key == match.value) {
-              CF_EXPECTF(match.key.find("no") == std::string::npos,
-                         "--nodaemon is not supported by {}", kPossibleCmds);
-              return {};
-            }
-            CF_EXPECTF(match.value.find(",") == std::string::npos,
-                       "{} had a comma that is not allowed", match.value);
-            static constexpr std::string_view kValidFalseStrings[] = {"n", "no",
-                                                                      "false"};
-            static constexpr std::string_view kValidTrueStrings[] = {"y", "yes",
-                                                                     "true"};
-            for (const auto& true_string : kValidTrueStrings) {
-              if (absl::EqualsIgnoreCase(true_string, match.value)) {
-                return {};
-              }
-            }
-            for (const auto& false_string : kValidFalseStrings) {
-              CF_EXPECTF(!absl::EqualsIgnoreCase(false_string, match.value),
-                         "\"{}{} was given and is not supported by {}",
-                         match.key, match.value, kPossibleCmds);
-            }
-            return CF_ERRF(
-                "Invalid --daemon option: {}{}. {} supports only "
-                "\"--daemon=true\"",
-                match.key, match.value, kPossibleCmds);
+      GflagsCompatFlag("daemon", daemon)
+          .AddValidator([&daemon]() -> Result<void> {
+            CF_EXPECT(!!daemon, "`cvd start` must always run in daemon mode.");
+            return {};
           });
   CF_EXPECT(ConsumeFlags({flag}, args));
   return {};
