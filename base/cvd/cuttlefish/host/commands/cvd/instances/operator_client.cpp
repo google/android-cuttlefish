@@ -44,7 +44,7 @@ Result<Json::Value> BuildPregistrationMsg(const LocalInstanceGroup& group) {
   Json::Value devices(Json::arrayValue);
   for (const auto& instance : group.Instances()) {
     Json::Value dev;
-    dev["id"] = instance.webrtc_device_id();
+    dev["id"] = instance.WebRtcDeviceId();
     dev["name"] = instance.Name();
     dev["adb_port"] = instance.adb_port();
     devices.append(dev);

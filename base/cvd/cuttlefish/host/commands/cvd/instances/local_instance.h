@@ -41,7 +41,7 @@ class LocalInstance {
   const std::string& Name() const { return instance_proto_->name(); }
   cvd::InstanceState State() const { return instance_proto_->state(); }
   void SetState(cvd::InstanceState state);
-  const std::string& webrtc_device_id() const {
+  const std::string& WebRtcDeviceId() const {
     return instance_proto_->webrtc_device_id();
   }
   void set_webrtc_device_id(std::string webrtc_device_id) {
