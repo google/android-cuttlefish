@@ -229,7 +229,7 @@ TEST_F(CvdInstanceDatabaseTest, AddInstances) {
   }
   const auto& instances = kitty_group->Instances();
   for (auto const& instance : instances) {
-    ASSERT_TRUE(instance.name() == "yumi" || instance.name() == "tiger");
+    ASSERT_TRUE(instance.Name() == "yumi" || instance.Name() == "tiger");
   }
 }
 
@@ -274,11 +274,11 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
   ASSERT_TRUE(result7.ok());
   ASSERT_TRUE(result11.ok());
   ASSERT_TRUE(result3.ok());
-  ASSERT_EQ(result1->first.name(), "8");
-  ASSERT_EQ(result10->first.name(), "tv-instance");
-  ASSERT_EQ(result7->first.name(), "my_favorite_phone");
-  ASSERT_EQ(result11->first.name(), "tv-instance");
-  ASSERT_EQ(result3->first.name(), "3_");
+  ASSERT_EQ(result1->first.Name(), "8");
+  ASSERT_EQ(result10->first.Name(), "tv-instance");
+  ASSERT_EQ(result7->first.Name(), "my_favorite_phone");
+  ASSERT_EQ(result11->first.Name(), "tv-instance");
+  ASSERT_EQ(result3->first.Name(), "3_");
   ASSERT_FALSE(result_invalid.ok());
 }
 

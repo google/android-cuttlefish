@@ -79,11 +79,11 @@ std::string HumanFriendlyStateName(cvd::InstanceState state) {
 // instance is not running.
 void OverrideInstanceJson(const LocalInstance& instance,
                           Json::Value& instance_json) {
-  instance_json["instance_name"] = instance.name();
+  instance_json["instance_name"] = instance.Name();
   instance_json["status"] = HumanFriendlyStateName(instance.state());
   instance_json["assembly_dir"] = instance.assembly_dir();
   instance_json["instance_dir"] = instance.instance_dir();
-  instance_json["instance_name"] = instance.name();
+  instance_json["instance_name"] = instance.Name();
   if (instance.IsActive()) {
     // Only running instances have id > 0, these values only make sense for
     // running instances.
@@ -109,7 +109,7 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
   if (instance.state() != cvd::INSTANCE_STATE_RUNNING &&
       instance.state() != cvd::INSTANCE_STATE_UNREACHABLE) {
     Json::Value instance_json;
-    instance_json["instance_name"] = instance.name();
+    instance_json["instance_name"] = instance.Name();
     instance_json["status"] = HumanFriendlyStateName(instance.state());
     OverrideInstanceJson(instance, instance_json);
     return instance_json;

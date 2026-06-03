@@ -179,7 +179,7 @@ Result<LocalInstance> LocalInstanceGroup::FindInstanceById(
 std::vector<LocalInstance> LocalInstanceGroup::FindByInstanceName(
     const std::string& instance_name) const {
   return Filter(Instances(), [instance_name](const LocalInstance& instance) {
-    return instance.name() == instance_name;
+    return instance.Name() == instance_name;
   });
 }
 
