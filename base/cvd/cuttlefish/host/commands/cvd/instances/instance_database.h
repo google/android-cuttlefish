@@ -80,6 +80,8 @@ class InstanceDatabase {
   }
   Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceWithGroup(
       const Filter& filter) const;
+  Result<std::vector<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>>
+  FindInstances(const Filter& filter) const;
 
  private:
   template <typename T>
