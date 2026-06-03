@@ -184,7 +184,7 @@ Result<void> LoadConfigsCommand::Handle(const CommandRequest& request) {
 
   auto res = LoadGroup(request, group, std::move(cvd_flags));
   if (!res.ok()) {
-    auto first_instance_state = group.Instances()[0].state();
+    auto first_instance_state = group.Instances()[0].State();
     // The failure could have occurred during prepare(fetch) or start
     auto failed_state = first_instance_state == cvd::INSTANCE_STATE_PREPARING
                             ? cvd::INSTANCE_STATE_PREPARE_FAILED

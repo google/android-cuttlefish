@@ -400,8 +400,8 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
 
   EXPECT_EQ(find_res->Instances()[0].Id(), 1);
   EXPECT_EQ(find_res->Instances()[1].Id(), 2);
-  EXPECT_EQ(find_res->Instances()[0].state(), cvd::INSTANCE_STATE_STARTING);
-  EXPECT_EQ(find_res->Instances()[1].state(), cvd::INSTANCE_STATE_STARTING);
+  EXPECT_EQ(find_res->Instances()[0].State(), cvd::INSTANCE_STATE_STARTING);
+  EXPECT_EQ(find_res->Instances()[1].State(), cvd::INSTANCE_STATE_STARTING);
 }
 
 }  // namespace selector
