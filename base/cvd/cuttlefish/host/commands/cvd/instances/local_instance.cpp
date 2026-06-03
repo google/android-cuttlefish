@@ -89,7 +89,7 @@ std::string LocalInstance::assembly_dir() const {
 }
 
 bool LocalInstance::IsActive() const {
-  switch (state()) {
+  switch (State()) {
     case cvd::INSTANCE_STATE_RUNNING:
     case cvd::INSTANCE_STATE_STARTING:
     case cvd::INSTANCE_STATE_STOPPING:
@@ -104,7 +104,7 @@ bool LocalInstance::IsActive() const {
       return false;
     // Include these just to avoid the warning
     default:
-      LOG(FATAL) << "Invalid instance state: " << state();
+      LOG(FATAL) << "Invalid instance state: " << State();
   }
   return false;
 }
@@ -203,8 +203,8 @@ Result<std::vector<std::string>> LocalInstance::ListRecordings() {
 
 Result<void> LocalInstance::StartRecording(
     std::chrono::seconds launcher_timeout) {
-  CF_EXPECT(state() == cvd::INSTANCE_STATE_STARTING ||
-                state() == cvd::INSTANCE_STATE_RUNNING,
+  CF_EXPECT(State() == cvd::INSTANCE_STATE_STARTING ||
+                State() == cvd::INSTANCE_STATE_RUNNING,
             "Instance must be running to be recorded");
   CuttlefishConfig::InstanceSpecific instance_config =
       CF_EXPECT(GetInstanceConfig(), "Failed to load instance config");
@@ -214,8 +214,8 @@ Result<void> LocalInstance::StartRecording(
 
 Result<void> LocalInstance::StopRecording(
     std::chrono::seconds launcher_timeout) {
-  CF_EXPECT(state() == cvd::INSTANCE_STATE_STARTING ||
-                state() == cvd::INSTANCE_STATE_RUNNING,
+  CF_EXPECT(State() == cvd::INSTANCE_STATE_STARTING ||
+                State() == cvd::INSTANCE_STATE_RUNNING,
             "Instance must be running to be recorded");
   CuttlefishConfig::InstanceSpecific instance_config =
       CF_EXPECT(GetInstanceConfig(), "Failed to load instance config");

@@ -80,7 +80,7 @@ std::string HumanFriendlyStateName(cvd::InstanceState state) {
 void OverrideInstanceJson(const LocalInstance& instance,
                           Json::Value& instance_json) {
   instance_json["instance_name"] = instance.Name();
-  instance_json["status"] = HumanFriendlyStateName(instance.state());
+  instance_json["status"] = HumanFriendlyStateName(instance.State());
   instance_json["assembly_dir"] = instance.assembly_dir();
   instance_json["instance_dir"] = instance.instance_dir();
   instance_json["instance_name"] = instance.Name();
@@ -106,11 +106,11 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
   // Only running instances are capable of responding to status requests. An
   // unreachable instance is also considered running, it just didnt't reply last
   // time.
-  if (instance.state() != cvd::INSTANCE_STATE_RUNNING &&
-      instance.state() != cvd::INSTANCE_STATE_UNREACHABLE) {
+  if (instance.State() != cvd::INSTANCE_STATE_RUNNING &&
+      instance.State() != cvd::INSTANCE_STATE_UNREACHABLE) {
     Json::Value instance_json;
     instance_json["instance_name"] = instance.Name();
-    instance_json["status"] = HumanFriendlyStateName(instance.state());
+    instance_json["status"] = HumanFriendlyStateName(instance.State());
     OverrideInstanceJson(instance, instance_json);
     return instance_json;
   }
