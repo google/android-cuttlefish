@@ -57,7 +57,7 @@ LocalInstance::LocalInstance(std::shared_ptr<cvd::InstanceGroup> group_proto,
                              cvd::Instance* instance_proto)
     : group_proto_(group_proto), instance_proto_(instance_proto) {}
 
-void LocalInstance::set_state(cvd::InstanceState state) {
+void LocalInstance::SetState(cvd::InstanceState state) {
   instance_proto_->set_state(state);
 }
 
