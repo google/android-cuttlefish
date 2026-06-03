@@ -169,7 +169,7 @@ LocalInstanceGroup::LocalInstanceGroup(const cvd::InstanceGroup& group_proto)
 Result<LocalInstance> LocalInstanceGroup::FindInstanceById(
     const unsigned id) const {
   for (const auto& instance : instances_) {
-    if (instance.id() == id) {
+    if (instance.Id() == id) {
       return instance;
     }
   }

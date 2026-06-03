@@ -85,7 +85,7 @@ Result<Command> BuildCommand(InstanceManager& instance_manager,
       absl::StrCat(android_host_out, "/bin/", kDisplayBin);
 
   cvd_common::Args cvd_env_args{subcmd_args};
-  cvd_env_args.push_back(absl::StrCat("--instance_num=", instance.id()));
+  cvd_env_args.push_back(absl::StrCat("--instance_num=", instance.Id()));
   envs["HOME"] = home;
   envs[kAndroidHostOut] = android_host_out;
   envs[kAndroidSoongHostOut] = android_host_out;

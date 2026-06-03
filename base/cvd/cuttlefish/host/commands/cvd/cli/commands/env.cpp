@@ -73,7 +73,7 @@ Result<Command> NonHelpCommand(InstanceManager& instance_manager,
   const std::string& android_host_out = group.Proto().host_artifacts_path();
   const std::string cvd_env_bin_path =
       absl::StrCat(android_host_out, "/bin/", kCvdEnvBin);
-  const std::string internal_device_name = absl::StrCat("cvd-", instance.id());
+  const std::string internal_device_name = absl::StrCat("cvd-", instance.Id());
 
   const cvd_common::Args& subcmd_args = request.SubcommandArguments();
   cvd_common::Args cvd_env_args{internal_device_name};

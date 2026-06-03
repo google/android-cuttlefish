@@ -188,10 +188,10 @@ Result<bool> InstanceManager::RemoveInstanceGroup(LocalInstanceGroup group) {
   CF_EXPECT(!group.HasActiveInstances(),
             "Group still contains active instances");
   for (auto& instance : group.Instances()) {
-    if (instance.id() == 0) {
+    if (instance.Id() == 0) {
       continue;
     }
-    if (auto res = lock_manager_.RemoveLockFile(instance.id()); !res.ok()) {
+    if (auto res = lock_manager_.RemoveLockFile(instance.Id()); !res.ok()) {
       LOG(ERROR) << "Failed to remove instance id lock: " << res.error();
     }
   }
@@ -249,10 +249,10 @@ Result<void> InstanceManager::Clear() {
       }
     }
     for (auto instance : group.Instances()) {
-      if (instance.id() <= 0) {
+      if (instance.Id() <= 0) {
         continue;
       }
-      auto res = lock_manager_.RemoveLockFile(instance.id());
+      auto res = lock_manager_.RemoveLockFile(instance.Id());
       if (!res.ok()) {
         LOG(ERROR) << "Failed to remove lock file for instance: "
                    << res.error();

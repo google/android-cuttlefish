@@ -125,7 +125,7 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
   cvd_common::Envs envs;
   envs["HOME"] = home;
   // old cvd_internal_status expects CUTTLEFISH_INSTANCE=<k>
-  envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.id());
+  envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.Id());
 
   ConstructCommandParam help_cmd_param{
       .bin_path = bin_path,
