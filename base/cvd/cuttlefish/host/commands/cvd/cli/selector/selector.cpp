@@ -122,18 +122,6 @@ Result<LocalInstanceGroup> PromptUserForGroup(
   }
 }
 
-Result<LocalInstanceGroup> FindGroupOrDefault(
-    const InstanceDatabase::Filter& filter,
-    const InstanceManager& instance_manager) {
-  if (filter.Empty()) {
-    return CF_EXPECT(GetDefaultGroup(instance_manager));
-  }
-  std::vector<LocalInstanceGroup> groups =
-      CF_EXPECT(instance_manager.FindGroups(filter));
-  CF_EXPECT_EQ(groups.size(), 1u, "groups.size() = " << groups.size());
-  return groups.front();
-}
-
 Result<std::pair<LocalInstance, LocalInstanceGroup>> FindDefaultInstance(
     const InstanceManager& instance_manager) {
   const LocalInstanceGroup group = CF_EXPECT(GetDefaultGroup(instance_manager));
@@ -147,15 +135,13 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> FindDefaultInstance(
 
 Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
                                        const CommandRequest& request) {
-  const bool has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
-  CF_EXPECT(std::move(has_groups), "No instance groups available");
-  const SelectorOptions& selector_options = request.Selectors();
-  InstanceDatabase::Filter filter =
-      CF_EXPECT(BuildFilterFromSelectors(selector_options));
-  Result<LocalInstanceGroup> group_selection_result =
-      FindGroupOrDefault(filter, instance_manager);
-  if (group_selection_result.ok()) {
-    return CF_EXPECT(std::move(group_selection_result));
+  const InstanceDatabase::Filter filter =
+      CF_EXPECT(BuildFilterFromSelectors(request.Selectors()));
+  std::vector<LocalInstanceGroup> groups =
+      CF_EXPECT(instance_manager.FindGroups(filter));
+  CF_EXPECT(!groups.empty(), "No instance groups available");
+  if (groups.size() == 1) {
+    return groups.front();
   }
   CF_EXPECT(isatty(0),
             "Multiple groups found. Narrow the selection with selector "
