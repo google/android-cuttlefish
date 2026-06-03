@@ -34,16 +34,6 @@ namespace cuttlefish {
 namespace selector {
 namespace {
 
-Result<LocalInstanceGroup> GetDefaultGroup(
-    const InstanceManager& instance_manager) {
-  const std::vector<LocalInstanceGroup> all_groups =
-      CF_EXPECT(instance_manager.FindGroups({}));
-  CF_EXPECTF(all_groups.size() == 1,
-             "There are {} instance groups, unable to pick one",
-             all_groups.size());
-  return all_groups.front();
-}
-
 Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
     const SelectorOptions& selectors) {
   InstanceDatabase::Filter filter;
@@ -122,13 +112,10 @@ Result<LocalInstanceGroup> PromptUserForGroup(
   }
 }
 
-Result<std::pair<LocalInstance, LocalInstanceGroup>> FindDefaultInstance(
-    const InstanceManager& instance_manager) {
-  const LocalInstanceGroup group = CF_EXPECT(GetDefaultGroup(instance_manager));
-  const std::vector<LocalInstance> instances = group.Instances();
-  CF_EXPECT_EQ(instances.size(), 1u,
-               "Default instance is the single instance in the default group.");
-  return std::make_pair(instances.front(), group);
+Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
+    const InstanceManager& instance_manager, const CommandRequest& request,
+    InstanceDatabase::Filter filter) {
+  return CF_ERR("TODO(chadreynolds): implement in follow-up commit");
 }
 
 }  // namespace
@@ -152,12 +139,21 @@ Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
     const InstanceManager& instance_manager, const CommandRequest& request) {
-  InstanceDatabase::Filter filter =
+  const InstanceDatabase::Filter filter =
       CF_EXPECT(BuildFilterFromSelectors(request.Selectors()));
-
-  return filter.Empty()
-             ? CF_EXPECT(FindDefaultInstance(instance_manager))
-             : CF_EXPECT(instance_manager.FindInstanceWithGroup(filter));
+  std::vector<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>
+      found_instances = CF_EXPECT(instance_manager.FindInstances(filter));
+  CF_EXPECT(!found_instances.empty(), "No instances available");
+  if (found_instances.size() == 1 &&
+      found_instances.front().second.size() == 1) {
+    auto [group, instances] = found_instances.front();
+    return std::make_pair(instances.front(), group);
+  }
+  CF_EXPECT(isatty(0),
+            "Multiple instances found.  Narrow the selection with selector "
+            "arguments or run in an interactive terminal");
+  return CF_EXPECT(
+      PromptUserForInstance(instance_manager, request, std::move(filter)));
 }
 
 }  // namespace selector
