@@ -50,9 +50,7 @@ class Range {
     return start_ < other.start_ ||
            (start_ == other.start_ && end_ > other.end_);
   }
-  bool operator==(const Range& other) const {
-    return start_ == other.start_ && end_ == other.end_;
-  }
+  bool operator==(const Range&) const = default;
 
   std::pair<uint64_t, uint64_t> AsPair() const {
     return std::make_pair(start_, end_);
