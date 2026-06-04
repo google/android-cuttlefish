@@ -91,7 +91,7 @@ void OverrideInstanceJson(const LocalInstance& instance,
         fmt::format("https://localhost:1443/devices/{}/files/client.html",
                     instance.WebRtcDeviceId());
     instance_json["webrtc_device_id"] = instance.WebRtcDeviceId();
-    instance_json["adb_port"] = instance.adb_port();
+    instance_json["adb_port"] = instance.AdbPort();
   }
 }
 

@@ -72,7 +72,7 @@ std::string LocalInstance::InstanceDirectory() const {
   return to_ret;
 }
 
-int LocalInstance::adb_port() const {
+int LocalInstance::AdbPort() const {
   // The instance id is zero for a very short time between the load and create
   // commands. The adb_port property should not be accessed during that time,
   // but return an invalid port number just in case.
