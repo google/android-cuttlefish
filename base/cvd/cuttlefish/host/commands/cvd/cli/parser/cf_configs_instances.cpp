@@ -25,6 +25,7 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_connectivity_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_disk_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_graphics_configs.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_media_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_security_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_streaming_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_vm_configs.h"
@@ -44,6 +45,7 @@ Result<std::vector<std::string>> GenerateInstancesFlags(
   res = MergeResults(std::move(res), GenerateStreamingFlags(cfg));
   res = MergeResults(std::move(res), CF_EXPECT(GenerateVmFlags(cfg)));
   res = MergeResults(std::move(res), GenerateConnectivityFlags(cfg));
+  res = MergeResults(std::move(res), CF_EXPECT(GenerateMediaFlags(cfg)));
   return res;
 }
 
