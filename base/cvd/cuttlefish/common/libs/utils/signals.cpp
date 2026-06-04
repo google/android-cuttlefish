@@ -44,7 +44,7 @@ void ChangeSignalHandlers(void (*handler)(int), std::vector<int> signals) {
   struct sigaction act;
   act.sa_handler = handler;
   sigemptyset(&act.sa_mask);
-  for (auto signal: signals) {
+  for (auto signal : signals) {
     sigaddset(&act.sa_mask, signal);
   }
   act.sa_flags = 0;
@@ -55,4 +55,3 @@ void ChangeSignalHandlers(void (*handler)(int), std::vector<int> signals) {
 }
 
 }  // namespace cuttlefish
-

@@ -24,5 +24,3 @@ namespace cuttlefish {
 uint16_t JsIndexToLinux(const int32_t& index_code);
 
 }
-
-

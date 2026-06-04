@@ -66,7 +66,6 @@ cf_cc_library(
     name = "remote_zip",
     srcs = ["remote_zip.cc"],
     hdrs = ["remote_zip.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",

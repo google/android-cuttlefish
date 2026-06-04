@@ -372,7 +372,6 @@ cf_cc_library(
     name = "kernel_args",
     srcs = ["kernel_args.cpp"],
     hdrs = ["kernel_args.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -406,7 +405,6 @@ cf_cc_library(
     name = "logging",
     srcs = ["logging.cpp"],
     hdrs = ["logging.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",

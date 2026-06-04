@@ -64,8 +64,8 @@ Result<void> PowerwashCvdMain() {
   return {};
 }
 
-} // namespace
-} // namespace cuttlefish
+}  // namespace
+}  // namespace cuttlefish
 
 int main(int argc, char** argv) {
   cuttlefish::LogToStderr();

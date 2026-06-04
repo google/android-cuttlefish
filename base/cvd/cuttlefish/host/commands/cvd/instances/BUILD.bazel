@@ -31,7 +31,6 @@ cf_cc_library(
     name = "data_viewer",
     srcs = ["data_viewer.cpp"],
     hdrs = ["data_viewer.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:signals",

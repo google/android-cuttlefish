@@ -32,7 +32,7 @@ int DeviceConfig::host_id() {
 
 std::string DeviceConfig::PerInstancePath(const char* file_name) {
   if (!cuttlefish::CuttlefishConfig::Get()) {
-      return "";
+    return "";
   }
   auto config = cuttlefish::CuttlefishConfig::Get();
   auto instance = config->ForDefaultInstance();
@@ -62,11 +62,12 @@ std::string DeviceConfig::ril_dns() {
 }
 
 std::ifstream DeviceConfig::open_ifstream_crossplat(const char* filename) {
-    return std::ifstream(filename);
+  return std::ifstream(filename);
 }
 
-std::ofstream DeviceConfig::open_ofstream_crossplat(const char* filename, std::ios_base::openmode mode) {
-    return std::ofstream(filename, mode);
+std::ofstream DeviceConfig::open_ofstream_crossplat(
+    const char* filename, std::ios_base::openmode mode) {
+  return std::ofstream(filename, mode);
 }
 
 }  // namespace modem

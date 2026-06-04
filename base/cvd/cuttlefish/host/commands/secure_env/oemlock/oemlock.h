@@ -29,7 +29,7 @@ namespace oemlock {
  *
  * Inspired by OemLock HAL interface:
  * https://cs.android.com/android/platform/superproject/+/master:hardware/interfaces/oemlock/aidl/default/Android.bp
-*/
+ */
 class OemLock {
  public:
   OemLock(secure_env::Storage& storage);
@@ -47,5 +47,5 @@ class OemLock {
   secure_env::Storage& storage_;
 };
 
-} // namespace oemlock
-} // namespace cuttlefish
+}  // namespace oemlock
+}  // namespace cuttlefish

@@ -102,4 +102,4 @@ Result<void> WaitForUnixSocketListeningWithoutConnect(const std::string& path,
   return CF_ERR("This shouldn't be executed");
 }
 
-}
+}  // namespace cuttlefish

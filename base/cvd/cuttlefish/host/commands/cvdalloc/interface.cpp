@@ -19,7 +19,7 @@
 
 namespace cuttlefish {
 
-std::string CvdallocInterfaceName(const std::string &name, int num) {
+std::string CvdallocInterfaceName(const std::string& name, int num) {
   return absl::StrFormat("%s-%s%d", kCvdallocInterfacePrefix, name, num);
 }
 

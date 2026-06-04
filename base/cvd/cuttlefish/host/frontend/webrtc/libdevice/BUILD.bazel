@@ -15,7 +15,6 @@ cf_cc_library(
 cf_cc_library(
     name = "audio_sink",
     hdrs = ["audio_sink.h"],
-    clang_format_enabled = False,
     deps = [
         ":audio_frame_buffer",
     ],
@@ -25,7 +24,6 @@ cf_cc_library(
     name = "audio_track_source_impl",
     srcs = ["audio_track_source_impl.cpp"],
     hdrs = ["audio_track_source_impl.h"],
-    clang_format_enabled = False,
     deps = [
         ":audio_sink",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
@@ -80,7 +78,6 @@ cf_cc_library(
 cf_cc_library(
     name = "connection_observer",
     hdrs = ["connection_observer.h"],
-    clang_format_enabled = False,
     deps = [
         ":camera_controller",
         ":lights_observer",
@@ -114,7 +111,6 @@ cf_cc_library(
     name = "gamepad",
     srcs = ["gamepad.cpp"],
     hdrs = ["gamepad.h"],
-    clang_format_enabled = False,
     deps = [
         "//libbase",
     ],
@@ -145,7 +141,6 @@ cf_cc_library(
     name = "local_recorder",
     srcs = ["local_recorder.cpp"],
     hdrs = ["local_recorder.h"],
-    clang_format_enabled = False,
     linkopts = [
         "-lopus",
     ],
@@ -165,7 +160,6 @@ cf_cc_library(
     name = "recording_manager",
     srcs = ["recording_manager.cpp"],
     hdrs = ["recording_manager.h"],
-    clang_format_enabled = False,
     deps = [
         ":local_recorder",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -180,7 +174,6 @@ cf_cc_library(
     name = "server_connection",
     srcs = ["server_connection.cpp"],
     hdrs = ["server_connection.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:json",

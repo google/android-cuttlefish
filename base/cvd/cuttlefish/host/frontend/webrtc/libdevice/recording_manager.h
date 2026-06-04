@@ -32,25 +32,25 @@ namespace cuttlefish {
 namespace webrtc_streaming {
 
 class Source {
-public:
+ public:
   size_t width_;
   size_t height_;
   std::shared_ptr<::webrtc::VideoTrackSourceInterface> video_;
 };
 
 class RecordingManager {
-public:
+ public:
   RecordingManager();
 
   void AddSource(size_t width, size_t height,
-           std::shared_ptr<::webrtc::VideoTrackSourceInterface> video,
-           const std::string& label);
+                 std::shared_ptr<::webrtc::VideoTrackSourceInterface> video,
+                 const std::string& label);
   void RemoveSource(const std::string& label);
   void Start();
   void Stop();
   void WaitForSources(size_t num_sources);
 
-private:
+ private:
   bool recording_;
   std::string recording_directory_;
   std::string instance_name_;
@@ -58,7 +58,8 @@ private:
   std::condition_variable video_source_ready_signal_;
   std::map<std::string, std::unique_ptr<Source>> sources_;
   std::map<std::string,
-           std::unique_ptr<cuttlefish::webrtc_streaming::LocalRecorder>> local_recorders_;
+           std::unique_ptr<cuttlefish::webrtc_streaming::LocalRecorder>>
+      local_recorders_;
 
   void StartSingleRecorder(const std::string& label);
 };

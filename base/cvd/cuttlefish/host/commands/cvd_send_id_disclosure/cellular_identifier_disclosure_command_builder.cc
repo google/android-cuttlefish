@@ -20,10 +20,9 @@
 
 #include <fmt/format.h>
 
-
 namespace cuttlefish {
 
-std::string GetATCommand(const std::string &plmn, int32_t identifierType,
+std::string GetATCommand(const std::string& plmn, int32_t identifierType,
                          int32_t protocolMessage, bool isEmergency) {
   return fmt::format("AT+REMOTEIDDISCLOSURE:\"{}\",{},{},{:d}\r", plmn,
                      identifierType, protocolMessage, isEmergency);

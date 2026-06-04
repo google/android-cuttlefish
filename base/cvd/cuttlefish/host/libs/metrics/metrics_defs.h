@@ -18,9 +18,9 @@
 namespace cuttlefish {
 
 enum MetricsExitCodes : int {
-  kSuccess=0,
-  kMetricsError=1,
-  kInvalidHostConfiguration=2,
+  kSuccess = 0,
+  kMetricsError = 1,
+  kInvalidHostConfiguration = 2,
 };
 
 }  // namespace cuttlefish

@@ -26,4 +26,3 @@ bool ShouldEnableMultitouch(
 }
 
 }  // namespace cuttlefish
-

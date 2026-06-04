@@ -235,4 +235,3 @@ std::unique_ptr<InputConnector> InputConnectorBuilder::Build() && {
 }
 
 }  // namespace cuttlefish
-

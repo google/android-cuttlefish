@@ -21,8 +21,8 @@
 #include <vector>
 
 #include <fruit/component.h>
-#include <fruit/macro.h>
 #include <fruit/injector.h>
+#include <fruit/macro.h>
 #include <gtest/gtest.h>
 
 #include "cuttlefish/host/libs/config/config_flag.h"

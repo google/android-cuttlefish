@@ -10,7 +10,6 @@ cf_cc_library(
         "interface.cpp",
     ],
     hdrs = ["interface.h"],
-    clang_format_enabled = False,
     deps = [
         "@abseil-cpp//absl/strings:str_format",
     ],

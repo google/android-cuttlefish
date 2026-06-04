@@ -33,14 +33,16 @@ class CfAudioDeviceModule : public webrtc::AudioDeviceModule,
 
   // Returns number of frames if there is data available, 0 if the stream is not
   // playing (no clients or the streams are muted), -1 on error.
-  int GetMoreAudioData(void* data, int bytes_per_samples, int samples_per_channel,
-                       int num_channels, int sample_rate, bool& muted) override;
+  int GetMoreAudioData(void* data, int bytes_per_samples,
+                       int samples_per_channel, int num_channels,
+                       int sample_rate, bool& muted) override;
 
   // Retrieve the currently utilized audio layer
   int32_t ActiveAudioLayer(AudioLayer* audioLayer) const override;
 
   // Full-duplex transportation of PCM audio
-  int32_t RegisterAudioCallback(webrtc::AudioTransport* audio_callback) override;
+  int32_t RegisterAudioCallback(
+      webrtc::AudioTransport* audio_callback) override;
 
   // Main initialization and termination
   int32_t Init() override;

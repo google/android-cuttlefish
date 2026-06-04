@@ -113,4 +113,3 @@ void ClientFilesServer::Serve() {
   }
 }
 }  // namespace cuttlefish
-

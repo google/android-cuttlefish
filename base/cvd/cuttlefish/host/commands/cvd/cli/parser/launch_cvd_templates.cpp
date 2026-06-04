@@ -232,7 +232,8 @@ static constexpr std::string_view kFoldableInstanceTemplate = R""""(
 }
   )"""";
 
-static Result<Json::Value> LoadTemplateByName(const std::string& template_name) {
+static Result<Json::Value> LoadTemplateByName(
+    const std::string& template_name) {
   static auto* kSupportedTemplatesKeyMap =
       new std::map<std::string_view, std::string_view>{
           {"phone", kPhoneInstanceTemplate},
@@ -269,7 +270,7 @@ Result<EnvironmentSpecification> ExtractLaunchTemplates(
       combined_json_sstream << ins_json;
       const auto& combined_json_str = combined_json_sstream.str();
 
-      //status = JsonStringToMessage(combined_json_str, &ins);
+      // status = JsonStringToMessage(combined_json_str, &ins);
       CF_EXPECTF(status.ok(), "{}", status.ToString());
     }
   }

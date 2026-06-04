@@ -29,7 +29,7 @@ namespace webrtc_streaming {
 class VideoTrackSourceImpl;
 
 class LocalRecorder {
-public:
+ public:
   ~LocalRecorder();
 
   static std::unique_ptr<LocalRecorder> Create(const std::string& filename);
@@ -38,7 +38,7 @@ public:
                   std::shared_ptr<::webrtc::VideoTrackSourceInterface> source);
   void Stop();
 
-private:
+ private:
   class Display;
   class Impl;
 
@@ -47,5 +47,5 @@ private:
   std::unique_ptr<Impl> impl_;
 };
 
-} // namespace webrtc_streaming
-} // namespace cuttlefish
+}  // namespace webrtc_streaming
+}  // namespace cuttlefish

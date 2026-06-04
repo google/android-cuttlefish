@@ -86,4 +86,3 @@ class InputConnectorBuilder {
 };
 
 }  // namespace cuttlefish
-

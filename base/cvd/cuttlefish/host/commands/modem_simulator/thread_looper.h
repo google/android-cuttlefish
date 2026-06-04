@@ -26,7 +26,7 @@
 namespace cuttlefish {
 
 template <typename T>
-std::function<void()> makeSafeCallback(T *me, std::function<void(T *)> f) {
+std::function<void()> makeSafeCallback(T* me, std::function<void(T*)> f) {
   return [f, me] {
     if (me) {
       f(me);
@@ -34,18 +34,18 @@ std::function<void()> makeSafeCallback(T *me, std::function<void(T *)> f) {
   };
 }
 
-template<typename T, typename... Params>
-std::function<void()> makeSafeCallback(
-    T *obj, void (T::*f)(const Params&...), const Params&... params) {
+template <typename T, typename... Params>
+std::function<void()> makeSafeCallback(T* obj, void (T::*f)(const Params&...),
+                                       const Params&... params) {
   return makeSafeCallback<T>(obj,
-                             [f, params...](T *me) { (me->*f)(params...); });
+                             [f, params...](T* me) { (me->*f)(params...); });
 }
 
-template<typename T, typename... Params>
-std::function<void()> makeSafeCallback(
-      T *obj, void (T::*f)(Params...), const Params&... params) {
+template <typename T, typename... Params>
+std::function<void()> makeSafeCallback(T* obj, void (T::*f)(Params...),
+                                       const Params&... params) {
   return makeSafeCallback<T>(obj,
-                             [f, params...](T *me) { (me->*f)(params...); });
+                             [f, params...](T* me) { (me->*f)(params...); });
 }
 
 class ThreadLooper {
@@ -53,8 +53,8 @@ class ThreadLooper {
   ThreadLooper();
   ~ThreadLooper();
 
-  ThreadLooper(const ThreadLooper &) = delete;
-  ThreadLooper &operator=(const ThreadLooper &) = delete;
+  ThreadLooper(const ThreadLooper&) = delete;
+  ThreadLooper& operator=(const ThreadLooper&) = delete;
 
   typedef std::function<void()> Callback;
   typedef int32_t Serial;
@@ -69,11 +69,11 @@ class ThreadLooper {
 
  private:
   struct Event {
-      std::chrono::steady_clock::time_point when;
-      Callback cb;
-      Serial serial;
+    std::chrono::steady_clock::time_point when;
+    Callback cb;
+    Serial serial;
 
-      bool operator<=(const Event &other) const;
+    bool operator<=(const Event& other) const;
   };
 
   bool stopped_;
@@ -86,7 +86,7 @@ class ThreadLooper {
 
   void ThreadLoop();
 
-  void Insert(const Event &event);
+  void Insert(const Event& event);
 };
 
 };  // namespace cuttlefish

@@ -118,4 +118,3 @@ class ConnectionObserverFactory {
 
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish
-

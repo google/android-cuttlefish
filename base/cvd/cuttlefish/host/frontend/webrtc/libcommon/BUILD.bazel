@@ -8,7 +8,6 @@ cf_cc_library(
     name = "audio_device",
     srcs = ["audio_device.cpp"],
     hdrs = ["audio_device.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
         "//libbase",
@@ -80,7 +79,6 @@ cf_cc_library(
     name = "vp8only_encoder_factory",
     srcs = ["vp8only_encoder_factory.cpp"],
     hdrs = ["vp8only_encoder_factory.h"],
-    clang_format_enabled = False,
     deps = [
         "@libwebrtc",
     ],

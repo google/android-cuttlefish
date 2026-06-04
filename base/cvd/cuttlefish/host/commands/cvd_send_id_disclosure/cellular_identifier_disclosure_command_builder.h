@@ -27,7 +27,7 @@ namespace cuttlefish {
  * unsolicited calls to
  * aidl::android::hardware::radio::network::IRadioNetworkIndication::cellularIdentifierDisclosed.
  */
-std::string GetATCommand(const std::string &plmn, int32_t identifierType,
+std::string GetATCommand(const std::string& plmn, int32_t identifierType,
                          int32_t protocolMessage, bool isEmergency);
 
 }  // namespace cuttlefish

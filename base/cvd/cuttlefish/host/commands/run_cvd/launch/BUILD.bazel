@@ -75,7 +75,6 @@ cf_cc_library(
     name = "enable_multitouch",
     srcs = ["enable_multitouch.cpp"],
     hdrs = ["enable_multitouch.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:guest_os",

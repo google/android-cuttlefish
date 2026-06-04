@@ -17,8 +17,8 @@
 #include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
 
 #include <poll.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 
 #include <atomic>
 #include <cstring>
@@ -37,8 +37,7 @@ namespace {
 
 class ProxyPair {
  public:
-  ProxyPair()
-      : stop_fd_(SharedFD::Event()) {
+  ProxyPair() : stop_fd_(SharedFD::Event()) {
     if (!stop_fd_->IsOpen()) {
       LOG(FATAL) << "Failed to open eventfd: " << stop_fd_->StrError();
       return;
@@ -80,9 +79,7 @@ class ProxyPair {
                        std::ref(t2c_running_));
   }
 
-  bool Running() {
-    return c2t_running_ || t2c_running_;
-  }
+  bool Running() { return c2t_running_ || t2c_running_; }
 
  private:
   void Forward(const std::string& label, SharedFD from, SharedFD to,
@@ -112,22 +109,22 @@ class ProxyPair {
 
 }  // namespace
 
-ProxyServer::ProxyServer(SharedFD server, std::function<SharedFD()> clients_factory)
+ProxyServer::ProxyServer(SharedFD server,
+                         std::function<SharedFD()> clients_factory)
     : stop_fd_(SharedFD::Event()) {
   if (!stop_fd_->IsOpen()) {
     LOG(FATAL) << "Failed to open eventfd: " << stop_fd_->StrError();
     return;
   }
   server_ = std::thread([&, server_fd = std::move(server),
-                            clients_factory = std::move(clients_factory)]() {
+                         clients_factory = std::move(clients_factory)]() {
     constexpr ssize_t SERVER = 0;
     constexpr ssize_t STOP = 1;
     std::list<ProxyPair> watched;
 
     std::vector<PollSharedFd> server_poll = {
-      {.fd = server_fd, .events = POLLIN},
-      {.fd = stop_fd_, .events = POLLIN}
-    };
+        {.fd = server_fd, .events = POLLIN},
+        {.fd = stop_fd_, .events = POLLIN}};
 
     while (server_fd->IsOpen()) {
       server_poll[SERVER].revents = 0;
@@ -151,7 +148,8 @@ ProxyServer::ProxyServer(SharedFD server, std::function<SharedFD()> clients_fact
       // connection without blocking on that
       auto client = SharedFD::Accept(*server_fd);
       if (!client->IsOpen()) {
-        LOG(ERROR) << "Failed to accept incoming connection: " << client->StrError();
+        LOG(ERROR) << "Failed to accept incoming connection: "
+                   << client->StrError();
         continue;
       }
       auto target = clients_factory();
@@ -163,13 +161,15 @@ ProxyServer::ProxyServer(SharedFD server, std::function<SharedFD()> clients_fact
             << "Proxy is launched. Amount of currently tracked proxy pairs: "
             << watched.size();
       } else {
-        LOG(ERROR) << "Cannot connect to the target to setup proxying: " << target->StrError();
+        LOG(ERROR) << "Cannot connect to the target to setup proxying: "
+                   << target->StrError();
       }
       // Unwatch completed proxy pairs
       watched.remove_if([](ProxyPair& proxy) { return !proxy.Running(); });
     }
 
-    // Making sure all launched proxy pairs are finished by triggering their destructor
+    // Making sure all launched proxy pairs are finished by triggering their
+    // destructor
     VLOG(0) << "Waiting for proxy threads to turn down";
     watched.clear();
     VLOG(0) << "Proxy threads are successfully turned down";
@@ -194,8 +194,10 @@ void Proxy(SharedFD server, std::function<SharedFD()> conn_factory) {
   proxy.Join();
 }
 
-std::unique_ptr<ProxyServer> ProxyAsync(SharedFD server, std::function<SharedFD()> conn_factory) {
-  return std::make_unique<ProxyServer>(std::move(server), std::move(conn_factory));
+std::unique_ptr<ProxyServer> ProxyAsync(
+    SharedFD server, std::function<SharedFD()> conn_factory) {
+  return std::make_unique<ProxyServer>(std::move(server),
+                                       std::move(conn_factory));
 }
 
 }  // namespace cuttlefish

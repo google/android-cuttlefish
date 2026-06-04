@@ -44,6 +44,7 @@ class ProxyServer {
 // behavior for SIGPIPE before calling this function, otherwise it runs the risk
 // or crashing the process when a connection breaks.
 void Proxy(SharedFD server, std::function<SharedFD()> conn_factory);
-std::unique_ptr<ProxyServer> ProxyAsync(SharedFD server, std::function<SharedFD()> conn_factory);
+std::unique_ptr<ProxyServer> ProxyAsync(SharedFD server,
+                                        std::function<SharedFD()> conn_factory);
 
 }  // namespace cuttlefish

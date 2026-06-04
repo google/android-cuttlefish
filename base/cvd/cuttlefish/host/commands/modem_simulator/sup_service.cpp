@@ -53,12 +53,10 @@ std::vector<CommandHandler> SupService::InitializeCommandHandlers() {
 }
 
 void SupService::InitializeServiceState() {
-  call_forward_infos_ = {
-    CallForwardInfo(CallForwardInfo::Reason::CFU),
-    CallForwardInfo(CallForwardInfo::Reason::CFB),
-    CallForwardInfo(CallForwardInfo::Reason::CFNR),
-    CallForwardInfo(CallForwardInfo::Reason::CFNRC)
-  };
+  call_forward_infos_ = {CallForwardInfo(CallForwardInfo::Reason::CFU),
+                         CallForwardInfo(CallForwardInfo::Reason::CFB),
+                         CallForwardInfo(CallForwardInfo::Reason::CFNR),
+                         CallForwardInfo(CallForwardInfo::Reason::CFNRC)};
 }
 
 // clang-format off
@@ -179,7 +177,8 @@ void SupService::HandleCLIP(const Client& client) {
  * see RIL_REQUEST_SET_SUPP_SVC_NOTIFICATION in RIL
  */
 // clang-format on
-void SupService::HandleSuppServiceNotifications(const Client& client, std::string& /*command*/) {
+void SupService::HandleSuppServiceNotifications(const Client& client,
+                                                std::string& /*command*/) {
   client.SendCommandResponse("OK");
 }
 
@@ -221,8 +220,8 @@ void SupService::HandleCallForward(const Client& client, std::string& command) {
         auto iter = call_forward_infos_.begin();
         for (; iter != call_forward_infos_.end(); ++iter) {
           ss.clear();
-          ss << "+CCFCU: " << iter->status << "," << classx << "," << number_type
-                  << "," << ton << ",\"" << iter->number << "\"";
+          ss << "+CCFCU: " << iter->status << "," << classx << ","
+             << number_type << "," << ton << ",\"" << iter->number << "\"";
           if (iter->reason == CallForwardInfo::Reason::CFNR) {
             ss << ",,," << iter->timeSeconds;
           }
@@ -237,8 +236,8 @@ void SupService::HandleCallForward(const Client& client, std::string& command) {
     case CallForwardInfo::Reason::CFNR:
     case CallForwardInfo::Reason::CFNRC: {
       if (status == CallForwardInfo::CallForwardInfoStatus::INTERROGATE) {
-        ss << "+CCFCU: " << call_forward_infos_[reason].status
-           << "," << classx << "," << number_type << "," << ton << ",\""
+        ss << "+CCFCU: " << call_forward_infos_[reason].status << "," << classx
+           << "," << number_type << "," << ton << ",\""
            << call_forward_infos_[reason].number << "\"";
         if (reason == CallForwardInfo::Reason::CFNR) {
           ss << ",,," << call_forward_infos_[reason].timeSeconds;
@@ -246,11 +245,11 @@ void SupService::HandleCallForward(const Client& client, std::string& command) {
         responses.push_back(ss.str());
       } else {
         if (status == CallForwardInfo::CallForwardInfoStatus::REGISTRATION) {
-          call_forward_infos_[reason].status
-                = CallForwardInfo::CallForwardInfoStatus::ENABLE;
+          call_forward_infos_[reason].status =
+              CallForwardInfo::CallForwardInfoStatus::ENABLE;
         } else {
           call_forward_infos_[reason].status =
-                (CallForwardInfo::CallForwardInfoStatus)status;
+              (CallForwardInfo::CallForwardInfoStatus)status;
         }
         call_forward_infos_[reason].number_type = number_type;
         call_forward_infos_[reason].ton = ton;
@@ -260,7 +259,8 @@ void SupService::HandleCallForward(const Client& client, std::string& command) {
           cmd.SkipComma();
           cmd.SkipComma();
           int timeSeconds = cmd.GetNextInt();
-          call_forward_infos_[reason].timeSeconds = timeSeconds >= 0 ? timeSeconds : 0;
+          call_forward_infos_[reason].timeSeconds =
+              timeSeconds >= 0 ? timeSeconds : 0;
         }
       }
       break;
