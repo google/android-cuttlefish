@@ -36,3 +36,19 @@ aosp_artifact(
     build_target = "aosp_cf_x86_64_only_phone-userdebug",
     out_name = "images.zip",
 )
+
+aosp_artifact(
+    name = "sdv_core_images",
+    artifact_name = "aosp_cf_x86_64_sdv_core-img-15150359.zip",
+    build_id = "15150359",
+    build_target = "aosp_cf_x86_64_sdv_core-trunk_staging-userdebug",
+    out_name = "sdv_core_images.zip",
+)
+
+aosp_artifact(
+    name = "sdv_media_images",
+    artifact_name = "aosp_cf_x86_64_sdv_media-img-15150359.zip",
+    build_id = "15150359",
+    build_target = "aosp_cf_x86_64_sdv_media-trunk_staging-userdebug",
+    out_name = "sdv_media_images.zip",
+)
