@@ -71,6 +71,7 @@ cf_cc_library(
         "sign.h",
         "sign_utils.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/concurrency",
         "//cuttlefish/common/libs/confui",

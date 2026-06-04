@@ -11,5 +11,6 @@ cf_cc_binary(
 
 cf_cc_library(
     name = "graphics_detector_shaders",
+    clang_format_enabled = False,
     textual_hdrs = glob(["*.inl"]),
 )

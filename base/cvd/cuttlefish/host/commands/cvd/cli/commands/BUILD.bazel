@@ -18,6 +18,7 @@ cf_cc_library(
     name = "bugreport",
     srcs = ["bugreport.cpp"],
     hdrs = ["bugreport.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -95,6 +96,7 @@ cf_cc_library(
     name = "display",
     srcs = ["display.cpp"],
     hdrs = ["display.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -181,6 +183,7 @@ cf_cc_library(
     name = "host_tool_target",
     srcs = ["host_tool_target.cpp"],
     hdrs = ["host_tool_target.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -211,6 +214,7 @@ cf_cc_library(
     name = "login",
     srcs = ["login.cpp"],
     hdrs = ["login.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:is_google_corp",
@@ -250,6 +254,7 @@ cf_cc_library(
     name = "power_btn",
     srcs = ["power_btn.cpp"],
     hdrs = ["power_btn.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
@@ -383,6 +388,7 @@ cf_cc_library(
     name = "start",
     srcs = ["start.cpp"],
     hdrs = ["start.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
@@ -465,6 +471,7 @@ cf_cc_library(
     name = "version",
     srcs = ["version.cpp"],
     hdrs = ["version.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:proto",
         "//cuttlefish/flag_parser",
@@ -483,6 +490,7 @@ cf_cc_library(
     name = "setup",
     srcs = ["setup.cc"],
     hdrs = ["setup.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/cli:command_request",

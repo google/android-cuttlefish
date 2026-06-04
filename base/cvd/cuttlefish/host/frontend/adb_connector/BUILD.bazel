@@ -11,6 +11,7 @@ cf_cc_binary(
         "adb_connection_maintainer.h",
         "main.cpp",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",

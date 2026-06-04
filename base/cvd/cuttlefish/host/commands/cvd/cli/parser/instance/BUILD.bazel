@@ -50,6 +50,7 @@ cf_cc_library(
     name = "cf_graphics_configs",
     srcs = ["cf_graphics_configs.cpp"],
     hdrs = ["cf_graphics_configs.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
@@ -103,6 +104,7 @@ cf_cc_library(
 cf_cc_test(
     name = "disk_configs_test",
     srcs = ["disk_configs_test.cc"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "@jsoncpp",
@@ -112,6 +114,7 @@ cf_cc_test(
 cf_cc_test(
     name = "graphics_configs_test",
     srcs = ["graphics_configs_test.cc"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:json",
@@ -128,6 +131,7 @@ cf_cc_test(
 cf_cc_test(
     name = "vm_configs_test",
     srcs = ["vm_configs_test.cc"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",

@@ -9,6 +9,7 @@ cf_cc_library(
     name = "cache",
     srcs = ["cache.cpp"],
     hdrs = ["cache.h"],
+    clang_format_enabled = False,
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:disk_usage",

@@ -195,6 +195,7 @@ cf_cc_library(
     hdrs = [
         "metrics_receiver.h",
     ],
+    clang_format_enabled = False,
     deps = [
         ":metrics_headers",
         "//cuttlefish/common/libs/fs",
@@ -264,6 +265,7 @@ cf_cc_library(
         "metrics_configs.h",
         "metrics_defs.h",
     ],
+    clang_format_enabled = False,
 )
 
 cf_cc_library(

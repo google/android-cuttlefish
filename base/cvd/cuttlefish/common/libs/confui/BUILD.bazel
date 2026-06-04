@@ -20,6 +20,7 @@ cf_cc_library(
         "protocol_types.h",
         "utils.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",

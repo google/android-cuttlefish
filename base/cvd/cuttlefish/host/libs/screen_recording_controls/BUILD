@@ -12,6 +12,7 @@ cf_cc_library(
     hdrs = [
         "screen_recording_controls.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/command_util",

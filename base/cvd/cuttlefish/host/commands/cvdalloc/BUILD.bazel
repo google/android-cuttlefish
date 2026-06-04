@@ -10,6 +10,7 @@ cf_cc_library(
         "interface.cpp",
     ],
     hdrs = ["interface.h"],
+    clang_format_enabled = False,
     deps = [
         "@abseil-cpp//absl/strings:str_format",
     ],
@@ -30,10 +31,7 @@ cf_cc_library(
 
 cf_cc_library(
     name = "privilege",
-    srcs = [
-        "privilege.cpp",
-        "privilege.h",
-    ],
+    srcs = ["privilege.cpp"],
     hdrs = ["privilege.h"],
     deps = [
         "//cuttlefish/posix:strerror",
@@ -48,6 +46,7 @@ cf_cc_binary(
     srcs = [
         "cvdalloc.cpp",
     ],
+    clang_format_enabled = False,
     deps = [
         ":interface",
         ":privilege",

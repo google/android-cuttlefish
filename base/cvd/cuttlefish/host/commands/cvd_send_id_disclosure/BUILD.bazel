@@ -9,6 +9,7 @@ cf_cc_binary(
     srcs = [
         "main.cc",
     ],
+    clang_format_enabled = False,
     deps = [
         ":libcvd_id_disclosure_builder",
         "//cuttlefish/common/libs/fs",
@@ -28,6 +29,7 @@ cf_cc_library(
     hdrs = [
         "cellular_identifier_disclosure_command_builder.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "@fmt",
     ],

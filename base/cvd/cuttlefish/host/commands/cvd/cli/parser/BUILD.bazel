@@ -75,6 +75,7 @@ cf_cc_library(
     name = "fetch_config_parser",
     srcs = ["fetch_config_parser.cpp"],
     hdrs = ["fetch_config_parser.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
@@ -88,6 +89,7 @@ cf_cc_library(
 cf_cc_test(
     name = "flags_parser_test",
     srcs = ["flags_parser_test.cc"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
@@ -101,6 +103,7 @@ cf_cc_library(
     name = "launch_cvd_parser",
     srcs = ["launch_cvd_parser.cpp"],
     hdrs = ["launch_cvd_parser.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_instances",
@@ -117,6 +120,7 @@ cf_cc_library(
     name = "launch_cvd_templates",
     srcs = ["launch_cvd_templates.cpp"],
     hdrs = ["launch_cvd_templates.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
@@ -150,6 +154,7 @@ cf_cc_library(
     name = "load_configs_parser",
     srcs = ["load_configs_parser.cpp"],
     hdrs = ["load_configs_parser.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
@@ -189,6 +194,7 @@ cf_cc_library(
     name = "selector_parser",
     srcs = ["selector_parser.cpp"],
     hdrs = ["selector_parser.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",

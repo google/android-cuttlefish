@@ -9,6 +9,7 @@ cf_cc_binary(
     srcs = [
         "log_tee.cpp",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:tee_logging",

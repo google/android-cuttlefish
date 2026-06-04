@@ -17,6 +17,7 @@ cf_cc_library(
         "GpxParser.h",
         "KmlParser.h",
     ],
+    clang_format_enabled = False,
     # `layering_check` conflicts with the combination of the clang prebuilt and
     # the cmake build rules used for @libxml2.
     features = ["-layering_check"],

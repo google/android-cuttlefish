@@ -12,6 +12,7 @@ cf_cc_library(
     hdrs = [
         "avb.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",

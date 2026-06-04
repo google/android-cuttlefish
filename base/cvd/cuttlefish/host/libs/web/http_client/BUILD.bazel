@@ -15,6 +15,7 @@ cf_cc_library(
     name = "curl_http_client",
     srcs = ["curl_http_client.cc"],
     hdrs = ["curl_http_client.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
@@ -53,6 +54,7 @@ cf_cc_library(
     name = "http_client",
     srcs = ["http_client.cc"],
     hdrs = ["http_client.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/result",
         "@fmt",

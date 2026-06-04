@@ -12,6 +12,7 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
+    clang_format_enabled = False,
     deps = [
         ":libcasimir",
         ":libcasimir_control_server",
@@ -44,6 +45,7 @@ cf_cc_library(
         "packet_runtime.h",
         "rf_packets.h",
     ],
+    clang_format_enabled = False,
     deps = [
         ":libcasimir_control_server",
         "//cuttlefish/common/libs/fs",

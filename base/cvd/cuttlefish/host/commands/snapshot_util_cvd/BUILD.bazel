@@ -13,6 +13,7 @@ cf_cc_binary(
         "snapshot_taker.cc",
         "snapshot_taker.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",

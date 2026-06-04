@@ -31,6 +31,7 @@ cf_cc_library(
     name = "data_viewer",
     srcs = ["data_viewer.cpp"],
     hdrs = ["data_viewer.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:signals",
@@ -56,6 +57,7 @@ cf_cc_library(
     testonly = True,
     srcs = ["instance_database_helper.cpp"],
     hdrs = ["instance_database_helper.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -97,6 +99,7 @@ cf_cc_library(
         "operator_client.h",
         "status_fetcher.h",
     ],
+    clang_format_enabled = False,
     deps = [
         ":cvd_persistent_data",
         "//cuttlefish/common/libs/fs",
@@ -144,6 +147,7 @@ cf_cc_library(
     hdrs = [
         "instance_manager.h",
     ],
+    clang_format_enabled = False,
     deps = [
         ":cvd_persistent_data",
         ":instances",
@@ -204,6 +208,7 @@ cf_cc_library(
     name = "run_cvd_proc_collector",
     srcs = ["run_cvd_proc_collector.cpp"],
     hdrs = ["run_cvd_proc_collector.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
@@ -222,6 +227,7 @@ cf_cc_library(
     name = "stop",
     srcs = ["stop.cpp"],
     hdrs = ["stop.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",

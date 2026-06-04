@@ -199,6 +199,7 @@ cf_cc_library(
     name = "fetch_cvd",
     srcs = ["fetch_cvd.cc"],
     hdrs = ["fetch_cvd.h"],
+    clang_format_enabled = False,
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:archive",
@@ -240,6 +241,7 @@ cf_cc_library(
     name = "fetch_cvd_parser",
     srcs = ["fetch_cvd_parser.cc"],
     hdrs = ["fetch_cvd_parser.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
@@ -316,6 +318,7 @@ cf_cc_library(
     name = "substitute",
     srcs = ["substitute.cc"],
     hdrs = ["substitute.h"],
+    clang_format_enabled = False,
     deps = [
         ":host_pkg_migration_cc_proto",
         "//cuttlefish/common/libs/utils:environment",
@@ -344,6 +347,7 @@ cf_cc_library(
     name = "vector_flags",
     srcs = ["vector_flags.cc"],
     hdrs = ["vector_flags.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/web:android_build_string",
