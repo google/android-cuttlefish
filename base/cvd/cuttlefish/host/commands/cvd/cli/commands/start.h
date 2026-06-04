@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 
-#include "cuttlefish/flag_parser/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"

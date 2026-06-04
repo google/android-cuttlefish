@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,14 @@
 
 #pragma once
 
-#include <stdint.h>
-
 #include <string>
-#include <vector>
+#include <string_view>
 
-#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-struct Parser {
-  static Result<Parser> ConsumeAndParse(std::vector<std::string>&);
-
-  bool ignore_sigtstp = false;
-  bool when_dumped = false;
-  bool when_killed = false;
-  bool when_exited_with_failure = false;
-  /*
-   * TODO(288166029): if the flag is not given, do not restart
-   * with the exit code of -1 or 255.
-   */
-  int32_t when_exited_with_code = -1;
-  std::string first_time_argument;
-};
+Result<bool> ParseBool(std::string_view value, std::string_view name);
+Result<int> ParseInt(const std::string& value, std::string_view name);
 
 }  // namespace cuttlefish

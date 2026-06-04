@@ -24,7 +24,8 @@
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/macro.h>
 
-#include "cuttlefish/flag_parser/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/result/result.h"

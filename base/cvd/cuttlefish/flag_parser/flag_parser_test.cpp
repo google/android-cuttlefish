@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/flag_parser/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 
 #include <stdint.h>
 
@@ -76,7 +77,7 @@ TEST(FlagParser, NormalizedStringFlag) {
 
 std::optional<std::map<std::string, std::string>> flagXml(const Flag& f) {
   std::stringstream xml_stream;
-  if (!f.WriteGflagsCompatXml(xml_stream)) {
+  if (!WriteGflagsCompatXml(f, xml_stream)) {
     return {};
   }
   auto xml = xml_stream.str();
@@ -559,6 +560,83 @@ TEST(FlagParser, OptionalStringVectorFlag_UnsetOptPresent) {
   ASSERT_THAT(flag_unset.Parse({"--myflag=baz"}), IsOk());
   ASSERT_TRUE(value.has_value());
   ASSERT_EQ(*value, std::vector<std::string>({"baz"}));
+}
+
+TEST(FlagParser, OptionalBoolFlag_DefaultOptNotPresent) {
+  std::optional<bool> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+  value = std::nullopt;
+  ASSERT_THAT(flag.Parse({}), IsOk());
+  ASSERT_FALSE(value.has_value());
+}
+
+TEST(FlagParser, OptionalBoolFlag_DefaultOptPresent_FlagOnly) {
+  std::optional<bool> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+  value = std::nullopt;
+  ASSERT_THAT(flag.Parse({"--myflag"}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_TRUE(*value);
+}
+
+TEST(FlagParser, OptionalBoolFlag_DefaultOptPresent_TrueValue) {
+  std::optional<bool> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+  value = std::nullopt;
+  ASSERT_THAT(flag.Parse({"--myflag=true"}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_TRUE(*value);
+}
+
+TEST(FlagParser, OptionalBoolFlag_DefaultOptPresent_FalseValue) {
+  std::optional<bool> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+  value = std::nullopt;
+  ASSERT_THAT(flag.Parse({"--myflag=false"}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_FALSE(*value);
+}
+
+TEST(FlagParser, OptionalBoolFlag_NoFlag) {
+  std::optional<bool> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+  value = std::nullopt;
+  ASSERT_THAT(flag.Parse({"--nomyflag"}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_FALSE(*value);
+}
+
+TEST(FlagParser, OptionalBoolFlag_EmptyOptEmptyFlag) {
+  std::optional<bool> value;
+  auto flag = GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
+  value = true;
+  ASSERT_THAT(flag.Parse({"--myflag="}), IsOk());
+  ASSERT_FALSE(value.has_value());
+}
+
+TEST(FlagParser, OptionalBoolFlag_UnsetOptUnsetValue) {
+  std::optional<bool> value;
+  auto flag = GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
+  value = true;
+  ASSERT_THAT(flag.Parse({"--myflag=unset"}), IsOk());
+  ASSERT_FALSE(value.has_value());
+}
+
+TEST(FlagParser, OptionalInt64Flag_Present) {
+  std::optional<int64_t> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+  value = std::nullopt;
+  ASSERT_THAT(flag.Parse({"--myflag=123456789012345"}), IsOk());
+  ASSERT_TRUE(value.has_value());
+  ASSERT_EQ(*value, 123456789012345LL);
+}
+
+TEST(FlagParser, OptionalInt64Flag_NotPresent) {
+  std::optional<int64_t> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+  value = std::nullopt;
+  ASSERT_THAT(flag.Parse({}), IsOk());
+  ASSERT_FALSE(value.has_value());
 }
 
 }  // namespace cuttlefish

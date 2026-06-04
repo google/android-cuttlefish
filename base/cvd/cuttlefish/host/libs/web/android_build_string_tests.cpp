@@ -22,7 +22,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "cuttlefish/flag_parser/flag_parser.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {

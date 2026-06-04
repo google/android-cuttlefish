@@ -23,7 +23,8 @@
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/flag_parser/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
 

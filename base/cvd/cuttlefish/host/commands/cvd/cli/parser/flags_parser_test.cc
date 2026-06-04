@@ -21,7 +21,7 @@
 #include <android-base/file.h>
 #include <gtest/gtest.h>
 
-#include "cuttlefish/flag_parser/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 #include "cuttlefish/result/result_matchers.h"

@@ -16,9 +16,6 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
-
 #include <functional>
 #include <optional>
 #include <ostream>
@@ -26,15 +23,6 @@
 #include <vector>
 
 #include "cuttlefish/result/result.h"
-
-/* Support for parsing individual flags out of a larger list of flags. This
- * supports externally determining the order that flags are evaluated in, and
- * incrementally integrating with existing flag parsing implementations.
- *
- * Start with Flag() or one of the GflagsCompatFlag(...) functions to create new
- * flags. These flags should be aggregated through the application through some
- * other mechanism and then evaluated individually with Flag::Parse or together
- * with ConsumeFlags on arguments. */
 
 namespace cuttlefish {
 
@@ -102,10 +90,10 @@ class Flag {
   Result<void> Parse(std::vector<std::string>& arguments) const;
   Result<void> Parse(std::vector<std::string>&& arguments) const;
 
-  /* Write gflags `--helpxml` style output for a string-type flag. */
-  bool WriteGflagsCompatXml(std::ostream&) const;
-
  private:
+  /* Write gflags `--helpxml` style output for a string-type flag. */
+  friend bool WriteGflagsCompatXml(const Flag&, std::ostream&);
+
   /* Reports whether `Process` wants to consume zero, one, or two arguments. */
   enum class FlagProcessResult {
     /* Error in handling a flag, exit flag handling with an error result. */
@@ -143,8 +131,13 @@ class Flag {
 
 std::ostream& operator<<(std::ostream&, const Flag&);
 
-Result<bool> ParseBool(std::string_view value, std::string_view name);
-Result<int> ParseInt(const std::string& value, std::string_view name);
+/* Catches any argument that begin with `-` and errors out. When used after all
+ * valid flags it effectively fails on unrecognized flags.
+ */
+Flag InvalidFlagGuard();
+/* Catches any arguments not extracted by other Flag matchers and errors out.
+ * This effectively denies unknown flags and any positional arguments. */
+Flag UnexpectedArgumentGuard();
 
 /* Handles a list of flags. Flags are matched in the order given in case two
  * flags match the same argument. Matched flags are removed, leaving only
@@ -163,62 +156,5 @@ Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
                                      std::vector<std::string>&);
 Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
                                      std::vector<std::string>&&);
-
-bool WriteGflagsCompatXml(const std::vector<Flag>&, std::ostream&);
-
-/* If any of these are used, they should be evaluated after all other flags, and
- * in the order defined here (help before invalid flags, invalid flags before
- * unexpected arguments). */
-
-/* If a "-help" or "--help" flag is present, prints all the flags and fails. */
-Flag HelpFlag(const std::vector<Flag>& flags, std::string text = "");
-
-/* If a "-helpxml" is present, prints all the flags in XML and fails. */
-Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream&, bool& value,
-                 std::string text = "");
-
-/* Catches unrecognized arguments that begin with `-`, and errors out. This
- * effectively denies unknown flags. */
-Flag InvalidFlagGuard();
-/* Catches any arguments not extracted by other Flag matchers and errors out.
- * This effectively denies unknown flags and any positional arguments. */
-Flag UnexpectedArgumentGuard();
-
-// Create a flag resembling a gflags argument of the given type. This includes
-// "-[-]flag=*",support for all types, "-[-]noflag" support for booleans, and
-// "-flag *", "--flag *", support for other types. The value passed in the flag
-// is saved to the defined reference.
-Flag GflagsCompatFlag(const std::string& name);
-Flag GflagsCompatBoolFlag(const std::string& name);
-Flag GflagsCompatFlag(const std::string& name, std::string& value);
-Flag GflagsCompatFlag(const std::string& name, int32_t& value);
-Flag GflagsCompatFlag(const std::string& name, size_t& value);
-Flag GflagsCompatFlag(const std::string& name, bool& value);
-Flag GflagsCompatFlag(const std::string& name, std::vector<std::string>& value);
-Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
-                      bool default_value);
-// Indicates when to assign std::nullopt to the std::optional backing the flag.
-enum class CoerceToNullopt {
-  None, // When the flag is not present in the arguments
-  UnsetKeyword, // When the flag has the "unset" special value.
-  EmptyString, // When the flag has an empty value (`--flag "" or `--flag=`)
-};
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<std::string>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<size_t>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<unsigned>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
-
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<std::vector<std::string>>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<std::vector<unsigned>>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
-
 
 }  // namespace cuttlefish
