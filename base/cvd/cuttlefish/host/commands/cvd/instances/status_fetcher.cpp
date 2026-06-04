@@ -82,7 +82,7 @@ void OverrideInstanceJson(const LocalInstance& instance,
   instance_json["instance_name"] = instance.Name();
   instance_json["status"] = HumanFriendlyStateName(instance.State());
   instance_json["assembly_dir"] = instance.assembly_dir();
-  instance_json["instance_dir"] = instance.instance_dir();
+  instance_json["instance_dir"] = instance.InstanceDirectory();
   instance_json["instance_name"] = instance.Name();
   if (instance.IsActive()) {
     // Only running instances have id > 0, these values only make sense for

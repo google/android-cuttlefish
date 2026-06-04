@@ -192,7 +192,7 @@ Result<void> CreateSymlinks(const LocalInstanceGroup& group) {
   // cvd_internal_start to persist the user's choice for
   // -report_anonymous_usage_stats.
   CF_EXPECT(
-      Copy(group.Instances()[0].instance_dir() + "/cuttlefish_config.json",
+      Copy(group.Instances()[0].InstanceDirectory() + "/cuttlefish_config.json",
            CF_EXPECT(SystemWideUserHome()) + "/.cuttlefish_config.json"),
       "Failed to copy config file to home directory");
 

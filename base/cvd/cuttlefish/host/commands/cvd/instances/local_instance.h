@@ -47,7 +47,7 @@ class LocalInstance {
   void SetWebRtcDeviceId(std::string webrtc_device_id) {
     instance_proto_->set_webrtc_device_id(std::move(webrtc_device_id));
   }
-  std::string instance_dir() const;
+  std::string InstanceDirectory() const;
   int adb_port() const;
   const std::string& home_directory() const {
     return group_proto_->home_directory();
