@@ -441,4 +441,36 @@ TEST(FlagsParserTest, ParseMediaMplane) {
       << "media flag is missing or wrongly formatted";
 }
 
+TEST(FlagsParserTest, ParseMediaV4l2Proxy) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_proxy": {
+                  "device_path": "/dev/video0"
+                }
+              }
+            ]
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, "--media=type=v4l2_proxy"))
+      << "media flag is missing or wrongly formatted";
+}
+
 }  // namespace cuttlefish
