@@ -33,6 +33,9 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
+    dynamic_deps = [
+        "//cuttlefish/common/libs/utils:files_shared",
+    ],
     deps = [
         ":libcontrol_env_proxy_server",
         "//cuttlefish/common/libs/utils:files",

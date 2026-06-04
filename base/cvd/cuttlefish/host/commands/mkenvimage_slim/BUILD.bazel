@@ -9,6 +9,11 @@ exports_files([".clang-tidy"])
 cf_cc_binary(
     name = "mkenvimage_slim",
     srcs = ["mkenvimage_slim.cc"],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//cuttlefish/result:result_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:mkenvimage_slim",

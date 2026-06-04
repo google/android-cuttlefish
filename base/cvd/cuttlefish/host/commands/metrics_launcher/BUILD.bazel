@@ -9,6 +9,11 @@ cf_cc_binary(
     srcs = [
         "metrics_launcher.cpp",
     ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//cuttlefish/result:result_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/metrics",

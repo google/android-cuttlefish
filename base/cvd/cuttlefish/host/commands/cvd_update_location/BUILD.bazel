@@ -9,6 +9,10 @@ cf_cc_binary(
     srcs = [
         "main.cc",
     ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",

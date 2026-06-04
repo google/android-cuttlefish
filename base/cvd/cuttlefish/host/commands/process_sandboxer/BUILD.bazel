@@ -117,6 +117,9 @@ cf_cc_library(
 cf_cc_binary(
     name = "process_sandboxer",
     srcs = ["main.cpp"],
+    dynamic_deps = [
+        "//:absl_shared",
+    ],
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:logs",
         "//cuttlefish/host/commands/process_sandboxer:pidfd",
@@ -181,6 +184,9 @@ cf_cc_library(
 cf_cc_binary(
     name = "sandboxer_proxy",
     srcs = ["sandboxer_proxy.cpp"],
+    dynamic_deps = [
+        "//:absl_shared",
+    ],
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:proxy_common",
         "@abseil-cpp//absl/status",

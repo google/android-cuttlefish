@@ -17,6 +17,11 @@ cf_cc_binary(
         "validate_metrics_confirmation.cpp",
         "validate_metrics_confirmation.h",
     ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//cuttlefish/common/libs/fs:fs_shared",
+        "//libbase:libbase_shared",
+    ],
     # `layering_check` conflicts with the combination of the clang prebuilt and
     # the cmake build rules used for @libxml2.
     features = ["-layering_check"],

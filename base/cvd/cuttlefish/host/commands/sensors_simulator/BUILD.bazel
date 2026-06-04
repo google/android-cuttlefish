@@ -45,6 +45,10 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         ":libsensors_hal_proxy",
         ":libsensors_simulator",

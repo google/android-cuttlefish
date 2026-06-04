@@ -7,6 +7,11 @@ package(
 cf_cc_binary(
     name = "secure_env",
     srcs = ["secure_env_only_oemlock.cpp"],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//cuttlefish/common/libs/fs:fs_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         ":suspend_resume_handler",
         ":worker_thread_loop_body",

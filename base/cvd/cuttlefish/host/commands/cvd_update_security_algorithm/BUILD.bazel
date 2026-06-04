@@ -9,6 +9,11 @@ cf_cc_binary(
     srcs = [
         "main.cc",
     ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//cuttlefish/common/libs/fs:fs_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         ":libcvd_update_security_algorithm_builder",
         "//cuttlefish/common/libs/fs",

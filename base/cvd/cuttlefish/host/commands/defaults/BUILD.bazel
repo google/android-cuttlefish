@@ -9,6 +9,11 @@ cf_cc_binary(
     srcs = [
         "defaults.cpp",
     ],
+    dynamic_deps = [
+        "//:absl_shared",
+        "//cuttlefish/result:result_shared",
+        "//libbase:libbase_shared",
+    ],
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
