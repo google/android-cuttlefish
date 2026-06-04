@@ -52,7 +52,7 @@ class LocalInstance {
   const std::string& HomeDirectory() const {
     return group_proto_->home_directory();
   }
-  const std::string& host_artifacts_path() const {
+  const std::string& HostArtifactsPath() const {
     return group_proto_->host_artifacts_path();
   }
   std::string assembly_dir() const;

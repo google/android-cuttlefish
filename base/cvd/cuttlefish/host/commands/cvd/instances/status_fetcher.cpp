@@ -117,7 +117,7 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
 
   const auto working_dir = CurrentDirectory();
 
-  auto android_host_out = instance.host_artifacts_path();
+  auto android_host_out = instance.HostArtifactsPath();
   auto home = instance.HomeDirectory();
   auto bin = CF_EXPECT(GetBin(android_host_out));
   auto bin_path = fmt::format("{}/bin/{}", android_host_out, bin);
