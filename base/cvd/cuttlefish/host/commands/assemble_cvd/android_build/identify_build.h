@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <compare>
 #include <memory>
 #include <string>
 
@@ -33,9 +34,9 @@ struct AndroidBuildKey {
   std::string system_image_dir;
   const FetcherConfig* fetcher_config;
   FileSource source;
-};
 
-bool operator<(const AndroidBuildKey&, const AndroidBuildKey&);
+  auto operator<=>(const AndroidBuildKey&) const = default;
+};
 
 Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
     const std::string& system_image_dir, const FetcherConfig& config,

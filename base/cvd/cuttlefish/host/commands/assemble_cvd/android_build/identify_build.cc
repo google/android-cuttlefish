@@ -45,16 +45,6 @@ AndroidBuildKey::AndroidBuildKey(std::string system_image_dir,
       fetcher_config(&fetcher_config),
       source(source) {}
 
-bool operator<(const AndroidBuildKey& left, const AndroidBuildKey& right) {
-  if (left.system_image_dir != right.system_image_dir) {
-    return left.system_image_dir < right.system_image_dir;
-  }
-  if (left.fetcher_config != right.fetcher_config) {
-    return left.fetcher_config < right.fetcher_config;
-  }
-  return left.source < right.source;
-}
-
 Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
     const std::string& system_image_dir, const FetcherConfig& config,
     FileSource source) {
