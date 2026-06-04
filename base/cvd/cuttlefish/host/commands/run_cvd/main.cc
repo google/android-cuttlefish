@@ -78,6 +78,7 @@
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/inject.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/metrics/metrics_receiver.h"
 #include "cuttlefish/host/libs/version/version.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
@@ -88,16 +89,11 @@ namespace {
 
 class CuttlefishEnvironment : public DiagnosticInformation {
  public:
-  INJECT(
-      CuttlefishEnvironment(const CuttlefishConfig::InstanceSpecific& instance))
-      : instance_(instance) {}
+  INJECT(CuttlefishEnvironment()) {}
 
   // DiagnosticInformation
   std::vector<std::string> Diagnostics() const override {
-    auto config_path = instance_.PerInstancePath("cuttlefish_config.json");
     return {
-        "Launcher log: " + instance_.launcher_log_path(),
-        "Instance configuration: " + config_path,
         // TODO(rammuthiah)  replace this with a more thorough cvd host package
         // version scheme. Currently this only reports the Build Number of
         // run_cvd and it is possible for other host binaries to be from
@@ -107,7 +103,6 @@ class CuttlefishEnvironment : public DiagnosticInformation {
   }
 
  private:
-  const CuttlefishConfig::InstanceSpecific& instance_;
 };
 
 class InstanceLifecycle : public LateInjected {
@@ -196,7 +191,6 @@ fruit::Component<> runCvdComponent(
       .install(AutoCmd<EchoServer>::Component)
       .install(AutoCmd<GnssGrpcProxyServer>::Component)
       .install(AutoCmd<LogcatReceiver>::Component)
-      .install(AutoDiagnostic<LogcatInfo>::Component)
       .install(KernelLogMonitorComponent)
       .install(AutoCmd<MetricsService>::Component)
       .install(OpenwrtControlServerComponent)
@@ -237,7 +231,7 @@ void ConfigureLogs(const CuttlefishConfig& config,
 
   if (!FileHasContent(log_path)) {
     std::ofstream launcher_log_ofstream(log_path.c_str());
-    auto assembly_path = config.AssemblyPath("assemble_cvd.log");
+    auto assembly_path = config.AssemblyPath(kLogNameAssembleCvd);
     std::ifstream assembly_log_ifstream(assembly_path);
     if (assembly_log_ifstream) {
       auto assemble_log = ReadFile(assembly_path);

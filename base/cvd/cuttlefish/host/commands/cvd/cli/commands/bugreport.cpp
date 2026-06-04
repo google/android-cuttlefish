@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 
-#include <functional>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -30,18 +30,19 @@
 #include "absl/log/log.h"
 #include "android-base/file.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
-#include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
 #include "cuttlefish/result/result.h"
@@ -49,6 +50,7 @@
 namespace cuttlefish {
 namespace {
 
+constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
 constexpr char kSummaryHelpText[] =
     "Run cvd bugreport --help for command description";
 
@@ -66,52 +68,32 @@ Result<std::string> OutputFileFromArgs(cvd_common::Args args) {
 
 Result<void> AddFetchLogIfPresent(const LocalInstanceGroup& instance_group,
                                   const std::string& output_file) {
-  std::string fetch_log_path = instance_group.ProductOutPath() + "/fetch.log";
+  std::string fetch_log_path =
+      instance_group.ProductOutPath() + "/" + kLogNameFetch;
   if (!FileExists(fetch_log_path)) {
     // The fetch log is in the parent of the host artifacts path when cvd create
     // --config_file was used.
     fetch_log_path =
-        android::base::Dirname(instance_group.HostArtifactsPath()) +
-        "/fetch.log";
+        android::base::Dirname(instance_group.HostArtifactsPath()) + "/" +
+        kLogNameFetch;
   }
   if (!FileExists(fetch_log_path)) {
     // There will be no fetch log when running from local sources
     return {};
   }
-  LOG(INFO) << "Attaching fetch.log to report";
+  LOG(INFO) << "Attaching " << kLogNameFetch << " to report";
   WritableZip archive = CF_EXPECT(ZipOpenReadWrite(output_file));
-  CF_EXPECT(AddFileAt(archive, fetch_log_path, "fetch.log"));
+  CF_EXPECT(AddFileAt(archive, fetch_log_path, kLogNameFetch));
   CF_EXPECT(WritableZip::Finalize(std::move(archive)));
   return {};
 }
-
-class CvdBugreportCommandHandler : public CvdCommandHandler {
- public:
-  CvdBugreportCommandHandler(InstanceManager& instance_manager);
-
-  Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override;
-  Result<std::string> SummaryHelp() const override;
-
-  bool RequiresDeviceExists() const override;
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
-
- private:
-  InstanceManager& instance_manager_;
-  using BinGeneratorType = std::function<Result<std::string>(
-      const std::string& host_artifacts_path)>;
-  std::unique_ptr<InterruptibleTerminal> terminal_ = nullptr;
-
-  static constexpr char kHostBugreportBin[] = "cvd_internal_host_bugreport";
-};
+}  // namespace
 
 CvdBugreportCommandHandler::CvdBugreportCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
 Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
-
   std::vector<std::string> cmd_args = request.SubcommandArguments();
   cvd_common::Envs env = request.Env();
 
@@ -156,28 +138,26 @@ std::vector<std::string> CvdBugreportCommandHandler::CmdList() const {
   return {"bugreport", "host_bugreport", "cvd_host_bugreport"};
 }
 
-Result<std::string> CvdBugreportCommandHandler::SummaryHelp() const {
+std::string CvdBugreportCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
-
 
 bool CvdBugreportCommandHandler::RequiresDeviceExists() const { return true; }
 
 Result<std::string> CvdBugreportCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
-  std::string android_host_out = CF_EXPECT(AndroidHostPath(request.Env()));
-  Command command = CF_EXPECT(
-      ConstructCvdHelpCommand(kHostBugreportBin, request.Env(),
-                              request.SubcommandArguments(), request));
+    const CommandRequest& request) {
+  Command command = CF_EXPECT(ConstructSiblingHelpCommand(
+      kHostBugreportBin, request.Env(), request.SubcommandArguments()));
   std::string stdout;
-  int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, nullptr);
+  std::string stderr;
+  int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, &stderr);
   // gflags returns exit code 1 when --help is given
-  CF_EXPECTF(res == 0 || res == 1,
-             "Failed to execute bugreport binary, exit code: {}", res);
+  if (res != 0 && res != 1) {
+    std::cerr << stderr;
+    return CF_ERRF("Failed to execute bugreport binary, exit code: {}", res);
+  }
   return stdout;
 }
-
-}  // namespace
 
 std::unique_ptr<CvdCommandHandler> NewCvdBugreportCommandHandler(
     InstanceManager& instance_manager) {

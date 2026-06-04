@@ -102,14 +102,14 @@ InstanceBootImage::InstanceBootImage(
     const CuttlefishConfig::InstanceSpecific& instance,
     const BootImageFlag& boot_image_flag)
     : config_(&config),
-      instance_(&instance),
+      instance_(instance),
       boot_image_flag_(&boot_image_flag) {
   // Repacking a boot.img doesn't work with Gem5 because the user must always
   // specify a vmlinux instead of an arm64 Image, and that file can be too
   // large to be repacked. Skip repack of boot.img on Gem5, as we need to be
   // able to extract the ramdisk.img in a later stage and so this step must
   // not fail (..and the repacked kernel wouldn't be used anyway).
-  if (instance_->kernel_path().empty() || VmManagerIsGem5(*config_)) {
+  if (instance_.kernel_path().empty() || VmManagerIsGem5(*config_)) {
     path_ = boot_image_flag.ForIndex(instance.index());
   }
 }
@@ -122,13 +122,13 @@ Result<std::string> InstanceBootImage::Generate() {
   }
 
   std::string previous_boot_image =
-      boot_image_flag_->ForIndex(instance_->index());
+      boot_image_flag_->ForIndex(instance_.index());
   CF_EXPECTF(FileHasContent(previous_boot_image), "File not found: {}",
              previous_boot_image);
 
-  std::string new_path = instance_->PerInstancePath("boot_repacked.img");
+  std::string new_path = instance_.PerInstancePath("boot_repacked.img");
   CF_EXPECT(
-      RepackBootImage(instance_->kernel_path(), previous_boot_image, new_path),
+      RepackBootImage(instance_.kernel_path(), previous_boot_image, new_path),
       "Failed to regenerate the boot image with the new kernel");
   path_ = new_path;
 

@@ -29,6 +29,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/metrics/enabled.h"
 #include "cuttlefish/host/libs/metrics/host_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
@@ -42,8 +43,6 @@ namespace cuttlefish {
 namespace {
 
 using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
-
-constexpr char kMetricsLogName[] = "metrics.log";
 
 std::chrono::milliseconds GetEpochTime() {
   auto now = std::chrono::system_clock::now().time_since_epoch();
@@ -63,7 +62,7 @@ ScopedLogger CreateLogger(std::string_view metrics_directory) {
       isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
   return ScopedLogger(
       SeverityTarget::FromFile(
-          fmt::format("{}/{}", metrics_directory, kMetricsLogName),
+          fmt::format("{}/{}", metrics_directory, kLogNameMetricsV2),
           metadata_level),
       "");
 }

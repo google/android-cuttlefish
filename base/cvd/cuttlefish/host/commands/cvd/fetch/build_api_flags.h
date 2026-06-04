@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cache/cache.h"
 #include "cuttlefish/host/commands/cvd/fetch/credential_flags.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"

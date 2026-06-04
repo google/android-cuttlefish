@@ -52,21 +52,6 @@ func TestVerifyAccessToken(t *testing.T) {
 		f    func(srv hoclient.HostOrchestratorClient, token string)
 	}{
 		{
-			name: "FetchArtifacts",
-			f: func(srv hoclient.HostOrchestratorClient, token string) {
-				r := &hoapi.FetchArtifactsRequest{
-					AndroidCIBundle: &hoapi.AndroidCIBundle{
-						Build: &hoapi.AndroidCIBuild{
-							BuildID: "13150599",
-							Target:  "aosp_cf_x86_64_phone-trunk_staging-userdebug",
-						},
-						Type: hoapi.MainBundleType,
-					},
-				}
-				srv.FetchArtifacts(r, &hoclient.AccessTokenBuildAPICreds{AccessToken: token})
-			},
-		},
-		{
 			name: "CreateCVDWithEnvConfig",
 			f: func(srv hoclient.HostOrchestratorClient, token string) {
 				config := `

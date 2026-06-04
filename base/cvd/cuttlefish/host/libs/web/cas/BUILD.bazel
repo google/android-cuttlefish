@@ -30,7 +30,7 @@ cf_cc_test(
     srcs = ["cas_downloader_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web/cas:cas_downloader",
         "//cuttlefish/host/libs/web/cas:cas_flags",
@@ -57,7 +57,7 @@ cf_cc_library(
     hdrs = ["cas_flags.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",

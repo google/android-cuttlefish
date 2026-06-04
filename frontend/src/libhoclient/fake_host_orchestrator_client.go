@@ -45,18 +45,10 @@ func (c *FakeHostOrchestratorClient) ConnectADBWebSocket(device string) (*websoc
 	return nil, nil
 }
 
-func (c *FakeHostOrchestratorClient) FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds BuildAPICreds) (*hoapi.FetchArtifactsResponse, error) {
-	return &hoapi.FetchArtifactsResponse{AndroidCIBundle: req.AndroidCIBundle}, nil
-}
-
 func (c *FakeHostOrchestratorClient) CreateCVD(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.CreateCVDResponse, error) {
 	var cvds []*hoapi.CVD
 	var err error
-	if req.CVD != nil {
-		cvds, err = c.createFakeCVDs(int(req.AdditionalInstancesNum) + 1)
-	} else {
-		cvds, err = c.createFakeEnvironment(req.EnvConfig)
-	}
+	cvds, err = c.createFakeEnvironment(req.EnvConfig)
 	return &hoapi.CreateCVDResponse{CVDs: cvds}, err
 }
 
@@ -244,8 +236,4 @@ func (c *FakeHostOrchestratorClient) unusedCVDId() int {
 
 func (c *FakeHostOrchestratorClient) randomString() string {
 	return fmt.Sprint(time.Now().UnixNano())
-}
-
-func (c *FakeHostOrchestratorClient) CVDStatus(groupName, instanceName string) (*hoapi.CVDStatusResponse, error) {
-	return &hoapi.CVDStatusResponse{}, nil
 }

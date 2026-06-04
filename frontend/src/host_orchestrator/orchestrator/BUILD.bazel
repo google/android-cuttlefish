@@ -7,7 +7,6 @@ go_library(
         "createcvdaction.go",
         "createcvdbugreportaction.go",
         "createsnapshotaction.go",
-        "cvdstatusaction.go",
         "displayaddaction.go",
         "displaylistaction.go",
         "displayremoveaction.go",

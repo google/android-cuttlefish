@@ -43,6 +43,7 @@
 #include "cuttlefish/host/commands/process_sandboxer/pidfd.h"
 #include "cuttlefish/host/commands/process_sandboxer/policies.h"
 #include "cuttlefish/host/commands/process_sandboxer/sandbox_manager.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 
 inline constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 
@@ -158,7 +159,7 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
 
   absl::Status logs_status;
   if (absl::GetFlag(FLAGS_log_files).empty()) {
-    std::string default_log_path = JoinPath(host.log_dir, "launcher.log");
+    std::string default_log_path = JoinPath(host.log_dir, kLogNameLauncher);
     unlink(default_log_path.c_str());  // Clean from previous run
     logs_status = LogToFiles({default_log_path});
   } else {

@@ -31,6 +31,7 @@
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -62,7 +63,7 @@ class OpenwrtControlServer : public CommandSource {
                                             first_instance.launcher_log_path());
     openwrt_control_server_cmd.AddParameter(
         "--openwrt_log_path=",
-        AbsolutePath(first_instance.PerInstanceLogPath("crosvm_openwrt.log")));
+        AbsolutePath(first_instance.PerInstanceLogPath(kLogNameCrosvmOpenWrt)));
 
     std::vector<MonitorCommand> commands;
     commands.emplace_back(std::move(openwrt_control_server_cmd));

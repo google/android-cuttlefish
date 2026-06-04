@@ -25,12 +25,14 @@ import (
 
 type ListCVDsActionOpts struct {
 	Group       string
+	Name        string
 	Paths       IMPaths
 	ExecContext exec.ExecContext
 }
 
 type ListCVDsAction struct {
 	group  string
+	name   string
 	paths  IMPaths
 	cvdCLI *cvd.CLI
 }
@@ -38,6 +40,7 @@ type ListCVDsAction struct {
 func NewListCVDsAction(opts ListCVDsActionOpts) *ListCVDsAction {
 	return &ListCVDsAction{
 		group:  opts.Group,
+		name:   opts.Name,
 		paths:  opts.Paths,
 		cvdCLI: cvd.NewCLI(opts.ExecContext),
 	}
@@ -56,8 +59,19 @@ func (a *ListCVDsAction) Run() (*apiv1.ListCVDsResponse, error) {
 		groups = []*cvd.Group{g}
 	}
 	cvds := []*apiv1.CVD{}
-	for _, g := range groups {
-		cvds = append(cvds, CvdGroupToAPIObject(g)...)
+	if a.name != "" {
+		if len(groups) == 0 {
+			return nil, operator.NewNotFoundError(fmt.Sprintf("CVD %q not found", a.name), nil)
+		}
+		found, ins := findInstance(groups[0], a.name)
+		if !found {
+			return nil, operator.NewNotFoundError(fmt.Sprintf("CVD %q not found in group %q", a.name, a.group), nil)
+		}
+		cvds = []*apiv1.CVD{CvdInstanceToAPIObject(ins, a.group)}
+	} else {
+		for _, g := range groups {
+			cvds = append(cvds, CvdGroupToAPIObject(g)...)
+		}
 	}
 	return &apiv1.ListCVDsResponse{CVDs: cvds}, nil
 }

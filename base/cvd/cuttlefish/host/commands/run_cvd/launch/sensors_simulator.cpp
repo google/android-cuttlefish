@@ -15,11 +15,10 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_simulator.h"
 
-#include <unistd.h>
-
 #include <string>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -32,8 +31,7 @@ namespace cuttlefish {
 namespace {
 
 Result<SharedFD> CreateFifo(const std::string& path) {
-  unlink(path.c_str());
-  return SharedFD::Fifo(path, 0660);
+  return CreateOrReuseAndDrainFifo(path, 0660);
 }
 
 }  // namespace

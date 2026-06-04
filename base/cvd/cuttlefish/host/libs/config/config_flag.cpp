@@ -43,7 +43,8 @@
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -87,7 +88,11 @@ class ConfigReader : public FlagFeature {
   std::unordered_set<FlagFeature*> Dependencies() const override { return {}; }
   Result<void> Process(std::vector<std::string>&) override {
     auto config_path = DefaultHostArtifactsPath("etc/cvd_config");
-    auto dir_contents = CF_EXPECT(DirectoryContents(config_path));
+    if (!DirectoryExists(config_path)) {
+      return {};
+    }
+    std::vector<std::string> dir_contents =
+        CF_EXPECT(DirectoryContents(config_path));
     for (const std::string& file : dir_contents) {
       std::string_view local_file(file);
       if (absl::ConsumePrefix(&local_file, "cvd_config_") &&
@@ -109,19 +114,18 @@ class ConfigFlagImpl : public ConfigFlag {
       : config_reader_(cr),
         system_image_dir_flag_(s),
         configs_(s.Size(), kDefaultConfig),
-        is_default_(true) {
-    auto help =
-        "Config preset name. Will automatically set flag fields using the "
-        "values from this file of presets. See "
-        "device/google/cuttlefish/shared/config/config_*.json for possible "
-        "values.";
-    auto getter = [this]() { return VectorizedFlagValue(configs_); };
-    auto setter = [this](const FlagMatch& m) -> Result<void> {
-      CF_EXPECT(ChooseConfigs(m.value));
-      return {};
-    };
-    flag_ = GflagsCompatFlag("config").Help(help).Getter(getter).Setter(setter);
-  }
+        is_default_(true),
+        flag_(
+            GflagsCompatFlag("config")
+                .Help("Config preset name. Will automatically set flag fields "
+                      "using the values from this file of presets. See "
+                      "device/google/cuttlefish/shared/config/config_*.json "
+                      "for possible values.")
+                .Getter([this]() { return VectorizedFlagValue(configs_); })
+                .Setter([this](const FlagMatch& m) -> Result<void> {
+                  CF_EXPECT(ChooseConfigs(m.value));
+                  return {};
+                })) {}
 
   std::string Name() const override { return "ConfigFlagImpl"; }
   std::unordered_set<FlagFeature*> Dependencies() const override {
@@ -144,8 +148,14 @@ class ConfigFlagImpl : public ConfigFlag {
     LOG(INFO) << "Launching CVD using --config='"
               << VectorizedFlagValue(configs_) << "'.";
     for (size_t i = 0; i < configs_.size(); ++i) {
-      Json::Value config_values =
-          CF_EXPECT(config_reader_.ReadConfig(configs_[i]));
+      Result<Json::Value> config_values_res =
+          config_reader_.ReadConfig(configs_[i]);
+      if (!config_values_res.ok()) {
+        LOG(WARNING) << "Config '" << configs_[i]
+                     << "' not found: " << config_values_res.error();
+        continue;
+      }
+      Json::Value config_values = CF_EXPECT(std::move(config_values_res));
       for (const std::string& flag : config_values.getMemberNames()) {
         std::string value;
         if (flag == "custom_actions") {
@@ -168,7 +178,7 @@ class ConfigFlagImpl : public ConfigFlag {
     return {};
   }
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
-    return flag_.WriteGflagsCompatXml(out);
+    return WriteGflagsCompatXml(flag_, out);
   }
 
  private:
@@ -184,13 +194,12 @@ class ConfigFlagImpl : public ConfigFlag {
     return {};
   }
   std::optional<std::string> FindAndroidInfoConfig(size_t index) const {
-    std::string info_path =
+    const std::string info_path =
         system_image_dir_flag_.ForIndex(index) + "/android-info.txt";
-
-    LOG(INFO) << "Reading --config option from: " << info_path;
     if (!FileExists(info_path)) {
       return {};
     }
+    VLOG(0) << "Reading --config option from: " << info_path;
     Result<std::string> android_info_result = ReadFileContents(info_path);
     if (!android_info_result.ok()) {
       return {};

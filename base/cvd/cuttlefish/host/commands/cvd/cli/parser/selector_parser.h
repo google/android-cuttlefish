@@ -16,14 +16,12 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 
 namespace cuttlefish {
 
-std::vector<std::string> ParseSelectorConfigs(
+selector::SelectorOptions ParseSelectorConfigs(
     const cvd::config::EnvironmentSpecification&);
 
 };  // namespace cuttlefish

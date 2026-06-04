@@ -35,6 +35,7 @@
 #include "cuttlefish/host/libs/config/openwrt_args.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
 #include "cuttlefish/result/result.h"
 
@@ -137,8 +138,8 @@ class OpenWrt : public CommandSource {
     ap_cmd.AddReadWriteDisk(instance_.PerInstancePath("ap_overlay.img"));
 
     auto boot_logs_path =
-        instance_.PerInstanceLogPath("crosvm_openwrt_boot.log");
-    auto logs_path = instance_.PerInstanceLogPath("crosvm_openwrt.log");
+        instance_.PerInstanceLogPath(kLogNameCrosvmOpenWrtBoot);
+    auto logs_path = instance_.PerInstanceLogPath(kLogNameCrosvmOpenWrt);
     ap_cmd.AddSerialConsoleReadOnly(boot_logs_path);
     ap_cmd.AddHvcReadOnly(logs_path);
 
@@ -187,7 +188,7 @@ class OpenWrt : public CommandSource {
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::EnvironmentSpecific& environment_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   LogTeeCreator& log_tee_;
   WmediumdServer& wmediumd_server_;
   Cvdalloc& cvdalloc_;

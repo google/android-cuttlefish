@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -49,7 +50,7 @@ Result<std::optional<MonitorCommand>> BluetoothConnector(
   };
   std::vector<SharedFD> fifos;
   for (const auto& path : fifo_paths) {
-    fifos.emplace_back(CF_EXPECT(SharedFD::Fifo(path, 0660)));
+    fifos.emplace_back(CF_EXPECT(CreateOrReuseAndDrainFifo(path, 0660)));
   }
   return Command(TcpConnectorBinary())
       .AddParameter("-fifo_out=", fifos[0])

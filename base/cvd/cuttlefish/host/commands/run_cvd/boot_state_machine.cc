@@ -22,8 +22,10 @@
 #include <sys/poll.h>
 #include <unistd.h>
 
+#include <chrono>
+#include <condition_variable>
 #include <cstdlib>
-#include <memory>
+#include <mutex>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -33,6 +35,7 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/time/time.h"
 #include "android-base/file.h"
 #include "fruit/component.h"
 #include "fruit/fruit_forward_decls.h"
@@ -74,6 +77,9 @@ using openwrtcontrolserver::OpenwrtIpaddrReply;
 
 DEFINE_int32(reboot_notification_fd, CF_DEFAULTS_REBOOT_NOTIFICATION_FD,
              "A file descriptor to notify when boot completes.");
+
+DEFINE_int32(boot_timeout_secs, 600,
+             "Wait for completed boot before failing. On qemu and gem5, this timeout is disabled unless flag is specified");
 
 namespace cuttlefish {
 namespace {
@@ -193,9 +199,9 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
     }
     if (!IsRestoring(config)) {
       if (exit_code == RunnerExitCodes::kSuccess) {
-        LOG(INFO) << kBootCompletedMessage;
+        VLOG(0) << kBootCompletedMessage;
       } else {
-        LOG(INFO) << kBootFailedMessage;
+        LOG(ERROR) << kBootFailedMessage;
       }
     }
     std::exit(exit_code);
@@ -286,6 +292,8 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
         state_(kBootStarted) {}
 
   ~CvdBootStateMachine() {
+    CancelTimeout();
+
     if (interrupt_fd_write_->IsOpen()) {
       char c = 1;
       CHECK_EQ(interrupt_fd_write_->Write(&c, 1), 1)
@@ -293,6 +301,9 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     }
     if (boot_event_handler_.joinable()) {
       boot_event_handler_.join();
+    }
+    if (timeout_thread_.joinable()) {
+      timeout_thread_.join();
     }
     if (restore_complete_stop_write_->IsOpen()) {
       char c = 1;
@@ -302,6 +313,14 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     if (restore_complete_handler_.joinable()) {
       restore_complete_handler_.join();
     }
+  }
+
+  void CancelTimeout() {
+    {
+      std::unique_lock<std::mutex> lock(timeout_mutex_);
+      timeout_done_ = true;
+    }
+    timeout_cv_.notify_all();
   }
 
   // SetupFeature
@@ -420,6 +439,8 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
           ThreadLoop(boot_events_pipe, restore_complete_pipe);
         });
 
+    timeout_thread_ = std::thread([this]() { TimeoutThreadLoop(); });
+
     return {};
   }
 
@@ -524,6 +545,63 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     }
   }
 
+  void TimeoutThreadLoop() {
+    auto timeout = std::chrono::seconds(FLAGS_boot_timeout_secs);
+    bool done = false;
+    std::string formatted_timeout =
+        absl::FormatDuration(absl::Seconds(FLAGS_boot_timeout_secs));
+
+    if (ShouldDisableTimeout()) {
+      return;
+    }
+
+    LOG(INFO) << "TimeoutThreadLoop: waiting for " << formatted_timeout;
+
+    {
+      std::unique_lock<std::mutex> lock(timeout_mutex_);
+      done = timeout_cv_.wait_for(lock, timeout,
+                                  [this]() { return timeout_done_; });
+    }
+
+    if (done) {
+      return;
+    }
+
+    LOG(ERROR)
+        << "TimeoutThreadLoop: Did not receive boot completion event after "
+        << formatted_timeout;
+    auto monitor_res =
+        GetLauncherMonitorFromInstance(instance_, /* timeout_seconds= */ 5);
+    if (!monitor_res.ok()) {
+      LOG(ERROR) << "TimeoutThreadLoop: Failed to get launcher monitor: "
+                 << monitor_res.error();
+      LOG(FATAL) << "TimeoutThreadLoop: Startup timeout expired and couldn't "
+                    "cleanly shut down.";
+    }
+
+    auto fail_res = RunLauncherAction(
+        *monitor_res, LauncherAction::kFail, std::optional<int>());
+    if (!fail_res.ok()) {
+      LOG(ERROR) << "TimeoutThreadLoop: Failed to send fail action: "
+                 << fail_res.error();
+      LOG(FATAL) << "TimeoutThreadLoop: Startup timeout expired and couldn't "
+                    "cleanly shut down.";
+    }
+  }
+
+  bool ShouldDisableTimeout() const {
+    if (FLAGS_boot_timeout_secs <= 0) {
+      return true;
+    }
+    bool is_flag_default =
+        gflags::GetCommandLineFlagInfoOrDie("boot_timeout_secs").is_default;
+    if (is_flag_default &&
+        (VmManagerIsQemu(config_) || VmManagerIsGem5(config_))) {
+      return true;
+    }
+    return false;
+  }
+
   // Continue consuming events from boot_events_pipe, until an interrupt is sent
   // via interrupt_fd_read_.
   //
@@ -597,7 +675,6 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     }
 
     if ((*read_result)->event == monitor::Event::BootCompleted) {
-      LOG(INFO) << "Virtual device booted successfully";
       state_ |= kGuestBootCompleted;
       if (!instance_.vcpu_config_path().empty()) {
         auto res = WattsonRebalanceThreads(instance_.id());
@@ -622,29 +699,35 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     fd->Close();
   }
   bool MaybeWriteNotification() {
+    bool final_state = BootCompleted() || BootFailed();
+    if (final_state) {
+      CancelTimeout();
+    }
     std::vector<SharedFD> fds = {reboot_notification_, fg_launcher_pipe_};
     for (auto& fd : fds) {
       if (fd->IsOpen()) {
         if (BootCompleted()) {
           SendExitCode(RunnerExitCodes::kSuccess, fd);
-        } else if (state_ & kGuestBootFailed) {
+        } else if (BootFailed()) {
           SendExitCode(RunnerExitCodes::kVirtualDeviceBootFailed, fd);
         }
       }
     }
-    // Either we sent the code before or just sent it, in any case the state is
-    // final
-    return BootCompleted() || (state_ & kGuestBootFailed);
+    return final_state;
   }
 
   const CuttlefishConfig& config_;
   AutoSetup<ProcessLeader>::Type& process_leader_;
   KernelLogPipeProvider& kernel_log_pipe_provider_;
   const vm_manager::VmManager& vm_manager_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
 
   std::thread boot_event_handler_;
   std::thread restore_complete_handler_;
+  std::thread timeout_thread_;
+  std::mutex timeout_mutex_;
+  std::condition_variable timeout_cv_;
+  bool timeout_done_ = false;
   SharedFD restore_complete_stop_write_;
   SharedFD fg_launcher_pipe_;
   SharedFD reboot_notification_;

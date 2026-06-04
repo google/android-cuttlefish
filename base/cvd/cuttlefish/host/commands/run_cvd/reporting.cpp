@@ -29,8 +29,7 @@ DiagnosticInformation::~DiagnosticInformation() = default;
 
 void DiagnosticInformation::PrintAll(
     const std::vector<DiagnosticInformation*>& infos) {
-  LOG(INFO) << kGreenColor
-            << "The following lines contain useful debugging information:"
+  LOG(INFO) << kGreenColor << "  Run `cvd logs` to report paths to device logs."
             << kResetColor;
   for (const auto& info : infos) {
     for (const auto& line : info->Diagnostics()) {

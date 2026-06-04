@@ -12,7 +12,10 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-exports_files([".clang-tidy"])
+exports_files([
+    ".clang-format",
+    ".clang-tidy",
+])
 
 genrule(
     name = "build_compilation_mode_txt",
@@ -24,6 +27,8 @@ filegroup(
     name = "clang_tidy_config",
     srcs = [
         ".clang-tidy",
+        "//cuttlefish/io:.clang-tidy",
+        "//cuttlefish/common/libs/key_equals_value:.clang-tidy",
         "//cuttlefish/host/commands/assemble_cvd/android_build:.clang-tidy",
         "//cuttlefish/host/commands/cvd/cli/commands:.clang-tidy",
         "//cuttlefish/host/commands/kernel_log_monitor:.clang-tidy",

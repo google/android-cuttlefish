@@ -20,6 +20,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 
 const char* kEnvironments = "environments";
 
@@ -84,7 +85,7 @@ std::string CuttlefishConfig::EnvironmentSpecific::control_socket_path() const {
 }
 
 std::string CuttlefishConfig::EnvironmentSpecific::launcher_log_path() const {
-  return AbsolutePath(PerEnvironmentLogPath("launcher.log"));
+  return AbsolutePath(PerEnvironmentLogPath(kLogNameLauncher));
 }
 
 std::string CuttlefishConfig::EnvironmentSpecific::casimir_nci_socket_path()

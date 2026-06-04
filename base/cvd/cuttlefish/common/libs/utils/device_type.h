@@ -29,6 +29,7 @@ enum class DeviceType {
   Tv,
   Minidroid,
   Go,
+  Desktop,
 };
 
 // Parse device type android-info.txt config field.

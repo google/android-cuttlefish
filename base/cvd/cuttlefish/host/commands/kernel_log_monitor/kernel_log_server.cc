@@ -25,14 +25,14 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
-#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish::monitor {
 namespace {
@@ -87,8 +87,8 @@ void ProcessSubscriptions(Json::Value message,
     if (action == SubscriptionAction::ContinueSubscription) {
       ++idx;
     } else {
-      // Cancel the subscription by swapping it with the last active subscription
-      // and decreasing the active subscription count
+      // Cancel the subscription by swapping it with the last active
+      // subscription and decreasing the active subscription count
       --active_subscription_count;
       std::swap((*subscribers)[idx], (*subscribers)[active_subscription_count]);
     }
@@ -135,7 +135,7 @@ bool KernelLogServer::HandleIncomingMessage() {
   }
 
   // Detect VIRTUAL_DEVICE_BOOT_*
-  for (ssize_t i=0; i<ret; i++) {
+  for (ssize_t i = 0; i < ret; i++) {
     if ('\n' == buf[i]) {
       for (auto& [match, prefix] : kInformationalPatterns) {
         auto pos = line_.find(match);

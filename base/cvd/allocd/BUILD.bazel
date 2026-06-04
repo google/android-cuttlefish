@@ -37,10 +37,13 @@ cc_library(
         "//conditions:default": [":alloc_iproute2"],
     }) + [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:logging",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",

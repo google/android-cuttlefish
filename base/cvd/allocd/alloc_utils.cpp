@@ -18,15 +18,19 @@
 #include <stdint.h>
 
 #include <fstream>
+#include <string>
 #include <string_view>
 #include <sstream>
 
+#include "absl/base/no_destructor.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 
 #include "allocd/alloc_driver.h"
+#include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/result/result.h"
 
@@ -35,6 +39,20 @@
 #endif
 
 #include <net/if.h>
+
+namespace {
+
+cuttlefish::Result<std::string> SearchForIptables() {
+  cuttlefish::Result<std::string> p =
+      cuttlefish::Search(cuttlefish::Path(), "iptables");
+  if (p.ok()) {
+    return p;
+  }
+
+  return cuttlefish::Search({"/usr/sbin", "/sbin"}, "iptables");
+}
+
+}  // namespace
 
 namespace cuttlefish {
 
@@ -74,6 +92,11 @@ bool CreateMobileIface(std::string_view name, uint16_t id,
   }
 
   auto netmask = "/30";
+  Result<std::string> iptables_path = IptablesPath();
+  if (!iptables_path.ok()) {
+    return false;
+  }
+
   auto gateway = MobileGatewayName(ipaddr, id);
   auto network = MobileNetworkName(ipaddr, netmask, id);
 
@@ -85,7 +108,7 @@ bool CreateMobileIface(std::string_view name, uint16_t id,
     DestroyIface(name);
   }
 
-  if (!IptableConfig("/sbin/iptables", network, true).ok()) {
+  if (!IptableConfig(*iptables_path, network, true).ok()) {
     DestroyGateway(name, gateway, netmask);
     DestroyIface(name);
     return false;
@@ -105,7 +128,11 @@ bool DestroyMobileIface(std::string_view name, uint16_t id,
   auto gateway = MobileGatewayName(ipaddr, id);
   auto network = MobileNetworkName(ipaddr, netmask, id);
 
-  IptableConfig("/sbin/iptables", network, false);
+  Result<std::string> iptables_path = IptablesPath();
+  if (!iptables_path.ok()) {
+    return false;
+  }
+  IptableConfig(*iptables_path, network, false);
   DestroyGateway(name, gateway, netmask);
   return DestroyIface(name);
 }
@@ -132,6 +159,11 @@ bool CreateTap(std::string_view name) {
 
 #ifdef __linux__
 Result<void> ValidateTapInterfaceIsUsable(const std::string& interface_name) {
+  CF_EXPECT(NetworkInterfaceExists(interface_name),
+             "Tap interface does not exist. Ensure "
+             "\"cuttlefish-host-resources.service\" is running (start with "
+             "\"sudo systemctl start cuttlefish-host-resources.service\").");
+
   constexpr auto kTunTapDev = "/dev/net/tun";
 
   auto tap_fd = SharedFD::Open(kTunTapDev, O_RDWR | O_NONBLOCK);
@@ -144,8 +176,8 @@ Result<void> ValidateTapInterfaceIsUsable(const std::string& interface_name) {
   strncpy(ifr.ifr_name, interface_name.c_str(), IFNAMSIZ);
 
   int err = tap_fd->Ioctl(TUNSETIFF, &ifr);
-  CF_EXPECTF(err == 0, "Unable to connect to {} tap interface: {}",
-             interface_name, tap_fd->StrError());
+  CF_EXPECTF(err == 0, "Unable to connect to tap interface: {}",
+             tap_fd->StrError());
 
   return {};
 }
@@ -192,6 +224,11 @@ bool DestroyBridge(std::string_view name) {
 
 bool SetupBridgeGateway(std::string_view bridge_name,
                         std::string_view ipaddr) {
+  Result<std::string> iptables_path = IptablesPath();
+  if (!iptables_path.ok()) {
+    return false;
+  }
+
   GatewayConfig config{false, false, false};
   auto gateway = absl::StrFormat("%s.1", ipaddr);
   auto netmask = "/24";
@@ -211,7 +248,7 @@ bool SetupBridgeGateway(std::string_view bridge_name,
 
   config.has_dnsmasq = true;
 
-  auto ret = IptableConfig("/sbin/iptables", network, true).ok();
+  auto ret = IptableConfig(*iptables_path, network, true).ok();
   if (!ret) {
     CleanupBridgeGateway(bridge_name, ipaddr, config);
     LOG(WARNING) << "Failed to setup ip tables";
@@ -228,7 +265,10 @@ void CleanupBridgeGateway(std::string_view name, std::string_view ipaddr,
   auto dhcp_range = absl::StrFormat("%s.2,%s.255", ipaddr, ipaddr);
 
   if (config.has_iptable) {
-    IptableConfig("/sbin/iptables", network, false);
+    Result<std::string> iptables_path = IptablesPath();
+    if (iptables_path.ok()) {
+      IptableConfig(*iptables_path, network, false);
+    }
   }
 
   if (config.has_dnsmasq) {
@@ -315,6 +355,14 @@ bool DestroyEthernetBridgeIface(std::string_view name,
   CleanupBridgeGateway(name, ipaddr, config);
 
   return DestroyBridge(name);
+}
+
+Result<std::string> IptablesPath() {
+  static const absl::NoDestructor<std::string> iptables_path(
+     SearchForIptables().value_or(""));
+
+  CF_EXPECT(!iptables_path->empty(), "could not find iptables");
+  return *iptables_path;
 }
 
 }  // namespace cuttlefish

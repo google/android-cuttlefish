@@ -22,6 +22,7 @@
 #include <string_view>
 #include <vector>
 
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -30,7 +31,7 @@
 namespace cuttlefish {
 
 Result<void> CheckProcessExitedNormally(siginfo_t infop,
-                                        const int expected_exit_code = 0);
+                                        int expected_exit_code = 0);
 
 struct ConstructCommandParam {
   const std::string& bin_path;
@@ -48,6 +49,11 @@ Result<Command> ConstructCvdHelpCommand(const std::string& bin_file,
                                         const cvd_common::Args& _args,
                                         const CommandRequest& request);
 
+Result<Command> ConstructSiblingHelpCommand(
+    const std::string& bin_name,
+    const cvd_common::Envs& env,
+    const cvd_common::Args& subcmd_args);
+
 // Constructs a command for cvd non-start-op
 struct ConstructNonHelpForm {
   std::string bin_file;
@@ -59,6 +65,16 @@ struct ConstructNonHelpForm {
 };
 Result<Command> ConstructCvdGenericNonHelpCommand(
     const ConstructNonHelpForm& request_form, const CommandRequest& request);
+
+// Returns the flags supported by a sibling command.
+// A sibling command is one whose executable resides in the same directory as
+// the current process'. Flags are obtained by running the sibling command with
+// the given arguments and environment plus the --helpxml flag.
+// Gflags-specific flags (except --help) are filtered out to keep the output
+// size reasonable.
+Result<std::vector<Flag>> GetSiblingCommandFlags(const std::string& bin_name,
+                                                 const cvd_common::Envs& env,
+                                                 cvd_common::Args args);
 
 // Call this when there is no instance group is running
 // The function does not verify that.

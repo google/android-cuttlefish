@@ -51,6 +51,7 @@
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -1351,7 +1352,7 @@ void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_ports(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
-  return AbsolutePath(PerInstanceLogPath("launcher.log"));
+  return AbsolutePath(PerInstanceLogPath(kLogNameLauncher));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {

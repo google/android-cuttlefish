@@ -15,6 +15,7 @@
 
 #include "cuttlefish/io/read_exact.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "cuttlefish/io/io.h"

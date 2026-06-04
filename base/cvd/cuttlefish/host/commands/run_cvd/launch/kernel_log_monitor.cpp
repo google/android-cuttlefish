@@ -31,7 +31,6 @@
 #include "absl/log/check.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -47,16 +46,10 @@ namespace {
 
 class KernelLogMonitor : public CommandSource,
                          public KernelLogPipeProvider,
-                         public DiagnosticInformation,
                          public LateInjected {
  public:
   INJECT(KernelLogMonitor(const CuttlefishConfig::InstanceSpecific& instance))
       : instance_(instance) {}
-
-  // DiagnosticInformation
-  std::vector<std::string> Diagnostics() const override {
-    return {"Kernel log: " + instance_.PerInstancePath("kernel.log")};
-  }
 
   Result<void> LateInject(fruit::Injector<>& injector) override {
     number_of_event_pipes_ =
@@ -118,7 +111,7 @@ class KernelLogMonitor : public CommandSource,
   }
 
   int number_of_event_pipes_ = 0;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   SharedFD fifo_;
   std::vector<SharedFD> event_pipe_write_ends_;
   std::vector<SharedFD> event_pipe_read_ends_;
@@ -133,7 +126,6 @@ KernelLogMonitorComponent() {
       .bind<KernelLogPipeProvider, KernelLogMonitor>()
       .addMultibinding<CommandSource, KernelLogMonitor>()
       .addMultibinding<SetupFeature, KernelLogMonitor>()
-      .addMultibinding<DiagnosticInformation, KernelLogMonitor>()
       .addMultibinding<LateInjected, KernelLogMonitor>();
 }
 

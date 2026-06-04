@@ -22,76 +22,27 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
-#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 namespace selector {
 namespace {
 
-class CreationAnalyzer {
- public:
-  static Result<CreationAnalyzer> Create(const CreationAnalyzerParam& param);
-
-  Result<GroupCreationInfo> ExtractGroupInfo();
-
- private:
-  CreationAnalyzer(const CreationAnalyzerParam& param,
-                   StartSelectorParser&& selector_options_parser);
-
-  Result<std::vector<InstanceParams>> AnalyzeInstances();
-
-  /**
-   * Figures out the HOME directory
-   *
-   * The issue is that many times, HOME is anyway implicitly given. Thus, only
-   * if the HOME value is not equal to the HOME directory recognized by the
-   * system, it can be safely regarded as overridden by the user.
-   *
-   * If that is not the case, we use an automatically generated value as HOME.
-   */
-  Result<std::optional<std::string>> AnalyzeHome() const;
-
-  // inputs
-  std::unordered_map<std::string, std::string> envs_;
-
-  // internal, temporary
-  StartSelectorParser selector_options_parser_;
-};
-
-Result<CreationAnalyzer> CreationAnalyzer::Create(
-    const CreationAnalyzerParam& param) {
-  auto selector_options_parser =
-      CF_EXPECT(StartSelectorParser::ConductSelectFlagsParser(
-          param.selectors, param.cmd_args, param.envs));
-  return CreationAnalyzer(param, std::move(selector_options_parser));
-}
-
-CreationAnalyzer::CreationAnalyzer(
-    const CreationAnalyzerParam& param,
-    StartSelectorParser&& selector_options_parser)
-    : envs_(param.envs),
-      selector_options_parser_{std::move(selector_options_parser)} {}
-
-Result<std::vector<InstanceParams>> CreationAnalyzer::AnalyzeInstances() {
-  // As this test was done earlier, this line must not fail
-  const auto n_instances = selector_options_parser_.RequestedNumInstances();
+Result<std::vector<InstanceParams>> BuildInstanceParams(
+    size_t n_instances, std::vector<unsigned> instance_ids,
+    const std::optional<std::vector<std::string>>& instance_names_opt) {
   std::vector<InstanceParams> instance_params(n_instances);
-  std::vector<unsigned> instance_ids = selector_options_parser_.InstanceIds();
   for (size_t i = 0; i < n_instances && i < instance_ids.size(); ++i) {
     instance_params[i].instance_id = instance_ids[i];
   }
 
-  std::optional<std::vector<std::string>> instance_names_opt =
-      selector_options_parser_.PerInstanceNames();
   if (instance_names_opt) {
     CF_EXPECT_EQ(instance_names_opt.value().size(), n_instances,
                  "Number of instance names provided doesn't match number of "
@@ -104,50 +55,12 @@ Result<std::vector<InstanceParams>> CreationAnalyzer::AnalyzeInstances() {
   return instance_params;
 }
 
-Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo() {
-  InstanceGroupParams group_params;
-  group_params.instances = CF_EXPECT(AnalyzeInstances());
-  group_params.group_name = selector_options_parser_.GroupName().value_or("");
-  InstanceManager::GroupDirectories group_directories{
-      .home = CF_EXPECT(AnalyzeHome()),
-      .host_artifacts_path = CF_EXPECT(AndroidHostPath(envs_)),
-  };
-  size_t num_instances = group_params.instances.size();
-  group_directories.product_out_paths.reserve(num_instances);
-  auto it = envs_.find(kAndroidProductOut);
-  if (it != envs_.end()) {
-    std::vector<std::string_view> env_product_out =
-        absl::StrSplit(it->second, ',');
-    if (env_product_out.size() > num_instances) {
-      LOG(WARNING) << env_product_out.size()
-                   << " product paths provided, but only " << num_instances
-                   << " are going to be created";
-      env_product_out.resize(num_instances);
-    }
-    for (auto& env_path : env_product_out) {
-      group_directories.product_out_paths.emplace_back(env_path);
-    }
-  } else {
-    group_directories.product_out_paths.emplace_back(
-        group_directories.host_artifacts_path);
-  }
-  while (group_directories.product_out_paths.size() < num_instances) {
-    // Use the first product path when more instances are required than product
-    // paths provided. This supports creating multiple identical instances from
-    // a single set of images.
-    group_directories.product_out_paths.emplace_back(
-        group_directories.product_out_paths[0]);
-  }
-
-  return GroupCreationInfo{
-      .group_creation_params = group_params,
-      .group_directories = group_directories,
-  };
-}  // namespace
-
-Result<std::optional<std::string>> CreationAnalyzer::AnalyzeHome() const {
-  auto home_it = envs_.find("HOME");
-  if (home_it == envs_.end() ||
+// Determines whether the user provided a custom directory in the $HOME variable
+// and returns it.
+Result<std::optional<std::string>> HomeFromEnvironment(
+    const cvd_common::Envs& env) {
+  auto home_it = env.find("HOME");
+  if (home_it == env.end() ||
       home_it->second == CF_EXPECT(SystemWideUserHome())) {
     return std::nullopt;
   }
@@ -160,8 +73,45 @@ Result<std::optional<std::string>> CreationAnalyzer::AnalyzeHome() const {
 }  // namespace
 
 Result<GroupCreationInfo> AnalyzeCreation(const CreationAnalyzerParam& params) {
-  CreationAnalyzer analyzer = CF_EXPECT(CreationAnalyzer::Create(params));
-  return CF_EXPECT(analyzer.ExtractGroupInfo());
+  InstanceGroupParams group_params;
+  group_params.instances =
+      CF_EXPECT(BuildInstanceParams(params.num_instances, params.instance_ids,
+                                    params.selectors.instance_names));
+  group_params.group_name = params.selectors.group_name.value_or("");
+  InstanceManager::GroupDirectories group_directories{
+      .home = CF_EXPECT(HomeFromEnvironment(params.envs)),
+      .host_artifacts_path = CF_EXPECT(AndroidHostPath(params.envs)),
+  };
+  group_directories.product_out_paths.reserve(params.num_instances);
+  auto it = params.envs.find(kAndroidProductOut);
+  if (it != params.envs.end()) {
+    std::vector<std::string_view> env_product_out =
+        absl::StrSplit(it->second, ',');
+    if (env_product_out.size() > params.num_instances) {
+      LOG(WARNING) << env_product_out.size()
+                   << " product paths provided, but only "
+                   << params.num_instances << " are going to be created";
+      env_product_out.resize(params.num_instances);
+    }
+    for (auto& env_path : env_product_out) {
+      group_directories.product_out_paths.emplace_back(env_path);
+    }
+  } else {
+    group_directories.product_out_paths.emplace_back(
+        group_directories.host_artifacts_path);
+  }
+  while (group_directories.product_out_paths.size() < params.num_instances) {
+    // Use the first product path when more instances are required than product
+    // paths provided. This supports creating multiple identical instances from
+    // a single set of images.
+    group_directories.product_out_paths.emplace_back(
+        group_directories.product_out_paths[0]);
+  }
+
+  return GroupCreationInfo{
+      .group_creation_params = group_params,
+      .group_directories = group_directories,
+  };
 }
 
 }  // namespace selector

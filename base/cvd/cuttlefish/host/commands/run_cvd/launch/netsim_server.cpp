@@ -209,13 +209,13 @@ class NetsimServer : public CommandSource {
   Result<SharedFD> MakeFifo(const CuttlefishConfig::InstanceSpecific& instance,
                             const char* relative_path) {
     auto path = instance.PerInstanceInternalPath(relative_path);
-    return CF_EXPECT(SharedFD::Fifo(path, 0660));
+    return CF_EXPECT(CreateOrReuseAndDrainFifo(path, 0660));
   }
 
  private:
   std::vector<Device> devices_;
   const CuttlefishConfig& config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
 };
 
 }  // namespace

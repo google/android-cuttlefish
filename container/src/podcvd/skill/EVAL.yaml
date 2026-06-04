@@ -1,0 +1,141 @@
+suite_name: podcvd
+timeout_seconds: 600
+max_tool_calls: 80
+
+cases:
+  - name: podcvd_lifecycle_single_create_and_reset
+    prompt: |
+      Create a single Cuttlefish instance group. Sequentially perform these multi-layered verifications:
+      1. Extract the assigned group name, ADB connection address, and truncated base Web UI URL.
+      2. Execute fleet to ensure the group is actively registered.
+      3. Execute `adb devices -l` to confirm the ADB device is attached.
+      4. Execute a `curl` command targeting the base Web UI URL to verify dashboard accessibility.
+      Finally, perform a global clear to reset all states globally.
+
+      WARNING:
+      - Must reply all outputs into the chat, instead of creating files to get review. It's not available to read those files.
+      - Must describe all commands executed to the output.
+    skills: [podcvd]
+    rubric: |
+      The LLM evaluator must verify that the agent strictly follows this complete end-to-end agentic sequence:
+      1. Creation: Executes `scripts/podcvd_executor.sh create` with mandatory flags `--vhost_user_vsock=true` and `--report_anonymous_usage_stats=n`. Direct `podcvd` usage is prohibited.
+      2. Extraction: Parses outputs to explicitly display connection details. The evaluator must enforce the exact structural Formats below, while treating the Example Values strictly as illustrative references:
+         - Group Name ➔ Format: simple identifier string (Example Value: `cvd_1`)
+         - ADB Connection ➔ Format: `IP:PORT` (Example Value: `192.168.80.1:6520`)
+         - Web UI Endpoint ➔ Format: `https://IP:PORT` strictly stripping all specific internal paths (Example Value: `https://192.168.80.1:11443`)
+      3. Fleet Verification: Executes `scripts/podcvd_executor.sh fleet` to confirm active registration.
+      4. ADB Bridge Verification: Executes `adb devices -l` to explicitly confirm the Cuttlefish instance is attached as a valid device.
+      5. Application Verification: Executes a `curl` command against the extracted Web UI endpoint to verify HTTP reachability.
+      6. Reset: Executes `scripts/podcvd_executor.sh clear` to purge all resources globally.
+    expect_keywords:
+      - "scripts/podcvd_executor.sh"
+      - "create"
+      - "--vhost_user_vsock=true"
+      - "--report_anonymous_usage_stats=n"
+      - "fleet"
+      - "adb"
+      - "curl"
+      - "clear"
+
+  - name: podcvd_lifecycle_bulk_create_and_dynamic_teardown
+    prompt: |
+      Create two Cuttlefish instance groups in parallel. Sequentially perform these verifications for both distinct groups:
+      1. Report their identifiers, ADB addresses, and truncated Web UI URLs.
+      2. Execute fleet to monitor their active registration.
+      3. Execute `adb devices -l` to confirm both ADB connection states are present.
+      4. Execute `curl` requests to verify that both Web UI endpoints are network-accessible.
+      Finally, remove both groups concurrently by dynamically injecting their extracted identifiers.
+
+      WARNING:
+      - Must reply all outputs into the chat, instead of creating files to get review. It's not available to read those files.
+      - Must describe all commands executed to the output.
+    skills: [podcvd]
+    rubric: |
+      The LLM evaluator must verify native task concurrency, multi-layered checks, and dynamic state injection:
+      1. Bulk Creation: Launches two independent `scripts/podcvd_executor.sh create` commands concurrently using native agent capabilities. Mandatory flags must be applied.
+      2. Extraction: Parses outputs to display distinct access details for each group. The evaluator must enforce the required Formats below without deviation, treating Example Values strictly as illustrative placeholders:
+         - Group Name ➔ Format: simple identifier string (Example Value: `cvd_1`)
+         - ADB Connection ➔ Format: `IP:PORT` using standard ADB port (Example Value: `192.168.80.1:6520`)
+         - Web UI Endpoint ➔ Format: `https://IP:PORT` using standard Web UI port (Example Value: `https://192.168.80.1:11443`)
+      3. Fleet Monitoring: Executes `scripts/podcvd_executor.sh fleet`.
+      4. ADB Bridge Monitoring: Executes `adb devices -l` to confirm multiple distinct IP:port attachments.
+      5. Network Monitoring: Executes `curl` commands to proactively verify that both independent Web UI dashboards respond.
+      6. Dynamic Teardown: Concurrently launches independent `remove` commands. The agent MUST dynamically inject the actual group name strings extracted from the creation steps into the `--group_name` arguments (Format: `--group_name=<dynamically_parsed_string>`, Example Value: `--group_name=cvd_1`). Hardcoding target strings is strictly forbidden.
+    expect_keywords:
+      - "scripts/podcvd_executor.sh"
+      - "create"
+      - "--vhost_user_vsock=true"
+      - "--report_anonymous_usage_stats=n"
+      - "fleet"
+      - "adb"
+      - "curl"
+      - "remove"
+
+  - name: podcvd_lifecycle_stop_and_start
+    prompt: |
+      Create a single Cuttlefish instance group. Sequentially perform these state transition verifications:
+      1. Extract the assigned group name, ADB connection address, and truncated base Web UI URL.
+      2. Stop the running group.
+      3. Execute fleet or adb devices -l to ensure the group is no longer active or attached.
+      4. Start the stopped group again.
+      5. Execute fleet and adb devices -l to confirm the group is active and the ADB device is re-attached.
+      Finally, remove the group to clean up resources.
+
+      WARNING:
+      - Must reply all outputs into the chat, instead of creating files to get review. It's not available to read those files.
+      - Must describe all commands executed to the output.
+    skills: [podcvd]
+    rubric: |
+      The LLM evaluator must verify that the agent strictly follows this state transition sequence:
+      1. Creation: Executes `scripts/podcvd_executor.sh create` with mandatory flags `--vhost_user_vsock=true` and `--report_anonymous_usage_stats=n`. Direct `podcvd` usage is prohibited.
+      2. Extraction: Parses outputs to explicitly display connection details. The evaluator must enforce the exact structural Formats below, while treating the Example Values strictly as illustrative references:
+         - Group Name ➔ Format: simple identifier string (Example Value: `cvd_1`)
+         - ADB Connection ➔ Format: `IP:PORT` (Example Value: `192.168.80.1:6520`)
+         - Web UI Endpoint ➔ Format: `https://IP:PORT` strictly stripping all specific internal paths (Example Value: `https://192.168.80.1:11443`)
+      3. Stop: Executes `scripts/podcvd_executor.sh --group_name=<group_name> stop` to stop the running group. The agent MUST dynamically inject the actual group name string extracted from the creation step (Format: `--group_name=<dynamically_parsed_string>`).
+      4. Disconnection Verification: Executes `scripts/podcvd_executor.sh fleet` or `adb devices -l` to confirm the device is stopped/disconnected.
+      5. Start: Executes `scripts/podcvd_executor.sh --group_name=<group_name> start` to restart the stopped group. The agent MUST dynamically inject the actual group name string extracted from the creation step (Format: `--group_name=<dynamically_parsed_string>`).
+      6. Re-connection Verification: Executes `scripts/podcvd_executor.sh fleet` and `adb devices -l` to confirm the Cuttlefish instance is active and attached again.
+      7. Teardown: Executes `scripts/podcvd_executor.sh --group_name=<group_name> remove` to clean up resources. The agent MUST dynamically inject the actual group name string (Format: `--group_name=<dynamically_parsed_string>`).
+    expect_keywords:
+      - "scripts/podcvd_executor.sh"
+      - "create"
+      - "--vhost_user_vsock=true"
+      - "--report_anonymous_usage_stats=n"
+      - "stop"
+      - "start"
+      - "fleet"
+      - "adb"
+      - "remove"
+
+  - name: podcvd_lifecycle_restart
+    prompt: |
+      Create a single Cuttlefish instance group. Sequentially perform these restart verifications:
+      1. Extract the assigned group name, ADB connection address, and truncated base Web UI URL.
+      2. Restart the running group.
+      3. Execute fleet and adb devices -l to confirm the group is active and the ADB device is re-attached.
+      Finally, remove the group to clean up resources.
+
+      WARNING:
+      - Must reply all outputs into the chat, instead of creating files to get review. It's not available to read those files.
+      - Must describe all commands executed to the output.
+    skills: [podcvd]
+    rubric: |
+      The LLM evaluator must verify that the agent strictly follows this restart sequence:
+      1. Creation: Executes `scripts/podcvd_executor.sh create` with mandatory flags `--vhost_user_vsock=true` and `--report_anonymous_usage_stats=n`. Direct `podcvd` usage is prohibited.
+      2. Extraction: Parses outputs to explicitly display connection details. The evaluator must enforce the exact structural Formats below, while treating the Example Values strictly as illustrative references:
+         - Group Name ➔ Format: simple identifier string (Example Value: `cvd_1`)
+         - ADB Connection ➔ Format: `IP:PORT` (Example Value: `192.168.80.1:6520`)
+         - Web UI Endpoint ➔ Format: `https://IP:PORT` strictly stripping all specific internal paths (Example Value: `https://192.168.80.1:11443`)
+      3. Restart: Executes `scripts/podcvd_executor.sh --group_name=<group_name> restart` to restart the running group. The agent MUST dynamically inject the actual group name string extracted from the creation step (Format: `--group_name=<dynamically_parsed_string>`).
+      4. Re-connection Verification: Executes `scripts/podcvd_executor.sh fleet` and `adb devices -l` to confirm the Cuttlefish instance is active and attached again after restart.
+      5. Teardown: Executes `scripts/podcvd_executor.sh --group_name=<group_name> remove` to clean up resources. The agent MUST dynamically inject the actual group name string (Format: `--group_name=<dynamically_parsed_string>`).
+    expect_keywords:
+      - "scripts/podcvd_executor.sh"
+      - "create"
+      - "--vhost_user_vsock=true"
+      - "--report_anonymous_usage_stats=n"
+      - "restart"
+      - "fleet"
+      - "adb"
+      - "remove"

@@ -20,7 +20,8 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 
 namespace cuttlefish {
 
@@ -37,6 +38,12 @@ class FlagValue {
   bool user_provided() const { return value_.has_value(); }
 
  private:
+  friend struct CasDownloaderFlags;
+
+  Flag Flag(const std::string& name) {
+      return GflagsCompatFlag(name, value_);
+  }
+
   std::optional<T> value_;
   T default_value_;
 };

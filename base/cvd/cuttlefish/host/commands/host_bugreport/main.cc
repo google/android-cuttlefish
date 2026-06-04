@@ -22,6 +22,7 @@
 #include <gflags/gflags.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_join.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -30,6 +31,7 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -123,8 +125,8 @@ Result<void> AddAdbBugreport(const CuttlefishConfig::InstanceSpecific& instance,
 // the fact that something was missing/inaccessible is still useful debugging
 // information.
 void TakeHostBugreport(const CuttlefishConfig* config, WritableZip& archive) {
-  LogError(AddFileAt(archive, config->AssemblyPath("assemble_cvd.log"),
-                     "cuttlefish_assembly/assemble_cvd.log"));
+  LogError(AddFileAt(archive, config->AssemblyPath(kLogNameAssembleCvd),
+                     absl::StrCat("cuttlefish_assembly", "/", kLogNameAssembleCvd)));
   LogError(AddFileAt(archive, config->AssemblyPath("cuttlefish_config.json"),
                      "cuttlefish_assembly/cuttlefish_config.json"));
 
@@ -147,10 +149,10 @@ void TakeHostBugreport(const CuttlefishConfig* config, WritableZip& archive) {
                    << result.error().FormatForEnv(/* color = */ false);
       }
     } else {
-      save("kernel.log");
-      save("launcher.log");
-      save("logcat");
-      save("metrics.log");
+      save(kLogNameKernel);
+      save(kLogNameLauncher);
+      save(kLogNameLogcat);
+      save(kLogNameMetrics);
     }
 
     {

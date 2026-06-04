@@ -39,7 +39,7 @@ func TestTakeBugreport(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, _, err := c.RunCmd(c.TargetBin(), "host_bugreport", "--output=/tmp/host_bugreport.zip", "--include_adb_bugreport=true"); err != nil {
+	if _, err := c.RunCmd(c.TargetBin(), "host_bugreport", "--output=/tmp/host_bugreport.zip", "--include_adb_bugreport=true"); err != nil {
 		t.Fatal(err)
 	}
 

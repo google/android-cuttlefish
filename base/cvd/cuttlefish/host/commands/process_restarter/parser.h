@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

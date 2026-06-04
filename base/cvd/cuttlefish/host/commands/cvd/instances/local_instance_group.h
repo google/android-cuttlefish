@@ -16,11 +16,11 @@
 
 #pragma once
 
+#include <json/json.h>
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include <json/json.h>
 
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
@@ -73,6 +73,9 @@ class LocalInstanceGroup {
   std::string MetricsDir() const;
   std::string ArtifactsDir() const;
   std::string ProductDir(int instance_index) const;
+
+  // Return list of filenames of group-level log files.
+  std::vector<std::string> LogsFilenames() const;
 
   Result<LocalInstance> FindInstanceById(unsigned id) const;
   /**

@@ -38,7 +38,7 @@ class InstanceBootImage : public ImageFile {
 
  private:
   const CuttlefishConfig* config_;
-  const CuttlefishConfig::InstanceSpecific* instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   const BootImageFlag* boot_image_flag_;
   std::optional<std::string> path_;
 };

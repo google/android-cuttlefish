@@ -24,7 +24,8 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -33,6 +34,8 @@
 
 namespace cuttlefish {
 namespace {
+
+constexpr char kResetSubcmd[] = "reset";
 
 constexpr char kSummaryHelpText[] =
     "Used to stop devices, optionally clean up instance files, and shut down "
@@ -82,7 +85,7 @@ static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
 
   ParsedFlags parsed_flags;
 
-  Flag y_flag = Flag()
+  Flag y_flag = Flag("yes")
                     .Alias({FlagAliasMode::kFlagExact, "-y"})
                     .Alias({FlagAliasMode::kFlagExact, "--yes"})
                     .Setter([&parsed_flags](const FlagMatch&) -> Result<void> {
@@ -107,46 +110,42 @@ static bool GetUserConfirm() {
                  ::tolower);
   return (user_confirm == "y" || user_confirm == "yes");
 }
+}  // namespace
 
-class CvdResetCommandHandler : public CvdCommandHandler {
- public:
-  CvdResetCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_(instance_manager) {}
+CvdResetCommandHandler::CvdResetCommandHandler(
+    InstanceManager& instance_manager)
+    : instance_manager_(instance_manager) {}
 
-  Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-    std::vector<std::string> subcmd_args = request.SubcommandArguments();
-    auto options = CF_EXPECT(ParseResetFlags(subcmd_args));
+Result<void> CvdResetCommandHandler::Handle(const CommandRequest& request) {
+  std::vector<std::string> subcmd_args = request.SubcommandArguments();
+  auto options = CF_EXPECT(ParseResetFlags(subcmd_args));
 
-    // cvd reset. Give one more opportunity
-    if (!options.is_confirmed_by_flag && !GetUserConfirm()) {
-      std::cout << "For more details: " << "  cvd reset --help" << std::endl;
-      return {};
-    }
-
-    if (options.clean_runtime_dir) {
-      CF_EXPECT(instance_manager_.ResetAndClearInstanceDirs());
-    } else {
-      CF_EXPECT(instance_manager_.Reset());
-    }
+  // cvd reset. Give one more opportunity
+  if (!options.is_confirmed_by_flag && !GetUserConfirm()) {
+    std::cout << "For more details: " << "  cvd reset --help" << std::endl;
     return {};
   }
-  cvd_common::Args CmdList() const override { return {kResetSubcmd}; }
 
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
-
-
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kDetailedHelpText;
+  if (options.clean_runtime_dir) {
+    CF_EXPECT(instance_manager_.ResetAndClearInstanceDirs());
+  } else {
+    CF_EXPECT(instance_manager_.Reset());
   }
+  return {};
+}
 
- private:
-  static constexpr char kResetSubcmd[] = "reset";
-  InstanceManager& instance_manager_;
-};
+cvd_common::Args CvdResetCommandHandler::CmdList() const {
+  return {kResetSubcmd};
+}
 
-}  // namespace
+std::string CvdResetCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
+
+Result<std::string> CvdResetCommandHandler::DetailedHelp(
+    const CommandRequest& /*request*/) {
+  return kDetailedHelpText;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdResetCommandHandler(
     InstanceManager& instance_manager) {

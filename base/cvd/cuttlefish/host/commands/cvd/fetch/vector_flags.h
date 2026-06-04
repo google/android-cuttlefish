@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 #include "cuttlefish/result/result.h"

@@ -17,11 +17,50 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
+#include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
 
 namespace cuttlefish {
+
+class CvdStartCommandHandler : public CvdCommandHandler {
+ public:
+  CvdStartCommandHandler(InstanceManager& instance_manager);
+
+  Result<void> Handle(const CommandRequest& request) override;
+  cvd_common::Args CmdList() const override;
+  std::string SummaryHelp() const override {
+    return "Start all Cuttlefish Instances in a group";
+  }
+  std::vector<HelpParagraph> Description() const override;
+  Result<std::vector<Flag>> Flags(const CommandRequest&) override;
+
+  bool RequiresDeviceExists() const override { return true; }
+
+ private:
+  Result<void> LaunchDevice(Command command, LocalInstanceGroup& group,
+                            const cvd_common::Envs& envs,
+                            const CommandRequest& request);
+
+  Result<void> LaunchDeviceInterruptible(Command command,
+                                         LocalInstanceGroup& group,
+                                         const cvd_common::Envs& envs,
+                                         const CommandRequest& request);
+
+  // Flags handled by `cvd start` itself, not cvd_internal_start.
+  std::vector<Flag> BuildOwnFlags();
+
+  InstanceManager& instance_manager_;
+  SubprocessWaiter subprocess_waiter_;
+  struct {
+    std::vector<std::string> host_substitutions;
+  } own_flags_;
+};
 
 std::unique_ptr<CvdCommandHandler> NewCvdStartCommandHandler(
     InstanceManager& instance_manager);

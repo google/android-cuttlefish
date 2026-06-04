@@ -35,7 +35,8 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
@@ -58,7 +59,7 @@ std::set<std::string> FallbackDirs() {
   paths.insert(parent_path + "/cuttlefish_assembly");
 
   std::unique_ptr<DIR, int(*)(DIR*)> dir(opendir(parent_path.c_str()), closedir);
-  if (!dir.get()) {
+  if (!dir) {
     return paths;
   }
 
@@ -177,8 +178,7 @@ FlagVaules GetFlagValues(int argc, char** argv) {
   bool helpxml = false;
   flags.emplace_back(HelpXmlFlag(flags, std::cout, helpxml));
   flags.emplace_back(UnexpectedArgumentGuard());
-  std::vector<std::string> args =
-      ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
+  std::vector<std::string> args(argv + 1, argv + argc);  // Skip argv[0]
   auto parse_res = ConsumeFlags(flags, args);
   CHECK(parse_res.ok() || helpxml) << "Could not process command line flags.";
 

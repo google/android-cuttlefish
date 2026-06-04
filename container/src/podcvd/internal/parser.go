@@ -41,13 +41,17 @@ func ParseCvdArgs(allArgs []string) *CvdArgs {
 	fs.BoolVar(&commonArgs.Help, "help", false, "Print help message")
 	fs.StringVar(&commonArgs.Verbosity, "verbosity", "", "Verbosity level of the command")
 	fs.Parse(allArgs)
+	subcommandArgs := fs.Args()
+	if len(subcommandArgs) > 0 {
+		subcommandArgs[0] = mapSubcommand(subcommandArgs[0])
+	}
 	return &CvdArgs{
 		CommonArgs: &commonArgs,
 		// Golang's standard library 'flag' stops parsing just before the first
 		// non-flag argument. As the command 'cvd' expects only selector and driver
 		// options before the subcommand argument, 'subcommandArgs' should be empty
 		// or starting with subcommand name.
-		SubCommandArgs: fs.Args(),
+		SubCommandArgs: subcommandArgs,
 		flagSet:        fs,
 	}
 }
@@ -105,4 +109,46 @@ func (a *CvdArgs) GetStringFlagValueOnSubCommandArgs(flagName string) string {
 		}
 	}
 	return ""
+}
+
+func (a *CvdArgs) ReplaceFlagValueOnSubCommandArgs(flagName, newValue string) {
+	flags := make(map[string]struct{})
+	flags["-"+flagName] = struct{}{}
+	flags["--"+flagName] = struct{}{}
+
+	for idx, arg := range a.SubCommandArgs {
+		if _, exists := flags[arg]; exists {
+			if idx+1 < len(a.SubCommandArgs) && !strings.HasPrefix(a.SubCommandArgs[idx+1], "-") {
+				a.SubCommandArgs[idx+1] = newValue
+				return
+			}
+			a.SubCommandArgs[idx] = fmt.Sprintf("-%s=%s", flagName, newValue)
+			return
+		}
+		splitArg := strings.SplitN(arg, "=", 2)
+		if len(splitArg) == 2 {
+			if _, exists := flags[splitArg[0]]; exists {
+				a.SubCommandArgs[idx] = fmt.Sprintf("%s=%s", splitArg[0], newValue)
+				return
+			}
+		}
+	}
+
+	a.SubCommandArgs = append(a.SubCommandArgs, fmt.Sprintf("-%s=%s", flagName, newValue))
+}
+
+func mapSubcommand(subcmd string) string {
+	aliases := map[string]string{
+		"fetch_cvd":          "fetch",
+		"host_bugreport":     "bugreport",
+		"cvd_host_bugreport": "bugreport",
+		"stop_cvd":           "stop",
+		"rm":                 "remove",
+		"launch_cvd":         "start",
+		"cvd_status":         "status",
+	}
+	if mapped, exists := aliases[subcmd]; exists {
+		return mapped
+	}
+	return subcmd
 }

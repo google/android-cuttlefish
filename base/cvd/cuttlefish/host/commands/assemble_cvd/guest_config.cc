@@ -81,7 +81,8 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
                         {config::DeviceType::Foldable, DeviceType::Foldable},
                         {config::DeviceType::Tv, DeviceType::Tv},
                         {config::DeviceType::Minidroid, DeviceType::Minidroid},
-                        {config::DeviceType::Go, DeviceType::Go}};
+                        {config::DeviceType::Go, DeviceType::Go},
+                        {config::DeviceType::Desktop, DeviceType::Desktop}};
 
   config::GuestConfigFile proto_config;
 

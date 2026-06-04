@@ -29,7 +29,8 @@
 #include <fmt/ranges.h>
 #include <json/value.h>
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cache/cache.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -95,18 +96,9 @@ Result<CacheArguments> ProcessArguments(
   return result;
 }
 
-class CvdCacheCommandHandler : public CvdCommandHandler {
- public:
-  Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override { return {"cache"}; }
-  Result<std::string> SummaryHelp() const override;
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
-};
+}  // namespace
 
 Result<void> CvdCacheCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
-
   CacheArguments arguments =
       CF_EXPECT(ProcessArguments(request.SubcommandArguments()));
   std::string cache_directory = PerUserCacheDir();
@@ -149,12 +141,14 @@ Result<void> CvdCacheCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-Result<std::string> CvdCacheCommandHandler::SummaryHelp() const {
+cvd_common::Args CvdCacheCommandHandler::CmdList() const { return {"cache"}; }
+
+std::string CvdCacheCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
 Result<std::string> CvdCacheCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return fmt::format(R"(usage: cvd cache <action> [<flag>...]
 
 Example usage:
@@ -172,8 +166,6 @@ Example usage:
 )",
                      kDefaultCacheSizeGb);
 }
-
-}  // namespace
 
 std::unique_ptr<CvdCommandHandler> NewCvdCacheCommandHandler() {
   return std::unique_ptr<CvdCommandHandler>(new CvdCacheCommandHandler());

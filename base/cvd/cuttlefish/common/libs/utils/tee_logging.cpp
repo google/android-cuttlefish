@@ -165,7 +165,8 @@ std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
   return output_string;
 }
 
-// TODO(schuffelen): Do something less primitive.
+}  // namespace
+
 std::string StripColorCodes(const std::string& str) {
   std::stringstream sstream;
   bool in_color_code = false;
@@ -182,8 +183,6 @@ std::string StripColorCodes(const std::string& str) {
   }
   return sstream.str();
 }
-
-}  // namespace
 
 SeverityTarget SeverityTarget::FromFile(const std::string& path,
                                         MetadataLevel metadata_level,

@@ -18,11 +18,13 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"math/rand"
 	"net"
 	"net/http"
 	"net/netip"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -34,14 +36,13 @@ import (
 	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
-	"github.com/vishvananda/netlink"
 )
 
-func CreateCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, commonArgs *CvdCommonArgs) error {
+func CreateCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	if err := pullContainerImage(ccm); err != nil {
 		return err
 	}
-	ip, err := createAndStartContainer(ccm, commonArgs)
+	ip, err := createAndStartContainer(ccm, cvdArgs)
 	if err != nil {
 		return err
 	}
@@ -125,54 +126,14 @@ func ExecFetchCmdOnDisposableHost(ccm libcfcontainer.CuttlefishContainerManager,
 	return nil
 }
 
-func ExecHelpCmdOnDisposableHost(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
-	if err := pullContainerImage(ccm); err != nil {
-		return err
-	}
-	containerCfg := &container.Config{
-		Env: []string{
-			"ANDROID_HOST_OUT=/host_out",
-		},
-		Image: imageName,
-		Labels: map[string]string{
-			labelCreatedBy: valueCreatedBy,
-		},
-	}
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get current directory: %w", err)
-	}
-	hostOut := os.Getenv("ANDROID_HOST_OUT")
-	if hostOut == "" {
-		hostOut = currentDir
-	}
-	containerHostCfg := &container.HostConfig{
-		Binds: []string{
-			fmt.Sprintf("%s:/host_out:O", hostOut),
-		},
-	}
-	containerID, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, "")
-	if err != nil {
-		return fmt.Errorf("failed to create and start container: %w", err)
-	}
-	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
-	args = append(args, cvdArgs.SubCommandArgs...)
-	if err := ccm.ExecOnContainer(context.Background(), containerID, args, os.Stdin, os.Stdout, os.Stderr); err != nil {
-		return fmt.Errorf("failed to execute help command on the container: %w", err)
-	}
-	if err := ccm.StopAndRemoveContainer(context.Background(), containerID); err != nil {
-		return fmt.Errorf("failed to stop and remove container: %w", err)
-	}
-	return nil
-}
-
 func pullContainerImage(ccm libcfcontainer.CuttlefishContainerManager) error {
 	if exists, err := ccm.ImageExists(context.Background(), imageName); err != nil {
 		return err
 	} else if exists {
 		return nil
 	}
-	return ccm.PullImage(context.Background(), imageName)
+	log.Printf("Pulling container image %q...\n", imageName)
+	return ccm.PullImage(context.Background(), imageName, os.Stderr)
 }
 
 func cvdDataHome() (string, error) {
@@ -193,24 +154,6 @@ func appendPortBindingRange(portMap nat.PortMap, hostIP string, protocol string,
 	}
 }
 
-func findCidr() (string, error) {
-	link, err := netlink.LinkByName(ifName)
-	if err != nil {
-		return "", fmt.Errorf("failed to find interface %q: %w", ifName, err)
-	}
-	routes, err := netlink.RouteListFiltered(netlink.FAMILY_V4, &netlink.Route{}, netlink.RT_FILTER_TABLE)
-	if err != nil {
-		return "", fmt.Errorf("failed to list routes: %w", err)
-	}
-	for _, route := range routes {
-		if route.LinkIndex != link.Attrs().Index || route.Dst == nil {
-			continue
-		}
-		return route.Dst.String(), nil
-	}
-	return "", fmt.Errorf("failed to find route for interface %q", ifName)
-}
-
 func lastIPv4Addr(prefix netip.Prefix) netip.Addr {
 	addr := prefix.Masked().Addr().As4()
 	mask := net.CIDRMask(prefix.Bits(), 32)
@@ -221,9 +164,14 @@ func lastIPv4Addr(prefix netip.Prefix) netip.Addr {
 }
 
 func findAvailableIPv4Addr(groupNameIpAddrMap map[string]string) (string, error) {
-	cidr, err := findCidr()
+	u, err := user.Current()
 	if err != nil {
-		return "", fmt.Errorf("failed to find CIDR: %w", err)
+		return "", fmt.Errorf("failed to get current user: %w", err)
+	}
+	username := u.Username
+	cidr, err := readUserCidrFromConfig(username)
+	if err != nil {
+		return "", fmt.Errorf("failed to read user CIDR from config: %w", err)
 	}
 	prefix, err := netip.ParsePrefix(cidr)
 	if err != nil {
@@ -258,7 +206,8 @@ func findAvailableGroupName(groupNameIpAddrMap map[string]string) string {
 	return fmt.Sprintf("%s%d", prefix, maxNum+1)
 }
 
-func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, commonArgs *CvdCommonArgs) (string, error) {
+func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) (string, error) {
+	commonArgs := cvdArgs.CommonArgs
 	attemptID := uuid.New().String()
 	containerCfg := &container.Config{
 		Env: []string{
@@ -317,6 +266,75 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 			PidsLimit: &pidsLimit,
 		},
 	}
+	// A set to prevent duplicate mounts
+	parseBind := func(bind string) (string, string) {
+		parts := strings.SplitN(bind, ":", 3)
+		if len(parts) < 2 {
+			return "", ""
+		}
+		return parts[0], parts[1]
+	}
+
+	bindSet := make(map[string]bool)
+	for _, bind := range containerHostCfg.Binds {
+		// Existing bind format is "hostPath:containerPath:options"
+		host, container := parseBind(bind)
+		if host != "" {
+			bindSet[host+":"+container] = true
+		} else {
+			log.Printf("warning: ignoring malformed bind: %q\n", bind)
+		}
+	}
+
+	for _, arg := range cvdArgs.SubCommandArgs {
+		path := arg
+		if strings.Contains(arg, "=") {
+			path = strings.SplitN(arg, "=", 2)[1]
+		}
+		
+		// 1. Filter out empty strings which would incorrectly mount the CWD
+		if strings.TrimSpace(path) == "" {
+			continue
+		}
+
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			continue
+		}
+		if _, err := os.Stat(absPath); err != nil {
+			continue
+		}
+		// Prevent mounting critical system directories
+		if strings.HasPrefix(absPath, "/dev/") || strings.HasPrefix(absPath, "/sys/") || strings.HasPrefix(absPath, "/proc/") {
+			continue
+		}
+
+		pathsToMount := []string{absPath}
+		
+		// 2. Resolve symlinks and track the target file to ensure it's accessible inside
+		if realPath, err := filepath.EvalSymlinks(absPath); err == nil && realPath != absPath {
+			pathsToMount = append(pathsToMount, realPath)
+		}
+
+		// 3. Add to mount configuration while preventing duplicates
+		for _, p := range pathsToMount {
+			key := fmt.Sprintf("%s:%s", p, p)
+			if !bindSet[key] {
+				pInfo, err := os.Stat(p)
+				if err != nil {
+					log.Printf("warning: failed to stat path %q to mount: %v\n", p, err)
+					continue
+				}
+				opt := "ro"
+				if pInfo.IsDir() {
+					opt = "O"
+				}
+				containerHostCfg.Binds = append(containerHostCfg.Binds, fmt.Sprintf("%s:%s:%s", p, p, opt))
+				bindSet[key] = true
+			}
+		}
+	}
+
 	var lastErr error
 	for retryCount := 0; retryCount < 10; retryCount++ {
 		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, true)

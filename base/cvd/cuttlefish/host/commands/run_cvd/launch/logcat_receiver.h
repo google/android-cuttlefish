@@ -23,8 +23,6 @@
 
 namespace cuttlefish {
 
-std::string LogcatInfo(const CuttlefishConfig::InstanceSpecific& instance);
-
 Result<MonitorCommand> LogcatReceiver(
     const CuttlefishConfig::InstanceSpecific& instance);
 

@@ -15,6 +15,8 @@
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 
+#include <functional>
+#include <map>
 #include <string>
 
 #include "gmock/gmock-matchers.h"

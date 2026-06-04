@@ -61,7 +61,7 @@ FetcherConfigs FetcherConfigs::ReadFromDirectories(
 
     std::string path = absl::StrCat(real, "/", kFetcherConfigFile);
 
-    if (!it->second.LoadFromFile(path)) {
+    if (FileExists(path) && !it->second.LoadFromFile(path)) {
       VLOG(0) << "No valid fetcher_config in '" << path
               << "', falling back to default";
     }

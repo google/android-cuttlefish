@@ -21,14 +21,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/file.h>
-
-#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/frontline_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/request_context.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
+#include "cuttlefish/host/libs/vm_manager/host_configuration.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -38,23 +36,38 @@ Cvd::Cvd(InstanceManager& instance_manager,
     : instance_manager_(instance_manager),
       lock_file_manager_(lock_file_manager) {}
 
+static Result<void> EnforceHostConfigured() {
+  std::vector<vm_manager::HostConfigurationAction> actions =
+      CF_EXPECT(vm_manager::ValidateHostConfiguration());
+  CF_EXPECT(actions.empty(), "Run `cvd setup` to configure the host.");
+  return {};
+}
+
 Result<void> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
     const std::unordered_map<std::string, std::string>& env,
-    const std::vector<std::string>& selector_args) {
-  CommandRequest request = CF_EXPECT(CommandRequestBuilder()
-                                         .AddArguments(cvd_process_args)
-                                         .SetEnv(env)
-                                         .AddSelectorArguments(selector_args)
-                                         .Build());
+    selector::SelectorOptions selector_args) {
+  CommandRequest request =
+      CF_EXPECT(CommandRequestBuilder()
+                    .AddArguments(cvd_process_args)
+                    .SetEnv(env)
+                    .SetSelectorOptions(std::move(selector_args))
+                    .Build());
 
   RequestContext context(instance_manager_, lock_file_manager_);
-  auto handler = CF_EXPECT(context.Handler(request));
+  CvdCommandHandler* handler = CF_EXPECT(context.Handler(request));
+
   if (CF_EXPECT(HasHelpFlag(request.SubcommandArguments()))) {
     std::cout << CF_EXPECT(handler->DetailedHelp(request)) << std::endl;
-  } else {
-    CF_EXPECT(handler->Handle(request));
+    return {};
   }
+
+  if (handler->RequiresHostConfiguration()) {
+    CF_EXPECT(EnforceHostConfigured());
+  }
+
+  CF_EXPECT(handler->Handle(request));
+
   return {};
 }
 
@@ -66,9 +79,9 @@ Result<void> Cvd::HandleCvdCommand(
   if (args.size() == 1ul) {
     args = cvd_common::Args{"cvd", "help"};
   }
-  std::vector<std::string> selector_args = CF_EXPECT(ExtractCvdArgs(args));
+  selector::SelectorOptions selector_args = CF_EXPECT(ExtractCvdArgs(args));
   // TODO(schuffelen): Deduplicate cvd process split.
-  CF_EXPECT(HandleCommand(args, env, selector_args));
+  CF_EXPECT(HandleCommand(args, env, std::move(selector_args)));
   return {};
 }
 

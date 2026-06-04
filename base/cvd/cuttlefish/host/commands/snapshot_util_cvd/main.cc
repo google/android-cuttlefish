@@ -26,7 +26,6 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/snapshot_util_cvd/parse.h"
 #include "cuttlefish/host/commands/snapshot_util_cvd/snapshot_taker.h"
@@ -142,7 +141,7 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
 
 int main(int argc, char** argv) {
   cuttlefish::LogToStderr();
-  std::vector<std::string> all_args = cuttlefish::ArgsToVec(argc, argv);
+  std::vector<std::string> all_args(argv, argv + argc);
   auto result = cuttlefish::SnapshotCvdMain(std::move(all_args));
   if (!result.ok()) {
     LOG(ERROR) << result.error();

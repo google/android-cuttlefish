@@ -30,7 +30,7 @@ class GrpcSocketCreator {
   std::string CreateGrpcSocket(const std::string& process_name);
 
  private:
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
 };
 
 }  // namespace cuttlefish

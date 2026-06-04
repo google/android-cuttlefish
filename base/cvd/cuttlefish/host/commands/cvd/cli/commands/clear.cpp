@@ -18,7 +18,9 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -32,37 +34,29 @@ constexpr char kClearCmd[] = "clear";
 constexpr char kSummaryHelpText[] =
     "Clears the instance database, stopping any running instances first.";
 
-class CvdClearCommandHandler : public CvdCommandHandler {
- public:
-  CvdClearCommandHandler(InstanceManager& instance_manager);
-
-  Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override { return {kClearCmd}; }
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
-
-  bool RequiresDeviceExists() const override { return true; }
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
-
- private:
-  InstanceManager& instance_manager_;
-};
+}  // namespace
 
 CvdClearCommandHandler::CvdClearCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
 Result<void> CvdClearCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
+  std::vector<std::string> args = request.SubcommandArguments();
+  CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
   CF_EXPECT(instance_manager_.Clear());
   return {};
 }
 
-Result<std::string> CvdClearCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+cvd_common::Args CvdClearCommandHandler::CmdList() const { return {kClearCmd}; }
+
+std::string CvdClearCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
-}  // namespace
+Result<std::string> CvdClearCommandHandler::DetailedHelp(
+    const CommandRequest& request) {
+  return kSummaryHelpText;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdClearCommandHandler(
     InstanceManager& instance_manager) {
@@ -71,4 +65,3 @@ std::unique_ptr<CvdCommandHandler> NewCvdClearCommandHandler(
 }
 
 }  // namespace cuttlefish
-

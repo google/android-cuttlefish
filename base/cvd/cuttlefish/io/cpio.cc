@@ -16,12 +16,19 @@
 #include "cuttlefish/io/cpio.h"
 
 #include <endian.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 #include <charconv>
+#include <memory>
+#include <string>
 #include <string_view>
+#include <system_error>
+#include <utility>
 
 #include "cuttlefish/common/libs/utils/size_utils.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/io/read_window_view.h"
 #include "cuttlefish/result/expect.h"
@@ -146,7 +153,8 @@ Result<CpioReader::EntriesMap> CpioReader::Parse(const ReaderSeeker& reader) {
   }
 }
 
-Result<CpioReader::EntriesMap> CpioReader::ParseNewc(const ReaderSeeker& reader) {
+Result<CpioReader::EntriesMap> CpioReader::ParseNewc(
+    const ReaderSeeker& reader) {
   EntriesMap entries;
   uint64_t offset = 0;
   while (true) {
@@ -189,7 +197,8 @@ Result<CpioReader::EntriesMap> CpioReader::ParseNewc(const ReaderSeeker& reader)
   return entries;
 }
 
-Result<CpioReader::EntriesMap> CpioReader::ParseOdc(const ReaderSeeker& reader) {
+Result<CpioReader::EntriesMap> CpioReader::ParseOdc(
+    const ReaderSeeker& reader) {
   EntriesMap entries;
   uint64_t offset = 0;
   while (true) {

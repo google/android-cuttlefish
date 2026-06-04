@@ -24,7 +24,8 @@
 #include <fmt/ranges.h>
 #include <json/value.h>
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/common/libs/utils/proto.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -45,45 +46,38 @@ Result<bool> ProcessArguments(
   std::vector<Flag> flags;
   flags.emplace_back(GflagsCompatFlag("json", json_formatted)
                          .Help("Output version information in JSON format."));
+  flags.emplace_back(UnexpectedArgumentGuard());
 
   CF_EXPECTF(ConsumeFlags(flags, version_arguments),
              "Failure processing arguments/flags: cvd version {}",
              fmt::join(subcommand_arguments, " "));
   return json_formatted;
 }
-
-class CvdVersionHandler : public CvdCommandHandler {
- public:
-  CvdVersionHandler() = default;
-
-  Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-    const bool json_formatted =
-        CF_EXPECT(ProcessArguments(request.SubcommandArguments()));
-    const VersionIdentifiers version_ids = GetVersionIds();
-    if (json_formatted) {
-      Json::Value json_output(Json::objectValue);
-      json_output["package_version"] = version_ids.package;
-      json_output["version_control_id"] = version_ids.version_control;
-      std::cout << json_output.toStyledString();
-    } else {
-      std::cout << version_ids.ToPrettyString();
-    }
-    return {};
-  }
-
-  cvd_common::Args CmdList() const override { return {"version"}; }
-
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
-
-
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kSummaryHelpText;
-  }
-};
-
 }  // namespace
+
+Result<void> CvdVersionHandler::Handle(const CommandRequest& request) {
+  const bool json_formatted =
+      CF_EXPECT(ProcessArguments(request.SubcommandArguments()));
+  const VersionIdentifiers version_ids = GetVersionIds();
+  if (json_formatted) {
+    Json::Value json_output(Json::objectValue);
+    json_output["package_version"] = version_ids.package;
+    json_output["version_control_id"] = version_ids.version_control;
+    std::cout << json_output.toStyledString();
+  } else {
+    std::cout << version_ids.ToPrettyString();
+  }
+  return {};
+}
+
+cvd_common::Args CvdVersionHandler::CmdList() const { return {"version"}; }
+
+std::string CvdVersionHandler::SummaryHelp() const { return kSummaryHelpText; }
+
+Result<std::string> CvdVersionHandler::DetailedHelp(
+    const CommandRequest& request) {
+  return kSummaryHelpText;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdVersionHandler() {
   return std::unique_ptr<CvdCommandHandler>(new CvdVersionHandler());

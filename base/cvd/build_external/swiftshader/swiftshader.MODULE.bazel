@@ -3,7 +3,7 @@ git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "g
 git_repository(
     name = "swiftshader",
     build_file = "@//build_external/swiftshader:BUILD.swiftshader.bazel",
-    commit = "14f87286123a47207ba25d0d32ebda27b13fe5a3",
+    commit = "f9d5d49a3c599a315e3493dc1e9b5309cffb3305",
     remote = "https://swiftshader.googlesource.com/SwiftShader.git",
     patch_strip = 1,
     patches = ["@//build_external/swiftshader:bazel9.patch"],

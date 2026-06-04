@@ -21,7 +21,8 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
@@ -55,48 +56,47 @@ struct PowerwashOptions {
     return {
         GflagsCompatFlag("wait_for_launcher", wait_for_launcher_seconds),
         GflagsCompatFlag("boot_timeout", boot_timeout_seconds),
+        UnexpectedArgumentGuard(),
     };
   }
 };
-
-class CvdDevicePowerwashCommandHandler : public CvdCommandHandler {
- public:
-  CvdDevicePowerwashCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_{instance_manager} {}
-
-  Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-
-    PowerwashOptions options;
-    std::vector<std::string> subcmd_args = request.SubcommandArguments();
-    CF_EXPECT(ConsumeFlags(options.Flags(), subcmd_args));
-
-    auto [instance, unused] =
-        CF_EXPECT(selector::SelectInstance(instance_manager_, request),
-                  "Unable to select an instance");
-    CF_EXPECT(instance.PowerWash(
-        std::chrono::seconds(options.wait_for_launcher_seconds),
-        std::chrono::seconds(options.boot_timeout_seconds)));
-    return {};
-  }
-
-  cvd_common::Args CmdList() const override { return {kPowerwashCmd}; }
-
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
-
-
-
-  bool RequiresDeviceExists() const override { return true; }
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kDetailedHelpText;
-  }
-
- private:
-  InstanceManager& instance_manager_;
-};
-
 }  // namespace
+
+CvdDevicePowerwashCommandHandler::CvdDevicePowerwashCommandHandler(
+    InstanceManager& instance_manager)
+    : instance_manager_{instance_manager} {}
+
+Result<void> CvdDevicePowerwashCommandHandler::Handle(
+    const CommandRequest& request) {
+  PowerwashOptions options;
+  std::vector<std::string> subcmd_args = request.SubcommandArguments();
+  CF_EXPECT(ConsumeFlags(options.Flags(), subcmd_args));
+
+  auto [instance, unused] =
+      CF_EXPECT(selector::SelectInstance(instance_manager_, request),
+                "Unable to select an instance");
+  CF_EXPECT(instance.PowerWash(
+      std::chrono::seconds(options.wait_for_launcher_seconds),
+      std::chrono::seconds(options.boot_timeout_seconds)));
+  return {};
+}
+
+cvd_common::Args CvdDevicePowerwashCommandHandler::CmdList() const {
+  return {kPowerwashCmd};
+}
+
+std::string CvdDevicePowerwashCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
+
+bool CvdDevicePowerwashCommandHandler::RequiresDeviceExists() const {
+  return true;
+}
+
+Result<std::string> CvdDevicePowerwashCommandHandler::DetailedHelp(
+    const CommandRequest& request) {
+  return kDetailedHelpText;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdDevicePowerwashCommandHandler(
     InstanceManager& instance_manager) {

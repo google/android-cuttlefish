@@ -314,7 +314,7 @@ class VhostInputDevices : public CommandSource,
     return {};
   }
 
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   LogTeeCreator& log_tee_;
   DeviceSockets rotary_sockets_;
   DeviceSockets mouse_sockets_;

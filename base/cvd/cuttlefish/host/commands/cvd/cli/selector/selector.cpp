@@ -18,7 +18,6 @@
 
 #include <iostream>
 #include <memory>
-#include <ostream>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -38,7 +37,8 @@ namespace {
 
 Result<LocalInstanceGroup> GetDefaultGroup(
     const InstanceManager& instance_manager) {
-  const auto all_groups = CF_EXPECT(instance_manager.FindGroups({}));
+  const std::vector<LocalInstanceGroup> all_groups =
+      CF_EXPECT(instance_manager.FindGroups({}));
   CF_EXPECTF(all_groups.size() == 1,
              "There are {} instance groups, unable to pick one",
              all_groups.size());
@@ -50,7 +50,8 @@ Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
   InstanceDatabase::Filter filter;
   filter.group_name = selectors.group_name;
   if (selectors.instance_names) {
-    const auto per_instance_names = selectors.instance_names.value();
+    const std::vector<std::string> per_instance_names =
+        selectors.instance_names.value();
     for (const auto& per_instance_name : per_instance_names) {
       filter.instance_names.insert(per_instance_name);
     }
@@ -58,7 +59,7 @@ Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
   auto it = env.find(kCuttlefishInstanceEnvVarName);
   if (it != env.end()) {
     unsigned id;
-    auto cuttlefish_instance = it->second;
+    std::string cuttlefish_instance = it->second;
     CF_EXPECT(absl::SimpleAtoi(cuttlefish_instance, &id));
   }
 
@@ -92,7 +93,7 @@ Result<LocalInstanceGroup> PromptUserForGroup(
   // show the menu and let the user choose
   std::vector<LocalInstanceGroup> groups =
       CF_EXPECT(instance_manager.FindGroups({}));
-  auto menu = SelectionMenu(groups);
+  std::string menu = SelectionMenu(groups);
 
   std::cout << menu << "\n";
   std::unique_ptr<InterruptibleTerminal> terminal_ =
@@ -118,7 +119,8 @@ Result<LocalInstanceGroup> PromptUserForGroup(
     }
 
     filter.group_name = chosen_group_name;
-    auto instance_group_result = instance_manager.FindGroup(filter);
+    Result<LocalInstanceGroup> instance_group_result =
+        instance_manager.FindGroup(filter);
     if (instance_group_result.ok()) {
       return instance_group_result;
     }
@@ -134,31 +136,33 @@ Result<LocalInstanceGroup> FindGroupOrDefault(
   if (filter.Empty()) {
     return CF_EXPECT(GetDefaultGroup(instance_manager));
   }
-  auto groups = CF_EXPECT(instance_manager.FindGroups(filter));
+  std::vector<LocalInstanceGroup> groups =
+      CF_EXPECT(instance_manager.FindGroups(filter));
   CF_EXPECT_EQ(groups.size(), 1u, "groups.size() = " << groups.size());
-  return *(groups.cbegin());
+  return groups.front();
 }
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>> FindDefaultInstance(
     const InstanceManager& instance_manager) {
-  auto group = CF_EXPECT(GetDefaultGroup(instance_manager));
-  const auto instances = group.Instances();
+  const LocalInstanceGroup group = CF_EXPECT(GetDefaultGroup(instance_manager));
+  const std::vector<LocalInstance> instances = group.Instances();
   CF_EXPECT_EQ(instances.size(), 1u,
                "Default instance is the single instance in the default group.");
-  return std::make_pair(*instances.cbegin(), group);
+  return std::make_pair(instances.front(), group);
 }
 
 }  // namespace
 
 Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
                                        const CommandRequest& request) {
-  auto has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
+  const bool has_groups = CF_EXPECT(instance_manager.HasInstanceGroups());
   CF_EXPECT(std::move(has_groups), "No instance groups available");
   const cvd_common::Envs& env = request.Env();
-  const auto& selector_options = request.Selectors();
+  const SelectorOptions& selector_options = request.Selectors();
   InstanceDatabase::Filter filter =
       CF_EXPECT(BuildFilterFromSelectors(selector_options, request.Env()));
-  auto group_selection_result = FindGroupOrDefault(filter, instance_manager);
+  Result<LocalInstanceGroup> group_selection_result =
+      FindGroupOrDefault(filter, instance_manager);
   if (group_selection_result.ok()) {
     return CF_EXPECT(std::move(group_selection_result));
   }

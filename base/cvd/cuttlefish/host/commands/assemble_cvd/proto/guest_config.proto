@@ -147,6 +147,7 @@ enum DeviceType {
   Tv = 5;
   Minidroid = 6;
   Go = 7;
+  Desktop = 8;
 }
 
 // The presence of this field in the proto indicates the lights HAL is enabled.

@@ -15,6 +15,8 @@
  */
 
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
+#include "cuttlefish/flag_parser/flag.h"
 
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -26,12 +28,17 @@
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/strip.h"
+#include "android-base/file.h"
 #include "fmt/format.h"
 #include "fmt/ranges.h"  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/gflags_xml_parser.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -40,7 +47,7 @@
 namespace cuttlefish {
 
 Result<void> CheckProcessExitedNormally(siginfo_t infop,
-                                        const int expected_exit_code) {
+                                        int expected_exit_code) {
   if (infop.si_code == CLD_EXITED && infop.si_status == expected_exit_code) {
     return {};
   }
@@ -54,9 +61,21 @@ Result<void> CheckProcessExitedNormally(siginfo_t infop,
   }
 }
 
+static Command FixGroupsIfNecessary(const std::string& command_name,
+                                    const std::string& bin_path) {
+  if (InGroup("cvdnetwork") && InGroup("kvm")) {
+    return Command(command_name).SetExecutable(bin_path);
+  }
+  const std::string refresh_groups =
+      android::base::GetExecutableDirectory() + "/cvd_refresh_groups";
+  return Command("cvd_refresh_groups")
+      .SetExecutable(refresh_groups)
+      .AddParameter(bin_path)
+      .AddParameter(command_name);
+}
+
 Result<Command> ConstructCommand(const ConstructCommandParam& param) {
-  Command command(param.command_name);
-  command.SetExecutable(param.bin_path);
+  Command command = FixGroupsIfNecessary(param.command_name, param.bin_path);
   for (const std::string& arg : param.args) {
     command.AddParameter(arg);
   }
@@ -107,6 +126,34 @@ Result<Command> ConstructCvdHelpCommand(
   return help_command;
 }
 
+Result<Command> ConstructSiblingHelpCommand(
+    const std::string& bin_name,
+    const cvd_common::Envs& env,
+    const cvd_common::Args& subcmd_args) {
+  std::string exec_dir = android::base::GetExecutableDirectory();
+
+  std::string bin_path = exec_dir + "/" + bin_name;
+  CF_EXPECTF(FileExists(bin_path),
+             "Could not find {} in executable directory '{}'", bin_name,
+             exec_dir);
+
+  Command command(bin_name);
+  command.SetExecutable(bin_path);
+  for (const auto& [var, value]: env) {
+    if (var == kAndroidHostOut || var == kAndroidSoongHostOut) {
+      // These variables will cause cvd_internal_start to find the wrong
+      // assemble_cvd binary. $HOME could cause the same problem, but we need
+      // that one to find the correct image paths.
+      continue;
+    }
+    command.AddEnvironmentVariable(var, value);
+  }
+  for (const std::string& arg: subcmd_args) {
+    command.AddParameter(arg);
+  }
+  return command;
+}
+
 Result<Command> ConstructCvdGenericNonHelpCommand(
     const ConstructNonHelpForm& request_form, const CommandRequest& request) {
   cvd_common::Envs envs{request_form.envs};
@@ -144,6 +191,54 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
   return CF_EXPECT(ConstructCommand(construct_cmd_param));
 }
 
+Result<std::vector<Flag>> GetSiblingCommandFlags(const std::string& bin_name,
+                                                 const cvd_common::Envs& env,
+                                                 cvd_common::Args args) {
+  // Remove help-like flags to ensure --helpxml takes effect
+  std::erase_if(args, [](std::string_view arg) {
+    if (!absl::ConsumePrefix(&arg, "-")) {
+      // Must have at least one "-"
+      return false;
+    }
+    // May have another "-"
+    (void)absl::ConsumePrefix(&arg, "-");
+    return arg.starts_with("help") || arg == "version" || arg == "h";
+  });
+  args.emplace_back("-helpxml");
+  Command command =
+      CF_EXPECT(ConstructSiblingHelpCommand(bin_name, env, args));
+  std::string stdout;
+  std::string stderr;
+  int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, &stderr);
+  // gflags returns exit code 1 when --help is given
+  if (res != 0 && res != 1) {
+    return CF_ERRF("Failed to execute start binary, exit code: {}, stderr: {}",
+                   res, stderr);
+  }
+  std::vector<GflagDescription> gflag_descs =
+      CF_EXPECT(ParseGflagsXmlHelp(stdout));
+  std::vector<Flag> flags;
+  for (const GflagDescription& desc : gflag_descs) {
+    if (desc.name != "help" &&
+        android::base::Basename(desc.file).starts_with("gflags")) {
+      // Skip gflags-specific flags. Reporting these flags is quite noisy and
+      // adds little to no value in the context of cvd.
+      continue;
+    }
+    flags
+        .emplace_back(desc.type.starts_with("bool")
+                          ? GflagsCompatBoolFlag(desc.name)
+                          : GflagsCompatFlag(desc.name))
+        // Add setter and getter that won't crash
+        .Setter([](const FlagMatch& match) -> Result<void> { return {}; })
+        // The getter always returns the current value reported by the internal
+        // binary so the help message is accurate.
+        .Getter([value = desc.current_value]() { return value; })
+        .Help(desc.meaning);
+  }
+  return flags;
+}
+
 static constexpr char kTerminalBoldRed[] = "\033[0;1;31m";
 static constexpr char kTerminalCyan[] = "\033[0;36m";
 static constexpr char kTerminalRed[] = "\033[0;31m";
@@ -167,9 +262,10 @@ std::string_view TerminalColors::Cyan() const {
 
 std::string NoGroupMessage(const CommandRequest& request) {
   TerminalColors colors(isatty(1));
-  return fmt::format("Command `{}{}{}` is not applicable: {}{}{}", colors.Red(),
+  return fmt::format("{}Command `{}{}{}{}` is not applicable: {}{}{}",
+                     colors.Reset(), colors.Red(), request.Subcommand(),
                      fmt::join(request.SubcommandArguments(), " "),
-                     colors.Reset(), colors.BoldRed(), "no device",
+                     colors.Reset(), colors.BoldRed(), "no devices present",
                      colors.Reset());
 }
 

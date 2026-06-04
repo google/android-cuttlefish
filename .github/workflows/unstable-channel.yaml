@@ -3,7 +3,11 @@ name: Unstable channel
 on:
   push:
     branches:
-      - 'version-[0-9]+.[0-9]+-dev'
+      - 'version-*-dev'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   deploy:

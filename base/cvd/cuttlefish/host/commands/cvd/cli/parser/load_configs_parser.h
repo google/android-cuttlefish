@@ -16,11 +16,14 @@
 
 #pragma once
 
-#include <ostream>
+#include <functional>
+#include <map>
 #include <string>
 #include <vector>
 
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/result/result.h"
@@ -29,31 +32,21 @@ namespace cuttlefish {
 
 struct CvdFlags {
   std::vector<std::string> launch_cvd_flags;
-  std::vector<std::string> selector_flags;
+  selector::SelectorOptions selector_flags;
   std::vector<std::string> fetch_cvd_flags;
   std::string target_directory;
 };
 
-struct Override {
-  std::string config_path;
-  std::string new_value;
-};
-
-std::ostream& operator<<(std::ostream& out, const Override& override);
-
 struct LoadFlags {
-  std::vector<Override> overrides;
-  std::string config_path;
-  std::string credential_source;
-  std::string project_id;
+  std::map<std::string, std::string, std::less<void>> overrides;
   std::string base_dir;
 };
 
-Result<LoadFlags> GetFlags(std::vector<std::string>& args,
-                           const std::string& working_directory);
+std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags);
 
 Result<cvd::config::EnvironmentSpecification> GetEnvironmentSpecification(
-    const LoadFlags& flags);
+    const std::string& config_path,
+    const std::map<std::string, std::string, std::less<void>>& overrides);
 
 Result<InstanceManager::GroupDirectories> GetGroupCreationDirectories(
     const std::string& parent_directory,

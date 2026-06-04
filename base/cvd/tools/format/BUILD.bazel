@@ -1,0 +1,12 @@
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+native_binary(
+    name = "clang_format",
+    src = "@llvm_toolchain//:clang-format",
+    out = "clang_format",
+    data = ["//:.clang-format"],
+)

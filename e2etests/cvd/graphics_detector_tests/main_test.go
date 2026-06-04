@@ -15,7 +15,6 @@
 package main
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/cvd/common"
@@ -41,12 +40,19 @@ func TestLaunchingWithAutoEnablesGfxstream(t *testing.T) {
 		t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %w", err)
 	}
 
-	output, _, err := c.RunCmd("adb", "shell", "getprop", "ro.hardware.egl")
+	gl_driver, err := c.GetSyspropString("ro.hardware.egl")
 	if err != nil {
 		t.Fatalf("failed to get EGL sysprop: %w", err)
 	}
-	output = strings.TrimSpace(output)
-	if output != "emulation" {
-		t.Errorf(`"ro.hardware.egl" was "%s"; expected "emulation"`, output)
+	if gl_driver != "emulation" {
+		t.Errorf(`"ro.hardware.egl" was "%s"; expected "emulation"`, gl_driver)
+	}
+
+	vk_driver, err := c.GetSyspropString("ro.hardware.vulkan")
+	if err != nil {
+		t.Fatalf("failed to get Vulkan sysprop: %w", err)
+	}
+	if vk_driver != "ranchu" {
+		t.Errorf(`"ro.hardware.vulkan" was "%s"; expected "ranchu"`, vk_driver)
 	}
 }

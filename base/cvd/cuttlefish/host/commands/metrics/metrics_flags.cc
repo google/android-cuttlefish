@@ -21,7 +21,8 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/base64.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/libs/metrics/metrics_environment.h"
 #include "cuttlefish/result/result.h"
 
@@ -77,8 +78,7 @@ Result<MetricsFlags> ProcessFlags(int argc, char** argv) {
                 "and transmit."));
   flags.emplace_back(HelpFlag(flags));
   flags.emplace_back(UnexpectedArgumentGuard());
-  std::vector<std::string> args =
-      ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
+  std::vector<std::string> args(argv + 1, argv + argc);  // Skip argv[0]
   CF_EXPECT(ConsumeFlags(flags, args));
 
   CF_EXPECT(result.serialized_proto.empty() != result.event_filepath.empty(),

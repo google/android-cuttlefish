@@ -13,16 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/io/io.h"
-
+#include <stddef.h>
 #include <stdint.h>
 
+#include <utility>
+
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<uint64_t> FakePRead(ReaderSeeker& reader_seeker, void* buf, uint64_t count, uint64_t offset) {
+Result<uint64_t> FakePRead(ReaderSeeker& reader_seeker, void* buf,
+                           uint64_t count, uint64_t offset) {
   size_t original_offset = CF_EXPECT(reader_seeker.SeekCur(0));
   CF_EXPECT(reader_seeker.SeekSet(offset));
   Result<size_t> read_res = reader_seeker.Read(buf, count);

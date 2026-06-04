@@ -61,7 +61,7 @@ cf_cc_library(
     srcs = ["android_build_string.cpp"],
     hdrs = ["android_build_string.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
@@ -73,7 +73,7 @@ cf_cc_test(
     name = "android_build_string_test",
     srcs = ["android_build_string_tests.cpp"],
     deps = [
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
@@ -144,7 +144,7 @@ cf_cc_library(
     srcs = ["chrome_os_build_string.cpp"],
     hdrs = ["chrome_os_build_string.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/flag_parser",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",

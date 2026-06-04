@@ -44,11 +44,11 @@ jobs:
             ;;
           nightly)
             # Debian package format                : X.Y.Z~gitYYYYMMDDHHMM-<Github SHA 8 digit>
-            # Docker tag / os image version format : gitYYYYMMDDHHMM-<Github SHA 8 digit>
+            # Docker tag / os image version format : <Github SHA 8 digit>
             SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
             BASE_VERSION=$(sed -n '1s/.*(\([0-9]\+\.[0-9]\+\.[0-9]\+\)).*/\1/p' base/debian/changelog)
             DEBIAN_VERSION="${BASE_VERSION}~git${TIME}.${SHORT_SHA}"
-            IMAGE_VERSION="git${TIME}-${SHORT_SHA}"
+            IMAGE_VERSION="${SHORT_SHA}"
             ;;
           *)
             DEBIAN_VERSION=""

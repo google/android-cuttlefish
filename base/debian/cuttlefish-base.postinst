@@ -25,8 +25,20 @@ case "$1" in
         addgroup --system kvm
     fi
 
+    if [ -f /etc/modules-load.d/cuttlefish-common.conf ]; then
+        while read -r module || [ -n "$module" ]; do
+            case "$module" in
+                [\#]*) continue ;;
+                "") continue ;;
+            esac
+            modprobe "$module" || true
+        done < /etc/modules-load.d/cuttlefish-common.conf
+    fi
+
     setcap cap_net_admin,cap_net_bind_service,cap_net_raw=+ep \
         /usr/lib/cuttlefish-common/bin/cvdalloc
+    setcap cap_setgid=+ep \
+        /usr/lib/cuttlefish-common/bin/cvd_refresh_groups
     ;;
 esac
 

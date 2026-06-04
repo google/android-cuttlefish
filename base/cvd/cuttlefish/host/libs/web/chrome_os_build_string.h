@@ -23,7 +23,8 @@
 
 #include <fmt/format.h>
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 
 namespace cuttlefish {
 

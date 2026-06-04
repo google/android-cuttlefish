@@ -35,7 +35,7 @@ func addDisplay(c e2etests.TestContext, t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, _, err := c.RunCmd(c.TargetBin(), "display", "add", "--display=width=500,height=500"); err != nil {
+	if _, err := c.RunCmd(c.TargetBin(), "display", "add", "--display=width=500,height=500"); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -55,7 +55,7 @@ func listDisplays(c e2etests.TestContext, t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, _, err := c.RunCmd(c.TargetBin(), "display", "list"); err != nil {
+	if _, err := c.RunCmd(c.TargetBin(), "display", "list"); err != nil {
 		t.Fatal(err)
 	}
 }

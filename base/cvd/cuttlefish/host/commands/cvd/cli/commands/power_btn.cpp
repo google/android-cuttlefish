@@ -18,7 +18,9 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
@@ -33,37 +35,39 @@ constexpr char kSummaryHelpText[] = "Trigger power button event on the device";
 
 constexpr char kPowerBtnCmd[] = "powerbtn";
 
-class CvdDevicePowerBtnCommandHandler : public CvdCommandHandler {
- public:
-  CvdDevicePowerBtnCommandHandler(InstanceManager& instance_manager)
-      : instance_manager_{instance_manager} {}
-
-  Result<void> Handle(const CommandRequest& request) override {
-    CF_EXPECT(CanHandle(request));
-    auto [instance, _] =
-        CF_EXPECT(selector::SelectInstance(instance_manager_, request),
-                  "Unable to select an instance");
-    CF_EXPECT(instance.PressPowerBtn());
-    return {};
-  }
-
-  cvd_common::Args CmdList() const override { return {kPowerBtnCmd}; }
-
-  Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
-
-
-
-  bool RequiresDeviceExists() const override { return true; }
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
-    return kSummaryHelpText;
-  }
-
- private:
-  InstanceManager& instance_manager_;
-};
-
 }  // namespace
+
+CvdDevicePowerBtnCommandHandler::CvdDevicePowerBtnCommandHandler(
+    InstanceManager& instance_manager)
+    : instance_manager_{instance_manager} {}
+
+Result<void> CvdDevicePowerBtnCommandHandler::Handle(
+    const CommandRequest& request) {
+  std::vector<std::string> args = request.SubcommandArguments();
+  CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
+  auto [instance, _] =
+      CF_EXPECT(selector::SelectInstance(instance_manager_, request),
+                "Unable to select an instance");
+  CF_EXPECT(instance.PressPowerBtn());
+  return {};
+}
+
+cvd_common::Args CvdDevicePowerBtnCommandHandler::CmdList() const {
+  return {kPowerBtnCmd};
+}
+
+std::string CvdDevicePowerBtnCommandHandler::SummaryHelp() const {
+  return kSummaryHelpText;
+}
+
+bool CvdDevicePowerBtnCommandHandler::RequiresDeviceExists() const {
+  return true;
+}
+
+Result<std::string> CvdDevicePowerBtnCommandHandler::DetailedHelp(
+    const CommandRequest& request) {
+  return kSummaryHelpText;
+}
 
 std::unique_ptr<CvdCommandHandler> NewCvdDevicePowerBtnCommandHandler(
     InstanceManager& instance_manager) {

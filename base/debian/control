@@ -43,6 +43,7 @@ Depends: adduser,
          grub-efi-amd64-bin [!arm64],
          iproute2,
          iptables,
+         jq,
          less,
          libarchive-tools | bsdtar,
          libcap2-bin,
@@ -64,6 +65,7 @@ Depends: adduser,
          libxml2-dev,
          libz3-4,
          net-tools,
+         nftables,
          openssl,
          opus-tools,
          python3,
@@ -82,6 +84,7 @@ Architecture: any
 Depends: cuttlefish-base,
          cuttlefish-user,
          cuttlefish-defaults,
+         cuttlefish-podcvd,
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
 Description: Cuttlefish Android Virtual Device companion package

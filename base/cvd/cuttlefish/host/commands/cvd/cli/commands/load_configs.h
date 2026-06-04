@@ -16,11 +16,39 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+
+class LoadConfigsCommand : public CvdCommandHandler {
+ public:
+  LoadConfigsCommand(InstanceManager& instance_manager);
+  ~LoadConfigsCommand() = default;
+
+  Result<void> Handle(const CommandRequest& request) override;
+  cvd_common::Args CmdList() const override;
+  std::string SummaryHelp() const override;
+  std::vector<HelpParagraph> Description() const override;
+  Result<std::vector<Flag>> Flags(const CommandRequest&) override;
+
+  static std::vector<HelpParagraph> CommonCommandDescription();
+
+ private:
+  Result<void> LoadGroup(const CommandRequest& request,
+                         LocalInstanceGroup& group, CvdFlags cvd_flags);
+
+  InstanceManager& instance_manager_;
+  LoadFlags flags_;
+};
 
 /*
 cvd load component is responsible of loading, translation and creation of

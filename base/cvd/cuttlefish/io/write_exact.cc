@@ -15,7 +15,7 @@
 
 #include "cuttlefish/io/write_exact.h"
 
-#include <stdint.h>
+#include <stddef.h>
 
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/expect.h"

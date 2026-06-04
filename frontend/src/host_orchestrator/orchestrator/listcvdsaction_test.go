@@ -86,7 +86,6 @@ func TestListCVDsSucceeds(t *testing.T) {
 		{
 			Group:          "foo",
 			Name:           "1",
-			BuildSource:    &apiv1.BuildSource{},
 			Status:         "Running",
 			Displays:       []string{"720 x 1280 ( 320 )"},
 			WebRTCDeviceID: "cvd-1",
@@ -96,7 +95,6 @@ func TestListCVDsSucceeds(t *testing.T) {
 		{
 			Group:          "bar",
 			Name:           "1",
-			BuildSource:    &apiv1.BuildSource{},
 			Status:         "Running",
 			Displays:       []string{"720 x 1280 ( 320 )"},
 			WebRTCDeviceID: "cvd-1",
@@ -105,29 +103,63 @@ func TestListCVDsSucceeds(t *testing.T) {
 		},
 	}
 	var tests = []struct {
-		group string
-		want  *apiv1.ListCVDsResponse
+		nameDesc string
+		group    string
+		name     string
+		want     *apiv1.ListCVDsResponse
+		wantErr  bool
 	}{
 		{
-			group: "",
-			want:  &apiv1.ListCVDsResponse{CVDs: cvds},
+			nameDesc: "list all",
+			group:    "",
+			name:     "",
+			want:     &apiv1.ListCVDsResponse{CVDs: cvds},
 		},
 		{
-			group: "foo",
-			want:  &apiv1.ListCVDsResponse{CVDs: []*apiv1.CVD{cvds[0]}},
+			nameDesc: "list group foo",
+			group:    "foo",
+			name:     "",
+			want:     &apiv1.ListCVDsResponse{CVDs: []*apiv1.CVD{cvds[0]}},
+		},
+		{
+			nameDesc: "get cvd 1 in group foo",
+			group:    "foo",
+			name:     "1",
+			want:     &apiv1.ListCVDsResponse{CVDs: []*apiv1.CVD{cvds[0]}},
+		},
+		{
+			nameDesc: "get cvd 2 in group foo (not found)",
+			group:    "foo",
+			name:     "2",
+			wantErr:  true,
+		},
+		{
+			nameDesc: "get cvd 1 in non-existent group (not found)",
+			group:    "baz",
+			name:     "1",
+			wantErr:  true,
 		},
 	}
 	for _, test := range tests {
-		opts := ListCVDsActionOpts{
-			Group:       test.group,
-			ExecContext: execContext,
-		}
-		action := NewListCVDsAction(opts)
+		t.Run(test.nameDesc, func(t *testing.T) {
+			opts := ListCVDsActionOpts{
+				Group:       test.group,
+				Name:        test.name,
+				ExecContext: execContext,
+			}
+			action := NewListCVDsAction(opts)
 
-		res, _ := action.Run()
+			res, err := action.Run()
 
-		if diff := cmp.Diff(test.want, res); diff != "" {
-			t.Errorf("response mismatch (-want +got):\n%s", diff)
-		}
+			if (err != nil) != test.wantErr {
+				t.Errorf("wantErr %v, got %v", test.wantErr, err)
+			}
+			if test.wantErr {
+				return
+			}
+			if diff := cmp.Diff(test.want, res); diff != "" {
+				t.Errorf("response mismatch (-want +got):\n%s", diff)
+			}
+		})
 	}
 }

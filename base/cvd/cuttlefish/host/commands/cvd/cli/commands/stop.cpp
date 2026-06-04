@@ -20,22 +20,20 @@
 #include <stdlib.h>
 
 #include <chrono>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
-#include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
 #include "cuttlefish/result/result.h"
 
@@ -70,47 +68,19 @@ Result<StopFlags> ParseCommandFlags(cvd_common::Args& args) {
   std::vector<Flag> flags = {
       GflagsCompatFlag("wait_for_launcher", flag_values.wait_for_launcher_secs),
       GflagsCompatFlag("clear_instance_dirs", flag_values.clear_instance_dirs),
+      UnexpectedArgumentGuard(),
   };
   CF_EXPECT(ConsumeFlags(flags, args));
   return flag_values;
 }
 
-class CvdStopCommandHandler : public CvdCommandHandler {
- public:
-  CvdStopCommandHandler(InstanceManager& instance_manager);
-
-  Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override { return {"stop", "stop_cvd"}; }
-  Result<std::string> SummaryHelp() const override;
-
-  bool RequiresDeviceExists() const override { return true; }
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
-
- private:
-  Result<std::string> GetBin(const std::string& host_artifacts_path) const;
-  // whether the "bin" is cvd bins like stop_cvd or not (e.g. ln, ls, mkdir)
-  // The information to fire the command might be different. This information
-  // is about what the executable binary is and how to find it.
-  struct BinPathInfo {
-    std::string bin_;
-    std::string bin_path_;
-  };
-  Result<BinPathInfo> CvdHelpBinPath(const std::string& subcmd,
-                                     const cvd_common::Envs& envs) const;
-
-  InstanceManager& instance_manager_;
-  using BinGeneratorType = std::function<Result<std::string>(
-      const std::string& host_artifacts_path)>;
-};
+}  // namespace
 
 CvdStopCommandHandler::CvdStopCommandHandler(InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
 Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
   std::vector<std::string> cmd_args = request.SubcommandArguments();
-
-
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_ERR(NoGroupMessage(request));
@@ -135,34 +105,18 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-Result<std::string> CvdStopCommandHandler::SummaryHelp() const {
+cvd_common::Args CvdStopCommandHandler::CmdList() const {
+  return {"stop", "stop_cvd"};
+}
+
+std::string CvdStopCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
 Result<std::string> CvdStopCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   return kDetailedHelpText;
 }
-
-Result<CvdStopCommandHandler::BinPathInfo>
-CvdStopCommandHandler::CvdHelpBinPath(const std::string& subcmd,
-                                      const cvd_common::Envs& envs) const {
-  auto tool_dir_path = CF_EXPECT(AndroidHostPath(envs));
-  auto bin_path_base = CF_EXPECT(GetBin(tool_dir_path));
-  // no need of executable directory. Will look up by PATH
-  // bin_path_base is like ln, mkdir, etc.
-  return BinPathInfo{
-      .bin_ = bin_path_base,
-      .bin_path_ = tool_dir_path.append("/bin/").append(bin_path_base),
-  };
-}
-
-Result<std::string> CvdStopCommandHandler::GetBin(
-    const std::string& host_artifacts_path) const {
-  return CF_EXPECT(HostToolTarget(host_artifacts_path).GetStopBinName());
-}
-
-}  // namespace
 
 std::unique_ptr<CvdCommandHandler> NewCvdStopCommandHandler(
     InstanceManager& instance_manager) {

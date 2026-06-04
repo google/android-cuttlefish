@@ -15,10 +15,14 @@
 package internal
 
 import (
+	"bufio"
 	"context"
 	"crypto/sha256"
 	"fmt"
 	"os"
+	"strings"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
 
@@ -79,4 +83,30 @@ func Ipv4AddressesByGroupNames(ccm libcfcontainer.CuttlefishContainerManager, al
 
 func ContainerName(groupName string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(groupName)))[:12]
+}
+
+func readUserCidrFromConfig(username string) (string, error) {
+	file, err := os.Open("/etc/podcvd.users")
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) == 2 && parts[0] == username {
+			return parts[1], nil
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+	return "", fmt.Errorf("user %q not found in /etc/podcvd.users", username)
+}
+
+func Isatty(fd uintptr) bool {
+	_, err := unix.IoctlGetTermios(int(fd), unix.TCGETS)
+	return err == nil
 }

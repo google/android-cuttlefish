@@ -278,7 +278,15 @@ Result<void> ProcessMonitor::StartSubprocesses(
 Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
   VLOG(0) << "Waiting for a `stop` message from the parent";
   while (running.load()) {
-    ManagedMessage message = CF_EXPECT(child_channel_->ReceiveMessage());
+    auto message_res = child_channel_->ReceiveMessage();
+    if (!message_res.ok()) {
+      if (!running.load()) {
+        // We were shut down intentionally, ignore error
+        return {};
+      }
+      CF_EXPECT(std::move(message_res));
+    }
+    auto message = std::move(*message_res);
     if (message->command == ParentToChildMessageType::kStop) {
       running.store(false);
       // Wake up the wait() loop by giving it an exited child process
@@ -406,6 +414,7 @@ Result<void> ProcessMonitor::StartAndMonitorProcesses() {
   if (monitor_ == 0) {
     pipe_read->Close();
     child_channel_ = transport::SharedFdChannel(child_sock, child_sock);
+    child_sock_ = std::move(child_sock);
     Result<void> monitor_result = MonitorRoutine();
     if (!monitor_result.ok()) {
       LOG(ERROR) << "Monitoring processes failed:\n" << monitor_result.error();
@@ -444,6 +453,9 @@ Result<void> ProcessMonitor::MonitorRoutine() {
   CF_EXPECT(MonitorLoop(running, properties_mutex_,
                         properties_.restart_subprocesses_,
                         properties_.entries_));
+  if (child_sock_->IsOpen()) {
+    child_sock_->Shutdown(SHUT_RDWR);
+  }
   CF_EXPECT(parent_comms.get(), "Should have exited if monitoring stopped");
 
   CF_EXPECT(StopSubprocesses(properties_.entries_));

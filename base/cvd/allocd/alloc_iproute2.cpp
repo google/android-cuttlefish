@@ -15,13 +15,9 @@
  */
 #include "allocd/alloc_driver.h"
 
-#include <cstdint>
-#include <fstream>
 #include <string_view>
 
-#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/result/result.h"

@@ -650,4 +650,35 @@ Result<std::string> Search(const std::vector<std::string>& path,
   return CF_ERR("Not found: ") << name << ", path " << absl::StrJoin(path, ":");
 }
 
+Result<SharedFD> CreateOrReuseAndDrainFifo(const std::string& path, mode_t mode) {
+  struct stat st {};
+  bool existed = false;
+  if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) != 0) {
+    CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
+               "Failed to mkfifo('{}', {:o}): {}", path, mode,
+               ::cuttlefish::StrError(errno));
+  } else {
+    CF_EXPECTF(S_ISFIFO(st.st_mode),
+               "File at '{}' exists but is not a FIFO", path);
+    existed = true;
+  }
+
+  auto ret = SharedFD::Open(path, O_RDWR);
+  CF_EXPECTF(ret->IsOpen(), "Failed to open '{}': '{}'", path, ret->StrError());
+
+  if (existed) {
+    int flags = ret->Fcntl(F_GETFL, 0);
+    if (flags >= 0) {
+      ret->Fcntl(F_SETFL, flags | O_NONBLOCK);
+      char buf[4096];
+      while (ret->Read(buf, sizeof(buf)) > 0) {
+        // Reading while there is data to read
+      }
+      ret->Fcntl(F_SETFL, flags);
+    }
+  }
+
+  return ret;
+}
+
 }  // namespace cuttlefish

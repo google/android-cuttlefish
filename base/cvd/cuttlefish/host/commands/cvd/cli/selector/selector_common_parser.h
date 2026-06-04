@@ -20,8 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/host/commands/cvd/cli/types.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/flag_parser/flag.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -29,15 +28,15 @@ namespace selector {
 struct SelectorOptions {
   std::optional<std::string> group_name;
   std::optional<std::vector<std::string>> instance_names;
+
   bool HasOptions() const {
     return group_name.has_value() || instance_names.has_value();
   }
-  std::vector<std::string> AsArgs() const;
+
+  bool operator==(const SelectorOptions&) const = default;
 };
 
-// Parses and consumes the selector arguments from the given argument list
-Result<SelectorOptions> ParseCommonSelectorArguments(
-    cvd_common::Args& args);
+std::vector<Flag> BuildCommonSelectorFlags(SelectorOptions& opts);
 
 }  // namespace selector
 }  // namespace cuttlefish

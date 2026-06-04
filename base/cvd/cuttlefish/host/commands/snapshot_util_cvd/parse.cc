@@ -23,7 +23,8 @@
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
 
@@ -71,7 +72,7 @@ Flag CleanupSnapshotPathFlag(bool& cleanup) {
 }  // namespace
 
 Result<Parsed> Parse(int argc, char** argv) {
-  auto args = ArgsToVec(argc, argv);
+  std::vector<std::string> args(argv, argv + argc);
   auto parsed = CF_EXPECT(Parse(args));
   return parsed;
 }

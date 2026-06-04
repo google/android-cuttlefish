@@ -115,7 +115,8 @@ class CuttlefishConfig {
 
   enum class MediaType {
     kUnknown = 0,
-    kV4l2EmulatedCamera,
+    kV4l2EmulatedCameraSPlane,
+    kV4l2EmulatedCameraMPlane,
     kV4l2Proxy,
   };
 

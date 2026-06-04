@@ -29,7 +29,8 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/container.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/result/result.h"
@@ -40,8 +41,9 @@ namespace {
 class AdbConfigFlagImpl : public AdbConfigFlag {
  public:
   INJECT(AdbConfigFlagImpl(AdbConfig& config, ConfigFlag& config_flag))
-      : config_(config), config_flag_(config_flag) {
-    mode_flag_ = GflagsCompatFlag("adb_mode").Help(mode_help);
+      : config_(config),
+        config_flag_(config_flag),
+        mode_flag_(GflagsCompatFlag("adb_mode").Help(mode_help)) {
     mode_flag_.Getter([this]() {
       std::stringstream modes;
       for (const auto& mode : config_.Modes()) {

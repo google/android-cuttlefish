@@ -115,6 +115,7 @@ cf_cc_library(
     deps = [
         ":environment",
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/posix:rename",
@@ -143,43 +144,31 @@ cf_cc_test(
 )
 
 cf_cc_library(
-    name = "flag_parser",
-    srcs = ["flag_parser.cpp"],
-    hdrs = ["flag_parser.h"],
-    deps = [
-        "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/result",
-        "//libbase",
-        "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/log:check",
-        "@abseil-cpp//absl/strings",
-        "@fmt",
-    ],
-)
-
-cf_cc_test(
-    name = "flag_parser_test",
-    srcs = ["flag_parser_test.cpp"],
-    # `layering_check` conflicts with the combination of the clang prebuilt and
-    # the cmake build rules used for @libxml2.
-    features = ["-layering_check"],
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/result",
-        "//cuttlefish/result:result_matchers",
-        "//libbase",
-        "@libxml2",
-    ],
-)
-
-cf_cc_library(
     name = "flags_validator",
     srcs = ["flags_validator.cpp"],
     hdrs = ["flags_validator.h"],
     deps = [
         "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
+    name = "gflags_xml_parser",
+    srcs = ["gflags_xml_parser.cpp"],
+    hdrs = ["gflags_xml_parser.h"],
+    features = ["-layering_check"],
+    deps = [
+        "//cuttlefish/result",
+        "@libxml2",
+    ],
+)
+
+cf_cc_test(
+    name = "gflags_xml_parser_test",
+    srcs = ["gflags_xml_parser_test.cpp"],
+    deps = [
+        ":gflags_xml_parser",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 
@@ -302,14 +291,23 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "shared_fd_flag",
-    srcs = ["shared_fd_flag.cpp"],
-    hdrs = ["shared_fd_flag.h"],
+    name = "semver",
+    srcs = ["semver.cpp"],
+    hdrs = ["semver.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:flag_parser",
-        "//libbase",
+        "//cuttlefish/result",
+        "//cuttlefish/result:expect",
         "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "semver_test",
+    srcs = ["semver_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:semver",
+        "//cuttlefish/result:result_matchers",
+        "//cuttlefish/result:result_type",
     ],
 )
 

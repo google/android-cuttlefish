@@ -20,7 +20,6 @@
 
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -35,9 +34,10 @@ struct GroupCreationInfo {
 };
 
 struct CreationAnalyzerParam {
-  const std::vector<std::string>& cmd_args;
   const std::unordered_map<std::string, std::string>& envs;
   const SelectorOptions& selectors;
+  const size_t num_instances;
+  const std::vector<unsigned> instance_ids;
 };
 
 /**

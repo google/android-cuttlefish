@@ -24,7 +24,7 @@
 #include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/parser.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

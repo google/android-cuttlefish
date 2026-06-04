@@ -85,7 +85,7 @@ class FastbootProxy : public CommandSource, public KernelLogPipeConsumer {
     return {};
   }
 
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
   const FastbootConfig& fastboot_config_;
   KernelLogPipeProvider& log_pipe_provider_;
   SharedFD kernel_log_pipe_;

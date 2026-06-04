@@ -43,15 +43,6 @@ namespace cuttlefish {
 
 namespace {
 
-class CvdFetchCommandHandler : public CvdCommandHandler {
- public:
-  Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override { return {"fetch", "fetch_cvd"}; }
-  Result<std::string> SummaryHelp() const override;
-
-  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
-};
-
 Result<void> RunAutoLogin(const BuildApiFlags& build_api_flags) {
   if (!CF_EXPECT(ShouldAutoLogin(build_api_flags))) {
     return {};
@@ -90,9 +81,9 @@ Result<void> RunCacheCleanup(const BuildApiFlags& build_api_flags) {
   return {};
 }
 
-Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
-  CF_EXPECT(CanHandle(request));
+}  // namespace
 
+Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
   const FetchFlags flags = CF_EXPECT(FetchFlags::Parse(args));
   CF_EXPECT(EnsureDirectoryExists(flags.target_directory));
@@ -119,19 +110,21 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-Result<std::string> CvdFetchCommandHandler::SummaryHelp() const {
+cvd_common::Args CvdFetchCommandHandler::CmdList() const {
+  return {"fetch", "fetch_cvd"};
+}
+
+std::string CvdFetchCommandHandler::SummaryHelp() const {
   return "Retrieve build artifacts based on branch and target names";
 }
 
 Result<std::string> CvdFetchCommandHandler::DetailedHelp(
-    const CommandRequest& request) const {
+    const CommandRequest& request) {
   std::vector<std::string> args = {"--help"};
   // TODO: b/389119573 - Should return the help text instead of printing it
   CF_EXPECT(FetchFlags::Parse(args));
   return {};
 }
-
-}  // namespace
 
 std::unique_ptr<CvdCommandHandler> NewCvdFetchCommandHandler() {
   return std::unique_ptr<CvdCommandHandler>(new CvdFetchCommandHandler());

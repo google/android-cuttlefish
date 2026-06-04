@@ -24,8 +24,9 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
-#include "cuttlefish/common/libs/utils/shared_fd_flag.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
+#include "cuttlefish/flag_parser/shared_fd_flag.h"
 #include "cuttlefish/host/libs/config/logging.h"
 
 namespace cuttlefish {
@@ -70,8 +71,7 @@ int TombstoneReceiverMain(int argc, char** argv) {
   flags.emplace_back(HelpFlag(flags));
   flags.emplace_back(UnexpectedArgumentGuard());
 
-  std::vector<std::string> args =
-      ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
+  std::vector<std::string> args(argv + 1, argv + argc);  // Skip argv[0]
   auto parse_res = ConsumeFlags(flags, args);
   CHECK(parse_res.ok()) << "Could not process command line flags. "
                         << parse_res.error();

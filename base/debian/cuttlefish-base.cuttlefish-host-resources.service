@@ -1,0 +1,21 @@
+[Unit]
+SourcePath=/etc/init.d/cuttlefish-host-resources
+Description=Set up initial cuttlefish environment
+After=network-online.target
+After=remote-fs.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+Restart=no
+TimeoutSec=5min
+IgnoreSIGPIPE=no
+KillMode=process
+GuessMainPID=no
+RemainAfterExit=yes
+SuccessExitStatus=5 6
+ExecStart=/etc/init.d/cuttlefish-host-resources start
+ExecStop=/etc/init.d/cuttlefish-host-resources stop
+
+[Install]
+WantedBy=multi-user.target

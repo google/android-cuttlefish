@@ -27,7 +27,8 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
@@ -66,8 +67,7 @@ Result<StatusFlags> GetFlagValues(int argc, char** argv) {
   flags.emplace_back(HelpXmlFlag(flags, std::cout, flag_values.help_xml));
   flags.emplace_back(UnexpectedArgumentGuard());
 
-  std::vector<std::string> args =
-      ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
+  std::vector<std::string> args(argv + 1, argv + argc);  // Skip argv[0]
   CF_EXPECT(ConsumeFlags(flags, args), "Could not process command line flags.");
   return flag_values;
 }

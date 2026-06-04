@@ -1,0 +1,53 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "flag_parser",
+    srcs = [
+        "flag.cpp",
+        "gflags_compat.cpp",
+    ],
+    hdrs = [
+        "flag.h",
+        "gflags_compat.h",
+    ],
+    deps = [
+        "//cuttlefish/result",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "flag_parser_test",
+    srcs = ["flag_parser_test.cpp"],
+    # `layering_check` conflicts with the combination of the clang prebuilt and
+    # the cmake build rules used for @libxml2.
+    features = ["-layering_check"],
+    deps = [
+        ":flag_parser",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
+        "@libxml2",
+    ],
+)
+
+cf_cc_library(
+    name = "shared_fd_flag",
+    srcs = ["shared_fd_flag.cpp"],
+    hdrs = ["shared_fd_flag.h"],
+    deps = [
+        ":flag_parser",
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
+    ],
+)

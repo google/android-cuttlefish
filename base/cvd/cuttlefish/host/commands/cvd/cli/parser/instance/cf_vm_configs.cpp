@@ -15,14 +15,13 @@
  */
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_vm_configs.h"
 
+#include <google/protobuf/util/json_util.h>
 #include <stdint.h>
 
 #include <optional>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <google/protobuf/util/json_util.h>
 
 #include "cuttlefish/common/libs/utils/flags_validator.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
@@ -33,6 +32,68 @@
 #define UI_DEFAULTS_MEMORY_MB 2048
 
 namespace cuttlefish {
+namespace {
+
+using cvd::config::EnvironmentSpecification;
+using cvd::config::Instance;
+using cvd::config::Vm;
+
+inline constexpr char kFlagVmManager[] = "vm_manager";
+inline constexpr char kFlagCpus[] = "cpus";
+inline constexpr char kFlagMemoryMb[] = "memory_mb";
+inline constexpr char kFlagUseSdcard[] = "use_sdcard";
+inline constexpr char kFlagSetupWizardMode[] = "setupwizard_mode";
+inline constexpr char kFlagUuid[] = "uuid";
+inline constexpr char kFlagEnableSandbox[] = "enable_sandbox";
+inline constexpr char kFlagCrosvmSimpleMediaDevice[] =
+    "crosvm_simple_media_device";
+inline constexpr char kFlagCrosvmV4l2Proxy[] = "crosvm_v4l2_proxy";
+
+std::set<std::string> GatherFlagNamesUsedInInstanceConfig(const Instance& ins) {
+  std::set<std::string> names;
+  if (ins.has_vm()) {
+    names.insert(kFlagVmManager);
+  }
+  if (ins.vm().has_cpus()) {
+    names.insert(kFlagCpus);
+  }
+  if (ins.vm().has_memory_mb()) {
+    names.insert(kFlagMemoryMb);
+  }
+  if (ins.vm().has_use_sdcard()) {
+    names.insert(kFlagUseSdcard);
+  }
+  if (ins.vm().has_setupwizard_mode()) {
+    names.insert(kFlagSetupWizardMode);
+  }
+  if (ins.vm().has_uuid()) {
+    names.insert(kFlagUuid);
+  }
+  if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
+      ins.vm().crosvm().has_enable_sandbox()) {
+    names.insert(kFlagEnableSandbox);
+  }
+  if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
+      ins.vm().crosvm().has_simple_media_device()) {
+    names.insert(kFlagCrosvmSimpleMediaDevice);
+  }
+  if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
+      ins.vm().crosvm().has_v4l2_proxy()) {
+    names.insert(kFlagCrosvmV4l2Proxy);
+  }
+  return names;
+}
+
+std::set<std::string> GatherFlagNamesUsedInEnvironmentConfig(
+    const EnvironmentSpecification& cfg) {
+  std::set<std::string> names;
+  for (const auto& ins : cfg.instances()) {
+    names.merge(GatherFlagNamesUsedInInstanceConfig(ins));
+  }
+  return names;
+}
+
+}  // namespace
 
 using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
@@ -103,7 +164,8 @@ static bool EnableSandbox(const Instance& instance) {
 static bool SimpleMediaDevice(const Instance& instance) {
   const auto& crosvm = instance.vm().crosvm();
   const auto& default_val = CF_DEFAULTS_CROSVM_SIMPLE_MEDIA_DEVICE;
-  return crosvm.has_simple_media_device() ? crosvm.simple_media_device() : default_val;
+  return crosvm.has_simple_media_device() ? crosvm.simple_media_device()
+                                          : default_val;
 }
 
 static std::string V4l2Proxy(const Instance& instance) {
@@ -112,15 +174,16 @@ static std::string V4l2Proxy(const Instance& instance) {
   return crosvm.has_v4l2_proxy() ? crosvm.v4l2_proxy() : default_val;
 }
 
-static std::vector<std::string> UserPageSize(const EnvironmentSpecification& cfg) {
+static std::vector<std::string> UserPageSize(
+    const EnvironmentSpecification& cfg) {
   std::vector<std::string> ret;
   for (const auto& instance : cfg.instances()) {
-    if (instance.vm().has_page_size())
-    {
+    if (instance.vm().has_page_size()) {
       if (instance.vm().page_size() == cvd::config::USER_PAGE_SIZE_16KB) {
         ret.emplace_back("--extra_kernel_cmdline=page_shift=14");
         return ret;
-      } else if (instance.vm().page_size() == cvd::config::USER_PAGE_SIZE_64KB) {
+      } else if (instance.vm().page_size() ==
+                 cvd::config::USER_PAGE_SIZE_64KB) {
         ret.emplace_back("--extra_kernel_cmdline=page_shift=16");
         return ret;
       }
@@ -162,17 +225,40 @@ static Result<std::vector<std::string>> CustomConfigsFlags(
 
 Result<std::vector<std::string>> GenerateVmFlags(
     const EnvironmentSpecification& cfg) {
-  std::vector<std::string> flags = {
-      GenerateInstanceFlag("vm_manager", cfg, VmManager),
-      GenerateInstanceFlag("cpus", cfg, Cpus),
-      GenerateInstanceFlag("memory_mb", cfg, MemoryMb),
-      GenerateInstanceFlag("use_sdcard", cfg, UseSdcard),
-      CF_EXPECT(ResultInstanceFlag("setupwizard_mode", cfg, SetupWizardMode)),
-      GenerateInstanceFlag("uuid", cfg, Uuid),
-      GenerateInstanceFlag("enable_sandbox", cfg, EnableSandbox),
-      GenerateInstanceFlag("crosvm_simple_media_device", cfg, SimpleMediaDevice),
-      GenerateInstanceFlag("crosvm_v4l2_proxy", cfg, V4l2Proxy),
-  };
+  std::set<std::string> used_names =
+      GatherFlagNamesUsedInEnvironmentConfig(cfg);
+  std::vector<std::string> flags = {};
+  if (used_names.contains(kFlagVmManager)) {
+    flags.push_back(GenerateInstanceFlag(kFlagVmManager, cfg, VmManager));
+  }
+  if (used_names.contains(kFlagCpus)) {
+    flags.push_back(GenerateInstanceFlag(kFlagCpus, cfg, Cpus));
+  }
+  if (used_names.contains(kFlagMemoryMb)) {
+    flags.push_back(GenerateInstanceFlag(kFlagMemoryMb, cfg, MemoryMb));
+  }
+  if (used_names.contains(kFlagUseSdcard)) {
+    flags.push_back(GenerateInstanceFlag(kFlagUseSdcard, cfg, UseSdcard));
+  }
+  if (used_names.contains(kFlagSetupWizardMode)) {
+    flags.push_back(CF_EXPECT(
+        ResultInstanceFlag(kFlagSetupWizardMode, cfg, SetupWizardMode)));
+  }
+  if (used_names.contains(kFlagUuid)) {
+    flags.push_back(GenerateInstanceFlag(kFlagUuid, cfg, Uuid));
+  }
+  // TODO(b/517984573): Always pass enable_sandbox.
+  // if (used_names.contains(kFlagEnableSandbox)) {
+  flags.push_back(GenerateInstanceFlag(kFlagEnableSandbox, cfg, EnableSandbox));
+  // }
+  if (used_names.contains(kFlagCrosvmSimpleMediaDevice)) {
+    flags.push_back(GenerateInstanceFlag(kFlagCrosvmSimpleMediaDevice, cfg,
+                                         SimpleMediaDevice));
+  }
+  if (used_names.contains(kFlagCrosvmV4l2Proxy)) {
+    flags.emplace_back(
+        GenerateInstanceFlag(kFlagCrosvmV4l2Proxy, cfg, V4l2Proxy));
+  }
 
   flags = MergeResults(std::move(flags), CF_EXPECT(CustomConfigsFlags(cfg)));
   flags = MergeResults(std::move(flags), UserPageSize(cfg));

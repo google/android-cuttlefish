@@ -16,14 +16,16 @@
 
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 
+#include <android-base/file.h>
+#include <fmt/format.h>
+
 #include <fstream>
 #include <memory>
 #include <string>
 #include <utility>
 
-#include <fmt/format.h>
 #include "absl/log/log.h"
-
+#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
@@ -62,7 +64,7 @@ void LocalInstance::set_state(cvd::InstanceState state) {
 std::string LocalInstance::instance_dir() const {
   std::string to_ret = fmt::format("{}/cuttlefish/instances/cvd-{}",
                                    group_proto_->home_directory(), id());
-  if(!FileExists(to_ret)) {
+  if (!FileExists(to_ret)) {
     // Legacy launchers create cuttlefish_runtime.{$ID}
     to_ret = fmt::format("{}/cuttlefish_runtime.{}",
                          group_proto_->home_directory(), id());
@@ -270,6 +272,25 @@ Result<SharedFD> LocalInstance::GetLauncherMonitor(
              "Failed to connect to instance monitor socket ({}): {}",
              monitor_path, monitor->StrError());
   return monitor;
+}
+
+Result<std::vector<std::string>> LocalInstance::LogsFilenames() const {
+  if (!FileExists(instance_dir())) {
+    VLOG(0) << "Instance directory \"" << instance_dir() << "\" does not exist";
+    return {};
+  }
+  std::string logs_dir = instance_dir() + "/logs";
+  if (!FileExists(logs_dir)) {
+    VLOG(0) << "Instance logs directory \"" << logs_dir << "\" does not exist";
+    return {};
+  }
+  std::vector<std::string> result = {};
+  auto callback = [&result](const std::string& filename) -> Result<void> {
+    result.push_back(filename);
+    return {};
+  };
+  CF_EXPECT(WalkDirectory(logs_dir, callback));
+  return result;
 }
 
 }  // namespace cuttlefish

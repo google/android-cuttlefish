@@ -122,6 +122,7 @@ cf_cc_binary(
         "//cuttlefish/host/commands/process_sandboxer:pidfd",
         "//cuttlefish/host/commands/process_sandboxer:policies",
         "//cuttlefish/host/commands/process_sandboxer:sandbox_manager",
+        "//cuttlefish/host/libs/log_names",
         "@abseil-cpp//absl/base:log_severity",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",

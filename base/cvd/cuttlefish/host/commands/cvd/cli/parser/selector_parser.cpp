@@ -18,26 +18,27 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 
 namespace cuttlefish {
 
 using cvd::config::EnvironmentSpecification;
-using cvd::config::Instance;
 
-std::string InsName(const Instance& instance) { return instance.name(); }
-
-std::vector<std::string> ParseSelectorConfigs(
+selector::SelectorOptions ParseSelectorConfigs(
     const EnvironmentSpecification& config) {
-  auto ins_name_flag = GenerateInstanceFlag("instance_name", config, InsName);
+  selector::SelectorOptions options;
 
-  if (!config.common().has_group_name()) {
-    return {ins_name_flag};
+  options.instance_names = std::vector<std::string>();
+  for (const auto& instance : config.instances()) {
+    options.instance_names->push_back(instance.name());
   }
 
-  auto group_flag = GenerateFlag("group_name", config.common().group_name());
-  return {ins_name_flag, group_flag};
+  if (config.common().has_group_name()) {
+    options.group_name = config.common().group_name();
+  }
+
+  return options;
 }
 
 }  // namespace cuttlefish

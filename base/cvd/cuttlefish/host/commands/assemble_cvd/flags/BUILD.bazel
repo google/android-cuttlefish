@@ -179,12 +179,22 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "parser",
+    srcs = ["parser.cpp"],
+    hdrs = ["parser.h"],
+    deps = [
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
     name = "from_gflags",
     srcs = ["from_gflags.cc"],
     hdrs = ["from_gflags.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "//cuttlefish/host/commands/assemble_cvd/flags:parser",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",

@@ -62,12 +62,11 @@ type Controller struct {
 }
 
 func (c *Controller) AddRoutes(router *mux.Router) {
-	router.Handle("/artifacts",
-		httpHandler(&fetchArtifactsHandler{Config: c.Config, OM: c.OperationManager})).Methods("POST")
 	router.Handle("/cvds",
 		httpHandler(newCreateCVDHandler(c.Config, c.OperationManager, c.UserArtifactsManager))).Methods("POST")
 	router.Handle("/cvds", httpHandler(&listCVDsHandlerAll{Config: c.Config})).Methods("GET")
 	router.Handle("/cvds/{group}", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
+	router.Handle("/cvds/{group}/{name}", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
 	router.PathPrefix("/cvds/{group}/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
 	router.Handle("/cvds/{group}/:start",
 		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &startCvdCommand{}))).Methods("POST")
@@ -78,8 +77,6 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	// Append `include_adb_bugreport=true` query parameter to include a device `adb bugreport` in the cvd bugreport.
 	router.Handle("/cvds/{group}/:bugreport",
 		httpHandler(newCreateCVDBugReportHandler(c.Config, c.OperationManager))).Methods("POST")
-	router.Handle("/cvds/{group}/{name}",
-		httpHandler(newGetCVDInstanceStatusHandler(c.Config, c.OperationManager))).Methods("GET")
 	router.Handle("/cvds/{group}/{name}",
 		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &removeCvdCommand{}))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}/:start",
@@ -183,39 +180,6 @@ func replyJSON(w http.ResponseWriter, obj interface{}, statusCode int) error {
 	return encoder.Encode(obj)
 }
 
-type fetchArtifactsHandler struct {
-	Config Config
-	OM     OperationManager
-}
-
-// FetchArtifacts godoc
-//
-//	@Summary		Fetches and stores artifacts from the Android Build API
-//	@Description	Fetches and stores artifacts from the Android Build API
-//	@Accept			json
-//	@Produce		json
-//	@Param			FetchArtifactsRequest					body		apiv1.FetchArtifactsRequest	true	" "
-//	@Param			X-Cutf-Host-Orchestrator-BuildAPI-Creds	header		string						false	"Use this header for forwarding EUC towards the Android Build API"
-//	@Success		200										{object}	apiv1.Operation
-//	@Router			/artifacts [post]
-func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
-	req := apiv1.FetchArtifactsRequest{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
-	}
-	creds := getFetchCredentials(h.Config.BuildAPICredentials, r)
-	cvdBundleFetcher :=
-		newFetchCVDCommandArtifactsFetcher(exec.CommandContext, creds, h.Config.AndroidBuildServiceURL)
-	opts := FetchArtifactsActionOpts{
-		Request:          &req,
-		Paths:            h.Config.Paths,
-		OperationManager: h.OM,
-		CVDBundleFetcher: cvdBundleFetcher,
-	}
-	return NewFetchArtifactsAction(opts).Run()
-}
-
 type createCVDHandler struct {
 	Config        Config
 	OM            OperationManager
@@ -298,6 +262,7 @@ func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	opts := ListCVDsActionOpts{
 		Group:       vars["group"],
+		Name:        vars["name"],
 		Paths:       h.Config.Paths,
 		ExecContext: exec.CommandContext,
 	}
@@ -938,25 +903,6 @@ func okHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-}
-
-type getCVDInstanceStatusHandler struct {
-	Config Config
-	OM     OperationManager
-}
-
-func newGetCVDInstanceStatusHandler(c Config, om OperationManager) *getCVDInstanceStatusHandler {
-	return &getCVDInstanceStatusHandler{Config: c, OM: om}
-}
-
-func (h *getCVDInstanceStatusHandler) Handle(r *http.Request) (interface{}, error) {
-	vars := mux.Vars(r)
-	opts := CVDInstanceStatusActionOpts{
-		Selector:         cvd.InstanceSelector{GroupName: vars["group"], Name: vars["name"]},
-		OperationManager: h.OM,
-		ExecContext:      exec.CommandContext,
-	}
-	return NewCVDInstanceStatusAction(opts).Run()
 }
 
 func getFetchCredentials(config BuildAPICredentialsConfig, r *http.Request) cvd.FetchCredentials {

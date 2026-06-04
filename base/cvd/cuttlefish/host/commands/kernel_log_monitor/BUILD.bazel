@@ -11,12 +11,14 @@ cf_cc_binary(
     srcs = [
         "main.cc",
     ],
+    clang_format_enabled = True,
     deps = [
         ":kernel_log_monitor_utils",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
+        "//cuttlefish/host/libs/log_names",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
@@ -37,6 +39,7 @@ cf_cc_library(
         "kernel_log_server.h",
         "utils.h",
     ],
+    clang_format_enabled = True,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:json",

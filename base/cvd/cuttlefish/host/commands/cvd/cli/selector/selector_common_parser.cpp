@@ -18,49 +18,39 @@
 
 #include <unistd.h>
 
+#include <optional>
 #include <string>
 #include <string_view>
-#include <optional>
 #include <unordered_set>
 #include <vector>
 
-#include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
-
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_constants.h"
 #include "cuttlefish/host/commands/cvd/instances/device_name.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace selector {
-
-std::vector<std::string> SelectorOptions::AsArgs() const {
-  std::vector<std::string> ret;
-  if (group_name) {
-    ret.push_back(
-        fmt::format("--{}={}", SelectorFlags::kGroupName, *group_name));
+namespace {
+Result<void> ValidateGroupNameOpt(
+    const std::optional<std::string>& group_name) {
+  if (!group_name) {
+    return {};
   }
-  if (instance_names) {
-    ret.push_back(fmt::format("--{}={}", SelectorFlags::kInstanceName,
-                              absl::StrJoin(*instance_names, ",")));
-  }
-  return ret;
+  CF_EXPECTF(IsValidGroupName(*group_name), "Invalid group name: {}",
+             *group_name);
+  return {};
 }
 
-Result<std::string> HandleGroupName(const std::string& group_name) {
-  CF_EXPECTF(IsValidGroupName(group_name), "Invalid group name: {}",
-             group_name);
-  return group_name;
-}
-
-Result<std::vector<std::string>> HandleInstanceNames(
-    const std::string& per_instance_names) {
-  std::vector<std::string> instance_names =
-      absl::StrSplit(per_instance_names, ',');
+Result<void> ValidateInstanceNamesOpt(
+    const std::optional<std::vector<std::string>>& instance_names) {
+  if (!instance_names) {
+    return {};
+  }
   std::unordered_set<std::string_view> duplication_check;
-  for (const auto& instance_name : instance_names) {
+  for (const auto& instance_name : *instance_names) {
     CF_EXPECT(IsValidInstanceName(instance_name));
     // Check that provided non-empty instance names are unique. Empty names will
     // be replaced later with defaults guaranteed to be unique.
@@ -68,46 +58,32 @@ Result<std::vector<std::string>> HandleInstanceNames(
               !Contains(duplication_check, instance_name));
     duplication_check.emplace(instance_name);
   }
-  return instance_names;
+  return {};
 }
 
-Result<SelectorOptions> HandleNameOpts(
-    const std::optional<std::string>& group_name,
-    const std::optional<std::string>& instance_names) {
-  SelectorOptions ret;
-  if (group_name) {
-    ret.group_name = CF_EXPECT(HandleGroupName(*group_name));
-  }
+}  // namespace
 
-  if (instance_names) {
-    ret.instance_names = CF_EXPECT(HandleInstanceNames(*instance_names));
-  }
-  return ret;
-}
-
-Result<SelectorOptions> ParseCommonSelectorArguments(
-    cvd_common::Args& args) {
-  // Handling name-related options
-  std::optional<std::string> group_name_opt;
+std::vector<Flag> BuildCommonSelectorFlags(SelectorOptions& opts) {
   Flag group_name_flag =
-      GflagsCompatFlag(SelectorFlags::kGroupName)
-          .Setter([&group_name_opt](const FlagMatch& match) -> Result<void> {
-            group_name_opt = match.value;
+      GflagsCompatFlag(SelectorFlags::kGroupName, opts.group_name)
+          .AddValidator([&opts]() -> Result<void> {
+            CF_EXPECT(ValidateGroupNameOpt(opts.group_name));
             return {};
-          });
-
-  std::optional<std::string> instance_name_opt;
+          })
+          .Help(
+              "Instance group name. If only one group exists it will default "
+              "to that when no group name is provided.");
   Flag instance_name_flag =
-      GflagsCompatFlag(SelectorFlags::kInstanceName)
-          .Setter([&instance_name_opt](const FlagMatch& match) -> Result<void> {
-            instance_name_opt = match.value;
+      GflagsCompatFlag(SelectorFlags::kInstanceName, opts.instance_names)
+          .AddValidator([&opts]() -> Result<void> {
+            CF_EXPECT(ValidateInstanceNamesOpt(opts.instance_names));
             return {};
-          });
-
-  CF_EXPECT(
-      ConsumeFlagsConstrained({group_name_flag, instance_name_flag}, args));
-
-  return CF_EXPECT(HandleNameOpts(group_name_opt, instance_name_opt));
+          })
+          .Help(
+              "Comma separated list of instance names. If a single group with "
+              "a single instance exists it will default to that when not "
+              "provided.");
+  return {group_name_flag, instance_name_flag};
 }
 
 }  // namespace selector

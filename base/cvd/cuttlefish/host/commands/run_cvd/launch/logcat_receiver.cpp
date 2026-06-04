@@ -27,10 +27,6 @@
 
 namespace cuttlefish {
 
-std::string LogcatInfo(const CuttlefishConfig::InstanceSpecific& instance) {
-  return "Logcat output: " + LogcatPath(instance);
-}
-
 Result<MonitorCommand> LogcatReceiver(
     const CuttlefishConfig::InstanceSpecific& instance) {
   // Open the pipe here (from the launcher) to ensure the pipe is not deleted

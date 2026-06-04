@@ -27,7 +27,9 @@
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 #include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
+#include "cuttlefish/common/libs/utils/proc_file_utils.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -85,10 +87,62 @@ Result<void> CleanPriorFiles(const std::string& path,
   return {};
 }
 
+Result<std::vector<pid_t>> GetPidsUsingFiles(
+    const std::set<std::string>& prior_dirs,
+    const std::set<std::string>& prior_files) {
+  std::vector<pid_t> pids_in_use;
+
+  VLOG(0) << "Checking if prior dirs or files are in use: ";
+  for (const auto& prior_dir : prior_dirs) {
+    VLOG(0) << prior_dir;
+  }
+  for (const auto& prior_file : prior_files) {
+    VLOG(0) << prior_file;
+  }
+  auto pids = CF_EXPECT(CollectPids(getuid()));
+  for (const auto pid : pids) {
+    std::string fd_dir_path = fmt::format("/proc/{}/fd", pid);
+    Result<std::vector<std::string>> entity_names =
+        DirectoryContents(fd_dir_path);
+
+    if (!entity_names.ok()) {
+      continue;
+    }
+
+    for (const auto& entity_name : *entity_names) {
+      std::string fd_path = fd_dir_path + "/" + entity_name;
+      std::string target;
+      if (!android::base::Readlink(fd_path, &target)) {
+        continue;
+      }
+
+      bool match = false;
+
+      for (const auto& prior_dir : prior_dirs) {
+        if (target.starts_with(prior_dir)) {
+          match = true;
+          break;
+        }
+      }
+
+      if (!match && prior_files.find(target) != prior_files.end()) {
+        match = true;
+      }
+
+      if (match) {
+        pids_in_use.push_back(pid);
+        break;
+      }
+    }
+  }
+
+  return pids_in_use;
+}
+
 Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
                              const std::set<std::string>& preserving) {
-  std::vector<std::string> prior_dirs;
-  std::vector<std::string> prior_files;
+  std::set<std::string> prior_dirs;
+  std::set<std::string> prior_files;
   for (const auto& path : paths) {
     struct stat statbuf;
     if (stat(path.c_str(), &statbuf) < 0) {
@@ -98,32 +152,18 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
       return CF_ERRNO("Could not stat \"" << path << "\"");
     }
     bool is_directory = (statbuf.st_mode & S_IFMT) == S_IFDIR;
-    (is_directory ? prior_dirs : prior_files).emplace_back(path);
+    (is_directory ? prior_dirs : prior_files).emplace(path);
   }
   VLOG(0) << fmt::format("Prior dirs: {}", fmt::join(prior_dirs, ", "));
   VLOG(0) << fmt::format("Prior files: {}", fmt::join(prior_files, ", "));
 
   // TODO(schuffelen): Fix logic for host-sandboxing mode.
   if (!InSandbox() && (!prior_dirs.empty() || !prior_files.empty())) {
-    Command lsof("lsof");
-    lsof.AddParameter("-t");
-    lsof.AddParameter("-Q");  // ignore failed search terms
-    for (const auto& prior_dir : prior_dirs) {
-      lsof.AddParameter("+D").AddParameter(prior_dir);
-    }
-    for (const auto& prior_file : prior_files) {
-      lsof.AddParameter(prior_file);
-    }
-
-    Result<std::string> lsof_out = RunAndCaptureStdout(std::move(lsof));
-    if (lsof_out.ok()) {
-      CF_EXPECTF(
-          lsof_out->empty(),
-          "Instance directory files in use. Try `cvd reset`? Observed PIDs: {}",
-          fmt::join(absl::StrSplit(*lsof_out, "\n"), ", "));
-    } else {
-      LOG(ERROR) << "Failed to run `lsof`: " << lsof_out.error();
-    }
+    auto pids = CF_EXPECT(GetPidsUsingFiles(prior_dirs, prior_files));
+    CF_EXPECTF(
+        pids.empty(),
+        "Instance directory files in use. Try `cvd reset`? Observed PIDs: {}",
+        fmt::join(pids, ", "));
   }
 
   for (const auto& path : paths) {

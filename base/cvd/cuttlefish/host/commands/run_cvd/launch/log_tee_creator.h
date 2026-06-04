@@ -38,7 +38,7 @@ class LogTeeCreator {
                                Subprocess::StdIOChannel log_channel);
 
  private:
-  const CuttlefishConfig::InstanceSpecific& instance_;
+  const CuttlefishConfig::InstanceSpecific instance_;
 };
 
 }  // namespace cuttlefish
