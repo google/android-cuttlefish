@@ -87,11 +87,11 @@ Result<void> CvdMonitorCommandHandler::Handle(const CommandRequest& request) {
                 "Unable to select an instance");
 
   std::string kernel_log =
-      absl::StrCat(instance.instance_dir(), "/logs/", kLogNameKernel);
+      absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameKernel);
   std::string launcher_log =
-      absl::StrCat(instance.instance_dir(), "/logs/", kLogNameLauncher);
+      absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameLauncher);
   std::string logcat =
-      absl::StrCat(instance.instance_dir(), "/logs/", kLogNameLogcat);
+      absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameLogcat);
 
   SharedFD kernel_fd;
   SharedFD launcher_fd;

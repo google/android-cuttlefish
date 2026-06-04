@@ -61,7 +61,7 @@ void LocalInstance::SetState(cvd::InstanceState state) {
   instance_proto_->set_state(state);
 }
 
-std::string LocalInstance::instance_dir() const {
+std::string LocalInstance::InstanceDirectory() const {
   std::string to_ret = fmt::format("{}/cuttlefish/instances/cvd-{}",
                                    group_proto_->home_directory(), Id());
   if (!FileExists(to_ret)) {
@@ -120,7 +120,7 @@ Result<void> LocalInstance::PressPowerBtn() {
   }
 
   std::unique_ptr<const CuttlefishConfig> config =
-      CuttlefishConfig::GetFromFile(instance_dir() + "/cuttlefish_config.json");
+      CuttlefishConfig::GetFromFile(InstanceDirectory() + "/cuttlefish_config.json");
   CF_EXPECT_EQ(config->vm_manager(), VmmMode::kCrosvm,
                "powerbtn not supported in vm manager " << config->vm_manager());
   auto instance = config->ForInstance(Id());
@@ -193,7 +193,7 @@ Result<void> LocalInstance::PowerWash(std::chrono::seconds launcher_timeout,
 }
 
 Result<std::vector<std::string>> LocalInstance::ListRecordings() {
-  std::string recordings_dir = fmt::format("{}/recording", instance_dir());
+  std::string recordings_dir = fmt::format("{}/recording", InstanceDirectory());
   std::vector<std::string> files = CF_EXPECT(DirectoryContents(recordings_dir));
   for (std::string& file : files) {
     file = fmt::format("{}/{}", recordings_dir, file);
@@ -258,7 +258,7 @@ Result<SharedFD> LocalInstance::GetLauncherMonitor(
   // Newer cuttlefish instances put launcher monitor socket in a directory
   // under /tmp, and store this path in the config. Older instances just put
   // them in the instance directory.
-  std::string uds_dir = instance_dir();
+  std::string uds_dir = InstanceDirectory();
   Json::Value config = CF_EXPECT(ReadJsonConfig());
   if (config.isMember("instances_uds_dir") &&
       config["instances_uds_dir"].isString()) {
@@ -275,11 +275,11 @@ Result<SharedFD> LocalInstance::GetLauncherMonitor(
 }
 
 Result<std::vector<std::string>> LocalInstance::LogsFilenames() const {
-  if (!FileExists(instance_dir())) {
-    VLOG(0) << "Instance directory \"" << instance_dir() << "\" does not exist";
+  if (!FileExists(InstanceDirectory())) {
+    VLOG(0) << "Instance directory \"" << InstanceDirectory() << "\" does not exist";
     return {};
   }
-  std::string logs_dir = instance_dir() + "/logs";
+  std::string logs_dir = InstanceDirectory() + "/logs";
   if (!FileExists(logs_dir)) {
     VLOG(0) << "Instance logs directory \"" << logs_dir << "\" does not exist";
     return {};
