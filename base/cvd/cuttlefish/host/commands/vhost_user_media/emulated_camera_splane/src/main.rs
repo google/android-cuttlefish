@@ -78,7 +78,12 @@ fn start_backend(config: Config) -> Result<()> {
         };
         let backend = Arc::new(RwLock::new(VhuMediaBackend::new(
             config,
-            |event_queue, host_mapper| crate::device::EmulatedCamera::new(event_queue, host_mapper),
+            |event_queue, host_mapper| {
+                vhu_media::devices::EmulatedCamera::<_, _, crate::device::SplaneFormat>::new(
+                    event_queue,
+                    host_mapper,
+                )
+            },
         )));
         let mut daemon = VhostUserDaemon::new(
             String::from("vhost-user-media-backend"),
