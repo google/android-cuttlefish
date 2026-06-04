@@ -572,6 +572,9 @@ Result<AndroidBuilds> FindAndroidBuilds(
 
 Result<int> AssembleCvdMain(int argc, char** argv) {
   auto log = CF_EXPECT(SetLogger(AbsolutePath(FLAGS_instance_dir)));
+  VLOG(0) << "received flags: "
+          << absl::StrJoin(std::vector<std::string>(argv + 1, argv + argc),
+                           " ");
 
   CF_EXPECT(CheckNoTTY());
 
