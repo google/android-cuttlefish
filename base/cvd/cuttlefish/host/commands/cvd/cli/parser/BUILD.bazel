@@ -91,6 +91,7 @@ cf_cc_test(
     srcs = ["flags_parser_test.cc"],
     clang_format_enabled = False,
     deps = [
+        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",

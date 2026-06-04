@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 
 #include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 #include "cuttlefish/result/result_matchers.h"
@@ -173,6 +174,52 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
       << "netsim_bt flag is missing or wrongly formatted";
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_uwb=true)"))
       << "netsim_uwb flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseNetSimArgs) {
+  const char* test_string = R""""(
+{
+   "netsim_args": ["--wifi-instance=1", "--bt-instance=2"],
+     "instances" :
+     [
+        {
+          "vm": {
+            "crosvm":{
+            }
+          }
+        }
+      ]
+}
+  )"""";
+
+  auto json_configs = ParseJson(test_string);
+  EXPECT_THAT(json_configs, IsOk());
+  auto serialized_data = LaunchCvdParserTester(*json_configs);
+  EXPECT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(*serialized_data, "--netsim_args=--wifi-instance=1 --bt-instance=2"))
+      << "netsim_args flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseNetSimArgsWhitespaceError) {
+  const char* test_string = R""""(
+{
+   "netsim_args": ["--wifi-instance=1", "--bt-instance 2"],
+     "instances" :
+     [
+        {
+          "vm": {
+            "crosvm":{
+            }
+          }
+        }
+      ]
+}
+  )"""";
+
+  auto json_configs = ParseJson(test_string);
+  EXPECT_THAT(json_configs, IsOk());
+  auto serialized_data = LaunchCvdParserTester(*json_configs);
+  EXPECT_THAT(serialized_data, IsError());
 }
 
 TEST(CvdLoadFlagsTest, CredentialSourceSetter) {
