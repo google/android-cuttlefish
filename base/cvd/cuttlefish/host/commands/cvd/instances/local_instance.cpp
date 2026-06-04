@@ -46,9 +46,9 @@ constexpr int BASE_INSTANCE_ID = 1;
 
 void AddEnvironmentForInstance(Command& cmd, const LocalInstance& instance) {
   cmd.AddEnvironmentVariable("HOME", instance.HomeDirectory());
-  cmd.AddEnvironmentVariable(kAndroidHostOut, instance.host_artifacts_path());
+  cmd.AddEnvironmentVariable(kAndroidHostOut, instance.HostArtifactsPath());
   cmd.AddEnvironmentVariable(kAndroidSoongHostOut,
-                             instance.host_artifacts_path());
+                             instance.HostArtifactsPath());
 }
 
 }  // namespace
@@ -114,7 +114,7 @@ Result<Json::Value> LocalInstance::FetchStatus(std::chrono::seconds timeout) {
 }
 
 Result<void> LocalInstance::PressPowerBtn() {
-  auto bin_check = HostToolTarget(host_artifacts_path()).GetPowerBtnBinPath();
+  auto bin_check = HostToolTarget(HostArtifactsPath()).GetPowerBtnBinPath();
   if (bin_check.ok()) {
     return PressPowerBtnLegacy();
   }
@@ -136,7 +136,7 @@ Result<void> LocalInstance::PressPowerBtn() {
 
 Result<void> LocalInstance::PressPowerBtnLegacy() {
   Command cmd(
-      CF_EXPECT(HostToolTarget(host_artifacts_path()).GetPowerBtnBinPath()));
+      CF_EXPECT(HostToolTarget(HostArtifactsPath()).GetPowerBtnBinPath()));
 
   cmd.AddParameter("--instance_num=", Id());
   cmd.SetEnvironment({});
