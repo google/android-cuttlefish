@@ -49,7 +49,7 @@ class LocalInstance {
   }
   std::string InstanceDirectory() const;
   int AdbPort() const;
-  const std::string& home_directory() const {
+  const std::string& HomeDirectory() const {
     return group_proto_->home_directory();
   }
   const std::string& host_artifacts_path() const {
