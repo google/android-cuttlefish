@@ -35,6 +35,7 @@
 #include <sys/un.h>
 
 #include <chrono>
+#include <compare>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -205,17 +206,7 @@ class SharedFD {
   static std::string GetVhostUserVsockClientAddr(int cid);
 #endif
 
-  bool operator==(const SharedFD& rhs) const { return value_ == rhs.value_; }
-
-  bool operator!=(const SharedFD& rhs) const { return value_ != rhs.value_; }
-
-  bool operator<(const SharedFD& rhs) const { return value_ < rhs.value_; }
-
-  bool operator<=(const SharedFD& rhs) const { return value_ <= rhs.value_; }
-
-  bool operator>(const SharedFD& rhs) const { return value_ > rhs.value_; }
-
-  bool operator>=(const SharedFD& rhs) const { return value_ >= rhs.value_; }
+  auto operator<=>(const SharedFD&) const = default;
 
   std::shared_ptr<FileInstance> operator->() const { return value_; }
 

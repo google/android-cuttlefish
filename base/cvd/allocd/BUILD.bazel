@@ -11,17 +11,17 @@ string_flag(
 )
 
 config_setting(
-  name = "netlink",
-  flag_values = {
-    ":driver": "netlink"
-  }
+    name = "netlink",
+    flag_values = {
+        ":driver": "netlink",
+    },
 )
 
 config_setting(
-  name = "iproute2",
-  flag_values = {
-    ":driver": "iproute2"
-  }
+    name = "iproute2",
+    flag_values = {
+        ":driver": "iproute2",
+    },
 )
 
 cc_library(
@@ -32,6 +32,7 @@ cc_library(
     hdrs = [
         "alloc_utils.h",
     ],
+    copts = ["-std=c++20"],
     deps = select({
         ":netlink": [":alloc_netlink"],
         "//conditions:default": [":alloc_iproute2"],
@@ -58,12 +59,13 @@ cc_library(
     hdrs = [
         "alloc_driver.h",
     ],
+    copts = ["-std=c++20"],
     deps = [
-        "//cuttlefish/result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
-        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -75,6 +77,7 @@ cc_library(
     hdrs = [
         "alloc_driver.h",
     ],
+    copts = ["-std=c++20"],
     deps = [
         "//allocd/net:netlink",
         "//cuttlefish/common/libs/fs",
