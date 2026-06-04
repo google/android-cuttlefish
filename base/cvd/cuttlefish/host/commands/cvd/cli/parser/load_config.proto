@@ -45,6 +45,7 @@ message EnvironmentSpecification {
   optional Common common = 4;
   optional bool netsim_bt = 5;
   optional bool netsim_uwb = 6;
+  repeated string netsim_args = 7;
 }
 
 // TODO: chadreynolds - when we can make breaking changes and update, use this
@@ -55,6 +56,7 @@ message EnvironmentOptions {
   optional Common common = 3;
   optional bool netsim_bt = 4;
   optional bool netsim_uwb = 5;
+  repeated string netsim_args = 6;
 }
 
 message Common {

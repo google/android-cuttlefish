@@ -66,6 +66,14 @@ Result<std::vector<std::string>> GenerateCfFlags(
     flags.emplace_back(GenerateFlag("netsim_uwb", launch.netsim_uwb()));
   }
 
+  if (!launch.netsim_args().empty()) {
+    for (const auto& arg : launch.netsim_args()) {
+      CF_EXPECTF(arg.find_first_of(" \t\n\v\f\r") == std::string::npos,
+                 "netsim_args element '{}' contains whitespace", arg);
+    }
+    flags.emplace_back(GenerateFlag("netsim_args", absl::StrJoin(launch.netsim_args(), " ")));
+  }
+
   flags = MergeResults(std::move(flags), GenerateMetricsFlags(launch));
   flags = MergeResults(std::move(flags), CF_EXPECT(GenerateInstancesFlags(launch)));
   auto flag_op = GenerateUndefOkFlag(flags);
@@ -85,3 +93,4 @@ Result<std::vector<std::string>> ParseLaunchCvdConfigs(
 }
 
 }  // namespace cuttlefish
+
