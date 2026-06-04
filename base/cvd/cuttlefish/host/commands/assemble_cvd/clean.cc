@@ -33,6 +33,7 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -177,6 +178,8 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
 
 Result<void> CleanPriorFiles(const std::set<std::string>& preserving,
                              const std::vector<std::string>& clean_dirs) {
+  CF_TRACE("CleanPriorFiles");
+
   std::vector<std::string> paths = {
       // The global link to the config file
       GetGlobalConfigFileLink(),

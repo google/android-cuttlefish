@@ -1,0 +1,3 @@
+perfetto_ext = use_extension("//build_external/perfetto:repositories.bzl", "perfetto_extension")
+use_repo(perfetto_ext, "perfetto")
+use_repo(perfetto_ext, "perfetto_cfg")

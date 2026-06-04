@@ -67,6 +67,7 @@
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
 
@@ -497,6 +498,7 @@ std::vector<HelpParagraph> CvdStartCommandHandler::Description() const {
 
 Result<std::vector<Flag>> CvdStartCommandHandler::Flags(
     const CommandRequest& request) {
+  CF_TRACE("cvd start help");
   std::vector<Flag> own_flags = BuildOwnFlags();
 
   std::vector<Flag> internal_flags = CF_EXPECT(GetCvdInternalStartFlags(

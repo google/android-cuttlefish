@@ -57,6 +57,7 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
@@ -242,6 +243,8 @@ CvdCreateCommandHandler::CvdCreateCommandHandler(
     : instance_manager_(instance_manager) {}
 
 Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
+  CF_TRACE("cvd create");
+
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
 
   cvd_common::Envs envs = CF_EXPECT(GetEnvs(request));
@@ -253,7 +256,10 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
         CreateLoadCommand(request, subcmd_args, own_flags_.config_file));
     std::unique_ptr<CvdCommandHandler> load_handler =
         NewLoadConfigsCommand(instance_manager_);
-    CF_EXPECT(load_handler->Handle(subrequest));
+    {
+      CF_TRACE("cvd load");
+      CF_EXPECT(load_handler->Handle(subrequest));
+    }
     return {};
   }
 
@@ -285,7 +291,10 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
         CF_EXPECT(CreateStartCommand(group, subcmd_args, envs));
     std::unique_ptr<CvdCommandHandler> start_handler =
         NewCvdStartCommandHandler(instance_manager_);
-    CF_EXPECT(start_handler->Handle(start_cmd));
+    {
+      CF_TRACE("cvd start");
+      CF_EXPECT(start_handler->Handle(start_cmd));
+    }
 
     if (CF_EXPECT(IsDefaultGroup(request))) {
       // For backward compatibility, we add extra symlink in system wide home

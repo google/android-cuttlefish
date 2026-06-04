@@ -1,0 +1,107 @@
+load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_shared_library(
+    name = "perfetto_c",
+    deps = [
+        "@perfetto//:libperfetto_c",
+    ],
+)
+
+proto_library(
+    name = "tracing_proto",
+    srcs = ["tracing.proto"],
+    visibility = ["//visibility:private"],
+)
+
+cc_proto_library(
+    name = "tracing_cc_proto",
+    visibility = ["//visibility:private"],
+    deps = [":tracing_proto"],
+)
+
+cf_cc_library(
+    name = "tracing_utils",
+    srcs = [
+        "tracing_utils.cpp",
+    ],
+    hdrs = [
+        "tracing_utils.h",
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":tracing_cc_proto",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/config:config_utils",
+        "@abseil-cpp//absl/base:no_destructor",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cf_cc_library(
+    name = "tracing",
+    srcs = [
+        "tracing.cpp",
+        "tracing_client.cpp",
+        "tracing_client.h",
+        "tracing_session.cpp",
+        "tracing_state.cpp",
+        "tracing_state.h",
+    ],
+    hdrs = [
+        "tracing.h",
+        "tracing_session.h",
+    ],
+    deps = [
+        ":tracing_cc_proto",
+        ":tracing_utils",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:wait_for_file",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/base:core_headers",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/random",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/synchronization",
+        "@abseil-cpp//absl/time",
+    ],
+)
+
+cf_cc_library(
+    name = "tracing_server",
+    srcs = [
+        "tracing_server.cpp",
+    ],
+    hdrs = [
+        "tracing_server.h",
+    ],
+    visibility = ["//cuttlefish/host/commands/tracing_forwarder:__pkg__"],
+    deps = [
+        ":tracing",
+        ":tracing_cc_proto",
+        ":tracing_utils",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/base:core_headers",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/random",
+        "@abseil-cpp//absl/synchronization",
+        "@abseil-cpp//absl/time",
+        "@perfetto//:libperfetto_client_experimental",
+    ],
+)

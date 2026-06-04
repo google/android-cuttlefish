@@ -1,0 +1,20 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_binary(
+    name = "tracing_forwarder",
+    srcs = [
+        "tracing_forwarder.cpp",
+    ],
+    deps = [
+        "//cuttlefish/host/libs/config:logging",
+        "//cuttlefish/host/libs/tracing:tracing_server",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/time",
+        "@gflags",
+    ],
+)
