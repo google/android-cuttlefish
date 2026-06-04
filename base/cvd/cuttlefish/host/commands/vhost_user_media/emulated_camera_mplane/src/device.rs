@@ -14,7 +14,6 @@
 
 use std::collections::VecDeque;
 use std::io::BufWriter;
-use std::io::Result as IoResult;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
@@ -26,12 +25,13 @@ use v4l2r::QueueType;
 use v4l2r::bindings;
 use v4l2r::bindings::v4l2_fmtdesc;
 use v4l2r::bindings::v4l2_format;
+use v4l2r::bindings::v4l2_frmsizeenum;
+use v4l2r::bindings::v4l2_frmivalenum;
 use v4l2r::bindings::v4l2_requestbuffers;
 use v4l2r::ioctl::BufferCapabilities;
 use v4l2r::ioctl::BufferField;
 use v4l2r::ioctl::BufferFlags;
 use v4l2r::ioctl::V4l2Buffer;
-use v4l2r::ioctl::V4l2PlanesWithBackingMut;
 use v4l2r::memory::MemoryType;
 use virtio_media::VirtioMediaDevice;
 use virtio_media::VirtioMediaDeviceSession;
@@ -50,70 +50,21 @@ use virtio_media::protocol::V4l2Event;
 use virtio_media::protocol::V4l2Ioctl;
 use virtio_media::protocol::VIRTIO_MEDIA_MMAP_FLAG_RW;
 
-/// Current status of a buffer.
-#[derive(Debug, PartialEq, Eq)]
-enum BufferState {
-    /// Buffer has just been created (or streamed off) and not been used yet.
-    New,
-    /// Buffer has been QBUF'd by the driver but not yet processed.
-    Incoming,
-    /// Buffer has been processed and is ready for dequeue.
-    Outgoing {
-        /// Sequence of the generated frame.
-        sequence: u32,
-    },
-}
+use vhu_media::devices::{
+    Buffer, BufferState, set_plane_offset_and_length,
+};
 
-/// Information about a single buffer.
-struct Buffer {
-    /// Current state of the buffer.
-    state: BufferState,
-    /// V4L2 representation of this buffer to be sent to the guest when requested.
-    v4l2_buffer: V4l2Buffer,
-    /// Backing storage for the buffer.
-    fd: MemFdBuffer,
-    /// Offset that can be used to map the buffer.
-    ///
-    /// Cached from `v4l2_buffer` to avoid doing a match.
-    offset: u32,
-}
+const WIDTH: u32 = 640;
+const HEIGHT: u32 = 480;
+const FRAME_RATE: u32 = 30;
 
-impl Buffer {
-    fn new(v4l2_buffer: V4l2Buffer, fd: MemFdBuffer, offset: u32) -> Self {
-        Self {
-            state: BufferState::New,
-            v4l2_buffer,
-            fd,
-            offset,
-        }
-    }
+const INPUTS: [bindings::v4l2_input; 1] = [bindings::v4l2_input {
+    index: 0,
+    name: *b"Default\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+    type_: bindings::V4L2_INPUT_TYPE_CAMERA,
+    ..unsafe { std::mem::zeroed() }
+}];
 
-    /// Update the state of the buffer as well as its V4L2 representation.
-    fn set_state(&mut self, state: BufferState) {
-        let mut flags = self.v4l2_buffer.flags();
-        match state {
-            BufferState::New => {
-                *self.v4l2_buffer.get_first_plane_mut().bytesused = 0;
-                flags &= !BufferFlags::QUEUED;
-            }
-            BufferState::Incoming => {
-                *self.v4l2_buffer.get_first_plane_mut().bytesused = 0;
-                flags |= BufferFlags::QUEUED;
-            }
-            BufferState::Outgoing { sequence } => {
-                *self.v4l2_buffer.get_first_plane_mut().bytesused = BUFFER_SIZE;
-                self.v4l2_buffer.set_sequence(sequence);
-                self.v4l2_buffer.set_timestamp(bindings::timeval {
-                    tv_sec: (sequence + 1) as bindings::__time_t / 1000,
-                    tv_usec: (sequence + 1) as bindings::__time_t % 1000,
-                });
-                flags &= !BufferFlags::QUEUED;
-            }
-        }
-        self.v4l2_buffer.set_flags(flags);
-        self.state = state;
-    }
-}
 
 /// Session data of [`EmulatedCamera`].
 pub struct EmulatedCameraSession {
@@ -169,9 +120,12 @@ impl EmulatedCameraSession {
 
             Self::write_pattern(iteration, buffer.fd.as_file())?;
 
-            buffer.set_state(BufferState::Outgoing {
-                sequence: iteration as u32,
-            });
+            buffer.set_state(
+                BufferState::Outgoing {
+                    sequence: iteration as u32,
+                },
+                BUFFER_SIZE,
+            );
             evt_queue.send_event(V4l2Event::DequeueBuffer(DequeueBufferEvent::new(
                 self.id,
                 buffer.v4l2_buffer.clone(),
@@ -255,7 +209,7 @@ where
         ioctl: V4l2Ioctl,
         reader: &mut Reader,
         writer: &mut Writer,
-    ) -> IoResult<()> {
+    ) -> std::io::Result<()> {
         virtio_media_dispatch_ioctl(self, session, ioctl, reader, writer)
     }
 
@@ -288,26 +242,7 @@ where
 }
 
 const PIXELFORMAT: u32 = PixelFormat::from_fourcc(b"YU12").to_u32();
-const WIDTH: u32 = 640;
-const HEIGHT: u32 = 480;
-const FRAME_RATE: u32 = 30;
 const BUFFER_SIZE: u32 = WIDTH * HEIGHT * 3 / 2;
-
-const INPUTS: [bindings::v4l2_input; 1] = [bindings::v4l2_input {
-    index: 0,
-    name: *b"Default\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-    type_: bindings::V4L2_INPUT_TYPE_CAMERA,
-    ..unsafe { std::mem::zeroed() }
-}];
-
-fn default_fmtdesc(queue: QueueType) -> v4l2_fmtdesc {
-    v4l2_fmtdesc {
-        index: 0,
-        type_: queue as u32,
-        pixelformat: PIXELFORMAT,
-        ..Default::default()
-    }
-}
 
 fn default_fmt(queue: QueueType) -> v4l2_format {
     let pix_mp = bindings::v4l2_pix_format_mplane {
@@ -369,7 +304,14 @@ where
             return Err(libc::EINVAL);
         }
 
-        Ok(default_fmtdesc(queue))
+        let fmtdesc = v4l2_fmtdesc {
+            index: 0,
+            type_: queue as u32,
+            pixelformat: PIXELFORMAT,
+            ..Default::default()
+        };
+
+        Ok(fmtdesc)
     }
 
     fn g_fmt(&mut self, _session: &Self::Session, queue: QueueType) -> IoctlResult<v4l2_format> {
@@ -480,7 +422,7 @@ where
             // TODO factorize with streamoff.
             session.queued_buffers.clear();
             for buffer in session.buffers.iter_mut() {
-                buffer.set_state(BufferState::New);
+                buffer.set_state(BufferState::New, BUFFER_SIZE);
             }
             self.active_session = Some(session.id);
         }
@@ -505,18 +447,7 @@ where
                             .map_err(|_| libc::EINVAL)?;
 
                         let mut v4l2_buffer = V4l2Buffer::new(queue, i, MemoryType::Mmap);
-                        if let V4l2PlanesWithBackingMut::Mmap(mut planes) =
-                            v4l2_buffer.planes_with_backing_iter_mut()
-                        {
-                            // SAFETY: every buffer has at least one plane.
-                            let mut plane = planes.next().unwrap();
-                            plane.set_mem_offset(offset);
-                            *plane.length = BUFFER_SIZE;
-                        } else {
-                            // SAFETY: we have just set the buffer type to MMAP. Reaching this point means a bug in
-                            // the code.
-                            panic!()
-                        }
+                        set_plane_offset_and_length(&mut v4l2_buffer, offset, BUFFER_SIZE);
                         v4l2_buffer.set_field(BufferField::None);
                         v4l2_buffer.set_flags(BufferFlags::TIMESTAMP_MONOTONIC);
 
@@ -568,7 +499,7 @@ where
             return Err(libc::EINVAL);
         }
 
-        host_buffer.set_state(BufferState::Incoming);
+        host_buffer.set_state(BufferState::Incoming, BUFFER_SIZE);
         session.queued_buffers.push_back(buffer.index() as usize);
 
         let buffer = host_buffer.v4l2_buffer.clone();
@@ -598,7 +529,7 @@ where
         session.streaming = false;
         session.queued_buffers.clear();
         for buffer in session.buffers.iter_mut() {
-            buffer.set_state(BufferState::New);
+            buffer.set_state(BufferState::New, BUFFER_SIZE);
         }
 
         Ok(())
@@ -633,7 +564,7 @@ where
             return Err(libc::EINVAL);
         }
 
-        Ok(bindings::v4l2_frmsizeenum {
+        Ok(v4l2_frmsizeenum {
             index,
             pixel_format,
             type_: bindings::v4l2_frmsizetypes_V4L2_FRMSIZE_TYPE_DISCRETE,
@@ -665,7 +596,7 @@ where
             return Err(libc::EINVAL);
         }
 
-        Ok(bindings::v4l2_frmivalenum {
+        Ok(v4l2_frmivalenum {
             index,
             pixel_format,
             width,

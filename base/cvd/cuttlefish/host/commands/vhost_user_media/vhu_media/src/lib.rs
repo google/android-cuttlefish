@@ -53,6 +53,8 @@ pub mod cli {
     }
 }
 
+pub mod devices;
+
 #[derive(Debug, ThisError)]
 /// Errors related to vhost-user-media daemon.
 pub(crate) enum VhuMediaBackendError {
