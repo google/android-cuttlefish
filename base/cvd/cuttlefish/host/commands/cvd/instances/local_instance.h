@@ -55,7 +55,7 @@ class LocalInstance {
   const std::string& HostArtifactsPath() const {
     return group_proto_->host_artifacts_path();
   }
-  std::string assembly_dir() const;
+  std::string AssemblyDirectory() const;
 
   bool IsActive() const;
   // Contacts run_cvd to query the instance status. Returns a JSON object with

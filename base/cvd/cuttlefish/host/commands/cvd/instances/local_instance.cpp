@@ -84,7 +84,7 @@ int LocalInstance::AdbPort() const {
   return BASE_ADB_PORT + Id() - BASE_INSTANCE_ID;
 }
 
-std::string LocalInstance::assembly_dir() const {
+std::string LocalInstance::AssemblyDirectory() const {
   return AssemblyDirFromHome(HomeDirectory());
 }
 
