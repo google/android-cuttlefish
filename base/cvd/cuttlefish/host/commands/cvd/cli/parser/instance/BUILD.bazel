@@ -64,6 +64,17 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "cf_media_configs",
+    srcs = ["cf_media_configs.cpp"],
+    hdrs = ["cf_media_configs.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
     name = "cf_security_configs",
     srcs = ["cf_security_configs.cpp"],
     hdrs = ["cf_security_configs.h"],
