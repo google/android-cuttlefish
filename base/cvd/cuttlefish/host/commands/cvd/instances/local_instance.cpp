@@ -45,7 +45,7 @@ constexpr int BASE_ADB_PORT = 6520;
 constexpr int BASE_INSTANCE_ID = 1;
 
 void AddEnvironmentForInstance(Command& cmd, const LocalInstance& instance) {
-  cmd.AddEnvironmentVariable("HOME", instance.home_directory());
+  cmd.AddEnvironmentVariable("HOME", instance.HomeDirectory());
   cmd.AddEnvironmentVariable(kAndroidHostOut, instance.host_artifacts_path());
   cmd.AddEnvironmentVariable(kAndroidSoongHostOut,
                              instance.host_artifacts_path());
@@ -85,7 +85,7 @@ int LocalInstance::AdbPort() const {
 }
 
 std::string LocalInstance::assembly_dir() const {
-  return AssemblyDirFromHome(home_directory());
+  return AssemblyDirFromHome(HomeDirectory());
 }
 
 bool LocalInstance::IsActive() const {
@@ -224,7 +224,7 @@ Result<void> LocalInstance::StopRecording(
 }
 
 std::string LocalInstance::config_file_path() const {
-  return home_directory() + "/.cuttlefish_config.json";
+  return HomeDirectory() + "/.cuttlefish_config.json";
 }
 
 Result<Json::Value> LocalInstance::ReadJsonConfig() const {
