@@ -41,6 +41,8 @@ Result<std::vector<std::string>> GenerateMediaFlags(
       for (const auto& device : instance.media().devices()) {
         if (device.has_v4l2_emulated_camera_splane()) {
           flags.push_back("--media=type=v4l2_emulated_camera_splane");
+        } else if (device.has_v4l2_emulated_camera_mplane()) {
+          flags.push_back("--media=type=v4l2_emulated_camera_mplane");
         }
       }
     }
