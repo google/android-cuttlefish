@@ -44,7 +44,7 @@ class LocalInstance {
   const std::string& WebRtcDeviceId() const {
     return instance_proto_->webrtc_device_id();
   }
-  void set_webrtc_device_id(std::string webrtc_device_id) {
+  void SetWebRtcDeviceId(std::string webrtc_device_id) {
     instance_proto_->set_webrtc_device_id(std::move(webrtc_device_id));
   }
   std::string instance_dir() const;

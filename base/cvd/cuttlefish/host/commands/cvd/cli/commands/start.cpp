@@ -163,7 +163,7 @@ Result<void> UpdateWebrtcDeviceIds(cvd_common::Args& args,
   args.push_back("--webrtc_device_id=" + absl::StrJoin(webrtc_ids, ","));
 
   for (size_t i = 0; i < webrtc_ids.size(); ++i) {
-    group.Instances()[i].set_webrtc_device_id(std::move(webrtc_ids[i]));
+    group.Instances()[i].SetWebRtcDeviceId(std::move(webrtc_ids[i]));
   }
   return {};
 }
