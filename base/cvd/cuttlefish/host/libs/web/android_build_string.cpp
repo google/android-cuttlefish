@@ -109,32 +109,12 @@ std::ostream& operator<<(std::ostream& out,
   return out;
 }
 
-bool operator==(const DeviceBuildString& lhs, const DeviceBuildString& rhs) {
-  return lhs.branch_or_id == rhs.branch_or_id && lhs.target == rhs.target &&
-         lhs.filepath == rhs.filepath;
-}
-
-bool operator!=(const DeviceBuildString& lhs, const DeviceBuildString& rhs) {
-  return !(lhs == rhs);
-}
-
 std::ostream& operator<<(std::ostream& out,
                          const DirectoryBuildString& build_string) {
   fmt::print(out, "(paths=\"{}\", target=\"{}\", filepath=\"{}\")",
              fmt::join(build_string.paths, ":"), build_string.target,
              build_string.filepath.value_or(""));
   return out;
-}
-
-bool operator==(const DirectoryBuildString& lhs,
-                const DirectoryBuildString& rhs) {
-  return lhs.paths == rhs.paths && lhs.target == rhs.target &&
-         lhs.filepath == rhs.filepath;
-}
-
-bool operator!=(const DirectoryBuildString& lhs,
-                const DirectoryBuildString& rhs) {
-  return !(lhs == rhs);
 }
 
 std::ostream& operator<<(std::ostream& out, const BuildString& build_string) {

@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <compare>
 #include <optional>
 #include <string>
 #include <variant>
@@ -30,25 +31,23 @@ struct DeviceBuildString {
   std::string branch_or_id;
   std::optional<std::string> target;
   std::optional<std::string> filepath;
+
+  auto operator<=>(const DeviceBuildString&) const = default;
 };
 
 std::ostream& operator<<(std::ostream& out,
                          const DeviceBuildString& build_string);
-bool operator==(const DeviceBuildString& lhs, const DeviceBuildString& rhs);
-bool operator!=(const DeviceBuildString& lhs, const DeviceBuildString& rhs);
 
 struct DirectoryBuildString {
   std::vector<std::string> paths;
   std::string target;
   std::optional<std::string> filepath;
+
+  auto operator<=>(const DirectoryBuildString&) const = default;
 };
 
 std::ostream& operator<<(std::ostream& out,
                          const DirectoryBuildString& build_string);
-bool operator==(const DirectoryBuildString& lhs,
-                const DirectoryBuildString& rhs);
-bool operator!=(const DirectoryBuildString& lhs,
-                const DirectoryBuildString& rhs);
 
 using BuildString = std::variant<DeviceBuildString, DirectoryBuildString>;
 
