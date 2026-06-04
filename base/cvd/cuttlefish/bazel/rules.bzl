@@ -50,7 +50,7 @@ def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled,
 cf_cc_binary = macro(
     inherit_attrs = cc_binary,
     attrs = {
-        "clang_format_enabled": attr.bool(configurable = False, default = False, doc = "Decide if a corresponding format_test target is generated"),
+        "clang_format_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding format_test target is generated"),
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
         "linkopts": attr.string_list(configurable = False, default = []),
@@ -85,7 +85,7 @@ def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled
 cf_cc_library = macro(
     inherit_attrs = cc_library,
     attrs = {
-        "clang_format_enabled": attr.bool(configurable = False, default = False, doc = "Decide if a corresponding format_test target is generated"),
+        "clang_format_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding format_test target is generated"),
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
     },
@@ -123,7 +123,7 @@ def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, c
 cf_cc_test = macro(
     inherit_attrs = cc_test,
     attrs = {
-        "clang_format_enabled": attr.bool(configurable = False, default = False, doc = "Decide if a corresponding format_test target is generated"),
+        "clang_format_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding format_test target is generated"),
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
         "deps": attr.label_list(configurable = False),

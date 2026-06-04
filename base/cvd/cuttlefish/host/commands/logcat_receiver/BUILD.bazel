@@ -9,6 +9,7 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/config:config_instance_derived",

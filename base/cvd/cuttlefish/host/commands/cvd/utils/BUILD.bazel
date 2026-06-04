@@ -9,6 +9,7 @@ cf_cc_library(
     name = "common",
     srcs = ["common.cpp"],
     hdrs = ["common.h"],
+    clang_format_enabled = False,
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
@@ -38,6 +39,7 @@ cf_cc_library(
     name = "interrupt_listener",
     srcs = ["interrupt_listener.cpp"],
     hdrs = ["interrupt_listener.h"],
+    clang_format_enabled = False,
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:signals",

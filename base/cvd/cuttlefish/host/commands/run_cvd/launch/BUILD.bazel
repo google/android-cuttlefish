@@ -75,6 +75,7 @@ cf_cc_library(
     name = "enable_multitouch",
     srcs = ["enable_multitouch.cpp"],
     hdrs = ["enable_multitouch.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:guest_os",
@@ -115,6 +116,7 @@ cf_cc_library(
     name = "cvdalloc",
     srcs = ["cvdalloc.cpp"],
     hdrs = ["cvdalloc.h"],
+    clang_format_enabled = False,
     deps = [
         "//allocd:alloc_utils",
         "//cuttlefish/common/libs/fs",
@@ -175,6 +177,7 @@ cf_cc_library(
     name = "kernel_log_monitor",
     srcs = ["kernel_log_monitor.cpp"],
     hdrs = ["kernel_log_monitor.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd:reporting",
@@ -225,6 +228,7 @@ cf_cc_library(
     name = "mcu",
     srcs = ["mcu.cpp"],
     hdrs = ["mcu.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -306,6 +310,7 @@ cf_cc_library(
     name = "open_wrt",
     srcs = ["open_wrt.cpp"],
     hdrs = ["open_wrt.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/run_cvd/launch:cvdalloc",
@@ -445,6 +450,7 @@ cf_cc_library(
     name = "streamer",
     srcs = ["streamer.cpp"],
     hdrs = ["streamer.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -566,6 +572,7 @@ cf_cc_library(
     name = "vhost_input_devices",
     srcs = ["vhost_input_devices.cpp"],
     hdrs = ["input_connections_provider.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -588,6 +595,7 @@ cf_cc_library(
     name = "vhost_user_media_devices",
     srcs = ["vhost_user_media_devices.cpp"],
     hdrs = ["vhost_user_media_devices.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",

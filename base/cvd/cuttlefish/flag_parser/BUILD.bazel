@@ -14,6 +14,7 @@ cf_cc_library(
         "flag.h",
         "gflags_compat.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/result",
         "//libbase",
@@ -27,6 +28,7 @@ cf_cc_library(
 cf_cc_test(
     name = "flag_parser_test",
     srcs = ["flag_parser_test.cpp"],
+    clang_format_enabled = False,
     # `layering_check` conflicts with the combination of the clang prebuilt and
     # the cmake build rules used for @libxml2.
     features = ["-layering_check"],

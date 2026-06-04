@@ -10,6 +10,7 @@ cf_cc_library(
     name = "android_build",
     srcs = ["android_build.cc"],
     hdrs = ["android_build.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/pretty",
         "//cuttlefish/pretty:struct",
@@ -150,6 +151,7 @@ cf_cc_library(
     name = "identify_build",
     srcs = ["identify_build.cc"],
     hdrs = ["identify_build.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
@@ -211,6 +213,7 @@ cf_cc_library(
     name = "physical_partitions",
     srcs = ["physical_partitions.cc"],
     hdrs = ["physical_partitions.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/pretty:result",
@@ -224,6 +227,7 @@ cf_cc_library(
     name = "super_image",
     srcs = ["super_image.cc"],
     hdrs = ["super_image.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/assemble_cvd/android_build",

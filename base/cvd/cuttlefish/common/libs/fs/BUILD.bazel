@@ -28,6 +28,7 @@ cf_cc_library(
         "shared_fd.h",
         "shared_select.h",
     ],
+    clang_format_enabled = False,
     linkopts = select({
         "@platforms//os:linux": ["-lrt"],
         "//conditions:default": [],
@@ -48,6 +49,7 @@ cf_cc_test(
     srcs = [
         "shared_fd_test.cpp",
     ],
+    clang_format_enabled = False,
     deps = [
         ":fs",
         "//libbase",
@@ -58,6 +60,7 @@ cf_cc_library(
     name = "shared_fd_stream",
     srcs = ["shared_fd_stream.cpp"],
     hdrs = ["shared_fd_stream.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
     ],

@@ -7,6 +7,7 @@ package(
 cf_cc_binary(
     name = "secure_env",
     srcs = ["secure_env_only_oemlock.cpp"],
+    clang_format_enabled = False,
     deps = [
         ":suspend_resume_handler",
         ":worker_thread_loop_body",

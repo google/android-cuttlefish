@@ -30,6 +30,7 @@ cf_cc_library(
         "vhost_user.h",
         "vm_manager.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:container",

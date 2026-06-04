@@ -12,6 +12,7 @@ cf_cc_binary(
     srcs = [
         "gnss_grpc_proxy.cpp",
     ],
+    clang_format_enabled = False,
     deps = [
         ":libcvd_gnss_grpc_proxy",
         "//cuttlefish/common/libs/fs",

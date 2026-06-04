@@ -15,6 +15,7 @@ cf_cc_library(
         "instance_lock.h",
         "lock_file.h",
     ],
+    clang_format_enabled = False,
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/fs",

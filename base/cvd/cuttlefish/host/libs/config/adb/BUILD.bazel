@@ -16,6 +16,7 @@ cf_cc_library(
     hdrs = [
         "adb.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:container",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -41,6 +42,7 @@ cf_cc_test(
     srcs = [
         "test.cpp",
     ],
+    clang_format_enabled = False,
     deps = [
         ":adb",
         "//cuttlefish/host/libs/config:config_flag",

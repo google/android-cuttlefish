@@ -10,6 +10,7 @@ cf_cc_library(
     name = "archive",
     srcs = ["archive.cc"],
     hdrs = ["archive.h"],
+    clang_format_enabled = False,
     features = ["-layering_check"],  # libzip
     linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
@@ -56,6 +57,7 @@ cf_cc_library(
     name = "readable_source",
     srcs = ["readable_source.cc"],
     hdrs = ["readable_source.h"],
+    clang_format_enabled = False,
     features = ["-layering_check"],  # libzip
     linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
@@ -75,6 +77,7 @@ cf_cc_library(
     name = "seekable_source",
     srcs = ["seekable_source.cc"],
     hdrs = ["seekable_source.h"],
+    clang_format_enabled = False,
     features = ["-layering_check"],  # libzip
     linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip

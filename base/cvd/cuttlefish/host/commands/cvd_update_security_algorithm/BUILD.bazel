@@ -9,6 +9,7 @@ cf_cc_binary(
     srcs = [
         "main.cc",
     ],
+    clang_format_enabled = False,
     deps = [
         ":libcvd_update_security_algorithm_builder",
         "//cuttlefish/common/libs/fs",

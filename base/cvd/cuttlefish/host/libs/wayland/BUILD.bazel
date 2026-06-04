@@ -30,6 +30,7 @@ cf_cc_library(
         "wayland_utils.h",
         "wayland_virtio_gpu_metadata.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",

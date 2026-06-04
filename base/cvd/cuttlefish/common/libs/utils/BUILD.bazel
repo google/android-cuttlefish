@@ -8,6 +8,7 @@ cf_cc_library(
     name = "archive",
     srcs = ["archive.cpp"],
     hdrs = ["archive.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
@@ -32,6 +33,7 @@ cf_cc_library(
 cf_cc_test(
     name = "base64_test",
     srcs = ["base64_test.cpp"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/result:result_matchers",
@@ -72,6 +74,7 @@ cf_cc_library(
     name = "disk_usage",
     srcs = ["disk_usage.cpp"],
     hdrs = ["disk_usage.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
@@ -109,6 +112,7 @@ cf_cc_library(
     name = "files",
     srcs = ["files.cpp"],
     hdrs = ["files.h"],
+    clang_format_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",  # SEEK_DATA
     ],
@@ -176,6 +180,7 @@ cf_cc_library(
     name = "host_info",
     srcs = ["host_info.cpp"],
     hdrs = ["host_info.h"],
+    clang_format_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/base:no_destructor",
@@ -227,6 +232,7 @@ cf_cc_library(
     name = "network",
     srcs = ["network.cpp"],
     hdrs = ["network.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -288,6 +294,7 @@ cf_cc_library(
     hdrs = [
         "random.h",
     ],
+    clang_format_enabled = False,
 )
 
 cf_cc_library(
@@ -315,6 +322,7 @@ cf_cc_library(
     name = "signals",
     srcs = ["signals.cpp"],
     hdrs = ["signals.h"],
+    clang_format_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/log:check",
@@ -330,6 +338,7 @@ cf_cc_library(
     name = "socket2socket_proxy",
     srcs = ["socket2socket_proxy.cpp"],
     hdrs = ["socket2socket_proxy.h"],
+    clang_format_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],
@@ -360,6 +369,7 @@ cf_cc_library(
     name = "subprocess_managed_stdio",
     srcs = ["subprocess_managed_stdio.cc"],
     hdrs = ["subprocess_managed_stdio.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -373,6 +383,7 @@ cf_cc_library(
     name = "tee_logging",
     srcs = ["tee_logging.cpp"],
     hdrs = ["tee_logging.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
@@ -438,6 +449,7 @@ cf_cc_library(
     name = "users",
     srcs = ["users.cpp"],
     hdrs = ["users.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/result",
@@ -450,6 +462,7 @@ cf_cc_library(
     name = "vsock_connection",
     srcs = ["vsock_connection.cpp"],
     hdrs = ["vsock_connection.h"],
+    clang_format_enabled = False,
     clang_tidy_enabled = False,  # TODO: b/403278821 - fix warnings and re-enable after migration work
     target_compatible_with = [
         "@platforms//os:linux",
@@ -479,6 +492,7 @@ cf_cc_library(
     name = "wait_for_unix_socket",
     srcs = ["wait_for_unix_socket.cpp"],
     hdrs = ["wait_for_unix_socket.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",

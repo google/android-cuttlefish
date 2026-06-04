@@ -27,4 +27,5 @@ cf_cc_library(
     hdrs = [
         ":build_version_header",
     ],
+    clang_format_enabled = False,
 )

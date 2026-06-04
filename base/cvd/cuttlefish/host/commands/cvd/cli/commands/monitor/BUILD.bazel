@@ -8,7 +8,6 @@ cf_cc_library(
     name = "ansi_codes",
     srcs = ["ansi_codes.cc"],
     hdrs = ["ansi_codes.h"],
-    clang_format_enabled = True,
     deps = [
         "@abseil-cpp//absl/strings",
     ],
@@ -18,7 +17,6 @@ cf_cc_library(
     name = "command_handler",
     srcs = ["command_handler.cc"],
     hdrs = ["command_handler.h"],
-    clang_format_enabled = True,
     deps = [
         ":ansi_codes",
         ":display",
@@ -42,7 +40,6 @@ cf_cc_library(
     name = "display",
     srcs = ["display.cc"],
     hdrs = ["display.h"],
-    clang_format_enabled = True,
     deps = [
         ":kernel",
         ":launcher",
@@ -63,7 +60,6 @@ cf_cc_library(
 cf_cc_test(
     name = "display_test",
     srcs = ["display_test.cc"],
-    clang_format_enabled = True,
     deps = [
         ":display",
         "//cuttlefish/common/libs/fs",
@@ -76,7 +72,6 @@ cf_cc_library(
     name = "kernel",
     srcs = ["kernel.cc"],
     hdrs = ["kernel.h"],
-    clang_format_enabled = True,
     deps = [
         ":ansi_codes",
         "//cuttlefish/result",
@@ -87,7 +82,6 @@ cf_cc_library(
 cf_cc_test(
     name = "kernel_test",
     srcs = ["kernel_test.cc"],
-    clang_format_enabled = True,
     deps = [
         ":kernel",
         "//cuttlefish/result:result_matchers",
@@ -98,7 +92,6 @@ cf_cc_library(
     name = "launcher",
     srcs = ["launcher.cc"],
     hdrs = ["launcher.h"],
-    clang_format_enabled = True,
     deps = [
         ":ansi_codes",
         ":verbosity",
@@ -110,7 +103,6 @@ cf_cc_library(
 cf_cc_test(
     name = "launcher_test",
     srcs = ["launcher_test.cc"],
-    clang_format_enabled = True,
     deps = [
         ":launcher",
         "//cuttlefish/result:result_matchers",
@@ -121,7 +113,6 @@ cf_cc_library(
     name = "log_tee",
     srcs = ["log_tee.cc"],
     hdrs = ["log_tee.h"],
-    clang_format_enabled = True,
     deps = [
         ":ansi_codes",
         ":verbosity",
@@ -133,7 +124,6 @@ cf_cc_library(
 cf_cc_test(
     name = "log_tee_test",
     srcs = ["log_tee_test.cc"],
-    clang_format_enabled = True,
     deps = [
         ":log_tee",
         "//cuttlefish/result:result_matchers",
@@ -144,7 +134,6 @@ cf_cc_library(
     name = "logcat",
     srcs = ["logcat.cc"],
     hdrs = ["logcat.h"],
-    clang_format_enabled = True,
     deps = [
         ":ansi_codes",
         ":verbosity",
@@ -157,7 +146,6 @@ cf_cc_library(
     name = "truncate",
     srcs = ["truncate.cc"],
     hdrs = ["truncate.h"],
-    clang_format_enabled = True,
     deps = [
         ":ansi_codes",
         "@abseil-cpp//absl/strings",
@@ -167,7 +155,6 @@ cf_cc_library(
 cf_cc_test(
     name = "truncate_test",
     srcs = ["truncate_test.cc"],
-    clang_format_enabled = True,
     deps = [
         ":ansi_codes",
         ":truncate",
@@ -178,7 +165,6 @@ cf_cc_test(
 cf_cc_test(
     name = "logcat_test",
     srcs = ["logcat_test.cc"],
-    clang_format_enabled = True,
     deps = [
         ":logcat",
         "//cuttlefish/result:result_matchers",
@@ -189,7 +175,6 @@ cf_cc_library(
     name = "verbosity",
     srcs = ["verbosity.cc"],
     hdrs = ["verbosity.h"],
-    clang_format_enabled = True,
     deps = [
         ":ansi_codes",
     ],

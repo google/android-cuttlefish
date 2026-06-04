@@ -68,6 +68,7 @@ cf_cc_library(
     name = "bootloader",
     srcs = ["bootloader.cc"],
     hdrs = ["bootloader.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
@@ -192,6 +193,7 @@ cf_cc_library(
     name = "from_gflags",
     srcs = ["from_gflags.cc"],
     hdrs = ["from_gflags.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/host/commands/assemble_cvd/flags:parser",
@@ -234,6 +236,7 @@ cf_cc_library(
     name = "initramfs_path",
     srcs = ["initramfs_path.cc"],
     hdrs = ["initramfs_path.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:fetcher_config",
@@ -249,6 +252,7 @@ cf_cc_library(
     name = "kernel_path",
     srcs = ["kernel_path.cc"],
     hdrs = ["kernel_path.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:fetcher_config",
@@ -264,6 +268,7 @@ cf_cc_library(
     name = "mcu_config_path",
     srcs = ["mcu_config_path.cc"],
     hdrs = ["mcu_config_path.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
@@ -293,6 +298,7 @@ cf_cc_library(
     name = "restart_subprocesses",
     srcs = ["restart_subprocesses.cc"],
     hdrs = ["restart_subprocesses.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
@@ -306,6 +312,7 @@ cf_cc_library(
     name = "super_image",
     srcs = ["super_image.cc"],
     hdrs = ["super_image.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
@@ -319,6 +326,7 @@ cf_cc_library(
     name = "system_image_dir",
     srcs = ["system_image_dir.cc"],
     hdrs = ["system_image_dir.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
@@ -333,6 +341,7 @@ cf_cc_library(
     name = "use_cvdalloc",
     srcs = ["use_cvdalloc.cc"],
     hdrs = ["use_cvdalloc.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
@@ -347,6 +356,7 @@ cf_cc_library(
     name = "vendor_boot_image",
     srcs = ["vendor_boot_image.cc"],
     hdrs = ["vendor_boot_image.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
@@ -360,6 +370,7 @@ cf_cc_library(
     name = "vm_manager",
     srcs = ["vm_manager.cc"],
     hdrs = ["vm_manager.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:guest_config",

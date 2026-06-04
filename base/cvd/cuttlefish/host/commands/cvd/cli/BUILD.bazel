@@ -8,6 +8,7 @@ cf_cc_library(
     name = "command_request",
     srcs = ["command_request.cpp"],
     hdrs = ["command_request.h"],
+    clang_format_enabled = False,
     deps = [
         ":types",
         "//cuttlefish/flag_parser",
@@ -44,6 +45,7 @@ cf_cc_library(
     name = "help_format",
     srcs = ["help_format.cpp"],
     hdrs = ["help_format.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "@abseil-cpp//absl/log",
@@ -69,7 +71,6 @@ cf_cc_library(
     name = "log_files",
     srcs = ["log_files.cpp"],
     hdrs = ["log_files.h"],
-    clang_format_enabled = True,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/cvd/utils",
@@ -82,7 +83,6 @@ cf_cc_library(
 cf_cc_test(
     name = "log_files_test",
     srcs = ["log_files_test.cpp"],
-    clang_format_enabled = True,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/cvd/cli:log_files",
@@ -107,6 +107,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:help.h",
         "//cuttlefish/host/commands/cvd/cli/commands:load_configs.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
@@ -177,6 +178,7 @@ cf_cc_library(
     name = "utils",
     srcs = ["utils.cpp"],
     hdrs = ["utils.h"],
+    clang_format_enabled = False,
     deps = [
         ":command_request",
         ":types",

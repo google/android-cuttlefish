@@ -81,6 +81,7 @@ cf_cc_library(
     name = "chromeos_state",
     srcs = ["chromeos_state.cc"],
     hdrs = ["chromeos_state.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:boot_flow",
@@ -146,6 +147,7 @@ cf_cc_library(
     name = "generate_persistent_bootconfig",
     srcs = ["generate_persistent_bootconfig.cpp"],
     hdrs = ["generate_persistent_bootconfig.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/key_equals_value",
@@ -271,6 +273,7 @@ cf_cc_library(
     name = "misc_image",
     srcs = ["misc_image.cc"],
     hdrs = ["misc_image.h"],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",

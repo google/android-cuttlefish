@@ -44,6 +44,7 @@ cf_cc_library(
         "screen_connector_queue.h",
         "wayland_screen_connector.h",
     ],
+    clang_format_enabled = False,
     deps = [
         ":screen_connector_common",
         ":video_frame_buffer",

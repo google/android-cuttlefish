@@ -18,6 +18,7 @@ cf_cc_library(
         "input_connector.h",
         "input_devices.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:cf_endian",

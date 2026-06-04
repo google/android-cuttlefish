@@ -12,6 +12,7 @@ cf_cc_library(
     hdrs = [
         "defaults.h",
     ],
+    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:files",
