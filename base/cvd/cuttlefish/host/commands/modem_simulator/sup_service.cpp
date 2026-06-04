@@ -61,6 +61,7 @@ void SupService::InitializeServiceState() {
   };
 }
 
+// clang-format off
 /**
  * AT+CUSD
  *   This command allows control of the Unstructured Supplementary Service Data (USSD)
@@ -82,10 +83,12 @@ void SupService::InitializeServiceState() {
  *
  * see RIL_REQUEST_SEND_USSD or RIL_REQUEST_CANCEL_USSD in RIL
  */
+// clang-format on
 void SupService::HandleUSSD(const Client& client, std::string& /*command*/) {
   client.SendCommandResponse("OK");
 }
 
+// clang-format off
 /**
  * AT+CLIR
  *   This command refers to CLIR‑service according to 3GPP TS 22.081 that allows
@@ -109,6 +112,7 @@ void SupService::HandleUSSD(const Client& client, std::string& /*command*/) {
  *
  * see RIL_REQUEST_SET_CLIR or RIL_REQUEST_GET_CLIR in RIL
  */
+// clang-format on
 void SupService::HandleCLIR(const Client& client, std::string& command) {
   std::vector<std::string> responses;
   std::stringstream ss;
@@ -125,6 +129,7 @@ void SupService::HandleCLIR(const Client& client, std::string& command) {
   client.SendCommandResponse(responses);
 }
 
+// clang-format off
 /**
  * AT+CLIP
  *   This command refers to the supplementary service CLIP (Calling Line
@@ -146,11 +151,13 @@ void SupService::HandleCLIR(const Client& client, std::string& command) {
  *
  * see RIL_REQUEST_QUERY_CLIP in RIL
  */
+// clang-format on
 void SupService::HandleCLIP(const Client& client) {
   std::vector<std::string> responses = {"+CLIP: 0, 0", "OK"};
   client.SendCommandResponse(responses);
 }
 
+// clang-format off
 /**
  * AT+CSSN
  *   This command refers to supplementary service related network initiated
@@ -171,10 +178,12 @@ void SupService::HandleCLIP(const Client& client) {
  *
  * see RIL_REQUEST_SET_SUPP_SVC_NOTIFICATION in RIL
  */
+// clang-format on
 void SupService::HandleSuppServiceNotifications(const Client& client, std::string& /*command*/) {
   client.SendCommandResponse("OK");
 }
 
+// clang-format off
 /**
  * AT+CCFCU
  *   The command allows control of the communication forwarding supplementary service
@@ -191,6 +200,7 @@ void SupService::HandleSuppServiceNotifications(const Client& client, std::strin
  *
  * see RIL_REQUEST_SET_CALL_FORWARD or RIL_REQUEST_QUERY_CALL_FORWARD_STATUS in RIL
  */
+// clang-format on
 void SupService::HandleCallForward(const Client& client, std::string& command) {
   std::vector<std::string> responses;
   std::stringstream ss;
@@ -264,6 +274,7 @@ void SupService::HandleCallForward(const Client& client, std::string& command) {
   client.SendCommandResponse(responses);
 }
 
+// clang-format off
 /**
  * AT+CCWA
  *   This command allows control of the supplementary service Call Waiting
@@ -290,6 +301,7 @@ void SupService::HandleCallForward(const Client& client, std::string& command) {
  *
  * see RIL_REQUEST_QUERY_CALL_WAITING and RIL_REQUEST_SET_CALL_WAITING in RIL
  */
+// clang-format on
 void SupService::HandleCallWaiting(const Client& client, std::string& command) {
   std::vector<std::string> responses;
   std::stringstream ss;

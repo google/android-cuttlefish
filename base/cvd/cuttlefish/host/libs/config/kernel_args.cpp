@@ -42,20 +42,24 @@ std::vector<std::string> VmManagerKernelCmdline(
       if (instance.enable_kernel_log()) {
         vm_manager_cmdline.push_back("console=hvc0");
 
+        // clang-format off
         // To update the pl011 address:
         // $ qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine dumpdtb=virt.dtb
         // $ dtc -O dts -o virt.dts -I dtb virt.dtb
         // In the virt.dts file, look for a uart node
+        // clang-format on
         vm_manager_cmdline.push_back("earlycon=pl011,mmio32,0x9000000");
       }
     } else if (target_arch == Arch::RiscV64) {
         vm_manager_cmdline.push_back("console=hvc0");
 
+        // clang-format off
         // To update the uart8250 address:
         // $ qemu-system-riscv64 -machine virt -machine dumpdtb=virt.dtb
         // $ dtc -O dts -o virt.dts -I dtb virt.dtb
         // In the virt.dts file, look for a uart node
         // Only 'mmio' mode works; mmio32 does not
+        // clang-format on
         vm_manager_cmdline.push_back("earlycon=uart8250,mmio,0x10000000");
 
         // The kernel defaults to Sv57. Disable 5-level paging to set the mode
@@ -65,9 +69,11 @@ std::vector<std::string> VmManagerKernelCmdline(
       if (instance.enable_kernel_log()) {
         vm_manager_cmdline.push_back("console=hvc0");
 
+        // clang-format off
         // To update the uart8250 address:
         // $ qemu-system-x86_64 -kernel bzImage -serial stdio | grep ttyS0
         // Only 'io' mode works; mmio and mmio32 do not
+        // clang-format on
         vm_manager_cmdline.push_back("earlycon=uart8250,io,0x3f8");
       }
 
