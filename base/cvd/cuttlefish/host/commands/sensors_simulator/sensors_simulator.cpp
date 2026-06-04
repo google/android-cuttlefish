@@ -28,7 +28,7 @@ constexpr float kLight = 1000.0f;       // lux
 constexpr float kPressure = 1013.25f;   // hpa
 constexpr float kHumidity = 40.0f;      // percent
 constexpr float kHingeAngle0 = 180.0f;  // degree
-constexpr double kG = 9.80665;  // meter per second^2
+constexpr double kG = 9.80665;          // meter per second^2
 const Eigen::Vector3d kMagneticField{0, 5.9, -48.4};
 inline double ToRadians(double x) { return x * M_PI / 180; }
 

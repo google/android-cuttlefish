@@ -85,9 +85,7 @@ Result<Qcow2Image> Qcow2Image::OpenExisting(std::string path) {
 
 std::string Qcow2Image::MagicString() { return "QFI\xfb"; }
 
-Qcow2Image::Qcow2Image(Qcow2Image&& other) {
-  impl_ = std::move(other.impl_);
-}
+Qcow2Image::Qcow2Image(Qcow2Image&& other) { impl_ = std::move(other.impl_); }
 Qcow2Image::~Qcow2Image() = default;
 Qcow2Image& Qcow2Image::operator=(Qcow2Image&& other) {
   impl_ = std::move(other.impl_);

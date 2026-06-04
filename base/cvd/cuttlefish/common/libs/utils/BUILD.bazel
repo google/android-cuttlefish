@@ -294,7 +294,6 @@ cf_cc_library(
     hdrs = [
         "random.h",
     ],
-    clang_format_enabled = False,
 )
 
 cf_cc_library(
@@ -322,7 +321,6 @@ cf_cc_library(
     name = "signals",
     srcs = ["signals.cpp"],
     hdrs = ["signals.h"],
-    clang_format_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/log:check",
@@ -338,7 +336,6 @@ cf_cc_library(
     name = "socket2socket_proxy",
     srcs = ["socket2socket_proxy.cpp"],
     hdrs = ["socket2socket_proxy.h"],
-    clang_format_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],
@@ -462,7 +459,6 @@ cf_cc_library(
     name = "vsock_connection",
     srcs = ["vsock_connection.cpp"],
     hdrs = ["vsock_connection.h"],
-    clang_format_enabled = False,
     clang_tidy_enabled = False,  # TODO: b/403278821 - fix warnings and re-enable after migration work
     target_compatible_with = [
         "@platforms//os:linux",
@@ -492,7 +488,6 @@ cf_cc_library(
     name = "wait_for_unix_socket",
     srcs = ["wait_for_unix_socket.cpp"],
     hdrs = ["wait_for_unix_socket.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",

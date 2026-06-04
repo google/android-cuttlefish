@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include <string>
 #include <fstream>
- 
+#include <string>
+
 // this file provide a few device (cvd or emulator) specific hooks for
 // modem-simulator
 
@@ -34,7 +34,8 @@ class DeviceConfig {
   static std::string ril_gateway();
   static std::string ril_dns();
   static std::ifstream open_ifstream_crossplat(const char* filename);
-  static std::ofstream open_ofstream_crossplat(const char* filename, std::ios_base::openmode mode = std::ios_base::out);
+  static std::ofstream open_ofstream_crossplat(
+      const char* filename, std::ios_base::openmode mode = std::ios_base::out);
 };
 
 }  // namespace modem

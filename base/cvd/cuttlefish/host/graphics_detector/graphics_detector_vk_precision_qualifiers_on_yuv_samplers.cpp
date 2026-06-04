@@ -298,7 +298,8 @@ gfxstream::expected<bool, vk::Result> CanHandlePrecisionQualifierWithYuvSampler(
       .basePipelineHandle = VK_NULL_HANDLE,
       .basePipelineIndex = 0,
   };
-  auto pipeline_rv = vk.device().createGraphicsPipelineUnique({}, pipelineCreateInfo);
+  auto pipeline_rv =
+      vk.device().createGraphicsPipelineUnique({}, pipelineCreateInfo);
   if (pipeline_rv.result != vk::Result::eSuccess) {
     return false;
   }

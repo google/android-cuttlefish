@@ -82,7 +82,8 @@ TEST(CommandParserUnitTest, GetNextInt) {
   ASSERT_EQ(28421, cmd.GetNextInt());
 }
 
-TEST(CommandParserUnitTest, GetNextHexInt) {  // Hexadecimal string to decimal value
+TEST(CommandParserUnitTest,
+     GetNextHexInt) {  // Hexadecimal string to decimal value
   std::string command = "C0,6F05";
 
   cuttlefish::CommandParser cmd(command);

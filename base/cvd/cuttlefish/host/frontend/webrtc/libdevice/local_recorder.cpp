@@ -45,12 +45,13 @@ constexpr double kRtpTicksPerUs = kRtpTicksPerMs / 1000.;
 constexpr double kRtpTicksPerNs = kRtpTicksPerUs / 1000.;
 
 class LocalRecorder::Display
-    : public webrtc::EncodedImageCallback
-    , public rtc::VideoSinkInterface<webrtc::VideoFrame> {
-public:
+    : public webrtc::EncodedImageCallback,
+      public rtc::VideoSinkInterface<webrtc::VideoFrame> {
+ public:
   Display(LocalRecorder::Impl& impl);
   ~Display() {
-    CHECK(!encoder_running_) << "LocalRecorder::Display destroyed before calling Stop()";
+    CHECK(!encoder_running_)
+        << "LocalRecorder::Display destroyed before calling Stop()";
   }
 
   void EncoderLoop();
@@ -78,7 +79,7 @@ public:
 };
 
 class LocalRecorder::Impl {
-public:
+ public:
   mkvmuxer::MkvWriter file_writer_;
   mkvmuxer::Segment segment_;
   std::unique_ptr<webrtc::VideoEncoderFactory> encoder_factory_;
@@ -114,8 +115,7 @@ std::unique_ptr<LocalRecorder> LocalRecorder::Create(
 }
 
 LocalRecorder::LocalRecorder(std::unique_ptr<LocalRecorder::Impl> impl)
-    : impl_(std::move(impl)) {
-}
+    : impl_(std::move(impl)) {}
 
 LocalRecorder::~LocalRecorder() = default;
 
@@ -144,8 +144,8 @@ void LocalRecorder::AddDisplay(
     return;
   }
 
-  display->video_encoder_ =
-      impl_->encoder_factory_->CreateVideoEncoder(webrtc::SdpVideoFormat("VP8"));
+  display->video_encoder_ = impl_->encoder_factory_->CreateVideoEncoder(
+      webrtc::SdpVideoFormat("VP8"));
   if (!display->video_encoder_) {
     LOG(ERROR) << "Could not create vp8 video encoder";
     return;
@@ -158,17 +158,17 @@ void LocalRecorder::AddDisplay(
   }
   source->AddOrUpdateSink(display.get(), rtc::VideoSinkWants{});
 
-  webrtc::VideoCodec codec {};
+  webrtc::VideoCodec codec{};
   memset(&codec, 0, sizeof(codec));
   codec.codecType = webrtc::kVideoCodecVP8;
   codec.width = width;
   codec.height = height;
-  codec.startBitrate = 1000; // kilobits/sec
+  codec.startBitrate = 1000;  // kilobits/sec
   codec.maxBitrate = 2000;
   codec.minBitrate = 0;
   codec.maxFramerate = 60;
   codec.active = true;
-  codec.qpMax = 56; // kDefaultMaxQp from simulcast_encoder_adapter.cc
+  codec.qpMax = 56;  // kDefaultMaxQp from simulcast_encoder_adapter.cc
   codec.mode = webrtc::VideoCodecMode::kScreensharing;
   codec.expect_encode_from_texture = false;
   *codec.VP8() = webrtc::VideoEncoder::GetDefaultVp8Settings();
@@ -183,9 +183,8 @@ void LocalRecorder::AddDisplay(
   }
 
   display->encoder_running_ = true;
-  display->encoder_thread_ = std::thread([](Display* display) {
-    display->EncoderLoop();
-  }, display.get());
+  display->encoder_thread_ = std::thread(
+      [](Display* display) { display->EncoderLoop(); }, display.get());
 
   impl_->displays_[label] = std::move(display);
 }
@@ -198,8 +197,7 @@ void LocalRecorder::Stop() {
   impl_->segment_.Finalize();
 }
 
-LocalRecorder::Display::Display(LocalRecorder::Impl& impl) : impl_(impl) {
-}
+LocalRecorder::Display::Display(LocalRecorder::Impl& impl) : impl_(impl) {}
 
 void LocalRecorder::Display::OnFrame(const webrtc::VideoFrame& frame) {
   std::lock_guard queue_lock(encode_queue_mutex_);
@@ -235,9 +233,8 @@ void LocalRecorder::Display::EncoderLoop() {
     if (start_timestamp.time_since_epoch().count() == 0) {
       start_timestamp = now;
     }
-    auto timestamp_diff =
-        std::chrono::duration_cast<std::chrono::microseconds>(
-              now - start_timestamp);
+    auto timestamp_diff = std::chrono::duration_cast<std::chrono::microseconds>(
+        now - start_timestamp);
     frame->set_timestamp_us(timestamp_diff.count());
     frame->set_timestamp(timestamp_diff.count() * kRtpTicksPerUs);
 
@@ -276,17 +273,13 @@ webrtc::EncodedImageCallback::Result LocalRecorder::Display::OnEncodedImage(
 
   bool is_key =
       encoded_image._frameType == webrtc::VideoFrameType::kVideoFrameKey;
-  bool success = impl_.segment_.AddFrame(
-      encoded_image.data(),
-      encoded_image.size(),
-      video_track_number_,
-      timestamp,
-      is_key);
+  bool success =
+      impl_.segment_.AddFrame(encoded_image.data(), encoded_image.size(),
+                              video_track_number_, timestamp, is_key);
 
   webrtc::EncodedImageCallback::Result result(
-      success
-          ? webrtc::EncodedImageCallback::Result::Error::OK
-          : webrtc::EncodedImageCallback::Result::Error::ERROR_SEND_FAILED);
+      success ? webrtc::EncodedImageCallback::Result::Error::OK
+              : webrtc::EncodedImageCallback::Result::Error::ERROR_SEND_FAILED);
 
   if (success) {
     result.frame_id = encoded_image.Timestamp();
@@ -294,6 +287,5 @@ webrtc::EncodedImageCallback::Result LocalRecorder::Display::OnEncodedImage(
   return result;
 }
 
-} // namespace webrtc_streaming
-} // namespace cuttlefish
-
+}  // namespace webrtc_streaming
+}  // namespace cuttlefish

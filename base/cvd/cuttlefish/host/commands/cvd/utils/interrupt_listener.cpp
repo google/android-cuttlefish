@@ -163,7 +163,9 @@ void PopInterruptListener(size_t listener_index) {
 
 }  // namespace
 
-InterruptListenerHandle::~InterruptListenerHandle() { PopInterruptListener(listener_index_); }
+InterruptListenerHandle::~InterruptListenerHandle() {
+  PopInterruptListener(listener_index_);
+}
 
 Result<std::unique_ptr<InterruptListenerHandle>> PushInterruptListener(
     InterruptListener listener) {

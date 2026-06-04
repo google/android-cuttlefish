@@ -21,14 +21,15 @@
 
 namespace cuttlefish {
 
-class MiscService : public ModemService, public std::enable_shared_from_this<MiscService>  {
+class MiscService : public ModemService,
+                    public std::enable_shared_from_this<MiscService> {
  public:
   MiscService(int32_t service_id, ChannelMonitor* channel_monitor,
               ThreadLooper* thread_looper);
   ~MiscService() = default;
 
-  MiscService(const MiscService &) = delete;
-  MiscService &operator=(const MiscService &) = delete;
+  MiscService(const MiscService&) = delete;
+  MiscService& operator=(const MiscService&) = delete;
 
   void HandleGetIMEI(const Client& client, std::string& command);
   void HandleTimeUpdate(const Client& client, std::string& command);
@@ -39,7 +40,7 @@ class MiscService : public ModemService, public std::enable_shared_from_this<Mis
 
  private:
   void ParseTimeZone();
-  long TimeZoneOffset(time_t* utctime); // in seconds.
+  long TimeZoneOffset(time_t* utctime);  // in seconds.
   void FixTimeZone(std::string& line);
   std::string timezone_;
   std::vector<CommandHandler> InitializeCommandHandlers();

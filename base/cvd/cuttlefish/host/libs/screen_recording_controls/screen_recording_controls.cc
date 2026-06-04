@@ -51,4 +51,3 @@ Result<void> StopScreenRecording(
 }
 
 }  // namespace cuttlefish
-

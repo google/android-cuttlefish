@@ -19,7 +19,7 @@
 
 namespace cuttlefish {
 
-void DefaultSubprocessLogging(char* argv[],
-                              MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE);
+void DefaultSubprocessLogging(
+    char* argv[], MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE);
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

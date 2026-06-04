@@ -34,7 +34,7 @@ static constexpr char kModemTechnoloy[] = "modem_technoloy";
 static constexpr char kPreferredNetworkMode[] = "preferred_network_mode";
 static constexpr char kEmergencyMode[] = "emergency_mode";
 
-static constexpr int kDefaultNetworkSelectionMode = 0;     // AUTOMATIC
+static constexpr int kDefaultNetworkSelectionMode = 0;  // AUTOMATIC
 static constexpr int kDefaultModemTechnoloy = ModemTechnology::M_MODEM_TECH_LTE;
 static constexpr int kDefaultPreferredNetworkMode =
     ModemTechnology::M_MODEM_TECH_LTE | ModemTechnology::M_MODEM_TECH_WCDMA |
@@ -115,18 +115,19 @@ bool NvramConfig::LoadFromFile(const char* file) {
   }
 
   Json::CharReaderBuilder builder;
-  std::ifstream ifs = modem::DeviceConfig::open_ifstream_crossplat(real_file_path.c_str());
+  std::ifstream ifs =
+      modem::DeviceConfig::open_ifstream_crossplat(real_file_path.c_str());
   std::string errorMessage;
   if (!Json::parseFromStream(builder, ifs, dictionary_.get(), &errorMessage)) {
-    LOG(ERROR) << "Could not read config file " << file << ": "
-               << errorMessage;
+    LOG(ERROR) << "Could not read config file " << file << ": " << errorMessage;
     return false;
   }
   return true;
 }
 
 bool NvramConfig::SaveToFile(const std::string& file) const {
-  std::ofstream ofs = modem::DeviceConfig::open_ofstream_crossplat(file.c_str());
+  std::ofstream ofs =
+      modem::DeviceConfig::open_ofstream_crossplat(file.c_str());
   if (!ofs.is_open()) {
     LOG(ERROR) << "Unable to write to file " << file;
     return false;
@@ -165,7 +166,8 @@ std::string NvramConfig::InstanceSpecific::operator_numeric() const {
   return (*Dictionary())[kOperatorNumeric].asString();
 }
 
-void NvramConfig::InstanceSpecific::set_operator_numeric(std::string& operator_numeric) {
+void NvramConfig::InstanceSpecific::set_operator_numeric(
+    std::string& operator_numeric) {
   (*Dictionary())[kOperatorNumeric] = operator_numeric;
 }
 
@@ -193,8 +195,6 @@ void NvramConfig::InstanceSpecific::set_emergency_mode(bool mode) {
   (*Dictionary())[kEmergencyMode] = mode;
 }
 
-int NvramConfig::sim_type() const {
-  return sim_type_;
-}
+int NvramConfig::sim_type() const { return sim_type_; }
 
 }  // namespace cuttlefish

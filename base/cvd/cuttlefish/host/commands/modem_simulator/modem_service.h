@@ -15,7 +15,6 @@
 
 #pragma once
 
-
 #include <functional>
 #include <map>
 #include <optional>
@@ -27,18 +26,19 @@
 namespace cuttlefish {
 
 enum ModemServiceType : int {
-  kSimService     = 0,
+  kSimService = 0,
   kNetworkService = 1,
-  kDataService    = 2,
-  kCallService    = 3,
-  kSmsService     = 4,
-  kSupService     = 5,
-  kStkService     = 6,
-  kMiscService    = 7,
+  kDataService = 2,
+  kCallService = 3,
+  kSmsService = 4,
+  kSupService = 5,
+  kStkService = 6,
+  kMiscService = 7,
 };
 
-using f_func = std::function<void(const Client&)>;                // Full match
-using p_func = std::function<void(const Client&, std::string&)>;  // Partial match
+using f_func = std::function<void(const Client&)>;  // Full match
+using p_func =
+    std::function<void(const Client&, std::string&)>;  // Partial match
 
 class CommandHandler {
  public:
@@ -51,7 +51,7 @@ class CommandHandler {
   void HandleCommand(const Client& client, std::string& command) const;
 
  private:
-  enum MatchMode {FULL_MATCH = 0, PARTIAL_MATCH = 1};
+  enum MatchMode { FULL_MATCH = 0, PARTIAL_MATCH = 1 };
 
   std::string command_prefix;
   MatchMode match_mode;
@@ -62,11 +62,10 @@ class CommandHandler {
 
 class ModemService {
  public:
-
   virtual ~ModemService() = default;
 
-  ModemService(const ModemService &) = delete;
-  ModemService &operator=(const ModemService &) = delete;
+  ModemService(const ModemService&) = delete;
+  ModemService& operator=(const ModemService&) = delete;
 
   bool HandleModemCommand(const Client& client, std::string command);
 

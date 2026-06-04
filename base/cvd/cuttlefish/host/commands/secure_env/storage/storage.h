@@ -28,7 +28,8 @@ struct StorageData {
   uint8_t payload[0];
 
   Result<uint8_t> asUint8() {
-    CF_EXPECT(size == sizeof(uint8_t), "Size of payload is not matched with uint8 size");
+    CF_EXPECT(size == sizeof(uint8_t),
+              "Size of payload is not matched with uint8 size");
     return *reinterpret_cast<uint8_t*>(payload);
   }
 };
@@ -54,16 +55,17 @@ Result<ManagedStorageData> CreateStorageData(const void* data, size_t size);
 
 /**
  * Storage abstraction to store binary blobs associated with string key
-*/
+ */
 class Storage {
  public:
   virtual Result<bool> HasKey(const std::string& key) const = 0;
   virtual Result<ManagedStorageData> Read(const std::string& key) const = 0;
-  virtual Result<void> Write(const std::string& key, const StorageData& data) = 0;
+  virtual Result<void> Write(const std::string& key,
+                             const StorageData& data) = 0;
   virtual bool Exists() const = 0;
 
   virtual ~Storage() = default;
 };
 
-} // namespace secure_env
-} // namespace cuttlefish
+}  // namespace secure_env
+}  // namespace cuttlefish

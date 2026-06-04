@@ -42,7 +42,6 @@ cf_cc_test(
     srcs = [
         "test.cpp",
     ],
-    clang_format_enabled = False,
     deps = [
         ":adb",
         "//cuttlefish/host/libs/config:config_flag",

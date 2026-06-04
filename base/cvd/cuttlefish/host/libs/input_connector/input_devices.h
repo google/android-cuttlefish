@@ -45,8 +45,7 @@ class InputDevice {
 
 class TouchDevice : public InputDevice {
  public:
-  TouchDevice(InputConnection conn)
-      : InputDevice(conn) {}
+  TouchDevice(InputConnection conn) : InputDevice(conn) {}
 
   Result<void> SendTouchEvent(int x, int y, bool down);
 
@@ -85,8 +84,7 @@ class TouchDevice : public InputDevice {
 
 class MouseDevice : public InputDevice {
  public:
-  MouseDevice(InputConnection conn)
-      : InputDevice(conn) {}
+  MouseDevice(InputConnection conn) : InputDevice(conn) {}
 
   Result<void> SendMoveEvent(int x, int y);
   Result<void> SendButtonEvent(int button, bool down);
@@ -103,27 +101,23 @@ class GamepadDevice : public InputDevice {
 
 class KeyboardDevice : public InputDevice {
  public:
-  KeyboardDevice(InputConnection conn)
-      : InputDevice(conn) {}
+  KeyboardDevice(InputConnection conn) : InputDevice(conn) {}
 
   Result<void> SendEvent(uint16_t code, bool down);
 };
 
 class RotaryDevice : public InputDevice {
  public:
-  RotaryDevice(InputConnection conn)
-      : InputDevice(conn) {}
+  RotaryDevice(InputConnection conn) : InputDevice(conn) {}
 
   Result<void> SendEvent(int pixels);
 };
 
 class SwitchesDevice : public InputDevice {
  public:
-  SwitchesDevice(InputConnection conn)
-      : InputDevice(conn) {}
+  SwitchesDevice(InputConnection conn) : InputDevice(conn) {}
 
   Result<void> SendEvent(uint16_t code, bool state);
 };
 
 }  // namespace cuttlefish
-

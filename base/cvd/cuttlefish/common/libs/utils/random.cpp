@@ -27,9 +27,9 @@ std::string GenerateRandomString(const std::string& alphabet,
                                  const int length) {
   std::srand(std::time(0));
   std::vector<char> result(length);
-  for(int i = 0; i < length; i++){
+  for (int i = 0; i < length; i++) {
     result[i] = alphabet[std::rand() % alphabet.size()];
   }
   return std::string(result.begin(), result.end());
 }
-}
+}  // namespace cuttlefish

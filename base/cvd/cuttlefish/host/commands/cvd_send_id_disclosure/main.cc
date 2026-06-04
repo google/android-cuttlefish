@@ -83,6 +83,6 @@ int SendIdDisclosureMain(int argc, char** argv) {
 }  // namespace
 }  // namespace cuttlefish
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   return cuttlefish::SendIdDisclosureMain(argc, argv);
 }

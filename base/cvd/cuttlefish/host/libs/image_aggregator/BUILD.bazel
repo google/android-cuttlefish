@@ -167,7 +167,6 @@ cf_cc_library(
     name = "qcow2",
     srcs = ["qcow2.cc"],
     hdrs = ["qcow2.h"],
-    clang_format_enabled = False,
     copts = COPTS + [
         "-Wno-packed-non-pod",
     ],

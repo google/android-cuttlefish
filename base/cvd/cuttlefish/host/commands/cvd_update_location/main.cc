@@ -57,11 +57,11 @@ int UpdateLocationCvdMain(int argc, char** argv) {
 
   GpsFixArray coordinates;
   GpsFix location;
-  location.longitude=FLAGS_longitude;
-  location.latitude=FLAGS_latitude;
-  location.elevation=FLAGS_elevation;
+  location.longitude = FLAGS_longitude;
+  location.latitude = FLAGS_latitude;
+  location.elevation = FLAGS_elevation;
   coordinates.push_back(location);
-  auto status = gpsclient.SendGpsLocations(1000,coordinates);
+  auto status = gpsclient.SendGpsLocations(1000, coordinates);
   CHECK(status.ok()) << "Failed to send gps location data \n";
   if (!status.ok()) {
     return 1;

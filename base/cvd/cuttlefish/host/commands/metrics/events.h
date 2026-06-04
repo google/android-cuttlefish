@@ -30,4 +30,4 @@ int SendVMStop(VmmMode);
 int SendDeviceBoot(VmmMode);
 int SendLockScreen(VmmMode);
 
-}  // namespace cuttlefish
+}  // namespace cuttlefish::metrics

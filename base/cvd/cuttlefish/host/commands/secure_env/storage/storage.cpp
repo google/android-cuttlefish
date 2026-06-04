@@ -19,15 +19,13 @@
 namespace cuttlefish {
 namespace secure_env {
 
-void StorageDataDestroyer::operator()(StorageData* ptr) {
-  std::free(ptr);
-}
+void StorageDataDestroyer::operator()(StorageData* ptr) { std::free(ptr); }
 
 Result<ManagedStorageData> CreateStorageData(size_t size) {
   const auto bytes_to_allocate = sizeof(StorageData) + size;
   auto memory = std::malloc(bytes_to_allocate);
-  CF_EXPECT(memory != nullptr,
-            "Cannot allocate " << bytes_to_allocate << " bytes for storage data");
+  CF_EXPECT(memory != nullptr, "Cannot allocate " << bytes_to_allocate
+                                                  << " bytes for storage data");
   auto data = reinterpret_cast<StorageData*>(memory);
   data->size = size;
   return ManagedStorageData(data);

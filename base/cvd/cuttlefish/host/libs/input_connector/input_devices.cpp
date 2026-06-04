@@ -200,4 +200,3 @@ Result<void> SwitchesDevice::SendEvent(uint16_t code, bool state) {
 }
 
 }  // namespace cuttlefish
-

@@ -30,4 +30,4 @@ namespace cuttlefish {
  * `HttpClient`. */
 Result<SeekableZipSource> ZipSourceFromUrl(HttpClient&, const std::string& url,
                                            std::vector<std::string> headers);
-}
+}  // namespace cuttlefish

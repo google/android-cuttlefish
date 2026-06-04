@@ -15,8 +15,8 @@
  */
 
 /*
-* TODO: b/416777029 - Stop using this copy of the file
-*/
+ * TODO: b/416777029 - Stop using this copy of the file
+ */
 
 #pragma once
 

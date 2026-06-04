@@ -28,4 +28,4 @@ Result<void> WaitForUnixSocketListeningWithoutConnect(const std::string& path,
                                                       int timeoutSec);
 #endif
 
-}
+}  // namespace cuttlefish

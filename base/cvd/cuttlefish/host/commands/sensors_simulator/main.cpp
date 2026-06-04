@@ -25,10 +25,14 @@
 #include "cuttlefish/host/commands/sensors_simulator/sensors_simulator.h"
 #include "cuttlefish/host/libs/config/logging.h"
 
-DEFINE_int32(control_from_guest_fd, -1, "Sensors control virtio-console from guest to host");
-DEFINE_int32(control_to_guest_fd, -1, "Sensors control virtio-console from host to guest");
-DEFINE_int32(data_from_guest_fd, -1, "Sensors data virtio-console from guest to host");
-DEFINE_int32(data_to_guest_fd, -1, "Sensors data virtio-console from host to guest");
+DEFINE_int32(control_from_guest_fd, -1,
+             "Sensors control virtio-console from guest to host");
+DEFINE_int32(control_to_guest_fd, -1,
+             "Sensors control virtio-console from host to guest");
+DEFINE_int32(data_from_guest_fd, -1,
+             "Sensors data virtio-console from guest to host");
+DEFINE_int32(data_to_guest_fd, -1,
+             "Sensors data virtio-console from host to guest");
 DEFINE_int32(webrtc_fd, -1, "A file descriptor to communicate with webrtc");
 DEFINE_int32(kernel_events_fd, -1,
              "A pipe for monitoring events based on messages "

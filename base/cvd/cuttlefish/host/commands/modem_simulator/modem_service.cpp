@@ -36,7 +36,8 @@ CommandHandler::CommandHandler(const std::string& command, p_func handler)
 int CommandHandler::Compare(const std::string& command) const {
   int result = -1;
   if (match_mode == PARTIAL_MATCH) {
-    result = command.compare(2, command_prefix.size(), command_prefix);  // skip "AT"
+    result =
+        command.compare(2, command_prefix.size(), command_prefix);  // skip "AT"
   } else {
     result = command.compare(2, command.size(), command_prefix);
   }

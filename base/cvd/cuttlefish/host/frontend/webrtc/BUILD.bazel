@@ -111,7 +111,6 @@ cf_cc_library(
     name = "libcuttlefish_webrtc_client_server",
     srcs = ["client_server.cpp"],
     hdrs = ["client_server.h"],
-    clang_format_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/log",

@@ -24,7 +24,6 @@ cf_cc_library(
     name = "storage",
     srcs = ["storage.cpp"],
     hdrs = ["storage.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/result",
     ],

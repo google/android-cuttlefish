@@ -19,14 +19,13 @@
 
 namespace cuttlefish {
 
-ThreadLooper::ThreadLooper()
-  :   stopped_(false), next_serial_(1) {
+ThreadLooper::ThreadLooper() : stopped_(false), next_serial_(1) {
   looper_thread_ = std::thread([this]() { ThreadLoop(); });
 }
 
 ThreadLooper::~ThreadLooper() { Stop(); }
 
-bool ThreadLooper::Event::operator<=(const Event &other) const {
+bool ThreadLooper::Event::operator<=(const Event& other) const {
   return when <= other.when;
 }
 
@@ -37,7 +36,7 @@ ThreadLooper::Serial ThreadLooper::Post(Callback cb) {
   // If it's the time to process event with delay exactly when posting
   // a event without delay. Looper would process the event without delay firstly
   // if when set to be std::nullptr. so set when_ to be now.
-  Insert({ std::chrono::steady_clock::now(), cb, serial });
+  Insert({std::chrono::steady_clock::now(), cb, serial});
 
   return serial;
 }
@@ -47,7 +46,7 @@ ThreadLooper::Serial ThreadLooper::Post(
   CHECK(cb != nullptr);
 
   auto serial = next_serial_++;
-  Insert({ std::chrono::steady_clock::now() + delay, cb, serial });
+  Insert({std::chrono::steady_clock::now() + delay, cb, serial});
 
   return serial;
 }
@@ -69,7 +68,7 @@ bool ThreadLooper::CancelSerial(Serial serial) {
   return found;
 }
 
-void ThreadLooper::Insert(const Event &event) {
+void ThreadLooper::Insert(const Event& event) {
   std::lock_guard<std::mutex> autolock(lock_);
 
   auto iter = queue_.begin();
@@ -82,7 +81,7 @@ void ThreadLooper::Insert(const Event &event) {
 }
 
 void ThreadLooper::ThreadLoop() {
-  for(;;) {
+  for (;;) {
     Callback cb;
     {
       std::unique_lock<std::mutex> lock(lock_);
@@ -96,7 +95,8 @@ void ThreadLooper::ThreadLoop() {
         continue;
       }
 
-      auto time_to_wait = queue_.front().when - std::chrono::steady_clock::now();
+      auto time_to_wait =
+          queue_.front().when - std::chrono::steady_clock::now();
       if (time_to_wait.count() > 0) {
         // wait with timeout
         auto durationMs =
@@ -104,7 +104,7 @@ void ThreadLooper::ThreadLoop() {
         cond_.wait_for(lock, durationMs);
         continue;
       }
-      cb = queue_.front().cb; // callback at front of queue
+      cb = queue_.front().cb;  // callback at front of queue
       queue_.pop_front();
     }
     cb();

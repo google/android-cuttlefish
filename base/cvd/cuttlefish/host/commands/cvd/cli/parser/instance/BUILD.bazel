@@ -104,7 +104,6 @@ cf_cc_library(
 cf_cc_test(
     name = "disk_configs_test",
     srcs = ["disk_configs_test.cc"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "@jsoncpp",

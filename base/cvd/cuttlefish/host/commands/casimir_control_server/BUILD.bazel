@@ -45,7 +45,6 @@ cf_cc_library(
         "packet_runtime.h",
         "rf_packets.h",
     ],
-    clang_format_enabled = False,
     deps = [
         ":libcasimir_control_server",
         "//cuttlefish/common/libs/fs",

@@ -74,8 +74,7 @@ class AudioTrackSourceImplSinkWrapper : public AudioSink {
   AudioTrackSourceImplSinkWrapper(rtc::scoped_refptr<AudioTrackSourceImpl> obj)
       : track_source_impl_(obj) {}
 
-  void OnFrame(const AudioFrameBuffer& frame,
-               int64_t timestamp_ms) override {
+  void OnFrame(const AudioFrameBuffer& frame, int64_t timestamp_ms) override {
     track_source_impl_->OnFrame(frame, timestamp_ms);
   }
 

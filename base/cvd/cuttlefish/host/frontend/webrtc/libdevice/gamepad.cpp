@@ -40,5 +40,4 @@ uint16_t JsIndexToLinux(const int32_t& index_code) {
   return kJsIndexToLinuxMapping[index_code];
 }
 
-}
-
+}  // namespace cuttlefish

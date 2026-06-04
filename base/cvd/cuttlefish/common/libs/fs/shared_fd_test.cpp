@@ -16,8 +16,8 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
-#include <unistd.h>
 #include <gtest/gtest.h>
+#include <unistd.h>
 
 namespace cuttlefish {
 
@@ -28,10 +28,11 @@ TEST(SendFD, Basic) {
   SharedFD::Pipe(fds, fds + 1);
   EXPECT_TRUE(fds[0]->IsOpen());
   EXPECT_TRUE(fds[1]->IsOpen());
-  EXPECT_EQ(sizeof(pipe_message), fds[1]->Write(pipe_message, sizeof(pipe_message)));
+  EXPECT_EQ(sizeof(pipe_message),
+            fds[1]->Write(pipe_message, sizeof(pipe_message)));
   char buf[80];
   EXPECT_EQ(sizeof(pipe_message), fds[0]->Read(buf, sizeof(buf)));
   EXPECT_EQ(0, strcmp(buf, pipe_message));
 }
 
-}
+}  // namespace cuttlefish

@@ -49,7 +49,6 @@ cf_cc_test(
     srcs = [
         "shared_fd_test.cpp",
     ],
-    clang_format_enabled = False,
     deps = [
         ":fs",
         "//libbase",
