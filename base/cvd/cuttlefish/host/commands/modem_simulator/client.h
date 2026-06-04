@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <compare>
 #include <mutex>
 #include <vector>
 
@@ -31,7 +32,7 @@ class ClientId {
  public:
   ClientId();
 
-  bool operator==(const ClientId&) const;
+  auto operator<=>(const ClientId&) const = default;
 
  private:
   static size_t next_id_;

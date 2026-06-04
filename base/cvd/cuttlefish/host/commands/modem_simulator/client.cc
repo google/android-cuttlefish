@@ -29,10 +29,6 @@ ClientId::ClientId() {
   next_id_++;
 }
 
-bool ClientId::operator==(const ClientId& other) const {
-  return id_ == other.id_;
-}
-
 Client::Client(SharedFD fd) : client_read_fd_(fd), client_write_fd_(fd) {}
 
 Client::Client(SharedFD read, SharedFD write)
