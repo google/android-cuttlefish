@@ -15,6 +15,7 @@
 
 #include "cuttlefish/host/libs/web/android_build_url.h"
 
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -109,6 +110,25 @@ std::string BuildNameRegexp(
 
 }  // namespace
 
+std::string_view format_as(SafeLevel level) {
+  switch (level) {
+    case SafeLevel::kPlatinum:
+      return "PLATINUM";
+    case SafeLevel::kSafe2:
+      return "SAFE_2";
+    case SafeLevel::kSafe1:
+      return "SAFE_1";
+    case SafeLevel::kSafe0:
+      return "SAFE_0";
+    case SafeLevel::kSafeLevelUnspecified:
+      return "";
+  }
+}
+
+std::ostream& operator<<(std::ostream& os, SafeLevel level) {
+  return os << format_as(level);
+}
+
 AndroidBuildUrl::AndroidBuildUrl(std::string api_base_url, std::string api_key,
                                  std::string project_id)
     : api_base_url_(std::move(api_base_url)),
@@ -116,12 +136,14 @@ AndroidBuildUrl::AndroidBuildUrl(std::string api_base_url, std::string api_key,
       project_id_(std::move(project_id)) {}
 
 std::string AndroidBuildUrl::GetLatestBuildIdUrl(std::string_view branch,
-                                                 std::string_view target) {
+                                                 std::string_view target,
+                                                 SafeLevel safe_level) {
   UrlBuilder builder = UrlBuilder::GetLatestBuildIdBaseUrl(api_base_url_);
   builder.AddQueryParameter("buildAttemptStatus", "complete");
   builder.AddQueryParameter("buildType", "submitted");
   builder.AddQueryParameter("pageSize", "1");
   builder.AddQueryParameter("successful", "true");
+  builder.AddQueryParameter("safeLevel", format_as(safe_level));
   builder.AddQueryParameter("branches", branch);
   builder.AddQueryParameter("targets", target);
   builder.AddApiKeyAndProjectId(api_key_, project_id_);

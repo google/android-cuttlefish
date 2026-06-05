@@ -275,25 +275,33 @@ Result<std::vector<std::string>> AndroidBuildApi::Headers() {
 
 Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
     const std::string& branch, const std::string& target) {
-  const std::string url =
-      android_build_url_.GetLatestBuildIdUrl(branch, target);
-  auto response =
-      CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
+  for (const SafeLevel safe_level : kAllSafeLevels) {
+    VLOG(0) << "Attempting to download build at safe level '" << safe_level
+            << "' for branch '" << branch << "' and target '" << target << "'";
+    const std::string url =
+        android_build_url_.GetLatestBuildIdUrl(branch, target, safe_level);
+    const std::vector<std::string> headers = CF_EXPECT(Headers());
+    const HttpResponse<Json::Value> response =
+        CF_EXPECT(HttpGetToJson(http_client_, url, headers));
 
-  const Json::Value json = CF_EXPECTF(GetResponseJson(response),
-                                      "Error fetching last known good build "
-                                      "id for:\nbranch \"{}\", target \"{}\"",
-                                      branch, target);
-  if (!json.isMember("builds")) {
-    return std::nullopt;
+    Result<Json::Value> json_res = GetResponseJson(response);
+    if (!json_res.ok()) {
+      continue;
+    }
+    const Json::Value json = *json_res;
+
+    if (!json.isMember("builds")) {
+      continue;
+    }
+
+    CF_EXPECTF(json["builds"].isArray() && json["builds"].size() == 1,
+               "Expected to find a single latest build for branch \"{}\" and "
+               "target \"{}\" in the response array, "
+               "but found {}",
+               branch, target, json["builds"].size());
+    return CF_EXPECT(GetValue<std::string>(json["builds"][0], {"buildId"}));
   }
-
-  CF_EXPECTF(json["builds"].isArray() && json["builds"].size() == 1,
-             "Expected to find a single latest build for branch \"{}\" and "
-             "target \"{}\" in the response array, "
-             "but found {}",
-             branch, target, json["builds"].size());
-  return CF_EXPECT(GetValue<std::string>(json["builds"][0], { "buildId" }));
+  return std::nullopt;
 }
 
 Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
