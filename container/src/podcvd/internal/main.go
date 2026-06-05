@@ -15,13 +15,11 @@
 package internal
 
 import (
-	"archive/tar"
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -152,23 +150,9 @@ func handleBugreportExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) 
 		return fmt.Errorf("failed to execute cvd bugreport in the container: %w", err)
 	}
 	defer ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), []string{"rm", containerOutputPath}, nil, nil, nil)
-	tarStream, _, err := ccm.GetClient().CopyFromContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), containerOutputPath)
+	err = ccm.CopyFromContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), containerOutputPath, absHostOutputPath)
 	if err != nil {
 		return fmt.Errorf("failed to copy bugreport from container: %w", err)
-	}
-	defer tarStream.Close()
-	tr := tar.NewReader(tarStream)
-	header, err := tr.Next()
-	if err != nil {
-		return fmt.Errorf("failed to read tar header: %w", err)
-	}
-	outFile, err := os.OpenFile(absHostOutputPath, os.O_CREATE|os.O_RDWR|os.O_TRUNC, header.FileInfo().Mode())
-	if err != nil {
-		return fmt.Errorf("failed to create output file: %w", err)
-	}
-	defer outFile.Close()
-	if _, err := io.Copy(outFile, tr); err != nil {
-		return fmt.Errorf("failed to extract bugreport content: %w", err)
 	}
 	return nil
 }

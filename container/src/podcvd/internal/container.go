@@ -50,7 +50,6 @@ type ContainerListEntry struct {
 }
 
 type CuttlefishContainerManager interface {
-	GetClient() *client.Client
 	// Check whether an image with the given name exists on the container engine or not
 	ImageExists(ctx context.Context, name string) (bool, error)
 	// Pull the container image
@@ -63,6 +62,8 @@ type CuttlefishContainerManager interface {
 	CreateAndStartContainer(ctx context.Context, extraFlags []string, name string) (string, error)
 	// List containers managed by podcvd
 	ListContainers(ctx context.Context, all bool) ([]ContainerListEntry, error)
+	// Copy files/folders from a container instance
+	CopyFromContainer(ctx context.Context, ctr string, srcPath string, dstPath string) error
 	// Execute a command on a running container instance
 	ExecOnContainer(ctx context.Context, ctr string, cmd []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error
 	// Stop and remove a container instance
@@ -85,10 +86,6 @@ func NewCuttlefishContainerManager() (CuttlefishContainerManager, error) {
 	return &CuttlefishContainerManagerImpl{
 		cli: cli,
 	}, nil
-}
-
-func (m *CuttlefishContainerManagerImpl) GetClient() *client.Client {
-	return m.cli
 }
 
 func (m *CuttlefishContainerManagerImpl) ImageExists(ctx context.Context, name string) (bool, error) {
@@ -190,6 +187,16 @@ func (m *CuttlefishContainerManagerImpl) ListContainers(ctx context.Context, all
 		return nil, fmt.Errorf("failed to unmarshal container list: %w", err)
 	}
 	return entries, nil
+}
+
+func (m *CuttlefishContainerManagerImpl) CopyFromContainer(ctx context.Context, ctr string, srcPath string, dstPath string) error {
+	cmd := exec.CommandContext(ctx, "podman", "cp", ctr+":"+srcPath, dstPath)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to copy from container: %s: %w", stderr.String(), err)
+	}
+	return nil
 }
 
 func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ctr string, cmd []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
