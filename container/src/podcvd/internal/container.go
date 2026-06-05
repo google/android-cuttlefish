@@ -17,6 +17,7 @@ package internal
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -30,6 +31,14 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 )
 
+type ContainerConfig struct {
+	Labels map[string]string `json:"Labels"`
+}
+
+type ContainerInfo struct {
+	Config *ContainerConfig `json:"Config"`
+}
+
 type CuttlefishContainerManager interface {
 	GetClient() *client.Client
 	// Check whether an image with the given name exists on the container engine or not
@@ -38,6 +47,8 @@ type CuttlefishContainerManager interface {
 	PullImage(ctx context.Context, name string) error
 	// Check whether a container with the given name exists or not
 	ContainerExists(ctx context.Context, name string) (bool, error)
+	// Inspect a container to get its information
+	InspectContainer(ctx context.Context, name string) (*ContainerInfo, error)
 	// Create and start a container instance with raw extra flags
 	CreateAndStartContainer(ctx context.Context, extraFlags []string, name string) (string, error)
 	// Execute a command on a running container instance
@@ -100,6 +111,25 @@ func (m *CuttlefishContainerManagerImpl) ContainerExists(ctx context.Context, na
 		return false, nil
 	}
 	return false, fmt.Errorf("failed to check container existence: %w", err)
+}
+
+func (m *CuttlefishContainerManagerImpl) InspectContainer(ctx context.Context, name string) (*ContainerInfo, error) {
+	cmd := exec.CommandContext(ctx, "podman", "inspect", name)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("failed to inspect container %q: %s: %w", name, stderr.String(), err)
+	}
+	var infos []ContainerInfo
+	if err := json.Unmarshal(stdout.Bytes(), &infos); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal container inspect: %w", err)
+	}
+	if len(infos) == 0 {
+		return nil, fmt.Errorf("no inspect info returned for container %q", name)
+	}
+	return &infos[0], nil
 }
 
 func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Context, extraFlags []string, name string) (string, error) {

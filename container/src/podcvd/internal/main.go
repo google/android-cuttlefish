@@ -113,11 +113,11 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 	if !exists {
 		return fmt.Errorf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
 	}
-	inspectRes, err := ccm.GetClient().ContainerInspect(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
+	containerInfo, err := ccm.InspectContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
 	if err != nil {
 		return fmt.Errorf("failed to inspect container: %w", err)
 	}
-	attemptID := inspectRes.Config.Labels["attempt_id"]
+	attemptID := containerInfo.Config.Labels["attempt_id"]
 	podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
 	UpdateCvdGroupJsonRaw(res, podcvdHomeDir, ip)
 	stdout, err := json.MarshalIndent(res, "", "        ")
@@ -195,11 +195,11 @@ func handleLogsExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error
 	if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, os.Stderr); err != nil {
 		return err
 	}
-	inspectRes, err := ccm.GetClient().ContainerInspect(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
+	containerInfo, err := ccm.InspectContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
 	if err != nil {
 		return fmt.Errorf("failed to inspect container: %w", err)
 	}
-	attemptID := inspectRes.Config.Labels["attempt_id"]
+	attemptID := containerInfo.Config.Labels["attempt_id"]
 	podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
 	regex := regexp.MustCompile(`/var/tmp/cvd/[0-9]+/[0-9]+/home`)
 	translatedOutput := regex.ReplaceAllString(stdoutBuf.String(), podcvdHomeDir)
@@ -321,12 +321,12 @@ func fleetAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
 				errCh <- err
 				return
 			}
-			inspectRes, err := ccm.GetClient().ContainerInspect(context.Background(), containerName)
+			containerInfo, err := ccm.InspectContainer(context.Background(), containerName)
 			if err != nil {
 				errCh <- err
 				return
 			}
-			attemptID := inspectRes.Config.Labels["attempt_id"]
+			attemptID := containerInfo.Config.Labels["attempt_id"]
 			podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
 			for idx := range res.Groups {
 				UpdateCvdGroupJsonRaw(res.Groups[idx], podcvdHomeDir, ip)
