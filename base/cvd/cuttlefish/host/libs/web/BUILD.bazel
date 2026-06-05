@@ -28,6 +28,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_api_key",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:android_build_url",
         "//cuttlefish/host/libs/web:build_api",

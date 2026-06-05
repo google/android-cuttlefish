@@ -39,6 +39,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/android_build_api_key.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
@@ -87,13 +88,11 @@ Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
 
 AndroidBuildApi::AndroidBuildApi(HttpClient& http_client,
                                  CredentialSource* credential_source,
-                                 std::string catchall_api_key,
                                  AndroidBuildUrl* android_build_url,
                                  const std::chrono::seconds retry_period,
                                  CasDownloader* cas_downloader)
     : http_client_(http_client),
       credential_source_(credential_source),
-      catchall_api_key_(catchall_api_key),
       android_build_url_(android_build_url),
       retry_period_(retry_period),
       cas_downloader_(cas_downloader) {}
@@ -268,8 +267,8 @@ Result<std::vector<std::string>> AndroidBuildApi::Headers() {
   if (credential_source_) {
     headers.push_back("Authorization: Bearer " +
                       CF_EXPECT(credential_source_->Credential()));
-  } else if (!catchall_api_key_.empty()) {
-    headers.push_back("X-goog-api-key: " + catchall_api_key_);
+  } else if (std::string key = GetCatchallApiKey(); !key.empty()) {
+    headers.push_back("X-goog-api-key: " + key);
   }
   return headers;
 }
