@@ -76,6 +76,8 @@ cc_library(
     copts = COPTS + [
         "-Wno-vla-cxx-extension",
         "-Wno-c99-designator",
+        "-Wno-unused-function",
+        "-Wno-thread-safety",
     ],
     includes = ["include"],
     deps = [
