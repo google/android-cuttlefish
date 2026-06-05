@@ -5,7 +5,6 @@ edition = "2024"
 
 [dependencies]
 clap = { workspace = true }
-env_logger = { workspace = true }
 image = { workspace = true }
 libc = { workspace = true }
 log = { workspace = true }

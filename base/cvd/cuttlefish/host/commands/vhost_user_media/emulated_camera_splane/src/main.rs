@@ -12,53 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::path::PathBuf;
-use std::sync::{Arc, RwLock};
-
 use clap::Parser;
+use std::sync::{Arc, RwLock};
 use vhost_user_backend::VhostUserDaemon;
 use vhu_media::VhuMediaBackend;
-use vhu_media::cli::Error;
+use vhu_media::cli::{CmdLineArgs, Config, Error, init_logging, Result};
 use virtio_media::protocol::VirtioMediaDeviceConfig;
 use vm_memory::{GuestMemoryAtomic, GuestMemoryMmap};
 
 mod device;
-
-type Result<T> = std::result::Result<T, Error>;
-
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-struct CmdLineArgs {
-    /// Location of vhost-user Unix domain socket.
-    #[clap(short, long, value_name = "SOCKET")]
-    socket_path: PathBuf,
-    /// Log verbosity, one of Off, Error, Warning, Info, Debug, Trace.
-    #[clap(short, long, default_value_t = log::LevelFilter::Debug)]
-    verbosity: log::LevelFilter,
-}
-
-#[derive(PartialEq, Debug)]
-struct Config {
-    socket_path: PathBuf,
-}
-
-impl TryFrom<CmdLineArgs> for Config {
-    type Error = Error;
-
-    fn try_from(args: CmdLineArgs) -> Result<Self> {
-        Ok(Config {
-            socket_path: args.socket_path,
-        })
-    }
-}
-
-fn init_logging(verbosity: log::LevelFilter) -> Result<()> {
-    env_logger::builder()
-        .format_timestamp_secs()
-        .filter_level(verbosity)
-        .init();
-    Ok(())
-}
 
 const VFL_TYPE_VIDEO: u32 = 0;
 
