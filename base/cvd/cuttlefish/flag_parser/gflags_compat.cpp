@@ -422,6 +422,11 @@ Flag GflagsCompatFlag(const std::string& name,
   return GflagsCompatFlagImpl<std::string>(name, value, "");
 }
 
+Flag GflagsCompatFlag(const std::string& name,
+                      std::vector<unsigned>& value) {
+  return GflagsCompatFlagImpl<unsigned>(name, value, 0);
+}
+
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
                       const bool default_value) {
   return GflagsCompatFlagImpl(name, value, default_value);

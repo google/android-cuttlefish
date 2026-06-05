@@ -34,6 +34,7 @@
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
 #include "cuttlefish/result/result.h"
 
@@ -94,10 +95,24 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   if (flags.wait_for_launcher_secs > 0) {
     launcher_timeout.emplace(flags.wait_for_launcher_secs);
   }
+
+  std::vector<unsigned> instance_nums;
+  if (request.Selectors().instance_names) {
+    for (const auto& name : *request.Selectors().instance_names) {
+      std::vector<LocalInstance> instances = group.FindByInstanceName(name);
+      CF_EXPECTF(!instances.empty(), "Instance '{}' not found in group '{}'",
+                 name, group.GroupName());
+      for (const auto& inst : instances) {
+        instance_nums.push_back(inst.Id());
+      }
+    }
+  }
+
   Result<void> stop_outcome = instance_manager_.StopInstanceGroup(
       group, launcher_timeout,
       flags.clear_instance_dirs ? InstanceDirActionOnStop::Clear
-                                : InstanceDirActionOnStop::Keep);
+                                : InstanceDirActionOnStop::Keep,
+      instance_nums);
 
   GatherVmStopMetrics(group);
 

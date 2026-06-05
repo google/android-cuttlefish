@@ -37,6 +37,7 @@ struct StopCvdParams{
   std::string home_dir;
   int wait_for_launcher_secs;
   bool clear_runtime_dirs;
+  std::vector<unsigned> instance_nums;
 };
 Result<void> RunStopCvd(StopCvdParams params);
 
