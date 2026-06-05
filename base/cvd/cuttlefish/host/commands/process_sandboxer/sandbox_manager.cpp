@@ -305,10 +305,8 @@ class SandboxManager::SocketClient {
     if (!env.ok()) {
       return env.status();
     }
-    fds->erase(
-        std::remove_if(fds->begin(), fds->end(),
-                       [this](auto& arg) { return arg.second == ignored_fd_; }),
-        fds->end());
+    std::erase_if(*fds,
+                  [this](auto& arg) { return arg.second == ignored_fd_; });
     return manager_.RunProcess(client_fd_.get(), std::move(*argv),
                                std::move(*fds), *env);
   }
