@@ -17,7 +17,6 @@ package internal
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -151,19 +150,11 @@ func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ct
 }
 
 func (m *CuttlefishContainerManagerImpl) StopAndRemoveContainer(ctx context.Context, ctr string) error {
-	timeout := int(0)
-	stopConfig := container.StopOptions{
-		Signal:  "SIGKILL",
-		Timeout: &timeout,
+	cmd := exec.CommandContext(ctx, "podman", "rm", "-f", "-i", "-t", "0", ctr)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to stop and remove container %q: %w", ctr, err)
 	}
-	errs := []error{}
-	if err := m.cli.ContainerStop(ctx, ctr, stopConfig); err != nil {
-		errs = append(errs, fmt.Errorf("failed to stop docker container: %w", err))
-	}
-	if err := m.cli.ContainerRemove(ctx, ctr, container.RemoveOptions{}); err != nil {
-		errs = append(errs, fmt.Errorf("failed to remove docker container: %w", err))
-	}
-	return errors.Join(errs...)
+	return nil
 }
 
 func RootlessPodmanSocketAddr() string {

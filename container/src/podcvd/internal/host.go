@@ -69,13 +69,10 @@ func CreateToolingHost(ccm CuttlefishContainerManager) error {
 }
 
 func DeleteToolingHost(ccm CuttlefishContainerManager) error {
-	if err := ccm.StopAndRemoveContainer(context.Background(), ToolingContainerName); err == nil {
-		return nil
-	} else if errdefs.IsNotFound(err) {
-		return nil
-	} else {
+	if err := ccm.StopAndRemoveContainer(context.Background(), ToolingContainerName); err != nil {
 		return fmt.Errorf("failed to stop and remove container: %w", err)
 	}
+	return nil
 }
 
 func ExecFetchCmdOnDisposableHost(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
