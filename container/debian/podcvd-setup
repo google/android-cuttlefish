@@ -110,6 +110,11 @@ KERNEL=="kvm", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
 KERNEL=="vhost-net", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
 KERNEL=="vhost-vsock", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
 EOF
+
+    # Ensure vhost_net and vhost_vsock exists
+    modprobe vhost_net
+    modprobe vhost_vsock
+
     udevadm control --reload-rules
     udevadm trigger --action=change /dev/kvm
     udevadm trigger --action=change /dev/vhost-net
