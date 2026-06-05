@@ -29,7 +29,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
 	"github.com/google/uuid"
 )
 
@@ -39,7 +38,7 @@ func Main(args []string) error {
 		cvdArgs.SubCommandArgs = []string{"help"}
 	}
 
-	ccm, err := CuttlefishContainerManager()
+	ccm, err := NewCuttlefishContainerManager()
 	if err != nil {
 		return err
 	}
@@ -82,7 +81,7 @@ func Main(args []string) error {
 	return nil
 }
 
-func disconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, groupName string) error {
+func disconnectAdb(ccm CuttlefishContainerManager, groupName string) error {
 	var stdoutBuf bytes.Buffer
 	if err := ccm.ExecOnContainer(context.Background(), ContainerName(groupName), []string{"cvd", "fleet"}, nil, &stdoutBuf, nil); err != nil {
 		return err
@@ -94,7 +93,7 @@ func disconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, groupName stri
 	return DisconnectAdb(ccm, *instanceGroup)
 }
 
-func handleCreateOrStartExecution(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
 
@@ -136,7 +135,7 @@ func handleCreateOrStartExecution(ccm libcfcontainer.CuttlefishContainerManager,
 	return nil
 }
 
-func handleBugreportExecution(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+func handleBugreportExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	hostOutputPath := cvdArgs.GetStringFlagValueOnSubCommandArgs("output")
 	if hostOutputPath == "" {
 		hostOutputPath = "host_bugreport.zip"
@@ -185,7 +184,7 @@ func formatLogsList(output string) string {
 	return strings.Join(lines, "\n")
 }
 
-func handleLogsExecution(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+func handleLogsExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
 	if cvdArgs.GetStringFlagValueOnSubCommandArgs("print") != "" || cvdArgs.GetStringFlagValueOnSubCommandArgs("p") != "" {
@@ -211,7 +210,7 @@ func handleLogsExecution(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs 
 	return err
 }
 
-func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+func handleSubcommandsForSingleInstanceGroup(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	subcommand := cvdArgs.SubCommandArgs[0]
 	switch subcommand {
 	case "create":
@@ -262,7 +261,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 	return nil
 }
 
-func clearAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) error {
+func clearAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
 	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, true)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
@@ -295,7 +294,7 @@ func clearAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 	return errors.Join(errs...)
 }
 
-func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) error {
+func fleetAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
 	type cvdFleetResponse struct {
 		Groups []any `json:"groups"`
 	}
@@ -360,7 +359,7 @@ func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 	return nil
 }
 
-func handleToolingSubcommands(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+func handleToolingSubcommands(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	if err := CreateToolingHost(ccm); err != nil {
 		return err
 	}
@@ -380,7 +379,7 @@ func handleToolingSubcommands(ccm libcfcontainer.CuttlefishContainerManager, cvd
 	return nil
 }
 
-func handleLintExecution(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+func handleLintExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	if len(cvdArgs.SubCommandArgs) < 2 {
 		return fmt.Errorf("missing JSON config file path")
 	}

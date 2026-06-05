@@ -24,20 +24,11 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
-
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 )
 
-func CuttlefishContainerManager() (libcfcontainer.CuttlefishContainerManager, error) {
-	ccmOpts := libcfcontainer.CuttlefishContainerManagerOpts{
-		SockAddr: libcfcontainer.RootlessPodmanSocketAddr(),
-	}
-	return libcfcontainer.NewCuttlefishContainerManager(ccmOpts)
-}
-
-func Ipv4AddressesByGroupNames(ccm libcfcontainer.CuttlefishContainerManager, allContainers bool) (map[string]string, error) {
+func Ipv4AddressesByGroupNames(ccm CuttlefishContainerManager, allContainers bool) (map[string]string, error) {
 	opts := container.ListOptions{
 		Filters: filters.NewArgs(
 			filters.Arg("label", labelGroupName),

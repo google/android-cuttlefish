@@ -78,7 +78,6 @@ jobs:
       matrix:
         dir:
           - "e2etests"
-          - "container/src/libcfcontainer"
           - "container/src/podcvd"
           - "frontend/src/host_orchestrator"
           - "frontend/src/libhoclient"

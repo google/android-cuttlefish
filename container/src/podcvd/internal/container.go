@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package libcfcontainer
+package internal
 
 import (
 	"context"
@@ -44,22 +44,14 @@ type CuttlefishContainerManager interface {
 	StopAndRemoveContainer(ctx context.Context, ctr string) error
 }
 
-type CuttlefishContainerManagerOpts struct {
-	SockAddr string
-}
-
 type CuttlefishContainerManagerImpl struct {
 	cli *client.Client
 }
 
-func NewCuttlefishContainerManager(opts CuttlefishContainerManagerOpts) (*CuttlefishContainerManagerImpl, error) {
+func NewCuttlefishContainerManager() (CuttlefishContainerManager, error) {
 	cliopts := []client.Opt{
 		client.WithAPIVersionNegotiation(),
-	}
-	if opts.SockAddr != "" {
-		cliopts = append(cliopts, client.WithHost(opts.SockAddr))
-	} else {
-		cliopts = append(cliopts, client.FromEnv)
+		client.WithHost(RootlessPodmanSocketAddr()),
 	}
 	cli, err := client.NewClientWithOpts(cliopts...)
 	if err != nil {
