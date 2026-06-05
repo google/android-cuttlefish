@@ -10,7 +10,8 @@ Rules-Requires-Root: no
 
 Package: cuttlefish-podcvd
 Architecture: any
-Depends: adb,
+Depends: acl,
+         adb,
          android-sdk-platform-tools-common,
          crun,
          podman (>= 4.4),
