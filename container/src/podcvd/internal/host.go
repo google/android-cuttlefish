@@ -31,8 +31,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
-	"github.com/containerd/errdefs"
 )
 
 func CreateCuttlefishHost(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
@@ -60,10 +58,10 @@ func CreateToolingHost(ccm CuttlefishContainerManager) error {
 	if err := pullContainerImage(ccm); err != nil {
 		return err
 	}
-	if _, err := ccm.GetClient().ContainerInspect(context.Background(), ToolingContainerName); err == nil {
-		return nil
-	} else if !errdefs.IsNotFound(err) {
+	if exists, err := ccm.ContainerExists(context.Background(), ToolingContainerName); err != nil {
 		return err
+	} else if exists {
+		return nil
 	}
 	return createAndStartToolingContainer(ccm)
 }
