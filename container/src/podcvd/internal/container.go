@@ -26,9 +26,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/stdcopy"
 )
 
 type ContainerConfig struct {
@@ -200,36 +198,24 @@ func (m *CuttlefishContainerManagerImpl) CopyFromContainer(ctx context.Context, 
 }
 
 func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ctr string, cmd []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
-	execConfig := container.ExecOptions{
-		AttachStderr: stderr != nil,
-		AttachStdin:  stdin != nil,
-		AttachStdout: stdout != nil,
-		Cmd:          cmd,
-		Tty:          false,
-	}
-	createRes, err := m.cli.ContainerExecCreate(ctx, ctr, execConfig)
-	if err != nil {
-		return fmt.Errorf("failed to create container execution %q: %w", strings.Join(cmd, " "), err)
-	}
-	attachRes, err := m.cli.ContainerExecAttach(ctx, createRes.ID, container.ExecStartOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to attach container execution %q: %w", strings.Join(cmd, " "), err)
-	}
-	defer attachRes.Close()
+	args := []string{"exec"}
 	if stdin != nil {
-		go func() {
-			io.Copy(attachRes.Conn, stdin)
-			attachRes.CloseWrite()
-		}()
+		args = append(args, "-i")
 	}
-	stdcopy.StdCopy(stdout, stderr, attachRes.Reader)
-
-	if result, err := m.cli.ContainerExecInspect(ctx, createRes.ID); err != nil {
-		return fmt.Errorf("failed to run command on the container: %w", err)
-	} else if result.ExitCode != 0 {
-		return fmt.Errorf("failed to run command on the container with exit code %d", result.ExitCode)
+	args = append(args, ctr)
+	args = append(args, cmd...)
+	execCmd := exec.CommandContext(ctx, "podman", args...)
+	execCmd.Stdin = stdin
+	execCmd.Stdout = stdout
+	execCmd.Stderr = stderr
+	err := execCmd.Run()
+	if err == nil {
+		return nil
 	}
-	return nil
+	if exitErr, ok := err.(*exec.ExitError); ok {
+		return fmt.Errorf("failed to run command on the container with exit code %d: %w", exitErr.ExitCode(), err)
+	}
+	return fmt.Errorf("failed to run command on the container: %w", err)
 }
 
 func (m *CuttlefishContainerManagerImpl) StopAndRemoveContainer(ctx context.Context, ctr string) error {
