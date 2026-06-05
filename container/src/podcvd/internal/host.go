@@ -33,8 +33,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/containerd/errdefs"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
 )
 
 func CreateCuttlefishHost(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
@@ -84,12 +82,6 @@ func ExecFetchCmdOnDisposableHost(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 	if err := pullContainerImage(ccm); err != nil {
 		return err
 	}
-	containerCfg := &container.Config{
-		Image: imageName,
-		Labels: map[string]string{
-			labelCreatedBy: valueCreatedBy,
-		},
-	}
 	cvdDataHome, err := cvdDataHome()
 	if err != nil {
 		return fmt.Errorf("failed to get cvd data home: %w", err)
@@ -104,13 +96,12 @@ func ExecFetchCmdOnDisposableHost(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 	if info, err := os.Stat(targetDir); err != nil || !info.IsDir() {
 		return fmt.Errorf("target_directory %q doesn't exist", targetDir)
 	}
-	containerHostCfg := &container.HostConfig{
-		Binds: []string{
-			fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome),
-			fmt.Sprintf("%s:%s:rw", targetDir, targetDir),
-		},
+	extraFlags := []string{
+		"--label", fmt.Sprintf("%s=%s", labelCreatedBy, valueCreatedBy),
+		"-v", fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome),
+		"-v", fmt.Sprintf("%s:%s:rw", targetDir, targetDir),
 	}
-	containerID, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, "")
+	containerID, err := ccm.CreateAndStartContainer(context.Background(), extraFlags, "")
 	if err != nil {
 		return fmt.Errorf("failed to create and start container: %w", err)
 	}
@@ -144,13 +135,11 @@ func cvdDataHome() (string, error) {
 	}
 	return "", fmt.Errorf("failed to find cvd data home dir")
 }
-
-func appendPortBindingRange(portMap nat.PortMap, hostIP string, protocol string, portStart int, portEnd int) {
+func appendPortFlags(flags []string, hostIP string, protocol string, portStart int, portEnd int) []string {
 	for port := portStart; port <= portEnd; port++ {
-		portMap[nat.Port(fmt.Sprintf("%d/%s", port, protocol))] = []nat.PortBinding{
-			{HostIP: hostIP, HostPort: fmt.Sprintf("%d", port)},
-		}
+		flags = append(flags, "-p", fmt.Sprintf("%s:%d:%d/%s", hostIP, port, port, protocol))
 	}
+	return flags
 }
 
 func lastIPv4Addr(prefix netip.Prefix) netip.Addr {
@@ -208,22 +197,6 @@ func findAvailableGroupName(groupNameIpAddrMap map[string]string) string {
 func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (string, error) {
 	commonArgs := cvdArgs.CommonArgs
 	attemptID := uuid.New().String()
-	containerCfg := &container.Config{
-		Env: []string{
-			"ANDROID_HOST_OUT=/host_out",
-			"ANDROID_PRODUCT_OUT=/product_out",
-			"HOME=/podcvd_home",
-		},
-		Image: imageName,
-		Labels: map[string]string{
-			labelCreatedBy: valueCreatedBy,
-			labelAttemptID: attemptID,
-		},
-	}
-	clientID := os.Getenv(envClientID)
-	if clientID != "" {
-		containerCfg.Labels[labelClientID] = clientID
-	}
 	cvdDataHome, err := cvdDataHome()
 	if err != nil {
 		return "", fmt.Errorf("failed to get cvd data home: %w", err)
@@ -251,39 +224,31 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 	if err := os.MkdirAll(podcvdHomeDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create podcvd home dir: %w", err)
 	}
-	pidsLimit := int64(8192)
-	containerHostCfg := &container.HostConfig{
-		Annotations: map[string]string{"run.oci.keep_original_groups": "1"},
-		Binds: []string{
-			fmt.Sprintf("%s:/host_out:O", hostOut),
-			fmt.Sprintf("%s:/product_out:O", productOut),
-			fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome),
-			fmt.Sprintf("%s:/podcvd_home:rw", podcvdHomeDir),
-		},
-		CapAdd: []string{"NET_RAW"},
-		Resources: container.Resources{
-			PidsLimit: &pidsLimit,
-		},
+
+	extraFlags := []string{
+		"-e", "ANDROID_HOST_OUT=/host_out",
+		"-e", "ANDROID_PRODUCT_OUT=/product_out",
+		"-e", "HOME=/podcvd_home",
+		"--label", fmt.Sprintf("%s=%s", labelCreatedBy, valueCreatedBy),
+		"--label", fmt.Sprintf("%s=%s", labelAttemptID, attemptID),
+		"--annotation", "run.oci.keep_original_groups=1",
+		"-v", fmt.Sprintf("%s:/host_out:O", hostOut),
+		"-v", fmt.Sprintf("%s:/product_out:O", productOut),
+		"-v", fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome),
+		"-v", fmt.Sprintf("%s:/podcvd_home:rw", podcvdHomeDir),
+		"--cap-add", "NET_RAW",
+		"--pids-limit", "8192",
 	}
-	// A set to prevent duplicate mounts
-	parseBind := func(bind string) (string, string) {
-		parts := strings.SplitN(bind, ":", 3)
-		if len(parts) < 2 {
-			return "", ""
-		}
-		return parts[0], parts[1]
+	clientID := os.Getenv(envClientID)
+	if clientID != "" {
+		extraFlags = append(extraFlags, "--label", fmt.Sprintf("%s=%s", labelClientID, clientID))
 	}
 
 	bindSet := make(map[string]bool)
-	for _, bind := range containerHostCfg.Binds {
-		// Existing bind format is "hostPath:containerPath:options"
-		host, container := parseBind(bind)
-		if host != "" {
-			bindSet[host+":"+container] = true
-		} else {
-			log.Printf("warning: ignoring malformed bind: %q\n", bind)
-		}
-	}
+	bindSet[hostOut+":/host_out"] = true
+	bindSet[productOut+":/product_out"] = true
+	bindSet[cvdDataHome+":/root/.local/share/cvd"] = true
+	bindSet[podcvdHomeDir+":/podcvd_home"] = true
 
 	for _, arg := range cvdArgs.SubCommandArgs {
 		path := arg
@@ -328,7 +293,7 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 				if pInfo.IsDir() {
 					opt = "O"
 				}
-				containerHostCfg.Binds = append(containerHostCfg.Binds, fmt.Sprintf("%s:%s:%s", p, p, opt))
+				extraFlags = append(extraFlags, "-v", fmt.Sprintf("%s:%s:%s", p, p, opt))
 				bindSet[key] = true
 			}
 		}
@@ -344,14 +309,15 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		if err != nil {
 			return "", err
 		}
-		containerHostCfg.PortBindings = nat.PortMap{}
-		containerHostCfg.PortBindings[nat.Port(fmt.Sprintf("%d/tcp", portOperatorHttps))] = []nat.PortBinding{
-			{HostIP: ip, HostPort: fmt.Sprintf("%d", portOperatorHttpsOnHost)},
-		}
-		appendPortBindingRange(containerHostCfg.PortBindings, ip, "tcp", 6520, 6529)
-		appendPortBindingRange(containerHostCfg.PortBindings, ip, "tcp", 15550, 15599)
-		appendPortBindingRange(containerHostCfg.PortBindings, ip, "udp", 15550, 15599)
-		containerHostCfg.NetworkMode = container.NetworkMode(fmt.Sprintf("pasta:-a,%s", ip))
+		attemptFlags := make([]string, len(extraFlags))
+		copy(attemptFlags, extraFlags)
+		attemptFlags = append(attemptFlags,
+			"-p", fmt.Sprintf("%s:%d:%d/tcp", ip, portOperatorHttpsOnHost, portOperatorHttps),
+		)
+		attemptFlags = appendPortFlags(attemptFlags, ip, "tcp", 6520, 6529)
+		attemptFlags = appendPortFlags(attemptFlags, ip, "tcp", 15550, 15599)
+		attemptFlags = appendPortFlags(attemptFlags, ip, "udp", 15550, 15599)
+		attemptFlags = append(attemptFlags, "--network", fmt.Sprintf("pasta:-a,%s", ip))
 		groupName := commonArgs.GroupName
 		if groupName != "" {
 			if _, exists := groupNameIpAddrMap[groupName]; exists {
@@ -360,8 +326,8 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		} else {
 			groupName = findAvailableGroupName(groupNameIpAddrMap)
 		}
-		containerCfg.Labels[labelGroupName] = groupName
-		if _, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, ContainerName(groupName)); err != nil {
+		attemptFlags = append(attemptFlags, "--label", fmt.Sprintf("%s=%s", labelGroupName, groupName))
+		if _, err := ccm.CreateAndStartContainer(context.Background(), attemptFlags, ContainerName(groupName)); err != nil {
 			lastErr = err
 			// Cleanup created container if it failed.
 			inspectRes, inspectErr := ccm.GetClient().ContainerInspect(context.Background(), ContainerName(groupName))
@@ -406,12 +372,6 @@ func ensureOperatorHealthy(ip string) error {
 }
 
 func createAndStartToolingContainer(ccm CuttlefishContainerManager) error {
-	containerCfg := &container.Config{
-		Image: imageName,
-		Labels: map[string]string{
-			labelCreatedBy: valueCreatedBy,
-		},
-	}
 	cvdDataHome, err := cvdDataHome()
 	if err != nil {
 		return fmt.Errorf("failed to get cvd data home: %w", err)
@@ -419,12 +379,11 @@ func createAndStartToolingContainer(ccm CuttlefishContainerManager) error {
 	if err := os.MkdirAll(cvdDataHome, 0755); err != nil {
 		return fmt.Errorf("failed to eusure directory at %q: %w", cvdDataHome, err)
 	}
-	containerHostCfg := &container.HostConfig{
-		Binds: []string{
-			fmt.Sprintf("%s:/root/.local/share/cvd:rw", cvdDataHome),
-		},
+	extraFlags := []string{
+		"--label", fmt.Sprintf("%s=%s", labelCreatedBy, valueCreatedBy),
+		"-v", fmt.Sprintf("%s:/root/.local/share/cvd:rw", cvdDataHome),
 	}
-	if _, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, ToolingContainerName); err != nil {
+	if _, err := ccm.CreateAndStartContainer(context.Background(), extraFlags, ToolingContainerName); err != nil {
 		return err
 	}
 	return nil

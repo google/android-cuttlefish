@@ -15,16 +15,17 @@
 package internal
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"dario.cat/mergo"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
@@ -36,8 +37,8 @@ type CuttlefishContainerManager interface {
 	ImageExists(ctx context.Context, name string) (bool, error)
 	// Pull the container image
 	PullImage(ctx context.Context, name string) error
-	// Create and start a container instance
-	CreateAndStartContainer(ctx context.Context, additionalConfig *container.Config, additionalHostConfig *container.HostConfig, name string) (string, error)
+	// Create and start a container instance with raw extra flags
+	CreateAndStartContainer(ctx context.Context, extraFlags []string, name string) (string, error)
 	// Execute a command on a running container instance
 	ExecOnContainer(ctx context.Context, ctr string, cmd []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error
 	// Stop and remove a container instance
@@ -88,56 +89,32 @@ func (m *CuttlefishContainerManagerImpl) PullImage(ctx context.Context, name str
 	return nil
 }
 
-func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Context, additionalConfig *container.Config, additionalHostConfig *container.HostConfig, name string) (string, error) {
-	config := &container.Config{
-		AttachStdin: true,
-		Tty:         true,
+func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Context, extraFlags []string, name string) (string, error) {
+	args := []string{"run", "-d", "-t", "--cap-add", "NET_ADMIN"}
+	devices := []string{
+		"/dev/kvm",
+		"/dev/net/tun",
+		"/dev/vhost-net",
+		"/dev/vhost-vsock",
 	}
-	if additionalConfig != nil {
-		if err := mergo.Merge(config, additionalConfig, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
-			return "", fmt.Errorf("failed to merge container configuration: %w", err)
-		}
+	for _, dev := range devices {
+		args = append(args, "--device", dev+":"+dev+":rwm")
 	}
-	hostConfig := &container.HostConfig{
-		CapAdd: []string{"NET_ADMIN"},
-		Resources: container.Resources{
-			Devices: []container.DeviceMapping{
-				{
-					CgroupPermissions: "rwm",
-					PathInContainer:   "/dev/kvm",
-					PathOnHost:        "/dev/kvm",
-				},
-				{
-					CgroupPermissions: "rwm",
-					PathInContainer:   "/dev/net/tun",
-					PathOnHost:        "/dev/net/tun",
-				},
-				{
-					CgroupPermissions: "rwm",
-					PathInContainer:   "/dev/vhost-net",
-					PathOnHost:        "/dev/vhost-net",
-				},
-				{
-					CgroupPermissions: "rwm",
-					PathInContainer:   "/dev/vhost-vsock",
-					PathOnHost:        "/dev/vhost-vsock",
-				},
-			},
-		},
+	args = append(args, extraFlags...)
+	if name != "" {
+		args = append(args, "--name", name)
 	}
-	if additionalHostConfig != nil {
-		if err := mergo.Merge(hostConfig, additionalHostConfig, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
-			return "", fmt.Errorf("failed to merge container host configuration: %w", err)
-		}
+	args = append(args, imageName)
+	cmd := exec.CommandContext(ctx, "podman", args...)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("podman run failed: %s", stderr.String())
+		return "", fmt.Errorf("failed to create and start container: %w", err)
 	}
-	createRes, err := m.cli.ContainerCreate(ctx, config, hostConfig, nil, nil, name)
-	if err != nil {
-		return "", fmt.Errorf("failed to create docker container: %w", err)
-	}
-	if err := m.cli.ContainerStart(ctx, createRes.ID, container.StartOptions{}); err != nil {
-		return "", fmt.Errorf("failed to start docker container: %w", err)
-	}
-	return createRes.ID, nil
+	return strings.TrimSpace(stdout.String()), nil
 }
 
 func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ctr string, cmd []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
