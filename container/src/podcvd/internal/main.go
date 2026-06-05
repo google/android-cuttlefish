@@ -36,10 +36,7 @@ func Main(args []string) error {
 		cvdArgs.SubCommandArgs = []string{"help"}
 	}
 
-	ccm, err := NewCuttlefishContainerManager()
-	if err != nil {
-		return err
-	}
+	ccm := NewCuttlefishContainerManager()
 
 	subcommand := cvdArgs.SubCommandArgs[0]
 	if cvdArgs.HasHelpFlagOnSubCommandArgs() {
