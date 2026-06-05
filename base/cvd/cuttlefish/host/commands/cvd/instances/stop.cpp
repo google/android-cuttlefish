@@ -32,6 +32,7 @@
 #include <fmt/core.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 #include "absl/log/log.h"
+#include "absl/strings/str_join.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -265,6 +266,9 @@ Result<void> RunStopCvd(StopCvdParams params) {
   args.push_back(wait_flag);
   if (params.clear_runtime_dirs) {
     args.push_back("--clear_instance_dirs=true");
+  }
+  if (!params.instance_nums.empty()) {
+    args.push_back(fmt::format("--instance_nums={}", absl::StrJoin(params.instance_nums, ",")));
   }
   Result<void> cmd_res = RunStopCvdCmd(stopper_path, stop_cvd_envs, args);
   if (cmd_res.ok()) {

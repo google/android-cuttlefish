@@ -83,7 +83,8 @@ class InstanceManager {
   Result<void> StopInstanceGroup(
       LocalInstanceGroup& group,
       std::optional<std::chrono::seconds> launcher_timeout,
-      InstanceDirActionOnStop instance_dir_action);
+      InstanceDirActionOnStop instance_dir_action,
+      const std::vector<unsigned>& instance_nums = {});
 
  private:
   struct InternalInstanceDesc {
