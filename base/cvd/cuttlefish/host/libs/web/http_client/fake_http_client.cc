@@ -31,8 +31,25 @@ void FakeHttpClient::SetResponse(std::string data, std::string url) {
       .http_code = 200,
       .headers = {},
   };
-  auto handler = [res = std::move(res)](const HttpRequest&) { return res; };
+  SetResponse(std::move(res), std::move(url));
+}
+
+void FakeHttpClient::SetResponse(HttpResponse<std::string> response,
+                                 std::string url) {
+  auto handler = [res = std::move(response)](const HttpRequest&) {
+    return res;
+  };
   SetResponse(std::move(handler), std::move(url));
+}
+
+bool FakeHttpClient::RequestMade(std::string_view url) const {
+  std::lock_guard lock(mutex_);
+  for (const auto& requested : requested_urls_) {
+    if (requested.find(url) != std::string_view::npos) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void FakeHttpClient::SetResponse(FakeHttpClient::Handler handler,
@@ -60,6 +77,7 @@ const FakeHttpClient::Handler* FakeHttpClient::FindHandler(
 Result<HttpResponse<void>> FakeHttpClient::DownloadToCallback(
     HttpRequest request, HttpClient::DataCallback callback) {
   std::lock_guard lock(mutex_);
+  requested_urls_.push_back(request.url);
   CF_EXPECT(callback(nullptr, 0));
   const Handler* handler = FindHandler(request.url);
   HttpResponse<void> response;
