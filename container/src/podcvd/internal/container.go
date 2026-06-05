@@ -36,6 +36,8 @@ type CuttlefishContainerManager interface {
 	ImageExists(ctx context.Context, name string) (bool, error)
 	// Pull the container image
 	PullImage(ctx context.Context, name string) error
+	// Check whether a container with the given name exists or not
+	ContainerExists(ctx context.Context, name string) (bool, error)
 	// Create and start a container instance with raw extra flags
 	CreateAndStartContainer(ctx context.Context, extraFlags []string, name string) (string, error)
 	// Execute a command on a running container instance
@@ -86,6 +88,18 @@ func (m *CuttlefishContainerManagerImpl) PullImage(ctx context.Context, name str
 		return fmt.Errorf("failed to pull container image %q: %w", name, err)
 	}
 	return nil
+}
+
+func (m *CuttlefishContainerManagerImpl) ContainerExists(ctx context.Context, name string) (bool, error) {
+	cmd := exec.CommandContext(ctx, "podman", "container", "exists", name)
+	err := cmd.Run()
+	if err == nil {
+		return true, nil
+	}
+	if _, ok := err.(*exec.ExitError); ok {
+		return false, nil
+	}
+	return false, fmt.Errorf("failed to check container existence: %w", err)
 }
 
 func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Context, extraFlags []string, name string) (string, error) {
