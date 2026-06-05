@@ -83,6 +83,21 @@ cf_cc_test(
     ],
 )
 
+cf_cc_test(
+    name = "android_build_api_test",
+    srcs = ["android_build_api_test.cpp"],
+    deps = [
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_api",
+        "//cuttlefish/host/libs/web:android_build_url",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:fake_http_client",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
 cf_cc_library(
     name = "android_build_url",
     srcs = ["android_build_url.cpp"],
