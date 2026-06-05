@@ -21,6 +21,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
+#include "cuttlefish/host/libs/config/data_image_policy.h"
 
 #define DEFAULT_BLANK_DATA_IMAGE_SIZE "unset"
 
@@ -32,6 +33,7 @@ using cvd::config::Instance;
 std::vector<std::string> GenerateDiskFlags(
     const EnvironmentSpecification& config) {
   std::vector<std::string> data_image_mbs;
+  std::vector<std::string> data_policies;
   if (std::none_of(config.instances().cbegin(), config.instances().cend(),
                    [](const auto& instance) {
                      return instance.disk().has_blank_data_image_mb();
@@ -42,12 +44,17 @@ std::vector<std::string> GenerateDiskFlags(
     const auto& disk = instance.disk();
     if (disk.has_blank_data_image_mb()) {
       data_image_mbs.emplace_back(std::to_string(disk.blank_data_image_mb()));
+      data_policies.emplace_back(
+          DataImagePolicyString(DataImagePolicy::AlwaysCreate));
     } else {
       data_image_mbs.emplace_back(DEFAULT_BLANK_DATA_IMAGE_SIZE);
+      data_policies.emplace_back(
+          DataImagePolicyString(DataImagePolicy::UseExisting));
     }
   }
   return std::vector<std::string>{
       GenerateVecFlag("blank_data_image_mb", data_image_mbs),
+      GenerateVecFlag("data_policy", data_policies),
   };
 }
 

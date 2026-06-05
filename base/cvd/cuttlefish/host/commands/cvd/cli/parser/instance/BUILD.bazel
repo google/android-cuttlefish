@@ -43,6 +43,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+        "//cuttlefish/host/libs/config:data_image_policy",
     ],
 )
 

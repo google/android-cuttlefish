@@ -44,6 +44,8 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImageEmptyJson) {
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_FALSE(FindConfig(*serialized_data, R"(--blank_data_image_mb=)"))
       << "blank_data_image_mb flag is set";
+  EXPECT_FALSE(FindConfig(*serialized_data, R"(--data_policy=)"))
+      << "data_policy flag is set";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImagePartialJson) {
@@ -74,6 +76,9 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImagePartialJson) {
   EXPECT_TRUE(
       FindConfig(*serialized_data, R"(--blank_data_image_mb=unset,2048)"))
       << "blank_data_image_mb flag is missing or wrongly formatted";
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         R"(--data_policy=use_existing,always_create)"))
+      << "data_policy flag is missing or wrongly formatted";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImageFullJson) {
@@ -105,6 +110,9 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImageFullJson) {
   EXPECT_TRUE(
       FindConfig(*serialized_data, R"(--blank_data_image_mb=2048,4096)"))
       << "blank_data_image_mb flag is missing or wrongly formatted";
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         R"(--data_policy=always_create,always_create)"))
+      << "data_policy flag is missing or wrongly formatted";
 }
 
 }  // namespace cuttlefish
