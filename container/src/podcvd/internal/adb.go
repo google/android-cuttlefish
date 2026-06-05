@@ -17,19 +17,17 @@ package internal
 import (
 	"fmt"
 	"os/exec"
-
-	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
 )
 
-func ConnectAdb(ccm libcfcontainer.CuttlefishContainerManager, instanceGroup InstanceGroup) error {
+func ConnectAdb(ccm CuttlefishContainerManager, instanceGroup InstanceGroup) error {
 	return connectOrDisconnectAdb(ccm, instanceGroup, true)
 }
 
-func DisconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, instanceGroup InstanceGroup) error {
+func DisconnectAdb(ccm CuttlefishContainerManager, instanceGroup InstanceGroup) error {
 	return connectOrDisconnectAdb(ccm, instanceGroup, false)
 }
 
-func connectOrDisconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, instanceGroup InstanceGroup, enable bool) error {
+func connectOrDisconnectAdb(ccm CuttlefishContainerManager, instanceGroup InstanceGroup, enable bool) error {
 	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)

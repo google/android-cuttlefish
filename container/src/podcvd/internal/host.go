@@ -30,7 +30,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
 	"github.com/google/uuid"
 
 	"github.com/containerd/errdefs"
@@ -38,7 +37,7 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
-func CreateCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+func CreateCuttlefishHost(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	if err := pullContainerImage(ccm); err != nil {
 		return err
 	}
@@ -52,14 +51,14 @@ func CreateCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs
 	return nil
 }
 
-func DeleteCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, groupName string) error {
+func DeleteCuttlefishHost(ccm CuttlefishContainerManager, groupName string) error {
 	if err := ccm.StopAndRemoveContainer(context.Background(), ContainerName(groupName)); err != nil {
 		return fmt.Errorf("failed to stop and remove container: %w", err)
 	}
 	return nil
 }
 
-func CreateToolingHost(ccm libcfcontainer.CuttlefishContainerManager) error {
+func CreateToolingHost(ccm CuttlefishContainerManager) error {
 	if err := pullContainerImage(ccm); err != nil {
 		return err
 	}
@@ -71,7 +70,7 @@ func CreateToolingHost(ccm libcfcontainer.CuttlefishContainerManager) error {
 	return createAndStartToolingContainer(ccm)
 }
 
-func DeleteToolingHost(ccm libcfcontainer.CuttlefishContainerManager) error {
+func DeleteToolingHost(ccm CuttlefishContainerManager) error {
 	if err := ccm.StopAndRemoveContainer(context.Background(), ToolingContainerName); err == nil {
 		return nil
 	} else if errdefs.IsNotFound(err) {
@@ -81,7 +80,7 @@ func DeleteToolingHost(ccm libcfcontainer.CuttlefishContainerManager) error {
 	}
 }
 
-func ExecFetchCmdOnDisposableHost(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+func ExecFetchCmdOnDisposableHost(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	if err := pullContainerImage(ccm); err != nil {
 		return err
 	}
@@ -126,7 +125,7 @@ func ExecFetchCmdOnDisposableHost(ccm libcfcontainer.CuttlefishContainerManager,
 	return nil
 }
 
-func pullContainerImage(ccm libcfcontainer.CuttlefishContainerManager) error {
+func pullContainerImage(ccm CuttlefishContainerManager) error {
 	if exists, err := ccm.ImageExists(context.Background(), imageName); err != nil {
 		return err
 	} else if exists {
@@ -206,7 +205,7 @@ func findAvailableGroupName(groupNameIpAddrMap map[string]string) string {
 	return fmt.Sprintf("%s%d", prefix, maxNum+1)
 }
 
-func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) (string, error) {
+func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (string, error) {
 	commonArgs := cvdArgs.CommonArgs
 	attemptID := uuid.New().String()
 	containerCfg := &container.Config{
@@ -291,7 +290,7 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, cvdA
 		if strings.Contains(arg, "=") {
 			path = strings.SplitN(arg, "=", 2)[1]
 		}
-		
+
 		// 1. Filter out empty strings which would incorrectly mount the CWD
 		if strings.TrimSpace(path) == "" {
 			continue
@@ -310,7 +309,7 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, cvdA
 		}
 
 		pathsToMount := []string{absPath}
-		
+
 		// 2. Resolve symlinks and track the target file to ensure it's accessible inside
 		if realPath, err := filepath.EvalSymlinks(absPath); err == nil && realPath != absPath {
 			pathsToMount = append(pathsToMount, realPath)
@@ -406,7 +405,7 @@ func ensureOperatorHealthy(ip string) error {
 	return lastErr
 }
 
-func createAndStartToolingContainer(ccm libcfcontainer.CuttlefishContainerManager) error {
+func createAndStartToolingContainer(ccm CuttlefishContainerManager) error {
 	containerCfg := &container.Config{
 		Image: imageName,
 		Labels: map[string]string{
