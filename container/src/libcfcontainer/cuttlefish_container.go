@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -77,18 +78,15 @@ func (m *CuttlefishContainerManagerImpl) GetClient() *client.Client {
 }
 
 func (m *CuttlefishContainerManagerImpl) ImageExists(ctx context.Context, name string) (bool, error) {
-	listRes, err := m.cli.ImageList(ctx, image.ListOptions{})
-	if err != nil {
-		return false, fmt.Errorf("failed to list docker images: %w", err)
+	cmd := exec.CommandContext(ctx, "podman", "image", "exists", name)
+	err := cmd.Run()
+	if err == nil {
+		return true, nil
 	}
-	for _, image := range listRes {
-		for _, tag := range image.RepoTags {
-			if tag == name {
-				return true, nil
-			}
-		}
+	if _, ok := err.(*exec.ExitError); ok {
+		return false, nil
 	}
-	return false, nil
+	return false, fmt.Errorf("failed to check container image existence: %w", err)
 }
 
 func (m *CuttlefishContainerManagerImpl) PullImage(ctx context.Context, name string, progressWriter io.Writer) error {
