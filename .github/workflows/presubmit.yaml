@@ -515,7 +515,20 @@ jobs:
         sudo sysctl -w kernel.unprivileged_userns_clone=1
         sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
         sudo apt install -y skopeo
-        skopeo copy \
+
+        # On E2E test, it uses podman local image unlike production.
+        # Setting graphroot for this case is necessary to find local image by podman CLI.
+        DRIVER=$(podman info --format '{{ .Store.GraphDriverName }}')
+        GRAPHROOT=$(podman info --format '{{ .Store.GraphRoot }}')
+        mkdir -p /tmp/podcvd-podman-config
+        cat <<EOF > /tmp/podcvd-podman-config/storage.conf
+        [storage]
+        driver = "$DRIVER"
+        graphroot = "$GRAPHROOT"
+        rootless_storage_path = "$GRAPHROOT"
+        EOF
+
+        CONTAINERS_STORAGE_CONF=/tmp/podcvd-podman-config/storage.conf skopeo copy \
           docker-archive:cuttlefish-orchestration.tar \
           containers-storage:localhost/cuttlefish-orchestration:latest
     - name: Run cvd e2e test for podcvd
@@ -529,4 +542,5 @@ jobs:
           --test_env=HOME=$HOME \
           --test_env=USE_PODCVD=true \
           --test_env=XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+          --test_env=CONTAINERS_STORAGE_CONF=/tmp/podcvd-podman-config/storage.conf \
           --test_output=errors
