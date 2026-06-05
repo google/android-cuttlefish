@@ -23,10 +23,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
-
-	"github.com/docker/docker/client"
 )
 
 type ContainerConfig struct {
@@ -68,22 +65,10 @@ type CuttlefishContainerManager interface {
 	StopAndRemoveContainer(ctx context.Context, ctr string) error
 }
 
-type CuttlefishContainerManagerImpl struct {
-	cli *client.Client
-}
+type CuttlefishContainerManagerImpl struct{}
 
-func NewCuttlefishContainerManager() (CuttlefishContainerManager, error) {
-	cliopts := []client.Opt{
-		client.WithAPIVersionNegotiation(),
-		client.WithHost(RootlessPodmanSocketAddr()),
-	}
-	cli, err := client.NewClientWithOpts(cliopts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create a new container engine client: %w", err)
-	}
-	return &CuttlefishContainerManagerImpl{
-		cli: cli,
-	}, nil
+func NewCuttlefishContainerManager() CuttlefishContainerManager {
+	return &CuttlefishContainerManagerImpl{}
 }
 
 func (m *CuttlefishContainerManagerImpl) ImageExists(ctx context.Context, name string) (bool, error) {
@@ -224,9 +209,4 @@ func (m *CuttlefishContainerManagerImpl) StopAndRemoveContainer(ctx context.Cont
 		return fmt.Errorf("failed to stop and remove container %q: %w", ctr, err)
 	}
 	return nil
-}
-
-func RootlessPodmanSocketAddr() string {
-	socketPath := filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), "podman/podman.sock")
-	return fmt.Sprintf("unix://%s", socketPath)
 }

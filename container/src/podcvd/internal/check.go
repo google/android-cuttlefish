@@ -17,7 +17,6 @@ package internal
 import (
 	"fmt"
 	"log"
-	"os/exec"
 	"os/user"
 	"syscall"
 )
@@ -28,9 +27,6 @@ func CheckDeviceAccessible() error {
 		return fmt.Errorf("failed to get current user: %w", err)
 	}
 	username := u.Username
-
-	// Try to start Podman socket on-demand
-	ensurePodmanSocketRunning()
 
 	// Verify user is registered in /etc/podcvd.users
 	if _, err = readUserCidrFromConfig(username); err != nil {
@@ -54,10 +50,4 @@ func CheckDeviceAccessible() error {
 		}
 	}
 	return nil
-}
-
-func ensurePodmanSocketRunning() {
-	if err := exec.Command("systemctl", "--user", "enable", "--now", "podman.socket").Run(); err != nil {
-		log.Printf("Warning: failed to enable podman.socket dynamically: %v", err)
-	}
 }
