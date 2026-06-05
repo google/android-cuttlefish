@@ -325,8 +325,8 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		if _, err := ccm.CreateAndStartContainer(context.Background(), attemptFlags, ContainerName(groupName)); err != nil {
 			lastErr = err
 			// Cleanup created container if it failed.
-			inspectRes, inspectErr := ccm.GetClient().ContainerInspect(context.Background(), ContainerName(groupName))
-			if inspectErr == nil && inspectRes.Config.Labels[labelAttemptID] == attemptID {
+			containerInfo, inspectErr := ccm.InspectContainer(context.Background(), ContainerName(groupName))
+			if inspectErr == nil && containerInfo.Config.Labels[labelAttemptID] == attemptID {
 				ccm.StopAndRemoveContainer(context.Background(), ContainerName(groupName))
 			}
 			retryInterval := time.Duration(100+rand.Intn(201)) * time.Millisecond // 100-300 ms
