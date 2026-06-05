@@ -89,8 +89,8 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
   }
 
   impl->android_build_api_ = std::make_unique<AndroidBuildApi>(
-      *impl->retrying_http_client_, impl->android_creds_.get(),
-      impl->android_build_url_.get(), flags.wait_retry_period,
+      *impl->retrying_http_client_, *impl->android_build_url_,
+      impl->android_creds_.get(), flags.wait_retry_period,
       impl->cas_downloader_.get());
 
   if (flags.enable_caching && CanCache(target_directory, cache_base_path)) {

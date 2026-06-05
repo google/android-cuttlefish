@@ -87,13 +87,13 @@ Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
 }  // namespace
 
 AndroidBuildApi::AndroidBuildApi(HttpClient& http_client,
+                                 AndroidBuildUrl& android_build_url,
                                  CredentialSource* credential_source,
-                                 AndroidBuildUrl* android_build_url,
                                  const std::chrono::seconds retry_period,
                                  CasDownloader* cas_downloader)
     : http_client_(http_client),
-      credential_source_(credential_source),
       android_build_url_(android_build_url),
+      credential_source_(credential_source),
       retry_period_(retry_period),
       cas_downloader_(cas_downloader) {}
 
@@ -189,7 +189,7 @@ Result<SeekableZipSource> AndroidBuildApi::FileReader(
 
 Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
     std::string_view build_id, std::string_view target) {
-  const std::string url = android_build_url_->GetBuildUrl(build_id, target);
+  const std::string url = android_build_url_.GetBuildUrl(build_id, target);
   auto response =
       CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
 
@@ -233,7 +233,7 @@ Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
 Result<bool> AndroidBuildApi::BlockUntilTerminalStatus(
     std::string_view initial_status, std::string_view build_id,
     std::string_view target) {
-  const std::string url = android_build_url_->GetBuildUrl(build_id, target);
+  const std::string url = android_build_url_.GetBuildUrl(build_id, target);
   CF_EXPECTF(!initial_status.empty(),
              "\"{}\" is not a valid branch or build id.", build_id);
 
@@ -276,7 +276,7 @@ Result<std::vector<std::string>> AndroidBuildApi::Headers() {
 Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
     const std::string& branch, const std::string& target) {
   const std::string url =
-      android_build_url_->GetLatestBuildIdUrl(branch, target);
+      android_build_url_.GetLatestBuildIdUrl(branch, target);
   auto response =
       CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
 
@@ -303,7 +303,7 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
   std::unordered_set<std::string> artifacts;
 
   do {
-    const std::string url = android_build_url_->GetArtifactUrl(
+    const std::string url = android_build_url_.GetArtifactUrl(
         build.id, build.target, artifact_filenames, page_token);
     auto response =
         CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
@@ -352,7 +352,7 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
 Result<std::string> AndroidBuildApi::GetArtifactDownloadUrl(
     const DeviceBuild& build, const std::string& artifact) {
   const std::string download_url_endpoint =
-      android_build_url_->GetArtifactDownloadUrl(build.id, build.target,
+      android_build_url_.GetArtifactDownloadUrl(build.id, build.target,
                                                  artifact);
   auto response = CF_EXPECT(
       HttpGetToJson(http_client_, download_url_endpoint, CF_EXPECT(Headers())));
