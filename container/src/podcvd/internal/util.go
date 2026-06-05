@@ -23,23 +23,13 @@ import (
 	"strings"
 
 	"golang.org/x/sys/unix"
-
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
 )
 
 func Ipv4AddressesByGroupNames(ccm CuttlefishContainerManager, allContainers bool) (map[string]string, error) {
-	opts := container.ListOptions{
-		Filters: filters.NewArgs(
-			filters.Arg("label", labelGroupName),
-			filters.Arg("label", fmt.Sprintf("%s=%s", labelCreatedBy, valueCreatedBy)),
-		),
-		All: allContainers,
-	}
-	var containers []container.Summary
+	var containers []ContainerListEntry
 	var lastErr error
 	for retryCount := 0; retryCount < 10; retryCount++ {
-		containers, lastErr = ccm.GetClient().ContainerList(context.Background(), opts)
+		containers, lastErr = ccm.ListContainers(context.Background(), allContainers)
 		if lastErr == nil {
 			break
 		}

@@ -39,6 +39,16 @@ type ContainerInfo struct {
 	Config *ContainerConfig `json:"Config"`
 }
 
+type PortBinding struct {
+	IP          string `json:"host_ip"`
+	PrivatePort uint16 `json:"container_port"`
+}
+
+type ContainerListEntry struct {
+	Labels map[string]string `json:"Labels"`
+	Ports  []PortBinding     `json:"Ports"`
+}
+
 type CuttlefishContainerManager interface {
 	GetClient() *client.Client
 	// Check whether an image with the given name exists on the container engine or not
@@ -51,6 +61,8 @@ type CuttlefishContainerManager interface {
 	InspectContainer(ctx context.Context, name string) (*ContainerInfo, error)
 	// Create and start a container instance with raw extra flags
 	CreateAndStartContainer(ctx context.Context, extraFlags []string, name string) (string, error)
+	// List containers managed by podcvd
+	ListContainers(ctx context.Context, all bool) ([]ContainerListEntry, error)
 	// Execute a command on a running container instance
 	ExecOnContainer(ctx context.Context, ctr string, cmd []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error
 	// Stop and remove a container instance
@@ -158,6 +170,26 @@ func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Con
 		return "", fmt.Errorf("failed to create and start container: %w", err)
 	}
 	return strings.TrimSpace(stdout.String()), nil
+}
+
+func (m *CuttlefishContainerManagerImpl) ListContainers(ctx context.Context, all bool) ([]ContainerListEntry, error) {
+	args := []string{"ps", "--filter", "label=group_name", "--filter", "label=created_by=podcvd", "--format", "json"}
+	if all {
+		args = append(args, "--all")
+	}
+	cmd := exec.CommandContext(ctx, "podman", args...)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("failed to list containers: %s: %w", stderr.String(), err)
+	}
+	var entries []ContainerListEntry
+	if err := json.Unmarshal(stdout.Bytes(), &entries); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal container list: %w", err)
+	}
+	return entries, nil
 }
 
 func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ctr string, cmd []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
