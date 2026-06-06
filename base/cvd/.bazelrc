@@ -6,6 +6,28 @@ build --output_filter='^//((?!(external/libarchive|external/libevent|external/ru
 build --test_output=errors
 build --test_summary=terse
 
+# files with warnings from files they depend upon
+build --per_file_copt=cuttlefish/host/graphics_detector/vulkan\.cpp$@-Wno-deprecated-declarations
+# files with warnings that come from generated files either directly or indirectly through their includes
+build --per_file_copt=.*/cuttlefish/host/commands/casimir_control_server/casimir_control\.grpc\.pb\.cc$@-Wno-deprecated-declarations
+build --per_file_copt=.*/cuttlefish/host/commands/casimir_control_server/casimir_control\.grpc\.pb\.h$@-Wno-deprecated-declarations
+build --per_file_copt=.*/cuttlefish/host/commands/control_env_proxy_server/control_env_proxy\.grpc\.pb\.cc$@-Wno-deprecated-declarations
+build --per_file_copt=.*/cuttlefish/host/commands/control_env_proxy_server/control_env_proxy\.grpc\.pb\.h$@-Wno-deprecated-declarations
+build --per_file_copt=.*/cuttlefish/host/commands/echo_server/echo\.grpc\.pb\.cc$@-Wno-deprecated-declarations
+build --per_file_copt=.*/cuttlefish/host/commands/echo_server/echo\.grpc\.pb\.h$@-Wno-deprecated-declarations
+build --per_file_copt=.*/cuttlefish/host/commands/gnss_grpc_proxy/gnss_grpc_proxy\.grpc\.pb\.h$@-Wno-deprecated-declarations
+build --per_file_copt=.*/cuttlefish/host/commands/gnss_grpc_proxy/.*\.grpc\.pb\.cc$@-Wno-deprecated-declarations
+build --per_file_copt=.*/cuttlefish/host/commands/openwrt_control_server/openwrt_control\.grpc\.pb\.cc$@-Wno-deprecated-declarations
+build --per_file_copt=.*/cuttlefish/host/commands/openwrt_control_server/openwrt_control\.grpc\.pb\.h$@-Wno-deprecated-declarations
+build --per_file_copt=.*/cuttlefish/host/commands/screen_recording_server/screen_recording\.grpc\.pb\.cc$@-Wno-deprecated-declarations
+build --per_file_copt=.*/cuttlefish/host/commands/screen_recording_server/screen_recording\.grpc\.pb\.h$@-Wno-deprecated-declarations
+build --per_file_copt=cuttlefish/host/commands/casimir_control_server/main\.cpp$@-Wno-deprecated-declarations
+build --per_file_copt=cuttlefish/host/commands/casimir_control_server/casimir_controller\.cpp$@-Wno-deprecated-declarations
+build --per_file_copt=cuttlefish/host/commands/cvd_import_locations/main\.cc$@-Wno-deprecated-declarations
+build --per_file_copt=cuttlefish/host/commands/openwrt_control_server/main\.cpp$@-Wno-deprecated-declarations
+build --per_file_copt=cuttlefish/host/commands/run_cvd/boot_state_machine\.cc$@-Wno-deprecated-declarations
+build --per_file_copt=cuttlefish/host/commands/screen_recording_server/main\.cpp$@-Wno-deprecated-declarations
+
 # Match go/ubsan for always-enabled features
 # Docs: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 
