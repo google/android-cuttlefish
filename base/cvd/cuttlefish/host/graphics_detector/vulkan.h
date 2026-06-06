@@ -173,7 +173,6 @@ class Vk {
         mPhysicalDevice(std::move(physical_device)),
         mDevice(std::move(device)),
         mQueue(std::move(queue)),
-        mQueueFamilyIndex(queue_family_index),
         mCommandPool(std::move(command_pool)),
         mStagingBuffer(std::move(stagingBuffer)),
         mStagingBufferMemory(std::move(stagingBufferMemory)) {}
@@ -185,7 +184,6 @@ class Vk {
   vk::PhysicalDevice mPhysicalDevice;
   vk::UniqueDevice mDevice;
   vk::Queue mQueue;
-  uint32_t mQueueFamilyIndex;
   vk::UniqueCommandPool mCommandPool;
   static constexpr const VkDeviceSize kStagingBufferSize = 32 * 1024 * 1024;
   vk::UniqueBuffer mStagingBuffer;
