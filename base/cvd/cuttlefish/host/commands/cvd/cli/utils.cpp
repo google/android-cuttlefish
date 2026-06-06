@@ -38,6 +38,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/gflags_xml_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -63,7 +64,12 @@ Result<void> CheckProcessExitedNormally(siginfo_t infop,
 
 static Command FixGroupsIfNecessary(const std::string& command_name,
                                     const std::string& bin_path) {
-  if (InGroup("cvdnetwork") && InGroup("kvm")) {
+#ifndef __linux__
+  return Command(command_name).SetExecutable(bin_path);
+#endif
+  const bool has_net = InSandbox() || InGroup("cvdnetwork");
+  const bool has_kvm = IsKvmAccessible();
+  if (has_net && has_kvm) {
     return Command(command_name).SetExecutable(bin_path);
   }
   const std::string refresh_groups =

@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/container.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
 
 namespace cuttlefish {
@@ -98,7 +99,9 @@ Result<std::vector<HostConfigurationAction>> ValidateHostConfiguration() {
 
   // the check for cvdnetwork needs to happen even if the user is not in kvm, so
   // we can't just say UserInGroup("kvm") && UserInGroup("cvdnetwork")
-  PushOptional(actions, CF_EXPECT(PutUserInGroup("cvdnetwork")));
+  if (!InSandbox()) {
+    PushOptional(actions, CF_EXPECT(PutUserInGroup("cvdnetwork")));
+  }
 
   // if we're in the virtaccess group this is likely to be a CrOS environment.
   bool is_cros = InGroup("virtaccess");
@@ -109,7 +112,9 @@ Result<std::vector<HostConfigurationAction>> ValidateHostConfiguration() {
   } else {
     // this is regular Linux, so use the Debian group name and be more
     // conservative with the kernel version check.
-    PushOptional(actions, CF_EXPECT(PutUserInGroup("kvm")));
+    if (!IsKvmAccessible()) {
+      PushOptional(actions, CF_EXPECT(PutUserInGroup("kvm")));
+    }
     PushOptional(actions, CF_EXPECT(EnforceLinuxVersionAtLeast(version, 4, 8)));
   }
 #endif
