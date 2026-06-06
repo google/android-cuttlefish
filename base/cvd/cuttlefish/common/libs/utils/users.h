@@ -25,6 +25,7 @@ namespace cuttlefish {
 
 gid_t GroupIdFromName(const std::string& group_name);
 bool InGroup(const std::string& group);
+bool IsKvmAccessible();
 
 /**
  * returns the user's home defined by the system

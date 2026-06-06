@@ -126,4 +126,12 @@ Result<std::string> CurrentUserName() {
   return std::string(pwd.pw_name);
 }
 
+bool IsKvmAccessible() {
+#ifdef __linux__
+  return access("/dev/kvm", R_OK | W_OK) == 0 || InGroup("kvm");
+#else
+  return false;
+#endif
+}
+
 } // namespace cuttlefish
