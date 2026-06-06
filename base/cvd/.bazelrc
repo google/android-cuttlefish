@@ -27,6 +27,13 @@ build --per_file_copt=cuttlefish/host/commands/cvd_import_locations/main\.cc$@-W
 build --per_file_copt=cuttlefish/host/commands/openwrt_control_server/main\.cpp$@-Wno-deprecated-declarations
 build --per_file_copt=cuttlefish/host/commands/run_cvd/boot_state_machine\.cc$@-Wno-deprecated-declarations
 build --per_file_copt=cuttlefish/host/commands/screen_recording_server/main\.cpp$@-Wno-deprecated-declarations
+# TODO: these process_sandboxer files could potentially have their warnings fixed
+build --per_file_copt=cuttlefish/host/commands/process_sandboxer/main\.cpp$@-Wno-deprecated-declarations
+build --per_file_copt=cuttlefish/host/commands/process_sandboxer/policies\.cpp$@-Wno-deprecated-declarations
+build --per_file_copt=cuttlefish/host/commands/process_sandboxer/policies\.h$@-Wno-deprecated-declarations
+build --per_file_copt=cuttlefish/host/commands/process_sandboxer/policies/.*\.cpp$@-Wno-deprecated-declarations
+build --per_file_copt=cuttlefish/host/commands/process_sandboxer/sandbox_manager\.cpp$@-Wno-deprecated-declarations
+build --per_file_copt=cuttlefish/host/commands/process_sandboxer/sandbox_manager\.h$@-Wno-deprecated-declarations
 
 # Match go/ubsan for always-enabled features
 # Docs: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
