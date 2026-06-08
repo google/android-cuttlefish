@@ -30,6 +30,6 @@ namespace cuttlefish {
 Result<std::string> EncodeBase64(const void* _data, size_t size);
 Result<std::string> EncodeBase64(std::string_view);
 
-Result<std::vector<uint8_t>> DecodeBase64(const std::string& data);
+Result<std::vector<uint8_t>> DecodeBase64(std::string_view data);
 
 }  // namespace cuttlefish
