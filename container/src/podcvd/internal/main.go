@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -43,8 +44,10 @@ func Main(args []string) error {
 		cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
 		return handleToolingSubcommands(ccm, cvdArgs)
 	}
-	if err := CheckDeviceAccessible(); err != nil {
-		return err
+	if subcommand != "setup" {
+		if err := CheckDeviceAccessible(); err != nil {
+			return err
+		}
 	}
 	switch subcommand {
 	case "bugreport", "create", "display", "env", "logs", "monitor", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
@@ -67,7 +70,9 @@ func Main(args []string) error {
 		if err := ExecFetchCmdOnDisposableHost(ccm, cvdArgs); err != nil {
 			return err
 		}
-	case "cache", "load", "setup":
+	case "setup":
+		return setupPodcvd()
+	case "cache", "load":
 		// TODO(seungjaeyoo): Support other subcommands of cvd as well.
 		return fmt.Errorf("subcommand %q is not implemented yet", subcommand)
 	default:
@@ -378,5 +383,16 @@ func handleLintExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error
 	}
 	output := strings.ReplaceAll(stdoutBuf.String(), "/dev/stdin", configPath)
 	os.Stdout.WriteString(output)
+	return nil
+}
+
+func setupPodcvd() error {
+	cmd := exec.Command("podcvd-setup")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to execute 'podcvd-setup': %w", err)
+	}
 	return nil
 }
