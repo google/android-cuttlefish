@@ -57,11 +57,7 @@ InstanceDisplays DefaultDisplays() {
 
 Result<std::optional<InstancesDisplays>> DisplaysFlag(std::vector<std::string> args) {
   std::optional<std::string> flag_str_opt;
-  auto flag = GflagsCompatFlag("displays_binproto")
-                  .Setter([&flag_str_opt](const FlagMatch& m) -> Result<void> {
-                    flag_str_opt = m.value;
-                    return {};
-                  });
+  auto flag = GflagsCompatFlag("displays_binproto", flag_str_opt);
   CF_EXPECT(ConsumeFlags({flag}, args));
   if (!flag_str_opt.has_value()) {
     return {};

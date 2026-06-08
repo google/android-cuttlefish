@@ -64,9 +64,9 @@ Result<Parser> Parser::ConsumeAndParse(std::vector<std::string>& args) {
   flags.push_back(HelpFlag(flags, kHelp));
   bool matched_help_xml = false;
   flags.push_back(HelpXmlFlag(flags, std::cout, matched_help_xml, ""));
-  flags.push_back(UnexpectedArgumentGuard());
-  constexpr const bool recognize_end_of_option_mark = true;
-  CF_EXPECT(ConsumeFlags(flags, args, recognize_end_of_option_mark));
+  CF_EXPECT(ConsumeFlags(
+      flags, args,
+      {.stop_at_double_dashes = true, .fail_on_unexpected_argument = true}));
   return parser;
 }
 

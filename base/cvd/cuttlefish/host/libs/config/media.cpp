@@ -18,20 +18,22 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-static constexpr char kMediaTypeV4l2EmulatedCameraSPlane[] = "v4l2_emulated_camera_splane";
-static constexpr char kMediaTypeV4l2EmulatedCameraMPlane[] = "v4l2_emulated_camera_mplane";
+static constexpr char kMediaTypeV4l2EmulatedCameraSPlane[] =
+    "v4l2_emulated_camera_splane";
+static constexpr char kMediaTypeV4l2EmulatedCameraMPlane[] =
+    "v4l2_emulated_camera_mplane";
 static constexpr char kMediaTypeV4l2Proxy[] = "v4l2_proxy";
 
 Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
@@ -51,7 +53,7 @@ Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
 
   auto type_it = props.find("type");
   CF_EXPECT(type_it != props.end(), "Missing media type");
-  CuttlefishConfig::MediaType type { CuttlefishConfig::MediaType::kUnknown };
+  CuttlefishConfig::MediaType type{CuttlefishConfig::MediaType::kUnknown};
   if (type_it->second == kMediaTypeV4l2EmulatedCameraSPlane) {
     type = CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane;
   } else if (type_it->second == kMediaTypeV4l2EmulatedCameraMPlane) {
@@ -71,10 +73,10 @@ Result<std::vector<CuttlefishConfig::MediaConfig>> ParseMediaConfigsFromArgs(
     std::vector<std::string>& args) {
   std::vector<std::string> repeated_media_flag_values;
   const std::vector<Flag> media_flags = {
-      GflagsCompatFlag(kMediaFlag)
+      Flag::StringFlag(kMediaFlag)
           .Help(kMediaHelp)
-          .Setter([&](const FlagMatch& match) -> Result<void> {
-            repeated_media_flag_values.push_back(match.value);
+          .Setter([&](std::string_view arg) -> Result<void> {
+            repeated_media_flag_values.emplace_back(arg);
             return {};
           }),
   };

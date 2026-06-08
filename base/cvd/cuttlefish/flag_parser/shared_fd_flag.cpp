@@ -17,31 +17,28 @@
 
 #include <unistd.h>
 
-#include <functional>
 #include <string>
 
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/flag_parser/gflags_compat.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-static Result<void> Set(const FlagMatch& match, SharedFD& out) {
-  int raw_fd;
-  CF_EXPECTF(absl::SimpleAtoi(match.value, &raw_fd),
-             "Failed to parse value \"{}\" for fd flag \"{}\"", match.value,
-             match.key);
-  out = SharedFD::Dup(raw_fd);
-  if (out->IsOpen()) {
-    close(raw_fd);
-  }
-  return {};
-}
-
 Flag SharedFDFlag(const std::string& name, SharedFD& out) {
-  return GflagsCompatFlag(name).Setter(
-      [&out](const FlagMatch& mat) { return Set(mat, out); });
+  return Flag::StringFlag(name).Setter(
+      [&out, name](std::string_view arg) -> Result<void> {
+        int raw_fd;
+        CF_EXPECTF(absl::SimpleAtoi(arg, &raw_fd),
+                   "Failed to parse value \"{}\" for fd flag \"--{}\"", arg,
+                   name);
+        out = SharedFD::Dup(raw_fd);
+        CF_EXPECTF(out->IsOpen(), "Unable to dup file descriptor '{}': {}",
+                   raw_fd, out->StrError());
+        close(raw_fd);
+        return {};
+      });
 }
 
 }  // namespace cuttlefish

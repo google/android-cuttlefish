@@ -46,9 +46,9 @@ Result<bool> ProcessArguments(
   std::vector<Flag> flags;
   flags.emplace_back(GflagsCompatFlag("json", json_formatted)
                          .Help("Output version information in JSON format."));
-  flags.emplace_back(UnexpectedArgumentGuard());
 
-  CF_EXPECTF(ConsumeFlags(flags, version_arguments),
+  CF_EXPECTF(ConsumeFlags(flags, version_arguments,
+                          {.fail_on_unexpected_argument = true}),
              "Failure processing arguments/flags: cvd version {}",
              fmt::join(subcommand_arguments, " "));
   return json_formatted;

@@ -58,7 +58,8 @@ bool RemoveCvdCommandHandler::RequiresDeviceExists() const { return true; }
 
 Result<void> RemoveCvdCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
-  CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, subcmd_args));
+  CF_EXPECT(
+      ConsumeFlags({}, subcmd_args, {.fail_on_unexpected_argument = true}));
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_ERR(NoGroupMessage(request));

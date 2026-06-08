@@ -44,7 +44,7 @@ CvdDevicePowerBtnCommandHandler::CvdDevicePowerBtnCommandHandler(
 Result<void> CvdDevicePowerBtnCommandHandler::Handle(
     const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
-  CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
+  CF_EXPECT(ConsumeFlags({}, args, {.fail_on_unexpected_argument = true}));
   auto [instance, _] =
       CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                 "Unable to select an instance");

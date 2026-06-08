@@ -72,8 +72,9 @@ class TouchpadsConfigsFlagImpl : public TouchpadsConfigsFlag {
   }
 
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
-    Flag touchpad_flag = GflagsCompatFlag(kTouchpadFlag).Help(kTouchpadHelp);
-    return WriteGflagsCompatXml({touchpad_flag}, out);
+    Flag touchpad_flag = Flag::StringFlag(kTouchpadFlag).Help(kTouchpadHelp);
+    WriteGflagsCompatXml({touchpad_flag}, out);
+    return true;
   }
 
  private:

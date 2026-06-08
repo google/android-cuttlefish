@@ -17,14 +17,12 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 
 #include <concepts>
-#include <functional>
 #include <iostream>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <unordered_set>
 #include <vector>
 
 #include "absl/log/log.h"
@@ -32,8 +30,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
-#include <fmt/format.h>
-#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
+#include "fmt/format.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/result/result.h"
@@ -91,7 +88,7 @@ Result<T> ParseFlagValue(std::string_view str) {
 }
 
 // Setter for bool, default getter is fine
-template<>
+template <>
 Result<bool> ParseFlagValue<bool>(std::string_view str) {
   bool result;
   CF_EXPECT(absl::SimpleAtob(str, &result));
@@ -113,7 +110,8 @@ std::string FlagValueToString(const std::vector<T>& values) {
 // ParseFlagValue too and just be an overload but using a different name makes
 // it clear which implementation the compiler is choosing.
 template <typename T>
-Result<std::vector<T>> ParseFlagVectorValue(std::string_view str, T default_value) {
+Result<std::vector<T>> ParseFlagVectorValue(std::string_view str,
+                                            T default_value) {
   if (str.empty()) {
     return {};
   }
@@ -160,16 +158,15 @@ Result<std::optional<T>> ParseFlagOptionalValue(std::string_view str,
 // Template versions of the GflagsCompatFlag functions to reduce duplication
 template <std::integral T>
 Flag GflagsCompatFlagImpl(const std::string& name, T& value) {
-  return GflagsCompatFlag(name)
+  return Flag::StringFlag(name)
       .Getter([&value]() { return std::to_string(value); })
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
+      .Setter([&value](std::string_view arg) -> Result<void> {
         if constexpr (std::is_unsigned_v<T>) {
-          CF_EXPECTF(absl::SimpleAtoi<T>(match.value, &value),
-                     "Failed to parse \"{}\" as an unsigned integer",
-                     match.value);
+          CF_EXPECTF(absl::SimpleAtoi<T>(arg, &value),
+                     "Failed to parse \"{}\" as an unsigned integer", arg);
         } else {
-          CF_EXPECTF(absl::SimpleAtoi<T>(match.value, &value),
-                     "Failed to parse \"{}\" as an integer", match.value);
+          CF_EXPECTF(absl::SimpleAtoi<T>(arg, &value),
+                     "Failed to parse \"{}\" as an integer", arg);
         }
         return {};
       });
@@ -178,22 +175,22 @@ Flag GflagsCompatFlagImpl(const std::string& name, T& value) {
 template <typename T>
 Flag GflagsCompatFlagImpl(const std::string& name, std::vector<T>& value,
                           const T default_value) {
-  return GflagsCompatFlag(name)
+  return Flag::StringFlag(name)
       .Getter([&value]() { return FlagValueToString(value); })
-      .Setter([name, &value,
-               default_value](const FlagMatch& match) -> Result<void> {
-        value = CF_EXPECT(ParseFlagVectorValue(match.value, default_value));
-        return {};
-      });
+      .Setter(
+          [name, &value, default_value](std::string_view arg) -> Result<void> {
+            value = CF_EXPECT(ParseFlagVectorValue(arg, default_value));
+            return {};
+          });
 }
 
 template <typename T>
 Flag GflagsCompatFlagImpl(const std::string& name, std::optional<T>& value,
                           CoerceToNullopt opt) {
-  return GflagsCompatFlag(name)
+  return Flag::StringFlag(name)
       .Getter([&value, opt]() { return FlagValueToString(value, opt); })
-      .Setter([&value, opt](const FlagMatch& match) -> Result<void> {
-        value = CF_EXPECT(ParseFlagOptionalValue<T>(match.value, opt));
+      .Setter([&value, opt](std::string_view arg) -> Result<void> {
+        value = CF_EXPECT(ParseFlagOptionalValue<T>(arg, opt));
         return {};
       });
 }
@@ -202,140 +199,38 @@ std::string XmlEscape(const std::string& s) {
   return absl::StrReplaceAll(s, {{"<", "&lt;"}, {">", "&gt;"}});
 }
 
-Result<void> GflagsCompatBoolFlagSetter(const std::string& name, bool& value,
-                                        const FlagMatch& match) {
-  const auto& key = match.key;
-  if (key == "-" + name || key == "--" + name) {
-    value = true;
-    return {};
-  } else if (key == "-no" + name || key == "--no" + name) {
-    value = false;
-    return {};
-  } else if (key == "-" + name + "=" || key == "--" + name + "=") {
-    if (match.value == "true") {
-      value = true;
-      return {};
-    } else if (match.value == "false") {
-      value = false;
-      return {};
-    } else {
-      return CF_ERRF("Unexpected boolean value \"{}\" for \"{}\"", match.value,
-                     name);
-    }
-  }
-  return CF_ERRF("Unexpected key \"{}\" for \"{}\"", match.key, name);
-}
-
-Result<void> GflagsCompatBoolFlagSetter(const std::string& name,
-                                        std::optional<bool>& value,
-                                        const FlagMatch& match,
-                                        CoerceToNullopt opt) {
-  const auto& key = match.key;
-  if (key == "-" + name || key == "--" + name) {
-    value = true;
-    return {};
-  } else if (key == "-no" + name || key == "--no" + name) {
-    value = false;
-    return {};
-  } else if (key == "-" + name + "=" || key == "--" + name + "=") {
-    if (ShouldBeNullOpt(match.value, opt)) {
-      value = std::nullopt;
-      return {};
-    }
-    if (match.value == "true") {
-      value = true;
-      return {};
-    } else if (match.value == "false") {
-      value = false;
-      return {};
-    } else {
-      return CF_ERRF("Unexpected boolean value \"{}\" for \"{}\"", match.value,
-                     name);
-    }
-  }
-  return CF_ERRF("Unexpected key \"{}\" for \"{}\"", match.key, name);
-}
-
 }  // namespace
 
-bool WriteGflagsCompatXml(const Flag& flag, std::ostream& out) {
-  std::unordered_set<std::string> name_guesses;
-  for (const auto& alias : flag.aliases_) {
-    std::string_view name = alias.name;
-    if (!absl::ConsumePrefix(&name, "-")) {
-      continue;
-    }
-    absl::ConsumePrefix(&name, "-");
-    if (alias.mode == FlagAliasMode::kFlagExact) {
-      absl::ConsumePrefix(&name, "no");
-      name_guesses.insert(std::string{name});
-    } else if (alias.mode == FlagAliasMode::kFlagConsumesFollowing) {
-      name_guesses.insert(std::string{name});
-    } else if (alias.mode == FlagAliasMode::kFlagPrefix) {
-      if (!absl::ConsumeSuffix(&name, "=")) {
-        continue;
-      }
-      name_guesses.insert(std::string{name});
-    }
+void WriteGflagsCompatXml(const Flag& flag, std::ostream& out) {
+  std::string type_str;
+  switch (flag.style_) {
+    case Flag::Style::String:
+      type_str = "string";
+      break;
+    case Flag::Style::Bool:
+      type_str = "bool";
+      break;
   }
-  bool found_alias = false;
-  for (const auto& name : name_guesses) {
-    bool has_bool_aliases =
-        flag.HasAlias({FlagAliasMode::kFlagPrefix, "-" + name + "="}) &&
-        flag.HasAlias({FlagAliasMode::kFlagPrefix, "--" + name + "="}) &&
-        flag.HasAlias({FlagAliasMode::kFlagExact, "-" + name}) &&
-        flag.HasAlias({FlagAliasMode::kFlagExact, "--" + name}) &&
-        flag.HasAlias({FlagAliasMode::kFlagExact, "-no" + name}) &&
-        flag.HasAlias({FlagAliasMode::kFlagExact, "--no" + name});
-    bool has_other_aliases =
-        flag.HasAlias({FlagAliasMode::kFlagPrefix, "-" + name + "="}) &&
-        flag.HasAlias({FlagAliasMode::kFlagPrefix, "--" + name + "="}) &&
-        flag.HasAlias({FlagAliasMode::kFlagConsumesFollowing, "-" + name}) &&
-        flag.HasAlias({FlagAliasMode::kFlagConsumesFollowing, "--" + name});
-    bool has_help_aliases = flag.HasAlias({FlagAliasMode::kFlagExact, "-help"}) &&
-                            flag.HasAlias({FlagAliasMode::kFlagExact, "--help"});
-    std::vector<bool> has_aliases = {has_bool_aliases, has_other_aliases,
-                                     has_help_aliases};
-    const auto true_count =
-        std::count(has_aliases.cbegin(), has_aliases.cend(), true);
-    if (true_count > 1) {
-      LOG(ERROR) << "Expected exactly one of has_bool_aliases, "
-                 << "has_other_aliases, and has_help_aliases, got "
-                 << true_count << " for \"" << name << "\".";
-      return false;
-    }
-    if (true_count == 0) {
-      continue;
-    }
-    found_alias = true;
-    std::string type_str =
-        (has_bool_aliases || has_help_aliases) ? "bool" : "string";
-    // Lifted from external/gflags/src/gflags_reporting.cc:DescribeOneFlagInXML
-    out << "<flag>\n";
-    out << "  <file>file.cc</file>\n";
-    out << "  <name>" << XmlEscape(name) << "</name>\n";
-    auto help = flag.help_ ? XmlEscape(*flag.help_) : std::string{""};
-    out << "  <meaning>" << help << "</meaning>\n";
-    auto value = flag.getter_ ? XmlEscape((*flag.getter_)()) : std::string{""};
-    out << "  <default>" << value << "</default>\n";
-    out << "  <current>" << value << "</current>\n";
-    out << "  <type>" << type_str << "</type>\n";
-    out << "</flag>\n";
-  }
-  return found_alias;
+  // Lifted from external/gflags/src/gflags_reporting.cc:DescribeOneFlagInXML
+  out << "<flag>\n";
+  out << "  <file>file.cc</file>\n";
+  out << "  <name>" << flag.Name() << "</name>\n";
+  out << "  <meaning>" << XmlEscape(flag.help_) << "</meaning>\n";
+  auto value = XmlEscape(flag.getter_());
+  out << "  <default>" << value << "</default>\n";
+  out << "  <current>" << value << "</current>\n";
+  out << "  <type>" << type_str << "</type>\n";
+  out << "</flag>\n";
 }
 
-bool WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
+void WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
   for (const auto& flag : flags) {
-    if (!WriteGflagsCompatXml(flag, out)) {
-      return false;
-    }
+    WriteGflagsCompatXml(flag, out);
   }
-  return true;
 }
 
 Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {
-  auto setter = [&flags, text](FlagMatch) -> Result<void> {
+  auto setter = [&flags, text](std::string_view) -> Result<void> {
     if (!text.empty()) {
       LOG(INFO) << text;
     }
@@ -346,36 +241,22 @@ Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {
     std::exit(1);
     return {};
   };
-  return Flag("help")
-      .Alias({FlagAliasMode::kFlagExact, "-help"})
-      .Alias({FlagAliasMode::kFlagExact, "--help"})
-      .Setter(setter);
+  return Flag::BoolFlag("help").Setter(setter);
 }
 
-Flag GflagsCompatBoolFlag(const std::string& name) {
-  return Flag(name)
-      .Alias({FlagAliasMode::kFlagPrefix, "-" + name + "="})
-      .Alias({FlagAliasMode::kFlagPrefix, "--" + name + "="})
-      .Alias({FlagAliasMode::kFlagExact, "-" + name})
-      .Alias({FlagAliasMode::kFlagExact, "--" + name})
-      .Alias({FlagAliasMode::kFlagExact, "-no" + name})
-      .Alias({FlagAliasMode::kFlagExact, "--no" + name});
-}
-
-Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out, bool& value,
-                 std::string text) {
+Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out,
+                 bool& print_xml, std::string text) {
   const std::string name = "helpxml";
-  auto setter = [name, &out, &value, text,
-                 &flags](const FlagMatch& match) -> Result<void> {
-    bool print_xml = false;
-    CF_EXPECT(GflagsCompatBoolFlagSetter(name, print_xml, match));
+  auto setter = [name, &out, &print_xml, text,
+                 &flags](std::string_view arg) -> Result<void> {
+    print_xml = CF_EXPECTF(ParseFlagValue<bool>(arg),
+                           "Unexpected value for '--helpxml': '{}'", arg);
     if (!print_xml) {
       return {};
     }
     if (!text.empty()) {
       out << text << std::endl;
     }
-    value = print_xml;
     out << "<?xml version=\"1.0\"?>" << std::endl << "<AllFlags>" << std::endl;
     WriteGflagsCompatXml(flags, out);
     out << "</AllFlags>\n" << std::flush;
@@ -383,22 +264,14 @@ Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out, bool& value,
     std::exit(1);
     return {};
   };
-  return GflagsCompatBoolFlag(name).Setter(setter);
-}
-
-Flag GflagsCompatFlag(const std::string& name) {
-  return Flag(name)
-      .Alias({FlagAliasMode::kFlagPrefix, "-" + name + "="})
-      .Alias({FlagAliasMode::kFlagPrefix, "--" + name + "="})
-      .Alias({FlagAliasMode::kFlagConsumesFollowing, "-" + name})
-      .Alias({FlagAliasMode::kFlagConsumesFollowing, "--" + name});
+  return Flag::BoolFlag(name).Setter(setter);
 }
 
 Flag GflagsCompatFlag(const std::string& name, std::string& value) {
-  return GflagsCompatFlag(name)
+  return Flag::StringFlag(name)
       .Getter([&value]() { return value; })
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
-        value = match.value;
+      .Setter([&value](std::string_view arg) -> Result<void> {
+        value = arg;
         return {};
       });
 }
@@ -412,10 +285,12 @@ Flag GflagsCompatFlag(const std::string& name, size_t& value) {
 }
 
 Flag GflagsCompatFlag(const std::string& name, bool& value) {
-  return GflagsCompatBoolFlag(name)
+  return Flag::BoolFlag(name)
       .Getter([&value]() { return fmt::format("{}", value); })
-      .Setter([name, &value](const FlagMatch& match) {
-        return GflagsCompatBoolFlagSetter(name, value, match);
+      .Setter([name, &value](std::string_view arg) -> Result<void> {
+        value = CF_EXPECTF(ParseFlagValue<bool>(arg),
+                           "Unexpected value for \"--{}\": \"{}\"", arg, name);
+        return {};
       });
 }
 
@@ -424,8 +299,7 @@ Flag GflagsCompatFlag(const std::string& name,
   return GflagsCompatFlagImpl<std::string>(name, value, "");
 }
 
-Flag GflagsCompatFlag(const std::string& name,
-                      std::vector<unsigned>& value) {
+Flag GflagsCompatFlag(const std::string& name, std::vector<unsigned>& value) {
   return GflagsCompatFlagImpl<unsigned>(name, value, 0);
 }
 
@@ -435,8 +309,7 @@ Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
 }
 
 Flag GflagsCompatFlag(const std::string& name,
-                      std::optional<std::string>& value,
-                      CoerceToNullopt opt) {
+                      std::optional<std::string>& value, CoerceToNullopt opt) {
   return GflagsCompatFlagImpl(name, value, opt);
 }
 
@@ -462,10 +335,13 @@ Flag GflagsCompatFlag(const std::string& name, std::optional<int64_t>& value,
 
 Flag GflagsCompatFlag(const std::string& name, std::optional<bool>& value,
                       CoerceToNullopt opt) {
-  return GflagsCompatBoolFlag(name)
-      .Getter([&value, opt]() { return FlagValueToString(value, opt); })
-      .Setter([name, &value, opt](const FlagMatch& match) {
-        return GflagsCompatBoolFlagSetter(name, value, match, opt);
+  return Flag::BoolFlag(name)
+      .Getter([&value]() -> std::string {
+        return value ? fmt::format("{}", *value) : "";
+      })
+      .Setter([name, &value, opt](std::string_view arg) -> Result<void> {
+        value = CF_EXPECT(ParseFlagOptionalValue<bool>(arg, opt));
+        return {};
       });
 }
 

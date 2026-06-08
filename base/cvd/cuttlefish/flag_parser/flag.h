@@ -17,144 +17,104 @@
 #pragma once
 
 #include <functional>
-#include <optional>
 #include <ostream>
+#include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-/* The matching behavior used with the name in `FlagAlias::name`. */
-enum class FlagAliasMode {
-  /* Match arguments of the form `<name><value>`. In practice, <name> usually
-   * looks like "-flag=" or "--flag=", where the "-" and "=" are included in
-   * parsing. */
-  kFlagPrefix,
-  /* Match arguments of the form `<name>`. In practice, <name> will look like
-   * "-flag" or "--flag". */
-  kFlagExact,
-  /* Match a pair of arguments of the form `<name>` `<value>`. In practice,
-   * <name> will look like "-flag" or "--flag". */
-  kFlagConsumesFollowing,
-};
-
-/* A single matching rule for a `Flag`. One `Flag` can have multiple rules. */
-struct FlagAlias {
-  FlagAliasMode mode;
-  std::string name;
-};
-
-std::ostream& operator<<(std::ostream&, const FlagAlias&);
-
-/* A successful match in an argument list from a `FlagAlias` inside a `Flag`.
- * The `key` value corresponds to `FlagAlias::name`. For a match of
- * `FlagAliasMode::kFlagExact`, `key` and `value` will both be the `name`. */
-struct FlagMatch {
-  std::string key;
-  std::string value;
-};
+struct ConsumeFlagsOpts;
 
 class Flag {
  public:
-  explicit Flag(std::string name) : name_(std::move(name)) {}
+  static Flag StringFlag(std::string name);
+  static Flag BoolFlag(std::string name);
 
   /* Add an alias that triggers matches and calls to the `Setter` function. */
-  Flag& Alias(const FlagAlias& alias) &;
-  Flag Alias(const FlagAlias& alias) &&;
+  Flag& Alias(std::string alias) &;
+  Flag Alias(std::string alias) &&;
   /* Set help text, visible in the class ostream writer method. Optional. */
-  Flag& Help(const std::string&) &;
-  Flag Help(const std::string&) &&;
+  Flag& Help(std::string) &;
+  Flag Help(std::string) &&;
   /* Set a loader that displays the current value in help text. Optional. */
   Flag& Getter(std::function<std::string()>) &;
   Flag Getter(std::function<std::string()>) &&;
   /* Set the callback for matches. The callback may be invoked multiple times.
    */
-  Flag& Setter(std::function<Result<void>(const FlagMatch&)>) &;
-  Flag Setter(std::function<Result<void>(const FlagMatch&)>) &&;
+  Flag& Setter(std::function<Result<void>(std::string_view)>) &;
+  Flag Setter(std::function<Result<void>(std::string_view)>) &&;
   /* Add a callback to validate the parsed flag value. These callbacks are
    * guaranteed to be called after Setter succeeds in the same order they are
    * added. Validation stops when one validator callback fails, remaining
-   * callbacks are not executed.
-   */
+   * callbacks are not executed. */
   Flag& AddValidator(std::function<Result<void>()>) &;
   Flag AddValidator(std::function<Result<void>()>) &&;
 
-  const std::string& Name() const { return name_; }
+  std::string Name() const;
   bool operator<(const Flag& other) const { return Name() < other.Name(); }
 
   /* Examines a list of arguments, removing any matches from the list and
-   * invoking the `Setter` for every match. Returns `false` if the callback ever
-   * returns `false`. Non-matches are left in place. */
+   * invoking the `Setter` for every match. Returns error if the setter or any
+   * validator ever return error. Non-matches are left in place. */
   Result<void> Parse(std::vector<std::string>& arguments) const;
   Result<void> Parse(std::vector<std::string>&& arguments) const;
 
  private:
-  /* Write gflags `--helpxml` style output for a string-type flag. */
-  friend bool WriteGflagsCompatXml(const Flag&, std::ostream&);
-
-  /* Reports whether `Process` wants to consume zero, one, or two arguments. */
-  enum class FlagProcessResult {
-    /* Error in handling a flag, exit flag handling with an error result. */
-    kFlagSkip,                  /* Flag skipped; consume no arguments. */
-    kFlagConsumed,              /* Flag processed; consume one argument. */
-    kFlagConsumedWithFollowing, /* Flag processed; consume 2 arguments. */
+  enum class Style {
+    String,
+    Bool,
   };
+  Flag(std::string name, Style style);
 
-  void ValidateAlias(const FlagAlias& alias);
-  Flag& UnvalidatedAlias(const FlagAlias& alias) &;
-  Flag UnvalidatedAlias(const FlagAlias& alias) &&;
+  void ValidateAlias(const std::string&);
 
-  /* Attempt to match a single argument. */
-  Result<FlagProcessResult> Process(
-      const std::string& argument,
-      const std::optional<std::string>& next_arg) const;
-  Result<void> SetAndValidate(const FlagMatch&) const;
+  /* Calls the flag's setter with the appropriate value if it matches the
+   * current argument. Returns the number of arguments consumed by the flag
+   * (typically between 0 and 2), with 0 indicating the flag doesn't match. */
+  Result<size_t> Match(std::string_view current_arg,
+                       std::span<const std::string> following_args) const;
+  Result<size_t> MatchStringStyleFlag(std::string_view,
+                                      std::span<const std::string>) const;
+  Result<size_t> MatchBoolStyleFlag(std::string_view) const;
+  Result<void> SetAndValidate(std::string_view) const;
 
-  bool HasAlias(const FlagAlias&) const;
-
+  friend void WriteGflagsCompatXml(const Flag&, std::ostream&);
   friend std::ostream& operator<<(std::ostream&, const Flag&);
-  friend Flag InvalidFlagGuard();
-  friend Flag UnexpectedArgumentGuard();
+  friend Result<void> ConsumeFlags(const std::vector<Flag>&,
+                                   std::vector<std::string>&, ConsumeFlagsOpts);
 
-  friend Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
-                                              std::vector<std::string>&);
-
-  std::string name_;
-  std::vector<FlagAlias> aliases_;
-  std::optional<std::string> help_;
-  std::optional<std::function<std::string()>> getter_;
-  std::optional<std::function<Result<void>(const FlagMatch&)>> setter_;
+  std::vector<std::string> aliases_;
+  Style style_;
+  std::string help_;
+  std::function<std::string()> getter_ = []() { return ""; };
+  std::function<Result<void>(std::string_view value)> setter_;
   std::vector<std::function<Result<void>()>> validators_;
 };
 
 std::ostream& operator<<(std::ostream&, const Flag&);
 
-/* Catches any argument that begin with `-` and errors out. When used after all
- * valid flags it effectively fails on unrecognized flags.
+struct ConsumeFlagsOpts {
+  /* Stop matching flags when the "--" separator is found. The other options
+   * only apply to the arguments up to but exluding the "--", if present. */
+  bool stop_at_double_dashes = false;
+  /* Fail if there are unconsumed arguments left. */
+  bool fail_on_unexpected_argument = false;
+  /* Stops matching if an unrecognized argument is encountered; although it
+   * still succeeds unless configured to fail by one of the previous options. */
+  bool constrained_matching = false;
+};
+/* Matches flags against a list of arguments, removing all matches and leaving
+ * only unmatched arguments.
  */
-Flag InvalidFlagGuard();
-/* Catches any arguments not extracted by other Flag matchers and errors out.
- * This effectively denies unknown flags and any positional arguments. */
-Flag UnexpectedArgumentGuard();
-
-/* Handles a list of flags. Flags are matched in the order given in case two
- * flags match the same argument. Matched flags are removed, leaving only
- * unmatched arguments. */
 Result<void> ConsumeFlags(const std::vector<Flag>& flags,
                           std::vector<std::string>& args,
-                          bool recognize_end_of_option_mark = false);
+                          ConsumeFlagsOpts opts = {});
 Result<void> ConsumeFlags(const std::vector<Flag>& flags,
-                          std::vector<std::string>&&,
-                          bool recognize_end_of_option_mark = false);
-
-/* Handles a list of flags. Arguments are handled from the beginning. When an
- * unrecognized argument is encountered, parsing stops. At most one flag matcher
- * can handle a particular argument. */
-Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
-                                     std::vector<std::string>&);
-Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
-                                     std::vector<std::string>&&);
+                          std::vector<std::string>&& args,
+                          ConsumeFlagsOpts opts = {});
 
 }  // namespace cuttlefish

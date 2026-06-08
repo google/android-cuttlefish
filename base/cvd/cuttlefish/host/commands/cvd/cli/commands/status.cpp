@@ -105,10 +105,9 @@ Result<StatusCommandOptions> ParseFlags(cvd_common::Args& args) {
       GflagsCompatFlag("wait_for_launcher", ret.wait_for_launcher_seconds),
       GflagsCompatFlag("instance_name", ret.instance_name),
       GflagsCompatFlag("print", ret.print),
-      UnexpectedArgumentGuard(),
   };
 
-  CF_EXPECT(ConsumeFlags(flags, args));
+  CF_EXPECT(ConsumeFlags(flags, args, {.fail_on_unexpected_argument = true}));
 
   return ret;
 }

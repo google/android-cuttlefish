@@ -116,14 +116,14 @@ class ConfigFlagImpl : public ConfigFlag {
         configs_(s.Size(), kDefaultConfig),
         is_default_(true),
         flag_(
-            GflagsCompatFlag("config")
+            Flag::StringFlag("config")
                 .Help("Config preset name. Will automatically set flag fields "
                       "using the values from this file of presets. See "
                       "device/google/cuttlefish/shared/config/config_*.json "
                       "for possible values.")
                 .Getter([this]() { return VectorizedFlagValue(configs_); })
-                .Setter([this](const FlagMatch& m) -> Result<void> {
-                  CF_EXPECT(ChooseConfigs(m.value));
+                .Setter([this](std::string_view arg) -> Result<void> {
+                  CF_EXPECT(ChooseConfigs(arg));
                   return {};
                 })) {}
 
@@ -178,11 +178,12 @@ class ConfigFlagImpl : public ConfigFlag {
     return {};
   }
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
-    return WriteGflagsCompatXml(flag_, out);
+    WriteGflagsCompatXml(flag_, out);
+    return true;
   }
 
  private:
-  Result<void> ChooseConfigs(const std::string& value) {
+  Result<void> ChooseConfigs(std::string_view value) {
     std::vector<std::string> configs = absl::StrSplit(value, ",");
     for (const auto& name : configs) {
       CF_EXPECTF(config_reader_.HasConfig(name),

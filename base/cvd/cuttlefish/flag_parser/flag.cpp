@@ -19,142 +19,77 @@
 #include <algorithm>
 #include <functional>
 #include <iostream>
-#include <iterator>
-#include <optional>
 #include <ostream>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/log/check.h"
-#include "absl/log/log.h"
-#include "absl/strings/match.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/strip.h"
 
+#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 namespace {
 
-struct Separated {
-  std::vector<std::string> args_before_mark;
-  std::vector<std::string> args_after_mark;
-};
-Separated SeparateByEndOfOptionMark(std::vector<std::string> args) {
-  std::vector<std::string> args_before_mark;
-  std::vector<std::string> args_after_mark;
-
-  auto itr = std::find(args.begin(), args.end(), "--");
-  bool has_mark = (itr != args.end());
-  if (!has_mark) {
-    args_before_mark = std::move(args);
-  } else {
-    args_before_mark.insert(args_before_mark.end(), args.begin(), itr);
-    args_after_mark.insert(args_after_mark.end(), itr + 1, args.end());
+// Removes "--" or "-" from the beginning. Returns true if it removed something.
+bool ConsumeDashes(std::string_view& flag_arg) {
+  if (!absl::ConsumePrefix(&flag_arg, "-")) {
+    return false;
   }
-
-  return Separated{
-      .args_before_mark = std::move(args_before_mark),
-      .args_after_mark = std::move(args_after_mark),
-  };
+  absl::ConsumePrefix(&flag_arg, "-");
+  return true;
 }
 
-Result<void> ConsumeFlagsImpl(const std::vector<Flag>& flags,
-                                     std::vector<std::string>& args) {
-  for (const auto& flag : flags) {
-    CF_EXPECT(flag.Parse(args));
-  }
-  return {};
-}
-
-Result<void> ConsumeFlagsImpl(const std::vector<Flag>& flags,
-                                     std::vector<std::string>&& args) {
-  for (const auto& flag : flags) {
-    CF_EXPECT(flag.Parse(args));
-  }
-  return {};
+bool MatchNormalized(std::string_view str1, std::string_view str2) {
+  const std::string n1 = absl::StrReplaceAll(str1, {{"-", "_"}});
+  const std::string n2 = absl::StrReplaceAll(str2, {{"-", "_"}});
+  return n1 == n2;
 }
 
 }  // namespace
 
-std::ostream& operator<<(std::ostream& out, const FlagAlias& alias) {
-  switch (alias.mode) {
-    case FlagAliasMode::kFlagExact:
-      return out << alias.name;
-    case FlagAliasMode::kFlagPrefix:
-      return out << alias.name << "*";
-    case FlagAliasMode::kFlagConsumesFollowing:
-      return out << alias.name << " *";
-    default:
-      LOG(FATAL) << "Unexpected flag alias mode " << (int)alias.mode;
-  }
-  return out;
+Flag Flag::StringFlag(std::string name) {
+  return Flag(std::move(name), Style::String);
 }
 
-Flag& Flag::UnvalidatedAlias(const FlagAlias& alias) & {
-  aliases_.push_back(alias);
-  return *this;
-}
-Flag Flag::UnvalidatedAlias(const FlagAlias& alias) && {
-  aliases_.push_back(alias);
-  return *this;
+Flag Flag::BoolFlag(std::string name) {
+  return Flag(std::move(name), Style::Bool);
 }
 
-void Flag::ValidateAlias(const FlagAlias& alias) {
-  using absl::StartsWith;
-
-  CHECK(StartsWith(alias.name, "-")) << "Flags should start with \"-\"";
-  if (alias.mode == FlagAliasMode::kFlagPrefix) {
-    CHECK(absl::EndsWith(alias.name, "=")) << "Prefix flags must end with '='";
-  }
-
-  CHECK(!HasAlias(alias)) << "Duplicate flag alias: " << alias.name;
-  if (alias.mode == FlagAliasMode::kFlagConsumesFollowing) {
-    CHECK(!HasAlias({FlagAliasMode::kFlagExact, alias.name}))
-        << "Overlapping flag aliases for " << alias.name;
-  } else if (alias.mode == FlagAliasMode::kFlagExact) {
-    CHECK(!HasAlias({FlagAliasMode::kFlagConsumesFollowing, alias.name}))
-        << "Overlapping flag aliases for " << alias.name;
-  }
-}
-
-Flag& Flag::Alias(const FlagAlias& alias) & {
+Flag& Flag::Alias(std::string alias) & {
   ValidateAlias(alias);
-  aliases_.push_back(alias);
+  aliases_.emplace_back(std::move(alias));
   return *this;
 }
-Flag Flag::Alias(const FlagAlias& alias) && {
-  ValidateAlias(alias);
-  aliases_.push_back(alias);
+Flag Flag::Alias(std::string alias) && { return std::move(Alias(alias)); }
+
+Flag& Flag::Help(std::string help) & {
+  help_ = std::move(help);
   return *this;
+}
+Flag Flag::Help(std::string help) && { return std::move(Help(help)); }
+
+Flag& Flag::Getter(std::function<std::string()> getter) & {
+  getter_ = std::move(getter);
+  return *this;
+}
+Flag Flag::Getter(std::function<std::string()> getter) && {
+  return std::move(Getter(getter));
 }
 
-Flag& Flag::Help(const std::string& help) & {
-  help_ = help;
-  return *this;
-}
-Flag Flag::Help(const std::string& help) && {
-  help_ = help;
-  return *this;
-}
-
-Flag& Flag::Getter(std::function<std::string()> fn) & {
-  getter_ = std::move(fn);
-  return *this;
-}
-Flag Flag::Getter(std::function<std::string()> fn) && {
-  getter_ = std::move(fn);
-  return *this;
-}
-
-Flag& Flag::Setter(std::function<Result<void>(const FlagMatch&)> setter) & {
+Flag& Flag::Setter(std::function<Result<void>(std::string_view)> setter) & {
   setter_ = std::move(setter);
   return *this;
 }
-Flag Flag::Setter(std::function<Result<void>(const FlagMatch&)> setter) && {
-  setter_ = std::move(setter);
-  return *this;
+Flag Flag::Setter(std::function<Result<void>(std::string_view)> setter) && {
+  return std::move(Setter(setter));
 }
 
 Flag& Flag::AddValidator(std::function<Result<void>()> validator) & {
@@ -162,198 +97,191 @@ Flag& Flag::AddValidator(std::function<Result<void>()> validator) & {
   return *this;
 }
 Flag Flag::AddValidator(std::function<Result<void>()> validator) && {
-  validators_.emplace_back(std::move(validator));
-  return *this;
+  return std::move(AddValidator(validator));
 }
 
-Result<Flag::FlagProcessResult> Flag::Process(
-    const std::string& arg, const std::optional<std::string>& next_arg) const {
-  auto normalized_arg = absl::StrReplaceAll(arg, {{"-", "_"}});
-  if (!setter_ && !aliases_.empty()) {
-    return CF_ERRF("No setter for flag with alias {}", aliases_[0].name);
-  }
-  for (auto& alias : aliases_) {
-    auto normalized_alias = absl::StrReplaceAll(alias.name, {{"-", "_"}});
-    switch (alias.mode) {
-      case FlagAliasMode::kFlagConsumesFollowing:
-        if (normalized_arg != normalized_alias) {
-          continue;
-        }
-        CF_EXPECTF(next_arg.has_value(), "Expected an argument after \"{}\"",
-                   arg);
-        CF_EXPECTF(SetAndValidate({arg, *next_arg}),
-                   "Processing \"{}\" \"{}\" failed", arg, *next_arg);
-        return FlagProcessResult::kFlagConsumedWithFollowing;
-      case FlagAliasMode::kFlagExact:
-        if (normalized_arg != normalized_alias) {
-          continue;
-        }
-        CF_EXPECTF(SetAndValidate({arg, arg}), "Processing \"{}\" failed", arg);
-        return FlagProcessResult::kFlagConsumed;
-      case FlagAliasMode::kFlagPrefix:
-        if (!absl::StartsWith(normalized_arg, normalized_alias)) {
-          continue;
-        }
-        CF_EXPECTF(SetAndValidate({alias.name, arg.substr(alias.name.size())}),
-                   "Processing \"{}\" failed", arg);
-        return FlagProcessResult::kFlagConsumed;
-      default:
-        return CF_ERRF("Unknown flag alias mode: {}", (int)alias.mode);
-    }
-  }
-  return FlagProcessResult::kFlagSkip;
-}
-
-Result<void> Flag::SetAndValidate(const FlagMatch& match) const {
-  CF_EXPECT((*setter_)(match));
-  for (auto& validator: validators_) {
-    CF_EXPECT(validator());
-  }
-  return {};
-}
+std::string Flag::Name() const { return aliases_.front(); }
 
 Result<void> Flag::Parse(std::vector<std::string>& arguments) const {
-  for (int i = 0; i < arguments.size();) {
-    std::string arg = arguments[i];
-    std::optional<std::string> next_arg;
-    if (i < arguments.size() - 1) {
-      next_arg = arguments[i + 1];
-    }
-    switch (CF_EXPECT(Process(arg, next_arg))) {
-      case FlagProcessResult::kFlagConsumed:
-        arguments.erase(arguments.begin() + i);
-        break;
-      case FlagProcessResult::kFlagConsumedWithFollowing:
-        arguments.erase(arguments.begin() + i, arguments.begin() + i + 2);
-        break;
-      case FlagProcessResult::kFlagSkip:
-        i++;
-        break;
+  for (auto it = arguments.begin(); it != arguments.end();) {
+    size_t consumed = CF_EXPECT(Match(*it, std::span(it + 1, arguments.end())));
+    if (consumed == 0) {
+      ++it;
+    } else {
+      it = arguments.erase(it, it + consumed);
     }
   }
   return {};
 }
 Result<void> Flag::Parse(std::vector<std::string>&& arguments) const {
-  CF_EXPECT(Parse(static_cast<std::vector<std::string>&>(arguments)));
+  CF_EXPECT(Parse(arguments));
   return {};
 }
 
-bool Flag::HasAlias(const FlagAlias& test) const {
-  for (const auto& alias : aliases_) {
-    if (alias.mode == test.mode && alias.name == test.name) {
-      return true;
+Flag::Flag(std::string name, Flag::Style style) : style_(style) {
+  ValidateAlias(name);
+  aliases_.emplace_back(std::move(name));
+}
+
+void Flag::ValidateAlias(const std::string& alias) {
+  CHECK(!alias.starts_with("-")) << "Flag aliases should not start with \"-\"";
+  CHECK(!Contains(aliases_, alias)) << "Duplicate flag alias: " << alias;
+}
+
+Result<size_t> Flag::Match(std::string_view current_arg,
+                           std::span<const std::string> following_args) const {
+  switch (style_) {
+    case Style::String:
+      return CF_EXPECT(MatchStringStyleFlag(current_arg, following_args));
+    case Style::Bool:
+      return CF_EXPECT(MatchBoolStyleFlag(current_arg));
+  }
+}
+
+Result<size_t> Flag::MatchStringStyleFlag(
+    std::string_view current_arg,
+    std::span<const std::string> following_args) const {
+  if (!ConsumeDashes(current_arg)) {
+    // Doesn't begin with "-"
+    return 0;
+  }
+  for (const std::string& alias : aliases_) {
+    if (MatchNormalized(current_arg.substr(0, alias.size() + 1), alias + "=")) {
+      CF_EXPECT(SetAndValidate(current_arg.substr(alias.size() + 1)));
+      return 1;
     }
   }
-  return false;
+  std::vector<std::string> keys;
+  for (const std::string& alias : aliases_) {
+    if (!MatchNormalized(current_arg, alias)) {
+      continue;
+    }
+    CF_EXPECTF(!following_args.empty(), "No argument provided for flag '{}'",
+               current_arg);
+    CF_EXPECT(SetAndValidate(following_args[0]));
+    return 2;
+  }
+  return 0;
+}
+
+Result<size_t> Flag::MatchBoolStyleFlag(std::string_view current_arg) const {
+  if (!ConsumeDashes(current_arg)) {
+    // Doesn't begin with "-"
+    return 0;
+  }
+  for (const std::string& alias : aliases_) {
+    if (MatchNormalized(current_arg.substr(0, alias.size() + 1), alias + "=")) {
+      CF_EXPECT(SetAndValidate(current_arg.substr(alias.size() + 1)));
+      return 1;
+    }
+    if (MatchNormalized(current_arg, alias)) {
+      CF_EXPECT(SetAndValidate("yes"));
+      return 1;
+    }
+    if (MatchNormalized(current_arg, "no" + alias)) {
+      CF_EXPECT(SetAndValidate("no"));
+      return 1;
+    }
+  }
+  return 0;
+}
+
+Result<void> Flag::SetAndValidate(std::string_view value) const {
+  CF_EXPECT(setter_(value));
+  for (auto& validator : validators_) {
+    CF_EXPECT(validator());
+  }
+  return {};
 }
 
 std::ostream& operator<<(std::ostream& out, const Flag& flag) {
-  for (auto it = flag.aliases_.begin(); it != flag.aliases_.end(); it++) {
-    if (it != flag.aliases_.begin()) {
-      out << ", ";
+  std::vector<std::string> options;
+  for (const std::string& alias : flag.aliases_) {
+    switch (flag.style_) {
+      case Flag::Style::String:
+        options.emplace_back("--" + alias + "=VAL");
+        break;
+      case Flag::Style::Bool:
+        options.emplace_back("--[no]" + alias);
+        break;
     }
-    out << *it;
   }
-  out << "\n";
-  if (flag.help_) {
-    out <<  *flag.help_ << "\n";
+  out << absl::StrJoin(options, ", ") << "\n";
+
+  if (!flag.help_.empty()) {
+    out << flag.help_ << "\n";
   }
-  if (flag.getter_) {
-    out << "Current value: \"" << (*flag.getter_)() << "\"\n";
-  }
+  out << "Current value: \"" << flag.getter_() << "\"\n";
   return out;
 }
 
 Result<void> ConsumeFlags(const std::vector<Flag>& flags,
                           std::vector<std::string>& args,
-                          const bool recognize_end_of_option_mark) {
-  if (!recognize_end_of_option_mark) {
-    CF_EXPECT(ConsumeFlagsImpl(flags, args));
-    return {};
+                          ConsumeFlagsOpts opts) {
+  std::unordered_set<std::string_view> aliases;
+  for (const Flag& flag : flags) {
+    for (std::string_view alias : flag.aliases_) {
+      const auto [_, inserted] = aliases.insert(alias);
+      CF_EXPECTF(!!inserted,
+                 "Ambiguous argument parsing possible: '--{}' could be matched "
+                 "by multiple flags",
+                 alias);
+    }
   }
-  auto separated = SeparateByEndOfOptionMark(std::move(args));
-  args.clear();
-  auto result = ConsumeFlagsImpl(flags, separated.args_before_mark);
-  args = std::move(separated.args_before_mark);
-  args.insert(args.end(),
-              std::make_move_iterator(separated.args_after_mark.begin()),
-              std::make_move_iterator(separated.args_after_mark.end()));
-  CF_EXPECT(std::move(result));
+
+  auto end = args.end();
+  if (opts.stop_at_double_dashes) {
+    end = std::find(args.begin(), args.end(), "--");
+  }
+
+  auto available_slot_it = args.begin();
+  auto match_it = args.begin();
+  absl::Cleanup delete_args = [&args, &available_slot_it, &match_it, opts]() {
+    auto after_erase_it = args.erase(available_slot_it, match_it);
+    // TODO(jemoreira): Removing the "--" separator from the arguments list
+    // prevents distinguishing between unconsumed arguments before and after the
+    // separator, but existing usage expects it to be removed. The separator
+    // should be left in place and its index returned so the callers have as
+    // much flexibility as possible.
+    if (opts.stop_at_double_dashes && after_erase_it != args.end() &&
+        *after_erase_it == "--") {
+      args.erase(after_erase_it);
+    }
+  };
+  while (match_it != end) {
+    size_t consumed = 0;
+    for (const Flag& flag : flags) {
+      consumed = CF_EXPECT(flag.Match(*match_it, std::span(match_it + 1, end)));
+      if (consumed) {
+        break;
+      }
+    }
+    if (consumed) {
+      match_it += consumed;
+      continue;
+    }
+    CF_EXPECTF(!opts.fail_on_unexpected_argument, "Unexpected argument \"{}\"",
+               *match_it);
+    // This argument was not consumed, keep it at the first available consumed
+    // slot
+    if (available_slot_it != match_it) {
+      *available_slot_it = std::move(*match_it);
+    }
+    ++available_slot_it;
+    ++match_it;
+    if (opts.constrained_matching) {
+      // Stop parsing at first unrecognized argument.
+      break;
+    }
+  }
   return {};
 }
 
 Result<void> ConsumeFlags(const std::vector<Flag>& flags,
                           std::vector<std::string>&& args,
-                          const bool recognize_end_of_option_mark) {
-  if (!recognize_end_of_option_mark) {
-    CF_EXPECT(ConsumeFlagsImpl(flags, std::move(args)));
-    return {};
-  }
-  auto separated = SeparateByEndOfOptionMark(std::move(args));
-  CF_EXPECT(ConsumeFlagsImpl(flags, std::move(separated.args_before_mark)));
+                          ConsumeFlagsOpts opts) {
+  CF_EXPECT(ConsumeFlags(flags, args, opts));
   return {};
-}
-
-Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
-                                     std::vector<std::string>& args) {
-  while (!args.empty()) {
-    const std::string& first_arg = args[0];
-    std::optional<std::string> next_arg;
-    if (args.size() > 1) {
-      next_arg = args[1];
-    }
-    Flag::FlagProcessResult outcome = Flag::FlagProcessResult::kFlagSkip;
-    for (const Flag& flag : flags) {
-      Flag::FlagProcessResult flag_outcome = 
-          CF_EXPECT(flag.Process(first_arg, next_arg));
-      if (flag_outcome == Flag::FlagProcessResult::kFlagSkip) {
-        continue;
-      }
-      CF_EXPECTF(outcome == Flag::FlagProcessResult::kFlagSkip,
-                 "Multiple '{}' handlers", first_arg);
-      outcome = flag_outcome;
-    }
-    switch (outcome) {
-      case Flag::FlagProcessResult::kFlagSkip:
-        return {};
-      case Flag::FlagProcessResult::kFlagConsumed:
-        args.erase(args.begin());
-        break;
-      case Flag::FlagProcessResult::kFlagConsumedWithFollowing:
-        args.erase(args.begin(), args.begin() + 2);
-        break;
-    }
-  }
-  return {};
-}
-
-Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
-                                     std::vector<std::string>&& args) {
-  std::vector<std::string>& args_ref = args;
-  CF_EXPECT(ConsumeFlagsConstrained(flags, args_ref));
-  return {};
-}
-
-Flag InvalidFlagGuard() {
-  return Flag("_invalid_flag_guard_")
-      .UnvalidatedAlias({FlagAliasMode::kFlagPrefix, "-"})
-      .Help(
-          "This executable only supports the flags in `-help`. Positional "
-          "arguments may be supported.")
-      .Setter([](const FlagMatch& match) -> Result<void> {
-        return CF_ERRF("Unknown flag \"{}\"", match.value);
-      });
-}
-
-Flag UnexpectedArgumentGuard() {
-  return Flag("_unexpected_argument_guard_")
-      .UnvalidatedAlias({FlagAliasMode::kFlagPrefix, ""})
-      .Help(
-          "This executable only supports the flags in `-help`. Positional "
-          "arguments are not supported.")
-      .Setter([](const FlagMatch& match) -> Result<void> {
-        return CF_ERRF("Unexpected argument \"{}\"", match.value);
-      });
 }
 
 }  // namespace cuttlefish

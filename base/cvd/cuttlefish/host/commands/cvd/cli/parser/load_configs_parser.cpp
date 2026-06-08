@@ -74,7 +74,7 @@ bool IsLocalBuild(std::string path) {
 Flag GflagsCompatFlagOverride(
     const std::string& name,
     std::map<std::string, std::string, std::less<void>>& overrides) {
-  return GflagsCompatFlag(name)
+  return Flag::StringFlag(name)
       .Getter([&overrides]() {
         std::vector<std::string> formatted;
         for (const auto& [k, v] : overrides) {
@@ -82,30 +82,30 @@ Flag GflagsCompatFlagOverride(
         }
         return absl::StrJoin(formatted, ",");
       })
-      .Setter([&overrides](const FlagMatch& match) -> Result<void> {
-        size_t separator_index = match.value.find(kOverrideSeparator);
+      .Setter([&overrides](std::string_view arg) -> Result<void> {
+        size_t separator_index = arg.find(kOverrideSeparator);
         CF_EXPECTF(separator_index != std::string::npos,
                    "Unable to find separator \"{}\" in input \"{}\"",
-                   kOverrideSeparator, match.value);
-        auto property_path = match.value.substr(0, separator_index);
-        auto new_value = match.value.substr(separator_index + 1);
+                   kOverrideSeparator, arg);
+        auto property_path = arg.substr(0, separator_index);
+        auto new_value = arg.substr(separator_index + 1);
         CF_EXPECTF(overrides.count(property_path) == 0,
                    "Property \"{}\" is already overridden", property_path);
         CF_EXPECTF(!property_path.empty(),
                    "Config path before the separator \"{}\" cannot be empty in "
                    "input \"{}\"",
-                   kOverrideSeparator, match.value);
+                   kOverrideSeparator, arg);
         CF_EXPECTF(!new_value.empty(),
                    "New value after the separator \"{}\" cannot be empty in "
                    "input \"{}\"",
-                   kOverrideSeparator, match.value);
+                   kOverrideSeparator, arg);
         CF_EXPECTF(property_path.front() != '.' && property_path.back() != '.',
                    "Config path \"{}\" must not start or end with dot",
                    property_path);
         CF_EXPECTF(property_path.find("..") == std::string::npos,
                    "Config path \"{}\" cannot contain two consecutive dots",
                    property_path);
-        overrides[property_path] = new_value;
+        overrides[std::string(property_path)] = new_value;
         return {};
       });
 }
@@ -256,18 +256,17 @@ std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags) {
               "The format is `--override=<path.to.property>:<value>`. "
               "For example: `--override=instance.0.vm.cpus=16`."));
   flags.emplace_back(
-      GflagsCompatFlag("credential_source")
+      Flag::StringFlag("credential_source")
           .Help("Source of credentials to access the Android Build Server API. "
                 "Can be left empty in most cases, see the help for `login` and "
                 "`fetch` for details.")
-          .Setter([&load_flags](const FlagMatch& match) -> Result<void> {
+          .Setter([&load_flags](std::string_view arg) -> Result<void> {
             CF_EXPECTF(
                 load_flags.overrides.count(kCredentialSourceOverride) == 0,
                 "Specifying both --override={} and the "
                 "--credential_source flag is not allowed.",
                 kCredentialSourceOverride);
-            load_flags.overrides.emplace(kCredentialSourceOverride,
-                                         match.value);
+            load_flags.overrides.emplace(kCredentialSourceOverride, arg);
             return {};
           })
           .Getter([&load_flags]() -> std::string {
@@ -278,15 +277,15 @@ std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags) {
             return "";
           }));
   flags.emplace_back(
-      GflagsCompatFlag("project_id")
+      Flag::StringFlag("project_id")
           .Help("Google Cloud Project ID for Android Build "
                 "Server API access and quotas.")
-          .Setter([&load_flags](const FlagMatch& match) -> Result<void> {
+          .Setter([&load_flags](std::string_view arg) -> Result<void> {
             CF_EXPECTF(load_flags.overrides.count(kProjectIDOverride) == 0,
                        "Specifying both --override={} and the --project_id "
                        "flag is not allowed.",
                        kProjectIDOverride);
-            load_flags.overrides.emplace(kProjectIDOverride, match.value);
+            load_flags.overrides.emplace(kProjectIDOverride, arg);
             return {};
           })
           .Getter([&load_flags]() -> std::string {

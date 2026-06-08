@@ -42,7 +42,7 @@ CvdClearCommandHandler::CvdClearCommandHandler(
 
 Result<void> CvdClearCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
-  CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
+  CF_EXPECT(ConsumeFlags({}, args, {.fail_on_unexpected_argument = true}));
   CF_EXPECT(instance_manager_.Clear());
   return {};
 }

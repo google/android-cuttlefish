@@ -77,7 +77,6 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(
       HelpXmlFlag(flags, std::cout, fetch_flags.helpxml, help_message.str()));
 
-  flags.emplace_back(UnexpectedArgumentGuard());
   return flags;
 }
 
@@ -87,7 +86,8 @@ Result<FetchFlags> FetchFlags::Parse(std::vector<std::string>& args) {
   FetchFlags fetch_flags;
   std::string directory;
   std::vector<Flag> flags = GetFlagsVector(fetch_flags, directory);
-  CF_EXPECT(ConsumeFlags(flags, args), "Could not process command line flags.");
+  CF_EXPECT(ConsumeFlags(flags, args, {.fail_on_unexpected_argument = true}),
+            "Could not process command line flags.");
 
   if (!directory.empty()) {
     LOG(WARNING) << "Please use --target_directory instead of --directory";

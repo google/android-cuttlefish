@@ -18,11 +18,11 @@
 #include <compare>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
 #include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -60,7 +60,7 @@ std::optional<std::string> GetFilepath(const BuildString& build_string);
 
 void SetFilepath(BuildString& build_string, const std::string& value);
 
-Result<BuildString> ParseBuildString(const std::string& build_string);
+Result<BuildString> ParseBuildString(std::string_view build_string);
 
 Flag GflagsCompatFlag(const std::string& name,
                       std::optional<BuildString>& value);

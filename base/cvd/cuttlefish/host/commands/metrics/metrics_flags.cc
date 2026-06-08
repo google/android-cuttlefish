@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/base64.h"
@@ -31,29 +32,29 @@ namespace {
 
 Flag EnvironmentGflagsCompatFlag(const std::string& name,
                                  ClearcutEnvironment& value) {
-  return GflagsCompatFlag(name)
+  return Flag::StringFlag(name)
       .Getter([&value]() { return EnvironmentToString(value); })
-      .Setter([name, &value](const FlagMatch& match) -> Result<void> {
-        if (match.value == kClearcutLocal) {
+      .Setter([name, &value](std::string_view arg) -> Result<void> {
+        if (arg == kClearcutLocal) {
           value = ClearcutEnvironment::Local;
-        } else if (match.value == kClearcutStaging) {
+        } else if (arg == kClearcutStaging) {
           value = ClearcutEnvironment::Staging;
-        } else if (match.value == kClearcutProduction) {
+        } else if (arg == kClearcutProduction) {
           value = ClearcutEnvironment::Production;
         } else {
-          return CF_ERRF("Unexpected environment value: \"{}\"", match.value);
+          return CF_ERRF("Unexpected environment value: \"{}\"", arg);
         }
         return {};
       });
 }
 
 Flag Base64GflagsCompatFlag(const std::string& name, std::string& value) {
-  return GflagsCompatFlag(name)
+  return Flag::StringFlag(name)
       .Getter([&value]() { return value; })
-      .Setter([name, &value](const FlagMatch& match) -> Result<void> {
+      .Setter([name, &value](std::string_view arg) -> Result<void> {
         std::vector<uint8_t> decoded_out =
-            CF_EXPECTF(DecodeBase64(match.value),
-                       "Unable to base64 decode string: '{}'", match.value);
+            CF_EXPECTF(DecodeBase64(std::string(arg)),
+                       "Unable to base64 decode string: '{}'", arg);
         value = std::string(decoded_out.begin(), decoded_out.end());
         return {};
       });
@@ -77,9 +78,8 @@ Result<MetricsFlags> ProcessFlags(int argc, char** argv) {
           .Help("The base64 encoded, serialized proto string data to decode "
                 "and transmit."));
   flags.emplace_back(HelpFlag(flags));
-  flags.emplace_back(UnexpectedArgumentGuard());
   std::vector<std::string> args(argv + 1, argv + argc);  // Skip argv[0]
-  CF_EXPECT(ConsumeFlags(flags, args));
+  CF_EXPECT(ConsumeFlags(flags, args, {.fail_on_unexpected_argument = true}));
 
   CF_EXPECT(result.serialized_proto.empty() != result.event_filepath.empty(),
             "Must specify one and only one of the two input flags.  The event "

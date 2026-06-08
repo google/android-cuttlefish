@@ -155,10 +155,10 @@ Result<int> DoRemove(std::vector<std::string>& args) {
 
   std::vector<std::string> displays;
   const std::vector<Flag> remove_displays_flags = {
-      GflagsCompatFlag(kDisplayFlag)
+    Flag::StringFlag(kDisplayFlag)
           .Help("Display id of a display to remove.")
-          .Setter([&](const FlagMatch& match) -> Result<void> {
-            displays.push_back(match.value);
+          .Setter([&](std::string_view arg) -> Result<void> {
+            displays.emplace_back(arg);
             return {};
           }),
   };

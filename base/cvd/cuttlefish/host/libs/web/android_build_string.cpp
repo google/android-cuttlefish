@@ -21,6 +21,7 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -31,7 +32,6 @@
 #include <fmt/ranges.h>
 
 #include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -39,8 +39,8 @@ namespace cuttlefish {
 namespace {
 
 Result<std::pair<std::string, std::optional<std::string>>> ParseFilepath(
-    const std::string& build_string) {
-  std::string remaining_build_string = build_string;
+    std::string_view build_string) {
+  std::string_view remaining_build_string = build_string;
   std::optional<std::string> filepath;
   size_t open_bracket = build_string.find('{');
   size_t close_bracket = build_string.find('}');
@@ -52,13 +52,13 @@ Result<std::pair<std::string, std::optional<std::string>>> ParseFilepath(
       "Open or close curly bracket exists without its complement in \"{}\"",
       build_string);
   if (has_open && has_close) {
-    std::string remaining_substring = build_string.substr(0, open_bracket);
+    std::string_view remaining_substring = build_string.substr(0, open_bracket);
     CF_EXPECTF(
         !remaining_substring.empty(),
         "The build string excluding filepath cannot be empty.  Input: {}",
         build_string);
     size_t filepath_start = open_bracket + 1;
-    std::string filepath_substring =
+    std::string_view filepath_substring =
         build_string.substr(filepath_start, close_bracket - filepath_start);
     CF_EXPECTF(
         !filepath_substring.empty(),
@@ -67,7 +67,7 @@ Result<std::pair<std::string, std::optional<std::string>>> ParseFilepath(
     remaining_build_string = remaining_substring;
     filepath = filepath_substring;
   }
-  return {{remaining_build_string, filepath}};
+  return {{std::string(remaining_build_string), filepath}};
 }
 
 Result<BuildString> ParseDeviceBuildString(
@@ -140,7 +140,7 @@ void SetFilepath(BuildString& build_string, const std::string& value) {
   std::visit([&value](auto&& arg) { arg.filepath = value; }, build_string);
 }
 
-Result<BuildString> ParseBuildString(const std::string& build_string) {
+Result<BuildString> ParseBuildString(std::string_view build_string) {
   CF_EXPECT(!build_string.empty(), "The given build string cannot be empty");
   auto [remaining_build_string, filepath] =
       CF_EXPECT(ParseFilepath(build_string));
@@ -154,16 +154,16 @@ Result<BuildString> ParseBuildString(const std::string& build_string) {
 
 Flag GflagsCompatFlag(const std::string& name,
                       std::optional<BuildString>& value) {
-  return GflagsCompatFlag(name)
+  return Flag::StringFlag(name)
       .Getter([&value]() {
         std::stringstream result;
         result << value;
         return result.str();
       })
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
+      .Setter([&value](std::string_view arg) -> Result<void> {
         value = std::nullopt;
-        if (!match.value.empty()) {
-          value = CF_EXPECT(ParseBuildString(match.value));
+        if (!arg.empty()) {
+          value = CF_EXPECT(ParseBuildString(arg));
         }
         return {};
       });
@@ -171,17 +171,16 @@ Flag GflagsCompatFlag(const std::string& name,
 
 Flag GflagsCompatFlag(const std::string& name,
                       std::vector<std::optional<BuildString>>& value) {
-  return GflagsCompatFlag(name)
+  return Flag::StringFlag(name)
       .Getter([&value]() {
         return absl::StrJoin(value, ",", absl::StreamFormatter());
       })
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
-        if (match.value.empty()) {
+      .Setter([&value](std::string_view arg) -> Result<void> {
+        if (arg.empty()) {
           value.clear();
           return {};
         }
-        std::vector<std::string> str_vals =
-            absl::StrSplit(match.value, ',');
+        std::vector<std::string> str_vals = absl::StrSplit(arg, ',');
         value.clear();
         for (const auto& str_val : str_vals) {
           if (str_val.empty()) {

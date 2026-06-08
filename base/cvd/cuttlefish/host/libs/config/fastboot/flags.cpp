@@ -55,8 +55,10 @@ class FastbootConfigFlagImpl : public FastbootConfigFlag {
 
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
     bool proxy_fastboot = config_.ProxyFastboot();
-    Flag proxy_fastboot_flag = GflagsCompatFlag(kName, proxy_fastboot).Help(kHelp);
-    return WriteGflagsCompatXml({proxy_fastboot_flag}, out);
+    Flag proxy_fastboot_flag =
+        GflagsCompatFlag(kName, proxy_fastboot).Help(kHelp);
+    WriteGflagsCompatXml({proxy_fastboot_flag}, out);
+    return true;
   }
 
  private:
