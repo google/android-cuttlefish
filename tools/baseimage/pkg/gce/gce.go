@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 
@@ -260,8 +261,24 @@ func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error 
 	insName := opts.ImageName
 	attachedDiskName := fmt.Sprintf("%s-attached-disk", insName)
 
+	log.Println("creating instance...")
+	inst, err := h.CreateInstance(insName, opts.Arch)
+	if err != nil {
+		return fmt.Errorf("failed to create instance: %w", err)
+	}
+	defer h.cleanupDeleteInstance(insName)
+	log.Printf("instance created: %q", insName)
+
 	if opts.Arch == ArchArm {
-		opts.CreateAttachedDiskOpts.Type = fmt.Sprintf("zones/%s/diskTypes/hyperdisk-balanced", zone)
+		machineType := path.Base(inst.MachineType)
+		var diskType string
+		switch machineType {
+		case "t2a-standard-16":
+			diskType = "pd-balanced"
+		default:
+			diskType = "hyperdisk-balanced"
+		}
+		opts.CreateAttachedDiskOpts.Type = fmt.Sprintf("zones/%s/diskTypes/%s", zone, diskType)
 	}
 
 	log.Println("creating disk...")
@@ -270,13 +287,6 @@ func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error 
 	}
 	defer h.cleanupDeleteDisk(attachedDiskName)
 	log.Printf("disk created: %q", attachedDiskName)
-
-	log.Println("creating instance...")
-	if _, err := h.CreateInstance(insName, opts.Arch); err != nil {
-		return fmt.Errorf("failed to create instance: %w", err)
-	}
-	defer h.cleanupDeleteInstance(insName)
-	log.Printf("instance created: %q", insName)
 
 	log.Println("attaching disk...")
 	if err := h.AttachDisk(insName, attachedDiskName); err != nil {
