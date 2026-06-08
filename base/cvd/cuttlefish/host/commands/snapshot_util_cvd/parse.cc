@@ -126,8 +126,8 @@ Result<Parsed> Parse(std::vector<std::string>& args) {
                       .Help("Suspend/resume before/after taking the snapshot"));
   flags.push_back(HelpFlag(flags));
   flags.push_back(HelpXmlFlag(flags, std::cout, help_xml));
-  flags.push_back(UnexpectedArgumentGuard());
-  auto parse_res = ConsumeFlags(flags, args);
+  Result<void> parse_res =
+      ConsumeFlags(flags, args, {.fail_on_unexpected_argument = true});
   if (!help_xml && !parse_res.ok()) {
     // Parse fails if helpxml is passed
     CF_EXPECT(std::move(parse_res), "Flag parsing failed");

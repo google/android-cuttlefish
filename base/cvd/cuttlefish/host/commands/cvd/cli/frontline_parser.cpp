@@ -38,7 +38,7 @@ Result<selector::SelectorOptions> ExtractCvdArgs(cvd_common::Args& args) {
   selector::SelectorOptions selector_options;
   std::vector<Flag> selector_flags =
       selector::BuildCommonSelectorFlags(selector_options);
-  CF_EXPECT(ConsumeFlagsConstrained(selector_flags, args));
+  CF_EXPECT(ConsumeFlags(selector_flags, args, {.constrained_matching = true}));
 
   // Re-insert program into arguments
   args.insert(args.begin(), program);

@@ -79,24 +79,20 @@ struct ParsedFlags {
 
 static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
   if (subcmd_args.size() > 2 && subcmd_args.at(2) == "help") {
-    // unfortunately, {FlagAliasMode::kFlagExact, "help"} is not allowed
+    // Turn `cvd reset help` into `cvd reset --help`
     subcmd_args[2] = "--help";
   }
 
   ParsedFlags parsed_flags;
 
-  Flag y_flag = Flag("yes")
-                    .Alias({FlagAliasMode::kFlagExact, "-y"})
-                    .Alias({FlagAliasMode::kFlagExact, "--yes"})
-                    .Setter([&parsed_flags](const FlagMatch&) -> Result<void> {
-                      parsed_flags.is_confirmed_by_flag = true;
-                      return {};
-                    });
+  Flag y_flag =
+      GflagsCompatFlag("yes", parsed_flags.is_confirmed_by_flag).Alias("y");
   std::vector<Flag> flags{
       y_flag,
       GflagsCompatFlag("clean-runtime-dir", parsed_flags.clean_runtime_dir),
-      UnexpectedArgumentGuard()};
-  CF_EXPECT(ConsumeFlags(flags, subcmd_args));
+  };
+  CF_EXPECT(
+      ConsumeFlags(flags, subcmd_args, {.fail_on_unexpected_argument = true}));
 
   return parsed_flags;
 }

@@ -120,10 +120,10 @@ ParseDisplayConfigsFromArgs(std::vector<std::string>& args) {
           .Help(kDisplayHelp),
       GflagsCompatFlag(kDisplay3FlagName, display3_flag_value)
           .Help(kDisplayHelp),
-      GflagsCompatFlag(kDisplayFlag)
+      Flag::StringFlag(kDisplayFlag)
           .Help(kDisplayHelp)
-          .Setter([&](const FlagMatch& match) -> Result<void> {
-            repeated_display_flag_values.push_back(match.value);
+          .Setter([&](std::string_view arg) -> Result<void> {
+            repeated_display_flag_values.emplace_back(arg);
             return {};
           }),
   };

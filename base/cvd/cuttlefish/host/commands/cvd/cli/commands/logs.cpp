@@ -36,9 +36,7 @@ struct LogsCmdOptions {
 
   std::vector<Flag> Flags() {
     return {
-        GflagsCompatFlag("print", print_target)
-            .Alias({FlagAliasMode::kFlagConsumesFollowing, "-p"}),
-        UnexpectedArgumentGuard(),
+        GflagsCompatFlag("print", print_target).Alias("p"),
     };
   }
 };
@@ -90,7 +88,8 @@ Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
 
   LogsCmdOptions opts;
   std::vector<std::string> args = request.SubcommandArguments();
-  CF_EXPECT(ConsumeFlags(opts.Flags(), args));
+  CF_EXPECT(
+      ConsumeFlags(opts.Flags(), args, {.fail_on_unexpected_argument = true}));
 
   std::vector<std::string> logs_filenames;
 

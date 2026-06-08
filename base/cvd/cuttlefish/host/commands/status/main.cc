@@ -65,10 +65,10 @@ Result<StatusFlags> GetFlagValues(int argc, char** argv) {
           .Help("List all instances status and instance config information."));
   flags.emplace_back(HelpFlag(flags));
   flags.emplace_back(HelpXmlFlag(flags, std::cout, flag_values.help_xml));
-  flags.emplace_back(UnexpectedArgumentGuard());
 
   std::vector<std::string> args(argv + 1, argv + argc);  // Skip argv[0]
-  CF_EXPECT(ConsumeFlags(flags, args), "Could not process command line flags.");
+  CF_EXPECT(ConsumeFlags(flags, args, {.fail_on_unexpected_argument = true}),
+            "Could not process command line flags.");
   return flag_values;
 }
 

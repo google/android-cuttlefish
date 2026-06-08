@@ -72,8 +72,9 @@ class MediaConfigsFlagImpl : public MediaConfigsFlag {
   }
 
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
-    Flag media_flag = GflagsCompatFlag(kMediaFlag).Help(kMediaHelp);
-    return WriteGflagsCompatXml({media_flag}, out);
+    Flag media_flag = Flag::StringFlag(kMediaFlag).Help(kMediaHelp);
+    WriteGflagsCompatXml({media_flag}, out);
+    return true;
   }
 
  private:

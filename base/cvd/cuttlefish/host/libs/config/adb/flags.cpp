@@ -43,7 +43,7 @@ class AdbConfigFlagImpl : public AdbConfigFlag {
   INJECT(AdbConfigFlagImpl(AdbConfig& config, ConfigFlag& config_flag))
       : config_(config),
         config_flag_(config_flag),
-        mode_flag_(GflagsCompatFlag("adb_mode").Help(mode_help)) {
+        mode_flag_(Flag::StringFlag("adb_mode").Help(mode_help)) {
     mode_flag_.Getter([this]() {
       std::stringstream modes;
       for (const auto& mode : config_.Modes()) {
@@ -51,10 +51,10 @@ class AdbConfigFlagImpl : public AdbConfigFlag {
       }
       return modes.str().substr(1);  // First comma
     });
-    mode_flag_.Setter([this](const FlagMatch& match) -> Result<void> {
+    mode_flag_.Setter([this](std::string_view arg) -> Result<void> {
       // TODO(schuffelen): Error on unknown types?
       std::set<AdbMode> modes;
-      for (std::string_view mode : absl::StrSplit(match.value, ',')) {
+      for (std::string_view mode : absl::StrSplit(arg, ',')) {
         modes.insert(StringToAdbMode(mode));
       }
       CF_EXPECT(config_.SetModes(modes));
@@ -88,7 +88,8 @@ class AdbConfigFlagImpl : public AdbConfigFlag {
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
     bool run = config_.RunConnector();
     Flag run_flag = GflagsCompatFlag("run_adb_connector", run).Help(run_help);
-    return WriteGflagsCompatXml({run_flag, mode_flag_}, out);
+    WriteGflagsCompatXml({run_flag, mode_flag_}, out);
+    return true;
   }
 
  private:

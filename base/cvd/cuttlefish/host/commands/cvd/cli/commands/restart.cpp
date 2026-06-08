@@ -55,7 +55,6 @@ struct RestartOptions {
     return {
         GflagsCompatFlag("wait_for_launcher", wait_for_launcher_seconds),
         GflagsCompatFlag("boot_timeout", boot_timeout_seconds),
-        UnexpectedArgumentGuard(),
     };
   }
 };
@@ -70,7 +69,8 @@ Result<void> CvdDeviceRestartCommandHandler::Handle(
     const CommandRequest& request) {
   RestartOptions options;
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
-  CF_EXPECT(ConsumeFlags(options.Flags(), subcmd_args));
+  CF_EXPECT(ConsumeFlags(options.Flags(), subcmd_args,
+                         {.fail_on_unexpected_argument = true}));
 
   auto [instance, group] =
       CF_EXPECT(selector::SelectInstance(instance_manager_, request),

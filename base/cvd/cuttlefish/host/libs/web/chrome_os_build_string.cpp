@@ -18,6 +18,7 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_split.h"
@@ -27,7 +28,6 @@
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -66,14 +66,14 @@ std::ostream& operator<<(std::ostream& stream,
 
 Flag GflagsCompatFlag(const std::string& name,
                       std::vector<std::optional<ChromeOsBuildString>>& value) {
-  return GflagsCompatFlag(name)
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
-        if (match.value.empty()) {
+  return Flag::StringFlag(name)
+      .Setter([&value](std::string_view arg) -> Result<void> {
+        if (arg.empty()) {
           value.clear();
           return {};
         }
         std::vector<std::string> str_vals =
-            absl::StrSplit(match.value, ',');
+            absl::StrSplit(arg, ',');
         value.clear();
         for (const auto& str_val : str_vals) {
           if (str_val.empty()) {

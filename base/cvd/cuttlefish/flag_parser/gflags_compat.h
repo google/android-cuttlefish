@@ -26,15 +26,13 @@
 namespace cuttlefish {
 
 /* Write gflags `--helpxml` style output for a string-type flag. */
-bool WriteGflagsCompatXml(const Flag&, std::ostream&);
-bool WriteGflagsCompatXml(const std::vector<Flag>&, std::ostream&);
+void WriteGflagsCompatXml(const Flag&, std::ostream&);
+void WriteGflagsCompatXml(const std::vector<Flag>&, std::ostream&);
 
 // Create a flag resembling a gflags argument of the given type. This includes
 // "-[-]flag=*",support for all types, "-[-]noflag" support for booleans, and
 // "-flag *", "--flag *", support for other types. The value passed in the flag
 // is saved to the defined reference.
-Flag GflagsCompatFlag(const std::string& name);
-Flag GflagsCompatBoolFlag(const std::string& name);
 Flag GflagsCompatFlag(const std::string& name, std::string& value);
 Flag GflagsCompatFlag(const std::string& name, int32_t& value);
 Flag GflagsCompatFlag(const std::string& name, size_t& value);
@@ -45,41 +43,36 @@ Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
                       bool default_value);
 // Indicates when to assign std::nullopt to the std::optional backing the flag.
 enum class CoerceToNullopt {
-  None, // When the flag is not present in the arguments
-  UnsetKeyword, // When the flag has the "unset" special value.
-  EmptyString, // When the flag has an empty value (`--flag "" or `--flag=`)
+  None,          // When the flag is not present in the arguments
+  UnsetKeyword,  // When the flag has the "unset" special value.
+  EmptyString,   // When the flag has an empty value (`--flag "" or `--flag=`)
 };
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<std::string>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<int>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<size_t>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<unsigned>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<int64_t>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<bool>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(const std::string& name,
+                      std::optional<std::string>& value,
+                      CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(const std::string& name, std::optional<int>& value,
+                      CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(const std::string& name, std::optional<size_t>& value,
+                      CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(const std::string& name, std::optional<unsigned>& value,
+                      CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(const std::string& name, std::optional<int64_t>& value,
+                      CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(const std::string& name, std::optional<bool>& value,
+                      CoerceToNullopt opt = CoerceToNullopt::None);
 
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<std::vector<std::string>>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
-Flag GflagsCompatFlag(
-    const std::string& name, std::optional<std::vector<unsigned>>& value,
-    CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(const std::string& name,
+                      std::optional<std::vector<std::string>>& value,
+                      CoerceToNullopt opt = CoerceToNullopt::None);
+Flag GflagsCompatFlag(const std::string& name,
+                      std::optional<std::vector<unsigned>>& value,
+                      CoerceToNullopt opt = CoerceToNullopt::None);
 
 /* If a "-help" or "--help" flag is present, prints all the flags and fails. */
 Flag HelpFlag(const std::vector<Flag>& flags, std::string text = "");
 
 /* If a "-helpxml" is present, prints all the flags in XML and fails. */
-Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream&, bool& value,
+Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream&, bool& print_xml,
                  std::string text = "");
 
 }  // namespace cuttlefish

@@ -14,35 +14,32 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/flag_parser/gflags_compat.h"
-
 #include <stdint.h>
 
 #include <map>
 #include <optional>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include <gmock/gmock-matchers.h>
-#include <gtest/gtest.h>
 #include <libxml/parser.h>
+#include "gmock/gmock-matchers.h"
+#include "gtest/gtest.h"
 
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 
 TEST(FlagParser, DuplicateAlias) {
-  FlagAlias alias = {FlagAliasMode::kFlagExact, "--flag"};
-  ASSERT_DEATH({ Flag("flag").Alias(alias).Alias(alias); }, "Duplicate flag alias");
-}
-
-TEST(FlagParser, ConflictingAlias) {
-  FlagAlias exact_alias = {FlagAliasMode::kFlagExact, "--flag"};
-  FlagAlias following_alias = {FlagAliasMode::kFlagConsumesFollowing, "--flag"};
-  ASSERT_DEATH({ Flag("flag").Alias(exact_alias).Alias(following_alias); },
-               "Overlapping flag aliases");
+  ASSERT_DEATH(
+      { Flag::StringFlag("flag").Alias("flag"); },
+      "Duplicate flag alias: flag");
+  ASSERT_DEATH(
+      { Flag::StringFlag("flag").Alias("foo").Alias("foo"); },
+      "Duplicate flag alias: foo");
 }
 
 TEST(FlagParser, StringFlag) {
@@ -77,12 +74,10 @@ TEST(FlagParser, NormalizedStringFlag) {
 
 std::optional<std::map<std::string, std::string>> flagXml(const Flag& f) {
   std::stringstream xml_stream;
-  if (!WriteGflagsCompatXml(f, xml_stream)) {
-    return {};
-  }
+  WriteGflagsCompatXml(f, xml_stream);
   auto xml = xml_stream.str();
   // Holds all memory for the parsed structure.
-  std::unique_ptr<xmlDoc, void(*)(xmlDocPtr)> doc(
+  std::unique_ptr<xmlDoc, void (*)(xmlDocPtr)> doc(
       xmlReadMemory(xml.c_str(), xml.size(), nullptr, nullptr, 0), xmlFreeDoc);
   if (!doc) {
     return {};
@@ -103,11 +98,6 @@ std::optional<std::map<std::string, std::string>> flagXml(const Flag& f) {
     elements_map[(char*)elem->name] = (char*)elem->children->content;
   }
   return elements_map;
-}
-
-TEST(FlagParser, GflagsIncompatibleFlag) {
-  auto flag = Flag("flag").Alias({FlagAliasMode::kFlagExact, "--flag"});
-  ASSERT_FALSE(flagXml(flag));
 }
 
 TEST(FlagParser, StringFlagXml) {
@@ -132,9 +122,9 @@ TEST(FlagParser, RepeatedStringFlag) {
 
 TEST(FlagParser, RepeatedListFlag) {
   std::vector<std::string> elems;
-  auto flag = GflagsCompatFlag("myflag");
-  flag.Setter([&elems](const FlagMatch& match) -> Result<void> {
-    elems.push_back(match.value);
+  auto flag = Flag::StringFlag("myflag");
+  flag.Setter([&elems](std::string_view arg) -> Result<void> {
+    elems.emplace_back(arg);
     return {};
   });
   ASSERT_THAT(flag.Parse({"-myflag=a", "--myflag", "b"}), IsOk());
@@ -328,32 +318,35 @@ TEST(FlagParser, InvalidIntFlag) {
   ASSERT_THAT(flag.Parse({"--myflag", "def"}), IsError());
 }
 
-TEST(FlagParser, InvalidFlagGuard) {
-  auto flag = InvalidFlagGuard();
-  ASSERT_THAT(flag.Parse({}), IsOk());
-  ASSERT_THAT(flag.Parse({"positional"}), IsOk());
-  ASSERT_THAT(flag.Parse({"positional", "positional2"}), IsOk());
-  ASSERT_THAT(flag.Parse({"-flag"}), IsError());
-  ASSERT_THAT(flag.Parse({"-"}), IsError());
-}
-
 TEST(FlagParser, UnexpectedArgumentGuard) {
-  auto flag = UnexpectedArgumentGuard();
-  ASSERT_THAT(flag.Parse({}), IsOk());
-  ASSERT_THAT(flag.Parse({"positional"}), IsError());
-  ASSERT_THAT(flag.Parse({"positional", "positional2"}), IsError());
-  ASSERT_THAT(flag.Parse({"-flag"}), IsError());
-  ASSERT_THAT(flag.Parse({"-"}), IsError());
+  auto consume_check_unexpected = [](std::vector<std::string> args) {
+    return ConsumeFlags({}, std::move(args),
+                        {.fail_on_unexpected_argument = true});
+  };
+  ASSERT_THAT(consume_check_unexpected({}), IsOk());
+  ASSERT_THAT(consume_check_unexpected({"positional"}), IsError());
+  ASSERT_THAT(consume_check_unexpected({"positional", "positional2"}),
+              IsError());
+  ASSERT_THAT(consume_check_unexpected({"-flag"}), IsError());
+  ASSERT_THAT(consume_check_unexpected({"-"}), IsError());
 }
 
 TEST(FlagParser, EndOfOptionMark) {
   std::vector<std::string> args{"-flag", "--", "-invalid_flag"};
   bool flag = false;
-  std::vector<Flag> flags{GflagsCompatFlag("flag", flag), InvalidFlagGuard()};
+  std::vector<Flag> flags{GflagsCompatFlag("flag", flag)};
 
-  EXPECT_THAT(ConsumeFlags(flags, args), IsError());
   EXPECT_THAT(ConsumeFlags(flags, args,
-                           /* recognize_end_of_option_mark */ true),
+                           {
+                               .fail_on_unexpected_argument = true,
+                           }),
+              IsError());
+  EXPECT_EQ(args, std::vector<std::string>({"--", "-invalid_flag"}));
+  EXPECT_THAT(ConsumeFlags(flags, args,
+                           {
+                               .stop_at_double_dashes = true,
+                               .fail_on_unexpected_argument = true,
+                           }),
               IsOk());
   ASSERT_TRUE(flag);
 }
@@ -365,7 +358,8 @@ TEST(FlagParser, ConsumesConstrainedEquals) {
   Flag name_flag = GflagsCompatFlag("name", name);
 
   std::vector<Flag> flags = {name_flag};
-  EXPECT_THAT(ConsumeFlagsConstrained(flags, args), IsOk());
+  EXPECT_THAT(ConsumeFlags(flags, args, {.constrained_matching = true}),
+              IsOk());
 
   std::vector<std::string> expected_args = {"status", "--name=def"};
   EXPECT_EQ(args, expected_args);
@@ -379,7 +373,8 @@ TEST(FlagParser, ConsumesConstrainedSeparated) {
   Flag name_flag = GflagsCompatFlag("name", name);
 
   std::vector<Flag> flags = {name_flag};
-  EXPECT_THAT(ConsumeFlagsConstrained(flags, args), IsOk());
+  EXPECT_THAT(ConsumeFlags(flags, args, {.constrained_matching = true}),
+              IsOk());
 
   std::vector<std::string> expected_args = {"status", "--name", "def"};
   EXPECT_EQ(args, expected_args);
@@ -428,7 +423,8 @@ TEST(FlagParser, OptionalStringFlag_EmptyOptEmtpyFlag) {
   std::optional<std::string> value;
 
   // With EmptyString option
-  auto flag_empty_string = GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
+  auto flag_empty_string =
+      GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
 
   // Present with empty value -> should be nullopt
   value = "before";
@@ -440,7 +436,8 @@ TEST(FlagParser, OptionalStringFlag_EmptyOptPresent) {
   std::optional<std::string> value;
 
   // With EmptyString option
-  auto flag_empty_string = GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
+  auto flag_empty_string =
+      GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
 
   // Present with value -> should be value
   value = std::nullopt;
@@ -453,7 +450,8 @@ TEST(FlagParser, OptionalStringFlag_UnsetOptUnsetValue) {
   std::optional<std::string> value;
 
   // With UnsetKeyword option
-  auto flag_unset = GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
+  auto flag_unset =
+      GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
 
   // Present with "unset" -> should be nullopt
   value = "before";
@@ -465,7 +463,8 @@ TEST(FlagParser, OptionalStringFlag_UnsetOptOtherValue) {
   std::optional<std::string> value;
 
   // With UnsetKeyword option
-  auto flag_unset = GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
+  auto flag_unset =
+      GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
 
   // Present with other value -> should be value
   value = std::nullopt;
@@ -505,7 +504,8 @@ TEST(FlagParser, OptionalStringVectorFlag_DefaultOptEmptyValue) {
   // Default options: None
   auto flag_default = GflagsCompatFlag("myflag", value);
 
-  // Present with empty value (should be empty vector, not nullopt, because opt is None)
+  // Present with empty value (should be empty vector, not nullopt, because opt
+  // is None)
   value = std::nullopt;
   ASSERT_THAT(flag_default.Parse({"--myflag="}), IsOk());
   ASSERT_TRUE(value.has_value());
@@ -516,7 +516,8 @@ TEST(FlagParser, OptionalStringVectorFlag_EmptyOptEmptyValue) {
   std::optional<std::vector<std::string>> value;
 
   // With EmptyString option
-  auto flag_empty_string = GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
+  auto flag_empty_string =
+      GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
 
   // Present with empty value -> should be nullopt
   value = std::vector<std::string>{"before"};
@@ -528,7 +529,8 @@ TEST(FlagParser, OptionalStringVectorFlag_EmptyOptPresent) {
   std::optional<std::vector<std::string>> value;
 
   // With EmptyString option
-  auto flag_empty_string = GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
+  auto flag_empty_string =
+      GflagsCompatFlag("myflag", value, CoerceToNullopt::EmptyString);
 
   // Present with value -> should be value
   value = std::nullopt;
@@ -541,7 +543,8 @@ TEST(FlagParser, OptionalStringVectorFlag_UnsetOptUnsetValue) {
   std::optional<std::vector<std::string>> value;
 
   // With UnsetKeyword option
-  auto flag_unset = GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
+  auto flag_unset =
+      GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
 
   // Present with "unset" -> should be nullopt
   value = std::vector<std::string>{"before"};
@@ -553,7 +556,8 @@ TEST(FlagParser, OptionalStringVectorFlag_UnsetOptPresent) {
   std::optional<std::vector<std::string>> value;
 
   // With UnsetKeyword option
-  auto flag_unset = GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
+  auto flag_unset =
+      GflagsCompatFlag("myflag", value, CoerceToNullopt::UnsetKeyword);
 
   // Present with other value -> should be value
   value = std::nullopt;

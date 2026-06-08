@@ -62,7 +62,7 @@ Result<std::string> CvdFleetCommandHandler::DetailedHelp(
 
 Result<void> CvdFleetCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
-  CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
+  CF_EXPECT(ConsumeFlags({}, args, {.fail_on_unexpected_argument = true}));
 
   auto all_groups = CF_EXPECT(instance_manager_.FindGroups({}));
   Json::Value groups_json(Json::arrayValue);

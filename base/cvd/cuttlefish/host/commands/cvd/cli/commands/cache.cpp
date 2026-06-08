@@ -88,8 +88,8 @@ Result<CacheArguments> ProcessArguments(
                                "operation, in gigabytes."));
   flags.emplace_back(GflagsCompatFlag("json", result.json_formatted)
                          .Help("Output `info` command in JSON format."));
-  flags.emplace_back(UnexpectedArgumentGuard());
-  CF_EXPECTF(ConsumeFlags(flags, cache_arguments),
+  CF_EXPECTF(ConsumeFlags(flags, cache_arguments,
+                          {.fail_on_unexpected_argument = true}),
              "Failure processing arguments and flags: cvd cache {} {}", action,
              fmt::join(cache_arguments, " "));
 

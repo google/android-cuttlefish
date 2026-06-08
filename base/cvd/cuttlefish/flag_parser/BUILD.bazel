@@ -14,10 +14,11 @@ cf_cc_library(
         "flag.h",
         "gflags_compat.h",
     ],
-    clang_format_enabled = False,
     deps = [
+        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -28,7 +29,6 @@ cf_cc_library(
 cf_cc_test(
     name = "flag_parser_test",
     srcs = ["flag_parser_test.cpp"],
-    clang_format_enabled = False,
     # `layering_check` conflicts with the combination of the clang prebuilt and
     # the cmake build rules used for @libxml2.
     features = ["-layering_check"],
@@ -49,6 +49,7 @@ cf_cc_library(
     deps = [
         ":flag_parser",
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
     ],

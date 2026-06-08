@@ -77,8 +77,9 @@ class DisplaysConfigsFlagImpl : public DisplaysConfigsFlag {
   }
 
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
-    Flag display_flag = GflagsCompatFlag(kDisplayFlag).Help(kDisplayHelp);
-    return WriteGflagsCompatXml({display_flag}, out);
+    Flag display_flag = Flag::StringFlag(kDisplayFlag).Help(kDisplayHelp);
+    WriteGflagsCompatXml({display_flag}, out);
+    return true;
   }
 
  private:

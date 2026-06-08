@@ -31,12 +31,12 @@ namespace {
 
 Flag GflagsCompatFlagSeconds(const std::string& name,
                              std::chrono::seconds& value) {
-  return GflagsCompatFlag(name)
+  return Flag::StringFlag(name)
       .Getter([&value]() { return std::to_string(value.count()); })
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
+      .Setter([&value](std::string_view arg) -> Result<void> {
         int parsed_int;
-        CF_EXPECTF(absl::SimpleAtoi(match.value, &parsed_int),
-                   "Failed to parse \"{}\" as an integer", match.value);
+        CF_EXPECTF(absl::SimpleAtoi(arg, &parsed_int),
+                   "Failed to parse \"{}\" as an integer", arg);
         value = std::chrono::seconds(parsed_int);
         return {};
       });

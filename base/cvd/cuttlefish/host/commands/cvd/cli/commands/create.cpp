@@ -214,13 +214,13 @@ Result<void> CreateSymlinks(const LocalInstanceGroup& group) {
 std::vector<Flag> BuildSelectorFlagsForCreateHelp(
     const selector::SelectorOptions& selectors) {
   return {
-      GflagsCompatFlag(selector::SelectorFlags::kGroupName)
+      Flag::StringFlag(selector::SelectorFlags::kGroupName)
           .Getter([selectors]() { return selectors.group_name.value_or(""); })
           .Help("Name of the group to be created. The command will fail if a "
                 "group with that name already exists. A new name of the form "
                 "'cvd-<n>' guaranteed to not exist yet will be generated if "
                 "not provided."),
-      GflagsCompatFlag(selector::SelectorFlags::kInstanceName)
+      Flag::StringFlag(selector::SelectorFlags::kInstanceName)
           .Getter([selectors]() -> std::string {
             return absl::StrJoin(
                 selectors.instance_names.value_or(std::vector<std::string>()),

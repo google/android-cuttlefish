@@ -233,10 +233,10 @@ Result<std::vector<Flag>> GetSiblingCommandFlags(const std::string& bin_name,
     }
     flags
         .emplace_back(desc.type.starts_with("bool")
-                          ? GflagsCompatBoolFlag(desc.name)
-                          : GflagsCompatFlag(desc.name))
+                          ? Flag::BoolFlag(desc.name)
+                          : Flag::StringFlag(desc.name))
         // Add setter and getter that won't crash
-        .Setter([](const FlagMatch& match) -> Result<void> { return {}; })
+        .Setter([](std::string_view) -> Result<void> { return {}; })
         // The getter always returns the current value reported by the internal
         // binary so the help message is accurate.
         .Getter([value = desc.current_value]() { return value; })

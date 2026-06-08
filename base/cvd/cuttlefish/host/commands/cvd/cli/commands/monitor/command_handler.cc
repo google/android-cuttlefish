@@ -80,7 +80,7 @@ Result<void> CvdMonitorCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(isatty(0), "The monitor command requires an interactive terminal.");
 
   std::vector<std::string> args = request.SubcommandArguments();
-  CF_EXPECT(ConsumeFlags({UnexpectedArgumentGuard()}, args));
+  CF_EXPECT(ConsumeFlags({}, args, {.fail_on_unexpected_argument = true}));
 
   auto [instance, unused] =
       CF_EXPECT(selector::SelectInstance(instance_manager_, request),

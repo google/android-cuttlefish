@@ -69,10 +69,10 @@ int TombstoneReceiverMain(int argc, char** argv) {
           .Help("File descriptor to an already created vsock server"));
 
   flags.emplace_back(HelpFlag(flags));
-  flags.emplace_back(UnexpectedArgumentGuard());
 
   std::vector<std::string> args(argv + 1, argv + argc);  // Skip argv[0]
-  auto parse_res = ConsumeFlags(flags, args);
+  Result<void> parse_res =
+      ConsumeFlags(flags, args, {.fail_on_unexpected_argument = true});
   CHECK(parse_res.ok()) << "Could not process command line flags. "
                         << parse_res.error();
 
