@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 
 #include <sys/types.h>
@@ -48,6 +49,7 @@
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/pretty/optional.h"
 #include "cuttlefish/pretty/string.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

@@ -24,6 +24,7 @@
 #include <gflags/gflags.h>
 
 #include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

@@ -24,6 +24,7 @@
 #include "absl/strings/str_format.h"
 
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

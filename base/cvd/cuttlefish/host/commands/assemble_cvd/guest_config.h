@@ -28,6 +28,7 @@
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/pretty/pretty.h"
 #include "cuttlefish/pretty/struct.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

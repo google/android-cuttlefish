@@ -45,6 +45,7 @@
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/io/shared_fd.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

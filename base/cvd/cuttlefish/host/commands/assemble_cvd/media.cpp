@@ -20,6 +20,7 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/libs/config/media.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

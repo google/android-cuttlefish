@@ -41,6 +41,7 @@
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
+#include "cuttlefish/result/result.h"
 
 #ifdef __APPLE__
 #define CF_UNUSED_ON_MACOS [[maybe_unused]]

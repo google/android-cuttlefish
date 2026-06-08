@@ -21,6 +21,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

@@ -26,6 +26,7 @@
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 #include "cuttlefish/host/libs/image_aggregator/qcow2.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
