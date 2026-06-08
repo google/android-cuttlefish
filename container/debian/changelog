@@ -4,7 +4,7 @@ cuttlefish-container (1.55.0) UNRELEASED; urgency=medium
 
  -- 3405691582 <dsk@google.com>  Fri, 29 May 2026 18:55:55 +0000
 
-cuttlefish-container (1.54.0) unstable; urgency=medium
+cuttlefish-container (1.54.0) stable; urgency=medium
 
  * Start development on 1.54.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2455
  * Add crun as dependency of cuttlefish-podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2458

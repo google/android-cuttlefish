@@ -4,7 +4,7 @@ cuttlefish-integration-gigabyte-arm64 (1.55.0) UNRELEASED; urgency=medium
 
  -- 3405691582 <dsk@google.com>  Fri, 29 May 2026 18:56:21 +0000
 
-cuttlefish-integration-gigabyte-arm64 (1.54.0) unstable; urgency=medium
+cuttlefish-integration-gigabyte-arm64 (1.54.0) stable; urgency=medium
 
  * Start development on 1.54.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2455
 
