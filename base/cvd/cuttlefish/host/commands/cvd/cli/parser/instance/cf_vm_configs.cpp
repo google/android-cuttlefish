@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include <google/protobuf/util/json_util.h>
+#include "google/protobuf/util/json_util.h"
 
 #include "cuttlefish/common/libs/utils/flags_validator.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"

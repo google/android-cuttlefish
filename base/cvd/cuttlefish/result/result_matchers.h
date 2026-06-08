@@ -17,8 +17,8 @@
 
 #include <type_traits>
 
-#include <android-base/expected.h>
-#include <gmock/gmock.h>
+#include "android-base/expected.h"
+#include "gmock/gmock.h"
 
 #include "cuttlefish/result/result.h"
 

@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 namespace cuttlefish {
 namespace http_client {

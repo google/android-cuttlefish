@@ -21,10 +21,10 @@
 #include <memory>
 #include <string>
 
-#include <gflags/gflags.h>
-#include <grpcpp/ext/proto_server_reflection_plugin.h>
-#include <grpcpp/grpcpp.h>
-#include <grpcpp/health_check_service_interface.h>
+#include "gflags/gflags.h"
+#include "grpcpp/ext/proto_server_reflection_plugin.h"
+#include "grpcpp/grpcpp.h"
+#include "grpcpp/health_check_service_interface.h"
 
 #include "cuttlefish/host/commands/echo_server/echo.grpc.pb.h"
 

@@ -20,7 +20,7 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include <fmt/format.h>
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/frontend/webrtc/libcommon/utils.h"

@@ -20,8 +20,8 @@
 #include <cstddef>
 #include <string>
 
-#include <android-base/file.h>
-#include <gtest/gtest.h>
+#include "android-base/file.h"
+#include "gtest/gtest.h"
 
 namespace cuttlefish {
 

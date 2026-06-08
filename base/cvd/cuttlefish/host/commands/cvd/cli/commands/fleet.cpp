@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include <json/value.h>
+#include "json/value.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"

@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/commands/modem_simulator/command_parser.h"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 TEST(CommandParserUnitTest, SkipPrefix) {
   std::string command = "AT+SPUSATENVECMD=\"D3078202018190014E\"";

@@ -16,7 +16,7 @@
 
 #include <string>
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 

@@ -19,7 +19,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"

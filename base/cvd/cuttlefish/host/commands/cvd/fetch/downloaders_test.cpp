@@ -18,10 +18,10 @@
 #include <fstream>
 #include <string>
 
+#include "android-base/file.h"
 #include "fmt/core.h"
-#include <android-base/file.h>
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"

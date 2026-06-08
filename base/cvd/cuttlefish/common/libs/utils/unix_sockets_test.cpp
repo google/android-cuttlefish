@@ -20,8 +20,8 @@
 #include <utility>
 
 #include "absl/log/check.h"
-#include <android-base/result.h>
-#include <gtest/gtest.h>
+#include "android-base/result.h"
+#include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"

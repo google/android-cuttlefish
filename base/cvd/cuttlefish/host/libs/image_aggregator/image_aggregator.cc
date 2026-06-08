@@ -32,10 +32,10 @@
 #include <string>
 #include <vector>
 
-#include <android-base/file.h>
-#include <google/protobuf/text_format.h>
-#include <google/protobuf/util/message_differencer.h>
-#include <sparse/sparse.h>
+#include "android-base/file.h"
+#include "google/protobuf/text_format.h"
+#include "google/protobuf/util/message_differencer.h"
+#include "sparse/sparse.h"
 #include <zlib.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"

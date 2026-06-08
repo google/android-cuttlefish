@@ -18,8 +18,8 @@
 
 #include <sstream>
 
-#include <google/protobuf/util/json_util.h>
-#include <json/value.h>
+#include "google/protobuf/util/json_util.h"
+#include "json/value.h"
 
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/result/result.h"

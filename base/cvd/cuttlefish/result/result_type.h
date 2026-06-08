@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <android-base/result.h>  // IWYU pragma: export
+#include "android-base/result.h"  // IWYU pragma: export
 
 #include "cuttlefish/result/error_type.h"
 

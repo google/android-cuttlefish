@@ -18,8 +18,8 @@
 #include <sstream>
 
 #include "absl/log/check.h"
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 

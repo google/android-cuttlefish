@@ -17,7 +17,7 @@
 
 #include <inttypes.h>
 
-#include <android-base/endian.h>
+#include "android-base/endian.h"
 
 // The utilities in android-base/endian.h still require the use of regular int
 // types to store values with any endianness, which requires the user to

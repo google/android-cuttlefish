@@ -17,7 +17,7 @@
 
 #include <string>
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"

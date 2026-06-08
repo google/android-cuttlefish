@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/commands/cvd_send_sms/pdu_format_builder.h"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 namespace cuttlefish {
 namespace {

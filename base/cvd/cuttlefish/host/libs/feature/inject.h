@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/result/result.h"
 

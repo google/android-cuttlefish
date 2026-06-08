@@ -17,7 +17,7 @@
 #include <string>
 
 #include "absl/log/log.h"
-#include <gflags/gflags.h>
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 #include "cuttlefish/common/libs/utils/device_type.h"

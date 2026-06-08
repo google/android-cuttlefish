@@ -19,7 +19,7 @@
 #include <functional>
 
 #include "absl/log/log.h"
-#include <json/json.h>
+#include "json/json.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 

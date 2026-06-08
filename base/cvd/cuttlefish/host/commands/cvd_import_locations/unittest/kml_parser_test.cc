@@ -16,8 +16,8 @@
 
 #include <fstream>
 
-#include <android-base/file.h>
-#include <gtest/gtest.h>
+#include "android-base/file.h"
+#include "gtest/gtest.h"
 
 #include "cuttlefish/host/libs/location/GpsFix.h"
 #include "cuttlefish/host/libs/location/KmlParser.h"

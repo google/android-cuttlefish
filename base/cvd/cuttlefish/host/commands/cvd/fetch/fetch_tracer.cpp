@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-#include <fmt/format.h>
+#include "fmt/format.h"
 
 namespace cuttlefish {
 namespace {

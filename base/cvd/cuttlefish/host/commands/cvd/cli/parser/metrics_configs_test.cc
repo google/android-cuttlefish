@@ -16,9 +16,9 @@
 
 #include <string>
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#include <json/value.h>
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include "json/value.h"
 
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 #include "cuttlefish/result/result.h"

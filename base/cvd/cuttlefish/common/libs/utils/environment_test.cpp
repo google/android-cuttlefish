@@ -21,7 +21,7 @@
 #include <string_view>
 
 #include "absl/cleanup/cleanup.h"
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 namespace cuttlefish {
 

@@ -25,7 +25,7 @@ IncludeCategories:
     Priority:        4
   - Regex:           '^<(zip|zlib|png|lz4|archive|tinyxml2|pcre2)\.h>'
     Priority:        3
-  - Regex:           '^<([^/]*|(sys|linux|netinet|arpa|asm|net|gnu)/.*)\.h>'
+  - Regex:           '^<.*\.h>'
     Priority:        1
   - Regex:           '^<[a-z_]*>'
     Priority:        2

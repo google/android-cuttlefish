@@ -19,8 +19,8 @@
 #include <utility>
 #include <vector>
 
-#include <fmt/format.h>
-#include <gflags/gflags.h>
+#include "fmt/format.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/from_gflags.h"

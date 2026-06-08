@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include <gflags/gflags.h>
+#include "gflags/gflags.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"

@@ -17,7 +17,7 @@
 
 #include <string>
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/result/result_matchers.h"

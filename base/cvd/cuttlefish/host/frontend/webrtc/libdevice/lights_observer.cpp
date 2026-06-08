@@ -18,7 +18,7 @@
 #include <chrono>
 
 #include "absl/log/log.h"
-#include <json/json.h>
+#include "json/json.h"
 
 #include "cuttlefish/common/libs/utils/vsock_connection.h"
 

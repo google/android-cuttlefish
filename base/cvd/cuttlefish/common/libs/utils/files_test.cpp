@@ -20,9 +20,9 @@
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/strings/str_cat.h"
-#include <android-base/file.h>
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "android-base/file.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
