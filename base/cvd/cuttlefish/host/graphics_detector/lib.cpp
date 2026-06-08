@@ -16,9 +16,9 @@
 
 #include "cuttlefish/host/graphics_detector/lib.h"
 
-#include <string>
-
 #include <dlfcn.h>
+
+#include <string>
 
 namespace gfxstream {
 

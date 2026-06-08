@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+#include "cuttlefish/common/libs/utils/semver.h"
+
 #include <string>
 
 #include <gtest/gtest.h>
-
-#include "cuttlefish/common/libs/utils/semver.h"
 
 namespace cuttlefish {
 

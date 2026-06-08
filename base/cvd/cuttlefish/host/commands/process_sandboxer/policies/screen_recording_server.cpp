@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/process_sandboxer/policies.h"
-
 #include <errno.h>
 #include <linux/filter.h>
 #include <sys/mman.h>
@@ -26,6 +24,8 @@
 
 #include "sandboxed_api/sandbox2/policybuilder.h"
 #include "sandboxed_api/sandbox2/util/bpf_helper.h"
+
+#include "cuttlefish/host/commands/process_sandboxer/policies.h"
 
 namespace cuttlefish::process_sandboxer {
 

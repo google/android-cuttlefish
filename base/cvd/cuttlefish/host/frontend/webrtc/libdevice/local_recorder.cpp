@@ -25,7 +25,6 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-
 #include <api/media_stream_interface.h>
 #include <api/rtp_parameters.h>
 #include <api/task_queue/default_task_queue_factory.h>

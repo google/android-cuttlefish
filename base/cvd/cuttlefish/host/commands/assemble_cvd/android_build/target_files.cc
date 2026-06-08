@@ -28,10 +28,10 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
-#include "cuttlefish/host/commands/assemble_cvd/android_build/combined_android_build.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/combined_android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/find_build_archive.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/misc_info_metadata.h"
 #include "cuttlefish/host/libs/config/build_archive.h"

@@ -22,8 +22,8 @@
 #include <string_view>
 #include <vector>
 
-#include <fmt/format.h>
 #include "absl/strings/str_split.h"
+#include <fmt/format.h>
 
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"

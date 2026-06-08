@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 
+#include <libyuv.h>
+
 #include <memory>
 #include <string_view>
 
-#include <fruit/fruit.h>
-#include <gflags/gflags.h>
-#include <libyuv.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "google/protobuf/text_format.h"
+#include "google/rpc/code.pb.h"
+#include "google/rpc/status.pb.h"
+#include <fruit/fruit.h>
+#include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 #include "cuttlefish/host/frontend/webrtc/audio_handler.h"
 #include "cuttlefish/host/frontend/webrtc/client_server.h"
 #include "cuttlefish/host/frontend/webrtc/connection_observer.h"
@@ -49,11 +54,6 @@
 #include "cuttlefish/host/libs/input_connector/input_connector.h"
 #include "cuttlefish/host/libs/screen_connector/composition_manager.h"
 #include "cuttlefish/host/libs/screen_connector/screen_connector.h"
-#include "google/protobuf/text_format.h"
-#include "google/rpc/code.pb.h"
-#include "google/rpc/status.pb.h"
-
-#include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 
 DEFINE_bool(multitouch, true,
             "Whether to send multi-touch or single-touch events");

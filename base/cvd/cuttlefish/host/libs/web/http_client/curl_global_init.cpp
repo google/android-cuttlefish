@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <curl/curl.h>
-
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
+
+#include <curl/curl.h>
 
 namespace cuttlefish {
 

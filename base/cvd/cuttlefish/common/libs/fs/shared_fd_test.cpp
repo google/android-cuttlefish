@@ -16,8 +16,9 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
-#include <gtest/gtest.h>
 #include <unistd.h>
+
+#include <gtest/gtest.h>
 
 namespace cuttlefish {
 

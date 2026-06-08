@@ -20,8 +20,8 @@
 #include <string>
 #include <string_view>
 
-#include <gtest/gtest.h>
 #include "absl/cleanup/cleanup.h"
+#include <gtest/gtest.h>
 
 namespace cuttlefish {
 

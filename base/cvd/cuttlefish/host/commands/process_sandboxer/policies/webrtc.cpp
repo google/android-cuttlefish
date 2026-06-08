@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/process_sandboxer/policies.h"
-
 #include <linux/filter.h>
 #include <linux/prctl.h>
 #include <linux/sockios.h>
@@ -32,6 +30,8 @@
 #include "sandboxed_api/sandbox2/policybuilder.h"
 #include "sandboxed_api/sandbox2/util/bpf_helper.h"
 #include "sandboxed_api/util/path.h"
+
+#include "cuttlefish/host/commands/process_sandboxer/policies.h"
 
 namespace cuttlefish::process_sandboxer {
 

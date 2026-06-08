@@ -20,8 +20,8 @@
 #include <mutex>
 #include <thread>
 
-#include <gflags/gflags.h>
 #include "absl/log/log.h"
+#include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"

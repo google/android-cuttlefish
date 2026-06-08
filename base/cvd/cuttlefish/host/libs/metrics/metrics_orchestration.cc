@@ -23,8 +23,8 @@
 #include <string_view>
 #include <vector>
 
-#include <fmt/format.h>
 #include "absl/log/log.h"
+#include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"

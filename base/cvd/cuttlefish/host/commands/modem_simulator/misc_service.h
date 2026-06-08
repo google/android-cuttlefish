@@ -15,9 +15,9 @@
 
 #pragma once
 
-#include "cuttlefish/host/commands/modem_simulator/modem_service.h"
-
 #include <ctime>
+
+#include "cuttlefish/host/commands/modem_simulator/modem_service.h"
 
 namespace cuttlefish {
 

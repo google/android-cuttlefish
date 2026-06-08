@@ -16,11 +16,11 @@
 
 #include "cuttlefish/host/libs/input_connector/event_buffer.h"
 
+#include <linux/input.h>
+
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
-
-#include <linux/input.h>
 
 namespace cuttlefish {
 

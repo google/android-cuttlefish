@@ -18,7 +18,6 @@
 
 #include <cstdint>
 #include <cstdlib>
-
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/cf_endian.h"

@@ -15,12 +15,12 @@
 
 #pragma once
 
+#include <libwebsockets.h>
+
 #include <atomic>
 #include <memory>
 #include <string>
 #include <thread>
-
-#include <libwebsockets.h>
 
 namespace cuttlefish {
 // Utility class to serve the client files in a thread

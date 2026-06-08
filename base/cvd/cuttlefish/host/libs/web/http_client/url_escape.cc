@@ -15,10 +15,10 @@
 
 #include "cuttlefish/host/libs/web/http_client/url_escape.h"
 
-#include <curl/curl.h>
-
 #include <string>
 #include <string_view>
+
+#include <curl/curl.h>
 
 namespace cuttlefish {
 

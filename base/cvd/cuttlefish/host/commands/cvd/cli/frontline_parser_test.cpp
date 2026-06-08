@@ -13,12 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "cuttlefish/host/commands/cvd/cli/frontline_parser.h"
+
 #include <string>
 #include <vector>
 
 #include <gtest/gtest.h>
 
-#include "cuttlefish/host/commands/cvd/cli/frontline_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/result/result_matchers.h"
 

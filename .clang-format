@@ -19,4 +19,15 @@
 # of the below options.
 
 BasedOnStyle: Google
-IncludeBlocks: Preserve
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^[<"](cuttlefish|allocd|external_proto)/'
+    Priority:        4
+  - Regex:           '^<(zip|zlib|png|lz4|archive|tinyxml2|pcre2)\.h>'
+    Priority:        3
+  - Regex:           '^<([^/]*|(sys|linux|netinet|arpa|asm|net|gnu)/.*)\.h>'
+    Priority:        1
+  - Regex:           '^<[a-z_]*>'
+    Priority:        2
+  - Regex:           '.*'
+    Priority:        3
