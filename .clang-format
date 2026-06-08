@@ -19,15 +19,22 @@
 # of the below options.
 
 BasedOnStyle: Google
+# Enforce grouping and sorting of #include directives into distinct blocks
+# separated by a blank line, evaluated in the order listed below:
 IncludeBlocks: Regroup
 IncludeCategories:
+  # 1. Project headers (cuttlefish/, allocd/, and external_proto/)
   - Regex:           '^[<"](cuttlefish|allocd|external_proto)/'
     Priority:        4
+  # 2. Plain C external third-party library headers inside angle brackets
   - Regex:           '^<(zip|zlib|png|lz4|archive|tinyxml2|pcre2)\.h>'
     Priority:        3
+  # 3. C/POSIX system headers (any other angle-bracket header ending in .h)
   - Regex:           '^<.*\.h>'
     Priority:        1
+  # 4. C++ standard library headers (extensionless angle-bracket headers)
   - Regex:           '^<[a-z_]*>'
     Priority:        2
+  # 5. External third-party library headers inside double quotes
   - Regex:           '.*'
     Priority:        3
