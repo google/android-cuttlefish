@@ -28,6 +28,7 @@
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

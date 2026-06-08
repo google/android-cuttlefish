@@ -33,6 +33,7 @@
 #include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

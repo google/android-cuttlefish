@@ -46,7 +46,6 @@
 #include "cuttlefish/common/libs/utils/container.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags/parser.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/network.h"
@@ -69,6 +68,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/mcu_config_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/parser.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/use_cvdalloc.h"
@@ -94,6 +94,7 @@
 #include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/result/result.h"
 
 #define GET_FLAG_STR_VALUE(name) GetFlagStrValueForInstances(FLAGS_ ##name, instances_size, #name, name_to_default_value)
 #define GET_FLAG_INT_VALUE(name) GetFlagIntValueForInstances(FLAGS_ ##name, instances_size, #name, name_to_default_value)

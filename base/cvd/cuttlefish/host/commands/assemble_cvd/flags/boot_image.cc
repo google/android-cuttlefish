@@ -25,6 +25,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/result/result.h"
 
 DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
               "Location of cuttlefish boot image. If empty it is assumed to be "

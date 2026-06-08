@@ -24,6 +24,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
