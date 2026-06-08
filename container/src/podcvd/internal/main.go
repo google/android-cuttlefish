@@ -47,7 +47,7 @@ func Main(args []string) error {
 		return err
 	}
 	switch subcommand {
-	case "bugreport", "create", "display", "env", "logs", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
+	case "bugreport", "create", "display", "env", "logs", "monitor", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
 		if err := handleSubcommandsForSingleInstanceGroup(ccm, cvdArgs); err != nil {
 			return err
 		}
@@ -67,7 +67,7 @@ func Main(args []string) error {
 		if err := ExecFetchCmdOnDisposableHost(ccm, cvdArgs); err != nil {
 			return err
 		}
-	case "cache", "load", "monitor", "setup":
+	case "cache", "load", "setup":
 		// TODO(seungjaeyoo): Support other subcommands of cvd as well.
 		return fmt.Errorf("subcommand %q is not implemented yet", subcommand)
 	default:
