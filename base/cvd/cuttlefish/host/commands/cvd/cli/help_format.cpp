@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 
-#include "absl/log/check.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 
@@ -54,14 +53,6 @@ std::vector<std::string> WrapAroundLine(std::string_view str,
     ret.push_back(absl::StrJoin(line, " "));
   }
   return ret;
-}
-
-std::vector<std::string> GetFlagHelpMessage(const Flag& flag) {
-  std::stringstream ss;
-  ss << flag;
-  std::vector<std::string> flag_help_lines =
-      absl::StrSplit(ss.str(), '\n', absl::SkipWhitespace());
-  return flag_help_lines;
 }
 
 }  // namespace
@@ -98,15 +89,12 @@ std::string FormatFlagsHelp(const std::vector<Flag>& flags,
                             size_t max_line_width) {
   std::stringstream ss;
   for (const Flag& flag : flags) {
-    std::vector<std::string> help_lines = GetFlagHelpMessage(flag);
-    CHECK(!help_lines.empty())
-        << "Flag produced empty help message: " << flag.Name();
-    for (std::string_view line : help_lines) {
-      for (std::string_view wrapped_line :
-           WrapAroundLine(line, max_line_width - 4)) {
-        ss << "    " << wrapped_line << "\n";
-      }
+    ss << " " << flag.Synopsis() << "\n";
+    for (std::string_view wrapped_line :
+         WrapAroundLine(flag.Description(), max_line_width - 4)) {
+      ss << "    " << wrapped_line << "\n";
     }
+    ss << "    Current value: \"" << flag.CurrentValue() << "\"\n";
     ss << "\n";
   }
   return ss.str();

@@ -102,6 +102,25 @@ Flag Flag::AddValidator(std::function<Result<void>()> validator) && {
 
 std::string Flag::Name() const { return aliases_.front(); }
 
+std::string Flag::Synopsis() const {
+  std::vector<std::string> options;
+  for (const std::string& alias : aliases_) {
+    switch (style_) {
+      case Flag::Style::String:
+        options.emplace_back(absl::StrCat("--", alias, "=VAL"));
+        break;
+      case Flag::Style::Bool:
+        options.emplace_back("--[no]" + alias);
+        break;
+    }
+  }
+  return absl::StrJoin(options, ", ");
+}
+
+const std::string& Flag::Description() const { return help_; }
+
+std::string Flag::CurrentValue() const { return getter_(); }
+
 Result<void> Flag::Parse(std::vector<std::string>& arguments) const {
   for (auto it = arguments.begin(); it != arguments.end();) {
     size_t consumed = CF_EXPECT(Match(*it, std::span(it + 1, arguments.end())));
@@ -195,23 +214,13 @@ Result<void> Flag::SetAndValidate(std::string_view value) const {
 }
 
 std::ostream& operator<<(std::ostream& out, const Flag& flag) {
-  std::vector<std::string> options;
-  for (const std::string& alias : flag.aliases_) {
-    switch (flag.style_) {
-      case Flag::Style::String:
-        options.emplace_back("--" + alias + "=VAL");
-        break;
-      case Flag::Style::Bool:
-        options.emplace_back("--[no]" + alias);
-        break;
-    }
-  }
-  out << absl::StrJoin(options, ", ") << "\n";
+  out << flag.Synopsis() << "\n";
 
-  if (!flag.help_.empty()) {
-    out << flag.help_ << "\n";
+  std::string help = flag.Description();
+  if (!help.empty()) {
+    out << help << "\n";
   }
-  out << "Current value: \"" << flag.getter_() << "\"\n";
+  out << "Current value: \"" << flag.CurrentValue() << "\"\n";
   return out;
 }
 
