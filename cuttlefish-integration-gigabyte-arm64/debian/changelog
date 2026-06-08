@@ -1,4 +1,4 @@
-cuttlefish-integration-gigabyte-arm64 (1.54.0) unstable; urgency=medium
+cuttlefish-integration-gigabyte-arm64 (1.54.0) stable; urgency=medium
 
  * Start development on 1.54.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2455
 
