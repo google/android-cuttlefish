@@ -48,7 +48,7 @@ Result<std::string> EncodeBase64(std::string_view data) {
   return CF_EXPECT(EncodeBase64(data.data(), data.size()));
 }
 
-Result<std::vector<uint8_t>> DecodeBase64(const std::string& data) {
+Result<std::vector<uint8_t>> DecodeBase64(std::string_view data) {
   std::vector<uint8_t> buffer(data.size());
   size_t actual_len = 0;
   CF_EXPECT_EQ(EVP_DecodeBase64(buffer.data(), &actual_len, buffer.size(),

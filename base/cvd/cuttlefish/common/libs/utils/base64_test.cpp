@@ -17,6 +17,7 @@
 #include "cuttlefish/common/libs/utils/base64.h"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -42,6 +43,13 @@ TEST(Base64Test, DecodeMult3) {
 TEST(Base64Test, DecodeNonMult3) {
   std::vector<uint8_t> expected{'f','o','o','b','a','r','1'};
   ASSERT_THAT(DecodeBase64("Zm9vYmFyMQ=="), IsOkAndValue(expected));
+}
+
+TEST(Base64Test, DecodeStringViewSubstring) {
+  std::vector<uint8_t> expected{'f','o','o','b','a','r'};
+  std::string_view sv = "Zm9vYmFyEXTRA";
+  sv = sv.substr(0, 8);
+  ASSERT_THAT(DecodeBase64(sv), IsOkAndValue(expected));
 }
 
 TEST(Base64Test, EncodeOneZero) {
