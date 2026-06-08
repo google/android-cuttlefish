@@ -56,6 +56,9 @@ class Flag {
 
   std::string Name() const;
   bool operator<(const Flag& other) const { return Name() < other.Name(); }
+  std::string Synopsis() const;
+  const std::string& Description() const;
+  std::string CurrentValue() const;
 
   /* Examines a list of arguments, removing any matches from the list and
    * invoking the `Setter` for every match. Returns error if the setter or any
@@ -83,7 +86,6 @@ class Flag {
   Result<void> SetAndValidate(std::string_view) const;
 
   friend void WriteGflagsCompatXml(const Flag&, std::ostream&);
-  friend std::ostream& operator<<(std::ostream&, const Flag&);
   friend Result<void> ConsumeFlags(const std::vector<Flag>&,
                                    std::vector<std::string>&, ConsumeFlagsOpts);
 
