@@ -18,7 +18,7 @@
 #include <string>
 #include <string_view>
 
-#include <curl/curl.h>
+#include "curl/curl.h"
 
 namespace cuttlefish {
 

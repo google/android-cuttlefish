@@ -19,11 +19,11 @@
 #include <string>
 
 #include "absl/log/log.h"
-#include <gflags/gflags.h>
-#include <google/protobuf/empty.pb.h>
-#include <grpcpp/ext/proto_server_reflection_plugin.h>
-#include <grpcpp/grpcpp.h>
-#include <grpcpp/health_check_service_interface.h>
+#include "gflags/gflags.h"
+#include "google/protobuf/empty.pb.h"
+#include "grpcpp/ext/proto_server_reflection_plugin.h"
+#include "grpcpp/grpcpp.h"
+#include "grpcpp/health_check_service_interface.h"
 
 #include "cuttlefish/host/commands/screen_recording_server/screen_recording.grpc.pb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"

@@ -19,7 +19,7 @@
 #include <string_view>
 #include <vector>
 
-#include <json/json.h>
+#include "json/json.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/result/result.h"

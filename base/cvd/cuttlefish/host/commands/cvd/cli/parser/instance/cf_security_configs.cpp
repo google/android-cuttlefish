@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include <fmt/format.h>
+#include "fmt/format.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"

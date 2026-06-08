@@ -24,7 +24,7 @@
 #include "liblp/builder.h"
 #include "liblp/metadata_format.h"
 #include "liblp/partition_opener.h"
-#include <openssl/sha.h>
+#include "openssl/sha.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"

@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_command_channel.h"

@@ -21,7 +21,7 @@
 #include <mutex>
 #include <string>
 
-#include <Eigen/Dense>
+#include "Eigen/Dense"
 
 #include "cuttlefish/common/libs/sensors/sensors.h"
 

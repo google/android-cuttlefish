@@ -20,7 +20,7 @@
 #include <string_view>
 #include <vector>
 
-#include <libxml/parser.h>
+#include "libxml/parser.h"
 
 #include "cuttlefish/result/result.h"
 

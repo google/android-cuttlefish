@@ -20,7 +20,7 @@
 #include <thread>
 #include <unordered_map>
 
-#include <json/json.h>
+#include "json/json.h"
 
 #include "cuttlefish/common/libs/utils/vsock_connection.h"
 

@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-#include <json/value.h>
+#include "json/value.h"
 
 #include "cuttlefish/result/result.h"
 

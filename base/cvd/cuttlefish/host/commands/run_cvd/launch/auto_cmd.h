@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/utils/type_name.h"
 #include "cuttlefish/host/libs/feature/command_source.h"

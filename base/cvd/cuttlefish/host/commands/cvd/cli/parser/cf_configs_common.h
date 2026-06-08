@@ -20,10 +20,10 @@
 #include <type_traits>
 #include <vector>
 
-#include <fmt/format.h>
-#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
-#include <google/protobuf/message.h>
-#include <json/json.h>
+#include "fmt/format.h"
+#include "fmt/ranges.h"  // NOLINT(misc-include-cleaner): version difference
+#include "google/protobuf/message.h"
+#include "json/json.h"
 
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/result/result.h"

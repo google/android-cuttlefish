@@ -18,7 +18,7 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include <gflags/gflags.h>
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/socket2socket_proxy.h"

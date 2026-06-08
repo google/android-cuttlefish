@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include <google/protobuf/text_format.h>
+#include "google/protobuf/text_format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/result/result.h"

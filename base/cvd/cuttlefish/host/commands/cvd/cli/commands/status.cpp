@@ -26,7 +26,7 @@
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/strip.h"
-#include <json/value.h>
+#include "json/value.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"

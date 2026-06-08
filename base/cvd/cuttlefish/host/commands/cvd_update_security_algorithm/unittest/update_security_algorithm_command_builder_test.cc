@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/commands/cvd_update_security_algorithm/update_security_algorithm_command_builder.h"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 TEST(CommandBuilderTest, GetATCommand) {
   std::string serialized = cuttlefish::GetATCommand(1, 2, 3, false);

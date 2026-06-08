@@ -19,9 +19,9 @@
 #include <utility>
 #include <vector>
 
-#include <fmt/format.h>
-#include <gflags/gflags.h>
-#include <google/protobuf/text_format.h>
+#include "fmt/format.h"
+#include "gflags/gflags.h"
+#include "google/protobuf/text_format.h"
 
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"

@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"

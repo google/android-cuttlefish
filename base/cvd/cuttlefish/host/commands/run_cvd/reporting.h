@@ -20,7 +20,7 @@
 #include <tuple>
 #include <vector>
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 namespace cuttlefish {
 

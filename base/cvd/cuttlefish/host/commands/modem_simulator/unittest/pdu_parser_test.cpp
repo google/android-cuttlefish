@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/commands/modem_simulator/pdu_parser.h"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 TEST(PDUParserTest, IsValidPDU_true) {
   std::string pdu =

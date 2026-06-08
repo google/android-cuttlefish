@@ -23,7 +23,7 @@
 #include <string_view>
 #include <vector>
 
-#include <openssl/base64.h>
+#include "openssl/base64.h"
 
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"

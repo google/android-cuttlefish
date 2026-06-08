@@ -22,8 +22,8 @@
 #include <string_view>
 #include <utility>
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include "cuttlefish/io/filesystem.h"
 #include "cuttlefish/io/in_memory.h"

@@ -22,8 +22,8 @@
 #include <utility>
 #include <vector>
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 #include "cuttlefish/io/in_memory.h"
 #include "cuttlefish/io/io.h"

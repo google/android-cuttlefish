@@ -25,7 +25,7 @@
 #include <string>
 
 #include "absl/log/log.h"
-#include <drm/drm_fourcc.h>
+#include "drm/drm_fourcc.h"
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/streamer.h"
 #include "cuttlefish/host/libs/screen_connector/composition_manager.h"

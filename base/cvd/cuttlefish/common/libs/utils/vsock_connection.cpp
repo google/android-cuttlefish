@@ -32,7 +32,7 @@
 #include <vector>
 
 #include "absl/log/log.h"
-#include <json/json.h>
+#include "json/json.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"

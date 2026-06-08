@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <gflags/gflags.h>
+#include "gflags/gflags.h"
 
 DECLARE_int32(num_instances);
 DECLARE_string(report_anonymous_usage_stats);

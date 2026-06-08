@@ -16,10 +16,10 @@
 #include <type_traits>
 #include <vector>
 
-#include <fmt/core.h>
-#include <google/protobuf/message.h>
-#include <google/protobuf/text_format.h>
-#include <google/protobuf/util/json_util.h>
+#include "fmt/core.h"
+#include "google/protobuf/message.h"
+#include "google/protobuf/text_format.h"
+#include "google/protobuf/util/json_util.h"
 
 /* Format proto messages as textproto with {} or {:t} and json with {:j}. */
 template <typename T>

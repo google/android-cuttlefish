@@ -15,8 +15,8 @@
 
 #include "cuttlefish/host/libs/web/http_client/fake_http_client.h"
 
-#include <gmock/gmock-matchers.h>
-#include <gtest/gtest.h>
+#include "gmock/gmock-matchers.h"
+#include "gtest/gtest.h"
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_string.h"

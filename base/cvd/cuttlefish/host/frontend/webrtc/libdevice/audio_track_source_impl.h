@@ -19,7 +19,7 @@
 #include <mutex>
 #include <set>
 
-#include <api/media_stream_interface.h>
+#include "api/media_stream_interface.h"
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/audio_sink.h"
 

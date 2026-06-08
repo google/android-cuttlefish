@@ -22,7 +22,7 @@
 #include <type_traits>
 #include <vector>
 
-#include <fmt/format.h>
+#include "fmt/format.h"
 
 #include "cuttlefish/result/result.h"
 

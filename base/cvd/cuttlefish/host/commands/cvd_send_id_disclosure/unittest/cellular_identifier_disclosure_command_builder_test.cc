@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/commands/cvd_send_id_disclosure/cellular_identifier_disclosure_command_builder.h"
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 TEST(CommandBuilderTest, GetATCommand) {
   std::string serialized = cuttlefish::GetATCommand("001001", 2, 3, false);

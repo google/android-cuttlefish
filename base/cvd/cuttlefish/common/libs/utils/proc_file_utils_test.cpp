@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 

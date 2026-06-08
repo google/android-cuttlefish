@@ -16,8 +16,8 @@
 
 #include <string>
 
-#include <android-base/file.h>
-#include <gtest/gtest.h>
+#include "android-base/file.h"
+#include "gtest/gtest.h"
 
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
