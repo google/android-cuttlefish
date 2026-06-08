@@ -440,6 +440,7 @@ func (tc *TestContext) TearDown() {
 				"cuttlefish_runtime/cuttlefish_config.json",
 				"cuttlefish_runtime/logcat",
 				"cuttlefish_runtime/*.log",
+				"fetch.log",
 			}
 			for _, pattern := range patterns {
 				matches, err := filepath.Glob(path.Join(tc.tempdir, pattern))
