@@ -1,6 +1,5 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/logs.h"
 
-#include <android-base/file.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -12,6 +11,8 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include <android-base/file.h>
+
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"

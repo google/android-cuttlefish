@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include <modules/audio_device/include/audio_device.h>
-
 #include <atomic>
+
+#include <modules/audio_device/include/audio_device.h>
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/audio_source.h"
 

@@ -16,10 +16,11 @@
 #include "lights_observer.h"
 
 #include <chrono>
-#include "absl/log/log.h"
-#include "cuttlefish/common/libs/utils/vsock_connection.h"
 
+#include "absl/log/log.h"
 #include <json/json.h>
+
+#include "cuttlefish/common/libs/utils/vsock_connection.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

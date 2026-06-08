@@ -18,8 +18,8 @@
 #include <iostream>
 #include <string>
 
-#include <gflags/gflags.h>
 #include "absl/log/log.h"
+#include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/metrics/metrics_receiver.h"

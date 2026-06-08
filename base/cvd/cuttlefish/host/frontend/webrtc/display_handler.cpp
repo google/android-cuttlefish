@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/frontend/webrtc/display_handler.h"
 
+#include <libyuv.h>
 #include <stdint.h>
 
 #include <chrono>
@@ -23,9 +24,8 @@
 #include <optional>
 #include <string>
 
-#include <drm/drm_fourcc.h>
-#include <libyuv.h>
 #include "absl/log/log.h"
+#include <drm/drm_fourcc.h>
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/streamer.h"
 #include "cuttlefish/host/libs/screen_connector/composition_manager.h"

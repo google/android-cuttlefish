@@ -13,8 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/libs/web/android_build_string.h"
-
 #include <optional>
 #include <string>
 #include <vector>
@@ -22,6 +20,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {

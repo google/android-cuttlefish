@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/host_package.h"
 
-#include <android-base/file.h>
 #include <sys/stat.h>
 
 #include <optional>
@@ -23,6 +22,7 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include <android-base/file.h>
 
 #include "cuttlefish/common/libs/utils/archive.h"
 #include "cuttlefish/common/libs/utils/files.h"

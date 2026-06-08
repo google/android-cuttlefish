@@ -15,10 +15,11 @@
  */
 
 #include <stdlib.h>
+
 #include <iostream>
 
-#include <gflags/gflags.h>
 #include "absl/log/log.h"
+#include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"

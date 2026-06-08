@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include <google/protobuf/text_format.h>
-
 #include <fstream>
 #include <string>
+
+#include <google/protobuf/text_format.h>
 
 #include "cuttlefish/host/graphics_detector/graphics_detector.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"

@@ -19,9 +19,8 @@
 #include <memory>
 #include <vector>
 
-#include <json/json.h>
-
 #include <api/peer_connection_interface.h>
+#include <json/json.h>
 
 #include "cuttlefish/result/result.h"
 

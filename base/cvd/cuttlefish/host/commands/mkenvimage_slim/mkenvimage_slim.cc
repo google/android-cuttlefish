@@ -17,13 +17,14 @@
 // https://github.com/u-boot/u-boot/blob/master/tools/mkenvimage.c The bare
 // minimum amount of functionality for our application is replicated.
 
+#include "cuttlefish/host/libs/config/mkenvimage_slim.h"
+
 #include <stdlib.h>
 
 #include "absl/log/log.h"
 #include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
-#include "cuttlefish/host/libs/config/mkenvimage_slim.h"
 #include "cuttlefish/result/result.h"
 
 DEFINE_int32(env_size, 4096, "file size of resulting env");

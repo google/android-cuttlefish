@@ -21,9 +21,9 @@
 #include <memory>
 #include <string>
 
-#include <gflags/gflags.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"

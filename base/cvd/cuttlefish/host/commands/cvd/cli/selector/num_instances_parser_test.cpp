@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+#include "cuttlefish/host/commands/cvd/cli/selector/num_instances_parser.h"
+
 #include <gtest/gtest.h>
 
 #include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/num_instances_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result_matchers.h"

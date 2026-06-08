@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <string>
-
 #include "cuttlefish/common/libs/utils/flags_validator.h"
+
+#include <string>
 
 namespace cuttlefish {
 Result<void> ValidateSetupWizardMode(const std::string& setupwizard_mode) {

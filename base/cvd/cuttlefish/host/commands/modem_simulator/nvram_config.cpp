@@ -15,11 +15,11 @@
 
 #include "cuttlefish/host/commands/modem_simulator/nvram_config.h"
 
-#include <json/json.h>
-#include "absl/log/log.h"
-
 #include <fstream>
 #include <mutex>
+
+#include "absl/log/log.h"
+#include <json/json.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/modem_simulator/device_config.h"

@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
+#include "inotify.h"
+
 #include <limits.h>
 #include <string.h>
 #include <sys/inotify.h>
 #include <unistd.h>
+
 #include <string>
 #include <vector>
 
 #include "absl/log/log.h"
-
-#include "inotify.h"
 
 namespace cuttlefish {
 

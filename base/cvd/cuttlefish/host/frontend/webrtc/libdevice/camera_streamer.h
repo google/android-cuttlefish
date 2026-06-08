@@ -15,6 +15,11 @@
  */
 
 #pragma once
+#include <atomic>
+#include <mutex>
+#include <thread>
+#include <vector>
+
 #include <api/video/i420_buffer.h>
 #include <api/video/video_frame.h>
 #include <api/video/video_sink_interface.h>
@@ -22,11 +27,6 @@
 
 #include "cuttlefish/common/libs/utils/vsock_connection.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/camera_controller.h"
-
-#include <atomic>
-#include <mutex>
-#include <thread>
-#include <vector>
 
 namespace cuttlefish {
 namespace webrtc_streaming {

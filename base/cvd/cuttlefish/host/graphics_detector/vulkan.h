@@ -21,10 +21,10 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/host/graphics_detector/expected.h"
-
 #include "vulkan/vulkan_raii.hpp"
 #include "vulkan/vulkan_to_string.hpp"
+
+#include "cuttlefish/host/graphics_detector/expected.h"
 
 namespace gfxstream {
 

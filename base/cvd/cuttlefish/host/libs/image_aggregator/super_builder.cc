@@ -17,8 +17,6 @@
 
 #include <stdint.h>
 
-#include <openssl/sha.h>
-
 #include <map>
 #include <string_view>
 
@@ -26,18 +24,18 @@
 #include "liblp/builder.h"
 #include "liblp/metadata_format.h"
 #include "liblp/partition_opener.h"
+#include <openssl/sha.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/config/log_string_to_dir.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
 #include "cuttlefish/host/libs/image_aggregator/disk_image.h"
 #include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
-#include "cuttlefish/result/result.h"
-
-#include "cuttlefish/host/libs/config/log_string_to_dir.h"
 #include "cuttlefish/pretty/liblp/liblp.h"  // IWYU pragma: keep: overloads
 #include "cuttlefish/pretty/unique_ptr.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

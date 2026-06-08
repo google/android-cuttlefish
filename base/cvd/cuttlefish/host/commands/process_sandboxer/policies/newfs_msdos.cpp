@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/process_sandboxer/policies.h"
-
 #include <sys/syscall.h>
 
 #include "sandboxed_api/sandbox2/policybuilder.h"
+
+#include "cuttlefish/host/commands/process_sandboxer/policies.h"
 
 namespace cuttlefish::process_sandboxer {
 

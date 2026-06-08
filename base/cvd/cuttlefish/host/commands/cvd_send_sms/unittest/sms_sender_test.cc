@@ -17,9 +17,9 @@
 
 #include <sstream>
 
+#include "absl/log/check.h"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "absl/log/check.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 

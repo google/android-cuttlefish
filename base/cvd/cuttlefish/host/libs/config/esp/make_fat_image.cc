@@ -15,9 +15,8 @@
 
 #include "cuttlefish/host/libs/config/esp/make_fat_image.h"
 
-#include <sys/types.h>
-
 #include <fcntl.h>
+#include <sys/types.h>
 
 #include <string>
 #include <vector>

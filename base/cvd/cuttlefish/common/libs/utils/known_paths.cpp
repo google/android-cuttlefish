@@ -16,9 +16,9 @@
 
 #include "cuttlefish/common/libs/utils/known_paths.h"
 
-#include "cuttlefish/common/libs/utils/environment.h"
-
 #include <string>
+
+#include "cuttlefish/common/libs/utils/environment.h"
 
 namespace cuttlefish {
 

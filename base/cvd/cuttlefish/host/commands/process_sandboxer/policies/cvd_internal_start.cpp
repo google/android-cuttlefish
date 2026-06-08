@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cuttlefish/host/commands/process_sandboxer/policies.h"
-
 #include <linux/prctl.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
@@ -24,6 +22,8 @@
 
 #include "sandboxed_api/sandbox2/policybuilder.h"
 #include "sandboxed_api/sandbox2/util/bpf_helper.h"
+
+#include "cuttlefish/host/commands/process_sandboxer/policies.h"
 
 namespace cuttlefish::process_sandboxer {
 

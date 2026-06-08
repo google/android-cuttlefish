@@ -13,16 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "cuttlefish/host/commands/cvd/fetch/downloaders.h"
+
 #include <fstream>
 #include <string>
 
+#include "fmt/core.h"
 #include <android-base/file.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "fmt/core.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/host/commands/cvd/fetch/downloaders.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"

@@ -15,14 +15,14 @@
  */
 
 #pragma once
-#include "cuttlefish/common/libs/utils/vsock_connection.h"
-
 #include <atomic>
 #include <mutex>
 #include <thread>
 #include <unordered_map>
 
 #include <json/json.h>
+
+#include "cuttlefish/common/libs/utils/vsock_connection.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

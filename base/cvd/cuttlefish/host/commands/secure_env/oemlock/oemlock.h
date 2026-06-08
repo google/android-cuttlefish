@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include "cuttlefish/result/result.h"
-
 #include "cuttlefish/host/commands/secure_env/storage/storage.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace oemlock {

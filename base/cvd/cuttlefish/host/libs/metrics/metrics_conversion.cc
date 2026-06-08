@@ -20,8 +20,8 @@
 #include <string_view>
 #include <variant>
 
-#include <fmt/format.h>
 #include "google/protobuf/timestamp.pb.h"
+#include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"

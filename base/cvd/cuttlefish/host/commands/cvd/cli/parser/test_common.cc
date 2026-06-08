@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
+#include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
+
 #include <algorithm>
 #include <string>
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_flags_validator.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/launch_cvd_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 
 namespace cuttlefish {
 

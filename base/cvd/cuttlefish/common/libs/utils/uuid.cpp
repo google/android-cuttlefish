@@ -16,9 +16,9 @@
 
 #include "cuttlefish/common/libs/utils/uuid.h"
 
-#include <uuid/uuid.h>
-
 #include <string>
+
+#include <uuid/uuid.h>
 
 namespace cuttlefish {
 namespace {

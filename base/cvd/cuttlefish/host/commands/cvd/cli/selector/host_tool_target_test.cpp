@@ -13,12 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
+
 #include <string>
 
 #include <gtest/gtest.h>
 
 #include "cuttlefish/common/libs/utils/environment.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
