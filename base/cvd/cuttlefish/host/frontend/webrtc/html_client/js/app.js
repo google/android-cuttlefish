@@ -1099,11 +1099,9 @@ class DeviceControlApp {
   }
 
   #onRotateButton(rotation) {
-    // Attempt to init adb again, in case the initial connection failed.
-    // This succeeds immediately if already connected.
-    this.#initializeAdb();
     this.#rotateDisplays(rotation);
-    adbShell(`/vendor/bin/cuttlefish_sensor_injection rotate ${rotation}`);
+    const z = normalizeAngle(rotation);
+    this.#setOrientation(z);
   }
 
   #onControlPanelButton(e, command) {
@@ -1301,6 +1299,17 @@ window.addEventListener("load", async evt => {
   }
   document.getElementById('loader').style.display = 'none';
 });
+
+// Wrap an angle in degrees to the (-180, 180] range, preserving orientation:
+// the result is always congruent to the input modulo 360, so the corresponding
+// sin/cos (and thus the simulated orientation) are unchanged.
+function normalizeAngle(degrees) {
+  let normalized = ((degrees % 360) + 360) % 360;  // [0, 360)
+  if (normalized > 180) {
+    normalized -= 360;  // (180, 360) -> (-180, 0)
+  }
+  return normalized;
+}
 
 // The formulas in this function are derived from the following facts:
 // * The video element's aspect ratio (ar) is fixed.
