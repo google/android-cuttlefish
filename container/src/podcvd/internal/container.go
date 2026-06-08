@@ -187,6 +187,9 @@ func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ct
 	if stdin != nil {
 		args = append(args, "-i")
 	}
+	if useTTY(stdin, stdout, stderr) {
+		args = append(args, "-t")
+	}
 	args = append(args, ctr)
 	args = append(args, cmd...)
 	execCmd := exec.CommandContext(ctx, "podman", args...)
@@ -209,4 +212,20 @@ func (m *CuttlefishContainerManagerImpl) StopAndRemoveContainer(ctx context.Cont
 		return fmt.Errorf("failed to stop and remove container %q: %w", ctr, err)
 	}
 	return nil
+}
+
+func useTTY(stdin io.Reader, stdout io.Writer, stderr io.Writer) bool {
+	if stdin == nil || stdout == nil || stderr == nil {
+		return false
+	}
+	if f, ok := stdin.(interface{ Fd() uintptr }); !ok || !Isatty(f.Fd()) {
+		return false
+	}
+	if f, ok := stdout.(interface{ Fd() uintptr }); !ok || !Isatty(f.Fd()) {
+		return false
+	}
+	if f, ok := stderr.(interface{ Fd() uintptr }); !ok || !Isatty(f.Fd()) {
+		return false
+	}
+	return true
 }
