@@ -20,7 +20,6 @@ rust_binary(
     edition = "2024",
     deps = crate_deps([
         "clap",
-        "env_logger",
         "image",
         "libc",
         "log",

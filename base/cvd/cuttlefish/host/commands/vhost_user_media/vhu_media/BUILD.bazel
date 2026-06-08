@@ -5,12 +5,19 @@ package(default_visibility = ["//visibility:public"])
 
 rust_library(
     name = "vhu_media",
-    srcs = ["src/lib.rs"],
+    srcs = [
+        "src/cli.rs",
+        "src/devices.rs",
+        "src/lib.rs",
+    ],
     edition = "2024",
     deps = crate_deps([
+        "clap",
+        "env_logger",
         "libc",
         "log",
         "thiserror",
+        "v4l2r",
         "vhost",
         "vhost-user-backend",
         "virtio-bindings",

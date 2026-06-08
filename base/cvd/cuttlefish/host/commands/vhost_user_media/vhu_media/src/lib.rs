@@ -41,17 +41,8 @@ use vmm_sys_util::epoll::EventSet;
 use vmm_sys_util::event::new_event_consumer_and_notifier;
 use vmm_sys_util::event::{EventConsumer, EventFlag, EventNotifier};
 
-pub mod cli {
-    use thiserror::Error as ThisError;
-
-    #[derive(Debug, ThisError)]
-    pub enum Error {
-        #[error("Could not create daemon: {0}")]
-        CouldNotCreateDaemon(vhost_user_backend::Error),
-        #[error("Fatal error: {0}")]
-        ServeFailed(vhost_user_backend::Error),
-    }
-}
+pub mod cli;
+pub mod devices;
 
 #[derive(Debug, ThisError)]
 /// Errors related to vhost-user-media daemon.
