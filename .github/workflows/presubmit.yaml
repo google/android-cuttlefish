@@ -532,6 +532,9 @@ jobs:
           containers-storage:localhost/cuttlefish-orchestration:latest
     - name: Run cvd e2e test for podcvd
       run: |
+        # TODO(b/520405665): Resolve flakiness when not doing chmod.
+        sudo chmod 666 /dev/kvm
+
         cd e2etests
         bazel test \
           //cvd/bugreport_tests \
