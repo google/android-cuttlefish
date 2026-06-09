@@ -131,11 +131,11 @@ Result<void> ValidateBoardBootconfigKeys(
     allowed_args.insert(allowed_args.end(),
                         std::begin(kLegacyBoardBootconfigKeysMinidroid),
                         std::end(kLegacyBoardBootconfigKeysMinidroid));
-  } else if (type == cuttlefish::DeviceType::Unknown) {
-    // Desktop targets don't define device type yet
+  } else if (type == cuttlefish::DeviceType::Desktop) {
     allowed_args.insert(allowed_args.end(),
                         std::begin(kLegacyBoardBootconfigKeysDesktop),
                         std::end(kLegacyBoardBootconfigKeysDesktop));
+  } else if (type == cuttlefish::DeviceType::Unknown) {
     // Sdv core targets don't define device type yet.
     allowed_args.insert(allowed_args.end(),
                         std::begin(kLegacyBoardBootconfigKeysSdvCore),
