@@ -300,7 +300,7 @@ destroy_bridged_interfaces() {
         manage_nft_rule delete masq "br-${2}"
         stop_dnsmasq "${2}"
         if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
-            ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_len}" dev "${2}"
+            ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${2}"
         fi
         ip addr del "${gateway}${netmask}" dev "${2}"
     fi
