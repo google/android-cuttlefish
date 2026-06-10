@@ -378,8 +378,10 @@ Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out, bool& value,
     value = print_xml;
     out << "<?xml version=\"1.0\"?>" << std::endl << "<AllFlags>" << std::endl;
     WriteGflagsCompatXml(flags, out);
-    out << "</AllFlags>" << std::flush;
-    return CF_ERR("Requested early exit");
+    out << "</AllFlags>\n" << std::flush;
+    // return value of 1 matches gflags --help flag behavior
+    std::exit(1);
+    return {};
   };
   return GflagsCompatBoolFlag(name).Setter(setter);
 }
