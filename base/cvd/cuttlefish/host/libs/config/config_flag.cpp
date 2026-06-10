@@ -134,7 +134,7 @@ class ConfigFlagImpl : public ConfigFlag {
     };
   }
   Result<void> Process(std::vector<std::string>& args) override {
-    CF_EXPECT(flag_.Parse(args), "Failed to parse `--config` flag");
+    CF_EXPECT(ConsumeFlags({flag_}, args), "Failed to parse `--config` flag");
 
     if (is_default_) {
       configs_.resize(system_image_dir_flag_.Size());

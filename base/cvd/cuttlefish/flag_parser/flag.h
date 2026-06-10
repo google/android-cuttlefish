@@ -60,12 +60,6 @@ class Flag {
   const std::string& Description() const;
   std::string CurrentValue() const;
 
-  /* Examines a list of arguments, removing any matches from the list and
-   * invoking the `Setter` for every match. Returns error if the setter or any
-   * validator ever return error. Non-matches are left in place. */
-  Result<void> Parse(std::vector<std::string>& arguments) const;
-  Result<void> Parse(std::vector<std::string>&& arguments) const;
-
  private:
   enum class Style {
     String,

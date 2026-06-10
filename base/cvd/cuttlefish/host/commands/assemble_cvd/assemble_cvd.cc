@@ -598,9 +598,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
       GflagsCompatFlag("helppackage", help_str),
       GflagsCompatFlag("helpxml", helpxml),
   };
-  for (const auto& help_flag : help_flags) {
-    CF_EXPECT(help_flag.Parse(args), "Failed to process help flag");
-  }
+  CF_EXPECT(ConsumeFlags(help_flags, args), "Failed to process help flags");
 
   {
     std::string process_name = "assemble_cvd";
