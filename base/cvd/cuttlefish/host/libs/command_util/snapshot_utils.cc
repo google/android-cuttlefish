@@ -24,14 +24,15 @@
 #include <string>
 #include <unordered_map>
 
-#include <android-base/file.h>
-#include "absl/strings/strip.h"
 #include "absl/log/log.h"
+#include "absl/strings/strip.h"
+#include "android-base/file.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
 

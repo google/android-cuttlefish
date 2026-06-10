@@ -32,3 +32,13 @@ cf_cc_library(
         "//cuttlefish/result",
     ],
 )
+
+cf_cc_library(
+    name = "readlink",
+    srcs = ["readlink.cc"],
+    hdrs = ["readlink.h"],
+    deps = [
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result",
+    ],
+)
