@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/instances/status_fetcher.h"
 
+#include <algorithm>
 #include <cctype>
 #include <string>
 #include <string_view>
@@ -31,6 +32,7 @@
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/common/libs/utils/gflags_xml_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
@@ -130,7 +132,7 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
   ConstructCommandParam help_cmd_param{
       .bin_path = bin_path,
       .home = home,
-      .args = {"--help"},
+      .args = {"--helpxml"},
       .envs = envs,
       .working_dir = working_dir,
       .command_name = bin,
@@ -140,8 +142,11 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
   std::string stdout_str, stderr_str;
   RunWithManagedStdio(std::move(help_cmd), nullptr, &stdout_str, &stderr_str);
 
-  bool has_print = stdout_str.find("--print") != std::string::npos ||
-                   stderr_str.find("--print") != std::string::npos;
+  std::vector<GflagDescription> internal_flags =
+      CF_EXPECT(ParseGflagsXmlHelp(stdout_str));
+  bool has_print = std::any_of(
+      internal_flags.begin(), internal_flags.end(),
+      [](const GflagDescription& desc) { return desc.name == "print"; });
 
   std::vector<std::string> args{"--wait_for_launcher",
                                 std::to_string(timeout.count())};
