@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
 
+#include <filesystem>
 #include <ostream>
 #include <string_view>
 #include <vector>
