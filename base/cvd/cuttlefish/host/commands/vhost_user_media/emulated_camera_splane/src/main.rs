@@ -23,6 +23,7 @@ use virtio_media::protocol::VirtioMediaDeviceConfig;
 use vm_memory::{GuestMemoryAtomic, GuestMemoryMmap};
 
 mod device;
+use device::LensFacing;
 
 type Result<T> = std::result::Result<T, Error>;
 
@@ -35,19 +36,26 @@ struct CmdLineArgs {
     /// Log verbosity, one of Off, Error, Warning, Info, Debug, Trace.
     #[clap(short, long, default_value_t = log::LevelFilter::Debug)]
     verbosity: log::LevelFilter,
+    /// Lens facing configuration: FRONT, BACK, or EXTERNAL.
+    #[clap(long, value_name = "LENS_FACING", default_value = "BACK")]
+    lens_facing: String,
 }
 
 #[derive(PartialEq, Debug)]
 struct Config {
     socket_path: PathBuf,
+    lens_facing: LensFacing,
 }
 
 impl TryFrom<CmdLineArgs> for Config {
     type Error = Error;
 
     fn try_from(args: CmdLineArgs) -> Result<Self> {
+        let lens_facing = args.lens_facing.parse::<LensFacing>()
+            .map_err(Error::InvalidArgument)?;
         Ok(Config {
             socket_path: args.socket_path,
+            lens_facing,
         })
     }
 }
@@ -71,14 +79,17 @@ fn start_backend(config: Config) -> Result<()> {
     // across VMs restarts rather than having to manually start the binary again.
     loop {
         use virtio_media::v4l2r::ioctl::Capabilities;
-        let config = VirtioMediaDeviceConfig {
+        let device_config = VirtioMediaDeviceConfig {
             device_caps: (Capabilities::VIDEO_CAPTURE | Capabilities::STREAMING).bits(),
             device_type: VFL_TYPE_VIDEO,
             card,
         };
+        let lens_facing = config.lens_facing;
         let backend = Arc::new(RwLock::new(VhuMediaBackend::new(
-            config,
-            |event_queue, host_mapper| crate::device::EmulatedCamera::new(event_queue, host_mapper),
+            device_config,
+            move |event_queue, host_mapper| {
+                crate::device::EmulatedCamera::new(event_queue, host_mapper, lens_facing)
+            },
         )));
         let mut daemon = VhostUserDaemon::new(
             String::from("vhost-user-media-backend"),

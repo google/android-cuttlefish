@@ -50,6 +50,8 @@ pub mod cli {
         CouldNotCreateDaemon(vhost_user_backend::Error),
         #[error("Fatal error: {0}")]
         ServeFailed(vhost_user_backend::Error),
+        #[error("Invalid argument: {0}")]
+        InvalidArgument(String),
     }
 }
 

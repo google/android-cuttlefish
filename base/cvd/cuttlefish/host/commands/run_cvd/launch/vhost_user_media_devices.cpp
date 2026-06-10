@@ -40,10 +40,13 @@ namespace {
 
 using Subprocess::StdIOChannel::kStdErr;
 
-Command NewCommand(const std::string& binary_path, const std::string& socket_path) {
+Command NewCommand(const std::string& binary_path, const std::string& socket_path, const std::string& lens_facing) {
   Command cmd(binary_path);
   cmd.AddParameter("--socket-path=", socket_path);
   cmd.AddParameter("--verbosity=", "debug");
+  if (!lens_facing.empty()) {
+    cmd.AddParameter("--lens-facing=", lens_facing);
+  }
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
                     SharedFD::Open("/dev/null", O_WRONLY));
   return cmd;
@@ -68,7 +71,7 @@ class VhostUserMediaDevices : public CommandSource {
       } else {
         CF_EXPECT(false, "unknown media type");
       }
-      Command cmd = NewCommand(binary_path, instance_.media_socket_path(index));
+      Command cmd = NewCommand(binary_path, instance_.media_socket_path(index), config.lens_facing);
       Command cmd_log_tee = CF_EXPECT(
           log_tee_.CreateLogTee(cmd, "vhu_media_simple_device", kStdErr), "Failed to create log tee command for media device");
       commands.emplace_back(std::move(cmd));

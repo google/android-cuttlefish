@@ -96,7 +96,7 @@ namespace {
 
 class MediaConfigsFragmentImpl : public MediaConfigsFragment {
  public:
-  INJECT(MediaConfigsFragmentImpl(MediaConfigs& configs))
+   INJECT(MediaConfigsFragmentImpl(MediaConfigs& configs))
       : configs_(configs) {}
 
   std::string Name() const override { return "MediaConfigsFragmentImpl"; }
@@ -106,6 +106,7 @@ class MediaConfigsFragmentImpl : public MediaConfigsFragment {
     for (const auto& config : configs_.GetConfigs()) {
       Json::Value json(Json::objectValue);
       json[kType] = static_cast<int>(config.type);
+      json[kLensFacing] = config.lens_facing;
       configs_json.append(json);
     }
     return configs_json;
@@ -124,6 +125,9 @@ class MediaConfigsFragmentImpl : public MediaConfigsFragment {
       CuttlefishConfig::MediaConfig config = {};
       config.type =
           static_cast<CuttlefishConfig::MediaType>(json[kType].asInt());
+      if (json.isMember(kLensFacing)) {
+        config.lens_facing = json[kLensFacing].asString();
+      }
       configs.emplace_back(config);
     }
 
@@ -134,6 +138,7 @@ class MediaConfigsFragmentImpl : public MediaConfigsFragment {
  private:
   static constexpr char kMediaConfigs[] = "media_configs";
   static constexpr char kType[] = "type";
+  static constexpr char kLensFacing[] = "lens_facing";
   MediaConfigs& configs_;
 };
 
