@@ -121,22 +121,6 @@ const std::string& Flag::Description() const { return help_; }
 
 std::string Flag::CurrentValue() const { return getter_(); }
 
-Result<void> Flag::Parse(std::vector<std::string>& arguments) const {
-  for (auto it = arguments.begin(); it != arguments.end();) {
-    size_t consumed = CF_EXPECT(Match(*it, std::span(it + 1, arguments.end())));
-    if (consumed == 0) {
-      ++it;
-    } else {
-      it = arguments.erase(it, it + consumed);
-    }
-  }
-  return {};
-}
-Result<void> Flag::Parse(std::vector<std::string>&& arguments) const {
-  CF_EXPECT(Parse(arguments));
-  return {};
-}
-
 Flag::Flag(std::string name, Flag::Style style) : style_(style) {
   ValidateAlias(name);
   aliases_.emplace_back(std::move(name));

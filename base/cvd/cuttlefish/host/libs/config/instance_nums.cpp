@@ -43,7 +43,7 @@ static Result<std::optional<int32_t>> ParseBaseInstanceFlag(
     std::vector<std::string>& flags) {
   int value = -1;
   auto flag = GflagsCompatFlag("base_instance_num", value);
-  CF_EXPECT(flag.Parse(flags), "Flag parsing error");
+  CF_EXPECT(ConsumeFlags({flag}, flags), "Flag parsing error");
   return value > 0 ? value : std::optional<int32_t>();
 }
 
@@ -54,7 +54,7 @@ static Result<std::optional<int32_t>> ParseNumInstancesFlag(
     std::vector<std::string>& flags) {
   int value = -1;
   auto flag = GflagsCompatFlag("num_instances", value);
-  CF_EXPECT(flag.Parse(flags), "Flag parsing error");
+  CF_EXPECT(ConsumeFlags({flag}, flags), "Flag parsing error");
   return value > 0 ? value : std::optional<int32_t>();
 }
 
@@ -91,7 +91,7 @@ static Result<std::vector<int32_t>> ParseInstanceNumsFlag(
     std::vector<std::string>& flags) {
   std::string value;
   auto flag = GflagsCompatFlag("instance_nums", value);
-  CF_EXPECT(flag.Parse(flags), "Flag parsing error");
+  CF_EXPECT(ConsumeFlags({flag}, flags), "Flag parsing error");
   if (!value.empty()) {
     return CF_EXPECT(ParseInstanceNums(value));
   } else {
