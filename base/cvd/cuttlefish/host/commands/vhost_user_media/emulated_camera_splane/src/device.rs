@@ -58,6 +58,28 @@ use virtio_media::protocol::SgEntry;
 use virtio_media::protocol::V4l2Event;
 use virtio_media::protocol::V4l2Ioctl;
 use virtio_media::protocol::VIRTIO_MEDIA_MMAP_FLAG_RW;
+use std::str::FromStr;
+
+/// https://developer.android.com/reference/android/hardware/camera2/CameraMetadata#LENS_FACING_FRONT
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LensFacing {
+    Front = 0,
+    Back = 1,
+    External = 2,
+}
+
+impl FromStr for LensFacing {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "FRONT" => Ok(LensFacing::Front),
+            "BACK" => Ok(LensFacing::Back),
+            "EXTERNAL" => Ok(LensFacing::External),
+            _ => Err(format!("Invalid lens facing: {}. Expected FRONT, BACK, or EXTERNAL", s)),
+        }
+    }
+}
 
 /// Current status of a buffer.
 #[derive(Debug, PartialEq, Eq)]
@@ -223,6 +245,8 @@ pub struct EmulatedCamera<Q: VirtioMediaEventQueue, HM: VirtioMediaHostMemoryMap
     /// same time. It will fails if we allow simultaneous sessions to be active, so we need this
     /// artificial limitation to make it pass fully.
     active_session: Option<u32>,
+    /// Lens facing configuration.
+    lens_facing: LensFacing,
 }
 
 impl<Q, HM> EmulatedCamera<Q, HM>
@@ -230,11 +254,12 @@ where
     Q: VirtioMediaEventQueue,
     HM: VirtioMediaHostMemoryMapper,
 {
-    pub fn new(evt_queue: Q, mapper: HM) -> Self {
+    pub fn new(evt_queue: Q, mapper: HM, lens_facing: LensFacing) -> Self {
         Self {
             evt_queue,
             mmap_manager: MmapMappingManager::from(mapper),
             active_session: None,
+            lens_facing,
         }
     }
 
@@ -246,10 +271,10 @@ where
             id: CID_LENS_FACING,
             type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER,
             name: name.map(|b| b as i8),
-            minimum: 0,
-            maximum: 0,
+            minimum: LensFacing::Front as i64,
+            maximum: LensFacing::External as i64,
             step: 1,
-            default_value: 0,
+            default_value: self.lens_facing as i64,
             flags: bindings::V4L2_CTRL_FLAG_READ_ONLY,
             elems: 1,
             elem_size: std::mem::size_of::<u32>() as u32,
@@ -743,7 +768,7 @@ where
         for ctrl in ctrl_array {
             match ctrl.id {
                 CID_LENS_FACING => {
-                    ctrl.__bindgen_anon_1.value = 0;
+                    ctrl.__bindgen_anon_1.value = self.lens_facing as i32;
                 }
                 _ => {
                     ctrls.error_idx = ctrls.count;
