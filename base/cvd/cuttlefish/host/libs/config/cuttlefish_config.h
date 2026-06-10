@@ -122,6 +122,7 @@ class CuttlefishConfig {
 
   struct MediaConfig {
     MediaType type;
+    std::string lens_facing;
   };
 
   void set_secure_hals(const std::set<SecureHal>&);
