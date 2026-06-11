@@ -26,10 +26,12 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
@@ -202,6 +204,11 @@ std::string XmlEscape(const std::string& s) {
   return absl::StrReplaceAll(s, {{"<", "&lt;"}, {">", "&gt;"}});
 }
 
+Flag WithVectorNameValueHint(Flag flag) {
+  std::string hint = flag.ValueNameHint();
+  return std::move(flag).ValueNameHint(absl::StrCat(hint, "[,", hint, "...]"));
+}
+
 }  // namespace
 
 void WriteGflagsCompatXml(const Flag& flag, std::ostream& out) {
@@ -299,16 +306,19 @@ Flag GflagsCompatFlag(const std::string& name, bool& value) {
 
 Flag GflagsCompatFlag(const std::string& name,
                       std::vector<std::string>& value) {
-  return GflagsCompatFlagImpl<std::string>(name, value, "");
+  return WithVectorNameValueHint(
+      GflagsCompatFlagImpl<std::string>(name, value, ""));
 }
 
 Flag GflagsCompatFlag(const std::string& name, std::vector<unsigned>& value) {
-  return GflagsCompatFlagImpl<unsigned>(name, value, 0);
+  return WithVectorNameValueHint(
+      GflagsCompatFlagImpl<unsigned>(name, value, 0));
 }
 
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
                       const bool default_value) {
-  return GflagsCompatFlagImpl(name, value, default_value);
+  return WithVectorNameValueHint(
+      GflagsCompatFlagImpl(name, value, default_value));
 }
 
 Flag GflagsCompatFlag(const std::string& name,
@@ -351,13 +361,13 @@ Flag GflagsCompatFlag(const std::string& name, std::optional<bool>& value,
 Flag GflagsCompatFlag(const std::string& name,
                       std::optional<std::vector<std::string>>& value,
                       CoerceToNullopt opt) {
-  return GflagsCompatFlagImpl(name, value, opt);
+  return WithVectorNameValueHint(GflagsCompatFlagImpl(name, value, opt));
 }
 
 Flag GflagsCompatFlag(const std::string& name,
                       std::optional<std::vector<unsigned>>& value,
                       CoerceToNullopt opt) {
-  return GflagsCompatFlagImpl(name, value, opt);
+  return WithVectorNameValueHint(GflagsCompatFlagImpl(name, value, opt));
 }
 
 }  // namespace cuttlefish
