@@ -18,6 +18,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <sys/eventfd.h>
 #include <sys/inotify.h>
 #include <sys/poll.h>
@@ -139,10 +140,29 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
     }
     LogMonitorDisplay display(width);
 
-    display.DrawFile(launcher_fd, using_assemble_log ? kLogNameAssembleCvd
-                                                     : kLogNameLauncher);
-    display.DrawFile(kernel_fd, kLogNameKernel);
-    display.DrawFile(logcat_fd, kLogNameLogcat);
+    bool logcat_ready = false;
+    if (logcat_fd->IsOpen() && logcat_fd->LSeek(0, SEEK_END) > 0) {
+      logcat_ready = true;
+    }
+
+    size_t total_content = 30;
+
+    const std::string launcher_name =
+        using_assemble_log ? kLogNameAssembleCvd : kLogNameLauncher;
+    size_t launcher_lines = total_content;
+    size_t kernel_lines = 0;
+    size_t logcat_lines = 0;
+    if (kernel_fd->IsOpen()) {
+      launcher_lines = total_content / 3;
+      kernel_lines = total_content - launcher_lines;
+    }
+    if (logcat_ready) {
+      kernel_lines = total_content / 3;
+      logcat_lines = total_content - launcher_lines - kernel_lines;
+    }
+    display.DrawFile(launcher_fd, launcher_name, launcher_lines);
+    display.DrawFile(kernel_fd, kLogNameKernel, kernel_lines);
+    display.DrawFile(logcat_fd, kLogNameLogcat, logcat_lines);
 
     const auto [output, total_lines_drawn] = display.Finalize();
     std::cout << output << std::flush;
@@ -171,7 +191,7 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
     // a fallback timeout to awake and retry.
     int timeout_ms = -1;
     if (dir_watch == -1 || kernel_watch == -1 || launcher_watch == -1 ||
-        logcat_watch == -1 || using_assemble_log) {
+        logcat_watch == -1 || !logcat_ready || using_assemble_log) {
       timeout_ms = 200;
     }
 

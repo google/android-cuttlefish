@@ -66,7 +66,7 @@ class LogMonitorDisplay {
    * within a bordered box titled with the provided name.
    * If the file cannot be read, an error box is drawn instead.
    */
-  void DrawFile(SharedFD fd, const std::string& title);
+  void DrawFile(SharedFD fd, const std::string& title, size_t max_lines = 10);
 
   /**
    * Appends the final bottom border to the display and returns the

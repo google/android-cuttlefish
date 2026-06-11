@@ -99,10 +99,15 @@ LogMonitorDisplay::LogMonitorDisplay(size_t width)
       total_lines_drawn_(0),
       colorize_(ShouldColorizeOutput(1)) {}
 
-void LogMonitorDisplay::DrawFile(SharedFD fd, const std::string& title) {
+void LogMonitorDisplay::DrawFile(SharedFD fd, const std::string& title,
+                                 size_t max_lines) {
+  if (max_lines == 0) {
+    return;
+  }
   std::vector<std::string> lines;
   if (fd->IsOpen()) {
-    Result<std::vector<std::string>> lines_result = GetLastNLines(fd, 10);
+    Result<std::vector<std::string>> lines_result =
+        GetLastNLines(fd, max_lines);
     if (lines_result.ok()) {
       lines = *lines_result;
     } else {
@@ -120,7 +125,10 @@ void LogMonitorDisplay::DrawFile(SharedFD fd, const std::string& title) {
     lines.push_back(absl::StrCat("Error: ", fd->StrError()));
   }
 
-  while (lines.size() < 10) {
+  if (lines.size() > max_lines) {
+    lines.resize(max_lines);
+  }
+  while (lines.size() < max_lines) {
     lines.push_back("");
   }
 
