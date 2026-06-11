@@ -84,4 +84,29 @@ TEST(FlagParser, EndOfOptionMark) {
   ASSERT_TRUE(flag);
 }
 
+TEST(FlagParser, ValueNameHint_Customized) {
+  auto flag = Flag::StringFlag("myflag").ValueNameHint("myvalue");
+  EXPECT_EQ(flag.Synopsis(), "--myflag=myvalue");
+}
+
+TEST(FlagParser, ValueNameHint_CustomizedWithAlias) {
+  auto flag = Flag::StringFlag("myflag").Alias("mf").ValueNameHint("myvalue");
+  EXPECT_EQ(flag.Synopsis(), "--myflag=myvalue, --mf=myvalue");
+}
+
+TEST(FlagParser, ValueNameHint_DefaultDerived) {
+  auto flag = Flag::StringFlag("myflag");
+  EXPECT_EQ(flag.Synopsis(), "--myflag=MYFLAG");
+}
+
+TEST(FlagParser, ValueNameHint_DefaultDerivedDashed) {
+  auto flag = Flag::StringFlag("verbosity-level");
+  EXPECT_EQ(flag.Synopsis(), "--verbosity-level=LEVEL");
+}
+
+TEST(FlagParser, ValueNameHint_DefaultDerivedSnaked) {
+  auto flag = Flag::StringFlag("verbosity_level");
+  EXPECT_EQ(flag.Synopsis(), "--verbosity_level=LEVEL");
+}
+
 }  // namespace cuttlefish
