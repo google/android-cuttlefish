@@ -155,6 +155,7 @@ cf_cc_library(
         ":ansi_codes",
         ":display",
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/libs/log_names",
