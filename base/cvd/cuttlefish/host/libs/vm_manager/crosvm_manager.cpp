@@ -247,19 +247,39 @@ Result<void> MaybeConfigureVulkanIcd(const CuttlefishConfig& config,
   return {};
 }
 
+// TODO(b/402274999): remove after crosvm has been fully substituted.
 Result<std::string> CrosvmPathForVhostUserGpu(const CuttlefishConfig& config) {
   const auto& instance = config.ForDefaultInstance();
+
+  std::string crosvm_path;
   switch (HostArch()) {
     case Arch::Arm64:
-      return HostBinaryPath("aarch64-linux-gnu/crosvm");
     case Arch::X86:
     case Arch::X86_64:
-      return instance.crosvm_binary();
-    default:
+      crosvm_path = HostBinaryPath("prebuilts/crosvm");
       break;
-  }
-  return CF_ERR("Unhandled host arch " << HostArchStr()
+    default:
+      return CF_ERR("Unhandled host arch " << HostArchStr()
                                        << " for vhost user gpu crosvm");
+  }
+  if (FileExists(crosvm_path)) {
+    return crosvm_path;
+  }
+
+  // Older builds placed the prebuilt in an arch specific subdirectory.
+  switch (HostArch()) {
+    case Arch::Arm64:
+      crosvm_path = HostBinaryPath("aarch64-linux-gnu/crosvm");
+    case Arch::X86:
+    case Arch::X86_64:
+      crosvm_path = instance.crosvm_binary();
+    default:
+      return CF_ERR("Unhandled host arch " << HostArchStr()
+                                       << " for vhost user gpu crosvm");
+  }
+
+  CF_EXPECT(FileExists(crosvm_path), "Failed to find crosvm prebuilt for vhost user gpu.");
+  return crosvm_path;
 }
 
 Result<VhostUserDeviceCommands> BuildVhostUserGpu(
