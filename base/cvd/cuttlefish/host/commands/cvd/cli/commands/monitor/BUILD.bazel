@@ -18,9 +18,7 @@ cf_cc_library(
     srcs = ["command_handler.cc"],
     hdrs = ["command_handler.h"],
     deps = [
-        ":ansi_codes",
-        ":display",
-        "//cuttlefish/common/libs/fs",
+        ":monitor",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
@@ -29,10 +27,8 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/selector",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:instance_manager",
-        "//cuttlefish/host/libs/log_names",
         "//cuttlefish/result",
         "//libbase",
-        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -142,6 +138,31 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "logcat_test",
+    srcs = ["logcat_test.cc"],
+    deps = [
+        ":logcat",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
+    name = "monitor",
+    srcs = ["monitor.cc"],
+    hdrs = ["monitor.h"],
+    deps = [
+        ":ansi_codes",
+        ":display",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/libs/log_names",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
 cf_cc_library(
     name = "truncate",
     srcs = ["truncate.cc"],
@@ -159,15 +180,6 @@ cf_cc_test(
         ":ansi_codes",
         ":truncate",
         "@abseil-cpp//absl/strings",
-    ],
-)
-
-cf_cc_test(
-    name = "logcat_test",
-    srcs = ["logcat_test.cc"],
-    deps = [
-        ":logcat",
-        "//cuttlefish/result:result_matchers",
     ],
 )
 
