@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <libxml/parser.h>
 #include <stdint.h>
 
 #include <map>
@@ -26,6 +25,7 @@
 
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
+#include "libxml/parser.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
