@@ -88,7 +88,7 @@ Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
 
   VLOG(0) << "bootconfig size is " << bootconfig.size();
   ssize_t bytesWritten = WriteAll(bootconfig_fd, bootconfig);
-  CF_EXPECT(WriteAll(bootconfig_fd, bootconfig) == bootconfig.size(),
+  CF_EXPECT(bytesWritten == bootconfig.size(),
             "Failed to write bootconfig to \"" << bootconfig_path << "\"");
   VLOG(0) << "Bootconfig parameters from vendor boot image and config are "
           << ReadFile(bootconfig_path);
