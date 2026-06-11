@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2026 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,33 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "cuttlefish/host/libs/web/build_api.h"
 
 #include <string>
 
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/android_build_string.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-class BuildApi {
- public:
-  virtual ~BuildApi() = default;
-  virtual Result<Build> GetBuild(const BuildString& build_string) = 0;
-
-  virtual Result<std::string> DownloadFile(
-      const Build& build, const std::string& target_directory,
-      const std::string& artifact_name) = 0;
-
-  virtual Result<SeekableZipSource> FileReader(
-      const Build&, const std::string& artifact_name) = 0;
-};
-
 Result<std::string> DownloadFileWithBackup(
     BuildApi& build_api, const Build& build,
     const std::string& target_directory, const std::string& artifact_name,
-    const std::string& backup_artifact_name);
+    const std::string& backup_artifact_name) {
+  Result<std::string> result =
+      build_api.DownloadFile(build, target_directory, artifact_name);
+  if (result.ok()) {
+    return result;
+  }
+  return CF_EXPECT(
+      build_api.DownloadFile(build, target_directory, backup_artifact_name));
+}
 
 }  // namespace cuttlefish
