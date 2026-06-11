@@ -148,17 +148,6 @@ Result<std::string> AndroidBuildApi::DownloadFile(
   return DownloadTargetFile(build, target_directory, artifact_name);
 }
 
-Result<std::string> AndroidBuildApi::DownloadFileWithBackup(
-    const Build& build, const std::string& target_directory,
-    const std::string& artifact_name, const std::string& backup_artifact_name) {
-  std::unordered_set<std::string> artifacts =
-      CF_EXPECT(Artifacts(build, {artifact_name, backup_artifact_name}));
-  std::string selected_artifact = artifact_name;
-  if (!Contains(artifacts, artifact_name)) {
-    selected_artifact = backup_artifact_name;
-  }
-  return DownloadTargetFile(build, target_directory, selected_artifact);
-}
 
 Result<SeekableZipSource> AndroidBuildApi::FileReader(
     const Build& build, const std::string& artifact_name) {
