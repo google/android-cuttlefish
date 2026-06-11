@@ -27,17 +27,25 @@ cf_cc_library(
 )
 
 cf_cc_test(
-    name = "flag_parser_test",
-    srcs = ["flag_parser_test.cpp"],
+    name = "flag_test",
+    srcs = ["flag_test.cpp"],
+    deps = [
+        ":flag_parser",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_test(
+    name = "gflags_compat_test",
+    srcs = ["gflags_compat_test.cpp"],
     # `layering_check` conflicts with the combination of the clang prebuilt and
     # the cmake build rules used for @libxml2.
     features = ["-layering_check"],
     deps = [
         ":flag_parser",
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
         "@libxml2",
     ],
 )

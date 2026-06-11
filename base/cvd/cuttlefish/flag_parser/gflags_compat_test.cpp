@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
+#include "cuttlefish/flag_parser/gflags_compat.h"
+
 #include <stdint.h>
 
 #include <map>
 #include <optional>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "gmock/gmock-matchers.h"
@@ -28,19 +29,9 @@
 #include "libxml/parser.h"
 
 #include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
-
-TEST(FlagParser, DuplicateAlias) {
-  ASSERT_DEATH(
-      { Flag::StringFlag("flag").Alias("flag"); },
-      "Duplicate flag alias: flag");
-  ASSERT_DEATH(
-      { Flag::StringFlag("flag").Alias("foo").Alias("foo"); },
-      "Duplicate flag alias: foo");
-}
 
 TEST(FlagParser, StringFlag) {
   std::string value;
@@ -118,17 +109,6 @@ TEST(FlagParser, RepeatedStringFlag) {
   auto flag = GflagsCompatFlag("myflag", value);
   ASSERT_THAT(ConsumeFlags({flag}, {"-myflag=a", "--myflag", "b"}), IsOk());
   ASSERT_EQ(value, "b");
-}
-
-TEST(FlagParser, RepeatedListFlag) {
-  std::vector<std::string> elems;
-  auto flag = Flag::StringFlag("myflag");
-  flag.Setter([&elems](std::string_view arg) -> Result<void> {
-    elems.emplace_back(arg);
-    return {};
-  });
-  ASSERT_THAT(ConsumeFlags({flag}, {"-myflag=a", "--myflag", "b"}), IsOk());
-  ASSERT_EQ(elems, (std::vector<std::string>{"a", "b"}));
 }
 
 TEST(FlagParser, FlagRemoval) {
@@ -316,39 +296,6 @@ TEST(FlagParser, InvalidIntFlag) {
   ASSERT_THAT(ConsumeFlags({flag}, {"--myflag=def"}), IsError());
   ASSERT_THAT(ConsumeFlags({flag}, {"-myflag", "abc"}), IsError());
   ASSERT_THAT(ConsumeFlags({flag}, {"--myflag", "def"}), IsError());
-}
-
-TEST(FlagParser, UnexpectedArgumentGuard) {
-  auto consume_check_unexpected = [](std::vector<std::string> args) {
-    return ConsumeFlags({}, std::move(args),
-                        {.fail_on_unexpected_argument = true});
-  };
-  ASSERT_THAT(consume_check_unexpected({}), IsOk());
-  ASSERT_THAT(consume_check_unexpected({"positional"}), IsError());
-  ASSERT_THAT(consume_check_unexpected({"positional", "positional2"}),
-              IsError());
-  ASSERT_THAT(consume_check_unexpected({"-flag"}), IsError());
-  ASSERT_THAT(consume_check_unexpected({"-"}), IsError());
-}
-
-TEST(FlagParser, EndOfOptionMark) {
-  std::vector<std::string> args{"-flag", "--", "-invalid_flag"};
-  bool flag = false;
-  std::vector<Flag> flags{GflagsCompatFlag("flag", flag)};
-
-  EXPECT_THAT(ConsumeFlags(flags, args,
-                           {
-                               .fail_on_unexpected_argument = true,
-                           }),
-              IsError());
-  EXPECT_EQ(args, std::vector<std::string>({"--", "-invalid_flag"}));
-  EXPECT_THAT(ConsumeFlags(flags, args,
-                           {
-                               .stop_at_double_dashes = true,
-                               .fail_on_unexpected_argument = true,
-                           }),
-              IsOk());
-  ASSERT_TRUE(flag);
 }
 
 TEST(FlagParser, OptionalStringFlag_DefaultOptNotPresent) {
