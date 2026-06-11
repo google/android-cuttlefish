@@ -140,6 +140,8 @@ const std::string& Flag::Description() const { return help_; }
 
 std::string Flag::CurrentValue() const { return getter_(); }
 
+const std::string& Flag::ValueNameHint() const { return value_name_hint_; }
+
 Flag::Flag(std::string name, Flag::Style style) : style_(style) {
   ValidateAlias(name);
   value_name_hint_ = DefaultValueNameHint(name);

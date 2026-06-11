@@ -560,4 +560,34 @@ TEST(FlagParser, OptionalInt64Flag_NotPresent) {
   ASSERT_FALSE(value.has_value());
 }
 
+TEST(FlagParser, VectorFlagValueNameHint_StringVector) {
+  std::vector<std::string> string_vec;
+  auto flag = GflagsCompatFlag("string-vec", string_vec);
+  EXPECT_EQ(flag.Synopsis(), "--string-vec=VEC[,VEC...]");
+}
+
+TEST(FlagParser, VectorFlagValueNameHint_UnsignedVector) {
+  std::vector<unsigned> unsigned_vec;
+  auto flag = GflagsCompatFlag("unsigned-vec", unsigned_vec);
+  EXPECT_EQ(flag.Synopsis(), "--unsigned-vec=VEC[,VEC...]");
+}
+
+TEST(FlagParser, VectorFlagValueNameHint_BoolVector) {
+  std::vector<bool> bool_vec;
+  auto flag = GflagsCompatFlag("bool-vec", bool_vec, true);
+  EXPECT_EQ(flag.Synopsis(), "--bool-vec=VEC[,VEC...]");
+}
+
+TEST(FlagParser, VectorFlagValueNameHint_OptionalStringVector) {
+  std::optional<std::vector<std::string>> opt_string_vec;
+  auto flag = GflagsCompatFlag("opt-string-vec", opt_string_vec);
+  EXPECT_EQ(flag.Synopsis(), "--opt-string-vec=VEC[,VEC...]");
+}
+
+TEST(FlagParser, VectorFlagValueNameHint_OptionalUnsignedVector) {
+  std::optional<std::vector<unsigned>> opt_unsigned_vec;
+  auto flag = GflagsCompatFlag("opt-unsigned-vec", opt_unsigned_vec);
+  EXPECT_EQ(flag.Synopsis(), "--opt-unsigned-vec=VEC[,VEC...]");
+}
+
 }  // namespace cuttlefish

@@ -62,6 +62,7 @@ class Flag {
   std::string Synopsis() const;
   const std::string& Description() const;
   std::string CurrentValue() const;
+  const std::string& ValueNameHint() const;
 
  private:
   enum class Style {
