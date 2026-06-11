@@ -226,6 +226,7 @@ std::vector<Flag> BuildSelectorFlagsForCreateHelp(
                 selectors.instance_names.value_or(std::vector<std::string>()),
                 ",");
           })
+          .ValueNameHint("NAME[,NAME...]")
           .Help("Comma separated list of instance names. When provided, this "
                 "flag determines the number of instaces to have in the group, "
                 "so it must match the --num_instances flag. Valid names will "
