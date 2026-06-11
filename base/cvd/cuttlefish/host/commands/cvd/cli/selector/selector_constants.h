@@ -42,6 +42,7 @@ class SelectorFlags {
  public:
   static constexpr char kGroupName[] = "group_name";
   static constexpr char kInstanceName[] = "instance_name";
+  static constexpr char kInstanceNames[] = "instance_names";
 };
 
 }  // namespace selector

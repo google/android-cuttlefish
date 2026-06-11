@@ -75,6 +75,7 @@ std::vector<Flag> BuildCommonSelectorFlags(SelectorOptions& opts) {
               "to that when no group name is provided.");
   Flag instance_name_flag =
       GflagsCompatFlag(SelectorFlags::kInstanceName, opts.instance_names)
+          .Alias(SelectorFlags::kInstanceNames)
           .AddValidator([&opts]() -> Result<void> {
             CF_EXPECT(ValidateInstanceNamesOpt(opts.instance_names));
             return {};
