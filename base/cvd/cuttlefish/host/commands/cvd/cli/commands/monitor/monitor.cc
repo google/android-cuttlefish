@@ -18,8 +18,9 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <poll.h>
+#include <sys/eventfd.h>
 #include <sys/inotify.h>
+#include <sys/poll.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -28,6 +29,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include "absl/strings/str_cat.h"
 
@@ -40,15 +42,7 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
 namespace {
-
-void ClearLastNLines(int n) {
-  if (n > 0) {
-    // Move cursor up N lines and clear to end of screen
-    std::cout << AnsiCursorUp(n) << kAnsiClearScreenAfterCursor << std::flush;
-  }
-}
 
 void UpdateFileAndWatch(const SharedFD& inotify_fd, const std::string& path,
                         SharedFD& fd, int& watch) {
@@ -62,7 +56,17 @@ void UpdateFileAndWatch(const SharedFD& inotify_fd, const std::string& path,
 
 }  // namespace
 
+void ClearLastNLines(int n) {
+  if (n > 0) {
+    // Move cursor up N lines and clear to end of screen
+    std::cout << AnsiCursorUp(n) << kAnsiClearScreenAfterCursor << std::flush;
+  }
+}
 Result<void> MonitorLogs(const LocalInstance& instance) {
+  return MonitorLogs(instance, SharedFD());
+}
+
+Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
   CF_EXPECT(isatty(0), "The monitor command requires an interactive terminal.");
 
   const std::string kernel_log =
@@ -122,19 +126,34 @@ Result<void> MonitorLogs(const LocalInstance& instance) {
     }
     last_draw_time = std::chrono::steady_clock::now();
 
+    // Setup poll_fds
+    std::vector<PollSharedFd> poll_fds = {
+        PollSharedFd{.fd = inotify_fd, .events = POLLIN, .revents = 0},
+    };
+    if (stop_eventfd->IsOpen()) {
+      poll_fds.push_back(
+          PollSharedFd{.fd = stop_eventfd, .events = POLLIN, .revents = 0});
+    }
+
     // Block until file changes occur. If any watch failed or is missing, use
     // a 1-second fallback timeout to awake and retry.
-    // NOLINTNEXTLINE(misc-include-cleaner)
-    PollSharedFd poll_fd = {inotify_fd, POLLIN, 0};
     int timeout_ms = -1;
     if (dir_watch == -1 || kernel_watch == -1 || launcher_watch == -1 ||
         logcat_watch == -1) {
       timeout_ms = 1000;
     }
 
-    // NOLINTNEXTLINE(misc-include-cleaner)
-    if (SharedFD::Poll(&poll_fd, 1, timeout_ms) > 0 &&
-        (poll_fd.revents & POLLIN)) {
+    int poll_res = SharedFD::Poll(poll_fds, timeout_ms);
+
+    if (stop_eventfd->IsOpen() && (poll_fds[1].revents & POLLIN)) {
+      // Stop requested via eventfd
+      eventfd_t val;
+      stop_eventfd->EventfdRead(&val);
+      ClearLastNLines(total_lines_drawn);
+      return {};
+    }
+
+    if (poll_res > 0 && (poll_fds[0].revents & POLLIN)) {
       // Exhaustively drain all available events from the non-blocking
       // descriptor to coalesce rapid file modifications.
       char buf[4096]

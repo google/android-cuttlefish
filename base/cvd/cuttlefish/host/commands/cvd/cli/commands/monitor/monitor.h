@@ -16,11 +16,18 @@
 
 #pragma once
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
+void ClearLastNLines(int n);
+
 Result<void> MonitorLogs(const LocalInstance& instance);
+
+// The monitor will stop and return if `stop_eventfd` becomes readable (receives
+// an event).
+Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd);
 
 }  // namespace cuttlefish

@@ -17,10 +17,11 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 
-#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
@@ -63,6 +64,8 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   SubprocessWaiter subprocess_waiter_;
   struct {
     std::vector<std::string> host_substitutions;
+    bool daemon;
+    std::optional<std::string> report_anonymous_usage_stats;
   } own_flags_;
 };
 
