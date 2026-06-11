@@ -99,9 +99,6 @@ struct ConsumeFlagsOpts {
   bool stop_at_double_dashes = false;
   /* Fail if there are unconsumed arguments left. */
   bool fail_on_unexpected_argument = false;
-  /* Stops matching if an unrecognized argument is encountered; although it
-   * still succeeds unless configured to fail by one of the previous options. */
-  bool constrained_matching = false;
 };
 /* Matches flags against a list of arguments, removing all matches and leaving
  * only unmatched arguments.

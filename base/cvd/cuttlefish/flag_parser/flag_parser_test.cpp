@@ -351,36 +351,6 @@ TEST(FlagParser, EndOfOptionMark) {
   ASSERT_TRUE(flag);
 }
 
-TEST(FlagParser, ConsumesConstrainedEquals) {
-  std::vector<std::string> args{"--name=abc", "status", "--name=def"};
-
-  std::string name;
-  Flag name_flag = GflagsCompatFlag("name", name);
-
-  std::vector<Flag> flags = {name_flag};
-  EXPECT_THAT(ConsumeFlags(flags, args, {.constrained_matching = true}),
-              IsOk());
-
-  std::vector<std::string> expected_args = {"status", "--name=def"};
-  EXPECT_EQ(args, expected_args);
-  EXPECT_EQ(name, "abc");
-}
-
-TEST(FlagParser, ConsumesConstrainedSeparated) {
-  std::vector<std::string> args{"--name", "abc", "status", "--name", "def"};
-
-  std::string name;
-  Flag name_flag = GflagsCompatFlag("name", name);
-
-  std::vector<Flag> flags = {name_flag};
-  EXPECT_THAT(ConsumeFlags(flags, args, {.constrained_matching = true}),
-              IsOk());
-
-  std::vector<std::string> expected_args = {"status", "--name", "def"};
-  EXPECT_EQ(args, expected_args);
-  EXPECT_EQ(name, "abc");
-}
-
 TEST(FlagParser, OptionalStringFlag_DefaultOptNotPresent) {
   std::optional<std::string> value;
 
