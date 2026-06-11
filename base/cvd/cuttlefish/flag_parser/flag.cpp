@@ -262,10 +262,6 @@ Result<void> ConsumeFlags(const std::vector<Flag>& flags,
     }
     ++available_slot_it;
     ++match_it;
-    if (opts.constrained_matching) {
-      // Stop parsing at first unrecognized argument.
-      break;
-    }
   }
   return {};
 }

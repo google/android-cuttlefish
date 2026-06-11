@@ -19,8 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "android-base/file.h"
-
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -38,7 +36,7 @@ Result<selector::SelectorOptions> ExtractCvdArgs(cvd_common::Args& args) {
   selector::SelectorOptions selector_options;
   std::vector<Flag> selector_flags =
       selector::BuildCommonSelectorFlags(selector_options);
-  CF_EXPECT(ConsumeFlags(selector_flags, args, {.constrained_matching = true}));
+  CF_EXPECT(ConsumeFlags(selector_flags, args));
 
   // Re-insert program into arguments
   args.insert(args.begin(), program);
