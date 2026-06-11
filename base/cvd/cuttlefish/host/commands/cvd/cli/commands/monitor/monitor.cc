@@ -34,6 +34,7 @@
 #include "absl/strings/str_cat.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/ansi_codes.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/display.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
@@ -47,7 +48,9 @@ namespace {
 void UpdateFileAndWatch(const SharedFD& inotify_fd, const std::string& path,
                         SharedFD& fd, int& watch) {
   if (!fd->IsOpen()) {
-    fd = SharedFD::Open(path, O_RDONLY);
+    if (FileExists(path)) {
+      fd = SharedFD::Open(path, O_RDONLY);
+    }
   }
   if (fd->IsOpen() && watch == -1) {
     watch = inotify_fd->InotifyAddWatch(path, IN_MODIFY);
@@ -75,6 +78,9 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
       absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameLauncher);
   const std::string logcat =
       absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameLogcat);
+  const std::string assemble_log =
+      absl::StrCat(instance.AssemblyDirectory(), "/", kLogNameAssembleCvd);
+  bool using_assemble_log = true;
 
   SharedFD kernel_fd;
   SharedFD launcher_fd;
@@ -97,8 +103,33 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
       std::chrono::steady_clock::time_point();
 
   while (true) {
+    if (using_assemble_log) {
+      if (FileExists(launcher_log)) {
+        if (launcher_watch != -1) {
+          inotify_fd->InotifyRmWatch(launcher_watch);
+          launcher_watch = -1;
+        }
+        launcher_fd = SharedFD::Open(launcher_log, O_RDONLY);
+        if (launcher_fd->IsOpen()) {
+          launcher_watch = inotify_fd->InotifyAddWatch(launcher_log, IN_MODIFY);
+          using_assemble_log = false;
+        }
+      } else if (!launcher_fd->IsOpen()) {
+        if (FileExists(assemble_log)) {
+          launcher_fd = SharedFD::Open(assemble_log, O_RDONLY);
+          if (launcher_fd->IsOpen()) {
+            if (launcher_watch == -1) {
+              launcher_watch =
+                  inotify_fd->InotifyAddWatch(assemble_log, IN_MODIFY);
+            }
+          }
+        }
+      }
+    } else {
+      UpdateFileAndWatch(inotify_fd, launcher_log, launcher_fd, launcher_watch);
+    }
+
     UpdateFileAndWatch(inotify_fd, kernel_log, kernel_fd, kernel_watch);
-    UpdateFileAndWatch(inotify_fd, launcher_log, launcher_fd, launcher_watch);
     UpdateFileAndWatch(inotify_fd, logcat, logcat_fd, logcat_watch);
 
     const Result<TerminalSize> term_size_result = GetTerminalSize();
@@ -108,7 +139,8 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
     }
     LogMonitorDisplay display(width);
 
-    display.DrawFile(launcher_fd, kLogNameLauncher);
+    display.DrawFile(launcher_fd, using_assemble_log ? kLogNameAssembleCvd
+                                                     : kLogNameLauncher);
     display.DrawFile(kernel_fd, kLogNameKernel);
     display.DrawFile(logcat_fd, kLogNameLogcat);
 
@@ -136,11 +168,11 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
     }
 
     // Block until file changes occur. If any watch failed or is missing, use
-    // a 1-second fallback timeout to awake and retry.
+    // a fallback timeout to awake and retry.
     int timeout_ms = -1;
     if (dir_watch == -1 || kernel_watch == -1 || launcher_watch == -1 ||
-        logcat_watch == -1) {
-      timeout_ms = 1000;
+        logcat_watch == -1 || using_assemble_log) {
+      timeout_ms = 200;
     }
 
     int poll_res = SharedFD::Poll(poll_fds, timeout_ms);
