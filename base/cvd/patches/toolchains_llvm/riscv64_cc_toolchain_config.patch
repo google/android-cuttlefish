@@ -1,0 +1,17 @@
+--- a/toolchain/cc_toolchain_config.bzl
++++ b/toolchain/cc_toolchain_config.bzl
+@@ -82,6 +82,14 @@ def cc_toolchain_config(
+             "clang",
+             "glibc_unknown",
+         ),
++        "linux-riscv64": (
++            "clang-riscv64-linux",
++            "riscv64",
++            "glibc_unknown",
++            "clang",
++            "clang",
++            "glibc_unknown",
++        ),
+         "linux-armv7": (
+             "clang-armv7-linux",
+             "armv7",

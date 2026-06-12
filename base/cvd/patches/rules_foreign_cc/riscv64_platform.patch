@@ -1,0 +1,19 @@
+--- a/foreign_cc/private/framework/platform.bzl	2026-04-03 15:37:18.723121806 +0000
++++ b/foreign_cc/private/framework/platform.bzl	2026-04-03 15:37:48.796072212 +0000
+@@ -3,6 +3,7 @@
+ SUPPORTED_CPU = [
+     "aarch64",
+     "ppc64le",
++    "riscv64",
+     "s390x",
+     "wasm32",
+     "wasm64",
+@@ -192,6 +193,8 @@
+             return "powerpc64le-unknown-linux-gnu"
+         elif arch == "s390x":
+             return "s390x-ibm-linux-gnu"
++        elif arch == "riscv64":
++            return "riscv64-unknown-linux-gnu"
+         elif arch == "x86_64":
+             return "x86_64-pc-linux-gnu"
+ 
