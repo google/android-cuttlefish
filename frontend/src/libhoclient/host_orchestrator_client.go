@@ -131,14 +131,18 @@ type InstanceOperationsClient interface {
 	CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error
 	// Powerwash the device.
 	Powerwash(groupName, instanceName string) error
-	// Stop the device.
-	Stop(groupName, instanceName string) error
+	// Stop group.
+	StopGroup(groupName string) error
+	// Stop specific instance.
+	StopInstance(groupName, instanceName string) error
 	// Restart the device.
 	Restart(groupName, instanceName string) error
 	// Press power button.
 	Powerbtn(groupName, instanceName string) error
-	// Start the device.
-	Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error
+	// Start specific instance.
+	StartGroup(groupName string, req *hoapi.StartCVDRequest) error
+	// Start specific instance.
+	StartInstance(groupName, instanceName string, req *hoapi.StartCVDRequest) error
 	// Create device snapshot.
 	CreateSnapshot(groupName, instanceName string, req *hoapi.CreateSnapshotRequest) (*hoapi.CreateSnapshotResponse, error)
 	// List screen recordings
@@ -463,7 +467,13 @@ func (c *HostOrchestratorClientImpl) Powerbtn(groupName, instanceName string) er
 	return c.doEmptyResponseRequest(rb)
 }
 
-func (c *HostOrchestratorClientImpl) Stop(groupName, instanceName string) error {
+func (c *HostOrchestratorClientImpl) StopGroup(groupName string) error {
+	path := fmt.Sprintf("/cvds/%s/:stop", groupName)
+	rb := c.HTTPHelper.NewPostRequest(path, nil)
+	return c.doEmptyResponseRequest(rb)
+}
+
+func (c *HostOrchestratorClientImpl) StopInstance(groupName, instanceName string) error {
 	path := fmt.Sprintf("/cvds/%s/%s/:stop", groupName, instanceName)
 	rb := c.HTTPHelper.NewPostRequest(path, nil)
 	return c.doEmptyResponseRequest(rb)
@@ -475,7 +485,13 @@ func (c *HostOrchestratorClientImpl) Restart(groupName, instanceName string) err
 	return c.doEmptyResponseRequest(rb)
 }
 
-func (c *HostOrchestratorClientImpl) Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error {
+func (c *HostOrchestratorClientImpl) StartGroup(groupName string, req *hoapi.StartCVDRequest) error {
+	path := fmt.Sprintf("/cvds/%s/:start", groupName)
+	rb := c.HTTPHelper.NewPostRequest(path, req)
+	return c.doEmptyResponseRequest(rb)
+}
+
+func (c *HostOrchestratorClientImpl) StartInstance(groupName, instanceName string, req *hoapi.StartCVDRequest) error {
 	path := fmt.Sprintf("/cvds/%s/%s/:start", groupName, instanceName)
 	rb := c.HTTPHelper.NewPostRequest(path, req)
 	return c.doEmptyResponseRequest(rb)
