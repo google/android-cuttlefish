@@ -270,14 +270,22 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		return "", fmt.Errorf("failed to create podcvd home dir: %w", err)
 	}
 	var pathsToMount []string
-	for _, arg := range cvdArgs.SubCommandArgs {
+	for idx, arg := range cvdArgs.SubCommandArgs {
 		path := arg
+		var flagPrefix string
 		if strings.Contains(arg, "=") {
-			path = strings.SplitN(arg, "=", 2)[1]
+			parts := strings.SplitN(arg, "=", 2)
+			flagPrefix = parts[0]
+			path = parts[1]
 		}
 		absPath := resolveHostPath(path)
 		if absPath == "" {
 			continue
+		}
+		if flagPrefix != "" {
+			cvdArgs.SubCommandArgs[idx] = flagPrefix + "=" + absPath
+		} else {
+			cvdArgs.SubCommandArgs[idx] = absPath
 		}
 		pathsToMount = append(pathsToMount, absPath)
 		if realPath, err := filepath.EvalSymlinks(absPath); err == nil && realPath != absPath {
