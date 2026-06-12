@@ -18,9 +18,11 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
@@ -34,9 +36,9 @@ class CvdSetupHandler : public CvdCommandHandler {
   cvd_common::Args CmdList() const override;
 
   std::string SummaryHelp() const override;
+  std::vector<HelpParagraph> Description() const override;
   bool RequiresDeviceExists() const override;
   bool RequiresHostConfiguration() const override;
-  Result<std::string> DetailedHelp(const CommandRequest&) override;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdSetupHandler();
