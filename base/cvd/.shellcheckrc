@@ -1,0 +1,42 @@
+### These are turned off so we can submit shellcheck without breaking the presubmit. They should be fixed eventually.
+
+## Warning:
+# Warning: 'foo appears unused. Verify it or export it.'
+# Reason:
+disable=SC2034
+
+# Warning: 'Prefer [ p ] && [ q ] as [ p -a q ] is not well-defined.'
+# Reason:
+disable=SC2166
+
+# Warning: 'var is referenced but not assigned.'
+# Reason:
+disable=SC2154
+
+# Warning: 'Quote this to prevent word splitting.'
+# Reason:
+disable=SC2046
+
+## Info:
+# Info: 'Double quote to prevent globbing and word splitting.'
+# Reason:
+disable=SC2086
+
+# Info: 'Not following: (error message here)'
+# Reason:
+disable=SC1091
+
+## Style:
+# Style: '$`/`${}` is unnecessary on arithmetic variables.'
+# Reason:
+disable=SC2004
+
+### These should stay disabled:
+
+# Warning: 'In POSIX sh, local is undefined.'
+# Reason: We want 'local' + we don't need to support POSIX sh.
+disable=SC3043
+
+# Warning: 'In POSIX sh, $(<file) is undefined.'
+# Reason: We don't need to support POSIX sh.
+disable=SC3034
