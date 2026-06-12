@@ -1,8 +1,11 @@
-cuttlefish-frontend (1.55.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.55.0) unstable; urgency=medium
 
-  * 
+  * Start development on v1.55. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2630
+  * Cleanup deprecated way to create devices via HO by @ser-io in https://github.com/google/android-cuttlefish/pull/2644
+  * Route per-instance stop API to instance-level stop by @SuperStrongDinosaur in https://github.com/google/android-cuttlefish/pull/2615
+  * Mark v1.54 as stable. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2677
 
- -- 3405691582 <dsk@google.com>  Fri, 29 May 2026 18:56:39 +0000
+ -- Ram Muthiah <rammuthiah@google.com>  Fri, 12 Jun 2026 02:47:44 +0100
 
 cuttlefish-frontend (1.54.0) stable; urgency=medium
 
