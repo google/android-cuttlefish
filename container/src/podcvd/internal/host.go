@@ -227,10 +227,6 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		"--label", fmt.Sprintf("%s=%s", labelCreatedBy, valueCreatedBy),
 		"--label", fmt.Sprintf("%s=%s", labelAttemptID, attemptID),
 		"--annotation", "run.oci.keep_original_groups=1",
-		"-v", fmt.Sprintf("%s:/host_out:O", hostOut),
-		"-v", fmt.Sprintf("%s:/product_out:O", productOut),
-		"-v", fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome),
-		"-v", fmt.Sprintf("%s:/podcvd_home:rw", podcvdHomeDir),
 		"--cap-add", "NET_RAW",
 		"--pids-limit", "8192",
 	}
@@ -239,12 +235,11 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		extraFlags = append(extraFlags, "--label", fmt.Sprintf("%s=%s", labelClientID, clientID))
 	}
 
-	bindSet := make(map[string]bool)
-	bindSet[hostOut+":/host_out"] = true
-	bindSet[productOut+":/product_out"] = true
-	bindSet[cvdDataHome+":/root/.local/share/cvd"] = true
-	bindSet[podcvdHomeDir+":/podcvd_home"] = true
-
+	bindMap := make(map[string]string)
+	bindMap["/host_out"] = fmt.Sprintf("%s:/host_out:O", hostOut)
+	bindMap["/product_out"] = fmt.Sprintf("%s:/product_out:O", productOut)
+	bindMap["/root/.local/share/cvd"] = fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome)
+	bindMap["/podcvd_home"] = fmt.Sprintf("%s:/podcvd_home:rw", podcvdHomeDir)
 	for _, arg := range cvdArgs.SubCommandArgs {
 		path := arg
 		if strings.Contains(arg, "=") {
@@ -277,21 +272,27 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 
 		// 3. Add to mount configuration while preventing duplicates
 		for _, p := range pathsToMount {
-			key := fmt.Sprintf("%s:%s", p, p)
-			if !bindSet[key] {
-				pInfo, err := os.Stat(p)
-				if err != nil {
-					log.Printf("warning: failed to stat path %q to mount: %v\n", p, err)
-					continue
+			if spec, ok := bindMap[p]; ok {
+				host := strings.SplitN(spec, ":", 2)[0]
+				if host != p {
+					log.Printf("warning: container path %q is already mounted to %q, cannot mount %q\n", p, host, p)
 				}
-				opt := "ro"
-				if pInfo.IsDir() {
-					opt = "O"
-				}
-				extraFlags = append(extraFlags, "-v", fmt.Sprintf("%s:%s:%s", p, p, opt))
-				bindSet[key] = true
+				continue
 			}
+			pInfo, err := os.Stat(p)
+			if err != nil {
+				log.Printf("warning: failed to stat path %q to mount: %v\n", p, err)
+				continue
+			}
+			opt := "ro"
+			if pInfo.IsDir() {
+				opt = "O"
+			}
+			bindMap[p] = fmt.Sprintf("%s:%s:%s", p, p, opt)
 		}
+	}
+	for _, mountSpec := range bindMap {
+		extraFlags = append(extraFlags, "-v", mountSpec)
 	}
 
 	var lastErr error
