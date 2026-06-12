@@ -17,16 +17,20 @@
 #include "cuttlefish/flag_parser/flag.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <ostream>
+#include <span>
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/log/check.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/strip.h"

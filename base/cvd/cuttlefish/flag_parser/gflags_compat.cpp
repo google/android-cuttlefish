@@ -17,6 +17,9 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 
 #include <concepts>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <optional>
 #include <ostream>
