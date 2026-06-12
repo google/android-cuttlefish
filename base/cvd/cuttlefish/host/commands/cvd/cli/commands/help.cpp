@@ -26,6 +26,7 @@
 
 #include "absl/strings/str_join.h"
 
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -207,16 +208,15 @@ std::string CvdHelpHandler::TopLevelHelp() {
 
   paragraphs.emplace_back(HelpParagraph::Raw(
       R"(Usage:
-    cvd [selector/global options] <command> [args])"));
+    cvd [selector/global options] <command> [args]
+    cvd help [<command> [args]])"));
 
   std::stringstream help_message;
   help_message << FormatHelpText(paragraphs);
 
   help_message << "Global Options:\n";
-  bool help_val = false;
   std::string verbosity_val = "INFO";
   std::vector<Flag> global_flags = {
-      GflagsCompatFlag("help", help_val).Help("Print this message"),
       GflagsCompatFlag("verbosity", verbosity_val)
           .Help("Adjust Cvd verbosity level. LEVEL is one of ERROR, WARNING, "
                 "INFO, DEBUG, VERBOSE."),
