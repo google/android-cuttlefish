@@ -191,6 +191,10 @@ class CuttlefishConfig {
   void set_extra_kernel_cmdline(const std::string& extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
 
+  // The port for the signaling (operator) server.
+  void set_sig_server_port(int port);
+  int sig_server_port() const;
+
   // The port for the webrtc signaling server proxy.
   void set_sig_server_proxy_port(int port);
   int sig_server_proxy_port() const;

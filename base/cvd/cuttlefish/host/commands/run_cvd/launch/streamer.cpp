@@ -221,7 +221,7 @@ class WebRtcServer : public virtual CommandSource,
     }
     std::ostringstream out;
     out << "Point your browser to https://localhost:"
-        << config_.sig_server_proxy_port() << " to interact with the device.";
+        << config_.sig_server_port() << " to interact with the device.";
     return {out.str()};
   }
 
