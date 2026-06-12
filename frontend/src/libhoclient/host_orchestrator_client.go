@@ -464,7 +464,10 @@ func (c *HostOrchestratorClientImpl) Powerbtn(groupName, instanceName string) er
 }
 
 func (c *HostOrchestratorClientImpl) Stop(groupName, instanceName string) error {
-	path := fmt.Sprintf("/cvds/%s/%s/:stop", groupName, instanceName)
+	path := fmt.Sprintf("/cvds/%s/:stop", groupName)
+	if instanceName != "" {
+		path = fmt.Sprintf("/cvds/%s/%s/:stop", groupName, instanceName)
+	}
 	rb := c.HTTPHelper.NewPostRequest(path, nil)
 	return c.doEmptyResponseRequest(rb)
 }
@@ -476,7 +479,10 @@ func (c *HostOrchestratorClientImpl) Restart(groupName, instanceName string) err
 }
 
 func (c *HostOrchestratorClientImpl) Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error {
-	path := fmt.Sprintf("/cvds/%s/%s/:start", groupName, instanceName)
+	path := fmt.Sprintf("/cvds/%s/:start", groupName)
+	if instanceName != "" {
+		path = fmt.Sprintf("/cvds/%s/%s/:start", groupName, instanceName)
+	}
 	rb := c.HTTPHelper.NewPostRequest(path, req)
 	return c.doEmptyResponseRequest(rb)
 }
