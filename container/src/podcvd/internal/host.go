@@ -130,6 +130,56 @@ func cvdDataHome() (string, error) {
 	}
 	return "", fmt.Errorf("failed to find cvd data home dir")
 }
+
+func resolveHostPath(path string) string {
+	if strings.TrimSpace(path) == "" {
+		return ""
+	}
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return ""
+	}
+	if _, err := os.Stat(absPath); err != nil {
+		return ""
+	}
+	if strings.HasPrefix(absPath, "/dev/") || strings.HasPrefix(absPath, "/sys/") || strings.HasPrefix(absPath, "/proc/") {
+		return ""
+	}
+	return absPath
+}
+
+func collectMountSpecs(pathsToMount []string, hostOut, productOut, cvdDataHome, podcvdHomeDir string) []string {
+	bindMap := make(map[string]string)
+	bindMap["/host_out"] = fmt.Sprintf("%s:/host_out:O", hostOut)
+	bindMap["/product_out"] = fmt.Sprintf("%s:/product_out:O", productOut)
+	bindMap["/root/.local/share/cvd"] = fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome)
+	bindMap["/podcvd_home"] = fmt.Sprintf("%s:/podcvd_home:rw", podcvdHomeDir)
+	for _, p := range pathsToMount {
+		if spec, ok := bindMap[p]; ok {
+			host := strings.SplitN(spec, ":", 2)[0]
+			if host != p {
+				log.Printf("warning: container path %q is already mounted to %q, cannot mount %q\n", p, host, p)
+			}
+			continue
+		}
+		pInfo, err := os.Stat(p)
+		if err != nil {
+			log.Printf("warning: failed to stat path %q to mount: %v\n", p, err)
+			continue
+		}
+		opt := "ro"
+		if pInfo.IsDir() {
+			opt = "O"
+		}
+		bindMap[p] = fmt.Sprintf("%s:%s:%s", p, p, opt)
+	}
+	var specs []string
+	for _, spec := range bindMap {
+		specs = append(specs, spec)
+	}
+	return specs
+}
+
 func appendPortFlags(flags []string, hostIP string, protocol string, portStart int, portEnd int) []string {
 	for port := portStart; port <= portEnd; port++ {
 		flags = append(flags, "-p", fmt.Sprintf("%s:%d:%d/%s", hostIP, port, port, protocol))
@@ -219,6 +269,30 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 	if err := os.MkdirAll(podcvdHomeDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create podcvd home dir: %w", err)
 	}
+	var pathsToMount []string
+	for idx, arg := range cvdArgs.SubCommandArgs {
+		path := arg
+		var flagPrefix string
+		if strings.Contains(arg, "=") {
+			parts := strings.SplitN(arg, "=", 2)
+			flagPrefix = parts[0]
+			path = parts[1]
+		}
+		absPath := resolveHostPath(path)
+		if absPath == "" {
+			continue
+		}
+		if flagPrefix != "" {
+			cvdArgs.SubCommandArgs[idx] = flagPrefix + "=" + absPath
+		} else {
+			cvdArgs.SubCommandArgs[idx] = absPath
+		}
+		pathsToMount = append(pathsToMount, absPath)
+		if realPath, err := filepath.EvalSymlinks(absPath); err == nil && realPath != absPath {
+			pathsToMount = append(pathsToMount, realPath)
+		}
+	}
+	mountSpecs := collectMountSpecs(pathsToMount, hostOut, productOut, cvdDataHome, podcvdHomeDir)
 
 	extraFlags := []string{
 		"-e", "ANDROID_HOST_OUT=/host_out",
@@ -227,71 +301,15 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		"--label", fmt.Sprintf("%s=%s", labelCreatedBy, valueCreatedBy),
 		"--label", fmt.Sprintf("%s=%s", labelAttemptID, attemptID),
 		"--annotation", "run.oci.keep_original_groups=1",
-		"-v", fmt.Sprintf("%s:/host_out:O", hostOut),
-		"-v", fmt.Sprintf("%s:/product_out:O", productOut),
-		"-v", fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome),
-		"-v", fmt.Sprintf("%s:/podcvd_home:rw", podcvdHomeDir),
 		"--cap-add", "NET_RAW",
 		"--pids-limit", "8192",
+	}
+	for _, spec := range mountSpecs {
+		extraFlags = append(extraFlags, "-v", spec)
 	}
 	clientID := os.Getenv(envClientID)
 	if clientID != "" {
 		extraFlags = append(extraFlags, "--label", fmt.Sprintf("%s=%s", labelClientID, clientID))
-	}
-
-	bindSet := make(map[string]bool)
-	bindSet[hostOut+":/host_out"] = true
-	bindSet[productOut+":/product_out"] = true
-	bindSet[cvdDataHome+":/root/.local/share/cvd"] = true
-	bindSet[podcvdHomeDir+":/podcvd_home"] = true
-
-	for _, arg := range cvdArgs.SubCommandArgs {
-		path := arg
-		if strings.Contains(arg, "=") {
-			path = strings.SplitN(arg, "=", 2)[1]
-		}
-
-		// 1. Filter out empty strings which would incorrectly mount the CWD
-		if strings.TrimSpace(path) == "" {
-			continue
-		}
-
-		absPath, err := filepath.Abs(path)
-		if err != nil {
-			continue
-		}
-		if _, err := os.Stat(absPath); err != nil {
-			continue
-		}
-		// Prevent mounting critical system directories
-		if strings.HasPrefix(absPath, "/dev/") || strings.HasPrefix(absPath, "/sys/") || strings.HasPrefix(absPath, "/proc/") {
-			continue
-		}
-
-		pathsToMount := []string{absPath}
-
-		// 2. Resolve symlinks and track the target file to ensure it's accessible inside
-		if realPath, err := filepath.EvalSymlinks(absPath); err == nil && realPath != absPath {
-			pathsToMount = append(pathsToMount, realPath)
-		}
-
-		// 3. Add to mount configuration while preventing duplicates
-		for _, p := range pathsToMount {
-			key := fmt.Sprintf("%s:%s", p, p)
-			if !bindSet[key] {
-				pInfo, err := os.Stat(p)
-				if err != nil {
-					log.Printf("warning: failed to stat path %q to mount: %v\n", p, err)
-					continue
-				}
-				opt := "ro"
-				if pInfo.IsDir() {
-					opt = "O"
-				}
-				extraFlags = append(extraFlags, "-v", fmt.Sprintf("%s:%s:%s", p, p, opt))
-				bindSet[key] = true
-			}
-		}
 	}
 
 	var lastErr error

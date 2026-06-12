@@ -17,6 +17,7 @@ package internal
 import (
 	"flag"
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -33,7 +34,7 @@ type CvdArgs struct {
 	flagSet        *flag.FlagSet
 }
 
-func ParseCvdArgs(allArgs []string) *CvdArgs {
+func ParseCvdArgs(allArgs []string) (*CvdArgs, error) {
 	fs := flag.NewFlagSet("podcvd", flag.ExitOnError)
 	commonArgs := CvdCommonArgs{}
 	fs.StringVar(&commonArgs.GroupName, "group_name", "", "Cuttlefish instance group")
@@ -44,6 +45,13 @@ func ParseCvdArgs(allArgs []string) *CvdArgs {
 	subcommandArgs := fs.Args()
 	if len(subcommandArgs) > 0 {
 		subcommandArgs[0] = mapSubcommand(subcommandArgs[0])
+		if subcommandArgs[0] == "load" {
+			var err error
+			subcommandArgs, err = substituteLoadWithCreateArgs(subcommandArgs)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 	return &CvdArgs{
 		CommonArgs: &commonArgs,
@@ -53,7 +61,7 @@ func ParseCvdArgs(allArgs []string) *CvdArgs {
 		// or starting with subcommand name.
 		SubCommandArgs: subcommandArgs,
 		flagSet:        fs,
-	}
+	}, nil
 }
 
 func (a *CvdArgs) SerializeCommonArgs() []string {
@@ -151,4 +159,24 @@ func mapSubcommand(subcmd string) string {
 		return mapped
 	}
 	return subcmd
+}
+
+func substituteLoadWithCreateArgs(subcmdArgs []string) ([]string, error) {
+	subcmdArgs[0] = "create"
+	for idx := 1; idx < len(subcmdArgs); idx++ {
+		arg := subcmdArgs[idx]
+		if strings.HasPrefix(arg, "-") {
+			if !strings.Contains(arg, "=") {
+				idx++
+			}
+			continue
+		}
+		absPath, err := filepath.Abs(arg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get absolute path for %q: %w", arg, err)
+		}
+		subcmdArgs[idx] = "--config_file=" + absPath
+		return subcmdArgs, nil
+	}
+	return nil, fmt.Errorf("missing config file path for load command")
 }
