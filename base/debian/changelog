@@ -1,3 +1,9 @@
+cuttlefish-common (1.56.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Ram Muthiah <rammuthiah@google.com>  Fri, 12 Jun 2026 03:18:06 +0100
+
 cuttlefish-common (1.55.0) unstable; urgency=medium
 
   * Start development on v1.55. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2630
@@ -58,6 +64,7 @@ cuttlefish-common (1.55.0) unstable; urgency=medium
   * Request higher SafeLevel builds when requesting Android build by branch by @Databean in https://github.com/google/android-cuttlefish/pull/2667
   * Update path handling for ARM crosvm prebuilts by @jmacnak in https://github.com/google/android-cuttlefish/pull/2697
   * Fixed two missing fallthroughs by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2702
+  * Reverts "Substitute all artifacts when the build has the debian_substitution_marker present" by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2704
 
  -- Ram Muthiah <rammuthiah@google.com>  Fri, 12 Jun 2026 02:46:46 +0100
 
