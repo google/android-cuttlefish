@@ -1,3 +1,21 @@
+load("@rules_perl//perl:toolchain.bzl", "perl_toolchain")
+
 package(default_visibility = ["//visibility:public"])
 
 filegroup(name = "empty")
+
+# riscv64 perl toolchain using prebuilt perl-linux-riscv64 tarball.
+perl_toolchain(
+    name = "perl_linux_riscv64_toolchain_impl",
+    runtime = ["@perl_linux_riscv64//:runtime"],
+)
+
+toolchain(
+    name = "perl_linux_riscv64_toolchain",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:riscv64",
+    ],
+    toolchain = ":perl_linux_riscv64_toolchain_impl",
+    toolchain_type = "@rules_perl//perl:toolchain_type",
+)

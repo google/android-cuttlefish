@@ -1,0 +1,133 @@
+--- a/BUILD.bazel	2026-04-07 04:53:37.512538708 +0000
++++ b/BUILD.bazel	2026-04-07 05:22:07.136257395 +0000
+@@ -45,6 +45,20 @@
+     _LINUX_ARM64_PERLASM_TOOLS = "PERLASM_TOOLS",
+ )
+ load(
++    "@openssl-generated-overlay//:constants-linux-riscv64.bzl",
++    _LINUX_RISCV64_GEN_FILES = "GEN_FILES",
++    _LINUX_RISCV64_LIBCRYPTO_DEFINES = "LIBCRYPTO_DEFINES",
++    _LINUX_RISCV64_LIBCRYPTO_SRCS = "LIBCRYPTO_SRCS",
++    _LINUX_RISCV64_LIBSSL_DEFINES = "LIBSSL_DEFINES",
++    _LINUX_RISCV64_LIBSSL_SRCS = "LIBSSL_SRCS",
++    _LINUX_RISCV64_OPENSSL_APP_DEFINES = "OPENSSL_APP_DEFINES",
++    _LINUX_RISCV64_OPENSSL_APP_SRCS = "OPENSSL_APP_SRCS",
++    _LINUX_RISCV64_OPENSSL_DEFINES = "OPENSSL_DEFINES",
++    _LINUX_RISCV64_PERLASM_GEN = "PERLASM_GEN",
++    _LINUX_RISCV64_PERLASM_OUTS = "PERLASM_OUTS",
++    _LINUX_RISCV64_PERLASM_TOOLS = "PERLASM_TOOLS",
++)
++load(
+     "@openssl-generated-overlay//:constants-linux-x86_64-clang.bzl",
+     _LINUX_X86_64_GEN_FILES = "GEN_FILES",
+     _LINUX_X86_64_LIBCRYPTO_DEFINES = "LIBCRYPTO_DEFINES",
+@@ -117,6 +131,7 @@
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_OPENSSL_APP_SRCS,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_OPENSSL_APP_SRCS,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_OPENSSL_APP_SRCS,
++        "@bazel_tools//src/conditions:linux_riscv64": _LINUX_RISCV64_OPENSSL_APP_SRCS,
+     }),
+     copts = [
+         "-iquote",
+@@ -130,6 +145,7 @@
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_OPENSSL_APP_DEFINES,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_OPENSSL_APP_DEFINES,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_OPENSSL_APP_DEFINES,
++        "@bazel_tools//src/conditions:linux_riscv64": _LINUX_RISCV64_OPENSSL_APP_DEFINES,
+     }),
+     visibility = ["//visibility:public"],
+     deps = [":ssl"],
+@@ -184,6 +200,7 @@
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_LIBCRYPTO_SRCS,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_LIBCRYPTO_SRCS,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_LIBCRYPTO_SRCS,
++        "@bazel_tools//src/conditions:linux_riscv64": _LINUX_RISCV64_LIBCRYPTO_SRCS,
+     }),
+     hdrs = glob(
+         [
+@@ -219,11 +236,13 @@
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_OPENSSL_DEFINES,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_OPENSSL_DEFINES,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_OPENSSL_DEFINES,
++        "@bazel_tools//src/conditions:linux_riscv64": _LINUX_RISCV64_OPENSSL_DEFINES,
+     }) + select({
+         "@bazel_tools//src/conditions:linux_aarch64": _LINUX_ARM64_LIBCRYPTO_DEFINES,
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_LIBCRYPTO_DEFINES,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_LIBCRYPTO_DEFINES,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_LIBCRYPTO_DEFINES,
++        "@bazel_tools//src/conditions:linux_riscv64": _LINUX_RISCV64_LIBCRYPTO_DEFINES,
+     }),
+     # To make sure downstream targets add the right copts to be able to include the headers.
+     includes = ["include"],
+@@ -247,6 +266,7 @@
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_LIBSSL_SRCS,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_LIBSSL_SRCS,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_LIBSSL_SRCS,
++        "@bazel_tools//src/conditions:linux_riscv64": _LINUX_RISCV64_LIBSSL_SRCS,
+     }),
+     hdrs = glob(
+         ["include/openssl/*.h"],
+@@ -257,11 +277,13 @@
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_OPENSSL_DEFINES,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_OPENSSL_DEFINES,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_OPENSSL_DEFINES,
++        "@bazel_tools//src/conditions:linux_riscv64": _LINUX_RISCV64_OPENSSL_DEFINES,
+     }) + select({
+         "@bazel_tools//src/conditions:linux_aarch64": _LINUX_ARM64_LIBSSL_DEFINES,
+         "@bazel_tools//src/conditions:linux_x86_64": _LINUX_X86_64_LIBSSL_DEFINES,
+         "@bazel_tools//src/conditions:darwin_arm64": _DARWIN_ARM64_LIBSSL_DEFINES,
+         "@bazel_tools//src/conditions:darwin_x86_64": _DARWIN_X86_64_LIBSSL_DEFINES,
++        "@bazel_tools//src/conditions:linux_riscv64": _LINUX_RISCV64_LIBSSL_DEFINES,
+     }),
+     # To make sure downstream targets add the right copts to be able to include the headers.
+     includes = ["include"],
+@@ -273,7 +295,7 @@
+ )
+ 
+ PERLASM_TOOLS = glob(
+-    ["crypto/perlasm/*.pl"],
++    ["crypto/perlasm/*.pl", "crypto/perlasm/*.pm"],
+     exclude = COMMON_GENERATED_FILES,
+ )
+ 
+@@ -291,10 +313,15 @@
+             "@bazel_tools//src/conditions:linux_x86_64": CC_ENV_CMD + _LINUX_X86_64_PERLASM_GEN,
+             "@bazel_tools//src/conditions:darwin_arm64": CC_ENV_CMD + _DARWIN_ARM64_PERLASM_GEN,
+             "@bazel_tools//src/conditions:darwin_x86_64": CC_ENV_CMD + _DARWIN_X86_64_PERLASM_GEN,
++            # Post-process perlasm output: replace non-PIC 'jal ra,SYMBOL' with
++            # PIC-compatible 'call SYMBOL' (auipc+jalr pseudo-instruction).
++            # Upstream perlasm bug: aes-riscv64.pl generates jal for AES_set_encrypt_key.
++            "@bazel_tools//src/conditions:linux_riscv64": CC_ENV_CMD + _LINUX_RISCV64_PERLASM_GEN + "\n".join(["sed -i 's/jal\\s\\+ra,/call /g' $(OUTS)"]),
+         }),
+         target_compatible_with = [{
+             "arm64": "@platforms//cpu:arm64",
+             "x86_64": "@platforms//cpu:x86_64",
++            "riscv64": "@platforms//cpu:riscv64",
+         }[k]],
+         toolchains = [
+             "@bazel_tools//tools/cpp:current_cc_toolchain",
+@@ -305,11 +332,13 @@
+             "@bazel_tools//src/conditions:linux_x86_64": depset(direct = _LINUX_X86_64_PERLASM_TOOLS).to_list(),
+             "@bazel_tools//src/conditions:darwin_arm64": depset(direct = _DARWIN_ARM64_PERLASM_TOOLS).to_list(),
+             "@bazel_tools//src/conditions:darwin_x86_64": depset(direct = _DARWIN_X86_64_PERLASM_TOOLS).to_list(),
++            "@bazel_tools//src/conditions:linux_riscv64": depset(direct = _LINUX_RISCV64_PERLASM_TOOLS).to_list(),
+         }),
+     )
+     for k, v in {
+         "arm64": _DARWIN_ARM64_PERLASM_OUTS,
+         "x86_64": _LINUX_X86_64_PERLASM_OUTS,
++        "riscv64": _LINUX_RISCV64_PERLASM_OUTS,
+     }.items()
+ ]
+ 
+@@ -359,6 +388,10 @@
+             contents = v,
+             filename = k,
+         ) for k, v in _DARWIN_X86_64_GEN_FILES.items()]),
++        "@bazel_tools//src/conditions:linux_riscv64": "\n".join([GEN_FILE_CMD.format(
++            contents = v,
++            filename = k,
++        ) for k, v in _LINUX_RISCV64_GEN_FILES.items()]),
+     }),
+ )
+ 

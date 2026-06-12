@@ -3,6 +3,14 @@ llvm.toolchain(
     llvm_version = "19.1.7",
 )
 
+# riscv64: no prebuilt LLVM toolchain is available for riscv64 host.
+# Use the system-installed clang-19 from /usr/lib/llvm-19.
+llvm.toolchain_root(
+    name = "llvm_toolchain",
+    targets = ["linux-riscv64"],
+    path = "/usr/lib/llvm-19",
+)
+
 use_repo(llvm, "llvm_toolchain")
 
 register_toolchains(
