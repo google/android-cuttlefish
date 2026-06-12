@@ -122,11 +122,15 @@ func (c *FakeHostOrchestratorClient) CreateBugReport(group string, opts CreateBu
 
 func (c *FakeHostOrchestratorClient) Powerwash(groupName, instanceName string) error { return nil }
 
-func (c *FakeHostOrchestratorClient) Stop(groupName, instanceName string) error { return nil }
+func (c *FakeHostOrchestratorClient) StopGroup(groupName string) error { return nil }
+
+func (c *FakeHostOrchestratorClient) StopInstance(groupName, instanceName string) error { return nil }
 
 func (c *FakeHostOrchestratorClient) Restart(groupName, instanceName string) error { return nil }
 
-func (c *FakeHostOrchestratorClient) Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error {
+func (c *FakeHostOrchestratorClient) StartGroup(string, *hoapi.StartCVDRequest) error { return nil }
+
+func (c *FakeHostOrchestratorClient) StartInstance(groupName, instanceName string, req *hoapi.StartCVDRequest) error {
 	return nil
 }
 
