@@ -192,7 +192,13 @@ std::string DefaultCustomActionConfig() {
     } else if (custom_action_configs.size() == 1) {
       for (const auto& config : custom_action_configs) {
         if (absl::EndsWithIgnoreCase(config, ".json")) {
-          return custom_action_config_dir + "/" + config;
+          auto full_path = custom_action_config_dir + "/" + config;
+          if (FileExists(full_path)) {
+            return full_path;
+          }
+          LOG(WARNING)
+              << "Default custom action config " << full_path
+              << " exists in directory but is not accessible (broken symlink?)";
         }
       }
     }
