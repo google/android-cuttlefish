@@ -135,6 +135,12 @@ func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Con
 	for _, dev := range devices {
 		args = append(args, "--device", dev+":"+dev+":rwm")
 	}
+	if hasNvidiaGPU() {
+		args = append(args,
+			"-e", "NVIDIA_DRIVER_CAPABILITIES=all",
+			"--device", "android.com/gpu-podcvd=all",
+		)
+	}
 	args = append(args, extraFlags...)
 	if name != "" {
 		args = append(args, "--name", name)
@@ -225,6 +231,16 @@ func useTTY(stdin io.Reader, stdout io.Writer, stderr io.Writer) bool {
 		return false
 	}
 	if f, ok := stderr.(interface{ Fd() uintptr }); !ok || !Isatty(f.Fd()) {
+		return false
+	}
+	return true
+}
+
+func hasNvidiaGPU() bool {
+	if _, err := os.Stat("/dev/nvidiactl"); err != nil {
+		return false
+	}
+	if _, err := os.Stat("/etc/cdi/nvidia-podcvd.yaml"); err != nil {
 		return false
 	}
 	return true
