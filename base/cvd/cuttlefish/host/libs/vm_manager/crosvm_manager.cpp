@@ -270,9 +270,11 @@ Result<std::string> CrosvmPathForVhostUserGpu(const CuttlefishConfig& config) {
   switch (HostArch()) {
     case Arch::Arm64:
       crosvm_path = HostBinaryPath("aarch64-linux-gnu/crosvm");
+      break;
     case Arch::X86:
     case Arch::X86_64:
       crosvm_path = instance.crosvm_binary();
+      break;
     default:
       return CF_ERR("Unhandled host arch " << HostArchStr()
                                        << " for vhost user gpu crosvm");
