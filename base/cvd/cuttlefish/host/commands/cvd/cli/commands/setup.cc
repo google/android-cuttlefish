@@ -26,6 +26,7 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/libs/vm_manager/host_configuration.h"
 #include "cuttlefish/result/result.h"
@@ -34,15 +35,6 @@ namespace cuttlefish {
 namespace {
 
 constexpr char kSummaryHelpText[] = "Configure the host for Cuttlefish";
-
-constexpr char kDetailedHelpText[] =
-    R"(cvd setup - configure host for cuttlefish
-
-Checks host configuration (kernel version, group memberships) and automatically applies fixes (e.g., adding user to kvm and cvdnetwork groups). Some fixes may require sudo permissions.
-
-Usage:
-  cvd setup
-)";
 
 using vm_manager::HostConfigurationAction;
 using vm_manager::ValidateHostConfiguration;
@@ -82,19 +74,21 @@ Result<void> CvdSetupHandler::Handle(const CommandRequest& request) {
 
 cvd_common::Args CvdSetupHandler::CmdList() const { return {"setup"}; }
 
-std::string CvdSetupHandler::SummaryHelp() const {
-  return kSummaryHelpText;
+std::string CvdSetupHandler::SummaryHelp() const { return kSummaryHelpText; }
+
+std::vector<HelpParagraph> CvdSetupHandler::Description() const {
+  std::vector<HelpParagraph> description;
+  description.emplace_back(HelpParagraph::Raw("Usage:\n  cvd setup"));
+  description.emplace_back(
+      "Checks host configuration (kernel version, group memberships) and "
+      "automatically applies fixes (e.g., adding user to kvm and cvdnetwork "
+      "groups). Some fixes may require sudo permissions.");
+  return description;
 }
 
 bool CvdSetupHandler::RequiresDeviceExists() const { return false; }
 
-bool CvdSetupHandler::RequiresHostConfiguration() const {
-  return false;
-}
-
-Result<std::string> CvdSetupHandler::DetailedHelp(const CommandRequest&) {
-  return kDetailedHelpText;
-}
+bool CvdSetupHandler::RequiresHostConfiguration() const { return false; }
 
 std::unique_ptr<CvdCommandHandler> NewCvdSetupHandler() {
   return std::unique_ptr<CvdCommandHandler>(new CvdSetupHandler());
