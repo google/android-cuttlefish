@@ -1,0 +1,90 @@
+# riscv64 build container for android-cuttlefish.
+#
+# debian:trixie is used because debian:bookworm does not support riscv64.
+# Trixie (Debian 13) is the first Debian release with official riscv64.
+# clang-19 (19.1.7) in trixie matches the hermetic LLVM 19.1.7 used by
+# amd64/arm64 via toolchains_llvm.
+#
+# Host requirement: Docker's default seccomp profile blocks the
+# RISCV_FLUSH_ICACHE syscall needed by the JVM on riscv64.  Configure:
+#   echo '{"seccomp-profile": "unconfined"}' | sudo tee /etc/docker/daemon.json
+#   sudo systemctl restart docker
+
+FROM debian:trixie AS base
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update -y && apt-get upgrade -y
+RUN apt-get install -y sudo devscripts
+
+# Build tools
+RUN apt-get install -y \
+  build-essential \
+  ca-certificates \
+  ca-certificates-java \
+  git \
+  openjdk-21-jdk \
+  pkg-config \
+  python3 \
+  zip \
+  unzip \
+  wget
+
+# Debian packaging tools (needed by build_packages.sh / debuild)
+RUN apt-get install -y \
+  config-package-dev \
+  debhelper-compat \
+  equivs
+
+# LLVM/Clang 19 toolchain - matches the hermetic LLVM 19.1.7 used by
+# amd64/arm64.  System-installed because no prebuilt hermetic LLVM exists
+# for riscv64.
+RUN apt-get install -y \
+  clang-19 \
+  lld-19 \
+  libc++-19-dev \
+  libc++abi-19-dev \
+  libclang-rt-19-dev \
+  libunwind-19-dev
+
+# Bridge Debian's legacy clang-rt layout to the per-target layout expected
+# by toolchains_llvm.
+RUN LEGACY_RT="/usr/lib/llvm-19/lib/clang/19/lib/linux/libclang_rt.builtins-riscv64.a" && \
+    TARGET_DIR="/usr/lib/llvm-19/lib/clang/19/lib/riscv64-unknown-linux-gnu" && \
+    TARGET_RT="${TARGET_DIR}/libclang_rt.builtins.a" && \
+    if [ -f "$LEGACY_RT" ] && [ ! -e "$TARGET_RT" ]; then \
+      mkdir -p "$TARGET_DIR" && ln -sf "$LEGACY_RT" "$TARGET_RT"; \
+    fi
+
+# Rust toolchain (needed for cargo-bazel)
+RUN apt-get install -y rustc cargo
+
+# Golang
+RUN apt-get install -y golang
+
+# Build Bazel from source - no prebuilt binary for riscv64.
+ARG BAZEL_VERSION=8.5.1
+RUN tmpdir="$(mktemp -d)" && \
+    cd "$tmpdir" && \
+    wget -q "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip" && \
+    unzip -q "bazel-${BAZEL_VERSION}-dist.zip" && \
+    env EXTRA_BAZEL_ARGS="--tool_java_runtime_version=local_jdk" bash ./compile.sh && \
+    cp output/bazel /usr/local/bin/bazel && \
+    cd / && rm -rf "$tmpdir"
+
+# Build cargo-bazel from the rules_rust source tree.  The crates.io
+# "cargo-bazel" package is NOT the same binary -- it lacks flags like
+# --repository-name that rules_rust expects.  Must build from the matching
+# rules_rust release tag.
+ARG RULES_RUST_VERSION=0.68.1
+RUN tmpdir="$(mktemp -d)" && \
+    cd "$tmpdir" && \
+    wget -q "https://github.com/bazelbuild/rules_rust/archive/refs/tags/${RULES_RUST_VERSION}.tar.gz" && \
+    tar xzf "${RULES_RUST_VERSION}.tar.gz" && \
+    cargo install --locked --path "rules_rust-${RULES_RUST_VERSION}/crate_universe" \
+      --root /usr/local && \
+    cd / && rm -rf "$tmpdir"
+
+ENV CARGO_BAZEL_GENERATOR_URL=file:///usr/local/bin/cargo-bazel
+
+ENTRYPOINT ["tools/buildutils/cw/entrypoint.sh"]
