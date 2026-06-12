@@ -1,8 +1,19 @@
-cuttlefish-container (1.55.0) UNRELEASED; urgency=medium
+cuttlefish-container (1.55.0) unstable; urgency=medium
 
-  * 
+  * Start development on v1.55. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2630
+  * Make execution of `podcvd-setup` with sudo permision being available. by @0405ysj in https://github.com/google/android-cuttlefish/pull/2619
+  * Resolve filesystem isolation issue on podcvd bugreport by @0405ysj in https://github.com/google/android-cuttlefish/pull/2612
+  * Show progress when pulling podman image by @0405ysj in https://github.com/google/android-cuttlefish/pull/2620
+  * podcvd help start/bugreport doesn't need cvd host package anymore by @0405ysj in https://github.com/google/android-cuttlefish/pull/2613
+  * Podcvd supports logs subcommand by @0405ysj in https://github.com/google/android-cuttlefish/pull/2632
+  * podcvd support lint subcommand by @0405ysj in https://github.com/google/android-cuttlefish/pull/2636
+  * Ensure vhost_net and vhost_vsock exists before triggering udev action by @0405ysj in https://github.com/google/android-cuttlefish/pull/2669
+  * podcvd uses podman CLI rather than docker golang SDK by @0405ysj in https://github.com/google/android-cuttlefish/pull/2659
+  * Add acl as dependency of cuttlefish-podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2672
+  * Mark v1.54 as stable. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2677
+  * podcvd supports monitor/setup subcommand by @0405ysj in https://github.com/google/android-cuttlefish/pull/2676
 
- -- 3405691582 <dsk@google.com>  Fri, 29 May 2026 18:55:55 +0000
+ -- Ram Muthiah <rammuthiah@google.com>  Fri, 12 Jun 2026 02:47:17 +0100
 
 cuttlefish-container (1.54.0) stable; urgency=medium
 
