@@ -497,11 +497,18 @@ DEFINE_string(fuchsia_root_image, CF_DEFAULTS_FUCHSIA_ROOT_IMAGE,
 
 DEFINE_string(
     custom_partition_path, CF_DEFAULTS_CUSTOM_PARTITION_PATH,
-    "Location of custom image that will be passed as a \"custom\" partition"
-    "to rootfs and can be used by /dev/block/by-name/custom. Multiple images "
-    "can be passed, separated by semicolons and can be used as "
-    "/dev/block/by-name/custom_1, /dev/block/by-name/custom_2, etc. Example: "
-    "--custom_partition_path=\"/path/to/custom.img;/path/to/other.img\"");
+    "Location of custom image that will be passed as a custom partition "
+    "to rootfs. Multiple entries can be passed, separated by semicolons. "
+    "Each entry uses key=value pairs separated by commas. "
+    "Supported keys: name (partition label), path (image file path), "
+    "ab (true/false for A/B slots). 'path' is required; 'name' defaults to "
+    "'custom', 'custom_1', etc.; 'ab' defaults to false. "
+    "Example with A/B: "
+    "--custom_partition_path=\"name=oem1,path=./oem1.img,ab=true;"
+    "name=oem2,path=./oem2.img\" "
+    "Example without names (legacy): "
+    "--custom_partition_path=\"/path/to/custom.img;/path/to/other.img\" "
+    "For multi-instance, separate per-instance values with '|'.");
 
 DEFINE_string(
     blank_sdcard_image_mb, CF_DEFAULTS_BLANK_SDCARD_IMAGE_MB,
