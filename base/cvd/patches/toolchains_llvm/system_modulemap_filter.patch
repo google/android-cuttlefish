@@ -1,0 +1,11 @@
+--- a/toolchain/internal/configure.bzl	2026-04-04 05:46:35.154316311 +0000
++++ b/toolchain/internal/configure.bzl	2026-04-04 05:47:15.999204323 +0000
+@@ -684,6 +684,8 @@
+ 
+ def _is_hermetic_or_exists(rctx, path, sysroot_path):
+     path = path.replace("%sysroot%", sysroot_path).replace("//", "/")
++    if path.startswith("%workspace%/"):
++        path = path.removeprefix("%workspace%")
+     if not path.startswith("/"):
+         return True
+     return rctx.path(path).exists

@@ -1,0 +1,27 @@
+--- a/foreign_cc/built_tools/pkgconfig_build.bzl	2026-04-03 15:35:15.959189738 +0000
++++ b/foreign_cc/built_tools/pkgconfig_build.bzl	2026-04-03 15:36:20.353263341 +0000
+@@ -22,7 +22,7 @@
+     "//foreign_cc/private/framework:helpers.bzl",
+     "escape_dquote_bash",
+ )
+-load("//foreign_cc/private/framework:platform.bzl", "os_name")
++load("//foreign_cc/private/framework:platform.bzl", "arch_name", "os_name", "triplet_name")
+ load("//toolchains/native_tools:tool_access.bzl", "get_make_data")
+ 
+ def _pkgconfig_tool_impl(ctx):
+@@ -77,6 +77,15 @@
+     if xcompile_options:
+         configure_options.extend(xcompile_options)
+ 
++    # When not cross-compiling, config.guess determines the build type.
++    # Older config.guess versions (e.g. 2015 bundled in pkg-config 0.29.2)
++    # do not recognize newer architectures like riscv64.  Explicitly pass
++    # --build so configure does not need to guess.
++    if not xcompile_options:
++        host_triplet = triplet_name(os_name(ctx), arch_name(ctx))
++        if host_triplet != "unknown":
++            configure_options.append("--build=" + host_triplet)
++
+     env.update({
+         "AR": absolute_ar,
+         "ARFLAGS": _join_flags_list(ctx.workspace_name, arflags),

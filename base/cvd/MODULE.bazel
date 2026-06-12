@@ -65,3 +65,48 @@ include("//toolchain:bazel.MODULE.bazel")
 include("//toolchain:llvm.MODULE.bazel")
 include("//toolchain:python.MODULE.bazel")
 include("//toolchain:rust.MODULE.bazel")
+
+# riscv64: rules_rust does not support riscv64 host out of the box.
+# Patch triple.bzl to add riscv64gc to the supported linux architectures
+# and map the riscv64 arch string to riscv64gc (Rust's triple prefix).
+# Also patch crate_universe to include riscv64gc-unknown-linux-gnu in the
+# default SUPPORTED_PLATFORM_TRIPLES so generated BUILD files are compatible.
+single_version_override(
+    module_name = "rules_rust",
+    patches = [
+        "//patches/rules_rust:riscv64_triple.patch",
+        "//patches/rules_rust:riscv64_supported_platform.patch",
+    ],
+    patch_strip = 1,
+)
+
+# riscv64: rules_foreign_cc does not recognize riscv64 as a supported CPU,
+# and its bundled pkg-config 0.29.2 config.guess (2015) cannot detect riscv64.
+# Patch to add riscv64 support, pass --build explicitly to configure,
+# Provide prebuilt cmake 3.31.8 for riscv64 to avoid long bootstrap.
+single_version_override(
+    module_name = "rules_foreign_cc",
+    patches = [
+        "//patches/rules_foreign_cc:riscv64_platform.patch",
+        "//patches/rules_foreign_cc:riscv64_pkgconfig.patch",
+        "//patches/rules_foreign_cc:riscv64_cmake_prebuilt.patch",
+    ],
+    patch_strip = 1,
+)
+
+# riscv64: toolchains_llvm does not support riscv64 as a host architecture.
+# Patch to add linux-riscv64 to SUPPORTED_TARGETS and its target system name.
+single_version_override(
+    module_name = "toolchains_llvm",
+    patches = [
+        "//patches/toolchains_llvm:riscv64_common.patch",
+        "//patches/toolchains_llvm:riscv64_configure.patch",
+        "//patches/toolchains_llvm:riscv64_cc_toolchain_config.patch",
+        # Fix: system_module_map filtering needs to strip %workspace% prefix,
+        # so non-existing include dirs (lib64/, arch-specific c++/v1) are 
+        # filtered out when using toolchain_root with an absolute path.
+        # This is a generic bug affecting any toolchain_root usage.
+        "//patches/toolchains_llvm:system_modulemap_filter.patch",
+    ],
+    patch_strip = 1,
+)
