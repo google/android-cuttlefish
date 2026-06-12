@@ -32,7 +32,10 @@ import (
 )
 
 func Main(args []string) error {
-	cvdArgs := ParseCvdArgs(args)
+	cvdArgs, err := ParseCvdArgs(args)
+	if err != nil {
+		return err
+	}
 	if len(cvdArgs.SubCommandArgs) == 0 {
 		cvdArgs.SubCommandArgs = []string{"help"}
 	}
@@ -72,7 +75,7 @@ func Main(args []string) error {
 		}
 	case "setup":
 		return setupPodcvd()
-	case "cache", "load":
+	case "cache":
 		// TODO(seungjaeyoo): Support other subcommands of cvd as well.
 		return fmt.Errorf("subcommand %q is not implemented yet", subcommand)
 	default:
