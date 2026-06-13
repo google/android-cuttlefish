@@ -55,6 +55,9 @@ Result<std::string> CvdCommandHandler::DetailedHelp(
   cvd_common::Args args = request.SubcommandArguments();
   CF_EXPECT(ConsumeFlags(flags, args));
 
+  // Make sure the flags are in alphabetical order
+  std::sort(flags.begin(), flags.end());
+
   selector::SelectorOptions selector_options = request.Selectors();
   if (RequiresDeviceExists()) {
     // Add the common selector flags if the command supports them. This doesn't
@@ -63,11 +66,8 @@ Result<std::string> CvdCommandHandler::DetailedHelp(
     // "current value" is correct.
     std::vector<Flag> selector_flags =
         selector::BuildCommonSelectorFlags(selector_options);
-    flags.insert(flags.end(), selector_flags.begin(), selector_flags.end());
+    flags.insert(flags.begin(), selector_flags.begin(), selector_flags.end());
   }
-
-  // Make sure the flags are in alphabetical order
-  std::sort(flags.begin(), flags.end());
 
   ss << FormatFlagsHelp(flags);
 
