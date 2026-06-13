@@ -18,6 +18,11 @@ def _get_common_prefix(paths):
     return "/".join(prefix)
 
 def _remove_prefix(path, path_prefix):
+    # Empty prefix is a no-op (caller's common-prefix computation may return
+    # "" when two paths share no leading directory, e.g. lib64/x vs bin/y).
+    if not path_prefix:
+        return path
+
     path_parts = path.split("/")
 
     for path_prefix_part in path_prefix.split("/"):
