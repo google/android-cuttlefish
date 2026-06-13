@@ -27,6 +27,7 @@ RUN apt install -y --no-install-recommends \
     ca-certificates \
     curl \
     mesa-utils \
+    mesa-vulkan-drivers \
     nginx \
     sudo
 RUN update-ca-certificates
