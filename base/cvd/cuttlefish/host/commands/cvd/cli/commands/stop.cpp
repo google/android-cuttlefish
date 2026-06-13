@@ -30,6 +30,7 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
@@ -41,39 +42,12 @@
 namespace cuttlefish {
 namespace {
 
-constexpr char kSummaryHelpText[] = "Stop all instances in a group";
-
-constexpr char kDetailedHelpText[] =
-    R"""(
-Stops all instances in an instance group
-
-Usage:
-cvd stop [--wait_for_launcher=SECONDS] [--clear_instance_dirs]
-
-Stops a running cuttlefish instance group.
-
---wait_for_launcher=SECONDS    The number of seconds to wait for the launcher to
-                     respond to the stop request. If SECONDS is 0 it will wait
-                     indefinitely. Defaults to 5 seconds.
-
---clear_instance_dirs    If provided the instance directories will be deleted
-                     after stopping.
-)""";
+constexpr char kSummaryHelpText[] = "Stop Cuttlefish instances";
 
 struct StopFlags {
   size_t wait_for_launcher_secs = 5;
   bool clear_instance_dirs = false;
 };
-Result<StopFlags> ParseCommandFlags(cvd_common::Args& args) {
-  StopFlags flag_values;
-  std::vector<Flag> flags = {
-      GflagsCompatFlag("wait_for_launcher", flag_values.wait_for_launcher_secs),
-      GflagsCompatFlag("clear_instance_dirs", flag_values.clear_instance_dirs),
-  };
-  CF_EXPECT(ConsumeFlags(flags, args, {.fail_on_unexpected_argument = true}));
-  return flag_values;
-}
-
 }  // namespace
 
 CvdStopCommandHandler::CvdStopCommandHandler(InstanceManager& instance_manager)
@@ -89,10 +63,11 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   auto group = CF_EXPECT(selector::SelectGroup(instance_manager_, request));
   CF_EXPECT(group.HasActiveInstances(), "Selected group is not running");
 
-  StopFlags flags = CF_EXPECT(ParseCommandFlags(cmd_args));
+  CF_EXPECT(ConsumeFlags(CF_EXPECT(Flags(request)), cmd_args,
+                         {.fail_on_unexpected_argument = true}));
   std::optional<std::chrono::seconds> launcher_timeout;
-  if (flags.wait_for_launcher_secs > 0) {
-    launcher_timeout.emplace(flags.wait_for_launcher_secs);
+  if (flags_.wait_for_launcher_secs > 0) {
+    launcher_timeout.emplace(flags_.wait_for_launcher_secs);
   }
 
   std::vector<unsigned> instance_nums;
@@ -109,8 +84,8 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
 
   Result<void> stop_outcome = instance_manager_.StopInstanceGroup(
       group, launcher_timeout,
-      flags.clear_instance_dirs ? InstanceDirActionOnStop::Clear
-                                : InstanceDirActionOnStop::Keep,
+      flags_.clear_instance_dirs ? InstanceDirActionOnStop::Clear
+                                 : InstanceDirActionOnStop::Keep,
       instance_nums);
 
   GatherVmStopMetrics(group);
@@ -127,9 +102,43 @@ std::string CvdStopCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
-Result<std::string> CvdStopCommandHandler::DetailedHelp(
-    const CommandRequest& request) {
-  return kDetailedHelpText;
+std::vector<HelpParagraph> CvdStopCommandHandler::Description() const {
+  std::vector<HelpParagraph> description;
+  description.emplace_back(
+      HelpParagraph::Raw("Usage:\n    cvd [selectors] stop [args]"));
+  description.emplace_back(
+      "Stop a subset of instances from a group. A single instance, several or "
+      "all instances in a group can be stopped at once. To stop instances from "
+      "different groups the command must be invoked multiple times.");
+  description.emplace_back(
+      "Instances must be in 'Running' or 'Starting' states, otherwise the "
+      "command will fail. Instances will be left in 'Stopped' state if the "
+      "command succeeds and can later be started with the `cvd start` "
+      "command.");
+  description.emplace_back(
+      "Instances are stopped by asking the virtual machine manager to stop, "
+      "which typically means immediately stopping all VCPU threads. This may "
+      "lead to data loss and/or corruption as it's roughly equivalent to "
+      "removing the battery from a physical Android device. Logs, virtual "
+      "disks and other files are preserved after a stop completes unless "
+      "--clear_instance_dirs is given.");
+  return description;
+}
+
+Result<std::vector<Flag>> CvdStopCommandHandler::Flags(const CommandRequest&) {
+  return std::vector<Flag>{
+      GflagsCompatFlag("wait_for_launcher_seconds",
+                       flags_.wait_for_launcher_secs)
+          .Alias("wait_for_launcher")
+          .Help("Number of seconds to wait for the running instance(s) "
+                "to report that it stopped successfully before "
+                "forcefully stopping it."),
+      GflagsCompatFlag("clear_instance_dirs", flags_.clear_instance_dirs)
+          .Help("Deletes log files, temporary files, virtual disks "
+                "overlays and other instance specific state. It does "
+                "not delete the original disk images, but reverts any "
+                "changes the instance may have written to disk."),
+  };
 }
 
 std::unique_ptr<CvdCommandHandler> NewCvdStopCommandHandler(
