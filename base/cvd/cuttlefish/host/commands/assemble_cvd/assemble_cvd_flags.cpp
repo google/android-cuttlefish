@@ -16,10 +16,10 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 
-#include <string>
-
 #include <fmt/format.h>
 #include <gflags/gflags.h>
+
+#include <string>
 
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
@@ -28,9 +28,9 @@
 #define DEFINE_vec DEFINE_string
 
 DEFINE_vec(gdb_port, std::to_string(CF_DEFAULTS_GDB_PORT),
-             "Port number to spawn kernel gdb on e.g. -gdb_port=1234. The"
-             "kernel must have been built with CONFIG_RANDOMIZE_BASE "
-             "disabled.");
+           "Port number to spawn kernel gdb on e.g. -gdb_port=1234. The"
+           "kernel must have been built with CONFIG_RANDOMIZE_BASE "
+           "disabled.");
 
 // TODO(b/192495477): combine these into a single repeatable '--display' flag
 // when assemble_cvd switches to using the new flag parsing library.
@@ -49,11 +49,11 @@ DEFINE_string(overlays, "",
               "List of displays to overlay. Format is: 'vm_index:display_index "
               "vm_index2:display_index2 [...]'");
 DEFINE_vec(extra_bootconfig_args, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
-              "Space-separated list of extra bootconfig args. "
-              "Note: overwriting an existing bootconfig argument "
-              "requires ':=' instead of '='.");
+           "Space-separated list of extra bootconfig args. "
+           "Note: overwriting an existing bootconfig argument "
+           "requires ':=' instead of '='.");
 DEFINE_vec(serial_number, CF_DEFAULTS_SERIAL_NUMBER,
-              "Serial number to use for the device");
+           "Serial number to use for the device");
 DEFINE_vec(use_random_serial, fmt::format("{}", CF_DEFAULTS_USE_RANDOM_SERIAL),
            "Whether to use random serial for the device.");
 DEFINE_vec(gpu_vhost_user_mode,
@@ -61,10 +61,10 @@ DEFINE_vec(gpu_vhost_user_mode,
            "Whether or not to run the Virtio GPU worker in a separate"
            "process using vhost-user-gpu. One of {auto, on, off}.");
 DEFINE_vec(hwcomposer, CF_DEFAULTS_HWCOMPOSER,
-              "What hardware composer to use, one of {auto, drm, ranchu} ");
+           "What hardware composer to use, one of {auto, drm, ranchu} ");
 DEFINE_vec(gpu_capture_binary, CF_DEFAULTS_GPU_CAPTURE_BINARY,
-              "Path to the GPU capture binary to use when capturing GPU traces"
-              "(ngfx, renderdoc, etc)");
+           "Path to the GPU capture binary to use when capturing GPU traces"
+           "(ngfx, renderdoc, etc)");
 DEFINE_vec(enable_gpu_udmabuf,
            fmt::format("{}", CF_DEFAULTS_ENABLE_GPU_UDMABUF),
            "Use the udmabuf driver for zero-copy virtio-gpu");
@@ -99,13 +99,13 @@ DEFINE_vec(
     "Frame socket path to use when launching a VM "
     "For example, \"--frames_socket_path=${XDG_RUNTIME_DIR}/wayland-0\"");
 
+DEFINE_vec(enable_minimal_mode,
+           CF_DEFAULTS_ENABLE_MINIMAL_MODE ? "true" : "false",
+           "Only enable the minimum features to boot a cuttlefish device and "
+           "support minimal UI interactions.\nNote: Currently only supports "
+           "handheld/phone targets");
 DEFINE_vec(
-    enable_minimal_mode, CF_DEFAULTS_ENABLE_MINIMAL_MODE ? "true" : "false",
-    "Only enable the minimum features to boot a cuttlefish device and "
-    "support minimal UI interactions.\nNote: Currently only supports "
-    "handheld/phone targets");
-DEFINE_vec(
-    pause_in_bootloader, CF_DEFAULTS_PAUSE_IN_BOOTLOADER?"true":"false",
+    pause_in_bootloader, CF_DEFAULTS_PAUSE_IN_BOOTLOADER ? "true" : "false",
     "Stop the bootflow in u-boot. You can continue the boot by connecting "
     "to the device console and typing in \"boot\".");
 DEFINE_vec(enable_host_bluetooth,
@@ -129,11 +129,10 @@ DEFINE_string(casimir_args, CF_DEFAULTS_CASIMIR_ARGS,
               "Space-separated list of casimir args.");
 DEFINE_bool(enable_host_uwb, CF_DEFAULTS_ENABLE_HOST_UWB,
             "Enable the uwb host and the uwb connector.");
-DEFINE_int32(
-    pica_instance_num, CF_DEFAULTS_ENABLE_PICA_INSTANCE_NUM,
-    "If it is greater than 0, use an existing pica instance which is "
-    "launched from cuttlefish instance "
-    "with pica_instance_num. Else, launch a new pica instance");
+DEFINE_int32(pica_instance_num, CF_DEFAULTS_ENABLE_PICA_INSTANCE_NUM,
+             "If it is greater than 0, use an existing pica instance which is "
+             "launched from cuttlefish instance "
+             "with pica_instance_num. Else, launch a new pica instance");
 
 DEFINE_vec(netsim, fmt::format("{}", CF_DEFAULTS_NETSIM),
            "[Experimental] Connect all radios to netsim.");
@@ -141,6 +140,8 @@ DEFINE_vec(netsim_bt, fmt::format("{}", CF_DEFAULTS_NETSIM_BT),
            "Connect Bluetooth radio to netsim.");
 DEFINE_vec(netsim_uwb, fmt::format("{}", CF_DEFAULTS_NETSIM_UWB),
            "[Experimental] Connect Uwb radio to netsim.");
+DEFINE_vec(netsim_nfc, fmt::format("{}", CF_DEFAULTS_NETSIM_NFC),
+           "[Experimental] Connect Nfc radio to netsim.");
 DEFINE_string(netsim_args, CF_DEFAULTS_NETSIM_ARGS,
               "Space-separated list of netsim args.");
 
@@ -185,12 +186,12 @@ DEFINE_string(webrtc_sig_server_addr, CF_DEFAULTS_WEBRTC_SIG_SERVER_ADDR,
 // TODO (jemoreira): We need a much bigger range to reliably support several
 // simultaneous connections.
 DEFINE_vec(tcp_port_range, CF_DEFAULTS_TCP_PORT_RANGE,
-              "The minimum and maximum TCP port numbers to allocate for ICE "
-              "candidates as 'min:max'. To use any port just specify '0:0'");
+           "The minimum and maximum TCP port numbers to allocate for ICE "
+           "candidates as 'min:max'. To use any port just specify '0:0'");
 
 DEFINE_vec(udp_port_range, CF_DEFAULTS_UDP_PORT_RANGE,
-              "The minimum and maximum UDP port numbers to allocate for ICE "
-              "candidates as 'min:max'. To use any port just specify '0:0'");
+           "The minimum and maximum UDP port numbers to allocate for ICE "
+           "candidates as 'min:max'. To use any port just specify '0:0'");
 
 DEFINE_vec(
     webrtc_device_id, CF_DEFAULTS_WEBRTC_DEVICE_ID,
@@ -202,7 +203,7 @@ DEFINE_vec(uuid, CF_DEFAULTS_UUID,
            "UUID to use for the device. Random if not specified");
 
 DEFINE_vec(setupwizard_mode, CF_DEFAULTS_SETUPWIZARD_MODE,
-              "One of DISABLED,OPTIONAL,REQUIRED");
+           "One of DISABLED,OPTIONAL,REQUIRED");
 DEFINE_vec(enable_bootanimation,
            fmt::format("{}", CF_DEFAULTS_ENABLE_BOOTANIMATION),
            "Whether to enable the boot animation.");
@@ -216,19 +217,19 @@ DEFINE_string(qemu_binary_dir, CF_DEFAULTS_QEMU_BINARY_DIR,
 DEFINE_string(crosvm_binary, CF_DEFAULTS_CROSVM_BINARY,
               "The Crosvm binary to use");
 DEFINE_vec(gem5_binary_dir, CF_DEFAULTS_GEM5_BINARY_DIR,
-              "Path to the gem5 build tree root");
+           "Path to the gem5 build tree root");
 DEFINE_vec(gem5_checkpoint_dir, CF_DEFAULTS_GEM5_CHECKPOINT_DIR,
-              "Path to the gem5 restore checkpoint directory");
+           "Path to the gem5 restore checkpoint directory");
 DEFINE_vec(gem5_debug_file, CF_DEFAULTS_GEM5_DEBUG_FILE,
-              "The file name where gem5 saves debug prints and logs");
+           "The file name where gem5 saves debug prints and logs");
 DEFINE_string(gem5_debug_flags, CF_DEFAULTS_GEM5_DEBUG_FLAGS,
               "The debug flags gem5 uses to print debugs to file");
 
 DEFINE_vec(boot_slot, CF_DEFAULTS_BOOT_SLOT,
-              "Force booting into the given slot. If empty, "
-              "the slot will be chosen based on the misc partition if using a "
-              "bootloader. It will default to 'a' if empty and not using a "
-              "bootloader.");
+           "Force booting into the given slot. If empty, "
+           "the slot will be chosen based on the misc partition if using a "
+           "bootloader. It will default to 'a' if empty and not using a "
+           "bootloader.");
 DEFINE_int32(num_instances, CF_DEFAULTS_NUM_INSTANCES,
              "Number of Android guests to launch");
 DEFINE_string(instance_nums, CF_DEFAULTS_INSTANCE_NUMS,
@@ -238,8 +239,7 @@ DEFINE_string(report_anonymous_usage_stats,
               CF_DEFAULTS_REPORT_ANONYMOUS_USAGE_STATS,
               "Report anonymous usage "
               "statistics for metrics collection and analysis.");
-DEFINE_vec(ril_dns, CF_DEFAULTS_RIL_DNS,
-              "DNS address of mobile network (RIL)");
+DEFINE_vec(ril_dns, CF_DEFAULTS_RIL_DNS, "DNS address of mobile network (RIL)");
 DEFINE_vec(kgdb, fmt::format("{}", CF_DEFAULTS_KGDB),
            "Configure the virtual device for debugging the kernel "
            "with kgdb/kdb. The kernel must have been built with "
@@ -249,19 +249,19 @@ DEFINE_vec(start_gnss_proxy, fmt::format("{}", CF_DEFAULTS_START_GNSS_PROXY),
            "Whether to start the gnss proxy.");
 
 DEFINE_vec(gnss_file_path, CF_DEFAULTS_GNSS_FILE_PATH,
-              "Local gnss raw measurement file path for the gnss proxy");
+           "Local gnss raw measurement file path for the gnss proxy");
 
 DEFINE_vec(fixed_location_file_path, CF_DEFAULTS_FIXED_LOCATION_FILE_PATH,
-              "Local fixed location file path for the gnss proxy");
+           "Local fixed location file path for the gnss proxy");
 
 // by default, this modem-simulator is disabled
 DEFINE_vec(enable_modem_simulator,
-              CF_DEFAULTS_ENABLE_MODEM_SIMULATOR ? "true" : "false",
-              "Enable the modem simulator to process RILD AT commands");
+           CF_DEFAULTS_ENABLE_MODEM_SIMULATOR ? "true" : "false",
+           "Enable the modem simulator to process RILD AT commands");
 // modem_simulator_sim_type=2 for test CtsCarrierApiTestCases
 DEFINE_vec(modem_simulator_sim_type,
-              std::to_string(CF_DEFAULTS_MODEM_SIMULATOR_SIM_TYPE),
-              "Sim type: 1 for normal, 2 for CtsCarrierApiTestCases");
+           std::to_string(CF_DEFAULTS_MODEM_SIMULATOR_SIM_TYPE),
+           "Sim type: 1 for normal, 2 for CtsCarrierApiTestCases");
 
 DEFINE_vec(console, fmt::format("{}", CF_DEFAULTS_CONSOLE),
            "Enable the serial console");
@@ -329,8 +329,8 @@ DEFINE_string(secure_hals, CF_DEFAULTS_SECURE_HALS,
               "Which HALs to use enable host security features for. Supports "
               "keymint and gatekeeper at the moment.");
 
-DEFINE_vec(use_sdcard, CF_DEFAULTS_USE_SDCARD?"true":"false",
-            "Create blank SD-Card image and expose to guest");
+DEFINE_vec(use_sdcard, CF_DEFAULTS_USE_SDCARD ? "true" : "false",
+           "Create blank SD-Card image and expose to guest");
 
 DEFINE_vec(protected_vm, fmt::format("{}", CF_DEFAULTS_PROTECTED_VM),
            "Boot in Protected VM mode");
@@ -348,10 +348,10 @@ DEFINE_vec(enable_jcard_simulator,
            "Whether to allow host jcard simulator on the device");
 
 DEFINE_vec(camera_server_port, std::to_string(CF_DEFAULTS_CAMERA_SERVER_PORT),
-              "camera vsock port");
+           "camera vsock port");
 
 DEFINE_vec(userdata_format, CF_DEFAULTS_USERDATA_FORMAT,
-              "The userdata filesystem format");
+           "The userdata filesystem format");
 
 DEFINE_bool(use_overlay, CF_DEFAULTS_USE_OVERLAY,
             "Capture disk writes an overlay. This is a "
@@ -377,10 +377,12 @@ DEFINE_vec(crosvm_simple_media_device, "false",
            "Controls the crosvm --simple-media-device flag"
            "The flag is given if crosvm_simple_media_device is true.");
 
-DEFINE_vec(crosvm_v4l2_proxy, CF_DEFAULTS_CROSVM_V4L2_PROXY,
-           "Controls the crosvm --v4l2-proxy flag"
-           "The flag is given if crosvm_v4l2_proxy is set with a valid string literal. "
-           "When this flag is set, crosvm_simple_media_device becomes ineffective.");
+DEFINE_vec(
+    crosvm_v4l2_proxy, CF_DEFAULTS_CROSVM_V4L2_PROXY,
+    "Controls the crosvm --v4l2-proxy flag"
+    "The flag is given if crosvm_v4l2_proxy is set with a valid string "
+    "literal. "
+    "When this flag is set, crosvm_simple_media_device becomes ineffective.");
 
 DEFINE_vec(use_pmem, "true",
            "Make this flag false to disable pmem with crosvm");
@@ -467,19 +469,18 @@ DEFINE_string(default_vvmtruststore_file_name,
 DEFINE_string(vvmtruststore_path, CF_DEFAULTS_VVMTRUSTSTORE_PATH,
               "Location of the vvmtruststore image");
 
-DEFINE_string(
-    default_target_zip, CF_DEFAULTS_DEFAULT_TARGET_ZIP,
-    "Location of default target zip file.");
-DEFINE_string(
-    system_target_zip, CF_DEFAULTS_SYSTEM_TARGET_ZIP,
-    "Location of system target zip file.");
+DEFINE_string(default_target_zip, CF_DEFAULTS_DEFAULT_TARGET_ZIP,
+              "Location of default target zip file.");
+DEFINE_string(system_target_zip, CF_DEFAULTS_SYSTEM_TARGET_ZIP,
+              "Location of system target zip file.");
 
 DEFINE_string(linux_kernel_path, CF_DEFAULTS_LINUX_KERNEL_PATH,
               "Location of linux kernel for cuttlefish otheros flow.");
 DEFINE_string(linux_initramfs_path, CF_DEFAULTS_LINUX_INITRAMFS_PATH,
               "Location of linux initramfs.img for cuttlefish otheros flow.");
-DEFINE_string(linux_root_image, CF_DEFAULTS_LINUX_ROOT_IMAGE,
-              "Location of linux root filesystem image for cuttlefish otheros flow.");
+DEFINE_string(
+    linux_root_image, CF_DEFAULTS_LINUX_ROOT_IMAGE,
+    "Location of linux root filesystem image for cuttlefish otheros flow.");
 
 DEFINE_string(chromeos_disk, CF_DEFAULTS_CHROMEOS_DISK,
               "Location of a complete ChromeOS GPT disk");
@@ -490,10 +491,12 @@ DEFINE_string(chromeos_root_image, CF_DEFAULTS_CHROMEOS_ROOT_IMAGE,
 
 DEFINE_string(fuchsia_zedboot_path, CF_DEFAULTS_FUCHSIA_ZEDBOOT_PATH,
               "Location of fuchsia zedboot path for cuttlefish otheros flow.");
-DEFINE_string(fuchsia_multiboot_bin_path, CF_DEFAULTS_FUCHSIA_MULTIBOOT_BIN_PATH,
-              "Location of fuchsia multiboot bin path for cuttlefish otheros flow.");
-DEFINE_string(fuchsia_root_image, CF_DEFAULTS_FUCHSIA_ROOT_IMAGE,
-              "Location of fuchsia root filesystem image for cuttlefish otheros flow.");
+DEFINE_string(
+    fuchsia_multiboot_bin_path, CF_DEFAULTS_FUCHSIA_MULTIBOOT_BIN_PATH,
+    "Location of fuchsia multiboot bin path for cuttlefish otheros flow.");
+DEFINE_string(
+    fuchsia_root_image, CF_DEFAULTS_FUCHSIA_ROOT_IMAGE,
+    "Location of fuchsia root filesystem image for cuttlefish otheros flow.");
 
 DEFINE_string(
     custom_partition_path, CF_DEFAULTS_CUSTOM_PARTITION_PATH,
