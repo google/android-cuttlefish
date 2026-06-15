@@ -96,15 +96,21 @@
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 #include "cuttlefish/result/result.h"
 
-#define GET_FLAG_STR_VALUE(name) GetFlagStrValueForInstances(FLAGS_ ##name, instances_size, #name, name_to_default_value)
-#define GET_FLAG_INT_VALUE(name) GetFlagIntValueForInstances(FLAGS_ ##name, instances_size, #name, name_to_default_value)
-#define GET_FLAG_BOOL_VALUE(name) GetFlagBoolValueForInstances(FLAGS_ ##name, instances_size, #name, name_to_default_value)
+#define GET_FLAG_STR_VALUE(name)                                   \
+  GetFlagStrValueForInstances(FLAGS_##name, instances_size, #name, \
+                              name_to_default_value)
+#define GET_FLAG_INT_VALUE(name)                                   \
+  GetFlagIntValueForInstances(FLAGS_##name, instances_size, #name, \
+                              name_to_default_value)
+#define GET_FLAG_BOOL_VALUE(name)                                   \
+  GetFlagBoolValueForInstances(FLAGS_##name, instances_size, #name, \
+                               name_to_default_value)
 
 namespace cuttlefish {
 
-using vm_manager::QemuManager;
 using vm_manager::Gem5Manager;
 using vm_manager::GetVmManager;
+using vm_manager::QemuManager;
 
 namespace {
 
@@ -159,7 +165,8 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
     CF_EXPECT(device_id.find("{num}") != std::string::npos,
               "If one webrtc_device_ids is given for multiple instances, "
                   << " {num} should be included in webrtc_device_id.");
-    device_ids = std::vector<std::string_view>(instance_nums.size(), tokens.front());
+    device_ids =
+        std::vector<std::string_view>(instance_nums.size(), tokens.front());
   }
 
   if (tokens.size() == instance_nums.size()) {
@@ -178,8 +185,8 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
 }
 
 /**
- * Returns a mapping between flag name and "gflags default_value" as strings for flags
- * defined in the binary.
+ * Returns a mapping between flag name and "gflags default_value" as strings for
+ * flags defined in the binary.
  */
 std::map<std::string, std::string> CurrentFlagsToDefaultValue() {
   std::map<std::string, std::string> name_to_default_value;
@@ -203,18 +210,22 @@ Result<std::vector<bool>> GetFlagBoolValueForInstances(
   std::vector<std::string_view> default_value_vec =
       absl::StrSplit(default_value_it->second, ",");
 
-  for (int instance_index=0; instance_index<instances_size; instance_index++) {
+  for (int instance_index = 0; instance_index < instances_size;
+       instance_index++) {
     if (instance_index >= flag_vec.size()) {
       value_vec[instance_index] = value_vec[0];
     } else {
-      if (flag_vec[instance_index] == "unset" || flag_vec[instance_index] == "\"unset\"") {
+      if (flag_vec[instance_index] == "unset" ||
+          flag_vec[instance_index] == "\"unset\"") {
         std::string_view default_value = default_value_vec[0];
         if (instance_index < default_value_vec.size()) {
           default_value = default_value_vec[instance_index];
         }
-        value_vec[instance_index] = CF_EXPECT(ParseBool(default_value, flag_name));
+        value_vec[instance_index] =
+            CF_EXPECT(ParseBool(default_value, flag_name));
       } else {
-        value_vec[instance_index] = CF_EXPECT(ParseBool(flag_vec[instance_index], flag_name));
+        value_vec[instance_index] =
+            CF_EXPECT(ParseBool(flag_vec[instance_index], flag_name));
       }
     }
   }
@@ -233,21 +244,23 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
   std::vector<std::string_view> default_value_vec =
       absl::StrSplit(default_value_it->second, ",");
 
-  for (int instance_index=0; instance_index<instances_size; instance_index++) {
+  for (int instance_index = 0; instance_index < instances_size;
+       instance_index++) {
     if (instance_index >= flag_vec.size()) {
       value_vec[instance_index] = value_vec[0];
     } else {
-      if (flag_vec[instance_index] == "unset" || flag_vec[instance_index] == "\"unset\"") {
+      if (flag_vec[instance_index] == "unset" ||
+          flag_vec[instance_index] == "\"unset\"") {
         std::string_view default_value = default_value_vec[0];
         if (instance_index < default_value_vec.size()) {
           default_value = default_value_vec[instance_index];
         }
-        CF_EXPECTF(
-            absl::SimpleAtoi(default_value, &value_vec[instance_index]),
-            "Failed to parse value '{}' for '{}'", default_value, flag_name);
+        CF_EXPECTF(absl::SimpleAtoi(default_value, &value_vec[instance_index]),
+                   "Failed to parse value '{}' for '{}'", default_value,
+                   flag_name);
       } else {
         CF_EXPECTF(absl::SimpleAtoi(flag_vec[instance_index],
-                                           &value_vec[instance_index]),
+                                    &value_vec[instance_index]),
                    "Failed to parse value '{}' for '{}'",
                    flag_vec[instance_index], flag_name);
       }
@@ -271,11 +284,13 @@ Result<std::vector<std::string>> GetFlagStrValueForInstances(
   std::vector<std::string_view> default_value_vec =
       absl::StrSplit(default_value_it->second, ",");
 
-  for (int instance_index=0; instance_index<instances_size; instance_index++) {
+  for (int instance_index = 0; instance_index < instances_size;
+       instance_index++) {
     if (instance_index >= flag_vec.size()) {
       value_vec[instance_index] = value_vec[0];
     } else {
-      if (flag_vec[instance_index] == "unset" || flag_vec[instance_index] == "\"unset\"") {
+      if (flag_vec[instance_index] == "unset" ||
+          flag_vec[instance_index] == "\"unset\"") {
         std::string_view default_value = default_value_vec[0];
         if (instance_index < default_value_vec.size()) {
           default_value = default_value_vec[instance_index];
@@ -346,7 +361,7 @@ std::optional<std::string> InstancesUdsDir() {
   return instances_uds_dir;
 }
 
-} // namespace
+}  // namespace
 
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir, const std::vector<GuestConfig>& guest_configs,
@@ -435,7 +450,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   if ((FLAGS_ap_rootfs_image.empty()) != (FLAGS_ap_kernel_image.empty())) {
     LOG(FATAL) << "Either both ap_rootfs_image and ap_kernel_image should be "
-        "set or neither should be set.";
+                  "set or neither should be set.";
   }
   // If user input multiple values, we only take the 1st value and shared with
   // all instances
@@ -468,22 +483,32 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> netsim_uwb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_uwb));
   bool any_netsim_uwb = std::any_of(
       netsim_uwb_vec.begin(), netsim_uwb_vec.end(), [](bool e) { return e; });
+  std::vector<bool> netsim_nfc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_nfc));
+  bool any_netsim_nfc = std::any_of(
+      netsim_nfc_vec.begin(), netsim_nfc_vec.end(), [](bool e) { return e; });
   bool netsim_has_bt = any_netsim_all_radios || any_netsim_bt;
   bool netsim_has_uwb = any_netsim_all_radios || any_netsim_uwb;
+  bool netsim_has_nfc = any_netsim_all_radios || any_netsim_nfc;
 
   // These flags inform NetsimServer::ResultSetup which radios it owns.
   if (netsim_has_bt) {
-    tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Bluetooth);
+    tmp_config_obj.netsim_radio_enable(
+        CuttlefishConfig::NetsimRadio::Bluetooth);
   }
   if (netsim_has_uwb) {
     tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Uwb);
   }
+  if (netsim_has_nfc) {
+    tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Nfc);
+  }
 
   bool any_not_netsim_bt = false;
   bool any_not_netsim_uwb = false;
+  bool any_not_netsim_nfc = false;
   for (int32_t i = 0; i < instances_size; ++i) {
     any_not_netsim_bt |= !netsim_all_radios_vec[i] && !netsim_bt_vec[i];
     any_not_netsim_uwb |= !netsim_all_radios_vec[i] && !netsim_uwb_vec[i];
+    any_not_netsim_nfc |= !netsim_all_radios_vec[i] && !netsim_nfc_vec[i];
   }
 
   std::vector<bool> enable_host_bluetooth_vec =
@@ -503,15 +528,15 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<int> x_res_vec = CF_EXPECT(GET_FLAG_INT_VALUE(x_res));
   std::vector<int> y_res_vec = CF_EXPECT(GET_FLAG_INT_VALUE(y_res));
   std::vector<int> dpi_vec = CF_EXPECT(GET_FLAG_INT_VALUE(dpi));
-  std::vector<int> refresh_rate_hz_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
-      refresh_rate_hz));
+  std::vector<int> refresh_rate_hz_vec =
+      CF_EXPECT(GET_FLAG_INT_VALUE(refresh_rate_hz));
   std::vector<std::string> overlays_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(overlays));
   MemoryMbFlag memory_mb_values = CF_EXPECT(MemoryMbFlag::FromGlobalGflags());
-  std::vector<int> camera_server_port_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
-      camera_server_port));
-  std::vector<int> vsock_guest_cid_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
-      vsock_guest_cid));
+  std::vector<int> camera_server_port_vec =
+      CF_EXPECT(GET_FLAG_INT_VALUE(camera_server_port));
+  std::vector<int> vsock_guest_cid_vec =
+      CF_EXPECT(GET_FLAG_INT_VALUE(vsock_guest_cid));
   std::vector<std::string> vsock_guest_group_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(vsock_guest_group));
   CpusFlag cpus_values = CF_EXPECT(CpusFlag::FromGlobalGflags());
@@ -531,23 +556,24 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   UseCvdallocFlag use_cvdalloc_values =
       CF_EXPECT(UseCvdallocFlag::FromGlobalGflags(defaults));
   std::vector<bool> use_sdcard_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_sdcard));
-  std::vector<bool> pause_in_bootloader_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      pause_in_bootloader));
+  std::vector<bool> pause_in_bootloader_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(pause_in_bootloader));
   std::vector<std::string> uuid_vec = CF_EXPECT(GET_FLAG_STR_VALUE(uuid));
   DaemonFlag daemon_values = CF_EXPECT(DaemonFlag::FromGlobalGflags());
-  std::vector<bool> enable_minimal_mode_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      enable_minimal_mode));
-  std::vector<bool> enable_modem_simulator_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      enable_modem_simulator));
-  std::vector<int> modem_simulator_count_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
-      modem_simulator_count));
-  std::vector<int> modem_simulator_sim_type_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
-      modem_simulator_sim_type));
+  std::vector<bool> enable_minimal_mode_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_minimal_mode));
+  std::vector<bool> enable_modem_simulator_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_modem_simulator));
+  std::vector<int> modem_simulator_count_vec =
+      CF_EXPECT(GET_FLAG_INT_VALUE(modem_simulator_count));
+  std::vector<int> modem_simulator_sim_type_vec =
+      CF_EXPECT(GET_FLAG_INT_VALUE(modem_simulator_sim_type));
   std::vector<bool> console_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(console));
-  std::vector<bool> enable_audio_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_audio));
+  std::vector<bool> enable_audio_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_audio));
   std::vector<bool> enable_usb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_usb));
-  std::vector<bool> start_gnss_proxy_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      start_gnss_proxy));
+  std::vector<bool> start_gnss_proxy_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(start_gnss_proxy));
   std::vector<bool> enable_bootanimation_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_bootanimation));
 
@@ -556,13 +582,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<std::string> extra_bootconfig_args_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(extra_bootconfig_args));
 
-  std::vector<bool> record_screen_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      record_screen));
+  std::vector<bool> record_screen_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(record_screen));
   std::vector<std::string> gem5_debug_file_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gem5_debug_file));
   std::vector<bool> mte_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(mte));
-  std::vector<bool> enable_kernel_log_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      enable_kernel_log));
+  std::vector<bool> enable_kernel_log_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_kernel_log));
   std::vector<bool> kgdb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(kgdb));
   std::vector<std::string> boot_slot_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(boot_slot));
@@ -572,18 +598,16 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(tcp_port_range));
   std::vector<std::string> udp_port_range_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(udp_port_range));
-  std::vector<bool> vhost_net_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      vhost_net));
+  std::vector<bool> vhost_net_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(vhost_net));
   std::vector<std::string> vhost_user_vsock_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(vhost_user_vsock));
-  std::vector<std::string> ril_dns_vec =
-      CF_EXPECT(GET_FLAG_STR_VALUE(ril_dns));
+  std::vector<std::string> ril_dns_vec = CF_EXPECT(GET_FLAG_STR_VALUE(ril_dns));
   std::vector<bool> enable_jcard_simulator_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_jcard_simulator));
 
   // At this time, FLAGS_enable_sandbox comes from SetDefaultFlagsForCrosvm
-  std::vector<bool> enable_sandbox_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      enable_sandbox));
+  std::vector<bool> enable_sandbox_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_sandbox));
   std::vector<bool> enable_virtiofs_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_virtiofs));
 
@@ -706,6 +730,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     pica_instance_num = FLAGS_pica_instance_num - 1;
   }
   tmp_config_obj.set_enable_host_uwb(FLAGS_enable_host_uwb || any_netsim_uwb);
+  tmp_config_obj.set_enable_host_nfc(FLAGS_enable_host_nfc || any_netsim_nfc);
+  tmp_config_obj.set_enable_host_nfc_connector(FLAGS_enable_host_nfc &&
+                                               any_not_netsim_nfc);
 
   tmp_config_obj.set_pica_uci_port(7000 + pica_instance_num);
   VLOG(0) << "launch pica: " << (FLAGS_pica_instance_num <= 0);
@@ -795,10 +822,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_crosvm_use_balloon(use_balloon_vec[instance_index]);
     instance.set_crosvm_use_rng(use_rng_vec[instance_index]);
-    instance.set_crosvm_simple_media_device(simple_media_device_vec[instance_index]);
+    instance.set_crosvm_simple_media_device(
+        simple_media_device_vec[instance_index]);
     instance.set_crosvm_v4l2_proxy(v4l2_proxy_vec[instance_index]);
     instance.set_use_pmem(use_pmem_vec[instance_index]);
-    instance.set_bootconfig_supported(guest_configs[instance_index].bootconfig_supported);
+    instance.set_bootconfig_supported(
+        guest_configs[instance_index].bootconfig_supported);
     instance.set_enable_mouse(guest_configs[instance_index].mouse_supported);
     instance.set_enable_gamepad(
         guest_configs[instance_index].gamepad_supported);
@@ -811,7 +840,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
           guest_configs[instance_index].domkey_mapping_config.value());
     }
     instance.set_filename_encryption_mode(
-      guest_configs[instance_index].hctr2_supported ? "hctr2" : "cts");
+        guest_configs[instance_index].hctr2_supported ? "hctr2" : "cts");
     instance.set_enable_audio(enable_audio_vec[instance_index]);
     instance.set_enable_usb(enable_usb_vec[instance_index]);
     instance.set_enable_gnss_grpc_proxy(start_gnss_proxy_vec[instance_index]);
@@ -908,8 +937,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_grpc_socket_path(const_instance.PerInstanceGrpcSocketPath(""));
 
-    // call this before all stuff that has vsock server: e.g. touchpad, keyboard, etc
-    const auto vsock_guest_cid = vsock_guest_cid_vec[instance_index] + num - GetInstance();
+    // call this before all stuff that has vsock server: e.g. touchpad,
+    // keyboard, etc
+    const auto vsock_guest_cid =
+        vsock_guest_cid_vec[instance_index] + num - GetInstance();
     instance.set_vsock_guest_cid(vsock_guest_cid);
     auto calc_vsock_port = [vsock_guest_cid](const int base_port) {
       // a base (vsock) port is like 9600 for modem_simulator, etc
@@ -961,7 +992,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     std::vector<CuttlefishConfig::DisplayConfig> display_configs;
-    // assume displays proto input has higher priority than original display inputs
+    // assume displays proto input has higher priority than original display
+    // inputs
     if (instances_display_configs.Config()) {
       if (instance_index < instances_display_configs.Config()->size()) {
         display_configs = (*instances_display_configs.Config())[instance_index];
@@ -1002,10 +1034,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         guest_enforce_security_values.ForIndex(instance_index));
     instance.set_pause_in_bootloader(pause_in_bootloader_vec[instance_index]);
     instance.set_run_as_daemon(daemon_values.ForIndex(instance_index));
-    instance.set_enable_modem_simulator(enable_modem_simulator_vec[instance_index] &&
-                                        !enable_minimal_mode_vec[instance_index]);
-    instance.set_modem_simulator_instance_number(modem_simulator_count_vec[instance_index]);
-    instance.set_modem_simulator_sim_type(modem_simulator_sim_type_vec[instance_index]);
+    instance.set_enable_modem_simulator(
+        enable_modem_simulator_vec[instance_index] &&
+        !enable_minimal_mode_vec[instance_index]);
+    instance.set_modem_simulator_instance_number(
+        modem_simulator_count_vec[instance_index]);
+    instance.set_modem_simulator_sim_type(
+        modem_simulator_sim_type_vec[instance_index]);
 
     instance.set_enable_minimal_mode(enable_minimal_mode_vec[instance_index]);
     instance.set_camera_server_port(camera_server_port_vec[instance_index]);
@@ -1155,13 +1190,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
           const_instance.PerInstanceInternalUdsPath("frames.sock"));
     }
 
-    // 1. Keep original code order SetCommandLineOptionWithMode("enable_sandbox")
-    // then set_enable_sandbox later.
+    // 1. Keep original code order
+    // SetCommandLineOptionWithMode("enable_sandbox") then set_enable_sandbox
+    // later.
     // 2. SetCommandLineOptionWithMode condition: if gpu_mode or console,
     // then SetCommandLineOptionWithMode false as original code did,
     // otherwise keep default enable_sandbox value.
-    // 3. Sepolicy rules need to be updated to support gpu mode. Temporarily disable
-    // auto-enabling sandbox when gpu is enabled (b/152323505).
+    // 3. Sepolicy rules need to be updated to support gpu mode. Temporarily
+    // disable auto-enabling sandbox when gpu is enabled (b/152323505).
     default_enable_sandbox += comma_str;
     default_enable_virtiofs += comma_str;
     if (gpu_mode != GpuMode::GuestSwiftshader) {
@@ -1180,9 +1216,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     // end of gpu related settings
 
-    instance.set_gnss_grpc_proxy_server_port(7200 + num -1);
+    instance.set_gnss_grpc_proxy_server_port(7200 + num - 1);
     instance.set_gnss_file_path(gnss_file_paths[instance_index]);
-    instance.set_fixed_location_file_path(fixed_location_file_paths[instance_index]);
+    instance.set_fixed_location_file_path(
+        fixed_location_file_paths[instance_index]);
 
     std::vector<std::string> virtual_disk_paths;
 
@@ -1252,7 +1289,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_start_rootcanal(is_first_instance && any_not_netsim_bt &&
                                  (FLAGS_rootcanal_instance_num <= 0));
 
-    instance.set_start_casimir(is_first_instance &&
+    instance.set_start_casimir(is_first_instance && any_not_netsim_nfc &&
                                FLAGS_casimir_instance_num <= 0);
 
     instance.set_start_pica(is_first_instance && any_not_netsim_uwb &&
@@ -1282,11 +1319,15 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // instance.modem_simulator_ports := "" or "[port,]*port"
     if (modem_simulator_count_vec[instance_index] > 0) {
       std::stringstream modem_ports;
-      for (auto index {0}; index < modem_simulator_count_vec[instance_index] - 1; index++) {
-        auto port = 9600 + (modem_simulator_count_vec[instance_index] * (num - 1)) + index;
+      for (auto index{0}; index < modem_simulator_count_vec[instance_index] - 1;
+           index++) {
+        auto port = 9600 +
+                    (modem_simulator_count_vec[instance_index] * (num - 1)) +
+                    index;
         modem_ports << calc_vsock_port(port) << ",";
       }
-      auto port = 9600 + (modem_simulator_count_vec[instance_index] * (num - 1)) +
+      auto port = 9600 +
+                  (modem_simulator_count_vec[instance_index] * (num - 1)) +
                   modem_simulator_count_vec[instance_index] - 1;
       modem_ports << calc_vsock_port(port);
       instance.set_modem_simulator_ports(modem_ports.str());
@@ -1352,8 +1393,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // default flag values changed, need recalculate name_to_default_value
   name_to_default_value = CurrentFlagsToDefaultValue();
   // After last SetCommandLineOptionWithMode, we could set these special flags
-  enable_sandbox_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      enable_sandbox));
+  enable_sandbox_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_sandbox));
   enable_virtiofs_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_virtiofs));
 
   instance_index = 0;
@@ -1499,4 +1539,4 @@ std::string GetConfigFilePath(const CuttlefishConfig& config) {
   return config.AssemblyPath("cuttlefish_config.json");
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
