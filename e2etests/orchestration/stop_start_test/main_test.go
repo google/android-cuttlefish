@@ -104,17 +104,16 @@ func TestStopStart(t *testing.T) {
 		t.Fatalf("status mismatch (-want +got):\n%s", diff)
 	}
 
-	// TODO(b/523379344): Failing to boot.
-	// if err := srv.StartGroup("cvd_1", &hoapi.StartCVDRequest{}); err != nil {
-	// 	t.Fatal(err)
-	// }
-	// cvds, err = srv.ListCVDs()
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// if diff := cmp.Diff(cvdStatus(cvds), []string{"Running", "Running"}); diff != "" {
-	// 	t.Fatalf("status mismatch (-want +got):\n%s", diff)
-	// }
+	if err := srv.StartGroup("cvd_1", &hoapi.StartCVDRequest{}); err != nil {
+		t.Fatal(err)
+	}
+	cvds, err = srv.ListCVDs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(cvdStatus(cvds), []string{"Running", "Running"}); diff != "" {
+		t.Fatalf("status mismatch (-want +got):\n%s", diff)
+	}
 }
 
 func cvdStatus(cvds []*hoapi.CVD) []string {
