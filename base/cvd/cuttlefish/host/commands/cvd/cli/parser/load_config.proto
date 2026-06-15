@@ -157,6 +157,7 @@ message MediaDevice {
     V4l2EmulatedCameraMplane v4l2_emulated_camera_mplane = 2;
     V4l2Proxy v4l2_proxy = 3;
   }
+  optional string lens_facing = 4;
 }
 
 message V4l2EmulatedCameraSplane {}

@@ -29,10 +29,10 @@
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/libs/metrics/device_event_type.h"
-#include "cuttlefish/host/libs/metrics/enabled.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
+#include "cuttlefish/host/libs/metrics/notification.h"
 #include "cuttlefish/host/libs/metrics/parsed_flags.h"
 #include "cuttlefish/result/result.h"
 
@@ -117,6 +117,7 @@ Result<void> RunMetrics(const DeviceMetricsInput& metrics_input) {
 }  // namespace
 
 void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
+  DisplayPrivacyNotice();
   Result<DeviceMetricsInput> metrics_input_result = GetDeviceMetricsInput(
       instance_group, DeviceEventType::DeviceInstantiation);
   if (!metrics_input_result.ok()) {
@@ -130,9 +131,6 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_setup_result.error());
     return;
-  }
-  if (AreMetricsEnabled()) {
-    LOG(INFO) << kMetricsEnabledNotice;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
   if (!run_metrics_result.ok()) {

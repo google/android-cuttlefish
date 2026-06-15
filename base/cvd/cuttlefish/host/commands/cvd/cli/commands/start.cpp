@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 
+#include <fcntl.h>
 #include <signal.h>  // IWYU pragma: keep
 #include <stddef.h>
 #include <stdlib.h>
@@ -40,6 +41,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/flag_parser/flag.h"
@@ -327,6 +329,21 @@ static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
   return {};
 }
 
+static bool HasUnsafeFlagsForBypass(const std::vector<std::string>& args) {
+  std::vector<std::string> args_copy = args;
+  bool daemon = true;
+  std::string report_anonymous = "";
+  std::vector<Flag> safe_flags = {
+      GflagsCompatFlag("daemon", daemon),
+      GflagsCompatFlag("report_anonymous_usage_stats", report_anonymous),
+  };
+  auto res = ConsumeFlags(safe_flags, args_copy);
+  if (!res.ok()) {
+    return true;
+  }
+  return !args_copy.empty();
+}
+
 Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
   CF_EXPECT(!GetConfigPath(subcmd_args).has_value(),
@@ -335,6 +352,22 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_ERR(NoGroupMessage(request));
+  }
+
+  if (request.Selectors().instance_names &&
+      request.Selectors().instance_names->size() == 1) {
+    auto [instance, group] =
+        CF_EXPECT(selector::SelectInstance(instance_manager_, request));
+
+    if (instance.State() == cvd::INSTANCE_STATE_STOPPED &&
+        group.StartTime() != TimeStamp{} &&
+        !HasUnsafeFlagsForBypass(subcmd_args)) {
+      CF_EXPECT(LaunchSingleInstance(instance, group, request));
+      return {};
+    } else {
+      VLOG(1) << "Instance is not in stopped state. Proceeding with "
+                 "normal group start.";
+    }
   }
 
   CF_EXPECT(ConsumeDaemonModeFlag(subcmd_args));
@@ -432,11 +465,6 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
 
   CF_EXPECT(subprocess_waiter_.Setup(launch_command));
 
-  LOG(INFO)
-      << "By using this Android Virtual Device, you agree to Google Terms of "
-         "Service (https://policies.google.com/terms). The Google Privacy "
-         "Policy (https://policies.google.com/privacy) describes how Google "
-         "handles information generated as you use Google services.";
   GatherVmStartMetrics(group);
 
   // NOLINTNEXTLINE(misc-include-cleaner)
@@ -473,6 +501,72 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
     return start_res;
   }
+
+  return {};
+}
+
+Result<void> CvdStartCommandHandler::LaunchSingleInstance(
+    LocalInstance& instance, LocalInstanceGroup& group,
+    const CommandRequest& request) {
+  auto bin_path = group.HostArtifactsPath() + "/bin/run_cvd";
+  cvd_common::Envs run_cvd_envs = request.Env();
+  run_cvd_envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.Id());
+  run_cvd_envs["HOME"] = group.HomeDir();
+  run_cvd_envs[kAndroidHostOut] = group.HostArtifactsPath();
+  run_cvd_envs[kAndroidProductOut] = group.ProductOutPath();
+  run_cvd_envs[kAndroidSoongHostOut] = group.HostArtifactsPath();
+  run_cvd_envs[kCvdMarkEnv] = "true";
+
+  ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
+                                            .home = group.HomeDir(),
+                                            .args = cvd_common::Args{},
+                                            .envs = run_cvd_envs,
+                                            .working_dir = CurrentDirectory(),
+                                            .command_name = "run_cvd"};
+
+  Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
+  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+                        Subprocess::StdIOChannel::kStdErr);
+  SharedFD dev_null = SharedFD::Open("/dev/null", O_RDONLY);
+  if (dev_null->IsOpen()) {
+    command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, dev_null);
+  } else {
+    LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
+  }
+
+  auto symlink_config_res = SymlinkPreviousConfig(group.HomeDir());
+  if (!symlink_config_res.ok()) {
+    LOG(ERROR) << "Failed to symlink the config file at system wide home: "
+               << symlink_config_res.error();
+  }
+
+  auto set_instance_state = [&group, &instance](cvd::InstanceState state) {
+    for (auto& inst : group.Instances()) {
+      if (inst.Id() == instance.Id()) {
+        inst.SetState(state);
+        break;
+      }
+    }
+  };
+
+  set_instance_state(cvd::INSTANCE_STATE_STARTING);
+  group.SetStartTime(CvdServerClock::now());
+  CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+
+  Result<void> start_res =
+      LaunchDevice(std::move(command), group, run_cvd_envs, request);
+
+  if (!start_res.ok()) {
+    set_instance_state(cvd::INSTANCE_STATE_BOOT_FAILED);
+    CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+    return start_res;
+  }
+
+  set_instance_state(cvd::INSTANCE_STATE_RUNNING);
+  CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+
+  auto group_json = CF_EXPECT(group.FetchStatus());
+  std::cout << group_json.toStyledString();
 
   return {};
 }

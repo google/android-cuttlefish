@@ -390,6 +390,7 @@ cf_cc_library(
     hdrs = ["start.h"],
     clang_format_enabled = False,
     deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
@@ -494,6 +495,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:help_format",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/libs/vm_manager",

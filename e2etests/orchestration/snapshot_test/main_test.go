@@ -84,12 +84,12 @@ func TestSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Stop the device.
-	if err := srv.Stop(groupName, cvd.Name); err != nil {
+	if err := srv.StopInstance(groupName, cvd.Name); err != nil {
 		t.Fatal(err)
 	}
 	// Restore the device from the snapshot.
 	req := &hoapi.StartCVDRequest{SnapshotID: snapshotID}
-	if err := srv.Start(groupName, cvd.Name, req); err != nil {
+	if err := srv.StartInstance(groupName, cvd.Name, req); err != nil {
 		t.Fatal(err)
 	}
 	cvd, err = getCVD(srv)
@@ -175,7 +175,7 @@ func verifyDeleteSnapshot(client hoclient.HostOrchestratorClient, group, name, s
 	}
 	// Verifies the snapshot was deleted by aiming to restore from snapshot again.
 	req := &hoapi.StartCVDRequest{SnapshotID: snapshotID}
-	if err := client.Start(group, name, req); err != nil {
+	if err := client.StartInstance(group, name, req); err != nil {
 		var apiCallErr *hoclient.ApiCallError
 		if errors.As(err, &apiCallErr) {
 		} else {

@@ -33,6 +33,11 @@ use v4l2r::bindings::v4l2_requestbuffers;
 use v4l2r::ioctl::BufferCapabilities;
 use v4l2r::ioctl::BufferField;
 use v4l2r::ioctl::BufferFlags;
+use v4l2r::ioctl::CtrlId;
+use v4l2r::ioctl::CtrlWhich;
+use v4l2r::ioctl::EventType as V4l2EventType;
+use v4l2r::ioctl::QueryCtrlFlags;
+use v4l2r::ioctl::SubscribeEventFlags;
 use v4l2r::ioctl::V4l2Buffer;
 use v4l2r::ioctl::V4l2PlanesWithBackingMut;
 use v4l2r::memory::MemoryType;
@@ -48,10 +53,33 @@ use virtio_media::ioctl::virtio_media_dispatch_ioctl;
 use virtio_media::memfd::MemFdBuffer;
 use virtio_media::mmap::MmapMappingManager;
 use virtio_media::protocol::DequeueBufferEvent;
+use virtio_media::protocol::SessionEvent;
 use virtio_media::protocol::SgEntry;
 use virtio_media::protocol::V4l2Event;
 use virtio_media::protocol::V4l2Ioctl;
 use virtio_media::protocol::VIRTIO_MEDIA_MMAP_FLAG_RW;
+use std::str::FromStr;
+
+/// https://developer.android.com/reference/android/hardware/camera2/CameraMetadata#LENS_FACING_FRONT
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LensFacing {
+    Front = 0,
+    Back = 1,
+    External = 2,
+}
+
+impl FromStr for LensFacing {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "FRONT" => Ok(LensFacing::Front),
+            "BACK" => Ok(LensFacing::Back),
+            "EXTERNAL" => Ok(LensFacing::External),
+            _ => Err(format!("Invalid lens facing: {}. Expected FRONT, BACK, or EXTERNAL", s)),
+        }
+    }
+}
 
 /// Current status of a buffer.
 #[derive(Debug, PartialEq, Eq)]
@@ -217,6 +245,8 @@ pub struct EmulatedCamera<Q: VirtioMediaEventQueue, HM: VirtioMediaHostMemoryMap
     /// same time. It will fails if we allow simultaneous sessions to be active, so we need this
     /// artificial limitation to make it pass fully.
     active_session: Option<u32>,
+    /// Lens facing configuration.
+    lens_facing: LensFacing,
 }
 
 impl<Q, HM> EmulatedCamera<Q, HM>
@@ -224,11 +254,31 @@ where
     Q: VirtioMediaEventQueue,
     HM: VirtioMediaHostMemoryMapper,
 {
-    pub fn new(evt_queue: Q, mapper: HM) -> Self {
+    pub fn new(evt_queue: Q, mapper: HM, lens_facing: LensFacing) -> Self {
         Self {
             evt_queue,
             mmap_manager: MmapMappingManager::from(mapper),
             active_session: None,
+            lens_facing,
+        }
+    }
+
+    fn lens_facing_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
+        let name_str = "LENS_FACING";
+        let mut name = [0u8; 32];
+        name[0..name_str.len()].copy_from_slice(name_str.as_bytes());
+        bindings::v4l2_query_ext_ctrl {
+            id: CID_LENS_FACING,
+            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER,
+            name: name.map(|b| b as i8),
+            minimum: LensFacing::Front as i64,
+            maximum: LensFacing::External as i64,
+            step: 1,
+            default_value: self.lens_facing as i64,
+            flags: bindings::V4L2_CTRL_FLAG_READ_ONLY,
+            elems: 1,
+            elem_size: std::mem::size_of::<u32>() as u32,
+            ..Default::default()
         }
     }
 }
@@ -303,6 +353,10 @@ where
             .map_err(|_| libc::EINVAL)
     }
 }
+
+// Use an offset for virtio-media custom camera class control id values.
+const CID_OFFSET: u32 = bindings::V4L2_CID_CAMERA_CLASS_BASE + 0x100;
+const CID_LENS_FACING: u32 = CID_OFFSET + 1;
 
 const FRAME_RATE: u32 = 30;
 
@@ -682,5 +736,123 @@ where
             Some(&input) => Ok(input),
             None => Err(libc::EINVAL),
         }
+    }
+
+    /// https://www.kernel.org/doc/html/latest/userspace-api/media/v4l/vidioc-queryctrl.html#control-flags
+    fn query_ext_ctrl(
+        &mut self,
+        _session: &Self::Session,
+        id: CtrlId,
+        flags: QueryCtrlFlags,
+    ) -> IoctlResult<bindings::v4l2_query_ext_ctrl> {
+        let id: u32 = unsafe { std::mem::transmute(id) };
+        // If V4L2_CTRL_FLAG_NEXT_CTRL present returns the first control with a higher ID.
+        if flags.contains(QueryCtrlFlags::NEXT) {
+            if id < CID_LENS_FACING {
+                return Ok(self.lens_facing_query_ext_ctrl());
+            }
+        } else if id == CID_LENS_FACING {
+            return Ok(self.lens_facing_query_ext_ctrl());
+        }
+        return Err(libc::EINVAL);
+    }
+
+    fn g_ext_ctrls(
+        &mut self,
+        _session: &Self::Session,
+        _which: CtrlWhich,
+        ctrls: &mut bindings::v4l2_ext_controls,
+        ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
+        _user_regions: Vec<Vec<SgEntry>>,
+    ) -> IoctlResult<()> {
+        for ctrl in ctrl_array {
+            match ctrl.id {
+                CID_LENS_FACING => {
+                    ctrl.__bindgen_anon_1.value = self.lens_facing as i32;
+                }
+                _ => {
+                    ctrls.error_idx = ctrls.count;
+                    return Err(libc::EINVAL);
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn try_ext_ctrls(
+        &mut self,
+        _session: &Self::Session,
+        _which: CtrlWhich,
+        ctrls: &mut bindings::v4l2_ext_controls,
+        ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
+        _user_regions: Vec<Vec<SgEntry>>,
+    ) -> IoctlResult<()> {
+        for (idx, ctrl) in ctrl_array.iter_mut().enumerate() {
+            ctrls.error_idx = idx as u32;
+            let err_code = match ctrl.id {
+                CID_LENS_FACING => libc::EACCES,
+                _ => libc::EINVAL,
+            };
+            return Err(err_code);
+        }
+        Ok(())
+    }
+
+    fn s_ext_ctrls(
+        &mut self,
+        _session: &mut Self::Session,
+        _which: CtrlWhich,
+        ctrls: &mut bindings::v4l2_ext_controls,
+        ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
+        _user_regions: Vec<Vec<SgEntry>>,
+    ) -> IoctlResult<()> {
+        for ctrl in ctrl_array {
+            ctrls.error_idx = ctrls.count;
+            let err_code = match ctrl.id {
+                CID_LENS_FACING => libc::EACCES,
+                _ => libc::EINVAL,
+            };
+            return Err(err_code);
+        }
+        Ok(())
+    }
+
+    fn subscribe_event(
+        &mut self,
+        session: &mut Self::Session,
+        event: V4l2EventType,
+        flags: SubscribeEventFlags,
+    ) -> IoctlResult<()> {
+        if !flags.contains(SubscribeEventFlags::SEND_INITIAL) {
+            return Err(libc::EINVAL);
+        }
+        match event {
+            V4l2EventType::Ctrl(id) => match id {
+                CID_LENS_FACING => {
+                    let ctrl_event = bindings::v4l2_event {
+                        type_: bindings::V4L2_EVENT_CTRL,
+                        id: CID_LENS_FACING,
+                        ..Default::default()
+                    };
+                    self.evt_queue
+                        .send_event(V4l2Event::Event(SessionEvent::new(session.id, ctrl_event)));
+                    Ok(())
+                }
+                _ => Err(libc::EINVAL),
+            },
+            _ => Err(libc::EINVAL),
+        }
+    }
+
+    fn unsubscribe_event(
+        &mut self,
+        _session: &mut Self::Session,
+        event: bindings::v4l2_event_subscription,
+    ) -> IoctlResult<()> {
+        return if event.type_ == bindings::V4L2_EVENT_CTRL && event.id == CID_LENS_FACING {
+            Ok(())
+        } else {
+            Err(libc::EINVAL)
+        };
     }
 }

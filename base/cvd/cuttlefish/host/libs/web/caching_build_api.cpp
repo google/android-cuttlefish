@@ -22,7 +22,6 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/web/android_build.h"
@@ -119,30 +118,6 @@ Result<std::string> CachingBuildApi::DownloadFile(
                                   kOverwriteExistingFile));
 }
 
-Result<std::string> CachingBuildApi::DownloadFileWithBackup(
-    const Build& build, const std::string& target_directory,
-    const std::string& artifact_name, const std::string& backup_artifact_name) {
-  const auto paths =
-      CF_EXPECT(ConstructCachePaths(cache_base_path_, build, target_directory,
-                                    artifact_name, backup_artifact_name));
-  if (IsInCache(paths.cache_artifact)) {
-    return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
-                                    kOverwriteExistingFile));
-  }
-  if (IsInCache(paths.cache_backup_artifact)) {
-    return CF_EXPECT(CreateHardLink(paths.cache_backup_artifact,
-                                    paths.target_backup_artifact,
-                                    kOverwriteExistingFile));
-  }
-  const auto artifact_filepath = CF_EXPECT(build_api_.DownloadFileWithBackup(
-      build, paths.build_cache, artifact_name, backup_artifact_name));
-  if (absl::EndsWith(artifact_filepath, artifact_name)) {
-    return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
-                                    kOverwriteExistingFile));
-  }
-  return CF_EXPECT(CreateHardLink(paths.cache_backup_artifact,
-                                  paths.target_backup_artifact));
-}
 
 Result<SeekableZipSource> CachingBuildApi::FileReader(
     const Build& build, const std::string& artifact) {

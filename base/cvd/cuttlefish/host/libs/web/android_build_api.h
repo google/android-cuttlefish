@@ -52,10 +52,6 @@ class AndroidBuildApi : public BuildApi {
                                    const std::string& target_directory,
                                    const std::string& artifact_name) override;
 
-  Result<std::string> DownloadFileWithBackup(
-      const Build& build, const std::string& target_directory,
-      const std::string& artifact_name,
-      const std::string& backup_artifact_name) override;
 
   Result<SeekableZipSource> FileReader(
       const Build&, const std::string& artifact_name) override;

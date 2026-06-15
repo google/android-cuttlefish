@@ -16,30 +16,19 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/command_handler.h"
 
-#include <fcntl.h>
 #include <unistd.h>
 
-#include <chrono>
-#include <iostream>
 #include <memory>
 #include <string>
-#include <thread>
-#include <utility>
 #include <vector>
 
-#include "absl/strings/str_cat.h"
-
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor/ansi_codes.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor/display.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
-#include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
-#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -63,13 +52,6 @@ Usage:
 
 constexpr char kMonitorCmd[] = "monitor";
 
-void ClearLastNLines(int n) {
-  if (n > 0) {
-    // Move cursor up N lines and clear to end of screen
-    std::cout << AnsiCursorUp(n) << kAnsiClearScreenAfterCursor << std::flush;
-  }
-}
-
 }  // namespace
 
 CvdMonitorCommandHandler::CvdMonitorCommandHandler(
@@ -82,52 +64,11 @@ Result<void> CvdMonitorCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
   CF_EXPECT(ConsumeFlags({}, args, {.fail_on_unexpected_argument = true}));
 
-  auto [instance, unused] =
+  const auto [instance, unused] =
       CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                 "Unable to select an instance");
 
-  std::string kernel_log =
-      absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameKernel);
-  std::string launcher_log =
-      absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameLauncher);
-  std::string logcat =
-      absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameLogcat);
-
-  SharedFD kernel_fd;
-  SharedFD launcher_fd;
-  SharedFD logcat_fd;
-
-  while (true) {
-    if (!kernel_fd->IsOpen()) {
-      kernel_fd = SharedFD::Open(kernel_log, O_RDONLY);
-    }
-    if (!launcher_fd->IsOpen()) {
-      launcher_fd = SharedFD::Open(launcher_log, O_RDONLY);
-    }
-    if (!logcat_fd->IsOpen()) {
-      logcat_fd = SharedFD::Open(logcat, O_RDONLY);
-    }
-
-    Result<TerminalSize> term_size_result = GetTerminalSize();
-    int width = 79;  // Default fallback width (80 - 1)
-    if (term_size_result.ok()) {
-      width = term_size_result->columns - 1;
-    }
-    LogMonitorDisplay display(width);
-
-    display.DrawFile(launcher_fd, kLogNameLauncher);
-    display.DrawFile(kernel_fd, kLogNameKernel);
-    display.DrawFile(logcat_fd, kLogNameLogcat);
-
-    auto [output, total_lines_drawn] = display.Finalize();
-    std::cout << output << std::flush;
-
-    // Wait a bit before clearing and redrawing
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    ClearLastNLines(total_lines_drawn);
-  }
-
-  return {};
+  return MonitorLogs(instance);
 }
 
 cvd_common::Args CvdMonitorCommandHandler::CmdList() const {

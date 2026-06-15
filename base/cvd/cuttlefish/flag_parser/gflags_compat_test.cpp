@@ -19,6 +19,7 @@
 #include <stdint.h>
 
 #include <map>
+#include <memory>
 #include <optional>
 #include <sstream>
 #include <string>
