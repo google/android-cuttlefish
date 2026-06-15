@@ -30,11 +30,13 @@ bool IsRunningInDocker() {
   return FileExists(docker_env_path) || DirectoryExists(docker_env_path);
 }
 
+bool IsRunningInPodman() { return FileExists("/run/.containerenv"); }
+
 }  // namespace
 
 bool IsRunningInContainer() {
   // TODO: add more if we support other containers than docker
-  return IsRunningInDocker();
+  return IsRunningInDocker() || IsRunningInPodman();
 }
 
 }  // namespace cuttlefish
