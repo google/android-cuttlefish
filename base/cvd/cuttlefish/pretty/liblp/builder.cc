@@ -18,10 +18,9 @@
 #include "liblp/builder.h"
 
 #include "cuttlefish/pretty/pretty.h"
-#include "cuttlefish/pretty/string.h"
 #include "cuttlefish/pretty/struct.h"
-#include "cuttlefish/pretty/unique_ptr.h"
-#include "cuttlefish/pretty/vector.h"
+#include "cuttlefish/pretty/unique_ptr.h"  // IWYU pragma: keep
+#include "cuttlefish/pretty/vector.h"      // IWYU pragma: keep
 
 namespace cuttlefish {
 

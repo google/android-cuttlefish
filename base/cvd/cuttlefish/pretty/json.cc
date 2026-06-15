@@ -15,6 +15,8 @@
 
 #include "cuttlefish/pretty/json.h"
 
+#include <string>
+
 #include "json/value.h"
 #include "json/writer.h"
 
