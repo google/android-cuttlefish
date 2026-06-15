@@ -42,6 +42,7 @@ filegroup(
         "//cuttlefish/host/libs/zip/libzip_cc:.clang-tidy",
         "//cuttlefish/io:.clang-tidy",
         "//cuttlefish/posix:.clang-tidy",
+        "//cuttlefish/pretty:.clang-tidy",
         "//cuttlefish/result:.clang-tidy",
     ],
 )

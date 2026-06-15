@@ -16,6 +16,8 @@
 
 #include "cuttlefish/pretty/json.h"
 
+#include <string>
+
 #include "absl/strings/match.h"
 #include "gtest/gtest.h"
 #include "json/value.h"

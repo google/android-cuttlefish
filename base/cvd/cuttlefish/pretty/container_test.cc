@@ -16,10 +16,12 @@
 
 #include "cuttlefish/pretty/container.h"
 
+#include <sstream>
 #include <string_view>
 #include <vector>
 
 #include "absl/strings/ascii.h"
+#include "absl/strings/str_cat.h"
 #include "fmt/format.h"
 #include "gtest/gtest.h"
 

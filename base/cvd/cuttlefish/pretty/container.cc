@@ -20,6 +20,8 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
 
 namespace cuttlefish {
