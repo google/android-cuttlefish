@@ -22,14 +22,15 @@
 #include "cuttlefish/common/libs/utils/files.h"
 
 namespace cuttlefish {
+namespace {
 
-static bool IsRunningInDocker() {
+bool IsRunningInDocker() {
   // if /.dockerenv exists, it's inside a docker container
-  static std::string docker_env_path("/.dockerenv");
-  static bool ret =
-      FileExists(docker_env_path) || DirectoryExists(docker_env_path);
-  return ret;
+  std::string docker_env_path("/.dockerenv");
+  return FileExists(docker_env_path) || DirectoryExists(docker_env_path);
 }
+
+}  // namespace
 
 bool IsRunningInContainer() {
   // TODO: add more if we support other containers than docker
