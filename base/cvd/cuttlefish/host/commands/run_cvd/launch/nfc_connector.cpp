@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -32,9 +33,13 @@ constexpr const size_t kBufferSize = 1024;
 
 namespace cuttlefish {
 
-Result<MonitorCommand> NfcConnector(
+Result<std::optional<MonitorCommand>> NfcConnector(
+    const CuttlefishConfig& config,
     const CuttlefishConfig::EnvironmentSpecific& environment,
     const CuttlefishConfig::InstanceSpecific& instance) {
+  if (!config.enable_host_nfc_connector()) {
+    return {};
+  }
   std::vector<std::string> fifo_paths = {
       instance.PerInstanceInternalPath("nfc_fifo_vm.in"),
       instance.PerInstanceInternalPath("nfc_fifo_vm.out"),

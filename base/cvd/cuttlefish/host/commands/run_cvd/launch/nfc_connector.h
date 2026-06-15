@@ -15,13 +15,16 @@
 
 #pragma once
 
+#include <optional>
+
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<MonitorCommand> NfcConnector(
+Result<std::optional<MonitorCommand>> NfcConnector(
+    const CuttlefishConfig& config,
     const CuttlefishConfig::EnvironmentSpecific& environment,
     const CuttlefishConfig::InstanceSpecific& instance);
 
