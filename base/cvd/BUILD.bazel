@@ -28,6 +28,7 @@ filegroup(
     srcs = [
         ".clang-tidy",
         "//cuttlefish/io:.clang-tidy",
+        "//cuttlefish/posix:.clang-tidy",
         "//cuttlefish/common/libs/key_equals_value:.clang-tidy",
         "//cuttlefish/flag_parser:.clang-tidy",
         "//cuttlefish/host/commands/assemble_cvd/android_build:.clang-tidy",
