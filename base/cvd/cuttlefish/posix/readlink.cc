@@ -15,9 +15,11 @@
  */
 #include "cuttlefish/posix/readlink.h"
 
-#include <errno.h>
+#include <sys/types.h>
 #include <unistd.h>
 
+#include <cerrno>
+#include <cstddef>
 #include <string>
 #include <string_view>
 #include <vector>
