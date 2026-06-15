@@ -15,6 +15,8 @@
 
 #include "cuttlefish/result/error_type.h"
 
+#include <cstddef>
+#include <cstdlib>
 #include <optional>
 #include <ostream>
 #include <sstream>
@@ -22,8 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include "android-base/format.h"
-#include "android-base/result.h"
+#include "fmt/base.h"
 
 namespace cuttlefish {
 

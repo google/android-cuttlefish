@@ -27,8 +27,6 @@ filegroup(
     name = "clang_tidy_config",
     srcs = [
         ".clang-tidy",
-        "//cuttlefish/io:.clang-tidy",
-        "//cuttlefish/posix:.clang-tidy",
         "//cuttlefish/common/libs/key_equals_value:.clang-tidy",
         "//cuttlefish/flag_parser:.clang-tidy",
         "//cuttlefish/host/commands/assemble_cvd/android_build:.clang-tidy",
@@ -41,6 +39,9 @@ filegroup(
         "//cuttlefish/host/libs/web:.clang-tidy",
         "//cuttlefish/host/libs/zip:.clang-tidy",
         "//cuttlefish/host/libs/zip/libzip_cc:.clang-tidy",
+        "//cuttlefish/io:.clang-tidy",
+        "//cuttlefish/posix:.clang-tidy",
+        "//cuttlefish/result:.clang-tidy",
     ],
 )
 
