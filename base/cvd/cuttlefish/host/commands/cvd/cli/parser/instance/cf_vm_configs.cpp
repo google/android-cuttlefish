@@ -248,10 +248,10 @@ Result<std::vector<std::string>> GenerateVmFlags(
   if (used_names.contains(kFlagUuid)) {
     flags.push_back(GenerateInstanceFlag(kFlagUuid, cfg, Uuid));
   }
-  // TODO(b/517984573): Always pass enable_sandbox.
-  // if (used_names.contains(kFlagEnableSandbox)) {
-  flags.push_back(GenerateInstanceFlag(kFlagEnableSandbox, cfg, EnableSandbox));
-  // }
+  if (used_names.contains(kFlagEnableSandbox)) {
+    flags.push_back(
+        GenerateInstanceFlag(kFlagEnableSandbox, cfg, EnableSandbox));
+  }
   if (used_names.contains(kFlagCrosvmSimpleMediaDevice)) {
     flags.push_back(GenerateInstanceFlag(kFlagCrosvmSimpleMediaDevice, cfg,
                                          SimpleMediaDevice));
