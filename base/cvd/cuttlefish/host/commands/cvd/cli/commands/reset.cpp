@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/reset.h"
 
 #include <ctype.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <iostream>
@@ -28,8 +29,10 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -38,64 +41,7 @@ namespace {
 constexpr char kResetSubcmd[] = "reset";
 
 constexpr char kSummaryHelpText[] =
-    "Used to stop devices, optionally clean up instance files, and shut down "
-    "the deprecated cvd server process";
-
-constexpr char kDetailedHelpText[] = R"(usage: cvd reset <args>
-
-* Warning: Cvd reset is an experimental implementation. When you are in panic,
-cvd reset is the last resort.
-
-args:
-  --help                 Prints this message.
-    help
-
-  --device-by-cvd-only   Terminates devices that a cvd server started
-                         This excludes the devices launched by "launch_cvd"
-                         or "cvd_internal_start" directly (default: false)
-
-  --clean-runtime-dir    Cleans up the runtime directory for the devices
-                         Yet to be implemented. For now, if true, only if
-                         stop_cvd supports --clear_instance_dirs and the
-                         device could be stopped by stop_cvd, the flag takes
-                         effects. (default: true)
-
-  --yes                  Resets without asking the user confirmation.
-   -y
-
-description:
-
-  1. Gracefully stops all devices that the cvd client can reach.
-  2. Forcefully stops all run_cvd processes and their subprocesses.
-  3. Kill the cvd server itself if unresponsive.
-  4. Reset the states of the involved instance lock files
-     -- If cvd reset stops a device, it resets the corresponding lock file.
-  5. Optionally, cleans up the runtime files of the stopped devices.)";
-
-struct ParsedFlags {
-  bool clean_runtime_dir = true;
-  bool is_confirmed_by_flag = false;
-};
-
-static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
-  if (subcmd_args.size() > 2 && subcmd_args.at(2) == "help") {
-    // Turn `cvd reset help` into `cvd reset --help`
-    subcmd_args[2] = "--help";
-  }
-
-  ParsedFlags parsed_flags;
-
-  Flag y_flag =
-      GflagsCompatFlag("yes", parsed_flags.is_confirmed_by_flag).Alias("y");
-  std::vector<Flag> flags{
-      y_flag,
-      GflagsCompatFlag("clean-runtime-dir", parsed_flags.clean_runtime_dir),
-  };
-  CF_EXPECT(
-      ConsumeFlags(flags, subcmd_args, {.fail_on_unexpected_argument = true}));
-
-  return parsed_flags;
-}
+    "Remove all instance groups and kills orphaned cuttlefish processes";
 
 static bool GetUserConfirm() {
   std::cout << "Are you sure to reset all the devices, runtime files, "
@@ -114,15 +60,17 @@ CvdResetCommandHandler::CvdResetCommandHandler(
 
 Result<void> CvdResetCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
-  auto options = CF_EXPECT(ParseResetFlags(subcmd_args));
+  std::vector<Flag> flags = CF_EXPECT(Flags(request));
+  CF_EXPECT(
+      ConsumeFlags(flags, subcmd_args, {.fail_on_unexpected_argument = true}));
 
   // cvd reset. Give one more opportunity
-  if (!options.is_confirmed_by_flag && !GetUserConfirm()) {
-    std::cout << "For more details: " << "  cvd reset --help" << std::endl;
+  if (!flags_.is_confirmed_by_flag && !GetUserConfirm()) {
+    std::cout << "For more details: " << "  cvd help reset" << std::endl;
     return {};
   }
 
-  if (options.clean_runtime_dir) {
+  if (flags_.clean_runtime_dir) {
     CF_EXPECT(instance_manager_.ResetAndClearInstanceDirs());
   } else {
     CF_EXPECT(instance_manager_.Reset());
@@ -138,9 +86,63 @@ std::string CvdResetCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
-Result<std::string> CvdResetCommandHandler::DetailedHelp(
-    const CommandRequest& /*request*/) {
-  return kDetailedHelpText;
+std::vector<HelpParagraph> CvdResetCommandHandler::Description() const {
+  return {
+      HelpParagraph::Raw(
+          "Usage:\n    cvd reset [--yes] [--noclean-runtime-dir]"),
+      HelpParagraph("Warning: `cvd reset` is an experimental command and "
+                    "should only be used as a last resort. Prefer `cvd remove` "
+                    "and/or `cvd clear` instead."),
+      HelpParagraph(
+          "Attempts to remove any trace of running Cuttlefish devices *owned "
+          "by the current user*. This includes Cuttlefish devices not tracked "
+          "by CVD, such as those started by the legacy launch_cvd invocations. "
+          "It's particularly useful for file-in-use errors and when ADB "
+          "remains connected to untracked devices."),
+      HelpParagraph(
+          "This is a destructive operation that cannot be undone, so the "
+          "command always asks for confirmation from the user and exits if it "
+          "can't get it. Confirmation can be provided on the command line with "
+          "the --yes flag which allows the command to be used in scripts and "
+          "other non-interactive use cases."),
+      HelpParagraph(
+          "By default, all instance directories and files are deleted as part "
+          "of the reset. It is possible to skip this step for untracked "
+          "instances (those not members of any known instance group) by "
+          "passing the --noclean-runtime-dir flag. This allows examining the "
+          "runtime files of any untracked instances after the reset. Tracked "
+          "instances can be managed using other commands (like stop) to "
+          "preserve their files, so this option doesn't apply to them and "
+          "their runtime files are always deleted during reset."),
+      HelpParagraph("`cvd reset` executes the following steps:"),
+      HelpParagraph("  1. Stop and remove all known instance groups."),
+      HelpParagraph("  2. Gracefully stop all remaining devices that CVD can "
+                    "reach and optionally clean their runtime directories."),
+      HelpParagraph(
+          "  3. Kill all remaining run_cvd processes and their subprocesses."),
+      HelpParagraph("  4. Release host resources previously used by any "
+                    "untracked devices."),
+      HelpParagraph(
+          fmt::format("These steps are a best-effort attempt at resetting CVD "
+                      "to a clean state, but it may sometimes not be enough. "
+                      "In those cases the best course of action might be to "
+                      "reboot the system and then delete the '{}' directory.",
+                      CvdDir())),
+  };
+}
+
+Result<std::vector<Flag>> CvdResetCommandHandler::Flags(const CommandRequest&) {
+  Flag y_flag = GflagsCompatFlag("yes", flags_.is_confirmed_by_flag)
+                    .Alias("y")
+                    .Help(
+                        "Provide user confirmation in advance so the command "
+                        "doesn't ask for it interactively.");
+  Flag clean_runtime_dir_flag =
+      GflagsCompatFlag("clean-runtime-dir", flags_.clean_runtime_dir)
+          .Help(
+              "Clean up the runtime directory for untracked devices (not "
+              "members of any known instance group)");
+  return std::vector<Flag>{y_flag, clean_runtime_dir_flag};
 }
 
 std::unique_ptr<CvdCommandHandler> NewCvdResetCommandHandler(

@@ -314,6 +314,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:help_format",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/instances",
@@ -321,6 +322,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/result",
         "//libbase",
+        "@fmt",
     ],
 )
 

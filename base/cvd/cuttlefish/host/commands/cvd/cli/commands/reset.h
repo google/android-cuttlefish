@@ -21,6 +21,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/result/result.h"
@@ -35,10 +36,16 @@ class CvdResetCommandHandler : public CvdCommandHandler {
   cvd_common::Args CmdList() const override;
 
   std::string SummaryHelp() const override;
-  Result<std::string> DetailedHelp(const CommandRequest& request) override;
+  std::vector<HelpParagraph> Description() const override;
+  Result<std::vector<Flag>> Flags(const CommandRequest&) override;
 
  private:
+  struct ResetFlags {
+    bool clean_runtime_dir = true;
+    bool is_confirmed_by_flag = false;
+  };
   InstanceManager& instance_manager_;
+  ResetFlags flags_;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdResetCommandHandler(
