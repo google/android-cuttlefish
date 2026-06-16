@@ -37,7 +37,8 @@ namespace cuttlefish {
 static Result<void> TestTapDevices(
     const CuttlefishConfig::InstanceSpecific& instance) {
 #ifdef __linux__
-  if (InSandbox()) {
+  if (InSandbox()
+  || instance.use_cvdalloc()) { // cvdalloc owns its own resources. those resources can't be validated this way.
     return {};
   }
   auto wifi = instance.wifi_tap_name();
