@@ -41,8 +41,9 @@ class Downloaders {
 
   BuildApi& AndroidBuild();
   LuciBuildApi& Luci();
-  // Returns nullptr when no GCS credentials are configured.
-  GcsBuildApi* Gcs();
+  // Fails when no GCS credentials are configured, carrying the reason in
+  // the error.
+  Result<GcsBuildApi*> Gcs();
   HttpBuildApi& Http();
 
   // Dispatches over the Build/BuildString variant to the appropriate

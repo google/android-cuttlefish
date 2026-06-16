@@ -195,11 +195,11 @@ Result<BuildString> ParseBuildString(const std::string& build_string) {
       CF_EXPECT(ParseFilepath(build_string));
   // URL detection must come before the ':' check, because URLs contain
   // '://' which would otherwise be misinterpreted as a directory separator.
-  if (android::base::StartsWith(remaining_build_string, "gs://")) {
+  if (remaining_build_string.starts_with("gs://")) {
     return GcsBuildString{.url = remaining_build_string, .filepath = filepath};
   }
-  if (android::base::StartsWith(remaining_build_string, "https://") ||
-      android::base::StartsWith(remaining_build_string, "http://")) {
+  if (remaining_build_string.starts_with("https://") ||
+      remaining_build_string.starts_with("http://")) {
     return HttpBuildString{.url = remaining_build_string, .filepath = filepath};
   }
   if (remaining_build_string.find(':') != std::string::npos) {

@@ -144,7 +144,12 @@ BuildApi& Downloaders::AndroidBuild() {
 
 LuciBuildApi& Downloaders::Luci() { return *impl_->luci_build_api_; }
 
-GcsBuildApi* Downloaders::Gcs() { return impl_->gcs_build_api_.get(); }
+Result<GcsBuildApi*> Downloaders::Gcs() {
+  CF_EXPECT(impl_->gcs_build_api_ != nullptr,
+            "GCS build requested but no GCS credentials are configured. "
+            "Provide credentials via ~/.boto or pass --use_gce_metadata=true.");
+  return impl_->gcs_build_api_.get();
+}
 
 HttpBuildApi& Downloaders::Http() { return *impl_->http_build_api_; }
 
@@ -160,9 +165,8 @@ Result<Build> Downloaders::GetBuild(const BuildString& build_string) {
       return self.AndroidBuild().GetBuild(build_string);
     }
     Result<Build> operator()(const GcsBuildString& bs) {
-      CF_EXPECT(self.Gcs() != nullptr,
-                "GCS build requested but no GCS credentials are configured");
-      return self.Gcs()->GetBuild(bs);
+      GcsBuildApi* gcs = CF_EXPECT(self.Gcs());
+      return gcs->GetBuild(bs);
     }
     Result<Build> operator()(const HttpBuildString& bs) {
       return self.Http().GetBuild(bs);
@@ -189,9 +193,8 @@ Result<std::string> Downloaders::DownloadFile(
                                               artifact_name);
     }
     Result<std::string> operator()(const GcsBuild& b) {
-      CF_EXPECT(self.Gcs() != nullptr,
-                "GCS build requested but no GCS credentials are configured");
-      return self.Gcs()->DownloadFile(b, target_directory, artifact_name);
+      GcsBuildApi* gcs = CF_EXPECT(self.Gcs());
+      return gcs->DownloadFile(b, target_directory, artifact_name);
     }
     Result<std::string> operator()(const HttpBuild& b) {
       return self.Http().DownloadFile(b, target_directory, artifact_name);
@@ -215,9 +218,8 @@ Result<SeekableZipSource> Downloaders::FileReader(
       return self.AndroidBuild().FileReader(build, artifact_name);
     }
     Result<SeekableZipSource> operator()(const GcsBuild& b) {
-      CF_EXPECT(self.Gcs() != nullptr,
-                "GCS build requested but no GCS credentials are configured");
-      return self.Gcs()->FileReader(b, artifact_name);
+      GcsBuildApi* gcs = CF_EXPECT(self.Gcs());
+      return gcs->FileReader(b, artifact_name);
     }
     Result<SeekableZipSource> operator()(const HttpBuild& b) {
       return self.Http().FileReader(b, artifact_name);

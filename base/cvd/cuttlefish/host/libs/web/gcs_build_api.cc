@@ -20,9 +20,11 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <fmt/core.h>
 
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/strip.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
@@ -56,13 +58,13 @@ std::string GcsBuildApi::BuildGcsApiUrl(const std::string& bucket,
 
 Result<Build> GcsBuildApi::GetBuild(const GcsBuildString& build_string) {
   std::string_view url_view = build_string.url;
-  CF_EXPECT(android::base::ConsumePrefix(&url_view, "gs://"),
+  CF_EXPECT(absl::ConsumePrefix(&url_view, "gs://"),
             "GCS URL must start with gs://: " << build_string.url);
-  auto parts = android::base::Split(std::string(url_view), "/");
+  std::vector<std::string> parts = absl::StrSplit(url_view, '/');
   CF_EXPECT(!parts.empty(), "Invalid GCS URL: " << build_string.url);
   std::string bucket = parts[0];
   parts.erase(parts.begin());
-  std::string object = android::base::Join(parts, "/");
+  std::string object = absl::StrJoin(parts, "/");
   CF_EXPECT(!object.empty(),
             "Invalid GCS URL (missing object path): " << build_string.url);
   return GcsBuild{

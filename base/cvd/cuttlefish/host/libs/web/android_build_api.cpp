@@ -33,6 +33,7 @@
 
 #include <json/value.h>
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 
 #include <android-base/file.h>
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -506,7 +507,7 @@ std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build) {
     }
     std::tuple<std::string, std::string> operator()(
         const GcsBuild& b) const {
-      return {"gs://" + b.bucket + "/" + b.object, "url"};
+      return {absl::StrCat("gs://", b.bucket, "/", b.object), "url"};
     }
     std::tuple<std::string, std::string> operator()(
         const HttpBuild& b) const {

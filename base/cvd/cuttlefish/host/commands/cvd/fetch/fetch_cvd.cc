@@ -76,8 +76,8 @@ bool IsUrlBuild(const Build& build) {
 
 // Returns the local filename to use when downloading a URL-style build.
 // Derived from the GCS object path or the HTTP URL path (sans query
-// parameters). Returns empty string for non-URL builds.
-std::string UrlBuildFilename(const Build& build) {
+// parameters). It is an error to call this on a non-URL build.
+Result<std::string> UrlBuildFilename(const Build& build) {
   std::string path;
   if (auto* gcs = std::get_if<GcsBuild>(&build)) {
     path = gcs->object;
@@ -88,7 +88,7 @@ std::string UrlBuildFilename(const Build& build) {
       path = path.substr(0, query_pos);
     }
   } else {
-    return "";
+    return CF_ERR("UrlBuildFilename called on a non-URL build");
   }
   auto pos = path.rfind('/');
   return pos == std::string::npos ? path : path.substr(pos + 1);
@@ -100,7 +100,7 @@ std::string UrlBuildFilename(const Build& build) {
 // extracted in full.
 Result<void> FetchUrlTarget(FetchBuildContext& context,
                             bool keep_downloaded_archives) {
-  std::string filename = UrlBuildFilename(context.Build());
+  std::string filename = CF_EXPECT(UrlBuildFilename(context.Build()));
   FetchArtifact artifact = context.Artifact(filename);
   CF_EXPECT(artifact.Download());
 
