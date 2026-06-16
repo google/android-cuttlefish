@@ -481,33 +481,42 @@ Result<void> FetchChromeOsTarget(
 Result<void> FetchTarget(FetchContext& fetch_context,
                          const DownloadFlags& flags,
                          const bool keep_downloaded_archives) {
-  if (auto ctx = fetch_context.DefaultBuild()) {
+  if (std::optional<FetchBuildContext> context = fetch_context.DefaultBuild()) {
     bool has_system_build = fetch_context.SystemBuild().has_value();
-    CF_EXPECT(FetchDefaultTarget(*ctx, keep_downloaded_archives, flags,
+    CF_EXPECT(FetchDefaultTarget(*context, keep_downloaded_archives, flags,
                                  has_system_build));
   }
-  if (auto ctx = fetch_context.SystemBuild()) {
-    CF_EXPECT(FetchSystemTarget(*ctx, flags.download_img_zip,
+
+  if (std::optional<FetchBuildContext> context = fetch_context.SystemBuild()) {
+    CF_EXPECT(FetchSystemTarget(*context, flags.download_img_zip,
                                 keep_downloaded_archives));
   }
-  if (auto ctx = fetch_context.KernelBuild()) {
-    CF_EXPECT(FetchKernelTarget(*ctx, keep_downloaded_archives));
+
+  if (std::optional<FetchBuildContext> context = fetch_context.KernelBuild()) {
+    CF_EXPECT(FetchKernelTarget(*context, keep_downloaded_archives));
   }
-  if (auto ctx = fetch_context.BootBuild()) {
-    CF_EXPECT(FetchBootTarget(*ctx, keep_downloaded_archives));
+
+  if (std::optional<FetchBuildContext> context = fetch_context.BootBuild()) {
+    CF_EXPECT(FetchBootTarget(*context, keep_downloaded_archives));
   }
-  if (auto ctx = fetch_context.BootloaderBuild()) {
+
+  if (std::optional<FetchBuildContext> ctx = fetch_context.BootloaderBuild()) {
     CF_EXPECT(FetchBootloaderTarget(*ctx, keep_downloaded_archives));
   }
-  if (auto ctx = fetch_context.AndroidEfiLoaderBuild()) {
+
+  if (std::optional<FetchBuildContext> ctx =
+          fetch_context.AndroidEfiLoaderBuild()) {
     CF_EXPECT(FetchAndroidEfiLoaderTarget(*ctx, keep_downloaded_archives));
   }
-  if (auto ctx = fetch_context.OtaToolsBuild()) {
+
+  if (std::optional<FetchBuildContext> ctx = fetch_context.OtaToolsBuild()) {
     CF_EXPECT(FetchOtaToolsTarget(*ctx, keep_downloaded_archives));
   }
-  if (auto ctx = fetch_context.TestSuitesBuild()) {
+
+  if (std::optional<FetchBuildContext> ctx = fetch_context.TestSuitesBuild()) {
     CF_EXPECT(FetchTestSuitesTarget(*ctx, keep_downloaded_archives));
   }
+
   return {};
 }
 

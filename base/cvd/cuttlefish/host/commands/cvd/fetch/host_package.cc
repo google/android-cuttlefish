@@ -47,8 +47,7 @@ Result<void> FetchHostPackage(
   // The download time will still include time spent waiting for the mutex in
   // the build_api though.
   trace.CompletePhase("Async start delay");
-  auto host_tools_name =
-      GetFilepath(build).value_or("cvd-host_package.tar.gz");
+  auto host_tools_name = GetFilepath(build).value_or("cvd-host_package.tar.gz");
   std::string host_tools_filepath = CF_EXPECT(
       downloaders.DownloadFile(build, target_dir, host_tools_name));
   trace.CompletePhase("Download", FileSize(host_tools_filepath));

@@ -260,7 +260,7 @@ TEST(ParseBuildStringTests, HttpBuildStringNotMisparsedAsDirectory) {
                   HttpBuildString{.url = "https://example.com/path/file.zip"}));
 }
 
-TEST(ParseBuildStringTests, UnsupportedS3SchemeFail) {
+TEST(ParseBuildStringTests, UnknownSchemeParsesAsDirectoryBuildString) {
   auto result = ParseBuildString("s3://bucket/file");
   // s3:// does not start with gs://, https://, or http://, so it falls
   // through to non-URL parsing. With the ":" it becomes a directory
