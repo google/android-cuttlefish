@@ -22,6 +22,7 @@
 
 #include <fmt/core.h>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
@@ -78,7 +79,7 @@ Result<std::string> GcsBuildApi::DownloadFile(
     const GcsBuild& build, const std::string& target_directory,
     const std::string& artifact_name) {
   std::string api_url = BuildGcsApiUrl(build.bucket, build.object);
-  std::string dest_path = target_directory + "/" + artifact_name;
+  std::string dest_path = absl::StrCat(target_directory, "/", artifact_name);
   auto headers = CF_EXPECT(Headers());
   auto response =
       CF_EXPECT(HttpGetToFile(http_client_, api_url, dest_path, headers));

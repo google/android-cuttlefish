@@ -17,6 +17,7 @@
 
 #include <string>
 
+#include "absl/strings/str_cat.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
@@ -40,7 +41,7 @@ Result<Build> HttpBuildApi::GetBuild(const HttpBuildString& build_string) {
 Result<std::string> HttpBuildApi::DownloadFile(
     const HttpBuild& build, const std::string& target_directory,
     const std::string& artifact_name) {
-  std::string dest_path = target_directory + "/" + artifact_name;
+  std::string dest_path = absl::StrCat(target_directory, "/", artifact_name);
   auto response = CF_EXPECT(HttpGetToFile(http_client_, build.url, dest_path));
   CF_EXPECT(response.HttpSuccess(),
             "Failed to download " << build.url << ", HTTP status: "

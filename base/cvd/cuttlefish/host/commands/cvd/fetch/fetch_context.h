@@ -111,8 +111,10 @@ class FetchBuildContext {
 
 std::ostream& operator<<(std::ostream&, const FetchBuildContext&);
 
-// References common state used by most download operations and produces
-// FetchBuildContext instances for each configured build component.
+/**
+ * References common state used by most download operations and produces
+ * `FetchBuildContext` instances.
+ */
 class FetchContext {
  public:
   FetchContext(Downloaders&, const TargetDirectories&, const Builds&,
