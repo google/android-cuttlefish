@@ -408,7 +408,7 @@ Result<void> FetchBootloaderTarget(FetchBuildContext& context,
 }
 
 Result<void> FetchAndroidEfiLoaderTarget(FetchBuildContext& context,
-                                        bool keep_downloaded_archives) {
+                                         bool keep_downloaded_archives) {
   if (IsUrlBuild(context.Build())) {
     return FetchUrlTarget(context, keep_downloaded_archives);
   }

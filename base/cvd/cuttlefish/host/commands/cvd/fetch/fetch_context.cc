@@ -187,9 +187,7 @@ const Build& FetchBuildContext::Build() const { return build_; }
 std::string FetchBuildContext::GetBuildZipName(const std::string& name) const {
   struct ProductVisitor {
     std::string operator()(const DeviceBuild& b) const { return b.product; }
-    std::string operator()(const DirectoryBuild& b) const {
-      return b.product;
-    }
+    std::string operator()(const DirectoryBuild& b) const { return b.product; }
     std::string operator()(const GcsBuild&) const { return "url"; }
     std::string operator()(const HttpBuild&) const { return "url"; }
   };
