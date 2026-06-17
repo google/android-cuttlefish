@@ -30,9 +30,11 @@
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/log/check.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -57,6 +59,15 @@ bool MatchNormalized(std::string_view str1, std::string_view str2) {
   return n1 == n2;
 }
 
+std::string DefaultValueNameHint(std::string_view name) {
+  std::vector<std::string_view> parts =
+      absl::StrSplit(name, absl::ByAnyChar("-_"), absl::SkipEmpty());
+  if (parts.empty()) {
+    return "VAL";
+  }
+  return absl::AsciiStrToUpper(parts.back());
+}
+
 }  // namespace
 
 Flag Flag::StringFlag(std::string name) {
@@ -79,6 +90,14 @@ Flag& Flag::Help(std::string help) & {
   return *this;
 }
 Flag Flag::Help(std::string help) && { return std::move(Help(help)); }
+
+Flag& Flag::ValueNameHint(std::string value_name_hint) & {
+  value_name_hint_ = std::move(value_name_hint);
+  return *this;
+}
+Flag Flag::ValueNameHint(std::string value_name_hint) && {
+  return std::move(ValueNameHint(value_name_hint));
+}
 
 Flag& Flag::Getter(std::function<std::string()> getter) & {
   getter_ = std::move(getter);
@@ -111,7 +130,7 @@ std::string Flag::Synopsis() const {
   for (const std::string& alias : aliases_) {
     switch (style_) {
       case Flag::Style::String:
-        options.emplace_back(absl::StrCat("--", alias, "=VAL"));
+        options.emplace_back(absl::StrCat("--", alias, "=", value_name_hint_));
         break;
       case Flag::Style::Bool:
         options.emplace_back("--[no]" + alias);
@@ -125,8 +144,11 @@ const std::string& Flag::Description() const { return help_; }
 
 std::string Flag::CurrentValue() const { return getter_(); }
 
+const std::string& Flag::ValueNameHint() const { return value_name_hint_; }
+
 Flag::Flag(std::string name, Flag::Style style) : style_(style) {
   ValidateAlias(name);
+  value_name_hint_ = DefaultValueNameHint(name);
   aliases_.emplace_back(std::move(name));
 }
 

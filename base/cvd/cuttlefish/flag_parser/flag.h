@@ -40,6 +40,9 @@ class Flag {
   /* Set help text, visible in the class ostream writer method. Optional. */
   Flag& Help(std::string) &;
   Flag Help(std::string) &&;
+  /* Set the value name hint used in the synopsis. Optional. */
+  Flag& ValueNameHint(std::string) &;
+  Flag ValueNameHint(std::string) &&;
   /* Set a loader that displays the current value in help text. Optional. */
   Flag& Getter(std::function<std::string()>) &;
   Flag Getter(std::function<std::string()>) &&;
@@ -59,6 +62,7 @@ class Flag {
   std::string Synopsis() const;
   const std::string& Description() const;
   std::string CurrentValue() const;
+  const std::string& ValueNameHint() const;
 
  private:
   enum class Style {
@@ -86,6 +90,7 @@ class Flag {
   std::vector<std::string> aliases_;
   Style style_;
   std::string help_;
+  std::string value_name_hint_ = "VAL";
   std::function<std::string()> getter_ = []() { return ""; };
   std::function<Result<void>(std::string_view value)> setter_;
   std::vector<std::function<Result<void>()>> validators_;

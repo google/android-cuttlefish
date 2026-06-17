@@ -15,6 +15,8 @@
  */
 #include "cuttlefish/posix/rename.h"
 
+#include <cerrno>
+#include <cstdio>
 #include <string>
 #include <string_view>
 

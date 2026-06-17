@@ -26,6 +26,7 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
@@ -43,15 +44,27 @@ cvd_common::Args RemoveCvdCommandHandler::CmdList() const {
 }
 
 std::string RemoveCvdCommandHandler::SummaryHelp() const {
-  return "Remove devices and artifacts from the system.";
+  return "Remove instance groups and related artifacts from the system.";
 }
 
-Result<std::string> RemoveCvdCommandHandler::DetailedHelp(
-    const CommandRequest& request) {
-  return "Removes selected devices from the system.\n\n"
-         "Running devices are stopped first. Deletes build and runtime "
-         "artifacts, including log files and images (only if downloaded by "
-         "cvd itself)";
+std::vector<HelpParagraph> RemoveCvdCommandHandler::Description() const {
+  return {
+      HelpParagraph(
+          "Removal consists of deleting the group's runtime directory (which "
+          "includes log files and virtual disks), and removing the group "
+          "from the CVD instance database. This operation completely removes "
+          "any trace of the group from the system and cannot be undone."),
+      HelpParagraph(
+          "The `cvd remove` command operates on entire instance groups. Even "
+          "if you target a specific instance using selector flags (e.g., "
+          "`--instance_name`), the entire group containing that instance will "
+          "be removed."),
+      HelpParagraph(
+          "If the selected instance group is running, the command will attempt "
+          "to stop it first. If the instances cannot be stopped, the removal "
+          "will fail. In this case, you may need to run `cvd reset` to "
+          "clean up the system."),
+  };
 }
 
 bool RemoveCvdCommandHandler::RequiresDeviceExists() const { return true; }

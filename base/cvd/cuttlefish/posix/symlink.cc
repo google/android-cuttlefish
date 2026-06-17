@@ -15,6 +15,9 @@
  */
 #include "cuttlefish/posix/symlink.h"
 
+#include <unistd.h>
+
+#include <cerrno>
 #include <string>
 
 #include "cuttlefish/posix/strerror.h"
