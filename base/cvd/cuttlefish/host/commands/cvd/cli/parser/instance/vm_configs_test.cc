@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include <android-base/file.h>
+#include <gtest/gtest.h>
+
 #include <algorithm>
 #include <string>
 #include <vector>
-
-#include <android-base/file.h>
-#include <gtest/gtest.h>
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
@@ -568,7 +568,8 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSimpleMediaDeviceFlagPartialJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--crosvm_simple_media_device=false,true)"))
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         R"(--crosvm_simple_media_device=false,true)"))
       << "crosvm_simple_media_device flag is missing or wrongly formatted";
 }
 
@@ -602,7 +603,8 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSimpleMediaDeviceFlagFullJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--crosvm_simple_media_device=true,true)"))
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--crosvm_simple_media_device=true,true)"))
       << "crosvm_simple_media_device flag is missing or wrongly formatted";
 }
 
@@ -635,7 +637,8 @@ TEST(VmFlagsParserTest, ParseTwoInstancesV4l2ProxyFlagPartialJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--crosvm_v4l2_proxy=,/dev/video0)"))
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--crosvm_v4l2_proxy=,/dev/video0)"))
       << "crosvm_v4l2_proxy flag is missing or wrongly formatted";
 }
 
@@ -669,7 +672,8 @@ TEST(VmFlagsParserTest, ParseTwoInstancesV4l2ProxyFlagFullJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--crosvm_v4l2_proxy=/dev/video0,/dev/video1)"))
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         R"(--crosvm_v4l2_proxy=/dev/video0,/dev/video1)"))
       << "crosvm_v4l2_proxy flag is missing or wrongly formatted";
 }
 
@@ -741,6 +745,73 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCustomActionsFlagPartialJson) {
   expected_actions[0]["device_states"][0]["lid_switch_open"] = false;
   expected_actions[0]["device_states"][0]["hinge_angle_value"] = 0;
   EXPECT_THAT(ParseJson(custom_actions[0]), IsOkAndValue(expected_actions));
+}
+
+TEST(VmFlagsParserTest, ParseTwoInstancesVhostUserVsockFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                    "vhost_user_vsock": "true"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--vhost_user_vsock=auto,true)"))
+      << "vhost_user_vsock flag is missing or wrongly formatted";
+}
+
+TEST(VmFlagsParserTest, ParseTwoInstancesVhostUserVsockFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                    "vhost_user_vsock": "true"
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                    "vhost_user_vsock": "false"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--vhost_user_vsock=true,false)"))
+      << "vhost_user_vsock flag is missing or wrongly formatted";
 }
 
 }  // namespace cuttlefish
