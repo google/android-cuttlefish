@@ -49,6 +49,7 @@ inline constexpr char kFlagEnableSandbox[] = "enable_sandbox";
 inline constexpr char kFlagCrosvmSimpleMediaDevice[] =
     "crosvm_simple_media_device";
 inline constexpr char kFlagCrosvmV4l2Proxy[] = "crosvm_v4l2_proxy";
+inline constexpr char kFlagVhostUserVsock[] = "vhost_user_vsock";
 inline constexpr char kFlagEnablePkvm[] = "enable_pkvm";
 
 std::set<std::string> GatherFlagNamesUsedInInstanceConfig(const Instance& ins) {
@@ -82,6 +83,10 @@ std::set<std::string> GatherFlagNamesUsedInInstanceConfig(const Instance& ins) {
   if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
       ins.vm().crosvm().has_v4l2_proxy()) {
     names.insert(kFlagCrosvmV4l2Proxy);
+  }
+  if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
+      ins.vm().crosvm().has_vhost_user_vsock()) {
+    names.insert(kFlagVhostUserVsock);
   }
   if (ins.vm().has_enable_pkvm()) {
     names.insert(kFlagEnablePkvm);
@@ -179,6 +184,13 @@ static std::string V4l2Proxy(const Instance& instance) {
   return crosvm.has_v4l2_proxy() ? crosvm.v4l2_proxy() : default_val;
 }
 
+static std::string VhostUserVsock(const Instance& instance) {
+  const auto& crosvm = instance.vm().crosvm();
+  const auto& default_val = CF_DEFAULTS_VHOST_USER_VSOCK;
+  return crosvm.has_vhost_user_vsock() ? crosvm.vhost_user_vsock()
+                                       : default_val;
+}
+
 static bool EnablePkvm(const Instance& instance) {
   const auto& vm = instance.vm();
   return vm.has_enable_pkvm() ? vm.enable_pkvm() : CF_DEFAULTS_ENABLE_PKVM;
@@ -268,6 +280,10 @@ Result<std::vector<std::string>> GenerateVmFlags(
   if (used_names.contains(kFlagCrosvmV4l2Proxy)) {
     flags.emplace_back(
         GenerateInstanceFlag(kFlagCrosvmV4l2Proxy, cfg, V4l2Proxy));
+  }
+  if (used_names.contains(kFlagVhostUserVsock)) {
+    flags.emplace_back(
+        GenerateInstanceFlag(kFlagVhostUserVsock, cfg, VhostUserVsock));
   }
   if (used_names.contains(kFlagEnablePkvm)) {
     flags.emplace_back(GenerateInstanceFlag(kFlagEnablePkvm, cfg, EnablePkvm));

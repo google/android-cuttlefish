@@ -743,4 +743,71 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCustomActionsFlagPartialJson) {
   EXPECT_THAT(ParseJson(custom_actions[0]), IsOkAndValue(expected_actions));
 }
 
+TEST(VmFlagsParserTest, ParseTwoInstancesVhostUserVsockFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                    "vhost_user_vsock": "true"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--vhost_user_vsock=auto,true)"))
+      << "vhost_user_vsock flag is missing or wrongly formatted";
+}
+
+TEST(VmFlagsParserTest, ParseTwoInstancesVhostUserVsockFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                    "vhost_user_vsock": "true"
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                    "vhost_user_vsock": "false"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, R"(--vhost_user_vsock=true,false)"))
+      << "vhost_user_vsock flag is missing or wrongly formatted";
+}
+
 }  // namespace cuttlefish
