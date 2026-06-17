@@ -17,6 +17,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -44,13 +45,15 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
     std::string product_path;
     bool start;
     std::string config_file;
+    bool reuse;
   };
 
   std::vector<Flag> ConfigFileModeFlags();
   std::vector<Flag> FlagModeFlags(const cvd_common::Envs& env,
                                   const selector::SelectorOptions&);
+  Result<std::optional<LocalInstanceGroup>> FindReusableGroup(
+      const selector::SelectorOptions& selectors, const cvd_common::Envs& envs);
   Result<LocalInstanceGroup> CreateGroup(
-      InstanceManager& instance_manager,
       const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
       const CommandRequest& request);
 
