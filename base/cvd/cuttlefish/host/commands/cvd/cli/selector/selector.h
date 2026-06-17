@@ -27,6 +27,9 @@
 namespace cuttlefish {
 namespace selector {
 
+InstanceDatabase::Filter BuildFilterFromSelectors(
+    const SelectorOptions& selectors);
+
 // Selects a single group based on the request's selector options. Asks the user
 // to manually choose a single group if multiple groups match the selector
 // options and stdin is a terminal.

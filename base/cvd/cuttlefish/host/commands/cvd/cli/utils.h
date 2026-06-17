@@ -97,4 +97,7 @@ class TerminalColors {
   bool is_tty_;
 };
 
+std::vector<std::string> ExpandProductPaths(const std::string& product_path,
+                                            size_t num_instances);
+
 }  // namespace cuttlefish
