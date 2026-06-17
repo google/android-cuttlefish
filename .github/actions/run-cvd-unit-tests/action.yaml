@@ -9,7 +9,22 @@ runs:
     shell: bash
   - name: Install dependencies
     run: |
-      sudo apt-get install -y git clang libcurl4-openssl-dev clang-tidy xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev autoconf libtool
+      sudo apt-get install -y \
+        autoconf \
+        clang \
+        clang-tidy \
+        cmake \
+        git \
+        libaom-dev \
+        libcap-dev \
+        libcurl4-openssl-dev \
+        liblzma-dev \
+        libopus-dev \
+        libtool \
+        libvpx-dev \
+        libwayland-dev \
+        protobuf-compiler \
+        xxd
       wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2_amd64.deb
       sudo dpkg -i libtinfo5_6.3-2_amd64.deb
     shell: bash

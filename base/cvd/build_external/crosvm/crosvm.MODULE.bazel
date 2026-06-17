@@ -31,7 +31,6 @@ crosvm_bin.spec(
         "gpu_display",
         "gunyah",
         "libaaudio_stub",
-        "media",
         "net",
         "net_util",
         "qcow",
