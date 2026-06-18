@@ -164,18 +164,29 @@ GetGpuModeRequirementsMap() {
           "Consider enabling --gpu_mode=gfxstream_guest_angle_host_swiftshader "
           "for host software rendering which has a vetted software renderer.",
   };
-  // TODO: separate host vulkan loader check out.
-  const RequirementWithReason kHostVulkanAvailable{
+  const RequirementWithReason kHostVulkanLoaderAvailable{
+      .func =
+          [](const CommonState& common) {
+            const auto& availability = common.graphics_availability;
+            return availability.vulkan_loader_available();
+          },
+      .success_explanation =
+          "The host has the Vulkan loader installed and "
+          "available.",
+      .failure_explanation =
+          "The host does not have the Vulkan loader installed. Please ensure "
+          "the Vulkan loader is installed and available.",
+  };
+  const RequirementWithReason kHostVulkanDriverAvailable{
       .func =
           [](const CommonState& common) {
             const auto& availability = common.graphics_availability;
             return availability.has_vulkan();
           },
-      .success_explanation = "The host has Vulkan support.",
+      .success_explanation = "The host has a Vulkan driver available.",
       .failure_explanation =
-          "The host does not have Vulkan support. Please ensure the Vulkan "
-          "userspace drivers and the Vulkan loader are installed and "
-          "available.",
+          "The host does not have a Vulkan driver available. Please ensure "
+          "a Vulkan driver is installed.",
   };
   const RequirementWithReason kHostVulkanIsNonSoftwareRenderer{
       .func =
@@ -239,7 +250,8 @@ GetGpuModeRequirementsMap() {
                   kHostGlesAvailable,
                   kHostGlesIsNonSoftwareRenderer,
                   kHostIsNonArm,
-                  kHostVulkanAvailable,
+                  kHostVulkanLoaderAvailable,
+                  kHostVulkanDriverAvailable,
                   kHostVulkanIsNonSoftwareRenderer,
               },
           },
@@ -248,7 +260,8 @@ GetGpuModeRequirementsMap() {
               {
                   kGuestSupportsGfxstream,
                   kHostIsNonArm,
-                  kHostVulkanAvailable,
+                  kHostVulkanLoaderAvailable,
+                  kHostVulkanDriverAvailable,
                   kHostVulkanIsNonSoftwareRenderer,
                   kHostVulkanMemoryCanBeMappedIntoKvm,
                   kNotUsingHostQemu,
@@ -259,7 +272,7 @@ GetGpuModeRequirementsMap() {
               {
                   kGuestSupportsGfxstream,
                   kHostIsNonArm,
-                  kHostVulkanAvailable,
+                  kHostVulkanLoaderAvailable,
                   kNotUsingHostQemu,
               },
           },
@@ -268,7 +281,7 @@ GetGpuModeRequirementsMap() {
               {
                   kGuestSupportsGfxstream,
                   kHostIsNonArm,
-                  kHostVulkanAvailable,
+                  kHostVulkanLoaderAvailable,
                   kNotUsingHostQemu,
               },
           },
