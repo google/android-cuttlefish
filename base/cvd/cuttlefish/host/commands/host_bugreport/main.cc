@@ -93,7 +93,7 @@ Result<void> CreateDeviceBugreport(
   Command bugreport_cmd("timeout");
   bugreport_cmd.SetWorkingDirectory(
       "/");  // Use a deterministic working directory
-  bugreport_cmd.AddParameter("300s")
+  bugreport_cmd.AddParameter("600s")
       .AddParameter(adb_bin_path)
       .AddParameter("-s")
       .AddParameter(ins.adb_ip_and_port())
