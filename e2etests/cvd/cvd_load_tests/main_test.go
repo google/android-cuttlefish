@@ -135,6 +135,44 @@ func TestCvdLoad(t *testing.T) {
   }
 }`,
 		},
+		{
+			name: "GitMainSDVMULTI",
+			loadconfig: `
+{
+  "instances": [
+    {
+      "name": "core",
+      "disk": {
+        "default_build": "@ab\/git_main\/aosp_cf_x86_64_sdv_core-trunk_staging-userdebug"
+      },
+      "vm": {
+        "cpus": 2,
+        "memory_mb": 4096
+      },
+      "graphics": {
+        "displays": [],
+        "record_screen": false
+      }
+    },
+    {
+      "name": "media",
+      "disk": {
+        "default_build": "@ab\/git_main\/aosp_cf_x86_64_sdv_media-trunk_staging-userdebug"
+      },
+      "vm": {
+        "cpus": 2,
+        "memory_mb": 4096
+      }
+    }
+  ],
+  "metrics": {
+    "enable": true
+  },
+  "common": {
+    "host_package": "@ab\/git_main\/aosp_cf_x86_64_only_phone-trunk_staging-userdebug"
+  }
+}`,
+		},
 	}
 	c := e2etests.TestContext{}
 	for _, tc := range testcases {

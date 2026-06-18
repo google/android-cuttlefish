@@ -32,6 +32,21 @@ func TestLaunchCvd(t *testing.T) {
 			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
 		},
 		{
+			name:   "GitMainSDVMedia",
+			branch: "git_main",
+			target: "aosp_cf_x86_64_sdv_media-trunk_staging-userdebug",
+		},
+		{
+			name:   "GitMainSDVCore",
+			branch: "git_main",
+			target: "aosp_cf_x86_64_sdv_core-trunk_staging-userdebug",
+		},
+		{
+			name:   "GitMainAuto",
+			branch: "git_main",
+			target: "aosp_cf_x86_64_auto-trunk_staging-userdebug",
+		},
+		{
 			name:   "AospMainPhone",
 			branch: "aosp-android-latest-release",
 			target: "aosp_cf_x86_64_only_phone-userdebug",
