@@ -35,6 +35,8 @@ cf_cc_binary(
         "graphics_detector_vk.h",
         "graphics_detector_vk_external_memory_host.cpp",
         "graphics_detector_vk_external_memory_host.h",
+        "graphics_detector_vk_loader.cpp",
+        "graphics_detector_vk_loader.h",
         "graphics_detector_vk_precision_qualifiers_on_yuv_samplers.cpp",
         "graphics_detector_vk_precision_qualifiers_on_yuv_samplers.h",
         "image.cpp",

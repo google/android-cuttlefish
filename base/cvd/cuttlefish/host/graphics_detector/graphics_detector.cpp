@@ -19,6 +19,7 @@
 #include "cuttlefish/host/graphics_detector/graphics_detector_gl.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector_vk.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector_vk_external_memory_host.h"
+#include "cuttlefish/host/graphics_detector/graphics_detector_vk_loader.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector_vk_precision_qualifiers_on_yuv_samplers.h"
 #include "cuttlefish/host/graphics_detector/subprocess.h"
 
@@ -32,6 +33,7 @@ namespace gfxstream {
   const std::vector<std::pair<std::string, GraphicsCheckFn*>> checks = {
       {"PopulateEglAndGlesAvailability", PopulateEglAndGlesAvailability},
       {"PopulateVulkanAvailability", PopulateVulkanAvailability},
+      {"PopulateVulkanLoaderAvailability", PopulateVulkanLoaderAvailability},
       {"PopulateVulkanExternalMemoryHostQuirk",
        PopulateVulkanExternalMemoryHostQuirk},
       {"PopulateVulkanPrecisionQualifiersOnYuvSamplersQuirk",
