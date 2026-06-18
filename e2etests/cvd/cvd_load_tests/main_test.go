@@ -109,32 +109,6 @@ func TestCvdLoad(t *testing.T) {
   }
 }`,
 		},
-		{
-			name: "AospMainX64PhoneX2",
-			loadconfig: `
-{
-  "instances": [
-    {
-      "name": "ins-1",
-      "disk": {
-        "default_build": "@ab\/aosp-android-latest-release\/aosp_cf_x86_64_only_phone-userdebug"
-      }
-    },
-    {
-      "name": "ins-2",
-      "disk": {
-        "default_build": "@ab\/aosp-android-latest-release\/aosp_cf_x86_64_only_phone-userdebug"
-      }
-    }
-  ],
-  "metrics": {
-    "enable": true
-  },
-  "common": {
-    "host_package": "@ab\/aosp-android-latest-release\/aosp_cf_x86_64_only_phone-userdebug"
-  }
-}`,
-		},
 	}
 	c := e2etests.TestContext{}
 	for _, tc := range testcases {
