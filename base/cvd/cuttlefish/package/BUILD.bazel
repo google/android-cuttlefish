@@ -94,7 +94,7 @@ package_files(
         "cuttlefish-common/bin/sensors_simulator": "//cuttlefish/host/commands/sensors_simulator",
         "cuttlefish-common/bin/simg2img": "@android_system_core//:simg2img",
         "cuttlefish-common/bin/snapshot_util_cvd": "//cuttlefish/host/commands/snapshot_util_cvd",
-        "cuttlefish-common/bin/socket_vsock_proxy": "//cuttlefish/common/frontend/socket_vsock_proxy",
+        "cuttlefish-common/bin/socket_vsock_proxy": "//cuttlefish/host/commands/socket_vsock_proxy",
         "cuttlefish-common/bin/tcp_connector": "//cuttlefish/host/commands/tcp_connector",
         "cuttlefish-common/bin/tombstone_receiver": "//cuttlefish/host/commands/tombstone_receiver",
         "cuttlefish-common/bin/unpack_bootimg.py": "@mkbootimg//:unpack_bootimg.py",
