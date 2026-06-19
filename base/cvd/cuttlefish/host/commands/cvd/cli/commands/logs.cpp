@@ -17,6 +17,7 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -25,21 +26,7 @@
 namespace cuttlefish {
 namespace {
 
-constexpr char kSummaryHelpText[] = "Print device logs";
-
-constexpr char kDetailedHelpText[] = R"(
-usage: cvd [--group_name name [--instance_name name]] logs [-p|--print name]
-)";
-
-struct LogsCmdOptions {
-  std::string print_target;
-
-  std::vector<Flag> Flags() {
-    return {
-        GflagsCompatFlag("print", print_target).Alias("p"),
-    };
-  }
-};
+constexpr char kSummaryHelpText[] = "List and display log files";
 
 void PrintLogsList(const std::vector<std::string>& filenames) {
   for (auto& filename : filenames) {
@@ -86,10 +73,9 @@ Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
       CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                 "Unable to select an instance");
 
-  LogsCmdOptions opts;
   std::vector<std::string> args = request.SubcommandArguments();
-  CF_EXPECT(
-      ConsumeFlags(opts.Flags(), args, {.fail_on_unexpected_argument = true}));
+  auto flags = CF_EXPECT(Flags(request));
+  CF_EXPECT(ConsumeFlags(flags, args, {.fail_on_unexpected_argument = true}));
 
   std::vector<std::string> logs_filenames;
 
@@ -109,7 +95,7 @@ Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
     }
   }
 
-  if (opts.print_target.empty()) {
+  if (print_target_flag_.empty()) {
     if (logs_filenames.empty()) {
       LOG(INFO) << "There are no log files available";
     } else {
@@ -120,13 +106,13 @@ Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
 
   for (auto& filename : logs_filenames) {
     std::string basename = android::base::Basename(filename);
-    if (basename == opts.print_target) {
+    if (basename == print_target_flag_) {
       CF_EXPECT(PrintLog(filename));
       return {};
     }
   };
 
-  CF_EXPECTF(false, "Not found `{}` logs", opts.print_target);
+  CF_EXPECTF(false, "Not found `{}` logs", print_target_flag_);
 
   return {};
 }
@@ -137,8 +123,19 @@ std::string CvdLogsHandler::SummaryHelp() const { return kSummaryHelpText; }
 
 bool CvdLogsHandler::RequiresDeviceExists() const { return true; }
 
-Result<std::string> CvdLogsHandler::DetailedHelp(const CommandRequest&) {
-  return kDetailedHelpText;
+std::vector<HelpParagraph> CvdLogsHandler::Description() const {
+  return {
+      HelpParagraph("Prints Cuttlefish device logs."),
+  };
+}
+
+Result<std::vector<Flag>> CvdLogsHandler::Flags(const CommandRequest&) {
+  return std::vector<Flag>{
+      GflagsCompatFlag("print", print_target_flag_)
+          .ValueNameHint("LOGFILE")
+          .Alias("p")
+          .Help("Log file name to print"),
+  };
 }
 
 std::unique_ptr<CvdCommandHandler> NewCvdLogsHandler(
