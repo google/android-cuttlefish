@@ -13,19 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <unistd.h>
+
 #include <iostream>
 #include <optional>
 #include <sstream>
 #include <unordered_set>
 
-#include <android-base/file.h>
 #include "absl/base/no_destructor.h"
-#include "absl/strings/str_split.h"
-#include <fmt/format.h>
-#include <gflags/gflags.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
+#include "android-base/file.h"
+#include "fmt/format.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -47,6 +49,7 @@
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
+#include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/posix/symlink.h"
 
 namespace cuttlefish {
@@ -206,9 +209,49 @@ Result<void> LinkLogs2InstanceDir(
   return {};
 }
 
+bool ParentIsCvd() {
+  const std::string exe_link = absl::StrCat("/proc/", getppid(), "/exe");
+  const Result<std::string> exe_path = ReadLink(exe_link);
+  CHECK(exe_path.ok()) << exe_path.error();
+  return exe_path->ends_with("/cvd");
+}
+
+std::string CvdPath() {
+  const Result<std::string> exe_path_res = ReadLink("/proc/self/exe");
+  CHECK(exe_path_res.ok()) << exe_path_res.error();
+  std::string_view exe_path = *exe_path_res;
+  CHECK(absl::ConsumeSuffix(&exe_path, "/cvd_internal_start"));
+  return absl::StrCat(exe_path, "/cvd");
+}
+
+void ExecCvd(std::vector<std::string> args) {
+  bool daemon = false;
+  const Result<void> res = ConsumeFlags({GflagsCompatFlag("daemon", daemon)}, args);
+  CHECK(res.ok()) << res.error();
+
+  const std::string daemon_val = daemon ? "true" : "false";
+  const std::string daemon_str = absl::StrCat("--daemon=", daemon_val);
+  args.insert(args.begin(), {"cvd", "create", daemon_str, "--reuse=true"});
+
+  std::vector<char*> args_cstr;
+  args_cstr.reserve(args.size());
+  for (std::string& arg : args) {
+    args_cstr.push_back(arg.data());
+  }
+  args_cstr.push_back(nullptr);
+
+  const std::string cvd_path = CvdPath();
+  execv(cvd_path.c_str(), args_cstr.data());
+  PLOG(FATAL) << "execv(cvd) failed";
+}
+
 int CvdInternalStartMain(int argc, char** argv) {
   LogToStderr();
+
   std::vector<std::string> args(argv + 1, argv + argc);
+  if (!ParentIsCvd()) {
+    ExecCvd(args);
+  }
 
   std::vector<std::string> assemble_args;
   std::string image_dir;
