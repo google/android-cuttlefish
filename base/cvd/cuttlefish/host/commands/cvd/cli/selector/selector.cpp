@@ -184,5 +184,13 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
   return CF_EXPECT(PromptUserForInstance(instance_manager));
 }
 
+Result<std::vector<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>>
+SelectInstances(const InstanceManager& instance_manager,
+                const CommandRequest& request) {
+  const InstanceDatabase::Filter filter =
+      BuildFilterFromSelectors(request.Selectors());
+  return CF_EXPECT(instance_manager.FindInstances(filter));
+}
+
 }  // namespace selector
 }  // namespace cuttlefish

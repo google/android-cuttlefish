@@ -43,5 +43,15 @@ Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
 Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
     const InstanceManager& instance_manager, const CommandRequest& request);
 
+// Selects all instances matching the request's selector options.
+//
+// Returns a vector of pairs, where each pair contains a matching
+// LocalInstanceGroup and a vector of its matching LocalInstance member
+// instances. Unlike SelectInstance, this method does not fail or prompt the
+// user if multiple instances match.
+Result<std::vector<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>>
+SelectInstances(const InstanceManager& instance_manager,
+                const CommandRequest& request);
+
 }  // namespace selector
 }  // namespace cuttlefish
