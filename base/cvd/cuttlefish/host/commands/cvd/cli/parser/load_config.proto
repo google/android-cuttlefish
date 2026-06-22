@@ -104,6 +104,7 @@ message Build {
 
 message Connectivity {
   optional Vsock vsock = 1;
+  optional uint32 modem_simulator_sim_type = 2;
 }
 
 message Vsock {

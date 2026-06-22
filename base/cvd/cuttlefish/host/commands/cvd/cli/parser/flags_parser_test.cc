@@ -473,4 +473,33 @@ TEST(FlagsParserTest, ParseMediaV4l2Proxy) {
       << "media flag is missing or wrongly formatted";
 }
 
+TEST(ConnectivityFlagsParserTest, ParseModemSimulatorSimType) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "connectivity": {
+            "modem_simulator_sim_type": 2
+          }
+        },
+        {
+          "connectivity": {
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  const Result<std::vector<std::string>> serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(FindConfig(*serialized_data, "--modem_simulator_sim_type=2,1"))
+      << "modem_simulator_sim_type flag is missing or wrongly formatted";
+}
+
 }  // namespace cuttlefish
