@@ -19,8 +19,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/transport/channel.h"
 
-namespace cuttlefish {
-namespace transport {
+namespace cuttlefish::transport {
 
 class SharedFdChannel : public Channel {
  public:
@@ -37,5 +36,4 @@ class SharedFdChannel : public Channel {
   Result<void> SendMessage(RawMessage& message, bool response);
 };
 
-}  // namespace transport
-}  // namespace cuttlefish
+}  // namespace cuttlefish::transport

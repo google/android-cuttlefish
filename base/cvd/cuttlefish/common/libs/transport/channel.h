@@ -18,10 +18,9 @@
 
 #include <memory>
 
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_type.h"
 
-namespace cuttlefish {
-namespace transport {
+namespace cuttlefish::transport {
 
 /**
  * RawMessage - Header and raw byte payload for a serialized
@@ -73,5 +72,4 @@ class Channel {
   virtual ~Channel() {}
 };
 
-}  // namespace transport
-}  // namespace cuttlefish
+}  // namespace cuttlefish::transport

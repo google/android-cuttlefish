@@ -4,6 +4,8 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+exports_files([".clang-tidy"])
+
 cf_cc_library(
     name = "transport",
     srcs = [
@@ -16,7 +18,8 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/result",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "//libbase",
         "@abseil-cpp//absl/log",
     ],
