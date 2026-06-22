@@ -49,33 +49,6 @@ struct IdAndPerInstanceName {
   unsigned id;
 };
 
-// The most important thing this function does is turn "INSTANCE_STATE_RUNNING"
-// into "Running". Some external tools (like the host orchestrator) already
-// depend on this string.
-std::string HumanFriendlyStateName(cvd::InstanceState state) {
-  std::string name = cvd::InstanceState_Name(state);
-  // Drop the enum name prefix
-  std::string_view prefix = "INSTANCE_STATE_";
-  if (absl::StartsWith(name, prefix)) {
-    name = name.substr(prefix.size());
-  }
-
-  for (size_t i = 0; i < name.size(); ++i) {
-    // Replace underscores with spaces
-    if (name[i] == '_') {
-      name[i] = ' ';
-      continue;
-    }
-    // All characters but the first of each word should be lowercase
-    bool first = (i == 0 || name[i - 1] == ' ');
-    if (!first) {
-      name[i] = std::tolower(static_cast<unsigned char>(name[i]));
-    }
-  }
-
-  return name;
-}
-
 // Adds more information to the json object returned by cvd_internal_status,
 // including some that cvd_internal_status normally returns but doesn't when the
 // instance is not running.
@@ -197,6 +170,30 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
   OverrideInstanceJson(instance, instance_status_json);
 
   return instance_status_json;
+}
+
+std::string HumanFriendlyStateName(cvd::InstanceState state) {
+  std::string name = cvd::InstanceState_Name(state);
+  // Drop the enum name prefix
+  std::string_view prefix = "INSTANCE_STATE_";
+  if (absl::StartsWith(name, prefix)) {
+    name = name.substr(prefix.size());
+  }
+
+  for (size_t i = 0; i < name.size(); ++i) {
+    // Replace underscores with spaces
+    if (name[i] == '_') {
+      name[i] = ' ';
+      continue;
+    }
+    // All characters but the first of each word should be lowercase
+    bool first = (i == 0 || name[i - 1] == ' ');
+    if (!first) {
+      name[i] = std::tolower(static_cast<unsigned char>(name[i]));
+    }
+  }
+
+  return name;
 }
 
 }  // namespace cuttlefish

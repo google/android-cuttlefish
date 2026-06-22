@@ -32,6 +32,7 @@
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
+#include "cuttlefish/host/commands/cvd/instances/status_fetcher.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -59,8 +60,9 @@ std::string GroupDisplay(const std::vector<LocalInstanceGroup>& groups,
       if (behavior == DisplayBehavior::LabelInstance) {
         fmt::print(result, "[{}] - ", instance_index);
       }
-      fmt::print(result, "{}-{} (id : {})\n", group.GroupName(),
-                 instance.Name(), instance.Id());
+      fmt::print(result, "{}-{} (id : {} | status : {})\n", group.GroupName(),
+                 instance.Name(), instance.Id(),
+                 HumanFriendlyStateName(instance.State()));
 
       instance_index++;
     }
