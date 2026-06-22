@@ -84,7 +84,9 @@ func TestPrintLogs(t *testing.T) {
 		if err != nil {
 			t.Fatal(res.Stderr)
 		}
-		listedNames = append(listedNames, fields[0])
+		names := strings.Split(fields[0], ":")
+		logName := names[len(names) - 1]
+		listedNames = append(listedNames, logName)
 	}
 	keyExpectedNames := []string{
 		// Group-level logs

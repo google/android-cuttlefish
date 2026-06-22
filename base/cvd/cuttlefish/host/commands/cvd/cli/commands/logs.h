@@ -22,6 +22,9 @@ class CvdLogsHandler : public CvdCommandHandler {
   Result<std::vector<Flag>> Flags(const CommandRequest& request) override;
 
  private:
+  Result<void> HandlePrint(const CommandRequest& request);
+  Result<void> HandleList(const CommandRequest& request);
+
   InstanceManager& instance_manager_;
   std::string print_target_flag_;
 };
