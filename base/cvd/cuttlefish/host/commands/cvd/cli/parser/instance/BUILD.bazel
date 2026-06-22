@@ -31,6 +31,7 @@ cf_cc_library(
     srcs = ["cf_connectivity_configs.cpp"],
     hdrs = ["cf_connectivity_configs.h"],
     deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
     ],

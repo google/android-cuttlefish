@@ -38,6 +38,12 @@ enum UserPageSize {
   USER_PAGE_SIZE_64KB = 2;
 }
 
+enum ModemSimulatorSimType {
+  MODEM_SIMULATOR_SIM_TYPE_UNSPECIFIED = 0;
+  MODEM_SIMULATOR_SIM_TYPE_NORMAL = 1;
+  MODEM_SIMULATOR_SIM_TYPE_CTS_CARRIER_API = 2;
+}
+
 message EnvironmentSpecification {
   repeated Instance instances = 1;
   optional Fetch fetch = 2;
@@ -104,6 +110,7 @@ message Build {
 
 message Connectivity {
   optional Vsock vsock = 1;
+  optional ModemSimulatorSimType modem_simulator_sim_type = 2;
 }
 
 message Vsock {
