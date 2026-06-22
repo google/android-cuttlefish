@@ -28,12 +28,12 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/expected.h>
-#include "absl/strings/str_join.h"
-#include <json/value.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "android-base/expected.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -44,7 +44,6 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
 namespace {
 
 std::set<std::string> GetSupportedFlags(const std::string& go_binary_path) {
