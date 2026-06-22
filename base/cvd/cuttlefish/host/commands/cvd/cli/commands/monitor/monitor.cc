@@ -54,7 +54,7 @@ void UpdateFileAndWatch(const SharedFD& inotify_fd, const std::string& path,
     }
   }
   if (fd->IsOpen() && watch == -1) {
-    watch = inotify_fd->InotifyAddWatch(path, IN_MODIFY);
+    watch = inotify_fd->InotifyAddWatch(path, IN_DELETE_SELF | IN_MODIFY);
   }
 }
 
@@ -95,7 +95,8 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
 
   const std::string logs_dir =
       absl::StrCat(instance.InstanceDirectory(), "/logs");
-  const int dir_watch = inotify_fd->InotifyAddWatch(logs_dir, IN_CREATE);
+  const int dir_watch =
+      inotify_fd->InotifyAddWatch(logs_dir, IN_CREATE | IN_DELETE);
 
   int kernel_watch = -1;
   int launcher_watch = -1;
@@ -112,7 +113,8 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
         }
         launcher_fd = SharedFD::Open(launcher_log, O_RDONLY);
         if (launcher_fd->IsOpen()) {
-          launcher_watch = inotify_fd->InotifyAddWatch(launcher_log, IN_MODIFY);
+          launcher_watch = inotify_fd->InotifyAddWatch(
+              launcher_log, IN_DELETE_SELF | IN_MODIFY);
           using_assemble_log = false;
         }
       } else if (!launcher_fd->IsOpen()) {
@@ -120,8 +122,8 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
           launcher_fd = SharedFD::Open(assemble_log, O_RDONLY);
           if (launcher_fd->IsOpen()) {
             if (launcher_watch == -1) {
-              launcher_watch =
-                  inotify_fd->InotifyAddWatch(assemble_log, IN_MODIFY);
+              launcher_watch = inotify_fd->InotifyAddWatch(
+                  assemble_log, IN_DELETE_SELF | IN_MODIFY);
             }
           }
         }
@@ -212,6 +214,29 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
           __attribute__((aligned(__alignof__(struct inotify_event))));
       ssize_t read_res = 0;
       while ((read_res = inotify_fd->Read(buf, sizeof(buf))) > 0) {
+        char* ptr = buf;
+        while (ptr < buf + read_res) {
+          inotify_event* event = reinterpret_cast<inotify_event*>(ptr);
+          if (event->mask & (IN_DELETE | IN_DELETE_SELF | IN_IGNORED)) {
+            using_assemble_log = true;
+            if (launcher_watch != -1) {
+              inotify_fd->InotifyRmWatch(launcher_watch);
+              launcher_watch = -1;
+            }
+            launcher_fd = SharedFD();
+            if (kernel_watch != -1) {
+              inotify_fd->InotifyRmWatch(kernel_watch);
+              kernel_watch = -1;
+            }
+            kernel_fd = SharedFD();
+            if (logcat_watch != -1) {
+              inotify_fd->InotifyRmWatch(logcat_watch);
+              logcat_watch = -1;
+            }
+            logcat_fd = SharedFD();
+          }
+          ptr += sizeof(inotify_event) + event->len;
+        }
       }
       CF_EXPECT(read_res != 0,
                 "Unexpected End-of-File reading inotify descriptor");
