@@ -8,7 +8,6 @@ cf_cc_library(
     name = "cas_downloader",
     srcs = ["cas_downloader.cpp"],
     hdrs = ["cas_downloader.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",

@@ -61,9 +61,8 @@ CasDownloaderFlags::CasDownloaderFlags()
 std::vector<Flag> CasDownloaderFlags::Flags() {
   std::vector<Flag> flags;
 
-  flags.emplace_back(
-      cas_config_filepath.Flag("cas_config_filepath")
-          .Help("Path to the CAS downloader config file."));
+  flags.emplace_back(cas_config_filepath.Flag("cas_config_filepath")
+                         .Help("Path to the CAS downloader config file."));
   flags.emplace_back(
       downloader_path.Flag("cas_downloader_path")
           .Help("Path to the CAS downloader binary. Enables CAS downloading if "
@@ -105,10 +104,9 @@ std::vector<Flag> CasDownloaderFlags::Flags() {
       get_capabilities_timeout.Flag("cas_get_capabilities_timeout")
           .Help("RPC timeout for GetCapabilities in seconds (casdownloader "
                 "flag: get-capabilities-timeout)."));
-  flags.emplace_back(
-      get_tree_timeout.Flag("cas_get_tree_timeout")
-          .Help("RPC timeout for GetTree in seconds "
-                "(casdownloader flag: get-tree-timeout)."));
+  flags.emplace_back(get_tree_timeout.Flag("cas_get_tree_timeout")
+                         .Help("RPC timeout for GetTree in seconds "
+                               "(casdownloader flag: get-tree-timeout)."));
   flags.emplace_back(
       batch_read_blobs_timeout.Flag("cas_batch_read_blobs_timeout")
           .Help("RPC timeout for BatchReadBlobs in seconds (casdownloader "
@@ -118,9 +116,8 @@ std::vector<Flag> CasDownloaderFlags::Flags() {
           .Help("RPC timeout for BatchUpdateBlobs in seconds (casdownloader "
                 "flag: batch-update-blobs-timeout)."));
   flags.emplace_back(
-      version.Flag("version")
-          .Help("Print CAS downloader version information "
-                "(casdownloader flag: version)."));
+      version.Flag("version").Help("Print CAS downloader version information "
+                                   "(casdownloader flag: version)."));
 
   return flags;
 }
