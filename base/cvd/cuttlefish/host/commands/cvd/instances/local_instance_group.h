@@ -77,6 +77,8 @@ class LocalInstanceGroup {
   // Return list of filenames of group-level log files.
   std::vector<std::string> LogsFilenames() const;
 
+  static std::vector<std::string> GroupLogBasenames();
+
   Result<LocalInstance> FindInstanceById(unsigned id) const;
   /**
    * Find by per-instance name.

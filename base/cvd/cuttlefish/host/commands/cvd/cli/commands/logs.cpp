@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
@@ -33,9 +34,12 @@ constexpr char kSummaryHelpText[] = "List and display log files";
 void PrintLogsList(const std::string& group_name,
                    const std::string& instance_name,
                    const std::vector<std::string>& filenames) {
-  for (auto& filename : filenames) {
+  for (const std::string& filename : filenames) {
     std::string basename = android::base::Basename(filename);
-    std::string prefix = group_name + ":" + instance_name + ":" + basename;
+    std::string prefix =
+        instance_name.empty()
+            ? group_name + ":" + basename
+            : group_name + ":" + instance_name + ":" + basename;
     std::cout << prefix;
     std::cout << " ";
     if (isatty(STDOUT_FILENO)) {
@@ -47,6 +51,12 @@ void PrintLogsList(const std::string& group_name,
     std::cout << filename;
     std::cout << std::endl;
   };
+}
+
+bool IsGroupLevelLog(const std::string& log_name) {
+  std::vector<std::string> basenames = LocalInstanceGroup::GroupLogBasenames();
+  return std::find(basenames.begin(), basenames.end(), log_name) !=
+         basenames.end();
 }
 
 std::vector<std::string> RemoveInaccessibleFilenames(
@@ -62,26 +72,6 @@ std::vector<std::string> RemoveInaccessibleFilenames(
   return filenames;
 }
 
-Result<std::vector<std::string>> GetInstanceLogs(
-    const LocalInstance& instance, const LocalInstanceGroup& group) {
-  std::vector<std::string> logs_filenames;
-  auto group_names = RemoveInaccessibleFilenames(group.LogsFilenames());
-  logs_filenames = group_names;
-  auto ins_names =
-      RemoveInaccessibleFilenames(CF_EXPECT(instance.LogsFilenames()));
-  for (auto ins_filename : ins_names) {
-    std::string base = android::base::Basename(ins_filename);
-    auto p = [base](const auto& v) {
-      return base == android::base::Basename(v);
-    };
-    auto it = std::find_if(group_names.begin(), group_names.end(), p);
-    if (it == group_names.end()) {
-      logs_filenames.push_back(ins_filename);
-    }
-  }
-  return logs_filenames;
-}
-
 Result<void> PrintLog(const std::string& filename) {
   const char* exec_name = isatty(STDOUT_FILENO) ? "less" : "cat";
   execlp(exec_name, exec_name, filename.c_str(), nullptr);
@@ -95,42 +85,51 @@ CvdLogsHandler::CvdLogsHandler(InstanceManager& instance_manager)
 
 Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
-  auto flags = CF_EXPECT(Flags(request));
+  std::vector<Flag> flags = CF_EXPECT(Flags(request));
   CF_EXPECT(ConsumeFlags(flags, args, {.fail_on_unexpected_argument = true}));
 
   if (!print_target_flag_.empty()) {
-    auto [instance, group] =
-        CF_EXPECT(selector::SelectInstance(instance_manager_, request),
-                  "Unable to select an instance");
-    auto logs_filenames = CF_EXPECT(GetInstanceLogs(instance, group));
-    for (auto& filename : logs_filenames) {
-      std::string basename = android::base::Basename(filename);
+    CF_EXPECT(HandlePrint(request));
+    return {};
+  }
+  CF_EXPECT(HandleList(request));
+  return {};
+}
+
+Result<void> CvdLogsHandler::HandlePrint(const CommandRequest& request) {
+  if (IsGroupLevelLog(print_target_flag_)) {
+    const LocalInstanceGroup group =
+        CF_EXPECT(selector::SelectGroup(instance_manager_, request));
+    const std::vector<std::string> log_filenames =
+        RemoveInaccessibleFilenames(group.LogsFilenames());
+    for (const std::string& filename : log_filenames) {
+      const std::string basename = android::base::Basename(filename);
       if (basename == print_target_flag_) {
         CF_EXPECT(PrintLog(filename));
         return {};
       }
     }
-    return CF_ERRF("Not found `{}` logs", print_target_flag_);
-  }
-
-  // Listing mode
-  if (request.Selectors().instance_names) {
-    // If instance_names is specified, we must resolve to a single instance.
-    auto [instance, group] =
+  } else {
+    const auto [instance, group] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                   "Unable to select an instance");
-    auto logs_filenames = CF_EXPECT(GetInstanceLogs(instance, group));
-    if (logs_filenames.empty()) {
-      LOG(INFO) << "There are no log files available";
-    } else {
-      PrintLogsList(group.GroupName(), instance.Name(), logs_filenames);
+    const std::vector<std::string> log_filenames =
+        RemoveInaccessibleFilenames(CF_EXPECT(instance.LogsFilenames()));
+    for (const std::string& filename : log_filenames) {
+      const std::string basename = android::base::Basename(filename);
+      if (basename == print_target_flag_) {
+        CF_EXPECT(PrintLog(filename));
+        return {};
+      }
     }
-    return {};
   }
+  return CF_ERRF("Not found `{}` logs", print_target_flag_);
+}
 
-  // Otherwise, list all matching instances.
-  auto found_instances =
-      CF_EXPECT(selector::SelectInstances(instance_manager_, request));
+Result<void> CvdLogsHandler::HandleList(const CommandRequest& request) {
+  const std::vector<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>
+      found_instances =
+          CF_EXPECT(selector::SelectInstances(instance_manager_, request));
 
   if (found_instances.empty()) {
     LOG(INFO) << "There are no log files available";
@@ -138,9 +137,16 @@ Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
   }
 
   for (const auto& [group, instances] : found_instances) {
-    for (const auto& instance : instances) {
-      auto logs_filenames = CF_EXPECT(GetInstanceLogs(instance, group));
-      PrintLogsList(group.GroupName(), instance.Name(), logs_filenames);
+    const std::vector<std::string> group_logs =
+        RemoveInaccessibleFilenames(group.LogsFilenames());
+    PrintLogsList(group.GroupName(), "", group_logs);
+    for (const LocalInstance& instance : instances) {
+      std::vector<std::string> ins_logs =
+          RemoveInaccessibleFilenames(CF_EXPECT(instance.LogsFilenames()));
+      std::erase_if(ins_logs, [](const std::string& path) {
+        return IsGroupLevelLog(android::base::Basename(path));
+      });
+      PrintLogsList(group.GroupName(), instance.Name(), ins_logs);
     }
   }
 
