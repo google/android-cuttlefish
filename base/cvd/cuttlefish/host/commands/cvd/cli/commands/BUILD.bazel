@@ -180,6 +180,23 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "ps",
+    srcs = ["ps.cpp"],
+    hdrs = ["ps.h"],
+    deps = [
+        "//cuttlefish/flag_parser",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:instance_manager",
+        "//cuttlefish/result",
+        "@fmt",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
     name = "host_tool_target",
     srcs = ["host_tool_target.cpp"],
     hdrs = ["host_tool_target.h"],

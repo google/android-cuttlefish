@@ -48,6 +48,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/setup.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/snapshot.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/ps.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/status.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/stop.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/version.h"
@@ -118,6 +119,7 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
   request_handlers_.emplace_back(NewCvdSetupHandler());
   request_handlers_.emplace_back(NewCvdStartCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdStatusCommandHandler(instance_manager));
+  request_handlers_.emplace_back(NewCvdPsCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdVersionHandler());
   request_handlers_.emplace_back(NewCvdLogsHandler(instance_manager));
 }
