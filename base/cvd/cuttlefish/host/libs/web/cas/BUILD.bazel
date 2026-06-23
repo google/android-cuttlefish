@@ -55,7 +55,6 @@ cf_cc_library(
     name = "cas_flags",
     srcs = ["cas_flags.cc"],
     hdrs = ["cas_flags.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/flag_parser",
