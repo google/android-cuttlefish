@@ -148,6 +148,44 @@ setup_rootless_podman() {
     sudo -H -u "$username" podman system migrate
 }
 
+setup_nvidia_gpu() {
+    if ! command -v nvidia-smi >/dev/null 2>&1; then
+        echo "nvidia-smi not found. NVIDIA GPU is likely not available."
+        return 1
+    fi
+    if ! command -v nvidia-ctk >/dev/null 2>&1; then
+        echo "nvidia-ctk not found. Please install nvidia-container-toolkit."
+        return 1
+    fi
+    local VERSION=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -n 1)
+    [ -n "$VERSION" ] || return 1
+    local CDI_CONFIG_PATH=/etc/cdi/nvidia-podcvd.yaml
+    sudo mkdir -p /etc/cdi
+    sudo nvidia-ctk cdi generate --output=$CDI_CONFIG_PATH 2>/dev/null || return 1
+    sudo yq -y '.kind = "android.com/gpu-podcvd"' -i $CDI_CONFIG_PATH 2>/dev/null || return 1
+
+    # Some nvidia libraries were missing from the configuration file created by
+    # executing `nvidia-ctk cdi generate`. This leads an error to launch
+    # Cuttlefish instance with GPU acceleration. (e.g. vulkan) This step is
+    # required to fulfill missing nvidia libraries so that container instance
+    # can have all necessary libraries.
+    for lib in /usr/lib/*-linux-gnu/libnvidia*${VERSION}; do
+        [ -e "$lib" ] || continue
+        if grep -qF "$lib" "$CDI_CONFIG_PATH"; then
+            continue
+        fi
+        sudo yq -y "
+        .containerEdits.mounts += [
+            {
+            \"hostPath\": \"$lib\",
+            \"containerPath\": \"$lib\",
+            \"options\": [\"ro\", \"nosuid\", \"nodev\", \"rbind\", \"rprivate\"]
+            }
+        ]
+        " -i $CDI_CONFIG_PATH || return 1
+    done
+}
+
 USER_CONFIG="/etc/podcvd.users"
 username="${1:-${SUDO_USER:-$(id -un)}}"
 if [ -z "$username" ] || ! id "$username" >/dev/null 2>&1; then
@@ -162,5 +200,7 @@ fi
 setup_cidr
 setup_device_permissions
 setup_rootless_podman
+# This is working only when both nvidia-smi and nvidia-ctk works fine.
+setup_nvidia_gpu || echo "Skipping NVIDIA GPU setup."
 
 echo "Setup complete! You can now run 'podcvd'."
