@@ -17,7 +17,6 @@ package internal
 import (
 	"flag"
 	"fmt"
-	"path/filepath"
 	"strings"
 )
 
@@ -171,11 +170,7 @@ func substituteLoadWithCreateArgs(subcmdArgs []string) ([]string, error) {
 			}
 			continue
 		}
-		absPath, err := filepath.Abs(arg)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get absolute path for %q: %w", arg, err)
-		}
-		subcmdArgs[idx] = "--config_file=" + absPath
+		subcmdArgs[idx] = "--config_file=" + arg
 		return subcmdArgs, nil
 	}
 	return nil, fmt.Errorf("missing config file path for load command")
