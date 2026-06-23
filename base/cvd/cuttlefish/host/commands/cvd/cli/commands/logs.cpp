@@ -14,6 +14,7 @@
 #include "absl/log/log.h"
 #include "android-base/file.h"
 
+#include "cuttlefish/ansi_codes/ansi_codes.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -30,29 +31,6 @@ namespace cuttlefish {
 namespace {
 
 constexpr char kSummaryHelpText[] = "List and display log files";
-
-void PrintLogsList(const std::string& group_name,
-                   const std::string& instance_name,
-                   const std::vector<std::string>& filenames,
-                   const bool pretty) {
-  for (const std::string& filename : filenames) {
-    std::string basename = android::base::Basename(filename);
-    std::string prefix =
-        instance_name.empty()
-            ? group_name + ":" + basename
-            : group_name + ":" + instance_name + ":" + basename;
-    std::cout << prefix;
-    std::cout << " ";
-    if (pretty) {
-      constexpr int kMaxPadding = 30;
-      // Add more spaces for a clear two column view printing to a terminal.
-      std::cout << std::string(std::max(int(kMaxPadding - prefix.length()), 1),
-                               ' ');
-    }
-    std::cout << filename;
-    std::cout << std::endl;
-  };
-}
 
 bool IsGroupLevelLog(const std::string& log_name) {
   std::vector<std::string> basenames = LocalInstanceGroup::GroupLogBasenames();
@@ -73,10 +51,116 @@ std::vector<std::string> RemoveInaccessibleFilenames(
   return filenames;
 }
 
+Result<void> PrintLogsList(
+    const std::vector<std::pair<LocalInstanceGroup,
+                                std::vector<LocalInstance>>>& found_instances) {
+  for (const auto& [group, instances] : found_instances) {
+    const std::vector<std::string> group_logs =
+        RemoveInaccessibleFilenames(group.LogsFilenames());
+    for (const std::string& filename : group_logs) {
+      std::cout << group.GroupName() << ":" << android::base::Basename(filename)
+                << " " << filename << std::endl;
+    }
+    for (const LocalInstance& instance : instances) {
+      std::vector<std::string> ins_logs =
+          RemoveInaccessibleFilenames(CF_EXPECT(instance.LogsFilenames()));
+      for (const std::string& filename : ins_logs) {
+        std::cout << group.GroupName() << ":" << instance.Name() << ":"
+                  << android::base::Basename(filename) << " " << filename
+                  << std::endl;
+      }
+    }
+  }
+  return {};
+}
+
 Result<void> PrintLog(const std::string& filename) {
   const char* exec_name = isatty(STDOUT_FILENO) ? "less" : "cat";
   execlp(exec_name, exec_name, filename.c_str(), nullptr);
   return CF_ERR("execlp failed: " << strerror(errno));
+}
+
+Result<void> PrintLogsTree(
+    const std::vector<std::pair<LocalInstanceGroup,
+                                std::vector<LocalInstance>>>& found_instances) {
+  for (const auto& [group, instances] : found_instances) {
+    std::cout << kAnsiBoldCyan << group.GroupName() << kAnsiReset << std::endl;
+
+    const std::vector<std::string> group_logs =
+        RemoveInaccessibleFilenames(group.LogsFilenames());
+
+    struct InstanceWithLogs {
+      LocalInstance instance;
+      std::vector<std::string> logs;
+    };
+    std::vector<InstanceWithLogs> instances_with_logs;
+    instances_with_logs.reserve(instances.size());
+    for (const LocalInstance& instance : instances) {
+      std::vector<std::string> ins_logs =
+          RemoveInaccessibleFilenames(CF_EXPECT(instance.LogsFilenames()));
+      instances_with_logs.push_back({instance, std::move(ins_logs)});
+    }
+
+    int max_visible_width = 0;
+    for (const std::string& log : group_logs) {
+      const std::string basename = android::base::Basename(log);
+      max_visible_width =
+          std::max(max_visible_width, 4 + (int)basename.length());
+    }
+    for (const InstanceWithLogs& inst : instances_with_logs) {
+      for (const std::string& log : inst.logs) {
+        const std::string basename = android::base::Basename(log);
+        max_visible_width =
+            std::max(max_visible_width, 8 + (int)basename.length());
+      }
+    }
+    const int target_column = std::min(max_visible_width + 4, 30);
+
+    const size_t total_children =
+        group_logs.size() + instances_with_logs.size();
+    size_t child_idx = 0;
+
+    for (size_t i = 0; i < group_logs.size(); ++i, ++child_idx) {
+      const bool is_last_child = (child_idx == total_children - 1);
+      const std::string branch = is_last_child ? "└── " : "├── ";
+      const std::string basename = android::base::Basename(group_logs[i]);
+
+      std::cout << branch;
+      std::cout << basename;
+
+      const int visible_length = 4 + basename.length();
+      const int padding = std::max(target_column - visible_length, 1);
+      std::cout << std::string(padding, ' ');
+      std::cout << kAnsiGrey << group_logs[i] << kAnsiReset << std::endl;
+    }
+
+    for (size_t j = 0; j < instances_with_logs.size(); ++j, ++child_idx) {
+      const bool is_last_child = (child_idx == total_children - 1);
+      const std::string branch = is_last_child ? "└── " : "├── ";
+
+      std::cout << branch;
+      std::cout << kAnsiBoldBlue << instances_with_logs[j].instance.Name()
+                << kAnsiReset << std::endl;
+
+      const std::string inst_prefix = is_last_child ? "    " : "│   ";
+      const std::vector<std::string>& ins_logs = instances_with_logs[j].logs;
+
+      for (size_t k = 0; k < ins_logs.size(); ++k) {
+        const bool is_last_log = (k == ins_logs.size() - 1);
+        const std::string leaf_branch = is_last_log ? "└── " : "├── ";
+        const std::string basename = android::base::Basename(ins_logs[k]);
+
+        std::cout << inst_prefix << leaf_branch;
+        std::cout << basename;
+
+        const int visible_length = 8 + basename.length();
+        const int padding = std::max(target_column - visible_length, 1);
+        std::cout << std::string(padding, ' ');
+        std::cout << kAnsiGrey << ins_logs[k] << kAnsiReset << std::endl;
+      }
+    }
+  }
+  return {};
 }
 
 }  // namespace
@@ -137,18 +221,10 @@ Result<void> CvdLogsHandler::HandleList(const CommandRequest& request) {
     return {};
   }
 
-  for (const auto& [group, instances] : found_instances) {
-    const std::vector<std::string> group_logs =
-        RemoveInaccessibleFilenames(group.LogsFilenames());
-    PrintLogsList(group.GroupName(), "", group_logs, pretty_);
-    for (const LocalInstance& instance : instances) {
-      std::vector<std::string> ins_logs =
-          RemoveInaccessibleFilenames(CF_EXPECT(instance.LogsFilenames()));
-      std::erase_if(ins_logs, [](const std::string& path) {
-        return IsGroupLevelLog(android::base::Basename(path));
-      });
-      PrintLogsList(group.GroupName(), instance.Name(), ins_logs, pretty_);
-    }
+  if (pretty_) {
+    CF_EXPECT(PrintLogsTree(found_instances));
+  } else {
+    CF_EXPECT(PrintLogsList(found_instances));
   }
 
   return {};
