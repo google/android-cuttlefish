@@ -17,7 +17,6 @@ package orchestrator
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
@@ -36,8 +35,6 @@ func (s EmptyFieldError) Error() string {
 }
 
 type IMPaths struct {
-	RootDir             string
-	InstancesDir        string
 	CVDBugReportsDir    string
 	SnapshotsRootDir    string
 	ImageDirectoriesDir string
@@ -96,90 +93,6 @@ func CVDLogsDir(ctx hoexec.ExecContext, groupName, name string) (string, error) 
 		return "", operator.NewNotFoundError(fmt.Sprintf("Instance %q not found", name), nil)
 	}
 	return ins.InstanceDir() + "/logs", nil
-}
-
-type fetchCVDCommandArtifactsFetcher struct {
-	execContext      hoexec.ExecContext
-	fetchCredentials cvd.FetchCredentials
-	buildAPIBaseURL  string
-}
-
-type ExtraCVDOptions struct {
-	KernelBuild      cvd.AndroidBuild
-	BootloaderBuild  cvd.AndroidBuild
-	SystemImageBuild cvd.AndroidBuild
-}
-
-type CVDBundleFetcher interface {
-	// Fetches artifacts to launch a Cuttlefish device
-	Fetch(outDir string, mainBuild cvd.AndroidBuild, opts ExtraCVDOptions) error
-}
-
-func newFetchCVDCommandArtifactsFetcher(
-	execContext hoexec.ExecContext, fetchCredentials cvd.FetchCredentials, buildAPIBaseURL string) *fetchCVDCommandArtifactsFetcher {
-	return &fetchCVDCommandArtifactsFetcher{
-		execContext:      execContext,
-		fetchCredentials: fetchCredentials,
-		buildAPIBaseURL:  buildAPIBaseURL,
-	}
-}
-
-// The artifacts directory gets created during the execution of `fetch_cvd` granting access to the cvdnetwork group
-// which translated to granting the necessary permissions to the cvd executor user.
-func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir string, mainBuild cvd.AndroidBuild, opts ExtraCVDOptions) error {
-	fetchOpts := cvd.FetchOpts{
-		BuildAPIBaseURL:  f.buildAPIBaseURL,
-		Credentials:      f.fetchCredentials,
-		KernelBuild:      opts.KernelBuild,
-		BootloaderBuild:  opts.BootloaderBuild,
-		SystemImageBuild: opts.SystemImageBuild,
-	}
-	cvdCLI := cvd.NewCLI(f.execContext)
-	return cvdCLI.Fetch(mainBuild, outDir, fetchOpts)
-}
-
-const (
-	// TODO(b/242599859): Add report_anonymous_usage_stats as a parameter to the Create CVD API.
-	reportAnonymousUsageStats = true
-	groupName                 = "cvd"
-)
-
-type startCVDParams struct {
-	InstanceCount    uint32
-	MainArtifactsDir string
-	// OPTIONAL. If set, kernel relevant artifacts will be pulled from this dir.
-	KernelDir string
-	// OPTIONAL. If set, bootloader relevant artifacts will be pulled from this dir.
-	BootloaderDir string
-}
-
-func CreateCVD(ctx hoexec.ExecContext, p startCVDParams) (*cvd.Group, error) {
-	createOpts := cvd.CreateOptions{
-		HostPath:    p.MainArtifactsDir,
-		ProductPath: p.MainArtifactsDir,
-	}
-	createOpts.InstanceCount = p.InstanceCount
-
-	startOpts := cvd.StartOptions{
-		ReportUsageStats: reportAnonymousUsageStats,
-	}
-	if p.KernelDir != "" {
-		startOpts.KernelImage = fmt.Sprintf("%s/bzImage", p.KernelDir)
-		initramfs := filepath.Join(p.KernelDir, "initramfs.img")
-		if exist, _ := fileExist(initramfs); exist {
-			startOpts.InitramfsImage = initramfs
-		}
-	}
-	if p.BootloaderDir != "" {
-		startOpts.BootloaderRom = fmt.Sprintf("%s/u-boot.rom", p.BootloaderDir)
-	}
-
-	cvdCLI := cvd.NewCLI(ctx)
-	group, err := cvdCLI.Create(cvd.GroupSelector{Name: groupName}, createOpts, startOpts)
-	if err != nil {
-		return nil, fmt.Errorf("launch cvd stage failed: %w", err)
-	}
-	return group, nil
 }
 
 // Fails if the directory already exists.

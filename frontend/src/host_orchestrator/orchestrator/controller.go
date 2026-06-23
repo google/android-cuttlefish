@@ -211,15 +211,12 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
 	creds := getFetchCredentials(h.Config.BuildAPICredentials, r)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, creds, h.Config.AndroidBuildServiceURL)
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
 		Paths:                    h.Config.Paths,
 		OperationManager:         h.OM,
 		ExecContext:              exec.CommandContext,
-		CVDBundleFetcher:         cvdBundleFetcher,
-		UUIDGen:                  func() string { return uuid.New().String() },
 		UserArtifactsDirResolver: h.UADirResolver,
 		FetchCredentials:         creds,
 		BuildAPIBaseURL:          h.Config.AndroidBuildServiceURL,
