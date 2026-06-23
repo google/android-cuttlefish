@@ -238,6 +238,7 @@ cf_cc_library(
     srcs = ["logs.cpp"],
     hdrs = ["logs.h"],
     deps = [
+        "//cuttlefish/ansi_codes",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:help_format",
