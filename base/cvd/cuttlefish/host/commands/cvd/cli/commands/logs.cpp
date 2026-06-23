@@ -184,30 +184,23 @@ Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
 }
 
 Result<void> CvdLogsHandler::HandlePrint(const CommandRequest& request) {
+  std::vector<std::string> log_filenames;
   if (IsGroupLevelLog(print_target_flag_)) {
     const LocalInstanceGroup group =
         CF_EXPECT(selector::SelectGroup(instance_manager_, request));
-    const std::vector<std::string> log_filenames =
-        RemoveInaccessibleFilenames(group.LogsFilenames());
-    for (const std::string& filename : log_filenames) {
-      const std::string basename = android::base::Basename(filename);
-      if (basename == print_target_flag_) {
-        CF_EXPECT(PrintLog(filename, pager_));
-        return {};
-      }
-    }
+    log_filenames = group.LogsFilenames();
   } else {
     const auto [instance, group] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                   "Unable to select an instance");
-    const std::vector<std::string> log_filenames =
-        RemoveInaccessibleFilenames(CF_EXPECT(instance.LogsFilenames()));
-    for (const std::string& filename : log_filenames) {
-      const std::string basename = android::base::Basename(filename);
-      if (basename == print_target_flag_) {
-        CF_EXPECT(PrintLog(filename, pager_));
-        return {};
-      }
+    log_filenames = CF_EXPECT(instance.LogsFilenames());
+  }
+  log_filenames = RemoveInaccessibleFilenames(std::move(log_filenames));
+  for (const std::string& filename : log_filenames) {
+    const std::string basename = android::base::Basename(filename);
+    if (basename == print_target_flag_) {
+      CF_EXPECT(PrintLog(filename, pager_));
+      return {};
     }
   }
   return CF_ERRF("Not found `{}` logs", print_target_flag_);
