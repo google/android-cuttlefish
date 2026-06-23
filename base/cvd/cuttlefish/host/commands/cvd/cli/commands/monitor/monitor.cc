@@ -34,9 +34,9 @@
 
 #include "absl/strings/str_cat.h"
 
+#include "cuttlefish/ansi_codes/ansi_codes.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor/ansi_codes.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/display.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"

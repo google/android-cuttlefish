@@ -5,15 +5,6 @@ package(
 )
 
 cf_cc_library(
-    name = "ansi_codes",
-    srcs = ["ansi_codes.cc"],
-    hdrs = ["ansi_codes.h"],
-    deps = [
-        "@abseil-cpp//absl/strings",
-    ],
-)
-
-cf_cc_library(
     name = "command_handler",
     srcs = ["command_handler.cc"],
     hdrs = ["command_handler.h"],
@@ -69,7 +60,7 @@ cf_cc_library(
     srcs = ["kernel.cc"],
     hdrs = ["kernel.h"],
     deps = [
-        ":ansi_codes",
+        "//cuttlefish/ansi_codes",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],
@@ -89,8 +80,8 @@ cf_cc_library(
     srcs = ["launcher.cc"],
     hdrs = ["launcher.h"],
     deps = [
-        ":ansi_codes",
         ":verbosity",
+        "//cuttlefish/ansi_codes",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],
@@ -110,8 +101,8 @@ cf_cc_library(
     srcs = ["log_tee.cc"],
     hdrs = ["log_tee.h"],
     deps = [
-        ":ansi_codes",
         ":verbosity",
+        "//cuttlefish/ansi_codes",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],
@@ -131,8 +122,8 @@ cf_cc_library(
     srcs = ["logcat.cc"],
     hdrs = ["logcat.h"],
     deps = [
-        ":ansi_codes",
         ":verbosity",
+        "//cuttlefish/ansi_codes",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],
@@ -152,8 +143,8 @@ cf_cc_library(
     srcs = ["monitor.cc"],
     hdrs = ["monitor.h"],
     deps = [
-        ":ansi_codes",
         ":display",
+        "//cuttlefish/ansi_codes",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/cvd/cli:utils",
@@ -169,7 +160,7 @@ cf_cc_library(
     srcs = ["truncate.cc"],
     hdrs = ["truncate.h"],
     deps = [
-        ":ansi_codes",
+        "//cuttlefish/ansi_codes",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -178,8 +169,8 @@ cf_cc_test(
     name = "truncate_test",
     srcs = ["truncate_test.cc"],
     deps = [
-        ":ansi_codes",
         ":truncate",
+        "//cuttlefish/ansi_codes",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -189,6 +180,6 @@ cf_cc_library(
     srcs = ["verbosity.cc"],
     hdrs = ["verbosity.h"],
     deps = [
-        ":ansi_codes",
+        "//cuttlefish/ansi_codes",
     ],
 )

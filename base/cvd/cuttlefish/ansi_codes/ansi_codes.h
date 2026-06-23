@@ -28,6 +28,9 @@ inline constexpr std::string_view kAnsiGreen = "\033[0;32m";
 inline constexpr std::string_view kAnsiYellow = "\033[0;33m";
 inline constexpr std::string_view kAnsiCyan = "\033[0;36m";
 inline constexpr std::string_view kAnsiWhite = "\033[0;37m";
+inline constexpr std::string_view kAnsiBoldCyan = "\033[1;36m";
+inline constexpr std::string_view kAnsiBoldBlue = "\033[1;34m";
+inline constexpr std::string_view kAnsiGrey = "\033[90m";
 inline constexpr std::string_view kAnsiClearScreenAfterCursor = "\033[J";
 
 // CSI final bytes are in the range 0x40–0x7E (ASCII @ to ~).
