@@ -15,6 +15,7 @@ Depends: acl,
          android-sdk-platform-tools-common,
          crun,
          podman (>= 4.4),
+         yq,
 Pre-Depends: ${misc:Pre-Depends}
 Description: Cuttlefish Android Virtual Device companion package
  Contains a binary named 'podcvd' needed to launch Cuttlefish Android
