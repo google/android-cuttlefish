@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor/ansi_codes.h"
+#include "cuttlefish/ansi_codes/ansi_codes.h"
 
 #include <string>
 
