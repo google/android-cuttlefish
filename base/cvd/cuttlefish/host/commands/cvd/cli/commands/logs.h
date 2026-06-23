@@ -27,6 +27,7 @@ class CvdLogsHandler : public CvdCommandHandler {
 
   InstanceManager& instance_manager_;
   std::string print_target_flag_;
+  bool pretty_;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdLogsHandler(

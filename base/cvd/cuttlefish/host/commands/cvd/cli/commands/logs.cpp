@@ -33,7 +33,8 @@ constexpr char kSummaryHelpText[] = "List and display log files";
 
 void PrintLogsList(const std::string& group_name,
                    const std::string& instance_name,
-                   const std::vector<std::string>& filenames) {
+                   const std::vector<std::string>& filenames,
+                   const bool pretty) {
   for (const std::string& filename : filenames) {
     std::string basename = android::base::Basename(filename);
     std::string prefix =
@@ -42,7 +43,7 @@ void PrintLogsList(const std::string& group_name,
             : group_name + ":" + instance_name + ":" + basename;
     std::cout << prefix;
     std::cout << " ";
-    if (isatty(STDOUT_FILENO)) {
+    if (pretty) {
       constexpr int kMaxPadding = 30;
       // Add more spaces for a clear two column view printing to a terminal.
       std::cout << std::string(std::max(int(kMaxPadding - prefix.length()), 1),
@@ -81,7 +82,7 @@ Result<void> PrintLog(const std::string& filename) {
 }  // namespace
 
 CvdLogsHandler::CvdLogsHandler(InstanceManager& instance_manager)
-    : instance_manager_(instance_manager) {}
+    : instance_manager_(instance_manager), pretty_(isatty(STDOUT_FILENO)) {}
 
 Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
@@ -139,14 +140,14 @@ Result<void> CvdLogsHandler::HandleList(const CommandRequest& request) {
   for (const auto& [group, instances] : found_instances) {
     const std::vector<std::string> group_logs =
         RemoveInaccessibleFilenames(group.LogsFilenames());
-    PrintLogsList(group.GroupName(), "", group_logs);
+    PrintLogsList(group.GroupName(), "", group_logs, pretty_);
     for (const LocalInstance& instance : instances) {
       std::vector<std::string> ins_logs =
           RemoveInaccessibleFilenames(CF_EXPECT(instance.LogsFilenames()));
       std::erase_if(ins_logs, [](const std::string& path) {
         return IsGroupLevelLog(android::base::Basename(path));
       });
-      PrintLogsList(group.GroupName(), instance.Name(), ins_logs);
+      PrintLogsList(group.GroupName(), instance.Name(), ins_logs, pretty_);
     }
   }
 
@@ -171,6 +172,9 @@ Result<std::vector<Flag>> CvdLogsHandler::Flags(const CommandRequest&) {
           .ValueNameHint("LOGFILE")
           .Alias("p")
           .Help("Log file name to print"),
+      GflagsCompatFlag("pretty", pretty_)
+          .Help("Stylize output for human readability. The default when "
+                "output is a terminal."),
   };
 }
 
