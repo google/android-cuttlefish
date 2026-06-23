@@ -56,13 +56,20 @@ class Chip {
  public:
   SharedFD fd_in;
   SharedFD fd_out;
+  int sim_type = 1;
 
   Chip(std::string kind) : kind_(kind) {}
 
   // Append the chip information as Json to the command.
   void Append(Command& c) const {
     c.AppendToLastParameter(R"({"kind":")", kind_, R"(","fdIn":)", fd_in,
-                            R"(,"fdOut":)", fd_out, "}");
+                            R"(,"fdOut":)", fd_out);
+    if (kind_ == "CELLULAR") {
+      // simType is defined as int32 in netsim's startup.proto, so do not quote
+      // it.
+      c.AppendToLastParameter(R"(,"simType":)", std::to_string(sim_type));
+    }
+    c.AppendToLastParameter("}");
   }
 
  private:
@@ -205,6 +212,14 @@ class NetsimServer : public CommandSource {
         Chip chip("NFC");
         chip.fd_in = CF_EXPECT(MakeFifo(instance, "nfc_fifo_vm.in"));
         chip.fd_out = CF_EXPECT(MakeFifo(instance, "nfc_fifo_vm.out"));
+        device.chips.emplace_back(chip);
+      }
+      // Add modem chip if enabled
+      if (config_.netsim_radio_enabled(CuttlefishConfig::NetsimRadio::Modem)) {
+        Chip chip("CELLULAR");
+        chip.fd_in = CF_EXPECT(MakeFifo(instance, "modem_fifo_vm.in"));
+        chip.fd_out = CF_EXPECT(MakeFifo(instance, "modem_fifo_vm.out"));
+        chip.sim_type = instance.modem_simulator_sim_type();
         device.chips.emplace_back(chip);
       }
       // Add other chips if enabled

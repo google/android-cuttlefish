@@ -21,10 +21,10 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -156,8 +156,10 @@ Result<void> ValidateBoardBootconfigKeys(
 Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    const std::map<std::string, std::string, std::less<void>> builtin_bootconfig_args) {
-  CF_EXPECT(ValidateBoardBootconfigKeys(instance.device_type(), builtin_bootconfig_args));
+    const std::map<std::string, std::string, std::less<void>>
+        builtin_bootconfig_args) {
+  CF_EXPECT(ValidateBoardBootconfigKeys(instance.device_type(),
+                                        builtin_bootconfig_args));
 
   std::unordered_map<std::string, std::string> bootconfig_args;
 
@@ -235,6 +237,10 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
       !instance.modem_simulator_ports().empty()) {
     bootconfig_args["androidboot.modem_simulator_ports"] =
         instance.modem_simulator_ports();
+  }
+
+  if (instance.enable_modem_netsim()) {
+    bootconfig_args["androidboot.netsim_modem"] = "1";
   }
 
   // Once all Cuttlefish kernel versions are at least 5.15, filename encryption
@@ -331,7 +337,8 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     bootconfig_args["androidboot.wifi_impl"] = "virt_wifi";
   }
 
-  if (!builtin_bootconfig_args.count("androidboot.vendor.apex.com.google.emulated.camera.provider.hal")){
+  if (!builtin_bootconfig_args.count(
+          "androidboot.vendor.apex.com.google.emulated.camera.provider.hal")) {
     bootconfig_args
         ["androidboot.vendor.apex.com.google.emulated.camera.provider.hal"] =
             // Camera configs is only populated for virtio-media host camera
@@ -343,9 +350,11 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   }
 
   if (instance.device_type() == cuttlefish::DeviceType::Auto) {
-    if (!builtin_bootconfig_args.count("androidboot.cuttlefish_service_bluetooth_checker")) {
+    if (!builtin_bootconfig_args.count(
+            "androidboot.cuttlefish_service_bluetooth_checker")) {
       // # TODO (b/405655265) Remove once the BT issue is fixed
-      bootconfig_args["androidboot.cuttlefish_service_bluetooth_checker"] = "false";
+      bootconfig_args["androidboot.cuttlefish_service_bluetooth_checker"] =
+          "false";
     }
   }
 

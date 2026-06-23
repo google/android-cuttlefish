@@ -161,6 +161,7 @@ class CuttlefishConfig {
     Wifi = 0b00000010,
     Uwb = 0b00000100,
     Nfc = 0b00001000,
+    Modem = 0b00010000,
   };
 
   void netsim_radio_enable(NetsimRadio flag);
@@ -384,6 +385,7 @@ class CuttlefishConfig {
 
     // modem simulator related
     std::string modem_simulator_ports() const;
+    bool enable_modem_netsim() const;
 
     // The device id the webrtc process should use to register with the
     // signaling server
@@ -646,6 +648,7 @@ class CuttlefishConfig {
     void set_environment_name(const std::string& env_name);
     // modem simulator related
     void set_modem_simulator_ports(const std::string& modem_simulator_ports);
+    void set_enable_modem_netsim(bool enable);
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
     void set_webrtc_device_id(const std::string& id);
     void set_start_rootcanal(bool start);

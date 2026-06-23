@@ -486,9 +486,15 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> netsim_nfc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_nfc));
   bool any_netsim_nfc = std::any_of(
       netsim_nfc_vec.begin(), netsim_nfc_vec.end(), [](bool e) { return e; });
+  std::vector<bool> netsim_modem_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_modem));
+  bool any_netsim_modem =
+      std::any_of(netsim_modem_vec.begin(), netsim_modem_vec.end(),
+                  [](bool e) { return e; });
   bool netsim_has_bt = any_netsim_all_radios || any_netsim_bt;
   bool netsim_has_uwb = any_netsim_all_radios || any_netsim_uwb;
   bool netsim_has_nfc = any_netsim_all_radios || any_netsim_nfc;
+  bool netsim_has_modem = any_netsim_all_radios || any_netsim_modem;
 
   // These flags inform NetsimServer::ResultSetup which radios it owns.
   if (netsim_has_bt) {
@@ -500,6 +506,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   }
   if (netsim_has_nfc) {
     tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Nfc);
+  }
+  if (netsim_has_modem) {
+    tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Modem);
   }
 
   bool any_not_netsim_bt = false;
@@ -1034,9 +1043,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         guest_enforce_security_values.ForIndex(instance_index));
     instance.set_pause_in_bootloader(pause_in_bootloader_vec[instance_index]);
     instance.set_run_as_daemon(daemon_values.ForIndex(instance_index));
+    bool is_netsim_all = netsim_all_radios_vec[instance_index];
+    bool is_modem_netsim = is_netsim_all || netsim_modem_vec[instance_index];
     instance.set_enable_modem_simulator(
         enable_modem_simulator_vec[instance_index] &&
-        !enable_minimal_mode_vec[instance_index]);
+        !enable_minimal_mode_vec[instance_index] && !is_modem_netsim);
+    instance.set_enable_modem_netsim(is_modem_netsim);
     instance.set_modem_simulator_instance_number(
         modem_simulator_count_vec[instance_index]);
     instance.set_modem_simulator_sim_type(
@@ -1079,7 +1091,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     // crosvm should create fifos for Bluetooth
     bool enable_host_bluetooth = enable_host_bluetooth_vec[instance_index];
-    bool is_netsim_all = netsim_all_radios_vec[instance_index];
     bool is_bt_netsim = is_netsim_all || netsim_bt_vec[instance_index];
     // or is_bt_netsim is here for backwards compatibility only
     instance.set_has_bluetooth(enable_host_bluetooth || is_bt_netsim);
@@ -1091,8 +1102,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // netsim has its own connector for uwb
     instance.set_enable_host_uwb_connector(FLAGS_enable_host_uwb &&
                                            !is_uwb_netsim);
-
-    bool is_any_netsim = is_netsim_all || is_bt_netsim || is_uwb_netsim;
 
     instance.set_uuid(uuid_vec[instance_index]);
 
@@ -1284,7 +1293,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto port = 8443 + num - 1;
     // Change the signaling server port for all instances
     tmp_config_obj.set_sig_server_proxy_port(port);
-    instance.set_start_netsim(is_first_instance && is_any_netsim);
+    instance.set_start_netsim(is_first_instance &&
+                              (netsim_has_bt || netsim_has_uwb ||
+                               netsim_has_nfc || netsim_has_modem));
 
     instance.set_start_rootcanal(is_first_instance && any_not_netsim_bt &&
                                  (FLAGS_rootcanal_instance_num <= 0));
