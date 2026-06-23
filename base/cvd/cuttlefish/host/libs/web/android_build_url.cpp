@@ -22,15 +22,14 @@
 #include <utility>
 #include <vector>
 
-#include <fmt/core.h>
-#include <fmt/format.h>
-#include <fmt/ostream.h>
-#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
+#include "fmt/core.h"
+#include "fmt/format.h"
+#include "fmt/ostream.h"
+#include "fmt/ranges.h"
 
 #include "cuttlefish/host/libs/web/http_client/url_escape.h"
 
 namespace cuttlefish {
-
 namespace {
 
 class UrlBuilder {
@@ -165,7 +164,7 @@ std::string AndroidBuildUrl::GetArtifactUrl(
     std::string_view page_token) {
   UrlBuilder builder =
       UrlBuilder::GetArtifactBaseUrl(api_base_url_, id, target);
-  builder.AddQueryParameter("pageSize", "100"); // maximum value allowed by API
+  builder.AddQueryParameter("pageSize", "100");  // maximum value allowed by API
   if (!artifact_filenames.empty()) {
     builder.AddQueryParameter("nameRegexp",
                               BuildNameRegexp(artifact_filenames));

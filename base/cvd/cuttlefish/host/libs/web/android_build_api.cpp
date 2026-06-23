@@ -31,10 +31,10 @@
 #include <variant>
 #include <vector>
 
-#include <json/value.h>
 #include "absl/log/log.h"
+#include "android-base/file.h"
+#include "json/value.h"
 
-#include <android-base/file.h>
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -147,7 +147,6 @@ Result<std::string> AndroidBuildApi::DownloadFile(
             "Target " << build << " did not contain " << artifact_name);
   return DownloadTargetFile(build, target_directory, artifact_name);
 }
-
 
 Result<SeekableZipSource> AndroidBuildApi::FileReader(
     const Build& build, const std::string& artifact_name) {
@@ -350,14 +349,14 @@ Result<std::string> AndroidBuildApi::GetArtifactDownloadUrl(
     const DeviceBuild& build, const std::string& artifact) {
   const std::string download_url_endpoint =
       android_build_url_.GetArtifactDownloadUrl(build.id, build.target,
-                                                 artifact);
+                                                artifact);
   auto response = CF_EXPECT(
       HttpGetToJson(http_client_, download_url_endpoint, CF_EXPECT(Headers())));
   const Json::Value json =
       CF_EXPECTF(GetResponseJson(response, /* allow redirect response */ true),
                  "Error fetching download URL for \"{}\" from build ID \"{}\"",
                  artifact, build.id);
-  return CF_EXPECT(GetValue<std::string>(json, { "signedUrl" }));
+  return CF_EXPECT(GetValue<std::string>(json, {"signedUrl"}));
 }
 
 Result<void> AndroidBuildApi::ArtifactToFile(const DeviceBuild& build,
