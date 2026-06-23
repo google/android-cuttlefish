@@ -28,6 +28,7 @@ class CvdLogsHandler : public CvdCommandHandler {
   InstanceManager& instance_manager_;
   std::string print_target_flag_;
   bool pretty_;
+  bool pager_;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdLogsHandler(

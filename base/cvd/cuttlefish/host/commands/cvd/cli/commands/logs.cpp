@@ -74,8 +74,8 @@ Result<void> PrintLogsList(
   return {};
 }
 
-Result<void> PrintLog(const std::string& filename) {
-  const char* exec_name = isatty(STDOUT_FILENO) ? "less" : "cat";
+Result<void> PrintLog(const std::string& filename, const bool use_pager) {
+  const char* exec_name = use_pager ? "less" : "cat";
   execlp(exec_name, exec_name, filename.c_str(), nullptr);
   return CF_ERR("execlp failed: " << strerror(errno));
 }
@@ -166,7 +166,9 @@ Result<void> PrintLogsTree(
 }  // namespace
 
 CvdLogsHandler::CvdLogsHandler(InstanceManager& instance_manager)
-    : instance_manager_(instance_manager), pretty_(isatty(STDOUT_FILENO)) {}
+    : instance_manager_(instance_manager),
+      pretty_(isatty(STDOUT_FILENO)),
+      pager_(isatty(STDOUT_FILENO)) {}
 
 Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
@@ -190,7 +192,7 @@ Result<void> CvdLogsHandler::HandlePrint(const CommandRequest& request) {
     for (const std::string& filename : log_filenames) {
       const std::string basename = android::base::Basename(filename);
       if (basename == print_target_flag_) {
-        CF_EXPECT(PrintLog(filename));
+        CF_EXPECT(PrintLog(filename, pager_));
         return {};
       }
     }
@@ -203,7 +205,7 @@ Result<void> CvdLogsHandler::HandlePrint(const CommandRequest& request) {
     for (const std::string& filename : log_filenames) {
       const std::string basename = android::base::Basename(filename);
       if (basename == print_target_flag_) {
-        CF_EXPECT(PrintLog(filename));
+        CF_EXPECT(PrintLog(filename, pager_));
         return {};
       }
     }
@@ -284,6 +286,10 @@ std::vector<HelpParagraph> CvdLogsHandler::Description() const {
     $ cvd logs -p launcher.log)"),
 
       HelpParagraph::Raw(
+          R"(  Print the launcher.log file without a pager:
+    $ cvd logs -p launcher.log --nopager)"),
+
+      HelpParagraph::Raw(
           R"(  Print the kernel.log for a specific instance 'cvd-2' in group 'mygroup':
     $ cvd -group_name mygroup -instance_name cvd-2 logs -p kernel.log)"),
   };
@@ -298,6 +304,9 @@ Result<std::vector<Flag>> CvdLogsHandler::Flags(const CommandRequest&) {
                 "needed, ex: 'launcher.log'."),
       GflagsCompatFlag("pretty", pretty_)
           .Help("Stylize output for human readability. The default when output "
+                "is a terminal."),
+      GflagsCompatFlag("pager", pager_)
+          .Help("Use a pager when printing log files. The default when output "
                 "is a terminal."),
   };
 }
