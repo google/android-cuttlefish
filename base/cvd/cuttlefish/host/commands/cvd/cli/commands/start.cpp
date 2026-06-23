@@ -39,6 +39,7 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "fmt/core.h"
@@ -73,6 +74,7 @@
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
@@ -455,6 +457,13 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   Result<void> monitor_res;
 
   if (!own_flags_.daemon) {
+    const LocalInstance& instance = *group.Instances().begin();
+    const std::string assemble_log =
+        absl::StrCat(instance.AssemblyDirectory(), "/", kLogNameAssembleCvd);
+    Result<void> unused = RemoveFile(assemble_log);
+    for (const auto& log : CF_EXPECT(instance.LogsFilenames())) {
+      Result<void> unused = RemoveFile(log);
+    }
     monitor_thread = std::thread([&group, stop_eventfd, &monitor_res]() {
       const LocalInstance& first_instance = *group.Instances().begin();
       monitor_res = MonitorLogs(first_instance, stop_eventfd);

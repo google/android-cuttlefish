@@ -296,7 +296,8 @@ CvdCreateCommandHandler::FindReusableGroup(
   if (groups.empty()) {
     return std::nullopt;
   }
-  CF_EXPECT_EQ(groups.size(), 1, "Unclear which group to reuse");
+  CF_EXPECT_EQ(groups.size(), 1,
+               "Unclear which group to reuse, try `cvd reset -y`");
 
   auto target_host_it = envs.find(kAndroidHostOut);
   CF_EXPECT(target_host_it != envs.end());
