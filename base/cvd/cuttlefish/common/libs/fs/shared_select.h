@@ -43,25 +43,15 @@ class SharedFDSet {
   const_iterator begin() const { return value_.begin(); }
   const_iterator end() const { return value_.end(); }
 
-  void swap(SharedFDSet* rhs) {
-    value_.swap(rhs->value_);
-  }
+  void swap(SharedFDSet* rhs) { value_.swap(rhs->value_); }
 
-  void Clr(const SharedFD& in) {
-    value_.erase(in);
-  }
+  void Clr(const SharedFD& in) { value_.erase(in); }
 
-  bool IsSet(const SharedFD& in) const {
-    return value_.count(in) != 0;
-  }
+  bool IsSet(const SharedFD& in) const { return value_.count(in) != 0; }
 
-  void Set(const SharedFD& in) {
-    value_.insert(in);
-  }
+  void Set(const SharedFD& in) { value_.insert(in); }
 
-  void Zero() {
-    value_.clear();
-  }
+  void Zero() { value_.clear(); }
 
  private:
   std::set<SharedFD> value_;
@@ -70,8 +60,8 @@ class SharedFDSet {
 /**
  * SharedFD version of select.
  *
- * read_set, write_set, and timeout are in/out parameters. This caller should keep
- * a copy of the original values if it wants to preserve them.
+ * read_set, write_set, and timeout are in/out parameters. This caller should
+ * keep a copy of the original values if it wants to preserve them.
  */
 int Select(SharedFDSet* read_set, SharedFDSet* write_set,
            SharedFDSet* error_set, struct timeval* timeout);

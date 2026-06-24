@@ -28,7 +28,6 @@ cf_cc_library(
         "shared_fd.h",
         "shared_select.h",
     ],
-    clang_format_enabled = False,
     linkopts = select({
         "@platforms//os:linux": ["-lrt"],
         "//conditions:default": [],

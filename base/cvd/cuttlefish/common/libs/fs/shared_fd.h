@@ -20,9 +20,13 @@
 #define CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 
 #ifdef __linux__
+#include <linux/vm_sockets.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 #endif
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
 #include <sys/inotify.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -33,6 +37,8 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/un.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include <chrono>
 #include <compare>
@@ -42,17 +48,7 @@
 #include <utility>
 #include <vector>
 
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <termios.h>
-#include <unistd.h>
-
-#include <android-base/cmsg.h>
-
-#ifdef __linux__
-#include <linux/vm_sockets.h>
-#endif
+#include "android-base/cmsg.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -129,6 +125,7 @@ struct VsockCid;
 class SharedFD {
   // Give WeakFD access to the underlying shared_ptr.
   friend class WeakFD;
+
  public:
   inline SharedFD();
   SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) {}
@@ -155,7 +152,9 @@ class SharedFD {
   static SharedFD ShmOpen(const std::string& name, int oflag, int mode);
 #endif
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
-  static SharedFD MemfdCreateWithData(const std::string& name, const std::string& data, unsigned int flags = 0);
+  static SharedFD MemfdCreateWithData(const std::string& name,
+                                      const std::string& data,
+                                      unsigned int flags = 0);
   static SharedFD Mkstemp(std::string* path);
   static Result<std::pair<SharedFD, std::string>> Mkostemp(
       std::string_view path, int flags = O_CLOEXEC);
@@ -171,10 +170,12 @@ class SharedFD {
   static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
                                     int in_type, int timeout_seconds);
   static SharedFD SocketLocalClient(int port, int type);
-  static SharedFD SocketClient(const std::string& host, int port,
-                               int type, std::chrono::seconds timeout = std::chrono::seconds(0));
-  static SharedFD Socket6Client(const std::string& host, const std::string& interface, int port,
-                                int type, std::chrono::seconds timeout = std::chrono::seconds(0));
+  static SharedFD SocketClient(
+      const std::string& host, int port, int type,
+      std::chrono::seconds timeout = std::chrono::seconds(0));
+  static SharedFD Socket6Client(
+      const std::string& host, const std::string& interface, int port, int type,
+      std::chrono::seconds timeout = std::chrono::seconds(0));
   static SharedFD SocketLocalServer(const std::string& name, bool is_abstract,
                                     int in_type, mode_t mode);
   static SharedFD SocketLocalServer(int port, int type);

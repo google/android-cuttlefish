@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
@@ -28,7 +29,7 @@ namespace {
 
 const size_t BUFF_SIZE = 1 << 14;
 
-} // namespace
+}  // namespace
 
 ssize_t WriteAll(SharedFD fd, const char* buf, size_t size) {
   size_t total_written = 0;
@@ -69,7 +70,8 @@ ssize_t ReadAll(SharedFD fd, std::string* buf) {
   std::stringstream ss;
   ssize_t read;
   while ((read = fd->Read(buff, BUFF_SIZE - 1)) > 0) {
-    // this is necessary to avoid problems with having a '\0' in the middle of the buffer
+    // this is necessary to avoid problems with having a '\0' in the middle of
+    // the buffer
     ss << std::string(buff, read);
   }
   if (read < 0) {
@@ -128,4 +130,4 @@ std::string RecvAll(SharedFD sock, const size_t count) {
   return {data.get(), count};
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

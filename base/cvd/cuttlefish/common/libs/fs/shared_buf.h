@@ -88,9 +88,9 @@ ssize_t ReadExact(SharedFD fd, char* buf, size_t size);
  * If a read error is encountered, returns -1. buf will contain any data read
  * up until that point and errno will be set.
  */
-template<typename T>
+template <typename T>
 ssize_t ReadExactBinary(SharedFD fd, T* binary_data) {
-  return ReadExact(fd, (char*) binary_data, sizeof(*binary_data));
+  return ReadExact(fd, (char*)binary_data, sizeof(*binary_data));
 }
 
 /**
@@ -155,9 +155,9 @@ ssize_t WriteAll(SharedFD fd, const char* buf, size_t size);
  * -1 is returned. If not detected, 0 is returned with errno unchanged.
  *
  */
-template<typename T>
+template <typename T>
 ssize_t WriteAllBinary(SharedFD fd, const T* binary_data) {
-  return WriteAll(fd, (const char*) binary_data, sizeof(*binary_data));
+  return WriteAll(fd, (const char*)binary_data, sizeof(*binary_data));
 }
 
 /**
@@ -179,4 +179,4 @@ bool SendAll(SharedFD sock, std::string_view msg);
  */
 std::string RecvAll(SharedFD sock, size_t count);
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

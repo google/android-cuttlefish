@@ -27,9 +27,9 @@
 #include <utility>
 #include <vector>
 
-#include <fruit/component.h>
-#include <fruit/fruit_forward_decls.h>
 #include "absl/log/log.h"
+#include "fruit/component.h"
+#include "fruit/fruit_forward_decls.h"
 
 #include "allocd/alloc_utils.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -106,7 +106,7 @@ Result<void> Cvdalloc::ResultSetup() {
 }
 
 Result<void> Cvdalloc::BinaryIsValid(std::string_view path) {
-  struct stat st;
+  struct stat st;  // NOLINT(misc-include-cleaner): sys/stat.h
   int r = stat(path.data(), &st);
   CF_EXPECT(r == 0, "Could not stat the cvdalloc binary at "
                         << path << ": " << StrError(errno));
