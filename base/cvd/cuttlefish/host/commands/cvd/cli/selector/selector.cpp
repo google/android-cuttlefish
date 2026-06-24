@@ -38,33 +38,19 @@ namespace cuttlefish {
 namespace selector {
 namespace {
 
-enum class DisplayBehavior {
-  LabelGroup,
-  LabelInstance,
-};
-
-std::string GroupDisplay(const std::vector<LocalInstanceGroup>& groups,
-                         const DisplayBehavior behavior) {
+std::string GroupDisplay(const std::vector<LocalInstanceGroup>& groups) {
   std::stringstream result;
   int group_index = 0;
   for (const LocalInstanceGroup& group : groups) {
-    if (behavior == DisplayBehavior::LabelGroup) {
-      fmt::print(result, "[{}] - ", group_index);
-    }
+    fmt::print(result, "[{}] - ", group_index);
     fmt::print(result, "{} (created: {})\n", group.GroupName(),
                Format(group.StartTime()));
 
-    int instance_index = 0;
     for (const LocalInstance& instance : group.Instances()) {
       result << "\t";
-      if (behavior == DisplayBehavior::LabelInstance) {
-        fmt::print(result, "[{}] - ", instance_index);
-      }
       fmt::print(result, "{}-{} (id : {} | status : {})\n", group.GroupName(),
                  instance.Name(), instance.Id(),
                  HumanFriendlyStateName(instance.State()));
-
-      instance_index++;
     }
 
     group_index++;
@@ -104,7 +90,7 @@ Result<LocalInstanceGroup> PromptUserForGroup(
     const InstanceManager& instance_manager) {
   const std::vector<LocalInstanceGroup> groups =
       CF_EXPECT(instance_manager.FindGroups({}));
-  std::cout << GroupDisplay(groups, DisplayBehavior::LabelGroup);
+  std::cout << GroupDisplay(groups);
 
   const int selection = CF_EXPECT(PromptForSelection(groups.size() - 1));
   auto group_filter = InstanceDatabase::Filter{
@@ -114,26 +100,42 @@ Result<LocalInstanceGroup> PromptUserForGroup(
   return CF_EXPECT(instance_manager.FindGroup(group_filter));
 }
 
+std::string FormatInstanceSelectionMenu(
+    const std::vector<
+        std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>&
+        instances_by_group) {
+  std::stringstream result;
+  int global_instance_index = 0;
+  for (const auto& [group, instances] : instances_by_group) {
+    fmt::print(result, "{} (created: {})\n", group.GroupName(),
+               Format(group.StartTime()));
+    for (const LocalInstance& instance : instances) {
+      fmt::print(result, "\t[{}] - {}-{} (id : {} | status: {})\n",
+                 global_instance_index, group.GroupName(), instance.Name(),
+                 instance.Id(), HumanFriendlyStateName(instance.State()));
+      global_instance_index++;
+    }
+  }
+  return result.str();
+}
+
 Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
-    const InstanceManager& instance_manager) {
-  const LocalInstanceGroup group =
-      CF_EXPECT(PromptUserForGroup(instance_manager));
-  const std::vector<LocalInstance>& instances = group.Instances();
-  if (instances.size() == 1) {
-    fmt::print(std::cout,
-               "Single instance in group {}, defaulting to that choice.\n",
-               group.GroupName());
-    return std::pair(instances.front(), group);
+    const std::vector<std::pair<LocalInstanceGroup,
+                                std::vector<LocalInstance>>>& found_instances) {
+  std::vector<std::pair<LocalInstance, LocalInstanceGroup>> flat_instances;
+  for (const auto& [group, instances] : found_instances) {
+    for (const LocalInstance& instance : instances) {
+      flat_instances.push_back({instance, group});
+    }
   }
 
-  std::cout << GroupDisplay({group}, DisplayBehavior::LabelInstance);
+  CF_EXPECT(!flat_instances.empty(), "No instances available");
 
-  const int selection = CF_EXPECT(PromptForSelection(instances.size() - 1));
-  auto instance_filter = InstanceDatabase::Filter{
-      .group_name = group.GroupName(),
-      .instance_names = {instances[selection].Name()},
-  };
-  return CF_EXPECT(instance_manager.FindInstanceWithGroup(instance_filter));
+  std::cout << FormatInstanceSelectionMenu(found_instances);
+
+  const int selection =
+      CF_EXPECT(PromptForSelection(flat_instances.size() - 1));
+  return flat_instances[selection];
 }
 
 }  // namespace
@@ -183,7 +185,7 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
   CF_EXPECT(isatty(0),
             "Multiple instances found.  Narrow the selection with selector "
             "arguments.");
-  return CF_EXPECT(PromptUserForInstance(instance_manager));
+  return CF_EXPECT(PromptUserForInstance(found_instances));
 }
 
 Result<std::vector<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>>
