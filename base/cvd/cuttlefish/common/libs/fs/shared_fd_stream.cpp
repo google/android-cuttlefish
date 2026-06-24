@@ -26,7 +26,7 @@
 namespace cuttlefish {
 
 SharedFDStreambuf::SharedFDStreambuf(SharedFD shared_fd)
-  : shared_fd_(shared_fd) {}
+    : shared_fd_(shared_fd) {}
 
 int SharedFDStreambuf::underflow() {
   if (gptr() < egptr()) {
@@ -40,16 +40,13 @@ int SharedFDStreambuf::underflow() {
   } else {
     unget_size = std::min(gptr() - eback(), kUngetSize);
     std::memcpy(read_buffer_.get(),
-                read_buffer_.get() + kBufferSize - unget_size,
-                unget_size);
+                read_buffer_.get() + kBufferSize - unget_size, unget_size);
   }
 
-  ssize_t bytes_read = ReadExact(shared_fd_,
-                                 read_buffer_.get() + unget_size,
-                                 bytes_to_read);
+  ssize_t bytes_read =
+      ReadExact(shared_fd_, read_buffer_.get() + unget_size, bytes_to_read);
 
-  setg(read_buffer_.get(),
-       read_buffer_.get() + unget_size,
+  setg(read_buffer_.get(), read_buffer_.get() + unget_size,
        read_buffer_.get() + unget_size + bytes_read);
 
   if (bytes_read <= 0 || in_avail() == 0) {
@@ -78,10 +75,10 @@ std::streamsize SharedFDStreambuf::xsgetn(char* dest, std::streamsize count) {
 
 int SharedFDStreambuf::overflow(int c) {
   if (c != EOF) {
-      char z = c;
-      if (WriteAll(shared_fd_, &z, 1) != 1) {
-          return EOF;
-      }
+    char z = c;
+    if (WriteAll(shared_fd_, &z, 1) != 1) {
+      return EOF;
+    }
   }
   return c;
 }
@@ -104,9 +101,13 @@ int SharedFDStreambuf::pbackfail(int c) {
 }
 
 SharedFDOstream::SharedFDOstream(SharedFD shared_fd)
-  : std::ostream(nullptr), buf_(shared_fd) { rdbuf(&buf_); }
+    : std::ostream(nullptr), buf_(shared_fd) {
+  rdbuf(&buf_);
+}
 
 SharedFDIstream::SharedFDIstream(SharedFD shared_fd)
-  : std::istream(nullptr), buf_(shared_fd) { rdbuf(&buf_); }
+    : std::istream(nullptr), buf_(shared_fd) {
+  rdbuf(&buf_);
+}
 
 }  // namespace cuttlefish
