@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/confui/protocol_types.h"
 
 namespace cuttlefish {
 namespace confui {

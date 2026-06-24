@@ -22,7 +22,8 @@
 #include <tuple>
 
 #include "cuttlefish/common/libs/concurrency/thread_safe_queue.h"
-#include "cuttlefish/common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/confui/protocol.h"
+#include "cuttlefish/common/libs/confui/utils.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/confui/host_utils.h"

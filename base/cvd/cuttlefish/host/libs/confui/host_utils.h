@@ -24,7 +24,7 @@
 #include <string>
 #include <thread>
 
-#include "cuttlefish/common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/confui/utils.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
 #include "cuttlefish/host/libs/config/logging.h"
