@@ -47,8 +47,9 @@ Result<std::vector<std::string>> ExtractImageContents(
   CF_EXPECT(WalkDirectory(image_filepath, file_collector));
 
   if (keep_archive) {
-    // Must use hard linking due to the way fetch_cvd uses the cache.
-    CF_EXPECT(HardLinkDirecoryContentsRecursively(image_filepath, target_dir));
+    // Prefer hard linking, but fallback to copy if necessary.
+    CF_EXPECT(
+        LinkOrCopyDirectoryContentsRecursively(image_filepath, target_dir));
   } else {
     CF_EXPECT(MoveDirectoryContents(image_filepath, target_dir));
     // Ignore even if removing directory fails - harmless.

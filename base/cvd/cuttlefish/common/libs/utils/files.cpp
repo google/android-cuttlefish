@@ -115,46 +115,89 @@ Result<bool> AreHardLinked(const std::string& source,
           CF_EXPECT(FileInodeNumber(destination)));
 }
 
-Result<std::string> CreateHardLink(const std::string& target,
-                                   const std::string& hardlink,
-                                   const bool overwrite_existing) {
-  if (FileExists(hardlink)) {
-    if (CF_EXPECT(AreHardLinked(target, hardlink))) {
-      return hardlink;
+Result<bool> AreFilesIdentical(const std::string& path1,
+                               const std::string& path2) {
+  struct stat st1;
+  struct stat st2;
+  CF_EXPECTF(stat(path1.c_str(), &st1) == 0, "stat failed for {}", path1);
+  CF_EXPECTF(stat(path2.c_str(), &st2) == 0, "stat failed for {}", path2);
+  if (st1.st_size != st2.st_size) {
+    return false;
+  }
+
+  SharedFD fd1 = SharedFD::Open(path1, O_RDONLY);
+  SharedFD fd2 = SharedFD::Open(path2, O_RDONLY);
+  CF_EXPECTF(fd1->IsOpen(), "Failed to open \"{}\"", path1);
+  CF_EXPECTF(fd2->IsOpen(), "Failed to open \"{}\"", path2);
+
+  char buf1[4096];
+  char buf2[4096];
+  while (true) {
+    auto r1 = fd1->Read(buf1, sizeof(buf1));
+    auto r2 = fd2->Read(buf2, sizeof(buf2));
+    CF_EXPECTF(r1 >= 0, "Read failed for \"{}\"", path1);
+    CF_EXPECTF(r2 >= 0, "Read failed for \"{}\"", path2);
+    if (r1 != r2) {
+      return false;
+    }
+    if (r1 == 0) {
+      break;
+    }
+    if (memcmp(buf1, buf2, r1) != 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+Result<std::string> LinkOrCopy(const std::string& target,
+                               const std::string& destination,
+                               const bool overwrite_existing) {
+  if (FileExists(destination)) {
+    if (CF_EXPECT(AreHardLinked(target, destination))) {
+      return destination;
     }
     if (!overwrite_existing) {
+      if (CF_EXPECT(AreFilesIdentical(target, destination))) {
+        return destination;
+      }
       return CF_ERRF(
-          "Cannot hardlink from \"{}\" to \"{}\", the second file already "
-          "exists and is not hardlinked to the first",
-          target, hardlink);
+          "Cannot link/copy from \"{}\" to \"{}\", the second file already "
+          "exists and is different from the first",
+          target, destination);
     }
-    LOG(WARNING) << "Overwriting existing file \"" << hardlink << "\" with \""
-                 << target << "\" from the cache";
-    CF_EXPECTF(unlink(hardlink.c_str()) == 0,
-               "Failed to unlink \"{}\" with error: {}", hardlink,
+    LOG(WARNING) << "Overwriting existing file \"" << destination
+                 << "\" with \"" << target << "\" from the cache";
+    CF_EXPECTF(unlink(destination.c_str()) == 0,
+               "Failed to unlink \"{}\" with error: {}", destination,
                strerror(errno));
   }
-  CF_EXPECTF(link(target.c_str(), hardlink.c_str()) == 0,
-             "link() failed trying to create hardlink from \"{}\" to \"{}\" "
-             "with error: {}",
-             target, hardlink, strerror(errno));
-  VLOG(1) << "Created hard link from \"" << target << "\" to \"" << hardlink
+  if (link(target.c_str(), destination.c_str()) == 0) {
+    VLOG(1) << "Created hard link from \"" << target << "\" to \""
+            << destination << "\"";
+    return destination;
+  }
+  CF_EXPECTF(Copy(target, destination), "Failed to copy \"{}\" to \"{}\"",
+             target, destination);
+  VLOG(1) << "Copied file from \"" << target << "\" to \"" << destination
           << "\"";
-  return hardlink;
+
+  return destination;
 }
 
 bool FileHasContent(const std::string& path) {
   return FileSize(path) > 0;
 }
 
-Result<void> HardLinkDirecoryContentsRecursively(
+Result<void> LinkOrCopyDirectoryContentsRecursively(
     const std::string& source, const std::string& destination) {
   CF_EXPECTF(IsDirectory(source), "Source '{}' is not a directory", source);
 
   CF_EXPECT(EnsureDirectoryExists(destination, 0755));
 
-  auto linker = [&source, &destination](
-                    const std::string& filepath) mutable -> Result<void> {
+  auto linker_or_copier =
+      [&source,
+       &destination](const std::string& filepath) mutable -> Result<void> {
     const std::string src_path = filepath;
     const std::string dst_path =
         destination + "/" + filepath.substr(source.size() + 1);
@@ -163,10 +206,10 @@ Result<void> HardLinkDirecoryContentsRecursively(
       return {};
     }
     const bool overwrite_existing = true;
-    CF_EXPECT(CreateHardLink(src_path, dst_path, overwrite_existing));
+    CF_EXPECT(LinkOrCopy(src_path, dst_path, overwrite_existing));
     return {};
   };
-  CF_EXPECT(WalkDirectory(source, linker));
+  CF_EXPECT(WalkDirectory(source, linker_or_copier));
 
   return {};
 }

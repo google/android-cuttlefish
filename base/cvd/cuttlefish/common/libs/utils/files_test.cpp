@@ -63,15 +63,16 @@ class FilesTests : public ::testing::Test {
   std::string dst_dir_;
 };
 
-TEST_F(FilesTests, HardLinkRecursivelyFailsIfSourceIsNotADirectory) {
-  Result<void> result = HardLinkDirecoryContentsRecursively(
+TEST_F(FilesTests, LinkOrCopyRecursivelyFailsIfSourceIsNotADirectory) {
+  Result<void> result = LinkOrCopyDirectoryContentsRecursively(
       src_dir_ + "/file1.txt", dst_dir_ + "/file1.txt");
 
   EXPECT_THAT(result, IsError());
 }
 
-TEST_F(FilesTests, HardLinkRecursively) {
-  Result<void> result = HardLinkDirecoryContentsRecursively(src_dir_, dst_dir_);
+TEST_F(FilesTests, LinkOrCopyRecursively) {
+  Result<void> result =
+      LinkOrCopyDirectoryContentsRecursively(src_dir_, dst_dir_);
 
   EXPECT_THAT(result, IsOk());
   Result<bool> resultHardLinked =
