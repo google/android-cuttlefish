@@ -24,6 +24,8 @@
 
 #include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/confui/utils.h"
+#include "cuttlefish/common/libs/confui/protocol.h"
 #include "cuttlefish/host/libs/confui/secure_input.h"
 
 namespace cuttlefish {

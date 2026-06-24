@@ -24,6 +24,7 @@
 #include <drm/drm_fourcc.h>
 #include "absl/log/check.h"
 
+#include "cuttlefish/common/libs/confui/utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/confui/host_utils.h"
 

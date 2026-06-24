@@ -28,7 +28,6 @@
 #include <fruit/fruit.h>
 #include <teeui/utils.h>  // $(croot)/system/teeui/libteeui/.../include
 
-#include "cuttlefish/common/libs/confui/confui.h"
 #include "cuttlefish/host/libs/confui/layouts/layout.h"
 #include "cuttlefish/host/libs/confui/server_common.h"
 #include "cuttlefish/host/libs/screen_connector/screen_connector_common.h"

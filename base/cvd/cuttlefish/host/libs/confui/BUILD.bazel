@@ -74,7 +74,9 @@ cf_cc_library(
     clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/concurrency",
-        "//cuttlefish/common/libs/confui",
+        "//cuttlefish/common/libs/confui:protocol",
+        "//cuttlefish/common/libs/confui:protocol_types",
+        "//cuttlefish/common/libs/confui:utils",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/security:confui_sign",
         "//cuttlefish/common/libs/utils:contains",

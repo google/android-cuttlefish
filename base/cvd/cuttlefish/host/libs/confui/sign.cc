@@ -26,7 +26,7 @@
 #include <openssl/sha.h>
 #include "absl/log/check.h"
 
-#include "cuttlefish/common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/confui/utils.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/security/confui_sign.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"

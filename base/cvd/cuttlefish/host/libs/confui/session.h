@@ -24,9 +24,8 @@
 #include <string>
 #include <vector>
 
-#include <teeui/msg_formatting.h>
+#include "teeui/msg_formatting.h"
 
-#include "cuttlefish/common/libs/confui/confui.h"
 #include "cuttlefish/host/libs/confui/confui_cbor.h"
 #include "cuttlefish/host/libs/confui/host_mode_ctrl.h"
 #include "cuttlefish/host/libs/confui/host_renderer.h"

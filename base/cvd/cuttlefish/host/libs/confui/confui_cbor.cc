@@ -24,8 +24,6 @@
 
 #include "cbor.h"
 
-#include "cuttlefish/common/libs/confui/confui.h"
-
 namespace cuttlefish {
 namespace confui {
 /**
