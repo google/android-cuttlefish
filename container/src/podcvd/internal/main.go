@@ -65,7 +65,7 @@ func Main(args []string) error {
 		if err := fleetAllCuttlefishHosts(ccm); err != nil {
 			return err
 		}
-	case "help", "lint", "login", "version":
+	case "cache", "help", "lint", "login", "version":
 		if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
 			return err
 		}
@@ -75,9 +75,6 @@ func Main(args []string) error {
 		}
 	case "setup":
 		return setupPodcvd()
-	case "cache":
-		// TODO(seungjaeyoo): Support other subcommands of cvd as well.
-		return fmt.Errorf("subcommand %q is not implemented yet", subcommand)
 	default:
 		return fmt.Errorf("unknown subcommand %q", subcommand)
 	}
@@ -354,6 +351,10 @@ func handleToolingSubcommands(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) 
 	}
 	subcommand := cvdArgs.SubCommandArgs[0]
 	switch subcommand {
+	case "cache":
+		if err := handleCacheExecution(ccm, cvdArgs); err != nil {
+			return err
+		}
 	case "lint":
 		if err := handleLintExecution(ccm, cvdArgs); err != nil {
 			return err
@@ -366,6 +367,34 @@ func handleToolingSubcommands(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) 
 		}
 	}
 	return nil
+}
+
+func handleCacheExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+	cacheDir := hostCacheDir()
+
+	if len(cvdArgs.SubCommandArgs) > 1 && cvdArgs.SubCommandArgs[1] == "empty" {
+		entries, err := os.ReadDir(cacheDir)
+		if err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to empty cache directory %q: %w", cacheDir, err)
+		}
+		for _, entry := range entries {
+			if err := os.RemoveAll(filepath.Join(cacheDir, entry.Name())); err != nil {
+				return fmt.Errorf("failed to empty cache directory %q: %w", cacheDir, err)
+			}
+		}
+		fmt.Printf("Cache at %q has been emptied\n", cacheDir)
+		return nil
+	}
+
+	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
+	args = append(args, cvdArgs.SubCommandArgs...)
+	var stdoutBuf bytes.Buffer
+	if err := ccm.ExecOnContainer(context.Background(), ToolingContainerName, args, os.Stdin, &stdoutBuf, os.Stderr); err != nil {
+		return err
+	}
+	translatedOutput := strings.ReplaceAll(stdoutBuf.String(), "/var/tmp/cvd/0/cache", cacheDir)
+	_, err := os.Stdout.WriteString(translatedOutput)
+	return err
 }
 
 func handleLintExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
