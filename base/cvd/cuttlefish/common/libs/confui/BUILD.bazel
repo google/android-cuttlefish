@@ -6,26 +6,10 @@ package(
 
 cf_cc_library(
     name = "confui",
-    srcs = [
-        "protocol.cpp",
-    ],
-    hdrs = [
-        "confui.h",
-        "protocol.h",
-    ],
+    hdrs = ["confui.h"],
     deps = [
-        "//cuttlefish/common/libs/confui:packet",
-        "//cuttlefish/common/libs/confui:packet_types",
-        "//cuttlefish/common/libs/confui:protocol_types",
+        "//cuttlefish/common/libs/confui:protocol",
         "//cuttlefish/common/libs/confui:utils",
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:contains",
-        "//libbase",
-        "//teeui/libteeui",
-        "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/log:check",
-        "@abseil-cpp//absl/strings",
-        "@boringssl//:crypto",
     ],
 )
 
@@ -46,6 +30,21 @@ cf_cc_library(
     name = "packet_types",
     srcs = ["packet_types.cpp"],
     hdrs = ["packet_types.h"],
+)
+
+cf_cc_library(
+    name = "protocol",
+    srcs = ["protocol.cpp"],
+    hdrs = ["protocol.h"],
+    deps = [
+        "//cuttlefish/common/libs/confui:packet",
+        "//cuttlefish/common/libs/confui:packet_types",
+        "//cuttlefish/common/libs/confui:protocol_types",
+        "//cuttlefish/common/libs/confui:utils",
+        "//cuttlefish/common/libs/fs",
+        "//teeui/libteeui",
+        "@abseil-cpp//absl/strings",
+    ],
 )
 
 cf_cc_library(
