@@ -18,9 +18,9 @@ cf_cc_library(
         "packet_types.h",
         "protocol.h",
         "protocol_types.h",
-        "utils.h",
     ],
     deps = [
+        "//cuttlefish/common/libs/confui:utils",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//libbase",
@@ -29,5 +29,14 @@ cf_cc_library(
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
         "@boringssl//:crypto",
+    ],
+)
+
+cf_cc_library(
+    name = "utils",
+    hdrs = ["utils.h"],
+    deps = [
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
     ],
 )
