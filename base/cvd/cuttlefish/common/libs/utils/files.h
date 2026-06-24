@@ -39,10 +39,11 @@ inline Result<bool> CanRename(const std::string& source,
 Result<ino_t> FileInodeNumber(const std::string& path);
 Result<bool> AreHardLinked(const std::string& source,
                            const std::string& destination);
-Result<std::string> CreateHardLink(const std::string& target,
-                                   const std::string& hardlink,
-                                   bool overwrite_existing = false);
-Result<void> HardLinkDirecoryContentsRecursively(
+
+Result<std::string> LinkOrCopy(const std::string& target,
+                               const std::string& destination,
+                               bool overwrite_existing = false);
+Result<void> LinkOrCopyDirectoryContentsRecursively(
     const std::string& source, const std::string& destination);
 // Merges the contents of the source directory into the destination directory.
 // The source directory is empty after this operation.

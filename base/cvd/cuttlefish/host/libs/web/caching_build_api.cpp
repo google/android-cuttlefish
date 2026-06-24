@@ -82,22 +82,6 @@ bool IsInCache(const std::string& filepath) {
 
 }  // namespace
 
-bool CanCache(const std::string& target_directory,
-              const std::string& cache_base_path) {
-  const Result<bool> result = CanHardLink(target_directory, cache_base_path);
-  if (result.ok() && *result) {
-    return true;
-  }
-  if (!result.ok()) {
-    LOG(ERROR) << "Error during hard link check: " << result.error();
-  }
-  LOG(WARNING)
-      << "Caching disabled, unable to hard link between fetch directory \""
-      << target_directory << "\" and cache directory \"" << cache_base_path
-      << "\"";
-  return false;
-}
-
 CachingBuildApi::CachingBuildApi(BuildApi& build_api,
                                  std::string cache_base_path)
     : build_api_(build_api), cache_base_path_(std::move(cache_base_path)) {};
@@ -114,8 +98,8 @@ Result<std::string> CachingBuildApi::DownloadFile(
   if (!IsInCache(paths.cache_artifact)) {
     CF_EXPECT(build_api_.DownloadFile(build, paths.build_cache, artifact_name));
   }
-  return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
-                                  kOverwriteExistingFile));
+  return CF_EXPECT(LinkOrCopy(paths.cache_artifact, paths.target_artifact,
+                              kOverwriteExistingFile));
 }
 
 
