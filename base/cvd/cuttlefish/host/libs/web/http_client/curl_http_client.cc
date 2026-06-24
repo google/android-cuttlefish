@@ -17,10 +17,6 @@
 
 #include <stdio.h>
 
-#include <curl/curl.h>
-#include <curl/easy.h>
-#include <curl/header.h>
-
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -29,8 +25,11 @@
 #include <utility>
 #include <vector>
 
-#include "absl/strings/ascii.h"
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
+#include "curl/curl.h"
+#include "curl/easy.h"
+#include "curl/header.h"
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"

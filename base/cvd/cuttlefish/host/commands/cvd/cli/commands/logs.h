@@ -18,10 +18,17 @@ class CvdLogsHandler : public CvdCommandHandler {
 
   std::string SummaryHelp() const override;
   bool RequiresDeviceExists() const override;
-  Result<std::string> DetailedHelp(const CommandRequest& request) override;
+  std::vector<HelpParagraph> Description() const override;
+  Result<std::vector<Flag>> Flags(const CommandRequest& request) override;
 
  private:
+  Result<void> HandlePrint(const CommandRequest& request);
+  Result<void> HandleList(const CommandRequest& request);
+
   InstanceManager& instance_manager_;
+  std::string print_target_flag_;
+  bool pretty_;
+  bool pager_;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdLogsHandler(

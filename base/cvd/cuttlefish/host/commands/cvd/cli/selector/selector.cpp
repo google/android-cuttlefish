@@ -42,20 +42,6 @@ enum class DisplayBehavior {
   LabelInstance,
 };
 
-Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
-    const SelectorOptions& selectors) {
-  InstanceDatabase::Filter filter;
-  filter.group_name = selectors.group_name;
-  if (selectors.instance_names) {
-    const std::vector<std::string> per_instance_names =
-        selectors.instance_names.value();
-    for (const auto& per_instance_name : per_instance_names) {
-      filter.instance_names.insert(per_instance_name);
-    }
-  }
-  return filter;
-}
-
 std::string GroupDisplay(const std::vector<LocalInstanceGroup>& groups,
                          const DisplayBehavior behavior) {
   std::stringstream result;
@@ -150,10 +136,24 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
 
 }  // namespace
 
+InstanceDatabase::Filter BuildFilterFromSelectors(
+    const SelectorOptions& selectors) {
+  InstanceDatabase::Filter filter;
+  filter.group_name = selectors.group_name;
+  if (selectors.instance_names) {
+    const std::vector<std::string> per_instance_names =
+        selectors.instance_names.value();
+    for (const auto& per_instance_name : per_instance_names) {
+      filter.instance_names.insert(per_instance_name);
+    }
+  }
+  return filter;
+}
+
 Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
                                        const CommandRequest& request) {
   const InstanceDatabase::Filter filter =
-      CF_EXPECT(BuildFilterFromSelectors(request.Selectors()));
+      BuildFilterFromSelectors(request.Selectors());
   std::vector<LocalInstanceGroup> groups =
       CF_EXPECT(instance_manager.FindGroups(filter));
   CF_EXPECT(!groups.empty(), "No instance groups available");
@@ -169,7 +169,7 @@ Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
 Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
     const InstanceManager& instance_manager, const CommandRequest& request) {
   const InstanceDatabase::Filter filter =
-      CF_EXPECT(BuildFilterFromSelectors(request.Selectors()));
+      BuildFilterFromSelectors(request.Selectors());
   std::vector<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>
       found_instances = CF_EXPECT(instance_manager.FindInstances(filter));
   CF_EXPECT(!found_instances.empty(), "No instances available");
@@ -182,6 +182,14 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
             "Multiple instances found.  Narrow the selection with selector "
             "arguments.");
   return CF_EXPECT(PromptUserForInstance(instance_manager));
+}
+
+Result<std::vector<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>>
+SelectInstances(const InstanceManager& instance_manager,
+                const CommandRequest& request) {
+  const InstanceDatabase::Filter filter =
+      BuildFilterFromSelectors(request.Selectors());
+  return CF_EXPECT(instance_manager.FindInstances(filter));
 }
 
 }  // namespace selector

@@ -14,25 +14,19 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "cuttlefish/ansi_codes/ansi_codes.h"
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/str_cat.h"
 
 namespace cuttlefish {
 
-inline constexpr std::string_view kAnsiCsi = "\033[";
-inline constexpr std::string_view kAnsiReset = "\033[0m";
-inline constexpr std::string_view kAnsiRed = "\033[0;31m";
-inline constexpr std::string_view kAnsiGreen = "\033[0;32m";
-inline constexpr std::string_view kAnsiYellow = "\033[0;33m";
-inline constexpr std::string_view kAnsiCyan = "\033[0;36m";
-inline constexpr std::string_view kAnsiWhite = "\033[0;37m";
-inline constexpr std::string_view kAnsiClearScreenAfterCursor = "\033[J";
+bool IsCsiFinalByte(char c) {
+  auto uc = static_cast<unsigned char>(c);
+  return uc >= '@' && uc <= '~';
+}
 
-// CSI final bytes are in the range 0x40–0x7E (ASCII @ to ~).
-bool IsCsiFinalByte(char c);
-
-std::string AnsiCursorUp(int n);
+std::string AnsiCursorUp(int n) { return absl::StrCat("\033[", n, "A"); }
 
 }  // namespace cuttlefish

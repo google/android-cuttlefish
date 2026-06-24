@@ -29,6 +29,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
@@ -82,31 +83,23 @@ Result<GroupCreationInfo> AnalyzeCreation(const CreationAnalyzerParam& params) {
       .home = CF_EXPECT(HomeFromEnvironment(params.envs)),
       .host_artifacts_path = CF_EXPECT(AndroidHostPath(params.envs)),
   };
-  group_directories.product_out_paths.reserve(params.num_instances);
-  auto it = params.envs.find(kAndroidProductOut);
+  std::string product_out_val;
+  const auto it = params.envs.find(kAndroidProductOut);
   if (it != params.envs.end()) {
-    std::vector<std::string_view> env_product_out =
-        absl::StrSplit(it->second, ',');
+    product_out_val = it->second;
+    const std::vector<std::string_view> env_product_out =
+        absl::StrSplit(product_out_val, ',');
     if (env_product_out.size() > params.num_instances) {
       LOG(WARNING) << env_product_out.size()
                    << " product paths provided, but only "
                    << params.num_instances << " are going to be created";
-      env_product_out.resize(params.num_instances);
-    }
-    for (auto& env_path : env_product_out) {
-      group_directories.product_out_paths.emplace_back(env_path);
     }
   } else {
-    group_directories.product_out_paths.emplace_back(
-        group_directories.host_artifacts_path);
+    product_out_val = group_directories.host_artifacts_path.value_or("");
   }
-  while (group_directories.product_out_paths.size() < params.num_instances) {
-    // Use the first product path when more instances are required than product
-    // paths provided. This supports creating multiple identical instances from
-    // a single set of images.
-    group_directories.product_out_paths.emplace_back(
-        group_directories.product_out_paths[0]);
-  }
+  const std::vector<std::string> expanded =
+      ExpandProductPaths(product_out_val, params.num_instances);
+  group_directories.product_out_paths.assign(expanded.begin(), expanded.end());
 
   return GroupCreationInfo{
       .group_creation_params = group_params,

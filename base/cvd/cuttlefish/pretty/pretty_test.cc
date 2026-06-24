@@ -19,18 +19,19 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/pretty/map.h"
-#include "cuttlefish/pretty/optional.h"
-#include "cuttlefish/pretty/string.h"
+#include "cuttlefish/pretty/map.h"       // IWYU pragma: keep
+#include "cuttlefish/pretty/optional.h"  // IWYU pragma: keep
+#include "cuttlefish/pretty/string.h"    // IWYU pragma: keep
 #include "cuttlefish/pretty/struct.h"
-#include "cuttlefish/pretty/unique_ptr.h"
-#include "cuttlefish/pretty/vector.h"
+#include "cuttlefish/pretty/unique_ptr.h"  // IWYU pragma: keep
+#include "cuttlefish/pretty/vector.h"      // IWYU pragma: keep
 
 namespace cuttlefish {
 namespace {

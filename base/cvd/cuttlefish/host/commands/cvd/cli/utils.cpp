@@ -15,11 +15,10 @@
  */
 
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
-#include "cuttlefish/flag_parser/gflags_compat.h"
-#include "cuttlefish/flag_parser/flag.h"
 
 #include <sys/ioctl.h>
 #include <unistd.h>
+
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -28,6 +27,7 @@
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
@@ -37,9 +37,11 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/gflags_xml_parser.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -280,6 +282,17 @@ Result<TerminalSize> GetTerminalSize() {
   CF_EXPECT(ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1,
             "Failed to get terminal size: " << strerror(errno));
   return TerminalSize{.rows = w.ws_row, .columns = w.ws_col};
+}
+
+std::vector<std::string> ExpandProductPaths(const std::string& product_path,
+                                            size_t num_instances) {
+  const std::vector<std::string_view> split = absl::StrSplit(product_path, ',');
+  std::vector<std::string> expanded;
+  expanded.reserve(num_instances);
+  for (size_t i = 0; i < num_instances; i++) {
+    expanded.emplace_back(i < split.size() ? split[i] : split[0]);
+  }
+  return expanded;
 }
 
 }  // namespace cuttlefish

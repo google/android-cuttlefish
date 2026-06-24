@@ -40,9 +40,7 @@ class FlagValue {
  private:
   friend struct CasDownloaderFlags;
 
-  Flag Flag(const std::string& name) {
-      return GflagsCompatFlag(name, value_);
-  }
+  Flag Flag(const std::string& name) { return GflagsCompatFlag(name, value_); }
 
   std::optional<T> value_;
   T default_value_;

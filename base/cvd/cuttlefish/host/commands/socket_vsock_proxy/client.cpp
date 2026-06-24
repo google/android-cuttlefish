@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/common/frontend/socket_vsock_proxy/client.h"
+#include "cuttlefish/host/commands/socket_vsock_proxy/client.h"
 
 #include <chrono>
 #include <string>

@@ -21,7 +21,6 @@ cf_cc_library(
     name = "android_build_api",
     srcs = ["android_build_api.cpp"],
     hdrs = ["android_build_api.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
@@ -62,7 +61,6 @@ cf_cc_library(
     name = "android_build_string",
     srcs = ["android_build_string.cpp"],
     hdrs = ["android_build_string.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/result",
@@ -115,7 +113,6 @@ cf_cc_library(
     name = "android_build_url",
     srcs = ["android_build_url.cpp"],
     hdrs = ["android_build_url.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/libs/web/http_client:url_escape",
         "//cuttlefish/result",

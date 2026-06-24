@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor/ansi_codes.h"
+#include "cuttlefish/host/graphics_detector/expected.h"
+#include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 
-#include <string>
+namespace gfxstream {
 
-#include "absl/strings/str_cat.h"
+gfxstream::expected<Ok, std::string> PopulateVulkanLoaderAvailability(
+    ::gfxstream::proto::GraphicsAvailability* availability);
 
-namespace cuttlefish {
-
-bool IsCsiFinalByte(char c) {
-  auto uc = static_cast<unsigned char>(c);
-  return uc >= '@' && uc <= '~';
-}
-
-std::string AnsiCursorUp(int n) { return absl::StrCat("\033[", n, "A"); }
-
-}  // namespace cuttlefish
+}  // namespace gfxstream

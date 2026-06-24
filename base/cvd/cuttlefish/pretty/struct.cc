@@ -18,6 +18,7 @@
 #include <ostream>
 #include <string_view>
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
 

@@ -1,0 +1,43 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_sh_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+cf_sh_binary(
+    name = "cuttlefish-host-resources-init",
+    srcs = ["debian/cuttlefish-base.cuttlefish-host-resources.init"],
+)
+
+cf_sh_binary(
+    name = "cuttlefish-defaults-init",
+    srcs = ["debian/cuttlefish-integration.cuttlefish-defaults.init"],
+)
+
+cf_sh_binary(
+    name = "cuttlefish-base-postinst",
+    srcs = ["debian/cuttlefish-base.postinst"],
+)
+
+cf_sh_binary(
+    name = "cuttlefish-base-postrm",
+    srcs = ["debian/cuttlefish-base.postrm"],
+)
+
+cf_sh_binary(
+    name = "cuttlefish-base-prerm",
+    srcs = ["debian/cuttlefish-base.prerm"],
+)
+
+cf_sh_binary(
+    name = "cuttlefish-defaults-postrm",
+    srcs = ["debian/cuttlefish-defaults.postrm"],
+)
+
+cf_sh_binary(
+    name = "cuttlefish-defaults-preinst",
+    srcs = ["debian/cuttlefish-defaults.preinst"],
+)
+
+cf_sh_binary(
+    name = "cuttlefish-integration-postinst",
+    srcs = ["debian/cuttlefish-integration.postinst"],
+)

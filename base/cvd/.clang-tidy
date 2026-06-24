@@ -1,1 +1,1 @@
-clang_tidy_configs/base_config
+clang_tidy_configs/with_include_cleaner

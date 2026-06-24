@@ -16,12 +16,19 @@
 
 #include "cuttlefish/common/libs/transport/channel.h"
 
-namespace cuttlefish {
-namespace transport {
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
+
+namespace cuttlefish::transport {
 
 void MessageDestroyer::operator()(RawMessage* ptr) {
-  std::memset(ptr, 0, sizeof(RawMessage) + ptr->payload_size);
-  std::free(ptr);
+  memset(ptr, 0, sizeof(RawMessage) + ptr->payload_size);
+  free(ptr);
 }
 
 /**
@@ -30,12 +37,12 @@ void MessageDestroyer::operator()(RawMessage* ptr) {
  */
 Result<ManagedMessage> CreateMessage(uint32_t command, bool is_response,
                                      size_t payload_size) {
-  const auto bytes_to_allocate = sizeof(RawMessage) + payload_size;
-  auto memory = std::malloc(bytes_to_allocate);
-  CF_EXPECT(memory != nullptr, "Cannot allocate "
-                                   << bytes_to_allocate
-                                   << " bytes for secure_env RPC message");
-  auto message = reinterpret_cast<RawMessage*>(memory);
+  const size_t bytes_to_allocate = sizeof(RawMessage) + payload_size;
+  void* memory = malloc(bytes_to_allocate);
+  CF_EXPECTF(memory != nullptr,
+             "Cannot allocate {} bytes for secure_env RPC message",
+             bytes_to_allocate);
+  RawMessage* message = reinterpret_cast<RawMessage*>(memory);
   message->command = command;
   message->is_response = is_response;
   message->payload_size = payload_size;
@@ -43,8 +50,7 @@ Result<ManagedMessage> CreateMessage(uint32_t command, bool is_response,
 }
 
 Result<ManagedMessage> CreateMessage(uint32_t command, size_t payload_size) {
-  return CreateMessage(command, false, payload_size);
+  return CF_EXPECT(CreateMessage(command, false, payload_size));
 }
 
-}  // namespace transport
-}  // namespace cuttlefish
+}  // namespace cuttlefish::transport
