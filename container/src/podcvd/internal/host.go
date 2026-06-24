@@ -85,6 +85,10 @@ func ExecFetchCmdOnDisposableHost(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 	if err := os.MkdirAll(cvdDataHome, 0755); err != nil {
 		return fmt.Errorf("failed to eusure directory at %q: %w", cvdDataHome, err)
 	}
+	cacheDir := hostCacheDir()
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		return fmt.Errorf("failed to ensure cache directory at %q: %w", cacheDir, err)
+	}
 	targetDir := cvdArgs.GetStringFlagValueOnSubCommandArgs("target_directory")
 	if targetDir == "" {
 		return fmt.Errorf("target_directory is missing")
@@ -96,6 +100,7 @@ func ExecFetchCmdOnDisposableHost(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 		"--label", fmt.Sprintf("%s=%s", labelCreatedBy, valueCreatedBy),
 		"-v", fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome),
 		"-v", fmt.Sprintf("%s:%s:rw", targetDir, targetDir),
+		"-v", fmt.Sprintf("%s:/var/tmp/cvd/0/cache:rw", cacheDir),
 	}
 	containerID, err := ccm.CreateAndStartContainer(context.Background(), extraFlags, "")
 	if err != nil {
@@ -130,6 +135,11 @@ func cvdDataHome() (string, error) {
 		return filepath.Join(home, ".local/share", "cvd"), nil
 	}
 	return "", fmt.Errorf("failed to find cvd data home dir")
+}
+
+func hostCacheDir() string {
+	uid := os.Getuid()
+	return filepath.Join("/var/tmp/cvd", strconv.Itoa(uid), "cache")
 }
 
 func resolveHostPath(path string) string {
@@ -196,12 +206,13 @@ func mountablePathsFromConfigFile(cvdArgs *CvdArgs) []string {
 	return extractPaths(data)
 }
 
-func collectMountSpecs(pathsToMount []string, hostOut, productOut, cvdDataHome, podcvdHomeDir string) []string {
+func collectMountSpecs(pathsToMount []string, hostOut, productOut, cvdDataHome, podcvdHomeDir, cacheDir string) []string {
 	bindMap := make(map[string]string)
 	bindMap["/host_out"] = fmt.Sprintf("%s:/host_out:O", hostOut)
 	bindMap["/product_out"] = fmt.Sprintf("%s:/product_out:O", productOut)
 	bindMap["/root/.local/share/cvd"] = fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome)
 	bindMap["/podcvd_home"] = fmt.Sprintf("%s:/podcvd_home:rw", podcvdHomeDir)
+	bindMap["/var/tmp/cvd/0/cache"] = fmt.Sprintf("%s:/var/tmp/cvd/0/cache:rw", cacheDir)
 	for _, p := range pathsToMount {
 		if spec, ok := bindMap[p]; ok {
 			host := strings.SplitN(spec, ":", 2)[0]
@@ -297,6 +308,10 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 	if err := os.MkdirAll(cvdDataHome, 0755); err != nil {
 		return "", fmt.Errorf("failed to eusure directory at %q: %w", cvdDataHome, err)
 	}
+	cacheDir := hostCacheDir()
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to ensure cache directory at %q: %w", cacheDir, err)
+	}
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return "", fmt.Errorf("failed to get current directory: %w", err)
@@ -346,7 +361,7 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 			pathsToMount = append(pathsToMount, realPath)
 		}
 	}
-	mountSpecs := collectMountSpecs(pathsToMount, hostOut, productOut, cvdDataHome, podcvdHomeDir)
+	mountSpecs := collectMountSpecs(pathsToMount, hostOut, productOut, cvdDataHome, podcvdHomeDir, cacheDir)
 
 	extraFlags := []string{
 		"-e", "ANDROID_HOST_OUT=/host_out",
@@ -446,9 +461,14 @@ func createAndStartToolingContainer(ccm CuttlefishContainerManager) error {
 	if err := os.MkdirAll(cvdDataHome, 0755); err != nil {
 		return fmt.Errorf("failed to eusure directory at %q: %w", cvdDataHome, err)
 	}
+	cacheDir := hostCacheDir()
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		return fmt.Errorf("failed to ensure cache directory at %q: %w", cacheDir, err)
+	}
 	extraFlags := []string{
 		"--label", fmt.Sprintf("%s=%s", labelCreatedBy, valueCreatedBy),
 		"-v", fmt.Sprintf("%s:/root/.local/share/cvd:rw", cvdDataHome),
+		"-v", fmt.Sprintf("%s:/var/tmp/cvd/0/cache:rw", cacheDir),
 	}
 	if _, err := ccm.CreateAndStartContainer(context.Background(), extraFlags, ToolingContainerName); err != nil {
 		return err
