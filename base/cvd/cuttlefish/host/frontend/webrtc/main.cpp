@@ -315,9 +315,11 @@ int CuttlefishMain() {
   cuttlefish::InputConnectorBuilder inputs_builder;
 
   const auto display_count = instance.display_configs().size();
-  const std::vector<std::string_view> touch_fds =
-      absl::StrSplit(FLAGS_touch_fds, ',');
-  CHECK(touch_fds.size() == display_count + instance.touchpad_configs().size())
+  std::vector<std::string_view> touch_fds;
+  if (!FLAGS_touch_fds.empty()) {
+    touch_fds = absl::StrSplit(FLAGS_touch_fds, ',');
+  }
+  CHECK_EQ(touch_fds.size(), display_count + instance.touchpad_configs().size())
       << "Number of touch FDs does not match the number of configured displays "
          "and touchpads";
   for (int i = 0; i < touch_fds.size(); i++) {

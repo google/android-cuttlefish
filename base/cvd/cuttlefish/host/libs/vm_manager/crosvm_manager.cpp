@@ -455,7 +455,7 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
       gpu_common_string + ",egl=true,surfaceless=true,glx=false" + gles_string +
       gpu_renderer_features_param;
 
-  std::string gpu_displays_string = "";
+  std::string gpu_displays_string = "displays=[],";
   if (instance.hwcomposer() != kHwComposerNone) {
     std::vector<std::string> gpu_displays_strings;
     for (const auto& display_config : instance.display_configs()) {
@@ -471,8 +471,10 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
           },
           ","));
     }
-    gpu_displays_string =
-        "displays=[[" + absl::StrJoin(gpu_displays_strings, "],[") + "]],";
+    if (!gpu_displays_strings.empty()) {
+      gpu_displays_string = absl::StrCat(
+          "displays=[[", absl::StrJoin(gpu_displays_strings, "],["), "]],");
+    }
 
     crosvm_cmd->AddParameter("--wayland-sock=", instance.frames_socket_path());
   }
