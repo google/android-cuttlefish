@@ -36,10 +36,10 @@ InstanceDatabase::Filter BuildFilterFromSelectors(
 Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
                                        const CommandRequest& request);
 
-// Selects a single instance based on the request's selector options. Unlike
-// SelectGroup it doesn't ask the user to refine the selection in case multiple
-// instances match, it just fails instead. Also returns the group the selected
-// instance belongs to.
+// Selects a single instance based on the request's selector options. Asks the
+// user to manually choose a single instance if multiple instances match the
+// selector options and stdin is a terminal. Also returns the group the
+// selected instance belongs to.
 Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
     const InstanceManager& instance_manager, const CommandRequest& request);
 
