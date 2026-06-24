@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include <teeui/common_message_types.h>  // /system/teeui/libteeui/.../include
+#include "teeui/common_message_types.h"  // /system/teeui/libteeui/.../include
 
 #include "cuttlefish/common/libs/confui/packet_types.h"
 #include "cuttlefish/common/libs/confui/protocol_types.h"

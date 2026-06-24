@@ -21,11 +21,10 @@
 #include <utility>
 #include <vector>
 
-#include <teeui/common_message_types.h>  // /system/teeui/libteeui/.../include
+#include "teeui/common_message_types.h"  // /system/teeui/libteeui/.../include
 
 #include "cuttlefish/common/libs/confui/packet.h"
 #include "cuttlefish/common/libs/confui/packet_types.h"
-
 #include "cuttlefish/common/libs/confui/utils.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
@@ -152,8 +151,8 @@ class ConfUiCliResponseMessage : public ConfUiMessage {
   bool SendOver(SharedFD fd) override;
 
  private:
-  UserResponse::type response_;     // plain format
-  std::vector<uint8_t> sign_;       // signed format
+  UserResponse::type response_;  // plain format
+  std::vector<uint8_t> sign_;    // signed format
   // second argument to pass via resultCB of promptUserConfirmation
   std::vector<uint8_t> message_;
 };
