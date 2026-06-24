@@ -20,6 +20,7 @@
 
 #include <chrono>
 
+#include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/result/result.h"
 
@@ -29,5 +30,10 @@ namespace cuttlefish {
 // respond within the given timeout.
 Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
                                         std::chrono::seconds timeout);
+
+// The most important thing this function does is turn "INSTANCE_STATE_RUNNING"
+// into "Running". Some external tools (like the host orchestrator) already
+// depend on this string.
+std::string HumanFriendlyStateName(cvd::InstanceState state);
 
 }  // namespace cuttlefish
