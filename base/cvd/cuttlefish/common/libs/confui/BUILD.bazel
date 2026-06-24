@@ -5,15 +5,6 @@ package(
 )
 
 cf_cc_library(
-    name = "confui",
-    hdrs = ["confui.h"],
-    deps = [
-        "//cuttlefish/common/libs/confui:protocol",
-        "//cuttlefish/common/libs/confui:utils",
-    ],
-)
-
-cf_cc_library(
     name = "packet",
     srcs = ["packet.cpp"],
     hdrs = ["packet.h"],
