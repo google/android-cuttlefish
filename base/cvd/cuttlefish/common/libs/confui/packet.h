@@ -24,7 +24,6 @@
 #include <type_traits>
 #include <vector>
 
-
 #include "cuttlefish/common/libs/confui/packet_types.h"
 #include "cuttlefish/common/libs/confui/utils.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
