@@ -17,6 +17,7 @@ package internal
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -146,6 +147,53 @@ func resolveHostPath(path string) string {
 		return ""
 	}
 	return absPath
+}
+
+func extractPaths(data any) []string {
+	var paths []string
+	switch v := data.(type) {
+	case map[string]any:
+		for _, val := range v {
+			paths = append(paths, extractPaths(val)...)
+		}
+		return paths
+	case []any:
+		for _, val := range v {
+			paths = append(paths, extractPaths(val)...)
+		}
+		return paths
+	case string:
+		if !strings.HasPrefix(v, "/") {
+			return nil
+		}
+		absPath := resolveHostPath(v)
+		if absPath == "" {
+			return nil
+		}
+		return []string{absPath}
+	}
+	return nil
+}
+
+func mountablePathsFromConfigFile(cvdArgs *CvdArgs) []string {
+	configFile := cvdArgs.GetStringFlagValueOnSubCommandArgs("config_file")
+	if configFile == "" {
+		return nil
+	}
+	absConfigFile := resolveHostPath(configFile)
+	if absConfigFile == "" {
+		return nil
+	}
+	file, err := os.Open(absConfigFile)
+	if err != nil {
+		return nil
+	}
+	defer file.Close()
+	var data any
+	if err := json.NewDecoder(file).Decode(&data); err != nil {
+		return nil
+	}
+	return extractPaths(data)
 }
 
 func collectMountSpecs(pathsToMount []string, hostOut, productOut, cvdDataHome, podcvdHomeDir string) []string {
@@ -287,6 +335,12 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		} else {
 			cvdArgs.SubCommandArgs[idx] = absPath
 		}
+		pathsToMount = append(pathsToMount, absPath)
+		if realPath, err := filepath.EvalSymlinks(absPath); err == nil && realPath != absPath {
+			pathsToMount = append(pathsToMount, realPath)
+		}
+	}
+	for _, absPath := range mountablePathsFromConfigFile(cvdArgs) {
 		pathsToMount = append(pathsToMount, absPath)
 		if realPath, err := filepath.EvalSymlinks(absPath); err == nil && realPath != absPath {
 			pathsToMount = append(pathsToMount, realPath)
