@@ -21,6 +21,8 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <stddef.h>
+#include <stdlib.h>
 #include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/sendfile.h>
@@ -28,19 +30,17 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <cstddef>
 
 #include <algorithm>
-#include <cstdlib>
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
-#include <fmt/format.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
@@ -110,7 +110,8 @@ constexpr size_t kPreferredBufferSize = 8192;
 
 }  // namespace
 
-bool FileInstance::CopyFrom(FileInstance& in, size_t length, FileInstance* stop) {
+bool FileInstance::CopyFrom(FileInstance& in, size_t length,
+                            FileInstance* stop) {
   LocalErrno record_errno(errno_);
   std::vector<char> buffer(kPreferredBufferSize);
   while (length > 0) {
@@ -138,8 +139,8 @@ bool FileInstance::CopyFrom(FileInstance& in, size_t length, FileInstance* stop)
       return false;
     }
     if (pollfds[OUT].revents != 0) {
-      // destination was either closed, invalid or errored, either way there is no
-      // point in continuing.
+      // destination was either closed, invalid or errored, either way there is
+      // no point in continuing.
       return false;
     }
 
@@ -159,7 +160,7 @@ bool FileInstance::CopyFrom(FileInstance& in, size_t length, FileInstance* stop)
         return false;
       }
       written += res;
-    } while(written < num_read);
+    } while (written < num_read);
   }
   return true;
 }
@@ -198,7 +199,6 @@ bool FileInstance::SendFile(FileInstance& in, off_t* offset, size_t count) {
   return true;
 }
 
-
 void FileInstance::Close() {
   std::stringstream message;
   if (fd_ == -1) {
@@ -206,7 +206,8 @@ void FileInstance::Close() {
   } else if (close(fd_) == -1) {
     errno_ = errno;
     if (!identity_.empty()) {
-      message << __FUNCTION__ << ": " << identity_ << " failed (" << StrError() << ")";
+      message << __FUNCTION__ << ": " << identity_ << " failed (" << StrError()
+              << ")";
       std::string message_str = message.str();
       Log(message_str.c_str());
     }
@@ -298,9 +299,7 @@ bool FileInstance::IsSet(fd_set* in) const {
 }
 
 #if ENABLE_GCE_SHARED_FD_LOGGING
-void FileInstance::Log(const char* message) {
-  LOG(INFO) << message;
-}
+void FileInstance::Log(const char* message) { LOG(INFO) << message; }
 #else
 void FileInstance::Log(const char*) {}
 #endif
@@ -411,7 +410,8 @@ SharedFD SharedFD::Accept(const FileInstance& listener) {
 SharedFD SharedFD::Dup(int unmanaged_fd) {
   int fd = fcntl(unmanaged_fd, F_DUPFD_CLOEXEC, 3);
   int error_num = errno;
-  return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, error_num)));
+  return SharedFD(
+      std::shared_ptr<FileInstance>(new FileInstance(fd, error_num)));
 }
 
 bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
@@ -449,7 +449,9 @@ SharedFD SharedFD::MemfdCreate(const std::string& name, unsigned int flags) {
   return std::shared_ptr<FileInstance>(new FileInstance(fd, error_num));
 }
 
-SharedFD SharedFD::MemfdCreateWithData(const std::string& name, const std::string& data, unsigned int flags) {
+SharedFD SharedFD::MemfdCreateWithData(const std::string& name,
+                                       const std::string& data,
+                                       unsigned int flags) {
   auto memfd = MemfdCreate(name, flags);
   if (WriteAll(memfd, data) != data.size()) {
     return ErrorFD(errno);
@@ -463,8 +465,8 @@ SharedFD SharedFD::MemfdCreateWithData(const std::string& name, const std::strin
   return memfd;
 }
 
-bool SharedFD::SocketPair(int domain, int type, int protocol,
-                          SharedFD* fd0, SharedFD* fd1) {
+bool SharedFD::SocketPair(int domain, int type, int protocol, SharedFD* fd0,
+                          SharedFD* fd1) {
   int fds[2];
   int rval = socketpair(domain, type, protocol, fds);
   if (rval != -1) {
@@ -504,7 +506,7 @@ SharedFD SharedFD::InotifyFd(void) {
 }
 
 SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
-  return SharedFD::Open(path, O_CREAT|O_WRONLY|O_TRUNC, mode);
+  return SharedFD::Open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
 }
 
 int SharedFD::Fchdir(SharedFD shared_fd) {
@@ -517,7 +519,7 @@ int SharedFD::Fchdir(SharedFD shared_fd) {
 }
 
 Result<SharedFD> SharedFD::Fifo(const std::string& path, mode_t mode) {
-  struct stat st {};
+  struct stat st{};
   if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) == 0) {
     CF_EXPECTF(TEMP_FAILURE_RETRY(remove(path.c_str())) == 0,
                "Failed to delete old file at '{}': '{}'", path,
@@ -597,7 +599,8 @@ SharedFD SharedFD::SocketLocalClient(int port, int type) {
   if (!rval->IsOpen()) {
     return rval;
   }
-  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr), sizeof addr) < 0) {
+  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr), sizeof addr) <
+      0) {
     return SharedFD::ErrorFD(rval->GetErrno());
   }
   return rval;
@@ -621,8 +624,9 @@ SharedFD SharedFD::SocketClient(const std::string& host, int port, int type,
   return rval;
 }
 
-SharedFD SharedFD::Socket6Client(const std::string& host, const std::string& interface,
-                                 int port, int type, std::chrono::seconds timeout) {
+SharedFD SharedFD::Socket6Client(const std::string& host,
+                                 const std::string& interface, int port,
+                                 int type, std::chrono::seconds timeout) {
   sockaddr_in6 addr{};
   addr.sin6_family = AF_INET6;
   addr.sin6_port = htons(port);
@@ -637,7 +641,8 @@ SharedFD SharedFD::Socket6Client(const std::string& host, const std::string& int
     ifreq ifr{};
     snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", interface.c_str());
 
-    if (rval->SetSockOpt(SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) == -1) {
+    if (rval->SetSockOpt(SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) ==
+        -1) {
       return SharedFD::ErrorFD(rval->GetErrno());
     }
 #elif defined(__APPLE__)
@@ -665,7 +670,7 @@ SharedFD SharedFD::SocketLocalServer(int port, int type) {
   addr.sin_port = htons(port);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
-  if(!rval->IsOpen()) {
+  if (!rval->IsOpen()) {
     return rval;
   }
   int n = 1;
@@ -673,7 +678,7 @@ SharedFD SharedFD::SocketLocalServer(int port, int type) {
     LOG(ERROR) << "SetSockOpt failed " << rval->StrError();
     return SharedFD::ErrorFD(rval->GetErrno());
   }
-  if(rval->Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+  if (rval->Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
     LOG(ERROR) << "Bind failed " << rval->StrError();
     return SharedFD::ErrorFD(rval->GetErrno());
   }
@@ -791,7 +796,7 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
   if (vhost_user) {
     // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock
     auto client = SharedFD::SocketLocalClient(GetVhostUserVsockClientAddr(cid),
-        false /* abstract */, type);
+                                              false /* abstract */, type);
     const std::string msg = fmt::format("connect {}\n", port);
     SendAll(client, msg);
 
@@ -1089,9 +1094,7 @@ int FileInstance::InotifyAddWatch(const std::string& pathname, uint32_t mask) {
   return inotify_add_watch(fd_, pathname.c_str(), mask);
 }
 
-void FileInstance::InotifyRmWatch(int watch) {
-  inotify_rm_watch(fd_, watch);
-}
+void FileInstance::InotifyRmWatch(int watch) { inotify_rm_watch(fd_, watch); }
 
 FileInstance::FileInstance(int fd, int in_errno)
     : fd_(fd), errno_(in_errno), is_regular_file_(IsRegularFile(fd_)) {

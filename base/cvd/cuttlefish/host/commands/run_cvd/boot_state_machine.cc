@@ -20,6 +20,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <sys/poll.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <chrono>
