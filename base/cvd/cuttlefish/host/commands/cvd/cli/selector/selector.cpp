@@ -38,26 +38,56 @@ namespace cuttlefish {
 namespace selector {
 namespace {
 
-std::string GroupDisplay(const std::vector<LocalInstanceGroup>& groups,
-                         const TerminalColors& colors) {
+enum class DisplayBehavior {
+  LabelGroup,
+  LabelInstance,
+};
+
+std::string SelectionMenu(
+    const std::vector<std::pair<
+        LocalInstanceGroup, std::vector<LocalInstance>>>& instances_by_group,
+    DisplayBehavior behavior, const TerminalColors& colors) {
   std::stringstream result;
   int group_index = 0;
-  for (const LocalInstanceGroup& group : groups) {
-    fmt::print(result, "{}[{}]{} - ", colors.Cyan(), group_index,
-               colors.Reset());
+  int global_instance_index = 0;
+  for (const auto& [group, instances] : instances_by_group) {
+    if (behavior == DisplayBehavior::LabelGroup) {
+      fmt::print(result, "{}[{}]{} - ", colors.Cyan(), group_index++,
+                 colors.Reset());
+    }
     fmt::print(result, "{} (created: {})\n", group.GroupName(),
                Format(group.StartTime()));
-
-    for (const LocalInstance& instance : group.Instances()) {
-      result << "\t";
-      fmt::print(result, "{}-{} (id : {} | status : {})\n", group.GroupName(),
+    for (const LocalInstance& instance : instances) {
+      fmt::print(result, "\t");
+      if (behavior == DisplayBehavior::LabelInstance) {
+        fmt::print(result, "{}[{}]{} - ", colors.Cyan(),
+                   global_instance_index++, colors.Reset());
+      }
+      fmt::print(result, "{}-{} (id : {} | status: {})\n", group.GroupName(),
                  instance.Name(), instance.Id(),
                  HumanFriendlyStateName(instance.State()));
     }
-
-    group_index++;
   }
   return result.str();
+}
+
+std::string GroupSelectionMenu(const std::vector<LocalInstanceGroup>& groups,
+                               const TerminalColors& colors) {
+  std::vector<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>
+      instances_by_group;
+  instances_by_group.reserve(groups.size());
+  for (const LocalInstanceGroup& group : groups) {
+    instances_by_group.emplace_back(group, group.Instances());
+  }
+  return SelectionMenu(instances_by_group, DisplayBehavior::LabelGroup, colors);
+}
+
+std::string InstanceSelectionMenu(
+    const std::vector<std::pair<
+        LocalInstanceGroup, std::vector<LocalInstance>>>& instances_by_group,
+    const TerminalColors& colors) {
+  return SelectionMenu(instances_by_group, DisplayBehavior::LabelInstance,
+                       colors);
 }
 
 Result<int> PromptForSelection(const int max_selection) {
@@ -93,7 +123,7 @@ Result<LocalInstanceGroup> PromptUserForGroup(
   const std::vector<LocalInstanceGroup> groups =
       CF_EXPECT(instance_manager.FindGroups({}));
   const TerminalColors colors(isatty(1));
-  std::cout << GroupDisplay(groups, colors);
+  std::cout << GroupSelectionMenu(groups, colors);
 
   const int selection = CF_EXPECT(PromptForSelection(groups.size() - 1));
   auto group_filter = InstanceDatabase::Filter{
@@ -101,26 +131,6 @@ Result<LocalInstanceGroup> PromptUserForGroup(
   };
 
   return CF_EXPECT(instance_manager.FindGroup(group_filter));
-}
-
-std::string FormatInstanceSelectionMenu(
-    const std::vector<std::pair<
-        LocalInstanceGroup, std::vector<LocalInstance>>>& instances_by_group,
-    const TerminalColors& colors) {
-  std::stringstream result;
-  int global_instance_index = 0;
-  for (const auto& [group, instances] : instances_by_group) {
-    fmt::print(result, "{} (created: {})\n", group.GroupName(),
-               Format(group.StartTime()));
-    for (const LocalInstance& instance : instances) {
-      fmt::print(result, "\t{}[{}]{} - {}-{} (id : {} | status: {})\n",
-                 colors.Cyan(), global_instance_index, colors.Reset(),
-                 group.GroupName(), instance.Name(), instance.Id(),
-                 HumanFriendlyStateName(instance.State()));
-      global_instance_index++;
-    }
-  }
-  return result.str();
 }
 
 Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
@@ -136,7 +146,7 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
   CF_EXPECT(!flat_instances.empty(), "No instances available");
 
   const TerminalColors colors(isatty(1));
-  std::cout << FormatInstanceSelectionMenu(found_instances, colors);
+  std::cout << InstanceSelectionMenu(found_instances, colors);
 
   const int selection =
       CF_EXPECT(PromptForSelection(flat_instances.size() - 1));
