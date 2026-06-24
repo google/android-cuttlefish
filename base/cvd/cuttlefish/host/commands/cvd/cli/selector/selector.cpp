@@ -68,8 +68,8 @@ Result<int> PromptForSelection(const int max_selection) {
 
   int selection = -1;
   while (selection < 0 || selection > max_selection) {
-    fmt::print(std::cout, "\nSelect {}[0,{}]{}: ", colors.Cyan(), max_selection,
-               colors.Reset());
+    fmt::print(std::cout, "\nSelect {}[0..{}]{}: ", colors.Cyan(),
+               max_selection, colors.Reset());
     std::cout << std::flush;
     std::string input_line = CF_EXPECT(terminal->ReadLine());
     if (!absl::SimpleAtoi(input_line, &selection)) {
