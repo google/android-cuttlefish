@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-// TODO: We can't use std::shared_ptr on the older guests due to HALs.
-
 #ifndef CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 #define CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 
-#ifdef __linux__
-#include <linux/vm_sockets.h>
-#include <sys/epoll.h>
-#include <sys/eventfd.h>
-#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -39,6 +32,13 @@
 #include <sys/un.h>
 #include <termios.h>
 #include <unistd.h>
+
+// Must be below sys/socket.h to support older libc
+#ifdef __linux__
+#include <linux/vm_sockets.h>
+#include <sys/epoll.h>
+#include <sys/eventfd.h>
+#endif
 
 #include <chrono>
 #include <compare>
