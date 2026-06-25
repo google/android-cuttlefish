@@ -16,15 +16,17 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/bootconfig_args.h"
 
+#include <algorithm>
 #include <array>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 
-#include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -120,35 +122,39 @@ Result<std::unordered_map<std::string, std::string>> ConsoleBootconfig(
 Result<void> ValidateBoardBootconfigKeys(
     const cuttlefish::DeviceType type,
     const std::map<std::string, std::string, std::less<void>> args) {
-  std::vector<std::string> allowed_args(
+  std::unordered_set<std::string> used_args;
+  used_args.reserve(args.size());
+  for (const auto& [arg, unused_arg_value] : args) {
+    used_args.insert(arg);
+  }
+
+  std::unordered_set<std::string> allowed_args(
       std::begin(kLegacyBoardBootconfigKeysShared),
       std::end(kLegacyBoardBootconfigKeysShared));
   if (type == cuttlefish::DeviceType::Auto) {
-    allowed_args.insert(allowed_args.end(),
-                        std::begin(kLegacyBoardBootconfigKeysAuto),
+    allowed_args.insert(std::begin(kLegacyBoardBootconfigKeysAuto),
                         std::end(kLegacyBoardBootconfigKeysAuto));
   } else if (type == cuttlefish::DeviceType::Minidroid) {
-    allowed_args.insert(allowed_args.end(),
-                        std::begin(kLegacyBoardBootconfigKeysMinidroid),
+    allowed_args.insert(std::begin(kLegacyBoardBootconfigKeysMinidroid),
                         std::end(kLegacyBoardBootconfigKeysMinidroid));
   } else if (type == cuttlefish::DeviceType::Desktop) {
-    allowed_args.insert(allowed_args.end(),
-                        std::begin(kLegacyBoardBootconfigKeysDesktop),
+    allowed_args.insert(std::begin(kLegacyBoardBootconfigKeysDesktop),
                         std::end(kLegacyBoardBootconfigKeysDesktop));
   } else if (type == cuttlefish::DeviceType::Unknown) {
     // Sdv core targets don't define device type yet.
-    allowed_args.insert(allowed_args.end(),
-                        std::begin(kLegacyBoardBootconfigKeysSdvCore),
+    allowed_args.insert(std::begin(kLegacyBoardBootconfigKeysSdvCore),
                         std::end(kLegacyBoardBootconfigKeysSdvCore));
   }
 
-  for (auto iter = args.begin(); iter != args.end(); iter++) {
-    CF_EXPECTF(Contains(allowed_args, iter->first),
-               "Error: detected new `BOARD_BOOTCONFIG` key: \"{}\" for device "
-               "type: \"{}\"!!! Please "
-               "add new bootconfig args to the `cvd` launcher.",
-               iter->first, static_cast<int>(type));
+  for (const std::string& arg : allowed_args) {
+    used_args.erase(arg);
   }
+
+  CF_EXPECTF(used_args.empty(),
+             "Error: detected new `BOARD_BOOTCONFIG` key(s): \"{}\" for device "
+             "type: \"{}\"!!! Please "
+             "add new bootconfig args to the `cvd` launcher.",
+             absl::StrJoin(used_args, "\", \""), static_cast<int>(type));
 
   return {};
 }
