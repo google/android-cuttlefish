@@ -115,3 +115,9 @@ override_dh_fixperms:
 	dh_fixperms
 	chmod -x ${cuttlefish_common}/bin/*.json
 	find ${cuttlefish_common}/etc -type f -exec chmod -x '{}' ';'
+
+# Override udev rule priority (default is 60)
+.PHONY: override_dh_installudev
+override_dh_installudev:
+	dh_installudev --package=cuttlefish-base --priority=88
+	dh_installudev --remaining-packages

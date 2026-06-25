@@ -48,10 +48,11 @@ RUN apt install -y --no-install-recommends -f \
 FROM runner-base AS runner-prod
 
 ARG REPO
-RUN apt install -y --no-install-recommends gnupg
-RUN curl https://us-apt.pkg.dev/doc/repo-signing-key.gpg | apt-key add -
-RUN echo "deb https://us-apt.pkg.dev/projects/android-cuttlefish-artifacts $REPO main" \
-    | tee -a /etc/apt/sources.list.d/artifact-registry.list
+RUN install -m 0755 -d /etc/apt/keyrings
+RUN curl -fsSL https://us-apt.pkg.dev/doc/repo-signing-key.gpg -o /etc/apt/keyrings/android-cuttlefish-artifacts.asc
+RUN chmod a+r /etc/apt/keyrings/android-cuttlefish-artifacts.asc
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/android-cuttlefish-artifacts.asc] https://us-apt.pkg.dev/projects/android-cuttlefish-artifacts $REPO main" \
+    | tee /etc/apt/sources.list.d/android-cuttlefish-artifacts.list > /dev/null
 RUN apt update
 RUN apt install -y --no-install-recommends \
     cuttlefish-base \

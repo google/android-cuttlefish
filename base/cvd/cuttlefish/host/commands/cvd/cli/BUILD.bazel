@@ -133,6 +133,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:logs",
         "//cuttlefish/host/commands/cvd/cli/commands:power_btn",
         "//cuttlefish/host/commands/cvd/cli/commands:powerwash",
+        "//cuttlefish/host/commands/cvd/cli/commands:ps",
         "//cuttlefish/host/commands/cvd/cli/commands:remove",
         "//cuttlefish/host/commands/cvd/cli/commands:reset",
         "//cuttlefish/host/commands/cvd/cli/commands:restart",

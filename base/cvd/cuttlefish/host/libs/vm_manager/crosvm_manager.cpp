@@ -34,6 +34,7 @@
 #include "absl/strings/str_join.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
@@ -684,7 +685,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
 #ifdef __linux__
-  if (instance.enable_tap_devices()) {
+  if (instance.enable_tap_devices() && !InSandbox()) {
     // The PCI ordering of tap devices is important. Make sure any change here
     // is reflected in ethprime u-boot variable.
     // TODO(b/218364216, b/322862402): Crosvm occupies 32 PCI devices first and

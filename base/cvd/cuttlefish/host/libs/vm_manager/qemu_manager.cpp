@@ -35,6 +35,7 @@
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
@@ -786,7 +787,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   bool has_network_devices = false;
   switch (instance.external_network_mode()) {
     case ExternalNetworkMode::kTap:
-      if (instance.enable_tap_devices()) {
+      if (instance.enable_tap_devices() && !InSandbox()) {
         has_network_devices = true;
         qemu_cmd.AddParameter("-netdev");
         qemu_cmd.AddParameter(
