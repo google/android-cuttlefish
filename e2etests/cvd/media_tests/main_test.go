@@ -23,12 +23,19 @@ import (
 
 func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 	testcases := []struct {
-		branch string
-		target string
+		branch    string
+		target    string
+		mediaType string
 	}{
 		{
-			branch: "git_main",
-			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+			branch:    "git_main",
+			target:    "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+			mediaType: "v4l2_emulated_camera_splane",
+		},
+		{
+			branch:    "git_main-throttled-nightly",
+			target:    "aosp_cf_x86_64_auto-trunk_staging-userdebug",
+			mediaType: "v4l2_emulated_camera_mplane",
 		},
 	}
 	c := e2etests.TestContext{}
@@ -44,7 +51,7 @@ func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if err := c.CVDCreate(e2etests.CreateArgs{Args: []string{"--media=type=v4l2_emulated_camera_splane"}}); err != nil {
+			if err := c.CVDCreate(e2etests.CreateArgs{Args: []string{fmt.Sprintf("--media=type=%s", tc.mediaType)}}); err != nil {
 				t.Fatal(err)
 			}
 
