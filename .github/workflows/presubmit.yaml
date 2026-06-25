@@ -484,9 +484,28 @@ jobs:
         # Run create_from_images_zip_test e2e tests
         cd e2etests
         bazel test orchestration/create_from_images_zip_test:create_from_images_zip_test_test
-  e2etests-podcvd:
+  e2etests-podcvd-generate-matrix:
     runs-on: ubuntu-24.04
-    needs: [build-debian-package-amd64, build-docker-image-amd64]
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      - name: Generate Test List via Bazel Query
+        id: set-matrix
+        run: |
+          cd e2etests
+          PODCVD_TESTS=$(bazel query 'attr(tags, "podcvd", //cvd/...)' 2>/dev/null | sort)
+          PODCVD_TEST_GROUPS=$(echo "$PODCVD_TESTS" | xargs -n 3 | jq -R -n -c '[inputs] | {test_group: .}')
+          echo "Groupped test cases of podcvd per runner: $PODCVD_TEST_GROUPS"
+          echo "matrix=${PODCVD_TEST_GROUPS}" >> $GITHUB_OUTPUT
+  e2etests-podcvd:
+    name: e2etests-podcvd-${{ strategy.job-index }}
+    runs-on: ubuntu-24.04
+    needs: [e2etests-podcvd-generate-matrix, build-debian-package-amd64, build-docker-image-amd64]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.e2etests-podcvd-generate-matrix.outputs.matrix) }}
     steps:
     - name: Free disk space
       uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
@@ -537,10 +556,7 @@ jobs:
 
         cd e2etests
         bazel test \
-          //cvd/bugreport_tests \
-          //cvd/cvd_powerwash_tests \
-          //cvd/display_tests \
-          //cvd/env_tests \
+          ${{ matrix.test_group }} \
           --test_env=HOME=$HOME \
           --test_env=USE_PODCVD=true \
           --test_env=XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
@@ -550,5 +566,5 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v6
       with:
-        name: e2etests-podcvd-logs
+        name: e2etests-podcvd-logs-${{ strategy.job-index }}
         path: e2etests/bazel-testlogs
