@@ -557,6 +557,8 @@ int CuttlefishMain() {
         custom_action.device_states);
   }
 
+  std::shared_ptr<AudioHandler> audio_handler = SetupAudio(instance, *streamer);
+
   std::shared_ptr<webrtc_streaming::OperatorObserver> operator_observer(
       new CfOperatorObserver());
   streamer->Register(operator_observer);
@@ -570,7 +572,6 @@ int CuttlefishMain() {
     VLOG(0) << "Webrtc control thread exiting.";
   });
 
-  auto audio_handler = SetupAudio(instance, *streamer);
   if (audio_handler) {
     audio_handler->Start();
   }
