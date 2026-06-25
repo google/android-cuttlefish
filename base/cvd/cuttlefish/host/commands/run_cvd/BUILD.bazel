@@ -46,6 +46,7 @@ cf_cc_library(
     srcs = ["reporting.cpp"],
     hdrs = ["reporting.h"],
     deps = [
+        "//cuttlefish/ansi_codes",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@fruit",
