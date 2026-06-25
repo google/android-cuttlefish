@@ -25,6 +25,7 @@ go_test(
         "external",
         "no-sandbox",
         "supports-graceful-termination",
+        "podcvd",
     ],
     deps = [
         "//cvd/common",
