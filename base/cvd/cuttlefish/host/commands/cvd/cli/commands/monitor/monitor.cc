@@ -104,6 +104,8 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
   std::chrono::steady_clock::time_point last_draw_time =
       std::chrono::steady_clock::time_point();
 
+  size_t last_total_lines_drawn = 0;
+
   while (true) {
     if (using_assemble_log) {
       if (FileExists(launcher_log)) {
@@ -167,7 +169,10 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
     display.DrawFile(logcat_fd, kLogNameLogcat, logcat_lines);
 
     const auto [output, total_lines_drawn] = display.Finalize();
+    ClearLastNLines(last_total_lines_drawn);
     std::cout << output << std::flush;
+    last_total_lines_drawn = total_lines_drawn;
+
     // Enforce a maximum framerate (max 20 FPS / min 50ms between draws)
     // so we don't saturate SSH bandwidth or CPU during heavy, continuous
     // logging.
@@ -245,7 +250,6 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
                  "Unexpected error reading inotify descriptor: {} ({})",
                  inotify_fd->StrError(), err);
     }
-    ClearLastNLines(total_lines_drawn);
   }
 
   return {};
