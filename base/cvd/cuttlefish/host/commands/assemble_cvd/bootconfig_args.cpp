@@ -46,9 +46,12 @@ namespace {
 
 static constexpr std::string_view kLegacyBoardBootconfigKeysShared[] = {
     "androidboot.hardware",
+    "androidboot.vendor.apex.com.android.wifi.hal",
     "androidboot.vendor.apex.com.google.emulated.camera.provider.hal",
-    "kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_"
     "buf_size",
+    "kernel.mac80211_hwsim.radios",
+    "kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_",
+    "kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_buf_size",
 };
 
 static constexpr std::string_view kLegacyBoardBootconfigKeysAuto[] = {
