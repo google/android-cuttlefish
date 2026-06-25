@@ -357,6 +357,7 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		"--annotation", "run.oci.keep_original_groups=1",
 		"--cap-add", "NET_RAW",
 		"--pids-limit", "8192",
+		"--tmpfs", "/tmp",
 	}
 	for _, spec := range mountSpecs {
 		extraFlags = append(extraFlags, "-v", spec)
