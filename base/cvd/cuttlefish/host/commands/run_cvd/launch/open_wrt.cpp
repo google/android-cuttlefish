@@ -26,6 +26,7 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/host/commands/run_cvd/launch/cvdalloc.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
@@ -111,7 +112,7 @@ class OpenWrt : public CommandSource {
       ap_cmd.Cmd().AddParameter("--vhost-user=mac80211-hwsim,socket=",
                                 environment_.vhost_user_mac80211_hwsim());
     }
-    if (environment_.enable_wifi() && instance_.enable_tap_devices()) {
+    if (environment_.enable_wifi() && instance_.enable_tap_devices() && !InSandbox()) {
       ap_cmd.AddTap(instance_.wifi_tap_name());
     }
 

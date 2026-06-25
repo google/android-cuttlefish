@@ -311,6 +311,7 @@ cf_cc_library(
     hdrs = ["open_wrt.h"],
     clang_format_enabled = False,
     deps = [
+        "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/run_cvd/launch:cvdalloc",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
