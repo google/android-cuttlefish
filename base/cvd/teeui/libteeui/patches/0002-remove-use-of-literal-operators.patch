@@ -1,0 +1,115 @@
+commit d22ec7296cbd69e90603d7645b6d75bea6ce4c6d
+Author: Jason Macnak <natsu@google.com>
+Date:   Tue Apr 1 11:03:42 2025 -0700
+
+    Remove use of literal operators
+    
+    ... to make internal build happy
+
+diff --git a/base/cvd/teeui/libteeui/include/teeui/label.h b/base/cvd/teeui/libteeui/include/teeui/label.h
+index 6c7b3d042..e307f9a47 100644
+--- a/base/cvd/teeui/libteeui/include/teeui/label.h
++++ b/base/cvd/teeui/libteeui/include/teeui/label.h
+@@ -66,7 +66,7 @@ class LabelImpl {
+     };
+ 
+     LabelImpl()
+-        : fontSize_(10_px), lineHeight_(12_px), text_{}, horizontalTextAlignment_(Alignment::LEFT),
++        : fontSize_(pxs(10)), lineHeight_(pxs(12)), text_{}, horizontalTextAlignment_(Alignment::LEFT),
+           verticalTextAlignment_(Alignment::TOP), textColor_(0), font_{}, textId_(0) {}
+     LabelImpl(pxs fontSize, pxs lineHeight, text_t text, Alignment horizontal,
+               Alignment verticalJustified, Color textColor, FontBuffer font, uint64_t textId)
+diff --git a/base/cvd/teeui/libteeui/include/teeui/utils.h b/base/cvd/teeui/libteeui/include/teeui/utils.h
+index 6c2d46bf4..2f64f10ef 100644
+--- a/base/cvd/teeui/libteeui/include/teeui/utils.h
++++ b/base/cvd/teeui/libteeui/include/teeui/utils.h
+@@ -528,25 +528,6 @@ using dps = Coordinate<dp>;
+ using mms = Coordinate<mm>;
+ using pxs = Coordinate<px>;
+ 
+-constexpr dps operator""_dp(long double dp) {
+-    return dps(dp);
+-}
+-constexpr mms operator""_mm(long double mm) {
+-    return mms(mm);
+-}
+-constexpr pxs operator""_px(long double px) {
+-    return pxs(px);
+-}
+-constexpr dps operator""_dp(unsigned long long dp) {
+-    return dps(dp);
+-}
+-constexpr mms operator""_mm(unsigned long long mm) {
+-    return mms(mm);
+-}
+-constexpr pxs operator""_px(unsigned long long px) {
+-    return pxs(px);
+-}
+-
+ template <typename Coord> class Vec2d {
+     Coord x_, y_;
+ 
+diff --git a/base/cvd/teeui/libteeui/src/label.cpp b/base/cvd/teeui/libteeui/src/label.cpp
+index 6dfd8f79a..188a9d645 100644
+--- a/base/cvd/teeui/libteeui/src/label.cpp
++++ b/base/cvd/teeui/libteeui/src/label.cpp
+@@ -63,7 +63,7 @@ Error LabelImpl::draw(const PixelDrawer& drawPixel, const Box<pxs>& bounds, Line
+     drawBox(bounds, 0xff);
+ #endif
+ 
+-    Point<pxs> pen = {0_px, 0_px};
++    Point<pxs> pen = {pxs(0), pxs(0)};
+     auto textBegin = text_.begin();
+     optional<Box<pxs>> boundingBox;
+ 
+@@ -95,7 +95,7 @@ Error LabelImpl::draw(const PixelDrawer& drawPixel, const Box<pxs>& bounds, Line
+         case Alignment::BOTTOM:
+             break;
+         case Alignment::CENTER:
+-            pen += {(bounds.w() - bBox.w()) / 2.0_px, 0};
++            pen += {(bounds.w() - bBox.w()) / pxs(2.0), 0};
+             break;
+         case Alignment::RIGHT:
+             pen += {bounds.w() - bBox.w(), 0};
+@@ -116,7 +116,7 @@ Error LabelImpl::draw(const PixelDrawer& drawPixel, const Box<pxs>& bounds, Line
+             textBegin++;
+         }
+ 
+-        pen += {0_px, lineHeight_};
++        pen += {pxs(0), lineHeight_};
+         ++curLine;
+     }
+ 
+@@ -128,7 +128,7 @@ Error LabelImpl::draw(const PixelDrawer& drawPixel, const Box<pxs>& bounds, Line
+     TEEUI_LOG << "Offset: " << offset << ENDL;
+ 
+     if (verticalTextAlignment_ == Alignment::CENTER)
+-        offset += {0, (bounds.h() - boundingBox->h()) / 2.0_px};
++        offset += {0, (bounds.h() - boundingBox->h()) / pxs(2.0)};
+     else if (verticalTextAlignment_ == Alignment::BOTTOM)
+         offset += {0, (bounds.h() - boundingBox->h())};
+ 
+diff --git a/base/cvd/teeui/libteeui/src/utils.cpp b/base/cvd/teeui/libteeui/src/utils.cpp
+index 8e8c2eed8..246f31b42 100644
+--- a/base/cvd/teeui/libteeui/src/utils.cpp
++++ b/base/cvd/teeui/libteeui/src/utils.cpp
+@@ -93,8 +93,8 @@ Color drawLinePoint(Point<pxs> a, Point<pxs> b, Point<pxs> px_origin, Color c, p
+     auto len = line.length();
+     auto l = line / len;
+     auto seg = l * (px_origin - b);
+-    auto dist = 0_px;
+-    if (seg < 0_px) {
++    auto dist = pxs(0);
++    if (seg < pxs(0)) {
+         //        line = px_origin - b;
+         //        dist = line.length();
+         //        line /= dist;
+@@ -108,7 +108,7 @@ Color drawLinePoint(Point<pxs> a, Point<pxs> b, Point<pxs> px_origin, Color c, p
+         return 0;
+     } else {
+         line = Point<pxs>(-line.y(), line.x()) / len;
+-        dist = (line * (px_origin - a)).abs() - width + .5_px;
++        dist = (line * (px_origin - a)).abs() - width + pxs(.5);
+     }
+ 
+     return pixelLineIntersect(line, dist, c);
