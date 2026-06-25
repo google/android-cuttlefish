@@ -546,3 +546,9 @@ jobs:
           --test_env=XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
           --test_env=CONTAINERS_STORAGE_CONF=/tmp/podcvd-podman-config/storage.conf \
           --test_output=errors
+    - name: Upload test logs
+      if: always()
+      uses: actions/upload-artifact@v6
+      with:
+        name: e2etests-podcvd-logs
+        path: e2etests/bazel-testlogs
