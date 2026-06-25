@@ -24,7 +24,10 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
 #include "fmt/base.h"
+
+#include "cuttlefish/ansi_codes/ansi_codes.h"
 
 namespace cuttlefish {
 
@@ -75,8 +78,6 @@ bool StackTraceEntry::HasMessage() const { return !message_.str().empty(); }
 fmt::format_context::iterator StackTraceEntry::format(
     fmt::format_context& ctx, const std::vector<FormatSpecifier>& specifiers,
     std::optional<int> index) const {
-  static constexpr char kTerminalBoldRed[] = "\033[0;1;31m";
-  static constexpr char kTerminalReset[] = "\033[0m";
   auto out = ctx.out();
   std::vector<FormatSpecifier> filtered_specs;
   bool arrow = false;
@@ -149,8 +150,8 @@ fmt::format_context::iterator StackTraceEntry::format(
         break;
       case FormatSpecifier::kMessage:
         if (color) {
-          out = fmt::format_to(out, "{}{}{}", kTerminalBoldRed, message_.str(),
-                               kTerminalReset);
+          out = fmt::format_to(out, "{}{}{}", kAnsiRed, message_.str(),
+                               kAnsiReset);
         } else {
           out = fmt::format_to(out, "{}", message_.str());
         }
@@ -164,7 +165,7 @@ fmt::format_context::iterator StackTraceEntry::format(
             file_.substr(last_slash == std::string::npos ? 0 : last_slash + 1);
         std::string last;
         if (HasMessage()) {
-          last = color ? kTerminalBoldRed + message_.str() + kTerminalReset
+          last = color ? absl::StrCat(kAnsiRed, message_.str(), kAnsiReset)
                        : message_.str();
         }
         if (color) {
