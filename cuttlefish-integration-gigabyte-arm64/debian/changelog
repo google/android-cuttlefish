@@ -1,8 +1,8 @@
-cuttlefish-integration-gigabyte-arm64 (1.56.0) UNRELEASED; urgency=medium
+cuttlefish-integration-gigabyte-arm64 (1.56.0) unstable; urgency=medium
 
-  * 
+  * N/A
 
- -- Ram Muthiah <rammuthiah@google.com>  Fri, 12 Jun 2026 03:18:48 +0100
+ -- Cody Schuffelen <schuffelen@google.com>  Thu, 25 Jun 2026 18:12:53 -0700
 
 cuttlefish-integration-gigabyte-arm64 (1.55.0) unstable; urgency=medium
 
@@ -13,7 +13,7 @@ cuttlefish-integration-gigabyte-arm64 (1.55.0) unstable; urgency=medium
 
 cuttlefish-integration-gigabyte-arm64 (1.54.0) stable; urgency=medium
 
- * Start development on 1.54.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2455
+  * Start development on 1.54.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2455
 
  -- 3405691582 <dsk@google.com>  Thu, 28 May 2026 17:44:18 +0000
 
