@@ -126,7 +126,6 @@ cf_cc_library(
     name = "sparse_image",
     srcs = ["sparse_image.cc"],
     hdrs = ["sparse_image.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",

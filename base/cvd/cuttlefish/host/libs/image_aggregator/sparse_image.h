@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+#pragma once
+
+#include <stdint.h>
+
+#include <memory>
 #include <string>
 
 #include "cuttlefish/host/libs/image_aggregator/disk_image.h"
