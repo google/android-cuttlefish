@@ -23,10 +23,10 @@
 
 #include "zip.h"
 
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -79,6 +79,7 @@ class ZipSourceReader : public Reader {
 
  protected:
   std::recursive_mutex mutex_;
+
  private:
   ZipSourceReader(ReadableZipSource*);
 
