@@ -100,7 +100,6 @@ cf_cc_library(
     name = "zip_file",
     srcs = ["zip_file.cc"],
     hdrs = ["zip_file.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
