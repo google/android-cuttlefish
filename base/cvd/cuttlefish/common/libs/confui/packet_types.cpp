@@ -15,15 +15,18 @@
 
 #include "cuttlefish/common/libs/confui/packet_types.h"
 
-#include <sstream>
+#include <stdint.h>
 
-namespace cuttlefish {
-namespace confui {
-namespace packet {
+#include <sstream>
+#include <string>
+#include <vector>
+
+namespace cuttlefish::confui::packet {
+
 std::string ToString(const ParsedPacket& packet) {
   std::stringstream ss;
   ss << "[" << packet.session_id_ << "," << packet.type_ << ",";
-  for (auto const& vec : packet.additional_info_) {
+  for (const std::vector<uint8_t>& vec : packet.additional_info_) {
     if (vec.empty()) {
       ss << ",";
       continue;
@@ -39,6 +42,5 @@ std::string ToString(const ParsedPacket& packet) {
   result.append("]");
   return result;
 }
-}  // end of namespace packet
-}  // end of namespace confui
-}  // end of namespace cuttlefish
+
+}  // namespace cuttlefish::confui::packet

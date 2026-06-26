@@ -18,16 +18,20 @@
 #include <stdint.h>
 
 #include <map>
+#include <optional>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "cuttlefish/common/libs/confui/packet.h"
+#include "teeui/common_message_types.h"  // /system/teeui/libteeui/.../include
+
 #include "cuttlefish/common/libs/confui/utils.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 
-namespace cuttlefish {
-namespace confui {
+namespace cuttlefish::confui {
+
 std::string ToDebugString(const ConfUiCmd& cmd, const bool is_verbose) {
   std::stringstream ss;
   ss << " of " << Enum2Base(cmd);
@@ -174,5 +178,4 @@ bool ConfUiUserTouchMessage::SendOver(SharedFD fd) {
                std::to_string(y_));
 }
 
-}  // end of namespace confui
-}  // end of namespace cuttlefish
+}  // namespace cuttlefish::confui

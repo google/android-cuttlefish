@@ -17,14 +17,12 @@
 
 #include <stdint.h>
 
-#include <sstream>
 #include <string>
 #include <tuple>
 #include <vector>
 
-namespace cuttlefish {
-namespace confui {
-namespace packet {
+namespace cuttlefish::confui::packet {
+
 struct PayloadHeader {
   uint32_t payload_length_;
 };
@@ -38,6 +36,7 @@ using Payload = std::tuple<PayloadHeader, BufferType>;
 constexpr const ssize_t kMaxPayloadLength = 10000;
 
 using ConfUiPacketInfo = std::vector<std::vector<uint8_t>>;
+
 struct ParsedPacket {
   std::string session_id_;
   std::string type_;
@@ -45,6 +44,5 @@ struct ParsedPacket {
 };
 
 std::string ToString(const ParsedPacket& packet);
-}  // end of namespace packet
-}  // end of namespace confui
-}  // end of namespace cuttlefish
+
+}  // namespace cuttlefish::confui::packet

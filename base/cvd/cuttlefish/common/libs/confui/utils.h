@@ -24,15 +24,13 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 
-namespace cuttlefish {
+namespace cuttlefish::confui {
+
 template <typename T>
 constexpr typename std::underlying_type_t<T> Enum2Base(T t) {
   return static_cast<typename std::underlying_type_t<T>>(t);
 }
-}  // end of namespace cuttlefish
 
-namespace cuttlefish {
-namespace confui {
 template <typename Delim, typename... Args>
 std::string ArgsToStringWithDelim(Delim&& delim, Args&&... args) {
   std::stringstream ss;
@@ -66,5 +64,4 @@ inline bool IsOnlyDigits(std::string_view src) {
 // TODO(kwstephenkim@google.com): make these look more like LOG(level)
 #define ConfUiCheck(cond) CHECK(cond) << "ConfUI: "
 
-}  // end of namespace confui
-}  // end of namespace cuttlefish
+}  // namespace cuttlefish::confui

@@ -17,7 +17,7 @@
 
 #include <stdint.h>
 
-#include <algorithm>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -25,9 +25,13 @@
 #include "absl/log/check.h"
 #include "absl/strings/str_split.h"
 
-namespace cuttlefish {
-namespace confui {
-namespace packet {
+#include "cuttlefish/common/libs/confui/packet_types.h"
+#include "cuttlefish/common/libs/confui/utils.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+
+namespace cuttlefish::confui::packet {
+
 static std::optional<std::vector<uint8_t>> ReadRawData(SharedFD s) {
   if (!s->IsOpen()) {
     ConfUiLog(ERROR) << "file, socket, etc, is not open to read";
@@ -159,6 +163,5 @@ std::optional<ParsedPacket> ReadPayload(SharedFD s) {
   }
   return parsed_result;
 }
-}  // end of namespace packet
-}  // end of namespace confui
-}  // end of namespace cuttlefish
+
+}  // namespace cuttlefish::confui::packet
