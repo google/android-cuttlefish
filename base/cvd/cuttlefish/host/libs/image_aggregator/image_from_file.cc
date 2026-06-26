@@ -23,8 +23,8 @@
 
 #include "absl/strings/match.h"
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
 #include "cuttlefish/host/libs/image_aggregator/disk_image.h"
@@ -47,8 +47,8 @@ Result<std::unique_ptr<DiskImage>> ImageFromFile(const std::string& file_path) {
   constexpr uint64_t MAGIC_BLOCK_SIZE = 4096;
   std::string magic(std::min(file_size, MAGIC_BLOCK_SIZE), '\0');
 
-  CF_EXPECTF(ReadExact(fd, &magic) > 0,
-             "Failed to read '{}': {}'", file_path, fd->StrError());
+  CF_EXPECTF(ReadExact(fd, &magic) > 0, "Failed to read '{}': {}'", file_path,
+             fd->StrError());
 
   CF_EXPECTF(fd->LSeek(0, SEEK_SET) != -1, "Failed to lseek('{}'): {}",
              file_path, fd->StrError());
