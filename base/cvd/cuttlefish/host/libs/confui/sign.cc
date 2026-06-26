@@ -22,9 +22,9 @@
 #include <string>
 #include <vector>
 
-#include <openssl/hmac.h>
-#include <openssl/sha.h>
 #include "absl/log/check.h"
+#include "openssl/hmac.h"
+#include "openssl/sha.h"
 
 #include "cuttlefish/common/libs/confui/utils.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"

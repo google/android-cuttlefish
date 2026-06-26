@@ -157,4 +157,3 @@ std::unique_ptr<InputConnector::EventSink> HostVirtualInput::CreateSink() {
 
 }  // namespace confui
 }  // namespace cuttlefish
-
