@@ -25,4 +25,3 @@ extern unsigned int RobotoRegular_length;
 
 extern unsigned char Shield[];
 extern unsigned int Shield_length;
-

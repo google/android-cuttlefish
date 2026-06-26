@@ -23,7 +23,7 @@
 #include <functional>
 #include <mutex>
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/confui/utils.h"
 #include "cuttlefish/host/libs/confui/host_utils.h"
@@ -62,10 +62,10 @@ class HostModeCtrl {
    */
   void WaitAndroidMode() {
     ConfUiLogDebug << cuttlefish::confui::thread::GetName()
-                     << "checking atomic Android mode";
+                   << "checking atomic Android mode";
     if (atomic_mode_ == ModeType::kAndroidMode) {
       ConfUiLogDebug << cuttlefish::confui::thread::GetName()
-                       << "returns as it is already Android mode";
+                     << "returns as it is already Android mode";
       return;
     }
     auto check = [this]() -> bool {
@@ -74,24 +74,24 @@ class HostModeCtrl {
     std::unique_lock<std::mutex> lock(mode_mtx_);
     and_mode_cv_.wait(lock, check);
     ConfUiLogDebug << cuttlefish::confui::thread::GetName()
-                     << "awakes from cond var waiting for Android mode";
+                   << "awakes from cond var waiting for Android mode";
   }
 
   void SetMode(const ModeType mode) {
     ConfUiLogDebug << cuttlefish::confui::thread::GetName()
-                     << " tries to acquire the lock in SetMode";
+                   << " tries to acquire the lock in SetMode";
     std::lock_guard<std::mutex> lock(mode_mtx_);
     ConfUiLogDebug << cuttlefish::confui::thread::GetName()
-                     << " acquired the lock in SetMode";
+                   << " acquired the lock in SetMode";
     atomic_mode_ = mode;
     if (atomic_mode_ == ModeType::kAndroidMode) {
       ConfUiLogDebug << cuttlefish::confui::thread::GetName()
-                       << " signals kAndroidMode in SetMode";
+                     << " signals kAndroidMode in SetMode";
       and_mode_cv_.notify_all();
       return;
     }
     ConfUiLogDebug << cuttlefish::confui::thread::GetName()
-                     << "signals kConfUI_Mode in SetMode";
+                   << "signals kConfUI_Mode in SetMode";
     confui_mode_cv_.notify_all();
   }
 

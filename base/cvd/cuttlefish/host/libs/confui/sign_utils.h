@@ -28,11 +28,11 @@ using hmac_t = auth_token_key_t;
 
 template <typename T>
 auto bytes_cast(const T& v) -> const uint8_t (&)[sizeof(T)] {
-  return *reinterpret_cast<const uint8_t(*)[sizeof(T)]>(&v);
+  return *reinterpret_cast<const uint8_t * [sizeof(T)]>(&v);
 }
 template <typename T>
 auto bytes_cast(T& v) -> uint8_t (&)[sizeof(T)] {
-  return *reinterpret_cast<uint8_t(*)[sizeof(T)]>(&v);
+  return *reinterpret_cast<uint8_t * [sizeof(T)]>(&v);
 }
 
 template <typename IntType, uint32_t byteOrder>
@@ -42,8 +42,7 @@ template <typename IntType>
 struct choose_hton<IntType, __ORDER_LITTLE_ENDIAN__> {
   inline static IntType hton(const IntType& value) {
     IntType result = {};
-    const unsigned char* inbytes =
-        reinterpret_cast<const unsigned char*>(&value);
+    const unsigned char* inbytes = reinterpret_cast<const unsigned char*>(&value);
     unsigned char* outbytes = reinterpret_cast<unsigned char*>(&result);
     for (int i = sizeof(IntType) - 1; i >= 0; --i) {
       *(outbytes++) = inbytes[i];
@@ -73,15 +72,13 @@ class ByteBufferProxy {
     static int* f(const U* u, decltype(u->data())) {
       return nullptr;
     }
-    static constexpr bool value =
-        std::is_pointer<decltype(f((T*)nullptr, ""))>::value;
+    static constexpr bool value = std::is_pointer<decltype(f((T*)nullptr, ""))>::value;
   };
 
  public:
   template <typename T>
   ByteBufferProxy(const T& buffer, decltype(buffer.data()) = nullptr)
-      : data_(reinterpret_cast<const uint8_t*>(buffer.data())),
-        size_(buffer.size()) {
+      : data_(reinterpret_cast<const uint8_t*>(buffer.data())), size_(buffer.size()) {
     static_assert(sizeof(decltype(*buffer.data())) == 1, "elements to large");
   }
 
@@ -89,11 +86,9 @@ class ByteBufferProxy {
   // as hidl_string. std::string has both so we need to explicitly disable this
   // overload if .data() is present.
   template <typename T>
-  ByteBufferProxy(
-      const T& buffer,
-      std::enable_if_t<!has_data<T>::value, decltype(buffer.c_str())> = nullptr)
-      : data_(reinterpret_cast<const uint8_t*>(buffer.c_str())),
-        size_(buffer.size()) {
+  ByteBufferProxy(const T& buffer,
+                  std::enable_if_t<!has_data<T>::value, decltype(buffer.c_str())> = nullptr)
+      : data_(reinterpret_cast<const uint8_t*>(buffer.c_str())), size_(buffer.size()) {
     static_assert(sizeof(decltype(*buffer.c_str())) == 1, "elements to large");
   }
 

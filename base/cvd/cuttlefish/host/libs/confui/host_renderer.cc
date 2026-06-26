@@ -21,8 +21,8 @@
 #include <string>
 #include <vector>
 
-#include <drm/drm_fourcc.h>
 #include "absl/log/check.h"
+#include "drm/drm_fourcc.h"
 
 #include "cuttlefish/common/libs/confui/utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -85,8 +85,8 @@ class ConfUiRendererImpl {
   ConfUiRendererImpl(uint32_t display, const std::string& confirmation_msg,
                      const std::string& locale, bool inverted, bool magnified);
 
-  struct Boundary {            // inclusive but.. LayoutElement's size is float
-    uint32_t x, y, w, h;       // (x, y) is the top left
+  struct Boundary {       // inclusive but.. LayoutElement's size is float
+    uint32_t x, y, w, h;  // (x, y) is the top left
   };
 
   template <typename LayoutElement>
@@ -285,8 +285,7 @@ teeui::Error ConfUiRendererImpl::UpdateTranslations() {
 
 void ConfUiRendererImpl::SetDeviceContext(unsigned long long w,
                                           const unsigned long long h,
-                                          bool is_inverted,
-                                          bool is_magnified) {
+                                          bool is_inverted, bool is_magnified) {
   using namespace teeui;
   const auto screen_width = pxs(w);
   const auto screen_height = pxs(h);
@@ -366,8 +365,8 @@ std::unique_ptr<TeeUiFrameWrapper>& ConfUiRendererImpl::RenderRawFrame() {
   return raw_frame_;
 }
 
-std::unique_ptr<TeeUiFrameWrapper> ConfUiRendererImpl::RepaintRawFrame(
-    int w, int h) {
+std::unique_ptr<TeeUiFrameWrapper> ConfUiRendererImpl::RepaintRawFrame(int w,
+                                                                       int h) {
   std::get<teeui::LabelOK>(layout_).setTextColor(kColorEnabled);
   std::get<teeui::LabelCancel>(layout_).setTextColor(kColorEnabled);
 

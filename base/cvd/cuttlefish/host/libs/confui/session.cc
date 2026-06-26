@@ -24,8 +24,8 @@
 
 #include "absl/log/log.h"
 
-#include "cuttlefish/common/libs/confui/utils.h"
 #include "cuttlefish/common/libs/confui/protocol.h"
+#include "cuttlefish/common/libs/confui/utils.h"
 #include "cuttlefish/host/libs/confui/secure_input.h"
 
 namespace cuttlefish {
@@ -159,7 +159,7 @@ bool Session::HandleInit(SharedFD hal_cli, const FsmInput fsm_input,
 
   // Start Session
   ConfUiLogVerbose << "Sending ack to hal_cli: "
-                     << Enum2Base(ConfUiCmd::kCliAck);
+                   << Enum2Base(ConfUiCmd::kCliAck);
   host_mode_ctrl_.SetMode(HostModeCtrl::ModeType::kConfUI_Mode);
 
   auto start_cmd_msg = static_cast<const ConfUiStartMessage&>(conf_ui_message);

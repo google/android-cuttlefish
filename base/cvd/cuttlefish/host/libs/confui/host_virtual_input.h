@@ -20,7 +20,7 @@
 
 #include <memory>
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/host/libs/confui/host_server.h"
 #include "cuttlefish/host/libs/input_connector/input_connector.h"

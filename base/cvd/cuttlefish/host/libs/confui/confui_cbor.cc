@@ -45,8 +45,9 @@ void Cbor::Init() {
     return;
   }
   auto success = cbor_map_add(
-      cb_map_.get(), (struct cbor_pair){.key = cbor_move(cbor_build_string("prompt")),
-                                  .value = cbor_move(cb_prompt)});
+      cb_map_.get(),
+      (struct cbor_pair){.key = cbor_move(cbor_build_string("prompt")),
+                         .value = cbor_move(cb_prompt)});
   if (!success) {
     // Shouldn't happen, the map has capacity for 2.
     buffer_status_ = Error::OUT_OF_DATA;
@@ -59,8 +60,9 @@ void Cbor::Init() {
     return;
   }
   success = cbor_map_add(
-      cb_map_.get(), (struct cbor_pair){.key = cbor_move(cbor_build_string("extra")),
-                                  .value = cbor_move(cb_extra_data)});
+      cb_map_.get(),
+      (struct cbor_pair){.key = cbor_move(cbor_build_string("extra")),
+                         .value = cbor_move(cb_extra_data)});
   if (!success) {
     // Shouldn't happen, the map has capacity for 2.
     buffer_status_ = Error::MALFORMED;
