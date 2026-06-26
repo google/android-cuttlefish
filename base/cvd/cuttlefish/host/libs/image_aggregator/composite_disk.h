@@ -46,9 +46,7 @@ class CompositeDiskImage : public DiskImage {
 
   Result<uint64_t> VirtualSizeBytes() const override;
 
-  const CompositeDisk& GetCompositeDisk() const {
-    return cdisk_;
-  }
+  const CompositeDisk& GetCompositeDisk() const { return cdisk_; }
 
  private:
   CompositeDiskImage(CompositeDisk);
