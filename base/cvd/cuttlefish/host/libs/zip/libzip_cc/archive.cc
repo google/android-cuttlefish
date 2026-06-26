@@ -98,9 +98,8 @@ Result<uint32_t> ReadableZip::EntryAttributes(uint64_t index) const {
 }
 
 Result<bool> ReadableZip::EntryIsDirectory(uint64_t index) {
-  const uint32_t attributes =
-      CF_EXPECT(EntryAttributes(index),
-                "Failed to get attributes for entry " << index);
+  const uint32_t attributes = CF_EXPECT(
+      EntryAttributes(index), "Failed to get attributes for entry " << index);
 
   // See
   //  * https://cs.android.com/android/platform/superproject/main/+/main:build/soong/zip/zip.go;drc=8967d7562557001eb10e216ba7a947fb6054c67c;l=782
