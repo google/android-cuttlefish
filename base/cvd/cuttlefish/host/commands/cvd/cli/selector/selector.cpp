@@ -38,6 +38,9 @@ namespace cuttlefish {
 namespace selector {
 namespace {
 
+// Output is always a TTY when printing the selection menu.
+constexpr bool kIsMenuOnTTY = true;
+
 enum class DisplayBehavior {
   LabelGroup,
   LabelInstance,
@@ -94,13 +97,13 @@ Result<int> PromptForSelection(const int max_selection) {
   std::unique_ptr<InterruptibleTerminal> terminal =
       std::make_unique<InterruptibleTerminal>();
 
-  TerminalColors colors(isatty(2));
+  TerminalColors colors(kIsMenuOnTTY);
 
   int selection = -1;
   while (selection < 0 || selection > max_selection) {
-    fmt::print(std::cout, "\nSelect {}[0..{}]{}: ", colors.Cyan(),
+    fmt::print(std::cerr, "\nSelect {}[0..{}]{}: ", colors.Cyan(),
                max_selection, colors.Reset());
-    std::cout << std::flush;
+    std::cerr << std::flush;
     std::string input_line = CF_EXPECT(terminal->ReadLine());
     if (!absl::SimpleAtoi(input_line, &selection)) {
       selection = -1;
@@ -122,8 +125,8 @@ Result<LocalInstanceGroup> PromptUserForGroup(
     const InstanceManager& instance_manager) {
   const std::vector<LocalInstanceGroup> groups =
       CF_EXPECT(instance_manager.FindGroups({}));
-  const TerminalColors colors(isatty(1));
-  std::cout << GroupSelectionMenu(groups, colors);
+  const TerminalColors colors(kIsMenuOnTTY);
+  std::cerr << GroupSelectionMenu(groups, colors);
 
   const int selection = CF_EXPECT(PromptForSelection(groups.size() - 1));
   auto group_filter = InstanceDatabase::Filter{
@@ -145,12 +148,20 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> PromptUserForInstance(
 
   CF_EXPECT(!flat_instances.empty(), "No instances available");
 
-  const TerminalColors colors(isatty(1));
-  std::cout << InstanceSelectionMenu(found_instances, colors);
+  const TerminalColors colors(kIsMenuOnTTY);
+  std::cerr << InstanceSelectionMenu(found_instances, colors);
 
   const int selection =
       CF_EXPECT(PromptForSelection(flat_instances.size() - 1));
   return flat_instances[selection];
+}
+
+bool CanShowSelectionMenu() {
+  // Don't display selection menu unless both stdin and stderr are connected to
+  // the terminal. Stderr is used in case the user is piping the output of to
+  // command, for example `cvd status | grep ...` will still show the selection
+  // menu and won't interfere with the grep command.
+  return isatty(0) && isatty(2);
 }
 
 }  // namespace
@@ -180,7 +191,7 @@ Result<LocalInstanceGroup> SelectGroup(const InstanceManager& instance_manager,
     return groups.front();
   }
   CF_EXPECT(
-      isatty(0),
+      CanShowSelectionMenu(),
       "Multiple groups found. Narrow the selection with selector arguments.");
   return CF_EXPECT(PromptUserForGroup(instance_manager));
 }
@@ -197,7 +208,7 @@ Result<std::pair<LocalInstance, LocalInstanceGroup>> SelectInstance(
     auto [group, instances] = found_instances.front();
     return std::make_pair(instances.front(), group);
   }
-  CF_EXPECT(isatty(0),
+  CF_EXPECT(CanShowSelectionMenu(),
             "Multiple instances found.  Narrow the selection with selector "
             "arguments.");
   return CF_EXPECT(PromptUserForInstance(found_instances));
