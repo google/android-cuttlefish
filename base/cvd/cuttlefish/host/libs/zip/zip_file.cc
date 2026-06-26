@@ -75,7 +75,7 @@ Result<void> ExtractFile(ReadableZip& zip, std::string_view zip_path,
     // The fetcher must occasionally download archives from Android 10 or 11
     // which incorrectly had the file attributes set to 0. To remedy this
     // set them to a safe 0640.
-    if(*attr == 0) {
+    if (*attr == 0) {
       *attr = 0640;
     }
     CF_EXPECT_EQ(chmod(host_path.c_str(), *attr), 0, StrError(errno));
