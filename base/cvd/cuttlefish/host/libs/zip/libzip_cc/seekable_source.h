@@ -20,10 +20,10 @@
 
 #include <memory>
 
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -60,7 +60,8 @@ class SeekingZipSourceReader : public ZipSourceReader, public ReaderSeeker {
   Result<void> Visit(IoVisitor&) override;
 
   Result<uint64_t> Read(void* data, uint64_t length) override;
-  Result<uint64_t> PRead(void* buf, uint64_t count, uint64_t offset) const override;
+  Result<uint64_t> PRead(void* buf, uint64_t count,
+                         uint64_t offset) const override;
 
   Result<uint64_t> SeekSet(uint64_t offset) override;
   Result<uint64_t> SeekCur(int64_t offset) override;
