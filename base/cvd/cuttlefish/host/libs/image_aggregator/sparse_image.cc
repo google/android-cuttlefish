@@ -23,9 +23,8 @@
 #include <string_view>
 #include <utility>
 
-#include <android-base/unique_fd.h>
-#include <sparse/sparse.h>
-
+#include "android-base/unique_fd.h"
+#include "sparse/sparse.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -53,9 +52,7 @@ Result<SharedFD> AcquireLockForImage(const std::string& image_path) {
 }
 
 struct SparseImageDeleter {
-  void operator()(sparse_file* file) {
-    sparse_file_destroy(file);
-  }
+  void operator()(sparse_file* file) { sparse_file_destroy(file); }
 };
 
 }  // namespace
@@ -102,7 +99,8 @@ struct AndroidSparseImage::Impl {
   android::base::unique_fd raw_fd;
 };
 
-Result<AndroidSparseImage> AndroidSparseImage::OpenExisting(const std::string& path) {
+Result<AndroidSparseImage> AndroidSparseImage::OpenExisting(
+    const std::string& path) {
   SharedFD fd = SharedFD::Open(path, O_RDONLY | O_CLOEXEC);
   CF_EXPECTF(fd->IsOpen(), "{}", fd->StrError());
 
@@ -112,13 +110,16 @@ Result<AndroidSparseImage> AndroidSparseImage::OpenExisting(const std::string& p
   impl->raw_fd = android::base::unique_fd(fd->UNMANAGED_Dup());
   CF_EXPECT(impl->raw_fd.ok());
 
-  impl->raw_sparse_file.reset(sparse_file_import(impl->raw_fd.get(), /* verbose= */ false, /* crc= */ false));
+  impl->raw_sparse_file.reset(sparse_file_import(
+      impl->raw_fd.get(), /* verbose= */ false, /* crc= */ false));
   CF_EXPECT(impl->raw_sparse_file.get());
 
   return AndroidSparseImage(std::move(impl));
 }
 
-AndroidSparseImage::AndroidSparseImage(std::unique_ptr<AndroidSparseImage::Impl> impl) : impl_(std::move(impl)) { }
+AndroidSparseImage::AndroidSparseImage(
+    std::unique_ptr<AndroidSparseImage::Impl> impl)
+    : impl_(std::move(impl)) {}
 
 AndroidSparseImage::AndroidSparseImage(AndroidSparseImage&& other) {
   impl_ = std::move(other.impl_);
@@ -139,8 +140,8 @@ Result<uint64_t> AndroidSparseImage::VirtualSizeBytes() const {
   CF_EXPECT(impl_.get());
   CF_EXPECT(impl_->raw_sparse_file.get());
 
-  return sparse_file_len(impl_->raw_sparse_file.get(), /* sparse= */ false, /* crc= */ true);
+  return sparse_file_len(impl_->raw_sparse_file.get(), /* sparse= */ false,
+                         /* crc= */ true);
 }
-
 
 }  // namespace cuttlefish
