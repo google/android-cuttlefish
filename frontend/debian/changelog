@@ -1,8 +1,10 @@
-cuttlefish-frontend (1.56.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.56.0) unstable; urgency=medium
 
-  * 
+  * Route per-instance start API by @SuperStrongDinosaur in https://github.com/google/android-cuttlefish/pull/2618
+  * Fix ho client for group start/stop requests by @ser-io in https://github.com/google/android-cuttlefish/pull/2710
+  * Clean up unused code. by @ser-io in https://github.com/google/android-cuttlefish/pull/2741
 
- -- Ram Muthiah <rammuthiah@google.com>  Fri, 12 Jun 2026 03:19:02 +0100
+ -- Cody Schuffelen <schuffelen@google.com>  Thu, 25 Jun 2026 18:13:18 -0700
 
 cuttlefish-frontend (1.55.0) unstable; urgency=medium
 
@@ -15,11 +17,11 @@ cuttlefish-frontend (1.55.0) unstable; urgency=medium
 
 cuttlefish-frontend (1.54.0) stable; urgency=medium
 
- * Start development on 1.54.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2455
- * Consolidate Bazel modules in frontend and fix build by @Databean in https://github.com/google/android-cuttlefish/pull/2435
- * Added host orchestrator endpoint for cvd status by @SuperStrongDinosaur in https://github.com/google/android-cuttlefish/pull/2395
- * Revert "Added host orchestrator endpoint for cvd status" by @ser-io in https://github.com/google/android-cuttlefish/pull/2583
- * Implement GET /cvds/{group}/{name} endpoint by @SuperStrongDinosaur in https://github.com/google/android-cuttlefish/pull/2607
+  * Start development on 1.54.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2455
+  * Consolidate Bazel modules in frontend and fix build by @Databean in https://github.com/google/android-cuttlefish/pull/2435
+  * Added host orchestrator endpoint for cvd status by @SuperStrongDinosaur in https://github.com/google/android-cuttlefish/pull/2395
+  * Revert "Added host orchestrator endpoint for cvd status" by @ser-io in https://github.com/google/android-cuttlefish/pull/2583
+  * Implement GET /cvds/{group}/{name} endpoint by @SuperStrongDinosaur in https://github.com/google/android-cuttlefish/pull/2607
 
  -- 3405691582 <dsk@google.com>  Thu, 28 May 2026 17:44:18 +0000
 
