@@ -28,8 +28,8 @@
 #include "cuttlefish/common/libs/confui/utils.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
-namespace cuttlefish {
-namespace confui {
+namespace cuttlefish::confui {
+
 // When you update this, please update all the utility functions
 // in conf.cpp: e.g. ToString, etc
 enum class ConfUiCmd : uint32_t {
@@ -47,11 +47,11 @@ enum class ConfUiCmd : uint32_t {
 constexpr const ssize_t kMaxMessageLength = packet::kMaxPayloadLength;
 
 std::string ToString(const ConfUiCmd& cmd);
-std::string ToDebugString(const ConfUiCmd& cmd, const bool is_verbose);
+std::string ToDebugString(const ConfUiCmd& cmd, bool is_verbose);
 ConfUiCmd ToCmd(const std::string& cmd_str);
 ConfUiCmd ToCmd(uint32_t i);
 
-std::string ToString(const teeui::UIOption ui_opt);
+std::string ToString(teeui::UIOption ui_opt);
 std::optional<teeui::UIOption> ToUiOption(const std::string&);
 
 struct HostError {
@@ -228,5 +228,4 @@ class ConfUiUserTouchMessage : public ConfUiMessage {
 using ConfUiAbortMessage = ConfUiGenericMessage<ConfUiCmd::kAbort>;
 using ConfUiStopMessage = ConfUiGenericMessage<ConfUiCmd::kStop>;
 
-}  // end of namespace confui
-}  // end of namespace cuttlefish
+}  // namespace cuttlefish::confui

@@ -23,12 +23,10 @@
 
 #include "teeui/common_message_types.h"  // /system/teeui/libteeui/.../include
 
-#include "cuttlefish/common/libs/confui/packet_types.h"
 #include "cuttlefish/common/libs/confui/protocol_types.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
-namespace cuttlefish {
-namespace confui {
+namespace cuttlefish::confui {
 
 std::string ToString(const ConfUiMessage& msg);
 
@@ -46,7 +44,7 @@ std::unique_ptr<ConfUiMessage> RecvConfUiMsg(const std::string& session_id,
 
 bool SendAbortCmd(SharedFD fd, const std::string& session_id);
 
-bool SendAck(SharedFD fd, const std::string& session_id, const bool is_success,
+bool SendAck(SharedFD fd, const std::string& session_id, bool is_success,
              const std::string& status_message);
 bool SendResponse(SharedFD fd, const std::string& session_id,
                   const UserResponse::type& plain_selection,
@@ -67,5 +65,4 @@ bool SendStopCmd(SharedFD fd, const std::string& session_id);
 bool SendUserSelection(SharedFD fd, const std::string& session_id,
                        const UserResponse::type& confirm_cancel);
 
-}  // end of namespace confui
-}  // end of namespace cuttlefish
+}  // namespace cuttlefish::confui

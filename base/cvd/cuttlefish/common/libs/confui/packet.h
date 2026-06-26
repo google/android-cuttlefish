@@ -17,11 +17,9 @@
 
 #include <stdint.h>
 
-#include <algorithm>
 #include <optional>
+#include <sstream>
 #include <string>
-#include <tuple>
-#include <type_traits>
 #include <vector>
 
 #include "cuttlefish/common/libs/confui/packet_types.h"
@@ -49,9 +47,7 @@
  * is the binary representation of the i th item
  *
  */
-namespace cuttlefish {
-namespace confui {
-namespace packet {
+namespace cuttlefish::confui::packet {
 
 /*
  * methods in namespace impl is not intended for public use
@@ -60,6 +56,7 @@ namespace packet {
  * or, skip the namespace impl
  */
 namespace impl {
+
 template <typename Buffer, typename... Args>
 void AppendToBuffer(Buffer& buffer, Args&&... args) {
   (buffer.insert(buffer.end(), std::begin(std::forward<Args>(args)),
@@ -97,6 +94,7 @@ Payload ToPayload(const std::string& cmd_str, const std::string& session_id,
   ph.payload_length_ = payload_buffer.size();
   return {ph, payload_buffer};
 }
+
 }  // namespace impl
 
 /*
@@ -130,6 +128,4 @@ bool WritePayload(SharedFD d, const std::string& cmd_str,
   return true;
 }
 
-}  // end of namespace packet
-}  // end of namespace confui
-}  // end of namespace cuttlefish
+}  // namespace cuttlefish::confui::packet

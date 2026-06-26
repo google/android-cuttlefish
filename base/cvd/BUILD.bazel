@@ -30,6 +30,7 @@ filegroup(
         ".clang-tidy",
         "//allocd:.clang-tidy",
         "//cuttlefish/common:.clang-tidy",
+        "//cuttlefish/common/libs/confui:.clang-tidy",
         "//cuttlefish/common/libs/key_equals_value:.clang-tidy",
         "//cuttlefish/common/libs/transport:.clang-tidy",
         "//cuttlefish/host:.clang-tidy",

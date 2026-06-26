@@ -17,18 +17,23 @@
 
 #include <stdint.h>
 
-#include <sstream>
+#include <memory>
+#include <string>
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "teeui/common_message_types.h"  // /system/teeui/libteeui/.../include
 
 #include "cuttlefish/common/libs/confui/packet.h"
+#include "cuttlefish/common/libs/confui/packet_types.h"
+#include "cuttlefish/common/libs/confui/protocol_types.h"
 #include "cuttlefish/common/libs/confui/utils.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
-namespace cuttlefish {
-namespace confui {
+namespace cuttlefish::confui {
+
 namespace {
+
 // default implementation of ToConfUiMessage
 template <ConfUiCmd C>
 std::unique_ptr<ConfUiMessage> ToConfUiMessage(
@@ -82,7 +87,8 @@ std::unique_ptr<ConfUiMessage> ToConfUiMessage(
   }
   return {nullptr};
 }
-}  // end of unnamed namespace
+
+}  // namespace
 
 std::string ToString(const ConfUiMessage& msg) { return msg.ToString(); }
 
@@ -160,6 +166,7 @@ bool SendUserSelection(SharedFD fd, const std::string& session_id,
 
 // specialized ToConfUiMessage()
 namespace {
+
 template <>
 std::unique_ptr<ConfUiMessage> ToConfUiMessage<ConfUiCmd::kCliAck>(
     const packet::ParsedPacket& message) {
@@ -270,6 +277,6 @@ std::unique_ptr<ConfUiMessage> ToConfUiMessage<ConfUiCmd::kCliRespond>(
   return std::make_unique<ConfUiCliResponseMessage>(message.session_id_,
                                                     response, sign, msg);
 }
-}  // end of unnamed namespace
-}  // end of namespace confui
-}  // end of namespace cuttlefish
+
+}  // namespace
+}  // namespace cuttlefish::confui
