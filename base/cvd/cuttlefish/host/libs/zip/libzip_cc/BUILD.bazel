@@ -10,7 +10,6 @@ cf_cc_library(
     name = "archive",
     srcs = ["archive.cc"],
     hdrs = ["archive.h"],
-    clang_format_enabled = False,
     features = ["-layering_check"],  # libzip
     linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
