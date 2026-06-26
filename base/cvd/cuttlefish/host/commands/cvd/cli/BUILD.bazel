@@ -184,6 +184,7 @@ cf_cc_library(
     deps = [
         ":command_request",
         ":types",
+        "//cuttlefish/ansi_codes",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
