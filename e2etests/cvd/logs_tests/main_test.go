@@ -85,7 +85,7 @@ func TestPrintLogs(t *testing.T) {
 			t.Fatal(res.Stderr)
 		}
 		names := strings.Split(fields[0], ":")
-		logName := names[len(names) - 1]
+		logName := names[len(names)-1]
 		listedNames = append(listedNames, logName)
 	}
 	keyExpectedNames := []string{
@@ -110,6 +110,28 @@ func TestPrintLogs(t *testing.T) {
 	stdOut = res.Stdout
 	if len(stdOut) == 0 {
 		t.Fatalf("empty launcher.log")
+	}
+
+	// Test cvd logs <logfilename> (equivalent to --print)
+	res, err = c.RunCmd(c.TargetBin(), "logs", "launcher.log")
+	if err != nil {
+		t.Fatal(err)
+	}
+	stdOut = res.Stdout
+	if len(stdOut) == 0 {
+		t.Fatalf("empty launcher.log when printed without --print flag")
+	}
+
+	// Test cvd logs <file1> <file2> (should fail)
+	_, err = c.RunCmd(c.TargetBin(), "logs", "launcher.log", "kernel.log")
+	if err == nil {
+		t.Fatalf("expected cvd logs with multiple positional arguments to fail")
+	}
+
+	// Test cvd logs --print <file1> <file2> (should fail)
+	_, err = c.RunCmd(c.TargetBin(), "logs", "--print", "launcher.log", "kernel.log")
+	if err == nil {
+		t.Fatalf("expected cvd logs --print with extra positional arguments to fail")
 	}
 
 }

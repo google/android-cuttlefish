@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -26,7 +27,7 @@ class CvdLogsHandler : public CvdCommandHandler {
   Result<void> HandleList(const CommandRequest& request);
 
   InstanceManager& instance_manager_;
-  std::string print_target_flag_;
+  std::optional<std::string> print_target_flag_;
   bool pretty_;
   bool pager_;
 };
