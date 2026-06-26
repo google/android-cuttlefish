@@ -22,8 +22,8 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/io/read_exact.h"
-#include "cuttlefish/io/string.h"
 #include "cuttlefish/io/shared_fd.h"
+#include "cuttlefish/io/string.h"
 
 namespace cuttlefish {
 

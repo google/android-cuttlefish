@@ -20,7 +20,6 @@ cf_cc_library(
     name = "composite_disk",
     srcs = ["composite_disk.cc"],
     hdrs = ["composite_disk.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
