@@ -8,6 +8,11 @@ build --test_summary=terse
 
 # files with warnings from files they depend upon
 build --per_file_copt=cuttlefish/host/graphics_detector/vulkan\.cpp$@-Wno-deprecated-declarations
+build --per_file_copt=cuttlefish/host/frontend/webrtc/libcommon/connection_controller\.cpp$@-Wno-thread-safety-reference-return
+build --per_file_copt=cuttlefish/host/frontend/webrtc/libcommon/connection_controller\.h$@-Wno-thread-safety-reference-return
+build --per_file_copt=cuttlefish/host/frontend/webrtc/libcommon/utils\.cpp$@-Wno-thread-safety-reference-return
+build --per_file_copt=cuttlefish/host/frontend/webrtc/libcommon/utils\.h$@-Wno-thread-safety-reference-return
+build --per_file_copt=cuttlefish/host/frontend/webrtc/libdevice/data_channels\.cpp$@-Wno-thread-safety-reference-return
 # files with warnings that come from generated files either directly or indirectly through their includes
 build --per_file_copt=.*/cuttlefish/host/commands/casimir_control_server/casimir_control\.grpc\.pb\.cc$@-Wno-deprecated-declarations
 build --per_file_copt=.*/cuttlefish/host/commands/casimir_control_server/casimir_control\.grpc\.pb\.h$@-Wno-deprecated-declarations
