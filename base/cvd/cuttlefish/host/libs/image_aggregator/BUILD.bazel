@@ -63,7 +63,6 @@ cf_cc_library(
     name = "image_from_file",
     srcs = ["image_from_file.cc"],
     hdrs = ["image_from_file.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
