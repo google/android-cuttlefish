@@ -7,6 +7,7 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -173,9 +174,16 @@ CvdLogsHandler::CvdLogsHandler(InstanceManager& instance_manager)
 Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
   std::vector<Flag> flags = CF_EXPECT(Flags(request));
-  CF_EXPECT(ConsumeFlags(flags, args, {.fail_on_unexpected_argument = true}));
+  CF_EXPECT(ConsumeFlags(flags, args, {.fail_on_unexpected_argument = false}));
+  if (!print_target_flag_ && !args.empty()) {
+    print_target_flag_ = args[0];
+    args.erase(args.begin());
+  }
+  // Check for unexpected arguments only, flags were consumed on the previous
+  // call
+  CF_EXPECT(ConsumeFlags({}, args, {.fail_on_unexpected_argument = true}));
 
-  if (!print_target_flag_.empty()) {
+  if (print_target_flag_) {
     CF_EXPECT(HandlePrint(request));
     return {};
   }
@@ -184,8 +192,11 @@ Result<void> CvdLogsHandler::Handle(const CommandRequest& request) {
 }
 
 Result<void> CvdLogsHandler::HandlePrint(const CommandRequest& request) {
+  if (print_target_flag_.value().empty()) {
+    return CF_ERR("Invalid log file name: ''");
+  }
   std::vector<std::string> log_filenames;
-  if (IsGroupLevelLog(print_target_flag_)) {
+  if (IsGroupLevelLog(*print_target_flag_)) {
     const LocalInstanceGroup group =
         CF_EXPECT(selector::SelectGroup(instance_manager_, request));
     log_filenames = group.LogsFilenames();
@@ -198,12 +209,13 @@ Result<void> CvdLogsHandler::HandlePrint(const CommandRequest& request) {
   log_filenames = RemoveInaccessibleFilenames(std::move(log_filenames));
   for (const std::string& filename : log_filenames) {
     const std::string basename = android::base::Basename(filename);
-    if (basename == print_target_flag_) {
+    if (basename == *print_target_flag_) {
       CF_EXPECT(PrintLog(filename, pager_));
       return {};
     }
   }
-  return CF_ERRF("Not found `{}` logs", print_target_flag_);
+  return CF_ERRF("Could not find `{}` in the logs directories",
+                 *print_target_flag_);
 }
 
 Result<void> CvdLogsHandler::HandleList(const CommandRequest& request) {
