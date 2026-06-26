@@ -16,12 +16,17 @@
 #include "cuttlefish/host/libs/web/android_build_api.h"
 
 #include <dirent.h>
+#include <time.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <chrono>
+#include <iomanip>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -32,6 +37,8 @@
 #include <vector>
 
 #include <json/value.h>
+
+#include "absl/log/check.h"
 #include "absl/log/log.h"
 
 #include <android-base/file.h>
@@ -82,6 +89,15 @@ Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
             "Response was successful, but contains error information.  Check "
             "log file for full response.");
   return response.data;
+}
+
+Result<std::chrono::system_clock::time_point> ParseTime(std::string_view str) {
+  std::stringstream stream = std::stringstream(std::string(str));
+  tm time_tm;
+  stream >> std::get_time(&time_tm, "%Y-%m-%dT%H:%M:%S.");
+  CF_EXPECTF(!!stream, "Failed to parse time '{}'", str);
+
+  return std::chrono::system_clock::from_time_t(mktime(&time_tm));
 }
 
 }  // namespace
@@ -275,6 +291,12 @@ Result<std::vector<std::string>> AndroidBuildApi::Headers() {
 
 Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
     const std::string& branch, const std::string& target) {
+  struct CandidateBuild {
+    std::string build_id;
+    std::chrono::system_clock::time_point creation_time;
+  };
+  // Find the latest build at every safe level
+  std::vector<CandidateBuild> candidates;
   for (const SafeLevel safe_level : kAllSafeLevels) {
     VLOG(0) << "Attempting to download build at safe level '" << safe_level
             << "' for branch '" << branch << "' and target '" << target << "'";
@@ -288,7 +310,7 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
     if (!json_res.ok()) {
       continue;
     }
-    const Json::Value json = *json_res;
+    const Json::Value& json = *json_res;
 
     if (!json.isMember("builds")) {
       continue;
@@ -299,9 +321,29 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
                "target \"{}\" in the response array, "
                "but found {}",
                branch, target, json["builds"].size());
-    return CF_EXPECT(GetValue<std::string>(json["builds"][0], {"buildId"}));
+
+    const Json::Value& build = json["builds"][0];
+    const std::string& completion = build["completionTimestamp"].asString();
+    candidates.emplace_back(CandidateBuild{
+        .build_id = build["buildId"].asString(),
+        .creation_time = CF_EXPECT(ParseTime(completion)),
+    });
   }
-  return std::nullopt;
+  if (candidates.empty()) {
+    return std::nullopt;
+  }
+  // Drop candidate builds 1 week older than the latest
+  auto creation = [](const auto& cd) { return cd.creation_time; };
+  std::chrono::system_clock::time_point latest =
+      std::ranges::max(std::views::transform(candidates, creation));
+  auto recent = [latest](const auto& cd) {
+    // NOLINTNEXTLINE(misc-include-cleaner): <chrono>
+    return latest - cd.creation_time < std::chrono::weeks(1);
+  };
+  // Return the first valid build (which will have the highest safe level)
+  auto it = std::find_if(candidates.begin(), candidates.end(), recent);
+  CHECK(it != candidates.end());
+  return it->build_id;
 }
 
 Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
