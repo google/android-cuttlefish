@@ -16,7 +16,8 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/logcat.h"
 
-#include <cstddef>
+#include <stddef.h>
+
 #include <string>
 #include <string_view>
 #include <vector>
@@ -41,57 +42,33 @@ Result<LogcatLine> ParseLogcatLine(std::string_view line) {
   // Note: We avoid absl::MaxSplits here because it counts delimiter matches
   // *before* absl::SkipWhitespace filters them, which breaks index alignment on
   // double-spaces.
-  std::vector<std::string_view> fields =
+  const std::vector<std::string_view> fields =
       absl::StrSplit(line, absl::ByAnyChar(" \t"), absl::SkipWhitespace());
 
-  CF_EXPECT(fields.size() > 5, "Failed to parse Logcat line");
+  CF_EXPECT_GT(fields.size(), 6, "Failed to parse Logcat line");
 
-  CF_EXPECT(fields[4].size() == 1, "Invalid verbosity indicator");
-  char verbosity = fields[4][0];
+  CF_EXPECT_EQ(fields[4].size(), 1, "Invalid verbosity indicator");
 
-  std::string_view tag;
-  std::string_view message;
-
-  // Remainder starts at Field 5
-  const char* remainder_start = fields[5].data();
+  // Remainder starts at Field 6
+  const char* remainder_start = fields[6].data();
   const size_t remainder_len = line.data() + line.size() - remainder_start;
-  std::string_view remainder(remainder_start, remainder_len);
-
-  size_t colon = remainder.find(':');
-  if (colon == std::string_view::npos) {
-    tag = "";
-    message = remainder;
-  } else {
-    tag = remainder.substr(0, colon + 1);  // "TagName:"
-    message = remainder.substr(colon + 1);
-    if (!message.empty() && (message[0] == ' ' || message[0] == '\t')) {
-      message.remove_prefix(1);
-    }
-  }
 
   return LogcatLine{
       .date = fields[0],
       .time = fields[1],
       .uid = fields[2],
       .pid = fields[3],
-      .verbosity = verbosity,
-      .tag = tag,
-      .message = message,
+      .verbosity = fields[4][0],
+      .tag = fields[5],
+      .message = std::string_view(remainder_start, remainder_len),
   };
 }
 
 std::string FormatLogcatLine(const LogcatLine& line) {
-  const std::string_view verb_color = GetColorForVerbosity(line.verbosity);
-  std::string result = absl::StrCat(kAnsiGreen, line.date, " ", line.time, " ",
-                                    verb_color, line.uid, " ", line.pid, " ",
-                                    std::string_view(&line.verbosity, 1), " ");
-
-  if (!line.tag.empty()) {
-    absl::StrAppend(&result, kAnsiYellow, line.tag, " ");
-  }
-
-  absl::StrAppend(&result, kAnsiReset, line.message);
-  return result;
+  return absl::StrCat(kAnsiGreen, line.date, " ", line.time, " ",
+                      GetColorForVerbosity(line.verbosity), line.uid, " ",
+                      line.pid, " ", std::string_view(&line.verbosity, 1), " ",
+                      kAnsiYellow, line.tag, kAnsiReset, " ", line.message);
 }
 
 }  // namespace cuttlefish

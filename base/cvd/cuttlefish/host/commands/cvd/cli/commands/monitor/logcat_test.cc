@@ -38,19 +38,6 @@ TEST(LogcatTest, ParseLogcatLineValid) {
   EXPECT_EQ(parsed->message, "message");
 }
 
-TEST(LogcatTest, ParseLogcatLineNoColon) {
-  std::string line = "05-15 15:28:15.123  1000  1000 I message without colon";
-  auto parsed = ParseLogcatLine(line);
-  ASSERT_THAT(parsed, IsOk());
-  EXPECT_EQ(parsed->date, "05-15");
-  EXPECT_EQ(parsed->time, "15:28:15.123");
-  EXPECT_EQ(parsed->uid, "1000");
-  EXPECT_EQ(parsed->pid, "1000");
-  EXPECT_EQ(parsed->verbosity, 'I');
-  EXPECT_EQ(parsed->tag, "");
-  EXPECT_EQ(parsed->message, "message without colon");
-}
-
 TEST(LogcatTest, ParseLogcatLineInvalid) {
   EXPECT_THAT(ParseLogcatLine("Failed to read logcat:"), IsError());
   EXPECT_THAT(ParseLogcatLine("short line"), IsError());
