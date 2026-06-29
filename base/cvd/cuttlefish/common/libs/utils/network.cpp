@@ -20,24 +20,12 @@
 #include <fcntl.h>
 #include <ifaddrs.h>
 #include <stdint.h>
+#include <string.h>
 
-#include <cstring>
-#include <ostream>
-#include <set>
 #include <string>
-#include <string_view>
-#include <utility>
 #include <vector>
 
-#include <fmt/ranges.h>
-#include "absl/log/log.h"
-#include "absl/strings/match.h"
-#include "absl/strings/str_split.h"
-
-#include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
-#include "cuttlefish/result/result.h"
+#include "fmt/ranges.h"
 
 namespace cuttlefish {
 namespace {
@@ -48,7 +36,7 @@ namespace {
  * ________ __    ______
  *    |      |          |
  *    |       type (e0, e1, etc)
-*/
+ */
 void GenerateMacForInstance(int index, uint8_t type, uint8_t out[6]) {
   // the first octet must be even
   out[0] = 0x00;
@@ -105,8 +93,9 @@ void GenerateWifiMacForInstance(int index, uint8_t out[6]) {
  * 2. Throw ff:fe as a 3th and 4th octets (00:1a:11 :ff:fe: ee:cf:01)
  * 3. Flip 2th bit in the first octet (02: 1a:11:ff:fe:ee:cf:01)
  * 4. Use IPv6 format (021a:11ff:feee:cf01)
- * 5. Add prefix fe80:: (fe80::021a:11ff:feee:cf01 or fe80:0000:0000:0000:021a:11ff:feee:cf00)
-*/
+ * 5. Add prefix fe80:: (fe80::021a:11ff:feee:cf01 or
+ * fe80:0000:0000:0000:021a:11ff:feee:cf00)
+ */
 void GenerateCorrespondingIpv6ForMac(const uint8_t mac[6], uint8_t out[16]) {
   out[0] = 0xfe;
   out[1] = 0x80;
