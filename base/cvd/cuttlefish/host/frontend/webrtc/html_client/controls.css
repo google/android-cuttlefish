@@ -25,9 +25,16 @@ body.light-theme {
   --toggle-off-fg: white;
 }
 
-.toggle-control.toggle-off {
+.toggle-control.toggle-off:enabled {
   background-color: var(--toggle-off-bg);
   color: var(--toggle-off-fg);
   border-radius: 10px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--button-bg);
+  color: var(--button-fg);
 }
 
