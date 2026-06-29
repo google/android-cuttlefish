@@ -11,6 +11,10 @@ case "$(uname -m)" in
     export NODE_DISTRO=linux-arm64
     export NODE_SHA256SUM=a43100595e7960b9e8364bff5641e0956a9929feee2759e70cbb396a1d827b7c
     ;;
+  *)
+    echo "error: setup-nodejs-env.sh: unsupported architecture: $(uname -m)" >&2
+    exit 1
+    ;;
 esac
 
 export NODE_ROOT=/tmp/nodejs
