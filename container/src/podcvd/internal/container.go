@@ -125,7 +125,7 @@ func (m *CuttlefishContainerManagerImpl) InspectContainer(ctx context.Context, n
 }
 
 func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Context, extraFlags []string, name string) (string, error) {
-	args := []string{"run", "-d", "-t", "--cap-add", "NET_ADMIN"}
+	args := []string{"run", "-d", "-t", "--rm", "--cap-add", "NET_ADMIN"}
 	// TODO(b/383428636): Remove this when vhost_user_vsock is enabled by default.
 	args = append(args, "--security-opt", "seccomp=unconfined")
 	devices := []string{
