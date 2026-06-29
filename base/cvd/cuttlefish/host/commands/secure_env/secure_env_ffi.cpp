@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tpm_ffi.h"
+#include "secure_env_ffi.h"
 
 #include "absl/log/log.h"
 
