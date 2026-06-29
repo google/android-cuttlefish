@@ -22,10 +22,10 @@
 #include <vector>
 
 #include "absl/strings/str_split.h"
-#include <fmt/core.h>
-#include <fmt/format.h>
-#include <fmt/ostream.h>
-#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
+#include "fmt/core.h"
+#include "fmt/format.h"
+#include "fmt/ostream.h"
+#include "fmt/ranges.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/result/result.h"
@@ -72,8 +72,7 @@ Flag GflagsCompatFlag(const std::string& name,
           value.clear();
           return {};
         }
-        std::vector<std::string> str_vals =
-            absl::StrSplit(arg, ',');
+        std::vector<std::string> str_vals = absl::StrSplit(arg, ',');
         value.clear();
         for (const auto& str_val : str_vals) {
           if (str_val.empty()) {
