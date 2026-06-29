@@ -22,10 +22,10 @@
 #include <utility>
 #include <vector>
 
-#include "absl/strings/strip.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
@@ -84,7 +84,7 @@ Result<std::vector<std::string>> ExtractFiles(
   std::vector<std::string_view> split = absl::StrSplit(bsdtar_stderr, '\n');
   std::vector<std::string> outputs;
   outputs.reserve(split.size());
-  for (std::string_view& view: split) {
+  for (std::string_view& view : split) {
     absl::ConsumePrefix(&view, "x ");
     outputs.emplace_back(view);
   }
@@ -165,4 +165,4 @@ std::vector<std::string> ArchiveContents(const std::string& archive) {
   }
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

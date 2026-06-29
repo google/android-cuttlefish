@@ -40,4 +40,4 @@ std::string ExtractArchiveToMemory(const std::string& archive_filepath,
 
 std::vector<std::string> ArchiveContents(const std::string& archive);
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
