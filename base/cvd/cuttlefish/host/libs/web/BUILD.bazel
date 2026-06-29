@@ -225,7 +225,6 @@ cf_cc_library(
     name = "oauth2_consent",
     srcs = ["oauth2_consent.cpp"],
     hdrs = ["oauth2_consent.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
