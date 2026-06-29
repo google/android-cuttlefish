@@ -28,4 +28,4 @@ namespace cuttlefish {
 Result<size_t> GetDiskUsageBytes(const std::string& path);
 Result<size_t> GetDiskUsageGigabytes(const std::string& path);
 
-}  // namespace
+}  // namespace cuttlefish
