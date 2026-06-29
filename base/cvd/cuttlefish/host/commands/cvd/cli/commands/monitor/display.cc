@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/display.h"
 
+#include <stdint.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -34,8 +35,6 @@
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/kernel.h"
@@ -44,14 +43,16 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/logcat.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/truncate.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 namespace {
 
-Result<std::vector<std::string>> GetLastNLines(SharedFD fd, size_t n) {
-  off_t file_size = fd->LSeek(0, SEEK_END);
+Result<std::vector<std::string>> GetLastNLines(ReaderSeeker& rs, size_t n) {
+  uint64_t file_size = CF_EXPECT(rs.SeekEnd(0));
   CF_EXPECT(file_size != -1, "Failed to seek to end of file");
 
   absl::Cord accumulated_data;
@@ -62,12 +63,10 @@ Result<std::vector<std::string>> GetLastNLines(SharedFD fd, size_t n) {
     static constexpr off_t kChunkSize = 4096;
     size_t to_read = std::min(kChunkSize, offset);
     offset -= to_read;
-    fd->LSeek(offset, SEEK_SET);
+    CF_EXPECT(rs.SeekSet(offset));
 
     std::string chunk(to_read, '\0');
-    ssize_t bytes_read = ReadExact(fd, &chunk);
-    CF_EXPECTF(bytes_read == static_cast<ssize_t>(to_read), "Read failed: '{}'",
-               fd->StrError());
+    CF_EXPECT(ReadExact(rs, chunk.data(), to_read));
 
     newline_count += std::count(chunk.begin(), chunk.end(), '\n');
     accumulated_data.Prepend(std::move(chunk));
@@ -99,30 +98,23 @@ LogMonitorDisplay::LogMonitorDisplay(size_t width)
       total_lines_drawn_(0),
       colorize_(ShouldColorizeOutput(1)) {}
 
-void LogMonitorDisplay::DrawFile(SharedFD fd, const std::string& title,
+void LogMonitorDisplay::DrawFile(ReaderSeeker& rs, const std::string& title,
                                  size_t max_lines) {
   if (max_lines == 0) {
     return;
   }
   std::vector<std::string> lines;
-  if (fd->IsOpen()) {
-    Result<std::vector<std::string>> lines_result =
-        GetLastNLines(fd, max_lines);
-    if (lines_result.ok()) {
-      lines = *lines_result;
-    } else {
-      lines.push_back(absl::StrCat("Failed to read ", title, ":"));
-      std::string error_str =
-          lines_result.error().FormatForEnv(/*color=*/false);
-      for (const auto& el : absl::StrSplit(error_str, '\n')) {
-        if (!el.empty()) {
-          lines.push_back(std::string(el));
-        }
+  Result<std::vector<std::string>> lines_result = GetLastNLines(rs, max_lines);
+  if (lines_result.ok()) {
+    lines = *lines_result;
+  } else {
+    lines.push_back(absl::StrCat("Failed to read ", title, ":"));
+    std::string error_str = lines_result.error().FormatForEnv(/*color=*/false);
+    for (const auto& el : absl::StrSplit(error_str, '\n')) {
+      if (!el.empty()) {
+        lines.push_back(std::string(el));
       }
     }
-  } else {
-    lines.push_back(absl::StrCat("Failed to read ", title, ": File not open"));
-    lines.push_back(absl::StrCat("Error: ", fd->StrError()));
   }
 
   if (lines.size() > max_lines) {
@@ -133,6 +125,11 @@ void LogMonitorDisplay::DrawFile(SharedFD fd, const std::string& title,
   }
 
   DrawBorderedText(lines, title);
+}
+
+void LogMonitorDisplay::DrawFile(ReaderSeeker&& rs, const std::string& title,
+                                 size_t max_lines) {
+  DrawFile(rs, title, max_lines);
 }
 
 LogMonitorDisplayResult LogMonitorDisplay::Finalize() {
