@@ -16,18 +16,17 @@
 
 #include "cuttlefish/common/libs/utils/users.h"
 
+#include <errno.h>
 #include <grp.h>
 #include <pwd.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <cerrno>
-#include <cstring>
 #include <mutex>
 #include <string>
 #include <vector>
 
-#include <android-base/file.h>
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -58,13 +57,13 @@ gid_t GroupIdFromName(const std::string& group_name) {
   struct group* grp_p{};
   std::vector<char> buffer(100);
   int result = 0;
-  while(true) {
+  while (true) {
     result = getgrnam_r(group_name.c_str(), &grp, buffer.data(), buffer.size(),
                         &grp_p);
     if (result != ERANGE) {
       break;
     }
-    buffer.resize(2*buffer.size());
+    buffer.resize(2 * buffer.size());
   }
   if (result == 0) {
     if (grp_p != nullptr) {
@@ -134,4 +133,4 @@ bool IsKvmAccessible() {
 #endif
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
