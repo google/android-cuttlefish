@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tee_logging.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 
 #include <fcntl.h>
 #include <string.h>
@@ -25,16 +25,12 @@
 #include <cstring>
 #include <ctime>
 #include <limits>
-#include <ostream>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
-#include <android-base/macros.h>
-#include <android-base/threads.h>
 #include "absl/log/globals.h"
 #include "absl/log/initialize.h"
 #include "absl/log/log.h"
@@ -43,14 +39,17 @@
 #include "absl/log/log_sink_registry.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
+#include "android-base/file.h"
+#include "android-base/macros.h"
+#include "android-base/threads.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/proc_file_utils.h"
 #include "cuttlefish/result/result.h"
 
-using android::base::GetThreadId;
 using absl::StrFormat;
+using android::base::GetThreadId;
 
 namespace cuttlefish {
 namespace {
@@ -141,11 +140,10 @@ std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
   if (file != nullptr) {
     line_prefix =
         StrFormat("%s %c %s %5d %5" PRIu64 " %s:%u] ", tag ? tag : "nullptr",
-                     severity_char, timestamp, pid, tid, file, line);
+                  severity_char, timestamp, pid, tid, file, line);
   } else {
-    line_prefix =
-        StrFormat("%s %c %s %5d %5" PRIu64 " ", tag ? tag : "nullptr",
-                     severity_char, timestamp, pid, tid);
+    line_prefix = StrFormat("%s %c %s %5d %5" PRIu64 " ", tag ? tag : "nullptr",
+                            severity_char, timestamp, pid, tid);
   }
 
   auto [size, new_lines] = CountSizeAndNewLines(message);
