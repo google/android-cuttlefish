@@ -20,7 +20,7 @@
 #include <string_view>
 #include <vector>
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include "cuttlefish/result/result_matchers.h"
 #include "cuttlefish/result/result_type.h"
@@ -36,17 +36,17 @@ TEST(Base64Test, EncodeNonMult3) {
 }
 
 TEST(Base64Test, DecodeMult3) {
-  std::vector<uint8_t> expected{'f','o','o','b','a','r'};
+  std::vector<uint8_t> expected{'f', 'o', 'o', 'b', 'a', 'r'};
   ASSERT_THAT(DecodeBase64("Zm9vYmFy"), IsOkAndValue(expected));
 }
 
 TEST(Base64Test, DecodeNonMult3) {
-  std::vector<uint8_t> expected{'f','o','o','b','a','r','1'};
+  std::vector<uint8_t> expected{'f', 'o', 'o', 'b', 'a', 'r', '1'};
   ASSERT_THAT(DecodeBase64("Zm9vYmFyMQ=="), IsOkAndValue(expected));
 }
 
 TEST(Base64Test, DecodeStringViewSubstring) {
-  std::vector<uint8_t> expected{'f','o','o','b','a','r'};
+  std::vector<uint8_t> expected{'f', 'o', 'o', 'b', 'a', 'r'};
   std::string_view sv = "Zm9vYmFyEXTRA";
   sv = sv.substr(0, 8);
   ASSERT_THAT(DecodeBase64(sv), IsOkAndValue(expected));
@@ -78,4 +78,4 @@ TEST(Base64Test, EncodeThreeZeroes) {
 
   ASSERT_THAT(DecodeBase64(*string_encoding), IsOkAndValue(in));
 }
-}
+}  // namespace cuttlefish
