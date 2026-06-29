@@ -21,9 +21,9 @@
 #include <string>
 #include <utility>
 
-#include <openssl/evp.h>
+#include "json/value.h"
+#include "openssl/evp.h"
 
-#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
 

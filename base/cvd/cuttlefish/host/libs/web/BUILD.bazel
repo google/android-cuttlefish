@@ -187,7 +187,6 @@ cf_cc_library(
     name = "credential_source",
     srcs = ["credential_source.cc"],
     hdrs = ["credential_source.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:json",

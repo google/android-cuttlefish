@@ -29,18 +29,18 @@
 #include <vector>
 
 #include "absl/strings/ascii.h"
-#include "absl/strings/str_replace.h"
-#include "absl/strings/strip.h"
-#include "absl/strings/str_split.h"
-#include <json/value.h>
-#include <json/writer.h>
-#include <openssl/base.h>
-#include <openssl/bio.h>
-#include <openssl/digest.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/pem.h>
 #include "absl/strings/match.h"
+#include "absl/strings/str_replace.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/strip.h"
+#include "json/value.h"
+#include "json/writer.h"
+#include "openssl/base.h"
+#include "openssl/bio.h"
+#include "openssl/digest.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/pem.h"
 
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -175,7 +175,8 @@ Result<std::string> FixedCredentialSource::Credential() { return credential_; }
 
 std::unique_ptr<CredentialSource> FixedCredentialSource::Make(
     const std::string& credential) {
-  return std::unique_ptr<CredentialSource>(new FixedCredentialSource(credential));
+  return std::unique_ptr<CredentialSource>(
+      new FixedCredentialSource(credential));
 }
 
 Result<std::unique_ptr<RefreshTokenCredentialSource>>
