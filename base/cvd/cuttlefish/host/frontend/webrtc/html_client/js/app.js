@@ -185,11 +185,14 @@ class DeviceControlApp {
 
     this.#showDeviceUI();
 
+    const hasAudio = deviceHasAudio(this.#deviceConnection.description);
+
     // Enable non-ADB buttons, these buttons use data channels to communicate
     // with the host, so they're ready to go as soon as the webrtc connection is
     // established.
     this.#getControlPanelButtons()
         .filter(b => !b.dataset.adb)
+        .filter(b => hasAudio || (b.id !== 'volume_off_btn' && b.id !== 'mic_btn'))
         .forEach(b => b.disabled = false);
   }
 
@@ -382,23 +385,37 @@ class DeviceControlApp {
     this.#updateDeviceDisplays();
     this.#deviceConnection.onStreamChange(stream => this.#onStreamChange(stream));
 
-    // Set up audio
     let audioPlaybackCtrl = createToggleControl(
         document.getElementById('volume_off_btn'),
         enabled => this.#onAudioPlaybackToggle(enabled));
-    for (const audio_desc of this.#deviceConnection.description.audio_streams) {
-      let stream_id = audio_desc.stream_id;
-      this.#addAudioStream(stream_id, audioPlaybackCtrl);
-      this.#deviceConnection.onStream(stream_id)
-          .then(stream => {
-            const deviceAudio = document.getElementById(`device-${stream_id}`);
-            if (!deviceAudio) {
-              throw `Element with id device-${stream_id} not found`;
-            }
-            deviceAudio.srcObject = stream;
-            deviceAudio.play();
-          })
-          .catch(e => console.error('Unable to get audio stream: ', e));
+
+    // Set up audio
+    if (deviceHasAudio(this.#deviceConnection.description)) {
+      for (const audio_desc of this.#deviceConnection.description.audio_streams) {
+        let stream_id = audio_desc.stream_id;
+        this.#addAudioStream(stream_id, audioPlaybackCtrl);
+        this.#deviceConnection.onStream(stream_id)
+            .then(stream => {
+              const deviceAudio = document.getElementById(`device-${stream_id}`);
+              if (!deviceAudio) {
+                throw `Element with id device-${stream_id} not found`;
+              }
+              deviceAudio.srcObject = stream;
+              deviceAudio.play();
+            })
+            .catch(e => console.error('Unable to get audio stream: ', e));
+      }
+    } else {
+      const noAudioMsg = 'Device has no audio';
+      const volumeOffBtn = document.getElementById('volume_off_btn');
+      volumeOffBtn.disabled = true;
+      volumeOffBtn.title = noAudioMsg;
+      document.getElementById('volume_up_btn').style.display = 'none';
+      document.getElementById('volume_down_btn').style.display = 'none';
+
+      const micBtn = document.getElementById('mic_btn');
+      micBtn.disabled = true;
+      micBtn.title = noAudioMsg;
     }
 
     // Set up keyboard and wheel capture
@@ -1362,4 +1379,9 @@ function getStyleAfterRotation(rotationDeg, ar) {
       rightFactor})) rotate(${rotationDeg}deg)`;
 
   return {transform, maxWidth, maxHeight};
+}
+
+// Checks if the device description contains any active audio streams.
+function deviceHasAudio(description) {
+  return description.audio_streams && description.audio_streams.length > 0;
 }
