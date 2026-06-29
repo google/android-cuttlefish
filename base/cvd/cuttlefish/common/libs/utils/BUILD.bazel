@@ -357,7 +357,6 @@ cf_cc_library(
     name = "subprocess_managed_stdio",
     srcs = ["subprocess_managed_stdio.cc"],
     hdrs = ["subprocess_managed_stdio.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:subprocess",

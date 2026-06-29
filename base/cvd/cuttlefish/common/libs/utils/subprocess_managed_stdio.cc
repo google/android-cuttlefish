@@ -147,7 +147,8 @@ Result<std::string> RunAndCaptureStdout(Command command) {
   VLOG(0) << "Ran " << command_str << " with stdout:\n" << standard_out;
   VLOG(0) << "Ran " << command_str << " with stderr:\n" << standard_err;
   CF_EXPECTF(exit_code == 0,
-             "Failed to execute '{}' <args>: exit code = {}, stdout = '{}', stderr = '{}'",
+             "Failed to execute '{}' <args>: exit code = {}, stdout = '{}', "
+             "stderr = '{}'",
              command_str, exit_code, standard_out, standard_err);
   return standard_out;
 }
