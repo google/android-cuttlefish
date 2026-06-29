@@ -115,41 +115,6 @@ Result<bool> AreHardLinked(const std::string& source,
           CF_EXPECT(FileInodeNumber(destination)));
 }
 
-Result<bool> AreFilesIdentical(const std::string& path1,
-                               const std::string& path2) {
-  struct stat st1;
-  struct stat st2;
-  CF_EXPECTF(stat(path1.c_str(), &st1) == 0, "stat failed for {}", path1);
-  CF_EXPECTF(stat(path2.c_str(), &st2) == 0, "stat failed for {}", path2);
-  if (st1.st_size != st2.st_size) {
-    return false;
-  }
-
-  SharedFD fd1 = SharedFD::Open(path1, O_RDONLY);
-  SharedFD fd2 = SharedFD::Open(path2, O_RDONLY);
-  CF_EXPECTF(fd1->IsOpen(), "Failed to open \"{}\"", path1);
-  CF_EXPECTF(fd2->IsOpen(), "Failed to open \"{}\"", path2);
-
-  char buf1[4096];
-  char buf2[4096];
-  while (true) {
-    auto r1 = fd1->Read(buf1, sizeof(buf1));
-    auto r2 = fd2->Read(buf2, sizeof(buf2));
-    CF_EXPECTF(r1 >= 0, "Read failed for \"{}\"", path1);
-    CF_EXPECTF(r2 >= 0, "Read failed for \"{}\"", path2);
-    if (r1 != r2) {
-      return false;
-    }
-    if (r1 == 0) {
-      break;
-    }
-    if (memcmp(buf1, buf2, r1) != 0) {
-      return false;
-    }
-  }
-  return true;
-}
-
 Result<std::string> LinkOrCopy(const std::string& target,
                                const std::string& destination,
                                const bool overwrite_existing) {
@@ -158,12 +123,9 @@ Result<std::string> LinkOrCopy(const std::string& target,
       return destination;
     }
     if (!overwrite_existing) {
-      if (CF_EXPECT(AreFilesIdentical(target, destination))) {
-        return destination;
-      }
       return CF_ERRF(
           "Cannot link/copy from \"{}\" to \"{}\", the second file already "
-          "exists and is different from the first",
+          "exists and is not a hard link to the first",
           target, destination);
     }
     LOG(WARNING) << "Overwriting existing file \"" << destination
