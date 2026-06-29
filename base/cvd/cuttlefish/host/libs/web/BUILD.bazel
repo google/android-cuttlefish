@@ -205,7 +205,6 @@ cf_cc_library(
     name = "luci_build_api",
     srcs = ["luci_build_api.cpp"],
     hdrs = ["luci_build_api.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/libs/web:chrome_os_build_string",

@@ -22,12 +22,12 @@
 #include <variant>
 #include <vector>
 
-#include "absl/strings/strip.h"
 #include "absl/strings/str_split.h"
-#include <fmt/core.h>
-#include <fmt/format.h>
-#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
-#include <json/value.h>
+#include "absl/strings/strip.h"
+#include "fmt/core.h"
+#include "fmt/format.h"
+#include "fmt/ranges.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
