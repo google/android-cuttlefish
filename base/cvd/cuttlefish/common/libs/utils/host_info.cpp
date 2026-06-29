@@ -16,16 +16,16 @@
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 
+#include <stdlib.h>
+#include <string.h>
 #include <sys/utsname.h>
 
-#include <cstdlib>
 #include <cstring>
 #include <ostream>
 #include <string>
 #include <string_view>
 
 #include "absl/base/no_destructor.h"
-#include <android-base/strings.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 
