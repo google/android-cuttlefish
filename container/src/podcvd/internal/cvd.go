@@ -94,9 +94,11 @@ func UpdateCvdGroupJsonRaw(data any, podcvdHomeDir, ipAddr string) {
 var cvdPathRegex = regexp.MustCompile(`^/var/tmp/cvd/[0-9]+/[0-9]+/home`)
 
 func updateStringOnCvdGroupJsonRaw(data, podcvdHomeDir, ipAddr string) string {
-	data = strings.ReplaceAll(data, "0.0.0.0", ipAddr)
-	data = strings.ReplaceAll(data, "localhost", ipAddr)
-	data = strings.ReplaceAll(data, "127.0.0.1", ipAddr)
+	operatorEndpointOnHost := fmt.Sprintf("%s:%d", ipAddr, portOperatorHttpsOnHost)
+	for _, host := range []string{"0.0.0.0", "localhost", "127.0.0.1"} {
+		data = strings.ReplaceAll(data, fmt.Sprintf("%s:%d", host, portOperatorHttps), operatorEndpointOnHost)
+		data = strings.ReplaceAll(data, host, ipAddr)
+	}
 	if cvdPathRegex.MatchString(data) {
 		data = cvdPathRegex.ReplaceAllString(data, podcvdHomeDir)
 	}
