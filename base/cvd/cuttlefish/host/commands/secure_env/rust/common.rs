@@ -20,6 +20,8 @@ use std::io::{Read, Write};
 use std::os::fd::AsFd;
 use std::os::unix::net::UnixStream;
 
+/// Logger module that forwards logs to the Android C++ backend.
+pub mod logger;
 // See `SnapshotSocketMessage` in suspend_resume_handler.h for docs.
 const SNAPSHOT_SOCKET_MESSAGE_SUSPEND: u8 = 1;
 const SNAPSHOT_SOCKET_MESSAGE_SUSPEND_ACK: u8 = 2;
