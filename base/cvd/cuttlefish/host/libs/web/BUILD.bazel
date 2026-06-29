@@ -151,7 +151,6 @@ cf_cc_library(
     name = "caching_build_api",
     srcs = ["caching_build_api.cpp"],
     hdrs = ["caching_build_api.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/web:android_build",
