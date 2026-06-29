@@ -72,7 +72,6 @@ cf_cc_library(
     name = "disk_usage",
     srcs = ["disk_usage.cpp"],
     hdrs = ["disk_usage.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
