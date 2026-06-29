@@ -18,10 +18,10 @@
 #include <string>
 #include <utility>
 
-#include <android-base/file.h>
-#include <fmt/core.h>
-#include <fmt/format.h>
 #include "absl/log/log.h"
+#include "android-base/file.h"
+#include "fmt/core.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/web/android_build.h"
@@ -45,11 +45,10 @@ struct CachingPaths {
   std::string cache_backup_artifact;
 };
 
-Result<CachingPaths> ConstructCachePaths(const std::string& cache_base,
-                                         const Build& build,
-                                         const std::string& target_directory,
-                                         const std::string& artifact,
-                                         const std::string& backup_artifact = "") {
+Result<CachingPaths> ConstructCachePaths(
+    const std::string& cache_base, const Build& build,
+    const std::string& target_directory, const std::string& artifact,
+    const std::string& backup_artifact = "") {
   const auto [id, target] = GetBuildIdAndTarget(build);
   auto result = CachingPaths{
       .build_cache = fmt::format("{}/{}/{}", cache_base, id, target),
@@ -93,15 +92,14 @@ Result<Build> CachingBuildApi::GetBuild(const BuildString& build_string) {
 Result<std::string> CachingBuildApi::DownloadFile(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name) {
-  const auto paths = CF_EXPECT(ConstructCachePaths(cache_base_path_, build,
-                                                   target_directory, artifact_name));
+  const auto paths = CF_EXPECT(ConstructCachePaths(
+      cache_base_path_, build, target_directory, artifact_name));
   if (!IsInCache(paths.cache_artifact)) {
     CF_EXPECT(build_api_.DownloadFile(build, paths.build_cache, artifact_name));
   }
   return CF_EXPECT(LinkOrCopy(paths.cache_artifact, paths.target_artifact,
                               kOverwriteExistingFile));
 }
-
 
 Result<SeekableZipSource> CachingBuildApi::FileReader(
     const Build& build, const std::string& artifact) {
