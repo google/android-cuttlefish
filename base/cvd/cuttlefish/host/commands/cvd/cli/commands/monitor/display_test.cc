@@ -17,23 +17,24 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/display.h"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/io/in_memory.h"
+#include "cuttlefish/io/io.h"
 
 namespace cuttlefish {
 
 TEST(LogMonitorDisplayTest, DrawFileValid) {
-  SharedFD fd =
-      SharedFD::MemfdCreateWithData("test_log", "line1\nline2\nline3\n");
-  ASSERT_TRUE(fd->IsOpen());
+  std::unique_ptr<ReaderWriterSeeker> rs = InMemoryIo("line1\nline2\nline3\n");
+  ASSERT_TRUE(rs.get());
 
   LogMonitorDisplay display(40);
-  display.DrawFile(fd, "test.log");
+  display.DrawFile(*rs, "test.log");
 
   std::string output = display.Finalize().output;
   EXPECT_TRUE(absl::StrContains(output, "+--test.log "));
@@ -47,25 +48,13 @@ TEST(LogMonitorDisplayTest, DrawFileValid) {
       absl::StrContains(output, "+--------------------------------------+"));
 }
 
-TEST(LogMonitorDisplayTest, DrawFileInvalid) {
-  SharedFD fd;  // Invalid FD
-
-  LogMonitorDisplay display(40);
-  display.DrawFile(fd, "test.log");
-
-  std::string output = display.Finalize().output;
-  EXPECT_TRUE(absl::StrContains(output, "+--test.log "));
-  EXPECT_TRUE(
-      absl::StrContains(output, "|Failed to read test.log: File not open|"));
-  EXPECT_TRUE(
-      absl::StrContains(output, "+--------------------------------------+"));
-}
-
 TEST(LogMonitorDisplayTest, TotalLinesDrawn) {
-  SharedFD fd = SharedFD::MemfdCreateWithData("test_log", "line1\n");
+  std::unique_ptr<ReaderWriterSeeker> rs = InMemoryIo("line1\n");
+  ASSERT_TRUE(rs.get());
+
   LogMonitorDisplay display(40);
 
-  display.DrawFile(fd, "test.log");
+  display.DrawFile(*rs, "test.log");
   int total_lines_drawn = display.Finalize().total_lines_drawn;
   // 10 lines of content + 1 top border + 1 bottom border
   EXPECT_EQ(total_lines_drawn, 12);
@@ -76,11 +65,11 @@ TEST(LogMonitorDisplayTest, DrawFileLastNLinesOrder) {
   for (int i = 1; i <= 12; ++i) {
     data += absl::StrCat("line", i, "\n");
   }
-  SharedFD fd = SharedFD::MemfdCreateWithData("test_log", data);
-  ASSERT_TRUE(fd->IsOpen());
+  std::unique_ptr<ReaderWriterSeeker> rs = InMemoryIo(data);
+  ASSERT_TRUE(rs.get());
 
   LogMonitorDisplay display(40);
-  display.DrawFile(fd, "test.log");
+  display.DrawFile(*rs, "test.log");
 
   std::string output = display.Finalize().output;
 
@@ -113,11 +102,11 @@ TEST(LogMonitorDisplayTest, DrawFileLinesAcrossChunks) {
   }
   ASSERT_EQ(data.size(), 5000);
 
-  SharedFD fd = SharedFD::MemfdCreateWithData("test_log", data);
-  ASSERT_TRUE(fd->IsOpen());
+  std::unique_ptr<ReaderWriterSeeker> rs = InMemoryIo(data);
+  ASSERT_TRUE(rs.get());
 
   LogMonitorDisplay display(80);
-  display.DrawFile(fd, "test.log");
+  display.DrawFile(*rs, "test.log");
 
   std::string output = display.Finalize().output;
 

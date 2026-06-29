@@ -41,6 +41,7 @@
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
+#include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -164,9 +165,9 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
       kernel_lines = total_content / 3;
       logcat_lines = total_content - launcher_lines - kernel_lines;
     }
-    display.DrawFile(launcher_fd, launcher_name, launcher_lines);
-    display.DrawFile(kernel_fd, kLogNameKernel, kernel_lines);
-    display.DrawFile(logcat_fd, kLogNameLogcat, logcat_lines);
+    display.DrawFile(SharedFdIo(launcher_fd), launcher_name, launcher_lines);
+    display.DrawFile(SharedFdIo(kernel_fd), kLogNameKernel, kernel_lines);
+    display.DrawFile(SharedFdIo(logcat_fd), kLogNameLogcat, logcat_lines);
 
     const auto [output, total_lines_drawn] = display.Finalize();
     ClearLastNLines(last_total_lines_drawn);
