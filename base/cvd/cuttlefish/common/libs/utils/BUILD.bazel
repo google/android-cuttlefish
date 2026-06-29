@@ -227,12 +227,7 @@ cf_cc_library(
     name = "network",
     srcs = ["network.cpp"],
     hdrs = ["network.h"],
-    clang_format_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
-        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",

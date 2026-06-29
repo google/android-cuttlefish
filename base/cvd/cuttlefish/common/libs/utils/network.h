@@ -15,11 +15,12 @@
  */
 #pragma once
 
-#include <cstdint>
-#include <set>
+#include <stdint.h>
+
 #include <string>
 
 namespace cuttlefish {
+
 // Check network interface with given name exists, such as cvd-ebr.
 bool NetworkInterfaceExists(const std::string& interface_name);
 void GenerateCorrespondingIpv6ForMac(const uint8_t mac[6], uint8_t out[16]);
@@ -29,4 +30,5 @@ void GenerateWifiMacForInstance(int index, uint8_t out[6]);
 
 std::string MacAddressToString(const uint8_t mac[6]);
 std::string Ipv6ToString(const uint8_t ip[16]);
-}
+
+}  // namespace cuttlefish
