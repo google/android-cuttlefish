@@ -248,7 +248,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm CuttlefishContainerManager, cvd
 }
 
 func clearAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
-	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, true)
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 	}
