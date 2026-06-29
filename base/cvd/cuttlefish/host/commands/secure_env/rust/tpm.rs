@@ -43,7 +43,7 @@ impl TpmHmac {
 
         // Safety: all slices are valid with correct lengths.
         let rc = unsafe {
-            secure_env_tpm::tpm_hmac(
+            secure_env_ffi::tpm_hmac(
                 self.trm,
                 data.as_ptr(),
                 data.len() as u32,
