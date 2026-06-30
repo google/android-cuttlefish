@@ -68,7 +68,8 @@ Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
   auto lens_facing_it = props.find("lens_facing");
   if (lens_facing_it != props.end()) {
     lens_facing = lens_facing_it->second;
-    CF_EXPECT(lens_facing == "FRONT" || lens_facing == "BACK" || lens_facing == "EXTERNAL",
+    CF_EXPECT(lens_facing == "FRONT" || lens_facing == "BACK" ||
+                  lens_facing == "EXTERNAL",
               "Invalid lens_facing value: " << lens_facing);
   }
 
@@ -101,4 +102,3 @@ Result<std::vector<CuttlefishConfig::MediaConfig>> ParseMediaConfigsFromArgs(
 }
 
 }  // namespace cuttlefish
-
