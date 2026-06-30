@@ -23,7 +23,6 @@ cf_cc_library(
 cf_cc_binary(
     name = "assemble_cvd",
     srcs = ["assemble_cvd.cc"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
