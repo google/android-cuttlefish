@@ -333,7 +333,6 @@ cf_cc_library(
     name = "use_cvdalloc",
     srcs = ["use_cvdalloc.cc"],
     hdrs = ["use_cvdalloc.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
