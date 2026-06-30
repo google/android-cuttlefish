@@ -146,7 +146,6 @@ cf_cc_library(
     name = "bootconfig_args",
     srcs = ["bootconfig_args.cpp"],
     hdrs = ["bootconfig_args.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:json",
