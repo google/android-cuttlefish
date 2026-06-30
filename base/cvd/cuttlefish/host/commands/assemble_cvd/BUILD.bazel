@@ -633,13 +633,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "assemble_cvd_flags",
-    srcs = [
-        "assemble_cvd_flags.cpp",
-    ],
-    hdrs = [
-        "assemble_cvd_flags.h",
-    ],
-    clang_format_enabled = False,
+    srcs = ["assemble_cvd_flags.cpp"],
+    hdrs = ["assemble_cvd_flags.h"],
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
