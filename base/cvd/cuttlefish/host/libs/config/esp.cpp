@@ -112,8 +112,8 @@ static bool GrubMakeImage(const std::string& prefix, const std::string& format,
                           const std::string& directory,
                           const std::string& output, const T& modules) {
   std::vector<std::string> command = {"grub-mkimage", "--prefix", prefix,
-                                      "--format", format, "--directory", directory,
-                                      "--output", output};
+                                      "--format",     format,     "--directory",
+                                      directory,      "--output", output};
   std::move(modules.begin(), modules.end(), std::back_inserter(command));
 
   const auto success = Execute(command);
@@ -165,13 +165,13 @@ EspBuilder AddGrubConfig(const std::string& config) {
   auto builder = EspBuilder();
 
   builder.Directory("boot")
-         .Directory("EFI/debian")
-         .Directory("EFI/ubuntu")
-         .Directory("boot/grub");
+      .Directory("EFI/debian")
+      .Directory("EFI/ubuntu")
+      .Directory("boot/grub");
 
   builder.File(config, kGrubDebianConfigDestPath, /*required*/ true)
-         .File(config, kGrubUbuntuConfigDestPath, /*required*/ true)
-         .File(config, kGrubConfigDestPath, /*required*/ true);
+      .File(config, kGrubUbuntuConfigDestPath, /*required*/ true)
+      .File(config, kGrubConfigDestPath, /*required*/ true);
 
   return builder;
 }
@@ -214,7 +214,8 @@ bool AndroidEfiLoaderEspBuilder::Build() const {
   return builder.Build();
 }
 
-LinuxEspBuilder& LinuxEspBuilder::Argument(std::string key, std::string value) & {
+LinuxEspBuilder& LinuxEspBuilder::Argument(std::string key,
+                                           std::string value) & {
   arguments_.push_back({std::move(key), std::move(value)});
   return *this;
 }
@@ -323,7 +324,8 @@ FuchsiaEspBuilder& FuchsiaEspBuilder::Architecture(Arch arch) & {
 
 bool FuchsiaEspBuilder::Build() const {
   if (multiboot_bin_.empty()) {
-    LOG(ERROR) << "Multiboot esp path is required argument for FuchsiaEspBuilder";
+    LOG(ERROR)
+        << "Multiboot esp path is required argument for FuchsiaEspBuilder";
     return false;
   }
   if (zedboot_.empty()) {
@@ -370,4 +372,4 @@ std::string FuchsiaEspBuilder::DumpConfig() const {
   return o.str();
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

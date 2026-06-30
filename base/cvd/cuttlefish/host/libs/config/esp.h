@@ -44,7 +44,8 @@ class AndroidEfiLoaderEspBuilder final {
 class LinuxEspBuilder final {
  public:
   LinuxEspBuilder() = delete;
-  LinuxEspBuilder(std::string image_path): image_path_(std::move(image_path)) {}
+  LinuxEspBuilder(std::string image_path)
+      : image_path_(std::move(image_path)) {}
 
   LinuxEspBuilder& Argument(std::string key, std::string value) &;
   LinuxEspBuilder& Argument(std::string value) &;
@@ -70,7 +71,8 @@ class LinuxEspBuilder final {
 class FuchsiaEspBuilder {
  public:
   FuchsiaEspBuilder() = delete;
-  FuchsiaEspBuilder(std::string image_path): image_path_(std::move(image_path)) {}
+  FuchsiaEspBuilder(std::string image_path)
+      : image_path_(std::move(image_path)) {}
 
   FuchsiaEspBuilder& MultibootBinary(std::string multiboot) &;
   FuchsiaEspBuilder& Zedboot(std::string zedboot) &;
@@ -89,4 +91,4 @@ class FuchsiaEspBuilder {
 
 bool CanGenerateGrubEsp(Arch arch);
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
