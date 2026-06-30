@@ -16,7 +16,6 @@
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 
 #include <stdint.h>
-#include <zlib.h>
 
 #include <fstream>
 #include <future>
@@ -26,6 +25,7 @@
 #include <vector>
 
 #include "absl/log/check.h"
+#include <zlib.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -33,12 +33,12 @@
 namespace cuttlefish {
 
 uint32_t FileCrc(const std::string& path) {
-  uint32_t crc = crc32(0, (unsigned char*) path.c_str(), path.size());
+  uint32_t crc = crc32(0, (unsigned char*)path.c_str(), path.size());
   std::ifstream file_stream(path, std::ifstream::binary);
   std::vector<char> data(1024, 0);
   while (file_stream) {
     file_stream.read(data.data(), data.size());
-    crc = crc32(crc, (unsigned char*) data.data(), file_stream.gcount());
+    crc = crc32(crc, (unsigned char*)data.data(), file_stream.gcount());
   }
   return crc;
 }
@@ -54,7 +54,7 @@ static std::map<std::string, uint32_t> DirectoryCrc(const std::string& path) {
   std::vector<std::future<uint32_t>> calculations;
   calculations.reserve(files.size());
   for (auto& file : files) {
-    file = path + "/" + file; // mutate in place in files vector
+    file = path + "/" + file;  // mutate in place in files vector
     calculations.emplace_back(
         std::async(FileCrc, DefaultHostArtifactsPath(file)));
   }
@@ -78,4 +78,4 @@ std::map<std::string, uint32_t> HostToolsCrc() {
   return all_crcs;
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

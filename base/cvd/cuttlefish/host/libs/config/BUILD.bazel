@@ -331,7 +331,6 @@ cf_cc_library(
     name = "host_tools_version",
     srcs = ["host_tools_version.cpp"],
     hdrs = ["host_tools_version.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:config_utils",
