@@ -17,8 +17,8 @@
 #include <optional>
 #include <string>
 
-#include "cuttlefish/result/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -26,9 +26,12 @@ constexpr const char kMediaFlag[] = "media";
 constexpr const char kMediaHelp[] =
     "Comma separated key=value pairs of media device properties. Supported "
     "properties:\n"
-    " 'type': optional, defaults to 'v4l2_emulated_camera_splane', supported values:\n"
-    "    'v4l2_emulated_camera_splane': emulated media capture device (single-plane)\n"
-    "    'v4l2_emulated_camera_mplane': emulated media capture device (multi-plane)\n"
+    " 'type': optional, defaults to 'v4l2_emulated_camera_splane', supported "
+    "values:\n"
+    "    'v4l2_emulated_camera_splane': emulated media capture device "
+    "(single-plane)\n"
+    "    'v4l2_emulated_camera_mplane': emulated media capture device "
+    "(multi-plane)\n"
     "    'v4l2_proxy': proxy a host V4L2 device into the guest\n"
     " 'lens_facing': optional, supported values: 'FRONT', 'BACK', 'EXTERNAL'\n"
     "Example usage:\n"
@@ -41,4 +44,3 @@ Result<std::vector<CuttlefishConfig::MediaConfig>> ParseMediaConfigsFromArgs(
     std::vector<std::string>& args);
 
 }  // namespace cuttlefish
-
