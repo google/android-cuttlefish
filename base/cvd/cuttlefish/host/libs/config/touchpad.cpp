@@ -21,8 +21,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "absl/strings/str_split.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/flag_parser/flag.h"
@@ -67,7 +67,7 @@ ParseTouchpadConfigsFromArgs(std::vector<std::string>& args) {
   std::vector<std::string> repeated_touchpad_flag_values;
 
   const std::vector<Flag> touchpad_flags = {
-    Flag::StringFlag(kTouchpadFlag)
+      Flag::StringFlag(kTouchpadFlag)
           .Help(kTouchpadHelp)
           .Setter([&](std::string_view arg) -> Result<void> {
             repeated_touchpad_flag_values.emplace_back(arg);
