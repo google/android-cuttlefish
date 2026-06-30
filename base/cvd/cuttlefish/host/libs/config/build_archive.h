@@ -23,10 +23,9 @@
 #include <string>
 #include <string_view>
 
-#include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
-
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/pretty/pretty.h"
 #include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
