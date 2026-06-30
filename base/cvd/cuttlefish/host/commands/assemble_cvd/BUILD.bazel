@@ -389,7 +389,6 @@ cf_cc_library(
     name = "guest_config",
     srcs = ["guest_config.cc"],
     hdrs = ["guest_config.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:device_type",
