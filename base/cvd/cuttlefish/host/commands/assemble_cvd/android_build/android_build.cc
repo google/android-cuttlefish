@@ -37,9 +37,7 @@ Result<std::string> AndroidBuild::ImageFile(std::string_view name,
                  name, extract);
 }
 
-Result<void> AndroidBuild::SetExtractDir(std::string_view) {
-  return {};
-}
+Result<void> AndroidBuild::SetExtractDir(std::string_view) { return {}; }
 
 Result<std::set<std::string, std::less<void>>> AndroidBuild::AbPartitions() {
   return CF_ERRF("Unimplemented for '{}'", *this);
