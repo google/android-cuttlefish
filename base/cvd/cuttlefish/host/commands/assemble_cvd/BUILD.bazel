@@ -249,7 +249,6 @@ cf_cc_library(
     name = "disk_image_flags_vectorization",
     srcs = ["disk_image_flags_vectorization.cc"],
     hdrs = ["disk_image_flags_vectorization.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:super_image_mixer",
