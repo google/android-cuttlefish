@@ -32,6 +32,7 @@ class ChromeOsStateImage {
       const CuttlefishConfig::InstanceSpecific&);
 
   const std::string& FilePath() const;
+
  private:
   ChromeOsStateImage(std::string);
 

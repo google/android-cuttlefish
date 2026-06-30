@@ -55,8 +55,6 @@ Result<std::optional<ChromeOsStateImage>> ChromeOsStateImage::Reuse(
 
 ChromeOsStateImage::ChromeOsStateImage(std::string path) : path_(path) {}
 
-const std::string& ChromeOsStateImage::FilePath() const {
-  return path_;
-}
+const std::string& ChromeOsStateImage::FilePath() const { return path_; }
 
 }  // namespace cuttlefish
