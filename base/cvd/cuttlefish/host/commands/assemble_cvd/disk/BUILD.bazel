@@ -146,7 +146,6 @@ cf_cc_library(
     name = "generate_persistent_bootconfig",
     srcs = ["generate_persistent_bootconfig.cpp"],
     hdrs = ["generate_persistent_bootconfig.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/key_equals_value",
