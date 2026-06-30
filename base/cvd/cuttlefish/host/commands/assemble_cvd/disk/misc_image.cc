@@ -44,5 +44,4 @@ Result<std::string> MiscImage::Path() const {
   return path_;
 }
 
-
 }  // namespace cuttlefish
