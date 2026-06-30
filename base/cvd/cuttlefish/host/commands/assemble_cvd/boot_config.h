@@ -42,4 +42,4 @@ class ApBootloaderEnvPartition {
   ApBootloaderEnvPartition() = default;
 };
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

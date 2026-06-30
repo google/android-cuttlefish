@@ -86,7 +86,6 @@ cf_cc_library(
     name = "boot_config",
     srcs = ["boot_config.cc"],
     hdrs = ["boot_config.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:size_utils",

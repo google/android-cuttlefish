@@ -66,7 +66,8 @@ void WritePausedEntrypoint(std::string_view entrypoint,
                            const CuttlefishConfig::InstanceSpecific& instance,
                            std::ostream& env) {
   if (instance.pause_in_bootloader()) {
-    env << "if test $paused -ne 1; then paused=1; else " << entrypoint << "; fi";
+    env << "if test $paused -ne 1; then paused=1; else " << entrypoint
+        << "; fi";
   } else {
     env << entrypoint;
   }
@@ -75,8 +76,7 @@ void WritePausedEntrypoint(std::string_view entrypoint,
 }
 
 void WriteAndroidEnvironment(
-    std::ostream& env,
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    std::ostream& env, const CuttlefishConfig::InstanceSpecific& instance) {
   WritePausedEntrypoint("run bootcmd_android", instance, env);
 
   if (!instance.boot_slot().empty()) {
@@ -143,8 +143,8 @@ Result<void> PrepareBootEnvImage(
   // protect kvm which is running a kernel with bootconfig support.
   if (!instance.bootconfig_supported()) {
     std::map<std::string, std::string, std::less<void>> builtin_bootconfig_args;
-    auto bootconfig_args =
-        CF_EXPECT(BootconfigArgsFromConfig(config, instance, builtin_bootconfig_args));
+    auto bootconfig_args = CF_EXPECT(
+        BootconfigArgsFromConfig(config, instance, builtin_bootconfig_args));
 
     // "androidboot.hardware" kernel parameter has changed to "hardware" in
     // bootconfig and needs to be replaced before being used in the kernel
@@ -217,4 +217,4 @@ ApBootloaderEnvPartition::Create(
   return ApBootloaderEnvPartition();
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
