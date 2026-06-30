@@ -192,7 +192,6 @@ cf_cc_library(
     name = "from_gflags",
     srcs = ["from_gflags.cc"],
     hdrs = ["from_gflags.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/host/commands/assemble_cvd/flags:parser",

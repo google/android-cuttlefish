@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include <gflags/gflags.h>
+#include "gflags/gflags.h"
 
 #include "cuttlefish/result/result.h"
 

@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "absl/strings/str_split.h"
-#include <gflags/gflags.h>
+#include "gflags/gflags.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/parser.h"
 #include "cuttlefish/result/result.h"
