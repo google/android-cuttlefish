@@ -369,7 +369,6 @@ cf_cc_library(
     name = "known_paths",
     srcs = ["known_paths.cpp"],
     hdrs = ["known_paths.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:config_utils",
