@@ -61,7 +61,8 @@ constexpr size_t RoundUp(size_t a, size_t divisor) {
 
 template <typename Container>
 bool WriteLinesToFile(const Container& lines, const std::string& path) {
-  SharedFD fd = SharedFD::Open(path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0640);
+  SharedFD fd =
+      SharedFD::Open(path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0640);
   if (!fd->IsOpen()) {
     PLOG(ERROR) << "Failed to open " << path;
     return false;
