@@ -74,4 +74,4 @@ inline constexpr char kHwComposerAuto[] = "auto";
 inline constexpr char kHwComposerDrm[] = "drm_hwcomposer";
 inline constexpr char kHwComposerRanchu[] = "ranchu";
 inline constexpr char kHwComposerNone[] = "none";
-}
+}  // namespace cuttlefish

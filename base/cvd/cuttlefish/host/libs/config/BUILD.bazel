@@ -19,7 +19,6 @@ cf_cc_library(
 cf_cc_library(
     name = "config_constants",
     hdrs = ["config_constants.h"],
-    clang_format_enabled = False,
 )
 
 cf_cc_library(
