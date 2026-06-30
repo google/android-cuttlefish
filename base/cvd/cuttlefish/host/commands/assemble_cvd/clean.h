@@ -25,4 +25,4 @@ namespace cuttlefish {
 Result<void> CleanPriorFiles(const std::set<std::string>& preserving,
                              const std::vector<std::string>& clean_dirs);
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

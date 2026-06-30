@@ -21,17 +21,14 @@
 
 #include <vector>
 
-#include <android-base/file.h>
-#include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
-#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 #include "absl/log/log.h"
+#include "absl/strings/str_join.h"
+#include "android-base/file.h"
+#include "fmt/ranges.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/proc_file_utils.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -61,11 +58,12 @@ Result<void> CleanPriorFiles(const std::string& path,
     }
     return {};
   }
-  std::unique_ptr<DIR, int(*)(DIR*)> dir(opendir(path.c_str()), closedir);
+  std::unique_ptr<DIR, int (*)(DIR*)> dir(opendir(path.c_str()), closedir);
   if (!dir) {
     return CF_ERRNO("Could not clean \"" << path << "\"");
   }
-  for (auto entity = readdir(dir.get()); entity != nullptr; entity = readdir(dir.get())) {
+  for (auto entity = readdir(dir.get()); entity != nullptr;
+       entity = readdir(dir.get())) {
     std::string entity_name(entity->d_name);
     if (entity_name == "." || entity_name == "..") {
       continue;
@@ -173,7 +171,7 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
   return {};
 }
 
-} // namespace
+}  // namespace
 
 Result<void> CleanPriorFiles(const std::set<std::string>& preserving,
                              const std::vector<std::string>& clean_dirs) {
@@ -184,10 +182,10 @@ Result<void> CleanPriorFiles(const std::set<std::string>& preserving,
   paths.insert(paths.end(), clean_dirs.begin(), clean_dirs.end());
   using absl::StrJoin;
   CF_EXPECT(CleanPriorFiles(paths, preserving),
-            "CleanPriorFiles("
-                << "paths = {" << StrJoin(paths, ", ") << "}, "
-                << "preserving = {" << StrJoin(preserving, ", ") << "}) failed");
+            "CleanPriorFiles(" << "paths = {" << StrJoin(paths, ", ") << "}, "
+                               << "preserving = {" << StrJoin(preserving, ", ")
+                               << "}) failed");
   return {};
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
