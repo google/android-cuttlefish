@@ -22,8 +22,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "absl/strings/str_split.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/flag_parser/flag.h"
@@ -83,7 +83,7 @@ Result<std::optional<CuttlefishConfig::DisplayConfig>> ParseDisplayConfig(
   auto display_refresh_rate_hz_it = props.find("refresh_rate_hz");
   if (display_refresh_rate_hz_it != props.end()) {
     CF_EXPECT(absl::SimpleAtoi(display_refresh_rate_hz_it->second,
-                                      &display_refresh_rate_hz),
+                               &display_refresh_rate_hz),
               "Display configuration invalid 'refresh_rate_hz' in \"" << flag
                                                                       << "\"");
   }
