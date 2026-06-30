@@ -223,7 +223,6 @@ cf_cc_library(
     name = "build_archive",
     srcs = ["build_archive.cc"],
     hdrs = ["build_archive.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:fetcher_config",
