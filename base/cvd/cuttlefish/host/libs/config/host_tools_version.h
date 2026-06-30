@@ -24,4 +24,4 @@ namespace cuttlefish {
 uint32_t FileCrc(const std::string& path);
 std::map<std::string, uint32_t> HostToolsCrc();
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
