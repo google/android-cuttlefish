@@ -25,9 +25,9 @@
 #include <utility>
 #include <vector>
 
-#include "absl/strings/str_split.h"
-#include <gflags/gflags.h>
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
@@ -76,7 +76,7 @@ static Result<std::vector<int32_t>> ParseInstanceNums(
               "Unable to parse \"" << instance_num_str << "\" in "
                                    << "`--instance_nums=\"" << instance_nums_str
                                    << "\"`");
-    const auto[_, inserted] = duplication_check_set.insert(instance_num);
+    const auto [_, inserted] = duplication_check_set.insert(instance_num);
     CF_EXPECTF(!!inserted, "{} is duplicated in -instance_nums flag.",
                instance_num);
     instance_nums.push_back(instance_num);
