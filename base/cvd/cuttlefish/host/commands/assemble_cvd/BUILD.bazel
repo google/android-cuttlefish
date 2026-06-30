@@ -550,7 +550,6 @@ cf_cc_library(
     name = "resolve_instance_files",
     srcs = ["resolve_instance_files.cc"],
     hdrs = ["resolve_instance_files.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
