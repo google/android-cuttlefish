@@ -19,14 +19,16 @@
 #include <utility>
 #include <vector>
 
-#include <gflags/gflags.h>
+#include "gflags/gflags.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/from_gflags.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/result/result.h"
 
-DEFINE_string(restart_subprocesses, CF_DEFAULTS_RESTART_SUBPROCESSES ? "true" : "false", "Restart any crashed host process");
+DEFINE_string(restart_subprocesses,
+              CF_DEFAULTS_RESTART_SUBPROCESSES ? "true" : "false",
+              "Restart any crashed host process");
 
 namespace cuttlefish {
 namespace {

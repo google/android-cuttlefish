@@ -293,7 +293,6 @@ cf_cc_library(
     name = "restart_subprocesses",
     srcs = ["restart_subprocesses.cc"],
     hdrs = ["restart_subprocesses.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
