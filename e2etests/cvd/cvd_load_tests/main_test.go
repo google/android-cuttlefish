@@ -109,6 +109,65 @@ func TestCvdLoad(t *testing.T) {
   }
 }`,
 		},
+		{
+			name: "GitSwCarDevSdv",
+			loadconfig: `
+{
+  "instances": [
+    {
+      "name": "ins-1",
+      "vm": {
+        "cpus": 2,
+        "memory_mb": 2048
+      },
+      "boot": {
+        "extra_bootconfig_args": "androidboot.sdv.instance_name=instance1 androidboot.virt.address=3 androidboot.sdv.boot_mode=unlocked"
+      },
+      "security": {
+        "guest_enforce_security": false
+      },
+      "disk": {
+        "default_build": "@ab\/git_main-swcar-dev\/aosp_cf_x86_64_sdv_core-trunk_staging-userdebug"
+      },
+      "graphics": {
+        "gpu_mode": "none"
+      }
+    },
+    {
+      "name": "ins-2",
+      "vm": {
+        "cpus": 4,
+        "memory_mb": 4096
+      },
+      "boot": {
+        "extra_bootconfig_args": "androidboot.sdv.instance_name=instance2 androidboot.virt.address=4 androidboot.sdv.boot_mode=unlocked"
+      },
+      "security": {
+        "guest_enforce_security": false
+      },
+      "disk": {
+        "default_build": "@ab\/git_main-swcar-dev\/aosp_cf_x86_64_sdv_media-trunk_staging-userdebug"
+      },
+      "graphics": {
+        "displays": [
+          {
+            "width": 1920,
+            "height": 1080
+          }
+        ],
+        "gpu_mode": "gfxstream_guest_angle_host_swiftshader"
+      }
+    }
+  ],
+  "netsim_bt": false,
+  "metrics": {
+    "enable": true
+  },
+  "common": {
+    "host_package": "@ab\/git_main-swcar-dev\/aosp_cf_x86_64_sdv_media-trunk_staging-userdebug"
+  }
+}`,
+		},
 	}
 	c := e2etests.TestContext{}
 	for _, tc := range testcases {
