@@ -82,9 +82,9 @@ int GetDefaultVsockCid() {
   return default_vsock_cid;
 }
 
-int GetVsockServerPort(const int base,
-                       const int vsock_guest_cid /**< per instance guest cid */) {
-    return base + (vsock_guest_cid - 3);
+int GetVsockServerPort(
+    const int base, const int vsock_guest_cid /**< per instance guest cid */) {
+  return base + (vsock_guest_cid - 3);
 }
 
 std::string GetGlobalConfigFileLink() {
@@ -107,9 +107,7 @@ std::string DefaultHostArtifactsPath(const std::string& file_name) {
          file_name;
 }
 
-std::string HostBinaryDir() {
-  return DefaultHostArtifactsPath("bin");
-}
+std::string HostBinaryDir() { return DefaultHostArtifactsPath("bin"); }
 
 bool UseQemuPrebuilt() {
   const std::string target_prod_str = StringFromEnv("TARGET_PRODUCT", "");
@@ -140,8 +138,8 @@ std::string HostUsrSharePath(const std::string& file) {
 
 std::string HostQemuBiosPath() {
   if (UseQemuPrebuilt()) {
-    return DefaultHostArtifactsPath(
-        "usr/share/qemu/" + HostArchStr() + "-linux-gnu");
+    return DefaultHostArtifactsPath("usr/share/qemu/" + HostArchStr() +
+                                    "-linux-gnu");
   }
   return "/usr/share/qemu";
 }
@@ -183,4 +181,4 @@ std::string GetSeccompPolicyDir() {
       "usr/share/crosvm/" + HostArchStr() + "-linux-gnu/seccomp";
   return DefaultHostArtifactsPath(kSeccompDir);
 }
-}
+}  // namespace cuttlefish
