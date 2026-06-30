@@ -23,6 +23,7 @@
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <vulkan/vulkan.h>
 
 #include <cstdlib>
 #include <string>
@@ -30,7 +31,6 @@
 #include <utility>
 #include <vector>
 
-#include <vulkan/vulkan.h>
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 
@@ -65,8 +65,8 @@ std::string GetMonitorPath(const CuttlefishConfig& config) {
 StopperResult Stop() {
   auto config = CuttlefishConfig::Get();
   auto monitor_path = GetMonitorPath(*config);
-  auto monitor_sock = SharedFD::SocketLocalClient(
-      monitor_path.c_str(), false, SOCK_STREAM);
+  auto monitor_sock =
+      SharedFD::SocketLocalClient(monitor_path.c_str(), false, SOCK_STREAM);
 
   if (!monitor_sock->IsOpen()) {
     LOG(ERROR) << "The connection to qemu is closed, is it still running?";
@@ -115,9 +115,7 @@ Result<std::pair<int, int>> GetQemuVersion(const std::string& qemu_binary) {
 
 QemuManager::QemuManager(Arch arch) : arch_(arch) {}
 
-bool QemuManager::IsSupported() {
-  return HostSupportsQemuCli();
-}
+bool QemuManager::IsSupported() { return HostSupportsQemuCli(); }
 
 Result<std::unordered_map<std::string, std::string>>
 QemuManager::ConfigureGraphics(
@@ -327,8 +325,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   if (FileExists(access_kregistry)) {
     access_kregistry_size_bytes = FileSize(access_kregistry);
     CF_EXPECTF((access_kregistry_size_bytes & (1024 * 1024 - 1)) == 0,
-               "'{}' file size ({}) not a multiple of 1MB",
-               access_kregistry, access_kregistry_size_bytes);
+               "'{}' file size ({}) not a multiple of 1MB", access_kregistry,
+               access_kregistry_size_bytes);
   }
 
   auto hwcomposer_pmem_size_bytes = 0;
@@ -351,7 +349,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   }
 
   qemu_cmd.AddParameter("-name");
-  qemu_cmd.AddParameter("guest=", instance.instance_name(), ",debug-threads=on");
+  qemu_cmd.AddParameter("guest=", instance.instance_name(),
+                        ",debug-threads=on");
 
   std::string machine = is_x86 ? "pc,nvdimm=on" : "virt";
   if (is_arm) {
@@ -367,7 +366,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     machine += ",mte=on";
   }
   qemu_cmd.AddParameter("-machine");
-  qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off,memory-backend=vm_ram");
+  qemu_cmd.AddParameter(machine,
+                        ",usb=off,dump-guest-core=off,memory-backend=vm_ram");
 
   if (IsHostCompatible(arch_)) {
     qemu_cmd.AddParameter("-accel");
@@ -400,8 +400,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
                 (hwcomposer_pmem_size_bytes / 1024 / 1024) +
                 (is_x86 ? pstore_size_bytes / 1024 / 1024 : 0);
   auto slots = is_x86 ? ",slots=2" : "";
-  qemu_cmd.AddParameter("size=", instance.memory_mb(), "M",
-                        ",maxmem=", maxmem, "M", slots);
+  qemu_cmd.AddParameter("size=", instance.memory_mb(), "M", ",maxmem=", maxmem,
+                        "M", slots);
 
   qemu_cmd.AddParameter("-overcommit");
   qemu_cmd.AddParameter("mem-lock=off");
@@ -412,11 +412,11 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   if (instance.smt()) {
     CF_EXPECT(instance.cpus() % 2 == 0,
               "CPUs must be a multiple of 2 in SMT mode");
-    qemu_cmd.AddParameter(instance.cpus(), ",cores=",
-                          instance.cpus() / 2, ",threads=2");
+    qemu_cmd.AddParameter(instance.cpus(), ",cores=", instance.cpus() / 2,
+                          ",threads=2");
   } else {
-    qemu_cmd.AddParameter(instance.cpus(), ",cores=",
-                          instance.cpus(), ",threads=1");
+    qemu_cmd.AddParameter(instance.cpus(), ",cores=", instance.cpus(),
+                          ",threads=1");
   }
 
   qemu_cmd.AddParameter("-uuid");
@@ -511,9 +511,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   }
 
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter(
-      "virtio-serial-pci-non-transitional,max_ports=", kMaxSerialPorts,
-      ",id=virtio-serial");
+  qemu_cmd.AddParameter("virtio-serial-pci-non-transitional,max_ports=",
+                        kMaxSerialPorts, ",id=virtio-serial");
 
   // /dev/hvc0 = kernel console
   // If kernel log is enabled, the virtio-console port will be specified as
@@ -658,6 +657,13 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   // /dev/hvc19 = sensors data
   add_hvc(instance.PerInstanceInternalPath("sensors_data_fifo_vm"));
 
+  // /dev/hvc20 = modem
+  if (instance.enable_modem_netsim()) {
+    add_hvc(instance.PerInstanceInternalPath("modem_fifo_vm"));
+  } else {
+    add_hvc_sink();
+  }
+
   auto disk_num = instance.virtual_disk_paths().size();
 
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
@@ -727,8 +733,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       qemu_cmd.AddParameter("-object");
       qemu_cmd.AddParameter(
           "memory-backend-file,id=objpmem1,share=on,mem-path=",
-          AccessKregistryPath(instance),
-          ",size=", access_kregistry_size_bytes);
+          AccessKregistryPath(instance), ",size=", access_kregistry_size_bytes);
 
       qemu_cmd.AddParameter("-device");
       qemu_cmd.AddParameter(
@@ -856,8 +861,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   // behavior changes upstream.
   if (is_riscv64) {
     qemu_cmd.AddParameter("-cpu");
-    qemu_cmd.AddParameter("rv64",
-                          ",v=true,elen=64,vlen=128",
+    qemu_cmd.AddParameter("rv64", ",v=true,elen=64,vlen=128",
                           ",zba=true,zbb=true,zbs=true");
   }
 

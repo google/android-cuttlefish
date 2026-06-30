@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -61,14 +61,15 @@ class VmManager {
   // - /dev/hvc10 = oemlock
   // - /dev/hvc11 = keymint
   // - /dev/hvc12 = NFC
-  // - /dev/hvc13 = vacant (sink, so feel free to use)
+  // - /dev/hvc13 = Weaver
   // - /dev/hvc14 = MCU control
   // - /dev/hvc15 = MCU UART
   // - /dev/hvc16 = Ti50 TPM FIFO
   // - /dev/hvc17 = jcardsimulator
   // - /dev/hvc18 = Sensors control
   // - /dev/hvc19 = Sensors data
-  static const int kDefaultNumHvcs = 20;
+  // - /dev/hvc20 = Modem
+  static const int kDefaultNumHvcs = 21;
 
   // This is the number of virtual disks (block devices) that should be
   // configured by the VmManager. Related to the description above regarding
@@ -132,5 +133,5 @@ Result<std::unordered_map<std::string, std::string>>
 ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,
                              int num_disks);
 
-} // namespace vm_manager
-} // namespace cuttlefish
+}  // namespace vm_manager
+}  // namespace cuttlefish
