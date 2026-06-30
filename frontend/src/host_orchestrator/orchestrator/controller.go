@@ -69,6 +69,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds/{group}", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
 	router.Handle("/cvds/{group}/{name}", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
 	router.Handle("/cvds/{group}/{name}/logs/{logname}", &getCVDLogsHandler{Config: c.Config}).Methods("GET")
+	router.Handle("/cvds/{group}/{name}/logs/{logname}/:stream", &streamInstanceLogFileHandler{}).Methods("GET")
 	router.Handle("/cvds/{group}/:start",
 		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &startCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/:stop",
@@ -947,4 +948,81 @@ func getFetchCredentials(config BuildAPICredentialsConfig, r *http.Request) cvd.
 	}
 	log.Println("fetch credentials: using no credentials")
 	return cvd.FetchCredentials{}
+}
+
+type streamInstanceLogFileHandler struct{}
+
+func (h *streamInstanceLogFileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Println("request:", r.Method, r.URL.Path)
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	logname := vars["logname"]
+	logsDir, err := CVDLogsDir(exec.CommandContext, group, name)
+	if err != nil {
+		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	filePath := filepath.Join(logsDir, logname)
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Transfer-Encoding", "chunked")
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		log.Println("ResponseWriter does not support Flusher")
+	}
+	buffer := make([]byte, 4096)
+
+	// Read existing content first
+	for {
+		n, err := file.Read(buffer)
+		if n > 0 {
+			w.Write(buffer[:n])
+			if flusher != nil {
+				flusher.Flush()
+			}
+		}
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			log.Printf("Error reading file: %v", err)
+			return
+		}
+	}
+	// Live tailing loop
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-r.Context().Done():
+			log.Println("Client disconnected")
+			return
+		case <-ticker.C:
+			for {
+				n, err := file.Read(buffer)
+				if n > 0 {
+					w.Write(buffer[:n])
+					if flusher != nil {
+						flusher.Flush()
+					}
+				}
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					log.Printf("Error reading file: %v", err)
+					return
+				}
+			}
+		}
+	}
 }
