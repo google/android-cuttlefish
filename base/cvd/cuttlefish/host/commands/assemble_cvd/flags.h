@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include <fruit/fruit.h>
+#include "fruit/injector.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"

@@ -305,7 +305,6 @@ cf_cc_library(
     name = "flags",
     srcs = ["flags.cc"],
     hdrs = ["flags.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:container",
