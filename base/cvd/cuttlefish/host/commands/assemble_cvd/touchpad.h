@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include <fruit/fruit.h>
+#include "fruit/component.h"
 
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
