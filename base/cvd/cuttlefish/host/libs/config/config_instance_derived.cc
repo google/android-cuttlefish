@@ -97,4 +97,3 @@ std::string RestoreAdbdPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
 }
 
 }  // namespace cuttlefish
-
