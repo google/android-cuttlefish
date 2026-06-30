@@ -10,7 +10,6 @@ cf_cc_library(
     name = "android_build",
     srcs = ["android_build.cc"],
     hdrs = ["android_build.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/pretty",
         "//cuttlefish/pretty:struct",
