@@ -224,7 +224,6 @@ cf_cc_library(
     name = "super_image",
     srcs = ["super_image.cc"],
     hdrs = ["super_image.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/assemble_cvd/android_build",

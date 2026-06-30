@@ -176,7 +176,8 @@ class SuperImageAsBuildImpl : public AndroidBuild {
     return ret;
   }
 
-  Result<std::set<std::string, std::less<void>>> PartitionsInGroup(std::string_view match) {
+  Result<std::set<std::string, std::less<void>>> PartitionsInGroup(
+      std::string_view match) {
     std::set<std::string, std::less<void>> ret;
     for (const LpMetadataPartition& partition : super_metadata_->partitions) {
       CF_EXPECT_LE(partition.group_index, super_metadata_->groups.size());
