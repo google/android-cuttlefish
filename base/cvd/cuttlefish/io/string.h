@@ -15,9 +15,10 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <stddef.h>
 
 #include <string>
+#include <string_view>
 
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result_type.h"
@@ -25,5 +26,6 @@
 namespace cuttlefish {
 
 Result<std::string> ReadToString(Reader&, size_t buffer_size = 1 << 16);
+Result<void> WriteString(Writer&, std::string_view);
 
 }  // namespace cuttlefish
