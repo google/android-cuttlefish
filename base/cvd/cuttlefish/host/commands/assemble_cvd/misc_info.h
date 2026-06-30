@@ -45,4 +45,4 @@ Result<MiscInfo> MergeMiscInfos(
 Result<VbmetaArgs> GetVbmetaArgs(const MiscInfo& misc_info,
                                  const std::string& image_path);
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

@@ -23,12 +23,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include "absl/strings/str_join.h"
-#include <fmt/format.h>
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/host/libs/avb/avb.h"
@@ -286,4 +286,4 @@ Result<VbmetaArgs> GetVbmetaArgs(const MiscInfo& misc_info,
   return result;
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
