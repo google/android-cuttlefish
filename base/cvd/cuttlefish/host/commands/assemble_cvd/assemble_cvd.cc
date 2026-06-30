@@ -17,11 +17,11 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/strings/str_split.h"
-#include <gflags/gflags.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -102,18 +102,15 @@ Result<void> SaveConfig(const CuttlefishConfig& tmp_config_obj) {
 }
 
 #ifndef O_TMPFILE
-# define O_TMPFILE (020000000 | O_DIRECTORY)
+#define O_TMPFILE (020000000 | O_DIRECTORY)
 #endif
 
 Result<void> CreateLegacySymlinks(
     const CuttlefishConfig::InstanceSpecific& instance,
     const CuttlefishConfig::EnvironmentSpecific& environment) {
-  std::string log_files[] = {kLogNameKernel,
-                             kLogNameLauncher,
-                             kLogNameLogcat,
-                             kLogNameMetrics,
-                             kLogNameModemSimulator,
-                             kLogNameCrosvmOpenWrt,
+  std::string log_files[] = {kLogNameKernel,           kLogNameLauncher,
+                             kLogNameLogcat,           kLogNameMetrics,
+                             kLogNameModemSimulator,   kLogNameCrosvmOpenWrt,
                              kLogNameCrosvmOpenWrtBoot};
   for (const auto& log_file : log_files) {
     auto symlink_location = instance.PerInstancePath(log_file);
@@ -194,7 +191,7 @@ Result<std::set<std::string>> PreservingOnResume(
   if (creating_os_disk) {
     // not snapshot restore, must be --resume
     VLOG(0) << "Trying to resume previous session, but base images have "
-                 "changed.  Wiping overlay files.";
+               "changed.  Wiping overlay files.";
     if (InSandbox()) {
       return {{kLogNameLauncher}};
     } else {
@@ -267,10 +264,10 @@ Result<std::set<std::string>> PreservingOnResume(
 Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
   SharedFD log_file;
   if (InSandbox()) {
-    log_file = SharedFD::Open(
-        absl::StrCat(runtime_dir_parent, "/instances/cvd-1/logs/",
-                     kLogNameLauncher),
-        O_WRONLY | O_APPEND);
+    log_file =
+        SharedFD::Open(absl::StrCat(runtime_dir_parent,
+                                    "/instances/cvd-1/logs/", kLogNameLauncher),
+                       O_WRONLY | O_APPEND);
   } else {
     while (runtime_dir_parent[runtime_dir_parent.size() - 1] == '/') {
       runtime_dir_parent =
@@ -569,7 +566,7 @@ Result<AndroidBuilds> FindAndroidBuilds(
   return CF_EXPECT(AndroidBuilds::Identify(std::move(keys)));
 }
 
-} // namespace
+}  // namespace
 
 Result<int> AssembleCvdMain(int argc, char** argv) {
   auto log = CF_EXPECT(SetLogger(AbsolutePath(FLAGS_instance_dir)));
@@ -581,9 +578,9 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
 
   // Read everything that cvd_internal_start writes, but ignore it since
   // fetcher_config.json will be searched for in the system image directory.
-  (void) CF_EXPECT(ReadInputFiles());
+  (void)CF_EXPECT(ReadInputFiles());
 
-  std::vector<std::string> args(argv+1, argv + argc);
+  std::vector<std::string> args(argv + 1, argv + argc);
 
   bool help = false;
   std::string help_str;
@@ -621,7 +618,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
 
   InitramfsPathFlag initramfs_path =
       InitramfsPathFlag::FromGlobalGflags(fetcher_configs);
-  KernelPathFlag kernel_path = KernelPathFlag::FromGlobalGflags(fetcher_configs);
+  KernelPathFlag kernel_path =
+      KernelPathFlag::FromGlobalGflags(fetcher_configs);
 
   SuperImageFlag super_image =
       SuperImageFlag::FromGlobalGflags(system_image_dir);
@@ -700,7 +698,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   return 0;
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
 
 int main(int argc, char** argv) {
   auto res = cuttlefish::AssembleCvdMain(argc, argv);
