@@ -23,10 +23,10 @@
 #include <utility>
 #include <vector>
 
-#include "absl/strings/strip.h"
-#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/archive.h"
@@ -301,7 +301,8 @@ Result<RebuildPaths> GetRebuildPaths(
 
     system_target_zip =
         TargetFilesZip(fetcher_config, FileSource::SYSTEM_BUILD);
-    CF_EXPECT(!system_target_zip.empty(), "Unable to find system target zip file.");
+    CF_EXPECT(!system_target_zip.empty(),
+              "Unable to find system target zip file.");
   }
   return RebuildPaths{
       .vendor_target_zip = default_target_zip,

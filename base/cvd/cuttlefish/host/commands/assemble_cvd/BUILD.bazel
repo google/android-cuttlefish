@@ -570,7 +570,6 @@ cf_cc_library(
     name = "super_image_mixer",
     srcs = ["super_image_mixer.cc"],
     hdrs = ["super_image_mixer.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:archive",
