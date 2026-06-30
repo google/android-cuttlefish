@@ -18,8 +18,8 @@
 #include <string>
 #include <vector>
 
-#include <fruit/fruit.h>
 #include "absl/log/log.h"
+#include "fruit/fruit.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
@@ -38,8 +38,8 @@ class DisplaysConfigsImpl : public DisplaysConfigs {
     return display_configs_;
   }
 
-  void SetConfigs(const std::vector<CuttlefishConfig::DisplayConfig>& configs)
-      override {
+  void SetConfigs(
+      const std::vector<CuttlefishConfig::DisplayConfig>& configs) override {
     display_configs_ = configs;
   }
 
