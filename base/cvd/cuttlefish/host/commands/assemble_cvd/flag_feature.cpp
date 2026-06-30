@@ -20,8 +20,8 @@
 #include <vector>
 
 #include "absl/strings/str_replace.h"
-#include <fruit/fruit.h>
-#include <gflags/gflags.h>
+#include "fruit/fruit.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/result/result.h"
@@ -40,9 +40,7 @@ class ParseGflagsImpl : public ParseGflags {
   std::unordered_set<FlagFeature*> Dependencies() const override {
     return {static_cast<FlagFeature*>(&config_)};
   }
-  Result<void> Process(std::vector<std::string>& args) override {
-    return {};
-  }
+  Result<void> Process(std::vector<std::string>& args) override { return {}; }
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
     // Lifted from external/gflags/src/gflags_reporting.cc:ShowXMLOfFlags
     std::vector<gflags::CommandLineFlagInfo> flags;

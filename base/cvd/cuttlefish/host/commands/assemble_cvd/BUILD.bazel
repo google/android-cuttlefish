@@ -290,7 +290,6 @@ cf_cc_library(
     name = "flag_feature",
     srcs = ["flag_feature.cpp"],
     hdrs = ["flag_feature.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/feature",
