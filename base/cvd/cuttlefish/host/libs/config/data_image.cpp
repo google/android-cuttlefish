@@ -153,7 +153,7 @@ static Result<DataImageAction> ChooseDataImageAction(
   return DataImageAction::kNoAction;
 }
 
-} // namespace
+}  // namespace
 
 Result<void> CreateBlankEmptyImage(std::string_view image, int num_mb) {
   VLOG(0) << "Creating " << image;
@@ -245,10 +245,13 @@ static bool EspRequiredForAPBootFlow(APBootFlow ap_boot_flow) {
   return ap_boot_flow == APBootFlow::Grub;
 }
 
-static void InitLinuxArgs(Arch target_arch, LinuxEspBuilder& linux_esp_builder) {
+static void InitLinuxArgs(Arch target_arch,
+                          LinuxEspBuilder& linux_esp_builder) {
   linux_esp_builder.Root("/dev/vda2");
 
-  linux_esp_builder.Argument("console", "hvc0").Argument("panic", "-1").Argument("noefi");
+  linux_esp_builder.Argument("console", "hvc0")
+      .Argument("panic", "-1")
+      .Argument("noefi");
 
   switch (target_arch) {
     case Arch::Arm:
@@ -370,4 +373,4 @@ Result<void> InitializeEspImage(
   return {};
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
