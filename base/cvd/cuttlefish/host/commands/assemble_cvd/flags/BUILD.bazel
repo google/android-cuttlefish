@@ -249,7 +249,6 @@ cf_cc_library(
     name = "kernel_path",
     srcs = ["kernel_path.cc"],
     hdrs = ["kernel_path.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:fetcher_config",
