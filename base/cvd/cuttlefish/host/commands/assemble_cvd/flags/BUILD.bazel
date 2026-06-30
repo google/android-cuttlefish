@@ -234,7 +234,6 @@ cf_cc_library(
     name = "initramfs_path",
     srcs = ["initramfs_path.cc"],
     hdrs = ["initramfs_path.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:fetcher_config",
