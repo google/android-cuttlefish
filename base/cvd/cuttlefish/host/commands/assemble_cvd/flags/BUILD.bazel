@@ -68,7 +68,6 @@ cf_cc_library(
     name = "bootloader",
     srcs = ["bootloader.cc"],
     hdrs = ["bootloader.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
