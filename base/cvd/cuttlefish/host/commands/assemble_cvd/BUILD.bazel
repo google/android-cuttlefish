@@ -610,7 +610,6 @@ cf_cc_library(
     name = "vendor_dlkm_utils",
     srcs = ["vendor_dlkm_utils.cc"],
     hdrs = ["vendor_dlkm_utils.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
