@@ -132,7 +132,8 @@ static constexpr char kGem5DebugFlags[] = "gem5_debug_flags";
 std::string CuttlefishConfig::gem5_debug_flags() const {
   return (*dictionary_)[kGem5DebugFlags].asString();
 }
-void CuttlefishConfig::set_gem5_debug_flags(const std::string& gem5_debug_flags) {
+void CuttlefishConfig::set_gem5_debug_flags(
+    const std::string& gem5_debug_flags) {
   (*dictionary_)[kGem5DebugFlags] = gem5_debug_flags;
 }
 
@@ -274,7 +275,8 @@ static constexpr char kNetsimRadios[] = "netsim_radios";
 void CuttlefishConfig::netsim_radio_enable(NetsimRadio flag) {
   if (dictionary_->isMember(kNetsimRadios)) {
     // OR the radio to current set of radios
-    (*dictionary_)[kNetsimRadios] = (*dictionary_)[kNetsimRadios].asInt() | flag;
+    (*dictionary_)[kNetsimRadios] =
+        (*dictionary_)[kNetsimRadios].asInt() | flag;
   } else {
     (*dictionary_)[kNetsimRadios] = flag;
   }
@@ -525,8 +527,8 @@ CuttlefishConfig::GetFromFile(const std::string& path) {
 }
 
 /*static*/ bool CuttlefishConfig::ConfigExists() {
-  auto config_file_path = StringFromEnv(kCuttlefishConfigEnvVarName,
-                                        GetGlobalConfigFileLink());
+  auto config_file_path =
+      StringFromEnv(kCuttlefishConfigEnvVarName, GetGlobalConfigFileLink());
   auto real_file_path = AbsolutePath(config_file_path.c_str());
   return FileExists(real_file_path);
 }
@@ -615,11 +617,13 @@ std::string CuttlefishConfig::EnvironmentsUdsPath(
   return AbsolutePath(absl::StrCat(environments_uds_dir(), "/", file_name));
 }
 
-CuttlefishConfig::MutableInstanceSpecific CuttlefishConfig::ForInstance(int num) {
+CuttlefishConfig::MutableInstanceSpecific CuttlefishConfig::ForInstance(
+    int num) {
   return MutableInstanceSpecific(this, std::to_string(num));
 }
 
-CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForInstance(int num) const {
+CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForInstance(
+    int num) const {
   return InstanceSpecific(this, std::to_string(num));
 }
 
@@ -628,11 +632,13 @@ CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForInstanceName(
   return ForInstance(InstanceFromString(name));
 }
 
-CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForDefaultInstance() const {
+CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForDefaultInstance()
+    const {
   return ForInstance(GetInstance());
 }
 
-std::vector<CuttlefishConfig::InstanceSpecific> CuttlefishConfig::Instances() const {
+std::vector<CuttlefishConfig::InstanceSpecific> CuttlefishConfig::Instances()
+    const {
   const auto& json = (*dictionary_)[kInstances];
   std::vector<CuttlefishConfig::InstanceSpecific> instances;
   for (const auto& name : json.getMemberNames()) {
