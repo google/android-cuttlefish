@@ -26,9 +26,7 @@
 
 namespace cuttlefish {
 
-std::string ToString(VmmMode mode) {
-  return std::string(format_as(mode));
-}
+std::string ToString(VmmMode mode) { return std::string(format_as(mode)); }
 
 std::ostream& operator<<(std::ostream& out, VmmMode vmm) {
   return out << format_as(vmm);

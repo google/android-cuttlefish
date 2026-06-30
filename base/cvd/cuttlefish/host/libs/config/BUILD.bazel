@@ -455,7 +455,6 @@ cf_cc_library(
     name = "vmm_mode",
     srcs = ["vmm_mode.cc"],
     hdrs = ["vmm_mode.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
