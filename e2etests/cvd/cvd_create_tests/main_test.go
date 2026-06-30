@@ -25,6 +25,7 @@ func TestCvdCreate(t *testing.T) {
 	testcases := []struct {
 		branch string
 		target string
+		args   []string
 	}{
 		{
 			branch: "aosp-android-latest-release",
@@ -37,6 +38,20 @@ func TestCvdCreate(t *testing.T) {
 		{
 			branch: "git_main-throttled-nightly",
 			target: "aosp_cf_x86_64_auto-trunk_staging-userdebug",
+		},
+		{
+			branch: "git_main-swcar-dev",
+			target: "aosp_cf_x86_64_sdv_core-trunk_staging-userdebug",
+			args: []string{
+				"--enable_sandbox=true",
+			},
+		},
+		{
+			branch: "git_main-swcar-dev",
+			target: "aosp_cf_x86_64_sdv_media-trunk_staging-userdebug",
+			args: []string{
+				"--enable_sandbox=true",
+			},
 		},
 	}
 	c := e2etests.TestContext{}
@@ -52,7 +67,9 @@ func TestCvdCreate(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {
+			if err := c.CVDCreate(e2etests.CreateArgs{
+				Args: tc.args,
+			}); err != nil {
 				t.Fatal(err)
 			}
 
