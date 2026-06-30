@@ -81,7 +81,6 @@ cf_cc_library(
     name = "chromeos_state",
     srcs = ["chromeos_state.cc"],
     hdrs = ["chromeos_state.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:boot_flow",
