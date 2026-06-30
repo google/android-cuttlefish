@@ -53,4 +53,4 @@ Result<void> UnpackRamdisk(const std::string& original_ramdisk_path,
                            const std::string& ramdisk_stage_dir);
 Result<void> PackRamdisk(const std::string& ramdisk_stage_dir,
                          const std::string& output_ramdisk);
-}
+}  // namespace cuttlefish
