@@ -347,7 +347,6 @@ cf_cc_library(
     name = "vendor_boot_image",
     srcs = ["vendor_boot_image.cc"],
     hdrs = ["vendor_boot_image.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
