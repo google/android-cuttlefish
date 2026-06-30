@@ -27,7 +27,8 @@ namespace cuttlefish {
 Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    const std::map<std::string, std::string, std::less<void>> builtin_bootconfig_args);
+    const std::map<std::string, std::string, std::less<void>>
+        builtin_bootconfig_args);
 
 Result<std::string> BootconfigArgsString(
     const std::unordered_map<std::string, std::string>& args,

@@ -51,7 +51,8 @@ static constexpr std::string_view kLegacyBoardBootconfigKeysShared[] = {
     "buf_size",
     "kernel.mac80211_hwsim.radios",
     "kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_",
-    "kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_buf_size",
+    "kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_"
+    "buf_size",
 };
 
 static constexpr std::string_view kLegacyBoardBootconfigKeysAuto[] = {
@@ -165,8 +166,10 @@ Result<void> ValidateBoardBootconfigKeys(
 Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    const std::map<std::string, std::string, std::less<void>> builtin_bootconfig_args) {
-  CF_EXPECT(ValidateBoardBootconfigKeys(instance.device_type(), builtin_bootconfig_args));
+    const std::map<std::string, std::string, std::less<void>>
+        builtin_bootconfig_args) {
+  CF_EXPECT(ValidateBoardBootconfigKeys(instance.device_type(),
+                                        builtin_bootconfig_args));
 
   std::unordered_map<std::string, std::string> bootconfig_args;
 
@@ -340,7 +343,8 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     bootconfig_args["androidboot.wifi_impl"] = "virt_wifi";
   }
 
-  if (!builtin_bootconfig_args.count("androidboot.vendor.apex.com.google.emulated.camera.provider.hal")){
+  if (!builtin_bootconfig_args.count(
+          "androidboot.vendor.apex.com.google.emulated.camera.provider.hal")) {
     bootconfig_args
         ["androidboot.vendor.apex.com.google.emulated.camera.provider.hal"] =
             // Camera configs is only populated for virtio-media host camera
@@ -352,9 +356,11 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   }
 
   if (instance.device_type() == cuttlefish::DeviceType::Auto) {
-    if (!builtin_bootconfig_args.count("androidboot.cuttlefish_service_bluetooth_checker")) {
+    if (!builtin_bootconfig_args.count(
+            "androidboot.cuttlefish_service_bluetooth_checker")) {
       // # TODO (b/405655265) Remove once the BT issue is fixed
-      bootconfig_args["androidboot.cuttlefish_service_bluetooth_checker"] = "false";
+      bootconfig_args["androidboot.cuttlefish_service_bluetooth_checker"] =
+          "false";
     }
   }
 
