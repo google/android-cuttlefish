@@ -34,7 +34,8 @@ class MediaConfigsImpl : public MediaConfigs {
     return media_configs_;
   }
 
-  void SetConfigs(const std::vector<CuttlefishConfig::MediaConfig>& configs) override {
+  void SetConfigs(
+      const std::vector<CuttlefishConfig::MediaConfig>& configs) override {
     media_configs_ = configs;
   }
 
@@ -56,8 +57,7 @@ namespace {
 
 class MediaConfigsFlagImpl : public MediaConfigsFlag {
  public:
-  INJECT(MediaConfigsFlagImpl(MediaConfigs& configs,
-                                ConfigFlag& config_flag))
+  INJECT(MediaConfigsFlagImpl(MediaConfigs& configs, ConfigFlag& config_flag))
       : media_configs_(configs), config_flag_dependency_(config_flag) {}
 
   std::string Name() const override { return "MediaConfigsFlagImpl"; }
@@ -84,8 +84,7 @@ class MediaConfigsFlagImpl : public MediaConfigsFlag {
 
 }  // namespace
 
-fruit::Component<fruit::Required<MediaConfigs, ConfigFlag>,
-                 MediaConfigsFlag>
+fruit::Component<fruit::Required<MediaConfigs, ConfigFlag>, MediaConfigsFlag>
 MediaConfigsFlagComponent() {
   return fruit::createComponent()
       .bind<MediaConfigsFlag, MediaConfigsFlagImpl>()
@@ -96,8 +95,7 @@ namespace {
 
 class MediaConfigsFragmentImpl : public MediaConfigsFragment {
  public:
-   INJECT(MediaConfigsFragmentImpl(MediaConfigs& configs))
-      : configs_(configs) {}
+  INJECT(MediaConfigsFragmentImpl(MediaConfigs& configs)) : configs_(configs) {}
 
   std::string Name() const override { return "MediaConfigsFragmentImpl"; }
 
@@ -152,4 +150,3 @@ MediaConfigsFragmentComponent() {
 }
 
 }  // namespace cuttlefish
-
