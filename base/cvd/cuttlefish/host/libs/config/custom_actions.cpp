@@ -23,18 +23,18 @@
 #include <utility>
 #include <vector>
 
-#include <fruit/component.h>
-#include <fruit/fruit_forward_decls.h>
-#include <fruit/macro.h>
-#include <json/value.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "fruit/component.h"
+#include "fruit/fruit_forward_decls.h"
+#include "fruit/macro.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
-#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -70,8 +70,8 @@ CustomShellActionConfig GetCustomShellActionConfigFromJson(
   // Shell command with one button.
   Json::Value button_entry = dictionary[kCustomActionButton];
   config.button = {button_entry[kCustomActionButtonCommand].asString(),
-    button_entry[kCustomActionButtonTitle].asString(),
-    button_entry[kCustomActionButtonIconName].asString()};
+                   button_entry[kCustomActionButtonTitle].asString(),
+                   button_entry[kCustomActionButtonIconName].asString()};
   config.shell_command = dictionary[kCustomActionShellCommand].asString();
   return config;
 }
@@ -83,8 +83,8 @@ CustomActionServerConfig GetCustomActionServerConfigFromJson(
   for (const Json::Value& button_entry : dictionary[kCustomActionButtons]) {
     config.buttons.push_back(
         {button_entry[kCustomActionButtonCommand].asString(),
-        button_entry[kCustomActionButtonTitle].asString(),
-        button_entry[kCustomActionButtonIconName].asString()});
+         button_entry[kCustomActionButtonTitle].asString(),
+         button_entry[kCustomActionButtonIconName].asString()});
   }
   config.server = dictionary[kCustomActionServer].asString();
   return config;
@@ -97,20 +97,18 @@ CustomDeviceStateActionConfig GetCustomDeviceStateActionConfigFromJson(
   // Each button press cycles to the next state, then repeats to the first.
   Json::Value button_entry = dictionary[kCustomActionButton];
   config.button = {button_entry[kCustomActionButtonCommand].asString(),
-    button_entry[kCustomActionButtonTitle].asString(),
-    button_entry[kCustomActionButtonIconName].asString()};
+                   button_entry[kCustomActionButtonTitle].asString(),
+                   button_entry[kCustomActionButtonIconName].asString()};
   for (const Json::Value& device_state_entry :
-      dictionary[kCustomActionDeviceStates]) {
+       dictionary[kCustomActionDeviceStates]) {
     DeviceState state;
-    if (device_state_entry.isMember(
-          kCustomActionDeviceStateLidSwitchOpen)) {
+    if (device_state_entry.isMember(kCustomActionDeviceStateLidSwitchOpen)) {
       state.lid_switch_open =
-        device_state_entry[kCustomActionDeviceStateLidSwitchOpen].asBool();
+          device_state_entry[kCustomActionDeviceStateLidSwitchOpen].asBool();
     }
-    if (device_state_entry.isMember(
-          kCustomActionDeviceStateHingeAngleValue)) {
+    if (device_state_entry.isMember(kCustomActionDeviceStateHingeAngleValue)) {
       state.hinge_angle_value =
-        device_state_entry[kCustomActionDeviceStateHingeAngleValue].asInt();
+          device_state_entry[kCustomActionDeviceStateHingeAngleValue].asInt();
     }
     config.device_states.push_back(state);
   }
@@ -231,8 +229,7 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
                     "config will be empty as well.")
                 .Getter([this]() { return custom_action_config_[0]; })
                 .Setter([this](std::string_view arg) -> Result<void> {
-                  if (!arg.empty() &&
-                      (arg == "unset" || arg == "\"unset\"")) {
+                  if (!arg.empty() && (arg == "unset" || arg == "\"unset\"")) {
                     custom_action_config_.push_back(
                         DefaultCustomActionConfig());
                   } else if (!arg.empty() && !FileExists(std::string(arg))) {
@@ -445,11 +442,11 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
     return true;
   }
 
-    ConfigFlag& config_;
-    Flag custom_action_config_flag_;
-    std::vector<std::string> custom_action_config_;
-    Flag custom_actions_flag_;
-    std::vector<InstanceActions> instance_actions_;
+  ConfigFlag& config_;
+  Flag custom_action_config_flag_;
+  std::vector<std::string> custom_action_config_;
+  Flag custom_actions_flag_;
+  std::vector<InstanceActions> instance_actions_;
 };
 
 }  // namespace
