@@ -88,14 +88,17 @@ Result<void> RunLz4(const std::string& input, const std::string& output) {
   return {};
 }
 
-// Though it is just as fast to overwrite the existing boot images with the newly generated ones,
-// the cuttlefish composite disk generator checks the age of each of the components and
-// regenerates the disk outright IF any one of the components is younger/newer than the current
-// composite disk. If this file overwrite occurs, that condition is fulfilled. This action then
-// causes data in the userdata partition from previous boots to be lost (which is not expected by
-// the user if they've been booting the same kernel/ramdisk combination repeatedly).
-// Consequently, the file is checked for differences and ONLY overwritten if there is a diff.
-bool DeleteTmpFileIfNotChanged(const std::string& tmp_file, const std::string& current_file) {
+// Though it is just as fast to overwrite the existing boot images with the
+// newly generated ones, the cuttlefish composite disk generator checks the age
+// of each of the components and regenerates the disk outright IF any one of the
+// components is younger/newer than the current composite disk. If this file
+// overwrite occurs, that condition is fulfilled. This action then causes data
+// in the userdata partition from previous boots to be lost (which is not
+// expected by the user if they've been booting the same kernel/ramdisk
+// combination repeatedly). Consequently, the file is checked for differences
+// and ONLY overwritten if there is a diff.
+bool DeleteTmpFileIfNotChanged(const std::string& tmp_file,
+                               const std::string& current_file) {
   if (!FileExists(current_file) ||
       ReadFile(current_file) != ReadFile(tmp_file)) {
     if (!RenameFile(tmp_file, current_file).ok()) {
@@ -127,8 +130,10 @@ Result<void> RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
 
   CF_EXPECT(PackRamdisk(ramdisk_stage_dir, stripped_ramdisk_path));
 
-  // Concatenates the stripped ramdisk and input ramdisk and places the result at new_ramdisk_path
-  std::ofstream final_rd(new_ramdisk_path, std::ios_base::binary | std::ios_base::trunc);
+  // Concatenates the stripped ramdisk and input ramdisk and places the result
+  // at new_ramdisk_path
+  std::ofstream final_rd(new_ramdisk_path,
+                         std::ios_base::binary | std::ios_base::trunc);
   std::ifstream ramdisk_a(stripped_ramdisk_path, std::ios_base::binary);
   std::ifstream ramdisk_b(kernel_modules_ramdisk_path, std::ios_base::binary);
   final_rd << ramdisk_a.rdbuf() << ramdisk_b.rdbuf();
@@ -158,11 +163,12 @@ Result<void> PackRamdisk(const std::string& ramdisk_stage_dir,
 Result<void> UnpackRamdisk(const std::string& original_ramdisk_path,
                            const std::string& ramdisk_stage_dir) {
   NativeFilesystem fs;
-  std::unique_ptr<Reader> ramdisk_input = CF_EXPECT(fs.OpenReadOnly(original_ramdisk_path));
+  std::unique_ptr<Reader> ramdisk_input =
+      CF_EXPECT(fs.OpenReadOnly(original_ramdisk_path));
   CF_EXPECT(ramdisk_input.get());
 
   const std::string output_path = original_ramdisk_path + kCpioExt;
-  (void) fs.DeleteFile(output_path);
+  (void)fs.DeleteFile(output_path);
   std::unique_ptr<WriterSeeker> output = CF_EXPECT(fs.CreateFile(output_path));
 
   if (!IsCpioArchive(original_ramdisk_path)) {
@@ -281,7 +287,8 @@ Result<void> RepackBootImage(const std::string& new_kernel_path,
   } else {
     CF_EXPECT(Avb().AddHashFooter(tmp_boot_image_path, "boot", 0));
   }
-  CF_EXPECT(DeleteTmpFileIfNotChanged(tmp_boot_image_path, new_boot_image_path));
+  CF_EXPECT(
+      DeleteTmpFileIfNotChanged(tmp_boot_image_path, new_boot_image_path));
 
   return {};
 }
@@ -380,22 +387,23 @@ Result<void> RepackGem5BootImage(
   std::ofstream final_rd(initrd_path,
                          std::ios_base::binary | std::ios_base::trunc);
 
-  std::ifstream boot_ramdisk(unpack_dir + "/ramdisk",
-                             std::ios_base::binary);
+  std::ifstream boot_ramdisk(unpack_dir + "/ramdisk", std::ios_base::binary);
   std::string new_ramdisk_path = unpack_dir + "/vendor_ramdisk_repacked";
-  // Test to make sure new ramdisk hasn't already been repacked if input ramdisk is provided
+  // Test to make sure new ramdisk hasn't already been repacked if input ramdisk
+  // is provided
   if (FileExists(input_ramdisk_path) && !FileExists(new_ramdisk_path)) {
     CF_EXPECT(RepackVendorRamdisk(input_ramdisk_path,
                                   unpack_dir + "/" + kConcatenatedVendorRamdisk,
                                   new_ramdisk_path, unpack_dir));
   }
-  std::ifstream vendor_boot_ramdisk(FileExists(new_ramdisk_path) ? new_ramdisk_path : unpack_dir +
-                                    "/concatenated_vendor_ramdisk",
-                                    std::ios_base::binary);
+  std::ifstream vendor_boot_ramdisk(
+      FileExists(new_ramdisk_path)
+          ? new_ramdisk_path
+          : unpack_dir + "/concatenated_vendor_ramdisk",
+      std::ios_base::binary);
 
-  std::ifstream vendor_boot_bootconfig(unpack_dir + "/bootconfig",
-                                       std::ios_base::binary |
-                                       std::ios_base::ate);
+  std::ifstream vendor_boot_bootconfig(
+      unpack_dir + "/bootconfig", std::ios_base::binary | std::ios_base::ate);
 
   auto vb_size = vendor_boot_bootconfig.tellg();
   vendor_boot_bootconfig.seekg(0);
@@ -413,9 +421,9 @@ Result<void> RepackGem5BootImage(
   // and trailer bytes
 
   std::string bootconfig =
-    "androidboot.slot_suffix=_a\n"
-    "androidboot.force_normal_boot=1\n"
-    "androidboot.verifiedbootstate=orange\n";
+      "androidboot.slot_suffix=_a\n"
+      "androidboot.force_normal_boot=1\n"
+      "androidboot.verifiedbootstate=orange\n";
   auto bootconfig_size = bootconfig.size();
   bootconfig.resize(bootconfig_size + (uint64_t)(vb_size + pb_size), '\0');
   vendor_boot_bootconfig.read(&bootconfig[bootconfig_size], vb_size);
@@ -424,12 +432,11 @@ Result<void> RepackGem5BootImage(
   bootconfig.erase(bootconfig.find_last_not_of('\0'));
 
   // Write out the ramdisks and bootconfig blocks
-  final_rd << boot_ramdisk.rdbuf() << vendor_boot_ramdisk.rdbuf()
-           << bootconfig;
+  final_rd << boot_ramdisk.rdbuf() << vendor_boot_ramdisk.rdbuf() << bootconfig;
 
   // Append bootconfig length
   bootconfig_size = bootconfig.size();
-  final_rd.write(reinterpret_cast<const char *>(&bootconfig_size),
+  final_rd.write(reinterpret_cast<const char*>(&bootconfig_size),
                  sizeof(uint32_t));
 
   // Append bootconfig checksum
@@ -437,7 +444,7 @@ Result<void> RepackGem5BootImage(
   for (auto i = 0; i < bootconfig_size; i++) {
     bootconfig_csum += bootconfig[i];
   }
-  final_rd.write(reinterpret_cast<const char *>(&bootconfig_csum),
+  final_rd.write(reinterpret_cast<const char*>(&bootconfig_csum),
                  sizeof(uint32_t));
 
   // Append bootconfig trailer
@@ -471,4 +478,4 @@ Result<std::string> ReadAndroidVersionFromBootImage(
              "Version string is not a valid version: '{}'", *os_version);
   return os_version;
 }
-} // namespace cuttlefish
+}  // namespace cuttlefish
