@@ -111,7 +111,6 @@ cf_cc_library(
         "cuttlefish_config_instance.cpp",
     ],
     hdrs = ["cuttlefish_config.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:device_type",
         "//cuttlefish/common/libs/utils:environment",

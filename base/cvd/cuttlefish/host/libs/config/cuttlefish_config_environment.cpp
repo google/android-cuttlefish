@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
-
 #include <string>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
 
 const char* kEnvironments = "environments";
