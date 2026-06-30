@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"

@@ -85,7 +85,6 @@ cf_cc_library(
     name = "custom_actions",
     srcs = ["custom_actions.cpp"],
     hdrs = ["custom_actions.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
