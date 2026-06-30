@@ -26,6 +26,7 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 
@@ -70,6 +71,63 @@ std::optional<ImagePartition> HibernationImage(
       .image_file_path = path,
   };
   return FileExists(path) ? std::optional<ImagePartition>(image) : std::nullopt;
+}
+
+struct CustomPartitionSpec {
+  std::string label;
+  std::string path;
+  bool ab_enabled;
+};
+
+Result<CustomPartitionSpec> ParseCustomPartitionSpec(std::string_view spec,
+                                                     int index) {
+  std::string label;
+  std::string path;
+  bool ab_enabled = false;
+
+  // Key=value format: "name=oem,path=./oem.img,ab=true"
+  if (spec.find('=') != std::string_view::npos) {
+    std::vector<std::string_view> kvpairs = absl::StrSplit(spec, ',');
+    for (const auto& kvpair : kvpairs) {
+      std::vector<std::string_view> kv = absl::StrSplit(kvpair, '=');
+      CF_EXPECTF(kv.size() == 2,
+                 "Invalid key=value pair '{}' in custom partition spec '{}'",
+                 kvpair, spec);
+      std::string_view key = kv[0];
+      std::string_view value = kv[1];
+      if (key == "name") {
+        label = std::string(value);
+      } else if (key == "path") {
+        path = std::string(value);
+      } else if (key == "ab") {
+        CF_EXPECTF(value == "true" || value == "false",
+                   "Invalid value '{}' for key 'ab' in custom partition spec "
+                   "'{}'. Expected 'true' or 'false'",
+                   value, spec);
+        ab_enabled = (value == "true");
+      } else {
+        return CF_ERRF("Unknown key '{}' in custom partition spec '{}'. "
+                       "Valid keys are: name, path, ab",
+                       key, spec);
+      }
+    }
+    CF_EXPECTF(!path.empty(),
+               "Missing required 'path' key in custom partition spec '{}'",
+               spec);
+    if (label.empty()) {
+      label = index > 0 ? "custom_" + std::to_string(index) : "custom";
+    }
+  } else {
+    // Legacy format: plain path only
+    label = index > 0 ? "custom_" + std::to_string(index) : "custom";
+    path = std::string(spec);
+  }
+
+  return CustomPartitionSpec{
+      .label = std::move(label),
+      .path = std::move(path),
+      .ab_enabled = ab_enabled,
+  };
 }
 
 }  // namespace
@@ -214,10 +272,26 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
     std::vector<std::string_view> custom_partition_paths =
         absl::StrSplit(custom_partition_path, ';');
     for (int i = 0; i < custom_partition_paths.size(); i++) {
-      partitions.push_back(ImagePartition{
-          .label = i > 0 ? "custom_" + std::to_string(i) : "custom",
-          .image_file_path = AbsolutePath(custom_partition_paths[i]),
-      });
+      CustomPartitionSpec spec =
+          CF_EXPECT(ParseCustomPartitionSpec(custom_partition_paths[i], i));
+      if (spec.ab_enabled) {
+        VLOG(1) << "Adding custom partition: " << spec.label + "_a";
+        partitions.push_back(ImagePartition{
+            .label = spec.label + "_a",
+            .image_file_path = AbsolutePath(spec.path),
+        });
+        VLOG(1) << "Adding custom partition: " << spec.label + "_b";
+        partitions.push_back(ImagePartition{
+            .label = spec.label + "_b",
+            .image_file_path = AbsolutePath(spec.path),
+        });
+      } else {
+        VLOG(1) << "Adding custom partition: " << spec.label;
+        partitions.push_back(ImagePartition{
+            .label = spec.label,
+            .image_file_path = AbsolutePath(spec.path),
+        });
+      }
     }
   }
 
