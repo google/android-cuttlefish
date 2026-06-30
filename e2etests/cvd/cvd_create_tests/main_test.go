@@ -38,6 +38,14 @@ func TestCvdCreate(t *testing.T) {
 			branch: "git_main-throttled-nightly",
 			target: "aosp_cf_x86_64_auto-trunk_staging-userdebug",
 		},
+		{
+			branch: "git_main-swcar-dev",
+			target: "aosp_cf_x86_64_sdv_core-trunk_staging-userdebug",
+		},
+		{
+			branch: "git_main-swcar-dev",
+			target: "aosp_cf_x86_64_sdv_media-trunk_staging-userdebug",
+		},
 	}
 	c := e2etests.TestContext{}
 	for _, tc := range testcases {
