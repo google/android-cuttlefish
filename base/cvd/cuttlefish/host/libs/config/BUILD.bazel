@@ -197,7 +197,6 @@ cf_cc_library(
     name = "esp",
     srcs = ["esp.cpp"],
     hdrs = ["esp.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
