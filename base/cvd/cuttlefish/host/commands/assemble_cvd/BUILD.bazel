@@ -163,13 +163,10 @@ cf_cc_library(
     name = "clean",
     srcs = ["clean.cc"],
     hdrs = ["clean.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:proc_file_utils",
-        "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
