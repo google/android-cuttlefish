@@ -146,7 +146,7 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
         DefaultHostArtifactsPath(input_config.domkey_mapping_config());
   }
 
-  if(proto_config.has_audio()) {
+  if (proto_config.has_audio()) {
     guest_config.audio_settings = proto_config.audio();
   }
 
@@ -248,9 +248,9 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
   if (const Result<std::string> res =
           MapGetResult(info, "output_audio_streams_count");
       res.ok()) {
-    CF_EXPECTF(
-        absl::SimpleAtoi(*res, &guest_config.output_audio_streams_count),
-        "Failed to parse value '{}' for output audio stream count", *res);
+    CF_EXPECTF(absl::SimpleAtoi(*res, &guest_config.output_audio_streams_count),
+               "Failed to parse value '{}' for output audio stream count",
+               *res);
   }
 
   if (const Result<std::string> res =
