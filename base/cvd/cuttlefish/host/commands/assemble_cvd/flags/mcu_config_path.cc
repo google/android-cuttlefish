@@ -22,8 +22,8 @@
 #include <vector>
 
 #include "absl/strings/str_split.h"
-#include <gflags/gflags.h>
-#include <json/value.h>
+#include "gflags/gflags.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -48,8 +48,7 @@ McuConfigPathFlag McuConfigPathFlag::FromGlobalGflags() {
   std::string mcu_config_path_flag =
       flag_info.is_default ? default_path : flag_info.current_value;
 
-  std::vector<std::string> paths =
-      absl::StrSplit(mcu_config_path_flag, ',');
+  std::vector<std::string> paths = absl::StrSplit(mcu_config_path_flag, ',');
 
   if (paths.empty()) {
     paths.emplace_back("");

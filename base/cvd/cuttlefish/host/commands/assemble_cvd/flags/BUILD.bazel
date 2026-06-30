@@ -264,7 +264,6 @@ cf_cc_library(
     name = "mcu_config_path",
     srcs = ["mcu_config_path.cc"],
     hdrs = ["mcu_config_path.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
