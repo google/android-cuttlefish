@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 
-#include <cctype>
 #include <fstream>
 #include <map>
 #include <memory>
@@ -26,14 +25,14 @@
 #include <string_view>
 #include <utility>
 
-#include <android-base/file.h>
-#include "absl/strings/strip.h"
-#include <json/reader.h>
-#include <json/value.h>
-#include <json/writer.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/strip.h"
+#include "android-base/file.h"
+#include "json/reader.h"
+#include "json/value.h"
+#include "json/writer.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/file_source.h"

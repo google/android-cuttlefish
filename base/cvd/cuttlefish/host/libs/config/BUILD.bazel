@@ -249,7 +249,6 @@ cf_cc_library(
     name = "fetcher_config",
     srcs = ["fetcher_config.cpp"],
     hdrs = ["fetcher_config.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:file_source",
