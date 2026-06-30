@@ -594,7 +594,6 @@ cf_cc_library(
     name = "touchpad",
     srcs = ["touchpad.cpp"],
     hdrs = ["touchpad.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:config_flag",
