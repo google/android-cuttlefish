@@ -65,4 +65,4 @@ Result<IfaceConfig> DefaultNetworkInterfaces(
   return config;
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

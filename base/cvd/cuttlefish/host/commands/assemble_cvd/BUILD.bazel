@@ -10,7 +10,6 @@ cf_cc_library(
     name = "alloc",
     srcs = ["alloc.cc"],
     hdrs = ["alloc.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/cvdalloc:interface",

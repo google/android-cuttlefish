@@ -41,9 +41,9 @@ struct IfaceConfig {
 };
 
 Result<IfaceConfig> DefaultNetworkInterfaces(
-    const CuttlefishConfig::InstanceSpecific &instance);
+    const CuttlefishConfig::InstanceSpecific& instance);
 
 // Acquires interfaces from the resource allocator daemon.
 std::optional<IfaceConfig> AllocateNetworkInterfaces();
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
