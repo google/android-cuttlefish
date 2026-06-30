@@ -52,7 +52,8 @@ Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
 
   if (res = FetchedAndroidBuild(config, source); res.ok()) {
   } else if (res = AndroidDistBuild(system_image_dir); res.ok()) {
-    // TODO: b/473624789 - what if the dist build is older than the product build
+    // TODO: b/473624789 - what if the dist build is older than the product
+    // build
   } else if (res = CF_EXPECT(AndroidProductDir(system_image_dir)); res.ok()) {
   } else {
     return CF_EXPECT(std::move(res));
