@@ -20,13 +20,13 @@
 #include <string_view>
 #include <vector>
 
-#include <android-base/file.h>
-#include "absl/strings/str_join.h"
-#include <fmt/format.h>
-#include <google/protobuf/text_format.h>
 #include "absl/log/log.h"
 #include "absl/strings/ascii.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "android-base/file.h"
+#include "fmt/format.h"
+#include "google/protobuf/text_format.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -817,8 +817,8 @@ Result<GpuMode> ConfigureGpuSettings(
     }
   }
 
-  const auto angle_features = CF_EXPECT(GetNeededAngleFeatures(
-      gpu_mode, graphics_availability));
+  const auto angle_features =
+      CF_EXPECT(GetNeededAngleFeatures(gpu_mode, graphics_availability));
   instance.set_gpu_angle_feature_overrides_enabled(
       angle_features.angle_feature_overrides_enabled);
   instance.set_gpu_angle_feature_overrides_disabled(
