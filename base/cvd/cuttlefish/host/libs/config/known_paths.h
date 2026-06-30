@@ -78,4 +78,3 @@ std::string WmediumdBinary();
 std::string WmediumdGenConfigBinary();
 
 }  // namespace cuttlefish
-
