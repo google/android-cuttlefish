@@ -211,7 +211,6 @@ cf_cc_library(
     name = "physical_partitions",
     srcs = ["physical_partitions.cc"],
     hdrs = ["physical_partitions.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/pretty:result",
