@@ -16,6 +16,7 @@
 #pragma once
 
 #include <fruit/fruit.h>
+
 #include <string>
 #include <vector>
 
@@ -47,8 +48,7 @@ class MediaConfigsFragment : public ConfigFragment {};
 
 fruit::Component<MediaConfigs> MediaConfigsComponent();
 
-fruit::Component<fruit::Required<MediaConfigs, ConfigFlag>,
-                 MediaConfigsFlag>
+fruit::Component<fruit::Required<MediaConfigs, ConfigFlag>, MediaConfigsFlag>
 MediaConfigsFlagComponent();
 
 fruit::Component<fruit::Required<MediaConfigs>, MediaConfigsFragment>
