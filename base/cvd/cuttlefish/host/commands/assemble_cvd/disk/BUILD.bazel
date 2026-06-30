@@ -271,7 +271,6 @@ cf_cc_library(
     name = "misc_image",
     srcs = ["misc_image.cc"],
     hdrs = ["misc_image.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
