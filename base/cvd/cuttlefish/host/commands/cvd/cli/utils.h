@@ -22,8 +22,8 @@
 #include <string_view>
 #include <vector>
 
-#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
@@ -50,8 +50,7 @@ Result<Command> ConstructCvdHelpCommand(const std::string& bin_file,
                                         const CommandRequest& request);
 
 Result<Command> ConstructSiblingHelpCommand(
-    const std::string& bin_name,
-    const cvd_common::Envs& env,
+    const std::string& bin_name, const cvd_common::Envs& env,
     const cvd_common::Args& subcmd_args);
 
 // Constructs a command for cvd non-start-op
@@ -88,11 +87,12 @@ Result<TerminalSize> GetTerminalSize();
 
 class TerminalColors {
  public:
-  TerminalColors(bool is_tty): is_tty_(is_tty){}
+  TerminalColors(bool is_tty) : is_tty_(is_tty) {}
   std::string_view Reset() const;
   std::string_view BoldRed() const;
   std::string_view Red() const;
   std::string_view Cyan() const;
+
  private:
   bool is_tty_;
 };

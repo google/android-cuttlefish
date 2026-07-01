@@ -177,7 +177,6 @@ cf_cc_library(
     name = "utils",
     srcs = ["utils.cpp"],
     hdrs = ["utils.h"],
-    clang_format_enabled = False,
     deps = [
         ":command_request",
         ":types",
