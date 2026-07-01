@@ -24,10 +24,10 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
-#include <fmt/format.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "android-base/file.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
@@ -288,11 +288,11 @@ Result<void> InstanceManager::Clear() {
       }
     }
     std::string runtime_link = group.HomeDir() + "/cuttlefish_runtime";
-    if (Result<void> res = RemoveFile(runtime_link);!res.ok()) {
+    if (Result<void> res = RemoveFile(runtime_link); !res.ok()) {
       LOG(ERROR) << res.error();
     }
     std::string config_link = group.HomeDir() + "/" + config_json_name;
-    if (Result<void> res = RemoveFile(config_link);!res.ok()) {
+    if (Result<void> res = RemoveFile(config_link); !res.ok()) {
       LOG(ERROR) << res.error();
     }
     // TODO: b/471069557 - diagnose unused

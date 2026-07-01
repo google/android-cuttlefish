@@ -138,13 +138,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "instance_manager",
-    srcs = [
-        "instance_manager.cpp",
-    ],
-    hdrs = [
-        "instance_manager.h",
-    ],
-    clang_format_enabled = False,
+    srcs = ["instance_manager.cpp"],
+    hdrs = ["instance_manager.h"],
     deps = [
         ":cvd_persistent_data",
         ":instances",
