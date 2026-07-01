@@ -56,12 +56,10 @@ cf_cc_library(
     testonly = True,
     srcs = ["instance_database_helper.cpp"],
     hdrs = ["instance_database_helper.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/commands/cvd/instances:instance_manager",
         "//cuttlefish/posix:strerror",
         "//libbase",
         "@googletest//:gtest",
