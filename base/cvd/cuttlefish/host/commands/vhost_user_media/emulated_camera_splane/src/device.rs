@@ -137,9 +137,17 @@ impl Buffer {
             }
             BufferState::Outgoing { sequence } => {
                 self.v4l2_buffer.set_sequence(sequence);
+                let mut ts = libc::timespec {
+                    tv_sec: 0,
+                    tv_nsec: 0,
+                };
+                // SAFETY: clock_gettime is a standard POSIX libc call with a valid pointer.
+                unsafe {
+                    libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut ts);
+                }
                 self.v4l2_buffer.set_timestamp(bindings::timeval {
-                    tv_sec: (sequence + 1) as bindings::__time_t / 1000,
-                    tv_usec: (sequence + 1) as bindings::__time_t % 1000,
+                    tv_sec: ts.tv_sec as bindings::__time_t,
+                    tv_usec: (ts.tv_nsec / 1000) as bindings::__time_t,
                 });
                 Self::unset_flag(&mut flags, BufferFlags::QUEUED);
             }
