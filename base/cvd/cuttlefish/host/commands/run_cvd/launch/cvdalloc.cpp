@@ -48,11 +48,7 @@ namespace cuttlefish {
 constexpr std::chrono::seconds kCvdAllocateTimeout = std::chrono::seconds(30);
 constexpr std::chrono::seconds kCvdTeardownTimeout = std::chrono::seconds(2);
 
-enum class CvdallocStatus {
-  kUnknown = 0,
-  kAvailable,
-  kFailed
-};
+enum class CvdallocStatus { kUnknown = 0, kAvailable, kFailed };
 
 Cvdalloc::Cvdalloc(const CuttlefishConfig::InstanceSpecific& instance)
     : instance_(instance), status_(CvdallocStatus::kUnknown) {}
@@ -79,7 +75,7 @@ bool Cvdalloc::Enabled() const {
   return instance_.use_cvdalloc();
 }
 
-std::unordered_set<SetupFeature *> Cvdalloc::Dependencies() const { return {}; }
+std::unordered_set<SetupFeature*> Cvdalloc::Dependencies() const { return {}; }
 
 Result<void> Cvdalloc::WaitForAvailability() {
   std::lock_guard<std::mutex> lock(availability_mutex_);
