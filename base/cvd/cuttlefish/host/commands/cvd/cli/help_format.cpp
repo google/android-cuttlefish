@@ -33,7 +33,8 @@ std::vector<std::string> WrapAroundLine(std::string_view str,
   std::vector<std::string> ret;
   size_t total_word_sizes = 0;
   std::vector<std::string_view> line;
-  for (std::string_view word : absl::StrSplit(str, absl::ByAnyChar(" \t\r\n"))) {
+  for (std::string_view word :
+       absl::StrSplit(str, absl::ByAnyChar(" \t\r\n"))) {
     // line.size() accounts for the spaces added when joining the words.
     if (total_word_sizes + word.size() + line.size() >= max_line_length) {
       // If the line is empty at this point it means the current word is too
@@ -67,7 +68,7 @@ HelpParagraph::HelpParagraph(std::string text, Style style)
     : text_(std::move(text)), style_(style) {}
 
 std::string HelpParagraph::Formatted(size_t max_line_width) const {
-  switch(style_) {
+  switch (style_) {
     case Style::Wrapped:
       return absl::StrJoin(WrapAroundLine(text_, max_line_width), "\n");
     case Style::Raw:
