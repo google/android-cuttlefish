@@ -27,7 +27,6 @@
 #include <variant>
 #include <vector>
 
-#include <android-base/file.h>
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 
@@ -48,7 +47,6 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
-#include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
@@ -107,7 +105,8 @@ Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
   for (const auto& target : targets) {
     CF_EXPECT(EnsureDirectoryExists(target.directories.root, kRwxAllMode));
     CF_EXPECT(EnsureDirectoryExists(target.directories.otatools, kRwxAllMode));
-    CF_EXPECT(EnsureDirectoryExists(target.directories.test_suites, kRwxAllMode));
+    CF_EXPECT(
+        EnsureDirectoryExists(target.directories.test_suites, kRwxAllMode));
     CF_EXPECT(EnsureDirectoryExists(target.directories.chrome_os, kRwxAllMode));
   }
   return {};
@@ -217,7 +216,7 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
     if (IsSignedBuild(context.Build())) {
       img_zip_artifact_name = kSignedPrefix + img_zip_artifact_name;
       LOG(INFO) << "Attempting to fetch SIGNED default image zip: "
-                  << img_zip_artifact_name;
+                << img_zip_artifact_name;
     }
     FetchArtifact img_zip = context.Artifact(img_zip_artifact_name);
     CF_EXPECT(img_zip.Download());
