@@ -190,7 +190,6 @@ cf_cc_library(
     name = "selector_parser",
     srcs = ["selector_parser.cpp"],
     hdrs = ["selector_parser.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
