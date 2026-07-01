@@ -24,10 +24,10 @@
 #include <utility>
 #include <vector>
 
-#include <fruit/component.h>
-#include <fruit/fruit_forward_decls.h>
-#include <fruit/macro.h>
 #include "absl/log/log.h"
+#include "fruit/component.h"
+#include "fruit/fruit_forward_decls.h"
+#include "fruit/macro.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -312,4 +312,3 @@ launchStreamerComponent() {
 }
 
 }  // namespace cuttlefish
-
