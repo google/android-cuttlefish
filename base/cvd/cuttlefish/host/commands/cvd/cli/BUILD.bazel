@@ -44,7 +44,6 @@ cf_cc_library(
     name = "help_format",
     srcs = ["help_format.cpp"],
     hdrs = ["help_format.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "@abseil-cpp//absl/log",
