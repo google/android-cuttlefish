@@ -21,12 +21,11 @@
 #include <utility>
 #include <vector>
 
-#include <google/protobuf/text_format.h>
-
-#include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"
+#include "google/protobuf/text_format.h"
 
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/result/result.h"
@@ -38,7 +37,8 @@ using cvd::config::Display;
 using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
 
-Result<std::optional<std::string>> GenerateDisplayFlag(const EnvironmentSpecification& cfg) {
+Result<std::optional<std::string>> GenerateDisplayFlag(
+    const EnvironmentSpecification& cfg) {
   bool no_displays_configured =
       std::all_of(cfg.instances().begin(), cfg.instances().end(),
                   [](const auto& instance) -> bool {
@@ -115,9 +115,10 @@ std::optional<std::string> GpuMode(const Instance& instance) {
   return instance.graphics().gpu_mode();
 }
 
-std::optional<std::vector<std::string>> GpuModes(const EnvironmentSpecification& cfg) {
+std::optional<std::vector<std::string>> GpuModes(
+    const EnvironmentSpecification& cfg) {
   std::vector<std::optional<std::string>> opts;
-  for (const Instance& instance: cfg.instances()) {
+  for (const Instance& instance : cfg.instances()) {
     opts.emplace_back(GpuMode(instance));
   }
   if (std::none_of(opts.begin(), opts.end(),
@@ -125,16 +126,16 @@ std::optional<std::vector<std::string>> GpuModes(const EnvironmentSpecification&
     return std::nullopt;
   }
   std::vector<std::string> values;
-  for (const std::optional<std::string>& opt: opts) {
-  // Use the instance default
-  // https://github.com/google/android-cuttlefish/blob/c4f1643479f98bdc7310d281e81751188595233b/base/cvd/cuttlefish/host/commands/assemble_cvd/flags.cc#L948
-  // See also b/406464352#comment7
+  for (const std::optional<std::string>& opt : opts) {
+    // Use the instance default
+    // https://github.com/google/android-cuttlefish/blob/c4f1643479f98bdc7310d281e81751188595233b/base/cvd/cuttlefish/host/commands/assemble_cvd/flags.cc#L948
+    // See also b/406464352#comment7
     values.emplace_back(opt.value_or("unset"));
   }
   return values;
 }
 
-}
+}  // namespace
 
 Result<std::vector<std::string>> GenerateGraphicsFlags(
     const EnvironmentSpecification& cfg) {
