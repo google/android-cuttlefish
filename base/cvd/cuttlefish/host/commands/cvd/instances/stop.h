@@ -32,7 +32,7 @@ Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs);
 
 Result<void> ForcefullyStopGroup(uid_t any_id_in_group);
 
-struct StopCvdParams{
+struct StopCvdParams {
   std::string bin_path;
   std::string home_dir;
   int wait_for_launcher_secs;
