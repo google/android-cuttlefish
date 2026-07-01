@@ -8,7 +8,6 @@ cf_cc_library(
     name = "command_request",
     srcs = ["command_request.cpp"],
     hdrs = ["command_request.h"],
-    clang_format_enabled = False,
     deps = [
         ":types",
         "//cuttlefish/flag_parser",
