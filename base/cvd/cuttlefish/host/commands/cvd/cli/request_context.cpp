@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
+#include "fmt/ranges.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -41,6 +41,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/power_btn.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/powerwash.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/ps.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/remove.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/reset.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/restart.h"
@@ -48,7 +49,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/setup.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/snapshot.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/ps.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/status.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/stop.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/version.h"
@@ -60,7 +60,8 @@ namespace cuttlefish {
 
 namespace {
 
-bool CanHandle(const CvdCommandHandler& handler, const CommandRequest& request) {
+bool CanHandle(const CvdCommandHandler& handler,
+               const CommandRequest& request) {
   return Contains(handler.CmdList(), request.Subcommand());
 }
 
@@ -98,8 +99,7 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
   request_handlers_.emplace_back(
       NewCvdBugreportCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdStopCommandHandler(instance_manager));
-  request_handlers_.emplace_back(
-      NewCvdHelpHandler(this->request_handlers_));
+  request_handlers_.emplace_back(NewCvdHelpHandler(this->request_handlers_));
   request_handlers_.emplace_back(NewLintCommand());
   request_handlers_.emplace_back(NewLoadConfigsCommand(instance_manager));
   request_handlers_.emplace_back(NewLoginCommand());

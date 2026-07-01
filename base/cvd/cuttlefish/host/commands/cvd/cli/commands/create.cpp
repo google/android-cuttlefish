@@ -71,8 +71,7 @@ namespace {
 using selector::AnalyzeCreation;
 using selector::GroupCreationInfo;
 
-constexpr char kSummaryHelpText[] =
-    "Create a Cuttlefish instance group";
+constexpr char kSummaryHelpText[] = "Create a Cuttlefish instance group";
 
 std::string DefaultHostPath(const cvd_common::Envs& envs) {
   for (const auto& key : {kAndroidHostOut, kAndroidSoongHostOut, "HOME"}) {
@@ -93,7 +92,6 @@ std::string DefaultProductPath(const cvd_common::Envs& envs) {
   }
   return CurrentDirectory();
 }
-
 
 Result<CommandRequest> CreateLoadCommand(const CommandRequest& request,
                                          cvd_common::Args& args,
@@ -254,9 +252,11 @@ bool IsDeviceRunning(const LocalInstanceGroup& group) {
   return std::ranges::any_of(group.Instances(), &LocalInstance::IsActive);
 }
 
-Result<bool> MatchPaths(const LocalInstanceGroup& group, const std::string& target_host,
+Result<bool> MatchPaths(const LocalInstanceGroup& group,
+                        const std::string& target_host,
                         const std::vector<std::string>& target_products) {
-  const std::string real_group_host = CF_EXPECT(RealPath(group.HostArtifactsPath()));
+  const std::string real_group_host =
+      CF_EXPECT(RealPath(group.HostArtifactsPath()));
   const std::string real_target_host = CF_EXPECT(RealPath(target_host));
 
   if (real_group_host != real_target_host) {
@@ -307,8 +307,8 @@ CvdCreateCommandHandler::FindReusableGroup(
 
   const std::vector<std::string> target_products = ExpandProductPaths(
       target_product_it->second, num_instances_parser_.NumInstances());
-  bool match = CF_EXPECT(
-      MatchPaths(groups[0], target_host_it->second, target_products));
+  bool match =
+      CF_EXPECT(MatchPaths(groups[0], target_host_it->second, target_products));
   CF_EXPECT(std::move(match),
             "Trying to change the host paths on an existing group");
   CF_EXPECT(!IsDeviceRunning(groups[0]),
@@ -478,7 +478,8 @@ std::vector<Flag> CvdCreateCommandHandler::ConfigFileModeFlags() {
 }
 
 std::vector<Flag> CvdCreateCommandHandler::FlagModeFlags(
-    const cvd_common::Envs& env, const selector::SelectorOptions& selector_options) {
+    const cvd_common::Envs& env,
+    const selector::SelectorOptions& selector_options) {
   own_flags_.host_path = DefaultHostPath(env);
   own_flags_.product_path = DefaultProductPath(env);
   own_flags_.start = true;
