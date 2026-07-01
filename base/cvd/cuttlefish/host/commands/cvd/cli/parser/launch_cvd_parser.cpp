@@ -36,7 +36,8 @@ using cvd::config::EnvironmentSpecification;
 
 namespace {
 
-std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) {
+std::optional<std::string> GenerateUndefOkFlag(
+    std::vector<std::string>& flags) {
   // TODO(b/1153527): don't pass undefok, pass only the explicitly specified
   // flags instead
   if (flags.empty()) {
@@ -45,7 +46,7 @@ std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) 
   std::vector<std::string> flag_names;
   std::regex dashes_re("^--?");
   std::regex value_re("=.*$");
-  for (const auto& flag: flags) {
+  for (const auto& flag : flags) {
     auto flag_without_dashes = std::regex_replace(flag, dashes_re, "");
     auto flag_name = std::regex_replace(flag_without_dashes, value_re, "");
     flag_names.emplace_back(std::move(flag_name));
@@ -71,11 +72,13 @@ Result<std::vector<std::string>> GenerateCfFlags(
       CF_EXPECTF(arg.find_first_of(" \t\n\v\f\r") == std::string::npos,
                  "netsim_args element '{}' contains whitespace", arg);
     }
-    flags.emplace_back(GenerateFlag("netsim_args", absl::StrJoin(launch.netsim_args(), " ")));
+    flags.emplace_back(
+        GenerateFlag("netsim_args", absl::StrJoin(launch.netsim_args(), " ")));
   }
 
   flags = MergeResults(std::move(flags), GenerateMetricsFlags(launch));
-  flags = MergeResults(std::move(flags), CF_EXPECT(GenerateInstancesFlags(launch)));
+  flags =
+      MergeResults(std::move(flags), CF_EXPECT(GenerateInstancesFlags(launch)));
   auto flag_op = GenerateUndefOkFlag(flags);
   if (flag_op.has_value()) {
     flags.emplace_back(std::move(*flag_op));
@@ -93,4 +96,3 @@ Result<std::vector<std::string>> ParseLaunchCvdConfigs(
 }
 
 }  // namespace cuttlefish
-
