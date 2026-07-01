@@ -33,18 +33,18 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
-#include "absl/strings/str_join.h"
-#include <fmt/format.h>
-#include <json/value.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_join.h"
+#include "android-base/file.h"
+#include "fmt/format.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
-#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_flags_validator.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/fetch_config_parser.h"
@@ -67,9 +67,7 @@ constexpr std::string_view kCredentialSourceOverride =
     "fetch.credential_source";
 constexpr std::string_view kProjectIDOverride = "fetch.project_id";
 
-bool IsLocalBuild(std::string path) {
-  return absl::StartsWith(path, "/");
-}
+bool IsLocalBuild(std::string path) { return absl::StartsWith(path, "/"); }
 
 Flag GflagsCompatFlagOverride(
     const std::string& name,
@@ -289,8 +287,7 @@ std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags) {
             return {};
           })
           .Getter([&load_flags]() -> std::string {
-            auto it =
-                load_flags.overrides.find(kProjectIDOverride);
+            auto it = load_flags.overrides.find(kProjectIDOverride);
             if (it != load_flags.overrides.end()) {
               return it->second;
             }

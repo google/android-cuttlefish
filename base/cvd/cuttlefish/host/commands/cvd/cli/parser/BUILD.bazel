@@ -151,7 +151,6 @@ cf_cc_library(
     name = "load_configs_parser",
     srcs = ["load_configs_parser.cpp"],
     hdrs = ["load_configs_parser.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
