@@ -26,9 +26,8 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
-#include <android-base/strings.h>
 #include "absl/log/log.h"
+#include "android-base/file.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -121,7 +120,6 @@ Result<LockFile> LockFileManager::AcquireLock(
   CF_EXPECT(fd->Flock(LOCK_EX));
   return LockFile(fd, lock_file_path);
 }
-
 
 Result<std::optional<LockFile>> LockFileManager::TryAcquireLock(
     const std::string& lock_file_path) {

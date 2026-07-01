@@ -18,13 +18,10 @@
 
 #include <sys/file.h>
 
-#include <cstring>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <utility>
-
-#include <android-base/file.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/posix/strerror.h"
@@ -32,7 +29,8 @@
 
 namespace cuttlefish {
 
-InstanceLockFile::InstanceLockFile(LockFile&& lock_file, const unsigned instance_num)
+InstanceLockFile::InstanceLockFile(LockFile&& lock_file,
+                                   const unsigned instance_num)
     : lock_file_(std::move(lock_file)), instance_num_(instance_num) {}
 
 unsigned InstanceLockFile::Instance() const { return instance_num_; }
@@ -51,7 +49,8 @@ InstanceLockFileManager::InstanceLockFileManager(
     std::string instance_locks_path)
     : instance_locks_path_(std::move(instance_locks_path)) {};
 
-Result<std::string> InstanceLockFileManager::LockFilePath(unsigned instance_num) {
+Result<std::string> InstanceLockFileManager::LockFilePath(
+    unsigned instance_num) {
   std::stringstream path;
   path << instance_locks_path_;
   CF_EXPECT(EnsureDirectoryExists(path.str()));
