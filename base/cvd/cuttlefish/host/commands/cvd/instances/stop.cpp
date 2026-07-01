@@ -18,7 +18,6 @@
 
 #include <errno.h>
 #include <signal.h>
-#include <string.h>
 #include <unistd.h>
 
 #include <iostream>  // std::endl
@@ -27,12 +26,11 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
-#include <android-base/strings.h>
-#include <fmt/core.h>
-#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 #include "absl/log/log.h"
 #include "absl/strings/str_join.h"
+#include "android-base/file.h"
+#include "fmt/core.h"
+#include "fmt/ranges.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -65,8 +63,8 @@ static Command CreateStopCvdCommand(const std::string& stopper_path,
 }
 
 Result<void> RunStopCvdCmd(const std::string& stopper_path,
-                        const cvd_common::Envs& env,
-                        const cvd_common::Args& args) {
+                           const cvd_common::Envs& env,
+                           const cvd_common::Args& args) {
   Command stop_cmd = CreateStopCvdCommand(stopper_path, env, args);
 
   LOG(INFO) << "Running " << stop_cmd.ToString();
@@ -82,7 +80,7 @@ Result<void> RunStopCvdCmd(const std::string& stopper_path,
 Result<void> RunStopCvdAll(bool clear_runtime_dirs) {
   std::vector<GroupProcInfo> group_infos = CF_EXPECT(CollectRunCvdGroups());
   LOG(INFO) << "Found " << group_infos.size()
-               << " untracked running instance groups";
+            << " untracked running instance groups";
   for (const GroupProcInfo& group_info : group_infos) {
     auto stop_cvd_result = RunStopCvd(StopCvdParams{
         .bin_path = group_info.stop_cvd_path_,
@@ -111,8 +109,8 @@ static bool IsStillRunCvd(const pid_t pid) {
   if (!extract_proc_info_result.ok()) {
     return false;
   }
-  return (android::base::Basename(extract_proc_info_result->actual_exec_path_) ==
-          "run_cvd");
+  return (android::base::Basename(
+              extract_proc_info_result->actual_exec_path_) == "run_cvd");
 }
 
 Result<void> SendSignal(pid_t pid) {
@@ -188,7 +186,7 @@ Result<void> KillAllRunCvds() {
     return {};
   }
   LOG(INFO) << run_cvd_pids.size()
-               << " run_cvd processes still remain, will stop forcefully";
+            << " run_cvd processes still remain, will stop forcefully";
   for (pid_t group_pid : run_cvd_pids) {
     if (Result<void> result = SendSignal(group_pid); !result.ok()) {
       LOG(ERROR) << result.error();
@@ -200,7 +198,7 @@ Result<void> KillAllRunCvds() {
 Result<void> DeleteAllOwnedInstanceLocks() {
   const std::string lock_dir = InstanceLocksPath();
   uid_t own_uid = geteuid();
-  for (const std::string& lock_file: CF_EXPECT(DirectoryContents(lock_dir))) {
+  for (const std::string& lock_file : CF_EXPECT(DirectoryContents(lock_dir))) {
     std::string lock_file_path = fmt::format("{}/{}", lock_dir, lock_file);
     Result<uid_t> file_uid_res = FileOwner(lock_file_path);
     if (!file_uid_res.ok()) {
@@ -268,7 +266,8 @@ Result<void> RunStopCvd(StopCvdParams params) {
     args.push_back("--clear_instance_dirs=true");
   }
   if (!params.instance_nums.empty()) {
-    args.push_back(fmt::format("--instance_nums={}", absl::StrJoin(params.instance_nums, ",")));
+    args.push_back(fmt::format("--instance_nums={}",
+                               absl::StrJoin(params.instance_nums, ",")));
   }
   Result<void> cmd_res = RunStopCvdCmd(stopper_path, stop_cvd_envs, args);
   if (cmd_res.ok()) {

@@ -218,7 +218,6 @@ cf_cc_library(
     name = "stop",
     srcs = ["stop.cpp"],
     hdrs = ["stop.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
