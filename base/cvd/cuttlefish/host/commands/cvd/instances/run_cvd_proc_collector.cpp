@@ -26,8 +26,9 @@
 #include <vector>
 
 #include "absl/log/log.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
+#include "android-base/file.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"

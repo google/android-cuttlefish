@@ -24,8 +24,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/file.h>
-
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
