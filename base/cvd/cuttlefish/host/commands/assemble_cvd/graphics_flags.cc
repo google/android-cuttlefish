@@ -26,6 +26,7 @@
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
+#include "google/protobuf/io/tokenizer.h"
 #include "google/protobuf/text_format.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -51,6 +52,23 @@
 
 namespace cuttlefish {
 namespace {
+
+struct AggregatingErrorCollector : public google::protobuf::io::ErrorCollector {
+  void RecordError(int /* line */, int /* column */,
+                   const absl::string_view message) override {
+    if (!error_message.empty()) {
+      absl::StrAppend(&error_message, "; ");
+    }
+    absl::StrAppend(&error_message, message);
+  }
+
+  void RecordWarning(int /* line */, int /* column */,
+                     const absl::string_view /* message */) override {
+    // Ignore warnings
+  }
+
+  std::string error_message;
+};
 
 struct CommonState {
   const VmmMode vmm_mode;
@@ -762,10 +780,15 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
       graphics_availability_content_result.value();
 
   gfxstream::proto::GraphicsAvailability availability;
+
   google::protobuf::TextFormat::Parser parser;
+  parser.AllowUnknownField(true);
+  AggregatingErrorCollector error_collector;
+  parser.RecordErrorsTo(&error_collector);
   if (!parser.ParseFromString(graphics_availability_content, &availability)) {
     LOG(ERROR) << "Failed to parse graphics detector output: "
                << graphics_availability_content
+               << ". Error(s): " << error_collector.error_message
                << ". Assuming no availability.";
     return {};
   }
