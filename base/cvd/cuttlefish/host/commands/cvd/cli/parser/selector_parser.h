@@ -25,4 +25,3 @@ selector::SelectorOptions ParseSelectorConfigs(
     const cvd::config::EnvironmentSpecification&);
 
 };  // namespace cuttlefish
-
