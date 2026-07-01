@@ -1,6 +1,6 @@
 # this needs to be at parity with with build_external/crosvm/crosvm.config.toml
 CROSVM_REMOTE = "https://chromium.googlesource.com/crosvm/crosvm"
-CROSVM_REV = "bc84c8bd6ce078e251594aa1af9e84932c5d0d81"
+CROSVM_REV = "77b782606b436067aaeb30f7e4b79c68e7962303"
 
 # note that this won't use the same source checkout as the git_repository directive below
 #
@@ -21,7 +21,6 @@ crosvm_bin.spec(
         "audio_aaudio",
         "balloon",
         "composite-disk",
-        "config-file",
         "fs_runtime_ugid_map",
         "gdb",
         "gdbstub",
@@ -32,8 +31,8 @@ crosvm_bin.spec(
         "gpu_display",
         "gunyah",
         "libaaudio_stub",
-        "media",
         "net",
+        "net_util",
         "qcow",
         "usb",
     ],
@@ -86,7 +85,7 @@ crosvm_bin.annotation(
 crosvm_bin.annotation(
     crate = "minijail-sys",
     build_script_data = ["@@//:minijail_sources"],
-    build_script_rundir = "external/+_repo_rules2+crosvm/third_party/minijail",
+    build_script_rundir = "external/+_repo_rules+crosvm/third_party/minijail",
     patch_args = ["-p1"],
     # crates_universe checks out only a subdirectory of the repository, so the
     # file paths in this patch are relative to that directory.

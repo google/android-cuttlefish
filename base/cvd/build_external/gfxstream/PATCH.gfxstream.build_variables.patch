@@ -1,27 +1,36 @@
+From 07f547d5ef3234bd04befd995bb82aeb0095b042 Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Wed, 17 Jun 2026 08:51:21 -0700
+Subject: [PATCH] Disable some build warnings for Cuttlefish build
+
+---
+ build_variables.bzl     | 7 +++++++
+ common/base/BUILD.bazel | 1 +
+ 2 files changed, 8 insertions(+)
+
 diff --git a/build_variables.bzl b/build_variables.bzl
-index 113342840..94e0a8377 100644
+index 73f196c86..4b60babee 100644
 --- a/build_variables.bzl
 +++ b/build_variables.bzl
-@@ -9,7 +9,13 @@ GFXSTREAM_HOST_COPTS = [
-     ],
-     "//conditions:default": [
-         "-fno-exceptions",
--    ],
-+        "-Wno-thread-safety-analysis",
-+        "-Wno-thread-safety-attributes",
-+        "-Wno-unused-but-set-variable",
-+        "-Wno-unused-const-variable",
-+        "-Wno-unused-function",
-+        "-Wno-unused-private-field",
-+      ],
+@@ -27,6 +27,13 @@ GFXSTREAM_COMMON_COPTS = [
+     "//conditions:default": [],
  })
- GFXSTREAM_HOST_VK_DEFINES = [
-     "VK_GFXSTREAM_STRUCTURE_TYPE_EXT",
+ GFXSTREAM_HOST_COPTS = GFXSTREAM_COMMON_COPTS + [
++    "-Wno-deprecated-declarations",
++    "-Wno-thread-safety-analysis",
++    "-Wno-thread-safety-attributes",
++    "-Wno-unused-but-set-variable",
++    "-Wno-unused-const-variable",
++    "-Wno-unused-function",
++    "-Wno-unused-private-field",
+ ] + select({
+     "@platforms//os:windows": [
+         "/EHs-c-",
 diff --git a/common/base/BUILD.bazel b/common/base/BUILD.bazel
-index c6cffabd8..9fe05e501 100644
+index 1c3ae6942..f36bdcfcc 100644
 --- a/common/base/BUILD.bazel
 +++ b/common/base/BUILD.bazel
-@@ -81,6 +81,7 @@ cc_library(
+@@ -14,6 +14,7 @@ cc_library(
          ],
          exclude = ["include/gfxstream/testing/**"],
      ),
@@ -29,3 +38,6 @@ index c6cffabd8..9fe05e501 100644
      defines = select({
          "@platforms//os:windows": [
              "WIN32_LEAN_AND_MEAN",
+--
+2.54.0.1136.gdb2ca164c4-goog
+
