@@ -18,7 +18,7 @@
 #include <mutex>
 #include <string_view>
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -33,13 +33,13 @@ enum class CvdallocStatus;
 
 class Cvdalloc : public vm_manager::VmmDependencyCommand {
  public:
-  INJECT(Cvdalloc(const CuttlefishConfig::InstanceSpecific &instance));
+  INJECT(Cvdalloc(const CuttlefishConfig::InstanceSpecific& instance));
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override;
   std::string Name() const override;
   bool Enabled() const override;
-  std::unordered_set<SetupFeature *> Dependencies() const override;
+  std::unordered_set<SetupFeature*> Dependencies() const override;
 
   // StatusCheckCommandSource
   Result<void> WaitForAvailability() override;
