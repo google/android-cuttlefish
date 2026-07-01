@@ -238,7 +238,6 @@ cf_cc_library(
     name = "fetch_cvd_parser",
     srcs = ["fetch_cvd_parser.cc"],
     hdrs = ["fetch_cvd_parser.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
