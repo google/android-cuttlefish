@@ -76,7 +76,6 @@ cf_cc_library(
     name = "fetch_config_parser",
     srcs = ["fetch_config_parser.cpp"],
     hdrs = ["fetch_config_parser.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
