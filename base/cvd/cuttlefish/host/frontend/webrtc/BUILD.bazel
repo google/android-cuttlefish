@@ -12,6 +12,20 @@ proto_library(
     deps = ["@googleapis//google/rpc:status_proto"],
 )
 
+cf_cc_library(
+    name = "libcuttlefish_webrtc_cvd_abgr_video_frame_buffer",
+    srcs = [
+        "cvd_abgr_video_frame_buffer.cpp",
+    ],
+    hdrs = [
+        "cvd_abgr_video_frame_buffer.h",
+    ],
+    deps = [
+        ":libcuttlefish_webrtc_cvd_video_frame_buffer",
+        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
+    ],
+)
+
 cc_proto_library(
     name = "libcuttlefish_webrtc_commands_proto",
     deps = [":webrtc_commands_proto"],
@@ -191,6 +205,7 @@ cf_cc_library(
     hdrs = ["display_handler.h"],
     depend_on_what_you_use_enabled = False,
     deps = [
+        ":libcuttlefish_webrtc_cvd_abgr_video_frame_buffer",
         ":libcuttlefish_webrtc_cvd_video_frame_buffer",
         ":libcuttlefish_webrtc_screenshot_handler",
         "//cuttlefish/host/frontend/webrtc/libdevice:streamer",
@@ -351,6 +366,7 @@ cf_cc_binary(
         ":libcuttlefish_webrtc_command_channel",
         ":libcuttlefish_webrtc_commands_proto",
         ":libcuttlefish_webrtc_connection_observer",
+        ":libcuttlefish_webrtc_cvd_abgr_video_frame_buffer",
         ":libcuttlefish_webrtc_cvd_video_frame_buffer",
         ":libcuttlefish_webrtc_display_handler",
         ":libcuttlefish_webrtc_gpx_locations_handler",
