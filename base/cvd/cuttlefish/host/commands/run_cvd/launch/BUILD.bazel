@@ -306,7 +306,6 @@ cf_cc_library(
     name = "open_wrt",
     srcs = ["open_wrt.cpp"],
     hdrs = ["open_wrt.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:json",
