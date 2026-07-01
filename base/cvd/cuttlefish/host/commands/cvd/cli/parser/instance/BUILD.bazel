@@ -141,12 +141,10 @@ cf_cc_test(
 cf_cc_test(
     name = "vm_configs_test",
     srcs = ["vm_configs_test.cc"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
         "@jsoncpp",
     ],
 )
