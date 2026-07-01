@@ -228,7 +228,6 @@ cf_cc_library(
     name = "login",
     srcs = ["login.cpp"],
     hdrs = ["login.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:is_google_corp",
