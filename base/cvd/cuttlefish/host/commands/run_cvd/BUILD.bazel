@@ -129,7 +129,6 @@ cf_cc_library(
         "server_loop_impl_webrtc.cpp",
     ],
     hdrs = ["server_loop.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",

@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/json.h"
