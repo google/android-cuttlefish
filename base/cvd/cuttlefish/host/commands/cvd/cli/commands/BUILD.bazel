@@ -510,7 +510,6 @@ cf_cc_library(
     name = "setup",
     srcs = ["setup.cc"],
     hdrs = ["setup.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/cli:command_request",
