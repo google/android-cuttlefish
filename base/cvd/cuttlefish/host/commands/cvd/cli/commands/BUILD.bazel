@@ -270,7 +270,6 @@ cf_cc_library(
     name = "power_btn",
     srcs = ["power_btn.cpp"],
     hdrs = ["power_btn.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
