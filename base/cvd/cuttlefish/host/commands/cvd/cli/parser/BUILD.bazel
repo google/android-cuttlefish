@@ -102,7 +102,6 @@ cf_cc_library(
     name = "launch_cvd_parser",
     srcs = ["launch_cvd_parser.cpp"],
     hdrs = ["launch_cvd_parser.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_instances",
