@@ -492,7 +492,6 @@ cf_cc_library(
     name = "version",
     srcs = ["version.cpp"],
     hdrs = ["version.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:proto",
         "//cuttlefish/flag_parser",
