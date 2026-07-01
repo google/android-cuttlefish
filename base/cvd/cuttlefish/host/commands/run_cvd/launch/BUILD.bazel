@@ -567,7 +567,6 @@ cf_cc_library(
     name = "vhost_input_devices",
     srcs = ["vhost_input_devices.cpp"],
     hdrs = ["input_connections_provider.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
