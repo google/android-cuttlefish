@@ -23,11 +23,9 @@
 namespace cuttlefish {
 namespace {
 
-Result<void> LoadSymbol(void* lib, const char* name,
-                        void** out) {
+Result<void> LoadSymbol(void* lib, const char* name, void** out) {
   *out = dlsym(lib, name);
-  CF_EXPECT_NE(*out, nullptr,
-               "Failed to load symbol: " << name);
+  CF_EXPECT_NE(*out, nullptr, "Failed to load symbol: " << name);
   return {};
 }
 
@@ -46,39 +44,37 @@ Result<CudaLibrary> LoadCuda() {
 
   CudaFunctions& f = lib.funcs;
 
-  CF_EXPECT(LoadSymbol(lib.handle, "cuInit",
-      reinterpret_cast<void**>(&f.cuInit)));
+  CF_EXPECT(
+      LoadSymbol(lib.handle, "cuInit", reinterpret_cast<void**>(&f.cuInit)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuDeviceGet",
-      reinterpret_cast<void**>(&f.cuDeviceGet)));
+                       reinterpret_cast<void**>(&f.cuDeviceGet)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuDeviceGetName",
-      reinterpret_cast<void**>(&f.cuDeviceGetName)));
+                       reinterpret_cast<void**>(&f.cuDeviceGetName)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuDevicePrimaryCtxRetain",
-      reinterpret_cast<void**>(
-          &f.cuDevicePrimaryCtxRetain)));
+                       reinterpret_cast<void**>(&f.cuDevicePrimaryCtxRetain)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuDevicePrimaryCtxRelease",
-      reinterpret_cast<void**>(
-          &f.cuDevicePrimaryCtxRelease)));
+                       reinterpret_cast<void**>(&f.cuDevicePrimaryCtxRelease)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuCtxPushCurrent_v2",
-      reinterpret_cast<void**>(&f.cuCtxPushCurrent)));
+                       reinterpret_cast<void**>(&f.cuCtxPushCurrent)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuCtxPopCurrent_v2",
-      reinterpret_cast<void**>(&f.cuCtxPopCurrent)));
+                       reinterpret_cast<void**>(&f.cuCtxPopCurrent)));
 
   CF_EXPECT(LoadSymbol(lib.handle, "cuStreamCreate",
-      reinterpret_cast<void**>(&f.cuStreamCreate)));
+                       reinterpret_cast<void**>(&f.cuStreamCreate)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuStreamDestroy_v2",
-      reinterpret_cast<void**>(&f.cuStreamDestroy)));
+                       reinterpret_cast<void**>(&f.cuStreamDestroy)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuStreamSynchronize",
-      reinterpret_cast<void**>(&f.cuStreamSynchronize)));
+                       reinterpret_cast<void**>(&f.cuStreamSynchronize)));
 
   CF_EXPECT(LoadSymbol(lib.handle, "cuMemAllocPitch_v2",
-      reinterpret_cast<void**>(&f.cuMemAllocPitch)));
+                       reinterpret_cast<void**>(&f.cuMemAllocPitch)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuMemFree_v2",
-      reinterpret_cast<void**>(&f.cuMemFree)));
+                       reinterpret_cast<void**>(&f.cuMemFree)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuMemcpy2DAsync_v2",
-      reinterpret_cast<void**>(&f.cuMemcpy2DAsync)));
+                       reinterpret_cast<void**>(&f.cuMemcpy2DAsync)));
 
   CF_EXPECT(LoadSymbol(lib.handle, "cuGetErrorString",
-      reinterpret_cast<void**>(&f.cuGetErrorString)));
+                       reinterpret_cast<void**>(&f.cuGetErrorString)));
 
   return lib;
 }

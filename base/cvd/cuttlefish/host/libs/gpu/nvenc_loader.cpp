@@ -33,16 +33,14 @@ Result<NvencLibrary> LoadNvenc() {
   NvencLibrary lib;
   lib.handle = dlopen("libnvidia-encode.so.1", RTLD_LAZY);
   CF_EXPECT_NE(lib.handle, nullptr,
-               "libnvidia-encode.so.1 not available: "
-                   << dlerror());
+               "libnvidia-encode.so.1 not available: " << dlerror());
 
   typedef NVENCSTATUS(NVENCAPI * NvEncodeAPICreateInstanceFn)(
       NV_ENCODE_API_FUNCTION_LIST*);
   NvEncodeAPICreateInstanceFn fn =
       reinterpret_cast<NvEncodeAPICreateInstanceFn>(
           dlsym(lib.handle, "NvEncodeAPICreateInstance"));
-  CF_EXPECT_NE(fn, nullptr,
-               "Cannot load NvEncodeAPICreateInstance");
+  CF_EXPECT_NE(fn, nullptr, "Cannot load NvEncodeAPICreateInstance");
 
   lib.funcs.version = NV_ENCODE_API_FUNCTION_LIST_VER;
   NVENCSTATUS status = fn(&lib.funcs);

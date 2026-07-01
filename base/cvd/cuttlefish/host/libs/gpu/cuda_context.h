@@ -17,6 +17,7 @@
 #pragma once
 
 #include <cuda.h>
+
 #include <map>
 #include <memory>
 #include <mutex>
@@ -44,8 +45,7 @@ class CudaContext {
   CUcontext get() const { return ctx_; }
 
  private:
-  CudaContext(CUcontext ctx, int device_id,
-              const CudaFunctions* cuda);
+  CudaContext(CUcontext ctx, int device_id, const CudaFunctions* cuda);
 
   CUcontext ctx_;
   int device_id_;

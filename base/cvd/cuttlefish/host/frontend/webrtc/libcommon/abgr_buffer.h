@@ -17,6 +17,7 @@
 #pragma once
 
 #include <api/video/video_frame_buffer.h>
+
 #include <memory>
 
 #include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
@@ -27,13 +28,13 @@ class AbgrBuffer : public webrtc::VideoFrameBuffer {
  public:
   explicit AbgrBuffer(
       std::shared_ptr<cuttlefish::PackedVideoFrameBuffer> buffer);
-  
+
   Type type() const override { return Type::kNative; }
   int width() const override;
   int height() const override;
-  
+
   rtc::scoped_refptr<webrtc::I420BufferInterface> ToI420() override;
-  
+
   const uint8_t* Data() const;
   int Stride() const;
   uint32_t PixelFormat() const { return buffer_->PixelFormat(); }

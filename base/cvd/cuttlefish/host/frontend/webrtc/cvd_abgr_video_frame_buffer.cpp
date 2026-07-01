@@ -20,7 +20,7 @@
 
 namespace cuttlefish {
 
-CvdAbgrVideoFrameBuffer::CvdAbgrVideoFrameBuffer(int width, int height, 
+CvdAbgrVideoFrameBuffer::CvdAbgrVideoFrameBuffer(int width, int height,
                                                  uint32_t format, int stride,
                                                  const uint8_t* data)
     : width_(width),

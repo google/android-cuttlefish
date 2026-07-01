@@ -190,8 +190,7 @@ Result<void> ScreenshotHandler::Screenshot(uint32_t display_number,
                 << kScreenshotTimeoutSeconds << " seconds.");
 
   SharedFrame frame = frame_future.get();
-  auto planar =
-      std::dynamic_pointer_cast<PlanarVideoFrameBuffer>(frame);
+  auto planar = std::dynamic_pointer_cast<PlanarVideoFrameBuffer>(frame);
   CF_EXPECT(planar != nullptr, "Screenshot requires a planar frame");
 
   if (absl::EndsWith(screenshot_path, ".jpg")) {

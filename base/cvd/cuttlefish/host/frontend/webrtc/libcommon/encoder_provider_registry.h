@@ -56,9 +56,9 @@ class EncoderProviderRegistrar {
   }
 };
 
-#define REGISTER_ENCODER_PROVIDER(ProviderClass)                     \
-  static ::cuttlefish::webrtc_streaming::EncoderProviderRegistrar<   \
-      ProviderClass>                                                 \
+#define REGISTER_ENCODER_PROVIDER(ProviderClass)                   \
+  static ::cuttlefish::webrtc_streaming::EncoderProviderRegistrar< \
+      ProviderClass>                                               \
       g_encoder_provider_registrar_##ProviderClass
 
 }  // namespace webrtc_streaming

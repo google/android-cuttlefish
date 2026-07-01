@@ -21,7 +21,6 @@ cf_cc_library(
         "cvd_abgr_video_frame_buffer.h",
     ],
     deps = [
-        ":libcuttlefish_webrtc_cvd_video_frame_buffer",
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
     ],
 )

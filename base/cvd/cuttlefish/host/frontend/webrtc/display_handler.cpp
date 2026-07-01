@@ -115,8 +115,8 @@ DisplayHandler::GetScreenConnectorCallback() {
             frame_fourcc_format == DRM_FORMAT_ABGR8888 ||
             frame_fourcc_format == DRM_FORMAT_XBGR8888) {
           processed_frame.buf_ = std::make_unique<CvdAbgrVideoFrameBuffer>(
-              frame_width, frame_height, frame_fourcc_format, frame_stride_bytes,
-              frame_pixels);
+              frame_width, frame_height, frame_fourcc_format,
+              frame_stride_bytes, frame_pixels);
           processed_frame.is_success_ = true;
         } else {
           processed_frame.is_success_ = false;
@@ -129,8 +129,7 @@ DisplayHandler::GetScreenConnectorCallback() {
   for (;;) {
     auto processed_frame = screen_connector_.OnNextFrame();
 
-    std::shared_ptr<VideoFrameBuffer> buffer =
-        std::move(processed_frame.buf_);
+    std::shared_ptr<VideoFrameBuffer> buffer = std::move(processed_frame.buf_);
 
     const uint32_t display_number = processed_frame.display_number_;
     {
@@ -245,11 +244,11 @@ void DisplayHandler::RepeatFramesPeriodically() {
         if (time_stamp >
             buffer_info->last_sent_time_stamp + kRepeatingInterval) {
           if (composition_manager_.has_value()) {
-            auto planar = std::dynamic_pointer_cast<
-                PlanarVideoFrameBuffer>(buffer_info->buffer);
+            auto planar = std::dynamic_pointer_cast<PlanarVideoFrameBuffer>(
+                buffer_info->buffer);
             if (planar) {
-              composition_manager_.value()->ComposeFrame(
-                  display_number, planar);
+              composition_manager_.value()->ComposeFrame(display_number,
+                                                         planar);
             }
           }
           buffers[display_number] = buffer_info;

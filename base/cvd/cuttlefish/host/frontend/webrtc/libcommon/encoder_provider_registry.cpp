@@ -34,14 +34,12 @@ void EncoderProviderRegistry::Register(
     return;
   }
   std::lock_guard<std::mutex> lock(mutex_);
-  LOG(INFO) << "Registering encoder provider: "
-            << provider->GetName()
+  LOG(INFO) << "Registering encoder provider: " << provider->GetName()
             << " (priority=" << provider->GetPriority() << ")";
   providers_.push_back(std::move(provider));
 }
 
-std::vector<EncoderProvider*>
-EncoderProviderRegistry::GetProviders() const {
+std::vector<EncoderProvider*> EncoderProviderRegistry::GetProviders() const {
   std::vector<EncoderProvider*> result;
   {
     std::lock_guard<std::mutex> lock(mutex_);

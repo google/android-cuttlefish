@@ -16,11 +16,11 @@
 
 #include "cuttlefish/host/libs/gpu/nvenc_capabilities.h"
 
-#include <memory>
-#include <string.h>
-#include <vector>
-
 #include <nvEncodeAPI.h>
+#include <string.h>
+
+#include <memory>
+#include <vector>
 
 #include "android-base/logging.h"
 
@@ -32,25 +32,22 @@ namespace cuttlefish {
 namespace {
 
 std::vector<GUID> LoadSupportedCodecGuids(int device_id) {
-  Result<const NV_ENCODE_API_FUNCTION_LIST*> funcs_result =
-      TryLoadNvenc();
+  Result<const NV_ENCODE_API_FUNCTION_LIST*> funcs_result = TryLoadNvenc();
   if (!funcs_result.ok()) {
     LOG(WARNING) << "NVENC capabilities: NVENC not available";
     return {};
   }
   const NV_ENCODE_API_FUNCTION_LIST* funcs = *funcs_result;
 
-  std::shared_ptr<CudaContext> context =
-      CudaContext::Get(device_id);
+  std::shared_ptr<CudaContext> context = CudaContext::Get(device_id);
   if (!context) {
     LOG(WARNING) << "NVENC capabilities: "
-                 << "failed to get CUDA context for device "
-                 << device_id;
+                 << "failed to get CUDA context for device " << device_id;
     return {};
   }
 
-  NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS open_params =
-      {NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER};
+  NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS open_params = {
+      NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER};
   open_params.device = context->get();
   open_params.deviceType = NV_ENC_DEVICE_TYPE_CUDA;
   open_params.apiVersion = NVENCAPI_VERSION;
@@ -60,30 +57,24 @@ std::vector<GUID> LoadSupportedCodecGuids(int device_id) {
       funcs->nvEncOpenEncodeSessionEx(&open_params, &raw_encoder);
   if (status != NV_ENC_SUCCESS) {
     LOG(WARNING) << "NVENC capabilities: "
-                 << "nvEncOpenEncodeSessionEx failed: "
-                 << status;
+                 << "nvEncOpenEncodeSessionEx failed: " << status;
     return {};
   }
 
-  auto deleter = [funcs](void* e) {
-    funcs->nvEncDestroyEncoder(e);
-  };
-  std::unique_ptr<void, decltype(deleter)> encoder(
-      raw_encoder, deleter);
+  auto deleter = [funcs](void* e) { funcs->nvEncDestroyEncoder(e); };
+  std::unique_ptr<void, decltype(deleter)> encoder(raw_encoder, deleter);
 
   uint32_t guid_count = 0;
-  status = funcs->nvEncGetEncodeGUIDCount(
-      encoder.get(), &guid_count);
+  status = funcs->nvEncGetEncodeGUIDCount(encoder.get(), &guid_count);
   if (status != NV_ENC_SUCCESS) {
     LOG(WARNING) << "NVENC capabilities: "
-                 << "nvEncGetEncodeGUIDCount failed: "
-                 << status;
+                 << "nvEncGetEncodeGUIDCount failed: " << status;
     return {};
   }
 
   std::vector<GUID> guids(guid_count);
-  status = funcs->nvEncGetEncodeGUIDs(
-      encoder.get(), guids.data(), guid_count, &guid_count);
+  status = funcs->nvEncGetEncodeGUIDs(encoder.get(), guids.data(), guid_count,
+                                      &guid_count);
   if (status != NV_ENC_SUCCESS) {
     LOG(WARNING) << "NVENC capabilities: "
                  << "nvEncGetEncodeGUIDs failed: " << status;

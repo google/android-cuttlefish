@@ -103,7 +103,7 @@ def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled
         copts = (copts or []) + COPTS,
         **kwargs
     )
-    if clang_format_enabled:
+    if clang_format_enabled and (kwargs.get("srcs") or kwargs.get("hdrs")):
         format_test(
             name = name + "_format_test",
             cc = "//tools/format:clang_format",

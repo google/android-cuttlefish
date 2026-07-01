@@ -47,7 +47,7 @@ struct WebRtcScProcessedFrame : public ScreenConnectorFrameInfo {
     // copy internal buffer, not move
     auto cloned_frame = std::make_unique<WebRtcScProcessedFrame>();
     if (buf_) {
-        cloned_frame->buf_ = buf_->Clone();
+      cloned_frame->buf_ = buf_->Clone();
     }
     return cloned_frame;
   }

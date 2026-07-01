@@ -26,7 +26,6 @@ cf_cc_library(
     deps = [
         ":encoder_provider",
         "//libbase",
-        "@libwebrtc",
     ],
 )
 
@@ -72,7 +71,6 @@ cf_cc_library(
     deps = [
         ":decoder_provider",
         "//libbase",
-        "@libwebrtc",
     ],
 )
 
@@ -150,7 +148,6 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
-        "@libwebrtc",
         "@nv_codec_headers//:nv_headers",
     ],
     alwayslink = True,
@@ -160,7 +157,10 @@ cf_cc_library(
 # Currently a no-op cc_library. When the public/private repo split
 # happens, replace with a label_flag that points to private repo
 # providers.
-cf_cc_library(name = "extra_codec_providers")
+cf_cc_library(
+    name = "extra_codec_providers",
+    depend_on_what_you_use_enabled = False,
+)
 
 # =============================================================================
 # Common Components
