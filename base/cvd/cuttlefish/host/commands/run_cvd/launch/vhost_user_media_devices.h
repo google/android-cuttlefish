@@ -22,8 +22,8 @@
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
+fruit::Component<
+    fruit::Required<const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 VhostUserMediaDevicesComponent();
 
 }  // namespace cuttlefish
-

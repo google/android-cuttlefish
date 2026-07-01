@@ -22,9 +22,9 @@
 #include <utility>
 #include <vector>
 
-#include <fruit/component.h>
-#include <fruit/fruit_forward_decls.h>
-#include <fruit/macro.h>
+#include "fruit/component.h"
+#include "fruit/fruit_forward_decls.h"
+#include "fruit/macro.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -40,7 +40,9 @@ namespace {
 
 using Subprocess::StdIOChannel::kStdErr;
 
-Command NewCommand(const std::string& binary_path, const std::string& socket_path, const std::string& lens_facing) {
+Command NewCommand(const std::string& binary_path,
+                   const std::string& socket_path,
+                   const std::string& lens_facing) {
   Command cmd(binary_path);
   cmd.AddParameter("--socket-path=", socket_path);
   cmd.AddParameter("--verbosity=", "debug");
@@ -54,7 +56,10 @@ Command NewCommand(const std::string& binary_path, const std::string& socket_pat
 
 class VhostUserMediaDevices : public CommandSource {
  public:
-  INJECT(VhostUserMediaDevices(const CuttlefishConfig::InstanceSpecific& instance, LogTeeCreator& log_tee)) : instance_(instance), log_tee_(log_tee) {}
+  INJECT(
+      VhostUserMediaDevices(const CuttlefishConfig::InstanceSpecific& instance,
+                            LogTeeCreator& log_tee))
+      : instance_(instance), log_tee_(log_tee) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
@@ -62,18 +67,22 @@ class VhostUserMediaDevices : public CommandSource {
     for (int index = 0; index < instance_.media_configs().size(); index++) {
       auto config = instance_.media_configs()[index];
       std::string binary_path;
-      if (config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane) {
+      if (config.type ==
+          CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane) {
         binary_path = VhostUserMediaEmulatedCameraMPlaneBinary();
-      } else if (config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane) {
+      } else if (config.type ==
+                 CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane) {
         binary_path = VhostUserMediaEmulatedCameraSPlaneBinary();
       } else if (config.type == CuttlefishConfig::MediaType::kV4l2Proxy) {
         continue;
       } else {
         CF_EXPECT(false, "unknown media type");
       }
-      Command cmd = NewCommand(binary_path, instance_.media_socket_path(index), config.lens_facing);
+      Command cmd = NewCommand(binary_path, instance_.media_socket_path(index),
+                               config.lens_facing);
       Command cmd_log_tee = CF_EXPECT(
-          log_tee_.CreateLogTee(cmd, "vhu_media_simple_device", kStdErr), "Failed to create log tee command for media device");
+          log_tee_.CreateLogTee(cmd, "vhu_media_simple_device", kStdErr),
+          "Failed to create log tee command for media device");
       commands.emplace_back(std::move(cmd));
       commands.emplace_back(std::move(cmd_log_tee));
     }
@@ -92,11 +101,11 @@ class VhostUserMediaDevices : public CommandSource {
 
 }  // namespace
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
+fruit::Component<
+    fruit::Required<const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 VhostUserMediaDevicesComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, VhostUserMediaDevices>();
 }
 
 }  // namespace cuttlefish
-
