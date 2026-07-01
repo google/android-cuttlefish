@@ -20,14 +20,14 @@
 #include <string>
 #include <vector>
 
-#include <google/protobuf/message.h>
-#include <google/protobuf/util/message_differencer.h>
-#include <gtest/gtest.h>
+#include "google/protobuf/message.h"
+#include "google/protobuf/util/message_differencer.h"
+#include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/utils/base64.h"
+#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
-#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 #include "cuttlefish/result/result_matchers.h"
@@ -55,7 +55,8 @@ InstanceDisplays DefaultDisplays() {
   return displays;
 }
 
-Result<std::optional<InstancesDisplays>> DisplaysFlag(std::vector<std::string> args) {
+Result<std::optional<InstancesDisplays>> DisplaysFlag(
+    std::vector<std::string> args) {
   std::optional<std::string> flag_str_opt;
   auto flag = GflagsCompatFlag("displays_binproto", flag_str_opt);
   CF_EXPECT(ConsumeFlags({flag}, args));

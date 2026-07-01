@@ -125,7 +125,6 @@ cf_cc_test(
 cf_cc_test(
     name = "graphics_configs_test",
     srcs = ["graphics_configs_test.cc"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:json",
