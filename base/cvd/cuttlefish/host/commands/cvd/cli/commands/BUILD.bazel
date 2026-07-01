@@ -406,7 +406,6 @@ cf_cc_library(
     name = "start",
     srcs = ["start.cpp"],
     hdrs = ["start.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
