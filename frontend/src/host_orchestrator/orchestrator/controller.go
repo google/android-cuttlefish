@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
@@ -998,29 +999,60 @@ func (h *streamInstanceLogFileHandler) ServeHTTP(w http.ResponseWriter, r *http.
 			return
 		}
 	}
-	// Live tailing loop
-	ticker := time.NewTicker(500 * time.Millisecond)
-	defer ticker.Stop()
+	// Set up fsnotify watcher
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Printf("Failed to create watcher: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer watcher.Close()
+
+	// Watch the directory to reliably detect file deletion
+	err = watcher.Add(logsDir)
+	if err != nil {
+		log.Printf("Failed to add directory to watcher: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	for {
 		select {
 		case <-r.Context().Done():
 			log.Println("Client disconnected")
 			return
-		case <-ticker.C:
-			for {
-				n, err := file.Read(buffer)
-				if n > 0 {
-					w.Write(buffer[:n])
-					if flusher != nil {
-						flusher.Flush()
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				return
+			}
+			log.Printf("Watcher error: %v", err)
+			return
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return
+			}
+			if event.Name == filePath {
+				if event.Has(fsnotify.Write) {
+					for {
+						n, err := file.Read(buffer)
+						if n > 0 {
+							w.Write(buffer[:n])
+							if flusher != nil {
+								flusher.Flush()
+							}
+						}
+						if err != nil {
+							if err == io.EOF {
+								break
+							}
+							log.Printf("Error reading file: %v", err)
+							return
+						}
 					}
 				}
-				if err != nil {
-					if err == io.EOF {
-						break
-					}
-					log.Printf("Error reading file: %v", err)
-					return
+				if event.Has(fsnotify.Remove) || event.Has(fsnotify.Rename) {
+					log.Printf("File was deleted or renamed: %v", event)
+					return // Stop streaming
 				}
 			}
 		}

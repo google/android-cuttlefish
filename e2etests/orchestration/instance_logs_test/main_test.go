@@ -89,6 +89,24 @@ func TestInstanceLogs(t *testing.T) {
 	if diff <= delta {
 		t.Fatalf("expected stream delta bigger than: %d, got: %d", delta, diff)
 	}
+
+	// Verifies stream stops when device is deleted
+	stopStreamChan := make(chan result)
+	start := time.Now()
+	go stream(1*time.Minute, stopStreamChan)
+	go func() {
+		if err := srv.Reset(); err != nil {
+			log.Printf("reset failed %v", err)
+		}
+	}()
+	res := <-stopStreamChan
+	if res.err != nil {
+		t.Fatal(res.err)
+	}
+	duration := time.Since(start)
+	if duration >= 1*time.Minute {
+		t.Fatal("stream not stopped in less than 1 minute after `cvd reset`")
+	}
 }
 
 type result struct {
