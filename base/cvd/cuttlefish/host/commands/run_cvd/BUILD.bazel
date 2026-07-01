@@ -10,7 +10,6 @@ cf_cc_library(
     name = "boot_state_machine",
     srcs = ["boot_state_machine.cc"],
     hdrs = ["boot_state_machine.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",

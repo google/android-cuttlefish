@@ -80,7 +80,8 @@ DEFINE_int32(reboot_notification_fd, CF_DEFAULTS_REBOOT_NOTIFICATION_FD,
              "A file descriptor to notify when boot completes.");
 
 DEFINE_int32(boot_timeout_secs, 600,
-             "Wait for completed boot before failing. On qemu and gem5, this timeout is disabled unless flag is specified");
+             "Wait for completed boot before failing. On qemu and gem5, this "
+             "timeout is disabled unless flag is specified");
 
 namespace cuttlefish {
 namespace {
@@ -580,8 +581,8 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
                     "cleanly shut down.";
     }
 
-    auto fail_res = RunLauncherAction(
-        *monitor_res, LauncherAction::kFail, std::optional<int>());
+    auto fail_res = RunLauncherAction(*monitor_res, LauncherAction::kFail,
+                                      std::optional<int>());
     if (!fail_res.ok()) {
       LOG(ERROR) << "TimeoutThreadLoop: Failed to send fail action: "
                  << fail_res.error();
