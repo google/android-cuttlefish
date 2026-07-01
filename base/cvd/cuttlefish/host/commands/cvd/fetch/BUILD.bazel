@@ -314,7 +314,6 @@ cf_cc_library(
     name = "substitute",
     srcs = ["substitute.cc"],
     hdrs = ["substitute.h"],
-    clang_format_enabled = False,
     deps = [
         ":host_pkg_migration_cc_proto",
         "//cuttlefish/common/libs/utils:environment",
