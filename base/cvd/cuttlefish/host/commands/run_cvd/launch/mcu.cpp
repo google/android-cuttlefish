@@ -20,10 +20,10 @@
 #include <vector>
 
 #include "absl/strings/str_replace.h"
-#include <fruit/component.h>
-#include <fruit/fruit_forward_decls.h>
-#include <fruit/macro.h>
-#include <json/value.h>
+#include "fruit/component.h"
+#include "fruit/fruit_forward_decls.h"
+#include "fruit/macro.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -46,7 +46,7 @@ class Mcu : public vm_manager::VmmDependencyCommand {
  public:
   INJECT(Mcu(const CuttlefishConfig::InstanceSpecific& instance,
              LogTeeCreator& log_tee))
-      :instance_(instance), log_tee_(log_tee) {}
+      : instance_(instance), log_tee_(log_tee) {}
 
   Result<void> ResultSetup() override {
     if (!Enabled()) {
@@ -70,12 +70,12 @@ class Mcu : public vm_manager::VmmDependencyCommand {
               "mcu: config: start-cmd: array expected");
     CF_EXPECT(!start.empty(), "mcu: config: empty start-cmd");
     Command command(absl::StrReplaceAll(start[0].asString(),
-                                       {{"${bin}", HostBinaryPath("")}}));
+                                        {{"${bin}", HostBinaryPath("")}}));
 
     for (unsigned int i = 1; i < start.size(); i++) {
       auto param = start[i].asString();
-      absl::StrReplaceAll({{"${wdir}", mcu_dir_}, {"${bin}", HostBinaryPath("")}},
-                          &param);
+      absl::StrReplaceAll(
+          {{"${wdir}", mcu_dir_}, {"${bin}", HostBinaryPath("")}}, &param);
       command.AddParameter(param);
     }
 
@@ -99,13 +99,13 @@ class Mcu : public vm_manager::VmmDependencyCommand {
 
     auto control = instance_.mcu()["control"]["path"];
     if (control.type() == Json::stringValue) {
-      CF_EXPECT(WaitForFile(mcu_dir_ + "/" + control.asString(),
-                            MCU_START_TIMEOUT));
+      CF_EXPECT(
+          WaitForFile(mcu_dir_ + "/" + control.asString(), MCU_START_TIMEOUT));
     }
     auto uart0 = instance_.mcu()["uart0"]["path"];
     if (uart0.type() == Json::stringValue) {
-      CF_EXPECT(WaitForFile(mcu_dir_ + "/" + uart0.asString(),
-                            MCU_START_TIMEOUT));
+      CF_EXPECT(
+          WaitForFile(mcu_dir_ + "/" + uart0.asString(), MCU_START_TIMEOUT));
     }
     return {};
   }
