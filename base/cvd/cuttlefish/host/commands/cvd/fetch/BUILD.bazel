@@ -199,7 +199,6 @@ cf_cc_library(
     name = "fetch_cvd",
     srcs = ["fetch_cvd.cc"],
     hdrs = ["fetch_cvd.h"],
-    clang_format_enabled = False,
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:archive",
@@ -219,7 +218,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:file_source",
-        "//cuttlefish/host/libs/image_aggregator:sparse_image",
         "//cuttlefish/host/libs/log_names",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_string",
@@ -231,7 +229,6 @@ cf_cc_library(
         "//cuttlefish/io",
         "//cuttlefish/io:string",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
