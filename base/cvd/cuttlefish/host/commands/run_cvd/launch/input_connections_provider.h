@@ -45,4 +45,3 @@ fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
 VhostInputDevicesComponent();
 
 }  // namespace cuttlefish
-
