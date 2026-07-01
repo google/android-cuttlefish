@@ -446,7 +446,6 @@ cf_cc_library(
     name = "streamer",
     srcs = ["streamer.cpp"],
     hdrs = ["streamer.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
