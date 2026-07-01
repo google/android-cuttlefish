@@ -15,7 +15,6 @@
 
 #include <unistd.h>
 
-#include <iostream>
 #include <optional>
 #include <sstream>
 #include <unordered_set>
@@ -210,10 +209,18 @@ Result<void> LinkLogs2InstanceDir(
 }
 
 bool ParentIsCvd() {
-  const std::string exe_link = absl::StrCat("/proc/", getppid(), "/exe");
+  const std::string ppid_path = absl::StrCat("/proc/", getppid());
+  const std::string exe_link = absl::StrCat(ppid_path, "/exe");
   const Result<std::string> exe_path = ReadLink(exe_link);
-  CHECK(exe_path.ok()) << exe_path.error();
-  return exe_path->ends_with("/cvd");
+  if (exe_path.ok()) {
+    return exe_path->ends_with("/cvd");
+  }
+  const std::string cmdline_path = absl::StrCat(ppid_path, "/cmdline");
+  Result<std::string> cmdline_res = ReadFileContents(cmdline_path);
+  CHECK(cmdline_res.ok()) << cmdline_res.error();
+  std::vector<std::string> cmdline = absl::StrSplit(*cmdline_res, '\0');
+  CHECK(!cmdline.empty());
+  return cmdline[0] == "cvd" || cmdline[0].ends_with("/cvd");
 }
 
 std::string CvdPath() {
