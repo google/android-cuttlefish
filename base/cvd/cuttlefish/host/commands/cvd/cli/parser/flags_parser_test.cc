@@ -18,11 +18,10 @@
 #include <sstream>
 #include <string>
 
-#include <android-base/file.h>
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
-#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 #include "cuttlefish/result/result_matchers.h"
@@ -196,7 +195,8 @@ TEST(BootFlagsParserTest, ParseNetSimArgs) {
   EXPECT_THAT(json_configs, IsOk());
   auto serialized_data = LaunchCvdParserTester(*json_configs);
   EXPECT_THAT(serialized_data, IsOk());
-  EXPECT_TRUE(FindConfig(*serialized_data, "--netsim_args=--wifi-instance=1 --bt-instance=2"))
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         "--netsim_args=--wifi-instance=1 --bt-instance=2"))
       << "netsim_args flag is missing or wrongly formatted";
 }
 
@@ -286,8 +286,7 @@ TEST(CvdLoadFlagsTest, ProjectIDGetter) {
 
   std::stringstream ss;
   ss << *flag_it;
-  EXPECT_NE(ss.str().find("Current value: \"bar\""),
-            std::string::npos)
+  EXPECT_NE(ss.str().find("Current value: \"bar\""), std::string::npos)
       << "Help text was: " << ss.str();
 }
 
@@ -344,7 +343,8 @@ TEST(CvdLoadFlagsTest, OverrideConflictWithProjectID) {
 TEST(CvdLoadFlagsTest, DuplicateOverridesFail) {
   LoadFlags load_flags;
   auto flags = BuildCvdLoadFlags(load_flags);
-  std::vector<std::string> args = {"--override=fetch.credential_source:val1", "--override=fetch.credential_source:val2"};
+  std::vector<std::string> args = {"--override=fetch.credential_source:val1",
+                                   "--override=fetch.credential_source:val2"};
   auto result = ConsumeFlags(flags, args);
   EXPECT_FALSE(result.ok()) << "Expected duplicate overrides to fail";
 }
@@ -374,7 +374,8 @@ TEST(FlagsParserTest, ParseMediaSplaneSingleInstance) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, "--media=type=v4l2_emulated_camera_splane"))
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, "--media=type=v4l2_emulated_camera_splane"))
       << "media flag is missing or wrongly formatted";
 }
 
@@ -437,7 +438,8 @@ TEST(FlagsParserTest, ParseMediaMplane) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
 
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, "--media=type=v4l2_emulated_camera_mplane"))
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, "--media=type=v4l2_emulated_camera_mplane"))
       << "media flag is missing or wrongly formatted";
 }
 
@@ -496,7 +498,8 @@ TEST(ConnectivityFlagsParserTest, ParseModemSimulatorSimTypeValidInt) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  const Result<std::vector<std::string>> serialized_data = LaunchCvdParserTester(json_configs);
+  const Result<std::vector<std::string>> serialized_data =
+      LaunchCvdParserTester(json_configs);
   EXPECT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data, "--modem_simulator_sim_type=2,1"))
       << "modem_simulator_sim_type flag is missing or wrongly formatted";
@@ -521,7 +524,8 @@ TEST(ConnectivityFlagsParserTest, ParseModemSimulatorSimTypeValidString) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  const Result<std::vector<std::string>> serialized_data = LaunchCvdParserTester(json_configs);
+  const Result<std::vector<std::string>> serialized_data =
+      LaunchCvdParserTester(json_configs);
   EXPECT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data, "--modem_simulator_sim_type=2"))
       << "modem_simulator_sim_type flag is missing or wrongly formatted";
@@ -546,7 +550,8 @@ TEST(ConnectivityFlagsParserTest, ParseModemSimulatorSimTypeUnspecified) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  const Result<std::vector<std::string>> serialized_data = LaunchCvdParserTester(json_configs);
+  const Result<std::vector<std::string>> serialized_data =
+      LaunchCvdParserTester(json_configs);
   EXPECT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data, "--modem_simulator_sim_type=1"))
       << "modem_simulator_sim_type flag is missing or wrongly formatted";
@@ -571,7 +576,8 @@ TEST(ConnectivityFlagsParserTest, ParseModemSimulatorSimTypeInvalidString) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  const Result<std::vector<std::string>> serialized_data = LaunchCvdParserTester(json_configs);
+  const Result<std::vector<std::string>> serialized_data =
+      LaunchCvdParserTester(json_configs);
   EXPECT_FALSE(serialized_data.ok());
 }
 
@@ -594,7 +600,8 @@ TEST(ConnectivityFlagsParserTest, ParseModemSimulatorSimTypeInvalidInt) {
 
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
-  const Result<std::vector<std::string>> serialized_data = LaunchCvdParserTester(json_configs);
+  const Result<std::vector<std::string>> serialized_data =
+      LaunchCvdParserTester(json_configs);
   EXPECT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data, "--modem_simulator_sim_type=1"))
       << "modem_simulator_sim_type flag is missing or wrongly formatted";
