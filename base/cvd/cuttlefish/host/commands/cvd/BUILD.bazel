@@ -28,7 +28,6 @@ cf_cc_library(
 cf_cc_binary(
     name = "cvd",
     srcs = ["main.cc"],
-    clang_format_enabled = False,
     deps = [
         ":libcvd",
         "//cuttlefish/common/libs/utils:environment",
