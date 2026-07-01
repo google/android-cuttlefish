@@ -22,8 +22,8 @@
 #include <string>
 #include <utility>
 
-#include <fmt/core.h>
 #include "absl/strings/numbers.h"
+#include "fmt/core.h"
 
 namespace cuttlefish {
 

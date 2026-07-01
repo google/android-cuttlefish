@@ -96,7 +96,6 @@ cf_cc_library(
         "operator_client.h",
         "status_fetcher.h",
     ],
-    clang_format_enabled = False,
     deps = [
         ":cvd_persistent_data",
         "//cuttlefish/common/libs/fs",
