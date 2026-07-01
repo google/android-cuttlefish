@@ -15,17 +15,13 @@
 
 #include "cuttlefish/host/commands/cvd/instances/instance_database_helper.h"
 
-#include <cstdlib>
 #include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
-
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/posix/strerror.h"
 
 namespace cuttlefish {
@@ -126,8 +122,7 @@ bool CvdInstanceDatabaseTest::AddGroup(
     const std::vector<std::pair<unsigned, std::string>>& instances) {
   LocalInstanceGroup::Builder builder(base_name);
   for (const auto& instance : instances) {
-    builder.AddInstance(instance.first,
-        instance.second);
+    builder.AddInstance(instance.first, instance.second);
   }
   Result<LocalInstanceGroup> create_res = builder.Build();
   if (!create_res.ok()) {
