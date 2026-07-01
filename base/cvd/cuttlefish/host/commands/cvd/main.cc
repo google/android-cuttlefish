@@ -34,10 +34,10 @@
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/log_files.h"
 #include "cuttlefish/host/commands/cvd/cvd.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -95,7 +95,6 @@ Result<void> EnsureCvdDirectoriesExist() {
 
   return {};
 }
-
 
 /**
  * Increase the file descriptor limit for this process and its descendants.
@@ -174,7 +173,8 @@ std::string ColoredUrl(const std::string& url) {
   std::string coloring_prefix = "\033[01;31m";
   std::string output;
   auto ls_colors = StringFromEnv("LS_COLORS", "");
-  std::vector<std::string_view> colors_vec = absl::StrSplit(ls_colors, ':', absl::SkipEmpty());
+  std::vector<std::string_view> colors_vec =
+      absl::StrSplit(ls_colors, ':', absl::SkipEmpty());
   std::unordered_map<std::string, std::string> colors;
   for (const auto& color_entry : colors_vec) {
     std::vector<std::string_view> tokenized =
