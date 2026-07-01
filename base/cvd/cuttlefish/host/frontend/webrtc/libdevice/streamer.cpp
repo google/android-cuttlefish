@@ -548,7 +548,7 @@ void Streamer::Impl::HandleConfigMessage(const Json::Value& server_message) {
   auto result = ParseIceServersMessage(server_message);
   if (!result.has_value()) {
     LOG(WARNING) << "Failed to parse ice servers message from server: "
-                 << result.error();
+                 << result.error().Message();
   }
   operator_config_.servers = *result;
 }
