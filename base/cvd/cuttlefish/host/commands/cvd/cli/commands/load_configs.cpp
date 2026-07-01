@@ -22,9 +22,9 @@
 #include <utility>
 #include <vector>
 
-#include <fmt/core.h>
-#include <fmt/format.h>
 #include "absl/log/log.h"
+#include "fmt/core.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/flag_parser/flag.h"
@@ -55,7 +55,6 @@ constexpr char kLoadSubCmd[] = "load";
 
 constexpr char kSummaryHelpText[] =
     "Creates and starts an instance group from a JSON configuration file";
-
 
 Result<CommandRequest> BuildFetchCmd(const CommandRequest& request,
                                      const CvdFlags& cvd_flags) {
@@ -171,8 +170,7 @@ Result<void> LoadConfigsCommand::Handle(const CommandRequest& request) {
 
   group_creation_mtx.lock();
   // Don't use CF_EXPECT here or the mutex will be left locked.
-  auto group_res =
-      CreateGroup(instance_manager_, flags_.base_dir, env_spec);
+  auto group_res = CreateGroup(instance_manager_, flags_.base_dir, env_spec);
   if (group_res.ok()) {
     // Have to initialize the group_name variable before releasing the mutex.
     group_name = (*group_res).GroupName();
