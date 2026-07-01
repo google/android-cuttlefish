@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
-
 #include "absl/log/log.h"
 
+#include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/result/result.h"
 

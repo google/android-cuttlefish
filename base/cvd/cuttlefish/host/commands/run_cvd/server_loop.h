@@ -36,4 +36,4 @@ fruit::Component<
                     AutoSnapshotControlFiles::Type, WebRtcController>,
     ServerLoop>
 serverLoopComponent();
-}
+}  // namespace cuttlefish
