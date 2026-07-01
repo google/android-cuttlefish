@@ -589,7 +589,6 @@ cf_cc_library(
     name = "vhost_user_media_devices",
     srcs = ["vhost_user_media_devices.cpp"],
     hdrs = ["vhost_user_media_devices.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
