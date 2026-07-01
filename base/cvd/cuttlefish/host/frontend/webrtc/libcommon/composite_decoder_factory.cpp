@@ -37,7 +37,8 @@ class CompositeDecoderFactory : public webrtc::VideoDecoderFactory {
 
     // Deduplicate by string representation; higher-priority first.
     for (const DecoderProvider* provider : registry_->GetProviders()) {
-      for (const webrtc::SdpVideoFormat& format : provider->GetSupportedFormats()) {
+      for (const webrtc::SdpVideoFormat& format :
+           provider->GetSupportedFormats()) {
         std::string key = format.ToString();
         if (seen.insert(key).second) {
           all_formats.push_back(format);
@@ -65,11 +66,11 @@ class CompositeDecoderFactory : public webrtc::VideoDecoderFactory {
     return nullptr;
   }
 
-  CodecSupport QueryCodecSupport(
-      const webrtc::SdpVideoFormat& format,
-      bool reference_scaling) const override {
+  CodecSupport QueryCodecSupport(const webrtc::SdpVideoFormat& format,
+                                 bool reference_scaling) const override {
     for (const DecoderProvider* provider : registry_->GetProviders()) {
-      for (const webrtc::SdpVideoFormat& supported : provider->GetSupportedFormats()) {
+      for (const webrtc::SdpVideoFormat& supported :
+           provider->GetSupportedFormats()) {
         if (format.IsSameCodec(supported)) {
           return {.is_supported = true};
         }

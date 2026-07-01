@@ -34,14 +34,12 @@ void DecoderProviderRegistry::Register(
     return;
   }
   std::lock_guard<std::mutex> lock(mutex_);
-  LOG(INFO) << "Registering decoder provider: "
-            << provider->GetName()
+  LOG(INFO) << "Registering decoder provider: " << provider->GetName()
             << " (priority=" << provider->GetPriority() << ")";
   providers_.push_back(std::move(provider));
 }
 
-std::vector<DecoderProvider*>
-DecoderProviderRegistry::GetProviders() const {
+std::vector<DecoderProvider*> DecoderProviderRegistry::GetProviders() const {
   std::vector<DecoderProvider*> result;
   {
     std::lock_guard<std::mutex> lock(mutex_);
