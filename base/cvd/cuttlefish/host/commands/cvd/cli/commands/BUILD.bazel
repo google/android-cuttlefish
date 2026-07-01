@@ -18,7 +18,6 @@ cf_cc_library(
     name = "bugreport",
     srcs = ["bugreport.cpp"],
     hdrs = ["bugreport.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
