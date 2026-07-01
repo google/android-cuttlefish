@@ -198,7 +198,6 @@ cf_cc_library(
     name = "host_tool_target",
     srcs = ["host_tool_target.cpp"],
     hdrs = ["host_tool_target.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
