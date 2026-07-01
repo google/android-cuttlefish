@@ -18,6 +18,7 @@
 
 #include <errno.h>
 #include <sys/utsname.h>
+
 #include <string>
 #include <vector>
 
@@ -37,16 +38,20 @@ namespace cuttlefish {
 static Result<void> TestTapDevices(
     const CuttlefishConfig::InstanceSpecific& instance) {
 #ifdef __linux__
-  if (InSandbox()
-  || instance.use_cvdalloc()) { // cvdalloc owns its own resources. those resources can't be validated this way.
+  if (InSandbox() ||
+      instance.use_cvdalloc()) {  // cvdalloc owns its own resources. those
+                                  // resources can't be validated this way.
     return {};
   }
   auto wifi = instance.wifi_tap_name();
-  CF_EXPECTF(ValidateTapInterfaceIsUsable(wifi), "Failed to validate tap interface: {}", wifi);
+  CF_EXPECTF(ValidateTapInterfaceIsUsable(wifi),
+             "Failed to validate tap interface: {}", wifi);
   auto mobile = instance.mobile_tap_name();
-  CF_EXPECTF(ValidateTapInterfaceIsUsable(mobile), "Failed to validate tap interface: {}", mobile);
+  CF_EXPECTF(ValidateTapInterfaceIsUsable(mobile),
+             "Failed to validate tap interface: {}", mobile);
   auto eth = instance.ethernet_tap_name();
-  CF_EXPECTF(ValidateTapInterfaceIsUsable(eth), "Failed to validate tap interface: {}", eth);
+  CF_EXPECTF(ValidateTapInterfaceIsUsable(eth),
+             "Failed to validate tap interface: {}", eth);
 #else
   (void)instance;
 #endif
@@ -55,9 +60,10 @@ static Result<void> TestTapDevices(
 
 Result<void> ValidateTapDevices(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  CF_EXPECT(TestTapDevices(instance),
-            "Failed to validate tap devices. Try `cvd reset` or `pkill run_cvd` "
-            "and `pkill crosvm`");
+  CF_EXPECT(
+      TestTapDevices(instance),
+      "Failed to validate tap devices. Try `cvd reset` or `pkill run_cvd` "
+      "and `pkill crosvm`");
   return {};
 }
 

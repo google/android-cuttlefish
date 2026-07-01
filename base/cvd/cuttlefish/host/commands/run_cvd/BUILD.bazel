@@ -165,7 +165,6 @@ cf_cc_library(
     name = "validate",
     srcs = ["validate.cpp"],
     hdrs = ["validate.h"],
-    clang_format_enabled = False,
     deps = [
         "//allocd:alloc_utils",
         "//cuttlefish/common/libs/utils:in_sandbox",
