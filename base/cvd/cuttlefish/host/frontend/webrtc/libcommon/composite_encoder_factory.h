@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "api/video_codecs/video_encoder_factory.h"
+
 #include "cuttlefish/host/frontend/webrtc/libcommon/encoder_provider_registry.h"
 
 namespace cuttlefish {

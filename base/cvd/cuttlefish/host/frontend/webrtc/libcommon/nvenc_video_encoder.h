@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include <memory>
-#include <vector>
-
 #include <cuda.h>
 #include <nvEncodeAPI.h>
+
+#include <memory>
+#include <vector>
 
 #include "api/video/video_codec_type.h"
 #include "api/video/video_frame.h"
@@ -41,8 +41,7 @@ struct NvencEncoderDeleter {
   void operator()(void* encoder) const;
 };
 
-using NvencEncoderHandle =
-    std::unique_ptr<void, NvencEncoderDeleter>;
+using NvencEncoderHandle = std::unique_ptr<void, NvencEncoderDeleter>;
 
 // Hardware-accelerated video encoder using NVIDIA NVENC.
 //
@@ -60,9 +59,9 @@ class NvencVideoEncoder : public webrtc::VideoEncoder {
   int32_t RegisterEncodeCompleteCallback(
       webrtc::EncodedImageCallback* callback) override;
   int32_t Release() override;
-  int32_t Encode(const webrtc::VideoFrame& frame,
-                 const std::vector<webrtc::VideoFrameType>* frame_types)
-      override;
+  int32_t Encode(
+      const webrtc::VideoFrame& frame,
+      const std::vector<webrtc::VideoFrameType>* frame_types) override;
   void SetRates(const RateControlParameters& parameters) override;
   EncoderInfo GetEncoderInfo() const override;
 
@@ -99,8 +98,7 @@ class NvencVideoEncoder : public webrtc::VideoEncoder {
   // Input resource registration (lazy, on first frame)
   bool input_resource_registered_ = false;
   uint32_t registered_pixel_format_ = 0;
-  NV_ENC_BUFFER_FORMAT nvenc_input_format_ =
-      NV_ENC_BUFFER_FORMAT_UNDEFINED;
+  NV_ENC_BUFFER_FORMAT nvenc_input_format_ = NV_ENC_BUFFER_FORMAT_UNDEFINED;
 
   // NVENC encoder session
   NvencEncoderHandle encoder_;

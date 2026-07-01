@@ -17,6 +17,7 @@
 #include "cuttlefish/host/libs/gpu/cuda_context.h"
 
 #include "android-base/logging.h"
+
 #include "cuttlefish/host/libs/gpu/cuda_loader.h"
 
 namespace cuttlefish {
@@ -51,8 +52,8 @@ std::shared_ptr<CudaContext> CudaContext::Get(int device_id) {
   CUdevice device;
   res = cuda->cuDeviceGet(&device, device_id);
   if (res != CUDA_SUCCESS) {
-    LOG(WARNING) << "cuDeviceGet failed for device " << device_id
-                 << ": " << static_cast<int>(res);
+    LOG(WARNING) << "cuDeviceGet failed for device " << device_id << ": "
+                 << static_cast<int>(res);
     return nullptr;
   }
 
@@ -63,17 +64,16 @@ std::shared_ptr<CudaContext> CudaContext::Get(int device_id) {
   CUcontext ctx;
   res = cuda->cuDevicePrimaryCtxRetain(&ctx, device);
   if (res != CUDA_SUCCESS) {
-    LOG(WARNING) << "cuDevicePrimaryCtxRetain failed for device "
-                 << device_id << ": " << static_cast<int>(res);
+    LOG(WARNING) << "cuDevicePrimaryCtxRetain failed for device " << device_id
+                 << ": " << static_cast<int>(res);
     return nullptr;
   }
 
-  std::shared_ptr<CudaContext> shared(
-      new CudaContext(ctx, device_id, cuda));
+  std::shared_ptr<CudaContext> shared(new CudaContext(ctx, device_id, cuda));
   instances[device_id] = shared;
 
-  LOG(INFO) << "CUDA context created for device " << device_id
-            << " (" << device_name << ")";
+  LOG(INFO) << "CUDA context created for device " << device_id << " ("
+            << device_name << ")";
   return shared;
 }
 
@@ -100,8 +100,7 @@ CudaContext::~CudaContext() {
   }
 }
 
-ScopedCudaContext::ScopedCudaContext(CUcontext ctx,
-                                     const CudaFunctions* cuda)
+ScopedCudaContext::ScopedCudaContext(CUcontext ctx, const CudaFunctions* cuda)
     : cuda_(cuda), push_succeeded_(false) {
   if (ctx == nullptr || cuda == nullptr) {
     LOG(ERROR) << "ScopedCudaContext: null context or CUDA functions";

@@ -17,6 +17,7 @@
 #pragma once
 
 #include <stdint.h>
+
 #include <vector>
 
 #include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
@@ -25,13 +26,13 @@ namespace cuttlefish {
 
 class CvdAbgrVideoFrameBuffer : public PackedVideoFrameBuffer {
  public:
-  CvdAbgrVideoFrameBuffer(int width, int height, uint32_t format, int stride, 
+  CvdAbgrVideoFrameBuffer(int width, int height, uint32_t format, int stride,
                           const uint8_t* data);
   ~CvdAbgrVideoFrameBuffer() override = default;
 
   int width() const override { return width_; }
   int height() const override { return height_; }
-  
+
   uint8_t* Data() const override { return const_cast<uint8_t*>(data_.data()); }
   int Stride() const override { return stride_; }
   std::size_t DataSize() const override { return data_.size(); }

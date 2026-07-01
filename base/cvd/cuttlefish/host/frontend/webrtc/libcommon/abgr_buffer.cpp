@@ -17,8 +17,8 @@
 #include "cuttlefish/host/frontend/webrtc/libcommon/abgr_buffer.h"
 
 #include <api/video/i420_buffer.h>
-#include <libyuv.h>
 #include <drm/drm_fourcc.h>
+#include <libyuv.h>
 
 #include "android-base/logging.h"
 
@@ -37,28 +37,25 @@ int AbgrBuffer::Stride() const { return buffer_->Stride(); }
 rtc::scoped_refptr<webrtc::I420BufferInterface> AbgrBuffer::ToI420() {
   rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer =
       webrtc::I420Buffer::Create(width(), height());
-  
+
   uint32_t format = buffer_->PixelFormat();
 
   int res = -1;
   if (format == DRM_FORMAT_ARGB8888 || format == DRM_FORMAT_XRGB8888) {
     res = libyuv::ARGBToI420(
-        buffer_->Data(), buffer_->Stride(),
-        i420_buffer->MutableDataY(), i420_buffer->StrideY(),
-        i420_buffer->MutableDataU(), i420_buffer->StrideU(),
-        i420_buffer->MutableDataV(), i420_buffer->StrideV(),
-        width(), height());
-  } else if (format == DRM_FORMAT_ABGR8888 ||
-             format == DRM_FORMAT_XBGR8888) {
+        buffer_->Data(), buffer_->Stride(), i420_buffer->MutableDataY(),
+        i420_buffer->StrideY(), i420_buffer->MutableDataU(),
+        i420_buffer->StrideU(), i420_buffer->MutableDataV(),
+        i420_buffer->StrideV(), width(), height());
+  } else if (format == DRM_FORMAT_ABGR8888 || format == DRM_FORMAT_XBGR8888) {
     res = libyuv::ABGRToI420(
-        buffer_->Data(), buffer_->Stride(),
-        i420_buffer->MutableDataY(), i420_buffer->StrideY(),
-        i420_buffer->MutableDataU(), i420_buffer->StrideU(),
-        i420_buffer->MutableDataV(), i420_buffer->StrideV(),
-        width(), height());
+        buffer_->Data(), buffer_->Stride(), i420_buffer->MutableDataY(),
+        i420_buffer->StrideY(), i420_buffer->MutableDataU(),
+        i420_buffer->StrideU(), i420_buffer->MutableDataV(),
+        i420_buffer->StrideV(), width(), height());
   } else {
-    LOG(ERROR) << "AbgrBuffer::ToI420: unsupported pixel format: 0x"
-               << std::hex << format;
+    LOG(ERROR) << "AbgrBuffer::ToI420: unsupported pixel format: 0x" << std::hex
+               << format;
     return nullptr;
   }
 
