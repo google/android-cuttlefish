@@ -342,7 +342,6 @@ cf_cc_library(
     name = "vector_flags",
     srcs = ["vector_flags.cc"],
     hdrs = ["vector_flags.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/web:android_build_string",

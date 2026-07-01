@@ -87,9 +87,8 @@ Result<int> VectorFlags::NumberOfBuilds() const {
         this->kernel_build.size(), this->boot_build.size(),
         this->bootloader_build.size(), this->android_efi_loader_build.size(),
         this->otatools_build.size(), this->test_suites_build.size(),
-        this->chrome_os_build.size(),
-        this->boot_artifact.size(), this->download_img_zip.size(),
-        this->download_target_files_zip.size(),
+        this->chrome_os_build.size(), this->boot_artifact.size(),
+        this->download_img_zip.size(), this->download_target_files_zip.size(),
         this->target_subdirectory.size()}) {
     if (flag_size == 0) {
       // a size zero flag vector means the flag was not given
