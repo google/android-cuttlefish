@@ -21,9 +21,7 @@
 #include <string_view>
 #include <unordered_map>
 
-#include <android-base/file.h>
 #include "absl/strings/str_format.h"
-#include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -140,7 +138,7 @@ Result<std::string> GroupDirFromHome(std::string_view dir) {
 
 std::string AssemblyDirFromHome(const std::string& group_home_dir) {
   std::string to_ret = group_home_dir + "/cuttlefish/assembly";
-  if(!FileExists(to_ret)) {
+  if (!FileExists(to_ret)) {
     // Legacy launchers create cuttlefish_assembly instead
     to_ret = group_home_dir + "/cuttlefish_assembly";
   }
