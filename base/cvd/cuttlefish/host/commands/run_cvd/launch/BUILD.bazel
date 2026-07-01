@@ -225,7 +225,6 @@ cf_cc_library(
     name = "mcu",
     srcs = ["mcu.cpp"],
     hdrs = ["mcu.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
