@@ -129,15 +129,13 @@ Result<Command> ConstructCvdHelpCommand(
                                             .args = subcmd_args,
                                             .envs = std::move(envs_copy),
                                             .working_dir = client_pwd,
-                                            .command_name = bin_file
-  };
+                                            .command_name = bin_file};
   Command help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   return help_command;
 }
 
 Result<Command> ConstructSiblingHelpCommand(
-    const std::string& bin_name,
-    const cvd_common::Envs& env,
+    const std::string& bin_name, const cvd_common::Envs& env,
     const cvd_common::Args& subcmd_args) {
   std::string exec_dir = android::base::GetExecutableDirectory();
 
@@ -148,7 +146,7 @@ Result<Command> ConstructSiblingHelpCommand(
 
   Command command(bin_name);
   command.SetExecutable(bin_path);
-  for (const auto& [var, value]: env) {
+  for (const auto& [var, value] : env) {
     if (var == kAndroidHostOut || var == kAndroidSoongHostOut) {
       // These variables will cause cvd_internal_start to find the wrong
       // assemble_cvd binary. $HOME could cause the same problem, but we need
@@ -157,7 +155,7 @@ Result<Command> ConstructSiblingHelpCommand(
     }
     command.AddEnvironmentVariable(var, value);
   }
-  for (const std::string& arg: subcmd_args) {
+  for (const std::string& arg : subcmd_args) {
     command.AddParameter(arg);
   }
   return command;
@@ -195,8 +193,7 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
       .args = request_form.cmd_args,
       .envs = envs,
       .working_dir = CurrentDirectory(),
-      .command_name = request_form.bin_file
-  };
+      .command_name = request_form.bin_file};
   return CF_EXPECT(ConstructCommand(construct_cmd_param));
 }
 
@@ -214,8 +211,7 @@ Result<std::vector<Flag>> GetSiblingCommandFlags(const std::string& bin_name,
     return arg.starts_with("help") || arg == "version" || arg == "h";
   });
   args.emplace_back("-helpxml");
-  Command command =
-      CF_EXPECT(ConstructSiblingHelpCommand(bin_name, env, args));
+  Command command = CF_EXPECT(ConstructSiblingHelpCommand(bin_name, env, args));
   std::string stdout;
   std::string stderr;
   int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, &stderr);
@@ -256,9 +252,7 @@ std::string_view TerminalColors::BoldRed() const {
   return is_tty_ ? kAnsiRed : "";
 }
 
-std::string_view TerminalColors::Red() const {
-  return is_tty_ ? kAnsiRed : "";
-}
+std::string_view TerminalColors::Red() const { return is_tty_ ? kAnsiRed : ""; }
 
 std::string_view TerminalColors::Cyan() const {
   return is_tty_ ? kAnsiCyan : "";
