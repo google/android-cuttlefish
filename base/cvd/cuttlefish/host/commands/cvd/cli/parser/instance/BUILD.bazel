@@ -52,7 +52,6 @@ cf_cc_library(
     name = "cf_graphics_configs",
     srcs = ["cf_graphics_configs.cpp"],
     hdrs = ["cf_graphics_configs.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
