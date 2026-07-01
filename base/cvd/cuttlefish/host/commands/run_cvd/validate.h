@@ -23,4 +23,4 @@ namespace cuttlefish {
 Result<void> ValidateTapDevices(const CuttlefishConfig::InstanceSpecific&);
 Result<void> ValidateHostConfiguration();
 Result<void> ValidateHostKernel();
-}
+}  // namespace cuttlefish
