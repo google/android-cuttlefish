@@ -24,9 +24,8 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
-#include <fmt/format.h>
 #include "absl/log/check.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"

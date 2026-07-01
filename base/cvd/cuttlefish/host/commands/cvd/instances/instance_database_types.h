@@ -19,7 +19,7 @@
 #include <chrono>
 #include <string>
 
-#include <json/json.h>
+#include "json/value.h"
 
 #include "cuttlefish/result/result.h"
 

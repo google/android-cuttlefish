@@ -25,6 +25,7 @@
 #include <utility>
 
 #include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -120,7 +121,8 @@ Result<void> LocalInstance::PressPowerBtn() {
   }
 
   std::unique_ptr<const CuttlefishConfig> config =
-      CuttlefishConfig::GetFromFile(InstanceDirectory() + "/cuttlefish_config.json");
+      CuttlefishConfig::GetFromFile(InstanceDirectory() +
+                                    "/cuttlefish_config.json");
   CF_EXPECT_EQ(config->vm_manager(), VmmMode::kCrosvm,
                "powerbtn not supported in vm manager " << config->vm_manager());
   auto instance = config->ForInstance(Id());
@@ -276,7 +278,8 @@ Result<SharedFD> LocalInstance::GetLauncherMonitor(
 
 Result<std::vector<std::string>> LocalInstance::LogsFilenames() const {
   if (!FileExists(InstanceDirectory())) {
-    VLOG(0) << "Instance directory \"" << InstanceDirectory() << "\" does not exist";
+    VLOG(0) << "Instance directory \"" << InstanceDirectory()
+            << "\" does not exist";
     return {};
   }
   std::string logs_dir = InstanceDirectory() + "/logs";
