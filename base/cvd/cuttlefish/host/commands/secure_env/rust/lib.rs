@@ -29,12 +29,9 @@ use kmr_ta::{HardwareInfo, KeyMintTa, RpcInfo, RpcInfoV3};
 use kmr_ta_nonsecure::{rpc, soft};
 use kmr_wire::keymint::SecurityLevel;
 use kmr_wire::rpc::MINIMUM_SUPPORTED_KEYS_IN_CSR;
-use log::{error, info, trace};
-use std::ffi::CString;
-use std::io::{Read, Write};
-use std::os::fd::AsFd;
+use log::{error, info};
+use secure_env_common::run_ta_loop;
 use std::os::fd::AsRawFd;
-use std::os::unix::ffi::OsStrExt;
 
 mod clock;
 mod sdd;
@@ -43,24 +40,19 @@ mod tpm;
 #[cfg(test)]
 mod tests;
 
-// See `SnapshotSocketMessage` in suspend_resume_handler.h for docs.
-const SNAPSHOT_SOCKET_MESSAGE_SUSPEND: u8 = 1;
-const SNAPSHOT_SOCKET_MESSAGE_SUSPEND_ACK: u8 = 2;
-const SNAPSHOT_SOCKET_MESSAGE_RESUME: u8 = 3;
-
 /// Main routine for the KeyMint TA. Only returns if there is a fatal error.
 ///
 /// # Safety
 ///
 /// TODO: What are the preconditions for `trm`?
 pub unsafe fn ta_main(
-    mut infile: std::fs::File,
-    mut outfile: std::fs::File,
+    infile: std::fs::File,
+    outfile: std::fs::File,
     security_level: SecurityLevel,
     trm: *mut libc::c_void,
-    mut snapshot_socket: std::os::unix::net::UnixStream,
+    snapshot_socket: std::os::unix::net::UnixStream,
 ) {
-    log::set_logger(&AndroidCppLogger).unwrap();
+    log::set_logger(&secure_env_common::logger::AndroidCppLogger).unwrap();
     log::set_max_level(log::LevelFilter::Debug); // Filtering happens elsewhere
     info!(
         "KeyMint Rust TA running with infile={}, outfile={}, security_level={:?}",
@@ -152,151 +144,7 @@ pub unsafe fn ta_main(
     };
     let mut ta = KeyMintTa::new(hw_info, RpcInfo::V3(rpc_info_v3), imp, dev);
 
-    let mut buf = [0; kmr_wire::DEFAULT_MAX_SIZE];
-    loop {
-        // Wait for data from either `infile` or `snapshot_socket`. If both have data, we prioritize
-        // processing only `infile` until it is empty so that there is no pending state when we
-        // suspend the loop.
-        let mut fd_set = nix::sys::select::FdSet::new();
-        fd_set.insert(infile.as_fd());
-        fd_set.insert(snapshot_socket.as_fd());
-        if let Err(e) = nix::sys::select::select(
-            None,
-            /*readfds=*/ Some(&mut fd_set),
-            None,
-            None,
-            /*timeout=*/ None,
-        ) {
-            error!("FATAL: Failed to select on input FDs: {:?}", e);
-            return;
-        }
-
-        if fd_set.contains(infile.as_fd()) {
-            // Read a request message from the pipe, as a 4-byte BE length followed by the message.
-            let mut req_len_data = [0u8; 4];
-            if let Err(e) = infile.read_exact(&mut req_len_data) {
-                error!("FATAL: Failed to read request length from connection: {:?}", e);
-                return;
-            }
-            let req_len = u32::from_be_bytes(req_len_data) as usize;
-            if req_len > kmr_wire::DEFAULT_MAX_SIZE {
-                error!("FATAL: Request too long ({})", req_len);
-                return;
-            }
-            let req_data = &mut buf[..req_len];
-            if let Err(e) = infile.read_exact(req_data) {
-                error!(
-                    "FATAL: Failed to read request data of length {} from connection: {:?}",
-                    req_len, e
-                );
-                return;
-            }
-
-            // Pass to the TA to process.
-            trace!("-> TA: received data: (len={})", req_data.len());
-            let rsp = ta.process(req_data);
-            trace!("<- TA: send data: (len={})", rsp.len());
-
-            // Send the response message down the pipe, as a 4-byte BE length followed by the message.
-            let rsp_len: u32 = match rsp.len().try_into() {
-                Ok(l) => l,
-                Err(_e) => {
-                    error!("FATAL: Response too long (len={})", rsp.len());
-                    return;
-                }
-            };
-            let rsp_len_data = rsp_len.to_be_bytes();
-            if let Err(e) = outfile.write_all(&rsp_len_data[..]) {
-                error!("FATAL: Failed to write response length to connection: {:?}", e);
-                return;
-            }
-            if let Err(e) = outfile.write_all(&rsp) {
-                error!(
-                    "FATAL: Failed to write response data of length {} to connection: {:?}",
-                    rsp_len, e
-                );
-                return;
-            }
-            let _ = outfile.flush();
-
-            continue;
-        }
-
-        if fd_set.contains(snapshot_socket.as_fd()) {
-            // Read suspend request.
-            let mut suspend_request = 0u8;
-            if let Err(e) = snapshot_socket.read_exact(std::slice::from_mut(&mut suspend_request)) {
-                error!("FATAL: Failed to read suspend request: {:?}", e);
-                return;
-            }
-            if suspend_request != SNAPSHOT_SOCKET_MESSAGE_SUSPEND {
-                error!(
-                    "FATAL: Unexpected value from snapshot socket: got {}, expected {}",
-                    suspend_request, SNAPSHOT_SOCKET_MESSAGE_SUSPEND
-                );
-                return;
-            }
-            // Write ACK.
-            if let Err(e) = snapshot_socket.write_all(&[SNAPSHOT_SOCKET_MESSAGE_SUSPEND_ACK]) {
-                error!("FATAL: Failed to write suspend ACK request: {:?}", e);
-                return;
-            }
-            // Block until we get a resume request.
-            let mut resume_request = 0u8;
-            if let Err(e) = snapshot_socket.read_exact(std::slice::from_mut(&mut resume_request)) {
-                error!("FATAL: Failed to read resume request: {:?}", e);
-                return;
-            }
-            if resume_request != SNAPSHOT_SOCKET_MESSAGE_RESUME {
-                error!(
-                    "FATAL: Unexpected value from snapshot socket: got {}, expected {}",
-                    resume_request, SNAPSHOT_SOCKET_MESSAGE_RESUME
-                );
-                return;
-            }
-        }
-    }
-}
-
-// TODO(schuffelen): Use android_logger when rust works with host glibc, see aosp/1415969
-struct AndroidCppLogger;
-
-impl log::Log for AndroidCppLogger {
-    fn enabled(&self, _metadata: &log::Metadata) -> bool {
-        // Filtering is done in the underlying C++ logger, so indicate to the Rust code that all
-        // logs should be included
-        true
-    }
-
-    fn log(&self, record: &log::Record) {
-        let file = record.file().unwrap_or("(no file)");
-        let file_basename =
-            std::path::Path::new(file).file_name().unwrap_or(std::ffi::OsStr::new("(no file)"));
-        let file = CString::new(file_basename.as_bytes())
-            .unwrap_or_else(|_| CString::new("(invalid file)").unwrap());
-        let line = record.line().unwrap_or(0);
-        let severity = match record.level() {
-            log::Level::Trace => 0,
-            log::Level::Debug => 1,
-            log::Level::Info => 2,
-            log::Level::Warn => 3,
-            log::Level::Error => 4,
-        };
-        let tag = CString::new("secure_env::".to_owned() + record.target())
-            .unwrap_or_else(|_| CString::new("(invalid tag)").unwrap());
-        let msg = CString::new(format!("{}", record.args()))
-            .unwrap_or_else(|_| CString::new("(invalid msg)").unwrap());
-        // SAFETY: All pointer arguments are generated from valid owned CString instances.
-        unsafe {
-            secure_env_tpm::secure_env_log(
-                file.as_ptr(),
-                line,
-                severity,
-                tag.as_ptr(),
-                msg.as_ptr(),
-            );
-        }
-    }
-
-    fn flush(&self) {}
+    run_ta_loop(infile, outfile, snapshot_socket, kmr_wire::DEFAULT_MAX_SIZE, |req| {
+        ta.process(req)
+    });
 }
