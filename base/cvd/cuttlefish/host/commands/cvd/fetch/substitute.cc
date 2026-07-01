@@ -17,18 +17,16 @@
 
 #include <unistd.h>
 
-#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include <android-base/file.h>
-#include <android-base/strings.h>
-#include "absl/strings/strip.h"
-#include <google/protobuf/text_format.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/strip.h"
+#include "android-base/file.h"
+#include "google/protobuf/text_format.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -97,7 +95,8 @@ Result<void> SubstituteWithFlag(
   } else {
     for (const std::string& substitution : host_substitutions) {
       std::string source = fmt::format("{}/{}", bin_dir_parent, substitution);
-      std::string to_substitute = fmt::format("{}/{}", target_dir, substitution);
+      std::string to_substitute =
+          fmt::format("{}/{}", target_dir, substitution);
       CF_EXPECT(Substitute(source, to_substitute));
     }
   }
@@ -160,7 +159,6 @@ Result<void> SubstituteWithMarker(const std::string& target_dir,
 Result<void> HostPackageSubstitution(
     const std::string& target_dir,
     const std::vector<std::string>& host_substitutions) {
-
   // TODO: remove when we can safely add this to the marker file.
   std::string cvdalloc_src =
       fmt::format("{}/bin/{}", CF_EXPECT(GetCuttlefishCommonDir()), "cvdalloc");
@@ -172,7 +170,8 @@ Result<void> HostPackageSubstitution(
     return SubstituteWithFlag(target_dir, host_substitutions);
   }
 
-  // [DEVELOPMENT ONLY] Substitute when LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE is set.
+  // [DEVELOPMENT ONLY] Substitute when LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE is
+  // set.
   std::optional<std::string> local_marker_file =
       StringFromEnv("LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE");
   if (local_marker_file.has_value()) {
