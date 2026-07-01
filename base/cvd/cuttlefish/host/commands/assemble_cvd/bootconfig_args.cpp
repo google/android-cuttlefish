@@ -45,14 +45,13 @@ using vm_manager::QemuManager;
 namespace {
 
 static constexpr std::string_view kLegacyBoardBootconfigKeysShared[] = {
+    // clang-format off
     "androidboot.hardware",
     "androidboot.vendor.apex.com.android.wifi.hal",
     "androidboot.vendor.apex.com.google.emulated.camera.provider.hal",
-    "buf_size",
     "kernel.mac80211_hwsim.radios",
-    "kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_",
-    "kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_"
-    "buf_size",
+    "kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_buf_size",
+    // clang-format on
 };
 
 static constexpr std::string_view kLegacyBoardBootconfigKeysAuto[] = {
