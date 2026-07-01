@@ -109,6 +109,59 @@ func TestCvdLoad(t *testing.T) {
   }
 }`,
 		},
+		{
+			name: "GitSwCarDevSdv",
+			loadconfig: `
+{
+  "instances": [
+    {
+      "name": "sdv-core",
+      "vm": {
+        "cpus": 2,
+        "memory_mb": 2048,
+        "crosvm": {
+          "enable_sandbox": true
+        }
+      },
+      "disk": {
+        "default_build": "@ab\/git_main-swcar-dev\/aosp_cf_x86_64_sdv_core-trunk_staging-userdebug"
+      },
+      "graphics": {
+        "gpu_mode": "none"
+      }
+    },
+    {
+      "name": "sdv-media",
+      "vm": {
+        "cpus": 4,
+        "memory_mb": 4096,
+        "crosvm": {
+          "enable_sandbox": true
+        }
+      },
+      "disk": {
+        "default_build": "@ab\/git_main-swcar-dev\/aosp_cf_x86_64_sdv_media-trunk_staging-userdebug"
+      },
+      "graphics": {
+        "displays": [
+          {
+            "width": 1920,
+            "height": 1080
+          }
+        ],
+        "gpu_mode": "gfxstream_guest_angle_host_swiftshader"
+      }
+    }
+  ],
+  "netsim_bt": false,
+  "metrics": {
+    "enable": true
+  },
+  "common": {
+    "host_package": "@ab\/git_main-swcar-dev\/aosp_cf_x86_64_sdv_media-trunk_staging-userdebug"
+  }
+}`,
+		},
 	}
 	c := e2etests.TestContext{}
 	for _, tc := range testcases {

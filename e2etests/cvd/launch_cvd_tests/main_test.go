@@ -25,6 +25,7 @@ func TestLaunchCvd(t *testing.T) {
 		name   string
 		branch string
 		target string
+		args   []string
 	}{
 		{
 			name:   "GitMainPhone",
@@ -62,6 +63,27 @@ func TestLaunchCvd(t *testing.T) {
 			target: "aosp_cf_x86_64_auto-userdebug",
 		},
 		{
+			name:   "Car17Auto",
+			branch: "git_android17-car-release",
+			target: "aosp_cf_x86_64_auto-userdebug",
+		},
+		{
+			name:   "GitSwCarDevSdvCore",
+			branch: "git_main-swcar-dev",
+			target: "aosp_cf_x86_64_sdv_core-trunk_staging-userdebug",
+			args: []string{
+				"--enable_sandbox=true",
+			},
+		},
+		{
+			name:   "GitSwCarDevSdvMedia",
+			branch: "git_main-swcar-dev",
+			target: "aosp_cf_x86_64_sdv_media-trunk_staging-userdebug",
+			args: []string{
+				"--enable_sandbox=true",
+			},
+		},
+		{
 			name:   "Aosp11GsiPhone",
 			branch: "aosp-android11-gsi",
 			target: "aosp_cf_x86_64_only_phone-userdebug",
@@ -80,7 +102,9 @@ func TestLaunchCvd(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if err := c.LaunchCVD(e2etests.CreateArgs{}); err != nil {
+			if err := c.LaunchCVD(e2etests.CreateArgs{
+				Args: tc.args,
+			}); err != nil {
 				t.Fatal(err)
 			}
 
