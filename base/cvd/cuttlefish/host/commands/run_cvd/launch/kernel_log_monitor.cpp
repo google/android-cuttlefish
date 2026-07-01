@@ -24,11 +24,11 @@
 #include <utility>
 #include <vector>
 
-#include <fruit/component.h>
-#include <fruit/fruit_forward_decls.h>
-#include <fruit/injector.h>
-#include <fruit/macro.h>
 #include "absl/log/check.h"
+#include "fruit/component.h"
+#include "fruit/fruit_forward_decls.h"
+#include "fruit/injector.h"
+#include "fruit/macro.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
@@ -78,9 +78,10 @@ class KernelLogMonitor : public CommandSource,
 
   // KernelLogPipeProvider
   SharedFD KernelLogPipe() override {
-    CHECK(!event_pipe_read_ends_.empty()) << "No more kernel pipes left. Make sure you inherited "
-                                             "KernelLogPipeProvider and provided multibinding "
-                                             "from KernelLogPipeConsumer to your type.";
+    CHECK(!event_pipe_read_ends_.empty())
+        << "No more kernel pipes left. Make sure you inherited "
+           "KernelLogPipeProvider and provided multibinding "
+           "from KernelLogPipeConsumer to your type.";
     SharedFD ret = event_pipe_read_ends_.back();
     event_pipe_read_ends_.pop_back();
     return ret;
