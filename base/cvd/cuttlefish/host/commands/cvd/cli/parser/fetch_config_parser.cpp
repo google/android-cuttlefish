@@ -43,9 +43,9 @@ bool ShouldFetch(const Instance& instance) {
   const auto& disk = instance.disk();
 
   for (const auto& value :
-       {disk.default_build(), disk.super_partition().system(), boot.kernel().build(),
-        boot.kernel().build(), boot.build(), boot.bootloader().build(),
-        disk.otatools()}) {
+       {disk.default_build(), disk.super_partition().system(),
+        boot.kernel().build(), boot.kernel().build(), boot.build(),
+        boot.bootloader().build(), disk.otatools()}) {
     // expects non-prefixed build strings already converted to empty strings
     if (!value.empty()) {
       return true;
@@ -86,7 +86,8 @@ Result<Instance> RemoveNonPrefixedBuildStrings(const Instance& instance) {
   auto& bootloader = *boot.mutable_bootloader()->mutable_build();
   bootloader = CF_EXPECT(GetFetchBuildString(bootloader));
 
-  auto& android_efi_loader = *boot.mutable_android_efi_loader()->mutable_build();
+  auto& android_efi_loader =
+      *boot.mutable_android_efi_loader()->mutable_build();
   android_efi_loader = CF_EXPECT(GetFetchBuildString(android_efi_loader));
 
   return result;
@@ -143,7 +144,7 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
     const std::vector<std::string>& target_subdirectories) {
   EnvironmentSpecification fetch_instances;
   std::vector<std::string> fetch_subdirectories;
-  CF_EXPECT_EQ(config.instances().size(), (int) target_subdirectories.size(),
+  CF_EXPECT_EQ(config.instances().size(), (int)target_subdirectories.size(),
                "Mismatched sizes between number of subdirectories and number "
                "of instances");
   for (int i = 0; i < config.instances().size(); i++) {
@@ -181,7 +182,8 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
   }
   if (fetch_config.has_keep_downloaded_archives()) {
     auto value = fetch_config.keep_downloaded_archives();
-    result.emplace_back(GenerateFlag("keep_downloaded_archives", std::move(value)));
+    result.emplace_back(
+        GenerateFlag("keep_downloaded_archives", std::move(value)));
   }
   if (fetch_config.has_api_base_url()) {
     auto value = fetch_config.api_base_url();
@@ -201,8 +203,8 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
       GenerateInstanceFlag("boot_build", fetch_instances, BootBuild));
   result.emplace_back(GenerateInstanceFlag("bootloader_build", fetch_instances,
                                            BootloaderBuild));
-  result.emplace_back(GenerateInstanceFlag("android_efi_loader_build",
-                                           fetch_instances, AndroidEfiLoaderBuild));
+  result.emplace_back(GenerateInstanceFlag(
+      "android_efi_loader_build", fetch_instances, AndroidEfiLoaderBuild));
   result.emplace_back(
       GenerateInstanceFlag("otatools_build", fetch_instances, OtaToolsBuild));
   result.emplace_back(GenerateInstanceFlag("download_img_zip", fetch_instances,
