@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-#include <algorithm>
 #include <string>
 #include <vector>
 
-#include <android-base/file.h>
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
@@ -568,7 +566,8 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSimpleMediaDeviceFlagPartialJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--crosvm_simple_media_device=false,true)"))
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         R"(--crosvm_simple_media_device=false,true)"))
       << "crosvm_simple_media_device flag is missing or wrongly formatted";
 }
 
@@ -602,7 +601,8 @@ TEST(VmFlagsParserTest, ParseTwoInstancesSimpleMediaDeviceFlagFullJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--crosvm_simple_media_device=true,true)"))
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--crosvm_simple_media_device=true,true)"))
       << "crosvm_simple_media_device flag is missing or wrongly formatted";
 }
 
@@ -635,7 +635,8 @@ TEST(VmFlagsParserTest, ParseTwoInstancesV4l2ProxyFlagPartialJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--crosvm_v4l2_proxy=,/dev/video0)"))
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--crosvm_v4l2_proxy=,/dev/video0)"))
       << "crosvm_v4l2_proxy flag is missing or wrongly formatted";
 }
 
@@ -669,7 +670,8 @@ TEST(VmFlagsParserTest, ParseTwoInstancesV4l2ProxyFlagFullJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--crosvm_v4l2_proxy=/dev/video0,/dev/video1)"))
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         R"(--crosvm_v4l2_proxy=/dev/video0,/dev/video1)"))
       << "crosvm_v4l2_proxy flag is missing or wrongly formatted";
 }
 
