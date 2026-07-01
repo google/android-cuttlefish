@@ -200,7 +200,6 @@ cf_cc_library(
     name = "run_cvd_proc_collector",
     srcs = ["run_cvd_proc_collector.cpp"],
     hdrs = ["run_cvd_proc_collector.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
