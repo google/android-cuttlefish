@@ -44,7 +44,8 @@ function create_test_user() {
 PKG_DIR=""
 TEST_USER=""
 EXTRA_GROUPS=""
-while getopts "d:u:g:" opt; do
+PODCVD_MODE=false
+while getopts "d:u:g:p" opt; do
   case "${opt}" in
     u)
       TEST_USER="${OPTARG}"
@@ -55,9 +56,12 @@ while getopts "d:u:g:" opt; do
     d)
       PKG_DIR="${OPTARG}"
       ;;
+    p)
+      PODCVD_MODE=true
+      ;;
     *)
     echo "Invalid option: -${opt}"
-    echo "Usage: $0 -d PACKAGE_DIR [-u TEST_USER [-g EXTRA_GROUPS]]"
+    echo "Usage: $0 -d PACKAGE_DIR [-u TEST_USER [-g EXTRA_GROUPS]] [-p]"
     exit 1
     ;;
   esac
@@ -69,13 +73,24 @@ if [[ "${PKG_DIR}" == "" ]] || ! [[ -d "${PKG_DIR}" ]]; then
 fi
 
 sudo apt-get update
-install_pkgs "${PKG_DIR}" cuttlefish-base cuttlefish-metrics cuttlefish-user
 
-check_service_started cuttlefish-host-resources
-load_kernel_modules kvm vhost-vsock vhost-net bridge
-grant_device_access vhost-vsock vhost-net kvm
-check_service_started cuttlefish-operator
+if [[ "${PODCVD_MODE}" == true ]]; then
+  install_pkgs "${PKG_DIR}" cuttlefish-podcvd
+  load_kernel_modules kvm vhost-vsock vhost-net bridge
+  grant_device_access vhost-vsock vhost-net kvm
+  if [[ "${TEST_USER}" != "" ]]; then
+    create_test_user "${TEST_USER}" "${EXTRA_GROUPS}"
+    sudo /usr/bin/podcvd-setup "${TEST_USER}"
+  fi
+else
+  install_pkgs "${PKG_DIR}" cuttlefish-base cuttlefish-metrics cuttlefish-user
 
-if [[ "${TEST_USER}" != "" ]]; then
-  create_test_user "${TEST_USER}" "${EXTRA_GROUPS}"
+  check_service_started cuttlefish-host-resources
+  load_kernel_modules kvm vhost-vsock vhost-net bridge
+  grant_device_access vhost-vsock vhost-net kvm
+  check_service_started cuttlefish-operator
+
+  if [[ "${TEST_USER}" != "" ]]; then
+    create_test_user "${TEST_USER}" "${EXTRA_GROUPS}"
+  fi
 fi
