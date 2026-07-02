@@ -9,10 +9,7 @@ package(
 
 cf_cc_binary(
     name = "casimir_control_server",
-    srcs = [
-        "main.cpp",
-    ],
-    clang_format_enabled = False,
+    srcs = ["main.cpp"],
     deps = [
         ":libcasimir",
         ":libcasimir_control_server",
