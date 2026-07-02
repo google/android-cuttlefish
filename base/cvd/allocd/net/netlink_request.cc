@@ -19,17 +19,16 @@
 #include <linux/if_link.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
-#include <net/if.h>
-#include <sys/socket.h>
+#include <net/if.h>  // IWYU pragma: keep // IFF_UP
 #include <netinet/in.h>
+#include <stddef.h>
+#include <sys/socket.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #include <algorithm>
 #include <array>
-#include <cstdint>  // for int32_t
-#include <ostream>  // for operator<<, basic_ostream
 #include <string>
-#include <type_traits>  // for swap
 #include <utility>
 #include <vector>
 

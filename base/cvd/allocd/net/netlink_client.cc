@@ -18,13 +18,11 @@
 #include <errno.h>
 #include <linux/netlink.h>
 #include <sys/socket.h>
-#include <sys/uio.h>
+#include <sys/uio.h>  // IWYU pragma: keep // iovec
 
 #include <cstdint>
 #include <cstring>
 #include <memory>
-#include <string>
-#include "ostream"  // for operator<<, basic_ostream
 
 #include "absl/log/log.h"
 
@@ -59,7 +57,7 @@ class NetlinkClientImpl : public NetlinkClient {
 bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
   uint32_t len;
   char buf[4096];
-  struct iovec iov = { buf, sizeof(buf) };
+  struct iovec iov = { buf, sizeof(buf) };  // NOLINT(misc-include-cleaner)
   struct sockaddr_nl sa;
   struct msghdr msg {};
   struct nlmsghdr *nh;
@@ -118,7 +116,7 @@ bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
 
 bool NetlinkClientImpl::Send(const NetlinkRequest& message) {
   struct sockaddr_nl netlink_addr;
-  struct iovec netlink_iov = {
+  struct iovec netlink_iov = {  // NOLINT(misc-include-cleaner)
     message.RequestData(),
     message.RequestLength()
   };
@@ -129,6 +127,7 @@ bool NetlinkClientImpl::Send(const NetlinkRequest& message) {
   msg.msg_name = &address_;
   msg.msg_namelen = sizeof(address_);
   msg.msg_iov = &netlink_iov;
+  // NOLINTNEXTLINE(misc-include-cleaner)
   msg.msg_iovlen = sizeof(netlink_iov) / sizeof(iovec);
 
   if (netlink_fd_->SendMsg(&msg, 0) < 0) {
