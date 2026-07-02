@@ -49,15 +49,10 @@ cf_cc_library(
     ],
 )
 
-cc_library(
+cf_cc_library(
     name = "alloc_iproute2",
-    srcs = [
-        "alloc_iproute2.cpp",
-    ],
-    hdrs = [
-        "alloc_driver.h",
-    ],
-    copts = ["-std=c++20"],
+    srcs = ["alloc_iproute2.cpp"],
+    hdrs = ["alloc_driver.h"],
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/result",
