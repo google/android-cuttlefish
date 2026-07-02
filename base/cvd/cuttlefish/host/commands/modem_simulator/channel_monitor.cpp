@@ -18,8 +18,8 @@
 
 #include <algorithm>
 
-#include "absl/strings/str_replace.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_replace.h"
 
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/commands/modem_simulator/virtual_modem_simulator.h"
@@ -68,13 +68,15 @@ ClientId ChannelMonitor::SetRemoteClient(SharedFD client, bool is_accepted) {
 void ChannelMonitor::AcceptIncomingConnection() {
   auto client_fd = SharedFD::Accept(*server_);
   if (!client_fd->IsOpen()) {
-    LOG(ERROR) << "Error accepting connection on socket: " << client_fd->StrError();
+    LOG(ERROR) << "Error accepting connection on socket: "
+               << client_fd->StrError();
   } else {
     auto client = std::make_unique<Client>(client_fd);
     VLOG(0) << "added one RIL client";
     clients_.push_back(std::move(client));
     if (clients_.size() == 1) {
-      // The first connected client default to be the unsolicited commands channel
+      // The first connected client default to be the unsolicited commands
+      // channel
       modem_.OnFirstClientConnected();
     }
   }
@@ -87,7 +89,7 @@ void ChannelMonitor::ReadCommand(Client& client) {
     if (errno == EAGAIN && client.type == Client::REMOTE &&
         client.first_read_command_) {
       LOG(ERROR) << "After read 'REM' from remote client, and before select "
-          "no new data come.";
+                    "no new data come.";
       return;
     }
     VLOG(0) << "Error reading from client fd: "
@@ -130,7 +132,7 @@ void ChannelMonitor::ReadCommand(Client& client) {
         VLOG(1) << "AT> " << command;
         modem_.DispatchCommand(client, command);
       }
-      pos = r_pos + 1;  // Skip '\r'
+      pos = r_pos + 1;                     // Skip '\r'
     } else if (pos < commands.length()) {  // Incomplete command
       incomplete_command = commands.substr(pos);
       VLOG(1) << "incomplete command: " << incomplete_command;
