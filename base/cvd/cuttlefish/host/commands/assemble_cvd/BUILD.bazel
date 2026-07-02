@@ -444,6 +444,7 @@ cf_cc_library(
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@protobuf",
+        "@protobuf//src/google/protobuf/io:tokenizer",
     ],
 )
 
