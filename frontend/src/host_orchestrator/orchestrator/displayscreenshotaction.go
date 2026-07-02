@@ -16,7 +16,6 @@ package orchestrator
 
 import (
 	"encoding/base64"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -64,7 +63,7 @@ func (a *DisplayScreenshotAction) Run() (apiv1.Operation, error) {
 }
 
 func (a *DisplayScreenshotAction) createScreenshot(op apiv1.Operation) (*apiv1.DisplayScreenshotResponse, error) {
-	tempdir, err := ioutil.TempDir("", "screenshot")
+	tempdir, err := os.MkdirTemp("", "screenshot")
 	if err != nil {
 		return nil, operator.NewInternalError("failed to create temp directory", err)
 	}
@@ -77,7 +76,7 @@ func (a *DisplayScreenshotAction) createScreenshot(op apiv1.Operation) (*apiv1.D
 		return nil, operator.NewInternalError("cvd display screenshot failed", err)
 	}
 
-	screenshotBytes, err := ioutil.ReadFile(screenshotPath)
+	screenshotBytes, err := os.ReadFile(screenshotPath)
 	if err != nil {
 		return nil, operator.NewInternalError("failed to read screenshot file", err)
 	}
