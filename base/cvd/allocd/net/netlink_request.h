@@ -16,10 +16,9 @@
 #ifndef ALLOCD_NET_NETLINK_REQUEST_H_
 #define ALLOCD_NET_NETLINK_REQUEST_H_
 
-#include <stddef.h>
-
 #include <linux/netlink.h>
 #include <netinet/in.h>
+#include <stddef.h>
 
 #include <array>
 #include <cstdint>
@@ -66,7 +65,7 @@ class NetlinkRequest {
   void AddMacAddress(const std::array<unsigned char, 6>& address);
 
   // Add an ipv4 address
-  void AddInAddr(uint16_t type, in_addr_t *addr);
+  void AddInAddr(uint16_t type, in_addr_t* addr);
 
   // Creates new list.
   // List mimic recursive structures in a flat, continuous representation.
@@ -96,12 +95,14 @@ class NetlinkRequest {
   void* ReserveRaw(size_t length);
 
   // Append specialized data.
-  template <typename T> T* Append(const T& data) {
+  template <typename T>
+  T* Append(const T& data) {
     return static_cast<T*>(AppendRaw(&data, sizeof(T)));
   }
 
   // Reserve specialized data.
-  template <typename T> T* Reserve() {
+  template <typename T>
+  T* Reserve() {
     return static_cast<T*>(ReserveRaw(sizeof(T)));
   }
 
@@ -113,7 +114,7 @@ class NetlinkRequest {
   nlmsghdr* header_;
 
   NetlinkRequest(const NetlinkRequest&) = delete;
-  NetlinkRequest& operator= (const NetlinkRequest&) = delete;
+  NetlinkRequest& operator=(const NetlinkRequest&) = delete;
 };
 }  // namespace cuttlefish
 #endif  // COMMON_LIBS_NET_NETLINK_REQUEST_H_
