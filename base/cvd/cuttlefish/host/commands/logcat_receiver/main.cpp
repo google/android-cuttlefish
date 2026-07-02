@@ -16,9 +16,9 @@
 
 #include <signal.h>
 
-#include <gflags/gflags.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -42,8 +42,7 @@ int main(int argc, char** argv) {
   auto instance = config->ForDefaultInstance();
 
   // Disable default handling of SIGPIPE
-  struct sigaction new_action {
-  }, old_action{};
+  struct sigaction new_action{}, old_action{};
   new_action.sa_handler = SIG_IGN;
   sigaction(SIGPIPE, &new_action, &old_action);
 
@@ -63,8 +62,8 @@ int main(int argc, char** argv) {
   }
 
   auto path = cuttlefish::LogcatPath(instance);
-  auto logcat_file =
-      cuttlefish::SharedFD::Open(path.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
+  auto logcat_file = cuttlefish::SharedFD::Open(
+      path.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
 
   // Server loop
   while (true) {
