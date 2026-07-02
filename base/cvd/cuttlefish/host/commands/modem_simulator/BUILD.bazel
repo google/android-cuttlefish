@@ -10,7 +10,6 @@ cf_cc_library(
     name = "channel_monitor",
     srcs = ["channel_monitor.cpp"],
     hdrs = ["channel_monitor.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/modem_simulator:client",
