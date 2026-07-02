@@ -1,8 +1,0 @@
-go 1.23
-
-use (
-	./src/host_orchestrator
-	./src/libhoclient
-	./src/liboperator
-	./src/operator
-)
