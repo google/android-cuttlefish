@@ -18,18 +18,16 @@
 #include <errno.h>
 #include <linux/netlink.h>
 #include <sys/socket.h>
-#include <sys/uio.h>
+#include <sys/uio.h>  // IWYU pragma: keep // iovec
 
 #include <cstdint>
 #include <cstring>
 #include <memory>
-#include <string>
-#include "ostream"  // for operator<<, basic_ostream
 
 #include "absl/log/log.h"
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "allocd/net/netlink_request.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 namespace {
@@ -59,10 +57,10 @@ class NetlinkClientImpl : public NetlinkClient {
 bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
   uint32_t len;
   char buf[4096];
-  struct iovec iov = { buf, sizeof(buf) };
+  struct iovec iov = {buf, sizeof(buf)};  // NOLINT(misc-include-cleaner)
   struct sockaddr_nl sa;
-  struct msghdr msg {};
-  struct nlmsghdr *nh;
+  struct msghdr msg{};
+  struct nlmsghdr* nh;
 
   msg.msg_name = &sa;
   msg.msg_namelen = sizeof(sa);
@@ -70,7 +68,7 @@ bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
   msg.msg_iovlen = 1;
 
   int result = netlink_fd_->RecvMsg(&msg, 0);
-  if (result  < 0) {
+  if (result < 0) {
     LOG(ERROR) << "Netlink error: " << strerror(errno);
     return false;
   }
@@ -78,15 +76,14 @@ bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
   len = static_cast<uint32_t>(result);
   LOG(INFO) << "Received netlink response (" << len << " bytes)";
 
-  for (nh = reinterpret_cast<nlmsghdr*>(buf);
-       NLMSG_OK(nh, len);
+  for (nh = reinterpret_cast<nlmsghdr*>(buf); NLMSG_OK(nh, len);
        nh = NLMSG_NEXT(nh, len)) {
     if (nh->nlmsg_seq != seq_no) {
       // This really shouldn't happen. If we see this, it means somebody is
       // issuing netlink requests using the same socket as us, and ignoring
       // responses.
-      LOG(WARNING) << "Sequence number mismatch: "
-                   << nh->nlmsg_seq << " != " << seq_no;
+      LOG(WARNING) << "Sequence number mismatch: " << nh->nlmsg_seq
+                   << " != " << seq_no;
       continue;
     }
 
@@ -118,10 +115,8 @@ bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
 
 bool NetlinkClientImpl::Send(const NetlinkRequest& message) {
   struct sockaddr_nl netlink_addr;
-  struct iovec netlink_iov = {
-    message.RequestData(),
-    message.RequestLength()
-  };
+  struct iovec netlink_iov = {// NOLINT(misc-include-cleaner)
+                              message.RequestData(), message.RequestLength()};
   struct msghdr msg;
   memset(&msg, 0, sizeof(msg));
   memset(&netlink_addr, 0, sizeof(netlink_addr));
@@ -129,11 +124,11 @@ bool NetlinkClientImpl::Send(const NetlinkRequest& message) {
   msg.msg_name = &address_;
   msg.msg_namelen = sizeof(address_);
   msg.msg_iov = &netlink_iov;
+  // NOLINTNEXTLINE(misc-include-cleaner)
   msg.msg_iovlen = sizeof(netlink_iov) / sizeof(iovec);
 
   if (netlink_fd_->SendMsg(&msg, 0) < 0) {
-    LOG(ERROR) << "Failed to send netlink message: "
-               << strerror(errno);
+    LOG(ERROR) << "Failed to send netlink message: " << strerror(errno);
 
     return false;
   }
@@ -176,7 +171,7 @@ class NetlinkClientFactoryImpl : public NetlinkClientFactory {
 }  // namespace
 
 NetlinkClientFactory* NetlinkClientFactory::Default() {
-  static NetlinkClientFactory &factory = *new NetlinkClientFactoryImpl();
+  static NetlinkClientFactory& factory = *new NetlinkClientFactoryImpl();
   return &factory;
 }
 

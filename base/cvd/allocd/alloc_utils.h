@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <stdint.h>
 #include <pwd.h>
+#include <stdint.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -61,7 +61,6 @@ bool CreateTap(std::string_view name);
 Result<void> ValidateTapInterfaceIsUsable(const std::string& interface_name);
 #endif
 
-
 bool DestroyIface(std::string_view name);
 
 bool DestroyBridge(std::string_view name);
@@ -79,10 +78,8 @@ bool SetupBridgeGateway(std::string_view name, std::string_view ipaddr);
 void CleanupBridgeGateway(std::string_view name, std::string_view ipaddr,
                           const GatewayConfig& config);
 
-bool CreateEthernetBridgeIface(std::string_view name,
-                               std::string_view ipaddr);
-bool DestroyEthernetBridgeIface(std::string_view name,
-                                std::string_view ipaddr);
+bool CreateEthernetBridgeIface(std::string_view name, std::string_view ipaddr);
+bool DestroyEthernetBridgeIface(std::string_view name, std::string_view ipaddr);
 
 bool StartDnsmasq(std::string_view bridge_name, std::string_view gateway,
                   std::string_view dhcp_range);

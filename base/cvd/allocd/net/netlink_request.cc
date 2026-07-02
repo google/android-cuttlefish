@@ -19,17 +19,16 @@
 #include <linux/if_link.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
-#include <net/if.h>
-#include <sys/socket.h>
+#include <net/if.h>  // IWYU pragma: keep // IFF_UP
 #include <netinet/in.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 #include <algorithm>
 #include <array>
-#include <cstdint>  // for int32_t
-#include <ostream>  // for operator<<, basic_ostream
 #include <string>
-#include <type_traits>  // for swap
 #include <utility>
 #include <vector>
 
@@ -40,9 +39,7 @@ namespace {
 uint32_t kRequestSequenceNumber = 0;
 }  // namespace
 
-uint32_t NetlinkRequest::SeqNo() const {
-  return header_->nlmsg_seq;
-}
+uint32_t NetlinkRequest::SeqNo() const { return header_->nlmsg_seq; }
 
 void* NetlinkRequest::AppendRaw(const void* data, size_t length) {
   auto* output = static_cast<char*>(ReserveRaw(length));
@@ -57,8 +54,8 @@ void* NetlinkRequest::ReserveRaw(size_t length) {
   return reinterpret_cast<void*>(request_.data() + original_size);
 }
 
-nlattr* NetlinkRequest::AppendTag(
-    uint16_t type, const void* data, uint16_t data_length) {
+nlattr* NetlinkRequest::AppendTag(uint16_t type, const void* data,
+                                  uint16_t data_length) {
   nlattr* attr = Reserve<nlattr>();
   attr->nla_type = type;
   attr->nla_len = RTA_LENGTH(data_length);
@@ -104,11 +101,12 @@ void NetlinkRequest::AddAddrInfo(int32_t if_index, int prefix_len) {
   ad_info->ifa_index = if_index;
 }
 
-void NetlinkRequest::AddMacAddress(const std::array<unsigned char, 6>& address) {
+void NetlinkRequest::AddMacAddress(
+    const std::array<unsigned char, 6>& address) {
   AppendTag(IFLA_ADDRESS, address.data(), 6);
 }
 
-void NetlinkRequest::AddInAddr(uint16_t type, in_addr_t *addr) {
+void NetlinkRequest::AddInAddr(uint16_t type, in_addr_t* addr) {
   AppendTag(type, addr, sizeof(in_addr_t));
 }
 
@@ -135,8 +133,6 @@ void* NetlinkRequest::RequestData() const {
   return header_;
 }
 
-size_t NetlinkRequest::RequestLength() const {
-  return request_.size();
-}
+size_t NetlinkRequest::RequestLength() const { return request_.size(); }
 
 }  // namespace cuttlefish
