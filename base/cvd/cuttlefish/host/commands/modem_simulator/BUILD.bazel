@@ -51,7 +51,6 @@ cf_cc_library(
     name = "data_service",
     srcs = ["data_service.cpp"],
     hdrs = ["data_service.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:modem_service",
