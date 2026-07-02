@@ -42,10 +42,7 @@ cf_cc_library(
 
 cf_cc_binary(
     name = "cvdalloc",
-    srcs = [
-        "cvdalloc.cpp",
-    ],
-    clang_format_enabled = False,
+    srcs = ["cvdalloc.cpp"],
     deps = [
         ":interface",
         ":privilege",
