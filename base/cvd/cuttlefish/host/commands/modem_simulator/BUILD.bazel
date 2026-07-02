@@ -35,7 +35,6 @@ cf_cc_library(
     name = "command_parser",
     srcs = ["command_parser.cpp"],
     hdrs = ["command_parser.h"],
-    clang_format_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/strings",
