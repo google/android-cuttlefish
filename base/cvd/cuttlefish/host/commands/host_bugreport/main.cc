@@ -16,13 +16,13 @@
 
 #include <string>
 
-#include <android-base/file.h>
-#include <android-base/strings.h>
-#include <fmt/format.h>
-#include <gflags/gflags.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_join.h"
+#include "android-base/file.h"
+#include "android-base/strings.h"
+#include "fmt/format.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -125,8 +125,9 @@ Result<void> AddAdbBugreport(const CuttlefishConfig::InstanceSpecific& instance,
 // the fact that something was missing/inaccessible is still useful debugging
 // information.
 void TakeHostBugreport(const CuttlefishConfig* config, WritableZip& archive) {
-  LogError(AddFileAt(archive, config->AssemblyPath(kLogNameAssembleCvd),
-                     absl::StrCat("cuttlefish_assembly", "/", kLogNameAssembleCvd)));
+  LogError(
+      AddFileAt(archive, config->AssemblyPath(kLogNameAssembleCvd),
+                absl::StrCat("cuttlefish_assembly", "/", kLogNameAssembleCvd)));
   LogError(AddFileAt(archive, config->AssemblyPath("cuttlefish_config.json"),
                      "cuttlefish_assembly/cuttlefish_config.json"));
 
