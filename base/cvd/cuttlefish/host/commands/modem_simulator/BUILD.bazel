@@ -160,10 +160,7 @@ cf_cc_library(
 
 cf_cc_binary(
     name = "modem_simulator",
-    srcs = [
-        "main.cpp",
-    ],
-    clang_format_enabled = False,
+    srcs = ["main.cpp"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:tee_logging",
