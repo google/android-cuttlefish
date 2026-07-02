@@ -6,10 +6,7 @@ package(
 
 cf_cc_binary(
     name = "cf_defaults",
-    srcs = [
-        "defaults.cpp",
-    ],
-    clang_format_enabled = False,
+    srcs = ["defaults.cpp"],
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
