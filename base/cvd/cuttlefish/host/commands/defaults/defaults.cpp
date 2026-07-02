@@ -27,7 +27,8 @@
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_string.h"
 
-ABSL_FLAG(std::string, filename, "/usr/lib/cuttlefish-common/etc/cf_defaults", "Output filename.");
+ABSL_FLAG(std::string, filename, "/usr/lib/cuttlefish-common/etc/cf_defaults",
+          "Output filename.");
 ABSL_FLAG(std::optional<std::string>, static_defaults_when, std::nullopt,
           "Specify a key-value pair as \"<key>=<value>\". "
           "The key should be a metadata path, e.g., 'project/project-id'. "
@@ -48,7 +49,7 @@ Result<std::string> MetadataValue(std::string_view key) {
 }
 
 Result<std::pair<std::string, std::string>> ParseKeyValueFlag(
-    const std::string &flag) {
+    const std::string& flag) {
   std::map<std::string, std::string, std::less<void>> kvs =
       CF_EXPECT(ParseKeyEqualsValue(flag));
   CF_EXPECT(kvs.size() == 1);
@@ -62,7 +63,7 @@ Result<std::pair<std::string, std::string>> ParseKeyValueFlag(
  * For example, if the flag value is `project/project-id=testing`,
  * static defaults will only be used if running in the `testing` project.
  */
-Result<bool> UseStaticDefaults(const std::optional<std::string> &flag) {
+Result<bool> UseStaticDefaults(const std::optional<std::string>& flag) {
   if (!flag.has_value()) {
     LOG(INFO) << "Will not use static defaults.";
     return false;
@@ -73,7 +74,8 @@ Result<bool> UseStaticDefaults(const std::optional<std::string> &flag) {
   Result<std::pair<std::string, std::string>> kv =
       CF_EXPECT(ParseKeyValueFlag(flag.value()),
                 "Couldn't parse key-value pair to find in metadata, "
-                "got: " << flag.value());
+                "got: "
+                    << flag.value());
 
   /* Does the key exist? If so, then get the value. */
   std::string actual =
@@ -81,12 +83,12 @@ Result<bool> UseStaticDefaults(const std::optional<std::string> &flag) {
                 "Couldn't get value at metadata path " << kv->first);
   std::string expected = kv->second;
 
-  /* Is the value expected? */ 
+  /* Is the value expected? */
   if (actual != expected) {
     // No error, but do not use static defaults.
     LOG(WARNING) << absl::StrFormat(
-      "Metadata value for %s unexpected, got: '%s', expected '%s'",
-      kv->first, actual, expected);
+        "Metadata value for %s unexpected, got: '%s', expected '%s'", kv->first,
+        actual, expected);
   }
   return actual == expected;
 }
@@ -106,8 +108,8 @@ std::map<std::string, std::string> StaticDefaults() {
 
 }  // namespace
 
-Result<int> DefaultsMain(int argc, char *argv[]) {
-  std::vector<char *> args = absl::ParseCommandLine(argc, argv);
+Result<int> DefaultsMain(int argc, char* argv[]) {
+  std::vector<char*> args = absl::ParseCommandLine(argc, argv);
 
   std::string filename = absl::GetFlag(FLAGS_filename);
   LOG(INFO) << "Writing to " << filename;
@@ -132,7 +134,7 @@ Result<int> DefaultsMain(int argc, char *argv[]) {
 
 }  // namespace cuttlefish
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   auto res = cuttlefish::DefaultsMain(argc, argv);
   if (!res.ok()) {
     LOG(ERROR) << "defaults failed: \n" << res.error();
