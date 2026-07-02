@@ -16,11 +16,11 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "absl/strings/str_split.h"
-#include <fmt/format.h>
-#include <gflags/gflags.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_split.h"
+#include "fmt/format.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -34,7 +34,8 @@
 // will listen to one server fd for incoming sms/phone call
 // there should be at least 1 valid fd
 DEFINE_string(server_fds, "", "A comma separated list of file descriptors");
-DEFINE_int32(sim_type, 1, "Sim type: 1 for normal, 2 for CtsCarrierApiTestCases");
+DEFINE_int32(sim_type, 1,
+             "Sim type: 1 for normal, 2 for CtsCarrierApiTestCases");
 
 namespace cuttlefish {
 namespace {
@@ -42,7 +43,7 @@ namespace {
 std::vector<SharedFD> ServerFdsFromCmdline() {
   // Validate the parameter
   std::string fd_list = FLAGS_server_fds;
-  for (auto c: fd_list) {
+  for (auto c : fd_list) {
     if (c != ',' && (c < '0' || c > '9')) {
       LOG(ERROR) << "Invalid file descriptor list: " << fd_list;
       std::exit(1);
@@ -51,7 +52,7 @@ std::vector<SharedFD> ServerFdsFromCmdline() {
 
   std::vector<std::string> fds = absl::StrSplit(fd_list, ',');
   std::vector<SharedFD> shared_fds;
-  for (auto& fd_str: fds) {
+  for (auto& fd_str : fds) {
     auto fd = std::stoi(fd_str);
     auto shared_fd = SharedFD::Dup(fd);
     close(fd);
@@ -77,8 +78,9 @@ int ModemSimulatorMain(int argc, char** argv) {
   }
 
   LOG(INFO) << "Start modem simulator, server_fds: " << FLAGS_server_fds
-            << ", Sim type: " << ((FLAGS_sim_type == 2) ?
-                "special for CtsCarrierApiTestCases" : "normal" );
+            << ", Sim type: "
+            << ((FLAGS_sim_type == 2) ? "special for CtsCarrierApiTestCases"
+                                      : "normal");
 
   auto server_fds = ServerFdsFromCmdline();
   if (server_fds.empty()) {
@@ -101,7 +103,8 @@ int ModemSimulatorMain(int argc, char** argv) {
   std::vector<std::unique_ptr<ModemSimulator>> modem_simulators;
 
   for (auto& fd : server_fds) {
-    CHECK(fd->IsOpen()) << "Error creating or inheriting modem simulator server: "
+    CHECK(fd->IsOpen())
+        << "Error creating or inheriting modem simulator server: "
         << fd->StrError();
 
     auto modem_simulator = std::make_unique<ModemSimulator>(modem_id);
