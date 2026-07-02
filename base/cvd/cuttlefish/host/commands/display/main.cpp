@@ -21,12 +21,11 @@
 #include <vector>
 
 #include "absl/base/no_destructor.h"
-#include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
-#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -105,8 +104,7 @@ Result<int> DoHelp(std::vector<std::string>& args) {
     return 0;
   }
 
-  static const absl::NoDestructor<
-      std::unordered_map<std::string, std::string>>
+  static const absl::NoDestructor<std::unordered_map<std::string, std::string>>
       kSubCommandUsages({
           {"add", kAddUsage},
           {"list", kListUsage},
@@ -155,7 +153,7 @@ Result<int> DoRemove(std::vector<std::string>& args) {
 
   std::vector<std::string> displays;
   const std::vector<Flag> remove_displays_flags = {
-    Flag::StringFlag(kDisplayFlag)
+      Flag::StringFlag(kDisplayFlag)
           .Help("Display id of a display to remove.")
           .Setter([&](std::string_view arg) -> Result<void> {
             displays.emplace_back(arg);
