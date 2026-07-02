@@ -325,25 +325,47 @@ Result<std::vector<Flag>> GetCvdInternalStartFlags(
   return flags;
 }
 
+bool CanBypassToSingleInstance(const LocalInstance& instance,
+                               const LocalInstanceGroup& group,
+                               const std::vector<std::string>& subcmd_args) {
+  if (instance.State() != cvd::INSTANCE_STATE_STOPPED) {
+    return false;
+  }
+  if (group.StartTime() == TimeStamp{}) {
+    return false;
+  }
+
+  std::vector<std::string> args_copy = subcmd_args;
+  bool daemon = true;
+  std::vector<Flag> safe_flags = {
+      GflagsCompatFlag("daemon", daemon),
+  };
+  const Result<void> res = ConsumeFlags(safe_flags, args_copy);
+  if (!res.ok() || !daemon || !args_copy.empty()) {
+    return false;
+  }
+
+  const std::vector<LocalInstance>& instances = group.Instances();
+  if (instances.empty()) {
+    return false;
+  }
+  const LocalInstance& main_instance = instances[0];
+  if (instance.Id() == main_instance.Id()) {
+    return false;
+  }
+  if (main_instance.State() != cvd::INSTANCE_STATE_RUNNING) {
+    return false;
+  }
+
+  return true;
+}
+
 }  // namespace
 
 CvdStartCommandHandler::CvdStartCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {
   own_flags_.daemon = true;
-}
-
-static bool HasUnsafeFlagsForBypass(const std::vector<std::string>& args) {
-  std::vector<std::string> args_copy = args;
-  bool daemon = true;
-  std::vector<Flag> safe_flags = {
-      GflagsCompatFlag("daemon", daemon),
-  };
-  auto res = ConsumeFlags(safe_flags, args_copy);
-  if (!res.ok()) {
-    return true;
-  }
-  return !args_copy.empty();
 }
 
 Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
@@ -361,13 +383,11 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
     auto [instance, group] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request));
 
-    if (instance.State() == cvd::INSTANCE_STATE_STOPPED &&
-        group.StartTime() != TimeStamp{} &&
-        !HasUnsafeFlagsForBypass(subcmd_args)) {
+    if (CanBypassToSingleInstance(instance, group, subcmd_args)) {
       CF_EXPECT(LaunchSingleInstance(instance, group, request));
       return {};
     } else {
-      VLOG(1) << "Instance is not in stopped state. Proceeding with "
+      VLOG(1) << "Cannot bypass to single instance start. Proceeding with "
                  "normal group start.";
     }
   }
@@ -584,7 +604,7 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
 Result<void> CvdStartCommandHandler::LaunchSingleInstance(
     LocalInstance& instance, LocalInstanceGroup& group,
     const CommandRequest& request) {
-  auto bin_path = group.HostArtifactsPath() + "/bin/run_cvd";
+  const std::string bin_path = group.HostArtifactsPath() + "/bin/run_cvd";
   std::unordered_map<std::string, std::string> run_cvd_envs = request.Env();
   run_cvd_envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.Id());
   run_cvd_envs["HOME"] = group.HomeDir();
@@ -610,7 +630,8 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
     LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
   }
 
-  auto symlink_config_res = SymlinkPreviousConfig(group.HomeDir());
+  const Result<void> symlink_config_res =
+      SymlinkPreviousConfig(group.HomeDir());
   if (!symlink_config_res.ok()) {
     LOG(ERROR) << "Failed to symlink the config file at system wide home: "
                << symlink_config_res.error();
@@ -641,7 +662,7 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
   set_instance_state(cvd::INSTANCE_STATE_RUNNING);
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
-  auto group_json = CF_EXPECT(group.FetchStatus());
+  const Json::Value group_json = CF_EXPECT(group.FetchStatus());
   std::cout << group_json.toStyledString();
 
   return {};
