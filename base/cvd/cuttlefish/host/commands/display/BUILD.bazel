@@ -6,10 +6,7 @@ package(
 
 cf_cc_binary(
     name = "cvd_internal_display",
-    srcs = [
-        "main.cpp",
-    ],
-    clang_format_enabled = False,
+    srcs = ["main.cpp"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -21,7 +18,6 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:display",
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/base:no_destructor",
     ],
 )
