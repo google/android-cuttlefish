@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "absl/strings/strip.h"
-
 #include <algorithm>
 #include <string>
+
+#include "absl/strings/strip.h"
 
 namespace cuttlefish {
 
@@ -38,15 +38,17 @@ class CommandParser {
 
   std::string_view GetNextStr();
   std::string_view GetNextStr(char flag);
-  std::string GetNextStrDeciToHex();  /* for AT+CRSM */
+  std::string GetNextStrDeciToHex(); /* for AT+CRSM */
 
   int GetNextInt();
   int GetNextHexInt();
 
   const std::string_view* operator->() const { return &command_; }
   const std::string_view& operator*() const { return command_; }
-  bool operator==(const std::string &rhs) const { return command_ == rhs; }
-  std::string_view::const_reference& operator[](int index) const { return command_[index]; }
+  bool operator==(const std::string& rhs) const { return command_ == rhs; }
+  std::string_view::const_reference& operator[](int index) const {
+    return command_[index];
+  }
 
  private:
   std::string copy_command_;

@@ -19,14 +19,15 @@
 
 namespace cuttlefish {
 
-class DataService : public ModemService, public std::enable_shared_from_this<DataService> {
+class DataService : public ModemService,
+                    public std::enable_shared_from_this<DataService> {
  public:
   DataService(int32_t service_id, ChannelMonitor* channel_monitor,
               ThreadLooper* thread_looper);
   ~DataService() = default;
 
-  DataService(const DataService &) = delete;
-  DataService &operator=(const DataService &) = delete;
+  DataService(const DataService&) = delete;
+  DataService& operator=(const DataService&) = delete;
 
   void HandleActivateDataCall(const Client& client, const std::string& command);
   void HandleQueryDataCallList(const Client& client);
@@ -47,7 +48,7 @@ class DataService : public ModemService, public std::enable_shared_from_this<Dat
                                     int cellBandwidthDownlink, int count);
 
   struct PDPContext {
-    enum CidState {ACTIVE, NO_ACTIVE};
+    enum CidState { ACTIVE, NO_ACTIVE };
 
     int cid;
     CidState state;

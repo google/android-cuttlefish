@@ -10,7 +10,6 @@ cf_cc_library(
     name = "channel_monitor",
     srcs = ["channel_monitor.cpp"],
     hdrs = ["channel_monitor.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/modem_simulator:client",
@@ -36,7 +35,6 @@ cf_cc_library(
     name = "command_parser",
     srcs = ["command_parser.cpp"],
     hdrs = ["command_parser.h"],
-    clang_format_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/strings",
@@ -53,7 +51,6 @@ cf_cc_library(
     name = "data_service",
     srcs = ["data_service.cpp"],
     hdrs = ["data_service.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:modem_service",
@@ -163,10 +160,7 @@ cf_cc_library(
 
 cf_cc_binary(
     name = "modem_simulator",
-    srcs = [
-        "main.cpp",
-    ],
-    clang_format_enabled = False,
+    srcs = ["main.cpp"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:tee_logging",

@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <string.h>
 #include <unistd.h>
 
 #include <string_view>
 
-#include <android-base/macros.h>
 #include "absl/cleanup/cleanup.h"
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/log/log.h"
-#include "absl/strings/str_format.h"
 
 #include "allocd/alloc_utils.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 #include "cuttlefish/host/commands/cvdalloc/sem.h"
@@ -83,8 +79,8 @@ Result<void> Teardown(int id, std::string_view ethernet_bridge_name,
 
 }  // namespace
 
-Result<int> CvdallocMain(int argc, char *argv[]) {
-  std::vector<char *> args = absl::ParseCommandLine(argc, argv);
+Result<int> CvdallocMain(int argc, char* argv[]) {
+  std::vector<char*> args = absl::ParseCommandLine(argc, argv);
 
   if (absl::GetFlag(FLAGS_id) == 0 || absl::GetFlag(FLAGS_socket) == 0) {
     Usage();
@@ -103,9 +99,7 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
     return CF_ERRNO("close: " << StrError(errno));
   }
 
-  absl::Cleanup shutdown = [sock]() {
-    sock->Shutdown(SHUT_RDWR);
-  };
+  absl::Cleanup shutdown = [sock]() { sock->Shutdown(SHUT_RDWR); };
 
   /*
    * Save our current uid, so we can restore it to drop privileges later.
@@ -131,7 +125,8 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
         Teardown(id, kCvdallocEthernetBridgeName, kCvdallocWirelessBridgeName);
   };
 
-  CF_EXPECT(Allocate(id, kCvdallocEthernetBridgeName, kCvdallocWirelessBridgeName));
+  CF_EXPECT(
+      Allocate(id, kCvdallocEthernetBridgeName, kCvdallocWirelessBridgeName));
   CF_EXPECT(cvdalloc::Post(sock));
 
   LOG(INFO) << "cvdalloc: waiting to teardown";
@@ -145,7 +140,7 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
 
 }  // namespace cuttlefish
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   auto res = cuttlefish::CvdallocMain(argc, argv);
   if (!res.ok()) {
     LOG(ERROR) << "cvdalloc failed: \n" << res.error();

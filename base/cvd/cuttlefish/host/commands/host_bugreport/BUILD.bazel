@@ -7,7 +7,6 @@ package(
 cf_cc_binary(
     name = "cvd_internal_host_bugreport",
     srcs = ["main.cc"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
