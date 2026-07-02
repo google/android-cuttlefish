@@ -20,11 +20,11 @@
 
 #include <regex>
 
-#include "absl/strings/ascii.h"
-#include <gflags/gflags.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -69,13 +69,13 @@ int main(int argc, char** argv) {
   auto instance = config->ForDefaultInstance();
 
   if (instance.run_as_daemon()) {
-        cuttlefish::LogToFiles({instance.launcher_log_path()});
+    cuttlefish::LogToFiles({instance.launcher_log_path()});
   } else {
-        cuttlefish::LogToStderrAndFiles({instance.launcher_log_path()});
+    cuttlefish::LogToStderrAndFiles({instance.launcher_log_path()});
   }
 
   auto log_fd = cuttlefish::SharedFD::Dup(FLAGS_log_fd_in);
-  CHECK(log_fd->IsOpen()) << "Failed to dup log_fd_in: " <<  log_fd->StrError();
+  CHECK(log_fd->IsOpen()) << "Failed to dup log_fd_in: " << log_fd->StrError();
   close(FLAGS_log_fd_in);
 
   if (!FLAGS_process_name.empty()) {
