@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/commands/modem_simulator/data_service.h"
 
-
 #include "cuttlefish/host/commands/modem_simulator/device_config.h"
 
 namespace cuttlefish {
@@ -158,13 +157,10 @@ void DataService::HandlePDPContext(const Client& client,
   auto dnses = cuttlefish::modem::DeviceConfig::ril_dns();
   auto gateways = cuttlefish::modem::DeviceConfig::ril_gateway();
 
-  PDPContext pdp_context = {cid,
-                            PDPContext::ACTIVE,
+  PDPContext pdp_context = {cid,     PDPContext::ACTIVE,
                             ip_type,  // IPV4 or IPV6 or IPV4V6
-                            apn,
-                            address,
-                            dnses,
-                            gateways};
+                            apn,     address,
+                            dnses,   gateways};
 
   // check cid
   auto iter = pdp_context_.begin();
@@ -191,8 +187,8 @@ void DataService::HandleQueryPDPContextList(const Client& client) {
   std::stringstream ss;
   for (auto it = pdp_context_.begin(); it != pdp_context_.end(); ++it) {
     std::stringstream ss;
-    ss << "+CGDCONT: " << it->cid << "," << it->conn_types << ","
-       << it->apn << "," << it->addresses << ",0,0";
+    ss << "+CGDCONT: " << it->cid << "," << it->conn_types << "," << it->apn
+       << "," << it->addresses << ",0,0";
     responses.push_back(ss.str());
   }
   responses.push_back("OK");
@@ -247,13 +243,13 @@ void DataService::HandleEnterDataState(const Client& client,
  *   The execution command returns the relevant information for an active non
  * secondary PDP context with the context identifier <cid>.
  *
- * Command                            Possible response(s)
- * +CGCONTRDP[=<cid>]                 [+CGCONTRDP: <cid>,<bearer_id>,<apn>
- *                                    [,<local_addr and subnet_mask>[,<gw_addr>
- *                                    [,<DNS_prim_addr>[<DNS_sec_addr>[...]]]]]]
- *                                    [<CR><LF>+CGCONTRDP: <cid>,<bearer_id>,<apn>
- *                                    [,<local_addr and subnet_mask>[,<gw_addr>
- *                                    [,<DNS_prim_addr>[<DNS_sec_addr>[...]]]]]]
+ * Command                          Possible response(s)
+ * +CGCONTRDP[=<cid>]               [+CGCONTRDP: <cid>,<bearer_id>,<apn>
+ *                                  [,<local_addr and subnet_mask>[,<gw_addr>
+ *                                  [,<DNS_prim_addr>[<DNS_sec_addr>[...]]]]]]
+ *                                  [<CR><LF>+CGCONTRDP: <cid>,<bearer_id>,<apn>
+ *                                  [,<local_addr and subnet_mask>[,<gw_addr>
+ *                                  [,<DNS_prim_addr>[<DNS_sec_addr>[...]]]]]]
  *
  * <cid>: see AT+CGACT
  * <bearer_id>: integer type; identifies the bearer, i.e. the EPS bearer and
@@ -263,7 +259,8 @@ void DataService::HandleEnterDataState(const Client& client,
  * <gw_addr>: string type; shows the Gateway Address of the MT. The string is
  *            given as dot-separated numeric (0-255) parameters.
  * <DNS_prim_addr>: string type; shows the IP address of the primary DNS server.
- * <DNS_sec_addr>: string type; shows the IP address of the secondary DNS server.
+ * <DNS_sec_addr>: string type; shows the IP address of the secondary DNS
+ * server.
  *
  *
  * see RIL_REQUEST_SETUP_DATA_CALL in RIL
@@ -287,12 +284,8 @@ void DataService::HandleReadDynamicParam(const Client& client,
     responses.push_back(kCmeErrorInvalidIndex);  // number
   } else {
     std::stringstream ss;
-    ss << "+CGCONTRDP: "
-       << iter->cid << ",5,"
-       << iter->apn << ","
-       << iter->addresses << ","
-       << iter->gateways << ","
-       << iter->dnses;
+    ss << "+CGCONTRDP: " << iter->cid << ",5," << iter->apn << ","
+       << iter->addresses << "," << iter->gateways << "," << iter->dnses;
     responses.push_back(ss.str());
     responses.push_back("OK");
   }
