@@ -62,15 +62,10 @@ cf_cc_library(
     ],
 )
 
-cc_library(
+cf_cc_library(
     name = "alloc_netlink",
-    srcs = [
-        "alloc_netlink.cpp",
-    ],
-    hdrs = [
-        "alloc_driver.h",
-    ],
-    copts = ["-std=c++20"],
+    srcs = ["alloc_netlink.cpp"],
+    hdrs = ["alloc_driver.h"],
     deps = [
         "//allocd/net:netlink",
         "//cuttlefish/common/libs/fs",

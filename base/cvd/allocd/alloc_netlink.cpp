@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "allocd/alloc_driver.h"
 
 #include <arpa/inet.h>
+#include <asm/types.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <linux/if_tun.h>
@@ -25,11 +26,10 @@
 #include <net/if_arp.h>
 #include <netinet/in.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/types.h>
+#include <sys/socket.h>  // IWYU pragma: keep
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <string_view>
 
@@ -37,10 +37,11 @@
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
 #include "absl/strings/strip.h"
 
+#include "allocd/alloc_driver.h"
 #include "allocd/net/netlink_client.h"
+#include "allocd/net/netlink_request.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/result/result.h"
@@ -100,8 +101,10 @@ Result<void> ShutdownIface(std::string_view name) {
   auto factory = NetlinkClientFactory::Default();
   std::unique_ptr<NetlinkClient> nl = factory->New(NETLINK_ROUTE);
 
+  // NOLINTNEXTLINE(misc-include-cleaner): rtnetlink
   NetlinkRequest req(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_ACK);
   req.AddIfInfo(0, false);
+  // NOLINTNEXTLINE(misc-include-cleaner): rtnetlink
   req.AddString(IFLA_IFNAME, std::string(name));
   CF_EXPECT(nl->Send(req), "ShutdownIface");
   return {};
@@ -112,6 +115,7 @@ Result<void> BringUpIface(std::string_view name) {
   auto factory = NetlinkClientFactory::Default();
   std::unique_ptr<NetlinkClient> nl = factory->New(NETLINK_ROUTE);
 
+  // NOLINTNEXTLINE(misc-include-cleaner): rtnetlink
   NetlinkRequest req(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_ACK);
   req.AddIfInfo(0, true);
   req.AddString(IFLA_IFNAME, std::string(name));
@@ -131,8 +135,8 @@ Result<void> AddGateway(std::string_view name, std::string_view gateway,
   NetlinkRequest req(RTM_NEWADDR, NLM_F_REQUEST | NLM_F_ACK);
   req.AddAddrInfo(*index, Prefix(netmask));
   in_addr_t inaddr = inet_addr(std::string(gateway).c_str());
-  req.AddInAddr(IFA_LOCAL, &inaddr);
-  req.AddInAddr(IFA_ADDRESS, &inaddr);
+  req.AddInAddr(IFA_LOCAL, &inaddr);    // NOLINT(misc-include-cleaner): netlink
+  req.AddInAddr(IFA_ADDRESS, &inaddr);  // NOLINT(misc-include-cleaner): netlink
 
   CF_EXPECT(nl->Send(req), "AddGateway");
   return {};
@@ -221,12 +225,14 @@ Result<void> CreateBridge(std::string_view name) {
   req.Append(ifinfomsg{
       .ifi_type = ARPHRD_NETROM,
   });
+  // NOLINTBEGIN(misc-include-cleaner): rtnetlink
   req.AddString(IFLA_IFNAME, std::string(name));
   req.PushList(IFLA_LINKINFO);
   req.AddString(IFLA_INFO_KIND, "bridge");
   req.PushList(IFLA_INFO_DATA);
   req.AddInt(IFLA_BR_FORWARD_DELAY, 0);
   req.AddInt(IFLA_BR_STP_STATE, 0);
+  // NOLINTEND(misc-include-cleaner): rtnetlink
   req.PopList();
   req.PopList();
 
