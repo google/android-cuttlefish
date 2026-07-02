@@ -17,6 +17,7 @@ package orchestrator
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -26,6 +27,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
@@ -67,7 +69,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds", httpHandler(&listCVDsHandlerAll{Config: c.Config})).Methods("GET")
 	router.Handle("/cvds/{group}", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
 	router.Handle("/cvds/{group}/{name}", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
-	router.PathPrefix("/cvds/{group}/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
+	router.Handle("/cvds/{group}/{name}/logs/{logname}", &getCVDLogsHandler{Config: c.Config}).Methods("GET")
+	router.Handle("/cvds/{group}/{name}/logs/{logname}/:stream", &streamInstanceLogFileHandler{}).Methods("GET")
 	router.Handle("/cvds/{group}/:start",
 		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &startCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/:stop",
@@ -536,20 +539,44 @@ func (h *getCVDLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	group := vars["group"]
 	name := vars["name"]
+	logname := vars["logname"]
 	logsDir, err := CVDLogsDir(exec.CommandContext, group, name)
 	if err != nil {
 		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
-		appErr, ok := err.(*operator.AppError)
-		if ok {
-			w.WriteHeader(appErr.StatusCode)
-		} else {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	sp := fmt.Sprintf("/cvds/%s/%s/logs", group, name)
-	handler := http.StripPrefix(sp, http.FileServer(http.Dir(logsDir)))
-	handler.ServeHTTP(w, r)
+	filePath := filepath.Join(logsDir, logname)
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Transfer-Encoding", "chunked")
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		log.Println("ResponseWriter does not support Flusher")
+	}
+	buffer := make([]byte, 4096)
+	for {
+		n, err := file.Read(buffer)
+		if n > 0 {
+			w.Write(buffer[:n])
+			if flusher != nil {
+				flusher.Flush()
+			}
+		}
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			log.Printf("Error reading file: %v", err)
+			return
+		}
+	}
 }
 
 type listOperationsHandler struct {
@@ -922,4 +949,112 @@ func getFetchCredentials(config BuildAPICredentialsConfig, r *http.Request) cvd.
 	}
 	log.Println("fetch credentials: using no credentials")
 	return cvd.FetchCredentials{}
+}
+
+type streamInstanceLogFileHandler struct{}
+
+func (h *streamInstanceLogFileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Println("request:", r.Method, r.URL.Path)
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	logname := vars["logname"]
+	logsDir, err := CVDLogsDir(exec.CommandContext, group, name)
+	if err != nil {
+		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	filePath := filepath.Join(logsDir, logname)
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Transfer-Encoding", "chunked")
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		log.Println("ResponseWriter does not support Flusher")
+	}
+	buffer := make([]byte, 4096)
+
+	// Read existing content first
+	for {
+		n, err := file.Read(buffer)
+		if n > 0 {
+			w.Write(buffer[:n])
+			if flusher != nil {
+				flusher.Flush()
+			}
+		}
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			log.Printf("Error reading file: %v", err)
+			return
+		}
+	}
+	// Set up fsnotify watcher
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Printf("Failed to create watcher: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer watcher.Close()
+
+	// Watch the directory to reliably detect file deletion
+	err = watcher.Add(logsDir)
+	if err != nil {
+		log.Printf("Failed to add directory to watcher: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	for {
+		select {
+		case <-r.Context().Done():
+			log.Println("Client disconnected")
+			return
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				return
+			}
+			log.Printf("Watcher error: %v", err)
+			return
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return
+			}
+			if event.Name == filePath {
+				if event.Has(fsnotify.Write) {
+					for {
+						n, err := file.Read(buffer)
+						if n > 0 {
+							w.Write(buffer[:n])
+							if flusher != nil {
+								flusher.Flush()
+							}
+						}
+						if err != nil {
+							if err == io.EOF {
+								break
+							}
+							log.Printf("Error reading file: %v", err)
+							return
+						}
+					}
+				}
+				if event.Has(fsnotify.Remove) || event.Has(fsnotify.Rename) {
+					log.Printf("File was deleted or renamed: %v", event)
+					return // Stop streaming
+				}
+			}
+		}
+	}
 }
