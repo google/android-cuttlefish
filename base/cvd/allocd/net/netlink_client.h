@@ -33,7 +33,7 @@ class NetlinkClient {
 
  private:
   NetlinkClient(const NetlinkClient&);
-  NetlinkClient& operator= (const NetlinkClient&);
+  NetlinkClient& operator=(const NetlinkClient&);
 };
 
 class NetlinkClientFactory {
