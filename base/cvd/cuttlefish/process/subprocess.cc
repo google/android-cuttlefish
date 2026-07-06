@@ -27,6 +27,7 @@
 
 #include "absl/log/log.h"
 
+#include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -85,23 +86,22 @@ int Subprocess::Wait() {
   return retval;
 }
 // NOLINTNEXTLINE(misc-include-cleaner): <signal.h>
-int Subprocess::Wait(siginfo_t* infop, int options) {
-  if (pid_ < 0) {
-    LOG(ERROR)
-        << "Attempt to wait on invalid pid(has it been waited on already?): "
-        << pid_;
-    return -1;
-  }
-  *infop = {};
-  // NOLINTNEXTLINE(misc-include-cleaner): <sys/wait.h>
-  auto retval = TEMP_FAILURE_RETRY(waitid(P_PID, pid_, infop, options));
+Result<siginfo_t> Subprocess::Wait(int options) {
+  CF_EXPECT_GE(pid_, 0,
+               "Attempt to wait on invalid pid(has it been waited on already?");
+  siginfo_t infop = {};
+  // NOLINTNEXTLINE(misc-include-cleaner): P_PID
+  int retval = TEMP_FAILURE_RETRY(waitid(P_PID, pid_, &infop, options));
   // We don't want to wait twice for the same process
-  bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED;
+  bool exited = infop.si_code == CLD_EXITED || infop.si_code == CLD_DUMPED;
   bool reaped = !(options & WNOWAIT);
+  pid_t tracked = pid_;
   if (exited && reaped) {
     pid_ = -1;
   }
-  return retval;
+  CF_EXPECT_EQ(retval, 0,
+               "Lost track of process " << tracked << ": " << StrError(errno));
+  return infop;
 }
 
 static Result<void> SendSignalImpl(const int signal, const pid_t pid,
