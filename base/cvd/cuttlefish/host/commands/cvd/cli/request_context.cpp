@@ -88,40 +88,55 @@ std::vector<std::string> GetPossibleCommands(
 
 RequestContext::RequestContext(InstanceManager& instance_manager,
                                InstanceLockFileManager& lock_file_manager) {
-  request_handlers_.emplace_back(NewCvdCacheCommandHandler());
+  request_handlers_.emplace_back(std::make_unique<CvdCacheCommandHandler>());
 
-  request_handlers_.emplace_back(NewCvdCreateCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdDisplayCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdEnvCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdFetchCommandHandler());
-  request_handlers_.emplace_back(NewCvdFleetCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdClearCommandHandler(instance_manager));
   request_handlers_.emplace_back(
-      NewCvdBugreportCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdStopCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdHelpHandler(this->request_handlers_));
-  request_handlers_.emplace_back(NewLintCommand());
-  request_handlers_.emplace_back(NewLoadConfigsCommand(instance_manager));
-  request_handlers_.emplace_back(NewLoginCommand());
+      std::make_unique<CvdCreateCommandHandler>(instance_manager));
   request_handlers_.emplace_back(
-      NewCvdDevicePowerBtnCommandHandler(instance_manager));
+      std::make_unique<CvdDisplayCommandHandler>(instance_manager));
   request_handlers_.emplace_back(
-      NewCvdDevicePowerwashCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdMonitorCommandHandler(instance_manager));
+      std::make_unique<CvdEnvCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(std::make_unique<CvdFetchCommandHandler>());
   request_handlers_.emplace_back(
-      NewCvdDeviceRestartCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewRemoveCvdCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdResetCommandHandler(instance_manager));
+      std::make_unique<CvdFleetCommandHandler>(instance_manager));
   request_handlers_.emplace_back(
-      NewScreenRecordingCommandHandler(instance_manager));
+      std::make_unique<CvdClearCommandHandler>(instance_manager));
   request_handlers_.emplace_back(
-      NewCvdSnapshotCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdSetupHandler());
-  request_handlers_.emplace_back(NewCvdStartCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdStatusCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdPsCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdVersionHandler());
-  request_handlers_.emplace_back(NewCvdLogsHandler(instance_manager));
+      std::make_unique<CvdBugreportCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(
+      std::make_unique<CvdStopCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(
+      std::make_unique<CvdHelpHandler>(this->request_handlers_));
+  request_handlers_.emplace_back(std::make_unique<LintCommandHandler>());
+  request_handlers_.emplace_back(
+      std::make_unique<LoadConfigsCommand>(instance_manager));
+  request_handlers_.emplace_back(std::make_unique<CvdLoginCommand>());
+  request_handlers_.emplace_back(
+      std::make_unique<CvdDevicePowerBtnCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(
+      std::make_unique<CvdDevicePowerwashCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(
+      std::make_unique<CvdMonitorCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(
+      std::make_unique<CvdDeviceRestartCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(
+      std::make_unique<RemoveCvdCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(
+      std::make_unique<CvdResetCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(
+      std::make_unique<ScreenRecordingCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(
+      std::make_unique<CvdSnapshotCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(std::make_unique<CvdSetupHandler>());
+  request_handlers_.emplace_back(
+      std::make_unique<CvdStartCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(
+      std::make_unique<CvdStatusCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(
+      std::make_unique<CvdPsCommandHandler>(instance_manager));
+  request_handlers_.emplace_back(std::make_unique<CvdVersionHandler>());
+  request_handlers_.emplace_back(
+      std::make_unique<CvdLogsHandler>(instance_manager));
 }
 
 Result<CvdCommandHandler*> RequestContext::Handler(
