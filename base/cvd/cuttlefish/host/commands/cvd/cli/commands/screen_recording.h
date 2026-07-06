@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -43,8 +43,5 @@ class ScreenRecordingCommandHandler : public CvdCommandHandler {
 
   InstanceManager& instance_manager_;
 };
-
-std::unique_ptr<CvdCommandHandler> NewScreenRecordingCommandHandler(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

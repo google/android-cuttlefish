@@ -211,7 +211,7 @@ Result<void> LoadConfigsCommand::LoadGroup(const CommandRequest& request,
   if (!cvd_flags.fetch_cvd_flags.empty()) {
     CommandRequest fetch_cmd = CF_EXPECT(BuildFetchCmd(request, cvd_flags));
     std::unique_ptr<CvdCommandHandler> fetch_handler =
-        NewCvdFetchCommandHandler();
+        std::make_unique<CvdFetchCommandHandler>();
     Result<void> fetch_res = fetch_handler->Handle(fetch_cmd);
     if (!fetch_res.ok()) {
       group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
@@ -230,7 +230,7 @@ Result<void> LoadConfigsCommand::LoadGroup(const CommandRequest& request,
   CommandRequest start_cmd =
       CF_EXPECT(BuildStartCommand(request, cvd_flags, group));
   std::unique_ptr<CvdCommandHandler> start_handler =
-      NewCvdStartCommandHandler(instance_manager_);
+      std::make_unique<CvdStartCommandHandler>(instance_manager_);
   CF_EXPECT(start_handler->Handle(start_cmd));
   return {};
 }
@@ -319,12 +319,6 @@ std::vector<HelpParagraph> LoadConfigsCommand::CommonCommandDescription() {
 Result<std::vector<Flag>> LoadConfigsCommand::Flags(
     const CommandRequest& request) {
   return BuildCvdLoadFlags(flags_);
-}
-
-std::unique_ptr<CvdCommandHandler> NewLoadConfigsCommand(
-    InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new LoadConfigsCommand(instance_manager));
 }
 
 }  // namespace cuttlefish

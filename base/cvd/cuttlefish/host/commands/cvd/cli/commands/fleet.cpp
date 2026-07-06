@@ -17,7 +17,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/fleet.h"
 
 #include <iostream>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -25,7 +24,6 @@
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/result/result.h"
@@ -75,12 +73,6 @@ Result<void> CvdFleetCommandHandler::Handle(const CommandRequest& request) {
   std::cout << output_json.toStyledString();
 
   return {};
-}
-
-std::unique_ptr<CvdCommandHandler> NewCvdFleetCommandHandler(
-    InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new CvdFleetCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

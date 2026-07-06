@@ -16,13 +16,11 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/clear.h"
 
-#include <memory>
 #include <string>
 #include <vector>
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/result/result.h"
@@ -56,12 +54,6 @@ std::string CvdClearCommandHandler::SummaryHelp() const {
 Result<std::string> CvdClearCommandHandler::DetailedHelp(
     const CommandRequest& request) {
   return kSummaryHelpText;
-}
-
-std::unique_ptr<CvdCommandHandler> NewCvdClearCommandHandler(
-    InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new CvdClearCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

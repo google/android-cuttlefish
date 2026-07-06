@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -44,8 +43,5 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
  private:
   InstanceManager& instance_manager_;
 };
-
-std::unique_ptr<CvdCommandHandler> NewCvdDisplayCommandHandler(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include <memory>
+#include <string>
+#include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -40,8 +41,5 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
 
   InstanceManager& instance_manager_;
 };
-
-std::unique_ptr<CvdCommandHandler> NewRemoveCvdCommandHandler(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

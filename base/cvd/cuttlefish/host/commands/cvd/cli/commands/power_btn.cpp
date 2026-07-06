@@ -16,13 +16,11 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/power_btn.h"
 
-#include <memory>
 #include <string>
 #include <vector>
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -67,12 +65,6 @@ bool CvdDevicePowerBtnCommandHandler::RequiresDeviceExists() const {
 Result<std::string> CvdDevicePowerBtnCommandHandler::DetailedHelp(
     const CommandRequest& request) {
   return kSummaryHelpText;
-}
-
-std::unique_ptr<CvdCommandHandler> NewCvdDevicePowerBtnCommandHandler(
-    InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new CvdDevicePowerBtnCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

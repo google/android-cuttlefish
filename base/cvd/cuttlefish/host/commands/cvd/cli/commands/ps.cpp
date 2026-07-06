@@ -21,7 +21,6 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -32,7 +31,6 @@
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -162,12 +160,6 @@ PsRow CvdPsCommandHandler::InstanceToRow(const LocalInstanceGroup& group,
   row[PsColumns::kWebAccess] = web_access_str;
 
   return row;
-}
-
-std::unique_ptr<CvdCommandHandler> NewCvdPsCommandHandler(
-    InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new CvdPsCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

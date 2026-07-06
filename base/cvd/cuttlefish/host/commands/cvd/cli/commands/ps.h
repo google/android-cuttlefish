@@ -17,7 +17,6 @@
 #pragma once
 
 #include <map>
-#include <memory>
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -57,8 +56,5 @@ class CvdPsCommandHandler : public CvdCommandHandler {
   PsRow InstanceToRow(const LocalInstanceGroup& group,
                       LocalInstance& instance) const;
 };
-
-std::unique_ptr<CvdCommandHandler> NewCvdPsCommandHandler(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

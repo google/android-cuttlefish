@@ -46,6 +46,4 @@ class CvdHelpHandler : public CvdCommandHandler {
   const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers_;
 };
 
-std::unique_ptr<CvdCommandHandler> NewCvdHelpHandler(
-    const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers);
 }  // namespace cuttlefish

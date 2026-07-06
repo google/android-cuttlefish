@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -39,8 +38,5 @@ class CvdStatusCommandHandler : public CvdCommandHandler {
  private:
   InstanceManager& instance_manager_;
 };
-
-std::unique_ptr<CvdCommandHandler> NewCvdStatusCommandHandler(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

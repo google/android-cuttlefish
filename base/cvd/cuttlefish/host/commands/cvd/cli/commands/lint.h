@@ -15,7 +15,6 @@
  */
 #pragma once
 
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -36,7 +35,5 @@ class LintCommandHandler : public CvdCommandHandler {
  private:
   Result<std::string> ValidateConfig(std::vector<std::string>& args);
 };
-
-std::unique_ptr<CvdCommandHandler> NewLintCommand();
 
 }  // namespace cuttlefish

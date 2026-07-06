@@ -125,7 +125,7 @@ Result<void> StartGroup(const LocalInstanceGroup& group,
   const CommandRequest start_cmd =
       CF_EXPECT(CreateStartCommand(group, subcmd_args, envs));
   std::unique_ptr<CvdCommandHandler> start_handler =
-      NewCvdStartCommandHandler(instance_manager);
+      std::make_unique<CvdStartCommandHandler>(instance_manager);
   CF_EXPECT(start_handler->Handle(start_cmd));
   return {};
 }
@@ -327,7 +327,7 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
     CommandRequest subrequest = CF_EXPECT(
         CreateLoadCommand(request, subcmd_args, own_flags_.config_file));
     std::unique_ptr<CvdCommandHandler> load_handler =
-        NewLoadConfigsCommand(instance_manager_);
+        std::make_unique<LoadConfigsCommand>(instance_manager_);
     CF_EXPECT(load_handler->Handle(subrequest));
     return {};
   }
@@ -503,11 +503,6 @@ std::vector<Flag> CvdCreateCommandHandler::FlagModeFlags(
                 "there are multiple matching groups, or the chosen group has a "
                 "host tools / guest image mismatch."));
   return flags;
-}
-
-std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(
-    InstanceManager& instance_manager) {
-  return std::make_unique<CvdCreateCommandHandler>(instance_manager);
 }
 
 }  // namespace cuttlefish

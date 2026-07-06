@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <memory>
 #include <optional>
 #include <string>
 
@@ -68,8 +67,5 @@ class CvdStartCommandHandler : public CvdCommandHandler {
     std::optional<std::string> report_anonymous_usage_stats;
   } own_flags_;
 };
-
-std::unique_ptr<CvdCommandHandler> NewCvdStartCommandHandler(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

@@ -18,7 +18,6 @@
 
 #include <chrono>
 #include <iostream>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -31,7 +30,6 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
@@ -175,12 +173,6 @@ Result<void> CvdStatusCommandHandler::Handle(const CommandRequest& request) {
   }
 
   return {};
-}
-
-std::unique_ptr<CvdCommandHandler> NewCvdStatusCommandHandler(
-    InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new CvdStatusCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

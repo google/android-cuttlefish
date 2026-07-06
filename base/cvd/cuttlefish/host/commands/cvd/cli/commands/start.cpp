@@ -55,7 +55,6 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
@@ -702,12 +701,6 @@ std::vector<Flag> CvdStartCommandHandler::BuildOwnFlags() {
                            own_flags_.report_anonymous_usage_stats)
               .Help("Report anonymous usage stats. In foreground mode, "
                     "defaults to 'n' if not specified.")};
-}
-
-std::unique_ptr<CvdCommandHandler> NewCvdStartCommandHandler(
-    InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new CvdStartCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish
