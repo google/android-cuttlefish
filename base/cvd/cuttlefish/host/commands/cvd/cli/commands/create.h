@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -61,8 +60,5 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
   CreateFlags own_flags_;
   selector::NumInstancesParser num_instances_parser_;
 };
-
-std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

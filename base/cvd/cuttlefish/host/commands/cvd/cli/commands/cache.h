@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -24,8 +23,6 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-class CommandRequest;
 
 class CvdCacheCommandHandler : public CvdCommandHandler {
  public:
@@ -36,7 +33,5 @@ class CvdCacheCommandHandler : public CvdCommandHandler {
   std::string SummaryHelp() const override;
   Result<std::string> DetailedHelp(const CommandRequest& request) override;
 };
-
-std::unique_ptr<CvdCommandHandler> NewCvdCacheCommandHandler();
 
 }  // namespace cuttlefish

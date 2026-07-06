@@ -16,14 +16,12 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
-
-class InstanceManager;
 
 class CvdClearCommandHandler : public CvdCommandHandler {
  public:
@@ -40,8 +38,5 @@ class CvdClearCommandHandler : public CvdCommandHandler {
  private:
   InstanceManager& instance_manager_;
 };
-
-std::unique_ptr<CvdCommandHandler> NewCvdClearCommandHandler(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

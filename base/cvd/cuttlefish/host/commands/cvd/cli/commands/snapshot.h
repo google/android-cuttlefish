@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -26,8 +25,6 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-class CommandRequest;
 
 class CvdSnapshotCommandHandler : public CvdCommandHandler {
  public:
@@ -48,8 +45,5 @@ class CvdSnapshotCommandHandler : public CvdCommandHandler {
 
   InstanceManager& instance_manager_;
 };
-
-std::unique_ptr<CvdCommandHandler> NewCvdSnapshotCommandHandler(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -40,7 +39,5 @@ class CvdSetupHandler : public CvdCommandHandler {
   bool RequiresDeviceExists() const override;
   bool RequiresHostConfiguration() const override;
 };
-
-std::unique_ptr<CvdCommandHandler> NewCvdSetupHandler();
 
 }  // namespace cuttlefish

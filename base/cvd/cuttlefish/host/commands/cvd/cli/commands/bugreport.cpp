@@ -19,7 +19,6 @@
 #include <stdlib.h>
 
 #include <iostream>
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -35,7 +34,6 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
@@ -157,12 +155,6 @@ Result<std::string> CvdBugreportCommandHandler::DetailedHelp(
     return CF_ERRF("Failed to execute bugreport binary, exit code: {}", res);
   }
   return stdout;
-}
-
-std::unique_ptr<CvdCommandHandler> NewCvdBugreportCommandHandler(
-    InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new CvdBugreportCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

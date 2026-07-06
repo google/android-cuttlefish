@@ -17,7 +17,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/remove.h"
 
 #include <chrono>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -25,7 +24,6 @@
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -99,12 +97,6 @@ Result<void> RemoveCvdCommandHandler::StopGroup(
   CF_EXPECT(instance_manager_.StopInstanceGroup(
       group, std::chrono::seconds(5), InstanceDirActionOnStop::Clear));
   return {};
-}
-
-std::unique_ptr<CvdCommandHandler> NewRemoveCvdCommandHandler(
-    InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new RemoveCvdCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

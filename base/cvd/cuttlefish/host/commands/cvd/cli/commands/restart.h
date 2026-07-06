@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -27,6 +26,7 @@
 
 namespace cuttlefish {
 
+// restart, powerwash, powerbtn
 class CvdDeviceRestartCommandHandler : public CvdCommandHandler {
  public:
   CvdDeviceRestartCommandHandler(InstanceManager& instance_manager);
@@ -41,9 +41,5 @@ class CvdDeviceRestartCommandHandler : public CvdCommandHandler {
  private:
   InstanceManager& instance_manager_;
 };
-
-// restart, powerwash, powerbtn
-std::unique_ptr<CvdCommandHandler> NewCvdDeviceRestartCommandHandler(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

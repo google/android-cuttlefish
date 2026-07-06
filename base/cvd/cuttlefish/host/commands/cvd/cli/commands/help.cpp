@@ -271,10 +271,4 @@ Result<std::string> CvdHelpHandler::SubCommandHelp(
   return help_message.str();
 }
 
-std::unique_ptr<CvdCommandHandler> NewCvdHelpHandler(
-    const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new CvdHelpHandler(server_handlers));
-}
-
 }  // namespace cuttlefish

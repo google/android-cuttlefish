@@ -6,7 +6,6 @@
 #include <cerrno>
 #include <cstring>
 #include <iostream>
-#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -19,7 +18,6 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -314,12 +312,6 @@ Result<std::vector<Flag>> CvdLogsHandler::Flags(const CommandRequest&) {
           .Help("Use a pager when printing log files. The default when output "
                 "is a terminal."),
   };
-}
-
-std::unique_ptr<CvdCommandHandler> NewCvdLogsHandler(
-    InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new CvdLogsHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

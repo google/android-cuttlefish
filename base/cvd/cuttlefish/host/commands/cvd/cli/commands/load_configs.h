@@ -15,7 +15,6 @@
  */
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include "cuttlefish/flag_parser/flag.h"
@@ -29,6 +28,10 @@
 
 namespace cuttlefish {
 
+/*
+cvd load component is responsible of loading, translation and creation of
+cuttlefish instances based on input json configuration file
+*/
 class LoadConfigsCommand : public CvdCommandHandler {
  public:
   LoadConfigsCommand(InstanceManager& instance_manager);
@@ -49,12 +52,5 @@ class LoadConfigsCommand : public CvdCommandHandler {
   InstanceManager& instance_manager_;
   LoadFlags flags_;
 };
-
-/*
-cvd load component is responsible of loading, translation and creation of
-cuttlefish instances based on input json configuration file
-*/
-std::unique_ptr<CvdCommandHandler> NewLoadConfigsCommand(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

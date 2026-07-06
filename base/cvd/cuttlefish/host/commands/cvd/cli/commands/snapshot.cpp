@@ -20,7 +20,6 @@
 #include <stdlib.h>
 
 #include <iostream>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -31,7 +30,6 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -151,12 +149,6 @@ Result<Command> CvdSnapshotCommandHandler::GenerateCommand(
   };
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   return command;
-}
-
-std::unique_ptr<CvdCommandHandler> NewCvdSnapshotCommandHandler(
-    InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new CvdSnapshotCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

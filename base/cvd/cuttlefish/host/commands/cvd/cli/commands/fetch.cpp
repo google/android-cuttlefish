@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/fetch.h"
 
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -29,7 +28,6 @@
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/cache/cache.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/fetch/auto_login.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
@@ -124,10 +122,6 @@ Result<std::string> CvdFetchCommandHandler::DetailedHelp(
   // TODO: b/389119573 - Should return the help text instead of printing it
   CF_EXPECT(FetchFlags::Parse(args));
   return {};
-}
-
-std::unique_ptr<CvdCommandHandler> NewCvdFetchCommandHandler() {
-  return std::unique_ptr<CvdCommandHandler>(new CvdFetchCommandHandler());
 }
 
 }  // namespace cuttlefish

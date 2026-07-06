@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -50,8 +49,5 @@ class CvdStopCommandHandler : public CvdCommandHandler {
 
   InstanceManager& instance_manager_;
 };
-
-std::unique_ptr<CvdCommandHandler> NewCvdStopCommandHandler(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish

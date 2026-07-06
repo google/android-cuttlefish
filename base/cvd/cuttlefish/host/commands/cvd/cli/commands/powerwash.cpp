@@ -17,14 +17,12 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/powerwash.h"
 
 #include <chrono>
-#include <memory>
 #include <string>
 #include <vector>
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -96,12 +94,6 @@ bool CvdDevicePowerwashCommandHandler::RequiresDeviceExists() const {
 Result<std::string> CvdDevicePowerwashCommandHandler::DetailedHelp(
     const CommandRequest& request) {
   return kDetailedHelpText;
-}
-
-std::unique_ptr<CvdCommandHandler> NewCvdDevicePowerwashCommandHandler(
-    InstanceManager& instance_manager) {
-  return std::unique_ptr<CvdCommandHandler>(
-      new CvdDevicePowerwashCommandHandler(instance_manager));
 }
 
 }  // namespace cuttlefish

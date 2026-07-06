@@ -15,7 +15,6 @@
  */
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -25,6 +24,7 @@
 
 namespace cuttlefish {
 
+/** Create a credentials file */
 class CvdLoginCommand : public CvdCommandHandler {
  public:
   Result<void> Handle(const CommandRequest& request) override;
@@ -33,8 +33,5 @@ class CvdLoginCommand : public CvdCommandHandler {
   std::string SummaryHelp() const override;
   Result<std::string> DetailedHelp(const CommandRequest& request) override;
 };
-
-/** Create a credentials file */
-std::unique_ptr<CvdCommandHandler> NewLoginCommand();
 
 }  // namespace cuttlefish

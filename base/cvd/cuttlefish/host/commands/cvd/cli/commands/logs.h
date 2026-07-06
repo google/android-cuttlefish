@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory>
 #include <optional>
 #include <string>
 
@@ -31,8 +30,5 @@ class CvdLogsHandler : public CvdCommandHandler {
   bool pretty_;
   bool pager_;
 };
-
-std::unique_ptr<CvdCommandHandler> NewCvdLogsHandler(
-    InstanceManager& instance_manager);
 
 }  // namespace cuttlefish
