@@ -146,8 +146,7 @@ Result<void> LocalInstance::PressPowerBtnLegacy() {
 
   VLOG(0) << "Executing: " << cmd.ToString();
 
-  siginfo_t infop;
-  cmd.Start().Wait(&infop, WEXITED);
+  siginfo_t infop = CF_EXPECT(cmd.Start().Wait(WEXITED));
   CF_EXPECT(CheckProcessExitedNormally(infop));
 
   return {};

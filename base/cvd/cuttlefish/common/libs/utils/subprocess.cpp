@@ -52,6 +52,7 @@
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/posix/strerror.h"
 
 extern char** environ;
 
@@ -207,22 +208,19 @@ int Subprocess::Wait() {
   }
   return retval;
 }
-int Subprocess::Wait(siginfo_t* infop, int options) {
-  if (pid_ < 0) {
-    LOG(ERROR)
-        << "Attempt to wait on invalid pid(has it been waited on already?): "
-        << pid_;
-    return -1;
-  }
-  *infop = {};
-  auto retval = TEMP_FAILURE_RETRY(waitid(P_PID, pid_, infop, options));
+Result<siginfo_t> Subprocess::Wait(int options) {
+  CF_EXPECT_GE(pid_, 0,
+               "Attempt to wait on invalid pid(has it been waited on already?");
+  siginfo_t infop = {};
+  int retval = TEMP_FAILURE_RETRY(waitid(P_PID, pid_, &infop, options));
   // We don't want to wait twice for the same process
-  bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED;
+  bool exited = infop.si_code == CLD_EXITED || infop.si_code == CLD_DUMPED;
   bool reaped = !(options & WNOWAIT);
   if (exited && reaped) {
     pid_ = -1;
   }
-  return retval;
+  CF_EXPECT_EQ(retval, 0, StrError(errno));
+  return infop;
 }
 
 static Result<void> SendSignalImpl(const int signal, const pid_t pid,
@@ -581,10 +579,7 @@ Result<siginfo_t> Execute(std::vector<std::string> command,
   Subprocess subprocess = cmd.Start(std::move(subprocess_options));
   CF_EXPECT(subprocess.Started(), "Subprocess failed to start.");
 
-  siginfo_t info;
-  CF_EXPECT_EQ(subprocess.Wait(&info, wait_options), 0);
-
-  return info;
+  return CF_EXPECT(subprocess.Wait(wait_options));
 }
 
 }  // namespace cuttlefish

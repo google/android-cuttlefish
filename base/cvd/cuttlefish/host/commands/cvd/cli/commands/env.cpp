@@ -105,8 +105,8 @@ Result<void> CvdEnvCommandHandler::Handle(const CommandRequest& request) {
                         ? CF_EXPECT(HelpCommand(request))
                         : CF_EXPECT(NonHelpCommand(instance_manager_, request));
 
-  siginfo_t infop;  // NOLINT(misc-include-cleaner)
-  command.Start().Wait(&infop, WEXITED);
+  // NOLINTNEXTLINE(misc-include-cleaner)
+  siginfo_t infop = CF_EXPECT(command.Start().Wait(WEXITED));
 
   CF_EXPECT(CheckProcessExitedNormally(infop));
   return {};
