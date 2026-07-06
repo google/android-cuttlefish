@@ -52,10 +52,7 @@ Result<siginfo_t> Execute(std::vector<std::string> command,
   Subprocess subprocess = cmd.Start(std::move(subprocess_options));
   CF_EXPECT(subprocess.Started(), "Subprocess failed to start.");
 
-  siginfo_t info;
-  CF_EXPECT_EQ(subprocess.Wait(&info, wait_options), 0);
-
-  return info;
+  return CF_EXPECT(subprocess.Wait(wait_options));
 }
 
 }  // namespace cuttlefish

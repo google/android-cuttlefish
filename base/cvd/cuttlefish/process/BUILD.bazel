@@ -92,6 +92,7 @@ cf_cc_library(
     srcs = ["subprocess.cc"],
     hdrs = ["subprocess.h"],
     deps = [
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
