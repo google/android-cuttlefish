@@ -6,9 +6,7 @@ package(
 
 cf_cc_binary(
     name = "cvd_import_locations",
-    srcs = [
-        "main.cc",
-    ],
+    srcs = ["main.cc"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:tee_logging",
@@ -18,5 +16,6 @@ cf_cc_binary(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@gflags",
+        "@grpc//:grpc++",
     ],
 )

@@ -20,9 +20,9 @@
 
 #include <memory>
 
-#include <grpcpp/channel.h>
-#include <grpcpp/support/status.h>
 #include "absl/log/log.h"
+#include "grpcpp/channel.h"
+#include "grpcpp/support/status.h"
 
 #include "cuttlefish/result/result.h"
 

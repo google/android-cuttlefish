@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "GpxParser.h"
+#include "cuttlefish/host/libs/location/GpxParser.h"
+
 #include <string.h>
 #include <time.h>
 
@@ -22,9 +23,9 @@
 #include <string>
 #include <utility>
 
-#include <libxml/parser.h>
+#include "libxml/parser.h"
 
-#include "StringParse.h"
+#include "cuttlefish/host/libs/location/StringParse.h"
 
 // format an error message
 template <class... Args>
@@ -34,7 +35,7 @@ static std::string formatError(const char* format, Args&&... args) {
   return buf;
 }
 
-static void cleanupXmlDoc(xmlDoc *doc) {
+static void cleanupXmlDoc(xmlDoc* doc) {
   xmlFreeDoc(doc);
   xmlCleanupParser();
 }
@@ -45,15 +46,15 @@ static bool parseLocation(xmlNode* ptNode, xmlDoc* doc, GpsFix* result,
   float longitude;
 
   xmlAttrPtr attr;
-  xmlChar *tmpStr;
+  xmlChar* tmpStr;
 
   // Check for and get the latitude attribute
-  attr = xmlHasProp(ptNode, (const xmlChar *)"lat");
-  if (!attr || !(tmpStr = xmlGetProp(ptNode, (const xmlChar *)"lat"))) {
+  attr = xmlHasProp(ptNode, (const xmlChar*)"lat");
+  if (!attr || !(tmpStr = xmlGetProp(ptNode, (const xmlChar*)"lat"))) {
     *error = formatError("Point missing a latitude on line %d.", ptNode->line);
     return false;  // Return error since a point *must* have a latitude
   } else {
-    int read = SscanfWithCLocale(reinterpret_cast<const char *>(tmpStr), "%f",
+    int read = SscanfWithCLocale(reinterpret_cast<const char*>(tmpStr), "%f",
                                  &latitude);
     xmlFree(tmpStr);  // Caller-freed
     if (read != 1) {
@@ -62,12 +63,12 @@ static bool parseLocation(xmlNode* ptNode, xmlDoc* doc, GpsFix* result,
   }
 
   // Check for and get the longitude attribute
-  attr = xmlHasProp(ptNode, (const xmlChar *)"lon");
-  if (!attr || !(tmpStr = xmlGetProp(ptNode, (const xmlChar *)"lon"))) {
+  attr = xmlHasProp(ptNode, (const xmlChar*)"lon");
+  if (!attr || !(tmpStr = xmlGetProp(ptNode, (const xmlChar*)"lon"))) {
     *error = formatError("Point missing a longitude on line %d.", ptNode->line);
     return false;  // Return error since a point *must* have a longitude
   } else {
-    int read = SscanfWithCLocale(reinterpret_cast<const char *>(tmpStr), "%f",
+    int read = SscanfWithCLocale(reinterpret_cast<const char*>(tmpStr), "%f",
                                  &longitude);
     xmlFree(tmpStr);  // Caller-freed
     if (read != 1) {
@@ -83,15 +84,15 @@ static bool parseLocation(xmlNode* ptNode, xmlDoc* doc, GpsFix* result,
   // description) Note that none are actually required according to the GPX
   // format.
   int childCount = 0;
-  for (xmlNode *field = ptNode->children; field; field = field->next) {
+  for (xmlNode* field = ptNode->children; field; field = field->next) {
     tmpStr = nullptr;
 
-    if (!strcmp((const char *)field->name, "time")) {
+    if (!strcmp((const char*)field->name, "time")) {
       if ((tmpStr = xmlNodeListGetString(doc, field->children, 1))) {
         // Convert to a number
         struct tm time = {};
         time.tm_isdst = -1;
-        int results = sscanf((const char *)tmpStr, "%u-%u-%uT%u:%u:%u",
+        int results = sscanf((const char*)tmpStr, "%u-%u-%uT%u:%u:%u",
                              &time.tm_year, &time.tm_mon, &time.tm_mday,
                              &time.tm_hour, &time.tm_min, &time.tm_sec);
         if (results != 6) {
@@ -110,9 +111,9 @@ static bool parseLocation(xmlNode* ptNode, xmlDoc* doc, GpsFix* result,
         xmlFree(tmpStr);  // Caller-freed
         childCount++;
       }
-    } else if (!strcmp((const char *)field->name, "ele")) {
+    } else if (!strcmp((const char*)field->name, "ele")) {
       if ((tmpStr = xmlNodeListGetString(doc, field->children, 1))) {
-        int read = SscanfWithCLocale(reinterpret_cast<const char *>(tmpStr),
+        int read = SscanfWithCLocale(reinterpret_cast<const char*>(tmpStr),
                                      "%f", &result->elevation);
         xmlFree(tmpStr);  // Caller-freed
         if (read != 1) {
@@ -120,15 +121,15 @@ static bool parseLocation(xmlNode* ptNode, xmlDoc* doc, GpsFix* result,
         }
         childCount++;
       }
-    } else if (!strcmp((const char *)field->name, "name")) {
+    } else if (!strcmp((const char*)field->name, "name")) {
       if ((tmpStr = xmlNodeListGetString(doc, field->children, 1))) {
-        result->name = reinterpret_cast<const char *>(tmpStr);
+        result->name = reinterpret_cast<const char*>(tmpStr);
         xmlFree(tmpStr);  // Caller-freed
         childCount++;
       }
-    } else if (!strcmp((const char *)field->name, "desc")) {
+    } else if (!strcmp((const char*)field->name, "desc")) {
       if ((tmpStr = xmlNodeListGetString(doc, field->children, 1))) {
-        result->description = reinterpret_cast<const char *>(tmpStr);
+        result->description = reinterpret_cast<const char*>(tmpStr);
         xmlFree(tmpStr);  // Caller-freed
         childCount++;
       }
@@ -144,13 +145,13 @@ static bool parseLocation(xmlNode* ptNode, xmlDoc* doc, GpsFix* result,
 }
 
 static bool parse(xmlDoc* doc, GpsFixArray* fixes, std::string* error) {
-  xmlNode *root = xmlDocGetRootElement(doc);
+  xmlNode* root = xmlDocGetRootElement(doc);
   GpsFix location;
   bool isOk;
 
-  for (xmlNode *child = root->children; child; child = child->next) {
+  for (xmlNode* child = root->children; child; child = child->next) {
     // Individual <wpt> elements are parsed on their own
-    if (!strcmp((const char *)child->name, "wpt")) {
+    if (!strcmp((const char*)child->name, "wpt")) {
       isOk = parseLocation(child, doc, &location, error);
       if (!isOk) {
         cleanupXmlDoc(doc);
@@ -160,10 +161,10 @@ static bool parse(xmlDoc* doc, GpsFixArray* fixes, std::string* error) {
     }
 
     // <rte> elements require an additional depth of parsing
-    else if (!strcmp((const char *)child->name, "rte")) {
-      for (xmlNode *rtept = child->children; rtept; rtept = rtept->next) {
+    else if (!strcmp((const char*)child->name, "rte")) {
+      for (xmlNode* rtept = child->children; rtept; rtept = rtept->next) {
         // <rtept> elements are parsed just like <wpt> elements
-        if (!strcmp((const char *)rtept->name, "rtept")) {
+        if (!strcmp((const char*)rtept->name, "rtept")) {
           isOk = parseLocation(rtept, doc, &location, error);
           if (!isOk) {
             cleanupXmlDoc(doc);
@@ -175,14 +176,14 @@ static bool parse(xmlDoc* doc, GpsFixArray* fixes, std::string* error) {
     }
 
     // <trk> elements require two additional depths of parsing
-    else if (!strcmp((const char *)child->name, "trk")) {
-      for (xmlNode *trkseg = child->children; trkseg; trkseg = trkseg->next) {
+    else if (!strcmp((const char*)child->name, "trk")) {
+      for (xmlNode* trkseg = child->children; trkseg; trkseg = trkseg->next) {
         // Skip non <trkseg> elements
-        if (!strcmp((const char *)trkseg->name, "trkseg")) {
+        if (!strcmp((const char*)trkseg->name, "trkseg")) {
           // <trkseg> elements an additional depth of parsing
-          for (xmlNode *trkpt = trkseg->children; trkpt; trkpt = trkpt->next) {
+          for (xmlNode* trkpt = trkseg->children; trkpt; trkpt = trkpt->next) {
             // <trkpt> elements are parsed just like <wpt> elements
-            if (!strcmp((const char *)trkpt->name, "trkpt")) {
+            if (!strcmp((const char*)trkpt->name, "trkpt")) {
               isOk = parseLocation(trkpt, doc, &location, error);
               if (!isOk) {
                 cleanupXmlDoc(doc);
