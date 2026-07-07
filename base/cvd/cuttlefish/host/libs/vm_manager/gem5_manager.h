@@ -52,5 +52,5 @@ class Gem5Manager : public VmManager {
   Arch arch_;
 };
 
-} // namespace vm_manager
-} // namespace cuttlefish
+}  // namespace vm_manager
+}  // namespace cuttlefish

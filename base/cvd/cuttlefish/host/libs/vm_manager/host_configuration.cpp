@@ -59,7 +59,7 @@ Result<std::pair<int, int>> GetLinuxVersion() {
     if (digit) {
       digit = strtok(NULL, "+.-");
       int minor = atoi(digit);
-      return std::pair<int,int>{major, minor};
+      return std::pair<int, int>{major, minor};
     }
   }
   return CF_ERR("Failed to detect Linux kernel version");
@@ -79,7 +79,7 @@ Result<std::optional<HostConfigurationAction>> EnforceLinuxVersionAtLeast(
   };
 }
 
-} // namespace
+}  // namespace
 
 Result<std::vector<HostConfigurationAction>> ValidateHostConfiguration() {
   std::vector<HostConfigurationAction> actions;
@@ -121,6 +121,5 @@ Result<std::vector<HostConfigurationAction>> ValidateHostConfiguration() {
   return actions;
 }
 
-} // namespace vm_manager
-} // namespace cuttlefish
-
+}  // namespace vm_manager
+}  // namespace cuttlefish

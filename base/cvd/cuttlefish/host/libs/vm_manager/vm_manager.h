@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -132,5 +132,5 @@ Result<std::unordered_map<std::string, std::string>>
 ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,
                              int num_disks);
 
-} // namespace vm_manager
-} // namespace cuttlefish
+}  // namespace vm_manager
+}  // namespace cuttlefish

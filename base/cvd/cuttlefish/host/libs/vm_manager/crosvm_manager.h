@@ -52,5 +52,5 @@ class CrosvmManager : public VmManager {
   static constexpr int kCrosvmVmResetExitCode = 32;
 };
 
-} // namespace vm_manager
-} // namespace cuttlefish
+}  // namespace vm_manager
+}  // namespace cuttlefish

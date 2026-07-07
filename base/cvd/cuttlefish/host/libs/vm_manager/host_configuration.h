@@ -37,6 +37,5 @@ struct HostConfigurationAction {
 
 Result<std::vector<HostConfigurationAction>> ValidateHostConfiguration();
 
-} // namespace vm_manager
-} // namespace cuttlefish
-
+}  // namespace vm_manager
+}  // namespace cuttlefish
