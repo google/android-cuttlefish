@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-
 #include <chrono>
 #include <fstream>
 
-#include <fmt/format.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
@@ -39,7 +38,7 @@ static std::string next_tombstone_path(const std::string& dir) {
   auto retval = fmt::format("{}/tombstone_{:%Y-%m-%d-%H%M%S}", dir, in_time);
 
   // Gives tombstones unique names
-  if(retval == last_tombstone_name) {
+  if (retval == last_tombstone_name) {
     num_tombstones_in_last_second++;
     retval += "_" + std::to_string(num_tombstones_in_last_second);
   } else {
