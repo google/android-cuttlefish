@@ -12,10 +12,7 @@ cf_cc_library(
         "flags.cpp",
         "launch.cpp",
     ],
-    hdrs = [
-        "fastboot.h",
-    ],
-    clang_format_enabled = False,
+    hdrs = ["fastboot.h"],
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/flag_parser",

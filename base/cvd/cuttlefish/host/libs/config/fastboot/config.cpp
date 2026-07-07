@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cuttlefish/host/libs/config/fastboot/fastboot.h"
-
 #include <string>
 
-#include <fruit/component.h>
-#include <fruit/fruit_forward_decls.h>
-#include <fruit/macro.h>
-#include <json/value.h>
 #include "absl/log/log.h"
+#include "fruit/component.h"
+#include "fruit/fruit_forward_decls.h"
+#include "fruit/macro.h"
+#include "json/value.h"
 
 #include "cuttlefish/host/libs/config/config_fragment.h"
+#include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 
 namespace cuttlefish {
 namespace {
 
 class FastbootConfigFragmentImpl : public FastbootConfigFragment {
  public:
-  INJECT(FastbootConfigFragmentImpl(FastbootConfig& config)) : config_(config) {}
+  INJECT(FastbootConfigFragmentImpl(FastbootConfig& config))
+      : config_(config) {}
 
   std::string Name() const override { return "FastbootConfigFragmentImpl"; }
 

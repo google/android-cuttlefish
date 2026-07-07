@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
@@ -36,9 +36,9 @@ class FastbootConfig {
 class FastbootConfigFragment : public ConfigFragment {};
 class FastbootConfigFlag : public FlagFeature {};
 
-fruit::Component<FastbootConfig>
-FastbootConfigComponent();
-fruit::Component<fruit::Required<FastbootConfig, ConfigFlag>, FastbootConfigFlag>
+fruit::Component<FastbootConfig> FastbootConfigComponent();
+fruit::Component<fruit::Required<FastbootConfig, ConfigFlag>,
+                 FastbootConfigFlag>
 FastbootConfigFlagComponent();
 fruit::Component<fruit::Required<FastbootConfig>, FastbootConfigFragment>
 FastbootConfigFragmentComponent();
