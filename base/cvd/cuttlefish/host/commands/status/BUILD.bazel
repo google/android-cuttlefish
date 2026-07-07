@@ -6,10 +6,7 @@ package(
 
 cf_cc_binary(
     name = "cvd_internal_status",
-    srcs = [
-        "main.cc",
-    ],
-    clang_format_enabled = False,
+    srcs = ["main.cc"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -21,7 +18,6 @@ cf_cc_binary(
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
-        "@gflags",
         "@jsoncpp",
     ],
 )
