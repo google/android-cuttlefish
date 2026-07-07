@@ -31,7 +31,7 @@ namespace cuttlefish {
 
 Defaults::Defaults(
     std::map<std::string, std::string, std::less<void>> defaults) {
-  for(const auto &[k, v]: defaults) {
+  for (const auto& [k, v] : defaults) {
     defaults_[k] = v;
   }
 }
@@ -50,7 +50,7 @@ std::optional<bool> Defaults::BoolValue(std::string_view k) const {
   return Value(k) == "true" ? true : false;
 }
 
-Result<Defaults> Defaults::FromFile(const std::string &path) {
+Result<Defaults> Defaults::FromFile(const std::string& path) {
   std::string defaults_str =
       CF_EXPECT(ReadFileContents(path), "Couldn't read defaults file.");
   std::map<std::string, std::string, std::less<void>> defaults_map = CF_EXPECT(
