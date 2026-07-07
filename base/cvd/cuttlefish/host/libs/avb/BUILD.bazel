@@ -6,13 +6,8 @@ package(
 
 cf_cc_library(
     name = "avb",
-    srcs = [
-        "avb.cpp",
-    ],
-    hdrs = [
-        "avb.h",
-    ],
-    clang_format_enabled = False,
+    srcs = ["avb.cpp"],
+    hdrs = ["avb.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",

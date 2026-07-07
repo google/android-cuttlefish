@@ -15,8 +15,6 @@
 
 #pragma once
 
-#include "cuttlefish/result/result.h"
-
 #include <sys/types.h>
 
 #include <cstdint>
@@ -25,6 +23,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -50,7 +49,7 @@ class Avb {
    * @image_path: path to image to sign
    * @partition_name: partition name (without A/B suffix)
    * @partition_size_bytes: partition size (in bytes)
-  */
+   */
   Result<void> AddHashFooter(const std::string& image_path,
                              const std::string& partition_name,
                              off_t partition_size_bytes) const;
