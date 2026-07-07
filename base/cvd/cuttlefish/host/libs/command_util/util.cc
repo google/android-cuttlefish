@@ -17,8 +17,8 @@
 #include "cuttlefish/host/libs/command_util/util.h"
 
 #include <stdint.h>
-#include "sys/time.h"
-#include "sys/types.h"
+#include <sys/time.h>
+#include <sys/types.h>
 
 #include <optional>
 #include <string>
@@ -100,10 +100,12 @@ Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
   return GetLauncherMonitorFromInstance(instance_config, timeout_seconds);
 }
 
-Result<std::optional<LauncherActionInfo>> ReadLauncherActionFromFd(SharedFD monitor_socket) {
+Result<std::optional<LauncherActionInfo>> ReadLauncherActionFromFd(
+    SharedFD monitor_socket) {
   LauncherAction action;
-  auto read_something = CF_EXPECT(ReadExactBinaryResult(monitor_socket, &action),
-            "Error reading LauncherAction");
+  auto read_something =
+      CF_EXPECT(ReadExactBinaryResult(monitor_socket, &action),
+                "Error reading LauncherAction");
   if (!read_something) {
     return std::nullopt;
   }
