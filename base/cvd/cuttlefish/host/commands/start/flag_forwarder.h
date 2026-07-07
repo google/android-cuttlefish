@@ -28,19 +28,19 @@ class FlagForwarder {
   std::set<std::string> subprocesses_;
   std::set<std::unique_ptr<SubprocessFlag>> flags_;
 
-public:
- FlagForwarder(std::set<std::string> subprocesses,
-               const std::vector<std::vector<std::string>>& args);
- ~FlagForwarder();
- FlagForwarder(FlagForwarder&&) = default;
- FlagForwarder(const FlagForwarder&) = delete;
- FlagForwarder& operator=(FlagForwarder&&) = default;
- FlagForwarder& operator=(const FlagForwarder&) = delete;
+ public:
+  FlagForwarder(std::set<std::string> subprocesses,
+                const std::vector<std::vector<std::string>>& args);
+  ~FlagForwarder();
+  FlagForwarder(FlagForwarder&&) = default;
+  FlagForwarder(const FlagForwarder&) = delete;
+  FlagForwarder& operator=(FlagForwarder&&) = default;
+  FlagForwarder& operator=(const FlagForwarder&) = delete;
 
- void UpdateFlagDefaults() const;
- std::vector<std::string> ArgvForSubprocess(
-     const std::string& subprocess,
-     const std::vector<std::string>& args = std::vector<std::string>()) const;
+  void UpdateFlagDefaults() const;
+  std::vector<std::string> ArgvForSubprocess(
+      const std::string& subprocess,
+      const std::vector<std::string>& args = std::vector<std::string>()) const;
 };
 
 }  // namespace cuttlefish

@@ -15,12 +15,12 @@
 
 #include "cuttlefish/host/commands/start/filesystem_explorer.h"
 
-#include <set>
-#include <string>
-
 #include <dirent.h>
 #include <errno.h>
 #include <sys/types.h>
+
+#include <set>
+#include <string>
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"

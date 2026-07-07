@@ -31,11 +31,11 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/start/filesystem_explorer.h"
 #include "cuttlefish/host/commands/start/flag_forwarder.h"
 #include "cuttlefish/host/commands/start/override_bool_arg.h"
@@ -233,7 +233,8 @@ std::string CvdPath() {
 
 void ExecCvd(std::vector<std::string> args) {
   bool daemon = false;
-  const Result<void> res = ConsumeFlags({GflagsCompatFlag("daemon", daemon)}, args);
+  const Result<void> res =
+      ConsumeFlags({GflagsCompatFlag("daemon", daemon)}, args);
   CHECK(res.ok()) << res.error();
 
   const std::string daemon_val = daemon ? "true" : "false";
