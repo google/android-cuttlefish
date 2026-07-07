@@ -17,15 +17,10 @@ genrule(
     outs = ["version.h"],
     cmd = "$(location replace_with_stamp_values.sh) bazel-out/stable-status.txt $< $@",
     stamp = 1,
-    tools = [
-        "replace_with_stamp_values.sh",
-    ],
+    tools = ["replace_with_stamp_values.sh"],
 )
 
 cf_cc_library(
     name = "version",
-    hdrs = [
-        ":build_version_header",
-    ],
-    clang_format_enabled = False,
+    hdrs = [":build_version_header"],
 )
