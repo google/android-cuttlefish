@@ -22,6 +22,7 @@
 #include <string_view>
 
 #include "absl/container/btree_map.h"
+
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -30,7 +31,7 @@ class Defaults {
  public:
   Defaults() : defaults_() {};
   Defaults(std::map<std::string, std::string, std::less<void>> defaults);
-  static Result<Defaults> FromFile(const std::string &path);
+  static Result<Defaults> FromFile(const std::string& path);
 
   std::optional<std::string_view> Value(std::string_view k) const;
   std::optional<bool> BoolValue(std::string_view k) const;
