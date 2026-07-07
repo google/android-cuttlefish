@@ -8,7 +8,6 @@ cf_cc_library(
     name = "insecure_json_storage",
     srcs = ["insecure_json_storage.cpp"],
     hdrs = ["insecure_json_storage.h"],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:files",

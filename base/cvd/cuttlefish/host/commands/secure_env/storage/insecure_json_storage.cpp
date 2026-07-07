@@ -15,10 +15,8 @@
 
 #include "cuttlefish/host/commands/secure_env/storage/insecure_json_storage.h"
 
-#include <fstream>
-
-#include <android-base/file.h>
-#include <json/json.h>
+#include "android-base/file.h"
+#include "json/json.h"
 
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -40,13 +38,12 @@ Result<void> WriteJson(const std::string& path, const Json::Value& root) {
   return {};
 }
 
-} // namespace
+}  // namespace
 
-InsecureJsonStorage::InsecureJsonStorage(std::string path) : path_(std::move(path)) {}
+InsecureJsonStorage::InsecureJsonStorage(std::string path)
+    : path_(std::move(path)) {}
 
-bool InsecureJsonStorage::Exists() const {
-  return ReadJson(path_).ok();
-}
+bool InsecureJsonStorage::Exists() const { return ReadJson(path_).ok(); }
 
 Result<bool> InsecureJsonStorage::HasKey(const std::string& key) const {
   if (!FileHasContent(path_)) {
@@ -55,7 +52,8 @@ Result<bool> InsecureJsonStorage::HasKey(const std::string& key) const {
   return CF_EXPECT(ReadJson(path_)).isMember(key);
 }
 
-Result<ManagedStorageData> InsecureJsonStorage::Read(const std::string& key) const {
+Result<ManagedStorageData> InsecureJsonStorage::Read(
+    const std::string& key) const {
   auto root = CF_EXPECT(ReadJson(path_));
   CF_EXPECT(root.isMember(key), "Key: " << key << " not found in " << path_);
 
@@ -63,12 +61,14 @@ Result<ManagedStorageData> InsecureJsonStorage::Read(const std::string& key) con
       CF_EXPECTF(DecodeBase64(root[key].asString()),
                  "Failed to decode base64 to read key '{}'", key);
   auto storage_data = CF_EXPECT(CreateStorageData(base64_buffer.size()));
-  std::memcpy(storage_data->payload, reinterpret_cast<unsigned char *>(base64_buffer.data()),
+  std::memcpy(storage_data->payload,
+              reinterpret_cast<unsigned char*>(base64_buffer.data()),
               base64_buffer.size());
   return storage_data;
 }
 
-Result<void> InsecureJsonStorage::Write(const std::string& key, const StorageData& data) {
+Result<void> InsecureJsonStorage::Write(const std::string& key,
+                                        const StorageData& data) {
   Json::Value root;
   if (FileHasContent(path_)) {
     root = CF_EXPECT(ReadJson(path_));
@@ -81,5 +81,5 @@ Result<void> InsecureJsonStorage::Write(const std::string& key, const StorageDat
   return {};
 }
 
-}  // namespace oemlock
+}  // namespace secure_env
 }  // namespace cuttlefish
