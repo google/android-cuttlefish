@@ -265,7 +265,7 @@ class WebRtcServer : public virtual CommandSource,
 
   // SetupFeature
   bool Enabled() const override {
-    return sockets_.Enabled() &&
+    return sockets_.Enabled() && instance_.gpu_mode() != GpuMode::None &&
            (VmManagerIsCrosvm(config_) || VmManagerIsQemu(config_));
   }
 
