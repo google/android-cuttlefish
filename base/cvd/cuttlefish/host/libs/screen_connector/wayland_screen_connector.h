@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include <fruit/fruit.h>
+#include "fruit/fruit.h"
 
 #include "cuttlefish/host/libs/screen_connector/screen_connector_common.h"
 #include "cuttlefish/host/libs/wayland/wayland_server.h"
