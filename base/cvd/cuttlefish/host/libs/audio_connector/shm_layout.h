@@ -16,6 +16,7 @@
 #pragma once
 
 #include <cstdint>
+
 #include "cuttlefish/common/libs/utils/cf_endian.h"
 
 namespace cuttlefish {
@@ -113,43 +114,43 @@ enum AudioStreamRate : uint8_t {
 
 /* standard channel position definition */
 enum AudioChannelMap : uint8_t {
-  VIRTIO_SND_CHMAP_NONE = 0,  /* undefined */
-  VIRTIO_SND_CHMAP_NA,        /* silent */
-  VIRTIO_SND_CHMAP_MONO,      /* mono stream */
-  VIRTIO_SND_CHMAP_FL,        /* front left */
-  VIRTIO_SND_CHMAP_FR,        /* front right */
-  VIRTIO_SND_CHMAP_RL,        /* rear left */
-  VIRTIO_SND_CHMAP_RR,        /* rear right */
-  VIRTIO_SND_CHMAP_FC,        /* front center */
-  VIRTIO_SND_CHMAP_LFE,       /* low frequency (LFE) */
-  VIRTIO_SND_CHMAP_SL,        /* side left */
-  VIRTIO_SND_CHMAP_SR,        /* side right */
-  VIRTIO_SND_CHMAP_RC,        /* rear center */
-  VIRTIO_SND_CHMAP_FLC,       /* front left center */
-  VIRTIO_SND_CHMAP_FRC,       /* front right center */
-  VIRTIO_SND_CHMAP_RLC,       /* rear left center */
-  VIRTIO_SND_CHMAP_RRC,       /* rear right center */
-  VIRTIO_SND_CHMAP_FLW,       /* front left wide */
-  VIRTIO_SND_CHMAP_FRW,       /* front right wide */
-  VIRTIO_SND_CHMAP_FLH,       /* front left high */
-  VIRTIO_SND_CHMAP_FCH,       /* front center high */
-  VIRTIO_SND_CHMAP_FRH,       /* front right high */
-  VIRTIO_SND_CHMAP_TC,        /* top center */
-  VIRTIO_SND_CHMAP_TFL,       /* top front left */
-  VIRTIO_SND_CHMAP_TFR,       /* top front right */
-  VIRTIO_SND_CHMAP_TFC,       /* top front center */
-  VIRTIO_SND_CHMAP_TRL,       /* top rear left */
-  VIRTIO_SND_CHMAP_TRR,       /* top rear right */
-  VIRTIO_SND_CHMAP_TRC,       /* top rear center */
-  VIRTIO_SND_CHMAP_TFLC,      /* top front left center */
-  VIRTIO_SND_CHMAP_TFRC,      /* top front right center */
-  VIRTIO_SND_CHMAP_TSL,       /* top side left */
-  VIRTIO_SND_CHMAP_TSR,       /* top side right */
-  VIRTIO_SND_CHMAP_LLFE,      /* left LFE */
-  VIRTIO_SND_CHMAP_RLFE,      /* right LFE */
-  VIRTIO_SND_CHMAP_BC,        /* bottom center */
-  VIRTIO_SND_CHMAP_BLC,       /* bottom left center */
-  VIRTIO_SND_CHMAP_BRC        /* bottom right center */
+  VIRTIO_SND_CHMAP_NONE = 0, /* undefined */
+  VIRTIO_SND_CHMAP_NA,       /* silent */
+  VIRTIO_SND_CHMAP_MONO,     /* mono stream */
+  VIRTIO_SND_CHMAP_FL,       /* front left */
+  VIRTIO_SND_CHMAP_FR,       /* front right */
+  VIRTIO_SND_CHMAP_RL,       /* rear left */
+  VIRTIO_SND_CHMAP_RR,       /* rear right */
+  VIRTIO_SND_CHMAP_FC,       /* front center */
+  VIRTIO_SND_CHMAP_LFE,      /* low frequency (LFE) */
+  VIRTIO_SND_CHMAP_SL,       /* side left */
+  VIRTIO_SND_CHMAP_SR,       /* side right */
+  VIRTIO_SND_CHMAP_RC,       /* rear center */
+  VIRTIO_SND_CHMAP_FLC,      /* front left center */
+  VIRTIO_SND_CHMAP_FRC,      /* front right center */
+  VIRTIO_SND_CHMAP_RLC,      /* rear left center */
+  VIRTIO_SND_CHMAP_RRC,      /* rear right center */
+  VIRTIO_SND_CHMAP_FLW,      /* front left wide */
+  VIRTIO_SND_CHMAP_FRW,      /* front right wide */
+  VIRTIO_SND_CHMAP_FLH,      /* front left high */
+  VIRTIO_SND_CHMAP_FCH,      /* front center high */
+  VIRTIO_SND_CHMAP_FRH,      /* front right high */
+  VIRTIO_SND_CHMAP_TC,       /* top center */
+  VIRTIO_SND_CHMAP_TFL,      /* top front left */
+  VIRTIO_SND_CHMAP_TFR,      /* top front right */
+  VIRTIO_SND_CHMAP_TFC,      /* top front center */
+  VIRTIO_SND_CHMAP_TRL,      /* top rear left */
+  VIRTIO_SND_CHMAP_TRR,      /* top rear right */
+  VIRTIO_SND_CHMAP_TRC,      /* top rear center */
+  VIRTIO_SND_CHMAP_TFLC,     /* top front left center */
+  VIRTIO_SND_CHMAP_TFRC,     /* top front right center */
+  VIRTIO_SND_CHMAP_TSL,      /* top side left */
+  VIRTIO_SND_CHMAP_TSR,      /* top side right */
+  VIRTIO_SND_CHMAP_LLFE,     /* left LFE */
+  VIRTIO_SND_CHMAP_RLFE,     /* right LFE */
+  VIRTIO_SND_CHMAP_BC,       /* bottom center */
+  VIRTIO_SND_CHMAP_BLC,      /* bottom left center */
+  VIRTIO_SND_CHMAP_BRC       /* bottom right center */
 };
 
 struct virtio_snd_hdr {
@@ -168,9 +169,7 @@ struct virtio_snd_info {
 };
 
 /* supported jack features */
-enum AudioJackFeatures: uint8_t {
-  VIRTIO_SND_JACK_F_REMAP = 0
-};
+enum AudioJackFeatures : uint8_t { VIRTIO_SND_JACK_F_REMAP = 0 };
 
 struct virtio_snd_jack_info {
   struct virtio_snd_info hdr;
