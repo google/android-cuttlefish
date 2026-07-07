@@ -23,9 +23,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include <fruit/fruit.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "fruit/fruit.h"
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -65,13 +65,15 @@ std::unique_ptr<VmManager> GetVmManager(VmmMode vmm_mode, Arch arch) {
 Result<std::unordered_map<std::string, std::string>>
 ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,
                              int num_disks) {
-  int num_boot_devices =
-      (num_disks < VmManager::kDefaultNumBootDevices) ? num_disks : VmManager::kDefaultNumBootDevices;
+  int num_boot_devices = (num_disks < VmManager::kDefaultNumBootDevices)
+                             ? num_disks
+                             : VmManager::kDefaultNumBootDevices;
   std::string boot_devices_prop_val = "";
   for (int i = 0; i < num_boot_devices; i++) {
     std::stringstream stream;
     stream << std::setfill('0') << std::setw(2) << std::hex
-           << pci_offset + i + VmManager::kDefaultNumHvcs + VmManager::kMaxDisks - num_disks;
+           << pci_offset + i + VmManager::kDefaultNumHvcs +
+                  VmManager::kMaxDisks - num_disks;
     boot_devices_prop_val += pci_path + stream.str() + ".0,";
   }
   boot_devices_prop_val.pop_back();
@@ -124,5 +126,5 @@ VmManagerComponent() {
       .addMultibinding<SetupFeature, VmmCommands>();
 }
 
-} // namespace vm_manager
-} // namespace cuttlefish
+}  // namespace vm_manager
+}  // namespace cuttlefish

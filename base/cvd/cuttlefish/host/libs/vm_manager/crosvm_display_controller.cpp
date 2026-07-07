@@ -20,8 +20,8 @@
 #include <string>
 #include <vector>
 
-#include "absl/strings/str_join.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_join.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"

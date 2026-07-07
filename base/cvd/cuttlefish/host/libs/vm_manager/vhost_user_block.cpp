@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/vm_manager/vhost_user.h"
-
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -27,13 +25,14 @@
 #include <string>
 #include <utility>
 
-#include <vulkan/vulkan.h>
+#include "vulkan/vulkan.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
+#include "cuttlefish/host/libs/vm_manager/vhost_user.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

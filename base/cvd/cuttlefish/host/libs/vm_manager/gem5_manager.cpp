@@ -29,8 +29,8 @@
 #include <utility>
 #include <vector>
 
-#include <vulkan/vulkan.h>
 #include "absl/log/log.h"
+#include "vulkan/vulkan.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -140,8 +140,10 @@ if __name__ == "__m5_main__":
 
 void GenerateGem5File(const CuttlefishConfig& config,
                       const CuttlefishConfig::InstanceSpecific& instance) {
-  // Gem5 specific config, currently users have to change these config locally (without through launch_cvd input flag) to meet their design
-  // TODO: Add these config into launch_cvd input flag or parse from one json file
+  // Gem5 specific config, currently users have to change these config locally
+  // (without through launch_cvd input flag) to meet their design
+  // TODO: Add these config into launch_cvd input flag or parse from one json
+  // file
   std::string cpu_class = "AtomicSimpleCPU";
   std::string l1_icache_class = "None";
   std::string l1_dcache_class = "None";
@@ -154,8 +156,8 @@ void GenerateGem5File(const CuttlefishConfig& config,
   std::string mem_ranks = "None";
 
   // start generating starter_fs.py
-  std::string fs_path = instance.gem5_binary_dir() +
-                        "/configs/example/arm/starter_fs.py";
+  std::string fs_path =
+      instance.gem5_binary_dir() + "/configs/example/arm/starter_fs.py";
   std::ofstream starter_fs_ofstream(fs_path.c_str());
   starter_fs_ofstream << kFsHeader << "\n";
 
@@ -167,33 +169,57 @@ void GenerateGem5File(const CuttlefishConfig& config,
 
   // args
   starter_fs_ofstream << "  parser = argparse.ArgumentParser(epilog=__doc__)\n";
-  starter_fs_ofstream << "  parser.add_argument(\"--disk-image\", action=\"append\", type=str, default=[])\n";
-  starter_fs_ofstream << "  parser.add_argument(\"--mem-type\", default=\"" << mem_type << "\", choices=ObjectList.mem_list.get_names())\n";
-  starter_fs_ofstream << "  parser.add_argument(\"--mem-channels\", type=int, default=" << mem_channels << ")\n";
-  starter_fs_ofstream << "  parser.add_argument(\"--mem-ranks\", type=int, default=" << mem_ranks << ")\n";
-  starter_fs_ofstream << "  parser.add_argument(\"--mem-size\", action=\"store\", type=str, default=\"" << instance.memory_mb() << "MB\")\n";
-  starter_fs_ofstream << "  parser.add_argument(\"--restore\", type=str, default=None)\n";
+  starter_fs_ofstream << "  parser.add_argument(\"--disk-image\", "
+                         "action=\"append\", type=str, default=[])\n";
+  starter_fs_ofstream << "  parser.add_argument(\"--mem-type\", default=\""
+                      << mem_type
+                      << "\", choices=ObjectList.mem_list.get_names())\n";
+  starter_fs_ofstream
+      << "  parser.add_argument(\"--mem-channels\", type=int, default="
+      << mem_channels << ")\n";
+  starter_fs_ofstream
+      << "  parser.add_argument(\"--mem-ranks\", type=int, default="
+      << mem_ranks << ")\n";
+  starter_fs_ofstream << "  parser.add_argument(\"--mem-size\", "
+                         "action=\"store\", type=str, default=\""
+                      << instance.memory_mb() << "MB\")\n";
+  starter_fs_ofstream
+      << "  parser.add_argument(\"--restore\", type=str, default=None)\n";
   starter_fs_ofstream << "  args = parser.parse_args()\n";
 
   // instantiate system
   starter_fs_ofstream << "  root = Root(full_system=True)\n";
   starter_fs_ofstream << "  mem_mode = " << cpu_class << ".memory_mode()\n";
-  starter_fs_ofstream << "  has_caches = True if mem_mode == \"timing\" else False\n";
-  starter_fs_ofstream << "  root.system = devices.SimpleSystem(has_caches, args.mem_size, mem_mode=mem_mode, workload=ArmFsLinux(object_file=SysPaths.binary(\"" << config.assembly_dir() << "/kernel\")))\n";
+  starter_fs_ofstream
+      << "  has_caches = True if mem_mode == \"timing\" else False\n";
+  starter_fs_ofstream
+      << "  root.system = devices.SimpleSystem(has_caches, args.mem_size, "
+         "mem_mode=mem_mode, workload=ArmFsLinux(object_file=SysPaths.binary(\""
+      << config.assembly_dir() << "/kernel\")))\n";
 
   // mem config and pci instantiate
   starter_fs_ofstream << kFsMemPci;
 
   // system settings
-  starter_fs_ofstream << "  root.system.cpu_cluster = [devices.CpuCluster(root.system, " << num_cores << ", \"" << cpu_freq << "\", \"1.0V\", " << cpu_class << ", " << l1_icache_class << ", " << l1_dcache_class << ", " << walk_cache_class << ", " << l2_Cache_class << ")]\n";
-  starter_fs_ofstream << "  root.system.addCaches(has_caches, last_cache_level=2)\n";
-  starter_fs_ofstream << "  root.system.realview.setupBootLoader(root.system, SysPaths.binary)\n";
-  starter_fs_ofstream << "  root.system.workload.dtb_filename = os.path.join(m5.options.outdir, 'system.dtb')\n";
-  starter_fs_ofstream << "  root.system.generateDtb(root.system.workload.dtb_filename)\n";
-  starter_fs_ofstream << "  root.system.workload.initrd_filename = \"" << instance.PerInstancePath("initrd.img") << "\"\n";
-  starter_fs_ofstream << "  root_dir = \"" << StringFromEnv("HOME", ".") << "\"\n";
+  starter_fs_ofstream
+      << "  root.system.cpu_cluster = [devices.CpuCluster(root.system, "
+      << num_cores << ", \"" << cpu_freq << "\", \"1.0V\", " << cpu_class
+      << ", " << l1_icache_class << ", " << l1_dcache_class << ", "
+      << walk_cache_class << ", " << l2_Cache_class << ")]\n";
+  starter_fs_ofstream
+      << "  root.system.addCaches(has_caches, last_cache_level=2)\n";
+  starter_fs_ofstream << "  root.system.realview.setupBootLoader(root.system, "
+                         "SysPaths.binary)\n";
+  starter_fs_ofstream << "  root.system.workload.dtb_filename = "
+                         "os.path.join(m5.options.outdir, 'system.dtb')\n";
+  starter_fs_ofstream
+      << "  root.system.generateDtb(root.system.workload.dtb_filename)\n";
+  starter_fs_ofstream << "  root.system.workload.initrd_filename = \""
+                      << instance.PerInstancePath("initrd.img") << "\"\n";
+  starter_fs_ofstream << "  root_dir = \"" << StringFromEnv("HOME", ".")
+                      << "\"\n";
 
-  //kernel cmd
+  // kernel cmd
   starter_fs_ofstream << kFsKernelCmd << "\n";
 
   // execute main
@@ -204,9 +230,7 @@ void GenerateGem5File(const CuttlefishConfig& config,
 
 Gem5Manager::Gem5Manager(Arch arch) : arch_(arch) {}
 
-bool Gem5Manager::IsSupported() {
-  return HostSupportsQemuCli();
-}
+bool Gem5Manager::IsSupported() { return HostSupportsQemuCli(); }
 
 Result<std::unordered_map<std::string, std::string>>
 Gem5Manager::ConfigureGraphics(
@@ -308,9 +332,9 @@ Result<std::vector<MonitorCommand>> Gem5Manager::StartCommands(
 
   // Add debug-flags and debug-file before the script (i.e. starter_fs.py).
   // We check the flags are not empty first since they are optional
-  if(!config.gem5_debug_flags().empty()) {
+  if (!config.gem5_debug_flags().empty()) {
     gem5_cmd.AddParameter("--debug-flags=", config.gem5_debug_flags());
-    if(!instance.gem5_debug_file().empty()) {
+    if (!instance.gem5_debug_file().empty()) {
       gem5_cmd.AddParameter("--debug-file=", instance.gem5_debug_file());
     }
   }
@@ -320,11 +344,11 @@ Result<std::vector<MonitorCommand>> Gem5Manager::StartCommands(
 
   // restore checkpoint case
   if (!instance.gem5_checkpoint_dir().empty()) {
-    gem5_cmd.AddParameter("--restore=",
-                          instance.gem5_checkpoint_dir());
+    gem5_cmd.AddParameter("--restore=", instance.gem5_checkpoint_dir());
   }
 
-  gem5_cmd.AddParameter("--mem-size=", instance.memory_mb() * 1024ULL * 1024ULL);
+  gem5_cmd.AddParameter("--mem-size=",
+                        instance.memory_mb() * 1024ULL * 1024ULL);
   for (const auto& disk : instance.virtual_disk_paths()) {
     gem5_cmd.AddParameter("--disk-image=", disk);
   }
@@ -336,5 +360,5 @@ Result<std::vector<MonitorCommand>> Gem5Manager::StartCommands(
   return commands;
 }
 
-} // namespace vm_manager
-} // namespace cuttlefish
+}  // namespace vm_manager
+}  // namespace cuttlefish
