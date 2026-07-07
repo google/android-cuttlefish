@@ -18,9 +18,9 @@
 #include <optional>
 #include <thread>
 
-#include <gflags/gflags.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
@@ -158,7 +158,6 @@ Result<void> SecureEnvMain(int argc, char** argv) {
           .gatekeeper = std::move(gatekeeper_snapshot_socket1),
           .oemlock = std::move(oemlock_snapshot_socket1),
       });
-
 
   std::vector<std::thread> threads;
 
