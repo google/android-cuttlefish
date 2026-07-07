@@ -21,8 +21,8 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/result/result.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

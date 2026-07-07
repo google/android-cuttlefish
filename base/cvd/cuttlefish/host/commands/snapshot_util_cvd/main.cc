@@ -20,9 +20,9 @@
 #include <vector>
 
 #include "absl/cleanup/cleanup.h"
-#include <fmt/core.h>
-#include <google/protobuf/text_format.h>
 #include "absl/log/log.h"
+#include "fmt/core.h"
+#include "google/protobuf/text_format.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -92,17 +92,17 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
         CF_EXPECT(BroadcastLauncherAction(*config, parsed, extended_action));
       }
       absl::Cleanup maybe_resume_on_exit = [&parsed, &config]() {
-            if (!parsed.auto_suspend) {
-              return;
-            }
-            run_cvd::ExtendedLauncherAction extended_action;
-            extended_action.mutable_resume();
-            Result<void> result =
-                BroadcastLauncherAction(*config, parsed, extended_action);
-            if (!result.ok()) {
-              LOG(FATAL) << "RunLauncherAction failed: " << result.error();
-            }
-          };
+        if (!parsed.auto_suspend) {
+          return;
+        }
+        run_cvd::ExtendedLauncherAction extended_action;
+        extended_action.mutable_resume();
+        Result<void> result =
+            BroadcastLauncherAction(*config, parsed, extended_action);
+        if (!result.ok()) {
+          LOG(FATAL) << "RunLauncherAction failed: " << result.error();
+        }
+      };
 
       // Delete incomplete snapshot if we fail partway.
       absl::Cleanup delete_snapshot_on_fail = [&parsed]() {
