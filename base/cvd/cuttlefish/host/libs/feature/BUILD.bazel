@@ -6,15 +6,12 @@ package(
 
 cf_cc_library(
     name = "feature",
-    srcs = [
-        "feature.cpp",
-    ],
+    srcs = ["feature.cpp"],
     hdrs = [
         "command_source.h",
         "feature.h",
         "kernel_log_pipe_provider.h",
     ],
-    clang_format_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -29,9 +26,7 @@ cf_cc_library(
 
 cf_cc_library(
     name = "inject",
-    hdrs = [
-        "inject.h",
-    ],
+    hdrs = ["inject.h"],
     deps = [
         "//cuttlefish/result",
         "@fruit",

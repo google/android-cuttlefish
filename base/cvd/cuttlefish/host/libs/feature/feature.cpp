@@ -65,9 +65,8 @@ Result<void> FlagFeature::ProcessFlags(
     CF_EXPECT(feature->Process(flags));
     return {};
   };
-  CF_EXPECT(
-      Feature<FlagFeature>::TopologicalVisit(features_set, handle),
-      "Unable to parse flags.");
+  CF_EXPECT(Feature<FlagFeature>::TopologicalVisit(features_set, handle),
+            "Unable to parse flags.");
   return {};
 }
 
