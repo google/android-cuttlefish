@@ -25,8 +25,8 @@
 #include <type_traits>
 #include <unordered_set>
 
-#include <fruit/fruit.h>
 #include "absl/log/log.h"
+#include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"

@@ -6,12 +6,8 @@ package(
 
 cf_cc_library(
     name = "screen_connector_common",
-    srcs = [
-        "screen_connector_common.cc",
-    ],
-    hdrs = [
-        "screen_connector_common.h",
-    ],
+    srcs = ["screen_connector_common.cc"],
+    hdrs = ["screen_connector_common.h"],
     deps = [
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -22,9 +18,7 @@ cf_cc_library(
 
 cf_cc_library(
     name = "video_frame_buffer",
-    hdrs = [
-        "video_frame_buffer.h",
-    ],
+    hdrs = ["video_frame_buffer.h"],
 )
 
 cf_cc_library(
@@ -44,7 +38,6 @@ cf_cc_library(
         "screen_connector_queue.h",
         "wayland_screen_connector.h",
     ],
-    clang_format_enabled = False,
     deps = [
         ":screen_connector_common",
         ":video_frame_buffer",

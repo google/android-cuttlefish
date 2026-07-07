@@ -25,7 +25,7 @@
 #include <optional>
 #include <string>
 
-#include <fmt/format.h>
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 

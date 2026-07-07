@@ -20,7 +20,7 @@
  * Currently the Composition algorithm implemented in
  * this module has a known limitation.  It uses IPC buffers in such a way where
  * it is currently possible for frames to be simultaneously
- * read and written from the same memory lcoation.  It's therefore possible to
+ * read and written from the same memory location.  It's therefore possible to
  * have some display artifacts as partial frames are read.  To remedy there is
  * follow-up work (documented in b/384939093) planned.
  */
@@ -34,13 +34,13 @@
 #include <string_view>
 #include <vector>
 
-#include "absl/strings/ascii.h"
-#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
+#include "drm/drm_fourcc.h"
 #include "libyuv.h"
 
-#include <drm/drm_fourcc.h>
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/screen_connector/ring_buffer_manager.h"
 #include "cuttlefish/host/libs/wayland/wayland_server_callbacks.h"

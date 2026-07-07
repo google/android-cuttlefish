@@ -19,7 +19,6 @@
 #include <stdint.h>
 
 #include "cuttlefish/common/libs/concurrency/multiplexer.h"
-
 #include "cuttlefish/host/libs/confui/host_mode_ctrl.h"
 #include "cuttlefish/host/libs/screen_connector/screen_connector_queue.h"
 
