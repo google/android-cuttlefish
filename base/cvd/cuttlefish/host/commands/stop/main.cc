@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-#include <sys/types.h>
-
 #include <stdint.h>
+#include <sys/types.h>
 
 #include <cinttypes>
 #include <csignal>
@@ -35,9 +34,9 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
-#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -58,12 +57,14 @@ std::set<std::string> FallbackDirs() {
   std::string parent_path = StringFromEnv("HOME", ".");
   paths.insert(parent_path + "/cuttlefish_assembly");
 
-  std::unique_ptr<DIR, int(*)(DIR*)> dir(opendir(parent_path.c_str()), closedir);
+  std::unique_ptr<DIR, int (*)(DIR*)> dir(opendir(parent_path.c_str()),
+                                          closedir);
   if (!dir) {
     return paths;
   }
 
-  for (auto entity = readdir(dir.get()); entity != nullptr; entity = readdir(dir.get())) {
+  for (auto entity = readdir(dir.get()); entity != nullptr;
+       entity = readdir(dir.get())) {
     std::string subdir(entity->d_name);
     if (!absl::StartsWith(subdir, "cuttlefish_runtime.")) {
       continue;
@@ -98,7 +99,7 @@ std::set<pid_t> GetCandidateProcessGroups(const std::set<std::string>& dirs) {
   }
   int64_t pid;
   std::set<pid_t> ret{};
-  while(fscanf(cmd_out.get(), "%" PRId64, &pid) != EOF) {
+  while (fscanf(cmd_out.get(), "%" PRId64, &pid) != EOF) {
     pid_t pgid = getpgid(static_cast<pid_t>(pid));
     if (pgid < 0) {
       LOG(ERROR) << "Unable to get process group of " << pid << ": "
@@ -116,7 +117,7 @@ int FallBackStop(const std::set<std::string>& dirs) {
   auto exit_code = 0;
 
   auto process_groups = GetCandidateProcessGroups(dirs);
-  for (auto pgid: process_groups) {
+  for (auto pgid : process_groups) {
     LOG(INFO) << "Sending SIGKILL to process group " << pgid;
     auto retval = killpg(pgid, SIGKILL);
     if (retval < 0) {
@@ -222,7 +223,8 @@ int StopCvdMain(const std::int32_t wait_for_launcher,
   for (const auto& instance : instances) {
     unsigned id;
     if (!absl::SimpleAtoi(instance.id(), &id)) {
-      LOG(ERROR) << "Failed to parse instance ID \"" << instance.id() << "\" as unsigned";
+      LOG(ERROR) << "Failed to parse instance ID \"" << instance.id()
+                 << "\" as unsigned";
       exit_code |= 1;
       continue;
     }
@@ -250,8 +252,8 @@ int StopCvdMain(const std::int32_t wait_for_launcher,
   return exit_code;
 }
 
-} // namespace
-} // namespace cuttlefish
+}  // namespace
+}  // namespace cuttlefish
 
 int main(int argc, char** argv) {
   const auto [wait_for_launcher, clear_instance_dirs, instance_nums, helpxml] =
@@ -271,9 +273,10 @@ int main(int argc, char** argv) {
 
   if (cuttlefish::CuttlefishConfig::Get() &&
       cuttlefish::CuttlefishConfig::Get()->enable_metrics() ==
-      cuttlefish::CuttlefishConfig::Answer::kYes) {
+          cuttlefish::CuttlefishConfig::Answer::kYes) {
     cuttlefish::MetricsReceiver::LogMetricsVMStop();
   }
 
-  return cuttlefish::StopCvdMain(wait_for_launcher, clear_instance_dirs, instance_nums);
+  return cuttlefish::StopCvdMain(wait_for_launcher, clear_instance_dirs,
+                                 instance_nums);
 }
