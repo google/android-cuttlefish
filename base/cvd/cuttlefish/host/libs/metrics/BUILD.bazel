@@ -6,12 +6,8 @@ package(
 
 cf_cc_library(
     name = "device_metrics_orchestration",
-    srcs = [
-        "device_metrics_orchestration.cc",
-    ],
-    hdrs = [
-        "device_metrics_orchestration.h",
-    ],
+    srcs = ["device_metrics_orchestration.cc"],
+    hdrs = ["device_metrics_orchestration.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
@@ -31,12 +27,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "enabled",
-    srcs = [
-        "enabled.cc",
-    ],
-    hdrs = [
-        "enabled.h",
-    ],
+    srcs = ["enabled.cc"],
+    hdrs = ["enabled.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
     ],
@@ -44,22 +36,14 @@ cf_cc_library(
 
 cf_cc_library(
     name = "device_event_type",
-    srcs = [
-        "device_event_type.cc",
-    ],
-    hdrs = [
-        "device_event_type.h",
-    ],
+    srcs = ["device_event_type.cc"],
+    hdrs = ["device_event_type.h"],
 )
 
 cf_cc_library(
     name = "fetch_metrics",
-    srcs = [
-        "fetch_metrics.cc",
-    ],
-    hdrs = [
-        "fetch_metrics.h",
-    ],
+    srcs = ["fetch_metrics.cc"],
+    hdrs = ["fetch_metrics.h"],
     deps = [
         "//cuttlefish/host/commands/cvd/fetch:builds",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd",
@@ -70,12 +54,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "fetch_metrics_orchestration",
-    srcs = [
-        "fetch_metrics_orchestration.cc",
-    ],
-    hdrs = [
-        "fetch_metrics_orchestration.h",
-    ],
+    srcs = ["fetch_metrics_orchestration.cc"],
+    hdrs = ["fetch_metrics_orchestration.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
@@ -93,12 +73,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "flag_metrics",
-    srcs = [
-        "flag_metrics.cc",
-    ],
-    hdrs = [
-        "flag_metrics.h",
-    ],
+    srcs = ["flag_metrics.cc"],
+    hdrs = ["flag_metrics.h"],
     deps = [
         "//cuttlefish/host/libs/config:data_image_policy",
         "//cuttlefish/host/libs/config:gpu_mode",
@@ -109,12 +85,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "gce_environment",
-    srcs = [
-        "gce_environment.cc",
-    ],
-    hdrs = [
-        "gce_environment.h",
-    ],
+    srcs = ["gce_environment.cc"],
+    hdrs = ["gce_environment.h"],
     deps = [
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:curl_global_init",
@@ -128,25 +100,15 @@ cf_cc_library(
 
 cf_cc_library(
     name = "github_environment",
-    srcs = [
-        "github_environment.cc",
-    ],
-    hdrs = [
-        "github_environment.h",
-    ],
-    deps = [
-        "//cuttlefish/common/libs/utils:environment",
-    ],
+    srcs = ["github_environment.cc"],
+    hdrs = ["github_environment.h"],
+    deps = ["//cuttlefish/common/libs/utils:environment"],
 )
 
 cf_cc_library(
     name = "guest_metrics",
-    srcs = [
-        "guest_metrics.cc",
-    ],
-    hdrs = [
-        "guest_metrics.h",
-    ],
+    srcs = ["guest_metrics.cc"],
+    hdrs = ["guest_metrics.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/libs/metrics:device_event_type",
@@ -159,12 +121,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "host_metrics",
-    srcs = [
-        "host_metrics.cc",
-    ],
-    hdrs = [
-        "host_metrics.h",
-    ],
+    srcs = ["host_metrics.cc"],
+    hdrs = ["host_metrics.h"],
     deps = [
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/host/libs/metrics:gce_environment",
@@ -176,26 +134,15 @@ cf_cc_library(
 
 cf_cc_library(
     name = "invoker",
-    srcs = [
-        "invoker.cc",
-    ],
-    hdrs = [
-        "invoker.h",
-    ],
-    deps = [
-        "//cuttlefish/common/libs/utils:environment",
-    ],
+    srcs = ["invoker.cc"],
+    hdrs = ["invoker.h"],
+    deps = ["//cuttlefish/common/libs/utils:environment"],
 )
 
 cf_cc_library(
     name = "metrics",
-    srcs = [
-        "metrics_receiver.cc",
-    ],
-    hdrs = [
-        "metrics_receiver.h",
-    ],
-    clang_format_enabled = False,
+    srcs = ["metrics_receiver.cc"],
+    hdrs = ["metrics_receiver.h"],
     deps = [
         ":metrics_headers",
         "//cuttlefish/common/libs/fs",
@@ -212,12 +159,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "metrics_conversion",
-    srcs = [
-        "metrics_conversion.cc",
-    ],
-    hdrs = [
-        "metrics_conversion.h",
-    ],
+    srcs = ["metrics_conversion.cc"],
+    hdrs = ["metrics_conversion.h"],
     deps = [
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/host/commands/cvd/fetch:builds",
@@ -251,12 +194,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "metrics_environment",
-    srcs = [
-        "metrics_environment.cc",
-    ],
-    hdrs = [
-        "metrics_environment.h",
-    ],
+    srcs = ["metrics_environment.cc"],
+    hdrs = ["metrics_environment.h"],
 )
 
 cf_cc_library(
@@ -269,12 +208,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "metrics_orchestration",
-    srcs = [
-        "metrics_orchestration.cc",
-    ],
-    hdrs = [
-        "metrics_orchestration.h",
-    ],
+    srcs = ["metrics_orchestration.cc"],
+    hdrs = ["metrics_orchestration.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
@@ -295,12 +230,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "metrics_transmitter",
-    srcs = [
-        "metrics_transmitter.cc",
-    ],
-    hdrs = [
-        "metrics_transmitter.h",
-    ],
+    srcs = ["metrics_transmitter.cc"],
+    hdrs = ["metrics_transmitter.h"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -313,12 +244,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "metrics_writer",
-    srcs = [
-        "metrics_writer.cc",
-    ],
-    hdrs = [
-        "metrics_writer.h",
-    ],
+    srcs = ["metrics_writer.cc"],
+    hdrs = ["metrics_writer.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -332,12 +259,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "notification",
-    srcs = [
-        "notification.cc",
-    ],
-    hdrs = [
-        "notification.h",
-    ],
+    srcs = ["notification.cc"],
+    hdrs = ["notification.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/directories",
@@ -351,12 +274,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "parsed_flags",
-    srcs = [
-        "parsed_flags.cc",
-    ],
-    hdrs = [
-        "parsed_flags.h",
-    ],
+    srcs = ["parsed_flags.cc"],
+    hdrs = ["parsed_flags.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/flags:cpus",
         "//cuttlefish/host/commands/assemble_cvd/flags:daemon",
@@ -373,12 +292,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "session_id",
-    srcs = [
-        "session_id.cc",
-    ],
-    hdrs = [
-        "session_id.h",
-    ],
+    srcs = ["session_id.cc"],
+    hdrs = ["session_id.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:uuid",
