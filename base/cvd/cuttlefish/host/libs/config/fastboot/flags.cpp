@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cuttlefish/host/libs/config/fastboot/fastboot.h"
-
 #include <ostream>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
-#include <fruit/component.h>
-#include <fruit/fruit_forward_decls.h>
-#include <fruit/macro.h>
+#include "fruit/component.h"
+#include "fruit/fruit_forward_decls.h"
+#include "fruit/macro.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
+#include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/result/result.h"
 
@@ -35,7 +34,8 @@ namespace {
 
 class FastbootConfigFlagImpl : public FastbootConfigFlag {
  public:
-  INJECT(FastbootConfigFlagImpl(FastbootConfig& config, ConfigFlag& config_flag))
+  INJECT(FastbootConfigFlagImpl(FastbootConfig& config,
+                                ConfigFlag& config_flag))
       : config_(config), config_flag_(config_flag) {}
 
   std::string Name() const override { return "FastbootConfigFlagImpl"; }
@@ -71,7 +71,8 @@ class FastbootConfigFlagImpl : public FastbootConfigFlag {
 
 }  // namespace
 
-fruit::Component<fruit::Required<FastbootConfig, ConfigFlag>, FastbootConfigFlag>
+fruit::Component<fruit::Required<FastbootConfig, ConfigFlag>,
+                 FastbootConfigFlag>
 FastbootConfigFlagComponent() {
   return fruit::createComponent()
       .bind<FastbootConfigFlag, FastbootConfigFlagImpl>()
