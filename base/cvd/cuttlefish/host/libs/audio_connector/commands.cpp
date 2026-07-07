@@ -70,7 +70,7 @@ void ChmapInfoCommand::Reply(AudioStatus status,
     auto channels = std::min(VIRTIO_SND_CHMAP_MAX_SIZE, reply[i].channels);
     info_reply()[i].channels = channels;
     for (int j = 0; j < channels; ++j) {
-	    info_reply()[i].positions[j] = reply[i].positions[j];
+      info_reply()[i].positions[j] = reply[i].positions[j];
     }
   }
 }
@@ -80,8 +80,8 @@ ControlInfoCommand::ControlInfoCommand(uint32_t start_id, size_t count,
     : InfoCommand(AudioCommandType::VIRTIO_SND_R_CTL_INFO, start_id, count,
                   ctl_info) {}
 
-void ControlInfoCommand::Reply(
-    AudioStatus status, std::span<const virtio_snd_ctl_info> reply) {
+void ControlInfoCommand::Reply(AudioStatus status,
+                               std::span<const virtio_snd_ctl_info> reply) {
   MarkReplied(status);
   if (status != AudioStatus::VIRTIO_SND_S_OK) {
     return;
