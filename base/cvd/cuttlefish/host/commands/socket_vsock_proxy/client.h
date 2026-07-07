@@ -31,7 +31,8 @@ class Client {
 
 class TcpClient : public Client {
  public:
-  TcpClient(std::string host, int port, std::chrono::seconds timeout = std::chrono::seconds(0));
+  TcpClient(std::string host, int port,
+            std::chrono::seconds timeout = std::chrono::seconds(0));
   SharedFD Start() override;
   std::string Describe() const override;
 
@@ -55,5 +56,5 @@ class VsockClient : public Client {
   int last_failure_reason_ = 0;
 };
 
-}
-}
+}  // namespace socket_proxy
+}  // namespace cuttlefish

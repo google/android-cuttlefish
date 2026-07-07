@@ -30,7 +30,8 @@ namespace socket_proxy {
 namespace {
 
 bool socketErrorIsRecoverable(int error) {
-  std::set<int> unrecoverable{EACCES, EAFNOSUPPORT, EINVAL, EPROTONOSUPPORT, EADDRINUSE};
+  std::set<int> unrecoverable{EACCES, EAFNOSUPPORT, EINVAL, EPROTONOSUPPORT,
+                              EADDRINUSE};
   return !Contains(unrecoverable, error);
 }
 
@@ -40,9 +41,10 @@ bool socketErrorIsRecoverable(int error) {
   }
 }
 
-}
+}  // namespace
 
-TcpServer::TcpServer(int port, int retries_count, std::chrono::milliseconds retries_delay)
+TcpServer::TcpServer(int port, int retries_count,
+                     std::chrono::milliseconds retries_delay)
     : port_(port),
       retries_count_(retries_count),
       retries_delay_(retries_delay) {};
@@ -65,8 +67,9 @@ Result<SharedFD> TcpServer::Start() {
     std::this_thread::sleep_for(retries_delay_);
   }
 
-  return CF_ERR("Could not start TCP server on port: " << port_
-                << "after " << retries_count_ << " attempts. Last error: " << last_error);
+  return CF_ERR("Could not start TCP server on port: "
+                << port_ << "after " << retries_count_
+                << " attempts. Last error: " << last_error);
 }
 
 std::string TcpServer::Describe() const {
@@ -82,9 +85,9 @@ Result<SharedFD> VsockServer::Start() {
     server = SharedFD::VsockServer(port_, SOCK_STREAM, vhost_user_vsock_cid_);
     if (!server->IsOpen() && !socketErrorIsRecoverable(server->GetErrno())) {
       LOG(ERROR) << "Could not open vsock socket: " << server->StrError();
-      // socket_vsock_proxy will now wait forever in the guest on encountering an
-      // "unrecoverable" errno. This is to prevent churn from being restarted by
-      // init.vsoc.rc.
+      // socket_vsock_proxy will now wait forever in the guest on encountering
+      // an "unrecoverable" errno. This is to prevent churn from being restarted
+      // by init.vsoc.rc.
       SleepForever();
     }
   } while (!server->IsOpen());
@@ -96,18 +99,14 @@ std::string VsockServer::Describe() const {
   return fmt::format("vsock: {}", port_);
 }
 
-DupServer::DupServer(int fd) : fd_(fd), sfd_(SharedFD::Dup(fd_)) {
-  close(fd);
-}
+DupServer::DupServer(int fd) : fd_(fd), sfd_(SharedFD::Dup(fd_)) { close(fd); }
 
 Result<SharedFD> DupServer::Start() {
   CF_EXPECT(sfd_->IsOpen(), "Could not start duplicate server for passed fd");
   return sfd_;
 }
 
-std::string DupServer::Describe() const {
-  return fmt::format("fd: {}", fd_);
-}
+std::string DupServer::Describe() const { return fmt::format("fd: {}", fd_); }
 
-}
+}  // namespace socket_proxy
 }  // namespace cuttlefish

@@ -32,8 +32,9 @@ class Server {
 
 class TcpServer : public Server {
  public:
-  TcpServer(int port, int retries_count = 1,
-            std::chrono::milliseconds retries_delay = std::chrono::milliseconds(0));
+  TcpServer(
+      int port, int retries_count = 1,
+      std::chrono::milliseconds retries_delay = std::chrono::milliseconds(0));
   Result<SharedFD> Start() override;
   std::string Describe() const override;
 
@@ -65,5 +66,5 @@ class DupServer : public Server {
   SharedFD sfd_;
 };
 
-}
-}
+}  // namespace socket_proxy
+}  // namespace cuttlefish

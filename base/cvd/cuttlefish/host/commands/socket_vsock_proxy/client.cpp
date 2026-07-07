@@ -19,9 +19,9 @@
 #include <string>
 #include <string_view>
 
-#include "absl/strings/str_split.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
@@ -33,11 +33,13 @@ bool IsIpv6(const std::string& address) {
   return address.find(':') != std::string::npos;
 }
 
-SharedFD StartIpv4(const std::string& host, int port, std::chrono::seconds timeout) {
+SharedFD StartIpv4(const std::string& host, int port,
+                   std::chrono::seconds timeout) {
   return SharedFD::SocketClient(host, port, SOCK_STREAM, timeout);
 }
 
-SharedFD StartIpv6(const std::string& host, int port, std::chrono::seconds timeout) {
+SharedFD StartIpv6(const std::string& host, int port,
+                   std::chrono::seconds timeout) {
   const std::vector<std::string_view> host_parsed =
       absl::StrSplit(host, '%', absl::SkipEmpty());
   const auto host_interface_tokens_count = host_parsed.size();
@@ -60,12 +62,10 @@ SharedFD StartIpv6(const std::string& host, int port, std::chrono::seconds timeo
                                  timeout);
 }
 
-}
+}  // namespace
 
 TcpClient::TcpClient(std::string host, int port, std::chrono::seconds timeout)
-    : host_(std::move(host)),
-      port_(port),
-      timeout_(timeout) {}
+    : host_(std::move(host)), port_(port), timeout_(timeout) {}
 
 SharedFD TcpClient::Start() {
   SharedFD client;
@@ -121,5 +121,5 @@ std::string VsockClient::Describe() const {
                      vhost_user_vsock_);
 }
 
-}
-}
+}  // namespace socket_proxy
+}  // namespace cuttlefish
