@@ -26,8 +26,8 @@
 #include <iostream>
 #include <memory>
 
-#include <gflags/gflags.h>
 #include "absl/log/log.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -39,7 +39,7 @@ using cuttlefish::MetricsExitCodes;
 
 namespace cuttlefish {
 
-void SendHelper(const std::string &queue_name, const std::string &message) {
+void SendHelper(const std::string& queue_name, const std::string& message) {
   auto msg_queue = SysVMessageQueue::Create(queue_name, false);
   if (msg_queue == NULL) {
     LOG(FATAL) << "Create: failed to create" << queue_name;
