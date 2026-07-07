@@ -273,8 +273,7 @@ Result<std::string> HandleTypeCmd(
 
   std::vector<std::string> grpc_arguments{"grpc_cli", "type"};
   const auto& service_name = args[0];
-  CF_EXPECT(service_name != kServiceControlEnvProxy,
-            "Prohibited service name");
+  CF_EXPECT(service_name != kServiceControlEnvProxy, "Prohibited service name");
   const auto& type_name = args[1];
 
   const auto& server_address =
