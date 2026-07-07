@@ -17,13 +17,10 @@
 
 #include <memory>
 
-#include <grpc/grpc.h>
-#include <grpcpp/channel.h>
-#include <grpcpp/client_context.h>
-#include <grpcpp/create_channel.h>
+#include "grpcpp/channel.h"
+#include "grpcpp/client_context.h"
 
 #include "cuttlefish/host/commands/gnss_grpc_proxy/gnss_grpc_proxy.grpc.pb.h"
-
 #include "cuttlefish/host/libs/location/GpsFix.h"
 #include "cuttlefish/result/result.h"
 

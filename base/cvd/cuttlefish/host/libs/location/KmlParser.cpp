@@ -22,7 +22,7 @@
 #include <string>
 #include <utility>
 
-#include <libxml/parser.h>
+#include "libxml/parser.h"
 
 #include "cuttlefish/host/libs/location/StringParse.h"
 

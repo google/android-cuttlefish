@@ -16,7 +16,9 @@
 
 #pragma once
 
-#include "GpsFix.h"
+#include <string>
+
+#include "cuttlefish/host/libs/location/GpsFix.h"
 
 class GpxParser {
  public:
@@ -26,9 +28,9 @@ class GpxParser {
    * Returns true on success, false otherwise. If false is returned, |*error|
    * is set to a string describing the error.
    */
-  static bool parseFile(const char *filePath, GpsFixArray *fixes,
-                        std::string *error);
+  static bool parseFile(const char* filePath, GpsFixArray* fixes,
+                        std::string* error);
 
-  static bool parseString(const char *str, int len, GpsFixArray *fixes,
-                          std::string *error);
+  static bool parseString(const char* str, int len, GpsFixArray* fixes,
+                          std::string* error);
 };

@@ -30,7 +30,7 @@ struct GpsFix {
   float elevation = 0.0;
   time_t time = 0;
 
-  bool operator<(const GpsFix &other) const { return time < other.time; }
+  bool operator<(const GpsFix& other) const { return time < other.time; }
 };
 
 typedef std::vector<GpsFix> GpsFixArray;
