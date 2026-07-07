@@ -99,8 +99,8 @@ static Result<std::vector<int>> InstanceNums() {
   instance_nums.reserve(instances.size());
   for (const auto& instance : instances) {
     int id;
-    CF_EXPECTF(absl::SimpleAtoi(instance.id(), &id),
-               "Parsing filed for {}", id);
+    CF_EXPECTF(absl::SimpleAtoi(instance.id(), &id), "Parsing filed for {}",
+               id);
     instance_nums.push_back(id);
   }
   return instance_nums;
