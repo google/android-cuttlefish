@@ -1,8 +1,14 @@
-cuttlefish-container (1.56.1) UNRELEASED; urgency=medium
+cuttlefish-container (1.56.2) unstable; urgency=medium
 
   * N/A
 
- -- Cody Schuffelen <schuffelen@google.com>  Thu, 25 Jun 2026 20:45:16 -0700
+ -- Cody Schuffelen <schuffelen@google.com>  Tue, 07 Jul 2026 14:11:11 -0700
+
+cuttlefish-container (1.56.1) unstable; urgency=medium
+
+  * N/A
+
+ -- Cody Schuffelen <schuffelen@google.com>  Tue, 07 Jul 2026 14:08:00 -0700
 
 cuttlefish-container (1.56.0) unstable; urgency=medium
 
