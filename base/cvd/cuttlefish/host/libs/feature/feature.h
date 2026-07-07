@@ -22,8 +22,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include <fruit/fruit.h>
 #include "absl/log/check.h"
+#include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/utils/type_name.h"
 #include "cuttlefish/result/result.h"
@@ -155,8 +155,9 @@ Result<void> Feature<Subclass>::TopologicalVisit(
               "Cycle detected while visiting " << feature->Name());
     features_status[feature] = Status::VISITING;
     for (const auto& dependency : feature->Dependencies()) {
-      CF_EXPECT(dependency != nullptr,
-                "SetupFeature " << feature->Name() << " has a null dependency.");
+      CF_EXPECT(dependency != nullptr, "SetupFeature "
+                                           << feature->Name()
+                                           << " has a null dependency.");
       CF_EXPECT(visit(dependency),
                 "Error detected while visiting " << feature->Name());
     }
