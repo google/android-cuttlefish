@@ -20,12 +20,8 @@
 
 namespace cuttlefish {
 
-std::string GetVcsId() {
-  return "@VCS_TAG@";
-}
+std::string GetVcsId() { return "@VCS_TAG@"; }
 
-std::string GetCuttlefishCommonVersion() {
-  return "@CF_VER_TAG@";
-}
+std::string GetCuttlefishCommonVersion() { return "@CF_VER_TAG@"; }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
