@@ -28,7 +28,6 @@ cf_cc_library(
         "snapshot_utils.h",
         "util.h",
     ],
-    clang_format_enabled = False,
     deps = [
         ":libcuttlefish_run_cvd_proto",
         "//cuttlefish/common/libs/fs",

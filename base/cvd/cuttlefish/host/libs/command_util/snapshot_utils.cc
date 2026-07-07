@@ -122,11 +122,10 @@ Result<void> CopyDirectoryImpl(
     // older than the disk components.
     const struct timespec times[2] = {
 #if defined(__APPLE__)
-      src_stat.st_atimespec,
-      src_stat.st_mtimespec
+        src_stat.st_atimespec, src_stat.st_mtimespec
 #else
-      src_stat.st_atim,
-      src_stat.st_mtim,
+        src_stat.st_atim,
+        src_stat.st_mtim,
 #endif
     };
     if (dest_fd->Futimens(times) != 0) {
