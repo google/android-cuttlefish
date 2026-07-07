@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cuttlefish/host/libs/config/adb/adb.h"
-
 #include <set>
 #include <utility>
 
-#include <fruit/component.h>
-#include <fruit/macro.h>
+#include "fruit/component.h"
+#include "fruit/macro.h"
+
+#include "cuttlefish/host/libs/config/adb/adb.h"
 
 namespace cuttlefish {
 namespace {

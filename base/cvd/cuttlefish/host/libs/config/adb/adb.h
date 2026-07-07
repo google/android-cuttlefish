@@ -15,9 +15,10 @@
  */
 #pragma once
 
-#include <fruit/fruit.h>
 #include <set>
 #include <string_view>
+
+#include "fruit/fruit.h"
 
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
