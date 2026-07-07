@@ -17,7 +17,6 @@ cf_cc_binary(
         "validate_metrics_confirmation.cpp",
         "validate_metrics_confirmation.h",
     ],
-    clang_format_enabled = False,
     # `layering_check` conflicts with the combination of the clang prebuilt and
     # the cmake build rules used for @libxml2.
     features = ["-layering_check"],
@@ -52,12 +51,8 @@ cf_cc_binary(
 
 cf_cc_library(
     name = "start_flags",
-    srcs = [
-        "start_flags.cpp",
-    ],
-    hdrs = [
-        "start_flags.h",
-    ],
+    srcs = ["start_flags.cpp"],
+    hdrs = ["start_flags.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "@gflags",
