@@ -23,10 +23,6 @@ while getopts "g" opt; do
   esac
 done
 
-# TODO(b/532409657): Disable all test cases requiring ab for a moment as
-# they're not working.
-bazel_test_tag_filter_arg+=",-requires_ab"
-
 function gather_test_results() {
   # Don't immediately exit on error anymore
   set +e
