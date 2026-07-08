@@ -448,6 +448,9 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
     // run_cvd processes may be still running in background
     // the order of the following operations should be kept
     CF_EXPECT(CvdResetGroup(group));
+
+    GatherVmBootCompleteMetrics(group);
+    return CF_ERR("Device launch failed.");
   }
   CF_EXPECT(CheckProcessExitedNormally(infop));
   GatherVmBootCompleteMetrics(group);
