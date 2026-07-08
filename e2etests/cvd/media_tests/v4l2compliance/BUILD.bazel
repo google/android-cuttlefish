@@ -11,3 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+load("@rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "media_tests",
+    size = "large",
+    srcs = ["main_test.go"],
+    data = ["//:debian_substitution_marker"],
+    env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(rlocationpath //:debian_substitution_marker)"},
+    tags = [
+        "exclusive",
+        "external",
+        "no-sandbox",
+        "requires_ab",
+        "supports-graceful-termination",
+    ],
+    deps = [
+        "//cvd/common",
+    ],
+)
