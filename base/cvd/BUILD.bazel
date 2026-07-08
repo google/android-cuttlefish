@@ -14,7 +14,10 @@ package(
 
 cf_build_test(
     name = "cf_build_test",
-    srcs = ["MODULE.bazel"],
+    srcs = [
+        "MODULE.bazel",
+        "build_variables.bzl",
+    ],
 )
 
 exports_files([
