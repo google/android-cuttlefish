@@ -1,5 +1,5 @@
 load("@rules_cc//cc:cc_import.bzl", "cc_import")
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//tools/lint:linters.bzl", "buildifier_test")
 
 package_group(
     name = "android_cuttlefish",
@@ -17,6 +17,17 @@ exports_files([
     ".clang-tidy",
     ".shellcheckrc",
 ])
+
+filegroup(
+    name = "starlark_files",
+    srcs = ["BUILD.bazel"],
+    tags = ["lint-with-buildifier"],
+)
+
+buildifier_test(
+    name = "buildifier_test",
+    srcs = [":starlark_files"],
+)
 
 genrule(
     name = "build_compilation_mode_txt",

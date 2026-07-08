@@ -1,0 +1,5 @@
+buildifier_prebuilt = use_extension("@buildifier_prebuilt//:defs.bzl", "buildifier_prebuilt_deps_extension")
+use_repo(
+    buildifier_prebuilt,
+    "buildifier_prebuilt_toolchains",
+)
