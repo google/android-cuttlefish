@@ -17,13 +17,35 @@ load("@cc_compatibility_proxy//:proxy.bzl", "cc_binary", "cc_library", "cc_test"
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_library.bzl", "sh_library")
 load("//:build_variables.bzl", BUILD_VAR_COPTS = "COPTS", BUILD_VAR_LINKOPTS = "LINKOPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
-load("//tools/lint:linters.bzl", "shellcheck_test")
+load("//tools/lint:linters.bzl", "buildifier_test", "clang_tidy_test", "shellcheck_test")
 
 visibility(["//..."])
 
 COPTS = BUILD_VAR_COPTS
 LINKOPTS = BUILD_VAR_LINKOPTS
+
+def _cf_build_test_implementation(name, srcs, **kwargs):
+    native.filegroup(
+        name = name + "_LINT_TEST_starlark_files",
+        srcs = (srcs or []) + ["BUILD.bazel"],
+        tags = ["lint-with-buildifier"],
+    )
+    buildifier_test(
+        name = name + "_LINT_TEST",
+        srcs = [":" + name + "_LINT_TEST_starlark_files"],
+        **kwargs,
+    )
+
+cf_build_test = macro(
+    inherit_attrs = "common",
+    attrs = {
+        "srcs": attr.label_list(
+            configurable = False,
+            default = [],
+        )
+    },
+    implementation = _cf_build_test_implementation,
+)
 
 def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, linkopts, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
