@@ -392,6 +392,9 @@ class CuttlefishConfig {
     bool crosvm_simple_media_device() const;
     std::string crosvm_v4l2_proxy() const;
     bool use_pmem() const;
+    std::string crosvm_acpi_table() const;
+    std::string crosvm_device_tree_overlay() const;
+    std::string crosvm_file_backed_mapping() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -644,6 +647,9 @@ class CuttlefishConfig {
     void set_crosvm_simple_media_device(const bool simple_media_device);
     void set_crosvm_v4l2_proxy(const std::string v4l2_proxy);
     void set_use_pmem(const bool use_pmem);
+    void set_crosvm_acpi_table(const std::string acpi_table);
+    void set_crosvm_device_tree_overlay(const std::string device_tree_overlay);
+    void set_crosvm_file_backed_mapping(const std::string file_backed_mapping);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host

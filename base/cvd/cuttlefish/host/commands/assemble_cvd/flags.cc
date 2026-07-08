@@ -618,6 +618,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> smt_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(smt));
   std::vector<std::string> crosvm_binary_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(crosvm_binary));
+  std::vector<std::string> crosvm_acpi_table_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(crosvm_acpi_table));
+  std::vector<std::string> crosvm_device_tree_overlay_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(crosvm_device_tree_overlay));
+  std::vector<std::string> crosvm_file_backed_mapping_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(crosvm_file_backed_mapping));
   std::vector<std::string> seccomp_policy_dir_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(seccomp_policy_dir));
   std::vector<std::string> qemu_binary_dir_vec =
@@ -843,6 +849,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     instance.set_crosvm_binary(crosvm_binary_vec[instance_index]);
+    instance.set_crosvm_acpi_table(crosvm_acpi_table_vec[instance_index]);
+    instance.set_crosvm_device_tree_overlay(
+        crosvm_device_tree_overlay_vec[instance_index]);
+    instance.set_crosvm_file_backed_mapping(
+        crosvm_file_backed_mapping_vec[instance_index]);
     instance.set_seccomp_policy_dir(seccomp_policy_dir_vec[instance_index]);
     instance.set_qemu_binary_dir(qemu_binary_dir_vec[instance_index]);
 
