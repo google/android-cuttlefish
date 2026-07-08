@@ -13,6 +13,7 @@ go_test(
         "exclusive",
         "external",
         "no-sandbox",
+        "requires_ab",
         "supports-graceful-termination",
     ],
     deps = [
