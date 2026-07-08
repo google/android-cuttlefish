@@ -1,6 +1,8 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
 
 package(default_visibility = ["//:android_cuttlefish"])
+
+cf_build_test(name = "cf_build_test")
 
 cf_cc_library(
     name = "ansi_codes",
