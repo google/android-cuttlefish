@@ -1,14 +1,13 @@
-###############################################################################
-# Bazel now uses Bzlmod by default to manage external dependencies.
-# Please consider migrating your external dependencies from WORKSPACE to MODULE.bazel.
-#
-# For more details, please check https://github.com/bazelbuild/bazel/issues/18958
-###############################################################################
+"""
+Host tools used to run Android Cuttlefish Virtual Devices.
+"""
+
+bazel_dep(name = "aspect_rules_lint", version = "2.5.2", dev_dependency = True)
+bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 
 bazel_dep(name = "abseil-cpp", version = "20260107.0")
 bazel_dep(name = "aspect_bazel_lib", version = "2.22.0")
-bazel_dep(name = "aspect_rules_lint", version = "2.5.2", dev_dependency = True)
-bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2")
 bazel_dep(name = "brotli")
@@ -23,7 +22,6 @@ bazel_dep(name = "googleapis-cc", version = "1.0.0")
 bazel_dep(name = "googletest")
 bazel_dep(name = "grpc")
 bazel_dep(name = "grpc-proto")
-bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 bazel_dep(name = "icu", version = "76.1.bcr.1")
 bazel_dep(name = "jsoncpp")
 bazel_dep(name = "libarchive", version = "3.7.9")
@@ -41,12 +39,10 @@ bazel_dep(name = "protobuf", version = "33.0")
 bazel_dep(name = "rootcanal")
 bazel_dep(name = "rules_cc", version = "0.2.16")
 bazel_dep(name = "rules_flex", version = "0.4")
-# this is normally an indirect dependency, but for bazel 9 we need a higher version
-bazel_dep(name = "rules_foreign_cc", version = "0.15.1")
+bazel_dep(name = "rules_foreign_cc", version = "0.15.1")  # this is normally an indirect dependency, but for bazel 9 we need a higher version
 bazel_dep(name = "rules_java", version = "8.16.1")
 bazel_dep(name = "rules_license", version = "1.0.0")
-# this is normally an indirect dependency, but for bazel 9 we need a higher version
-bazel_dep(name = "rules_nodejs", version = "6.7.3")
+bazel_dep(name = "rules_nodejs", version = "6.7.3")  # this is normally an indirect dependency, but for bazel 9 we need a higher version
 bazel_dep(name = "rules_proto", version = "7.1.0")
 bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.1")
 bazel_dep(name = "rules_proto_grpc_go", version = "5.3.0")

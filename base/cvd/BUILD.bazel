@@ -12,7 +12,10 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cf_build_test(name = "cf_build_test")
+cf_build_test(
+    name = "cf_build_test",
+    srcs = ["MODULE.bazel"],
+)
 
 exports_files([
     ".clang-format",
