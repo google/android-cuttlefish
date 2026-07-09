@@ -39,6 +39,7 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/log_files.h"
+#include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/cvd.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
@@ -200,7 +201,7 @@ std::string ColoredUrl(const std::string& url) {
   return output;
 }
 
-void InitializeLogs(std::vector<std::string>& all_args) {
+std::optional<std::string> InitializeLogs(std::vector<std::string>& all_args) {
   LogSeverity verbosity = CvdVerbosityOption(all_args);
   MetadataLevel metadata_level =
       isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
@@ -215,6 +216,8 @@ void InitializeLogs(std::vector<std::string>& all_args) {
   LogToStderrAndFiles(log_files, "", metadata_level, verbosity);
 
   (void)PruneLogsDirectory(CvdUserLogDir());
+
+  return log_files.empty() ? std::optional<std::string>() : log_files[0];
 }
 
 }  // namespace
@@ -226,11 +229,17 @@ int main(int argc, char** argv) {
 
   std::vector<std::string> all_args(argv, argv + argc);
 
-  cuttlefish::InitializeLogs(all_args);
+  std::optional<std::string> log_file = cuttlefish::InitializeLogs(all_args);
 
   cuttlefish::Result<void> result = cuttlefish::CvdMain(std::move(all_args));
   if (result.ok()) {
     return 0;
+  } else if (log_file.has_value() && isatty(2)) {
+    VLOG(0) << result.error();
+    cuttlefish::TerminalColors colors(isatty(2));
+    std::cerr << colors.Red() << "'cvd' encountered an error." << colors.Reset()
+              << " Please see '" << colors.Cyan() << *log_file << colors.Reset()
+              << "' for the complete failure report.\n";
   } else {
     // TODO: we should not print the stack trace, instead, we should rely on
     // each handler to print the error message directly in the client's
@@ -245,6 +254,6 @@ int main(int argc, char** argv) {
     std::cerr << "        " << cuttlefish::ColoredUrl(kCuttlefishBugUrl)
               << std::endl
               << std::endl;
-    return -1;
   }
+  return -1;
 }
