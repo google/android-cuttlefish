@@ -43,14 +43,14 @@ cc_library(
         "libavb/boringssl/avb_crypto_ops_impl.h",
         "libavb/boringssl/sha.c",
     ],
-    includes = [
-        ".",
-        "libavb/boringssl",
-    ],
     hdrs = ["libavb/libavb.h"],
     copts = [
         "-DAVB_ENABLE_DEBUG",
         "-DAVB_COMPILATION",
+    ],
+    includes = [
+        ".",
+        "libavb/boringssl",
     ],
     deps = ["@boringssl//:crypto"],
 )
