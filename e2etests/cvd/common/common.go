@@ -629,7 +629,7 @@ func RunXts(t *testing.T, cuttlefishArgs FetchAndCreateArgs, xtsArgs XtsArgs) {
 				testname := fmt.Sprintf("%s#%s", xtsTestCase.Name, xtsTest.Name)
 				t.Run(testname, func(t *testing.T) {
 					log.Printf("%s result: %s", testname, xtsTest.Result)
-					if xtsTest.Result == "failed" {
+					if strings.HasPrefix(xtsTest.Result, "fail") {
 						t.Error("XTS test failed, see logs")
 					}
 				})
