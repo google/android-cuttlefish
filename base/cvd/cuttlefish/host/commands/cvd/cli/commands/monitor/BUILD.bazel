@@ -152,6 +152,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/libs/log_names",
+        "//cuttlefish/io:in_memory",
         "//cuttlefish/io:shared_fd",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
