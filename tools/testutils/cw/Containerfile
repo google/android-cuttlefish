@@ -6,6 +6,9 @@ ENV OVERRIDE_BAZEL_WRAPPER_DOWNLOAD_DIR=/tmp/cw_bazel
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y sudo systemd init systemd-journal-remote nginx jq adb
 
+# Packages needed to run CTS
+RUN apt-get install -y aapt
+
 RUN groupadd kvm
 COPY tools/testutils/cw/setup.service /etc/systemd/system/setup.service
 RUN systemctl enable setup
