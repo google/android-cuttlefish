@@ -37,8 +37,8 @@ cc_library(
     ],
     deps = [
         ":libsparse",
-        "@@//libbase",
-        "@@//libext4_utils",
+        "@//libbase",
+        "@//libext4_utils",
         "@boringssl//:crypto",
     ],
 )
@@ -70,7 +70,7 @@ cc_library(
     ],
     includes = ["libsparse/include"],
     deps = [
-        "@@//libbase",
+        "@//libbase",
         "@zlib",
     ],
 )
