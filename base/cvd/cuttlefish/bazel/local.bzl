@@ -28,7 +28,6 @@ def _common_attrs():
     }
 
 def _local_repository_impl(repository_ctx):
-
     target = repository_ctx.path(repository_ctx.attr.path)
     for child in target.readdir():
         repository_ctx.symlink(child, repository_ctx.path(child.basename))

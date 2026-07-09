@@ -11,3 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test")
+
+cf_build_test(
+    name = "cf_build_test",
+    srcs = [
+        "local.bzl",
+        "rules.bzl",
+    ],
+)

@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Macros wrapping executable, library, and test targets that generate linter
+invocation targets.
+"""
+
 load("@aspect_rules_lint//format:defs.bzl", "format_test")
 load("@cc_compatibility_proxy//:proxy.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
@@ -33,7 +38,7 @@ def _cf_build_test_implementation(name, srcs, **kwargs):
     buildifier_test(
         name = name + "_LINT_TEST",
         srcs = [":" + name + "_LINT_TEST_starlark_files"],
-        **kwargs,
+        **kwargs
     )
 
 cf_build_test = macro(
@@ -42,7 +47,7 @@ cf_build_test = macro(
         "srcs": attr.label_list(
             configurable = False,
             default = [],
-        )
+        ),
     },
     implementation = _cf_build_test_implementation,
 )
@@ -54,7 +59,7 @@ def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled,
         name = name,
         copts = (copts or []) + COPTS,
         linkopts = (linkopts or []) + LINKOPTS,
-        **kwargs,
+        **kwargs
     )
     if clang_format_enabled:
         format_test(
@@ -89,7 +94,7 @@ def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled
     cc_library(
         name = name,
         copts = (copts or []) + COPTS,
-        **kwargs,
+        **kwargs
     )
     if clang_format_enabled:
         format_test(
@@ -127,7 +132,7 @@ def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, c
             "@googletest//:gtest",
             "@googletest//:gtest_main",
         ],
-        **kwargs,
+        **kwargs
     )
     if clang_format_enabled:
         format_test(
@@ -159,7 +164,7 @@ cf_cc_test = macro(
 def _cf_sh_binary_implementation(name, shellcheck_enabled, **kwargs):
     sh_binary(
         name = name,
-        **kwargs,
+        **kwargs
     )
     if shellcheck_enabled:
         shellcheck_test(
@@ -180,7 +185,7 @@ cf_sh_binary = macro(
 def _cf_sh_library_implementation(name, shellcheck_enabled, **kwargs):
     sh_library(
         name = name,
-        **kwargs,
+        **kwargs
     )
     if shellcheck_enabled:
         shellcheck_test(
