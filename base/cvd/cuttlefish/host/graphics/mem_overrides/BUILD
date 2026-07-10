@@ -14,7 +14,6 @@ cf_cc_binary(
             "mem_overrides_noop.cpp",
         ],
     }),
-    clang_format_enabled = False,
     copts = [
         "-fPIC",
     ],

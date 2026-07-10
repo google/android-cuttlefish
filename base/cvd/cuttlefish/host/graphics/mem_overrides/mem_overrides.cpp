@@ -6,9 +6,9 @@ extern "C" {
 // cause SIGBUS errors on some Nvidia GPUs. Override memcpy here:
 
 void* memcpy(void* dest, const void* src, size_t n) {
-	return __memcpy_aarch64(dest, src, n);
+  return __memcpy_aarch64(dest, src, n);
 }
 
 void* memmove(void* dest, const void* src, size_t n) {
-	return __memmove_aarch64(dest, src, n);
+  return __memmove_aarch64(dest, src, n);
 }
