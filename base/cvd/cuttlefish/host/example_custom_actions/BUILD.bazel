@@ -12,10 +12,7 @@ exports_files(
 
 cf_cc_binary(
     name = "cuttlefish_example_action_server",
-    srcs = [
-        "main.cpp",
-    ],
-    clang_format_enabled = False,
+    srcs = ["main.cpp"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/config:cuttlefish_config",
