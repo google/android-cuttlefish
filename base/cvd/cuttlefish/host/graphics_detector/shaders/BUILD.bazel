@@ -20,12 +20,23 @@ genrule(
     tools = [":generate_shader_embed"],
 )
 
+genrule(
+    name = "gen_blit_texture.vert.inl",
+    srcs = [
+        "blit_texture.vert",
+        "blit_texture.vert.spv",
+    ],
+    outs = ["blit_texture.vert.inl"],
+    cmd = "$(location :generate_shader_embed) $(location :blit_texture.vert) $(location :blit_texture.vert.spv) kBlitTextureVert $@",
+    tools = [":generate_shader_embed"],
+)
+
 cf_cc_library(
     name = "graphics_detector_shaders",
     clang_format_enabled = False,
     textual_hdrs = [
         ":gen_blit_texture.frag.inl",
-        "blit_texture.vert.inl",
+        ":gen_blit_texture.vert.inl",
         "blit_texture_highp.frag.inl",
         "blit_texture_lowp.frag.inl",
         "blit_texture_mediump.frag.inl",
