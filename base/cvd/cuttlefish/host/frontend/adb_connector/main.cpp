@@ -23,8 +23,8 @@
 #include <thread>
 #include <vector>
 
-#include <gflags/gflags.h>
 #include "absl/log/check.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
@@ -33,8 +33,9 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
 
-DEFINE_string(addresses, "", "Comma-separated list of addresses to "
-                             "'adb connect' to");
+DEFINE_string(addresses, "",
+              "Comma-separated list of addresses to "
+              "'adb connect' to");
 
 namespace cuttlefish {
 namespace {
