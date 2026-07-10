@@ -21,6 +21,7 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
+#include "cuttlefish/ansi_codes/should_color.h"
 
 namespace cuttlefish {
 
@@ -28,11 +29,20 @@ DiagnosticInformation::~DiagnosticInformation() = default;
 
 void DiagnosticInformation::PrintAll(
     const std::vector<DiagnosticInformation*>& infos) {
-  LOG(INFO) << kAnsiGreen << "  Run `cvd logs` to report paths to device logs."
-            << kAnsiReset;
+  static constexpr char kCvdLogsMsg[] =
+      "  Run `cvd logs` to report paths to device logs.";
+  if (ShouldColorStderr()) {
+    LOG(INFO) << kAnsiGreen << kCvdLogsMsg << kAnsiReset;
+  } else {
+    LOG(INFO) << kCvdLogsMsg;
+  }
   for (const auto& info : infos) {
     for (const auto& line : info->Diagnostics()) {
-      LOG(INFO) << kAnsiGreen << "  " << line << kAnsiReset;
+      if (ShouldColorStderr()) {
+        LOG(INFO) << kAnsiGreen << "  " << line << kAnsiReset;
+      } else {
+        LOG(INFO) << "  " << line;
+      }
     }
   }
 }

@@ -10,6 +10,7 @@ cf_cc_library(
     hdrs = ["error_type.h"],
     deps = [
         "//cuttlefish/ansi_codes",
+        "//cuttlefish/ansi_codes:should_color",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",

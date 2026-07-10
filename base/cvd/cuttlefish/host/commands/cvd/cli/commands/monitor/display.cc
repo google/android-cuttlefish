@@ -18,7 +18,6 @@
 
 #include <stdint.h>
 #include <sys/types.h>
-#include <unistd.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -35,7 +34,7 @@
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 
-#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/ansi_codes/should_color.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/kernel.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/launcher.h"
@@ -86,17 +85,10 @@ Result<std::vector<std::string>> GetLastNLines(ReaderSeeker& rs, size_t n) {
   return all_lines;
 }
 
-bool ShouldColorizeOutput(int fd) {
-  return !StringFromEnv("NO_COLOR").has_value() &&
-         (StringFromEnv("FORCE_COLOR").has_value() || isatty(fd));
-}
-
 }  // namespace
 
 LogMonitorDisplay::LogMonitorDisplay(size_t width)
-    : width_(width),
-      total_lines_drawn_(0),
-      colorize_(ShouldColorizeOutput(1)) {}
+    : width_(width), total_lines_drawn_(0), colorize_(ShouldColorStdout()) {}
 
 void LogMonitorDisplay::DrawFile(ReaderSeeker& rs, const std::string& title,
                                  size_t max_lines) {

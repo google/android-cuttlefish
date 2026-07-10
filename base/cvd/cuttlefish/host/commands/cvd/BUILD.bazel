@@ -30,6 +30,7 @@ cf_cc_binary(
     srcs = ["main.cc"],
     deps = [
         ":libcvd",
+        "//cuttlefish/ansi_codes:should_color",
         "//cuttlefish/ansi_codes:terminal_colors",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",

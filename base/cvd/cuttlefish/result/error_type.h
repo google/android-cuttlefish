@@ -27,6 +27,8 @@
 #include "android-base/expected.h"  // IWYU pragma: export
 #include "fmt/core.h"               // IWYU pragma: export
 
+#include "cuttlefish/ansi_codes/should_color.h"
+
 namespace cuttlefish {
 
 class StackTraceError;
@@ -188,7 +190,7 @@ class StackTraceError {
 
   std::string Trace() const { return fmt::format(fmt::runtime("{:v}"), *this); }
 
-  std::string FormatForEnv(bool color = (isatty(STDERR_FILENO) == 1)) const {
+  std::string FormatForEnv(bool color = ShouldColorStdout()) const {
     return fmt::format(fmt::runtime(ResultErrorFormat(color)), *this);
   }
 
