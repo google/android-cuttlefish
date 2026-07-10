@@ -14,6 +14,15 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "should_color",
+    srcs = ["should_color.cc"],
+    hdrs = ["should_color.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+    ],
+)
+
+cf_cc_library(
     name = "terminal_colors",
     srcs = ["terminal_colors.cc"],
     hdrs = ["terminal_colors.h"],
