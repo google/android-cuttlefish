@@ -53,16 +53,6 @@ cf_cc_library(
     ],
 )
 
-cf_cc_library(
-    name = "cf_metrics_configs",
-    srcs = ["cf_metrics_configs.cpp"],
-    hdrs = ["cf_metrics_configs.h"],
-    deps = [
-        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
-        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
-    ],
-)
-
 cf_cc_test(
     name = "configs_inheritance_test",
     srcs = ["configs_inheritance_test.cc"],
@@ -108,7 +98,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_instances",
-        "//cuttlefish/host/commands/cvd/cli/parser:cf_metrics_configs",
         "//cuttlefish/host/commands/cvd/cli/parser:launch_cvd_templates",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/result",
@@ -173,19 +162,6 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
-        "@jsoncpp",
-    ],
-)
-
-cf_cc_test(
-    name = "metrics_configs_test",
-    srcs = ["metrics_configs_test.cc"],
-    depend_on_what_you_use_enabled = False,
-    deps = [
-        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
-        "//cuttlefish/result",
-        "//cuttlefish/result:result_matchers",
-        "//libbase",
         "@jsoncpp",
     ],
 )

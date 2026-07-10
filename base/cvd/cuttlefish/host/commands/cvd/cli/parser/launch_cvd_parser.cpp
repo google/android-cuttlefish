@@ -25,7 +25,6 @@
 
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_instances.h"
-#include "cuttlefish/host/commands/cvd/cli/parser/cf_metrics_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/launch_cvd_templates.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/result/result.h"
@@ -76,7 +75,6 @@ Result<std::vector<std::string>> GenerateCfFlags(
         GenerateFlag("netsim_args", absl::StrJoin(launch.netsim_args(), " ")));
   }
 
-  flags = MergeResults(std::move(flags), GenerateMetricsFlags(launch));
   flags =
       MergeResults(std::move(flags), CF_EXPECT(GenerateInstancesFlags(launch)));
   auto flag_op = GenerateUndefOkFlag(flags);
