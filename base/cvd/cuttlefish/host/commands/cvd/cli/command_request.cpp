@@ -46,7 +46,8 @@ constexpr std::array help_str_opts{
 };
 
 }  // namespace
-CommandRequest::CommandRequest(cvd_common::Args args, cvd_common::Envs env,
+CommandRequest::CommandRequest(std::vector<std::string> args,
+                               std::unordered_map<std::string, std::string> env,
                                selector::SelectorOptions selectors)
     : args_(std::move(args)),
       env_(std::move(env)),
@@ -82,12 +83,14 @@ CommandRequestBuilder CommandRequestBuilder::AddArguments(
   return AddArguments(std::vector<std::string_view>(args));
 }
 
-CommandRequestBuilder& CommandRequestBuilder::SetEnv(cvd_common::Envs env) & {
+CommandRequestBuilder& CommandRequestBuilder::SetEnv(
+    std::unordered_map<std::string, std::string> env) & {
   env_ = std::move(env);
   return *this;
 }
 
-CommandRequestBuilder CommandRequestBuilder::SetEnv(cvd_common::Envs env) && {
+CommandRequestBuilder CommandRequestBuilder::SetEnv(
+    std::unordered_map<std::string, std::string> env) && {
   env_ = std::move(env);
   return *this;
 }

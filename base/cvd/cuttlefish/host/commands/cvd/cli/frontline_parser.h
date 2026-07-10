@@ -17,12 +17,12 @@
 #pragma once
 
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 /* Returns `cvd` arguments before the subcommand, removing them from `args`. */
-Result<selector::SelectorOptions> ExtractCvdArgs(cvd_common::Args& args);
+Result<selector::SelectorOptions> ExtractCvdArgs(
+    std::vector<std::string>& args);
 
 }  // namespace cuttlefish

@@ -20,7 +20,6 @@
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/result/result.h"
 
@@ -31,17 +30,17 @@ class CvdSnapshotCommandHandler : public CvdCommandHandler {
   CvdSnapshotCommandHandler(InstanceManager& instance_manager);
 
   Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override;
+  std::vector<std::string> CmdList() const override;
 
   std::string SummaryHelp() const override;
   bool RequiresDeviceExists() const override { return true; }
   Result<std::string> DetailedHelp(const CommandRequest& request) override;
 
  private:
-  Result<Command> GenerateCommand(const CommandRequest& request,
-                                  const std::string& subcmd,
-                                  cvd_common::Args& subcmd_args,
-                                  cvd_common::Envs envs);
+  Result<Command> GenerateCommand(
+      const CommandRequest& request, const std::string& subcmd,
+      std::vector<std::string>& subcmd_args,
+      std::unordered_map<std::string, std::string> envs);
 
   InstanceManager& instance_manager_;
 };

@@ -20,6 +20,7 @@
 #include <stdlib.h>
 
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -29,7 +30,6 @@
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -52,7 +52,7 @@ cvd env type $SERVICE_NAME $REQUEST_MESSAGE_TYPE - outputs the proto the specifi
 )";
 
 Result<Command> HelpCommand(const CommandRequest& request) {
-  cvd_common::Envs envs_copy = request.Env();
+  std::unordered_map<std::string, std::string> envs_copy = request.Env();
   std::vector<std::string> help_args = request.SubcommandArguments();
   if (help_args.empty()) {
     help_args.push_back("--help");
@@ -73,8 +73,8 @@ Result<Command> NonHelpCommand(InstanceManager& instance_manager,
       absl::StrCat(android_host_out, "/bin/", kCvdEnvBin);
   const std::string internal_device_name = absl::StrCat("cvd-", instance.Id());
 
-  const cvd_common::Args& subcmd_args = request.SubcommandArguments();
-  cvd_common::Args cvd_env_args{internal_device_name};
+  const std::vector<std::string>& subcmd_args = request.SubcommandArguments();
+  std::vector<std::string> cvd_env_args{internal_device_name};
   cvd_env_args.insert(cvd_env_args.end(), subcmd_args.begin(),
                       subcmd_args.end());
 
@@ -110,7 +110,9 @@ Result<void> CvdEnvCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args CvdEnvCommandHandler::CmdList() const { return {"env"}; }
+std::vector<std::string> CvdEnvCommandHandler::CmdList() const {
+  return {"env"};
+}
 
 std::string CvdEnvCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;

@@ -21,7 +21,6 @@
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/result/result.h"
 
@@ -45,7 +44,9 @@ Result<void> CvdClearCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args CvdClearCommandHandler::CmdList() const { return {kClearCmd}; }
+std::vector<std::string> CvdClearCommandHandler::CmdList() const {
+  return {kClearCmd};
+}
 
 std::string CvdClearCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;

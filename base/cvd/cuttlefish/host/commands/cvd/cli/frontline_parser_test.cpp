@@ -26,8 +26,8 @@
 namespace cuttlefish {
 
 struct ExtractCvdArgsTestParams {
-  cvd_common::Args input_args;
-  cvd_common::Args expected_args;
+  std::vector<std::string> input_args;
+  std::vector<std::string> expected_args;
   selector::SelectorOptions expected_options;
 };
 
@@ -35,7 +35,7 @@ class FrontlineParserTestFixture
     : public ::testing::TestWithParam<ExtractCvdArgsTestParams> {};
 
 TEST_P(FrontlineParserTestFixture, FrontlineParserTest) {
-  cvd_common::Args args = GetParam().input_args;
+  std::vector<std::string> args = GetParam().input_args;
 
   Result<selector::SelectorOptions> options_result = ExtractCvdArgs(args);
 

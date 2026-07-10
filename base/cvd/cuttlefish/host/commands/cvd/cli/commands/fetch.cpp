@@ -28,7 +28,6 @@
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/cache/cache.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/fetch/auto_login.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
@@ -108,7 +107,7 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args CvdFetchCommandHandler::CmdList() const {
+std::vector<std::string> CvdFetchCommandHandler::CmdList() const {
   return {"fetch", "fetch_cvd"};
 }
 

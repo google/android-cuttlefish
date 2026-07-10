@@ -33,7 +33,6 @@
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/request_context.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -136,7 +135,7 @@ Result<void> CvdHelpHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args CvdHelpHandler::CmdList() const { return {"help"}; }
+std::vector<std::string> CvdHelpHandler::CmdList() const { return {"help"}; }
 
 std::string CvdHelpHandler::SummaryHelp() const { return kSummaryHelpText; }
 

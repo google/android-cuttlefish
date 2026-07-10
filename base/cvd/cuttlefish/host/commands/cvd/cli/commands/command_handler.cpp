@@ -27,7 +27,6 @@
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -52,7 +51,7 @@ Result<std::string> CvdCommandHandler::DetailedHelp(
 
   std::vector<Flag> flags = CF_EXPECT(Flags(request));
   // Consume flags to ensure "current value" is accurate
-  cvd_common::Args args = request.SubcommandArguments();
+  std::vector<std::string> args = request.SubcommandArguments();
   CF_EXPECT(ConsumeFlags(flags, args));
 
   // Make sure the flags are in alphabetical order

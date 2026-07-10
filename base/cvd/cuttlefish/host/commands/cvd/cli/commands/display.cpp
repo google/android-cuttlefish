@@ -22,6 +22,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -33,7 +34,6 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -61,10 +61,10 @@ Commands:
                         Captures a screenshot of the given display.
 )";
 
-Result<Command> BuildCommand(InstanceManager& instance_manager,
-                             const CommandRequest& request,
-                             cvd_common::Args& subcmd_args,
-                             cvd_common::Envs envs) {
+Result<Command> BuildCommand(
+    InstanceManager& instance_manager, const CommandRequest& request,
+    std::vector<std::string>& subcmd_args,
+    std::unordered_map<std::string, std::string> envs) {
   // test if there is --instance_num flag
   int instance_num = -1;
   Flag instance_num_flag = GflagsCompatFlag("instance_num", instance_num);
@@ -82,7 +82,7 @@ Result<Command> BuildCommand(InstanceManager& instance_manager,
   const std::string cvd_display_bin_path =
       absl::StrCat(android_host_out, "/bin/", kDisplayBin);
 
-  cvd_common::Args cvd_env_args{subcmd_args};
+  std::vector<std::string> cvd_env_args{subcmd_args};
   cvd_env_args.push_back(absl::StrCat("--instance_num=", instance.Id()));
   envs["HOME"] = home;
   envs[kAndroidHostOut] = android_host_out;
@@ -112,7 +112,7 @@ CvdDisplayCommandHandler::CvdDisplayCommandHandler(
     : instance_manager_{instance_manager} {}
 
 Result<void> CvdDisplayCommandHandler::Handle(const CommandRequest& request) {
-  const cvd_common::Envs& env = request.Env();
+  const std::unordered_map<std::string, std::string>& env = request.Env();
 
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
   if (subcmd_args.empty()) {
@@ -132,7 +132,7 @@ Result<void> CvdDisplayCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args CvdDisplayCommandHandler::CmdList() const {
+std::vector<std::string> CvdDisplayCommandHandler::CmdList() const {
   return {"display"};
 }
 

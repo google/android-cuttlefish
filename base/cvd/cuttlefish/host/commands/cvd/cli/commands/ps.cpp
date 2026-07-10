@@ -31,7 +31,6 @@
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
@@ -97,7 +96,9 @@ void PrintTable(const std::map<PsColumns, std::string_view>& headers,
 CvdPsCommandHandler::CvdPsCommandHandler(InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
-cvd_common::Args CvdPsCommandHandler::CmdList() const { return {kPsSubcmd}; }
+std::vector<std::string> CvdPsCommandHandler::CmdList() const {
+  return {kPsSubcmd};
+}
 
 std::string CvdPsCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;

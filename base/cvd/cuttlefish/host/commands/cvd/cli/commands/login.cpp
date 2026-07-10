@@ -25,7 +25,6 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
@@ -86,7 +85,7 @@ Result<void> CvdLoginCommand::Handle(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args CvdLoginCommand::CmdList() const { return {"login"}; }
+std::vector<std::string> CvdLoginCommand::CmdList() const { return {"login"}; }
 
 std::string CvdLoginCommand::SummaryHelp() const { return kSummaryHelpText; }
 

@@ -17,7 +17,6 @@
 
 #include "absl/strings/str_split.h"
 
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -35,13 +34,13 @@ CommandInvocation MockParseInvocation(const std::vector<std::string>& args) {
   }
   if (args[0] != "cvd") {
     return CommandInvocation{.command = args[0],
-                             .arguments = cvd_common::Args{}};
+                             .arguments = std::vector<std::string>{}};
   }
   if (args.size() == 1) {
     return CommandInvocation{.command = "help",
-                             .arguments = cvd_common::Args{}};
+                             .arguments = std::vector<std::string>{}};
   }
-  cvd_common::Args program_args{args.begin() + 2, args.end()};
+  std::vector<std::string> program_args{args.begin() + 2, args.end()};
   return CommandInvocation{.command = args[1], .arguments = program_args};
 }
 

@@ -25,14 +25,15 @@
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 class CommandRequest {
  public:
-  const cvd_common::Envs& Env() const { return env_; }
+  const std::unordered_map<std::string, std::string>& Env() const {
+    return env_;
+  }
 
   const selector::SelectorOptions& Selectors() const { return selectors_; }
 
@@ -43,11 +44,12 @@ class CommandRequest {
 
  private:
   friend class CommandRequestBuilder;
-  CommandRequest(cvd_common::Args args, cvd_common::Envs env,
+  CommandRequest(std::vector<std::string> args,
+                 std::unordered_map<std::string, std::string> env,
                  selector::SelectorOptions selectors);
 
-  cvd_common::Args args_;
-  cvd_common::Envs env_;
+  std::vector<std::string> args_;
+  std::unordered_map<std::string, std::string> env_;
   selector::SelectorOptions selectors_;
 
   std::string subcommand_;
@@ -91,8 +93,8 @@ class CommandRequestBuilder {
     return *this;
   }
 
-  CommandRequestBuilder& SetEnv(cvd_common::Envs) &;
-  CommandRequestBuilder SetEnv(cvd_common::Envs) &&;
+  CommandRequestBuilder& SetEnv(std::unordered_map<std::string, std::string>) &;
+  CommandRequestBuilder SetEnv(std::unordered_map<std::string, std::string>) &&;
 
   CommandRequestBuilder& AddEnvVar(std::string key, std::string val) &;
   CommandRequestBuilder AddEnvVar(std::string key, std::string val) &&;
@@ -100,8 +102,8 @@ class CommandRequestBuilder {
   Result<CommandRequest> Build() &&;
 
  private:
-  cvd_common::Args args_;
-  cvd_common::Envs env_;
+  std::vector<std::string> args_;
+  std::unordered_map<std::string, std::string> env_;
   selector::SelectorOptions selector_options_;
 };
 

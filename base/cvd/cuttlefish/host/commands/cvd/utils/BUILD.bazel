@@ -13,7 +13,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
@@ -71,7 +70,6 @@ cf_cc_library(
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/commands/cvd/utils:flags_collector",
         "//cuttlefish/host/commands/cvd/utils:interrupt_listener",

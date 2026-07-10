@@ -24,7 +24,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -38,8 +37,8 @@ struct GroupProcInfo {
   struct InstanceInfo {
     std::set<pid_t> pids_;
     std::set<pid_t> parent_run_cvd_pids_;
-    cvd_common::Envs envs_;
-    cvd_common::Args cmd_args_;
+    std::unordered_map<std::string, std::string> envs_;
+    std::vector<std::string> cmd_args_;
     unsigned id_;
   };
   // instance id to instance info mapping

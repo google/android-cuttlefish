@@ -77,7 +77,7 @@ Result<void> Cvd::HandleCvdCommand(
   CF_EXPECT(!all_args.empty());
   std::vector<std::string> args = all_args;
   if (args.size() == 1ul) {
-    args = cvd_common::Args{"cvd", "help"};
+    args = std::vector<std::string>{"cvd", "help"};
   }
   selector::SelectorOptions selector_args = CF_EXPECT(ExtractCvdArgs(args));
   // TODO(schuffelen): Deduplicate cvd process split.

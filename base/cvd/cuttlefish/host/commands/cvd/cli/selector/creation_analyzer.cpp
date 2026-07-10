@@ -59,7 +59,7 @@ Result<std::vector<InstanceParams>> BuildInstanceParams(
 // Determines whether the user provided a custom directory in the $HOME variable
 // and returns it.
 Result<std::optional<std::string>> HomeFromEnvironment(
-    const cvd_common::Envs& env) {
+    const std::unordered_map<std::string, std::string>& env) {
   auto home_it = env.find("HOME");
   if (home_it == env.end() ||
       home_it->second == CF_EXPECT(SystemWideUserHome())) {

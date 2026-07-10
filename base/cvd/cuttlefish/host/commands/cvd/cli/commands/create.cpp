@@ -30,6 +30,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -55,7 +56,6 @@
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_constants.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -73,7 +73,8 @@ using selector::GroupCreationInfo;
 
 constexpr char kSummaryHelpText[] = "Create a Cuttlefish instance group";
 
-std::string DefaultHostPath(const cvd_common::Envs& envs) {
+std::string DefaultHostPath(
+    const std::unordered_map<std::string, std::string>& envs) {
   for (const auto& key : {kAndroidHostOut, kAndroidSoongHostOut, "HOME"}) {
     auto it = envs.find(key);
     if (it != envs.end()) {
@@ -83,7 +84,8 @@ std::string DefaultHostPath(const cvd_common::Envs& envs) {
   return CurrentDirectory();
 }
 
-std::string DefaultProductPath(const cvd_common::Envs& envs) {
+std::string DefaultProductPath(
+    const std::unordered_map<std::string, std::string>& envs) {
   for (const auto& key : {kAndroidProductOut, "HOME"}) {
     auto it = envs.find(key);
     if (it != envs.end()) {
@@ -94,7 +96,7 @@ std::string DefaultProductPath(const cvd_common::Envs& envs) {
 }
 
 Result<CommandRequest> CreateLoadCommand(const CommandRequest& request,
-                                         cvd_common::Args& args,
+                                         std::vector<std::string>& args,
                                          const std::string& config_file) {
   return CF_EXPECT(CommandRequestBuilder()
                        .SetEnv(request.Env())
@@ -104,9 +106,9 @@ Result<CommandRequest> CreateLoadCommand(const CommandRequest& request,
                        .Build());
 }
 
-Result<CommandRequest> CreateStartCommand(const LocalInstanceGroup& group,
-                                          const cvd_common::Args& args,
-                                          const cvd_common::Envs& envs) {
+Result<CommandRequest> CreateStartCommand(
+    const LocalInstanceGroup& group, const std::vector<std::string>& args,
+    const std::unordered_map<std::string, std::string>& envs) {
   selector::SelectorOptions selector_options{
       .group_name = group.GroupName(),
   };
@@ -118,10 +120,11 @@ Result<CommandRequest> CreateStartCommand(const LocalInstanceGroup& group,
                        .Build());
 }
 
-Result<void> StartGroup(const LocalInstanceGroup& group,
-                        const std::vector<std::string>& subcmd_args,
-                        const cvd_common::Envs& envs,
-                        InstanceManager& instance_manager) {
+Result<void> StartGroup(
+    const LocalInstanceGroup& group,
+    const std::vector<std::string>& subcmd_args,
+    const std::unordered_map<std::string, std::string>& envs,
+    InstanceManager& instance_manager) {
   const CommandRequest start_cmd =
       CF_EXPECT(CreateStartCommand(group, subcmd_args, envs));
   std::unique_ptr<CvdCommandHandler> start_handler =
@@ -130,8 +133,9 @@ Result<void> StartGroup(const LocalInstanceGroup& group,
   return {};
 }
 
-Result<cvd_common::Envs> GetEnvs(const CommandRequest& request) {
-  cvd_common::Envs envs = request.Env();
+Result<std::unordered_map<std::string, std::string>> GetEnvs(
+    const CommandRequest& request) {
+  std::unordered_map<std::string, std::string> envs = request.Env();
   if (auto it = envs.find("HOME"); it != envs.end() && it->second.empty()) {
     envs.erase(it);
   }
@@ -287,7 +291,8 @@ CvdCreateCommandHandler::CvdCreateCommandHandler(
 
 Result<std::optional<LocalInstanceGroup>>
 CvdCreateCommandHandler::FindReusableGroup(
-    const selector::SelectorOptions& selectors, const cvd_common::Envs& envs) {
+    const selector::SelectorOptions& selectors,
+    const std::unordered_map<std::string, std::string>& envs) {
   InstanceDatabase::Filter filter =
       selector::BuildFilterFromSelectors(selectors);
 
@@ -319,7 +324,8 @@ CvdCreateCommandHandler::FindReusableGroup(
 Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
 
-  cvd_common::Envs envs = CF_EXPECT(GetEnvs(request));
+  std::unordered_map<std::string, std::string> envs =
+      CF_EXPECT(GetEnvs(request));
 
   CF_EXPECT(ConsumeFlags(ConfigFileModeFlags(), subcmd_args));
 
@@ -377,7 +383,8 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
 }
 
 Result<LocalInstanceGroup> CvdCreateCommandHandler::CreateGroup(
-    const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
+    const std::vector<std::string>& subcmd_args,
+    const std::unordered_map<std::string, std::string>& envs,
     const CommandRequest& request) {
   GroupCreationInfo creation_info = CF_EXPECT(AnalyzeCreation({
       .envs = envs,
@@ -478,7 +485,7 @@ std::vector<Flag> CvdCreateCommandHandler::ConfigFileModeFlags() {
 }
 
 std::vector<Flag> CvdCreateCommandHandler::FlagModeFlags(
-    const cvd_common::Envs& env,
+    const std::unordered_map<std::string, std::string>& env,
     const selector::SelectorOptions& selector_options) {
   own_flags_.host_path = DefaultHostPath(env);
   own_flags_.product_path = DefaultProductPath(env);

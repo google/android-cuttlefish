@@ -54,7 +54,6 @@ cf_cc_test(
         ":num_instances_parser",
         ":selector_common_parser",
         "//cuttlefish/flag_parser",
-        "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
     ],
@@ -84,7 +83,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/flag_parser",
-        "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_constants",
         "//cuttlefish/host/commands/cvd/instances:device_name",
         "//cuttlefish/result",
