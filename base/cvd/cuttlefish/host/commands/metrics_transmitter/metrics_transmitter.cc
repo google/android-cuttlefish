@@ -19,10 +19,10 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
-#include "cuttlefish/host/commands/metrics/debug_reader.h"
-#include "cuttlefish/host/commands/metrics/metrics_conversion.h"
-#include "cuttlefish/host/commands/metrics/metrics_flags.h"
-#include "cuttlefish/host/commands/metrics/metrics_transmission.h"
+#include "cuttlefish/host/commands/metrics_transmitter/debug_reader.h"
+#include "cuttlefish/host/commands/metrics_transmitter/metrics_conversion.h"
+#include "cuttlefish/host/commands/metrics_transmitter/metrics_flags.h"
+#include "cuttlefish/host/commands/metrics_transmitter/metrics_transmission.h"
 #include "cuttlefish/result/result.h"
 #include "external_proto/clientanalytics.pb.h"
 

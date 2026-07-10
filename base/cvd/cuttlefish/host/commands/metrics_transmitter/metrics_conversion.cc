@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/metrics/metrics_conversion.h"
+#include "cuttlefish/host/commands/metrics_transmitter/metrics_conversion.h"
 
 #include <chrono>
 #include <string>

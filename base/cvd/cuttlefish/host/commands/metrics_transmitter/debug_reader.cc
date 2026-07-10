@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/metrics/debug_reader.h"
+#include "cuttlefish/host/commands/metrics_transmitter/debug_reader.h"
 
 #include <string>
 
