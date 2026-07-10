@@ -8,7 +8,6 @@ cf_cc_library(
     name = "cuttlefish_wayland_server",
     srcs = [
         "wayland_compositor.cpp",
-        "wayland_dmabuf.cpp",
         "wayland_seat.cpp",
         "wayland_server.cpp",
         "wayland_surface.cpp",
@@ -17,7 +16,6 @@ cf_cc_library(
     ],
     hdrs = [
         "wayland_compositor.h",
-        "wayland_dmabuf.h",
         "wayland_seat.h",
         "wayland_server.h",
         "wayland_surface.h",
@@ -26,6 +24,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/wayland:wayland_dmabuf",
         "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
         "//cuttlefish/host/libs/wayland:wayland_shell",
         "//cuttlefish/host/libs/wayland:wayland_subcompositor",
@@ -36,6 +35,20 @@ cf_cc_library(
         "@crosvm//:crosvm_gpu_display_wayland_protocols",
         "@libdrm//:libdrm_fourcc",
         "@libffi",
+        "@wayland//:wayland_server",
+    ],
+)
+
+cf_cc_library(
+    name = "wayland_dmabuf",
+    srcs = ["wayland_dmabuf.cpp"],
+    hdrs = ["wayland_dmabuf.h"],
+    deps = [
+        "//cuttlefish/host/libs/wayland:wayland_utils",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@crosvm//:crosvm_gpu_display_wayland_protocols",
+        "@libdrm//:libdrm_fourcc",
         "@wayland//:wayland_server",
     ],
 )
