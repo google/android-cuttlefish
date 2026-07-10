@@ -47,6 +47,7 @@ enum ModemSimulatorSimType {
 message EnvironmentSpecification {
   repeated Instance instances = 1;
   optional Fetch fetch = 2;
+  // deprecated v1 metrics enabling field, is not read/used
   optional Metrics metrics = 3;
   optional Common common = 4;
   optional bool netsim_bt = 5;
@@ -58,6 +59,7 @@ message EnvironmentSpecification {
 // in EnvironmentSpecification instead of individual fields
 message EnvironmentOptions {
   optional Fetch fetch = 1;
+  // deprecated v1 metrics enabling field, is not read/used
   optional Metrics metrics = 2;
   optional Common common = 3;
   optional bool netsim_bt = 4;
