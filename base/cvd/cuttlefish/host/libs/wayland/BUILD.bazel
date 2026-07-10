@@ -5,31 +5,6 @@ package(
 )
 
 cf_cc_library(
-    name = "cuttlefish_wayland_server",
-    srcs = ["wayland_server.cpp"],
-    hdrs = ["wayland_server.h"],
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/host/libs/wayland:wayland_compositor",
-        "//cuttlefish/host/libs/wayland:wayland_dmabuf",
-        "//cuttlefish/host/libs/wayland:wayland_seat",
-        "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
-        "//cuttlefish/host/libs/wayland:wayland_shell",
-        "//cuttlefish/host/libs/wayland:wayland_subcompositor",
-        "//cuttlefish/host/libs/wayland:wayland_surface",
-        "//cuttlefish/host/libs/wayland:wayland_utils",
-        "//cuttlefish/host/libs/wayland:wayland_virtio_gpu_metadata",
-        "//libbase",
-        "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/log:check",
-        "@crosvm//:crosvm_gpu_display_wayland_protocols",
-        "@libdrm//:libdrm_fourcc",
-        "@libffi",
-        "@wayland//:wayland_server",
-    ],
-)
-
-cf_cc_library(
     name = "wayland_compositor",
     srcs = ["wayland_compositor.cpp"],
     hdrs = ["wayland_compositor.h"],
@@ -61,6 +36,25 @@ cf_cc_library(
     hdrs = ["wayland_seat.h"],
     deps = [
         "@abseil-cpp//absl/log",
+        "@wayland//:wayland_server",
+    ],
+)
+
+cf_cc_library(
+    name = "wayland_server",
+    srcs = ["wayland_server.cpp"],
+    hdrs = ["wayland_server.h"],
+    deps = [
+        "//cuttlefish/host/libs/wayland:wayland_compositor",
+        "//cuttlefish/host/libs/wayland:wayland_dmabuf",
+        "//cuttlefish/host/libs/wayland:wayland_seat",
+        "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
+        "//cuttlefish/host/libs/wayland:wayland_shell",
+        "//cuttlefish/host/libs/wayland:wayland_subcompositor",
+        "//cuttlefish/host/libs/wayland:wayland_surface",
+        "//cuttlefish/host/libs/wayland:wayland_virtio_gpu_metadata",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@wayland//:wayland_server",
     ],
 )
