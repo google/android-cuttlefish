@@ -22,7 +22,6 @@ cf_cc_library(
         "wayland_server.h",
         "wayland_surface.h",
         "wayland_surfaces.h",
-        "wayland_utils.h",
         "wayland_virtio_gpu_metadata.h",
     ],
     deps = [
@@ -30,6 +29,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
         "//cuttlefish/host/libs/wayland:wayland_shell",
         "//cuttlefish/host/libs/wayland:wayland_subcompositor",
+        "//cuttlefish/host/libs/wayland:wayland_utils",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
@@ -62,6 +62,15 @@ cf_cc_library(
     hdrs = ["wayland_subcompositor.h"],
     deps = [
         "@abseil-cpp//absl/log",
+        "@wayland//:wayland_server",
+    ],
+)
+
+cf_cc_library(
+    name = "wayland_utils",
+    hdrs = ["wayland_utils.h"],
+    deps = [
+        "@abseil-cpp//absl/log:check",
         "@wayland//:wayland_server",
     ],
 )
