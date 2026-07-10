@@ -9,11 +9,22 @@ cf_cc_binary(
     srcs = ["generate_shader_embed.cpp"],
 )
 
+genrule(
+    name = "gen_blit_texture.frag.inl",
+    srcs = [
+        "blit_texture.frag",
+        "blit_texture.frag.spv",
+    ],
+    outs = ["blit_texture.frag.inl"],
+    cmd = "$(location :generate_shader_embed) $(location :blit_texture.frag) $(location :blit_texture.frag.spv) kBlitTextureFrag $@",
+    tools = [":generate_shader_embed"],
+)
+
 cf_cc_library(
     name = "graphics_detector_shaders",
     clang_format_enabled = False,
     textual_hdrs = [
-        "blit_texture.frag.inl",
+        ":gen_blit_texture.frag.inl",
         "blit_texture.vert.inl",
         "blit_texture_highp.frag.inl",
         "blit_texture_lowp.frag.inl",
