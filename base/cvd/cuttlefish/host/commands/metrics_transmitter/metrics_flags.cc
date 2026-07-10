@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/metrics/metrics_flags.h"
+#include "cuttlefish/host/commands/metrics_transmitter/metrics_flags.h"
 
 #include <cstdint>
 #include <string>

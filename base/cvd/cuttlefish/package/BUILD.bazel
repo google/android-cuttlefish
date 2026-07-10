@@ -150,7 +150,7 @@ package_files(
     name = "metrics",
     executable = "cuttlefish-metrics/bin/metrics_transmitter",
     package_file_to_src = {
-        "cuttlefish-metrics/bin/metrics_transmitter": "//cuttlefish/host/commands/metrics:metrics_transmitter",
+        "cuttlefish-metrics/bin/metrics_transmitter": "//cuttlefish/host/commands/metrics_transmitter:metrics_transmitter",
     },
     visibility = ["//:android_cuttlefish"],
 )
