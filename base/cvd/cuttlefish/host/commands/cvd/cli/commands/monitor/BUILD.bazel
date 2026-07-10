@@ -33,6 +33,7 @@ cf_cc_library(
         ":log_tee",
         ":logcat",
         ":truncate",
+        "//cuttlefish/ansi_codes:should_color",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/log_names",
