@@ -33,7 +33,7 @@
 #include "fmt/format.h"
 #include "fmt/ranges.h"  // NOLINT(misc-include-cleaner): version difference
 
-#include "cuttlefish/ansi_codes/ansi_codes.h"
+#include "cuttlefish/ansi_codes/terminal_colors.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -242,20 +242,6 @@ Result<std::vector<Flag>> GetSiblingCommandFlags(const std::string& bin_name,
         .Help(desc.meaning);
   }
   return flags;
-}
-
-std::string_view TerminalColors::Reset() const {
-  return is_tty_ ? kAnsiReset : "";
-}
-
-std::string_view TerminalColors::BoldRed() const {
-  return is_tty_ ? kAnsiRed : "";
-}
-
-std::string_view TerminalColors::Red() const { return is_tty_ ? kAnsiRed : ""; }
-
-std::string_view TerminalColors::Cyan() const {
-  return is_tty_ ? kAnsiCyan : "";
 }
 
 std::string NoGroupMessage(const CommandRequest& request) {

@@ -24,12 +24,11 @@
 #include <utility>
 #include <vector>
 
-#include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
 
+#include "cuttlefish/ansi_codes/terminal_colors.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
-#include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/instances/status_fetcher.h"

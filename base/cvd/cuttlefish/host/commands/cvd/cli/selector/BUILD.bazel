@@ -65,10 +65,10 @@ cf_cc_library(
     srcs = ["selector.cpp"],
     hdrs = ["selector.h"],
     deps = [
+        "//cuttlefish/ansi_codes:terminal_colors",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
-        "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:instance_manager",
         "//cuttlefish/result",
