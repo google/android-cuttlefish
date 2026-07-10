@@ -334,10 +334,8 @@ CvdStartCommandHandler::CvdStartCommandHandler(
 static bool HasUnsafeFlagsForBypass(const std::vector<std::string>& args) {
   std::vector<std::string> args_copy = args;
   bool daemon = true;
-  std::string report_anonymous = "";
   std::vector<Flag> safe_flags = {
       GflagsCompatFlag("daemon", daemon),
-      GflagsCompatFlag("report_anonymous_usage_stats", report_anonymous),
   };
   auto res = ConsumeFlags(safe_flags, args_copy);
   if (!res.ok()) {
@@ -374,15 +372,6 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
 
   CF_EXPECT(ConsumeFlags(BuildOwnFlags(), subcmd_args));
   subcmd_args.push_back("--daemon=true");
-  if (own_flags_.report_anonymous_usage_stats) {
-    subcmd_args.push_back("--report_anonymous_usage_stats=" +
-                          *own_flags_.report_anonymous_usage_stats);
-  } else if (!own_flags_.daemon) {
-    // If the user did not specify the anonymous usage stats flag, default it
-    // to 'n' to ensure that cvd_internal_start does not block waiting for
-    // input on stdin.
-    subcmd_args.push_back("--report_anonymous_usage_stats=n");
-  }
 
   LocalInstanceGroup group =
       CF_EXPECT(selector::SelectGroup(instance_manager_, request),
@@ -572,6 +561,8 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
   // determine the default value for the -report_anonymous_usage_stats flag so
   // we symlink that to the group's home directory, this link will be
   // overwritten later by cvd_internal_start itself.
+  // NOTE: --report_anonymous_usage_stats flag and its value in the config are
+  // deprecated
   auto symlink_config_res = SymlinkPreviousConfig(group.HomeDir());
   if (!symlink_config_res.ok()) {
     LOG(ERROR) << "Failed to symlink the config file at system wide home: "
@@ -687,21 +678,19 @@ Result<std::vector<Flag>> CvdStartCommandHandler::Flags(
 }
 
 std::vector<Flag> CvdStartCommandHandler::BuildOwnFlags() {
-  return {GflagsCompatFlag("host_substitutions", own_flags_.host_substitutions)
-              .Help("Comma separated list of files to replace in the host "
-                    "artifacts from the android build with artifacts from the "
-                    "cuttlefish-base package. The special value \"all\" causes "
-                    "it to replace everything it can, while with an empty it "
-                    "will replace what the android build specifies in the "
-                    "'debian_substitution_marker' file."),
-          GflagsCompatFlag("daemon", own_flags_.daemon)
-              .Help("Run the start command in the background as a daemon. "
-                    "If false, the command runs in the foreground and monitors "
-                    "logs."),
-          GflagsCompatFlag("report_anonymous_usage_stats",
-                           own_flags_.report_anonymous_usage_stats)
-              .Help("Report anonymous usage stats. In foreground mode, "
-                    "defaults to 'n' if not specified.")};
+  return {
+      GflagsCompatFlag("host_substitutions", own_flags_.host_substitutions)
+          .Help("Comma separated list of files to replace in the host "
+                "artifacts from the android build with artifacts from the "
+                "cuttlefish-base package. The special value \"all\" causes "
+                "it to replace everything it can, while with an empty it "
+                "will replace what the android build specifies in the "
+                "'debian_substitution_marker' file."),
+      GflagsCompatFlag("daemon", own_flags_.daemon)
+          .Help("Run the start command in the background as a daemon. "
+                "If false, the command runs in the foreground and monitors "
+                "logs."),
+  };
 }
 
 }  // namespace cuttlefish

@@ -321,51 +321,6 @@ std::vector<std::string> CuttlefishConfig::netsim_args() const {
   return netsim_args;
 }
 
-static constexpr char kEnableMetrics[] = "enable_metrics";
-void CuttlefishConfig::set_enable_metrics(std::string enable_metrics) {
-  (*dictionary_)[kEnableMetrics] =
-      static_cast<int>(cuttlefish::CuttlefishConfig::Answer::kUnknown);
-  if (!enable_metrics.empty()) {
-    switch (enable_metrics.at(0)) {
-      case 'y':
-      case 'Y':
-        (*dictionary_)[kEnableMetrics] =
-            static_cast<int>(cuttlefish::CuttlefishConfig::Answer::kYes);
-        break;
-      case 'n':
-      case 'N':
-        (*dictionary_)[kEnableMetrics] =
-            static_cast<int>(cuttlefish::CuttlefishConfig::Answer::kNo);
-        break;
-    }
-  }
-}
-
-// validate the casting and conversion from json configs to
-// CuttlefishConfig::Answer class
-bool IsValidMetricsConfigs(int value) {
-  return value == static_cast<int>(CuttlefishConfig::Answer::kUnknown) ||
-         value == static_cast<int>(CuttlefishConfig::Answer::kNo) ||
-         value == static_cast<int>(CuttlefishConfig::Answer::kYes);
-}
-
-CuttlefishConfig::Answer CuttlefishConfig::enable_metrics() const {
-  int value = (*dictionary_)[kEnableMetrics].asInt();
-  if (!IsValidMetricsConfigs(value)) {
-    LOG(ERROR) << "Invalid integer value for Answer enum";
-    return static_cast<Answer>(CuttlefishConfig::Answer::kUnknown);
-  }
-  return static_cast<Answer>(value);
-}
-
-static constexpr char kMetricsBinary[] = "metrics_binary";
-void CuttlefishConfig::set_metrics_binary(const std::string& metrics_binary) {
-  (*dictionary_)[kMetricsBinary] = metrics_binary;
-}
-std::string CuttlefishConfig::metrics_binary() const {
-  return (*dictionary_)[kMetricsBinary].asString();
-}
-
 static constexpr char kExtraKernelCmdline[] = "extra_kernel_cmdline";
 void CuttlefishConfig::set_extra_kernel_cmdline(
     const std::string& extra_cmdline) {

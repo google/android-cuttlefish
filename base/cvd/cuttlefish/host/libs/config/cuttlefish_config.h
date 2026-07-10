@@ -178,18 +178,6 @@ class CuttlefishConfig {
   void set_netsim_args(const std::string& netsim_args);
   std::vector<std::string> netsim_args() const;
 
-  enum class Answer {
-    kUnknown = 0,
-    kYes,
-    kNo,
-  };
-
-  void set_enable_metrics(std::string enable_metrics);
-  CuttlefishConfig::Answer enable_metrics() const;
-
-  void set_metrics_binary(const std::string& metrics_binary);
-  std::string metrics_binary() const;
-
   void set_extra_kernel_cmdline(const std::string& extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
 

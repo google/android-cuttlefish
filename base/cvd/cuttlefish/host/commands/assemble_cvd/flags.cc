@@ -430,9 +430,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_sig_server_address(FLAGS_webrtc_sig_server_addr);
 
-  tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
-  // TODO(moelsherif): Handle this flag (set_metrics_binary) in the future
-
   std::optional<bool> guest_config_mac80211_hwsim =
       guest_configs[0].enforce_mac80211_hwsim;
   if (guest_config_mac80211_hwsim.has_value()) {
