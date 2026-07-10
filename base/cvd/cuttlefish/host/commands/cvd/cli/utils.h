@@ -19,7 +19,6 @@
 #include <signal.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -84,18 +83,6 @@ struct TerminalSize {
   int columns;
 };
 Result<TerminalSize> GetTerminalSize();
-
-class TerminalColors {
- public:
-  TerminalColors(bool is_tty) : is_tty_(is_tty) {}
-  std::string_view Reset() const;
-  std::string_view BoldRed() const;
-  std::string_view Red() const;
-  std::string_view Cyan() const;
-
- private:
-  bool is_tty_;
-};
 
 std::vector<std::string> ExpandProductPaths(const std::string& product_path,
                                             size_t num_instances);

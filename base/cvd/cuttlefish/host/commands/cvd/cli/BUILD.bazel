@@ -180,7 +180,7 @@ cf_cc_library(
     deps = [
         ":command_request",
         ":types",
-        "//cuttlefish/ansi_codes",
+        "//cuttlefish/ansi_codes:terminal_colors",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
