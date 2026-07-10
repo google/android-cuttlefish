@@ -9,12 +9,10 @@ cf_cc_library(
     srcs = [
         "wayland_compositor.cpp",
         "wayland_server.cpp",
-        "wayland_virtio_gpu_metadata.cpp",
     ],
     hdrs = [
         "wayland_compositor.h",
         "wayland_server.h",
-        "wayland_virtio_gpu_metadata.h",
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
@@ -25,6 +23,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/wayland:wayland_subcompositor",
         "//cuttlefish/host/libs/wayland:wayland_surface",
         "//cuttlefish/host/libs/wayland:wayland_utils",
+        "//cuttlefish/host/libs/wayland:wayland_virtio_gpu_metadata",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
@@ -111,6 +110,18 @@ cf_cc_library(
     hdrs = ["wayland_utils.h"],
     deps = [
         "@abseil-cpp//absl/log:check",
+        "@wayland//:wayland_server",
+    ],
+)
+
+cf_cc_library(
+    name = "wayland_virtio_gpu_metadata",
+    srcs = ["wayland_virtio_gpu_metadata.cpp"],
+    hdrs = ["wayland_virtio_gpu_metadata.h"],
+    deps = [
+        "//cuttlefish/host/libs/wayland:wayland_surface",
+        "//cuttlefish/host/libs/wayland:wayland_utils",
+        "@crosvm//:crosvm_gpu_display_wayland_protocols",
         "@wayland//:wayland_server",
     ],
 )
