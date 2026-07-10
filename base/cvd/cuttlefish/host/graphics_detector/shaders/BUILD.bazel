@@ -1,8 +1,10 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_binary", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
+
+cf_build_test(name = "cf_build_test")
 
 cf_cc_binary(
     name = "generate_shader_embed",
