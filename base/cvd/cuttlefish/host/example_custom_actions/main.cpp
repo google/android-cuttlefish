@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <sys/socket.h>
-
 #include <stddef.h>
+#include <sys/socket.h>
 
 #include <cstdlib>
 #include <string>
@@ -77,8 +76,7 @@ int main(int argc, char** argv) {
 
     // Demonstrate two commands. For demonstration purposes these two
     // commands use adb shell, but commands can execute any action you choose.
-    std::string adb_shell_command =
-        cuttlefish::HostBinaryPath("adb");
+    std::string adb_shell_command = cuttlefish::HostBinaryPath("adb");
     if (command == "settings") {
       adb_shell_command += " shell cmd statusbar ";
       adb_shell_command += statusbar_expanded ? "collapse" : "expand-settings";
