@@ -14,8 +14,6 @@ cf_cc_binary(
         "main.cc",
         "override_bool_arg.cpp",
         "override_bool_arg.h",
-        "validate_metrics_confirmation.cpp",
-        "validate_metrics_confirmation.h",
     ],
     depend_on_what_you_use_enabled = False,
     # `layering_check` conflicts with the combination of the clang prebuilt and

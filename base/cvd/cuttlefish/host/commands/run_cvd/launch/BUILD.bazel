@@ -271,18 +271,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "metrics",
-    srcs = ["metrics.cpp"],
-    hdrs = ["metrics.h"],
-    deps = [
-        "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/config:known_paths",
-        "//cuttlefish/host/libs/feature",
-        "//cuttlefish/process:command",
-    ],
-)
-
-cf_cc_library(
     name = "modem",
     srcs = ["modem.cpp"],
     hdrs = ["modem.h"],

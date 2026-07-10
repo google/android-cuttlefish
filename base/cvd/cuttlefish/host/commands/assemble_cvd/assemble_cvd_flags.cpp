@@ -235,10 +235,7 @@ DEFINE_int32(num_instances, CF_DEFAULTS_NUM_INSTANCES,
 DEFINE_string(instance_nums, CF_DEFAULTS_INSTANCE_NUMS,
               "A comma-separated list of instance numbers "
               "to use. Mutually exclusive with base_instance_num.");
-DEFINE_string(report_anonymous_usage_stats,
-              CF_DEFAULTS_REPORT_ANONYMOUS_USAGE_STATS,
-              "Report anonymous usage "
-              "statistics for metrics collection and analysis.");
+DEFINE_string(report_anonymous_usage_stats, "", "Deprecated, no usage.");
 DEFINE_vec(ril_dns, CF_DEFAULTS_RIL_DNS, "DNS address of mobile network (RIL)");
 DEFINE_vec(kgdb, fmt::format("{}", CF_DEFAULTS_KGDB),
            "Configure the virtual device for debugging the kernel "

@@ -40,7 +40,6 @@
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/metrics/metrics_receiver.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -269,12 +268,6 @@ int main(int argc, char** argv) {
      * CHECK(false) and --helpxml return the same return code.
      */
     return 134;
-  }
-
-  if (cuttlefish::CuttlefishConfig::Get() &&
-      cuttlefish::CuttlefishConfig::Get()->enable_metrics() ==
-          cuttlefish::CuttlefishConfig::Answer::kYes) {
-    cuttlefish::MetricsReceiver::LogMetricsVMStop();
   }
 
   return cuttlefish::StopCvdMain(wait_for_launcher, clear_instance_dirs,

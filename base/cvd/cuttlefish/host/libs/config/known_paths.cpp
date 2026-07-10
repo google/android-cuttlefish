@@ -109,8 +109,6 @@ std::string LogcatReceiverBinary() { return HostBinaryPath("logcat_receiver"); }
 
 std::string McopyBinary() { return HostBinaryPath("mcopy"); }
 
-std::string MetricsBinary() { return HostBinaryPath("metrics"); }
-
 std::string MkfsFat() { return HostBinaryPath("mkfs.fat"); }
 
 std::string MkuserimgMke2fsBinary() {

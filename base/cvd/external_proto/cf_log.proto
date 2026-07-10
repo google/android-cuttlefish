@@ -60,6 +60,7 @@ message CuttlefishLogEvent {
   string cuttlefish_version = 4;
 
   oneof events {
+    // deprecated message, no longer transmitted
     // Metrics V1, used by launch_cvd: go/cf-metrics-prd
     logs.proto.wireless.android.cuttlefish.events.MetricsEvent metrics_event =
         5;

@@ -38,7 +38,6 @@
 #include "cuttlefish/host/commands/start/flag_forwarder.h"
 #include "cuttlefish/host/commands/start/override_bool_arg.h"
 #include "cuttlefish/host/commands/start/start_flags.h"
-#include "cuttlefish/host/commands/start/validate_metrics_confirmation.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -295,9 +294,6 @@ int CvdInternalStartMain(int argc, char** argv) {
 
   setenv("CF_CONSOLE_SEVERITY", FLAGS_verbosity.c_str(), /* replace */ false);
   setenv("CF_FILE_SEVERITY", FLAGS_file_verbosity.c_str(), /* replace */ false);
-
-  auto use_metrics = FLAGS_report_anonymous_usage_stats;
-  FLAGS_report_anonymous_usage_stats = ValidateMetricsConfirmation(use_metrics);
 
   if (FLAGS_track_host_tools_crc) {
     // TODO(b/159068082) Make decisions based on this value in assemble_cvd
