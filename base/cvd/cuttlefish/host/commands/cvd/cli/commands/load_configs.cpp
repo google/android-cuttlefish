@@ -36,7 +36,6 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -235,7 +234,9 @@ Result<void> LoadConfigsCommand::LoadGroup(const CommandRequest& request,
   return {};
 }
 
-cvd_common::Args LoadConfigsCommand::CmdList() const { return {kLoadSubCmd}; }
+std::vector<std::string> LoadConfigsCommand::CmdList() const {
+  return {kLoadSubCmd};
+}
 
 std::string LoadConfigsCommand::SummaryHelp() const { return kSummaryHelpText; }
 

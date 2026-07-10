@@ -24,7 +24,6 @@
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/result/result.h"
 
@@ -45,7 +44,7 @@ CvdFleetCommandHandler::CvdFleetCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
-cvd_common::Args CvdFleetCommandHandler::CmdList() const {
+std::vector<std::string> CvdFleetCommandHandler::CmdList() const {
   return {kFleetSubcmd};
 }
 

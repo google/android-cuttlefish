@@ -33,7 +33,7 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   CvdStartCommandHandler(InstanceManager& instance_manager);
 
   Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override;
+  std::vector<std::string> CmdList() const override;
   std::string SummaryHelp() const override {
     return "Start all Cuttlefish Instances in a group";
   }
@@ -47,14 +47,15 @@ class CvdStartCommandHandler : public CvdCommandHandler {
                                     LocalInstanceGroup& group,
                                     const CommandRequest& request);
 
-  Result<void> LaunchDevice(Command command, LocalInstanceGroup& group,
-                            const cvd_common::Envs& envs,
-                            const CommandRequest& request);
+  Result<void> LaunchDevice(
+      Command command, LocalInstanceGroup& group,
+      const std::unordered_map<std::string, std::string>& envs,
+      const CommandRequest& request);
 
-  Result<void> LaunchDeviceInterruptible(Command command,
-                                         LocalInstanceGroup& group,
-                                         const cvd_common::Envs& envs,
-                                         const CommandRequest& request);
+  Result<void> LaunchDeviceInterruptible(
+      Command command, LocalInstanceGroup& group,
+      const std::unordered_map<std::string, std::string>& envs,
+      const CommandRequest& request);
 
   // Flags handled by `cvd start` itself, not cvd_internal_start.
   std::vector<Flag> BuildOwnFlags();

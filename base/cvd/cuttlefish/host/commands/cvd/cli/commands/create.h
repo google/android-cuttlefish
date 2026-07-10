@@ -48,12 +48,15 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
   };
 
   std::vector<Flag> ConfigFileModeFlags();
-  std::vector<Flag> FlagModeFlags(const cvd_common::Envs& env,
-                                  const selector::SelectorOptions&);
+  std::vector<Flag> FlagModeFlags(
+      const std::unordered_map<std::string, std::string>& env,
+      const selector::SelectorOptions&);
   Result<std::optional<LocalInstanceGroup>> FindReusableGroup(
-      const selector::SelectorOptions& selectors, const cvd_common::Envs& envs);
+      const selector::SelectorOptions& selectors,
+      const std::unordered_map<std::string, std::string>& envs);
   Result<LocalInstanceGroup> CreateGroup(
-      const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
+      const std::vector<std::string>& subcmd_args,
+      const std::unordered_map<std::string, std::string>& envs,
       const CommandRequest& request);
 
   InstanceManager& instance_manager_;

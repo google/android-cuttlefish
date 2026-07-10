@@ -47,9 +47,10 @@
 namespace cuttlefish {
 namespace {
 
-static Command CreateStopCvdCommand(const std::string& stopper_path,
-                                    const cvd_common::Envs& envs,
-                                    const cvd_common::Args& args) {
+static Command CreateStopCvdCommand(
+    const std::string& stopper_path,
+    const std::unordered_map<std::string, std::string>& envs,
+    const std::vector<std::string>& args) {
   Command command(android::base::Basename(stopper_path));
   command.SetExecutable(stopper_path);
   for (const auto& arg : args) {
@@ -62,9 +63,10 @@ static Command CreateStopCvdCommand(const std::string& stopper_path,
   return command;
 }
 
-Result<void> RunStopCvdCmd(const std::string& stopper_path,
-                           const cvd_common::Envs& env,
-                           const cvd_common::Args& args) {
+Result<void> RunStopCvdCmd(
+    const std::string& stopper_path,
+    const std::unordered_map<std::string, std::string>& env,
+    const std::vector<std::string>& args) {
   Command stop_cmd = CreateStopCvdCommand(stopper_path, env, args);
 
   LOG(INFO) << "Running " << stop_cmd.ToString();
@@ -249,7 +251,7 @@ Result<void> ForcefullyStopGroup(const uid_t any_id_in_group) {
 
 Result<void> RunStopCvd(StopCvdParams params) {
   const auto& stopper_path = params.bin_path;
-  cvd_common::Envs stop_cvd_envs;
+  std::unordered_map<std::string, std::string> stop_cvd_envs;
   stop_cvd_envs["HOME"] = params.home_dir;
   // stop_cvd is located at $ANDROID_HOST_OUT/bin/stop_cvd
   std::string android_host_out =
@@ -258,7 +260,7 @@ Result<void> RunStopCvd(StopCvdParams params) {
   stop_cvd_envs[kAndroidSoongHostOut] = android_host_out;
   auto config_file_path = CF_EXPECT(GetCuttlefishConfigPath(params.home_dir));
   stop_cvd_envs[kCuttlefishConfigEnvVarName] = config_file_path;
-  cvd_common::Args args;
+  std::vector<std::string> args;
   std::string wait_flag =
       fmt::format("--wait_for_launcher={}", params.wait_for_launcher_secs);
   args.push_back(wait_flag);

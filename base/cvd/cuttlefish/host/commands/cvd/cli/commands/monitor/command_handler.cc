@@ -27,7 +27,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/result/result.h"
 
@@ -71,7 +70,7 @@ Result<void> CvdMonitorCommandHandler::Handle(const CommandRequest& request) {
   return MonitorLogs(instance);
 }
 
-cvd_common::Args CvdMonitorCommandHandler::CmdList() const {
+std::vector<std::string> CvdMonitorCommandHandler::CmdList() const {
   return {kMonitorCmd};
 }
 

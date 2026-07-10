@@ -60,7 +60,7 @@ namespace {
  *  e.g. cvd start --verbosity=DEBUG
  *
  */
-LogSeverity CvdVerbosityOption(cvd_common::Args& all_args) {
+LogSeverity CvdVerbosityOption(std::vector<std::string>& all_args) {
   std::string verbosity_flag_value;
   std::vector<Flag> verbosity_flag{
       GflagsCompatFlag("verbosity", verbosity_flag_value)};
@@ -125,7 +125,7 @@ void IncreaseFileLimit() {
   }
 }
 
-Result<void> CvdMain(cvd_common::Args all_args) {
+Result<void> CvdMain(std::vector<std::string> all_args) {
   if (!isatty(0)) {
     LOG(INFO) << GetVersionIds().ToString();
   }

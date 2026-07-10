@@ -20,7 +20,6 @@
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -30,7 +29,7 @@ class CvdVersionHandler : public CvdCommandHandler {
   CvdVersionHandler() = default;
 
   Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override;
+  std::vector<std::string> CmdList() const override;
 
   std::string SummaryHelp() const override;
   Result<std::string> DetailedHelp(const CommandRequest& request) override;

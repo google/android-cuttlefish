@@ -27,7 +27,6 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/result/result.h"
 
@@ -68,7 +67,9 @@ Result<void> CvdVersionHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args CvdVersionHandler::CmdList() const { return {"version"}; }
+std::vector<std::string> CvdVersionHandler::CmdList() const {
+  return {"version"};
+}
 
 std::string CvdVersionHandler::SummaryHelp() const { return kSummaryHelpText; }
 

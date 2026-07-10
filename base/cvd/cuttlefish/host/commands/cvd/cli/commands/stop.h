@@ -23,7 +23,6 @@
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/result/result.h"
 
@@ -34,7 +33,7 @@ class CvdStopCommandHandler : public CvdCommandHandler {
   CvdStopCommandHandler(InstanceManager& instance_manager);
 
   Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override;
+  std::vector<std::string> CmdList() const override;
   Result<std::vector<Flag>> Flags(const CommandRequest& request) override;
 
   std::string SummaryHelp() const override;

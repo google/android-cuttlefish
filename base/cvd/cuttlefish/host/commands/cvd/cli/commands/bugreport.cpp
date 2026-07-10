@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -35,7 +36,6 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
@@ -53,7 +53,7 @@ constexpr char kSummaryHelpText[] =
     "Run cvd bugreport --help for command description";
 
 // Accepts a copy of the args to not modify the original.
-Result<std::string> OutputFileFromArgs(cvd_common::Args args) {
+Result<std::string> OutputFileFromArgs(std::vector<std::string> args) {
   // This flag must match the one defined in
   // //cuttlefish/host/commands/host_bugreport/main.cc
   std::string output = "host_bugreport.zip";
@@ -93,7 +93,7 @@ CvdBugreportCommandHandler::CvdBugreportCommandHandler(
 
 Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> cmd_args = request.SubcommandArguments();
-  cvd_common::Envs env = request.Env();
+  std::unordered_map<std::string, std::string> env = request.Env();
 
   std::string output_file =
       CF_EXPECT(OutputFileFromArgs(cmd_args), "Failed to parse output flag");

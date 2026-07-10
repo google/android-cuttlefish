@@ -29,7 +29,6 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/result/result.h"
@@ -77,7 +76,7 @@ Result<void> CvdResetCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args CvdResetCommandHandler::CmdList() const {
+std::vector<std::string> CvdResetCommandHandler::CmdList() const {
   return {kResetSubcmd};
 }
 

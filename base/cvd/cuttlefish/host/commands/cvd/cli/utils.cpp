@@ -113,12 +113,13 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
 }
 
 Result<Command> ConstructCvdHelpCommand(
-    const std::string& bin_file, cvd_common::Envs envs,
+    const std::string& bin_file,
+    std::unordered_map<std::string, std::string> envs,
     const std::vector<std::string>& subcmd_args,
     const CommandRequest& request) {
   auto client_pwd = CurrentDirectory();
   const auto home = (Contains(envs, "HOME") ? envs.at("HOME") : client_pwd);
-  cvd_common::Envs envs_copy{envs};
+  std::unordered_map<std::string, std::string> envs_copy{envs};
   envs_copy["HOME"] = AbsolutePath(home);
   auto android_host_out = CF_EXPECT(AndroidHostPath(envs));
   const auto bin_path = android_host_out + "/bin/" + bin_file;
@@ -135,8 +136,9 @@ Result<Command> ConstructCvdHelpCommand(
 }
 
 Result<Command> ConstructSiblingHelpCommand(
-    const std::string& bin_name, const cvd_common::Envs& env,
-    const cvd_common::Args& subcmd_args) {
+    const std::string& bin_name,
+    const std::unordered_map<std::string, std::string>& env,
+    const std::vector<std::string>& subcmd_args) {
   std::string exec_dir = android::base::GetExecutableDirectory();
 
   std::string bin_path = exec_dir + "/" + bin_name;
@@ -163,7 +165,7 @@ Result<Command> ConstructSiblingHelpCommand(
 
 Result<Command> ConstructCvdGenericNonHelpCommand(
     const ConstructNonHelpForm& request_form, const CommandRequest& request) {
-  cvd_common::Envs envs{request_form.envs};
+  std::unordered_map<std::string, std::string> envs{request_form.envs};
   envs["HOME"] = request_form.home;
   envs[kAndroidHostOut] = request_form.android_host_out;
   envs[kAndroidSoongHostOut] = request_form.android_host_out;
@@ -197,9 +199,10 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
   return CF_EXPECT(ConstructCommand(construct_cmd_param));
 }
 
-Result<std::vector<Flag>> GetSiblingCommandFlags(const std::string& bin_name,
-                                                 const cvd_common::Envs& env,
-                                                 cvd_common::Args args) {
+Result<std::vector<Flag>> GetSiblingCommandFlags(
+    const std::string& bin_name,
+    const std::unordered_map<std::string, std::string>& env,
+    std::vector<std::string> args) {
   // Remove help-like flags to ensure --helpxml takes effect
   std::erase_if(args, [](std::string_view arg) {
     if (!absl::ConsumePrefix(&arg, "-")) {

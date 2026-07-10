@@ -25,7 +25,6 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/libs/vm_manager/host_configuration.h"
 #include "cuttlefish/result/result.h"
 
@@ -70,7 +69,7 @@ Result<void> CvdSetupHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args CvdSetupHandler::CmdList() const { return {"setup"}; }
+std::vector<std::string> CvdSetupHandler::CmdList() const { return {"setup"}; }
 
 std::string CvdSetupHandler::SummaryHelp() const { return kSummaryHelpText; }
 

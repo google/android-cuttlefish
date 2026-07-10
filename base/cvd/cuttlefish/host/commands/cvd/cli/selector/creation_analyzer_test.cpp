@@ -19,7 +19,6 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_constants.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database_utils.h"
 #include "cuttlefish/host/commands/cvd/unittests/selector/creation_analyzer_helper.h"
 
@@ -195,11 +194,12 @@ TEST(AutoHomeTest, DefaultFailAtSecondTrialTest) {
   auto credential = ucred{.pid = getpid(), .uid = getuid(), .gid = getgid()};
   InstanceLockFileManager lock_manager;
   InstanceDatabase instance_db;
-  cvd_common::Envs envs = {{"ANDROID_HOST_OUT", android_host_out}};
-  cvd_common::Args empty_args;
-  std::vector<cvd_common::Args> cmd_args_list{
-      cvd_common::Args{"--daemon", "--instance_nums=7"},
-      cvd_common::Args{"--daemon", "--instance_nums=3"}};
+  std::unordered_map<std::string, std::string> envs = {
+      {"ANDROID_HOST_OUT", android_host_out}};
+  std::vector<std::string> empty_args;
+  std::vector<std::vector<std::string>> cmd_args_list{
+      std::vector<std::string>{"--daemon", "--instance_nums=7"},
+      std::vector<std::string>{"--daemon", "--instance_nums=3"}};
   auto param0 = CreationAnalyzer::CreationAnalyzerParam{
       .cmd_args = cmd_args_list[0], .envs = envs, .selector_args = empty_args};
   auto param1 = CreationAnalyzer::CreationAnalyzerParam{
@@ -235,15 +235,18 @@ TEST(AutoHomeTest, DefaultFollowedByNonDefaultTest) {
   auto credential = ucred{.pid = getpid(), .uid = getuid(), .gid = getgid()};
   InstanceLockFileManager lock_manager;
   InstanceDatabase instance_db;
-  cvd_common::Envs envs = {{"ANDROID_HOST_OUT", android_host_out}};
+  std::unordered_map<std::string, std::string> envs = {
+      {"ANDROID_HOST_OUT", android_host_out}};
   // needs this as the CreationAnalyzerParam takes references, not copies.
-  // i.e. .cmd_args = cvd_common::Args{} won't work.
-  cvd_common::Args empty_args;
-  cvd_common::Args cmd_arg_for_default{"--daemon", "--instance_nums=7"};
-  cvd_common::Args cmd_args_1st_non_default{"--daemon", "--instance_nums=3"};
-  cvd_common::Args cmd_args_2nd_non_default{"--daemon", "--instance_nums=5"};
-  cvd_common::Args selector_device_name_args{"--group_name=goog",
-                                             "--instance_name=tv"};
+  // i.e. .cmd_args = std::vector<std::string>{} won't work.
+  std::vector<std::string> empty_args;
+  std::vector<std::string> cmd_arg_for_default{"--daemon", "--instance_nums=7"};
+  std::vector<std::string> cmd_args_1st_non_default{"--daemon",
+                                                    "--instance_nums=3"};
+  std::vector<std::string> cmd_args_2nd_non_default{"--daemon",
+                                                    "--instance_nums=5"};
+  std::vector<std::string> selector_device_name_args{"--group_name=goog",
+                                                     "--instance_name=tv"};
   auto param_default =
       CreationAnalyzer::CreationAnalyzerParam{.cmd_args = cmd_arg_for_default,
                                               .envs = envs,
@@ -253,7 +256,7 @@ TEST(AutoHomeTest, DefaultFollowedByNonDefaultTest) {
       .envs = envs,
       .selector_args = selector_device_name_args};
   // To make second non-default run non-default.
-  cvd_common::Envs envs_with_home{envs};
+  std::unordered_map<std::string, std::string> envs_with_home{envs};
   envs_with_home["HOME"] = "/home/mocktester";
   auto param_2nd_non_default = CreationAnalyzer::CreationAnalyzerParam{
       .cmd_args = cmd_args_2nd_non_default,

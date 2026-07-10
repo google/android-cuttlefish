@@ -21,7 +21,6 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -32,7 +31,7 @@ class CvdCommandHandler {
 
   virtual Result<void> Handle(const CommandRequest&) = 0;
   // returns the list of subcommand it can handle
-  virtual cvd_common::Args CmdList() const = 0;
+  virtual std::vector<std::string> CmdList() const = 0;
   // used for command help text
   virtual std::string SummaryHelp() const = 0;
   virtual bool RequiresDeviceExists() const;

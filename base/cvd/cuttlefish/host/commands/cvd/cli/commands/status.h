@@ -29,7 +29,7 @@ class CvdStatusCommandHandler : public CvdCommandHandler {
   CvdStatusCommandHandler(InstanceManager& instance_manager);
 
   Result<void> Handle(const CommandRequest& request) override;
-  cvd_common::Args CmdList() const override;
+  std::vector<std::string> CmdList() const override;
 
   std::string SummaryHelp() const override;
   bool RequiresDeviceExists() const override { return true; }

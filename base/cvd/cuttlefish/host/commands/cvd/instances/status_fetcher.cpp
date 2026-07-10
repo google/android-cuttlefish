@@ -97,7 +97,7 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
   auto bin = CF_EXPECT(GetBin(android_host_out));
   auto bin_path = fmt::format("{}/bin/{}", android_host_out, bin);
 
-  cvd_common::Envs envs;
+  std::unordered_map<std::string, std::string> envs;
   envs["HOME"] = home;
   // old cvd_internal_status expects CUTTLEFISH_INSTANCE=<k>
   envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.Id());

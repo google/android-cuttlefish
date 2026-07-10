@@ -19,7 +19,6 @@
 #include <string>
 #include <string_view>
 
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -54,6 +53,7 @@ std::string AssemblyDirFromHome(const std::string& group_home_dir);
 // libraries and other files built with the Android build system. It searches,
 // in order, the ANDROID_HOST_OUT, ANDROID_SOONG_HOST_OUT and HOME environment
 // variables followed by the current directory.
-Result<std::string> AndroidHostPath(const cvd_common::Envs& env);
+Result<std::string> AndroidHostPath(
+    const std::unordered_map<std::string, std::string>& env);
 
 }  // namespace cuttlefish

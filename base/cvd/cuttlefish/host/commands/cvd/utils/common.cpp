@@ -70,7 +70,8 @@ bool ShouldUsePreviousCvdLocation() {
  * - envs["HOME"] if envs["HOME"] + "/bin/cvd_internal_start" exists.
  * - current working directory
  */
-Result<std::string> AndroidHostPath(const cvd_common::Envs& envs) {
+Result<std::string> AndroidHostPath(
+    const std::unordered_map<std::string, std::string>& envs) {
   auto it = envs.find(kAndroidHostOut);
   if (it != envs.end() && IsValidAndroidHostOutPath(it->second)) {
     return it->second;

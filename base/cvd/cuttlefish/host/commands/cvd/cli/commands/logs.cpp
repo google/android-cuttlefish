@@ -20,7 +20,6 @@
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
@@ -235,7 +234,7 @@ Result<void> CvdLogsHandler::HandleList(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args CvdLogsHandler::CmdList() const { return {"logs"}; }
+std::vector<std::string> CvdLogsHandler::CmdList() const { return {"logs"}; }
 
 std::string CvdLogsHandler::SummaryHelp() const { return kSummaryHelpText; }
 

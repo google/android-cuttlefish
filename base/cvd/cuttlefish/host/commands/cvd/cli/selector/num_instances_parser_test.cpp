@@ -20,7 +20,6 @@
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -28,12 +27,12 @@ namespace selector {
 
 struct NumInstancesParserTestParam {
   SelectorOptions selector_options;
-  cvd_common::Args args;
+  std::vector<std::string> args;
   bool should_fail = false;
   size_t expected_num_instances = 0;
   std::vector<unsigned> expected_instance_nums = {};
 
-  NumInstancesParserTestParam& WithArgs(cvd_common::Args args) {
+  NumInstancesParserTestParam& WithArgs(std::vector<std::string> args) {
     this->args = std::move(args);
     return *this;
   }
@@ -61,7 +60,7 @@ class NumInstancesParserTest
 
 TEST_P(NumInstancesParserTest, ParseFlags) {
   NumInstancesParser parser;
-  cvd_common::Args args = GetParam().args;
+  std::vector<std::string> args = GetParam().args;
   Result<void> parse_result =
       ConsumeFlags(parser.Flags(GetParam().selector_options), args);
   if (GetParam().should_fail) {

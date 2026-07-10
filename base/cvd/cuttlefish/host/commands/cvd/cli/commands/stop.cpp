@@ -30,7 +30,6 @@
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
@@ -92,7 +91,7 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args CvdStopCommandHandler::CmdList() const {
+std::vector<std::string> CvdStopCommandHandler::CmdList() const {
   return {"stop", "stop_cvd"};
 }
 

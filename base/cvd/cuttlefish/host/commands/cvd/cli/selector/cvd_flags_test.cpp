@@ -26,13 +26,13 @@ TEST_F(CvdFlagCollectionTest, Init) {
 TEST_F(CvdFlagCollectionTest, Leftover) {
   auto output_result = flag_collection_.FilterFlags(input_);
   ASSERT_TRUE(output_result.ok()) << output_result.error().Trace();
-  ASSERT_EQ(input_, cvd_common::Args{"--not_consumed"});
+  ASSERT_EQ(input_, std::vector<std::string>{"--not_consumed"});
 }
 
 TEST_F(CvdFlagCollectionTest, AllGivenFlagsListed) {
   auto output_result = flag_collection_.FilterFlags(input_);
   ASSERT_TRUE(output_result.ok()) << output_result.error().Trace();
-  ASSERT_EQ(input_, cvd_common::Args{"--not_consumed"});
+  ASSERT_EQ(input_, std::vector<std::string>{"--not_consumed"});
   auto output = std::move(*output_result);
 
   ASSERT_FALSE(Contains(output, "help"));
@@ -45,9 +45,9 @@ TEST_F(CvdFlagCollectionTest, AllGivenFlagsListed) {
 
 TEST(CvdFlagTest, FlagProxyFilter) {
   CvdFlag<std::string> no_default("no_default");
-  cvd_common::Args has_flag_args{"--no_default=Hello"};
-  cvd_common::Args not_has_flag_args{"--bar --foo=name --enable_vnc"};
-  cvd_common::Args empty_args{""};
+  std::vector<std::string> has_flag_args{"--no_default=Hello"};
+  std::vector<std::string> not_has_flag_args{"--bar --foo=name --enable_vnc"};
+  std::vector<std::string> empty_args{""};
 
   CvdFlagProxy no_default_proxy(std::move(no_default));
   auto expected_hello_opt_result = no_default_proxy.FilterFlag(has_flag_args);
@@ -67,7 +67,7 @@ TEST(CvdFlagTest, FlagProxyFilter) {
 
   ASSERT_TRUE(has_flag_args.empty());
   ASSERT_EQ(not_has_flag_args,
-            cvd_common::Args{"--bar --foo=name --enable_vnc"});
+            std::vector<std::string>{"--bar --foo=name --enable_vnc"});
 }
 
 }  // namespace cuttlefish

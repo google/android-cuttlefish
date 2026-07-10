@@ -32,7 +32,6 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cache/cache.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/result/result.h"
 
@@ -139,7 +138,9 @@ Result<void> CvdCacheCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args CvdCacheCommandHandler::CmdList() const { return {"cache"}; }
+std::vector<std::string> CvdCacheCommandHandler::CmdList() const {
+  return {"cache"};
+}
 
 std::string CvdCacheCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;

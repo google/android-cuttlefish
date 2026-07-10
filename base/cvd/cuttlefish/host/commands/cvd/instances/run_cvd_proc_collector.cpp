@@ -93,7 +93,8 @@ static Result<std::string> StopCvdPath(const RunCvdProcInfo& info) {
   return SearchFilesInPath(cvd_dir, stop_bins);
 }
 
-static std::optional<std::string> HostOut(const cvd_common::Envs& envs) {
+static std::optional<std::string> HostOut(
+    const std::unordered_map<std::string, std::string>& envs) {
   if (auto it = envs.find(kAndroidHostOut); it != envs.end()) {
     return it->second;
   }

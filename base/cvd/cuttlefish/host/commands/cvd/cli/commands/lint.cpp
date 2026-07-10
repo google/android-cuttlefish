@@ -23,7 +23,6 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -52,7 +51,9 @@ Result<void> LintCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-cvd_common::Args LintCommandHandler::CmdList() const { return {kLintSubCmd}; }
+std::vector<std::string> LintCommandHandler::CmdList() const {
+  return {kLintSubCmd};
+}
 
 std::string LintCommandHandler::SummaryHelp() const { return kSummaryHelpText; }
 
