@@ -42,6 +42,17 @@ genrule(
     tools = [":generate_shader_embed"],
 )
 
+genrule(
+    name = "gen_blit_texture_lowp.frag.inl",
+    srcs = [
+        "blit_texture_lowp.frag",
+        "blit_texture_lowp.frag.spv",
+    ],
+    outs = ["blit_texture_lowp.frag.inl"],
+    cmd = "$(location :generate_shader_embed) $(location :blit_texture_lowp.frag) $(location :blit_texture_lowp.frag.spv) kBlitTextureLowpFrag $@",
+    tools = [":generate_shader_embed"],
+)
+
 cf_cc_library(
     name = "graphics_detector_shaders",
     clang_format_enabled = False,
@@ -49,7 +60,7 @@ cf_cc_library(
         ":gen_blit_texture.frag.inl",
         ":gen_blit_texture.vert.inl",
         ":gen_blit_texture_highp.frag.inl",
-        "blit_texture_lowp.frag.inl",
+        ":gen_blit_texture_lowp.frag.inl",
         "blit_texture_mediump.frag.inl",
     ],
 )
