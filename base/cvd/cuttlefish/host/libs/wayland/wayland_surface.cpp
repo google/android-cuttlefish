@@ -17,15 +17,14 @@
 #include "cuttlefish/host/libs/wayland/wayland_surface.h"
 
 #include <stdint.h>
+#include <sys/mman.h>
 
 #include <mutex>
 
-#include <drm/drm_fourcc.h>
-#include <sys/mman.h>
-#include <wayland-server-protocol.h>
-
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "drm/drm_fourcc.h"
+#include "wayland-server-protocol.h"
 
 #include "cuttlefish/host/libs/wayland/wayland_dmabuf.h"
 #include "cuttlefish/host/libs/wayland/wayland_surfaces.h"
@@ -112,15 +111,14 @@ void Surface::Commit() {
         buffer_stride_bytes = dmabuf_plane.stride;
         buffer_size = buffer_h * buffer_stride_bytes;
         // TODO: Refactor to not have `PROT_WRITE`.
-        auto mapped = mmap(nullptr, buffer_size, PROT_READ,
-                            MAP_SHARED, dmabuf_plane.fd, 0);
+        auto mapped = mmap(nullptr, buffer_size, PROT_READ, MAP_SHARED,
+                           dmabuf_plane.fd, 0);
         if (mapped != MAP_FAILED) {
           buffer_pixels = reinterpret_cast<uint8_t*>(mapped);
         } else {
           PLOG(ERROR) << "Failed to mmap dmabuf.";
         }
       }
-
     }
 
     if (!state_.has_notified_surface_create) {

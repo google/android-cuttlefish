@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 
-#include <wayland-server-core.h>
+#include "wayland-server-core.h"
 
 #include "cuttlefish/host/libs/wayland/wayland_surfaces.h"
 

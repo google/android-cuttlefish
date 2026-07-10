@@ -20,8 +20,8 @@
 
 #include <mutex>
 
-#include <drm/drm_fourcc.h>
-#include <wayland-server-protocol.h>
+#include "drm/drm_fourcc.h"
+#include "wayland-server-protocol.h"
 
 #include "cuttlefish/host/libs/wayland/wayland_surface.h"
 

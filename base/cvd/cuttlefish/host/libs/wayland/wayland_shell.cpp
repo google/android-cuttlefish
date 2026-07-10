@@ -17,10 +17,9 @@
 #include "cuttlefish/host/libs/wayland/wayland_shell.h"
 
 #include "absl/log/log.h"
-
-#include <wayland-server-core.h>
-#include <wayland-server-protocol.h>
-#include <xdg-shell-server-protocol.h>
+#include "wayland-server-core.h"
+#include "wayland-server-protocol.h"
+#include "xdg-shell-server-protocol.h"
 
 namespace wayland {
 namespace {

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-
 #pragma once
 
 #include <stdint.h>
+
 #include <mutex>
 #include <optional>
 
-#include <wayland-server-core.h>
+#include "wayland-server-core.h"
 
 namespace wayland {
 

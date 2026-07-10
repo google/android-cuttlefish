@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-
 #pragma once
 
 #include <stdint.h>
+
+#include "wayland-client-core.h"
 
 struct wl_display;
 

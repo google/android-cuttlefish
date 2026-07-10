@@ -18,9 +18,8 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-
-#include <wayland-server-core.h>
-#include <wayland-server-protocol.h>
+#include "wayland-server-core.h"
+#include "wayland-server-protocol.h"
 
 #include "cuttlefish/host/libs/wayland/wayland_compositor.h"
 #include "cuttlefish/host/libs/wayland/wayland_dmabuf.h"
@@ -28,7 +27,6 @@
 #include "cuttlefish/host/libs/wayland/wayland_shell.h"
 #include "cuttlefish/host/libs/wayland/wayland_subcompositor.h"
 #include "cuttlefish/host/libs/wayland/wayland_surface.h"
-#include "cuttlefish/host/libs/wayland/wayland_utils.h"
 #include "cuttlefish/host/libs/wayland/wayland_virtio_gpu_metadata.h"
 
 namespace wayland {
@@ -50,7 +48,7 @@ WaylandServer::WaylandServer(int wayland_socket_fd,
       });
 
   std::unique_lock<std::mutex> lock(server_ready_mutex_);
-  server_ready_cv_.wait(lock, [&]{return server_ready_; });
+  server_ready_cv_.wait(lock, [&] { return server_ready_; });
 }
 
 WaylandServer::~WaylandServer() {
@@ -65,7 +63,7 @@ void WaylandServer::ServerLoop(int fd, bool frames_are_rgba) {
 
   server_state_->display_ = wl_display_create();
   CHECK(server_state_->display_ != nullptr)
-    << "Failed to start WaylandServer: failed to create display";
+      << "Failed to start WaylandServer: failed to create display";
 
   if (fd < 0) {
     const char* socket = wl_display_add_socket_auto(server_state_->display_);

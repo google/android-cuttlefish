@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-
 #pragma once
 
 #include <stdint.h>
+
 #include <map>
 
-#include <android-base/unique_fd.h>
-
-#include <wayland-server-core.h>
+#include "android-base/unique_fd.h"
+#include "wayland-server-core.h"
 
 namespace wayland {
 
