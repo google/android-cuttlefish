@@ -48,7 +48,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/confui:host_confui",
-        "//cuttlefish/host/libs/wayland:cuttlefish_wayland_server",
+        "//cuttlefish/host/libs/wayland:wayland_server",
         "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
         "//cuttlefish/result",
         "//libbase",
