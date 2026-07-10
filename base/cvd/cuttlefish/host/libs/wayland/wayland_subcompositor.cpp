@@ -17,9 +17,8 @@
 #include "cuttlefish/host/libs/wayland/wayland_subcompositor.h"
 
 #include "absl/log/log.h"
-
-#include <wayland-server-core.h>
-#include <wayland-server-protocol.h>
+#include "wayland-server-core.h"
+#include "wayland-server-protocol.h"
 
 namespace wayland {
 namespace {
@@ -30,23 +29,19 @@ void subsurface_destroy(wl_client*, wl_resource* subsurface) {
   wl_resource_destroy(subsurface);
 }
 
-void subsurface_set_position(wl_client*,
-                             wl_resource* subsurface,
-                             int32_t x,
+void subsurface_set_position(wl_client*, wl_resource* subsurface, int32_t x,
                              int32_t y) {
   VLOG(1) << __FUNCTION__ << " subsurface=" << subsurface << " x=" << x
           << " y=" << y;
 }
 
-void subsurface_place_above(wl_client*,
-                            wl_resource* subsurface,
+void subsurface_place_above(wl_client*, wl_resource* subsurface,
                             wl_resource* surface) {
   VLOG(1) << __FUNCTION__ << " subsurface=" << subsurface
           << " surface=" << surface;
 }
 
-void subsurface_place_below(wl_client*,
-                            wl_resource* subsurface,
+void subsurface_place_below(wl_client*, wl_resource* subsurface,
                             wl_resource* surface) {
   VLOG(1) << __FUNCTION__ << " subsurface=" << subsurface
           << " surface=" << surface;
@@ -77,10 +72,8 @@ void subcompositor_destroy(wl_client*, wl_resource* subcompositor) {
   wl_resource_destroy(subcompositor);
 }
 
-void subcompositor_get_subsurface(wl_client* client,
-                                  wl_resource* display,
-                                  uint32_t id,
-                                  wl_resource* surface,
+void subcompositor_get_subsurface(wl_client* client, wl_resource* display,
+                                  uint32_t id, wl_resource* surface,
                                   wl_resource* parent_surface) {
   VLOG(1) << __FUNCTION__ << " display=" << display << " surface=" << surface
           << " parent_surface=" << parent_surface;
@@ -100,9 +93,7 @@ const struct wl_subcompositor_interface subcompositor_implementation = {
 
 void subcompositor_destroy_resource_callback(struct wl_resource*) {}
 
-void bind_subcompositor(wl_client* client,
-                        void* data,
-                        uint32_t version,
+void bind_subcompositor(wl_client* client, void* data, uint32_t version,
                         uint32_t id) {
   wl_resource* resource =
       wl_resource_create(client, &wl_subcompositor_interface, version, id);

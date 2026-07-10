@@ -17,12 +17,10 @@
 #include "cuttlefish/host/libs/wayland/wayland_dmabuf.h"
 
 #include "absl/log/log.h"
-
-#include <drm/drm_fourcc.h>
-
-#include <linux-dmabuf-unstable-v1-server-protocol.h>
-#include <wayland-server-core.h>
-#include <wayland-server-protocol.h>
+#include "drm/drm_fourcc.h"
+#include "linux-dmabuf-unstable-v1-server-protocol.h"
+#include "wayland-server-core.h"
+#include "wayland-server-protocol.h"
 
 #include "cuttlefish/host/libs/wayland/wayland_utils.h"
 
@@ -30,7 +28,7 @@ namespace wayland {
 namespace {
 
 void buffer_destroy_resource(struct wl_resource* buffer_resource) {
-	wl_resource_destroy(buffer_resource);
+  wl_resource_destroy(buffer_resource);
 }
 
 void buffer_destroy(wl_client*, wl_resource* dmabuf_resource) {
@@ -47,7 +45,7 @@ const struct wl_buffer_interface buffer_implementation = {
 };
 
 void params_destroy_resource(struct wl_resource* params_resource) {
-	wl_resource_destroy(params_resource);
+  wl_resource_destroy(params_resource);
 }
 
 void params_destroy(struct wl_client*, struct wl_resource* params_resource) {
@@ -59,13 +57,8 @@ void params_destroy(struct wl_client*, struct wl_resource* params_resource) {
   }
 }
 
-void params_add(wl_client*,
-                wl_resource* params,
-                int32_t fd,
-                uint32_t plane,
-                uint32_t offset,
-                uint32_t stride,
-                uint32_t modifier_hi,
+void params_add(wl_client*, wl_resource* params, int32_t fd, uint32_t plane,
+                uint32_t offset, uint32_t stride, uint32_t modifier_hi,
                 uint32_t modifier_lo) {
   VLOG(1) << __FUNCTION__ << " params=" << params << " fd=" << fd
           << " plane=" << plane << " offset=" << offset << " stride=" << stride
@@ -85,12 +78,8 @@ void params_add(wl_client*,
   dmabuf_params->planes[plane] = std::move(dma_plane);
 }
 
-void params_create(wl_client* client,
-                   wl_resource* params,
-                   int32_t w,
-                   int32_t h,
-                   uint32_t format,
-                   uint32_t flags) {
+void params_create(wl_client* client, wl_resource* params, int32_t w, int32_t h,
+                   uint32_t format, uint32_t flags) {
   VLOG(1) << __FUNCTION__ << " params=" << params << " w=" << w << " h=" << h
           << " format=" << format << " flags=" << flags;
 
@@ -112,12 +101,8 @@ void params_create(wl_client* client,
   zwp_linux_buffer_params_v1_send_created(params, buffer_resource);
 }
 
-void params_create_immed(wl_client* client,
-                         wl_resource* params,
-                         uint32_t id,
-                         int32_t w,
-                         int32_t h,
-                         uint32_t format,
+void params_create_immed(wl_client* client, wl_resource* params, uint32_t id,
+                         int32_t w, int32_t h, uint32_t format,
                          uint32_t flags) {
   VLOG(1) << __FUNCTION__ << " params=" << params << " id=" << id << " w=" << w
           << " h=" << h << " format=" << format << " flags=" << flags;
@@ -135,7 +120,7 @@ const struct zwp_linux_buffer_params_v1_interface
         .add = params_add,
         .create = params_create,
         .create_immed = params_create_immed,
-    };
+};
 
 void linux_dmabuf_destroy(wl_client*, wl_resource* dmabuf) {
   VLOG(1) << __FUNCTION__ << " dmabuf=" << dmabuf;
@@ -143,8 +128,7 @@ void linux_dmabuf_destroy(wl_client*, wl_resource* dmabuf) {
   wl_resource_destroy(dmabuf);
 }
 
-void linux_dmabuf_create_params(wl_client* client,
-                                wl_resource* display,
+void linux_dmabuf_create_params(wl_client* client, wl_resource* display,
                                 uint32_t id) {
   VLOG(1) << __FUNCTION__ << " display=" << display << " id=" << id;
 
@@ -155,21 +139,18 @@ void linux_dmabuf_create_params(wl_client* client,
 
   wl_resource_set_implementation(buffer_params_resource,
                                  &zwp_linux_buffer_params_implementation,
-                                 dmabuf_params,
-                                 &params_destroy_resource);
+                                 dmabuf_params, &params_destroy_resource);
 }
 
-const struct zwp_linux_dmabuf_v1_interface
-    zwp_linux_dmabuf_v1_implementation = {
+const struct zwp_linux_dmabuf_v1_interface zwp_linux_dmabuf_v1_implementation =
+    {
         .destroy = linux_dmabuf_destroy,
         .create_params = linux_dmabuf_create_params,
-    };
+};
 
 constexpr uint32_t kLinuxDmabufVersion = 2;
 
-void bind_linux_dmabuf(wl_client* client,
-                       void* data,
-                       uint32_t version,
+void bind_linux_dmabuf(wl_client* client, void* data, uint32_t version,
                        uint32_t id) {
   wl_resource* resource =
       wl_resource_create(client, &zwp_linux_dmabuf_v1_interface,
@@ -184,8 +165,8 @@ void bind_linux_dmabuf(wl_client* client,
 }  // namespace
 
 void BindDmabufInterface(wl_display* display) {
-  wl_global_create(display, &zwp_linux_dmabuf_v1_interface,
-                   kLinuxDmabufVersion, nullptr, bind_linux_dmabuf);
+  wl_global_create(display, &zwp_linux_dmabuf_v1_interface, kLinuxDmabufVersion,
+                   nullptr, bind_linux_dmabuf);
 }
 
 bool IsDmabufResource(struct wl_resource* resource) {

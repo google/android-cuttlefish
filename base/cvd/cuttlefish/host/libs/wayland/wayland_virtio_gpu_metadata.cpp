@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/wayland/wayland_compositor.h"
+#include "cuttlefish/host/libs/wayland/wayland_virtio_gpu_metadata.h"
 
-#include <virtio-gpu-metadata-v1-server-protocol.h>
-#include <wayland-server-core.h>
-#include <wayland-server-protocol.h>
+#include "virtio-gpu-metadata-v1-server-protocol.h"
+#include "wayland-server-core.h"
+#include "wayland-server-protocol.h"
 
 #include "cuttlefish/host/libs/wayland/wayland_surface.h"
 #include "cuttlefish/host/libs/wayland/wayland_utils.h"

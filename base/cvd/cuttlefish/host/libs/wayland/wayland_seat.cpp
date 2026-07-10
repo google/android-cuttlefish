@@ -17,19 +17,14 @@
 #include "cuttlefish/host/libs/wayland/wayland_seat.h"
 
 #include "absl/log/log.h"
-
-#include <wayland-server-core.h>
-#include <wayland-server-protocol.h>
+#include "wayland-server-core.h"
+#include "wayland-server-protocol.h"
 
 namespace wayland {
 namespace {
 
-void pointer_set_cursor(wl_client*,
-                        wl_resource* pointer,
-                        uint32_t serial,
-                        wl_resource* surface,
-                        int32_t x,
-                        int32_t y) {
+void pointer_set_cursor(wl_client*, wl_resource* pointer, uint32_t serial,
+                        wl_resource* surface, int32_t x, int32_t y) {
   VLOG(1) << __FUNCTION__ << " pointer=" << pointer << " serial=" << serial
           << " surface=" << surface << " x=" << x << " y=" << y;
 }
@@ -41,9 +36,7 @@ void pointer_release(wl_client*, wl_resource* pointer) {
 }
 
 const struct wl_pointer_interface pointer_implementation = {
-  .set_cursor = pointer_set_cursor,
-  .release = pointer_release
-};
+    .set_cursor = pointer_set_cursor, .release = pointer_release};
 
 void keyboard_release(wl_client*, wl_resource* keyboard) {
   VLOG(1) << __FUNCTION__ << " keyboard=" << keyboard;
@@ -52,8 +45,7 @@ void keyboard_release(wl_client*, wl_resource* keyboard) {
 }
 
 const struct wl_keyboard_interface keyboard_implementation = {
-  .release = keyboard_release
-};
+    .release = keyboard_release};
 
 void touch_release(wl_client*, wl_resource* touch) {
   VLOG(1) << __FUNCTION__ << " touch=" << touch;
@@ -61,18 +53,16 @@ void touch_release(wl_client*, wl_resource* touch) {
   wl_resource_destroy(touch);
 }
 
-const struct wl_touch_interface touch_implementation = {
-  .release = touch_release
-};
+const struct wl_touch_interface touch_implementation = {.release =
+                                                            touch_release};
 
 void pointer_destroy_resource_callback(struct wl_resource*) {}
 
 void seat_get_pointer(wl_client* client, wl_resource* seat, uint32_t id) {
   VLOG(1) << __FUNCTION__ << " seat=" << seat << " id=" << id;
 
-  wl_resource* pointer_resource =
-      wl_resource_create(client, &wl_pointer_interface,
-                         wl_resource_get_version(seat), id);
+  wl_resource* pointer_resource = wl_resource_create(
+      client, &wl_pointer_interface, wl_resource_get_version(seat), id);
 
   wl_resource_set_implementation(pointer_resource, &pointer_implementation,
                                  nullptr, pointer_destroy_resource_callback);
@@ -83,9 +73,8 @@ void keyboard_destroy_resource_callback(struct wl_resource*) {}
 void seat_get_keyboard(wl_client* client, wl_resource* seat, uint32_t id) {
   VLOG(1) << __FUNCTION__ << " seat=" << seat << " id=" << id;
 
-  wl_resource* keyboard_resource =
-      wl_resource_create(client, &wl_keyboard_interface,
-                         wl_resource_get_version(seat), id);
+  wl_resource* keyboard_resource = wl_resource_create(
+      client, &wl_keyboard_interface, wl_resource_get_version(seat), id);
 
   wl_resource_set_implementation(keyboard_resource, &keyboard_implementation,
                                  nullptr, keyboard_destroy_resource_callback);
@@ -96,9 +85,8 @@ void touch_destroy_resource_callback(struct wl_resource*) {}
 void seat_get_touch(wl_client* client, wl_resource* seat, uint32_t id) {
   VLOG(1) << __FUNCTION__ << " seat=" << seat << " id=" << id;
 
-  wl_resource* touch_resource =
-      wl_resource_create(client, &wl_touch_interface,
-                         wl_resource_get_version(seat), id);
+  wl_resource* touch_resource = wl_resource_create(
+      client, &wl_touch_interface, wl_resource_get_version(seat), id);
 
   wl_resource_set_implementation(touch_resource, &touch_implementation, nullptr,
                                  touch_destroy_resource_callback);
@@ -116,13 +104,11 @@ const struct wl_seat_interface seat_implementation = {
     .get_pointer = seat_get_pointer,
     .get_keyboard = seat_get_keyboard,
     .get_touch = seat_get_touch,
-    .release = seat_release
-};
+    .release = seat_release};
 
 void bind_seat(wl_client* client, void* data, uint32_t version, uint32_t id) {
-  wl_resource* resource =
-      wl_resource_create(client, &wl_seat_interface,
-                         std::min(version, kSeatVersion), id);
+  wl_resource* resource = wl_resource_create(
+      client, &wl_seat_interface, std::min(version, kSeatVersion), id);
 
   wl_resource_set_implementation(resource, &seat_implementation, data, nullptr);
 }

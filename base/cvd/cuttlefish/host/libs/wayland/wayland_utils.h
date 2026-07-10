@@ -19,8 +19,7 @@
 #include <memory>
 
 #include "absl/log/check.h"
-
-#include <wayland-server-core.h>
+#include "wayland-server-core.h"
 
 namespace wayland {
 
