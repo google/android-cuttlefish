@@ -12,9 +12,9 @@ cf_cc_binary(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

@@ -1,0 +1,20 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_build_test(name = "cf_build_test")
+
+cf_cc_library(
+    name = "managed_stdio",
+    srcs = ["managed_stdio.cc"],
+    hdrs = ["managed_stdio.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/result",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+    ],
+)

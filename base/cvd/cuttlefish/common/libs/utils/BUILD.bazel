@@ -10,7 +10,7 @@ cf_cc_library(
     hdrs = ["archive.h"],
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
+        "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
@@ -74,7 +74,7 @@ cf_cc_library(
     hdrs = ["disk_usage.h"],
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
+        "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
@@ -354,19 +354,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "subprocess_managed_stdio",
-    srcs = ["subprocess_managed_stdio.cc"],
-    hdrs = ["subprocess_managed_stdio.h"],
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/result",
-        "//libbase",
-        "@abseil-cpp//absl/log",
-    ],
-)
-
-cf_cc_library(
     name = "tee_logging",
     srcs = ["tee_logging.cpp"],
     hdrs = ["tee_logging.h"],
@@ -478,8 +465,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/common/libs/utils:wait_for_file",
+        "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
     ],
