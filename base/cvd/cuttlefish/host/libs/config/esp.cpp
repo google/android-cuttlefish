@@ -32,8 +32,8 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/esp/esp_builder.h"
+#include "cuttlefish/process/command_subprocess.h"
 
 namespace cuttlefish {
 

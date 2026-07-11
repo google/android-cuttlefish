@@ -37,9 +37,9 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:network",
-        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:logging",
+        "//cuttlefish/process:command_subprocess",
         "//cuttlefish/result",
         "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/log",
@@ -53,7 +53,7 @@ cf_cc_library(
     srcs = ["alloc_iproute2.cpp"],
     hdrs = ["alloc_driver.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/process:command_subprocess",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
@@ -68,7 +68,7 @@ cf_cc_library(
     deps = [
         "//allocd/net:netlink",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/process:command_subprocess",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

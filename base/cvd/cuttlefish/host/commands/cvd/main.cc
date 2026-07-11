@@ -36,7 +36,6 @@
 #include "cuttlefish/ansi_codes/terminal_colors.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
@@ -45,6 +44,7 @@
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/process/command_subprocess.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "cuttlefish/host/commands/cvd/metrics/cvd_metrics_api.h"
 

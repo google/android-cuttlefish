@@ -37,7 +37,6 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
@@ -48,6 +47,7 @@
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/pretty/optional.h"
 #include "cuttlefish/pretty/string.h"
+#include "cuttlefish/process/command_subprocess.h"
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 

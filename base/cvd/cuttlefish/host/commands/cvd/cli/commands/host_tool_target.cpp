@@ -26,9 +26,9 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/flags_collector.h"
+#include "cuttlefish/process/command_subprocess.h"
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 

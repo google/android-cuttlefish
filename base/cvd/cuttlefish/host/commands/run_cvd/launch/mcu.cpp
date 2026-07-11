@@ -26,7 +26,6 @@
 #include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/wait_for_file.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -34,6 +33,7 @@
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/process/command_subprocess.h"
 #include "cuttlefish/result/result.h"
 
 // timeout for the MCU channels to be created after the start command is issued

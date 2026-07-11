@@ -31,7 +31,6 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/boot_image_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image.h"
@@ -50,6 +49,7 @@
 #include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
+#include "cuttlefish/process/command_subprocess.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

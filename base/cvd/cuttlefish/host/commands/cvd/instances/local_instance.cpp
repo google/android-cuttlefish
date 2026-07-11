@@ -28,7 +28,6 @@
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/status_fetcher.h"
@@ -37,6 +36,7 @@
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/screen_recording_controls/screen_recording_controls.h"
+#include "cuttlefish/process/command_subprocess.h"
 #include "cuttlefish/process/managed_stdio.h"
 
 namespace cuttlefish {

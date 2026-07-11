@@ -21,9 +21,9 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/process/command_subprocess.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

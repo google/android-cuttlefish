@@ -20,11 +20,11 @@
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/network.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_cpu.h"
+#include "cuttlefish/process/command_subprocess.h"
 
 namespace cuttlefish {
 namespace {

@@ -31,11 +31,11 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/gflags_xml_parser.h"
 #include "cuttlefish/common/libs/utils/json.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/process/command_subprocess.h"
 #include "cuttlefish/process/managed_stdio.h"
 
 namespace cuttlefish {

@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/process/command_subprocess.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

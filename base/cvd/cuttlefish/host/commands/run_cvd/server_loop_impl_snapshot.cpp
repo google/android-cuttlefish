@@ -32,7 +32,6 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
@@ -42,6 +41,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
+#include "cuttlefish/process/command_subprocess.h"
 #include "cuttlefish/result/result.h"
 
 #ifndef WEXITED
