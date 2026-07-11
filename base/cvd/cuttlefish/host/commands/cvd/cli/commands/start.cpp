@@ -24,7 +24,6 @@
 #include <unistd.h>
 
 #include <algorithm>
-#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -504,7 +503,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
 
     LOG(INFO) << "Stopping device...";
     CF_EXPECT(instance_manager_.StopInstanceGroup(
-        group, std::chrono::seconds(5), InstanceDirActionOnStop::Keep, {}));
+        group, InstanceDirActionOnStop::Keep));
     LOG(INFO) << "Device stopped.";
     return monitor_res;
   }

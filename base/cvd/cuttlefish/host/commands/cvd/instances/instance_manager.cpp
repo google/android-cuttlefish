@@ -212,9 +212,8 @@ Result<void> InstanceManager::UpdateInstanceGroup(
 }
 
 Result<void> InstanceManager::StopInstanceGroup(
-    LocalInstanceGroup& group,
-    std::optional<std::chrono::seconds> launcher_timeout,
-    InstanceDirActionOnStop instance_dir_action,
+    LocalInstanceGroup& group, InstanceDirActionOnStop instance_dir_action,
+    std::chrono::seconds launcher_timeout,
     const std::vector<unsigned>& instance_nums) {
   // Validate that the requested instances actually belong to this group
   std::set<unsigned> valid_ids;
@@ -231,14 +230,10 @@ Result<void> InstanceManager::StopInstanceGroup(
 
   const auto stop_bin = CF_EXPECT(StopBin(group.HostArtifactsPath()));
   const auto stop_bin_path = group.HostArtifactsPath() + "/bin/" + stop_bin;
-  int wait_for_launcher_secs = 0;
-  if (launcher_timeout.has_value()) {
-    wait_for_launcher_secs = launcher_timeout->count();
-  }
   Result<void> cmd_result = RunStopCvd(StopCvdParams{
       .bin_path = stop_bin_path,
       .home_dir = group.HomeDir(),
-      .wait_for_launcher_secs = wait_for_launcher_secs,
+      .wait_for_launcher_secs = static_cast<int>(launcher_timeout.count()),
       .clear_runtime_dirs =
           instance_dir_action == InstanceDirActionOnStop::Clear,
       .instance_nums = instance_nums,
@@ -271,8 +266,8 @@ Result<void> InstanceManager::Clear() {
   for (auto& group : instance_groups) {
     // Only stop running instances.
     if (group.HasActiveInstances()) {
-      auto stop_result = StopInstanceGroup(group, std::chrono::seconds(5),
-                                           InstanceDirActionOnStop::Clear);
+      Result<void> stop_result =
+          StopInstanceGroup(group, InstanceDirActionOnStop::Clear);
       if (!stop_result.ok()) {
         LOG(ERROR) << stop_result.error();
       }

@@ -41,10 +41,6 @@ namespace {
 
 constexpr char kSummaryHelpText[] = "Stop Cuttlefish instances";
 
-struct StopFlags {
-  size_t wait_for_launcher_secs = 5;
-  bool clear_instance_dirs = false;
-};
 }  // namespace
 
 CvdStopCommandHandler::CvdStopCommandHandler(InstanceManager& instance_manager)
@@ -80,10 +76,10 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   }
 
   Result<void> stop_outcome = instance_manager_.StopInstanceGroup(
-      group, launcher_timeout,
+      group,
       flags_.clear_instance_dirs ? InstanceDirActionOnStop::Clear
                                  : InstanceDirActionOnStop::Keep,
-      instance_nums);
+      launcher_timeout.value_or(std::chrono::seconds(0)), instance_nums);
 
   GatherVmStopMetrics(group);
 
