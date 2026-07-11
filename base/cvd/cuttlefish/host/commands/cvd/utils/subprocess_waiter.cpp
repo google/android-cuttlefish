@@ -18,8 +18,8 @@
 
 #include <mutex>
 
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/process/command_subprocess.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

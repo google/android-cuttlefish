@@ -19,12 +19,12 @@
 #include <optional>
 #include <string>
 
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
+#include "cuttlefish/process/command_subprocess.h"
 
 namespace cuttlefish {
 

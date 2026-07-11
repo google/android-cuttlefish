@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/common/libs/utils/subprocess.h"
-
-#ifdef __linux__
-#include <sys/prctl.h>
-#endif
+#include "cuttlefish/process/command_subprocess.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -31,6 +27,7 @@
 
 #include <cerrno>
 #include <cstring>
+#include <functional>
 #include <map>
 #include <optional>
 #include <ostream>
@@ -50,8 +47,15 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/result/result.h"
+
+#ifdef __linux__
+#include <linux/prctl.h>
+#include <sys/prctl.h>
+#endif
 
 extern char** environ;
 
@@ -207,6 +211,7 @@ int Subprocess::Wait() {
   }
   return retval;
 }
+// NOLINTNEXTLINE(misc-include-cleaner): <signal.h>
 int Subprocess::Wait(siginfo_t* infop, int options) {
   if (pid_ < 0) {
     LOG(ERROR)
@@ -215,6 +220,7 @@ int Subprocess::Wait(siginfo_t* infop, int options) {
     return -1;
   }
   *infop = {};
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/wait.h>
   auto retval = TEMP_FAILURE_RETRY(waitid(P_PID, pid_, infop, options));
   // We don't want to wait twice for the same process
   bool exited = infop->si_code == CLD_EXITED || infop->si_code == CLD_DUMPED;
@@ -565,7 +571,7 @@ int Execute(std::vector<std::string> commands) {
   const Result<siginfo_t> result =
       Execute(std::move(commands), SubprocessOptions(), WEXITED);
   if (result.ok() && result->si_code == CLD_EXITED) {
-    return result->si_status;
+    return result->si_status;  // NOLINT(misc-include-cleaner): <signal.h>
   } else {
     return -1;
   }

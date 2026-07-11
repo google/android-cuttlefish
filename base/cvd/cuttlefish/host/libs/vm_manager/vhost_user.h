@@ -18,8 +18,8 @@
 #include <string>
 #include <string_view>
 
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/process/command_subprocess.h"
 
 namespace cuttlefish {
 namespace vm_manager {
