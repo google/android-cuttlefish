@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/remove.h"
 
-#include <chrono>
 #include <string>
 #include <vector>
 
@@ -94,7 +93,7 @@ Result<void> RemoveCvdCommandHandler::StopGroup(
     return {};
   }
   CF_EXPECT(instance_manager_.StopInstanceGroup(
-      group, std::chrono::seconds(5), InstanceDirActionOnStop::Clear));
+      group, InstanceDirActionOnStop::Clear));
   return {};
 }
 

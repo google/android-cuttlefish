@@ -83,9 +83,8 @@ class InstanceManager {
   // Stops the device by asking it over the control socket. If launcher_timeout
   // has a value, it will wait for at most that time before returning an error.
   Result<void> StopInstanceGroup(
-      LocalInstanceGroup& group,
-      std::optional<std::chrono::seconds> launcher_timeout,
-      InstanceDirActionOnStop instance_dir_action,
+      LocalInstanceGroup& group, InstanceDirActionOnStop instance_dir_action,
+      std::chrono::seconds launcher_timeout = std::chrono::seconds(5),
       const std::vector<unsigned>& instance_nums = {});
 
  private:
