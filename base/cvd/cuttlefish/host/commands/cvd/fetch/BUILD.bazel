@@ -19,10 +19,10 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:is_google_corp",
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/commands/cvd/fetch:build_api_credentials",
         "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
         "//cuttlefish/host/libs/web:oauth2_consent",
+        "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
     ],
 )

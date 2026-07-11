@@ -38,7 +38,6 @@
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
@@ -47,6 +46,7 @@
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
+#include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 
 // This is the QEMU default, but set it explicitly just in case it

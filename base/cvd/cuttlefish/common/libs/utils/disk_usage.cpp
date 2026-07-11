@@ -26,7 +26,7 @@
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

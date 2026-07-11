@@ -24,8 +24,8 @@
 #include "absl/strings/str_join.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

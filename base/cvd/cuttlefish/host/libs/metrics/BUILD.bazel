@@ -235,8 +235,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/libs/metrics:metrics_environment",
+        "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "//external_proto:cf_log_cc_proto",
     ],
