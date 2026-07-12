@@ -1274,9 +1274,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
               "Error in looking up num to webrtc_device_id_flag_map");
     instance.set_webrtc_device_id(num_to_webrtc_device_id_flag_map[num]);
 
-    auto port = 8443 + num - 1;
-    // Change the signaling server port for all instances
-    tmp_config_obj.set_sig_server_proxy_port(port);
+    // TODO(b/522400327): It would be nice to consolidate the port definitions around here.
+    auto sig_server_port = 1443;
+    tmp_config_obj.set_sig_server_port(sig_server_port);
+
+    auto sig_server_proxy_port = 8443 + num - 1;
+    // Change the signaling server proxy port for all instances
+    tmp_config_obj.set_sig_server_proxy_port(sig_server_proxy_port);
     instance.set_start_netsim(is_first_instance && is_any_netsim);
 
     instance.set_start_rootcanal(is_first_instance && any_not_netsim_bt &&

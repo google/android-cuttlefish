@@ -138,11 +138,19 @@ void CuttlefishConfig::set_gem5_debug_flags(
 }
 
 static constexpr char kSigServerPort[] = "webrtc_sig_server_port";
-void CuttlefishConfig::set_sig_server_proxy_port(int port) {
+void CuttlefishConfig::set_sig_server_port(int port) {
   (*dictionary_)[kSigServerPort] = port;
 }
-int CuttlefishConfig::sig_server_proxy_port() const {
+int CuttlefishConfig::sig_server_port() const {
   return (*dictionary_)[kSigServerPort].asInt();
+}
+
+static constexpr char kSigServerProxyPort[] = "webrtc_sig_server_proxy_port";
+void CuttlefishConfig::set_sig_server_proxy_port(int port) {
+  (*dictionary_)[kSigServerProxyPort] = port;
+}
+int CuttlefishConfig::sig_server_proxy_port() const {
+  return (*dictionary_)[kSigServerProxyPort].asInt();
 }
 
 static constexpr char kSigServerAddress[] = "webrtc_sig_server_addr";
