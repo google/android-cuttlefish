@@ -173,9 +173,9 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:in_sandbox",
-        "//cuttlefish/common/libs/utils:proc_file_utils",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/posix:strerror",
+        "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

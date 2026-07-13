@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/common/libs/utils/proc_file_utils.h"
+#include "cuttlefish/process/proc_file_utils.h"
 
-#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/stat.h>  // IWYU pragma: keep
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <regex>
@@ -33,6 +35,7 @@
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
 #include "fmt/core.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -45,6 +48,7 @@ namespace cuttlefish {
 // sometimes, files under /proc/<pid> owned by a different user
 // e.g. /proc/<pid>/exe
 static Result<uid_t> FileOwnerUid(const std::string& file_path) {
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/stat.h>
   struct stat buf;
   CF_EXPECT_EQ(::stat(file_path.data(), &buf), 0);
   return buf.st_uid;

@@ -13,13 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/common/libs/utils/proc_file_utils.h"
+#include "cuttlefish/process/proc_file_utils.h"
 
-#include <sys/stat.h>
 #include <unistd.h>
-
-#include <string>
-#include <vector>
 
 #include "gtest/gtest.h"
 
