@@ -250,33 +250,6 @@ cf_cc_test(
 )
 
 cf_cc_library(
-    name = "proc_file_utils",
-    srcs = ["proc_file_utils.cpp"],
-    hdrs = ["proc_file_utils.h"],
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/posix:readlink",
-        "//cuttlefish/result",
-        "//libbase",
-        "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
-        "@fmt",
-    ],
-)
-
-cf_cc_test(
-    name = "proc_file_utils_test",
-    srcs = ["proc_file_utils_test.cpp"],
-    depend_on_what_you_use_enabled = False,
-    deps = [
-        "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:proc_file_utils",
-        "//cuttlefish/result",
-    ],
-)
-
-cf_cc_library(
     name = "proto",
     hdrs = ["proto.h"],
     deps = [
@@ -359,7 +332,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:proc_file_utils",
+        "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

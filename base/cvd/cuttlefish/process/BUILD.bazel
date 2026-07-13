@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -62,6 +62,33 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
+    ],
+)
+
+cf_cc_library(
+    name = "proc_file_utils",
+    srcs = ["proc_file_utils.cc"],
+    hdrs = ["proc_file_utils.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/posix:readlink",
+        "//cuttlefish/result",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "proc_file_utils_test",
+    srcs = ["proc_file_utils_test.cc"],
+    depend_on_what_you_use_enabled = False,
+    deps = [
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/process:proc_file_utils",
+        "//cuttlefish/result",
     ],
 )
 

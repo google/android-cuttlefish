@@ -28,9 +28,9 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
-#include "cuttlefish/common/libs/utils/proc_file_utils.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/process/proc_file_utils.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

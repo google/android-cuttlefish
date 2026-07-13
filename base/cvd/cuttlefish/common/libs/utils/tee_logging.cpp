@@ -45,7 +45,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/utils/environment.h"
-#include "cuttlefish/common/libs/utils/proc_file_utils.h"
+#include "cuttlefish/process/proc_file_utils.h"
 #include "cuttlefish/result/result.h"
 
 using absl::StrFormat;
