@@ -48,7 +48,7 @@ struct CmdLineArgs {
     #[clap(short, long, default_value_t = log::LevelFilter::Debug)]
     verbosity: log::LevelFilter,
     /// Lens facing configuration: FRONT, BACK, or EXTERNAL.
-    #[clap(long, value_name = "LENS_FACING", default_value = "BACK")]
+    #[clap(long, value_name = "LENS_FACING", default_value = "EXTERNAL")]
     lens_facing: String,
 }
 
