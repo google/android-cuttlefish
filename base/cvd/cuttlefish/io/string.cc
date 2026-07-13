@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -37,6 +38,11 @@ Result<std::string> ReadToString(Reader& reader, size_t buffer_size) {
     out.write(buf.data(), data_read);
   }
   return out.str();
+}
+
+Result<void> WriteString(Writer& writer, std::string_view str) {
+  CF_EXPECT(WriteExact(writer, str.data(), str.size()));
+  return {};
 }
 
 }  // namespace cuttlefish
