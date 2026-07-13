@@ -159,14 +159,14 @@ Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
       LOG(WARNING) << "Error in stopping \"" << it.cmd->GetShortName() << "\"";
       return false;
     }
-    siginfo_t infop;
-    auto success = it.proc->Wait(&infop, WEXITED);
-    if (success < 0) {
-      LOG(WARNING) << "Failed to wait for process " << it.cmd->GetShortName();
+    Result<siginfo_t> infop = it.proc->Wait(WEXITED);
+    if (!infop.ok()) {
+      LOG(WARNING) << "Failed to wait for process " << it.cmd->GetShortName()
+                   << ": " << infop.error();
       return false;
     }
     if (stop_result == StopperResult::kStopCrash) {
-      LogSubprocessExit(it.cmd->GetShortName(), infop);
+      LogSubprocessExit(it.cmd->GetShortName(), *infop);
     }
     return true;
   };

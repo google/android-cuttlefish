@@ -75,7 +75,7 @@ class Subprocess {
   // successfully, non-zero otherwise.
   int Wait();
   // Same as waitid(2)
-  int Wait(siginfo_t* infop, int options);
+  Result<siginfo_t> Wait(int options);
   // Whether the command started successfully. It only says whether the call to
   // fork() succeeded or not, it says nothing about exec or successful
   // completion of the command, that's what Wait is for.

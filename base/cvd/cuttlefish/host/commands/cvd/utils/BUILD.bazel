@@ -54,7 +54,6 @@ cf_cc_library(
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
     ],
 )

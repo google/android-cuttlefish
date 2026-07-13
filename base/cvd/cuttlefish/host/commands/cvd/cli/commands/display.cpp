@@ -125,8 +125,8 @@ Result<void> CvdDisplayCommandHandler::Handle(const CommandRequest& request) {
   Command command =
       CF_EXPECT(BuildCommand(instance_manager_, request, subcmd_args, env));
 
-  siginfo_t infop;  // NOLINT(misc-include-cleaner)
-  command.Start().Wait(&infop, WEXITED);
+  // NOLINTNEXTLINE(misc-include-cleaner)
+  siginfo_t infop = CF_EXPECT(command.Start().Wait(WEXITED));
 
   CF_EXPECT(CheckProcessExitedNormally(infop));
   return {};

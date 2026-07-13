@@ -91,8 +91,8 @@ Result<void> CvdSnapshotCommandHandler::Handle(const CommandRequest& request) {
   Command command =
       CF_EXPECT(GenerateCommand(request, subcmd, subcmd_args, request.Env()));
 
-  siginfo_t infop;  // NOLINT(misc-include-cleaner)
-  command.Start().Wait(&infop, WEXITED);
+  // NOLINTNEXTLINE(misc-include-cleaner)
+  siginfo_t infop = CF_EXPECT(command.Start().Wait(WEXITED));
 
   CF_EXPECT(CheckProcessExitedNormally(infop));
   return {};

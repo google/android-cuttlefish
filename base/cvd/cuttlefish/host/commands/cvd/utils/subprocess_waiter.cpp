@@ -19,7 +19,6 @@
 #include <mutex>
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -38,17 +37,13 @@ Result<siginfo_t> SubprocessWaiter::Wait() {
   CF_EXPECT(!interrupted_, "Interrupted");
   CF_EXPECT(subprocess_.has_value());
 
-  siginfo_t infop{};
-
   interrupt_lock.unlock();
 
   // This blocks until the process exits, but doesn't reap it.
-  auto result = subprocess_->Wait(&infop, WEXITED | WNOWAIT);
-  CF_EXPECTF(result != -1, "Lost track of subprocess pid: {}", StrError(errno));
+  siginfo_t infop = CF_EXPECT(subprocess_->Wait(WEXITED | WNOWAIT));
   interrupt_lock.lock();
   // Perform a reaping wait on the process (which should already have exited).
-  result = subprocess_->Wait(&infop, WEXITED);
-  CF_EXPECT(result != -1, "Lost track of subprocess pid");
+  infop = CF_EXPECT(subprocess_->Wait(WEXITED));
   // The double wait avoids a race around the kernel reusing pids. Waiting
   // with WNOWAIT won't cause the child process to be reaped, so the kernel
   // won't reuse the pid until the Wait call below, and any kill signals won't
