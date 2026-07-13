@@ -53,6 +53,7 @@
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

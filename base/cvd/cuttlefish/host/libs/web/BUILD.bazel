@@ -244,7 +244,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_json",
         "//cuttlefish/host/libs/web/http_client:url_escape",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:execute",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@fmt",

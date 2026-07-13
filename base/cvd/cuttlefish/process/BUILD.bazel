@@ -30,7 +30,6 @@ cf_cc_library(
     hdrs = ["command_subprocess.h"],
     deps = [
         "//cuttlefish/process:command",
-        "//cuttlefish/process:execute",
         "//cuttlefish/process:subprocess",
         "//cuttlefish/process:subprocess_options",
     ],

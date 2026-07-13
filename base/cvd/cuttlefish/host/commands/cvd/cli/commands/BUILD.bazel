@@ -511,7 +511,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli:help_format",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/libs/vm_manager",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:execute",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],
