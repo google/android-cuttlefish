@@ -24,6 +24,16 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "envp_to_map",
+    srcs = ["envp_to_map.cc"],
+    hdrs = ["envp_to_map.h"],
+    deps = [
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
     name = "managed_stdio",
     srcs = ["managed_stdio.cc"],
     hdrs = ["managed_stdio.h"],

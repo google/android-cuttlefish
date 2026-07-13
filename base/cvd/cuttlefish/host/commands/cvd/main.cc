@@ -44,7 +44,7 @@
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/posix/strerror.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/envp_to_map.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "cuttlefish/host/commands/cvd/metrics/cvd_metrics_api.h"
 
