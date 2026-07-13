@@ -269,21 +269,6 @@ int CuttlefishConfig::casimir_rf_port() const {
   return (*dictionary_)[kCasimirRfPort].asInt();
 }
 
-static constexpr char kNetsimRadios[] = "netsim_radios";
-
-void CuttlefishConfig::netsim_radio_enable(NetsimRadio flag) {
-  if (dictionary_->isMember(kNetsimRadios)) {
-    // OR the radio to current set of radios
-    (*dictionary_)[kNetsimRadios] = (*dictionary_)[kNetsimRadios].asInt() | flag;
-  } else {
-    (*dictionary_)[kNetsimRadios] = flag;
-  }
-}
-
-bool CuttlefishConfig::netsim_radio_enabled(NetsimRadio flag) const {
-  return (*dictionary_)[kNetsimRadios].asInt() & flag;
-}
-
 static constexpr char kNetsimInstanceNum[] = "netsim_instance_num";
 int CuttlefishConfig::netsim_instance_num() const {
   return (*dictionary_)[kNetsimInstanceNum].asInt();

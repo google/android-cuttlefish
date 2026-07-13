@@ -1351,6 +1351,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_ports(
   (*Dictionary())[kModemSimulatorPorts] = modem_simulator_ports;
 }
 
+static constexpr char kEnableModemNetsim[] = "enable_modem_netsim";
+bool CuttlefishConfig::InstanceSpecific::enable_modem_netsim() const {
+  return (*Dictionary())[kEnableModemNetsim].asBool();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_modem_netsim(
+    bool enable) {
+  (*Dictionary())[kEnableModemNetsim] = enable;
+}
+
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
   return AbsolutePath(PerInstanceLogPath(kLogNameLauncher));
 }
