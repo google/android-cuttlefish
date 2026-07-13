@@ -19,7 +19,7 @@
 #include <mutex>
 #include <optional>
 
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

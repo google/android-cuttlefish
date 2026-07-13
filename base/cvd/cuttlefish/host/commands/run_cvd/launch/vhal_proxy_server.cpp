@@ -27,7 +27,7 @@
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/vhal_proxy_server/vhal_proxy_server_eth_addr.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 
 namespace cuttlefish {
 

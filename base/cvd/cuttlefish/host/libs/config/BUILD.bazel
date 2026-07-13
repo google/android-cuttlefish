@@ -164,7 +164,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:openwrt_args",
         "//cuttlefish/host/libs/config/esp:make_fat_image",
         "//cuttlefish/host/libs/image_aggregator:mbr",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:command",
         "//cuttlefish/process:execute",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",

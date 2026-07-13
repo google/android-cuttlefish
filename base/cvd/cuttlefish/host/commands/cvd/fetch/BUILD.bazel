@@ -21,7 +21,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:build_api_credentials",
         "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
         "//cuttlefish/host/libs/web:oauth2_consent",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
     ],

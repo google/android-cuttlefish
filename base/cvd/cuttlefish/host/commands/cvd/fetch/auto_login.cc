@@ -23,7 +23,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/build_api_credentials.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
 #include "cuttlefish/host/libs/web/oauth2_consent.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 

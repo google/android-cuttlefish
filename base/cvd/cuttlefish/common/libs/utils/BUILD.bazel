@@ -10,7 +10,7 @@ cf_cc_library(
     hdrs = ["archive.h"],
     depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "//libbase",
@@ -75,7 +75,7 @@ cf_cc_library(
     hdrs = ["disk_usage.h"],
     depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "//libbase",
@@ -466,7 +466,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:wait_for_file",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",

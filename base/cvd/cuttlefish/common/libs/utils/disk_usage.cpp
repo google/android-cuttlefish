@@ -25,7 +25,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 

@@ -20,7 +20,7 @@
 
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/host/libs/metrics/metrics_environment.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 #include "external_proto/cf_log.pb.h"

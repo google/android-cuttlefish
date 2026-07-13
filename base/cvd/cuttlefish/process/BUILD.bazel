@@ -26,14 +26,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "command_subprocess",
-    hdrs = ["command_subprocess.h"],
-    deps = [
-        "//cuttlefish/process:command",
-    ],
-)
-
-cf_cc_library(
     name = "envp_to_map",
     srcs = ["envp_to_map.cc"],
     hdrs = ["envp_to_map.h"],

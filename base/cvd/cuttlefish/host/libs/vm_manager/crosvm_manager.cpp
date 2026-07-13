@@ -52,7 +52,7 @@
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
 #include "cuttlefish/posix/strerror.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/process/execute.h"
 #include "cuttlefish/process/subprocess_options.h"
 #include "cuttlefish/result/result.h"

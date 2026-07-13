@@ -57,7 +57,7 @@ cf_cc_library(
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/posix:strerror",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:command",
         "//cuttlefish/process:subprocess",
         "//cuttlefish/result",
     ],
@@ -78,7 +78,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/utils:flags_collector",
         "//cuttlefish/host/commands/cvd/utils:interrupt_listener",
         "//cuttlefish/host/commands/cvd/utils:subprocess_waiter",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:command",
         "//cuttlefish/result",
         "//libbase",
     ],
