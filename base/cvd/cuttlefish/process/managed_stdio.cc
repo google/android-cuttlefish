@@ -27,7 +27,9 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/subprocess.h"
+#include "cuttlefish/process/subprocess_options.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

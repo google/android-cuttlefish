@@ -39,6 +39,7 @@ cf_cc_binary(
         "//cuttlefish/posix:symlink",
         "//cuttlefish/process:command_subprocess",
         "//cuttlefish/process:managed_stdio",
+        "//cuttlefish/process:subprocess_options",
         "//libbase",
         "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/log",
