@@ -92,9 +92,8 @@ Command NewVhostUserInputCommand(const DeviceSockets& device_sockets,
   cmd.AddParameter("--verbosity=DEBUG");
   cmd.AddParameter("--socket-fd=", device_sockets.vhu_server);
   cmd.AddParameter("--device-config=", spec);
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn,
-                    device_sockets.device_end);
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+  cmd.RedirectStdIO(Command::StdIoChannel::kStdIn, device_sockets.device_end);
+  cmd.RedirectStdIO(Command::StdIoChannel::kStdOut,
                     SharedFD::Open("/dev/null", O_WRONLY));
   return cmd;
 }
@@ -132,7 +131,7 @@ class VhostInputDevices : public CommandSource,
         NewVhostUserInputCommand(rotary_sockets_, DefaultRotaryDeviceSpec());
     Command rotary_log_tee =
         CF_EXPECT(log_tee_.CreateLogTee(rotary_cmd, "vhost_user_rotary",
-                                        Subprocess::StdIOChannel::kStdErr),
+                                        Command::StdIoChannel::kStdErr),
                   "Failed to create log tee command for rotary device");
     commands.emplace_back(std::move(rotary_cmd));
     commands.emplace_back(std::move(rotary_log_tee));
@@ -142,7 +141,7 @@ class VhostInputDevices : public CommandSource,
           NewVhostUserInputCommand(mouse_sockets_, DefaultMouseSpec());
       Command mouse_log_tee =
           CF_EXPECT(log_tee_.CreateLogTee(mouse_cmd, "vhost_user_mouse",
-                                          Subprocess::StdIOChannel::kStdErr),
+                                          Command::StdIoChannel::kStdErr),
                     "Failed to create log tee command for mouse device");
       commands.emplace_back(std::move(mouse_cmd));
       commands.emplace_back(std::move(mouse_log_tee));
@@ -153,7 +152,7 @@ class VhostInputDevices : public CommandSource,
           NewVhostUserInputCommand(gamepad_sockets_, DefaultGamepadSpec());
       Command gamepad_log_tee =
           CF_EXPECT(log_tee_.CreateLogTee(gamepad_cmd, "vhost_user_gamepad",
-                                          Subprocess::StdIOChannel::kStdErr),
+                                          Command::StdIoChannel::kStdErr),
                     "Failed to create log tee command for gamepad device");
       commands.emplace_back(std::move(gamepad_cmd));
       commands.emplace_back(std::move(gamepad_log_tee));
@@ -165,7 +164,7 @@ class VhostInputDevices : public CommandSource,
         NewVhostUserInputCommand(keyboard_sockets_, keyboard_spec);
     Command keyboard_log_tee =
         CF_EXPECT(log_tee_.CreateLogTee(keyboard_cmd, "vhost_user_keyboard",
-                                        Subprocess::StdIOChannel::kStdErr),
+                                        Command::StdIoChannel::kStdErr),
                   "Failed to create log tee command for keyboard device");
     commands.emplace_back(std::move(keyboard_cmd));
     commands.emplace_back(std::move(keyboard_log_tee));
@@ -174,7 +173,7 @@ class VhostInputDevices : public CommandSource,
         NewVhostUserInputCommand(switches_sockets_, DefaultSwitchesSpec());
     Command switches_log_tee =
         CF_EXPECT(log_tee_.CreateLogTee(switches_cmd, "vhost_user_switches",
-                                        Subprocess::StdIOChannel::kStdErr),
+                                        Command::StdIoChannel::kStdErr),
                   "Failed to create log tee command for switches device");
     commands.emplace_back(std::move(switches_cmd));
     commands.emplace_back(std::move(switches_log_tee));
@@ -202,7 +201,7 @@ class VhostInputDevices : public CommandSource,
       Command touchscreen_log_tee = CF_EXPECTF(
           log_tee_.CreateLogTee(touchscreen_cmd,
                                 fmt::format("vhost_user_touchscreen_{}", i),
-                                Subprocess::StdIOChannel::kStdErr),
+                                Command::StdIoChannel::kStdErr),
           "Failed to create log tee for touchscreen device", i);
       commands.emplace_back(std::move(touchscreen_cmd));
       commands.emplace_back(std::move(touchscreen_log_tee));
@@ -229,7 +228,7 @@ class VhostInputDevices : public CommandSource,
       Command touchpad_log_tee =
           CF_EXPECTF(log_tee_.CreateLogTee(
                          touchpad_cmd, fmt::format("vhost_user_touchpad_{}", i),
-                         Subprocess::StdIOChannel::kStdErr),
+                         Command::StdIoChannel::kStdErr),
                      "Failed to create log tee for touchpad {}", i);
       commands.emplace_back(std::move(touchpad_cmd));
       commands.emplace_back(std::move(touchpad_log_tee));

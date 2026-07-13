@@ -38,7 +38,7 @@
 namespace cuttlefish {
 namespace {
 
-using Subprocess::StdIOChannel::kStdErr;
+using Command::StdIoChannel::kStdErr;
 
 Command NewCommand(const std::string& binary_path,
                    const std::string& socket_path,
@@ -49,7 +49,7 @@ Command NewCommand(const std::string& binary_path,
   if (!lens_facing.empty()) {
     cmd.AddParameter("--lens-facing=", lens_facing);
   }
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+  cmd.RedirectStdIO(Command::StdIoChannel::kStdOut,
                     SharedFD::Open("/dev/null", O_WRONLY));
   return cmd;
 }

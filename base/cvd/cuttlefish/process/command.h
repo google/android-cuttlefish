@@ -52,6 +52,12 @@ class Command {
   }
 
  public:
+  enum class StdIoChannel {
+    kStdIn = 0,
+    kStdOut = 1,
+    kStdErr = 2,
+  };
+
   // Constructs a command object from the path to an executable binary and an
   // optional subprocess stopper. When not provided, stopper defaults to sending
   // SIGKILL to the subprocess.
@@ -155,14 +161,12 @@ class Command {
   }
 
   // Redirects the standard IO of the command.
-  Command& RedirectStdIO(Subprocess::StdIOChannel channel,
-                         SharedFD shared_fd) &;
-  Command RedirectStdIO(Subprocess::StdIOChannel channel,
-                        SharedFD shared_fd) &&;
-  Command& RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
-                         Subprocess::StdIOChannel parent_channel) &;
-  Command RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
-                        Subprocess::StdIOChannel parent_channel) &&;
+  Command& RedirectStdIO(StdIoChannel channel, SharedFD shared_fd) &;
+  Command RedirectStdIO(StdIoChannel channel, SharedFD shared_fd) &&;
+  Command& RedirectStdIO(StdIoChannel subprocess_channel,
+                         StdIoChannel parent_channel) &;
+  Command RedirectStdIO(StdIoChannel subprocess_channel,
+                        StdIoChannel parent_channel) &&;
 
   Command& SetWorkingDirectory(const std::string& path) &;
   Command SetWorkingDirectory(const std::string& path) &&;
@@ -196,7 +200,7 @@ class Command {
   std::vector<std::string> command_;
   std::vector<std::function<Result<void>()>> prerequisites_;
   std::map<SharedFD, int> inherited_fds_{};
-  std::map<Subprocess::StdIOChannel, int> redirects_{};
+  std::map<StdIoChannel, int> redirects_{};
   std::vector<std::string> env_{};
   SubprocessStopper subprocess_stopper_;
   SharedFD working_directory_;

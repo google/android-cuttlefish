@@ -31,7 +31,7 @@ namespace {
 Result<Command> CreateLogTeeImpl(
     Command& cmd, const CuttlefishConfig::InstanceSpecific& instance,
     std::string process_name,
-    const std::vector<Subprocess::StdIOChannel>& log_channels) {
+    const std::vector<Command::StdIoChannel>& log_channels) {
   auto name_with_ext = process_name + "_logs.fifo";
   auto logs_path = instance.PerInstanceInternalPath(name_with_ext.c_str());
   auto logs = CF_EXPECT(SharedFD::Fifo(logs_path, 0666));
@@ -53,13 +53,13 @@ Result<Command> LogTeeCreator::CreateFullLogTee(Command& cmd,
                                                 std::string process_name) {
   return CF_EXPECT(CreateLogTeeImpl(
       cmd, instance_, std::move(process_name),
-      {Subprocess::StdIOChannel::kStdOut, Subprocess::StdIOChannel::kStdErr}));
+      {Command::StdIoChannel::kStdOut, Command::StdIoChannel::kStdErr}));
 }
 
-Result<Command> LogTeeCreator::CreateLogTee(
-    Command& cmd, std::string process_name,
-    Subprocess::StdIOChannel log_channel) {
-  CF_EXPECT(log_channel != Subprocess::StdIOChannel::kStdIn,
+Result<Command> LogTeeCreator::CreateLogTee(Command& cmd,
+                                            std::string process_name,
+                                            Command::StdIoChannel log_channel) {
+  CF_EXPECT(log_channel != Command::StdIoChannel::kStdIn,
             "Invalid channel for log tee: stdin");
   return CF_EXPECT(
       CreateLogTeeImpl(cmd, instance_, std::move(process_name), {log_channel}));

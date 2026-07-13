@@ -299,15 +299,13 @@ Result<Command> ConstructCvdNonHelpCommand(
                                             .command_name = bin_file};
   Command non_help_command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   if (output_fd->IsOpen()) {
-    non_help_command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
-                                   output_fd);
-    non_help_command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
-                                   output_fd);
+    non_help_command.RedirectStdIO(Command::StdIoChannel::kStdOut, output_fd);
+    non_help_command.RedirectStdIO(Command::StdIoChannel::kStdErr, output_fd);
   } else {
     // Print everything to stderr, cvd needs to print JSON to stdout which
     // would be unparseable with the subcommand's output.
-    non_help_command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
-                                   Subprocess::StdIOChannel::kStdErr);
+    non_help_command.RedirectStdIO(Command::StdIoChannel::kStdOut,
+                                   Command::StdIoChannel::kStdErr);
   }
   return non_help_command;
 }
@@ -610,11 +608,11 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
                                             .command_name = "run_cvd"};
 
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
-                        Subprocess::StdIOChannel::kStdErr);
+  command.RedirectStdIO(Command::StdIoChannel::kStdOut,
+                        Command::StdIoChannel::kStdErr);
   SharedFD dev_null = SharedFD::Open("/dev/null", O_RDONLY);
   if (dev_null->IsOpen()) {
-    command.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, dev_null);
+    command.RedirectStdIO(Command::StdIoChannel::kStdIn, dev_null);
   } else {
     LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
   }

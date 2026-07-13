@@ -44,12 +44,6 @@ SubprocessStopper KillSubprocessFallback(SubprocessStopper nice_stopper);
 // It's an error to wait twice for the same subprocess.
 class Subprocess {
  public:
-  enum class StdIOChannel {
-    kStdIn = 0,
-    kStdOut = 1,
-    kStdErr = 2,
-  };
-
   Subprocess(pid_t pid, SubprocessStopper stopper = KillSubprocess)
       : pid_(pid), started_(pid > 0), stopper_(stopper) {}
   // The default implementation won't do because we need to reset the pid of the
