@@ -319,6 +319,15 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
         "none";
   }
 
+  // Weaver HAL
+  if (secure_hals.count(SecureHal::kHostWeaverSecure)) {
+    bootconfig_args["androidboot.vendor.apex.com.android.hardware.weaver"] =
+        "com.android.hardware.weaver.cf";
+  } else {
+    bootconfig_args["androidboot.vendor.apex.com.android.hardware.weaver"] =
+        "none";
+  }
+
   bootconfig_args
       ["androidboot.vendor.apex.com.android.hardware.graphics.composer"] =
           instance.hwcomposer() == kHwComposerDrm

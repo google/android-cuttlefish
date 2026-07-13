@@ -40,6 +40,9 @@ Result<MonitorCommand> SecureEnv(
                        snapshot_control_files->confui_server_fd);
   command.AddParameter("-snapshot_control_fd=",
                        snapshot_control_files->secure_env_snapshot_control_fd);
+  // Weaver flags are not understood by older Android images.
+  command.AddParameter(
+      "--undefok=weaver_fd_out,weaver_fd_in,weaver_storage_path");
 
   std::vector<std::string> fifo_paths = {
       instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
@@ -52,6 +55,8 @@ Result<MonitorCommand> SecureEnv(
       instance.PerInstanceInternalPath("keymint_fifo_vm.out"),
       instance.PerInstanceInternalPath("jcardsim_fifo_vm.in"),
       instance.PerInstanceInternalPath("jcardsim_fifo_vm.out"),
+      instance.PerInstanceInternalPath("weaver_fifo_vm.in"),
+      instance.PerInstanceInternalPath("weaver_fifo_vm.out"),
   };
   std::vector<SharedFD> fifos;
   for (const auto& path : fifo_paths) {
@@ -67,6 +72,10 @@ Result<MonitorCommand> SecureEnv(
   command.AddParameter("-keymint_fd_in=", fifos[7]);
   command.AddParameter("-jcardsim_fd_out=", fifos[8]);
   command.AddParameter("-jcardsim_fd_in=", fifos[9]);
+  command.AddParameter("-weaver_fd_out=", fifos[10]);
+  command.AddParameter("-weaver_fd_in=", fifos[11]);
+  command.AddParameter("-weaver_storage_path=",
+                       instance.PerInstanceInternalPath("weaver_storage.json"));
 
   const auto& secure_hals = CF_EXPECT(config.secure_hals());
   bool secure_keymint = secure_hals.count(SecureHal::kHostKeymintSecure) > 0;

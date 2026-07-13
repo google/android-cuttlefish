@@ -614,8 +614,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     add_hvc_sink();
   }
 
-  // /dev/hvc13 is vacant, feel free to use
-  add_hvc_sink();
+  // /dev/hvc13 = Weaver
+  add_hvc(instance.PerInstanceInternalPath("weaver_fifo_vm"));
 
   // /dev/hvc14 = MCU CONTROL
   if (instance.mcu()["control"]["type"].asString() == "serial") {
