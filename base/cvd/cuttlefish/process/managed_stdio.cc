@@ -77,7 +77,7 @@ int RunWithManagedStdio(Command cmd_tmp, const std::string* stdin_str,
                  << cmd.GetShortName() << "\"";
       return -1;
     }
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, pipe_read);
+    cmd.RedirectStdIO(Command::StdIoChannel::kStdIn, pipe_read);
     stdin_thread = std::thread([pipe_write, stdin_str, &io_error]() {
       int written = WriteAll(pipe_write, *stdin_str);
       if (written < 0) {
@@ -93,7 +93,7 @@ int RunWithManagedStdio(Command cmd_tmp, const std::string* stdin_str,
                  << cmd.GetShortName() << "\"";
       return -1;
     }
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, pipe_write);
+    cmd.RedirectStdIO(Command::StdIoChannel::kStdOut, pipe_write);
     stdout_thread = std::thread([pipe_read, stdout_str, &io_error]() {
       int read = ReadAll(pipe_read, stdout_str);
       if (read < 0) {
@@ -109,7 +109,7 @@ int RunWithManagedStdio(Command cmd_tmp, const std::string* stdin_str,
                  << cmd.GetShortName() << "\"";
       return -1;
     }
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, pipe_write);
+    cmd.RedirectStdIO(Command::StdIoChannel::kStdErr, pipe_write);
     stderr_thread = std::thread([pipe_read, stderr_str, &io_error]() {
       int read = ReadAll(pipe_read, stderr_str);
       if (read < 0) {

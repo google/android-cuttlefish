@@ -114,7 +114,7 @@ Subprocess StartRunner(SharedFD runner_stdin,
   for (const auto& arg : argv) {
     run_cmd.AddParameter(arg);
   }
-  run_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, runner_stdin);
+  run_cmd.RedirectStdIO(Command::StdIoChannel::kStdIn, runner_stdin);
   run_cmd.SetWorkingDirectory(instance.instance_dir());
   return run_cmd.Start();
 }

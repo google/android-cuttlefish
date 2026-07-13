@@ -70,7 +70,7 @@ Result<void> RunMkBootFs(const std::string& input_dir,
 
   int success = Command(HostBinaryPath("mkbootfs"))
                     .AddParameter(input_dir)
-                    .RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_fd)
+                    .RedirectStdIO(Command::StdIoChannel::kStdOut, output_fd)
                     .Start()
                     .Wait();
   CF_EXPECT_EQ(success, 0, "`mkbootfs` failed.");
@@ -184,7 +184,7 @@ Result<void> UnpackRamdisk(const std::string& original_ramdisk_path,
   Command(CpioBinary())
       .AddParameter("-idu")
       .SetWorkingDirectory(ramdisk_stage_dir)
-      .RedirectStdIO(Subprocess::StdIOChannel::kStdIn, input)
+      .RedirectStdIO(Command::StdIoChannel::kStdIn, input)
       .Start()
       .Wait();
   return {};

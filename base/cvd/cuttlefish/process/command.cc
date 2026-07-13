@@ -65,9 +65,8 @@ namespace {
 // If a redirected-to file descriptor was already closed, it's possible that
 // some inherited file descriptor duped to this file descriptor and the redirect
 // would override that. This function makes sure that doesn't happen.
-bool validate_redirects(
-    const std::map<Subprocess::StdIOChannel, int>& redirects,
-    const std::map<SharedFD, int>& inherited_fds) {
+bool validate_redirects(const std::map<Command::StdIoChannel, int>& redirects,
+                        const std::map<SharedFD, int>& inherited_fds) {
   // Add the redirected IO channels to a set as integers. This allows converting
   // the enum values into integers instead of the other way around.
   std::set<int> int_redirects;
@@ -85,7 +84,7 @@ bool validate_redirects(
   return true;
 }
 
-void do_redirects(const std::map<Subprocess::StdIOChannel, int>& redirects) {
+void do_redirects(const std::map<Command::StdIoChannel, int>& redirects) {
   for (const auto& entry : redirects) {
     auto std_channel = static_cast<int>(entry.first);
     auto fd = entry.second;
@@ -177,7 +176,7 @@ Command Command::AddParameter(std::string arg) && {
   return std::move(*this);
 }
 
-Command& Command::RedirectStdIO(Subprocess::StdIOChannel channel,
+Command& Command::RedirectStdIO(Command::StdIoChannel channel,
                                 SharedFD shared_fd) & {
   CHECK(shared_fd->IsOpen());
   CHECK(redirects_.count(channel) == 0)
@@ -188,18 +187,18 @@ Command& Command::RedirectStdIO(Subprocess::StdIOChannel channel,
   redirects_[channel] = dup_fd;
   return *this;
 }
-Command Command::RedirectStdIO(Subprocess::StdIOChannel channel,
+Command Command::RedirectStdIO(Command::StdIoChannel channel,
                                SharedFD shared_fd) && {
   RedirectStdIO(channel, shared_fd);
   return std::move(*this);
 }
-Command& Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
-                                Subprocess::StdIOChannel parent_channel) & {
+Command& Command::RedirectStdIO(Command::StdIoChannel subprocess_channel,
+                                Command::StdIoChannel parent_channel) & {
   return RedirectStdIO(subprocess_channel,
                        SharedFD::Dup(static_cast<int>(parent_channel)));
 }
-Command Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
-                               Subprocess::StdIOChannel parent_channel) && {
+Command Command::RedirectStdIO(Command::StdIoChannel subprocess_channel,
+                               Command::StdIoChannel parent_channel) && {
   RedirectStdIO(subprocess_channel, parent_channel);
   return std::move(*this);
 }

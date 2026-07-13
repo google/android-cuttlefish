@@ -417,9 +417,9 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
 
   CF_EXPECT(MaybeConfigureVulkanIcd(config, &gpu_device_cmd.Cmd()));
 
-  gpu_device_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+  gpu_device_cmd.Cmd().RedirectStdIO(Command::StdIoChannel::kStdOut,
                                      gpu_device_logs);
-  gpu_device_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
+  gpu_device_cmd.Cmd().RedirectStdIO(Command::StdIoChannel::kStdErr,
                                      gpu_device_logs);
 
   return VhostUserDeviceCommands{
@@ -1022,18 +1022,16 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
           "Unhandled GPU capture binary: " << instance.gpu_capture_binary());
     }
 
-    gpu_capture_command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+    gpu_capture_command.RedirectStdIO(Command::StdIoChannel::kStdOut,
                                       gpu_capture_logs);
-    gpu_capture_command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
+    gpu_capture_command.RedirectStdIO(Command::StdIoChannel::kStdErr,
                                       gpu_capture_logs);
 
     commands.emplace_back(std::move(gpu_capture_log_tee_cmd));
     commands.emplace_back(std::move(gpu_capture_command));
   } else {
-    crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
-                                   crosvm_logs);
-    crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
-                                   crosvm_logs);
+    crosvm_cmd.Cmd().RedirectStdIO(Command::StdIoChannel::kStdOut, crosvm_logs);
+    crosvm_cmd.Cmd().RedirectStdIO(Command::StdIoChannel::kStdErr, crosvm_logs);
     commands.emplace_back(std::move(crosvm_cmd.Cmd()), true);
   }
 
