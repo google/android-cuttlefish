@@ -155,16 +155,6 @@ class CuttlefishConfig {
   void set_casimir_rf_port(int port);
   int casimir_rf_port() const;
 
-  // Flags for the set of radios that are connected to netsim
-  enum NetsimRadio {
-    Bluetooth = 0b00000001,
-    Wifi = 0b00000010,
-    Uwb = 0b00000100,
-    Nfc = 0b00001000,
-  };
-
-  void netsim_radio_enable(NetsimRadio flag);
-  bool netsim_radio_enabled(NetsimRadio flag) const;
   void set_netsim_instance_num(int netsim_instance_num);
   int netsim_instance_num() const;
   // Netsim has a built-in connector to forward packets to another daemon based
@@ -512,6 +502,7 @@ class CuttlefishConfig {
     // Configuration flags for a minimal device
     bool enable_minimal_mode() const;
     bool enable_modem_simulator() const;
+    bool enable_modem_netsim() const;
     int modem_simulator_instance_number() const;
     int modem_simulator_sim_type() const;
 
@@ -747,6 +738,7 @@ class CuttlefishConfig {
     // Configuration flags for a minimal device
     void set_enable_minimal_mode(bool enable_minimal_mode);
     void set_enable_modem_simulator(bool enable_modem_simulator);
+    void set_enable_modem_netsim(bool enable);
     void set_modem_simulator_instance_number(int instance_numbers);
     void set_modem_simulator_sim_type(int sim_type);
 
