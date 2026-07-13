@@ -16,6 +16,5 @@
 #pragma once
 
 #include "cuttlefish/process/command.h"             // IWYU pragma: export
-#include "cuttlefish/process/execute.h"             // IWYU pragma: export
 #include "cuttlefish/process/subprocess.h"          // IWYU pragma: export
 #include "cuttlefish/process/subprocess_options.h"  // IWYU pragma: export

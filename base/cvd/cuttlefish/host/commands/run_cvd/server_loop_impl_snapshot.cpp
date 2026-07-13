@@ -42,6 +42,7 @@
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 #include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
 
 #ifndef WEXITED

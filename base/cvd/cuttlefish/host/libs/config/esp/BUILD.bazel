@@ -14,7 +14,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:known_paths",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:execute",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -28,7 +28,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config/esp:make_fat_image",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:execute",
         "@abseil-cpp//absl/log",
     ],
 )

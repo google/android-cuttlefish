@@ -19,7 +19,7 @@
 #include "absl/strings/str_cat.h"
 
 #include "allocd/alloc_driver.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

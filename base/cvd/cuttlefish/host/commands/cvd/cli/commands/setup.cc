@@ -25,7 +25,7 @@
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/libs/vm_manager/host_configuration.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

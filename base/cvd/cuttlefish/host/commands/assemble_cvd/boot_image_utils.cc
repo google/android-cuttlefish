@@ -50,6 +50,7 @@
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
