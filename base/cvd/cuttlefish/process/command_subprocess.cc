@@ -35,7 +35,6 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -102,26 +101,6 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
   return ret;
 }
 }  // namespace
-
-std::unordered_map<std::string, std::string> EnvpToMap(char** envp) {
-  std::unordered_map<std::string, std::string> env_map;
-  if (!envp) {
-    return env_map;
-  }
-  for (char** e = envp; *e != nullptr; e++) {
-    std::vector<std::string_view> key_value =
-        absl::StrSplit(*e, absl::MaxSplits('=', 1));
-    if (key_value.size() != 2) {
-      LOG(WARNING) << "Environment var in unknown format: " << *e;
-      continue;
-    }
-    auto [it, inserted] = env_map.emplace(key_value[0], key_value[1]);
-    if (!inserted) {
-      LOG(WARNING) << "Duplicate environment variable " << key_value[0];
-    }
-  }
-  return env_map;
-}
 
 SubprocessOptions& SubprocessOptions::Verbose(bool verbose) & {
   verbose_ = verbose;

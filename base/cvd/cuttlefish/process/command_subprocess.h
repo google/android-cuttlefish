@@ -37,8 +37,6 @@
 
 namespace cuttlefish {
 
-std::unordered_map<std::string, std::string> EnvpToMap(char** envp);
-
 enum class StopperResult {
   kStopFailure, /* Failed to stop the subprocess. */
   kStopCrash,   /* Attempted to stop the subprocess cleanly, but that failed. */
