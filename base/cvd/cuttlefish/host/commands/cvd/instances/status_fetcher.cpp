@@ -35,7 +35,7 @@
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
 
 namespace cuttlefish {

@@ -23,7 +23,7 @@
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
 
 std::string GetControlSocketPath(const cuttlefish::CuttlefishConfig& config) {

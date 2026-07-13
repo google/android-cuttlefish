@@ -33,7 +33,7 @@
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
 #include "cuttlefish/posix/strerror.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
 DEFINE_string(output, "host_bugreport.zip", "Where to write the output");

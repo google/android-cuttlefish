@@ -12,7 +12,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:known_paths",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:command",
         "//cuttlefish/result",
     ],
 )

@@ -21,7 +21,7 @@
 #include "json/value.h"
 
 #include "cuttlefish/host/libs/vm_manager/pci.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

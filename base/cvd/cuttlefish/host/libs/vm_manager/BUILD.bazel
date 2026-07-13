@@ -55,7 +55,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/feature:inject",
         "//cuttlefish/posix:strerror",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:command",
         "//cuttlefish/process:execute",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/process:subprocess_options",

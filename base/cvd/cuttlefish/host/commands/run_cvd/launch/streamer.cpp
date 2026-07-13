@@ -45,7 +45,7 @@
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
 #include "cuttlefish/posix/strerror.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/result/result.h"
 

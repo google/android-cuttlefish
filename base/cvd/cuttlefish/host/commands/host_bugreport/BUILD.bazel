@@ -17,7 +17,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/log_names",
         "//cuttlefish/host/libs/zip:zip_file",
         "//cuttlefish/posix:strerror",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:command",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

@@ -16,7 +16,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web/cas:cas_flags",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "//libbase",

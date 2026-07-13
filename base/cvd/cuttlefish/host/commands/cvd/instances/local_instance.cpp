@@ -36,7 +36,7 @@
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/screen_recording_controls/screen_recording_controls.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
 
 namespace cuttlefish {
