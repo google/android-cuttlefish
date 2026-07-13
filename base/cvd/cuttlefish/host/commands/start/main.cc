@@ -48,8 +48,9 @@
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/posix/symlink.h"
-#include "cuttlefish/process/command_subprocess.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
+#include "cuttlefish/process/subprocess.h"
 
 namespace cuttlefish {
 namespace {

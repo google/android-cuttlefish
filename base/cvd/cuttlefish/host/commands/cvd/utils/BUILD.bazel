@@ -58,6 +58,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/posix:strerror",
         "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:subprocess",
         "//cuttlefish/result",
     ],
 )
