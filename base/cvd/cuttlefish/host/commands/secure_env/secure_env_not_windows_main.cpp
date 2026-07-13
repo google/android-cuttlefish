@@ -24,6 +24,7 @@
 #include <keymaster/soft_keymaster_logger.h>
 #include <tss2/tss2_esys.h>
 #include <tss2/tss2_rc.h>
+
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 
@@ -52,6 +53,7 @@
 #include "cuttlefish/host/commands/secure_env/tpm_keymaster_context.h"
 #include "cuttlefish/host/commands/secure_env/tpm_keymaster_enforcement.h"
 #include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"
+#include "cuttlefish/host/commands/secure_env/weaver/weaver_ta.h"
 #include "cuttlefish/host/commands/secure_env/worker_thread_loop_body.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/config/logging.h"
@@ -68,6 +70,9 @@ DEFINE_int32(gatekeeper_fd_in, -1, "A pipe for gatekeeper communication");
 DEFINE_int32(gatekeeper_fd_out, -1, "A pipe for gatekeeper communication");
 DEFINE_int32(oemlock_fd_in, -1, "A pipe for oemlock communication");
 DEFINE_int32(oemlock_fd_out, -1, "A pipe for oemlock communication");
+DEFINE_int32(weaver_fd_in, -1, "A pipe for weaver communication");
+DEFINE_int32(weaver_fd_out, -1, "A pipe for weaver communication");
+DEFINE_string(weaver_storage_path, "", "Path to weaver storage file");
 DEFINE_int32(kernel_events_fd, -1,
              "A pipe for monitoring events based on "
              "messages written to the kernel log. This "
@@ -287,6 +292,8 @@ Result<void> SecureEnvMain(int argc, char** argv) {
       CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0));
   auto [oemlock_snapshot_socket1, oemlock_snapshot_socket2] =
       CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0));
+  auto [weaver_snapshot_socket1, weaver_snapshot_socket2] =
+      CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0));
   SharedFD channel_to_run_cvd = DupFdFlag(FLAGS_snapshot_control_fd);
 
   SnapshotCommandHandler suspend_resume_handler(
@@ -296,6 +303,7 @@ Result<void> SecureEnvMain(int argc, char** argv) {
           .keymaster = std::move(keymaster_snapshot_socket1),
           .gatekeeper = std::move(gatekeeper_snapshot_socket1),
           .oemlock = std::move(oemlock_snapshot_socket1),
+          .weaver = std::move(weaver_snapshot_socket1),
       });
 
   // The guest image may have either the C++ implementation of
@@ -422,6 +430,18 @@ Result<void> SecureEnvMain(int argc, char** argv) {
 
   auto kernel_events_fd = DupFdFlag(FLAGS_kernel_events_fd);
   threads.emplace_back(StartKernelEventMonitor(kernel_events_fd, oemlock_lock));
+
+  VLOG(0) << "starting Weaver TA implementation in a thread";
+  int weaver_in = FLAGS_weaver_fd_in;
+  int weaver_out = FLAGS_weaver_fd_out;
+  threads.emplace_back(
+      [weaver_in, weaver_out,
+       weaver_snapshot_socket2 = std::move(weaver_snapshot_socket2)]() {
+        int snapshot_socket_fd =
+            std::move(weaver_snapshot_socket2)->UNMANAGED_Dup();
+        weaver_ta_main(weaver_in, weaver_out, FLAGS_weaver_storage_path.c_str(),
+                       snapshot_socket_fd);
+      });
 
   for (auto& t : threads) {
     t.join();

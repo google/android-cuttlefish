@@ -148,6 +148,8 @@ Result<void> SecureEnvMain(int argc, char** argv) {
       CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0));
   auto [oemlock_snapshot_socket1, oemlock_snapshot_socket2] =
       CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0));
+  auto [weaver_snapshot_socket1, weaver_snapshot_socket2] =
+      CF_EXPECT(SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0));
   SharedFD channel_to_run_cvd = DupFdFlag(FLAGS_snapshot_control_fd);
 
   SnapshotCommandHandler suspend_resume_handler(
@@ -157,6 +159,7 @@ Result<void> SecureEnvMain(int argc, char** argv) {
           .keymaster = std::move(keymaster_snapshot_socket1),
           .gatekeeper = std::move(gatekeeper_snapshot_socket1),
           .oemlock = std::move(oemlock_snapshot_socket1),
+          .weaver = std::move(weaver_snapshot_socket1),
       });
 
   std::vector<std::thread> threads;

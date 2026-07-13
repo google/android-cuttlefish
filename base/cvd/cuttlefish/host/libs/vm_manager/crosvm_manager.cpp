@@ -879,8 +879,10 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.AddHvcSink();
   }
 
-  // /dev/hvc13 is vacant, feel free to use
-  crosvm_cmd.AddHvcSink();
+  // /dev/hvc13 = Weaver
+  crosvm_cmd.AddHvcReadWrite(
+      instance.PerInstanceInternalPath("weaver_fifo_vm.out"),
+      instance.PerInstanceInternalPath("weaver_fifo_vm.in"));
 
   // /dev/hvc14 = MCU CONTROL
   if (instance.mcu()["control"]["type"].asString() == "serial") {

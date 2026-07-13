@@ -59,6 +59,7 @@ class SnapshotCommandHandler {
     SharedFD keymaster;
     SharedFD gatekeeper;
     SharedFD oemlock;
+    SharedFD weaver;
   };
 
   ~SnapshotCommandHandler();
