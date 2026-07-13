@@ -142,6 +142,8 @@ DEFINE_vec(netsim_uwb, fmt::format("{}", CF_DEFAULTS_NETSIM_UWB),
            "[Experimental] Connect Uwb radio to netsim.");
 DEFINE_vec(netsim_nfc, fmt::format("{}", CF_DEFAULTS_NETSIM_NFC),
            "[Experimental] Connect Nfc radio to netsim.");
+DEFINE_vec(netsim_modem, fmt::format("{}", CF_DEFAULTS_NETSIM_MODEM),
+           "[Experimental] Connect Modem radio to netsim.");
 DEFINE_string(netsim_args, CF_DEFAULTS_NETSIM_ARGS,
               "Space-separated list of netsim args.");
 
