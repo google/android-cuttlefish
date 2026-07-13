@@ -53,6 +53,7 @@ message EnvironmentSpecification {
   optional bool netsim_bt = 5;
   optional bool netsim_uwb = 6;
   repeated string netsim_args = 7;
+  optional bool netsim_modem = 8;
 }
 
 // TODO: chadreynolds - when we can make breaking changes and update, use this
@@ -65,6 +66,7 @@ message EnvironmentOptions {
   optional bool netsim_bt = 4;
   optional bool netsim_uwb = 5;
   repeated string netsim_args = 6;
+  optional bool netsim_modem = 7;
 }
 
 message Common {

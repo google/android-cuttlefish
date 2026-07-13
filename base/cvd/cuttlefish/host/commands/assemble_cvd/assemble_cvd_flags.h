@@ -69,6 +69,7 @@ DECLARE_vec(netsim);
 DECLARE_vec(netsim_bt);
 DECLARE_vec(netsim_uwb);
 DECLARE_vec(netsim_nfc);
+DECLARE_vec(netsim_modem);
 DECLARE_string(netsim_args);
 
 DECLARE_bool(enable_automotive_proxy);
