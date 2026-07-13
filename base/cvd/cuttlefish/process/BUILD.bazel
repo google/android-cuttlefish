@@ -31,7 +31,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/process:command",
         "//cuttlefish/process:subprocess",
-        "//cuttlefish/process:subprocess_options",
     ],
 )
 
@@ -66,7 +65,9 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/process:command_subprocess",
+        "//cuttlefish/process:command",
+        "//cuttlefish/process:subprocess",
+        "//cuttlefish/process:subprocess_options",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

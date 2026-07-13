@@ -58,6 +58,7 @@ cf_cc_library(
         "//cuttlefish/process:command_subprocess",
         "//cuttlefish/process:execute",
         "//cuttlefish/process:managed_stdio",
+        "//cuttlefish/process:subprocess_options",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
