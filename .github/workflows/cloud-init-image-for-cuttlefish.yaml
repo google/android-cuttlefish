@@ -5,7 +5,7 @@ on:
     paths:
       - 'cloud-init-image-for-cuttlefish/**'
   push:
-    branchs:
+    branches:
       - '**'
 
 permissions:
