@@ -30,6 +30,7 @@ cf_cc_library(
     name = "alloc_utils",
     srcs = ["alloc_utils.cpp"],
     hdrs = ["alloc_utils.h"],
+    depend_on_what_you_use_enabled = False,
     deps = select({
         ":netlink": [":alloc_netlink"],
         "//conditions:default": [":alloc_iproute2"],
@@ -52,6 +53,7 @@ cf_cc_library(
     name = "alloc_iproute2",
     srcs = ["alloc_iproute2.cpp"],
     hdrs = ["alloc_driver.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/process:command_subprocess",
         "//cuttlefish/result",
@@ -65,6 +67,7 @@ cf_cc_library(
     name = "alloc_netlink",
     srcs = ["alloc_netlink.cpp"],
     hdrs = ["alloc_driver.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//allocd/net:netlink",
         "//cuttlefish/common/libs/fs",

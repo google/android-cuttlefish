@@ -7,6 +7,7 @@ package(
 cf_cc_library(
     name = "audio_frame_buffer",
     hdrs = ["audio_frame_buffer.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "@libwebrtc",
     ],
@@ -24,6 +25,7 @@ cf_cc_library(
     name = "audio_track_source_impl",
     srcs = ["audio_track_source_impl.cpp"],
     hdrs = ["audio_track_source_impl.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":audio_sink",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
@@ -34,6 +36,7 @@ cf_cc_library(
 cf_cc_library(
     name = "camera_controller",
     hdrs = ["camera_controller.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "@jsoncpp",
@@ -44,6 +47,7 @@ cf_cc_library(
     name = "camera_streamer",
     srcs = ["camera_streamer.cpp"],
     hdrs = ["camera_streamer.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":camera_controller",
         "//cuttlefish/common/libs/utils:json",
@@ -61,6 +65,7 @@ cf_cc_library(
     srcs = ["client_handler.cpp"],
     hdrs = ["client_handler.h"],
     clang_format_enabled = False,
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":connection_observer",
         ":data_channels",
@@ -78,6 +83,7 @@ cf_cc_library(
 cf_cc_library(
     name = "connection_observer",
     hdrs = ["connection_observer.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":camera_controller",
         ":lights_observer",
@@ -92,6 +98,7 @@ cf_cc_library(
     srcs = ["data_channels.cpp"],
     hdrs = ["data_channels.h"],
     clang_format_enabled = False,
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":connection_observer",
         ":gamepad",
@@ -111,6 +118,7 @@ cf_cc_library(
     name = "gamepad",
     srcs = ["gamepad.cpp"],
     hdrs = ["gamepad.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//libbase",
     ],
@@ -120,6 +128,7 @@ cf_cc_library(
     name = "keyboard",
     srcs = ["keyboard.cpp"],
     hdrs = ["keyboard.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//libbase",
     ],
@@ -129,6 +138,7 @@ cf_cc_library(
     name = "lights_observer",
     srcs = ["lights_observer.cpp"],
     hdrs = ["lights_observer.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:vsock_connection",
         "//libbase",
@@ -141,6 +151,7 @@ cf_cc_library(
     name = "local_recorder",
     srcs = ["local_recorder.cpp"],
     hdrs = ["local_recorder.h"],
+    depend_on_what_you_use_enabled = False,
     linkopts = [
         "-lopus",
     ],
@@ -160,6 +171,7 @@ cf_cc_library(
     name = "recording_manager",
     srcs = ["recording_manager.cpp"],
     hdrs = ["recording_manager.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":local_recorder",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -174,6 +186,7 @@ cf_cc_library(
     name = "server_connection",
     srcs = ["server_connection.cpp"],
     hdrs = ["server_connection.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:json",
@@ -192,6 +205,7 @@ cf_cc_library(
     srcs = ["streamer.cpp"],
     hdrs = ["streamer.h"],
     clang_format_enabled = False,
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":audio_sink",
         ":audio_track_source_impl",

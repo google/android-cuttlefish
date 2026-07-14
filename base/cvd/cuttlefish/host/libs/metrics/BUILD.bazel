@@ -143,6 +143,7 @@ cf_cc_library(
     name = "metrics",
     srcs = ["metrics_receiver.cc"],
     hdrs = ["metrics_receiver.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":metrics_headers",
         "//cuttlefish/common/libs/fs",
@@ -161,6 +162,7 @@ cf_cc_library(
     name = "metrics_conversion",
     srcs = ["metrics_conversion.cc"],
     hdrs = ["metrics_conversion.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/host/commands/cvd/fetch:builds",
@@ -246,6 +248,7 @@ cf_cc_library(
     name = "metrics_writer",
     srcs = ["metrics_writer.cc"],
     hdrs = ["metrics_writer.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",

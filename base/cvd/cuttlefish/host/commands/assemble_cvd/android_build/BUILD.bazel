@@ -56,6 +56,7 @@ cf_cc_library(
     name = "android_product_dir",
     srcs = ["android_product_dir.cc"],
     hdrs = ["android_product_dir.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
@@ -117,6 +118,7 @@ cf_cc_library(
     name = "fetched_android_build",
     srcs = ["fetched_android_build.cc"],
     hdrs = ["fetched_android_build.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
@@ -150,6 +152,7 @@ cf_cc_library(
     name = "identify_build",
     srcs = ["identify_build.cc"],
     hdrs = ["identify_build.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
@@ -173,6 +176,7 @@ cf_cc_library(
     name = "img_zip",
     srcs = ["img_zip.cc"],
     hdrs = ["img_zip.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
@@ -224,6 +228,7 @@ cf_cc_library(
     name = "super_image",
     srcs = ["super_image.cc"],
     hdrs = ["super_image.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
@@ -244,6 +249,7 @@ cf_cc_library(
     name = "target_files",
     srcs = ["target_files.cc"],
     hdrs = ["target_files.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/host/commands/assemble_cvd/android_build",

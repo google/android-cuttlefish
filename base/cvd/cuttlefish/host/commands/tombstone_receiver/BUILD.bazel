@@ -7,6 +7,7 @@ package(
 cf_cc_binary(
     name = "tombstone_receiver",
     srcs = ["main.cpp"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/flag_parser",

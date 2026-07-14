@@ -9,6 +9,7 @@ cf_cc_binary(
     srcs = [
         "main.cc",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":libcvd_send_sms",
         "//cuttlefish/common/libs/fs",
@@ -28,6 +29,7 @@ cf_cc_library(
         "pdu_format_builder.h",
         "sms_sender.h",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
@@ -44,6 +46,7 @@ cf_cc_test(
         "unittest/pdu_format_builder_test.cc",
         "unittest/sms_sender_test.cc",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":libcvd_send_sms",
         "//cuttlefish/common/libs/fs",

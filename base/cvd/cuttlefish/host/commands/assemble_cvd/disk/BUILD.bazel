@@ -21,6 +21,7 @@ cf_cc_library(
     name = "android_composite_disk_config",
     srcs = ["android_composite_disk_config.cc"],
     hdrs = ["android_composite_disk_config.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
@@ -41,6 +42,7 @@ cf_cc_library(
     name = "ap_composite_disk",
     srcs = ["ap_composite_disk.cc"],
     hdrs = ["ap_composite_disk.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
@@ -67,6 +69,7 @@ cf_cc_library(
     name = "chromeos_composite_disk",
     srcs = ["chromeos_composite_disk.cc"],
     hdrs = ["chromeos_composite_disk.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/disk:chromeos_state",
@@ -168,6 +171,7 @@ cf_cc_library(
     name = "generate_persistent_vbmeta",
     srcs = ["generate_persistent_vbmeta.cpp"],
     hdrs = ["generate_persistent_vbmeta.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:boot_config",
@@ -207,6 +211,7 @@ cf_cc_library(
     name = "initialize_instance_composite_disk",
     srcs = ["initialize_instance_composite_disk.cc"],
     hdrs = ["initialize_instance_composite_disk.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
@@ -271,6 +276,7 @@ cf_cc_library(
     name = "misc_image",
     srcs = ["misc_image.cc"],
     hdrs = ["misc_image.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
@@ -287,6 +293,7 @@ cf_cc_library(
     name = "os_composite_disk",
     srcs = ["os_composite_disk.cc"],
     hdrs = ["os_composite_disk.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",

@@ -25,6 +25,7 @@ cf_cc_library(
     name = "config_flag",
     srcs = ["config_flag.cpp"],
     hdrs = ["config_flag.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:files",
@@ -66,6 +67,7 @@ cf_cc_library(
     name = "config_utils",
     srcs = ["config_utils.cpp"],
     hdrs = ["config_utils.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
@@ -111,6 +113,7 @@ cf_cc_library(
         "cuttlefish_config_instance.cpp",
     ],
     hdrs = ["cuttlefish_config.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:device_type",
         "//cuttlefish/common/libs/utils:environment",
@@ -147,6 +150,7 @@ cf_cc_library(
     name = "data_image",
     srcs = ["data_image.cpp"],
     hdrs = ["data_image.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -182,6 +186,7 @@ cf_cc_library(
     name = "display",
     srcs = ["display.cpp"],
     hdrs = ["display.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/flag_parser",
@@ -197,6 +202,7 @@ cf_cc_library(
     name = "esp",
     srcs = ["esp.cpp"],
     hdrs = ["esp.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -223,6 +229,7 @@ cf_cc_library(
     name = "build_archive",
     srcs = ["build_archive.cc"],
     hdrs = ["build_archive.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:fetcher_config",
@@ -264,6 +271,7 @@ cf_cc_library(
     name = "fetcher_configs",
     srcs = ["fetcher_configs.cc"],
     hdrs = ["fetcher_configs.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:fetcher_config",
@@ -331,6 +339,7 @@ cf_cc_library(
     name = "host_tools_version",
     srcs = ["host_tools_version.cpp"],
     hdrs = ["host_tools_version.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:config_utils",
@@ -344,6 +353,7 @@ cf_cc_library(
     name = "instance_nums",
     srcs = ["instance_nums.cpp"],
     hdrs = ["instance_nums.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/flag_parser",
@@ -391,6 +401,7 @@ cf_cc_library(
     name = "logging",
     srcs = ["logging.cpp"],
     hdrs = ["logging.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -417,6 +428,7 @@ cf_cc_library(
     name = "openwrt_args",
     srcs = ["openwrt_args.cpp"],
     hdrs = ["openwrt_args.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvdalloc:interface",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -429,6 +441,7 @@ cf_cc_library(
     name = "secure_hals",
     srcs = ["secure_hals.cpp"],
     hdrs = ["secure_hals.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/result",
         "//libbase",
@@ -441,6 +454,7 @@ cf_cc_library(
     name = "touchpad",
     srcs = ["touchpad.cpp"],
     hdrs = ["touchpad.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/flag_parser",
@@ -465,6 +479,7 @@ cf_cc_library(
     name = "media",
     srcs = ["media.cpp"],
     hdrs = ["media.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/flag_parser",

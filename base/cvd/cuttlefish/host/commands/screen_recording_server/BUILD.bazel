@@ -33,6 +33,7 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":libscreen_recording_server",
         "//cuttlefish/common/libs/fs",

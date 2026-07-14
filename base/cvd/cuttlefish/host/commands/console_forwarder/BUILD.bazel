@@ -11,6 +11,7 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",

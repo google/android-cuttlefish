@@ -8,6 +8,7 @@ cf_cc_library(
     name = "audio_device",
     srcs = ["audio_device.cpp"],
     hdrs = ["audio_device.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
         "//libbase",
@@ -24,6 +25,7 @@ cf_cc_library(
     name = "connection_controller",
     srcs = ["connection_controller.cpp"],
     hdrs = ["connection_controller.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/frontend/webrtc/libcommon:peer_signaling_handler",
@@ -64,6 +66,7 @@ cf_cc_library(
     name = "utils",
     srcs = ["utils.cpp"],
     hdrs = ["utils.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/result",

@@ -8,6 +8,7 @@ cf_cc_library(
     name = "archive",
     srcs = ["archive.cpp"],
     hdrs = ["archive.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/process:command_subprocess",
         "//cuttlefish/process:managed_stdio",
@@ -72,6 +73,7 @@ cf_cc_library(
     name = "disk_usage",
     srcs = ["disk_usage.cpp"],
     hdrs = ["disk_usage.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/process:command_subprocess",
         "//cuttlefish/process:managed_stdio",
@@ -91,6 +93,7 @@ cf_cc_library(
         "environment.h",
         "known_paths.h",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//libbase",
     ],
@@ -109,6 +112,7 @@ cf_cc_library(
     name = "files",
     srcs = ["files.cpp"],
     hdrs = ["files.h"],
+    depend_on_what_you_use_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",  # SEEK_DATA
     ],
@@ -156,6 +160,7 @@ cf_cc_library(
     name = "gflags_xml_parser",
     srcs = ["gflags_xml_parser.cpp"],
     hdrs = ["gflags_xml_parser.h"],
+    depend_on_what_you_use_enabled = False,
     features = ["-layering_check"],
     deps = [
         "//cuttlefish/result",
@@ -176,6 +181,7 @@ cf_cc_library(
     name = "host_info",
     srcs = ["host_info.cpp"],
     hdrs = ["host_info.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/base:no_destructor",
@@ -194,6 +200,7 @@ cf_cc_library(
     name = "inotify",
     srcs = ["inotify.cpp"],
     hdrs = ["inotify.h"],
+    depend_on_what_you_use_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],
@@ -227,6 +234,7 @@ cf_cc_library(
     name = "network",
     srcs = ["network.cpp"],
     hdrs = ["network.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/log",
@@ -260,6 +268,7 @@ cf_cc_library(
 cf_cc_test(
     name = "proc_file_utils_test",
     srcs = ["proc_file_utils_test.cpp"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:proc_file_utils",
@@ -291,6 +300,7 @@ cf_cc_library(
     name = "semver",
     srcs = ["semver.cpp"],
     hdrs = ["semver.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/result",
         "//cuttlefish/result:expect",
@@ -301,6 +311,7 @@ cf_cc_library(
 cf_cc_test(
     name = "semver_test",
     srcs = ["semver_test.cpp"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:semver",
         "//cuttlefish/result:result_matchers",
@@ -312,6 +323,7 @@ cf_cc_library(
     name = "signals",
     srcs = ["signals.cpp"],
     hdrs = ["signals.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/log:check",
@@ -327,6 +339,7 @@ cf_cc_library(
     name = "socket2socket_proxy",
     srcs = ["socket2socket_proxy.cpp"],
     hdrs = ["socket2socket_proxy.h"],
+    depend_on_what_you_use_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],
@@ -341,6 +354,7 @@ cf_cc_library(
     name = "tee_logging",
     srcs = ["tee_logging.cpp"],
     hdrs = ["tee_logging.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
@@ -381,6 +395,7 @@ cf_cc_library(
     name = "unix_sockets",
     srcs = ["unix_sockets.cpp"],
     hdrs = ["unix_sockets.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
@@ -393,6 +408,7 @@ cf_cc_library(
 cf_cc_test(
     name = "unix_sockets_test",
     srcs = ["unix_sockets_test.cpp"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:unix_sockets",
@@ -418,6 +434,7 @@ cf_cc_library(
     srcs = ["vsock_connection.cpp"],
     hdrs = ["vsock_connection.h"],
     clang_tidy_enabled = False,  # TODO: b/403278821 - fix warnings and re-enable after migration work
+    depend_on_what_you_use_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],

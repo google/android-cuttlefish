@@ -7,6 +7,7 @@ package(
 cf_cc_library(
     name = "auto_cmd",
     hdrs = ["auto_cmd.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:type_name",
         "//cuttlefish/host/libs/feature",
@@ -115,6 +116,7 @@ cf_cc_library(
     name = "cvdalloc",
     srcs = ["cvdalloc.cpp"],
     hdrs = ["cvdalloc.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//allocd:alloc_utils",
         "//cuttlefish/common/libs/fs",
@@ -175,6 +177,7 @@ cf_cc_library(
     name = "input_connections_provider",
     srcs = ["input_connections_provider.cc"],
     hdrs = ["input_connections_provider.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -197,6 +200,7 @@ cf_cc_library(
     name = "kernel_log_monitor",
     srcs = ["kernel_log_monitor.cpp"],
     hdrs = ["kernel_log_monitor.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/run_cvd:reporting",
         "//cuttlefish/host/libs/config:config_instance_derived",
@@ -247,6 +251,7 @@ cf_cc_library(
     name = "mcu",
     srcs = ["mcu.cpp"],
     hdrs = ["mcu.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:wait_for_file",
@@ -280,6 +285,7 @@ cf_cc_library(
     name = "modem",
     srcs = ["modem.cpp"],
     hdrs = ["modem.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -328,6 +334,7 @@ cf_cc_library(
     name = "open_wrt",
     srcs = ["open_wrt.cpp"],
     hdrs = ["open_wrt.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:json",
@@ -411,6 +418,7 @@ cf_cc_library(
     name = "secure_env",
     srcs = ["secure_env.cpp"],
     hdrs = ["secure_env.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -468,6 +476,7 @@ cf_cc_library(
     name = "streamer",
     srcs = ["streamer.cpp"],
     hdrs = ["streamer.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -498,6 +507,7 @@ cf_cc_library(
     name = "ti50_emulator",
     srcs = ["ti50_emulator.cpp"],
     hdrs = ["ti50_emulator.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:socket2socket_proxy",
@@ -519,6 +529,7 @@ cf_cc_library(
     name = "tombstone_receiver",
     srcs = ["tombstone_receiver.cpp"],
     hdrs = ["tombstone_receiver.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -567,6 +578,7 @@ cf_cc_library(
     name = "vhost_device_vsock",
     srcs = ["vhost_device_vsock.cpp"],
     hdrs = ["vhost_device_vsock.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:wait_for_unix_socket",
@@ -589,6 +601,7 @@ cf_cc_library(
     name = "vhost_user_media_devices",
     srcs = ["vhost_user_media_devices.cpp"],
     hdrs = ["vhost_user_media_devices.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -611,6 +624,7 @@ cf_cc_library(
     name = "webrtc_controller",
     srcs = ["webrtc_controller.cpp"],
     hdrs = ["webrtc_controller.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_command_channel",

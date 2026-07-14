@@ -8,6 +8,7 @@ cf_cc_library(
     name = "error_type",
     srcs = ["error_type.cc"],
     hdrs = ["error_type.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/ansi_codes",
         "//cuttlefish/ansi_codes:should_color",
@@ -21,6 +22,7 @@ cf_cc_library(
 cf_cc_library(
     name = "expect",
     hdrs = ["expect.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/result:error_type",
         "//cuttlefish/result:result_type",
@@ -42,6 +44,7 @@ cf_cc_library(
 cf_cc_test(
     name = "result_test",
     srcs = ["result_test.cpp"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
@@ -52,6 +55,7 @@ cf_cc_test(
 cf_cc_library(
     name = "result_type",
     hdrs = ["result_type.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/result:error_type",
         "//libbase",

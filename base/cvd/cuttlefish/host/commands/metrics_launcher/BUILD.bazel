@@ -9,6 +9,7 @@ cf_cc_binary(
     srcs = [
         "metrics_launcher.cpp",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/metrics",

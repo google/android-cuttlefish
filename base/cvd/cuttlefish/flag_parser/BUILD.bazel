@@ -14,6 +14,7 @@ cf_cc_library(
         "flag.h",
         "gflags_compat.h",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/result",
@@ -39,6 +40,7 @@ cf_cc_test(
 cf_cc_test(
     name = "gflags_compat_test",
     srcs = ["gflags_compat_test.cpp"],
+    depend_on_what_you_use_enabled = False,
     # `layering_check` conflicts with the combination of the clang prebuilt and
     # the cmake build rules used for @libxml2.
     features = ["-layering_check"],
@@ -54,6 +56,7 @@ cf_cc_library(
     name = "shared_fd_flag",
     srcs = ["shared_fd_flag.cpp"],
     hdrs = ["shared_fd_flag.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":flag_parser",
         "//cuttlefish/common/libs/fs",

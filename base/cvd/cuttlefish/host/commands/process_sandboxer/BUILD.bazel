@@ -117,6 +117,7 @@ cf_cc_library(
 cf_cc_binary(
     name = "process_sandboxer",
     srcs = ["main.cpp"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:logs",
         "//cuttlefish/host/commands/process_sandboxer:pidfd",

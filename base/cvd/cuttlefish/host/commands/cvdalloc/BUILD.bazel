@@ -32,6 +32,7 @@ cf_cc_library(
     name = "privilege",
     srcs = ["privilege.cpp"],
     hdrs = ["privilege.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
@@ -43,6 +44,7 @@ cf_cc_library(
 cf_cc_binary(
     name = "cvdalloc",
     srcs = ["cvdalloc.cpp"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":interface",
         ":privilege",

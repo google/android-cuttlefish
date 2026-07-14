@@ -22,6 +22,7 @@ cf_cc_library(
     name = "android_efi_loader",
     srcs = ["android_efi_loader.cc"],
     hdrs = ["android_efi_loader.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
@@ -38,6 +39,7 @@ cf_cc_library(
     name = "blank_data_image_mb",
     srcs = ["blank_data_image_mb.cc"],
     hdrs = ["blank_data_image_mb.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:guest_config",
@@ -53,6 +55,7 @@ cf_cc_library(
     name = "boot_image",
     srcs = ["boot_image.cc"],
     hdrs = ["boot_image.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/android_build:android_builds",
@@ -68,6 +71,7 @@ cf_cc_library(
     name = "bootloader",
     srcs = ["bootloader.cc"],
     hdrs = ["bootloader.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
@@ -88,6 +92,7 @@ cf_cc_library(
     name = "build_super_image",
     srcs = ["build_super_image.cc"],
     hdrs = ["build_super_image.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
@@ -102,6 +107,7 @@ cf_cc_library(
     name = "cpus",
     srcs = ["cpus.cc"],
     hdrs = ["cpus.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
@@ -116,6 +122,7 @@ cf_cc_library(
     name = "daemon",
     srcs = ["daemon.cc"],
     hdrs = ["daemon.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
@@ -144,6 +151,7 @@ cf_cc_library(
     name = "display_proto",
     srcs = ["display_proto.cc"],
     hdrs = ["display_proto.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
@@ -171,6 +179,7 @@ cf_cc_library(
     name = "flag_base",
     srcs = ["flag_base.cc"],
     hdrs = ["flag_base.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/result",
         "//libbase",
@@ -192,6 +201,7 @@ cf_cc_library(
     name = "from_gflags",
     srcs = ["from_gflags.cc"],
     hdrs = ["from_gflags.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/host/commands/assemble_cvd/flags:parser",
@@ -234,6 +244,7 @@ cf_cc_library(
     name = "initramfs_path",
     srcs = ["initramfs_path.cc"],
     hdrs = ["initramfs_path.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:fetcher_config",
@@ -249,6 +260,7 @@ cf_cc_library(
     name = "kernel_path",
     srcs = ["kernel_path.cc"],
     hdrs = ["kernel_path.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:fetcher_config",
@@ -306,6 +318,7 @@ cf_cc_library(
     name = "super_image",
     srcs = ["super_image.cc"],
     hdrs = ["super_image.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
@@ -319,6 +332,7 @@ cf_cc_library(
     name = "system_image_dir",
     srcs = ["system_image_dir.cc"],
     hdrs = ["system_image_dir.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
@@ -333,6 +347,7 @@ cf_cc_library(
     name = "use_cvdalloc",
     srcs = ["use_cvdalloc.cc"],
     hdrs = ["use_cvdalloc.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
@@ -347,6 +362,7 @@ cf_cc_library(
     name = "vendor_boot_image",
     srcs = ["vendor_boot_image.cc"],
     hdrs = ["vendor_boot_image.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
@@ -360,6 +376,7 @@ cf_cc_library(
     name = "vm_manager",
     srcs = ["vm_manager.cc"],
     hdrs = ["vm_manager.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:guest_config",

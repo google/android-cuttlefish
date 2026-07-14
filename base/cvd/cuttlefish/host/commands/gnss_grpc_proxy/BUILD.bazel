@@ -10,6 +10,7 @@ package(
 cf_cc_binary(
     name = "gnss_grpc_proxy",
     srcs = ["gnss_grpc_proxy.cpp"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":libcvd_gnss_grpc_proxy",
         "//cuttlefish/common/libs/fs",
