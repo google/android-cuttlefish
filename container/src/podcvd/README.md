@@ -37,8 +37,8 @@ execute `cvd help` or `cvd create` after installing `cuttlefish-base`.
 
 ### Skill for agents
 
-Podcvd skill for AI agents is located under `container/src/podcvd/skill`
-directory.
+Podcvd skill for AI agents is located under `skills/podcvd` directory of this
+repository.
 
 ## Development guide
 
