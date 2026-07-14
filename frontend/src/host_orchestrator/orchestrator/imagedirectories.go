@@ -16,7 +16,6 @@ package orchestrator
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -69,7 +68,7 @@ func (m *ImageDirectoriesManagerImpl) ListImageDirectories() ([]string, error) {
 	} else if !exists {
 		return imageDirs, nil
 	}
-	entries, err := ioutil.ReadDir(m.RootDir)
+	entries, err := os.ReadDir(m.RootDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory: %w", err)
 	}
@@ -94,7 +93,7 @@ func (m *ImageDirectoriesManagerImpl) UpdateImageDirectory(imageDirName, dir str
 	} else if !exists {
 		return operator.NewNotFoundError(fmt.Sprintf("image directory(dir:%q) not found", imageDirName), nil)
 	}
-	entries, err := ioutil.ReadDir(dir)
+	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return fmt.Errorf("failed to read directory: %w", err)
 	}

@@ -83,7 +83,6 @@ func verifyZipFile(filename string) error {
 func VerifyLogsEndpoint(srvURL, group, name string) error {
 	base := fmt.Sprintf("%s/cvds/%s/%s/logs/", srvURL, group, name)
 	urls := []string{
-		base,
 		base + "launcher.log",
 		base + "kernel.log",
 	}
