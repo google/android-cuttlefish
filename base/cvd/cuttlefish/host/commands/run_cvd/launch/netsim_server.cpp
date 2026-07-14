@@ -26,6 +26,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -94,8 +95,9 @@ class Device {
 class NetsimServer : public CommandSource {
  public:
   INJECT(NetsimServer(const CuttlefishConfig& config,
-                      const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+                      const CuttlefishConfig::InstanceSpecific& instance,
+                      GrpcSocketCreator& grpc_socket))
+      : config_(config), instance_(instance), grpc_socket_(grpc_socket) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
@@ -106,6 +108,11 @@ class NetsimServer : public CommandSource {
     devices_.clear();
     // Port configuration.
     netsimd.AddParameter("--hci_port=", config_.rootcanal_hci_port());
+
+    if (config_.netsim_radio_enabled(CuttlefishConfig::NetsimRadio::Nfc)) {
+      netsimd.AddParameter("--grpc_uds_path=", grpc_socket_.CreateGrpcSocket(
+                                                   "NetsimControlServer"));
+    }
 
     // When no connector is requested, add the instance number
     if (config_.netsim_connector_instance_num() ==
@@ -229,12 +236,14 @@ class NetsimServer : public CommandSource {
   std::vector<Device> devices_;
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific instance_;
+  GrpcSocketCreator& grpc_socket_;
 };
 
 }  // namespace
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 GrpcSocketCreator>>
 NetsimServerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, NetsimServer>()
