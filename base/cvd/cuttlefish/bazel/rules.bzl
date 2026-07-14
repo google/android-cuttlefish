@@ -17,7 +17,7 @@ load("@cc_compatibility_proxy//:proxy.bzl", "cc_binary", "cc_library", "cc_test"
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_library.bzl", "sh_library")
 load("//:build_variables.bzl", BUILD_VAR_COPTS = "COPTS", BUILD_VAR_LINKOPTS = "LINKOPTS")
-load("//tools/lint:linters.bzl", "buildifier_test", "clang_tidy_test", "shellcheck_test")
+load("//tools/lint:linters.bzl", "buildifier_test", "clang_tidy_test", "dwyu_rule", "shellcheck_test")
 
 visibility(["//..."])
 
@@ -47,7 +47,7 @@ cf_build_test = macro(
     implementation = _cf_build_test_implementation,
 )
 
-def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, linkopts, **kwargs):
+def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, linkopts, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
     cc_binary(
@@ -71,6 +71,12 @@ def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled,
             tags = ["clang_tidy", "clang-tidy"],
             visibility = ["//visibility:private"],
         )
+    if depend_on_what_you_use_enabled:
+        dwyu_rule(
+            name = name + "_depend_on_what_you_use",
+            deps = [":" + name],
+            testonly = True,
+        )
 
 cf_cc_binary = macro(
     inherit_attrs = cc_binary,
@@ -78,12 +84,13 @@ cf_cc_binary = macro(
         "clang_format_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding format_test target is generated"),
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
+        "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = False, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
         "linkopts": attr.string_list(configurable = False, default = []),
     },
     implementation = _cf_cc_binary_implementation,
 )
 
-def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, **kwargs):
+def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
     cc_library(
@@ -106,6 +113,12 @@ def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled
             tags = ["clang_tidy", "clang-tidy"],
             visibility = ["//visibility:private"],
         )
+    if depend_on_what_you_use_enabled:
+        dwyu_rule(
+            name = name + "_depend_on_what_you_use",
+            deps = [":" + name],
+            testonly = True,
+        )
 
 cf_cc_library = macro(
     inherit_attrs = cc_library,
@@ -113,11 +126,12 @@ cf_cc_library = macro(
         "clang_format_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding format_test target is generated"),
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
+        "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = False, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
     },
     implementation = _cf_cc_library_implementation,
 )
 
-def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, deps, **kwargs):
+def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, deps, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
     cc_test(
@@ -144,6 +158,12 @@ def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, c
             tags = ["clang_tidy", "clang-tidy"],
             visibility = ["//visibility:private"],
         )
+    if depend_on_what_you_use_enabled:
+        dwyu_rule(
+            name = name + "_depend_on_what_you_use",
+            deps = [":" + name],
+            testonly = True,
+        )
 
 cf_cc_test = macro(
     inherit_attrs = cc_test,
@@ -151,6 +171,7 @@ cf_cc_test = macro(
         "clang_format_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding format_test target is generated"),
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
+        "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = False, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
         "deps": attr.label_list(configurable = False),
     },
     implementation = _cf_cc_test_implementation,
