@@ -10,6 +10,7 @@ cf_cc_library(
     name = "command_subprocess",
     srcs = ["command_subprocess.cc"],
     hdrs = ["command_subprocess.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
@@ -26,6 +27,7 @@ cf_cc_library(
     name = "managed_stdio",
     srcs = ["managed_stdio.cc"],
     hdrs = ["managed_stdio.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/process:command_subprocess",

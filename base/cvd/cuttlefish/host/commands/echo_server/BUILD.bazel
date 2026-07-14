@@ -32,6 +32,7 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":libecho_server",
         "@gflags",

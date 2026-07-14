@@ -20,6 +20,7 @@ cf_cc_library(
     name = "composite_disk",
     srcs = ["composite_disk.cc"],
     hdrs = ["composite_disk.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
@@ -83,6 +84,7 @@ cf_cc_library(
     copts = COPTS + [
         "-Wno-packed-non-pod",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -143,6 +145,7 @@ cf_cc_library(
     name = "super_builder",
     srcs = ["super_builder.cc"],
     hdrs = ["super_builder.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/config:log_string_to_dir",

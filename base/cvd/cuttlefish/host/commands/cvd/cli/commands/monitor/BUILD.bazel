@@ -8,6 +8,7 @@ cf_cc_library(
     name = "command_handler",
     srcs = ["command_handler.cc"],
     hdrs = ["command_handler.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":monitor",
         "//cuttlefish/flag_parser",
@@ -26,6 +27,7 @@ cf_cc_library(
     name = "display",
     srcs = ["display.cc"],
     hdrs = ["display.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":kernel",
         ":launcher",
@@ -48,6 +50,7 @@ cf_cc_library(
 cf_cc_test(
     name = "display_test",
     srcs = ["display_test.cc"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":display",
         "//cuttlefish/io",

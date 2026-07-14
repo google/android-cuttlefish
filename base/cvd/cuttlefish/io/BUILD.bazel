@@ -101,6 +101,7 @@ cf_cc_library(
 cf_cc_test(
     name = "cpio_test",
     srcs = ["cpio_test.cc"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:cpio",
@@ -130,6 +131,7 @@ cf_cc_library(
     name = "disjoint_range_set",
     srcs = ["disjoint_range_set.cc"],
     hdrs = ["disjoint_range_set.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/log:check",
@@ -208,6 +210,7 @@ cf_cc_library(
 cf_cc_test(
     name = "in_memory_test",
     srcs = ["in_memory_test.cc"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:in_memory",
@@ -281,6 +284,7 @@ cf_cc_library(
 cf_cc_test(
     name = "lz4_legacy_test",
     srcs = ["lz4_legacy_test.cc"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:filesystem",
@@ -335,6 +339,7 @@ cf_cc_library(
 cf_cc_test(
     name = "read_window_view_test",
     srcs = ["read_window_view_test.cc"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:in_memory",
@@ -359,6 +364,7 @@ cf_cc_library(
 cf_cc_test(
     name = "serialize_disjoint_range_set_test",
     srcs = ["serialize_disjoint_range_set_test.cc"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/io:disjoint_range_set",
         "//cuttlefish/io:serialize_disjoint_range_set",

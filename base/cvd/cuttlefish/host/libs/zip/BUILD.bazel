@@ -10,6 +10,7 @@ cf_cc_library(
     name = "buffered_zip_source",
     srcs = ["buffered_zip_source.cc"],
     hdrs = ["buffered_zip_source.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
@@ -52,6 +53,7 @@ cf_cc_library(
 cf_cc_test(
     name = "cached_zip_source_test",
     srcs = ["cached_zip_source_test.cc"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/zip:cached_zip_source",
@@ -66,6 +68,7 @@ cf_cc_library(
     name = "remote_zip",
     srcs = ["remote_zip.cc"],
     hdrs = ["remote_zip.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
@@ -100,6 +103,7 @@ cf_cc_library(
     name = "zip_file",
     srcs = ["zip_file.cc"],
     hdrs = ["zip_file.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",

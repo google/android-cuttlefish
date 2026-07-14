@@ -10,6 +10,7 @@ cf_cc_library(
     name = "channel_monitor",
     srcs = ["channel_monitor.cpp"],
     hdrs = ["channel_monitor.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/modem_simulator:client",
@@ -24,6 +25,7 @@ cf_cc_library(
     name = "client",
     srcs = ["client.cc"],
     hdrs = ["client.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
@@ -35,6 +37,7 @@ cf_cc_library(
     name = "command_parser",
     srcs = ["command_parser.cpp"],
     hdrs = ["command_parser.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/strings",
@@ -51,6 +54,7 @@ cf_cc_library(
     name = "data_service",
     srcs = ["data_service.cpp"],
     hdrs = ["data_service.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:modem_service",
@@ -81,6 +85,7 @@ cf_cc_library(
     name = "modem_service",
     srcs = ["modem_service.cpp"],
     hdrs = ["modem_service.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/modem_simulator:channel_monitor",
         "//cuttlefish/host/commands/modem_simulator:command_parser",
@@ -95,6 +100,7 @@ cf_cc_library(
     name = "modem_simulator_class",
     srcs = ["modem_simulator.cpp"],
     hdrs = ["modem_simulator.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/modem_simulator:channel_monitor",
         "//cuttlefish/host/commands/modem_simulator:data_service",
@@ -133,6 +139,7 @@ cf_cc_library(
         "-Werror",
         "-Wno-unused-const-variable",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -161,6 +168,7 @@ cf_cc_library(
 cf_cc_binary(
     name = "modem_simulator",
     srcs = ["main.cpp"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:tee_logging",
@@ -190,6 +198,7 @@ cf_cc_library(
     name = "nvram_config",
     srcs = ["nvram_config.cpp"],
     hdrs = ["nvram_config.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/modem_simulator:device_config",
@@ -220,6 +229,7 @@ cf_cc_test(
         "unittest/service_test.cpp",
     ],
     clang_format_enabled = False,
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -249,6 +259,7 @@ cf_cc_library(
     name = "thread_looper",
     srcs = ["thread_looper.cpp"],
     hdrs = ["thread_looper.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/log",

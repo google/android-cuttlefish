@@ -10,6 +10,7 @@ cf_cc_library(
     srcs = ["common.cpp"],
     hdrs = ["common.h"],
     copts = COPTS + ["-Werror=sign-compare"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
@@ -25,6 +26,7 @@ cf_cc_library(
     srcs = ["flags_collector.cpp"],
     hdrs = ["flags_collector.h"],
     copts = COPTS + ["-Werror=sign-compare"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/log",
@@ -37,6 +39,7 @@ cf_cc_library(
     srcs = ["interrupt_listener.cpp"],
     hdrs = ["interrupt_listener.h"],
     copts = COPTS + ["-Werror=sign-compare"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:signals",
         "//cuttlefish/posix:strerror",
@@ -68,6 +71,7 @@ cf_cc_library(
         "subprocess_waiter.h",
     ],
     copts = COPTS + ["-Werror=sign-compare"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/commands/cvd/utils:flags_collector",

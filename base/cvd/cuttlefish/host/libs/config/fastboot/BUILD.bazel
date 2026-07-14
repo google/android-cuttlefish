@@ -13,6 +13,7 @@ cf_cc_library(
         "launch.cpp",
     ],
     hdrs = ["fastboot.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",

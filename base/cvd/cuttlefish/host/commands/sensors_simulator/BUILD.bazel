@@ -12,6 +12,7 @@ cf_cc_library(
     hdrs = [
         "sensors_simulator.h",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/sensors",
         "//libbase",
@@ -27,6 +28,7 @@ cf_cc_library(
     hdrs = [
         "sensors_hal_proxy.h",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":libsensors_simulator",
         "//cuttlefish/common/libs/sensors",
@@ -45,6 +47,7 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":libsensors_hal_proxy",
         ":libsensors_simulator",

@@ -28,6 +28,7 @@ cf_cc_library(
         "snapshot_utils.h",
         "util.h",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":libcuttlefish_run_cvd_proto",
         "//cuttlefish/common/libs/fs",

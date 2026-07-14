@@ -16,6 +16,7 @@ cf_cc_library(
         "channel.h",
         "channel_sharedfd.h",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result:expect",

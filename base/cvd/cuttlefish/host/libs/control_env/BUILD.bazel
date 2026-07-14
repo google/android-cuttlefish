@@ -8,6 +8,7 @@ cf_cc_library(
     name = "control_env",
     srcs = ["grpc_service_handler.cc"],
     hdrs = ["grpc_service_handler.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/result",
