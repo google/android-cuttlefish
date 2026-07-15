@@ -50,7 +50,6 @@ cf_cc_test(
 cf_cc_library(
     name = "map",
     hdrs = ["map.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/pretty",
         "//cuttlefish/pretty:container",
