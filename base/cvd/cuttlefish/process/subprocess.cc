@@ -148,13 +148,13 @@ StopperResult KillSubprocess(Subprocess* subprocess) {
     bool is_group_head = pid == pgid;
     auto kill_ret = (is_group_head ? killpg : kill)(pid, SIGKILL);
     if (kill_ret == 0) {
-      return StopperResult::kStopSuccess;
+      return StopperResult::kSuccess;
     }
     auto kill_cmd = is_group_head ? "killpg(" : "kill(";
     PLOG(ERROR) << kill_cmd << pid << ", SIGKILL) failed: ";
-    return StopperResult::kStopFailure;
+    return StopperResult::kFailure;
   }
-  return StopperResult::kStopSuccess;
+  return StopperResult::kSuccess;
 }
 
 SubprocessStopper KillSubprocessFallback(std::function<StopperResult()> nice) {
@@ -164,11 +164,10 @@ SubprocessStopper KillSubprocessFallback(std::function<StopperResult()> nice) {
 SubprocessStopper KillSubprocessFallback(SubprocessStopper nice_stopper) {
   return [nice_stopper](Subprocess* process) {
     auto nice_result = nice_stopper(process);
-    if (nice_result == StopperResult::kStopFailure) {
+    if (nice_result == StopperResult::kFailure) {
       auto harsh_result = KillSubprocess(process);
-      return harsh_result == StopperResult::kStopSuccess
-                 ? StopperResult::kStopCrash
-                 : harsh_result;
+      return harsh_result == StopperResult::kSuccess ? StopperResult::kCrash
+                                                     : harsh_result;
     }
     return nice_result;
   };

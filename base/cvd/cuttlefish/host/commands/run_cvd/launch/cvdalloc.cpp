@@ -120,16 +120,16 @@ StopperResult Cvdalloc::Stop() {
   LOG(INFO) << "cvdalloc (run_cvd): stop requested; teardown started";
   if (!cvdalloc::Post(socket_).ok()) {
     LOG(INFO) << "cvdalloc (run_cvd): stop failed: couldn't Post";
-    return StopperResult::kStopFailure;
+    return StopperResult::kFailure;
   }
 
   if (!cvdalloc::Wait(socket_, kCvdTeardownTimeout).ok()) {
     LOG(INFO) << "cvdalloc (run_cvd): stop failed: couldn't Wait";
-    return StopperResult::kStopFailure;
+    return StopperResult::kFailure;
   }
 
   LOG(INFO) << "cvdalloc (run_cvd): teardown completed";
-  return StopperResult::kStopSuccess;
+  return StopperResult::kSuccess;
 }
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>

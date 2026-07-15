@@ -155,7 +155,7 @@ Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
   VLOG(0) << "Stopping monitored subprocesses";
   auto stop = [](const auto& it) {
     auto stop_result = it.proc->Stop();
-    if (stop_result == StopperResult::kStopFailure) {
+    if (stop_result == StopperResult::kFailure) {
       LOG(WARNING) << "Error in stopping \"" << it.cmd->GetShortName() << "\"";
       return false;
     }
@@ -165,7 +165,7 @@ Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
       LOG(WARNING) << "Failed to wait for process " << it.cmd->GetShortName();
       return false;
     }
-    if (stop_result == StopperResult::kStopCrash) {
+    if (stop_result == StopperResult::kCrash) {
       LogSubprocessExit(it.cmd->GetShortName(), infop);
     }
     return true;

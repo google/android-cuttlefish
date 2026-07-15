@@ -70,7 +70,7 @@ StopperResult Stop() {
 
   if (!monitor_sock->IsOpen()) {
     LOG(ERROR) << "The connection to qemu is closed, is it still running?";
-    return StopperResult::kStopFailure;
+    return StopperResult::kFailure;
   }
   char msg[] = "{\"execute\":\"qmp_capabilities\"}{\"execute\":\"quit\"}";
   ssize_t len = sizeof(msg) - 1;
@@ -78,7 +78,7 @@ StopperResult Stop() {
     int tmp = monitor_sock->Write(msg, len);
     if (tmp < 0) {
       LOG(ERROR) << "Error writing to socket: " << monitor_sock->StrError();
-      return StopperResult::kStopFailure;
+      return StopperResult::kFailure;
     }
     len -= tmp;
   }
@@ -89,7 +89,7 @@ StopperResult Stop() {
     LOG(INFO) << "From qemu monitor: " << buff;
   }
 
-  return StopperResult::kStopSuccess;
+  return StopperResult::kSuccess;
 }
 
 Result<std::pair<int, int>> GetQemuVersion(const std::string& qemu_binary) {

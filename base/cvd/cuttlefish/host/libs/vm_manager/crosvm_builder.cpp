@@ -63,8 +63,8 @@ void CrosvmBuilder::AddControlSocket(const std::string& control_socket,
     Command stop_cmd(executable_path);
     stop_cmd.AddParameter("stop");
     stop_cmd.AddParameter(control_socket);
-    return stop_cmd.Start().Wait() == 0 ? StopperResult::kStopSuccess
-                                        : StopperResult::kStopFailure;
+    return stop_cmd.Start().Wait() == 0 ? StopperResult::kSuccess
+                                        : StopperResult::kFailure;
   };
   command_.SetStopper(KillSubprocessFallback(stopper));
   command_.AddParameter("--socket=", control_socket);

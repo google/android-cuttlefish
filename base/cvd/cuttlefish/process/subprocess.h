@@ -26,9 +26,9 @@
 namespace cuttlefish {
 
 enum class StopperResult {
-  kStopFailure, /* Failed to stop the subprocess. */
-  kStopCrash,   /* Attempted to stop the subprocess cleanly, but that failed. */
-  kStopSuccess, /* The subprocess exited in the expected way. */
+  kFailure, /* Failed to stop the subprocess. */
+  kCrash,   /* Attempted to stop the subprocess cleanly, but that failed. */
+  kSuccess, /* The subprocess exited in the expected way. */
 };
 
 class Subprocess;

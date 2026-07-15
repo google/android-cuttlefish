@@ -308,7 +308,7 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
     // Ask nicely so that log_tee gets a chance to process all the logs.
     // TODO: b/335934714 - Make sure the process actually exits
     bool res = kill(proc->pid(), SIGINT) == 0;
-    return res ? StopperResult::kStopSuccess : StopperResult::kStopFailure;
+    return res ? StopperResult::kSuccess : StopperResult::kFailure;
   }));
 
   const std::string crosvm_path = CF_EXPECT(CrosvmPathForVhostUserGpu(config));
@@ -806,7 +806,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     // Ask nicely so that log_tee gets a chance to process all the logs.
     bool res = kill(proc->pid(), SIGINT) == 0;
     // TODO: b/335934714 - Make sure the process actually exits
-    return res ? StopperResult::kStopSuccess : StopperResult::kStopFailure;
+    return res ? StopperResult::kSuccess : StopperResult::kFailure;
   }));
 
   // /dev/hvc2 = serial logging
