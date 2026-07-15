@@ -238,7 +238,7 @@ class WebRtcServer : public virtual CommandSource,
 
     auto stopper = [webrtc_controller = webrtc_controller_]() mutable {
       (void)webrtc_controller.SendStopRecordingCommand();
-      return StopperResult::kStopFailure;
+      return StopperResult::kFailure;
     };
 
     Command webrtc(WebRtcBinary(), KillSubprocessFallback(stopper));
