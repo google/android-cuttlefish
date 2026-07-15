@@ -101,12 +101,10 @@ cf_cc_library(
 cf_cc_test(
     name = "cpio_test",
     srcs = ["cpio_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:cpio",
         "//cuttlefish/io:in_memory",
-        "//cuttlefish/io:read_exact",
         "//cuttlefish/io:string",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
