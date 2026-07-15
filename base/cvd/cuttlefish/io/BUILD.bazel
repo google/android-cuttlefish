@@ -278,13 +278,11 @@ cf_cc_library(
 cf_cc_test(
     name = "lz4_legacy_test",
     srcs = ["lz4_legacy_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:filesystem",
         "//cuttlefish/io:in_memory",
         "//cuttlefish/io:lz4_legacy",
-        "//cuttlefish/io:read_exact",
         "//cuttlefish/io:string",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/result",
