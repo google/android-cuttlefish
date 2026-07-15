@@ -34,10 +34,8 @@ cf_cc_library(
     name = "metadata_format",
     srcs = ["metadata_format.cc"],
     hdrs = ["metadata_format.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/pretty",
-        "//cuttlefish/pretty:string",
         "//cuttlefish/pretty:struct",
         "//cuttlefish/pretty:vector",
         "@android_system_core//:liblp",
