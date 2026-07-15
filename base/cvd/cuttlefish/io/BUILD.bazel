@@ -206,12 +206,10 @@ cf_cc_library(
 cf_cc_test(
     name = "in_memory_test",
     srcs = ["in_memory_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:in_memory",
         "//cuttlefish/result:result_matchers",
-        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings",
     ],
 )
