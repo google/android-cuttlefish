@@ -13,13 +13,15 @@
 // limitations under the License.
 
 use std::collections::VecDeque;
-use std::io::BufWriter;
 use std::io::Result as IoResult;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
 use std::os::fd::AsFd;
 use std::os::fd::BorrowedFd;
+
+use crate::pattern::FramePattern;
+use crate::pattern::pulse::Pulse;
 
 use std::str::FromStr;
 use v4l2r::PixelFormat;
@@ -195,28 +197,15 @@ impl VirtioMediaDeviceSession for EmulatedCameraSession {
 }
 
 impl EmulatedCameraSession {
-    fn write_pattern<WY: std::io::Write, WU: std::io::Write, WV: std::io::Write>(
+    fn write_pattern(
         iteration: u64,
-        mut sink_y: WY,
-        mut sink_u: WU,
-        mut sink_v: WV,
+        sink_y: &mut dyn Write,
+        sink_u: &mut dyn Write,
+        sink_v: &mut dyn Write,
     ) -> IoctlResult<()> {
-        let mut writer_y = BufWriter::new(&mut sink_y);
-        let mut writer_u = BufWriter::new(&mut sink_u);
-        let mut writer_v = BufWriter::new(&mut sink_v);
-        let y = (iteration % 256) as u8;
-        let u = ((iteration + 64) % 256) as u8;
-        let v = ((iteration + 128) % 256) as u8;
-        for _ in 0..(WIDTH * HEIGHT) {
-            writer_y.write_all(&[y]).map_err(|_| libc::EIO)?;
-        }
-        for _ in 0..(WIDTH * HEIGHT / 4) {
-            writer_u.write_all(&[u]).map_err(|_| libc::EIO)?;
-        }
-        for _ in 0..(WIDTH * HEIGHT / 4) {
-            writer_v.write_all(&[v]).map_err(|_| libc::EIO)?;
-        }
-        Ok(())
+        Pulse
+            .write(iteration, sink_y, sink_u, sink_v)
+            .map_err(|_| libc::EIO)
     }
 
     /// Write basic pattern into the queued buffers
@@ -236,12 +225,10 @@ impl EmulatedCameraSession {
                     .map_err(|_| libc::EIO)?;
             }
 
-            Self::write_pattern(
-                iteration,
-                buffer.planes[0].fd.as_file(),
-                buffer.planes[1].fd.as_file(),
-                buffer.planes[2].fd.as_file(),
-            )?;
+            let mut plane_y = buffer.planes[0].fd.as_file();
+            let mut plane_u = buffer.planes[1].fd.as_file();
+            let mut plane_v = buffer.planes[2].fd.as_file();
+            Self::write_pattern(iteration, &mut plane_y, &mut plane_u, &mut plane_v)?;
 
             buffer.set_state(BufferState::Outgoing {
                 sequence: iteration as u32,
@@ -395,8 +382,8 @@ const CID_OFFSET: u32 = bindings::V4L2_CID_CAMERA_CLASS_BASE + 0x100;
 const CID_LENS_FACING: u32 = CID_OFFSET + 1;
 
 const PIXELFORMAT: u32 = PixelFormat::from_fourcc(b"YM12").to_u32();
-const WIDTH: u32 = 640;
-const HEIGHT: u32 = 480;
+pub(crate) const WIDTH: u32 = 640;
+pub(crate) const HEIGHT: u32 = 480;
 const FRAME_RATE: u32 = 30;
 
 const INPUTS: [bindings::v4l2_input; 1] = [bindings::v4l2_input {
