@@ -17,6 +17,8 @@
 
 #include <map>
 
+#include "absl/strings/str_cat.h"
+
 #include "cuttlefish/pretty/container.h"
 #include "cuttlefish/pretty/pretty.h"
 
