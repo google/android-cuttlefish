@@ -40,11 +40,9 @@ cf_cc_library(
 cf_cc_test(
     name = "result_test",
     srcs = ["result_test.cpp"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
     ],
 )
 
