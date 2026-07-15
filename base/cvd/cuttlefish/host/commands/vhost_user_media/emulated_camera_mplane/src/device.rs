@@ -13,13 +13,15 @@
 // limitations under the License.
 
 use std::collections::VecDeque;
-use std::io::BufWriter;
 use std::io::Result as IoResult;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
 use std::os::fd::AsFd;
 use std::os::fd::BorrowedFd;
+
+use crate::pattern::FramePattern;
+use crate::pattern::pulse::Pulse;
 
 use std::str::FromStr;
 use v4l2r::PixelFormat;
@@ -195,28 +197,15 @@ impl VirtioMediaDeviceSession for EmulatedCameraSession {
 }
 
 impl EmulatedCameraSession {
-    fn write_pattern<WY: std::io::Write, WU: std::io::Write, WV: std::io::Write>(
+    fn write_pattern<WY: Write, WU: Write, WV: Write>(
         iteration: u64,
-        mut sink_y: WY,
-        mut sink_u: WU,
-        mut sink_v: WV,
+        sink_y: WY,
+        sink_u: WU,
+        sink_v: WV,
     ) -> IoctlResult<()> {
-        let mut writer_y = BufWriter::new(&mut sink_y);
-        let mut writer_u = BufWriter::new(&mut sink_u);
-        let mut writer_v = BufWriter::new(&mut sink_v);
-        let y = (iteration % 256) as u8;
-        let u = ((iteration + 64) % 256) as u8;
-        let v = ((iteration + 128) % 256) as u8;
-        for _ in 0..(WIDTH * HEIGHT) {
-            writer_y.write_all(&[y]).map_err(|_| libc::EIO)?;
-        }
-        for _ in 0..(WIDTH * HEIGHT / 4) {
-            writer_u.write_all(&[u]).map_err(|_| libc::EIO)?;
-        }
-        for _ in 0..(WIDTH * HEIGHT / 4) {
-            writer_v.write_all(&[v]).map_err(|_| libc::EIO)?;
-        }
-        Ok(())
+        Pulse
+            .write(iteration, sink_y, sink_u, sink_v)
+            .map_err(|_| libc::EIO)
     }
 
     /// Write basic pattern into the queued buffers

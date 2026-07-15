@@ -14,10 +14,10 @@
 
 use std::io::Write;
 
+pub mod pulse;
+
 pub const WIDTH: u32 = 640;
 pub const HEIGHT: u32 = 480;
-pub const Y_SIZE: usize = (WIDTH * HEIGHT) as usize;
-pub const UV_SIZE: usize = (WIDTH * HEIGHT / 4) as usize;
 
 pub trait FramePattern: Send + Sync {
     fn write<WY: Write, WU: Write, WV: Write>(
