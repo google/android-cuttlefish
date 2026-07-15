@@ -1,0 +1,226 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_python//python:defs.bzl", "py_binary")
+
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+    ],
+)
+
+# Build information generation script
+py_binary(
+    name = "build_info",
+    srcs = ["build_info.py"],
+)
+
+genrule(
+    name = "gen_build_info_h",
+    srcs = [
+        "CHANGES.md",
+        "build_info.h.tmpl",
+    ],
+    outs = ["glslang/build_info.h"],
+    cmd = "$(location build_info) $$(dirname $(location CHANGES.md)) -i $(location build_info.h.tmpl) -o $(location glslang/build_info.h)",
+    tools = [":build_info"],
+)
+
+# Intrinsics generation script
+py_binary(
+    name = "gen_extension_headers",
+    srcs = ["gen_extension_headers.py"],
+)
+
+genrule(
+    name = "glsl_intrinsic_header_h",
+    srcs = [
+        "glslang/ExtensionHeaders/GL_EXT_shader_realtime_clock.glsl",
+    ],
+    outs = ["glslang/glsl_intrinsic_header.h"],
+    cmd = "$(location gen_extension_headers) -i $$(dirname $(location glslang/ExtensionHeaders/GL_EXT_shader_realtime_clock.glsl)) -o $(location glslang/glsl_intrinsic_header.h)",
+    tools = [":gen_extension_headers"],
+)
+
+cc_library(
+    name = "generated_headers",
+    hdrs = [
+        ":gen_build_info_h",
+        ":glsl_intrinsic_header_h",
+    ],
+    copts = [
+        "$(STACK_FRAME_UNLIMITED)",
+        "-Wno-logical-op-parentheses",
+        "-Wno-gnu-redeclared-enum",
+        "-Wno-sometimes-uninitialized",
+        "-Wno-implicit-fallthrough",
+        "-Ithird_party/glslang",
+        # glslang is not clean under certain sanitizers
+        "-fno-sanitize=float-cast-overflow,null,signed-integer-overflow",
+    ],
+    includes = ["."],
+    linkstatic = 1,
+)
+
+cc_library(
+    name = "glslang",
+    srcs = glob(
+        [
+            "glslang/CInterface/*.cpp",
+            "glslang/GenericCodeGen/*.cpp",
+            "glslang/HLSL/*.cpp",
+            "glslang/MachineIndependent/*.cpp",
+            "glslang/MachineIndependent/preprocessor/*.cpp",
+        ],
+        exclude = [
+            "glslang/HLSL/pch.cpp",
+            "glslang/HLSL/pch.h",
+            "glslang/MachineIndependent/pch.cpp",
+            "glslang/MachineIndependent/pch.h",
+        ],
+    ) + [
+        "glslang/OSDependent/Unix/ossource.cpp",
+    ],
+    hdrs = glob([
+        "glslang/HLSL/*.h",
+        "glslang/Include/*.h",
+        "glslang/MachineIndependent/*.h",
+        "glslang/MachineIndependent/preprocessor/*.h",
+    ]) + [
+        "StandAlone/DirStackFileIncluder.h",
+        "glslang/OSDependent/osinclude.h",
+        "glslang/Public/ResourceLimits.h",
+        "glslang/Public/ShaderLang.h",
+    ],
+    copts = [
+        "$(STACK_FRAME_UNLIMITED)",
+        "-Wno-logical-op-parentheses",
+        "-Wno-gnu-redeclared-enum",
+        "-Wno-sometimes-uninitialized",
+        "-Wno-implicit-fallthrough",
+        "-Ithird_party/glslang",
+        # glslang is not clean under certain sanitizers
+        "-fno-sanitize=float-cast-overflow,null,signed-integer-overflow",
+        "-Ithird_party/glslang/glslang/MachineIndependent",
+    ],
+    defines = [
+        "AMD_EXTENSIONS",
+        "ENABLE_HLSL",
+        "ENABLE_OPT=1",
+        "ENABLE_SPIRV",
+        "GLSLANG_OSINCLUDE_UNIX",
+        "NV_EXTENSIONS",
+    ],
+    linkstatic = 1,
+    deps = [":generated_headers"],
+)
+
+cc_library(
+    name = "SPIRV_headers",
+    hdrs = [
+        "SPIRV/GLSL.ext.AMD.h",
+        "SPIRV/GLSL.ext.ARM.h",
+        "SPIRV/GLSL.ext.EXT.h",
+        "SPIRV/GLSL.ext.KHR.h",
+        "SPIRV/GLSL.ext.NV.h",
+        "SPIRV/GLSL.ext.QCOM.h",
+        "SPIRV/GLSL.std.450.h",
+        "SPIRV/spirv.hpp11",
+        "SPIRV/spvUtil.h",
+    ],
+    copts = [
+        "$(STACK_FRAME_UNLIMITED)",
+        "-Wno-logical-op-parentheses",
+        "-Wno-gnu-redeclared-enum",
+        "-Wno-sometimes-uninitialized",
+        "-Wno-implicit-fallthrough",
+        "-Ithird_party/glslang",
+        # glslang is not clean under certain sanitizers
+        "-fno-sanitize=float-cast-overflow,null,signed-integer-overflow",
+    ],
+    includes = ["."],
+    linkstatic = 1,
+)
+
+cc_library(
+    name = "SPIRV",
+    srcs = glob([
+        "SPIRV/*.cpp",
+        "SPIRV/CInterface/*.cpp",
+    ]),
+    hdrs = [
+        "SPIRV/GlslangToSpv.h",
+        "SPIRV/Logger.h",
+        "SPIRV/NonSemanticDebugPrintf.h",
+        "SPIRV/NonSemanticShaderDebugInfo.h",
+        "SPIRV/SpvBuilder.h",
+        "SPIRV/SpvTools.h",
+        "SPIRV/bitutils.h",
+        "SPIRV/disassemble.h",
+        "SPIRV/doc.h",
+        "SPIRV/hex_float.h",
+        "SPIRV/spvIR.h",
+    ],
+    copts = [
+        "$(STACK_FRAME_UNLIMITED)",
+        "-Wno-logical-op-parentheses",
+        "-Wno-gnu-redeclared-enum",
+        "-Wno-sometimes-uninitialized",
+        "-Wno-implicit-fallthrough",
+        "-Ithird_party/glslang",
+        # glslang is not clean under certain sanitizers
+        "-fno-sanitize=float-cast-overflow,null,signed-integer-overflow",
+    ],
+    linkstatic = 1,
+    deps = [
+        ":SPIRV_headers",
+        ":generated_headers",
+        ":glslang",
+        "@spirv_tools//:spirv_tools_opt",
+    ],
+)
+
+cc_library(
+    name = "glslang-default-resource-limits",
+    srcs = [
+        "glslang/ResourceLimits/ResourceLimits.cpp",
+        "glslang/ResourceLimits/resource_limits_c.cpp",
+    ],
+    hdrs = [
+        "glslang/Public/ResourceLimits.h",
+        "glslang/Public/resource_limits_c.h",
+    ],
+    copts = [
+        "$(STACK_FRAME_UNLIMITED)",
+        "-Wno-logical-op-parentheses",
+        "-Wno-gnu-redeclared-enum",
+        "-Wno-sometimes-uninitialized",
+        "-Wno-implicit-fallthrough",
+        "-Ithird_party/glslang",
+        # glslang is not clean under certain sanitizers
+        "-fno-sanitize=float-cast-overflow,null,signed-integer-overflow",
+    ],
+    deps = [":glslang"],
+)
+
+cc_binary(
+    name = "glslangValidator",
+    srcs = [
+        "StandAlone/StandAlone.cpp",
+        "StandAlone/Worklist.h",
+    ],
+    copts = [
+        "$(STACK_FRAME_UNLIMITED)",
+        "-Wno-logical-op-parentheses",
+        "-Wno-gnu-redeclared-enum",
+        "-Wno-sometimes-uninitialized",
+        "-Wno-implicit-fallthrough",
+        "-Ithird_party/glslang",
+        # glslang is not clean under certain sanitizers
+        "-fno-sanitize=float-cast-overflow,null,signed-integer-overflow",
+    ],
+    deps = [
+        ":SPIRV",
+        ":glslang",
+        ":glslang-default-resource-limits",
+    ],
+)
