@@ -129,9 +129,7 @@ cf_cc_library(
     name = "disjoint_range_set",
     srcs = ["disjoint_range_set.cc"],
     hdrs = ["disjoint_range_set.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        "//libbase",
         "@abseil-cpp//absl/log:check",
     ],
 )
