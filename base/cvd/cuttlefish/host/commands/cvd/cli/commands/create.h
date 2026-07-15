@@ -37,6 +37,7 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
   std::vector<std::string> CmdList() const override { return {"create"}; }
   std::string SummaryHelp() const override;
   Result<std::string> DetailedHelp(const CommandRequest&) override;
+  bool RequiresHostConfiguration() const override { return true; }
 
  private:
   struct CreateFlags {

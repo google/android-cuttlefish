@@ -39,6 +39,7 @@ Cvd::Cvd(InstanceManager& instance_manager,
 static Result<void> EnforceHostConfigured() {
   std::vector<vm_manager::HostConfigurationAction> actions =
       CF_EXPECT(vm_manager::ValidateHostConfiguration());
+  // TODO: chadreynolds - exit, then only print a message and not a stacktrace
   CF_EXPECT(actions.empty(), "Run `cvd setup` to configure the host.");
   return {};
 }

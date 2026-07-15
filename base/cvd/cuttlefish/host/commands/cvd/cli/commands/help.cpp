@@ -139,8 +139,6 @@ std::vector<std::string> CvdHelpHandler::CmdList() const { return {"help"}; }
 
 std::string CvdHelpHandler::SummaryHelp() const { return kSummaryHelpText; }
 
-bool CvdHelpHandler::RequiresHostConfiguration() const { return false; }
-
 std::vector<HelpParagraph> CvdHelpHandler::Description() const {
   return {
       HelpParagraph("Example usage:"),
