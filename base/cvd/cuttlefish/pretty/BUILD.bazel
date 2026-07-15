@@ -149,7 +149,6 @@ cf_cc_library(
 cf_cc_test(
     name = "struct_test",
     srcs = ["struct_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/pretty:string",
         "//cuttlefish/pretty:struct",
