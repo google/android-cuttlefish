@@ -83,6 +83,50 @@ impl FromStr for LensFacing {
     }
 }
 
+/// Test pattern selectable through `V4L2_CID_TEST_PATTERN`.
+///
+/// The discriminants double as the menu indices reported by `VIDIOC_QUERYMENU`, so they
+/// must stay contiguous and start at [`TestPattern::MIN`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TestPattern {
+    Pulse = 0,
+}
+
+impl TestPattern {
+    /// Lowest menu index, reported as `minimum` for `V4L2_CID_TEST_PATTERN`.
+    const MIN: i32 = TestPattern::Pulse as i32;
+    /// Highest menu index, reported as `maximum` for `V4L2_CID_TEST_PATTERN`.
+    const MAX: i32 = TestPattern::Pulse as i32;
+    /// Pattern selected until the guest asks for something else.
+    const DEFAULT: TestPattern = TestPattern::Pulse;
+
+    /// Human readable name reported by `VIDIOC_QUERYMENU`.
+    fn name(self) -> &'static str {
+        match self {
+            TestPattern::Pulse => "Pulse",
+        }
+    }
+
+    /// Frame generator backing this pattern.
+    fn generator(self) -> &'static dyn FramePattern {
+        match self {
+            TestPattern::Pulse => &Pulse,
+        }
+    }
+}
+
+impl TryFrom<i32> for TestPattern {
+    /// Raw `errno` reported to the guest for an out-of-range menu index.
+    type Error = i32;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(TestPattern::Pulse),
+            _ => Err(libc::ERANGE),
+        }
+    }
+}
+
 /// Current status of a buffer.
 #[derive(Debug, PartialEq, Eq)]
 enum BufferState {
@@ -199,11 +243,13 @@ impl VirtioMediaDeviceSession for EmulatedCameraSession {
 impl EmulatedCameraSession {
     fn write_pattern(
         iteration: u64,
+        test_pattern: TestPattern,
         sink_y: &mut dyn Write,
         sink_u: &mut dyn Write,
         sink_v: &mut dyn Write,
     ) -> IoctlResult<()> {
-        Pulse
+        test_pattern
+            .generator()
             .write(iteration, sink_y, sink_u, sink_v)
             .map_err(|_| libc::EIO)
     }
@@ -212,6 +258,7 @@ impl EmulatedCameraSession {
     fn process_queued_buffers<Q: VirtioMediaEventQueue>(
         &mut self,
         evt_queue: &mut Q,
+        test_pattern: TestPattern,
     ) -> IoctlResult<()> {
         while let Some(buf_id) = self.queued_buffers.pop_front() {
             let iteration = self.iteration;
@@ -228,7 +275,13 @@ impl EmulatedCameraSession {
             let mut plane_y = buffer.planes[0].fd.as_file();
             let mut plane_u = buffer.planes[1].fd.as_file();
             let mut plane_v = buffer.planes[2].fd.as_file();
-            Self::write_pattern(iteration, &mut plane_y, &mut plane_u, &mut plane_v)?;
+            Self::write_pattern(
+                iteration,
+                test_pattern,
+                &mut plane_y,
+                &mut plane_u,
+                &mut plane_v,
+            )?;
 
             buffer.set_state(BufferState::Outgoing {
                 sequence: iteration as u32,
@@ -263,6 +316,8 @@ pub struct EmulatedCamera<Q: VirtioMediaEventQueue, HM: VirtioMediaHostMemoryMap
     active_session: Option<u32>,
     /// Lens facing configuration.
     lens_facing: LensFacing,
+    /// Currently selected test pattern.
+    current_pattern: TestPattern,
 }
 
 impl<Q, HM> EmulatedCamera<Q, HM>
@@ -276,17 +331,15 @@ where
             mmap_manager: MmapMappingManager::from(mapper),
             active_session: None,
             lens_facing,
+            current_pattern: TestPattern::Pulse,
         }
     }
 
     fn lens_facing_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
-        let name_str = "LENS_FACING";
-        let mut name = [0u8; 32];
-        name[0..name_str.len()].copy_from_slice(name_str.as_bytes());
         bindings::v4l2_query_ext_ctrl {
             id: CID_LENS_FACING,
             type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER,
-            name: name.map(|b| b as i8),
+            name: ctrl_name("LENS_FACING").map(|b| b as i8),
             minimum: LensFacing::Front as i64,
             maximum: LensFacing::External as i64,
             step: 1,
@@ -297,6 +350,117 @@ where
             ..Default::default()
         }
     }
+
+    fn image_proc_class_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
+        bindings::v4l2_query_ext_ctrl {
+            id: bindings::V4L2_CID_IMAGE_PROC_CLASS,
+            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_CTRL_CLASS,
+            name: ctrl_name("Image Processing Controls").map(|b| b as i8),
+            minimum: 0,
+            maximum: 0,
+            step: 0,
+            default_value: 0,
+            // A control class holds no value of its own, so it can be neither read nor
+            // written. This mirrors what `v4l2_ctrl_fill()` does in the kernel.
+            flags: bindings::V4L2_CTRL_FLAG_READ_ONLY | bindings::V4L2_CTRL_FLAG_WRITE_ONLY,
+            elems: 1,
+            elem_size: std::mem::size_of::<u32>() as u32,
+            ..Default::default()
+        }
+    }
+
+    fn test_pattern_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
+        bindings::v4l2_query_ext_ctrl {
+            id: bindings::V4L2_CID_TEST_PATTERN,
+            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_MENU,
+            name: ctrl_name("Test Pattern").map(|b| b as i8),
+            minimum: TestPattern::MIN as i64,
+            maximum: TestPattern::MAX as i64,
+            step: 1,
+            default_value: TestPattern::DEFAULT as i64,
+            flags: 0,
+            elems: 1,
+            elem_size: std::mem::size_of::<u32>() as u32,
+            ..Default::default()
+        }
+    }
+
+    /// Builds the `V4L2_EVENT_CTRL` payload describing the current state of `id`.
+    fn ctrl_event(&self, id: u32) -> IoctlResult<bindings::v4l2_event> {
+        let mut event = bindings::v4l2_event {
+            type_: bindings::V4L2_EVENT_CTRL,
+            id,
+            ..Default::default()
+        };
+        match id {
+            CID_LENS_FACING => {
+                event.u.ctrl.type_ = bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER;
+                event.u.ctrl.__bindgen_anon_1.value = self.lens_facing as i32;
+                event.u.ctrl.minimum = LensFacing::Front as i32;
+                event.u.ctrl.maximum = LensFacing::External as i32;
+                event.u.ctrl.step = 1;
+                event.u.ctrl.default_value = LensFacing::Front as i32;
+            }
+            bindings::V4L2_CID_TEST_PATTERN => {
+                event.u.ctrl.type_ = bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_MENU;
+                event.u.ctrl.__bindgen_anon_1.value = self.current_pattern as i32;
+                event.u.ctrl.minimum = TestPattern::MIN;
+                event.u.ctrl.maximum = TestPattern::MAX;
+                event.u.ctrl.step = 1;
+                event.u.ctrl.default_value = TestPattern::DEFAULT as i32;
+            }
+            _ => return Err(libc::EINVAL),
+        }
+        // Listeners gate on this mask, so an event without it is silently ignored.
+        event.u.ctrl.changes = bindings::V4L2_EVENT_CTRL_CH_VALUE;
+        Ok(event)
+    }
+
+    /// Applies `pattern`, signalling subscribers if the value actually changed.
+    fn set_test_pattern(&mut self, session_id: u32, pattern: TestPattern) -> IoctlResult<()> {
+        if self.current_pattern == pattern {
+            return Ok(());
+        }
+        self.current_pattern = pattern;
+        let event = self.ctrl_event(bindings::V4L2_CID_TEST_PATTERN)?;
+        self.evt_queue
+            .send_event(V4l2Event::Event(SessionEvent::new(session_id, event)));
+        Ok(())
+    }
+
+    /// Checks that every control in `ctrl_array` can be written with the requested value,
+    /// pointing `error_idx` at the offending control on failure.
+    fn validate_ext_ctrls(
+        ctrls: &mut bindings::v4l2_ext_controls,
+        ctrl_array: &[bindings::v4l2_ext_control],
+    ) -> IoctlResult<()> {
+        for (idx, ctrl) in ctrl_array.iter().enumerate() {
+            let result = match ctrl.id {
+                CID_LENS_FACING | bindings::V4L2_CID_IMAGE_PROC_CLASS => Err(libc::EACCES),
+                bindings::V4L2_CID_TEST_PATTERN => {
+                    // SAFETY: this is an integer control, so the guest-provided payload is
+                    // in the `value` arm of the union.
+                    TestPattern::try_from(unsafe { ctrl.__bindgen_anon_1.value }).map(|_| ())
+                }
+                _ => Err(libc::EINVAL),
+            };
+            if let Err(err) = result {
+                ctrls.error_idx = idx as u32;
+                return Err(err);
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Copies `name` into a NUL-padded, fixed-size V4L2 control name buffer, truncating if
+/// it does not fit.
+fn ctrl_name(name: &str) -> [u8; 32] {
+    let mut buf = [0u8; 32];
+    let bytes = name.as_bytes();
+    let len = std::cmp::min(bytes.len(), buf.len() - 1);
+    buf[..len].copy_from_slice(&bytes[..len]);
+    buf
 }
 
 impl<Q, HM, Reader, Writer> VirtioMediaDevice<Reader, Writer> for EmulatedCamera<Q, HM>
@@ -714,7 +878,7 @@ where
         let buffer = host_buffer.v4l2_buffer.clone();
 
         if session.streaming {
-            session.process_queued_buffers(&mut self.evt_queue)?;
+            session.process_queued_buffers(&mut self.evt_queue, self.current_pattern)?;
         }
 
         Ok(buffer)
@@ -726,7 +890,7 @@ where
         }
         session.streaming = true;
 
-        session.process_queued_buffers(&mut self.evt_queue)?;
+        session.process_queued_buffers(&mut self.evt_queue, self.current_pattern)?;
 
         Ok(())
     }
@@ -828,16 +992,86 @@ where
         id: CtrlId,
         flags: QueryCtrlFlags,
     ) -> IoctlResult<bindings::v4l2_query_ext_ctrl> {
-        let id: u32 = unsafe { std::mem::transmute(id) };
-        // If V4L2_CTRL_FLAG_NEXT_CTRL present returns the first control with a higher ID.
+        let requested_id: u32 = unsafe { std::mem::transmute(id) };
+
         if flags.contains(QueryCtrlFlags::NEXT) {
-            if id < CID_LENS_FACING {
+            if requested_id < CID_LENS_FACING {
                 return Ok(self.lens_facing_query_ext_ctrl());
+            } else if requested_id < bindings::V4L2_CID_IMAGE_PROC_CLASS {
+                return Ok(self.image_proc_class_query_ext_ctrl());
+            } else if requested_id < bindings::V4L2_CID_TEST_PATTERN {
+                return Ok(self.test_pattern_query_ext_ctrl());
             }
-        } else if id == CID_LENS_FACING {
-            return Ok(self.lens_facing_query_ext_ctrl());
+        } else {
+            match requested_id {
+                CID_LENS_FACING => return Ok(self.lens_facing_query_ext_ctrl()),
+                bindings::V4L2_CID_IMAGE_PROC_CLASS => {
+                    return Ok(self.image_proc_class_query_ext_ctrl());
+                }
+                bindings::V4L2_CID_TEST_PATTERN => {
+                    return Ok(self.test_pattern_query_ext_ctrl());
+                }
+                _ => {}
+            }
         }
-        return Err(libc::EINVAL);
+
+        Err(libc::EINVAL)
+    }
+
+    fn querymenu(
+        &mut self,
+        _session: &Self::Session,
+        id: u32,
+        index: u32,
+    ) -> IoctlResult<bindings::v4l2_querymenu> {
+        if id != bindings::V4L2_CID_TEST_PATTERN {
+            return Err(libc::EINVAL);
+        }
+        // Menu indices are the `TestPattern` discriminants, so the enum decides the range.
+        let pattern = i32::try_from(index)
+            .ok()
+            .and_then(|index| TestPattern::try_from(index).ok())
+            .ok_or(libc::EINVAL)?;
+
+        Ok(bindings::v4l2_querymenu {
+            id,
+            index,
+            __bindgen_anon_1: bindings::v4l2_querymenu__bindgen_ty_1 {
+                name: ctrl_name(pattern.name()),
+            },
+            ..Default::default()
+        })
+    }
+
+    fn g_ctrl(&mut self, _session: &Self::Session, id: u32) -> IoctlResult<bindings::v4l2_control> {
+        let value = match id {
+            CID_LENS_FACING => self.lens_facing as i32,
+            bindings::V4L2_CID_TEST_PATTERN => self.current_pattern as i32,
+            bindings::V4L2_CID_IMAGE_PROC_CLASS => return Err(libc::EACCES),
+            _ => return Err(libc::EINVAL),
+        };
+        Ok(bindings::v4l2_control { id, value })
+    }
+
+    fn s_ctrl(
+        &mut self,
+        session: &mut Self::Session,
+        id: u32,
+        value: i32,
+    ) -> IoctlResult<bindings::v4l2_control> {
+        match id {
+            CID_LENS_FACING | bindings::V4L2_CID_IMAGE_PROC_CLASS => Err(libc::EACCES),
+            bindings::V4L2_CID_TEST_PATTERN => {
+                let pattern = TestPattern::try_from(value)?;
+                self.set_test_pattern(session.id, pattern)?;
+                // Report back the value that was actually applied.
+                Ok(bindings::v4l2_control {
+                    id,
+                    value: pattern as i32,
+                })
+            }
+            _ => Err(libc::EINVAL),
+        }
     }
 
     fn g_ext_ctrls(
@@ -848,16 +1082,21 @@ where
         ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
         _user_regions: Vec<Vec<SgEntry>>,
     ) -> IoctlResult<()> {
-        for ctrl in ctrl_array {
-            match ctrl.id {
-                CID_LENS_FACING => {
-                    ctrl.__bindgen_anon_1.value = self.lens_facing as i32;
+        for (idx, ctrl) in ctrl_array.iter_mut().enumerate() {
+            let value = match ctrl.id {
+                CID_LENS_FACING => self.lens_facing as i32,
+                bindings::V4L2_CID_TEST_PATTERN => self.current_pattern as i32,
+                // A control class holds no value that could be read back.
+                bindings::V4L2_CID_IMAGE_PROC_CLASS => {
+                    ctrls.error_idx = idx as u32;
+                    return Err(libc::EACCES);
                 }
                 _ => {
-                    ctrls.error_idx = ctrls.count;
+                    ctrls.error_idx = idx as u32;
                     return Err(libc::EINVAL);
                 }
-            }
+            };
+            ctrl.__bindgen_anon_1.value = value;
         }
         Ok(())
     }
@@ -870,32 +1109,31 @@ where
         ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
         _user_regions: Vec<Vec<SgEntry>>,
     ) -> IoctlResult<()> {
-        for (idx, ctrl) in ctrl_array.iter_mut().enumerate() {
-            ctrls.error_idx = idx as u32;
-            let err_code = match ctrl.id {
-                CID_LENS_FACING => libc::EACCES,
-                _ => libc::EINVAL,
-            };
-            return Err(err_code);
-        }
-        Ok(())
+        Self::validate_ext_ctrls(ctrls, ctrl_array)
     }
 
     fn s_ext_ctrls(
         &mut self,
-        _session: &mut Self::Session,
+        session: &mut Self::Session,
         _which: CtrlWhich,
         ctrls: &mut bindings::v4l2_ext_controls,
         ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
         _user_regions: Vec<Vec<SgEntry>>,
     ) -> IoctlResult<()> {
-        for ctrl in ctrl_array {
-            ctrls.error_idx = ctrls.count;
-            let err_code = match ctrl.id {
-                CID_LENS_FACING => libc::EACCES,
-                _ => libc::EINVAL,
-            };
-            return Err(err_code);
+        // Validate the whole request before applying any of it, so a rejected control
+        // cannot leave the device half-updated.
+        Self::validate_ext_ctrls(ctrls, ctrl_array)?;
+
+        for ctrl in ctrl_array.iter_mut() {
+            if ctrl.id != bindings::V4L2_CID_TEST_PATTERN {
+                continue;
+            }
+            // SAFETY: this is an integer control, so the guest-provided payload is in the
+            // `value` arm of the union.
+            let pattern = TestPattern::try_from(unsafe { ctrl.__bindgen_anon_1.value })?;
+            self.set_test_pattern(session.id, pattern)?;
+            // Report back the value that was actually applied.
+            ctrl.__bindgen_anon_1.value = pattern as i32;
         }
         Ok(())
     }
@@ -909,22 +1147,14 @@ where
         if !flags.contains(SubscribeEventFlags::SEND_INITIAL) {
             return Err(libc::EINVAL);
         }
-        match event {
-            V4l2EventType::Ctrl(id) => match id {
-                CID_LENS_FACING => {
-                    let ctrl_event = bindings::v4l2_event {
-                        type_: bindings::V4L2_EVENT_CTRL,
-                        id: CID_LENS_FACING,
-                        ..Default::default()
-                    };
-                    self.evt_queue
-                        .send_event(V4l2Event::Event(SessionEvent::new(session.id, ctrl_event)));
-                    Ok(())
-                }
-                _ => Err(libc::EINVAL),
-            },
-            _ => Err(libc::EINVAL),
-        }
+        let V4l2EventType::Ctrl(id) = event else {
+            return Err(libc::EINVAL);
+        };
+
+        let ctrl_event = self.ctrl_event(id)?;
+        self.evt_queue
+            .send_event(V4l2Event::Event(SessionEvent::new(session.id, ctrl_event)));
+        Ok(())
     }
 
     fn unsubscribe_event(
@@ -932,10 +1162,53 @@ where
         _session: &mut Self::Session,
         event: bindings::v4l2_event_subscription,
     ) -> IoctlResult<()> {
-        return if event.type_ == bindings::V4L2_EVENT_CTRL && event.id == CID_LENS_FACING {
-            Ok(())
-        } else {
-            Err(libc::EINVAL)
-        };
+        if event.type_ != bindings::V4L2_EVENT_CTRL {
+            return Err(libc::EINVAL);
+        }
+        match event.id {
+            CID_LENS_FACING | bindings::V4L2_CID_TEST_PATTERN => Ok(()),
+            _ => Err(libc::EINVAL),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every index between `MIN` and `MAX` is advertised as a menu entry, so each one has
+    /// to map back to a pattern with a name and a generator.
+    #[test]
+    fn every_advertised_menu_index_maps_to_a_pattern() {
+        for value in TestPattern::MIN..=TestPattern::MAX {
+            let pattern = TestPattern::try_from(value).expect("advertised index must be valid");
+            assert_eq!(pattern as i32, value);
+            assert!(!pattern.name().is_empty());
+        }
+    }
+
+    #[test]
+    fn out_of_range_menu_index_is_rejected() {
+        assert_eq!(
+            TestPattern::try_from(TestPattern::MIN - 1),
+            Err(libc::ERANGE)
+        );
+        assert_eq!(
+            TestPattern::try_from(TestPattern::MAX + 1),
+            Err(libc::ERANGE)
+        );
+    }
+
+    #[test]
+    fn ctrl_name_is_nul_padded() {
+        let name = ctrl_name("Test Pattern");
+        assert_eq!(&name[..12], b"Test Pattern");
+        assert!(name[12..].iter().all(|byte| *byte == 0));
+    }
+
+    #[test]
+    fn ctrl_name_truncates_and_stays_nul_terminated() {
+        let name = ctrl_name("This control name is definitely far too long to fit");
+        assert_eq!(name[31], 0);
     }
 }
