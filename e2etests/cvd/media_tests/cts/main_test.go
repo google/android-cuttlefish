@@ -31,8 +31,8 @@ func TestEmulatedCamera(t *testing.T) {
 			},
 			Create: e2etests.CreateArgs{
 				Args: []string{
-					"--media=type=v4l2_emulated_camera_splane,lens_facing=BACK",
-					"--media=type=v4l2_emulated_camera_splane,lens_facing=FRONT",
+					"--media=type=v4l2_emulated_camera_mplane,lens_facing=BACK",
+					"--media=type=v4l2_emulated_camera_mplane,lens_facing=FRONT",
 				},
 			},
 		},
