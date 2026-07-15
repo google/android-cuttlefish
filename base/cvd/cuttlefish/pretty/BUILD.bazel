@@ -92,7 +92,6 @@ cf_cc_library(
 cf_cc_test(
     name = "pretty_test",
     srcs = ["pretty_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/pretty",
         "//cuttlefish/pretty:map",
@@ -102,7 +101,6 @@ cf_cc_test(
         "//cuttlefish/pretty:unique_ptr",
         "//cuttlefish/pretty:vector",
         "@abseil-cpp//absl/strings",
-        "@fmt",
     ],
 )
 
