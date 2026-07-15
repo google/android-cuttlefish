@@ -21,6 +21,7 @@
 
 #include "android-base/format.h"  // IWYU pragma: export
 #include "android-base/result.h"  // IWYU pragma: export
+#include "fmt/format.h"           // IWYU pragma: keep: preprocessor
 
 #include "cuttlefish/result/error_type.h"
 #include "cuttlefish/result/result_type.h"  // IWYU pragma: export
