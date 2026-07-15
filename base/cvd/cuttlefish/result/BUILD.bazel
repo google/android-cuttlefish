@@ -8,12 +8,10 @@ cf_cc_library(
     name = "error_type",
     srcs = ["error_type.cc"],
     hdrs = ["error_type.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/ansi_codes",
         "//cuttlefish/ansi_codes:should_color",
         "//libbase",
-        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
     ],
