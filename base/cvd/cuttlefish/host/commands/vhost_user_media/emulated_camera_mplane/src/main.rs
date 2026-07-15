@@ -24,6 +24,7 @@ use virtio_media::protocol::VirtioMediaDeviceConfig;
 use vm_memory::{GuestMemoryAtomic, GuestMemoryMmap};
 
 mod device;
+mod pattern;
 use device::LensFacing;
 
 #[derive(Debug, Error)]
