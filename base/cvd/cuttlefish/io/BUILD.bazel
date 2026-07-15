@@ -354,11 +354,9 @@ cf_cc_library(
 cf_cc_test(
     name = "serialize_disjoint_range_set_test",
     srcs = ["serialize_disjoint_range_set_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/io:disjoint_range_set",
         "//cuttlefish/io:serialize_disjoint_range_set",
-        "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
     ],
 )
