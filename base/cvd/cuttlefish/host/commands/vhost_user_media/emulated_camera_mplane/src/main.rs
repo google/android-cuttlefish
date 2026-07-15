@@ -62,7 +62,9 @@ impl TryFrom<CmdLineArgs> for Config {
     type Error = Error;
 
     fn try_from(args: CmdLineArgs) -> Result<Self> {
-        let lens_facing = args.lens_facing.parse::<LensFacing>()
+        let lens_facing = args
+            .lens_facing
+            .parse::<LensFacing>()
             .map_err(Error::InvalidArgument)?;
         Ok(Config {
             socket_path: args.socket_path,

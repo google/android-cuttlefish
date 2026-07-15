@@ -21,6 +21,7 @@ use std::io::Write;
 use std::os::fd::AsFd;
 use std::os::fd::BorrowedFd;
 
+use std::str::FromStr;
 use v4l2r::PixelFormat;
 use v4l2r::QueueType;
 use v4l2r::bindings;
@@ -55,7 +56,6 @@ use virtio_media::protocol::SgEntry;
 use virtio_media::protocol::V4l2Event;
 use virtio_media::protocol::V4l2Ioctl;
 use virtio_media::protocol::VIRTIO_MEDIA_MMAP_FLAG_RW;
-use std::str::FromStr;
 
 /// https://developer.android.com/reference/android/hardware/camera2/CameraMetadata#LENS_FACING_FRONT
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -73,7 +73,10 @@ impl FromStr for LensFacing {
             "FRONT" => Ok(LensFacing::Front),
             "BACK" => Ok(LensFacing::Back),
             "EXTERNAL" => Ok(LensFacing::External),
-            _ => Err(format!("Invalid lens facing: {}. Expected FRONT, BACK, or EXTERNAL", s)),
+            _ => Err(format!(
+                "Invalid lens facing: {}. Expected FRONT, BACK, or EXTERNAL",
+                s
+            )),
         }
     }
 }
