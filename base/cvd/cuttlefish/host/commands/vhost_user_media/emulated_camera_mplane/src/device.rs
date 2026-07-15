@@ -14,7 +14,6 @@
 
 use anyhow::{Context, Result as AnyhowResult};
 use std::collections::VecDeque;
-use std::io::BufWriter;
 use std::io::Result as IoResult;
 use std::io::Seek;
 use std::io::SeekFrom;
@@ -28,6 +27,9 @@ use std::time::Duration;
 use vmm_sys_util::eventfd::{EFD_NONBLOCK, EventFd};
 use vmm_sys_util::poll::{PollContext, PollToken};
 use vmm_sys_util::timerfd::TimerFd;
+
+use crate::pattern::FramePattern;
+use crate::pattern::pulse::Pulse;
 
 use v4l2r::PixelFormat;
 use v4l2r::QueueType;
@@ -126,13 +128,13 @@ impl Default for Gain {
 
 /// State of all camera controls.
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct CameraControls {
-    lens_facing: LensFacing,
-    gain: Gain,
+pub struct CameraControls {
+    pub lens_facing: LensFacing,
+    pub gain: Gain,
 }
 
 impl CameraControls {
-    fn new(lens_facing: LensFacing) -> Self {
+    pub fn new(lens_facing: LensFacing) -> Self {
         Self {
             lens_facing,
             gain: Gain::default(),
@@ -289,37 +291,18 @@ impl VirtioMediaDeviceSession for EmulatedCameraSession {
 }
 
 impl EmulatedCameraSession {
-    fn write_pattern<WY: std::io::Write, WU: std::io::Write, WV: std::io::Write>(
+    fn write_pattern(
         iteration: u64,
         controls: &CameraControls,
         width: u32,
         height: u32,
-        mut sink_y: WY,
-        mut sink_u: WU,
-        mut sink_v: WV,
+        sink_y: &mut dyn Write,
+        sink_u: &mut dyn Write,
+        sink_v: &mut dyn Write,
     ) -> IoctlResult<()> {
-        let mut writer_y = BufWriter::new(&mut sink_y);
-        let mut writer_u = BufWriter::new(&mut sink_u);
-        let mut writer_v = BufWriter::new(&mut sink_v);
-        // The base Y (luma) value changes over iterations to create a moving pattern.
-        let base_y = (iteration % 256) as u8;
-        // Apply gain to the luma channel.
-        // Gain::MIN (100) represents 1.0x gain. Higher values scale the brightness.
-        // We clamp the result to 255.0 to avoid overflow.
-        let y =
-            ((base_y as f32) * (controls.gain.value() as f32 / Gain::MIN as f32)).min(255.0) as u8;
-        let u = ((iteration + 64) % 256) as u8;
-        let v = ((iteration + 128) % 256) as u8;
-        for _ in 0..(width * height) {
-            writer_y.write_all(&[y]).map_err(|_| libc::EIO)?;
-        }
-        for _ in 0..(width * height / 4) {
-            writer_u.write_all(&[u]).map_err(|_| libc::EIO)?;
-        }
-        for _ in 0..(width * height / 4) {
-            writer_v.write_all(&[v]).map_err(|_| libc::EIO)?;
-        }
-        Ok(())
+        Pulse
+            .write(iteration, controls, width, height, sink_y, sink_u, sink_v)
+            .map_err(|_| libc::EIO)
     }
 
     fn drain_diag(&self) {
@@ -526,9 +509,15 @@ fn spawn_frame_worker<Q: VirtioMediaEventQueue + Send + 'static>(
             };
 
             // Release the lock during pattern rendering:
-            if let (Some(fy), Some(fu), Some(fv)) = (file_y, file_u, file_v) {
+            if let (Some(mut fy), Some(mut fu), Some(mut fv)) = (file_y, file_u, file_v) {
                 if let Err(e) = EmulatedCameraSession::write_pattern(
-                    iteration, &controls, width, height, fy, fu, fv,
+                    iteration,
+                    &controls,
+                    width,
+                    height,
+                    &mut fy,
+                    &mut fu,
+                    &mut fv,
                 ) {
                     send_warn(format!("Failed to write pattern: errno {}", e));
                 }
