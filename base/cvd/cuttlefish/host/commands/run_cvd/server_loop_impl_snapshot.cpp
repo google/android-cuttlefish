@@ -191,8 +191,8 @@ static Result<void> RunAdbShellCommand(
 Result<void> ServerLoopImpl::HandleSuspend(ProcessMonitor& process_monitor) {
   // right order: guest -> host
   VLOG(0) << "Suspending the guest..";
-  CF_EXPECT(
-      RunAdbShellCommand(instance_, {"/vendor/bin/snapshot_hook_pre_suspend"}));
+  CF_EXPECT(RunAdbShellCommand(
+      instance_, {"su", "root", "/vendor/bin/snapshot_hook_pre_suspend"}));
   CF_EXPECT(SuspendGuest());
   VLOG(0) << "The guest is suspended.";
   CF_EXPECT(process_monitor.SuspendMonitoredProcesses(),
@@ -208,8 +208,8 @@ Result<void> ServerLoopImpl::HandleResume(ProcessMonitor& process_monitor) {
   VLOG(0) << "The host processes are resumed.";
   VLOG(0) << "Resuming the guest..";
   CF_EXPECT(ResumeGuest());
-  CF_EXPECT(
-      RunAdbShellCommand(instance_, {"/vendor/bin/snapshot_hook_post_resume"}));
+  CF_EXPECT(RunAdbShellCommand(
+      instance_, {"su", "root", "/vendor/bin/snapshot_hook_post_resume"}));
   VLOG(0) << "The guest resumed.";
   return {};
 }
