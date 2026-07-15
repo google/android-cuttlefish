@@ -54,12 +54,10 @@ cf_cc_library(
     name = "shared_fd_flag",
     srcs = ["shared_fd_flag.cpp"],
     hdrs = ["shared_fd_flag.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         ":flag_parser",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )
