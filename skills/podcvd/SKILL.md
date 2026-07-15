@@ -18,11 +18,14 @@ This skill fully orchestrates the lifecycle of Cuttlefish instances and their gr
 
 ## Prerequisites
 
-* **Package Requirement**: `podcvd` is delivered via the `cuttlefish-podcvd` Debian package.
-* **Initial Setup**: To use `podcvd` successfully, the `podcvd-setup` binary (installed with the package) **MUST** be executed at least once after installation to perform the necessary initialization.
 * **Required Build Artifacts**: Launching Cuttlefish instances requires appropriate Cuttlefish host tools (host binaries and libraries) and Android device images (such as system.img, boot.img, and vendor.img):
   * **Inside an Android Workspace**: You must initialize the environment (e.g., `lunch <target>`) and build the required targets (e.g., `m`) to ensure that valid Cuttlefish host tools (inside `ANDROID_HOST_OUT`) and Android device images (inside `ANDROID_PRODUCT_OUT`) are generated.
   * **Outside an Android Workspace**: If you are not in an active build environment, you must ensure that compatible, pre-built Cuttlefish host tools and Android device images are already present in the working directory or are otherwise accessible via the relevant environment paths (like `ANDROID_HOST_OUT` and `ANDROID_PRODUCT_OUT`).
+
+## Setup & Installation Guidance
+
+* **Missing `podcvd` Command**: If `podcvd` is not installed (e.g., `which podcvd` fails), install the package using `sudo apt install cuttlefish-podcvd -y`.
+* **Host Initialization Required**: If executing `podcvd` fails due to an unconfigured host (e.g., explicit prompts to run `podcvd-setup` or missing device permissions such as `/dev/kvm`), execute `podcvd-setup` to initialize the host.
 
 ## Mandatory Environment Configuration (Client ID Tracking)
 
