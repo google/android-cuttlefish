@@ -41,6 +41,7 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   Result<std::vector<Flag>> Flags(const CommandRequest&) override;
 
   bool RequiresDeviceExists() const override { return true; }
+  bool RequiresHostConfiguration() const override { return true; }
 
  private:
   Result<void> LaunchSingleInstance(LocalInstance& instance,

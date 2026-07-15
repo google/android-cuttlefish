@@ -36,7 +36,6 @@ class CvdSetupHandler : public CvdCommandHandler {
   std::string SummaryHelp() const override;
   std::vector<HelpParagraph> Description() const override;
   bool RequiresDeviceExists() const override;
-  bool RequiresHostConfiguration() const override;
 };
 
 }  // namespace cuttlefish

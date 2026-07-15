@@ -42,6 +42,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
   std::string SummaryHelp() const override;
   std::vector<HelpParagraph> Description() const override;
   Result<std::vector<Flag>> Flags(const CommandRequest&) override;
+  bool RequiresHostConfiguration() const override { return true; }
 
   static std::vector<HelpParagraph> CommonCommandDescription();
 

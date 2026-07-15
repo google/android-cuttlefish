@@ -35,7 +35,6 @@ class CvdHelpHandler : public CvdCommandHandler {
   std::vector<std::string> CmdList() const override;
 
   std::string SummaryHelp() const override;
-  bool RequiresHostConfiguration() const override;
   std::vector<HelpParagraph> Description() const override;
 
  private:

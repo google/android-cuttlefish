@@ -85,6 +85,4 @@ std::vector<HelpParagraph> CvdSetupHandler::Description() const {
 
 bool CvdSetupHandler::RequiresDeviceExists() const { return false; }
 
-bool CvdSetupHandler::RequiresHostConfiguration() const { return false; }
-
 }  // namespace cuttlefish
