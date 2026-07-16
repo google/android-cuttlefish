@@ -26,11 +26,12 @@
 namespace cuttlefish {
 
 enum class PsColumns {
-  kNames = 0,
+  kGroups = 0,
+  kNames,
   kId,
   kStatus,
   kCreated,
-  kPorts,
+  kAdbSerial,
   kWebAccess,
 };
 
