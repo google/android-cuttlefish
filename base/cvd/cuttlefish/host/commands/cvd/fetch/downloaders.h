@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 
-#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 #include "cuttlefish/result/result.h"
