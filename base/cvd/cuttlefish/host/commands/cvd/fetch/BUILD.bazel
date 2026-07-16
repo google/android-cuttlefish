@@ -170,9 +170,7 @@ cf_cc_library(
     name = "fetch_context",
     srcs = ["fetch_context.cc"],
     hdrs = ["fetch_context.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/cvd/fetch:builds",
         "//cuttlefish/host/commands/cvd/fetch:de_android_sparse",
@@ -186,7 +184,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:build_api_zip",
         "//cuttlefish/host/libs/zip:zip_file",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
-        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
