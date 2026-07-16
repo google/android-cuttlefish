@@ -85,6 +85,22 @@ std::vector<std::string> GetPossibleCommands(
   }
   return possibilities;
 }
+
+bool HandleDeprecatedCommands(const CommandRequest& request) {
+  if (request.Subcommand() == "acloud") {
+    std::cerr << "If you are seeing this error when you tried to run `acloud` "
+                 "in an Android lunch environment, you are likely running into "
+                 "an error with an outdated `acloud_translator` symlink.  You "
+                 "can verify "
+                 "with `where acloud`, and there should be two results.\n\nTo "
+                 "fix, run `rm $ANDROID_HOST_OUT/bin/acloud` to remove the "
+                 "deprecated `acloud_translator` binary symlink.  `m clean; m` "
+                 "should also remove the symlink.\n";
+    return true;
+  }
+  return false;
+}
+
 void SuggestAlternativeCommands(
     const CommandRequest& request,
     const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers) {
@@ -104,7 +120,9 @@ void SuggestAlternativeCommands(
 void HandleNoMatches(
     const CommandRequest& request,
     const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers) {
-  SuggestAlternativeCommands(request, handlers);
+  if (!HandleDeprecatedCommands(request)) {
+    SuggestAlternativeCommands(request, handlers);
+  }
 }
 
 }  //  namespace
