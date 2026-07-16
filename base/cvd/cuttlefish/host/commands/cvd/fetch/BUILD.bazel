@@ -1,11 +1,13 @@
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("//:build_variables.bzl", "COPTS")
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
+
+cf_build_test(name = "fetch_build_test")
 
 cf_cc_library(
     name = "auto_login",
@@ -35,17 +37,15 @@ cf_cc_library(
     hdrs = [
         "build_api_credentials.h",
     ],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
-        "//cuttlefish/host/commands/cvd/fetch:credential_flags",
         "//cuttlefish/host/libs/web:credential_source",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@jsoncpp",
     ],
 )
 
@@ -53,7 +53,6 @@ cf_cc_library(
     name = "build_api_flags",
     srcs = ["build_api_flags.cc"],
     hdrs = ["build_api_flags.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cache",
@@ -61,7 +60,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:android_build_url",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -125,14 +123,11 @@ cf_cc_library(
     name = "downloaders",
     srcs = ["downloaders.cc"],
     hdrs = ["downloaders.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/commands/cvd/fetch:build_api_credentials",
         "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
-        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/libs/web:android_build_api",
-        "//cuttlefish/host/libs/web:android_build_api_key",
         "//cuttlefish/host/libs/web:android_build_url",
         "//cuttlefish/host/libs/web:build_api",
         "//cuttlefish/host/libs/web:caching_build_api",
@@ -175,9 +170,7 @@ cf_cc_library(
     name = "fetch_context",
     srcs = ["fetch_context.cc"],
     hdrs = ["fetch_context.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/cvd/fetch:builds",
         "//cuttlefish/host/commands/cvd/fetch:de_android_sparse",
@@ -191,7 +184,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:build_api_zip",
         "//cuttlefish/host/libs/zip:zip_file",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
-        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
@@ -204,7 +196,6 @@ cf_cc_library(
     srcs = ["fetch_cvd.cc"],
     hdrs = ["fetch_cvd.h"],
     copts = COPTS + ["-Werror=sign-compare"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:contains",
@@ -218,7 +209,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
         "//cuttlefish/host/commands/cvd/fetch:host_package",
         "//cuttlefish/host/commands/cvd/fetch:host_tools_target",
-        "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/fetch:target_directories",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:fetcher_config",
@@ -229,7 +219,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:chrome_os_build_string",
         "//cuttlefish/host/libs/web:luci_build_api",
         "//cuttlefish/host/libs/web/http_client:curl_global_init",
-        "//cuttlefish/host/libs/zip:zip_string",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/io",
         "//cuttlefish/io:string",
@@ -243,15 +232,12 @@ cf_cc_library(
     name = "fetch_cvd_parser",
     srcs = ["fetch_cvd_parser.cc"],
     hdrs = ["fetch_cvd_parser.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
         "//cuttlefish/host/commands/cvd/fetch:vector_flags",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )
