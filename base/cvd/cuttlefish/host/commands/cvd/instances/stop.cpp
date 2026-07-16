@@ -27,7 +27,6 @@
 #include <vector>
 
 #include "absl/log/log.h"
-#include "absl/strings/str_join.h"
 #include "android-base/file.h"
 #include "fmt/core.h"
 #include "fmt/ranges.h"
@@ -61,22 +60,6 @@ static Command CreateStopCvdCommand(
     command.AddEnvironmentVariable(key, value);
   }
   return command;
-}
-
-Result<void> RunStopCvdCmd(
-    const std::string& stopper_path,
-    const std::unordered_map<std::string, std::string>& env,
-    const std::vector<std::string>& args) {
-  Command stop_cmd = CreateStopCvdCommand(stopper_path, env, args);
-
-  LOG(INFO) << "Running " << stop_cmd.ToString();
-  Result<std::string> cmd_res = RunAndCaptureStdout(std::move(stop_cmd));
-  if (!cmd_res.ok()) {
-    LOG(ERROR) << "Failed to run " << stopper_path;
-    CF_EXPECT(std::move(cmd_res));
-  }
-  VLOG(1) << "\"" << stopper_path << " successfully ";
-  return {};
 }
 
 Result<void> RunStopCvdAll(bool clear_runtime_dirs) {
@@ -250,45 +233,46 @@ Result<void> ForcefullyStopGroup(const uid_t any_id_in_group) {
 }
 
 Result<void> RunStopCvd(StopCvdParams params) {
-  const auto& stopper_path = params.bin_path;
-  std::unordered_map<std::string, std::string> stop_cvd_envs;
-  stop_cvd_envs["HOME"] = params.home_dir;
   // stop_cvd is located at $ANDROID_HOST_OUT/bin/stop_cvd
-  std::string android_host_out =
-      android::base::Dirname(android::base::Dirname(stopper_path));
-  stop_cvd_envs[kAndroidHostOut] = android_host_out;
-  stop_cvd_envs[kAndroidSoongHostOut] = android_host_out;
-  auto config_file_path = CF_EXPECT(GetCuttlefishConfigPath(params.home_dir));
-  stop_cvd_envs[kCuttlefishConfigEnvVarName] = config_file_path;
-  std::vector<std::string> args;
+  const std::string android_host_out =
+      android::base::Dirname(android::base::Dirname(params.bin_path));
+  const std::unordered_map<std::string, std::string> stop_cvd_envs = {
+      std::make_pair("HOME", params.home_dir),
+      std::make_pair(kAndroidHostOut, android_host_out),
+      std::make_pair(kAndroidSoongHostOut, android_host_out),
+      std::make_pair(kCuttlefishConfigEnvVarName,
+                     CF_EXPECT(GetCuttlefishConfigPath(params.home_dir))),
+  };
+
   std::string wait_flag =
       fmt::format("--wait_for_launcher={}", params.wait_for_launcher_secs);
-  args.push_back(wait_flag);
+  std::vector<std::string> args = {wait_flag};
   if (params.clear_runtime_dirs) {
-    args.push_back("--clear_instance_dirs=true");
+    args.emplace_back("--clear_instance_dirs=true");
   }
   if (!params.instance_nums.empty()) {
-    args.push_back(fmt::format("--instance_nums={}",
-                               absl::StrJoin(params.instance_nums, ",")));
+    args.emplace_back(fmt::format("--instance_nums={}",
+                                  fmt::join(params.instance_nums, ",")));
   }
-  Result<void> cmd_res = RunStopCvdCmd(stopper_path, stop_cvd_envs, args);
+
+  Result<std::string> cmd_res = RunAndCaptureStdout(
+      CreateStopCvdCommand(params.bin_path, stop_cvd_envs, args));
   if (cmd_res.ok()) {
     return {};
   }
   /**
-   * --clear_instance_dirs may not be available in old branches. This causes
-   * stop_cvd to terminate with a non-zero exit code due to a parsing error. Try
-   * again without that flag.
+   * --clear_instance_dirs or --instance_nums may not be available in old
+   * branches. This causes stop_cvd to terminate with a non-zero exit code due
+   * to a parsing error. Try again without that flag.
    */
-  if (!params.clear_runtime_dirs) {
+  if (!params.clear_runtime_dirs && !params.instance_nums.empty()) {
     CF_EXPECT(std::move(cmd_res));
   }
-  // TODO(kwstephenkim): deletes manually if `stop_cvd --clear_instance_dirs`
-  // failed.
-  LOG(ERROR) << "Perhaps --clear_instance_dirs is not supported.";
+  LOG(ERROR) << "--clear_instance_dirs or --instance_nums is not supported.";
   LOG(ERROR) << "Trying again without it";
 
-  CF_EXPECT(RunStopCvdCmd(stopper_path, stop_cvd_envs, {wait_flag}));
+  CF_EXPECT(RunAndCaptureStdout(
+      CreateStopCvdCommand(params.bin_path, stop_cvd_envs, {wait_flag})));
   return {};
 }
 }  // namespace cuttlefish
