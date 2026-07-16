@@ -53,7 +53,6 @@ cf_cc_library(
     name = "build_api_flags",
     srcs = ["build_api_flags.cc"],
     hdrs = ["build_api_flags.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cache",
@@ -61,7 +60,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:android_build_url",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )
