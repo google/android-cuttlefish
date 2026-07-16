@@ -20,6 +20,8 @@
 #include <utility>
 
 #include "absl/log/log.h"
+#include "json/reader.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
