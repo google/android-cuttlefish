@@ -196,7 +196,6 @@ cf_cc_library(
     srcs = ["fetch_cvd.cc"],
     hdrs = ["fetch_cvd.h"],
     copts = COPTS + ["-Werror=sign-compare"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:contains",
@@ -210,7 +209,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
         "//cuttlefish/host/commands/cvd/fetch:host_package",
         "//cuttlefish/host/commands/cvd/fetch:host_tools_target",
-        "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/fetch:target_directories",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:fetcher_config",
@@ -221,7 +219,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:chrome_os_build_string",
         "//cuttlefish/host/libs/web:luci_build_api",
         "//cuttlefish/host/libs/web/http_client:curl_global_init",
-        "//cuttlefish/host/libs/zip:zip_string",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/io",
         "//cuttlefish/io:string",
