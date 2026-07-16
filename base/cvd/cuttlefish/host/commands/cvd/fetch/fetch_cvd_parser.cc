@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 
-#include <cstddef>
 #include <iostream>
 #include <optional>
 #include <sstream>

@@ -232,15 +232,12 @@ cf_cc_library(
     name = "fetch_cvd_parser",
     srcs = ["fetch_cvd_parser.cc"],
     hdrs = ["fetch_cvd_parser.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
         "//cuttlefish/host/commands/cvd/fetch:vector_flags",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )
