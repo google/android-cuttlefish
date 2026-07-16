@@ -16,10 +16,12 @@
 
 #include "cuttlefish/host/commands/cvd/cli/request_context.h"
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "fmt/format.h"
 #include "fmt/ranges.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -82,6 +84,27 @@ std::vector<std::string> GetPossibleCommands(
     }
   }
   return possibilities;
+}
+void SuggestAlternativeCommands(
+    const CommandRequest& request,
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers) {
+  fmt::print(std::cerr,
+             "Unable to find a matching command for \"cvd {}\".\nMaybe there "
+             "is a typo?  Run `cvd help` for a list of commands.",
+             request.Subcommand());
+  const std::vector<std::string> possible_commands =
+      GetPossibleCommands(request, handlers);
+  std::string addendum;
+  if (!possible_commands.empty()) {
+    fmt::print(std::cerr, "\n\nDid you mean one of:\n\t{}\n",
+               fmt::join(possible_commands, "\n\t"));
+  }
+}
+
+void HandleNoMatches(
+    const CommandRequest& request,
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers) {
+  SuggestAlternativeCommands(request, handlers);
 }
 
 }  //  namespace
@@ -160,17 +183,9 @@ Result<CvdCommandHandler*> RequestHandler(
                "include the exact command that raised the error.");
 
   if (compatible_handlers.size() != 1) {
-    const std::vector<std::string> possible_commands =
-        GetPossibleCommands(request, handlers);
-    std::string addendum;
-    if (!possible_commands.empty()) {
-      addendum = fmt::format("\n\nDid you mean one of:\n\t{}",
-                             fmt::join(possible_commands, "\n\t"));
-    }
-    return CF_ERRF(
-        "Unable to find a matching command for \"cvd {}\".\nMaybe there "
-        "is a typo?  Run `cvd help` for a list of commands.{}",
-        request.Subcommand(), addendum);
+    HandleNoMatches(request, handlers);
+    return CF_ERRF("Unable to find matching command for \"cvd {}\".",
+                   request.Subcommand());
   }
   return compatible_handlers[0];
 }
