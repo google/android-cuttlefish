@@ -40,11 +40,11 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
-        "//cuttlefish/host/commands/cvd/fetch:credential_flags",
         "//cuttlefish/host/libs/web:credential_source",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@jsoncpp",
     ],
 )
 
