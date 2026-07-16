@@ -154,10 +154,10 @@ Result<CvdCommandHandler*> RequestHandler(
     }
   }
 
-  CF_EXPECT(compatible_handlers.size() < 2,
-            "The command matched multiple handlers which should not happen.  "
-            "Please open a bug with the cvd/Cuttlefish team and include the "
-            "exact command that raised the error so it can be fixed.");
+  CF_EXPECT_LE(compatible_handlers.size(), 1,
+               "The command matched multiple handlers, which should not "
+               "happen.  Please open a bug with the Cuttlefish team and "
+               "include the exact command that raised the error.");
 
   if (compatible_handlers.size() != 1) {
     const std::vector<std::string> possible_commands =
