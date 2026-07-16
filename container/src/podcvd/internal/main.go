@@ -65,6 +65,10 @@ func Main(args []string) error {
 		if err := fleetAllCuttlefishHosts(ccm); err != nil {
 			return err
 		}
+	case "ps":
+		if err := psAllCuttlefishHosts(ccm); err != nil {
+			return err
+		}
 	case "cache", "help", "lint", "login", "version":
 		if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
 			return err
@@ -321,6 +325,20 @@ func fleetAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
 	}
 	os.Stdout.Write(append(combinedOutput, '\n'))
 	return nil
+}
+
+func psAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
+	results, err := ExecOnAllCuttlefishHosts(ccm, []string{"cvd", "ps"}, os.Stderr)
+	if err != nil {
+		return err
+	}
+	if len(results) > 0 {
+		return PrintPsOutputs(results, os.Stdout)
+	}
+	if err := CreateToolingHost(ccm); err != nil {
+		return err
+	}
+	return ccm.ExecOnContainer(context.Background(), ToolingContainerName, []string{"cvd", "ps"}, nil, os.Stdout, os.Stderr)
 }
 
 func handleToolingSubcommands(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
