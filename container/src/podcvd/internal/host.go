@@ -15,10 +15,13 @@
 package internal
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net"
@@ -29,6 +32,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -115,6 +119,56 @@ func ExecFetchCmdOnDisposableHost(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 		return fmt.Errorf("failed to stop and remove container: %w", err)
 	}
 	return nil
+}
+
+type HostExecResult struct {
+	GroupName string
+	IP        string
+	Stdout    []byte
+}
+
+func ExecOnAllCuttlefishHosts(ccm CuttlefishContainerManager, subcommandArgs []string, stderr io.Writer) ([]HostExecResult, error) {
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(len(groupNameIpAddrMap))
+	resCh := make(chan HostExecResult, len(groupNameIpAddrMap))
+	errCh := make(chan error, len(groupNameIpAddrMap))
+	for groupName, ip := range groupNameIpAddrMap {
+		go func(groupName, ip string) {
+			defer wg.Done()
+			containerName := ContainerName(groupName)
+			var stdoutBuf bytes.Buffer
+			if err := ccm.ExecOnContainer(context.Background(), containerName, subcommandArgs, nil, &stdoutBuf, stderr); err != nil {
+				errCh <- fmt.Errorf("failed to run %v on container %q: %w", subcommandArgs, containerName, err)
+				return
+			}
+			resCh <- HostExecResult{
+				GroupName: groupName,
+				IP:        ip,
+				Stdout:    stdoutBuf.Bytes(),
+			}
+		}(groupName, ip)
+	}
+	wg.Wait()
+	close(resCh)
+	close(errCh)
+
+	var errs []error
+	for err := range errCh {
+		errs = append(errs, err)
+	}
+	if err := errors.Join(errs...); err != nil {
+		return nil, err
+	}
+	var results []HostExecResult
+	for res := range resCh {
+		results = append(results, res)
+	}
+	return results, nil
 }
 
 func pullContainerImage(ccm CuttlefishContainerManager) error {

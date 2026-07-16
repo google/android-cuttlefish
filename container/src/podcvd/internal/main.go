@@ -285,57 +285,35 @@ func fleetAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
 		Groups []any `json:"groups"`
 	}
 
-	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
+	results, err := ExecOnAllCuttlefishHosts(ccm, []string{"cvd", "fleet"}, nil)
 	if err != nil {
-		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
-	}
-	var wg sync.WaitGroup
-	wg.Add(len(groupNameIpAddrMap))
-	resCh := make(chan cvdFleetResponse, len(groupNameIpAddrMap))
-	errCh := make(chan error, len(groupNameIpAddrMap))
-	for groupName, ip := range groupNameIpAddrMap {
-		go func(groupName, ip string) {
-			defer wg.Done()
-			containerName := ContainerName(groupName)
-			var stdoutBuf bytes.Buffer
-			if err := ccm.ExecOnContainer(context.Background(), containerName, []string{"cvd", "fleet"}, nil, &stdoutBuf, nil); err != nil {
-				errCh <- err
-				return
-			}
-			var res cvdFleetResponse
-			if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
-				errCh <- err
-				return
-			}
-			containerInfo, err := ccm.InspectContainer(context.Background(), containerName)
-			if err != nil {
-				errCh <- err
-				return
-			}
-			attemptID := containerInfo.Config.Labels["attempt_id"]
-			podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
-			for idx := range res.Groups {
-				UpdateCvdGroupJsonRaw(res.Groups[idx], podcvdHomeDir, ip)
-			}
-			resCh <- res
-		}(groupName, ip)
-	}
-	wg.Wait()
-	close(resCh)
-	close(errCh)
-
-	var errs []error
-	for err := range errCh {
-		errs = append(errs, err)
-	}
-	if err := errors.Join(errs...); err != nil {
 		return err
 	}
+
+	containers, err := ccm.ListContainers(context.Background(), false)
+	if err != nil {
+		return fmt.Errorf("failed to list containers: %w", err)
+	}
+	podcvdHomeDirMap := make(map[string]string)
+	uid := strconv.Itoa(os.Getuid())
+	for _, c := range containers {
+		if groupName, ok := c.Labels[labelGroupName]; ok {
+			podcvdHomeDirMap[groupName] = filepath.Join("/var/tmp/podcvd", uid, c.Labels[labelAttemptID])
+		}
+	}
+
 	combinedRes := cvdFleetResponse{
 		Groups: []any{},
 	}
-	for res := range resCh {
-		combinedRes.Groups = append(combinedRes.Groups, res.Groups...)
+	for _, res := range results {
+		var fleetRes cvdFleetResponse
+		if err := json.Unmarshal(res.Stdout, &fleetRes); err != nil {
+			return err
+		}
+		for idx := range fleetRes.Groups {
+			UpdateCvdGroupJsonRaw(fleetRes.Groups[idx], podcvdHomeDirMap[res.GroupName], res.IP)
+		}
+		combinedRes.Groups = append(combinedRes.Groups, fleetRes.Groups...)
 	}
 	combinedOutput, err := json.MarshalIndent(combinedRes, "", "        ")
 	if err != nil {
