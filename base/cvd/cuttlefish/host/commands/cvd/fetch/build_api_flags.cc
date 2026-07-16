@@ -16,7 +16,6 @@
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
 
 #include <chrono>
-#include <cstddef>
 #include <string>
 #include <vector>
 
