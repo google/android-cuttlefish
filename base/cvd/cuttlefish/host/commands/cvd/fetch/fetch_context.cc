@@ -37,6 +37,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/build_api_zip.h"
@@ -229,7 +230,7 @@ Result<void> FetchBuildContext::AddFileToConfig(std::string file,
 }
 
 std::ostream& operator<<(std::ostream& out, const FetchBuildContext& context) {
-  return out << context.Build();
+  return out << FetchLabel(context.Build());
 }
 
 FetchContext::FetchContext(BuildApi& build_api,

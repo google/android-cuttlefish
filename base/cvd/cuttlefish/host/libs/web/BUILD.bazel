@@ -15,6 +15,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//libbase",
         "@abseil-cpp//absl/strings",
+        "@fmt",
     ],
 )
 

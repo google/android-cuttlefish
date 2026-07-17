@@ -40,7 +40,7 @@ Result<void> FetchHostPackage(
     const bool keep_archives,
     const std::vector<std::string>& host_substitutions,
     FetchTracer::Trace trace) {
-  LOG(INFO) << "Preparing host package for " << build;
+  LOG(INFO) << "Downloading host package for " << FetchLabel(build);
   // This function is called asynchronously, so it may take a while to start.
   // Complete a phase here to ensure that delay is not counted in the download
   // time.
