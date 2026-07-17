@@ -2,13 +2,6 @@
 
 set -e
 
-# Number of AVD accounts to create. 8 may be the limit imposed by the
-# VHCI HCD driver used for adb connections
-num_cvd_accounts=8
-
-# cvd accounts only invoke adb, so limit their access via groups
-cvd_account_groups=plugdev
-
 case "$1" in
     (configure)
     # Update the installed version of the diverted file with the

@@ -1,10 +1,5 @@
 ### These are turned off so we can submit shellcheck without breaking the presubmit. They should be fixed eventually.
 
-## Warning:
-# Warning: 'foo appears unused. Verify it or export it.'
-# Reason:
-disable=SC2034
-
 # Warning: 'Prefer [ p ] && [ q ] as [ p -a q ] is not well-defined.'
 # Reason:
 disable=SC2166
