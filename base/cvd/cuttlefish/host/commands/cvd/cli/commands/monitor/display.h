@@ -48,10 +48,6 @@ struct LogMonitorDisplayResult {
  *   display.DrawFile(kernel_fd, "kernel.log");
  *   auto result = display.Finalize();
  *   std::cout << result.output << std::flush;
- *
- *   // Use the returned line count to know how many
- *   // lines to clear for a redraw:
- *   ClearLastNLines(result.total_lines_drawn);
  * @endcode
  */
 class LogMonitorDisplay {
