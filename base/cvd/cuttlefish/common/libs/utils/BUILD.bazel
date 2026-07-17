@@ -123,6 +123,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/files:copy",
+        "//cuttlefish/files:file_device_id",
         "//cuttlefish/posix:rename",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/posix:symlink",
