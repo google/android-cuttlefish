@@ -82,4 +82,8 @@ std::string FormatLauncherLine(const LauncherLine& line) {
                       line.proc_name, ": ", kAnsiReset, line.message);
 }
 
+Result<std::string> ColorLauncherLine(std::string_view line) {
+  return FormatLauncherLine(CF_EXPECT(ParseLauncherLine(line)));
+}
+
 }  // namespace cuttlefish

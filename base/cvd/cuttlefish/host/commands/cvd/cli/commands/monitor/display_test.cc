@@ -16,104 +16,96 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/display.h"
 
-#include <cstddef>
-#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
-#include "absl/strings/match.h"
-#include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/io/in_memory.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor_source.h"
 
 namespace cuttlefish {
+namespace {
 
-TEST(LogMonitorDisplayTest, DrawFileValid) {
-  std::unique_ptr<ReaderWriterSeeker> rs = InMemoryIo("line1\nline2\nline3\n");
-  ASSERT_TRUE(rs.get());
+TEST(LogMonitorDisplayTest, LineCountMatches) {
+  MonitorOutput monitor_output("test1.log", {"line1", "line2", "line3"});
 
-  LogMonitorDisplay display(40);
-  display.DrawFile(*rs, "test.log");
+  LogMonitorDisplay display(20);
+  display.DrawReport(std::move(monitor_output), 3);
 
-  std::string output = display.Finalize().output;
-  EXPECT_TRUE(absl::StrContains(output, "+--test.log "));
-  EXPECT_TRUE(
-      absl::StrContains(output, "|line1                                 |"));
-  EXPECT_TRUE(
-      absl::StrContains(output, "|line2                                 |"));
-  EXPECT_TRUE(
-      absl::StrContains(output, "|line3                                 |"));
-  EXPECT_TRUE(
-      absl::StrContains(output, "+--------------------------------------+"));
+  const LogMonitorDisplayResult result = display.Finalize();
+  ASSERT_EQ(result.total_lines_drawn, 5);
+
+  const std::vector<std::string> lines = absl::StrSplit(result.output, '\n');
+  ASSERT_EQ(lines.size(), 6);
+
+  EXPECT_EQ(lines[0], "+--test1.log ------+");
+  EXPECT_EQ(lines[1], "|line1             |");
+  EXPECT_EQ(lines[2], "|line2             |");
+  EXPECT_EQ(lines[3], "|line3             |");
+  EXPECT_EQ(lines[4], "+------------------+");
+  EXPECT_EQ(lines[5], "");
 }
 
-TEST(LogMonitorDisplayTest, TotalLinesDrawn) {
-  std::unique_ptr<ReaderWriterSeeker> rs = InMemoryIo("line1\n");
-  ASSERT_TRUE(rs.get());
+TEST(LogMonitorDisplayTest, TooFewLines) {
+  MonitorOutput monitor_output("test2.log", {"line1"});
 
-  LogMonitorDisplay display(40);
+  LogMonitorDisplay display(20);
+  display.DrawReport(std::move(monitor_output), 3);
 
-  display.DrawFile(*rs, "test.log");
-  int total_lines_drawn = display.Finalize().total_lines_drawn;
-  // 10 lines of content + 1 top border + 1 bottom border
-  EXPECT_EQ(total_lines_drawn, 12);
+  const LogMonitorDisplayResult result = display.Finalize();
+  ASSERT_EQ(result.total_lines_drawn, 5);
+
+  const std::vector<std::string> lines = absl::StrSplit(result.output, '\n');
+  ASSERT_EQ(lines.size(), 6);
+
+  EXPECT_EQ(lines[0], "+--test2.log ------+");
+  EXPECT_EQ(lines[1], "|line1             |");
+  EXPECT_EQ(lines[2], "|                  |");
+  EXPECT_EQ(lines[3], "|                  |");
+  EXPECT_EQ(lines[4], "+------------------+");
+  EXPECT_EQ(lines[5], "");
 }
 
-TEST(LogMonitorDisplayTest, DrawFileLastNLinesOrder) {
-  std::string data;
-  for (int i = 1; i <= 12; ++i) {
-    data += absl::StrCat("line", i, "\n");
-  }
-  std::unique_ptr<ReaderWriterSeeker> rs = InMemoryIo(data);
-  ASSERT_TRUE(rs.get());
+TEST(LogMonitorDisplayTest, TooManyLines) {
+  MonitorOutput monitor_output("test3.log",
+                               {"line1", "line2", "line3", "line4"});
 
-  LogMonitorDisplay display(40);
-  display.DrawFile(*rs, "test.log");
+  LogMonitorDisplay display(20);
+  display.DrawReport(monitor_output, 2);
 
-  std::string output = display.Finalize().output;
+  const LogMonitorDisplayResult result = display.Finalize();
+  ASSERT_EQ(result.total_lines_drawn, 4);
 
-  // Should contain line3 to line12
-  for (int i = 3; i <= 12; ++i) {
-    EXPECT_TRUE(absl::StrContains(output, absl::StrCat("|line", i)));
-  }
-  // Should NOT contain line1 or line2
-  EXPECT_FALSE(absl::StrContains(output, "|line1 "));
-  EXPECT_FALSE(absl::StrContains(output, "|line2 "));
+  const std::vector<std::string> lines = absl::StrSplit(result.output, '\n');
+  ASSERT_EQ(lines.size(), 5);
 
-  // Check order
-  size_t last_pos = 0;
-  for (int i = 3; i <= 12; ++i) {
-    size_t pos = output.find(absl::StrCat("|line", i));
-    ASSERT_NE(pos, std::string::npos);
-    EXPECT_GT(pos, last_pos);
-    last_pos = pos;
-  }
+  EXPECT_EQ(lines[0], "+--test3.log ------+");
+  EXPECT_EQ(lines[1], "|line3             |");
+  EXPECT_EQ(lines[2], "|line4             |");
+  EXPECT_EQ(lines[3], "+------------------+");
+  EXPECT_EQ(lines[4], "");
 }
 
-TEST(LogMonitorDisplayTest, DrawFileLinesAcrossChunks) {
-  std::string data;
-  for (int i = 1; i <= 10; ++i) {
-    std::string line = absl::StrCat("Line ", i, ": ");
-    int fill_len = 500 - line.length() - 1;
-    line += std::string(fill_len, 'A' + i);
-    line += "\n";
-    data += line;
-  }
-  ASSERT_EQ(data.size(), 5000);
+TEST(LogMonitorDisplayTest, LinesTooLong) {
+  MonitorOutput monitor_output("test4.log", {"line1AAAAAAAAAAAAAAAAAAAAAAAAA"});
 
-  std::unique_ptr<ReaderWriterSeeker> rs = InMemoryIo(data);
-  ASSERT_TRUE(rs.get());
+  LogMonitorDisplay display(20);
+  display.DrawReport(monitor_output, 2);
 
-  LogMonitorDisplay display(80);
-  display.DrawFile(*rs, "test.log");
+  const LogMonitorDisplayResult result = display.Finalize();
+  ASSERT_EQ(result.total_lines_drawn, 4);
 
-  std::string output = display.Finalize().output;
+  const std::vector<std::string> lines = absl::StrSplit(result.output, '\n');
+  ASSERT_EQ(lines.size(), 5);
 
-  // Verify all lines are present
-  for (int i = 1; i <= 10; ++i) {
-    EXPECT_TRUE(absl::StrContains(output, absl::StrCat("Line ", i, ": ")));
-  }
+  EXPECT_EQ(lines[0], "+--test4.log ------+");
+  EXPECT_EQ(lines[1], "|line1AAAAAAAAAAAAA|");
+  EXPECT_EQ(lines[2], "|                  |");
+  EXPECT_EQ(lines[3], "+------------------+");
+  EXPECT_EQ(lines[4], "");
 }
 
+}  // namespace
 }  // namespace cuttlefish

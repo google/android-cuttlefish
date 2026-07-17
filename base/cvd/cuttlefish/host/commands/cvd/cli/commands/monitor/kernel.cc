@@ -23,7 +23,8 @@
 #include "absl/strings/str_cat.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -72,6 +73,10 @@ Result<KernelLine> ParseKernelLine(std::string_view line) {
 std::string FormatKernelLine(const KernelLine& line) {
   return absl::StrCat(kAnsiGreen, line.timestamp, kAnsiYellow, line.prefix,
                       kAnsiReset, line.message);
+}
+
+Result<std::string> ColorKernelLine(std::string_view line) {
+  return FormatKernelLine(CF_EXPECT(ParseKernelLine(line)));
 }
 
 }  // namespace cuttlefish

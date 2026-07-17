@@ -16,25 +16,31 @@
 
 #pragma once
 
-#include <string>
-#include <string_view>
+#include <stddef.h>
 
-#include "cuttlefish/result/result.h"
+#include <string>
+#include <vector>
 
 namespace cuttlefish {
 
-struct LogcatLine {
-  std::string_view date;
-  std::string_view time;
-  std::string_view uid;
-  std::string_view pid;
-  char verbosity;
-  std::string_view tag;
-  std::string_view message;
+struct MonitorOutput {
+  MonitorOutput();
+  MonitorOutput(std::string title, std::vector<std::string> lines);
+
+  std::string title;
+  std::vector<std::string> lines;
 };
 
-Result<LogcatLine> ParseLogcatLine(std::string_view line);
-std::string FormatLogcatLine(const LogcatLine& line);
-Result<std::string> ColorLogcatLine(std::string_view line);
+class MonitorSource {
+ public:
+  virtual ~MonitorSource();
+  /**
+   * Pulls new information from the data source if there is any and returns the
+   * text that should be shown in the monitor window.
+   *
+   * `rows` and `columns` are hints for the output. May output more or less.
+   */
+  virtual MonitorOutput Report(size_t rows, size_t columns) = 0;
+};
 
 }  // namespace cuttlefish

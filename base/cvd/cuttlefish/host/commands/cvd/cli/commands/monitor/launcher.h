@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <string>
 #include <string_view>
 
@@ -34,7 +33,9 @@ struct LauncherLine {
   std::string_view file_line;
   std::string_view message;
 };
+
 Result<LauncherLine> ParseLauncherLine(std::string_view line);
 std::string FormatLauncherLine(const LauncherLine& line);
+Result<std::string> ColorLauncherLine(std::string_view line);
 
 }  // namespace cuttlefish

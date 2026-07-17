@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <string>
 #include <string_view>
 
@@ -30,7 +29,9 @@ struct LogTeeLine {
   std::string_view subsystem;
   std::string_view message;
 };
+
 Result<LogTeeLine> ParseLogTeeLine(std::string_view line);
 std::string FormatLogTeeLine(const LogTeeLine& line);
+Result<std::string> ColorLogTeeLine(std::string_view line);
 
 }  // namespace cuttlefish
