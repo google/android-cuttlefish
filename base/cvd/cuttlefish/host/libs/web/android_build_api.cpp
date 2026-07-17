@@ -39,6 +39,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "android-base/file.h"
+#include "fmt/format.h"
 #include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -121,9 +122,9 @@ Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string) {
       CF_EXPECT(LatestBuildId(proposed_build_id, *build_string.target));
   if (latest_build_id) {
     proposed_build_id = *latest_build_id;
-    LOG(INFO) << "Latest build id for branch '" << build_string.branch_or_id
-              << "' and target '" << *build_string.target << "' is '"
-              << proposed_build_id << "'";
+    VLOG(0) << fmt::format(
+        "Build id({}) to be fetched for branch({}), target({}).",
+        proposed_build_id, build_string.branch_or_id, *build_string.target);
   }
 
   AndroidBuildApi::BuildInfo build_info =
