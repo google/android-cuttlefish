@@ -7,6 +7,17 @@ package(
 cf_build_test(name = "files_build_test")
 
 cf_cc_library(
+    name = "copy",
+    srcs = ["copy.cc"],
+    hdrs = ["copy.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+    ],
+)
+
+cf_cc_library(
     name = "recursively_remove_directory",
     srcs = ["recursively_remove_directory.cc"],
     hdrs = ["recursively_remove_directory.h"],

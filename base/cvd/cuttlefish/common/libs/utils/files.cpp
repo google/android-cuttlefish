@@ -61,6 +61,7 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/files/copy.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -293,62 +294,6 @@ Result<bool> IsDirectoryEmpty(const std::string& path) {
     if (cnt > 2) {
       return false;
     }
-  }
-  return true;
-}
-
-bool Copy(const std::string& from, const std::string& to) {
-  SharedFD fd_from = SharedFD::Open(from, O_RDONLY);
-  SharedFD fd_to = SharedFD::Open(to, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-
-  if (!fd_from->IsOpen() || !fd_to->IsOpen()) {
-    return false;
-  }
-
-  off_t farthest_seek = fd_from->LSeek(0, SEEK_END);
-  if (farthest_seek == -1) {
-    LOG(ERROR) << "Could not lseek in \"" << from
-               << "\": " << fd_from->StrError();
-    return false;
-  }
-  if (fd_to->Truncate(farthest_seek) < 0) {
-    LOG(ERROR) << "Failed to truncate " << to << ": " << fd_to->StrError();
-  }
-  off_t offset = 0;
-  while (offset < farthest_seek) {
-    off_t new_offset = fd_from->LSeek(offset, SEEK_HOLE);
-    if (new_offset == -1) {
-      if (fd_from->GetErrno() == ENXIO) {
-        return true;
-      }
-      LOG(ERROR) << "Could not lseek in \"" << from
-                 << "\": " << fd_from->StrError();
-      return false;
-    }
-    auto data_bytes = new_offset - offset;
-    if (fd_to->LSeek(offset, SEEK_SET) < 0) {
-      LOG(ERROR) << "lseek() on " << to << " failed: " << fd_to->StrError();
-      return false;
-    }
-    if (!fd_to->SendFile(*fd_from, &offset, data_bytes)) {
-      LOG(ERROR) << "SendFile failed: " << fd_to->StrError();
-      return false;
-    }
-    CHECK_EQ(offset, new_offset);
-
-    if (offset >= farthest_seek) {
-      return true;
-    }
-    new_offset = fd_from->LSeek(offset, SEEK_DATA);
-    if (new_offset == -1) {
-      if (fd_from->GetErrno() == ENXIO) {
-        return true;
-      }
-      LOG(ERROR) << "Could not lseek in \"" << from
-                 << "\": " << fd_from->StrError();
-      return false;
-    }
-    offset = new_offset;
   }
   return true;
 }

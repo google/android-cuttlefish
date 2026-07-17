@@ -32,6 +32,7 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/files/copy.h"
 #include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"

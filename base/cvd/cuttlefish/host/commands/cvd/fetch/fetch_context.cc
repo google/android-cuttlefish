@@ -31,6 +31,7 @@
 #include "fmt/ranges.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/copy.h"
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
 #include "cuttlefish/host/commands/cvd/fetch/de_android_sparse.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
