@@ -317,7 +317,8 @@ Result<std::vector<Flag>> GetCvdInternalStartFlags(
       CF_EXPECT(GetSiblingCommandFlags("cvd_internal_start", env, args));
   // Remove flags set by cvd and intented to be exposed to the user
   const std::vector<std::string> to_remove = {
-      "daemon", "instance_nums", "num_instances", "base_instance_num"};
+      "daemon", "instance_nums", "num_instances", "base_instance_num",
+      "report_anonymous_usage_stats"};
   std::erase_if(flags,
                 [&to_remove](Flag f) { return Contains(to_remove, f.Name()); });
   return flags;
