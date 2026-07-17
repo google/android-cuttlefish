@@ -37,6 +37,7 @@ cf_cc_library(
         "//cuttlefish/ansi_codes:should_color",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/cvd/cli:format_byte_size",
         "//cuttlefish/host/libs/log_names",
         "//cuttlefish/io",
         "//cuttlefish/io:read_exact",
