@@ -62,6 +62,7 @@
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/files/copy.h"
+#include "cuttlefish/files/file_device_id.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -76,16 +77,6 @@ namespace cuttlefish {
 bool FileExists(const std::string& path, bool follow_symlinks) {
   struct stat st{};
   return (follow_symlinks ? stat : lstat)(path.c_str(), &st) == 0;
-}
-
-Result<dev_t> FileDeviceId(const std::string& path) {
-  struct stat out;
-  CF_EXPECTF(
-      stat(path.c_str(), &out) == 0,
-      "stat() failed trying to retrieve device ID information for \"{}\" "
-      "with error: {}",
-      path, strerror(errno));
-  return out.st_dev;
 }
 
 Result<bool> CanHardLink(const std::string& source,

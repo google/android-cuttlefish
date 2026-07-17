@@ -18,6 +18,17 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "file_device_id",
+    srcs = ["file_device_id.cc"],
+    hdrs = ["file_device_id.h"],
+    deps = [
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "recursively_remove_directory",
     srcs = ["recursively_remove_directory.cc"],
     hdrs = ["recursively_remove_directory.h"],
