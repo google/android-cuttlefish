@@ -70,7 +70,7 @@ Result<void> RunCacheCleanup(const BuildApiFlags& build_api_flags) {
                  "Error pruning cache at {} to {}GB", cache_directory,
                  build_api_flags.max_cache_size_gb);
   if (prune_result.before > prune_result.after) {
-    LOG(INFO) << fmt::format(
+    VLOG(0) << fmt::format(
         "Cache at \"{}\" pruned from ~{}GB to ~{}GB of {}GB max size",
         cache_directory, prune_result.before, prune_result.after,
         build_api_flags.max_cache_size_gb);
