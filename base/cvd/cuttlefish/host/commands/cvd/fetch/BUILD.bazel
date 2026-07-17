@@ -180,6 +180,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:copy",
         "//cuttlefish/host/commands/cvd/fetch:builds",
         "//cuttlefish/host/commands/cvd/fetch:de_android_sparse",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",

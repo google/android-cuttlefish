@@ -135,6 +135,7 @@ cf_cc_library(
     hdrs = ["gem5_image_unpacker.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:copy",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -235,6 +236,7 @@ cf_cc_library(
     hdrs = ["kernel_ramdisk_repacker.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:copy",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd:vendor_dlkm_utils",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
