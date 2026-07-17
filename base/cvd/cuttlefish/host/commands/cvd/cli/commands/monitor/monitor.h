@@ -22,12 +22,9 @@
 
 namespace cuttlefish {
 
-void ClearLastNLines(int n);
-
-Result<void> MonitorLogs(const LocalInstance& instance);
-
 // The monitor will stop and return if `stop_eventfd` becomes readable (receives
 // an event).
-Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd);
+Result<void> MonitorLogs(const LocalInstance& instance,
+                         SharedFD stop_eventfd = SharedFD());
 
 }  // namespace cuttlefish
