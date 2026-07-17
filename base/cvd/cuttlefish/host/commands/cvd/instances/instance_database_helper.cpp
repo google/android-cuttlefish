@@ -22,6 +22,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/posix/strerror.h"
 
 namespace cuttlefish {

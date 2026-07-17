@@ -33,6 +33,7 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/files:recursively_remove_directory",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:clean",
