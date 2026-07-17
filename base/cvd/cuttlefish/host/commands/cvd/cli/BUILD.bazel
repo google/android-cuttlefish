@@ -17,6 +17,13 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "format_byte_size",
+    srcs = ["format_byte_size.cc"],
+    hdrs = ["format_byte_size.h"],
+    deps = ["@fmt"],
+)
+
+cf_cc_library(
     name = "frontline_parser",
     srcs = ["frontline_parser.cpp"],
     hdrs = ["frontline_parser.h"],

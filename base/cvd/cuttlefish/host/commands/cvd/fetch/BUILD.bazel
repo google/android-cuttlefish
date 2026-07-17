@@ -270,7 +270,10 @@ cf_cc_library(
     name = "fetch_tracer",
     srcs = ["fetch_tracer.cpp"],
     hdrs = ["fetch_tracer.h"],
-    deps = ["@fmt"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli:format_byte_size",
+        "@fmt",
+    ],
 )
 
 cf_cc_library(
