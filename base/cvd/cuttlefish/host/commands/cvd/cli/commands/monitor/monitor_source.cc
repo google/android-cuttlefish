@@ -14,27 +14,19 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor_source.h"
 
 #include <string>
-#include <string_view>
-
-#include "cuttlefish/result/result.h"
+#include <utility>
+#include <vector>
 
 namespace cuttlefish {
 
-struct LogcatLine {
-  std::string_view date;
-  std::string_view time;
-  std::string_view uid;
-  std::string_view pid;
-  char verbosity;
-  std::string_view tag;
-  std::string_view message;
-};
+MonitorOutput::MonitorOutput() = default;
 
-Result<LogcatLine> ParseLogcatLine(std::string_view line);
-std::string FormatLogcatLine(const LogcatLine& line);
-Result<std::string> ColorLogcatLine(std::string_view line);
+MonitorOutput::MonitorOutput(std::string title, std::vector<std::string> lines)
+    : title(std::move(title)), lines(std::move(lines)) {}
+
+MonitorSource::~MonitorSource() = default;
 
 }  // namespace cuttlefish

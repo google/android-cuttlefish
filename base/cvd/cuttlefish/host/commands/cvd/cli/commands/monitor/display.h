@@ -16,12 +16,12 @@
 
 #pragma once
 
-#include <cstddef>
+#include <stddef.h>
+
 #include <sstream>
 #include <string>
-#include <vector>
 
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor_source.h"
 
 namespace cuttlefish {
 
@@ -44,9 +44,9 @@ struct LogMonitorDisplayResult {
  * Example usage:
  * @code
  *   LogMonitorDisplay display(80); // 80 columns wide
- *   display.DrawFile(launcher_fd, "launcher.log");
- *   display.DrawFile(kernel_fd, "kernel.log");
- *   auto result = display.Finalize();
+ *   display.DrawReport(launcher_source, 20);
+ *   display.DrawReport(kernel_source, 40);
+ *   LogMonitorDisplayResult result = display.Finalize();
  *   std::cout << result.output << std::flush;
  * @endcode
  */
@@ -57,14 +57,9 @@ class LogMonitorDisplay {
    */
   LogMonitorDisplay(size_t width);
 
-  /**
-   * Reads the recent content of the given file descriptor and draws it
-   * within a bordered box titled with the provided name.
-   * If the file cannot be read, an error box is drawn instead.
-   */
-  void DrawFile(ReaderSeeker&, const std::string& title, size_t max_lines = 10);
-  void DrawFile(ReaderSeeker&&, const std::string& title,
-                size_t max_lines = 10);
+  /* Draw the output of a single monitor source. */
+  void DrawReport(MonitorSource*, size_t lines);
+  void DrawReport(MonitorOutput, size_t lines);
 
   /**
    * Appends the final bottom border to the display and returns the
@@ -76,15 +71,14 @@ class LogMonitorDisplay {
   /**
    * Helper to draw a list of text lines inside a bordered box with a title.
    */
-  void DrawBorderedText(const std::vector<std::string>& lines,
-                        const std::string& title);
+  void DrawBorderedText(const MonitorOutput&);
 
   /**
    * Formats a single line of text: parses it for specific log types (like
    * logcat, kernel), applies color formatting, truncates to fit the display
    * width, pads with spaces, and adds borders.
    */
-  void FormatAndDrawLine(const std::string& formatted);
+  void FormatAndDrawLine(std::string_view formatted);
 
   size_t width_;
   std::stringstream ss_;

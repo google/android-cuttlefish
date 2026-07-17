@@ -16,25 +16,31 @@
 
 #pragma once
 
+#include <stddef.h>
+
+#include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
 
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor_source.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-struct LogcatLine {
-  std::string_view date;
-  std::string_view time;
-  std::string_view uid;
-  std::string_view pid;
-  char verbosity;
-  std::string_view tag;
-  std::string_view message;
-};
+class FileMonitorSource : public MonitorSource {
+ public:
+  FileMonitorSource(
+      std::string name, std::unique_ptr<ReaderSeeker> file_io,
+      std::function<Result<std::string>(std::string_view)> colorize_line);
 
-Result<LogcatLine> ParseLogcatLine(std::string_view line);
-std::string FormatLogcatLine(const LogcatLine& line);
-Result<std::string> ColorLogcatLine(std::string_view line);
+  MonitorOutput Report(size_t rows, size_t columns) override;
+
+ private:
+  std::string name_;
+  std::unique_ptr<ReaderSeeker> file_io_;
+  std::function<Result<std::string>(std::string_view)> colorize_line_;
+};
 
 }  // namespace cuttlefish

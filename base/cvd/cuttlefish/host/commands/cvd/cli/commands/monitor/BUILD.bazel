@@ -29,37 +29,40 @@ cf_cc_library(
     name = "display",
     srcs = ["display.cc"],
     hdrs = ["display.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        ":kernel",
-        ":launcher",
-        ":log_tee",
-        ":logcat",
-        ":truncate",
         "//cuttlefish/ansi_codes:should_color",
-        "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/host/commands/cvd/cli:format_byte_size",
-        "//cuttlefish/host/libs/log_names",
-        "//cuttlefish/io",
-        "//cuttlefish/io:read_exact",
-        "//cuttlefish/result",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:monitor_source",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:truncate",
+        "//libbase",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:cord",
     ],
 )
 
 cf_cc_test(
     name = "display_test",
     srcs = ["display_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        ":display",
-        "//cuttlefish/io",
-        "//cuttlefish/io:in_memory",
-        "//cuttlefish/result:result_matchers",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:display",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:monitor_source",
         "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
+    name = "file_monitor_source",
+    srcs = ["file_monitor_source.cc"],
+    hdrs = ["file_monitor_source.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli:format_byte_size",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:monitor_source",
+        "//cuttlefish/io",
+        "//cuttlefish/io:read_exact",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:cord",
     ],
 )
 
@@ -69,7 +72,8 @@ cf_cc_library(
     hdrs = ["kernel.h"],
     deps = [
         "//cuttlefish/ansi_codes",
-        "//cuttlefish/result",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -156,14 +160,26 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:display",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:file_monitor_source",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:kernel",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:launcher",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:log_tee",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:logcat",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:monitor_source",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/libs/log_names",
-        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io",
         "//cuttlefish/io:shared_fd",
         "//cuttlefish/result",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/strings",
     ],
+)
+
+cf_cc_library(
+    name = "monitor_source",
+    srcs = ["monitor_source.cc"],
+    hdrs = ["monitor_source.h"],
 )
 
 cf_cc_library(

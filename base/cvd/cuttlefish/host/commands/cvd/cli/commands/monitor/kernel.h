@@ -16,11 +16,10 @@
 
 #pragma once
 
-#include <cstddef>
 #include <string>
 #include <string_view>
 
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -29,7 +28,9 @@ struct KernelLine {
   std::string_view prefix;
   std::string_view message;
 };
+
 Result<KernelLine> ParseKernelLine(std::string_view line);
 std::string FormatKernelLine(const KernelLine& line);
+Result<std::string> ColorKernelLine(std::string_view line);
 
 }  // namespace cuttlefish

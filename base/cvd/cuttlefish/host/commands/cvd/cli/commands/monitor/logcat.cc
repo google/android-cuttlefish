@@ -71,4 +71,8 @@ std::string FormatLogcatLine(const LogcatLine& line) {
                       kAnsiYellow, line.tag, kAnsiReset, " ", line.message);
 }
 
+Result<std::string> ColorLogcatLine(std::string_view line) {
+  return FormatLogcatLine(CF_EXPECT(ParseLogcatLine(line)));
+}
+
 }  // namespace cuttlefish

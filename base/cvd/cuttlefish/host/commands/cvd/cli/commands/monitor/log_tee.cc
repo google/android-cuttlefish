@@ -82,4 +82,8 @@ std::string FormatLogTeeLine(const LogTeeLine& line) {
                       line.message);
 }
 
+Result<std::string> ColorLogTeeLine(std::string_view line) {
+  return FormatLogTeeLine(CF_EXPECT(ParseLogTeeLine(line)));
+}
+
 }  // namespace cuttlefish

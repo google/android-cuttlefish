@@ -29,7 +29,9 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "absl/cleanup/cleanup.h"
@@ -39,26 +41,105 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/display.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/file_monitor_source.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/kernel.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/launcher.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/log_tee.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/logcat.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor_source.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
-#include "cuttlefish/io/in_memory.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
 
-void UpdateFileAndWatch(const SharedFD& inotify_fd, const std::string& path,
-                        SharedFD& fd, int& watch) {
-  if (!fd->IsOpen()) {
-    if (FileExists(path)) {
-      fd = SharedFD::Open(path, O_RDONLY);
+Result<std::string> ColorLauncherOrLogTee(std::string_view line) {
+  if (line.find("log_tee(") != 0) {
+    return CF_EXPECT(ColorLauncherLine(line));
+  }
+  const size_t bracket = line.find(']');
+  if (bracket != std::string_view::npos) {
+    line.remove_prefix(bracket + 1);
+    const size_t first_non_space = line.find_first_not_of(" \t");
+    if (first_non_space != std::string_view::npos) {
+      line.remove_prefix(first_non_space);
+    } else {
+      line = "";
     }
   }
-  if (fd->IsOpen() && watch == -1) {
-    watch = inotify_fd->InotifyAddWatch(path, IN_DELETE_SELF | IN_MODIFY);
+  return CF_EXPECT(ColorLogTeeLine(line));
+}
+
+// TODO(schuffelen): integrate inotify watches into MonitorSource
+
+std::unique_ptr<MonitorSource> LauncherLogMonitorSource(
+    const LocalInstance& instance, SharedFD inotify_fd, int& watch) {
+  if (watch != -1) {
+    inotify_fd->InotifyRmWatch(watch);
+    watch = -1;
   }
+  const std::string launcher =
+      absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameLauncher);
+  const std::string assemble =
+      absl::StrCat(instance.AssemblyDirectory(), "/", kLogNameAssembleCvd);
+  const std::string path = FileExists(launcher) ? launcher : assemble;
+  if (!FileExists(path)) {
+    return {};
+  }
+  SharedFD fd = SharedFD::Open(path, O_RDONLY);
+  if (!fd->IsOpen() || fd->LSeek(0, SEEK_END) <= 0) {
+    return {};
+  }
+  watch = inotify_fd->InotifyAddWatch(path, IN_DELETE_SELF | IN_MODIFY);
+  std::unique_ptr<ReaderSeeker> io = std::make_unique<SharedFdIo>(fd);
+  return std::make_unique<FileMonitorSource>(path, std::move(io),
+                                             ColorLauncherOrLogTee);
+}
+
+std::unique_ptr<MonitorSource> KernelLogMonitorSource(
+    const LocalInstance& instance, SharedFD inotify_fd, int& watch) {
+  if (watch != -1) {
+    inotify_fd->InotifyRmWatch(watch);
+    watch = -1;
+  }
+  const std::string path =
+      absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameKernel);
+  if (!FileExists(path)) {
+    return {};
+  }
+  SharedFD fd = SharedFD::Open(path, O_RDONLY);
+  if (!fd->IsOpen() || fd->LSeek(0, SEEK_END) <= 0) {
+    return {};
+  }
+  watch = inotify_fd->InotifyAddWatch(path, IN_DELETE_SELF | IN_MODIFY);
+  std::unique_ptr<ReaderSeeker> io = std::make_unique<SharedFdIo>(fd);
+  return std::make_unique<FileMonitorSource>(path, std::move(io),
+                                             ColorKernelLine);
+}
+
+std::unique_ptr<MonitorSource> LogcatMonitorSource(
+    const LocalInstance& instance, SharedFD inotify_fd, int& watch) {
+  if (watch != -1) {
+    inotify_fd->InotifyRmWatch(watch);
+    watch = -1;
+  }
+  const std::string path =
+      absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameLogcat);
+  if (!FileExists(path)) {
+    return {};
+  }
+  SharedFD fd = SharedFD::Open(path, O_RDONLY);
+  if (!fd->IsOpen() || fd->LSeek(0, SEEK_END) <= 0) {
+    return {};
+  }
+  watch = inotify_fd->InotifyAddWatch(path, IN_DELETE_SELF | IN_MODIFY);
+  std::unique_ptr<ReaderSeeker> io = std::make_unique<SharedFdIo>(fd);
+  return std::make_unique<FileMonitorSource>(path, std::move(io),
+                                             ColorLogcatLine);
 }
 
 }  // namespace
@@ -66,19 +147,9 @@ void UpdateFileAndWatch(const SharedFD& inotify_fd, const std::string& path,
 Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
   CF_EXPECT(isatty(0), "The monitor command requires an interactive terminal.");
 
-  const std::string kernel_log =
-      absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameKernel);
-  const std::string launcher_log =
-      absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameLauncher);
-  const std::string logcat =
-      absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameLogcat);
-  const std::string assemble_log =
-      absl::StrCat(instance.AssemblyDirectory(), "/", kLogNameAssembleCvd);
-  bool using_assemble_log = true;
-
-  SharedFD kernel_fd;
-  SharedFD launcher_fd;
-  SharedFD logcat_fd;
+  std::unique_ptr<MonitorSource> kernel_monitor_source;
+  std::unique_ptr<MonitorSource> launcher_monitor_source;
+  std::unique_ptr<MonitorSource> logcat_monitor_source;
 
   const SharedFD inotify_fd = SharedFD::InotifyFd();
   CF_EXPECT(inotify_fd->IsOpen(), "Failed to create inotify fd");
@@ -88,8 +159,7 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
 
   const std::string logs_dir =
       absl::StrCat(instance.InstanceDirectory(), "/logs");
-  const int dir_watch =
-      inotify_fd->InotifyAddWatch(logs_dir, IN_CREATE | IN_DELETE);
+  inotify_fd->InotifyAddWatch(logs_dir, IN_CREATE | IN_DELETE);
 
   int kernel_watch = -1;
   int launcher_watch = -1;
@@ -105,71 +175,49 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
   };
 
   while (true) {
-    if (using_assemble_log) {
-      if (FileExists(launcher_log)) {
-        if (launcher_watch != -1) {
-          inotify_fd->InotifyRmWatch(launcher_watch);
-          launcher_watch = -1;
-        }
-        launcher_fd = SharedFD::Open(launcher_log, O_RDONLY);
-        if (launcher_fd->IsOpen()) {
-          launcher_watch = inotify_fd->InotifyAddWatch(
-              launcher_log, IN_DELETE_SELF | IN_MODIFY);
-          using_assemble_log = false;
-        }
-      } else if (!launcher_fd->IsOpen()) {
-        if (FileExists(assemble_log)) {
-          launcher_fd = SharedFD::Open(assemble_log, O_RDONLY);
-          if (launcher_fd->IsOpen()) {
-            if (launcher_watch == -1) {
-              launcher_watch = inotify_fd->InotifyAddWatch(
-                  assemble_log, IN_DELETE_SELF | IN_MODIFY);
-            }
-          }
-        }
+    if (!kernel_monitor_source.get()) {
+      kernel_monitor_source =
+          KernelLogMonitorSource(instance, inotify_fd, kernel_watch);
+    }
+    if (!logcat_monitor_source.get()) {
+      logcat_monitor_source =
+          LogcatMonitorSource(instance, inotify_fd, logcat_watch);
+    }
+    if (!launcher_monitor_source.get()) {
+      launcher_monitor_source =
+          LauncherLogMonitorSource(instance, inotify_fd, launcher_watch);
+    }
+
+    TerminalSize term_size =
+        GetTerminalSize().value_or(TerminalSize{.rows = 35, .columns = 80});
+    term_size.rows -= 3;
+    term_size.columns -= 1;
+    LogMonitorDisplay display(term_size.columns);
+
+    bool missing_source = false;
+    const std::vector<MonitorSource*> sources = {
+        launcher_monitor_source.get(),
+        kernel_monitor_source.get(),
+        logcat_monitor_source.get(),
+    };
+
+    for (size_t i = 0; i < sources.size(); i++) {
+      MonitorSource* source = sources[i];
+      if (source == nullptr) {
+        missing_source = true;
       }
-    } else {
-      UpdateFileAndWatch(inotify_fd, launcher_log, launcher_fd, launcher_watch);
+      size_t lines = (term_size.rows / 3) - 1;
+      while (i + 1 < sources.size() && sources[i + 1] == nullptr) {
+        lines += (term_size.rows / 3) - 1;
+        i++;
+        missing_source = true;
+      }
+      display.DrawReport(source, lines);
     }
 
-    UpdateFileAndWatch(inotify_fd, kernel_log, kernel_fd, kernel_watch);
-    UpdateFileAndWatch(inotify_fd, logcat, logcat_fd, logcat_watch);
-
-    const Result<TerminalSize> term_size_result = GetTerminalSize();
-    int width = 79;  // Default fallback width (80 - 1)
-    int height = 30;
-    if (term_size_result.ok()) {
-      width = term_size_result->columns - 1;
-      height = term_size_result->rows - 5;
+    if (missing_source) {
+      launcher_monitor_source.reset();  // will cut over to launcher.log soon
     }
-    LogMonitorDisplay display(width);
-
-    bool logcat_ready = false;
-    if (logcat_fd->IsOpen() && logcat_fd->LSeek(0, SEEK_END) > 0) {
-      logcat_ready = true;
-    }
-
-    const std::string launcher_name =
-        using_assemble_log ? kLogNameAssembleCvd : kLogNameLauncher;
-    size_t launcher_lines = height;
-    size_t kernel_lines = 0;
-    size_t logcat_lines = 0;
-    if (kernel_fd->IsOpen()) {
-      launcher_lines = height / 3 - 1;
-      kernel_lines = height - launcher_lines - 1;
-    }
-    if (logcat_ready) {
-      kernel_lines = height / 3 - 1;
-      logcat_lines = height - launcher_lines - kernel_lines - 2;
-    }
-    if (!FileExists(assemble_log)) {
-      display.DrawFile(*InMemoryIo("Waiting for assemble_cvd.log creation"),
-                       launcher_name, launcher_lines);
-    } else {
-      display.DrawFile(SharedFdIo(launcher_fd), launcher_name, launcher_lines);
-    }
-    display.DrawFile(SharedFdIo(kernel_fd), kLogNameKernel, kernel_lines);
-    display.DrawFile(SharedFdIo(logcat_fd), kLogNameLogcat, logcat_lines);
 
     const auto [output, total_lines_drawn] = display.Finalize();
     std::cout << kAnsiClearScreen << kAnsiCursorTopLeft << output << std::flush;
@@ -197,13 +245,7 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
 
     // Block until file changes occur. If any watch failed or is missing, use
     // a fallback timeout to awake and retry.
-    int timeout_ms = -1;
-    if (dir_watch == -1 || kernel_watch == -1 || launcher_watch == -1 ||
-        logcat_watch == -1 || !logcat_ready || using_assemble_log) {
-      timeout_ms = 200;
-    }
-
-    int poll_res = SharedFD::Poll(poll_fds, timeout_ms);
+    int poll_res = SharedFD::Poll(poll_fds, missing_source ? 200 : -1);
 
     if (stop_eventfd->IsOpen() && (poll_fds[1].revents & POLLIN)) {
       // Stop requested via eventfd
@@ -223,22 +265,21 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
         while (ptr < buf + read_res) {
           inotify_event* event = reinterpret_cast<inotify_event*>(ptr);
           if (event->mask & (IN_DELETE | IN_DELETE_SELF | IN_IGNORED)) {
-            using_assemble_log = true;
             if (launcher_watch != -1) {
               inotify_fd->InotifyRmWatch(launcher_watch);
               launcher_watch = -1;
             }
-            launcher_fd = SharedFD();
+            launcher_monitor_source.reset();
             if (kernel_watch != -1) {
               inotify_fd->InotifyRmWatch(kernel_watch);
               kernel_watch = -1;
             }
-            kernel_fd = SharedFD();
+            kernel_monitor_source.reset();
             if (logcat_watch != -1) {
               inotify_fd->InotifyRmWatch(logcat_watch);
               logcat_watch = -1;
             }
-            logcat_fd = SharedFD();
+            logcat_monitor_source.reset();
           }
           ptr += sizeof(inotify_event) + event->len;
         }
