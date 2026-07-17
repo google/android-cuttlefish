@@ -167,6 +167,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:recursively_remove_directory",
         "//cuttlefish/result",
     ],
 )

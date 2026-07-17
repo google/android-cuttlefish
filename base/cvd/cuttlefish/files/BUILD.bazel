@@ -1,0 +1,19 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_build_test(name = "files_build_test")
+
+cf_cc_library(
+    name = "recursively_remove_directory",
+    srcs = ["recursively_remove_directory.cc"],
+    hdrs = ["recursively_remove_directory.h"],
+    deps = [
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
+    ],
+)

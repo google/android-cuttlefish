@@ -24,7 +24,6 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <ftw.h>
 #include <libgen.h>
 #include <sched.h>
 #include <stddef.h>
@@ -55,7 +54,6 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
-#include "android-base/macros.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -297,45 +295,6 @@ Result<bool> IsDirectoryEmpty(const std::string& path) {
     }
   }
   return true;
-}
-
-Result<void> RecursivelyRemoveDirectory(const std::string& path) {
-  // Copied from libbase TemporaryDir destructor.
-  auto callback = [](const char* child, const struct stat*, int file_type,
-                     struct FTW*) -> int {
-    switch (file_type) {
-      case FTW_D:
-      case FTW_DP:
-      case FTW_DNR:
-        if (rmdir(child) == -1) {
-          PLOG(ERROR) << "rmdir " << child;
-          return -1;
-        }
-        break;
-      case FTW_NS:
-      default:
-        if (rmdir(child) != -1) {
-          break;
-        }
-        // FALLTHRU (for gcc, lint, pcc, etc; and following for clang)
-        FALLTHROUGH_INTENDED;
-      case FTW_F:
-      case FTW_SL:
-      case FTW_SLN:
-        if (unlink(child) == -1) {
-          PLOG(ERROR) << "unlink " << child;
-          return -1;
-        }
-        break;
-    }
-    return 0;
-  };
-
-  if (nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_PHYS) < 0) {
-    return CF_ERRNO("Failed to remove directory \""
-                    << path << "\": " << strerror(errno));
-  }
-  return {};
 }
 
 bool Copy(const std::string& from, const std::string& to) {
