@@ -38,6 +38,7 @@
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"

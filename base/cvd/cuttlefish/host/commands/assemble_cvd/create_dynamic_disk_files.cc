@@ -26,6 +26,7 @@
 #include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"

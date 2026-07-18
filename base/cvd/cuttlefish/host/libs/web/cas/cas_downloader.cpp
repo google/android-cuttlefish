@@ -37,6 +37,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
 #include "cuttlefish/process/command.h"

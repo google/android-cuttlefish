@@ -45,6 +45,7 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_api_key.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"

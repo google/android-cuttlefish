@@ -17,15 +17,14 @@
 #include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
 
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 #include "fmt/format.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/libs/metrics/device_event_type.h"

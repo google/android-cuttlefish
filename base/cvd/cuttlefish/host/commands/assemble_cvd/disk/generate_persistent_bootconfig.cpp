@@ -26,6 +26,7 @@
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/bootconfig_args.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"

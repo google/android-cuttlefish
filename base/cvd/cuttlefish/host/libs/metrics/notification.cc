@@ -25,7 +25,7 @@
 #include "absl/strings/str_cat.h"
 #include "fmt/format.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/directories/xdg.h"
 #include "cuttlefish/host/libs/metrics/enabled.h"
 #include "cuttlefish/result/result.h"

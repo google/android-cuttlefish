@@ -24,7 +24,7 @@ cf_cc_library(
     hdrs = ["android_efi_loader.h"],
     depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
@@ -73,7 +73,7 @@ cf_cc_library(
     hdrs = ["bootloader.h"],
     depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:guest_config",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
@@ -279,6 +279,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/result",

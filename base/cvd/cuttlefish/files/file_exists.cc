@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/assemble_cvd/disk/pstore.h"
-
 #include "cuttlefish/files/file_exists.h"
-#include "cuttlefish/host/libs/config/config_instance_derived.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/data_image.h"
-#include "cuttlefish/result/result.h"
+
+#include <sys/stat.h>
+
+#include <string>
 
 namespace cuttlefish {
 
-Result<void> InitializePstore(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  if (FileExists(PstorePath(instance))) {
-    return {};
-  }
-  CF_EXPECTF(CreateBlankEmptyImage(PstorePath(instance), 2 /* mb */),
-             "Failed to create '{}'", PstorePath(instance));
-  return {};
+bool FileExists(const std::string& path, bool follow_symlinks) {
+  struct stat st{};
+  return (follow_symlinks ? stat : lstat)(path.c_str(), &st) == 0;
 }
 
 }  // namespace cuttlefish

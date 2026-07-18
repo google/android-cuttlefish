@@ -28,7 +28,6 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-bool FileExists(const std::string& path, bool follow_symlinks = true);
 Result<bool> CanHardLink(const std::string& source,
                          const std::string& destination);
 inline Result<bool> CanRename(const std::string& source,

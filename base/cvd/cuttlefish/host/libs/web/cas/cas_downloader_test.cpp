@@ -33,6 +33,7 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
 #include "cuttlefish/result/result.h"

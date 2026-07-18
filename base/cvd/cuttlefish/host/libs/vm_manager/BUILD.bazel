@@ -42,6 +42,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/common/libs/utils:wait_for_unix_socket",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_instance_derived",

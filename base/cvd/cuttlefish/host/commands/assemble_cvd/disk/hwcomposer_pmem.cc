@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/hwcomposer_pmem.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"

@@ -30,6 +30,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/bootconfig_args.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"

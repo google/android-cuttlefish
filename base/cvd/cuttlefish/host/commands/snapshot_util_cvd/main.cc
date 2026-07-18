@@ -27,6 +27,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/host/commands/snapshot_util_cvd/parse.h"
 #include "cuttlefish/host/commands/snapshot_util_cvd/snapshot_taker.h"

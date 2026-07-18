@@ -34,6 +34,7 @@
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
 #include "cuttlefish/host/commands/cvd/instances/run_cvd_proc_collector.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"

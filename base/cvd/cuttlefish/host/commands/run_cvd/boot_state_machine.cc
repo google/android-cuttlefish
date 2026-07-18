@@ -51,6 +51,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"

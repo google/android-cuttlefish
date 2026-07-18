@@ -29,6 +29,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_api_key",
         "//cuttlefish/host/libs/web:android_build_string",
@@ -161,6 +162,7 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_api",
         "//cuttlefish/host/libs/web:android_build_string",

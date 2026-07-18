@@ -27,6 +27,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/result/result.h"

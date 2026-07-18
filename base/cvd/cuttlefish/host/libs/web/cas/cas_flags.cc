@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/flag_parser/flag.h"
 
 namespace cuttlefish {

@@ -26,7 +26,7 @@
 #include "fmt/format.h"
 #include "gflags/gflags.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"

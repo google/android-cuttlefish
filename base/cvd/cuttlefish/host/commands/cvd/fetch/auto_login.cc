@@ -18,8 +18,8 @@
 #include <string>
 #include <string_view>
 
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/is_google_corp.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_api_credentials.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
 #include "cuttlefish/host/libs/web/oauth2_consent.h"

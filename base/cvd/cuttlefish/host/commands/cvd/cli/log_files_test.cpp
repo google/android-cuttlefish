@@ -27,6 +27,7 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/result/result_matchers.h"
 

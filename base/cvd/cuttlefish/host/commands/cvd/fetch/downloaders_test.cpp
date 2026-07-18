@@ -24,6 +24,7 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"

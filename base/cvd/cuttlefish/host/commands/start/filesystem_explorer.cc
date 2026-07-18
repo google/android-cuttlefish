@@ -16,14 +16,13 @@
 #include "cuttlefish/host/commands/start/filesystem_explorer.h"
 
 #include <dirent.h>
-#include <errno.h>
 #include <sys/types.h>
 
-#include <set>
 #include <string>
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 
 namespace cuttlefish {

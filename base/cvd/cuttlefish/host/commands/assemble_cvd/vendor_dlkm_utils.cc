@@ -38,6 +38,7 @@
 #include "cuttlefish/common/libs/utils/disk_usage.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/kernel_module_parser.h"
 #include "cuttlefish/host/libs/avb/avb.h"

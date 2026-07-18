@@ -26,8 +26,8 @@
 
 #include "absl/log/log.h"
 
-#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/status_fetcher.h"

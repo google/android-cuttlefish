@@ -295,6 +295,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",

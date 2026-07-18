@@ -36,6 +36,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/files:copy",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/posix:readlink",

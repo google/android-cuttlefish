@@ -29,6 +29,12 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "file_exists",
+    srcs = ["file_exists.cc"],
+    hdrs = ["file_exists.h"],
+)
+
+cf_cc_library(
     name = "recursively_remove_directory",
     srcs = ["recursively_remove_directory.cc"],
     hdrs = ["recursively_remove_directory.h"],

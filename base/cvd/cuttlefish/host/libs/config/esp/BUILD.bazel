@@ -12,7 +12,7 @@ cf_cc_library(
     hdrs = ["make_fat_image.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/process:execute",
         "//cuttlefish/result:expect",
@@ -26,6 +26,7 @@ cf_cc_library(
     hdrs = ["esp_builder.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config/esp:make_fat_image",
         "//cuttlefish/process:execute",

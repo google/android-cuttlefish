@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/expect.h"

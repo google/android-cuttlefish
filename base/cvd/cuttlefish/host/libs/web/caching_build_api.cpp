@@ -24,6 +24,7 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"

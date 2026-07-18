@@ -91,6 +91,7 @@ cf_cc_test(
     depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/files:recursively_remove_directory",
         "//cuttlefish/host/commands/cvd/cli:log_files",
         "//cuttlefish/host/commands/cvd/utils",
@@ -122,6 +123,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/files:copy",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/files:recursively_remove_directory",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
@@ -195,6 +197,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:gflags_xml_parser",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/instances:config_path",
         "//cuttlefish/host/commands/cvd/utils",

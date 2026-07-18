@@ -30,7 +30,7 @@
 #include "grpcpp/grpcpp.h"
 #include "grpcpp/health_check_service_interface.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.grpc.pb.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"

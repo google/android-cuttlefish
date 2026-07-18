@@ -22,6 +22,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/copy.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"
