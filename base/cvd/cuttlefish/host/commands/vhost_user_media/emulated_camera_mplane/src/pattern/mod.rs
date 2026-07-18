@@ -16,6 +16,7 @@ use crate::device::CameraControls;
 use std::io::Write;
 
 pub mod pulse;
+pub mod smpte;
 
 /// Generator for a single multi-planar YUV 4:2:0 frame.
 ///
@@ -114,5 +115,10 @@ mod tests {
             )
             .expect("writing into Vec must succeed");
         assert_eq!(plane_y_clamped[0], 255);
+    }
+
+    #[test]
+    fn smpte_bars_writes_full_planes() {
+        assert_plane_sizes(&smpte::SmpteBars);
     }
 }
