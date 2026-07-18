@@ -18,6 +18,7 @@ rust_binary(
         "src/main.rs",
         "src/pattern/mod.rs",
         "src/pattern/pulse.rs",
+        "src/pattern/smpte.rs",
     ],
     edition = "2024",
     deps = crate_deps([
