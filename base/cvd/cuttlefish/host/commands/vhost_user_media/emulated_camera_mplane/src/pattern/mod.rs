@@ -15,6 +15,7 @@
 use std::io::Write;
 
 pub mod pulse;
+pub mod smpte;
 
 /// Frame geometry is owned by the device, which advertises it to the guest through
 /// `v4l2_format`. Patterns re-export it so that both always agree on the plane sizes.
@@ -65,5 +66,10 @@ mod tests {
     #[test]
     fn pulse_writes_full_planes() {
         assert_plane_sizes(&pulse::Pulse);
+    }
+
+    #[test]
+    fn smpte_bars_writes_full_planes() {
+        assert_plane_sizes(&smpte::SmpteBars);
     }
 }
