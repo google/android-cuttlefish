@@ -29,6 +29,7 @@ use vmm_sys_util::poll::{PollContext, PollToken};
 use vmm_sys_util::timerfd::TimerFd;
 
 use crate::pattern::FramePattern;
+use crate::pattern::julia_set::JuliaSet;
 use crate::pattern::pulse::Pulse;
 use crate::pattern::smpte::SmpteBars;
 
@@ -135,13 +136,14 @@ impl Default for Gain {
 pub enum TestPattern {
     Pulse = 0,
     SmpteBars = 1,
+    JuliaSet = 2,
 }
 
 impl TestPattern {
     /// Lowest menu index, reported as `minimum` for `V4L2_CID_TEST_PATTERN`.
     const MIN: i32 = TestPattern::Pulse as i32;
     /// Highest menu index, reported as `maximum` for `V4L2_CID_TEST_PATTERN`.
-    const MAX: i32 = TestPattern::SmpteBars as i32;
+    const MAX: i32 = TestPattern::JuliaSet as i32;
     /// Pattern selected until the guest asks for something else.
     const DEFAULT: TestPattern = TestPattern::Pulse;
 
@@ -150,6 +152,7 @@ impl TestPattern {
         match self {
             TestPattern::Pulse => "Pulse",
             TestPattern::SmpteBars => "SMPTE + Bouncing Box",
+            TestPattern::JuliaSet => "Animated Julia Set",
         }
     }
 
@@ -158,6 +161,7 @@ impl TestPattern {
         match self {
             TestPattern::Pulse => &Pulse,
             TestPattern::SmpteBars => &SmpteBars,
+            TestPattern::JuliaSet => &JuliaSet,
         }
     }
 }
@@ -170,6 +174,7 @@ impl TryFrom<i32> for TestPattern {
         match value {
             0 => Ok(TestPattern::Pulse),
             1 => Ok(TestPattern::SmpteBars),
+            2 => Ok(TestPattern::JuliaSet),
             _ => Err(libc::ERANGE),
         }
     }

@@ -16,6 +16,7 @@ rust_binary(
     srcs = [
         "src/device.rs",
         "src/main.rs",
+        "src/pattern/julia_set.rs",
         "src/pattern/mod.rs",
         "src/pattern/pulse.rs",
         "src/pattern/smpte.rs",
