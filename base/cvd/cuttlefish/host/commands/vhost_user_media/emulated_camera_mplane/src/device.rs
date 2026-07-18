@@ -30,6 +30,7 @@ use vmm_sys_util::timerfd::TimerFd;
 
 use crate::pattern::FramePattern;
 use crate::pattern::pulse::Pulse;
+use crate::pattern::smpte::SmpteBars;
 
 use v4l2r::PixelFormat;
 use v4l2r::QueueType;
@@ -133,13 +134,14 @@ impl Default for Gain {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TestPattern {
     Pulse = 0,
+    SmpteBars = 1,
 }
 
 impl TestPattern {
     /// Lowest menu index, reported as `minimum` for `V4L2_CID_TEST_PATTERN`.
     const MIN: i32 = TestPattern::Pulse as i32;
     /// Highest menu index, reported as `maximum` for `V4L2_CID_TEST_PATTERN`.
-    const MAX: i32 = TestPattern::Pulse as i32;
+    const MAX: i32 = TestPattern::SmpteBars as i32;
     /// Pattern selected until the guest asks for something else.
     const DEFAULT: TestPattern = TestPattern::Pulse;
 
@@ -147,6 +149,7 @@ impl TestPattern {
     fn name(self) -> &'static str {
         match self {
             TestPattern::Pulse => "Pulse",
+            TestPattern::SmpteBars => "SMPTE + Bouncing Box",
         }
     }
 
@@ -154,6 +157,7 @@ impl TestPattern {
     fn generator(self) -> &'static dyn FramePattern {
         match self {
             TestPattern::Pulse => &Pulse,
+            TestPattern::SmpteBars => &SmpteBars,
         }
     }
 }
@@ -165,6 +169,7 @@ impl TryFrom<i32> for TestPattern {
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(TestPattern::Pulse),
+            1 => Ok(TestPattern::SmpteBars),
             _ => Err(libc::ERANGE),
         }
     }
