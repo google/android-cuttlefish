@@ -14,6 +14,7 @@
 
 use std::io::Write;
 
+pub mod julia_set;
 pub mod pulse;
 pub mod smpte;
 
@@ -71,5 +72,27 @@ mod tests {
     #[test]
     fn smpte_bars_writes_full_planes() {
         assert_plane_sizes(&smpte::SmpteBars);
+    }
+
+    #[test]
+    fn julia_set_writes_full_planes() {
+        assert_plane_sizes(&julia_set::JuliaSet);
+    }
+
+    /// The rotation wraps rather than growing without bound, so a frame far into a long
+    /// streaming session still animates instead of freezing on a quantized angle.
+    #[test]
+    fn julia_set_keeps_animating_after_a_long_run() {
+        let far_out = 50_000_000u64;
+        let luma_at = |iteration: u64| {
+            let mut plane_y = Vec::new();
+            let mut plane_u = Vec::new();
+            let mut plane_v = Vec::new();
+            julia_set::JuliaSet
+                .write(iteration, &mut plane_y, &mut plane_u, &mut plane_v)
+                .expect("writing into a Vec cannot fail");
+            plane_y
+        };
+        assert_ne!(luma_at(far_out), luma_at(far_out + 1));
     }
 }
