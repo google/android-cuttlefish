@@ -21,6 +21,7 @@ use std::os::fd::AsFd;
 use std::os::fd::BorrowedFd;
 
 use crate::pattern::FramePattern;
+use crate::pattern::julia_set::JuliaSet;
 use crate::pattern::pulse::Pulse;
 use crate::pattern::smpte::SmpteBars;
 
@@ -89,6 +90,7 @@ pub enum TestPattern {
     Undefined = 0,
     Pulse = 1,
     SmpteBars = 2,
+    JuliaSet = 3,
 }
 
 impl TryFrom<i32> for TestPattern {
@@ -99,6 +101,7 @@ impl TryFrom<i32> for TestPattern {
             0 => Ok(TestPattern::Undefined),
             1 => Ok(TestPattern::Pulse),
             2 => Ok(TestPattern::SmpteBars),
+            3 => Ok(TestPattern::JuliaSet),
             _ => Err(libc::ERANGE),
         }
     }
@@ -227,6 +230,9 @@ impl EmulatedCameraSession {
     ) -> IoctlResult<()> {
         match test_pattern {
             TestPattern::SmpteBars => SmpteBars
+                .write(iteration, sink_y, sink_u, sink_v)
+                .map_err(|_| libc::EIO),
+            TestPattern::JuliaSet => JuliaSet
                 .write(iteration, sink_y, sink_u, sink_v)
                 .map_err(|_| libc::EIO),
             _ => Pulse
@@ -360,7 +366,7 @@ where
             type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_MENU,
             name: name.map(|b| b as i8),
             minimum: 0,
-            maximum: 2,
+            maximum: 3,
             step: 1,
             default_value: 1,
             flags: 0,
@@ -932,7 +938,7 @@ where
         if id != bindings::V4L2_CID_TEST_PATTERN {
             return Err(libc::EINVAL);
         }
-        if index > 2 {
+        if index > 3 {
             return Err(libc::EINVAL);
         }
 
@@ -940,7 +946,8 @@ where
         let name_str = match index {
             0 => "Undefined",
             1 => "Pulse",
-            _ => "SMPTE + Bouncing Box",
+            2 => "SMPTE + Bouncing Box",
+            _ => "Animated Julia Set",
         };
         let bytes = name_str.as_bytes();
         name[0..bytes.len()].copy_from_slice(bytes);
@@ -1062,7 +1069,7 @@ where
                     ctrl_event.u.ctrl.type_ = bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER;
                     ctrl_event.u.ctrl.__bindgen_anon_1.value = self.current_pattern as i32;
                     ctrl_event.u.ctrl.minimum = 0;
-                    ctrl_event.u.ctrl.maximum = 2;
+                    ctrl_event.u.ctrl.maximum = 3;
                     ctrl_event.u.ctrl.step = 1;
                     ctrl_event.u.ctrl.default_value = 1;
                     self.evt_queue
@@ -1109,7 +1116,7 @@ where
                 ctrl_event.u.ctrl.type_ = bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER;
                 ctrl_event.u.ctrl.__bindgen_anon_1.value = self.current_pattern as i32;
                 ctrl_event.u.ctrl.minimum = 0;
-                ctrl_event.u.ctrl.maximum = 1;
+                ctrl_event.u.ctrl.maximum = 3;
                 ctrl_event.u.ctrl.step = 1;
                 ctrl_event.u.ctrl.default_value = 1;
                 self.evt_queue
