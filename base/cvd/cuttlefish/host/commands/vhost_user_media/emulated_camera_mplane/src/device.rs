@@ -22,6 +22,7 @@ use std::os::fd::BorrowedFd;
 
 use crate::pattern::FramePattern;
 use crate::pattern::pulse::Pulse;
+use crate::pattern::smpte::SmpteBars;
 
 use std::str::FromStr;
 use v4l2r::PixelFormat;
@@ -87,6 +88,7 @@ impl FromStr for LensFacing {
 pub enum TestPattern {
     Undefined = 0,
     Pulse = 1,
+    SmpteBars = 2,
 }
 
 impl TryFrom<i32> for TestPattern {
@@ -96,6 +98,7 @@ impl TryFrom<i32> for TestPattern {
         match value {
             0 => Ok(TestPattern::Undefined),
             1 => Ok(TestPattern::Pulse),
+            2 => Ok(TestPattern::SmpteBars),
             _ => Err(libc::ERANGE),
         }
     }
@@ -223,6 +226,9 @@ impl EmulatedCameraSession {
         sink_v: WV,
     ) -> IoctlResult<()> {
         match test_pattern {
+            TestPattern::SmpteBars => SmpteBars
+                .write(iteration, sink_y, sink_u, sink_v)
+                .map_err(|_| libc::EIO),
             _ => Pulse
                 .write(iteration, sink_y, sink_u, sink_v)
                 .map_err(|_| libc::EIO),
@@ -354,7 +360,7 @@ where
             type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_MENU,
             name: name.map(|b| b as i8),
             minimum: 0,
-            maximum: 3,
+            maximum: 2,
             step: 1,
             default_value: 1,
             flags: 0,
@@ -926,14 +932,15 @@ where
         if id != bindings::V4L2_CID_TEST_PATTERN {
             return Err(libc::EINVAL);
         }
-        if index > 1 {
+        if index > 2 {
             return Err(libc::EINVAL);
         }
 
         let mut name = [0u8; 32];
         let name_str = match index {
             0 => "Undefined",
-            _ => "Pulse",
+            1 => "Pulse",
+            _ => "SMPTE + Bouncing Box",
         };
         let bytes = name_str.as_bytes();
         name[0..bytes.len()].copy_from_slice(bytes);
@@ -1052,6 +1059,12 @@ where
                     let mut ctrl_event: bindings::v4l2_event = unsafe { std::mem::zeroed() };
                     ctrl_event.type_ = bindings::V4L2_EVENT_CTRL;
                     ctrl_event.id = bindings::V4L2_CID_TEST_PATTERN;
+                    ctrl_event.u.ctrl.type_ = bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER;
+                    ctrl_event.u.ctrl.__bindgen_anon_1.value = self.current_pattern as i32;
+                    ctrl_event.u.ctrl.minimum = 0;
+                    ctrl_event.u.ctrl.maximum = 2;
+                    ctrl_event.u.ctrl.step = 1;
+                    ctrl_event.u.ctrl.default_value = 1;
                     self.evt_queue
                         .send_event(V4l2Event::Event(SessionEvent::new(_session.id, ctrl_event)));
                 }

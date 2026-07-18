@@ -15,6 +15,7 @@
 use std::io::Write;
 
 pub mod pulse;
+pub mod smpte;
 
 pub const WIDTH: u32 = 640;
 pub const HEIGHT: u32 = 480;
