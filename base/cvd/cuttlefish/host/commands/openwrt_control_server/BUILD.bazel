@@ -36,7 +36,7 @@ cf_cc_binary(
     depend_on_what_you_use_enabled = False,
     deps = [
         ":libopenwrt_control_server",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
         "//cuttlefish/host/libs/web/http_client:http_json",

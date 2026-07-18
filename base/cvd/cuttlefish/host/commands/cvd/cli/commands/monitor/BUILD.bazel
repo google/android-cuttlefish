@@ -153,7 +153,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/ansi_codes",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:display",
         "//cuttlefish/host/commands/cvd/instances",

@@ -26,10 +26,10 @@
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/random.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/process/execute.h"
 

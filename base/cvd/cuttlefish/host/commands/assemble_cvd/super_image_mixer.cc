@@ -32,6 +32,7 @@
 #include "cuttlefish/common/libs/utils/archive.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/misc_info.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"

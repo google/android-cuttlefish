@@ -16,10 +16,10 @@
 
 #include "cuttlefish/common/libs/utils/container.h"
 
-#include <cstdlib>
 #include <string>
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 
 namespace cuttlefish {
 namespace {

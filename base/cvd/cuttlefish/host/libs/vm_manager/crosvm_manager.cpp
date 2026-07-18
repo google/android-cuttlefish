@@ -40,6 +40,7 @@
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"

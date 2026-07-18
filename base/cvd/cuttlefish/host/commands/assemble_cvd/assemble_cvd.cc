@@ -30,6 +30,7 @@
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/enabled.h"
+#pragma once
 
-#include "cuttlefish/files/file_exists.h"
+#include <string>
 
 namespace cuttlefish {
 
-bool AreMetricsEnabled() { return FileExists(kTransmitterPath); }
+bool FileExists(const std::string& path, bool follow_symlinks = true);
 
 }  // namespace cuttlefish

@@ -146,6 +146,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_flags_validator",

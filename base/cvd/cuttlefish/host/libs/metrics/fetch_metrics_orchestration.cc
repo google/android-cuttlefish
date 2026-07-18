@@ -19,14 +19,12 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <vector>
 
 #include "absl/log/log.h"
-#include "absl/strings/str_split.h"
 #include "fmt/format.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"

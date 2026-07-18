@@ -9,7 +9,7 @@ cf_cc_library(
     srcs = ["access_kregistry.cc"],
     hdrs = ["access_kregistry.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
@@ -24,6 +24,7 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
         "//cuttlefish/host/commands/assemble_cvd/flags:build_super_image",
@@ -86,6 +87,7 @@ cf_cc_library(
     hdrs = ["chromeos_state.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
@@ -110,6 +112,7 @@ cf_cc_library(
     hdrs = ["factory_reset_protected.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/image_aggregator",
@@ -155,6 +158,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:size_utils",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd:bootconfig_args",
         "//cuttlefish/host/commands/assemble_cvd/boot_image:vendor_boot_image",
         "//cuttlefish/host/libs/avb",
@@ -192,7 +196,7 @@ cf_cc_library(
     srcs = ["hwcomposer_pmem.cc"],
     hdrs = ["hwcomposer_pmem.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
@@ -237,6 +241,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:copy",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd:vendor_dlkm_utils",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
@@ -267,6 +272,7 @@ cf_cc_library(
     hdrs = ["metadata_image.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
@@ -323,6 +329,7 @@ cf_cc_library(
     hdrs = ["pflash.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
@@ -335,7 +342,7 @@ cf_cc_library(
     srcs = ["pstore.cc"],
     hdrs = ["pstore.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
@@ -348,7 +355,7 @@ cf_cc_library(
     srcs = ["sd_card.cc"],
     hdrs = ["sd_card.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/image_aggregator:qcow2",
@@ -361,7 +368,7 @@ cf_cc_library(
     srcs = ["vbmeta_enforce_minimum_size.cc"],
     hdrs = ["vbmeta_enforce_minimum_size.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",

@@ -15,16 +15,18 @@
 
 #include "cuttlefish/host/commands/modem_simulator/network_service.h"
 
-#include "absl/log/log.h"
-
 #include <map>
 #include <sstream>
 
+#include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/modem_simulator/device_config.h"
 #include "cuttlefish/host/commands/modem_simulator/modem_technology.h"
 #include "cuttlefish/host/commands/modem_simulator/nvram_config.h"
 #include "cuttlefish/host/commands/modem_simulator/thread_looper.h"
+
 namespace cuttlefish {
 
 // string type; two byte location area code in hexadecimal format

@@ -25,7 +25,7 @@
 #include "fmt/core.h"
 #include "fmt/format.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/flags_collector.h"
 #include "cuttlefish/process/command.h"

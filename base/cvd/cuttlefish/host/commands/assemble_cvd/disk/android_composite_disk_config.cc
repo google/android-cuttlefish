@@ -30,6 +30,7 @@
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/build_super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"

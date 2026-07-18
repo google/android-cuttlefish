@@ -22,6 +22,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
@@ -198,7 +199,7 @@ cf_cc_library(
     hdrs = ["host_tool_target.h"],
     depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
@@ -409,6 +410,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:help_format",

@@ -63,6 +63,7 @@
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/files/copy.h"
 #include "cuttlefish/files/file_device_id.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"

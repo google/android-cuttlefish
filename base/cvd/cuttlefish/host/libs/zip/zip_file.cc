@@ -24,7 +24,7 @@
 #include <string_view>
 #include <utility>
 
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"

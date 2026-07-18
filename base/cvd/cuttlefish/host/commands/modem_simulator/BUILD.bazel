@@ -143,6 +143,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/modem_simulator:channel_monitor",
         "//cuttlefish/host/commands/modem_simulator:client",
         "//cuttlefish/host/commands/modem_simulator:command_parser",
@@ -201,6 +202,7 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:modem_technology",
         "//libbase",

@@ -22,6 +22,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/uuid.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

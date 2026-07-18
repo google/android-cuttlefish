@@ -33,6 +33,7 @@
 #include "android-base/file.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"

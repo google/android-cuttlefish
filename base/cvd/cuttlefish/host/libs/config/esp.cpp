@@ -30,8 +30,8 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/esp/esp_builder.h"
 #include "cuttlefish/process/execute.h"
 

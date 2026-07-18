@@ -59,6 +59,7 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/pretty:result",
         "//cuttlefish/pretty:set",

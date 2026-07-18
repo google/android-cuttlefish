@@ -105,7 +105,7 @@ cf_cc_library(
     hdrs = ["zip_file.h"],
     depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:stat",

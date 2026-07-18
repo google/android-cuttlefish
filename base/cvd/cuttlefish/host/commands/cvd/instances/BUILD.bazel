@@ -12,8 +12,8 @@ cf_cc_library(
     hdrs = ["config_path.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/result",
-        "//libbase",
     ],
 )
 
@@ -109,6 +109,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:signals",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
@@ -206,7 +207,7 @@ cf_cc_library(
     hdrs = ["run_cvd_proc_collector.h"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/process:proc_file_utils",
@@ -224,6 +225,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/instances:config_path",
         "//cuttlefish/host/commands/cvd/instances:run_cvd_proc_collector",
         "//cuttlefish/host/commands/cvd/utils",

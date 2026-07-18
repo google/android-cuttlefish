@@ -15,10 +15,11 @@
 
 #include "cuttlefish/host/commands/modem_simulator/sim_service.h"
 
-#include <tinyxml2.h>
 #include "absl/log/log.h"
+#include <tinyxml2.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/modem_simulator/device_config.h"
 #include "cuttlefish/host/commands/modem_simulator/network_service.h"
 #include "cuttlefish/host/commands/modem_simulator/nvram_config.h"

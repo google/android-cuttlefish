@@ -9,8 +9,8 @@ cf_cc_library(
     srcs = ["device_metrics_orchestration.cc"],
     hdrs = ["device_metrics_orchestration.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/libs/metrics:device_event_type",
         "//cuttlefish/host/libs/metrics:guest_metrics",
@@ -30,7 +30,7 @@ cf_cc_library(
     srcs = ["enabled.cc"],
     hdrs = ["enabled.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
     ],
 )
 
@@ -57,8 +57,8 @@ cf_cc_library(
     srcs = ["fetch_metrics_orchestration.cc"],
     hdrs = ["fetch_metrics_orchestration.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/libs/metrics:metrics_conversion",
@@ -66,7 +66,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/metrics:notification",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
@@ -238,7 +237,7 @@ cf_cc_library(
     srcs = ["notification.cc"],
     hdrs = ["notification.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/directories",
         "//cuttlefish/host/libs/metrics:enabled",
         "//cuttlefish/result",
@@ -273,6 +272,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:uuid",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/result",
         "@fmt",
     ],

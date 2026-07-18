@@ -30,6 +30,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
@@ -71,10 +72,10 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:random",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/process:execute",
         "//libbase",
@@ -90,6 +91,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
@@ -120,6 +122,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flags_validator",
         "//cuttlefish/common/libs/utils:host_info",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:boot_flow",
@@ -207,8 +210,8 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:host_info",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config/esp:esp_builder",
         "//cuttlefish/process:execute",
         "//libbase",
@@ -234,6 +237,7 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:file_source",
         "//cuttlefish/host/libs/zip:zip_file",
@@ -276,6 +280,7 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/result",
         "//libbase",
@@ -382,7 +387,7 @@ cf_cc_library(
     srcs = ["known_paths.cpp"],
     hdrs = ["known_paths.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:config_utils",
     ],
 )
