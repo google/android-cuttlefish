@@ -14,6 +14,7 @@
 
 use std::io::Write;
 
+pub mod julia_set;
 pub mod pulse;
 pub mod smpte;
 
