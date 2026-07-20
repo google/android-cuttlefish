@@ -40,6 +40,8 @@ Result<GpuMode> GpuModeFromString(std::string_view mode) {
     return GpuMode::GfxstreamGuestAngleHostSwiftshader;
   } else if (mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
     return GpuMode::GfxstreamGuestAngleHostLavapipe;
+  } else if (mode == kGpuModeGuestLavapipe) {
+    return GpuMode::GuestLavapipe;
   } else if (mode == kGpuModeGuestSwiftshader) {
     return GpuMode::GuestSwiftshader;
   } else if (mode == kGpuModeNone) {
@@ -73,6 +75,9 @@ std::string_view format_as(GpuMode mode) {
     case GpuMode::GfxstreamGuestAngleHostSwiftshader:
       return kGpuModeGfxstreamGuestAngleHostSwiftshader;
       break;
+    case GpuMode::GuestLavapipe:
+      return kGpuModeGuestLavapipe;
+      break;
     case GpuMode::GuestSwiftshader:
       return kGpuModeGuestSwiftshader;
       break;
@@ -91,6 +96,10 @@ bool IsGfxstreamGuestAngleMode(GpuMode mode) {
   return mode == GpuMode::GfxstreamGuestAngle ||
          mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
          mode == GpuMode::GfxstreamGuestAngleHostSwiftshader;
+}
+
+bool IsGuestRenderingMode(GpuMode mode) {
+  return mode == GpuMode::GuestLavapipe || mode == GpuMode::GuestSwiftshader;
 }
 
 }  // namespace cuttlefish
