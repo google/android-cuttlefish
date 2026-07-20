@@ -78,7 +78,18 @@ CrosvmManager::ConfigureGraphics(
 
   std::unordered_map<std::string, std::string> bootconfig_args;
 
-  if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
+  if (instance.gpu_mode() == GpuMode::GuestLavapipe) {
+    bootconfig_args = {
+        {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_4)},
+        {"androidboot.hardware.gralloc", "minigbm"},
+        {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
+        {"androidboot.hardware.hwcomposer.mode", "client"},
+        {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
+        {"androidboot.hardware.egl", "angle"},
+        {"androidboot.hardware.vulkan", "lvp"},
+        {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
+    };
+  } else if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_3)},
         {"androidboot.hardware.gralloc", "minigbm"},
@@ -326,7 +337,7 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
   gpu_device_cmd.Cmd().AddParameter("gpu");
 
   const GpuMode gpu_mode = instance.gpu_mode();
-  CF_EXPECT(IsGfxstreamMode(gpu_mode) || gpu_mode == GpuMode::GuestSwiftshader,
+  CF_EXPECT(IsGfxstreamMode(gpu_mode) || IsGuestRenderingMode(gpu_mode),
             "GPU mode " << GpuModeString(gpu_mode)
                         << " not yet supported with vhost user gpu.");
 
@@ -336,7 +347,7 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
   // Why does this need JSON instead of just following the normal flags style...
   Json::Value gpu_params_json;
   gpu_params_json["pci-address"] = gpu_pci_address;
-  if (gpu_mode == GpuMode::GuestSwiftshader) {
+  if (IsGuestRenderingMode(gpu_mode)) {
     gpu_params_json["backend"] = "2D";
   } else if (gpu_mode == GpuMode::Gfxstream) {
     gpu_params_json["context-types"] = "gfxstream-gles:gfxstream-vulkan";
@@ -482,7 +493,7 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
     crosvm_cmd->AddParameter("--wayland-sock=", instance.frames_socket_path());
   }
 
-  if (gpu_mode == GpuMode::GuestSwiftshader) {
+  if (IsGuestRenderingMode(gpu_mode)) {
     crosvm_cmd->AddParameter("--gpu=", gpu_displays_string, "backend=2D",
                              gpu_common_string);
   } else if (gpu_mode == GpuMode::DrmVirgl) {

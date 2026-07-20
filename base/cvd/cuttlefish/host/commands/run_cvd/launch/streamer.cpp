@@ -151,7 +151,7 @@ class StreamerSockets : public virtual SetupFeature {
   // SetupFeature
   std::string Name() const override { return "StreamerSockets"; }
   bool Enabled() const override {
-    bool is_accelerated = instance_.gpu_mode() != GpuMode::GuestSwiftshader;
+    bool is_accelerated = !IsGuestRenderingMode(instance_.gpu_mode());
     return !(VmManagerIsQemu(config_) && is_accelerated);
   }
 

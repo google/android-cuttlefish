@@ -135,12 +135,25 @@ GetGpuModeRequirementsMap() {
   const RequirementWithReason kGuestSupportsGfxstream{
       .func =
           [](const CommonState& common) {
-            return common.guest_config.gfxstream_supported;
+            return common.guest_config.gfxstream_supported ||
+                   common.guest_config.has_vulkan_gfxstream_apex;
           },
       .success_explanation = "The guest supports Gfxstream.",
       .failure_explanation =
           "The guest does not support Gfxstream. This is configured in the "
           "`android-info.txt` file associated with the guest target build.",
+  };
+  const RequirementWithReason kGuestSupportsLavapipe{
+      .func =
+          [](const CommonState& common) {
+            return common.guest_config.guest_lavapipe_supported ||
+                   common.guest_config.has_vulkan_lavapipe_apex;
+          },
+      .success_explanation = "The guest supports Lavapipe.",
+      .failure_explanation =
+          "The guest does not claim support for Lavapipe. This is "
+          "configured in the `android-info.txt` file associated with the guest "
+          "target build.",
   };
   const RequirementWithReason kHostGlesAvailable{
       .func =
@@ -301,6 +314,12 @@ GetGpuModeRequirementsMap() {
                   kHostIsNonArm,
                   kHostVulkanLoaderAvailable,
                   kNotUsingHostQemu,
+              },
+          },
+          {
+              GpuMode::GuestLavapipe,
+              {
+                  kGuestSupportsLavapipe,
               },
           },
           {
@@ -487,12 +506,18 @@ std::vector<GpuMode> GetGpuModeCandidates(const GuestConfig& guest_config) {
     gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostSwiftshader);
     gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostLavapipe);
     gpu_mode_candidates.push_back(GpuMode::GuestSwiftshader);
+    if (guest_config.guest_lavapipe_supported) {
+      gpu_mode_candidates.push_back(GpuMode::GuestLavapipe);
+    }
   } else {
     gpu_mode_candidates.push_back(GpuMode::Gfxstream);
     gpu_mode_candidates.push_back(GpuMode::GuestSwiftshader);
     gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngle);
     gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostSwiftshader);
     gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostLavapipe);
+    if (guest_config.guest_lavapipe_supported) {
+      gpu_mode_candidates.push_back(GpuMode::GuestLavapipe);
+    }
   }
 
   gpu_mode_candidates.push_back(GpuMode::None);
@@ -596,7 +621,7 @@ Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
             gpu_vhost_user_mode_arg == kGpuVhostUserModeOn ||
             gpu_vhost_user_mode_arg == kGpuVhostUserModeOff);
   if (gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto) {
-    if (gpu_mode == GpuMode::GuestSwiftshader) {
+    if (IsGuestRenderingMode(gpu_mode)) {
       VLOG(0) << "GPU vhost user auto mode: not needed for --gpu_mode="
               << GpuModeString(gpu_mode) << ". Not enabling vhost user gpu.";
       return false;
@@ -844,6 +869,12 @@ Result<GpuMode> ConfigureGpuSettings(
     const std::string& guest_renderer_preload_arg, VmmMode vmm,
     const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
+  instance.set_has_vulkan_gfxstream_apex(
+      guest_config.has_vulkan_gfxstream_apex);
+  instance.set_has_vulkan_lavapipe_apex(guest_config.has_vulkan_lavapipe_apex);
+  instance.set_has_vulkan_swiftshader_apex(
+      guest_config.has_vulkan_swiftshader_apex);
+
 #ifdef __APPLE__
   (void)graphics_availability;
   (void)gpu_vhost_user_mode_arg;

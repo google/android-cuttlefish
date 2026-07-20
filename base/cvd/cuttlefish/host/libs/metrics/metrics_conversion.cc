@@ -120,6 +120,9 @@ CuttlefishFlags_GpuMode ConvertGpuMode(GpuMode mode) {
     case GpuMode::GuestSwiftshader:
       return CuttlefishFlags_GpuMode::
           CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_SWIFTSHADER;
+    case GpuMode::GuestLavapipe:
+      return CuttlefishFlags_GpuMode::
+          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_LAVAPIPE;
     case GpuMode::None:
       return CuttlefishFlags_GpuMode::
           CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_NONE;
