@@ -472,7 +472,9 @@ int CuttlefishMain() {
                             std::to_string(instance.memory_mb()) + " mb");
 
   std::string user_friendly_gpu_mode;
-  if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
+  if (instance.gpu_mode() == GpuMode::GuestLavapipe) {
+    user_friendly_gpu_mode = "Lavapipe (Guest GPU Rendering)";
+  } else if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
     user_friendly_gpu_mode = "SwiftShader (Guest CPU Rendering)";
   } else if (instance.gpu_mode() == GpuMode::DrmVirgl) {
     user_friendly_gpu_mode =
