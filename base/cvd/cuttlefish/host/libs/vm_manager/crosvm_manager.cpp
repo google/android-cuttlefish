@@ -720,7 +720,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
                                   ",size=", FileSize(PstorePath(instance)));
   }
 
-  if (instance.enable_sandbox()) {
+  if (instance.enable_sandbox() && !InSandbox()) {
     const bool seccomp_exists = DirectoryExists(instance.seccomp_policy_dir());
     const std::string& var_empty_dir = kCrosvmVarEmptyDir;
     const bool var_empty_available = DirectoryExists(var_empty_dir);
