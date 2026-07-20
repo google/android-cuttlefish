@@ -515,6 +515,10 @@ class CuttlefishConfig {
     bool enable_gpu_external_blob() const;
     bool enable_gpu_system_blob() const;
 
+    bool has_vulkan_gfxstream_apex() const;
+    bool has_vulkan_lavapipe_apex() const;
+    bool has_vulkan_swiftshader_apex() const;
+
     std::string hwcomposer() const;
 
     bool restart_subprocesses() const;
@@ -748,6 +752,10 @@ class CuttlefishConfig {
     void set_enable_gpu_vhost_user(const bool enable_gpu_vhost_user);
     void set_enable_gpu_external_blob(const bool enable_gpu_external_blob);
     void set_enable_gpu_system_blob(const bool enable_gpu_system_blob);
+
+    void set_has_vulkan_gfxstream_apex(const bool has_apex);
+    void set_has_vulkan_lavapipe_apex(const bool has_apex);
+    void set_has_vulkan_swiftshader_apex(const bool has_apex);
 
     void set_hwcomposer(const std::string&);
 

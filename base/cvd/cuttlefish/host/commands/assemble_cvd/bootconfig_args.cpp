@@ -338,6 +338,26 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
               ? "com.android.hardware.graphics.composer.drm_hwcomposer"
               : "com.android.hardware.graphics.composer.ranchu";
 
+  const GpuMode gpu_mode = instance.gpu_mode();
+  if (gpu_mode != GpuMode::None) {
+    if (IsGfxstreamMode(gpu_mode)) {
+      if (instance.has_vulkan_gfxstream_apex()) {
+        bootconfig_args["androidboot.vendor.apex.com.google.cf.vulkan"] =
+            "com.google.cf.vulkan.gfxstream";
+      }
+    } else if (gpu_mode == GpuMode::GuestLavapipe) {
+      if (instance.has_vulkan_lavapipe_apex()) {
+        bootconfig_args["androidboot.vendor.apex.com.google.cf.vulkan"] =
+            "com.google.cf.vulkan.lavapipe";
+      }
+    } else if (gpu_mode == GpuMode::GuestSwiftshader) {
+      if (instance.has_vulkan_swiftshader_apex()) {
+        bootconfig_args["androidboot.vendor.apex.com.google.cf.vulkan"] =
+            "com.google.cf.vulkan.swiftshader";
+      }
+    }
+  }
+
   if (instance.vhal_proxy_server_port()) {
     bootconfig_args["androidboot.vhal_proxy_server_port"] =
         std::to_string(instance.vhal_proxy_server_port());
