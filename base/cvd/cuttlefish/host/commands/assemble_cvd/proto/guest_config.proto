@@ -48,6 +48,15 @@ message Graphics {
 
   // The list of gpu modes supported by the guest in order of preference.
   repeated GpuMode gpu_mode_candidates = 5;
+
+  // Whether the guest has a separate apex for the Gfxstream Vulkan driver.
+  bool vulkan_gfxstream_apex_supported = 6;
+
+  // Whether the guest has a separate apex for the Lavapipe Vulkan driver.
+  bool vulkan_lavapipe_apex_supported = 7;
+
+  // Whether the guest has a separate apex for the Swiftshader Vulkan driver.
+  bool vulkan_swiftshader_apex_supported = 8;
 }
 
 message Audio {
@@ -88,7 +97,7 @@ message Audio {
       bool mute_control_enabled = 1;
       Volume volume_control = 2;
     }
-    
+
     message Stream {
       uint32 id = 1;
       ChannelLayout channel_layout = 2;
