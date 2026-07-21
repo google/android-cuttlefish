@@ -223,4 +223,5 @@ cc_binary(
         ":glslang",
         ":glslang-default-resource-limits",
     ],
+    visibility = ["//visibility:public"],
 )
