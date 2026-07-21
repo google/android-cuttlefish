@@ -17,8 +17,10 @@
 
 #include <unistd.h>
 
+#include <cerrno>
 #include <functional>
 #include <optional>
+#include <random>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -29,6 +31,7 @@
 #include <google/protobuf/text_format.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -64,10 +67,27 @@ Result<void> Substitute(const std::string& target,
 
   CF_EXPECT(EnsureDirectoryExists(android::base::Dirname(full_link_name)));
 
-  int unlink_res = unlink(full_link_name.c_str());
-  CF_EXPECTF(unlink_res == 0 || errno == ENOENT, "{}", StrError(errno));
+  std::random_device rd;
+  std::string tmp_link_name;
+  constexpr int kMaxRetries = 10;
+  for (int attempt = 0; attempt < kMaxRetries; ++attempt) {
+    tmp_link_name = fmt::format("{}.tmp_{}_{}", full_link_name, getpid(), rd());
+    auto symlink_res = Symlink(target, tmp_link_name);
+    if (symlink_res.has_value()) {
+      break;
+    }
+    if (errno == EEXIST && attempt + 1 < kMaxRetries) {
+      continue;
+    }
+    return symlink_res;
+  }
 
-  CF_EXPECT(Symlink(target, full_link_name));
+  if (rename(tmp_link_name.c_str(), full_link_name.c_str()) != 0) {
+    const int err = errno;
+    unlink(tmp_link_name.c_str());
+    return CF_ERRF("Failed to rename symlink: {}", StrError(err));
+  }
+
   return {};
 }
 
