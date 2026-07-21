@@ -42,6 +42,8 @@ class SimService : public ModemService, public std::enable_shared_from_this<SimS
   void HandleCSIM_IO(const Client& client, const std::string& command);
   void HandleGetIMSI(const Client& client);
   void HandleGetIccId(const Client& client);
+  void HandleGetEid(const Client& client);
+  void HandleGetAtr(const Client& client);
   void HandleFacilityLock(const Client& client, const std::string& command);
   void HandleOpenLogicalChannel(const Client& client,
                                 const std::string& command);
