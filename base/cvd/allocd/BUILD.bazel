@@ -1,5 +1,5 @@
 load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -33,8 +33,9 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     deps = select({
         ":netlink": [":alloc_netlink"],
-        "//conditions:default": [":alloc_iproute2"],
+        "//conditions:default": [":alloc_netlink"],
     }) + [
+        "//allocd/net:nftables",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:network",
@@ -78,5 +79,15 @@ cf_cc_library(
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cf_cc_test(
+    name = "alloc_utils_firewall_test",
+    srcs = ["alloc_utils_firewall_test.cpp"],
+    deps = [
+        ":alloc_utils",
+        "//allocd/test:mock_nftables",
+        "//cuttlefish/result:result_matchers",
     ],
 )

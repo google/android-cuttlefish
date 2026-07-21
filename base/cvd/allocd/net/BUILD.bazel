@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -17,5 +17,38 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "@abseil-cpp//absl/log",
+    ],
+)
+
+cf_cc_library(
+    name = "nftables",
+    srcs = [
+        "nft_rule.cc",
+        "nftables_nft.cc",
+    ],
+    hdrs = [
+        "nft_rule.h",
+        "nftables.h",
+        "nftables_nft.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/process:command",
+        "//cuttlefish/process:managed_stdio",
+        "//cuttlefish/process:subprocess",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/base:no_destructor",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
+cf_cc_test(
+    name = "nft_rule_test",
+    srcs = ["nft_rule_test.cc"],
+    deps = [
+        ":nftables",
+        "//allocd/test:mock_nftables",
+        "//cuttlefish/result:result_matchers",
     ],
 )

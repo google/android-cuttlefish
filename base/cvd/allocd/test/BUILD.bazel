@@ -1,0 +1,14 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "mock_nftables",
+    hdrs = ["mock_nftables.h"],
+    deps = [
+        "//allocd/net:nftables",
+        "@googletest//:gtest",
+    ],
+)

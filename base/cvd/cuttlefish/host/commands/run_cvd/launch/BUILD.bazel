@@ -118,7 +118,7 @@ cf_cc_library(
     hdrs = ["cvdalloc.h"],
     depend_on_what_you_use_enabled = False,
     deps = [
-        "//allocd:alloc_utils",
+        "//allocd/net:nftables",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/cvdalloc:privilege",
         "//cuttlefish/host/commands/cvdalloc:sem",
