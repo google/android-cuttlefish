@@ -172,7 +172,7 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
     display.DrawFile(SharedFdIo(logcat_fd), kLogNameLogcat, logcat_lines);
 
     const auto [output, total_lines_drawn] = display.Finalize();
-    std::cout << kAnsiClearScreen << output << std::flush;
+    std::cout << kAnsiClearScreen << kAnsiCursorTopLeft << output << std::flush;
 
     // Enforce a maximum framerate (max 20 FPS / min 50ms between draws)
     // so we don't saturate SSH bandwidth or CPU during heavy, continuous

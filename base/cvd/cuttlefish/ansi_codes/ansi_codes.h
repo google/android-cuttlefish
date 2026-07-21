@@ -21,6 +21,7 @@
 
 namespace cuttlefish {
 
+inline constexpr std::string_view kAnsiCursorTopLeft = "\033[;H";
 inline constexpr std::string_view kAnsiBoldBlue = "\033[1;34m";
 inline constexpr std::string_view kAnsiBoldCyan = "\033[1;36m";
 inline constexpr std::string_view kAnsiClearScreen = "\033[2J";
