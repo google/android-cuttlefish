@@ -78,7 +78,14 @@ void WritePausedEntrypoint(std::string_view entrypoint,
 
 void WriteAndroidEnvironment(
     std::ostream& env, const CuttlefishConfig::InstanceSpecific& instance) {
-  WritePausedEntrypoint("run bootcmd_android", instance, env);
+  const std::string entrypoint =
+      "bcb load virtio 0 misc; "
+      "if bcb test command = boot-quiescent; then "
+      "setenv bootargs \"$bootargs androidboot.quiescent=1\"; "
+      "bcb clear command; bcb store; "
+      "fi; "
+      "run bootcmd_android";
+  WritePausedEntrypoint(entrypoint, instance, env);
 
   if (!instance.boot_slot().empty()) {
     env << "android_slot_suffix=_" << instance.boot_slot() << '\0';
