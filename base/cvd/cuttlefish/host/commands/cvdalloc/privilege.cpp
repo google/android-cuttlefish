@@ -30,6 +30,9 @@
 
 #include <string_view>
 
+#include <optional>
+#include <utility>
+
 #include "absl/log/log.h"
 
 #include "cuttlefish/posix/stat.h"
@@ -155,6 +158,24 @@ int DropPrivileges(uid_t orig) {
 #endif
 
   return setuid(orig);
+}
+
+Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
+  uid_t orig = getuid();
+  CF_EXPECTF(BeginElevatedPrivileges() != -1,
+             "Couldn't elevate permissions: {}", StrError(errno));
+  return ScopedPrivileges(orig);
+}
+
+ScopedPrivileges::ScopedPrivileges(uid_t orig) : orig_(orig) {}
+
+ScopedPrivileges::ScopedPrivileges(ScopedPrivileges&& other) noexcept
+    : orig_(std::exchange(other.orig_, std::nullopt)) {}
+
+ScopedPrivileges::~ScopedPrivileges() {
+  if (orig_.has_value() && DropPrivileges(*orig_) == -1) {
+    LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << StrError(errno);
+  }
 }
 
 }  // namespace cuttlefish
