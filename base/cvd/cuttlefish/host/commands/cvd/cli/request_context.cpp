@@ -16,10 +16,12 @@
 
 #include "cuttlefish/host/commands/cvd/cli/request_context.h"
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "fmt/format.h"
 #include "fmt/ranges.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -82,6 +84,45 @@ std::vector<std::string> GetPossibleCommands(
     }
   }
   return possibilities;
+}
+
+bool HandleDeprecatedCommands(const CommandRequest& request) {
+  if (request.Subcommand() == "acloud") {
+    std::cerr << "If you are seeing this error when you tried to run `acloud` "
+                 "in an Android lunch environment, you are likely running into "
+                 "an error with an outdated `acloud_translator` symlink.  You "
+                 "can verify "
+                 "with `where acloud`, and there should be two results.\n\nTo "
+                 "fix, run `rm $ANDROID_HOST_OUT/bin/acloud` to remove the "
+                 "deprecated `acloud_translator` binary symlink.  `m clean; m` "
+                 "should also remove the symlink.\n";
+    return true;
+  }
+  return false;
+}
+
+void SuggestAlternativeCommands(
+    const CommandRequest& request,
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers) {
+  fmt::print(std::cerr,
+             "Unable to find a matching command for \"cvd {}\".\nMaybe there "
+             "is a typo?  Run `cvd help` for a list of commands.",
+             request.Subcommand());
+  const std::vector<std::string> possible_commands =
+      GetPossibleCommands(request, handlers);
+  std::string addendum;
+  if (!possible_commands.empty()) {
+    fmt::print(std::cerr, "\n\nDid you mean one of:\n\t{}\n",
+               fmt::join(possible_commands, "\n\t"));
+  }
+}
+
+void HandleNoMatches(
+    const CommandRequest& request,
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& handlers) {
+  if (!HandleDeprecatedCommands(request)) {
+    SuggestAlternativeCommands(request, handlers);
+  }
 }
 
 }  //  namespace
@@ -154,23 +195,15 @@ Result<CvdCommandHandler*> RequestHandler(
     }
   }
 
-  CF_EXPECT(compatible_handlers.size() < 2,
-            "The command matched multiple handlers which should not happen.  "
-            "Please open a bug with the cvd/Cuttlefish team and include the "
-            "exact command that raised the error so it can be fixed.");
+  CF_EXPECT_LE(compatible_handlers.size(), 1,
+               "The command matched multiple handlers, which should not "
+               "happen.  Please open a bug with the Cuttlefish team and "
+               "include the exact command that raised the error.");
 
   if (compatible_handlers.size() != 1) {
-    const std::vector<std::string> possible_commands =
-        GetPossibleCommands(request, handlers);
-    std::string addendum;
-    if (!possible_commands.empty()) {
-      addendum = fmt::format("\n\nDid you mean one of:\n\t{}",
-                             fmt::join(possible_commands, "\n\t"));
-    }
-    return CF_ERRF(
-        "Unable to find a matching command for \"cvd {}\".\nMaybe there "
-        "is a typo?  Run `cvd help` for a list of commands.{}",
-        request.Subcommand(), addendum);
+    HandleNoMatches(request, handlers);
+    return CF_ERRF("Unable to find matching command for \"cvd {}\".",
+                   request.Subcommand());
   }
   return compatible_handlers[0];
 }

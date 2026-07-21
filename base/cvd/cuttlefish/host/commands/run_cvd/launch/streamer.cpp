@@ -31,7 +31,6 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
 #include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
@@ -46,6 +45,8 @@
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -237,7 +238,7 @@ class WebRtcServer : public virtual CommandSource,
 
     auto stopper = [webrtc_controller = webrtc_controller_]() mutable {
       (void)webrtc_controller.SendStopRecordingCommand();
-      return StopperResult::kStopFailure;
+      return StopperResult::kFailure;
     };
 
     Command webrtc(WebRtcBinary(), KillSubprocessFallback(stopper));

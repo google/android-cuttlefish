@@ -25,10 +25,11 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
+#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -39,27 +40,27 @@ static StopperResult StopModemSimulator(int id) {
       SharedFD::SocketLocalClient(socket_name, true, SOCK_STREAM);
   if (!monitor_sock->IsOpen()) {
     LOG(ERROR) << "The connection to modem simulator is closed";
-    return StopperResult::kStopFailure;
+    return StopperResult::kFailure;
   }
   std::string msg("STOP");
   if (monitor_sock->Write(msg.data(), msg.size()) < 0) {
     monitor_sock->Close();
     LOG(ERROR) << "Failed to send 'STOP' to modem simulator";
-    return StopperResult::kStopFailure;
+    return StopperResult::kFailure;
   }
   char buf[64] = {0};
   if (monitor_sock->Read(buf, sizeof(buf)) <= 0) {
     monitor_sock->Close();
     LOG(ERROR) << "Failed to read message from modem simulator";
-    return StopperResult::kStopFailure;
+    return StopperResult::kFailure;
   }
   if (strcmp(buf, "OK")) {
     monitor_sock->Close();
     LOG(ERROR) << "Read '" << buf << "' instead of 'OK' from modem simulator";
-    return StopperResult::kStopFailure;
+    return StopperResult::kFailure;
   }
 
-  return StopperResult::kStopSuccess;
+  return StopperResult::kSuccess;
 }
 
 Result<std::optional<MonitorCommand>> ModemSimulator(

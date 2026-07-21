@@ -20,11 +20,11 @@
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/network.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_cpu.h"
+#include "cuttlefish/process/command.h"
 
 namespace cuttlefish {
 namespace {
@@ -63,8 +63,8 @@ void CrosvmBuilder::AddControlSocket(const std::string& control_socket,
     Command stop_cmd(executable_path);
     stop_cmd.AddParameter("stop");
     stop_cmd.AddParameter(control_socket);
-    return stop_cmd.Start().Wait() == 0 ? StopperResult::kStopSuccess
-                                        : StopperResult::kStopFailure;
+    return stop_cmd.Start().Wait() == 0 ? StopperResult::kSuccess
+                                        : StopperResult::kFailure;
   };
   command_.SetStopper(KillSubprocessFallback(stopper));
   command_.AddParameter("--socket=", control_socket);

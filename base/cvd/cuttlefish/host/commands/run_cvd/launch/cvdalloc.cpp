@@ -32,7 +32,6 @@
 #include "fruit/fruit_forward_decls.h"
 
 #include "allocd/alloc_utils.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 #include "cuttlefish/host/commands/cvdalloc/sem.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -41,6 +40,8 @@
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -119,16 +120,16 @@ StopperResult Cvdalloc::Stop() {
   LOG(INFO) << "cvdalloc (run_cvd): stop requested; teardown started";
   if (!cvdalloc::Post(socket_).ok()) {
     LOG(INFO) << "cvdalloc (run_cvd): stop failed: couldn't Post";
-    return StopperResult::kStopFailure;
+    return StopperResult::kFailure;
   }
 
   if (!cvdalloc::Wait(socket_, kCvdTeardownTimeout).ok()) {
     LOG(INFO) << "cvdalloc (run_cvd): stop failed: couldn't Wait";
-    return StopperResult::kStopFailure;
+    return StopperResult::kFailure;
   }
 
   LOG(INFO) << "cvdalloc (run_cvd): teardown completed";
-  return StopperResult::kStopSuccess;
+  return StopperResult::kSuccess;
 }
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>

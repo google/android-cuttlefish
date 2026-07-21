@@ -25,8 +25,10 @@ import (
 
 func TestDeviceNetworking(t *testing.T) {
 	testcases := []struct {
-		branch string
-		target string
+		name       string
+		branch     string
+		target     string
+		createArgs e2etests.CreateArgs
 	}{
 		{
 			branch: "aosp-android-latest-release",
@@ -36,10 +38,22 @@ func TestDeviceNetworking(t *testing.T) {
 			branch: "git_main",
 			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
 		},
+		{
+			name:   "cvdalloc",
+			branch: "git_main",
+			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+			createArgs: e2etests.CreateArgs{
+				Args: []string{"--use_cvdalloc=true"},
+			},
+		},
 	}
 	c := e2etests.TestContext{}
 	for _, tc := range testcases {
-		t.Run(fmt.Sprintf("BUILD=%s/%s", tc.branch, tc.target), func(t *testing.T) {
+		testName := fmt.Sprintf("BUILD=%s/%s", tc.branch, tc.target)
+		if tc.name != "" {
+			testName = fmt.Sprintf("%s_CONFIG=%s", testName, tc.name)
+		}
+		t.Run(testName, func(t *testing.T) {
 			c.SetUp(t)
 			defer c.TearDown()
 
@@ -52,7 +66,7 @@ func TestDeviceNetworking(t *testing.T) {
 			}
 
 			t.Log("Launching Cuttlefish...")
-			if err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {
+			if err := c.CVDCreate(tc.createArgs); err != nil {
 				t.Fatal(err)
 			}
 

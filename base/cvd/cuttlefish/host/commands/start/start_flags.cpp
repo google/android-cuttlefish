@@ -22,10 +22,7 @@
 
 DEFINE_int32(num_instances, CF_DEFAULTS_NUM_INSTANCES,
              "Number of Android guests to launch");
-DEFINE_string(report_anonymous_usage_stats,
-              CF_DEFAULTS_REPORT_ANONYMOUS_USAGE_STATS,
-              "Report anonymous usage "
-              "statistics for metrics collection and analysis.");
+DEFINE_string(report_anonymous_usage_stats, "", "Deprecated, no usage.");
 DEFINE_int32(
     base_instance_num, CF_DEFAULTS_BASE_INSTANCE_NUM,
     "The instance number of the device created. When `-num_instances N`"

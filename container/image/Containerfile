@@ -32,6 +32,18 @@ RUN apt install -y --no-install-recommends \
     sudo
 RUN update-ca-certificates
 
+# When setting `auto` value, nginx spawns worker processes as the number of CPU
+# cores. It's discouraged in any multiple container scenarios, as it spawns too
+# much worker processes in huge machines, but not actually required.
+RUN sed -i 's/worker_processes auto;/worker_processes 2;/' \
+    /etc/nginx/nginx.conf
+# When setting `auto` value, nginx select which CPU core executing worker
+# processes. It's discouraged in any multiple container scenarios, as all
+# containers may use CPU core `0`-`N` when `worker_processes` is set as `N+1`.
+# When setting no values, OS scheduler manages it instead.
+RUN sed -i 's/worker_cpu_affinity auto;/# worker_cpu_affinity auto;/' \
+    /etc/nginx/nginx.conf
+
 COPY ./container/image/guest/run_services.sh /root/
 RUN chmod +x /root/run_services.sh
 

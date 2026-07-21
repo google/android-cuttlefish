@@ -15,11 +15,12 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/transport",
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/posix:strerror",
+        "//cuttlefish/process:command",
+        "//cuttlefish/process:subprocess",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

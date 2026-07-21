@@ -140,27 +140,10 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "metrics",
-    srcs = ["metrics_receiver.cc"],
-    hdrs = ["metrics_receiver.h"],
-    deps = [
-        ":metrics_headers",
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/msg_queue",
-        "//libbase",
-        "@abseil-cpp//absl/log",
-        "@fruit",
-        "@gflags",
-        "@jsoncpp",
-    ],
-)
-
-cf_cc_library(
     name = "metrics_conversion",
     srcs = ["metrics_conversion.cc"],
     hdrs = ["metrics_conversion.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/host/commands/cvd/fetch:builds",
@@ -199,14 +182,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "metrics_headers",
-    hdrs = [
-        "metrics_configs.h",
-        "metrics_defs.h",
-    ],
-)
-
-cf_cc_library(
     name = "metrics_orchestration",
     srcs = ["metrics_orchestration.cc"],
     hdrs = ["metrics_orchestration.h"],
@@ -234,9 +209,9 @@ cf_cc_library(
     hdrs = ["metrics_transmitter.h"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
-        "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/libs/metrics:metrics_environment",
+        "//cuttlefish/process:command",
+        "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "//external_proto:cf_log_cc_proto",
     ],
@@ -246,6 +221,7 @@ cf_cc_library(
     name = "metrics_writer",
     srcs = ["metrics_writer.cc"],
     hdrs = ["metrics_writer.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",

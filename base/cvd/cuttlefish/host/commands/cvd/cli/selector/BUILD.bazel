@@ -8,6 +8,7 @@ cf_cc_library(
     name = "creation_analyzer",
     srcs = ["creation_analyzer.cpp"],
     hdrs = ["creation_analyzer.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
@@ -50,6 +51,7 @@ cf_cc_library(
 cf_cc_test(
     name = "num_instances_parser_test",
     srcs = ["num_instances_parser_test.cpp"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":num_instances_parser",
         ":selector_common_parser",
@@ -63,6 +65,7 @@ cf_cc_library(
     name = "selector",
     srcs = ["selector.cpp"],
     hdrs = ["selector.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/ansi_codes:terminal_colors",
         "//cuttlefish/common/libs/utils:users",
@@ -80,6 +83,7 @@ cf_cc_library(
     name = "selector_common_parser",
     srcs = ["selector_common_parser.cpp"],
     hdrs = ["selector_common_parser.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/flag_parser",

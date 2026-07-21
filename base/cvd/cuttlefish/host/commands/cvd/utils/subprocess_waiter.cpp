@@ -18,8 +18,9 @@
 
 #include <mutex>
 
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -64,11 +65,11 @@ Result<void> SubprocessWaiter::Interrupt() {
   if (subprocess_) {
     auto stop_result = subprocess_->Stop();
     switch (stop_result) {
-      case StopperResult::kStopFailure:
+      case StopperResult::kFailure:
         return CF_ERR("Failed to stop subprocess");
-      case StopperResult::kStopCrash:
+      case StopperResult::kCrash:
         return CF_ERR("Stopper caused process to crash");
-      case StopperResult::kStopSuccess:
+      case StopperResult::kSuccess:
         return {};
       default:
         return CF_ERRF("Unknown stop result: {}", (uint64_t)stop_result);

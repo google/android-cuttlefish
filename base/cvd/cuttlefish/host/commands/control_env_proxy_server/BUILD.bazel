@@ -33,6 +33,7 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":libcontrol_env_proxy_server",
         "//cuttlefish/common/libs/utils:files",

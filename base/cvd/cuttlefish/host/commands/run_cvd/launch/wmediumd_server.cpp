@@ -24,7 +24,6 @@
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
 
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
@@ -33,6 +32,7 @@
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

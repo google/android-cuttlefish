@@ -39,7 +39,7 @@ class CvdCommandHandler {
   virtual std::vector<HelpParagraph> Description() const;
   virtual Result<std::vector<Flag>> Flags(const CommandRequest&);
 
-  virtual bool RequiresHostConfiguration() const { return true; }
+  virtual bool RequiresHostConfiguration() const { return false; }
 };
 
 }  // namespace cuttlefish

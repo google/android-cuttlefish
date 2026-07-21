@@ -39,7 +39,6 @@
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/network.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -53,6 +52,9 @@
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/execute.h"
+#include "cuttlefish/process/subprocess_options.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -306,7 +308,7 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
     // Ask nicely so that log_tee gets a chance to process all the logs.
     // TODO: b/335934714 - Make sure the process actually exits
     bool res = kill(proc->pid(), SIGINT) == 0;
-    return res ? StopperResult::kStopSuccess : StopperResult::kStopFailure;
+    return res ? StopperResult::kSuccess : StopperResult::kFailure;
   }));
 
   const std::string crosvm_path = CF_EXPECT(CrosvmPathForVhostUserGpu(config));
@@ -415,9 +417,9 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
 
   CF_EXPECT(MaybeConfigureVulkanIcd(config, &gpu_device_cmd.Cmd()));
 
-  gpu_device_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+  gpu_device_cmd.Cmd().RedirectStdIO(Command::StdIoChannel::kStdOut,
                                      gpu_device_logs);
-  gpu_device_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
+  gpu_device_cmd.Cmd().RedirectStdIO(Command::StdIoChannel::kStdErr,
                                      gpu_device_logs);
 
   return VhostUserDeviceCommands{
@@ -804,7 +806,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     // Ask nicely so that log_tee gets a chance to process all the logs.
     bool res = kill(proc->pid(), SIGINT) == 0;
     // TODO: b/335934714 - Make sure the process actually exits
-    return res ? StopperResult::kStopSuccess : StopperResult::kStopFailure;
+    return res ? StopperResult::kSuccess : StopperResult::kFailure;
   }));
 
   // /dev/hvc2 = serial logging
@@ -1022,18 +1024,16 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
           "Unhandled GPU capture binary: " << instance.gpu_capture_binary());
     }
 
-    gpu_capture_command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+    gpu_capture_command.RedirectStdIO(Command::StdIoChannel::kStdOut,
                                       gpu_capture_logs);
-    gpu_capture_command.RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
+    gpu_capture_command.RedirectStdIO(Command::StdIoChannel::kStdErr,
                                       gpu_capture_logs);
 
     commands.emplace_back(std::move(gpu_capture_log_tee_cmd));
     commands.emplace_back(std::move(gpu_capture_command));
   } else {
-    crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
-                                   crosvm_logs);
-    crosvm_cmd.Cmd().RedirectStdIO(Subprocess::StdIOChannel::kStdErr,
-                                   crosvm_logs);
+    crosvm_cmd.Cmd().RedirectStdIO(Command::StdIoChannel::kStdOut, crosvm_logs);
+    crosvm_cmd.Cmd().RedirectStdIO(Command::StdIoChannel::kStdErr, crosvm_logs);
     commands.emplace_back(std::move(crosvm_cmd.Cmd()), true);
   }
 

@@ -13,8 +13,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/process:execute",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -26,9 +26,9 @@ cf_cc_library(
     hdrs = ["esp_builder.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config/esp:make_fat_image",
+        "//cuttlefish/process:execute",
         "@abseil-cpp//absl/log",
     ],
 )

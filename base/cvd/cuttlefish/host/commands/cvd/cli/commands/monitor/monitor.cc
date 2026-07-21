@@ -32,6 +32,7 @@
 #include <thread>
 #include <vector>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/strings/str_cat.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
@@ -61,16 +62,6 @@ void UpdateFileAndWatch(const SharedFD& inotify_fd, const std::string& path,
 }
 
 }  // namespace
-
-void ClearLastNLines(int n) {
-  if (n > 0) {
-    // Move cursor up N lines and clear to end of screen
-    std::cout << AnsiCursorUp(n) << kAnsiClearScreenAfterCursor << std::flush;
-  }
-}
-Result<void> MonitorLogs(const LocalInstance& instance) {
-  return MonitorLogs(instance, SharedFD());
-}
 
 Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
   CF_EXPECT(isatty(0), "The monitor command requires an interactive terminal.");
@@ -106,7 +97,12 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
   std::chrono::steady_clock::time_point last_draw_time =
       std::chrono::steady_clock::time_point();
 
-  size_t last_total_lines_drawn = 0;
+  std::cout << kXtermUseAlternateScreen;
+  std::cout.flush();
+  absl::Cleanup clean_terminal = [] {
+    std::cout << kAnsiReset << kAnsiClearScreen << kXtermUseMainScreen;
+    std::cout.flush();
+  };
 
   while (true) {
     if (using_assemble_log) {
@@ -141,8 +137,10 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
 
     const Result<TerminalSize> term_size_result = GetTerminalSize();
     int width = 79;  // Default fallback width (80 - 1)
+    int height = 30;
     if (term_size_result.ok()) {
       width = term_size_result->columns - 1;
+      height = term_size_result->rows - 5;
     }
     LogMonitorDisplay display(width);
 
@@ -151,20 +149,18 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
       logcat_ready = true;
     }
 
-    size_t total_content = 30;
-
     const std::string launcher_name =
         using_assemble_log ? kLogNameAssembleCvd : kLogNameLauncher;
-    size_t launcher_lines = total_content;
+    size_t launcher_lines = height;
     size_t kernel_lines = 0;
     size_t logcat_lines = 0;
     if (kernel_fd->IsOpen()) {
-      launcher_lines = total_content / 3;
-      kernel_lines = total_content - launcher_lines;
+      launcher_lines = height / 3 - 1;
+      kernel_lines = height - launcher_lines - 1;
     }
     if (logcat_ready) {
-      kernel_lines = total_content / 3;
-      logcat_lines = total_content - launcher_lines - kernel_lines;
+      kernel_lines = height / 3 - 1;
+      logcat_lines = height - launcher_lines - kernel_lines - 2;
     }
     if (!FileExists(assemble_log)) {
       display.DrawFile(*InMemoryIo("Waiting for assemble_cvd.log creation"),
@@ -176,9 +172,7 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
     display.DrawFile(SharedFdIo(logcat_fd), kLogNameLogcat, logcat_lines);
 
     const auto [output, total_lines_drawn] = display.Finalize();
-    ClearLastNLines(last_total_lines_drawn);
-    std::cout << output << std::flush;
-    last_total_lines_drawn = total_lines_drawn;
+    std::cout << kAnsiClearScreen << output << std::flush;
 
     // Enforce a maximum framerate (max 20 FPS / min 50ms between draws)
     // so we don't saturate SSH bandwidth or CPU during heavy, continuous
@@ -215,7 +209,6 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
       // Stop requested via eventfd
       eventfd_t val;
       stop_eventfd->EventfdRead(&val);
-      ClearLastNLines(total_lines_drawn);
       return {};
     }
 
@@ -258,7 +251,6 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
                  inotify_fd->StrError(), err);
     }
   }
-
   return {};
 }
 

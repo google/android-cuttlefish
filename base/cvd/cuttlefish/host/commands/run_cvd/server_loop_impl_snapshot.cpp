@@ -32,7 +32,6 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
@@ -42,6 +41,9 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
+#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/execute.h"
+#include "cuttlefish/process/subprocess_options.h"
 #include "cuttlefish/result/result.h"
 
 #ifndef WEXITED
@@ -189,8 +191,8 @@ static Result<void> RunAdbShellCommand(
 Result<void> ServerLoopImpl::HandleSuspend(ProcessMonitor& process_monitor) {
   // right order: guest -> host
   VLOG(0) << "Suspending the guest..";
-  CF_EXPECT(
-      RunAdbShellCommand(instance_, {"/vendor/bin/snapshot_hook_pre_suspend"}));
+  CF_EXPECT(RunAdbShellCommand(
+      instance_, {"su", "root", "/vendor/bin/snapshot_hook_pre_suspend"}));
   CF_EXPECT(SuspendGuest());
   VLOG(0) << "The guest is suspended.";
   CF_EXPECT(process_monitor.SuspendMonitoredProcesses(),
@@ -206,8 +208,8 @@ Result<void> ServerLoopImpl::HandleResume(ProcessMonitor& process_monitor) {
   VLOG(0) << "The host processes are resumed.";
   VLOG(0) << "Resuming the guest..";
   CF_EXPECT(ResumeGuest());
-  CF_EXPECT(
-      RunAdbShellCommand(instance_, {"/vendor/bin/snapshot_hook_post_resume"}));
+  CF_EXPECT(RunAdbShellCommand(
+      instance_, {"su", "root", "/vendor/bin/snapshot_hook_post_resume"}));
   VLOG(0) << "The guest resumed.";
   return {};
 }

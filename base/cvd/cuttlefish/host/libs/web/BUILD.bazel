@@ -10,10 +10,12 @@ cf_cc_library(
     name = "android_build",
     srcs = ["android_build.cc"],
     hdrs = ["android_build.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//libbase",
         "@abseil-cpp//absl/strings",
+        "@fmt",
     ],
 )
 
@@ -21,6 +23,7 @@ cf_cc_library(
     name = "android_build_api",
     srcs = ["android_build_api.cpp"],
     hdrs = ["android_build_api.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
@@ -44,6 +47,7 @@ cf_cc_library(
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
+        "@fmt",
         "@jsoncpp",
     ],
 )
@@ -62,6 +66,7 @@ cf_cc_library(
     name = "android_build_string",
     srcs = ["android_build_string.cpp"],
     hdrs = ["android_build_string.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/result",
@@ -74,6 +79,7 @@ cf_cc_library(
 cf_cc_test(
     name = "android_build_string_test",
     srcs = ["android_build_string_tests.cpp"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/web:android_build_string",
@@ -114,6 +120,7 @@ cf_cc_library(
     name = "android_build_url",
     srcs = ["android_build_url.cpp"],
     hdrs = ["android_build_url.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/libs/web/http_client:url_escape",
         "//cuttlefish/result",
@@ -151,6 +158,7 @@ cf_cc_library(
     name = "caching_build_api",
     srcs = ["caching_build_api.cpp"],
     hdrs = ["caching_build_api.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/web:android_build",
@@ -174,6 +182,7 @@ cf_cc_library(
     name = "chrome_os_build_string",
     srcs = ["chrome_os_build_string.cpp"],
     hdrs = ["chrome_os_build_string.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/result",
@@ -187,6 +196,7 @@ cf_cc_library(
     name = "credential_source",
     srcs = ["credential_source.cc"],
     hdrs = ["credential_source.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:json",
@@ -205,6 +215,7 @@ cf_cc_library(
     name = "luci_build_api",
     srcs = ["luci_build_api.cpp"],
     hdrs = ["luci_build_api.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/libs/web:chrome_os_build_string",
@@ -230,12 +241,12 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/directories",
         "//cuttlefish/host/libs/web:credential_source",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_json",
         "//cuttlefish/host/libs/web/http_client:url_escape",
+        "//cuttlefish/process:execute",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@fmt",

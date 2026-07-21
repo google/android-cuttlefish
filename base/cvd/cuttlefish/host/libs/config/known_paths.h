@@ -42,7 +42,6 @@ std::string GnssGrpcProxyBinary();
 std::string KernelLogMonitorBinary();
 std::string LogcatReceiverBinary();
 std::string McopyBinary();
-std::string MetricsBinary();
 std::string MkfsFat();
 std::string MkuserimgMke2fsBinary();
 std::string MmdBinary();

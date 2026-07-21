@@ -27,18 +27,18 @@
 #include "fruit/macro.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
 
-using Subprocess::StdIOChannel::kStdErr;
+using Command::StdIoChannel::kStdErr;
 
 Command NewCommand(const std::string& binary_path,
                    const std::string& socket_path,
@@ -49,7 +49,7 @@ Command NewCommand(const std::string& binary_path,
   if (!lens_facing.empty()) {
     cmd.AddParameter("--lens-facing=", lens_facing);
   }
-  cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+  cmd.RedirectStdIO(Command::StdIoChannel::kStdOut,
                     SharedFD::Open("/dev/null", O_WRONLY));
   return cmd;
 }

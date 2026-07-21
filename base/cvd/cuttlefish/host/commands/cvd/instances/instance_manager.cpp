@@ -30,6 +30,7 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"

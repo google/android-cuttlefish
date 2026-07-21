@@ -12,7 +12,6 @@ cf_cc_library(
         "//cuttlefish/ansi_codes",
         "//cuttlefish/ansi_codes:should_color",
         "//libbase",
-        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
     ],
@@ -25,7 +24,6 @@ cf_cc_library(
         "//cuttlefish/result:error_type",
         "//cuttlefish/result:result_type",
         "//libbase",
-        "@abseil-cpp//absl/log",
         "@fmt",
     ],
 )
@@ -45,7 +43,6 @@ cf_cc_test(
     deps = [
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
     ],
 )
 
@@ -55,7 +52,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result:error_type",
         "//libbase",
-        "@fmt",
     ],
 )
 

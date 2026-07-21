@@ -8,6 +8,7 @@ cf_cc_library(
     name = "screen_connector_common",
     srcs = ["screen_connector_common.cc"],
     hdrs = ["screen_connector_common.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -38,6 +39,7 @@ cf_cc_library(
         "screen_connector_queue.h",
         "wayland_screen_connector.h",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":screen_connector_common",
         ":video_frame_buffer",
@@ -48,7 +50,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/confui:host_confui",
-        "//cuttlefish/host/libs/wayland:cuttlefish_wayland_server",
+        "//cuttlefish/host/libs/wayland:wayland_server",
+        "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

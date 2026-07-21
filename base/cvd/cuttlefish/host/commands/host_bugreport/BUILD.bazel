@@ -7,16 +7,17 @@ package(
 cf_cc_binary(
     name = "cvd_internal_host_bugreport",
     srcs = ["main.cc"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/log_names",
         "//cuttlefish/host/libs/zip:zip_file",
         "//cuttlefish/posix:strerror",
+        "//cuttlefish/process:command",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

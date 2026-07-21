@@ -10,7 +10,6 @@ cf_cc_library(
     hdrs = ["builder.h"],
     deps = [
         "//cuttlefish/pretty",
-        "//cuttlefish/pretty:string",
         "//cuttlefish/pretty:struct",
         "//cuttlefish/pretty:unique_ptr",
         "//cuttlefish/pretty:vector",
@@ -37,7 +36,6 @@ cf_cc_library(
     hdrs = ["metadata_format.h"],
     deps = [
         "//cuttlefish/pretty",
-        "//cuttlefish/pretty:string",
         "//cuttlefish/pretty:struct",
         "//cuttlefish/pretty:vector",
         "@android_system_core//:liblp",

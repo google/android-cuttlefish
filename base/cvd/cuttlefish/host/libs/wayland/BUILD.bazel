@@ -1,43 +1,130 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cf_build_test(name = "cf_build_test")
+
 cf_cc_library(
-    name = "cuttlefish_wayland_server",
-    srcs = [
-        "wayland_compositor.cpp",
-        "wayland_dmabuf.cpp",
-        "wayland_seat.cpp",
-        "wayland_server.cpp",
-        "wayland_shell.cpp",
-        "wayland_subcompositor.cpp",
-        "wayland_surface.cpp",
-        "wayland_surfaces.cpp",
-        "wayland_virtio_gpu_metadata.cpp",
-    ],
-    hdrs = [
-        "wayland_compositor.h",
-        "wayland_dmabuf.h",
-        "wayland_seat.h",
-        "wayland_server.h",
-        "wayland_server_callbacks.h",
-        "wayland_shell.h",
-        "wayland_subcompositor.h",
-        "wayland_surface.h",
-        "wayland_surfaces.h",
-        "wayland_utils.h",
-        "wayland_virtio_gpu_metadata.h",
-    ],
+    name = "wayland_compositor",
+    srcs = ["wayland_compositor.cpp"],
+    hdrs = ["wayland_compositor.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/wayland:wayland_surface",
+        "//cuttlefish/host/libs/wayland:wayland_utils",
+        "@abseil-cpp//absl/log",
+        "@wayland//:wayland_server",
+    ],
+)
+
+cf_cc_library(
+    name = "wayland_dmabuf",
+    srcs = ["wayland_dmabuf.cpp"],
+    hdrs = ["wayland_dmabuf.h"],
+    deps = [
+        "//cuttlefish/host/libs/wayland:wayland_utils",
         "//libbase",
         "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/log:check",
         "@crosvm//:crosvm_gpu_display_wayland_protocols",
         "@libdrm//:libdrm_fourcc",
-        "@libffi",
+        "@wayland//:wayland_server",
+    ],
+)
+
+cf_cc_library(
+    name = "wayland_seat",
+    srcs = ["wayland_seat.cpp"],
+    hdrs = ["wayland_seat.h"],
+    deps = [
+        "@abseil-cpp//absl/log",
+        "@wayland//:wayland_server",
+    ],
+)
+
+cf_cc_library(
+    name = "wayland_server",
+    srcs = ["wayland_server.cpp"],
+    hdrs = ["wayland_server.h"],
+    deps = [
+        "//cuttlefish/host/libs/wayland:wayland_compositor",
+        "//cuttlefish/host/libs/wayland:wayland_dmabuf",
+        "//cuttlefish/host/libs/wayland:wayland_seat",
+        "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
+        "//cuttlefish/host/libs/wayland:wayland_shell",
+        "//cuttlefish/host/libs/wayland:wayland_subcompositor",
+        "//cuttlefish/host/libs/wayland:wayland_surface",
+        "//cuttlefish/host/libs/wayland:wayland_virtio_gpu_metadata",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@wayland//:wayland_server",
+    ],
+)
+
+cf_cc_library(
+    name = "wayland_server_callbacks",
+    hdrs = ["wayland_server_callbacks.h"],
+)
+
+cf_cc_library(
+    name = "wayland_shell",
+    srcs = ["wayland_shell.cpp"],
+    hdrs = ["wayland_shell.h"],
+    deps = [
+        "@abseil-cpp//absl/log",
+        "@crosvm//:crosvm_gpu_display_wayland_protocols",
+        "@wayland//:wayland_server",
+    ],
+)
+
+cf_cc_library(
+    name = "wayland_subcompositor",
+    srcs = ["wayland_subcompositor.cpp"],
+    hdrs = ["wayland_subcompositor.h"],
+    deps = [
+        "@abseil-cpp//absl/log",
+        "@wayland//:wayland_server",
+    ],
+)
+
+cf_cc_library(
+    name = "wayland_surface",
+    srcs = [
+        "wayland_surface.cpp",
+        "wayland_surfaces.cpp",
+    ],
+    hdrs = [
+        "wayland_surface.h",
+        "wayland_surfaces.h",
+    ],
+    deps = [
+        "//cuttlefish/host/libs/wayland:wayland_dmabuf",
+        "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
+        "//cuttlefish/host/libs/wayland:wayland_utils",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@libdrm//:libdrm_fourcc",
+        "@wayland//:wayland_server",
+    ],
+)
+
+cf_cc_library(
+    name = "wayland_utils",
+    hdrs = ["wayland_utils.h"],
+    deps = [
+        "@abseil-cpp//absl/log:check",
+        "@wayland//:wayland_server",
+    ],
+)
+
+cf_cc_library(
+    name = "wayland_virtio_gpu_metadata",
+    srcs = ["wayland_virtio_gpu_metadata.cpp"],
+    hdrs = ["wayland_virtio_gpu_metadata.h"],
+    deps = [
+        "//cuttlefish/host/libs/wayland:wayland_surface",
+        "//cuttlefish/host/libs/wayland:wayland_utils",
+        "@crosvm//:crosvm_gpu_display_wayland_protocols",
         "@wayland//:wayland_server",
     ],
 )

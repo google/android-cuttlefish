@@ -43,6 +43,8 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/files/copy.h"
+#include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -208,6 +210,8 @@ Result<void> CreateSymlinks(const LocalInstanceGroup& group) {
   // dangling. The config file in the home directory is used by
   // cvd_internal_start to persist the user's choice for
   // -report_anonymous_usage_stats.
+  // NOTE: --report_anonymous_usage_stats flag and its value in the config are
+  // deprecated
   CF_EXPECT(
       Copy(group.Instances()[0].InstanceDirectory() + "/cuttlefish_config.json",
            CF_EXPECT(SystemWideUserHome()) + "/.cuttlefish_config.json"),

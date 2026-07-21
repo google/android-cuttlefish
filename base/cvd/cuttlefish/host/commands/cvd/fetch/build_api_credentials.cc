@@ -70,8 +70,8 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
                    << oauth_filepath << "\":" << attempt_load.error();
       }
     } else {
-      LOG(INFO) << "\"" << oauth_filepath
-                << "\" is missing, running without credentials";
+      VLOG(0) << "\"" << oauth_filepath
+              << "\" is missing, running without credentials";
     }
   } else if (!FileExists(credential_source)) {
     // If the parameter doesn't point to an existing file it must be the

@@ -19,8 +19,8 @@
 
 #include "fruit/fruit.h"
 
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -35,7 +35,7 @@ class LogTeeCreator {
 
   // Creates a log tee command for specified channel of the given command.
   Result<Command> CreateLogTee(Command& cmd, std::string process_name,
-                               Subprocess::StdIOChannel log_channel);
+                               Command::StdIoChannel log_channel);
 
  private:
   const CuttlefishConfig::InstanceSpecific instance_;

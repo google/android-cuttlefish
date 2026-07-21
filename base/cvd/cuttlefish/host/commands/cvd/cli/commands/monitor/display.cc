@@ -16,8 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/display.h"
 
-#include <stdint.h>
-#include <sys/types.h>
+#include <stddef.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -30,6 +29,7 @@
 
 #include "absl/log/check.h"
 #include "absl/strings/cord.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
@@ -41,6 +41,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/log_tee.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/logcat.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/truncate.h"
+#include "cuttlefish/host/commands/cvd/cli/format_byte_size.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
@@ -50,16 +51,21 @@ namespace cuttlefish {
 
 namespace {
 
-Result<std::vector<std::string>> GetLastNLines(ReaderSeeker& rs, size_t n) {
-  uint64_t file_size = CF_EXPECT(rs.SeekEnd(0));
-  CF_EXPECT(file_size != -1, "Failed to seek to end of file");
+struct FileData {
+  std::vector<std::string> last_lines;
+  size_t total_size = 0;
+};
+
+Result<FileData> GetLastNLines(ReaderSeeker& rs, size_t n) {
+  FileData ret;
+  ret.total_size = CF_EXPECT(rs.SeekEnd(0));
 
   absl::Cord accumulated_data;
-  off_t offset = file_size;
+  size_t offset = ret.total_size;
   size_t newline_count = 0;
 
   while (offset > 0 && newline_count < n + 1) {
-    static constexpr off_t kChunkSize = 4096;
+    static constexpr size_t kChunkSize = 4096;
     size_t to_read = std::min(kChunkSize, offset);
     offset -= to_read;
     CF_EXPECT(rs.SeekSet(offset));
@@ -71,18 +77,18 @@ Result<std::vector<std::string>> GetLastNLines(ReaderSeeker& rs, size_t n) {
     accumulated_data.Prepend(std::move(chunk));
   }
 
-  std::vector<std::string> all_lines =
-      absl::StrSplit(std::string(accumulated_data), '\n');
+  ret.last_lines = absl::StrSplit(std::string(accumulated_data), '\n');
 
   // Handle trailing newline
-  if (!all_lines.empty() && all_lines.back().empty()) {
-    all_lines.pop_back();
+  if (!ret.last_lines.empty() && ret.last_lines.back().empty()) {
+    ret.last_lines.pop_back();
   }
 
-  size_t start_idx = all_lines.size() > n ? all_lines.size() - n : 0;
-  all_lines.erase(all_lines.begin(), all_lines.begin() + start_idx);
+  size_t start_idx = ret.last_lines.size() > n ? ret.last_lines.size() - n : 0;
+  ret.last_lines.erase(ret.last_lines.begin(),
+                       ret.last_lines.begin() + start_idx);
 
-  return all_lines;
+  return ret;
 }
 
 }  // namespace
@@ -95,13 +101,16 @@ void LogMonitorDisplay::DrawFile(ReaderSeeker& rs, const std::string& title,
   if (max_lines == 0) {
     return;
   }
+  std::string title_with_size = title;
   std::vector<std::string> lines;
-  Result<std::vector<std::string>> lines_result = GetLastNLines(rs, max_lines);
-  if (lines_result.ok()) {
-    lines = *lines_result;
+  Result<FileData> file_data = GetLastNLines(rs, max_lines);
+  if (file_data.ok()) {
+    lines = file_data->last_lines;
+    absl::StrAppend(&title_with_size, " (",
+                    FormatByteSize(file_data->total_size), ")");
   } else {
     lines.push_back(absl::StrCat("Failed to read ", title, ":"));
-    std::string error_str = lines_result.error().FormatForEnv(/*color=*/false);
+    std::string error_str = file_data.error().FormatForEnv(/*color=*/false);
     for (const auto& el : absl::StrSplit(error_str, '\n')) {
       if (!el.empty()) {
         lines.push_back(std::string(el));
@@ -116,7 +125,7 @@ void LogMonitorDisplay::DrawFile(ReaderSeeker& rs, const std::string& title,
     lines.push_back("");
   }
 
-  DrawBorderedText(lines, title);
+  DrawBorderedText(lines, title_with_size);
 }
 
 void LogMonitorDisplay::DrawFile(ReaderSeeker&& rs, const std::string& title,
@@ -151,7 +160,9 @@ void LogMonitorDisplay::DrawBorderedText(const std::vector<std::string>& lines,
       line = sanitized_holder;
     }
 
-    if (title == kLogNameLauncher && line.find("log_tee(") == 0) {
+    const bool cf_log = absl::StrContains(title, kLogNameAssembleCvd) ||
+                        absl::StrContains(title, kLogNameLauncher);
+    if (cf_log && line.find("log_tee(") == 0) {
       const size_t bracket = line.find(']');
       if (bracket != std::string_view::npos) {
         line.remove_prefix(bracket + 1);
@@ -169,21 +180,21 @@ void LogMonitorDisplay::DrawBorderedText(const std::vector<std::string>& lines,
       }
     }
 
-    if (title == kLogNameLogcat) {
+    if (absl::StrContains(title, kLogNameLogcat)) {
       if (Result<LogcatLine> parsed = ParseLogcatLine(line); parsed.ok()) {
         FormatAndDrawLine(FormatLogcatLine(*parsed));
         continue;
       }
     }
 
-    if (title == kLogNameKernel) {
+    if (absl::StrContains(title, kLogNameKernel)) {
       if (Result<KernelLine> parsed = ParseKernelLine(line); parsed.ok()) {
         FormatAndDrawLine(FormatKernelLine(*parsed));
         continue;
       }
     }
 
-    if (title == kLogNameLauncher) {
+    if (absl::StrContains(title, kLogNameLauncher)) {
       if (Result<LauncherLine> parsed = ParseLauncherLine(line); parsed.ok()) {
         FormatAndDrawLine(FormatLauncherLine(*parsed));
         continue;

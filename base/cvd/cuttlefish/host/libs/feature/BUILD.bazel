@@ -12,10 +12,11 @@ cf_cc_library(
         "feature.h",
         "kernel_log_pipe_provider.h",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:type_name",
+        "//cuttlefish/process:command",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

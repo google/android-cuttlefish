@@ -33,8 +33,6 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/semver.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -42,6 +40,8 @@
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
+#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 
 #ifdef __APPLE__
@@ -626,6 +626,35 @@ Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
   return gpu_vhost_user_mode_arg == kGpuVhostUserModeOn;
 }
 
+Result<GuestHwuiRenderer> SelectGuestHwuiRenderer(
+    const GpuMode gpu_mode, const GuestConfig& guest_config,
+    const std::string& guest_hwui_renderer_arg) {
+  if (!guest_hwui_renderer_arg.empty()) {
+    GuestHwuiRenderer hwui_renderer = CF_EXPECT(
+        ParseGuestHwuiRenderer(guest_hwui_renderer_arg),
+        "Failed to parse HWUI renderer flag: " << guest_hwui_renderer_arg);
+    VLOG(0) << "Using explicitly provided HWUI renderer: "
+            << ToString(hwui_renderer);
+    return hwui_renderer;
+  }
+
+  // Only makes sense for Android guests:
+  if (guest_config.android_version_number.empty()) {
+    return GuestHwuiRenderer::kUnknown;
+  }
+
+  // TODO(b/533056543): after testing Gfxstream's virtual queue support.
+  if (IsGfxstreamGuestAngleMode(gpu_mode) &&
+      gpu_mode != GpuMode::GfxstreamGuestAngleHostSwiftshader) {
+    VLOG(0) << "Selecting SkiaVk as the HWUI renderer for "
+            << GpuModeString(gpu_mode)
+            << " GPU mode which is GfxstreamGuestAngle* based.";
+    return GuestHwuiRenderer::kSkiaVk;
+  }
+
+  return GuestHwuiRenderer::kUnknown;
+}
+
 Result<GuestRendererPreload> SelectGuestRendererPreload(
     const GpuMode gpu_mode, const GuestHwuiRenderer guest_hwui_renderer,
     const std::string& guest_renderer_preload_arg) {
@@ -641,8 +670,8 @@ Result<GuestRendererPreload> SelectGuestRendererPreload(
     if (guest_hwui_renderer == GuestHwuiRenderer::kSkiaVk &&
         (gpu_mode == GpuMode::GfxstreamGuestAngle ||
          gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader)) {
-      LOG(INFO) << "Disabling guest renderer preload for Gfxstream based mode "
-                   "when running with SkiaVk.";
+      VLOG(0) << "Disabling guest renderer preload for Gfxstream based mode "
+                 "when running with SkiaVk.";
       guest_renderer_preload = GuestRendererPreload::kDisabled;
     }
   }
@@ -697,7 +726,8 @@ std::string GetGfxstreamRendererFeaturesString(
 
 CF_UNUSED_ON_MACOS
 Result<void> SetGfxstreamFlags(
-    const GpuMode gpu_mode, const std::string& gpu_renderer_features_arg,
+    const GpuMode gpu_mode, const GuestHwuiRenderer hwui_renderer,
+    const std::string& gpu_renderer_features_arg,
     const GuestConfig& guest_config,
     const gfxstream::proto::GraphicsAvailability& availability,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
@@ -719,6 +749,13 @@ Result<void> SetGfxstreamFlags(
   // Apply features from guest/mode requirements.
   if (guest_config.gfxstream_gl_program_binary_link_status_supported) {
     features["GlProgramBinaryLinkStatus"] = true;
+  }
+
+  // SwiftShader currently only supports a single queue. SkiaVK requests
+  // a second queue used for transfers.
+  if (gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader &&
+      hwui_renderer == GuestHwuiRenderer::kSkiaVk) {
+    features["VulkanVirtualQueue"] = true;
   }
 
   // Apply feature overrides from --gpu_renderer_features.
@@ -826,11 +863,6 @@ Result<GpuMode> ConfigureGpuSettings(
   const bool enable_gpu_vhost_user =
       CF_EXPECT(SelectGpuVhostUserMode(gpu_mode, gpu_vhost_user_mode_arg, vmm));
 
-  if (IsGfxstreamMode(gpu_mode)) {
-    CF_EXPECT(SetGfxstreamFlags(gpu_mode, gpu_renderer_features_arg,
-                                guest_config, graphics_availability, instance));
-  }
-
   if (gpu_mode == GpuMode::Custom) {
     std::vector<std::string> requested_types =
         absl::StrSplit(gpu_context_types_arg, ':');
@@ -859,17 +891,19 @@ Result<GpuMode> ConfigureGpuSettings(
     instance.set_enable_gpu_system_blob(false);
   }
 
-  GuestHwuiRenderer hwui_renderer = GuestHwuiRenderer::kUnknown;
-  if (!guest_hwui_renderer_arg.empty()) {
-    hwui_renderer = CF_EXPECT(
-        ParseGuestHwuiRenderer(guest_hwui_renderer_arg),
-        "Failed to parse HWUI renderer flag: " << guest_hwui_renderer_arg);
-  }
+  const GuestHwuiRenderer hwui_renderer = CF_EXPECT(
+      SelectGuestHwuiRenderer(gpu_mode, guest_config, guest_hwui_renderer_arg));
   instance.set_guest_hwui_renderer(hwui_renderer);
 
   const auto guest_renderer_preload = CF_EXPECT(SelectGuestRendererPreload(
       gpu_mode, hwui_renderer, guest_renderer_preload_arg));
   instance.set_guest_renderer_preload(guest_renderer_preload);
+
+  if (IsGfxstreamMode(gpu_mode)) {
+    CF_EXPECT(SetGfxstreamFlags(gpu_mode, hwui_renderer,
+                                gpu_renderer_features_arg, guest_config,
+                                graphics_availability, instance));
+  }
 
   instance.set_gpu_mode(gpu_mode);
   instance.set_enable_gpu_vhost_user(enable_gpu_vhost_user);

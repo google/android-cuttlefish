@@ -9,11 +9,12 @@ cf_cc_binary(
     srcs = [
         "health.cpp",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/process:command",
+        "//cuttlefish/process:managed_stdio",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@gflags",

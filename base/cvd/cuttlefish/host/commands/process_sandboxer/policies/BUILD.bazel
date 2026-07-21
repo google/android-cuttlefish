@@ -431,6 +431,7 @@ cf_cc_library(
     name = "wmediumd_gen_config",
     srcs = ["wmediumd_gen_config.cpp"],
     copts = COPTS + ALLOW_C,
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",

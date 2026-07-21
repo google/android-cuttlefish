@@ -7,6 +7,7 @@ package(
 cf_cc_binary(
     name = "secure_env",
     srcs = ["secure_env_only_oemlock.cpp"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":suspend_resume_handler",
         ":worker_thread_loop_body",
@@ -29,6 +30,7 @@ cf_cc_library(
     name = "suspend_resume_handler",
     srcs = ["suspend_resume_handler.cpp"],
     hdrs = ["suspend_resume_handler.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/command_util",

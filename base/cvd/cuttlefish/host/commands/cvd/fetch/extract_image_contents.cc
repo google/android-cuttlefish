@@ -20,6 +20,7 @@
 
 #include "cuttlefish/common/libs/utils/archive.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

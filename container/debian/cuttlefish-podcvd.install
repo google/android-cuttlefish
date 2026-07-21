@@ -1,4 +1,3 @@
 src/podcvd/podcvd /usr/lib/cuttlefish-podcvd/bin/
 debian/podcvd-setup /usr/lib/cuttlefish-podcvd/bin/
 debian/podcvd.users /etc/
-src/podcvd/skill /usr/lib/cuttlefish-podcvd/

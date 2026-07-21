@@ -1,0 +1,292 @@
+/*
+ * Copyright (C) 2023 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "cuttlefish/process/proc_file_utils.h"
+
+#include <fcntl.h>
+#include <sys/stat.h>  // IWYU pragma: keep
+#include <sys/types.h>
+#include <unistd.h>
+
+#include <regex>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+
+#include "absl/log/log.h"
+#include "absl/strings/ascii.h"
+#include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/strip.h"
+#include "android-base/file.h"
+#include "fmt/core.h"
+#include "fmt/format.h"
+
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/posix/readlink.h"
+#include "cuttlefish/result/result.h"
+
+namespace cuttlefish {
+
+// sometimes, files under /proc/<pid> owned by a different user
+// e.g. /proc/<pid>/exe
+static Result<uid_t> FileOwnerUid(const std::string& file_path) {
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/stat.h>
+  struct stat buf;
+  CF_EXPECT_EQ(::stat(file_path.data(), &buf), 0);
+  return buf.st_uid;
+}
+
+struct ProcStatusUids {
+  uid_t real_;
+  uid_t effective_;
+  uid_t saved_set_;
+  uid_t filesystem_;
+};
+
+// /proc/<pid>/status has Uid: <uid> <uid> <uid> <uid> line
+// It normally is separated by a tab or more but that's not guaranteed forever
+static Result<ProcStatusUids> OwnerUids(const pid_t pid) {
+  // parse from /proc/<pid>/status
+  std::regex uid_pattern(R"(Uid:\s+([0-9]+)\s+([0-9]+)\s+([0-9]+)\s+([0-9]+))");
+  std::string status_path = fmt::format("/proc/{}/status", pid);
+  std::string status_content = CF_EXPECT(ReadFileContents(status_path));
+  std::vector<uid_t> uids;
+  for (std::string_view line :
+       absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
+    std::smatch matches;
+    std::string line_str(line);
+    if (!std::regex_match(line_str, matches, uid_pattern)) {
+      continue;
+    }
+    // the line, then 4 uids
+    CF_EXPECT_EQ(matches.size(), 5,
+                 fmt::format("Error in the Uid line: \"{}\"", line));
+    uids.reserve(4);
+    for (int i = 1; i < 5; i++) {
+      unsigned uid = 0;
+      CF_EXPECT(absl::SimpleAtoi(matches[i].str(), &uid));
+      uids.push_back(uid);
+    }
+    break;
+  }
+  CF_EXPECT(!uids.empty(), "The \"Uid:\" line was not found");
+  return ProcStatusUids{
+      .real_ = uids.at(0),
+      .effective_ = uids.at(1),
+      .saved_set_ = uids.at(2),
+      .filesystem_ = uids.at(3),
+  };
+}
+
+static std::string PidDirPath(const pid_t pid) {
+  return fmt::format("{}/{}", kProcDir, pid);
+}
+
+/* ReadFile does not work for /proc/<pid>/<some files>
+ * ReadFile requires the file size to be known in advance,
+ * which is not the case here.
+ */
+static Result<std::string> ReadAll(const std::string& file_path) {
+  SharedFD fd = SharedFD::Open(file_path, O_RDONLY);
+  CF_EXPECT(fd->IsOpen());
+  // should be good size to read all Envs or Args,
+  // whichever bigger
+  const int buf_size = 1024;
+  std::string output;
+  ssize_t nread = 0;
+  do {
+    std::vector<char> buf(buf_size);
+    nread = ReadExact(fd, buf.data(), buf_size);
+    CF_EXPECT(nread >= 0, "ReadExact returns " << nread);
+    output.append(buf.begin(), buf.end());
+  } while (nread > 0);
+  return output;
+}
+
+Result<std::vector<pid_t>> CollectPids(const uid_t uid) {
+  CF_EXPECT(DirectoryExists(kProcDir));
+  auto subdirs = CF_EXPECT(DirectoryContents(kProcDir));
+  std::regex pid_dir_pattern("[0-9]+");
+  std::vector<pid_t> pids;
+  for (const auto& subdir : subdirs) {
+    if (!std::regex_match(subdir, pid_dir_pattern)) {
+      continue;
+    }
+    int pid;
+    // Shouldn't fail here. If failed, either regex or
+    // absl::SimpleAtoi needs serious fixes
+    CF_EXPECT(absl::SimpleAtoi(subdir, &pid));
+    auto owner_uid_result = OwnerUids(pid);
+    if (owner_uid_result.ok() && owner_uid_result->real_ == uid) {
+      pids.push_back(pid);
+    }
+  }
+  return pids;
+}
+
+Result<std::vector<std::string>> GetCmdArgs(const pid_t pid) {
+  std::string cmdline_file_path = PidDirPath(pid) + "/cmdline";
+  auto owner = CF_EXPECT(FileOwnerUid(cmdline_file_path));
+  CF_EXPECT(getuid() == owner);
+  std::string contents = CF_EXPECT(ReadAll(cmdline_file_path));
+  return absl::StrSplit(contents, '\0', absl::SkipEmpty());
+}
+
+Result<std::string> GetExecutablePath(const pid_t pid) {
+  std::string proc_exe_path = fmt::format("/proc/{}/exe", pid);
+  std::string exec_target_path = CF_EXPECTF(
+      ReadLink(proc_exe_path), "Unable to read link at \"{}\".", proc_exe_path);
+  std::string suffix(" (deleted)");
+  if (absl::EndsWith(exec_target_path, suffix)) {
+    return exec_target_path.substr(0, exec_target_path.size() - suffix.size());
+  }
+  return exec_target_path;
+}
+
+static Result<void> CheckExecNameFromStatus(const std::string& exec_name,
+                                            const pid_t pid) {
+  std::string status_path = fmt::format("/proc/{}/status", pid);
+  std::string status_content = CF_EXPECT(ReadFileContents(status_path));
+  bool found = false;
+  for (std::string_view line :
+       absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
+    if (!absl::ConsumePrefix(&line, "Name:")) {
+      continue;
+    }
+    if (absl::StripAsciiWhitespace(line) == exec_name) {
+      found = true;
+      break;
+    }
+  }
+  CF_EXPECTF(found == true,
+             "\"Name:  [name]\" line is not found in the status file: \"{}\"",
+             status_path);
+  return {};
+}
+
+Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
+                                                 const uid_t uid) {
+  CF_EXPECT_EQ(android::base::Basename(exec_name), exec_name);
+  auto input_pids = CF_EXPECT(CollectPids(uid));
+  std::vector<pid_t> output_pids;
+  for (const auto pid : input_pids) {
+    auto owner_uids_result = OwnerUids(pid);
+    if (!owner_uids_result.ok() || owner_uids_result->real_ != uid) {
+      VLOG(1) << "Process #" << pid << " does not belong to " << uid;
+      continue;
+    }
+    if (CheckExecNameFromStatus(exec_name, pid).ok()) {
+      output_pids.push_back(pid);
+    }
+  }
+  return output_pids;
+}
+
+Result<std::vector<pid_t>> CollectPidsByExecPath(const std::string& exec_path,
+                                                 const uid_t uid) {
+  auto input_pids = CF_EXPECT(CollectPids(uid));
+  std::vector<pid_t> output_pids;
+  for (const auto pid : input_pids) {
+    auto pid_exec_path = GetExecutablePath(pid);
+    if (!pid_exec_path.ok()) {
+      continue;
+    }
+    if (*pid_exec_path == exec_path) {
+      output_pids.push_back(pid);
+    }
+  }
+  return output_pids;
+}
+
+Result<std::vector<pid_t>> CollectPidsByArgv0(const std::string& expected_argv0,
+                                              const uid_t uid) {
+  auto input_pids = CF_EXPECT(CollectPids(uid));
+  std::vector<pid_t> output_pids;
+  for (const auto pid : input_pids) {
+    auto argv_result = GetCmdArgs(pid);
+    if (!argv_result.ok()) {
+      continue;
+    }
+    if (argv_result->empty()) {
+      continue;
+    }
+    if (argv_result->front() == expected_argv0) {
+      output_pids.push_back(pid);
+    }
+  }
+  return output_pids;
+}
+
+Result<uid_t> OwnerUid(const pid_t pid) {
+  // parse from /proc/<pid>/status
+  auto uids_result = OwnerUids(pid);
+  if (!uids_result.ok()) {
+    VLOG(0) << uids_result.error().Trace();
+    VLOG(0) << "Falling back to the old OwnerUid logic";
+    return CF_EXPECT(FileOwnerUid(PidDirPath(pid)));
+  }
+  return uids_result->real_;
+}
+
+Result<std::unordered_map<std::string, std::string>> GetEnvs(const pid_t pid) {
+  std::string environ_file_path = PidDirPath(pid) + "/environ";
+  auto owner = CF_EXPECT(FileOwnerUid(environ_file_path));
+  CF_EXPECT(getuid() == owner, "Owned by another user of uid" << owner);
+  std::string environ = CF_EXPECT(ReadAll(environ_file_path));
+  // now, each line looks like:  HOME=/home/user
+  std::unordered_map<std::string, std::string> envs;
+  for (std::string_view line :
+       absl::StrSplit(environ, '\0', absl::SkipEmpty())) {
+    envs.emplace(absl::StrSplit(line, absl::MaxSplits('=', 1)));
+  }
+  return envs;
+}
+
+Result<ProcInfo> ExtractProcInfo(const pid_t pid) {
+  auto owners = CF_EXPECT(OwnerUids(pid));
+  return ProcInfo{.pid_ = pid,
+                  .real_owner_ = owners.real_,
+                  .effective_owner_ = owners.effective_,
+                  .actual_exec_path_ = CF_EXPECT(GetExecutablePath(pid)),
+                  .envs_ = CF_EXPECT(GetEnvs(pid)),
+                  .args_ = CF_EXPECT(GetCmdArgs(pid))};
+}
+
+Result<pid_t> Ppid(const pid_t pid) {
+  // parse from /proc/<pid>/status
+  std::regex uid_pattern(R"(PPid:\s*([0-9]+))");
+  std::string status_path = fmt::format("/proc/{}/status", pid);
+  std::string status_content = CF_EXPECT(ReadFileContents(status_path));
+  for (std::string_view line :
+       absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
+    std::smatch matches;
+    std::string line_str(line);
+    if (!std::regex_match(line_str, matches, uid_pattern)) {
+      continue;
+    }
+    unsigned ppid;
+    CF_EXPECT(absl::SimpleAtoi(matches[1].str(), &ppid));
+    return static_cast<pid_t>(ppid);
+  }
+  return CF_ERR("Status file does not have PPid: line in the right format");
+}
+
+}  // namespace cuttlefish

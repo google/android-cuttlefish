@@ -59,6 +59,7 @@ cf_cc_binary(
         "-DVULKAN_HPP_RAII_NO_EXCEPTIONS=1",
         "-Wno-module-import-in-extern-c",
     ],
+    depend_on_what_you_use_enabled = False,
     deps = [
         ":graphics_detector_cc_proto",
         "//cuttlefish/host/graphics_detector/shaders:graphics_detector_shaders",

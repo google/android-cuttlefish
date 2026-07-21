@@ -28,9 +28,9 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/posix/rename.h"
+#include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

@@ -31,8 +31,6 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
@@ -40,7 +38,6 @@
 #include "cuttlefish/host/commands/start/flag_forwarder.h"
 #include "cuttlefish/host/commands/start/override_bool_arg.h"
 #include "cuttlefish/host/commands/start/start_flags.h"
-#include "cuttlefish/host/commands/start/validate_metrics_confirmation.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -50,6 +47,9 @@
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/posix/symlink.h"
+#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/managed_stdio.h"
+#include "cuttlefish/process/subprocess.h"
 
 namespace cuttlefish {
 namespace {
@@ -114,7 +114,7 @@ Subprocess StartRunner(SharedFD runner_stdin,
   for (const auto& arg : argv) {
     run_cmd.AddParameter(arg);
   }
-  run_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, runner_stdin);
+  run_cmd.RedirectStdIO(Command::StdIoChannel::kStdIn, runner_stdin);
   run_cmd.SetWorkingDirectory(instance.instance_dir());
   return run_cmd.Start();
 }
@@ -294,9 +294,6 @@ int CvdInternalStartMain(int argc, char** argv) {
 
   setenv("CF_CONSOLE_SEVERITY", FLAGS_verbosity.c_str(), /* replace */ false);
   setenv("CF_FILE_SEVERITY", FLAGS_file_verbosity.c_str(), /* replace */ false);
-
-  auto use_metrics = FLAGS_report_anonymous_usage_stats;
-  FLAGS_report_anonymous_usage_stats = ValidateMetricsConfirmation(use_metrics);
 
   if (FLAGS_track_host_tools_crc) {
     // TODO(b/159068082) Make decisions based on this value in assemble_cvd

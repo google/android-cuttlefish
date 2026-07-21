@@ -24,6 +24,8 @@
 #include "fmt/format.h"
 #include "gtest/gtest.h"
 
+#include "cuttlefish/pretty/string.h"  // IWYU pragma: keep: overload used
+
 namespace cuttlefish {
 namespace {
 

@@ -101,7 +101,6 @@ cf_cc_test(
         "//cuttlefish/pretty:unique_ptr",
         "//cuttlefish/pretty:vector",
         "@abseil-cpp//absl/strings",
-        "@fmt",
     ],
 )
 

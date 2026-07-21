@@ -37,8 +37,6 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
@@ -47,6 +45,8 @@
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
+#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 
 // This is the QEMU default, but set it explicitly just in case it
@@ -70,7 +70,7 @@ StopperResult Stop() {
 
   if (!monitor_sock->IsOpen()) {
     LOG(ERROR) << "The connection to qemu is closed, is it still running?";
-    return StopperResult::kStopFailure;
+    return StopperResult::kFailure;
   }
   char msg[] = "{\"execute\":\"qmp_capabilities\"}{\"execute\":\"quit\"}";
   ssize_t len = sizeof(msg) - 1;
@@ -78,7 +78,7 @@ StopperResult Stop() {
     int tmp = monitor_sock->Write(msg, len);
     if (tmp < 0) {
       LOG(ERROR) << "Error writing to socket: " << monitor_sock->StrError();
-      return StopperResult::kStopFailure;
+      return StopperResult::kFailure;
     }
     len -= tmp;
   }
@@ -89,7 +89,7 @@ StopperResult Stop() {
     LOG(INFO) << "From qemu monitor: " << buff;
   }
 
-  return StopperResult::kStopSuccess;
+  return StopperResult::kSuccess;
 }
 
 Result<std::pair<int, int>> GetQemuVersion(const std::string& qemu_binary) {

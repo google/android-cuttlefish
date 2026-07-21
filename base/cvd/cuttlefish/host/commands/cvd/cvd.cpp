@@ -39,7 +39,7 @@ Cvd::Cvd(InstanceManager& instance_manager,
 static Result<void> EnforceHostConfigured() {
   std::vector<vm_manager::HostConfigurationAction> actions =
       CF_EXPECT(vm_manager::ValidateHostConfiguration());
-  CF_EXPECT(actions.empty(), "Run `cvd setup` to configure the host.");
+  CF_EXPECT(actions.empty(), "Host configuration is invalid.");
   return {};
 }
 
@@ -63,7 +63,13 @@ Result<void> Cvd::HandleCommand(
   }
 
   if (handler->RequiresHostConfiguration()) {
-    CF_EXPECT(EnforceHostConfigured());
+    Result<void> enforce_result = EnforceHostConfigured();
+    if (!enforce_result.ok()) {
+      std::cerr << "Host configuration requirements not met.  Run `cvd setup` "
+                   "to configure the host."
+                << std::endl;
+      CF_EXPECT(std::move(enforce_result));
+    }
   }
 
   CF_EXPECT(handler->Handle(request));

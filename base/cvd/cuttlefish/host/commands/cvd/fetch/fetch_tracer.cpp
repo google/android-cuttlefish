@@ -28,6 +28,8 @@
 
 #include "fmt/format.h"
 
+#include "cuttlefish/host/commands/cvd/cli/format_byte_size.h"
+
 namespace cuttlefish {
 namespace {
 
@@ -55,26 +57,6 @@ std::chrono::milliseconds FullDuration(const FetchTracer::TraceImpl& trace) {
     total_duration += phase.duration;
   }
   return total_duration;
-}
-
-std::string FormatByteSize(uint64_t size) {
-  if (size < 10240) {
-    return fmt::format("{} B", size);
-  }
-  size /= 1024;
-  if (size < 10240) {
-    return fmt::format("{} KiB", size);
-  }
-  size /= 1024;
-  if (size < 10240) {
-    return fmt::format("{} MiB", size);
-  }
-  size /= 1024;
-  if (size < 10240) {
-    return fmt::format("{} GiB", size);
-  }
-  size /= 1024;
-  return fmt::format("{} TiB", size);
 }
 
 std::string FormatDuration(std::chrono::milliseconds duration_ms) {

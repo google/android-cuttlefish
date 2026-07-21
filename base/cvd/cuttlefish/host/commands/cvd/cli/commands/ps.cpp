@@ -50,9 +50,13 @@ usage: cvd ps [--help]
 )";
 
 const std::map<PsColumns, std::string_view> kHeaders = {
-    {PsColumns::kNames, "NAMES"},   {PsColumns::kId, "ID"},
-    {PsColumns::kStatus, "STATUS"}, {PsColumns::kCreated, "CREATED"},
-    {PsColumns::kPorts, "PORTS"},   {PsColumns::kWebAccess, "WEB_ACCESS"},
+    {PsColumns::kGroups, "GROUPS"},
+    {PsColumns::kNames, "NAMES"},
+    {PsColumns::kId, "ID"},
+    {PsColumns::kStatus, "STATUS"},
+    {PsColumns::kCreated, "CREATED"},
+    {PsColumns::kAdbSerial, "ADB_SERIAL"},
+    {PsColumns::kWebAccess, "WEB_ACCESS"},
 };
 
 void PrintTable(const std::map<PsColumns, std::string_view>& headers,
@@ -131,14 +135,14 @@ PsRow CvdPsCommandHandler::InstanceToRow(const LocalInstanceGroup& group,
                                          LocalInstance& instance) const {
   PsRow row;
 
-  row[PsColumns::kNames] =
-      fmt::format("{}/{}", group.GroupName(), instance.Name());
+  row[PsColumns::kGroups] = group.GroupName();
+  row[PsColumns::kNames] = instance.Name();
   row[PsColumns::kId] = std::to_string(instance.Id());
 
   // Fetch live status
   const Result<Json::Value> status_json_res = instance.FetchStatus();
   std::string status_str = "Unknown (Fetch Failed)";
-  std::string ports_str = "-";
+  std::string adb_serial_str = "-";
   std::string web_access_str = "-";
 
   if (status_json_res.ok()) {
@@ -147,7 +151,8 @@ PsRow CvdPsCommandHandler::InstanceToRow(const LocalInstanceGroup& group,
 
     if (instance.IsActive()) {
       if (status_json.isMember("adb_port")) {
-        ports_str = fmt::format("adb:{}", status_json["adb_port"].asInt());
+        adb_serial_str =
+            fmt::format("localhost:{}", status_json["adb_port"].asInt());
       }
       if (status_json.isMember("web_access")) {
         web_access_str = status_json["web_access"].asString();
@@ -157,7 +162,7 @@ PsRow CvdPsCommandHandler::InstanceToRow(const LocalInstanceGroup& group,
 
   row[PsColumns::kStatus] = status_str;
   row[PsColumns::kCreated] = Format(group.StartTime());
-  row[PsColumns::kPorts] = ports_str;
+  row[PsColumns::kAdbSerial] = adb_serial_str;
   row[PsColumns::kWebAccess] = web_access_str;
 
   return row;

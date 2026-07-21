@@ -54,4 +54,6 @@ using Build = std::variant<DeviceBuild, DirectoryBuild>;
 
 std::ostream& operator<<(std::ostream&, const Build&);
 
+std::string FetchLabel(const Build& build);
+
 }  // namespace cuttlefish

@@ -40,10 +40,10 @@
 #include "cuttlefish/common/libs/transport/channel.h"
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -155,7 +155,7 @@ Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
   VLOG(0) << "Stopping monitored subprocesses";
   auto stop = [](const auto& it) {
     auto stop_result = it.proc->Stop();
-    if (stop_result == StopperResult::kStopFailure) {
+    if (stop_result == StopperResult::kFailure) {
       LOG(WARNING) << "Error in stopping \"" << it.cmd->GetShortName() << "\"";
       return false;
     }
@@ -165,7 +165,7 @@ Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
       LOG(WARNING) << "Failed to wait for process " << it.cmd->GetShortName();
       return false;
     }
-    if (stop_result == StopperResult::kStopCrash) {
+    if (stop_result == StopperResult::kCrash) {
       LogSubprocessExit(it.cmd->GetShortName(), infop);
     }
     return true;

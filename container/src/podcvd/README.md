@@ -37,9 +37,8 @@ execute `cvd help` or `cvd create` after installing `cuttlefish-base`.
 
 ### Skill for agents
 
-Installing skill requires additional setup beyond podcvd.
-
-For Gemini CLI, execute `gemini skills link /usr/lib/cuttlefish-podcvd/skill`.
+Podcvd skill for AI agents is located under `skills/podcvd` directory of this
+repository.
 
 ## Development guide
 

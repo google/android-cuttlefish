@@ -28,11 +28,11 @@
 #include "vulkan/vulkan.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -59,7 +59,7 @@ Result<VhostUserDeviceCommands> VhostUserBlockDevice(
     // Ask nicely so that log_tee gets a chance to process all the logs.
     // TODO: b/335934714 - Make sure the process actually exits
     bool res = kill(proc->pid(), SIGINT) == 0;
-    return res ? StopperResult::kStopSuccess : StopperResult::kStopFailure;
+    return res ? StopperResult::kSuccess : StopperResult::kFailure;
   }));
 
   const std::string crosvm_path = config.crosvm_binary();

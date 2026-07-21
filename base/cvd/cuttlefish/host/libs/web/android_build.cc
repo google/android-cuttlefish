@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "absl/strings/str_join.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 
@@ -54,6 +55,13 @@ std::ostream& operator<<(std::ostream& out, const DirectoryBuild& build) {
 std::ostream& operator<<(std::ostream& out, const Build& build) {
   std::visit([&out](auto&& arg) { out << arg; }, build);
   return out;
+}
+
+std::string FetchLabel(const Build& build) {
+  // return std::visit((auto&& arg) { return FetchLabel(arg); }, build)
+  return fmt::format("{}/{}",
+                     std::visit([](auto&& arg) { return arg.id; }, build),
+                     std::visit([](auto&& arg) { return arg.target; }, build));
 }
 
 }  // namespace cuttlefish

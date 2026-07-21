@@ -37,10 +37,10 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
+#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -297,7 +297,7 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
   // Ensure callers and logs clearly indicate that CAS downloading is
   // disabled and why, using the same environment-aware formatting that
   // test helpers use.
-  LOG(INFO) << "CAS downloading disabled, see log for reason.";
+  VLOG(0) << "CAS downloading disabled, see log for reason.";
   VLOG(0) << "CAS downloading disabled: " << result.error();
   return result;
 }
@@ -321,9 +321,9 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::CreateImpl(
         cas_downloader_flags.cas_config_filepath.value();
     bool is_default_config = (config_filepath == kDefaultCasConfigFilePath);
     if (is_default_config) {
-      LOG(INFO) << "Using default CAS config from: " << config_filepath;
+      VLOG(0) << "Using default CAS config from: " << config_filepath;
     } else {
-      LOG(INFO) << "Using CAS config from: " << config_filepath;
+      VLOG(0) << "Using CAS config from: " << config_filepath;
     }
     std::string config_contents = CF_EXPECT(ReadFileContents(config_filepath));
     Json::Value config = CF_EXPECT(ParseJson(config_contents));
@@ -355,7 +355,7 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::CreateImpl(
     // No config file available: use CLI values (or defaults if CLI didn't set
     // them). Convert current flag values into config_flags for downstream
     // processing.
-    LOG(INFO) << "Using CAS downloader flags from command line or defaults.";
+    VLOG(0) << "Using CAS downloader flags from command line or defaults.";
     config_flags = ConvertToConfigFlags(cas_downloader_flags);
   }
 
@@ -429,7 +429,7 @@ Result<void> CasDownloader::DownloadFile(
   AppendBuildInfoToInvocationId(build, flags_);
   Command cmd = GetCommand(downloader_path_, flags_, cas_identifier,
                            download_directory, stats_filepath);
-  LOG(INFO) << "CAS Downloader Command: '" << cmd.AsBashScript() << "'";
+  VLOG(0) << "CAS Downloader Command: '" << cmd.AsBashScript() << "'";
   int ret_code = cmd.Start().Wait();
   if (ret_code != 0) {
     return CF_ERRF("Failed to download file with CAS downloader ({}).",

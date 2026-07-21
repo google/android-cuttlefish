@@ -22,12 +22,14 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -67,7 +69,18 @@ Result<void> CvdMonitorCommandHandler::Handle(const CommandRequest& request) {
       CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                 "Unable to select an instance");
 
-  return MonitorLogs(instance);
+  SharedFD stop_eventfd = SharedFD::Event();
+  CF_EXPECTF(stop_eventfd->IsOpen(),
+             "Failed to create eventfd for stopping monitor: {}",
+             stop_eventfd->StrError());
+
+  std::unique_ptr<InterruptListenerHandle> stop_listener =
+      CF_EXPECT(PushInterruptListener(
+          [stop_eventfd](int) { stop_eventfd->EventfdWrite(1); }));
+
+  CF_EXPECT(MonitorLogs(instance, stop_eventfd));
+
+  return {};
 }
 
 std::vector<std::string> CvdMonitorCommandHandler::CmdList() const {

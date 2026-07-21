@@ -45,7 +45,6 @@
 #include "cuttlefish/host/commands/run_cvd/launch/kernel_log_monitor.h"
 #include "cuttlefish/host/commands/run_cvd/launch/logcat_receiver.h"
 #include "cuttlefish/host/commands/run_cvd/launch/mcu.h"
-#include "cuttlefish/host/commands/run_cvd/launch/metrics.h"
 #include "cuttlefish/host/commands/run_cvd/launch/modem.h"
 #include "cuttlefish/host/commands/run_cvd/launch/netsim_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/nfc_connector.h"
@@ -79,7 +78,6 @@
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
-#include "cuttlefish/host/libs/metrics/metrics_receiver.h"
 #include "cuttlefish/host/libs/version/version.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 #include "cuttlefish/result/result.h"
@@ -192,7 +190,6 @@ fruit::Component<> runCvdComponent(
       .install(AutoCmd<GnssGrpcProxyServer>::Component)
       .install(AutoCmd<LogcatReceiver>::Component)
       .install(KernelLogMonitorComponent)
-      .install(AutoCmd<MetricsService>::Component)
       .install(OpenwrtControlServerComponent)
       .install(AutoCmd<Pica>::Component)
       .install(RootCanalComponent)
@@ -260,10 +257,6 @@ Result<void> RunCvdMain(int argc, char** argv) {
 
   for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
     CF_EXPECT(late_injected->LateInject(injector));
-  }
-
-  if (config->enable_metrics() == cuttlefish::CuttlefishConfig::Answer::kYes) {
-    MetricsReceiver::LogMetricsVMStart();
   }
 
   auto instance_bindings = injector.getMultibindings<InstanceLifecycle>();

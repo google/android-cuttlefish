@@ -30,8 +30,8 @@
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/random.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/process/execute.h"
 
 namespace cuttlefish {
 

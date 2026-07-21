@@ -15,6 +15,7 @@ cf_cc_library(
     name = "curl_http_client",
     srcs = ["curl_http_client.cc"],
     hdrs = ["curl_http_client.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
@@ -53,6 +54,7 @@ cf_cc_library(
     name = "http_client",
     srcs = ["http_client.cc"],
     hdrs = ["http_client.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/result",
         "@fmt",
@@ -64,6 +66,7 @@ cf_cc_library(
     name = "http_file",
     srcs = ["http_file.cc"],
     hdrs = ["http_file.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:shared_fd_stream",
@@ -79,6 +82,7 @@ cf_cc_library(
     name = "http_json",
     srcs = ["http_json.cc"],
     hdrs = ["http_json.h"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/libs/web/http_client",
@@ -119,6 +123,7 @@ cf_cc_library(
 cf_cc_test(
     name = "scrub_secrets_test",
     srcs = ["scrub_secrets_test.cc"],
+    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "@jsoncpp",

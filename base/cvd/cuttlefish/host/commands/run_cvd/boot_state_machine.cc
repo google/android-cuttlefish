@@ -50,7 +50,6 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
@@ -68,6 +67,7 @@
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
 using grpc::ClientContext;
@@ -425,9 +425,11 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
                 instance_.adb_ip_and_port());
             adb_command.AddParameter("wait-for-device");
             adb_command.AddParameter("shell");
-            adb_command.AddParameter("/vendor/bin/snapshot_hook_post_resume");
+            adb_command.AddParameter(
+                "su root /vendor/bin/snapshot_hook_post_resume");
             CHECK_EQ(adb_command.Start().Wait(), 0)
-                << "Failed to run /vendor/bin/snapshot_hook_post_resume";
+                << "Failed to run su root "
+                   "/vendor/bin/snapshot_hook_post_resume";
             // Done last so that adb is more likely to be ready.
             CHECK(cuttlefish::WriteAll(restore_complete_pipe_write, "1") == 1)
                 << "Error writing to restore complete pipe: "

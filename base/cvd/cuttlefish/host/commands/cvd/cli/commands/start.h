@@ -19,12 +19,12 @@
 #include <optional>
 #include <string>
 
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
+#include "cuttlefish/process/command.h"
 
 namespace cuttlefish {
 
@@ -41,6 +41,7 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   Result<std::vector<Flag>> Flags(const CommandRequest&) override;
 
   bool RequiresDeviceExists() const override { return true; }
+  bool RequiresHostConfiguration() const override { return true; }
 
  private:
   Result<void> LaunchSingleInstance(LocalInstance& instance,
@@ -65,7 +66,6 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   struct {
     std::vector<std::string> host_substitutions;
     bool daemon;
-    std::optional<std::string> report_anonymous_usage_stats;
   } own_flags_;
 };
 
