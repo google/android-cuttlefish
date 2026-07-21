@@ -314,6 +314,12 @@ std::vector<CommandHandler> SimService::InitializeCommandHandlers() {
       CommandHandler(
           "+CICCID",
           [this](const Client& client) { this->HandleGetIccId(client); }),
+      CommandHandler(
+          "+CEID",
+          [this](const Client& client) { this->HandleGetEid(client); }),
+      CommandHandler(
+          "+CATR",
+          [this](const Client& client) { this->HandleGetAtr(client); }),
       CommandHandler("+CLCK=",
                      [this](const Client& client, std::string& cmd) {
                        this->HandleFacilityLock(client, cmd);
@@ -1320,6 +1326,58 @@ void SimService::HandleGetIccId(const Client& client) {
   }
 
   responses.push_back(final->GetText());
+  responses.push_back("OK");
+  client.SendCommandResponse(responses);
+}
+
+void SimService::HandleGetEid(const Client& client) {
+  std::vector<std::string> responses;
+
+  XMLElement* root = sim_file_system_.GetRootElement();
+  if (!root) {
+    client.SendCommandResponse(kCmeErrorOperationNotAllowed);
+    return;
+  }
+
+  XMLElement* card_profile = root->FirstChildElement("CardProfile");
+  if (!card_profile) {
+    client.SendCommandResponse(kCmeErrorNotFound);
+    return;
+  }
+
+  XMLElement* final = card_profile->FirstChildElement("EID");
+  if (!final) {
+    client.SendCommandResponse(kCmeErrorNotFound);
+    return;
+  }
+
+  responses.push_back("+CEID: " + std::string(final->GetText()));
+  responses.push_back("OK");
+  client.SendCommandResponse(responses);
+}
+
+void SimService::HandleGetAtr(const Client& client) {
+  std::vector<std::string> responses;
+
+  XMLElement* root = sim_file_system_.GetRootElement();
+  if (!root) {
+    client.SendCommandResponse(kCmeErrorOperationNotAllowed);
+    return;
+  }
+
+  XMLElement* card_profile = root->FirstChildElement("CardProfile");
+  if (!card_profile) {
+    client.SendCommandResponse(kCmeErrorNotFound);
+    return;
+  }
+
+  XMLElement* final = card_profile->FirstChildElement("ATR");
+  if (!final) {
+    client.SendCommandResponse(kCmeErrorNotFound);
+    return;
+  }
+
+  responses.push_back("+CATR: " + std::string(final->GetText()));
   responses.push_back("OK");
   client.SendCommandResponse(responses);
 }
