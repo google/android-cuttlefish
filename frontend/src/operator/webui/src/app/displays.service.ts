@@ -1,5 +1,5 @@
 import {Injectable, inject} from '@angular/core';
-import {Subject, merge} from 'rxjs';
+import {BehaviorSubject, Subject, merge} from 'rxjs';
 import {map, mergeMap} from 'rxjs/operators';
 import {DeviceService} from './device.service';
 
@@ -8,6 +8,12 @@ import {DeviceService} from './device.service';
 })
 export class DisplaysService {
   private deviceService = inject(DeviceService);
+
+  addVertically$ = new BehaviorSubject<boolean>(false);
+
+  toggleAddVertically(enabled: boolean): void {
+    this.addVertically$.next(enabled);
+  }
 
   private devices = this.deviceService.getAllDevices();
 
