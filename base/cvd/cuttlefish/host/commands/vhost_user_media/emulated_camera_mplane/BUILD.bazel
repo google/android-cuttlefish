@@ -19,6 +19,7 @@ rust_binary(
     ],
     edition = "2024",
     deps = crate_deps([
+        "anyhow",
         "clap",
         "env_logger",
         "libc",
@@ -28,6 +29,7 @@ rust_binary(
         "vhost-user-backend",
         "virtio-media",
         "vm-memory",
+        "vmm-sys-util",
     ]) + [
         "//cuttlefish/host/commands/vhost_user_media/vhu_media",
     ],
