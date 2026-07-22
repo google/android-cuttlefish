@@ -120,11 +120,6 @@ symlinks {
   link_name: "bin/logcat_receiver"
 }
 
-symlinks {
-  target: "/usr/lib/cuttlefish-common/bin/metrics_launcher"
-  link_name: "bin/metrics_launcher"
-}
-
 symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/mkbootfs"
   link_name: "bin/mkbootfs"
