@@ -249,6 +249,8 @@ cf_cc_library(
     clang_format_enabled = False,
     deps = [
         ":video_sink",
+        "//cuttlefish/host/frontend/webrtc/libcommon:abgr_buffer",
+        "@libdrm//:libdrm_fourcc",
         "@libwebrtc",
     ],
 )
