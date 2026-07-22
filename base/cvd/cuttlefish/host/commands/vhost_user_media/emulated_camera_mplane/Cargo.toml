@@ -14,3 +14,4 @@ vhost-user-backend = { workspace = true }
 vhu_media = { workspace = true }
 virtio-media = { workspace = true }
 vm-memory = { workspace = true }
+vmm-sys-util = { workspace = true }
