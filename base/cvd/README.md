@@ -4,6 +4,14 @@
 executables from AOSP. It is deployed through the `cuttlefish-base` debian
 package, but can also be compiled and run on its own.
 
+## First time setup
+
+From the top level directory, please run the build wrapper script. It will
+install all the deps needed to run local builds.
+```sh
+tools/buildutils/build_packages.sh
+```
+
 ## Compiling and running
 
 ```sh
