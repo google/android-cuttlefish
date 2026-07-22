@@ -53,6 +53,13 @@ message VulkanQuirks {
   optional VulkanExternalMemoryHostQuirks external_memory_host_quirks = 2;
 }
 
+message VulkanQueueFamily {
+  optional bool supports_compute = 1;
+  optional bool supports_graphics = 2;
+  optional bool supports_transfer = 3;
+  optional uint32 queue_count = 4;
+}
+
 message VulkanPhysicalDevice {
   optional string name = 1;
   repeated string extensions = 2;
@@ -63,6 +70,8 @@ message VulkanPhysicalDevice {
   optional Type type = 3;
 
   optional VulkanQuirks quirks = 4;
+
+  repeated VulkanQueueFamily queue_families = 5;
 }
 
 message VulkanAvailability {
