@@ -832,7 +832,12 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
     return {};
   }
 
-  VLOG(0) << "Host Graphics Availability:" << availability.DebugString();
+  VLOG(0) << "Host Graphics Availability:";
+  for (absl::string_view line :
+       absl::StrSplit(graphics_availability_content, '\n')) {
+    VLOG(0) << line;
+  }
+
   return availability;
 #endif
 }
