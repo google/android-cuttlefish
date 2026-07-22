@@ -27,12 +27,10 @@ cf_cc_library(
     name = "frontline_parser",
     srcs = ["frontline_parser.cpp"],
     hdrs = ["frontline_parser.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/result",
-        "//libbase",
     ],
 )
 
@@ -50,10 +48,8 @@ cf_cc_library(
     name = "help_format",
     srcs = ["help_format.cpp"],
     hdrs = ["help_format.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
-        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -62,12 +58,10 @@ cf_cc_library(
     name = "interruptible_terminal",
     srcs = ["interruptible_terminal.cpp"],
     hdrs = ["interruptible_terminal.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/cleanup",
     ],
 )
@@ -88,13 +82,11 @@ cf_cc_library(
 cf_cc_test(
     name = "log_files_test",
     srcs = ["log_files_test.cpp"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:recursively_remove_directory",
         "//cuttlefish/host/commands/cvd/cli:log_files",
-        "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/result:result_matchers",
         "@abseil-cpp//absl/cleanup",
     ],
@@ -115,9 +107,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:help.h",
         "//cuttlefish/host/commands/cvd/cli/commands:load_configs.h",
     ],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
@@ -168,17 +158,12 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances:instance_manager",
         "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/utils",
-        "//cuttlefish/host/libs/metrics:device_metrics_orchestration",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/posix:symlink",
-        "//cuttlefish/process:command",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
         "@fmt",
-        "@jsoncpp",
     ],
 )
 
@@ -186,10 +171,8 @@ cf_cc_library(
     name = "utils",
     srcs = ["utils.cpp"],
     hdrs = ["utils.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         ":command_request",
-        "//cuttlefish/ansi_codes",
         "//cuttlefish/ansi_codes:terminal_colors",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
