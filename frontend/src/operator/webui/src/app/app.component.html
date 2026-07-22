@@ -2,6 +2,14 @@
   <mat-toolbar class="cloud-android-toolbar">
     <button mat-icon-button id="device-pane-toggle" (click)="snav.toggle()"><mat-icon>menu</mat-icon></button>
     <h1 class="cloud-android-title">Cloud Android</h1>
+    <mat-slide-toggle
+      color="primary"
+      [checked]="(displaysService.addVertically$ | async)!"
+      (change)="displaysService.toggleAddVertically($event.checked)"
+      class="add-vertically-toggle"
+      >
+      Add Device Panel<br />Vertically
+    </mat-slide-toggle>
   </mat-toolbar>
 
   <mat-sidenav-container class="drawer-container">
