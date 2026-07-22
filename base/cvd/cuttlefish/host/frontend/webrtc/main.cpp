@@ -28,6 +28,7 @@
 #include "google/protobuf/text_format.h"
 #include "google/rpc/code.pb.h"
 #include "google/rpc/status.pb.h"
+#include "rtc_base/logging.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -592,6 +593,7 @@ int CuttlefishMain() {
 
 int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
+  rtc::LogMessage::LogToDebug(rtc::LS_WARNING);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
   return cuttlefish::CuttlefishMain();
 }
