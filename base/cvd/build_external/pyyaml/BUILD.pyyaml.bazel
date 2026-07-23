@@ -4,6 +4,7 @@ package(
     default_visibility = [
         "@//:android_cuttlefish",
         "@mesa//:__subpackages__",
+        "@virglrenderer//:__subpackages__",
     ],
 )
 
