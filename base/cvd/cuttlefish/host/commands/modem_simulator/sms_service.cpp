@@ -297,7 +297,7 @@ void SmsService::HandleSendSMSPDU(const Client& client, std::string& command) {
       thread_looper_->Post(
           makeSafeCallback<SmsService>(
               this,
-              [&sms_pdu](SmsService* me) { me->HandleReceiveSMS(sms_pdu); }),
+              [sms_pdu](SmsService* me) { me->HandleReceiveSMS(sms_pdu); }),
           std::chrono::seconds(1));
     } else {  // Send SMS to remote host port
       SendSmsToRemote(remote_host_port, sms_pdu);
