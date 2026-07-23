@@ -1,4 +1,12 @@
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+load("@depend_on_what_you_use//dwyu/cc:defs.bzl", "MAP_DIRECT_DEPS", "dwyu_make_cc_info_mapping")
+
+dwyu_make_cc_info_mapping(
+    name = "map_external_deps",
+    mapping = {
+        "@protobuf": MAP_DIRECT_DEPS,
+    },
+)
 
 native_binary(
     name = "clang_tidy",
