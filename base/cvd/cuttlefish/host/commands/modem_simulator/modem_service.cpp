@@ -34,14 +34,13 @@ CommandHandler::CommandHandler(const std::string& command, p_func handler)
       p_command_handler(handler) {}
 
 int CommandHandler::Compare(const std::string& command) const {
-  int result = -1;
-  if (match_mode == PARTIAL_MATCH) {
-    result =
-        command.compare(2, command_prefix.size(), command_prefix);  // skip "AT"
-  } else {
-    result = command.compare(2, command.size(), command_prefix);
+  if (command.size() < 2) {  // the "AT" prefix
+    return -1;
   }
-  return result;
+
+  return (match_mode == PARTIAL_MATCH)
+             ? command.compare(2, command_prefix.size(), command_prefix)
+             : command.compare(2, command.size(), command_prefix);
 }
 
 void CommandHandler::HandleCommand(const Client& client,
