@@ -35,7 +35,7 @@ func TestTakeBugreport(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {
+	if _, err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {
 		t.Fatal(err)
 	}
 
