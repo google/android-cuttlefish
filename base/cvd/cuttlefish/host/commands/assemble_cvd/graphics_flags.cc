@@ -725,6 +725,28 @@ std::string GetGfxstreamRendererFeaturesString(
 }
 
 CF_UNUSED_ON_MACOS
+bool HasMultipleGraphicsQueues(
+    const gfxstream::proto::GraphicsAvailability& availability) {
+  if (!availability.has_vulkan()) {
+    return false;
+  }
+  const gfxstream::proto::VulkanAvailability& vulkan_availability =
+      availability.vulkan();
+  if (vulkan_availability.physical_devices().empty()) {
+    return false;
+  }
+  const auto& physical_device = vulkan_availability.physical_devices(0);
+  for (const auto& queue_family : physical_device.queue_families()) {
+    if (!queue_family.has_supports_graphics()) continue;
+    if (!queue_family.supports_graphics()) continue;
+
+    // HWUI seems to only check the first queue family supporting graphics:
+    return queue_family.has_queue_count() && queue_family.queue_count() >= 2;
+  }
+  return false;
+}
+
+CF_UNUSED_ON_MACOS
 Result<void> SetGfxstreamFlags(
     const GpuMode gpu_mode, const GuestHwuiRenderer hwui_renderer,
     const std::string& gpu_renderer_features_arg,
@@ -751,11 +773,21 @@ Result<void> SetGfxstreamFlags(
     features["GlProgramBinaryLinkStatus"] = true;
   }
 
-  // SwiftShader currently only supports a single queue. SkiaVK requests
-  // a second queue used for transfers.
-  if (gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader &&
-      hwui_renderer == GuestHwuiRenderer::kSkiaVk) {
-    features["VulkanVirtualQueue"] = true;
+  if (hwui_renderer == GuestHwuiRenderer::kSkiaVk) {
+    // SkiaVK requires a second graphics queue for AHB transfers.
+    const bool needs_multi_queue_emulation =
+        (gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader)
+            ?
+            // The SwiftShader driver packaged with the Cuttlefish host tools
+            // does not appear in `availability` and does not have multiple
+            // queues.
+            true
+            : !HasMultipleGraphicsQueues(availability);
+    ;
+
+    if (needs_multi_queue_emulation) {
+      features["VulkanVirtualQueue"] = true;
+    }
   }
 
   // Apply feature overrides from --gpu_renderer_features.
@@ -830,7 +862,12 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
     return {};
   }
 
-  VLOG(0) << "Host Graphics Availability:" << availability.DebugString();
+  VLOG(0) << "Host Graphics Availability:";
+  for (absl::string_view line :
+       absl::StrSplit(graphics_availability_content, '\n')) {
+    VLOG(0) << line;
+  }
+
   return availability;
 #endif
 }

@@ -45,6 +45,18 @@ gfxstream::expected<Ok, vk::Result> PopulateVulkanAvailabilityImpl(
     for (const auto& ext : exts) {
       outPhysicalDevice->add_extensions(std::string(ext.extensionName));
     }
+
+    const auto queueFamilies = physicalDevice.getQueueFamilyProperties();
+    for (const auto& queueFamily : queueFamilies) {
+      auto* outQueueFamily = outPhysicalDevice->add_queue_families();
+      outQueueFamily->set_supports_compute(static_cast<bool>(
+          queueFamily.queueFlags & vk::QueueFlagBits::eCompute));
+      outQueueFamily->set_supports_graphics(static_cast<bool>(
+          queueFamily.queueFlags & vk::QueueFlagBits::eGraphics));
+      outQueueFamily->set_supports_transfer(static_cast<bool>(
+          queueFamily.queueFlags & vk::QueueFlagBits::eTransfer));
+      outQueueFamily->set_queue_count(queueFamily.queueCount);
+    }
   }
 
   return Ok{};
