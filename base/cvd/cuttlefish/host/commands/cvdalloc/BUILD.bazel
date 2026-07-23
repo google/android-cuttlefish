@@ -50,6 +50,7 @@ cf_cc_binary(
         ":privilege",
         ":sem",
         "//allocd:alloc_utils",
+        "//allocd/net:nftables",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",

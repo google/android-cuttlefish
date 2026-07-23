@@ -31,7 +31,7 @@
 #include "fruit/component.h"
 #include "fruit/fruit_forward_decls.h"
 
-#include "allocd/alloc_utils.h"
+#include "allocd/net/nftables_nft.h"
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 #include "cuttlefish/host/commands/cvdalloc/sem.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -112,7 +112,7 @@ Result<void> Cvdalloc::BinaryIsValid(std::string_view path) {
 }
 
 Result<void> Cvdalloc::IsUsable() const {
-  CF_EXPECT(IptablesPath());
+  CF_EXPECT(NftablesNft::BinaryPath());
   return {};
 }
 

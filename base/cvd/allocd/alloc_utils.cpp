@@ -27,7 +27,6 @@
 #include <string>
 #include <string_view>
 
-#include "absl/base/no_destructor.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -48,16 +47,78 @@ namespace cuttlefish {
 
 namespace {
 
-Result<std::string> SearchForIptables() {
-  Result<std::string> p = Search(Path(), "iptables");
-  if (p.ok()) {
-    return p;
-  }
+// nftables address families.
+constexpr std::string_view kFamilyIp = "ip";
+constexpr std::string_view kFamilyBridge = "bridge";
 
-  return CF_EXPECT(Search({"/usr/sbin", "/sbin"}, "iptables"));
+// nftables table names.
+constexpr std::string_view kNatTable = "cuttlefish_nat";
+constexpr std::string_view kBridgeTable = "cuttlefish_bridge";
+
+// nftables chain names.
+constexpr std::string_view kPostroutingChain = "postrouting";
+constexpr std::string_view kPreroutingChain = "prerouting";
+constexpr std::string_view kForwardChain = "forward";
+
+// Base chain hook definitions, supplied when the chains are created.
+constexpr std::string_view kNatPostroutingChainDef =
+    "{ type nat hook postrouting priority 100 ; }";
+constexpr std::string_view kBridgePreroutingChainDef =
+    "{ type filter hook prerouting priority -250 ; }";
+constexpr std::string_view kBridgeForwardChainDef =
+    "{ type filter hook forward priority 0 ; }";
+
+// The /30 netmask carving each mobile interface into a point-to-point subnet.
+constexpr std::string_view kMobileNetmask = "/30";
+
+// Bridge subnets that receive a permanent masquerade rule during setup.
+constexpr std::string_view kBridgeSubnets[] = {
+    "192.168.96.0/24",
+    "192.168.98.0/24",
+    "192.168.160.0/24",
+    "192.168.192.0/24",
+};
+
+// Builds the nftables expression masquerading traffic sourced from `source`,
+// an address or CIDR subnet.
+std::string MasqueradeRule(std::string_view source) {
+  return absl::StrCat("ip saddr ", source, " masquerade");
 }
 
 }  // namespace
+
+Result<void> SetupFirewall(Nftables& nft, bool setup_byob) {
+  CF_EXPECT(nft.EnsureTable(kFamilyIp, kNatTable));
+  CF_EXPECT(nft.EnsureChain(kFamilyIp, kNatTable, kPostroutingChain,
+                            kNatPostroutingChainDef));
+
+  for (std::string_view subnet : kBridgeSubnets) {
+    CF_EXPECT(nft.AddRule(kFamilyIp, kNatTable, kPostroutingChain,
+                          MasqueradeRule(subnet)));
+  }
+
+  if (setup_byob) {
+    CF_EXPECT(nft.EnsureTable(kFamilyBridge, kBridgeTable));
+    CF_EXPECT(nft.EnsureChain(kFamilyBridge, kBridgeTable, kPreroutingChain,
+                              kBridgePreroutingChainDef));
+    CF_EXPECT(nft.EnsureChain(kFamilyBridge, kBridgeTable, kForwardChain,
+                              kBridgeForwardChainDef));
+  }
+
+  return {};
+}
+
+Result<void> TeardownFirewall(Nftables& nft) {
+  auto res = nft.DeleteTable(kFamilyIp, kNatTable);
+  if (!res.ok()) {
+    LOG(WARNING) << "Failed to delete " << kNatTable
+                 << " table: " << res.error();
+  }
+
+  (void)nft.DeleteTable(kFamilyBridge, kBridgeTable);
+
+  return {};
+}
 
 bool CreateEthernetIface(std::string_view name, std::string_view bridge_name) {
   // assume bridge exists
@@ -87,56 +148,43 @@ std::string MobileNetworkName(std::string_view ipaddr, std::string_view netmask,
   return ss.str();
 }
 
-bool CreateMobileIface(std::string_view name, uint16_t id,
-                       std::string_view ipaddr) {
+Result<NftRule> CreateMobileIface(Nftables& nft, std::string_view name,
+                                  uint16_t id, std::string_view ipaddr) {
+  CF_EXPECTF(id <= kMaxIfaceNameId,
+             "ID exceeds maximum value to assign a netmask: {}", id);
+
+  auto gateway = MobileGatewayName(ipaddr, id);
+  auto network = MobileNetworkName(ipaddr, kMobileNetmask, id);
+
+  CF_EXPECTF(CreateTap(name), "Failed to create tap interface: {}", name);
+
+  if (!AddGateway(name, gateway, kMobileNetmask).ok()) {
+    (void)DestroyIface(name);
+    return CF_ERRF("Failed to add gateway to interface: {}", name);
+  }
+
+  auto rule = NftRule::Create(nft, kFamilyIp, kNatTable, kPostroutingChain,
+                              MasqueradeRule(network));
+  if (!rule.ok()) {
+    (void)DestroyGateway(name, gateway, kMobileNetmask);
+    (void)DestroyIface(name);
+    return CF_ERRF("Failed to create NftRule for interface {}: {}", name,
+                   rule.error());
+  }
+
+  return rule;
+}
+
+bool DestroyMobileIface(std::string_view name, uint16_t id,
+                        std::string_view ipaddr) {
   if (id > kMaxIfaceNameId) {
     LOG(ERROR) << "ID exceeds maximum value to assign a netmask: " << id;
     return false;
   }
 
-  auto netmask = "/30";
-  Result<std::string> iptables_path = IptablesPath();
-  if (!iptables_path.ok()) {
-    return false;
-  }
-
   auto gateway = MobileGatewayName(ipaddr, id);
-  auto network = MobileNetworkName(ipaddr, netmask, id);
 
-  if (!CreateTap(name)) {
-    return false;
-  }
-
-  if (!AddGateway(name, gateway, netmask).ok()) {
-    DestroyIface(name);
-  }
-
-  if (!IptableConfig(*iptables_path, network, true).ok()) {
-    (void)DestroyGateway(name, gateway, netmask);
-    (void)DestroyIface(name);
-    return false;
-  };
-
-  return true;
-}
-
-bool DestroyMobileIface(std::string_view name, uint16_t id,
-                        std::string_view ipaddr) {
-  if (id > 63) {
-    LOG(ERROR) << "ID exceeds maximum value to assign a netmask: " << id;
-    return false;
-  }
-
-  auto netmask = "/30";
-  auto gateway = MobileGatewayName(ipaddr, id);
-  auto network = MobileNetworkName(ipaddr, netmask, id);
-
-  Result<std::string> iptables_path = IptablesPath();
-  if (!iptables_path.ok()) {
-    return false;
-  }
-  (void)IptableConfig(*iptables_path, network, false);
-  (void)DestroyGateway(name, gateway, netmask);
+  (void)DestroyGateway(name, gateway, kMobileNetmask);
   return DestroyIface(name);
 }
 
@@ -226,15 +274,9 @@ bool DestroyBridge(std::string_view name) {
 }
 
 bool SetupBridgeGateway(std::string_view bridge_name, std::string_view ipaddr) {
-  Result<std::string> iptables_path = IptablesPath();
-  if (!iptables_path.ok()) {
-    return false;
-  }
-
-  GatewayConfig config{false, false, false};
+  GatewayConfig config{false, false};
   auto gateway = absl::StrFormat("%s.1", ipaddr);
   auto netmask = "/24";
-  auto network = absl::StrFormat("%s.0%s", ipaddr, netmask);
   auto dhcp_range = absl::StrFormat("%s.2,%s.255", ipaddr, ipaddr);
 
   if (!AddGateway(bridge_name, gateway, netmask).ok()) {
@@ -248,30 +290,13 @@ bool SetupBridgeGateway(std::string_view bridge_name, std::string_view ipaddr) {
     return false;
   }
 
-  config.has_dnsmasq = true;
-
-  auto ret = IptableConfig(*iptables_path, network, true).ok();
-  if (!ret) {
-    CleanupBridgeGateway(bridge_name, ipaddr, config);
-    LOG(WARNING) << "Failed to setup ip tables";
-  }
-
-  return ret;
+  return true;
 }
 
 void CleanupBridgeGateway(std::string_view name, std::string_view ipaddr,
                           const GatewayConfig& config) {
   auto gateway = absl::StrFormat("%s.1", ipaddr);
   auto netmask = "/24";
-  auto network = absl::StrFormat("%s.0%s", ipaddr, netmask);
-  auto dhcp_range = absl::StrFormat("%s.2,%s.255", ipaddr, ipaddr);
-
-  if (config.has_iptable) {
-    Result<std::string> iptables_path = IptablesPath();
-    if (iptables_path.ok()) {
-      (void)IptableConfig(*iptables_path, network, false);
-    }
-  }
 
   if (config.has_dnsmasq) {
     StopDnsmasq(name);
@@ -349,21 +374,13 @@ bool CreateEthernetBridgeIface(std::string_view name, std::string_view ipaddr) {
 
 bool DestroyEthernetBridgeIface(std::string_view name,
                                 std::string_view ipaddr) {
-  GatewayConfig config{true, true, true};
+  GatewayConfig config{true, true};
 
   // Don't need to check if removing some part of the config failed, we need to
   // remove the entire interface, so just ignore any error until the end
   CleanupBridgeGateway(name, ipaddr, config);
 
   return DestroyBridge(name);
-}
-
-Result<std::string> IptablesPath() {
-  static const absl::NoDestructor<std::string> iptables_path(
-      SearchForIptables().value_or(""));
-
-  CF_EXPECT(!iptables_path->empty(), "could not find iptables");
-  return *iptables_path;
 }
 
 }  // namespace cuttlefish
