@@ -1,8 +1,10 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
+
+cf_build_test(name = "fs_build_test")
 
 cf_cc_library(
     name = "epoll",
@@ -45,13 +47,9 @@ cf_cc_library(
 
 cf_cc_test(
     name = "fs_test",
-    srcs = [
-        "shared_fd_test.cpp",
-    ],
-    depend_on_what_you_use_enabled = False,
+    srcs = ["shared_fd_test.cpp"],
     deps = [
-        ":fs",
-        "//libbase",
+        "//cuttlefish/common/libs/fs",
     ],
 )
 
