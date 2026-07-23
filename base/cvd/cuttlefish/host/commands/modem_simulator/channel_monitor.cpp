@@ -83,8 +83,8 @@ void ChannelMonitor::AcceptIncomingConnection() {
 }
 
 void ChannelMonitor::ReadCommand(Client& client) {
-  std::vector<char> buffer(kMaxCommandLength);
-  auto bytes_read = client.client_read_fd_->Read(buffer.data(), buffer.size());
+  char buffer[kMaxCommandLength];
+  auto bytes_read = client.client_read_fd_->Read(buffer, kMaxCommandLength);
   if (bytes_read <= 0) {
     if (errno == EAGAIN && client.type == Client::REMOTE &&
         client.first_read_command_) {
@@ -107,13 +107,9 @@ void ChannelMonitor::ReadCommand(Client& client) {
     return;
   }
 
-  std::string& incomplete_command = client.incomplete_command;
-
   // Add the incomplete command from the last read
-  auto commands = std::string{incomplete_command.data()};
-  commands.append(buffer.data());
-
-  incomplete_command.clear();
+  std::string commands(std::move(client.incomplete_command));
+  commands.append(buffer, bytes_read);
 
   // Replacing '\n' with '\r'
   absl::StrReplaceAll({{"\n", "\r"}}, &commands);
@@ -134,8 +130,8 @@ void ChannelMonitor::ReadCommand(Client& client) {
       }
       pos = r_pos + 1;                     // Skip '\r'
     } else if (pos < commands.length()) {  // Incomplete command
-      incomplete_command = commands.substr(pos);
-      VLOG(1) << "incomplete command: " << incomplete_command;
+      client.incomplete_command = commands.substr(pos);
+      VLOG(1) << "incomplete command: " << client.incomplete_command;
     }
   }
 }
