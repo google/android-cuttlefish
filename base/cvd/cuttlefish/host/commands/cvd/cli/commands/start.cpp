@@ -366,6 +366,7 @@ CvdStartCommandHandler::CvdStartCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {
   own_flags_.daemon = true;
+  own_flags_.print_group_format = isatty(0) ? "human" : "json";
 }
 
 Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
@@ -520,16 +521,16 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
 
   listener_handle.reset();
 
-  if (isatty(0)) {
+  if (own_flags_.print_group_format == "json") {
+    auto group_json = CF_EXPECT(group.FetchStatus());
+    std::cout << group_json.toStyledString();
+  } else if (own_flags_.print_group_format == "human") {
     std::vector<std::string> instance_names;
     for (const auto& instance : group.Instances()) {
       instance_names.push_back(instance.Name());
     }
     std::cout << fmt::format("group:{}|instance(s):{}\n", group.GroupName(),
                              absl::StrJoin(instance_names, ","));
-  } else {
-    auto group_json = CF_EXPECT(group.FetchStatus());
-    std::cout << group_json.toStyledString();
   }
 
   return {};
@@ -713,6 +714,9 @@ std::vector<Flag> CvdStartCommandHandler::BuildOwnFlags() {
           .Help("Run the start command in the background as a daemon. "
                 "If false, the command runs in the foreground and monitors "
                 "logs."),
+      GflagsCompatFlag("print_group_format", own_flags_.print_group_format)
+          .Help("The format in which to print group information after start. "
+                "Supported values are \"human\", \"json\", and \"none\"."),
   };
 }
 
