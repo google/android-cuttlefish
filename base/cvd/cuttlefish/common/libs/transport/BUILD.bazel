@@ -1,10 +1,12 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
 exports_files([".clang-tidy"])
+
+cf_build_test(name = "transport_build_test")
 
 cf_cc_library(
     name = "transport",
@@ -16,12 +18,10 @@ cf_cc_library(
         "channel.h",
         "channel_sharedfd.h",
     ],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )
