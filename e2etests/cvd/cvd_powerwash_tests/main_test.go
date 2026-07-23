@@ -37,11 +37,11 @@ func TestCvdPowerwash(t *testing.T) {
 			c.SetUp(t)
 			defer c.TearDown()
 
-			if err := c.CVDFetch(e2etests.FetchArgs{
+			if res, err := c.CVDFetch(e2etests.FetchArgs{
 				DefaultBuildBranch: tc.branch,
 				DefaultBuildTarget: tc.target,
 			}); err != nil {
-				t.Fatal(err)
+				t.Fatalf("cvd fetch failed with %v, stderr:%s", err, res.Stderr)
 			}
 
 			if err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {

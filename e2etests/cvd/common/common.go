@@ -166,7 +166,7 @@ type FetchAndCreateArgs struct {
 }
 
 // Performs `cvd fetch <args>`.
-func (tc *TestContext) CVDFetch(args FetchArgs) error {
+func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
 	log.Printf("Fetching...")
 	fetchCmd := []string{
 		tc.TargetBin(),
@@ -182,9 +182,10 @@ func (tc *TestContext) CVDFetch(args FetchArgs) error {
 	if credentialArg != "" {
 		fetchCmd = append(fetchCmd, fmt.Sprintf("--credential_source=%s", credentialArg))
 	}
-	if _, err := tc.RunCmd(fetchCmd...); err != nil {
+	res, err := tc.RunCmd(fetchCmd...);
+	if err != nil {
 		log.Printf("Failed to fetch: %w", err)
-		return err
+		return res, err
 	}
 
 	// Android CTS includes some files with a `kernel` suffix which confuses the
@@ -195,7 +196,7 @@ func (tc *TestContext) CVDFetch(args FetchArgs) error {
 
 	log.Printf("Fetch completed!")
 
-	return nil
+	return res, nil
 }
 
 // Performs `cvd create <args>`.
@@ -577,7 +578,7 @@ func RunXts(t *testing.T, cuttlefishArgs FetchAndCreateArgs, xtsArgs XtsArgs) {
 		log.Printf("Failed to find existing XTS, will fetch.")
 	}
 
-	if err := tc.CVDFetch(cuttlefishArgs.Fetch); err != nil {
+	if _, err := tc.CVDFetch(cuttlefishArgs.Fetch); err != nil {
 		t.Fatal(err)
 	}
 

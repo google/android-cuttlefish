@@ -58,11 +58,11 @@ func TestDeviceNetworking(t *testing.T) {
 			defer c.TearDown()
 
 			t.Log("Fetching remote build...")
-			if err := c.CVDFetch(e2etests.FetchArgs{
+			if res, err := c.CVDFetch(e2etests.FetchArgs{
 				DefaultBuildBranch: tc.branch,
 				DefaultBuildTarget: tc.target,
 			}); err != nil {
-				t.Fatal(err)
+				t.Fatalf("cvd fetch failed with %v, stderr:%s", err, res.Stderr)
 			}
 
 			t.Log("Launching Cuttlefish...")
