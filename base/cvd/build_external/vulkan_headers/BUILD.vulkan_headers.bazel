@@ -1,7 +1,11 @@
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 package(
-    default_visibility = ["@//:android_cuttlefish"],
+    default_visibility = [
+        "@//:android_cuttlefish",
+        "@venus_protocol//:__subpackages__",
+        "@virglrenderer//:__subpackages__",
+    ],
 )
 
 cc_library(
