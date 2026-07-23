@@ -20,6 +20,7 @@ clang_tidy_test = lint_test(aspect = clang_tidy)
 
 depend_on_what_you_use = dwyu_cc_aspect_factory(
     preprocessing_mode = "fast",
+    target_mapping = Label("@//tools/lint:map_external_deps")
 )
 
 def _dwyu_rule_impl(ctx):
