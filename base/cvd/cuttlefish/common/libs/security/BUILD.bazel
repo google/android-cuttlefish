@@ -1,22 +1,17 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cf_build_test(name = "security_build_test")
+
 cf_cc_library(
     name = "confui_sign",
-    srcs = [
-        "confui_sign.cpp",
-    ],
-    hdrs = [
-        "confui_sign.h",
-    ],
-    depend_on_what_you_use_enabled = False,
+    srcs = ["confui_sign.cpp"],
+    hdrs = ["confui_sign.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//libbase",
-        "@abseil-cpp//absl/log",
     ],
 )
 
