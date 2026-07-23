@@ -25,7 +25,7 @@ DEBIAN_DISTRIBUTION="$(lsb_release -c -s)"
 DEBIAN_ARCH="$(dpkg --print-architecture)"
 
 apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 \
-    update
+    -o Dir::Etc::SourceParts=/root update
 
 # Install kernel
 DEBIAN_DISTRIBUTION="$(lsb_release -c -s)"
@@ -35,8 +35,11 @@ if [ x"$has_backports" != x"" ]; then
     apt install -y -t "${DEBIAN_DISTRIBUTION}-backports" linux-headers-arm64
     apt install -y -t "${DEBIAN_DISTRIBUTION}-backports" linux-image-arm64
 else
-    apt install -y linux-headers-arm64
-    apt install -y linux-image-arm64
+    KERNEL_ABI="6.18.15+deb13-arm64"
+    KERNEL_DEB_VERSION="6.18.15-1~bpo13+1"
+    apt-get install -y -o Dir::Etc::SourceParts=/root \
+        "linux-image-${KERNEL_ABI}=${KERNEL_DEB_VERSION}" \
+        "linux-headers-${KERNEL_ABI}=${KERNEL_DEB_VERSION}"
 fi
 
 # Install nVidia or AMD GPU driver
@@ -59,9 +62,11 @@ elif [ x"$nvidia_gpu" != x"" ]; then
         DEBIAN_FRONTEND=noninteractive apt-get install -y -t "${DEBIAN_DISTRIBUTION}-backports" -q --force-yes nvidia-driver
         DEBIAN_FRONTEND=noninteractive apt-get install -y -t "${DEBIAN_DISTRIBUTION}-backports" -q --force-yes firmware-misc-nonfree
     else
-        DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes nvidia-open-kernel-dkms
-        DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes nvidia-driver
-        DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes firmware-misc-nonfree
+        NVIDIA_DEB_VERSION="550.163.01-4~bpo13+1"
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Dir::Etc::SourceParts=/root -t trixie-backports "nvidia-open-kernel-dkms=${NVIDIA_DEB_VERSION}"
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Dir::Etc::SourceParts=/root -t trixie-backports "nvidia-driver=${NVIDIA_DEB_VERSION}"
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -q firmware-misc-nonfree
+        apt-mark hold nvidia-open-kernel-dkms nvidia-driver
     fi
 fi
 # End of Install kernel
