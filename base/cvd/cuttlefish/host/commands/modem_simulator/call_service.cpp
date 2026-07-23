@@ -400,8 +400,8 @@ void CallService::HandleHangup(const Client& client,
   CommandParser cmd(command);
   cmd.SkipPrefix();
 
-  std::string action(*cmd);
-  int n = std::stoi(action.substr(0, 1));
+  const std::string action(*cmd);
+  const int n = action.empty() ? -1 : (action[0] - '0');
   int index = -1;
   if (cmd->length() > 1) {
     index = std::stoi(action.substr(1));
