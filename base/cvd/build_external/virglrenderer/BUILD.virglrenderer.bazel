@@ -1,0 +1,519 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
+load("@rules_python//python:defs.bzl", "py_binary")
+
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+    ],
+)
+
+# Configuration header
+genrule(
+    name = "config_h",
+    outs = ["config.h"],
+    cmd = """cat << 'EOF' > $@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#define _GNU_SOURCE 1
+#define PACKAGE_VERSION "1.3.0"
+#define VERSION "1.3.0"
+#define VIRGL_RENDERER_UNSTABLE_APIS 1
+#define ENABLE_VENUS 1
+#define ENABLE_GBM 1
+#define ENABLE_GBM_ALLOCATION 1
+#define MINIGBM 1
+#define ENABLE_DRM 1
+#define ENABLE_LIBDRM 1
+#define ENABLE_RENDER_SERVER 1
+#define ENABLE_RENDER_SERVER_WORKER_THREAD 1
+#define ENABLE_VULKAN_DLOAD 1
+#define RENDER_SERVER_EXEC_PATH "virgl_render_server"
+#define HAVE_PTHREAD 1
+#define HAVE_PTHREAD_SETAFFINITY 1
+#define HAVE_SYS_UIO_H 1
+#define HAVE_DLFCN_H 1
+#define HAVE_EVENTFD_H 1
+#define HAVE_SYS_SELECT_H 1
+#define HAVE_DMABUF_H 1
+#define HAVE_MEMFD_CREATE 1
+#define HAVE_STRTOK_R 1
+#define HAVE_TIMESPEC_GET 1
+#define HAVE___BUILTIN_BSWAP32 1
+#define HAVE___BUILTIN_BSWAP64 1
+#define HAVE___BUILTIN_CLZ 1
+#define HAVE___BUILTIN_CLZLL 1
+#define HAVE___BUILTIN_EXPECT 1
+#define HAVE___BUILTIN_FFS 1
+#define HAVE___BUILTIN_FFSLL 1
+#define HAVE___BUILTIN_POPCOUNT 1
+#define HAVE___BUILTIN_POPCOUNTLL 1
+#define HAVE___BUILTIN_TYPES_COMPATIBLE_P 1
+#define HAVE___BUILTIN_UNREACHABLE 1
+#define HAVE_FUNC_ATTRIBUTE_CONST 1
+#define HAVE_FUNC_ATTRIBUTE_FLATTEN 1
+#define HAVE_FUNC_ATTRIBUTE_FORMAT 1
+#define HAVE_FUNC_ATTRIBUTE_MALLOC 1
+#define HAVE_FUNC_ATTRIBUTE_NORETURN 1
+#define HAVE_FUNC_ATTRIBUTE_PACKED 1
+#define HAVE_FUNC_ATTRIBUTE_PURE 1
+#define HAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL 1
+#define HAVE_FUNC_ATTRIBUTE_UNUSED 1
+#define HAVE_FUNC_ATTRIBUTE_WARN_UNUSED_RESULT 1
+#define HAVE_FUNC_ATTRIBUTE_WEAK 1
+#define HAVE_FUNC_ATTRIBUTE_ALIGNED 1
+#define UTIL_ARCH_LITTLE_ENDIAN 1
+#define UTIL_ARCH_BIG_ENDIAN 0
+
+#if defined(__aarch64__)
+#define PIPE_ARCH_AARCH64 1
+#elif defined(__x86_64__)
+#define PIPE_ARCH_X86_64 1
+#endif
+
+#endif
+EOF
+""",
+)
+
+genrule(
+    name = "virgl_version_h",
+    outs = ["src/virgl-version.h"],
+    cmd = """cat << 'EOF' > $@
+#ifndef VIRGL_VERSION_H
+#define VIRGL_VERSION_H
+
+#define VIRGL_MAJOR_VERSION 1
+#define VIRGL_MINOR_VERSION 3
+#define VIRGL_MICRO_VERSION 0
+
+#endif
+EOF
+""",
+)
+
+# Venus Codegen
+py_binary(
+    name = "vkr_device_object_py",
+    srcs = ["src/venus/vkr_device_object.py"],
+    main = "src/venus/vkr_device_object.py",
+)
+
+genrule(
+    name = "venus_codegen",
+    srcs = [
+        "src/venus/vkr_device_object.json",
+    ],
+    outs = [
+        "src/venus/vkr_acceleration_structure_gen.h",
+        "src/venus/vkr_buffer_gen.h",
+        "src/venus/vkr_command_buffer_gen.h",
+        "src/venus/vkr_descriptor_set_gen.h",
+        "src/venus/vkr_device_memory_gen.h",
+        "src/venus/vkr_image_gen.h",
+        "src/venus/vkr_pipeline_gen.h",
+        "src/venus/vkr_query_pool_gen.h",
+        "src/venus/vkr_queue_gen.h",
+        "src/venus/vkr_render_pass_gen.h",
+    ],
+    cmd = "$(location :vkr_device_object_py) -o $(@D)/src/venus $(location src/venus/vkr_device_object.json)",
+    tools = [":vkr_device_object_py"],
+)
+
+# Gallium Format Codegen
+py_binary(
+    name = "u_format_table_py",
+    srcs = [
+        "src/gallium/auxiliary/util/u_format_parse.py",
+        "src/gallium/auxiliary/util/u_format_table.py",
+    ],
+    imports = ["src/gallium/auxiliary/util"],
+    main = "src/gallium/auxiliary/util/u_format_table.py",
+    deps = [
+        "@pyyaml//:yaml",
+    ],
+)
+
+genrule(
+    name = "u_format_table_c",
+    srcs = ["src/gallium/auxiliary/util/u_format.yaml"],
+    outs = ["src/gallium/auxiliary/util/u_format_table.c"],
+    cmd = "$(location :u_format_table_py) $(location src/gallium/auxiliary/util/u_format.yaml) > $@",
+    tools = [":u_format_table_py"],
+)
+
+genrule(
+    name = "u_format_gen_h",
+    srcs = ["src/gallium/auxiliary/util/u_format.yaml"],
+    outs = ["src/gallium/auxiliary/util/u_format_gen.h"],
+    cmd = "$(location :u_format_table_py) $(location src/gallium/auxiliary/util/u_format.yaml) --enums > $@",
+    tools = [":u_format_table_py"],
+)
+
+VIRGL_COMMON_COPTS = [
+    "-Wno-error",
+    "-include",
+    "$(execpath :config_h)",
+]
+
+# Core Libraries
+cc_library(
+    name = "mesa_util",
+    srcs = [
+        "src/mesa/util/anon_file.c",
+        "src/mesa/util/bitscan.c",
+        "src/mesa/util/hash_table.c",
+        "src/mesa/util/os_file.c",
+        "src/mesa/util/os_misc.c",
+        "src/mesa/util/ralloc.c",
+        "src/mesa/util/u_cpu_detect.c",
+        "src/mesa/util/u_debug.c",
+        "src/mesa/util/u_math.c",
+        ":config_h",
+    ],
+    hdrs = glob([
+        "src/mesa/**/*.h",
+    ]),
+    copts = VIRGL_COMMON_COPTS,
+    includes = [
+        ".",
+        "src",
+        "src/mesa",
+        "src/mesa/compat",
+        "src/mesa/pipe",
+        "src/mesa/util",
+    ],
+)
+
+cc_library(
+    name = "gallium_aux",
+    srcs = [
+        "src/gallium/auxiliary/cso_cache/cso_cache.c",
+        "src/gallium/auxiliary/cso_cache/cso_hash.c",
+        "src/gallium/auxiliary/tgsi/tgsi_build.c",
+        "src/gallium/auxiliary/tgsi/tgsi_dump.c",
+        "src/gallium/auxiliary/tgsi/tgsi_info.c",
+        "src/gallium/auxiliary/tgsi/tgsi_iterate.c",
+        "src/gallium/auxiliary/tgsi/tgsi_parse.c",
+        "src/gallium/auxiliary/tgsi/tgsi_sanity.c",
+        "src/gallium/auxiliary/tgsi/tgsi_scan.c",
+        "src/gallium/auxiliary/tgsi/tgsi_strings.c",
+        "src/gallium/auxiliary/tgsi/tgsi_text.c",
+        "src/gallium/auxiliary/tgsi/tgsi_util.c",
+        "src/gallium/auxiliary/util/u_debug_describe.c",
+        "src/gallium/auxiliary/util/u_format.c",
+        "src/gallium/auxiliary/util/u_hash_table.c",
+        "src/gallium/auxiliary/util/u_texture.c",
+        ":config_h",
+        ":u_format_table_c",
+    ],
+    hdrs = glob([
+        "src/gallium/**/*.h",
+        "src/*.h",
+    ]) + [
+        ":config_h",
+        ":u_format_gen_h",
+    ],
+    copts = VIRGL_COMMON_COPTS,
+    includes = [
+        ".",
+        "src",
+        "src/gallium/auxiliary",
+        "src/gallium/auxiliary/util",
+        "src/gallium/include",
+    ],
+    deps = [
+        ":mesa_util",
+    ],
+)
+
+# Dummy Epoxy headers for virglrenderer.c
+genrule(
+    name = "dummy_epoxy_headers",
+    outs = [
+        "include/epoxy/gl.h",
+        "include/epoxy/egl.h",
+    ],
+    cmd = """cat << 'EOF' > $(location include/epoxy/gl.h)
+#ifndef DUMMY_EPOXY_GL_H
+#define DUMMY_EPOXY_GL_H
+#include <stdint.h>
+typedef unsigned int GLuint;
+typedef unsigned int GLenum;
+typedef unsigned int GLbitfield;
+typedef int GLint;
+typedef int GLsizei;
+typedef int64_t GLint64;
+typedef uint64_t GLuint64;
+typedef float GLfloat;
+typedef double GLdouble;
+typedef char GLchar;
+typedef unsigned char GLboolean;
+typedef void GLvoid;
+#endif
+EOF
+cat << 'EOF' > $(location include/epoxy/egl.h)
+#ifndef DUMMY_EPOXY_EGL_H
+#define DUMMY_EPOXY_EGL_H
+#endif
+EOF
+""",
+)
+
+# Vrend stubs for Venus/Vulkan-only mode
+genrule(
+    name = "vrend_stubs_c",
+    outs = ["src/vrend_stubs.c"],
+    cmd = """cat << 'EOF' > $@
+#include "config.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+struct virgl_resource_pipe_callbacks;
+struct vrend_if_cbs;
+struct pipe_resource;
+struct vrend_renderer_resource_create_args;
+struct vrend_renderer_resource_info;
+struct vrend_transfer_info;
+union virgl_caps;
+typedef void *virgl_renderer_gl_context;
+struct virgl_gl_ctx_param;
+struct virgl_context;
+struct iovec;
+
+const struct virgl_resource_pipe_callbacks *vrend_renderer_get_pipe_callbacks(void) {
+    return NULL;
+}
+int vrend_winsys_init(uint32_t flags, int preferred_fd) {
+    (void)flags; (void)preferred_fd;
+    return -1;
+}
+int vrend_winsys_init_external(void *egl_display) {
+    (void)egl_display;
+    return -1;
+}
+void vrend_winsys_cleanup(void) {}
+int vrend_renderer_init(const struct vrend_if_cbs *cb, uint32_t flags) {
+    (void)cb; (void)flags;
+    return -1;
+}
+void vrend_renderer_fini(void) {}
+void vrend_renderer_prepare_reset(void) {}
+void vrend_renderer_poll(void) {}
+int vrend_renderer_create_ctx0_fence(uint32_t fence_id) {
+    (void)fence_id;
+    return -1;
+}
+void vrend_renderer_force_ctx_0(void) {}
+struct pipe_resource *vrend_renderer_resource_create(struct vrend_renderer_resource_create_args *args, void *image) {
+    (void)args; (void)image;
+    return NULL;
+}
+int vrend_renderer_resource_get_map_info(struct pipe_resource *pres) {
+    (void)pres;
+    return 0;
+}
+void vrend_renderer_resource_get_info(struct pipe_resource *pres, struct vrend_renderer_resource_info *info) {
+    (void)pres; (void)info;
+}
+void *vrend_renderer_resource_d3d11_texture2d(struct pipe_resource *pres, void *d3d_tex2d) {
+    (void)pres; (void)d3d_tex2d;
+    return NULL;
+}
+int vrend_winsys_get_attrs_for_texture(uint32_t tex_id, uint32_t format, int *fourcc,
+                                       bool *has_dmabuf_export, int *planes, uint64_t *modifier) {
+    (void)tex_id; (void)format; (void)fourcc; (void)has_dmabuf_export; (void)planes; (void)modifier;
+    return -1;
+}
+int vrend_winsys_get_fd_for_texture(uint32_t tex_id, int *fd) {
+    (void)tex_id; (void)fd;
+    return -1;
+}
+int vrend_winsys_get_fd_for_texture2(uint32_t tex_id, int *fd, int *stride, int *offset) {
+    (void)tex_id; (void)fd; (void)stride; (void)offset;
+    return -1;
+}
+void vrend_renderer_get_cap_set(uint32_t cap_set, uint32_t *max_ver, uint32_t *max_size) {
+    (void)cap_set;
+    if (max_ver) *max_ver = 0;
+    if (max_size) *max_size = 0;
+}
+void vrend_renderer_fill_caps(uint32_t set, uint32_t version, union virgl_caps *caps) {
+    (void)set; (void)version; (void)caps;
+}
+int vrend_renderer_get_rect(struct pipe_resource *pres, const struct iovec *iov, unsigned int num_iovs,
+                            uint32_t offset, int x, int y, int width, int height) {
+    (void)pres; (void)iov; (void)num_iovs; (void)offset; (void)x; (void)y; (void)width; (void)height;
+    return -1;
+}
+int vrend_renderer_get_cursor_contents(struct pipe_resource *pres, uint32_t *ret_buf) {
+    (void)pres; (void)ret_buf;
+    return -1;
+}
+struct virgl_context *vrend_renderer_context_create(uint32_t ctx_id, uint32_t nlen, const char *name) {
+    (void)ctx_id; (void)nlen; (void)name;
+    return NULL;
+}
+int vrend_renderer_transfer_pipe(struct pipe_resource *pres, const struct vrend_transfer_info *info, int transfer_mode) {
+    (void)pres; (void)info; (void)transfer_mode;
+    return -1;
+}
+virgl_renderer_gl_context vrend_winsys_create_context(struct virgl_gl_ctx_param *param) {
+    (void)param;
+    return NULL;
+}
+void vrend_winsys_destroy_context(virgl_renderer_gl_context ctx) {
+    (void)ctx;
+}
+int vrend_winsys_make_context_current(virgl_renderer_gl_context ctx) {
+    (void)ctx;
+    return -1;
+}
+void vrend_renderer_reset(void) {}
+int vrend_renderer_get_poll_fd(void) { return -1; }
+int vrend_renderer_export_query(struct pipe_resource *pres, void *export_query) {
+    (void)pres; (void)export_query;
+    return -1;
+}
+int vrend_renderer_resource_map(struct pipe_resource *pres, void **map, uint64_t *out_size) {
+    (void)pres; (void)map; (void)out_size;
+    return -1;
+}
+int vrend_renderer_resource_unmap(struct pipe_resource *pres) {
+    (void)pres;
+    return -1;
+}
+EOF
+""",
+)
+
+cc_library(
+    name = "virglrenderer_internal",
+    srcs = [
+        "src/drm/drm_context.c",
+        "src/drm/drm_fence.c",
+        "src/drm/drm_renderer.c",
+        "src/drm/drm_util.c",
+        "src/proxy/proxy_client.c",
+        "src/proxy/proxy_common.c",
+        "src/proxy/proxy_context.c",
+        "src/proxy/proxy_renderer.c",
+        "src/proxy/proxy_server.c",
+        "src/proxy/proxy_socket.c",
+        "src/vrend/iov.c",
+        "src/venus/vkr_acceleration_structure.c",
+        "src/venus/vkr_allocator.c",
+        "src/venus/vkr_buffer.c",
+        "src/venus/vkr_command_buffer.c",
+        "src/venus/vkr_common.c",
+        "src/venus/vkr_context.c",
+        "src/venus/vkr_cs.c",
+        "src/venus/vkr_descriptor_heap.c",
+        "src/venus/vkr_descriptor_set.c",
+        "src/venus/vkr_device.c",
+        "src/venus/vkr_device_memory.c",
+        "src/venus/vkr_host_copy.c",
+        "src/venus/vkr_image.c",
+        "src/venus/vkr_instance.c",
+        "src/venus/vkr_library.c",
+        "src/venus/vkr_physical_device.c",
+        "src/venus/vkr_pipeline.c",
+        "src/venus/vkr_query_pool.c",
+        "src/venus/vkr_queue.c",
+        "src/venus/vkr_render_pass.c",
+        "src/venus/vkr_renderer.c",
+        "src/venus/vkr_ring.c",
+        "src/venus/vkr_transport.c",
+        "src/virgl_context.c",
+        "src/virgl_fence.c",
+        "src/virgl_resource.c",
+        "src/virgl_util.c",
+        "src/virglrenderer.c",
+        ":config_h",
+        ":vrend_stubs_c",
+    ],
+    hdrs = glob([
+        "src/**/*.h",
+        "server/*.h",
+    ]) + [
+        ":venus_codegen",
+        ":virgl_version_h",
+        ":config_h",
+        ":dummy_epoxy_headers",
+        ":u_format_gen_h",
+    ],
+    copts = VIRGL_COMMON_COPTS + [
+        "-fvisibility=hidden",
+    ],
+    includes = [
+        ".",
+        "include",
+        "src",
+        "src/drm",
+        "src/drm/drm-uapi",
+        "src/gallium/auxiliary",
+        "src/gallium/auxiliary/util",
+        "src/gallium/include",
+        "src/venus",
+    ],
+    linkopts = [
+        "-pthread",
+        "-ldl",
+        "-lm",
+    ],
+    deps = [
+        ":gallium_aux",
+        ":mesa_util",
+        "@libdrm",
+        "@minigbm//:libgbm_internal",
+        "@venus_protocol//:vn_protocol_renderer",
+    ],
+)
+
+cc_shared_library(
+    name = "libvirglrenderer.so.1",
+    deps = [":virglrenderer_internal"],
+    shared_lib_name = "libvirglrenderer.so",
+)
+
+cc_binary(
+    name = "virgl_render_server",
+    srcs = [
+        "server/main.c",
+        "server/render_client.c",
+        "server/render_common.c",
+        "server/render_context.c",
+        "server/render_server.c",
+        "server/render_socket.c",
+        "server/render_state.c",
+        "server/render_worker.c",
+        ":config_h",
+    ] + glob([
+        "server/*.h",
+    ]),
+    copts = VIRGL_COMMON_COPTS + [
+        "-O0",
+    ],
+    includes = [
+        ".",
+        "include",
+        "server",
+        "src",
+        "src/drm",
+        "src/drm/drm-uapi",
+        "src/gallium/auxiliary",
+        "src/gallium/include",
+        "src/venus",
+    ],
+    linkopts = [
+        "-pthread",
+    ],
+    deps = [
+        ":virglrenderer_internal",
+        "@libdrm",
+        "@minigbm//:libgbm_internal",
+    ],
+)
