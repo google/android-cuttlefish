@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+
 namespace cuttlefish {
 
 struct MonitorOutput {
@@ -41,6 +43,14 @@ class MonitorSource {
    * `rows` and `columns` are hints for the output. May output more or less.
    */
   virtual MonitorOutput Report(size_t rows, size_t columns) = 0;
+
+  /**
+   * When this file descriptor is ready for reading (as defined by `poll`), it
+   * is ready to report new data from `Report`.
+   *
+   * If the file descriptor is invalid, the source is always considered ready.
+   */
+  virtual SharedFD ReadyFd() = 0;
 };
 
 }  // namespace cuttlefish

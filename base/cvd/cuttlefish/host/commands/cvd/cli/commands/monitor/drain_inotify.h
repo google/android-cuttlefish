@@ -16,36 +16,20 @@
 
 #pragma once
 
-#include <stddef.h>
-
-#include <functional>
-#include <memory>
-#include <string>
-#include <string_view>
+#include <stdint.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor_source.h"
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-class FileMonitorSource : public MonitorSource {
- public:
-  FileMonitorSource(
-      std::string path, std::unique_ptr<ReaderSeeker> file_io,
-      std::function<Result<std::string>(std::string_view)> colorize_line);
-  ~FileMonitorSource() override;
-
-  MonitorOutput Report(size_t rows, size_t columns) override;
-
-  SharedFD ReadyFd() override;
-
- private:
-  std::string path_;
-  std::unique_ptr<ReaderSeeker> file_io_;
-  std::function<Result<std::string>(std::string_view)> colorize_line_;
-  SharedFD inotify_fd_;
-};
+/*
+ * Exhaustively drain all available events from the non-blocking inotify file
+ * descriptor to coalesce rapid file modifications. The file descriptor should
+ * be set to non-blocking.
+ *
+ * Returns a bit mask of the events unioned together.
+ */
+Result<uint32_t> DrainInotifyEvents(SharedFD inotify_fd);
 
 }  // namespace cuttlefish

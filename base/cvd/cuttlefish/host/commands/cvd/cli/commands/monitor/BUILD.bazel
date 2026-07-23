@@ -51,16 +51,32 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "drain_inotify",
+    srcs = ["drain_inotify.cc"],
+    hdrs = ["drain_inotify.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "file_monitor_source",
     srcs = ["file_monitor_source.cc"],
     hdrs = ["file_monitor_source.h"],
     deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/cvd/cli:format_byte_size",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:drain_inotify",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:monitor_source",
         "//cuttlefish/io",
         "//cuttlefish/io:read_exact",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+        "//libbase",
+        "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:cord",
     ],
@@ -160,6 +176,7 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:display",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:drain_inotify",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:file_monitor_source",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:kernel",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:launcher",
@@ -180,6 +197,9 @@ cf_cc_library(
     name = "monitor_source",
     srcs = ["monitor_source.cc"],
     hdrs = ["monitor_source.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+    ],
 )
 
 cf_cc_library(
