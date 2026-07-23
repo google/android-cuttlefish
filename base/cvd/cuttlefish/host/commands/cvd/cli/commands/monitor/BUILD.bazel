@@ -125,6 +125,28 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "log_sources",
+    srcs = ["log_sources.cc"],
+    hdrs = ["log_sources.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:file_monitor_source",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:kernel",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:launcher",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:log_tee",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:logcat",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:monitor_source",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/libs/log_names",
+        "//cuttlefish/io",
+        "//cuttlefish/io:shared_fd",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
     name = "log_tee",
     srcs = ["log_tee.cc"],
     hdrs = ["log_tee.h"],
@@ -173,20 +195,12 @@ cf_cc_library(
     deps = [
         "//cuttlefish/ansi_codes",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:display",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:drain_inotify",
-        "//cuttlefish/host/commands/cvd/cli/commands/monitor:file_monitor_source",
-        "//cuttlefish/host/commands/cvd/cli/commands/monitor:kernel",
-        "//cuttlefish/host/commands/cvd/cli/commands/monitor:launcher",
-        "//cuttlefish/host/commands/cvd/cli/commands/monitor:log_tee",
-        "//cuttlefish/host/commands/cvd/cli/commands/monitor:logcat",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:log_sources",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:monitor_source",
         "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/libs/log_names",
-        "//cuttlefish/io",
-        "//cuttlefish/io:shared_fd",
         "//cuttlefish/result",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/strings",
