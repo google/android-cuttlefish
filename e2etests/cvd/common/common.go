@@ -166,7 +166,7 @@ type FetchAndCreateArgs struct {
 }
 
 // Performs `cvd fetch <args>`.
-func (tc *TestContext) CVDFetch(args FetchArgs) error {
+func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
 	log.Printf("Fetching...")
 	fetchCmd := []string{
 		tc.TargetBin(),
@@ -182,9 +182,10 @@ func (tc *TestContext) CVDFetch(args FetchArgs) error {
 	if credentialArg != "" {
 		fetchCmd = append(fetchCmd, fmt.Sprintf("--credential_source=%s", credentialArg))
 	}
-	if _, err := tc.RunCmd(fetchCmd...); err != nil {
+	res, err := tc.RunCmd(fetchCmd...);
+	if err != nil {
 		log.Printf("Failed to fetch: %w", err)
-		return err
+		return res, err
 	}
 
 	// Android CTS includes some files with a `kernel` suffix which confuses the
@@ -195,11 +196,11 @@ func (tc *TestContext) CVDFetch(args FetchArgs) error {
 
 	log.Printf("Fetch completed!")
 
-	return nil
+	return res, nil
 }
 
 // Performs `cvd create <args>`.
-func (tc *TestContext) CVDCreate(args CreateArgs) error {
+func (tc *TestContext) CVDCreate(args CreateArgs) (CommandOutput, error) {
 	tempdirEnv := map[string]string{
 		"HOME": tc.tempdir,
 	}
@@ -213,13 +214,14 @@ func (tc *TestContext) CVDCreate(args CreateArgs) error {
 	if len(args.Args) > 0 {
 		createCmd = append(createCmd, args.Args...)
 	}
-	if _, err := tc.RunCmdWithEnv(createCmd, tempdirEnv); err != nil {
+	res, err := tc.RunCmdWithEnv(createCmd, tempdirEnv)
+	if err != nil {
 		log.Printf("Failed to create instance(s): %w", err)
-		return err
+		return res, err
 	}
 
 	tc.Cleanup(func() { tc.CVDStop() })
-	return nil
+	return res, nil
 }
 
 // Performs `cvd stop`.
@@ -577,12 +579,12 @@ func RunXts(t *testing.T, cuttlefishArgs FetchAndCreateArgs, xtsArgs XtsArgs) {
 		log.Printf("Failed to find existing XTS, will fetch.")
 	}
 
-	if err := tc.CVDFetch(cuttlefishArgs.Fetch); err != nil {
-		t.Fatal(err)
+	if res, err := tc.CVDFetch(cuttlefishArgs.Fetch); err != nil {
+		t.Fatalf("cvd fetch failed with %v, stderr:%s", err, res.Stderr)
 	}
 
-	if err := tc.CVDCreate(cuttlefishArgs.Create); err != nil {
-		t.Fatal(err)
+	if res, err := tc.CVDCreate(cuttlefishArgs.Create); err != nil {
+		t.Fatalf("cvd create failed with %v, stderr:%s", err, res.Stderr)
 	}
 
 	if err := tc.RunAdbWaitForDevice(); err != nil {

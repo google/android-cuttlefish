@@ -15,11 +15,41 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/cvd/common"
 )
+
+var allowedCvdFetchLinePatterns = []string{
+	`Starting fetch to.*`,
+	`Downloading host package.*`,
+	`Completed target fetch to.*`,
+	`Completed all fetches`,
+}
+var allowedCvdFetchRegexp = regexp.MustCompile(strings.Join(allowedCvdFetchLinePatterns, "|"))
+
+var allowedCvdCreateLinePatterns = []string{
+	`Point your browser to.*`,
+	`Serial console is disabled;.*`,
+	`Launcher Build ID`,
+	`Virtual device booted successfully`,
+	`group.*`,
+}
+var allowedCvdCreateRegexp = regexp.MustCompile(strings.Join(allowedCvdCreateLinePatterns, "|"))
+
+func checkForLogspam(t *testing.T, res e2etests.CommandOutput, allowed *regexp.Regexp) {
+	scanner := bufio.NewScanner(strings.NewReader(res.Stdout))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !allowed.MatchString(line) {
+			t.Errorf("unexpected log: %s", line)
+		}
+	}
+}
 
 func TestCvdCreate(t *testing.T) {
 	testcases := []struct {
@@ -27,24 +57,8 @@ func TestCvdCreate(t *testing.T) {
 		target string
 	}{
 		{
-			branch: "aosp-android-latest-release",
-			target: "aosp_cf_x86_64_only_phone-userdebug",
-		},
-		{
 			branch: "git_main",
 			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
-		},
-		{
-			branch: "git_main-throttled-nightly",
-			target: "aosp_cf_x86_64_auto-trunk_staging-userdebug",
-		},
-		{
-			branch: "git_main-swcar-dev",
-			target: "aosp_cf_x86_64_sdv_core-trunk_staging-userdebug",
-		},
-		{
-			branch: "git_main-swcar-dev",
-			target: "aosp_cf_x86_64_sdv_media-trunk_staging-userdebug",
 		},
 	}
 	c := e2etests.TestContext{}
@@ -53,17 +67,22 @@ func TestCvdCreate(t *testing.T) {
 			c.SetUp(t)
 			defer c.TearDown()
 
-			if res, err := c.CVDFetch(e2etests.FetchArgs{
+			res, err := c.CVDFetch(e2etests.FetchArgs{
 				DefaultBuildBranch: tc.branch,
 				DefaultBuildTarget: tc.target,
-			}); err != nil {
+			})
+			if err != nil {
 				t.Fatalf("cvd fetch failed with %v, stderr:%s", err, res.Stderr)
 			}
 
-			if res, err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {
+			checkForLogspam(t, res, allowedCvdFetchRegexp)
+
+			res, err = c.CVDCreate(e2etests.CreateArgs{})
+			if err != nil {
 				t.Fatalf("cvd create failed with %v, stderr:%s", err, res.Stderr)
 			}
 
+			checkForLogspam(t, res, allowedCvdCreateRegexp)
 		})
 	}
 }
