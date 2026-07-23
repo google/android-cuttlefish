@@ -1,11 +1,13 @@
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_proto_grpc_go//:defs.bzl", "go_proto_compile")
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
+
+cf_build_test(name = "parser")
 
 cf_cc_library(
     name = "cf_configs_instances",
@@ -42,11 +44,9 @@ cf_cc_library(
     name = "cf_configs_common",
     srcs = ["cf_configs_common.cpp"],
     hdrs = ["cf_configs_common.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         ":load_config_cc_proto",
         "//cuttlefish/result",
-        "//libbase",
         "@fmt",
         "@jsoncpp",
         "@protobuf",
@@ -67,13 +67,11 @@ cf_cc_library(
     name = "fetch_config_parser",
     srcs = ["fetch_config_parser.cpp"],
     hdrs = ["fetch_config_parser.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -94,14 +92,12 @@ cf_cc_library(
     name = "launch_cvd_parser",
     srcs = ["launch_cvd_parser.cpp"],
     hdrs = ["launch_cvd_parser.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_instances",
         "//cuttlefish/host/commands/cvd/cli/parser:launch_cvd_templates",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -182,11 +178,9 @@ cf_cc_library(
     testonly = True,
     srcs = ["test_common.cc"],
     hdrs = ["test_common.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:cf_flags_validator",
         "//cuttlefish/host/commands/cvd/cli/parser:launch_cvd_parser",
-        "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
         "//cuttlefish/result",
         "@jsoncpp",
     ],
