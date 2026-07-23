@@ -1,16 +1,16 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cf_build_test(name = "instance")
+
 cf_cc_test(
     name = "boot_configs_test",
     srcs = ["boot_configs_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
-        "@jsoncpp",
     ],
 )
 
@@ -53,7 +53,6 @@ cf_cc_library(
     name = "cf_graphics_configs",
     srcs = ["cf_graphics_configs.cpp"],
     hdrs = ["cf_graphics_configs.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
@@ -61,7 +60,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/result",
-        "//libbase",
         "@protobuf",
     ],
 )
@@ -103,15 +101,12 @@ cf_cc_library(
     name = "cf_vm_configs",
     srcs = ["cf_vm_configs.cpp"],
     hdrs = ["cf_vm_configs.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:flags_validator",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/result",
-        "//libbase",
-        "@fmt",
         "@protobuf//:json_util",
     ],
 )
@@ -119,17 +114,14 @@ cf_cc_library(
 cf_cc_test(
     name = "disk_configs_test",
     srcs = ["disk_configs_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
-        "@jsoncpp",
     ],
 )
 
 cf_cc_test(
     name = "graphics_configs_test",
     srcs = ["graphics_configs_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:json",
@@ -137,7 +129,6 @@ cf_cc_test(
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//cuttlefish/result:result_matchers",
-        "@jsoncpp",
         "@protobuf",
         "@protobuf//:differencer",
     ],
@@ -146,11 +137,9 @@ cf_cc_test(
 cf_cc_test(
     name = "vm_configs_test",
     srcs = ["vm_configs_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//cuttlefish/result:result_matchers",
-        "@jsoncpp",
     ],
 )
