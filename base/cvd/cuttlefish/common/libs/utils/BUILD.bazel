@@ -1,19 +1,19 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cf_build_test(name = "utils_build_test")
+
 cf_cc_library(
     name = "archive",
     srcs = ["archive.cpp"],
     hdrs = ["archive.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
@@ -76,12 +76,10 @@ cf_cc_library(
     name = "disk_usage",
     srcs = ["disk_usage.cpp"],
     hdrs = ["disk_usage.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -95,10 +93,6 @@ cf_cc_library(
     hdrs = [
         "environment.h",
         "known_paths.h",
-    ],
-    depend_on_what_you_use_enabled = False,
-    deps = [
-        "//libbase",
     ],
 )
 
@@ -115,14 +109,12 @@ cf_cc_library(
     name = "files",
     srcs = ["files.cpp"],
     hdrs = ["files.h"],
-    depend_on_what_you_use_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",  # SEEK_DATA
     ],
     deps = [
         ":environment",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/files:copy",
@@ -130,7 +122,6 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/posix:rename",
         "//cuttlefish/posix:strerror",
-        "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
@@ -188,9 +179,7 @@ cf_cc_library(
     name = "host_info",
     srcs = ["host_info.cpp"],
     hdrs = ["host_info.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        "//libbase",
         "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
@@ -207,12 +196,10 @@ cf_cc_library(
     name = "inotify",
     srcs = ["inotify.cpp"],
     hdrs = ["inotify.h"],
-    depend_on_what_you_use_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],
     deps = [
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -241,11 +228,7 @@ cf_cc_library(
     name = "network",
     srcs = ["network.cpp"],
     hdrs = ["network.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        "//libbase",
-        "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
@@ -280,10 +263,8 @@ cf_cc_library(
     name = "semver",
     srcs = ["semver.cpp"],
     hdrs = ["semver.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/result",
-        "//cuttlefish/result:expect",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -291,11 +272,8 @@ cf_cc_library(
 cf_cc_test(
     name = "semver_test",
     srcs = ["semver_test.cpp"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:semver",
-        "//cuttlefish/result:result_matchers",
-        "//cuttlefish/result:result_type",
     ],
 )
 
@@ -303,9 +281,7 @@ cf_cc_library(
     name = "signals",
     srcs = ["signals.cpp"],
     hdrs = ["signals.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        "//libbase",
         "@abseil-cpp//absl/log:check",
     ],
 )
@@ -319,13 +295,11 @@ cf_cc_library(
     name = "socket2socket_proxy",
     srcs = ["socket2socket_proxy.cpp"],
     hdrs = ["socket2socket_proxy.h"],
-    depend_on_what_you_use_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -334,10 +308,8 @@ cf_cc_library(
     name = "tee_logging",
     srcs = ["tee_logging.cpp"],
     hdrs = ["tee_logging.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/result",
@@ -375,11 +347,9 @@ cf_cc_library(
     name = "unix_sockets",
     srcs = ["unix_sockets.cpp"],
     hdrs = ["unix_sockets.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
     ],
@@ -388,11 +358,9 @@ cf_cc_library(
 cf_cc_test(
     name = "unix_sockets_test",
     srcs = ["unix_sockets_test.cpp"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:unix_sockets",
-        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log:check",
     ],
@@ -414,13 +382,11 @@ cf_cc_library(
     srcs = ["vsock_connection.cpp"],
     hdrs = ["vsock_connection.h"],
     clang_tidy_enabled = False,  # TODO: b/403278821 - fix warnings and re-enable after migration work
-    depend_on_what_you_use_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@jsoncpp",
     ],
