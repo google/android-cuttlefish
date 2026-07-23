@@ -43,9 +43,6 @@ cf_cc_test(
 cf_cc_library(
     name = "cf_endian",
     hdrs = ["cf_endian.h"],
-    deps = [
-        "//libbase",
-    ],
 )
 
 cf_cc_library(
