@@ -200,7 +200,7 @@ func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
 }
 
 // Performs `cvd create <args>`.
-func (tc *TestContext) CVDCreate(args CreateArgs) error {
+func (tc *TestContext) CVDCreate(args CreateArgs) (CommandOutput, error) {
 	tempdirEnv := map[string]string{
 		"HOME": tc.tempdir,
 	}
@@ -214,13 +214,14 @@ func (tc *TestContext) CVDCreate(args CreateArgs) error {
 	if len(args.Args) > 0 {
 		createCmd = append(createCmd, args.Args...)
 	}
-	if _, err := tc.RunCmdWithEnv(createCmd, tempdirEnv); err != nil {
+	res, err := tc.RunCmdWithEnv(createCmd, tempdirEnv)
+	if err != nil {
 		log.Printf("Failed to create instance(s): %w", err)
-		return err
+		return res, err
 	}
 
 	tc.Cleanup(func() { tc.CVDStop() })
-	return nil
+	return res, nil
 }
 
 // Performs `cvd stop`.
@@ -582,7 +583,7 @@ func RunXts(t *testing.T, cuttlefishArgs FetchAndCreateArgs, xtsArgs XtsArgs) {
 		t.Fatal(err)
 	}
 
-	if err := tc.CVDCreate(cuttlefishArgs.Create); err != nil {
+	if _, err := tc.CVDCreate(cuttlefishArgs.Create); err != nil {
 		t.Fatal(err)
 	}
 

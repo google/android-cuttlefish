@@ -66,7 +66,7 @@ func TestDeviceNetworking(t *testing.T) {
 			}
 
 			t.Log("Launching Cuttlefish...")
-			if err := c.CVDCreate(tc.createArgs); err != nil {
+			if _, err := c.CVDCreate(tc.createArgs); err != nil {
 				t.Fatal(err)
 			}
 
