@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use std::collections::VecDeque;
-use std::io::BufWriter;
 use std::io::Result as IoResult;
 use std::io::Seek;
 use std::io::SeekFrom;
@@ -21,6 +20,12 @@ use std::io::Write;
 use std::os::fd::AsFd;
 use std::os::fd::BorrowedFd;
 
+use crate::pattern::FramePattern;
+use crate::pattern::julia_set::JuliaSet;
+use crate::pattern::pulse::Pulse;
+use crate::pattern::smpte::SmpteBars;
+
+use std::str::FromStr;
 use v4l2r::PixelFormat;
 use v4l2r::QueueType;
 use v4l2r::bindings;
@@ -55,7 +60,6 @@ use virtio_media::protocol::SgEntry;
 use virtio_media::protocol::V4l2Event;
 use virtio_media::protocol::V4l2Ioctl;
 use virtio_media::protocol::VIRTIO_MEDIA_MMAP_FLAG_RW;
-use std::str::FromStr;
 
 /// https://developer.android.com/reference/android/hardware/camera2/CameraMetadata#LENS_FACING_FRONT
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -73,7 +77,32 @@ impl FromStr for LensFacing {
             "FRONT" => Ok(LensFacing::Front),
             "BACK" => Ok(LensFacing::Back),
             "EXTERNAL" => Ok(LensFacing::External),
-            _ => Err(format!("Invalid lens facing: {}. Expected FRONT, BACK, or EXTERNAL", s)),
+            _ => Err(format!(
+                "Invalid lens facing: {}. Expected FRONT, BACK, or EXTERNAL",
+                s
+            )),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TestPattern {
+    Undefined = 0,
+    Pulse = 1,
+    SmpteBars = 2,
+    JuliaSet = 3,
+}
+
+impl TryFrom<i32> for TestPattern {
+    type Error = i32;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(TestPattern::Undefined),
+            1 => Ok(TestPattern::Pulse),
+            2 => Ok(TestPattern::SmpteBars),
+            3 => Ok(TestPattern::JuliaSet),
+            _ => Err(libc::ERANGE),
         }
     }
 }
@@ -192,34 +221,31 @@ impl VirtioMediaDeviceSession for EmulatedCameraSession {
 }
 
 impl EmulatedCameraSession {
-    fn write_pattern<WY: std::io::Write, WU: std::io::Write, WV: std::io::Write>(
+    fn write_pattern<WY: Write, WU: Write, WV: Write>(
         iteration: u64,
-        mut sink_y: WY,
-        mut sink_u: WU,
-        mut sink_v: WV,
+        test_pattern: TestPattern,
+        sink_y: WY,
+        sink_u: WU,
+        sink_v: WV,
     ) -> IoctlResult<()> {
-        let mut writer_y = BufWriter::new(&mut sink_y);
-        let mut writer_u = BufWriter::new(&mut sink_u);
-        let mut writer_v = BufWriter::new(&mut sink_v);
-        let y = (iteration % 256) as u8;
-        let u = ((iteration + 64) % 256) as u8;
-        let v = ((iteration + 128) % 256) as u8;
-        for _ in 0..(WIDTH * HEIGHT) {
-            writer_y.write_all(&[y]).map_err(|_| libc::EIO)?;
+        match test_pattern {
+            TestPattern::SmpteBars => SmpteBars
+                .write(iteration, sink_y, sink_u, sink_v)
+                .map_err(|_| libc::EIO),
+            TestPattern::JuliaSet => JuliaSet
+                .write(iteration, sink_y, sink_u, sink_v)
+                .map_err(|_| libc::EIO),
+            _ => Pulse
+                .write(iteration, sink_y, sink_u, sink_v)
+                .map_err(|_| libc::EIO),
         }
-        for _ in 0..(WIDTH * HEIGHT / 4) {
-            writer_u.write_all(&[u]).map_err(|_| libc::EIO)?;
-        }
-        for _ in 0..(WIDTH * HEIGHT / 4) {
-            writer_v.write_all(&[v]).map_err(|_| libc::EIO)?;
-        }
-        Ok(())
     }
 
     /// Write basic pattern into the queued buffers
     fn process_queued_buffers<Q: VirtioMediaEventQueue>(
         &mut self,
         evt_queue: &mut Q,
+        test_pattern: TestPattern,
     ) -> IoctlResult<()> {
         while let Some(buf_id) = self.queued_buffers.pop_front() {
             let iteration = self.iteration;
@@ -235,6 +261,7 @@ impl EmulatedCameraSession {
 
             Self::write_pattern(
                 iteration,
+                test_pattern,
                 buffer.planes[0].fd.as_file(),
                 buffer.planes[1].fd.as_file(),
                 buffer.planes[2].fd.as_file(),
@@ -273,6 +300,8 @@ pub struct EmulatedCamera<Q: VirtioMediaEventQueue, HM: VirtioMediaHostMemoryMap
     active_session: Option<u32>,
     /// Lens facing configuration.
     lens_facing: LensFacing,
+    /// Currently selected test pattern.
+    current_pattern: TestPattern,
 }
 
 impl<Q, HM> EmulatedCamera<Q, HM>
@@ -286,6 +315,7 @@ where
             mmap_manager: MmapMappingManager::from(mapper),
             active_session: None,
             lens_facing,
+            current_pattern: TestPattern::Pulse,
         }
     }
 
@@ -302,6 +332,44 @@ where
             step: 1,
             default_value: self.lens_facing as i64,
             flags: bindings::V4L2_CTRL_FLAG_READ_ONLY,
+            elems: 1,
+            elem_size: std::mem::size_of::<u32>() as u32,
+            ..Default::default()
+        }
+    }
+
+    fn image_proc_class_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
+        let name_str = "Image Processing Controls";
+        let mut name = [0u8; 32];
+        name[0..name_str.len()].copy_from_slice(name_str.as_bytes());
+        bindings::v4l2_query_ext_ctrl {
+            id: bindings::V4L2_CID_IMAGE_PROC_CLASS,
+            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_CTRL_CLASS,
+            name: name.map(|b| b as i8),
+            minimum: 0,
+            maximum: 0,
+            step: 0,
+            default_value: 0,
+            flags: bindings::V4L2_CTRL_FLAG_READ_ONLY,
+            elems: 1,
+            elem_size: std::mem::size_of::<u32>() as u32,
+            ..Default::default()
+        }
+    }
+
+    fn test_pattern_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
+        let name_str = "Test Pattern";
+        let mut name = [0u8; 32];
+        name[0..name_str.len()].copy_from_slice(name_str.as_bytes());
+        bindings::v4l2_query_ext_ctrl {
+            id: bindings::V4L2_CID_TEST_PATTERN,
+            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_MENU,
+            name: name.map(|b| b as i8),
+            minimum: 0,
+            maximum: 3,
+            step: 1,
+            default_value: 1,
+            flags: 0,
             elems: 1,
             elem_size: std::mem::size_of::<u32>() as u32,
             ..Default::default()
@@ -724,7 +792,7 @@ where
         let buffer = host_buffer.v4l2_buffer.clone();
 
         if session.streaming {
-            session.process_queued_buffers(&mut self.evt_queue)?;
+            session.process_queued_buffers(&mut self.evt_queue, self.current_pattern)?;
         }
 
         Ok(buffer)
@@ -736,7 +804,7 @@ where
         }
         session.streaming = true;
 
-        session.process_queued_buffers(&mut self.evt_queue)?;
+        session.process_queued_buffers(&mut self.evt_queue, self.current_pattern)?;
 
         Ok(())
     }
@@ -838,16 +906,83 @@ where
         id: CtrlId,
         flags: QueryCtrlFlags,
     ) -> IoctlResult<bindings::v4l2_query_ext_ctrl> {
-        let id: u32 = unsafe { std::mem::transmute(id) };
-        // If V4L2_CTRL_FLAG_NEXT_CTRL present returns the first control with a higher ID.
+        let requested_id: u32 = unsafe { std::mem::transmute(id) };
+
         if flags.contains(QueryCtrlFlags::NEXT) {
-            if id < CID_LENS_FACING {
+            if requested_id < CID_LENS_FACING {
                 return Ok(self.lens_facing_query_ext_ctrl());
+            } else if requested_id < bindings::V4L2_CID_IMAGE_PROC_CLASS {
+                return Ok(self.image_proc_class_query_ext_ctrl());
+            } else if requested_id < bindings::V4L2_CID_TEST_PATTERN {
+                return Ok(self.test_pattern_query_ext_ctrl());
             }
-        } else if id == CID_LENS_FACING {
-            return Ok(self.lens_facing_query_ext_ctrl());
+        } else {
+            if requested_id == CID_LENS_FACING {
+                return Ok(self.lens_facing_query_ext_ctrl());
+            } else if requested_id == bindings::V4L2_CID_IMAGE_PROC_CLASS {
+                return Ok(self.image_proc_class_query_ext_ctrl());
+            } else if requested_id == bindings::V4L2_CID_TEST_PATTERN {
+                return Ok(self.test_pattern_query_ext_ctrl());
+            }
         }
-        return Err(libc::EINVAL);
+
+        Err(libc::EINVAL)
+    }
+
+    fn querymenu(
+        &mut self,
+        _session: &Self::Session,
+        id: u32,
+        index: u32,
+    ) -> IoctlResult<bindings::v4l2_querymenu> {
+        if id != bindings::V4L2_CID_TEST_PATTERN {
+            return Err(libc::EINVAL);
+        }
+        if index > 3 {
+            return Err(libc::EINVAL);
+        }
+
+        let mut name = [0u8; 32];
+        let name_str = match index {
+            0 => "Undefined",
+            1 => "Pulse",
+            2 => "SMPTE + Bouncing Box",
+            _ => "Animated Julia Set",
+        };
+        let bytes = name_str.as_bytes();
+        name[0..bytes.len()].copy_from_slice(bytes);
+
+        Ok(bindings::v4l2_querymenu {
+            id,
+            index,
+            __bindgen_anon_1: bindings::v4l2_querymenu__bindgen_ty_1 { name },
+            ..Default::default()
+        })
+    }
+
+    fn g_ctrl(&mut self, _session: &Self::Session, id: u32) -> IoctlResult<bindings::v4l2_control> {
+        if id != bindings::V4L2_CID_TEST_PATTERN {
+            return Err(libc::EINVAL);
+        }
+        Ok(bindings::v4l2_control {
+            id,
+            value: self.current_pattern as i32,
+        })
+    }
+
+    fn s_ctrl(
+        &mut self,
+        _session: &mut Self::Session,
+        id: u32,
+        value: i32,
+    ) -> IoctlResult<bindings::v4l2_control> {
+        if id != bindings::V4L2_CID_TEST_PATTERN {
+            return Err(libc::EINVAL);
+        }
+
+        let pattern = TestPattern::try_from(value).map_err(|_| libc::ERANGE)?;
+        self.current_pattern = pattern;
+        Ok(bindings::v4l2_control { id, value })
     }
 
     fn g_ext_ctrls(
@@ -858,13 +993,20 @@ where
         ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
         _user_regions: Vec<Vec<SgEntry>>,
     ) -> IoctlResult<()> {
-        for ctrl in ctrl_array {
+        for (i, ctrl) in ctrl_array.iter_mut().enumerate() {
             match ctrl.id {
                 CID_LENS_FACING => {
                     ctrl.__bindgen_anon_1.value = self.lens_facing as i32;
                 }
-                _ => {
+                bindings::V4L2_CID_TEST_PATTERN => {
+                    ctrl.__bindgen_anon_1.value = self.current_pattern as i32;
+                }
+                bindings::V4L2_CID_IMAGE_PROC_CLASS => {
                     ctrls.error_idx = ctrls.count;
+                    return Err(libc::EACCES);
+                }
+                _ => {
+                    ctrls.error_idx = i as u32;
                     return Err(libc::EINVAL);
                 }
             }
@@ -880,13 +1022,17 @@ where
         ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
         _user_regions: Vec<Vec<SgEntry>>,
     ) -> IoctlResult<()> {
-        for (idx, ctrl) in ctrl_array.iter_mut().enumerate() {
-            ctrls.error_idx = idx as u32;
-            let err_code = match ctrl.id {
-                CID_LENS_FACING => libc::EACCES,
-                _ => libc::EINVAL,
-            };
-            return Err(err_code);
+        for (i, ctrl) in ctrl_array.iter().enumerate() {
+            ctrls.error_idx = i as u32;
+            match ctrl.id {
+                CID_LENS_FACING => return Err(libc::EACCES),
+                bindings::V4L2_CID_IMAGE_PROC_CLASS => return Err(libc::EACCES),
+                bindings::V4L2_CID_TEST_PATTERN => {
+                    let val = unsafe { ctrl.__bindgen_anon_1.value };
+                    TestPattern::try_from(val).map_err(|_| libc::ERANGE)?;
+                }
+                _ => return Err(libc::EINVAL),
+            }
         }
         Ok(())
     }
@@ -899,13 +1045,37 @@ where
         ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
         _user_regions: Vec<Vec<SgEntry>>,
     ) -> IoctlResult<()> {
+        for (i, ctrl) in ctrl_array.iter().enumerate() {
+            ctrls.error_idx = i as u32;
+            match ctrl.id {
+                CID_LENS_FACING => return Err(libc::EACCES),
+                bindings::V4L2_CID_IMAGE_PROC_CLASS => return Err(libc::EACCES),
+                bindings::V4L2_CID_TEST_PATTERN => {
+                    let val = unsafe { ctrl.__bindgen_anon_1.value };
+                    TestPattern::try_from(val).map_err(|_| libc::ERANGE)?;
+                }
+                _ => return Err(libc::EINVAL),
+            }
+        }
         for ctrl in ctrl_array {
-            ctrls.error_idx = ctrls.count;
-            let err_code = match ctrl.id {
-                CID_LENS_FACING => libc::EACCES,
-                _ => libc::EINVAL,
-            };
-            return Err(err_code);
+            if ctrl.id == bindings::V4L2_CID_TEST_PATTERN {
+                let val = unsafe { ctrl.__bindgen_anon_1.value };
+                if let Ok(pattern) = TestPattern::try_from(val) {
+                    self.current_pattern = pattern;
+
+                    let mut ctrl_event: bindings::v4l2_event = unsafe { std::mem::zeroed() };
+                    ctrl_event.type_ = bindings::V4L2_EVENT_CTRL;
+                    ctrl_event.id = bindings::V4L2_CID_TEST_PATTERN;
+                    ctrl_event.u.ctrl.type_ = bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER;
+                    ctrl_event.u.ctrl.__bindgen_anon_1.value = self.current_pattern as i32;
+                    ctrl_event.u.ctrl.minimum = 0;
+                    ctrl_event.u.ctrl.maximum = 3;
+                    ctrl_event.u.ctrl.step = 1;
+                    ctrl_event.u.ctrl.default_value = 1;
+                    self.evt_queue
+                        .send_event(V4l2Event::Event(SessionEvent::new(_session.id, ctrl_event)));
+                }
+            }
         }
         Ok(())
     }
@@ -919,20 +1089,40 @@ where
         if !flags.contains(SubscribeEventFlags::SEND_INITIAL) {
             return Err(libc::EINVAL);
         }
-        match event {
-            V4l2EventType::Ctrl(id) => match id {
-                CID_LENS_FACING => {
-                    let ctrl_event = bindings::v4l2_event {
-                        type_: bindings::V4L2_EVENT_CTRL,
-                        id: CID_LENS_FACING,
-                        ..Default::default()
-                    };
-                    self.evt_queue
-                        .send_event(V4l2Event::Event(SessionEvent::new(session.id, ctrl_event)));
-                    Ok(())
-                }
-                _ => Err(libc::EINVAL),
-            },
+        let id = match event {
+            V4l2EventType::Ctrl(id) => id,
+            _ => return Err(libc::EINVAL),
+        };
+
+        match id {
+            CID_LENS_FACING => {
+                let mut ctrl_event: bindings::v4l2_event = unsafe { std::mem::zeroed() };
+                ctrl_event.type_ = bindings::V4L2_EVENT_CTRL;
+                ctrl_event.id = CID_LENS_FACING;
+                ctrl_event.u.ctrl.type_ = bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER;
+                ctrl_event.u.ctrl.__bindgen_anon_1.value = self.lens_facing as i32;
+                ctrl_event.u.ctrl.minimum = LensFacing::Front as i32;
+                ctrl_event.u.ctrl.maximum = LensFacing::External as i32;
+                ctrl_event.u.ctrl.step = 1;
+                ctrl_event.u.ctrl.default_value = LensFacing::Front as i32;
+                self.evt_queue
+                    .send_event(V4l2Event::Event(SessionEvent::new(session.id, ctrl_event)));
+                Ok(())
+            }
+            bindings::V4L2_CID_TEST_PATTERN => {
+                let mut ctrl_event: bindings::v4l2_event = unsafe { std::mem::zeroed() };
+                ctrl_event.type_ = bindings::V4L2_EVENT_CTRL;
+                ctrl_event.id = bindings::V4L2_CID_TEST_PATTERN;
+                ctrl_event.u.ctrl.type_ = bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER;
+                ctrl_event.u.ctrl.__bindgen_anon_1.value = self.current_pattern as i32;
+                ctrl_event.u.ctrl.minimum = 0;
+                ctrl_event.u.ctrl.maximum = 3;
+                ctrl_event.u.ctrl.step = 1;
+                ctrl_event.u.ctrl.default_value = 1;
+                self.evt_queue
+                    .send_event(V4l2Event::Event(SessionEvent::new(session.id, ctrl_event)));
+                Ok(())
+            }
             _ => Err(libc::EINVAL),
         }
     }
@@ -942,10 +1132,12 @@ where
         _session: &mut Self::Session,
         event: bindings::v4l2_event_subscription,
     ) -> IoctlResult<()> {
-        return if event.type_ == bindings::V4L2_EVENT_CTRL && event.id == CID_LENS_FACING {
-            Ok(())
-        } else {
-            Err(libc::EINVAL)
-        };
+        if event.type_ != bindings::V4L2_EVENT_CTRL {
+            return Err(libc::EINVAL);
+        }
+        if event.id != CID_LENS_FACING && event.id != bindings::V4L2_CID_TEST_PATTERN {
+            return Err(libc::EINVAL);
+        }
+        Ok(())
     }
 }
