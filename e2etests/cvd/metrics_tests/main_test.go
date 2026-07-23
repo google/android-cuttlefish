@@ -37,7 +37,7 @@ func TestMetrics(t *testing.T) {
 	c.SetUp(t)
 	defer c.TearDown()
 
-	if err := c.CVDFetch(e2etests.FetchArgs{
+	if _, err := c.CVDFetch(e2etests.FetchArgs{
 		DefaultBuildBranch: "aosp-android-latest-release",
 		DefaultBuildTarget: "aosp_cf_x86_64_only_phone-userdebug",
 	}); err != nil {
