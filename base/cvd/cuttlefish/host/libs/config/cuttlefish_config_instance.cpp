@@ -1351,6 +1351,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_ports(
   (*Dictionary())[kModemSimulatorPorts] = modem_simulator_ports;
 }
 
+static constexpr char kEnableModemNetsim[] = "enable_modem_netsim";
+bool CuttlefishConfig::InstanceSpecific::enable_modem_netsim() const {
+  return (*Dictionary())[kEnableModemNetsim].asBool();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_modem_netsim(
+    bool enable) {
+  (*Dictionary())[kEnableModemNetsim] = enable;
+}
+
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
   return AbsolutePath(PerInstanceLogPath(kLogNameLauncher));
 }
@@ -1919,6 +1928,7 @@ CuttlefishConfig::InstanceSpecific::audio_settings() const {
 
 static constexpr char kMediaConfigs[] = "media_configs";
 static constexpr char kMediaType[] = "type";
+static constexpr char kMediaLensFacing[] = "lens_facing";
 std::vector<CuttlefishConfig::MediaConfig>
 CuttlefishConfig::InstanceSpecific::media_configs() const {
   std::vector<MediaConfig> configs;
@@ -1926,6 +1936,9 @@ CuttlefishConfig::InstanceSpecific::media_configs() const {
     MediaConfig config = {};
     config.type =
         static_cast<CuttlefishConfig::MediaType>(json[kMediaType].asInt());
+    if (json.isMember(kMediaLensFacing)) {
+      config.lens_facing = json[kMediaLensFacing].asString();
+    }
     configs.emplace_back(config);
   }
   return configs;
@@ -1938,6 +1951,7 @@ void CuttlefishConfig::MutableInstanceSpecific::set_media_configs(
   for (const MediaConfig& config : configs) {
     Json::Value json(Json::objectValue);
     json[kMediaType] = static_cast<int>(config.type);
+    json[kMediaLensFacing] = config.lens_facing;
     configs_json.append(json);
   }
 

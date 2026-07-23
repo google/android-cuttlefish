@@ -122,6 +122,7 @@ class CuttlefishConfig {
 
   struct MediaConfig {
     MediaType type;
+    std::string lens_facing;
   };
 
   void set_secure_hals(const std::set<SecureHal>&);
@@ -154,15 +155,6 @@ class CuttlefishConfig {
   void set_casimir_rf_port(int port);
   int casimir_rf_port() const;
 
-  // Flags for the set of radios that are connected to netsim
-  enum NetsimRadio {
-    Bluetooth = 0b00000001,
-    Wifi      = 0b00000010,
-    Uwb       = 0b00000100,
-  };
-
-  void netsim_radio_enable(NetsimRadio flag);
-  bool netsim_radio_enabled(NetsimRadio flag) const;
   void set_netsim_instance_num(int netsim_instance_num);
   int netsim_instance_num() const;
   // Netsim has a built-in connector to forward packets to another daemon based
@@ -271,7 +263,8 @@ class CuttlefishConfig {
 
     Json::Value* Dictionary();
     const Json::Value* Dictionary() const;
-  public:
+
+   public:
     std::string serial_number() const;
 
     // Index of this instance within current configured group of VMs
@@ -509,6 +502,7 @@ class CuttlefishConfig {
     // Configuration flags for a minimal device
     bool enable_minimal_mode() const;
     bool enable_modem_simulator() const;
+    bool enable_modem_netsim() const;
     int modem_simulator_instance_number() const;
     int modem_simulator_sim_type() const;
 
@@ -608,7 +602,8 @@ class CuttlefishConfig {
     MutableInstanceSpecific(CuttlefishConfig* config, const std::string& id);
 
     Json::Value* Dictionary();
-  public:
+
+   public:
     void set_serial_number(const std::string& serial_number);
     void set_qemu_vnc_server_port(int qemu_vnc_server_port);
     void set_tombstone_receiver_port(int tombstone_receiver_port);
@@ -650,7 +645,7 @@ class CuttlefishConfig {
     void set_start_netsim(bool start);
     // TODO(b/288987294) Remove this when separating environment is done
     void set_start_wmediumd_instance(bool start);
-    void set_mcu(const Json::Value &cfg);
+    void set_mcu(const Json::Value& cfg);
     void set_ap_boot_flow(APBootFlow flow);
     void set_crosvm_use_balloon(const bool use_balloon);
     void set_crosvm_use_rng(const bool use_rng);
@@ -662,7 +657,7 @@ class CuttlefishConfig {
     // Gnss grpc proxy server port inside the host
     void set_gnss_grpc_proxy_server_port(int gnss_grpc_proxy_server_port);
     // Gnss grpc proxy local file path
-    void set_gnss_file_path(const std::string &gnss_file_path);
+    void set_gnss_file_path(const std::string& gnss_file_path);
     void set_fixed_location_file_path(
         const std::string& fixed_location_file_path);
     void set_gem5_binary_dir(const std::string& gem5_binary_dir);
@@ -743,6 +738,7 @@ class CuttlefishConfig {
     // Configuration flags for a minimal device
     void set_enable_minimal_mode(bool enable_minimal_mode);
     void set_enable_modem_simulator(bool enable_modem_simulator);
+    void set_enable_modem_netsim(bool enable);
     void set_modem_simulator_instance_number(int instance_numbers);
     void set_modem_simulator_sim_type(int sim_type);
 
@@ -801,7 +797,8 @@ class CuttlefishConfig {
     void set_linux_initramfs_path(const std::string& linux_initramfs_path);
     void set_linux_root_image(const std::string& linux_root_image);
     void set_fuchsia_zedboot_path(const std::string& fuchsia_zedboot_path);
-    void set_fuchsia_multiboot_bin_path(const std::string& fuchsia_multiboot_bin_path);
+    void set_fuchsia_multiboot_bin_path(
+        const std::string& fuchsia_multiboot_bin_path);
     void set_fuchsia_root_image(const std::string& fuchsia_root_image);
     void set_custom_partition_path(const std::string& custom_partition_path);
     void set_blank_sdcard_image_mb(int blank_sdcard_image_mb);
@@ -810,7 +807,8 @@ class CuttlefishConfig {
     void set_kernel_path(const std::string& kernel_path);
     void set_guest_android_version(const std::string& guest_android_version);
     void set_bootconfig_supported(bool bootconfig_supported);
-    void set_filename_encryption_mode(const std::string& filename_encryption_mode);
+    void set_filename_encryption_mode(
+        const std::string& filename_encryption_mode);
     void set_external_network_mode(ExternalNetworkMode network_mode);
 
     void set_enable_vhal_proxy_server(bool enable_vhal_proxy_server);
@@ -935,4 +933,3 @@ bool VmManagerIsQemu(const CuttlefishConfig&);
 bool VmManagerIsGem5(const CuttlefishConfig&);
 
 }  // namespace cuttlefish
-

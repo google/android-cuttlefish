@@ -174,6 +174,8 @@
 #define CF_DEFAULTS_NETSIM false
 #define CF_DEFAULTS_NETSIM_BT true
 #define CF_DEFAULTS_NETSIM_UWB true
+#define CF_DEFAULTS_NETSIM_NFC false
+#define CF_DEFAULTS_NETSIM_MODEM false
 
 // Netsim default parameters
 #define CF_DEFAULTS_NETSIM_ARGS ""

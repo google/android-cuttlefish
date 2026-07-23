@@ -38,6 +38,12 @@ enum UserPageSize {
   USER_PAGE_SIZE_64KB = 2;
 }
 
+enum ModemSimulatorSimType {
+  MODEM_SIMULATOR_SIM_TYPE_UNSPECIFIED = 0;
+  MODEM_SIMULATOR_SIM_TYPE_NORMAL = 1;
+  MODEM_SIMULATOR_SIM_TYPE_CTS_CARRIER_API = 2;
+}
+
 message EnvironmentSpecification {
   repeated Instance instances = 1;
   optional Fetch fetch = 2;
@@ -46,6 +52,7 @@ message EnvironmentSpecification {
   optional bool netsim_bt = 5;
   optional bool netsim_uwb = 6;
   repeated string netsim_args = 7;
+  optional bool netsim_modem = 8;
 }
 
 // TODO: chadreynolds - when we can make breaking changes and update, use this
@@ -57,6 +64,7 @@ message EnvironmentOptions {
   optional bool netsim_bt = 4;
   optional bool netsim_uwb = 5;
   repeated string netsim_args = 6;
+  optional bool netsim_modem = 7;
 }
 
 message Common {
@@ -104,6 +112,7 @@ message Build {
 
 message Connectivity {
   optional Vsock vsock = 1;
+  optional ModemSimulatorSimType modem_simulator_sim_type = 2;
 }
 
 message Vsock {
@@ -157,6 +166,7 @@ message MediaDevice {
     V4l2EmulatedCameraMplane v4l2_emulated_camera_mplane = 2;
     V4l2Proxy v4l2_proxy = 3;
   }
+  optional string lens_facing = 4;
 }
 
 message V4l2EmulatedCameraSplane {}

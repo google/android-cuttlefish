@@ -33,39 +33,33 @@ type CreateCVDActionOpts struct {
 	Paths                    IMPaths
 	OperationManager         OperationManager
 	ExecContext              exec.ExecContext
-	CVDBundleFetcher         CVDBundleFetcher
-	UUIDGen                  func() string
 	UserArtifactsDirResolver UserArtifactsDirResolver
 	FetchCredentials         cvd.FetchCredentials
 	BuildAPIBaseURL          string
 }
 
 type CreateCVDAction struct {
-	req                      *apiv1.CreateCVDRequest
-	hostValidator            Validator
-	paths                    IMPaths
-	om                       OperationManager
-	execContext              exec.ExecContext
-	cvdCLI                   *cvd.CLI
-	cvdBundleFetcher         CVDBundleFetcher
-	userArtifactsDirResolver UserArtifactsDirResolver
-	fetchCredentials         cvd.FetchCredentials
-	buildAPIBaseURL          string
+	req              *apiv1.CreateCVDRequest
+	hostValidator    Validator
+	paths            IMPaths
+	om               OperationManager
+	execContext      exec.ExecContext
+	cvdCLI           *cvd.CLI
+	fetchCredentials cvd.FetchCredentials
+	buildAPIBaseURL  string
 }
 
 func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 	execCtx := opts.ExecContext
 	return &CreateCVDAction{
-		req:                      opts.Request,
-		hostValidator:            opts.HostValidator,
-		paths:                    opts.Paths,
-		om:                       opts.OperationManager,
-		cvdBundleFetcher:         opts.CVDBundleFetcher,
-		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
-		fetchCredentials:         opts.FetchCredentials,
-		buildAPIBaseURL:          opts.BuildAPIBaseURL,
-		execContext:              execCtx,
-		cvdCLI:                   cvd.NewCLI(execCtx),
+		req:              opts.Request,
+		hostValidator:    opts.HostValidator,
+		paths:            opts.Paths,
+		om:               opts.OperationManager,
+		fetchCredentials: opts.FetchCredentials,
+		buildAPIBaseURL:  opts.BuildAPIBaseURL,
+		execContext:      execCtx,
+		cvdCLI:           cvd.NewCLI(execCtx),
 	}
 }
 
@@ -74,9 +68,6 @@ func (a *CreateCVDAction) Run() (apiv1.Operation, error) {
 		return apiv1.Operation{}, operator.NewBadRequestError("invalid CreateCVDRequest", err)
 	}
 	if err := a.hostValidator.Validate(); err != nil {
-		return apiv1.Operation{}, err
-	}
-	if err := createDir(a.paths.InstancesDir); err != nil {
 		return apiv1.Operation{}, err
 	}
 	op := a.om.New()

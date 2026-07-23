@@ -79,75 +79,6 @@ type AccessTokenCredentials struct {
 	UserProjectID string // optional
 }
 
-type FetchOpts struct {
-	BuildAPIBaseURL  string
-	Credentials      FetchCredentials
-	KernelBuild      AndroidBuild
-	BootloaderBuild  AndroidBuild
-	SystemImageBuild AndroidBuild
-}
-
-func (cli *CLI) Fetch(mainBuild AndroidBuild, targetDir string, opts FetchOpts) error {
-	if err := mainBuild.Validate(); err != nil {
-		return fmt.Errorf("invalid main build: %w", err)
-	}
-	args := []string{
-		"fetch",
-		fmt.Sprintf("--directory=%s", targetDir),
-		fmt.Sprintf("--default_build=%s", cliFormat(mainBuild)),
-	}
-	if opts.SystemImageBuild != (AndroidBuild{}) {
-		build := opts.SystemImageBuild
-		if err := build.Validate(); err != nil {
-			return fmt.Errorf("invalid system image build: %w", err)
-		}
-		args = append(args, fmt.Sprintf("--system_build=%s", cliFormat(build)))
-	}
-	if opts.KernelBuild != (AndroidBuild{}) {
-		build := opts.KernelBuild
-		if err := build.Validate(); err != nil {
-			return fmt.Errorf("invalid kernel build: %w", err)
-		}
-		args = append(args, fmt.Sprintf("--kernel_build=%s", cliFormat(build)))
-	}
-	if opts.BootloaderBuild != (AndroidBuild{}) {
-		build := opts.BootloaderBuild
-		if err := build.Validate(); err != nil {
-			return fmt.Errorf("invalid bootloader build: %w", err)
-		}
-		args = append(args, fmt.Sprintf("--bootloader_build=%s", cliFormat(build)))
-	}
-	if opts.BuildAPIBaseURL != "" {
-		args = append(args, fmt.Sprintf("--api_base_url=%s", opts.BuildAPIBaseURL))
-	}
-
-	cmd := cli.buildCmd(CVDBin, args...)
-
-	if opts.Credentials.UseGCEServiceAccountCredentials {
-		cmd.Args = append(cmd.Args, "--use_gce_metadata")
-	} else if opts.Credentials.AccessTokenCredentials != (AccessTokenCredentials{}) {
-		file, err := createCredentialsFile(opts.Credentials.AccessTokenCredentials.AccessToken)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		// This is necessary for the subprocess to inherit the file.
-		cmd.ExtraFiles = append(cmd.ExtraFiles, file)
-		// The actual fd number is not retained, the lowest available number is used instead.
-		fd := 3 + len(cmd.ExtraFiles) - 1
-		cmd.Args = append(cmd.Args, fmt.Sprintf("--credential_filepath=/proc/self/fd/%d", fd))
-	}
-
-	if _, err := cli.runCmd(cmd); err != nil {
-		return fmt.Errorf("`cvd fetch` failed: %w", err)
-	}
-	// TODO(b/286466643): Remove this hack once cuttlefish is capable of booting from read-only artifacts again.
-	if _, err := cli.exec("chmod", "-R", "g+rw", targetDir); err != nil {
-		return err
-	}
-	return nil
-}
-
 type CreateOptions struct {
 	HostPath      string
 	ProductPath   string
@@ -390,6 +321,14 @@ func (i *Instance) Stop() error {
 	return err
 }
 
+func (i *Instance) Start(opts StartOptions) error {
+	args := i.selectorArgs()
+	args = append(args, "start", "--report_anonymous_usage_stats=y")
+	args = append(args, opts.toArgs()...)
+	_, err := i.cli.exec(CVDBin, args...)
+	return err
+}
+
 type DisplayAddOpts struct {
 	Width         int
 	Height        int
@@ -628,12 +567,4 @@ func createCredentialsFile(content string) (*os.File, error) {
 		}
 	}(p2)
 	return p1, nil
-}
-
-func cliFormat(b AndroidBuild) string {
-	build := b.BuildID
-	if build == "" {
-		build = b.Branch
-	}
-	return fmt.Sprintf("%s/%s", build, b.BuildTarget)
 }
