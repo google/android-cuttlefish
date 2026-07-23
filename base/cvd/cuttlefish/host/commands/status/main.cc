@@ -151,13 +151,13 @@ int main(int argc, char** argv) {
   cuttlefish::LogToStderr();
   cuttlefish::Result<cuttlefish::StatusFlags> flag_result =
       cuttlefish::GetFlagValues(argc, argv);
-  if (!flag_result.ok()) {
+  if (!flag_result.has_value()) {
     LOG(ERROR) << flag_result.error();
     return EXIT_FAILURE;
   }
 
   auto result = cuttlefish::CvdStatusMain(flag_result.value());
-  if (!result.ok()) {
+  if (!result.has_value()) {
     LOG(ERROR) << result.error();
     return EXIT_FAILURE;
   }

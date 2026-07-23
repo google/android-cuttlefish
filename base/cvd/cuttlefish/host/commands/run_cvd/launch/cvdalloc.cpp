@@ -70,7 +70,7 @@ Result<std::vector<MonitorCommand>> Cvdalloc::Commands() {
 std::string Cvdalloc::Name() const { return "Cvdalloc"; }
 
 bool Cvdalloc::Enabled() const {
-  if (!IsUsable().ok()) {
+  if (!IsUsable().has_value()) {
     return false;
   }
   return instance_.use_cvdalloc();
@@ -118,12 +118,12 @@ Result<void> Cvdalloc::IsUsable() const {
 
 StopperResult Cvdalloc::Stop() {
   LOG(INFO) << "cvdalloc (run_cvd): stop requested; teardown started";
-  if (!cvdalloc::Post(socket_).ok()) {
+  if (!cvdalloc::Post(socket_).has_value()) {
     LOG(INFO) << "cvdalloc (run_cvd): stop failed: couldn't Post";
     return StopperResult::kFailure;
   }
 
-  if (!cvdalloc::Wait(socket_, kCvdTeardownTimeout).ok()) {
+  if (!cvdalloc::Wait(socket_, kCvdTeardownTimeout).has_value()) {
     LOG(INFO) << "cvdalloc (run_cvd): stop failed: couldn't Wait";
     return StopperResult::kFailure;
   }

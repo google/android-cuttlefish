@@ -126,7 +126,7 @@ Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
   (void)command.Start().Wait();
 
   auto result = AddFetchLogIfPresent(instance_group, output_file);
-  if (!result.ok()) {
+  if (!result.has_value()) {
     LOG(ERROR) << "Failed to add fetch log to bugreport: " << result.error();
   }
 

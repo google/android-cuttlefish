@@ -20,18 +20,18 @@ namespace cuttlefish {
 
 TEST_F(CvdFlagCollectionTest, Init) {
   auto output_result = flag_collection_.FilterFlags(input_);
-  ASSERT_TRUE(output_result.ok()) << output_result.error().Trace();
+  ASSERT_TRUE(output_result.has_value()) << output_result.error().Trace();
 }
 
 TEST_F(CvdFlagCollectionTest, Leftover) {
   auto output_result = flag_collection_.FilterFlags(input_);
-  ASSERT_TRUE(output_result.ok()) << output_result.error().Trace();
+  ASSERT_TRUE(output_result.has_value()) << output_result.error().Trace();
   ASSERT_EQ(input_, std::vector<std::string>{"--not_consumed"});
 }
 
 TEST_F(CvdFlagCollectionTest, AllGivenFlagsListed) {
   auto output_result = flag_collection_.FilterFlags(input_);
-  ASSERT_TRUE(output_result.ok()) << output_result.error().Trace();
+  ASSERT_TRUE(output_result.has_value()) << output_result.error().Trace();
   ASSERT_EQ(input_, std::vector<std::string>{"--not_consumed"});
   auto output = std::move(*output_result);
 
@@ -54,13 +54,13 @@ TEST(CvdFlagTest, FlagProxyFilter) {
   auto expected_null_result = no_default_proxy.FilterFlag(not_has_flag_args);
   auto expected_null_result2 = no_default_proxy.FilterFlag(empty_args);
 
-  ASSERT_TRUE(expected_hello_opt_result.ok());
-  ASSERT_TRUE(expected_null_result.ok());
-  ASSERT_TRUE(expected_null_result2.ok());
+  ASSERT_TRUE(expected_hello_opt_result.has_value());
+  ASSERT_TRUE(expected_null_result.has_value());
+  ASSERT_TRUE(expected_null_result2.has_value());
 
   ASSERT_TRUE(*expected_hello_opt_result);
   auto value_result = Get<std::string>(**expected_hello_opt_result);
-  ASSERT_TRUE(value_result.ok());
+  ASSERT_TRUE(value_result.has_value());
   ASSERT_EQ(*value_result, "Hello");
   ASSERT_FALSE(*expected_null_result);
   ASSERT_FALSE(*expected_null_result2);

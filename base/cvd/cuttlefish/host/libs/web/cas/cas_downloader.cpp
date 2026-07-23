@@ -32,7 +32,6 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include "android-base/expected.h"
 #include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -292,7 +291,7 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
     const CasDownloaderFlags& cas_downloader_flags,
     const std::string& service_account_filepath) {
   auto result = CreateImpl(cas_downloader_flags, service_account_filepath);
-  if (result.ok()) {
+  if (result.has_value()) {
     return result;
   }
   // Ensure callers and logs clearly indicate that CAS downloading is
@@ -454,7 +453,7 @@ Result<CasIdentifier> CasDownloader::GetCasIdentifier(
     const std::string digests_filename = "cas_digests.json";
     std::string digests_filepath = CF_EXPECT(digests_fetcher(digests_filename));
     Json::Value cas_digests = CF_EXPECT(ParseJson(ReadFile(digests_filepath)));
-    if (Result<void> res = RemoveFile(digests_filepath); !res.ok()) {
+    if (Result<void> res = RemoveFile(digests_filepath); !res.has_value()) {
       LOG(ERROR) << res.error();
     }
     std::vector<std::string> mandatory_keys{

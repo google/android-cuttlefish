@@ -41,7 +41,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImageEmptyJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
   EXPECT_FALSE(FindConfig(*serialized_data, R"(--blank_data_image_mb=)"))
       << "blank_data_image_mb flag is set";
   EXPECT_FALSE(FindConfig(*serialized_data, R"(--data_policy=)"))
@@ -72,7 +72,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImagePartialJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
   EXPECT_TRUE(
       FindConfig(*serialized_data, R"(--blank_data_image_mb=unset,2048)"))
       << "blank_data_image_mb flag is missing or wrongly formatted";
@@ -106,7 +106,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImageFullJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
   EXPECT_TRUE(
       FindConfig(*serialized_data, R"(--blank_data_image_mb=2048,4096)"))
       << "blank_data_image_mb flag is missing or wrongly formatted";

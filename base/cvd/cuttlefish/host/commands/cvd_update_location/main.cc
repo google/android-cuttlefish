@@ -62,8 +62,8 @@ int UpdateLocationCvdMain(int argc, char** argv) {
   location.elevation = FLAGS_elevation;
   coordinates.push_back(location);
   auto status = gpsclient.SendGpsLocations(1000, coordinates);
-  CHECK(status.ok()) << "Failed to send gps location data \n";
-  if (!status.ok()) {
+  CHECK(status.has_value()) << "Failed to send gps location data \n";
+  if (!status.has_value()) {
     return 1;
   }
   return 0;

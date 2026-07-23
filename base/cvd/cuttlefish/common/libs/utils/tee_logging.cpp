@@ -204,7 +204,7 @@ class LogSink : public absl::LogSink {
   LogSink(SeverityTarget destination, const std::string& prefix)
       : destination_(std::move(destination)), prefix_(prefix) {
     Result<std::string> exe = GetExecutablePath(getpid());
-    if (!exe.ok()) {
+    if (!exe.has_value()) {
       executable_ = std::to_string(getpid());
       return;
     }

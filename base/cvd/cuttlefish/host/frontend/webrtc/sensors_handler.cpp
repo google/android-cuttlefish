@@ -89,7 +89,7 @@ int SensorsHandler::AddMotionUpdatedCallback(MotionUpdatedCallback callback) {
 
   // Send device's initial state to the new client.
   Result<std::string> result = GetSensorsData(kMotionSensors);
-  if (!result.ok()) {
+  if (!result.has_value()) {
     LOG(ERROR) << "Failed to get sensors data: " << result.error();
     return subscriber_id;
   }
@@ -108,7 +108,7 @@ void SensorsHandler::RemoveMotionUpdatedCallback(int subscriber_id) {
 
 void SensorsHandler::NotifyMotionUpdated() {
   Result<std::string> result = GetSensorsData(kMotionSensors);
-  if (!result.ok()) {
+  if (!result.has_value()) {
     LOG(ERROR) << "Failed to get sensors data: " << result.error();
     return;
   }

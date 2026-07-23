@@ -71,7 +71,7 @@ TEST_F(CvdInstanceDatabaseTest, Empty) {
   auto& db = GetDb();
   ASSERT_THAT(db.IsEmpty(), IsOkAndValue(true));
   auto group_res = db.InstanceGroups();
-  ASSERT_TRUE(group_res.ok() && (*group_res).empty());
+  ASSERT_TRUE(group_res.has_value() && (*group_res).empty());
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
@@ -81,13 +81,14 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
   auto& db = GetDb();
   // populate home directories under Workspace()
   const std::string home{Workspace() + "/" + "meow"};
-  if (!EnsureDirectoryExists(home).ok()) {
+  if (!EnsureDirectoryExists(home).has_value()) {
     // if ever failed, skip
     GTEST_SKIP() << "Failed to find/create " << home;
   }
   const std::string invalid_host_artifacts_path{Workspace() + "/" + "host_out"};
-  if (!EnsureDirectoryExists(invalid_host_artifacts_path).ok() ||
-      !EnsureDirectoryExists(invalid_host_artifacts_path + "/bin").ok()) {
+  if (!EnsureDirectoryExists(invalid_host_artifacts_path).has_value() ||
+      !EnsureDirectoryExists(invalid_host_artifacts_path + "/bin")
+           .has_value()) {
     GTEST_SKIP() << "Failed to find/create "
                  << invalid_host_artifacts_path + "/bin";
   }
@@ -106,8 +107,8 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
   auto result_non_qualifying_host_tool_dir =
       db.AddInstanceGroup(group_builder2.Build().value());
 
-  ASSERT_FALSE(result_bad_group_name.ok());
-  ASSERT_FALSE(result_non_qualifying_host_tool_dir.ok());
+  ASSERT_FALSE(result_bad_group_name.has_value());
+  ASSERT_FALSE(result_non_qualifying_host_tool_dir.has_value());
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddWithValidGroupInfo) {
@@ -116,22 +117,22 @@ TEST_F(CvdInstanceDatabaseTest, AddWithValidGroupInfo) {
   }
   auto& db = GetDb();
   const std::string home0{Workspace() + "/" + "home0"};
-  if (!EnsureDirectoryExists(home0).ok()) {
+  if (!EnsureDirectoryExists(home0).has_value()) {
     GTEST_SKIP() << "Failed to find/create " << home0;
   }
   const std::string home1{Workspace() + "/" + "home1"};
-  if (!EnsureDirectoryExists(home1).ok()) {
+  if (!EnsureDirectoryExists(home1).has_value()) {
     GTEST_SKIP() << "Failed to find/create " << home1;
   }
 
   auto group_builder1 = GroupParamWithInstances(
       "meow", home0, HostArtifactsPath(), {HostArtifactsPath()}, {{1, "name"}});
-  ASSERT_TRUE(db.AddInstanceGroup(group_builder1.Build().value()).ok());
+  ASSERT_TRUE(db.AddInstanceGroup(group_builder1.Build().value()).has_value());
 
   auto group_builder2 =
       GroupParamWithInstances("miaou", home1, HostArtifactsPath(),
                               {HostArtifactsPath()}, {{2, "name"}});
-  ASSERT_TRUE(db.AddInstanceGroup(group_builder2.Build().value()).ok());
+  ASSERT_TRUE(db.AddInstanceGroup(group_builder2.Build().value()).has_value());
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
@@ -140,16 +141,16 @@ TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
   }
   auto& db = GetDb();
   const std::string home{Workspace() + "/" + "my_home"};
-  if (!EnsureDirectoryExists(home).ok()) {
+  if (!EnsureDirectoryExists(home).has_value()) {
     GTEST_SKIP() << "Failed to find/create " << home;
   }
 
   auto group_builder1 = GroupParamWithInstances(
       "meow", home, HostArtifactsPath(), {HostArtifactsPath()}, {{1, "name"}});
-  ASSERT_TRUE(db.AddInstanceGroup(group_builder1.Build().value()).ok());
+  ASSERT_TRUE(db.AddInstanceGroup(group_builder1.Build().value()).has_value());
   auto group_builder2 = GroupParamWithInstances(
       "meow", home, HostArtifactsPath(), {HostArtifactsPath()}, {{2, "name"}});
-  ASSERT_FALSE(db.AddInstanceGroup(group_builder2.Build().value()).ok());
+  ASSERT_FALSE(db.AddInstanceGroup(group_builder2.Build().value()).has_value());
 }
 
 TEST_F(CvdInstanceDatabaseTest, Clear) {
@@ -166,7 +167,7 @@ TEST_F(CvdInstanceDatabaseTest, Clear) {
 
   // test Clear()
   ASSERT_THAT(db.IsEmpty(), IsOkAndValue(false));
-  ASSERT_TRUE(db.Clear().ok());
+  ASSERT_TRUE(db.Clear().has_value());
   ASSERT_THAT(db.IsEmpty(), IsOkAndValue(true));
 }
 
@@ -184,13 +185,13 @@ TEST_F(CvdInstanceDatabaseTest, SearchGroups) {
   auto invalid_groups = db.FindGroups({.group_name = invalid_group_name});
   auto invalid_group = db.FindGroup({.group_name = invalid_group_name});
 
-  ASSERT_TRUE(valid_groups.ok());
+  ASSERT_TRUE(valid_groups.has_value());
   ASSERT_EQ(valid_groups->size(), 1);
-  ASSERT_TRUE(valid_group.ok());
+  ASSERT_TRUE(valid_group.has_value());
 
-  ASSERT_TRUE(invalid_groups.ok());
+  ASSERT_TRUE(invalid_groups.has_value());
   ASSERT_EQ(invalid_groups->size(), 0);
-  ASSERT_FALSE(invalid_group.ok());
+  ASSERT_FALSE(invalid_group.has_value());
 }
 
 TEST_F(CvdInstanceDatabaseTest, RemoveGroup) {
@@ -203,7 +204,7 @@ TEST_F(CvdInstanceDatabaseTest, RemoveGroup) {
     GTEST_SKIP() << Error().msg;
   }
   auto eng_group = db.FindGroup({.group_name = "meow"});
-  if (!eng_group.ok()) {
+  if (!eng_group.has_value()) {
     GTEST_SKIP() << "meow"
                  << " group was not found.";
   }
@@ -224,7 +225,7 @@ TEST_F(CvdInstanceDatabaseTest, AddInstances) {
   ASSERT_FALSE(AddGroup({"yah_ong3"}, {{5, "yumi"}, {5, "tiger"}}));
   ASSERT_FALSE(AddGroup({"yah_ong4"}, {{1, "yumi"}, {6, "tiger"}}));
   auto kitty_group = db.FindGroup({.group_name = "yah_ong1"});
-  if (!kitty_group.ok()) {
+  if (!kitty_group.has_value()) {
     GTEST_SKIP() << "yah_ong1"
                  << " group was not found";
   }
@@ -257,7 +258,7 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
   auto& db = GetDb();
   auto miau_group = db.FindGroup({.group_name = "miau"});
   auto nyah_group = db.FindGroup({.group_name = "nyah"});
-  if (!miau_group.ok() || !nyah_group.ok()) {
+  if (!miau_group.has_value() || !nyah_group.has_value()) {
     GTEST_SKIP() << "miau or nyah group"
                  << " group was not found";
   }
@@ -270,17 +271,17 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
   auto result3 = db.FindInstanceWithGroup({.instance_id = 3});
   auto result_invalid = db.FindInstanceWithGroup({.instance_id = 20});
 
-  ASSERT_TRUE(result1.ok());
-  ASSERT_TRUE(result10.ok());
-  ASSERT_TRUE(result7.ok());
-  ASSERT_TRUE(result11.ok());
-  ASSERT_TRUE(result3.ok());
+  ASSERT_TRUE(result1.has_value());
+  ASSERT_TRUE(result10.has_value());
+  ASSERT_TRUE(result7.has_value());
+  ASSERT_TRUE(result11.has_value());
+  ASSERT_TRUE(result3.has_value());
   ASSERT_EQ(result1->first.Name(), "8");
   ASSERT_EQ(result10->first.Name(), "tv-instance");
   ASSERT_EQ(result7->first.Name(), "my_favorite_phone");
   ASSERT_EQ(result11->first.Name(), "tv-instance");
   ASSERT_EQ(result3->first.Name(), "3_");
-  ASSERT_FALSE(result_invalid.ok());
+  ASSERT_FALSE(result_invalid.has_value());
 }
 
 TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
@@ -297,7 +298,7 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   auto& db = GetDb();
   auto miau_group = db.FindGroup({.group_name = "miau"});
   auto nyah_group = db.FindGroup({.group_name = "nyah"});
-  if (!miau_group.ok() || !nyah_group.ok()) {
+  if (!miau_group.has_value() || !nyah_group.has_value()) {
     GTEST_SKIP() << "miau or nyah "
                  << " group was not found";
   }
@@ -309,11 +310,11 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   auto result_invalid =
       db.FindInstanceWithGroup({.instance_names = {"name_never_seen"}});
 
-  ASSERT_TRUE(result1.ok());
-  ASSERT_TRUE(result7.ok());
+  ASSERT_TRUE(result1.has_value());
+  ASSERT_TRUE(result7.has_value());
   ASSERT_EQ(result1->first.Id(), 1);
   ASSERT_EQ(result7->first.Id(), 7);
-  ASSERT_FALSE(result_invalid.ok());
+  ASSERT_FALSE(result_invalid.has_value());
 }
 
 TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
@@ -330,7 +331,7 @@ TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
   auto& db = GetDb();
   auto miau_group = db.FindGroup({.group_name = "miau"});
   auto nyah_group = db.FindGroup({.group_name = "nyah"});
-  if (!miau_group.ok() || !nyah_group.ok()) {
+  if (!miau_group.has_value() || !nyah_group.has_value()) {
     GTEST_SKIP() << "miau or nyah "
                  << " group was not found";
   }
@@ -341,10 +342,10 @@ TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
   auto result_nyah = db.FindGroups({.instance_names = {"my_favorite_phone"}});
   auto result_invalid = db.FindGroups({.instance_names = {"name_never_seen"}});
 
-  ASSERT_TRUE(result_miau.ok());
-  ASSERT_TRUE(result_both.ok());
-  ASSERT_TRUE(result_nyah.ok());
-  ASSERT_TRUE(result_invalid.ok());
+  ASSERT_TRUE(result_miau.has_value());
+  ASSERT_TRUE(result_both.has_value());
+  ASSERT_TRUE(result_nyah.has_value());
+  ASSERT_TRUE(result_invalid.has_value());
   ASSERT_EQ(result_miau->size(), 1);
   ASSERT_EQ(result_both->size(), 2);
   ASSERT_EQ(result_nyah->size(), 1);
@@ -366,8 +367,8 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesTogether) {
   auto result_tv =
       db.FindInstanceWithGroup({.instance_names = {"tv_instance"}});
 
-  ASSERT_TRUE(result_8.ok()) << result_8.error().Trace();
-  ASSERT_TRUE(result_tv.ok()) << result_tv.error().Trace();
+  ASSERT_TRUE(result_8.has_value()) << result_8.error().Trace();
+  ASSERT_TRUE(result_tv.has_value()) << result_tv.error().Trace();
 }
 
 TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
@@ -383,7 +384,7 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
   Result<LocalInstanceGroup> group_res = builder.Build();
   ASSERT_THAT(group_res, IsOk());
   auto add_res = db.AddInstanceGroup(*group_res);
-  ASSERT_TRUE(add_res.ok())
+  ASSERT_TRUE(add_res.has_value())
       << "Failed to add group to db: " << add_res.error().Message();
 
   auto instance_group = *(std::move(group_res));
@@ -393,11 +394,11 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
   instance2.SetState(cvd::INSTANCE_STATE_STARTING);
 
   auto update_res = db.UpdateInstanceGroup(instance_group);
-  ASSERT_TRUE(update_res.ok())
+  ASSERT_TRUE(update_res.has_value())
       << "Failed to update database: " << update_res.error().Message();
 
   auto find_res = db.FindGroup({.group_name = "grp1"});
-  ASSERT_TRUE(find_res.ok()) << find_res.error().Message();
+  ASSERT_TRUE(find_res.has_value()) << find_res.error().Message();
 
   EXPECT_EQ(find_res->Instances()[0].Id(), 1);
   EXPECT_EQ(find_res->Instances()[1].Id(), 2);

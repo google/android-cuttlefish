@@ -270,7 +270,7 @@ Result<void> RunCvdMain(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   auto result = cuttlefish::RunCvdMain(argc, argv);
-  if (result.ok()) {
+  if (result.has_value()) {
     return 0;
   }
   LOG(ERROR) << result.error();

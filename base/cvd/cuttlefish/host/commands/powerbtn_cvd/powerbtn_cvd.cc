@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
   cuttlefish::LogToStderr();
   google::ParseCommandLineFlags(&argc, &argv, true);
   cuttlefish::Result<void> result = cuttlefish::PowerbtnCvdMain();
-  if (!result.ok()) {
+  if (!result.has_value()) {
     LOG(ERROR) << result.error();
     return EXIT_FAILURE;
   }

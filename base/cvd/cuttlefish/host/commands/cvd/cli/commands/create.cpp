@@ -377,7 +377,7 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
       // For backward compatibility, we add extra symlink in system wide home
       // when HOME is NOT overridden and selector flags are NOT given.
       auto symlink_res = CreateSymlinks(*group);
-      if (!symlink_res.ok()) {
+      if (!symlink_res.has_value()) {
         LOG(ERROR) << "Failed to create symlinks for default group: "
                    << symlink_res.error();
       }

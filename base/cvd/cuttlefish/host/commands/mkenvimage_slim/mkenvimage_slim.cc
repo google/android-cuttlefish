@@ -57,7 +57,7 @@ Result<void> MkenvimageSlimMain(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   if (cuttlefish::Result<void> res = cuttlefish::MkenvimageSlimMain(argc, argv);
-      res.ok()) {
+      res.has_value()) {
     return 0;
   } else {
     LOG(ERROR) << "mkenvimage_slim failed: \n" << res.error();

@@ -210,7 +210,8 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
   guest_config.gfxstream_gl_program_binary_link_status_supported =
       MapHasValue(info, "gfxstream_gl_program_binary_link_status", "supported");
 
-  if (const auto res = MapGetResult(info, "gpu_mode_candidates"); res.ok()) {
+  if (const auto res = MapGetResult(info, "gpu_mode_candidates");
+      res.has_value()) {
     const std::string& gpu_mode_candidates_str = *res;
     for (const std::string_view candidate_str :
          absl::StrSplit(gpu_mode_candidates_str, ",")) {
@@ -227,12 +228,12 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
   guest_config.gamepad_supported = MapHasValue(info, "gamepad", "supported");
 
   if (const Result<std::string> res = MapGetResult(info, "custom_keyboard");
-      res.ok()) {
+      res.has_value()) {
     guest_config.custom_keyboard_config = DefaultHostArtifactsPath(*res);
   }
 
   if (const Result<std::string> res = MapGetResult(info, "domkey_mapping");
-      res.ok()) {
+      res.has_value()) {
     guest_config.domkey_mapping_config = DefaultHostArtifactsPath(*res);
   }
 
@@ -248,7 +249,7 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
 
   if (const Result<std::string> res =
           MapGetResult(info, "output_audio_streams_count");
-      res.ok()) {
+      res.has_value()) {
     CF_EXPECTF(absl::SimpleAtoi(*res, &guest_config.output_audio_streams_count),
                "Failed to parse value '{}' for output audio stream count",
                *res);
@@ -256,7 +257,7 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
 
   if (const Result<std::string> res =
           MapGetResult(info, "enforce_mac80211_hwsim");
-      res.ok()) {
+      res.has_value()) {
     if (*res == "true") {
       guest_config.enforce_mac80211_hwsim = true;
     } else if (*res == "false") {
@@ -265,14 +266,14 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
   }
 
   if (const Result<std::string> res = MapGetResult(info, "blank_data_image_mb");
-      res.ok()) {
+      res.has_value()) {
     CF_EXPECTF(absl::SimpleAtoi(*res, &guest_config.blank_data_image_mb),
                "Failed to parse value '{}' for blank data image size", *res);
   }
 
   if (const Result<std::string> res =
           MapGetResult(info, "lights_server_enabled");
-      res.ok()) {
+      res.has_value()) {
     bool value;
     if (absl::SimpleAtob(*res, &value)) {
       guest_config.lights_server_enabled = value;

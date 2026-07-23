@@ -88,7 +88,7 @@ std::optional<std::string> GetConfigPath(std::vector<std::string>& args) {
   std::vector<Flag> config_flags = {
       GflagsCompatFlag("config_file", config_file)};
   auto result = ConsumeFlags(config_flags, args);
-  if (!result.ok() || initial_size == args.size()) {
+  if (!result.has_value() || initial_size == args.size()) {
     return std::nullopt;
   }
   return config_file;
@@ -104,7 +104,7 @@ bool PotentiallyHostArtifactsPath(const std::string& host_artifacts_path) {
   }
   const auto host_bin_path = host_artifacts_path + "/bin";
   auto contents_result = DirectoryContents(host_bin_path);
-  if (!contents_result.ok()) {
+  if (!contents_result.has_value()) {
     return false;
   }
   std::vector<std::string> contents = std::move(*contents_result);
@@ -228,7 +228,8 @@ static Result<void> UpdateInstanceArgs(std::vector<std::string>& args,
 Result<void> SymlinkPreviousConfig(const std::string& group_home_dir) {
   auto system_wide_home = CF_EXPECT(SystemWideUserHome());
   auto config_from_home = system_wide_home + "/.cuttlefish_config.json";
-  if (!FileExists(config_from_home) || !LoadFromFile(config_from_home).ok()) {
+  if (!FileExists(config_from_home) ||
+      !LoadFromFile(config_from_home).has_value()) {
     // Skip if the file doesn't exist or can't be parsed as JSON
     return {};
   }
@@ -341,7 +342,7 @@ bool CanBypassToSingleInstance(const LocalInstance& instance,
       GflagsCompatFlag("daemon", daemon),
   };
   const Result<void> res = ConsumeFlags(safe_flags, args_copy);
-  if (!res.ok() || !daemon || !args_copy.empty()) {
+  if (!res.has_value() || !daemon || !args_copy.empty()) {
     return false;
   }
 
@@ -436,7 +437,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
           stop_eventfd->EventfdWrite(1);
         }
         Result<void> interrupt_res = subprocess_waiter_.Interrupt();
-        if (!interrupt_res.ok()) {
+        if (!interrupt_res.has_value()) {
           LOG(ERROR) << "Failed to stop subprocesses: "
                      << interrupt_res.error();
           LOG(ERROR) << "Devices may still be executing in the background, "
@@ -445,7 +446,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
 
         group.SetAllStates(cvd::INSTANCE_STATE_CANCELLED);
         Result<void> update_res = instance_manager_.UpdateInstanceGroup(group);
-        if (!update_res.ok()) {
+        if (!update_res.has_value()) {
           LOG(ERROR) << "Failed to update group status: " << update_res.error();
         }
         // It's technically possible for the group's state to be set to
@@ -481,7 +482,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   Result<void> launch_res =
       LaunchDeviceInterruptible(std::move(command), group, envs, request);
 
-  if (!launch_res.ok()) {
+  if (!launch_res.has_value()) {
     if (!own_flags_.daemon) {
       if (stop_eventfd->IsOpen()) {
         stop_eventfd->EventfdWrite(1);
@@ -549,7 +550,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
   // themselves the pre-registration is lost and group information won't be
   // shown in the UI.
   auto conn_res = PreregisterGroup(group);
-  if (!conn_res.ok()) {
+  if (!conn_res.has_value()) {
     LOG(ERROR) << "Failed to pre-register devices with operator, group "
                   "information won't show in the UI: "
                << conn_res.error();
@@ -586,13 +587,13 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
   // NOTE: --report_anonymous_usage_stats flag and its value in the config are
   // deprecated
   auto symlink_config_res = SymlinkPreviousConfig(group.HomeDir());
-  if (!symlink_config_res.ok()) {
+  if (!symlink_config_res.has_value()) {
     LOG(ERROR) << "Failed to symlink the config file at system wide home: "
                << symlink_config_res.error();
   }
   Result<void> start_res =
       LaunchDevice(std::move(command), group, envs, request);
-  if (!start_res.ok()) {
+  if (!start_res.has_value()) {
     group.SetAllStates(cvd::INSTANCE_STATE_BOOT_FAILED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
     return start_res;
@@ -632,7 +633,7 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
 
   const Result<void> symlink_config_res =
       SymlinkPreviousConfig(group.HomeDir());
-  if (!symlink_config_res.ok()) {
+  if (!symlink_config_res.has_value()) {
     LOG(ERROR) << "Failed to symlink the config file at system wide home: "
                << symlink_config_res.error();
   }
@@ -653,7 +654,7 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
   Result<void> start_res =
       LaunchDevice(std::move(command), group, run_cvd_envs, request);
 
-  if (!start_res.ok()) {
+  if (!start_res.has_value()) {
     set_instance_state(cvd::INSTANCE_STATE_BOOT_FAILED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
     return start_res;

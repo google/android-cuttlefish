@@ -68,7 +68,7 @@ CommandRequest::CommandRequest(std::vector<std::string> args,
 
   //  transform `cvd -h` or `cvd --help` requests into `cvd help`
   Result<bool> is_top_level_help_flag = HasHelpFlag({subcommand_});
-  if (is_top_level_help_flag.ok() && *is_top_level_help_flag) {
+  if (is_top_level_help_flag.has_value() && *is_top_level_help_flag) {
     subcommand_ = "help";
   }
 }

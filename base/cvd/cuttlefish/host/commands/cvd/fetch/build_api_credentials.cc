@@ -45,7 +45,7 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
   }
   auto result = ServiceAccountOauthCredentialSource::FromJson(
       http_client, content, kAndroidBuildApiScope);
-  if (!result.ok()) {
+  if (!result.has_value()) {
     VLOG(0) << "Failed to load service account json file: \n" << result.error();
     return {};
   }
@@ -63,7 +63,7 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
       std::string oauth_contents = CF_EXPECT(ReadFileContents(oauth_filepath));
       auto attempt_load = RefreshTokenCredentialSource::FromOauth2ClientFile(
           http_client, oauth_contents);
-      if (attempt_load.ok()) {
+      if (attempt_load.has_value()) {
         result = std::move(*attempt_load);
         VLOG(0) << "Loaded credentials from '" << oauth_filepath << "'";
       } else {

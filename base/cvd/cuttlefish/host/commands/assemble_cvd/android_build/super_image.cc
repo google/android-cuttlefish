@@ -226,9 +226,9 @@ Result<std::unique_ptr<android::fs_mgr::LpMetadata>> SuperImageFromAndroidBuild(
   // it is smaller.
   Result<std::string> path;
   std::unique_ptr<android::fs_mgr::LpMetadata> metadata;
-  if (path = build.ImageFile(kSuperEmpty); path.ok()) {
+  if (path = build.ImageFile(kSuperEmpty); path.has_value()) {
     metadata = android::fs_mgr::ReadFromImageFile(*path);
-  } else if (path = build.ImageFile(kSuper); path.ok()) {
+  } else if (path = build.ImageFile(kSuper); path.has_value()) {
     metadata = android::fs_mgr::ReadMetadata(*path, 0);
   } else {
     return CF_ERR("No super.img or super_empty.img could be found");

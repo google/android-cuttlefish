@@ -79,7 +79,7 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
     // Update authentication key when it's empty.
     if (auth_key_.empty()) {
       Result<void> auth_res = UpdateLuciRpcAuthKey();
-      if (!auth_res.ok()) {
+      if (!auth_res.has_value()) {
         return ErrorResultToStatus(kErrorMessageRpcAuth, auth_res.error());
       }
     }
@@ -88,14 +88,14 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
                                 ToVector(request->params()));
 
     // When RPC request fails, update authentication key and retry once.
-    if (!reply.ok()) {
+    if (!reply.has_value()) {
       Result<void> auth_res = UpdateLuciRpcAuthKey();
-      if (!auth_res.ok()) {
+      if (!auth_res.has_value()) {
         return ErrorResultToStatus(kErrorMessageRpcAuth, auth_res.error());
       }
       reply = RequestLuciRpc(request->subpath(), request->method(),
                              ToVector(request->params()));
-      if (!reply.ok()) {
+      if (!reply.has_value()) {
         return ErrorResultToStatus(kErrorMessageRpc, reply.error());
       }
     }
@@ -113,7 +113,7 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
     // TODO(seungjaeyoo) : Find IP address from crosvm_openwrt.log when using
     // cvd-wtap-XX after disabling DHCP inside OpenWRT in bridged_wifi_tap mode.
     Result<std::string> ipaddr = FindIpaddrLauncherLog();
-    if (!ipaddr.ok()) {
+    if (!ipaddr.has_value()) {
       return ErrorResultToStatus("Failed to get Openwrt IP address",
                                  ipaddr.error());
     }

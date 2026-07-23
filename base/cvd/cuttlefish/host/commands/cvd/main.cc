@@ -64,7 +64,7 @@ LogSeverity CvdVerbosityOption(std::vector<std::string>& all_args) {
   std::string verbosity_flag_value;
   std::vector<Flag> verbosity_flag{
       GflagsCompatFlag("verbosity", verbosity_flag_value)};
-  if (!ConsumeFlags(verbosity_flag, all_args).ok()) {
+  if (!ConsumeFlags(verbosity_flag, all_args).has_value()) {
     LOG(ERROR) << "Verbosity flag parsing failed, so use the default value.";
     return LogSeverity::Info;
   }
@@ -72,7 +72,7 @@ LogSeverity CvdVerbosityOption(std::vector<std::string>& all_args) {
     return LogSeverity::Info;
   }
   Result<LogSeverity> to_severity_res = ToSeverity(verbosity_flag_value);
-  if (!to_severity_res.ok()) {
+  if (!to_severity_res.has_value()) {
     return LogSeverity::Info;
   }
   LogSeverity verbosity = *to_severity_res;
@@ -208,7 +208,7 @@ std::optional<std::string> InitializeLogs(std::vector<std::string>& all_args) {
       isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
 
   std::vector<std::string> log_files;
-  if (EnsureDirectoryExists(CvdUserLogDir(), 0777).ok()) {
+  if (EnsureDirectoryExists(CvdUserLogDir(), 0777).has_value()) {
     log_files.push_back(GetCvdLogFileName(CvdUserLogDir()));
   } else {
     std::cerr << "File logging disabled, could not create " << CvdUserLogDir()
@@ -233,7 +233,7 @@ int main(int argc, char** argv) {
   std::optional<std::string> log_file = cuttlefish::InitializeLogs(all_args);
 
   cuttlefish::Result<void> result = cuttlefish::CvdMain(std::move(all_args));
-  if (result.ok()) {
+  if (result.has_value()) {
     return 0;
   } else if (log_file.has_value() && isatty(2)) {
     VLOG(0) << result.error();

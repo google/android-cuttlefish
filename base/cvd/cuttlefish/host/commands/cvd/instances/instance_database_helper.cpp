@@ -39,8 +39,9 @@ std::optional<std::string> CreateTempDirectory(
     return {std::string(ptr)};
   }
   std::string default_path = "/tmp/" + subdir + "." + default_suffix;
-  return (EnsureDirectoryExists(default_path).ok() ? std::optional(default_path)
-                                                   : std::nullopt);
+  return (EnsureDirectoryExists(default_path).has_value()
+              ? std::optional(default_path)
+              : std::nullopt);
 }
 
 // Linux "touch" a(n empty) file
@@ -101,12 +102,12 @@ bool CvdInstanceDatabaseTest::InitMockAndroidHostOut() {
    *
    */
   std::string android_host_out = workspace_dir_ + "/android_host_out";
-  if (!EnsureDirectoryExists(android_host_out).ok()) {
+  if (!EnsureDirectoryExists(android_host_out).has_value()) {
     SetErrorCode(ErrorCode::kFileError, "Failed to create " + android_host_out);
     return false;
   }
   android_artifacts_path_ = android_host_out;
-  if (!EnsureDirectoryExists(android_artifacts_path_ + "/bin").ok()) {
+  if (!EnsureDirectoryExists(android_artifacts_path_ + "/bin").has_value()) {
     SetErrorCode(ErrorCode::kFileError,
                  "Failed to create " + android_artifacts_path_ + "/bin");
     return false;
@@ -126,10 +127,10 @@ bool CvdInstanceDatabaseTest::AddGroup(
     builder.AddInstance(instance.first, instance.second);
   }
   Result<LocalInstanceGroup> create_res = builder.Build();
-  if (!create_res.ok()) {
+  if (!create_res.has_value()) {
     return false;
   }
-  if (!db_.AddInstanceGroup(create_res.value()).ok()) {
+  if (!db_.AddInstanceGroup(create_res.value()).has_value()) {
     SetErrorCode(ErrorCode::kInstanceDabaseError, "Failed to add group");
     return false;
   }

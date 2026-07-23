@@ -50,17 +50,18 @@ Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
     FileSource source) {
   Result<std::unique_ptr<AndroidBuild>> res;
 
-  if (res = FetchedAndroidBuild(config, source); res.ok()) {
-  } else if (res = AndroidDistBuild(system_image_dir); res.ok()) {
+  if (res = FetchedAndroidBuild(config, source); res.has_value()) {
+  } else if (res = AndroidDistBuild(system_image_dir); res.has_value()) {
     // TODO: b/473624789 - what if the dist build is older than the product
     // build
-  } else if (res = CF_EXPECT(AndroidProductDir(system_image_dir)); res.ok()) {
+  } else if (res = CF_EXPECT(AndroidProductDir(system_image_dir));
+             res.has_value()) {
   } else {
     return CF_EXPECT(std::move(res));
   }
   std::unique_ptr<AndroidBuild> build = CF_EXPECT(std::move(res));
 
-  if (res = SuperImageAsBuild(*build); res.ok()) {
+  if (res = SuperImageAsBuild(*build); res.has_value()) {
     std::vector<std::unique_ptr<AndroidBuild>> builds;
     builds.emplace_back(std::move(build));
     builds.emplace_back(std::move(*res));
@@ -68,7 +69,7 @@ Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
     build = CF_EXPECT(CombinedAndroidBuild("WithSuper", std::move(builds)));
   }
 
-  if (res = PhysicalPartitions(*build); res.ok()) {
+  if (res = PhysicalPartitions(*build); res.has_value()) {
     std::vector<std::unique_ptr<AndroidBuild>> builds;
     builds.emplace_back(std::move(build));
     builds.emplace_back(std::move(*res));

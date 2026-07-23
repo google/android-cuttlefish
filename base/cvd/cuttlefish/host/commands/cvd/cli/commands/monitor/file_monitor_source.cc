@@ -107,7 +107,7 @@ FileMonitorSource::~FileMonitorSource() = default;
 MonitorOutput FileMonitorSource::Report(size_t rows, size_t) {
   const std::string basename = android::base::Basename(path_);
   Result<FileData> file_data = GetLastNLines(*file_io_, rows);
-  if (!file_data.ok()) {
+  if (!file_data.has_value()) {
     return MonitorOutput(
         absl::StrCat(basename, " (error)"),
         absl::StrSplit(file_data.error().FormatForEnv(true), '\n'));

@@ -205,21 +205,21 @@ std::unique_ptr<Streamer> Streamer::Create(
   impl->connection_observer_factory_ = connection_observer_factory;
 
   auto network_thread_result = CreateAndStartThread("network-thread");
-  if (!network_thread_result.ok()) {
+  if (!network_thread_result.has_value()) {
     LOG(ERROR) << network_thread_result.error();
     return nullptr;
   }
   impl->network_thread_ = std::move(*network_thread_result);
 
   auto worker_thread_result = CreateAndStartThread("worker-thread");
-  if (!worker_thread_result.ok()) {
+  if (!worker_thread_result.has_value()) {
     LOG(ERROR) << worker_thread_result.error();
     return nullptr;
   }
   impl->worker_thread_ = std::move(*worker_thread_result);
 
   auto signal_thread_result = CreateAndStartThread("signal-thread");
-  if (!signal_thread_result.ok()) {
+  if (!signal_thread_result.has_value()) {
     LOG(ERROR) << signal_thread_result.error();
     return nullptr;
   }
@@ -233,7 +233,7 @@ std::unique_ptr<Streamer> Streamer::Create(
       impl->network_thread_.get(), impl->worker_thread_.get(),
       impl->signal_thread_.get(), impl->audio_device_module_->device_module());
 
-  if (!result.ok()) {
+  if (!result.has_value()) {
     LOG(ERROR) << result.error();
     return nullptr;
   }
@@ -546,7 +546,7 @@ void Streamer::Impl::HandleConfigMessage(const Json::Value& server_message) {
   CHECK(signal_thread_->IsCurrent())
       << __FUNCTION__ << " called from the wrong thread";
   auto result = ParseIceServersMessage(server_message);
-  if (!result.ok()) {
+  if (!result.has_value()) {
     LOG(WARNING) << "Failed to parse ice servers message from server: "
                  << result.error();
   }

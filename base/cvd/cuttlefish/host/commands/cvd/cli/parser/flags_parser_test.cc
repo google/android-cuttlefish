@@ -56,7 +56,7 @@ TEST(FlagsParserTest, ParseJsonWithSpellingError) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_FALSE(serialized_data.ok());
+  EXPECT_FALSE(serialized_data.has_value());
 }
 
 TEST(FlagsParserTest, ParseBasicJsonSingleInstances) {
@@ -80,7 +80,7 @@ TEST(FlagsParserTest, ParseBasicJsonSingleInstances) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, "--num_instances=1"))
       << "num_instances flag is missing or wrongly formatted";
 }
@@ -112,7 +112,7 @@ TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, "--num_instances=2"))
       << "num_instances flag is missing or wrongly formatted";
 }
@@ -138,7 +138,7 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEmptyJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
   EXPECT_FALSE(FindConfig(*serialized_data, R"(--netsim_bt=)"))
       << "netsim_bt flag is set";
   EXPECT_FALSE(FindConfig(*serialized_data, R"(--netsim_uwb=)"))
@@ -168,7 +168,7 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=false)"))
       << "netsim_bt flag is missing or wrongly formatted";
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_uwb=true)"))
@@ -228,7 +228,7 @@ TEST(CvdLoadFlagsTest, CredentialSourceSetter) {
   auto flags = BuildCvdLoadFlags(load_flags);
   std::vector<std::string> args = {"--credential_source=foo"};
   auto result = ConsumeFlags(flags, args);
-  ASSERT_TRUE(result.ok()) << result.error().Trace();
+  ASSERT_TRUE(result.has_value()) << result.error().Trace();
 
   ASSERT_EQ(load_flags.overrides.size(), 1);
   EXPECT_EQ(load_flags.overrides.count("fetch.credential_source"), 1);
@@ -267,7 +267,7 @@ TEST(CvdLoadFlagsTest, ProjectIDSetter) {
   auto flags = BuildCvdLoadFlags(load_flags);
   std::vector<std::string> args = {"--project_id=foo"};
   auto result = ConsumeFlags(flags, args);
-  ASSERT_TRUE(result.ok()) << result.error().Trace();
+  ASSERT_TRUE(result.has_value()) << result.error().Trace();
 
   ASSERT_EQ(load_flags.overrides.size(), 1);
   EXPECT_EQ(load_flags.overrides.count("fetch.project_id"), 1);
@@ -297,7 +297,7 @@ TEST(CvdLoadFlagsTest, ProjectIDDuplicated) {
   std::vector<std::string> args = {"--project_id=first_project",
                                    "--project_id=second_project"};
   auto result = ConsumeFlags(flags, args);
-  EXPECT_FALSE(result.ok()) << "Expected duplicate flag to fail";
+  EXPECT_FALSE(result.has_value()) << "Expected duplicate flag to fail";
 }
 
 TEST(CvdLoadFlagsTest, CredentialSourceConflictWithOverride) {
@@ -307,7 +307,8 @@ TEST(CvdLoadFlagsTest, CredentialSourceConflictWithOverride) {
       "--override=fetch.credential_source:override_val",
       "--credential_source=flag_val"};
   auto result = ConsumeFlags(flags, args);
-  EXPECT_FALSE(result.ok()) << "Expected override followed by flag to fail";
+  EXPECT_FALSE(result.has_value())
+      << "Expected override followed by flag to fail";
 }
 
 TEST(CvdLoadFlagsTest, OverrideConflictWithCredentialSource) {
@@ -317,7 +318,8 @@ TEST(CvdLoadFlagsTest, OverrideConflictWithCredentialSource) {
       "--credential_source=flag_val",
       "--override=fetch.credential_source:override_val"};
   auto result = ConsumeFlags(flags, args);
-  EXPECT_FALSE(result.ok()) << "Expected flag followed by override to fail";
+  EXPECT_FALSE(result.has_value())
+      << "Expected flag followed by override to fail";
 }
 
 TEST(CvdLoadFlagsTest, ProjectIDConflictWithOverride) {
@@ -327,7 +329,8 @@ TEST(CvdLoadFlagsTest, ProjectIDConflictWithOverride) {
       "--override=fetch.project_id:override_project",
       "--project_id=flag_project"};
   auto result = ConsumeFlags(flags, args);
-  EXPECT_FALSE(result.ok()) << "Expected override followed by flag to fail";
+  EXPECT_FALSE(result.has_value())
+      << "Expected override followed by flag to fail";
 }
 
 TEST(CvdLoadFlagsTest, OverrideConflictWithProjectID) {
@@ -337,7 +340,8 @@ TEST(CvdLoadFlagsTest, OverrideConflictWithProjectID) {
       "--project_id=flag_project",
       "--override=fetch.project_id:override_project"};
   auto result = ConsumeFlags(flags, args);
-  EXPECT_FALSE(result.ok()) << "Expected flag followed by override to fail";
+  EXPECT_FALSE(result.has_value())
+      << "Expected flag followed by override to fail";
 }
 
 TEST(CvdLoadFlagsTest, DuplicateOverridesFail) {
@@ -346,7 +350,7 @@ TEST(CvdLoadFlagsTest, DuplicateOverridesFail) {
   std::vector<std::string> args = {"--override=fetch.credential_source:val1",
                                    "--override=fetch.credential_source:val2"};
   auto result = ConsumeFlags(flags, args);
-  EXPECT_FALSE(result.ok()) << "Expected duplicate overrides to fail";
+  EXPECT_FALSE(result.has_value()) << "Expected duplicate overrides to fail";
 }
 
 TEST(FlagsParserTest, ParseMediaSplaneSingleInstance) {
@@ -373,7 +377,7 @@ TEST(FlagsParserTest, ParseMediaSplaneSingleInstance) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
   EXPECT_TRUE(
       FindConfig(*serialized_data, "--media=type=v4l2_emulated_camera_splane"))
       << "media flag is missing or wrongly formatted";
@@ -406,7 +410,7 @@ TEST(FlagsParserTest, ParseMediaSplaneTwoDevices) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
   EXPECT_EQ(std::count(serialized_data->begin(), serialized_data->end(),
                        "--media=type=v4l2_emulated_camera_splane"),
             2);
@@ -437,7 +441,7 @@ TEST(FlagsParserTest, ParseMediaMplane) {
 
   auto serialized_data = LaunchCvdParserTester(json_configs);
 
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
   EXPECT_TRUE(
       FindConfig(*serialized_data, "--media=type=v4l2_emulated_camera_mplane"))
       << "media flag is missing or wrongly formatted";
@@ -470,7 +474,7 @@ TEST(FlagsParserTest, ParseMediaV4l2Proxy) {
 
   auto serialized_data = LaunchCvdParserTester(json_configs);
 
-  EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
+  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data, "--media=type=v4l2_proxy"))
       << "media flag is missing or wrongly formatted";
 }
@@ -578,7 +582,7 @@ TEST(ConnectivityFlagsParserTest, ParseModemSimulatorSimTypeInvalidString) {
       << "Invalid Json string";
   const Result<std::vector<std::string>> serialized_data =
       LaunchCvdParserTester(json_configs);
-  EXPECT_FALSE(serialized_data.ok());
+  EXPECT_FALSE(serialized_data.has_value());
 }
 
 TEST(ConnectivityFlagsParserTest, ParseModemSimulatorSimTypeInvalidInt) {

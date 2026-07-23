@@ -71,7 +71,7 @@ Result<void> ExtractFile(ReadableZip& zip, std::string_view zip_path,
 
   CF_EXPECT(SparseCopy(*reader, *writer));
 
-  if (Result<uint32_t> attr = zip.FileAttributes(zip_path); attr.ok()) {
+  if (Result<uint32_t> attr = zip.FileAttributes(zip_path); attr.has_value()) {
     // The fetcher must occasionally download archives from Android 10 or 11
     // which incorrectly had the file attributes set to 0. To remedy this
     // set them to a safe 0640.

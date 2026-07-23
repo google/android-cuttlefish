@@ -396,7 +396,7 @@ gfxstream::expected<bool, vk::Result> CanHandlePrecisionQualifierWithYuvSampler(
   };
 
   auto result = CompareImages(textureDataRgba, actual);
-  return result.ok();
+  return result.has_value();
 }
 
 }  // namespace
@@ -436,7 +436,7 @@ PopulateVulkanPrecisionQualifiersOnYuvSamplersQuirk(
   for (const auto& combo : combos) {
     auto result =
         CanHandlePrecisionQualifierWithYuvSampler(combo.vert, combo.frag);
-    if (!result.ok()) {
+    if (!result.has_value()) {
       // Failed to run to completion.
       return gfxstream::unexpected(vk::to_string(result.error()));
     }

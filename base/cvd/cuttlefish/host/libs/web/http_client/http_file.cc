@@ -49,14 +49,14 @@ Result<HttpResponse<std::string>> HttpGetToFile(
     // "beginning of download" case, which can come multiple times.
     if (data == nullptr) {
       if (!temp_path.empty()) {
-        if (Result<void> res = RemoveFile(temp_path); !res.ok()) {
+        if (Result<void> res = RemoveFile(temp_path); !res.has_value()) {
           LOG(ERROR) << res.error();
         }
       }
       total_dl = 0;
       last_log = 0;
       Result<std::pair<SharedFD, std::string>> res = SharedFD::Mkostemp(path);
-      if (!res.ok()) {
+      if (!res.has_value()) {
         LOG(ERROR) << "Can't make temp file: " << res.error();
         return false;
       }

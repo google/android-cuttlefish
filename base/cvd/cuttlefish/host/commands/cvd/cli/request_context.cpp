@@ -21,7 +21,9 @@
 #include <string>
 #include <vector>
 
+#include "fmt/base.h"
 #include "fmt/format.h"
+#include "fmt/ostream.h"
 #include "fmt/ranges.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"

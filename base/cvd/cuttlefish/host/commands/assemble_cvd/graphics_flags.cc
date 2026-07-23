@@ -25,7 +25,9 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
+#include "fmt/base.h"
 #include "fmt/format.h"
+#include "fmt/ostream.h"
 #include "google/protobuf/io/tokenizer.h"
 #include "google/protobuf/text_format.h"
 
@@ -234,7 +236,7 @@ GetGpuModeRequirementsMap() {
             }
 
             auto semver_result = ParseSemVer(common.host_info.release);
-            if (!semver_result.ok()) {
+            if (!semver_result.has_value()) {
               return false;
             }
             SemVer semver = *semver_result;
@@ -796,7 +798,7 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
 
   Result<std::string> graphics_detector_stdout =
       RunAndCaptureStdout(std::move(graphics_detector_cmd));
-  if (!graphics_detector_stdout.ok()) {
+  if (!graphics_detector_stdout.has_value()) {
     LOG(ERROR)
         << "Failed to run graphics detector, assuming no availability: \n"
         << graphics_detector_stdout.error();
@@ -806,7 +808,7 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
 
   auto graphics_availability_content_result =
       ReadFileContents(graphics_availability_file.path);
-  if (!graphics_availability_content_result.ok()) {
+  if (!graphics_availability_content_result.has_value()) {
     LOG(ERROR) << "Failed to read graphics availability from file "
                << graphics_availability_file.path << ":"
                << graphics_availability_content_result.error()

@@ -116,7 +116,7 @@ Result<Json::Value> LocalInstance::FetchStatus(std::chrono::seconds timeout) {
 
 Result<void> LocalInstance::PressPowerBtn() {
   auto bin_check = HostToolTarget(HostArtifactsPath()).GetPowerBtnBinPath();
-  if (bin_check.ok()) {
+  if (bin_check.has_value()) {
     return PressPowerBtnLegacy();
   }
 

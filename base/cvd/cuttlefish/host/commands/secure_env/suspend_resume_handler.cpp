@@ -64,7 +64,7 @@ SnapshotCommandHandler::SnapshotCommandHandler(SharedFD channel_to_run_cvd,
   handler_thread_ = std::thread([this]() {
     while (true) {
       auto result = SuspendResumeHandler();
-      if (!result.ok()) {
+      if (!result.has_value()) {
         LOG(ERROR) << result.error().Trace();
         return;
       }

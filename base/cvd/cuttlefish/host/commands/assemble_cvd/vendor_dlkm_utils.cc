@@ -562,7 +562,7 @@ bool MoveIfChanged(const std::string& src, const std::string& dst) {
     return false;
   }
   const auto ret = RenameFile(src, dst);
-  if (!ret.ok()) {
+  if (!ret.has_value()) {
     LOG(ERROR) << ret.error();
     return false;
   }

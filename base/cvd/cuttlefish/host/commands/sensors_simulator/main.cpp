@@ -135,7 +135,7 @@ int SensorsSimulatorMain(int argc, char** argv) {
       data_to_guest_fd, kernel_events_fd, sensors_simulator, device_type);
   while (true) {
     auto result = ProcessWebrtcRequest(channel, sensors_simulator);
-    if (!result.ok()) {
+    if (!result.has_value()) {
       LOG(ERROR) << result.error();
     }
   }

@@ -27,7 +27,8 @@ TEST(ProcFileUid, SelfUidTest) {
   auto my_pid = getpid();
   auto login_uid_of_my_pid = OwnerUid(my_pid);
 
-  ASSERT_TRUE(login_uid_of_my_pid.ok()) << login_uid_of_my_pid.error().Trace();
+  ASSERT_TRUE(login_uid_of_my_pid.has_value())
+      << login_uid_of_my_pid.error().Trace();
   ASSERT_EQ(getuid(), *login_uid_of_my_pid);
 }
 
@@ -36,7 +37,7 @@ TEST(ProcFilePid, CurrentPidCollected) {
   auto this_pid = getpid();
 
   // verify if the pids returned are really owned by getuid()
-  ASSERT_TRUE(pids_result.ok());
+  ASSERT_TRUE(pids_result.has_value());
   ASSERT_TRUE(Contains(*pids_result, this_pid));
 }
 

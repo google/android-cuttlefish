@@ -217,8 +217,9 @@ std::vector<LocalInstanceGroup> InstanceDatabase::FindGroups(
       continue;
     }
     auto group_res = LocalInstanceGroup::Create(group);
-    CHECK(group_res.ok()) << "Instance group from database fails validation: "
-                          << group_res.error();
+    CHECK(group_res.has_value())
+        << "Instance group from database fails validation: "
+        << group_res.error();
     ret.push_back(*group_res);
   }
   return ret;

@@ -122,7 +122,7 @@ Result<int> DefaultsMain(int argc, char* argv[]) {
 
   Result<std::map<std::string, std::string, std::less<void>>> m =
       DefaultsFromMetadata();
-  if (!m.ok()) {
+  if (!m.has_value()) {
     LOG(INFO) << "Couldn't get defaults from metadata.";
     // Not necessarily an error, so don't report it.
     return 0;
@@ -136,7 +136,7 @@ Result<int> DefaultsMain(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
   auto res = cuttlefish::DefaultsMain(argc, argv);
-  if (!res.ok()) {
+  if (!res.has_value()) {
     LOG(ERROR) << "defaults failed: \n" << res.error();
     abort();
   }

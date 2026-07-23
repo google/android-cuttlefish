@@ -213,12 +213,12 @@ bool ParentIsCvd() {
   const std::string ppid_path = absl::StrCat("/proc/", getppid());
   const std::string exe_link = absl::StrCat(ppid_path, "/exe");
   const Result<std::string> exe_path = ReadLink(exe_link);
-  if (exe_path.ok()) {
+  if (exe_path.has_value()) {
     return exe_path->ends_with("/cvd");
   }
   const std::string cmdline_path = absl::StrCat(ppid_path, "/cmdline");
   Result<std::string> cmdline_res = ReadFileContents(cmdline_path);
-  CHECK(cmdline_res.ok()) << cmdline_res.error();
+  CHECK(cmdline_res.has_value()) << cmdline_res.error();
   std::vector<std::string> cmdline = absl::StrSplit(*cmdline_res, '\0');
   CHECK(!cmdline.empty());
   return cmdline[0] == "cvd" || cmdline[0].ends_with("/cvd");
@@ -226,7 +226,7 @@ bool ParentIsCvd() {
 
 std::string CvdPath() {
   const Result<std::string> exe_path_res = ReadLink("/proc/self/exe");
-  CHECK(exe_path_res.ok()) << exe_path_res.error();
+  CHECK(exe_path_res.has_value()) << exe_path_res.error();
   std::string_view exe_path = *exe_path_res;
   CHECK(absl::ConsumeSuffix(&exe_path, "/cvd_internal_start"));
   return absl::StrCat(exe_path, "/cvd");
@@ -236,7 +236,7 @@ void ExecCvd(std::vector<std::string> args) {
   bool daemon = false;
   const Result<void> res =
       ConsumeFlags({GflagsCompatFlag("daemon", daemon)}, args);
-  CHECK(res.ok()) << res.error();
+  CHECK(res.has_value()) << res.error();
 
   const std::string daemon_val = daemon ? "true" : "false";
   const std::string daemon_str = absl::StrCat("--daemon=", daemon_val);
@@ -268,7 +268,7 @@ int CvdInternalStartMain(int argc, char** argv) {
   auto parse_res = ConsumeFlags(
       {GflagsCompatFlag("system_image_dir", image_dir)}, args_copy);
 
-  if (!parse_res.ok()) {
+  if (!parse_res.has_value()) {
     LOG(ERROR) << "Error extracting system_image_dir from args: "
                << parse_res.error();
     return -1;
@@ -302,7 +302,7 @@ int CvdInternalStartMain(int argc, char** argv) {
   }
 
   auto instance_nums = InstanceNumsCalculator().FromGlobalGflags().Calculate();
-  if (!instance_nums.ok()) {
+  if (!instance_nums.has_value()) {
     LOG(ERROR) << instance_nums.error();
     abort();
   }
@@ -369,7 +369,7 @@ int CvdInternalStartMain(int argc, char** argv) {
   std::vector<Subprocess> runners;
   for (const auto& instance : config->Instances()) {
     Result<void> link_res = LinkLogs2InstanceDir(conf_path, *config, instance);
-    if (!link_res.ok()) {
+    if (!link_res.has_value()) {
       LOG(ERROR) << "Failed to link logs to instance dir: " << link_res.error();
     }
     SharedFD runner_stdin = SharedFD::Open("/dev/null", O_RDONLY);

@@ -68,7 +68,7 @@ std::string GetNoticeMessage() {
 
 void DisplayPrivacyNotice() {
   Result<std::string> filepath_result = GetNoticeFilepath();
-  if (!filepath_result.ok()) {
+  if (!filepath_result.has_value()) {
     VLOG(0) << "Failed generating notice filepath: " << filepath_result.error();
   } else if (FileExists(*filepath_result)) {
     return;
@@ -78,7 +78,7 @@ void DisplayPrivacyNotice() {
   std::cerr << notice_message;
 
   Result<void> write_result = WriteNoticeFile(notice_message);
-  if (!write_result.ok()) {
+  if (!write_result.has_value()) {
     VLOG(0) << "Failed writing notice file: " << write_result.error();
   }
 }

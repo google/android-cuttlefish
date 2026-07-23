@@ -162,7 +162,7 @@ Result<MiscInfo> GetCombinedDynamicPartitions(
   // copy where both files are equal
   for (const auto& key_val : vendor_info) {
     const auto value_result = GetExpected(system_info, key_val.first);
-    if (value_result.ok() && *value_result == key_val.second) {
+    if (value_result.has_value() && *value_result == key_val.second) {
       result[key_val.first] = key_val.second;
     }
   }
@@ -172,7 +172,7 @@ Result<MiscInfo> GetCombinedDynamicPartitions(
 
   const auto block_devices_result =
       GetExpected(vendor_info, kSuperBlockDevices);
-  if (block_devices_result.ok()) {
+  if (block_devices_result.has_value()) {
     result[kSuperBlockDevices] = *block_devices_result;
     for (std::string_view block_device :
          absl::StrSplit(result[kSuperBlockDevices], ' ', absl::SkipEmpty())) {
@@ -202,7 +202,7 @@ Result<MiscInfo> GetCombinedDynamicPartitions(
        {"virtual_ab", "virtual_ab_retrofit", "lpmake", "super_metadata_device",
         "super_partition_error_limit", "super_partition_size"}) {
     const auto value_result = GetExpected(vendor_info, key);
-    if (value_result.ok()) {
+    if (value_result.has_value()) {
       result[key] = *value_result;
     }
   }
@@ -235,7 +235,7 @@ Result<MiscInfo> MergeMiscInfos(
   }
   for (const auto& key : kNonPartitionKeysToMerge) {
     const auto value_result = GetExpected(system_info, key);
-    if (value_result.ok()) {
+    if (value_result.has_value()) {
       result[key] = *value_result;
     }
   }
@@ -258,7 +258,7 @@ Result<VbmetaArgs> GetVbmetaArgs(const MiscInfo& misc_info,
   // must split and add --<flag> <arg> arguments(non-equals format) separately
   // due to how Command.AddParameter handles each argument
   const auto extra_args_result = GetExpected(misc_info, kAvbVbmetaArgs);
-  if (extra_args_result.ok()) {
+  if (extra_args_result.has_value()) {
     for (std::string_view arg :
          absl::StrSplit(*extra_args_result, ' ', absl::SkipEmpty())) {
       result.extra_arguments.emplace_back(arg);

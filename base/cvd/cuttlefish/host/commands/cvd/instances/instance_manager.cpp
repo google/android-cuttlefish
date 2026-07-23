@@ -197,7 +197,8 @@ Result<bool> InstanceManager::RemoveInstanceGroup(LocalInstanceGroup group) {
     if (instance.Id() == 0) {
       continue;
     }
-    if (auto res = lock_manager_.RemoveLockFile(instance.Id()); !res.ok()) {
+    if (auto res = lock_manager_.RemoveLockFile(instance.Id());
+        !res.has_value()) {
       LOG(ERROR) << "Failed to remove instance id lock: " << res.error();
     }
   }
@@ -244,7 +245,7 @@ Result<void> InstanceManager::StopInstanceGroup(
           instance_dir_action == InstanceDirActionOnStop::Clear,
       .instance_nums = instance_nums,
   });
-  if (!cmd_result.ok()) {
+  if (!cmd_result.has_value()) {
     LOG(WARNING)
         << "Warning: error stopping instances for dir \"" + group.HomeDir() +
                "\".\nThis can happen if instances are already stopped.\n";
@@ -274,7 +275,7 @@ Result<void> InstanceManager::Clear() {
     if (group.HasActiveInstances()) {
       auto stop_result = StopInstanceGroup(group, std::chrono::seconds(5),
                                            InstanceDirActionOnStop::Clear);
-      if (!stop_result.ok()) {
+      if (!stop_result.has_value()) {
         LOG(ERROR) << stop_result.error();
       }
     }
@@ -283,17 +284,17 @@ Result<void> InstanceManager::Clear() {
         continue;
       }
       auto res = lock_manager_.RemoveLockFile(instance.Id());
-      if (!res.ok()) {
+      if (!res.has_value()) {
         LOG(ERROR) << "Failed to remove lock file for instance: "
                    << res.error();
       }
     }
     std::string runtime_link = group.HomeDir() + "/cuttlefish_runtime";
-    if (Result<void> res = RemoveFile(runtime_link); !res.ok()) {
+    if (Result<void> res = RemoveFile(runtime_link); !res.has_value()) {
       LOG(ERROR) << res.error();
     }
     std::string config_link = group.HomeDir() + "/" + config_json_name;
-    if (Result<void> res = RemoveFile(config_link); !res.ok()) {
+    if (Result<void> res = RemoveFile(config_link); !res.has_value()) {
       LOG(ERROR) << res.error();
     }
     // TODO: b/471069557 - diagnose unused

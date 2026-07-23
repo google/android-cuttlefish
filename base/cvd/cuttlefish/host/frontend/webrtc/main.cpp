@@ -166,7 +166,7 @@ Result<void> ControlLoop(SharedFD control_socket,
 
       display_handler.RemoveDisplayClient();
 
-      if (!command_result.ok()) {
+      if (!command_result.has_value()) {
         LOG(ERROR) << "Failed to screenshot display "
                    << screenshot_request.display_number() << " to "
                    << screenshot_request.screenshot_path() << ":"
@@ -178,7 +178,7 @@ Result<void> ControlLoop(SharedFD control_socket,
 
     webrtc::WebrtcCommandResponse response;
     auto* response_status = response.mutable_status();
-    if (command_result.ok()) {
+    if (command_result.has_value()) {
       response_status->set_code(google::rpc::Code::OK);
     } else {
       response_status->set_code(google::rpc::Code::INTERNAL);
@@ -441,7 +441,7 @@ int CuttlefishMain() {
   if (cvd_config->OverlaysEnabled()) {
     Result<std::unique_ptr<CompositionManager>> composition_manager_result =
         CompositionManager::Create();
-    if (composition_manager_result.ok() && *composition_manager_result) {
+    if (composition_manager_result.has_value() && *composition_manager_result) {
       composition_manager = std::optional<std::unique_ptr<CompositionManager>>(
           std::move(*composition_manager_result));
     }
@@ -567,7 +567,7 @@ int CuttlefishMain() {
   std::thread control_thread([&]() {
     auto result = ControlLoop(control_socket, *display_handler,
                               recording_manager, screenshot_handler);
-    if (!result.ok()) {
+    if (!result.has_value()) {
       LOG(ERROR) << "Webrtc control loop error: " << result.error().Message();
     }
     VLOG(0) << "Webrtc control thread exiting.";

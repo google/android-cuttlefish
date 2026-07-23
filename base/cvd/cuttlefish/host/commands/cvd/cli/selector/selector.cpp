@@ -25,6 +25,9 @@
 #include <vector>
 
 #include "absl/strings/numbers.h"
+#include "fmt/base.h"
+#include "fmt/format.h"
+#include "fmt/ostream.h"
 
 #include "cuttlefish/ansi_codes/terminal_colors.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"

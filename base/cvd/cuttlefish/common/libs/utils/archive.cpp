@@ -141,7 +141,7 @@ std::string ExtractArchiveToMemory(const std::string& archive_filepath,
   bsdtar_cmd.AddParameter(archive_member);
   Result<std::string> stdout_str = RunAndCaptureStdout(std::move(bsdtar_cmd));
 
-  if (!stdout_str.ok()) {
+  if (!stdout_str.has_value()) {
     LOG(ERROR) << "Could not extract \"" << archive_member << "\" from \""
                << archive_filepath << "\" to memory: " << stdout_str.error();
     return "";
@@ -156,7 +156,7 @@ std::vector<std::string> ArchiveContents(const std::string& archive) {
 
   Result<std::string> bsdtar_output =
       RunAndCaptureStdout(std::move(bsdtar_cmd));
-  if (bsdtar_output.ok()) {
+  if (bsdtar_output.has_value()) {
     return absl::StrSplit(*bsdtar_output, '\n');
   } else {
     LOG(ERROR) << "`bsdtar -tf '" << archive

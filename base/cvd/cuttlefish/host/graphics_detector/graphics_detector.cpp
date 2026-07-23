@@ -43,7 +43,7 @@ namespace gfxstream {
   for (const auto& check : checks) {
     auto result =
         DoWithSubprocessCheck([&]() { return check.second(&availability); });
-    if (!result.ok()) {
+    if (!result.has_value()) {
       availability.add_errors("Graphics check failure for " + check.first +
                               ": " + result.error());
     }

@@ -109,7 +109,7 @@ Result<void> CreateDynamicDiskFiles(
 
     if (Result<BuildArchive> img_zip =
             FindImgZip(fetcher_config, system_image_dir);
-        img_zip.ok()) {
+        img_zip.has_value()) {
       VLOG(0) << "Found image zip: " << *img_zip;
     } else {
       VLOG(0) << "Error accessing '-img-*.zip', expected for a local build.";

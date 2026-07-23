@@ -28,7 +28,7 @@ namespace cuttlefish {
 template <typename T>
 std::string Pretty(const Result<T>& result,
                    PrettyAdlPlaceholder unused = PrettyAdlPlaceholder()) {
-  if (result.ok()) {
+  if (result.has_value()) {
     return absl::StrCat(Pretty(result.value(), PrettyAdlPlaceholder()));
   } else {
     std::stringstream out;

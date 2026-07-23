@@ -206,7 +206,7 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
   constexpr char kSignedPrefix[] = "signed/signed-";
   // Some older builds might not have misc_info.txt, so permit errors on
   // fetching misc_info.txt
-  if (!context.Artifact("misc_info.txt").Download().ok()) {
+  if (!context.Artifact("misc_info.txt").Download().has_value()) {
     VLOG(0) << "Failed to download misc_info.txt, continuing";
   }
   if (flags.download_img_zip) {
@@ -270,7 +270,8 @@ Result<void> FetchSystemTarget(FetchBuildContext& context,
 
   if (download_img_zip) {
     LOG(INFO) << "Downloading system image zip for " << context;
-    if (!target_files.ExtractOneTo("IMAGES/system.img", "system.img").ok()) {
+    if (!target_files.ExtractOneTo("IMAGES/system.img", "system.img")
+             .has_value()) {
       LOG(INFO) << "Unable to retrieve system.img from target files, falling "
                    "back to system *-img-*.zip for system image";
       std::string system_img_zip_name = context.GetBuildZipName("img");
@@ -294,7 +295,7 @@ Result<void> FetchSystemTarget(FetchBuildContext& context,
     for (std::string_view system_image : kSystemImageFiles) {
       std::string member = fmt::format("IMAGES/{}.img", system_image);
       std::string rename_to = fmt::format("{}.img", system_image);
-      if (!target_files.ExtractOneTo(member, rename_to).ok()) {
+      if (!target_files.ExtractOneTo(member, rename_to).has_value()) {
         VLOG(0) << "Failed to extract " << member;
       }
     }
@@ -305,12 +306,12 @@ Result<void> FetchSystemTarget(FetchBuildContext& context,
 Result<void> FetchKernelTarget(FetchBuildContext context) {
   // If the kernel is from an arm/aarch64 build, the artifact will be called
   // Image.
-  if (!context.Artifact("bzImage").DownloadTo("kernel").ok()) {
+  if (!context.Artifact("bzImage").DownloadTo("kernel").has_value()) {
     CF_EXPECT(context.Artifact("Image").DownloadTo("kernel"));
   }
 
   // Certain kernel builds do not have corresponding ramdisks.
-  if (!context.Artifact("initramfs.img").Download().ok()) {
+  if (!context.Artifact("initramfs.img").Download().has_value()) {
     VLOG(0) << "No initramfs.img for kernel build, ignoring";
   }
   return {};
@@ -337,7 +338,7 @@ Result<void> FetchBootTarget(FetchBuildContext& context,
 Result<void> FetchBootloaderTarget(FetchBuildContext& context) {
   // If the bootloader is from an arm/aarch64 build, the artifact will be of
   // filetype bin.
-  if (!context.Artifact("u-boot.rom").DownloadTo("bootloader").ok()) {
+  if (!context.Artifact("u-boot.rom").DownloadTo("bootloader").has_value()) {
     CF_EXPECT(context.Artifact("u-boot.bin").DownloadTo("bootloader"));
   }
   return {};

@@ -77,17 +77,17 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
     offset_in_buffer_ = 0;
     buffer_remaining_ = 0;
 
-    return data_provider_->SeekSet(0).ok();
+    return data_provider_->SeekSet(0).has_value();
   }
   int64_t Read(char* data, uint64_t len) override {
     if (len > buffer_.size()) {
       buffer_remaining_ = 0;
-      if (!data_provider_->SeekSet(offset_).ok()) {
+      if (!data_provider_->SeekSet(offset_).has_value()) {
         return false;
       }
       VLOG(1) << "Bypassing buffer, reading " << len;
       if (Result<uint64_t> read_len = data_provider_->Read(data, len);
-          read_len.ok()) {
+          read_len.has_value()) {
         offset_ += *read_len;
         return *read_len;
       } else {
@@ -109,13 +109,13 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
     if (buffer_fill == 0) {
       return 0;
     }
-    if (!data_provider_->SeekSet(offset_).ok()) {
+    if (!data_provider_->SeekSet(offset_).has_value()) {
       return -1;
     }
     VLOG(1) << "Filling buffer with " << buffer_fill;
     Result<size_t> data_provider_read =
         data_provider_->Read(buffer_.data(), buffer_fill);
-    if (!data_provider_read.ok()) {
+    if (!data_provider_read.has_value()) {
       return -1;
     }
     buffer_remaining_ = *data_provider_read;

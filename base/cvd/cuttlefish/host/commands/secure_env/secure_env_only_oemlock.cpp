@@ -106,7 +106,7 @@ std::thread StartKernelEventMonitor(SharedFD kernel_events_fd,
   return std::thread([kernel_events_fd, &oemlock_lock]() {
     while (kernel_events_fd->IsOpen()) {
       auto read_result = monitor::ReadEvent(kernel_events_fd);
-      CHECK(read_result.ok()) << read_result.error();
+      CHECK(read_result.has_value()) << read_result.error();
       CHECK(read_result->has_value()) << "EOF in kernel log monitor";
       if ((*read_result)->event == monitor::Event::BootloaderLoaded) {
         VLOG(0) << "secure_env detected guest reboot, restarting.";
@@ -174,13 +174,13 @@ Result<void> SecureEnvMain(int argc, char** argv) {
           oemlock::OemLockResponder responder(channel, oemlock, oemlock_lock);
 
           std::function<bool()> oemlock_process_cb = [&responder]() -> bool {
-            return (responder.ProcessMessage().ok());
+            return (responder.ProcessMessage().has_value());
           };
 
           // infinite loop that returns if resetting responder is needed
           auto result = secure_env_impl::WorkerInnerLoop(
               oemlock_process_cb, oemlock_in, oemlock_snapshot_socket2);
-          if (!result.ok()) {
+          if (!result.has_value()) {
             LOG(FATAL) << "oemlock worker failed: " << result.error().Trace();
           }
         }
@@ -200,7 +200,7 @@ Result<void> SecureEnvMain(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   auto result = cuttlefish::SecureEnvMain(argc, argv);
-  if (result.ok()) {
+  if (result.has_value()) {
     return 0;
   }
   LOG(FATAL) << result.error().Trace();

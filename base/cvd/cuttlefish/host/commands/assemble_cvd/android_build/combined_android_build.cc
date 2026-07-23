@@ -67,14 +67,15 @@ class CombinedAndroidBuildImpl : public AndroidBuild {
 
     // If the file is already extracted somewhere, prefer that version.
     for (const std::unique_ptr<AndroidBuild>& build : builds_) {
-      if (res = CF_EXPECT(build.get())->ImageFile(name, false); res.ok()) {
+      if (res = CF_EXPECT(build.get())->ImageFile(name, false);
+          res.has_value()) {
         return res;
       }
     }
     // Now try to extract if it any of the builds have it.
     CF_EXPECTF(!!extract, "'{}' has not been extracted anywhere.", name);
     for (const std::unique_ptr<AndroidBuild>& build : builds_) {
-      if (res = build->ImageFile(name, true); res.ok()) {
+      if (res = build->ImageFile(name, true); res.has_value()) {
         return res;
       }
     }
@@ -87,7 +88,7 @@ class CombinedAndroidBuildImpl : public AndroidBuild {
     Result<void> res;
     for (const std::unique_ptr<AndroidBuild>& build : builds_) {
       res = CF_EXPECT(build.get())->SetExtractDir(dir);
-      one_succeeded |= res.ok();
+      one_succeeded |= res.has_value();
     }
     if (!one_succeeded) {
       CF_EXPECT(std::move(res));
@@ -124,7 +125,7 @@ class CombinedAndroidBuildImpl : public AndroidBuild {
 
     std::set<std::string, std::less<void>> merged;
     for (const std::unique_ptr<AndroidBuild>& build : builds_) {
-      if (res = ((*build).*fn)(); res.ok()) {
+      if (res = ((*build).*fn)(); res.has_value()) {
         one_succeeded = true;
         merged.merge(std::move(*res));
       }

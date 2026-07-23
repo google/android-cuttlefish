@@ -72,7 +72,7 @@ Result<void> RunStopCvdCmd(
 
   LOG(INFO) << "Running " << stop_cmd.ToString();
   Result<std::string> cmd_res = RunAndCaptureStdout(std::move(stop_cmd));
-  if (!cmd_res.ok()) {
+  if (!cmd_res.has_value()) {
     LOG(ERROR) << "Failed to run " << stopper_path;
     CF_EXPECT(std::move(cmd_res));
   }
@@ -91,7 +91,7 @@ Result<void> RunStopCvdAll(bool clear_runtime_dirs) {
         .wait_for_launcher_secs = 5,
         .clear_runtime_dirs = clear_runtime_dirs,
     });
-    if (!stop_cvd_result.ok()) {
+    if (!stop_cvd_result.has_value()) {
       LOG(ERROR) << stop_cvd_result.error();
       continue;
     }
@@ -105,11 +105,11 @@ static bool IsStillRunCvd(const pid_t pid) {
     return false;
   }
   auto owner_result = OwnerUid(pid);
-  if (!owner_result.ok() || (getuid() != *owner_result)) {
+  if (!owner_result.has_value() || (getuid() != *owner_result)) {
     return false;
   }
   auto extract_proc_info_result = ExtractProcInfo(pid);
-  if (!extract_proc_info_result.ok()) {
+  if (!extract_proc_info_result.has_value()) {
     return false;
   }
   return (android::base::Basename(
@@ -130,7 +130,7 @@ Result<void> SendSignal(const GroupProcInfo& group_info) {
         continue;
       }
       LOG(INFO) << "Sending SIGKILL to process " << parent_run_cvd_pid;
-      if (SendSignal(parent_run_cvd_pid).ok()) {
+      if (SendSignal(parent_run_cvd_pid).has_value()) {
         VLOG(1) << "Successfully SIGKILL'ed " << parent_run_cvd_pid;
       } else {
         failed_pids.push_back(parent_run_cvd_pid);
@@ -155,7 +155,7 @@ Result<void> DeleteLockFile(const GroupProcInfo& group_info) {
     lock_file_path_stream << lock_file_prefix << id << ".lock";
     auto lock_file_path = lock_file_path_stream.str();
     if (FileExists(lock_file_path) && !DirectoryExists(lock_file_path)) {
-      if (Result<void> res = RemoveFile(lock_file_path); res.ok()) {
+      if (Result<void> res = RemoveFile(lock_file_path); res.has_value()) {
         VLOG(0) << "Reset the lock file: " << lock_file_path;
       } else {
         all_success = false;
@@ -171,7 +171,7 @@ Result<void> DeleteLockFile(const GroupProcInfo& group_info) {
 Result<void> ForcefullyStopGroup(const GroupProcInfo& group) {
   auto signal_res = SendSignal(group);
   auto delete_res = DeleteLockFile(group);
-  if (!delete_res.ok()) {
+  if (!delete_res.has_value()) {
     LOG(ERROR) << "Tried to delete instance lock file for the group rooted at "
                   "HOME="
                << group.home_ << " but failed.";
@@ -191,7 +191,7 @@ Result<void> KillAllRunCvds() {
   LOG(INFO) << run_cvd_pids.size()
             << " run_cvd processes still remain, will stop forcefully";
   for (pid_t group_pid : run_cvd_pids) {
-    if (Result<void> result = SendSignal(group_pid); !result.ok()) {
+    if (Result<void> result = SendSignal(group_pid); !result.has_value()) {
       LOG(ERROR) << result.error();
     }
   }
@@ -204,7 +204,7 @@ Result<void> DeleteAllOwnedInstanceLocks() {
   for (const std::string& lock_file : CF_EXPECT(DirectoryContents(lock_dir))) {
     std::string lock_file_path = fmt::format("{}/{}", lock_dir, lock_file);
     Result<uid_t> file_uid_res = FileOwner(lock_file_path);
-    if (!file_uid_res.ok()) {
+    if (!file_uid_res.has_value()) {
       LOG(ERROR) << "Failed to obtain owner of '" << lock_file_path << "'";
       continue;
     }
@@ -213,7 +213,7 @@ Result<void> DeleteAllOwnedInstanceLocks() {
               << "' because it's not owned by current user";
       continue;
     }
-    if (Result<void> res = RemoveFile(lock_file_path); !res.ok()) {
+    if (Result<void> res = RemoveFile(lock_file_path); !res.has_value()) {
       LOG(ERROR) << res.error();
     }
   }
@@ -223,15 +223,15 @@ Result<void> DeleteAllOwnedInstanceLocks() {
 }  // namespace
 
 Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs) {
-  if (Result<void> res = RunStopCvdAll(clear_runtime_dirs); !res.ok()) {
+  if (Result<void> res = RunStopCvdAll(clear_runtime_dirs); !res.has_value()) {
     LOG(ERROR) << res.error();
   }
 
-  if (Result<void> res = KillAllRunCvds(); !res.ok()) {
+  if (Result<void> res = KillAllRunCvds(); !res.has_value()) {
     LOG(ERROR) << res.error();
   }
 
-  if (Result<void> res = DeleteAllOwnedInstanceLocks(); !res.ok()) {
+  if (Result<void> res = DeleteAllOwnedInstanceLocks(); !res.has_value()) {
     LOG(ERROR) << res.error();
   }
 
@@ -273,7 +273,7 @@ Result<void> RunStopCvd(StopCvdParams params) {
                                absl::StrJoin(params.instance_nums, ",")));
   }
   Result<void> cmd_res = RunStopCvdCmd(stopper_path, stop_cvd_envs, args);
-  if (cmd_res.ok()) {
+  if (cmd_res.has_value()) {
     return {};
   }
   /**

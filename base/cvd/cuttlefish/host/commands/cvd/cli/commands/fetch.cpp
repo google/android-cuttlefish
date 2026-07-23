@@ -85,7 +85,7 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   const FetchFlags flags = CF_EXPECT(FetchFlags::Parse(args));
   CF_EXPECT(EnsureDirectoryExists(flags.target_directory));
   Result<void> ensure_credentials_result = RunAutoLogin(flags.build_api_flags);
-  if (!ensure_credentials_result.ok()) {
+  if (!ensure_credentials_result.has_value()) {
     LOG(INFO) << "Auto-login failed with the following error:\n"
               << ensure_credentials_result.error() << "\n";
     LOG(INFO) << "Still running the fetch operation.";
@@ -98,7 +98,7 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   Result<FetchResult> result = FetchCvdMain(flags);
   CF_EXPECT(RunCacheCleanup(flags.build_api_flags));
 
-  if (result.ok()) {
+  if (result.has_value()) {
     GatherFetchCompleteMetrics(flags.target_directory, *result);
   } else {
     GatherFetchFailedMetrics(flags.target_directory);

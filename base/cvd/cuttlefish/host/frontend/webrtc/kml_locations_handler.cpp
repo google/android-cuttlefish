@@ -62,7 +62,7 @@ void KmlLocationsHandler::HandleMessage(const uint8_t *msg, size_t len) {
       grpc::CreateChannel(socket_name, grpc::InsecureChannelCredentials()));
 
   Result<void> reply = gpsclient.SendGpsLocations(1000, coordinates);
-  if (!reply.ok()) {
+  if (!reply.has_value()) {
     LOG(ERROR) << reply.error();
   }
 }

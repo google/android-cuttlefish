@@ -103,14 +103,14 @@ bool DeleteTmpFileIfNotChanged(const std::string& tmp_file,
                                const std::string& current_file) {
   if (!FileExists(current_file) ||
       ReadFile(current_file) != ReadFile(tmp_file)) {
-    if (!RenameFile(tmp_file, current_file).ok()) {
+    if (!RenameFile(tmp_file, current_file).has_value()) {
       LOG(ERROR) << "Unable to delete " << current_file;
       return false;
     }
     VLOG(0) << "Updated " << current_file;
   } else {
     VLOG(0) << "Didn't update " << current_file;
-    if (Result<void> res = RemoveFile(tmp_file); !res.ok()) {
+    if (Result<void> res = RemoveFile(tmp_file); !res.has_value()) {
       LOG(ERROR) << res.error();
     }
   }
@@ -469,7 +469,7 @@ Result<std::string> ReadAndroidVersionFromBootImage(
       avb_parser.LookupProperty("com.android.build.boot.os_version");
   // if the OS version is "None", or the prop does not exist, it wasn't set
   // when the boot image was made.
-  if (!os_version.ok() || *os_version == "None") {
+  if (!os_version.has_value() || *os_version == "None") {
     LOG(INFO) << "Could not extract os version from " << boot_image_path
               << ". Defaulting to 0.0.0.";
     return "0.0.0";

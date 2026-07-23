@@ -124,7 +124,7 @@ Result<std::string> ReadCvdDataFile(std::string_view path) {
   for (const auto& dir : CF_EXPECT(CvdDataDirs())) {
     Result<std::string> contents =
         ReadFileContents(fmt::format("{}/{}", dir, path));
-    if (contents.ok()) {
+    if (contents.has_value()) {
       return std::move(*contents);
     }
   }

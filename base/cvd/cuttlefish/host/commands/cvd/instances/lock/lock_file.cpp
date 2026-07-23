@@ -54,7 +54,7 @@ LockFile::LockFileReleaser::~LockFileReleaser() {
     return;
   }
   auto funlock_result = flocked_file_fd_->Flock(LOCK_UN | LOCK_NB);
-  if (!funlock_result.ok()) {
+  if (!funlock_result.has_value()) {
     LOG(ERROR) << "Unlock the \"" << lock_file_path_
                << "\" failed: " << funlock_result.error().Trace();
   }
@@ -125,10 +125,10 @@ Result<std::optional<LockFile>> LockFileManager::TryAcquireLock(
     const std::string& lock_file_path) {
   auto fd = CF_EXPECT(OpenLockFile(lock_file_path));
   auto flock_result = fd->Flock(LOCK_EX | LOCK_NB);
-  if (flock_result.ok()) {
+  if (flock_result.has_value()) {
     return std::optional<LockFile>(LockFile(fd, lock_file_path));
     // TODO(schuffelen): Include the error code in the Result
-  } else if (!flock_result.ok() && fd->GetErrno() == EWOULDBLOCK) {
+  } else if (!flock_result.has_value() && fd->GetErrno() == EWOULDBLOCK) {
     return {};
   }
   CF_EXPECT(std::move(flock_result));

@@ -103,7 +103,7 @@ std::string GetFsType(const std::string& path) {
   command.AddParameter(path);
 
   Result<std::string> blkid_out = RunAndCaptureStdout(std::move(command));
-  if (!blkid_out.ok()) {
+  if (!blkid_out.has_value()) {
     LOG(ERROR) << "`blkid '" << path << "'` failed: " << blkid_out.error();
     return "";
   }
@@ -209,7 +209,8 @@ Result<void> InitializeDataImage(
       VLOG(0) << instance.data_image() << " exists. Not creating it.";
       return {};
     case DataImageAction::kCreateBlankImage: {
-      if (Result<void> res = RemoveFile(instance.new_data_image()); !res.ok()) {
+      if (Result<void> res = RemoveFile(instance.new_data_image());
+          !res.has_value()) {
         LOG(ERROR) << res.error();
       }
       CF_EXPECT(instance.blank_data_image_mb() != 0,

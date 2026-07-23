@@ -51,7 +51,7 @@ TEST_F(LocalInstanceGroupUnitTest, AddInstancesAndListAll) {
 
 TEST_F(LocalInstanceGroupUnitTest, SearchById) {
   auto group_res = Get();
-  if (!group_res.ok()) {
+  if (!group_res.has_value()) {
     /*
      * Here's why we skip the test rather than see it as a failure.
      *

@@ -439,7 +439,7 @@ void DataChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
     OnFirstMessage();
   }
   auto res = OnMessageInner(msg);
-  if (!res.ok()) {
+  if (!res.has_value()) {
     LOG(ERROR) << res.error();
   }
 }

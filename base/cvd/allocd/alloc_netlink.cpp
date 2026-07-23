@@ -127,7 +127,7 @@ Result<void> AddGateway(std::string_view name, std::string_view gateway,
                         std::string_view netmask) {
   VLOG(0) << "AddGateway: " << name << ", " << gateway << netmask;
   auto index = Index(name);
-  PCHECK(index.ok()) << "Index: " << name;
+  PCHECK(index.has_value()) << "Index: " << name;
 
   auto factory = NetlinkClientFactory::Default();
   std::unique_ptr<NetlinkClient> nl = factory->New(NETLINK_ROUTE);
@@ -146,7 +146,7 @@ Result<void> DestroyGateway(std::string_view name, std::string_view gateway,
                             std::string_view netmask) {
   VLOG(0) << "DestroyGateway: " << name << ", " << gateway << netmask;
   auto index = Index(name);
-  if (!index.ok()) {
+  if (!index.has_value()) {
     return {};  // Nothing to delete.
   }
 
@@ -167,9 +167,9 @@ Result<void> LinkTapToBridge(std::string_view tap_name,
                              std::string_view bridge_name) {
   VLOG(0) << "LinkTapToBridge: " << tap_name << ", " << bridge_name;
   auto tap_index = Index(tap_name);
-  PCHECK(tap_index.ok()) << "Index: " << tap_name;
+  PCHECK(tap_index.has_value()) << "Index: " << tap_name;
   auto bridge_index = Index(bridge_name);
-  PCHECK(bridge_index.ok()) << "Index: " << bridge_name;
+  PCHECK(bridge_index.has_value()) << "Index: " << bridge_name;
 
   auto factory = NetlinkClientFactory::Default();
   std::unique_ptr<NetlinkClient> nl = factory->New(NETLINK_ROUTE);
@@ -185,7 +185,7 @@ Result<void> LinkTapToBridge(std::string_view tap_name,
 Result<void> DeleteIface(std::string_view name) {
   VLOG(0) << "DeleteIface: " << name;
   auto index = Index(name);
-  if (!index.ok()) {
+  if (!index.has_value()) {
     return {};  // Nothing to delete.
   }
 
@@ -202,7 +202,7 @@ Result<void> DeleteIface(std::string_view name) {
 Result<bool> BridgeExists(std::string_view name) {
   VLOG(0) << "BridgeExists: " << name;
   auto index = Index(name);
-  if (!index.ok()) {
+  if (!index.has_value()) {
     CF_EXPECT(errno == ENODEV);
     return false;
   }

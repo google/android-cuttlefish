@@ -189,7 +189,8 @@ Result<void> PrepareBootEnvImage(
     CF_EXPECT(RenameFile(tmp_boot_env_image_path, image_path),
               "Unable to delete the old env image");
     VLOG(0) << "Updated bootloader environment image.";
-  } else if (Result<void> rs = RemoveFile(tmp_boot_env_image_path); !rs.ok()) {
+  } else if (Result<void> rs = RemoveFile(tmp_boot_env_image_path);
+             !rs.has_value()) {
     LOG(WARNING) << rs.error();
   }
 

@@ -17,8 +17,8 @@
 
 #include <type_traits>
 
-#include "android-base/expected.h"
 #include "gmock/gmock.h"
+#include "tl/expected.hpp"
 
 #include "cuttlefish/result/result.h"
 
@@ -26,7 +26,7 @@ namespace cuttlefish {
 
 MATCHER(IsOk, "an ok result") {
   auto& result = arg;
-  if (!result.ok()) {
+  if (!result.has_value()) {
     *result_listener << "which is an error result with trace: "
                      << result.error().Trace();
     return false;
@@ -36,7 +36,7 @@ MATCHER(IsOk, "an ok result") {
 
 MATCHER(IsError, "an error result") {
   auto& result = arg;
-  if (result.ok()) {
+  if (result.has_value()) {
     *result_listener << "which is an ok result";
     return false;
   }
@@ -44,24 +44,22 @@ MATCHER(IsError, "an error result") {
 }
 
 MATCHER_P(IsOkAndValue, result_value_matcher, "") {
-  auto& result = arg;
-  using ResultType = std::decay_t<decltype(result)>;
+  auto get_value = [](const auto& res) -> auto { return res.value(); };
   return ExplainMatchResult(
-      ::testing::AllOf(IsOk(), ::testing::Property("value", &ResultType::value,
+      ::testing::AllOf(IsOk(), ::testing::ResultOf("value", get_value,
                                                    result_value_matcher)),
-      result, result_listener);
+      arg, result_listener);
 }
 
 MATCHER_P(IsErrorAndMessage, message_matcher, "") {
-  auto& result = arg;
-  using ResultType = std::decay_t<decltype(result)>;
+  auto get_error = [](const auto& res) -> auto { return res.error(); };
   return ExplainMatchResult(
       ::testing::AllOf(
           IsError(),
-          ::testing::Property(
-              "error", &ResultType::error,
+          ::testing::ResultOf(
+              "error", get_error,
               ::testing::Property(&StackTraceError::Message, message_matcher))),
-      result, result_listener);
+      arg, result_listener);
 }
 
 }  // namespace cuttlefish

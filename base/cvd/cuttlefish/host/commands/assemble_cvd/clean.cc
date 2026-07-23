@@ -103,7 +103,7 @@ Result<std::vector<pid_t>> GetPidsUsingFiles(
     Result<std::vector<std::string>> entity_names =
         DirectoryContents(fd_dir_path);
 
-    if (!entity_names.ok()) {
+    if (!entity_names.has_value()) {
       continue;
     }
 
