@@ -66,6 +66,7 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   struct {
     std::vector<std::string> host_substitutions;
     bool daemon;
+    std::string print_group_format;
   } own_flags_;
 };
 
