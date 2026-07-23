@@ -31,6 +31,11 @@ apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 \
 DEBIAN_DISTRIBUTION="$(lsb_release -c -s)"
 #apt-get install -y '^linux-image-6.1.*aosp14-linaro.*' '^linux-headers-6.1.*aosp14-linaro.*'
 has_backports=$(apt-cache policy | grep "${DEBIAN_DISTRIBUTION}-backports")
+# Enable ARM64 nested virtualization (KVM NV2). The sed must run before
+# the kernel install below: the kernel postinst's update-grub hook is
+# what regenerates grub.cfg with the flag included. On hardware without
+# FEAT_NV2 the kernel logs a warning at boot and keeps the default mode.
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 kvm-arm.mode=nested\"/' /etc/default/grub
 if [ x"$has_backports" != x"" ]; then
     apt install -y -t "${DEBIAN_DISTRIBUTION}-backports" linux-headers-arm64
     apt install -y -t "${DEBIAN_DISTRIBUTION}-backports" linux-image-arm64
