@@ -88,7 +88,7 @@ func TestLaunchCvd(t *testing.T) {
 			c.SetUp(t)
 			defer c.TearDown()
 
-			if err := c.CVDFetch(e2etests.FetchArgs{
+			if _, err := c.CVDFetch(e2etests.FetchArgs{
 				DefaultBuildBranch: tc.branch,
 				DefaultBuildTarget: tc.target,
 			}); err != nil {
