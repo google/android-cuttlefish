@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <mutex>
+
 #include "cuttlefish/host/commands/modem_simulator/modem_service.h"
 #include "cuttlefish/host/commands/modem_simulator/network_service.h"
 #include "cuttlefish/host/commands/modem_simulator/sim_service.h"
@@ -32,6 +34,7 @@ class CallService : public ModemService, public std::enable_shared_from_this<Cal
 
   void SetupDependency(SimService* sim, NetworkService* net);
 
+ private:
   void HandleDial(const Client& client, const std::string& command);
   void HandleAcceptCall(const Client& client);
   void HandleRejectCall(const Client& client);
@@ -50,7 +53,6 @@ class CallService : public ModemService, public std::enable_shared_from_this<Cal
     }
   }
 
- private:
   void InitializeServiceState();
   std::vector<CommandHandler> InitializeCommandHandlers();
   void SimulatePendingCallsAnswered();
@@ -148,6 +150,7 @@ class CallService : public ModemService, public std::enable_shared_from_this<Cal
   // private data members
   SimService* sim_service_;
   NetworkService* network_service_;
+  std::mutex active_calls_mutex_;
   std::map<int, CallStatus> active_calls_;
   bool in_emergency_mode_;
   bool mute_on_;
