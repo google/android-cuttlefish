@@ -60,8 +60,8 @@ func TestCvdCreate(t *testing.T) {
 				t.Fatalf("cvd fetch failed with %v, stderr:%s", err, res.Stderr)
 			}
 
-			if err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {
-				t.Fatal(err)
+			if res, err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {
+				t.Fatalf("cvd create failed with %v, stderr:%s", err, res.Stderr)
 			}
 
 		})

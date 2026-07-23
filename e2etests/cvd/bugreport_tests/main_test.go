@@ -35,8 +35,8 @@ func TestTakeBugreport(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("cvd fetch failed with %v, stderr:%s", err, res.Stderr)
 	}
-	if err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {
-		t.Fatal(err)
+	if res, err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {
+		t.Fatalf("cvd create failed with %v, stderr:%s", err, res.Stderr)
 	}
 
 	if _, err := c.RunCmd(c.TargetBin(), "host_bugreport", "--output=/tmp/host_bugreport.zip", "--include_adb_bugreport=true"); err != nil {

@@ -66,8 +66,8 @@ func TestDeviceNetworking(t *testing.T) {
 			}
 
 			t.Log("Launching Cuttlefish...")
-			if err := c.CVDCreate(tc.createArgs); err != nil {
-				t.Fatal(err)
+			if res, err := c.CVDCreate(tc.createArgs); err != nil {
+				t.Fatalf("cvd create failed with %v, stderr:%s", err, res.Stderr)
 			}
 
 			t.Log("Waiting for device via ADB...")
