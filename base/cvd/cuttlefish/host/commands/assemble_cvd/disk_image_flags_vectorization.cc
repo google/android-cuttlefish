@@ -84,8 +84,10 @@ Result<void> DiskImageFlagsVectorization(
   std::vector<std::string> fuchsia_root_image =
       absl::StrSplit(FLAGS_fuchsia_root_image, ',');
 
+  // custom_partition_path uses ',' inside key=value entries, so split
+  // on '|' for multi-instance separation instead of ','.
   std::vector<std::string> custom_partition_path =
-      absl::StrSplit(FLAGS_custom_partition_path, ',');
+      absl::StrSplit(FLAGS_custom_partition_path, '|');
 
   std::vector<std::string> blank_sdcard_image_mb =
       absl::StrSplit(FLAGS_blank_sdcard_image_mb, ',');
