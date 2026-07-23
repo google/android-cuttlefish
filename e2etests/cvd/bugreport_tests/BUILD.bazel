@@ -25,7 +25,6 @@ go_test(
         "exclusive",
         "external",
         "no-sandbox",
-        "podcvd",
     ],
 )
 
