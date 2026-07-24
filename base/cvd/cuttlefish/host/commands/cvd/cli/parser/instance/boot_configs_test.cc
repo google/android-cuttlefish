@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
+#include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 
@@ -49,7 +50,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagEmptyJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data, R"(--enable_bootanimation=true,true)"))
       << "enable_bootanimation flag is missing or wrongly formatted";
@@ -87,7 +88,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagPartialJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data, R"(--enable_bootanimation=true,false)"))
       << "enable_bootanimation flag is missing or wrongly formatted";
@@ -126,7 +127,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagFullJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data, R"(--enable_bootanimation=false,false)"))
       << "enable_bootanimation flag is missing or wrongly formatted";
@@ -159,7 +160,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagEmptyJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data,
                          R"(--serial_number=CUTTLEFISHCVD01,CUTTLEFISHCVD02)"))
       << "serial_number flag is missing or wrongly formatted";
@@ -197,7 +198,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagPartialJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data,
                          R"(--serial_number=CUTTLEFISHCVD01,CUTTLEFISHCVD101)"))
       << "serial_number flag is missing or wrongly formatted";
@@ -236,7 +237,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagFullJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(
       *serialized_data, R"(--serial_number=CUTTLEFISHCVD101,CUTTLEFISHCVD102)"))
       << "serial_number flag is missing or wrongly formatted";
@@ -269,7 +270,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesEnforceSecurityFlagEmptyJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data, R"(--guest_enforce_security=true,true)"))
       << "guest_enforce_security flag is missing or wrongly formatted";
@@ -307,7 +308,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesEnforceSecurityFlagPartialJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data, R"(--guest_enforce_security=true,false)"))
       << "guest_enforce_security flag is missing or wrongly formatted";
@@ -346,7 +347,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesEnforceSecurityFlagFullJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data, R"(--guest_enforce_security=false,false)"))
       << "guest_enforce_security flag is missing or wrongly formatted";

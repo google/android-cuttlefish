@@ -83,6 +83,7 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/process:proc_file_utils",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 

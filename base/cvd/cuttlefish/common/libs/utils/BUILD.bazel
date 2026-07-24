@@ -271,6 +271,7 @@ cf_cc_test(
     srcs = ["semver_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/utils:semver",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 
@@ -358,6 +359,7 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:unix_sockets",
+        "//cuttlefish/result:result_matchers",
         "@abseil-cpp//absl/log:check",
     ],
 )

@@ -56,7 +56,7 @@ LockFile::LockFileReleaser::~LockFileReleaser() {
   auto funlock_result = flocked_file_fd_->Flock(LOCK_UN | LOCK_NB);
   if (!funlock_result.has_value()) {
     LOG(ERROR) << "Unlock the \"" << lock_file_path_
-               << "\" failed: " << funlock_result.error().Trace();
+               << "\" failed: " << funlock_result.error();
   }
 }
 

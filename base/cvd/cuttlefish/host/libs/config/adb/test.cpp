@@ -21,11 +21,13 @@
 #include "fruit/component.h"
 #include "fruit/injector.h"
 #include "fruit/macro.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "cuttlefish/host/libs/config/adb/adb.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 
@@ -54,7 +56,7 @@ TEST(AdbConfigTest, SetFromFlags) {
   };
   auto flags = injector.getMultibindings<FlagFeature>();
   auto processed = FlagFeature::ProcessFlags(flags, args);
-  ASSERT_TRUE(processed.has_value()) << processed.error().Trace();
+  ASSERT_THAT(processed, IsOk());
   ASSERT_TRUE(args.empty());
 
   std::set<AdbMode> modes = {AdbMode::VsockTunnel, AdbMode::VsockHalfTunnel,
