@@ -24,8 +24,8 @@
 #include <utility>
 #include <vector>
 
-#include "android-base/expected.h"  // IWYU pragma: export
-#include "fmt/core.h"               // IWYU pragma: export
+#include "fmt/core.h"       // IWYU pragma: export
+#include "tl/expected.hpp"  // IWYU pragma: export
 
 #include "cuttlefish/ansi_codes/should_color.h"
 
@@ -97,7 +97,7 @@ class StackTraceEntry {
 
   operator StackTraceError() &&;
   template <typename T>
-  operator android::base::expected<T, StackTraceError>() &&;
+  operator tl::expected<T, StackTraceError>() &&;
 
   bool HasMessage() const;
 
@@ -195,8 +195,8 @@ class StackTraceError {
   }
 
   template <typename T>
-  operator android::base::expected<T, StackTraceError>() && {
-    return android::base::unexpected(std::move(*this));
+  operator tl::expected<T, StackTraceError>() && {
+    return tl::unexpected(std::move(*this));
   }
 
  private:
@@ -208,9 +208,8 @@ inline StackTraceEntry::operator StackTraceError() && {
 }
 
 template <typename T>
-inline StackTraceEntry::operator android::base::expected<T,
-                                                         StackTraceError>() && {
-  return android::base::unexpected(std::move(*this));
+inline StackTraceEntry::operator tl::expected<T, StackTraceError>() && {
+  return tl::unexpected(std::move(*this));
 }
 
 std::ostream& operator<<(std::ostream&, const StackTraceError&);
