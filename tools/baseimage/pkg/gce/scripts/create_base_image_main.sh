@@ -26,9 +26,12 @@ sudo apt-get upgrade -y
 # Avoids blocking "Default mirror not found" popup prompt when pbuilder is installed.
 echo "pbuilder        pbuilder/mirrorsite     string  https://deb.debian.org/debian" | sudo debconf-set-selections
 
-kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
-  cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
+kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -l | grep '^ii' | \
+  awk '{print $2}' | grep '^linux-image-[0-9]' | head -n1 | sed 's/linux-image-//')
 echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
+
+# Make sure we don't update the kernel image or headers during this process
+sudo chroot /mnt/image /usr/bin/apt-mark hold linux-image-cloud-${arch} linux-headers-cloud-${arch}
 
 sudo chroot /mnt/image /usr/bin/apt update
 sudo chroot /mnt/image /usr/bin/apt upgrade -y
