@@ -1,0 +1,93 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "minigbm_headers",
+    srcs = [
+        "gbm.h",
+        "minigbm_helpers.h",
+    ],
+    outs = [
+        "minigbm/gbm.h",
+        "minigbm/minigbm_helpers.h",
+    ],
+    cmd = "mkdir -p $(@D)/minigbm && cp $(location gbm.h) $(@D)/minigbm/gbm.h && cp $(location minigbm_helpers.h) $(@D)/minigbm/minigbm_helpers.h",
+)
+
+cc_library(
+    name = "libgbm_internal",
+    srcs = [
+        "backend_mock.c",
+        "drv.c",
+        "drv_array_helpers.c",
+        "drv_helpers.c",
+        "dumb_driver.c",
+        "gbm.c",
+        "gbm_helpers.c",
+        "minigbm_helpers.c",
+        "virtgpu.c",
+        "virtgpu_cross_domain.c",
+        "virtgpu_virgl.c",
+    ] + select({
+        "@platforms//cpu:aarch64": [
+            "msm.c",
+        ],
+        "@platforms//cpu:x86_64": [
+            "i915.c",
+            "xe.c",
+        ],
+        "//conditions:default": [],
+    }),
+    hdrs = glob([
+        "*.h",
+        "external/*.h",
+    ]) + [
+        ":minigbm_headers",
+    ],
+    copts = [
+        "-D_GNU_SOURCE=1",
+        "-D_FILE_OFFSET_BITS=64",
+        "-DDRV_VIRTGPU=1",
+        "-Wno-implicit-function-declaration",
+        "-Wno-unused-parameter",
+    ] + select({
+        "@platforms//cpu:aarch64": [
+            "-DDRV_MSM=1",
+        ],
+        "@platforms//cpu:x86_64": [
+            "-DDRV_I915=1",
+            "-DDRV_XE=1",
+        ],
+        "//conditions:default": [],
+    }),
+    includes = [
+        ".",
+    ],
+    linkopts = [
+        "-ldl",
+    ],
+    deps = [
+        "@libdrm",
+    ],
+)
+
+cc_shared_library(
+    name = "libgbm.so.1",
+    deps = [":libgbm_internal"],
+    shared_lib_name = "libgbm.so",
+)
+
+alias(
+    name = "libgbm",
+    actual = ":libgbm.so.1",
+)
+
+alias(
+    name = "libminigbm",
+    actual = ":libgbm.so.1",
+)
+
