@@ -1,0 +1,12 @@
+diff --git a/src/rutabaga_gralloc/mod.rs b/src/rutabaga_gralloc/mod.rs
+index 49a4179..b0cc741 100644
+--- a/src/rutabaga_gralloc/mod.rs
++++ b/src/rutabaga_gralloc/mod.rs
+@@ -12,6 +12,7 @@ mod formats;
+ mod gralloc;
+ mod minigbm;
+ mod minigbm_bindings;
++mod rendernode;
+ mod system_gralloc;
+ mod vulkano_gralloc;
+ 

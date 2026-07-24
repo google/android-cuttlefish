@@ -1,0 +1,347 @@
+--- a/src/rutabaga_gralloc/minigbm.rs
++++ b/src/rutabaga_gralloc/minigbm.rs
+@@ -2,9 +2,7 @@
+ // Use of this source code is governed by a BSD-style license that can be
+ // found in the LICENSE file.
+ 
+-//! minigbm: implements swapchain allocation using ChromeOS's minigbm library.
+-//!
+-//! External code found at <https://chromium.googlesource.com/chromiumos/platform/minigbm>.
++//! Implements swapchain allocation using Mesa's GBM (Generic Buffer Management) library.
+ 
+ #![cfg(feature = "gbm")]
+ 
+@@ -12,9 +10,9 @@ use std::fs::File;
+ use std::io::Error;
+ use std::io::Seek;
+ use std::io::SeekFrom;
+-use std::os::fd::FromRawFd;
+ use std::sync::Arc;
+ 
++use magma_gpu::util::AsRawDescriptor;
+ use magma_gpu::util::Error as MagmaGpuError;
+ use magma_gpu::util::FromRawDescriptor;
+ use magma_gpu::util::Handle as MagmaGpuHandle;
+@@ -24,7 +22,13 @@ use crate::rutabaga_gralloc::formats::DrmFormat;
+ use crate::rutabaga_gralloc::gralloc::Gralloc;
+ use crate::rutabaga_gralloc::gralloc::ImageAllocationInfo;
+ use crate::rutabaga_gralloc::gralloc::ImageMemoryRequirements;
++use crate::rutabaga_gralloc::gralloc::RutabagaGrallocFlags;
++use crate::rutabaga_gralloc::gralloc::RUTABAGA_GRALLOC_USE_LINEAR;
++use crate::rutabaga_gralloc::gralloc::RUTABAGA_GRALLOC_USE_PROTECTED;
++use crate::rutabaga_gralloc::gralloc::RUTABAGA_GRALLOC_USE_RENDERING;
++use crate::rutabaga_gralloc::gralloc::RUTABAGA_GRALLOC_USE_SCANOUT;
+ use crate::rutabaga_gralloc::minigbm_bindings::*;
++use crate::rutabaga_gralloc::rendernode;
+ use crate::rutabaga_utils::RutabagaError;
+ use crate::rutabaga_utils::RutabagaResult;
+ use crate::rutabaga_utils::RUTABAGA_MAP_CACHE_CACHED;
+@@ -57,26 +61,22 @@ impl Drop for MinigbmDeviceInner {
+ pub struct MinigbmDevice {
+     minigbm_device: Arc<MinigbmDeviceInner>,
+     last_buffer: Option<Arc<MinigbmBuffer>>,
++    device_name: String,
+ }
+ 
+ impl MinigbmDevice {
+     /// Returns a new `MinigbmDevice` if there is a rendernode in `/dev/dri/` that is accepted by
+     /// the minigbm library.
+     pub fn init() -> RutabagaResult<Box<dyn Gralloc>> {
+-        let descriptor: File;
+-        let gbm: *mut gbm_device;
+-        // SAFETY:
+-        // Safe because minigbm_create_default_device is safe to call with an unused fd,
+-        // and fd is guaranteed to be overwritten with a valid descriptor when a non-null
+-        // pointer is returned.
+-        unsafe {
+-            let mut fd = -1;
++        let undesired: &[&str] = &["vgem", "pvr"];
++        let (descriptor, device_name) = rendernode::open_device(undesired)?;
+ 
+-            gbm = minigbm_create_default_device(&mut fd);
+-            if gbm.is_null() {
+-                return Err(MagmaGpuError::IoError(Error::last_os_error()).into());
+-            }
+-            descriptor = File::from_raw_fd(fd);
++        // SAFETY:
++        // gbm_create_device is safe to call with a valid fd, and we check that a valid one is
++        // returned.  If the fd does not refer to a DRM device, gbm_create_device will reject it.
++        let gbm = unsafe { gbm_create_device(descriptor.as_raw_descriptor()) };
++        if gbm.is_null() {
++            return Err(MagmaGpuError::IoError(Error::last_os_error()).into());
+         }
+ 
+         Ok(Box::new(MinigbmDevice {
+@@ -85,10 +85,31 @@ impl MinigbmDevice {
+                 gbm,
+             }),
+             last_buffer: None,
++            device_name,
+         }))
+     }
+ }
+ 
++/// Translates guest RutabagaGrallocFlags (minigbm usage bits) to upstream Mesa GBM bo flags.
++pub fn rutabaga_gralloc_flags_to_gbm_flags(flags: RutabagaGrallocFlags) -> u32 {
++    let mut gbm_flags = 0;
++
++    if flags.0 & RUTABAGA_GRALLOC_USE_SCANOUT != 0 {
++        gbm_flags |= GBM_BO_USE_SCANOUT;
++    }
++    if flags.0 & RUTABAGA_GRALLOC_USE_RENDERING != 0 {
++        gbm_flags |= GBM_BO_USE_RENDERING;
++    }
++    if flags.0 & RUTABAGA_GRALLOC_USE_LINEAR != 0 {
++        gbm_flags |= GBM_BO_USE_LINEAR;
++    }
++    if flags.0 & RUTABAGA_GRALLOC_USE_PROTECTED != 0 {
++        gbm_flags |= GBM_BO_USE_PROTECTED;
++    }
++
++    gbm_flags
++}
++
+ impl Gralloc for MinigbmDevice {
+     fn supports_external_gpu_memory(&self) -> bool {
+         true
+@@ -110,7 +131,7 @@ impl Gralloc for MinigbmDevice {
+                 info.width,
+                 info.height,
+                 info.drm_format.0,
+-                info.flags.0,
++                rutabaga_gralloc_flags_to_gbm_flags(info.flags),
+             )
+         };
+         if bo.is_null() {
+@@ -123,7 +144,9 @@ impl Gralloc for MinigbmDevice {
+             _device: self.clone(),
+         };
+ 
+-        if gbm_buffer.cached() {
++        if info.flags.uses_scanout() {
++            reqs.map_info = RUTABAGA_MAP_CACHE_WC;
++        } else if self.device_name == "i915" || self.device_name == "xe" {
+             reqs.map_info = RUTABAGA_MAP_CACHE_CACHED;
+         } else {
+             reqs.map_info = RUTABAGA_MAP_CACHE_WC;
+@@ -138,13 +161,9 @@ impl Gralloc for MinigbmDevice {
+         let mut fd = gbm_buffer.export()?;
+         let size = fd.seek(SeekFrom::End(0)).map_err(MagmaGpuError::IoError)?;
+ 
+-        // minigbm does have the ability to query image requirements without allocating memory
+-        // via the TEST_ALLOC flag.  However, support has only been added in i915.  Until this
+-        // flag is supported everywhere, do the actual allocation here and stash it away.
+-        if self.last_buffer.is_some() {
+-            return Err(RutabagaError::AlreadyInUse);
+-        }
+-
++        // Upstream Mesa GBM doesn't have a TEST_ALLOC flag to query requirements without
++        // allocating memory. We stash the allocated buffer so allocate_memory can reuse it.
++        // If a previous buffer was stashed and never consumed, replacing it drops and frees it cleanly.
+         self.last_buffer = Some(Arc::new(gbm_buffer));
+         reqs.info = info;
+         reqs.size = size;
+@@ -154,18 +173,18 @@ impl Gralloc for MinigbmDevice {
+     fn allocate_memory(&mut self, reqs: ImageMemoryRequirements) -> RutabagaResult<MagmaGpuHandle> {
+         let last_buffer = self.last_buffer.take();
+         if let Some(gbm_buffer) = last_buffer {
+-            if gbm_buffer.width() != reqs.info.width
+-                || gbm_buffer.height() != reqs.info.height
+-                || gbm_buffer.format() != reqs.info.drm_format
++            if gbm_buffer.width() == reqs.info.width
++                && gbm_buffer.height() == reqs.info.height
++                && gbm_buffer.format() == reqs.info.drm_format
+             {
+-                return Err(RutabagaError::InvalidGrallocDimensions);
++                let dmabuf = gbm_buffer.export()?.into();
++                return Ok(MagmaGpuHandle {
++                    os_handle: dmabuf,
++                    handle_type: MAGMA_GPU_HANDLE_TYPE_MEM_DMABUF,
++                });
+             }
+-
+-            let dmabuf = gbm_buffer.export()?.into();
+-            return Ok(MagmaGpuHandle {
+-                os_handle: dmabuf,
+-                handle_type: MAGMA_GPU_HANDLE_TYPE_MEM_DMABUF,
+-            });
++            // If dimensions or format don't match, drop the stashed buffer and fall through
++            // to allocate a new one matching the requested requirements.
+         }
+ 
+         // TODO(b/315870313): Add safety comment
+@@ -176,7 +195,7 @@ impl Gralloc for MinigbmDevice {
+                 reqs.info.width,
+                 reqs.info.height,
+                 reqs.info.drm_format.0,
+-                reqs.info.flags.0,
++                rutabaga_gralloc_flags_to_gbm_flags(reqs.info.flags),
+             )
+         };
+ 
+@@ -259,14 +278,6 @@ impl MinigbmBuffer {
+         unsafe { gbm_bo_get_stride_for_plane(self.bo, plane) }
+     }
+ 
+-    /// Should buffer use cached mapping to guest
+-    pub fn cached(&self) -> bool {
+-        // SAFETY:
+-        // This is always safe to call with a valid gbm_bo pointer.
+-        let mode = unsafe { gbm_bo_get_map_info(self.bo) };
+-        mode == gbm_bo_map_cache_mode::GBM_BO_MAP_CACHE_CACHED
+-    }
+-
+     /// Exports a new dmabuf/prime file descriptor.
+     pub fn export(&self) -> RutabagaResult<File> {
+         // SAFETY:
+@@ -289,3 +300,150 @@ impl Drop for MinigbmBuffer {
+         unsafe { gbm_bo_destroy(self.bo) }
+     }
+ }
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use crate::rutabaga_gralloc::gralloc::*;
++
++    #[test]
++    fn test_flag_translation() {
++        let empty = RutabagaGrallocFlags::empty();
++        assert_eq!(rutabaga_gralloc_flags_to_gbm_flags(empty), 0);
++
++        let scanout = RutabagaGrallocFlags::new(RUTABAGA_GRALLOC_USE_SCANOUT);
++        assert_eq!(
++            rutabaga_gralloc_flags_to_gbm_flags(scanout),
++            GBM_BO_USE_SCANOUT
++        );
++
++        // Bit 1 (legacy USE_CURSOR in minigbm) is intentionally omitted from RutabagaGrallocFlags and translates to 0.
++        let cursor = RutabagaGrallocFlags::new(1 << 1);
++        assert_eq!(rutabaga_gralloc_flags_to_gbm_flags(cursor), 0);
++
++        let rendering = RutabagaGrallocFlags::new(RUTABAGA_GRALLOC_USE_RENDERING);
++        assert_eq!(
++            rutabaga_gralloc_flags_to_gbm_flags(rendering),
++            GBM_BO_USE_RENDERING
++        );
++
++        let linear = RutabagaGrallocFlags::new(RUTABAGA_GRALLOC_USE_LINEAR);
++        assert_eq!(
++            rutabaga_gralloc_flags_to_gbm_flags(linear),
++            GBM_BO_USE_LINEAR
++        );
++
++        // Crucial: Minigbm BO_USE_TEXTURE (1 << 5) must NOT translate to Mesa GBM_BO_USE_PROTECTED (1 << 5).
++        let texture = RutabagaGrallocFlags::new(RUTABAGA_GRALLOC_USE_TEXTURING);
++        assert_eq!(rutabaga_gralloc_flags_to_gbm_flags(texture), 0);
++
++        // Crucial: Minigbm BO_USE_CAMERA_WRITE (1 << 6) must NOT translate to Mesa GBM_BO_USE_FRONT_RENDERING (1 << 6).
++        let camera_write = RutabagaGrallocFlags::new(RUTABAGA_GRALLOC_USE_CAMERA_WRITE);
++        assert_eq!(rutabaga_gralloc_flags_to_gbm_flags(camera_write), 0);
++
++        // Crucial: Minigbm BO_USE_CAMERA_READ (1 << 7) must NOT translate to Mesa compression flags.
++        let camera_read = RutabagaGrallocFlags::new(RUTABAGA_GRALLOC_USE_CAMERA_READ);
++        assert_eq!(rutabaga_gralloc_flags_to_gbm_flags(camera_read), 0);
++
++        // Minigbm BO_USE_PROTECTED (1 << 8) translates to Mesa GBM_BO_USE_PROTECTED (1 << 5).
++        let protected = RutabagaGrallocFlags::new(RUTABAGA_GRALLOC_USE_PROTECTED);
++        assert_eq!(
++            rutabaga_gralloc_flags_to_gbm_flags(protected),
++            GBM_BO_USE_PROTECTED
++        );
++
++        // Minigbm SW and HW video flags should be filtered out.
++        let sw_read = RutabagaGrallocFlags::new(RUTABAGA_GRALLOC_USE_SW_READ_OFTEN);
++        assert_eq!(rutabaga_gralloc_flags_to_gbm_flags(sw_read), 0);
++        let sw_write = RutabagaGrallocFlags::new(RUTABAGA_GRALLOC_USE_SW_WRITE_OFTEN);
++        assert_eq!(rutabaga_gralloc_flags_to_gbm_flags(sw_write), 0);
++        let video_dec = RutabagaGrallocFlags::new(RUTABAGA_GRALLOC_VIDEO_DECODER);
++        assert_eq!(rutabaga_gralloc_flags_to_gbm_flags(video_dec), 0);
++
++        // Combined flags: scanout | rendering | texture -> SCANOUT | RENDERING (no PROTECTED)
++        let combined = RutabagaGrallocFlags::new(
++            RUTABAGA_GRALLOC_USE_SCANOUT
++                | RUTABAGA_GRALLOC_USE_RENDERING
++                | RUTABAGA_GRALLOC_USE_TEXTURING,
++        );
++        assert_eq!(
++            rutabaga_gralloc_flags_to_gbm_flags(combined),
++            GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING
++        );
++    }
++
++    #[test]
++    fn test_scanout_forces_map_info_wc() {
++        let mut gralloc = match MinigbmDevice::init() {
++            Ok(g) => g,
++            Err(_) => return, // Skip if no DRM device is accessible
++        };
++
++        // Scanout buffer must always be mapped as Write-Combining (WC)
++        let scanout_info = ImageAllocationInfo {
++            width: 64,
++            height: 64,
++            drm_format: DrmFormat::new(b'X', b'R', b'2', b'4'),
++            flags: RutabagaGrallocFlags::empty().use_scanout(true),
++        };
++        let scanout_reqs = gralloc.get_image_memory_requirements(scanout_info).unwrap();
++        assert_eq!(scanout_reqs.map_info, RUTABAGA_MAP_CACHE_WC);
++
++        // Non-scanout buffer with host_cached requested (SW_READ_OFTEN)
++        // Must NOT blindly set CACHED unless device is i915 or xe
++        let non_scanout_info = ImageAllocationInfo {
++            width: 64,
++            height: 64,
++            drm_format: DrmFormat::new(b'X', b'R', b'2', b'4'),
++            flags: RutabagaGrallocFlags::empty()
++                .use_rendering(true)
++                .use_sw_read(true),
++        };
++        let non_scanout_reqs = gralloc
++            .get_image_memory_requirements(non_scanout_info)
++            .unwrap();
++        assert!(
++            non_scanout_reqs.map_info == RUTABAGA_MAP_CACHE_WC
++                || non_scanout_reqs.map_info == RUTABAGA_MAP_CACHE_CACHED
++        );
++    }
++
++    #[test]
++    fn test_sequential_get_requirements_and_fallback() {
++        let mut gralloc = match MinigbmDevice::init() {
++            Ok(g) => g,
++            Err(_) => return, // Skip if no DRM device is accessible
++        };
++
++        let info1 = ImageAllocationInfo {
++            width: 64,
++            height: 64,
++            drm_format: DrmFormat::new(b'X', b'R', b'2', b'4'),
++            flags: RutabagaGrallocFlags::new(RUTABAGA_GRALLOC_USE_TEXTURING),
++        };
++
++        let info2 = ImageAllocationInfo {
++            width: 128,
++            height: 128,
++            drm_format: DrmFormat::new(b'X', b'R', b'2', b'4'),
++            flags: RutabagaGrallocFlags::new(
++                RUTABAGA_GRALLOC_USE_RENDERING | RUTABAGA_GRALLOC_USE_TEXTURING,
++            ),
++        };
++
++        // Sequential queries must not fail with AlreadyInUse
++        let reqs1 = gralloc.get_image_memory_requirements(info1).unwrap();
++        assert!(reqs1.size > 0);
++
++        let reqs2 = gralloc.get_image_memory_requirements(info2).unwrap();
++        assert!(reqs2.size > 0);
++
++        // Allocate memory for reqs1 when stashed buffer has info2 dimensions (mismatch fallback)
++        let handle1 = gralloc.allocate_memory(reqs1);
++        assert!(handle1.is_ok());
++
++        // Subsequent allocate without stashed buffer (clean fallback)
++        let handle2 = gralloc.allocate_memory(reqs2);
++        assert!(handle2.is_ok());
++    }
++}
