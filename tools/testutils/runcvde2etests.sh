@@ -7,17 +7,22 @@ OUTPUT_DIR="$(pwd)"
 CREDENTIAL_SOURCE="${CREDENTIAL_SOURCE:-}"
 
 bazel_test_tag_filter_arg="--test_tag_filters=-requires_gpu"
-while getopts "g" opt; do
+podcvd_arg=""
+while getopts "gp" opt; do
   case "${opt}" in
     g)
       bazel_test_tag_filter_arg="--test_tag_filters=requires_gpu"
       ;;
+    p)
+      podcvd_arg="--test_env=USE_PODCVD=true --test_env=HOME=${HOME} --test_env=XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+      ;;
     *)
     echo "Invalid option: -${opt}"
-    echo "Usage: $0 [-g]"
+    echo "Usage: $0 [-g] [-p]"
     echo ""
     echo "Options"
     echo " -g  only run tests with the 'requires_gpu' tag"
+    echo " -p  test podcvd instead of cvd"
     exit 1
     ;;
   esac
@@ -63,5 +68,6 @@ fi
 bazel test \
   ${bazel_test_tag_filter_arg} \
   ${credential_arg} \
+  ${podcvd_arg} \
   --zip_undeclared_test_outputs \
   cvd/...
