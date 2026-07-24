@@ -267,6 +267,8 @@ func collectMountSpecs(pathsToMount []string, hostOut, productOut, cvdDataHome, 
 	bindMap["/root/.local/share/cvd"] = fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome)
 	bindMap["/podcvd_home"] = fmt.Sprintf("%s:/podcvd_home:rw", podcvdHomeDir)
 	bindMap["/var/tmp/cvd/0/cache"] = fmt.Sprintf("%s:/var/tmp/cvd/0/cache:rw", cacheDir)
+	bindMap["/etc/cuttlefish-common/operator/cert/cert.pem"] = "/etc/cuttlefish-podcvd/cert.pem:/etc/cuttlefish-common/operator/cert/cert.pem:ro"
+	bindMap["/etc/cuttlefish-common/operator/cert/key.pem"] = "/etc/cuttlefish-podcvd/key.pem:/etc/cuttlefish-common/operator/cert/key.pem:ro"
 	for _, p := range pathsToMount {
 		if spec, ok := bindMap[p]; ok {
 			host := strings.SplitN(spec, ":", 2)[0]
