@@ -34,6 +34,7 @@ func CheckDeviceAccessible() error {
 		return fmt.Errorf("user %q is not registered in /etc/podcvd.users: %w", username, err)
 	}
 
+	// No-op comment
 	// Check device permissions
 	devices := []string{
 		"/dev/kvm",
