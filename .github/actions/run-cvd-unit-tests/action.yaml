@@ -18,6 +18,7 @@ runs:
         libaom-dev \
         libcap-dev \
         libcurl4-openssl-dev \
+        libgbm-dev \
         liblzma-dev \
         libopus-dev \
         libtool \

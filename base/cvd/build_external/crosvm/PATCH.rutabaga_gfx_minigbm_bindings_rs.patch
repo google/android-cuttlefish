@@ -1,0 +1,62 @@
+--- a/src/rutabaga_gralloc/minigbm_bindings.rs
++++ b/src/rutabaga_gralloc/minigbm_bindings.rs
+@@ -48,22 +48,14 @@ pub type gbm_bo_format = u32;
+ pub struct gbm_format_name_desc {
+     pub name: [c_char; 5usize],
+ }
+-pub const GBM_BO_USE_SCANOUT: gbm_bo_flags = 1;
+-pub const GBM_BO_USE_CURSOR: gbm_bo_flags = 2;
+-pub const GBM_BO_USE_CURSOR_64X64: gbm_bo_flags = 2;
+-pub const GBM_BO_USE_RENDERING: gbm_bo_flags = 4;
+-pub const GBM_BO_USE_WRITE: gbm_bo_flags = 8;
+-pub const GBM_BO_USE_LINEAR: gbm_bo_flags = 16;
+-pub const GBM_BO_USE_TEXTURING: gbm_bo_flags = 32;
+-pub const GBM_BO_USE_CAMERA_WRITE: gbm_bo_flags = 64;
+-pub const GBM_BO_USE_CAMERA_READ: gbm_bo_flags = 128;
+-pub const GBM_BO_USE_PROTECTED: gbm_bo_flags = 256;
+-pub const GBM_BO_USE_SW_READ_OFTEN: gbm_bo_flags = 512;
+-pub const GBM_BO_USE_SW_READ_RARELY: gbm_bo_flags = 1024;
+-pub const GBM_BO_USE_SW_WRITE_OFTEN: gbm_bo_flags = 2048;
+-pub const GBM_BO_USE_SW_WRITE_RARELY: gbm_bo_flags = 4096;
+-pub const GBM_BO_USE_HW_VIDEO_DECODER: gbm_bo_flags = 8192;
+-pub const GBM_BO_USE_HW_VIDEO_ENCODER: gbm_bo_flags = 16384;
++pub const GBM_BO_USE_SCANOUT: gbm_bo_flags = 1 << 0;
++pub const GBM_BO_USE_CURSOR: gbm_bo_flags = 1 << 1;
++pub const GBM_BO_USE_CURSOR_64X64: gbm_bo_flags = 1 << 1;
++pub const GBM_BO_USE_RENDERING: gbm_bo_flags = 1 << 2;
++pub const GBM_BO_USE_WRITE: gbm_bo_flags = 1 << 3;
++pub const GBM_BO_USE_LINEAR: gbm_bo_flags = 1 << 4;
++pub const GBM_BO_USE_PROTECTED: gbm_bo_flags = 1 << 5;
++pub const GBM_BO_USE_FRONT_RENDERING: gbm_bo_flags = 1 << 6;
+ /* Added below line manually */
+ #[allow(non_camel_case_types)]
+ pub type gbm_bo_flags = u32;
+@@ -149,21 +141,6 @@ pub type gbm_bo_transfer_flags = u32;
+ extern "C" {
+     pub fn gbm_bo_unmap(bo: *mut gbm_bo, map_data: *mut c_void);
+ }
+-#[repr(u32)]
+-#[doc = " Enum to indicate the cache attributes of CPU mapping returned by"]
+-#[doc = " gbm_bo_map()"]
+-#[doc = ""]
+-#[doc = " Note that definition aligns with VIRTIO_GPU_MAP_CACHE_*, RUTABAGA_MAP_CACHE_*,"]
+-#[doc = " and VIRGL_RENDERER_MAP_CACHE_* (but skipping the _NONE and _UNCACHED values as"]
+-#[doc = " those don't actually make sense to use)."]
+-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+-pub enum gbm_bo_map_cache_mode {
+-    GBM_BO_MAP_CACHE_CACHED = 1,
+-    GBM_BO_MAP_CACHE_WC = 3,
+-}
+-extern "C" {
+-    pub fn gbm_bo_get_map_info(bo: *mut gbm_bo) -> gbm_bo_map_cache_mode;
+-}
+ extern "C" {
+     pub fn gbm_bo_get_width(bo: *mut gbm_bo) -> u32;
+ }
+@@ -287,6 +264,3 @@ extern "C" {
+         plane: c_int,
+     ) -> *mut c_void;
+ }
+-extern "C" {
+-    pub fn minigbm_create_default_device(out_fd: *mut c_int) -> *mut gbm_device;
+-}

@@ -1,4 +1,5 @@
 load("@rules_cc//cc:cc_import.bzl", "cc_import")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//cuttlefish/bazel:rules.bzl", "cf_build_test")
 
 package_group(
@@ -68,5 +69,23 @@ alias(
 cc_import(
     name = "gfxstream_backend_import",
     shared_library = ":gfxstream_backend",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "virglrenderer",
+    actual = "@virglrenderer//:libvirglrenderer.so.1",
+    visibility = ["//visibility:public"],
+)
+
+cc_import(
+    name = "virglrenderer_import",
+    shared_library = ":virglrenderer",
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "gbm",
+    linkopts = ["-lgbm"],
     visibility = ["//visibility:public"],
 )
