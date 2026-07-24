@@ -874,6 +874,34 @@ bool CuttlefishConfig::InstanceSpecific::enable_gpu_system_blob() const {
   return (*Dictionary())[kEnableGpuSystemBlob].asBool();
 }
 
+static constexpr char kHasVulkanGfxstreamApex[] = "has_vulkan_gfxstream_apex";
+void CuttlefishConfig::MutableInstanceSpecific::set_has_vulkan_gfxstream_apex(
+    const bool has_apex) {
+  (*Dictionary())[kHasVulkanGfxstreamApex] = has_apex;
+}
+bool CuttlefishConfig::InstanceSpecific::has_vulkan_gfxstream_apex() const {
+  return (*Dictionary())[kHasVulkanGfxstreamApex].asBool();
+}
+
+static constexpr char kHasVulkanLavapipeApex[] = "has_vulkan_lavapipe_apex";
+void CuttlefishConfig::MutableInstanceSpecific::set_has_vulkan_lavapipe_apex(
+    const bool has_apex) {
+  (*Dictionary())[kHasVulkanLavapipeApex] = has_apex;
+}
+bool CuttlefishConfig::InstanceSpecific::has_vulkan_lavapipe_apex() const {
+  return (*Dictionary())[kHasVulkanLavapipeApex].asBool();
+}
+
+static constexpr char kHasVulkanSwiftshaderApex[] =
+    "has_vulkan_swiftshader_apex";
+void CuttlefishConfig::MutableInstanceSpecific::set_has_vulkan_swiftshader_apex(
+    const bool has_apex) {
+  (*Dictionary())[kHasVulkanSwiftshaderApex] = has_apex;
+}
+bool CuttlefishConfig::InstanceSpecific::has_vulkan_swiftshader_apex() const {
+  return (*Dictionary())[kHasVulkanSwiftshaderApex].asBool();
+}
+
 static constexpr char kEnableAudio[] = "enable_audio";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_audio(bool enable) {
   (*Dictionary())[kEnableAudio] = enable;

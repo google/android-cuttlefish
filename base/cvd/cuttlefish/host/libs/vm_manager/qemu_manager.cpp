@@ -128,7 +128,18 @@ QemuManager::ConfigureGraphics(
 
   std::unordered_map<std::string, std::string> bootconfig_args;
   const GpuMode gpu_mode = instance.gpu_mode();
-  if (gpu_mode == GpuMode::GuestSwiftshader) {
+  if (gpu_mode == GpuMode::GuestLavapipe) {
+    bootconfig_args = {
+        {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_4)},
+        {"androidboot.hardware.gralloc", "minigbm"},
+        {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
+        {"androidboot.hardware.hwcomposer.mode", "client"},
+        {"androidboot.hardware.egl", "angle"},
+        {"androidboot.hardware.vulkan", "lvp"},
+        // OpenGL ES 3.1
+        {"androidboot.opengles.version", "196609"},
+    };
+  } else if (gpu_mode == GpuMode::GuestSwiftshader) {
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_2)},
         {"androidboot.hardware.gralloc", "minigbm"},
@@ -447,8 +458,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
-  } else if (gpu_mode == GpuMode::GuestSwiftshader ||
-             IsGfxstreamMode(gpu_mode)) {
+  } else if (IsGuestRenderingMode(gpu_mode) || IsGfxstreamMode(gpu_mode)) {
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
   } else {

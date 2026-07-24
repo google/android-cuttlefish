@@ -244,8 +244,20 @@ Gem5Manager::ConfigureGraphics(
 
   std::unordered_map<std::string, std::string> bootconfig_args;
 
-  if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
-    LOG(INFO) << "We are in SwiftShader mode";
+  if (instance.gpu_mode() == GpuMode::GuestLavapipe) {
+    VLOG(0) << "We are in Lavapipe mode";
+    bootconfig_args = {
+        {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_1)},
+        {"androidboot.hardware.gralloc", "minigbm"},
+        {"androidboot.hardware.hwcomposer", "ranchu"},
+        {"androidboot.hardware.hwcomposer.mode", "noop"},
+        {"androidboot.hardware.hwcomposer.display_finder_mode", "gem5"},
+        {"androidboot.hardware.egl", "angle"},
+        {"androidboot.hardware.vulkan", "lvp"},
+        {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
+    };
+  } else if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
+    VLOG(0) << "We are in SwiftShader mode";
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_1)},
         {"androidboot.hardware.gralloc", "minigbm"},
