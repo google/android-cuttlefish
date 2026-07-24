@@ -11,9 +11,9 @@ cf_cc_library(
     deps = [
         "//cuttlefish/ansi_codes",
         "//cuttlefish/ansi_codes:should_color",
-        "//libbase",
         "@abseil-cpp//absl/strings",
         "@fmt",
+        "@tl-expected",
     ],
 )
 
