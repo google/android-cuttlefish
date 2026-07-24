@@ -5,6 +5,7 @@ package(
     default_visibility = [
         "@//:android_cuttlefish",
         "@mesa//:__subpackages__",
+        "@minigbm//:__subpackages__",
         "@virglrenderer//:__subpackages__",
     ],
 )
@@ -49,10 +50,9 @@ cc_library(
         "xf86drmRandom.c",
         "xf86drmSL.c",
     ],
-    hdrs = [
-        "include/drm/drm.h",
-        "include/drm/drm_fourcc.h",
-        "include/drm/drm_mode.h",
+    hdrs = glob([
+        "include/drm/*.h",
+    ]) + [
         "xf86drm.h",
         "xf86drmHash.h",
         "xf86drmMode.h",
