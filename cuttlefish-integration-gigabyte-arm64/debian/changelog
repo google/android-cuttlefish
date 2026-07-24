@@ -1,3 +1,12 @@
+cuttlefish-integration-gigabyte-arm64 (1.55.1) unstable; urgency=medium
+
+  * Update relevant values in e2e tests by @ser-io in https://github.com/google/android-cuttlefish/pull/2698
+  * Fix xts test result assertion by @ser-io in https://github.com/google/android-cuttlefish/pull/2829
+  * orchestration e2e tests to verify start after stop by @ser-io in https://github.com/google/android-cuttlefish/pull/2828
+  * Fix requests for group requests by @ser-io in https://github.com/google/android-cuttlefish/pull/2710
+
+ -- Ram Muthiah <rammuthiah@google.com>  Wed, 22 Jul 2026 20:02:32 +0100
+
 cuttlefish-integration-gigabyte-arm64 (1.55.0) unstable; urgency=medium
 
   * Start development on v1.55. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2630

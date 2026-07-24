@@ -1,5 +1,23 @@
+cuttlefish-common (1.55.1) unstable; urgency=medium
+
+  * Ignore ancient builds with higher safe levels by @Databean in https://github.com/google/android-cuttlefish/pull/2776
+  * Lens facing by @ser-io in https://github.com/google/android-cuttlefish/pull/2689
+  * Use host monotonic clock for timestamp by @chihchiachen in https://github.com/google/android-cuttlefish/pull/2802
+  * Implement custom lens_facing control for emulated_camera_mplane by @ser-io
+    in https://github.com/google/android-cuttlefish/pull/2842
+  * Default lens_facing to EXTERNAL by @ser-io in https://github.com/google/android-cuttlefish/pull/2849
+  * cuttlefish: Allow netsim to handle NFC by @schilit in https://github.com/google/android-cuttlefish/pull/2719
+  * cuttlefish: Add netsim_modem CLI flag and route cellular modem over VSOCK
+    to netsimd by @schilit in https://github.com/google/android-cuttlefish/pull/2745
+  * feat(cvd): Add modem_simulator_sim_type as enum to cvd load config by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2764
+  * Cherry-pick of ag/40371614 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2789
+  * Update adb_serial in cvd status by @ser-io in https://github.com/google/android-cuttlefish/pull/2698
+
+ -- Ram Muthiah <rammuthiah@google.com>  Wed, 22 Jul 2026 20:02:32 +0100
+
 cuttlefish-common (1.55.0) unstable; urgency=medium
 
+  * Fallback to looking at the parent process cmdline if parent process exe is locked down by @Databean in https://github.com/google/android-cuttlefish/pull/2804
   * Start development on v1.55. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2630
   * Strip unnecessary headers by @ser-io in https://github.com/google/android-cuttlefish/pull/2626
   * Resolve race condition for unlinking file on base/cvd/cuttlefish/host/commands/cvd/fetch/substitute.cc by @0405ysj in https://github.com/google/android-cuttlefish/pull/2627
