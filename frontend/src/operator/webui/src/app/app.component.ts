@@ -13,7 +13,7 @@ import {BUILD_VERSION} from '../environments/version'
 })
 export class AppComponent {
   readonly version = BUILD_VERSION;
-  constructor(private displaysService: DisplaysService) {}
+  constructor(public displaysService: DisplaysService) {}
 
   @HostListener('window:message', ['$event'])
   onWindowMessage(e: MessageEvent) {

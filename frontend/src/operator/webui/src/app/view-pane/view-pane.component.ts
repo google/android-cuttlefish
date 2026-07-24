@@ -237,16 +237,25 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
     item: DeviceGridItem,
     layout: DeviceGridItem[]
   ): DeviceGridItem {
-    const lastMaxY =
-      layout.length !== 0 ? Math.max(...layout.map(obj => obj.y)) : 0;
-    const lastRowLayout = layout.filter(obj => obj.y === lastMaxY);
-    const lastMaxX =
-      layout.length !== 0
-        ? Math.max(...lastRowLayout.map(obj => obj.x))
-        : -item.w;
+    if (this.displaysService.addVertically$.value) {
+      const newItemY =
+        layout.length !== 0
+          ? Math.max(...layout.map(obj => obj.y + obj.h))
+          : 0;
+      item.x = 0;
+      item.y = newItemY;
+    } else {
+      const lastItemY =
+        layout.length !== 0 ? Math.max(...layout.map(obj => obj.y)) : 0;
+      const lastRowLayout = layout.filter(obj => obj.y === lastItemY);
+      const lastItemX =
+        layout.length !== 0
+          ? Math.max(...lastRowLayout.map(obj => obj.x))
+          : -item.w;
 
-    item.x = lastMaxX + item.w * 2 <= this.cols ? lastMaxX + item.w : 0;
-    item.y = lastMaxX + item.h * 2 <= this.cols ? lastMaxY : lastMaxY + item.h;
+      item.x = lastItemX + item.w * (1.0 / this.defaultDisplayZoom) <= this.cols ? lastItemX + item.w : 0;
+      item.y = lastItemX + item.w * (1.0 / this.defaultDisplayZoom) <= this.cols ? lastItemY : lastItemY + item.h;
+    }
 
     item.placed = true;
 
@@ -294,6 +303,7 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
         }
         layoutById.set(id, item);
     });
+
     return Array.from(layoutById, ([, value]) => value);
   }, []), map(items => items.filter(item => item.visible)));
 

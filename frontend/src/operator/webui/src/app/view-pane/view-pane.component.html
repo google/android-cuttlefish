@@ -1,7 +1,7 @@
 <div #viewPane>
   <ktd-grid
     class="view-pane"
-    compactType="horizontal"
+    [compactType]="(displaysService.addVertically$ | async) ? 'vertical' : 'horizontal'"
     rowHeight="1"
     scrollSpeed="4"
     [cols]="cols"
