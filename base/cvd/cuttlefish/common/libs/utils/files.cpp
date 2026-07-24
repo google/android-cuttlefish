@@ -261,7 +261,7 @@ Result<void> ChangeGroup(const std::string& path,
   auto groupId = GroupIdFromName(group_name);
 
   if (groupId == -1) {
-    return CF_ERR("Failed to get group id: ") << group_name;
+    return CF_ERRF("Failed to get group id: {}", group_name);
   }
 
   if (chown(path.c_str(), -1, groupId) != 0) {
@@ -299,7 +299,7 @@ std::string AbsolutePath(std::string_view path) {
   }
 
   Result<std::string> real_cwd = RealPath(".");
-  if (!real_cwd.ok()) {
+  if (!real_cwd.has_value()) {
     LOG(WARNING) << "Could not get real path for current directory \".\": "
                  << real_cwd.error();
     return {};
@@ -533,7 +533,7 @@ Result<std::string> Search(const std::vector<std::string>& path,
       return abs_path;
     }
   }
-  return CF_ERR("Not found: ") << name << ", path " << absl::StrJoin(path, ":");
+  return CF_ERRF("Not found: '{}', path '{}'", name, absl::StrJoin(path, ":"));
 }
 
 Result<SharedFD> CreateOrReuseAndDrainFifo(const std::string& path,

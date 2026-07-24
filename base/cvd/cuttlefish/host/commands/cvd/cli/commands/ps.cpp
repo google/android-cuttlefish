@@ -145,7 +145,7 @@ PsRow CvdPsCommandHandler::InstanceToRow(const LocalInstanceGroup& group,
   std::string adb_serial_str = "-";
   std::string web_access_str = "-";
 
-  if (status_json_res.ok()) {
+  if (status_json_res.has_value()) {
     const Json::Value status_json = *status_json_res;
     status_str = status_json["status"].asString();
 

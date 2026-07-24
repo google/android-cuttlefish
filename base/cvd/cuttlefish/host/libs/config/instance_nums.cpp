@@ -208,7 +208,7 @@ InstanceNumsCalculator InstanceNumsCalculator::InstanceNums(
 
 template <typename T>
 void InstanceNumsCalculator::TrySet(T& field, Result<T> result) {
-  if (result.ok()) {
+  if (result.has_value()) {
     field = std::move(*result);
   } else {
     // TODO(schuffelen): Combine both errors into one

@@ -296,7 +296,7 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
         CF_EXPECT(HttpGetToJson(http_client_, url, headers));
 
     Result<Json::Value> json_res = GetResponseJson(response);
-    if (!json_res.ok()) {
+    if (!json_res.has_value()) {
       continue;
     }
     const Json::Value& json = *json_res;
@@ -473,7 +473,7 @@ Result<std::string> AndroidBuildApi::DownloadTargetFile(
       artifact_name.find("-img-") != std::string::npos) {
     Result<std::string> result =
         DownloadTargetFileFromCas(build, target_directory, artifact_name);
-    if (result.ok()) {
+    if (result.has_value()) {
       return {target_filepath};
     }
     // Fallback to download from AB.

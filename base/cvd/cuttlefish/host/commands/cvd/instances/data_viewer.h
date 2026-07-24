@@ -72,7 +72,7 @@ class DataViewer {
     auto fd = CF_EXPECT(LockBackingFile(LOCK_SH));
     auto data = CF_EXPECT(LoadData(fd));
     auto res = task(data);
-    if (!res.ok()) {
+    if (!res.has_value()) {
       // Don't update if there is an error
       return res;
     }

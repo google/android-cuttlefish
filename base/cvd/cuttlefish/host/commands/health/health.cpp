@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
 
   cuttlefish::Result<std::string> res =
       cuttlefish::RunAndCaptureStdout(std::move(command));
-  if (res.ok()) {
+  if (res.has_value()) {
     return 0;
   } else {
     LOG(ERROR) << "goldfish battery failed: " << res.error();

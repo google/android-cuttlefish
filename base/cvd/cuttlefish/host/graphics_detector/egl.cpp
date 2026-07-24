@@ -27,7 +27,7 @@ constexpr const char kEglLibAlt[] = "libEGL.so.1";
 gfxstream::expected<Lib, std::string> LoadEglLib() {
   for (const auto* possible_name : {kEglLib, kEglLibAlt}) {
     auto result = Lib::Load(possible_name);
-    if (result.ok()) {
+    if (result.has_value()) {
       return std::move(result.value());
     }
   }

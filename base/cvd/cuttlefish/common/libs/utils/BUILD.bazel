@@ -358,7 +358,6 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:unix_sockets",
-        "//libbase",
         "@abseil-cpp//absl/log:check",
     ],
 )

@@ -124,7 +124,7 @@ class CasDownloaderTests : public ::testing::Test {
       std::string service_account_filepath, CasDownloaderFlags flags) {
     Result<std::unique_ptr<CasDownloader>> result =
         CasDownloader::Create(flags, service_account_filepath);
-    if (result.ok()) {
+    if (result.has_value()) {
       return std::move(result.value());
     }
     return nullptr;
@@ -140,7 +140,7 @@ class CasDownloaderTests : public ::testing::Test {
     flags.cas_config_filepath.set_value(cas_config_filepath);
     Result<std::unique_ptr<CasDownloader>> result =
         CasDownloader::Create(flags, service_account_filepath);
-    if (result.ok()) {
+    if (result.has_value()) {
       return std::move(result.value());
     }
     return nullptr;
@@ -238,7 +238,7 @@ fi
 
   void SetUp() override {
     Result<void> result = CreateTestDirs();
-    if (!result.ok()) {
+    if (!result.has_value()) {
       FAIL() << result.error();
     }
   }

@@ -34,7 +34,7 @@ int Execute(std::vector<std::string> command) {
   // NOLINTNEXTLINE(misc-include-cleaner): <sys/wait.h> provides siginfo_t
   const Result<siginfo_t> result =
       Execute(std::move(command), SubprocessOptions(), WEXITED);
-  if (result.ok() && result->si_code == CLD_EXITED) {
+  if (result.has_value() && result->si_code == CLD_EXITED) {
     return result->si_status;  // NOLINT(misc-include-cleaner): <signal.h>
   } else {
     return -1;

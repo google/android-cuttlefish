@@ -64,7 +64,7 @@ Result<void> WriteFlag(secure_env::Storage& storage, int bit, bool value) {
 
 OemLock::OemLock(secure_env::Storage& storage) : storage_(storage) {
   auto result = InitializeDefaultState(storage_);
-  if (!result.ok()) {
+  if (!result.has_value()) {
     LOG(FATAL) << "Failed to initialize default state for OemLock TEE storage: "
                << result.error();
   }

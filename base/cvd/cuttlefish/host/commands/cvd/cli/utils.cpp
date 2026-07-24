@@ -92,7 +92,7 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
   // used by subcommands when locating the CuttlefishConfig.
   if (param.envs.count(cuttlefish::kCuttlefishConfigEnvVarName) == 0) {
     auto config_path = GetCuttlefishConfigPath(param.home);
-    if (config_path.ok()) {
+    if (config_path.has_value()) {
       command.AddEnvironmentVariable(cuttlefish::kCuttlefishConfigEnvVarName,
                                      *config_path);
     }

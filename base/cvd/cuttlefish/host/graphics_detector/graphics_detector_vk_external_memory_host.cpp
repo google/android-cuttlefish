@@ -225,7 +225,7 @@ gfxstream::expected<Ok, vk::Result> PopulateVulkanExternalMemoryHostQuirkImpl(
 
 #if defined(__linux__)
     const auto shmResult = CheckImportingSharedMemory(physicalDevice);
-    if (shmResult.ok()) {
+    if (shmResult.has_value()) {
       quirks->set_can_import_shm(true);
     } else {
       quirks->add_errors("can_import_shm error: " + shmResult.error());

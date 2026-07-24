@@ -148,7 +148,7 @@ Result<void> LoadConfigsCommand::Handle(const CommandRequest& request) {
           std::lock_guard lock(group_creation_mtx);
           auto group_res =
               instance_manager_.FindGroup({.group_name = group_name});
-          if (!group_res.ok()) {
+          if (!group_res.has_value()) {
             LOG(ERROR) << "Failed to load group from database: "
                        << group_res.error().Message();
             // Abort while holding the lock to prevent the group from being
@@ -158,7 +158,7 @@ Result<void> LoadConfigsCommand::Handle(const CommandRequest& request) {
           auto& group = *group_res;
           group.SetAllStates(cvd::INSTANCE_STATE_CANCELLED);
           auto update_res = instance_manager_.UpdateInstanceGroup(group);
-          if (!update_res.ok()) {
+          if (!update_res.has_value()) {
             LOG(ERROR) << "Failed to update groups status: "
                        << update_res.error().Message();
           }
@@ -170,7 +170,7 @@ Result<void> LoadConfigsCommand::Handle(const CommandRequest& request) {
   group_creation_mtx.lock();
   // Don't use CF_EXPECT here or the mutex will be left locked.
   auto group_res = CreateGroup(instance_manager_, flags_.base_dir, env_spec);
-  if (group_res.ok()) {
+  if (group_res.has_value()) {
     // Have to initialize the group_name variable before releasing the mutex.
     group_name = (*group_res).GroupName();
   }
@@ -180,7 +180,7 @@ Result<void> LoadConfigsCommand::Handle(const CommandRequest& request) {
   auto cvd_flags = CF_EXPECT(ParseCvdConfigs(env_spec, group));
 
   auto res = LoadGroup(request, group, std::move(cvd_flags));
-  if (!res.ok()) {
+  if (!res.has_value()) {
     auto first_instance_state = group.Instances()[0].State();
     // The failure could have occurred during prepare(fetch) or start
     auto failed_state = first_instance_state == cvd::INSTANCE_STATE_PREPARING
@@ -200,7 +200,7 @@ Result<void> LoadConfigsCommand::LoadGroup(const CommandRequest& request,
                                            CvdFlags cvd_flags) {
   auto mkdir_res =
       EnsureDirectoryExists(group.HomeDir(), 0775, /* group_name */ "");
-  if (!mkdir_res.ok()) {
+  if (!mkdir_res.has_value()) {
     group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
     // TODO: b/471069557 - diagnose unused
     Result<void> unused = instance_manager_.UpdateInstanceGroup(group);
@@ -212,7 +212,7 @@ Result<void> LoadConfigsCommand::LoadGroup(const CommandRequest& request,
     std::unique_ptr<CvdCommandHandler> fetch_handler =
         std::make_unique<CvdFetchCommandHandler>();
     Result<void> fetch_res = fetch_handler->Handle(fetch_cmd);
-    if (!fetch_res.ok()) {
+    if (!fetch_res.has_value()) {
       group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
       // TODO: b/471069557 - diagnose unused
       Result<void> unused = instance_manager_.UpdateInstanceGroup(group);

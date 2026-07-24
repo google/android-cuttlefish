@@ -60,7 +60,7 @@ Result<std::unique_ptr<AndroidBuild>> AndroidDistBuild(
     if (!DirectoryExists(dist_dir)) {
       continue;
     }
-    if (attempt = TryDirectory(dist_dir, product_dir); attempt.ok()) {
+    if (attempt = TryDirectory(dist_dir, product_dir); attempt.has_value()) {
       return std::move(*attempt);
     }
   }

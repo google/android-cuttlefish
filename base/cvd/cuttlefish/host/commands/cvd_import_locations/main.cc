@@ -113,8 +113,8 @@ int ImportLocationsCvdMain(int argc, char** argv) {
 
   int delay = (int)(1000 * FLAGS_delay);
   auto status = gpsclient.SendGpsLocations(delay, coordinates);
-  CHECK(status.ok()) << "Failed to send gps location data \n";
-  if (!status.ok()) {
+  CHECK(status.has_value()) << "Failed to send gps location data \n";
+  if (!status.has_value()) {
     return 1;
   }
   std::this_thread::sleep_for(std::chrono::milliseconds(delay));

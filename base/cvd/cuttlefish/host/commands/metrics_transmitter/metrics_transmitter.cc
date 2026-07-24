@@ -56,7 +56,7 @@ Result<void> MetricsMain(int argc, char** argv) {
 int main(int argc, char** argv) {
   cuttlefish::LogToStderr();
   cuttlefish::Result<void> result = cuttlefish::MetricsMain(argc, argv);
-  if (result.ok()) {
+  if (result.has_value()) {
     return EXIT_SUCCESS;
   } else {
     LOG(ERROR) << result.error();

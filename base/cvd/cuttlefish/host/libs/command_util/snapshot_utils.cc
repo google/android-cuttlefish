@@ -144,11 +144,11 @@ Result<void> CopyDirectoryImpl(
  */
 std::string RealpathOrSelf(const std::string& path) {
   Result<std::string> output = RealPath(path);
-  if (output.ok()) {
+  if (output.has_value()) {
     return *output;
   }
   auto absolute_path = RealPath(path);
-  return absolute_path.ok() ? *absolute_path : path;
+  return absolute_path.has_value() ? *absolute_path : path;
 }
 
 }  // namespace

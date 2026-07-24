@@ -174,7 +174,7 @@ Result<void> RepackKernelRamdisk(
           ramdisk_repacked, instance.vendor_boot_image(),
           new_vendor_boot_image_path, config.assembly_dir(),
           instance.bootconfig_supported());
-      if (!res.ok()) {
+      if (!res.has_value()) {
         LOG(ERROR) << "Failed to regenerate the vendor boot image with the "
                       "new ramdisk: "
                    << res.error();

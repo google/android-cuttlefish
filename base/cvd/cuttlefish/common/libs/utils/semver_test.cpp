@@ -24,7 +24,7 @@ namespace cuttlefish {
 
 TEST(SemVer, ParseBasic) {
   auto result = ParseSemVer("1.2.3");
-  ASSERT_TRUE(result.ok()) << result.error().Trace();
+  ASSERT_TRUE(result.has_value()) << result.error().Trace();
   EXPECT_EQ(result->major, 1);
   EXPECT_EQ(result->minor, 2);
   EXPECT_EQ(result->patch, 3);
@@ -34,7 +34,7 @@ TEST(SemVer, ParseBasic) {
 
 TEST(SemVer, ParseWithPrereleaseAndMetadata) {
   auto result = ParseSemVer("1.2.3-alpha.1+build.123");
-  ASSERT_TRUE(result.ok()) << result.error().Trace();
+  ASSERT_TRUE(result.has_value()) << result.error().Trace();
   EXPECT_EQ(result->major, 1);
   EXPECT_EQ(result->minor, 2);
   EXPECT_EQ(result->patch, 3);
@@ -44,7 +44,7 @@ TEST(SemVer, ParseWithPrereleaseAndMetadata) {
 
 TEST(SemVer, ParseInvalid) {
   auto result = ParseSemVer("asdfsf");
-  EXPECT_FALSE(result.ok());
+  EXPECT_FALSE(result.has_value());
 }
 
 }  // namespace cuttlefish

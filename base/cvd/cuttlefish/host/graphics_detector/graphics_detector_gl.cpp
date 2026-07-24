@@ -237,7 +237,7 @@ gfxstream::expected<Ok, std::string> PopulateEglAndGlesAvailability(
     auto contextCheckResult = GetGlesContextAvailability(
         egl, display, framebufferConfig, contextCheck.contextVersion,
         contextCheck.loadMethod);
-    if (contextCheckResult.ok()) {
+    if (contextCheckResult.has_value()) {
       *contextCheck.availabilityProvider() = contextCheckResult.value();
     } else {
       eglAvailability->add_errors(

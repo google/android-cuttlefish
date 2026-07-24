@@ -180,7 +180,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   }
   void OnHingeAngleChange(int hinge_angle) override {
     Result<void> result = sensors_handler_.SetHingeAngle(hinge_angle);
-    if (!result.ok()) {
+    if (!result.has_value()) {
       LOG(ERROR) << "Failed to set hinge angle: " << result.error();
     }
   }
@@ -267,7 +267,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     CHECK(absl::SimpleAtod(xyz.at(2), &z))
         << "Z rotation value must be a double";
     Result<void> result = sensors_handler_.SetMotion(x, y, z);
-    if (!result.ok()) {
+    if (!result.has_value()) {
       LOG(ERROR) << "Failed to set motion: " << result.error();
     }
   }
@@ -364,7 +364,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnDisplayAddMsg(const Json::Value &msg) override {
     auto result = HandleDisplayAddMessage(msg);
-    if (!result.ok()) {
+    if (!result.has_value()) {
       LOG(ERROR) << result.error();
     }
   }
@@ -393,7 +393,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnDisplayRemoveMsg(const Json::Value &msg) override {
     auto result = HandleDisplayRemoveMessage(msg);
-    if (!result.ok()) {
+    if (!result.has_value()) {
       LOG(ERROR) << result.error();
     }
   }

@@ -19,9 +19,8 @@
 #include <type_traits>
 #include <utility>
 
-#include "android-base/format.h"  // IWYU pragma: export
-#include "android-base/result.h"  // IWYU pragma: export
-#include "fmt/format.h"           // IWYU pragma: keep: preprocessor
+#include "fmt/format.h"     // IWYU pragma: keep: preprocessor
+#include "tl/expected.hpp"  // IWYU pragma: export
 
 #include "cuttlefish/result/error_type.h"
 #include "cuttlefish/result/result_type.h"  // IWYU pragma: export
@@ -46,10 +45,11 @@ namespace cuttlefish {
  *       at path/to/file.cpp:50
  *       in Result<std::string> MyFunction()
  */
-#define CF_ERR(MSG) (CF_STACK_TRACE_ENTRY("") << MSG)
-#define CF_ERRNO(MSG) (CF_STACK_TRACE_ENTRY("") << MSG)
-#define CF_ERRF(MSG, ...) \
-  (CF_STACK_TRACE_ENTRY("") << fmt::format(FMT_STRING(MSG), __VA_ARGS__))
+#define CF_ERR(MSG) tl::unexpected(CF_STACK_TRACE_ENTRY("") << MSG)
+#define CF_ERRNO(MSG) tl::unexpected(CF_STACK_TRACE_ENTRY("") << MSG)
+#define CF_ERRF(MSG, ...)                 \
+  tl::unexpected(CF_STACK_TRACE_ENTRY("") \
+                 << fmt::format(FMT_STRING(MSG), __VA_ARGS__))
 
 template <typename T>
 T OutcomeDereference(std::optional<T>&& value) {
@@ -78,7 +78,7 @@ bool TypeIsSuccess(std::optional<T>& value) {
 
 template <typename T>
 bool TypeIsSuccess(Result<T>& value) {
-  return value.ok();
+  return value.has_value();
 }
 
 inline auto ErrorFromType(bool) { return StackTraceError(); }
@@ -103,7 +103,7 @@ auto ErrorFromType(Result<T>& value) {
       current_entry << MSG;                                   \
       auto error = ErrorFromType(macro_intermediate_result);  \
       error.PushEntry(std::move(current_entry));              \
-      return std::move(error);                                \
+      return tl::unexpected(std::move(error));                \
     };                                                        \
     OutcomeDereference(std::move(macro_intermediate_result)); \
   })
@@ -167,7 +167,7 @@ auto ErrorFromType(Result<T>& value) {
       current_entry << MSG;                                                 \
       auto error = ErrorFromType(false);                                    \
       error.PushEntry(std::move(current_entry));                            \
-      return std::move(error);                                              \
+      return tl::unexpected(std::move(error));                              \
     };                                                                      \
     comparison_result;                                                      \
   })

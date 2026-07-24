@@ -83,14 +83,14 @@ void GatherFetchStartMetrics(const FetchFlags& fetch_flags) {
       GetFetchMetricsInput(fetch_flags.target_directory);
   Result<void> metrics_setup_result =
       SetUpMetrics(metrics_input.metrics_directory);
-  if (!metrics_setup_result.ok()) {
+  if (!metrics_setup_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_setup_result.error());
     return;
   }
 
   Result<void> run_metrics_result = RunMetrics(metrics_input, fetch_flags);
-  if (!run_metrics_result.ok()) {
+  if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
         run_metrics_result.error());
@@ -102,7 +102,7 @@ void GatherFetchCompleteMetrics(const std::string& target_directory,
                                 const FetchResult& fetch_result) {
   const MetricsInput metrics_input = GetFetchMetricsInput(target_directory);
   Result<void> run_metrics_result = RunMetrics(metrics_input, fetch_result);
-  if (!run_metrics_result.ok()) {
+  if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
         run_metrics_result.error());
@@ -113,7 +113,7 @@ void GatherFetchCompleteMetrics(const std::string& target_directory,
 void GatherFetchFailedMetrics(const std::string& target_directory) {
   const MetricsInput metrics_input = GetFetchMetricsInput(target_directory);
   Result<void> run_metrics_result = RunMetrics(metrics_input);
-  if (!run_metrics_result.ok()) {
+  if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
         run_metrics_result.error());

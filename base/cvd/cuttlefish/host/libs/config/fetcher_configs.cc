@@ -43,7 +43,7 @@ FetcherConfigs FetcherConfigs::ReadFromDirectories(
   for (const std::string& dir : directories) {
     std::string real;
     Result<std::string> real_res = RealPath(dir);
-    if (!real_res.ok()) {
+    if (!real_res.has_value()) {
       LOG(WARNING) << "Failed to resolve real path for '" << dir
                    << "': " << real_res.error();
       real = dir;

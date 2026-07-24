@@ -26,7 +26,7 @@ namespace selector {
 TEST(LocalinstanceTest, Fields) {
   auto parent_group_res =
       LocalInstanceGroup::Builder("super").AddInstance(3, "phone").Build();
-  if (!parent_group_res.ok()) {
+  if (!parent_group_res.has_value()) {
     /*
      * Here's why we skip the test rather than see it as a failure.
      *

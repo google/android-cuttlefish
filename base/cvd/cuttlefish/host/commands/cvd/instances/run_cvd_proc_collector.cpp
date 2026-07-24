@@ -80,7 +80,7 @@ static Result<std::string> StopCvdPath(const RunCvdProcInfo& info) {
   if (info.android_host_out_) {
     auto result =
         SearchFilesInPath(info.android_host_out_.value() + "/bin", stop_bins);
-    if (result.ok()) {
+    if (result.has_value()) {
       return *result;
     }
     LOG(ERROR) << result.error();
@@ -150,7 +150,7 @@ Result<std::vector<RunCvdProcInfo>> ExtractAllRunCvdInfo(
   run_cvd_proc_infos.reserve(run_cvd_pids.size());
   for (const auto run_cvd_pid : run_cvd_pids) {
     auto proc_info_result = ExtractRunCvdInfo(run_cvd_pid);
-    if (!proc_info_result.ok()) {
+    if (!proc_info_result.has_value()) {
       VLOG(0) << "Failed to fetch run_cvd process info for " << run_cvd_pid;
       // perhaps, not my process
       continue;
@@ -222,7 +222,7 @@ Result<std::vector<GroupProcInfo>> RunCvdProcessCollector::CollectInfo() {
       const auto& instance_run_cvd_pids = instance.pids_;
       for (const auto run_cvd_pid : instance_run_cvd_pids) {
         auto ppid_result = Ppid(run_cvd_pid);
-        if (!ppid_result.ok()) {
+        if (!ppid_result.has_value()) {
           VLOG(1) << "Failed to fetch the parent id of " << run_cvd_pid;
           continue;
         }

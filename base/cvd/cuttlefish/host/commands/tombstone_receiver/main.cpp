@@ -19,6 +19,7 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "fmt/chrono.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -72,8 +73,8 @@ int TombstoneReceiverMain(int argc, char** argv) {
   std::vector<std::string> args(argv + 1, argv + argc);  // Skip argv[0]
   Result<void> parse_res =
       ConsumeFlags(flags, args, {.fail_on_unexpected_argument = true});
-  CHECK(parse_res.ok()) << "Could not process command line flags. "
-                        << parse_res.error();
+  CHECK(parse_res.has_value())
+      << "Could not process command line flags. " << parse_res.error();
 
   CHECK(server_fd->IsOpen()) << "Did not receive a server fd";
 

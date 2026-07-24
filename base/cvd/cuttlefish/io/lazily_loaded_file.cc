@@ -88,7 +88,7 @@ LazilyLoadedFile::~LazilyLoadedFile() {
     return;
   }
   Result<void> res = impl_->WriteMetadata();
-  if (!res.ok()) {
+  if (!res.has_value()) {
     LOG(WARNING) << "fragment update failure: " << res.error();
   }
 }
@@ -124,7 +124,7 @@ Result<void> LazilyLoadedFile::Impl::ReadMetadata() {
   CF_EXPECT_GE(ReadAll(metadata_fd, &data), 0, metadata_fd->StrError());
 
   Result<DisjointRangeSet> parsed_res = DeserializeDisjointRangeSet(data);
-  if (parsed_res.ok()) {
+  if (parsed_res.has_value()) {
     already_downloaded_ = std::move(*parsed_res);
   } else {
     LOG(WARNING) << "Invalid fragments: " << parsed_res.error();

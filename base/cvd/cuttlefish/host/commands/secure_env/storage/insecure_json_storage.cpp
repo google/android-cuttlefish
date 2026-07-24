@@ -43,7 +43,7 @@ Result<void> WriteJson(const std::string& path, const Json::Value& root) {
 InsecureJsonStorage::InsecureJsonStorage(std::string path)
     : path_(std::move(path)) {}
 
-bool InsecureJsonStorage::Exists() const { return ReadJson(path_).ok(); }
+bool InsecureJsonStorage::Exists() const { return ReadJson(path_).has_value(); }
 
 Result<bool> InsecureJsonStorage::HasKey(const std::string& key) const {
   if (!FileHasContent(path_)) {

@@ -34,16 +34,16 @@ Result<std::unique_ptr<AndroidBuild>> FetchedAndroidBuild(
   Result<std::unique_ptr<AndroidBuild>> img_zip = ImgZip(config, source);
   Result<std::unique_ptr<AndroidBuild>> target = TargetFiles(config, source);
 
-  if (!img_zip.ok() && !target.ok()) {
+  if (!img_zip.has_value() && !target.has_value()) {
     CF_EXPECT(std::move(img_zip));
     return CF_ERR("unreachable");
   }
 
   std::vector<std::unique_ptr<AndroidBuild>> builds;
-  if (img_zip.ok()) {
+  if (img_zip.has_value()) {
     builds.emplace_back(std::move(*img_zip));
   }
-  if (target.ok()) {
+  if (target.has_value()) {
     builds.emplace_back(std::move(*target));
   }
   return CF_EXPECT(

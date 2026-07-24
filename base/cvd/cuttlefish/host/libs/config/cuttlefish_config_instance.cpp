@@ -684,7 +684,7 @@ GpuMode CuttlefishConfig::InstanceSpecific::gpu_mode() const {
       GpuModeFromString((*Dictionary())[kGpuMode].asString());
   // The value should be already be validated via `set_gpu_mode` and is only a
   // string internally.  No need for a `Result` on every getter call
-  CHECK(gpu_mode_result.ok());
+  CHECK(gpu_mode_result.has_value());
   return *gpu_mode_result;
 }
 void CuttlefishConfig::MutableInstanceSpecific::set_gpu_mode(GpuMode mode) {
@@ -704,7 +704,7 @@ std::vector<GpuMode> CuttlefishConfig::InstanceSpecific::gpu_mode_candidates()
     CHECK(json_candidate.isString())
         << "Unexpected type for 'gpu_mode_candidate'.";
     Result<GpuMode> candidate = GpuModeFromString(json_candidate.asString());
-    CHECK(candidate.ok());
+    CHECK(candidate.has_value());
     candidates.push_back(*candidate);
   }
   return candidates;

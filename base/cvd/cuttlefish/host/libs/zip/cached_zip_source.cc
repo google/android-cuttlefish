@@ -51,12 +51,12 @@ class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
 
   int64_t Read(char* data, uint64_t len) override {
     VLOG(1) << "Reading " << len;
-    if (Result<void> res = source_.Seek(offset_); !res.ok()) {
+    if (Result<void> res = source_.Seek(offset_); !res.has_value()) {
       LOG(ERROR) << res.error();
       return -1;
     }
     Result<size_t> res = source_.Read(data, len);
-    if (res.ok()) {
+    if (res.has_value()) {
       offset_ += *res;
       return *res;
     } else {

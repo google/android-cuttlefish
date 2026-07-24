@@ -64,7 +64,7 @@ Result<void> Cvd::HandleCommand(
 
   if (handler->RequiresHostConfiguration()) {
     Result<void> enforce_result = EnforceHostConfigured();
-    if (!enforce_result.ok()) {
+    if (!enforce_result.has_value()) {
       std::cerr << "Host configuration requirements not met.  Run `cvd setup` "
                    "to configure the host."
                 << std::endl;

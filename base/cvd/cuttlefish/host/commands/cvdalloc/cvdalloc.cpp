@@ -142,7 +142,7 @@ Result<int> CvdallocMain(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
   auto res = cuttlefish::CvdallocMain(argc, argv);
-  if (!res.ok()) {
+  if (!res.has_value()) {
     LOG(ERROR) << "cvdalloc failed: \n" << res.error();
     abort();
   }

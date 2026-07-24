@@ -67,7 +67,7 @@ class ScreenRecordingServiceImpl final
   template <typename R>
   Status Handle(R* reply, StartStopFn fn) {
     Result<std::vector<bool>> successes_res = OnAllInstances(fn);
-    if (successes_res.ok()) {
+    if (successes_res.has_value()) {
       reply->mutable_successes()->Assign(successes_res->begin(),
                                          successes_res->end());
       return Status::OK;
@@ -85,8 +85,8 @@ class ScreenRecordingServiceImpl final
     for (const auto& instance : config->Instances()) {
       Result<void> result =
           fn(instance, std::chrono::seconds(COMMAND_TIMEOUT_SEC));
-      successes.push_back(result.ok());
-      if (!result.ok()) {
+      successes.push_back(result.has_value());
+      if (!result.has_value()) {
         LOG(ERROR) << "Failed to communicate with instance " << instance.id()
                    << ": " << result.error();
       }

@@ -57,7 +57,7 @@ bool ShouldUsePreviousCvdLocation() {
     return false;
   }
   Result<bool> is_empty_res = IsDirectoryEmpty(old_locks_path);
-  return is_empty_res.ok() && !is_empty_res.value();
+  return is_empty_res.has_value() && !is_empty_res.value();
 }
 
 }  // namespace

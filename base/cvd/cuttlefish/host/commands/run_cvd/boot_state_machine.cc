@@ -106,7 +106,7 @@ Result<void> MoveThreadsToCgroup(const std::string& from_path,
 
   if (FileExists(file_path)) {
     Result<std::string> content_result = ReadFileContents(file_path);
-    if (!content_result.ok()) {
+    if (!content_result.has_value()) {
       LOG(INFO) << "Failed to open threads file and assume it is empty: "
                 << file_path;
       return {};
@@ -118,7 +118,7 @@ Result<void> MoveThreadsToCgroup(const std::string& from_path,
       std::string proc_status_path = "/proc/" + each_id;
       proc_status_path.append("/status");
       Result<std::string> proc_status = ReadFileContents(proc_status_path);
-      if (!proc_status.ok()) {
+      if (!proc_status.has_value()) {
         LOG(INFO) << "Failed to open proc status file and skip: "
                   << proc_status_path;
         continue;
@@ -370,7 +370,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
           [this, restore_complete_pipe_write, restore_complete_stop_read]() {
             const auto result =
                 vm_manager_.WaitForRestoreComplete(restore_complete_stop_read);
-            CHECK(result.ok())
+            CHECK(result.has_value())
                 << "Failed to wait for restore complete: " << result.error();
             if (!result.value()) {
               return;
@@ -509,10 +509,10 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
               break;
             }
             auto monitor_res = GetLauncherMonitorFromInstance(instance_, 5);
-            CHECK(monitor_res.ok()) << monitor_res.error();
+            CHECK(monitor_res.has_value()) << monitor_res.error();
             auto fail_res = RunLauncherAction(
                 *monitor_res, LauncherAction::kFail, std::optional<int>());
-            CHECK(fail_res.ok()) << fail_res.error();
+            CHECK(fail_res.has_value()) << fail_res.error();
           }
           break;
         }
@@ -577,7 +577,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
         << formatted_timeout;
     auto monitor_res =
         GetLauncherMonitorFromInstance(instance_, /* timeout_seconds= */ 5);
-    if (!monitor_res.ok()) {
+    if (!monitor_res.has_value()) {
       LOG(ERROR) << "TimeoutThreadLoop: Failed to get launcher monitor: "
                  << monitor_res.error();
       LOG(FATAL) << "TimeoutThreadLoop: Startup timeout expired and couldn't "
@@ -586,7 +586,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
 
     auto fail_res = RunLauncherAction(*monitor_res, LauncherAction::kFail,
                                       std::optional<int>());
-    if (!fail_res.ok()) {
+    if (!fail_res.has_value()) {
       LOG(ERROR) << "TimeoutThreadLoop: Failed to send fail action: "
                  << fail_res.error();
       LOG(FATAL) << "TimeoutThreadLoop: Startup timeout expired and couldn't "
@@ -648,14 +648,14 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
         // Fully parse the message and throw it away.
         Result<std::optional<monitor::ReadEventResult>> read_result =
             monitor::ReadEvent(boot_events_pipe);
-        if (!read_result.ok()) {
+        if (!read_result.has_value()) {
           return;
         }
         if ((*read_result)->event == monitor::Event::BootCompleted) {
           LOG(INFO) << "Virtual device rebooted successfully";
           if (!instance_.vcpu_config_path().empty()) {
             auto res = WattsonRebalanceThreads(instance_.id());
-            if (!res.ok()) {
+            if (!res.has_value()) {
               LOG(ERROR) << res.error();
             }
           }
@@ -668,7 +668,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
   bool OnBootEvtReceived(SharedFD boot_events_pipe) {
     Result<std::optional<monitor::ReadEventResult>> read_result =
         monitor::ReadEvent(boot_events_pipe);
-    if (!read_result.ok()) {
+    if (!read_result.has_value()) {
       LOG(ERROR) << "Failed to read a complete kernel log boot event: "
                  << read_result.error();
       state_ |= kGuestBootFailed;
@@ -683,7 +683,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
       state_ |= kGuestBootCompleted;
       if (!instance_.vcpu_config_path().empty()) {
         auto res = WattsonRebalanceThreads(instance_.id());
-        if (!res.ok()) {
+        if (!res.has_value()) {
           LOG(ERROR) << res.error();
         }
       }

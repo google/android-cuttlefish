@@ -67,6 +67,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances:instance_manager",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@fmt",
     ],
 )
 

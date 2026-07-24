@@ -65,7 +65,7 @@ bool Session::IsReadyForUserInput() const {
 bool Session::RenderDialog() {
   auto result =
       renderer_.RenderDialog(display_num_, prompt_text_, locale_, ui_options_);
-  if (!result.ok()) {
+  if (!result.has_value()) {
     LOG(ERROR) << result.error();
     return false;
   }

@@ -91,7 +91,7 @@ Result<void> StartStopRecording(const RecordingFlags& flags,
         flags.subcmd == kStartSubcmd
             ? instance.StartRecording(std::chrono::seconds(flags.timeout))
             : instance.StopRecording(std::chrono::seconds(flags.timeout));
-    if (!result.ok()) {
+    if (!result.has_value()) {
       LOG(ERROR) << "Failed to " << flags.subcmd
                  << " screen recording for instance " << instance.Name() << ": "
                  << result.error();
@@ -115,7 +115,7 @@ Result<void> ListRecordings(const LocalInstanceGroup& group,
     Json::Value recordings_array(Json::arrayValue);
     std::vector<std::string> recordings;
     Result<std::vector<std::string>> result = instance.ListRecordings();
-    if (result.ok()) {
+    if (result.has_value()) {
       recordings = std::move(*result);
     } else {
       LOG(ERROR) << "Failed to list screen recording for instance "

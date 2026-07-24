@@ -28,7 +28,7 @@ Result<std::string> DownloadFileWithBackup(
     const std::string& backup_artifact_name) {
   Result<std::string> result =
       build_api.DownloadFile(build, target_directory, artifact_name);
-  if (result.ok()) {
+  if (result.has_value()) {
     return result;
   }
   return CF_EXPECT(

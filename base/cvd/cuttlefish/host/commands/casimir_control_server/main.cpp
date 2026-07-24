@@ -72,7 +72,7 @@ Result<CasimirController> ConnectToCasimir() {
 }
 
 Status ResultToStatus(Result<void> res) {
-  if (res.ok()) {
+  if (res.has_value()) {
     return Status::OK;
   } else {
     LOG(ERROR) << "RPC failed: " << res.error();

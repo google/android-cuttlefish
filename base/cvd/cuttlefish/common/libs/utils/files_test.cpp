@@ -54,7 +54,7 @@ class FilesTests : public ::testing::Test {
 
   void SetUp() override {
     Result<void> result = CreateTestDirs();
-    if (!result.ok()) {
+    if (!result.has_value()) {
       FAIL() << result.error();
     }
   }
@@ -142,7 +142,7 @@ TEST(FilesTest, SearchFileNotFoundReturnsError) {
   EXPECT_FALSE(FileExists(absl::StrCat(temp_dir, "/search_non_existent_file")));
 
   auto result = Search({temp_dir}, "search_non_existent_file");
-  EXPECT_FALSE(result.ok());
+  EXPECT_FALSE(result.has_value());
 }
 
 }  // namespace cuttlefish

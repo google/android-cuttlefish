@@ -42,7 +42,7 @@ namespace {
 
 template <typename T>
 void LogError(Result<T> res) {
-  if (!res.ok()) {
+  if (!res.has_value()) {
     LOG(ERROR) << res.error().FormatForEnv(/* color = */ false);
   }
 }
@@ -139,7 +139,7 @@ void TakeHostBugreport(const CuttlefishConfig* config, WritableZip& archive) {
     save("disk_config.txt");
     if (DirectoryExists(instance.PerInstancePath("logs"))) {
       auto result = DirectoryContents(instance.PerInstancePath("logs"));
-      if (result.ok()) {
+      if (result.has_value()) {
         for (const auto& log : result.value()) {
           save("logs/" + log);
         }
@@ -156,7 +156,7 @@ void TakeHostBugreport(const CuttlefishConfig* config, WritableZip& archive) {
 
     {
       auto result = DirectoryContents(instance.PerInstancePath("tombstones"));
-      if (result.ok()) {
+      if (result.has_value()) {
         for (const auto& tombstone : result.value()) {
           save("tombstones/" + tombstone);
         }
@@ -168,7 +168,7 @@ void TakeHostBugreport(const CuttlefishConfig* config, WritableZip& archive) {
 
     {
       auto result = DirectoryContents(instance.PerInstancePath("recording"));
-      if (result.ok()) {
+      if (result.has_value()) {
         for (const auto& recording : result.value()) {
           save("recording/" + recording);
         }
@@ -206,7 +206,7 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
 
   LogError(WritableZip::Finalize(std::move(archive)));
 
-  if (Result<void> res = RemoveFile(log_filename); !res.ok()) {
+  if (Result<void> res = RemoveFile(log_filename); !res.has_value()) {
     LOG(INFO) << "Failed to remove host bug report log file '" << log_filename
               << "': " << res.error();
   }
@@ -219,6 +219,6 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   auto result = cuttlefish::CvdHostBugreportMain(argc, argv);
-  CHECK(result.ok()) << result.error();
+  CHECK(result.has_value()) << result.error();
   return 0;
 }

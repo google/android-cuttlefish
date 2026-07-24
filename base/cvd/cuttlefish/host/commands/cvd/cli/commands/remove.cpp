@@ -77,7 +77,7 @@ Result<void> RemoveCvdCommandHandler::Handle(const CommandRequest& request) {
   auto group = CF_EXPECT(selector::SelectGroup(instance_manager_, request));
 
   Result<void> stop_res = StopGroup(group);
-  if (!stop_res.ok()) {
+  if (!stop_res.has_value()) {
     LOG(ERROR) << stop_res.error();
     LOG(ERROR) << "Unable to stop devices first, run `cvd reset` to forcibly "
                   "kill any remaining device processes.";

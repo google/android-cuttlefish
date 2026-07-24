@@ -261,7 +261,7 @@ Subprocess Command::Start(SubprocessOptions options) const {
   for (auto& prerequisite : prerequisites_) {
     auto prerequisiteResult = prerequisite();
 
-    if (!prerequisiteResult.ok()) {
+    if (!prerequisiteResult.has_value()) {
       LOG(ERROR) << "Failed to check prerequisites: "
                  << prerequisiteResult.error();
       return Subprocess(-1, {});

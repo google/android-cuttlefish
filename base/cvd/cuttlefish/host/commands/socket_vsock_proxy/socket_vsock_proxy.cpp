@@ -197,7 +197,7 @@ static Result<void> ListenEventsAndProxy(int events_fd,
     // TODO(schuffelen): Investigate if any errors here are recoverable, and
     // remove the distinction between EOF and other errors if none are
     // recoverable.
-    if (!received_event.ok()) {
+    if (!received_event.has_value()) {
       LOG(ERROR) << "Failed reading kernel log event: "
                  << received_event.error();
       continue;
@@ -263,7 +263,7 @@ int main(int argc, char* argv[]) {
   }
 
   auto result = cuttlefish::socket_proxy::Main();
-  if (!result.ok()) {
+  if (!result.has_value()) {
     LOG(FATAL) << "Failed to proxy: " << result.error();
   }
 

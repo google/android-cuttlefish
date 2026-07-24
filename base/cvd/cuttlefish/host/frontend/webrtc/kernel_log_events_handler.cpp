@@ -72,7 +72,7 @@ void KernelLogEventsHandler::ReadLoop() {
     if (read_set.IsSet(kernel_log_fd_)) {
       Result<std::optional<monitor::ReadEventResult>> read_result =
           monitor::ReadEvent(kernel_log_fd_);
-      if (!read_result.ok()) {
+      if (!read_result.has_value()) {
         LOG(ERROR) << "Failed to read kernel log event: "
                    << read_result.error();
         break;

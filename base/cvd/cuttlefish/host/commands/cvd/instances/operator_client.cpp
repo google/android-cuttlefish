@@ -23,7 +23,9 @@
 #include <string>
 #include <vector>
 
+#include "fmt/base.h"
 #include "fmt/format.h"
+#include "fmt/ostream.h"
 #include "json/json.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"

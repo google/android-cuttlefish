@@ -79,8 +79,8 @@ class RemoteZip : public SeekableZipSourceCallback {
     };
     Result<HttpResponse<void>> res =
         http_client_.DownloadToCallback(request, cb);
-    if (!res.ok() || !res->HttpSuccess() || already_read != zip_len) {
-      if (!res.ok()) {
+    if (!res.has_value() || !res->HttpSuccess() || already_read != zip_len) {
+      if (!res.has_value()) {
         LOG(ERROR) << res.error();
       } else if (!res->HttpSuccess()) {
         LOG(ERROR) << "HTTP code: " << res->http_code;

@@ -151,7 +151,7 @@ class ConfigFlagImpl : public ConfigFlag {
     for (size_t i = 0; i < configs_.size(); ++i) {
       Result<Json::Value> config_values_res =
           config_reader_.ReadConfig(configs_[i]);
-      if (!config_values_res.ok()) {
+      if (!config_values_res.has_value()) {
         LOG(WARNING) << "Config '" << configs_[i]
                      << "' not found: " << config_values_res.error();
         continue;
@@ -203,13 +203,13 @@ class ConfigFlagImpl : public ConfigFlag {
     }
     VLOG(0) << "Reading --config option from: " << info_path;
     Result<std::string> android_info_result = ReadFileContents(info_path);
-    if (!android_info_result.ok()) {
+    if (!android_info_result.has_value()) {
       return {};
     }
     std::string android_info = std::move(*android_info_result);
     Result<std::map<std::string, std::string, std::less<void>>> parsed_config =
         ParseKeyEqualsValue(android_info);
-    if (!parsed_config.ok()) {
+    if (!parsed_config.has_value()) {
       return {};
     }
     auto config_it = parsed_config->find("config");

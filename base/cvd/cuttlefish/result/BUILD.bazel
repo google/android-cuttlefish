@@ -23,8 +23,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result:error_type",
         "//cuttlefish/result:result_type",
-        "//libbase",
         "@fmt",
+        "@tl-expected",
     ],
 )
 
@@ -51,7 +51,7 @@ cf_cc_library(
     hdrs = ["result_type.h"],
     deps = [
         "//cuttlefish/result:error_type",
-        "//libbase",
+        "@tl-expected",
     ],
 )
 
@@ -61,7 +61,7 @@ cf_cc_library(
     hdrs = ["result_matchers.h"],
     deps = [
         "//cuttlefish/result",
-        "//libbase",
         "@googletest//:gtest",
+        "@tl-expected",
     ],
 )

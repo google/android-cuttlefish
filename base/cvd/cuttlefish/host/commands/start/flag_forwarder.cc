@@ -179,8 +179,9 @@ std::vector<gflags::CommandLineFlagInfo> FlagsForSubprocess(
   helpxml_output = helpxml_output.substr(xml_begin);
 
   auto parse_result = ParseGflagsXmlHelp(helpxml_output);
-  CHECK(parse_result.ok()) << "Could not parse xml of subprocess `--helpxml`: "
-                           << parse_result.error();
+  CHECK(parse_result.has_value())
+      << "Could not parse xml of subprocess `--helpxml`: "
+      << parse_result.error();
 
   std::vector<gflags::CommandLineFlagInfo> flags;
   for (const auto& flag_desc : *parse_result) {

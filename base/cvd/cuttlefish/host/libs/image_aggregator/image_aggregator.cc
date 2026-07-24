@@ -372,7 +372,7 @@ Result<void> CreateOrUpdateCompositeDisk(
   Result<CompositeDiskImage> composite_image_res =
       CompositeDiskImage::OpenExisting(output_composite_path);
 
-  if (composite_image_res.ok() &&
+  if (composite_image_res.has_value() &&
       google::protobuf::util::MessageDifferencer::Equals(
           composite_proto, composite_image_res->GetCompositeDisk())) {
     // The existing composite disk matches the given partitions, no need to

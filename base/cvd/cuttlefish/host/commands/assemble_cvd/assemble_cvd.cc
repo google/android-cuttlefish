@@ -364,11 +364,11 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
 
       Result<std::optional<ChromeOsStateImage>> chrome_os_state =
           CF_EXPECT(ChromeOsStateImage::Reuse(instance));
-      if (chrome_os_state.ok()) {
+      if (chrome_os_state.has_value()) {
         Result<DiskBuilder> os_builder = OsCompositeDiskBuilder(
             config, instance, *chrome_os_state, instance_image_files,
             android_builds.ForIndex(index), system_image_dir);
-        if (!os_builder.ok()) {
+        if (!os_builder.has_value()) {
           creating_os_disk = true;
         } else {
           creating_os_disk |= CF_EXPECT(os_builder->WillRebuildCompositeDisk());
@@ -682,7 +682,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
       SetFlagDefaultsForVmm(guest_configs, system_image_dir, vm_manager_flag));
 
   Result<Defaults> defaults = GetFlagDefaultsFromConfig();
-  if (!defaults.ok()) {
+  if (!defaults.has_value()) {
     LOG(FATAL) << "assemble_cvd: Couldn't get flag defaults from config; "
                   "aborting: "
                << defaults.error().Message();
@@ -704,7 +704,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   auto res = cuttlefish::AssembleCvdMain(argc, argv);
-  if (res.ok()) {
+  if (res.has_value()) {
     return *res;
   }
   LOG(ERROR) << "assemble_cvd failed: \n" << res.error();

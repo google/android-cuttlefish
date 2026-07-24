@@ -59,7 +59,7 @@ bool IsValidDeviceName(const std::string& token) {
     return false;
   }
   Result<DeviceName> result = BreakDeviceName(token);
-  if (!result.ok()) {
+  if (!result.has_value()) {
     return false;
   }
   const auto [group_name, instance_name] = *result;

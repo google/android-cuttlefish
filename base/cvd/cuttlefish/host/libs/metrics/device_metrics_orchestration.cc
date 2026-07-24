@@ -119,20 +119,20 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
   DisplayPrivacyNotice();
   Result<DeviceMetricsInput> metrics_input_result = GetDeviceMetricsInput(
       instance_group, DeviceEventType::DeviceInstantiation);
-  if (!metrics_input_result.ok()) {
+  if (!metrics_input_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_input_result.error());
     return;
   }
   Result<void> metrics_setup_result =
       SetUpMetrics(metrics_input_result->base_input.metrics_directory);
-  if (!metrics_setup_result.ok()) {
+  if (!metrics_setup_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_setup_result.error());
     return;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
-  if (!run_metrics_result.ok()) {
+  if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
         run_metrics_result.error());
@@ -143,13 +143,13 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
 void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
   Result<DeviceMetricsInput> metrics_input_result =
       GetDeviceMetricsInput(instance_group, DeviceEventType::DeviceBootStart);
-  if (!metrics_input_result.ok()) {
+  if (!metrics_input_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_input_result.error());
     return;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
-  if (!run_metrics_result.ok()) {
+  if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
         run_metrics_result.error());
@@ -160,13 +160,13 @@ void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
 void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
   Result<DeviceMetricsInput> metrics_input_result = GetDeviceMetricsInput(
       instance_group, DeviceEventType::DeviceBootComplete);
-  if (!metrics_input_result.ok()) {
+  if (!metrics_input_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_input_result.error());
     return;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
-  if (!run_metrics_result.ok()) {
+  if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
         run_metrics_result.error());
@@ -177,13 +177,13 @@ void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
 void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
   Result<DeviceMetricsInput> metrics_input_result =
       GetDeviceMetricsInput(instance_group, DeviceEventType::DeviceBootFailed);
-  if (!metrics_input_result.ok()) {
+  if (!metrics_input_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_input_result.error());
     return;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
-  if (!run_metrics_result.ok()) {
+  if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
         run_metrics_result.error());
@@ -194,13 +194,13 @@ void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
 void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
   Result<DeviceMetricsInput> metrics_input_result =
       GetDeviceMetricsInput(instance_group, DeviceEventType::DeviceStop);
-  if (!metrics_input_result.ok()) {
+  if (!metrics_input_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_input_result.error());
     return;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
-  if (!run_metrics_result.ok()) {
+  if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
         run_metrics_result.error());

@@ -73,7 +73,7 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
       CredentialForScopes(*impl->curl_, scopes);
 
   impl->android_creds_ =
-      cvd_creds.ok() && cvd_creds->get()
+      cvd_creds.has_value() && cvd_creds->get()
           ? std::move(*cvd_creds)
           : CF_EXPECT(GetCredentialSourceFromFlags(
                 *impl->retrying_http_client_, flags, GetAcloudOauthFilepath()));
@@ -84,7 +84,7 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
   Result<std::unique_ptr<CasDownloader>> cas_downloader_result =
       CasDownloader::Create(flags.cas_downloader_flags,
                             flags.credential_flags.service_account_filepath);
-  if (cas_downloader_result.ok()) {
+  if (cas_downloader_result.has_value()) {
     impl->cas_downloader_ = std::move(cas_downloader_result.value());
   }
 

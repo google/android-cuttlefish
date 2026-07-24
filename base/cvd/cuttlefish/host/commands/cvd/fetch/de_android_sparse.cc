@@ -73,7 +73,7 @@ bool ConvertToRawImageNoBinary(const std::string& image_path) {
   }
 
   Result<void> result = Rename(tmp_raw_image_path, image_path.c_str());
-  CHECK(result.ok()) << "Unable to rename raw image: " << result.error();
+  CHECK(result.has_value()) << "Unable to rename raw image: " << result.error();
 
   return true;
 }

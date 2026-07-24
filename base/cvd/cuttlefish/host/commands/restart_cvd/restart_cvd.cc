@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
 
   cuttlefish::Result<void> result = cuttlefish::RestartCvdMain();
 
-  if (!result.ok()) {
+  if (!result.has_value()) {
     LOG(ERROR) << result.error();
     return EXIT_FAILURE;
   }
