@@ -33,6 +33,31 @@ podcvd_cidr=${podcvd_cidr:-192.168.112.0/20}
 
 podcvd_ifname="podcvd"
 
+gen_cert() {
+    local CA_DIR="/etc/cuttlefish-podcvd/ca"
+    local PUB_DIR="/etc/cuttlefish-podcvd/pub"
+    local CERT_DIR="/etc/cuttlefish-podcvd"
+    mkdir -p "$CA_DIR" "$PUB_DIR" "$CERT_DIR"
+    CAROOT="$CA_DIR" mkcert -install >/dev/null
+    ln -sf "$CA_DIR/rootCA.pem" "$PUB_DIR/rootCA.pem"
+
+    # Generate server certificates
+    local ip mask a b c d
+    IFS='/ ' read -r ip mask <<< "$podcvd_cidr"
+    IFS='.' read -r a b c d <<< "$ip"
+    local num_subnets=$(( 2 ** (24 - mask) ))
+    local start_c=$(( c & ~ (num_subnets - 1) ))
+    local end_c=$(( start_c + num_subnets - 1 ))
+    local ips=("127.0.0.1" "localhost")
+    for ((i=start_c; i<=end_c; i++)); do
+        for j in {0..255}; do
+            ips+=("${a}.${b}.${i}.${j}")
+        done
+    done
+    CAROOT="$CA_DIR" mkcert -cert-file "$CERT_DIR/cert.pem" -key-file "$CERT_DIR/key.pem" "${ips[@]}" >/dev/null
+    chmod 644 "$CERT_DIR/cert.pem" "$CERT_DIR/key.pem"
+}
+
 start() {
     modprobe vhost_net || true
     modprobe vhost_vsock || true
@@ -40,6 +65,8 @@ start() {
     ip link add "${podcvd_ifname}" type dummy
     ip link set "${podcvd_ifname}" up
     ip route add local "${podcvd_cidr}" dev "${podcvd_ifname}"
+
+    gen_cert
 }
 
 stop() {
