@@ -1,0 +1,1 @@
+deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/20260315T022902Z/ trixie-backports main contrib non-free non-free-firmware
