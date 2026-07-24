@@ -1,0 +1,76 @@
+--- a/src/rutabaga_gralloc/gralloc.rs
++++ b/src/rutabaga_gralloc/gralloc.rs
+@@ -65,23 +65,23 @@ impl RutabagaGrallocBackendFlags {
+  * Rutabaga gralloc flags are copied from minigbm, but redundant legacy flags are left out.
+  * For example, USE_WRITE / USE_CURSOR_64X64 / USE_CURSOR don't add much value.
+  */
+-const RUTABAGA_GRALLOC_USE_SCANOUT: u32 = 1 << 0;
+-const RUTABAGA_GRALLOC_USE_RENDERING: u32 = 1 << 2;
+-const RUTABAGA_GRALLOC_USE_LINEAR: u32 = 1 << 4;
+-const RUTABAGA_GRALLOC_USE_TEXTURING: u32 = 1 << 5;
+-const RUTABAGA_GRALLOC_USE_CAMERA_WRITE: u32 = 1 << 6;
+-const RUTABAGA_GRALLOC_USE_CAMERA_READ: u32 = 1 << 7;
++pub const RUTABAGA_GRALLOC_USE_SCANOUT: u32 = 1 << 0;
++pub const RUTABAGA_GRALLOC_USE_RENDERING: u32 = 1 << 2;
++pub const RUTABAGA_GRALLOC_USE_LINEAR: u32 = 1 << 4;
++pub const RUTABAGA_GRALLOC_USE_TEXTURING: u32 = 1 << 5;
++pub const RUTABAGA_GRALLOC_USE_CAMERA_WRITE: u32 = 1 << 6;
++pub const RUTABAGA_GRALLOC_USE_CAMERA_READ: u32 = 1 << 7;
+ #[allow(dead_code)]
+-const RUTABAGA_GRALLOC_USE_PROTECTED: u32 = 1 << 8;
++pub const RUTABAGA_GRALLOC_USE_PROTECTED: u32 = 1 << 8;
+ 
+ /* SW_{WRITE,READ}_RARELY omitted since not even Android uses this much. */
+-const RUTABAGA_GRALLOC_USE_SW_READ_OFTEN: u32 = 1 << 9;
+-const RUTABAGA_GRALLOC_USE_SW_WRITE_OFTEN: u32 = 1 << 11;
++pub const RUTABAGA_GRALLOC_USE_SW_READ_OFTEN: u32 = 1 << 9;
++pub const RUTABAGA_GRALLOC_USE_SW_WRITE_OFTEN: u32 = 1 << 11;
+ 
+ #[allow(dead_code)]
+-const RUTABAGA_GRALLOC_VIDEO_DECODER: u32 = 1 << 13;
++pub const RUTABAGA_GRALLOC_VIDEO_DECODER: u32 = 1 << 13;
+ #[allow(dead_code)]
+-const RUTABAGA_GRALLOC_VIDEO_ENCODER: u32 = 1 << 14;
++pub const RUTABAGA_GRALLOC_VIDEO_ENCODER: u32 = 1 << 14;
+ 
+ /// Usage flags for constructing a buffer object.
+ #[derive(Copy, Clone, Eq, PartialEq, Default)]
+@@ -151,6 +151,18 @@ impl RutabagaGrallocFlags {
+         }
+     }
+ 
++    /// Returns true if the scanout flag is set.
++    #[inline(always)]
++    pub fn uses_scanout(self) -> bool {
++        self.0 & RUTABAGA_GRALLOC_USE_SCANOUT != 0
++    }
++
++    /// Returns true if the linear flag is set.
++    #[inline(always)]
++    pub fn uses_linear(self) -> bool {
++        self.0 & RUTABAGA_GRALLOC_USE_LINEAR != 0
++    }
++
+     /// Returns true if the texturing flag is set.
+     #[inline(always)]
+     pub fn uses_texturing(self) -> bool {
+@@ -504,4 +516,19 @@ mod tests {
+         assert_eq!(size as u64, reqs.size);
+         assert_ne!(addr as *const u8, std::ptr::null());
+     }
++
++    #[test]
++    fn test_flags_getters() {
++        let flags = RutabagaGrallocFlags::empty()
++            .use_scanout(true)
++            .use_linear(true);
++        assert!(flags.uses_scanout());
++        assert!(flags.uses_linear());
++        assert!(!flags.uses_rendering());
++        assert!(!flags.uses_texturing());
++
++        let cleared = flags.use_scanout(false).use_linear(false);
++        assert!(!cleared.uses_scanout());
++        assert!(!cleared.uses_linear());
++    }
+ }
