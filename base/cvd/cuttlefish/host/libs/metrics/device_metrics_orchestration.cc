@@ -121,21 +121,21 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
       instance_group, DeviceEventType::DeviceInstantiation);
   if (!metrics_input_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_input_result.error());
+                           metrics_input_result.error().FormatForEnv());
     return;
   }
   Result<void> metrics_setup_result =
       SetUpMetrics(metrics_input_result->base_input.metrics_directory);
   if (!metrics_setup_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_setup_result.error());
+                           metrics_setup_result.error().FormatForEnv());
     return;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
   if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
-        run_metrics_result.error());
+        run_metrics_result.error().FormatForEnv());
     return;
   }
 }
@@ -145,14 +145,14 @@ void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
       GetDeviceMetricsInput(instance_group, DeviceEventType::DeviceBootStart);
   if (!metrics_input_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_input_result.error());
+                           metrics_input_result.error().FormatForEnv());
     return;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
   if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
-        run_metrics_result.error());
+        run_metrics_result.error().FormatForEnv());
     return;
   }
 }
@@ -162,14 +162,14 @@ void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
       instance_group, DeviceEventType::DeviceBootComplete);
   if (!metrics_input_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_input_result.error());
+                           metrics_input_result.error().FormatForEnv());
     return;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
   if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
-        run_metrics_result.error());
+        run_metrics_result.error().FormatForEnv());
     return;
   }
 }
@@ -179,14 +179,14 @@ void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
       GetDeviceMetricsInput(instance_group, DeviceEventType::DeviceBootFailed);
   if (!metrics_input_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_input_result.error());
+                           metrics_input_result.error().FormatForEnv());
     return;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
   if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
-        run_metrics_result.error());
+        run_metrics_result.error().FormatForEnv());
     return;
   }
 }
@@ -196,14 +196,14 @@ void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
       GetDeviceMetricsInput(instance_group, DeviceEventType::DeviceStop);
   if (!metrics_input_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_input_result.error());
+                           metrics_input_result.error().FormatForEnv());
     return;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
   if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
-        run_metrics_result.error());
+        run_metrics_result.error().FormatForEnv());
     return;
   }
 }

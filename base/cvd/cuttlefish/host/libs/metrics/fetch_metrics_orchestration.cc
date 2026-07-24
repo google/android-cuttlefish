@@ -85,7 +85,7 @@ void GatherFetchStartMetrics(const FetchFlags& fetch_flags) {
       SetUpMetrics(metrics_input.metrics_directory);
   if (!metrics_setup_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_setup_result.error());
+                           metrics_setup_result.error().FormatForEnv());
     return;
   }
 
@@ -93,7 +93,7 @@ void GatherFetchStartMetrics(const FetchFlags& fetch_flags) {
   if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
-        run_metrics_result.error());
+        run_metrics_result.error().FormatForEnv());
     return;
   }
 }
@@ -105,7 +105,7 @@ void GatherFetchCompleteMetrics(const std::string& target_directory,
   if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
-        run_metrics_result.error());
+        run_metrics_result.error().FormatForEnv());
     return;
   }
 }
@@ -116,7 +116,7 @@ void GatherFetchFailedMetrics(const std::string& target_directory) {
   if (!run_metrics_result.has_value()) {
     VLOG(0) << fmt::format(
         "Failed during metrics gathering and (possible) outputting.  Error: {}",
-        run_metrics_result.error());
+        run_metrics_result.error().FormatForEnv());
     return;
   }
 }
