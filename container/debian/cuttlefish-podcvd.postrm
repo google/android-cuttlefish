@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "purge" ]; then
+    CAROOT=/etc/cuttlefish-podcvd/ca mkcert -uninstall >/dev/null 2>&1 || true
+    rm -rf /etc/cuttlefish-podcvd
+fi
+
+#DEBHELPER#

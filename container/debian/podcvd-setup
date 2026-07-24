@@ -186,6 +186,11 @@ setup_nvidia_gpu() {
     done
 }
 
+trust_ca_in_browsers() {
+    echo "Registering Podcvd Root CA into browser trust stores..."
+    sudo -H -u "$username" TRUST_STORES="nss" CAROOT="/etc/cuttlefish-podcvd/pub" mkcert -install >/dev/null
+}
+
 USER_CONFIG="/etc/podcvd.users"
 username="${1:-${SUDO_USER:-$(id -un)}}"
 if [ -z "$username" ] || ! id "$username" >/dev/null 2>&1; then
@@ -202,5 +207,6 @@ setup_device_permissions
 setup_rootless_podman
 # This is working only when both nvidia-smi and nvidia-ctk works fine.
 setup_nvidia_gpu || echo "Skipping NVIDIA GPU setup."
+trust_ca_in_browsers
 
 echo "Setup complete! You can now run 'podcvd'."
