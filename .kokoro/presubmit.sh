@@ -32,13 +32,24 @@ if [ -f "$CACHE_CONFIG_FILE" ]; then
     source "$CACHE_CONFIG_FILE"
 fi
 
-"${TOOL_DIR}/buildutils/build_packages.sh" -r "${BAZEL_REMOTE_CACHE}" -c "${CACHE_VERSION}"
+if [[ "${ANDROID_CUTTLEFISH_KOKORO_BUILD_SCRIPT_ARGS:-}" == *"-p"* ]]; then
+    retry sudo apt-get install -y docker.io
+    sudo systemctl start docker || true
 
-# Add test user to the kokoro group so it has access to the source dir
-"${TOOL_DIR}/testutils/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro
+    sudo docker build -t android-cuttlefish-build:latest -f "${TOOL_DIR}/buildutils/cw/Containerfile" "${REPO_DIR}"
+    sudo docker run --rm --network=host -v="${REPO_DIR}":/mnt/build -w /mnt/build android-cuttlefish-build:latest base -r "${BAZEL_REMOTE_CACHE}" -c "${CACHE_VERSION}"
+    sudo docker run --rm --network=host -v="${REPO_DIR}":/mnt/build -w /mnt/build android-cuttlefish-build:latest container
+    sudo docker run --rm --network=host -v="${REPO_DIR}":/mnt/build -w /mnt/build android-cuttlefish-build:latest frontend
+    # Clean up temporary packaging directories created during debuild
+    sudo rm -rf "${REPO_DIR}"/*/debian/tmp
 
-if [[ "${ENABLE_GPU:-}" == "true" ]]; then
-    ANDROID_CUTTLEFISH_KOKORO_BUILD_SCRIPT_ARGS+=" -g"
+    "${TOOL_DIR}/testutils/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro -p
+    sudo -u testrunner "${REPO_DIR}/container/image/image-builder.sh" -c podman -m dev -t localhost/cuttlefish-orchestration:latest
+else
+    "${TOOL_DIR}/buildutils/build_packages.sh" -r "${BAZEL_REMOTE_CACHE}" -c "${CACHE_VERSION}"
+
+    # Add test user to the kokoro group so it has access to the source dir
+    "${TOOL_DIR}/testutils/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro
 fi
 
 # Allow kokoro group to the source dir:
