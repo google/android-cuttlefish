@@ -27,12 +27,9 @@ if [ ! -d /dev/fd ]; then
   ln -s /proc/self/fd /dev/fd
 fi
 
-# Using "Depends:" is more reliable than "Version:", because it works for
-# backported ("bpo") kernels as well. NOTE: "Package" can be used instead
-# if we don't install the metapackage ("linux-image-cloud-${arch}") but a
-# specific version in the future
-kmodver=$(dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
-          cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
+# Query the installed concrete kernel package version on disk rather than the metapackage
+kmodver=$(dpkg -l | grep '^ii' | awk '{print $2}' | \
+          grep '^linux-image-[0-9]' | head -n1 | sed 's/linux-image-//')
 
 apt-get install -y wget
 
