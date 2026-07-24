@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -53,8 +54,10 @@ class ChannelMonitor {
   cuttlefish::SharedFD server_;
   cuttlefish::SharedFD read_pipe_;
   cuttlefish::SharedFD write_pipe_;
+  std::mutex clients_mutex_;
   std::vector<std::unique_ptr<Client>> clients_;
   std::vector<std::unique_ptr<Client>> remote_clients_;
+  std::vector<std::unique_ptr<Client>> pending_remote_;
 
   void AcceptIncomingConnection();
   void OnClientSocketClosed(int sock);

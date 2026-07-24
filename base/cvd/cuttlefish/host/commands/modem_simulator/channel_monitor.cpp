@@ -46,15 +46,14 @@ ClientId ChannelMonitor::SetRemoteClient(SharedFD client, bool is_accepted) {
   if (is_accepted) {
     // There may be new data from remote client before select.
     remote_client->first_read_command_ = true;
-    ReadCommand(*remote_client);
   }
 
-  if (remote_client->client_read_fd_->IsOpen() &&
-      remote_client->client_write_fd_->IsOpen()) {
-    remote_client->first_read_command_ = false;
-    remote_clients_.push_back(std::move(remote_client));
-    VLOG(0) << "added one remote client";
+  {
+    std::lock_guard<std::mutex> lock(clients_mutex_);
+    pending_remote_.push_back(std::move(remote_client));
   }
+
+  VLOG(0) << "added one remote client";
 
   // Trigger monitor loop
   if (write_pipe_->IsOpen()) {
@@ -83,8 +82,8 @@ void ChannelMonitor::AcceptIncomingConnection() {
 }
 
 void ChannelMonitor::ReadCommand(Client& client) {
-  std::vector<char> buffer(kMaxCommandLength);
-  auto bytes_read = client.client_read_fd_->Read(buffer.data(), buffer.size());
+  char buffer[kMaxCommandLength];
+  auto bytes_read = client.client_read_fd_->Read(buffer, kMaxCommandLength);
   if (bytes_read <= 0) {
     if (errno == EAGAIN && client.type == Client::REMOTE &&
         client.first_read_command_) {
@@ -96,24 +95,18 @@ void ChannelMonitor::ReadCommand(Client& client) {
             << client.client_read_fd_->StrError();
     client.client_read_fd_->Close();  // Ignore errors here
     client.client_write_fd_->Close();
-    // Erase client from the vector clients
-    auto& clients = client.type == Client::REMOTE ? remote_clients_ : clients_;
-    auto iter = std::find_if(
-        clients.begin(), clients.end(),
-        [&](std::unique_ptr<Client>& other) { return *other == client; });
-    if (iter != clients.end()) {
-      clients.erase(iter);
-    }
+
+    // Do NOT erase here — we are called from inside MonitorLoop's range-for
+    // over the same vector.  Mark invalid; removeInvalidClients() reaps it on
+    // the next wake-pipe tick.
+    client.is_valid = false;
     return;
   }
-
-  std::string& incomplete_command = client.incomplete_command;
+  client.first_read_command_ = false;
 
   // Add the incomplete command from the last read
-  auto commands = std::string{incomplete_command.data()};
-  commands.append(buffer.data());
-
-  incomplete_command.clear();
+  std::string commands(std::move(client.incomplete_command));
+  commands.append(buffer, bytes_read);
 
   // Replacing '\n' with '\r'
   absl::StrReplaceAll({{"\n", "\r"}}, &commands);
@@ -134,14 +127,15 @@ void ChannelMonitor::ReadCommand(Client& client) {
       }
       pos = r_pos + 1;                     // Skip '\r'
     } else if (pos < commands.length()) {  // Incomplete command
-      incomplete_command = commands.substr(pos);
-      VLOG(1) << "incomplete command: " << incomplete_command;
+      client.incomplete_command = commands.substr(pos);
+      VLOG(1) << "incomplete command: " << client.incomplete_command;
     }
   }
 }
 
 void ChannelMonitor::SendUnsolicitedCommand(std::string& response) {
   // The first accepted client default to be unsolicited command channel?
+  std::lock_guard<std::mutex> lock(clients_mutex_);
   auto iter = clients_.begin();
   if (iter != clients_.end()) {
     iter->get()->SendCommandResponse(response);
@@ -151,6 +145,7 @@ void ChannelMonitor::SendUnsolicitedCommand(std::string& response) {
 }
 
 void ChannelMonitor::SendRemoteCommand(ClientId client, std::string& response) {
+  std::lock_guard<std::mutex> lock(clients_mutex_);
   auto iter = remote_clients_.begin();
   for (; iter != remote_clients_.end(); ++iter) {
     if (iter->get()->Id() == client) {
@@ -162,6 +157,7 @@ void ChannelMonitor::SendRemoteCommand(ClientId client, std::string& response) {
 }
 
 void ChannelMonitor::CloseRemoteConnection(ClientId client) {
+  std::lock_guard<std::mutex> lock(clients_mutex_);
   auto iter = remote_clients_.begin();
   for (; iter != remote_clients_.end(); ++iter) {
     if (iter->get()->Id() == client) {
@@ -211,16 +207,27 @@ void ChannelMonitor::MonitorLoop() {
     cuttlefish::SharedFDSet read_set;
     read_set.Set(server_);
     read_set.Set(read_pipe_);
-    for (auto& client : clients_) {
-      if (client->is_valid) {
-        read_set.Set(client->client_read_fd_);
+
+    {
+      std::lock_guard<std::mutex> lock(clients_mutex_);
+      remote_clients_.insert(
+          remote_clients_.end(),
+          std::make_move_iterator(pending_remote_.begin()),
+          std::make_move_iterator(pending_remote_.end()));
+      pending_remote_.clear();
+
+      for (auto& client : clients_) {
+        if (client->is_valid) {
+          read_set.Set(client->client_read_fd_);
+        }
+      }
+      for (auto& client : remote_clients_) {
+        if (client->is_valid) {
+          read_set.Set(client->client_read_fd_);
+        }
       }
     }
-    for (auto& client : remote_clients_) {
-      if (client->is_valid) {
-        read_set.Set(client->client_read_fd_);
-      }
-    }
+
     int num_fds = cuttlefish::Select(&read_set, nullptr, nullptr, nullptr);
     if (num_fds < 0) {
       LOG(ERROR) << "Select call returned error : " << strerror(errno);
@@ -237,20 +244,22 @@ void ChannelMonitor::MonitorLoop() {
           VLOG(0) << "requested to exit now";
           break;
         }
-        // clean the lists
-        removeInvalidClients(clients_);
-        removeInvalidClients(remote_clients_);
       }
+
+      std::lock_guard<std::mutex> lock(clients_mutex_);
       for (auto& client : clients_) {
-        if (read_set.IsSet(client->client_read_fd_)) {
+        if (client->is_valid && read_set.IsSet(client->client_read_fd_)) {
           ReadCommand(*client);
         }
       }
       for (auto& client : remote_clients_) {
-        if (read_set.IsSet(client->client_read_fd_)) {
+        if (client->is_valid && read_set.IsSet(client->client_read_fd_)) {
           ReadCommand(*client);
         }
       }
+
+      removeInvalidClients(clients_);
+      removeInvalidClients(remote_clients_);
     } else {
       // Ignore errors here
       LOG(ERROR) << "Select call returned error : " << strerror(errno);

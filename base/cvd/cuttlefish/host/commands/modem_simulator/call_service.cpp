@@ -90,6 +90,7 @@ std::vector<CommandHandler> CallService::InitializeCommandHandlers() {
 
 // This also resumes held calls
 void CallService::SimulatePendingCallsAnswered() {
+  std::lock_guard<std::mutex> lock(active_calls_mutex_);
   for (auto& iter : active_calls_) {
     if (iter.second.isCallDialing()) {
       iter.second.SetCallActive();
@@ -100,6 +101,7 @@ void CallService::SimulatePendingCallsAnswered() {
 void CallService::TimerWaitingRemoteCallResponse(CallToken call_token) {
   VLOG(0) << "Dialing id: " << call_token.first
           << ", number: " << call_token.second << "timeout, cancel";
+  std::lock_guard<std::mutex> lock(active_calls_mutex_);
   auto iter = active_calls_.find(call_token.first);
   if (iter != active_calls_.end() && iter->second.number == call_token.second) {
     if (iter->second.remote_client != std::nullopt) {
@@ -112,6 +114,7 @@ void CallService::TimerWaitingRemoteCallResponse(CallToken call_token) {
 
 /* ATD */
 void CallService::HandleDial(const Client& client, const std::string& command) {
+  std::lock_guard<std::mutex> lock(active_calls_mutex_);
   // Check the network registration state
   auto registration_state = NetworkService::NET_REGISTRATION_UNKNOWN;
   if (network_service_) {
@@ -265,6 +268,7 @@ void CallService::SendCallStatusToRemote(CallStatus& call,
 
 /* ATA */
 void CallService::HandleAcceptCall(const Client& client) {
+  std::lock_guard<std::mutex> lock(active_calls_mutex_);
   for (auto& iter : active_calls_) {
     if (iter.second.isCallIncoming()) {
       iter.second.SetCallActive();
@@ -280,6 +284,7 @@ void CallService::HandleAcceptCall(const Client& client) {
 
 /* ATH */
 void CallService::HandleRejectCall(const Client& client) {
+  std::lock_guard<std::mutex> lock(active_calls_mutex_);
   for (auto iter = active_calls_.begin(); iter != active_calls_.end();) {
     /* ATH: hangup, since user is busy */
     if (iter->second.isCallIncoming()) {
@@ -339,6 +344,7 @@ void CallService::HandleRejectCall(const Client& client) {
  *see RIL_REQUEST_GET_CURRENT_CALLS in RIL
  */
 void CallService::HandleCurrentCalls(const Client& client) {
+  std::lock_guard<std::mutex> lock(active_calls_mutex_);
   std::vector<std::string> responses;
   std::stringstream ss;
 
@@ -396,12 +402,13 @@ void CallService::HandleCurrentCalls(const Client& client) {
  */
 void CallService::HandleHangup(const Client& client,
                                const std::string& command) {
+  std::lock_guard<std::mutex> lock(active_calls_mutex_);
   std::vector<std::string> responses;
   CommandParser cmd(command);
   cmd.SkipPrefix();
 
-  std::string action(*cmd);
-  int n = std::stoi(action.substr(0, 1));
+  const std::string action(*cmd);
+  const int n = action.empty() ? -1 : (action[0] - '0');
   int index = -1;
   if (cmd->length() > 1) {
     index = std::stoi(action.substr(1));
@@ -643,6 +650,7 @@ void CallService::CallStateUpdate() {
  */
 void CallService::HandleRemoteCall(const Client& client,
                                    const std::string& command) {
+  std::lock_guard<std::mutex> lock(active_calls_mutex_);
   CommandParser cmd(command);
   cmd.SkipPrefix();
 
