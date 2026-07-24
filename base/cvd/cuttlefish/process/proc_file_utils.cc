@@ -239,7 +239,7 @@ Result<uid_t> OwnerUid(const pid_t pid) {
   // parse from /proc/<pid>/status
   auto uids_result = OwnerUids(pid);
   if (!uids_result.has_value()) {
-    VLOG(0) << uids_result.error().Trace();
+    VLOG(0) << uids_result.error();
     VLOG(0) << "Falling back to the old OwnerUid logic";
     return CF_EXPECT(FileOwnerUid(PidDirPath(pid)));
   }

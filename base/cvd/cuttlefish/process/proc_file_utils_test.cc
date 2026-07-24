@@ -17,9 +17,11 @@
 
 #include <unistd.h>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 
@@ -27,8 +29,7 @@ TEST(ProcFileUid, SelfUidTest) {
   auto my_pid = getpid();
   auto login_uid_of_my_pid = OwnerUid(my_pid);
 
-  ASSERT_TRUE(login_uid_of_my_pid.has_value())
-      << login_uid_of_my_pid.error().Trace();
+  ASSERT_THAT(login_uid_of_my_pid, IsOk());
   ASSERT_EQ(getuid(), *login_uid_of_my_pid);
 }
 

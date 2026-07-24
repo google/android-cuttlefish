@@ -11,6 +11,7 @@ cf_cc_test(
     srcs = ["boot_configs_test.cc"],
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 
@@ -116,6 +117,7 @@ cf_cc_test(
     srcs = ["disk_configs_test.cc"],
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 

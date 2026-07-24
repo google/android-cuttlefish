@@ -15,23 +15,24 @@
  */
 
 #include "cuttlefish/host/commands/cvd/unittests/selector/cvd_flags_helper.h"
+#include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 
 TEST_F(CvdFlagCollectionTest, Init) {
   auto output_result = flag_collection_.FilterFlags(input_);
-  ASSERT_TRUE(output_result.has_value()) << output_result.error().Trace();
+  ASSERT_THAT(output_result, IsOk());
 }
 
 TEST_F(CvdFlagCollectionTest, Leftover) {
   auto output_result = flag_collection_.FilterFlags(input_);
-  ASSERT_TRUE(output_result.has_value()) << output_result.error().Trace();
+  ASSERT_THAT(output_result, IsOk());
   ASSERT_EQ(input_, std::vector<std::string>{"--not_consumed"});
 }
 
 TEST_F(CvdFlagCollectionTest, AllGivenFlagsListed) {
   auto output_result = flag_collection_.FilterFlags(input_);
-  ASSERT_TRUE(output_result.has_value()) << output_result.error().Trace();
+  ASSERT_THAT(output_result, IsOk());
   ASSERT_EQ(input_, std::vector<std::string>{"--not_consumed"});
   auto output = std::move(*output_result);
 
@@ -54,9 +55,9 @@ TEST(CvdFlagTest, FlagProxyFilter) {
   auto expected_null_result = no_default_proxy.FilterFlag(not_has_flag_args);
   auto expected_null_result2 = no_default_proxy.FilterFlag(empty_args);
 
-  ASSERT_TRUE(expected_hello_opt_result.has_value());
-  ASSERT_TRUE(expected_null_result.has_value());
-  ASSERT_TRUE(expected_null_result2.has_value());
+  ASSERT_TRUE(expected_hello_opt_result, IsOk());
+  ASSERT_TRUE(expected_null_result, IsOk());
+  ASSERT_TRUE(expected_null_result2, IsOk());
 
   ASSERT_TRUE(*expected_hello_opt_result);
   auto value_result = Get<std::string>(**expected_hello_opt_result);

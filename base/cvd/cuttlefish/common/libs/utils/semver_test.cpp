@@ -20,11 +20,13 @@
 
 #include "gtest/gtest.h"
 
+#include "cuttlefish/result/result_matchers.h"
+
 namespace cuttlefish {
 
 TEST(SemVer, ParseBasic) {
   auto result = ParseSemVer("1.2.3");
-  ASSERT_TRUE(result.has_value()) << result.error().Trace();
+  ASSERT_THAT(result, IsOk());
   EXPECT_EQ(result->major, 1);
   EXPECT_EQ(result->minor, 2);
   EXPECT_EQ(result->patch, 3);
@@ -34,7 +36,7 @@ TEST(SemVer, ParseBasic) {
 
 TEST(SemVer, ParseWithPrereleaseAndMetadata) {
   auto result = ParseSemVer("1.2.3-alpha.1+build.123");
-  ASSERT_TRUE(result.has_value()) << result.error().Trace();
+  ASSERT_THAT(result, IsOk());
   EXPECT_EQ(result->major, 1);
   EXPECT_EQ(result->minor, 2);
   EXPECT_EQ(result->patch, 3);
@@ -42,9 +44,6 @@ TEST(SemVer, ParseWithPrereleaseAndMetadata) {
   EXPECT_EQ(result->build_metadata, "build.123");
 }
 
-TEST(SemVer, ParseInvalid) {
-  auto result = ParseSemVer("asdfsf");
-  EXPECT_FALSE(result.has_value());
-}
+TEST(SemVer, ParseInvalid) { EXPECT_THAT(ParseSemVer("asdfsf"), IsError()); }
 
 }  // namespace cuttlefish

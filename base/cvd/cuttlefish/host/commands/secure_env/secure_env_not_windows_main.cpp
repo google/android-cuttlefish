@@ -370,7 +370,7 @@ Result<void> SecureEnvMain(int argc, char** argv) {
       auto result = secure_env_impl::WorkerInnerLoop(
           keymaster_process_cb, keymaster_in, keymaster_snapshot_socket2);
       if (!result.has_value()) {
-        LOG(FATAL) << "keymaster worker failed: " << result.error().Trace();
+        LOG(FATAL) << "keymaster worker failed: " << result.error();
       }
     }
   });
@@ -394,7 +394,7 @@ Result<void> SecureEnvMain(int argc, char** argv) {
       auto result = secure_env_impl::WorkerInnerLoop(
           gatekeeper_process_cb, gatekeeper_in, gatekeeper_snapshot_socket2);
       if (!result.has_value()) {
-        LOG(FATAL) << "gatekeeper worker failed: " << result.error().Trace();
+        LOG(FATAL) << "gatekeeper worker failed: " << result.error();
       }
     }
   });
@@ -416,7 +416,7 @@ Result<void> SecureEnvMain(int argc, char** argv) {
           auto result = secure_env_impl::WorkerInnerLoop(
               oemlock_process_cb, oemlock_in, oemlock_snapshot_socket2);
           if (!result.has_value()) {
-            LOG(FATAL) << "oemlock worker failed: " << result.error().Trace();
+            LOG(FATAL) << "oemlock worker failed: " << result.error();
           }
         }
       });
@@ -456,6 +456,6 @@ int main(int argc, char** argv) {
   if (result.has_value()) {
     return 0;
   }
-  LOG(FATAL) << result.error().Trace();
+  LOG(FATAL) << result.error();
   return -1;
 }

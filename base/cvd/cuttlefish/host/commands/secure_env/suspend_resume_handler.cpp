@@ -65,7 +65,7 @@ SnapshotCommandHandler::SnapshotCommandHandler(SharedFD channel_to_run_cvd,
     while (true) {
       auto result = SuspendResumeHandler();
       if (!result.has_value()) {
-        LOG(ERROR) << result.error().Trace();
+        LOG(ERROR) << result.error();
         return;
       }
     }

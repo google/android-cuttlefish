@@ -367,8 +367,8 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesTogether) {
   auto result_tv =
       db.FindInstanceWithGroup({.instance_names = {"tv_instance"}});
 
-  ASSERT_TRUE(result_8.has_value()) << result_8.error().Trace();
-  ASSERT_TRUE(result_tv.has_value()) << result_tv.error().Trace();
+  ASSERT_THAT(result_8, IsOk());
+  ASSERT_THAT(result_tv, IsOk());
 }
 
 TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {

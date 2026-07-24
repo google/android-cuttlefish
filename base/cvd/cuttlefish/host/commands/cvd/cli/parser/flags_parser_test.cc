@@ -80,7 +80,7 @@ TEST(FlagsParserTest, ParseBasicJsonSingleInstances) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data, "--num_instances=1"))
       << "num_instances flag is missing or wrongly formatted";
 }
@@ -112,7 +112,7 @@ TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data, "--num_instances=2"))
       << "num_instances flag is missing or wrongly formatted";
 }
@@ -138,7 +138,7 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEmptyJson) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_FALSE(FindConfig(*serialized_data, R"(--netsim_bt=)"))
       << "netsim_bt flag is set";
   EXPECT_FALSE(FindConfig(*serialized_data, R"(--netsim_uwb=)"))
@@ -168,7 +168,7 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=false)"))
       << "netsim_bt flag is missing or wrongly formatted";
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_uwb=true)"))
@@ -228,7 +228,7 @@ TEST(CvdLoadFlagsTest, CredentialSourceSetter) {
   auto flags = BuildCvdLoadFlags(load_flags);
   std::vector<std::string> args = {"--credential_source=foo"};
   auto result = ConsumeFlags(flags, args);
-  ASSERT_TRUE(result.has_value()) << result.error().Trace();
+  ASSERT_THAT(result, IsOk());
 
   ASSERT_EQ(load_flags.overrides.size(), 1);
   EXPECT_EQ(load_flags.overrides.count("fetch.credential_source"), 1);
@@ -267,7 +267,7 @@ TEST(CvdLoadFlagsTest, ProjectIDSetter) {
   auto flags = BuildCvdLoadFlags(load_flags);
   std::vector<std::string> args = {"--project_id=foo"};
   auto result = ConsumeFlags(flags, args);
-  ASSERT_TRUE(result.has_value()) << result.error().Trace();
+  ASSERT_THAT(result, IsOk());
 
   ASSERT_EQ(load_flags.overrides.size(), 1);
   EXPECT_EQ(load_flags.overrides.count("fetch.project_id"), 1);
@@ -377,7 +377,7 @@ TEST(FlagsParserTest, ParseMediaSplaneSingleInstance) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data, "--media=type=v4l2_emulated_camera_splane"))
       << "media flag is missing or wrongly formatted";
@@ -410,7 +410,7 @@ TEST(FlagsParserTest, ParseMediaSplaneTwoDevices) {
   EXPECT_TRUE(ParseJsonString(json_text, json_configs))
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_EQ(std::count(serialized_data->begin(), serialized_data->end(),
                        "--media=type=v4l2_emulated_camera_splane"),
             2);
@@ -441,7 +441,7 @@ TEST(FlagsParserTest, ParseMediaMplane) {
 
   auto serialized_data = LaunchCvdParserTester(json_configs);
 
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data, "--media=type=v4l2_emulated_camera_mplane"))
       << "media flag is missing or wrongly formatted";
@@ -474,7 +474,7 @@ TEST(FlagsParserTest, ParseMediaV4l2Proxy) {
 
   auto serialized_data = LaunchCvdParserTester(json_configs);
 
-  EXPECT_TRUE(serialized_data.has_value()) << serialized_data.error().Trace();
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data, "--media=type=v4l2_proxy"))
       << "media flag is missing or wrongly formatted";
 }
