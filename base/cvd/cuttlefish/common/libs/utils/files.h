@@ -34,9 +34,6 @@ inline Result<bool> CanRename(const std::string& source,
                               const std::string& destination) {
   return CanHardLink(source, destination);
 }
-Result<ino_t> FileInodeNumber(const std::string& path);
-Result<bool> AreHardLinked(const std::string& source,
-                           const std::string& destination);
 
 Result<std::string> LinkOrCopy(const std::string& target,
                                const std::string& destination,

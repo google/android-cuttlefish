@@ -61,6 +61,7 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/files/are_hard_linked.h"
 #include "cuttlefish/files/copy.h"
 #include "cuttlefish/files/file_device_id.h"
 #include "cuttlefish/files/file_exists.h"
@@ -75,33 +76,10 @@
 
 namespace cuttlefish {
 
-bool FileExists(const std::string& path, bool follow_symlinks) {
-  struct stat st{};
-  return (follow_symlinks ? stat : lstat)(path.c_str(), &st) == 0;
-}
-
 Result<bool> CanHardLink(const std::string& source,
                          const std::string& destination) {
   return CF_EXPECT(FileDeviceId(source)) ==
          CF_EXPECT(FileDeviceId(destination));
-}
-
-Result<ino_t> FileInodeNumber(const std::string& path) {
-  struct stat out;
-  CF_EXPECTF(
-      stat(path.c_str(), &out) == 0,
-      "stat() failed trying to retrieve inode num information for \"{}\" "
-      "with error: {}",
-      path, strerror(errno));
-  return out.st_ino;
-}
-
-Result<bool> AreHardLinked(const std::string& source,
-                           const std::string& destination) {
-  return (CF_EXPECT(FileDeviceId(source)) ==
-          CF_EXPECT(FileDeviceId(destination))) &&
-         (CF_EXPECT(FileInodeNumber(source)) ==
-          CF_EXPECT(FileInodeNumber(destination)));
 }
 
 Result<std::string> LinkOrCopy(const std::string& target,
