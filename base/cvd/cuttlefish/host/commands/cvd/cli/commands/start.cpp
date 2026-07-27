@@ -35,6 +35,7 @@
 #include <set>
 #include <string>
 #include <thread>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -402,8 +403,25 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(UpdateEnvs(envs, group));
   const auto bin = CF_EXPECT(FindStartBin(group.HostArtifactsPath()));
 
+  bool substitute_all = false;
+  for (const auto& arg : subcmd_args) {
+    std::string_view arg_view(arg);
+    if (arg_view.starts_with("--")) {
+      arg_view.remove_prefix(2);
+    } else if (arg_view.starts_with("-")) {
+      arg_view.remove_prefix(1);
+    } else {
+      continue;
+    }
+    if (arg_view == "media" || arg_view.starts_with("media=")) {
+      substitute_all = true;
+      break;
+    }
+  }
+
   CF_EXPECT(HostPackageSubstitution(group.HostArtifactsPath(),
-                                    own_flags_.host_substitutions));
+                                    own_flags_.host_substitutions,
+                                    substitute_all));
 
   SharedFD memfd;
   SharedFD stop_eventfd;
