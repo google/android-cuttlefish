@@ -18,6 +18,7 @@
 #include <stddef.h>
 
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -26,6 +27,7 @@
 #include "gflags/gflags.h"
 
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"

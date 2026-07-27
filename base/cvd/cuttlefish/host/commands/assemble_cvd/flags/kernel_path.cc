@@ -15,6 +15,8 @@
  */
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 
+#include <stddef.h>
+
 #include <algorithm>
 #include <string>
 #include <utility>

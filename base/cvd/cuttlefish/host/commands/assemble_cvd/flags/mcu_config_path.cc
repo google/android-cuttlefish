@@ -16,6 +16,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/mcu_config_path.h"
 
 #include <stddef.h>
+#include <unistd.h>
 
 #include <string>
 #include <utility>

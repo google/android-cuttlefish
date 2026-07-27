@@ -15,6 +15,8 @@
  */
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 
+#include <stddef.h>
+
 #include <algorithm>
 #include <string>
 #include <utility>
@@ -26,6 +28,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
+#include "cuttlefish/host/libs/config/file_source.h"
 
 DEFINE_string(initramfs_path, CF_DEFAULTS_INITRAMFS_PATH,
               "Path to the initramfs. Overrides the one from the boot image");

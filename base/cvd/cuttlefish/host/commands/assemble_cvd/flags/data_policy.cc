@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
 
+#include <algorithm>
 #include <iterator>
 #include <string>
 #include <utility>

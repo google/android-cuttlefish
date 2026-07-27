@@ -15,6 +15,9 @@
  */
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
 
+#include <stdint.h>
+
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
