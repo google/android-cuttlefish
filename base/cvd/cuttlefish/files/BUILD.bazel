@@ -7,6 +7,18 @@ package(
 cf_build_test(name = "files_build_test")
 
 cf_cc_library(
+    name = "are_hard_linked",
+    srcs = ["are_hard_linked.cc"],
+    hdrs = ["are_hard_linked.h"],
+    deps = [
+        "//cuttlefish/files:file_device_id",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "copy",
     srcs = ["copy.cc"],
     hdrs = ["copy.h"],
