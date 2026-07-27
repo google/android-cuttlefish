@@ -24,6 +24,7 @@ namespace cuttlefish {
 
 Result<void> HostPackageSubstitution(
     const std::string& target_dir,
-    const std::vector<std::string>& host_substitutions);
+    const std::vector<std::string>& host_substitutions,
+    bool substitute_all = false);
 
 }  // namespace cuttlefish

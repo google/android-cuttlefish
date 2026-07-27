@@ -159,7 +159,8 @@ Result<void> SubstituteWithMarker(const std::string& target_dir,
 
 Result<void> HostPackageSubstitution(
     const std::string& target_dir,
-    const std::vector<std::string>& host_substitutions) {
+    const std::vector<std::string>& host_substitutions,
+    bool substitute_all) {
   std::string marker_file = target_dir + "/etc/debian_substitution_marker";
   // Use a local debian_substitution_marker file for development purposes.
   std::optional<std::string> local_marker_file =
@@ -178,7 +179,9 @@ Result<void> HostPackageSubstitution(
   std::string cvdalloc_name = fmt::format("{}/bin/{}", target_dir, "cvdalloc");
   CF_EXPECT(Substitute(cvdalloc_src, cvdalloc_name));
 
-  if (host_substitutions.empty() && FileExists(marker_file)) {
+  if (substitute_all) {
+    CF_EXPECT(SubstituteWithFlag(target_dir, {"all"}));
+  } else if (host_substitutions.empty() && FileExists(marker_file)) {
     CF_EXPECT(SubstituteWithMarker(target_dir, marker_file));
   } else {
     CF_EXPECT(SubstituteWithFlag(target_dir, host_substitutions));
