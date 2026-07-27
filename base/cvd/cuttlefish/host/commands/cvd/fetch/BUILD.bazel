@@ -314,7 +314,6 @@ cf_cc_library(
     name = "substitute",
     srcs = ["substitute.cc"],
     hdrs = ["substitute.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         ":host_pkg_migration_cc_proto",
         "//cuttlefish/common/libs/utils:environment",
@@ -326,7 +325,6 @@ cf_cc_library(
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
-        "@fmt",
         "@protobuf",
     ],
 )
