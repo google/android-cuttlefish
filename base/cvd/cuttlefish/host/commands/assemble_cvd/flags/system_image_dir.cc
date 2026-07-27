@@ -24,6 +24,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/result/result.h"
 
 DEFINE_string(system_image_dir, CF_DEFAULTS_SYSTEM_IMAGE_DIR,

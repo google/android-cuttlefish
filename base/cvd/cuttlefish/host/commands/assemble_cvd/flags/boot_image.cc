@@ -18,12 +18,16 @@
 #include <stddef.h>
 
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/str_split.h"
 #include "gflags/gflags.h"
 
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/result/result.h"
 

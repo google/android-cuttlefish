@@ -18,6 +18,8 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+exports_files([".clang-tidy"])
+
 cf_cc_library(
     name = "android_efi_loader",
     srcs = ["android_efi_loader.cc"],
@@ -58,6 +60,7 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:android_build",
         "//cuttlefish/host/commands/assemble_cvd/android_build:android_builds",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/result",
@@ -73,6 +76,7 @@ cf_cc_library(
     hdrs = ["bootloader.h"],
     depend_on_what_you_use_enabled = False,
     deps = [
+        "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:guest_config",
@@ -337,6 +341,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
@@ -379,6 +384,7 @@ cf_cc_library(
     hdrs = ["vm_manager.h"],
     depend_on_what_you_use_enabled = False,
     deps = [
+        "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:guest_config",
         "//cuttlefish/host/libs/config:vmm_mode",

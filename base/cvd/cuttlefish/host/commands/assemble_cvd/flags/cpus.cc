@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/cpus.h"
 
+#include <string>
 #include <utility>
 #include <vector>
 
