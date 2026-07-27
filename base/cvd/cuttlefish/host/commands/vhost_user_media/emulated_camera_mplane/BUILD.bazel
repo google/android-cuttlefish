@@ -16,6 +16,10 @@ rust_binary(
     srcs = [
         "src/device.rs",
         "src/main.rs",
+        "src/pattern/mod.rs",
+        "src/pattern/pulse.rs",
+        "src/pattern/smpte.rs",
+        "src/pattern/julia_set.rs",
     ],
     edition = "2024",
     deps = crate_deps([
