@@ -1,7 +1,8 @@
 import {Component, HostListener, Injectable, ChangeDetectionStrategy} from '@angular/core';
 
 import {DisplaysService} from './displays.service';
-import {BUILD_VERSION} from '../environments/version'
+import {ThemeService} from './theme.service';
+import {BUILD_VERSION} from '../environments/version';
 
 @Injectable()
 @Component({
@@ -13,7 +14,11 @@ import {BUILD_VERSION} from '../environments/version'
 })
 export class AppComponent {
   readonly version = BUILD_VERSION;
-  constructor(private displaysService: DisplaysService) {}
+
+  constructor(
+    private displaysService: DisplaysService,
+    public themeService: ThemeService,
+  ) {}
 
   @HostListener('window:message', ['$event'])
   onWindowMessage(e: MessageEvent) {

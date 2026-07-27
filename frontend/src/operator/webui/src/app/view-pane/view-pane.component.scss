@@ -15,21 +15,24 @@ ktd-grid {
       flex-direction: column;
       height: 98%;
       width: 98%;
-      background-color: #000;
+      background-color: var(--card-bg, #000);
       border-radius: 10px 10px 10px 10px;
 
       .viewer-header {
         display: flex;
         align-items: center;
-        background-color: #073042;
+        background-color: var(--card-header-bg, #073042);
         border-style: solid;
-        border-color: #073042;
+        border-color: var(--card-header-bg, #073042);
         border-radius: 10px 10px 0px 0px;
         font-size: 20px;
         font-weight: 400;
-        color: #eee;
+        color: var(--card-header-text, #eee);
         height: 40px;
         padding-left: 20px;
+        transition:
+          background-color 0.3s ease,
+          border-color 0.3s ease;
 
         .grid-item-remove-handle {
           position: absolute;
@@ -72,7 +75,7 @@ ktd-grid {
 } // hidden
 
 .loading-message {
-  color: white;
+  color: var(--text-primary, white);
   font-size: 15px;
   font-weight: 400;
   padding: 10px;
