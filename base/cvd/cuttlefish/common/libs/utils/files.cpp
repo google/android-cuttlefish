@@ -61,10 +61,10 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
-#include "cuttlefish/files/are_hard_linked.h"
 #include "cuttlefish/files/copy.h"
 #include "cuttlefish/files/file_device_id.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/files/link_or_copy.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -80,38 +80,6 @@ Result<bool> CanHardLink(const std::string& source,
                          const std::string& destination) {
   return CF_EXPECT(FileDeviceId(source)) ==
          CF_EXPECT(FileDeviceId(destination));
-}
-
-Result<std::string> LinkOrCopy(const std::string& target,
-                               const std::string& destination,
-                               const bool overwrite_existing) {
-  if (FileExists(destination)) {
-    if (CF_EXPECT(AreHardLinked(target, destination))) {
-      return destination;
-    }
-    if (!overwrite_existing) {
-      return CF_ERRF(
-          "Cannot link/copy from \"{}\" to \"{}\", the second file already "
-          "exists and is not a hard link to the first",
-          target, destination);
-    }
-    LOG(WARNING) << "Overwriting existing file \"" << destination
-                 << "\" with \"" << target << "\" from the cache";
-    CF_EXPECTF(unlink(destination.c_str()) == 0,
-               "Failed to unlink \"{}\" with error: {}", destination,
-               strerror(errno));
-  }
-  if (link(target.c_str(), destination.c_str()) == 0) {
-    VLOG(1) << "Created hard link from \"" << target << "\" to \""
-            << destination << "\"";
-    return destination;
-  }
-  CF_EXPECTF(Copy(target, destination), "Failed to copy \"{}\" to \"{}\"",
-             target, destination);
-  VLOG(1) << "Copied file from \"" << target << "\" to \"" << destination
-          << "\"";
-
-  return destination;
 }
 
 bool FileHasContent(const std::string& path) { return FileSize(path) > 0; }

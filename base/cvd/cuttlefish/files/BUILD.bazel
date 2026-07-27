@@ -47,6 +47,21 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "link_or_copy",
+    srcs = ["link_or_copy.cc"],
+    hdrs = ["link_or_copy.h"],
+    deps = [
+        "//cuttlefish/files:are_hard_linked",
+        "//cuttlefish/files:copy",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
+cf_cc_library(
     name = "recursively_remove_directory",
     srcs = ["recursively_remove_directory.cc"],
     hdrs = ["recursively_remove_directory.h"],

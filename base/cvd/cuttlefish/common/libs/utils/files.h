@@ -35,9 +35,6 @@ inline Result<bool> CanRename(const std::string& source,
   return CanHardLink(source, destination);
 }
 
-Result<std::string> LinkOrCopy(const std::string& target,
-                               const std::string& destination,
-                               bool overwrite_existing = false);
 Result<void> LinkOrCopyDirectoryContentsRecursively(
     const std::string& source, const std::string& destination);
 // Merges the contents of the source directory into the destination directory.
