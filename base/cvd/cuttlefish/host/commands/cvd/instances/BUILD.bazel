@@ -109,6 +109,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:signals",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:utils",
@@ -225,6 +226,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/instances:config_path",
         "//cuttlefish/host/commands/cvd/instances:run_cvd_proc_collector",

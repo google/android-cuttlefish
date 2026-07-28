@@ -30,6 +30,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
@@ -91,6 +92,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:config_flag",
@@ -349,6 +351,7 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_contents",
         "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
         "@abseil-cpp//absl/log:check",

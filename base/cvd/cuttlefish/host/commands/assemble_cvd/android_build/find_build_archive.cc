@@ -23,7 +23,7 @@
 
 #include "absl/strings/match.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/host/libs/config/build_archive.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
