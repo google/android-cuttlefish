@@ -27,6 +27,12 @@ DEBIAN_DISTRIBUTION="$(lsb_release -c -s)"
 DEBIAN_SNAPSHOT_DIR="/root/debian-snapshot"
 #apt-get install -y '^linux-image-6.1.*aosp14-linaro.*' '^linux-headers-6.1.*aosp14-linaro.*'
 has_backports=$(apt-cache policy | grep "${DEBIAN_DISTRIBUTION}-backports")
+# Enable ARM64 nested virtualization (KVM NV2).
+#
+# Note that any VHE host honors the flag, FEAT_NV2 or not. Without FEAT_NV2 KVM
+# falls back to normal VHE operation. Without a GICv3-class vGIC the flag is
+# fatal - KVM initialization fails and /dev/kvm never appears.
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 kvm-arm.mode=nested\"/' /etc/default/grub
 if [ x"$has_backports" != x"" ]; then
     apt install -y -t "${DEBIAN_DISTRIBUTION}-backports" linux-headers-arm64
     apt install -y -t "${DEBIAN_DISTRIBUTION}-backports" linux-image-arm64
@@ -70,6 +76,13 @@ elif [ x"$nvidia_gpu" != x"" ]; then
     fi
 fi
 # End of Install kernel
+
+# Regenerate grub.cfg: the kernel postinst's update-grub hook only runs when a
+# kernel package is actually configured, so a no-op install above would leave
+# the nested-virt cmdline out of the boot menu.
+if [ -e /boot/grub/grub.cfg ]; then
+    update-grub || exit 1
+fi
 
 # Install android cuttlefish packages
 #DEPLOY_CHANNEL=
