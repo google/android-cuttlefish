@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -8,10 +8,7 @@ cf_cc_library(
     name = "cas_downloader",
     srcs = ["cas_downloader.cpp"],
     hdrs = ["cas_downloader.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/files:file_exists",
@@ -20,7 +17,6 @@ cf_cc_library(
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@jsoncpp",
@@ -30,11 +26,9 @@ cf_cc_library(
 cf_cc_test(
     name = "cas_downloader_test",
     srcs = ["cas_downloader_test.cpp"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:file_exists",
-        "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web/cas:cas_downloader",
         "//cuttlefish/host/libs/web/cas:cas_flags",
@@ -48,9 +42,7 @@ cf_cc_test(
 cf_cc_test(
     name = "cas_flags_test",
     srcs = ["cas_flags_test.cpp"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//libbase",
     ],
@@ -60,13 +52,8 @@ cf_cc_library(
     name = "cas_flags",
     srcs = ["cas_flags.cc"],
     hdrs = ["cas_flags.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/files:file_exists",
         "//cuttlefish/flag_parser",
-        "//cuttlefish/result",
-        "//libbase",
-        "@abseil-cpp//absl/strings",
-        "@fmt",
     ],
 )
