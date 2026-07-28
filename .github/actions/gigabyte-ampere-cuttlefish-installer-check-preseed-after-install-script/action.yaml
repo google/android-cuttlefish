@@ -17,16 +17,17 @@ runs:
       apt-get update
       apt-get upgrade -y
       apt-get install -y sudo
+      apt-get install -y ca-certificates
       apt-get install -y initramfs-tools
       apt-get install -y grub-efi-arm64
       apt-get install -y lsb-release
       apt-get install -y pciutils
       apt-get install -y apt-show-versions
       apt-get install -y linux-image-arm64 linux-headers-arm64
-  - name: Setup non-free repository
+  - name: Setup base and non-free repository
     shell: bash
     run: |
-      echo "deb http://deb.debian.org/debian $(lsb_release -c -s) contrib non-free non-free-firmware" | tee /etc/apt/sources.list.d/debian-nonfree-1.list
+      echo "deb http://deb.debian.org/debian $(lsb_release -c -s) main contrib non-free non-free-firmware" | tee /etc/apt/sources.list
       apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 update
   - name: Setup backports repository
     shell: bash
@@ -35,6 +36,12 @@ runs:
         echo "deb http://deb.debian.org/debian $(lsb_release -c -s)-backports main contrib non-free non-free-firmware" | tee /etc/apt/sources.list.d/debian-backports-1.list
         apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 update
       fi
+  - name: Setup pinned snapshot source
+    working-directory: ./gigabyte-ampere-cuttlefish-installer
+    shell: bash
+    run: |
+      mkdir -p /root/debian-snapshot
+      cp -f preseed/debian-snapshot.list /root/debian-snapshot/
   - name: Check nVidia GPU emulation
     shell: bash
     run: echo "EMULATE_NVIDIA_GPU=${{ inputs.emulate-nvidia }}" >> $GITHUB_ENV
