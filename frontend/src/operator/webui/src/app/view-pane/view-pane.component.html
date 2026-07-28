@@ -5,11 +5,11 @@
     rowHeight="1"
     scrollSpeed="4"
     [cols]="cols"
-    [layout]="(resultLayout | async)!"
+    [layout]="(resultLayout | async) ?? []"
     [scrollableParent]="document"
     (layoutUpdated)="layoutUpdated$.next($event)"
     >
-    @for (display of resultLayout | async; track trackById($index, display)) {
+    @for (display of (resultLayout | async) ?? []; track display.id) {
       <ktd-grid-item
         class="device-viewer"
         dragStartThreshold="0"
