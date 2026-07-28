@@ -28,7 +28,6 @@ cf_cc_library(
         "snapshot_utils.h",
         "util.h",
     ],
-    depend_on_what_you_use_enabled = False,
     deps = [
         ":libcuttlefish_run_cvd_proto",
         "//cuttlefish/common/libs/fs",
@@ -36,6 +35,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/files:copy",
+        "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -43,10 +43,7 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
-        "@jsoncpp",
-        "@protobuf",
     ],
 )

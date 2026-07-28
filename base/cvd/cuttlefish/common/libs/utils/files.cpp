@@ -62,6 +62,7 @@
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/files/copy.h"
+#include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/file_device_id.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/link_or_copy.h"
@@ -129,20 +130,6 @@ Result<void> MoveDirectoryContents(const std::string& source,
   }
 
   return {};
-}
-
-Result<std::vector<std::string>> DirectoryContents(const std::string& path) {
-  std::vector<std::string> ret;
-  std::unique_ptr<DIR, int (*)(DIR*)> dir(opendir(path.c_str()), closedir);
-  CF_EXPECTF(dir != nullptr, "Could not read from dir \"{}\"", path);
-  struct dirent* ent{};
-  while ((ent = readdir(dir.get()))) {
-    if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
-      continue;
-    }
-    ret.emplace_back(ent->d_name);
-  }
-  return ret;
 }
 
 Result<std::vector<std::string>> DirectoryContentsPaths(
