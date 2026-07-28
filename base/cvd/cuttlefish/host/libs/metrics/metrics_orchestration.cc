@@ -21,9 +21,7 @@
 #include <chrono>
 #include <string>
 #include <string_view>
-#include <vector>
 
-#include "absl/log/log.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"

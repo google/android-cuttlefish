@@ -17,6 +17,7 @@
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 
 #include <string>
+#include <utility>
 
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/host/libs/metrics/metrics_environment.h"

@@ -22,7 +22,6 @@
 #include <string_view>
 
 #include "absl/log/log.h"
-#include "absl/strings/str_cat.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/files/file_exists.h"

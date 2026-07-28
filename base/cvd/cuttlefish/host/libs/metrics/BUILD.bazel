@@ -1,8 +1,12 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
+
+exports_files([".clang-tidy"])
+
+cf_build_test(name = "metrics_build_test")
 
 cf_cc_library(
     name = "device_metrics_orchestration",
@@ -61,6 +65,7 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/host/libs/metrics:fetch_metrics",
         "//cuttlefish/host/libs/metrics:metrics_conversion",
         "//cuttlefish/host/libs/metrics:metrics_orchestration",
         "//cuttlefish/host/libs/metrics:notification",
@@ -142,7 +147,6 @@ cf_cc_library(
     name = "metrics_conversion",
     srcs = ["metrics_conversion.cc"],
     hdrs = ["metrics_conversion.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/host/commands/cvd/fetch:builds",
@@ -150,7 +154,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/metrics:device_event_type",
         "//cuttlefish/host/libs/metrics:fetch_metrics",
-        "//cuttlefish/host/libs/metrics:flag_metrics",
         "//cuttlefish/host/libs/metrics:gce_environment",
         "//cuttlefish/host/libs/metrics:github_environment",
         "//cuttlefish/host/libs/metrics:guest_metrics",
@@ -197,7 +200,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/metrics:session_id",
         "//cuttlefish/result",
         "//external_proto:cf_log_cc_proto",
-        "@abseil-cpp//absl/log",
         "@fmt",
     ],
 )
@@ -220,9 +222,7 @@ cf_cc_library(
     name = "metrics_writer",
     srcs = ["metrics_writer.cc"],
     hdrs = ["metrics_writer.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:random",
         "//cuttlefish/result",
@@ -242,7 +242,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/metrics:enabled",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )

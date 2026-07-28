@@ -17,6 +17,9 @@
 #include "cuttlefish/host/libs/metrics/fetch_metrics.h"
 
 #include <algorithm>
+#include <string>
+#include <utility>
+#include <variant>
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"

@@ -22,6 +22,7 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/host/libs/metrics/flag_metrics.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
