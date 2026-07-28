@@ -20,23 +20,23 @@ adduser vsoc-01 kvm
 adduser vsoc-01 render
 adduser vsoc-01 video
 
-# Detect distribution
-DEBIAN_DISTRIBUTION="$(lsb_release -c -s)"
-DEBIAN_ARCH="$(dpkg --print-architecture)"
-
-apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 \
-    update
+apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 update
 
 # Install kernel
 DEBIAN_DISTRIBUTION="$(lsb_release -c -s)"
+DEBIAN_SNAPSHOT_DIR="/root/debian-snapshot"
 #apt-get install -y '^linux-image-6.1.*aosp14-linaro.*' '^linux-headers-6.1.*aosp14-linaro.*'
 has_backports=$(apt-cache policy | grep "${DEBIAN_DISTRIBUTION}-backports")
 if [ x"$has_backports" != x"" ]; then
     apt install -y -t "${DEBIAN_DISTRIBUTION}-backports" linux-headers-arm64
     apt install -y -t "${DEBIAN_DISTRIBUTION}-backports" linux-image-arm64
 else
-    apt install -y linux-headers-arm64
-    apt install -y linux-image-arm64
+    KERNEL_ABI="6.18.15+deb13-arm64"
+    KERNEL_DEB_VERSION="6.18.15-1~bpo13+1"
+    apt-get -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" -o Acquire::Retries=5 update
+    apt-get install -y -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" -o Acquire::Retries=5 \
+        "linux-image-${KERNEL_ABI}=${KERNEL_DEB_VERSION}" \
+        "linux-headers-${KERNEL_ABI}=${KERNEL_DEB_VERSION}" || exit 1
 fi
 
 # Install nVidia or AMD GPU driver
@@ -59,9 +59,14 @@ elif [ x"$nvidia_gpu" != x"" ]; then
         DEBIAN_FRONTEND=noninteractive apt-get install -y -t "${DEBIAN_DISTRIBUTION}-backports" -q --force-yes nvidia-driver
         DEBIAN_FRONTEND=noninteractive apt-get install -y -t "${DEBIAN_DISTRIBUTION}-backports" -q --force-yes firmware-misc-nonfree
     else
-        DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes nvidia-open-kernel-dkms
-        DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes nvidia-driver
-        DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes firmware-misc-nonfree
+        NVIDIA_DEB_VERSION="550.163.01-4~bpo13+1"
+        apt-get -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" -o Acquire::Retries=5 update
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" \
+            -o Acquire::Retries=5 -t ${DEBIAN_DISTRIBUTION}-backports \
+            "nvidia-open-kernel-dkms=${NVIDIA_DEB_VERSION}" \
+            "nvidia-driver=${NVIDIA_DEB_VERSION}" || exit 1
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -q firmware-misc-nonfree
+        apt-mark hold nvidia-open-kernel-dkms nvidia-driver
     fi
 fi
 # End of Install kernel
