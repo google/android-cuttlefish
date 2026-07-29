@@ -280,13 +280,14 @@ Result<std::shared_ptr<std::vector<uint8_t>>> CasimirController::ReadExact(
                  "Unexpected poll result for reading");
 
     // Nonblocking read, so don't need to care about timeout.
-    ssize_t read =
-        sock_->Read((void*)&(out->data()[total_read]), size - total_read);
+    uint64_t data_read =
+        sock_->Read((void*)&(out->data()[total_read]), size - total_read)
+            .value_or(0);
     CF_EXPECT_GT(
-        read, 0,
+        data_read, 0,
         "Failed to read from casimir socket, errno=" << sock_->GetErrno());
 
-    total_read += read;
+    total_read += data_read;
     if (total_read >= size) {
       return out;
     }

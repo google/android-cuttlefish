@@ -36,6 +36,7 @@ cf_cc_library(
     }),
     deps = [
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/io",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",

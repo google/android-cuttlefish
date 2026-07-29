@@ -19,6 +19,8 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/inotify.h>
 #include <sys/ioctl.h>
@@ -50,6 +52,7 @@
 
 #include "android-base/cmsg.h"
 
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 /**
@@ -282,7 +285,7 @@ class ScopedMMap {
  * escaping file descriptors. At this point SharedFD is the only class
  * that has access. We may eventually have ScopedFD and WeakFD.
  */
-class FileInstance {
+class FileInstance : public Reader {
   // Give SharedFD access to the aliasing constructor.
   friend class SharedFD;
   friend class Epoll;
@@ -349,7 +352,7 @@ class FileInstance {
   off_t LSeek(off_t offset, int whence);
   ssize_t Recv(void* buf, size_t len, int flags);
   ssize_t RecvMsg(struct msghdr* msg, int flags);
-  ssize_t Read(void* buf, size_t count);
+  Result<uint64_t> Read(void* buf, uint64_t count) override;
   ssize_t PRead(void* buf, size_t count, size_t offset);
 #ifdef __linux__
   int EventfdRead(eventfd_t* value);

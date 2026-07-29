@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -178,7 +179,8 @@ class ConsoleForwarder {
       if (read_set.IsSet(console_out_)) {
         std::shared_ptr<std::vector<char>> buf_ptr =
             std::make_shared<std::vector<char>>(4096);
-        auto bytes_read = console_out_->Read(buf_ptr->data(), buf_ptr->size());
+        uint64_t bytes_read =
+            console_out_->Read(buf_ptr->data(), buf_ptr->size()).value_or(0);
         // This is likely unrecoverable, so exit here
         CHECK(bytes_read > 0) << "Error reading from console output: "
                               << console_out_->StrError();
@@ -192,7 +194,8 @@ class ConsoleForwarder {
       if (read_set.IsSet(client_fd) || error_set.IsSet(client_fd)) {
         std::shared_ptr<std::vector<char>> buf_ptr =
             std::make_shared<std::vector<char>>(4096);
-        auto bytes_read = client_fd->Read(buf_ptr->data(), buf_ptr->size());
+        uint64_t bytes_read =
+            client_fd->Read(buf_ptr->data(), buf_ptr->size()).value_or(0);
         if (bytes_read <= 0) {
           // If this happens, it's usually because the PTY controller went away
           // e.g. the user closed minicom, or killed screen, or closed kgdb. In

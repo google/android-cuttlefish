@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
   VLOG(0) << "Starting to read from process " << FLAGS_process_name;
 
   char buf[1 << 16];
-  ssize_t chars_read = 0;
+  cuttlefish::Result<uint64_t> chars_read = 0;
   for (;;) {
     // We can assume all writers to `log_fd` have completed before a SIGINT is
     // sent, but we need to make sure we've actually read all the data before
@@ -128,16 +128,16 @@ int main(int argc, char** argv) {
         << "poll failed: " << StrError(errno);
     if (poll_fds[0].revents) {
       chars_read = log_fd->Read(buf, sizeof(buf));
-      if (chars_read < 0) {
+      if (!chars_read.has_value()) {
         VLOG(0) << "Failed to read from process " << FLAGS_process_name << ": "
                 << log_fd->StrError();
         break;
       }
-      if (chars_read == 0) {
+      if (*chars_read == 0) {
         break;
       }
       std::string trimmed(
-          absl::StripAsciiWhitespace(std::string_view(buf, chars_read)));
+          absl::StripAsciiWhitespace(std::string_view(buf, *chars_read)));
       // Newlines inside `trimmed` are handled by the android logging code.
       // These checks attempt to determine the log severity coming from crosvm.
       // There is no guarantee of success all the time since log line boundaries
@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
 #ifdef __linux__
     if (poll_fds[1].revents) {
       struct signalfd_siginfo siginfo;
-      int s = int_fd->Read(&siginfo, sizeof(siginfo));
+      uint64_t s = int_fd->Read(&siginfo, sizeof(siginfo)).value_or(0);
       CHECK(s == sizeof(siginfo)) << "bad read size on signalfd, expected "
                                   << sizeof(siginfo) << " got " << s;
       CHECK(siginfo.ssi_signo == SIGINT)

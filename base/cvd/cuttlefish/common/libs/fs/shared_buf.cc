@@ -50,17 +50,17 @@ ssize_t WriteAll(SharedFD fd, const char* buf, size_t size) {
 
 ssize_t ReadExact(SharedFD fd, char* buf, size_t size) {
   size_t total_read = 0;
-  ssize_t read = 0;
+  Result<uint64_t> read_res;
   do {
-    read = fd->Read((void*)&(buf[total_read]), size - total_read);
-    if (read <= 0) {
-      if (read < 0) {
-        errno = fd->GetErrno();
-        return read;
-      }
+    read_res = fd->Read((void*)&(buf[total_read]), size - total_read);
+    if (!read_res.has_value()) {
+      errno = fd->GetErrno();
+      return -1;
+    }
+    if (*read_res == 0) {
       return total_read;
     }
-    total_read += read;
+    total_read += *read_res;
   } while (total_read < size);
   return total_read;
 }
@@ -68,15 +68,15 @@ ssize_t ReadExact(SharedFD fd, char* buf, size_t size) {
 ssize_t ReadAll(SharedFD fd, std::string* buf) {
   char buff[BUFF_SIZE];
   std::stringstream ss;
-  ssize_t read;
-  while ((read = fd->Read(buff, BUFF_SIZE - 1)) > 0) {
+  Result<uint64_t> read_res;
+  while ((read_res = fd->Read(buff, BUFF_SIZE - 1)).value_or(0) > 0) {
     // this is necessary to avoid problems with having a '\0' in the middle of
     // the buffer
-    ss << std::string(buff, read);
+    ss << std::string(buff, *read_res);
   }
-  if (read < 0) {
+  if (!read_res.has_value()) {
     errno = fd->GetErrno();
-    return read;
+    return -1;
   }
   *buf = ss.str();
   return buf->size();
@@ -121,11 +121,12 @@ std::string RecvAll(SharedFD sock, const size_t count) {
   }
   std::unique_ptr<char[]> data(new char[count]);
   while (total_read < count) {
-    auto just_read = sock->Read(data.get() + total_read, count - total_read);
-    if (just_read <= 0) {
+    Result<uint64_t> read_res =
+        sock->Read(data.get() + total_read, count - total_read);
+    if (read_res.value_or(0) == 0) {
       return {};
     }
-    total_read += just_read;
+    total_read += *read_res;
   }
   return {data.get(), count};
 }

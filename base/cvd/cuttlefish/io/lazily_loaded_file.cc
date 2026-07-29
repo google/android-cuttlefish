@@ -19,7 +19,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <sys/types.h>
 #include <unistd.h>  // NOLINT(misc-include-cleaner): SEEK_SET
 
 #include <algorithm>
@@ -164,8 +163,7 @@ Result<size_t> LazilyLoadedFile::Impl::Read(char* data, size_t size) {
   // minimizing bandwidth usage.
   if (end_of_present_data.has_value()) {
     size_t read_request = std::min(*end_of_present_data - seek_pos_, size);
-    ssize_t data_read = contents_file_->Read(data, read_request);
-    CF_EXPECT_GE(data_read, 0, contents_file_->StrError());
+    size_t data_read = CF_EXPECT(contents_file_->Read(data, read_request));
     VLOG(1) << "Read " << data_read << " from local storage, seek pos was "
             << seek_pos_;
     seek_pos_ += data_read;

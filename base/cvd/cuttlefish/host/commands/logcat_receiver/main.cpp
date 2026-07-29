@@ -25,6 +25,7 @@
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
+#include "cuttlefish/result/result_type.h"
 
 DEFINE_int32(log_pipe_fd, -1,
              "A file descriptor representing a (UNIX) socket from which to "
@@ -68,15 +69,15 @@ int main(int argc, char** argv) {
   // Server loop
   while (true) {
     char buff[1024];
-    auto read = pipe->Read(buff, sizeof(buff));
-    if (read < 0) {
+    cuttlefish::Result<uint64_t> data_read = pipe->Read(buff, sizeof(buff));
+    if (!data_read.has_value()) {
       LOG(ERROR) << "Could not read logcat: " << pipe->StrError();
       break;
     }
-    auto written = cuttlefish::WriteAll(logcat_file, buff, read);
-    CHECK(written == read) << "Error writing to log file: "
-                           << logcat_file->StrError()
-                           << ". This is unrecoverable.";
+    auto written = cuttlefish::WriteAll(logcat_file, buff, *data_read);
+    CHECK(written == data_read)
+        << "Error writing to log file: " << logcat_file->StrError()
+        << ". This is unrecoverable.";
   }
 
   logcat_file->Close();

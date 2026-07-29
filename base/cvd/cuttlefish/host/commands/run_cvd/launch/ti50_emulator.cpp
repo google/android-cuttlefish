@@ -89,7 +89,8 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
     SharedFD sock = SharedFD::Accept(*ctrl_sock_);
     const char kExpectedReadyStr[] = "READY";
     char buf[std::size(kExpectedReadyStr)];
-    CF_EXPECT_NE(sock->Read(buf, sizeof(buf)), 0);
+    Result<uint64_t> data_read = sock->Read(buf, sizeof(buf));
+    CF_EXPECT(!data_read.has_value() || *data_read != 0);
     CF_EXPECT(!strcmp(buf, "READY"), "Ti50 emulator should return 'READY'");
 
     CF_EXPECT(ResetGPIO());

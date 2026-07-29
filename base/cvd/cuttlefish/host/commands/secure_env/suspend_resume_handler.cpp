@@ -33,7 +33,7 @@ Result<void> WriteSuspendRequest(const SharedFD& socket) {
 Result<void> ReadSuspendAck(const SharedFD& socket) {
   SnapshotSocketMessage ack_response;
   CF_EXPECT_EQ(sizeof(ack_response),
-               socket->Read(&ack_response, sizeof(ack_response)),
+               socket->Read(&ack_response, sizeof(ack_response)).value_or(0),
                "socket read failed: " << socket->StrError());
   CF_EXPECT_EQ(SnapshotSocketMessage::kSuspendAck, ack_response);
   return {};

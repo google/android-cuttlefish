@@ -92,15 +92,15 @@ void AdbHandler::ReadLoop() {
     Select(&read_set_, nullptr, nullptr, nullptr);
 
     if (read_set_.IsSet(adb_socket_)) {
-        auto read = adb_socket_->Read(buffer, sizeof(buffer));
-        if (read < 0) {
-          LOG(ERROR) << "Error on reading from ADB socket: "
-                     << adb_socket_->StrError();
-          break;
-        }
-        if (read) {
-            send_to_client_(buffer, read);
-        }
+      Result<uint64_t> data_read = adb_socket_->Read(buffer, sizeof(buffer));
+      if (!data_read.has_value()) {
+        LOG(ERROR) << "Error on reading from ADB socket: "
+                   << adb_socket_->StrError();
+        break;
+      }
+      if (*data_read > 0) {
+        send_to_client_(buffer, *data_read);
+      }
     }
 
     if (read_set_.IsSet(shutdown_)) {

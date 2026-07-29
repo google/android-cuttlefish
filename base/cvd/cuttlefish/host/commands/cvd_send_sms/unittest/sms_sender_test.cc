@@ -39,12 +39,13 @@ class SmsSenderTest : public ::testing::Test {
   void AssertCommandIsSent(std::string expected_command) {
     std::stringstream ss;
     std::vector<char> buffer(4096);
-    ssize_t bytes_read;
+    Result<size_t> bytes_read;
     do {
       bytes_read = fake_server_fd_->Read(buffer.data(), buffer.size());
-      CHECK(bytes_read >= 0) << fake_server_fd_->StrError();
-      ss << std::string(buffer.data(), bytes_read);
-    } while (buffer[bytes_read - 1] != '\r');
+      CHECK(bytes_read.has_value()) << fake_server_fd_->StrError();
+      ss << std::string(buffer.data(), *bytes_read);
+      CHECK_GT(*bytes_read, 0) << "Expected to receive data";
+    } while (buffer[*bytes_read - 1] != '\r');
     EXPECT_THAT(ss.str(), testing::Eq(expected_command));
   }
 

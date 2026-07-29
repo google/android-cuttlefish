@@ -49,7 +49,7 @@ static StopperResult StopModemSimulator(int id) {
     return StopperResult::kFailure;
   }
   char buf[64] = {0};
-  if (monitor_sock->Read(buf, sizeof(buf)) <= 0) {
+  if (monitor_sock->Read(buf, sizeof(buf)).value_or(0) == 0) {
     monitor_sock->Close();
     LOG(ERROR) << "Failed to read message from modem simulator";
     return StopperResult::kFailure;
