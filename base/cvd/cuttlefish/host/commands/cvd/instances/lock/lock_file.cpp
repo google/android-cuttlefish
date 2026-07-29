@@ -69,7 +69,7 @@ LockFile::LockFile(SharedFD fd, const std::string& lock_file_path)
 Result<InUseState> LockFile::Status() const {
   CF_EXPECT(fd_->LSeek(0, SEEK_SET) == 0, fd_->StrError());
   char state_char = static_cast<char>(InUseState::kNotInUse);
-  CF_EXPECT(fd_->Read(&state_char, 1) >= 0, fd_->StrError());
+  CF_EXPECT(fd_->Read(&state_char, 1).has_value(), fd_->StrError());
   switch (state_char) {
     case static_cast<char>(InUseState::kInUse):
       return InUseState::kInUse;

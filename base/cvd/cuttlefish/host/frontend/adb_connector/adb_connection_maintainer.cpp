@@ -128,12 +128,12 @@ int RecvUptimeResult(const SharedFD& sock) {
   std::vector<char> uptime_vec{};
   std::vector<char> just_read(16);
   do {
-    auto count = sock->Read(just_read.data(), just_read.size());
-    if (count < 0) {
+    Result<uint64_t> count = sock->Read(just_read.data(), just_read.size());
+    if (!count.has_value()) {
       LOG(WARNING) << "couldn't receive adb shell output";
       return -1;
     }
-    just_read.resize(count);
+    just_read.resize(*count);
     uptime_vec.insert(uptime_vec.end(), just_read.begin(), just_read.end());
   } while (!just_read.empty());
 
@@ -159,12 +159,12 @@ int RecvGetStatusResult(const SharedFD& sock) {
   std::vector<char> status_vec{};
   std::vector<char> just_read(16);
   do {
-    auto count = sock->Read(just_read.data(), just_read.size());
-    if (count < 0) {
+    Result<uint64_t> count = sock->Read(just_read.data(), just_read.size());
+    if (!count.has_value()) {
       LOG(WARNING) << "couldn't receive adb shell output";
       return -1;
     }
-    just_read.resize(count);
+    just_read.resize(*count);
     status_vec.insert(status_vec.end(), just_read.begin(), just_read.end());
   } while (!just_read.empty());
 

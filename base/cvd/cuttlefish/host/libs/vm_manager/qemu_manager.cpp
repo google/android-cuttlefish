@@ -85,7 +85,7 @@ StopperResult Stop() {
   }
   // Log the reply
   char buff[1000];
-  while ((len = monitor_sock->Read(buff, sizeof(buff) - 1)) > 0) {
+  while ((len = monitor_sock->Read(buff, sizeof(buff) - 1).value_or(0)) > 0) {
     buff[len] = '\0';
     LOG(INFO) << "From qemu monitor: " << buff;
   }

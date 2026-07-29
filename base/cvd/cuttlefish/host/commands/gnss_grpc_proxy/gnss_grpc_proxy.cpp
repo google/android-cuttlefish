@@ -282,7 +282,8 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
                    int out_fd) {
     std::vector<char> buffer(GNSS_SERIAL_BUFFER_SIZE);
     std::string cmd_str;
-    auto bytes_read = source_out->Read(buffer.data(), buffer.size());
+    uint64_t bytes_read =
+        source_out->Read(buffer.data(), buffer.size()).value_or(0);
     if (bytes_read > 0) {
       std::string s(buffer.data(), bytes_read);
       cmd_str += s;

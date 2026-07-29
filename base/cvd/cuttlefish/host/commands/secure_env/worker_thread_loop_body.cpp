@@ -54,7 +54,8 @@ Result<void> WorkerInnerLoop(std::function<bool()> process_callback,
       SnapshotSocketMessage suspend_request;
       CF_EXPECT_EQ(
           sizeof(suspend_request),
-          snapshot_socket->Read(&suspend_request, sizeof(suspend_request)),
+          snapshot_socket->Read(&suspend_request, sizeof(suspend_request))
+              .value_or(0),
           "socket read failed: " << snapshot_socket->StrError());
       CF_EXPECT_EQ(SnapshotSocketMessage::kSuspend, suspend_request);
       // Send the ACK response.
@@ -67,7 +68,8 @@ Result<void> WorkerInnerLoop(std::function<bool()> process_callback,
       SnapshotSocketMessage resume_request;
       CF_EXPECT_EQ(
           sizeof(resume_request),
-          snapshot_socket->Read(&resume_request, sizeof(resume_request)),
+          snapshot_socket->Read(&resume_request, sizeof(resume_request))
+              .value_or(0),
           "socket read failed: " << snapshot_socket->StrError());
       CF_EXPECT_EQ(SnapshotSocketMessage::kResume, resume_request);
     }

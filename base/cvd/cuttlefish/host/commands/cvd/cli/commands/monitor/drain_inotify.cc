@@ -19,7 +19,6 @@
 #include <errno.h>
 #include <stdint.h>
 #include <sys/inotify.h>
-#include <sys/types.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/posix/strerror.h"
@@ -38,16 +37,17 @@ Result<uint32_t> DrainInotifyEvents(SharedFD inotify_fd) {
   uint32_t events = 0;
 
   char buf[4096] __attribute__((aligned(__alignof__(struct inotify_event))));
-  ssize_t read_res = 0;
-  while ((read_res = inotify_fd->Read(buf, sizeof(buf))) > 0) {
+  Result<uint64_t> read_res = 0;
+  while ((read_res = inotify_fd->Read(buf, sizeof(buf))).value_or(0) > 0) {
     char* ptr = buf;
-    while (ptr < buf + read_res) {
+    while (ptr < buf + *read_res) {
       inotify_event* event = reinterpret_cast<inotify_event*>(ptr);
       events |= event->mask;
       ptr += sizeof(inotify_event) + event->len;
     }
   }
-  CF_EXPECT(read_res != 0, "Unexpected End-of-File reading inotify descriptor");
+  CF_EXPECT(!read_res.has_value(),
+            "Unexpected End-of-File reading inotify descriptor");
   const int err = inotify_fd->GetErrno();
   CF_EXPECTF(err == EAGAIN || err == EWOULDBLOCK,
              "Unexpected error reading inotify descriptor: {}", StrError(err));

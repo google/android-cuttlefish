@@ -180,8 +180,7 @@ static Result<void> ListenEventsAndProxy(int events_fd,
     // has started, and the VM has resumed. Exit the thread.
     // TODO (@khei): Add a device status tracking mechanism. b/325614380
     char buff[1];
-    auto read = restore_pipe_read->Read(buff, 1);
-    if (read <= 0) {
+    if (restore_pipe_read->Read(buff, 1).value_or(0) == 0) {
       return CF_ERR(
           "Could not read restore pipe: " << restore_pipe_read->StrError());
     }

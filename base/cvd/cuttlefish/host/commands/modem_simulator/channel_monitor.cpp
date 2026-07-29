@@ -84,8 +84,9 @@ void ChannelMonitor::AcceptIncomingConnection() {
 
 void ChannelMonitor::ReadCommand(Client& client) {
   char buffer[kMaxCommandLength];
-  auto bytes_read = client.client_read_fd_->Read(buffer, kMaxCommandLength);
-  if (bytes_read <= 0) {
+  Result<uint64_t> bytes_read =
+      client.client_read_fd_->Read(buffer, kMaxCommandLength);
+  if (bytes_read.value_or(0) == 0) {
     if (errno == EAGAIN && client.type == Client::REMOTE &&
         client.first_read_command_) {
       LOG(ERROR) << "After read 'REM' from remote client, and before select "
@@ -109,7 +110,7 @@ void ChannelMonitor::ReadCommand(Client& client) {
 
   // Add the incomplete command from the last read
   std::string commands(std::move(client.incomplete_command));
-  commands.append(buffer, bytes_read);
+  commands.append(buffer, *bytes_read);
 
   // Replacing '\n' with '\r'
   absl::StrReplaceAll({{"\n", "\r"}}, &commands);
@@ -228,7 +229,8 @@ void ChannelMonitor::MonitorLoop() {
       }
       if (read_set.IsSet(read_pipe_)) {
         std::string buf(2, ' ');
-        read_pipe_->Read(buf.data(), buf.size());  // Empty pipe
+        Result<uint64_t> unused =
+            read_pipe_->Read(buf.data(), buf.size());  // Empty pipe
         if (buf == std::string("KO")) {
           VLOG(0) << "requested to exit now";
           break;

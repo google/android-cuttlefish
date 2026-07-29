@@ -105,9 +105,9 @@ class ModemServiceTest : public ::testing::Test {
   void ReadCommandResponse(std::vector<std::string>& response) {
     do {
       std::vector<char> buffer(4096);  // kMaxCommandLength
-      auto bytes_read =
+      Result<uint64_t> bytes_read =
           ril_side_->client_read_fd_->Read(buffer.data(), buffer.size());
-      if (bytes_read <= 0) {
+      if (bytes_read.value_or(0) == 0) {
         // Close here to ensure the other side gets reset if it's still
         // connected
         ril_side_->client_read_fd_->Close();
