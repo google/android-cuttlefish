@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,23 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/common/libs/utils/container.h"
+#include "cuttlefish/files/directory_exists.h"
+
+#include <sys/stat.h>
 
 #include <string>
 
-#include "cuttlefish/files/directory_exists.h"
-#include "cuttlefish/files/file_exists.h"
-
 namespace cuttlefish {
-namespace {
 
-bool IsRunningInDocker() {
-  // if /.dockerenv exists, it's inside a docker container
-  std::string docker_env_path("/.dockerenv");
-  return FileExists(docker_env_path) || DirectoryExists(docker_env_path);
-}
-
-bool IsRunningInPodman() { return FileExists("/run/.containerenv"); }
-
-}  // namespace
-
-bool IsRunningInContainer() {
-  // TODO: add more if we support other containers than docker
-  return IsRunningInDocker() || IsRunningInPodman();
+bool DirectoryExists(const std::string& path, bool follow_symlinks) {
+  struct stat st{};
+  if ((follow_symlinks ? stat : lstat)(path.c_str(), &st) == -1) {
+    return false;
+  }
+  if ((st.st_mode & S_IFMT) != S_IFDIR) {
+    return false;
+  }
+  return true;
 }
 
 }  // namespace cuttlefish

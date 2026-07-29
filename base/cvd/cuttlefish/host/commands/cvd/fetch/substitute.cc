@@ -33,6 +33,7 @@
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/is_symlink.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_pkg_migration.pb.h"
@@ -102,7 +103,7 @@ Result<void> SubstituteWithFlag(
   if (host_substitutions == std::vector<std::string>{"all"}) {
     auto make_substitution = [&bin_dir_parent, &target_dir](
                                  const std::string& path) -> Result<void> {
-      if (IsDirectory(path)) {
+      if (DirectoryExists(path)) {
         return {};
       }
       std::string_view local_path(path);
@@ -115,7 +116,7 @@ Result<void> SubstituteWithFlag(
     };
     CF_EXPECT(WalkDirectory(bin_dir_parent, make_substitution));
     auto detect_not_substituted = [](const std::string& path) -> Result<void> {
-      if (!CF_EXPECT(IsSymlink(path)) && !IsDirectory(path)) {
+      if (!CF_EXPECT(IsSymlink(path)) && !DirectoryExists(path)) {
         VLOG(0) << "Not substituted: " << path;
       }
       return {};

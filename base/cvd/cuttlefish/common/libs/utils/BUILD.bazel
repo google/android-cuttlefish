@@ -53,7 +53,7 @@ cf_cc_library(
     srcs = ["container.cpp"],
     hdrs = ["container.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_exists",
     ],
 )
@@ -124,6 +124,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/files:copy",
         "//cuttlefish/files:directory_contents",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_device_id",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:link_or_copy",
@@ -220,7 +221,7 @@ cf_cc_library(
     srcs = ["is_google_corp.cpp"],
     hdrs = ["is_google_corp.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
     ],
 )
 

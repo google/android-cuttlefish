@@ -40,7 +40,7 @@ cf_cc_library(
     srcs = ["android_dist_build.cc"],
     hdrs = ["android_dist_build.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/host/commands/assemble_cvd/android_build:android_product_dir",
         "//cuttlefish/host/commands/assemble_cvd/android_build:combined_android_build",

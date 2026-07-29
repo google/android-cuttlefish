@@ -33,6 +33,7 @@
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/files/copy.h"
 #include "cuttlefish/files/directory_contents.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/posix/symlink.h"

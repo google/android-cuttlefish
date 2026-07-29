@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
-#include "cuttlefish/common/libs/utils/is_google_corp.h"
-
-#include "cuttlefish/files/directory_exists.h"
+#include <string>
 
 namespace cuttlefish {
-namespace {
 
-constexpr char kGoogleCorpDir[] = "/google";
-
-}  // namespace
-
-bool IsGoogleCorp() { return DirectoryExists(kGoogleCorpDir); }
+bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
 
 }  // namespace cuttlefish
