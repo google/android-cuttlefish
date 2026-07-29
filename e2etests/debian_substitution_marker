@@ -281,6 +281,16 @@ symlinks: {
 }
 
 symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim1_for_CtsCarrierApiTestCases.xml"
+  link_name: "etc/modem_simulator/files/iccprofile_for_sim1_for_CtsCarrierApiTestCases.xml"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim1.xml"
+  link_name: "etc/modem_simulator/files/iccprofile_for_sim1.xml"
+}
+
+symlinks: {
   target: "/usr/lib/cuttlefish-common/etc/modem_simulator/files/numeric_operator.xml"
   link_name: "etc/modem_simulator/files/numeric_operator.xml"
 }
