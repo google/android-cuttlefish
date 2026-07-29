@@ -171,7 +171,7 @@ impl Buffer {
     }
 
     /// Update the state of the buffer as well as its V4L2 representation.
-    fn set_state(&mut self, state: BufferState) {
+    fn set_state(&mut self, state: BufferState, width: u32, height: u32) {
         let mut flags = self.v4l2_buffer.flags();
         match state {
             BufferState::New => {
@@ -196,9 +196,9 @@ impl Buffer {
                 {
                     let planes = self.v4l2_buffer.planes_with_backing_iter_mut();
                     if let V4l2PlanesWithBackingMut::Mmap(mut planes) = planes {
-                        *planes.next().unwrap().bytesused = WIDTH * HEIGHT;
-                        *planes.next().unwrap().bytesused = WIDTH * HEIGHT / 4;
-                        *planes.next().unwrap().bytesused = WIDTH * HEIGHT / 4;
+                        *planes.next().unwrap().bytesused = width * height;
+                        *planes.next().unwrap().bytesused = width * height / 4;
+                        *planes.next().unwrap().bytesused = width * height / 4;
                     }
                 }
                 self.v4l2_buffer.set_sequence(sequence);
@@ -246,6 +246,8 @@ impl EmulatedCameraSession {
     fn write_pattern<WY: std::io::Write, WU: std::io::Write, WV: std::io::Write>(
         iteration: u64,
         controls: &CameraControls,
+        width: u32,
+        height: u32,
         mut sink_y: WY,
         mut sink_u: WU,
         mut sink_v: WV,
@@ -261,13 +263,13 @@ impl EmulatedCameraSession {
         let y = ((base_y as f32) * (controls.gain.value() as f32 / Gain::MIN as f32)).min(255.0) as u8;
         let u = ((iteration + 64) % 256) as u8;
         let v = ((iteration + 128) % 256) as u8;
-        for _ in 0..(WIDTH * HEIGHT) {
+        for _ in 0..(width * height) {
             writer_y.write_all(&[y]).map_err(|_| libc::EIO)?;
         }
-        for _ in 0..(WIDTH * HEIGHT / 4) {
+        for _ in 0..(width * height / 4) {
             writer_u.write_all(&[u]).map_err(|_| libc::EIO)?;
         }
-        for _ in 0..(WIDTH * HEIGHT / 4) {
+        for _ in 0..(width * height / 4) {
             writer_v.write_all(&[v]).map_err(|_| libc::EIO)?;
         }
         Ok(())
@@ -278,6 +280,8 @@ impl EmulatedCameraSession {
         &mut self,
         evt_queue: &mut Q,
         controls: &CameraControls,
+        width: u32,
+        height: u32,
     ) -> IoctlResult<()> {
         while let Some(buf_id) = self.queued_buffers.pop_front() {
             let iteration = self.iteration;
@@ -294,6 +298,8 @@ impl EmulatedCameraSession {
             Self::write_pattern(
                 iteration,
                 controls,
+                width,
+                height,
                 buffer.planes[0].fd.as_file(),
                 buffer.planes[1].fd.as_file(),
                 buffer.planes[2].fd.as_file(),
@@ -301,7 +307,7 @@ impl EmulatedCameraSession {
 
             buffer.set_state(BufferState::Outgoing {
                 sequence: iteration as u32,
-            });
+            }, width, height);
             evt_queue.send_event(V4l2Event::DequeueBuffer(DequeueBufferEvent::new(
                 self.id,
                 buffer.v4l2_buffer.clone(),
@@ -332,6 +338,10 @@ pub struct EmulatedCamera<Q: VirtioMediaEventQueue, HM: VirtioMediaHostMemoryMap
     active_session: Option<u32>,
     /// Camera controls.
     controls: CameraControls,
+    /// Width of the video.
+    width: u32,
+    /// Height of the video.
+    height: u32,
 }
 
 impl<Q, HM> EmulatedCamera<Q, HM>
@@ -345,6 +355,8 @@ where
             mmap_manager: MmapMappingManager::from(mapper),
             active_session: None,
             controls: CameraControls::new(lens_facing),
+            width: 640,
+            height: 480,
         }
     }
 
@@ -502,6 +514,11 @@ const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 const FRAME_RATE: u32 = 30;
 
+const SUPPORTED_SIZES: [(u32, u32); 2] = [
+    (640, 480),
+    (1280, 720),
+];
+
 const INPUTS: [bindings::v4l2_input; 1] = [bindings::v4l2_input {
     index: 0,
     name: *b"Default\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
@@ -518,28 +535,34 @@ fn default_fmtdesc(queue: QueueType) -> v4l2_fmtdesc {
     }
 }
 
-fn default_fmt(queue: QueueType) -> v4l2_format {
+fn session_fmt(queue: QueueType, width: u32, height: u32) -> v4l2_format {
     let pix_mp = bindings::v4l2_pix_format_mplane {
-        width: WIDTH,
-        height: HEIGHT,
+        width,
+        height,
         pixelformat: PIXELFORMAT,
         field: bindings::v4l2_field_V4L2_FIELD_NONE,
         colorspace: bindings::v4l2_colorspace_V4L2_COLORSPACE_SRGB,
         num_planes: 3,
         plane_fmt: [
             bindings::v4l2_plane_pix_format {
-                sizeimage: WIDTH * HEIGHT,
-                bytesperline: WIDTH,
+                // Size of Y plane
+                sizeimage: width * height,
+                // Bytes per line for Y plane
+                bytesperline: width,
                 ..Default::default()
             },
             bindings::v4l2_plane_pix_format {
-                sizeimage: WIDTH * HEIGHT / 4,
-                bytesperline: WIDTH / 2,
+                // Size of U plane (chroma subsampled by 2 in both directions)
+                sizeimage: width * height / 4,
+                // Bytes per line for U plane
+                bytesperline: width / 2,
                 ..Default::default()
             },
             bindings::v4l2_plane_pix_format {
-                sizeimage: WIDTH * HEIGHT / 4,
-                bytesperline: WIDTH / 2,
+                // Size of V plane
+                sizeimage: width * height / 4,
+                // Bytes per line for V plane
+                bytesperline: width / 2,
                 ..Default::default()
             },
             Default::default(),
@@ -555,6 +578,10 @@ fn default_fmt(queue: QueueType) -> v4l2_format {
         type_: queue as u32,
         fmt: bindings::v4l2_format__bindgen_ty_1 { pix_mp },
     }
+}
+
+fn default_fmt(queue: QueueType) -> v4l2_format {
+    session_fmt(queue, WIDTH, HEIGHT)
 }
 
 /// Implementations of the ioctls required by a v4l2 CAPTURE device.
@@ -581,35 +608,60 @@ where
         Ok(default_fmtdesc(queue))
     }
 
-    fn g_fmt(&mut self, _session: &Self::Session, queue: QueueType) -> IoctlResult<v4l2_format> {
+    fn g_fmt(&mut self, session: &Self::Session, queue: QueueType) -> IoctlResult<v4l2_format> {
         if queue != QueueType::VideoCaptureMplane {
             return Err(libc::EINVAL);
         }
-        Ok(default_fmt(queue))
+        log::info!("g_fmt: returning {}x{}", self.width, self.height);
+        Ok(session_fmt(queue, self.width, self.height))
     }
 
     fn s_fmt(
         &mut self,
-        _session: &mut Self::Session,
+        session: &mut Self::Session,
         queue: QueueType,
-        _format: v4l2_format,
+        format: v4l2_format,
     ) -> IoctlResult<v4l2_format> {
         if queue != QueueType::VideoCaptureMplane {
             return Err(libc::EINVAL);
         }
-        Ok(default_fmt(queue))
+        
+        let pix_mp = unsafe { format.fmt.pix_mp };
+        let req_width = pix_mp.width;
+        let req_height = pix_mp.height;
+        log::info!("s_fmt: requested {}x{}", req_width, req_height);
+        
+        if SUPPORTED_SIZES.contains(&(req_width, req_height)) {
+            self.width = req_width;
+            self.height = req_height;
+            log::info!("s_fmt: set resolution to {}x{}", req_width, req_height);
+        } else {
+            log::info!("s_fmt: requested resolution {}x{} not supported, keeping {}x{}", req_width, req_height, self.width, self.height);
+        }
+        
+        Ok(session_fmt(queue, self.width, self.height))
     }
 
     fn try_fmt(
         &mut self,
-        _session: &Self::Session,
+        session: &Self::Session,
         queue: QueueType,
-        _format: v4l2_format,
+        format: v4l2_format,
     ) -> IoctlResult<v4l2_format> {
         if queue != QueueType::VideoCaptureMplane {
             return Err(libc::EINVAL);
         }
-        Ok(default_fmt(queue))
+        
+        let pix_mp = unsafe { format.fmt.pix_mp };
+        let req_width = pix_mp.width;
+        let req_height = pix_mp.height;
+        log::info!("try_fmt: requested {}x{}", req_width, req_height);
+        
+        if SUPPORTED_SIZES.contains(&(req_width, req_height)) {
+            Ok(session_fmt(queue, req_width, req_height))
+        } else {
+            Ok(session_fmt(queue, self.width, self.height))
+        }
     }
 
     fn g_parm(
@@ -689,7 +741,7 @@ where
             // TODO factorize with streamoff.
             session.queued_buffers.clear();
             for buffer in session.buffers.iter_mut() {
-                buffer.set_state(BufferState::New);
+                buffer.set_state(BufferState::New, self.width, self.height);
             }
             self.active_session = Some(session.id);
         }
@@ -702,9 +754,9 @@ where
             }
         }
 
-        let size_y = (WIDTH * HEIGHT) as u64;
-        let size_u = (WIDTH * HEIGHT / 4) as u64;
-        let size_v = (WIDTH * HEIGHT / 4) as u64;
+        let size_y = (self.width * self.height) as u64;
+        let size_u = (self.width * self.height / 4) as u64;
+        let size_v = (self.width * self.height / 4) as u64;
 
         session.buffers = (0..count)
             .map(|i| -> std::result::Result<Buffer, i32> {
@@ -824,13 +876,13 @@ where
             return Err(libc::EINVAL);
         }
 
-        host_buffer.set_state(BufferState::Incoming);
+        host_buffer.set_state(BufferState::Incoming, self.width, self.height);
         session.queued_buffers.push_back(buffer.index() as usize);
 
         let buffer = host_buffer.v4l2_buffer.clone();
 
         if session.streaming {
-            session.process_queued_buffers(&mut self.evt_queue, &self.controls)?;
+            session.process_queued_buffers(&mut self.evt_queue, &self.controls, self.width, self.height)?;
         }
 
         Ok(buffer)
@@ -842,7 +894,7 @@ where
         }
         session.streaming = true;
 
-        session.process_queued_buffers(&mut self.evt_queue, &self.controls)?;
+        session.process_queued_buffers(&mut self.evt_queue, &self.controls, self.width, self.height)?;
 
         Ok(())
     }
@@ -854,7 +906,7 @@ where
         session.streaming = false;
         session.queued_buffers.clear();
         for buffer in session.buffers.iter_mut() {
-            buffer.set_state(BufferState::New);
+            buffer.set_state(BufferState::New, self.width, self.height);
         }
 
         Ok(())
@@ -882,21 +934,26 @@ where
         index: u32,
         pixel_format: u32,
     ) -> IoctlResult<bindings::v4l2_frmsizeenum> {
+        log::info!("enum_framesizes: index {}, format {}", index, pixel_format);
         if pixel_format != PIXELFORMAT {
+            log::info!("enum_framesizes: format {} not supported", pixel_format);
             return Err(libc::EINVAL);
         }
-        if index > 0 {
-            return Err(libc::EINVAL);
-        }
+        
+        let &(width, height) = SUPPORTED_SIZES.get(index as usize).ok_or_else(|| {
+            log::info!("enum_framesizes: index {} out of bounds", index);
+            libc::EINVAL
+        })?;
 
+        log::info!("enum_framesizes: returning {}x{}", width, height);
         Ok(bindings::v4l2_frmsizeenum {
             index,
             pixel_format,
             type_: bindings::v4l2_frmsizetypes_V4L2_FRMSIZE_TYPE_DISCRETE,
             __bindgen_anon_1: bindings::v4l2_frmsizeenum__bindgen_ty_1 {
                 discrete: bindings::v4l2_frmsize_discrete {
-                    width: WIDTH,
-                    height: HEIGHT,
+                    width,
+                    height,
                 },
             },
             ..Default::default()
@@ -911,13 +968,17 @@ where
         width: u32,
         height: u32,
     ) -> IoctlResult<bindings::v4l2_frmivalenum> {
+        log::info!("enum_frameintervals: index {}, format {}, {}x{}", index, pixel_format, width, height);
         if pixel_format != PIXELFORMAT {
+            log::info!("enum_frameintervals: format {} not supported", pixel_format);
             return Err(libc::EINVAL);
         }
-        if width != WIDTH || height != HEIGHT {
+        if !SUPPORTED_SIZES.contains(&(width, height)) {
+            log::info!("enum_frameintervals: size {}x{} not supported", width, height);
             return Err(libc::EINVAL);
         }
         if index > 0 {
+            log::info!("enum_frameintervals: index {} > 0 not supported", index);
             return Err(libc::EINVAL);
         }
 
