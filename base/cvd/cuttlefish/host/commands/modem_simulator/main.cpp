@@ -89,7 +89,9 @@ int ModemSimulatorMain(int argc, char** argv) {
   NvramConfig::InitNvramConfigService(server_fds.size(), FLAGS_sim_type);
 
   // Don't get a SIGPIPE from the clients
-  if (sigaction(SIGPIPE, nullptr, nullptr) != 0) {
+  struct sigaction sa{};
+  sa.sa_handler = SIG_IGN;
+  if (sigaction(SIGPIPE, &sa, nullptr) != 0) {
     LOG(ERROR) << "Failed to set SIGPIPE to be ignored: " << strerror(errno);
   }
 
