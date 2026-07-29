@@ -44,6 +44,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/files/copy.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/flag_parser/flag.h"

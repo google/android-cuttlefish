@@ -27,8 +27,8 @@
 #include "absl/log/check.h"
 #include <zlib.h>
 
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/directory_contents.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 
 namespace cuttlefish {

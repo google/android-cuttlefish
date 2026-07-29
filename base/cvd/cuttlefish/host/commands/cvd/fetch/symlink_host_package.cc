@@ -22,6 +22,7 @@
 #include "android-base/file.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
@@ -57,7 +58,7 @@ Result<void> SymlinkHostPackage(const std::string& target_dir) {
     const std::string full_target_path =
         absl::StrCat(target_dir, "/", local_path);
 
-    if (IsDirectory(path)) {
+    if (DirectoryExists(path)) {
       CF_EXPECT(EnsureDirectoryExists(full_target_path));
     } else {
       CF_EXPECT(Symlink(path, full_target_path));

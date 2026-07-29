@@ -172,6 +172,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:recursively_remove_directory",
         "//cuttlefish/result",
     ],
@@ -331,6 +332,7 @@ cf_cc_library(
         ":host_pkg_migration_cc_proto",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:is_symlink",
         "//cuttlefish/posix:strerror",
@@ -351,6 +353,7 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",

@@ -40,6 +40,12 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "directory_exists",
+    srcs = ["directory_exists.cc"],
+    hdrs = ["directory_exists.h"],
+)
+
+cf_cc_library(
     name = "file_device_id",
     srcs = ["file_device_id.cc"],
     hdrs = ["file_device_id.h"],

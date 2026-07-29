@@ -44,10 +44,6 @@ Result<void> MoveDirectoryContents(const std::string& source,
 bool FileHasContent(const std::string& path);
 Result<std::vector<std::string>> DirectoryContentsPaths(
     const std::string& path);
-bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
-inline bool IsDirectory(const std::string& path) {
-  return DirectoryExists(path);
-};
 Result<void> EnsureDirectoryExists(const std::string& directory_path,
                                    mode_t mode = S_IRWXU | S_IRWXG | S_IROTH |
                                                  S_IXOTH,

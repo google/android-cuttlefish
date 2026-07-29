@@ -28,6 +28,7 @@
 #include "vulkan/vulkan.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"

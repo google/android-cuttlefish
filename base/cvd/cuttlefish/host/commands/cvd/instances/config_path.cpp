@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 
 namespace cuttlefish {
