@@ -25,8 +25,10 @@
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor/verbosity.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/severity.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -53,8 +55,8 @@ Result<LauncherLine> ParseLauncherLine(std::string_view line) {
     proc_name = proc_name.substr(0, paren);
   }
 
-  CF_EXPECT(fields[1].size() == 1, "Invalid verbosity indicator");
-  char verbosity = fields[1][0];
+  CF_EXPECT(fields[1].size() == 1, "Invalid severity indicator");
+  char severity = fields[1][0];
 
   // Capture message from the 8th field (index 7) to the end of the line.
   // This preserves any internal spacing within the unstructured message.
@@ -64,7 +66,7 @@ Result<LauncherLine> ParseLauncherLine(std::string_view line) {
 
   return LauncherLine{
       .proc_name = proc_name,
-      .verbosity = verbosity,
+      .severity = severity,
       .date = fields[2],
       .time = fields[3],
       .pid = fields[4],
@@ -75,15 +77,23 @@ Result<LauncherLine> ParseLauncherLine(std::string_view line) {
 }
 
 std::string FormatLauncherLine(const LauncherLine& line) {
-  const std::string_view verb_color = GetColorForVerbosity(line.verbosity);
+  const std::string_view verb_color = CharToLogSeverity(line.severity)
+                                          .transform(GetColorForSeverity)
+                                          .value_or("");
   return absl::StrCat(kAnsiGreen, line.date, " ", line.time, " ", verb_color,
                       line.pid, " ", line.tid, " ",
-                      std::string_view(&line.verbosity, 1), " ", kAnsiYellow,
+                      std::string_view(&line.severity, 1), " ", kAnsiYellow,
                       line.proc_name, ": ", kAnsiReset, line.message);
 }
 
 Result<std::string> ColorLauncherLine(std::string_view line) {
   return FormatLauncherLine(CF_EXPECT(ParseLauncherLine(line)));
+}
+
+Result<bool> FilterLauncherLine(LogSeverity filter, std::string_view line) {
+  LauncherLine parsed = CF_EXPECT(ParseLauncherLine(line));
+  LogSeverity line_severity = CF_EXPECT(CharToLogSeverity(parsed.severity));
+  return FilterSeverity(filter, line_severity);
 }
 
 }  // namespace cuttlefish

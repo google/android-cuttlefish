@@ -19,13 +19,14 @@
 #include <string>
 #include <string_view>
 
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/severity.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 struct LauncherLine {
   std::string_view proc_name;
-  char verbosity;
+  char severity;
   std::string_view date;
   std::string_view time;
   std::string_view pid;
@@ -37,5 +38,6 @@ struct LauncherLine {
 Result<LauncherLine> ParseLauncherLine(std::string_view line);
 std::string FormatLauncherLine(const LauncherLine& line);
 Result<std::string> ColorLauncherLine(std::string_view line);
+Result<bool> FilterLauncherLine(LogSeverity filter, std::string_view line);
 
 }  // namespace cuttlefish

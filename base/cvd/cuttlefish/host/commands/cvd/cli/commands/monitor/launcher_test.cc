@@ -35,7 +35,7 @@ TEST(LauncherTest, ParseLauncherLineValid) {
   EXPECT_EQ(parsed->time, "16:39:26");
   EXPECT_EQ(parsed->pid, "4089384");
   EXPECT_EQ(parsed->tid, "4089384");
-  EXPECT_EQ(parsed->verbosity, 'I');
+  EXPECT_EQ(parsed->severity, 'I');
   EXPECT_EQ(parsed->proc_name, "kernel_log_monitor");
   EXPECT_EQ(parsed->file_line, "kernel_log_server.cc:153]");
   EXPECT_EQ(parsed->message, "VIRTUAL_DEVICE_BOOT_COMPLETED");

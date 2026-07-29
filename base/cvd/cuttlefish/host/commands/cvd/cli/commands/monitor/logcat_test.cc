@@ -33,7 +33,7 @@ TEST(LogcatTest, ParseLogcatLineValid) {
   EXPECT_EQ(parsed->time, "15:28:15.123");
   EXPECT_EQ(parsed->uid, "1000");
   EXPECT_EQ(parsed->pid, "1000");
-  EXPECT_EQ(parsed->verbosity, 'I');
+  EXPECT_EQ(parsed->severity, 'I');
   EXPECT_EQ(parsed->tag, "TagName:");
   EXPECT_EQ(parsed->message, "message");
 }

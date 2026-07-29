@@ -26,8 +26,10 @@
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor/verbosity.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/severity.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -47,7 +49,7 @@ Result<LogcatLine> ParseLogcatLine(std::string_view line) {
 
   CF_EXPECT_GT(fields.size(), 6, "Failed to parse Logcat line");
 
-  CF_EXPECT_EQ(fields[4].size(), 1, "Invalid verbosity indicator");
+  CF_EXPECT_EQ(fields[4].size(), 1, "Invalid severity indicator");
 
   // Remainder starts at Field 6
   const char* remainder_start = fields[6].data();
@@ -58,21 +60,30 @@ Result<LogcatLine> ParseLogcatLine(std::string_view line) {
       .time = fields[1],
       .uid = fields[2],
       .pid = fields[3],
-      .verbosity = fields[4][0],
+      .severity = fields[4][0],
       .tag = fields[5],
       .message = std::string_view(remainder_start, remainder_len),
   };
 }
 
 std::string FormatLogcatLine(const LogcatLine& line) {
+  const std::string_view severity_color = CharToLogSeverity(line.severity)
+                                              .transform(GetColorForSeverity)
+                                              .value_or("");
   return absl::StrCat(kAnsiGreen, line.date, " ", line.time, " ",
-                      GetColorForVerbosity(line.verbosity), line.uid, " ",
-                      line.pid, " ", std::string_view(&line.verbosity, 1), " ",
-                      kAnsiYellow, line.tag, kAnsiReset, " ", line.message);
+                      severity_color, line.uid, " ", line.pid, " ",
+                      std::string_view(&line.severity, 1), " ", kAnsiYellow,
+                      line.tag, kAnsiReset, " ", line.message);
 }
 
 Result<std::string> ColorLogcatLine(std::string_view line) {
   return FormatLogcatLine(CF_EXPECT(ParseLogcatLine(line)));
+}
+
+Result<bool> FilterLogcatLine(LogSeverity filter, std::string_view line) {
+  LogcatLine parsed = CF_EXPECT(ParseLogcatLine(line));
+  LogSeverity line_severity = CF_EXPECT(CharToLogSeverity(parsed.severity));
+  return FilterSeverity(filter, line_severity);
 }
 
 }  // namespace cuttlefish

@@ -18,11 +18,14 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -30,15 +33,23 @@ class CvdMonitorCommandHandler : public CvdCommandHandler {
  public:
   CvdMonitorCommandHandler(InstanceManager& instance_manager);
 
-  Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override;
 
-  std::string SummaryHelp() const override;
+  std::vector<HelpParagraph> Description() const override;
+
+  Result<std::vector<Flag>> Flags(const CommandRequest&) override;
+
+  Result<void> Handle(const CommandRequest& request) override;
+
   bool RequiresDeviceExists() const override;
-  Result<std::string> DetailedHelp(const CommandRequest& request) override;
+
+  std::string SummaryHelp() const override;
 
  private:
   InstanceManager& instance_manager_;
+  struct {
+    LogSeverity severity_;
+  } flags_;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdMonitorCommandHandler(

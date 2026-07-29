@@ -18,18 +18,19 @@
 
 #include <memory>
 
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor_source.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 
 namespace cuttlefish {
 
 std::unique_ptr<MonitorSource> LauncherLogMonitorSource(
-    const LocalInstance& instance);
+    const LocalInstance& instance, LogSeverity severity);
 
 std::unique_ptr<MonitorSource> KernelLogMonitorSource(
     const LocalInstance& instance);
 
 std::unique_ptr<MonitorSource> LogcatMonitorSource(
-    const LocalInstance& instance);
+    const LocalInstance& instance, LogSeverity severity);
 
 }  // namespace cuttlefish
