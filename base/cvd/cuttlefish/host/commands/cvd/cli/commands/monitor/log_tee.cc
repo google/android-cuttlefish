@@ -27,8 +27,10 @@
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor/verbosity.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/monitor/severity.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -45,9 +47,9 @@ Result<LogTeeLine> ParseLogTeeLine(std::string_view line) {
   std::string_view date = fields[0];
   CF_EXPECT(absl::StartsWith(date, "["), "Date does not start with '['");
 
-  std::string_view verbosity = fields[1];
-  for (const char c : verbosity) {
-    CF_EXPECT(std::isupper(c), "Invalid verbosity characters");
+  std::string_view severity = fields[1];
+  for (const char c : severity) {
+    CF_EXPECT(std::isupper(c), "Invalid severity characters");
   }
 
   std::string_view subsystem = fields[2];
@@ -59,31 +61,29 @@ Result<LogTeeLine> ParseLogTeeLine(std::string_view line) {
 
   return LogTeeLine{
       .date = date,
-      .verbosity = verbosity,
+      .severity = severity,
       .subsystem = subsystem,
       .message = message,
   };
 }
 
 std::string FormatLogTeeLine(const LogTeeLine& line) {
-  std::string_view verb_color;
-  if (line.verbosity == "ERROR") {
-    verb_color = GetColorForVerbosity('E');
-  } else if (line.verbosity == "WARN") {
-    verb_color = GetColorForVerbosity('W');
-  } else if (line.verbosity == "INFO") {
-    verb_color = GetColorForVerbosity('I');
-  } else if (line.verbosity == "DEBUG") {
-    verb_color = GetColorForVerbosity('D');
-  }
+  const std::string_view severity_color =
+      ToSeverity(line.severity).transform(GetColorForSeverity).value_or("");
 
-  return absl::StrCat(kAnsiGreen, line.date, " ", verb_color, line.verbosity,
+  return absl::StrCat(kAnsiGreen, line.date, " ", severity_color, line.severity,
                       " ", kAnsiYellow, line.subsystem, kAnsiReset,
                       line.message);
 }
 
 Result<std::string> ColorLogTeeLine(std::string_view line) {
   return FormatLogTeeLine(CF_EXPECT(ParseLogTeeLine(line)));
+}
+
+Result<bool> FilterLogTeeLine(LogSeverity filter, std::string_view line) {
+  const LogTeeLine parsed = CF_EXPECT(ParseLogTeeLine(line));
+  LogSeverity line_severity = CF_EXPECT(ToSeverity(parsed.severity));
+  return FilterSeverity(filter, line_severity);
 }
 
 }  // namespace cuttlefish

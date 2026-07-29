@@ -31,7 +31,7 @@ TEST(LogTeeTest, ParseLogTeeLineValid) {
   auto parsed = ParseLogTeeLine(line);
   ASSERT_THAT(parsed, IsOk());
   EXPECT_EQ(parsed->date, "[2026-05-15T23:43:46.448645816+00:00");
-  EXPECT_EQ(parsed->verbosity, "INFO");
+  EXPECT_EQ(parsed->severity, "INFO");
   EXPECT_EQ(parsed->subsystem, "disk]");
   EXPECT_EQ(parsed->message, " disk size 294518784");
 }

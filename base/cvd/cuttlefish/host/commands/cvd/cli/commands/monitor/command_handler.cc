@@ -20,17 +20,21 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor.h"
+#include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -48,22 +52,55 @@ It displays:
 - logcat
 
 Usage:
-  cvd [selector options] monitor
+  cvd [selector options] monitor [flags]
 )";
 
 constexpr char kMonitorCmd[] = "monitor";
+
+constexpr char kSeverityHelp[] =
+    "Set the severity cutoff of the monitor. Supported values are error, "
+    "warning, info, debug, and verbose";
+constexpr char kErrorHelp[] = "Equivalent to --monitor_severity=error";
 
 }  // namespace
 
 CvdMonitorCommandHandler::CvdMonitorCommandHandler(
     InstanceManager& instance_manager)
-    : instance_manager_{instance_manager} {}
+    : instance_manager_{instance_manager} {
+  flags_.severity_ = ConsoleSeverity();
+}
+
+std::vector<std::string> CvdMonitorCommandHandler::CmdList() const {
+  return {kMonitorCmd};
+}
+
+std::vector<HelpParagraph> CvdMonitorCommandHandler::Description() const {
+  return {HelpParagraph::Raw(kDetailedHelpText)};
+}
+
+Result<std::vector<Flag>> CvdMonitorCommandHandler::Flags(
+    const CommandRequest&) {
+  auto set_severity = [this](std::string_view severity) -> Result<void> {
+    flags_.severity_ = CF_EXPECT(ToSeverity(severity));
+    return {};
+  };
+  auto set_error = [this](std::string_view) -> Result<void> {
+    flags_.severity_ = LogSeverity::Error;
+    return {};
+  };
+  return std::vector<Flag>{
+      Flag::StringFlag("severity").Setter(set_severity).Help(kSeverityHelp),
+      Flag::StringFlag("verbosity").Setter(set_severity).Help(kSeverityHelp),
+      Flag::BoolFlag("e").Setter(set_error).Help(kErrorHelp),
+  };
+}
 
 Result<void> CvdMonitorCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(isatty(0), "The monitor command requires an interactive terminal.");
 
   std::vector<std::string> args = request.SubcommandArguments();
-  CF_EXPECT(ConsumeFlags({}, args, {.fail_on_unexpected_argument = true}));
+  std::vector<Flag> flags = CF_EXPECT(Flags(request));
+  CF_EXPECT(ConsumeFlags(flags, args, {.fail_on_unexpected_argument = true}));
 
   const auto [instance, unused] =
       CF_EXPECT(selector::SelectInstance(instance_manager_, request),
@@ -78,13 +115,9 @@ Result<void> CvdMonitorCommandHandler::Handle(const CommandRequest& request) {
       CF_EXPECT(PushInterruptListener(
           [stop_eventfd](int) { stop_eventfd->EventfdWrite(1); }));
 
-  CF_EXPECT(MonitorLogs(instance, stop_eventfd));
+  CF_EXPECT(MonitorLogs(instance, stop_eventfd, flags_.severity_));
 
   return {};
-}
-
-std::vector<std::string> CvdMonitorCommandHandler::CmdList() const {
-  return {kMonitorCmd};
 }
 
 std::string CvdMonitorCommandHandler::SummaryHelp() const {
@@ -92,11 +125,6 @@ std::string CvdMonitorCommandHandler::SummaryHelp() const {
 }
 
 bool CvdMonitorCommandHandler::RequiresDeviceExists() const { return true; }
-
-Result<std::string> CvdMonitorCommandHandler::DetailedHelp(
-    const CommandRequest& request) {
-  return kDetailedHelpText;
-}
 
 std::unique_ptr<CvdCommandHandler> NewCvdMonitorCommandHandler(
     InstanceManager& instance_manager) {

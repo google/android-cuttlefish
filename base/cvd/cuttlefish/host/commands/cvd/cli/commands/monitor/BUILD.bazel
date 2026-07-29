@@ -12,14 +12,17 @@ cf_cc_library(
     hdrs = ["command_handler.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:help_format",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor",
         "//cuttlefish/host/commands/cvd/cli/selector",
         "//cuttlefish/host/commands/cvd/instances:instance_manager",
         "//cuttlefish/host/commands/cvd/utils:interrupt_listener",
-        "//cuttlefish/result",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
 )
 
@@ -76,7 +79,6 @@ cf_cc_library(
         "//libbase",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:cord",
     ],
 )
 
@@ -106,9 +108,11 @@ cf_cc_library(
     srcs = ["launcher.cc"],
     hdrs = ["launcher.h"],
     deps = [
-        ":verbosity",
         "//cuttlefish/ansi_codes",
-        "//cuttlefish/result",
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:severity",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -128,6 +132,7 @@ cf_cc_library(
     hdrs = ["log_sources.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:file_monitor_source",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:kernel",
@@ -149,9 +154,11 @@ cf_cc_library(
     srcs = ["log_tee.cc"],
     hdrs = ["log_tee.h"],
     deps = [
-        ":verbosity",
         "//cuttlefish/ansi_codes",
-        "//cuttlefish/result",
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:severity",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -170,9 +177,11 @@ cf_cc_library(
     srcs = ["logcat.cc"],
     hdrs = ["logcat.h"],
     deps = [
-        ":verbosity",
         "//cuttlefish/ansi_codes",
-        "//cuttlefish/result",
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/cvd/cli/commands/monitor:severity",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -193,13 +202,16 @@ cf_cc_library(
     deps = [
         "//cuttlefish/ansi_codes",
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:display",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:drain_inotify",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:log_sources",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:monitor_source",
         "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/result",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/strings",
     ],
@@ -211,6 +223,18 @@ cf_cc_library(
     hdrs = ["monitor_source.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+    ],
+)
+
+cf_cc_library(
+    name = "severity",
+    srcs = ["severity.cc"],
+    hdrs = ["severity.h"],
+    deps = [
+        "//cuttlefish/ansi_codes",
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
 )
 
@@ -231,14 +255,5 @@ cf_cc_test(
         ":truncate",
         "//cuttlefish/ansi_codes",
         "@abseil-cpp//absl/strings",
-    ],
-)
-
-cf_cc_library(
-    name = "verbosity",
-    srcs = ["verbosity.cc"],
-    hdrs = ["verbosity.h"],
-    deps = [
-        "//cuttlefish/ansi_codes",
     ],
 )

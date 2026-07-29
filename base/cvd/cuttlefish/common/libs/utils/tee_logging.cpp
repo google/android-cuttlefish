@@ -54,8 +54,8 @@ using android::base::GetThreadId;
 namespace cuttlefish {
 namespace {
 
-std::string ToUpper(const std::string& input) {
-  std::string output = input;
+std::string ToUpper(std::string_view input) {
+  std::string output(input);
   std::transform(output.begin(), output.end(), output.begin(),
                  [](unsigned char ch) { return std::toupper(ch); });
   return output;
@@ -271,7 +271,7 @@ std::string FromSeverity(LogSeverity severity) {
   return "Unexpected severity";
 }
 
-Result<LogSeverity> ToSeverity(const std::string& value) {
+Result<LogSeverity> ToSeverity(std::string_view value) {
   const std::unordered_map<std::string, LogSeverity> string_to_severity{
       {"VERBOSE", LogSeverity::Verbose}, {"DEBUG", LogSeverity::Debug},
       {"INFO", LogSeverity::Info},       {"WARNING", LogSeverity::Warning},
