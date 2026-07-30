@@ -304,6 +304,8 @@ jobs:
       with:
         name: debs_amd64
         github-token: ${{ github.token }}
+    - name: Upgrade crun
+      uses: ./.github/actions/upgrade-crun
     - name: Build image
       run: |
         tar -xvf debs_amd64.tar
@@ -363,6 +365,8 @@ jobs:
       with:
         name: android-cuttlefish-e2etest-image-tar
         github-token: ${{ github.token }}
+    - name: Upgrade crun
+      uses: ./.github/actions/upgrade-crun
     - name: Run tests
       run: |
         sudo podman info
@@ -509,6 +513,8 @@ jobs:
       uses: actions/download-artifact@v7
       with:
         name: cuttlefish-orchestration-amd64
+    - name: Upgrade crun
+      uses: ./.github/actions/upgrade-crun
     - name: Load docker image as podman image
       run: |
         sudo sysctl -w kernel.unprivileged_userns_clone=1

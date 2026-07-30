@@ -16,6 +16,8 @@ runs:
       with:
         name: android-cuttlefish-e2etest-image-tar
         github-token: ${{ github.token }}
+    - name: Upgrade crun
+      uses: ./.github/actions/upgrade-crun
     - name: Run tests
       shell: bash
       env:
