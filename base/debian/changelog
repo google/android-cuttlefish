@@ -1,3 +1,19 @@
+cuttlefish-common (1.55.2) unstable; urgency=medium
+
+  * Update compile_commands.json generator
+  * Emulate signal gain for emulated_camera_mplane.
+  * Fix dependency issues with fetch:fetch_cvd
+  * Fix build issues with fetch:fetch_context
+  * Fix dependency issues with fetch:downloaders
+  * Fix dependency issues with fetch:build_api_flags
+  * Fix dependency issues with fetch:build_api_credentials
+  * modem_simulator: avoid referring to a dead object
+  * modem_simulator: fix the possible OOB if the buffer is not null terminated
+  * modem_simulator: prevent unhandled exceptions for incorrect input
+  * modem_simulator: prevent unhandled exceptions for strings shorter than 2
+
+ -- 3405691582 <dsk@google.com>  Thu, 30 Jul 2026 18:04:13 +0000
+
 cuttlefish-common (1.55.1) unstable; urgency=medium
 
   * Ignore ancient builds with higher safe levels by @Databean in https://github.com/google/android-cuttlefish/pull/2776
