@@ -12,12 +12,10 @@ cf_cc_library(
     name = "boot_image",
     srcs = ["boot_image.cc"],
     hdrs = ["boot_image.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:copy",
         "//cuttlefish/io:filesystem",
-        "//cuttlefish/io:length",
         "//cuttlefish/io:read_exact",
         "//cuttlefish/io:read_window_view",
         "//cuttlefish/result",
@@ -43,11 +41,9 @@ cf_cc_library(
 cf_cc_test(
     name = "boot_image_test",
     srcs = ["boot_image_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/boot_image",
         "//cuttlefish/host/commands/assemble_cvd/boot_image:boot_image_builder",
-        "//cuttlefish/io",
         "//cuttlefish/io:concat",
         "//cuttlefish/io:in_memory",
         "//cuttlefish/io:read_window_view",
@@ -89,11 +85,9 @@ cf_cc_library(
 cf_cc_test(
     name = "vendor_boot_image_test",
     srcs = ["vendor_boot_image_test.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/boot_image:vendor_boot_image",
         "//cuttlefish/host/commands/assemble_cvd/boot_image:vendor_boot_image_builder",
-        "//cuttlefish/io",
         "//cuttlefish/io:concat",
         "//cuttlefish/io:in_memory",
         "//cuttlefish/io:read_window_view",
