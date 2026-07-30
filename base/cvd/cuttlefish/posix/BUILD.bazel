@@ -42,3 +42,14 @@ cf_cc_library(
         "//cuttlefish/result",
     ],
 )
+
+cf_cc_library(
+    name = "realpath",
+    srcs = ["realpath.cc"],
+    hdrs = ["realpath.h"],
+    deps = [
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
