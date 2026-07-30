@@ -31,6 +31,7 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/files/is_symlink.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_pkg_migration.pb.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/posix/symlink.h"
@@ -79,8 +80,8 @@ Result<void> SubstituteWithFlag(
   const std::string bin_dir_parent = CF_EXPECT(GetCuttlefishCommonDir());
 
   if (host_substitutions == std::vector<std::string>{"all"}) {
-    auto callback = [&bin_dir_parent,
-                     &target_dir](const std::string& path) -> Result<void> {
+    auto make_substitution = [&bin_dir_parent, &target_dir](
+                                 const std::string& path) -> Result<void> {
       if (IsDirectory(path)) {
         return {};
       }
@@ -92,7 +93,18 @@ Result<void> SubstituteWithFlag(
       CF_EXPECT(Substitute(path, to_substitute));
       return {};
     };
-    CF_EXPECT(WalkDirectory(bin_dir_parent, callback));
+    CF_EXPECT(WalkDirectory(bin_dir_parent, make_substitution));
+    auto detect_not_substituted = [](const std::string& path) -> Result<void> {
+      if (!CF_EXPECT(IsSymlink(path)) && !IsDirectory(path)) {
+        VLOG(0) << "Not substituted: " << path;
+      }
+      return {};
+    };
+    Result<void> detect_res = WalkDirectory(target_dir, detect_not_substituted);
+    if (!detect_res.has_value()) {
+      VLOG(0) << "Failed to produce substitution report: "
+              << detect_res.error();
+    }
   } else {
     for (const std::string& substitution : host_substitutions) {
       std::string source = fmt::format("{}/{}", bin_dir_parent, substitution);
