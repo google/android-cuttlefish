@@ -214,6 +214,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
         "//cuttlefish/host/commands/cvd/fetch:host_package",
         "//cuttlefish/host/commands/cvd/fetch:host_tools_target",
+        "//cuttlefish/host/commands/cvd/fetch:symlink_host_package",
         "//cuttlefish/host/commands/cvd/fetch:target_directories",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:fetcher_config",
@@ -326,6 +327,20 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@protobuf",
+    ],
+)
+
+cf_cc_library(
+    name = "symlink_host_package",
+    srcs = ["symlink_host_package.cc"],
+    hdrs = ["symlink_host_package.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/posix:symlink",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

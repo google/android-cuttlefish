@@ -42,6 +42,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_package.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_tools_target.h"
+#include "cuttlefish/host/commands/cvd/fetch/symlink_host_package.h"
 #include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
@@ -469,12 +470,19 @@ Result<FetchResult> Fetch(const FetchFlags& flags,
       downloaders.AndroidBuild(), host_target, fallback_host_build));
   prefetch_trace.CompletePhase("GetBuilds");
 
-  auto host_package_future = std::async(
-      std::launch::async, FetchHostPackage,
-      std::ref(downloaders.AndroidBuild()), std::cref(host_target_build),
-      std::cref(host_target.host_tools_directory),
-      std::cref(flags.keep_downloaded_archives),
-      std::cref(flags.host_substitutions), tracer.NewTrace("Host Package"));
+  std::future<Result<void>> host_package_future;
+  if (flags.host_substitutions == std::vector<std::string>{"only"}) {
+    host_package_future =
+        std::async(std::launch::async, SymlinkHostPackage,
+                   std::cref(host_target.host_tools_directory));
+  } else {
+    host_package_future = std::async(
+        std::launch::async, FetchHostPackage,
+        std::ref(downloaders.AndroidBuild()), std::cref(host_target_build),
+        std::cref(host_target.host_tools_directory),
+        std::cref(flags.keep_downloaded_archives),
+        std::cref(flags.host_substitutions), tracer.NewTrace("Host Package"));
+  }
   size_t count = 1;
   FetchResult fetch_result;
   for (const auto& target : targets) {
