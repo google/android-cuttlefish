@@ -57,6 +57,16 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "is_symlink",
+    srcs = ["is_symlink.cc"],
+    hdrs = ["is_symlink.h"],
+    deps = [
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "link_or_copy",
     srcs = ["link_or_copy.cc"],
     hdrs = ["link_or_copy.h"],
