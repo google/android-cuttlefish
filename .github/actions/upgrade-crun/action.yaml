@@ -1,0 +1,29 @@
+name: 'Upgrade crun'
+description: 'Upgrade crun to latest version to avoid OCI compatibility issues'
+runs:
+  using: "composite"
+  steps:
+    - name: Upgrade crun
+      shell: bash
+      run: |
+        TARGET_VERSION="1.28"
+        EXPECTED_HASH="2aa6b7024a9c9f153895c0d11ae233d3758f54844011c3a039e3e89048d01d42"
+        CRUN_PATH=$(which crun || echo "/usr/bin/crun")
+        echo "Current crun path: $CRUN_PATH"
+        if [ -f "$CRUN_PATH" ]; then
+          echo "Current crun version:"
+          $CRUN_PATH --version
+        fi
+        
+        TEMP_CRUN=$(mktemp)
+        echo "Downloading crun $TARGET_VERSION..."
+        curl -L -o "$TEMP_CRUN" https://github.com/containers/crun/releases/download/${TARGET_VERSION}/crun-${TARGET_VERSION}-linux-amd64
+        
+        echo "Verifying hash..."
+        echo "$EXPECTED_HASH  $TEMP_CRUN" | sha256sum --check
+        
+        echo "Installing crun..."
+        sudo mv "$TEMP_CRUN" "$CRUN_PATH"
+        sudo chmod +x "$CRUN_PATH"
+        echo "Upgraded crun version:"
+        $CRUN_PATH --version
