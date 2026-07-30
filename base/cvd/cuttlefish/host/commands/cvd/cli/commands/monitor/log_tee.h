@@ -19,13 +19,14 @@
 #include <string>
 #include <string_view>
 
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 struct LogTeeLine {
   std::string_view date;
-  std::string_view verbosity;
+  std::string_view severity;
   std::string_view subsystem;
   std::string_view message;
 };
@@ -33,5 +34,6 @@ struct LogTeeLine {
 Result<LogTeeLine> ParseLogTeeLine(std::string_view line);
 std::string FormatLogTeeLine(const LogTeeLine& line);
 Result<std::string> ColorLogTeeLine(std::string_view line);
+Result<bool> FilterLogTeeLine(LogSeverity filter, std::string_view line);
 
 }  // namespace cuttlefish

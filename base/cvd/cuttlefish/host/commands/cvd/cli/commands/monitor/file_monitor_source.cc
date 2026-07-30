@@ -30,7 +30,6 @@
 #include <vector>
 
 #include "absl/log/check.h"
-#include "absl/strings/cord.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
@@ -47,42 +46,58 @@
 namespace cuttlefish {
 namespace {
 
+constexpr size_t kChunkReadSize = 1 << 20;
+constexpr size_t kMaximumScrollback = 1 << 24;
+
 struct FileData {
   std::vector<std::string> last_lines;
   size_t total_size = 0;
 };
 
-Result<FileData> GetLastNLines(ReaderSeeker& rs, size_t n) {
+Result<FileData> GetLastNLines(
+    ReaderSeeker& rs, size_t n,
+    std::function<Result<bool>(std::string_view)>& filter_line,
+    std::string name) {
   FileData ret;
   ret.total_size = CF_EXPECT(rs.SeekEnd(0));
 
-  absl::Cord accumulated_data;
+  std::string accumulated_data;
   size_t offset = ret.total_size;
-  size_t newline_count = 0;
 
-  while (offset > 0 && newline_count < n + 1) {
-    static constexpr size_t kChunkSize = 4096;
-    size_t to_read = std::min(kChunkSize, offset);
+  // TODO(schuffelen): make FileMonitorSource stateful to avoid re-reading
+  while (offset > 0 && ret.total_size - offset < kMaximumScrollback) {
+    size_t to_read = std::min(kChunkReadSize, offset);
     offset -= to_read;
     CF_EXPECT(rs.SeekSet(offset));
 
     std::string chunk(to_read, '\0');
     CF_EXPECT(ReadExact(rs, chunk.data(), to_read));
 
-    newline_count += std::count(chunk.begin(), chunk.end(), '\n');
-    accumulated_data.Prepend(std::move(chunk));
+    accumulated_data = chunk + accumulated_data;
+    std::vector<std::string_view> lines =
+        absl::StrSplit(accumulated_data, '\n');
+    if (lines.empty()) {
+      continue;
+    }
+    auto it = lines.begin();
+    it++;  // ignore the first line, it may be partially read
+    auto predicate = [&filter_line](std::string_view line) {
+      return line.empty() || !filter_line(line).value_or(false);
+    };
+    auto end = std::remove_if(it, lines.end(), predicate);
+    const size_t remaining = end - it;
+    if (remaining > n) {
+      it += remaining - n;
+    }
+    ret.last_lines.clear();
+    ret.last_lines.reserve(lines.size());
+    for (; it != end; it++) {
+      ret.last_lines.emplace_back(*it);
+    }
+    if (ret.last_lines.size() >= n) {
+      break;
+    }
   }
-
-  ret.last_lines = absl::StrSplit(std::string(accumulated_data), '\n');
-
-  // Handle trailing newline
-  if (!ret.last_lines.empty() && ret.last_lines.back().empty()) {
-    ret.last_lines.pop_back();
-  }
-
-  size_t start_idx = ret.last_lines.size() > n ? ret.last_lines.size() - n : 0;
-  ret.last_lines.erase(ret.last_lines.begin(),
-                       ret.last_lines.begin() + start_idx);
 
   return ret;
 }
@@ -91,10 +106,12 @@ Result<FileData> GetLastNLines(ReaderSeeker& rs, size_t n) {
 
 FileMonitorSource::FileMonitorSource(
     std::string path, std::unique_ptr<ReaderSeeker> file_io,
-    std::function<Result<std::string>(std::string_view)> colorize_line)
+    std::function<Result<std::string>(std::string_view)> colorize_line,
+    std::function<Result<bool>(std::string_view)> filter_line)
     : path_(std::move(path)),
       file_io_(std::move(file_io)),
-      colorize_line_(std::move(colorize_line)) {
+      colorize_line_(std::move(colorize_line)),
+      filter_line_(std::move(filter_line)) {
   inotify_fd_ = SharedFD::InotifyFd();
   CHECK(inotify_fd_->IsOpen()) << inotify_fd_->StrError();
   CHECK_GE(inotify_fd_->InotifyAddWatch(path_, IN_DELETE_SELF | IN_MODIFY), 0);
@@ -106,7 +123,8 @@ FileMonitorSource::~FileMonitorSource() = default;
 
 MonitorOutput FileMonitorSource::Report(size_t rows, size_t) {
   const std::string basename = android::base::Basename(path_);
-  Result<FileData> file_data = GetLastNLines(*file_io_, rows);
+  Result<FileData> file_data =
+      GetLastNLines(*file_io_, rows, filter_line_, basename);
   if (!file_data.has_value()) {
     return MonitorOutput(
         absl::StrCat(basename, " (error)"),

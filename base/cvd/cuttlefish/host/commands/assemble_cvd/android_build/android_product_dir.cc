@@ -25,7 +25,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/pretty/result.h"  // IWYU pragma: keep: overloads

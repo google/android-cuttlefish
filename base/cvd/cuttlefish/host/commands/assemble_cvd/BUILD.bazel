@@ -32,6 +32,7 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:recursively_remove_directory",
         "//cuttlefish/flag_parser",
@@ -165,6 +166,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:in_sandbox",
+        "//cuttlefish/files:directory_contents",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/process:proc_file_utils",

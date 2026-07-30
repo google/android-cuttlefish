@@ -15,6 +15,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",

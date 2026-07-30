@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -27,6 +28,7 @@
 #include "absl/strings/str_cat.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/file_monitor_source.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/kernel.h"
@@ -42,6 +44,23 @@
 
 namespace cuttlefish {
 namespace {
+
+Result<bool> FilterLauncherOrLogTee(LogSeverity filter, std::string_view line) {
+  if (line.find("log_tee(") != 0) {
+    return CF_EXPECT(FilterLauncherLine(filter, line));
+  }
+  const size_t bracket = line.find(']');
+  if (bracket != std::string_view::npos) {
+    line.remove_prefix(bracket + 1);
+    const size_t first_non_space = line.find_first_not_of(" \t");
+    if (first_non_space != std::string_view::npos) {
+      line.remove_prefix(first_non_space);
+    } else {
+      line = "";
+    }
+  }
+  return CF_EXPECT(FilterLogTeeLine(filter, line));
+}
 
 Result<std::string> ColorLauncherOrLogTee(std::string_view line) {
   if (line.find("log_tee(") != 0) {
@@ -63,7 +82,7 @@ Result<std::string> ColorLauncherOrLogTee(std::string_view line) {
 }  // namespace
 
 std::unique_ptr<MonitorSource> LauncherLogMonitorSource(
-    const LocalInstance& instance) {
+    const LocalInstance& instance, const LogSeverity severity) {
   const std::string launcher =
       absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameLauncher);
   const std::string assemble =
@@ -77,8 +96,9 @@ std::unique_ptr<MonitorSource> LauncherLogMonitorSource(
     return {};
   }
   std::unique_ptr<ReaderSeeker> io = std::make_unique<SharedFdIo>(fd);
-  return std::make_unique<FileMonitorSource>(path, std::move(io),
-                                             ColorLauncherOrLogTee);
+  return std::make_unique<FileMonitorSource>(
+      path, std::move(io), ColorLauncherOrLogTee,
+      std::bind_front(FilterLauncherOrLogTee, severity));
 }
 
 std::unique_ptr<MonitorSource> KernelLogMonitorSource(
@@ -93,12 +113,13 @@ std::unique_ptr<MonitorSource> KernelLogMonitorSource(
     return {};
   }
   std::unique_ptr<ReaderSeeker> io = std::make_unique<SharedFdIo>(fd);
-  return std::make_unique<FileMonitorSource>(path, std::move(io),
-                                             ColorKernelLine);
+  return std::make_unique<FileMonitorSource>(
+      path, std::move(io), ColorKernelLine,
+      [](std::string_view) { return true; });
 }
 
 std::unique_ptr<MonitorSource> LogcatMonitorSource(
-    const LocalInstance& instance) {
+    const LocalInstance& instance, const LogSeverity severity) {
   const std::string path =
       absl::StrCat(instance.InstanceDirectory(), "/logs/", kLogNameLogcat);
   if (!FileExists(path)) {
@@ -109,8 +130,9 @@ std::unique_ptr<MonitorSource> LogcatMonitorSource(
     return {};
   }
   std::unique_ptr<ReaderSeeker> io = std::make_unique<SharedFdIo>(fd);
-  return std::make_unique<FileMonitorSource>(path, std::move(io),
-                                             ColorLogcatLine);
+  return std::make_unique<FileMonitorSource>(
+      path, std::move(io), ColorLogcatLine,
+      std::bind_front(FilterLogcatLine, severity));
 }
 
 }  // namespace cuttlefish

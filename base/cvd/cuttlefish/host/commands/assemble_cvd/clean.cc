@@ -28,6 +28,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
+#include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/proc_file_utils.h"

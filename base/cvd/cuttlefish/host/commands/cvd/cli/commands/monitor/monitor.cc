@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -37,17 +38,21 @@
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/display.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/drain_inotify.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/log_sources.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor_source.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
+Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd,
+                         LogSeverity severity) {
   CF_EXPECT(isatty(0), "The monitor command requires an interactive terminal.");
 
   std::unique_ptr<MonitorSource> kernel_monitor_source;
@@ -79,10 +84,10 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
       kernel_monitor_source = KernelLogMonitorSource(instance);
     }
     if (!logcat_monitor_source.get()) {
-      logcat_monitor_source = LogcatMonitorSource(instance);
+      logcat_monitor_source = LogcatMonitorSource(instance, severity);
     }
     if (!launcher_monitor_source.get()) {
-      launcher_monitor_source = LauncherLogMonitorSource(instance);
+      launcher_monitor_source = LauncherLogMonitorSource(instance, severity);
     }
 
     TerminalSize term_size =
@@ -151,7 +156,7 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd) {
     // Block until file changes occur. If any watch failed or is missing, use
     // a fallback timeout to awake and retry.
     int poll_res = SharedFD::Poll(poll_fds, missing_source ? 200 : -1);
-    CF_EXPECT_GE(poll_res, 0);
+    CF_EXPECT_GE(poll_res, 0, StrError(errno));
 
     if (stop_eventfd->IsOpen() && (poll_fds[1].revents & POLLIN)) {
       // Stop requested via eventfd

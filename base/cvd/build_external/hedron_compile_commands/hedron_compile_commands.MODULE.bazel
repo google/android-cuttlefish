@@ -2,9 +2,8 @@
 # https://github.com/hedronvision/bazel-compile-commands-extractor
 git_override(
     module_name = "hedron_compile_commands",
-    # While waiting for
-    # https://github.com/hedronvision/bazel-compile-commands-extractor/pull/219
-    # to be merged.
-    commit = "f5fbd4cee671d8d908f37c83abaf70fba5928fc7",
-    remote = "https://github.com/mikael-s-persson/bazel-compile-commands-extractor",
+    # Upstream is unmaintained, see
+    # https://github.com/helly25/bazel-compile-commands-extractor/blob/1f9360db1834d115c48279d38a97f30d64d3fd4a/FORK.md
+    commit = "1f9360db1834d115c48279d38a97f30d64d3fd4a",
+    remote = "https://github.com/helly25/bazel-compile-commands-extractor.git",
 )

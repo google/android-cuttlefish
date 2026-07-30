@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
-#include "cuttlefish/host/commands/cvd/cli/commands/monitor/verbosity.h"
+#include <string>
+#include <vector>
 
-#include <string_view>
-
-#include "cuttlefish/ansi_codes/ansi_codes.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-std::string_view GetColorForVerbosity(const char verbosity) {
-  switch (verbosity) {
-    case 'E':
-      return kAnsiRed;
-    case 'W':
-      return kAnsiYellow;
-    case 'I':
-      return kAnsiGreen;
-    case 'D':
-      return kAnsiCyan;
-    case 'V':
-      return kAnsiWhite;
-    default:
-      return "";
-  }
-}
+Result<std::vector<std::string>> DirectoryContents(const std::string& path);
 
 }  // namespace cuttlefish

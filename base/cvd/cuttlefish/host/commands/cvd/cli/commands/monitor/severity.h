@@ -18,8 +18,14 @@
 
 #include <string_view>
 
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/result/result_type.h"
+
 namespace cuttlefish {
 
-std::string_view GetColorForVerbosity(const char verbosity);
+Result<LogSeverity> CharToLogSeverity(char severity);
+
+std::string_view GetColorForSeverity(LogSeverity);
+bool FilterSeverity(LogSeverity filter, LogSeverity test);
 
 }  // namespace cuttlefish
