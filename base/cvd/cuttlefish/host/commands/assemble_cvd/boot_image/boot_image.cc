@@ -16,9 +16,13 @@
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/boot_image.h"
 
 #include <stdint.h>
+#include <string.h>
 
 #include <map>
+#include <memory>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 
