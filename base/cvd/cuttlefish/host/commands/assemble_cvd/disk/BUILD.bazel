@@ -23,7 +23,6 @@ cf_cc_library(
     name = "android_composite_disk_config",
     srcs = ["android_composite_disk_config.cc"],
     hdrs = ["android_composite_disk_config.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:file_exists",
@@ -36,7 +35,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/image_aggregator:gpt_type_guid",
         "//cuttlefish/host/libs/image_aggregator:super_builder",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -45,13 +43,11 @@ cf_cc_library(
     name = "ap_composite_disk",
     srcs = ["ap_composite_disk.cc"],
     hdrs = ["ap_composite_disk.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",
         "//cuttlefish/host/libs/config:ap_boot_flow",
-        "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
     ],
@@ -72,14 +68,12 @@ cf_cc_library(
     name = "chromeos_composite_disk",
     srcs = ["chromeos_composite_disk.cc"],
     hdrs = ["chromeos_composite_disk.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/disk:chromeos_state",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
         "//cuttlefish/host/libs/image_aggregator:gpt_type_guid",
-        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -179,11 +173,9 @@ cf_cc_library(
     name = "generate_persistent_vbmeta",
     srcs = ["generate_persistent_vbmeta.cpp"],
     hdrs = ["generate_persistent_vbmeta.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:boot_config",
-        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_bootconfig",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:ap_boot_flow",
@@ -219,7 +211,6 @@ cf_cc_library(
     name = "initialize_instance_composite_disk",
     srcs = ["initialize_instance_composite_disk.cc"],
     hdrs = ["initialize_instance_composite_disk.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
@@ -231,9 +222,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
-        "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
-        "@gflags",
     ],
 )
 
@@ -287,16 +276,12 @@ cf_cc_library(
     name = "misc_image",
     srcs = ["misc_image.cc"],
     hdrs = ["misc_image.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/result",
-        "//libbase",
-        "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -304,7 +289,6 @@ cf_cc_library(
     name = "os_composite_disk",
     srcs = ["os_composite_disk.cc"],
     hdrs = ["os_composite_disk.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",
@@ -320,9 +304,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log:check",
-        "@abseil-cpp//absl/strings",
     ],
 )
 
