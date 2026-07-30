@@ -1,10 +1,12 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
 exports_files([".clang-tidy"])
+
+cf_build_test(name = "boot_image_build_test")
 
 cf_cc_library(
     name = "boot_image",
