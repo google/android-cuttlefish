@@ -19,6 +19,7 @@
 #include <stddef.h>
 
 #include <string>
+#include <utility>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"

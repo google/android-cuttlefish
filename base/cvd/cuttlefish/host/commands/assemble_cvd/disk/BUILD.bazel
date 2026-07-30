@@ -4,6 +4,8 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+exports_files([".clang-tidy"])
+
 cf_cc_library(
     name = "access_kregistry",
     srcs = ["access_kregistry.cc"],
@@ -101,6 +103,7 @@ cf_cc_library(
     hdrs = ["efi_loader.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
+        "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result:result_type",
     ],

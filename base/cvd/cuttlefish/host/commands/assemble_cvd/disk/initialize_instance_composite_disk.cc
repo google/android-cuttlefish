@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -23,6 +24,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
