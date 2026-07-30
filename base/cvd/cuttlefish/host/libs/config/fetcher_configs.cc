@@ -25,9 +25,9 @@
 #include "absl/strings/str_cat.h"
 #include "absl/types/span.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/posix/realpath.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

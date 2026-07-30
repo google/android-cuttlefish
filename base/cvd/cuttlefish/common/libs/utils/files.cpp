@@ -30,7 +30,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <array>
 #include <chrono>
 #include <fstream>
 #include <ios>
@@ -59,6 +58,7 @@
 #include "cuttlefish/files/file_device_id.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/link_or_copy.h"
+#include "cuttlefish/posix/realpath.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -220,18 +220,6 @@ std::string AbsolutePath(std::string_view path) {
     return {};
   }
   return absl::StrCat(*real_cwd, "/", path);
-}
-
-Result<std::string> RealPath(const std::string& path) {
-  // NOLINTNEXTLINE(misc-include-cleaner): <limits.h>
-  std::array<char, PATH_MAX> buffer{};
-  char* res;
-  do {
-    res = realpath(path.c_str(), buffer.data());
-  } while (res == nullptr && errno == EINTR);
-  CF_EXPECTF(res != nullptr, "Could not get real path for path \"{}\": {}",
-             path, StrError(errno));
-  return std::string(buffer.data());
 }
 
 off_t FileSize(const std::string& path) {

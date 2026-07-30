@@ -15,6 +15,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_exists",
+        "//cuttlefish/posix:realpath",
         "//cuttlefish/result",
     ],
 )
