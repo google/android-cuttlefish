@@ -226,6 +226,7 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("gatekeeper_secure");
   preserving.insert("gatekeeper_insecure");
   preserving.insert("keymint_secure_deletion_data");
+  preserving.insert("weaver_storage.json");
   preserving.insert("modem_nvram.json");
   preserving.insert("recording");
   preserving.insert("persistent_composite_disk_config.txt");
