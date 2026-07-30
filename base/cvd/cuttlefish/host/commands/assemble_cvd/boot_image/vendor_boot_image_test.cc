@@ -15,8 +15,12 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image.h"
 
+#include <stdint.h>
+
 #include <memory>
+#include <optional>
 #include <string_view>
+#include <utility>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

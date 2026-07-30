@@ -15,11 +15,15 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/boot_image_builder.h"
 
+#include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 #include "bootimg.h"
 
