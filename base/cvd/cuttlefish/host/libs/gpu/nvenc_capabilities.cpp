@@ -22,7 +22,7 @@
 #include <memory>
 #include <vector>
 
-#include "android-base/logging.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/gpu/cuda_context.h"
 #include "cuttlefish/host/libs/gpu/cuda_loader.h"
@@ -33,7 +33,7 @@ namespace {
 
 std::vector<GUID> LoadSupportedCodecGuids(int device_id) {
   Result<const NV_ENCODE_API_FUNCTION_LIST*> funcs_result = TryLoadNvenc();
-  if (!funcs_result.ok()) {
+  if (!funcs_result.has_value()) {
     LOG(WARNING) << "NVENC capabilities: NVENC not available";
     return {};
   }

@@ -130,15 +130,15 @@ int NvencVideoEncoder::InitEncode(
 
   VLOG(1) << "Initializing CUDA...";
   Result<void> cuda_result = InitCuda();
-  if (!cuda_result.ok()) {
-    LOG(ERROR) << "InitCuda failed: " << cuda_result.error().Message();
+  if (!cuda_result.has_value()) {
+    LOG(ERROR) << "InitCuda failed: " << cuda_result.error();
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
 
   VLOG(1) << "Initializing NVENC...";
   Result<void> nvenc_result = InitNvenc();
-  if (!nvenc_result.ok()) {
-    LOG(ERROR) << "InitNvenc failed: " << nvenc_result.error().Message();
+  if (!nvenc_result.has_value()) {
+    LOG(ERROR) << "InitNvenc failed: " << nvenc_result.error();
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
 
@@ -347,8 +347,8 @@ int32_t NvencVideoEncoder::Encode(
   }
 
   Result<void> result = EncodeInner(frame, frame_types);
-  if (!result.ok()) {
-    LOG(ERROR) << "Encode failed: " << result.error().Message();
+  if (!result.has_value()) {
+    LOG(ERROR) << "Encode failed: " << result.error();
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
   return WEBRTC_VIDEO_CODEC_OK;

@@ -54,8 +54,8 @@ Result<NvencLibrary> LoadNvenc() {
 
 Result<const NV_ENCODE_API_FUNCTION_LIST*> TryLoadNvenc() {
   static Result<NvencLibrary> cached = LoadNvenc();
-  if (!cached.ok()) {
-    return CF_ERR(cached.error().Message());
+  if (!cached.has_value()) {
+    return CF_ERR(cached.error());
   }
   return &(cached.value().funcs);
 }

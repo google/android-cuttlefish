@@ -54,7 +54,7 @@ class CompositeDecoderFactory : public webrtc::VideoDecoderFactory {
     for (DecoderProvider* provider : registry_->GetProviders()) {
       Result<std::unique_ptr<webrtc::VideoDecoder>> result =
           provider->CreateDecoder(format);
-      if (result.ok() && *result) {
+      if (result.has_value() && *result) {
         LOG(INFO) << "Created decoder for " << format.ToString()
                   << " using provider: " << provider->GetName();
         return std::move(*result);
