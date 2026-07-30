@@ -144,23 +144,24 @@ bool FileInstance::CopyFrom(FileInstance& in, size_t length,
       return false;
     }
 
-    ssize_t num_read = in.Read(buffer.data(), std::min(buffer.size(), length));
-    if (num_read <= 0) {
+    Result<size_t> num_read =
+        in.Read(buffer.data(), std::min(buffer.size(), length));
+    if (num_read.value_or(0) == 0) {
       return false;
     }
-    length -= num_read;
+    length -= *num_read;
 
     ssize_t written = 0;
     do {
       // No need to use poll for writes: even if the source closes, the data
       // needs to be delivered to the other side.
-      auto res = Write(buffer.data(), num_read);
+      auto res = Write(buffer.data(), *num_read);
       if (res <= 0) {
         // The caller will have to log an appropriate message.
         return false;
       }
       written += res;
-    } while (written < num_read);
+    } while (written < *num_read);
   }
   return true;
 }
@@ -957,10 +958,13 @@ ssize_t FileInstance::RecvMsg(struct msghdr* msg, int flags) {
   return TEMP_FAILURE_RETRY(recvmsg(fd_, msg, flags));
 }
 
-ssize_t FileInstance::Read(void* buf, size_t count) {
+Result<uint64_t> FileInstance::Read(void* buf, uint64_t count) {
   LocalErrno record_errno(errno_);
 
-  return TEMP_FAILURE_RETRY(read(fd_, buf, count));
+  ssize_t res = TEMP_FAILURE_RETRY(read(fd_, buf, count));
+  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError(errno));
+
+  return static_cast<uint64_t>(res);
 }
 
 ssize_t FileInstance::PRead(void* buf, size_t count, size_t offset) {

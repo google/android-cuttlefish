@@ -90,7 +90,8 @@ class HttpServer {
     std::stringstream request;
     char buffer[512];
     ssize_t bytes_read;
-    while ((bytes_read = client->Read(buffer, sizeof(buffer))) > 0) {
+    while ((bytes_read = client->Read(buffer, sizeof(buffer)).value_or(0)) >
+           0) {
       request.write(buffer, bytes_read);
       std::string_view buffer_view(buffer, bytes_read);
       if (buffer_view.find("\r\n\r\n") != std::string_view::npos) {

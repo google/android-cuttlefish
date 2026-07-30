@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <stdint.h>
 #include <sys/poll.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -175,7 +176,8 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
     // child process dies.
     write_end->Close();
     RunnerExitCodes exit_code;
-    auto bytes_read = read_end->Read(&exit_code, sizeof(exit_code));
+    uint64_t bytes_read =
+        read_end->Read(&exit_code, sizeof(exit_code)).value_or(0);
     if (bytes_read != sizeof(exit_code)) {
       LOG(ERROR) << "Failed to read a complete exit code, read " << bytes_read
                  << " bytes only instead of the expected " << sizeof(exit_code);
@@ -521,8 +523,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
       // restore_complete_pipe
       if (poll_shared_fd[1].revents & POLLIN) {
         char buff[1];
-        auto read = restore_complete_pipe->Read(buff, 1);
-        if (read <= 0) {
+        if (!restore_complete_pipe->Read(buff, 1).has_value()) {
           LOG(ERROR) << "Could not read restore pipe: "
                      << restore_complete_pipe->StrError();
           state_ |= kGuestBootFailed;

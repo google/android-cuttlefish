@@ -69,9 +69,7 @@ Result<std::string> InterruptibleTerminal::ReadLine() {
     CF_EXPECT(read_set.IsSet(stdin_fd));
     char c = 0;
     const char end_of_transmission = 4;
-    auto n_read = stdin_fd->Read(&c, sizeof(c));
-    CF_EXPECT(n_read >= 0,
-              "Read from stdin returned an error: " << stdin_fd->StrError());
+    uint64_t n_read = CF_EXPECT(stdin_fd->Read(&c, sizeof(c)));
     if (n_read > 0) {
       CF_EXPECTF(n_read == 1, "Expected to read 1 byte but read: {} bytes",
                  n_read);

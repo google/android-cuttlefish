@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/instances/operator_client.h"
 
+#include <stdint.h>
 #include <sys/socket.h>
 
 #include <memory>
@@ -64,10 +65,10 @@ Result<void> SendMsg(SharedFD fd, const Json::Value& msg) {
 
 Result<Json::Value> RecvMsg(SharedFD fd) {
   std::vector<char> buf(4096, '\0');
-  auto read = fd->Read(buf.data(), buf.size());
-  CF_EXPECTF(read >= 0, "Failed to receive message: {}", fd->StrError());
-  CF_EXPECT(read != 0, "The operator closed the connection without responding");
-  return CF_EXPECT(ParseJson(std::string_view(buf.data(), read)),
+  uint64_t data_read = CF_EXPECT(fd->Read(buf.data(), buf.size()));
+  CF_EXPECT(data_read != 0,
+            "The operator closed the connection without responding");
+  return CF_EXPECT(ParseJson(std::string_view(buf.data(), data_read)),
                    "Failed to parse operator response");
 }
 }  // namespace

@@ -491,7 +491,7 @@ Result<SharedFD> CreateOrReuseAndDrainFifo(const std::string& path,
     if (flags >= 0) {
       ret->Fcntl(F_SETFL, flags | O_NONBLOCK);
       char buf[4096];
-      while (ret->Read(buf, sizeof(buf)) > 0) {
+      while (ret->Read(buf, sizeof(buf)).value_or(0) > 0) {
         // Reading while there is data to read
       }
       ret->Fcntl(F_SETFL, flags);

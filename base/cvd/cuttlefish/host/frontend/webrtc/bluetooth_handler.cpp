@@ -54,13 +54,14 @@ void BluetoothHandler::ReadLoop() {
     Select(&read_set_, nullptr, nullptr, nullptr);
 
     if (read_set_.IsSet(rootcanal_socket_)) {
-      auto read = rootcanal_socket_->Read(buffer, sizeof(buffer));
-      if (read < 0) {
+      Result<uint64_t> data_read =
+          rootcanal_socket_->Read(buffer, sizeof(buffer));
+      if (!data_read.has_value()) {
         PLOG(ERROR) << "Error on reading from RootCanal socket.";
         break;
       }
-      if (read) {
-        send_to_client_(buffer, read);
+      if (*data_read > 0) {
+        send_to_client_(buffer, *data_read);
       }
     }
 
