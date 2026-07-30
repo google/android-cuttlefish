@@ -33,7 +33,7 @@ cf_cc_library(
     deps = [
         ":cuda_loader",
         "//cuttlefish/result",
-        "//libbase",
+        "@abseil-cpp//absl/log",
         "@cuda//:cudart_headers",
     ],
 )
@@ -46,7 +46,7 @@ cf_cc_library(
         ":cuda_context",
         ":cuda_loader",
         ":nvenc_loader",
-        "//libbase",
+        "@abseil-cpp//absl/log",
         "@nv_codec_headers//:nv_headers",
     ],
 )

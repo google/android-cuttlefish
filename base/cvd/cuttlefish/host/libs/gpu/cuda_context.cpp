@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/libs/gpu/cuda_context.h"
 
-#include "android-base/logging.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/gpu/cuda_loader.h"
 
@@ -27,7 +27,7 @@ std::shared_ptr<CudaContext> CudaContext::Get(int device_id) {
   static std::map<int, std::weak_ptr<CudaContext>> instances;
 
   Result<const CudaFunctions*> cuda_result = TryLoadCuda();
-  if (!cuda_result.ok()) {
+  if (!cuda_result.has_value()) {
     return nullptr;
   }
   const CudaFunctions* cuda = *cuda_result;

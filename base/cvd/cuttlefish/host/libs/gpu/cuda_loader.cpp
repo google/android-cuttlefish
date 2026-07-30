@@ -83,8 +83,8 @@ Result<CudaLibrary> LoadCuda() {
 
 Result<const CudaFunctions*> TryLoadCuda() {
   static Result<CudaLibrary> cached = LoadCuda();
-  if (!cached.ok()) {
-    return CF_ERR(cached.error().Message());
+  if (!cached.has_value()) {
+    return CF_ERR(cached.error());
   }
   return &(cached.value().funcs);
 }

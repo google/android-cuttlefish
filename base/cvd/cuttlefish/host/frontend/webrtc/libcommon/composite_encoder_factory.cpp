@@ -54,7 +54,7 @@ class CompositeEncoderFactory : public webrtc::VideoEncoderFactory {
     for (EncoderProvider* provider : registry_->GetProviders()) {
       Result<std::unique_ptr<webrtc::VideoEncoder>> result =
           provider->CreateEncoder(format);
-      if (result.ok() && *result) {
+      if (result.has_value() && *result) {
         LOG(INFO) << "Created encoder for " << format.ToString()
                   << " using provider: " << provider->GetName();
         return std::move(*result);
