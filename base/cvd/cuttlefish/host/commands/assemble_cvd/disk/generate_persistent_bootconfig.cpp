@@ -16,8 +16,15 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 
+#include <fcntl.h>
+#include <sys/types.h>
+
+#include <functional>
+#include <map>
+#include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 
 #include "absl/log/log.h"
 

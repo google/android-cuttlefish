@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 
+#include <errno.h>
+
 #include <string>
 
 #include "absl/log/log.h"

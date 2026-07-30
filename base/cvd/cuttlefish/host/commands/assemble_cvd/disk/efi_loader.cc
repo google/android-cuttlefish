@@ -18,8 +18,10 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 
+#include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result_type.h"
 
