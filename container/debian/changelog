@@ -1,3 +1,10 @@
+cuttlefish-container (1.55.2) unstable; urgency=medium
+
+  * Update to v1.55.2.
+  * Reduce the number of nginx worker processes in container
+
+ -- 3405691582 <dsk@google.com>  Thu, 30 Jul 2026 18:04:05 +0000
+
 cuttlefish-container (1.55.1) unstable; urgency=medium
 
   * N/A
