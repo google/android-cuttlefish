@@ -45,7 +45,7 @@
 
   button {
     display: inline-block;
-    color: #073042;
+    color: var(--button-color, #073042);
   }
 
   .group-name {
