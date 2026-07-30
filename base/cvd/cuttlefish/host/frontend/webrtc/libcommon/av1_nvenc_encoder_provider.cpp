@@ -20,8 +20,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
-#include "android-base/logging.h"
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/encoder_provider.h"
 #include "cuttlefish/host/frontend/webrtc/libcommon/encoder_provider_registry.h"

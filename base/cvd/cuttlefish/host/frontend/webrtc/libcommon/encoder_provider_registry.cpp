@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/encoder_provider_registry.h"
 
-#include "android-base/logging.h"
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

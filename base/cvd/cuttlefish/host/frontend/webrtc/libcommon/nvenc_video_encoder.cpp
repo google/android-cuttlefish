@@ -22,7 +22,6 @@
 #include <vector>
 
 #include "absl/log/log.h"
-#include "android-base/logging.h"
 #include "modules/video_coding/include/video_error_codes.h"
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/abgr_buffer.h"

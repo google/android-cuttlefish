@@ -20,7 +20,7 @@
 #include <drm/drm_fourcc.h>
 #include <libyuv.h>
 
-#include "android-base/logging.h"
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 
