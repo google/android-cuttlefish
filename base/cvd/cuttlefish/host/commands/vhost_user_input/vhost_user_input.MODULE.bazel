@@ -1,4 +1,18 @@
 vhost_user_input_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+
+# libz-sys with features=["static"] (required by grpcio-sys) tries to compile
+# vendored zlib C sources from src/zlib/, but those sources live in a git
+# submodule that is not included in the crates.io tarball. Disable the build
+# script and link system zlib instead.
+vhost_user_input_crates.annotation(
+    crate = "libz-sys",
+    gen_build_script = "off",
+    rustc_flags = [
+        "-lz",
+    ],
+    crate_features = ["libc"],
+)
+
 vhost_user_input_crates.from_cargo(
     name = "vhost_user_input_crates",
     cargo_config = "@//build_external/crosvm:crosvm.config.toml",

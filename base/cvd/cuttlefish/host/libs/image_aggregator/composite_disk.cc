@@ -16,14 +16,19 @@
 
 #include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
 
+#include <fcntl.h>
+#include <stdint.h>
+
 #include <string>
 #include <utility>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/io/string.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

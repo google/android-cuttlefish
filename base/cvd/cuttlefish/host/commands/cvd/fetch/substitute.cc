@@ -17,7 +17,9 @@
 
 #include <unistd.h>
 
+#include <cerrno>
 #include <optional>
+#include <random>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -26,11 +28,13 @@
 #include "absl/strings/match.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
+#include "fmt/format.h"
 #include "google/protobuf/text_format.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/files/is_symlink.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_pkg_migration.pb.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/posix/symlink.h"
@@ -63,10 +67,27 @@ Result<void> Substitute(const std::string& target,
 
   CF_EXPECT(EnsureDirectoryExists(android::base::Dirname(full_link_name)));
 
-  int unlink_res = unlink(full_link_name.c_str());
-  CF_EXPECTF(unlink_res == 0 || errno == ENOENT, "{}", StrError(errno));
+  std::random_device rd;
+  std::string tmp_link_name;
+  constexpr int kMaxRetries = 10;
+  for (int attempt = 0; attempt < kMaxRetries; ++attempt) {
+    tmp_link_name = fmt::format("{}.tmp_{}_{}", full_link_name, getpid(), rd());
+    auto symlink_res = Symlink(target, tmp_link_name);
+    if (symlink_res.has_value()) {
+      break;
+    }
+    if (errno == EEXIST && attempt + 1 < kMaxRetries) {
+      continue;
+    }
+    return symlink_res;
+  }
 
-  CF_EXPECT(Symlink(target, full_link_name));
+  if (rename(tmp_link_name.c_str(), full_link_name.c_str()) != 0) {
+    const int err = errno;
+    unlink(tmp_link_name.c_str());
+    return CF_ERRF("Failed to rename symlink: {}", StrError(err));
+  }
+
   return {};
 }
 
@@ -79,8 +100,8 @@ Result<void> SubstituteWithFlag(
   const std::string bin_dir_parent = CF_EXPECT(GetCuttlefishCommonDir());
 
   if (host_substitutions == std::vector<std::string>{"all"}) {
-    auto callback = [&bin_dir_parent,
-                     &target_dir](const std::string& path) -> Result<void> {
+    auto make_substitution = [&bin_dir_parent, &target_dir](
+                                 const std::string& path) -> Result<void> {
       if (IsDirectory(path)) {
         return {};
       }
@@ -92,7 +113,18 @@ Result<void> SubstituteWithFlag(
       CF_EXPECT(Substitute(path, to_substitute));
       return {};
     };
-    CF_EXPECT(WalkDirectory(bin_dir_parent, callback));
+    CF_EXPECT(WalkDirectory(bin_dir_parent, make_substitution));
+    auto detect_not_substituted = [](const std::string& path) -> Result<void> {
+      if (!CF_EXPECT(IsSymlink(path)) && !IsDirectory(path)) {
+        VLOG(0) << "Not substituted: " << path;
+      }
+      return {};
+    };
+    Result<void> detect_res = WalkDirectory(target_dir, detect_not_substituted);
+    if (!detect_res.has_value()) {
+      VLOG(0) << "Failed to produce substitution report: "
+              << detect_res.error();
+    }
   } else {
     for (const std::string& substitution : host_substitutions) {
       std::string source = fmt::format("{}/{}", bin_dir_parent, substitution);
