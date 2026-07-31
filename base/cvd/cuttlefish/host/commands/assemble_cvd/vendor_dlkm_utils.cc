@@ -16,13 +16,19 @@
 #include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"
 
 #include <fcntl.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
 #include <algorithm>
+#include <array>
 #include <deque>
 #include <map>
 #include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
