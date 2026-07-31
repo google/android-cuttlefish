@@ -15,9 +15,21 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
 
+#include <ostream>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
+#include "fruit/component.h"
+#include "fruit/fruit_forward_decls.h"
+#include "fruit/macro.h"
+
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
+#include "cuttlefish/host/libs/config/config_flag.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/touchpad.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
