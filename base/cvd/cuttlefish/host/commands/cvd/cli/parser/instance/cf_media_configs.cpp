@@ -41,16 +41,16 @@ Result<std::vector<std::string>> GenerateMediaFlags(
       for (const auto& device : instance.media().devices()) {
         std::string flag = "--media=";
         if (device.has_v4l2_emulated_camera_splane()) {
-          flag += "type=v4l2_emulated_camera_splane";
+          flag += "v4l2_emulated_camera_splane";
         } else if (device.has_v4l2_emulated_camera_mplane()) {
-          flag += "type=v4l2_emulated_camera_mplane";
+          flag += "v4l2_emulated_camera_mplane";
         } else if (device.has_v4l2_proxy()) {
           // TODO(b/520114678): Use device.v4l2_proxy.device_path when
           // supported.
-          flag += "type=v4l2_proxy";
+          flag += "v4l2_proxy";
         }
         if (device.has_lens_facing()) {
-          flag += ",lens_facing=" + device.lens_facing();
+          flag += ":lens_facing=" + device.lens_facing();
         }
         flags.push_back(flag);
       }
