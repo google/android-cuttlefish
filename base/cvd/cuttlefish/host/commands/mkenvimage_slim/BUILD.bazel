@@ -4,8 +4,6 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-exports_files([".clang-tidy"])
-
 cf_cc_binary(
     name = "mkenvimage_slim",
     srcs = ["mkenvimage_slim.cc"],
