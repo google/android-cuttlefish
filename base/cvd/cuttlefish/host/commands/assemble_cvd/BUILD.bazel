@@ -547,10 +547,10 @@ cf_cc_library(
     name = "required_directories",
     srcs = ["required_directories.cc"],
     hdrs = ["required_directories.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
