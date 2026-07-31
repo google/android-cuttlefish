@@ -498,10 +498,6 @@ std::vector<GpuMode> GetGpuModeCandidates(const GuestConfig& guest_config) {
              "Assuming the historically accepted modes.";
 
   std::vector<GpuMode> gpu_mode_candidates;
-  if (guest_config.prefer_drm_virgl_when_supported) {
-    gpu_mode_candidates.push_back(GpuMode::DrmVirgl);
-  }
-
   if (EnableHostRenderingByDefault()) {
     gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngle);
     gpu_mode_candidates.push_back(GpuMode::Gfxstream);
@@ -521,7 +517,6 @@ std::vector<GpuMode> GetGpuModeCandidates(const GuestConfig& guest_config) {
       gpu_mode_candidates.push_back(GpuMode::GuestLavapipe);
     }
   }
-
   gpu_mode_candidates.push_back(GpuMode::None);
 
   return gpu_mode_candidates;
@@ -921,7 +916,7 @@ Result<GpuMode> ConfigureGpuSettings(
   (void)guest_config;
   CF_EXPECT(gpu_mode_arg == GpuMode::Auto ||
             gpu_mode_arg == GpuMode::GuestSwiftshader ||
-            gpu_mode_arg == GpuMode::DrmVirgl || gpu_mode_arg == GpuMode::None);
+            gpu_mode_arg == GpuMode::None);
   if (gpu_mode_arg == GpuMode::Auto) {
     gpu_mode_arg = GpuMode::GuestSwiftshader;
   }

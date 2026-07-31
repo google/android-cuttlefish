@@ -22,13 +22,12 @@ enum GpuMode {
   GPU_MODE_UNKNOWN = 0;
   GPU_MODE_AUTO = 1;
   GPU_MODE_CUSTOM = 2;
-  GPU_MODE_DRM_VIRGL = 3;
-  GPU_MODE_GFXSTREAM = 4;
-  GPU_MODE_GFXSTREAM_GUEST_ANGLE = 5;
-  GPU_MODE_GFXSTREAM_GUEST_ANGLE_HOST_LAVAPIPE = 6;
-  GPU_MODE_GFXSTREAM_GUEST_ANGLE_HOST_SWIFTSHADER = 7;
-  GPU_MODE_GUEST_SWIFTSHADER = 8;
-  GPU_MODE_NONE = 9;
+  GPU_MODE_GFXSTREAM = 3;
+  GPU_MODE_GFXSTREAM_GUEST_ANGLE = 4;
+  GPU_MODE_GFXSTREAM_GUEST_ANGLE_HOST_LAVAPIPE = 5;
+  GPU_MODE_GFXSTREAM_GUEST_ANGLE_HOST_SWIFTSHADER = 6;
+  GPU_MODE_GUEST_SWIFTSHADER = 7;
+  GPU_MODE_NONE = 8;
 }
 
 message Graphics {
@@ -41,10 +40,6 @@ message Graphics {
 
   // Whether the guest UI can use the BGRA pixel format for its framebuffers.
   bool bgra_framebuffers_supported = 3;
-
-  // If true, the system will prefer using the drm_virgl display mode when
-  // available.
-  bool prefer_drm_virgl_when_supported = 4;
 
   // The list of gpu modes supported by the guest in order of preference.
   repeated GpuMode gpu_mode_candidates = 5;
