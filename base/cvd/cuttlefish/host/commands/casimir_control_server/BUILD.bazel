@@ -15,10 +15,10 @@ cf_cc_binary(
     name = "casimir_control_server",
     srcs = ["main.cpp"],
     deps = [
-        ":casimir_control_server_cc_proto",
-        ":libcasimir",
-        ":libcasimir_control_server",
+        "//cuttlefish/host/commands/casimir_control_server:casimir_control_server_cc_proto",
+        "//cuttlefish/host/commands/casimir_control_server:casimir_controller",
         "//cuttlefish/host/commands/casimir_control_server:hex",
+        "//cuttlefish/host/commands/casimir_control_server:libcasimir_control_server",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
@@ -30,28 +30,29 @@ cf_cc_binary(
 )
 
 cf_cc_library(
-    name = "crc",
-    srcs = ["crc.cpp"],
-    hdrs = ["crc.h"],
+    name = "casimir_controller",
+    srcs = [
+        "casimir_controller.cpp",
+        # TODO: b/416777029 - stop using a copy of these two files
+        "packet_runtime.h",
+        "rf_packets.h",
+    ],
+    hdrs = ["casimir_controller.h"],
     deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/commands/casimir_control_server:crc",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
 )
 
 cf_cc_library(
-    name = "libcasimir",
-    srcs = ["casimir_controller.cpp"],
-    hdrs = [
-        "casimir_controller.h",
-        # TODO: b/416777029 - stop using a copy of these two files
-        "packet_runtime.h",
-        "rf_packets.h",
-    ],
+    name = "crc",
+    srcs = ["crc.cpp"],
+    hdrs = ["crc.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/host/commands/casimir_control_server:crc",
-        "//cuttlefish/result",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
 )
 

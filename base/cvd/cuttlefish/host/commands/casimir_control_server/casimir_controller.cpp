@@ -35,7 +35,8 @@
 #include "cuttlefish/host/commands/casimir_control_server/crc.h"
 #include "cuttlefish/host/commands/casimir_control_server/packet_runtime.h"
 #include "cuttlefish/host/commands/casimir_control_server/rf_packets.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
