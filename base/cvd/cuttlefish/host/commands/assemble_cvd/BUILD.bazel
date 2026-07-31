@@ -517,7 +517,6 @@ cf_cc_library(
     name = "misc_info",
     srcs = ["misc_info.cc"],
     hdrs = ["misc_info.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/host/libs/avb",
