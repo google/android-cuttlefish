@@ -16,14 +16,13 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/alloc.h"
 
-#include <iomanip>
-#include <sstream>
+#include <string>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
