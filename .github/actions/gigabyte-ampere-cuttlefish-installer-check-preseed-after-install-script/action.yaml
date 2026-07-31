@@ -23,7 +23,6 @@ runs:
       apt-get install -y lsb-release
       apt-get install -y pciutils
       apt-get install -y apt-show-versions
-      apt-get install -y linux-image-arm64 linux-headers-arm64
   - name: Setup base and non-free repository
     shell: bash
     run: |
