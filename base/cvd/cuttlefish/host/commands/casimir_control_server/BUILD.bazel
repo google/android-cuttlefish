@@ -30,20 +30,27 @@ cf_cc_binary(
 )
 
 cf_cc_library(
-    name = "libcasimir",
-    srcs = [
-        "casimir_controller.cpp",
-        "crc.cpp",
+    name = "crc",
+    srcs = ["crc.cpp"],
+    hdrs = ["crc.h"],
+    deps = [
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
+)
+
+cf_cc_library(
+    name = "libcasimir",
+    srcs = ["casimir_controller.cpp"],
     hdrs = [
         "casimir_controller.h",
-        "crc.h",
         # TODO: b/416777029 - stop using a copy of these two files
         "packet_runtime.h",
         "rf_packets.h",
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/commands/casimir_control_server:crc",
         "//cuttlefish/result",
     ],
 )
