@@ -126,10 +126,6 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
     guest_config.supports_bgra_framebuffers =
         graphics_config.bgra_framebuffers_supported();
   }
-  if (graphics_config.has_prefer_drm_virgl_when_supported()) {
-    guest_config.prefer_drm_virgl_when_supported =
-        graphics_config.prefer_drm_virgl_when_supported();
-  }
   const auto& gpu_mode_map = GetGpuModeMap();
   for (int i = 0; i < graphics_config.gpu_mode_candidates_size(); i++) {
     config::GpuMode candidate = graphics_config.gpu_mode_candidates(i);
@@ -267,10 +263,6 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
       MapHasValue(info, "supports_bgra_framebuffers", "true");
 
   guest_config.vhost_user_vsock = MapHasValue(info, "vhost_user_vsock", "true");
-
-  guest_config.prefer_drm_virgl_when_supported =
-      MapHasValue(info, "prefer_drm_virgl_when_supported", "true");
-
   guest_config.ti50_emulator = MapGetResult(info, "ti50_emulator").value_or("");
 
   if (const Result<std::string> res =
@@ -323,8 +315,6 @@ PrettyStruct Pretty(const GuestConfig& config, PrettyAdlPlaceholder) {
               config.gfxstream_gl_program_binary_link_status_supported)
       .Member("vhost_user_vsock", config.vhost_user_vsock)
       .Member("supports_bgra_framebuffers", config.supports_bgra_framebuffers)
-      .Member("prefer_drm_virgl_when_supported",
-              config.prefer_drm_virgl_when_supported)
       .Member("mouse_supported", config.mouse_supported)
       .Member("gamepad_supported", config.gamepad_supported)
       .Member("ti50_emulator", config.ti50_emulator)
