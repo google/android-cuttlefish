@@ -379,7 +379,7 @@ TEST(FlagsParserTest, ParseMediaSplaneSingleInstance) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
-      FindConfig(*serialized_data, "--media=type=v4l2_emulated_camera_splane"))
+      FindConfig(*serialized_data, "--media=v4l2_emulated_camera_splane"))
       << "media flag is missing or wrongly formatted";
 }
 
@@ -412,7 +412,7 @@ TEST(FlagsParserTest, ParseMediaSplaneTwoDevices) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_EQ(std::count(serialized_data->begin(), serialized_data->end(),
-                       "--media=type=v4l2_emulated_camera_splane"),
+                       "--media=v4l2_emulated_camera_splane"),
             2);
 }
 
@@ -443,7 +443,7 @@ TEST(FlagsParserTest, ParseMediaMplane) {
 
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
-      FindConfig(*serialized_data, "--media=type=v4l2_emulated_camera_mplane"))
+      FindConfig(*serialized_data, "--media=v4l2_emulated_camera_mplane"))
       << "media flag is missing or wrongly formatted";
 }
 
@@ -475,7 +475,7 @@ TEST(FlagsParserTest, ParseMediaV4l2Proxy) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
 
   ASSERT_THAT(serialized_data, IsOk());
-  EXPECT_TRUE(FindConfig(*serialized_data, "--media=type=v4l2_proxy"))
+  EXPECT_TRUE(FindConfig(*serialized_data, "--media=v4l2_proxy"))
       << "media flag is missing or wrongly formatted";
 }
 

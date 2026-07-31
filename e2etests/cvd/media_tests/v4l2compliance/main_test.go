@@ -53,7 +53,7 @@ func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 
 			if _, err := c.CVDCreate(e2etests.CreateArgs{
 				Args: []string{
-					fmt.Sprintf("--media=type=%s", tc.mediaType),
+					fmt.Sprintf("--media=%s", tc.mediaType),
 				},
 			}); err != nil {
 				t.Fatal(err)
