@@ -26,7 +26,6 @@ namespace cuttlefish {
 enum class GpuMode {
   Auto,
   Custom,
-  DrmVirgl,
   Gfxstream,
   GfxstreamGuestAngle,
   GfxstreamGuestAngleHostLavapipe,
@@ -39,7 +38,6 @@ enum class GpuMode {
 
 inline constexpr std::string_view kGpuModeAuto = "auto";
 inline constexpr std::string_view kGpuModeCustom = "custom";
-inline constexpr std::string_view kGpuModeDrmVirgl = "drm_virgl";
 inline constexpr std::string_view kGpuModeGfxstream = "gfxstream";
 inline constexpr std::string_view kGpuModeGfxstreamGuestAngle =
     "gfxstream_guest_angle";
@@ -61,9 +59,6 @@ void AbslStringify(Sink& sink, GpuMode mode) {
       break;
     case GpuMode::Custom:
       sink.Append(kGpuModeCustom);
-      break;
-    case GpuMode::DrmVirgl:
-      sink.Append(kGpuModeDrmVirgl);
       break;
     case GpuMode::Gfxstream:
       sink.Append(kGpuModeGfxstream);

@@ -69,9 +69,6 @@ CuttlefishFlags_GpuMode ConvertGpuMode(GpuMode mode) {
     case GpuMode::Custom:
       return CuttlefishFlags_GpuMode::
           CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_CUSTOM;
-    case GpuMode::DrmVirgl:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_VIRGL_RENDERER;
     case GpuMode::Gfxstream:
       return CuttlefishFlags_GpuMode::
           CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM;
