@@ -158,7 +158,6 @@ cf_cc_library(
     name = "gflags_xml_parser",
     srcs = ["gflags_xml_parser.cpp"],
     hdrs = ["gflags_xml_parser.h"],
-    depend_on_what_you_use_enabled = False,
     features = ["-layering_check"],
     deps = [
         "//cuttlefish/result",

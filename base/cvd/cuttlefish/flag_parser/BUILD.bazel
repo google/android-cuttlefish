@@ -38,7 +38,6 @@ cf_cc_test(
 cf_cc_test(
     name = "gflags_compat_test",
     srcs = ["gflags_compat_test.cpp"],
-    depend_on_what_you_use_enabled = False,
     # `layering_check` conflicts with the combination of the clang prebuilt and
     # the cmake build rules used for @libxml2.
     features = ["-layering_check"],
