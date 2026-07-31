@@ -16,9 +16,13 @@
 
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 
+#include <fcntl.h>
+#include <stdint.h>
 #include <sys/file.h>
 
 #include <fstream>
+#include <ios>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <utility>

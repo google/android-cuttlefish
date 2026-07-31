@@ -15,8 +15,11 @@
  */
 #include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
 
+#include <fcntl.h>
 #include <stdint.h>
+#include <stdio.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>

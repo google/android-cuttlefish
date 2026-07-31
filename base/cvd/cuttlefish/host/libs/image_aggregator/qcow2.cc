@@ -16,6 +16,10 @@
 
 #include "cuttlefish/host/libs/image_aggregator/qcow2.h"
 
+#include <fcntl.h>
+#include <stdint.h>
+
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -24,6 +28,7 @@
 #include "cuttlefish/common/libs/utils/cf_endian.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
