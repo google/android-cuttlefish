@@ -10,6 +10,7 @@ cf_cc_library(
     name = "wayland_compositor",
     srcs = ["wayland_compositor.cpp"],
     hdrs = ["wayland_compositor.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/wayland:wayland_surface",
         "//cuttlefish/host/libs/wayland:wayland_utils",
@@ -22,6 +23,7 @@ cf_cc_library(
     name = "wayland_dmabuf",
     srcs = ["wayland_dmabuf.cpp"],
     hdrs = ["wayland_dmabuf.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/wayland:wayland_utils",
         "//libbase",
@@ -36,6 +38,7 @@ cf_cc_library(
     name = "wayland_seat",
     srcs = ["wayland_seat.cpp"],
     hdrs = ["wayland_seat.h"],
+    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/log",
         "@wayland//:wayland_server",
@@ -46,6 +49,7 @@ cf_cc_library(
     name = "wayland_server",
     srcs = ["wayland_server.cpp"],
     hdrs = ["wayland_server.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/wayland:wayland_compositor",
         "//cuttlefish/host/libs/wayland:wayland_dmabuf",
@@ -70,6 +74,7 @@ cf_cc_library(
     name = "wayland_shell",
     srcs = ["wayland_shell.cpp"],
     hdrs = ["wayland_shell.h"],
+    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/log",
         "@crosvm//:crosvm_gpu_display_wayland_protocols",
@@ -81,6 +86,7 @@ cf_cc_library(
     name = "wayland_subcompositor",
     srcs = ["wayland_subcompositor.cpp"],
     hdrs = ["wayland_subcompositor.h"],
+    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/log",
         "@wayland//:wayland_server",
@@ -97,6 +103,7 @@ cf_cc_library(
         "wayland_surface.h",
         "wayland_surfaces.h",
     ],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/wayland:wayland_dmabuf",
         "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
@@ -121,6 +128,7 @@ cf_cc_library(
     name = "wayland_virtio_gpu_metadata",
     srcs = ["wayland_virtio_gpu_metadata.cpp"],
     hdrs = ["wayland_virtio_gpu_metadata.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/wayland:wayland_surface",
         "//cuttlefish/host/libs/wayland:wayland_utils",

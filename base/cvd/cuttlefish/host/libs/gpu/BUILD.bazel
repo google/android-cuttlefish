@@ -8,6 +8,7 @@ cf_cc_library(
     name = "cuda_loader",
     srcs = ["cuda_loader.cpp"],
     hdrs = ["cuda_loader.h"],
+    include_cleaner_enabled = False,
     linkopts = ["-ldl"],
     deps = [
         "//cuttlefish/result",
@@ -19,6 +20,7 @@ cf_cc_library(
     name = "nvenc_loader",
     srcs = ["nvenc_loader.cpp"],
     hdrs = ["nvenc_loader.h"],
+    include_cleaner_enabled = False,
     linkopts = ["-ldl"],
     deps = [
         "//cuttlefish/result",
@@ -30,6 +32,7 @@ cf_cc_library(
     name = "cuda_context",
     srcs = ["cuda_context.cpp"],
     hdrs = ["cuda_context.h"],
+    include_cleaner_enabled = False,
     deps = [
         ":cuda_loader",
         "//cuttlefish/result",
@@ -42,6 +45,7 @@ cf_cc_library(
     name = "nvenc_capabilities",
     srcs = ["nvenc_capabilities.cpp"],
     hdrs = ["nvenc_capabilities.h"],
+    include_cleaner_enabled = False,
     deps = [
         ":cuda_context",
         ":cuda_loader",

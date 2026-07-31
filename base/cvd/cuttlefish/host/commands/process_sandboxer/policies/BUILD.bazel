@@ -11,6 +11,7 @@ cf_cc_library(
     name = "adb_connector",
     srcs = ["adb_connector.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -24,6 +25,7 @@ cf_cc_library(
     name = "assemble_cvd",
     srcs = ["assemble_cvd.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -37,6 +39,7 @@ cf_cc_library(
     name = "avbtool",
     srcs = ["avbtool.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@abseil-cpp//absl/log:check",
@@ -65,6 +68,7 @@ cf_cc_library(
     name = "casimir",
     srcs = ["casimir.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -77,6 +81,7 @@ cf_cc_library(
     name = "casimir_control_server",
     srcs = ["casimir_control_server.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -89,6 +94,7 @@ cf_cc_library(
     name = "cf_vhost_user_input",
     srcs = ["cf_vhost_user_input.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -102,6 +108,7 @@ cf_cc_library(
     name = "control_env_proxy_server",
     srcs = ["control_env_proxy_server.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -114,6 +121,7 @@ cf_cc_library(
     name = "cvd_internal_start",
     srcs = ["cvd_internal_start.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -126,6 +134,7 @@ cf_cc_library(
     name = "echo_server",
     srcs = ["echo_server.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -138,6 +147,7 @@ cf_cc_library(
     name = "gnss_grpc_proxy",
     srcs = ["gnss_grpc_proxy.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -161,6 +171,7 @@ cf_cc_library(
     name = "log_tee",
     srcs = ["log_tee.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -183,6 +194,7 @@ cf_cc_library(
     name = "metrics",
     srcs = ["metrics.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -206,6 +218,7 @@ cf_cc_library(
     name = "modem_simulator",
     srcs = ["modem_simulator.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -219,6 +232,7 @@ cf_cc_library(
     name = "netsimd",
     srcs = ["netsimd.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -233,6 +247,7 @@ cf_cc_library(
     name = "newfs_msdos",
     srcs = ["newfs_msdos.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -254,6 +269,7 @@ cf_cc_library(
     name = "openwrt_control_server",
     srcs = ["openwrt_control_server.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -267,6 +283,7 @@ cf_cc_library(
     name = "operator_proxy",
     srcs = ["operator_proxy.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -279,6 +296,7 @@ cf_cc_library(
     name = "process_restarter",
     srcs = ["process_restarter.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -291,6 +309,7 @@ cf_cc_library(
     name = "run_cvd",
     srcs = ["run_cvd.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@abseil-cpp//absl/strings",
@@ -305,6 +324,7 @@ cf_cc_library(
     name = "screen_recording_server",
     srcs = ["screen_recording_server.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -317,6 +337,7 @@ cf_cc_library(
     name = "secure_env",
     srcs = ["secure_env.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -328,6 +349,7 @@ cf_cc_library(
     name = "simg2img",
     srcs = ["simg2img.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -340,6 +362,7 @@ cf_cc_library(
     name = "socket_vsock_proxy",
     srcs = ["socket_vsock_proxy.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -353,6 +376,7 @@ cf_cc_library(
     name = "tcp_connector",
     srcs = ["tcp_connector.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -366,6 +390,7 @@ cf_cc_library(
     name = "tombstone_receiver",
     srcs = ["tombstone_receiver.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -378,6 +403,7 @@ cf_cc_library(
     name = "vhost_device_vsock",
     srcs = ["vhost_device_vsock.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -390,6 +416,7 @@ cf_cc_library(
     name = "webrtc",
     srcs = ["webrtc.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -404,6 +431,7 @@ cf_cc_library(
     name = "webrtc_operator",
     srcs = ["webrtc_operator.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -418,6 +446,7 @@ cf_cc_library(
     name = "wmediumd",
     srcs = ["wmediumd.cpp"],
     copts = COPTS + ALLOW_C,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",

@@ -20,6 +20,7 @@ cf_cc_library(
     hdrs = [
         "cvd_abgr_video_frame_buffer.h",
     ],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
     ],
@@ -35,6 +36,7 @@ cf_cc_library(
     srcs = ["webrtc_command_channel.cpp"],
     hdrs = ["webrtc_command_channel.h"],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         ":libcuttlefish_webrtc_commands_proto",
         "//cuttlefish/common/libs/transport",
@@ -48,6 +50,7 @@ cf_cc_library(
     hdrs = ["adb_handler.h"],
     clang_format_enabled = False,
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
@@ -66,6 +69,7 @@ cf_cc_library(
     hdrs = ["audio_handler.h"],
     clang_format_enabled = False,
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         ":libcuttlefish_webrtc_audio_mixer",
         ":libcuttlefish_webrtc_audio_settings",
@@ -89,6 +93,7 @@ cf_cc_library(
     hdrs = ["audio_mixer.h"],
     clang_format_enabled = False,
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         ":libcuttlefish_webrtc_audio_settings",
         "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
@@ -113,6 +118,7 @@ cf_cc_library(
     hdrs = ["bluetooth_handler.h"],
     clang_format_enabled = False,
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
@@ -130,6 +136,7 @@ cf_cc_library(
     srcs = ["client_server.cpp"],
     hdrs = ["client_server.h"],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//libbase",
         "@abseil-cpp//absl/log",
@@ -148,6 +155,7 @@ cf_cc_library(
     hdrs = ["connection_observer.h"],
     clang_format_enabled = False,
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         ":libcuttlefish_webrtc_adb_handler",
         ":libcuttlefish_webrtc_bluetooth_handler",
@@ -185,6 +193,7 @@ cf_cc_library(
     hdrs = ["cvd_video_frame_buffer.h"],
     clang_format_enabled = False,
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
@@ -203,6 +212,7 @@ cf_cc_library(
     srcs = ["display_handler.cpp"],
     hdrs = ["display_handler.h"],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         ":libcuttlefish_webrtc_cvd_abgr_video_frame_buffer",
         ":libcuttlefish_webrtc_cvd_video_frame_buffer",
@@ -229,6 +239,7 @@ cf_cc_library(
     hdrs = ["gpx_locations_handler.h"],
     clang_format_enabled = False,
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/location",
@@ -250,6 +261,7 @@ cf_cc_library(
     hdrs = ["kernel_log_events_handler.h"],
     clang_format_enabled = False,
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
@@ -272,6 +284,7 @@ cf_cc_library(
     hdrs = ["kml_locations_handler.h"],
     clang_format_enabled = False,
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/location",
@@ -292,6 +305,7 @@ cf_cc_library(
     hdrs = ["location_handler.h"],
     clang_format_enabled = False,
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/location",
@@ -312,6 +326,7 @@ cf_cc_library(
     srcs = ["screenshot_handler.cpp"],
     hdrs = ["screenshot_handler.h"],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
         "//cuttlefish/posix:strerror",
@@ -336,6 +351,7 @@ cf_cc_library(
     hdrs = ["sensors_handler.h"],
     clang_format_enabled = False,
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/sensors",
         "//cuttlefish/common/libs/transport",
@@ -355,6 +371,7 @@ cf_cc_binary(
         "main.cpp",
     ],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         ":libcuttlefish_webrtc_adb_handler",
         ":libcuttlefish_webrtc_audio_handler",

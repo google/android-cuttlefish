@@ -9,6 +9,7 @@ cf_build_test(name = "cf_build_test")
 cf_cc_binary(
     name = "generate_shader_embed",
     srcs = ["generate_shader_embed.cpp"],
+    include_cleaner_enabled = False,
 )
 
 genrule(

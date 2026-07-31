@@ -10,6 +10,7 @@ cf_cc_binary(
         "main.cc",
     ],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         ":libcvd_id_disclosure_builder",
         "//cuttlefish/common/libs/fs",
@@ -29,6 +30,7 @@ cf_cc_library(
     hdrs = [
         "cellular_identifier_disclosure_command_builder.h",
     ],
+    include_cleaner_enabled = False,
     deps = [
         "@fmt",
     ],
@@ -39,5 +41,6 @@ cf_cc_test(
     srcs = [
         "unittest/cellular_identifier_disclosure_command_builder_test.cc",
     ],
+    include_cleaner_enabled = False,
     deps = [":libcvd_id_disclosure_builder"],
 )

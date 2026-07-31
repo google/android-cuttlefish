@@ -8,6 +8,7 @@ cf_cc_library(
     name = "command_request",
     srcs = ["command_request.cpp"],
     hdrs = ["command_request.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
@@ -27,6 +28,7 @@ cf_cc_library(
     name = "frontline_parser",
     srcs = ["frontline_parser.cpp"],
     hdrs = ["frontline_parser.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
@@ -37,6 +39,7 @@ cf_cc_library(
 cf_cc_test(
     name = "frontline_parser_test",
     srcs = ["frontline_parser_test.cpp"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli:frontline_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
@@ -48,6 +51,7 @@ cf_cc_library(
     name = "help_format",
     srcs = ["help_format.cpp"],
     hdrs = ["help_format.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "@abseil-cpp//absl/strings",
@@ -58,6 +62,7 @@ cf_cc_library(
     name = "interruptible_terminal",
     srcs = ["interruptible_terminal.cpp"],
     hdrs = ["interruptible_terminal.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/posix:strerror",
@@ -70,6 +75,7 @@ cf_cc_library(
     name = "log_files",
     srcs = ["log_files.cpp"],
     hdrs = ["log_files.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:directory_contents",
@@ -83,6 +89,7 @@ cf_cc_library(
 cf_cc_test(
     name = "log_files_test",
     srcs = ["log_files_test.cpp"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:directory_contents",
@@ -109,6 +116,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:help.h",
         "//cuttlefish/host/commands/cvd/cli/commands:load_configs.h",
     ],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
@@ -173,6 +181,7 @@ cf_cc_library(
     name = "utils",
     srcs = ["utils.cpp"],
     hdrs = ["utils.h"],
+    include_cleaner_enabled = False,
     deps = [
         ":command_request",
         "//cuttlefish/ansi_codes:terminal_colors",

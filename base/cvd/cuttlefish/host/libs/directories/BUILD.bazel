@@ -12,6 +12,7 @@ cf_cc_library(
     hdrs = [
         "xdg.h",
     ],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
