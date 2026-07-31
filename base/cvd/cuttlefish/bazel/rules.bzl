@@ -22,7 +22,7 @@ load("@cc_compatibility_proxy//:proxy.bzl", "cc_binary", "cc_library", "cc_test"
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_library.bzl", "sh_library")
 load("//:build_variables.bzl", BUILD_VAR_COPTS = "COPTS", BUILD_VAR_LINKOPTS = "LINKOPTS")
-load("//tools/lint:linters.bzl", "buildifier_test", "clang_tidy_test", "dwyu_rule", "shellcheck_test")
+load("//tools/lint:linters.bzl", "buildifier_test", "clang_tidy_include_cleaner_test", "clang_tidy_test", "dwyu_rule", "shellcheck_test")
 
 visibility(["//..."])
 
@@ -52,7 +52,7 @@ cf_build_test = macro(
     implementation = _cf_build_test_implementation,
 )
 
-def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, features, linkopts, **kwargs):
+def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, features, include_cleaner_enabled, linkopts, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
     cc_binary(
@@ -71,12 +71,20 @@ def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled,
             visibility = ["//visibility:private"],
         )
     if clang_tidy_enabled:
-        clang_tidy_test(
-            name = name + "_clang_tidy",
-            srcs = [":" + name],
-            tags = ["clang_tidy", "clang-tidy"],
-            visibility = ["//visibility:private"],
-        )
+        if include_cleaner_enabled:
+            clang_tidy_include_cleaner_test(
+                name = name + "_clang_tidy",
+                srcs = [":" + name],
+                tags = ["clang_tidy", "clang-tidy"],
+                visibility = ["//visibility:private"],
+            )
+        else:
+            clang_tidy_test(
+                name = name + "_clang_tidy",
+                srcs = [":" + name],
+                tags = ["clang_tidy", "clang-tidy"],
+                visibility = ["//visibility:private"],
+            )
     if depend_on_what_you_use_enabled and not "-layering_check" in features:
         dwyu_rule(
             name = name + "_depend_on_what_you_use",
@@ -92,12 +100,13 @@ cf_cc_binary = macro(
         "copts": attr.string_list(configurable = False, default = []),
         "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
         "features": attr.string_list(configurable = False, default = []),
+        "include_cleaner_enabled": attr.bool(configurable = False, default = False, doc = "Run clang-tidy with misc-include-cleaner"),
         "linkopts": attr.string_list(configurable = False, default = []),
     },
     implementation = _cf_cc_binary_implementation,
 )
 
-def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, features, **kwargs):
+def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, features, include_cleaner_enabled, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
     cc_library(
@@ -115,12 +124,20 @@ def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled
             visibility = ["//visibility:private"],
         )
     if clang_tidy_enabled:
-        clang_tidy_test(
-            name = name + "_clang_tidy",
-            srcs = [":" + name],
-            tags = ["clang_tidy", "clang-tidy"],
-            visibility = ["//visibility:private"],
-        )
+        if include_cleaner_enabled:
+            clang_tidy_include_cleaner_test(
+                name = name + "_clang_tidy",
+                srcs = [":" + name],
+                tags = ["clang_tidy", "clang-tidy"],
+                visibility = ["//visibility:private"],
+            )
+        else:
+            clang_tidy_test(
+                name = name + "_clang_tidy",
+                srcs = [":" + name],
+                tags = ["clang_tidy", "clang-tidy"],
+                visibility = ["//visibility:private"],
+            )
     if depend_on_what_you_use_enabled and not "-layering_check" in features:
         dwyu_rule(
             name = name + "_depend_on_what_you_use",
@@ -136,11 +153,12 @@ cf_cc_library = macro(
         "copts": attr.string_list(configurable = False, default = []),
         "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
         "features": attr.string_list(configurable = False, default = []),
+        "include_cleaner_enabled": attr.bool(configurable = False, default = False, doc = "Run clang-tidy with misc-include-cleaner"),
     },
     implementation = _cf_cc_library_implementation,
 )
 
-def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, deps, features, **kwargs):
+def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, deps, features, include_cleaner_enabled, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
     cc_test(
@@ -162,12 +180,20 @@ def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, c
             visibility = ["//visibility:private"],
         )
     if clang_tidy_enabled:
-        clang_tidy_test(
-            name = name + "_clang_tidy",
-            srcs = [":" + name],
-            tags = ["clang_tidy", "clang-tidy"],
-            visibility = ["//visibility:private"],
-        )
+        if include_cleaner_enabled:
+            clang_tidy_include_cleaner_test(
+                name = name + "_clang_tidy",
+                srcs = [":" + name],
+                tags = ["clang_tidy", "clang-tidy"],
+                visibility = ["//visibility:private"],
+            )
+        else:
+            clang_tidy_test(
+                name = name + "_clang_tidy",
+                srcs = [":" + name],
+                tags = ["clang_tidy", "clang-tidy"],
+                visibility = ["//visibility:private"],
+            )
     if depend_on_what_you_use_enabled and not "-layering_check" in features:
         dwyu_rule(
             name = name + "_depend_on_what_you_use",
@@ -184,6 +210,7 @@ cf_cc_test = macro(
         "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
         "deps": attr.label_list(configurable = False),
         "features": attr.string_list(configurable = False, default = []),
+        "include_cleaner_enabled": attr.bool(configurable = False, default = False, doc = "Run clang-tidy with misc-include-cleaner"),
     },
     implementation = _cf_cc_test_implementation,
 )
