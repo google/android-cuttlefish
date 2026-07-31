@@ -457,7 +457,6 @@ cf_cc_library(
     name = "kernel_module_parser",
     srcs = ["kernel_module_parser.cc"],
     hdrs = ["kernel_module_parser.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:string",
