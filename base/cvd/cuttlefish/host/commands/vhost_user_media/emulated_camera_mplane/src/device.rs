@@ -994,7 +994,7 @@ where
 
         // Ensure all requested controls belong to the selected class.
         if let CtrlWhich::Class(class_id) = which {
-            for (idx, ctrl) in ctrl_array.iter().enumerate() {
+            for (_idx, ctrl) in ctrl_array.iter().enumerate() {
                 if v4l2_ctrl_id2which(ctrl.id) != class_id {
                     ctrls.error_idx = ctrls.count;
                     return Err(libc::EINVAL);
@@ -1003,7 +1003,7 @@ where
         }
 
         // Process controls. Class controls are write-only headers and must fail on read.
-        for (idx, ctrl) in ctrl_array.iter_mut().enumerate() {
+        for (_idx, ctrl) in ctrl_array.iter_mut().enumerate() {
             match ctrl.id {
                 bindings::V4L2_CID_USER_CLASS | bindings::V4L2_CID_CAMERA_CLASS => {
                     ctrls.error_idx = ctrls.count;
@@ -1114,7 +1114,7 @@ where
 
         // Ensure all requested controls belong to the selected class.
         if let CtrlWhich::Class(class_id) = which {
-            for (idx, ctrl) in ctrl_array.iter().enumerate() {
+            for (_idx, ctrl) in ctrl_array.iter().enumerate() {
                 if v4l2_ctrl_id2which(ctrl.id) != class_id {
                     ctrls.error_idx = ctrls.count;
                     return Err(libc::EINVAL);
@@ -1123,7 +1123,7 @@ where
         }
 
         // Apply control values. Class controls are read-only headers and must fail on write/try.
-        for (idx, ctrl) in ctrl_array.iter_mut().enumerate() {
+        for (_idx, ctrl) in ctrl_array.iter_mut().enumerate() {
             match ctrl.id {
                 bindings::V4L2_CID_USER_CLASS | bindings::V4L2_CID_CAMERA_CLASS => {
                     ctrls.error_idx = ctrls.count;
