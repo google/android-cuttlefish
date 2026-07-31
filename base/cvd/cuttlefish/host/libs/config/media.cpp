@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/libs/config/media.h"
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -38,30 +39,30 @@ static constexpr char kMediaTypeV4l2Proxy[] = "v4l2_proxy";
 
 Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
     const std::string& flag) {
-  std::unordered_map<std::string, std::string> props;
-  if (!flag.empty()) {
-    const std::vector<std::string> pairs = absl::StrSplit(flag, ",");
-    for (const std::string& pair : pairs) {
-      const std::vector<std::string> keyvalue = absl::StrSplit(pair, "=");
-      CF_EXPECT_EQ(keyvalue.size(), 2,
-                   "Invalid media flag key-value: \"" << flag << "\"");
-      const std::string& prop_key = keyvalue[0];
-      const std::string& prop_val = keyvalue[1];
-      props[prop_key] = prop_val;
-    }
-  }
+  const std::vector<std::string> parts = absl::StrSplit(flag, ":");
+  CF_EXPECT(!parts.empty(), "Invalid media flag: \"" << flag << "\"");
 
-  auto type_it = props.find("type");
-  CF_EXPECT(type_it != props.end(), "Missing media type");
+  const std::string& type_str = parts[0];
   CuttlefishConfig::MediaType type{CuttlefishConfig::MediaType::kUnknown};
-  if (type_it->second == kMediaTypeV4l2EmulatedCameraSPlane) {
+  if (type_str == kMediaTypeV4l2EmulatedCameraSPlane) {
     type = CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane;
-  } else if (type_it->second == kMediaTypeV4l2EmulatedCameraMPlane) {
+  } else if (type_str == kMediaTypeV4l2EmulatedCameraMPlane) {
     type = CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane;
-  } else if (type_it->second == kMediaTypeV4l2Proxy) {
+  } else if (type_str == kMediaTypeV4l2Proxy) {
     type = CuttlefishConfig::MediaType::kV4l2Proxy;
   } else {
-    return CF_ERRF("Unknown media type value: \"{}\"", type_it->second);
+    return CF_ERRF("Unknown media type value: \"{}\"", type_str);
+  }
+
+  std::unordered_map<std::string, std::string> props;
+  for (size_t i = 1; i < parts.size(); ++i) {
+    const std::vector<std::string> keyvalue = absl::StrSplit(parts[i], "=");
+    CF_EXPECT_EQ(keyvalue.size(), 2,
+                 "Invalid media flag key-value: \"" << parts[i] << "\" in \""
+                                                    << flag << "\"");
+    const std::string& prop_key = keyvalue[0];
+    const std::string& prop_val = keyvalue[1];
+    props[prop_key] = prop_val;
   }
 
   std::string lens_facing = "";
