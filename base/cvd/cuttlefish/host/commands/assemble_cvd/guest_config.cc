@@ -16,12 +16,16 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 
-#include <sys/types.h>
+#include <fcntl.h>
 #include <unistd.h>
 
+#include <functional>
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/match.h"
@@ -33,6 +37,7 @@
 #include "google/protobuf/text_format.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
+#include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
@@ -46,8 +51,10 @@
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/display.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
-#include "cuttlefish/pretty/optional.h"
-#include "cuttlefish/pretty/string.h"
+#include "cuttlefish/pretty/optional.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/string.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
