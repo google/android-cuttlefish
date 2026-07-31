@@ -12,6 +12,7 @@ cf_cc_library(
     hdrs = [
         "process_monitor.h",
     ],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/transport",
         "//cuttlefish/common/libs/utils:contains",

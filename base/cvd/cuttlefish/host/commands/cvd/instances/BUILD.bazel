@@ -10,6 +10,7 @@ cf_cc_library(
     name = "config_path",
     srcs = ["config_path.cpp"],
     hdrs = ["config_path.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:file_exists",
@@ -31,6 +32,7 @@ cf_cc_library(
     name = "data_viewer",
     srcs = ["data_viewer.cpp"],
     hdrs = ["data_viewer.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:signals",
@@ -45,6 +47,7 @@ cf_cc_library(
     srcs = ["device_name.cpp"],
     hdrs = ["device_name.h"],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/result",
         "//libbase",
@@ -58,6 +61,7 @@ cf_cc_library(
     srcs = ["instance_database_helper.cpp"],
     hdrs = ["instance_database_helper.h"],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -72,6 +76,7 @@ cf_cc_library(
 cf_cc_test(
     name = "instance_database_test",
     srcs = ["instance_database_test.cpp"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
@@ -100,6 +105,7 @@ cf_cc_library(
         "status_fetcher.h",
     ],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         ":cvd_persistent_data",
         "//cuttlefish/common/libs/fs",
@@ -146,6 +152,7 @@ cf_cc_library(
     srcs = ["instance_manager.cpp"],
     hdrs = ["instance_manager.h"],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         ":cvd_persistent_data",
         ":instances",
@@ -189,6 +196,7 @@ cf_cc_library(
 cf_cc_test(
     name = "local_instance_group_test",
     srcs = ["local_instance_group_test.cpp"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
@@ -206,6 +214,7 @@ cf_cc_library(
     name = "run_cvd_proc_collector",
     srcs = ["run_cvd_proc_collector.cpp"],
     hdrs = ["run_cvd_proc_collector.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/files:file_exists",
@@ -223,6 +232,7 @@ cf_cc_library(
     name = "stop",
     srcs = ["stop.cpp"],
     hdrs = ["stop.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",

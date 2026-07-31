@@ -10,6 +10,7 @@ cf_cc_library(
     name = "epoll",
     srcs = ["epoll.cpp"],
     hdrs = ["epoll.h"],
+    include_cleaner_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],
@@ -30,6 +31,7 @@ cf_cc_library(
         "shared_fd.h",
         "shared_select.h",
     ],
+    include_cleaner_enabled = False,
     linkopts = select({
         "@platforms//os:linux": ["-lrt"],
         "//conditions:default": [],
@@ -49,6 +51,7 @@ cf_cc_library(
 cf_cc_test(
     name = "fs_test",
     srcs = ["shared_fd_test.cpp"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
     ],
@@ -58,6 +61,7 @@ cf_cc_library(
     name = "shared_fd_stream",
     srcs = ["shared_fd_stream.cpp"],
     hdrs = ["shared_fd_stream.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
     ],

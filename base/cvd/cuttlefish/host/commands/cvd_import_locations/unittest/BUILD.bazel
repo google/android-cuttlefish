@@ -10,6 +10,7 @@ cf_cc_test(
         "gpx_parser_test.cc",
         "kml_parser_test.cc",
     ],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/location",
         "//cuttlefish/host/libs/location:string_parse",

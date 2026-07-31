@@ -13,6 +13,7 @@ cf_cc_library(
         "sensors_simulator.h",
     ],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/sensors",
         "//libbase",
@@ -29,6 +30,7 @@ cf_cc_library(
         "sensors_hal_proxy.h",
     ],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         ":libsensors_simulator",
         "//cuttlefish/common/libs/sensors",
@@ -48,6 +50,7 @@ cf_cc_binary(
         "main.cpp",
     ],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         ":libsensors_hal_proxy",
         ":libsensors_simulator",

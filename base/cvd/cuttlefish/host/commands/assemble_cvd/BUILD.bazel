@@ -12,6 +12,7 @@ cf_cc_library(
     name = "alloc",
     srcs = ["alloc.cc"],
     hdrs = ["alloc.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/cvdalloc:interface",
@@ -25,6 +26,7 @@ cf_cc_library(
 cf_cc_binary(
     name = "assemble_cvd",
     srcs = ["assemble_cvd.cc"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
@@ -89,6 +91,7 @@ cf_cc_library(
     name = "boot_config",
     srcs = ["boot_config.cc"],
     hdrs = ["boot_config.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:size_utils",
@@ -111,6 +114,7 @@ cf_cc_library(
     name = "boot_image_utils",
     srcs = ["boot_image_utils.cc"],
     hdrs = ["boot_image_utils.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -147,6 +151,7 @@ cf_cc_library(
     name = "bootconfig_args",
     srcs = ["bootconfig_args.cpp"],
     hdrs = ["bootconfig_args.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:json",
@@ -163,6 +168,7 @@ cf_cc_library(
     name = "clean",
     srcs = ["clean.cc"],
     hdrs = ["clean.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:in_sandbox",
@@ -182,6 +188,7 @@ cf_cc_library(
     name = "create_dynamic_disk_files",
     srcs = ["create_dynamic_disk_files.cc"],
     hdrs = ["create_dynamic_disk_files.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:file_exists",
@@ -229,6 +236,7 @@ cf_cc_library(
     name = "disk_builder",
     srcs = ["disk_builder.cpp"],
     hdrs = ["disk_builder.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:vmm_mode",
@@ -267,6 +275,7 @@ cf_cc_library(
     name = "display",
     srcs = ["display.cpp"],
     hdrs = ["display.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:config_flag",
@@ -284,6 +293,7 @@ cf_cc_library(
     name = "flag_feature",
     srcs = ["flag_feature.cpp"],
     hdrs = ["flag_feature.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/feature",
@@ -298,6 +308,7 @@ cf_cc_library(
     name = "flags",
     srcs = ["flags.cc"],
     hdrs = ["flags.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:container",
@@ -382,6 +393,7 @@ cf_cc_library(
     name = "guest_config",
     srcs = ["guest_config.cc"],
     hdrs = ["guest_config.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:device_type",
@@ -416,6 +428,7 @@ cf_cc_library(
     name = "graphics_flags",
     srcs = ["graphics_flags.cc"],
     hdrs = ["graphics_flags.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
@@ -445,6 +458,7 @@ cf_cc_library(
     name = "kernel_module_parser",
     srcs = ["kernel_module_parser.cc"],
     hdrs = ["kernel_module_parser.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:string",
@@ -488,6 +502,7 @@ cf_cc_library(
     name = "instance_image_files",
     srcs = ["instance_image_files.cc"],
     hdrs = ["instance_image_files.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/disk:efi_loader",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
@@ -503,6 +518,7 @@ cf_cc_library(
     name = "misc_info",
     srcs = ["misc_info.cc"],
     hdrs = ["misc_info.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/host/libs/avb",
@@ -517,6 +533,7 @@ cf_cc_library(
     name = "network_flags",
     srcs = ["network_flags.cpp"],
     hdrs = ["network_flags.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvdalloc:interface",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -531,6 +548,7 @@ cf_cc_library(
     name = "required_directories",
     srcs = ["required_directories.cc"],
     hdrs = ["required_directories.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -541,6 +559,7 @@ cf_cc_library(
     name = "resolve_instance_files",
     srcs = ["resolve_instance_files.cc"],
     hdrs = ["resolve_instance_files.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
@@ -560,6 +579,7 @@ cf_cc_library(
     name = "super_image_mixer",
     srcs = ["super_image_mixer.cc"],
     hdrs = ["super_image_mixer.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:archive",
@@ -584,6 +604,7 @@ cf_cc_library(
     name = "touchpad",
     srcs = ["touchpad.cpp"],
     hdrs = ["touchpad.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:config_flag",
@@ -599,6 +620,7 @@ cf_cc_library(
     name = "vendor_dlkm_utils",
     srcs = ["vendor_dlkm_utils.cc"],
     hdrs = ["vendor_dlkm_utils.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
@@ -641,6 +663,7 @@ cf_cc_library(
     name = "media",
     srcs = ["media.cpp"],
     hdrs = ["media.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:config_flag",

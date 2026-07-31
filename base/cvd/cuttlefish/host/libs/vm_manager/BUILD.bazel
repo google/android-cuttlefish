@@ -31,6 +31,7 @@ cf_cc_library(
         "vm_manager.h",
     ],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:container",

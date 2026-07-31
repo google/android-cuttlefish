@@ -8,6 +8,7 @@ cf_cc_library(
     name = "credentialed_unix_server",
     srcs = ["credentialed_unix_server.cpp"],
     hdrs = ["credentialed_unix_server.h"],
+    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
@@ -33,6 +34,7 @@ cf_cc_library(
     name = "pidfd",
     srcs = ["pidfd.cpp"],
     hdrs = ["pidfd.h"],
+    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
@@ -108,6 +110,7 @@ cf_cc_library(
     name = "poll_callback",
     srcs = ["poll_callback.cpp"],
     hdrs = ["poll_callback.h"],
+    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/status",
@@ -118,6 +121,7 @@ cf_cc_binary(
     name = "process_sandboxer",
     srcs = ["main.cpp"],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:logs",
         "//cuttlefish/host/commands/process_sandboxer:pidfd",
@@ -143,6 +147,7 @@ cf_cc_library(
     name = "proxy_common",
     srcs = ["proxy_common.cpp"],
     hdrs = ["proxy_common.h"],
+    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
@@ -153,6 +158,7 @@ cf_cc_library(
     name = "sandbox_manager",
     srcs = ["sandbox_manager.cpp"],
     hdrs = ["sandbox_manager.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:credentialed_unix_server",
         "//cuttlefish/host/commands/process_sandboxer:pidfd",
@@ -194,6 +200,7 @@ cf_cc_library(
     name = "signal_fd",
     srcs = ["signal_fd.cpp"],
     hdrs = ["signal_fd.h"],
+    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",

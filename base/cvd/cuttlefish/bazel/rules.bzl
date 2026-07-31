@@ -100,7 +100,7 @@ cf_cc_binary = macro(
         "copts": attr.string_list(configurable = False, default = []),
         "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
         "features": attr.string_list(configurable = False, default = []),
-        "include_cleaner_enabled": attr.bool(configurable = False, default = False, doc = "Run clang-tidy with misc-include-cleaner"),
+        "include_cleaner_enabled": attr.bool(configurable = False, default = True, doc = "Run clang-tidy with misc-include-cleaner"),
         "linkopts": attr.string_list(configurable = False, default = []),
     },
     implementation = _cf_cc_binary_implementation,
@@ -153,7 +153,7 @@ cf_cc_library = macro(
         "copts": attr.string_list(configurable = False, default = []),
         "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
         "features": attr.string_list(configurable = False, default = []),
-        "include_cleaner_enabled": attr.bool(configurable = False, default = False, doc = "Run clang-tidy with misc-include-cleaner"),
+        "include_cleaner_enabled": attr.bool(configurable = False, default = True, doc = "Run clang-tidy with misc-include-cleaner"),
     },
     implementation = _cf_cc_library_implementation,
 )
@@ -210,7 +210,7 @@ cf_cc_test = macro(
         "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
         "deps": attr.label_list(configurable = False),
         "features": attr.string_list(configurable = False, default = []),
-        "include_cleaner_enabled": attr.bool(configurable = False, default = False, doc = "Run clang-tidy with misc-include-cleaner"),
+        "include_cleaner_enabled": attr.bool(configurable = False, default = True, doc = "Run clang-tidy with misc-include-cleaner"),
     },
     implementation = _cf_cc_test_implementation,
 )

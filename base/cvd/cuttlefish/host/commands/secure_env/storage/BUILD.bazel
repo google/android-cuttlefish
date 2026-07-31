@@ -9,6 +9,7 @@ cf_cc_library(
     srcs = ["insecure_json_storage.cpp"],
     hdrs = ["insecure_json_storage.h"],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:files",
@@ -24,6 +25,7 @@ cf_cc_library(
     name = "storage",
     srcs = ["storage.cpp"],
     hdrs = ["storage.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/result",
     ],

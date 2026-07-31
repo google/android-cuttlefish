@@ -22,6 +22,7 @@ cf_cc_library(
     name = "encoder_provider_registry",
     srcs = ["encoder_provider_registry.cpp"],
     hdrs = ["encoder_provider_registry.h"],
+    include_cleaner_enabled = False,
     visibility = ["//visibility:public"],
     deps = [
         ":encoder_provider",
@@ -33,6 +34,7 @@ cf_cc_library(
     name = "composite_encoder_factory",
     srcs = ["composite_encoder_factory.cpp"],
     hdrs = ["composite_encoder_factory.h"],
+    include_cleaner_enabled = False,
     visibility = ["//visibility:public"],
     deps = [
         ":encoder_provider_registry",
@@ -67,6 +69,7 @@ cf_cc_library(
     name = "decoder_provider_registry",
     srcs = ["decoder_provider_registry.cpp"],
     hdrs = ["decoder_provider_registry.h"],
+    include_cleaner_enabled = False,
     visibility = ["//visibility:public"],
     deps = [
         ":decoder_provider",
@@ -78,6 +81,7 @@ cf_cc_library(
     name = "composite_decoder_factory",
     srcs = ["composite_decoder_factory.cpp"],
     hdrs = ["composite_decoder_factory.h"],
+    include_cleaner_enabled = False,
     visibility = ["//visibility:public"],
     deps = [
         ":decoder_provider_registry",
@@ -116,6 +120,7 @@ cf_cc_library(
     name = "nvenc_video_encoder",
     srcs = ["nvenc_video_encoder.cpp"],
     hdrs = ["nvenc_video_encoder.h"],
+    include_cleaner_enabled = False,
     deps = [
         ":abgr_buffer",
         ":nvenc_encoder_config",
@@ -138,6 +143,7 @@ cf_cc_library(
 cf_cc_library(
     name = "av1_nvenc_encoder_provider",
     srcs = ["av1_nvenc_encoder_provider.cpp"],
+    include_cleaner_enabled = False,
     deps = [
         ":encoder_provider",
         ":encoder_provider_registry",
@@ -169,6 +175,7 @@ cf_cc_library(
     name = "abgr_buffer",
     srcs = ["abgr_buffer.cpp"],
     hdrs = ["abgr_buffer.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
         "@abseil-cpp//absl/log",
@@ -183,6 +190,7 @@ cf_cc_library(
     srcs = ["audio_device.cpp"],
     hdrs = ["audio_device.h"],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
         "//libbase",
@@ -200,6 +208,7 @@ cf_cc_library(
     srcs = ["connection_controller.cpp"],
     hdrs = ["connection_controller.h"],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/frontend/webrtc/libcommon:peer_signaling_handler",
@@ -219,6 +228,7 @@ cf_cc_library(
     srcs = ["peer_connection_utils.cpp"],
     hdrs = ["peer_connection_utils.h"],
     clang_format_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         ":audio_device",
         ":av1_nvenc_encoder_provider",
@@ -249,6 +259,7 @@ cf_cc_library(
     srcs = ["utils.cpp"],
     hdrs = ["utils.h"],
     depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/result",
@@ -264,6 +275,7 @@ cf_cc_library(
     name = "vp8only_encoder_factory",
     srcs = ["vp8only_encoder_factory.cpp"],
     hdrs = ["vp8only_encoder_factory.h"],
+    include_cleaner_enabled = False,
     deps = [
         "@libwebrtc",
     ],

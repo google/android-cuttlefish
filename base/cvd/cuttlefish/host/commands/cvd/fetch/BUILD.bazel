@@ -17,6 +17,7 @@ cf_cc_library(
     hdrs = [
         "auto_login.h",
     ],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:is_google_corp",
         "//cuttlefish/files:file_exists",
@@ -37,6 +38,7 @@ cf_cc_library(
     hdrs = [
         "build_api_credentials.h",
     ],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
@@ -55,6 +57,7 @@ cf_cc_library(
     name = "build_api_flags",
     srcs = ["build_api_flags.cc"],
     hdrs = ["build_api_flags.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cache",
@@ -79,6 +82,7 @@ cf_cc_library(
     name = "build_strings",
     srcs = ["build_strings.cc"],
     hdrs = ["build_strings.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:get_optional",
@@ -100,6 +104,7 @@ cf_cc_library(
     name = "de_android_sparse",
     srcs = ["de_android_sparse.cc"],
     hdrs = ["de_android_sparse.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
         "//cuttlefish/posix:rename",
@@ -125,6 +130,7 @@ cf_cc_library(
     name = "downloaders",
     srcs = ["downloaders.cc"],
     hdrs = ["downloaders.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/commands/cvd/fetch:build_api_credentials",
@@ -146,6 +152,7 @@ cf_cc_library(
 cf_cc_test(
     name = "downloaders_test",
     srcs = ["downloaders_test.cpp"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:file_exists",
@@ -174,6 +181,7 @@ cf_cc_library(
     name = "fetch_context",
     srcs = ["fetch_context.cc"],
     hdrs = ["fetch_context.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:copy",
@@ -201,6 +209,7 @@ cf_cc_library(
     srcs = ["fetch_cvd.cc"],
     hdrs = ["fetch_cvd.h"],
     copts = COPTS + ["-Werror=sign-compare"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:contains",
@@ -238,6 +247,7 @@ cf_cc_library(
     name = "fetch_cvd_parser",
     srcs = ["fetch_cvd_parser.cc"],
     hdrs = ["fetch_cvd_parser.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/flag_parser",
@@ -277,6 +287,7 @@ cf_cc_library(
     name = "host_package",
     srcs = ["host_package.cc"],
     hdrs = ["host_package.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:files",
@@ -315,6 +326,7 @@ cf_cc_library(
     name = "substitute",
     srcs = ["substitute.cc"],
     hdrs = ["substitute.h"],
+    include_cleaner_enabled = False,
     deps = [
         ":host_pkg_migration_cc_proto",
         "//cuttlefish/common/libs/utils:environment",
@@ -336,6 +348,7 @@ cf_cc_library(
     name = "symlink_host_package",
     srcs = ["symlink_host_package.cc"],
     hdrs = ["symlink_host_package.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/posix:symlink",
@@ -359,6 +372,7 @@ cf_cc_library(
     name = "vector_flags",
     srcs = ["vector_flags.cc"],
     hdrs = ["vector_flags.h"],
+    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/web:android_build_string",
