@@ -1,0 +1,7 @@
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda.redist_json(
+    name = "cuda_redist",
+    version = "12.6.3",
+)
+cuda.toolkit(name = "cuda")
+use_repo(cuda, "cuda")
