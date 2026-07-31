@@ -16,13 +16,20 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 
-#include <stdint.h>
-#include <sys/stat.h>
+#include <stddef.h>
+#include <sys/types.h>
 
 #include <fstream>
+#include <functional>
+#include <ios>
+#include <map>
+#include <optional>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
+#include <utility>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_join.h"
