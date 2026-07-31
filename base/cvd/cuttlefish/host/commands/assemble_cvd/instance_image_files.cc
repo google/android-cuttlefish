@@ -16,6 +16,8 @@
 #include "cuttlefish/host/commands/assemble_cvd/instance_image_files.h"
 
 #include <memory>
+#include <optional>
+#include <utility>
 #include <vector>
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/efi_loader.h"
