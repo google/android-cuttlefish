@@ -558,7 +558,6 @@ cf_cc_library(
     name = "resolve_instance_files",
     srcs = ["resolve_instance_files.cc"],
     hdrs = ["resolve_instance_files.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
@@ -570,6 +569,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@fmt",
         "@gflags",
     ],
 )

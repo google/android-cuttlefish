@@ -16,16 +16,16 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/resolve_instance_files.h"
 
-#include <sys/statvfs.h>
-
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "fmt/format.h"
 #include "gflags/gflags.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
