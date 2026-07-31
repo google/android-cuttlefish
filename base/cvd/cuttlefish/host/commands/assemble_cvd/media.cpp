@@ -15,11 +15,24 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/media.h"
 
+#include <ostream>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
 #include "absl/log/log.h"
+#include "fruit/component.h"
+#include "fruit/fruit_forward_decls.h"
+#include "fruit/macro.h"
+#include "json/value.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
+#include "cuttlefish/host/libs/config/config_flag.h"
+#include "cuttlefish/host/libs/config/config_fragment.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/media.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

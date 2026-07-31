@@ -662,15 +662,16 @@ cf_cc_library(
     name = "media",
     srcs = ["media.cpp"],
     hdrs = ["media.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:media",
+        "//cuttlefish/host/libs/feature",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@fruit",
+        "@jsoncpp",
     ],
 )
