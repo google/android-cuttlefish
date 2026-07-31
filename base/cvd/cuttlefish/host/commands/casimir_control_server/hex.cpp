@@ -22,7 +22,8 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace {

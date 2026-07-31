@@ -16,7 +16,12 @@
 
 #pragma once
 
-#include "cuttlefish/result/result.h"
+#include <stdint.h>
+
+#include <string>
+#include <vector>
+
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 

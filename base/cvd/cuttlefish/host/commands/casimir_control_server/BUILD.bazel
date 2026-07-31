@@ -18,6 +18,7 @@ cf_cc_binary(
         ":casimir_control_server_cc_proto",
         ":libcasimir",
         ":libcasimir_control_server",
+        "//cuttlefish/host/commands/casimir_control_server:hex",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
@@ -33,12 +34,10 @@ cf_cc_library(
     srcs = [
         "casimir_controller.cpp",
         "crc.cpp",
-        "hex.cpp",
     ],
     hdrs = [
         "casimir_controller.h",
         "crc.h",
-        "hex.h",
         # TODO: b/416777029 - stop using a copy of these two files
         "packet_runtime.h",
         "rf_packets.h",
@@ -46,6 +45,16 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
+    name = "hex",
+    srcs = ["hex.cpp"],
+    hdrs = ["hex.h"],
+    deps = [
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
 )
 
