@@ -501,7 +501,6 @@ cf_cc_library(
     name = "instance_image_files",
     srcs = ["instance_image_files.cc"],
     hdrs = ["instance_image_files.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/disk:efi_loader",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
