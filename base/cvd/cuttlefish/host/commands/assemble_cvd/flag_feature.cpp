@@ -15,14 +15,18 @@
  */
 #include "cuttlefish/host/commands/assemble_cvd/flag_feature.h"
 
+#include <ostream>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
 #include "absl/strings/str_replace.h"
-#include "fruit/fruit.h"
+#include "fruit/component.h"
+#include "fruit/fruit_forward_decls.h"
+#include "fruit/macro.h"
 #include "gflags/gflags.h"
 
+#include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/result/result.h"
 
