@@ -11,7 +11,6 @@ new_iso=preseed-mini.iso
 
 PRESEEDFILE=$(realpath "${BASEDIR}"/preseed/preseed.cfg)
 AFTERINSTALLSCRIPT=$(realpath "${BASEDIR}"/preseed/after_install_1.sh)
-DEBIANSNAPSHOTLIST=$(realpath "${BASEDIR}"/preseed/debian-snapshot.list)
 
 part_img_ready=1
 if test "$auto_extract_efi" = 1; then
@@ -35,7 +34,6 @@ bsdtar -C ${new_files} -xf "$orig_iso"
 cd ${new_files}
 cp -f "${PRESEEDFILE}" preseed.cfg
 cp -f "${AFTERINSTALLSCRIPT}" after_install_1.sh
-cp -f "${DEBIANSNAPSHOTLIST}" debian-snapshot.list
 chmod a+rx after_install_1.sh
 
 # add preseed to console based installer
@@ -43,7 +41,6 @@ chmod ug+w initrd.gz
 gzip -d -f initrd.gz
 echo preseed.cfg | cpio -H newc -o -A -F initrd
 echo after_install_1.sh | cpio -H newc -o -A -F initrd
-echo debian-snapshot.list | cpio -H newc -o -A -F initrd
 gzip -9 initrd
 chmod a-w initrd.gz
 # add preseed to GTK based installer
@@ -53,13 +50,11 @@ chmod ug+w initrd.gz
 gzip -d -f initrd.gz
 cp -f ../preseed.cfg .
 cp -f ../after_install_1.sh .
-cp -f ../debian-snapshot.list .
 echo preseed.cfg | cpio -H newc -o -A -F initrd
 echo after_install_1.sh | cpio -H newc -o -A -F initrd
-echo debian-snapshot.list | cpio -H newc -o -A -F initrd
 gzip -9 initrd
 chmod a-w initrd.gz
-rm -f preseed.cfg after_install_1.sh debian-snapshot.list
+rm -f preseed.cfg after_install_1.sh
 cd ..
 chmod a-w gtk
 # modify Graphical installer to use tty1
