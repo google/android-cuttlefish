@@ -16,11 +16,16 @@
 
 #include "cuttlefish/host/libs/image_aggregator/raw.h"
 
+#include <errno.h>
+#include <stdint.h>
+#include <sys/types.h>
+
 #include <string>
 #include <utility>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

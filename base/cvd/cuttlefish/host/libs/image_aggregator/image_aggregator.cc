@@ -21,21 +21,18 @@
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 #include <fcntl.h>
-#include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <string.h>
 
 #include <fstream>
+#include <ios>
+#include <memory>
 #include <random>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include "android-base/file.h"
-#include "google/protobuf/text_format.h"
 #include "google/protobuf/util/message_differencer.h"
-#include "sparse/sparse.h"
 #include <zlib.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -44,11 +41,13 @@
 #include "cuttlefish/common/libs/utils/size_utils.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
+#include "cuttlefish/host/libs/image_aggregator/disk_image.h"
 #include "cuttlefish/host/libs/image_aggregator/gpt.h"
 #include "cuttlefish/host/libs/image_aggregator/gpt_type_guid.h"
 #include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
@@ -240,7 +239,7 @@ class CompositeDiskBuilder {
    */
   GptEnd End(const GptBeginning& head) const {
     GptEnd gpt;
-    std::memcpy((void*)gpt.entries, (void*)head.entries, sizeof(gpt.entries));
+    memcpy((void*)gpt.entries, (void*)head.entries, sizeof(gpt.entries));
     gpt.footer = head.header;
     gpt.footer.partition_entries_lba =
         (DiskSize() - sizeof(gpt.entries)) / kSectorSize - 1;

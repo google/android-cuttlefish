@@ -15,15 +15,26 @@
  */
 #include "cuttlefish/host/libs/image_aggregator/super_builder.h"
 
+#include <fcntl.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <map>
+#include <memory>
+#include <optional>
+#include <string>
 #include <string_view>
+#include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "liblp/builder.h"
+#include "liblp/liblp.h"
 #include "liblp/metadata_format.h"
 #include "liblp/partition_opener.h"
+#include "openssl/base.h"
 #include "openssl/sha.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
