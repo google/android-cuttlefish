@@ -15,7 +15,6 @@ cf_cc_binary(
         "override_bool_arg.cpp",
         "override_bool_arg.h",
     ],
-    depend_on_what_you_use_enabled = False,
     # `layering_check` conflicts with the combination of the clang prebuilt and
     # the cmake build rules used for @libxml2.
     features = ["-layering_check"],

@@ -52,13 +52,14 @@ cf_build_test = macro(
     implementation = _cf_build_test_implementation,
 )
 
-def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, linkopts, **kwargs):
+def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, features, linkopts, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
     cc_binary(
         name = name,
         copts = (copts or []) + COPTS,
         linkopts = (linkopts or []) + LINKOPTS,
+        features = features,
         **kwargs
     )
     if clang_format_enabled:
@@ -76,7 +77,7 @@ def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled,
             tags = ["clang_tidy", "clang-tidy"],
             visibility = ["//visibility:private"],
         )
-    if depend_on_what_you_use_enabled:
+    if depend_on_what_you_use_enabled and not "-layering_check" in features:
         dwyu_rule(
             name = name + "_depend_on_what_you_use",
             deps = [":" + name],
@@ -90,17 +91,19 @@ cf_cc_binary = macro(
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
         "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
+        "features": attr.string_list(configurable = False, default = []),
         "linkopts": attr.string_list(configurable = False, default = []),
     },
     implementation = _cf_cc_binary_implementation,
 )
 
-def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, **kwargs):
+def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, features, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
     cc_library(
         name = name,
         copts = (copts or []) + COPTS,
+        features = features,
         **kwargs
     )
     if clang_format_enabled:
@@ -118,7 +121,7 @@ def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled
             tags = ["clang_tidy", "clang-tidy"],
             visibility = ["//visibility:private"],
         )
-    if depend_on_what_you_use_enabled:
+    if depend_on_what_you_use_enabled and not "-layering_check" in features:
         dwyu_rule(
             name = name + "_depend_on_what_you_use",
             deps = [":" + name],
@@ -132,11 +135,12 @@ cf_cc_library = macro(
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
         "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
+        "features": attr.string_list(configurable = False, default = []),
     },
     implementation = _cf_cc_library_implementation,
 )
 
-def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, deps, **kwargs):
+def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, deps, features, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
     cc_test(
@@ -146,6 +150,7 @@ def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, c
             "@googletest//:gtest",
             "@googletest//:gtest_main",
         ],
+        features = features,
         **kwargs
     )
     if clang_format_enabled:
@@ -163,7 +168,7 @@ def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, c
             tags = ["clang_tidy", "clang-tidy"],
             visibility = ["//visibility:private"],
         )
-    if depend_on_what_you_use_enabled:
+    if depend_on_what_you_use_enabled and not "-layering_check" in features:
         dwyu_rule(
             name = name + "_depend_on_what_you_use",
             deps = [":" + name],
@@ -178,6 +183,7 @@ cf_cc_test = macro(
         "copts": attr.string_list(configurable = False, default = []),
         "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
         "deps": attr.label_list(configurable = False),
+        "features": attr.string_list(configurable = False, default = []),
     },
     implementation = _cf_cc_test_implementation,
 )
