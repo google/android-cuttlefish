@@ -18,12 +18,18 @@
 
 #include <arpa/inet.h>
 #include <ifaddrs.h>
+#include <netinet/in.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/socket.h>
+
+#include <string>
 
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
-#include "absl/strings/str_format.h"
 
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
