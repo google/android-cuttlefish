@@ -1,3 +1,10 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test")
+
 package(default_visibility = ["//visibility:public"])
 
 filegroup(name = "empty")
+
+cf_build_test(
+    name = "toolchain_build_test",
+    srcs = ["toolchain.MODULE.bazel"],
+)
