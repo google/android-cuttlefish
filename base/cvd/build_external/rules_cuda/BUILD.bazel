@@ -1,0 +1,10 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+cf_build_test(
+    name = "rules_cuda_build_test",
+    srcs = ["rules_cuda.MODULE.bazel"],
+)

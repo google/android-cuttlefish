@@ -1,0 +1,5 @@
+git_override(
+    module_name = "rules_cuda",
+    commit = "e10b718bc8d37abcb4c18d721806ef8ad74aa324",
+    remote = "https://github.com/bazel-contrib/rules_cuda.git",
+)

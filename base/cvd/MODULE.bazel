@@ -15,14 +15,6 @@ bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
 zig_toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
 use_repo(zig_toolchains, "zig_sdk")
 
-# CUDA support for NVENC (hermetic headers via redist_json, runtime dlopen)
-bazel_dep(name = "rules_cuda", version = "0.3.0")
-git_override(
-    module_name = "rules_cuda",
-    commit = "e10b718bc8d37abcb4c18d721806ef8ad74aa324",
-    remote = "https://github.com/bazel-contrib/rules_cuda.git",
-)
-
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
 cuda.redist_json(
     name = "cuda_redist",
@@ -32,8 +24,8 @@ cuda.toolkit(name = "cuda")
 use_repo(cuda, "cuda")
 
 bazel_dep(name = "boringssl", version = "0.20241024.0")
-bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2")
 bazel_dep(name = "brotli")
+bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2")
 bazel_dep(name = "crc32c")
 bazel_dep(name = "curl")
 bazel_dep(name = "cxx.rs", version = "1.0.194")
@@ -62,6 +54,7 @@ bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "protobuf", version = "33.0")
 bazel_dep(name = "rootcanal")
 bazel_dep(name = "rules_cc", version = "0.2.18")
+bazel_dep(name = "rules_cuda")  # CUDA support for NVENC (hermetic headers via redist_json, runtime dlopen)
 bazel_dep(name = "rules_flex", version = "0.4")
 bazel_dep(name = "rules_foreign_cc", version = "0.15.1")  # this is normally an indirect dependency, but for bazel 9 we need a higher version
 bazel_dep(name = "rules_java", version = "8.16.1")
@@ -73,10 +66,10 @@ bazel_dep(name = "rules_proto_grpc_go", version = "5.3.0")
 bazel_dep(name = "rules_python", version = "1.7.0")
 bazel_dep(name = "rules_rust", version = "0.68.1")
 bazel_dep(name = "rules_shell", version = "0.6.1")
+bazel_dep(name = "sandboxed_api")
 bazel_dep(name = "tinyxml2", version = "10.0.0")
 bazel_dep(name = "tl-expected", version = "1.3.1")
 bazel_dep(name = "toolchains_llvm", version = "1.6.0")
-bazel_dep(name = "sandboxed_api")
 bazel_dep(name = "zlib", version = "1.3.1.bcr.7")
 
 include("//build_external:build_external.MODULE.bazel")
