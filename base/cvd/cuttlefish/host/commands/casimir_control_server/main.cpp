@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
+#include <stdint.h>
+
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
@@ -26,8 +30,12 @@
 #include "grpcpp/ext/proto_server_reflection_plugin.h"
 #include "grpcpp/grpcpp.h"
 #include "grpcpp/health_check_service_interface.h"
+#include "grpcpp/security/server_credentials.h"
+#include "grpcpp/support/status.h"
+#include "grpcpp/support/status_code_enum.h"
 
 #include "cuttlefish/host/commands/casimir_control_server/casimir_control.grpc.pb.h"
+#include "cuttlefish/host/commands/casimir_control_server/casimir_control.pb.h"
 #include "cuttlefish/host/commands/casimir_control_server/casimir_controller.h"
 #include "cuttlefish/host/commands/casimir_control_server/hex.h"
 #include "cuttlefish/result/result.h"

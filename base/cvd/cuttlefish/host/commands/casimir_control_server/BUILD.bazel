@@ -7,11 +7,14 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+exports_files([".clang-tidy"])
+
 cf_cc_binary(
     name = "casimir_control_server",
     srcs = ["main.cpp"],
     depend_on_what_you_use_enabled = False,
     deps = [
+        ":casimir_control_server_cc_proto",
         ":libcasimir",
         ":libcasimir_control_server",
         "//cuttlefish/common/libs/fs",
@@ -44,7 +47,6 @@ cf_cc_library(
         "rf_packets.h",
     ],
     deps = [
-        ":libcasimir_control_server",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
     ],

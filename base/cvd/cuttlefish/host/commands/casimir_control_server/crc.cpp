@@ -16,6 +16,10 @@
 
 #include "cuttlefish/host/commands/casimir_control_server/crc.h"
 
+#include <stdint.h>
+
+#include <vector>
+
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
