@@ -18,8 +18,6 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-exports_files([".clang-tidy"])
-
 cf_build_test(name = "flags_build_test")
 
 cf_cc_library(

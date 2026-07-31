@@ -5,7 +5,6 @@ package(
 )
 
 exports_files([
-    ".clang-tidy",
     "create.cpp",
     "create.h",
     "help.cpp",
