@@ -16,17 +16,23 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
 
+#include <stddef.h>
+
+#include <functional>
 #include <ostream>
 #include <string_view>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/ascii.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
 #include "fmt/base.h"
-#include "fmt/format.h"
 #include "fmt/ostream.h"
 #include "google/protobuf/io/tokenizer.h"
 #include "google/protobuf/text_format.h"
@@ -35,8 +41,10 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/semver.h"
+#include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
@@ -57,7 +65,7 @@ namespace {
 
 struct AggregatingErrorCollector : public google::protobuf::io::ErrorCollector {
   void RecordError(int /* line */, int /* column */,
-                   const absl::string_view message) override {
+                   const std::string_view message) override {
     if (!error_message.empty()) {
       absl::StrAppend(&error_message, "; ");
     }
@@ -65,7 +73,7 @@ struct AggregatingErrorCollector : public google::protobuf::io::ErrorCollector {
   }
 
   void RecordWarning(int /* line */, int /* column */,
-                     const absl::string_view /* message */) override {
+                     const std::string_view /* message */) override {
     // Ignore warnings
   }
 
@@ -890,7 +898,7 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
   }
 
   VLOG(0) << "Host Graphics Availability:";
-  for (absl::string_view line :
+  for (std::string_view line :
        absl::StrSplit(graphics_availability_content, '\n')) {
     VLOG(0) << line;
   }
