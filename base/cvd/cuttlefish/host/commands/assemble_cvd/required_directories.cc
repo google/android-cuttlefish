@@ -15,10 +15,11 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/required_directories.h"
 
-#include <unistd.h>
-
 #include <string>
+#include <utility>
 #include <vector>
+
+#include "absl/strings/str_cat.h"
 
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
