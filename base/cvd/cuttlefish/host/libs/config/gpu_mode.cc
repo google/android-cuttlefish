@@ -30,8 +30,6 @@ Result<GpuMode> GpuModeFromString(std::string_view mode) {
     return GpuMode::Auto;
   } else if (mode == kGpuModeCustom) {
     return GpuMode::Custom;
-  } else if (mode == kGpuModeDrmVirgl) {
-    return GpuMode::DrmVirgl;
   } else if (mode == kGpuModeGfxstream) {
     return GpuMode::Gfxstream;
   } else if (mode == kGpuModeGfxstreamGuestAngle) {
@@ -59,9 +57,6 @@ std::string_view format_as(GpuMode mode) {
       return kGpuModeAuto;
     case GpuMode::Custom:
       return kGpuModeCustom;
-      break;
-    case GpuMode::DrmVirgl:
-      return kGpuModeDrmVirgl;
       break;
     case GpuMode::Gfxstream:
       return kGpuModeGfxstream;
