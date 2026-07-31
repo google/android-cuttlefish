@@ -41,6 +41,7 @@ func TestEmulatedCamera(t *testing.T) {
 			XtsArgs: []string{
 				"--include-filter=CtsAppTestCases android.app.cts.SystemFeaturesTest#testCameraFeatures",
 				"--include-filter=CtsCameraTestCases android.hardware.camera2.cts.CameraManagerTest",
+				"--include-filter=CtsCameraTestCases android.hardware.camera2.cts.FastBasicsTest",
 			},
 		})
 }
