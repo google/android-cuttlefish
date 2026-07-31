@@ -8,13 +8,6 @@ bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 
 bazel_dep(name = "abseil-cpp", version = "20260107.0")
 bazel_dep(name = "aspect_bazel_lib", version = "2.22.0")
-bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
-
-# Hermetic C/C++ toolchain using zig cc for cross-compilation and GLIBC targeting.
-# Use with: bazel build ... --extra_toolchains=@zig_sdk//toolchain:linux_amd64_gnu.2.36
-zig_toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
-use_repo(zig_toolchains, "zig_sdk")
-
 bazel_dep(name = "boringssl", version = "0.20241024.0")
 bazel_dep(name = "brotli")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2")
@@ -30,6 +23,7 @@ bazel_dep(name = "googleapis-cc", version = "1.0.0")
 bazel_dep(name = "googletest")
 bazel_dep(name = "grpc")
 bazel_dep(name = "grpc-proto")
+bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
 bazel_dep(name = "icu", version = "76.1.bcr.1")
 bazel_dep(name = "jsoncpp")
 bazel_dep(name = "libarchive", version = "3.7.9")
@@ -74,6 +68,7 @@ include("//toolchain:cuda.MODULE.bazel")
 include("//toolchain:llvm.MODULE.bazel")
 include("//toolchain:python.MODULE.bazel")
 include("//toolchain:rust.MODULE.bazel")
+include("//toolchain:zig.MODULE.bazel")
 
 # NVENC video encoding headers (nv-codec-headers SDK 12.1)
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
