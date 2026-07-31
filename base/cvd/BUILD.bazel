@@ -32,37 +32,6 @@ genrule(
     cmd = "echo $(COMPILATION_MODE) > $@",
 )
 
-filegroup(
-    name = "clang_tidy_config",
-    srcs = [
-        ".clang-tidy",
-        "//allocd:.clang-tidy",
-        "//cuttlefish/common:.clang-tidy",
-        "//cuttlefish/common/libs/confui:.clang-tidy",
-        "//cuttlefish/common/libs/key_equals_value:.clang-tidy",
-        "//cuttlefish/common/libs/transport:.clang-tidy",
-        "//cuttlefish/host:.clang-tidy",
-        "//cuttlefish/host/commands/assemble_cvd/android_build:.clang-tidy",
-        "//cuttlefish/host/commands/assemble_cvd/boot_image:.clang-tidy",
-        "//cuttlefish/host/commands/assemble_cvd/disk:.clang-tidy",
-        "//cuttlefish/host/commands/assemble_cvd/flags:.clang-tidy",
-        "//cuttlefish/host/commands/casimir_control_server:.clang-tidy",
-        "//cuttlefish/host/commands/console_forwarder:.clang-tidy",
-        "//cuttlefish/host/commands/cvd/cli/commands:.clang-tidy",
-        "//cuttlefish/host/commands/kernel_log_monitor:.clang-tidy",
-        "//cuttlefish/host/commands/mkenvimage_slim:.clang-tidy",
-        "//cuttlefish/host/commands/run_cvd:.clang-tidy",
-        "//cuttlefish/host/libs/config:.clang-tidy",
-        "//cuttlefish/host/libs/config/esp:.clang-tidy",
-        "//cuttlefish/host/libs/image_aggregator:.clang-tidy",
-        "//cuttlefish/host/libs/metrics:.clang-tidy",
-        "//cuttlefish/host/libs/web:.clang-tidy",
-        "//cuttlefish/host/libs/zip:.clang-tidy",
-        "//cuttlefish/host/libs/zip/libzip_cc:.clang-tidy",
-        "//teeui/libteeui:.clang-tidy",
-    ],
-)
-
 # for crosvm/jail. Has to be in the base repository, as the @crosvm repository isn't visible.
 #
 # Collections of python files can be combined into a zip file. The python
