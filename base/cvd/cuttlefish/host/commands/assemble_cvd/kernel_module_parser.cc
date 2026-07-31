@@ -15,6 +15,8 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/kernel_module_parser.h"
 
+#include <string_view>
+
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/result/expect.h"
