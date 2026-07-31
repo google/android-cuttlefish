@@ -15,14 +15,6 @@ bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
 zig_toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
 use_repo(zig_toolchains, "zig_sdk")
 
-cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
-cuda.redist_json(
-    name = "cuda_redist",
-    version = "12.6.3",
-)
-cuda.toolkit(name = "cuda")
-use_repo(cuda, "cuda")
-
 bazel_dep(name = "boringssl", version = "0.20241024.0")
 bazel_dep(name = "brotli")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2")
@@ -78,6 +70,7 @@ include("//cuttlefish/host/commands/vhost_user_input:vhost_user_input.MODULE.baz
 include("//cuttlefish/host/commands/vhost_user_media:vhost_user_media.MODULE.bazel")
 include("//toolchain:bazel.MODULE.bazel")
 include("//toolchain:buildifier.MODULE.bazel")
+include("//toolchain:cuda.MODULE.bazel")
 include("//toolchain:llvm.MODULE.bazel")
 include("//toolchain:python.MODULE.bazel")
 include("//toolchain:rust.MODULE.bazel")
