@@ -46,6 +46,7 @@ filegroup(
         "//cuttlefish/host/commands/assemble_cvd/boot_image:.clang-tidy",
         "//cuttlefish/host/commands/assemble_cvd/disk:.clang-tidy",
         "//cuttlefish/host/commands/assemble_cvd/flags:.clang-tidy",
+        "//cuttlefish/host/commands/casimir_control_server:.clang-tidy",
         "//cuttlefish/host/commands/console_forwarder:.clang-tidy",
         "//cuttlefish/host/commands/cvd/cli/commands:.clang-tidy",
         "//cuttlefish/host/commands/kernel_log_monitor:.clang-tidy",

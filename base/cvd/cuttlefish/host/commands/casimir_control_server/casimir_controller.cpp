@@ -16,13 +16,26 @@
 
 #include "cuttlefish/host/commands/casimir_control_server/casimir_controller.h"
 
+#include <endian.h>
 #include <fcntl.h>
+#include <math.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <sys/types.h>
 
 #include <chrono>
-#include <cstdint>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
-#include "cuttlefish/host/commands/casimir_control_server/casimir_control.grpc.pb.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/casimir_control_server/crc.h"
+#include "cuttlefish/host/commands/casimir_control_server/packet_runtime.h"
+#include "cuttlefish/host/commands/casimir_control_server/rf_packets.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -98,7 +111,8 @@ Result<uint16_t> CasimirController::SelectNfcA() {
   poll_command.payload_ = std::vector<uint8_t>{0x52};
   CF_EXPECT(Write(poll_command), "Failed to send NFC-A poll command");
 
-  auto res = CF_EXPECT(ReadRfPacket(10s), "Failed to get NFC-A poll response");
+  auto res = CF_EXPECT(ReadRfPacket(std::chrono::seconds(10)),
+                       "Failed to get NFC-A poll response");
 
   auto rf_packet = RfPacketView::Create(slice(res));
   if (rf_packet.IsValid()) {
@@ -117,7 +131,8 @@ Result<void> CasimirController::SelectT4AT(uint16_t sender_id) {
   t4at_select_command.bitrate_ = BitRate::BIT_RATE_106_KBIT_S;
   CF_EXPECT(Write(t4at_select_command), "Failed to send T4AT select command");
 
-  auto res = CF_EXPECT(ReadRfPacket(1s), "Failed to get T4AT response");
+  auto res = CF_EXPECT(ReadRfPacket(std::chrono::seconds(1)),
+                       "Failed to get T4AT response");
 
   // Note: T4AT select response implies NFC_A and ISO_DEP
   auto rf_packet = RfPacketView::Create(slice(res));
@@ -151,7 +166,8 @@ Result<std::vector<uint8_t>> CasimirController::SendApdu(
 
   CF_EXPECT(Write(data_builder), "Failed to send APDU bytes");
 
-  auto res = CF_EXPECT(ReadRfPacket(3s), "Failed to get APDU response");
+  auto res = CF_EXPECT(ReadRfPacket(std::chrono::seconds(3)),
+                       "Failed to get APDU response");
   auto rf_packet = RfPacketView::Create(slice(res));
   if (rf_packet.IsValid()) {
     auto data = DataView::Create(rf_packet);
@@ -228,7 +244,7 @@ CasimirController::SendBroadcast(std::vector<uint8_t> data, std::string type,
       bits != 8 ? PollingFrameFormat::SHORT : PollingFrameFormat::LONG;
 
   // Adjust range of values from 0-100 to 0-12
-  poll_command.power_level_ = static_cast<int>(std::round(power * 12 / 100));
+  poll_command.power_level_ = static_cast<int>(round(power * 12 / 100));
 
   CF_EXPECT(Write(poll_command), "Failed to send broadcast frame");
 
