@@ -15,9 +15,8 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
 
-#include <sys/stat.h>
-
 #include <array>
+#include <set>
 #include <string>
 #include <string_view>
 #include <utility>
