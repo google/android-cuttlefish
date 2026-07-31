@@ -427,7 +427,6 @@ cf_cc_library(
     name = "graphics_flags",
     srcs = ["graphics_flags.cc"],
     hdrs = ["graphics_flags.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
@@ -436,6 +435,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:guest_config",
         "//cuttlefish/host/graphics_detector:graphics_detector_cc_proto",
         "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/config:guest_hwui_renderer",
