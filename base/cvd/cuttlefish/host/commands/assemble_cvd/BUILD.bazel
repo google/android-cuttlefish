@@ -531,14 +531,12 @@ cf_cc_library(
     name = "network_flags",
     srcs = ["network_flags.cpp"],
     hdrs = ["network_flags.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvdalloc:interface",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:str_format",
     ],
 )
 
