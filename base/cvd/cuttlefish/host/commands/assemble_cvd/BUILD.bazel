@@ -241,7 +241,6 @@ cf_cc_library(
     name = "disk_builder",
     srcs = ["disk_builder.cpp"],
     hdrs = ["disk_builder.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:vmm_mode",
