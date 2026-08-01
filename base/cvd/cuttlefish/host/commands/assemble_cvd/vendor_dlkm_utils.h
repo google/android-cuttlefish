@@ -33,7 +33,7 @@ Result<void> RepackSuperWithPartition(const std::string& superimg_path,
 Result<void> BuildVbmetaImage(const std::string& vendor_dlkm_img,
                               const std::string& vbmeta_path);
 
-Result<void> BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
+Result<void> BuildDlkmImage(const std::string& src_dir, bool is_erofs,
                             const std::string& partition_name,
                             const std::string& output_image);
 

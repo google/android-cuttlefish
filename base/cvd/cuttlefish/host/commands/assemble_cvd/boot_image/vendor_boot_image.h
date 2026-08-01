@@ -17,6 +17,8 @@
 
 #include <stdint.h>
 
+#include <memory>
+#include <optional>
 #include <variant>
 
 #include "bootimg.h"
