@@ -13,14 +13,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <iostream>
+#include <memory>
+#include <optional>
+#include <ostream>
+#include <set>
+#include <sstream>
+#include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "fmt/format.h"
+#include "fruit/component.h"
+#include "fruit/injector.h"
 #include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -42,11 +60,13 @@
 #include "cuttlefish/host/commands/assemble_cvd/clean.h"
 #include "cuttlefish/host/commands/assemble_cvd/create_dynamic_disk_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/ap_composite_disk.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/os_composite_disk.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
 #include "cuttlefish/host/commands/assemble_cvd/flag_feature.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags.h"
@@ -58,6 +78,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/instance_image_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/media.h"
 #include "cuttlefish/host/commands/assemble_cvd/required_directories.h"
@@ -66,13 +87,17 @@
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/config/adb/adb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
+#include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/config/log_string_to_dir.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/posix/symlink.h"
