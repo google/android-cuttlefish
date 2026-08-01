@@ -310,7 +310,6 @@ cf_cc_library(
     name = "flags",
     srcs = ["flags.cc"],
     hdrs = ["flags.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:container",
@@ -326,6 +325,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:display",
         "//cuttlefish/host/commands/assemble_cvd:graphics_flags",
         "//cuttlefish/host/commands/assemble_cvd:guest_config",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:media",
         "//cuttlefish/host/commands/assemble_cvd:network_flags",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
@@ -354,6 +354,8 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvdalloc:interface",
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:config_fragment",
+        "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:display",
         "//cuttlefish/host/libs/config:external_network_mode",
@@ -367,13 +369,11 @@ cf_cc_library(
         "//cuttlefish/host/libs/vhal_proxy_server",
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@fruit",
         "@gflags",
-        "@jsoncpp",
     ],
 )
 

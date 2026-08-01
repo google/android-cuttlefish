@@ -15,13 +15,17 @@
  */
 #include "cuttlefish/host/commands/assemble_cvd/flags.h"
 
+#include <stddef.h>
 #include <stdint.h>
-#include <sys/types.h>
+#include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
+#include <map>
+#include <memory>
 #include <optional>
 #include <regex>
 #include <set>
@@ -29,18 +33,17 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
-#include "android-base/file.h"
 #include "fmt/format.h"
-#include "fruit/fruit.h"
+#include "fruit/fruit_forward_decls.h"
+#include "fruit/injector.h"
 #include "gflags/gflags.h"
-#include "json/json.h"
-#include "json/writer.h"
 
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/common/libs/utils/container.h"
@@ -71,6 +74,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/parser.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/use_cvdalloc.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
@@ -79,11 +83,15 @@
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/media.h"
 #include "cuttlefish/host/commands/assemble_cvd/network_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 #include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/config_fragment.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/host/libs/config/display.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
@@ -722,7 +730,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   auto env_config = const_cast<const CuttlefishConfig&>(tmp_config_obj)
                         .ForEnvironment(environment_name);
 
-  mutable_env_config.set_group_uuid(std::time(0));
+  mutable_env_config.set_group_uuid(time(0));
 
   std::vector<bool> enable_wifi_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_wifi));
