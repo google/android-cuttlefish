@@ -16,14 +16,20 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/create_dynamic_disk_files.h"
 
+#include <errno.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include <sys/statvfs.h>
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
-#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
