@@ -156,16 +156,20 @@ cf_cc_library(
     name = "bootconfig_args",
     srcs = ["bootconfig_args.cpp"],
     hdrs = ["bootconfig_args.h"],
-    include_cleaner_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:device_type",
+        "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:gpu_mode",
+        "//cuttlefish/host/libs/config:secure_hals",
+        "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@fmt",
     ],
 )
 

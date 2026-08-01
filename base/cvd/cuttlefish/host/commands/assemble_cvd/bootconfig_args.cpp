@@ -16,10 +16,14 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/bootconfig_args.h"
 
-#include <algorithm>
+#include <stdint.h>
+
 #include <array>
+#include <functional>
+#include <map>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -27,11 +31,16 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "fmt/format.h"
 
-#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/device_type.h"
+#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
+#include "cuttlefish/host/libs/config/secure_hals.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
