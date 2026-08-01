@@ -16,14 +16,20 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 
+#include <fcntl.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
-#include <unistd.h>
 
+#include <array>
 #include <fstream>
+#include <ios>
+#include <memory>
 #include <optional>
 #include <regex>
 #include <string>
+#include <string_view>
+#include <utility>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -36,6 +42,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/boot_image_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image_builder.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/avb/parser.h"
 #include "cuttlefish/host/libs/config/config_utils.h"

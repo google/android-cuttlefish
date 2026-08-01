@@ -119,7 +119,6 @@ cf_cc_library(
     name = "boot_image_utils",
     srcs = ["boot_image_utils.cc"],
     hdrs = ["boot_image_utils.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
