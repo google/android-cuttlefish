@@ -15,8 +15,10 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 
+#include <chrono>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
