@@ -17,16 +17,22 @@
 
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
+#include <memory>
+#include <set>
+#include <string>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_join.h"
 #include "android-base/file.h"
+#include "fmt/format.h"
 #include "fmt/ranges.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
