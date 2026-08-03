@@ -321,13 +321,13 @@ cf_cc_library(
     name = "tee_logging",
     srcs = ["tee_logging.cpp"],
     hdrs = ["tee_logging.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/base:log_severity",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:globals",
         "@abseil-cpp//absl/log:initialize",
@@ -336,6 +336,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log:log_sink_registry",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
+        "@fmt",
     ],
 )
 
