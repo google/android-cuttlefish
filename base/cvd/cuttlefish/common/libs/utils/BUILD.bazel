@@ -426,8 +426,8 @@ cf_cc_library(
     name = "wait_for_unix_socket",
     srcs = ["wait_for_unix_socket.cpp"],
     hdrs = ["wait_for_unix_socket.h"],
-    include_cleaner_enabled = False,
     deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:wait_for_file",
         "//cuttlefish/process:command",
