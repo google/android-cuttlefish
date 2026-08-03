@@ -178,25 +178,22 @@ impl EventQueue {
     fn send_events(&mut self, event: V4l2Event) -> Result<(), VhuMediaBackendError> {
         let vring = self.vring.clone();
         let mem = self.mem.clone();
-        let requests: Vec<_> = vring.get_mut().get_queue_mut().iter(mem)?.collect();
-        if requests.is_empty() {
-            return Err(VhuMediaBackendError::DescriptorUnavailable);
+        let desc_chain = match vring.get_mut().get_queue_mut().iter(mem)?.next() {
+            Some(d) => d,
+            None => return Err(VhuMediaBackendError::DescriptorUnavailable),
+        };
+        let mem = self.mem.clone();
+        let head_index = desc_chain.head_index();
+        let mut writer = desc_chain.writer(&mem)?;
+        match event {
+            V4l2Event::DequeueBuffer(e) => WriteToDescriptorChain::write_obj(&mut writer, e)?,
+            V4l2Event::Error(e) => WriteToDescriptorChain::write_obj(&mut writer, e)?,
+            V4l2Event::Event(e) => WriteToDescriptorChain::write_obj(&mut writer, e)?,
         }
-        for desc_chain in requests {
-            let mem = self.mem.clone();
-            let head_index = desc_chain.head_index();
-            let mut writer = desc_chain.writer(&mem)?;
-            match event {
-                V4l2Event::DequeueBuffer(e) => WriteToDescriptorChain::write_obj(&mut writer, e)?,
-                V4l2Event::Error(e) => WriteToDescriptorChain::write_obj(&mut writer, e)?,
-                V4l2Event::Event(e) => WriteToDescriptorChain::write_obj(&mut writer, e)?,
-            }
-            vring
-                .get_mut()
-                .add_used(head_index, writer.bytes_written() as u32)?;
-            vring.signal_used_queue()?;
-            break;
-        }
+        vring
+            .get_mut()
+            .add_used(head_index, writer.bytes_written() as u32)?;
+        vring.signal_used_queue()?;
         Ok(())
     }
 }
