@@ -91,7 +91,6 @@ cf_cc_library(
         "environment.h",
         "known_paths.h",
     ],
-    include_cleaner_enabled = False,
 )
 
 cf_cc_test(
