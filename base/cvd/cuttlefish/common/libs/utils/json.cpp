@@ -15,12 +15,19 @@
 
 #include "cuttlefish/common/libs/utils/json.h"
 
+#include <fcntl.h>
+
 #include <memory>
 #include <string>
 #include <string_view>
 
+#include "json/config.h"
+#include "json/reader.h"
+#include "json/value.h"
+
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
