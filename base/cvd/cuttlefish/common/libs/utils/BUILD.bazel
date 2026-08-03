@@ -233,7 +233,6 @@ cf_cc_library(
     name = "network",
     srcs = ["network.cpp"],
     hdrs = ["network.h"],
-    include_cleaner_enabled = False,
     deps = [
         "@fmt",
     ],
