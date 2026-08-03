@@ -17,25 +17,17 @@
 #include "cuttlefish/common/libs/utils/files.h"
 
 #ifdef __linux__
-#include <linux/fiemap.h>
 #include <linux/fs.h>
-#include <sys/sendfile.h>
 #endif
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <libgen.h>
-#include <sched.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/uio.h>
 #include <unistd.h>
 
 #include <array>
@@ -241,6 +233,7 @@ std::string AbsolutePath(std::string_view path) {
 }
 
 Result<std::string> RealPath(const std::string& path) {
+  // NOLINTNEXTLINE(misc-include-cleaner): <limits.h>
   std::array<char, PATH_MAX> buffer{};
   char* res;
   do {

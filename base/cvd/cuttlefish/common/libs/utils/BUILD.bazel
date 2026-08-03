@@ -106,7 +106,6 @@ cf_cc_library(
     name = "files",
     srcs = ["files.cpp"],
     hdrs = ["files.h"],
-    include_cleaner_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",  # SEEK_DATA
     ],
