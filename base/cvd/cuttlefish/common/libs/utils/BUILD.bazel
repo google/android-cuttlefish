@@ -306,7 +306,6 @@ cf_cc_library(
     name = "socket2socket_proxy",
     srcs = ["socket2socket_proxy.cpp"],
     hdrs = ["socket2socket_proxy.h"],
-    include_cleaner_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],
