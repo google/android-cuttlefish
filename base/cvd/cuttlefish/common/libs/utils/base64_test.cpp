@@ -16,10 +16,13 @@
 
 #include "cuttlefish/common/libs/utils/base64.h"
 
+#include <stdint.h>
+
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "cuttlefish/result/result_matchers.h"
