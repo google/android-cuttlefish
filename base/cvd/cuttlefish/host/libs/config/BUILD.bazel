@@ -461,6 +461,7 @@ cf_cc_library(
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
+        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )

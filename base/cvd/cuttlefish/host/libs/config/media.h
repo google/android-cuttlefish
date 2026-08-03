@@ -32,10 +32,20 @@ constexpr const char kMediaHelp[] =
     "    'v4l2_emulated_camera_mplane': emulated media capture device "
     "(multi-plane)\n"
     "    'v4l2_proxy': proxy a host V4L2 device into the guest\n"
+    "    'v4l2_stream_proxy': stream video from a host named pipe into the "
+    "guest\n\n"
+    "v4l2_stream_proxy properties:\n"
+    "    'input_path': path to the host named pipe\n"
+    "    'input_width': width of the video stream in pixels\n"
+    "    'input_height': height of the video stream in pixels\n"
+    "    'input_fps': frames per second (e.g., 30 or 30000/1001)\n\n"
     "Supported keys:\n"
-    " 'lens_facing': optional, supported values: 'FRONT', 'BACK', 'EXTERNAL'\n"
+    "    'lens_facing': optional, supported values: 'FRONT', 'BACK', "
+    "'EXTERNAL'\n\n"
     "Example usage:\n"
-    "  --media=v4l2_emulated_camera_mplane:lens_facing=BACK\n";
+    "  --media=v4l2_emulated_camera_mplane:lens_facing=BACK\n"
+    "  --media=v4l2_stream_proxy:input_path=/tmp/fifo:"
+    "input_width=640:input_height=480:input_fps=30\n";
 
 Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
     const std::string& flag);

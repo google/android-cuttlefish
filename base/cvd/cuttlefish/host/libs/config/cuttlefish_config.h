@@ -118,11 +118,20 @@ class CuttlefishConfig {
     kV4l2EmulatedCameraSPlane,
     kV4l2EmulatedCameraMPlane,
     kV4l2Proxy,
+    kV4l2StreamProxy,
   };
 
   struct MediaConfig {
     MediaType type;
     std::string lens_facing;
+
+    struct V4l2StreamProxyConfig {
+      std::string input_path;
+      int input_width;
+      int input_height;
+      std::string input_fps;
+    };
+    std::optional<V4l2StreamProxyConfig> v4l2_stream_proxy;
   };
 
   void set_secure_hals(const std::set<SecureHal>&);
