@@ -16,7 +16,8 @@
 #include "cuttlefish/common/libs/utils/unix_sockets.h"
 
 #include <fcntl.h>
-#include <sys/uio.h>
+#include <sys/socket.h>
+#include <sys/uio.h>  // IWYU pragma: keep: iovec
 #include <unistd.h>
 
 #include <cstring>
@@ -56,6 +57,7 @@ Result<ControlMessage> ControlMessage::FromFileDescriptors(
   ControlMessage message;
   message.data_.resize(CMSG_SPACE(fds.size() * sizeof(int)), 0);
   message.Raw()->cmsg_len = CMSG_LEN(fds.size() * sizeof(int));
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/socket.h>
   message.Raw()->cmsg_level = SOL_SOCKET;
   message.Raw()->cmsg_type = SCM_RIGHTS;
   for (int i = 0; i < fds.size(); i++) {
@@ -73,6 +75,7 @@ ControlMessage ControlMessage::FromCredentials(const ucred& credentials) {
   ControlMessage message;
   message.data_.resize(CMSG_SPACE(sizeof(ucred)), 0);
   message.Raw()->cmsg_len = CMSG_LEN(sizeof(ucred));
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/socket.h>
   message.Raw()->cmsg_level = SOL_SOCKET;
   message.Raw()->cmsg_type = SCM_CREDENTIALS;
   // Following the CMSG_DATA spec, use memcpy to avoid alignment issues.
@@ -119,6 +122,7 @@ const cmsghdr* ControlMessage::Raw() const {
 
 #ifdef __linux__
 bool ControlMessage::IsCredentials() const {
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/socket.h>
   bool right_level = Raw()->cmsg_level == SOL_SOCKET;
   bool right_type = Raw()->cmsg_type == SCM_CREDENTIALS;
   bool enough_data = Raw()->cmsg_len >= sizeof(cmsghdr) + sizeof(ucred);
@@ -134,6 +138,7 @@ Result<ucred> ControlMessage::AsCredentials() const {
 #endif
 
 bool ControlMessage::IsFileDescriptors() const {
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/socket.h>
   bool right_level = Raw()->cmsg_level == SOL_SOCKET;
   bool right_type = Raw()->cmsg_type == SCM_RIGHTS;
   return right_level && right_type;
@@ -203,6 +208,7 @@ Result<ucred> UnixSocketMessage::Credentials() {
 
 UnixMessageSocket::UnixMessageSocket(SharedFD socket) : socket_(socket) {
   socklen_t ln = sizeof(max_message_size_);
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/socket.h>
   CHECK(socket->GetSockOpt(SOL_SOCKET, SO_SNDBUF, &max_message_size_, &ln) == 0)
       << "error: can't retrieve socket max message size: "
       << socket->StrError();
@@ -211,6 +217,7 @@ UnixMessageSocket::UnixMessageSocket(SharedFD socket) : socket_(socket) {
 #ifdef __linux__
 Result<void> UnixMessageSocket::EnableCredentials(bool enable) {
   int flag = enable ? 1 : 0;
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/socket.h>
   if (socket_->SetSockOpt(SOL_SOCKET, SO_PASSCRED, &flag, sizeof(flag)) != 0) {
     return CF_ERR("Could not set credential status to " << enable << ": "
                                                         << socket_->StrError());
@@ -237,7 +244,7 @@ Result<void> UnixMessageSocket::WriteMessage(const UnixSocketMessage& message) {
     cmsg = CMSG_NXTHDR(&message_header, cmsg);
   }
 
-  iovec message_iovec;
+  iovec message_iovec;  // NOLINT(misc-include-cleaner): sys/uio.h
   message_iovec.iov_base = (void*)message.data.data();
   message_iovec.iov_len = message.data.size();
   message_header.msg_name = nullptr;
