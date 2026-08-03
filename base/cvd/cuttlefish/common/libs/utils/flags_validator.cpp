@@ -18,6 +18,9 @@
 
 #include <string>
 
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
+
 namespace cuttlefish {
 Result<void> ValidateSetupWizardMode(const std::string& setupwizard_mode) {
   // One of DISABLED,OPTIONAL,REQUIRED

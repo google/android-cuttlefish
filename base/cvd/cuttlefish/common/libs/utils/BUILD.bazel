@@ -152,9 +152,9 @@ cf_cc_library(
     name = "flags_validator",
     srcs = ["flags_validator.cpp"],
     hdrs = ["flags_validator.h"],
-    include_cleaner_enabled = False,
     deps = [
-        "//cuttlefish/result",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
 )
 
