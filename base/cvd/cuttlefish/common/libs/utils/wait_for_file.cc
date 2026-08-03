@@ -16,10 +16,13 @@
 
 #include "cuttlefish/common/libs/utils/wait_for_file.h"
 
+#include <errno.h>
+#include <string.h>
 #ifdef __linux__
 #include <sys/inotify.h>
 #endif
 #include <sys/select.h>
+#include <sys/time.h>  // IWYU pragma: keep
 
 #include <chrono>
 #include <string>
@@ -86,7 +89,7 @@ Result<void> WaitForFileInternal(const std::string& path, int timeoutSec,
             .count();
     const auto secondInUsec =
         std::chrono::microseconds(std::chrono::seconds(1)).count();
-    struct timeval timeout;
+    struct timeval timeout;  // NOLINT(misc-include-cleaner): sys/time.h
 
     timeout.tv_sec = timeRemain / secondInUsec;
     timeout.tv_usec = timeRemain % secondInUsec;
@@ -96,7 +99,7 @@ Result<void> WaitForFileInternal(const std::string& path, int timeoutSec,
     FD_ZERO(&readfds);
     FD_SET(inotify, &readfds);
 
-    auto ret = select(inotify + 1, &readfds, NULL, NULL, &timeout);
+    auto ret = select(inotify + 1, &readfds, nullptr, nullptr, &timeout);
 
     if (ret == 0) {
       return CF_ERR("select() timed out");
