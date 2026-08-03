@@ -33,7 +33,6 @@ cf_cc_library(
 cf_cc_test(
     name = "base64_test",
     srcs = ["base64_test.cpp"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/result:result_matchers",
