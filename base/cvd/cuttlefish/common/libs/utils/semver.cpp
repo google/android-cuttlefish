@@ -17,8 +17,11 @@
 #include "cuttlefish/common/libs/utils/semver.h"
 
 #include <regex>
+#include <string_view>
 
 #include "absl/strings/numbers.h"
+
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

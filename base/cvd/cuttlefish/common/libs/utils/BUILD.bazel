@@ -270,7 +270,6 @@ cf_cc_library(
     name = "semver",
     srcs = ["semver.cpp"],
     hdrs = ["semver.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
