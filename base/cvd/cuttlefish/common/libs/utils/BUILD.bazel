@@ -291,7 +291,6 @@ cf_cc_library(
     name = "signals",
     srcs = ["signals.cpp"],
     hdrs = ["signals.h"],
-    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/log:check",
     ],
