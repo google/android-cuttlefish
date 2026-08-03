@@ -16,7 +16,9 @@
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 
 #include <fcntl.h>
+#include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -25,12 +27,15 @@
 #include <cstring>
 #include <ctime>
 #include <limits>
+#include <optional>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "absl/base/log_severity.h"
 #include "absl/log/globals.h"
 #include "absl/log/initialize.h"
 #include "absl/log/log.h"
@@ -42,8 +47,10 @@
 #include "android-base/file.h"
 #include "android-base/macros.h"
 #include "android-base/threads.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/process/proc_file_utils.h"
 #include "cuttlefish/result/result.h"
