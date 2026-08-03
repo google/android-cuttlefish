@@ -133,7 +133,6 @@ cf_cc_library(
 cf_cc_test(
     name = "files_test",
     srcs = ["files_test.cpp"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:are_hard_linked",
