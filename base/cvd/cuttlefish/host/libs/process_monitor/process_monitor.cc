@@ -453,6 +453,7 @@ Result<void> ProcessMonitor::MonitorRoutine() {
   CF_EXPECT(MonitorLoop(running, properties_mutex_,
                         properties_.restart_subprocesses_,
                         properties_.entries_));
+  running.store(false);
   if (child_sock_->IsOpen()) {
     child_sock_->Shutdown(SHUT_RDWR);
   }
