@@ -10,7 +10,6 @@ cf_cc_library(
     name = "archive",
     srcs = ["archive.cpp"],
     hdrs = ["archive.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
