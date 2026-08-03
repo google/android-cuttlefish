@@ -52,6 +52,7 @@ constexpr struct {
   std::string_view init_boot = "init_boot";
   std::string_view metadata = "metadata";
   std::string_view misc = "misc";
+  std::string_view pvmfw = "pvmfw";
   std::string_view super = "super";
   std::string_view userdata = "userdata";
   std::string_view vbmeta = "vbmeta";
@@ -85,6 +86,7 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
   const std::set<std::string_view> ab_partitions = {
       kPartitions.boot,
       kPartitions.init_boot,
+      kPartitions.pvmfw,
       kPartitions.vbmeta,
       kPartitions.vbmeta_system,
       kPartitions.vbmeta_system_dlkm,

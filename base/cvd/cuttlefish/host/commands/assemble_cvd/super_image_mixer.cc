@@ -49,14 +49,23 @@ namespace {
 constexpr char kMiscInfoPath[] = "META/misc_info.txt";
 constexpr char kDynamicPartitionsPath[] = "META/dynamic_partitions_info.txt";
 constexpr std::array kVendorTargetImages = {
-    "IMAGES/boot.img",          "IMAGES/dtbo.img",
-    "IMAGES/init_boot.img",     "IMAGES/odm.img",
-    "IMAGES/odm_dlkm.img",      "IMAGES/recovery.img",
-    "IMAGES/system_dlkm.img",   "IMAGES/userdata.img",
-    "IMAGES/vbmeta.img",        "IMAGES/vbmeta_system_dlkm.img",
-    "IMAGES/vbmeta_vendor.img", "IMAGES/vbmeta_vendor_dlkm.img",
-    "IMAGES/vendor.img",        "IMAGES/vendor_boot.img",
-    "IMAGES/vendor_dlkm.img",   "IMAGES/vendor_kernel_boot.img",
+    "IMAGES/boot.img",
+    "IMAGES/dtbo.img",
+    "IMAGES/init_boot.img",
+    "IMAGES/odm.img",
+    "IMAGES/odm_dlkm.img",
+    "IMAGES/pvmfw.img",
+    "IMAGES/recovery.img",
+    "IMAGES/system_dlkm.img",
+    "IMAGES/userdata.img",
+    "IMAGES/vbmeta.img",
+    "IMAGES/vbmeta_system_dlkm.img",
+    "IMAGES/vbmeta_vendor.img",
+    "IMAGES/vbmeta_vendor_dlkm.img",
+    "IMAGES/vendor.img",
+    "IMAGES/vendor_boot.img",
+    "IMAGES/vendor_dlkm.img",
+    "IMAGES/vendor_kernel_boot.img",
 };
 constexpr std::array kVendorTargetBuildProps = {
     "ODM/build.prop",
