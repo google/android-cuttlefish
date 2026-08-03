@@ -386,7 +386,6 @@ cf_cc_library(
     name = "users",
     srcs = ["users.cpp"],
     hdrs = ["users.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/result",
