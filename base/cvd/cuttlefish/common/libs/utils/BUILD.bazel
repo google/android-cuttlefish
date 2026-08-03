@@ -222,7 +222,6 @@ cf_cc_library(
     name = "json",
     srcs = ["json.cpp"],
     hdrs = ["json.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
