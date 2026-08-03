@@ -182,7 +182,6 @@ cf_cc_library(
     name = "host_info",
     srcs = ["host_info.cpp"],
     hdrs = ["host_info.h"],
-    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/log",
