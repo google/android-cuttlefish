@@ -360,7 +360,6 @@ cf_cc_library(
     name = "unix_sockets",
     srcs = ["unix_sockets.cpp"],
     hdrs = ["unix_sockets.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
