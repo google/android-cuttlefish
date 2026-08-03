@@ -16,7 +16,9 @@
 
 #include "inotify.h"
 
+#include <errno.h>
 #include <limits.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/inotify.h>
 #include <unistd.h>
@@ -32,6 +34,7 @@ std::vector<std::string> GetCreatedFileListFromInotifyFd(int fd) {
   return GetFileListFromInotifyFd(fd, IN_CREATE);
 }
 
+// NOLINTNEXTLINE(misc-include-cleaner): <limits.h>
 #define INOTIFY_MAX_EVENT_SIZE (sizeof(struct inotify_event) + NAME_MAX + 1)
 
 std::vector<std::string> GetFileListFromInotifyFd(int fd, uint32_t mask) {
