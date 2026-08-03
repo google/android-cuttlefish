@@ -16,7 +16,9 @@
 
 #include "cuttlefish/common/libs/utils/environment.h"
 
-#include <cstdlib>
+#include <stdlib.h>
+
+#include <optional>
 #include <string>
 #include <string_view>
 
