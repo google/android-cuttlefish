@@ -1,0 +1,17 @@
+[package]
+name = "v4l2_stream_proxy"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { workspace = true }
+env_logger = { workspace = true }
+libc = { workspace = true }
+log = { workspace = true }
+nix = { workspace = true, features = ["event", "poll"] }
+v4l2r = { workspace = true }
+vhost-user-backend = { workspace = true }
+vhu_media = { workspace = true }
+virtio-media = { workspace = true }
+virtio-queue = { workspace = true }
+vm-memory = { workspace = true }

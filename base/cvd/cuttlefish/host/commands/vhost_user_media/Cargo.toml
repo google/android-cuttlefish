@@ -3,6 +3,7 @@ members = [
     "emulated_camera_mplane",
     "emulated_camera_splane",
     "vhu_media",
+    "v4l2_stream_proxy",
 ]
 
 [workspace.dependencies]
@@ -11,6 +12,7 @@ env_logger = "0.11"
 image = "0.24"
 libc = "0.2"
 log = "0.4"
+nix = "0.29.0"
 thiserror = "2.0"
 v4l2r = { version = "0.0.6", features = ["arch64"] }
 vhost = { version = "0.16.0", features = ["vhost-user-backend"] }
