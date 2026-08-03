@@ -198,7 +198,6 @@ cf_cc_library(
     name = "inotify",
     srcs = ["inotify.cpp"],
     hdrs = ["inotify.h"],
-    include_cleaner_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],
