@@ -280,7 +280,6 @@ cf_cc_library(
 cf_cc_test(
     name = "semver_test",
     srcs = ["semver_test.cpp"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:semver",
         "//cuttlefish/result:result_matchers",
