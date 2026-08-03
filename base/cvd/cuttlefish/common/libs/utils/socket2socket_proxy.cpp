@@ -17,11 +17,9 @@
 #include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
 
 #include <poll.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 
 #include <atomic>
-#include <cstring>
 #include <functional>
 #include <list>
 #include <memory>
@@ -31,6 +29,8 @@
 #include <vector>
 
 #include "absl/log/log.h"
+
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 namespace {
@@ -123,8 +123,11 @@ ProxyServer::ProxyServer(SharedFD server,
     std::list<ProxyPair> watched;
 
     std::vector<PollSharedFd> server_poll = {
+        // NOLINTNEXTLINE(misc-include-cleaner): <poll.h>
         {.fd = server_fd, .events = POLLIN},
-        {.fd = stop_fd_, .events = POLLIN}};
+        // NOLINTNEXTLINE(misc-include-cleaner): <poll.h>
+        {.fd = stop_fd_, .events = POLLIN},
+    };
 
     while (server_fd->IsOpen()) {
       server_poll[SERVER].revents = 0;
@@ -135,11 +138,13 @@ ProxyServer::ProxyServer(SharedFD server,
         LOG(ERROR) << "Failed to poll to wait for incoming connection";
         continue;
       }
+      // NOLINTNEXTLINE(misc-include-cleaner): <poll.h>
       if (server_poll[STOP].revents & POLLIN) {
         // Stop fd is available to read, so we received a stop event
         // and must stop the thread
         break;
       }
+      // NOLINTNEXTLINE(misc-include-cleaner): <poll.h>
       if (!(server_poll[SERVER].revents & POLLIN)) {
         continue;
       }
