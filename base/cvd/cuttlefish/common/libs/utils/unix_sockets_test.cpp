@@ -16,10 +16,15 @@
 
 #include "cuttlefish/common/libs/utils/unix_sockets.h"
 
+#include <stdio.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #include <string>
 #include <utility>
 
 #include "absl/log/check.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
