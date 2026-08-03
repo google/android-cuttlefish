@@ -242,7 +242,6 @@ cf_cc_library(
 cf_cc_test(
     name = "network_test",
     srcs = ["network_test.cpp"],
-    include_cleaner_enabled = False,
     deps = [":network"],
 )
 
