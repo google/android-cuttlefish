@@ -17,14 +17,16 @@
 #include "cuttlefish/common/libs/utils/network.h"
 
 #include <arpa/inet.h>
-#include <fcntl.h>
 #include <ifaddrs.h>
+#include <netinet/in.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/socket.h>
 
 #include <string>
 #include <vector>
 
+#include "fmt/format.h"
 #include "fmt/ranges.h"
 
 namespace cuttlefish {
