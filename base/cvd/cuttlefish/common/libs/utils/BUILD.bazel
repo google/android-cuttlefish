@@ -64,7 +64,6 @@ cf_cc_library(
     name = "device_type",
     srcs = ["device_type.cpp"],
     hdrs = ["device_type.h"],
-    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/strings",
     ],
