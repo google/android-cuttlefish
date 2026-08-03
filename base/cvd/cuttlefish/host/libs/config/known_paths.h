@@ -70,6 +70,7 @@ std::string VhalProxyServerConfig();
 std::string VhostUserInputBinary();
 std::string VhostUserMediaEmulatedCameraSPlaneBinary();
 std::string VhostUserMediaEmulatedCameraMPlaneBinary();
+std::string VhostUserMediaV4l2StreamProxyBinary();
 std::string WebRtcBinary();
 std::string WebRtcSigServerBinary();
 std::string WebRtcSigServerProxyBinary();

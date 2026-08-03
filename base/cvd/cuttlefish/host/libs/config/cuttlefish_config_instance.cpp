@@ -1988,6 +1988,11 @@ CuttlefishConfig::InstanceSpecific::audio_settings() const {
 static constexpr char kMediaConfigs[] = "media_configs";
 static constexpr char kMediaType[] = "type";
 static constexpr char kMediaLensFacing[] = "lens_facing";
+static constexpr char kMediaInputPath[] = "input_path";
+static constexpr char kMediaInputWidth[] = "input_width";
+static constexpr char kMediaInputHeight[] = "input_height";
+static constexpr char kMediaInputFps[] = "input_fps";
+
 std::vector<CuttlefishConfig::MediaConfig>
 CuttlefishConfig::InstanceSpecific::media_configs() const {
   std::vector<MediaConfig> configs;
@@ -1997,6 +2002,22 @@ CuttlefishConfig::InstanceSpecific::media_configs() const {
         static_cast<CuttlefishConfig::MediaType>(json[kMediaType].asInt());
     if (json.isMember(kMediaLensFacing)) {
       config.lens_facing = json[kMediaLensFacing].asString();
+    }
+    if (config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy) {
+      CuttlefishConfig::MediaConfig::V4l2StreamProxyConfig stream_config = {};
+      if (json.isMember(kMediaInputPath)) {
+        stream_config.input_path = json[kMediaInputPath].asString();
+      }
+      if (json.isMember(kMediaInputWidth)) {
+        stream_config.input_width = json[kMediaInputWidth].asInt();
+      }
+      if (json.isMember(kMediaInputHeight)) {
+        stream_config.input_height = json[kMediaInputHeight].asInt();
+      }
+      if (json.isMember(kMediaInputFps)) {
+        stream_config.input_fps = json[kMediaInputFps].asString();
+      }
+      config.v4l2_stream_proxy = stream_config;
     }
     configs.emplace_back(config);
   }
@@ -2011,6 +2032,13 @@ void CuttlefishConfig::MutableInstanceSpecific::set_media_configs(
     Json::Value json(Json::objectValue);
     json[kMediaType] = static_cast<int>(config.type);
     json[kMediaLensFacing] = config.lens_facing;
+    if (config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy &&
+        config.v4l2_stream_proxy.has_value()) {
+      json[kMediaInputPath] = config.v4l2_stream_proxy->input_path;
+      json[kMediaInputWidth] = config.v4l2_stream_proxy->input_width;
+      json[kMediaInputHeight] = config.v4l2_stream_proxy->input_height;
+      json[kMediaInputFps] = config.v4l2_stream_proxy->input_fps;
+    }
     configs_json.append(json);
   }
 

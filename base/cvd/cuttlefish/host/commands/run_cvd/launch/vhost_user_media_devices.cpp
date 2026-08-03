@@ -17,6 +17,7 @@
 
 #include <fcntl.h>
 
+#include <optional>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -67,23 +68,44 @@ class VhostUserMediaDevices : public CommandSource {
     for (int index = 0; index < instance_.media_configs().size(); index++) {
       auto config = instance_.media_configs()[index];
       std::string binary_path;
+      std::optional<Command> cmd;
       if (config.type ==
           CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane) {
         binary_path = VhostUserMediaEmulatedCameraMPlaneBinary();
+        cmd.emplace(NewCommand(binary_path, instance_.media_socket_path(index),
+                               config.lens_facing));
       } else if (config.type ==
                  CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane) {
         binary_path = VhostUserMediaEmulatedCameraSPlaneBinary();
+        cmd.emplace(NewCommand(binary_path, instance_.media_socket_path(index),
+                               config.lens_facing));
+      } else if (config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy) {
+        CF_EXPECT(config.v4l2_stream_proxy.has_value(),
+                  "Missing v4l2_stream_proxy config");
+        binary_path = VhostUserMediaV4l2StreamProxyBinary();
+        cmd.emplace(
+            NewCommand(binary_path, instance_.media_socket_path(index), ""));
+        cmd->AddParameter("--input_path=",
+                          config.v4l2_stream_proxy->input_path);
+        cmd->AddParameter(
+            "--input_width=",
+            std::to_string(config.v4l2_stream_proxy->input_width));
+        cmd->AddParameter(
+            "--input_height=",
+            std::to_string(config.v4l2_stream_proxy->input_height));
+        cmd->AddParameter("--input_fps=", config.v4l2_stream_proxy->input_fps);
       } else if (config.type == CuttlefishConfig::MediaType::kV4l2Proxy) {
         continue;
       } else {
         CF_EXPECT(false, "unknown media type");
       }
-      Command cmd = NewCommand(binary_path, instance_.media_socket_path(index),
-                               config.lens_facing);
+
+      CF_EXPECT(cmd.has_value(), "Command was not initialized");
+
       Command cmd_log_tee = CF_EXPECT(
-          log_tee_.CreateLogTee(cmd, "vhu_media_simple_device", kStdErr),
+          log_tee_.CreateLogTee(*cmd, "vhu_media_simple_device", kStdErr),
           "Failed to create log tee command for media device");
-      commands.emplace_back(std::move(cmd));
+      commands.emplace_back(std::move(*cmd));
       commands.emplace_back(std::move(cmd_log_tee));
     }
     return commands;
