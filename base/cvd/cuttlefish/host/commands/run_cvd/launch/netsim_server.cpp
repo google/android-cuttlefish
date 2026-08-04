@@ -145,8 +145,16 @@ class NetsimServer : public CommandSource {
     }
 
     // Add parameters from passthrough option --netsim-args.
-    for (auto const& arg : config_.netsim_args()) {
-      netsimd.AddParameter(arg);
+    // NETSIM_GRPC_PORT is extracted and injected as an environment variable;
+    // all other options are passed as command-line arguments.
+    for (const std::string& arg : config_.netsim_args()) {
+      if (arg.starts_with("NETSIM_GRPC_PORT=")) {
+        const std::string::size_type equals_pos = arg.find('=');
+        netsimd.AddEnvironmentVariable(arg.substr(0, equals_pos),
+                                       arg.substr(equals_pos + 1));
+      } else {
+        netsimd.AddParameter(arg);
+      }
     }
 
     // Add command for forwarding the HCI port to a vsock server.
