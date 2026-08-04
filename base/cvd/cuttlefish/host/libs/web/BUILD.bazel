@@ -259,3 +259,12 @@ cf_cc_library(
         "//cuttlefish/result:result_type",
     ],
 )
+
+cf_cc_test(
+    name = "parse_time_test",
+    srcs = ["parse_time_test.cc"],
+    deps = [
+        "//cuttlefish/host/libs/web:parse_time",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
