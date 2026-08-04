@@ -90,10 +90,30 @@ func main() {
 			slices.Collect(maps.Keys(sourceImageMap[arch.GceArch()])))
 	}
 
+	h, err := gce.NewGceHelper(project, zone)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sourceImage := sourceImageMap[arch.GceArch()][debianVersion]
+	if srcExists, err := h.ImageExists(debianSourceImageProject, sourceImage); err != nil || !srcExists {
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Fatalf("source image %q does not exist in project %q", sourceImage, debianSourceImageProject)
+	}
+
+	if exists, err := h.ImageExists(project, imageName); err != nil || exists {
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Fatalf("image %q already exists in project %q", imageName, project)
+	}
+
 	buildImageOpts := gce.BuildImageOpts{
 		Arch:               arch.GceArch(),
 		SourceImageProject: debianSourceImageProject,
-		SourceImage:        sourceImageMap[arch.GceArch()][debianVersion],
+		SourceImage:        sourceImage,
 		ImageName:          imageName,
 		ModifyFunc: func(project, zone, insName string) error {
 			if err := gce.UploadBashScript(project, zone, insName, "install_kernel_main.sh", scripts.InstallKernelMain); err != nil {
@@ -103,10 +123,6 @@ func main() {
 		},
 	}
 
-	h, err := gce.NewGceHelper(project, zone)
-	if err != nil {
-		log.Fatal(err)
-	}
 	if err := h.BuildImage(project, zone, buildImageOpts); err != nil {
 		log.Fatal(err)
 	}

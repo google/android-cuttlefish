@@ -65,6 +65,25 @@ func main() {
 		log.Fatal("usage: `-image-name` must not be empty")
 	}
 
+	h, err := gce.NewGceHelper(project, zone)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if srcExists, err := h.ImageExists(sourceImageProject, sourceImage); err != nil || !srcExists {
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Fatalf("source image %q does not exist in project %q", sourceImage, sourceImageProject)
+	}
+
+	if exists, err := h.ImageExists(project, imageName); err != nil || exists {
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Fatalf("image %q already exists in project %q", imageName, project)
+	}
+
 	buildImageOpts := gce.BuildImageOpts{
 		Arch:               arch.GceArch(),
 		SourceImageProject: sourceImageProject,
@@ -81,10 +100,6 @@ func main() {
 		},
 	}
 
-	h, err := gce.NewGceHelper(project, zone)
-	if err != nil {
-		log.Fatal(err)
-	}
 	if err := h.BuildImage(project, zone, buildImageOpts); err != nil {
 		log.Fatal(err)
 	}
