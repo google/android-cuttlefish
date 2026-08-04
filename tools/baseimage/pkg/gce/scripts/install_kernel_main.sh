@@ -27,13 +27,21 @@ arch=$(uname -m)
 [ "${arch}" = "aarch64" ] && arch=arm64
 
 sudo apt-get update
+sudo chroot /mnt/image /usr/bin/apt-get update
+
+if ! sudo chroot /mnt/image /usr/bin/apt-get install --dry-run \
+    "${linux_image_deb}" > /dev/null; then
+  echo "CREATE IMAGE FAILED!!!"
+  echo "Package not found: ${linux_image_deb}"
+  exit 1
+fi
+
 sudo apt-get upgrade -y
 
 version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 )
 echo "START VERSION: ${version}"
 
-sudo chroot /mnt/image /usr/bin/apt-get update
 sudo chroot /mnt/image /usr/bin/apt-get dist-upgrade -y
 
 version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
