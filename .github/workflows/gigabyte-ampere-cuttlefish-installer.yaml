@@ -301,6 +301,9 @@ jobs:
       run: |
         screen -d -m -L -Logfile console_001.log ./installer-iso-run-qemu.sh
         while ! egrep "[^[:space:]]+[[:space:]]login:" console_001.log; do sleep 30; done
+        # The login prompt appears before the system is usable, so wait for the
+        # boot to complete. "degraded" means booted with some unit failed.
+        until sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o "ConnectTimeout 60" -p 33322 vsoc-01@localhost 'systemctl is-system-running | grep -qE "running|degraded"'; do sleep 30; done
         cp -f console_001.log console_001_p1.log
         CONSOLELINES=$(cat console_001_p1.log | wc -l)
         cat console_001_p1.log
@@ -381,6 +384,9 @@ jobs:
       run: |
         screen -d -m -L -Logfile console_001.log ./installer-iso-run-qemu.sh
         while ! egrep "[^[:space:]]+[[:space:]]login:" console_001.log; do sleep 30; done
+        # The login prompt appears before the system is usable, so wait for the
+        # boot to complete. "degraded" means booted with some unit failed.
+        until sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -o "ConnectTimeout 60" -p 33322 vsoc-01@localhost 'systemctl is-system-running | grep -qE "running|degraded"'; do sleep 30; done
         cp -f console_001.log console_001_p1.log
         CONSOLELINES=$(cat console_001_p1.log | wc -l)
         cat console_001_p1.log
