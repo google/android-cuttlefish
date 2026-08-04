@@ -56,7 +56,7 @@ jobs:
         nvidia_gpu: ["true", "false"]
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Check preseed after install script
       uses: ./.github/actions/gigabyte-ampere-cuttlefish-installer-check-preseed-after-install-script
       with:
@@ -72,11 +72,11 @@ jobs:
       image: debian@sha256:13f29b6806e531c3ff3b565bb6eed73f2132506c8c9d41bb996065ca20fb27f2 # debian:trixie-20260223 (amd64)
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Build iso installer
       uses: ./.github/actions/build-gigabyte-ampere-cuttlefish-installer
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: gigabyte-ampere-cuttlefish-installer-artifacts
         path: gigabyte-ampere-cuttlefish-installer/preseed-mini.iso.xz
@@ -93,9 +93,9 @@ jobs:
       TEST_DISK_SIZE: "10G"
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cuttlefish-installer-artifacts
     - name: Prepare test environment
@@ -137,9 +137,9 @@ jobs:
         working-directory: ./gigabyte-ampere-cuttlefish-installer
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cuttlefish-installer-artifacts
     - name: Prepare test environment
@@ -185,9 +185,9 @@ jobs:
         working-directory: ./gigabyte-ampere-cuttlefish-installer
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cuttlefish-installer-artifacts
     - name: Prepare test environment
@@ -233,9 +233,9 @@ jobs:
         working-directory: ./gigabyte-ampere-cuttlefish-installer
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cuttlefish-installer-artifacts
     - name: Prepare test environment
@@ -281,9 +281,9 @@ jobs:
         working-directory: ./gigabyte-ampere-cuttlefish-installer
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cuttlefish-installer-artifacts
     - name: Prepare test environment
@@ -361,9 +361,9 @@ jobs:
         working-directory: ./gigabyte-ampere-cuttlefish-installer
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cuttlefish-installer-artifacts
     - name: Prepare test environment
