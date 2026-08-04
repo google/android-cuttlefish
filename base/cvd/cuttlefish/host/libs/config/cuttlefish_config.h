@@ -928,4 +928,6 @@ bool VmManagerIsCrosvm(const CuttlefishConfig&);
 bool VmManagerIsQemu(const CuttlefishConfig&);
 bool VmManagerIsGem5(const CuttlefishConfig&);
 
+bool EnableNetsimNfc(const CuttlefishConfig& config);
+
 }  // namespace cuttlefish
