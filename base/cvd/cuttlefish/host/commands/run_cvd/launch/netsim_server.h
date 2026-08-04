@@ -17,12 +17,14 @@
 
 #include "fruit/fruit.h"
 
+#include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 GrpcSocketCreator>>
 NetsimServerComponent();
 
 }  // namespace cuttlefish
