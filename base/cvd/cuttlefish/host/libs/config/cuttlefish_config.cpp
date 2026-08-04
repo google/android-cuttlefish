@@ -692,6 +692,10 @@ std::vector<std::string> CuttlefishConfig::environment_dirs() const {
   return result;
 }
 
+bool EnableNetsimNfc(const CuttlefishConfig& config) {
+  return config.enable_host_nfc() && !config.enable_host_nfc_connector();
+}
+
 bool VmManagerIsCrosvm(const CuttlefishConfig& config) {
   return VmManagerIsCrosvm(config.vm_manager());
 }
