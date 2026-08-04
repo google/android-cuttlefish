@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os/exec"
 	"path"
 	"strings"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
 	"google.golang.org/api/compute/v1"
+	"google.golang.org/api/googleapi"
 )
 
 type Arch int
@@ -246,6 +248,30 @@ func (h *GceHelper) CreateImage(ins, disk, name string) error {
 	return h.waitForGlobalOperation(op)
 }
 
+func (h *GceHelper) ImageExists(project, name string) (bool, error) {
+	_, err := h.Service.Images.Get(project, name).Do()
+	if err != nil {
+		var apiErr *googleapi.Error
+		if errors.As(err, &apiErr) && apiErr.Code == http.StatusNotFound {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (h *GceHelper) DiskExists(project, zone, name string) (bool, error) {
+	_, err := h.Service.Disks.Get(project, zone, name).Do()
+	if err != nil {
+		var apiErr *googleapi.Error
+		if errors.As(err, &apiErr) && apiErr.Code == http.StatusNotFound {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 type BuildImageOpts struct {
 	Arch                   Arch
 	SourceImageProject     string
@@ -260,6 +286,12 @@ const BuildImageMountPoint = "/mnt/image"
 func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error {
 	insName := opts.ImageName
 	attachedDiskName := fmt.Sprintf("%s-attached-disk", insName)
+	if diskExists, err := h.DiskExists(project, zone, attachedDiskName); err != nil || diskExists {
+		if err != nil {
+			return fmt.Errorf("failed to check if disk %q exists: %w", attachedDiskName, err)
+		}
+		return fmt.Errorf("disk %q already exists in project %q zone %q", attachedDiskName, project, zone)
+	}
 
 	log.Println("creating instance...")
 	inst, err := h.CreateInstance(insName, opts.Arch)
