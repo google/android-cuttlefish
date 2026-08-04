@@ -27,5 +27,9 @@ TEST(ParseTimeTest, WithMilliseconds) {
   EXPECT_THAT(ParseTime("2026-08-03T11:56:20.100Z"), IsOk());
 }
 
+TEST(ParseTimeTest, WithoutMilliseconds) {
+  EXPECT_THAT(ParseTime("2026-08-03T11:56:20Z"), IsOk());
+}
+
 }  // namespace
 }  // namespace cuttlefish
