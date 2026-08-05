@@ -223,7 +223,6 @@ cf_cc_library(
     name = "build_archive",
     srcs = ["build_archive.cc"],
     hdrs = ["build_archive.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:file_exists",
@@ -242,8 +241,6 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:str_format",
-        "@fmt",
     ],
 )
 
