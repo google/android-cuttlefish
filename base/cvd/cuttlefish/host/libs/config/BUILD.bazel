@@ -343,13 +343,10 @@ cf_cc_library(
     name = "instance_nums",
     srcs = ["instance_nums.cpp"],
     hdrs = ["instance_nums.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
         "@gflags",
     ],
