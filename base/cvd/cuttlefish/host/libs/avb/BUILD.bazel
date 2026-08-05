@@ -22,7 +22,6 @@ cf_cc_library(
     name = "parser",
     srcs = ["parser.cc"],
     hdrs = ["parser.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:read_exact",
