@@ -4,11 +4,11 @@
 
 set -o errexit
 
-URL=https://ci.android.com/builds/latest/branches/aosp-android-latest-release/targets/aosp_cf_arm64_only_phone-userdebug/view/BUILD_INFO
-RURL=$(curl -Ls -o /dev/null -w %{url_effective} ${URL})
-echo "RURL = ${RURL}"
-
-BUILD_ID=$(echo "${RURL}" | sed -n 's/.*\/builds\/submitted\/\([^\/]*\)\/.*/\1/p')
+BRANCH=aosp-android-latest-release
+TARGET=aosp_cf_arm64_only_phone-userdebug
+BUILD_ID=$(curl -fsS \
+    "https://ci.android.com/builds/branches/${BRANCH}/targets/${TARGET}/status.json" \
+    | sed -n 's/.*[{,[:space:]]"last_known_good_build"[[:space:]]*:[[:space:]]*"\([0-9][0-9]*\)".*/\1/p')
 echo "BUILD_ID = ${BUILD_ID}"
 
 if [[ -z "${BUILD_ID}" ]]; then
@@ -19,12 +19,9 @@ fi
 FILENAME="aosp_cf_arm64_only_phone-img-${BUILD_ID}.zip"
 echo "FILENAME = ${FILENAME}"
 
-if [[ -z "${FILENAME}" ]]; then
-    echo "Error: FILENAME empty."
-    exit 1
-fi
+RAWURL="https://ci.android.com/builds/submitted/${BUILD_ID}/${TARGET}/latest/raw"
 
-wget -nv -c ${RURL%/view/BUILD_INFO}/raw/${FILENAME}
-wget -nv -c ${RURL%/view/BUILD_INFO}/raw/cvd-host_package.tar.gz
+wget -nv -c ${RAWURL}/${FILENAME}
+wget -nv -c ${RAWURL}/cvd-host_package.tar.gz
 
 exit 0
