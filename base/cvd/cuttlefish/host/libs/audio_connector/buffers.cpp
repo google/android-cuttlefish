@@ -15,7 +15,13 @@
 
 #include "cuttlefish/host/libs/audio_connector/buffers.h"
 
+#include <stdint.h>
+
+#include <utility>
+
 #include "absl/log/check.h"
+
+#include "cuttlefish/host/libs/audio_connector/shm_layout.h"
 
 namespace cuttlefish {
 
