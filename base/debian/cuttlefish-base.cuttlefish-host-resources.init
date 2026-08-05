@@ -88,7 +88,7 @@ start_dnsmasq() {
 # $1 = interface to stop on
 stop_dnsmasq() {
     if [ -f /var/run/cuttlefish-dnsmasq-"${1}".pid ]; then
-        kill $(cat /var/run/cuttlefish-dnsmasq-"${1}".pid)
+        kill "$(cat /var/run/cuttlefish-dnsmasq-"${1}".pid)"
     fi
 }
 
