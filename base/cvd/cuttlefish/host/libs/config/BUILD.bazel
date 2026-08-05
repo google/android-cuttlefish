@@ -148,7 +148,6 @@ cf_cc_library(
     name = "data_image",
     srcs = ["data_image.cpp"],
     hdrs = ["data_image.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -167,7 +166,6 @@ cf_cc_library(
         "//cuttlefish/process:execute",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )
