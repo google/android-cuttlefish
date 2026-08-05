@@ -23,7 +23,6 @@ cf_cc_library(
     name = "config_flag",
     srcs = ["config_flag.cpp"],
     hdrs = ["config_flag.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:files",
@@ -32,7 +31,6 @@ cf_cc_library(
         "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/flag_parser",
-        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
