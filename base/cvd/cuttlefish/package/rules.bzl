@@ -37,8 +37,8 @@ def _remove_prefix(path, path_prefix):
 #
 # Example:
 #   _get_relative_path_for_link(
-#       link_target_path = "cuttlefish-common/bin/graphics_detector",
-#       link_path = "cuttlefish-common/bin/aarch64-linux-gnu/gfxstream_graphics_detector",
+#       link_target_path = "bin/graphics_detector",
+#       link_path = "bin/aarch64-linux-gnu/gfxstream_graphics_detector",
 #   ) == "../graphics_detector"
 def _get_relative_path_for_link(link_target_path, link_path):
     common_path = _get_common_prefix([link_target_path, link_path])
@@ -57,7 +57,7 @@ def _package_files_impl(ctx):
     path_to_declared_file = dict()
 
     for (dst, src) in ctx.attr.package_file_to_src.items():
-        out_file = ctx.actions.declare_file(dst)
+        out_file = ctx.actions.declare_file(ctx.attr.base_dir + '/' + dst)
 
         path_to_declared_file[dst] = out_file
 
@@ -74,7 +74,7 @@ def _package_files_impl(ctx):
         )
 
     for (dst, target) in ctx.attr.package_file_symlink_to_package_file.items():
-        dst_file = ctx.actions.declare_file(dst)
+        dst_file = ctx.actions.declare_file(ctx.attr.base_dir + '/' + dst)
 
         default_outputs.append(dst_file)
 
@@ -103,6 +103,7 @@ def _package_files_impl(ctx):
 
 package_files = rule(
     attrs = {
+        "base_dir": attr.string(),
         "executable": attr.string(),
         "package_file_to_src": attr.string_keyed_label_dict(
             doc = "File paths within the generated package archive to the target providing the file.",
