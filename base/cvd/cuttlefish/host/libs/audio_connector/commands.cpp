@@ -15,8 +15,11 @@
 
 #include "cuttlefish/host/libs/audio_connector/commands.h"
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include <algorithm>
-#include <cstdint>
+#include <span>
 #include <vector>
 
 #include "absl/log/check.h"

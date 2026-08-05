@@ -15,15 +15,25 @@
 
 #include "cuttlefish/host/libs/audio_connector/server.h"
 
-#include <fcntl.h>
-#include <strings.h>
-#include <unistd.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
+#include <functional>
+#include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/audio_connector/buffers.h"
+#include "cuttlefish/host/libs/audio_connector/commands.h"
+#include "cuttlefish/host/libs/audio_connector/shm_layout.h"
 
 namespace cuttlefish {
 
@@ -440,9 +450,9 @@ bool AudioClientConnection::CmdReply(AudioStatus status, const void* data,
       .code = Le32(static_cast<uint32_t>(status)),
   };
   std::vector<uint8_t> buffer(sizeof(vio_status) + size, 0);
-  std::memcpy(buffer.data(), &vio_status, sizeof(vio_status));
+  memcpy(buffer.data(), &vio_status, sizeof(vio_status));
   if (data) {
-    std::memcpy(buffer.data() + sizeof(vio_status), data, size);
+    memcpy(buffer.data() + sizeof(vio_status), data, size);
   }
   auto status_sent = control_socket_->Send(buffer.data(), buffer.size(), 0);
   if (status_sent < sizeof(vio_status) + size) {
