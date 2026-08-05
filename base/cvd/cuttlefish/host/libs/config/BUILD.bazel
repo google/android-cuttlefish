@@ -66,7 +66,6 @@ cf_cc_library(
     name = "config_utils",
     srcs = ["config_utils.cpp"],
     hdrs = ["config_utils.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
@@ -76,7 +75,6 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/process:execute",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
