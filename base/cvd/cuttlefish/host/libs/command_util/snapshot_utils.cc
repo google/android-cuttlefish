@@ -16,16 +16,20 @@
 
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 
-#include <unistd.h>
-#include <utime.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <time.h>
 
-#include <cstdlib>
-#include <cstring>
+#include <functional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
+#include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/strip.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -35,6 +39,7 @@
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/posix/realpath.h"
 #include "cuttlefish/posix/symlink.h"

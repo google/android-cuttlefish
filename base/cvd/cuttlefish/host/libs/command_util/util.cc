@@ -16,12 +16,14 @@
 
 #include "cuttlefish/host/libs/command_util/util.h"
 
+#include <errno.h>
 #include <stdint.h>
-#include <sys/time.h>
+#include <sys/time.h>  // IWYU pragma: keep: timeval
 #include <sys/types.h>
 
 #include <optional>
 #include <string>
+#include <utility>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -144,6 +146,7 @@ Result<void> WaitForRead(SharedFD monitor_socket, const int timeout_seconds) {
   // Perform a select with a timeout to guard against launcher hanging
   SharedFDSet read_set;
   read_set.Set(monitor_socket);
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/time.h>
   struct timeval timeout = {timeout_seconds, 0};
   int select_result = Select(&read_set, nullptr, nullptr,
                              timeout_seconds <= 0 ? nullptr : &timeout);
