@@ -21,6 +21,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "cuttlefish/common/libs/utils/flags_validator.h"
+#pragma once
 
 #include <string>
 
-#include "cuttlefish/result/expect.h"
-#include "cuttlefish/result/result_type.h"
-
 namespace cuttlefish {
-Result<void> ValidateSetupWizardMode(const std::string& setupwizard_mode) {
-  // One of DISABLED,OPTIONAL,REQUIRED
-  bool result = setupwizard_mode == "DISABLED" ||
-                setupwizard_mode == "OPTIONAL" ||
-                setupwizard_mode == "REQUIRED";
 
-  CF_EXPECT(result == true, "Invalid value for setupwizard_mode config");
-  return {};
-}
+bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
 
 }  // namespace cuttlefish

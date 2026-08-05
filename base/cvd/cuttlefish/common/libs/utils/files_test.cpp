@@ -15,8 +15,12 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 
+#include <stdlib.h>
+#include <unistd.h>
+
 #include <fstream>
 #include <string>
+#include <vector>
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/strings/str_cat.h"

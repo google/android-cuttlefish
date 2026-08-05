@@ -17,9 +17,10 @@
 
 #include <string>
 
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 Result<void> ValidateSetupWizardMode(const std::string& setupwizard_mode);
+
 }  // namespace cuttlefish

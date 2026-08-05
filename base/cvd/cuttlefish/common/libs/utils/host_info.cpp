@@ -16,6 +16,7 @@
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/utsname.h>

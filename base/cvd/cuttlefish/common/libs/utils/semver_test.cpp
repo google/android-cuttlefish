@@ -16,8 +16,7 @@
 
 #include "cuttlefish/common/libs/utils/semver.h"
 
-#include <string>
-
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "cuttlefish/result/result_matchers.h"

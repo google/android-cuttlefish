@@ -16,18 +16,15 @@
 
 #include "cuttlefish/common/libs/utils/is_google_corp.h"
 
-#include <string>
-#include <string_view>
-
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_exists.h"
 
 namespace cuttlefish {
 namespace {
 
-constexpr std::string_view kGoogleCorpDir = "/google";
+constexpr char kGoogleCorpDir[] = "/google";
 
 }  // namespace
 
-bool IsGoogleCorp() { return DirectoryExists(std::string(kGoogleCorpDir)); }
+bool IsGoogleCorp() { return DirectoryExists(kGoogleCorpDir); }
 
 }  // namespace cuttlefish

@@ -10,7 +10,6 @@ cf_cc_library(
     name = "archive",
     srcs = ["archive.cpp"],
     hdrs = ["archive.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
@@ -24,7 +23,6 @@ cf_cc_library(
     name = "base64",
     srcs = ["base64.cpp"],
     hdrs = ["base64.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
@@ -35,7 +33,6 @@ cf_cc_library(
 cf_cc_test(
     name = "base64_test",
     srcs = ["base64_test.cpp"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/result:result_matchers",
@@ -53,7 +50,7 @@ cf_cc_library(
     srcs = ["container.cpp"],
     hdrs = ["container.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_exists",
     ],
 )
@@ -67,7 +64,6 @@ cf_cc_library(
     name = "device_type",
     srcs = ["device_type.cpp"],
     hdrs = ["device_type.h"],
-    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/strings",
     ],
@@ -77,7 +73,6 @@ cf_cc_library(
     name = "disk_usage",
     srcs = ["disk_usage.cpp"],
     hdrs = ["disk_usage.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
@@ -96,13 +91,11 @@ cf_cc_library(
         "environment.h",
         "known_paths.h",
     ],
-    include_cleaner_enabled = False,
 )
 
 cf_cc_test(
     name = "environment_test",
     srcs = ["environment_test.cpp"],
-    include_cleaner_enabled = False,
     deps = [
         ":environment",
         "@abseil-cpp//absl/cleanup",
@@ -113,7 +106,6 @@ cf_cc_library(
     name = "files",
     srcs = ["files.cpp"],
     hdrs = ["files.h"],
-    include_cleaner_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",  # SEEK_DATA
     ],
@@ -124,9 +116,11 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/files:copy",
         "//cuttlefish/files:directory_contents",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_device_id",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:link_or_copy",
+        "//cuttlefish/posix:realpath",
         "//cuttlefish/posix:rename",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
@@ -141,7 +135,6 @@ cf_cc_library(
 cf_cc_test(
     name = "files_test",
     srcs = ["files_test.cpp"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:are_hard_linked",
@@ -158,9 +151,9 @@ cf_cc_library(
     name = "flags_validator",
     srcs = ["flags_validator.cpp"],
     hdrs = ["flags_validator.h"],
-    include_cleaner_enabled = False,
     deps = [
-        "//cuttlefish/result",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
 )
 
@@ -188,7 +181,6 @@ cf_cc_library(
     name = "host_info",
     srcs = ["host_info.cpp"],
     hdrs = ["host_info.h"],
-    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/log",
@@ -206,7 +198,6 @@ cf_cc_library(
     name = "inotify",
     srcs = ["inotify.cpp"],
     hdrs = ["inotify.h"],
-    include_cleaner_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],
@@ -220,7 +211,7 @@ cf_cc_library(
     srcs = ["is_google_corp.cpp"],
     hdrs = ["is_google_corp.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
     ],
 )
 
@@ -228,7 +219,6 @@ cf_cc_library(
     name = "json",
     srcs = ["json.cpp"],
     hdrs = ["json.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
@@ -240,7 +230,6 @@ cf_cc_library(
     name = "network",
     srcs = ["network.cpp"],
     hdrs = ["network.h"],
-    include_cleaner_enabled = False,
     deps = [
         "@fmt",
     ],
@@ -249,7 +238,6 @@ cf_cc_library(
 cf_cc_test(
     name = "network_test",
     srcs = ["network_test.cpp"],
-    include_cleaner_enabled = False,
     deps = [":network"],
 )
 
@@ -277,7 +265,6 @@ cf_cc_library(
     name = "semver",
     srcs = ["semver.cpp"],
     hdrs = ["semver.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
@@ -287,7 +274,6 @@ cf_cc_library(
 cf_cc_test(
     name = "semver_test",
     srcs = ["semver_test.cpp"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:semver",
         "//cuttlefish/result:result_matchers",
@@ -298,7 +284,6 @@ cf_cc_library(
     name = "signals",
     srcs = ["signals.cpp"],
     hdrs = ["signals.h"],
-    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/log:check",
     ],
@@ -313,7 +298,6 @@ cf_cc_library(
     name = "socket2socket_proxy",
     srcs = ["socket2socket_proxy.cpp"],
     hdrs = ["socket2socket_proxy.h"],
-    include_cleaner_enabled = False,
     target_compatible_with = [
         "@platforms//os:linux",
     ],
@@ -327,13 +311,13 @@ cf_cc_library(
     name = "tee_logging",
     srcs = ["tee_logging.cpp"],
     hdrs = ["tee_logging.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/base:log_severity",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:globals",
         "@abseil-cpp//absl/log:initialize",
@@ -342,6 +326,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log:log_sink_registry",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
+        "@fmt",
     ],
 )
 
@@ -367,7 +352,6 @@ cf_cc_library(
     name = "unix_sockets",
     srcs = ["unix_sockets.cpp"],
     hdrs = ["unix_sockets.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
@@ -379,7 +363,6 @@ cf_cc_library(
 cf_cc_test(
     name = "unix_sockets_test",
     srcs = ["unix_sockets_test.cpp"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:unix_sockets",
@@ -392,7 +375,6 @@ cf_cc_library(
     name = "users",
     srcs = ["users.cpp"],
     hdrs = ["users.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/result",
@@ -419,7 +401,6 @@ cf_cc_library(
     name = "wait_for_file",
     srcs = ["wait_for_file.cc"],
     hdrs = ["wait_for_file.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:inotify",
@@ -433,8 +414,8 @@ cf_cc_library(
     name = "wait_for_unix_socket",
     srcs = ["wait_for_unix_socket.cpp"],
     hdrs = ["wait_for_unix_socket.h"],
-    include_cleaner_enabled = False,
     deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:wait_for_file",
         "//cuttlefish/process:command",
