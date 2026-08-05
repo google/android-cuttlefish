@@ -330,12 +330,10 @@ cf_cc_library(
     name = "host_tools_version",
     srcs = ["host_tools_version.cpp"],
     hdrs = ["host_tools_version.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:directory_exists",
         "//cuttlefish/host/libs/config:config_utils",
-        "//libbase",
         "@abseil-cpp//absl/log:check",
         "@zlib",
     ],
