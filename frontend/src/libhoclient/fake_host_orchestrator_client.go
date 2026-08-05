@@ -182,7 +182,7 @@ func (c *FakeHostOrchestratorClient) createFakeCVDs(total int) ([]*hoapi.CVD, er
 			Group:          fmt.Sprintf("cvd-%d", id),
 			Name:           fmt.Sprintf("%d", id),
 			Status:         "Running",
-			Displays:       []string{"720 x 1280 (320)"},
+			Displays:       []string{"720 x 1348 ( 280 )"},
 			WebRTCDeviceID: fmt.Sprintf("cvd-%d-%d", id, id),
 			ADBSerial:      fmt.Sprintf("0.0.0.0:%d", 6520+id-1),
 		}
