@@ -18,9 +18,12 @@
 #include "cuttlefish/host/libs/avb/avb.h"
 
 #include <fcntl.h>
+#include <stddef.h>
+#include <sys/types.h>
 
-#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
