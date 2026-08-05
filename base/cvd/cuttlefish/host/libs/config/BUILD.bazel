@@ -412,11 +412,9 @@ cf_cc_library(
     name = "openwrt_args",
     srcs = ["openwrt_args.cpp"],
     hdrs = ["openwrt_args.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvdalloc:interface",
         "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )
