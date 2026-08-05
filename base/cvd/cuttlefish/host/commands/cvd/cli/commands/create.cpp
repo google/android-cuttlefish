@@ -66,6 +66,7 @@
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/posix/realpath.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"

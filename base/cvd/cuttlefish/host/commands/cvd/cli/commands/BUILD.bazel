@@ -385,6 +385,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/log_names",
         "//cuttlefish/host/libs/metrics:device_metrics_orchestration",
+        "//cuttlefish/posix:remove",
         "//cuttlefish/posix:symlink",
         "//cuttlefish/process:command",
         "//cuttlefish/result",

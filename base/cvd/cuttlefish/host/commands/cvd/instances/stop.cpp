@@ -40,6 +40,7 @@
 #include "cuttlefish/host/commands/cvd/instances/run_cvd_proc_collector.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"

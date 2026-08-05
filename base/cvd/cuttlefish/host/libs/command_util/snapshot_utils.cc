@@ -37,6 +37,7 @@
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/posix/realpath.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
 

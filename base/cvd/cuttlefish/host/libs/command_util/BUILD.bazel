@@ -43,6 +43,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/posix:readlink",
         "//cuttlefish/posix:realpath",
+        "//cuttlefish/posix:remove",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
