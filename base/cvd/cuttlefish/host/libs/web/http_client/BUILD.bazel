@@ -69,6 +69,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs:shared_fd_stream",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/posix:remove",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
     ],

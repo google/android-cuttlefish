@@ -60,6 +60,7 @@
 #include "cuttlefish/files/link_or_copy.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/posix/realpath.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -267,14 +268,6 @@ Result<std::string> RenameFile(const std::string& current_filepath,
     CF_EXPECT(Rename(current_filepath, target_filepath));
   }
   return target_filepath;
-}
-
-Result<void> RemoveFile(const std::string& file) {
-  VLOG(0) << "Removing file " << file;
-  if (remove(file.c_str()) != 0) {
-    return CF_ERRF("Failed to remove file '{}' : {}", file, StrError(errno));
-  }
-  return {};
 }
 
 std::string ReadFile(const std::string& file) {
