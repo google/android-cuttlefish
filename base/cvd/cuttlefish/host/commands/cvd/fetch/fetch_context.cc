@@ -44,6 +44,7 @@
 #include "cuttlefish/host/libs/web/build_api_zip.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

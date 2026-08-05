@@ -198,6 +198,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:build_api_zip",
         "//cuttlefish/host/libs/zip:zip_file",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//cuttlefish/posix:remove",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",

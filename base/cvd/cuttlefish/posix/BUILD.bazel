@@ -53,3 +53,15 @@ cf_cc_library(
         "//cuttlefish/result:result_type",
     ],
 )
+
+cf_cc_library(
+    name = "remove",
+    srcs = ["remove.cc"],
+    hdrs = ["remove.h"],
+    deps = [
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
+    ],
+)

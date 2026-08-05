@@ -29,6 +29,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd_stream.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
