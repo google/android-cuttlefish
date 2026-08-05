@@ -457,13 +457,10 @@ cf_cc_library(
     name = "media",
     srcs = ["media.cpp"],
     hdrs = ["media.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )
