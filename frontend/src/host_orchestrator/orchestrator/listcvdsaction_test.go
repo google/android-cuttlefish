@@ -41,7 +41,7 @@ func TestListCVDsSucceeds(t *testing.T) {
                           "adb_serial": "0.0.0.0:6520",
                           "assembly_dir": "/var/lib/cuttlefish-common/runtimes/cuttlefish/assembly",
                           "displays": [
-                            "720 x 1280 ( 320 )"
+                            "720 x 1348 ( 280 )"
                           ],
                           "instance_dir": "/var/lib/cuttlefish-common/runtimes/cuttlefish/instances/cvd-1",
                           "instance_name": "1",
@@ -60,7 +60,7 @@ func TestListCVDsSucceeds(t *testing.T) {
                           "adb_serial": "0.0.0.0:6520",
                           "assembly_dir": "/var/lib/cuttlefish-common/runtimes/cuttlefish/assembly",
                           "displays": [
-                            "720 x 1280 ( 320 )"
+                            "720 x 1348 ( 280 )"
                           ],
                           "instance_dir": "/var/lib/cuttlefish-common/runtimes/cuttlefish/instances/cvd-1",
                           "instance_name": "1",
@@ -87,7 +87,7 @@ func TestListCVDsSucceeds(t *testing.T) {
 			Group:          "foo",
 			Name:           "1",
 			Status:         "Running",
-			Displays:       []string{"720 x 1280 ( 320 )"},
+			Displays:       []string{"720 x 1348 ( 280 )"},
 			WebRTCDeviceID: "cvd-1",
 			ADBSerial:      "0.0.0.0:6520",
 			ADBPort:        6520,
@@ -96,7 +96,7 @@ func TestListCVDsSucceeds(t *testing.T) {
 			Group:          "bar",
 			Name:           "1",
 			Status:         "Running",
-			Displays:       []string{"720 x 1280 ( 320 )"},
+			Displays:       []string{"720 x 1348 ( 280 )"},
 			WebRTCDeviceID: "cvd-1",
 			ADBSerial:      "0.0.0.0:6520",
 			ADBPort:        6520,
