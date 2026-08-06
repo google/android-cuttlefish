@@ -1,14 +1,33 @@
-load("//cuttlefish/package:rules.bzl", "package_files")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
+load("//cuttlefish/package:rules.bzl", "package_executable", "package_files")
 
-alias(
+cf_cc_binary(
+    name = "packager",
+    srcs = ["packager.cc"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:copy_with_attributes",
+        "//cuttlefish/files:link_or_copy",
+        "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/flag_parser",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:symlink",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+package_executable(
     name = "cvd",
-    actual = ":common",
+    executable = "bin/cvd",
+    package = ":common",
 )
 
 package_files(
     name = "common",
     base_dir = "cuttlefish-common",
-    executable = "bin/cvd",
     package_file_symlink_to_package_file = {
         "bin/mcopy": "bin/mtools",
         "bin/mmd": "bin/mtools",
@@ -158,7 +177,6 @@ package_files(
 package_files(
     name = "defaults",
     base_dir = "cuttlefish-integration",
-    executable = "bin/cf_defaults",
     package_file_to_src = {
         "bin/cf_defaults": "//cuttlefish/host/commands/defaults:cf_defaults",
     },
@@ -168,7 +186,6 @@ package_files(
 package_files(
     name = "metrics",
     base_dir = "cuttlefish-metrics",
-    executable = "bin/metrics_transmitter",
     package_file_to_src = {
         "bin/metrics_transmitter": "//cuttlefish/host/commands/metrics_transmitter:metrics_transmitter",
     },
