@@ -1,7 +1,12 @@
 load("//cuttlefish/package:rules.bzl", "package_files")
 
-package_files(
+alias(
     name = "cvd",
+    actual = ":common",
+)
+
+package_files(
+    name = "common",
     base_dir = "cuttlefish-common",
     executable = "bin/cvd",
     package_file_symlink_to_package_file = {
