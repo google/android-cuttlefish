@@ -30,6 +30,18 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "copy_with_attributes",
+    srcs = ["copy_with_attributes.cc"],
+    hdrs = ["copy_with_attributes.h"],
+    deps = [
+        "//cuttlefish/files:copy",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "directory_contents",
     srcs = ["directory_contents.cc"],
     hdrs = ["directory_contents.h"],
@@ -78,7 +90,7 @@ cf_cc_library(
     hdrs = ["link_or_copy.h"],
     deps = [
         "//cuttlefish/files:are_hard_linked",
-        "//cuttlefish/files:copy",
+        "//cuttlefish/files:copy_with_attributes",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result:expect",
