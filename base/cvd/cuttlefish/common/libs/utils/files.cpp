@@ -19,7 +19,6 @@
 #ifdef __linux__
 #include <linux/fs.h>
 #endif
-#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -34,7 +33,6 @@
 #include <fstream>
 #include <ios>
 #include <iosfwd>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -191,20 +189,6 @@ Result<void> ChangeGroup(const std::string& path,
 
 bool CanAccess(const std::string& path, const int mode) {
   return access(path.c_str(), mode) == 0;
-}
-
-Result<bool> IsDirectoryEmpty(const std::string& path) {
-  std::unique_ptr<DIR, int (*)(DIR*)> direc(opendir(path.c_str()), closedir);
-  CF_EXPECTF(direc.get(), "opendir('{}') failed: {}", path, StrError(errno));
-
-  int cnt = 0;
-  while (::readdir(direc.get())) {
-    cnt++;
-    if (cnt > 2) {
-      return false;
-    }
-  }
-  return true;
 }
 
 std::string AbsolutePath(std::string_view path) {

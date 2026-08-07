@@ -30,6 +30,7 @@
 
 #include "cuttlefish/files/are_hard_linked.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/files/is_directory_empty.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 

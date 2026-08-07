@@ -81,6 +81,17 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "is_directory_empty",
+    srcs = ["is_directory_empty.cc"],
+    hdrs = ["is_directory_empty.h"],
+    deps = [
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "is_symlink",
     srcs = ["is_symlink.cc"],
     hdrs = ["is_symlink.h"],
