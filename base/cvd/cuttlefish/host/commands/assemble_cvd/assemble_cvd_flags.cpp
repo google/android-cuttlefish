@@ -386,6 +386,24 @@ DEFINE_vec(
 DEFINE_vec(use_pmem, "true",
            "Make this flag false to disable pmem with crosvm");
 
+DEFINE_vec(crosvm_acpi_table, "",
+           "Passed directly to crosvm as --acpi-table. "
+           "Path to user provided ACPI table");
+
+DEFINE_vec(crosvm_device_tree_overlay, "",
+           "Passed directly to crosvm as --device-tree-overlay. "
+           "Path to user provided device tree overlay");
+
+DEFINE_vec(crosvm_file_backed_mapping, "",
+           "Passed directly to crosvm as --file-backed-mapping. "
+           "Map the given file into guest memory at the specified address. "
+           "Parameters (addr, size, path are required): "
+           "addr=NUM,size=NUM,path=PATH,offset=NUM,rw,sync,align,ram");
+
+DEFINE_vec(crosvm_file_backed_mapping_base64, "",
+           "This is base64 encoded version of crosvm_file_backed_mapping. "
+           "Used for multi device clusters.");
+
 DEFINE_vec(enable_wifi, fmt::format("{}", CF_DEFAULTS_ENABLE_WIFI),
            "Enables the guest WIFI. Mainly for Minidroid");
 

@@ -186,6 +186,11 @@ DECLARE_vec(crosvm_v4l2_proxy);
 
 DECLARE_vec(use_pmem);
 
+DECLARE_vec(crosvm_acpi_table);
+DECLARE_vec(crosvm_device_tree_overlay);
+DECLARE_vec(crosvm_file_backed_mapping);
+DECLARE_vec(crosvm_file_backed_mapping_base64);
+
 DECLARE_vec(enable_wifi);
 
 DECLARE_vec(device_external_network);
