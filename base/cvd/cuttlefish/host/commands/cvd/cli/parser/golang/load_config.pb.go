@@ -141,15 +141,16 @@ func (ModemSimulatorSimType) EnumDescriptor() ([]byte, []int) {
 }
 
 type EnvironmentSpecification struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Instances     []*Instance            `protobuf:"bytes,1,rep,name=instances,proto3" json:"instances,omitempty"`
-	Fetch         *Fetch                 `protobuf:"bytes,2,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
-	Metrics       *Metrics               `protobuf:"bytes,3,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
-	Common        *Common                `protobuf:"bytes,4,opt,name=common,proto3,oneof" json:"common,omitempty"`
-	NetsimBt      *bool                  `protobuf:"varint,5,opt,name=netsim_bt,json=netsimBt,proto3,oneof" json:"netsim_bt,omitempty"`
-	NetsimUwb     *bool                  `protobuf:"varint,6,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
-	NetsimArgs    []string               `protobuf:"bytes,7,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
-	NetsimModem   *bool                  `protobuf:"varint,8,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Instances []*Instance            `protobuf:"bytes,1,rep,name=instances,proto3" json:"instances,omitempty"`
+	Fetch     *Fetch                 `protobuf:"bytes,2,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
+	// deprecated v1 metrics enabling field, is not read/used
+	Metrics       *Metrics `protobuf:"bytes,3,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
+	Common        *Common  `protobuf:"bytes,4,opt,name=common,proto3,oneof" json:"common,omitempty"`
+	NetsimBt      *bool    `protobuf:"varint,5,opt,name=netsim_bt,json=netsimBt,proto3,oneof" json:"netsim_bt,omitempty"`
+	NetsimUwb     *bool    `protobuf:"varint,6,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
+	NetsimArgs    []string `protobuf:"bytes,7,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
+	NetsimModem   *bool    `protobuf:"varint,8,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -243,14 +244,15 @@ func (x *EnvironmentSpecification) GetNetsimModem() bool {
 // TODO: chadreynolds - when we can make breaking changes and update, use this
 // in EnvironmentSpecification instead of individual fields
 type EnvironmentOptions struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Fetch         *Fetch                 `protobuf:"bytes,1,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
-	Metrics       *Metrics               `protobuf:"bytes,2,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
-	Common        *Common                `protobuf:"bytes,3,opt,name=common,proto3,oneof" json:"common,omitempty"`
-	NetsimBt      *bool                  `protobuf:"varint,4,opt,name=netsim_bt,json=netsimBt,proto3,oneof" json:"netsim_bt,omitempty"`
-	NetsimUwb     *bool                  `protobuf:"varint,5,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
-	NetsimArgs    []string               `protobuf:"bytes,6,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
-	NetsimModem   *bool                  `protobuf:"varint,7,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Fetch *Fetch                 `protobuf:"bytes,1,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
+	// deprecated v1 metrics enabling field, is not read/used
+	Metrics       *Metrics `protobuf:"bytes,2,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
+	Common        *Common  `protobuf:"bytes,3,opt,name=common,proto3,oneof" json:"common,omitempty"`
+	NetsimBt      *bool    `protobuf:"varint,4,opt,name=netsim_bt,json=netsimBt,proto3,oneof" json:"netsim_bt,omitempty"`
+	NetsimUwb     *bool    `protobuf:"varint,5,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
+	NetsimArgs    []string `protobuf:"bytes,6,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
+	NetsimModem   *bool    `protobuf:"varint,7,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1462,6 +1464,7 @@ type Vm struct {
 	CustomActions []*CustomAction `protobuf:"bytes,9,rep,name=custom_actions,json=customActions,proto3" json:"custom_actions,omitempty"`
 	// Desired user space page size.
 	PageSize      *UserPageSize `protobuf:"varint,10,opt,name=page_size,json=pageSize,proto3,enum=cuttlefish.cvd.config.UserPageSize,oneof" json:"page_size,omitempty"`
+	EnablePkvm    *bool         `protobuf:"varint,11,opt,name=enable_pkvm,json=enablePkvm,proto3,oneof" json:"enable_pkvm,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1577,6 +1580,13 @@ func (x *Vm) GetPageSize() UserPageSize {
 		return *x.PageSize
 	}
 	return UserPageSize_USER_PAGE_SIZE_UNSPECIFIED
+}
+
+func (x *Vm) GetEnablePkvm() bool {
+	if x != nil && x.EnablePkvm != nil {
+		return *x.EnablePkvm
+	}
+	return false
 }
 
 type isVm_Vmm interface {
@@ -2198,7 +2208,7 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\tV4l2Proxy\x12$\n" +
 	"\vdevice_path\x18\x01 \x01(\tH\x00R\n" +
 	"devicePath\x88\x01\x01B\x0e\n" +
-	"\f_device_path\"\xb7\x04\n" +
+	"\f_device_path\"\xed\x04\n" +
 	"\x02Vm\x12\x17\n" +
 	"\x04cpus\x18\x01 \x01(\rH\x01R\x04cpus\x88\x01\x01\x12 \n" +
 	"\tmemory_mb\x18\x02 \x01(\rH\x02R\bmemoryMb\x88\x01\x01\x12\"\n" +
@@ -2211,7 +2221,9 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\x04qemu\x18\b \x01(\v2\x1b.cuttlefish.cvd.config.QemuH\x00R\x04qemu\x12J\n" +
 	"\x0ecustom_actions\x18\t \x03(\v2#.cuttlefish.cvd.config.CustomActionR\rcustomActions\x12E\n" +
 	"\tpage_size\x18\n" +
-	" \x01(\x0e2#.cuttlefish.cvd.config.UserPageSizeH\x06R\bpageSize\x88\x01\x01B\x05\n" +
+	" \x01(\x0e2#.cuttlefish.cvd.config.UserPageSizeH\x06R\bpageSize\x88\x01\x01\x12$\n" +
+	"\venable_pkvm\x18\v \x01(\bH\aR\n" +
+	"enablePkvm\x88\x01\x01B\x05\n" +
 	"\x03vmmB\a\n" +
 	"\x05_cpusB\f\n" +
 	"\n" +
@@ -2220,7 +2232,8 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\x11_setupwizard_modeB\a\n" +
 	"\x05_uuidB\f\n" +
 	"\n" +
-	"_page_size\"\x8b\x02\n" +
+	"_page_sizeB\x0e\n" +
+	"\f_enable_pkvm\"\x8b\x02\n" +
 	"\x06Crosvm\x12*\n" +
 	"\x0eenable_sandbox\x18\x01 \x01(\bH\x00R\renableSandbox\x88\x01\x01\x123\n" +
 	"\x13simple_media_device\x18\x02 \x01(\bH\x01R\x11simpleMediaDevice\x88\x01\x01\x12\"\n" +

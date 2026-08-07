@@ -339,6 +339,11 @@ DEFINE_vec(protected_vm, fmt::format("{}", CF_DEFAULTS_PROTECTED_VM),
 
 DEFINE_vec(mte, fmt::format("{}", CF_DEFAULTS_MTE), "Enable MTE");
 
+DEFINE_vec(enable_pkvm, fmt::format("{}", CF_DEFAULTS_ENABLE_PKVM),
+           "Provision the guest to run pKVM so it can host its own protected "
+           "VMs; requires a nested-virt capable host, --vm_manager=crosvm "
+           "and an arm64 guest.");
+
 DEFINE_vec(enable_audio, fmt::format("{}", CF_DEFAULTS_ENABLE_AUDIO),
            "Whether to play or capture audio");
 
