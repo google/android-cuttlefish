@@ -400,6 +400,10 @@ DEFINE_vec(crosvm_file_backed_mapping, "",
            "Parameters (addr, size, path are required): "
            "addr=NUM,size=NUM,path=PATH,offset=NUM,rw,sync,align,ram");
 
+DEFINE_vec(crosvm_file_backed_mapping_base64, "",
+           "This is base64 encoded version of crosvm_file_backed_mapping. "
+           "Used for multi device clusters.");
+
 DEFINE_vec(enable_wifi, fmt::format("{}", CF_DEFAULTS_ENABLE_WIFI),
            "Enables the guest WIFI. Mainly for Minidroid");
 
