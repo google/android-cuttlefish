@@ -16,6 +16,7 @@ graph {
     vm--config
     vm--memory_mb
     vm--custom_actions
+    vm--enable_pkvm
     vm--vm_manager
         crosvm_binary_dir [label = "binary_dir"]
         qemu_binary_dir [label = "binary_dir"]
