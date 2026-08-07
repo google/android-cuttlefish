@@ -573,6 +573,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> vhost_net_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(vhost_net));
   std::vector<std::string> vhost_user_vsock_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(vhost_user_vsock));
+  std::vector<bool> enable_pkvm_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_pkvm));
   std::vector<std::string> ril_dns_vec = CF_EXPECT(GET_FLAG_STR_VALUE(ril_dns));
   std::vector<bool> enable_jcard_simulator_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_jcard_simulator));
@@ -899,6 +901,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
           "got '{}'",
           vhost_user_vsock_vec[instance_index]);
     }
+
+    if (enable_pkvm_vec[instance_index]) {
+      CF_EXPECT_EQ(tmp_config_obj.vm_manager(), VmmMode::kCrosvm,
+                   "Only crosvm supports --enable_pkvm");
+      CF_EXPECT_EQ(guest_configs[instance_index].target_arch, Arch::Arm64,
+                   "--enable_pkvm requires an arm64 guest");
+    }
+    instance.set_enable_pkvm(enable_pkvm_vec[instance_index]);
 
     if (use_random_serial_vec[instance_index]) {
       instance.set_serial_number(

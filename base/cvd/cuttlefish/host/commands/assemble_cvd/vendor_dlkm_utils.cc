@@ -131,6 +131,7 @@ std::vector<std::string> GetRamdiskModules(
       "vmw_vsock_virtio_transport.ko",
       "vmw_vsock_virtio_transport_common.ko",
       "vsock.ko",
+      "pkvm_iommu_temp.ko",
       // TODO(b/176860479) once virt_wifi is deprecated fully,
       // these following modules can be loaded in second stage init
       "libarc4.ko",
