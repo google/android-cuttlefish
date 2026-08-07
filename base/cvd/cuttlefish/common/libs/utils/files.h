@@ -51,7 +51,6 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
 Result<void> ChangeGroup(const std::string& path,
                          const std::string& group_name);
 bool CanAccess(const std::string& path, int mode);
-Result<bool> IsDirectoryEmpty(const std::string& path);
 off_t FileSize(const std::string& path);
 Result<void> RemoveFile(const std::string& file);
 Result<std::string> RenameFile(const std::string& current_filepath,
