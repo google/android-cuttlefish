@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/libs/config/media.h"
 
+#include <android-base/parseint.h>
+
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -36,6 +38,7 @@ static constexpr char kMediaTypeV4l2EmulatedCameraSPlane[] =
 static constexpr char kMediaTypeV4l2EmulatedCameraMPlane[] =
     "v4l2_emulated_camera_mplane";
 static constexpr char kMediaTypeV4l2Proxy[] = "v4l2_proxy";
+static constexpr char kMediaTypeV4l2Stream[] = "v4l2_stream_proxy";
 
 Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
     const std::string& flag) {
@@ -50,6 +53,8 @@ Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
     type = CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane;
   } else if (type_str == kMediaTypeV4l2Proxy) {
     type = CuttlefishConfig::MediaType::kV4l2Proxy;
+  } else if (type_str == kMediaTypeV4l2Stream) {
+    type = CuttlefishConfig::MediaType::kV4l2StreamProxy;
   } else {
     return CF_ERRF("Unknown media type value: \"{}\"", type_str);
   }
@@ -74,9 +79,46 @@ Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
               "Invalid lens_facing value: " << lens_facing);
   }
 
+  std::optional<CuttlefishConfig::MediaConfig::V4l2StreamProxyConfig>
+      v4l2_stream_proxy;
+  if (type == CuttlefishConfig::MediaType::kV4l2StreamProxy) {
+    CuttlefishConfig::MediaConfig::V4l2StreamProxyConfig stream_config = {};
+
+    auto source_it = props.find("input_path");
+    CF_EXPECT(source_it != props.end(),
+              "Missing 'input_path' for v4l2_stream_proxy");
+    stream_config.input_path = source_it->second;
+
+    auto width_it = props.find("input_width");
+    CF_EXPECT(width_it != props.end(),
+              "Missing 'input_width' for v4l2_stream_proxy");
+    CF_EXPECT(
+        android::base::ParseInt(width_it->second, &stream_config.input_width),
+        "Failed to parse input_width");
+    CF_EXPECT(stream_config.input_width > 0,
+              "input_width must be positive: " << stream_config.input_width);
+
+    auto height_it = props.find("input_height");
+    CF_EXPECT(height_it != props.end(),
+              "Missing 'input_height' for v4l2_stream_proxy");
+    CF_EXPECT(
+        android::base::ParseInt(height_it->second, &stream_config.input_height),
+        "Failed to parse input_height");
+    CF_EXPECT(stream_config.input_height > 0,
+              "input_height must be positive: " << stream_config.input_height);
+
+    auto fps_it = props.find("input_fps");
+    CF_EXPECT(fps_it != props.end(),
+              "Missing 'input_fps' for v4l2_stream_proxy");
+    stream_config.input_fps = fps_it->second;
+
+    v4l2_stream_proxy = stream_config;
+  }
+
   return CuttlefishConfig::MediaConfig{
       .type = type,
       .lens_facing = lens_facing,
+      .v4l2_stream_proxy = v4l2_stream_proxy,
   };
 }
 
