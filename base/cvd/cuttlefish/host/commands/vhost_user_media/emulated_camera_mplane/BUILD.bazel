@@ -28,6 +28,7 @@ rust_binary(
         "vhost-user-backend",
         "virtio-media",
         "vm-memory",
+        "vmm-sys-util",
     ]) + [
         "//cuttlefish/host/commands/vhost_user_media/vhu_media",
     ],
