@@ -51,6 +51,7 @@
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/files/is_directory_empty.h"
 #include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"

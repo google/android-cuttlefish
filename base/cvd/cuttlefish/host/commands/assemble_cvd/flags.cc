@@ -54,6 +54,7 @@
 #include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/files/is_directory_empty.h"
 #include "cuttlefish/host/commands/assemble_cvd/alloc.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_image_flags_vectorization.h"

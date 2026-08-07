@@ -139,6 +139,7 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:are_hard_linked",
         "//cuttlefish/files:file_exists",
+        "//cuttlefish/files:is_directory_empty",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "//libbase",
