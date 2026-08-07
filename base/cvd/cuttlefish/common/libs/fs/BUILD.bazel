@@ -37,6 +37,7 @@ cf_cc_library(
         "//conditions:default": [],
     }),
     deps = [
+        "//cuttlefish/common/libs/fs:scoped_mmap",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/io",
         "//cuttlefish/posix:strerror",
@@ -55,6 +56,12 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/fs",
     ],
+)
+
+cf_cc_library(
+    name = "scoped_mmap",
+    srcs = ["scoped_mmap.cc"],
+    hdrs = ["scoped_mmap.h"],
 )
 
 cf_cc_library(

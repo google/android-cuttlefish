@@ -25,7 +25,7 @@
 #include <string>
 #include <utility>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/scoped_mmap.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
