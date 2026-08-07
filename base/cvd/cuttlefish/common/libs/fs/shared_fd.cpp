@@ -967,10 +967,14 @@ Result<uint64_t> FileInstance::Read(void* buf, uint64_t count) {
   return static_cast<uint64_t>(res);
 }
 
-ssize_t FileInstance::PRead(void* buf, size_t count, size_t offset) {
-  LocalErrno record_errno(errno_);
+Result<uint64_t> FileInstance::PRead(void* buf, size_t count,
+                                     size_t offset) const {
+  LocalErrno record_errno(const_cast<int&>(errno_));
 
-  return TEMP_FAILURE_RETRY(pread(fd_, buf, count, offset));
+  ssize_t res = TEMP_FAILURE_RETRY(pread(fd_, buf, count, offset));
+  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError(errno));
+
+  return static_cast<uint64_t>(res);
 }
 
 #ifdef __linux__
@@ -991,6 +995,24 @@ ssize_t FileInstance::SendMsg(const struct msghdr* msg, int flags) {
   LocalErrno record_errno(errno_);
 
   return TEMP_FAILURE_RETRY(sendmsg(fd_, msg, flags));
+}
+
+Result<uint64_t> FileInstance::SeekSet(uint64_t offset) {
+  off_t ret = LSeek(static_cast<off_t>(offset), SEEK_SET);
+  CF_EXPECT_GE(ret, 0, StrError());
+  return ret;
+}
+
+Result<uint64_t> FileInstance::SeekCur(int64_t offset) {
+  off_t ret = LSeek(static_cast<off_t>(offset), SEEK_CUR);
+  CF_EXPECT_GE(ret, 0, StrError());
+  return ret;
+}
+
+Result<uint64_t> FileInstance::SeekEnd(int64_t offset) {
+  off_t ret = LSeek(static_cast<off_t>(offset), SEEK_END);
+  CF_EXPECT_GE(ret, 0, StrError());
+  return ret;
 }
 
 int FileInstance::Shutdown(int how) {

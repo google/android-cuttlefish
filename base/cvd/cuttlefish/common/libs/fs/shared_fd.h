@@ -285,7 +285,7 @@ class ScopedMMap {
  * escaping file descriptors. At this point SharedFD is the only class
  * that has access. We may eventually have ScopedFD and WeakFD.
  */
-class FileInstance : public Reader {
+class FileInstance : public ReaderSeeker {
   // Give SharedFD access to the aliasing constructor.
   friend class SharedFD;
   friend class Epoll;
@@ -353,12 +353,17 @@ class FileInstance : public Reader {
   ssize_t Recv(void* buf, size_t len, int flags);
   ssize_t RecvMsg(struct msghdr* msg, int flags);
   Result<uint64_t> Read(void* buf, uint64_t count) override;
-  ssize_t PRead(void* buf, size_t count, size_t offset);
+  Result<uint64_t> PRead(void* buf, uint64_t count,
+                         uint64_t offset) const override;
 #ifdef __linux__
   int EventfdRead(eventfd_t* value);
 #endif
   ssize_t Send(const void* buf, size_t len, int flags);
   ssize_t SendMsg(const struct msghdr* msg, int flags);
+
+  Result<uint64_t> SeekSet(uint64_t) override;
+  Result<uint64_t> SeekCur(int64_t) override;
+  Result<uint64_t> SeekEnd(int64_t) override;
 
   template <typename... Args>
   ssize_t SendFileDescriptors(const void* buf, size_t len, Args&&... sent_fds) {
