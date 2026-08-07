@@ -14,6 +14,7 @@ import {
   KtdGridLayout,
   KtdGridLayoutItem,
   ktdTrackById,
+  ktdGridCompact,
 } from '@katoid/angular-grid-layout';
 import {DisplayInfo} from '../../../../intercept/js/server_connector'
 
@@ -237,16 +238,19 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
     item: DeviceGridItem,
     layout: DeviceGridItem[]
   ): DeviceGridItem {
-    const lastMaxY =
-      layout.length !== 0 ? Math.max(...layout.map(obj => obj.y)) : 0;
-    const lastRowLayout = layout.filter(obj => obj.y === lastMaxY);
-    const lastMaxX =
-      layout.length !== 0
-        ? Math.max(...lastRowLayout.map(obj => obj.x))
-        : -item.w;
+    const lastItemY = Math.max(...layout.map(obj => obj.y), 0);
+    const bottomBorder = Math.max(...layout.map(obj => obj.y + obj.h), 0);
+    const lastRowLayout = layout.filter(obj => obj.y === lastItemY);
+    const rightBorder = Math.max(...lastRowLayout.map(obj => obj.x + obj.w), 0)
 
-    item.x = lastMaxX + item.w * 2 <= this.cols ? lastMaxX + item.w : 0;
-    item.y = lastMaxX + item.h * 2 <= this.cols ? lastMaxY : lastMaxY + item.h;
+    if (this.displaysService.addVertically$.value
+        || rightBorder + item.w > this.cols) {  // Stack vertically
+      item.x = 0;
+      item.y = bottomBorder;
+    } else {
+      item.x = rightBorder;
+      item.y = lastItemY;
+    }
 
     item.placed = true;
 
@@ -294,8 +298,22 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
         }
         layoutById.set(id, item);
     });
+
     return Array.from(layoutById, ([, value]) => value);
-  }, []), map(items => items.filter(item => item.visible)));
+  }, []), map(items => {
+    const visibleItems = items.filter(item => item.visible);
+    return this.packItems(visibleItems);
+  }));
+
+  private packItems(items: DeviceGridItem[]): DeviceGridItem[] {
+    const vertCompacted = ktdGridCompact(items, 'vertical', this.cols);
+    const bothCompacted = ktdGridCompact(vertCompacted, 'horizontal', this.cols);
+    const compactedMap = new Map(bothCompacted.map(item => [item.id, item]));
+    return items.map(item => {
+      const compacted = compactedMap.get(item.id);
+      return compacted ? { ...item, ...compacted } : item;
+    });
+  }
 
   forceShowDevice(deviceId: string) {
     this.displaysService.onDeviceDisplayInfo({

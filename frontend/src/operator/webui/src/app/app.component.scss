@@ -11,14 +11,33 @@
 }
 
 .cloud-android-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
   background: #073042;
   color: #eee;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
-  text-align: center;
 }
 
 .cloud-android-title {
-  margin: 0 auto;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+}
+
+.add-vertically-toggle {
+  margin-left: auto;
+  font-size: 13px;
+  line-height: 1.2;
+  color: #fff;
+
+  ::ng-deep .mdc-label {
+    color: #fff;
+    white-space: normal;
+    text-align: left;
+  }
 }
 
 .drawer-container {
