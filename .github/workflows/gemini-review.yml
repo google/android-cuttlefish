@@ -44,8 +44,9 @@ jobs:
         id: 'gemini_pr_review'
         env:
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
-          ISSUE_TITLE: '${{ github.event.pull_request.title }}'
-          ISSUE_BODY: '${{ github.event.pull_request.body }}'
+          # ISSUE_TITLE and ISSUE_BODY intentionally omitted: passing raw GitHub event
+          # content as env vars is a prompt-injection vector. The agent should
+          # fetch PR/issue content via the GitHub API using PULL_REQUEST_NUMBER.
           PULL_REQUEST_NUMBER: '${{ github.event.pull_request.number }}'
           REPOSITORY: '${{ github.repository }}'
           ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
@@ -117,8 +118,9 @@ jobs:
         id: 'gemini_security_analysis'
         env:
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
-          ISSUE_TITLE: '${{ github.event.pull_request.title }}'
-          ISSUE_BODY: '${{ github.event.pull_request.body }}'
+          # ISSUE_TITLE and ISSUE_BODY intentionally omitted: passing raw GitHub event
+          # content as env vars is a prompt-injection vector. The agent should
+          # fetch PR/issue content via the GitHub API using PULL_REQUEST_NUMBER.
           PULL_REQUEST_NUMBER: '${{ github.event.pull_request.number }}'
           REPOSITORY: '${{ github.repository }}'
           ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'

@@ -44,8 +44,8 @@ jobs:
         id: 'run_gemini'
         uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
         env:
-          TITLE: '${{ github.event.pull_request.title }}'
-          DESCRIPTION: '${{ github.event.pull_request.body }}'
+          # TITLE and DESCRIPTION intentionally omitted: prompt-injection vector.
+          # Agent fetches PR content via GitHub API using ISSUE_NUMBER.
           EVENT_NAME: '${{ github.event_name }}'
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
           IS_PULL_REQUEST: '${{ !!github.event.pull_request }}'
