@@ -52,69 +52,54 @@ cf_build_test = macro(
     implementation = _cf_build_test_implementation,
 )
 
-def _cf_cc_binary_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, features, include_cleaner_enabled, linkopts, **kwargs):
+def _cf_cc_target_implementation(
+        name,
+        clang_format_enabled,
+        clang_tidy_enabled,
+        copts,
+        depend_on_what_you_use_enabled,
+        deps,
+        features,
+        include_cleaner_enabled,
+        linkopts,
+        _target_type,
+        **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
-    cc_binary(
-        name = name,
-        copts = (copts or []) + COPTS,
-        linkopts = (linkopts or []) + LINKOPTS,
-        features = features,
-        **kwargs
-    )
-    if clang_format_enabled:
-        format_test(
-            name = name + "_format_test",
-            cc = "//tools/format:clang_format",
-            disable_git_attribute_checks = True,
-            srcs = (kwargs.get("srcs") or []) + (kwargs.get("hdrs") or []),
-            visibility = ["//visibility:private"],
-        )
-    if clang_tidy_enabled:
-        if include_cleaner_enabled:
-            clang_tidy_include_cleaner_test(
-                name = name + "_clang_tidy",
-                srcs = [":" + name],
-                tags = ["clang_tidy", "clang-tidy"],
-                visibility = ["//visibility:private"],
-            )
-        else:
-            clang_tidy_test(
-                name = name + "_clang_tidy",
-                srcs = [":" + name],
-                tags = ["clang_tidy", "clang-tidy"],
-                visibility = ["//visibility:private"],
-            )
-    if depend_on_what_you_use_enabled and not "-layering_check" in features:
-        dwyu_rule(
-            name = name + "_depend_on_what_you_use",
-            deps = [":" + name],
-            testonly = True,
-        )
 
-cf_cc_binary = macro(
-    inherit_attrs = cc_binary,
-    attrs = {
-        "clang_format_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding format_test target is generated"),
-        "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
-        "copts": attr.string_list(configurable = False, default = []),
-        "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
-        "features": attr.string_list(configurable = False, default = []),
-        "include_cleaner_enabled": attr.bool(configurable = False, default = True, doc = "Run clang-tidy with misc-include-cleaner"),
-        "linkopts": attr.string_list(configurable = False, default = []),
-    },
-    implementation = _cf_cc_binary_implementation,
-)
+    if _target_type == "cc_binary":
+        cc_binary(
+            name = name,
+            copts = (copts or []) + COPTS,
+            deps = deps,
+            features = features,
+            linkopts = (linkopts or []) + LINKOPTS,
+            **kwargs
+        )
+    elif _target_type == "cc_library":
+        cc_library(
+            name = name,
+            copts = (copts or []) + COPTS,
+            deps = deps,
+            features = features,
+            linkopts = linkopts,
+            **kwargs
+        )
+    elif _target_type == "cc_test":
+        cc_test(
+            name = name,
+            copts = (copts or []) + COPTS,
+            deps = deps + [
+                "@googletest//:gtest",
+                "@googletest//:gtest_main",
+            ],
+            features = features,
+            linkopts = linkopts,
+            **kwargs
+        )
+    else:
+        fail("Unknown target type " + _target_type)
 
-def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, features, include_cleaner_enabled, **kwargs):
-    if not clang_tidy_enabled and not kwargs["deprecation"]:
-        kwargs["deprecation"] = "Not covered by clang-tidy"
-    cc_library(
-        name = name,
-        copts = (copts or []) + COPTS,
-        features = features,
-        **kwargs
-    )
     if clang_format_enabled and (kwargs.get("srcs") or kwargs.get("hdrs")):
         format_test(
             name = name + "_format_test",
@@ -143,76 +128,69 @@ def _cf_cc_library_implementation(name, clang_format_enabled, clang_tidy_enabled
             name = name + "_depend_on_what_you_use",
             deps = [":" + name],
             testonly = True,
+            visibility = ["//visibility:private"],
         )
+
+_CC_COMMON_ATTRS = {
+    "clang_format_enabled": attr.bool(
+        configurable = False,
+        default = True,
+        doc = "Decide if a corresponding format_test target is generated",
+    ),
+    "clang_tidy_enabled": attr.bool(
+        configurable = False,
+        default = True,
+        doc = "Decide if a corresponding clang_tidy_test target is generated",
+    ),
+    "copts": attr.string_list(
+        configurable = False,
+        default = [],
+    ),
+    "depend_on_what_you_use_enabled": attr.bool(
+        configurable = False,
+        default = True,
+        doc = "Decide if a corresponding depend-on-what-you-use target is generated",
+    ),
+    "features": attr.string_list(
+        configurable = False,
+        default = [],
+    ),
+    "include_cleaner_enabled": attr.bool(
+        configurable = False,
+        default = True,
+        doc = "Run clang-tidy with misc-include-cleaner",
+    ),
+    "linkopts": attr.string_list(
+        configurable = True,
+        default = [],
+    ),
+}
+
+cf_cc_binary = macro(
+    inherit_attrs = cc_binary,
+    attrs = _CC_COMMON_ATTRS | {
+        "deps": attr.label_list(configurable = True),
+        "_target_type": attr.string(configurable = False, default = "cc_binary"),
+    },
+    implementation = _cf_cc_target_implementation,
+)
 
 cf_cc_library = macro(
     inherit_attrs = cc_library,
-    attrs = {
-        "clang_format_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding format_test target is generated"),
-        "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
-        "copts": attr.string_list(configurable = False, default = []),
-        "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
-        "features": attr.string_list(configurable = False, default = []),
-        "include_cleaner_enabled": attr.bool(configurable = False, default = True, doc = "Run clang-tidy with misc-include-cleaner"),
+    attrs = _CC_COMMON_ATTRS | {
+        "deps": attr.label_list(configurable = True),
+        "_target_type": attr.string(configurable = False, default = "cc_library"),
     },
-    implementation = _cf_cc_library_implementation,
+    implementation = _cf_cc_target_implementation,
 )
-
-def _cf_cc_test_implementation(name, clang_format_enabled, clang_tidy_enabled, copts, depend_on_what_you_use_enabled, deps, features, include_cleaner_enabled, **kwargs):
-    if not clang_tidy_enabled and not kwargs["deprecation"]:
-        kwargs["deprecation"] = "Not covered by clang-tidy"
-    cc_test(
-        name = name,
-        copts = (copts or []) + COPTS,
-        deps = deps + [
-            "@googletest//:gtest",
-            "@googletest//:gtest_main",
-        ],
-        features = features,
-        **kwargs
-    )
-    if clang_format_enabled:
-        format_test(
-            name = name + "_format_test",
-            cc = "//tools/format:clang_format",
-            disable_git_attribute_checks = True,
-            srcs = (kwargs.get("srcs") or []) + (kwargs.get("hdrs") or []),
-            visibility = ["//visibility:private"],
-        )
-    if clang_tidy_enabled:
-        if include_cleaner_enabled:
-            clang_tidy_include_cleaner_test(
-                name = name + "_clang_tidy",
-                srcs = [":" + name],
-                tags = ["clang_tidy", "clang-tidy"],
-                visibility = ["//visibility:private"],
-            )
-        else:
-            clang_tidy_test(
-                name = name + "_clang_tidy",
-                srcs = [":" + name],
-                tags = ["clang_tidy", "clang-tidy"],
-                visibility = ["//visibility:private"],
-            )
-    if depend_on_what_you_use_enabled and not "-layering_check" in features:
-        dwyu_rule(
-            name = name + "_depend_on_what_you_use",
-            deps = [":" + name],
-            testonly = True,
-        )
 
 cf_cc_test = macro(
     inherit_attrs = cc_test,
-    attrs = {
-        "clang_format_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding format_test target is generated"),
-        "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
-        "copts": attr.string_list(configurable = False, default = []),
-        "depend_on_what_you_use_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding depend-on-what-you-use target is generated"),
+    attrs = _CC_COMMON_ATTRS | {
         "deps": attr.label_list(configurable = False),
-        "features": attr.string_list(configurable = False, default = []),
-        "include_cleaner_enabled": attr.bool(configurable = False, default = True, doc = "Run clang-tidy with misc-include-cleaner"),
+        "_target_type": attr.string(configurable = False, default = "cc_test"),
     },
-    implementation = _cf_cc_test_implementation,
+    implementation = _cf_cc_target_implementation,
 )
 
 def _cf_sh_binary_implementation(name, shellcheck_enabled, **kwargs):
