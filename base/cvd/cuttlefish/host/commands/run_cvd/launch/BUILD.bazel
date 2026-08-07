@@ -290,7 +290,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/process:command",
         "//cuttlefish/result",
-        "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fruit",
     ],
 )

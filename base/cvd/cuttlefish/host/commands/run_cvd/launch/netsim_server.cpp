@@ -15,9 +15,6 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/netsim_server.h"
 
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
-
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -25,6 +22,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
 #include "fruit/component.h"
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
@@ -252,14 +251,14 @@ class NetsimServer : public CommandSource {
         CF_EXPECT(
             modem_count >= 0 && modem_count < 4,
             "Modem simulator instance number should range between 0 and 3");
-        auto port_strings =
-            android::base::Split(instance.modem_simulator_ports(), ",");
+        std::vector<std::string> port_strings =
+            absl::StrSplit(instance.modem_simulator_ports(), ",");
         for (size_t i = 0;
              i < static_cast<size_t>(modem_count) && i < port_strings.size();
              ++i) {
           int port = 0;
           CF_EXPECT(
-              android::base::ParseInt(port_strings[i], &port),
+              absl::SimpleAtoi(port_strings[i], &port),
               "Failed to parse modem simulator port: " << port_strings[i]);
 
           auto vsock = SharedFD::VsockServer(
