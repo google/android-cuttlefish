@@ -21,7 +21,6 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -59,7 +58,7 @@ func TestUpdateArtifactWithSingleChunkSucceeds(t *testing.T) {
 	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
 		t.Fatal(err)
 	}
-	b, err := ioutil.ReadFile(filepath.Join(rootDir, checksum, testFileName))
+	b, err := os.ReadFile(filepath.Join(rootDir, checksum, testFileName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,7 +157,7 @@ func TestUpdateArtifactWithMultipleSerialChunkSucceeds(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	b, err := ioutil.ReadFile(filepath.Join(rootDir, checksum, testFileName))
+	b, err := os.ReadFile(filepath.Join(rootDir, checksum, testFileName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +188,7 @@ func TestUpdateArtifactWithMultipleParallelChunkSucceeds(t *testing.T) {
 		}(chunk)
 	}
 	wg.Wait()
-	b, err := ioutil.ReadFile(filepath.Join(rootDir, checksum, testFileName))
+	b, err := os.ReadFile(filepath.Join(rootDir, checksum, testFileName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -257,7 +256,7 @@ func TestExtractArtifactSucceedsWithZipFormat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := ioutil.ReadFile(zipFile)
+	data, err := os.ReadFile(zipFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -303,7 +302,7 @@ func TestExtractArtifactSucceedsWithTarGzFormat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := ioutil.ReadFile(tarFile)
+	data, err := os.ReadFile(tarFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -368,7 +367,7 @@ func TestExtractArtifactAfterArtifactIsFullyExtractedFails(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := ioutil.ReadFile(archive)
+	data, err := os.ReadFile(archive)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -594,7 +593,7 @@ func getContents(dir string) (map[string]string, error) {
 		}
 		if relPath, err := filepath.Rel(dir, path); err != nil {
 			return err
-		} else if content, err := ioutil.ReadFile(path); err != nil {
+		} else if content, err := os.ReadFile(path); err != nil {
 			return err
 		} else {
 			contents[relPath] = string(content)
@@ -608,7 +607,7 @@ func getContents(dir string) (map[string]string, error) {
 }
 
 func createZip(dir string, contents map[string]string) (string, error) {
-	zipFile, err := ioutil.TempFile(dir, "*.zip")
+	zipFile, err := os.CreateTemp(dir, "*.zip")
 	if err != nil {
 		return "", err
 	}
@@ -651,7 +650,7 @@ func getSubdirs(path string) []string {
 }
 
 func createTarGz(dir string, contents map[string]string) (string, error) {
-	tarFile, err := ioutil.TempFile(dir, "*.tar.gz")
+	tarFile, err := os.CreateTemp(dir, "*.tar.gz")
 	if err != nil {
 		return "", err
 	}

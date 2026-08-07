@@ -15,7 +15,6 @@
 package orchestrator
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -86,14 +85,14 @@ func TestUpdateImageDirectorySucceeds(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer f.Close()
-	if err := ioutil.WriteFile(src, []byte("hello_world"), 0600); err != nil {
+	if err := os.WriteFile(src, []byte("hello_world"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	if err := idm.UpdateImageDirectory(imageDir, srcDir); err != nil {
 		t.Fatal(err)
 	}
-	if output, err := ioutil.ReadFile(filepath.Join(rootDir, imageDir, "foo.txt")); err != nil {
+	if output, err := os.ReadFile(filepath.Join(rootDir, imageDir, "foo.txt")); err != nil {
 		t.Fatal(err)
 	} else if diff := cmp.Diff("hello_world", string(output)); diff != "" {
 		t.Errorf("response mismatch (-want +got):\n%s", diff)
@@ -117,20 +116,20 @@ func TestUpdateImageDirectorySucceedsWithModification(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer f.Close()
-	if err := ioutil.WriteFile(src, []byte("hello_world"), 0600); err != nil {
+	if err := os.WriteFile(src, []byte("hello_world"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	if err := idm.UpdateImageDirectory(imageDir, srcDir); err != nil {
 		t.Fatal(err)
 	}
-	if err := ioutil.WriteFile(src, []byte("hello_world_again"), 0600); err != nil {
+	if err := os.WriteFile(src, []byte("hello_world_again"), 0600); err != nil {
 		t.Fatal(err)
 	}
 
 	if err := idm.UpdateImageDirectory(imageDir, srcDir); err != nil {
 		t.Fatal(err)
 	}
-	if output, err := ioutil.ReadFile(filepath.Join(rootDir, imageDir, "foo.txt")); err != nil {
+	if output, err := os.ReadFile(filepath.Join(rootDir, imageDir, "foo.txt")); err != nil {
 		t.Fatal(err)
 	} else if diff := cmp.Diff("hello_world_again", string(output)); diff != "" {
 		t.Errorf("response mismatch (-want +got):\n%s", diff)
@@ -182,7 +181,7 @@ func TestDeleteImageDirectorySucceeds(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer f.Close()
-	if err := ioutil.WriteFile(src, []byte("hello_world"), 0600); err != nil {
+	if err := os.WriteFile(src, []byte("hello_world"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	if err := idm.UpdateImageDirectory(imageDir, srcDir); err != nil {
