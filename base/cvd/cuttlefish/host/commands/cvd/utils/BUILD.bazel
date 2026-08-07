@@ -16,6 +16,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_exists",
+        "//cuttlefish/files:is_directory_empty",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
