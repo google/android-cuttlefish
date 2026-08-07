@@ -27,10 +27,10 @@
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/posix/remove.h"
 
 namespace cuttlefish {
 namespace {

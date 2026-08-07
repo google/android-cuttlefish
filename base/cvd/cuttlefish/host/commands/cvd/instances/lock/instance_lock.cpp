@@ -24,6 +24,7 @@
 #include <utility>
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 

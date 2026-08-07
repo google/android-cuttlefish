@@ -40,6 +40,7 @@
 #include "cuttlefish/host/libs/config/esp/make_fat_image.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/execute.h"
 #include "cuttlefish/process/managed_stdio.h"

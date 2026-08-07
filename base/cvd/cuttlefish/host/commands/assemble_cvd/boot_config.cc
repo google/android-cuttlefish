@@ -46,6 +46,7 @@
 #include "cuttlefish/host/libs/config/kernel_args.h"
 #include "cuttlefish/host/libs/config/mkenvimage_slim.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/result/result.h"
 
 using cuttlefish::vm_manager::CrosvmManager;

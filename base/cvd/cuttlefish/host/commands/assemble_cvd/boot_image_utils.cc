@@ -57,6 +57,7 @@
 #include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
