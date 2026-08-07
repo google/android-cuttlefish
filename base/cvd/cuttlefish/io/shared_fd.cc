@@ -63,9 +63,7 @@ Result<uint64_t> SharedFdIo::SeekEnd(int64_t offset) {
 
 Result<uint64_t> SharedFdIo::PRead(void* buf, uint64_t count,
                                    uint64_t offset) const {
-  int64_t data_read = fd_->PRead(buf, count, offset);
-  CF_EXPECT_GE(data_read, 0, fd_->StrError());
-  return data_read;
+  return CF_EXPECT(fd_->PRead(buf, count, offset));
 }
 
 Result<uint64_t> SharedFdIo::PWrite(const void* buf, uint64_t count,
