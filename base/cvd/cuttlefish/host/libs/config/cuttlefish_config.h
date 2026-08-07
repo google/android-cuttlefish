@@ -404,6 +404,7 @@ class CuttlefishConfig {
     bool crosvm_simple_media_device() const;
     std::string crosvm_v4l2_proxy() const;
     bool use_pmem() const;
+    bool enable_pkvm() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -656,6 +657,7 @@ class CuttlefishConfig {
     void set_crosvm_simple_media_device(const bool simple_media_device);
     void set_crosvm_v4l2_proxy(const std::string v4l2_proxy);
     void set_use_pmem(const bool use_pmem);
+    void set_enable_pkvm(bool enable_pkvm);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host

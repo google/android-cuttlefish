@@ -109,6 +109,11 @@ std::vector<std::string> KernelCommandLineFromConfig(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<std::string> kernel_cmdline;
   AppendVector(&kernel_cmdline, VmManagerKernelCmdline(config, instance));
+  if (instance.enable_pkvm() && instance.target_arch() == Arch::Arm64) {
+    kernel_cmdline.push_back("kvm-arm.mode=protected");
+    // Makes the guest kernel's early loader modprobe the pKVM IOMMU driver.
+    kernel_cmdline.push_back("kvm-arm.protected_modules=pkvm_iommu_temp");
+  }
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
   return kernel_cmdline;
 }

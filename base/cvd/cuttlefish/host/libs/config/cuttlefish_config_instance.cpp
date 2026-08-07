@@ -1871,6 +1871,15 @@ bool CuttlefishConfig::InstanceSpecific::use_pmem() const {
   return (*Dictionary())[kCrosvmUsePmem].asBool();
 }
 
+static constexpr char kEnablePkvm[] = "enable_pkvm";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_pkvm(
+    bool enable_pkvm) {
+  (*Dictionary())[kEnablePkvm] = enable_pkvm;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_pkvm() const {
+  return (*Dictionary())[kEnablePkvm].asBool();
+}
+
 static constexpr char kEnableTapDevices[] = "enable_tap_devices";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_tap_devices(
     const bool enable_tap_devices) {
