@@ -52,6 +52,20 @@ if [ "${version}" != "${linux_image_deb}" ]; then
   exit 1
 fi
 
+# Remove old kernel packages, keeping only the target kernel and the
+# linux-image-cloud-${arch} meta-package.
+old_kernels=$(sudo chroot /mnt/image /usr/bin/dpkg -l | grep '^ii' | awk '{print $2}' | \
+  grep '^linux-image-' | grep -v "^${linux_image_deb}$" | grep -v "^linux-image-cloud-${arch}$" || true)
+if [ -n "${old_kernels}" ]; then
+  echo "Removing old kernel packages: ${old_kernels}"
+  sudo chroot /mnt/image /usr/bin/apt-get purge -y ${old_kernels}
+  # update-grub may fail in a chroot; the grub config will be rebuilt
+  # when the image boots, so this is non-fatal.
+  sudo chroot /mnt/image /bin/sh -c 'command -v update-grub >/dev/null && update-grub || true'
+else
+  echo "No old kernel packages to remove"
+fi
+
 # Skip unmounting:
 #  Sometimes systemd starts, making it hard to unmount
 #  In any case we'll unmount cleanly when the instance shuts down

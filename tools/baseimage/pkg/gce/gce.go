@@ -295,6 +295,12 @@ func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error 
 	defer h.cleanupDetachDisk(insName, attachedDiskName)
 	log.Println("disk attached")
 
+	log.Println("waiting for instance to become responsive over SSH...")
+	if err := WaitForInstance(project, zone, insName); err != nil {
+		return fmt.Errorf("instance failed to become responsive over SSH: %w", err)
+	}
+	log.Println("instance is responsive over SSH")
+
 	if err := UploadBashScript(project, zone, insName, "fill_available_disk_space.sh", scripts.FillAvailableDiskSpace); err != nil {
 		return fmt.Errorf("error uploading script: %v", err)
 	}

@@ -9,9 +9,9 @@
     </EF>
     <EF name="EF_ICCID" id="2FE2" structure="transparent">
         <SIMIO cmd="C0" p1="0" p2="0" p3="F" data="">144,0,62178202412183022FE28A01058B032F06038002000A880110</SIMIO>
-        <SIMIO cmd="B0" p1="0" p2="0" p3="A" data="">144,0,98683081462002318379</SIMIO>
+        <SIMIO cmd="B0" p1="0" p2="0" p3="A" data="">144,0,98683081462002318389</SIMIO>
         <!-- Special ATC to read ICCID from modem cache -->
-        <CCID>89860318640220133897</CCID>
+        <CCID>89860318640220133898</CCID>
     </EF>
     <EF name="EF_PL" id="2F05" structure="transparent">
         <SIMIO cmd="C0" p1="0" p2="0" p3="F" data="">144,0,62178202412183022F058A01058B032F060280020004880128</SIMIO>
@@ -76,7 +76,7 @@
 
     <ADF name="USIM" path="7FFF" aid="A0000000871002FF86FF0389FFFFFFFF">
         <EF name="EF_IMSI" id="6F07" structure="transparent">
-            <CIMI>310260000000000</CIMI>
+            <CIMI>311740123456790</CIMI>
         </EF>
         <EF name="EF_MSISDN" id="6F40" structure="linear fixed">
             <SIMIO cmd="C0" p1="0" p2="0" p3="F" data="">144,0,621982054221001C0283026F408A01058B036F0605800200388800</SIMIO>
@@ -206,6 +206,6 @@
 <!-- Grouped Card Metadata -->
 <CardProfile>
     <ATR>3F979580BFFE8210428031A073BE211797</ATR>
-    <EID>89049032000001000000000254806852</EID>
+    <EID>89049032000001000000000254806853</EID>
 </CardProfile>
 </IccProfile>
