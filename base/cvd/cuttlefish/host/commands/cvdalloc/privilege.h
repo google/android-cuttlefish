@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef CUTTLEFISH_HOST_COMMANDS_CVDALLOC_PRIVILEGE_H_
+#define CUTTLEFISH_HOST_COMMANDS_CVDALLOC_PRIVILEGE_H_
+
 #include <unistd.h>
 
+#include <optional>
 #include <string_view>
 
 #include "cuttlefish/result/result.h"
@@ -25,4 +29,22 @@ int BeginElevatedPrivileges();
 int DropPrivileges(uid_t orig);
 Result<void> ValidateCvdallocBinary(std::string_view path);
 
+class ScopedPrivileges {
+ public:
+  static Result<ScopedPrivileges> Elevate();
+
+  ScopedPrivileges(ScopedPrivileges&& other) noexcept;
+  ScopedPrivileges& operator=(ScopedPrivileges&& other) = delete;
+  ScopedPrivileges(const ScopedPrivileges&) = delete;
+  ScopedPrivileges& operator=(const ScopedPrivileges&) = delete;
+  ~ScopedPrivileges();
+
+ private:
+  explicit ScopedPrivileges(uid_t orig);
+
+  std::optional<uid_t> orig_;
+};
+
 }  // namespace cuttlefish
+
+#endif  // CUTTLEFISH_HOST_COMMANDS_CVDALLOC_PRIVILEGE_H_

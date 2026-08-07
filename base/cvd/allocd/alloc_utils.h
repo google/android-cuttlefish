@@ -25,6 +25,8 @@
 #include <string>
 #include <string_view>
 
+#include "allocd/net/nft_rule.h"
+#include "allocd/net/nftables.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -48,11 +50,9 @@ inline constexpr uint32_t kMaxIfaceNameId = 63;
 struct GatewayConfig {
   bool has_gateway = false;
   bool has_dnsmasq = false;
-  bool has_iptable = false;
 };
 
 int RunExternalCommand(const std::string& command);
-Result<std::string> IptablesPath();
 std::optional<std::string> GetUserName(uid_t uid);
 
 bool CreateTap(std::string_view name);
@@ -65,8 +65,11 @@ bool DestroyIface(std::string_view name);
 
 bool DestroyBridge(std::string_view name);
 
-bool CreateMobileIface(std::string_view name, uint16_t id,
-                       std::string_view ipaddr);
+Result<void> SetupFirewall(Nftables& nft, bool setup_byob = false);
+Result<void> TeardownFirewall(Nftables& nft);
+
+Result<NftRule> CreateMobileIface(Nftables& nft, std::string_view name,
+                                  uint16_t id, std::string_view ipaddr);
 bool DestroyMobileIface(std::string_view name, uint16_t id,
                         std::string_view ipaddr);
 
