@@ -13,7 +13,6 @@ import {
   KtdGridComponent,
   KtdGridLayout,
   KtdGridLayoutItem,
-  ktdTrackById,
 } from '@katoid/angular-grid-layout';
 import {DisplayInfo} from '../../../../intercept/js/server_connector'
 
@@ -61,8 +60,6 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
   cols = 0;
 
   layoutUpdated$ = new BehaviorSubject<KtdGridLayout>([]);
-
-  trackById = ktdTrackById;
 
   private readonly minPanelWidth = 330;
   private readonly minPanelHeight = 100;
