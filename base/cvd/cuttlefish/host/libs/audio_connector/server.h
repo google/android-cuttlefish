@@ -18,6 +18,7 @@
 #include <memory>
 #include <utility>
 
+#include "cuttlefish/common/libs/fs/scoped_mmap.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/audio_connector/buffers.h"
 #include "cuttlefish/host/libs/audio_connector/commands.h"

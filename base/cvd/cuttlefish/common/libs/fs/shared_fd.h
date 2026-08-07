@@ -52,6 +52,7 @@
 
 #include "android-base/cmsg.h"
 
+#include "cuttlefish/common/libs/fs/scoped_mmap.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
@@ -239,37 +240,6 @@ class WeakFD {
 
  private:
   std::weak_ptr<FileInstance> value_;
-};
-
-// Provides RAII semantics for memory mappings, preventing memory leaks. It does
-// not however prevent use-after-free errors since the underlying pointer can be
-// extracted and could survive this object.
-class ScopedMMap {
- public:
-  ScopedMMap();
-  ScopedMMap(void* ptr, size_t len);
-  ScopedMMap(const ScopedMMap& other) = delete;
-  ScopedMMap& operator=(const ScopedMMap& other) = delete;
-  ScopedMMap(ScopedMMap&& other);
-
-  ~ScopedMMap();
-
-  void* get() { return ptr_; }
-  const void* get() const { return ptr_; }
-  size_t len() const { return len_; }
-
-  operator bool() const { return ptr_ != MAP_FAILED; }
-
-  // Checks whether the interval [offset, offset + length) is contained within
-  // [0, len_)
-  bool WithinBounds(size_t offset, size_t length) const {
-    // Don't add offset + len to avoid overflow
-    return offset < len_ && len_ - offset >= length;
-  }
-
- private:
-  void* ptr_ = MAP_FAILED;
-  size_t len_;
 };
 
 /**

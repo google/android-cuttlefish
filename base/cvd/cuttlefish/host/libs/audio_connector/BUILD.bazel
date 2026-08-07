@@ -19,6 +19,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:scoped_mmap",
         "//cuttlefish/common/libs/utils:cf_endian",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",

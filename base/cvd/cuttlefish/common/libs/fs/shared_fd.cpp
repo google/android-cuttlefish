@@ -42,6 +42,7 @@
 #include "absl/log/log.h"
 #include "fmt/format.h"
 
+#include "cuttlefish/common/libs/fs/scoped_mmap.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
@@ -838,22 +839,6 @@ SharedFD WeakFD::lock() const {
     return SharedFD(locked_file_instance);
   }
   return SharedFD();
-}
-
-ScopedMMap::ScopedMMap(void* ptr, size_t len) : ptr_(ptr), len_(len) {}
-
-ScopedMMap::ScopedMMap() : ptr_(MAP_FAILED), len_(0) {}
-
-ScopedMMap::ScopedMMap(ScopedMMap&& other)
-    : ptr_(other.ptr_), len_(other.len_) {
-  other.ptr_ = MAP_FAILED;
-  other.len_ = 0;
-}
-
-ScopedMMap::~ScopedMMap() {
-  if (ptr_ != MAP_FAILED) {
-    munmap(ptr_, len_);
-  }
 }
 
 /* static */ std::shared_ptr<FileInstance> FileInstance::ClosedInstance() {
