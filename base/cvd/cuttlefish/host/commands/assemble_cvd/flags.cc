@@ -1143,17 +1143,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     instance.set_hwcomposer(hwcomposer_vec[instance_index]);
-    if (!hwcomposer_vec[instance_index].empty()) {
-      if (hwcomposer_vec[instance_index] == kHwComposerRanchu) {
-        CF_EXPECT(gpu_mode != GpuMode::DrmVirgl,
-                  "ranchu hwcomposer not supported with --gpu_mode=drm_virgl");
-      }
-    }
-
     if (hwcomposer_vec[instance_index] == kHwComposerAuto) {
-      if (gpu_mode == GpuMode::DrmVirgl) {
-        instance.set_hwcomposer(kHwComposerDrm);
-      } else if (gpu_mode == GpuMode::None) {
+      if (gpu_mode == kGpuModeNone) {
         instance.set_hwcomposer(kHwComposerNone);
       } else {
         instance.set_hwcomposer(kHwComposerRanchu);
