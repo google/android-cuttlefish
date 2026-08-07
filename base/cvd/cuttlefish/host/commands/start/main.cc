@@ -156,6 +156,7 @@ const std::unordered_set<std::string>& BoolFlags() {
       "enable_kernel_log",
       "enable_minimal_mode",
       "enable_modem_simulator",
+      "enable_pkvm",
       "enable_sandbox",
       "enable_usb",
       "enable_virtiofs",

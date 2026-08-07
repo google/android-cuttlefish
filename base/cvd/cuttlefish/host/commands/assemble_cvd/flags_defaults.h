@@ -100,6 +100,7 @@
 #define CF_DEFAULTS_SECURE_HALS CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_PROTECTED_VM false
 #define CF_DEFAULTS_MTE false
+#define CF_DEFAULTS_ENABLE_PKVM false
 
 // Kernel default parameters
 #define CF_DEFAULTS_ENABLE_KERNEL_LOG true
