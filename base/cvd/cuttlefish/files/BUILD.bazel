@@ -63,6 +63,12 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "file_is_socket",
+    srcs = ["file_is_socket.cc"],
+    hdrs = ["file_is_socket.h"],
+)
+
+cf_cc_library(
     name = "is_symlink",
     srcs = ["is_symlink.cc"],
     hdrs = ["is_symlink.h"],
