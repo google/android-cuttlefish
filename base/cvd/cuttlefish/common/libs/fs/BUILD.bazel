@@ -21,6 +21,23 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "file_instance",
+    srcs = ["file_instance.cc"],
+    hdrs = ["file_instance.h"],
+    include_cleaner_enabled = False,
+    deps = [
+        "//cuttlefish/common/libs/fs:scoped_mmap",
+        "//cuttlefish/io",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+    ],
+)
+
+cf_cc_library(
     name = "fs",
     srcs = [
         "shared_buf.cc",
@@ -37,12 +54,10 @@ cf_cc_library(
         "//conditions:default": [],
     }),
     deps = [
-        "//cuttlefish/common/libs/fs:scoped_mmap",
+        "//cuttlefish/common/libs/fs:file_instance",
         "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/io",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@fmt",
