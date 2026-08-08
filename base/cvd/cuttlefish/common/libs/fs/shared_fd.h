@@ -17,7 +17,6 @@
 #ifndef CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 #define CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 
-#include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -43,17 +42,13 @@
 #endif
 
 #include <chrono>
-#include <compare>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
-#include "android-base/cmsg.h"
-
-#include "cuttlefish/common/libs/fs/scoped_mmap.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/common/libs/fs/file_instance.h"
 #include "cuttlefish/result/result.h"
 
 /**
@@ -240,148 +235,6 @@ class WeakFD {
 
  private:
   std::weak_ptr<FileInstance> value_;
-};
-
-/**
- * Tracks the lifetime of a file descriptor and provides methods to allow
- * callers to use the file without knowledge of the underlying descriptor
- * number.
- *
- * FileInstances have two states: Open and Closed. They may start in either
- * state. However, once a FileIntance enters the Closed state it cannot be
- * reopened.
- *
- * Construction of FileInstances is limited to select classes to avoid
- * escaping file descriptors. At this point SharedFD is the only class
- * that has access. We may eventually have ScopedFD and WeakFD.
- */
-class FileInstance : public ReaderSeeker {
-  // Give SharedFD access to the aliasing constructor.
-  friend class SharedFD;
-  friend class Epoll;
-
- public:
-  virtual ~FileInstance() { Close(); }
-
-  // This can't be a singleton because our shared_ptr's aren't thread safe.
-  static std::shared_ptr<FileInstance> ClosedInstance();
-
-  int Bind(const struct sockaddr* addr, socklen_t addrlen);
-  int Connect(const struct sockaddr* addr, socklen_t addrlen);
-  int ConnectWithTimeout(const struct sockaddr* addr, socklen_t addrlen,
-                         struct timeval* timeout);
-  void Close();
-
-  bool Chmod(mode_t mode);
-
-  // Returns true if the entire input was copied.
-  // Otherwise an error will be set either on this file or the input.
-  // The non-const reference is needed to avoid binding this to a particular
-  // reference type.
-  bool CopyFrom(FileInstance& in, size_t length, FileInstance* stop = nullptr);
-  // Same as CopyFrom, but reads from input until EOF is reached.
-  bool CopyAllFrom(FileInstance& in, FileInstance* stop = nullptr);
-  bool SendFile(FileInstance& in, off_t* offset, size_t count);
-
-  int UNMANAGED_Dup();
-  int UNMANAGED_Dup2(int newfd);
-  int Fchdir();
-  int Fcntl(int command, int value);
-  int Fsync();
-
-  Result<void> Flock(int operation);
-
-  int GetErrno() const { return errno_; }
-  int GetSockName(struct sockaddr* addr, socklen_t* addrlen);
-
-#ifdef __linux__
-  unsigned int VsockServerPort();
-#endif
-
-  int Ioctl(int request, void* val = nullptr);
-  bool IsOpen() const { return fd_ != -1; }
-
-  // in probably isn't modified, but the API spec doesn't have const.
-  bool IsSet(fd_set* in) const;
-
-  // whether this is a regular file or not
-  bool IsRegular() const { return is_regular_file_; }
-
-  /**
-   * Adds a hard link to a file descriptor, based on the current working
-   * directory of the process or to some absolute path.
-   *
-   * https://www.man7.org/linux/man-pages/man2/linkat.2.html
-   *
-   * Using this on a file opened with O_TMPFILE can link it into the filesystem.
-   */
-  // Used with O_TMPFILE files to attach them to the filesystem.
-  int LinkAtCwd(const std::string& path);
-  int Listen(int backlog);
-  static void Log(const char* message);
-  off_t LSeek(off_t offset, int whence);
-  ssize_t Recv(void* buf, size_t len, int flags);
-  ssize_t RecvMsg(struct msghdr* msg, int flags);
-  Result<uint64_t> Read(void* buf, uint64_t count) override;
-  Result<uint64_t> PRead(void* buf, uint64_t count,
-                         uint64_t offset) const override;
-#ifdef __linux__
-  int EventfdRead(eventfd_t* value);
-#endif
-  ssize_t Send(const void* buf, size_t len, int flags);
-  ssize_t SendMsg(const struct msghdr* msg, int flags);
-
-  Result<uint64_t> SeekSet(uint64_t) override;
-  Result<uint64_t> SeekCur(int64_t) override;
-  Result<uint64_t> SeekEnd(int64_t) override;
-
-  template <typename... Args>
-  ssize_t SendFileDescriptors(const void* buf, size_t len, Args&&... sent_fds) {
-    std::vector<int> fds;
-    (fds.push_back(sent_fds->fd_), ...);
-    errno = 0;
-    auto ret = android::base::SendFileDescriptorVector(fd_, buf, len, fds);
-    errno_ = errno;
-    return ret;
-  }
-
-  int Shutdown(int how);
-  void Set(fd_set* dest, int* max_index) const;
-  int SetSockOpt(int level, int optname, const void* optval, socklen_t optlen);
-  int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen);
-  int SetTerminalRaw();
-  std::string StrError() const;
-  ScopedMMap MMap(void* addr, size_t length, int prot, int flags, off_t offset);
-  ssize_t Truncate(off_t length);
-  /*
-   * If the file is a regular file and the count is 0, Write() may detect
-   * error(s) by calling write(fd, buf, 0) declared in <unistd.h>. If detected,
-   * it will return -1. If not, 0 will be returned. For non-regular files such
-   * as socket or pipe, write(fd, buf, 0) is not specified. Write(), however,
-   * will do nothing and just return 0.
-   *
-   */
-  ssize_t Write(const void* buf, size_t count);
-  ssize_t PWrite(const void* buf, size_t count, size_t offset);
-#ifdef __linux__
-  int EventfdWrite(eventfd_t value);
-#endif
-  bool IsATTY();
-
-  int Futimens(const struct timespec times[2]);
-
-  // inotify related functions
-  int InotifyAddWatch(const std::string& pathname, uint32_t mask);
-  void InotifyRmWatch(int watch);
-
- private:
-  FileInstance(int fd, int in_errno);
-  FileInstance* Accept(struct sockaddr* addr, socklen_t* addrlen) const;
-
-  int fd_;
-  int errno_;
-  std::string identity_;
-  bool is_regular_file_;
 };
 
 struct PollSharedFd {
