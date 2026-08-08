@@ -63,8 +63,6 @@ Result<void> WriteNewFile(const std::string& filepath, std::string_view content,
 bool MakeFileExecutable(const std::string& path);
 Result<std::chrono::system_clock::time_point> FileModificationTime(
     const std::string& path);
-// Whether a file exists and is a unix socket
-bool FileIsSocket(const std::string& path);
 Result<uid_t> FileOwner(const std::string& path);
 
 // The returned value may contain .. or . if these are present in the path

@@ -26,8 +26,8 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/wait_for_file.h"
+#include "cuttlefish/files/file_is_socket.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"

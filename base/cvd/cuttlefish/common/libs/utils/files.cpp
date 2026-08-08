@@ -382,11 +382,6 @@ FileSizes SparseFileSizes(const std::string& path) {
   return (FileSizes){.sparse_size = farthest_seek, .disk_size = data_bytes};
 }
 
-bool FileIsSocket(const std::string& path) {
-  struct stat st{};
-  return stat(path.c_str(), &st) == 0 && S_ISSOCK(st.st_mode);
-}
-
 Result<std::string> FindFile(const std::string& path,
                              const std::string& target_name) {
   std::string ret;
