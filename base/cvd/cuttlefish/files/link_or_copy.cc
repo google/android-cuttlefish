@@ -24,7 +24,7 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/files/are_hard_linked.h"
-#include "cuttlefish/files/copy.h"
+#include "cuttlefish/files/copy_with_attributes.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/expect.h"
@@ -56,8 +56,7 @@ Result<std::string> LinkOrCopy(const std::string& target,
             << destination << "\"";
     return destination;
   }
-  CF_EXPECTF(Copy(target, destination), "Failed to copy \"{}\" to \"{}\"",
-             target, destination);
+  CF_EXPECT(CopyWithAttributes(target, destination));
   VLOG(1) << "Copied file from \"" << target << "\" to \"" << destination
           << "\"";
 
