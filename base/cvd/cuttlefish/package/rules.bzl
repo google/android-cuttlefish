@@ -56,6 +56,15 @@ def _package_files_impl(ctx):
 
     path_to_declared_file = dict()
 
+    placeholder_clear_dir = ctx.actions.declare_file(ctx.attr.base_dir + ".placeholder")
+    full_base_dir = placeholder_clear_dir.dirname + "/" + ctx.attr.base_dir
+    ctx.actions.run_shell(
+        mnemonic = "ClearOutputDirectory",
+        command = "rm -r " + full_base_dir + " && touch " + placeholder_clear_dir.path,
+        inputs = [_file_from_label(src) for src in ctx.attr.package_file_to_src.values()],
+        outputs = [placeholder_clear_dir],
+    )
+
     for (dst, src) in ctx.attr.package_file_to_src.items():
         out_file = ctx.actions.declare_file(ctx.attr.base_dir + '/' + dst)
 
@@ -69,7 +78,7 @@ def _package_files_impl(ctx):
         ctx.actions.run_shell(
             mnemonic = "MakeOutputDir",
             outputs = [out_file],
-            inputs = [input_file],
+            inputs = [placeholder_clear_dir, input_file],
             command = "mkdir -p " + out_file.dirname + " && cp " + input_file.path + " " + out_file.path,
         )
 
@@ -90,7 +99,7 @@ def _package_files_impl(ctx):
         ctx.actions.run_shell(
             mnemonic = "MakeOutputDir",
             outputs = [dst_file],
-            inputs = [src_file],
+            inputs = [placeholder_clear_dir, src_file],
             command = "mkdir -p " + dst_file.dirname + " && ln -s " + relative_target + " " + dst_file.path,
         )
 
