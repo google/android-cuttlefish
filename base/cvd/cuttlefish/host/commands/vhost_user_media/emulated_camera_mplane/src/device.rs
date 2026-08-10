@@ -514,7 +514,8 @@ const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 const FRAME_RATE: u32 = 30;
 
-const SUPPORTED_SIZES: [(u32, u32); 2] = [
+const SUPPORTED_SIZES: [(u32, u32); 3] = [
+    (320, 240),
     (640, 480),
     (1280, 720),
 ];
