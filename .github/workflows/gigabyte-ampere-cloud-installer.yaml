@@ -5,7 +5,7 @@ on:
     paths:
       - 'gigabyte-ampere-cloud-installer/**'
   push:
-    branchs:
+    branches:
       - '**'
 
 jobs:
