@@ -88,13 +88,14 @@ namespace cuttlefish {
 class FileInstance : public ReaderSeeker {
   // Give SharedFD access to the aliasing constructor.
   friend class SharedFD;
+  friend class UniqueFd;
   friend class Epoll;
 
  public:
   virtual ~FileInstance() { Close(); }
 
   // This can't be a singleton because our shared_ptr's aren't thread safe.
-  static std::shared_ptr<FileInstance> ClosedInstance();
+  static std::unique_ptr<FileInstance> ClosedInstance();
 
   int Bind(const struct sockaddr* addr, socklen_t addrlen);
   int Connect(const struct sockaddr* addr, socklen_t addrlen);
