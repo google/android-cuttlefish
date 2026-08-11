@@ -8,6 +8,9 @@ on:
     branches:
       - '**'
 
+permissions:
+  contents: read
+
 jobs:
   build-cloud-installer-initramfs-job:
     runs-on: ubuntu-22.04-arm
@@ -19,7 +22,7 @@ jobs:
         working-directory: ./gigabyte-ampere-cloud-installer
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Setting up build environment
       run: |
         apt-get update
@@ -39,7 +42,7 @@ jobs:
         export HOME=$GITHUB_WORKSPACE
         ./regenerate-initramfs.sh
     - name: Upload artifacts for initramfs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: gigabyte-ampere-cloud-installer-initramfs-artifacts
         path: gigabyte-ampere-cloud-installer/initrd.img-*
@@ -55,9 +58,9 @@ jobs:
         working-directory: ./gigabyte-ampere-cloud-installer
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-initramfs-artifacts
         path: ./gigabyte-ampere-cloud-installer
@@ -91,7 +94,7 @@ jobs:
     - name: Clean build directory
       run: ./lb_clean.sh
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: gigabyte-ampere-cloud-installer-artifacts
         path: gigabyte-ampere-cloud-installer/live-image-arm64.iso.xz
@@ -103,7 +106,7 @@ jobs:
       contents: read
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Use github CLI to search for run-id
       id: search-run
       env:
@@ -113,13 +116,13 @@ jobs:
         echo "Found Run ID is : ${RUN_ID}"
         echo "target_id=$RUN_ID" >> $GITHUB_OUTPUT
     - name: Download artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: cloud-init-image-for-cuttlefish-artifacts
         run-id: ${{ steps.search-run.outputs.target_id }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Reupload artifact for later test cases
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: gigabyte-ampere-cloud-installer-cidata
         path: gigabyte-cidata.iso
@@ -138,14 +141,14 @@ jobs:
       TEST_DISK_SIZE: "10G"
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download installer artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-artifacts
         path: ./gigabyte-ampere-cloud-installer
     - name: Download cidata artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-cidata
         path: ./gigabyte-ampere-cloud-installer
@@ -194,14 +197,14 @@ jobs:
       TEST_DISK_SIZE: "10G"
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download installer artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-artifacts
         path: ./gigabyte-ampere-cloud-installer
     - name: Download cidata artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-cidata
         path: ./gigabyte-ampere-cloud-installer
@@ -252,14 +255,14 @@ jobs:
       TEST_DISK_SIZE: "10G"
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download installer artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-artifacts
         path: ./gigabyte-ampere-cloud-installer
     - name: Download cidata artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-cidata
         path: ./gigabyte-ampere-cloud-installer
@@ -310,14 +313,14 @@ jobs:
       TEST_DISK_SIZE: "10G"
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download installer artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-artifacts
         path: ./gigabyte-ampere-cloud-installer
     - name: Download cidata artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-cidata
         path: ./gigabyte-ampere-cloud-installer
@@ -370,14 +373,14 @@ jobs:
       TEST_DISK_SIZE: "10G"
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download installer artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-artifacts
         path: ./gigabyte-ampere-cloud-installer
     - name: Download cidata artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-cidata
         path: ./gigabyte-ampere-cloud-installer
@@ -445,14 +448,14 @@ jobs:
         working-directory: ./gigabyte-ampere-cloud-installer
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
     - name: Download installer artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-artifacts
         path: ./gigabyte-ampere-cloud-installer
     - name: Download cidata artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: gigabyte-ampere-cloud-installer-cidata
         path: ./gigabyte-ampere-cloud-installer

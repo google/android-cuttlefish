@@ -38,11 +38,11 @@ jobs:
           permission-pull-requests: 'write'
 
       - name: 'Checkout Code'
-        uses: 'actions/checkout@v4' # ratchet:exclude
+        uses: 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' # v4
 
       - name: 'Run Gemini CLI'
         id: 'run_gemini'
-        uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
+        uses: 'google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489' # v0
         env:
           TITLE: '${{ github.event.pull_request.title }}'
           DESCRIPTION: '${{ github.event.pull_request.body }}'
