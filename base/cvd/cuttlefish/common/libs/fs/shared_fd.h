@@ -49,6 +49,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/file_instance.h"
+#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/result/result.h"
 
 /**
@@ -130,8 +131,10 @@ class SharedFD {
   SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) {}
   SharedFD(SharedFD const&) = default;
   SharedFD(SharedFD&& other);
+  SharedFD(UniqueFd other);
   SharedFD& operator=(SharedFD const&) = default;
   SharedFD& operator=(SharedFD&& other);
+  SharedFD& operator=(UniqueFd other);
   // Reference the listener as a FileInstance to make this FD type agnostic.
   static SharedFD Accept(const FileInstance& listener, struct sockaddr* addr,
                          socklen_t* addrlen);

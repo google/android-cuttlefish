@@ -42,7 +42,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/common/libs/utils/known_paths.h"
+#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -87,15 +87,6 @@ void CheckMarked(fd_set* in_out_mask, SharedFDSet* in_out_set) {
   }
 }
 
-int memfd_create_wrapper(const char* name, unsigned int flags) {
-#ifdef __linux__
-  return memfd_create(name, flags);
-#else
-  (void)flags;
-  return shm_open(name, O_RDWR);
-#endif
-}
-
 }  // namespace
 
 int Select(SharedFDSet* read_set, SharedFDSet* write_set,
@@ -131,9 +122,16 @@ SharedFD::SharedFD(SharedFD&& other) {
   other.value_.reset(new FileInstance(-1, EBADF));
 }
 
+SharedFD::SharedFD(UniqueFd other) { value_ = std::move(other.value_); }
+
 SharedFD& SharedFD::operator=(SharedFD&& other) {
   value_ = std::move(other.value_);
   other.value_.reset(new FileInstance(-1, EBADF));
+  return *this;
+}
+
+SharedFD& SharedFD::operator=(UniqueFd other) {
+  value_ = std::move(other.value_);
   return *this;
 }
 
@@ -155,48 +153,16 @@ int SharedFD::Poll(PollSharedFd* fds, size_t num_fds, int timeout) {
   return ret;
 }
 
-static void MakeAddress(const char* name, bool abstract,
-                        struct sockaddr_un* dest, socklen_t* len) {
-  memset(dest, 0, sizeof(*dest));
-  dest->sun_family = AF_UNIX;
-  // sun_path is NOT expected to be nul-terminated.
-  // See man 7 unix.
-  size_t namelen;
-  if (abstract) {
-    // ANDROID_SOCKET_NAMESPACE_ABSTRACT
-    namelen = strlen(name);
-    CHECK_LE(namelen, sizeof(dest->sun_path) - 1)
-        << "MakeAddress failed. Name=" << name << " is longer than allowed.";
-    dest->sun_path[0] = 0;
-    memcpy(dest->sun_path + 1, name, namelen);
-  } else {
-    // ANDROID_SOCKET_NAMESPACE_RESERVED
-    // ANDROID_SOCKET_NAMESPACE_FILESYSTEM
-    // TODO(pinghao): Distinguish between them?
-    namelen = strlen(name);
-    CHECK_LE(namelen, sizeof(dest->sun_path))
-        << "MakeAddress failed. Name=" << name << " is longer than allowed.";
-    strncpy(dest->sun_path, name, strlen(name));
-  }
-  *len = namelen + offsetof(struct sockaddr_un, sun_path) + 1;
-}
-
 SharedFD SharedFD::Accept(const FileInstance& listener, struct sockaddr* addr,
                           socklen_t* addrlen) {
-  return SharedFD(
-      std::shared_ptr<FileInstance>(listener.Accept(addr, addrlen)));
+  return UniqueFd::Accept(listener, addr, addrlen);
 }
 
 SharedFD SharedFD::Accept(const FileInstance& listener) {
-  return SharedFD::Accept(listener, NULL, NULL);
+  return UniqueFd::Accept(listener);
 }
 
-SharedFD SharedFD::Dup(int unmanaged_fd) {
-  int fd = fcntl(unmanaged_fd, F_DUPFD_CLOEXEC, 3);
-  int error_num = errno;
-  return SharedFD(
-      std::shared_ptr<FileInstance>(new FileInstance(fd, error_num)));
-}
+SharedFD SharedFD::Dup(int unmanaged_fd) { return UniqueFd::Dup(unmanaged_fd); }
 
 bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   int fds[2];
@@ -215,22 +181,16 @@ bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
 
 #ifdef __linux__
 SharedFD SharedFD::Event(int initval, int flags) {
-  int fd = eventfd(initval, flags);
-  return std::shared_ptr<FileInstance>(new FileInstance(fd, errno));
+  return UniqueFd::Event(initval, flags);
 }
 
 SharedFD SharedFD::ShmOpen(const std::string& name, int oflag, int mode) {
-  errno = 0;
-  int fd = shm_open(name.c_str(), oflag, mode);
-  int error_num = errno;
-  return std::shared_ptr<FileInstance>(new FileInstance(fd, error_num));
+  return UniqueFd::ShmOpen(name, oflag, mode);
 }
 #endif
 
 SharedFD SharedFD::MemfdCreate(const std::string& name, unsigned int flags) {
-  int fd = memfd_create_wrapper(name.c_str(), flags);
-  int error_num = errno;
-  return std::shared_ptr<FileInstance>(new FileInstance(fd, error_num));
+  return UniqueFd::MemfdCreate(name, flags);
 }
 
 SharedFD SharedFD::MemfdCreateWithData(const std::string& name,
@@ -271,26 +231,17 @@ Result<std::pair<SharedFD, SharedFD>> SharedFD::SocketPair(int domain, int type,
 }
 
 SharedFD SharedFD::Open(const std::string& path, int flags, mode_t mode) {
-  return Open(path.c_str(), flags, mode);
+  return UniqueFd::Open(path, flags, mode);
 }
 
 SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
-  int fd = TEMP_FAILURE_RETRY(open(path, flags, mode));
-  if (fd == -1) {
-    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-  } else {
-    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
-  }
+  return UniqueFd::Open(path, flags, mode);
 }
 
-SharedFD SharedFD::InotifyFd(void) {
-  errno = 0;
-  int fd = TEMP_FAILURE_RETRY(inotify_init1(IN_CLOEXEC));
-  return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-}
+SharedFD SharedFD::InotifyFd(void) { return UniqueFd::InotifyFd(); }
 
 SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
-  return SharedFD::Open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
+  return UniqueFd::Creat(path, mode);
 }
 
 int SharedFD::Fchdir(SharedFD shared_fd) {
@@ -303,36 +254,15 @@ int SharedFD::Fchdir(SharedFD shared_fd) {
 }
 
 Result<SharedFD> SharedFD::Fifo(const std::string& path, mode_t mode) {
-  struct stat st{};
-  if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) == 0) {
-    CF_EXPECTF(TEMP_FAILURE_RETRY(remove(path.c_str())) == 0,
-               "Failed to delete old file at '{}': '{}'", path,
-               ::cuttlefish::StrError(errno));
-  }
-
-  CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
-             "Failed to mkfifo('{}', {:o})", path, mode);
-  auto ret = Open(path, O_RDWR);
-  CF_EXPECTF(ret->IsOpen(), "Failed to open '{}': '{}'", path, ret->StrError());
-  return ret;
+  return CF_EXPECT(UniqueFd::Fifo(path, mode));
 }
 
 SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
-  int fd = TEMP_FAILURE_RETRY(socket(domain, socket_type, protocol));
-  if (fd == -1) {
-    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-  } else {
-    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
-  }
+  return UniqueFd::Socket(domain, socket_type, protocol);
 }
 
 SharedFD SharedFD::Mkstemp(std::string* path) {
-  int fd = mkstemp(path->data());
-  if (fd == -1) {
-    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-  } else {
-    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
-  }
+  return UniqueFd::Mkstemp(path);
 }
 
 Result<std::pair<SharedFD, std::string>> SharedFD::Mkostemp(
@@ -348,213 +278,47 @@ Result<std::pair<SharedFD, std::string>> SharedFD::Mkostemp(
                                                std::move(temp_path));
 }
 
-SharedFD SharedFD::ErrorFD(int error) {
-  return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(-1, error)));
-}
+SharedFD SharedFD::ErrorFD(int error) { return UniqueFd::ErrorFD(error); }
 
 SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
                                      int in_type) {
-  return SocketLocalClient(name, abstract, in_type, 0);
+  return UniqueFd::SocketLocalClient(name, abstract, in_type);
 }
 
 SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
                                      int in_type, int timeout_seconds) {
-  struct sockaddr_un addr;
-  socklen_t addrlen;
-  MakeAddress(name.c_str(), abstract, &addr, &addrlen);
-  SharedFD rval = SharedFD::Socket(PF_UNIX, in_type, 0);
-  if (!rval->IsOpen()) {
-    return rval;
-  }
-  struct timeval timeout = {timeout_seconds, 0};
-  auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
-  if (rval->ConnectWithTimeout(casted_addr, addrlen, &timeout) == -1) {
-    return SharedFD::ErrorFD(rval->GetErrno());
-  }
-  return rval;
+  return UniqueFd::SocketLocalClient(name, abstract, in_type, timeout_seconds);
 }
 
 SharedFD SharedFD::SocketLocalClient(int port, int type) {
-  sockaddr_in addr{};
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  auto rval = SharedFD::Socket(AF_INET, type, 0);
-  if (!rval->IsOpen()) {
-    return rval;
-  }
-  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr), sizeof addr) <
-      0) {
-    return SharedFD::ErrorFD(rval->GetErrno());
-  }
-  return rval;
+  return UniqueFd::SocketLocalClient(port, type);
 }
 
 SharedFD SharedFD::SocketClient(const std::string& host, int port, int type,
                                 std::chrono::seconds timeout) {
-  sockaddr_in addr{};
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = inet_addr(host.c_str());
-  auto rval = SharedFD::Socket(AF_INET, type, 0);
-  if (!rval->IsOpen()) {
-    return rval;
-  }
-  struct timeval timeout_timeval = {static_cast<time_t>(timeout.count()), 0};
-  if (rval->ConnectWithTimeout(reinterpret_cast<const sockaddr*>(&addr),
-                               sizeof addr, &timeout_timeval) < 0) {
-    return SharedFD::ErrorFD(rval->GetErrno());
-  }
-  return rval;
+  return UniqueFd::SocketClient(host, port, type, timeout);
 }
 
 SharedFD SharedFD::Socket6Client(const std::string& host,
                                  const std::string& interface, int port,
                                  int type, std::chrono::seconds timeout) {
-  sockaddr_in6 addr{};
-  addr.sin6_family = AF_INET6;
-  addr.sin6_port = htons(port);
-  inet_pton(AF_INET6, host.c_str(), &addr.sin6_addr);
-  auto rval = SharedFD::Socket(AF_INET6, type, 0);
-  if (!rval->IsOpen()) {
-    return rval;
-  }
-
-  if (!interface.empty()) {
-#ifdef __linux__
-    ifreq ifr{};
-    snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", interface.c_str());
-
-    if (rval->SetSockOpt(SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) ==
-        -1) {
-      return SharedFD::ErrorFD(rval->GetErrno());
-    }
-#elif defined(__APPLE__)
-    int idx = if_nametoindex(interface.c_str());
-    if (rval->SetSockOpt(IPPROTO_IP, IP_BOUND_IF, &idx, sizeof(idx)) == -1) {
-      return SharedFD::ErrorFD(rval->GetErrno());
-    }
-#else
-#error "Unsupported operating system"
-#endif
-  }
-
-  struct timeval timeout_timeval = {static_cast<time_t>(timeout.count()), 0};
-  if (rval->ConnectWithTimeout(reinterpret_cast<const sockaddr*>(&addr),
-                               sizeof addr, &timeout_timeval) < 0) {
-    return SharedFD::ErrorFD(rval->GetErrno());
-  }
-  return rval;
+  return UniqueFd::Socket6Client(host, interface, port, type, timeout);
 }
 
 SharedFD SharedFD::SocketLocalServer(int port, int type) {
-  struct sockaddr_in addr;
-  memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
-  if (!rval->IsOpen()) {
-    return rval;
-  }
-  int n = 1;
-  if (rval->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1) {
-    LOG(ERROR) << "SetSockOpt failed " << rval->StrError();
-    return SharedFD::ErrorFD(rval->GetErrno());
-  }
-  if (rval->Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-    LOG(ERROR) << "Bind failed " << rval->StrError();
-    return SharedFD::ErrorFD(rval->GetErrno());
-  }
-  if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
-    if (rval->Listen(4) < 0) {
-      LOG(ERROR) << "Listen failed " << rval->StrError();
-      return SharedFD::ErrorFD(rval->GetErrno());
-    }
-  }
-  return rval;
+  return UniqueFd::SocketLocalServer(port, type);
 }
 
 SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
                                      int in_type, mode_t mode) {
-  // DO NOT UNLINK addr.sun_path. It does NOT have to be null-terminated.
-  // See man 7 unix for more details.
-  if (!abstract) {
-    (void)unlink(name.c_str());
-  }
-
-  struct sockaddr_un addr;
-  socklen_t addrlen;
-  MakeAddress(name.c_str(), abstract, &addr, &addrlen);
-  SharedFD rval = SharedFD::Socket(PF_UNIX, in_type, 0);
-  if (!rval->IsOpen()) {
-    return rval;
-  }
-
-  int n = 1;
-  if (rval->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1) {
-    LOG(ERROR) << "SetSockOpt failed " << rval->StrError();
-    return SharedFD::ErrorFD(rval->GetErrno());
-  }
-  if (rval->Bind(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
-    LOG(ERROR) << "Bind failed; name=" << name << ": " << rval->StrError();
-    return SharedFD::ErrorFD(rval->GetErrno());
-  }
-
-  /* Only the bottom bits are really the socket type; there are flags too. */
-  constexpr int SOCK_TYPE_MASK = 0xf;
-  auto socket_type = in_type & SOCK_TYPE_MASK;
-
-  // Connection oriented sockets: start listening.
-  if (socket_type == SOCK_STREAM || socket_type == SOCK_SEQPACKET) {
-    // Follows the default from socket_local_server
-    if (rval->Listen(1) == -1) {
-      LOG(ERROR) << "Listen failed: " << rval->StrError();
-      return SharedFD::ErrorFD(rval->GetErrno());
-    }
-  }
-
-  if (!abstract) {
-    if (TEMP_FAILURE_RETRY(chmod(name.c_str(), mode)) == -1) {
-      LOG(ERROR) << "chmod failed: " << ::cuttlefish::StrError(errno);
-      // However, continue since we do have a listening socket
-    }
-  }
-  return rval;
+  return UniqueFd::SocketLocalServer(name, abstract, in_type, mode);
 }
 
 #ifdef __linux__
 SharedFD SharedFD::VsockServer(
     unsigned int port, int type,
     std::optional<int> vhost_user_vsock_listening_cid, unsigned int cid) {
-  if (vhost_user_vsock_listening_cid) {
-    return SharedFD::SocketLocalServer(
-        GetVhostUserVsockServerAddr(port, *vhost_user_vsock_listening_cid),
-        false /* abstract */, type, 0666 /* mode */);
-  }
-
-  auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
-  if (!vsock->IsOpen()) {
-    return vsock;
-  }
-  sockaddr_vm addr{};
-  addr.svm_family = AF_VSOCK;
-  addr.svm_port = port;
-  addr.svm_cid = cid;
-  auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
-  if (vsock->Bind(casted_addr, sizeof(addr)) == -1) {
-    LOG(ERROR) << "Port " << port << " Bind failed (" << vsock->StrError()
-               << ")";
-    return SharedFD::ErrorFD(vsock->GetErrno());
-  }
-  if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
-    if (vsock->Listen(4) < 0) {
-      LOG(ERROR) << "Port" << port << " Listen failed (" << vsock->StrError()
-                 << ")";
-      return SharedFD::ErrorFD(vsock->GetErrno());
-    }
-  }
-  return vsock;
+  return UniqueFd::VsockServer(port, type, vhost_user_vsock_listening_cid, cid);
 }
 
 SharedFD SharedFD::VsockServer(
@@ -564,15 +328,12 @@ SharedFD SharedFD::VsockServer(
 
 std::string SharedFD::GetVhostUserVsockServerAddr(
     unsigned int port, int vhost_user_vsock_listening_cid) {
-  // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock_{}
-  return fmt::format(
-      "{}_{}", GetVhostUserVsockClientAddr(vhost_user_vsock_listening_cid),
-      port);
+  return UniqueFd::GetVhostUserVsockServerAddr(port,
+                                               vhost_user_vsock_listening_cid);
 }
 
 std::string SharedFD::GetVhostUserVsockClientAddr(int cid) {
-  // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock_{}
-  return fmt::format("{}/vsock_{}_{}/vm.vsock", TempDir(), cid, getuid());
+  return UniqueFd::GetVhostUserVsockClientAddr(cid);
 }
 
 SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,

@@ -55,7 +55,7 @@ cf_cc_library(
     }),
     deps = [
         "//cuttlefish/common/libs/fs:file_instance",
-        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/fs:unique_fd",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
