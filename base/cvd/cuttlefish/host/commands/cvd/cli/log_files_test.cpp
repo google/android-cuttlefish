@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/commands/cvd/cli/log_files.h"
 
+#include <stdlib.h>
+
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
@@ -30,6 +32,7 @@
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/recursively_remove_directory.h"
+#include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {

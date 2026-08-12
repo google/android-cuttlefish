@@ -22,6 +22,7 @@
 #include <initializer_list>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"

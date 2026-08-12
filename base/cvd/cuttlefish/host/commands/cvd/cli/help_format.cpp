@@ -16,8 +16,12 @@
 
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 
+#include <stddef.h>
+
 #include <sstream>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/str_join.h"

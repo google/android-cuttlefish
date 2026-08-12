@@ -16,12 +16,16 @@
 
 #include "cuttlefish/host/commands/cvd/cli/log_files.h"
 
+#include <stddef.h>
+#include <time.h>
+
 #include <algorithm>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/log/log.h"
@@ -31,6 +35,7 @@
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
@@ -50,13 +55,13 @@ std::string CvdUserLogDir() { return PerUserDir() + "/logs"; }
 
 std::string GetCvdLogFileName(const std::string& log_dir,
                               const std::chrono::system_clock::time_point now) {
-  const std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+  const time_t now_time_t = std::chrono::system_clock::to_time_t(now);
   const std::chrono::milliseconds now_ms =
       std::chrono::duration_cast<std::chrono::milliseconds>(
           now.time_since_epoch()) %
       1000;
 
-  std::tm tm_now;
+  struct tm tm_now;
   localtime_r(&now_time_t, &tm_now);
 
   std::stringstream ss;

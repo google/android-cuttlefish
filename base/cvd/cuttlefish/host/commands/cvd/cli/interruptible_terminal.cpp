@@ -17,14 +17,20 @@
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
 
 #include <errno.h>
+#include <stdint.h>
+#include <sys/eventfd.h>
 
+#include <mutex>
 #include <optional>
 #include <string>
+#include <thread>
 
 #include "absl/cleanup/cleanup.h"
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
