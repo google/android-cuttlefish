@@ -14,6 +14,7 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:unique_fd",
         "//cuttlefish/host/commands/modem_simulator:client",
         "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
         "//libbase",
@@ -182,6 +183,7 @@ cf_cc_binary(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:unique_fd",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/modem_simulator:modem_simulator_class",
         "//cuttlefish/host/libs/config:cuttlefish_config",

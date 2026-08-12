@@ -34,6 +34,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
@@ -86,7 +87,7 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
     }
 
     // Wait for control socket sending "READY".
-    SharedFD sock = SharedFD::Accept(*ctrl_sock_);
+    SharedFD sock = UniqueFd::Accept(*ctrl_sock_);
     const char kExpectedReadyStr[] = "READY";
     char buf[std::size(kExpectedReadyStr)];
     Result<uint64_t> data_read = sock->Read(buf, sizeof(buf));

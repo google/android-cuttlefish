@@ -36,6 +36,7 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
@@ -127,7 +128,7 @@ Result<void> ServerLoopImpl::Run() {
     }
 
     CF_EXPECT(read_set.IsSet(server_));
-    auto client = SharedFD::Accept(*server_);
+    SharedFD client = UniqueFd::Accept(*server_);
     while (client->IsOpen()) {
       auto launcher_action_with_info_result = ReadLauncherActionFromFd(client);
       if (!launcher_action_with_info_result.has_value()) {

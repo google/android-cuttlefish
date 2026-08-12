@@ -25,6 +25,7 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/modem_simulator/modem_simulator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -140,7 +141,7 @@ int ModemSimulatorMain(int argc, char** argv) {
     if (num_fds <= 0) {  // Ignore select error
       LOG(ERROR) << "Select call returned error : " << strerror(errno);
     } else if (read_set.IsSet(monitor_socket)) {
-      auto conn = SharedFD::Accept(*monitor_socket);
+      SharedFD conn = UniqueFd::Accept(*monitor_socket);
       std::string buf(4, ' ');
       auto read = ReadExact(conn, &buf);
       if (read <= 0) {

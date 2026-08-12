@@ -303,6 +303,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:unique_fd",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -392,6 +393,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:unique_fd",
         "@abseil-cpp//absl/log",
         "@jsoncpp",
     ],

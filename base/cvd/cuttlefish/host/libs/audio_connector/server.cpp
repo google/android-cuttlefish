@@ -32,6 +32,7 @@
 
 #include "cuttlefish/common/libs/fs/scoped_mmap.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/host/libs/audio_connector/buffers.h"
 #include "cuttlefish/host/libs/audio_connector/commands.h"
 #include "cuttlefish/host/libs/audio_connector/shm_layout.h"
@@ -112,7 +113,7 @@ std::function<void(AudioStatus, uint32_t, uint32_t)> SendStatusCallback(
 std::unique_ptr<AudioClientConnection> AudioServer::AcceptClient(
     uint32_t num_streams, uint32_t num_jacks, uint32_t num_chmaps,
     uint32_t num_controls, size_t tx_shm_len, size_t rx_shm_len) {
-  auto conn_fd = SharedFD::Accept(*server_socket_, nullptr, 0);
+  SharedFD conn_fd = UniqueFd::Accept(*server_socket_, nullptr, 0);
   if (!conn_fd->IsOpen()) {
     LOG(ERROR) << "Connection failed on audio server: " << conn_fd->StrError();
     return nullptr;
