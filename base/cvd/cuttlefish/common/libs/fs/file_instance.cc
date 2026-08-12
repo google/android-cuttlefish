@@ -282,8 +282,8 @@ void FileInstance::Set(fd_set* dest, int* max_index) const {
   FD_SET(fd_, dest);
 }
 
-/* static */ std::shared_ptr<FileInstance> FileInstance::ClosedInstance() {
-  return std::shared_ptr<FileInstance>(new FileInstance(-1, EBADF));
+/* static */ std::unique_ptr<FileInstance> FileInstance::ClosedInstance() {
+  return std::unique_ptr<FileInstance>(new FileInstance(-1, EBADF));
 }
 
 int FileInstance::Bind(const struct sockaddr* addr, socklen_t addrlen) {

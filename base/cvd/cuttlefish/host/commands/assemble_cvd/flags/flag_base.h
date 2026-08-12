@@ -18,6 +18,7 @@
 
 #include <stddef.h>
 
+#include <string>
 #include <utility>
 #include <vector>
 

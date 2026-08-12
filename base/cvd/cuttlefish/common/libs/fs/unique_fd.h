@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
-#define CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
+#ifndef CUTTLEFISH_COMMON_COMMON_LIBS_FS_UNIQUE_FD_H_
+#define CUTTLEFISH_COMMON_COMMON_LIBS_FS_UNIQUE_FD_H_
 
 #include <fcntl.h>
 #include <stddef.h>
@@ -49,7 +49,6 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/file_instance.h"
-#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/result/result.h"
 
 /**
@@ -68,7 +67,7 @@
  * These classes are designed to mimic to POSIX interface as closely as
  * possible. Specifically, they don't attempt to track the type of file
  * descriptors and expose only the valid operations. This is by design, since
- * it makes it easier to convert existing code to SharedFDs and avoids the
+ * it makes it easier to convert existing code to UniqueFds and avoids the
  * possibility that new POSIX functionality will lead to large refactorings.
  */
 namespace cuttlefish {
@@ -85,102 +84,85 @@ struct VsockCid;
  * This is also the place where most new FileInstances are created. The creation
  * methods correspond to the underlying POSIX calls.
  *
- * SharedFDs can be compared and stored in STL containers. The semantics are
+ * UniqueFds can be compared and stored in STL containers. The semantics are
  * slightly different from POSIX file descriptors:
  *
- * o The value of the SharedFD is the identity of its underlying FileInstance.
+ * o The value of the UniqueFd is the identity of its underlying FileInstance.
  *
- * o Each newly created SharedFD has a unique, closed FileInstance:
- *    SharedFD a, b;
+ * o Each newly created UniqueFd has a unique, closed FileInstance:
+ *    UniqueFd a, b;
  *    assert (a != b);
  *    a = b;
  *    assert(a == b);
  *
- * o The identity of the FileInstance is not affected by closing the file:
- *   SharedFD a, b;
- *   set<SharedFD> s;
- *   s.insert(a);
- *   assert(s.count(a) == 1);
- *   assert(s.count(b) == 0);
- *   a->Close();
- *   assert(s.count(a) == 1);
- *   assert(s.count(b) == 0);
- *
  * o FileInstances are never visibly recycled.
  *
- * o If all of the SharedFDs referring to a FileInstance go out of scope the
- *   file is closed and the FileInstance is recycled.
+ * o If the UniqueFd referring to a FileInstance goes out of scope the file is
+ *   closed and the FileInstance is recycled.
  *
  * Creation methods must ensure that no references to the new file descriptor
  * escape. The underlying FileInstance should have the only reference to the
  * file descriptor. Any method that needs to know the fd must be in either
- * SharedFD or FileInstance.
+ * UniqueFd or FileInstance.
  *
- * SharedFDs always have an underlying FileInstance, so all of the method
+ * UniqueFds always have an underlying FileInstance, so all of the method
  * calls are safe in accordance with the null object pattern.
  *
  * Errors on system calls that create new FileInstances, such as Open, are
  * reported with a new, closed FileInstance with the errno set.
  */
-class SharedFD {
-  // Give WeakFD access to the underlying shared_ptr.
-  friend class WeakFD;
+class UniqueFd {
+  // Give SharedFD access to the underlying unique_ptr.
+  friend class SharedFD;
 
  public:
-  inline SharedFD();
-  SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) {}
-  SharedFD(SharedFD const&) = default;
-  SharedFD(SharedFD&& other);
-  SharedFD(UniqueFd other);
-  SharedFD& operator=(SharedFD const&) = default;
-  SharedFD& operator=(SharedFD&& other);
-  SharedFD& operator=(UniqueFd other);
+  inline UniqueFd();
+  UniqueFd(std::unique_ptr<FileInstance> in) : value_(std::move(in)) {}
+  UniqueFd(UniqueFd&& other);
+  UniqueFd& operator=(UniqueFd&& other);
   // Reference the listener as a FileInstance to make this FD type agnostic.
-  static SharedFD Accept(const FileInstance& listener, struct sockaddr* addr,
+  static UniqueFd Accept(const FileInstance& listener, struct sockaddr* addr,
                          socklen_t* addrlen);
-  static SharedFD Accept(const FileInstance& listener);
-  static SharedFD Dup(int unmanaged_fd);
-  // All SharedFDs have the O_CLOEXEC flag after creation. To remove use the
+  static UniqueFd Accept(const FileInstance& listener);
+  static UniqueFd Dup(int unmanaged_fd);
+  // All UniqueFds have the O_CLOEXEC flag after creation. To remove use the
   // Fcntl or Dup functions.
-  static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
-  static SharedFD Open(const std::string& pathname, int flags, mode_t mode = 0);
-  static SharedFD InotifyFd();
-  static SharedFD Creat(const std::string& pathname, mode_t mode);
-  static int Fchdir(SharedFD);
-  static Result<SharedFD> Fifo(const std::string& pathname, mode_t mode);
-  static bool Pipe(SharedFD* fd0, SharedFD* fd1);
+  static UniqueFd Open(const char* pathname, int flags, mode_t mode = 0);
+  static UniqueFd Open(const std::string& pathname, int flags, mode_t mode = 0);
+  static UniqueFd InotifyFd();
+  static UniqueFd Creat(const std::string& pathname, mode_t mode);
+  static int Fchdir(UniqueFd);
+  static Result<UniqueFd> Fifo(const std::string& pathname, mode_t mode);
+  static bool Pipe(UniqueFd* fd0, UniqueFd* fd1);
 #ifdef __linux__
-  static SharedFD Event(int initval = 0, int flags = 0);
-  static SharedFD ShmOpen(const std::string& name, int oflag, int mode);
+  static UniqueFd Event(int initval = 0, int flags = 0);
+  static UniqueFd ShmOpen(const std::string& name, int oflag, int mode);
 #endif
-  static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
-  static SharedFD MemfdCreateWithData(const std::string& name,
-                                      const std::string& data,
-                                      unsigned int flags = 0);
-  static SharedFD Mkstemp(std::string* path);
-  static Result<std::pair<SharedFD, std::string>> Mkostemp(
+  static UniqueFd MemfdCreate(const std::string& name, unsigned int flags = 0);
+  static UniqueFd Mkstemp(std::string* path);
+  static Result<std::pair<UniqueFd, std::string>> Mkostemp(
       std::string_view path, int flags = O_CLOEXEC);
   static int Poll(PollSharedFd* fds, size_t num_fds, int timeout);
   static int Poll(std::vector<PollSharedFd>& fds, int timeout);
-  static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
-                         SharedFD* fd1);
-  static Result<std::pair<SharedFD, SharedFD>> SocketPair(int domain, int type,
+  static bool SocketPair(int domain, int type, int protocol, UniqueFd* fd0,
+                         UniqueFd* fd1);
+  static Result<std::pair<UniqueFd, UniqueFd>> SocketPair(int domain, int type,
                                                           int protocol);
-  static SharedFD Socket(int domain, int socket_type, int protocol);
-  static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
+  static UniqueFd Socket(int domain, int socket_type, int protocol);
+  static UniqueFd SocketLocalClient(const std::string& name, bool is_abstract,
                                     int in_type);
-  static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
+  static UniqueFd SocketLocalClient(const std::string& name, bool is_abstract,
                                     int in_type, int timeout_seconds);
-  static SharedFD SocketLocalClient(int port, int type);
-  static SharedFD SocketClient(
+  static UniqueFd SocketLocalClient(int port, int type);
+  static UniqueFd SocketClient(
       const std::string& host, int port, int type,
       std::chrono::seconds timeout = std::chrono::seconds(0));
-  static SharedFD Socket6Client(
+  static UniqueFd Socket6Client(
       const std::string& host, const std::string& interface, int port, int type,
       std::chrono::seconds timeout = std::chrono::seconds(0));
-  static SharedFD SocketLocalServer(const std::string& name, bool is_abstract,
+  static UniqueFd SocketLocalServer(const std::string& name, bool is_abstract,
                                     int in_type, mode_t mode);
-  static SharedFD SocketLocalServer(int port, int type);
+  static UniqueFd SocketLocalServer(int port, int type);
 
 #ifdef __linux__
   // For binding in vsock, svm_cid from `cid` param would be either
@@ -197,60 +179,32 @@ class SharedFD {
   // necessary.
   // TODO: combining them when vhost-user-vsock impl supports a kind of
   // VMADDR_CID_HOST
-  static SharedFD VsockServer(unsigned int port, int type,
+  static UniqueFd VsockServer(unsigned int port, int type,
                               std::optional<int> vhost_user_vsock_listening_cid,
                               unsigned int cid = VMADDR_CID_ANY);
-  static SharedFD VsockServer(
+  static UniqueFd VsockServer(
       int type, std::optional<int> vhost_user_vsock_listening_cid);
-  static SharedFD VsockClient(unsigned int cid, unsigned int port, int type,
-                              bool vhost_user);
   static std::string GetVhostUserVsockServerAddr(
       unsigned int port, int vhost_user_vsock_listening_cid);
   static std::string GetVhostUserVsockClientAddr(int cid);
 #endif
 
-  auto operator<=>(const SharedFD&) const = default;
+  auto operator<=>(const UniqueFd&) const = default;
 
-  std::shared_ptr<FileInstance> operator->() const { return value_; }
+  const std::unique_ptr<FileInstance>& operator->() const { return value_; }
 
   const FileInstance& operator*() const { return *value_; }
 
   FileInstance& operator*() { return *value_; }
 
  private:
-  static SharedFD ErrorFD(int error);
+  static UniqueFd ErrorFD(int error);
 
-  std::shared_ptr<FileInstance> value_;
+  std::unique_ptr<FileInstance> value_;
 };
 
-/**
- * A non-owning reference to a FileInstance. The referenced FileInstance needs
- * to be managed by a SharedFD. A WeakFD needs to be converted to a SharedFD to
- * access the underlying FileInstance.
- */
-class WeakFD {
- public:
-  WeakFD(SharedFD shared_fd) : value_(shared_fd.value_) {}
-
-  // Creates a new SharedFD object that shares ownership of the underlying fd.
-  // Callers need to check that the returned SharedFD is open before using it.
-  SharedFD lock() const;
-
- private:
-  std::weak_ptr<FileInstance> value_;
-};
-
-struct PollSharedFd {
-  SharedFD fd;
-  short events;
-  short revents;
-};
-
-/* Methods that need both a fully defined SharedFD and a fully defined
-   FileInstance. */
-
-SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
+UniqueFd::UniqueFd() : value_(FileInstance::ClosedInstance()) {}
 
 }  // namespace cuttlefish
 
-#endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
+#endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_UNIQUE_FD_H_
