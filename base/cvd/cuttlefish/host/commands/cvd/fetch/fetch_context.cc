@@ -180,7 +180,7 @@ FetchBuildContext::FetchBuildContext(FetchContext& fetch_context,
       file_source_(file_source),
       trace_(trace) {}
 
-const Build& FetchBuildContext::Build() const { return build_; }
+const cuttlefish::Build& FetchBuildContext::Build() const { return build_; }
 
 std::string FetchBuildContext::GetBuildZipName(const std::string& name) const {
   std::string product =
