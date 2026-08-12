@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 bool ConfUiSignerImpl::Send(SharedFD output,

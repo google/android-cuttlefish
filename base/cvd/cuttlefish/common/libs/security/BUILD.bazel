@@ -10,7 +10,6 @@ cf_cc_library(
     name = "confui_sign",
     srcs = ["confui_sign.cpp"],
     hdrs = ["confui_sign.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
     ],
