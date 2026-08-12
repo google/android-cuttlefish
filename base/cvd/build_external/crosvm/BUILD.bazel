@@ -1,3 +1,18 @@
+load("//build_external/crosvm:transition_opt.bzl", "build_in_opt")
+
 exports_files([
     "crosvm.config.toml",
 ])
+
+# Build crosvm as if bazel was invoked with `-c opt`. Without this, observed
+# some errors that looked like
+# ```
+# fatal runtime error: IO Safety violation: owned file descriptor already closed
+# ```
+# Additionally, crosvm optimization affects VM performance more noticeably
+# than other executables involved in running Cuttlefish devices.
+build_in_opt(
+    name = "crosvm_bin_opt",
+    actual = "@crosvm_bin//:crosvm__crosvm",
+    visibility = ["//visibility:public"],
+)
