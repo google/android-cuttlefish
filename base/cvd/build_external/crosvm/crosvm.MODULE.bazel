@@ -13,6 +13,7 @@ crosvm_bin = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate"
 crosvm_bin.spec(
     artifact = "bin",
     package = "crosvm",
+    default_features = False,
     features = [
         "android-sparse",
         "android_display",
