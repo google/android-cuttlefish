@@ -197,14 +197,6 @@ func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
 		return res, err
 	}
 
-	// TODO: schuffelen - remove after packaging crosvm
-	if args.SubstituteOnly {
-		if err := os.Link(tc.tempdir + "/bin/prebuilts/crosvm", tc.tempdir + "/bin/crosvm"); err != nil {
-			log.Printf("Failed to make crosvm link: %w", err)
-			return res, err
-		}
-	}
-
 	// Android CTS includes some files with a `kernel` suffix which confuses the
 	// Cuttlefish launcher prior to
 	// https://github.com/google/android-cuttlefish/commit/881728ed85329afaeb16e3b849d60c7a32fedcb7.

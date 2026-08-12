@@ -39,6 +39,7 @@ package_files(
         "lib64/vulkan.lvp.so": "bin/libvk_lavapipe.so",
         "lib64/vulkan.pastel.so": "bin/libvk_swiftshader.so",
         "bin/prebuilts/libgfxstream_backend.so": "bin/libgfxstream_backend.so",
+        "bin/prebuilts/crosvm": "bin/crosvm",
     },
     package_file_to_src = {
         "bin/adb": "//adb:adb",
@@ -51,7 +52,9 @@ package_files(
         "bin/console_forwarder": "//cuttlefish/host/commands/console_forwarder",
         "bin/control_env_proxy_server": "//cuttlefish/host/commands/control_env_proxy_server",
         "bin/cpio": "@libarchive//cpio:cpio",
+        "bin/crosvm": "//build_external/crosvm:crosvm_bin_opt",
         "bin/cuttlefish_example_action_server": "//cuttlefish/host/example_custom_actions:cuttlefish_example_action_server",
+        "bin/cvd": "//cuttlefish/host/commands/cvd",
         "bin/cvd_import_locations": "//cuttlefish/host/commands/cvd_import_locations",
         "bin/cvd_internal_display": "//cuttlefish/host/commands/display:cvd_internal_display",
         "bin/cvd_internal_env": "//cuttlefish/host/commands/cvd_env:cvd_internal_env",
@@ -64,7 +67,6 @@ package_files(
         "bin/cvd_send_sms": "//cuttlefish/host/commands/cvd_send_sms",
         "bin/cvd_update_location": "//cuttlefish/host/commands/cvd_update_location",
         "bin/cvd_update_security_algorithm": "//cuttlefish/host/commands/cvd_update_security_algorithm",
-        "bin/cvd": "//cuttlefish/host/commands/cvd",
         "bin/cvdalloc": "//cuttlefish/host/commands/cvdalloc",
         "bin/e2fsck": "@e2fsprogs//:e2fsck",
         "bin/e2fsdroid": "@e2fsprogs//:e2fsdroid",
@@ -159,8 +161,6 @@ package_files(
         "etc/modem_simulator/files/iccprofile_for_sim1_for_CtsCarrierApiTestCases.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim1_for_CtsCarrierApiTestCases.xml",
         "etc/modem_simulator/files/iccprofile_for_sim1.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim1.xml",
         "etc/modem_simulator/files/numeric_operator.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/numeric_operator.xml",
-        # "bin/crosvm": "@crosvm_bin//:crosvm__crosvm", # TODO: b/402274999 - currently requires --enable_sandbox=false
-        "bin/prebuilts/crosvm": "//build_external/crosvm:crosvm_bin_opt",  # TODO: b/402274999 - keep in bin and symlink to prebuilts
         "usr/share/webrtc/assets/client.html": "//cuttlefish/host/frontend/webrtc/html_client:client.html",
         "usr/share/webrtc/assets/controls.css": "//cuttlefish/host/frontend/webrtc/html_client:controls.css",
         "usr/share/webrtc/assets/custom.css": "//cuttlefish/host/frontend/webrtc/html_client:custom.css",
