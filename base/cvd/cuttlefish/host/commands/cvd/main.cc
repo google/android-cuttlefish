@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
+#include <errno.h>
 #include <stdlib.h>
 #include <sys/resource.h>
-#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
 #include <iostream>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "absl/cleanup/cleanup.h"
@@ -41,10 +43,15 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/log_files.h"
 #include "cuttlefish/host/commands/cvd/cvd.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/envp_to_map.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "cuttlefish/host/commands/cvd/metrics/cvd_metrics_api.h"
 
