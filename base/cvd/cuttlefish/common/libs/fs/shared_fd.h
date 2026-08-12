@@ -135,10 +135,6 @@ class SharedFD {
   SharedFD& operator=(SharedFD const&) = default;
   SharedFD& operator=(SharedFD&& other);
   SharedFD& operator=(UniqueFd other);
-  // Reference the listener as a FileInstance to make this FD type agnostic.
-  static SharedFD Accept(const FileInstance& listener, struct sockaddr* addr,
-                         socklen_t* addrlen);
-  static SharedFD Accept(const FileInstance& listener);
   static SharedFD Dup(int unmanaged_fd);
   // All SharedFDs have the O_CLOEXEC flag after creation. To remove use the
   // Fcntl or Dup functions.

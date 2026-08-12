@@ -153,15 +153,6 @@ int SharedFD::Poll(PollSharedFd* fds, size_t num_fds, int timeout) {
   return ret;
 }
 
-SharedFD SharedFD::Accept(const FileInstance& listener, struct sockaddr* addr,
-                          socklen_t* addrlen) {
-  return UniqueFd::Accept(listener, addr, addrlen);
-}
-
-SharedFD SharedFD::Accept(const FileInstance& listener) {
-  return UniqueFd::Accept(listener);
-}
-
 SharedFD SharedFD::Dup(int unmanaged_fd) { return UniqueFd::Dup(unmanaged_fd); }
 
 bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {

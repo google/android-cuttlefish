@@ -38,6 +38,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -84,7 +85,7 @@ class HttpServer {
   uint16_t Port() { return 8888; }
 
   Result<std::string> CodeFromClient() {
-    SharedFD client = SharedFD::Accept(*server_);
+    SharedFD client = UniqueFd::Accept(*server_);
     CF_EXPECT(client->IsOpen(), client->StrError());
 
     std::stringstream request;
