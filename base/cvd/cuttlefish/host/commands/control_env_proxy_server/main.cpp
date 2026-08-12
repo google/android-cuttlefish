@@ -16,18 +16,26 @@
  *
  */
 
+#include <sys/stat.h>
+
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "gflags/gflags.h"
+#include "google/protobuf/empty.pb.h"
 #include "grpcpp/ext/proto_server_reflection_plugin.h"
 #include "grpcpp/grpcpp.h"
 #include "grpcpp/health_check_service_interface.h"
-#include "json/json.h"
+#include "grpcpp/security/server_credentials.h"
+#include "grpcpp/support/status.h"
+#include "json/reader.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/control_env_proxy_server/control_env_proxy.grpc.pb.h"
+#include "cuttlefish/host/commands/control_env_proxy_server/control_env_proxy.pb.h"
 #include "cuttlefish/host/libs/control_env/grpc_service_handler.h"
 
 using controlenvproxyserver::CallUnaryMethodReply;
@@ -61,7 +69,7 @@ class ControlEnvProxyServiceImpl final
                                   request->method_name(),
                                   request->json_formatted_proto()};
     auto result = cuttlefish::HandleCmds(FLAGS_grpc_socket_path, "call", args);
-    if (!TypeIsSuccess(result)) {
+    if (!result.has_value()) {
       return Status(StatusCode::FAILED_PRECONDITION,
                     "Calling gRPC method failed");
     }
@@ -74,7 +82,7 @@ class ControlEnvProxyServiceImpl final
                       ListServicesReply* reply) override {
     std::vector<std::string> args;
     auto result = cuttlefish::HandleCmds(FLAGS_grpc_socket_path, "ls", args);
-    if (!TypeIsSuccess(result)) {
+    if (!result.has_value()) {
       return Status(StatusCode::FAILED_PRECONDITION,
                     "Listing gRPC services failed");
     }
@@ -100,7 +108,7 @@ class ControlEnvProxyServiceImpl final
                      ListMethodsReply* reply) override {
     std::vector<std::string> args{request->service_name()};
     auto result = cuttlefish::HandleCmds(FLAGS_grpc_socket_path, "ls", args);
-    if (!TypeIsSuccess(result)) {
+    if (!result.has_value()) {
       return Status(StatusCode::FAILED_PRECONDITION,
                     "Listing gRPC methods failed");
     }
@@ -128,7 +136,7 @@ class ControlEnvProxyServiceImpl final
     std::vector<std::string> args{request->service_name(),
                                   request->method_name()};
     auto result = cuttlefish::HandleCmds(FLAGS_grpc_socket_path, "ls", args);
-    if (!TypeIsSuccess(result)) {
+    if (!result.has_value()) {
       return Status(StatusCode::FAILED_PRECONDITION,
                     "Listing gRPC request and response message type failed");
     }
@@ -153,7 +161,7 @@ class ControlEnvProxyServiceImpl final
     std::vector<std::string> args{request->service_name(),
                                   request->type_name()};
     auto result = cuttlefish::HandleCmds(FLAGS_grpc_socket_path, "type", args);
-    if (!TypeIsSuccess(result)) {
+    if (!result.has_value()) {
       return Status(StatusCode::FAILED_PRECONDITION,
                     "Calling gRPC method failed");
     }
@@ -196,7 +204,7 @@ void RunServer() {
   // Let the socket for this server as writable
   auto change_group_result =
       cuttlefish::ChangeGroup(FLAGS_grpc_uds_path, "cvdnetwork");
-  if (!TypeIsSuccess(change_group_result)) {
+  if (!change_group_result.has_value()) {
     std::cout << "Failed ChangeGroup " << FLAGS_grpc_uds_path << std::endl;
   }
   int chmod_result = chmod(FLAGS_grpc_uds_path.c_str(), 0775);

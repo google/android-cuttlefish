@@ -1,11 +1,13 @@
 load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_binary")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
+
+cf_build_test(name = "control_env_proxy_server_build_test")
 
 proto_library(
     name = "control_env_proxy_server_proto",
@@ -33,16 +35,15 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
-    depend_on_what_you_use_enabled = False,
-    include_cleaner_enabled = False,
     deps = [
+        ":control_env_proxy_server_cc_proto",
         ":libcontrol_env_proxy_server",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/control_env",
         "@gflags",
-        "@grpc",
         "@grpc//:grpc++",
         "@grpc//:grpc++_reflection",
         "@jsoncpp",
+        "@protobuf//:empty_cc_proto",
     ],
 )
