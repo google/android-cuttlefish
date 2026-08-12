@@ -15,8 +15,12 @@
 
 #include "cuttlefish/host/libs/avb/parser.h"
 
+#include <stdint.h>
+
 #include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 #include "libavb/libavb.h"
 

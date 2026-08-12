@@ -40,6 +40,7 @@
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -591,6 +592,12 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.AddKvmPath(config.kvm_path());
   }
 
+  // A pkvm guest needs to boot at virtual EL2; crosvm verifies host support
+  // (KVM_CAP_ARM_EL2, GICv3 irqchip) and fails to start otherwise.
+  if (instance.enable_pkvm()) {
+    crosvm_cmd.Cmd().AddParameter("--nested=on");
+  }
+
   if (!instance.smt()) {
     crosvm_cmd.Cmd().AddParameter("--no-smt");
   }
@@ -647,7 +654,14 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   if (instance.hwcomposer() != kHwComposerNone) {
-    const bool pmem_disabled = instance.mte() || !instance.use_pmem();
+    // pmem is disabled for pkvm guests: the pmem backing files are mmap'd
+    // MAP_SHARED, and host writeback of storage-backed pages triggers
+    // mmu-notifiers that arm64 KVM currently handles by tearing down the
+    // guest's entire shadow stage-2 instead of a range-scoped invalidation
+    // (see the nested_mmu reverse-mapping TODO in arch/arm64/kvm/mmu.c),
+    // which makes the guest extremely slow.
+    const bool pmem_disabled =
+        instance.mte() || instance.enable_pkvm() || !instance.use_pmem();
     const std::string pmem_path = HwcomposerPmemPath(instance);
     if (!pmem_disabled && FileExists(pmem_path)) {
       crosvm_cmd.Cmd().AddParameter("--pmem=path=", pmem_path);
@@ -734,7 +748,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 #endif
 
-  const bool pmem_disabled = instance.mte() || !instance.use_pmem();
+  const bool pmem_disabled =
+      instance.mte() || instance.enable_pkvm() || !instance.use_pmem();
   const std::string access_kregistry = AccessKregistryPath(instance);
   if (!pmem_disabled && FileExists(access_kregistry)) {
     crosvm_cmd.Cmd().AddParameter("--pmem=path=", access_kregistry);

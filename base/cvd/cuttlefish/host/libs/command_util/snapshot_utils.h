@@ -19,6 +19,8 @@
 #include <functional>
 #include <string>
 
+#include "json/value.h"
+
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
 

@@ -24,7 +24,7 @@
 #include "absl/strings/str_cat.h"
 #include "android-base/file.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_product_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/combined_android_build.h"

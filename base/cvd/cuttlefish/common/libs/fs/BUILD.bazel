@@ -21,6 +21,23 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "file_instance",
+    srcs = ["file_instance.cc"],
+    hdrs = ["file_instance.h"],
+    include_cleaner_enabled = False,
+    deps = [
+        "//cuttlefish/common/libs/fs:scoped_mmap",
+        "//cuttlefish/io",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+    ],
+)
+
+cf_cc_library(
     name = "fs",
     srcs = [
         "shared_buf.cc",
@@ -37,11 +54,10 @@ cf_cc_library(
         "//conditions:default": [],
     }),
     deps = [
-        "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/io",
+        "//cuttlefish/common/libs/fs:file_instance",
+        "//cuttlefish/common/libs/fs:unique_fd",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@fmt",
@@ -58,11 +74,33 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "scoped_mmap",
+    srcs = ["scoped_mmap.cc"],
+    hdrs = ["scoped_mmap.h"],
+)
+
+cf_cc_library(
     name = "shared_fd_stream",
     srcs = ["shared_fd_stream.cpp"],
     hdrs = ["shared_fd_stream.h"],
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
+    ],
+)
+
+cf_cc_library(
+    name = "unique_fd",
+    srcs = ["unique_fd.cc"],
+    hdrs = ["unique_fd.h"],
+    include_cleaner_enabled = False,
+    deps = [
+        "//cuttlefish/common/libs/fs:file_instance",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@fmt",
     ],
 )

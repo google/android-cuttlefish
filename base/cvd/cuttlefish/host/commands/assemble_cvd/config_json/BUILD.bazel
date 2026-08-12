@@ -1,0 +1,20 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_build_test(name = "cf_build_test")
+
+exports_files([
+    "config_auto.json",
+    "config_auto_md.json",
+    "config_auto_portrait.json",
+    "config_foldable.json",
+    "config_go.json",
+    "config_phone.json",
+    "config_slim.json",
+    "config_tablet.json",
+    "config_tv.json",
+    "config_wear.json",
+])

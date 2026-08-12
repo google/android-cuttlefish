@@ -41,6 +41,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/directory_contents.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/result/result.h"
 

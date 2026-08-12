@@ -15,9 +15,6 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/netsim_server.h"
 
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
-
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -25,6 +22,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
 #include "fruit/component.h"
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
@@ -32,6 +31,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -111,8 +111,9 @@ class Device {
 class NetsimServer : public CommandSource {
  public:
   INJECT(NetsimServer(const CuttlefishConfig& config,
-                      const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+                      const CuttlefishConfig::InstanceSpecific& instance,
+                      GrpcSocketCreator& grpc_socket))
+      : config_(config), instance_(instance), grpc_socket_(grpc_socket) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
@@ -123,6 +124,11 @@ class NetsimServer : public CommandSource {
     devices_.clear();
     // Port configuration.
     netsimd.AddParameter("--hci_port=", config_.rootcanal_hci_port());
+
+    if (EnableNetsimNfc(config_)) {
+      netsimd.AddParameter("--grpc_uds_path=", grpc_socket_.CreateGrpcSocket(
+                                                   "NetsimControlServer"));
+    }
 
     // When no connector is requested, add the instance number
     if (config_.netsim_connector_instance_num() ==
@@ -139,8 +145,16 @@ class NetsimServer : public CommandSource {
     }
 
     // Add parameters from passthrough option --netsim-args.
-    for (auto const& arg : config_.netsim_args()) {
-      netsimd.AddParameter(arg);
+    // NETSIM_GRPC_PORT is extracted and injected as an environment variable;
+    // all other options are passed as command-line arguments.
+    for (const std::string& arg : config_.netsim_args()) {
+      if (arg.starts_with("NETSIM_GRPC_PORT=")) {
+        const std::string::size_type equals_pos = arg.find('=');
+        netsimd.AddEnvironmentVariable(arg.substr(0, equals_pos),
+                                       arg.substr(equals_pos + 1));
+      } else {
+        netsimd.AddParameter(arg);
+      }
     }
 
     // Add command for forwarding the HCI port to a vsock server.
@@ -224,7 +238,7 @@ class NetsimServer : public CommandSource {
         device.chips.emplace_back(chip);
       }
       // Add nfc chip if enabled
-      if (config_.enable_host_nfc() && !config_.enable_host_nfc_connector()) {
+      if (EnableNetsimNfc(config_)) {
         Chip chip("NFC");
         chip.fd_in = CF_EXPECT(MakeFifo(instance, "nfc_fifo_vm.in"));
         chip.fd_out = CF_EXPECT(MakeFifo(instance, "nfc_fifo_vm.out"));
@@ -237,14 +251,14 @@ class NetsimServer : public CommandSource {
         CF_EXPECT(
             modem_count >= 0 && modem_count < 4,
             "Modem simulator instance number should range between 0 and 3");
-        auto port_strings =
-            android::base::Split(instance.modem_simulator_ports(), ",");
+        std::vector<std::string> port_strings =
+            absl::StrSplit(instance.modem_simulator_ports(), ",");
         for (size_t i = 0;
              i < static_cast<size_t>(modem_count) && i < port_strings.size();
              ++i) {
           int port = 0;
           CF_EXPECT(
-              android::base::ParseInt(port_strings[i], &port),
+              absl::SimpleAtoi(port_strings[i], &port),
               "Failed to parse modem simulator port: " << port_strings[i]);
 
           auto vsock = SharedFD::VsockServer(
@@ -278,12 +292,14 @@ class NetsimServer : public CommandSource {
   std::vector<Device> devices_;
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific instance_;
+  GrpcSocketCreator& grpc_socket_;
 };
 
 }  // namespace
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 GrpcSocketCreator>>
 NetsimServerComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, NetsimServer>()

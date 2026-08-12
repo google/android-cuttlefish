@@ -16,6 +16,7 @@
 
 #include "cuttlefish/common/libs/utils/device_type.h"
 
+#include <ostream>
 #include <string_view>
 
 #include "absl/strings/match.h"

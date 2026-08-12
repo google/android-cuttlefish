@@ -50,6 +50,7 @@ inline constexpr char kFlagCrosvmSimpleMediaDevice[] =
     "crosvm_simple_media_device";
 inline constexpr char kFlagCrosvmV4l2Proxy[] = "crosvm_v4l2_proxy";
 inline constexpr char kFlagVhostUserVsock[] = "vhost_user_vsock";
+inline constexpr char kFlagEnablePkvm[] = "enable_pkvm";
 
 std::set<std::string> GatherFlagNamesUsedInInstanceConfig(const Instance& ins) {
   std::set<std::string> names;
@@ -86,6 +87,9 @@ std::set<std::string> GatherFlagNamesUsedInInstanceConfig(const Instance& ins) {
   if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
       ins.vm().crosvm().has_vhost_user_vsock()) {
     names.insert(kFlagVhostUserVsock);
+  }
+  if (ins.vm().has_enable_pkvm()) {
+    names.insert(kFlagEnablePkvm);
   }
   return names;
 }
@@ -187,6 +191,11 @@ static std::string VhostUserVsock(const Instance& instance) {
                                        : default_val;
 }
 
+static bool EnablePkvm(const Instance& instance) {
+  const auto& vm = instance.vm();
+  return vm.has_enable_pkvm() ? vm.enable_pkvm() : CF_DEFAULTS_ENABLE_PKVM;
+}
+
 static std::vector<std::string> UserPageSize(
     const EnvironmentSpecification& cfg) {
   std::vector<std::string> ret;
@@ -275,6 +284,9 @@ Result<std::vector<std::string>> GenerateVmFlags(
   if (used_names.contains(kFlagVhostUserVsock)) {
     flags.emplace_back(
         GenerateInstanceFlag(kFlagVhostUserVsock, cfg, VhostUserVsock));
+  }
+  if (used_names.contains(kFlagEnablePkvm)) {
+    flags.emplace_back(GenerateInstanceFlag(kFlagEnablePkvm, cfg, EnablePkvm));
   }
 
   flags = MergeResults(std::move(flags), CF_EXPECT(CustomConfigsFlags(cfg)));

@@ -98,7 +98,7 @@ func TestInstance(t *testing.T) {
 				Group:          group_name,
 				Name:           "1",
 				Status:         "Running",
-				Displays:       []string{"720 x 1280 ( 320 )"},
+				Displays:       []string{"720 x 1348 ( 280 )"},
 				WebRTCDeviceID: "cvd-1",
 				ADBSerial:      "127.0.0.1:6520",
 				ADBPort:        6520,

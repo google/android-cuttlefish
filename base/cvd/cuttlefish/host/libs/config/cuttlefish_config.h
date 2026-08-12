@@ -392,6 +392,7 @@ class CuttlefishConfig {
     bool crosvm_simple_media_device() const;
     std::string crosvm_v4l2_proxy() const;
     bool use_pmem() const;
+    bool enable_pkvm() const;
     std::string crosvm_acpi_table() const;
     std::string crosvm_device_tree_overlay() const;
     std::string crosvm_file_backed_mapping() const;
@@ -647,6 +648,7 @@ class CuttlefishConfig {
     void set_crosvm_simple_media_device(const bool simple_media_device);
     void set_crosvm_v4l2_proxy(const std::string v4l2_proxy);
     void set_use_pmem(const bool use_pmem);
+    void set_enable_pkvm(bool enable_pkvm);
     void set_crosvm_acpi_table(const std::string acpi_table);
     void set_crosvm_device_tree_overlay(const std::string device_tree_overlay);
     void set_crosvm_file_backed_mapping(const std::string file_backed_mapping);
@@ -933,5 +935,7 @@ bool IsRestoring(const CuttlefishConfig&);
 bool VmManagerIsCrosvm(const CuttlefishConfig&);
 bool VmManagerIsQemu(const CuttlefishConfig&);
 bool VmManagerIsGem5(const CuttlefishConfig&);
+
+bool EnableNetsimNfc(const CuttlefishConfig& config);
 
 }  // namespace cuttlefish

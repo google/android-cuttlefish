@@ -44,6 +44,7 @@
 #include "cuttlefish/common/libs/utils/disk_usage.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/kernel_module_parser.h"
@@ -140,6 +141,7 @@ std::vector<std::string> GetRamdiskModules(
       "vmw_vsock_virtio_transport.ko",
       "vmw_vsock_virtio_transport_common.ko",
       "vsock.ko",
+      "pkvm_iommu_temp.ko",
       // TODO(b/176860479) once virt_wifi is deprecated fully,
       // these following modules can be loaded in second stage init
       "libarc4.ko",

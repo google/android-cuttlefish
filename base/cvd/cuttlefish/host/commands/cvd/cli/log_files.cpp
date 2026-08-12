@@ -29,6 +29,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/directory_contents.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {

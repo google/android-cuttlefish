@@ -160,6 +160,8 @@ DECLARE_vec(protected_vm);
 
 DECLARE_vec(mte);
 
+DECLARE_vec(enable_pkvm);
+
 DECLARE_vec(enable_audio);
 
 DECLARE_vec(enable_jcard_simulator);

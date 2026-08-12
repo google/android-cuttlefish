@@ -69,6 +69,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:directory_contents",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/posix:readlink",
         "//cuttlefish/result",
         "//libbase",

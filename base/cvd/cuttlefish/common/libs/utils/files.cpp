@@ -17,28 +17,19 @@
 #include "cuttlefish/common/libs/utils/files.h"
 
 #ifdef __linux__
-#include <linux/fiemap.h>
 #include <linux/fs.h>
-#include <sys/sendfile.h>
 #endif
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <libgen.h>
-#include <sched.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/uio.h>
 #include <unistd.h>
 
-#include <array>
 #include <chrono>
 #include <fstream>
 #include <ios>
@@ -63,9 +54,11 @@
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/files/copy.h"
 #include "cuttlefish/files/directory_contents.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_device_id.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/link_or_copy.h"
+#include "cuttlefish/posix/realpath.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -87,7 +80,7 @@ bool FileHasContent(const std::string& path) { return FileSize(path) > 0; }
 
 Result<void> LinkOrCopyDirectoryContentsRecursively(
     const std::string& source, const std::string& destination) {
-  CF_EXPECTF(IsDirectory(source), "Source '{}' is not a directory", source);
+  CF_EXPECTF(DirectoryExists(source), "Source '{}' is not a directory", source);
 
   CF_EXPECT(EnsureDirectoryExists(destination, 0755));
 
@@ -97,7 +90,7 @@ Result<void> LinkOrCopyDirectoryContentsRecursively(
     const std::string src_path = filepath;
     const std::string dst_path =
         destination + "/" + filepath.substr(source.size() + 1);
-    if (IsDirectory(src_path)) {
+    if (DirectoryExists(src_path)) {
       CF_EXPECT(EnsureDirectoryExists(dst_path));
       return {};
     }
@@ -112,7 +105,7 @@ Result<void> LinkOrCopyDirectoryContentsRecursively(
 
 Result<void> MoveDirectoryContents(const std::string& source,
                                    const std::string& destination) {
-  CF_EXPECTF(IsDirectory(source), "Source '{}' is not a directory", source);
+  CF_EXPECTF(DirectoryExists(source), "Source '{}' is not a directory", source);
   CF_EXPECT(EnsureDirectoryExists(destination));
 
   bool should_rename = CF_EXPECT(CanRename(source, destination));
@@ -139,17 +132,6 @@ Result<std::vector<std::string>> DirectoryContentsPaths(
     filename = fmt::format("{}/{}", path, filename);
   }
   return result;
-}
-
-bool DirectoryExists(const std::string& path, bool follow_symlinks) {
-  struct stat st{};
-  if ((follow_symlinks ? stat : lstat)(path.c_str(), &st) == -1) {
-    return false;
-  }
-  if ((st.st_mode & S_IFMT) != S_IFDIR) {
-    return false;
-  }
-  return true;
 }
 
 Result<void> EnsureDirectoryExists(const std::string& directory_path,
@@ -238,17 +220,6 @@ std::string AbsolutePath(std::string_view path) {
     return {};
   }
   return absl::StrCat(*real_cwd, "/", path);
-}
-
-Result<std::string> RealPath(const std::string& path) {
-  std::array<char, PATH_MAX> buffer{};
-  char* res;
-  do {
-    res = realpath(path.c_str(), buffer.data());
-  } while (res == nullptr && errno == EINTR);
-  CF_EXPECTF(res != nullptr, "Could not get real path for path \"{}\": {}",
-             path, StrError(errno));
-  return std::string(buffer.data());
 }
 
 off_t FileSize(const std::string& path) {

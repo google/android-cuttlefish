@@ -1901,6 +1901,15 @@ bool CuttlefishConfig::InstanceSpecific::use_pmem() const {
   return (*Dictionary())[kCrosvmUsePmem].asBool();
 }
 
+static constexpr char kEnablePkvm[] = "enable_pkvm";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_pkvm(
+    bool enable_pkvm) {
+  (*Dictionary())[kEnablePkvm] = enable_pkvm;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_pkvm() const {
+  return (*Dictionary())[kEnablePkvm].asBool();
+}
+
 static constexpr char kCrosvmAcpiTable[] = "crosvm_acpi_table";
 void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_acpi_table(
     const std::string acpi_table) {

@@ -15,6 +15,8 @@
 
 #include "cuttlefish/common/libs/utils/network.h"
 
+#include <stdint.h>
+
 #include "gtest/gtest.h"
 
 namespace cuttlefish {

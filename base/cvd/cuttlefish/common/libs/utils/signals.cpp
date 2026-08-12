@@ -26,6 +26,7 @@
 
 namespace cuttlefish {
 
+// NOLINTNEXTLINE(misc-include-cleaner): <signal.h>
 SignalMasker::SignalMasker(sigset_t signals) {
   auto res = sigprocmask(SIG_SETMASK, &signals, &old_mask_);
   auto err = errno;

@@ -34,7 +34,7 @@ version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | g
 echo "START VERSION: ${version}"
 
 sudo chroot /mnt/image /usr/bin/apt-get update
-sudo chroot /mnt/image /usr/bin/apt-get dist-upgrade -y
+sudo chroot /mnt/image /usr/bin/apt-get upgrade -y
 
 version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 )

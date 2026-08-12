@@ -27,6 +27,7 @@
 
 #include "fmt/format.h"
 
+#include "cuttlefish/common/libs/fs/scoped_mmap.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {

@@ -49,6 +49,7 @@
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/files/directory_contents.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/flag_parser/flag.h"
@@ -252,6 +253,7 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("gatekeeper_secure");
   preserving.insert("gatekeeper_insecure");
   preserving.insert("keymint_secure_deletion_data");
+  preserving.insert("weaver_storage.json");
   preserving.insert("modem_nvram.json");
   preserving.insert("recording");
   preserving.insert("persistent_composite_disk_config.txt");
