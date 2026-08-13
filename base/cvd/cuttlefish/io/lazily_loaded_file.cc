@@ -32,6 +32,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/io/disjoint_range_set.h"
 #include "cuttlefish/io/io.h"
@@ -134,7 +135,7 @@ Result<void> LazilyLoadedFile::Impl::ReadMetadata() {
 
 Result<void> LazilyLoadedFile::Impl::WriteMetadata() {
   std::string new_metadata_name = MetadataFile() + ".XXXXXX";
-  SharedFD new_metadata = SharedFD::Mkstemp(&new_metadata_name);
+  SharedFD new_metadata = UniqueFd::Mkstemp(&new_metadata_name);
   CF_EXPECT(new_metadata->IsOpen(), new_metadata->StrError());
   CF_EXPECT(new_metadata->Chmod(0644));
 

@@ -250,10 +250,6 @@ SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   return UniqueFd::Socket(domain, socket_type, protocol);
 }
 
-SharedFD SharedFD::Mkstemp(std::string* path) {
-  return UniqueFd::Mkstemp(path);
-}
-
 Result<std::pair<SharedFD, std::string>> SharedFD::Mkostemp(
     const std::string_view path, const int flags) {
   // mkostemp replaces the Xs with random selections to make a unique filename
