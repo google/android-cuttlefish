@@ -100,7 +100,7 @@ if [ -n "$VIDEO_FILE" ]; then
   fi
   FPS="$FPS_RATIO"
   echo "Detected parameters: Width=$WIDTH, Height=$HEIGHT, FPS=$FPS"
-  
+
   FFMPEG_ARGS=(-re -stream_loop -1 -i "$VIDEO_FILE")
   echo "Streaming from $VIDEO_FILE to $FIFO_PATH..."
 else
@@ -108,7 +108,7 @@ else
   echo "Streaming testsrc (${WIDTH}x${HEIGHT} @ ${FPS}fps) to $FIFO_PATH..."
 fi
 
-echo "Suggested CVD config: --media=v4l2_stream_proxy:input_path=$FIFO_PATH:input_width=$WIDTH:input_height=$HEIGHT:input_fps=$FPS"
+echo "Use the following flag to attach the v4l2_stream_proxy device to the CF instance: --media=v4l2_stream_proxy:input_path=$FIFO_PATH:input_width=$WIDTH:input_height=$HEIGHT:input_fps=$FPS"
 echo "Streaming started. Press Ctrl+C to stop."
 
 while true; do
