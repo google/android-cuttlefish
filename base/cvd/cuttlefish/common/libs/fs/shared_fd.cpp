@@ -180,14 +180,10 @@ SharedFD SharedFD::ShmOpen(const std::string& name, int oflag, int mode) {
 }
 #endif
 
-SharedFD SharedFD::MemfdCreate(const std::string& name, unsigned int flags) {
-  return UniqueFd::MemfdCreate(name, flags);
-}
-
 SharedFD SharedFD::MemfdCreateWithData(const std::string& name,
                                        const std::string& data,
                                        unsigned int flags) {
-  auto memfd = MemfdCreate(name, flags);
+  SharedFD memfd = UniqueFd::MemfdCreate(name, flags);
   if (WriteAll(memfd, data) != data.size()) {
     return ErrorFD(errno);
   }

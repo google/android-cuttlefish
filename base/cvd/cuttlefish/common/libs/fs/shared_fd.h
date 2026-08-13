@@ -148,7 +148,6 @@ class SharedFD {
   static SharedFD Event(int initval = 0, int flags = 0);
   static SharedFD ShmOpen(const std::string& name, int oflag, int mode);
 #endif
-  static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
   static SharedFD MemfdCreateWithData(const std::string& name,
                                       const std::string& data,
                                       unsigned int flags = 0);
