@@ -42,6 +42,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/result/result.h"
 
 DEFINE_int32(console_in_fd, -1,
              "File descriptor for the console's input channel");
@@ -131,12 +132,12 @@ class ConsoleForwarder {
         // Write all bytes to the file descriptor. Writes may block, so the
         // mutex lock should NOT be held while writing to avoid blocking the
         // other thread.
-        ssize_t bytes_written = 0;
+        Result<uint64_t> bytes_written = 0;
         ssize_t bytes_to_write = buf_ptr->size();
         while (bytes_to_write > 0) {
           bytes_written =
-              fd->Write(buf_ptr->data() + bytes_written, bytes_to_write);
-          if (bytes_written < 0) {
+              fd->Write(buf_ptr->data() + *bytes_written, bytes_to_write);
+          if (!bytes_written.has_value()) {
             // It is expected for writes to the PTY to fail if nothing is
             // connected
             if (fd->GetErrno() != EAGAIN) {
@@ -148,7 +149,7 @@ class ConsoleForwarder {
             // disconnected, on serial console failure this process will abort).
             break;
           }
-          bytes_to_write -= bytes_written;
+          bytes_to_write -= *bytes_written;
         }
       }
       {

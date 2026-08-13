@@ -36,6 +36,7 @@
 #include "cuttlefish/host/libs/audio_connector/buffers.h"
 #include "cuttlefish/host/libs/audio_connector/commands.h"
 #include "cuttlefish/host/libs/audio_connector/shm_layout.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -49,8 +50,8 @@ ScopedMMap AllocateShm(size_t size, const std::string& name, SharedFD* shm_fd) {
     return ScopedMMap();
   }
 
-  auto truncate_ret = (*shm_fd)->Truncate(size);
-  if (truncate_ret != 0) {
+  Result<void> truncate_ret = (*shm_fd)->Truncate(size);
+  if (!truncate_ret.has_value()) {
     LOG(FATAL) << "Unable to resize " << name << " to " << size
                << " bytes: " << (*shm_fd)->StrError();
     return ScopedMMap();

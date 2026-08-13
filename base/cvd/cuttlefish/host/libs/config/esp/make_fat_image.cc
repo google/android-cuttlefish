@@ -37,7 +37,7 @@ Result<void> MakeFatImage(const std::string& data_image, int data_image_mb,
 
   if (FileExists(MkfsFat())) {
     auto fd = SharedFD::Open(data_image, O_CREAT | O_TRUNC | O_RDWR, 0666);
-    CF_EXPECTF(fd->Truncate(image_size_bytes) == 0,
+    CF_EXPECTF(fd->Truncate(image_size_bytes),
                "`truncate --size={}M '{}'` failed: {}", data_image_mb,
                data_image, fd->StrError());
 

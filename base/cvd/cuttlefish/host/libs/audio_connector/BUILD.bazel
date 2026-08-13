@@ -22,6 +22,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs:scoped_mmap",
         "//cuttlefish/common/libs/fs:unique_fd",
         "//cuttlefish/common/libs/utils:cf_endian",
+        "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
     ],

@@ -131,7 +131,7 @@ bool KernelLogServer::HandleIncomingMessage() {
     return false;
   }
   // Write the log to a file
-  if (log_fd_->Write(buf, *ret) < 0) {
+  if (!log_fd_->Write(buf, *ret).has_value()) {
     LOG(ERROR) << "Could not write kernel log to file: " << log_fd_->StrError();
     return false;
   }

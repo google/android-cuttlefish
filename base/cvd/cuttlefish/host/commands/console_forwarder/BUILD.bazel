@@ -17,6 +17,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
         "//cuttlefish/posix:strerror",
+        "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@gflags",

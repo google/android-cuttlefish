@@ -85,7 +85,7 @@ namespace cuttlefish {
  * escaping file descriptors. At this point SharedFD is the only class
  * that has access. We may eventually have ScopedFD and WeakFD.
  */
-class FileInstance : public ReaderSeeker {
+class FileInstance : public ReaderWriterSeeker {
   // Give SharedFD access to the aliasing constructor.
   friend class SharedFD;
   friend class UniqueFd;
@@ -183,7 +183,7 @@ class FileInstance : public ReaderSeeker {
   int SetTerminalRaw();
   std::string StrError() const;
   ScopedMMap MMap(void* addr, size_t length, int prot, int flags, off_t offset);
-  ssize_t Truncate(off_t length);
+  Result<void> Truncate(uint64_t length) override;
   /*
    * If the file is a regular file and the count is 0, Write() may detect
    * error(s) by calling write(fd, buf, 0) declared in <unistd.h>. If detected,
@@ -192,8 +192,9 @@ class FileInstance : public ReaderSeeker {
    * will do nothing and just return 0.
    *
    */
-  ssize_t Write(const void* buf, size_t count);
-  ssize_t PWrite(const void* buf, size_t count, size_t offset);
+  Result<uint64_t> Write(const void* buf, uint64_t count) override;
+  Result<uint64_t> PWrite(const void* buf, uint64_t count,
+                          uint64_t offset) override;
 #ifdef __linux__
   int EventfdWrite(eventfd_t value);
 #endif
