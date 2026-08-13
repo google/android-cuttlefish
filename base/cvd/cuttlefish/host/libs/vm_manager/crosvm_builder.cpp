@@ -93,7 +93,11 @@ Result<void> CrosvmBuilder::AddCpus(const Json::Value& vcpu_config_json) {
 }
 
 void CrosvmBuilder::AddCpus(size_t cpus) {
-  command_.AddParameter("--cpus=", cpus);
+  std::vector<std::string> cpus_params;
+  cpus_params.push_back(std::to_string(cpus));
+
+  command_.AddParameter("--cpus");
+  command_.AddJoinedParameter(cpus_params);
 }
 
 void CrosvmBuilder::AddHvcSink() {

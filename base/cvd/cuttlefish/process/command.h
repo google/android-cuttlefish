@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "absl/log/check.h"
+#include "absl/strings/str_join.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/process/subprocess.h"
@@ -158,6 +159,18 @@ class Command {
   template <typename... Args>
   Command AppendToLastParameter(Args... args) && {
     return std::move(AppendToLastParameter(std::forward<Args>(args)...));
+  }
+
+  template <typename Container, typename Separator = const char*>
+  Command& AddJoinedParameter(const Container& container,
+                              Separator separator = ",") & {
+    command_.push_back(absl::StrJoin(container, separator));
+    return *this;
+  }
+  template <typename Container, typename Separator = const char*>
+  Command AddJoinedParameter(const Container& container,
+                             Separator separator = ",") && {
+    return std::move(AddJoinedParameter(container, separator));
   }
 
   // Redirects the standard IO of the command.
