@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
@@ -95,11 +96,14 @@ Result<void> CrosvmBuilder::AddCpus(const Json::Value& vcpu_config_json) {
 }
 
 void CrosvmBuilder::AddCpus(size_t cpus) {
+  std::vector<std::string> cpus_params;
+  cpus_params.push_back(std::to_string(cpus));
   if (HostArch() == Arch::Arm64) {
-    command_.AddParameter("--cpus=", cpus, ",sve=[auto=true]");
-  } else {
-    command_.AddParameter("--cpus=", cpus);
+    cpus_params.push_back("sve=[auto=true]");
   }
+
+  command_.AddParameter("--cpus");
+  command_.AddParameter(absl::StrJoin(cpus_params, ","));
 }
 
 void CrosvmBuilder::AddHvcSink() {
