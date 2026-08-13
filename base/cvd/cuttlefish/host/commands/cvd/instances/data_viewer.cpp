@@ -22,6 +22,7 @@
 #include "absl/log/check.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/io/string.h"
 
 namespace cuttlefish {
 
@@ -36,10 +37,8 @@ Result<SharedFD> DataViewer::LockBackingFile(int op) const {
 }
 
 Result<cvd::PersistentData> DataViewer::LoadData(SharedFD fd) const {
-  std::string str;
-  auto read_size = ReadAll(fd, &str);
-  CF_EXPECTF(read_size >= 0, "Failed to read from backing file: {}",
-             fd->StrError());
+  const std::string str =
+      CF_EXPECT(ReadToString(*fd), "Failed to read from backing file");
   cvd::PersistentData data;
   data.ParseFromString(str);
   return std::move(data);

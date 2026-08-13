@@ -29,6 +29,8 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/io/string.h"
+#include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -41,9 +43,9 @@ SharedFD CreateMemFDWithData(const std::string& data) {
 }
 
 std::string ReadAllFDData(SharedFD fd) {
-  std::string data;
-  CHECK(ReadAll(fd, &data) > 0) << fd->StrError();
-  return data;
+  Result<std::string> data = ReadToString(*fd);
+  EXPECT_THAT(data, IsOk());
+  return *data;
 }
 
 TEST(UnixSocketMessage, ExtractFileDescriptors) {

@@ -16,7 +16,6 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -24,12 +23,6 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
-
-namespace {
-
-const size_t BUFF_SIZE = 1 << 14;
-
-}  // namespace
 
 ssize_t WriteAll(SharedFD fd, const char* buf, size_t size) {
   size_t total_written = 0;
@@ -63,23 +56,6 @@ ssize_t ReadExact(SharedFD fd, char* buf, size_t size) {
     total_read += *read_res;
   } while (total_read < size);
   return total_read;
-}
-
-ssize_t ReadAll(SharedFD fd, std::string* buf) {
-  char buff[BUFF_SIZE];
-  std::stringstream ss;
-  Result<uint64_t> read_res;
-  while ((read_res = fd->Read(buff, BUFF_SIZE - 1)).value_or(0) > 0) {
-    // this is necessary to avoid problems with having a '\0' in the middle of
-    // the buffer
-    ss << std::string(buff, *read_res);
-  }
-  if (!read_res.has_value()) {
-    errno = fd->GetErrno();
-    return -1;
-  }
-  *buf = ss.str();
-  return buf->size();
 }
 
 ssize_t ReadExact(SharedFD fd, std::string* buf) {

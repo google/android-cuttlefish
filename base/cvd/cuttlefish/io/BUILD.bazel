@@ -234,6 +234,7 @@ cf_cc_library(
         "//cuttlefish/io",
         "//cuttlefish/io:disjoint_range_set",
         "//cuttlefish/io:serialize_disjoint_range_set",
+        "//cuttlefish/io:string",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
     ],

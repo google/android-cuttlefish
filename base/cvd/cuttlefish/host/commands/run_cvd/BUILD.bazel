@@ -154,6 +154,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/feature:inject",
         "//cuttlefish/host/libs/process_monitor",
         "//cuttlefish/host/libs/vm_manager",
+        "//cuttlefish/io:string",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/process:command",
         "//cuttlefish/process:execute",

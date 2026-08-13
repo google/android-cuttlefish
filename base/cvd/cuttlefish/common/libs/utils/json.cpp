@@ -25,8 +25,8 @@
 #include "json/reader.h"
 #include "json/value.h"
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -44,10 +44,7 @@ Result<Json::Value> ParseJson(std::string_view input) {
 
 Result<Json::Value> LoadFromFile(SharedFD json_fd) {
   CF_EXPECT(json_fd->IsOpen(), "json_fd is not open.");
-  std::string json_contents;
-  // on success, this must return a positive integer
-  CF_EXPECT_GE(ReadAll(json_fd, &json_contents), 0,
-               "ReadAll() failed and returned 0 or -1");
+  const std::string json_contents = CF_EXPECT(ReadToString(*json_fd));
   Json::Value json_value = CF_EXPECTF(
       ParseJson(json_contents), "Failed to parse json: \n{}", json_contents);
   return json_value;

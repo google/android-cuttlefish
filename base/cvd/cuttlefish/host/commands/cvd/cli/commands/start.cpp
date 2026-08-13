@@ -45,7 +45,6 @@
 #include "fmt/core.h"
 #include "fmt/format.h"
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -76,6 +75,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
@@ -493,9 +493,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
         monitor_thread.join();
       }
       memfd->LSeek(0, SEEK_SET);
-      std::string full_output;
-      ReadAll(memfd, &full_output);
-      std::cout << full_output << std::flush;
+      std::cout << ReadToString(*memfd).value_or("") << std::flush;
     }
     return launch_res;
   }

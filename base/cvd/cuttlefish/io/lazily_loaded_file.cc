@@ -36,6 +36,7 @@
 #include "cuttlefish/io/disjoint_range_set.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/serialize_disjoint_range_set.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -119,8 +120,7 @@ Result<void> LazilyLoadedFile::Impl::ReadMetadata() {
   CF_EXPECTF(metadata_fd->IsOpen(), "Failed to open {}: {}", MetadataFile(),
              metadata_fd->StrError());
 
-  std::string data;
-  CF_EXPECT_GE(ReadAll(metadata_fd, &data), 0, metadata_fd->StrError());
+  const std::string data = CF_EXPECT(ReadToString(*metadata_fd));
 
   Result<DisjointRangeSet> parsed_res = DeserializeDisjointRangeSet(data);
   if (parsed_res.has_value()) {

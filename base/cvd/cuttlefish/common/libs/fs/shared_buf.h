@@ -17,23 +17,11 @@
 
 #include <string>
 #include <string_view>
-#include <thread>
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
-
-/**
- * Reads from fd until it is closed or errors, storing all data in buf.
- *
- * On a successful read, returns the number of bytes read.
- *
- * If a read error is encountered, returns -1. buf will contain any data read
- * up until that point and errno will be set.
- *
- */
-ssize_t ReadAll(SharedFD fd, std::string* buf);
 
 /**
  * Reads from fd until reading buf->size() bytes or errors.
