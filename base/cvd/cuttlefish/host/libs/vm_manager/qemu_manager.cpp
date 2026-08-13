@@ -76,12 +76,12 @@ StopperResult Stop() {
   char msg[] = "{\"execute\":\"qmp_capabilities\"}{\"execute\":\"quit\"}";
   ssize_t len = sizeof(msg) - 1;
   while (len > 0) {
-    int tmp = monitor_sock->Write(msg, len);
-    if (tmp < 0) {
+    Result<uint64_t> tmp = monitor_sock->Write(msg, len);
+    if (!tmp.has_value()) {
       LOG(ERROR) << "Error writing to socket: " << monitor_sock->StrError();
       return StopperResult::kFailure;
     }
-    len -= tmp;
+    len -= *tmp;
   }
   // Log the reply
   char buff[1000];

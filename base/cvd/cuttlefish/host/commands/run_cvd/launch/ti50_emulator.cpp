@@ -134,7 +134,8 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
     if (!cl->IsOpen()) {
       return CF_ERR("Failed to connect to gpioPltRst");
     }
-    CF_EXPECT_EQ(cl->Write("1", 1), 1);
+    uint64_t written = CF_EXPECT(cl->Write("1", 1));
+    CF_EXPECT_EQ(written, 1);
 
     LOG(INFO) << "ti50 emulator: reset GPIO!";
     return {};

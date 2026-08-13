@@ -60,7 +60,8 @@ ClientId ChannelMonitor::SetRemoteClient(SharedFD client, bool is_accepted) {
 
   // Trigger monitor loop
   if (write_pipe_->IsOpen()) {
-    write_pipe_->Write("OK", sizeof("OK"));
+    // TODO(schuffelen): Handle unused result
+    Result<uint64_t> unused = write_pipe_->Write("OK", sizeof("OK"));
   } else {
     LOG(ERROR) << "Pipe created fail, can't trigger monitor loop";
   }
@@ -170,7 +171,8 @@ void ChannelMonitor::CloseRemoteConnection(ClientId client) {
 
       // Trigger monitor loop
       if (write_pipe_->IsOpen()) {
-        write_pipe_->Write("OK", sizeof("OK"));
+        // TODO(schuffelen): Handle unused result
+        Result<uint64_t> unused = write_pipe_->Write("OK", sizeof("OK"));
         VLOG(0) << "asking to remove clients";
       } else {
         LOG(ERROR) << "Pipe created fail, can't trigger monitor loop";
@@ -183,7 +185,8 @@ void ChannelMonitor::CloseRemoteConnection(ClientId client) {
 
 ChannelMonitor::~ChannelMonitor() {
   if (write_pipe_->IsOpen()) {
-    write_pipe_->Write("KO", sizeof("KO"));
+    // TODO(schuffelen): Handle unused result
+    Result<uint64_t> unused = write_pipe_->Write("KO", sizeof("KO"));
   }
 
   if (monitor_thread_.joinable()) {

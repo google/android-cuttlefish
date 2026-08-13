@@ -122,12 +122,12 @@ bool FileInstance::CopyFrom(FileInstance& in, size_t length,
     do {
       // No need to use poll for writes: even if the source closes, the data
       // needs to be delivered to the other side.
-      auto res = Write(buffer.data(), *num_read);
-      if (res <= 0) {
+      Result<uint64_t> res = Write(buffer.data(), *num_read);
+      if (res.value_or(0) == 0) {
         // The caller will have to log an appropriate message.
         return false;
       }
-      written += res;
+      written += *res;
     } while (written < *num_read);
   }
   return true;
@@ -508,26 +508,36 @@ ScopedMMap FileInstance::MMap(void* addr, size_t length, int prot, int flags,
   return ScopedMMap(ptr, length);
 }
 
-ssize_t FileInstance::Truncate(off_t length) {
+Result<void> FileInstance::Truncate(uint64_t length) {
   LocalErrno record_errno(errno_);
 
-  return TEMP_FAILURE_RETRY(ftruncate(fd_, length));
+  ssize_t res = TEMP_FAILURE_RETRY(ftruncate(fd_, length));
+  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError(errno));
+
+  return {};
 }
 
-ssize_t FileInstance::Write(const void* buf, size_t count) {
+Result<uint64_t> FileInstance::Write(const void* buf, size_t count) {
   if (count == 0 && !IsRegular()) {
     return 0;
   }
 
   LocalErrno record_errno(errno_);
 
-  return TEMP_FAILURE_RETRY(write(fd_, buf, count));
+  ssize_t res = TEMP_FAILURE_RETRY(write(fd_, buf, count));
+  CF_EXPECT_GE(res, 0);
+
+  return static_cast<uint64_t>(res);
 }
 
-ssize_t FileInstance::PWrite(const void* buf, size_t count, size_t offset) {
+Result<uint64_t> FileInstance::PWrite(const void* buf, size_t count,
+                                      size_t offset) {
   LocalErrno record_errno(errno_);
 
-  return TEMP_FAILURE_RETRY(pwrite(fd_, buf, count, offset));
+  ssize_t res = TEMP_FAILURE_RETRY(pwrite(fd_, buf, count, offset));
+  CF_EXPECT_GE(res, 0);
+
+  return static_cast<uint64_t>(res);
 }
 
 #ifdef __linux__

@@ -77,7 +77,8 @@ AdbHandler::AdbHandler(
 AdbHandler::~AdbHandler() {
     // Send a message to the looper to shut down.
     uint64_t v = 1;
-    shutdown_->Write(&v, sizeof(v));
+    // TODO(schuffelen): Handle unused result
+    (void)shutdown_->Write(&v, sizeof(v));
     // Shut down the socket as well.  Not srictly necessary.
     adb_socket_->Shutdown(SHUT_RDWR);
     read_thread_.join();
@@ -113,12 +114,12 @@ void AdbHandler::ReadLoop() {
 void AdbHandler::handleMessage(const uint8_t *msg, size_t len) {
   size_t sent = 0;
   while (sent < len) {
-    auto this_sent = adb_socket_->Write(&msg[sent], len - sent);
-    if (this_sent < 0) {
+    Result<uint64_t> this_sent = adb_socket_->Write(&msg[sent], len - sent);
+    if (!this_sent.has_value()) {
       LOG(ERROR) << "Error writing to adb socket: " << adb_socket_->StrError();
       return;
     }
-    sent += this_sent;
+    sent += *this_sent;
   }
 }
 

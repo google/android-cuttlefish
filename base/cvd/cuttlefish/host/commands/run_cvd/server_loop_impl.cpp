@@ -233,12 +233,14 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       auto stop = process_monitor.StopMonitoredProcesses();
       if (stop.has_value()) {
         auto response = LauncherResponse::kSuccess;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         std::exit(0);
       } else {
         LOG(ERROR) << "Failed to stop subprocesses:\n" << stop.error();
         auto response = LauncherResponse::kError;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
       }
       break;
     }
@@ -246,11 +248,13 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       auto stop = process_monitor.StopMonitoredProcesses();
       if (stop.has_value()) {
         auto response = LauncherResponse::kSuccess;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         std::exit(RunnerExitCodes::kVirtualDeviceBootFailed);
       } else {
         auto response = LauncherResponse::kError;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         LOG(ERROR) << "Failed to stop subprocesses:\n" << stop.error();
       }
       break;
@@ -258,7 +262,8 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
     case LauncherAction::kStatus: {
       // TODO(schuffelen): Return more information on a side channel
       auto response = LauncherResponse::kSuccess;
-      client->Write(&response, sizeof(response));
+      // TODO(schuffelen): Handle unused result
+      (void)client->Write(&response, sizeof(response));
       break;
     }
     case LauncherAction::kPowerwash: {
@@ -268,7 +273,8 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       if (std::find(disks.begin(), disks.end(), overlay) == disks.end()) {
         LOG(ERROR) << "Powerwash unsupported with --use_overlay=false";
         auto response = LauncherResponse::kError;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         break;
       }
 
@@ -276,22 +282,26 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       if (!stop.has_value()) {
         LOG(ERROR) << "Stopping processes failed:\n" << stop.error();
         auto response = LauncherResponse::kError;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         break;
       }
       if (!PowerwashFiles()) {
         LOG(ERROR) << "Powerwashing files failed.";
         auto response = LauncherResponse::kError;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         break;
       }
       auto response = LauncherResponse::kSuccess;
-      client->Write(&response, sizeof(response));
+      // TODO(schuffelen): Handle unused result
+      (void)client->Write(&response, sizeof(response));
 
       RestartRunCvd(client->UNMANAGED_Dup());
       // RestartRunCvd should not return, so something went wrong.
       response = LauncherResponse::kError;
-      client->Write(&response, sizeof(response));
+      // TODO(schuffelen): Handle unused result
+      (void)client->Write(&response, sizeof(response));
       LOG(FATAL) << "run_cvd in a bad state";
       break;
     }
@@ -300,17 +310,20 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       if (!stop.has_value()) {
         LOG(ERROR) << "Stopping processes failed:\n" << stop.error();
         auto response = LauncherResponse::kError;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         break;
       }
       DeleteFifos();
 
       auto response = LauncherResponse::kSuccess;
-      client->Write(&response, sizeof(response));
+      // TODO(schuffelen): Handle unused result
+      (void)client->Write(&response, sizeof(response));
       RestartRunCvd(client->UNMANAGED_Dup());
       // RestartRunCvd should not return, so something went wrong.
       response = LauncherResponse::kError;
-      client->Write(&response, sizeof(response));
+      // TODO(schuffelen): Handle unused result
+      (void)client->Write(&response, sizeof(response));
       LOG(FATAL) << "run_cvd in a bad state";
       break;
     }
@@ -318,7 +331,8 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       LOG(ERROR) << "Unrecognized launcher action: "
                  << static_cast<char>(action);
       auto response = LauncherResponse::kError;
-      client->Write(&response, sizeof(response));
+      // TODO(schuffelen): Handle unused result
+      (void)client->Write(&response, sizeof(response));
       break;
   }
 }

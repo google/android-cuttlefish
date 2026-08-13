@@ -43,7 +43,7 @@ static StopperResult StopModemSimulator(int id) {
     return StopperResult::kFailure;
   }
   std::string msg("STOP");
-  if (monitor_sock->Write(msg.data(), msg.size()) < 0) {
+  if (!monitor_sock->Write(msg.data(), msg.size()).has_value()) {
     monitor_sock->Close();
     LOG(ERROR) << "Failed to send 'STOP' to modem simulator";
     return StopperResult::kFailure;

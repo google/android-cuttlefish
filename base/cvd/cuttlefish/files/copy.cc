@@ -44,7 +44,7 @@ bool Copy(const std::string& from, const std::string& to) {
                << "\": " << fd_from->StrError();
     return false;
   }
-  if (fd_to->Truncate(farthest_seek) < 0) {
+  if (!fd_to->Truncate(farthest_seek).has_value()) {
     LOG(ERROR) << "Failed to truncate " << to << ": " << fd_to->StrError();
   }
   off_t offset = 0;

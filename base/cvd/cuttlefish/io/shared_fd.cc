@@ -39,9 +39,7 @@ Result<uint64_t> SharedFdIo::Read(void* buf, uint64_t count) {
 }
 
 Result<uint64_t> SharedFdIo::Write(const void* buf, uint64_t count) {
-  int64_t data_written = fd_->Write(buf, count);
-  CF_EXPECT_GE(data_written, 0, fd_->StrError());
-  return data_written;
+  return CF_EXPECT(fd_->Write(buf, count));
 }
 
 Result<uint64_t> SharedFdIo::SeekSet(uint64_t offset) {
@@ -68,13 +66,11 @@ Result<uint64_t> SharedFdIo::PRead(void* buf, uint64_t count,
 
 Result<uint64_t> SharedFdIo::PWrite(const void* buf, uint64_t count,
                                     uint64_t offset) {
-  int64_t data_written = fd_->PWrite(buf, count, offset);
-  CF_EXPECT_GE(data_written, 0, fd_->StrError());
-  return data_written;
+  return CF_EXPECT(fd_->PWrite(buf, count, offset));
 }
 
 Result<void> SharedFdIo::Truncate(uint64_t size) {
-  CF_EXPECT_EQ(fd_->Truncate(size), 0);
+  CF_EXPECT(fd_->Truncate(size));
   return {};
 }
 
