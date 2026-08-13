@@ -27,9 +27,9 @@ type NftRuleset struct {
 }
 
 type NftTable struct {
-	Family string
-	Name   string
-	Handle int
+	Family string `json:"family"`
+	Name   string `json:"name"`
+	Handle int    `json:"handle"`
 }
 
 func (t NftTable) less(o NftTable) bool {
@@ -40,12 +40,12 @@ func (t NftTable) less(o NftTable) bool {
 }
 
 type NftChain struct {
-	Family string
-	Table  string
-	Name   string
-	Type   string
-	Hook   string
-	Handle int
+	Family string `json:"family"`
+	Table  string `json:"table"`
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+	Hook   string `json:"hook"`
+	Handle int    `json:"handle"`
 }
 
 func (c NftChain) less(o NftChain) bool {
@@ -58,6 +58,8 @@ func (c NftChain) less(o NftChain) bool {
 	return c.Name < o.Name
 }
 
+// Masquerade and SaddrPrefix are derived from the rule's expression list,
+// so this type is populated via convertNftRule.
 type NftRule struct {
 	Family      string
 	Table       string
@@ -83,83 +85,99 @@ func (r NftRule) less(o NftRule) bool {
 	return !r.Masquerade && o.Masquerade
 }
 
+// The types below mirror the schema of `nft -j list ruleset`. Each element of
+// the top-level "nftables" array is an object with a single populated key
+// ("table", "chain", or "rule".
+//
+// An abridged example:
+//
+//	{
+//	  "nftables": [
+//	    {"metainfo": {"version": "1.0.6", "json_schema_version": 1}},
+//	    {"table": {"family": "ip", "name": "cuttlefish_nat", "handle": 2}},
+//	    {"chain": {"family": "ip", "table": "cuttlefish_nat", "name": "postrouting",
+//	               "handle": 1, "type": "nat", "hook": "postrouting", "prio": 100, "policy": "accept"}},
+//	    {"rule": {"family": "ip", "table": "cuttlefish_nat", "chain": "postrouting", "handle": 4,
+//	              "expr": [
+//	                {"match": {"op": "==",
+//	                           "left": {"payload": {"protocol": "ip", "field": "saddr"}},
+//	                           "right": {"prefix": {"addr": "192.168.96.0", "len": 24}}}},
+//	                {"masquerade": null}
+//	              ]}}
+//	  ]
+//	}
+type nftElement struct {
+	Table *NftTable `json:"table"`
+	Chain *NftChain `json:"chain"`
+	Rule  *nftRule  `json:"rule"`
+}
+
+type nftRule struct {
+	Family string    `json:"family"`
+	Table  string    `json:"table"`
+	Chain  string    `json:"chain"`
+	Handle int       `json:"handle"`
+	Expr   []nftExpr `json:"expr"`
+}
+
+type nftExpr struct {
+	Masquerade json.RawMessage `json:"masquerade"`
+	Match      *nftMatch       `json:"match"`
+}
+
+type nftMatch struct {
+	Left  nftMatchLeft  `json:"left"`
+	Right nftMatchRight `json:"right"`
+}
+
+type nftMatchLeft struct {
+	Payload *nftPayload `json:"payload"`
+}
+
+type nftPayload struct {
+	Field string `json:"field"`
+}
+
+type nftMatchRight struct {
+	Prefix *nftPrefix `json:"prefix"`
+}
+
+type nftPrefix struct {
+	Addr string `json:"addr"`
+	Len  int    `json:"len"`
+}
+
 func parseNftRuleset(s string) NftRuleset {
 	var top struct {
-		Nftables []map[string]json.RawMessage `json:"nftables"`
+		Nftables []nftElement `json:"nftables"`
 	}
 	if err := json.Unmarshal([]byte(s), &top); err != nil {
 		return NftRuleset{}
 	}
 	var rs NftRuleset
 	for _, el := range top.Nftables {
-		if raw, ok := el["table"]; ok {
-			var t struct {
-				Family string `json:"family"`
-				Name   string `json:"name"`
-				Handle int    `json:"handle"`
-			}
-			if json.Unmarshal(raw, &t) == nil {
-				rs.Tables = append(rs.Tables, NftTable{Family: t.Family, Name: t.Name, Handle: t.Handle})
-			}
-		}
-		if raw, ok := el["chain"]; ok {
-			var c struct {
-				Family string `json:"family"`
-				Table  string `json:"table"`
-				Name   string `json:"name"`
-				Type   string `json:"type"`
-				Hook   string `json:"hook"`
-				Handle int    `json:"handle"`
-			}
-			if json.Unmarshal(raw, &c) == nil {
-				rs.Chains = append(rs.Chains, NftChain{Family: c.Family, Table: c.Table, Name: c.Name, Type: c.Type, Hook: c.Hook, Handle: c.Handle})
-			}
-		}
-		if raw, ok := el["rule"]; ok {
-			rs.Rules = append(rs.Rules, parseNftRule(raw))
+		switch {
+		case el.Table != nil:
+			rs.Tables = append(rs.Tables, *el.Table)
+		case el.Chain != nil:
+			rs.Chains = append(rs.Chains, *el.Chain)
+		case el.Rule != nil:
+			rs.Rules = append(rs.Rules, convertNftRule(*el.Rule))
 		}
 	}
 	return rs
 }
 
-func parseNftRule(raw json.RawMessage) NftRule {
-	var r struct {
-		Family string            `json:"family"`
-		Table  string            `json:"table"`
-		Chain  string            `json:"chain"`
-		Handle int               `json:"handle"`
-		Expr   []json.RawMessage `json:"expr"`
-	}
-	json.Unmarshal(raw, &r)
+// convertNftRule flattens the nft json rule schema into the NftRule domain type,
+// deriving Masquerade and SaddrPrefix from the rule's expression list.
+func convertNftRule(r nftRule) NftRule {
 	nr := NftRule{Family: r.Family, Table: r.Table, Chain: r.Chain, Handle: r.Handle}
 	for _, e := range r.Expr {
-		var m map[string]json.RawMessage
-		if json.Unmarshal(e, &m) != nil {
-			continue
-		}
-		if _, ok := m["masquerade"]; ok {
+		if len(e.Masquerade) > 0 {
 			nr.Masquerade = true
 		}
-		if mraw, ok := m["match"]; ok {
-			var match struct {
-				Left struct {
-					Payload *struct {
-						Field string `json:"field"`
-					} `json:"payload"`
-				} `json:"left"`
-				Right json.RawMessage `json:"right"`
-			}
-			if json.Unmarshal(mraw, &match) == nil && match.Left.Payload != nil && match.Left.Payload.Field == "saddr" {
-				var pfx struct {
-					Prefix *struct {
-						Addr string `json:"addr"`
-						Len  int    `json:"len"`
-					} `json:"prefix"`
-				}
-				if json.Unmarshal(match.Right, &pfx) == nil && pfx.Prefix != nil {
-					nr.SaddrPrefix = fmt.Sprintf("%s/%d", pfx.Prefix.Addr, pfx.Prefix.Len)
-				}
-			}
+		if e.Match != nil && e.Match.Left.Payload != nil && e.Match.Left.Payload.Field == "saddr" && e.Match.Right.Prefix != nil {
+			nr.SaddrPrefix = fmt.Sprintf("%s/%d", e.Match.Right.Prefix.Addr, e.Match.Right.Prefix.Len)
 		}
 	}
 	return nr
