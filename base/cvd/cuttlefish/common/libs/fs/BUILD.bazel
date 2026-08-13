@@ -74,6 +74,17 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "recv_all",
+    srcs = ["recv_all.cc"],
+    hdrs = ["recv_all.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs:file_instance",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "scoped_mmap",
     srcs = ["scoped_mmap.cc"],
     hdrs = ["scoped_mmap.h"],

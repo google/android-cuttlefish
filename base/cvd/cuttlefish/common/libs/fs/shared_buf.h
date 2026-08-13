@@ -158,13 +158,4 @@ ssize_t WriteAllBinary(SharedFD fd, const T* binary_data) {
  */
 bool SendAll(SharedFD sock, std::string_view msg);
 
-/**
- * Receives 'count' bytes from sock, checking for socket error conditions
- *
- * On successful Recv, returns a string containing the received data
- *
- * If a Recv error is encountered, returns the empty string
- */
-std::string RecvAll(SharedFD sock, size_t count);
-
 }  // namespace cuttlefish

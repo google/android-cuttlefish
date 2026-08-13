@@ -90,21 +90,4 @@ bool SendAll(SharedFD sock, std::string_view msg) {
   return true;
 }
 
-std::string RecvAll(SharedFD sock, const size_t count) {
-  size_t total_read{};
-  if (!sock->IsOpen()) {
-    return {};
-  }
-  std::unique_ptr<char[]> data(new char[count]);
-  while (total_read < count) {
-    Result<uint64_t> read_res =
-        sock->Read(data.get() + total_read, count - total_read);
-    if (read_res.value_or(0) == 0) {
-      return {};
-    }
-    total_read += *read_res;
-  }
-  return {data.get(), count};
-}
-
 }  // namespace cuttlefish
