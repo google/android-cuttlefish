@@ -209,15 +209,6 @@ UniqueFd UniqueFd::Creat(const std::string& path, mode_t mode) {
   return UniqueFd::Open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
 }
 
-int UniqueFd::Fchdir(UniqueFd shared_fd) {
-  if (!shared_fd.value_) {
-    return -1;
-  }
-  LocalErrno record_errno(shared_fd->errno_);
-
-  return TEMP_FAILURE_RETRY(fchdir(shared_fd->fd_));
-}
-
 Result<UniqueFd> UniqueFd::Fifo(const std::string& path, mode_t mode) {
   struct stat st{};
   if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) == 0) {

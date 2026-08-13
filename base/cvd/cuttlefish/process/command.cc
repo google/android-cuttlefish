@@ -294,7 +294,7 @@ Subprocess Command::Start(SubprocessOptions options) const {
       }
     }
     if (working_directory_->IsOpen()) {
-      if (SharedFD::Fchdir(working_directory_) != 0) {
+      if (working_directory_->Fchdir() != 0) {
         exit(-errno);
       }
     }

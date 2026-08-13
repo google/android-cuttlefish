@@ -131,7 +131,6 @@ class UniqueFd {
   static UniqueFd Open(const std::string& pathname, int flags, mode_t mode = 0);
   static UniqueFd InotifyFd();
   static UniqueFd Creat(const std::string& pathname, mode_t mode);
-  static int Fchdir(UniqueFd);
   static Result<UniqueFd> Fifo(const std::string& pathname, mode_t mode);
   static bool Pipe(UniqueFd* fd0, UniqueFd* fd1);
 #ifdef __linux__

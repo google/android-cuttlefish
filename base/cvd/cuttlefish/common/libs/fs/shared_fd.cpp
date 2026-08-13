@@ -52,21 +52,6 @@ namespace cuttlefish {
 
 namespace {
 
-class LocalErrno {
- public:
-  LocalErrno(int& local_errno) : local_errno_(local_errno), preserved_(errno) {
-    errno = 0;
-  }
-  ~LocalErrno() {
-    local_errno_ = errno;
-    errno = preserved_;
-  }
-
- private:
-  int& local_errno_;
-  int preserved_;
-};
-
 void MarkAll(const SharedFDSet& input, fd_set* dest, int* max_index) {
   for (SharedFDSet::const_iterator it = input.begin(); it != input.end();
        ++it) {
@@ -227,15 +212,6 @@ SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
 
 SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
   return UniqueFd::Creat(path, mode);
-}
-
-int SharedFD::Fchdir(SharedFD shared_fd) {
-  if (!shared_fd.value_) {
-    return -1;
-  }
-  LocalErrno record_errno(shared_fd->errno_);
-
-  return TEMP_FAILURE_RETRY(fchdir(shared_fd->fd_));
 }
 
 Result<SharedFD> SharedFD::Fifo(const std::string& path, mode_t mode) {
