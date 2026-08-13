@@ -140,7 +140,6 @@ class SharedFD {
   // Fcntl or Dup functions.
   static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
   static SharedFD Open(const std::string& pathname, int flags, mode_t mode = 0);
-  static SharedFD InotifyFd();
   static SharedFD Creat(const std::string& pathname, mode_t mode);
   static int Fchdir(SharedFD);
   static Result<SharedFD> Fifo(const std::string& pathname, mode_t mode);

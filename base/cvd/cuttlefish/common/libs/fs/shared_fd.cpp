@@ -229,8 +229,6 @@ SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
   return UniqueFd::Open(path, flags, mode);
 }
 
-SharedFD SharedFD::InotifyFd(void) { return UniqueFd::InotifyFd(); }
-
 SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
   return UniqueFd::Creat(path, mode);
 }
