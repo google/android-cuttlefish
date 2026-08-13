@@ -310,6 +310,15 @@ int FileInstance::UNMANAGED_Dup2(int newfd) {
   return TEMP_FAILURE_RETRY(dup2(fd_, newfd));
 }
 
+int FileInstance::Fchdir() {
+  if (fd_ < 0) {
+    return -1;
+  }
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(fchdir(fd_));
+}
+
 int FileInstance::Fcntl(int command, int value) {
   LocalErrno record_errno(errno_);
 
