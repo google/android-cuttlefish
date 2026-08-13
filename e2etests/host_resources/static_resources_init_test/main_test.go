@@ -102,7 +102,7 @@ func TestStaticResourcesInit(t *testing.T) {
 			defer s.Close()
 			sr := common.NewStaticResources(t, s)
 
-			base := s.Snapshot()
+			base := common.Snapshot(s)
 
 			if err := sr.Start(tc.env); err != nil {
 				t.Fatalf("start: %v", err)
@@ -115,7 +115,7 @@ func TestStaticResourcesInit(t *testing.T) {
 			if err := sr.Stop(tc.env); err != nil {
 				t.Fatalf("stop: %v", err)
 			}
-			afterStop := s.Snapshot()
+			afterStop := common.Snapshot(s)
 			if diff := common.DiffState(common.Normalize(base), common.Normalize(afterStop)); diff != "" {
 				t.Errorf("state leaked after stop (-before +after):\n%s", diff)
 			}
@@ -128,14 +128,14 @@ func TestStaticResourcesInit(t *testing.T) {
 }
 
 func observe(s *common.Sandbox) startState {
-	hs := s.Snapshot()
+	hs := common.Snapshot(s)
 	got := startState{
 		NftTables:     hs.Nft.Tables,
 		NftChains:     hs.Nft.Chains,
 		Masquerades:   hs.Nft.MasqueradeSaddrs(),
 		Sysctls:       hs.Sysctls,
-		HandleFiles:   s.HandleFiles(),
-		DnsmasqIfaces: s.DnsmasqPidfileIfaces(),
+		HandleFiles:   common.HandleFiles(s),
+		DnsmasqIfaces: common.DnsmasqPidfileIfaces(s),
 	}
 	for _, l := range hs.Links {
 		if l.Ifname == "lo" {

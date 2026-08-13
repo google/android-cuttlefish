@@ -29,7 +29,7 @@ type HostState struct {
 	Sysctls map[string]string
 }
 
-func (s *Sandbox) Snapshot() HostState {
+func Snapshot(s *Sandbox) HostState {
 	hs := HostState{Sysctls: map[string]string{}}
 
 	if out, err := s.Run("nft", "-j", "list", "ruleset"); err == nil {
@@ -60,7 +60,7 @@ func (s *Sandbox) Snapshot() HostState {
 
 // We can only check for the pidfiles, so we just do that to make sure
 // dnsmasq was invoked.
-func (s *Sandbox) DnsmasqPidfileIfaces() []string {
+func DnsmasqPidfileIfaces(s *Sandbox) []string {
 	out, err := s.Run("sh", "-c", `ls -1 /run/cuttlefish-dnsmasq-*.pid 2>/dev/null || true`)
 	if err != nil {
 		return nil
@@ -74,7 +74,7 @@ func (s *Sandbox) DnsmasqPidfileIfaces() []string {
 	return ifaces
 }
 
-func (s *Sandbox) HandleFiles() []string {
+func HandleFiles(s *Sandbox) []string {
 	out, err := s.Run("sh", "-c", `ls -1 /run/cuttlefish/ 2>/dev/null || true`)
 	if err != nil {
 		return nil
