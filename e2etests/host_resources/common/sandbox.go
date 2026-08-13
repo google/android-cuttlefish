@@ -16,6 +16,7 @@ package common
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -40,10 +41,12 @@ type Sandbox struct {
 }
 
 func NewSandbox(t *testing.T) *Sandbox {
-	t.Helper()
-	checkPrereqs(t)
+	if err := checkPrereqs(); err != nil {
+		t.Fatalf("sandbox prerequisites not met: %v", err)
+	}
 
 	s := &Sandbox{t: t, tempdir: t.TempDir()}
+	t.Cleanup(s.Close)
 
 	// spawn the process that will keep the sandbox alive
 	cmd := exec.Command("unshare", "--user", "--map-root-user", "--net", "--mount", "sleep", "infinity")
@@ -54,40 +57,37 @@ func NewSandbox(t *testing.T) *Sandbox {
 	s.pid = cmd.Process.Pid
 
 	if err := s.waitReady(); err != nil {
-		s.Close()
 		t.Fatalf("namespace not usable on this host: %v", err)
 	}
 	if err := s.setupFilesystem(); err != nil {
-		s.Close()
 		t.Fatalf("failed to prepare filesystem sandbox: %v", err)
 	}
 	if err := s.setupNetwork(); err != nil {
-		s.Close()
 		t.Fatalf("failed to prepare network sandbox: %v", err)
 	}
 
-	t.Cleanup(s.Close)
 	return s
 }
 
-func checkPrereqs(t *testing.T) {
-	t.Helper()
-	checkNamespacePrereqs(t)
-	checkNetworkPrereqs(t)
+func checkPrereqs() error {
+	if err := checkNamespacePrereqs(); err != nil {
+		return err
+	}
+	return checkNetworkPrereqs()
 }
 
-func checkNamespacePrereqs(t *testing.T) {
-	t.Helper()
+func checkNamespacePrereqs() error {
 	if b, err := os.ReadFile("/proc/sys/kernel/unprivileged_userns_clone"); err == nil {
 		if strings.TrimSpace(string(b)) == "0" {
-			t.Fatal("unprivileged user namespaces are disabled (unprivileged_userns_clone=0)")
+			return errors.New("unprivileged user namespaces are disabled (unprivileged_userns_clone=0)")
 		}
 	}
 	for _, bin := range []string{"unshare", "nsenter", "sleep"} {
 		if _, err := exec.LookPath(bin); err != nil {
-			t.Fatalf("required binary %q not found on PATH: %v", bin, err)
+			return fmt.Errorf("required binary %q not found on PATH: %w", bin, err)
 		}
 	}
+	return nil
 }
 
 func (s *Sandbox) waitReady() error {
