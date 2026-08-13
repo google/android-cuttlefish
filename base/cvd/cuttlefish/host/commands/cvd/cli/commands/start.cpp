@@ -46,6 +46,7 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -419,7 +420,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   SharedFD memfd;
   SharedFD stop_eventfd;
   if (!own_flags_.daemon) {
-    memfd = SharedFD::MemfdCreate("cvd_internal_start_output");
+    memfd = UniqueFd::MemfdCreate("cvd_internal_start_output");
     CF_EXPECT(memfd->IsOpen(), "Failed to create memfd for subprocess output: "
                                    << memfd->StrError());
 

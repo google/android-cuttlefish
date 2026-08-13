@@ -433,7 +433,7 @@ void ServerLoopImpl::RestartRunCvd(int notification_fd) {
     CHECK(RemoveFile(config_.AssemblyPath("restore")).has_value());
   }
   auto config_path = config_.AssemblyPath("cuttlefish_config.json");
-  auto followup_stdin = SharedFD::MemfdCreate("pseudo_stdin");
+  SharedFD followup_stdin = UniqueFd::MemfdCreate("pseudo_stdin");
   WriteAll(followup_stdin, config_path + "\n");
   // NOLINTNEXTLINE(misc-include-cleaner): unistd.h provides SEEK_SET
   followup_stdin->LSeek(0, SEEK_SET);

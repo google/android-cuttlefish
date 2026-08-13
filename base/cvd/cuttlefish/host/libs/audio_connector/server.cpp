@@ -42,7 +42,7 @@ namespace cuttlefish {
 namespace {
 
 ScopedMMap AllocateShm(size_t size, const std::string& name, SharedFD* shm_fd) {
-  *shm_fd = SharedFD::MemfdCreate(name, 0);
+  *shm_fd = UniqueFd::MemfdCreate(name, 0);
   if (!(*shm_fd)->IsOpen()) {
     LOG(FATAL) << "Unable to allocate create file for " << name << ": "
                << (*shm_fd)->StrError();
