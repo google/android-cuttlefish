@@ -99,6 +99,7 @@
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
+#include "cuttlefish/host/libs/config/mte.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/vhal_proxy_server/vhal_proxy_server_eth_addr.h"
@@ -566,7 +567,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_BOOL_VALUE(record_screen));
   std::vector<std::string> gem5_debug_file_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gem5_debug_file));
-  std::vector<bool> mte_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(mte));
+  std::vector<std::string> mte_vec = CF_EXPECT(GET_FLAG_STR_VALUE(mte));
   std::vector<bool> enable_kernel_log_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_kernel_log));
   std::vector<bool> kgdb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(kgdb));
@@ -839,7 +840,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_record_screen(record_screen_vec[instance_index]);
     instance.set_gem5_debug_file(gem5_debug_file_vec[instance_index]);
-    instance.set_mte(mte_vec[instance_index]);
+    instance.set_mte(CF_EXPECT(ParseMte(mte_vec[instance_index])));
+    if (instance.mte() != Mte::kOff) {
+      CF_EXPECT_EQ(guest_configs[instance_index].target_arch, Arch::Arm64,
+                   "--mte requires an arm64 guest");
+    }
     instance.set_enable_kernel_log(enable_kernel_log_vec[instance_index]);
     if (!boot_slot_vec[instance_index].empty()) {
       instance.set_boot_slot(boot_slot_vec[instance_index]);

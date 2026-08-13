@@ -51,6 +51,7 @@
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/config/mte.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
@@ -531,7 +532,8 @@ bool PmemEnabled(const CuttlefishConfig::InstanceSpecific& instance) {
   // guest's entire shadow stage-2 instead of a range-scoped invalidation
   // (see the nested_mmu reverse-mapping TODO in arch/arm64/kvm/mmu.c),
   // which makes the guest extremely slow.
-  return instance.use_pmem() && !instance.enable_pkvm() && !instance.mte();
+  return instance.use_pmem() && !instance.enable_pkvm() &&
+         instance.mte() != Mte::kOn;
 }
 
 Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
@@ -660,7 +662,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   // crosvm_cmd.Cmd().AddParameter("--null-audio");
   crosvm_cmd.Cmd().AddParameter("--mem=", instance.memory_mb());
-  if (instance.mte()) {
+  if (instance.mte() == Mte::kOn) {
     crosvm_cmd.Cmd().AddParameter("--mte");
   }
 
