@@ -198,14 +198,14 @@ SharedFD SharedFD::MemfdCreateWithData(const std::string& name,
 
 bool SharedFD::SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                           SharedFD* fd1) {
-  int fds[2];
-  int rval = socketpair(domain, type, protocol, fds);
-  if (rval != -1) {
-    (*fd0) = std::shared_ptr<FileInstance>(new FileInstance(fds[0], errno));
-    (*fd1) = std::shared_ptr<FileInstance>(new FileInstance(fds[1], errno));
-    return true;
+  UniqueFd unique_fd0;
+  UniqueFd unique_fd1;
+  if (!UniqueFd::SocketPair(domain, type, protocol, &unique_fd0, &unique_fd1)) {
+    return false;
   }
-  return false;
+  *fd0 = std::move(unique_fd0);
+  *fd1 = std::move(unique_fd1);
+  return true;
 }
 
 Result<std::pair<SharedFD, SharedFD>> SharedFD::SocketPair(int domain, int type,
