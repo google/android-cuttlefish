@@ -312,6 +312,13 @@ func extractFile(dst string, src string) error {
 	return nil
 }
 
+// isSafeToExtract reports whether target (already joined onto dst) stays within
+// dst, rejecting paths that escape via ".." components or an absolute path
+func isSafeToExtract(dst string, target string) bool {
+	rel, err := filepath.Rel(dst, target)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))
+}
+
 func untar(dst string, src string) error {
 	r, err := os.Open(src)
 	if err != nil {
@@ -336,6 +343,9 @@ func untar(dst string, src string) error {
 			continue
 		}
 		target := filepath.Join(dst, header.Name)
+		if !isSafeToExtract(dst, target) {
+			return fmt.Errorf("archive entry %q escapes the extraction directory", header.Name)
+		}
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {
@@ -356,6 +366,13 @@ func untar(dst string, src string) error {
 			}
 			f.Close()
 		case tar.TypeSymlink:
+			linkTarget := header.Linkname
+			if !filepath.IsAbs(linkTarget) {
+				linkTarget = filepath.Join(filepath.Dir(target), linkTarget)
+			}
+			if !isSafeToExtract(dst, linkTarget) {
+				return fmt.Errorf("symlink entry %q targets outside the extraction directory", header.Name)
+			}
 			if err := os.Symlink(header.Linkname, target); err != nil {
 				return err
 			}
@@ -391,7 +408,11 @@ func unzip(dstDir string, src string) error {
 		if f.Mode().IsDir() {
 			continue
 		}
-		if err := extractTo(filepath.Join(dstDir, f.Name), f); err != nil {
+		target := filepath.Join(dstDir, f.Name)
+		if !isSafeToExtract(dstDir, target) {
+			return fmt.Errorf("archive entry %q escapes the extraction directory", f.Name)
+		}
+		if err := extractTo(target, f); err != nil {
 			return err
 		}
 	}
