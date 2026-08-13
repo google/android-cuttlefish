@@ -135,6 +135,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/config:guest_hwui_renderer",
         "//cuttlefish/host/libs/config:guest_renderer_preload",
+        "//cuttlefish/host/libs/config:mte",
         "//cuttlefish/host/libs/config:secure_hals",
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/log_names",
@@ -344,6 +345,16 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:string_view",
+    ],
+)
+
+cf_cc_library(
+    name = "mte",
+    srcs = ["mte.cpp"],
+    hdrs = ["mte.h"],
+    deps = [
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
