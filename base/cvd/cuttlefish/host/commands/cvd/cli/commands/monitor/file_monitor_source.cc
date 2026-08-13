@@ -35,6 +35,7 @@
 #include "android-base/file.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/drain_inotify.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor_source.h"
 #include "cuttlefish/host/commands/cvd/cli/format_byte_size.h"
@@ -112,7 +113,7 @@ FileMonitorSource::FileMonitorSource(
       file_io_(std::move(file_io)),
       colorize_line_(std::move(colorize_line)),
       filter_line_(std::move(filter_line)) {
-  inotify_fd_ = SharedFD::InotifyFd();
+  inotify_fd_ = UniqueFd::InotifyFd();
   CHECK(inotify_fd_->IsOpen()) << inotify_fd_->StrError();
   CHECK_GE(inotify_fd_->InotifyAddWatch(path_, IN_DELETE_SELF | IN_MODIFY), 0);
   const int flags = inotify_fd_->Fcntl(F_GETFL, 0);
