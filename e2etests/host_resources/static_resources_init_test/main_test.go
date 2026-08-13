@@ -100,10 +100,11 @@ func TestStaticResourcesInit(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := common.NewSandbox(t)
 			defer s.Close()
+			sr := common.NewStaticResources(t, s)
 
 			base := s.Snapshot()
 
-			if err := s.RunHostResourcesInit("start", tc.env); err != nil {
+			if err := sr.Start(tc.env); err != nil {
 				t.Fatalf("start: %v", err)
 			}
 
@@ -111,7 +112,7 @@ func TestStaticResourcesInit(t *testing.T) {
 				t.Errorf("host state after start (-want +got):\n%s", diff)
 			}
 
-			if err := s.RunHostResourcesInit("stop", tc.env); err != nil {
+			if err := sr.Stop(tc.env); err != nil {
 				t.Fatalf("stop: %v", err)
 			}
 			afterStop := s.Snapshot()

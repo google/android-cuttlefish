@@ -24,8 +24,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/bazelbuild/rules_go/go/runfiles"
 )
 
 type CommandOutput struct {
@@ -34,16 +32,11 @@ type CommandOutput struct {
 }
 
 type Sandbox struct {
-	t          *testing.T
-	keeper     *exec.Cmd
-	pid        int
-	tempdir    string
-	initScript string
-	closed     bool
-}
-
-type InitEnv struct {
-	NumCvdAccounts int
+	t       *testing.T
+	keeper  *exec.Cmd
+	pid     int
+	tempdir string
+	closed  bool
 }
 
 func NewSandbox(t *testing.T) *Sandbox {
@@ -51,19 +44,6 @@ func NewSandbox(t *testing.T) *Sandbox {
 	checkPrereqs(t)
 
 	s := &Sandbox{t: t, tempdir: t.TempDir()}
-
-	script := os.Getenv("INIT_SCRIPT")
-	if script == "" {
-		t.Fatal("INIT_SCRIPT env var is not set (expected the host-resources init script runfile)")
-	}
-	full, err := runfiles.Rlocation(script)
-	if err != nil {
-		t.Fatalf("failed to locate init script runfile %q: %v", script, err)
-	}
-	if _, err := os.Stat(full); err != nil {
-		t.Fatalf("init script %q does not exist: %v", full, err)
-	}
-	s.initScript = full
 
 	// spawn the process that will keep the sandbox alive
 	cmd := exec.Command("unshare", "--user", "--map-root-user", "--net", "--mount", "sleep", "infinity")
@@ -143,16 +123,6 @@ func (s *Sandbox) Run(args ...string) (CommandOutput, error) {
 		return out, fmt.Errorf("command %q failed: %w (stderr: %s)", strings.Join(args, " "), err, strings.TrimSpace(errBuf.String()))
 	}
 	return out, nil
-}
-
-func (s *Sandbox) RunHostResourcesInit(action string, ie InitEnv) error {
-	args := []string{"env"}
-	if ie.NumCvdAccounts > 0 {
-		args = append(args, fmt.Sprintf("num_cvd_accounts=%d", ie.NumCvdAccounts))
-	}
-	args = append(args, "sh", s.initScript, action)
-	_, err := s.Run(args...)
-	return err
 }
 
 func (s *Sandbox) Close() {

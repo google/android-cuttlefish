@@ -23,6 +23,7 @@ go_library(
         "nft.go",
         "sandbox.go",
         "state.go",
+        "static_resources.go",
     ],
     importpath = "github.com/google/android-cuttlefish/e2etests/host_resources/common",
     visibility = ["//visibility:public"],
