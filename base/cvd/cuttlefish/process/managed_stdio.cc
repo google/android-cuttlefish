@@ -16,8 +16,6 @@
 
 #include "cuttlefish/process/managed_stdio.h"
 
-#include <cerrno>
-#include <cstring>
 #include <string>
 #include <thread>
 #include <utility>
@@ -27,6 +25,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/process/subprocess_options.h"
@@ -94,9 +93,11 @@ int RunWithManagedStdio(Command cmd_tmp, const std::string* stdin_str,
       return -1;
     }
     cmd.RedirectStdIO(Command::StdIoChannel::kStdOut, pipe_write);
-    stdout_thread = std::thread([pipe_read, stdout_str, &io_error]() {
-      int read = ReadAll(pipe_read, stdout_str);
-      if (read < 0) {
+    stdout_thread = std::thread([pipe_read, stdout_str, &io_error]() mutable {
+      Result<std::string> read_str = ReadToString(*pipe_read);
+      if (read_str.has_value()) {
+        *stdout_str = *read_str;
+      } else {
         io_error = true;
         LOG(ERROR) << "Error in reading stdout from process";
       }
@@ -110,9 +111,11 @@ int RunWithManagedStdio(Command cmd_tmp, const std::string* stdin_str,
       return -1;
     }
     cmd.RedirectStdIO(Command::StdIoChannel::kStdErr, pipe_write);
-    stderr_thread = std::thread([pipe_read, stderr_str, &io_error]() {
-      int read = ReadAll(pipe_read, stderr_str);
-      if (read < 0) {
+    stderr_thread = std::thread([pipe_read, &stderr_str, &io_error]() mutable {
+      Result<std::string> read_str = ReadToString(*pipe_read);
+      if (read_str.has_value()) {
+        *stderr_str = *read_str;
+      } else {
         io_error = true;
         LOG(ERROR) << "Error in reading stderr from process";
       }

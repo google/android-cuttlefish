@@ -58,6 +58,7 @@
 #include "cuttlefish/files/file_device_id.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/link_or_copy.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/posix/realpath.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
@@ -303,11 +304,7 @@ Result<std::string> ReadFileContents(const std::string& filepath) {
   auto file = SharedFD::Open(filepath, O_RDONLY);
   CF_EXPECTF(file->IsOpen(), "Failed to open file \"{}\".  Error: {}\n",
              filepath, file->StrError());
-  std::string file_content;
-  auto size = ReadAll(file, &file_content);
-  CF_EXPECTF(size >= 0, "Failed to read file contents.  Error: {}\n",
-             file->StrError());
-  return file_content;
+  return CF_EXPECT(ReadToString(*file));
 }
 Result<void> WriteNewFile(const std::string& filepath, std::string_view content,
                           mode_t mode) {

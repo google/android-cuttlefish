@@ -27,7 +27,6 @@
 #include "android-base/file.h"
 #include "json/value.h"
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -41,6 +40,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/execute.h"
 #include "cuttlefish/process/subprocess_options.h"
@@ -270,9 +270,8 @@ Result<void> ServerLoopImpl::TakeGuestSnapshot(VmmMode vm_manager,
   CF_EXPECTF(FileExists(json_path), "{} must exist but does not.", json_path);
   SharedFD json_fd = SharedFD::Open(json_path, O_RDONLY);
   CF_EXPECTF(json_fd->IsOpen(), "Failed to open {}", json_path);
-  std::string json_contents;
-  CF_EXPECT_GE(ReadAll(json_fd, &json_contents), 0,
-               std::string("Failed to read from ") + json_path);
+  const std::string json_contents =
+      CF_EXPECTF(ReadToString(*json_fd), "Failed to read from '{}'", json_path);
   Json::Value meta_json = CF_EXPECTF(
       ParseJson(json_contents), "Failed to parse json: \n{}", json_contents);
   CF_EXPECTF(VmManagerIsCrosvm(vm_manager),

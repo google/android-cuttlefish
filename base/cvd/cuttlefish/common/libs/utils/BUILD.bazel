@@ -120,6 +120,7 @@ cf_cc_library(
         "//cuttlefish/files:file_device_id",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:link_or_copy",
+        "//cuttlefish/io:string",
         "//cuttlefish/posix:realpath",
         "//cuttlefish/posix:rename",
         "//cuttlefish/posix:strerror",
@@ -221,6 +222,7 @@ cf_cc_library(
     hdrs = ["json.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/io:string",
         "//cuttlefish/result",
         "@jsoncpp",
     ],
@@ -366,6 +368,8 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:unix_sockets",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "@abseil-cpp//absl/log:check",
     ],
