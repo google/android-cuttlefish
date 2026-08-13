@@ -15,23 +15,23 @@
 package common
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
-	"testing"
 )
 
-func checkNetworkPrereqs(t *testing.T) {
-	t.Helper()
+func checkNetworkPrereqs() error {
 	ensurePath()
 	for _, bin := range []string{"ip", "nft"} {
 		if _, err := exec.LookPath(bin); err != nil {
-			t.Fatalf("required binary %q not found on PATH: %v", bin, err)
+			return fmt.Errorf("required binary %q not found on PATH: %w", bin, err)
 		}
 	}
 	if _, err := os.Stat("/dev/net/tun"); err != nil {
-		t.Fatalf("/dev/net/tun is not available: %v", err)
+		return fmt.Errorf("/dev/net/tun is not available: %w", err)
 	}
+	return nil
 }
 
 // make sure the sbin directories that hold ip and nft are on PATH
