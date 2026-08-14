@@ -811,14 +811,14 @@ Result<void> SetGfxstreamFlags(
   if (hwui_renderer == GuestHwuiRenderer::kSkiaVk) {
     // SkiaVK requires a second graphics queue for AHB transfers.
     const bool needs_multi_queue_emulation =
-        (gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader)
+        (gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
+         gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader)
             ?
             // The SwiftShader driver packaged with the Cuttlefish host tools
             // does not appear in `availability` and does not have multiple
             // queues.
             true
             : !HasMultipleGraphicsQueues(availability);
-    ;
 
     if (needs_multi_queue_emulation) {
       features["VulkanVirtualQueue"] = true;
