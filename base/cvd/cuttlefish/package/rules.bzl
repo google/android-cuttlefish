@@ -60,22 +60,45 @@ package_files = rule(
     implementation = _package_files_impl,
 )
 def _package_executable_impl(ctx):
-    executable_link = ctx.actions.declare_symlink(ctx.attr.name)
+    # There is a limitation on Google's bazel-based build system internally
+    # that conflicts with declare_symlink. Lacking declare_symlink, this
+    # creates a shell script that `exec`s the desired file.
+    #
+    # See discussion on b/139398567 and cl/807235633 for more information.
+    tmp_forwarder = ctx.actions.declare_file(ctx.attr.name + ".script")
 
     base_dir = _file_from_label(ctx.attr.package[DefaultInfo])
-    if base_dir.dirname != executable_link.dirname:
+    if base_dir.dirname != tmp_forwarder.dirname:
         fail("package_files and package_executable must be in the same directory")
 
-    ctx.actions.run_shell(
-        mnemonic = "OutputSymlink",
-        outputs = [executable_link],
-        inputs = ctx.attr.package[DefaultInfo].files,
-        command = "ln -s " + base_dir.basename + "/" + ctx.attr.executable + " " + executable_link.path,
+    script_base = """#!/usr/bin/env bash
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+"""
+    ctx.actions.write(
+        output = tmp_forwarder,
+        content = script_base + 'exec "${SCRIPT_DIR}"/' + base_dir.basename + "/" + ctx.attr.executable + ' "$@"\n',
+        is_executable = True,
     )
+
+    # Because ctx.actions.write cannot declare dependencies,
+    # ctx.actions.run_shell is used to artifically introduce dependencies on
+    # the outputs of the package_files rule. This makes it so `bazel run` on an
+    # executable target will trigger a rebuild if one of the members of the
+    # package needs to be rebuilt.
+    executable_forwarder = ctx.actions.declare_file(ctx.attr.name)
+    ctx.actions.run_shell(
+        mnemonic = "CopyForwarder",
+        inputs = ctx.attr.package[DefaultInfo].files.to_list() + [tmp_forwarder],
+        outputs = [executable_forwarder],
+        command = " ".join(["cp", tmp_forwarder.path, executable_forwarder.path])
+    )
+
     return [
         DefaultInfo(
-            executable = executable_link,
-            files = depset([executable_link])
+            executable = executable_forwarder,
+            files = depset([executable_forwarder])
         ),
     ]
 
