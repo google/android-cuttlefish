@@ -36,6 +36,7 @@
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/posix/stat.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/proc_file_utils.h"
 #include "cuttlefish/result/result.h"
@@ -149,14 +150,14 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
   std::set<std::string> prior_dirs;
   std::set<std::string> prior_files;
   for (const auto& path : paths) {
-    struct stat statbuf;
-    if (stat(path.c_str(), &statbuf) < 0) {
+    Result<struct stat> statbuf = Stat(path);
+    if (!statbuf.has_value()) {
       if (errno == ENOENT) {
         continue;  // it doesn't exist yet, so there is no work to do
       }
       return CF_ERRNO("Could not stat \"" << path << "\"");
     }
-    bool is_directory = (statbuf.st_mode & S_IFMT) == S_IFDIR;
+    bool is_directory = (statbuf->st_mode & S_IFMT) == S_IFDIR;
     (is_directory ? prior_dirs : prior_files).emplace(path);
   }
   VLOG(0) << fmt::format("Prior dirs: {}", fmt::join(prior_dirs, ", "));

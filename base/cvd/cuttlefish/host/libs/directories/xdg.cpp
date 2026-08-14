@@ -30,6 +30,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/posix/rename.h"
+#include "cuttlefish/posix/stat.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -134,12 +135,12 @@ Result<std::string> ReadCvdDataFile(std::string_view path) {
 Result<std::vector<std::string>> FindCvdDataFiles(std::string_view path) {
   std::vector<std::string> results;
   for (const std::string& dir : CF_EXPECT(CvdDataDirs())) {
-    struct stat statbuf;
     std::string test_path = fmt::format("{}/{}", dir, path);
-    if (stat(test_path.c_str(), &statbuf) != 0) {
+    Result<struct stat> statbuf = Stat(test_path);
+    if (!statbuf.has_value()) {
       continue;
     }
-    if (!S_ISDIR(statbuf.st_mode)) {
+    if (!S_ISDIR(statbuf->st_mode)) {
       results.emplace_back(std::move(test_path));
       continue;
     }

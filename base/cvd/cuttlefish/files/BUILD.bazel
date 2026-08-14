@@ -12,7 +12,7 @@ cf_cc_library(
     hdrs = ["are_hard_linked.h"],
     deps = [
         "//cuttlefish/files:file_device_id",
-        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:stat",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -35,6 +35,7 @@ cf_cc_library(
     hdrs = ["copy_with_attributes.h"],
     deps = [
         "//cuttlefish/files:copy",
+        "//cuttlefish/posix:stat",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
@@ -62,7 +63,7 @@ cf_cc_library(
     srcs = ["file_device_id.cc"],
     hdrs = ["file_device_id.h"],
     deps = [
-        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:stat",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -78,6 +79,9 @@ cf_cc_library(
     name = "file_is_socket",
     srcs = ["file_is_socket.cc"],
     hdrs = ["file_is_socket.h"],
+    deps = [
+        "//cuttlefish/posix:stat",
+    ],
 )
 
 cf_cc_library(

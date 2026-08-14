@@ -301,7 +301,7 @@ cf_cc_library(
         "//cuttlefish/io",
         "//cuttlefish/io:filesystem",
         "//cuttlefish/posix:remove",
-        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:stat",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],

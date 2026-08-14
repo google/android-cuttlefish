@@ -61,6 +61,7 @@
 #include "cuttlefish/posix/realpath.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/rename.h"
+#include "cuttlefish/posix/stat.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -210,19 +211,12 @@ std::string AbsolutePath(std::string_view path) {
 }
 
 off_t FileSize(const std::string& path) {
-  struct stat st{};
-  if (stat(path.c_str(), &st) == -1) {
-    return 0;
-  }
-  return st.st_size;
+  static auto get_size = [](const struct stat& st) { return st.st_size; };
+  return Stat(path).transform(get_size).value_or(0);
 }
 
 Result<uid_t> FileOwner(const std::string& path) {
-  struct stat st{};
-  if (stat(path.c_str(), &st) == -1) {
-    return CF_ERRF("Failed to stat file '{}' : {}", path, StrError(errno));
-  }
-  return st.st_uid;
+  return CF_EXPECT(Stat(path)).st_uid;
 }
 
 bool MakeFileExecutable(const std::string& path) {
@@ -232,11 +226,7 @@ bool MakeFileExecutable(const std::string& path) {
 
 Result<std::chrono::system_clock::time_point> FileModificationTime(
     const std::string& path) {
-  struct stat st;
-  CF_EXPECTF(stat(path.c_str(), &st) == 0,
-             "stat() failed retrieving file modification time on \"{}\" with "
-             "error: {}",
-             path, strerror(errno));
+  struct stat st = CF_EXPECT(Stat(path));
 #ifdef __linux__
   std::chrono::seconds seconds(st.st_mtim.tv_sec);
 #elif defined(__APPLE__)
@@ -407,21 +397,18 @@ Result<std::string> Search(const std::vector<std::string>& path,
 
 Result<SharedFD> CreateOrReuseAndDrainFifo(const std::string& path,
                                            mode_t mode) {
-  struct stat st{};
-  bool existed = false;
-  if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) != 0) {
-    CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
-               "Failed to mkfifo('{}', {:o}): {}", path, mode,
-               ::cuttlefish::StrError(errno));
-  } else {
-    CF_EXPECTF(S_ISFIFO(st.st_mode), "File at '{}' exists but is not a FIFO",
+  Result<struct stat> st = Stat(path);
+  if (st.has_value()) {
+    CF_EXPECTF(S_ISFIFO(st->st_mode), "File at '{}' exists but is not a FIFO",
                path);
-    existed = true;
+  } else {
+    CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
+               "Failed to mkfifo('{}', {:o}): {}", path, mode, StrError(errno));
   }
 
   Fd ret = CF_EXPECT(Fd::Open(path, O_RDWR));
 
-  if (existed) {
+  if (st.has_value()) {
     int flags = ret.Fcntl(F_GETFL, 0);
     if (flags >= 0) {
       ret.Fcntl(F_SETFL, flags | O_NONBLOCK);

@@ -16,26 +16,19 @@
 
 #include "cuttlefish/files/file_device_id.h"
 
-#include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
 #include <string>
 
-#include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/stat.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 Result<dev_t> FileDeviceId(const std::string& path) {
-  struct stat out;
-  CF_EXPECTF(
-      stat(path.c_str(), &out) == 0,
-      "stat() failed trying to retrieve device ID information for \"{}\" "
-      "with error: {}",
-      path, StrError(errno));
-  return out.st_dev;
+  return CF_EXPECT(Stat(path)).st_dev;
 }
 
 }  // namespace cuttlefish

@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include <memory>
 #include <string_view>
 
 #include "cuttlefish/io/filesystem.h"

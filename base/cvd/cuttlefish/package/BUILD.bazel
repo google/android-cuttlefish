@@ -10,7 +10,7 @@ cf_cc_binary(
         "//cuttlefish/files:link_or_copy",
         "//cuttlefish/files:recursively_remove_directory",
         "//cuttlefish/flag_parser",
-        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:stat",
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",

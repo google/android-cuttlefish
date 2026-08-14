@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <errno.h>
 #include <stddef.h>
 #include <sys/stat.h>
 
@@ -37,7 +36,7 @@
 #include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
-#include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/stat.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
@@ -121,9 +120,7 @@ Result<void> PackagerMain(std::vector<std::string> args_strs) {
   for (const auto& [pkg_path, src_path] : args.PackageToSrc()) {
     const std::string base_pkg = absl::StrCat(args.BaseDir(), "/", pkg_path);
     CF_EXPECT(EnsureDirectoryExists(android::base::Dirname(base_pkg)));
-    struct stat st;
-    CF_EXPECTF(stat(src_path.c_str(), &st) == 0, "Failed to stat('{}'): {}",
-               src_path, StrError(errno));
+    struct stat st = CF_EXPECT(Stat(src_path));
     // bin/cvd is sensitive to location, uses readlink("/proc/self/exe").
     // Otherwise, the input may be either a file in the source tree or a bazel
     // artifact. If we hard link the file in the source tree, bazel will try to
