@@ -15,13 +15,20 @@
 
 #include "cuttlefish/host/commands/cvd_send_sms/sms_sender.h"
 
+#include <stdint.h>
+#include <sys/socket.h>
+
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "absl/log/check.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/result/result_matchers.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace {
@@ -39,12 +46,11 @@ class SmsSenderTest : public ::testing::Test {
   void AssertCommandIsSent(std::string expected_command) {
     std::stringstream ss;
     std::vector<char> buffer(4096);
-    Result<size_t> bytes_read;
+    Result<uint64_t> bytes_read;
     do {
       bytes_read = fake_server_fd_->Read(buffer.data(), buffer.size());
-      CHECK(bytes_read.has_value()) << fake_server_fd_->StrError();
+      EXPECT_THAT(bytes_read, IsOk());
       ss << std::string(buffer.data(), *bytes_read);
-      CHECK_GT(*bytes_read, 0) << "Expected to receive data";
     } while (buffer[*bytes_read - 1] != '\r');
     EXPECT_THAT(ss.str(), testing::Eq(expected_command));
   }
@@ -56,17 +62,14 @@ class SmsSenderTest : public ::testing::Test {
 TEST_F(SmsSenderTest, InvalidContentFails) {
   SmsSender sender(client_fd_);
 
-  bool result = sender.Send("", "+16501234567");
-
-  EXPECT_FALSE(result);
+  EXPECT_FALSE(sender.Send("", "+16501234567"));
 }
 
 TEST_F(SmsSenderTest, ValidContentSucceeds) {
   SmsSender sender(client_fd_);
 
-  bool result = sender.Send("hellohello", "+16501234567");
+  EXPECT_TRUE(sender.Send("hellohello", "+16501234567"));
 
-  EXPECT_TRUE(result);
   AssertCommandIsSent(
       "REM0AT+REMOTESMS=0001000b916105214365f700000ae8329bfd4697d9ec37\r");
 }
@@ -74,9 +77,8 @@ TEST_F(SmsSenderTest, ValidContentSucceeds) {
 TEST_F(SmsSenderTest, NonDefaultModemIdValueSucceeds) {
   SmsSender sender(client_fd_);
 
-  bool result = sender.Send("hellohello", "+16501234567", 1);
+  EXPECT_TRUE(sender.Send("hellohello", "+16501234567", 1));
 
-  EXPECT_TRUE(result);
   AssertCommandIsSent(
       "REM1AT+REMOTESMS=0001000b916105214365f700000ae8329bfd4697d9ec37\r");
 }

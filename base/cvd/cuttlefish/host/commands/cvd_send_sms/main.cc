@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
+#include <string>
+
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -61,10 +64,10 @@ int SendSmsMain(int argc, char** argv) {
   }
   // Builds the name of the corresponding modem simulator monitor socket.
   // https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/modem_simulator/main.cpp;l=115;drc=cbfe7dba44bfea95049152b828c1a5d35c9e0522
-  std::string socket_name = std::string("modem_simulator") +
-                            std::to_string(1000 + FLAGS_instance_number);
-  auto client_socket = cuttlefish::SharedFD::SocketLocalClient(
-      socket_name.c_str(), /* abstract */ true, SOCK_STREAM);
+  const std::string socket_name =
+      absl::StrCat("modem_simulator", 1000 + FLAGS_instance_number);
+  SharedFD client_socket = SharedFD::SocketLocalClient(
+      socket_name, /* abstract */ true, SOCK_STREAM);
   SmsSender sms_sender(client_socket);
   if (!sms_sender.Send(argv[1], FLAGS_sender_number, FLAGS_modem_id)) {
     return -1;
