@@ -113,6 +113,8 @@ static void MakeAddress(const char* name, bool abstract,
   *len = namelen + offsetof(struct sockaddr_un, sun_path) + 1;
 }
 
+UniqueFd::UniqueFd() : value_(std::make_unique<FileInstance>()) {}
+
 UniqueFd UniqueFd::Accept(const FileInstance& listener, struct sockaddr* addr,
                           socklen_t* addrlen) {
   return UniqueFd(

@@ -77,6 +77,22 @@ constexpr size_t kPreferredBufferSize = 8192;
 
 }  // namespace
 
+FileInstance::FileInstance() : FileInstance(-1, 0) {}
+
+FileInstance::FileInstance(FileInstance&& other) : FileInstance() {
+  std::swap(fd_, other.fd_);
+  std::swap(errno_, other.errno_);
+}
+
+FileInstance::~FileInstance() { Close(); }
+
+FileInstance& FileInstance::operator=(FileInstance&& other) {
+  Close();
+  std::swap(fd_, other.fd_);
+  std::swap(errno_, other.errno_);
+  return *this;
+}
+
 bool FileInstance::CopyFrom(FileInstance& in, size_t length,
                             FileInstance* stop) {
   LocalErrno record_errno(errno_);
@@ -280,10 +296,6 @@ void FileInstance::Set(fd_set* dest, int* max_index) const {
     *max_index = fd_ + 1;
   }
   FD_SET(fd_, dest);
-}
-
-/* static */ std::unique_ptr<FileInstance> FileInstance::ClosedInstance() {
-  return std::unique_ptr<FileInstance>(new FileInstance(-1, EBADF));
 }
 
 int FileInstance::Bind(const struct sockaddr* addr, socklen_t addrlen) {
