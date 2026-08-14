@@ -116,7 +116,7 @@ class UniqueFd {
   friend class SharedFD;
 
  public:
-  inline UniqueFd();
+  UniqueFd();
   UniqueFd(std::unique_ptr<FileInstance> in) : value_(std::move(in)) {}
   UniqueFd(UniqueFd&& other);
   UniqueFd& operator=(UniqueFd&& other);
@@ -202,8 +202,6 @@ class UniqueFd {
 
   std::unique_ptr<FileInstance> value_;
 };
-
-UniqueFd::UniqueFd() : value_(FileInstance::ClosedInstance()) {}
 
 }  // namespace cuttlefish
 

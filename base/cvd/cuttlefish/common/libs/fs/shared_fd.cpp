@@ -117,6 +117,8 @@ int Select(SharedFDSet* read_set, SharedFDSet* write_set,
   return rval;
 }
 
+SharedFD::SharedFD() : value_(std::make_shared<FileInstance>()) {}
+
 SharedFD::SharedFD(SharedFD&& other) {
   value_ = std::move(other.value_);
   other.value_.reset(new FileInstance(-1, EBADF));

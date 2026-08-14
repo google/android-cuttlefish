@@ -78,12 +78,10 @@ namespace cuttlefish {
  * number.
  *
  * FileInstances have two states: Open and Closed. They may start in either
- * state. However, once a FileIntance enters the Closed state it cannot be
- * reopened.
+ * state.
  *
  * Construction of FileInstances is limited to select classes to avoid
- * escaping file descriptors. At this point SharedFD is the only class
- * that has access. We may eventually have ScopedFD and WeakFD.
+ * escaping file descriptors.
  */
 class FileInstance : public ReaderSeeker {
   // Give SharedFD access to the aliasing constructor.
@@ -92,10 +90,12 @@ class FileInstance : public ReaderSeeker {
   friend class Epoll;
 
  public:
-  virtual ~FileInstance() { Close(); }
-
-  // This can't be a singleton because our shared_ptr's aren't thread safe.
-  static std::unique_ptr<FileInstance> ClosedInstance();
+  FileInstance();
+  FileInstance(FileInstance&) = delete;
+  FileInstance(FileInstance&&);
+  ~FileInstance();
+  FileInstance& operator=(FileInstance&) = delete;
+  FileInstance& operator=(FileInstance&&);
 
   int Bind(const struct sockaddr* addr, socklen_t addrlen);
   int Connect(const struct sockaddr* addr, socklen_t addrlen);

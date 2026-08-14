@@ -127,7 +127,7 @@ class SharedFD {
   friend class WeakFD;
 
  public:
-  inline SharedFD();
+  SharedFD();
   SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) {}
   SharedFD(SharedFD const&) = default;
   SharedFD(SharedFD&& other);
@@ -241,11 +241,6 @@ struct PollSharedFd {
   short events;
   short revents;
 };
-
-/* Methods that need both a fully defined SharedFD and a fully defined
-   FileInstance. */
-
-SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
 }  // namespace cuttlefish
 
