@@ -16,6 +16,7 @@ package common
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -34,6 +35,7 @@ type CommandOutput struct {
 
 type Sandbox struct {
 	t       *testing.T
+	ctx     context.Context
 	keeper  *exec.Cmd
 	pid     int
 	tempdir string
@@ -45,16 +47,17 @@ func NewSandbox(t *testing.T) *Sandbox {
 		t.Fatalf("sandbox prerequisites not met: %v", err)
 	}
 
-	s := &Sandbox{t: t, tempdir: t.TempDir()}
+	ctx := t.Context()
+	s := &Sandbox{t: t, ctx: ctx, tempdir: t.TempDir()}
 	t.Cleanup(s.Close)
 
-	// spawn the process that will keep the sandbox alive
-	cmd := exec.Command("unshare", "--user", "--map-root-user", "--net", "--mount", "sleep", "infinity")
+	// spawn the process that will keep the sandbox alive.
+	// we use a PID namespace to ensure everything is torn down.
+	cmd := exec.CommandContext(ctx, "unshare", "--user", "--map-root-user", "--net", "--mount", "--pid", "--fork", "--kill-child", "--mount-proc", "sleep", "infinity")
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("cannot create rootless user+net namespace: %v", err)
 	}
 	s.keeper = cmd
-	s.pid = cmd.Process.Pid
 
 	if err := s.waitReady(); err != nil {
 		t.Fatalf("namespace not usable on this host: %v", err)
@@ -94,7 +97,16 @@ func (s *Sandbox) waitReady() error {
 	deadline := time.Now().Add(5 * time.Second)
 	var lastErr error
 	for time.Now().Before(deadline) {
-		c := exec.Command("nsenter", "-t", strconv.Itoa(s.pid), "-U", "-n", "-m", "--preserve-credentials", "--", "true")
+		if s.pid == 0 {
+			pid, err := childPid(s.keeper.Process.Pid)
+			if err != nil {
+				lastErr = err
+				time.Sleep(50 * time.Millisecond)
+				continue
+			}
+			s.pid = pid
+		}
+		c := exec.CommandContext(s.ctx, "nsenter", "-t", strconv.Itoa(s.pid), "-U", "-n", "-m", "-p", "--preserve-credentials", "--", "true")
 		if err := c.Run(); err == nil {
 			return nil
 		} else {
@@ -105,14 +117,50 @@ func (s *Sandbox) waitReady() error {
 	return fmt.Errorf("namespace did not become ready: %w", lastErr)
 }
 
+// we need to find the child PID since the keeper process stays in
+// the host namespace.
+func childPid(parent int) (int, error) {
+	entries, err := os.ReadDir("/proc")
+	if err != nil {
+		return 0, fmt.Errorf("reading /proc: %w", err)
+	}
+	for _, e := range entries {
+		pid, err := strconv.Atoi(e.Name())
+		if err != nil {
+			continue
+		}
+		status, err := os.ReadFile(fmt.Sprintf("/proc/%d/status", pid))
+		if err != nil {
+			continue
+		}
+		if ppidFromStatus(status) == parent {
+			return pid, nil
+		}
+	}
+	return 0, fmt.Errorf("no child of keeper pid %d found yet", parent)
+}
+
+func ppidFromStatus(status []byte) int {
+	for _, line := range strings.Split(string(status), "\n") {
+		if rest, ok := strings.CutPrefix(line, "PPid:"); ok {
+			ppid, err := strconv.Atoi(strings.TrimSpace(rest))
+			if err != nil {
+				return -1
+			}
+			return ppid
+		}
+	}
+	return -1
+}
+
 func (s *Sandbox) nsenterArgs(extra ...string) []string {
-	base := []string{"nsenter", "-t", strconv.Itoa(s.pid), "-U", "-n", "-m", "--preserve-credentials", "--"}
+	base := []string{"nsenter", "-t", strconv.Itoa(s.pid), "-U", "-n", "-m", "-p", "--preserve-credentials", "--"}
 	return append(base, extra...)
 }
 
 func (s *Sandbox) Run(args ...string) (CommandOutput, error) {
 	full := s.nsenterArgs(args...)
-	cmd := exec.Command(full[0], full[1:]...)
+	cmd := exec.CommandContext(s.ctx, full[0], full[1:]...)
 	var outBuf, errBuf bytes.Buffer
 	cmd.Stdout = &outBuf
 	cmd.Stderr = &errBuf
