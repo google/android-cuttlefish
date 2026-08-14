@@ -73,6 +73,7 @@ cf_cc_library(
         "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:directory_exists",
         "//cuttlefish/posix:readlink",
+        "//cuttlefish/posix:stat",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

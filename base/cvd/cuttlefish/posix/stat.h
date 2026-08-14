@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
-#include "cuttlefish/files/copy_with_attributes.h"
-
-#include <errno.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 
 #include <string>
+#include <string_view>
 
-#include "cuttlefish/files/copy.h"
-#include "cuttlefish/posix/stat.h"
-#include "cuttlefish/posix/strerror.h"
-#include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<void> CopyWithAttributes(const std::string& from,
-                                const std::string& to) {
-  CF_EXPECTF(Copy(from, to), "Failed to copy '{}' to '{}'", from, to);
-  mode_t mode = CF_EXPECT(Stat(from)).st_mode;
-  CF_EXPECTF(chmod(to.c_str(), mode) >= 0, "Failed to chmod '{}': {}", to,
-             StrError(errno));
-  return {};
-}
+Result<struct stat> Stat(const char*);
+Result<struct stat> Stat(const std::string&);
+Result<struct stat> Stat(std::string_view);
 
 }  // namespace cuttlefish
