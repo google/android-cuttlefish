@@ -43,6 +43,7 @@
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/posix/readlink.h"
+#include "cuttlefish/posix/stat.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -50,10 +51,7 @@ namespace cuttlefish {
 // sometimes, files under /proc/<pid> owned by a different user
 // e.g. /proc/<pid>/exe
 static Result<uid_t> FileOwnerUid(const std::string& file_path) {
-  // NOLINTNEXTLINE(misc-include-cleaner): <sys/stat.h>
-  struct stat buf;
-  CF_EXPECT_EQ(::stat(file_path.data(), &buf), 0);
-  return buf.st_uid;
+  return CF_EXPECT(Stat(file_path)).st_uid;
 }
 
 struct ProcStatusUids {

@@ -125,6 +125,7 @@ cf_cc_library(
         "//cuttlefish/posix:realpath",
         "//cuttlefish/posix:remove",
         "//cuttlefish/posix:rename",
+        "//cuttlefish/posix:stat",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",

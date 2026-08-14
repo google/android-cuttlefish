@@ -17,8 +17,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <stddef.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #if defined(__linux__)
 #include <linux/capability.h>
@@ -34,6 +32,7 @@
 
 #include "absl/log/log.h"
 
+#include "cuttlefish/posix/stat.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
@@ -92,11 +91,9 @@ static int SetAmbientCapabilities() {
 #endif
 
 Result<void> ValidateCvdallocBinary(std::string_view path) {
-  struct stat st;
-  int r = stat(path.data(), &st);
-  CF_EXPECTF(r == 0, "Could not stat the cvdalloc binary at '{}': '{}'", path,
-             StrError(errno));
+  struct stat st = CF_EXPECT(Stat(path));
 #if defined(__linux__)
+  (void)st;
   /* Try and determine if the cvdalloc binary has any capabilities. */
   struct vfs_cap_data cap;
   ssize_t s = getxattr(path.data(), XATTR_NAME_CAPS, &cap, sizeof(cap));

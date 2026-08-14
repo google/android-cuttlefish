@@ -189,6 +189,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/files:directory_contents",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/posix:stat",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/result",
