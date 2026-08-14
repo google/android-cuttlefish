@@ -17,9 +17,9 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "common",
     srcs = [
-        "filesystem_ns.go",
+        "init_filesystem_ns.go",
+        "init_network_ns.go",
         "ip.go",
-        "network_ns.go",
         "nft.go",
         "sandbox.go",
         "state.go",

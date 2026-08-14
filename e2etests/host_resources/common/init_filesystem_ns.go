@@ -62,7 +62,6 @@ func constructSandboxNsswitch() string {
 	return strings.Join(lines, "\n") + "\n"
 }
 
-
 // reconstruct the host's group file, but with cvdnetwork as gid 0,
 // mostly for convenience
 func constructSandboxGroupFile() string {
