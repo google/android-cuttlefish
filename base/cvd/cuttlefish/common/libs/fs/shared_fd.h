@@ -48,7 +48,7 @@
 #include <utility>
 #include <vector>
 
-#include "cuttlefish/common/libs/fs/file_instance.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/result/result.h"
 
@@ -75,28 +75,28 @@ namespace cuttlefish {
 
 struct PollSharedFd;
 class Epoll;
-class FileInstance;
+class Fd;
 struct VhostUserVsockCid;
 struct VsockCid;
 
 /**
- * Counted reference to a FileInstance.
+ * Counted reference to a Fd.
  *
- * This is also the place where most new FileInstances are created. The creation
+ * This is also the place where most new Fds are created. The creation
  * methods correspond to the underlying POSIX calls.
  *
  * SharedFDs can be compared and stored in STL containers. The semantics are
  * slightly different from POSIX file descriptors:
  *
- * o The value of the SharedFD is the identity of its underlying FileInstance.
+ * o The value of the SharedFD is the identity of its underlying Fd.
  *
- * o Each newly created SharedFD has a unique, closed FileInstance:
+ * o Each newly created SharedFD has a unique, closed Fd:
  *    SharedFD a, b;
  *    assert (a != b);
  *    a = b;
  *    assert(a == b);
  *
- * o The identity of the FileInstance is not affected by closing the file:
+ * o The identity of the Fd is not affected by closing the file:
  *   SharedFD a, b;
  *   set<SharedFD> s;
  *   s.insert(a);
@@ -106,21 +106,21 @@ struct VsockCid;
  *   assert(s.count(a) == 1);
  *   assert(s.count(b) == 0);
  *
- * o FileInstances are never visibly recycled.
+ * o Fds are never visibly recycled.
  *
- * o If all of the SharedFDs referring to a FileInstance go out of scope the
- *   file is closed and the FileInstance is recycled.
+ * o If all of the SharedFDs referring to a Fd go out of scope the
+ *   file is closed and the Fd is recycled.
  *
  * Creation methods must ensure that no references to the new file descriptor
- * escape. The underlying FileInstance should have the only reference to the
+ * escape. The underlying Fd should have the only reference to the
  * file descriptor. Any method that needs to know the fd must be in either
- * SharedFD or FileInstance.
+ * SharedFD or Fd.
  *
- * SharedFDs always have an underlying FileInstance, so all of the method
+ * SharedFDs always have an underlying Fd, so all of the method
  * calls are safe in accordance with the null object pattern.
  *
- * Errors on system calls that create new FileInstances, such as Open, are
- * reported with a new, closed FileInstance with the errno set.
+ * Errors on system calls that create new Fds, such as Open, are
+ * reported with a new, closed Fd with the errno set.
  */
 class SharedFD {
   // Give WeakFD access to the underlying shared_ptr.
@@ -128,7 +128,7 @@ class SharedFD {
 
  public:
   SharedFD();
-  SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) {}
+  SharedFD(const std::shared_ptr<Fd>& in) : value_(in) {}
   SharedFD(SharedFD const&) = default;
   SharedFD(SharedFD&& other);
   SharedFD(UniqueFd other);
@@ -203,22 +203,22 @@ class SharedFD {
 
   auto operator<=>(const SharedFD&) const = default;
 
-  std::shared_ptr<FileInstance> operator->() const { return value_; }
+  std::shared_ptr<Fd> operator->() const { return value_; }
 
-  const FileInstance& operator*() const { return *value_; }
+  const Fd& operator*() const { return *value_; }
 
-  FileInstance& operator*() { return *value_; }
+  Fd& operator*() { return *value_; }
 
  private:
   static SharedFD ErrorFD(int error);
 
-  std::shared_ptr<FileInstance> value_;
+  std::shared_ptr<Fd> value_;
 };
 
 /**
- * A non-owning reference to a FileInstance. The referenced FileInstance needs
+ * A non-owning reference to a Fd. The referenced Fd needs
  * to be managed by a SharedFD. A WeakFD needs to be converted to a SharedFD to
- * access the underlying FileInstance.
+ * access the underlying Fd.
  */
 class WeakFD {
  public:
@@ -229,7 +229,7 @@ class WeakFD {
   SharedFD lock() const;
 
  private:
-  std::weak_ptr<FileInstance> value_;
+  std::weak_ptr<Fd> value_;
 };
 
 struct PollSharedFd {
