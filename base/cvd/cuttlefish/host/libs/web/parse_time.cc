@@ -30,7 +30,7 @@ namespace cuttlefish {
 
 Result<std::chrono::system_clock::time_point> ParseTime(std::string_view str) {
   std::stringstream stream = std::stringstream(std::string(str));
-  tm time_tm;
+  tm time_tm = {};
   stream >> std::get_time(&time_tm, "%Y-%m-%dT%H:%M:%S");
   CF_EXPECTF(!!stream, "Failed to parse time '{}'", str);
 
