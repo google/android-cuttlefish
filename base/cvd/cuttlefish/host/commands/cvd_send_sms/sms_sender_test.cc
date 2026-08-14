@@ -20,6 +20,7 @@
 
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/log/check.h"
@@ -43,16 +44,16 @@ class SmsSenderTest : public ::testing::Test {
     CHECK(fake_server_fd_->IsOpen());
   }
 
-  void AssertCommandIsSent(std::string expected_command) {
+  void AssertCommandIsSent(std::string_view expected_command) {
     std::stringstream ss;
     std::vector<char> buffer(4096);
     Result<uint64_t> bytes_read;
     do {
       bytes_read = fake_server_fd_->Read(buffer.data(), buffer.size());
-      EXPECT_THAT(bytes_read, IsOk());
+      ASSERT_THAT(bytes_read, IsOk());
       ss << std::string(buffer.data(), *bytes_read);
     } while (buffer[*bytes_read - 1] != '\r');
-    EXPECT_THAT(ss.str(), testing::Eq(expected_command));
+    EXPECT_EQ(ss.str(), expected_command);
   }
 
   SharedFD client_fd_;
