@@ -77,25 +77,25 @@ namespace cuttlefish {
  * callers to use the file without knowledge of the underlying descriptor
  * number.
  *
- * FileInstances have two states: Open and Closed. They may start in either
+ * Fds have two states: Open and Closed. They may start in either
  * state.
  *
- * Construction of FileInstances is limited to select classes to avoid
+ * Construction of Fds is limited to select classes to avoid
  * escaping file descriptors.
  */
-class FileInstance : public ReaderWriterSeeker {
+class Fd : public ReaderWriterSeeker {
   // Give SharedFD access to the aliasing constructor.
   friend class SharedFD;
   friend class UniqueFd;
   friend class Epoll;
 
  public:
-  FileInstance();
-  FileInstance(FileInstance&) = delete;
-  FileInstance(FileInstance&&);
-  ~FileInstance();
-  FileInstance& operator=(FileInstance&) = delete;
-  FileInstance& operator=(FileInstance&&);
+  Fd();
+  Fd(Fd&) = delete;
+  Fd(Fd&&);
+  ~Fd();
+  Fd& operator=(Fd&) = delete;
+  Fd& operator=(Fd&&);
 
   int Bind(const struct sockaddr* addr, socklen_t addrlen);
   int Connect(const struct sockaddr* addr, socklen_t addrlen);
@@ -109,10 +109,10 @@ class FileInstance : public ReaderWriterSeeker {
   // Otherwise an error will be set either on this file or the input.
   // The non-const reference is needed to avoid binding this to a particular
   // reference type.
-  bool CopyFrom(FileInstance& in, size_t length, FileInstance* stop = nullptr);
+  bool CopyFrom(Fd& in, size_t length, Fd* stop = nullptr);
   // Same as CopyFrom, but reads from input until EOF is reached.
-  bool CopyAllFrom(FileInstance& in, FileInstance* stop = nullptr);
-  bool SendFile(FileInstance& in, off_t* offset, size_t count);
+  bool CopyAllFrom(Fd& in, Fd* stop = nullptr);
+  bool SendFile(Fd& in, off_t* offset, size_t count);
 
   int UNMANAGED_Dup();
   int UNMANAGED_Dup2(int newfd);
@@ -207,8 +207,8 @@ class FileInstance : public ReaderWriterSeeker {
   void InotifyRmWatch(int watch);
 
  private:
-  FileInstance(int fd, int in_errno);
-  FileInstance* Accept(struct sockaddr* addr, socklen_t* addrlen) const;
+  Fd(int fd, int in_errno);
+  Fd* Accept(struct sockaddr* addr, socklen_t* addrlen) const;
 
   int fd_;
   int errno_;

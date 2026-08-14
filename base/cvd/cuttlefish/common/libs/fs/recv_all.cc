@@ -21,13 +21,13 @@
 #include <memory>
 #include <string>
 
-#include "cuttlefish/common/libs/fs/file_instance.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<std::string> RecvAll(FileInstance& sock, const uint64_t count) {
+Result<std::string> RecvAll(Fd& sock, const uint64_t count) {
   uint64_t total_read{};
   CF_EXPECT(sock.IsOpen());
   std::unique_ptr<char[]> data(new char[count]);

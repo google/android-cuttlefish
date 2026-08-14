@@ -21,9 +21,9 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "file_instance",
-    srcs = ["file_instance.cc"],
-    hdrs = ["file_instance.h"],
+    name = "fd",
+    srcs = ["fd.cc"],
+    hdrs = ["fd.h"],
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs:scoped_mmap",
@@ -54,7 +54,7 @@ cf_cc_library(
         "//conditions:default": [],
     }),
     deps = [
-        "//cuttlefish/common/libs/fs:file_instance",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/fs:unique_fd",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
@@ -78,7 +78,7 @@ cf_cc_library(
     srcs = ["recv_all.cc"],
     hdrs = ["recv_all.h"],
     deps = [
-        "//cuttlefish/common/libs/fs:file_instance",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -106,7 +106,7 @@ cf_cc_library(
     hdrs = ["unique_fd.h"],
     include_cleaner_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/fs:file_instance",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",

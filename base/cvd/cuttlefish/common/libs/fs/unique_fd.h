@@ -48,7 +48,7 @@
 #include <utility>
 #include <vector>
 
-#include "cuttlefish/common/libs/fs/file_instance.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/result/result.h"
 
 /**
@@ -74,42 +74,42 @@ namespace cuttlefish {
 
 struct PollSharedFd;
 class Epoll;
-class FileInstance;
+class Fd;
 struct VhostUserVsockCid;
 struct VsockCid;
 
 /**
- * Counted reference to a FileInstance.
+ * Counted reference to a Fd.
  *
- * This is also the place where most new FileInstances are created. The creation
+ * This is also the place where most new Fds are created. The creation
  * methods correspond to the underlying POSIX calls.
  *
  * UniqueFds can be compared and stored in STL containers. The semantics are
  * slightly different from POSIX file descriptors:
  *
- * o The value of the UniqueFd is the identity of its underlying FileInstance.
+ * o The value of the UniqueFd is the identity of its underlying Fd.
  *
- * o Each newly created UniqueFd has a unique, closed FileInstance:
+ * o Each newly created UniqueFd has a unique, closed Fd:
  *    UniqueFd a, b;
  *    assert (a != b);
  *    a = b;
  *    assert(a == b);
  *
- * o FileInstances are never visibly recycled.
+ * o Fds are never visibly recycled.
  *
- * o If the UniqueFd referring to a FileInstance goes out of scope the file is
- *   closed and the FileInstance is recycled.
+ * o If the UniqueFd referring to a Fd goes out of scope the file is
+ *   closed and the Fd is recycled.
  *
  * Creation methods must ensure that no references to the new file descriptor
- * escape. The underlying FileInstance should have the only reference to the
+ * escape. The underlying Fd should have the only reference to the
  * file descriptor. Any method that needs to know the fd must be in either
- * UniqueFd or FileInstance.
+ * UniqueFd or Fd.
  *
- * UniqueFds always have an underlying FileInstance, so all of the method
+ * UniqueFds always have an underlying Fd, so all of the method
  * calls are safe in accordance with the null object pattern.
  *
- * Errors on system calls that create new FileInstances, such as Open, are
- * reported with a new, closed FileInstance with the errno set.
+ * Errors on system calls that create new Fds, such as Open, are
+ * reported with a new, closed Fd with the errno set.
  */
 class UniqueFd {
   // Give SharedFD access to the underlying unique_ptr.
@@ -117,13 +117,13 @@ class UniqueFd {
 
  public:
   UniqueFd();
-  UniqueFd(std::unique_ptr<FileInstance> in) : value_(std::move(in)) {}
+  UniqueFd(std::unique_ptr<Fd> in) : value_(std::move(in)) {}
   UniqueFd(UniqueFd&& other);
   UniqueFd& operator=(UniqueFd&& other);
-  // Reference the listener as a FileInstance to make this FD type agnostic.
-  static UniqueFd Accept(const FileInstance& listener, struct sockaddr* addr,
+  // Reference the listener as a Fd to make this FD type agnostic.
+  static UniqueFd Accept(const Fd& listener, struct sockaddr* addr,
                          socklen_t* addrlen);
-  static UniqueFd Accept(const FileInstance& listener);
+  static UniqueFd Accept(const Fd& listener);
   static UniqueFd Dup(int unmanaged_fd);
   // All UniqueFds have the O_CLOEXEC flag after creation. To remove use the
   // Fcntl or Dup functions.
@@ -190,16 +190,16 @@ class UniqueFd {
 
   auto operator<=>(const UniqueFd&) const = default;
 
-  const std::unique_ptr<FileInstance>& operator->() const { return value_; }
+  const std::unique_ptr<Fd>& operator->() const { return value_; }
 
-  const FileInstance& operator*() const { return *value_; }
+  const Fd& operator*() const { return *value_; }
 
-  FileInstance& operator*() { return *value_; }
+  Fd& operator*() { return *value_; }
 
  private:
   static UniqueFd ErrorFD(int error);
 
-  std::unique_ptr<FileInstance> value_;
+  std::unique_ptr<Fd> value_;
 };
 
 }  // namespace cuttlefish

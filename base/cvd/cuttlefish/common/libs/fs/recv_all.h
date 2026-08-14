@@ -19,7 +19,7 @@
 
 #include <string>
 
-#include "cuttlefish/common/libs/fs/file_instance.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
@@ -29,6 +29,6 @@ namespace cuttlefish {
  *
  * On successful Recv, returns a string containing the received data
  */
-Result<std::string> RecvAll(FileInstance& sock, uint64_t count);
+Result<std::string> RecvAll(Fd& sock, uint64_t count);
 
 }  // namespace cuttlefish

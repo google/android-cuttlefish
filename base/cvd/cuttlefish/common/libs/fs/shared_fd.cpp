@@ -95,25 +95,25 @@ int Select(SharedFDSet* read_set, SharedFDSet* write_set,
 
   int rval = TEMP_FAILURE_RETRY(
       select(max_index, &readfds, &writefds, &errorfds, timeout));
-  FileInstance::Log("select\n");
+  Fd::Log("select\n");
   CheckMarked(&readfds, read_set);
   CheckMarked(&writefds, write_set);
   CheckMarked(&errorfds, error_set);
   return rval;
 }
 
-SharedFD::SharedFD() : value_(std::make_shared<FileInstance>()) {}
+SharedFD::SharedFD() : value_(std::make_shared<Fd>()) {}
 
 SharedFD::SharedFD(SharedFD&& other) {
   value_ = std::move(other.value_);
-  other.value_.reset(new FileInstance(-1, EBADF));
+  other.value_.reset(new Fd(-1, EBADF));
 }
 
 SharedFD::SharedFD(UniqueFd other) { value_ = std::move(other.value_); }
 
 SharedFD& SharedFD::operator=(SharedFD&& other) {
   value_ = std::move(other.value_);
-  other.value_.reset(new FileInstance(-1, EBADF));
+  other.value_.reset(new Fd(-1, EBADF));
   return *this;
 }
 
@@ -150,8 +150,8 @@ bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   int rval = pipe(fds);
 #endif
   if (rval != -1) {
-    (*fd0) = std::shared_ptr<FileInstance>(new FileInstance(fds[0], errno));
-    (*fd1) = std::shared_ptr<FileInstance>(new FileInstance(fds[1], errno));
+    (*fd0) = std::shared_ptr<Fd>(new Fd(fds[0], errno));
+    (*fd1) = std::shared_ptr<Fd>(new Fd(fds[1], errno));
     return true;
   }
   return false;
@@ -231,8 +231,7 @@ Result<std::pair<SharedFD, std::string>> SharedFD::Mkostemp(
   const int fd = mkostemp(temp_path.data(), flags);
   CF_EXPECTF(fd != -1, "Error creating temporary file: {}",
              ::cuttlefish::StrError(errno));
-  auto shared_fd =
-      SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
+  auto shared_fd = SharedFD(std::shared_ptr<Fd>(new Fd(fd, 0)));
   return std::make_pair<SharedFD, std::string>(std::move(shared_fd),
                                                std::move(temp_path));
 }
