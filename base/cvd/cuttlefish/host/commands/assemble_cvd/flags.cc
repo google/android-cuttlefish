@@ -860,8 +860,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_crosvm_file_backed_mapping(
         crosvm_file_backed_mapping_vec[instance_index]);
     if (!crosvm_file_backed_mapping_base64_vec[instance_index].empty()) {
-      std::vector<uint8_t> decoded_mapping = CF_EXPECT(DecodeBase64(
-          crosvm_file_backed_mapping_base64_vec[instance_index]));
+      std::vector<uint8_t> decoded_mapping = CF_EXPECT(
+          DecodeBase64(crosvm_file_backed_mapping_base64_vec[instance_index]));
       std::string decoded_mapping_str(decoded_mapping.begin(),
                                       decoded_mapping.end());
       instance.set_crosvm_file_backed_mapping(decoded_mapping_str);
