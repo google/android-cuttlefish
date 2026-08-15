@@ -15,12 +15,12 @@ log = "0.4"
 nix = "0.29.0"
 thiserror = "2.0"
 v4l2r = { version = "0.0.6", features = ["arch64"] }
-vhost = { version = "0.16.0", features = ["vhost-user-backend"] }
-vhost-user-backend = {  version = "0.22.0" }
+vhost = { version = "0.17.0", features = ["vhost-user-backend"] }
+vhost-user-backend = {  version = "0.23.0" }
 vhu_media = { path = "vhu_media" }
-virtio-bindings = "0.2.6"
+virtio-bindings = "0.2.7"
 virtio-media = "0.0.7"
-virtio-queue = "0.17.0"
+virtio-queue = "0.18.0"
 vm-allocator = "0.1.3"
-vm-memory = "=0.17.1"
+vm-memory = "=0.18.0"
 vmm-sys-util = "0.15.0"
