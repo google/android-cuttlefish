@@ -1,3 +1,16 @@
+cuttlefish-common (1.55.3) unstable; urgency=medium
+
+  * Cherry-Pick Fix file already exist error while running substitute in Docker into version-1.55-dev by @k311093 in https://github.com/google/android-cuttlefish/pull/2940
+  * Cherry-pick ParseTime fix (#2965) to version-1.55-dev by @Databean in https://github.com/google/android-cuttlefish/pull/2970
+  * Cherry-pick #2860 for b/534832487 and #2982 to fix presubmit by @Databean in https://github.com/google/android-cuttlefish/pull/2979
+  * [1.55][cherrypick] Skip TAP device validation for cvdalloc launches. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2994
+  * Sync pKVM changes for the pending 1.55.3 release by @dimorinny in https://github.com/google/android-cuttlefish/pull/3002
+  * Use a special cache version for version-1.55-dev by @Databean in https://github.com/google/android-cuttlefish/pull/3028
+  * 1.55 gigabyte bump by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3026
+  * 1.55 load_config, media, and netsim changes by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3027
+
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 14 Aug 2026 16:52:55 -0700
+
 cuttlefish-common (1.55.2) unstable; urgency=medium
 
   * Update compile_commands.json generator
