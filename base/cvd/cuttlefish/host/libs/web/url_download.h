@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
 
@@ -29,15 +30,15 @@ namespace cuttlefish {
 struct UrlDownload {
   std::string url;
   std::vector<std::string> headers;
-  // Sent as `If-Range` on a resumed request, so an origin whose object changed
-  // answers with the whole of it rather than the tail of something else. Empty
-  // for a URL that already names one version of the object.
-  std::string if_range;
-  // Whether the probe found that `url` serves ranges and names bytes that do
-  // not change under it. Only then is a partial download worth keeping.
-  bool resumable = false;
+  std::string if_range;    // empty when `url` already names one version
+  bool resumable = false;  // whether a partial file is worth keeping
   std::optional<uint64_t> size;
 };
+
+// Returns whether `path` still names the file `fd` holds open. A download
+// that another process finished renames its partial file away, so whoever was
+// waiting for the lock on it wakes up holding a file that is gone.
+Result<bool> HoldsFileAt(SharedFD fd, const std::string& path);
 
 // Writes `download` to `path`, picking up where an interrupted earlier attempt
 // left off when the origin allows it.

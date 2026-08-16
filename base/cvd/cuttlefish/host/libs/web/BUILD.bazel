@@ -451,11 +451,13 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_file",
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/posix:remove",
         "//cuttlefish/result",
+        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
@@ -467,6 +469,7 @@ cf_cc_test(
     srcs = ["url_download_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/web:url_download",
         "//cuttlefish/host/libs/web/http_client",

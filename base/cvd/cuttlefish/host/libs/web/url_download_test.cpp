@@ -30,6 +30,7 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/web/http_client/fake_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
@@ -137,6 +138,35 @@ TEST_F(UrlDownloadTests, AVersionedUrlResumesWithoutIfRangeSuccess) {
                                   Not(Contains(HasSubstr("If-Range:")))));
 }
 
+TEST_F(UrlDownloadTests, APartialFileLongerThanTheObjectIsDiscardedSuccess) {
+  ServeContents();
+  WritePart(std::string(kSize + 8, 'z'));
+  UrlDownload download = {
+      .url = kUrl,
+      .if_range = "\"v1\"",
+      .resumable = true,
+      .size = kSize,
+  };
+
+  EXPECT_THAT(DownloadUrlToFile(http_client_, download, Path()), IsOk());
+  EXPECT_EQ(Downloaded(), kContents);
+  EXPECT_THAT(requests_[0], Not(Contains(HasSubstr("Range:"))));
+}
+
+TEST_F(UrlDownloadTests, APartialFileOfAnUnmeasuredObjectIsDiscardedSuccess) {
+  ServeContents();
+  WritePart("zzzz");
+  UrlDownload download = {
+      .url = kUrl,
+      .if_range = "\"v1\"",
+      .resumable = true,
+  };
+
+  EXPECT_THAT(DownloadUrlToFile(http_client_, download, Path()), IsOk());
+  EXPECT_EQ(Downloaded(), kContents);
+  EXPECT_THAT(requests_[0], Not(Contains(HasSubstr("Range:"))));
+}
+
 TEST_F(UrlDownloadTests, AChangedObjectIsDownloadedAgainSuccess) {
   ServeContents(/*honor_ranges=*/false);
   WritePart("xxxxxx");
@@ -168,6 +198,33 @@ TEST_F(UrlDownloadTests, APartialFileIsHeldUnderALockSuccess) {
 
   EXPECT_THAT(DownloadUrlToFile(http_client_, download, Path()), IsOk());
   EXPECT_TRUE(locked_out);
+}
+
+TEST_F(UrlDownloadTests, AnOpenFileIsFoundAtItsPathSuccess) {
+  WritePart("012345");
+  SharedFD part = SharedFD::Open(PartPath(), O_RDWR);
+  ASSERT_TRUE(part->IsOpen());
+
+  EXPECT_THAT(HoldsFileAt(part, PartPath()), IsOkAndValue(true));
+}
+
+TEST_F(UrlDownloadTests, AnOpenFileRenamedAwayIsNotFoundSuccess) {
+  WritePart("012345");
+  SharedFD part = SharedFD::Open(PartPath(), O_RDWR);
+  ASSERT_TRUE(part->IsOpen());
+  ASSERT_THAT(RenameFile(PartPath(), Path()), IsOk());
+
+  EXPECT_THAT(HoldsFileAt(part, PartPath()), IsOkAndValue(false));
+}
+
+TEST_F(UrlDownloadTests, AnOpenFileReplacedAtItsPathIsNotFoundSuccess) {
+  WritePart("012345");
+  SharedFD part = SharedFD::Open(PartPath(), O_RDWR);
+  ASSERT_TRUE(part->IsOpen());
+  ASSERT_THAT(RenameFile(PartPath(), Path()), IsOk());
+  WritePart("6789");
+
+  EXPECT_THAT(HoldsFileAt(part, PartPath()), IsOkAndValue(false));
 }
 
 TEST_F(UrlDownloadTests, AMissingObjectLeavesNoPartialFileFail) {
