@@ -393,20 +393,15 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       const std::vector<std::unique_ptr<ImageFile>>& instance_image_files =
           image_files[index];
 
-      Result<std::optional<ChromeOsStateImage>> chrome_os_state =
+      std::optional<ChromeOsStateImage> chrome_os_state =
           CF_EXPECT(ChromeOsStateImage::Reuse(instance));
-      if (chrome_os_state.has_value()) {
-        Result<DiskBuilder> os_builder = OsCompositeDiskBuilder(
-            config, instance, *chrome_os_state, instance_image_files,
-            android_builds.ForIndex(index), system_image_dir);
-        if (!os_builder.has_value()) {
-          creating_os_disk = true;
-        } else {
-          creating_os_disk |= CF_EXPECT(os_builder->WillRebuildCompositeDisk());
-        }
-      } else {
+      Result<DiskBuilder> os_builder = OsCompositeDiskBuilder(
+          config, instance, chrome_os_state, instance_image_files,
+          android_builds.ForIndex(index), system_image_dir);
+      if (!os_builder.has_value()) {
         creating_os_disk = true;
-        break;
+      } else {
+        creating_os_disk |= CF_EXPECT(os_builder->WillRebuildCompositeDisk());
       }
       if (instance.ap_boot_flow() != APBootFlow::None) {
         auto ap_builder = ApCompositeDiskBuilder(config, instance);
