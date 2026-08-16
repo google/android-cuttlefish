@@ -81,6 +81,19 @@ cf_cc_library(
 )
 
 cf_cc_test(
+    name = "fetch_config_parser_test",
+    srcs = ["fetch_config_parser_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_flags_validator",
+        "//cuttlefish/host/commands/cvd/cli/parser:fetch_config_parser",
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_test(
     name = "flags_parser_test",
     srcs = ["flags_parser_test.cc"],
     include_cleaner_enabled = False,
