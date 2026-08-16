@@ -420,6 +420,13 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
               }
               return subtool_path;
             };
+            // Connect adb.
+            Command adb_connect(SubtoolPath("adb"));
+            adb_connect.SetWorkingDirectory("/");
+            adb_connect.AddParameter("connect").AddParameter(
+                instance_.adb_ip_and_port());
+            CHECK_EQ(adb_connect.Start().Wait(), 0)
+                << "Failed to run adb connect";
             // Run the in-guest post-restore script.
             Command adb_command(SubtoolPath("adb"));
             // Avoid the adb server being started in the runtime directory and
