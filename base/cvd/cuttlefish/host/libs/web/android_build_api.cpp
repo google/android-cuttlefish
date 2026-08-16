@@ -52,6 +52,7 @@
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
+#include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/host/libs/web/parse_time.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
@@ -77,7 +78,10 @@ Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
                                     const bool allow_redirect = false) {
   //  debug information in error responses floods stderr with too much text
   //  logged at a level that still ends up in the log file
-  VLOG(0) << "API response data:\n" << response.data;
+  //  the artifact response carries a `signedUrl` whose query string is the
+  //  credential, so the body is scrubbed before it reaches the log file
+  VLOG(0) << "API response data:\n"
+          << ScrubSecrets(response.data.toStyledString());
   const bool response_code_allowed =
       response.HttpSuccess() || (allow_redirect && response.HttpRedirect());
   CF_EXPECTF(std::move(response_code_allowed),

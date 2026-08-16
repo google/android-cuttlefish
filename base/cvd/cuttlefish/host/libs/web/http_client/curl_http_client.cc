@@ -83,7 +83,7 @@ int LoggingCurlDebugFunction(CURL*, curl_infotype type, char* data, size_t size,
       break;
     case CURLINFO_HEADER_IN:
       VLOG(1) << "CURLINFO_HEADER_IN ";
-      VLOG(0) << TrimWhitespace(data, size);
+      VLOG(0) << ScrubSecrets(TrimWhitespace(data, size));
       break;
     case CURLINFO_HEADER_OUT:
       VLOG(1) << "CURLINFO_HEADER_OUT ";
@@ -147,7 +147,7 @@ class CurlClient : public HttpClient {
   Result<HttpResponse<void>> DownloadToCallback(
       HttpRequest request, DataCallback callback) override {
     std::lock_guard<std::mutex> lock(mutex_);
-    VLOG(0) << "Downloading '" << request.url << "'";
+    VLOG(0) << "Downloading '" << ScrubUrl(request.url) << "'";
     CF_EXPECT(
         request.data_to_write.empty() || request.method == HttpMethod::kPost,
         "data must be empty for non POST requests");
