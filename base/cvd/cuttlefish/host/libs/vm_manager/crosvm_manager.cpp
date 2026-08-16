@@ -64,6 +64,11 @@
 
 namespace cuttlefish {
 namespace vm_manager {
+namespace {
+
+constexpr int kBlockPciDeviceNum = 0x13;
+
+}  // namespace
 
 bool CrosvmManager::IsSupported() {
 #ifdef __ANDROID__
@@ -189,22 +194,10 @@ CrosvmManager::ConfigureGraphics(
 Result<std::unordered_map<std::string, std::string>>
 CrosvmManager::ConfigureBootDevices(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  const int num_disks = instance.virtual_disk_paths().size();
-  const bool has_gpu = instance.hwcomposer() != kHwComposerNone;
-  // TODO There is no way to control this assignment with crosvm (yet)
   if (HostArch() == Arch::X86_64) {
-    int num_gpu_pcis = has_gpu ? 1 : 0;
-    if (instance.gpu_mode() != GpuMode::None &&
-        !instance.enable_gpu_vhost_user()) {
-      // crosvm has an additional PCI device for an ISA bridge when running
-      // with a gpu and without vhost user gpu.
-      num_gpu_pcis += 1;
-    }
-    // virtio_gpu and virtio_wl precedes the first console or disk
-    int disk_pci_offset = 1 + num_gpu_pcis + VmManager::kDefaultNumHvcs +
-                          VmManager::kMaxDisks - num_disks;
-    return ConfigureMultipleBootDevices("pci0000:00/0000:00:", disk_pci_offset,
-                                        num_disks);
+    return ConfigureMultipleBootDevices(
+        "pci0000:00/0000:00:", kBlockPciDeviceNum,
+        instance.virtual_disk_paths().size());
   } else {
     // On ARM64 crosvm, block devices are on their own bridge, so we don't
     // need to calculate it, and the path is always the same
@@ -674,6 +667,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
                                         << VmManager::kMaxDisks << "supported");
   size_t disk_i = 0;
   for (const auto& disk : instance.virtual_disk_paths()) {
+    auto pci_addr = pci::Address(0, kBlockPciDeviceNum + disk_i, 0);
     if (instance.vhost_user_block() && disk_i == 2) {
       // TODO: b/346855591 - Run on all devices
       auto block = CF_EXPECT(VhostUserBlockDevice(config, disk_i, disk));
@@ -688,11 +682,10 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
         return CF_ERR("Unhandled check if vhost user block ready.");
 #endif
       });
-      auto pci_addr = fmt::format("00:{:0>2x}.0", 0x13 + disk_i);
       crosvm_cmd.Cmd().AddParameter("--vhost-user=block,socket=", socket_path,
-                                    ",pci-address=", pci_addr);
+                                    CrosvmBuilder::FormatPciArgument(pci_addr));
     } else {
-      crosvm_cmd.AddReadWriteDisk(disk);
+      crosvm_cmd.AddReadWriteDisk(disk, pci_addr);
     }
     disk_i++;
   }
