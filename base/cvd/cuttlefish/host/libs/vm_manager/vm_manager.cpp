@@ -63,7 +63,7 @@ std::unique_ptr<VmManager> GetVmManager(VmmMode vmm_mode, Arch arch) {
 }
 
 Result<std::unordered_map<std::string, std::string>>
-ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,
+ConfigureMultipleBootDevices(const std::string& pci_path, int disk_pci_offset,
                              int num_disks) {
   int num_boot_devices = (num_disks < VmManager::kDefaultNumBootDevices)
                              ? num_disks
@@ -72,8 +72,7 @@ ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,
   for (int i = 0; i < num_boot_devices; i++) {
     std::stringstream stream;
     stream << std::setfill('0') << std::setw(2) << std::hex
-           << pci_offset + i + VmManager::kDefaultNumHvcs +
-                  VmManager::kMaxDisks - num_disks;
+           << disk_pci_offset + i;
     boot_devices_prop_val += pci_path + stream.str() + ".0,";
   }
   boot_devices_prop_val.pop_back();
