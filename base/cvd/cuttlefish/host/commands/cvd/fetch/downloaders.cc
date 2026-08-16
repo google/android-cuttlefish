@@ -54,6 +54,8 @@ struct Downloaders::Impl {
   std::unique_ptr<CredentialSource> storage_credential_source_;
   std::unique_ptr<GcsBuildApi> gcs_build_api_;
   std::unique_ptr<HttpBuildApi> http_build_api_;
+  std::unique_ptr<CachingBuildApi> caching_gcs_build_api_;
+  std::unique_ptr<CachingBuildApi> caching_http_build_api_;
   std::unique_ptr<CompositeBuildApi> composite_build_api_;
 };
 
@@ -129,14 +131,20 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
   impl->http_build_api_ =
       std::make_unique<HttpBuildApi>(*impl->retrying_http_client_);
 
-  // Caching is not applied to the URL APIs until their cache keys carry the
-  // identity of the artifact they hold.
   BuildApi* android_build_api = impl->android_build_api_.get();
+  BuildApi* gcs_build_api = impl->gcs_build_api_.get();
+  BuildApi* http_build_api = impl->http_build_api_.get();
   if (impl->caching_build_api_) {
     android_build_api = impl->caching_build_api_.get();
+    impl->caching_gcs_build_api_ = std::make_unique<CachingBuildApi>(
+        *impl->gcs_build_api_, cache_base_path);
+    gcs_build_api = impl->caching_gcs_build_api_.get();
+    impl->caching_http_build_api_ = std::make_unique<CachingBuildApi>(
+        *impl->http_build_api_, cache_base_path);
+    http_build_api = impl->caching_http_build_api_.get();
   }
   impl->composite_build_api_ = std::make_unique<CompositeBuildApi>(
-      *android_build_api, *impl->gcs_build_api_, *impl->http_build_api_);
+      *android_build_api, *gcs_build_api, *http_build_api);
 
   return Downloaders(std::move(impl));
 }
