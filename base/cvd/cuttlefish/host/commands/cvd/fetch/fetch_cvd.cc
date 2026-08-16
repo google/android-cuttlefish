@@ -140,18 +140,19 @@ Result<Builds> GetBuilds(BuildApi& build_api,
       .android_efi_loader = CF_EXPECT(
           GetBuildHelper(build_api, build_sources.android_efi_loader_build,
                          "gbl_efi_dist_and_test")),
-      .otatools = CF_EXPECT(GetBuildHelper(
-          build_api, build_sources.otatools_build, kDefaultBuildTarget)),
       .test_suites = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.test_suites_build, kDefaultBuildTarget)),
       .chrome_os = build_sources.chrome_os_build,
   };
-  if (!result.otatools) {
-    if (result.system) {
-      result.otatools = result.system;
-    } else if (result.kernel) {
-      result.otatools = result.default_build;
-    }
+  std::optional<Build> otatools = CF_EXPECT(GetBuildHelper(
+      build_api, build_sources.otatools_build, kDefaultBuildTarget));
+  if (otatools) {
+    result.otatools = OtaTools{.build = *otatools};
+  } else if (result.system) {
+    result.otatools = OtaTools{.build = *result.system, .inferred = true};
+  } else if (result.kernel && result.default_build) {
+    result.otatools =
+        OtaTools{.build = *result.default_build, .inferred = true};
   }
   return {result};
 }
@@ -357,10 +358,17 @@ Result<void> FetchAndroidEfiLoaderTarget(FetchBuildContext& context) {
   return {};
 }
 
-Result<void> FetchOtaToolsTarget(FetchBuildContext& context,
+Result<void> FetchOtaToolsTarget(OtaToolsBuildContext& ota,
                                  bool keep_downloaded_archives) {
-  FetchArtifact otatools = context.Artifact("otatools.zip");
-  CF_EXPECT(otatools.Download());
+  FetchArtifact otatools = ota.context.Artifact("otatools.zip");
+  Result<void> downloaded = otatools.Download();
+  if (!downloaded.has_value() && ota.inferred) {
+    LOG(WARNING) << "No otatools.zip in " << ota.context
+                 << ", which was not requested but picked from the other "
+                    "builds, continuing without it";
+    return {};
+  }
+  CF_EXPECT(std::move(downloaded));
   CF_EXPECT(otatools.ExtractAll());
   if (!keep_downloaded_archives) {
     CF_EXPECT(otatools.DeleteLocalFile());
@@ -440,8 +448,8 @@ Result<void> FetchTarget(FetchContext& fetch_context,
     CF_EXPECT(FetchAndroidEfiLoaderTarget(*ctx));
   }
 
-  if (std::optional<FetchBuildContext> ctx = fetch_context.OtaToolsBuild()) {
-    CF_EXPECT(FetchOtaToolsTarget(*ctx, keep_downloaded_archives));
+  if (std::optional<OtaToolsBuildContext> ota = fetch_context.OtaToolsBuild()) {
+    CF_EXPECT(FetchOtaToolsTarget(*ota, keep_downloaded_archives));
   }
 
   if (std::optional<FetchBuildContext> ctx = fetch_context.TestSuitesBuild()) {

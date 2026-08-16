@@ -22,6 +22,11 @@
 
 namespace cuttlefish {
 
+struct OtaTools {
+  Build build;
+  bool inferred = false;  // guessed, may not hold otatools.zip
+};
+
 struct Builds {
   std::optional<Build> default_build;
   std::optional<Build> system;
@@ -29,7 +34,7 @@ struct Builds {
   std::optional<Build> boot;
   std::optional<Build> bootloader;
   std::optional<Build> android_efi_loader;
-  std::optional<Build> otatools;
+  std::optional<OtaTools> otatools;
   std::optional<Build> test_suites;
   std::optional<ChromeOsBuildString> chrome_os;
 };

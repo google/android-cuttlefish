@@ -306,7 +306,7 @@ void PopulateFetchBuilds(CuttlefishFetchBuilds& fetch_builds,
   }
   if (builds.otatools) {
     CuttlefishBuild& otatools_build = *fetch_builds.mutable_otatools();
-    PopulateCuttlefishBuild(otatools_build, builds.otatools.value());
+    PopulateCuttlefishBuild(otatools_build, builds.otatools->build);
   }
   if (builds.test_suites) {
     CuttlefishBuild& test_suites_build = *fetch_builds.mutable_test_suites();

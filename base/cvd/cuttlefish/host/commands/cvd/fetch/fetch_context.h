@@ -107,6 +107,11 @@ class FetchBuildContext {
 
 std::ostream& operator<<(std::ostream&, const FetchBuildContext&);
 
+struct OtaToolsBuildContext {
+  FetchBuildContext context;
+  bool inferred = false;  // guessed, may not hold otatools.zip
+};
+
 /**
  * References common state used by most download operations and produces
  * `FetchBuildContext` instances.
@@ -122,7 +127,7 @@ class FetchContext {
   std::optional<FetchBuildContext> BootBuild();
   std::optional<FetchBuildContext> BootloaderBuild();
   std::optional<FetchBuildContext> AndroidEfiLoaderBuild();
-  std::optional<FetchBuildContext> OtaToolsBuild();
+  std::optional<OtaToolsBuildContext> OtaToolsBuild();
   std::optional<FetchBuildContext> TestSuitesBuild();
 
  private:
