@@ -17,6 +17,7 @@
 
 #include <regex>
 #include <string>
+#include <string_view>
 
 namespace cuttlefish {
 
@@ -31,7 +32,19 @@ std::string ScrubSecrets(const std::string& data) {
   //    [<head>]client_secret=token_...[<tail>]
   result = std::regex_replace(
       result, std::regex("(client_secret=)(\\S{6})[^\\&\\s]*"), "$1$2...");
+  // eg [<head>]GET /path?signature=token_text HTTP/1.1[<tail>] ->
+  //    [<head>]GET /path?... HTTP/1.1[<tail>]
+  // Any query string is redacted, so this also covers an absolute URL in a
+  // header value such as the Location of a redirect, or in a JSON response
+  // body, and does not depend on a request line ending in " HTTP/". A '"'
+  // ends the match so a redacted JSON string stays closed.
+  result =
+      std::regex_replace(result, std::regex("\\?[^ \\t\\r\\n\"]*"), "?...");
   return result;
+}
+
+std::string ScrubUrl(std::string_view url) {
+  return std::string(url.substr(0, url.find_first_of("?#")));
 }
 
 }  // namespace cuttlefish
