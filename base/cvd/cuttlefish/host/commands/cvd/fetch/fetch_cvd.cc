@@ -218,35 +218,39 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
       CF_EXPECT(img_zip.DeleteLocalFile());
     }
   }
-  std::string target_files_name = context.GetBuildZipName("target_files");
-  FetchArtifact target_files = context.Artifact(target_files_name);
-  if (has_system_build || flags.download_target_files_zip) {
-    LOG(INFO) << "Downloading target files zip for " << context;
-    std::string download_location =
-        fmt::format("default/{}", target_files_name);
-    CF_EXPECT(target_files.DownloadTo(download_location));
-  }
-  if (flags.dynamic_super_image) {
-    ReadableZip* target_files_zip = CF_EXPECT(target_files.AsZip());
-    std::unique_ptr<ReaderSeeker> ab_partitions_source =
-        CF_EXPECT(target_files_zip->OpenReadOnly("META/ab_partitions.txt"));
-    CF_EXPECT(ab_partitions_source.get());
-    std::string ab_partitions_contents =
-        CF_EXPECT(ReadToString(*ab_partitions_source));
+  const bool download_target_files =
+      has_system_build || flags.download_target_files_zip;
+  if (download_target_files || flags.dynamic_super_image) {
+    std::string target_files_name = context.GetBuildZipName("target_files");
+    FetchArtifact target_files = context.Artifact(target_files_name);
+    if (download_target_files) {
+      LOG(INFO) << "Downloading target files zip for " << context;
+      const std::string download_location =
+          fmt::format("default/{}", target_files_name);
+      CF_EXPECT(target_files.DownloadTo(download_location));
+    }
+    if (flags.dynamic_super_image) {
+      ReadableZip* target_files_zip = CF_EXPECT(target_files.AsZip());
+      std::unique_ptr<ReaderSeeker> ab_partitions_source =
+          CF_EXPECT(target_files_zip->OpenReadOnly("META/ab_partitions.txt"));
+      CF_EXPECT(ab_partitions_source.get());
+      const std::string ab_partitions_contents =
+          CF_EXPECT(ReadToString(*ab_partitions_source));
 
-    CF_EXPECT(target_files.ExtractOneTo("META/ab_partitions.txt",
-                                        "default/ab_partitions.txt"));
+      CF_EXPECT(target_files.ExtractOneTo("META/ab_partitions.txt",
+                                          "default/ab_partitions.txt"));
 
-    std::vector<std::string_view> ab_files =
-        absl::StrSplit(ab_partitions_contents, '\n');
-    ab_files.emplace_back("super_empty");
-    for (std::string_view ab_file : ab_files) {
-      if (ab_file.empty()) {
-        continue;
+      std::vector<std::string_view> ab_files =
+          absl::StrSplit(ab_partitions_contents, '\n');
+      ab_files.emplace_back("super_empty");
+      for (std::string_view ab_file : ab_files) {
+        if (ab_file.empty()) {
+          continue;
+        }
+        const std::string member = fmt::format("IMAGES/{}.img", ab_file);
+        const std::string output = fmt::format("default/{}.img", ab_file);
+        CF_EXPECT(target_files.ExtractOneTo(member, output));
       }
-      std::string member = fmt::format("IMAGES/{}.img", ab_file);
-      std::string output = fmt::format("default/{}.img", ab_file);
-      CF_EXPECT(target_files.ExtractOneTo(member, output));
     }
   }
   return {};
@@ -314,12 +318,13 @@ Result<void> FetchKernelTarget(FetchBuildContext context) {
 
 Result<void> FetchBootTarget(FetchBuildContext& context,
                              bool keep_downloaded_archives) {
-  std::string img_zip = context.GetBuildZipName("img");
-  std::string to_download = context.GetFilepath().value_or(img_zip);
+  const std::optional<std::string> filepath = context.GetFilepath();
+  const std::string to_download =
+      filepath.has_value() ? *filepath : context.GetBuildZipName("img");
   FetchArtifact artifact = context.Artifact(to_download);
   CF_EXPECT(artifact.Download());
 
-  if (to_download == img_zip) {
+  if (!filepath.has_value()) {
     CF_EXPECT(artifact.ExtractOne("boot.img"));
     CF_EXPECT(artifact.ExtractOne("vendor_boot.img"));
     if (!keep_downloaded_archives) {
