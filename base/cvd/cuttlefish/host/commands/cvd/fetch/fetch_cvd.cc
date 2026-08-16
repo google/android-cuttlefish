@@ -305,9 +305,11 @@ Result<void> FetchSystemTarget(FetchBuildContext& context,
 }
 
 Result<void> FetchKernelTarget(FetchBuildContext context) {
-  // If the kernel is from an arm/aarch64 build, the artifact will be called
-  // Image.
-  if (!context.Artifact("bzImage").DownloadTo("kernel").has_value()) {
+  if (std::optional<std::string> filepath = context.GetFilepath()) {
+    CF_EXPECT(context.Artifact(*filepath).DownloadTo("kernel"));
+  } else if (!context.Artifact("bzImage").DownloadTo("kernel").has_value()) {
+    // If the kernel is from an arm/aarch64 build, the artifact will be called
+    // Image.
     CF_EXPECT(context.Artifact("Image").DownloadTo("kernel"));
   }
 
@@ -337,9 +339,13 @@ Result<void> FetchBootTarget(FetchBuildContext& context,
 }
 
 Result<void> FetchBootloaderTarget(FetchBuildContext& context) {
-  // If the bootloader is from an arm/aarch64 build, the artifact will be of
-  // filetype bin.
-  if (!context.Artifact("u-boot.rom").DownloadTo("bootloader").has_value()) {
+  if (std::optional<std::string> filepath = context.GetFilepath()) {
+    CF_EXPECT(context.Artifact(*filepath).DownloadTo("bootloader"));
+  } else if (!context.Artifact("u-boot.rom")
+                  .DownloadTo("bootloader")
+                  .has_value()) {
+    // If the bootloader is from an arm/aarch64 build, the artifact will be of
+    // filetype bin.
     CF_EXPECT(context.Artifact("u-boot.bin").DownloadTo("bootloader"));
   }
   return {};
