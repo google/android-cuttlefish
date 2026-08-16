@@ -31,6 +31,7 @@ using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::IsEmpty;
+using ::testing::Not;
 using ::testing::Optional;
 using ::testing::SizeIs;
 using ::testing::VariantWith;
@@ -291,6 +292,9 @@ TEST(ParseBuildStringTests, UnknownSchemeFail) {
   EXPECT_THAT(
       ParseBuildString("ftp://example.com/file.zip"),
       IsErrorAndMessage(AllOf(HasSubstr("gs://"), HasSubstr("https://"))));
+  EXPECT_THAT(
+      ParseBuildString("s3://bucket/file.zip?X-Goog-Signature=SECRETVALUE"),
+      IsErrorAndMessage(Not(HasSubstr("SECRETVALUE"))));
 }
 
 TEST(ParseBuildStringTests, Sha256FragmentSuccess) {
@@ -337,11 +341,34 @@ TEST(ParseBuildStringTests, CharactersAfterFilepathFail) {
   EXPECT_THAT(ParseBuildString("gs://bucket/{boot.img}trailing"), IsError());
   EXPECT_THAT(ParseBuildString("https://example.com/{boot.img}/more"),
               IsError());
+  EXPECT_THAT(ParseBuildString("gs://bucket/img.zip{}"), IsError());
+  EXPECT_THAT(ParseBuildString("gs://bucket/img.zip{boot.img"), IsError());
 }
 
 TEST(ParseBuildStringTests, UrlWithCommaFail) {
   EXPECT_THAT(ParseBuildString("gs://bucket/file,name.zip"),
               IsErrorAndMessage(HasSubstr("comma-separated")));
+  EXPECT_THAT(
+      ParseBuildString("gs://bucket/f,ile.zip?X-Goog-Signature=SECRETVALUE"),
+      IsErrorAndMessage(
+          AllOf(HasSubstr("comma-separated"), Not(HasSubstr("SECRETVALUE")))));
+}
+
+TEST(ParseBuildStringTests, UrlErrorsWithoutQueryFail) {
+  const std::string secret = "?X-Goog-Signature=SECRETVALUE";
+  const std::string inputs[] = {
+      "http://example.com/img.zip" + secret,
+      "gs://bucket/img.zip" + secret + "{}",
+      "gs://bucket/img.zip" + secret + "{boot.img}trailing",
+      "gs://bucket/img.zip#md5=abcdef" + secret,
+      "https://example.com/dist/" + secret,
+      std::string("https://example.com/dist/") + secret + "#sha256=" + kSha256,
+  };
+  for (const std::string& input : inputs) {
+    EXPECT_THAT(ParseBuildString(input),
+                IsErrorAndMessage(Not(HasSubstr("SECRETVALUE"))))
+        << input;
+  }
 }
 
 TEST(ParseBuildStringTests, QueryStringOnObjectSuccess) {
