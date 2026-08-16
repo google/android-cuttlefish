@@ -26,12 +26,17 @@
 
 namespace cuttlefish {
 
+using ::testing::AllOf;
 using ::testing::ElementsAre;
 using ::testing::Eq;
+using ::testing::HasSubstr;
 using ::testing::IsEmpty;
 using ::testing::Optional;
 using ::testing::SizeIs;
 using ::testing::VariantWith;
+
+constexpr char kSha256[] =
+    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
 TEST(ParseBuildStringTests, DeviceBuildStringSuccess) {
   auto result = ParseBuildString("abcde/test_target");
@@ -200,6 +205,189 @@ TEST(BuildStringGflagsCompatFlagTests, MultiValueMixedWithEmptySuccess) {
           DeviceBuildString{.branch_or_id = "12345", .target = "test_target"},
           std::nullopt,
           DeviceBuildString{.branch_or_id = "abcde", .target = "test_target"}));
+}
+
+TEST(ParseBuildStringTests, GcsObjectSuccess) {
+  auto result = ParseBuildString("gs://bucket/path/file.zip");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(), VariantWith<GcsBuildString>(GcsBuildString{
+                                  .url = "gs://bucket/path/file.zip"}));
+}
+
+TEST(ParseBuildStringTests, GcsDirectorySuccess) {
+  auto result = ParseBuildString("gs://bucket/dist/");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(), VariantWith<GcsBuildString>(
+                                  GcsBuildString{.url = "gs://bucket/dist/"}));
+}
+
+TEST(ParseBuildStringTests, GcsObjectFilepathSuccess) {
+  auto result = ParseBuildString("gs://bucket/img.zip{boot.img}");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(),
+              VariantWith<GcsBuildString>(GcsBuildString{
+                  .url = "gs://bucket/img.zip", .filepath = "boot.img"}));
+}
+
+TEST(ParseBuildStringTests, GcsDirectoryFilepathSuccess) {
+  auto result = ParseBuildString("gs://bucket/dist/{bzImage}");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(),
+              VariantWith<GcsBuildString>(GcsBuildString{
+                  .url = "gs://bucket/dist/", .filepath = "bzImage"}));
+}
+
+TEST(ParseBuildStringTests, HttpObjectSuccess) {
+  auto result = ParseBuildString("https://example.com/path/file.zip");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(), VariantWith<HttpBuildString>(HttpBuildString{
+                                  .url = "https://example.com/path/file.zip"}));
+}
+
+TEST(ParseBuildStringTests, HttpDirectorySuccess) {
+  auto result = ParseBuildString("https://example.com/dist/");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(), VariantWith<HttpBuildString>(HttpBuildString{
+                                  .url = "https://example.com/dist/"}));
+}
+
+TEST(ParseBuildStringTests, HttpObjectFilepathSuccess) {
+  auto result = ParseBuildString("https://example.com/img.zip{boot.img}");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(), VariantWith<HttpBuildString>(HttpBuildString{
+                                  .url = "https://example.com/img.zip",
+                                  .filepath = "boot.img"}));
+}
+
+TEST(ParseBuildStringTests, HttpDirectoryFilepathSuccess) {
+  auto result = ParseBuildString("https://example.com/dist/{mykernel}");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(),
+              VariantWith<HttpBuildString>(HttpBuildString{
+                  .url = "https://example.com/dist/", .filepath = "mykernel"}));
+}
+
+TEST(ParseBuildStringTests, UrlIsNotADirectoryBuildStringSuccess) {
+  auto result = ParseBuildString("gs://bucket/a/b/c.zip");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(), VariantWith<GcsBuildString>(GcsBuildString{
+                                  .url = "gs://bucket/a/b/c.zip"}));
+
+  result = ParseBuildString("https://example.com:8443/c.zip");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(), VariantWith<HttpBuildString>(HttpBuildString{
+                                  .url = "https://example.com:8443/c.zip"}));
+}
+
+TEST(ParseBuildStringTests, CleartextHttpFail) {
+  EXPECT_THAT(ParseBuildString("http://example.com/file.zip"),
+              IsErrorAndMessage(HasSubstr("https://")));
+}
+
+TEST(ParseBuildStringTests, UnknownSchemeFail) {
+  EXPECT_THAT(
+      ParseBuildString("s3://bucket/file.zip"),
+      IsErrorAndMessage(AllOf(HasSubstr("gs://"), HasSubstr("https://"))));
+  EXPECT_THAT(
+      ParseBuildString("ftp://example.com/file.zip"),
+      IsErrorAndMessage(AllOf(HasSubstr("gs://"), HasSubstr("https://"))));
+}
+
+TEST(ParseBuildStringTests, Sha256FragmentSuccess) {
+  auto result =
+      ParseBuildString(std::string("gs://bucket/file.zip#sha256=") + kSha256);
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(),
+              VariantWith<GcsBuildString>(GcsBuildString{
+                  .url = "gs://bucket/file.zip", .sha256 = kSha256}));
+}
+
+TEST(ParseBuildStringTests, Sha256FragmentAndFilepathSuccess) {
+  auto result = ParseBuildString(
+      std::string("https://example.com/img.zip{boot.img}#sha256=") + kSha256);
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(), VariantWith<HttpBuildString>(HttpBuildString{
+                                  .url = "https://example.com/img.zip",
+                                  .filepath = "boot.img",
+                                  .sha256 = kSha256}));
+}
+
+TEST(ParseBuildStringTests, FragmentBeforeFilepathFail) {
+  EXPECT_THAT(ParseBuildString(std::string("gs://bucket/img.zip#sha256=") +
+                               kSha256 + "{boot.img}"),
+              IsError());
+}
+
+TEST(ParseBuildStringTests, MalformedFragmentFail) {
+  EXPECT_THAT(ParseBuildString("gs://bucket/file.zip#sha256=abcdef"),
+              IsError());
+  EXPECT_THAT(ParseBuildString("gs://bucket/file.zip#md5=abcdef"), IsError());
+  EXPECT_THAT(
+      ParseBuildString(std::string("gs://bucket/fi#le.zip#sha256=") + kSha256),
+      IsError());
+}
+
+TEST(ParseBuildStringTests, Sha256FragmentOnDirectoryFail) {
+  EXPECT_THAT(
+      ParseBuildString(std::string("gs://bucket/dist/#sha256=") + kSha256),
+      IsError());
+}
+
+TEST(ParseBuildStringTests, CharactersAfterFilepathFail) {
+  EXPECT_THAT(ParseBuildString("gs://bucket/{boot.img}trailing"), IsError());
+  EXPECT_THAT(ParseBuildString("https://example.com/{boot.img}/more"),
+              IsError());
+}
+
+TEST(ParseBuildStringTests, UrlWithCommaFail) {
+  EXPECT_THAT(ParseBuildString("gs://bucket/file,name.zip"),
+              IsErrorAndMessage(HasSubstr("comma-separated")));
+}
+
+TEST(ParseBuildStringTests, QueryStringOnObjectSuccess) {
+  auto result = ParseBuildString("https://example.com/file.zip?sig=abc");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(),
+              VariantWith<HttpBuildString>(HttpBuildString{
+                  .url = "https://example.com/file.zip?sig=abc"}));
+}
+
+TEST(ParseBuildStringTests, QueryStringOnDirectoryFail) {
+  EXPECT_THAT(ParseBuildString("https://example.com/dist/?sig=abc"), IsError());
+}
+
+TEST(SingleBuildStringGflagsCompatFlagTests, GcsBuildStringSuccess) {
+  std::optional<BuildString> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+
+  ASSERT_THAT(ConsumeFlags({flag}, {"--myflag=gs://bucket/image.zip"}), IsOk());
+  ASSERT_THAT(value, Optional(VariantWith<GcsBuildString>(
+                         GcsBuildString{.url = "gs://bucket/image.zip"})));
+}
+
+TEST(SingleBuildStringGflagsCompatFlagTests, HttpBuildStringSuccess) {
+  std::optional<BuildString> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+
+  ASSERT_THAT(ConsumeFlags({flag}, {"--myflag=https://example.com/dist/"}),
+              IsOk());
+  ASSERT_THAT(value, Optional(VariantWith<HttpBuildString>(
+                         HttpBuildString{.url = "https://example.com/dist/"})));
+}
+
+TEST(BuildStringGflagsCompatFlagTests, UrlMultiValueSuccess) {
+  std::vector<std::optional<BuildString>> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+
+  ASSERT_THAT(ConsumeFlags({flag}, {"--myflag=gs://bucket/a.zip,https://"
+                                    "example.com/dist/"}),
+              IsOk());
+  ASSERT_THAT(value, SizeIs(2));
+  ASSERT_THAT(value,
+              ElementsAre(Optional(VariantWith<GcsBuildString>(
+                              GcsBuildString{.url = "gs://bucket/a.zip"})),
+                          Optional(VariantWith<HttpBuildString>(HttpBuildString{
+                              .url = "https://example.com/dist/"}))));
 }
 
 }  // namespace cuttlefish

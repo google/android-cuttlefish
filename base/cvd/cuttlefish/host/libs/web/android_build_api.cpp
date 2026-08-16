@@ -37,6 +37,7 @@
 #include "absl/log/log.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
+#include "fmt/ostream.h"
 #include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -143,9 +144,15 @@ Result<Build> AndroidBuildApi::GetBuild(
 }
 
 Result<Build> AndroidBuildApi::GetBuild(const BuildString& build_string) {
-  Result<Build> result =
-      std::visit([this](auto&& arg) { return GetBuild(arg); }, build_string);
-  return CF_EXPECT(std::move(result));
+  if (const auto* device = std::get_if<DeviceBuildString>(&build_string)) {
+    return CF_EXPECT(GetBuild(*device));
+  }
+  if (const auto* directory =
+          std::get_if<DirectoryBuildString>(&build_string)) {
+    return CF_EXPECT(GetBuild(*directory));
+  }
+  return CF_ERRF("AndroidBuildApi cannot handle '{}'",
+                 fmt::streamed(build_string));
 }
 
 Result<std::string> AndroidBuildApi::DownloadFile(

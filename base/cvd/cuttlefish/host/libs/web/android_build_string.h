@@ -49,7 +49,33 @@ struct DirectoryBuildString {
 std::ostream& operator<<(std::ostream& out,
                          const DirectoryBuildString& build_string);
 
-using BuildString = std::variant<DeviceBuildString, DirectoryBuildString>;
+// Names either a single object or, with a trailing '/', the prefix holding a
+// build's artifacts.
+struct GcsBuildString {
+  std::string url;
+  std::optional<std::string> filepath;
+  std::optional<std::string> sha256;
+
+  auto operator<=>(const GcsBuildString&) const = default;
+};
+
+std::ostream& operator<<(std::ostream& out, const GcsBuildString& build_string);
+
+// Names the same two forms over `https://`. Any credential travels in the URL
+// itself, as in a pre-signed URL.
+struct HttpBuildString {
+  std::string url;
+  std::optional<std::string> filepath;
+  std::optional<std::string> sha256;
+
+  auto operator<=>(const HttpBuildString&) const = default;
+};
+
+std::ostream& operator<<(std::ostream& out,
+                         const HttpBuildString& build_string);
+
+using BuildString = std::variant<DeviceBuildString, DirectoryBuildString,
+                                 GcsBuildString, HttpBuildString>;
 
 std::ostream& operator<<(std::ostream& out, const BuildString& build_string);
 
