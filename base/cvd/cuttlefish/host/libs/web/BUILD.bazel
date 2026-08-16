@@ -255,3 +255,24 @@ cf_cc_test(
         "//cuttlefish/result:result_matchers",
     ],
 )
+
+cf_cc_library(
+    name = "url_namespace",
+    srcs = ["url_namespace.cpp"],
+    hdrs = ["url_namespace.h"],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "url_namespace_test",
+    srcs = ["url_namespace_test.cpp"],
+    deps = [
+        "//cuttlefish/host/libs/web:url_namespace",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
