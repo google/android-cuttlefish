@@ -33,15 +33,22 @@ struct ParsedUrl {
 
 Result<ParsedUrl> ParseUrl(std::string_view url);
 
-// The product of a "<product>-img-<id>.zip" or "<product>-img.zip" artifact,
-// or "url" for names that do not follow the Android Build convention.
+// Returns the product named by a "<product>-img-<id>.zip" or
+// "<product>-img.zip" artifact, or "url" when the name does not follow the
+// Android Build convention.
 std::string DeriveProduct(std::string_view basename);
 
-// The name of the `kind` zip of a URL build, where `names` holds the contents
-// of a closed namespace and `object` the single object of a build that names
-// one. `{selector}` never names a zip, so it is deliberately not an input.
-// A name states its kind either as Android Build's "-<kind>-" infix or as a
-// "-<kind>.zip" suffix.
+// Returns true when the object form names one archive, so that `{selector}`
+// names a member of it rather than a second artifact of the build.
+bool IsArchiveMember(const std::optional<std::string>& object,
+                     const std::optional<std::string>& filepath,
+                     const std::string& artifact_name);
+
+// Returns the name of the `kind` zip of a URL build. `names` holds the
+// contents of a closed namespace and `object` the single object of a build
+// that names one. A name states its kind either as Android Build's "-<kind>-"
+// infix or as a "-<kind>.zip" suffix. `{selector}` never names a zip, so it is
+// not an input.
 Result<std::string> ResolveUrlZipName(const std::vector<std::string>& names,
                                       bool closed,
                                       const std::optional<std::string>& object,

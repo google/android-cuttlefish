@@ -16,6 +16,7 @@
 #include "cuttlefish/host/libs/web/url_namespace.h"
 
 #include <optional>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -87,6 +88,17 @@ TEST(DeriveProductTests, OtherNamesSuccess) {
   EXPECT_EQ(DeriveProduct("-img-12345.zip"), "url");
   EXPECT_EQ(DeriveProduct("-img.zip"), "url");
   EXPECT_EQ(DeriveProduct("phone-img-12345.tar.gz"), "url");
+}
+
+TEST(IsArchiveMemberTests, SelectorNamesAMemberSuccess) {
+  EXPECT_TRUE(IsArchiveMember("images.zip", "boot.img", "boot.img"));
+}
+
+TEST(IsArchiveMemberTests, OtherArtifactsAreNotMembersSuccess) {
+  EXPECT_FALSE(IsArchiveMember("images.zip", std::nullopt, "boot.img"));
+  EXPECT_FALSE(IsArchiveMember("images.zip", "boot.img", "images.zip"));
+  EXPECT_FALSE(IsArchiveMember("host.tar.gz", "boot.img", "boot.img"));
+  EXPECT_FALSE(IsArchiveMember(std::nullopt, "boot.img", "boot.img"));
 }
 
 TEST(ResolveUrlZipNameTests, ObjectNamingTheKindSuccess) {

@@ -87,6 +87,15 @@ std::ostream& operator<<(std::ostream& out, const GcsBuild& build) {
              << build.filepath.value_or("") << "\")";
 }
 
+std::vector<std::string> GcsArtifactNames(const GcsBuild& build) {
+  std::vector<std::string> names;
+  names.reserve(build.contents.size());
+  for (const auto& entry : build.contents) {
+    names.push_back(entry.first);
+  }
+  return names;
+}
+
 Result<HttpBuild> HttpBuild::FromBuildString(
     const HttpBuildString& build_string) {
   ParsedUrl url = CF_EXPECT(ParseUrl(build_string.url));

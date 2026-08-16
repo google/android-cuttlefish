@@ -89,6 +89,13 @@ std::string DeriveProduct(std::string_view basename) {
   return kUrlProduct;
 }
 
+bool IsArchiveMember(const std::optional<std::string>& object,
+                     const std::optional<std::string>& filepath,
+                     const std::string& artifact_name) {
+  return object.has_value() && artifact_name != *object &&
+         absl::EndsWith(*object, ".zip") && filepath == artifact_name;
+}
+
 Result<std::string> ResolveUrlZipName(const std::vector<std::string>& names,
                                       bool closed,
                                       const std::optional<std::string>& object,
