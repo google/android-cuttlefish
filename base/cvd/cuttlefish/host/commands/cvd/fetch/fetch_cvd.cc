@@ -126,7 +126,7 @@ Result<std::optional<Build>> GetBuildHelper(
 
 Result<Builds> GetBuilds(BuildApi& build_api,
                          const BuildStrings& build_sources) {
-  Builds result = Builds{
+  return Builds{
       .default_build = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.default_build, kDefaultBuildTarget)),
       .system = CF_EXPECT(GetBuildHelper(build_api, build_sources.system_build,
@@ -146,14 +146,6 @@ Result<Builds> GetBuilds(BuildApi& build_api,
           build_api, build_sources.test_suites_build, kDefaultBuildTarget)),
       .chrome_os = build_sources.chrome_os_build,
   };
-  if (!result.otatools) {
-    if (result.system) {
-      result.otatools = result.system;
-    } else if (result.kernel) {
-      result.otatools = result.default_build;
-    }
-  }
-  return {result};
 }
 
 Result<void> UpdateTargetsWithBuilds(BuildApi& build_api,
