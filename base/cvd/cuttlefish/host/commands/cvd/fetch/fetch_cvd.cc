@@ -152,6 +152,7 @@ Result<Builds> GetBuilds(BuildApi& build_api,
     } else if (result.kernel) {
       result.otatools = result.default_build;
     }
+    result.otatools_inferred = result.otatools.has_value();
   }
   return {result};
 }
@@ -358,9 +359,17 @@ Result<void> FetchAndroidEfiLoaderTarget(FetchBuildContext& context) {
 }
 
 Result<void> FetchOtaToolsTarget(FetchBuildContext& context,
-                                 bool keep_downloaded_archives) {
+                                 bool keep_downloaded_archives,
+                                 bool build_was_inferred) {
   FetchArtifact otatools = context.Artifact("otatools.zip");
-  CF_EXPECT(otatools.Download());
+  Result<void> downloaded = otatools.Download();
+  if (!downloaded.has_value() && build_was_inferred) {
+    LOG(WARNING) << "No otatools.zip in " << context
+                 << ", which was not requested but picked from the other "
+                    "builds, continuing without it";
+    return {};
+  }
+  CF_EXPECT(std::move(downloaded));
   CF_EXPECT(otatools.ExtractAll());
   if (!keep_downloaded_archives) {
     CF_EXPECT(otatools.DeleteLocalFile());
@@ -411,7 +420,8 @@ Result<void> FetchChromeOsTarget(
 
 Result<void> FetchTarget(FetchContext& fetch_context,
                          const DownloadFlags& flags,
-                         const bool keep_downloaded_archives) {
+                         const bool keep_downloaded_archives,
+                         bool otatools_inferred) {
   if (std::optional<FetchBuildContext> context = fetch_context.DefaultBuild()) {
     bool has_system_build = fetch_context.SystemBuild().has_value();
     CF_EXPECT(FetchDefaultTarget(*context, keep_downloaded_archives, flags,
@@ -441,7 +451,8 @@ Result<void> FetchTarget(FetchContext& fetch_context,
   }
 
   if (std::optional<FetchBuildContext> ctx = fetch_context.OtaToolsBuild()) {
-    CF_EXPECT(FetchOtaToolsTarget(*ctx, keep_downloaded_archives));
+    CF_EXPECT(
+        FetchOtaToolsTarget(*ctx, keep_downloaded_archives, otatools_inferred));
   }
 
   if (std::optional<FetchBuildContext> ctx = fetch_context.TestSuitesBuild()) {
@@ -497,7 +508,8 @@ Result<FetchResult> Fetch(const FetchFlags& flags,
                                target.builds, config, tracer);
     LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
     CF_EXPECT(FetchTarget(fetch_context, target.download_flags,
-                          flags.keep_downloaded_archives));
+                          flags.keep_downloaded_archives,
+                          target.builds.otatools_inferred));
 
     if (target.builds.chrome_os) {
       CF_EXPECT(FetchChromeOsTarget(
