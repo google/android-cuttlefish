@@ -16,6 +16,7 @@
 #include "cuttlefish/host/libs/web/gcs_build_api.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include <map>
 #include <memory>
@@ -27,6 +28,7 @@
 
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
 #include "gmock/gmock.h"
@@ -92,6 +94,9 @@ class ZipOverRanges {
 
   HttpResponse<std::string> operator()(const HttpRequest& request) {
     static constexpr std::string_view kPrefix = "Range: bytes=";
+    if (request.method == HttpMethod::kHead) {
+      *head_ = true;
+    }
     size_t start = 0;
     size_t end = data_.size();
     for (const std::string& header : request.headers) {
@@ -120,14 +125,19 @@ class ZipOverRanges {
     };
   }
 
+  uint64_t Size() const { return data_.size(); }
   bool RangeRequestMade() const { return *ranged_; }
+  bool HeadRequestMade() const { return *head_; }
 
  private:
   explicit ZipOverRanges(std::string data)
-      : data_(std::move(data)), ranged_(std::make_shared<bool>(false)) {}
+      : data_(std::move(data)),
+        ranged_(std::make_shared<bool>(false)),
+        head_(std::make_shared<bool>(false)) {}
 
   std::string data_;
   std::shared_ptr<bool> ranged_;
+  std::shared_ptr<bool> head_;
 };
 
 TEST(GcsBuildApiTests, GetBuildProbesObjectMetadataSuccess) {
@@ -223,7 +233,8 @@ TEST(GcsBuildApiTests, GetBuildListingFollowsPageTokensSuccess) {
         if (absl::StrContains(request.url, "pageToken=page2")) {
           data =
               R"({"items": [{"name": "dist/b.txt", "generation": "2",
-                             "md5Hash": "mb"}, {"name": "dist/"}]})";
+                             "md5Hash": "mb", "size": "12"},
+                            {"name": "dist/"}]})";
         }
         return HttpResponse<std::string>{.data = data, .http_code = 200};
       },
@@ -238,6 +249,7 @@ TEST(GcsBuildApiTests, GetBuildListingFollowsPageTokensSuccess) {
   EXPECT_THAT(gcs->contents, SizeIs(2));
   EXPECT_EQ(gcs->contents.at("a.txt").generation, "1");
   EXPECT_EQ(gcs->contents.at("b.txt").md5, "mb");
+  EXPECT_EQ(gcs->contents.at("b.txt").size, 12);
   EXPECT_TRUE(http_client.RequestMade("pageToken=page2"));
 }
 
@@ -285,14 +297,16 @@ TEST(GcsBuildApiTests, DownloadFileWritesTheArtifactSuccess) {
 TEST(GcsBuildApiTests, FileReaderReadsTheNamedArtifactSuccess) {
   FakeHttpClient http_client;
   GcsBuildApi api(http_client, nullptr);
-  http_client.SetResponse(
-      R"({"items": [{"name": "dist/phone-img-1.zip", "generation": "1"}]})",
-      kListUrl);
 
   Result<ZipOverRanges> zip_handler =
       ZipOverRanges::Create({{"boot.img", "boot bytes"}});
   ASSERT_THAT(zip_handler, IsOk());
   http_client.SetResponse(*zip_handler, kMediaUrl);
+  http_client.SetResponse(
+      absl::StrCat(R"({"items": [{"name": "dist/phone-img-1.zip",)",
+                   R"( "generation": "1", "size": ")", zip_handler->Size(),
+                   R"("}]})"),
+      kListUrl);
 
   BuildString build_string = GcsBuildString{.url = "gs://bucket/dist/"};
   Result<Build> build = api.GetBuild(build_string);
@@ -306,17 +320,20 @@ TEST(GcsBuildApiTests, FileReaderReadsTheNamedArtifactSuccess) {
   ASSERT_THAT(member, IsOk());
   EXPECT_THAT(ReadToString(**member), IsOkAndValue("boot bytes"));
   EXPECT_TRUE(http_client.RequestMade(kMediaUrl));
+  // The listing reported the size, so the reader has nothing left to ask.
+  EXPECT_FALSE(zip_handler->HeadRequestMade());
 }
 
 TEST(GcsBuildApiTests, DownloadFileExtractsAnArchiveMemberSuccess) {
   FakeHttpClient http_client;
   GcsBuildApi api(http_client, nullptr);
-  http_client.SetResponse(R"({"size": "3"})", kObjectUrl);
 
   Result<ZipOverRanges> zip_handler = ZipOverRanges::Create(
       {{"cvd-host_package.tar.gz", "package bytes"}, {"boot.img", "boot"}});
   ASSERT_THAT(zip_handler, IsOk());
   http_client.SetResponse(*zip_handler, kMediaUrl);
+  http_client.SetResponse(
+      absl::StrCat(R"({"size": ")", zip_handler->Size(), R"("})"), kObjectUrl);
 
   BuildString build_string = GcsBuildString{
       .url = "gs://bucket/dist/phone-img-1.zip",
@@ -336,6 +353,7 @@ TEST(GcsBuildApiTests, DownloadFileExtractsAnArchiveMemberSuccess) {
   ASSERT_TRUE(android::base::ReadFileToString(expected_path, &contents));
   EXPECT_EQ(contents, "package bytes");
   EXPECT_TRUE(zip_handler->RangeRequestMade());
+  EXPECT_FALSE(zip_handler->HeadRequestMade());
 }
 
 TEST(GcsBuildApiTests, ForeignBuildFail) {
