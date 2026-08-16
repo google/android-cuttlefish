@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -31,12 +32,42 @@
 #include "curl/easy.h"
 #include "curl/header.h"
 
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
+
+// The bundled libcurl compiles in the Debian bundle path as its default, so
+// hardcoding `CURLOPT_CAINFO` to that same path leaves the trust root tied to
+// Debian at both layers. Probing these is what makes other distributions work.
+constexpr const char* kCaBundleCandidates[] = {
+    "/etc/ssl/certs/ca-certificates.crt",  // Debian, Ubuntu, Arch, Alpine
+    "/etc/pki/tls/certs/ca-bundle.crt",    // Fedora, RHEL
+    "/etc/ssl/ca-bundle.pem",              // openSUSE
+    "/etc/ssl/cert.pem",                   // FreeBSD, macOS
+};
+
+// The bundle to hand to `CURLOPT_CAINFO`, or nothing to leave libcurl with
+// its compiled-in default. `CURL_CA_BUNDLE` is read here because libcurl
+// reads no CA environment variable of its own (it is a curl command line
+// tool convention), and it comes first so that the trust root stays
+// overridable on hosts where a candidate path exists.
+std::optional<std::string> CaBundlePath() {
+  std::optional<std::string> from_environment = StringFromEnv("CURL_CA_BUNDLE");
+  if (from_environment.has_value() && !from_environment->empty()) {
+    return from_environment;
+  }
+  for (const char* candidate : kCaBundleCandidates) {
+    if (FileExists(candidate)) {
+      return std::string(candidate);
+    }
+  }
+  return std::nullopt;
+}
 
 std::string TrimWhitespace(const char* data, const size_t size) {
   std::string_view converted(data, size);
@@ -142,8 +173,10 @@ class CurlClient : public HttpClient {
       default:
         break;
     }
-    curl_easy_setopt(curl_, CURLOPT_CAINFO,
-                     "/etc/ssl/certs/ca-certificates.crt");
+    static const std::optional<std::string> ca_bundle_path = CaBundlePath();
+    if (ca_bundle_path.has_value()) {
+      curl_easy_setopt(curl_, CURLOPT_CAINFO, ca_bundle_path->c_str());
+    }
     curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
     curl_easy_setopt(curl_, CURLOPT_URL, request.url.c_str());
     curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, curl_to_function_cb);
