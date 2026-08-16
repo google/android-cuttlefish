@@ -27,7 +27,10 @@
 #include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/caching_build_api.h"
+#include "cuttlefish/host/libs/web/composite_build_api.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/gcs_build_api.h"
+#include "cuttlefish/host/libs/web/http_build_api.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/retrying_http_client.h"
@@ -48,6 +51,10 @@ struct Downloaders::Impl {
   std::unique_ptr<CredentialSource> luci_credential_source_;
   std::unique_ptr<CredentialSource> gsutil_credential_source_;
   std::unique_ptr<LuciBuildApi> luci_build_api_;
+  std::unique_ptr<CredentialSource> storage_credential_source_;
+  std::unique_ptr<GcsBuildApi> gcs_build_api_;
+  std::unique_ptr<HttpBuildApi> http_build_api_;
+  std::unique_ptr<CompositeBuildApi> composite_build_api_;
 };
 
 Downloaders::Downloaders(std::unique_ptr<Downloaders::Impl> impl)
@@ -108,16 +115,33 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
       *impl->retrying_http_client_, impl->luci_credential_source_.get(),
       impl->gsutil_credential_source_.get());
 
+  Result<std::unique_ptr<CredentialSource>> storage_creds =
+      CredentialForScopes(*impl->curl_, {kCloudStorageReadScope});
+
+  impl->storage_credential_source_ =
+      storage_creds.has_value() && storage_creds->get()
+          ? std::move(*storage_creds)
+          : CF_EXPECT(GetStorageCredentialSource(*impl->retrying_http_client_,
+                                                 flags, IsRunningOnGce()));
+
+  impl->gcs_build_api_ = std::make_unique<GcsBuildApi>(
+      *impl->retrying_http_client_, impl->storage_credential_source_.get());
+  impl->http_build_api_ =
+      std::make_unique<HttpBuildApi>(*impl->retrying_http_client_);
+
+  // Caching is not applied to the URL APIs until their cache keys carry the
+  // identity of the artifact they hold.
+  BuildApi* android_build_api = impl->android_build_api_.get();
+  if (impl->caching_build_api_) {
+    android_build_api = impl->caching_build_api_.get();
+  }
+  impl->composite_build_api_ = std::make_unique<CompositeBuildApi>(
+      *android_build_api, *impl->gcs_build_api_, *impl->http_build_api_);
+
   return Downloaders(std::move(impl));
 }
 
-BuildApi& Downloaders::AndroidBuild() {
-  if (impl_->caching_build_api_) {
-    return *impl_->caching_build_api_;
-  } else {
-    return *impl_->android_build_api_;
-  }
-}
+BuildApi& Downloaders::Builds() { return *impl_->composite_build_api_; }
 
 LuciBuildApi& Downloaders::Luci() { return *impl_->luci_build_api_; }
 

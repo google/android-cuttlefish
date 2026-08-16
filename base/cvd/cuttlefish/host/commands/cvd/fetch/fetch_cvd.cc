@@ -483,13 +483,13 @@ Result<FetchResult> Fetch(const FetchFlags& flags,
 
   FetchTracer tracer;
   FetchTracer::Trace prefetch_trace = tracer.NewTrace("PreFetch actions");
-  CF_EXPECT(UpdateTargetsWithBuilds(downloaders.AndroidBuild(), targets));
+  CF_EXPECT(UpdateTargetsWithBuilds(downloaders.Builds(), targets));
   std::optional<Build> fallback_host_build = std::nullopt;
   if (!targets.empty()) {
     fallback_host_build = targets[0].builds.default_build;
   }
-  const auto host_target_build = CF_EXPECT(GetHostBuild(
-      downloaders.AndroidBuild(), host_target, fallback_host_build));
+  const auto host_target_build = CF_EXPECT(
+      GetHostBuild(downloaders.Builds(), host_target, fallback_host_build));
   prefetch_trace.CompletePhase("GetBuilds");
 
   std::future<Result<void>> host_package_future;
@@ -499,8 +499,8 @@ Result<FetchResult> Fetch(const FetchFlags& flags,
                    std::cref(host_target.host_tools_directory));
   } else {
     host_package_future = std::async(
-        std::launch::async, FetchHostPackage,
-        std::ref(downloaders.AndroidBuild()), std::cref(host_target_build),
+        std::launch::async, FetchHostPackage, std::ref(downloaders.Builds()),
+        std::cref(host_target_build),
         std::cref(host_target.host_tools_directory),
         std::cref(flags.keep_downloaded_archives),
         std::cref(flags.host_substitutions), tracer.NewTrace("Host Package"));
@@ -509,7 +509,7 @@ Result<FetchResult> Fetch(const FetchFlags& flags,
   FetchResult fetch_result;
   for (const auto& target : targets) {
     FetcherConfig config;
-    FetchContext fetch_context(downloaders.AndroidBuild(), target.directories,
+    FetchContext fetch_context(downloaders.Builds(), target.directories,
                                target.builds, config, tracer);
     LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
     CF_EXPECT(FetchTarget(fetch_context, target.download_flags,
