@@ -12,8 +12,23 @@ cf_cc_library(
     hdrs = ["android_build.h"],
     deps = [
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:url_namespace",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "android_build_test",
+    srcs = ["android_build_test.cpp"],
+    deps = [
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 
