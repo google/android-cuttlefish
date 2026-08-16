@@ -309,6 +309,69 @@ TEST(GcsBuildApiTests, DownloadFileWritesTheArtifactSuccess) {
   EXPECT_EQ(contents, "recovery_api_version=3");
 }
 
+TEST(GcsBuildApiTests, DownloadFileChecksTheListedMd5Fail) {
+  FakeHttpClient http_client;
+  GcsBuildApi api(http_client, nullptr);
+  http_client.SetResponse(
+      R"({"items": [{"name": "dist/misc_info.txt", "generation": "1",
+                     "md5Hash": "AAAAAAAAAAAAAAAAAAAAAA=="}]})",
+      kListUrl);
+  http_client.SetResponse("recovery_api_version=3",
+                          "b/bucket/o/dist%2Fmisc_info.txt?alt=media");
+
+  BuildString build_string = GcsBuildString{.url = "gs://bucket/dist/"};
+  Result<Build> build = api.GetBuild(build_string);
+  ASSERT_THAT(build, IsOk());
+
+  TemporaryDir target_directory;
+  EXPECT_THAT(api.DownloadFile(*build, target_directory.path, "misc_info.txt"),
+              IsErrorAndMessage(AllOf(HasSubstr("misc_info.txt"),
+                                      HasSubstr("iJ/GrhggATmj4tovMOdNDQ=="),
+                                      HasSubstr("AAAAAAAAAAAAAAAAAAAAAA=="))));
+}
+
+TEST(GcsBuildApiTests, DownloadFileChecksTheProbedMd5Success) {
+  FakeHttpClient http_client;
+  GcsBuildApi api(http_client, nullptr);
+  http_client.SetResponse(
+      R"({"size": "22", "generation": "17",
+          "md5Hash": "iJ/GrhggATmj4tovMOdNDQ=="})",
+      kObjectUrl);
+  http_client.SetResponse("recovery_api_version=3", kMediaUrl);
+
+  BuildString build_string =
+      GcsBuildString{.url = "gs://bucket/dist/phone-img-1.zip"};
+  Result<Build> build = api.GetBuild(build_string);
+  ASSERT_THAT(build, IsOk());
+
+  TemporaryDir target_directory;
+  EXPECT_THAT(
+      api.DownloadFile(*build, target_directory.path, "phone-img-1.zip"),
+      IsOk());
+}
+
+TEST(GcsBuildApiTests, DownloadFileChecksTheRequestedSha256Fail) {
+  FakeHttpClient http_client;
+  GcsBuildApi api(http_client, nullptr);
+  http_client.SetResponse(R"({"size": "22"})", kObjectUrl);
+  http_client.SetResponse("recovery_api_version=3", kMediaUrl);
+
+  BuildString build_string = GcsBuildString{
+      .url = "gs://bucket/dist/phone-img-1.zip",
+      .sha256 = std::string(64, 'b'),
+  };
+  Result<Build> build = api.GetBuild(build_string);
+  ASSERT_THAT(build, IsOk());
+
+  TemporaryDir target_directory;
+  EXPECT_THAT(
+      api.DownloadFile(*build, target_directory.path, "phone-img-1.zip"),
+      IsErrorAndMessage(AllOf(
+          HasSubstr("phone-img-1.zip"), HasSubstr(std::string(64, 'b')),
+          HasSubstr("8e441a1db0c390234afe2970a82f888e5608304062d77df18622d872e"
+                    "1328f5d"))));
+}
+
 TEST(GcsBuildApiTests, FileReaderReadsTheNamedArtifactSuccess) {
   FakeHttpClient http_client;
   GcsBuildApi api(http_client, nullptr);
