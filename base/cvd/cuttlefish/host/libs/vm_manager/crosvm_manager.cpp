@@ -201,7 +201,9 @@ CrosvmManager::ConfigureBootDevices(
       num_gpu_pcis += 1;
     }
     // virtio_gpu and virtio_wl precedes the first console or disk
-    return ConfigureMultipleBootDevices("pci0000:00/0000:00:", 1 + num_gpu_pcis,
+    int disk_pci_offset = 1 + num_gpu_pcis + VmManager::kDefaultNumHvcs +
+                          VmManager::kMaxDisks - num_disks;
+    return ConfigureMultipleBootDevices("pci0000:00/0000:00:", disk_pci_offset,
                                         num_disks);
   } else {
     // On ARM64 crosvm, block devices are on their own bridge, so we don't

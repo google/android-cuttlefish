@@ -223,9 +223,9 @@ QemuManager::ConfigureBootDevices(
       // QEMU has additional PCI devices for an ISA bridge and PIIX4
       // virtio_gpu precedes the first console or disk
       // TODO(schuffelen): Simplify this logic when crosvm uses multiport
-      int pci_offset = 3 + num_gpu - VmManager::kDefaultNumHvcs;
-      return ConfigureMultipleBootDevices("pci0000:00/0000:00:", pci_offset,
-                                          num_disks);
+      int disk_pci_offset = 3 + num_gpu + VmManager::kMaxDisks - num_disks;
+      return ConfigureMultipleBootDevices(
+          "pci0000:00/0000:00:", disk_pci_offset, num_disks);
     }
   }
 }
