@@ -29,6 +29,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd_stream.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/result/result.h"
 
@@ -37,7 +38,7 @@ namespace cuttlefish {
 Result<HttpResponse<std::string>> HttpGetToFile(
     HttpClient& http_client, const std::string& url, const std::string& path,
     const std::vector<std::string>& headers) {
-  VLOG(0) << "Saving '" << url << "' to '" << path << "'";
+  VLOG(0) << "Saving '" << ScrubUrl(url) << "' to '" << path << "'";
 
   std::string temp_path;
   std::unique_ptr<SharedFDOstream> stream;
@@ -83,8 +84,8 @@ Result<HttpResponse<std::string>> HttpGetToFile(
   HttpResponse<void> http_response =
       CF_EXPECT(http_client.DownloadToCallback(request, callback));
 
-  VLOG(0) << "Downloaded '" << total_dl << "' total bytes from '" << url
-          << "' to '" << path << "'.";
+  VLOG(0) << "Downloaded '" << total_dl << "' total bytes from '"
+          << ScrubUrl(url) << "' to '" << path << "'.";
 
   if (http_response.HttpSuccess()) {
     CF_EXPECT(RenameFile(temp_path, path));
