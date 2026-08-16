@@ -43,10 +43,10 @@
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/digest.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
-#include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/host/libs/web/http_client/url_escape.h"
+#include "cuttlefish/host/libs/web/url_download.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
@@ -127,6 +127,18 @@ std::optional<uint64_t> ArtifactSize(const GcsBuild& build,
     return std::nullopt;
   }
   return entry->second.size;
+}
+
+std::optional<std::string> ArtifactGeneration(
+    const GcsBuild& build, const std::string& artifact_name) {
+  if (build.object.has_value()) {
+    return build.generation;
+  }
+  auto entry = build.contents.find(artifact_name);
+  if (entry == build.contents.end() || entry->second.generation.empty()) {
+    return std::nullopt;
+  }
+  return entry->second.generation;
 }
 
 // The listing and the metadata probe both report an md5, so a `gs://` download
@@ -275,13 +287,24 @@ Result<std::string> GcsBuildApi::DownloadFile(
     return dest_path;
   }
 
-  const std::string url =
+  std::string url =
       MediaUrl(build.bucket, CF_EXPECT(ObjectName(build, artifact_name)));
-  HttpResponse<std::string> response = CF_EXPECT(
-      HttpGetToFile(http_client_, url, dest_path, CF_EXPECT(Headers())));
-  CF_EXPECTF(response.HttpSuccess(),
-             "Could not download '{}' from '{}' - {}:{}", artifact_name,
-             build.id, response.http_code, response.StatusDescription());
+  std::optional<std::string> generation =
+      ArtifactGeneration(build, artifact_name);
+  if (generation.has_value()) {
+    // Naming the generation fixes the bytes the URL serves, which is what a
+    // resumed download needs of it.
+    absl::StrAppend(&url, "&generation=", *generation);
+  }
+
+  UrlDownload download = {
+      .url = url,
+      .headers = CF_EXPECT(Headers()),
+      .resumable = generation.has_value(),
+      .size = ArtifactSize(build, artifact_name),
+  };
+  CF_EXPECTF(DownloadUrlToFile(http_client_, download, dest_path),
+             "Could not download '{}' from '{}'", artifact_name, build.id);
   CF_EXPECT(VerifyArtifact(build, artifact_name, dest_path));
   return dest_path;
 }

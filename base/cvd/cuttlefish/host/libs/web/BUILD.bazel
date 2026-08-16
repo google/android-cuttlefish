@@ -294,9 +294,9 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:build_api_zip",
         "//cuttlefish/host/libs/web:credential_source",
         "//cuttlefish/host/libs/web:digest",
+        "//cuttlefish/host/libs/web:url_download",
         "//cuttlefish/host/libs/web:url_namespace",
         "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/web/http_client:http_file",
         "//cuttlefish/host/libs/web/http_client:http_json",
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/host/libs/web/http_client:url_escape",
@@ -347,9 +347,9 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:build_api",
         "//cuttlefish/host/libs/web:build_api_zip",
         "//cuttlefish/host/libs/web:digest",
+        "//cuttlefish/host/libs/web:url_download",
         "//cuttlefish/host/libs/web:url_namespace",
         "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/web/http_client:http_file",
         "//cuttlefish/host/libs/zip:remote_zip",
         "//cuttlefish/host/libs/zip:zip_file",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
@@ -441,6 +441,40 @@ cf_cc_test(
     deps = [
         "//cuttlefish/host/libs/web:parse_time",
         "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
+    name = "url_download",
+    srcs = ["url_download.cpp"],
+    hdrs = ["url_download.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_file",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/posix:remove",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "url_download_test",
+    srcs = ["url_download_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/host/libs/web:url_download",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:fake_http_client",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
