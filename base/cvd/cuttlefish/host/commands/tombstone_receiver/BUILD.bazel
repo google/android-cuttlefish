@@ -11,7 +11,7 @@ cf_cc_binary(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/fs:unique_fd",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/flag_parser",
         "//cuttlefish/flag_parser:shared_fd_flag",
         "//cuttlefish/host/libs/config:logging",

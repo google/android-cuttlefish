@@ -27,6 +27,7 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs:scoped_mmap",
+        "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/io",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result:expect",
@@ -55,7 +56,6 @@ cf_cc_library(
     }),
     deps = [
         "//cuttlefish/common/libs/fs:fd",
-        "//cuttlefish/common/libs/fs:unique_fd",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
@@ -97,21 +97,5 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
-    ],
-)
-
-cf_cc_library(
-    name = "unique_fd",
-    srcs = ["unique_fd.cc"],
-    hdrs = ["unique_fd.h"],
-    include_cleaner_enabled = False,
-    deps = [
-        "//cuttlefish/common/libs/fs:fd",
-        "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/posix:strerror",
-        "//cuttlefish/result",
-        "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/log:check",
-        "@fmt",
     ],
 )
