@@ -1,4 +1,4 @@
-name: '▶️ Gemini Invoke'
+name: '🧙 Gemini Plan Execution'
 
 on:
   workflow_call:
@@ -9,20 +9,22 @@ on:
         required: false
 
 concurrency:
-  group: '${{ github.workflow }}-invoke-${{ github.event_name }}-${{ github.event.pull_request.number }}'
-  cancel-in-progress: false
+  group: '${{ github.workflow }}-plan-execute-${{ github.event_name }}-${{ github.event.pull_request.number }}'
+  cancel-in-progress: true
 
 defaults:
   run:
     shell: 'bash'
 
 jobs:
-  invoke:
+  plan-execute:
+    timeout-minutes: 30
     runs-on: 'ubuntu-latest'
     permissions:
-      contents: 'read'
+      contents: 'write'
       id-token: 'write'
       pull-requests: 'write'
+
     steps:
       - name: 'Mint identity token'
         id: 'mint_identity_token'
@@ -32,15 +34,15 @@ jobs:
         with:
           app-id: '${{ vars.APP_ID }}'
           private-key: '${{ secrets.APP_PRIVATE_KEY }}'
-          permission-contents: 'read'
+          permission-contents: 'write'
           permission-pull-requests: 'write'
 
       - name: 'Checkout Code'
-        uses: 'actions/checkout@v4' # ratchet:exclude
+        uses: 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' # v4
 
       - name: 'Run Gemini CLI'
         id: 'run_gemini'
-        uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
+        uses: 'google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489' # v0
         env:
           TITLE: '${{ github.event.pull_request.title }}'
           DESCRIPTION: '${{ github.event.pull_request.body }}'
@@ -63,7 +65,7 @@ jobs:
           use_gemini_code_assist: '${{ vars.GOOGLE_GENAI_USE_GCA }}'
           use_vertex_ai: '${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}'
           upload_artifacts: '${{ vars.UPLOAD_ARTIFACTS }}'
-          workflow_name: 'gemini-invoke'
+          workflow_name: 'gemini-plan-execute'
           # Assistant workflows can be triggered by comments on either Issues or PRs.
           # We explicitly map both fields so the CLI can correctly categorize the interaction.
           github_pr_number: '${{ github.event.pull_request.number }}'
@@ -89,12 +91,18 @@ jobs:
                     "ghcr.io/github/github-mcp-server:v0.27.0"
                   ],
                   "includeTools": [
+                    "create_pull_request",
                     "pull_request_read",
                     "list_pull_requests",
                     "search_pull_requests",
+                    "create_branch",
+                    "create_or_update_file",
+                    "delete_file",
+                    "fork_repository",
                     "get_commit",
                     "get_file_contents",
                     "list_commits",
+                    "push_files",
                     "search_code"
                   ],
                   "env": {
@@ -112,4 +120,4 @@ jobs:
                 ]
               }
             }
-          prompt: '/gemini-invoke'
+          prompt: '/gemini-plan-execute'
