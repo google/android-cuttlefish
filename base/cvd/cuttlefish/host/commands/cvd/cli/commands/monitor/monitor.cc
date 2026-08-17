@@ -37,8 +37,8 @@
 #include "absl/strings/str_cat.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/display.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/drain_inotify.h"
@@ -60,7 +60,7 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd,
   std::unique_ptr<MonitorSource> launcher_monitor_source;
   std::unique_ptr<MonitorSource> logcat_monitor_source;
 
-  const SharedFD dir_inotify_fd = UniqueFd::InotifyFd();
+  const SharedFD dir_inotify_fd = Fd::InotifyFd();
   CF_EXPECT(dir_inotify_fd->IsOpen(), "Failed to create inotify fd");
   const int flags = dir_inotify_fd->Fcntl(F_GETFL, 0);
   CF_EXPECT(dir_inotify_fd->Fcntl(F_SETFL, flags | O_NONBLOCK) != -1,

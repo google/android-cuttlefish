@@ -34,10 +34,10 @@
 #include "absl/log/log.h"
 #include "json/json.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/common/libs/fs/unique_fd.h"
 
 namespace cuttlefish {
 
@@ -244,7 +244,7 @@ bool VsockServerConnection::Connect(unsigned int port, unsigned int cid,
                                                    vhost_user_vsock_cid, cid);
   }
   if (server_fd_->IsOpen()) {
-    fd_ = UniqueFd::Accept(*server_fd_);
+    fd_ = Fd::Accept(*server_fd_);
     return fd_->IsOpen();
   } else {
     return false;

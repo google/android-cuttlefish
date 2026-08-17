@@ -33,10 +33,10 @@
 #include "fruit/injector.h"
 #include "gflags/gflags.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
@@ -129,7 +129,7 @@ Result<void> ServerLoopImpl::Run() {
     }
 
     CF_EXPECT(read_set.IsSet(server_));
-    SharedFD client = UniqueFd::Accept(*server_);
+    SharedFD client = Fd::Accept(*server_);
     while (client->IsOpen()) {
       auto launcher_action_with_info_result = ReadLauncherActionFromFd(client);
       if (!launcher_action_with_info_result.has_value()) {
@@ -448,7 +448,7 @@ void ServerLoopImpl::RestartRunCvd(int notification_fd) {
     CHECK(RemoveFile(config_.AssemblyPath("restore")).has_value());
   }
   auto config_path = config_.AssemblyPath("cuttlefish_config.json");
-  SharedFD followup_stdin = UniqueFd::MemfdCreate("pseudo_stdin");
+  SharedFD followup_stdin = Fd::MemfdCreate("pseudo_stdin");
   WriteAll(followup_stdin, config_path + "\n");
   // NOLINTNEXTLINE(misc-include-cleaner): unistd.h provides SEEK_SET
   followup_stdin->LSeek(0, SEEK_SET);

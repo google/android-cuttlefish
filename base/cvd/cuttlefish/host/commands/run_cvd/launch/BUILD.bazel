@@ -481,7 +481,7 @@ cf_cc_library(
     hdrs = ["ti50_emulator.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/fs:unique_fd",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:socket2socket_proxy",
         "//cuttlefish/common/libs/utils:wait_for_unix_socket",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",

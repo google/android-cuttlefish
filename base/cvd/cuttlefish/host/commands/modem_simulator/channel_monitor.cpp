@@ -21,9 +21,9 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_replace.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/host/commands/modem_simulator/virtual_modem_simulator.h"
 
 namespace cuttlefish {
@@ -69,7 +69,7 @@ ClientId ChannelMonitor::SetRemoteClient(SharedFD client, bool is_accepted) {
 }
 
 void ChannelMonitor::AcceptIncomingConnection() {
-  SharedFD client_fd = UniqueFd::Accept(*server_);
+  SharedFD client_fd = Fd::Accept(*server_);
   if (!client_fd->IsOpen()) {
     LOG(ERROR) << "Error accepting connection on socket: "
                << client_fd->StrError();

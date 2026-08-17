@@ -49,7 +49,6 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/result/result.h"
 
 /**
@@ -131,10 +130,10 @@ class SharedFD {
   SharedFD(const std::shared_ptr<Fd>& in) : value_(in) {}
   SharedFD(SharedFD const&) = default;
   SharedFD(SharedFD&& other);
-  SharedFD(UniqueFd other);
+  SharedFD(Fd other);
   SharedFD& operator=(SharedFD const&) = default;
   SharedFD& operator=(SharedFD&& other);
-  SharedFD& operator=(UniqueFd other);
+  SharedFD& operator=(Fd other);
   static SharedFD Dup(int unmanaged_fd);
   // All SharedFDs have the O_CLOEXEC flag after creation. To remove use the
   // Fcntl or Dup functions.

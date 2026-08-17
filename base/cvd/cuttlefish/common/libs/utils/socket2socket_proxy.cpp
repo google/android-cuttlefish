@@ -30,8 +30,8 @@
 
 #include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/fs/unique_fd.h"
 
 namespace cuttlefish {
 namespace {
@@ -152,7 +152,7 @@ ProxyServer::ProxyServer(SharedFD server,
 
       // Server fd is available to read, so we can accept the
       // connection without blocking on that
-      SharedFD client = UniqueFd::Accept(*server_fd);
+      SharedFD client = Fd::Accept(*server_fd);
       if (!client->IsOpen()) {
         LOG(ERROR) << "Failed to accept incoming connection: "
                    << client->StrError();
