@@ -18,6 +18,7 @@
 
 #include <string_view>
 
+#include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/result/result.h"
@@ -25,6 +26,9 @@
 namespace cuttlefish {
 
 Result<Mte> ParseMte(std::string_view str) {
+  if (absl::EqualsIgnoreCase(str, "auto")) {
+    return Mte::kAuto;
+  }
   bool bool_res;
   CF_EXPECTF(absl::SimpleAtob(str, &bool_res),
              "Failed to parse mte option \"{}\"", str);
