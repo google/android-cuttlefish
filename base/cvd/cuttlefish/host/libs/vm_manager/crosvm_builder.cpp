@@ -23,6 +23,7 @@
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/config/mte.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_cpu.h"
 #include "cuttlefish/process/command.h"
 
@@ -71,20 +72,22 @@ void CrosvmBuilder::AddControlSocket(const std::string& control_socket,
 }
 
 Result<void> CrosvmBuilder::AddCpus(size_t cpus,
-                                    const std::string& vcpu_config_path) {
+                                    const std::string& vcpu_config_path,
+                                    Mte mte) {
   if (!vcpu_config_path.empty()) {
     Json::Value vcpu_config_json = CF_EXPECT(LoadFromFile(vcpu_config_path));
 
-    CF_EXPECT(AddCpus(vcpu_config_json));
+    CF_EXPECT(AddCpus(vcpu_config_json, mte));
   } else {
-    AddCpus(cpus);
+    AddCpus(cpus, mte);
   }
   return {};
 }
 
-Result<void> CrosvmBuilder::AddCpus(const Json::Value& vcpu_config_json) {
+Result<void> CrosvmBuilder::AddCpus(const Json::Value& vcpu_config_json,
+                                    Mte mte) {
   std::vector<std::string> cpu_args =
-      CF_EXPECT(CrosvmCpuArguments(vcpu_config_json));
+      CF_EXPECT(CrosvmCpuArguments(vcpu_config_json, mte));
 
   for (const std::string& cpu_arg : cpu_args) {
     command_.AddParameter(cpu_arg);
@@ -92,9 +95,12 @@ Result<void> CrosvmBuilder::AddCpus(const Json::Value& vcpu_config_json) {
   return {};
 }
 
-void CrosvmBuilder::AddCpus(size_t cpus) {
+void CrosvmBuilder::AddCpus(size_t cpus, Mte mte) {
   std::vector<std::string> cpus_params;
   cpus_params.push_back(std::to_string(cpus));
+  if (mte == Mte::kAuto) {
+    cpus_params.push_back("mte=[auto]");
+  }
 
   command_.AddParameter("--cpus");
   command_.AddJoinedParameter(cpus_params);

@@ -24,6 +24,7 @@ namespace cuttlefish {
 enum class Mte {
   kOff,
   kOn,
+  kAuto,
 };
 
 Result<Mte> ParseMte(std::string_view);
