@@ -214,8 +214,11 @@ Fd Fd::InotifyFd(void) {
   return Fd(fd, errno);
 }
 
-Fd Fd::Creat(const std::string& path, mode_t mode) {
-  return Fd::Open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
+Result<Fd> Fd::Creat(const std::string& path, mode_t mode) {
+  Fd fd = Fd::Open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
+  CF_EXPECTF(fd.IsOpen(), "Failed to open '{}' with mode {:o}: {}", path, mode,
+             fd.StrError());
+  return fd;
 }
 
 Result<Fd> Fd::Fifo(const std::string& path, mode_t mode) {

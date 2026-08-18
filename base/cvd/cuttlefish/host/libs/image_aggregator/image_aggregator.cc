@@ -35,6 +35,7 @@
 #include "google/protobuf/util/message_differencer.h"
 #include <zlib.h>
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -322,8 +323,7 @@ Result<void> AggregateImage(const std::vector<ImagePartition>& partitions,
     Result<void> unused = builder.AppendPartition(partition);
   }
 
-  SharedFD output = SharedFD::Creat(output_path, 0600);
-  CF_EXPECTF(output->IsOpen(), "{}", output->StrError());
+  SharedFD output = CF_EXPECT(Fd::Creat(output_path, 0600));
 
   GptBeginning beginning = CF_EXPECT(builder.Beginning());
   CF_EXPECTF(WriteBeginning(output, beginning),
@@ -381,16 +381,14 @@ Result<void> CreateOrUpdateCompositeDisk(
 
   CF_EXPECT(WriteCompositeDiskToFile(composite_proto, output_composite_path));
 
-  SharedFD header = SharedFD::Creat(header_file, 0600);
-  CF_EXPECTF(header->IsOpen(), "{}", header->StrError());
+  SharedFD header = CF_EXPECT(Fd::Creat(header_file, 0600));
 
   GptBeginning beginning = CF_EXPECT(builder.Beginning());
   CF_EXPECTF(WriteBeginning(header, beginning),
              "Could not write GPT beginning to '{}': {}", header_file,
              header->StrError());
 
-  SharedFD footer = SharedFD::Creat(footer_file, 0600);
-  CF_EXPECTF(footer->IsOpen(), "{}", footer->StrError());
+  SharedFD footer = CF_EXPECT(Fd::Creat(footer_file, 0600));
 
   CF_EXPECTF(WriteEnd(footer, builder.End(beginning)),
              "Could not write GPT end to '{}': {}", footer_file,

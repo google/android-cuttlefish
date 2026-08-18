@@ -41,6 +41,7 @@
 #include "fruit/injector.h"
 #include "gflags/gflags.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -450,10 +451,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     }
 
     if (!snapshot_path.empty()) {
-      SharedFD temp = SharedFD::Creat(config.AssemblyPath("restore"), 0660);
-      if (!temp->IsOpen()) {
-        return CF_ERR("Failed to create restore file: " << temp->StrError());
-      }
+      CF_EXPECT(Fd::Creat(config.AssemblyPath("restore"), 0660));
     }
 
     auto environment =
