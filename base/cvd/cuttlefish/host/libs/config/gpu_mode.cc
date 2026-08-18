@@ -40,6 +40,8 @@ Result<GpuMode> GpuModeFromString(std::string_view mode) {
     return GpuMode::GfxstreamGuestAngleHostSwiftshader;
   } else if (mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
     return GpuMode::GfxstreamGuestAngleHostLavapipe;
+  } else if (mode == kGpuModeVenus) {
+    return GpuMode::Venus;
   } else if (mode == kGpuModeGuestLavapipe) {
     return GpuMode::GuestLavapipe;
   } else if (mode == kGpuModeGuestSwiftshader) {
@@ -74,6 +76,9 @@ std::string_view format_as(GpuMode mode) {
       break;
     case GpuMode::GfxstreamGuestAngleHostSwiftshader:
       return kGpuModeGfxstreamGuestAngleHostSwiftshader;
+      break;
+    case GpuMode::Venus:
+      return kGpuModeVenus;
       break;
     case GpuMode::GuestLavapipe:
       return kGpuModeGuestLavapipe;
