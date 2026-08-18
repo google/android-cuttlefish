@@ -34,7 +34,30 @@
 
 namespace cuttlefish {
 
+namespace {
+
 using cvd::config::EnvironmentSpecification;
+using cvd::config::Instance;
+
+std::string ConfigFlag(const Instance& instance) {
+  if (instance.has_config()) {
+    return instance.config();
+  }
+  return "";
+}
+
+std::vector<std::string> GenerateConfigFlags(
+    const EnvironmentSpecification& cfg) {
+  for (const auto& instance : cfg.instances()) {
+    if (instance.has_config() && !instance.config().empty()) {
+      return std::vector<std::string>{
+          GenerateInstanceFlag("config", cfg, ConfigFlag)};
+    }
+  }
+  return {};
+}
+
+}  // namespace
 
 Result<std::vector<std::string>> GenerateInstancesFlags(
     const EnvironmentSpecification& cfg) {
@@ -46,6 +69,7 @@ Result<std::vector<std::string>> GenerateInstancesFlags(
   res = MergeResults(std::move(res), CF_EXPECT(GenerateVmFlags(cfg)));
   res = MergeResults(std::move(res), GenerateConnectivityFlags(cfg));
   res = MergeResults(std::move(res), CF_EXPECT(GenerateMediaFlags(cfg)));
+  res = MergeResults(std::move(res), GenerateConfigFlags(cfg));
   return res;
 }
 

@@ -600,4 +600,85 @@ TEST(ConnectivityFlagsParserTest, ParseModemSimulatorSimTypeInvalidInt) {
       << "modem_simulator_sim_type flag is missing or wrongly formatted";
 }
 
+TEST(ConfigFlagsParserTest, ParseSingleInstanceConfig) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "config": "phone"
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  const Result<std::vector<std::string>> serialized_data =
+      LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(*serialized_data, "--config=phone"))
+      << "config flag is missing or wrongly formatted";
+}
+
+TEST(ConfigFlagsParserTest, ParseMultiInstanceConfig) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "config": "phone"
+        },
+        {
+          "config": "tv"
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  const Result<std::vector<std::string>> serialized_data =
+      LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(*serialized_data, "--config=phone,tv"))
+      << "config multi-instance flag is missing or wrongly formatted";
+}
+
+TEST(ConfigFlagsParserTest, ParseMultiInstanceConfigPartial) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "config": "phone"
+        },
+        {
+          "vm": {
+            "crosvm":{
+            }
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  const Result<std::vector<std::string>> serialized_data =
+      LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(*serialized_data, "--config=phone,"))
+      << "config partial multi-instance flag is missing or wrongly formatted";
+}
+
 }  // namespace cuttlefish
