@@ -532,6 +532,7 @@ class CuttlefishConfig {
     bool has_vulkan_gfxstream_apex() const;
     bool has_vulkan_lavapipe_apex() const;
     bool has_vulkan_swiftshader_apex() const;
+    bool has_vulkan_venus_apex() const;
 
     std::string hwcomposer() const;
 
@@ -771,6 +772,7 @@ class CuttlefishConfig {
     void set_has_vulkan_gfxstream_apex(bool has_apex);
     void set_has_vulkan_lavapipe_apex(bool has_apex);
     void set_has_vulkan_swiftshader_apex(bool has_apex);
+    void set_has_vulkan_venus_apex(bool has_apex);
 
     void set_hwcomposer(const std::string&);
 

@@ -902,6 +902,15 @@ bool CuttlefishConfig::InstanceSpecific::has_vulkan_swiftshader_apex() const {
   return (*Dictionary())[kHasVulkanSwiftshaderApex].asBool();
 }
 
+static constexpr char kHasVulkanVenusApex[] = "has_vulkan_venus_apex";
+void CuttlefishConfig::MutableInstanceSpecific::set_has_vulkan_venus_apex(
+    const bool has_apex) {
+  (*Dictionary())[kHasVulkanVenusApex] = has_apex;
+}
+bool CuttlefishConfig::InstanceSpecific::has_vulkan_venus_apex() const {
+  return (*Dictionary())[kHasVulkanVenusApex].asBool();
+}
+
 static constexpr char kEnableAudio[] = "enable_audio";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_audio(bool enable) {
   (*Dictionary())[kEnableAudio] = enable;
