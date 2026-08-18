@@ -167,7 +167,10 @@ class ConfigFlagImpl : public ConfigFlag {
         } else {
           value = config_values[flag].asString();
         }
-        flags[flag].push_back(value);
+        auto [flag_values_it, _] =
+            flags.try_emplace(flag, configs_.size(), "unset");
+        auto& flag_values = flag_values_it->second;
+        flag_values[i] = value;
       }
     }
     for (const auto& [flag, values] : flags) {
