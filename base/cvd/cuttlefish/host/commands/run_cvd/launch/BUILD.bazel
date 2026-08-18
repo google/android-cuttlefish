@@ -197,6 +197,8 @@ cf_cc_library(
     srcs = ["kernel_log_monitor.cpp"],
     hdrs = ["kernel_log_monitor.h"],
     deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
@@ -216,6 +218,7 @@ cf_cc_library(
     hdrs = ["log_tee_creator.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/process:command",
@@ -229,7 +232,7 @@ cf_cc_library(
     srcs = ["logcat_receiver.cpp"],
     hdrs = ["logcat_receiver.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
@@ -397,6 +400,7 @@ cf_cc_library(
     srcs = ["secure_env.cpp"],
     hdrs = ["secure_env.h"],
     deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
         "//cuttlefish/host/libs/config:cuttlefish_config",

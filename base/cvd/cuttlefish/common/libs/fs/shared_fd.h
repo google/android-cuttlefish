@@ -140,7 +140,6 @@ class SharedFD {
   static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
   static SharedFD Open(const std::string& pathname, int flags, mode_t mode = 0);
   static SharedFD Creat(const std::string& pathname, mode_t mode);
-  static Result<SharedFD> Fifo(const std::string& pathname, mode_t mode);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
 #ifdef __linux__
   static SharedFD Event(int initval = 0, int flags = 0);

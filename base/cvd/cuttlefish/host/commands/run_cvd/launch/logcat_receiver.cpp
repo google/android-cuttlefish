@@ -17,7 +17,7 @@
 
 #include <string>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -36,7 +36,7 @@ Result<MonitorCommand> LogcatReceiver(
   const std::string log_name = LogcatPipeName(instance);
 
   return Command(LogcatReceiverBinary())
-      .AddParameter("-log_pipe_fd=", CF_EXPECT(SharedFD::Fifo(log_name, 0600)));
+      .AddParameter("-log_pipe_fd=", CF_EXPECT(Fd::Fifo(log_name, 0600)));
 }
 
 }  // namespace cuttlefish

@@ -30,6 +30,8 @@
 #include "fruit/injector.h"
 #include "fruit/macro.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -99,7 +101,7 @@ class KernelLogMonitor : public CommandSource,
     // due to the usage counters in the kernel reaching zero. If this is not
     // done and the kernel_log_monitor crashes for some reason the VMM may get
     // SIGPIPE.
-    fifo_ = CF_EXPECT(SharedFD::Fifo(log_name, 0600));
+    fifo_ = CF_EXPECT(Fd::Fifo(log_name, 0600));
 
     for (unsigned int i = 0; i < number_of_event_pipes_; ++i) {
       SharedFD event_pipe_write_end, event_pipe_read_end;

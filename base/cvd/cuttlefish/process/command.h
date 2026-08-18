@@ -25,6 +25,7 @@
 
 #include "absl/log/check.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/process/subprocess_options.h"
@@ -43,12 +44,13 @@ class Command {
   }
   // Special treatment for SharedFD
   void BuildParameter(std::stringstream* stream, SharedFD shared_fd);
+  void BuildParameter(std::stringstream* stream, Fd fd);
   // Special treatment for bool so it uses true/false instead of 1/0
   void BuildParameter(std::stringstream* stream, bool arg);
   template <typename T, typename... Args>
-  void BuildParameter(std::stringstream* stream, T t, Args... args) {
-    BuildParameter(stream, t);
-    BuildParameter(stream, args...);
+  void BuildParameter(std::stringstream* stream, T&& t, Args&&... args) {
+    BuildParameter(stream, std::forward<T>(t));
+    BuildParameter(stream, std::forward<Args>(args)...);
   }
 
  public:
@@ -132,14 +134,14 @@ class Command {
   // object is destroyed. To add multiple parameters to the command the function
   // must be called multiple times, one per parameter.
   template <typename... Args>
-  Command& AddParameter(Args... args) & {
+  Command& AddParameter(Args&&... args) & {
     std::stringstream ss;
-    BuildParameter(&ss, args...);
+    BuildParameter(&ss, std::forward<Args>(args)...);
     command_.push_back(ss.str());
     return *this;
   }
   template <typename... Args>
-  Command AddParameter(Args... args) && {
+  Command AddParameter(Args&&... args) && {
     return std::move(AddParameter(std::forward<Args>(args)...));
   }
   Command& AddParameter(std::string arg) &;
