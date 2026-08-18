@@ -25,6 +25,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/result/result.h"
@@ -46,9 +47,7 @@ template <typename Comp>
 Result<void> GenericWriteKeyEqualsValue(
     const std::map<std::string, std::string, Comp>& key_equals_value,
     const std::string& path) {
-  SharedFD output = SharedFD::Creat(path, 0644);
-  CF_EXPECTF(output->IsOpen(), "Failed to open '{}': '{}'", path,
-             output->StrError());
+  SharedFD output = CF_EXPECT(Fd::Creat(path, 0644));
 
   std::string serialized = SerializeKeyEqualsValue(key_equals_value);
 

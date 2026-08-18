@@ -104,7 +104,7 @@ class Fd : public ReaderWriterSeeker {
   static Fd Accept(const Fd& listener, struct sockaddr* addr,
                    socklen_t* addrlen);
   static Fd Accept(const Fd& listener);
-  static Fd Creat(const std::string& pathname, mode_t mode);
+  static Result<Fd> Creat(const std::string& path, mode_t mode);
   static Fd Dup(int unmanaged_fd);
   static Result<Fd> Fifo(const std::string& pathname, mode_t mode);
   static Fd MemfdCreate(const std::string& name, unsigned int flags = 0);

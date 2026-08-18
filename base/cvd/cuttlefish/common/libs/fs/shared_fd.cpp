@@ -214,10 +214,6 @@ SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
   return Fd::Open(path, flags, mode);
 }
 
-SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
-  return Fd::Creat(path, mode);
-}
-
 SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   return Fd::Socket(domain, socket_type, protocol);
 }
