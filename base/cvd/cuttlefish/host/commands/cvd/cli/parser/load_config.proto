@@ -95,6 +95,7 @@ message Instance {
   // TODO: b/337089452 - handle outside of proto logic
   optional string import_template = 9 [json_name = "@import"];
   optional Media media = 10;
+  optional string config = 11;
 }
 
 message Boot {
