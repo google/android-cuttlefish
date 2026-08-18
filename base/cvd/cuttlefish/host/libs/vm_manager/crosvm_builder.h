@@ -21,6 +21,7 @@
 #include "absl/strings/string_view.h"
 #include "json/value.h"
 
+#include "cuttlefish/host/libs/config/mte.h"
 #include "cuttlefish/host/libs/vm_manager/pci.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
@@ -38,9 +39,10 @@ class CrosvmBuilder {
                              int exit_code);
   void AddControlSocket(const std::string&, const std::string&);
 
-  Result<void> AddCpus(size_t cpus, const std::string& vcpu_config_path);
-  Result<void> AddCpus(const Json::Value&);
-  void AddCpus(size_t cpus);
+  Result<void> AddCpus(size_t cpus, const std::string& vcpu_config_path,
+                       Mte mte = Mte::kOff);
+  Result<void> AddCpus(const Json::Value&, Mte mte = Mte::kOff);
+  void AddCpus(size_t cpus, Mte mte = Mte::kOff);
 
   void AddHvcSink();
   void AddHvcReadOnly(const std::string& output, bool console = false);
