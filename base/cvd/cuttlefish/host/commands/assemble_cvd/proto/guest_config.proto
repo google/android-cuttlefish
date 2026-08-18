@@ -57,6 +57,9 @@ message Graphics {
 
   // Whether the guest has a separate apex for the Swiftshader Vulkan driver.
   bool vulkan_swiftshader_apex_supported = 8;
+
+  // Whether the guest has a separate apex for the Venus Vulkan driver.
+  bool vulkan_venus_apex_supported = 9;
 }
 
 message Audio {

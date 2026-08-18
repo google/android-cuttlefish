@@ -372,6 +372,11 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
         bootconfig_args["androidboot.vendor.apex.com.google.cf.vulkan"] =
             "com.google.cf.vulkan.swiftshader";
       }
+    } else if (gpu_mode == GpuMode::Venus) {
+      if (instance.has_vulkan_venus_apex()) {
+        bootconfig_args["androidboot.vendor.apex.com.google.cf.vulkan"] =
+            "com.google.cf.vulkan.venus";
+      }
     }
   }
 
