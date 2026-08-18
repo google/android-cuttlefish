@@ -134,6 +134,10 @@ void Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
   *stream << fd;
 }
 
+void Command::BuildParameter(std::stringstream* stream, Fd fd) {
+  BuildParameter(stream, SharedFD(std::move(fd)));
+}
+
 void Command::BuildParameter(std::stringstream* stream, bool arg) {
   *stream << (arg ? "true" : "false");
 }

@@ -27,6 +27,8 @@
 
 #include "vulkan/vulkan.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -50,8 +52,8 @@ Result<VhostUserDeviceCommands> VhostUserBlockDevice(
       fmt::format("vhost-user-block-{}-socket", num));
   auto block_device_logs_path = instance.PerInstanceInternalPath(
       fmt::format("crosvm_vhost_user_block_{}.fifo", num));
-  auto block_device_logs =
-      CF_EXPECT(SharedFD::Fifo(block_device_logs_path, 0666));
+  SharedFD block_device_logs =
+      CF_EXPECT(Fd::Fifo(block_device_logs_path, 0666));
 
   Command block_device_logs_cmd(HostBinaryPath("log_tee"));
   block_device_logs_cmd.AddParameter("--process_name=crosvm_block_", num);

@@ -19,6 +19,7 @@
 #include <utility>
 #include <vector>
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -34,7 +35,7 @@ Result<Command> CreateLogTeeImpl(
     const std::vector<Command::StdIoChannel>& log_channels) {
   auto name_with_ext = process_name + "_logs.fifo";
   auto logs_path = instance.PerInstanceInternalPath(name_with_ext.c_str());
-  auto logs = CF_EXPECT(SharedFD::Fifo(logs_path, 0666));
+  SharedFD logs = CF_EXPECT(Fd::Fifo(logs_path, 0666));
 
   for (const auto& channel : log_channels) {
     cmd.RedirectStdIO(channel, logs);

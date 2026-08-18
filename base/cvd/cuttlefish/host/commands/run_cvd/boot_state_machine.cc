@@ -48,6 +48,7 @@
 #include "grpcpp/security/credentials.h"
 #include "grpcpp/support/status.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -255,7 +256,7 @@ Result<SharedFD> ProcessLeader(
     const CuttlefishConfig::InstanceSpecific& instance,
     AutoSetup<ValidateTapDevices>::Type& /* dependency */) {
   if (IsRestoring(config)) {
-    CF_EXPECT(SharedFD::Fifo(RestoreAdbdPipeName(instance), 0600),
+    CF_EXPECT(Fd::Fifo(RestoreAdbdPipeName(instance), 0600),
               "Unable to create adbd restore fifo");
   }
 

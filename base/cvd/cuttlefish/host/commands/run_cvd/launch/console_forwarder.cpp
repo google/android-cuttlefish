@@ -44,10 +44,10 @@ Result<std::optional<MonitorCommand>> ConsoleForwarder(
   // These fds will only be read from or written to, but open them with
   // read and write access to keep them open in case the subprocesses exit
   SharedFD console_forwarder_in_wr =
-      CF_EXPECT(SharedFD::Fifo(ConsoleInPipeName(instance), 0600));
+      CF_EXPECT(Fd::Fifo(ConsoleInPipeName(instance), 0600));
 
   SharedFD console_forwarder_out_rd =
-      CF_EXPECT(SharedFD::Fifo(ConsoleOutPipeName(instance), 0600));
+      CF_EXPECT(Fd::Fifo(ConsoleOutPipeName(instance), 0600));
 
   return Command(ConsoleForwarderBinary())
       .AddParameter("--console_in_fd=", console_forwarder_in_wr)

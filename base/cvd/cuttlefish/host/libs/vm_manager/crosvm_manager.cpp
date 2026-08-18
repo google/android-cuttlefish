@@ -34,6 +34,8 @@
 #include "json/json.h"
 #include "vulkan/vulkan.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
@@ -313,7 +315,7 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
       instance.PerInstanceInternalUdsPath("vhost-user-gpu-socket");
   auto gpu_device_logs_path =
       instance.PerInstanceInternalPath("crosvm_vhost_user_gpu.fifo");
-  auto gpu_device_logs = CF_EXPECT(SharedFD::Fifo(gpu_device_logs_path, 0666));
+  SharedFD gpu_device_logs = CF_EXPECT(Fd::Fifo(gpu_device_logs_path, 0666));
 
   Command gpu_device_logs_cmd(HostBinaryPath("log_tee"));
   gpu_device_logs_cmd.AddParameter("--process_name=crosvm_gpu");
@@ -824,7 +826,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   auto crosvm_logs_path = instance.PerInstanceInternalPath("crosvm.fifo");
-  auto crosvm_logs = CF_EXPECT(SharedFD::Fifo(crosvm_logs_path, 0666));
+  SharedFD crosvm_logs = CF_EXPECT(Fd::Fifo(crosvm_logs_path, 0666));
 
   Command crosvm_log_tee_cmd(HostBinaryPath("log_tee"));
   crosvm_log_tee_cmd.AddParameter("--process_name=crosvm");
@@ -1019,8 +1021,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
     auto gpu_capture_logs_path =
         instance.PerInstanceInternalPath("gpu_capture.fifo");
-    auto gpu_capture_logs =
-        CF_EXPECT(SharedFD::Fifo(gpu_capture_logs_path, 0666));
+    SharedFD gpu_capture_logs =
+        CF_EXPECT(Fd::Fifo(gpu_capture_logs_path, 0666));
 
     Command gpu_capture_log_tee_cmd(HostBinaryPath("log_tee"));
     gpu_capture_log_tee_cmd.AddParameter("--process_name=",

@@ -218,10 +218,6 @@ SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
   return Fd::Creat(path, mode);
 }
 
-Result<SharedFD> SharedFD::Fifo(const std::string& path, mode_t mode) {
-  return CF_EXPECT(Fd::Fifo(path, mode));
-}
-
 SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   return Fd::Socket(domain, socket_type, protocol);
 }
