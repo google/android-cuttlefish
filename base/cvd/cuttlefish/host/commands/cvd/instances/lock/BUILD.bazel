@@ -25,6 +25,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:directory_exists",
         "//cuttlefish/host/commands/cvd/utils:common",
+        "//cuttlefish/posix:remove",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",

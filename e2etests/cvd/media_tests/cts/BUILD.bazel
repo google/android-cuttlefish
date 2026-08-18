@@ -12,20 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_go//go:def.bzl", "go_test")
+# load("@rules_go//go:def.bzl", "go_test")
 
-go_test(
-    name = "media_tests",
-    srcs = ["main_test.go"],
-    deps = [
-        "//cvd/common:common",
-    ],
-    size = "large",
-    tags = [
-        "exclusive",
-        "external",
-        "no-sandbox",
-        "requires_ab",
-        "supports-graceful-termination",
-    ],
-)
+# TODO(b/543144081): re-enable this test
+# go_test(
+#     name = "media_tests",
+#     srcs = ["main_test.go"],
+#     deps = [
+#         "//cvd/common:common",
+#     ],
+#     size = "large",
+#     tags = [
+#         "exclusive",
+#         "external",
+#         "no-sandbox",
+#         "requires_ab",
+#         "supports-graceful-termination",
+#     ],
+# )

@@ -61,8 +61,9 @@ Result<void> WorkerInnerLoop(std::function<bool()> process_callback,
       // Send the ACK response.
       const SnapshotSocketMessage ack_response =
           SnapshotSocketMessage::kSuspendAck;
-      CF_EXPECT_EQ(sizeof(ack_response),
-                   snapshot_socket->Write(&ack_response, sizeof(ack_response)),
+      uint64_t written = CF_EXPECT(
+          snapshot_socket->Write(&ack_response, sizeof(ack_response)));
+      CF_EXPECT_EQ(sizeof(ack_response), written,
                    "socket write failed: " << snapshot_socket->StrError());
       // Block until resumed.
       SnapshotSocketMessage resume_request;

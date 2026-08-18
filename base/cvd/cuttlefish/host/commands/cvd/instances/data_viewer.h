@@ -82,8 +82,7 @@ class DataViewer {
     sigfillset(&all_signals);
     SignalMasker blocker(all_signals);
     // Overwrite the file contents, don't append
-    CF_EXPECTF(fd->Truncate(0) >= 0, "Failed to truncate fd: {}",
-               fd->StrError());
+    CF_EXPECTF(fd->Truncate(0), "Failed to truncate fd: {}", fd->StrError());
     CF_EXPECTF(fd->LSeek(0, SEEK_SET) >= 0, "Failed to seek to 0: {}",
                fd->StrError());
     CF_EXPECT(StoreData(fd, std::move(data)));

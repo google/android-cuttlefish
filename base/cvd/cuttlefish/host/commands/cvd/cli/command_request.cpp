@@ -16,8 +16,11 @@
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 
+#include <array>
+#include <initializer_list>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 

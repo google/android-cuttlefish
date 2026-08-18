@@ -28,6 +28,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_join.h"
 #include "android-base/file.h"
 #include "json/json.h"
@@ -751,13 +752,12 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     const bool seccomp_exists = DirectoryExists(instance.seccomp_policy_dir());
     const std::string& var_empty_dir = kCrosvmVarEmptyDir;
     const bool var_empty_available = DirectoryExists(var_empty_dir);
-    CF_EXPECT(var_empty_available && seccomp_exists,
-              var_empty_dir << " is not an existing, empty directory."
-                            << "seccomp-policy-dir, "
-                            << instance.seccomp_policy_dir()
-                            << " does not exist");
-    crosvm_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
-                                  instance.seccomp_policy_dir());
+    if (seccomp_exists && var_empty_available) {
+      crosvm_cmd.Cmd().AddParameter("--seccomp-policy-dir=",
+                                    instance.seccomp_policy_dir());
+    } else {
+      VLOG(0) << "Relying on crosvm built-in sandboxing";
+    }
   } else {
     crosvm_cmd.Cmd().AddParameter("--disable-sandbox");
   }
@@ -989,7 +989,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   for (int index = 0; index < instance.media_configs().size(); index++) {
     auto config = instance.media_configs()[index];
     if (config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane ||
-        config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane) {
+        config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane ||
+        config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy) {
       crosvm_cmd.Cmd().AddParameter("--vhost-user=type=media,socket=",
                                     instance.media_socket_path(index));
     } else if (config.type == CuttlefishConfig::MediaType::kV4l2Proxy) {

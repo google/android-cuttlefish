@@ -39,7 +39,8 @@ BluetoothHandler::BluetoothHandler(
 BluetoothHandler::~BluetoothHandler() {
   // Send a message to the looper to shut down.
   uint64_t v = 1;
-  shutdown_->Write(&v, sizeof(v));
+  // TODO(schuffelen): Handle unused result
+  (void)shutdown_->Write(&v, sizeof(v));
   // Shut down the socket as well.  Not strictly necessary.
   rootcanal_socket_->Shutdown(SHUT_RDWR);
   read_thread_.join();
@@ -75,12 +76,13 @@ void BluetoothHandler::ReadLoop() {
 void BluetoothHandler::handleMessage(const uint8_t *msg, size_t len) {
   size_t sent = 0;
   while (sent < len) {
-    auto this_sent = rootcanal_socket_->Write(&msg[sent], len - sent);
-    if (this_sent < 0) {
+    Result<uint64_t> this_sent =
+        rootcanal_socket_->Write(&msg[sent], len - sent);
+    if (!this_sent.has_value()) {
       PLOG(ERROR) << "Error writing to rootcanal socket.";
       return;
     }
-    sent += this_sent;
+    sent += *this_sent;
   }
 }
 

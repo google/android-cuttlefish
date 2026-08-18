@@ -103,7 +103,7 @@ Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
   VLOG(0) << "Bootconfig parameters from vendor boot image and config are "
           << ReadFile(bootconfig_path);
 
-  CF_EXPECT(bootconfig_fd->Truncate(bootconfig.size()) == 0,
+  CF_EXPECT(bootconfig_fd->Truncate(bootconfig.size()),
             "`truncate --size=" << bootconfig.size() << " bytes "
                                 << bootconfig_path
                                 << "` failed:" << bootconfig_fd->StrError());
@@ -111,7 +111,7 @@ Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
   if (VmManagerIsGem5(config)) {
     const off_t bootconfig_size_bytes_gem5 =
         AlignToPowerOf2(bytesWritten, PARTITION_SIZE_SHIFT);
-    CF_EXPECT(bootconfig_fd->Truncate(bootconfig_size_bytes_gem5) == 0);
+    CF_EXPECT(bootconfig_fd->Truncate(bootconfig_size_bytes_gem5));
     bootconfig_fd->Close();
   } else {
     bootconfig_fd->Close();

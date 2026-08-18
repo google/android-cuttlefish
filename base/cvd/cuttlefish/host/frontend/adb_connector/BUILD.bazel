@@ -15,6 +15,7 @@ cf_cc_binary(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:recv_all",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",

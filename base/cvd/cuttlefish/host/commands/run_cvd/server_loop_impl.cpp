@@ -36,6 +36,7 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
@@ -49,6 +50,7 @@
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
@@ -127,7 +129,7 @@ Result<void> ServerLoopImpl::Run() {
     }
 
     CF_EXPECT(read_set.IsSet(server_));
-    auto client = SharedFD::Accept(*server_);
+    SharedFD client = UniqueFd::Accept(*server_);
     while (client->IsOpen()) {
       auto launcher_action_with_info_result = ReadLauncherActionFromFd(client);
       if (!launcher_action_with_info_result.has_value()) {
@@ -232,12 +234,14 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       auto stop = process_monitor.StopMonitoredProcesses();
       if (stop.has_value()) {
         auto response = LauncherResponse::kSuccess;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         std::exit(0);
       } else {
         LOG(ERROR) << "Failed to stop subprocesses:\n" << stop.error();
         auto response = LauncherResponse::kError;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
       }
       break;
     }
@@ -245,11 +249,13 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       auto stop = process_monitor.StopMonitoredProcesses();
       if (stop.has_value()) {
         auto response = LauncherResponse::kSuccess;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         std::exit(RunnerExitCodes::kVirtualDeviceBootFailed);
       } else {
         auto response = LauncherResponse::kError;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         LOG(ERROR) << "Failed to stop subprocesses:\n" << stop.error();
       }
       break;
@@ -257,7 +263,8 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
     case LauncherAction::kStatus: {
       // TODO(schuffelen): Return more information on a side channel
       auto response = LauncherResponse::kSuccess;
-      client->Write(&response, sizeof(response));
+      // TODO(schuffelen): Handle unused result
+      (void)client->Write(&response, sizeof(response));
       break;
     }
     case LauncherAction::kPowerwash: {
@@ -267,7 +274,8 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       if (std::find(disks.begin(), disks.end(), overlay) == disks.end()) {
         LOG(ERROR) << "Powerwash unsupported with --use_overlay=false";
         auto response = LauncherResponse::kError;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         break;
       }
 
@@ -275,22 +283,26 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       if (!stop.has_value()) {
         LOG(ERROR) << "Stopping processes failed:\n" << stop.error();
         auto response = LauncherResponse::kError;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         break;
       }
       if (!PowerwashFiles()) {
         LOG(ERROR) << "Powerwashing files failed.";
         auto response = LauncherResponse::kError;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         break;
       }
       auto response = LauncherResponse::kSuccess;
-      client->Write(&response, sizeof(response));
+      // TODO(schuffelen): Handle unused result
+      (void)client->Write(&response, sizeof(response));
 
       RestartRunCvd(client->UNMANAGED_Dup());
       // RestartRunCvd should not return, so something went wrong.
       response = LauncherResponse::kError;
-      client->Write(&response, sizeof(response));
+      // TODO(schuffelen): Handle unused result
+      (void)client->Write(&response, sizeof(response));
       LOG(FATAL) << "run_cvd in a bad state";
       break;
     }
@@ -299,17 +311,20 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       if (!stop.has_value()) {
         LOG(ERROR) << "Stopping processes failed:\n" << stop.error();
         auto response = LauncherResponse::kError;
-        client->Write(&response, sizeof(response));
+        // TODO(schuffelen): Handle unused result
+        (void)client->Write(&response, sizeof(response));
         break;
       }
       DeleteFifos();
 
       auto response = LauncherResponse::kSuccess;
-      client->Write(&response, sizeof(response));
+      // TODO(schuffelen): Handle unused result
+      (void)client->Write(&response, sizeof(response));
       RestartRunCvd(client->UNMANAGED_Dup());
       // RestartRunCvd should not return, so something went wrong.
       response = LauncherResponse::kError;
-      client->Write(&response, sizeof(response));
+      // TODO(schuffelen): Handle unused result
+      (void)client->Write(&response, sizeof(response));
       LOG(FATAL) << "run_cvd in a bad state";
       break;
     }
@@ -317,7 +332,8 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       LOG(ERROR) << "Unrecognized launcher action: "
                  << static_cast<char>(action);
       auto response = LauncherResponse::kError;
-      client->Write(&response, sizeof(response));
+      // TODO(schuffelen): Handle unused result
+      (void)client->Write(&response, sizeof(response));
       break;
   }
 }
@@ -432,7 +448,7 @@ void ServerLoopImpl::RestartRunCvd(int notification_fd) {
     CHECK(RemoveFile(config_.AssemblyPath("restore")).has_value());
   }
   auto config_path = config_.AssemblyPath("cuttlefish_config.json");
-  auto followup_stdin = SharedFD::MemfdCreate("pseudo_stdin");
+  SharedFD followup_stdin = UniqueFd::MemfdCreate("pseudo_stdin");
   WriteAll(followup_stdin, config_path + "\n");
   // NOLINTNEXTLINE(misc-include-cleaner): unistd.h provides SEEK_SET
   followup_stdin->LSeek(0, SEEK_SET);

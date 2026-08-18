@@ -15,12 +15,15 @@
 
 #include "cuttlefish/host/commands/cvd/cli/frontline_parser.h"
 
+#include <optional>
 #include <string>
 #include <vector>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
+#include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {

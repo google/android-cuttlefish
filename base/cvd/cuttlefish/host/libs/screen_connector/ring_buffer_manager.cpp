@@ -51,7 +51,8 @@ Result<std::unique_ptr<DisplayRingBuffer>> DisplayRingBuffer::Create(
 
   CF_EXPECTF(sfd->IsOpen(), "Display buffer create failed {}", sfd->StrError());
 
-  sfd->Truncate(size);
+  // TODO(schuffelen): Handle unused result
+  Result<void> unused = sfd->Truncate(size);
 
   ScopedMMap smm = sfd->MMap(NULL, size, PROT_WRITE, MAP_SHARED, 0);
   addr = smm.get();

@@ -700,7 +700,8 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
   bool BootFailed() const { return state_ & kGuestBootFailed; }
 
   void SendExitCode(RunnerExitCodes exit_code, SharedFD fd) {
-    fd->Write(&exit_code, sizeof(exit_code));
+    // TODO(schuffelen): Handle unused result
+    (void)fd->Write(&exit_code, sizeof(exit_code));
     // The foreground process will exit after receiving the exit code, if we try
     // to write again we'll get a SIGPIPE
     fd->Close();

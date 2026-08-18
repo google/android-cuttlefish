@@ -58,7 +58,9 @@
 #include "cuttlefish/files/file_device_id.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/link_or_copy.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/posix/realpath.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -268,14 +270,6 @@ Result<std::string> RenameFile(const std::string& current_filepath,
   return target_filepath;
 }
 
-Result<void> RemoveFile(const std::string& file) {
-  VLOG(0) << "Removing file " << file;
-  if (remove(file.c_str()) != 0) {
-    return CF_ERRF("Failed to remove file '{}' : {}", file, StrError(errno));
-  }
-  return {};
-}
-
 std::string ReadFile(const std::string& file) {
   std::string contents;
   std::ifstream in(file, std::ios::in | std::ios::binary);
@@ -303,11 +297,7 @@ Result<std::string> ReadFileContents(const std::string& filepath) {
   auto file = SharedFD::Open(filepath, O_RDONLY);
   CF_EXPECTF(file->IsOpen(), "Failed to open file \"{}\".  Error: {}\n",
              filepath, file->StrError());
-  std::string file_content;
-  auto size = ReadAll(file, &file_content);
-  CF_EXPECTF(size >= 0, "Failed to read file contents.  Error: {}\n",
-             file->StrError());
-  return file_content;
+  return CF_EXPECT(ReadToString(*file));
 }
 Result<void> WriteNewFile(const std::string& filepath, std::string_view content,
                           mode_t mode) {

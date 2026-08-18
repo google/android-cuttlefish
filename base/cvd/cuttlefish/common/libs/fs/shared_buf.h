@@ -17,23 +17,11 @@
 
 #include <string>
 #include <string_view>
-#include <thread>
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
-
-/**
- * Reads from fd until it is closed or errors, storing all data in buf.
- *
- * On a successful read, returns the number of bytes read.
- *
- * If a read error is encountered, returns -1. buf will contain any data read
- * up until that point and errno will be set.
- *
- */
-ssize_t ReadAll(SharedFD fd, std::string* buf);
 
 /**
  * Reads from fd until reading buf->size() bytes or errors.
@@ -169,14 +157,5 @@ ssize_t WriteAllBinary(SharedFD fd, const T* binary_data) {
  * been written to 'sock' at that point.
  */
 bool SendAll(SharedFD sock, std::string_view msg);
-
-/**
- * Receives 'count' bytes from sock, checking for socket error conditions
- *
- * On successful Recv, returns a string containing the received data
- *
- * If a Recv error is encountered, returns the empty string
- */
-std::string RecvAll(SharedFD sock, size_t count);
 
 }  // namespace cuttlefish

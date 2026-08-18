@@ -52,21 +52,6 @@ namespace cuttlefish {
 
 namespace {
 
-class LocalErrno {
- public:
-  LocalErrno(int& local_errno) : local_errno_(local_errno), preserved_(errno) {
-    errno = 0;
-  }
-  ~LocalErrno() {
-    local_errno_ = errno;
-    errno = preserved_;
-  }
-
- private:
-  int& local_errno_;
-  int preserved_;
-};
-
 void MarkAll(const SharedFDSet& input, fd_set* dest, int* max_index) {
   for (SharedFDSet::const_iterator it = input.begin(); it != input.end();
        ++it) {
@@ -110,23 +95,25 @@ int Select(SharedFDSet* read_set, SharedFDSet* write_set,
 
   int rval = TEMP_FAILURE_RETRY(
       select(max_index, &readfds, &writefds, &errorfds, timeout));
-  FileInstance::Log("select\n");
+  Fd::Log("select\n");
   CheckMarked(&readfds, read_set);
   CheckMarked(&writefds, write_set);
   CheckMarked(&errorfds, error_set);
   return rval;
 }
 
+SharedFD::SharedFD() : value_(std::make_shared<Fd>()) {}
+
 SharedFD::SharedFD(SharedFD&& other) {
   value_ = std::move(other.value_);
-  other.value_.reset(new FileInstance(-1, EBADF));
+  other.value_.reset(new Fd(-1, EBADF));
 }
 
 SharedFD::SharedFD(UniqueFd other) { value_ = std::move(other.value_); }
 
 SharedFD& SharedFD::operator=(SharedFD&& other) {
   value_ = std::move(other.value_);
-  other.value_.reset(new FileInstance(-1, EBADF));
+  other.value_.reset(new Fd(-1, EBADF));
   return *this;
 }
 
@@ -153,15 +140,6 @@ int SharedFD::Poll(PollSharedFd* fds, size_t num_fds, int timeout) {
   return ret;
 }
 
-SharedFD SharedFD::Accept(const FileInstance& listener, struct sockaddr* addr,
-                          socklen_t* addrlen) {
-  return UniqueFd::Accept(listener, addr, addrlen);
-}
-
-SharedFD SharedFD::Accept(const FileInstance& listener) {
-  return UniqueFd::Accept(listener);
-}
-
 SharedFD SharedFD::Dup(int unmanaged_fd) { return UniqueFd::Dup(unmanaged_fd); }
 
 bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
@@ -172,8 +150,8 @@ bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   int rval = pipe(fds);
 #endif
   if (rval != -1) {
-    (*fd0) = std::shared_ptr<FileInstance>(new FileInstance(fds[0], errno));
-    (*fd1) = std::shared_ptr<FileInstance>(new FileInstance(fds[1], errno));
+    (*fd0) = std::shared_ptr<Fd>(new Fd(fds[0], errno));
+    (*fd1) = std::shared_ptr<Fd>(new Fd(fds[1], errno));
     return true;
   }
   return false;
@@ -189,14 +167,10 @@ SharedFD SharedFD::ShmOpen(const std::string& name, int oflag, int mode) {
 }
 #endif
 
-SharedFD SharedFD::MemfdCreate(const std::string& name, unsigned int flags) {
-  return UniqueFd::MemfdCreate(name, flags);
-}
-
 SharedFD SharedFD::MemfdCreateWithData(const std::string& name,
                                        const std::string& data,
                                        unsigned int flags) {
-  auto memfd = MemfdCreate(name, flags);
+  SharedFD memfd = UniqueFd::MemfdCreate(name, flags);
   if (WriteAll(memfd, data) != data.size()) {
     return ErrorFD(errno);
   }
@@ -211,14 +185,14 @@ SharedFD SharedFD::MemfdCreateWithData(const std::string& name,
 
 bool SharedFD::SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                           SharedFD* fd1) {
-  int fds[2];
-  int rval = socketpair(domain, type, protocol, fds);
-  if (rval != -1) {
-    (*fd0) = std::shared_ptr<FileInstance>(new FileInstance(fds[0], errno));
-    (*fd1) = std::shared_ptr<FileInstance>(new FileInstance(fds[1], errno));
-    return true;
+  UniqueFd unique_fd0;
+  UniqueFd unique_fd1;
+  if (!UniqueFd::SocketPair(domain, type, protocol, &unique_fd0, &unique_fd1)) {
+    return false;
   }
-  return false;
+  *fd0 = std::move(unique_fd0);
+  *fd1 = std::move(unique_fd1);
+  return true;
 }
 
 Result<std::pair<SharedFD, SharedFD>> SharedFD::SocketPair(int domain, int type,
@@ -238,19 +212,8 @@ SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
   return UniqueFd::Open(path, flags, mode);
 }
 
-SharedFD SharedFD::InotifyFd(void) { return UniqueFd::InotifyFd(); }
-
 SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
   return UniqueFd::Creat(path, mode);
-}
-
-int SharedFD::Fchdir(SharedFD shared_fd) {
-  if (!shared_fd.value_) {
-    return -1;
-  }
-  LocalErrno record_errno(shared_fd->errno_);
-
-  return TEMP_FAILURE_RETRY(fchdir(shared_fd->fd_));
 }
 
 Result<SharedFD> SharedFD::Fifo(const std::string& path, mode_t mode) {
@@ -261,10 +224,6 @@ SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   return UniqueFd::Socket(domain, socket_type, protocol);
 }
 
-SharedFD SharedFD::Mkstemp(std::string* path) {
-  return UniqueFd::Mkstemp(path);
-}
-
 Result<std::pair<SharedFD, std::string>> SharedFD::Mkostemp(
     const std::string_view path, const int flags) {
   // mkostemp replaces the Xs with random selections to make a unique filename
@@ -272,8 +231,7 @@ Result<std::pair<SharedFD, std::string>> SharedFD::Mkostemp(
   const int fd = mkostemp(temp_path.data(), flags);
   CF_EXPECTF(fd != -1, "Error creating temporary file: {}",
              ::cuttlefish::StrError(errno));
-  auto shared_fd =
-      SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
+  auto shared_fd = SharedFD(std::shared_ptr<Fd>(new Fd(fd, 0)));
   return std::make_pair<SharedFD, std::string>(std::move(shared_fd),
                                                std::move(temp_path));
 }

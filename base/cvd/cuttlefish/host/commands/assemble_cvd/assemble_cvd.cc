@@ -101,6 +101,8 @@
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
+#include "cuttlefish/io/string.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/pretty/vector.h"
 #include "cuttlefish/result/result.h"
@@ -571,13 +573,11 @@ Result<void> CheckNoTTY() {
 }
 
 Result<std::vector<std::string>> ReadInputFiles() {
-  std::string input_files_str;
   auto input_fd = SharedFD::Dup(0);
   CF_EXPECTF(input_fd->IsOpen(), "Failed to dup stdin: {}",
              input_fd->StrError());
-  auto bytes_read = ReadAll(input_fd, &input_files_str);
-  CF_EXPECT(bytes_read >= 0, "Failed to read input files. Error was \""
-                                 << input_fd->StrError() << "\"");
+  const std::string input_files_str =
+      CF_EXPECT(ReadToString(*input_fd), "Failed to read input files");
   return absl::StrSplit(input_files_str, "\n");
 }
 

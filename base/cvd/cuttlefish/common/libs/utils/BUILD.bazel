@@ -120,7 +120,9 @@ cf_cc_library(
         "//cuttlefish/files:file_device_id",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:link_or_copy",
+        "//cuttlefish/io:string",
         "//cuttlefish/posix:realpath",
+        "//cuttlefish/posix:remove",
         "//cuttlefish/posix:rename",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
@@ -221,6 +223,7 @@ cf_cc_library(
     hdrs = ["json.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/io:string",
         "//cuttlefish/result",
         "@jsoncpp",
     ],
@@ -303,6 +306,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:unique_fd",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -365,7 +369,10 @@ cf_cc_test(
     srcs = ["unix_sockets_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:unique_fd",
         "//cuttlefish/common/libs/utils:unix_sockets",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "@abseil-cpp//absl/log:check",
     ],
@@ -392,6 +399,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:unique_fd",
         "@abseil-cpp//absl/log",
         "@jsoncpp",
     ],

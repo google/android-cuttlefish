@@ -30,6 +30,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -168,6 +169,9 @@ func ExecOnAllCuttlefishHosts(ccm CuttlefishContainerManager, subcommandArgs []s
 	for res := range resCh {
 		results = append(results, res)
 	}
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].GroupName < results[j].GroupName
+	})
 	return results, nil
 }
 

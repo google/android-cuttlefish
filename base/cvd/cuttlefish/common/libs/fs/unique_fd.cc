@@ -78,12 +78,12 @@ int memfd_create_wrapper(const char* name, unsigned int flags) {
 
 UniqueFd::UniqueFd(UniqueFd&& other) {
   value_ = std::move(other.value_);
-  other.value_.reset(new FileInstance(-1, EBADF));
+  other.value_.reset(new Fd(-1, EBADF));
 }
 
 UniqueFd& UniqueFd::operator=(UniqueFd&& other) {
   value_ = std::move(other.value_);
-  other.value_.reset(new FileInstance(-1, EBADF));
+  other.value_.reset(new Fd(-1, EBADF));
   return *this;
 }
 
@@ -113,21 +113,21 @@ static void MakeAddress(const char* name, bool abstract,
   *len = namelen + offsetof(struct sockaddr_un, sun_path) + 1;
 }
 
-UniqueFd UniqueFd::Accept(const FileInstance& listener, struct sockaddr* addr,
+UniqueFd::UniqueFd() : value_(std::make_unique<Fd>()) {}
+
+UniqueFd UniqueFd::Accept(const Fd& listener, struct sockaddr* addr,
                           socklen_t* addrlen) {
-  return UniqueFd(
-      std::unique_ptr<FileInstance>(listener.Accept(addr, addrlen)));
+  return UniqueFd(std::unique_ptr<Fd>(listener.Accept(addr, addrlen)));
 }
 
-UniqueFd UniqueFd::Accept(const FileInstance& listener) {
+UniqueFd UniqueFd::Accept(const Fd& listener) {
   return UniqueFd::Accept(listener, NULL, NULL);
 }
 
 UniqueFd UniqueFd::Dup(int unmanaged_fd) {
   int fd = fcntl(unmanaged_fd, F_DUPFD_CLOEXEC, 3);
   int error_num = errno;
-  return UniqueFd(
-      std::unique_ptr<FileInstance>(new FileInstance(fd, error_num)));
+  return UniqueFd(std::unique_ptr<Fd>(new Fd(fd, error_num)));
 }
 
 bool UniqueFd::Pipe(UniqueFd* fd0, UniqueFd* fd1) {
@@ -138,8 +138,8 @@ bool UniqueFd::Pipe(UniqueFd* fd0, UniqueFd* fd1) {
   int rval = pipe(fds);
 #endif
   if (rval != -1) {
-    (*fd0) = std::unique_ptr<FileInstance>(new FileInstance(fds[0], errno));
-    (*fd1) = std::unique_ptr<FileInstance>(new FileInstance(fds[1], errno));
+    (*fd0) = std::unique_ptr<Fd>(new Fd(fds[0], errno));
+    (*fd1) = std::unique_ptr<Fd>(new Fd(fds[1], errno));
     return true;
   }
   return false;
@@ -148,21 +148,21 @@ bool UniqueFd::Pipe(UniqueFd* fd0, UniqueFd* fd1) {
 #ifdef __linux__
 UniqueFd UniqueFd::Event(int initval, int flags) {
   int fd = eventfd(initval, flags);
-  return std::unique_ptr<FileInstance>(new FileInstance(fd, errno));
+  return std::unique_ptr<Fd>(new Fd(fd, errno));
 }
 
 UniqueFd UniqueFd::ShmOpen(const std::string& name, int oflag, int mode) {
   errno = 0;
   int fd = shm_open(name.c_str(), oflag, mode);
   int error_num = errno;
-  return std::unique_ptr<FileInstance>(new FileInstance(fd, error_num));
+  return std::unique_ptr<Fd>(new Fd(fd, error_num));
 }
 #endif
 
 UniqueFd UniqueFd::MemfdCreate(const std::string& name, unsigned int flags) {
   int fd = memfd_create_wrapper(name.c_str(), flags);
   int error_num = errno;
-  return std::unique_ptr<FileInstance>(new FileInstance(fd, error_num));
+  return std::unique_ptr<Fd>(new Fd(fd, error_num));
 }
 
 bool UniqueFd::SocketPair(int domain, int type, int protocol, UniqueFd* fd0,
@@ -170,8 +170,8 @@ bool UniqueFd::SocketPair(int domain, int type, int protocol, UniqueFd* fd0,
   int fds[2];
   int rval = socketpair(domain, type, protocol, fds);
   if (rval != -1) {
-    (*fd0) = std::unique_ptr<FileInstance>(new FileInstance(fds[0], errno));
-    (*fd1) = std::unique_ptr<FileInstance>(new FileInstance(fds[1], errno));
+    (*fd0) = std::unique_ptr<Fd>(new Fd(fds[0], errno));
+    (*fd1) = std::unique_ptr<Fd>(new Fd(fds[1], errno));
     return true;
   }
   return false;
@@ -193,29 +193,20 @@ UniqueFd UniqueFd::Open(const std::string& path, int flags, mode_t mode) {
 UniqueFd UniqueFd::Open(const char* path, int flags, mode_t mode) {
   int fd = TEMP_FAILURE_RETRY(open(path, flags, mode));
   if (fd == -1) {
-    return UniqueFd(std::unique_ptr<FileInstance>(new FileInstance(fd, errno)));
+    return UniqueFd(std::unique_ptr<Fd>(new Fd(fd, errno)));
   } else {
-    return UniqueFd(std::unique_ptr<FileInstance>(new FileInstance(fd, 0)));
+    return UniqueFd(std::unique_ptr<Fd>(new Fd(fd, 0)));
   }
 }
 
 UniqueFd UniqueFd::InotifyFd(void) {
   errno = 0;
   int fd = TEMP_FAILURE_RETRY(inotify_init1(IN_CLOEXEC));
-  return UniqueFd(std::unique_ptr<FileInstance>(new FileInstance(fd, errno)));
+  return UniqueFd(std::unique_ptr<Fd>(new Fd(fd, errno)));
 }
 
 UniqueFd UniqueFd::Creat(const std::string& path, mode_t mode) {
   return UniqueFd::Open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
-}
-
-int UniqueFd::Fchdir(UniqueFd shared_fd) {
-  if (!shared_fd.value_) {
-    return -1;
-  }
-  LocalErrno record_errno(shared_fd->errno_);
-
-  return TEMP_FAILURE_RETRY(fchdir(shared_fd->fd_));
 }
 
 Result<UniqueFd> UniqueFd::Fifo(const std::string& path, mode_t mode) {
@@ -236,18 +227,18 @@ Result<UniqueFd> UniqueFd::Fifo(const std::string& path, mode_t mode) {
 UniqueFd UniqueFd::Socket(int domain, int socket_type, int protocol) {
   int fd = TEMP_FAILURE_RETRY(socket(domain, socket_type, protocol));
   if (fd == -1) {
-    return UniqueFd(std::unique_ptr<FileInstance>(new FileInstance(fd, errno)));
+    return UniqueFd(std::unique_ptr<Fd>(new Fd(fd, errno)));
   } else {
-    return UniqueFd(std::unique_ptr<FileInstance>(new FileInstance(fd, 0)));
+    return UniqueFd(std::unique_ptr<Fd>(new Fd(fd, 0)));
   }
 }
 
 UniqueFd UniqueFd::Mkstemp(std::string* path) {
   int fd = mkstemp(path->data());
   if (fd == -1) {
-    return UniqueFd(std::unique_ptr<FileInstance>(new FileInstance(fd, errno)));
+    return UniqueFd(std::unique_ptr<Fd>(new Fd(fd, errno)));
   } else {
-    return UniqueFd(std::unique_ptr<FileInstance>(new FileInstance(fd, 0)));
+    return UniqueFd(std::unique_ptr<Fd>(new Fd(fd, 0)));
   }
 }
 
@@ -258,14 +249,13 @@ Result<std::pair<UniqueFd, std::string>> UniqueFd::Mkostemp(
   const int fd = mkostemp(temp_path.data(), flags);
   CF_EXPECTF(fd != -1, "Error creating temporary file: {}",
              ::cuttlefish::StrError(errno));
-  auto shared_fd =
-      UniqueFd(std::unique_ptr<FileInstance>(new FileInstance(fd, 0)));
+  auto shared_fd = UniqueFd(std::unique_ptr<Fd>(new Fd(fd, 0)));
   return std::make_pair<UniqueFd, std::string>(std::move(shared_fd),
                                                std::move(temp_path));
 }
 
 UniqueFd UniqueFd::ErrorFD(int error) {
-  return UniqueFd(std::unique_ptr<FileInstance>(new FileInstance(-1, error)));
+  return UniqueFd(std::unique_ptr<Fd>(new Fd(-1, error)));
 }
 
 UniqueFd UniqueFd::SocketLocalClient(const std::string& name, bool abstract,

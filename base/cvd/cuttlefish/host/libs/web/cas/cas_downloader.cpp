@@ -39,6 +39,7 @@
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"

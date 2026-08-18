@@ -53,7 +53,6 @@ Result<void> ChangeGroup(const std::string& path,
 bool CanAccess(const std::string& path, int mode);
 Result<bool> IsDirectoryEmpty(const std::string& path);
 off_t FileSize(const std::string& path);
-Result<void> RemoveFile(const std::string& file);
 Result<std::string> RenameFile(const std::string& current_filepath,
                                const std::string& target_filepath);
 std::string ReadFile(const std::string& file);

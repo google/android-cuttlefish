@@ -142,7 +142,7 @@ Result<void> EnforceVbMetaSize(const std::string& path) {
     auto vbmeta_fd = SharedFD::Open(path, O_RDWR);
     CF_EXPECTF(vbmeta_fd->IsOpen(), "Unable to open {} with error {}", path,
                vbmeta_fd->StrError());
-    CF_EXPECTF(vbmeta_fd->Truncate(kVbMetaMaxSize) == 0,
+    CF_EXPECTF(vbmeta_fd->Truncate(kVbMetaMaxSize),
                "Truncating {} failed with error {}", path,
                vbmeta_fd->StrError());
     CF_EXPECTF(vbmeta_fd->Fsync() == 0, "fsync on {} failed with error {}",

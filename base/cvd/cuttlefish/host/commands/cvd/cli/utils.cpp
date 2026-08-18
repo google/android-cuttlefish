@@ -16,6 +16,12 @@
 
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 
+#include <asm-generic/ioctls.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>  // IWYU pragma: keep: siginfo_t
+#include <stddef.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -23,6 +29,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -42,16 +49,20 @@
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
+// NOLINTNEXTLINE(misc-include-cleaner): <signal.h>
 Result<void> CheckProcessExitedNormally(siginfo_t infop,
                                         int expected_exit_code) {
+  // NOLINTNEXTLINE(misc-include-cleaner): <signal.h>
   if (infop.si_code == CLD_EXITED && infop.si_status == expected_exit_code) {
     return {};
   }

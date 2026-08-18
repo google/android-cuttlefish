@@ -124,6 +124,7 @@ package_files(
         "bin/unpack_bootimg.py": "@mkbootimg//:unpack_bootimg.py",
         "bin/vhu_media_emulated_camera_splane": "//cuttlefish/host/commands/vhost_user_media/emulated_camera_splane",
         "bin/vhu_media_emulated_camera_mplane": "//cuttlefish/host/commands/vhost_user_media/emulated_camera_mplane",
+        "bin/vhu_media_v4l2_stream_proxy": "//cuttlefish/host/commands/vhost_user_media/v4l2_stream_proxy",
         "bin/vk_lavapipe_icd.json": "//cuttlefish/host/graphics/vulkan:vk_lavapipe_icd",
         "bin/vk_swiftshader_icd.json": "//cuttlefish/host/graphics/vulkan:vk_swiftshader_icd",
         "bin/webRTC": "//cuttlefish/host/frontend/webrtc:webRTC",

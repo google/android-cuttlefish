@@ -35,7 +35,7 @@ Result<Epoll> Epoll::Create() {
   if (fd == -1) {
     return CF_ERRNO("Failed to create epoll");
   }
-  SharedFD shared{std::shared_ptr<FileInstance>(new FileInstance(fd, 0))};
+  SharedFD shared{std::shared_ptr<Fd>(new Fd(fd, 0))};
   return Epoll(shared);
 }
 

@@ -162,6 +162,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:openwrt_args",
         "//cuttlefish/host/libs/config/esp:make_fat_image",
         "//cuttlefish/host/libs/image_aggregator:mbr",
+        "//cuttlefish/posix:remove",
         "//cuttlefish/process:command",
         "//cuttlefish/process:execute",
         "//cuttlefish/process:managed_stdio",
@@ -462,6 +463,7 @@ cf_cc_library(
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
+        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )

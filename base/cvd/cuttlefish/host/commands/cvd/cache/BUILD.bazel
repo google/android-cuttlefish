@@ -1,16 +1,17 @@
 load("//:build_variables.bzl", "COPTS")
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
+
+cf_build_test(name = "cache_build_test")
 
 cf_cc_library(
     name = "cache",
     srcs = ["cache.cpp"],
     hdrs = ["cache.h"],
     copts = COPTS + ["-Werror=sign-compare"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:disk_usage",
         "//cuttlefish/common/libs/utils:files",
@@ -20,6 +21,5 @@ cf_cc_library(
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
         "@fmt",
-        "@jsoncpp",
     ],
 )

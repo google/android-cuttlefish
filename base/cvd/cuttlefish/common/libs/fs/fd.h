@@ -77,25 +77,25 @@ namespace cuttlefish {
  * callers to use the file without knowledge of the underlying descriptor
  * number.
  *
- * FileInstances have two states: Open and Closed. They may start in either
- * state. However, once a FileIntance enters the Closed state it cannot be
- * reopened.
+ * Fds have two states: Open and Closed. They may start in either
+ * state.
  *
- * Construction of FileInstances is limited to select classes to avoid
- * escaping file descriptors. At this point SharedFD is the only class
- * that has access. We may eventually have ScopedFD and WeakFD.
+ * Construction of Fds is limited to select classes to avoid
+ * escaping file descriptors.
  */
-class FileInstance : public ReaderSeeker {
+class Fd : public ReaderWriterSeeker {
   // Give SharedFD access to the aliasing constructor.
   friend class SharedFD;
   friend class UniqueFd;
   friend class Epoll;
 
  public:
-  virtual ~FileInstance() { Close(); }
-
-  // This can't be a singleton because our shared_ptr's aren't thread safe.
-  static std::unique_ptr<FileInstance> ClosedInstance();
+  Fd();
+  Fd(Fd&) = delete;
+  Fd(Fd&&);
+  ~Fd();
+  Fd& operator=(Fd&) = delete;
+  Fd& operator=(Fd&&);
 
   int Bind(const struct sockaddr* addr, socklen_t addrlen);
   int Connect(const struct sockaddr* addr, socklen_t addrlen);
@@ -109,10 +109,10 @@ class FileInstance : public ReaderSeeker {
   // Otherwise an error will be set either on this file or the input.
   // The non-const reference is needed to avoid binding this to a particular
   // reference type.
-  bool CopyFrom(FileInstance& in, size_t length, FileInstance* stop = nullptr);
+  bool CopyFrom(Fd& in, size_t length, Fd* stop = nullptr);
   // Same as CopyFrom, but reads from input until EOF is reached.
-  bool CopyAllFrom(FileInstance& in, FileInstance* stop = nullptr);
-  bool SendFile(FileInstance& in, off_t* offset, size_t count);
+  bool CopyAllFrom(Fd& in, Fd* stop = nullptr);
+  bool SendFile(Fd& in, off_t* offset, size_t count);
 
   int UNMANAGED_Dup();
   int UNMANAGED_Dup2(int newfd);
@@ -183,7 +183,7 @@ class FileInstance : public ReaderSeeker {
   int SetTerminalRaw();
   std::string StrError() const;
   ScopedMMap MMap(void* addr, size_t length, int prot, int flags, off_t offset);
-  ssize_t Truncate(off_t length);
+  Result<void> Truncate(uint64_t length) override;
   /*
    * If the file is a regular file and the count is 0, Write() may detect
    * error(s) by calling write(fd, buf, 0) declared in <unistd.h>. If detected,
@@ -192,8 +192,9 @@ class FileInstance : public ReaderSeeker {
    * will do nothing and just return 0.
    *
    */
-  ssize_t Write(const void* buf, size_t count);
-  ssize_t PWrite(const void* buf, size_t count, size_t offset);
+  Result<uint64_t> Write(const void* buf, uint64_t count) override;
+  Result<uint64_t> PWrite(const void* buf, uint64_t count,
+                          uint64_t offset) override;
 #ifdef __linux__
   int EventfdWrite(eventfd_t value);
 #endif
@@ -206,8 +207,8 @@ class FileInstance : public ReaderSeeker {
   void InotifyRmWatch(int watch);
 
  private:
-  FileInstance(int fd, int in_errno);
-  FileInstance* Accept(struct sockaddr* addr, socklen_t* addrlen) const;
+  Fd(int fd, int in_errno);
+  Fd* Accept(struct sockaddr* addr, socklen_t* addrlen) const;
 
   int fd_;
   int errno_;

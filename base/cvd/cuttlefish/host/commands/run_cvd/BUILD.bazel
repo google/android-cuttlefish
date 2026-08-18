@@ -134,6 +134,7 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:unique_fd",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
@@ -153,6 +154,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/feature:inject",
         "//cuttlefish/host/libs/process_monitor",
         "//cuttlefish/host/libs/vm_manager",
+        "//cuttlefish/io:string",
+        "//cuttlefish/posix:remove",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/process:command",
         "//cuttlefish/process:execute",

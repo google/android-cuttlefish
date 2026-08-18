@@ -36,6 +36,7 @@
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 

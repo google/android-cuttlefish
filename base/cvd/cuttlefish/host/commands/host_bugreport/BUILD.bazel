@@ -11,7 +11,6 @@ cf_cc_binary(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:directory_exists",
@@ -19,6 +18,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/log_names",
         "//cuttlefish/host/libs/zip:zip_file",
+        "//cuttlefish/posix:remove",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/process:command",
         "//cuttlefish/result",

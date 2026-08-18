@@ -41,6 +41,7 @@
 #include "cuttlefish/host/libs/config/esp/make_fat_image.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/execute.h"
 #include "cuttlefish/process/managed_stdio.h"
@@ -81,7 +82,7 @@ Result<void> ResizeImage(const std::string& data_image, int data_image_mb,
   off_t raw_target = static_cast<off_t>(data_image_mb) << 20;
   auto fd = SharedFD::Open(data_image, O_RDWR);
   CF_EXPECTF(fd->IsOpen(), "Can't open '{}': '{}'", data_image, fd->StrError());
-  CF_EXPECTF(fd->Truncate(raw_target) == 0, "`truncate --size={}M {} fail: {}",
+  CF_EXPECTF(fd->Truncate(raw_target), "`truncate --size={}M {} fail: {}",
              data_image_mb, data_image, fd->StrError());
   CF_EXPECT(ForceFsckImage(data_image, instance));
   std::string resize_path;
@@ -165,7 +166,7 @@ Result<void> CreateBlankEmptyImage(std::string_view image, int num_mb) {
   SharedFD fd =
       SharedFD::Open(std::string(image), O_CREAT | O_TRUNC | O_RDWR, 0666);
   CF_EXPECTF(fd->IsOpen(), "Failed to open '{}': '{}'", image, fd->StrError());
-  CF_EXPECTF(fd->Truncate(image_size_bytes) == 0,
+  CF_EXPECTF(fd->Truncate(image_size_bytes),
              "`truncate --size={}M '{}'` failed: {}", num_mb, image,
              fd->StrError());
   return {};

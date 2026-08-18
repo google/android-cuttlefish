@@ -53,6 +53,7 @@ cf_cc_library(
     hdrs = ["managed_stdio.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/io:string",
         "//cuttlefish/process:command",
         "//cuttlefish/process:subprocess",
         "//cuttlefish/process:subprocess_options",

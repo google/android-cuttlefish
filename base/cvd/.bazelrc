@@ -7,6 +7,7 @@ build --test_output=errors
 build --test_summary=terse
 
 # files with warnings from files they depend upon
+build --per_file_copt=cuttlefish/host/commands/control_env_proxy_server/main\.cpp$@-Wno-deprecated-declarations
 build --per_file_copt=cuttlefish/host/graphics_detector/vulkan\.cpp$@-Wno-deprecated-declarations
 build --per_file_copt=cuttlefish/host/frontend/webrtc/libcommon/connection_controller\.cpp$@-Wno-thread-safety-reference-return
 build --per_file_copt=cuttlefish/host/frontend/webrtc/libcommon/connection_controller\.h$@-Wno-thread-safety-reference-return

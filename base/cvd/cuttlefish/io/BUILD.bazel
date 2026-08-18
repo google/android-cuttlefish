@@ -230,10 +230,12 @@ cf_cc_library(
     hdrs = ["lazily_loaded_file.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:unique_fd",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/io",
         "//cuttlefish/io:disjoint_range_set",
         "//cuttlefish/io:serialize_disjoint_range_set",
+        "//cuttlefish/io:string",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
     ],
