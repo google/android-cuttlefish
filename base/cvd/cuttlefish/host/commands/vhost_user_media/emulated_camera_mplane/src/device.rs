@@ -884,7 +884,7 @@ where
         Ok(default_fmtdesc(queue))
     }
 
-    fn g_fmt(&mut self, session: &Self::Session, queue: QueueType) -> IoctlResult<v4l2_format> {
+    fn g_fmt(&mut self, _session: &Self::Session, queue: QueueType) -> IoctlResult<v4l2_format> {
         if queue != QueueType::VideoCaptureMplane {
             return Err(libc::EINVAL);
         }
@@ -895,7 +895,7 @@ where
 
     fn s_fmt(
         &mut self,
-        session: &mut Self::Session,
+        _session: &mut Self::Session,
         queue: QueueType,
         format: v4l2_format,
     ) -> IoctlResult<v4l2_format> {
@@ -928,7 +928,7 @@ where
 
     fn try_fmt(
         &mut self,
-        session: &Self::Session,
+        _session: &Self::Session,
         queue: QueueType,
         format: v4l2_format,
     ) -> IoctlResult<v4l2_format> {
