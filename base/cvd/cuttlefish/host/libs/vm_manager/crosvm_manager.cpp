@@ -210,6 +210,33 @@ CrosvmManager::ConfigureBootDevices(
   }
 }
 
+#ifdef __linux__
+void ConfigureTapDevices(CrosvmBuilder& crosvm_cmd,
+                         const CuttlefishConfig& config,
+                         const CuttlefishConfig::InstanceSpecific& instance) {
+  if (instance.enable_tap_devices() && !InSandbox()) {
+    // The PCI ordering of tap devices is important. Make sure any change here
+    // is reflected in ethprime u-boot variable.
+    // TODO(b/218364216, b/322862402): Crosvm occupies 32 PCI devices first and
+    // only then uses PCI functions which may break order. The final solution is
+    // going to be a PCI allocation strategy that will guarantee the ordering.
+    // For now, hardcode PCI network devices to unoccupied functions.
+    const pci::Address mobile_pci =
+        pci::Address(0, VmManager::kNetPciDeviceNum, 1);
+    const pci::Address ethernet_pci =
+        pci::Address(0, VmManager::kNetPciDeviceNum, 2);
+    crosvm_cmd.AddTap(instance.mobile_tap_name(), instance.mobile_mac(),
+                      mobile_pci);
+    crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac(),
+                      ethernet_pci);
+
+    if (!config.virtio_mac80211_hwsim() && instance.has_wifi_card()) {
+      crosvm_cmd.AddTap(instance.wifi_tap_name());
+    }
+  }
+}
+#endif
+
 std::string ToSingleLineString(const Json::Value& value) {
   Json::StreamWriterBuilder builder;
   builder["indentation"] = "";
@@ -716,25 +743,13 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
 #ifdef __linux__
-  if (instance.enable_tap_devices() && !InSandbox()) {
-    // The PCI ordering of tap devices is important. Make sure any change here
-    // is reflected in ethprime u-boot variable.
-    // TODO(b/218364216, b/322862402): Crosvm occupies 32 PCI devices first and
-    // only then uses PCI functions which may break order. The final solution is
-    // going to be a PCI allocation strategy that will guarantee the ordering.
-    // For now, hardcode PCI network devices to unoccupied functions.
-    const pci::Address mobile_pci =
-        pci::Address(0, VmManager::kNetPciDeviceNum, 1);
-    const pci::Address ethernet_pci =
-        pci::Address(0, VmManager::kNetPciDeviceNum, 2);
-    crosvm_cmd.AddTap(instance.mobile_tap_name(), instance.mobile_mac(),
-                      mobile_pci);
-    crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac(),
-                      ethernet_pci);
-
-    if (!config.virtio_mac80211_hwsim() && instance.has_wifi_card()) {
-      crosvm_cmd.AddTap(instance.wifi_tap_name());
-    }
+  switch (instance.external_network_mode()) {
+    case ExternalNetworkMode::kTap:
+      ConfigureTapDevices(crosvm_cmd, config, instance);
+      break;
+    default:
+      return CF_ERR("Unexpected network mode "
+                    << instance.external_network_mode());
   }
 #endif
 
