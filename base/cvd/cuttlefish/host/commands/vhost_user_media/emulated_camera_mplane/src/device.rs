@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use anyhow::{Context, Result as AnyhowResult};
 use std::collections::VecDeque;
 use std::io::BufWriter;
 use std::io::Result as IoResult;
@@ -24,8 +25,7 @@ use std::str::FromStr;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use anyhow::{Context, Result as AnyhowResult};
-use vmm_sys_util::eventfd::{EventFd, EFD_NONBLOCK};
+use vmm_sys_util::eventfd::{EFD_NONBLOCK, EventFd};
 use vmm_sys_util::poll::{PollContext, PollToken};
 use vmm_sys_util::timerfd::TimerFd;
 
@@ -88,7 +88,10 @@ impl FromStr for LensFacing {
             "FRONT" => Ok(LensFacing::Front),
             "BACK" => Ok(LensFacing::Back),
             "EXTERNAL" => Ok(LensFacing::External),
-            _ => Err(format!("Invalid lens facing: {}. Expected FRONT, BACK, or EXTERNAL", s)),
+            _ => Err(format!(
+                "Invalid lens facing: {}. Expected FRONT, BACK, or EXTERNAL",
+                s
+            )),
         }
     }
 }
@@ -303,7 +306,8 @@ impl EmulatedCameraSession {
         // Apply gain to the luma channel.
         // Gain::MIN (100) represents 1.0x gain. Higher values scale the brightness.
         // We clamp the result to 255.0 to avoid overflow.
-        let y = ((base_y as f32) * (controls.gain.value() as f32 / Gain::MIN as f32)).min(255.0) as u8;
+        let y =
+            ((base_y as f32) * (controls.gain.value() as f32 / Gain::MIN as f32)).min(255.0) as u8;
         let u = ((iteration + 64) % 256) as u8;
         let v = ((iteration + 128) % 256) as u8;
         for _ in 0..(width * height) {
@@ -322,8 +326,12 @@ impl EmulatedCameraSession {
         if let Ok(rx) = self.diag_rx.lock() {
             while let Ok(msg) = rx.try_recv() {
                 match msg {
-                    DiagMsg::Warning(w) => log::warn!("Session {}: background worker warning: {}", self.id, w),
-                    DiagMsg::Error(e) => log::error!("Session {}: background worker error: {:#}", self.id, e),
+                    DiagMsg::Warning(w) => {
+                        log::warn!("Session {}: background worker warning: {}", self.id, w)
+                    }
+                    DiagMsg::Error(e) => {
+                        log::error!("Session {}: background worker error: {:#}", self.id, e)
+                    }
                 }
             }
         }
@@ -405,12 +413,20 @@ fn spawn_frame_worker<Q: VirtioMediaEventQueue + Send + 'static>(
         let mut timer_armed = false;
         let send_err = |err: anyhow::Error| {
             if let Err(e) = diag_tx.send(DiagMsg::Error(err)) {
-                log::warn!("Session {}: Failed to send diagnostic error: {}", session_id, e);
+                log::warn!(
+                    "Session {}: Failed to send diagnostic error: {}",
+                    session_id,
+                    e
+                );
             }
         };
         let send_warn = |msg: String| {
             if let Err(e) = diag_tx.send(DiagMsg::Warning(msg)) {
-                log::warn!("Session {}: Failed to send diagnostic warning: {}", session_id, e);
+                log::warn!(
+                    "Session {}: Failed to send diagnostic warning: {}",
+                    session_id,
+                    e
+                );
             }
         };
 
@@ -418,7 +434,10 @@ fn spawn_frame_worker<Q: VirtioMediaEventQueue + Send + 'static>(
             let ready_events = match poll_ctx.wait() {
                 Ok(events) => events,
                 Err(e) => {
-                    send_err(anyhow::Error::new(e).context(format!("Session {}: PollContext wait failed in worker thread", session_id)));
+                    send_err(anyhow::Error::new(e).context(format!(
+                        "Session {}: PollContext wait failed in worker thread",
+                        session_id
+                    )));
                     return Ok(());
                 }
             };
@@ -430,7 +449,9 @@ fn spawn_frame_worker<Q: VirtioMediaEventQueue + Send + 'static>(
                     WorkerToken::Wakeup => {
                         if let Err(e) = wakeup_evt.read() {
                             if e.kind() != std::io::ErrorKind::WouldBlock {
-                                send_err(anyhow::Error::new(e).context("Failed to read wakeup EventFd"));
+                                send_err(
+                                    anyhow::Error::new(e).context("Failed to read wakeup EventFd"),
+                                );
                             }
                         }
                     }
@@ -507,13 +528,7 @@ fn spawn_frame_worker<Q: VirtioMediaEventQueue + Send + 'static>(
             // Release the lock during pattern rendering:
             if let (Some(fy), Some(fu), Some(fv)) = (file_y, file_u, file_v) {
                 if let Err(e) = EmulatedCameraSession::write_pattern(
-                    iteration,
-                    &controls,
-                    width,
-                    height,
-                    fy,
-                    fu,
-                    fv,
+                    iteration, &controls, width, height, fy, fu, fv,
                 ) {
                     send_warn(format!("Failed to write pattern: errno {}", e));
                 }
@@ -535,9 +550,14 @@ fn spawn_frame_worker<Q: VirtioMediaEventQueue + Send + 'static>(
                     let v4l2_buf_clone = buffer.v4l2_buffer.clone();
                     guard.iteration += 1;
 
-                    device_state.lock().unwrap().evt_queue.send_event(V4l2Event::DequeueBuffer(
-                        DequeueBufferEvent::new(session_id, v4l2_buf_clone),
-                    ));
+                    device_state
+                        .lock()
+                        .unwrap()
+                        .evt_queue
+                        .send_event(V4l2Event::DequeueBuffer(DequeueBufferEvent::new(
+                            session_id,
+                            v4l2_buf_clone,
+                        )));
                 }
             }
         }
@@ -668,14 +688,12 @@ where
                 streaming: false,
                 stream_count: 0,
             }));
-            let wakeup_evt = Arc::new(
-                EventFd::new(EFD_NONBLOCK)
-                    .with_context(|| format!("Failed to create wakeup EventFd for session {}", session_id))?,
-            );
-            let exit_evt = Arc::new(
-                EventFd::new(EFD_NONBLOCK)
-                    .with_context(|| format!("Failed to create exit EventFd for session {}", session_id))?,
-            );
+            let wakeup_evt = Arc::new(EventFd::new(EFD_NONBLOCK).with_context(|| {
+                format!("Failed to create wakeup EventFd for session {}", session_id)
+            })?);
+            let exit_evt = Arc::new(EventFd::new(EFD_NONBLOCK).with_context(|| {
+                format!("Failed to create exit EventFd for session {}", session_id)
+            })?);
             let (diag_tx, diag_rx) = std::sync::mpsc::channel();
             let worker_handle = spawn_frame_worker(
                 session_id,
@@ -779,11 +797,7 @@ const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 const FRAME_RATE: u32 = 30;
 
-const SUPPORTED_SIZES: [(u32, u32); 3] = [
-    (320, 240),
-    (640, 480),
-    (1280, 720),
-];
+const SUPPORTED_SIZES: [(u32, u32); 3] = [(320, 240), (640, 480), (1280, 720)];
 
 const INPUTS: [bindings::v4l2_input; 1] = [bindings::v4l2_input {
     index: 0,
@@ -888,12 +902,12 @@ where
         if queue != QueueType::VideoCaptureMplane {
             return Err(libc::EINVAL);
         }
-        
+
         let pix_mp = unsafe { format.fmt.pix_mp };
         let req_width = pix_mp.width;
         let req_height = pix_mp.height;
         log::info!("s_fmt: requested {}x{}", req_width, req_height);
-        
+
         let mut dev = self.device_state.lock().unwrap();
         if SUPPORTED_SIZES.contains(&(req_width, req_height)) {
             dev.width = req_width;
@@ -902,10 +916,13 @@ where
         } else {
             log::info!(
                 "s_fmt: requested resolution {}x{} not supported, keeping {}x{}",
-                req_width, req_height, dev.width, dev.height
+                req_width,
+                req_height,
+                dev.width,
+                dev.height
             );
         }
-        
+
         Ok(session_fmt(queue, dev.width, dev.height))
     }
 
@@ -918,12 +935,12 @@ where
         if queue != QueueType::VideoCaptureMplane {
             return Err(libc::EINVAL);
         }
-        
+
         let pix_mp = unsafe { format.fmt.pix_mp };
         let req_width = pix_mp.width;
         let req_height = pix_mp.height;
         log::info!("try_fmt: requested {}x{}", req_width, req_height);
-        
+
         if SUPPORTED_SIZES.contains(&(req_width, req_height)) {
             Ok(session_fmt(queue, req_width, req_height))
         } else {
@@ -1152,10 +1169,7 @@ where
             (dev.width, dev.height)
         };
         let mut state = session.state.lock().unwrap();
-        let host_buffer = state
-            .buffers
-            .get_mut(buffer_idx)
-            .ok_or(libc::EINVAL)?;
+        let host_buffer = state.buffers.get_mut(buffer_idx).ok_or(libc::EINVAL)?;
         // Attempt to queue already queued buffer.
         if matches!(host_buffer.state, BufferState::Incoming) {
             return Err(libc::EINVAL);
@@ -1232,7 +1246,7 @@ where
             log::info!("enum_framesizes: format {} not supported", pixel_format);
             return Err(libc::EINVAL);
         }
-        
+
         let &(width, height) = SUPPORTED_SIZES.get(index as usize).ok_or_else(|| {
             log::info!("enum_framesizes: index {} out of bounds", index);
             libc::EINVAL
@@ -1244,10 +1258,7 @@ where
             pixel_format,
             type_: bindings::v4l2_frmsizetypes_V4L2_FRMSIZE_TYPE_DISCRETE,
             __bindgen_anon_1: bindings::v4l2_frmsizeenum__bindgen_ty_1 {
-                discrete: bindings::v4l2_frmsize_discrete {
-                    width,
-                    height,
-                },
+                discrete: bindings::v4l2_frmsize_discrete { width, height },
             },
             ..Default::default()
         })
@@ -1261,13 +1272,23 @@ where
         width: u32,
         height: u32,
     ) -> IoctlResult<bindings::v4l2_frmivalenum> {
-        log::info!("enum_frameintervals: index {}, format {}, {}x{}", index, pixel_format, width, height);
+        log::info!(
+            "enum_frameintervals: index {}, format {}, {}x{}",
+            index,
+            pixel_format,
+            width,
+            height
+        );
         if pixel_format != PIXELFORMAT {
             log::info!("enum_frameintervals: format {} not supported", pixel_format);
             return Err(libc::EINVAL);
         }
         if !SUPPORTED_SIZES.contains(&(width, height)) {
-            log::info!("enum_frameintervals: size {}x{} not supported", width, height);
+            log::info!(
+                "enum_frameintervals: size {}x{} not supported",
+                width,
+                height
+            );
             return Err(libc::EINVAL);
         }
         if index > 0 {
@@ -1335,7 +1356,9 @@ where
         match which {
             CtrlWhich::Current | CtrlWhich::Default => {}
             CtrlWhich::Class(class) => {
-                if class != bindings::V4L2_CTRL_CLASS_USER && class != bindings::V4L2_CTRL_CLASS_CAMERA {
+                if class != bindings::V4L2_CTRL_CLASS_USER
+                    && class != bindings::V4L2_CTRL_CLASS_CAMERA
+                {
                     ctrls.error_idx = ctrls.count;
                     return Err(libc::EINVAL);
                 }
@@ -1396,7 +1419,9 @@ where
         match which {
             CtrlWhich::Current => {}
             CtrlWhich::Class(class) => {
-                if class != bindings::V4L2_CTRL_CLASS_USER && class != bindings::V4L2_CTRL_CLASS_CAMERA {
+                if class != bindings::V4L2_CTRL_CLASS_USER
+                    && class != bindings::V4L2_CTRL_CLASS_CAMERA
+                {
                     ctrls.error_idx = ctrls.count;
                     return Err(libc::EINVAL);
                 }
@@ -1457,7 +1482,9 @@ where
         match which {
             CtrlWhich::Current => {}
             CtrlWhich::Class(class) => {
-                if class != bindings::V4L2_CTRL_CLASS_USER && class != bindings::V4L2_CTRL_CLASS_CAMERA {
+                if class != bindings::V4L2_CTRL_CLASS_USER
+                    && class != bindings::V4L2_CTRL_CLASS_CAMERA
+                {
                     ctrls.error_idx = ctrls.count;
                     return Err(libc::EINVAL);
                 }
