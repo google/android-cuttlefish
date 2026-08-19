@@ -113,7 +113,7 @@ package_files(
         "bin/rootcanal": "@rootcanal",
         "bin/run_cvd": "//cuttlefish/host/commands/run_cvd",
         "bin/screen_recording_server": "//cuttlefish/host/commands/screen_recording_server",
-        # "bin/secure_env": "//cuttlefish/host/commands/secure_env", # TODO: schuffelen - make this more complete
+        "bin/secure_env": "//cuttlefish/host/commands/secure_env",  # TODO: schuffelen - make this more complete
         "bin/sefcontext_compile": "@selinux//:sefcontext_compile",
         "bin/sensors_simulator": "//cuttlefish/host/commands/sensors_simulator",
         "bin/simg2img": "@android_system_core//:simg2img",
