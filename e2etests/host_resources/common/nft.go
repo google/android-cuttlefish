@@ -15,6 +15,7 @@
 package common
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -32,11 +33,11 @@ type NftTable struct {
 	Handle int    `json:"handle"`
 }
 
-func (t NftTable) less(o NftTable) bool {
-	if t.Family != o.Family {
-		return t.Family < o.Family
-	}
-	return t.Name < o.Name
+func (t NftTable) compare(o NftTable) int {
+	return cmp.Or(
+		cmp.Compare(t.Family, o.Family),
+		cmp.Compare(t.Name, o.Name),
+	)
 }
 
 type NftChain struct {
@@ -48,14 +49,12 @@ type NftChain struct {
 	Handle int    `json:"handle"`
 }
 
-func (c NftChain) less(o NftChain) bool {
-	if c.Family != o.Family {
-		return c.Family < o.Family
-	}
-	if c.Table != o.Table {
-		return c.Table < o.Table
-	}
-	return c.Name < o.Name
+func (c NftChain) compare(o NftChain) int {
+	return cmp.Or(
+		cmp.Compare(c.Family, o.Family),
+		cmp.Compare(c.Table, o.Table),
+		cmp.Compare(c.Name, o.Name),
+	)
 }
 
 // Masquerade and SaddrPrefix are derived from the rule's expression list,
@@ -69,20 +68,25 @@ type NftRule struct {
 	SaddrPrefix string
 }
 
-func (r NftRule) less(o NftRule) bool {
-	if r.Family != o.Family {
-		return r.Family < o.Family
+func (r NftRule) compare(o NftRule) int {
+	return cmp.Or(
+		cmp.Compare(r.Family, o.Family),
+		cmp.Compare(r.Table, o.Table),
+		cmp.Compare(r.Chain, o.Chain),
+		cmp.Compare(r.SaddrPrefix, o.SaddrPrefix),
+		compareBool(r.Masquerade, o.Masquerade),
+	)
+}
+
+// compareBool orders false before true.
+func compareBool(a, b bool) int {
+	if a == b {
+		return 0
 	}
-	if r.Table != o.Table {
-		return r.Table < o.Table
+	if !a {
+		return -1
 	}
-	if r.Chain != o.Chain {
-		return r.Chain < o.Chain
-	}
-	if r.SaddrPrefix != o.SaddrPrefix {
-		return r.SaddrPrefix < o.SaddrPrefix
-	}
-	return !r.Masquerade && o.Masquerade
+	return 1
 }
 
 // The types below mirror the schema of `nft -j list ruleset`. Each element of

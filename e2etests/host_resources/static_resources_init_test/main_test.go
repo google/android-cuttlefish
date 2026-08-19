@@ -102,20 +102,26 @@ func TestStaticResourcesInit(t *testing.T) {
 			defer s.Close()
 			sr := common.NewStaticResources(t, s)
 
-			base := common.Snapshot(s)
+			base, err := common.Snapshot(s)
+			if err != nil {
+				t.Fatalf("snapshot base: %v", err)
+			}
 
 			if err := sr.Start(tc.env); err != nil {
 				t.Fatalf("start: %v", err)
 			}
 
-			if diff := cmp.Diff(tc.want, observe(s), opts); diff != "" {
+			if diff := cmp.Diff(tc.want, observe(t, s), opts); diff != "" {
 				t.Errorf("host state after start (-want +got):\n%s", diff)
 			}
 
 			if err := sr.Stop(tc.env); err != nil {
 				t.Fatalf("stop: %v", err)
 			}
-			afterStop := common.Snapshot(s)
+			afterStop, err := common.Snapshot(s)
+			if err != nil {
+				t.Fatalf("snapshot afterStop: %v", err)
+			}
 			if diff := common.DiffState(common.Normalize(base), common.Normalize(afterStop)); diff != "" {
 				t.Errorf("state leaked after stop (-before +after):\n%s", diff)
 			}
@@ -127,8 +133,11 @@ func TestStaticResourcesInit(t *testing.T) {
 	}
 }
 
-func observe(s *common.Sandbox) startState {
-	hs := common.Snapshot(s)
+func observe(t *testing.T, s *common.Sandbox) startState {
+	hs, err := common.Snapshot(s)
+	if err != nil {
+		t.Fatalf("snapshot: %v", err)
+	}
 	got := startState{
 		NftTables:     hs.Nft.Tables,
 		NftChains:     hs.Nft.Chains,
