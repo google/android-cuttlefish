@@ -1054,8 +1054,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
     instance.set_mobile_tap_name(iface_config.mobile_tap.name);
 
-    CF_EXPECT(ConfigureNetworkSettings(ril_dns_vec[instance_index],
-                                       const_instance, instance));
+    CF_EXPECT(ConfigureNetworkSettings(
+        ril_dns_vec[instance_index], tmp_config_obj, const_instance, instance));
 
     bool use_non_bridged_wireless =
         (NetworkInterfaceExists(iface_config.non_bridged_wireless_tap.name) ||
