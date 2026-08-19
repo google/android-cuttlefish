@@ -29,6 +29,7 @@
 #include "allocd/alloc_utils.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/vm_manager/host_configuration.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -38,9 +39,9 @@ namespace cuttlefish {
 static Result<void> TestTapDevices(
     const CuttlefishConfig::InstanceSpecific& instance) {
 #ifdef __linux__
-  if (InSandbox() ||
-      instance.use_cvdalloc()) {  // cvdalloc owns its own resources. those
-                                  // resources can't be validated this way.
+  if (InSandbox() || instance.use_cvdalloc() ||
+      instance.external_network_mode() == ExternalNetworkMode::kSlirp ||
+      !instance.enable_tap_devices()) {
     return {};
   }
   auto wifi = instance.wifi_tap_name();
