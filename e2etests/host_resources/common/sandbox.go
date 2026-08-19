@@ -34,7 +34,6 @@ type CommandOutput struct {
 }
 
 type Sandbox struct {
-	t       *testing.T
 	ctx     context.Context
 	keeper  *exec.Cmd
 	pid     int
@@ -48,7 +47,7 @@ func NewSandbox(t *testing.T) *Sandbox {
 	}
 
 	ctx := t.Context()
-	s := &Sandbox{t: t, ctx: ctx, tempdir: t.TempDir()}
+	s := &Sandbox{ctx: ctx, tempdir: t.TempDir()}
 	t.Cleanup(s.Close)
 
 	// spawn the process that will keep the sandbox alive.

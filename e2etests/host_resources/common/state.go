@@ -15,7 +15,9 @@
 package common
 
 import (
+	"fmt"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -29,33 +31,38 @@ type HostState struct {
 	Sysctls map[string]string
 }
 
-func Snapshot(s *Sandbox) HostState {
+func Snapshot(s *Sandbox) (HostState, error) {
 	hs := HostState{Sysctls: map[string]string{}}
 
-	if out, err := s.Run("nft", "-j", "list", "ruleset"); err == nil {
-		hs.Nft = parseNftRuleset(out.Stdout)
-	} else {
-		s.t.Logf("snapshot: nft list failed: %v", err)
+	out, err := s.Run("nft", "-j", "list", "ruleset")
+	if err != nil {
+		return hs, fmt.Errorf("snapshot: nft list failed: %w", err)
 	}
-	if out, err := s.Run("ip", "-details", "-json", "link"); err == nil {
-		hs.Links = parseLinks(out.Stdout)
-	} else {
-		s.t.Logf("snapshot: ip link failed: %v", err)
+	hs.Nft = parseNftRuleset(out.Stdout)
+
+	out, err = s.Run("ip", "-details", "-json", "link")
+	if err != nil {
+		return hs, fmt.Errorf("snapshot: ip link failed: %w", err)
 	}
-	if out, err := s.Run("ip", "-json", "addr"); err == nil {
-		hs.Addrs = parseAddrs(out.Stdout)
-	} else {
-		s.t.Logf("snapshot: ip addr failed: %v", err)
+	hs.Links = parseLinks(out.Stdout)
+
+	out, err = s.Run("ip", "-json", "addr")
+	if err != nil {
+		return hs, fmt.Errorf("snapshot: ip addr failed: %w", err)
 	}
+	hs.Addrs = parseAddrs(out.Stdout)
+
 	for key, path := range map[string]string{
 		"net.ipv4.ip_forward":          "/proc/sys/net/ipv4/ip_forward",
 		"net.ipv6.conf.all.forwarding": "/proc/sys/net/ipv6/conf/all/forwarding",
 	} {
-		if out, err := s.Run("cat", path); err == nil {
-			hs.Sysctls[key] = strings.TrimSpace(out.Stdout)
+		out, err := s.Run("cat", path)
+		if err != nil {
+			return hs, fmt.Errorf("snapshot: read sysctl %q failed: %w", key, err)
 		}
+		hs.Sysctls[key] = strings.TrimSpace(out.Stdout)
 	}
-	return hs
+	return hs, nil
 }
 
 // We can only check for the pidfiles, so we just do that to make sure
@@ -93,6 +100,7 @@ func DiffState(a, b HostState) string {
 func Normalize(hs HostState) HostState {
 	out := HostState{}
 
+	// normalize the nftables state
 	nft := NftRuleset{}
 	nft.Tables = append(nft.Tables, hs.Nft.Tables...)
 	nft.Chains = append(nft.Chains, hs.Nft.Chains...)
@@ -106,11 +114,12 @@ func Normalize(hs HostState) HostState {
 	for i := range nft.Rules {
 		nft.Rules[i].Handle = 0
 	}
-	sort.Slice(nft.Tables, func(i, j int) bool { return nft.Tables[i].less(nft.Tables[j]) })
-	sort.Slice(nft.Chains, func(i, j int) bool { return nft.Chains[i].less(nft.Chains[j]) })
-	sort.Slice(nft.Rules, func(i, j int) bool { return nft.Rules[i].less(nft.Rules[j]) })
+	slices.SortFunc(nft.Tables, NftTable.compare)
+	slices.SortFunc(nft.Chains, NftChain.compare)
+	slices.SortFunc(nft.Rules, NftRule.compare)
 	out.Nft = nft
 
+	// normalize the ip link states
 	for _, l := range hs.Links {
 		nl := Link{Ifname: l.Ifname, Master: l.Master}
 		if l.IsUp() {
@@ -124,8 +133,9 @@ func Normalize(hs HostState) HostState {
 		}
 		out.Links = append(out.Links, nl)
 	}
-	sort.Slice(out.Links, func(i, j int) bool { return out.Links[i].Ifname < out.Links[j].Ifname })
+	slices.SortFunc(out.Links, func(a, b Link) int { return strings.Compare(a.Ifname, b.Ifname) })
 
+	// normalize the ip addr states
 	for _, a := range hs.Addrs {
 		na := Addr{Ifname: a.Ifname}
 		for _, ai := range a.AddrInfo {
@@ -134,10 +144,14 @@ func Normalize(hs HostState) HostState {
 			}
 			na.AddrInfo = append(na.AddrInfo, AddrInfo{Family: ai.Family, Local: ai.Local, Prefixlen: ai.Prefixlen})
 		}
-		sort.Slice(na.AddrInfo, func(i, j int) bool { return na.AddrInfo[i].Local < na.AddrInfo[j].Local })
+		slices.SortFunc(na.AddrInfo, func(a, b AddrInfo) int { return strings.Compare(a.Local, b.Local) })
 		out.Addrs = append(out.Addrs, na)
 	}
-	sort.Slice(out.Addrs, func(i, j int) bool { return out.Addrs[i].Ifname < out.Addrs[j].Ifname })
+	slices.SortFunc(out.Addrs, func(a, b Addr) int { return strings.Compare(a.Ifname, b.Ifname) })
+
+	// explicitly exclude sysctls from the normalized version
+	// so we can deterministically verify that we didn't leak
+	// anything.
 
 	return out
 }
