@@ -27,9 +27,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
@@ -37,7 +37,7 @@
 namespace cuttlefish {
 
 SharedFD CreateMemFDWithData(const std::string& data) {
-  SharedFD memfd = UniqueFd::MemfdCreate("");
+  SharedFD memfd = Fd::MemfdCreate("");
   CHECK(WriteAll(memfd, data) == data.size()) << memfd->StrError();
   CHECK(memfd->LSeek(0, SEEK_SET) == 0);
   return memfd;

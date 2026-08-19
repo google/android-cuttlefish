@@ -16,19 +16,22 @@
 #include "cuttlefish/host/commands/cvd_send_sms/pdu_format_builder.h"
 
 #include <algorithm>
-#include <codecvt>
 #include <cstddef>
 #include <iomanip>
 #include <iostream>
-#include <map>
+#include <iterator>
 #include <regex>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "unicode/uchriter.h"
+#include "unicode/umachine.h"
 #include "unicode/unistr.h"
-#include "unicode/ustring.h"
+#include "unicode/urename.h"
+#include "unicode/ustring.h"  // IWYU pragma: keep: u_strToUTF8
+#include "unicode/utypes.h"
 
 namespace cuttlefish {
 

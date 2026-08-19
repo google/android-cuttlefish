@@ -306,7 +306,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/fs:unique_fd",
+        "//cuttlefish/common/libs/fs:fd",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -369,7 +369,7 @@ cf_cc_test(
     srcs = ["unix_sockets_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/fs:unique_fd",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:unix_sockets",
         "//cuttlefish/io:string",
         "//cuttlefish/result",
@@ -399,7 +399,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/fs:unique_fd",
+        "//cuttlefish/common/libs/fs:fd",
         "@abseil-cpp//absl/log",
         "@jsoncpp",
     ],

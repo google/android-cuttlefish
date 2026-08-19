@@ -1,40 +1,28 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library", "cf_cc_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_binary", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cf_build_test(name = "cvd_send_sms_build_test")
+
 cf_cc_binary(
     name = "cvd_send_sms",
-    srcs = [
-        "main.cc",
-    ],
-    depend_on_what_you_use_enabled = False,
-    include_cleaner_enabled = False,
+    srcs = ["main.cc"],
     deps = [
-        ":libcvd_send_sms",
         "//cuttlefish/common/libs/fs",
-        "//libbase",
+        "//cuttlefish/host/commands/cvd_send_sms:sms_sender",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
 
 cf_cc_library(
-    name = "libcvd_send_sms",
-    srcs = [
-        "pdu_format_builder.cc",
-        "sms_sender.cc",
-    ],
-    hdrs = [
-        "pdu_format_builder.h",
-        "sms_sender.h",
-    ],
-    depend_on_what_you_use_enabled = False,
-    include_cleaner_enabled = False,
+    name = "pdu_format_builder",
+    srcs = ["pdu_format_builder.cc"],
+    hdrs = ["pdu_format_builder.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@icu//icu4c/source/common:headers",
         "@icu//icu4c/source/common:schriter",
@@ -43,17 +31,34 @@ cf_cc_library(
 )
 
 cf_cc_test(
-    name = "libcvd_send_sms_test",
-    srcs = [
-        "unittest/pdu_format_builder_test.cc",
-        "unittest/sms_sender_test.cc",
-    ],
-    depend_on_what_you_use_enabled = False,
-    include_cleaner_enabled = False,
+    name = "pdu_format_builder_test",
+    srcs = ["pdu_format_builder_test.cc"],
     deps = [
-        ":libcvd_send_sms",
+        "//cuttlefish/host/commands/cvd_send_sms:pdu_format_builder",
+    ],
+)
+
+cf_cc_library(
+    name = "sms_sender",
+    srcs = ["sms_sender.cc"],
+    hdrs = ["sms_sender.h"],
+    deps = [
         "//cuttlefish/common/libs/fs",
-        "//libbase",
+        "//cuttlefish/host/commands/cvd_send_sms:pdu_format_builder",
+        "@abseil-cpp//absl/log",
+        "@icu//icu4c/source/common:schriter",
+        "@icu//icu4c/source/common:utypes",
+    ],
+)
+
+cf_cc_test(
+    name = "sms_sender_test",
+    srcs = ["sms_sender_test.cc"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/commands/cvd_send_sms:sms_sender",
+        "//cuttlefish/result:result_matchers",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log:check",
     ],
 )

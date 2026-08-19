@@ -42,6 +42,7 @@
 #include <sys/eventfd.h>
 #endif
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
@@ -86,7 +87,7 @@ namespace cuttlefish {
 class Fd : public ReaderWriterSeeker {
   // Give SharedFD access to the aliasing constructor.
   friend class SharedFD;
-  friend class UniqueFd;
+  friend class Fd;
   friend class Epoll;
 
  public:
@@ -96,6 +97,69 @@ class Fd : public ReaderWriterSeeker {
   ~Fd();
   Fd& operator=(Fd&) = delete;
   Fd& operator=(Fd&&);
+
+  // All Fds have the O_CLOEXEC flag after creation. To remove use the
+  // Fcntl or Dup functions.
+
+  static Fd Accept(const Fd& listener, struct sockaddr* addr,
+                   socklen_t* addrlen);
+  static Fd Accept(const Fd& listener);
+  static Fd Creat(const std::string& pathname, mode_t mode);
+  static Fd Dup(int unmanaged_fd);
+  static Result<Fd> Fifo(const std::string& pathname, mode_t mode);
+  static Fd MemfdCreate(const std::string& name, unsigned int flags = 0);
+  static Fd Mkstemp(std::string* path);
+  static Result<std::pair<Fd, std::string>> Mkostemp(std::string_view path,
+                                                     int flags = O_CLOEXEC);
+  static Fd Open(const char* pathname, int flags, mode_t mode = 0);
+  static Fd Open(const std::string& pathname, int flags, mode_t mode = 0);
+  static bool Pipe(Fd* fd0, Fd* fd1);
+  static bool SocketPair(int domain, int type, int protocol, Fd* fd0, Fd* fd1);
+  static Fd Socket(int domain, int socket_type, int protocol);
+  static Fd Socket6Client(
+      const std::string& host, const std::string& interface, int port, int type,
+      std::chrono::seconds timeout = std::chrono::seconds(0));
+  static Fd SocketClient(
+      const std::string& host, int port, int type,
+      std::chrono::seconds timeout = std::chrono::seconds(0));
+  static Fd SocketLocalClient(const std::string& name, bool is_abstract,
+                              int in_type);
+  static Fd SocketLocalClient(const std::string& name, bool is_abstract,
+                              int in_type, int timeout_seconds);
+  static Fd SocketLocalClient(int port, int type);
+  static Fd SocketLocalServer(const std::string& name, bool is_abstract,
+                              int in_type, mode_t mode);
+  static Fd SocketLocalServer(int port, int type);
+  static Result<std::pair<Fd, Fd>> SocketPair(int domain, int type,
+                                              int protocol);
+
+#ifdef __linux__
+  static Fd Event(int initval = 0, int flags = 0);
+  static Fd InotifyFd();
+  static Fd ShmOpen(const std::string& name, int oflag, int mode);
+  // For binding in vsock, svm_cid from `cid` param would be either
+  // VMADDR_CID_ANY, VMADDR_CID_LOCAL, VMADDR_CID_HOST or their own CID, and it
+  // is used for indicating connections which it accepts from.
+  //  * VMADDR_CID_ANY: accept from any
+  //  * VMADDR_CID_LOCAL: accept from local
+  //  * VMADDR_CID_HOST: accept from child vm
+  //  * their own CID: accept from parent vm
+  // With vhost-user-vsock, it is basically similar to VMADDR_CID_HOST, but for
+  // now it has limitations that it should bind to a specific socket file which
+  // is for a certain cid. So for vhost-user-vsock, we need to specify the
+  // expected client's cid. That's why vhost_user_vsock_listening_cid is
+  // necessary.
+  // TODO: combining them when vhost-user-vsock impl supports a kind of
+  // VMADDR_CID_HOST
+  static std::string GetVhostUserVsockServerAddr(
+      unsigned int port, int vhost_user_vsock_listening_cid);
+  static std::string GetVhostUserVsockClientAddr(int cid);
+  static Fd VsockServer(unsigned int port, int type,
+                        std::optional<int> vhost_user_vsock_listening_cid,
+                        unsigned int cid = VMADDR_CID_ANY);
+  static Fd VsockServer(int type,
+                        std::optional<int> vhost_user_vsock_listening_cid);
+#endif
 
   int Bind(const struct sockaddr* addr, socklen_t addrlen);
   int Connect(const struct sockaddr* addr, socklen_t addrlen);
@@ -208,7 +272,9 @@ class Fd : public ReaderWriterSeeker {
 
  private:
   Fd(int fd, int in_errno);
-  Fd* Accept(struct sockaddr* addr, socklen_t* addrlen) const;
+  Fd AcceptInternal(struct sockaddr* addr, socklen_t* addrlen) const;
+
+  static Fd ErrorFD(int error);
 
   int fd_;
   int errno_;

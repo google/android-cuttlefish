@@ -22,9 +22,9 @@
 #include "fmt/chrono.h"
 #include "fmt/format.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/common/libs/fs/unique_fd.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/flag_parser/shared_fd_flag.h"
@@ -83,7 +83,7 @@ int TombstoneReceiverMain(int argc, char** argv) {
 
   // Server loop
   while (true) {
-    SharedFD conn = UniqueFd::Accept(*server_fd);
+    SharedFD conn = Fd::Accept(*server_fd);
     std::ofstream file(next_tombstone_path(tombstone_dir),
                        std::ofstream::out | std::ofstream::binary);
     auto acc = 0;

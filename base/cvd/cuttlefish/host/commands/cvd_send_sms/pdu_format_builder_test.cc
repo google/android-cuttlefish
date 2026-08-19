@@ -15,6 +15,8 @@
 
 #include "cuttlefish/host/commands/cvd_send_sms/pdu_format_builder.h"
 
+#include <string>
+
 #include "gtest/gtest.h"
 
 namespace cuttlefish {
@@ -23,9 +25,7 @@ namespace {
 TEST(PDUFormatBuilderTest, EmptyUserDataFails) {
   PDUFormatBuilder builder;
 
-  std::string result = builder.Build();
-
-  EXPECT_EQ(result, "");
+  EXPECT_EQ(builder.Build(), "");
 }
 
 TEST(PDUFormatBuilderTest, NotInAlphabetCharacterFails) {
@@ -33,9 +33,7 @@ TEST(PDUFormatBuilderTest, NotInAlphabetCharacterFails) {
   builder.SetUserData("ccccccc☺");
   builder.SetSenderNumber("+16501234567");
 
-  std::string result = builder.Build();
-
-  EXPECT_EQ(result, "");
+  EXPECT_EQ(builder.Build(), "");
 }
 
 TEST(PDUFormatBuilderTest, With161CharactersFails) {
@@ -46,9 +44,7 @@ TEST(PDUFormatBuilderTest, With161CharactersFails) {
       "ccccccccccccccccccccccccccccccccccccccccc");
   builder.SetSenderNumber("+16501234567");
 
-  std::string result = builder.Build();
-
-  EXPECT_EQ(result, "");
+  EXPECT_EQ(builder.Build(), "");
 }
 
 TEST(PDUFormatBuilderTest, With1CharacterSucceeds) {
@@ -56,9 +52,7 @@ TEST(PDUFormatBuilderTest, With1CharacterSucceeds) {
   builder.SetUserData("c");
   builder.SetSenderNumber("+16501234567");
 
-  std::string result = builder.Build();
-
-  EXPECT_EQ(result, "0001000b916105214365f700000163");
+  EXPECT_EQ(builder.Build(), "0001000b916105214365f700000163");
 }
 
 TEST(PDUFormatBuilderTest, With7CharactersSucceeds) {
@@ -66,9 +60,7 @@ TEST(PDUFormatBuilderTest, With7CharactersSucceeds) {
   builder.SetUserData("ccccccc");
   builder.SetSenderNumber("+16501234567");
 
-  std::string result = builder.Build();
-
-  EXPECT_EQ(result, "0001000b916105214365f7000007e3f1783c1e8f01");
+  EXPECT_EQ(builder.Build(), "0001000b916105214365f7000007e3f1783c1e8f01");
 }
 
 TEST(PDUFormatBuilderTest, With8CharactersSucceeds) {
@@ -76,9 +68,7 @@ TEST(PDUFormatBuilderTest, With8CharactersSucceeds) {
   builder.SetUserData("cccccccc");
   builder.SetSenderNumber("+16501234567");
 
-  std::string result = builder.Build();
-
-  EXPECT_EQ(result, "0001000b916105214365f7000008e3f1783c1e8fc7");
+  EXPECT_EQ(builder.Build(), "0001000b916105214365f7000008e3f1783c1e8fc7");
 }
 
 TEST(PDUFormatBuilderTest, With160CharactersSucceeds) {
@@ -89,9 +79,7 @@ TEST(PDUFormatBuilderTest, With160CharactersSucceeds) {
       "cccccccccccccccccccccccccccccccccccccccc");
   builder.SetSenderNumber("+16501234567");
 
-  std::string result = builder.Build();
-
-  EXPECT_EQ(result,
+  EXPECT_EQ(builder.Build(),
             "0001000b916105214365f70000a0"
             "e3f1783c1e8fc7"
             "e3f1783c1e8fc7"
@@ -123,9 +111,7 @@ TEST(PDUFormatBuilderTest, With160MultiByteCharactersSucceeds) {
       "ΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩΩ");
   builder.SetSenderNumber("+16501234567");
 
-  std::string result = builder.Build();
-
-  EXPECT_EQ(result,
+  EXPECT_EQ(builder.Build(),
             "0001000b916105214365f70000a0"
             "954aa552a9542a"
             "954aa552a9542a"
@@ -158,10 +144,8 @@ TEST(PDUFormatBuilderTest, FullAlphabetSucceeds) {
       "¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà");
   builder.SetSenderNumber("+16501234567");
 
-  std::string result = builder.Build();
-
   EXPECT_EQ(
-      result,
+      builder.Build(),
       "0001000b916105214365f70000808080604028180e888462c168381e90886442a9582e98"
       "8c66c3e9783ea09068442a994ea8946ac56ab95eb0986c46abd96eb89c6ec7ebf97ec0a0"
       "70482c1a8fc8a472c96c3a9fd0a8744aad5aafd8ac76cbed7abfe0b0784c2e9bcfe8b47a"
@@ -173,18 +157,15 @@ TEST(PDUFormatBuilderTest, WithEmptySenderPhoneNumberFails) {
   builder.SetUserData("c");
   builder.SetSenderNumber("");
 
-  std::string result = builder.Build();
-
-  EXPECT_EQ(result, "");
+  EXPECT_EQ(builder.Build(), "");
 }
 
 TEST(PDUFormatBuilderTest, WithInvalidSenderPhoneNumberFails) {
-  std::vector<std::string> numbers{"06501234567", "1", "1650603619399999"};
   PDUFormatBuilder builder;
   builder.SetUserData("c");
 
-  for (auto n : numbers) {
-    builder.SetSenderNumber(n);
+  for (const std::string& number : {"06501234567", "1", "1650603619399999"}) {
+    builder.SetSenderNumber(number);
     EXPECT_EQ(builder.Build(), "");
   }
 }
@@ -194,9 +175,7 @@ TEST(PDUFormatBuilderTest, WithoutLeadingPlusSignSucceeds) {
   builder.SetUserData("c");
   builder.SetSenderNumber("16501234567");
 
-  std::string result = builder.Build();
-
-  EXPECT_EQ(result, "0001000b916105214365f700000163");
+  EXPECT_EQ(builder.Build(), "0001000b916105214365f700000163");
 }
 
 TEST(PDUFormatBuilderTest, WithOddSenderPhoneNumberLengthSucceeds) {
@@ -204,9 +183,7 @@ TEST(PDUFormatBuilderTest, WithOddSenderPhoneNumberLengthSucceeds) {
   builder.SetUserData("c");
   builder.SetSenderNumber("+16501234567");
 
-  std::string result = builder.Build();
-
-  EXPECT_EQ(result, "0001000b916105214365f700000163");
+  EXPECT_EQ(builder.Build(), "0001000b916105214365f700000163");
 }
 
 TEST(PDUFormatBuilderTest, WithEvenSenderPhoneNumberLengthSucceeds) {
@@ -214,9 +191,7 @@ TEST(PDUFormatBuilderTest, WithEvenSenderPhoneNumberLengthSucceeds) {
   builder.SetUserData("c");
   builder.SetSenderNumber("+526501234567");
 
-  std::string result = builder.Build();
-
-  EXPECT_EQ(result, "0001000c9125561032547600000163");
+  EXPECT_EQ(builder.Build(), "0001000c9125561032547600000163");
 }
 
 }  // namespace
