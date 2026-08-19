@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+
+gen_ca() {
+    local CA_DIR="/etc/cuttlefish-podcvd/ca"
+    local PUB_DIR="/etc/cuttlefish-podcvd/pub"
+    mkdir -p "$CA_DIR" "$PUB_DIR"
+    CAROOT="$CA_DIR" mkcert -install >/dev/null
+    ln -sf "$CA_DIR/rootCA.pem" "$PUB_DIR/rootCA.pem"
+}
+
+case "$1" in
+    (configure)
+    gen_ca
+    ;;
+esac
+
+#DEBHELPER#
