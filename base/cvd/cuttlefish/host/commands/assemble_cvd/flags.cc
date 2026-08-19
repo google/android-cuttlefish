@@ -421,7 +421,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                                    "_openwrt");
 
   static constexpr char kDefaultSecure[] =
-      "oemlock,guest_keymint_insecure,guest_gatekeeper_insecure,weaver";
+      "oemlock,guest_keymint_insecure,guest_gatekeeper_insecure";
   SetCommandLineOptionWithMode("secure_hals", kDefaultSecure,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   auto secure_hals = CF_EXPECT(ParseSecureHals(FLAGS_secure_hals));
