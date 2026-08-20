@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 #include <atomic>
 #include <memory>

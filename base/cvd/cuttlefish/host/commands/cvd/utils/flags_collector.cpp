@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/utils/flags_collector.h"
 
+#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>

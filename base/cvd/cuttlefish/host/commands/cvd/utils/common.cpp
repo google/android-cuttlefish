@@ -16,13 +16,18 @@
 
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
+#include <stddef.h>
+#include <unistd.h>
+
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 #include "absl/strings/str_format.h"
 #include "absl/strings/strip.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/directory_exists.h"
