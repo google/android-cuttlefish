@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
+#include <errno.h>
+#include <stdlib.h>
+
 #include <string>
+#include <utility>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
 #include "gflags/gflags.h"
@@ -28,8 +33,10 @@
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/strerror.h"
