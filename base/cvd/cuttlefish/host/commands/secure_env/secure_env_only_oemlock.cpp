@@ -186,6 +186,24 @@ Result<void> SecureEnvMain(int argc, char** argv) {
         }
       });
 
+  std::vector<SharedFD> stub_snapshot_handlers = {
+      rust_snapshot_socket2,
+      keymaster_snapshot_socket2,
+      gatekeeper_snapshot_socket2,
+      weaver_snapshot_socket2,
+  };
+  for (SharedFD snapshot_socket : stub_snapshot_handlers) {
+    threads.emplace_back([snapshot_socket]() {
+      while (true) {
+        // infinite loop that returns if resetting responder is needed
+        Result<void> result = secure_env_impl::WorkerStubLoop(snapshot_socket);
+        if (!result.has_value()) {
+          LOG(FATAL) << "oemlock worker failed: " << result.error();
+        }
+      }
+    });
+  }
+
   auto kernel_events_fd = DupFdFlag(FLAGS_kernel_events_fd);
   threads.emplace_back(StartKernelEventMonitor(kernel_events_fd, oemlock_lock));
 
