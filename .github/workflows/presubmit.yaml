@@ -23,7 +23,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Install go
-      uses: actions/setup-go@v6
+      uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16  # v6
       with:
         go-version: '1.26.6'
     - name: Install buildozer
@@ -88,12 +88,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Install dependencies
-      uses: actions/setup-go@v6
+      uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16  # v6
       with:
         go-version: '1.25.0'
     - run: go version
     - name: Staticcheck
-      uses: dominikh/staticcheck-action@v1.3.1
+      uses: dominikh/staticcheck-action@fe1dd0c3658873b46f8c9bb3291096a617310ca6  # v1.3.1
       with:
         version: "latest"
         install-go: false
@@ -170,7 +170,7 @@ jobs:
     runs-on: ubuntu-24.04-4core
     steps:
     - name: Free disk space
-      uses: jlumbroso/free-disk-space@v1.3.1
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be  # v1.3.1
       with:
         large-packages: false
         swap-storage: false
@@ -185,7 +185,7 @@ jobs:
       uses: ./.github/actions/run-cvd-unit-tests
     - name: Upload test logs
       if: always()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
       with:
         name: cvd-unit-tests-logs
         path: base/cvd/bazel-out/k8-fastbuild/testlogs
@@ -193,7 +193,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: Free disk space
-      uses: jlumbroso/free-disk-space@v1.3.1
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be  # v1.3.1
       with:
         large-packages: false
         swap-storage: false
@@ -222,7 +222,7 @@ jobs:
     - name: Build debs_amd64.tar
       run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_amd64.tar --null --files-from -
     - name: Publish debs_amd64.tar
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
       with:
         name: debs_amd64
         path: debs_amd64.tar
@@ -245,7 +245,7 @@ jobs:
     - name: Build debs_arm64.tar
       run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_arm64.tar --null --files-from -
     - name: Publish debs_arm64.tar
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
       with:
         name: debs_arm64
         path: debs_arm64.tar
@@ -256,7 +256,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Download cuttlefish debs
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
       with:
         name: debs_amd64
     - name: Build docker image
@@ -278,7 +278,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Download cuttlefish debs
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
       with:
         name: debs_arm64
     - name: Build docker image
@@ -300,7 +300,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Download cuttlefish debs
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
       with:
         name: debs_amd64
         github-token: ${{ github.token }}
@@ -313,7 +313,7 @@ jobs:
         sudo podman build -f "tools/testutils/cw/Containerfile" --tag "android-cuttlefish-e2etest:latest" .
         sudo podman save --quiet -o android-cuttlefish-e2etest.tar localhost/android-cuttlefish-e2etest
     - name: Upload image
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
       with:
         name: android-cuttlefish-e2etest-image-tar
         path: android-cuttlefish-e2etest.tar
@@ -361,7 +361,7 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: download image
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
       with:
         name: android-cuttlefish-e2etest-image-tar
         github-token: ${{ github.token }}
@@ -412,7 +412,7 @@ jobs:
         sudo podman rm -f tester
     - name: Upload test logs
       if: always()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
       with:
         name: e2e-tests-orchestration-runner-special-testlogs
         path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main/bazel-out/k8-fastbuild/testlogs
@@ -426,7 +426,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Download docker image
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
       with:
         name: cuttlefish-orchestration-amd64
     - name: Load docker image
@@ -459,7 +459,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Download docker image
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
       with:
         name: cuttlefish-orchestration-amd64
     - name: Load docker image as podman image
@@ -520,7 +520,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Download cuttlefish debs
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
       with:
         name: debs_amd64
     - name: Install cuttlefish-podcvd
@@ -529,7 +529,7 @@ jobs:
         sudo apt install -y ./cuttlefish-podcvd_*.deb
         /usr/lib/cuttlefish-podcvd/bin/podcvd-setup
     - name: Download docker image
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
       with:
         name: cuttlefish-orchestration-amd64
     - name: Upgrade crun
@@ -570,7 +570,7 @@ jobs:
           --test_output=errors
     - name: Upload test logs
       if: always()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
       with:
         name: e2etests-podcvd-logs-${{ strategy.job-index }}
         path: e2etests/bazel-testlogs

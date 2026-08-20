@@ -22,7 +22,7 @@ runs:
       INPUTS_ACTION_NAME: ${{ inputs.action-name }}
   - name: Restore cache
     if: inputs.writable != 'true'
-    uses: actions/cache/restore@v4
+    uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
     with:
       path: ~/bazel-disk-cache
       key: ${{ format('{0}-{1}-{2}-{3}', env.CACHE_KEY_PREFIX, github.ref_name, github.sha, github.event_name) }}
@@ -32,7 +32,7 @@ runs:
         ${{ format('{0}-', env.CACHE_KEY_PREFIX) }}
   - name: Restore and save cache
     if: inputs.writable == 'true'
-    uses: actions/cache@v4
+    uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
     with:
       path: ~/bazel-disk-cache
       key: ${{ format('{0}-{1}-{2}-{3}', env.CACHE_KEY_PREFIX, github.ref_name, github.sha, github.event_name) }}
