@@ -13,12 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <errno.h>
 #include <signal.h>
+#include <stdint.h>
 #ifdef __linux__
 #include <sys/signalfd.h>
 #endif
+#include <unistd.h>
 
 #include <regex>
+#include <string>
+#include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -30,6 +35,7 @@
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/result/result_type.h"
 
 using cuttlefish::StrError;
 
@@ -84,10 +90,10 @@ int main(int argc, char** argv) {
   }
 
   // mask SIGINT and handle it using signalfd
-  sigset_t mask;
+  sigset_t mask;  // NOLINT(misc-include-cleaner): <signal.h>
   sigemptyset(&mask);
   sigaddset(&mask, SIGINT);
-  CHECK(sigprocmask(SIG_BLOCK, &mask, NULL) == 0)
+  CHECK_EQ(sigprocmask(SIG_BLOCK, &mask, nullptr), 0)
       << "sigprocmask failed: " << StrError(errno);
 #ifdef __linux__
   int sfd = signalfd(-1, &mask, 0);
