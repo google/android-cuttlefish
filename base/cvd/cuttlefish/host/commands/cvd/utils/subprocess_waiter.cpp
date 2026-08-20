@@ -16,9 +16,12 @@
 
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
 
+#include <signal.h>  // IWYU pragma: keep: siginfo_t
+#include <stdint.h>
+#include <sys/wait.h>  // IWYU pragma: keep: WEXITED, WNOWAIT
+
 #include <mutex>
 
-#include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/result/result.h"
@@ -34,6 +37,7 @@ Result<void> SubprocessWaiter::Setup(Command& command) {
   return {};
 }
 
+// NOLINTNEXTLINE(misc-include-cleaner): <signal.h>
 Result<siginfo_t> SubprocessWaiter::Wait() {
   std::unique_lock interrupt_lock(interruptible_);
   CF_EXPECT(!interrupted_, "Interrupted");
@@ -42,9 +46,11 @@ Result<siginfo_t> SubprocessWaiter::Wait() {
   interrupt_lock.unlock();
 
   // This blocks until the process exits, but doesn't reap it.
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/wait.h>
   siginfo_t infop = CF_EXPECT(subprocess_->Wait(WEXITED | WNOWAIT));
   interrupt_lock.lock();
   // Perform a reaping wait on the process (which should already have exited).
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/wait.h>
   infop = CF_EXPECT(subprocess_->Wait(WEXITED));
   // The double wait avoids a race around the kernel reusing pids. Waiting
   // with WNOWAIT won't cause the child process to be reaped, so the kernel
