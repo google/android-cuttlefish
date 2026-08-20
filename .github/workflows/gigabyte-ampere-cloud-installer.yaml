@@ -8,6 +8,9 @@ on:
     branchs:
       - '**'
 
+permissions:
+  contents: read
+
 jobs:
   build-cloud-installer-initramfs-job:
     runs-on: ubuntu-22.04-arm
