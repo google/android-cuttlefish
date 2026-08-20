@@ -12,7 +12,7 @@ runs:
       with:
         tool-cache: true
     - name: Download image
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
       with:
         name: android-cuttlefish-e2etest-image-tar
         github-token: ${{ github.token }}
@@ -80,7 +80,7 @@ runs:
         done
     - name: Upload test logs
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
       with:
         name: "e2e-tests-orchestration-runner-${{ inputs.runner-index }}"
         path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main//bazel-out/k8-fastbuild/testlogs
