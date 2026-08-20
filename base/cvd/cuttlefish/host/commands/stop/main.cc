@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
+#include <dirent.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <signal.h>
 #include <stdint.h>
-#include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#include <cinttypes>
-#include <csignal>
-#include <cstdio>
-#include <cstdlib>
 #include <future>
 #include <iostream>
 #include <memory>
+#include <set>
+#include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
@@ -34,7 +39,6 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/recursively_remove_directory.h"
@@ -134,7 +138,7 @@ int FallBackStop(const std::set<std::string>& dirs) {
 
 Result<void> CleanStopInstance(
     const CuttlefishConfig::InstanceSpecific& instance_config,
-    const std::int32_t wait_for_launcher) {
+    const int32_t wait_for_launcher) {
   SharedFD monitor_socket = CF_EXPECT(
       GetLauncherMonitorFromInstance(instance_config, wait_for_launcher));
 
@@ -149,7 +153,7 @@ Result<void> CleanStopInstance(
 
 int StopInstance(const CuttlefishConfig& config,
                  const CuttlefishConfig::InstanceSpecific& instance,
-                 const std::int32_t wait_for_launcher) {
+                 const int32_t wait_for_launcher) {
   auto result = CleanStopInstance(instance, wait_for_launcher);
   if (!result.has_value()) {
     LOG(ERROR) << "Clean stop failed: " << result.error();
@@ -160,14 +164,14 @@ int StopInstance(const CuttlefishConfig& config,
 }
 
 struct FlagVaules {
-  std::int32_t wait_for_launcher;
+  int32_t wait_for_launcher;
   bool clear_instance_dirs;
   std::vector<unsigned> instance_nums;
   bool helpxml;
 };
 
 FlagVaules GetFlagValues(int argc, char** argv) {
-  std::int32_t wait_for_launcher = 5;
+  int32_t wait_for_launcher = 5;
   bool clear_instance_dirs = false;
   std::vector<unsigned> instance_nums;
   std::vector<Flag> flags;
@@ -194,8 +198,7 @@ FlagVaules GetFlagValues(int argc, char** argv) {
   return {wait_for_launcher, clear_instance_dirs, instance_nums, helpxml};
 }
 
-int StopCvdMain(const std::int32_t wait_for_launcher,
-                const bool clear_instance_dirs,
+int StopCvdMain(const int32_t wait_for_launcher, const bool clear_instance_dirs,
                 const std::vector<unsigned>& instance_nums) {
   auto config = CuttlefishConfig::Get();
   if (!config) {
