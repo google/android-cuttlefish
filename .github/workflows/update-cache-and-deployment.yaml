@@ -22,6 +22,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
     - name: Define version
       id: define-version
       run: |
@@ -72,6 +74,8 @@ jobs:
         tool-cache: true
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
     - name: Mount bazel cache
       uses: ./.github/actions/mount-bazel-cache
       with:
@@ -91,6 +95,8 @@ jobs:
         swap-storage: false
     - name: checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
     - name: Mount bazel cache
       uses: ./.github/actions/mount-bazel-cache
       with:
@@ -124,6 +130,8 @@ jobs:
         swap-storage: false
     - name: checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
     - name: Mount bazel cache
       uses: ./.github/actions/mount-bazel-cache
       with:
@@ -155,6 +163,8 @@ jobs:
     steps:
     - name: checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
     - name: Build Gigabyte Ampere installer
       uses: ./.github/actions/build-gigabyte-ampere-cuttlefish-installer
       with:
@@ -179,6 +189,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
     - name: Build docker image
       run: container/image/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL}
       env:
@@ -206,6 +218,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
     - name: Build docker image
       run: container/image/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL}
       env:
@@ -233,6 +247,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
     - name: Authentication on GCP project android-cuttlefish-artifacts
       uses: 'google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093'  # v3
       with:
