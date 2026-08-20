@@ -64,7 +64,7 @@ if [[ "${gpu_enabled}" == true ]]; then
 fi
 podcvd_args=""
 if [[ "${podcvd_enabled}" == true ]]; then
-  test_tags+=",podcvd"
+  test_tags+=",-podcvd_excluded"
   podcvd_args+=" --test_env=CONTAINERS_STORAGE_CONF=/tmp/podcvd-podman-config/storage.conf"
   podcvd_args+=" --test_env=HOME=${HOME}"
   podcvd_args+=" --test_env=USE_PODCVD=true"
