@@ -25,6 +25,7 @@
 #include <utility>
 
 #include "absl/log/log.h"
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -318,6 +319,14 @@ static bool BuildAPImage(const CuttlefishConfig& config,
 static bool BuildOSImage(const CuttlefishConfig::InstanceSpecific& instance) {
   switch (instance.boot_flow()) {
     case BootFlow::AndroidEfiLoader: {
+      if (absl::EndsWith(instance.android_efi_loader(), ".img")) {
+        if (!Copy(instance.android_efi_loader(), instance.esp_image_path())) {
+          LOG(ERROR) << "Failed to copy " << instance.android_efi_loader()
+                     << " to " << instance.esp_image_path();
+          return false;
+        }
+        return true;
+      }
       auto android_efi_loader =
           AndroidEfiLoaderEspBuilder(instance.esp_image_path());
       android_efi_loader.EfiLoaderPath(instance.android_efi_loader())
