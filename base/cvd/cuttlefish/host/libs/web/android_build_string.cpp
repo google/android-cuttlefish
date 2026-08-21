@@ -26,7 +26,6 @@
 #include <variant>
 #include <vector>
 
-#include "absl/strings/ascii.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
@@ -35,29 +34,12 @@
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
+#include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 namespace {
-
-// Returns the "<scheme>" of a "<scheme>://" build string, which is what
-// separates a URL build source from a branch, a build id or a directory path.
-std::optional<std::string_view> UrlScheme(std::string_view build_string) {
-  constexpr std::string_view kSchemeCharacters =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-.";
-  // The allowed set also holds digits and "+-.", which cannot open a scheme,
-  // and an empty scheme has no opening character at all.
-  if (build_string.empty() || !absl::ascii_isalpha(build_string.front())) {
-    return std::nullopt;
-  }
-  const size_t separator = build_string.find_first_not_of(kSchemeCharacters);
-  if (separator == std::string_view::npos ||
-      !build_string.substr(separator).starts_with("://")) {
-    return std::nullopt;
-  }
-  return build_string.substr(0, separator);
-}
 
 // Returns the digest of a "#sha256=<64 hex digits>" fragment, or nullopt when
 // `fragment` is anything else.
