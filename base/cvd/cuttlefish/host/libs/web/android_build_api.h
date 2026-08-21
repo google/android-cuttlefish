@@ -47,12 +47,20 @@ class AndroidBuildApi : public BuildApi {
 
   Result<Build> GetBuild(const BuildString& build_string) override;
 
+  Result<Build> GetBuild(const DeviceBuildString& build_string);
+  Result<Build> GetBuild(const DirectoryBuildString& build_string);
+
   Result<std::string> DownloadFile(const Build& build,
                                    const std::string& target_directory,
                                    const std::string& artifact_name) override;
 
   Result<SeekableZipSource> FileReader(
       const Build&, const std::string& artifact_name) override;
+
+  Result<SeekableZipSource> FileReader(const DeviceBuild&,
+                                       const std::string& artifact_name);
+  Result<SeekableZipSource> FileReader(const DirectoryBuild&,
+                                       const std::string& artifact_name);
 
  private:
   struct BuildInfo {
@@ -109,14 +117,6 @@ class AndroidBuildApi : public BuildApi {
   Result<std::string> DownloadTargetFileFromCas(
       const Build& build, const std::string& target_directory,
       const std::string& artifact_name);
-
-  Result<Build> GetBuild(const DeviceBuildString& build_string);
-  Result<Build> GetBuild(const DirectoryBuildString& build_string);
-
-  Result<SeekableZipSource> FileReader(const DeviceBuild&,
-                                       const std::string& artifact_name);
-  Result<SeekableZipSource> FileReader(const DirectoryBuild&,
-                                       const std::string& artifact_name);
 
   HttpClient& http_client_;
   AndroidBuildUrl& android_build_url_;
