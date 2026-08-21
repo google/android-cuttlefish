@@ -15,6 +15,7 @@
 
 #include "cuttlefish/host/libs/web/android_build.h"
 
+#include <algorithm>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -30,8 +31,11 @@ namespace cuttlefish {
 namespace {
 
 using ::testing::AllOf;
+using ::testing::EndsWith;
 using ::testing::HasSubstr;
 using ::testing::Not;
+using ::testing::Optional;
+using ::testing::StartsWith;
 
 constexpr char kSignedUrl[] =
     "https://example.com/dist/phone-img-1.zip?X-Goog-Signature=secret";
@@ -148,6 +152,105 @@ TEST(FetchLabelTests, OtherBuildsAreIdAndTargetSuccess) {
 
   EXPECT_EQ(FetchLabel(device_build), "123/test_target");
   EXPECT_EQ(FetchLabel(directory_build), "eng/test_target");
+}
+
+TEST(ArtifactSha256Tests, OnlyTheNamedObjectSuccess) {
+  Build build = *GcsBuild::FromBuildString(GcsBuildString{
+      .url = "gs://bucket/dist/phone-img-1.zip",
+      .filepath = "boot.img",
+      .sha256 = std::string(64, 'a'),
+  });
+
+  EXPECT_EQ(ArtifactSha256(build, "phone-img-1.zip"), std::string(64, 'a'));
+  EXPECT_EQ(ArtifactSha256(build, "boot.img"), std::nullopt);
+  EXPECT_EQ(ArtifactSha256(DeviceBuild{.id = "123"}, "img.zip"), std::nullopt);
+}
+
+TEST(BuildHasArtifactTests, ListedArtifactsSuccess) {
+  GcsBuild build =
+      *GcsBuild::FromBuildString(GcsBuildString{.url = "gs://bucket/dist/"});
+  build.contents = {{"a.txt", GcsObjectInfo{.generation = "1"}}};
+
+  EXPECT_TRUE(BuildHasArtifact(build, "a.txt"));
+  EXPECT_FALSE(BuildHasArtifact(build, "misc_info.txt"));
+}
+
+TEST(BuildHasArtifactTests, UnlistedNamespacesAnswerYesSuccess) {
+  Build http_directory = *HttpBuild::FromBuildString(
+      HttpBuildString{.url = "https://example.com/dist/"});
+  Build gcs_object = *GcsBuild::FromBuildString(
+      GcsBuildString{.url = "gs://bucket/dist/phone-img-1.zip"});
+
+  EXPECT_TRUE(BuildHasArtifact(http_directory, "misc_info.txt"));
+  EXPECT_TRUE(BuildHasArtifact(gcs_object, "phone-img-1.zip"));
+  EXPECT_TRUE(BuildHasArtifact(DeviceBuild{.id = "123"}, "misc_info.txt"));
+}
+
+TEST(BuildCacheKeyTests, AndroidBuildsAreTheIdAndTargetSuccess) {
+  Build device_build = DeviceBuild{.id = "123", .target = "test_target"};
+  Build directory_build =
+      DirectoryBuild({"/tmp/build"}, "test_target", std::nullopt);
+
+  EXPECT_EQ(BuildCacheKey(device_build, "img.zip"), "123/test_target");
+  EXPECT_EQ(BuildCacheKey(directory_build, "img.zip"), "eng/test_target");
+}
+
+TEST(BuildCacheKeyTests, GcsObjectGenerationsDifferSuccess) {
+  GcsBuild build = *GcsBuild::FromBuildString(
+      GcsBuildString{.url = "gs://bucket/dist/phone-img-1.zip"});
+  build.generation = "17";
+  std::string first = *BuildCacheKey(build, "phone-img-1.zip");
+  build.generation = "18";
+  std::string second = *BuildCacheKey(build, "phone-img-1.zip");
+
+  EXPECT_THAT(first, EndsWith("/17"));
+  EXPECT_THAT(second, EndsWith("/18"));
+  EXPECT_THAT(first, StartsWith("url/"));
+  // The URL is what the two keys share.
+  EXPECT_EQ(first.substr(0, first.rfind('/')),
+            second.substr(0, second.rfind('/')));
+}
+
+TEST(BuildCacheKeyTests, GcsDirectoryArtifactsAreKeyedApartSuccess) {
+  GcsBuild build =
+      *GcsBuild::FromBuildString(GcsBuildString{.url = "gs://bucket/dist/"});
+  build.contents = {
+      {"a.txt", GcsObjectInfo{.generation = "1"}},
+      {"b.txt", GcsObjectInfo{.generation = "2"}},
+  };
+
+  EXPECT_THAT(BuildCacheKey(build, "a.txt"), Optional(EndsWith("/1")));
+  EXPECT_THAT(BuildCacheKey(build, "b.txt"), Optional(EndsWith("/2")));
+  EXPECT_EQ(BuildCacheKey(build, "absent.txt"), std::nullopt);
+}
+
+TEST(BuildCacheKeyTests, HttpObjectsUseTheEtagSuccess) {
+  HttpBuild build =
+      *HttpBuild::FromBuildString(HttpBuildString{.url = kSignedUrl});
+  build.etag = "W/\"a/b\"";
+
+  std::string key = *BuildCacheKey(build, "phone-img-1.zip");
+  EXPECT_THAT(key, StartsWith("url/"));
+  EXPECT_THAT(key, Not(HasSubstr("\"")));
+  EXPECT_THAT(key, Not(HasSubstr("secret")));
+  EXPECT_EQ(std::count(key.begin(), key.end(), '/'), 2);
+}
+
+TEST(BuildCacheKeyTests, HttpObjectsFallBackToTheDigestSuccess) {
+  HttpBuild build = *HttpBuild::FromBuildString(HttpBuildString{
+      .url = "https://example.com/dist/phone-img-1.zip",
+      .sha256 = std::string(64, 'a'),
+  });
+
+  EXPECT_THAT(BuildCacheKey(build, "phone-img-1.zip"),
+              Optional(EndsWith(std::string(64, 'a'))));
+}
+
+TEST(BuildCacheKeyTests, HttpDirectoriesHaveNoKeySuccess) {
+  HttpBuild build = *HttpBuild::FromBuildString(
+      HttpBuildString{.url = "https://example.com/dist/"});
+
+  EXPECT_EQ(BuildCacheKey(build, "misc_info.txt"), std::nullopt);
 }
 
 }  // namespace

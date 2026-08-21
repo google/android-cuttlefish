@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 
+#include <map>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -26,11 +27,14 @@
 #include <variant>
 #include <vector>
 
+#include "absl/strings/ascii.h"
 #include "absl/strings/str_join.h"
 #include "fmt/format.h"
 
+#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/digest.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/result/result.h"
@@ -41,6 +45,29 @@ namespace {
 // URL builds have no Android Build target, product or branch, so they carry
 // this name wherever one is expected.
 constexpr char kUrlName[] = "url";
+constexpr size_t kUrlKeyLength = 12;
+
+// Cache keys are directory names and an ETag may hold anything, so a version
+// that is not already path safe stands in as a digest of itself.
+std::string PathSafeVersion(const std::string& version) {
+  for (char character : version) {
+    if (!absl::ascii_isalnum(character) && character != '.' &&
+        character != '_' && character != '-') {
+      return Sha256Hex(version).substr(0, kUrlKeyLength);
+    }
+  }
+  return version;
+}
+
+std::optional<std::string> UrlCacheKey(
+    const std::string& id, const std::optional<std::string>& version) {
+  if (!version.has_value()) {
+    return std::nullopt;
+  }
+  return fmt::format("{}/{}/{}", kUrlName,
+                     Sha256Hex(id).substr(0, kUrlKeyLength),
+                     PathSafeVersion(*version));
+}
 
 // Returns where the name after the last '/' of `path` begins. A parsed path
 // has no leading '/', so a name at the root is the whole path.
@@ -142,6 +169,52 @@ std::string FetchLabel(const Build& build) {
   }
   if (const HttpBuild* http = std::get_if<HttpBuild>(&build)) {
     return http->id;
+  }
+  return fmt::format("{}/{}",
+                     std::visit([](auto&& arg) { return arg.id; }, build),
+                     std::visit([](auto&& arg) { return arg.target; }, build));
+}
+
+std::optional<std::string> ArtifactSha256(const Build& build,
+                                          const std::string& artifact_name) {
+  if (const GcsBuild* gcs = std::get_if<GcsBuild>(&build)) {
+    return gcs->object == artifact_name ? gcs->sha256 : std::nullopt;
+  }
+  if (const HttpBuild* http = std::get_if<HttpBuild>(&build)) {
+    return http->object == artifact_name ? http->sha256 : std::nullopt;
+  }
+  return std::nullopt;
+}
+
+bool BuildHasArtifact(const Build& build, const std::string& artifact_name) {
+  const GcsBuild* gcs = std::get_if<GcsBuild>(&build);
+  if (gcs == nullptr || gcs->object.has_value()) {
+    return true;
+  }
+  return Contains(gcs->contents, artifact_name);
+}
+
+std::optional<std::string> BuildCacheKey(const Build& build,
+                                         const std::string& artifact_name) {
+  if (const GcsBuild* gcs = std::get_if<GcsBuild>(&build)) {
+    if (gcs->object.has_value()) {
+      return UrlCacheKey(
+          gcs->id, gcs->generation.has_value() ? gcs->generation : gcs->sha256);
+    }
+    const std::map<std::string, GcsObjectInfo>::const_iterator entry =
+        gcs->contents.find(artifact_name);
+    if (entry == gcs->contents.end()) {
+      return std::nullopt;
+    }
+    return UrlCacheKey(gcs->id, entry->second.generation);
+  }
+  if (const HttpBuild* http = std::get_if<HttpBuild>(&build)) {
+    // A directory of plain HTTPS URLs reports nothing about its artifacts.
+    if (!http->object.has_value()) {
+      return std::nullopt;
+    }
+    return UrlCacheKey(http->id,
+                       http->etag.has_value() ? http->etag : http->sha256);
   }
   return fmt::format("{}/{}",
                      std::visit([](auto&& arg) { return arg.id; }, build),

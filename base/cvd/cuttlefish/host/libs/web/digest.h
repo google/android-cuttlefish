@@ -22,15 +22,18 @@
 
 namespace cuttlefish {
 
-// The SHA-256 of the contents of `path`, in lowercase hexadecimal.
+// Returns the SHA-256 of the contents of `path`, in lowercase hexadecimal.
 Result<std::string> Sha256File(const std::string& path);
+
+// Returns the SHA-256 of `data`, in lowercase hexadecimal.
+std::string Sha256Hex(std::string_view data);
 
 // Fails unless `path` holds the hexadecimal SHA-256 `expected`, which is
 // compared without regard to case. `artifact_name` names the file in the error.
 Result<void> VerifySha256(const std::string& path, std::string_view expected,
                           std::string_view artifact_name);
 
-// The same against the base64 MD5 that Cloud Storage reports for an object.
+// Checks the same against the base64 MD5 Cloud Storage reports for an object.
 Result<void> VerifyMd5(const std::string& path, std::string_view expected,
                        std::string_view artifact_name);
 

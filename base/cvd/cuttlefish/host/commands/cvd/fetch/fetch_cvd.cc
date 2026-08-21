@@ -194,7 +194,7 @@ Result<void> CheckHostPackagePresent(const Build& build) {
                 "Name a build that has a host package with "
                 "`--host_package_build`.");
     } else {
-      CF_EXPECTF(Contains(gcs->contents, name),
+      CF_EXPECTF(BuildHasArtifact(build, name),
                  "The build '{}' has no host package '{}'.  It holds [{}].  "
                  "Name a build that has one with `--host_package_build`.",
                  gcs->id, name, absl::StrJoin(GcsArtifactNames(*gcs), ", "));
