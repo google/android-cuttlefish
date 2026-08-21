@@ -125,6 +125,22 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "guest_conversion",
+    srcs = ["guest_conversion.cc"],
+    hdrs = ["guest_conversion.h"],
+    deps = [
+        "//cuttlefish/host/libs/config:data_image_policy",
+        "//cuttlefish/host/libs/config:gpu_mode",
+        "//cuttlefish/host/libs/metrics:device_event_type",
+        "//cuttlefish/host/libs/metrics:guest_metrics",
+        "//external_proto:cf_flags_cc_proto",
+        "//external_proto:cf_guest_cc_proto",
+        "//external_proto:cf_metrics_event_v2_cc_proto",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "guest_metrics",
     srcs = ["guest_metrics.cc"],
     hdrs = ["guest_metrics.h"],
@@ -180,19 +196,14 @@ cf_cc_library(
     srcs = ["metrics_conversion.cc"],
     hdrs = ["metrics_conversion.h"],
     deps = [
-        "//cuttlefish/host/libs/config:data_image_policy",
-        "//cuttlefish/host/libs/config:gpu_mode",
-        "//cuttlefish/host/libs/metrics:device_event_type",
         "//cuttlefish/host/libs/metrics:fetch_conversion",
         "//cuttlefish/host/libs/metrics:fetch_metrics",
+        "//cuttlefish/host/libs/metrics:guest_conversion",
         "//cuttlefish/host/libs/metrics:guest_metrics",
         "//cuttlefish/host/libs/metrics:host_conversion",
         "//cuttlefish/host/libs/metrics:host_metrics",
-        "//external_proto:cf_flags_cc_proto",
-        "//external_proto:cf_guest_cc_proto",
         "//external_proto:cf_log_cc_proto",
         "//external_proto:cf_metrics_event_v2_cc_proto",
-        "@fmt",
         "@protobuf//:timestamp_cc_proto",
     ],
 )
