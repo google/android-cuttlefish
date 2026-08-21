@@ -1,22 +1,20 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_binary")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cf_build_test(name = "record_cvd_build_test")
+
 cf_cc_binary(
     name = "record_cvd",
-    srcs = [
-        "record_cvd.cc",
-    ],
-    depend_on_what_you_use_enabled = False,
-    include_cleaner_enabled = False,
+    srcs = ["record_cvd.cc"],
     deps = [
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/screen_recording_controls",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@gflags",
     ],
