@@ -32,7 +32,7 @@
 #include "cuttlefish/host/libs/web/build_api_zip.h"
 #include "cuttlefish/host/libs/web/digest.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
-#include "cuttlefish/host/libs/web/http_client/http_file.h"
+#include "cuttlefish/host/libs/web/url_download.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
@@ -149,12 +149,14 @@ Result<std::string> HttpBuildApi::DownloadFile(
     return dest_path;
   }
 
-  const std::string url = CF_EXPECT(ArtifactUrl(build, artifact_name));
-  HttpResponse<std::string> response =
-      CF_EXPECT(HttpGetToFile(http_client_, url, dest_path));
-  CF_EXPECTF(response.HttpSuccess(),
-             "Could not download '{}' from '{}' - {}:{}", artifact_name,
-             build.id, response.http_code, response.StatusDescription());
+  const UrlDownload download = {
+      .url = CF_EXPECT(ArtifactUrl(build, artifact_name)),
+      .if_range = build.etag,
+      .resumable = build.accept_ranges && build.etag.has_value(),
+      .size = build.size,
+  };
+  CF_EXPECTF(DownloadUrlToFile(http_client_, download, dest_path),
+             "Could not download '{}' from '{}'", artifact_name, build.id);
   if (build.sha256.has_value()) {
     CF_EXPECT(VerifySha256(dest_path, *build.sha256, artifact_name));
   }
