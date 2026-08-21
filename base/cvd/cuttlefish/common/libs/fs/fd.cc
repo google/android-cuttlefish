@@ -699,6 +699,15 @@ Result<void> Fd::Flock(int operation) {
   return {};
 }
 
+Result<struct stat> Fd::Fstat() {
+  LocalErrno record_errno(errno_);
+
+  struct stat file_info = {};
+  CF_EXPECT(TEMP_FAILURE_RETRY(fstat(fd_, &file_info)) == 0,
+            ::cuttlefish::StrError(errno));
+  return file_info;
+}
+
 int Fd::GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
   LocalErrno record_errno(errno_);
 
