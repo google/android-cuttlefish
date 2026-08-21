@@ -94,6 +94,9 @@ struct HttpBuild {
   std::string url;                    // object, or directory ending in '/'
   std::optional<std::string> object;  // set in the object form only
   std::optional<std::string> etag;
+  // Whether the probe found an origin that serves range requests, without
+  // which a member cannot be read out of an archive.
+  bool accept_ranges = false;
   std::optional<std::string> sha256;
 
   // `id` has no query string, so requests must go to `url`.
