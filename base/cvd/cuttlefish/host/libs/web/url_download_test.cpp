@@ -132,6 +132,35 @@ TEST_F(UrlDownloadTests, AVersionedUrlResumesWithoutIfRangeSuccess) {
                                   Not(Contains(HasSubstr("If-Range:")))));
 }
 
+TEST_F(UrlDownloadTests, APartialFileLongerThanTheObjectIsDiscardedSuccess) {
+  ServeContents();
+  WritePart(std::string(kSize + 8, 'z'));
+  UrlDownload download = {
+      .url = kUrl,
+      .if_range = "\"v1\"",
+      .resumable = true,
+      .size = kSize,
+  };
+
+  EXPECT_THAT(DownloadUrlToFile(http_client_, download, Path()), IsOk());
+  EXPECT_THAT(ReadFileContents(Path()), IsOkAndValue(kContents));
+  EXPECT_THAT(requests_[0], Not(Contains(HasSubstr("Range:"))));
+}
+
+TEST_F(UrlDownloadTests, APartialFileOfAnUnmeasuredObjectIsDiscardedSuccess) {
+  ServeContents();
+  WritePart("zzzz");
+  UrlDownload download = {
+      .url = kUrl,
+      .if_range = "\"v1\"",
+      .resumable = true,
+  };
+
+  EXPECT_THAT(DownloadUrlToFile(http_client_, download, Path()), IsOk());
+  EXPECT_THAT(ReadFileContents(Path()), IsOkAndValue(kContents));
+  EXPECT_THAT(requests_[0], Not(Contains(HasSubstr("Range:"))));
+}
+
 TEST_F(UrlDownloadTests, AChangedObjectIsDownloadedAgainSuccess) {
   ServeContents(/*honor_ranges=*/false);
   WritePart("xxxxxx");
@@ -163,6 +192,33 @@ TEST_F(UrlDownloadTests, APartialFileIsHeldUnderALockSuccess) {
 
   EXPECT_THAT(DownloadUrlToFile(http_client_, download, Path()), IsOk());
   EXPECT_TRUE(locked_out);
+}
+
+TEST_F(UrlDownloadTests, AnOpenFileIsFoundAtItsPathSuccess) {
+  WritePart("012345");
+  Result<Fd> part = Fd::Open(PartPath(), O_RDWR);
+  ASSERT_THAT(part, IsOk());
+
+  EXPECT_THAT(HoldsFileAt(*part, PartPath()), IsOkAndValue(true));
+}
+
+TEST_F(UrlDownloadTests, AnOpenFileRenamedAwayIsNotFoundSuccess) {
+  WritePart("012345");
+  Result<Fd> part = Fd::Open(PartPath(), O_RDWR);
+  ASSERT_THAT(part, IsOk());
+  ASSERT_THAT(RenameFile(PartPath(), Path()), IsOk());
+
+  EXPECT_THAT(HoldsFileAt(*part, PartPath()), IsOkAndValue(false));
+}
+
+TEST_F(UrlDownloadTests, AnOpenFileReplacedAtItsPathIsNotFoundSuccess) {
+  WritePart("012345");
+  Result<Fd> part = Fd::Open(PartPath(), O_RDWR);
+  ASSERT_THAT(part, IsOk());
+  ASSERT_THAT(RenameFile(PartPath(), Path()), IsOk());
+  WritePart("6789");
+
+  EXPECT_THAT(HoldsFileAt(*part, PartPath()), IsOkAndValue(false));
 }
 
 TEST_F(UrlDownloadTests, AMissingObjectLeavesNoPartialFileFail) {
