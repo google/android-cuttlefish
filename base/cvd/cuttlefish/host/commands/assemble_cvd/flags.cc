@@ -1334,8 +1334,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto external_network_mode = CF_EXPECT(
         ParseExternalNetworkMode(device_external_network_vec[instance_index]));
     CF_EXPECT(external_network_mode == ExternalNetworkMode::kTap ||
-                  VmManagerIsQemu(vm_manager_flag),
-              "TODO(b/286284441): slirp only works on QEMU");
+                  external_network_mode == ExternalNetworkMode::kSlirp,
+              "Unknown external_network_mode");
     instance.set_external_network_mode(external_network_mode);
 
     instance.set_mcu(CF_EXPECT(mcu_config_paths.JsonForIndex(instance_index)));
