@@ -28,6 +28,7 @@
 #include "absl/strings/escaping.h"
 #include "openssl/base.h"
 #include "openssl/digest.h"
+#include "openssl/sha.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/base64.h"
@@ -63,12 +64,22 @@ Result<std::vector<uint8_t>> DigestFile(const std::string& path,
   return value;
 }
 
+std::string HexDigest(const uint8_t* value, size_t size) {
+  return absl::BytesToHexString(
+      std::string_view(reinterpret_cast<const char*>(value), size));
+}
+
 }  // namespace
 
 Result<std::string> Sha256File(const std::string& path) {
   const std::vector<uint8_t> value = CF_EXPECT(DigestFile(path, EVP_sha256()));
-  return absl::BytesToHexString(std::string_view(
-      reinterpret_cast<const char*>(value.data()), value.size()));
+  return HexDigest(value.data(), value.size());
+}
+
+std::string Sha256Hex(std::string_view data) {
+  uint8_t value[SHA256_DIGEST_LENGTH];
+  SHA256(reinterpret_cast<const uint8_t*>(data.data()), data.size(), value);
+  return HexDigest(value, sizeof(value));
 }
 
 Result<void> VerifySha256(const std::string& path, std::string_view expected,

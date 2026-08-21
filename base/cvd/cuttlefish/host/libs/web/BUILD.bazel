@@ -11,9 +11,11 @@ cf_cc_library(
     srcs = ["android_build.cc"],
     hdrs = ["android_build.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:android_build_url",
+        "//cuttlefish/host/libs/web:digest",
         "//cuttlefish/host/libs/web:url_namespace",
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
@@ -171,12 +173,32 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/web:digest",
         "//cuttlefish/host/libs/zip:cached_zip_source",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "caching_build_api_test",
+    srcs = ["caching_build_api_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/files:is_directory_empty",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/web:caching_build_api",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
     ],
 )
 

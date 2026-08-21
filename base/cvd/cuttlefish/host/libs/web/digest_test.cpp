@@ -65,6 +65,11 @@ TEST(DigestTests, Sha256OfMoreThanOneReadSuccess) {
           "8f990ba0b577b51cf009ea049368c16bbda1b21e1b93be07a824758bb253c39b"));
 }
 
+TEST(DigestTests, Sha256OfAStringSuccess) {
+  EXPECT_EQ(Sha256Hex("abc"), kAbcSha256);
+  EXPECT_EQ(Sha256Hex(""), kEmptySha256);
+}
+
 TEST(DigestTests, MissingFileFail) {
   TemporaryDir directory;
   EXPECT_THAT(Sha256File(std::string(directory.path) + "/absent"),

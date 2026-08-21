@@ -65,23 +65,19 @@ struct GcsObjectInfo {
   std::optional<uint64_t> size;
 };
 
-// The objects under a `gs://` prefix, or the single object a `gs://` URL
-// names.
+// Identifies the objects under a `gs://` prefix, or the single object a
+// `gs://` URL names.
 struct GcsBuild {
   static Result<GcsBuild> FromBuildString(const GcsBuildString& build_string);
 
   std::string bucket;
   std::string prefix;                 // ends with '/', empty at the bucket root
   std::optional<std::string> object;  // set in the object form only
-  // The listing of the directory form, by artifact name.
   std::map<std::string, GcsObjectInfo> contents;
   std::optional<std::string> generation;
   std::optional<std::string> md5;
   std::optional<uint64_t> size;
   std::optional<std::string> sha256;
-
-  // Derived from the URL for the code that handles every build alike. Never
-  // used to address the objects themselves.
   std::string id;
   std::string target;
   std::string product;
@@ -90,25 +86,21 @@ struct GcsBuild {
 
 std::ostream& operator<<(std::ostream&, const GcsBuild&);
 
-// The artifacts of a `gs://` directory build, in the order the listing keeps
-// them.
+// Returns the artifacts of a `gs://` directory build, in name order.
 std::vector<std::string> GcsArtifactNames(const GcsBuild& build);
 
-// The same two forms over `https://`, where a pre-signed URL carries its
-// credential in the query string of `url`.
+// Identifies the same two forms over `https://`, where a pre-signed URL
+// carries its credential in the query string of `url`. `id` drops that query
+// string, so requests use `url`.
 struct HttpBuild {
   static Result<HttpBuild> FromBuildString(const HttpBuildString& build_string);
 
   std::string url;                    // object, or directory ending in '/'
   std::optional<std::string> object;  // set in the object form only
   std::optional<std::string> etag;
-  // Whether the probe found an origin that serves range requests, without
-  // which a member cannot be read out of an archive.
   bool accept_ranges = false;
   std::optional<uint64_t> size;
   std::optional<std::string> sha256;
-
-  // `id` has no query string, so requests must go to `url`.
   std::string id;
   std::string target;
   std::string product;
@@ -122,6 +114,23 @@ using Build = std::variant<DeviceBuild, DirectoryBuild, GcsBuild, HttpBuild>;
 std::ostream& operator<<(std::ostream&, const Build&);
 
 std::string FetchLabel(const Build& build);
+
+// Returns the digest the build string asked `artifact_name` to have, if any.
+std::optional<std::string> ArtifactSha256(const Build& build,
+                                          const std::string& artifact_name);
+
+// Returns whether the build's namespace holds `artifact_name`. Only a listed
+// namespace can answer "no"; the others answer by attempting the download.
+bool BuildHasArtifact(const Build& build, const std::string& artifact_name);
+
+// Returns the path safe cache directory of one artifact of one build,
+// relative to the cache root. Android Build and directory builds key on
+// "{id}/{target}"; URL builds add the version the source reports for that one
+// artifact, so that overwriting an object never serves the bytes it replaced.
+// Returns nullopt when the source reports no version, which means the
+// artifact must not be cached.
+std::optional<std::string> BuildCacheKey(const Build& build,
+                                         const std::string& artifact_name);
 
 std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build);
 
