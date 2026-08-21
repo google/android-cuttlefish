@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <map>
 #include <memory>
 #include <string>
@@ -33,18 +35,22 @@ class ZipOverRanges {
  public:
   static Result<ZipOverRanges> Create(
       const std::map<std::string, std::string>& contents,
-      bool serve_ranges = true);
+      bool serve_ranges = true, bool reject_head = false);
 
   HttpResponse<std::string> operator()(const HttpRequest& request);
 
+  uint64_t Size() const { return data_.size(); }
   bool RangeRequestMade() const { return *ranged_; }
+  bool HeadRequestMade() const { return *head_; }
 
  private:
-  ZipOverRanges(std::string data, bool serve_ranges);
+  ZipOverRanges(std::string data, bool serve_ranges, bool reject_head);
 
   std::string data_;
   bool serve_ranges_;
+  bool reject_head_;
   std::shared_ptr<bool> ranged_;
+  std::shared_ptr<bool> head_;
 };
 
 }  // namespace cuttlefish

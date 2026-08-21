@@ -140,6 +140,14 @@ Result<SeekableZipSource> ZipSourceFromUrl(HttpClient& http_client,
   uint64_t size =
       CF_EXPECT(GetSizeIfSupportsRangeRequests(http_client, url, headers));
 
+  return CF_EXPECT(
+      ZipSourceFromUrl(http_client, url, std::move(headers), size));
+}
+
+Result<SeekableZipSource> ZipSourceFromUrl(HttpClient& http_client,
+                                           const std::string& url,
+                                           std::vector<std::string> headers,
+                                           uint64_t size) {
   std::unique_ptr<RemoteZip> callbacks =
       std::make_unique<RemoteZip>(http_client, url, size, std::move(headers));
   CF_EXPECT(callbacks.get());

@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <string>
 #include <vector>
 
@@ -30,4 +32,11 @@ namespace cuttlefish {
  * `HttpClient`. */
 Result<SeekableZipSource> ZipSourceFromUrl(HttpClient&, const std::string& url,
                                            std::vector<std::string> headers);
+
+/* The same, for a caller that already knows the object's `size` and that the
+ * origin serves ranges. Asks the origin neither question, so it also works
+ * where a HEAD request would be rejected. */
+Result<SeekableZipSource> ZipSourceFromUrl(HttpClient&, const std::string& url,
+                                           std::vector<std::string> headers,
+                                           uint64_t size);
 }  // namespace cuttlefish

@@ -28,6 +28,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
@@ -47,7 +48,8 @@ bool HasAuthorization(const std::vector<std::string>& headers) {
 }
 
 Result<ZipOverRanges> ZipOverRanges::Create(
-    const std::map<std::string, std::string>& contents, bool serve_ranges) {
+    const std::map<std::string, std::string>& contents, bool serve_ranges,
+    bool reject_head) {
   std::string buffer(4096, '\0');
 
   WritableZipSource source =
@@ -58,12 +60,19 @@ Result<ZipOverRanges> ZipOverRanges::Create(
   }
   source = CF_EXPECT(WritableZipSource::FromZip(std::move(zip)));
 
-  return ZipOverRanges(CF_EXPECT(ReadToString(source)), serve_ranges);
+  return ZipOverRanges(CF_EXPECT(ReadToString(source)), serve_ranges,
+                       reject_head);
 }
 
 HttpResponse<std::string> ZipOverRanges::operator()(
     const HttpRequest& request) {
   static constexpr std::string_view kPrefix = "Range: bytes=";
+  if (request.method == HttpMethod::kHead) {
+    *head_ = true;
+    if (reject_head_) {
+      return HttpResponse<std::string>{.http_code = 403};
+    }
+  }
   size_t start = 0;
   size_t end = data_.size();
   for (const std::string& header : request.headers) {
@@ -87,6 +96,8 @@ HttpResponse<std::string> ZipOverRanges::operator()(
   };
   if (serve_ranges_) {
     headers.push_back({"accept-ranges", "bytes"});
+    headers.push_back({"content-range", fmt::format("bytes {}-{}/{}", start,
+                                                    end - 1, data_.size())});
   }
   return HttpResponse<std::string>{
       .data = data_.substr(start, end - start),
@@ -95,9 +106,12 @@ HttpResponse<std::string> ZipOverRanges::operator()(
   };
 }
 
-ZipOverRanges::ZipOverRanges(std::string data, bool serve_ranges)
+ZipOverRanges::ZipOverRanges(std::string data, bool serve_ranges,
+                             bool reject_head)
     : data_(std::move(data)),
       serve_ranges_(serve_ranges),
-      ranged_(std::make_shared<bool>(false)) {}
+      reject_head_(reject_head),
+      ranged_(std::make_shared<bool>(false)),
+      head_(std::make_shared<bool>(false)) {}
 
 }  // namespace cuttlefish
