@@ -137,6 +137,7 @@ func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Con
 	for _, dev := range devices {
 		args = append(args, "--device", dev+":"+dev+":rwm")
 	}
+	args = append(args, "-e", "CVD_INVOKER=podcvd")
 	if hasNvidiaGPU() {
 		args = append(args,
 			"-e", "NVIDIA_DRIVER_CAPABILITIES=all",
