@@ -122,6 +122,20 @@ TEST(GcsBuildApiTests, GetBuildMissingObjectFail) {
                               HasSubstr("404"), HasSubstr("Check log file"))));
 }
 
+TEST(GcsBuildApiTests, GetBuildAnonymousForbiddenNamesTheLoginCommandFail) {
+  FakeHttpClient http_client;
+  GcsBuildApi api(http_client, nullptr);
+  http_client.SetResponse(
+      HttpResponse<std::string>{.data = "{}", .http_code = 403}, kObjectUrl);
+
+  GcsBuildString build_string = {.url = "gs://bucket/dist/phone-img-1.zip"};
+  EXPECT_THAT(
+      api.GetBuild(build_string),
+      IsErrorAndMessage(HasSubstr("cvd login "
+                                  "--scopes=https://www.googleapis.com/auth/"
+                                  "devstorage.read_only")));
+}
+
 TEST(GcsBuildApiTests, GetBuildEmptyPrefixFail) {
   FakeHttpClient http_client;
   GcsBuildApi api(http_client, nullptr);
