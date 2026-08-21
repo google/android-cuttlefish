@@ -23,22 +23,16 @@
 #include "fmt/format.h"
 #include "google/protobuf/timestamp.pb.h"
 
-#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/metrics/device_event_type.h"
 #include "cuttlefish/host/libs/metrics/fetch_conversion.h"
 #include "cuttlefish/host/libs/metrics/fetch_metrics.h"
-#include "cuttlefish/host/libs/metrics/gce_environment.h"
-#include "cuttlefish/host/libs/metrics/github_environment.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
+#include "cuttlefish/host/libs/metrics/host_conversion.h"
 #include "cuttlefish/host/libs/metrics/host_metrics.h"
-#include "cuttlefish/host/libs/metrics/invoker.h"
 #include "external_proto/cf_flags.pb.h"
-#include "external_proto/cf_gce_environment.pb.h"
-#include "external_proto/cf_github_actions_environment.pb.h"
 #include "external_proto/cf_guest.pb.h"
-#include "external_proto/cf_host.pb.h"
 #include "external_proto/cf_log.pb.h"
 #include "external_proto/cf_metrics_event_v2.pb.h"
 
@@ -52,19 +46,9 @@ using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishFlags_DataPolicy;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishFlags_GpuMode;
-using logs::proto::wireless::android::cuttlefish::events::
-    CuttlefishGceEnvironment;
-using logs::proto::wireless::android::cuttlefish::events::
-    CuttlefishGitHubActionsEnvironment;
-using logs::proto::wireless::android::cuttlefish::events::
-    CuttlefishGitHubActionsEnvironment_Repository;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishGuest;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishGuest_EventType;
-using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost;
-using logs::proto::wireless::android::cuttlefish::events::
-    CuttlefishHost_Invoker;
-using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost_OsType;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
 
 CuttlefishFlags_DataPolicy ConvertDataPolicy(DataImagePolicy policy) {
@@ -139,94 +123,6 @@ CuttlefishGuest_EventType ConvertDeviceEventType(DeviceEventType event_type) {
   }
 }
 
-CuttlefishHost_OsType ConvertHostOs(const HostInfo& host_info) {
-  switch (host_info.os) {
-    case Os::Unknown:
-      return CuttlefishHost_OsType::
-          CuttlefishHost_OsType_CUTTLEFISH_HOST_OS_TYPE_UNSPECIFIED;
-    case Os::Linux:
-      switch (host_info.arch) {
-        case Arch::Arm:
-          return CuttlefishHost_OsType::
-              CuttlefishHost_OsType_CUTTLEFISH_HOST_OS_TYPE_LINUX_AARCH32;
-        case Arch::Arm64:
-          return CuttlefishHost_OsType::
-              CuttlefishHost_OsType_CUTTLEFISH_HOST_OS_TYPE_LINUX_AARCH64;
-        case Arch::RiscV64:
-          return CuttlefishHost_OsType::
-              CuttlefishHost_OsType_CUTTLEFISH_HOST_OS_TYPE_LINUX_RISCV64;
-        case Arch::X86:
-          return CuttlefishHost_OsType::
-              CuttlefishHost_OsType_CUTTLEFISH_HOST_OS_TYPE_LINUX_X86;
-        case Arch::X86_64:
-          return CuttlefishHost_OsType::
-              CuttlefishHost_OsType_CUTTLEFISH_HOST_OS_TYPE_LINUX_X86_64;
-      }
-  }
-}
-
-CuttlefishHost_Invoker ConvertInvoker(const Invoker invoker) {
-  switch (invoker) {
-    case Invoker::Acloud:
-      return CuttlefishHost_Invoker::
-          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_ACLOUD;
-    case Invoker::HostOrchestrator:
-      return CuttlefishHost_Invoker::
-          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_HOST_ORCHESTRATOR;
-    case Invoker::None:
-      return CuttlefishHost_Invoker::
-          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_NONE;
-    case Invoker::Unknown:
-      return CuttlefishHost_Invoker::
-          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_UNSPECIFIED;
-  }
-}
-
-CuttlefishGitHubActionsEnvironment_Repository ConvertGitHubRepository(
-    const GitHubRepository repository) {
-  switch (repository) {
-    case GitHubRepository::AndroidCuttlefish:
-      return CuttlefishGitHubActionsEnvironment_Repository::
-          CuttlefishGitHubActionsEnvironment_Repository_CUTTLEFISH_GITHUB_ACTIONS_ENVIRONMENT_REPOSITORY_GOOGLE_ANDROID_CUTTLEFISH;
-    case GitHubRepository::CloudAndroidOrchestration:
-      return CuttlefishGitHubActionsEnvironment_Repository::
-          CuttlefishGitHubActionsEnvironment_Repository_CUTTLEFISH_GITHUB_ACTIONS_ENVIRONMENT_REPOSITORY_GOOGLE_CLOUD_ANDROID_ORCHESTRATION;
-    case GitHubRepository::Unknown:
-      return CuttlefishGitHubActionsEnvironment_Repository::
-          CuttlefishGitHubActionsEnvironment_Repository_CUTTLEFISH_GITHUB_ACTIONS_ENVIRONMENT_REPOSITORY_UNSPECIFIED;
-  }
-}
-
-struct PopulateEnvironment {
-  CuttlefishHost& host;
-
-  void operator()(const GceEnvironment& environment) {
-    CuttlefishGceEnvironment& gce = *host.mutable_gce();
-    gce.set_numeric_project_id(environment.numeric_project_id);
-    gce.set_zone(environment.zone);
-  }
-
-  void operator()(GitHubRepository repository) {
-    CuttlefishGitHubActionsEnvironment& github = *host.mutable_github();
-    github.set_repository(ConvertGitHubRepository(repository));
-  }
-
-  void operator()(const UnknownEnvironment&) {}
-};
-
-void PopulateCuttlefishHostEnvironment(CuttlefishHost& host,
-                                       const Environment& environment) {
-  std::visit(PopulateEnvironment{.host = host}, environment);
-}
-
-void PopulateCuttlefishHost(CuttlefishHost& host,
-                            const HostMetrics& host_metrics) {
-  host.set_host_os(ConvertHostOs(host_metrics.os));
-  host.set_host_os_version(host_metrics.os.release);
-  host.set_invoker(ConvertInvoker(host_metrics.invoker));
-  PopulateCuttlefishHostEnvironment(host, host_metrics.environment);
-}
-
 void PopulateCuttlefishGuest(CuttlefishGuest& guest,
                              const GuestMetrics& guest_metrics,
                              std::string_view session_id) {
@@ -266,8 +162,7 @@ CuttlefishLogEvent BuildCuttlefishLogEvent(const MetricsData& metrics_data) {
 
   MetricsEventV2& metrics_event = *cf_log_event.mutable_metrics_event_v2();
 
-  CuttlefishHost& host = *metrics_event.mutable_host();
-  PopulateCuttlefishHost(host, metrics_data.host_metrics);
+  PopulateCuttlefishHost(metrics_event, metrics_data.host_metrics);
 
   for (const GuestMetrics& guest_metric : metrics_data.guest_metrics) {
     CuttlefishGuest& guest = *metrics_event.add_guest();
