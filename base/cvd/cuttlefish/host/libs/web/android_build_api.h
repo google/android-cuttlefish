@@ -19,7 +19,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <tuple>
 #include <unordered_set>
 #include <vector>
 
@@ -125,12 +124,5 @@ class AndroidBuildApi : public BuildApi {
   std::chrono::seconds retry_period_;
   CasDownloader* cas_downloader_;
 };
-
-std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build);
-
-std::optional<std::string> GetFilepath(const Build& build);
-
-std::string ConstructTargetFilepath(const std::string& directory,
-                                    const std::string& filename);
 
 }  // namespace cuttlefish

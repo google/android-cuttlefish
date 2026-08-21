@@ -15,13 +15,17 @@
 
 #pragma once
 
+#include <map>
 #include <optional>
 #include <ostream>
 #include <string>
+#include <tuple>
 #include <variant>
 #include <vector>
 
+#include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -53,10 +57,65 @@ struct DirectoryBuild {
 
 std::ostream& operator<<(std::ostream&, const DirectoryBuild&);
 
-using Build = std::variant<DeviceBuild, DirectoryBuild>;
+struct GcsObjectInfo {
+  std::optional<std::string> generation;
+  std::optional<std::string> md5;
+};
+
+// The objects under a `gs://` prefix, or the single object a `gs://` URL
+// names.
+struct GcsBuild {
+  static Result<GcsBuild> FromBuildString(const GcsBuildString& build_string);
+
+  std::string bucket;
+  std::string prefix;                 // ends with '/', empty at the bucket root
+  std::optional<std::string> object;  // set in the object form only
+  // The listing of the directory form, by artifact name.
+  std::map<std::string, GcsObjectInfo> contents;
+  std::optional<std::string> generation;
+  std::optional<std::string> md5;
+  std::optional<std::string> sha256;
+
+  // Derived from the URL for the code that handles every build alike. Never
+  // used to address the objects themselves.
+  std::string id;
+  std::string target;
+  std::string product;
+  std::optional<std::string> filepath;
+};
+
+std::ostream& operator<<(std::ostream&, const GcsBuild&);
+
+// The same two forms over `https://`, where a pre-signed URL carries its
+// credential in the query string of `url`.
+struct HttpBuild {
+  static Result<HttpBuild> FromBuildString(const HttpBuildString& build_string);
+
+  std::string url;                    // object, or directory ending in '/'
+  std::optional<std::string> object;  // set in the object form only
+  std::optional<std::string> etag;
+  std::optional<std::string> sha256;
+
+  // `id` has no query string, so requests must go to `url`.
+  std::string id;
+  std::string target;
+  std::string product;
+  std::optional<std::string> filepath;
+};
+
+std::ostream& operator<<(std::ostream&, const HttpBuild&);
+
+using Build = std::variant<DeviceBuild, DirectoryBuild, GcsBuild, HttpBuild>;
 
 std::ostream& operator<<(std::ostream&, const Build&);
 
 std::string FetchLabel(const Build& build);
+
+std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build);
+
+std::optional<std::string> GetFilepath(const Build& build);
+
+std::string ConstructTargetFilepath(const std::string& directory,
+                                    const std::string& filename);
 
 }  // namespace cuttlefish
