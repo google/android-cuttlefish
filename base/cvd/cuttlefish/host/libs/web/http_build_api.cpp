@@ -19,14 +19,13 @@
 #include <string>
 #include <utility>
 
-#include "absl/strings/match.h"
-
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_probe.h"
+#include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/buffered_zip_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
@@ -36,14 +35,6 @@
 
 namespace cuttlefish {
 namespace {
-
-// The object form names one archive, so `{selector}` names a member of it
-// rather than a second artifact of the build.
-bool IsArchiveMember(const HttpBuild& build, const std::string& artifact_name) {
-  return build.object.has_value() && artifact_name != *build.object &&
-         absl::EndsWith(*build.object, ".zip") &&
-         build.filepath == artifact_name;
-}
 
 Result<std::string> ArtifactUrl(const HttpBuild& build,
                                 const std::string& artifact_name) {
@@ -78,7 +69,7 @@ Result<std::string> HttpBuildApi::DownloadFile(
       ConstructTargetFilepath(target_directory, artifact_name);
   CF_EXPECT(EnsureDirectoryExists(target_directory));
 
-  if (IsArchiveMember(build, artifact_name)) {
+  if (IsArchiveMember(build.object, build.filepath, artifact_name)) {
     CF_EXPECTF(!!build.object_info.accept_ranges,
                "'{}' does not serve range requests, so '{}' cannot be read out "
                "of it.",

@@ -46,6 +46,12 @@ Result<ParsedUrl> ParseUrl(std::string_view url);
 // Android Build convention.
 std::optional<std::string> DeriveProduct(std::string_view basename);
 
+// Returns true when the object form names one archive, so that `{selector}`
+// names a member of it rather than a second artifact of the build.
+bool IsArchiveMember(const std::optional<std::string>& object,
+                     const std::optional<std::string>& filepath,
+                     const std::string& artifact_name);
+
 // The kinds of zip archive a fetch resolves by name.
 enum class BuildZipKind {
   kImages,
