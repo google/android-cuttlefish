@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#include <cstdint>
-#include <cstdlib>
+#include <stdlib.h>
 
 #include "absl/log/log.h"
 #include "gflags/gflags.h"
@@ -24,6 +23,7 @@
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
 
