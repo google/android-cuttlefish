@@ -24,10 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
-#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/strip.h"
 #include "fmt/format.h"
@@ -44,6 +41,7 @@
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
 #include "cuttlefish/host/libs/web/http_client/url_escape.h"
+#include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/remote_zip.h"
@@ -84,21 +82,6 @@ std::string ListUrl(const std::string& bucket, const std::string& prefix,
   return url;
 }
 
-std::string ArtifactNames(const GcsBuild& build) {
-  return absl::StrJoin(build.contents, ", ",
-                       [](std::string* out, const auto& entry) {
-                         absl::StrAppend(out, entry.first);
-                       });
-}
-
-// The object form names one archive, so `{selector}` names a member of it
-// rather than a second artifact of the build.
-bool IsArchiveMember(const GcsBuild& build, const std::string& artifact_name) {
-  return build.object.has_value() && artifact_name != *build.object &&
-         absl::EndsWith(*build.object, ".zip") &&
-         build.filepath == artifact_name;
-}
-
 Result<std::string> ObjectName(const GcsBuild& build,
                                const std::string& artifact_name) {
   if (build.object.has_value()) {
@@ -108,7 +91,7 @@ Result<std::string> ObjectName(const GcsBuild& build,
   } else {
     CF_EXPECTF(Contains(build.contents, artifact_name),
                "The build '{}' has no '{}'.  It holds [{}].", build.id,
-               artifact_name, ArtifactNames(build));
+               artifact_name, absl::StrJoin(GcsArtifactNames(build), ", "));
   }
   return build.prefix + artifact_name;
 }
@@ -239,7 +222,7 @@ Result<std::string> GcsBuildApi::DownloadFile(
       ConstructTargetFilepath(target_directory, artifact_name);
   CF_EXPECT(EnsureDirectoryExists(target_directory));
 
-  if (IsArchiveMember(build, artifact_name)) {
+  if (IsArchiveMember(build.object, build.filepath, artifact_name)) {
     SeekableZipSource source = CF_EXPECT(FileReader(build, *build.object));
     ReadableZip zip = CF_EXPECT(OpenZip(std::move(source)));
     CF_EXPECTF(ExtractFile(zip, artifact_name, dest_path),

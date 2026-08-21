@@ -90,6 +90,10 @@ struct GcsBuild {
 
 std::ostream& operator<<(std::ostream&, const GcsBuild&);
 
+// The artifacts of a `gs://` directory build, in the order the listing keeps
+// them.
+std::vector<std::string> GcsArtifactNames(const GcsBuild& build);
+
 // The same two forms over `https://`, where a pre-signed URL carries its
 // credential in the query string of `url`.
 struct HttpBuild {

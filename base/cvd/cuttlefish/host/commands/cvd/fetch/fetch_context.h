@@ -28,6 +28,7 @@
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/result/result.h"
 
@@ -78,7 +79,7 @@ class FetchArtifact {
 class FetchBuildContext {
  public:
   const cuttlefish::Build& Build() const;
-  std::string GetBuildZipName(const std::string&) const;
+  Result<std::string> GetBuildZipName(BuildZipKind kind) const;
   // The specific filepath the user requested for a particular build. Ignored
   // for some builds.
   std::optional<std::string> GetFilepath() const;
