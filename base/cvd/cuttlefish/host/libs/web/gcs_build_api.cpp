@@ -37,6 +37,7 @@
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api_zip.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/digest.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
@@ -117,6 +118,28 @@ std::optional<uint64_t> ArtifactSize(const GcsBuild& build,
     return std::nullopt;
   }
   return entry->second.size;
+}
+
+// The listing and the metadata probe both report an md5, so a `gs://` download
+// is checked whether or not the build string carried a digest.
+Result<void> VerifyArtifact(const GcsBuild& build,
+                            const std::string& artifact_name,
+                            const std::string& path) {
+  if (build.object.has_value()) {
+    if (build.sha256.has_value()) {
+      CF_EXPECT(VerifySha256(path, *build.sha256, artifact_name));
+    }
+    if (build.md5.has_value()) {
+      CF_EXPECT(VerifyMd5(path, *build.md5, artifact_name));
+    }
+    return {};
+  }
+  const std::map<std::string, GcsObjectInfo>::const_iterator entry =
+      build.contents.find(artifact_name);
+  if (entry != build.contents.end() && entry->second.md5.has_value()) {
+    CF_EXPECT(VerifyMd5(path, *entry->second.md5, artifact_name));
+  }
+  return {};
 }
 
 Result<Json::Value> ResponseJson(const HttpResponse<Json::Value>& response,
@@ -237,6 +260,7 @@ Result<std::string> GcsBuildApi::DownloadFile(
   CF_EXPECTF(response.HttpSuccess(),
              "Could not download '{}' from '{}' - {}:{}", artifact_name,
              build.id, response.http_code, response.StatusDescription());
+  CF_EXPECT(VerifyArtifact(build, artifact_name, dest_path));
   return dest_path;
 }
 

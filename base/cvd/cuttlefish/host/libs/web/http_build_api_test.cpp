@@ -174,6 +174,47 @@ TEST(HttpBuildApiTests, DownloadFileAbsentFromAnObjectFail) {
                                       HasSubstr("phone-img-1.zip"))));
 }
 
+TEST(HttpBuildApiTests, DownloadFileChecksTheRequestedSha256Success) {
+  FakeHttpClient http_client;
+  HttpBuildApi api(http_client);
+  http_client.SetResponse("recovery_api_version=3", kObjectUrl);
+
+  HttpBuildString build_string = {
+      .url = kSignedUrl,
+      .sha256 =
+          "8E441A1DB0C390234AFE2970A82F888E5608304062D77DF18622D872E132"
+          "8F5D",
+  };
+  Result<HttpBuild> build = api.GetBuild(build_string);
+  ASSERT_THAT(build, IsOk());
+
+  TemporaryDir target_directory;
+  EXPECT_THAT(
+      api.DownloadFile(*build, target_directory.path, "phone-img-1.zip"),
+      IsOk());
+}
+
+TEST(HttpBuildApiTests, DownloadFileChecksTheRequestedSha256Fail) {
+  FakeHttpClient http_client;
+  HttpBuildApi api(http_client);
+  http_client.SetResponse("recovery_api_version=3", kObjectUrl);
+
+  HttpBuildString build_string = {
+      .url = kSignedUrl,
+      .sha256 = std::string(64, 'b'),
+  };
+  Result<HttpBuild> build = api.GetBuild(build_string);
+  ASSERT_THAT(build, IsOk());
+
+  TemporaryDir target_directory;
+  EXPECT_THAT(
+      api.DownloadFile(*build, target_directory.path, "phone-img-1.zip"),
+      IsErrorAndMessage(AllOf(
+          HasSubstr("phone-img-1.zip"), HasSubstr(std::string(64, 'b')),
+          HasSubstr("8e441a1db0c390234afe2970a82f888e5608304062d77df18622d872e"
+                    "1328f5d"))));
+}
+
 TEST(HttpBuildApiTests, FileReaderReadsTheObjectSuccess) {
   FakeHttpClient http_client;
   HttpBuildApi api(http_client);

@@ -30,6 +30,7 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api_zip.h"
+#include "cuttlefish/host/libs/web/digest.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
@@ -154,6 +155,9 @@ Result<std::string> HttpBuildApi::DownloadFile(
   CF_EXPECTF(response.HttpSuccess(),
              "Could not download '{}' from '{}' - {}:{}", artifact_name,
              build.id, response.http_code, response.StatusDescription());
+  if (build.sha256.has_value()) {
+    CF_EXPECT(VerifySha256(dest_path, *build.sha256, artifact_name));
+  }
   return dest_path;
 }
 

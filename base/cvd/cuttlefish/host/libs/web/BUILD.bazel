@@ -245,6 +245,31 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "digest",
+    srcs = ["digest.cpp"],
+    hdrs = ["digest.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@boringssl//:crypto",
+    ],
+)
+
+cf_cc_test(
+    name = "digest_test",
+    srcs = ["digest_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/web:digest",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
     name = "gcs_build_api",
     srcs = ["gcs_build_api.cpp"],
     hdrs = ["gcs_build_api.h"],
@@ -256,6 +281,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:build_api_zip",
         "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/host/libs/web:digest",
         "//cuttlefish/host/libs/web:url_namespace",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_file",
@@ -304,6 +330,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:build_api_zip",
+        "//cuttlefish/host/libs/web:digest",
         "//cuttlefish/host/libs/web:url_namespace",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_file",
