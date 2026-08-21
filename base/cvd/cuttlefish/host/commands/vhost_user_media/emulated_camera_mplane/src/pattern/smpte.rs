@@ -1,0 +1,143 @@
+// Copyright 2026, The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+use super::FramePattern;
+use crate::device::CameraControls;
+use std::io::Write;
+
+const SMPTE_COLOR_WHITE: (u8, u8, u8) = (180, 128, 128);
+const SMPTE_COLOR_YELLOW: (u8, u8, u8) = (162, 44, 142);
+const SMPTE_COLOR_CYAN: (u8, u8, u8) = (131, 156, 44);
+const SMPTE_COLOR_GREEN: (u8, u8, u8) = (112, 72, 58);
+const SMPTE_COLOR_MAGENTA: (u8, u8, u8) = (84, 184, 198);
+const SMPTE_COLOR_RED: (u8, u8, u8) = (65, 100, 212);
+const SMPTE_COLOR_BLUE: (u8, u8, u8) = (35, 212, 114);
+const SMPTE_COLOR_BLACK: (u8, u8, u8) = (16, 128, 128);
+const SMPTE_COLOR_DARK_GRAY: (u8, u8, u8) = (25, 128, 128);
+
+/// The color bars of the top row, left to right.
+const SMPTE_BARS: [(u8, u8, u8); 7] = [
+    SMPTE_COLOR_WHITE,
+    SMPTE_COLOR_YELLOW,
+    SMPTE_COLOR_CYAN,
+    SMPTE_COLOR_GREEN,
+    SMPTE_COLOR_MAGENTA,
+    SMPTE_COLOR_RED,
+    SMPTE_COLOR_BLUE,
+];
+
+/// SMPTE color bars overlaid with an inverse-color box bouncing around the frame.
+///
+/// Note: Gain scaling is intentionally ignored for SMPTE bars. SMPTE color bars are
+/// standardized color calibration test patterns with exact YUV reference colors.
+/// Applying gain (luma scaling) would distort the calibration values.
+pub struct SmpteBars;
+
+impl FramePattern for SmpteBars {
+    fn write(
+        &self,
+        iteration: u64,
+        // Gain is intentionally ignored for SMPTE bars to preserve exact YUV color calibration values.
+        _controls: &CameraControls,
+        width: u32,
+        height: u32,
+        sink_y: &mut dyn Write,
+        sink_u: &mut dyn Write,
+        sink_v: &mut dyn Write,
+    ) -> Result<(), i32> {
+        let sequence = iteration;
+        let box_size = (height / 6).max(1);
+
+        // Helper for triangle wave (constant velocity bounce)
+        let bouncing_box_coord = |t: u64, range: u32| -> u32 {
+            let range64 = range as u64;
+            let period = 2 * range64;
+            let val = t % period;
+            (if val < range64 { val } else { period - val }) as u32
+        };
+
+        let box_x = bouncing_box_coord(sequence * 8, width.saturating_sub(box_size));
+        let box_y = bouncing_box_coord(sequence * 5, height.saturating_sub(box_size));
+
+        let is_inside_box = |x: u32, y: u32| -> bool {
+            x >= box_x && x < box_x + box_size && y >= box_y && y < box_y + box_size
+        };
+
+        let last_bar = SMPTE_BARS.len() - 1;
+        let get_smpte_color = |x: u32, y: u32| -> (u8, u8, u8) {
+            let bar_width = (width / SMPTE_BARS.len() as u32).max(1);
+            // The bars do not divide the width evenly, so the rightmost one absorbs the
+            // remainder instead of running off the end of the array.
+            let bar_idx = std::cmp::min(x / bar_width, last_bar as u32) as usize;
+
+            let row1_height = height * 2 / 3;
+            let row2_height = height * 3 / 4;
+
+            if y < row1_height {
+                SMPTE_BARS[bar_idx]
+            } else if y < row2_height {
+                // Reversed bars for middle row
+                SMPTE_BARS[last_bar - bar_idx]
+            } else {
+                // Bottom row blocks
+                if x < bar_width {
+                    SMPTE_COLOR_BLUE
+                } else if x < bar_width * 2 {
+                    SMPTE_COLOR_WHITE
+                } else if x < bar_width * 3 {
+                    SMPTE_COLOR_MAGENTA
+                } else if x < bar_width * 4 {
+                    SMPTE_COLOR_BLACK
+                } else {
+                    SMPTE_COLOR_DARK_GRAY
+                }
+            }
+        };
+
+        // Write Y Plane
+        let mut y_plane = Vec::with_capacity((width * height) as usize);
+        for y_idx in 0..height {
+            for x_idx in 0..width {
+                let (y, _, _) = get_smpte_color(x_idx, y_idx);
+                let is_box = is_inside_box(x_idx, y_idx);
+                y_plane.push(if is_box { 255 - y } else { y });
+            }
+        }
+        sink_y.write_all(&y_plane).map_err(|_| libc::EIO)?;
+
+        // Write U Plane
+        let mut u_plane = Vec::with_capacity((width * height / 4) as usize);
+        for y_idx in 0..(height / 2) {
+            for x_idx in 0..(width / 2) {
+                let (_, u, _) = get_smpte_color(x_idx * 2, y_idx * 2);
+                let is_box = is_inside_box(x_idx * 2, y_idx * 2);
+                u_plane.push(if is_box { 255 - u } else { u });
+            }
+        }
+        sink_u.write_all(&u_plane).map_err(|_| libc::EIO)?;
+
+        // Write V Plane
+        let mut v_plane = Vec::with_capacity((width * height / 4) as usize);
+        for y_idx in 0..(height / 2) {
+            for x_idx in 0..(width / 2) {
+                let (_, _, v) = get_smpte_color(x_idx * 2, y_idx * 2);
+                let is_box = is_inside_box(x_idx * 2, y_idx * 2);
+                v_plane.push(if is_box { 255 - v } else { v });
+            }
+        }
+        sink_v.write_all(&v_plane).map_err(|_| libc::EIO)?;
+
+        Ok(())
+    }
+}
