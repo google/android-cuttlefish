@@ -152,7 +152,7 @@ ProxyServer::ProxyServer(SharedFD server,
 
       // Server fd is available to read, so we can accept the
       // connection without blocking on that
-      SharedFD client = Fd::Accept(*server_fd);
+      SharedFD client = Fd::Accept(*server_fd).value_or(Fd());
       if (!client->IsOpen()) {
         LOG(ERROR) << "Failed to accept incoming connection: "
                    << client->StrError();

@@ -37,7 +37,7 @@
 namespace cuttlefish {
 
 SharedFD CreateMemFDWithData(const std::string& data) {
-  SharedFD memfd = Fd::MemfdCreate("");
+  SharedFD memfd = Fd::MemfdCreate("").value_or(Fd());
   CHECK(WriteAll(memfd, data) == data.size()) << memfd->StrError();
   CHECK(memfd->LSeek(0, SEEK_SET) == 0);
   return memfd;
