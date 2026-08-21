@@ -477,9 +477,6 @@ int CuttlefishMain() {
     user_friendly_gpu_mode = "Lavapipe (Guest GPU Rendering)";
   } else if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
     user_friendly_gpu_mode = "SwiftShader (Guest CPU Rendering)";
-  } else if (instance.gpu_mode() == GpuMode::DrmVirgl) {
-    user_friendly_gpu_mode =
-        "VirglRenderer (Accelerated Rendering using Host OpenGL)";
   } else if (instance.gpu_mode() == GpuMode::Gfxstream) {
     user_friendly_gpu_mode =
         "Gfxstream (Accelerated Rendering using Host OpenGL and Vulkan)";
