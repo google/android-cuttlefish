@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/host_conversion.h"
+#include "cuttlefish/host/libs/metrics/conversion/host_conversion.h"
 
 #include <variant>
 
