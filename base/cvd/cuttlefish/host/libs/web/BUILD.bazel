@@ -257,6 +257,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/host/libs/web:url_namespace",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_file",
         "//cuttlefish/host/libs/web/http_client:http_json",
@@ -267,7 +268,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/result",
-        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@jsoncpp",
@@ -305,6 +305,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:url_namespace",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_file",
         "//cuttlefish/host/libs/web/http_client:http_probe",
@@ -314,7 +315,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/result",
-        "@abseil-cpp//absl/strings",
     ],
 )
 
