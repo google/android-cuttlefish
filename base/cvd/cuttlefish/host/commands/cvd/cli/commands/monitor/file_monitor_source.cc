@@ -113,7 +113,7 @@ FileMonitorSource::FileMonitorSource(
       file_io_(std::move(file_io)),
       colorize_line_(std::move(colorize_line)),
       filter_line_(std::move(filter_line)) {
-  inotify_fd_ = Fd::InotifyFd();
+  inotify_fd_ = Fd::InotifyFd().value_or(Fd());
   CHECK(inotify_fd_->IsOpen()) << inotify_fd_->StrError();
   CHECK_GE(inotify_fd_->InotifyAddWatch(path_, IN_DELETE_SELF | IN_MODIFY), 0);
   const int flags = inotify_fd_->Fcntl(F_GETFL, 0);

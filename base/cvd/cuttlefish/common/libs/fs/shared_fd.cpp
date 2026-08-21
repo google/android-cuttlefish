@@ -142,7 +142,9 @@ int SharedFD::Poll(PollSharedFd* fds, size_t num_fds, int timeout) {
   return ret;
 }
 
-SharedFD SharedFD::Dup(int unmanaged_fd) { return Fd::Dup(unmanaged_fd); }
+SharedFD SharedFD::Dup(int unmanaged_fd) {
+  return Fd::Dup(unmanaged_fd).value_or(Fd());
+}
 
 bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   int fds[2];
@@ -161,18 +163,18 @@ bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
 
 #ifdef __linux__
 SharedFD SharedFD::Event(int initval, int flags) {
-  return Fd::Event(initval, flags);
+  return Fd::Event(initval, flags).value_or(Fd());
 }
 
 SharedFD SharedFD::ShmOpen(const std::string& name, int oflag, int mode) {
-  return Fd::ShmOpen(name, oflag, mode);
+  return Fd::ShmOpen(name, oflag, mode).value_or(Fd());
 }
 #endif
 
 SharedFD SharedFD::MemfdCreateWithData(const std::string& name,
                                        const std::string& data,
                                        unsigned int flags) {
-  SharedFD memfd = Fd::MemfdCreate(name, flags);
+  SharedFD memfd = Fd::MemfdCreate(name, flags).value_or(Fd());
   if (WriteAll(memfd, data) != data.size()) {
     return ErrorFD(errno);
   }
@@ -187,13 +189,12 @@ SharedFD SharedFD::MemfdCreateWithData(const std::string& name,
 
 bool SharedFD::SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                           SharedFD* fd1) {
-  Fd unique_fd0;
-  Fd unique_fd1;
-  if (!Fd::SocketPair(domain, type, protocol, &unique_fd0, &unique_fd1)) {
+  Result<std::pair<Fd, Fd>> res = Fd::SocketPair(domain, type, protocol);
+  if (!res.has_value()) {
     return false;
   }
-  *fd0 = std::move(unique_fd0);
-  *fd1 = std::move(unique_fd1);
+  *fd0 = std::move(res->first);
+  *fd1 = std::move(res->second);
   return true;
 }
 
@@ -207,70 +208,67 @@ Result<std::pair<SharedFD, SharedFD>> SharedFD::SocketPair(int domain, int type,
 }
 
 SharedFD SharedFD::Open(const std::string& path, int flags, mode_t mode) {
-  return Fd::Open(path, flags, mode);
+  return Fd::Open(path, flags, mode).value_or(Fd());
 }
 
 SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
-  return Fd::Open(path, flags, mode);
+  return Fd::Open(path, flags, mode).value_or(Fd());
 }
 
 SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
-  return Fd::Socket(domain, socket_type, protocol);
+  return Fd::Socket(domain, socket_type, protocol).value_or(Fd());
 }
 
 Result<std::pair<SharedFD, std::string>> SharedFD::Mkostemp(
     const std::string_view path, const int flags) {
-  // mkostemp replaces the Xs with random selections to make a unique filename
-  auto temp_path = fmt::format("{}XXXXXX", path);
-  const int fd = mkostemp(temp_path.data(), flags);
-  CF_EXPECTF(fd != -1, "Error creating temporary file: {}",
-             ::cuttlefish::StrError(errno));
-  auto shared_fd = SharedFD(std::shared_ptr<Fd>(new Fd(fd, 0)));
-  return std::make_pair<SharedFD, std::string>(std::move(shared_fd),
-                                               std::move(temp_path));
+  std::pair<Fd, std::string> fd_path = CF_EXPECT(Fd::Mkostemp(path, flags));
+  return std::make_pair<SharedFD, std::string>(std::move(fd_path.first),
+                                               std::move(fd_path.second));
 }
 
 SharedFD SharedFD::ErrorFD(int error) { return Fd::ErrorFD(error); }
 
 SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
                                      int in_type) {
-  return Fd::SocketLocalClient(name, abstract, in_type);
+  return Fd::SocketLocalClient(name, abstract, in_type).value_or(Fd());
 }
 
 SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
                                      int in_type, int timeout_seconds) {
-  return Fd::SocketLocalClient(name, abstract, in_type, timeout_seconds);
+  return Fd::SocketLocalClient(name, abstract, in_type, timeout_seconds)
+      .value_or(Fd());
 }
 
 SharedFD SharedFD::SocketLocalClient(int port, int type) {
-  return Fd::SocketLocalClient(port, type);
+  return Fd::SocketLocalClient(port, type).value_or(Fd());
 }
 
 SharedFD SharedFD::SocketClient(const std::string& host, int port, int type,
                                 std::chrono::seconds timeout) {
-  return Fd::SocketClient(host, port, type, timeout);
+  return Fd::SocketClient(host, port, type, timeout).value_or(Fd());
 }
 
 SharedFD SharedFD::Socket6Client(const std::string& host,
                                  const std::string& interface, int port,
                                  int type, std::chrono::seconds timeout) {
-  return Fd::Socket6Client(host, interface, port, type, timeout);
+  return Fd::Socket6Client(host, interface, port, type, timeout).value_or(Fd());
 }
 
 SharedFD SharedFD::SocketLocalServer(int port, int type) {
-  return Fd::SocketLocalServer(port, type);
+  return Fd::SocketLocalServer(port, type).value_or(Fd());
 }
 
 SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
                                      int in_type, mode_t mode) {
-  return Fd::SocketLocalServer(name, abstract, in_type, mode);
+  return Fd::SocketLocalServer(name, abstract, in_type, mode).value_or(Fd());
 }
 
 #ifdef __linux__
 SharedFD SharedFD::VsockServer(
     unsigned int port, int type,
     std::optional<int> vhost_user_vsock_listening_cid, unsigned int cid) {
-  return Fd::VsockServer(port, type, vhost_user_vsock_listening_cid, cid);
+  return Fd::VsockServer(port, type, vhost_user_vsock_listening_cid, cid)
+      .value_or(Fd());
 }
 
 SharedFD SharedFD::VsockServer(

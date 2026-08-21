@@ -43,7 +43,7 @@ namespace cuttlefish {
 namespace {
 
 ScopedMMap AllocateShm(size_t size, const std::string& name, SharedFD* shm_fd) {
-  *shm_fd = Fd::MemfdCreate(name, 0);
+  *shm_fd = Fd::MemfdCreate(name, 0).value_or(Fd());
   if (!(*shm_fd)->IsOpen()) {
     LOG(FATAL) << "Unable to allocate create file for " << name << ": "
                << (*shm_fd)->StrError();
@@ -114,7 +114,7 @@ std::function<void(AudioStatus, uint32_t, uint32_t)> SendStatusCallback(
 std::unique_ptr<AudioClientConnection> AudioServer::AcceptClient(
     uint32_t num_streams, uint32_t num_jacks, uint32_t num_chmaps,
     uint32_t num_controls, size_t tx_shm_len, size_t rx_shm_len) {
-  SharedFD conn_fd = Fd::Accept(*server_socket_, nullptr, 0);
+  SharedFD conn_fd = Fd::Accept(*server_socket_).value_or(Fd());
   if (!conn_fd->IsOpen()) {
     LOG(ERROR) << "Connection failed on audio server: " << conn_fd->StrError();
     return nullptr;

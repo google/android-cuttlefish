@@ -85,8 +85,7 @@ class HttpServer {
   uint16_t Port() { return 8888; }
 
   Result<std::string> CodeFromClient() {
-    SharedFD client = Fd::Accept(*server_);
-    CF_EXPECT(client->IsOpen(), client->StrError());
+    SharedFD client = CF_EXPECT(Fd::Accept(*server_));
 
     std::stringstream request;
     char buffer[512];

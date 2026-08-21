@@ -244,7 +244,7 @@ bool VsockServerConnection::Connect(unsigned int port, unsigned int cid,
                                                    vhost_user_vsock_cid, cid);
   }
   if (server_fd_->IsOpen()) {
-    fd_ = Fd::Accept(*server_fd_);
+    fd_ = Fd::Accept(*server_fd_).value_or(Fd());
     return fd_->IsOpen();
   } else {
     return false;

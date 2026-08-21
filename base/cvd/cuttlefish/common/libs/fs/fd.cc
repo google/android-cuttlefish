@@ -38,6 +38,8 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "fmt/chrono.h"  // IWYU pragma: keep
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/scoped_mmap.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
@@ -66,13 +68,18 @@ class LocalErrno {
   int preserved_;
 };
 
-int memfd_create_wrapper(const char* name, unsigned int flags) {
+Result<int> MemfdCreateWrapper(const std::string& name, unsigned int flags) {
 #ifdef __linux__
-  return memfd_create(name, flags);
+  int fd = TEMP_FAILURE_RETRY(memfd_create(name.c_str(), flags));
+  CF_EXPECTF(fd >= 0, "memfd_create('{}', {}) failed: {}", name, flags,
+             StrError(errno));
 #else
   (void)flags;
-  return shm_open(name, O_RDWR);
+  int fd = TEMP_FAILURE_RETRY(shm_open(name.c_str(), O_RDWR));
+  CF_EXPECTF(fd >= 0, "shm_open('{}', O_RDWR) failed: {}", name,
+             StrError(errno));
 #endif
+  return fd;
 }
 
 bool IsRegularFile(const int fd) {
@@ -129,206 +136,174 @@ Fd& Fd::operator=(Fd&& other) {
   return *this;
 }
 
-Fd Fd::Accept(const Fd& listener, struct sockaddr* addr, socklen_t* addrlen) {
-  return listener.AcceptInternal(addr, addrlen);
+Result<Fd> Fd::Accept(const Fd& listener) {
+  const int fd = TEMP_FAILURE_RETRY(accept(listener.fd_, nullptr, nullptr));
+  CF_EXPECTF(fd >= 0, "accept(..., nullptr, nullptr) failed: '{}",
+             ::cuttlefish::StrError(errno));
+  return Fd(fd, 0);
 }
 
-Fd Fd::Accept(const Fd& listener) { return Fd::Accept(listener, NULL, NULL); }
-
-Fd Fd::Dup(int unmanaged_fd) {
-  int fd = fcntl(unmanaged_fd, F_DUPFD_CLOEXEC, 3);
-  int error_num = errno;
-  return Fd(fd, error_num);
+Result<Fd> Fd::Dup(int unmanaged_fd) {
+  const int fd = TEMP_FAILURE_RETRY(fcntl(unmanaged_fd, F_DUPFD_CLOEXEC, 3));
+  CF_EXPECTF(fd >= 0, "fcntl(..., F_DUPFD_CLOEXEC, 3) failed: {}",
+             ::cuttlefish::StrError(errno));
+  return Fd(fd, 0);
 }
 
-bool Fd::Pipe(Fd* fd0, Fd* fd1) {
+Result<std::pair<Fd, Fd>> Fd::Pipe() {
   int fds[2];
 #ifdef __linux__
-  int rval = pipe2(fds, O_CLOEXEC);
+  const int rval = TEMP_FAILURE_RETRY(pipe2(fds, O_CLOEXEC));
+  CF_EXPECTF(rval != -1, "pipe2(..., O_CLOEXEC) failed: {}",
+             ::cuttlefish::StrError(errno));
 #else
-  int rval = pipe(fds);
+  const int rval = TEMP_FAILURE_RETRY(pipe(fds));
+  CF_EXPECTF(rval != -1, "pipe(...) failed: {}", ::cuttlefish::StrError(errno));
 #endif
-  if (rval != -1) {
-    (*fd0) = Fd(fds[0], errno);
-    (*fd1) = Fd(fds[1], errno);
-    return true;
-  }
-  return false;
+  return std::make_pair(Fd(fds[0], 0), Fd(fds[1], 0));
 }
 
 #ifdef __linux__
-Fd Fd::Event(int initval, int flags) {
-  int fd = eventfd(initval, flags);
-  return Fd(fd, errno);
+Result<Fd> Fd::Event(int initval, int flags) {
+  int fd = TEMP_FAILURE_RETRY(eventfd(initval, flags));
+  CF_EXPECTF(fd >= 0, "eventfd({}, {}) failed: {}", initval, flags,
+             ::cuttlefish::StrError(errno));
+  return Fd(fd, 0);
 }
 
-Fd Fd::ShmOpen(const std::string& name, int oflag, int mode) {
-  errno = 0;
-  int fd = shm_open(name.c_str(), oflag, mode);
-  int error_num = errno;
-  return Fd(fd, error_num);
+Result<Fd> Fd::ShmOpen(std::string_view name, int oflag, int mode) {
+  std::string name_str(name);
+  const int fd = TEMP_FAILURE_RETRY(shm_open(name_str.c_str(), oflag, mode));
+  CF_EXPECTF(fd >= 0, "shm_open('{}', {}, {}) failed: {}", name, oflag, mode,
+             ::cuttlefish::StrError(errno));
+  return Fd(fd, 0);
 }
 #endif
 
-Fd Fd::MemfdCreate(const std::string& name, unsigned int flags) {
-  int fd = memfd_create_wrapper(name.c_str(), flags);
-  int error_num = errno;
-  return Fd(fd, error_num);
-}
-
-bool Fd::SocketPair(int domain, int type, int protocol, Fd* fd0, Fd* fd1) {
-  int fds[2];
-  int rval = socketpair(domain, type, protocol, fds);
-  if (rval != -1) {
-    (*fd0) = Fd(fds[0], errno);
-    (*fd1) = Fd(fds[1], errno);
-    return true;
-  }
-  return false;
+Result<Fd> Fd::MemfdCreate(std::string_view name, unsigned int flags) {
+  return Fd(CF_EXPECT(MemfdCreateWrapper(std::string(name), flags)), 0);
 }
 
 Result<std::pair<Fd, Fd>> Fd::SocketPair(int domain, int type, int protocol) {
-  Fd a, b;
-  if (!Fd::SocketPair(domain, type, protocol, &a, &b)) {
-    return CF_ERR("socketpair failed: " << ::cuttlefish::StrError(errno));
-  }
-  return std::make_pair(std::move(a), std::move(b));
+  int fds[2];
+  int rval = TEMP_FAILURE_RETRY(socketpair(domain, type, protocol, fds));
+  CF_EXPECTF(rval != -1, "socketpair({}, {}, {}) failed: {}", domain, type,
+             protocol, ::cuttlefish::StrError(errno));
+  return std::make_pair(Fd(fds[0], 0), Fd(fds[1], 0));
 }
 
-Fd Fd::Open(const std::string& path, int flags, mode_t mode) {
-  return Open(path.c_str(), flags, mode);
+Result<Fd> Fd::Open(std::string_view path, int flags, mode_t mode) {
+  const int fd =
+      TEMP_FAILURE_RETRY(open(std::string(path).c_str(), flags, mode));
+  CF_EXPECTF(fd >= 0, "open('{}', {}, {}) failed: {}", path, flags, mode,
+             ::cuttlefish::StrError(errno));
+  return Fd(fd, 0);
 }
 
-Fd Fd::Open(const char* path, int flags, mode_t mode) {
-  int fd = TEMP_FAILURE_RETRY(open(path, flags, mode));
-  if (fd == -1) {
-    return Fd(fd, errno);
-  } else {
-    return Fd(fd, 0);
-  }
+Result<Fd> Fd::InotifyFd(void) {
+  const int fd = TEMP_FAILURE_RETRY(inotify_init1(IN_CLOEXEC));
+  CF_EXPECTF(fd >= 0, "inotify_init1(IN_CLOEXEC) failed: {}",
+             ::cuttlefish::StrError(errno));
+  return Fd(fd, 0);
 }
 
-Fd Fd::InotifyFd(void) {
-  errno = 0;
-  int fd = TEMP_FAILURE_RETRY(inotify_init1(IN_CLOEXEC));
-  return Fd(fd, errno);
+Result<Fd> Fd::Creat(std::string_view path, mode_t mode) {
+  return CF_EXPECT(Fd::Open(path, O_CREAT | O_WRONLY | O_TRUNC, mode));
 }
 
-Result<Fd> Fd::Creat(const std::string& path, mode_t mode) {
-  Fd fd = Fd::Open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
-  CF_EXPECTF(fd.IsOpen(), "Failed to open '{}' with mode {:o}: {}", path, mode,
-             fd.StrError());
-  return fd;
-}
-
-Result<Fd> Fd::Fifo(const std::string& path, mode_t mode) {
+Result<Fd> Fd::Fifo(std::string_view path, mode_t mode) {
   struct stat st{};
-  if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) == 0) {
-    CF_EXPECTF(TEMP_FAILURE_RETRY(remove(path.c_str())) == 0,
+  std::string path_str(path);
+  if (TEMP_FAILURE_RETRY(stat(path_str.c_str(), &st)) == 0) {
+    CF_EXPECTF(TEMP_FAILURE_RETRY(remove(path_str.c_str())) == 0,
                "Failed to delete old file at '{}': '{}'", path,
                ::cuttlefish::StrError(errno));
   }
 
-  CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
+  CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path_str.c_str(), mode)) == 0,
              "Failed to mkfifo('{}', {:o})", path, mode);
-  auto ret = Open(path, O_RDWR);
-  CF_EXPECTF(ret.IsOpen(), "Failed to open '{}': '{}'", path, ret.StrError());
-  return ret;
+  return CF_EXPECT(Open(path, O_RDWR));
 }
 
-Fd Fd::Socket(int domain, int socket_type, int protocol) {
-  int fd = TEMP_FAILURE_RETRY(socket(domain, socket_type, protocol));
-  if (fd == -1) {
-    return Fd(fd, errno);
-  } else {
-    return Fd(fd, 0);
-  }
-}
-
-Fd Fd::Mkstemp(std::string* path) {
-  int fd = mkstemp(path->data());
-  if (fd == -1) {
-    return Fd(fd, errno);
-  } else {
-    return Fd(fd, 0);
-  }
+Result<Fd> Fd::Socket(int domain, int socket_type, int protocol) {
+  const int fd = TEMP_FAILURE_RETRY(socket(domain, socket_type, protocol));
+  CF_EXPECTF(fd >= 0, "socket({}, {}, {}) failed: {}", domain, socket_type,
+             protocol, ::cuttlefish::StrError(errno));
+  return Fd(fd, 0);
 }
 
 Result<std::pair<Fd, std::string>> Fd::Mkostemp(const std::string_view path,
                                                 const int flags) {
   // mkostemp replaces the Xs with random selections to make a unique filename
-  auto temp_path = fmt::format("{}XXXXXX", path);
-  const int fd = mkostemp(temp_path.data(), flags);
-  CF_EXPECTF(fd != -1, "Error creating temporary file: {}",
+  std::string temp_path = fmt::format("{}XXXXXX", path);
+  const int fd = TEMP_FAILURE_RETRY(mkostemp(temp_path.data(), flags));
+  CF_EXPECTF(fd != -1, "mkostemp('{}', {}) failed: {}", path, flags,
              ::cuttlefish::StrError(errno));
-  auto shared_fd = Fd(fd, 0);
-  return std::make_pair<Fd, std::string>(std::move(shared_fd),
-                                         std::move(temp_path));
+  return std::make_pair<Fd, std::string>(Fd(fd, 0), std::move(temp_path));
 }
 
 Fd Fd::ErrorFD(int error) { return Fd(-1, error); }
 
-Fd Fd::SocketLocalClient(const std::string& name, bool abstract, int in_type) {
-  return SocketLocalClient(name, abstract, in_type, 0);
+Result<Fd> Fd::SocketLocalClient(std::string_view name, bool abstract,
+                                 int in_type) {
+  return CF_EXPECT(SocketLocalClient(name, abstract, in_type, 0));
 }
 
-Fd Fd::SocketLocalClient(const std::string& name, bool abstract, int in_type,
-                         int timeout_seconds) {
+Result<Fd> Fd::SocketLocalClient(std::string_view name, bool abstract,
+                                 int in_type, int timeout_seconds) {
+  std::string name_str(name);
+
   struct sockaddr_un addr;
   socklen_t addrlen;
-  MakeAddress(name.c_str(), abstract, &addr, &addrlen);
-  Fd rval = Fd::Socket(PF_UNIX, in_type, 0);
-  if (!rval.IsOpen()) {
-    return rval;
-  }
+  MakeAddress(name_str.c_str(), abstract, &addr, &addrlen);
+  Fd rval = CF_EXPECT(Fd::Socket(PF_UNIX, in_type, 0));
+
   struct timeval timeout = {timeout_seconds, 0};
   auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
-  if (rval.ConnectWithTimeout(casted_addr, addrlen, &timeout) == -1) {
-    return Fd::ErrorFD(rval.GetErrno());
-  }
+  CF_EXPECTF(rval.ConnectWithTimeout(casted_addr, addrlen, &timeout) != -1,
+             "ConnectWithTimeout failed: {}", rval.StrError());
   return rval;
 }
 
-Fd Fd::SocketLocalClient(int port, int type) {
+Result<Fd> Fd::SocketLocalClient(int port, int type) {
   sockaddr_in addr{};
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  auto rval = Fd::Socket(AF_INET, type, 0);
-  if (!rval.IsOpen()) {
-    return rval;
-  }
-  if (rval.Connect(reinterpret_cast<const sockaddr*>(&addr), sizeof addr) < 0) {
-    return Fd::ErrorFD(rval.GetErrno());
-  }
+  Fd rval = CF_EXPECT(Fd::Socket(AF_INET, type, 0));
+
+  auto addr_ptr = reinterpret_cast<const sockaddr*>(&addr);
+  CF_EXPECTF(rval.Connect(addr_ptr, sizeof addr) >= 0,
+             "Connect failed to port {} with type {}: {}", port, type,
+             rval.StrError());
+
   return rval;
 }
 
-Fd Fd::SocketClient(const std::string& host, int port, int type,
-                    std::chrono::seconds timeout) {
+Result<Fd> Fd::SocketClient(std::string_view host, int port, int type,
+                            std::chrono::seconds timeout) {
   sockaddr_in addr{};
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = inet_addr(host.c_str());
-  auto rval = Fd::Socket(AF_INET, type, 0);
-  if (!rval.IsOpen()) {
-    return rval;
-  }
-  struct timeval timeout_timeval = {static_cast<time_t>(timeout.count()), 0};
-  if (rval.ConnectWithTimeout(reinterpret_cast<const sockaddr*>(&addr),
-                              sizeof addr, &timeout_timeval) < 0) {
-    return Fd::ErrorFD(rval.GetErrno());
-  }
+  addr.sin_addr.s_addr = inet_addr(std::string(host).c_str());
+  Fd rval = CF_EXPECT(Fd::Socket(AF_INET, type, 0));
+
+  struct timeval timeout_tval = {static_cast<time_t>(timeout.count()), 0};
+  auto addr_ptr = reinterpret_cast<const sockaddr*>(&addr);
+  CF_EXPECTF(
+      rval.ConnectWithTimeout(addr_ptr, sizeof addr, &timeout_tval) >= 0,
+      "ConnectWithTimeout to host {} and port {} with type {} failed in {}: {}",
+      host, port, type, timeout, rval.StrError());
   return rval;
 }
 
-Fd Fd::Socket6Client(const std::string& host, const std::string& interface,
-                     int port, int type, std::chrono::seconds timeout) {
+Result<Fd> Fd::Socket6Client(std::string_view host, std::string_view interface,
+                             int port, int type, std::chrono::seconds timeout) {
   sockaddr_in6 addr{};
   addr.sin6_family = AF_INET6;
   addr.sin6_port = htons(port);
-  inet_pton(AF_INET6, host.c_str(), &addr.sin6_addr);
-  auto rval = Fd::Socket(AF_INET6, type, 0);
+  inet_pton(AF_INET6, std::string(host).c_str(), &addr.sin6_addr);
+  Fd rval = CF_EXPECT(Fd::Socket(AF_INET6, type, 0));
   if (!rval.IsOpen()) {
     return rval;
   }
@@ -336,82 +311,70 @@ Fd Fd::Socket6Client(const std::string& host, const std::string& interface,
   if (!interface.empty()) {
 #ifdef __linux__
     ifreq ifr{};
-    snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", interface.c_str());
+    snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s",
+             std::string(interface).c_str());
 
-    if (rval.SetSockOpt(SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) == -1) {
-      return Fd::ErrorFD(rval.GetErrno());
-    }
+    CF_EXPECTF(
+        rval.SetSockOpt(SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) >= 0,
+        "SetSockOpt(SOL_SOCKET, SO_BINDTODEVICE, ...) failed: {}",
+        rval.StrError());
 #elif defined(__APPLE__)
-    int idx = if_nametoindex(interface.c_str());
-    if (rval->SetSockOpt(IPPROTO_IP, IP_BOUND_IF, &idx, sizeof(idx)) == -1) {
-      return Fd::ErrorFD(rval->GetErrno());
-    }
+    int idx = if_nametoindex(std::string(interface).c_str());
+    CF_EXPECTF(rval.SetSockOpt(IPPROTO_IP, IP_BOUND_IF, &idx, sizeof(idx)) >= 0,
+               "SetSockOpt(IPPROTO_IP, IP_BOUND_IF, {}, ...) failed: {}", idx,
+               rval.StrError());
 #else
 #error "Unsupported operating system"
 #endif
   }
 
   struct timeval timeout_timeval = {static_cast<time_t>(timeout.count()), 0};
-  if (rval.ConnectWithTimeout(reinterpret_cast<const sockaddr*>(&addr),
-                              sizeof addr, &timeout_timeval) < 0) {
-    return Fd::ErrorFD(rval.GetErrno());
-  }
+  CF_EXPECTF(rval.ConnectWithTimeout(reinterpret_cast<const sockaddr*>(&addr),
+                                     sizeof addr, &timeout_timeval) >= 0,
+             "ConnectWithTimeout failed: {}", rval.StrError());
   return rval;
 }
 
-Fd Fd::SocketLocalServer(int port, int type) {
+Result<Fd> Fd::SocketLocalServer(int port, int type) {
   struct sockaddr_in addr;
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  Fd rval = Fd::Socket(AF_INET, type, 0);
-  if (!rval.IsOpen()) {
-    return rval;
-  }
+  Fd rval = CF_EXPECT(Fd::Socket(AF_INET, type, 0));
+
   int n = 1;
-  if (rval.SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1) {
-    LOG(ERROR) << "SetSockOpt failed " << rval.StrError();
-    return Fd::ErrorFD(rval.GetErrno());
-  }
-  if (rval.Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-    LOG(ERROR) << "Bind failed " << rval.StrError();
-    return Fd::ErrorFD(rval.GetErrno());
-  }
+  CF_EXPECTF(rval.SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) >= 0,
+             "SetSockOpt failed: {}", rval.StrError());
+
+  CF_EXPECTF(rval.Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) >= 0,
+             "Bind failed: {}", rval.StrError());
+
   if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
-    if (rval.Listen(4) < 0) {
-      LOG(ERROR) << "Listen failed " << rval.StrError();
-      return Fd::ErrorFD(rval.GetErrno());
-    }
+    CF_EXPECTF(rval.Listen(4) >= 0, "Listen failed: {}", rval.StrError());
   }
   return rval;
 }
 
-Fd Fd::SocketLocalServer(const std::string& name, bool abstract, int in_type,
-                         mode_t mode) {
+Result<Fd> Fd::SocketLocalServer(std::string_view name, bool abstract,
+                                 int in_type, mode_t mode) {
   // DO NOT UNLINK addr.sun_path. It does NOT have to be null-terminated.
   // See man 7 unix for more details.
+  std::string name_str(name);
   if (!abstract) {
-    (void)unlink(name.c_str());
+    (void)TEMP_FAILURE_RETRY(unlink(name_str.c_str()));
   }
 
   struct sockaddr_un addr;
   socklen_t addrlen;
-  MakeAddress(name.c_str(), abstract, &addr, &addrlen);
-  Fd rval = Fd::Socket(PF_UNIX, in_type, 0);
-  if (!rval.IsOpen()) {
-    return rval;
-  }
+  MakeAddress(name_str.c_str(), abstract, &addr, &addrlen);
+  Fd rval = CF_EXPECT(Fd::Socket(PF_UNIX, in_type, 0));
 
   int n = 1;
-  if (rval.SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1) {
-    LOG(ERROR) << "SetSockOpt failed " << rval.StrError();
-    return Fd::ErrorFD(rval.GetErrno());
-  }
-  if (rval.Bind(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
-    LOG(ERROR) << "Bind failed; name=" << name << ": " << rval.StrError();
-    return Fd::ErrorFD(rval.GetErrno());
-  }
+  CF_EXPECTF(rval.SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) >= 0,
+             "SetSockOpt failed: {}", rval.StrError());
+  CF_EXPECTF(rval.Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) >= 0,
+             "Bind failed: {}", rval.StrError());
 
   /* Only the bottom bits are really the socket type; there are flags too. */
   constexpr int SOCK_TYPE_MASK = 0xf;
@@ -420,14 +383,11 @@ Fd Fd::SocketLocalServer(const std::string& name, bool abstract, int in_type,
   // Connection oriented sockets: start listening.
   if (socket_type == SOCK_STREAM || socket_type == SOCK_SEQPACKET) {
     // Follows the default from socket_local_server
-    if (rval.Listen(1) == -1) {
-      LOG(ERROR) << "Listen failed: " << rval.StrError();
-      return Fd::ErrorFD(rval.GetErrno());
-    }
+    CF_EXPECTF(rval.Listen(4) >= 0, "Listen failed: {}", rval.StrError());
   }
 
   if (!abstract) {
-    if (TEMP_FAILURE_RETRY(chmod(name.c_str(), mode)) == -1) {
+    if (TEMP_FAILURE_RETRY(chmod(name_str.c_str(), mode)) == -1) {
       LOG(ERROR) << "chmod failed: " << ::cuttlefish::StrError(errno);
       // However, continue since we do have a listening socket
     }
@@ -436,42 +396,36 @@ Fd Fd::SocketLocalServer(const std::string& name, bool abstract, int in_type,
 }
 
 #ifdef __linux__
-Fd Fd::VsockServer(unsigned int port, int type,
-                   std::optional<int> vhost_user_vsock_listening_cid,
-                   unsigned int cid) {
+Result<Fd> Fd::VsockServer(unsigned int port, int type,
+                           std::optional<int> vhost_user_vsock_listening_cid,
+                           unsigned int cid) {
   if (vhost_user_vsock_listening_cid) {
-    return Fd::SocketLocalServer(
+    return CF_EXPECT(Fd::SocketLocalServer(
         GetVhostUserVsockServerAddr(port, *vhost_user_vsock_listening_cid),
-        false /* abstract */, type, 0666 /* mode */);
+        false /* abstract */, type, 0666 /* mode */));
   }
 
-  auto vsock = Fd::Socket(AF_VSOCK, type, 0);
-  if (!vsock.IsOpen()) {
-    return vsock;
-  }
+  Fd vsock = CF_EXPECT(Fd::Socket(AF_VSOCK, type, 0));
+
   sockaddr_vm addr{};
   addr.svm_family = AF_VSOCK;
   addr.svm_port = port;
   addr.svm_cid = cid;
   auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
-  if (vsock.Bind(casted_addr, sizeof(addr)) == -1) {
-    LOG(ERROR) << "Port " << port << " Bind failed (" << vsock.StrError()
-               << ")";
-    return Fd::ErrorFD(vsock.GetErrno());
-  }
+  CF_EXPECTF(vsock.Bind(casted_addr, sizeof(addr)) >= 0,
+             "Bind failed port {}: {}", port, vsock.StrError());
+
   if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
-    if (vsock.Listen(4) < 0) {
-      LOG(ERROR) << "Port" << port << " Listen failed (" << vsock.StrError()
-                 << ")";
-      return Fd::ErrorFD(vsock.GetErrno());
-    }
+    CF_EXPECTF(vsock.Listen(4) >= 0, "Listen on port {} failed: {}", port,
+               vsock.StrError());
   }
   return vsock;
 }
 
-Fd Fd::VsockServer(int type,
-                   std::optional<int> vhost_user_vsock_listening_cid) {
-  return VsockServer(VMADDR_PORT_ANY, type, vhost_user_vsock_listening_cid);
+Result<Fd> Fd::VsockServer(int type,
+                           std::optional<int> vhost_user_vsock_listening_cid) {
+  return CF_EXPECT(
+      VsockServer(VMADDR_PORT_ANY, type, vhost_user_vsock_listening_cid));
 }
 
 std::string Fd::GetVhostUserVsockServerAddr(
@@ -978,15 +932,6 @@ Fd::Fd(int fd, int in_errno)
   std::stringstream identity;
   identity << "fd=" << fd << " @" << this;
   identity_ = identity.str();
-}
-
-Fd Fd::AcceptInternal(struct sockaddr* addr, socklen_t* addrlen) const {
-  int fd = TEMP_FAILURE_RETRY(accept(fd_, addr, addrlen));
-  if (fd == -1) {
-    return Fd(fd, errno);
-  } else {
-    return Fd(fd, 0);
-  }
 }
 
 }  // namespace cuttlefish

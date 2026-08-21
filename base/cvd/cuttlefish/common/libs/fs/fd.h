@@ -45,6 +45,7 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "android-base/cmsg.h"
@@ -101,42 +102,37 @@ class Fd : public ReaderWriterSeeker {
   // All Fds have the O_CLOEXEC flag after creation. To remove use the
   // Fcntl or Dup functions.
 
-  static Fd Accept(const Fd& listener, struct sockaddr* addr,
-                   socklen_t* addrlen);
-  static Fd Accept(const Fd& listener);
-  static Result<Fd> Creat(const std::string& path, mode_t mode);
-  static Fd Dup(int unmanaged_fd);
-  static Result<Fd> Fifo(const std::string& pathname, mode_t mode);
-  static Fd MemfdCreate(const std::string& name, unsigned int flags = 0);
-  static Fd Mkstemp(std::string* path);
+  static Result<Fd> Accept(const Fd& listener);
+  static Result<Fd> Creat(std::string_view path, mode_t mode);
+  static Result<Fd> Dup(int unmanaged_fd);
+  static Result<Fd> Fifo(std::string_view pathname, mode_t mode);
+  static Result<Fd> MemfdCreate(std::string_view name, unsigned int flags = 0);
   static Result<std::pair<Fd, std::string>> Mkostemp(std::string_view path,
                                                      int flags = O_CLOEXEC);
-  static Fd Open(const char* pathname, int flags, mode_t mode = 0);
-  static Fd Open(const std::string& pathname, int flags, mode_t mode = 0);
-  static bool Pipe(Fd* fd0, Fd* fd1);
-  static bool SocketPair(int domain, int type, int protocol, Fd* fd0, Fd* fd1);
-  static Fd Socket(int domain, int socket_type, int protocol);
-  static Fd Socket6Client(
-      const std::string& host, const std::string& interface, int port, int type,
-      std::chrono::seconds timeout = std::chrono::seconds(0));
-  static Fd SocketClient(
-      const std::string& host, int port, int type,
-      std::chrono::seconds timeout = std::chrono::seconds(0));
-  static Fd SocketLocalClient(const std::string& name, bool is_abstract,
-                              int in_type);
-  static Fd SocketLocalClient(const std::string& name, bool is_abstract,
-                              int in_type, int timeout_seconds);
-  static Fd SocketLocalClient(int port, int type);
-  static Fd SocketLocalServer(const std::string& name, bool is_abstract,
-                              int in_type, mode_t mode);
-  static Fd SocketLocalServer(int port, int type);
+  static Result<Fd> Open(std::string_view pathname, int flags, mode_t mode = 0);
+  static Result<std::pair<Fd, Fd>> Pipe();
   static Result<std::pair<Fd, Fd>> SocketPair(int domain, int type,
                                               int protocol);
+  static Result<Fd> Socket(int domain, int socket_type, int protocol);
+  static Result<Fd> Socket6Client(
+      std::string_view host, std::string_view interface, int port, int type,
+      std::chrono::seconds timeout = std::chrono::seconds(0));
+  static Result<Fd> SocketClient(
+      std::string_view host, int port, int type,
+      std::chrono::seconds timeout = std::chrono::seconds(0));
+  static Result<Fd> SocketLocalClient(std::string_view name, bool is_abstract,
+                                      int in_type);
+  static Result<Fd> SocketLocalClient(std::string_view name, bool is_abstract,
+                                      int in_type, int timeout_seconds);
+  static Result<Fd> SocketLocalClient(int port, int type);
+  static Result<Fd> SocketLocalServer(std::string_view name, bool is_abstract,
+                                      int in_type, mode_t mode);
+  static Result<Fd> SocketLocalServer(int port, int type);
 
 #ifdef __linux__
-  static Fd Event(int initval = 0, int flags = 0);
-  static Fd InotifyFd();
-  static Fd ShmOpen(const std::string& name, int oflag, int mode);
+  static Result<Fd> Event(int initval = 0, int flags = 0);
+  static Result<Fd> InotifyFd();
+  static Result<Fd> ShmOpen(std::string_view name, int oflag, int mode);
   // For binding in vsock, svm_cid from `cid` param would be either
   // VMADDR_CID_ANY, VMADDR_CID_LOCAL, VMADDR_CID_HOST or their own CID, and it
   // is used for indicating connections which it accepts from.
@@ -154,11 +150,12 @@ class Fd : public ReaderWriterSeeker {
   static std::string GetVhostUserVsockServerAddr(
       unsigned int port, int vhost_user_vsock_listening_cid);
   static std::string GetVhostUserVsockClientAddr(int cid);
-  static Fd VsockServer(unsigned int port, int type,
-                        std::optional<int> vhost_user_vsock_listening_cid,
-                        unsigned int cid = VMADDR_CID_ANY);
-  static Fd VsockServer(int type,
-                        std::optional<int> vhost_user_vsock_listening_cid);
+  static Result<Fd> VsockServer(
+      unsigned int port, int type,
+      std::optional<int> vhost_user_vsock_listening_cid,
+      unsigned int cid = VMADDR_CID_ANY);
+  static Result<Fd> VsockServer(
+      int type, std::optional<int> vhost_user_vsock_listening_cid);
 #endif
 
   int Bind(const struct sockaddr* addr, socklen_t addrlen);
@@ -272,7 +269,6 @@ class Fd : public ReaderWriterSeeker {
 
  private:
   Fd(int fd, int in_errno);
-  Fd AcceptInternal(struct sockaddr* addr, socklen_t* addrlen) const;
 
   static Fd ErrorFD(int error);
 
