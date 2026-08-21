@@ -18,10 +18,13 @@
 #include <chrono>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 

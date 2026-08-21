@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
+#include <fcntl.h>
+#include <linux/vm_sockets.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include <chrono>
 #include <memory>
+#include <optional>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -25,6 +29,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
 #include "cuttlefish/host/commands/socket_vsock_proxy/client.h"
 #include "cuttlefish/host/commands/socket_vsock_proxy/server.h"

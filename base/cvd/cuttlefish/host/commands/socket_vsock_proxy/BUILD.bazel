@@ -1,35 +1,52 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_binary", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cf_cc_binary(
-    name = "socket_vsock_proxy",
-    srcs = [
-        "client.cpp",
-        "client.h",
-        "server.cpp",
-        "server.h",
-        "socket_vsock_proxy.cpp",
+cf_build_test(name = "socket_vsock_proxy_build_test")
+
+cf_cc_library(
+    name = "client",
+    srcs = ["client.cpp"],
+    hdrs = ["client.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
     ],
-    depend_on_what_you_use_enabled = False,
-    include_cleaner_enabled = False,
+)
+
+cf_cc_library(
+    name = "server",
+    srcs = ["server.cpp"],
+    hdrs = ["server.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@fmt",
+    ],
+)
+
+cf_cc_binary(
+    name = "socket_vsock_proxy",
+    srcs = ["socket_vsock_proxy.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:socket2socket_proxy",
-        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
-        "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/host/commands/socket_vsock_proxy:client",
+        "//cuttlefish/host/commands/socket_vsock_proxy:server",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
-        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )

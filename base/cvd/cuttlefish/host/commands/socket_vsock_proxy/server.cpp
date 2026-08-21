@@ -15,11 +15,18 @@
 
 #include "cuttlefish/host/commands/socket_vsock_proxy/server.h"
 
+#include <errno.h>
+#include <unistd.h>
+
 #include <chrono>
+#include <limits>
+#include <optional>
 #include <set>
+#include <string>
 #include <thread>
 
 #include "absl/log/log.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
