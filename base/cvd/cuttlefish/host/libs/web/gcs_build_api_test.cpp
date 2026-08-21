@@ -303,8 +303,37 @@ TEST(GcsBuildApiTests, FileReaderReadsTheNamedArtifactSuccess) {
   ASSERT_THAT(member, IsOk());
   EXPECT_THAT(ReadToString(**member), IsOkAndValue("boot bytes"));
   EXPECT_TRUE(http_client.RequestMade(kMediaUrl));
+  EXPECT_TRUE(http_client.RequestMade("&generation=1"));
   // The listing reported the size, so the reader has nothing left to ask.
   EXPECT_FALSE(zip_handler->HeadRequestMade());
+}
+
+TEST(GcsBuildApiTests, FileReaderReadsOneGenerationOfAnObjectSuccess) {
+  FakeHttpClient http_client;
+  GcsBuildApi api(http_client, nullptr);
+
+  Result<ZipOverRanges> zip_handler =
+      ZipOverRanges::Create({{"boot.img", "boot bytes"}});
+  ASSERT_THAT(zip_handler, IsOk());
+  http_client.SetResponse(*zip_handler, kMediaUrl);
+  http_client.SetResponse(absl::StrCat(R"({"generation": "17", "size": ")",
+                                       zip_handler->Size(), R"("})"),
+                          kObjectUrl);
+
+  GcsBuildString build_string = {.url = "gs://bucket/dist/phone-img-1.zip"};
+  Result<GcsBuild> build = api.GetBuild(build_string);
+  ASSERT_THAT(build, IsOk());
+
+  Result<SeekableZipSource> source = api.FileReader(*build, "phone-img-1.zip");
+  ASSERT_THAT(source, IsOk());
+  Result<ReadableZip> zip = ReadableZip::FromSource(std::move(*source));
+  ASSERT_THAT(zip, IsOk());
+  Result<std::unique_ptr<ReaderSeeker>> member = zip->OpenReadOnly("boot.img");
+  ASSERT_THAT(member, IsOk());
+  EXPECT_THAT(ReadToString(**member), IsOkAndValue("boot bytes"));
+  // Every range of the read names the version the probe reported.
+  EXPECT_TRUE(zip_handler->RangeRequestMade());
+  EXPECT_TRUE(http_client.RequestMade("&generation=17"));
 }
 
 TEST(GcsBuildApiTests, DownloadFileExtractsAnArchiveMemberSuccess) {
@@ -335,6 +364,8 @@ TEST(GcsBuildApiTests, DownloadFileExtractsAnArchiveMemberSuccess) {
   EXPECT_THAT(ReadFileContents(expected_path), IsOkAndValue("package bytes"));
   EXPECT_TRUE(zip_handler->RangeRequestMade());
   EXPECT_FALSE(zip_handler->HeadRequestMade());
+  // The probe reported no generation, so there is no version to name.
+  EXPECT_FALSE(http_client.RequestMade("generation="));
 }
 
 }  // namespace
