@@ -24,8 +24,8 @@
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/digest.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
-#include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_probe.h"
+#include "cuttlefish/host/libs/web/url_download.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/buffered_zip_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
@@ -82,12 +82,18 @@ Result<std::string> HttpBuildApi::DownloadFile(
     return dest_path;
   }
 
-  const std::string url = CF_EXPECT(ArtifactUrl(build, artifact_name));
-  HttpResponse<std::string> response =
-      CF_EXPECT(HttpGetToFile(http_client_, url, dest_path));
-  CF_EXPECTF(response.HttpSuccess(),
-             "Could not download '{}' from '{}' - {}:{}", artifact_name,
-             build.id, response.http_code, response.StatusDescription());
+  std::optional<std::string> version;
+  if (build.object_info.accept_ranges && build.object_info.HasStrongEtag()) {
+    version = build.object_info.etag;
+  }
+  const UrlDownload download = {
+      .url = CF_EXPECT(ArtifactUrl(build, artifact_name)),
+      .if_range = version,
+      .version = version,
+      .size = build.object_info.size,
+  };
+  CF_EXPECTF(DownloadUrlToFile(http_client_, download, dest_path),
+             "Could not download '{}' from '{}'", artifact_name, build.id);
   if (build.sha256.has_value()) {
     CF_EXPECT(VerifySha256(dest_path, *build.sha256, artifact_name));
   }

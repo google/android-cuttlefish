@@ -30,6 +30,10 @@ struct HttpObjectInfo {
   std::optional<std::string> etag;
   bool accept_ranges = false;
   std::optional<uint64_t> size;
+
+  bool HasStrongEtag() const {
+    return etag.has_value() && !etag->starts_with("W/");
+  }
 };
 
 Result<HttpObjectInfo> ProbeHttpObject(HttpClient&, const std::string& url,
