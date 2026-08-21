@@ -49,4 +49,6 @@ class FakeHttpClient : public HttpClient {
   std::vector<std::string> requested_urls_;
 };
 
+bool HasAuthorization(const std::vector<std::string>& headers);
+
 }  // namespace cuttlefish
