@@ -17,22 +17,15 @@
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 
 #include <chrono>
-#include <string_view>
-#include <variant>
 
-#include "fmt/format.h"
 #include "google/protobuf/timestamp.pb.h"
 
-#include "cuttlefish/host/libs/config/data_image_policy.h"
-#include "cuttlefish/host/libs/config/gpu_mode.h"
-#include "cuttlefish/host/libs/metrics/device_event_type.h"
 #include "cuttlefish/host/libs/metrics/fetch_conversion.h"
 #include "cuttlefish/host/libs/metrics/fetch_metrics.h"
+#include "cuttlefish/host/libs/metrics/guest_conversion.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "cuttlefish/host/libs/metrics/host_conversion.h"
 #include "cuttlefish/host/libs/metrics/host_metrics.h"
-#include "external_proto/cf_flags.pb.h"
-#include "external_proto/cf_guest.pb.h"
 #include "external_proto/cf_log.pb.h"
 #include "external_proto/cf_metrics_event_v2.pb.h"
 
@@ -41,113 +34,7 @@ namespace {
 
 using google::protobuf::Timestamp;
 using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
-using logs::proto::wireless::android::cuttlefish::events::CuttlefishFlags;
-using logs::proto::wireless::android::cuttlefish::events::
-    CuttlefishFlags_DataPolicy;
-using logs::proto::wireless::android::cuttlefish::events::
-    CuttlefishFlags_GpuMode;
-using logs::proto::wireless::android::cuttlefish::events::CuttlefishGuest;
-using logs::proto::wireless::android::cuttlefish::events::
-    CuttlefishGuest_EventType;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
-
-CuttlefishFlags_DataPolicy ConvertDataPolicy(DataImagePolicy policy) {
-  switch (policy) {
-    case DataImagePolicy::AlwaysCreate:
-      return CuttlefishFlags_DataPolicy::
-          CuttlefishFlags_DataPolicy_CUTTLEFISH_FLAGS_DATA_POLICY_ALWAYS_CREATE;
-    case DataImagePolicy::ResizeUpTo:
-      return CuttlefishFlags_DataPolicy::
-          CuttlefishFlags_DataPolicy_CUTTLEFISH_FLAGS_DATA_POLICY_RESIZE_UP_TO;
-    case DataImagePolicy::Unknown:
-      return CuttlefishFlags_DataPolicy::
-          CuttlefishFlags_DataPolicy_CUTTLEFISH_FLAGS_DATA_POLICY_UNSPECIFIED;
-    case DataImagePolicy::UseExisting:
-      return CuttlefishFlags_DataPolicy::
-          CuttlefishFlags_DataPolicy_CUTTLEFISH_FLAGS_DATA_POLICY_USE_EXISTING;
-  }
-}
-
-CuttlefishFlags_GpuMode ConvertGpuMode(GpuMode mode) {
-  switch (mode) {
-    case GpuMode::Auto:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_AUTO;
-    case GpuMode::Custom:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_CUSTOM;
-    case GpuMode::DrmVirgl:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_VIRGL_RENDERER;
-    case GpuMode::Gfxstream:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM;
-    case GpuMode::GfxstreamGuestAngle:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM_GUEST_ANGLE;
-    case GpuMode::GfxstreamGuestAngleHostLavapipe:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM_GUEST_ANGLE_HOST_LAVAPIPE;
-    case GpuMode::GfxstreamGuestAngleHostSwiftshader:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM_GUEST_ANGLE_HOST_SWIFTSHADER;
-    case GpuMode::GuestSwiftshader:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_SWIFTSHADER;
-    case GpuMode::GuestLavapipe:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_LAVAPIPE;
-    case GpuMode::None:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_NONE;
-  }
-}
-
-CuttlefishGuest_EventType ConvertDeviceEventType(DeviceEventType event_type) {
-  switch (event_type) {
-    case DeviceEventType::DeviceInstantiation:
-      return CuttlefishGuest_EventType::
-          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_VM_INSTANTIATION;
-    case DeviceEventType::DeviceBootStart:
-      return CuttlefishGuest_EventType::
-          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_START;
-    case DeviceEventType::DeviceBootComplete:
-      return CuttlefishGuest_EventType::
-          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_COMPLETED;
-    case DeviceEventType::DeviceStop:
-      return CuttlefishGuest_EventType::
-          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_VM_STOP;
-    case DeviceEventType::DeviceBootFailed:
-      return CuttlefishGuest_EventType::
-          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_FAILED;
-  }
-}
-
-void PopulateCuttlefishGuest(CuttlefishGuest& guest,
-                             const GuestMetrics& guest_metrics,
-                             std::string_view session_id) {
-  guest.set_event_type(ConvertDeviceEventType(guest_metrics.event_type));
-  guest.set_guest_id(
-      fmt::format("{}-{}", session_id, guest_metrics.instance_id));
-  guest.set_guest_os_version(guest_metrics.os_version);
-
-  CuttlefishFlags& flags = *guest.mutable_flags();
-  flags.set_cpus(guest_metrics.flag_metrics.cpus);
-  flags.set_daemon(guest_metrics.flag_metrics.daemon);
-  flags.set_data_policy(
-      ConvertDataPolicy(guest_metrics.flag_metrics.data_policy));
-  flags.set_extra_kernel_cmdline(
-      guest_metrics.flag_metrics.extra_kernel_cmdline);
-  flags.set_gpu_mode_requested(
-      ConvertGpuMode(guest_metrics.flag_metrics.gpu_mode));
-  flags.set_guest_enforce_security(
-      guest_metrics.flag_metrics.guest_enforce_security);
-  flags.set_memory_mb(guest_metrics.flag_metrics.memory_mb);
-  flags.set_restart_subprocesses(
-      guest_metrics.flag_metrics.restart_subprocesses);
-  flags.set_system_image_dir_specified(
-      guest_metrics.flag_metrics.system_image_dir_specified);
-}
 
 }  // namespace
 
@@ -165,8 +52,8 @@ CuttlefishLogEvent BuildCuttlefishLogEvent(const MetricsData& metrics_data) {
   PopulateCuttlefishHost(metrics_event, metrics_data.host_metrics);
 
   for (const GuestMetrics& guest_metric : metrics_data.guest_metrics) {
-    CuttlefishGuest& guest = *metrics_event.add_guest();
-    PopulateCuttlefishGuest(guest, guest_metric, metrics_data.session_id);
+    PopulateCuttlefishGuest(metrics_event, guest_metric,
+                            metrics_data.session_id);
   }
 
   if (metrics_data.fetch_metrics) {
