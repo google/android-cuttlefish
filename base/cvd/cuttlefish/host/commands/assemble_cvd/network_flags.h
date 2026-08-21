@@ -21,7 +21,7 @@
 namespace cuttlefish {
 
 Result<void> ConfigureNetworkSettings(
-    const std::string& ril_dns_arg,
+    const std::string& ril_dns_arg, const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& const_instance,
     CuttlefishConfig::MutableInstanceSpecific& instance);
 

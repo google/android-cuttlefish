@@ -30,6 +30,7 @@
 
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -139,13 +140,17 @@ class NetConfig {
 }  // namespace
 
 Result<void> ConfigureNetworkSettings(
-    const std::string& ril_dns_arg,
+    const std::string& ril_dns_arg, const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& const_instance,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
   // We can't introspect the tap interfaces using cvdalloc because
   // they're not set up yet. However, we can expect the following
   // instance to address scheme for the mtap interfaces.
-  if (const_instance.use_cvdalloc()) {
+  bool crosvm_slirp =
+      VmManagerIsCrosvm(config) &&
+      const_instance.external_network_mode() == ExternalNetworkMode::kSlirp;
+  if (const_instance.use_cvdalloc() || crosvm_slirp ||
+      !const_instance.enable_tap_devices()) {
     int num;
     CF_EXPECT(absl::SimpleAtoi(const_instance.id(), &num));
 
