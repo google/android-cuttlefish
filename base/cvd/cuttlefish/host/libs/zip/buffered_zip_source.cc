@@ -27,6 +27,7 @@
 
 #include "absl/log/log.h"
 
+#include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/io/io.h"
@@ -165,6 +166,13 @@ Result<SeekableZipSource> BufferZipSource(SeekableZipSource source,
       BufferedZipSourceCallbacks::Create(std::move(source), buffer_size));
 
   return CF_EXPECT(SeekableZipSource::FromCallbacks(std::move(callbacks)));
+}
+
+Result<ReadableZip> BufferAndOpenZip(SeekableZipSource source) {
+  SeekableZipSource buffered =
+      CF_EXPECT(BufferZipSource(std::move(source), 1 << 26));
+
+  return CF_EXPECT(ReadableZip::FromSource(std::move(buffered)));
 }
 
 }  // namespace cuttlefish
