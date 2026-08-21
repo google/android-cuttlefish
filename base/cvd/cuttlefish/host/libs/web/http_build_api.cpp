@@ -102,6 +102,11 @@ Result<std::string> HttpBuildApi::DownloadFile(
 Result<SeekableZipSource> HttpBuildApi::FileReader(
     const HttpBuild& build, const std::string& artifact_name) {
   const std::string url = CF_EXPECT(ArtifactUrl(build, artifact_name));
+  if (build.object_info.size.has_value()) {
+    return CF_EXPECT(
+        ZipSourceFromUrl(http_client_, url, {}, *build.object_info.size));
+  }
+  // Only a directory reaches here, having had no probe to learn a size from.
   return CF_EXPECT(ZipSourceFromUrl(http_client_, url, {}));
 }
 

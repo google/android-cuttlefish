@@ -64,7 +64,9 @@ TEST(HttpBuildApiTests, GetBuildProbesWithARangedGetSuccess) {
         return HttpResponse<std::string>{
             .data = "a",
             .http_code = 206,
-            .headers = {{"etag", "\"v1\""}, {"accept-ranges", "bytes"}},
+            .headers = {{"etag", "\"v1\""},
+                        {"accept-ranges", "bytes"},
+                        {"content-range", "bytes 0-0/4096"}},
         };
       },
       kObjectUrl);
@@ -76,6 +78,7 @@ TEST(HttpBuildApiTests, GetBuildProbesWithARangedGetSuccess) {
   EXPECT_EQ(build->url, kSignedUrl);
   EXPECT_EQ(build->object_info.etag, "\"v1\"");
   EXPECT_TRUE(build->object_info.accept_ranges);
+  EXPECT_EQ(build->object_info.size, 4096);
   // A pre-signed URL signs the verb, so the probe is a ranged GET.
   EXPECT_THAT(seen_headers, Contains("Range: bytes=0-0"));
   EXPECT_FALSE(HasAuthorization(seen_headers));
@@ -206,6 +209,32 @@ TEST(HttpBuildApiTests, FileReaderReadsTheObjectSuccess) {
 
   EXPECT_TRUE(http_client.RequestMade(kSignedUrl));
   EXPECT_FALSE(authorized);
+  // The probe reported the size, so the reader has nothing left to ask.
+  EXPECT_EQ(zip_handler->HeadRequests(), 1);
+}
+
+TEST(HttpBuildApiTests, FileReaderReadsAnOriginThatRejectsHeadSuccess) {
+  FakeHttpClient http_client;
+  HttpBuildApi api(http_client);
+
+  Result<ZipOverRanges> zip_handler =
+      ZipOverRanges::Create({{"boot.img", "boot bytes"}},
+                            /*serve_ranges=*/true, /*reject_head=*/true);
+  ASSERT_THAT(zip_handler, IsOk());
+  http_client.SetResponse(*zip_handler, kObjectUrl);
+
+  HttpBuildString build_string = {.url = kSignedUrl};
+  Result<HttpBuild> build = api.GetBuild(build_string);
+  ASSERT_THAT(build, IsOk());
+
+  Result<SeekableZipSource> source = api.FileReader(*build, "phone-img-1.zip");
+  ASSERT_THAT(source, IsOk());
+  Result<ReadableZip> zip = ReadableZip::FromSource(std::move(*source));
+  ASSERT_THAT(zip, IsOk());
+  Result<std::unique_ptr<ReaderSeeker>> member = zip->OpenReadOnly("boot.img");
+  ASSERT_THAT(member, IsOk());
+  EXPECT_THAT(ReadToString(**member), IsOkAndValue("boot bytes"));
+  EXPECT_EQ(zip_handler->HeadRequests(), 1);
 }
 
 TEST(HttpBuildApiTests, DownloadFileExtractsAnArchiveMemberSuccess) {
@@ -234,6 +263,7 @@ TEST(HttpBuildApiTests, DownloadFileExtractsAnArchiveMemberSuccess) {
 
   EXPECT_THAT(ReadFileContents(expected_path), IsOkAndValue("package bytes"));
   EXPECT_TRUE(zip_handler->RangeRequestMade());
+  EXPECT_EQ(zip_handler->HeadRequests(), 1);
 }
 
 TEST(HttpBuildApiTests, DownloadFileMemberWithoutRangeSupportFail) {
