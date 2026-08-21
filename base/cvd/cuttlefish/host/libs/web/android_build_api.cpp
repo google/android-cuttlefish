@@ -27,7 +27,6 @@
 #include <string>
 #include <string_view>
 #include <thread>
-#include <tuple>
 #include <unordered_set>
 #include <utility>
 #include <variant>
@@ -170,11 +169,13 @@ Result<std::string> AndroidBuildApi::DownloadFile(
 
 Result<SeekableZipSource> AndroidBuildApi::FileReader(
     const Build& build, const std::string& artifact_name) {
-  Result<SeekableZipSource> res =
-      std::visit([this, &artifact_name](
-                     auto&& arg) { return FileReader(arg, artifact_name); },
-                 build);
-  return CF_EXPECT(std::move(res));
+  if (const auto* device = std::get_if<DeviceBuild>(&build)) {
+    return CF_EXPECT(FileReader(*device, artifact_name));
+  }
+  if (const auto* directory = std::get_if<DirectoryBuild>(&build)) {
+    return CF_EXPECT(FileReader(*directory, artifact_name));
+  }
+  return CF_ERRF("AndroidBuildApi cannot handle '{}'", FetchLabel(build));
 }
 
 Result<SeekableZipSource> AndroidBuildApi::FileReader(
@@ -382,11 +383,13 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
 
 Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
     const Build& build, const std::vector<std::string>& artifact_filenames) {
-  auto res =
-      std::visit([this, &artifact_filenames](
-                     auto&& arg) { return Artifacts(arg, artifact_filenames); },
-                 build);
-  return CF_EXPECT(std::move(res));
+  if (const DeviceBuild* device = std::get_if<DeviceBuild>(&build)) {
+    return CF_EXPECT(Artifacts(*device, artifact_filenames));
+  }
+  if (const DirectoryBuild* directory = std::get_if<DirectoryBuild>(&build)) {
+    return CF_EXPECT(Artifacts(*directory, artifact_filenames));
+  }
+  return CF_ERRF("AndroidBuildApi cannot handle '{}'", FetchLabel(build));
 }
 
 Result<std::string> AndroidBuildApi::GetArtifactDownloadUrl(
@@ -432,13 +435,15 @@ Result<void> AndroidBuildApi::ArtifactToFile(const DirectoryBuild& build,
 Result<void> AndroidBuildApi::ArtifactToFile(const Build& build,
                                              const std::string& artifact,
                                              const std::string& path) {
-  auto res = std::visit(
-      [this, &artifact, &path](auto&& arg) {
-        return ArtifactToFile(arg, artifact, path);
-      },
-      build);
-  CF_EXPECT(std::move(res));
-  return {};
+  if (const DeviceBuild* device = std::get_if<DeviceBuild>(&build)) {
+    CF_EXPECT(ArtifactToFile(*device, artifact, path));
+    return {};
+  }
+  if (const DirectoryBuild* directory = std::get_if<DirectoryBuild>(&build)) {
+    CF_EXPECT(ArtifactToFile(*directory, artifact, path));
+    return {};
+  }
+  return CF_ERRF("AndroidBuildApi cannot handle '{}'", FetchLabel(build));
 }
 
 Result<std::string> AndroidBuildApi::DownloadTargetFileFromCas(
@@ -485,21 +490,6 @@ Result<std::string> AndroidBuildApi::DownloadTargetFile(
             "Unable to download " << build << ":" << artifact_name << " to "
                                   << target_filepath);
   return {target_filepath};
-}
-
-std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build) {
-  auto id = std::visit([](auto&& arg) { return arg.id; }, build);
-  auto target = std::visit([](auto&& arg) { return arg.target; }, build);
-  return {id, target};
-}
-
-std::optional<std::string> GetFilepath(const Build& build) {
-  return std::visit([](auto&& arg) { return arg.filepath; }, build);
-}
-
-std::string ConstructTargetFilepath(const std::string& directory,
-                                    const std::string& filename) {
-  return directory + "/" + filename;
 }
 
 }  // namespace cuttlefish
