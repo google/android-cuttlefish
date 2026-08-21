@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/guest_conversion.h"
+#include "cuttlefish/host/libs/metrics/conversion/guest_conversion.h"
 
 #include <string_view>
 

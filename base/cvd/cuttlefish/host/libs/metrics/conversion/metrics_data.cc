@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/metrics_conversion.h"
+#include "cuttlefish/host/libs/metrics/conversion/metrics_data.h"
 
 #include <chrono>
 
 #include "google/protobuf/timestamp.pb.h"
 
-#include "cuttlefish/host/libs/metrics/fetch_conversion.h"
+#include "cuttlefish/host/libs/metrics/conversion/fetch_conversion.h"
+#include "cuttlefish/host/libs/metrics/conversion/guest_conversion.h"
+#include "cuttlefish/host/libs/metrics/conversion/host_conversion.h"
 #include "cuttlefish/host/libs/metrics/fetch_metrics.h"
-#include "cuttlefish/host/libs/metrics/guest_conversion.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
-#include "cuttlefish/host/libs/metrics/host_conversion.h"
 #include "cuttlefish/host/libs/metrics/host_metrics.h"
 #include "external_proto/cf_log.pb.h"
 #include "external_proto/cf_metrics_event_v2.pb.h"

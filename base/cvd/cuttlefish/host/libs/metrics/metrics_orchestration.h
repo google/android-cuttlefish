@@ -20,7 +20,7 @@
 #include <string_view>
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
-#include "cuttlefish/host/libs/metrics/metrics_conversion.h"
+#include "cuttlefish/host/libs/metrics/conversion/metrics_data.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
