@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/fetch_conversion.h"
+#include "cuttlefish/host/libs/metrics/conversion/fetch_conversion.h"
 
 #include <variant>
 
