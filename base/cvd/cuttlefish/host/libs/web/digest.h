@@ -22,8 +22,11 @@
 
 namespace cuttlefish {
 
-// The SHA-256 of the contents of `path`, in lowercase hexadecimal.
+// Returns the SHA-256 of the contents of `path`, in lowercase hexadecimal.
 Result<std::string> Sha256File(const std::string& path);
+
+// Returns the SHA-256 of `data`, in lowercase hexadecimal.
+std::string Sha256Hex(std::string_view data);
 
 // Fails unless `path` holds the hexadecimal SHA-256 `expected`, which is
 // compared without regard to case. `artifact_name` names the file in the error.
