@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
+#include <fcntl.h>
 #include <signal.h>
+#include <stdint.h>
+#include <unistd.h>
+
+#include <string>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
