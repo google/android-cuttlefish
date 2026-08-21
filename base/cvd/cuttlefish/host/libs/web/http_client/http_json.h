@@ -16,6 +16,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "json/json.h"
@@ -42,5 +43,22 @@ Result<HttpResponse<Json::Value>> HttpPostToJson(
 Result<HttpResponse<Json::Value>> HttpGetToJson(
     HttpClient&, const std::string& url,
     const std::vector<std::string>& headers = {});
+
+// What differs between the APIs that answer a request with json.
+struct JsonResponseOptions {
+  // Names the API in the error of a response that failed.
+  std::string_view source;
+  // Whether a redirect carries the json the caller asked for.
+  bool allow_redirect = false;
+  // Whether an "error" member of a successful response is itself a failure.
+  bool reject_error_member = false;
+  // Appended to the error of a response that failed.
+  std::string_view hint;
+};
+
+// Logs the body of `response` and returns its json, or an error naming the
+// status the API answered with.
+Result<Json::Value> JsonFromResponse(const HttpResponse<Json::Value>& response,
+                                     const JsonResponseOptions& options);
 
 }  // namespace cuttlefish

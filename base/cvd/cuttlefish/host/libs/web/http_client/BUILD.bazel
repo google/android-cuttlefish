@@ -86,6 +86,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_string",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@jsoncpp",
