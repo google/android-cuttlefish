@@ -28,7 +28,6 @@
 #include <string_view>
 #include <thread>
 #include <unordered_set>
-#include <utility>
 #include <variant>
 #include <vector>
 
@@ -52,7 +51,6 @@
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
-#include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/host/libs/web/parse_time.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
@@ -76,22 +74,11 @@ struct CloseDir {
 
 Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
                                     const bool allow_redirect = false) {
-  //  debug information in error responses floods stderr with too much text
-  //  logged at a level that still ends up in the log file
-  //  the artifact response carries a `signedUrl` whose query string is the
-  //  credential, so the body is scrubbed before it reaches the log file
-  VLOG(0) << "API response data:\n"
-          << ScrubSecrets(response.data.toStyledString());
-  const bool response_code_allowed =
-      response.HttpSuccess() || (allow_redirect && response.HttpRedirect());
-  CF_EXPECTF(std::move(response_code_allowed),
-             "Error response from Android Build API - {}:{}\nCheck log file "
-             "for full response",
-             response.http_code, response.StatusDescription());
-  CF_EXPECT(!response.data.isMember("error"),
-            "Response was successful, but contains error information.  Check "
-            "log file for full response.");
-  return response.data;
+  return JsonFromResponse(response, JsonResponseOptions{
+                                        .source = "Android Build API",
+                                        .allow_redirect = allow_redirect,
+                                        .reject_error_member = true,
+                                    });
 }
 
 }  // namespace
