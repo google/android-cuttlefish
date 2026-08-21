@@ -49,6 +49,7 @@
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
@@ -234,6 +235,21 @@ void ConfigureTapDevices(CrosvmBuilder& crosvm_cmd,
       crosvm_cmd.AddTap(instance.wifi_tap_name());
     }
   }
+}
+
+Result<void> ConfigureVhostUserNet(
+    CrosvmBuilder& crosvm_cmd, const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance,
+    std::vector<MonitorCommand>& commands) {
+  auto net = CF_EXPECT(VhostUserNetDevice(
+      config, "mobile", instance.ril_ipaddr(), instance.ril_prefixlen(),
+      instance.ril_gateway(), instance.ril_dns()));
+  commands.emplace_back(std::move(net.device_cmd));
+  commands.emplace_back(std::move(net.device_logs_cmd));
+
+  crosvm_cmd.AddVhostUser("net", net.socket_path, /*max_queue_size=*/256);
+
+  return {};
 }
 #endif
 
@@ -746,6 +762,9 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   switch (instance.external_network_mode()) {
     case ExternalNetworkMode::kTap:
       ConfigureTapDevices(crosvm_cmd, config, instance);
+      break;
+    case ExternalNetworkMode::kSlirp:
+      CF_EXPECT(ConfigureVhostUserNet(crosvm_cmd, config, instance, commands));
       break;
     default:
       return CF_ERR("Unexpected network mode "
