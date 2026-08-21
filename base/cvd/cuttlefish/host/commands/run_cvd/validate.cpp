@@ -38,6 +38,16 @@ namespace cuttlefish {
 
 static Result<void> TestTapDevices(
     const CuttlefishConfig::InstanceSpecific& instance) {
+  /*
+   * Check pre-created tap devices are available.
+   *
+   * This check should be skipped when we do not expect these tap devices
+   * to be available, such as sandbox environments; when the instance is
+   * not configured to use tap devices, such as when tap devices are
+   * disabled or when using user-mode networking; or when tap devices
+   * will not be created yet, such as when cvdalloc is being used which
+   * creates the tap devices when the instance is started.
+   */
 #ifdef __linux__
   if (InSandbox() || instance.use_cvdalloc() ||
       instance.external_network_mode() == ExternalNetworkMode::kSlirp ||
