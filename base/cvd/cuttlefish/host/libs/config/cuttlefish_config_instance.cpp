@@ -1910,6 +1910,35 @@ bool CuttlefishConfig::InstanceSpecific::enable_pkvm() const {
   return (*Dictionary())[kEnablePkvm].asBool();
 }
 
+static constexpr char kCrosvmAcpiTable[] = "crosvm_acpi_table";
+void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_acpi_table(
+    const std::string acpi_table) {
+  (*Dictionary())[kCrosvmAcpiTable] = acpi_table;
+}
+std::string CuttlefishConfig::InstanceSpecific::crosvm_acpi_table() const {
+  return (*Dictionary())[kCrosvmAcpiTable].asString();
+}
+
+static constexpr char kCrosvmDeviceTreeOverlay[] = "crosvm_device_tree_overlay";
+void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_device_tree_overlay(
+    const std::string device_tree_overlay) {
+  (*Dictionary())[kCrosvmDeviceTreeOverlay] = device_tree_overlay;
+}
+std::string CuttlefishConfig::InstanceSpecific::crosvm_device_tree_overlay()
+    const {
+  return (*Dictionary())[kCrosvmDeviceTreeOverlay].asString();
+}
+
+static constexpr char kCrosvmFileBackedMapping[] = "crosvm_file_backed_mapping";
+void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_file_backed_mapping(
+    const std::string file_backed_mapping) {
+  (*Dictionary())[kCrosvmFileBackedMapping] = file_backed_mapping;
+}
+std::string CuttlefishConfig::InstanceSpecific::crosvm_file_backed_mapping()
+    const {
+  return (*Dictionary())[kCrosvmFileBackedMapping].asString();
+}
+
 static constexpr char kEnableTapDevices[] = "enable_tap_devices";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_tap_devices(
     const bool enable_tap_devices) {

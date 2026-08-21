@@ -605,6 +605,19 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   crosvm_cmd.AddControlSocket(instance.CrosvmSocketPath(),
                               instance.crosvm_binary());
 
+  if (!instance.crosvm_acpi_table().empty()) {
+    crosvm_cmd.Cmd().AddParameter("--acpi-table=",
+                                  instance.crosvm_acpi_table());
+  }
+  if (!instance.crosvm_device_tree_overlay().empty()) {
+    crosvm_cmd.Cmd().AddParameter("--device-tree-overlay=",
+                                  instance.crosvm_device_tree_overlay());
+  }
+  if (!instance.crosvm_file_backed_mapping().empty()) {
+    crosvm_cmd.Cmd().AddParameter("--file-backed-mapping=",
+                                  instance.crosvm_file_backed_mapping());
+  }
+
   if (!config.kvm_path().empty()) {
     crosvm_cmd.AddKvmPath(config.kvm_path());
   }
