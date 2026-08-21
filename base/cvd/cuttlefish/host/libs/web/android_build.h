@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <map>
 #include <optional>
 #include <ostream>
@@ -61,6 +63,7 @@ std::ostream& operator<<(std::ostream&, const DirectoryBuild&);
 struct GcsObjectInfo {
   std::optional<std::string> generation;
   std::optional<std::string> md5_base64;
+  std::optional<uint64_t> size;
 };
 
 // The objects under a `gs://` prefix, or the single object a `gs://` URL

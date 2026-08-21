@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <string>
 #include <vector>
 
@@ -30,4 +32,13 @@ namespace cuttlefish {
  * `HttpClient`. */
 Result<SeekableZipSource> ZipSourceFromUrl(HttpClient&, const std::string& url,
                                            std::vector<std::string> headers);
+
+/* Creates a read-only zip archive that downloads files on-demand from a remote
+ * URL, for a caller that already knows the object's `size` and that the remote
+ * web server supports HTTP range requests. Makes no request to check either.
+ * `headers` are passed through when making HTTP requests to the
+ * `HttpClient`. */
+Result<SeekableZipSource> ZipSourceFromUrl(HttpClient&, const std::string& url,
+                                           std::vector<std::string> headers,
+                                           uint64_t size);
 }  // namespace cuttlefish
