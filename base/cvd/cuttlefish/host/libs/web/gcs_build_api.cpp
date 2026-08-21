@@ -133,6 +133,19 @@ std::optional<std::string> ArtifactGeneration(
   return entry->second.generation;
 }
 
+// The media URL of one artifact, naming the generation wherever it is known so
+// that every request against the URL reads one version of the object.
+Result<std::string> ArtifactUrl(const GcsBuild& build,
+                                const std::string& artifact_name) {
+  std::string url =
+      MediaUrl(build.bucket, CF_EXPECT(ObjectName(build, artifact_name)));
+  if (std::optional<std::string> generation =
+          ArtifactGeneration(build, artifact_name)) {
+    url += fmt::format("&generation={}", *generation);
+  }
+  return url;
+}
+
 // The listing and the metadata probe both report an md5, so a `gs://` download
 // is checked whether or not the build string carried a digest.
 Result<void> VerifyArtifact(const GcsBuild& build,
@@ -266,20 +279,12 @@ Result<std::string> GcsBuildApi::DownloadFile(
     return dest_path;
   }
 
-  std::string url =
-      MediaUrl(build.bucket, CF_EXPECT(ObjectName(build, artifact_name)));
-  std::optional<std::string> generation =
-      ArtifactGeneration(build, artifact_name);
-  if (generation.has_value()) {
-    // Naming the generation fixes the bytes the URL serves, which is what a
-    // resumed download needs of it.
-    absl::StrAppend(&url, "&generation=", *generation);
-  }
-
+  // A generation makes the bytes the URL serves fixed, which is what a resumed
+  // download needs of it.
   const UrlDownload download = {
-      .url = url,
+      .url = CF_EXPECT(ArtifactUrl(build, artifact_name)),
       .headers = CF_EXPECT(Headers()),
-      .resumable = generation.has_value(),
+      .resumable = ArtifactGeneration(build, artifact_name).has_value(),
       .size = ArtifactSize(build, artifact_name),
   };
   CF_EXPECTF(DownloadUrlToFile(http_client_, download, dest_path),
@@ -290,8 +295,7 @@ Result<std::string> GcsBuildApi::DownloadFile(
 
 Result<SeekableZipSource> GcsBuildApi::FileReader(
     const GcsBuild& build, const std::string& artifact_name) {
-  const std::string url =
-      MediaUrl(build.bucket, CF_EXPECT(ObjectName(build, artifact_name)));
+  const std::string url = CF_EXPECT(ArtifactUrl(build, artifact_name));
   std::vector<std::string> headers = CF_EXPECT(Headers());
   if (std::optional<uint64_t> size = ArtifactSize(build, artifact_name)) {
     return CF_EXPECT(
