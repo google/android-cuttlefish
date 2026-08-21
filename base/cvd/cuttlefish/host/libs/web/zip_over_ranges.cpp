@@ -27,6 +27,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/strip.h"
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
@@ -46,7 +47,7 @@ bool HasAuthorization(const std::vector<std::string>& headers) {
 }
 
 Result<ZipOverRanges> ZipOverRanges::Create(
-    const std::map<std::string, std::string>& contents) {
+    const std::map<std::string, std::string>& contents, bool serve_ranges) {
   std::string buffer(4096, '\0');
 
   WritableZipSource source =
@@ -57,7 +58,7 @@ Result<ZipOverRanges> ZipOverRanges::Create(
   }
   source = CF_EXPECT(WritableZipSource::FromZip(std::move(zip)));
 
-  return ZipOverRanges(CF_EXPECT(ReadToString(source)));
+  return ZipOverRanges(CF_EXPECT(ReadToString(source)), serve_ranges);
 }
 
 HttpResponse<std::string> ZipOverRanges::operator()(
@@ -66,11 +67,11 @@ HttpResponse<std::string> ZipOverRanges::operator()(
   size_t start = 0;
   size_t end = data_.size();
   for (const std::string& header : request.headers) {
-    if (!absl::StartsWith(header, kPrefix)) {
+    std::string_view range = header;
+    if (!absl::ConsumePrefix(&range, kPrefix) || !serve_ranges_) {
       continue;
     }
     *ranged_ = true;
-    const std::string range = header.substr(kPrefix.size());
     const std::vector<std::string_view> parts = absl::StrSplit(range, '-');
     if (parts.size() == 2 && absl::SimpleAtoi(parts[0], &start) &&
         absl::SimpleAtoi(parts[1], &end)) {
@@ -80,18 +81,23 @@ HttpResponse<std::string> ZipOverRanges::operator()(
   if (end > data_.size()) {
     end = data_.size();
   }
+  std::vector<HttpHeader> headers = {
+      {"content-length", std::to_string(end - start)},
+      {"etag", "\"abc\""},
+  };
+  if (serve_ranges_) {
+    headers.push_back({"accept-ranges", "bytes"});
+  }
   return HttpResponse<std::string>{
       .data = data_.substr(start, end - start),
       .http_code = 200,
-      .headers =
-          {
-              {"content-length", std::to_string(end - start)},
-              {"accept-ranges", "bytes"},
-          },
+      .headers = std::move(headers),
   };
 }
 
-ZipOverRanges::ZipOverRanges(std::string data)
-    : data_(std::move(data)), ranged_(std::make_shared<bool>(false)) {}
+ZipOverRanges::ZipOverRanges(std::string data, bool serve_ranges)
+    : data_(std::move(data)),
+      serve_ranges_(serve_ranges),
+      ranged_(std::make_shared<bool>(false)) {}
 
 }  // namespace cuttlefish

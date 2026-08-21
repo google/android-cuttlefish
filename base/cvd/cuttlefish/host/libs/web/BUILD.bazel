@@ -262,6 +262,47 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "http_build_api",
+    srcs = ["http_build_api.cpp"],
+    hdrs = ["http_build_api.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:build_api_zip",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_file",
+        "//cuttlefish/host/libs/zip:remote_zip",
+        "//cuttlefish/host/libs/zip:zip_file",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "http_build_api_test",
+    srcs = ["http_build_api_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:http_build_api",
+        "//cuttlefish/host/libs/web:zip_over_ranges",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:fake_http_client",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/io",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "luci_build_api",
     srcs = ["luci_build_api.cpp"],
     hdrs = ["luci_build_api.h"],

@@ -32,16 +32,18 @@ bool HasAuthorization(const std::vector<std::string>& headers);
 class ZipOverRanges {
  public:
   static Result<ZipOverRanges> Create(
-      const std::map<std::string, std::string>& contents);
+      const std::map<std::string, std::string>& contents,
+      bool serve_ranges = true);
 
   HttpResponse<std::string> operator()(const HttpRequest& request);
 
   bool RangeRequestMade() const { return *ranged_; }
 
  private:
-  explicit ZipOverRanges(std::string data);
+  ZipOverRanges(std::string data, bool serve_ranges);
 
   std::string data_;
+  bool serve_ranges_;
   std::shared_ptr<bool> ranged_;
 };
 
