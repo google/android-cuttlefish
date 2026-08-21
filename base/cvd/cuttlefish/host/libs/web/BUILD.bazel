@@ -398,5 +398,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@fmt",
     ],
 )

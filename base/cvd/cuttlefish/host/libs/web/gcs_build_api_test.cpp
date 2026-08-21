@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "android-base/file.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -142,7 +143,8 @@ TEST(GcsBuildApiTests, GetBuildListingFollowsPageTokensSuccess) {
         if (absl::StrContains(request.url, "pageToken=page2")) {
           data =
               R"({"items": [{"name": "dist/b.txt", "generation": "2",
-                             "md5Hash": "mb"}, {"name": "dist/"}]})";
+                             "md5Hash": "mb", "size": "12"},
+                            {"name": "dist/"}]})";
         }
         return HttpResponse<std::string>{.data = data, .http_code = 200};
       },
@@ -155,6 +157,7 @@ TEST(GcsBuildApiTests, GetBuildListingFollowsPageTokensSuccess) {
   EXPECT_THAT(build->contents, SizeIs(2));
   EXPECT_EQ(build->contents.at("a.txt").generation, "1");
   EXPECT_EQ(build->contents.at("b.txt").md5, "mb");
+  EXPECT_EQ(build->contents.at("b.txt").size, 12);
   EXPECT_TRUE(http_client.RequestMade("pageToken=page2"));
 }
 
@@ -201,14 +204,16 @@ TEST(GcsBuildApiTests, DownloadFileWritesTheArtifactSuccess) {
 TEST(GcsBuildApiTests, FileReaderReadsTheNamedArtifactSuccess) {
   FakeHttpClient http_client;
   GcsBuildApi api(http_client, nullptr);
-  http_client.SetResponse(
-      R"({"items": [{"name": "dist/phone-img-1.zip", "generation": "1"}]})",
-      kListUrl);
 
   Result<ZipOverRanges> zip_handler =
       ZipOverRanges::Create({{"boot.img", "boot bytes"}});
   ASSERT_THAT(zip_handler, IsOk());
   http_client.SetResponse(*zip_handler, kMediaUrl);
+  http_client.SetResponse(
+      absl::StrCat(R"({"items": [{"name": "dist/phone-img-1.zip",)",
+                   R"( "generation": "1", "size": ")", zip_handler->Size(),
+                   R"("}]})"),
+      kListUrl);
 
   GcsBuildString build_string = {.url = "gs://bucket/dist/"};
   Result<GcsBuild> build = api.GetBuild(build_string);
@@ -222,17 +227,20 @@ TEST(GcsBuildApiTests, FileReaderReadsTheNamedArtifactSuccess) {
   ASSERT_THAT(member, IsOk());
   EXPECT_THAT(ReadToString(**member), IsOkAndValue("boot bytes"));
   EXPECT_TRUE(http_client.RequestMade(kMediaUrl));
+  // The listing reported the size, so the reader has nothing left to ask.
+  EXPECT_FALSE(zip_handler->HeadRequestMade());
 }
 
 TEST(GcsBuildApiTests, DownloadFileExtractsAnArchiveMemberSuccess) {
   FakeHttpClient http_client;
   GcsBuildApi api(http_client, nullptr);
-  http_client.SetResponse(R"({"size": "3"})", kObjectUrl);
 
   Result<ZipOverRanges> zip_handler = ZipOverRanges::Create(
       {{"cvd-host_package.tar.gz", "package bytes"}, {"boot.img", "boot"}});
   ASSERT_THAT(zip_handler, IsOk());
   http_client.SetResponse(*zip_handler, kMediaUrl);
+  http_client.SetResponse(
+      absl::StrCat(R"({"size": ")", zip_handler->Size(), R"("})"), kObjectUrl);
 
   GcsBuildString build_string = {
       .url = "gs://bucket/dist/phone-img-1.zip",
@@ -250,6 +258,7 @@ TEST(GcsBuildApiTests, DownloadFileExtractsAnArchiveMemberSuccess) {
 
   EXPECT_THAT(ReadFileContents(expected_path), IsOkAndValue("package bytes"));
   EXPECT_TRUE(zip_handler->RangeRequestMade());
+  EXPECT_FALSE(zip_handler->HeadRequestMade());
 }
 
 }  // namespace

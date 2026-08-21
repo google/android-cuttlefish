@@ -15,7 +15,10 @@
 
 #include "cuttlefish/host/libs/web/gcs_build_api.h"
 
+#include <stdint.h>
+
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -23,6 +26,7 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/strip.h"
@@ -109,6 +113,29 @@ Result<std::string> ObjectName(const GcsBuild& build,
   return build.prefix + artifact_name;
 }
 
+std::optional<uint64_t> ParseSize(const std::string& size) {
+  uint64_t parsed = 0;
+  if (!absl::SimpleAtoi(size, &parsed)) {
+    return std::nullopt;
+  }
+  return parsed;
+}
+
+// The size the listing or the metadata probe already reported, which spares
+// the zip reader a round trip to ask for it.
+std::optional<uint64_t> ArtifactSize(const GcsBuild& build,
+                                     const std::string& artifact_name) {
+  if (build.object.has_value()) {
+    return build.size;
+  }
+  const std::map<std::string, GcsObjectInfo>::const_iterator entry =
+      build.contents.find(artifact_name);
+  if (entry == build.contents.end()) {
+    return std::nullopt;
+  }
+  return entry->second.size;
+}
+
 Result<Json::Value> ResponseJson(const HttpResponse<Json::Value>& response,
                                  const GcsBuild& build, bool authenticated) {
   std::string_view hint;
@@ -172,6 +199,7 @@ Result<void> GcsBuildApi::ListContents(GcsBuild& build) {
       if (item.isMember("md5Hash")) {
         info.md5 = item["md5Hash"].asString();
       }
+      info.size = ParseSize(item["size"].asString());
       build.contents.emplace(name, std::move(info));
     }
 
@@ -200,7 +228,7 @@ Result<void> GcsBuildApi::ProbeObject(GcsBuild& build) {
   if (json.isMember("md5Hash")) {
     build.md5 = json["md5Hash"].asString();
   }
-  VLOG(1) << build.id << " is " << json["size"].asString() << " bytes";
+  build.size = ParseSize(json["size"].asString());
   return {};
 }
 
@@ -233,7 +261,12 @@ Result<SeekableZipSource> GcsBuildApi::FileReader(
     const GcsBuild& build, const std::string& artifact_name) {
   const std::string url =
       MediaUrl(build.bucket, CF_EXPECT(ObjectName(build, artifact_name)));
-  return CF_EXPECT(ZipSourceFromUrl(http_client_, url, CF_EXPECT(Headers())));
+  std::vector<std::string> headers = CF_EXPECT(Headers());
+  if (std::optional<uint64_t> size = ArtifactSize(build, artifact_name)) {
+    return CF_EXPECT(
+        ZipSourceFromUrl(http_client_, url, std::move(headers), *size));
+  }
+  return CF_EXPECT(ZipSourceFromUrl(http_client_, url, std::move(headers)));
 }
 
 }  // namespace cuttlefish

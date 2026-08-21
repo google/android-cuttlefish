@@ -16,6 +16,7 @@
 #include "cuttlefish/host/libs/web/http_build_api.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include <optional>
 #include <string>
@@ -23,6 +24,7 @@
 #include <utility>
 
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/web/android_build.h"
@@ -69,6 +71,28 @@ bool ServesRanges(const HttpResponse<void>& response) {
   return ranges.has_value() && absl::StrContains(*ranges, "bytes");
 }
 
+// The whole object's length: the total of a partial response's `Content-Range`
+// or, where the origin answered the range request with the whole object, its
+// `Content-Length`.
+std::optional<uint64_t> ProbedSize(const HttpResponse<void>& response) {
+  uint64_t size = 0;
+  if (std::optional<std::string_view> range =
+          HeaderValue(response.headers, "content-range")) {
+    const size_t total = range->rfind('/');
+    if (total != std::string_view::npos &&
+        absl::SimpleAtoi(range->substr(total + 1), &size)) {
+      return size;
+    }
+  }
+  const std::optional<std::string_view> length =
+      HeaderValue(response.headers, "content-length");
+  if (response.http_code != kPartialContent && length.has_value() &&
+      absl::SimpleAtoi(*length, &size)) {
+    return size;
+  }
+  return std::nullopt;
+}
+
 }  // namespace
 
 HttpBuildApi::HttpBuildApi(HttpClient& http_client)
@@ -108,6 +132,7 @@ Result<void> HttpBuildApi::ProbeObject(HttpBuild& build) {
     build.etag = std::string(*etag);
   }
   build.accept_ranges = ServesRanges(response);
+  build.size = ProbedSize(response);
   return {};
 }
 
@@ -142,6 +167,10 @@ Result<std::string> HttpBuildApi::DownloadFile(
 Result<SeekableZipSource> HttpBuildApi::FileReader(
     const HttpBuild& build, const std::string& artifact_name) {
   const std::string url = CF_EXPECT(ArtifactUrl(build, artifact_name));
+  if (build.size.has_value()) {
+    return CF_EXPECT(ZipSourceFromUrl(http_client_, url, {}, *build.size));
+  }
+  // Only a directory reaches here, having had no probe to learn a size from.
   return CF_EXPECT(ZipSourceFromUrl(http_client_, url, {}));
 }
 

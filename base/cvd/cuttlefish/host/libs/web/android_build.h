@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <map>
 #include <optional>
 #include <ostream>
@@ -60,6 +62,7 @@ std::ostream& operator<<(std::ostream&, const DirectoryBuild&);
 struct GcsObjectInfo {
   std::optional<std::string> generation;
   std::optional<std::string> md5;
+  std::optional<uint64_t> size;
 };
 
 // The objects under a `gs://` prefix, or the single object a `gs://` URL
@@ -74,6 +77,7 @@ struct GcsBuild {
   std::map<std::string, GcsObjectInfo> contents;
   std::optional<std::string> generation;
   std::optional<std::string> md5;
+  std::optional<uint64_t> size;
   std::optional<std::string> sha256;
 
   // Derived from the URL for the code that handles every build alike. Never
@@ -97,6 +101,7 @@ struct HttpBuild {
   // Whether the probe found an origin that serves range requests, without
   // which a member cannot be read out of an archive.
   bool accept_ranges = false;
+  std::optional<uint64_t> size;
   std::optional<std::string> sha256;
 
   // `id` has no query string, so requests must go to `url`.
