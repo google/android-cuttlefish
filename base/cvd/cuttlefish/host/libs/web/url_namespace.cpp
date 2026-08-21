@@ -125,6 +125,13 @@ Result<std::string> ResolveUrlZipName(std::string_view object,
   return std::string(object);
 }
 
+bool IsArchiveMember(const std::optional<std::string>& object,
+                     const std::optional<std::string>& filepath,
+                     const std::string& artifact_name) {
+  return object.has_value() && artifact_name != *object &&
+         absl::EndsWith(*object, ".zip") && filepath == artifact_name;
+}
+
 Result<std::string> ResolveUrlZipName(const std::vector<std::string>& names,
                                       BuildZipKind kind) {
   std::vector<std::string> matches;

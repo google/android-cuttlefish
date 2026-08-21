@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/archive.h"
@@ -53,6 +54,7 @@
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
+#include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/string.h"
@@ -172,6 +174,43 @@ Result<Build> GetHostBuild(BuildApi& build_api,
       "aosp_cf_x86_64_only_phone-userdebug");
 }
 
+template <typename UrlBuild>
+Result<void> CheckObjectIsNamed(const UrlBuild& build,
+                                const std::string& name) {
+  CF_EXPECTF(name == *build.object ||
+                 IsArchiveMember(build.object, build.filepath, name),
+             "The build '{}' holds only '{}', so it has no '{}'.", build.id,
+             *build.object, name);
+  return {};
+}
+
+// The host package is fetched asynchronously, so without this check a build
+// that has none only says so after every target has been fetched.
+Result<void> CheckHostPackagePresent(const Build& build) {
+  const std::string name = HostPackageName(build);
+  if (const GcsBuild* gcs = std::get_if<GcsBuild>(&build)) {
+    if (gcs->object.has_value()) {
+      CF_EXPECT(CheckObjectIsNamed(*gcs, name),
+                "Name a build that has a host package with "
+                "`--host_package_build`.");
+    } else {
+      CF_EXPECTF(Contains(gcs->contents, name),
+                 "The build '{}' has no host package '{}'.  It holds [{}].  "
+                 "Name a build that has one with `--host_package_build`.",
+                 gcs->id, name, absl::StrJoin(GcsArtifactNames(*gcs), ", "));
+    }
+  } else if (const HttpBuild* http = std::get_if<HttpBuild>(&build)) {
+    // A plain HTTPS directory has no listing, so its host package is only
+    // known to be absent when the download answers 404.
+    if (http->object.has_value()) {
+      CF_EXPECT(CheckObjectIsNamed(*http, name),
+                "Name a build that has a host package with "
+                "`--host_package_build`.");
+    }
+  }
+  return {};
+}
+
 Result<std::string> SaveConfig(FetcherConfig& config,
                                const std::string& target_directory) {
   // Due to constraints of the build system, artifacts intentionally cannot
@@ -204,7 +243,8 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
   }
   if (flags.download_img_zip) {
     LOG(INFO) << "Downloading image zip for " << context;
-    std::string img_zip_name = context.GetBuildZipName("img");
+    const std::string img_zip_name =
+        CF_EXPECT(context.GetBuildZipName(BuildZipKind::kImages));
     std::string img_zip_artifact_name = img_zip_name;
     if (IsSignedBuild(context.Build())) {
       img_zip_artifact_name = kSignedPrefix + img_zip_artifact_name;
@@ -221,7 +261,8 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
   const bool download_target_files =
       has_system_build || flags.download_target_files_zip;
   if (download_target_files || flags.dynamic_super_image) {
-    std::string target_files_name = context.GetBuildZipName("target_files");
+    const std::string target_files_name =
+        CF_EXPECT(context.GetBuildZipName(BuildZipKind::kTargetFiles));
     FetchArtifact target_files = context.Artifact(target_files_name);
     if (download_target_files) {
       LOG(INFO) << "Downloading target files zip for " << context;
@@ -259,7 +300,8 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
 Result<void> FetchSystemTarget(FetchBuildContext& context,
                                bool download_img_zip,
                                const bool keep_downloaded_archives) {
-  std::string target_files_name = context.GetBuildZipName("target_files");
+  const std::string target_files_name =
+      CF_EXPECT(context.GetBuildZipName(BuildZipKind::kTargetFiles));
   FetchArtifact target_files = context.Artifact(target_files_name);
 
   CF_EXPECT(
@@ -271,7 +313,8 @@ Result<void> FetchSystemTarget(FetchBuildContext& context,
              .has_value()) {
       LOG(INFO) << "Unable to retrieve system.img from target files, falling "
                    "back to system *-img-*.zip for system image";
-      std::string system_img_zip_name = context.GetBuildZipName("img");
+      const std::string system_img_zip_name =
+          CF_EXPECT(context.GetBuildZipName(BuildZipKind::kImages));
       FetchArtifact system_files = context.Artifact(system_img_zip_name);
 
       CF_EXPECT(system_files.Download());
@@ -320,7 +363,9 @@ Result<void> FetchBootTarget(FetchBuildContext& context,
                              bool keep_downloaded_archives) {
   const std::optional<std::string> filepath = context.GetFilepath();
   const std::string to_download =
-      filepath.has_value() ? *filepath : context.GetBuildZipName("img");
+      filepath.has_value()
+          ? *filepath
+          : CF_EXPECT(context.GetBuildZipName(BuildZipKind::kImages));
   FetchArtifact artifact = context.Artifact(to_download);
   CF_EXPECT(artifact.Download());
 
@@ -479,6 +524,7 @@ Result<FetchResult> Fetch(const FetchFlags& flags,
         std::async(std::launch::async, SymlinkHostPackage,
                    std::cref(host_target.host_tools_directory));
   } else {
+    CF_EXPECT(CheckHostPackagePresent(host_target_build));
     host_package_future = std::async(
         std::launch::async, FetchHostPackage, std::ref(downloaders.Builds()),
         std::cref(host_target_build),
