@@ -219,6 +219,60 @@ TEST(HttpBuildApiTests, DownloadFileChecksTheRequestedSha256Fail) {
                     "1328f5d"))));
 }
 
+TEST(HttpBuildApiTests, DownloadFileWithAStrongEtagReadsRangesSuccess) {
+  FakeHttpClient http_client;
+  HttpBuildApi api(http_client);
+
+  Result<ZipOverRanges> zip_handler =
+      ZipOverRanges::Create({{"boot.img", "boot bytes"}});
+  ASSERT_THAT(zip_handler, IsOk());
+  http_client.SetResponse(*zip_handler, kObjectUrl);
+
+  HttpBuildString build_string = {.url = kSignedUrl};
+  Result<HttpBuild> build = api.GetBuild(build_string);
+  ASSERT_THAT(build, IsOk());
+
+  TemporaryDir target_directory;
+  EXPECT_THAT(
+      api.DownloadFile(*build, target_directory.path, "phone-img-1.zip"),
+      IsOk());
+  EXPECT_TRUE(zip_handler->RangeRequestMade());
+}
+
+TEST(HttpBuildApiTests, DownloadFileWithAWeakEtagIsNotRangedSuccess) {
+  FakeHttpClient http_client;
+  HttpBuildApi api(http_client);
+
+  std::vector<std::string> get_headers;
+  http_client.SetResponse(
+      [&get_headers](const HttpRequest& request) {
+        const std::vector<HttpHeader> headers = {
+            {"etag", "W/\"v1\""},
+            {"accept-ranges", "bytes"},
+            {"content-length", "22"},
+        };
+        if (request.method == HttpMethod::kHead) {
+          return HttpResponse<std::string>{.http_code = 200,
+                                           .headers = headers};
+        }
+        get_headers = request.headers;
+        return HttpResponse<std::string>{.data = "recovery_api_version=3",
+                                         .http_code = 200,
+                                         .headers = headers};
+      },
+      kObjectUrl);
+
+  HttpBuildString build_string = {.url = kSignedUrl};
+  Result<HttpBuild> build = api.GetBuild(build_string);
+  ASSERT_THAT(build, IsOk());
+
+  TemporaryDir target_directory;
+  EXPECT_THAT(
+      api.DownloadFile(*build, target_directory.path, "phone-img-1.zip"),
+      IsOk());
+  EXPECT_THAT(get_headers, Not(Contains(HasSubstr("Range"))));
+}
+
 TEST(HttpBuildApiTests, FileReaderReadsTheObjectSuccess) {
   FakeHttpClient http_client;
   HttpBuildApi api(http_client);
