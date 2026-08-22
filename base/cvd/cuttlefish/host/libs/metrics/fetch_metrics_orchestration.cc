@@ -29,8 +29,8 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/libs/metrics/conversion/metrics_data.h"
 #include "cuttlefish/host/libs/metrics/fetch_metrics.h"
+#include "cuttlefish/host/libs/metrics/io/notification.h"
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
-#include "cuttlefish/host/libs/metrics/notification.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 The Android Open Source Project
+ * Copyright (C) 2025 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,21 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/enabled.h"
+#include "cuttlefish/host/libs/metrics/io/metrics_environment.h"
 
-#include "cuttlefish/files/file_exists.h"
+#include <string>
 
 namespace cuttlefish {
 
-bool AreMetricsEnabled() { return FileExists(kTransmitterPath); }
+std::string EnvironmentToString(ClearcutEnvironment environment) {
+  switch (environment) {
+    case ClearcutEnvironment::Local:
+      return std::string(kClearcutLocal);
+    case ClearcutEnvironment::Staging:
+      return std::string(kClearcutStaging);
+    case ClearcutEnvironment::Production:
+      return std::string(kClearcutProduction);
+  }
+}
 
 }  // namespace cuttlefish

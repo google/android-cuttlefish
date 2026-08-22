@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/session_id.h"
+#include "cuttlefish/host/libs/metrics/io/session_id.h"
 
 #include <string>
 

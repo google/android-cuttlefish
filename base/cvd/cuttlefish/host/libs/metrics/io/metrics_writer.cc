@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/metrics_writer.h"
+#include "cuttlefish/host/libs/metrics/io/metrics_writer.h"
 
 #include <chrono>
 #include <string>
