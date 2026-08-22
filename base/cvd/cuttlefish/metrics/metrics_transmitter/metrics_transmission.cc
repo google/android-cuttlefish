@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/metrics_transmitter/metrics_transmission.h"
+#include "cuttlefish/metrics/metrics_transmitter/metrics_transmission.h"
 
 #include <memory>
 #include <string>
