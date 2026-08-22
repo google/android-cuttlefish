@@ -140,18 +140,19 @@ Result<Builds> GetBuilds(BuildApi& build_api,
       .android_efi_loader = CF_EXPECT(
           GetBuildHelper(build_api, build_sources.android_efi_loader_build,
                          "gbl_efi_dist_and_test")),
-      .otatools = CF_EXPECT(GetBuildHelper(
-          build_api, build_sources.otatools_build, kDefaultBuildTarget)),
       .test_suites = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.test_suites_build, kDefaultBuildTarget)),
       .chrome_os = build_sources.chrome_os_build,
   };
-  if (!result.otatools) {
-    if (result.system) {
-      result.otatools = result.system;
-    } else if (result.kernel) {
-      result.otatools = result.default_build;
-    }
+  std::optional<Build> otatools = CF_EXPECT(GetBuildHelper(
+      build_api, build_sources.otatools_build, kDefaultBuildTarget));
+  if (otatools) {
+    result.otatools = OtaTools{.build = *otatools};
+  } else if (result.system) {
+    result.otatools = OtaTools{.build = *result.system, .inferred = true};
+  } else if (result.kernel && result.default_build) {
+    result.otatools =
+        OtaTools{.build = *result.default_build, .inferred = true};
   }
   return {result};
 }
@@ -226,35 +227,39 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
       CF_EXPECT(img_zip.DeleteLocalFile());
     }
   }
-  std::string target_files_name = context.GetBuildZipName("target_files");
-  FetchArtifact target_files = context.Artifact(target_files_name);
-  if (has_system_build || flags.download_target_files_zip) {
-    LOG(INFO) << "Downloading target files zip for " << context;
-    std::string download_location =
-        fmt::format("default/{}", target_files_name);
-    CF_EXPECT(target_files.DownloadTo(download_location));
-  }
-  if (flags.dynamic_super_image) {
-    ReadableZip* target_files_zip = CF_EXPECT(target_files.AsZip());
-    std::unique_ptr<ReaderSeeker> ab_partitions_source =
-        CF_EXPECT(target_files_zip->OpenReadOnly("META/ab_partitions.txt"));
-    CF_EXPECT(ab_partitions_source.get());
-    std::string ab_partitions_contents =
-        CF_EXPECT(ReadToString(*ab_partitions_source));
+  bool download_target_files =
+      has_system_build || flags.download_target_files_zip;
+  if (download_target_files || flags.dynamic_super_image) {
+    std::string target_files_name = context.GetBuildZipName("target_files");
+    FetchArtifact target_files = context.Artifact(target_files_name);
+    if (download_target_files) {
+      LOG(INFO) << "Downloading target files zip for " << context;
+      std::string download_location =
+          fmt::format("default/{}", target_files_name);
+      CF_EXPECT(target_files.DownloadTo(download_location));
+    }
+    if (flags.dynamic_super_image) {
+      ReadableZip* target_files_zip = CF_EXPECT(target_files.AsZip());
+      std::unique_ptr<ReaderSeeker> ab_partitions_source =
+          CF_EXPECT(target_files_zip->OpenReadOnly("META/ab_partitions.txt"));
+      CF_EXPECT(ab_partitions_source.get());
+      std::string ab_partitions_contents =
+          CF_EXPECT(ReadToString(*ab_partitions_source));
 
-    CF_EXPECT(target_files.ExtractOneTo("META/ab_partitions.txt",
-                                        "default/ab_partitions.txt"));
+      CF_EXPECT(target_files.ExtractOneTo("META/ab_partitions.txt",
+                                          "default/ab_partitions.txt"));
 
-    std::vector<std::string_view> ab_files =
-        absl::StrSplit(ab_partitions_contents, '\n');
-    ab_files.emplace_back("super_empty");
-    for (std::string_view ab_file : ab_files) {
-      if (ab_file.empty()) {
-        continue;
+      std::vector<std::string_view> ab_files =
+          absl::StrSplit(ab_partitions_contents, '\n');
+      ab_files.emplace_back("super_empty");
+      for (std::string_view ab_file : ab_files) {
+        if (ab_file.empty()) {
+          continue;
+        }
+        std::string member = fmt::format("IMAGES/{}.img", ab_file);
+        std::string output = fmt::format("default/{}.img", ab_file);
+        CF_EXPECT(target_files.ExtractOneTo(member, output));
       }
-      std::string member = fmt::format("IMAGES/{}.img", ab_file);
-      std::string output = fmt::format("default/{}.img", ab_file);
-      CF_EXPECT(target_files.ExtractOneTo(member, output));
     }
   }
   return {};
@@ -305,9 +310,11 @@ Result<void> FetchSystemTarget(FetchBuildContext& context,
 }
 
 Result<void> FetchKernelTarget(FetchBuildContext context) {
-  // If the kernel is from an arm/aarch64 build, the artifact will be called
-  // Image.
-  if (!context.Artifact("bzImage").DownloadTo("kernel").has_value()) {
+  if (std::optional<std::string> filepath = context.GetFilepath()) {
+    CF_EXPECT(context.Artifact(*filepath).DownloadTo("kernel"));
+  } else if (!context.Artifact("bzImage").DownloadTo("kernel").has_value()) {
+    // If the kernel is from an arm/aarch64 build, the artifact will be called
+    // Image.
     CF_EXPECT(context.Artifact("Image").DownloadTo("kernel"));
   }
 
@@ -320,12 +327,13 @@ Result<void> FetchKernelTarget(FetchBuildContext context) {
 
 Result<void> FetchBootTarget(FetchBuildContext& context,
                              bool keep_downloaded_archives) {
-  std::string img_zip = context.GetBuildZipName("img");
-  std::string to_download = context.GetFilepath().value_or(img_zip);
+  std::optional<std::string> filepath = context.GetFilepath();
+  std::string to_download =
+      filepath.has_value() ? *filepath : context.GetBuildZipName("img");
   FetchArtifact artifact = context.Artifact(to_download);
   CF_EXPECT(artifact.Download());
 
-  if (to_download == img_zip) {
+  if (!filepath.has_value()) {
     CF_EXPECT(artifact.ExtractOne("boot.img"));
     CF_EXPECT(artifact.ExtractOne("vendor_boot.img"));
     if (!keep_downloaded_archives) {
@@ -337,9 +345,13 @@ Result<void> FetchBootTarget(FetchBuildContext& context,
 }
 
 Result<void> FetchBootloaderTarget(FetchBuildContext& context) {
-  // If the bootloader is from an arm/aarch64 build, the artifact will be of
-  // filetype bin.
-  if (!context.Artifact("u-boot.rom").DownloadTo("bootloader").has_value()) {
+  if (std::optional<std::string> filepath = context.GetFilepath()) {
+    CF_EXPECT(context.Artifact(*filepath).DownloadTo("bootloader"));
+  } else if (!context.Artifact("u-boot.rom")
+                  .DownloadTo("bootloader")
+                  .has_value()) {
+    // If the bootloader is from an arm/aarch64 build, the artifact will be of
+    // filetype bin.
     CF_EXPECT(context.Artifact("u-boot.bin").DownloadTo("bootloader"));
   }
   return {};
@@ -351,10 +363,17 @@ Result<void> FetchAndroidEfiLoaderTarget(FetchBuildContext& context) {
   return {};
 }
 
-Result<void> FetchOtaToolsTarget(FetchBuildContext& context,
+Result<void> FetchOtaToolsTarget(OtaToolsBuildContext& ota,
                                  bool keep_downloaded_archives) {
-  FetchArtifact otatools = context.Artifact("otatools.zip");
-  CF_EXPECT(otatools.Download());
+  FetchArtifact otatools = ota.context.Artifact("otatools.zip");
+  Result<void> downloaded = otatools.Download();
+  if (!downloaded.has_value() && ota.inferred) {
+    LOG(WARNING) << "No otatools.zip in " << ota.context
+                 << ", which was not requested but picked from the other "
+                    "builds, continuing without it";
+    return {};
+  }
+  CF_EXPECT(std::move(downloaded));
   CF_EXPECT(otatools.ExtractAll());
   if (!keep_downloaded_archives) {
     CF_EXPECT(otatools.DeleteLocalFile());
@@ -434,8 +453,8 @@ Result<void> FetchTarget(FetchContext& fetch_context,
     CF_EXPECT(FetchAndroidEfiLoaderTarget(*ctx));
   }
 
-  if (std::optional<FetchBuildContext> ctx = fetch_context.OtaToolsBuild()) {
-    CF_EXPECT(FetchOtaToolsTarget(*ctx, keep_downloaded_archives));
+  if (std::optional<OtaToolsBuildContext> ota = fetch_context.OtaToolsBuild()) {
+    CF_EXPECT(FetchOtaToolsTarget(*ota, keep_downloaded_archives));
   }
 
   if (std::optional<FetchBuildContext> ctx = fetch_context.TestSuitesBuild()) {

@@ -305,11 +305,14 @@ std::optional<FetchBuildContext> FetchContext::AndroidEfiLoaderBuild() {
   }
 }
 
-std::optional<FetchBuildContext> FetchContext::OtaToolsBuild() {
+std::optional<OtaToolsBuildContext> FetchContext::OtaToolsBuild() {
   if (builds_.otatools) {
-    return FetchBuildContext(
-        *this, *builds_.otatools, target_directories_.otatools,
-        FileSource::DEFAULT_BUILD, tracer_.NewTrace("OTA Tools"));
+    return OtaToolsBuildContext{
+        .context = FetchBuildContext(
+            *this, builds_.otatools->build, target_directories_.otatools,
+            FileSource::DEFAULT_BUILD, tracer_.NewTrace("OTA Tools")),
+        .inferred = builds_.otatools->inferred,
+    };
   } else {
     return {};
   }
