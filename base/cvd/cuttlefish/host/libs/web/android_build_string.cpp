@@ -26,17 +26,79 @@
 #include <variant>
 #include <vector>
 
+#include "absl/strings/ascii.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "fmt/ostream.h"
 #include "fmt/ranges.h"
 
 #include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 namespace {
+
+// The "<scheme>" of a "<scheme>://" build string, which is what separates a
+// URL build source from a branch, a build id or a directory path.
+std::optional<std::string_view> UrlScheme(std::string_view build_string) {
+  constexpr std::string_view kSchemeCharacters =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-.";
+  size_t separator = build_string.find("://");
+  if (separator == std::string_view::npos) {
+    return std::nullopt;
+  }
+  std::string_view scheme = build_string.substr(0, separator);
+  if (scheme.empty() || !absl::ascii_isalpha(scheme[0]) ||
+      scheme.find_first_not_of(kSchemeCharacters) != std::string_view::npos) {
+    return std::nullopt;
+  }
+  return scheme;
+}
+
+bool IsSha256Fragment(std::string_view fragment) {
+  constexpr std::string_view kPrefix = "#sha256=";
+  constexpr size_t kHexDigits = 64;
+  if (!fragment.starts_with(kPrefix)) {
+    return false;
+  }
+  std::string_view digest = fragment.substr(kPrefix.size());
+  return digest.size() == kHexDigits &&
+         digest.find_first_not_of("0123456789abcdefABCDEF") ==
+             std::string_view::npos;
+}
+
+// A URL build string's '{selector}', when it has one, must be complete and
+// must end the string. Checked before `ParseFilepath`, which allows a
+// selector anywhere and discards whatever follows it.
+bool HasSelectorSuffix(std::string_view build_string) {
+  size_t open_bracket = build_string.find('{');
+  size_t close_bracket = build_string.find('}');
+  if (open_bracket == std::string_view::npos) {
+    return close_bracket == std::string_view::npos;
+  }
+  return close_bracket + 1 == build_string.size() &&
+         close_bracket > open_bracket + 1;
+}
+
+// A fragment is a suffix by definition, so a '#' anywhere else is an error
+// rather than something silently kept in the URL. What follows the '#' is not
+// quoted back, as it can hold a query string.
+Result<std::pair<std::string_view, std::optional<std::string>>>
+ParseSha256Fragment(std::string_view build_string) {
+  size_t fragment_start = build_string.find('#');
+  if (fragment_start == std::string_view::npos) {
+    return {{build_string, std::nullopt}};
+  }
+  std::string_view fragment = build_string.substr(fragment_start);
+  CF_EXPECTF(IsSha256Fragment(fragment),
+             "The only fragment a URL build string may carry is a trailing "
+             "'#sha256=<64 hex digits>'.  Input: '{}'",
+             ScrubUrl(build_string));
+  return {{build_string.substr(0, fragment_start),
+           std::string(fragment.substr(fragment.find('=') + 1))}};
+}
 
 Result<std::pair<std::string, std::optional<std::string>>> ParseFilepath(
     std::string_view build_string) {
@@ -99,6 +161,49 @@ Result<DirectoryBuildString> ParseDirectoryBuildString(
   return result;
 }
 
+Result<BuildString> ParseUrlBuildString(std::string_view scheme,
+                                        std::string_view build_string) {
+  CF_EXPECTF(scheme != "http",
+             "Cleartext 'http://' build sources are not supported, use "
+             "'https://' instead.  Input: '{}'",
+             ScrubUrl(build_string));
+  CF_EXPECTF(scheme == "gs" || scheme == "https",
+             "Unsupported URL scheme '{}'.  The supported URL schemes are "
+             "'gs://' and 'https://'.  Input: '{}'",
+             scheme, ScrubUrl(build_string));
+  // The comma-separated build flags split their values before parsing them,
+  // so a comma can only be rejected where the whole value is still visible.
+  CF_EXPECTF(build_string.find(',') == std::string_view::npos,
+             "URL build strings cannot contain a comma, because the "
+             "comma-separated build flags split their values on ','.  Input: "
+             "'{}'",
+             ScrubUrl(build_string));
+
+  auto [without_fragment, sha256] =
+      CF_EXPECT(ParseSha256Fragment(build_string));
+  CF_EXPECTF(HasSelectorSuffix(without_fragment),
+             "A URL build string ends either with its '{{selector}}' or with "
+             "the URL itself.  Input: '{}'",
+             ScrubUrl(build_string));
+  auto [url, filepath] = CF_EXPECT(ParseFilepath(without_fragment));
+
+  size_t query = url.find('?');
+  bool object_form = !url.substr(0, query).ends_with('/');
+  CF_EXPECTF(object_form || query == std::string::npos,
+             "Query strings are only supported on URLs naming an object, not "
+             "on a '/'-terminated directory.  Input: '{}'",
+             ScrubUrl(build_string));
+  CF_EXPECTF(object_form || !sha256.has_value(),
+             "'#sha256=' is only supported on URLs naming an object, not on a "
+             "'/'-terminated directory.  Input: '{}'",
+             ScrubUrl(build_string));
+
+  if (scheme == "gs") {
+    return GcsBuildString{.url = url, .filepath = filepath, .sha256 = sha256};
+  }
+  return HttpBuildString{.url = url, .filepath = filepath, .sha256 = sha256};
+}
+
 }  // namespace
 
 std::ostream& operator<<(std::ostream& out,
@@ -114,6 +219,22 @@ std::ostream& operator<<(std::ostream& out,
   fmt::print(out, "(paths=\"{}\", target=\"{}\", filepath=\"{}\")",
              fmt::join(build_string.paths, ":"), build_string.target,
              build_string.filepath.value_or(""));
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         const GcsBuildString& build_string) {
+  fmt::print(out, "(url=\"{}\", filepath=\"{}\", sha256=\"{}\")",
+             ScrubUrl(build_string.url), build_string.filepath.value_or(""),
+             build_string.sha256.value_or(""));
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         const HttpBuildString& build_string) {
+  fmt::print(out, "(url=\"{}\", filepath=\"{}\", sha256=\"{}\")",
+             ScrubUrl(build_string.url), build_string.filepath.value_or(""),
+             build_string.sha256.value_or(""));
   return out;
 }
 
@@ -142,6 +263,12 @@ void SetFilepath(BuildString& build_string, const std::string& value) {
 
 Result<BuildString> ParseBuildString(std::string_view build_string) {
   CF_EXPECT(!build_string.empty(), "The given build string cannot be empty");
+  // Checked before the ':' of a directory build string, which every URL also
+  // contains.
+  std::optional<std::string_view> scheme = UrlScheme(build_string);
+  if (scheme) {
+    return CF_EXPECT(ParseUrlBuildString(*scheme, build_string));
+  }
   auto [remaining_build_string, filepath] =
       CF_EXPECT(ParseFilepath(build_string));
   if (remaining_build_string.find(':') != std::string::npos) {
@@ -205,6 +332,14 @@ struct WithFallbackTargetVisitor {
 
   BuildString operator()(DirectoryBuildString build_string,
                          const std::string&) {
+    return build_string;
+  }
+
+  BuildString operator()(GcsBuildString build_string, const std::string&) {
+    return build_string;
+  }
+
+  BuildString operator()(HttpBuildString build_string, const std::string&) {
     return build_string;
   }
 };

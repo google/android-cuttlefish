@@ -273,6 +273,12 @@ void PopulateCuttlefishBuild(CuttlefishBuild& cf_build, const Build& build) {
       std::visit([](auto&& arg) { return arg.product; }, build));
   if (const DeviceBuild* device_build = std::get_if<DeviceBuild>(&build)) {
     cf_build.set_branch(device_build->branch);
+  } else if (std::holds_alternative<GcsBuild>(build)) {
+    // A URL can name a private bucket or an internal host, so only its scheme
+    // is reported. The rest stays in the local fetcher config.
+    cf_build.set_build_id("gs");
+  } else if (std::holds_alternative<HttpBuild>(build)) {
+    cf_build.set_build_id("https");
   }
 }
 

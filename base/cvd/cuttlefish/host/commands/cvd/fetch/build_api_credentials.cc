@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "absl/log/log.h"
+#include "absl/strings/match.h"
 #include "json/reader.h"
 #include "json/value.h"
 
@@ -36,7 +37,8 @@ namespace cuttlefish {
 namespace {
 
 std::unique_ptr<CredentialSource> TryParseServiceAccount(
-    HttpClient& http_client, const std::string& file_content) {
+    HttpClient& http_client, const std::string& file_content,
+    const std::string& scope) {
   Json::Reader reader;
   Json::Value content;
   if (!reader.parse(file_content, content)) {
@@ -45,8 +47,8 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
     VLOG(0) << "Could not parse credential file as Service Account";
     return {};
   }
-  auto result = ServiceAccountOauthCredentialSource::FromJson(
-      http_client, content, kAndroidBuildApiScope);
+  auto result = ServiceAccountOauthCredentialSource::FromJson(http_client,
+                                                              content, scope);
   if (!result.has_value()) {
     VLOG(0) << "Failed to load service account json file: \n" << result.error();
     return {};
@@ -56,7 +58,7 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
 
 Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
     HttpClient& http_client, const std::string& credential_source,
-    const std::string& oauth_filepath) {
+    const std::string& oauth_filepath, const std::string& scope) {
   std::unique_ptr<CredentialSource> result;
   if (credential_source == "gce") {
     result = GceMetadataCredentialSource::Make(http_client);
@@ -88,7 +90,7 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
         CF_EXPECTF(ReadFileContents(credential_source),
                    "Failure getting credential file contents from file \"{}\"",
                    credential_source);
-    if (auto crds = TryParseServiceAccount(http_client, file_content)) {
+    if (auto crds = TryParseServiceAccount(http_client, file_content, scope)) {
       result = std::move(crds);
     } else {
       result = FixedCredentialSource::Make(file_content);
@@ -101,7 +103,7 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
     HttpClient& http_client, const std::string& credential_source,
     const std::string& oauth_filepath, const bool use_gce_metadata,
     const std::string& credential_filepath,
-    const std::string& service_account_filepath) {
+    const std::string& service_account_filepath, const std::string& scope) {
   const int number_of_set_credentials =
       !credential_source.empty() + use_gce_metadata +
       !credential_filepath.empty() + !service_account_filepath.empty();
@@ -125,7 +127,7 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
                    "from file \"{}\".",
                    service_account_filepath);
     auto service_account_credentials =
-        TryParseServiceAccount(http_client, contents);
+        TryParseServiceAccount(http_client, contents, scope);
     CF_EXPECTF(service_account_credentials != nullptr,
                "Unable to parse service account credentials in file \"{}\".  "
                "File contents: {}",
@@ -136,19 +138,67 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
   // when this helper is removed its `.acloud_oauth2.dat` processing should be
   // moved here
   return GetCredentialSourceLegacy(http_client, credential_source,
-                                   oauth_filepath);
+                                   oauth_filepath, scope);
 }
 
 }  // namespace
 
 Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
     HttpClient& http_client, const BuildApiFlags& flags,
-    const std::string& oauth_filepath) {
-  return CF_EXPECT(
-      GetCredentialSource(http_client, flags.credential_source, oauth_filepath,
-                          flags.credential_flags.use_gce_metadata,
-                          flags.credential_flags.credential_filepath,
-                          flags.credential_flags.service_account_filepath));
+    const std::string& oauth_filepath, const std::string& scope) {
+  return CF_EXPECT(GetCredentialSource(
+      http_client, flags.credential_source, oauth_filepath,
+      flags.credential_flags.use_gce_metadata,
+      flags.credential_flags.credential_filepath,
+      flags.credential_flags.service_account_filepath, scope));
+}
+
+bool IsRunningOnGce() {
+  Result<std::string> product_name =
+      ReadFileContents("/sys/class/dmi/id/product_name");
+  return product_name.has_value() &&
+         absl::StrContains(*product_name, "Google Compute Engine");
+}
+
+Result<std::unique_ptr<CredentialSource>> GetStorageCredentialSource(
+    HttpClient& http_client, const BuildApiFlags& flags, bool running_on_gce) {
+  const std::string& service_account_filepath =
+      flags.credential_flags.service_account_filepath;
+  if (!service_account_filepath.empty()) {
+    std::string contents =
+        CF_EXPECTF(ReadFileContents(service_account_filepath),
+                   "Failure getting service account credential file contents "
+                   "from file '{}'.",
+                   service_account_filepath);
+    std::unique_ptr<CredentialSource> credentials =
+        TryParseServiceAccount(http_client, contents, kCloudStorageReadScope);
+    CF_EXPECTF(credentials != nullptr,
+               "Unable to parse service account credentials in file '{}'.",
+               service_account_filepath);
+    return credentials;
+  }
+
+  const std::string boto_filepath = StringFromEnv("HOME", ".") + "/.boto";
+  if (FileExists(boto_filepath)) {
+    std::string contents = CF_EXPECTF(ReadFileContents(boto_filepath),
+                                      "Failure getting credential file "
+                                      "contents from file '{}'.",
+                                      boto_filepath);
+    Result<std::unique_ptr<RefreshTokenCredentialSource>> credentials =
+        RefreshTokenCredentialSource::FromOauth2ClientFile(http_client,
+                                                           contents);
+    if (credentials.has_value()) {
+      return std::move(*credentials);
+    }
+    LOG(ERROR) << "Failed to load oauth credentials from \"" << boto_filepath
+               << "\":" << credentials.error();
+  }
+
+  if (flags.credential_flags.use_gce_metadata ||
+      flags.credential_source == "gce" || running_on_gce) {
+    return GceMetadataCredentialSource::Make(http_client);
+  }
+  return nullptr;
 }
 
 std::string GetAcloudOauthFilepath() {

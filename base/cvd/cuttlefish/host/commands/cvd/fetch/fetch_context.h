@@ -78,7 +78,7 @@ class FetchArtifact {
 class FetchBuildContext {
  public:
   const cuttlefish::Build& Build() const;
-  std::string GetBuildZipName(const std::string&) const;
+  Result<std::string> GetBuildZipName(const std::string& kind) const;
   // The specific filepath the user requested for a particular build. Ignored
   // for some builds.
   std::optional<std::string> GetFilepath() const;

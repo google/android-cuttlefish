@@ -12,8 +12,24 @@ cf_cc_library(
     hdrs = ["android_build.h"],
     deps = [
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:digest",
+        "//cuttlefish/host/libs/web:url_namespace",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "android_build_test",
+    srcs = ["android_build_test.cpp"],
+    deps = [
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 
@@ -37,6 +53,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_file",
         "//cuttlefish/host/libs/web/http_client:http_json",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/host/libs/zip:remote_zip",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
@@ -62,6 +79,7 @@ cf_cc_library(
     hdrs = ["android_build_string.h"],
     deps = [
         "//cuttlefish/flag_parser",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@fmt",
@@ -154,12 +172,31 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:android_build_api",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/web:digest",
         "//cuttlefish/host/libs/zip:cached_zip_source",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "caching_build_api_test",
+    srcs = ["caching_build_api_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/web:caching_build_api",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
     ],
 )
 
@@ -172,6 +209,33 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "composite_build_api",
+    srcs = ["composite_build_api.cpp"],
+    hdrs = ["composite_build_api.h"],
+    deps = [
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_test(
+    name = "composite_build_api_test",
+    srcs = ["composite_build_api_test.cpp"],
+    deps = [
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/web:composite_build_api",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 
@@ -189,6 +253,132 @@ cf_cc_library(
         "@abseil-cpp//absl/strings",
         "@boringssl//:crypto",
         "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "digest",
+    srcs = ["digest.cpp"],
+    hdrs = ["digest.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@boringssl//:crypto",
+    ],
+)
+
+cf_cc_test(
+    name = "digest_test",
+    srcs = ["digest_test.cpp"],
+    deps = [
+        "//cuttlefish/host/libs/web:digest",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
+    name = "gcs_build_api",
+    srcs = ["gcs_build_api.cpp"],
+    hdrs = ["gcs_build_api.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_api",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/web:build_api_zip",
+        "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/host/libs/web:digest",
+        "//cuttlefish/host/libs/web:url_download",
+        "//cuttlefish/host/libs/web:url_namespace",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_json",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/host/libs/web/http_client:url_escape",
+        "//cuttlefish/host/libs/zip:remote_zip",
+        "//cuttlefish/host/libs/zip:zip_file",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_test(
+    name = "gcs_build_api_test",
+    srcs = ["gcs_build_api_test.cpp"],
+    deps = [
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/host/libs/web:gcs_build_api",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:fake_http_client",
+        "//cuttlefish/host/libs/zip:zip_string",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
+        "//cuttlefish/io",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
+    name = "http_build_api",
+    srcs = ["http_build_api.cpp"],
+    hdrs = ["http_build_api.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_api",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/web:build_api_zip",
+        "//cuttlefish/host/libs/web:digest",
+        "//cuttlefish/host/libs/web:url_download",
+        "//cuttlefish/host/libs/web:url_namespace",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/zip:remote_zip",
+        "//cuttlefish/host/libs/zip:zip_file",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "http_build_api_test",
+    srcs = ["http_build_api_test.cpp"],
+    deps = [
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:http_build_api",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:fake_http_client",
+        "//cuttlefish/host/libs/zip:zip_string",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
+        "//cuttlefish/io",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -250,6 +440,64 @@ cf_cc_test(
     srcs = ["parse_time_test.cc"],
     deps = [
         "//cuttlefish/host/libs/web:parse_time",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
+    name = "url_download",
+    srcs = ["url_download.cpp"],
+    hdrs = ["url_download.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_file",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/posix:remove",
+        "//cuttlefish/result",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "url_download_test",
+    srcs = ["url_download_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/host/libs/web:url_download",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:fake_http_client",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
+    name = "url_namespace",
+    srcs = ["url_namespace.cpp"],
+    hdrs = ["url_namespace.h"],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "url_namespace_test",
+    srcs = ["url_namespace_test.cpp"],
+    deps = [
+        "//cuttlefish/host/libs/web:url_namespace",
+        "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
     ],
 )

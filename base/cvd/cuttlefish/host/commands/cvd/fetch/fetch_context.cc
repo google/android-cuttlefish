@@ -42,6 +42,7 @@
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/build_api_zip.h"
+#include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
 #include "cuttlefish/posix/remove.h"
@@ -183,11 +184,20 @@ FetchBuildContext::FetchBuildContext(FetchContext& fetch_context,
 
 const cuttlefish::Build& FetchBuildContext::Build() const { return build_; }
 
-std::string FetchBuildContext::GetBuildZipName(const std::string& name) const {
+Result<std::string> FetchBuildContext::GetBuildZipName(
+    const std::string& kind) const {
+  if (const auto* gcs = std::get_if<GcsBuild>(&build_)) {
+    return CF_EXPECT(ResolveUrlZipName(GcsArtifactNames(*gcs),
+                                       /* closed = */ true, gcs->object, kind));
+  }
+  if (const auto* http = std::get_if<HttpBuild>(&build_)) {
+    bool closed = http->object.has_value();
+    return CF_EXPECT(ResolveUrlZipName({}, closed, http->object, kind));
+  }
   std::string product =
       std::visit([](auto&& arg) { return arg.product; }, build_);
   std::string id = std::get<0>(GetBuildIdAndTarget(build_));
-  return product + "-" + name + "-" + id + ".zip";
+  return product + "-" + kind + "-" + id + ".zip";
 }
 
 std::optional<std::string> FetchBuildContext::GetFilepath() const {

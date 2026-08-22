@@ -19,13 +19,17 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
+#include "absl/strings/match.h"
 #include "absl/strings/strip.h"
 
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -44,8 +48,8 @@ bool ShouldFetch(const Instance& instance) {
 
   for (const auto& value :
        {disk.default_build(), disk.super_partition().system(),
-        boot.kernel().build(), boot.kernel().build(), boot.build(),
-        boot.bootloader().build(), disk.otatools()}) {
+        boot.kernel().build(), boot.build(), boot.bootloader().build(),
+        boot.android_efi_loader().build(), disk.otatools()}) {
     // expects non-prefixed build strings already converted to empty strings
     if (!value.empty()) {
       return true;
@@ -56,15 +60,24 @@ bool ShouldFetch(const Instance& instance) {
 
 Result<std::string> GetFetchBuildString(const std::string& strVal) {
   std::string_view view = strVal;
-  if (!absl::ConsumePrefix(&view, kFetchPrefix)) {
-    // intentionally return an empty string when there are local, non-prefixed
-    // paths.  Fetch does not process the local paths
-    return "";
+  if (absl::ConsumePrefix(&view, kFetchPrefix)) {
+    CF_EXPECTF(!view.empty(),
+               "\"{}\" prefixed build string was not followed by a value",
+               kFetchPrefix);
+    CF_EXPECT(ParseBuildString(view));
+    return std::string(view);
   }
-  CF_EXPECTF(!view.empty(),
-             "\"{}\" prefixed build string was not followed by a value",
-             kFetchPrefix);
-  return std::string(view);
+  if (absl::StrContains(strVal, "://")) {
+    BuildString parsed = CF_EXPECT(ParseBuildString(strVal));
+    CF_EXPECTF(std::holds_alternative<GcsBuildString>(parsed) ||
+                   std::holds_alternative<HttpBuildString>(parsed),
+               "'{}' contains '://' but is not a 'gs://' or 'https://' URL.",
+               ScrubUrl(strVal));
+    return strVal;
+  }
+  // intentionally return an empty string when there are local, non-prefixed
+  // paths.  Fetch does not process the local paths
+  return "";
 }
 
 Result<Instance> RemoveNonPrefixedBuildStrings(const Instance& instance) {

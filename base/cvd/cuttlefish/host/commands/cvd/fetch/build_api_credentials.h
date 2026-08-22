@@ -28,9 +28,24 @@ namespace cuttlefish {
 inline constexpr char kAndroidBuildApiScope[] =
     "https://www.googleapis.com/auth/androidbuild.internal";
 
+inline constexpr char kCloudStorageReadScope[] =
+    "https://www.googleapis.com/auth/devstorage.read_only";
+
 Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
     HttpClient& http_client, const BuildApiFlags& flags,
-    const std::string& oauth_filepath);
+    const std::string& oauth_filepath,
+    const std::string& scope = kAndroidBuildApiScope);
+
+// Returns whether the DMI product name identifies this machine as a GCE VM,
+// where the metadata server issues credentials without any flag being given.
+bool IsRunningOnGce();
+
+// Resolves credentials for Cloud Storage. Never opens the `credential_source`
+// file, which the Android Build path may consume from a pipe, and never
+// re-uses an Android Build token, which Cloud Storage rejects. A null result
+// means anonymous access, which public buckets serve.
+Result<std::unique_ptr<CredentialSource>> GetStorageCredentialSource(
+    HttpClient& http_client, const BuildApiFlags& flags, bool running_on_gce);
 
 std::string GetAcloudOauthFilepath();
 
