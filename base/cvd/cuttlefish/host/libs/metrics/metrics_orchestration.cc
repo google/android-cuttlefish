@@ -30,7 +30,7 @@
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/metrics/conversion/metrics_data.h"
 #include "cuttlefish/host/libs/metrics/enabled.h"
-#include "cuttlefish/host/libs/metrics/host_metrics.h"
+#include "cuttlefish/host/libs/metrics/host/host_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
 #include "cuttlefish/host/libs/metrics/session_id.h"
