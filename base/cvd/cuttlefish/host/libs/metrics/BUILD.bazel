@@ -14,12 +14,12 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/libs/metrics:device_event_type",
-        "//cuttlefish/host/libs/metrics:guest_metrics",
-        "//cuttlefish/host/libs/metrics/conversion:metrics_data",
         "//cuttlefish/host/libs/metrics:metrics_orchestration",
         "//cuttlefish/host/libs/metrics:notification",
-        "//cuttlefish/host/libs/metrics:parsed_flags",
+        "//cuttlefish/host/libs/metrics/conversion:metrics_data",
+        "//cuttlefish/host/libs/metrics/guest:device_event_type",
+        "//cuttlefish/host/libs/metrics/guest:guest_metrics",
+        "//cuttlefish/host/libs/metrics/guest:parsed_flags",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
@@ -34,12 +34,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/files:file_exists",
     ],
-)
-
-cf_cc_library(
-    name = "device_event_type",
-    srcs = ["device_event_type.cc"],
-    hdrs = ["device_event_type.h"],
 )
 
 cf_cc_library(
@@ -64,37 +58,11 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/libs/metrics:fetch_metrics",
-        "//cuttlefish/host/libs/metrics/conversion:metrics_data",
         "//cuttlefish/host/libs/metrics:metrics_orchestration",
         "//cuttlefish/host/libs/metrics:notification",
+        "//cuttlefish/host/libs/metrics/conversion:metrics_data",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
-        "@fmt",
-    ],
-)
-
-cf_cc_library(
-    name = "flag_metrics",
-    srcs = ["flag_metrics.cc"],
-    hdrs = ["flag_metrics.h"],
-    deps = [
-        "//cuttlefish/host/libs/config:data_image_policy",
-        "//cuttlefish/host/libs/config:gpu_mode",
-        "//cuttlefish/host/libs/metrics:parsed_flags",
-        "//cuttlefish/result",
-    ],
-)
-
-cf_cc_library(
-    name = "guest_metrics",
-    srcs = ["guest_metrics.cc"],
-    hdrs = ["guest_metrics.h"],
-    deps = [
-        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
-        "//cuttlefish/host/libs/metrics:device_event_type",
-        "//cuttlefish/host/libs/metrics:flag_metrics",
-        "//cuttlefish/host/libs/metrics:parsed_flags",
-        "//cuttlefish/result",
         "@fmt",
     ],
 )
@@ -115,11 +83,11 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/version",
         "//cuttlefish/host/libs/log_names",
         "//cuttlefish/host/libs/metrics:enabled",
-        "//cuttlefish/host/libs/metrics/host:host_metrics",
-        "//cuttlefish/host/libs/metrics/conversion:metrics_data",
         "//cuttlefish/host/libs/metrics:metrics_transmitter",
         "//cuttlefish/host/libs/metrics:metrics_writer",
         "//cuttlefish/host/libs/metrics:session_id",
+        "//cuttlefish/host/libs/metrics/host:host_metrics",
+        "//cuttlefish/host/libs/metrics/conversion:metrics_data",
         "//cuttlefish/result",
         "//external_proto:cf_log_cc_proto",
         "@fmt",
@@ -165,24 +133,6 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@fmt",
-    ],
-)
-
-cf_cc_library(
-    name = "parsed_flags",
-    srcs = ["parsed_flags.cc"],
-    hdrs = ["parsed_flags.h"],
-    deps = [
-        "//cuttlefish/host/commands/assemble_cvd/flags:cpus",
-        "//cuttlefish/host/commands/assemble_cvd/flags:daemon",
-        "//cuttlefish/host/commands/assemble_cvd/flags:data_policy",
-        "//cuttlefish/host/commands/assemble_cvd/flags:extra_kernel_cmdline",
-        "//cuttlefish/host/commands/assemble_cvd/flags:gpu_mode",
-        "//cuttlefish/host/commands/assemble_cvd/flags:guest_enforce_security",
-        "//cuttlefish/host/commands/assemble_cvd/flags:memory_mb",
-        "//cuttlefish/host/commands/assemble_cvd/flags:restart_subprocesses",
-        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
-        "//cuttlefish/result",
     ],
 )
 

@@ -28,11 +28,11 @@
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/libs/metrics/conversion/metrics_data.h"
-#include "cuttlefish/host/libs/metrics/device_event_type.h"
-#include "cuttlefish/host/libs/metrics/guest_metrics.h"
+#include "cuttlefish/host/libs/metrics/guest/device_event_type.h"
+#include "cuttlefish/host/libs/metrics/guest/guest_metrics.h"
+#include "cuttlefish/host/libs/metrics/guest/parsed_flags.h"
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
 #include "cuttlefish/host/libs/metrics/notification.h"
-#include "cuttlefish/host/libs/metrics/parsed_flags.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

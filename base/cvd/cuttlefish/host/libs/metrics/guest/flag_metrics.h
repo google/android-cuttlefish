@@ -20,7 +20,7 @@
 
 #include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
-#include "cuttlefish/host/libs/metrics/parsed_flags.h"
+#include "cuttlefish/host/libs/metrics/guest/parsed_flags.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

@@ -21,9 +21,9 @@
 #include <string_view>
 #include <vector>
 
-#include "cuttlefish/host/libs/metrics/device_event_type.h"
-#include "cuttlefish/host/libs/metrics/flag_metrics.h"
-#include "cuttlefish/host/libs/metrics/parsed_flags.h"
+#include "cuttlefish/host/libs/metrics/guest/device_event_type.h"
+#include "cuttlefish/host/libs/metrics/guest/flag_metrics.h"
+#include "cuttlefish/host/libs/metrics/guest/parsed_flags.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

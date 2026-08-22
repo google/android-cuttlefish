@@ -22,8 +22,8 @@
 
 #include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
-#include "cuttlefish/host/libs/metrics/device_event_type.h"
-#include "cuttlefish/host/libs/metrics/guest_metrics.h"
+#include "cuttlefish/host/libs/metrics/guest/device_event_type.h"
+#include "cuttlefish/host/libs/metrics/guest/guest_metrics.h"
 #include "external_proto/cf_flags.pb.h"
 #include "external_proto/cf_guest.pb.h"
 #include "external_proto/cf_metrics_event_v2.pb.h"
