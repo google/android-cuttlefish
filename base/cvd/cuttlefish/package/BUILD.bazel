@@ -192,7 +192,7 @@ package_files(
     name = "metrics",
     base_dir = "cuttlefish-metrics",
     package_file_to_src = {
-        "bin/metrics_transmitter": "//cuttlefish/host/commands/metrics_transmitter:metrics_transmitter",
+        "bin/metrics_transmitter": "//cuttlefish/metrics/metrics_transmitter:metrics_transmitter",
     },
     visibility = ["//:android_cuttlefish"],
 )

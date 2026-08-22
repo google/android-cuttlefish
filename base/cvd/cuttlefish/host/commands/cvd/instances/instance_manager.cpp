@@ -40,7 +40,7 @@
 #include "cuttlefish/host/commands/cvd/instances/stop.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
-#include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
+#include "cuttlefish/metrics/device_metrics_orchestration.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
