@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/device_event_type.h"
+#include "cuttlefish/host/libs/metrics/guest/device_event_type.h"
 
 #include <string>
 
