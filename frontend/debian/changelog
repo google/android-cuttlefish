@@ -1,3 +1,9 @@
+cuttlefish-frontend (1.55.4) unstable; urgency=medium
+
+  * host_orchestrator: reject archive entries that escape the extraction dir
+
+ -- Ram Muthiah <rammuthiah@google.com>  Sat, 22 Aug 2026 22:07:29 +0000
+
 cuttlefish-frontend (1.55.3) unstable; urgency=medium
 
   * Use a special cache version for version-1.55-dev by @Databean in https://github.com/google/android-cuttlefish/pull/3028
