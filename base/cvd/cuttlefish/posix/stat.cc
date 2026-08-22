@@ -24,6 +24,7 @@
 #include <string_view>
 
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 

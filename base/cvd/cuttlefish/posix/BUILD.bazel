@@ -72,7 +72,13 @@ cf_cc_library(
     hdrs = ["stat.h"],
     deps = [
         "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:temp_failure_retry",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
+)
+
+cf_cc_library(
+    name = "temp_failure_retry",
+    hdrs = ["temp_failure_retry.h"],
 )
