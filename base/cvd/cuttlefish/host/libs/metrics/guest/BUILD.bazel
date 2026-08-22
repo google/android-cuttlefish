@@ -1,0 +1,57 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_build_test(name = "guest_build_test")
+
+cf_cc_library(
+    name = "device_event_type",
+    srcs = ["device_event_type.cc"],
+    hdrs = ["device_event_type.h"],
+)
+
+cf_cc_library(
+    name = "flag_metrics",
+    srcs = ["flag_metrics.cc"],
+    hdrs = ["flag_metrics.h"],
+    deps = [
+        "//cuttlefish/host/libs/config:data_image_policy",
+        "//cuttlefish/host/libs/config:gpu_mode",
+        "//cuttlefish/host/libs/metrics/guest:parsed_flags",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
+    name = "guest_metrics",
+    srcs = ["guest_metrics.cc"],
+    hdrs = ["guest_metrics.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/libs/metrics/guest:device_event_type",
+        "//cuttlefish/host/libs/metrics/guest:flag_metrics",
+        "//cuttlefish/host/libs/metrics/guest:parsed_flags",
+        "//cuttlefish/result",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "parsed_flags",
+    srcs = ["parsed_flags.cc"],
+    hdrs = ["parsed_flags.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/flags:cpus",
+        "//cuttlefish/host/commands/assemble_cvd/flags:daemon",
+        "//cuttlefish/host/commands/assemble_cvd/flags:data_policy",
+        "//cuttlefish/host/commands/assemble_cvd/flags:extra_kernel_cmdline",
+        "//cuttlefish/host/commands/assemble_cvd/flags:gpu_mode",
+        "//cuttlefish/host/commands/assemble_cvd/flags:guest_enforce_security",
+        "//cuttlefish/host/commands/assemble_cvd/flags:memory_mb",
+        "//cuttlefish/host/commands/assemble_cvd/flags:restart_subprocesses",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//cuttlefish/result",
+    ],
+)
