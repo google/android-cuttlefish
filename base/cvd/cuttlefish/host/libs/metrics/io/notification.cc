@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/notification.h"
+#include "cuttlefish/host/libs/metrics/io/notification.h"
 
 #include <iostream>
 #include <sstream>
@@ -26,7 +26,7 @@
 
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/directories/xdg.h"
-#include "cuttlefish/host/libs/metrics/enabled.h"
+#include "cuttlefish/host/libs/metrics/io/enabled.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
