@@ -14,29 +14,34 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/files/copy_with_attributes.h"
+#include "cuttlefish/posix/stat.h"
 
 #include <errno.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 
 #include <string>
+#include <string_view>
 
-#include "cuttlefish/files/copy.h"
-#include "cuttlefish/posix/stat.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/unistd.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<void> CopyWithAttributes(const std::string& from,
-                                const std::string& to) {
-  CF_EXPECTF(Copy(from, to), "Failed to copy '{}' to '{}'", from, to);
-  mode_t mode = CF_EXPECT(Stat(from)).st_mode;
-  CF_EXPECTF(chmod(to.c_str(), mode) >= 0, "Failed to chmod '{}': {}", to,
-             StrError(errno));
-  return {};
+Result<struct stat> Stat(const char* path) {
+  struct stat ret;
+  int success = TEMP_FAILURE_RETRY(stat(path, &ret));
+  CF_EXPECTF(success == 0, "Stat('{}') failed: ", path, StrError(errno));
+  return ret;
+}
+
+Result<struct stat> Stat(const std::string& path) {
+  return CF_EXPECT(Stat(path.c_str()));
+}
+
+Result<struct stat> Stat(std::string_view path) {
+  return CF_EXPECT(Stat(std::string(path)));
 }
 
 }  // namespace cuttlefish

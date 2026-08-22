@@ -20,11 +20,13 @@
 
 #include <string>
 
+#include "cuttlefish/posix/stat.h"
+
 namespace cuttlefish {
 
 bool FileIsSocket(const std::string& path) {
-  struct stat st{};
-  return stat(path.c_str(), &st) == 0 && S_ISSOCK(st.st_mode);
+  static auto sock = [](const struct stat& st) { return S_ISSOCK(st.st_mode); };
+  return Stat(path).transform(sock).value_or(false);
 }
 
 }  // namespace cuttlefish

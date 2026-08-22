@@ -16,14 +16,13 @@
 
 #include "cuttlefish/files/are_hard_linked.h"
 
-#include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
 #include <string>
 
 #include "cuttlefish/files/file_device_id.h"
-#include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/stat.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -31,13 +30,7 @@ namespace cuttlefish {
 namespace {
 
 Result<ino_t> FileInodeNumber(const std::string& path) {
-  struct stat out;
-  CF_EXPECTF(
-      stat(path.c_str(), &out) == 0,
-      "stat() failed trying to retrieve inode num information for \"{}\" "
-      "with error: {}",
-      path, StrError(errno));
-  return out.st_ino;
+  return CF_EXPECT(Stat(path)).st_ino;
 }
 
 }  // namespace
