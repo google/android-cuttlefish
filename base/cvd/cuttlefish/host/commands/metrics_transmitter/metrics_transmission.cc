@@ -19,11 +19,11 @@
 #include <memory>
 #include <string>
 
-#include "cuttlefish/host/libs/metrics/io/metrics_environment.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_string.h"
+#include "cuttlefish/metrics/io/metrics_environment.h"
 #include "cuttlefish/result/result.h"
 #include "external_proto/clientanalytics.pb.h"
 

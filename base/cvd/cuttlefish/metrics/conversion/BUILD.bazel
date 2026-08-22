@@ -1,0 +1,74 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_build_test(name = "conversion_build_test")
+
+cf_cc_library(
+    name = "fetch_conversion",
+    srcs = ["fetch_conversion.cc"],
+    hdrs = ["fetch_conversion.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/fetch:builds",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/metrics:fetch_metrics",
+        "//external_proto:cf_fetch_build_cc_proto",
+        "//external_proto:cf_fetch_builds_cc_proto",
+        "//external_proto:cf_fetch_complete_cc_proto",
+        "//external_proto:cf_fetch_failure_cc_proto",
+        "//external_proto:cf_fetch_start_cc_proto",
+        "//external_proto:cf_metrics_event_v2_cc_proto",
+    ],
+)
+
+cf_cc_library(
+    name = "guest_conversion",
+    srcs = ["guest_conversion.cc"],
+    hdrs = ["guest_conversion.h"],
+    deps = [
+        "//cuttlefish/host/libs/config:data_image_policy",
+        "//cuttlefish/host/libs/config:gpu_mode",
+        "//cuttlefish/metrics/guest:device_event_type",
+        "//cuttlefish/metrics/guest:guest_metrics",
+        "//external_proto:cf_flags_cc_proto",
+        "//external_proto:cf_guest_cc_proto",
+        "//external_proto:cf_metrics_event_v2_cc_proto",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "host_conversion",
+    srcs = ["host_conversion.cc"],
+    hdrs = ["host_conversion.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:host_info",
+        "//cuttlefish/metrics/host:gce_environment",
+        "//cuttlefish/metrics/host:github_environment",
+        "//cuttlefish/metrics/host:host_metrics",
+        "//cuttlefish/metrics/host:invoker",
+        "//external_proto:cf_gce_environment_cc_proto",
+        "//external_proto:cf_github_actions_environment_cc_proto",
+        "//external_proto:cf_host_cc_proto",
+        "//external_proto:cf_metrics_event_v2_cc_proto",
+    ],
+)
+
+cf_cc_library(
+    name = "metrics_data",
+    srcs = ["metrics_data.cc"],
+    hdrs = ["metrics_data.h"],
+    deps = [
+        "//cuttlefish/metrics:fetch_metrics",
+        "//cuttlefish/metrics/conversion:fetch_conversion",
+        "//cuttlefish/metrics/conversion:guest_conversion",
+        "//cuttlefish/metrics/conversion:host_conversion",
+        "//cuttlefish/metrics/guest:guest_metrics",
+        "//cuttlefish/metrics/host:host_metrics",
+        "//external_proto:cf_log_cc_proto",
+        "//external_proto:cf_metrics_event_v2_cc_proto",
+        "@protobuf//:timestamp_cc_proto",
+    ],
+)

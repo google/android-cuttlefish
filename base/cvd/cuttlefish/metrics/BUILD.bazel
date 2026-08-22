@@ -1,0 +1,80 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_build_test(name = "metrics_build_test")
+
+cf_cc_library(
+    name = "device_metrics_orchestration",
+    srcs = ["device_metrics_orchestration.cc"],
+    hdrs = ["device_metrics_orchestration.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/metrics:metrics_orchestration",
+        "//cuttlefish/metrics/conversion:metrics_data",
+        "//cuttlefish/metrics/guest:device_event_type",
+        "//cuttlefish/metrics/guest:guest_metrics",
+        "//cuttlefish/metrics/guest:parsed_flags",
+        "//cuttlefish/metrics/io:notification",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "fetch_metrics",
+    srcs = ["fetch_metrics.cc"],
+    hdrs = ["fetch_metrics.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/fetch:builds",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
+    name = "fetch_metrics_orchestration",
+    srcs = ["fetch_metrics_orchestration.cc"],
+    hdrs = ["fetch_metrics_orchestration.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/metrics:fetch_metrics",
+        "//cuttlefish/metrics:metrics_orchestration",
+        "//cuttlefish/metrics/conversion:metrics_data",
+        "//cuttlefish/metrics/io:notification",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "metrics_orchestration",
+    srcs = ["metrics_orchestration.cc"],
+    hdrs = ["metrics_orchestration.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/cvd/version",
+        "//cuttlefish/host/libs/log_names",
+        "//cuttlefish/metrics/conversion:metrics_data",
+        "//cuttlefish/metrics/host:host_metrics",
+        "//cuttlefish/metrics/io:enabled",
+        "//cuttlefish/metrics/io:metrics_transmitter",
+        "//cuttlefish/metrics/io:metrics_writer",
+        "//cuttlefish/metrics/io:session_id",
+        "//cuttlefish/result",
+        "//external_proto:cf_log_cc_proto",
+        "@fmt",
+    ],
+)
