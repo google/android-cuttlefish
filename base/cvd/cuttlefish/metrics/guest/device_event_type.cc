@@ -14,16 +14,25 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "cuttlefish/metrics/guest/device_event_type.h"
 
-#include "cuttlefish/metrics/io/metrics_environment.h"
-#include "cuttlefish/result/result.h"
-#include "external_proto/clientanalytics.pb.h"
+#include <string>
 
 namespace cuttlefish {
 
-Result<void> TransmitMetricsEvent(
-    const wireless_android_play_playlog::LogRequest& log_request,
-    ClearcutEnvironment environment);
+std::string DeviceEventTypeString(DeviceEventType event_type) {
+  switch (event_type) {
+    case DeviceEventType::DeviceInstantiation:
+      return "device_instantiation";
+    case DeviceEventType::DeviceBootStart:
+      return "device_boot_start";
+    case DeviceEventType::DeviceBootComplete:
+      return "device_boot_complete";
+    case DeviceEventType::DeviceStop:
+      return "device_stop";
+    case DeviceEventType::DeviceBootFailed:
+      return "device_boot_failed";
+  }
+}
 
 }  // namespace cuttlefish

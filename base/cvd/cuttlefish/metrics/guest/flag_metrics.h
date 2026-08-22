@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The Android Open Source Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,28 @@
 
 #pragma once
 
-#include "cuttlefish/metrics/io/metrics_environment.h"
+#include <string>
+
+#include "cuttlefish/host/libs/config/data_image_policy.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
+#include "cuttlefish/metrics/guest/parsed_flags.h"
 #include "cuttlefish/result/result.h"
-#include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 
-Result<void> TransmitMetricsEvent(
-    const wireless_android_play_playlog::LogRequest& log_request,
-    ClearcutEnvironment environment);
+struct FlagMetrics {
+  int cpus;
+  bool daemon;
+  DataImagePolicy data_policy;
+  std::string extra_kernel_cmdline;
+  GpuMode gpu_mode;
+  bool guest_enforce_security;
+  int memory_mb;
+  bool restart_subprocesses;
+  bool system_image_dir_specified;
+};
+
+Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
+                                   int guest_index);
 
 }  // namespace cuttlefish

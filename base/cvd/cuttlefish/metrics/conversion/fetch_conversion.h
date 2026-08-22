@@ -16,14 +16,17 @@
 
 #pragma once
 
-#include "cuttlefish/metrics/io/metrics_environment.h"
-#include "cuttlefish/result/result.h"
-#include "external_proto/clientanalytics.pb.h"
+#include "cuttlefish/metrics/fetch_metrics.h"
+#include "external_proto/cf_metrics_event_v2.pb.h"
 
 namespace cuttlefish {
+namespace {
 
-Result<void> TransmitMetricsEvent(
-    const wireless_android_play_playlog::LogRequest& log_request,
-    ClearcutEnvironment environment);
+using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
+
+}  // namespace
+
+void PopulateCuttlefishFetch(MetricsEventV2& event,
+                             const FetchMetrics& fetch_metrics);
 
 }  // namespace cuttlefish
