@@ -52,6 +52,6 @@ std::string ToString(const MainLoopState& state);
 FsmInput ToFsmInput(const ConfUiMessage& msg);
 
 std::unique_ptr<ConfUiMessage> CreateFromUserSelection(
-    const std::string& session_id, const UserResponse::type user_selection);
+    const std::string& session_id, UserResponse::type user_selection);
 }  // end of namespace confui
 }  // end of namespace cuttlefish

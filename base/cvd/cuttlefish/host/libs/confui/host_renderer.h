@@ -65,12 +65,12 @@ class ConfUiRenderer {
  public:
   INJECT(ConfUiRenderer(ScreenConnectorFrameRenderer& screen_connector));
   ~ConfUiRenderer();
-  Result<void> RenderDialog(const uint32_t display_num,
+  Result<void> RenderDialog(uint32_t display_num,
                             const std::string& prompt_text,
                             const std::string& locale,
                             const std::vector<teeui::UIOption>& ui_options);
-  bool IsInConfirm(const uint32_t x, const uint32_t y);
-  bool IsInCancel(const uint32_t x, const uint32_t y);
+  bool IsInConfirm(uint32_t x, uint32_t y);
+  bool IsInCancel(uint32_t x, uint32_t y);
 
  private:
   bool IsInverted(const std::vector<teeui::UIOption>& ui_options) const;

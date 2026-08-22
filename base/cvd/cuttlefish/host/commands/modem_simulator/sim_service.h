@@ -202,11 +202,11 @@ class SimService : public ModemService, public std::enable_shared_from_this<SimS
 
     bool CheckPasswordValid(std::string_view password);
 
-    bool VerifyPIN(const std::string_view pin);
-    bool VerifyPUK(const std::string_view puk);
-    bool ChangePIN(ChangeMode mode, const std::string_view pin_or_puk,
-                   const std::string_view new_pin);
-    bool ChangePUK(const std::string_view puk, const std::string_view new_puk);
+    bool VerifyPIN(std::string_view pin);
+    bool VerifyPUK(std::string_view puk);
+    bool ChangePIN(ChangeMode mode, std::string_view pin_or_puk,
+                   std::string_view new_pin);
+    bool ChangePUK(std::string_view puk, std::string_view new_puk);
   };
   PinStatus pin1_status_;
   PinStatus pin2_status_;

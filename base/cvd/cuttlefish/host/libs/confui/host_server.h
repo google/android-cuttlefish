@@ -58,7 +58,7 @@ class HostServer {
   virtual ~HostServer() {}
 
   // implement input interfaces. called by webRTC
-  void TouchEvent(const int x, const int y, const bool is_down);
+  void TouchEvent(int x, int y, bool is_down);
   void UserAbortEvent();
 
  private:

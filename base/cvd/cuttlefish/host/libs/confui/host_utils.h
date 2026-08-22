@@ -38,9 +38,9 @@ namespace thread {
  *
  * When running a thread, use the global RunThread function
  */
-std::string GetName(const std::thread::id tid = std::this_thread::get_id());
+std::string GetName(std::thread::id tid = std::this_thread::get_id());
 std::optional<std::thread::id> GetId(const std::string& name);
-void Set(const std::string& name, const std::thread::id tid);
+void Set(const std::string& name, std::thread::id tid);
 
 /*
  * This is wrapping std::thread. However, we keep the bidirectional map
@@ -56,9 +56,9 @@ ThreadTracer& GetThreadTracer();
 
 class ThreadTracer {
   friend ThreadTracer& GetThreadTracer();
-  friend std::string GetName(const std::thread::id tid);
+  friend std::string GetName(std::thread::id tid);
   friend std::optional<std::thread::id> GetId(const std::string& name);
-  friend void Set(const std::string& name, const std::thread::id tid);
+  friend void Set(const std::string& name, std::thread::id tid);
 
   template <typename F, typename... Args>
   friend std::thread RunThread(const std::string& name, F&& f, Args&&... args);
@@ -75,12 +75,12 @@ class ThreadTracer {
     ConfUiLogDebug << name << "thread started.";
     return th;
   }
-  std::string Get(const std::thread::id id = std::this_thread::get_id());
+  std::string Get(std::thread::id id = std::this_thread::get_id());
   std::optional<std::thread::id> Get(const std::string& name);
 
   // add later on even though it wasn't started with RunThread
   // if tid is already added, update the name only
-  void Set(const std::string& name, const std::thread::id tid);
+  void Set(const std::string& name, std::thread::id tid);
 
   ThreadTracer() = default;
   std::map<std::thread::id, std::string> id2name_;

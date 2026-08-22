@@ -29,7 +29,7 @@ constexpr std::chrono::seconds kSemNoTimeout = std::chrono::seconds(0);
  *
  * Any other processes Wait'ing to read on the socket will be unblocked.
  */
-Result<void> Post(const SharedFD socket);
+Result<void> Post(SharedFD socket);
 
 /*
  * Wait on the socket.
@@ -38,6 +38,6 @@ Result<void> Post(const SharedFD socket);
  * shut down, or the timeout is reached. The Result is ok if the socket
  * can be successfully read from.
  */
-Result<void> Wait(const SharedFD socket, std::chrono::seconds timeout);
+Result<void> Wait(SharedFD socket, std::chrono::seconds timeout);
 
 }  // namespace cuttlefish::cvdalloc

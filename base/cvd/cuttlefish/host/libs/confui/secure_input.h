@@ -34,7 +34,7 @@ namespace confui {
 class ConfUiSecureUserSelectionMessage : public ConfUiMessage {
  public:
   ConfUiSecureUserSelectionMessage(
-      std::unique_ptr<ConfUiUserSelectionMessage>&& msg, const bool secure);
+      std::unique_ptr<ConfUiUserSelectionMessage>&& msg, bool secure);
   ConfUiSecureUserSelectionMessage() = delete;
   virtual ~ConfUiSecureUserSelectionMessage() = default;
   std::string ToString() const override { return msg_->ToString(); }
@@ -53,7 +53,7 @@ class ConfUiSecureUserSelectionMessage : public ConfUiMessage {
 class ConfUiSecureUserTouchMessage : public ConfUiMessage {
  public:
   ConfUiSecureUserTouchMessage(std::unique_ptr<ConfUiUserTouchMessage>&& msg,
-                               const bool secure);
+                               bool secure);
   virtual ~ConfUiSecureUserTouchMessage() = default;
   std::string ToString() const override { return msg_->ToString(); }
   ConfUiCmd GetType() const override { return msg_->GetType(); }
@@ -68,8 +68,8 @@ class ConfUiSecureUserTouchMessage : public ConfUiMessage {
 };
 
 std::unique_ptr<ConfUiSecureUserSelectionMessage> ToSecureSelectionMessage(
-    std::unique_ptr<ConfUiUserSelectionMessage>&& msg, const bool secure);
+    std::unique_ptr<ConfUiUserSelectionMessage>&& msg, bool secure);
 std::unique_ptr<ConfUiSecureUserTouchMessage> ToSecureTouchMessage(
-    std::unique_ptr<ConfUiUserTouchMessage>&& msg, const bool secure);
+    std::unique_ptr<ConfUiUserTouchMessage>&& msg, bool secure);
 }  // end of namespace confui
 }  // end of namespace cuttlefish

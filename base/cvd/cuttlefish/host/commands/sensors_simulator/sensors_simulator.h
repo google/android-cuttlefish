@@ -54,7 +54,7 @@ class SensorsSimulator {
   // corresponding sensor should be included in the returned data. Assuming
   // accelerometer and gyroscope are specified, the returned string would be
   // formatted as "<acc.x>:<acc.y>:<acc.z> <gyro.x>:<gyro.y>:<gyro.z>".
-  std::string GetSensorsData(const SensorsMask mask);
+  std::string GetSensorsData(SensorsMask mask);
 
  private:
   void NotifySensorsChanged(SensorsMask changed);

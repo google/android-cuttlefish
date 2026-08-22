@@ -26,16 +26,16 @@ namespace vm_manager {
 class CrosvmDisplayController {
  public:
   CrosvmDisplayController(const CuttlefishConfig* config) : config_(config) {};
-  Result<int> Add(const int instance_num,
+  Result<int> Add(int instance_num,
                   const std::vector<CuttlefishConfig::DisplayConfig>&
                       display_configs) const;
-  Result<int> Remove(const int instance_num,
-                     const std::vector<std::string> display_ids) const;
-  Result<std::string> List(const int instance_num);
+  Result<int> Remove(int instance_num,
+                     std::vector<std::string> display_ids) const;
+  Result<std::string> List(int instance_num);
 
  private:
   const CuttlefishConfig* config_;
-  Result<int> RunCrosvmDisplayCommand(const int instance_num,
+  Result<int> RunCrosvmDisplayCommand(int instance_num,
                                       const std::vector<std::string>& args,
                                       std::string* stdout_str) const;
 };
