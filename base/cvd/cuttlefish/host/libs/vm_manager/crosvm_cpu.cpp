@@ -48,7 +48,7 @@ std::string SerializeFreqDomains(
 }  // namespace
 
 Result<std::vector<std::string>> CrosvmCpuArguments(
-    const Json::Value& vcpu_config_json) {
+    const Json::Value& vcpu_config_json, Mte mte) {
   std::vector<std::string> cpu_arguments;
 
   std::map<int, std::vector<int>> freq_domains;
@@ -119,8 +119,15 @@ Result<std::vector<std::string>> CrosvmCpuArguments(
   cpu_arguments.emplace_back(std::move(cgroup_path_arg));
   cpu_arguments.emplace_back("--virt-cpufreq-upstream");
 
-  cpu_arguments.emplace_back(
-      fmt::format("--cpus={},freq-domains={}", cpus, freq_domain_arg));
+  std::vector<std::string> cpus_params;
+  cpus_params.push_back(std::to_string(cpus));
+  cpus_params.push_back(fmt::format("freq-domains={}", freq_domain_arg));
+  if (mte == Mte::kAuto) {
+    cpus_params.push_back("mte=[auto]");
+  }
+
+  cpu_arguments.emplace_back("--cpus");
+  cpu_arguments.emplace_back(absl::StrJoin(cpus_params, ","));
 
   return cpu_arguments;
 }

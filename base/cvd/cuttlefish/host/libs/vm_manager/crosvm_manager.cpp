@@ -53,6 +53,7 @@
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/config/mte.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
@@ -553,6 +554,17 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
   return {};
 }
 
+bool PmemEnabled(const CuttlefishConfig::InstanceSpecific& instance) {
+  // pmem is disabled for pkvm guests: the pmem backing files are mmap'd
+  // MAP_SHARED, and host writeback of storage-backed pages triggers
+  // mmu-notifiers that arm64 KVM currently handles by tearing down the
+  // guest's entire shadow stage-2 instead of a range-scoped invalidation
+  // (see the nested_mmu reverse-mapping TODO in arch/arm64/kvm/mmu.c),
+  // which makes the guest extremely slow.
+  return instance.use_pmem() && !instance.enable_pkvm() &&
+         instance.mte() != Mte::kOn;
+}
+
 Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     const CuttlefishConfig& config,
     std::vector<VmmDependencyCommand*>& dependencyCommands) {
@@ -671,27 +683,20 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   if (instance.hwcomposer() != kHwComposerNone) {
-    // pmem is disabled for pkvm guests: the pmem backing files are mmap'd
-    // MAP_SHARED, and host writeback of storage-backed pages triggers
-    // mmu-notifiers that arm64 KVM currently handles by tearing down the
-    // guest's entire shadow stage-2 instead of a range-scoped invalidation
-    // (see the nested_mmu reverse-mapping TODO in arch/arm64/kvm/mmu.c),
-    // which makes the guest extremely slow.
-    const bool pmem_disabled =
-        instance.mte() || instance.enable_pkvm() || !instance.use_pmem();
     const std::string pmem_path = HwcomposerPmemPath(instance);
-    if (!pmem_disabled && FileExists(pmem_path)) {
+    if (PmemEnabled(instance) && FileExists(pmem_path)) {
       crosvm_cmd.Cmd().AddParameter("--pmem=path=", pmem_path);
     }
   }
 
   // crosvm_cmd.Cmd().AddParameter("--null-audio");
   crosvm_cmd.Cmd().AddParameter("--mem=", instance.memory_mb());
-  if (instance.mte()) {
+  if (instance.mte() == Mte::kOn) {
     crosvm_cmd.Cmd().AddParameter("--mte");
   }
 
-  CF_EXPECT(crosvm_cmd.AddCpus(instance.cpus(), instance.vcpu_config_path()));
+  CF_EXPECT(crosvm_cmd.AddCpus(instance.cpus(), instance.vcpu_config_path(),
+                               instance.mte()));
 
   auto disk_num = instance.virtual_disk_paths().size();
   CF_EXPECT(VmManager::kMaxDisks >= disk_num,
@@ -753,14 +758,12 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 #endif
 
-  const bool pmem_disabled =
-      instance.mte() || instance.enable_pkvm() || !instance.use_pmem();
   const std::string access_kregistry = AccessKregistryPath(instance);
-  if (!pmem_disabled && FileExists(access_kregistry)) {
+  if (PmemEnabled(instance) && FileExists(access_kregistry)) {
     crosvm_cmd.Cmd().AddParameter("--pmem=path=", access_kregistry);
   }
 
-  if (!pmem_disabled && FileExists(PstorePath(instance))) {
+  if (PmemEnabled(instance) && FileExists(PstorePath(instance))) {
     crosvm_cmd.Cmd().AddParameter("--pstore=path=", PstorePath(instance),
                                   ",size=", FileSize(PstorePath(instance)));
   }
