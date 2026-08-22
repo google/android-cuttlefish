@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cuttlefish/host/libs/metrics/metrics_environment.h"
+#include "cuttlefish/host/libs/metrics/io/metrics_environment.h"
 #include "cuttlefish/result/result.h"
 #include "external_proto/clientanalytics.pb.h"
 

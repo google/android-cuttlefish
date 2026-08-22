@@ -24,7 +24,7 @@
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
-#include "cuttlefish/host/libs/metrics/metrics_environment.h"
+#include "cuttlefish/host/libs/metrics/io/metrics_environment.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
