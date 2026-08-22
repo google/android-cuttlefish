@@ -16,14 +16,24 @@
 
 #pragma once
 
-#include "cuttlefish/metrics/io/metrics_environment.h"
+#include <string>
+#include <string_view>
+
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/metrics/conversion/metrics_data.h"
 #include "cuttlefish/result/result.h"
-#include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 
-Result<void> TransmitMetricsEvent(
-    const wireless_android_play_playlog::LogRequest& log_request,
-    ClearcutEnvironment environment);
+struct MetricsInput {
+  std::string metrics_directory;
+};
+
+Result<void> SetUpMetrics(const std::string& metrics_directory);
+ScopedLogger CreateLogger(std::string_view metrics_directory);
+Result<MetricsData> GatherMetrics(const MetricsInput& metrics_input);
+Result<void> OutputMetrics(std::string_view event_type_label,
+                           std::string_view metrics_directory,
+                           const MetricsData& metrics_data);
 
 }  // namespace cuttlefish

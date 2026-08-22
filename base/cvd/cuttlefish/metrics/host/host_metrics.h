@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The Android Open Source Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,28 @@
 
 #pragma once
 
-#include "cuttlefish/metrics/io/metrics_environment.h"
+#include <optional>
+#include <variant>
+
+#include "cuttlefish/common/libs/utils/host_info.h"
+#include "cuttlefish/metrics/host/gce_environment.h"
+#include "cuttlefish/metrics/host/github_environment.h"
+#include "cuttlefish/metrics/host/invoker.h"
 #include "cuttlefish/result/result.h"
-#include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 
-Result<void> TransmitMetricsEvent(
-    const wireless_android_play_playlog::LogRequest& log_request,
-    ClearcutEnvironment environment);
+struct UnknownEnvironment {};
+
+using Environment =
+    std::variant<GceEnvironment, GitHubRepository, UnknownEnvironment>;
+
+struct HostMetrics {
+  HostInfo os;
+  Invoker invoker;
+  Environment environment;
+};
+
+Result<HostMetrics> GetHostMetrics();
 
 }  // namespace cuttlefish
