@@ -79,8 +79,7 @@ class ServerLoopImpl : public ServerLoop,
   Result<void> HandleScreenshotDisplay(
       const run_cvd::ScreenshotDisplay& request);
 
-  void HandleActionWithNoData(const LauncherAction action,
-                              const SharedFD& client,
+  void HandleActionWithNoData(LauncherAction action, const SharedFD& client,
                               ProcessMonitor& process_monitor);
 
   void DeleteFifos();
