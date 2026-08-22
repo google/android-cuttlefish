@@ -407,7 +407,7 @@ jobs:
         # Flaky tests would be executed in clean container everytime, rather than using `cvd reset`
         # in a tainted container.
         sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-        targets=$(sudo podman exec --user=testrunner -it tester sh -c "stty -onlcr && bazel --output_user_root=/tmp/cw_bazel/output query --noshow_progress 'attr(flaky, 1, orchestration/...)' 2>/dev/null" | sort)
+        targets=$(sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output query --noshow_progress 'attr(flaky, 1, orchestration/...)' | sort)
         echo "FLAKY TARGETS:"                                                                                                                                                                                              
         echo "${targets}"                                                                                                                                                                                                  
         echo ""
@@ -419,7 +419,7 @@ jobs:
             echo "Attempt: ${attempt} of ${ATTEMPTS}"
             sudo podman rm -f tester
             sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-            sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test --test_timeout 600 --sandbox_writable_path=/home/testrunner --flaky_test_attempts=1 ${t} && break || true 
+            sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output test --test_timeout 600 --sandbox_writable_path=/home/testrunner --flaky_test_attempts=1 ${t} && break || true 
             attempt=$((attempt+1))                                                                                                                                                                                         
           done
           if [[ ${attempt} -gt ${ATTEMPTS}  ]]; then
@@ -431,14 +431,14 @@ jobs:
         # Run verify_access_token_test
         sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
         sleep 30s # Add delay before restarting cuttlefish-host_orchestrator service.
-        sudo podman exec -it tester sh -c 'echo "orchestrator_android_build_url=http://localhost:8090" >> /etc/default/cuttlefish-host_orchestrator && service cuttlefish-host_orchestrator restart'
-        sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/verify_access_token_test:verify_access_token_test_test
+        sudo podman exec tester sh -c 'echo "orchestrator_android_build_url=http://localhost:8090" >> /etc/default/cuttlefish-host_orchestrator && service cuttlefish-host_orchestrator restart'
+        sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/verify_access_token_test:verify_access_token_test_test
         sudo podman rm -f tester
         # Run create_with_gce_metadata_credentials_test
         sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
         sleep 30s # Add delay before restarting cuttlefish-host_orchestrator service.
-        sudo podman exec -it tester sh -c 'echo "build_api_credentials_use_gce_metadata=true" >> /etc/default/cuttlefish-host_orchestrator && service cuttlefish-host_orchestrator restart'
-        sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/create_with_gce_metadata_credentials_test:create_with_gce_metadata_credentials_test_test
+        sudo podman exec tester sh -c 'echo "build_api_credentials_use_gce_metadata=true" >> /etc/default/cuttlefish-host_orchestrator && service cuttlefish-host_orchestrator restart'
+        sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/create_with_gce_metadata_credentials_test:create_with_gce_metadata_credentials_test_test
         sudo podman rm -f tester
     - name: Upload test logs
       if: always()
