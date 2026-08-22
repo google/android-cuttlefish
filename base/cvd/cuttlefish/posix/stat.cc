@@ -18,12 +18,12 @@
 
 #include <errno.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #include <string>
 #include <string_view>
 
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/unistd.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 

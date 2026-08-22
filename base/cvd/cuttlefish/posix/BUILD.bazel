@@ -72,7 +72,13 @@ cf_cc_library(
     hdrs = ["stat.h"],
     deps = [
         "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:unistd",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
+)
+
+cf_cc_library(
+    name = "unistd",
+    hdrs = ["unistd.h"],
 )
