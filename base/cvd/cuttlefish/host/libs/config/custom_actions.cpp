@@ -267,7 +267,7 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
                   return {};
                 })) {}
 
-  const std::vector<CustomShellActionConfig> CustomShellActions(
+  std::vector<CustomShellActionConfig> CustomShellActions(
       const std::string& id_str = std::string()) const override {
     int instance_index = 0;
     if (instance_actions_.empty()) {
@@ -284,7 +284,7 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
     return instance_actions_[instance_index].custom_shell_actions_;
   }
 
-  const std::vector<CustomActionServerConfig> CustomActionServers(
+  std::vector<CustomActionServerConfig> CustomActionServers(
       const std::string& id_str = std::string()) const override {
     int instance_index = 0;
     if (instance_actions_.empty()) {
@@ -301,7 +301,7 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
     return instance_actions_[instance_index].custom_action_servers_;
   }
 
-  const std::vector<CustomDeviceStateActionConfig> CustomDeviceStateActions(
+  std::vector<CustomDeviceStateActionConfig> CustomDeviceStateActions(
       const std::string& id_str = std::string()) const override {
     int instance_index = 0;
     if (instance_actions_.empty()) {

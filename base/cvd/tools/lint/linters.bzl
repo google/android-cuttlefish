@@ -14,12 +14,14 @@ clang_tidy = lint_clang_tidy_aspect(
     binary = "@@//tools/lint:clang_tidy",
     global_config = ["@@//clang_tidy_configs:base_config"],
     rule_kinds = ["cc_binary", "cc_library", "cc_test"],
+    lint_target_headers = True,
 )
 
 clang_tidy_with_include_cleaner = lint_clang_tidy_aspect(
     binary = "@@//tools/lint:clang_tidy",
     global_config = ["@@//clang_tidy_configs:with_include_cleaner"],
     rule_kinds = ["cc_binary", "cc_library", "cc_test"],
+    lint_target_headers = True,
 )
 
 clang_tidy_test = lint_test(aspect = clang_tidy)

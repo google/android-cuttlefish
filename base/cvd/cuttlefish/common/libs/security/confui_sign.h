@@ -53,7 +53,7 @@ class ConfUiSignerImpl {
 
   // set the sign_status_ if there was an error
   // TODO(kwstephenkim@): use android::base::Result. aosp/1940753
-  bool Send(SharedFD output, const confui::SignMessageError error,
+  bool Send(SharedFD output, confui::SignMessageError error,
             const std::vector<uint8_t>& payload);
   std::optional<confui::SignRawMessage> Receive(SharedFD input);
 
@@ -75,8 +75,7 @@ class ConfUiSignSender {
 
   // note that the error is IO error
   std::optional<confui::SignRawMessage> Receive();
-  bool Send(const SignMessageError error,
-            const std::vector<uint8_t>& encoded_hmac);
+  bool Send(SignMessageError error, const std::vector<uint8_t>& encoded_hmac);
 
   bool IsOk() const { return impl_.IsOk(); }
   bool IsIoError() const { return impl_.IsIoError(); }
