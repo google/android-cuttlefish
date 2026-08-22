@@ -72,7 +72,6 @@ runs:
         # Run tests
         targets=( $(echo ${runner_tests}) )
         for t in "${targets[@]}"; do
-          t="${t::-1}"
           echo "running test: ${t}"
           sudo podman rm -f tester
           sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
