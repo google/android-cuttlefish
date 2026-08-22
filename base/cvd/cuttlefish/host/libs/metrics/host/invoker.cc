@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/invoker.h"
+#include "cuttlefish/host/libs/metrics/host/invoker.h"
 
 #include <optional>
 #include <string>

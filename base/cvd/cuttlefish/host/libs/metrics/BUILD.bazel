@@ -86,28 +86,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "gce_environment",
-    srcs = ["gce_environment.cc"],
-    hdrs = ["gce_environment.h"],
-    deps = [
-        "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/web/http_client:curl_global_init",
-        "//cuttlefish/host/libs/web/http_client:curl_http_client",
-        "//cuttlefish/host/libs/web/http_client:http_string",
-        "//cuttlefish/result",
-        "@abseil-cpp//absl/strings",
-        "@fmt",
-    ],
-)
-
-cf_cc_library(
-    name = "github_environment",
-    srcs = ["github_environment.cc"],
-    hdrs = ["github_environment.h"],
-    deps = ["//cuttlefish/common/libs/utils:environment"],
-)
-
-cf_cc_library(
     name = "guest_metrics",
     srcs = ["guest_metrics.cc"],
     hdrs = ["guest_metrics.h"],
@@ -119,26 +97,6 @@ cf_cc_library(
         "//cuttlefish/result",
         "@fmt",
     ],
-)
-
-cf_cc_library(
-    name = "host_metrics",
-    srcs = ["host_metrics.cc"],
-    hdrs = ["host_metrics.h"],
-    deps = [
-        "//cuttlefish/common/libs/utils:host_info",
-        "//cuttlefish/host/libs/metrics:gce_environment",
-        "//cuttlefish/host/libs/metrics:github_environment",
-        "//cuttlefish/host/libs/metrics:invoker",
-        "//cuttlefish/result",
-    ],
-)
-
-cf_cc_library(
-    name = "invoker",
-    srcs = ["invoker.cc"],
-    hdrs = ["invoker.h"],
-    deps = ["//cuttlefish/common/libs/utils:environment"],
 )
 
 cf_cc_library(
@@ -157,7 +115,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/version",
         "//cuttlefish/host/libs/log_names",
         "//cuttlefish/host/libs/metrics:enabled",
-        "//cuttlefish/host/libs/metrics:host_metrics",
+        "//cuttlefish/host/libs/metrics/host:host_metrics",
         "//cuttlefish/host/libs/metrics/conversion:metrics_data",
         "//cuttlefish/host/libs/metrics:metrics_transmitter",
         "//cuttlefish/host/libs/metrics:metrics_writer",

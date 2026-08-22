@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/gce_environment.h"
+#include "cuttlefish/host/libs/metrics/host/gce_environment.h"
 
 #include <memory>
 #include <optional>

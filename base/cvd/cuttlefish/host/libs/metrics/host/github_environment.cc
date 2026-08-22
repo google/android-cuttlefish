@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/github_environment.h"
+#include "cuttlefish/host/libs/metrics/host/github_environment.h"
 
 #include <optional>
 #include <string>

@@ -19,10 +19,10 @@
 #include <variant>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/host/libs/metrics/gce_environment.h"
-#include "cuttlefish/host/libs/metrics/github_environment.h"
-#include "cuttlefish/host/libs/metrics/host_metrics.h"
-#include "cuttlefish/host/libs/metrics/invoker.h"
+#include "cuttlefish/host/libs/metrics/host/gce_environment.h"
+#include "cuttlefish/host/libs/metrics/host/github_environment.h"
+#include "cuttlefish/host/libs/metrics/host/host_metrics.h"
+#include "cuttlefish/host/libs/metrics/host/invoker.h"
 #include "external_proto/cf_gce_environment.pb.h"
 #include "external_proto/cf_github_actions_environment.pb.h"
 #include "external_proto/cf_host.pb.h"
