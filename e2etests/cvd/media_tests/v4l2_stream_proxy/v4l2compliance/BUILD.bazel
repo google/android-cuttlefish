@@ -23,7 +23,6 @@ go_test(
     tags = [
         "exclusive",
         "external",
-        "manual",
         "no-sandbox",
         "requires_ab",
         "supports-graceful-termination",
