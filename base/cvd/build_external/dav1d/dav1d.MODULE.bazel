@@ -8,9 +8,9 @@ http_archive(
     build_file = "@//build_external/dav1d:BUILD.dav1d.bazel",
     strip_prefix = "dav1d-1.5.3",
     urls = [
-        "https://code.videolan.org/videolan/dav1d/-/archive/1.5.3/dav1d-1.5.3.tar.bz2",
+        "https://download.videolan.org/pub/videolan/dav1d/1.5.3/dav1d-1.5.3.tar.xz",
     ],
-    sha256 = "e099f53253f6c247580c554d53a13f1040638f2066edc3c740e4c2f15174ce22",
+    sha256 = "732010aa5ef461fa93355ed2c6c5fedb48ddc4b74e697eaabe8907eaeb943011",
     patch_cmds = [
         # Generate config.h with a dav1d-specific name to avoid
         # shadowing other libraries' config.h (e.g., libsrtp2) via
