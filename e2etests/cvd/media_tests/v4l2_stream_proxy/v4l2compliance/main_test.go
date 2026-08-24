@@ -63,36 +63,42 @@ func TestV4l2StreamProxyCompliance(t *testing.T) {
 			defer cancel()
 
 			go func() {
-				f, err := os.OpenFile(fifoPath, os.O_WRONLY, 0)
-				if err != nil {
-					t.Logf("failed to open fifo for writing: %v", err)
-					return
-				}
-				defer f.Close()
-
-				frameSize := int(640 * 480 * 1.5)
-				buf := make([]byte, frameSize)
-
-				ticker := time.NewTicker(33 * time.Millisecond) // ~30fps
-				defer ticker.Stop()
-
 				for {
-					select {
-					case <-ctx.Done():
+					f, err := os.OpenFile(fifoPath, os.O_WRONLY, 0)
+					if err != nil {
+						t.Logf("failed to open fifo for writing: %v", err)
 						return
-					case <-ticker.C:
-						_, err := f.Write(buf)
-						if err != nil {
-							t.Logf("failed to write to fifo: %v", err)
+					}
+					defer f.Close()
+
+					frameSize := int(640 * 480 * 1.5)
+					buf := make([]byte, frameSize)
+
+					ticker := time.NewTicker(33 * time.Millisecond) // ~30fps
+					defer ticker.Stop()
+					
+				workLoop:
+					for {
+						select {
+						case <-ctx.Done():
 							return
+						case <-ticker.C:
+							_, err := f.Write(buf)
+							if err != nil {
+								t.Logf("failed to write to fifo: %v", err)
+								break workLoop
+							}
 						}
 					}
 				}
 			}()
 
 			mediaArg := fmt.Sprintf("--media=v4l2_stream_proxy:input_path=%s:input_width=640:input_height=480:input_fps=30", fifoPath)
+
+			// When running with podcvd, we need to mount the fifo within the container as well, so the fifoPath is provided as an argument.
+			// When not running with podcvd, it seems to be ignored (or at least not cause errors).
 			if _, err := c.CVDCreate(e2etests.CreateArgs{
-				Args: []string{mediaArg},
+				Args: []string{mediaArg, fifoPath},
 			}); err != nil {
 				t.Fatal(err)
 			}
