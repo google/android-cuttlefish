@@ -55,7 +55,7 @@ class AndroidBuildUrl {
   AndroidBuildUrl(std::string api_base_url, std::string api_key,
                   std::string project_id);
 
-  std::string GetLatestBuildIdUrl(
+  std::string GetLatestBuildCandidateUrl(
       std::string_view branch, std::string_view target,
       SafeLevel safe_level = SafeLevel::kSafeLevelUnspecified);
   std::string GetBuildUrl(std::string_view id, std::string_view target);

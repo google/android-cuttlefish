@@ -34,7 +34,7 @@ namespace {
 
 class UrlBuilder {
  public:
-  static UrlBuilder GetLatestBuildIdBaseUrl(std::string_view api_base) {
+  static UrlBuilder GetLatestBuildCandidateUrl(std::string_view api_base) {
     return UrlBuilder(fmt::format("{}/builds", api_base));
   }
 
@@ -134,10 +134,10 @@ AndroidBuildUrl::AndroidBuildUrl(std::string api_base_url, std::string api_key,
       api_key_(std::move(api_key)),
       project_id_(std::move(project_id)) {}
 
-std::string AndroidBuildUrl::GetLatestBuildIdUrl(std::string_view branch,
-                                                 std::string_view target,
-                                                 SafeLevel safe_level) {
-  UrlBuilder builder = UrlBuilder::GetLatestBuildIdBaseUrl(api_base_url_);
+std::string AndroidBuildUrl::GetLatestBuildCandidateUrl(std::string_view branch,
+                                                        std::string_view target,
+                                                        SafeLevel safe_level) {
+  UrlBuilder builder = UrlBuilder::GetLatestBuildCandidateUrl(api_base_url_);
   builder.AddQueryParameter("buildAttemptStatus", "complete");
   builder.AddQueryParameter("buildType", "submitted");
   builder.AddQueryParameter("pageSize", "1");
