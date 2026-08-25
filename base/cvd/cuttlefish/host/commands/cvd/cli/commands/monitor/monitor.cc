@@ -60,8 +60,7 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd,
   std::unique_ptr<MonitorSource> launcher_monitor_source;
   std::unique_ptr<MonitorSource> logcat_monitor_source;
 
-  const SharedFD dir_inotify_fd = Fd::InotifyFd();
-  CF_EXPECT(dir_inotify_fd->IsOpen(), "Failed to create inotify fd");
+  const SharedFD dir_inotify_fd = CF_EXPECT(Fd::InotifyFd());
   const int flags = dir_inotify_fd->Fcntl(F_GETFL, 0);
   CF_EXPECT(dir_inotify_fd->Fcntl(F_SETFL, flags | O_NONBLOCK) != -1,
             "Failed to set inotify fd to non-blocking");

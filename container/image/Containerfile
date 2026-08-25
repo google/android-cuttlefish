@@ -26,11 +26,13 @@ RUN apt update
 RUN apt install -y --no-install-recommends \
     ca-certificates \
     curl \
+    default-jre-headless \
     libvulkan1 \
     mesa-utils \
     nginx \
     sudo
 RUN update-ca-certificates
+ENV JAVA_HOME=/usr/lib/jvm/default-java
 
 # When setting `auto` value, nginx spawns worker processes as the number of CPU
 # cores. It's discouraged in any multiple container scenarios, as it spawns too

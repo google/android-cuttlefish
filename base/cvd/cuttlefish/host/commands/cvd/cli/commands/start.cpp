@@ -421,9 +421,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   SharedFD memfd;
   SharedFD stop_eventfd;
   if (!own_flags_.daemon) {
-    memfd = Fd::MemfdCreate("cvd_internal_start_output");
-    CF_EXPECT(memfd->IsOpen(), "Failed to create memfd for subprocess output: "
-                                   << memfd->StrError());
+    memfd = CF_EXPECT(Fd::MemfdCreate("cvd_internal_start_output"));
 
     stop_eventfd = SharedFD::Event();
     CF_EXPECT(stop_eventfd->IsOpen(),

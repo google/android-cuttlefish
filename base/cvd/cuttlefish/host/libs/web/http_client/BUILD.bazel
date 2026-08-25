@@ -18,6 +18,8 @@ cf_cc_library(
     srcs = ["curl_http_client.cc"],
     hdrs = ["curl_http_client.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
@@ -69,6 +71,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs:shared_fd_stream",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/posix:remove",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",

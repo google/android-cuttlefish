@@ -273,8 +273,7 @@ Result<std::string> CompositeSuperImageBuilder::WriteToDirectory(
   unlink(header_path.c_str());  // Ignore errors
 
   SharedFD header_fd =
-      SharedFD::Open(header_path, O_RDWR | O_CREAT | O_EXCL, 0644);
-  CF_EXPECT(header_fd->IsOpen(), header_fd->StrError());
+      CF_EXPECT(Fd::Open(header_path, O_RDWR | O_CREAT | O_EXCL, 0644));
   CF_EXPECT_EQ(header_fd->LSeek(LP_PARTITION_RESERVED_BYTES, SEEK_SET),
                LP_PARTITION_RESERVED_BYTES, header_fd->StrError());
 
@@ -328,8 +327,7 @@ Result<std::string> CompositeSuperImageBuilder::WriteToDirectory(
   }
 
   SharedFD composite_fd =
-      SharedFD::Open(file_path, O_RDWR | O_CREAT | O_EXCL, 0644);
-  CF_EXPECT(composite_fd->IsOpen(), composite_fd->StrError());
+      CF_EXPECT(Fd::Open(file_path, O_RDWR | O_CREAT | O_EXCL, 0644));
 
   const std::string magic = CompositeDiskImage::MagicString();
   CF_EXPECT_EQ(WriteAll(composite_fd, magic), magic.size(),

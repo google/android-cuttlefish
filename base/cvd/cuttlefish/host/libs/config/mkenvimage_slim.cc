@@ -52,7 +52,7 @@ Result<void> MkenvimageSlim(const std::string& input_path,
   memcpy(env_buffer.data(), &crc, sizeof(uint32_t));
 
   SharedFD output_fd =  // NOLINTNEXTLINE(misc-include-cleaner)
-      SharedFD::Creat(output_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+      CF_EXPECT(Fd::Creat(output_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP));
 
   CF_EXPECTF(output_fd->IsOpen(), "Couldn't open the output file '{}': '{}'",
              output_path, output_fd->StrError());

@@ -28,9 +28,13 @@ namespace cuttlefish {
 inline constexpr char kAndroidBuildApiScope[] =
     "https://www.googleapis.com/auth/androidbuild.internal";
 
+inline constexpr char kCloudStorageReadScope[] =
+    "https://www.googleapis.com/auth/devstorage.read_only";
+
 Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
     HttpClient& http_client, const BuildApiFlags& flags,
-    const std::string& oauth_filepath);
+    const std::string& oauth_filepath,
+    const std::string& scope = kAndroidBuildApiScope);
 
 std::string GetAcloudOauthFilepath();
 

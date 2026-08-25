@@ -41,6 +41,7 @@
 #include "fruit/injector.h"
 #include "gflags/gflags.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -98,6 +99,7 @@
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/config/log_string_to_dir.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/inject.h"
@@ -450,10 +452,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     }
 
     if (!snapshot_path.empty()) {
-      SharedFD temp = SharedFD::Creat(config.AssemblyPath("restore"), 0660);
-      if (!temp->IsOpen()) {
-        return CF_ERR("Failed to create restore file: " << temp->StrError());
-      }
+      CF_EXPECT(Fd::Creat(config.AssemblyPath("restore"), 0660));
     }
 
     auto environment =
@@ -531,6 +530,23 @@ Result<void> VerifyConditionsOnSnapshotRestore(
                "--snapshot_path does not allow customizing --instance_dir");
   CF_EXPECT_EQ(assembly_dir, CF_DEFAULTS_ASSEMBLY_DIR,
                "--snapshot_path does not allow customizing --assembly_dir");
+
+  // We can't change the instance num as part of restore, so error early if it
+  // doesn't match.
+  const auto meta_json = CF_EXPECT(LoadMetaJson(snapshot_path));
+  CF_EXPECT(meta_json.isMember(kGuestSnapshotField),
+            "Snapshot meta json missing guest_snapshot field.");
+  const auto& guest_snapshot = meta_json[kGuestSnapshotField];
+  CF_EXPECT_EQ(guest_snapshot.size(), 1,
+               "Snapshot must contain exactly one instance");
+  const std::vector<int> target_nums =
+      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+  CF_EXPECT_EQ(target_nums.size(), 1,
+               "Restoring multiple instances is not supported");
+  const std::string snapshot_num = guest_snapshot.getMemberNames()[0];
+  const std::string target_num = std::to_string(target_nums[0]);
+  CF_EXPECT_EQ(target_num, snapshot_num,
+               "Requested instance num does not match snapshot");
   return {};
 }
 

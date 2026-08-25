@@ -69,7 +69,7 @@ ClientId ChannelMonitor::SetRemoteClient(SharedFD client, bool is_accepted) {
 }
 
 void ChannelMonitor::AcceptIncomingConnection() {
-  SharedFD client_fd = Fd::Accept(*server_);
+  SharedFD client_fd = Fd::Accept(*server_).value_or(Fd());
   if (!client_fd->IsOpen()) {
     LOG(ERROR) << "Error accepting connection on socket: "
                << client_fd->StrError();

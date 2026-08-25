@@ -49,6 +49,7 @@
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
@@ -64,6 +65,11 @@
 
 namespace cuttlefish {
 namespace vm_manager {
+namespace {
+
+constexpr int kBlockPciDeviceNum = 0x13;
+
+}  // namespace
 
 bool CrosvmManager::IsSupported() {
 #ifdef __ANDROID__
@@ -189,26 +195,58 @@ CrosvmManager::ConfigureGraphics(
 Result<std::unordered_map<std::string, std::string>>
 CrosvmManager::ConfigureBootDevices(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  const int num_disks = instance.virtual_disk_paths().size();
-  const bool has_gpu = instance.hwcomposer() != kHwComposerNone;
-  // TODO There is no way to control this assignment with crosvm (yet)
   if (HostArch() == Arch::X86_64) {
-    int num_gpu_pcis = has_gpu ? 1 : 0;
-    if (instance.gpu_mode() != GpuMode::None &&
-        !instance.enable_gpu_vhost_user()) {
-      // crosvm has an additional PCI device for an ISA bridge when running
-      // with a gpu and without vhost user gpu.
-      num_gpu_pcis += 1;
-    }
-    // virtio_gpu and virtio_wl precedes the first console or disk
-    return ConfigureMultipleBootDevices("pci0000:00/0000:00:", 1 + num_gpu_pcis,
-                                        num_disks);
+    return ConfigureMultipleBootDevices(
+        "pci0000:00/0000:00:", kBlockPciDeviceNum,
+        instance.virtual_disk_paths().size());
   } else {
     // On ARM64 crosvm, block devices are on their own bridge, so we don't
     // need to calculate it, and the path is always the same
     return {{{"androidboot.boot_devices", "10000.pci"}}};
   }
 }
+
+#ifdef __linux__
+void ConfigureTapDevices(CrosvmBuilder& crosvm_cmd,
+                         const CuttlefishConfig& config,
+                         const CuttlefishConfig::InstanceSpecific& instance) {
+  if (instance.enable_tap_devices() && !InSandbox()) {
+    // The PCI ordering of tap devices is important. Make sure any change here
+    // is reflected in ethprime u-boot variable.
+    // TODO(b/218364216, b/322862402): Crosvm occupies 32 PCI devices first and
+    // only then uses PCI functions which may break order. The final solution is
+    // going to be a PCI allocation strategy that will guarantee the ordering.
+    // For now, hardcode PCI network devices to unoccupied functions.
+    const pci::Address mobile_pci =
+        pci::Address(0, VmManager::kNetPciDeviceNum, 1);
+    const pci::Address ethernet_pci =
+        pci::Address(0, VmManager::kNetPciDeviceNum, 2);
+    crosvm_cmd.AddTap(instance.mobile_tap_name(), instance.mobile_mac(),
+                      mobile_pci);
+    crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac(),
+                      ethernet_pci);
+
+    if (!config.virtio_mac80211_hwsim() && instance.has_wifi_card()) {
+      crosvm_cmd.AddTap(instance.wifi_tap_name());
+    }
+  }
+}
+
+Result<void> ConfigureVhostUserNet(
+    CrosvmBuilder& crosvm_cmd, const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance,
+    std::vector<MonitorCommand>& commands) {
+  auto net = CF_EXPECT(VhostUserNetDevice(
+      config, "mobile", instance.ril_ipaddr(), instance.ril_prefixlen(),
+      instance.ril_gateway(), instance.ril_dns()));
+  commands.emplace_back(std::move(net.device_cmd));
+  commands.emplace_back(std::move(net.device_logs_cmd));
+
+  crosvm_cmd.AddVhostUser("net", net.socket_path, /*max_queue_size=*/256);
+
+  return {};
+}
+#endif
 
 std::string ToSingleLineString(const Json::Value& value) {
   Json::StreamWriterBuilder builder;
@@ -672,6 +710,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
                                         << VmManager::kMaxDisks << "supported");
   size_t disk_i = 0;
   for (const auto& disk : instance.virtual_disk_paths()) {
+    auto pci_addr = pci::Address(0, kBlockPciDeviceNum + disk_i, 0);
     if (instance.vhost_user_block() && disk_i == 2) {
       // TODO: b/346855591 - Run on all devices
       auto block = CF_EXPECT(VhostUserBlockDevice(config, disk_i, disk));
@@ -686,11 +725,10 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
         return CF_ERR("Unhandled check if vhost user block ready.");
 #endif
       });
-      auto pci_addr = fmt::format("00:{:0>2x}.0", 0x13 + disk_i);
       crosvm_cmd.Cmd().AddParameter("--vhost-user=block,socket=", socket_path,
-                                    ",pci-address=", pci_addr);
+                                    CrosvmBuilder::FormatPciArgument(pci_addr));
     } else {
-      crosvm_cmd.AddReadWriteDisk(disk);
+      crosvm_cmd.AddReadWriteDisk(disk, pci_addr);
     }
     disk_i++;
   }
@@ -716,25 +754,16 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
 #ifdef __linux__
-  if (instance.enable_tap_devices() && !InSandbox()) {
-    // The PCI ordering of tap devices is important. Make sure any change here
-    // is reflected in ethprime u-boot variable.
-    // TODO(b/218364216, b/322862402): Crosvm occupies 32 PCI devices first and
-    // only then uses PCI functions which may break order. The final solution is
-    // going to be a PCI allocation strategy that will guarantee the ordering.
-    // For now, hardcode PCI network devices to unoccupied functions.
-    const pci::Address mobile_pci =
-        pci::Address(0, VmManager::kNetPciDeviceNum, 1);
-    const pci::Address ethernet_pci =
-        pci::Address(0, VmManager::kNetPciDeviceNum, 2);
-    crosvm_cmd.AddTap(instance.mobile_tap_name(), instance.mobile_mac(),
-                      mobile_pci);
-    crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac(),
-                      ethernet_pci);
-
-    if (!config.virtio_mac80211_hwsim() && instance.has_wifi_card()) {
-      crosvm_cmd.AddTap(instance.wifi_tap_name());
-    }
+  switch (instance.external_network_mode()) {
+    case ExternalNetworkMode::kTap:
+      ConfigureTapDevices(crosvm_cmd, config, instance);
+      break;
+    case ExternalNetworkMode::kSlirp:
+      CF_EXPECT(ConfigureVhostUserNet(crosvm_cmd, config, instance, commands));
+      break;
+    default:
+      return CF_ERR("Unexpected network mode "
+                    << instance.external_network_mode());
   }
 #endif
 

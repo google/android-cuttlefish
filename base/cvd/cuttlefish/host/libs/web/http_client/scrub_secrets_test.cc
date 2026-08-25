@@ -73,5 +73,78 @@ TEST(HttpClientUtilTest, ScrubSecretsClientSecretNoMatch) {
   EXPECT_EQ(ScrubSecrets("client_id=1234567890"), "client_id=1234567890");
 }
 
+TEST(HttpClientUtilTest, ScrubSecretsRequestLineQueryMatch) {
+  EXPECT_EQ(ScrubSecrets(
+                "GET /bucket/image.zip?X-Goog-Signature=1234567890 HTTP/1.1"),
+            "GET /bucket/image.zip?... HTTP/1.1");
+  EXPECT_EQ(ScrubSecrets("GET /bucket/image.zip?X-Goog-Signature=1234567890 "
+                         "HTTP/1.1\r\nHost: storage.googleapis.com\r\n"),
+            "GET /bucket/image.zip?... HTTP/1.1\r\nHost: "
+            "storage.googleapis.com\r\n");
+  EXPECT_EQ(ScrubSecrets("HEAD https://example.com/image.zip?token=1234567890 "
+                         "HTTP/1.1"),
+            "HEAD https://example.com/image.zip?... HTTP/1.1");
+}
+
+TEST(HttpClientUtilTest, ScrubSecretsSignedRequestHeadersMatch) {
+  EXPECT_EQ(
+      ScrubSecrets("GET /bucket/image.zip?X-Goog-Signature=1234567890 "
+                   "HTTP/1.1\r\nHost: storage.googleapis.com\r\n"
+                   "Authorization: Bearer 1234567890\r\nAccept: */*\r\n"),
+      "GET /bucket/image.zip?... HTTP/1.1\r\nHost: storage.googleapis.com\r\n"
+      "Authorization: Bearer 123456...\r\nAccept: */*\r\n");
+}
+
+TEST(HttpClientUtilTest, ScrubSecretsRedirectLocationMatch) {
+  EXPECT_EQ(ScrubSecrets("Location: https://storage.googleapis.com/bucket/"
+                         "image.zip?X-Goog-Signature=1234567890"),
+            "Location: https://storage.googleapis.com/bucket/image.zip?...");
+  EXPECT_EQ(ScrubSecrets("HTTP/1.1 302 Found\r\nLocation: "
+                         "https://example.com/a.zip?token=1234567890\r\n"),
+            "HTTP/1.1 302 Found\r\nLocation: "
+            "https://example.com/a.zip?...\r\n");
+}
+
+TEST(HttpClientUtilTest, ScrubSecretsQueryWithoutRequestLineSuffix) {
+  EXPECT_EQ(ScrubSecrets("GET /bucket/image.zip?X-Goog-Signature=1234567890"),
+            "GET /bucket/image.zip?...");
+  EXPECT_EQ(
+      ScrubSecrets("GET /bucket/image.zip?X-Goog-Signature=1234567890\r\n"),
+      "GET /bucket/image.zip?...\r\n");
+}
+
+TEST(HttpClientUtilTest, ScrubSecretsJsonSignedUrlMatch) {
+  EXPECT_EQ(
+      ScrubSecrets(
+          "{\n   \"signedUrl\" : "
+          "\"https://storage.googleapis.com/a.zip?X-Goog-Sig=123\"\n}"),
+      "{\n   \"signedUrl\" : \"https://storage.googleapis.com/a.zip?...\"\n}");
+  EXPECT_EQ(
+      ScrubSecrets("{\n   \"a\" : \"x?tok=123\",\n   \"b\" : \"plain\"\n}"),
+      "{\n   \"a\" : \"x?...\",\n   \"b\" : \"plain\"\n}");
+}
+
+TEST(HttpClientUtilTest, ScrubSecretsRequestLineQueryNoMatch) {
+  EXPECT_EQ(ScrubSecrets("GET /bucket/image.zip HTTP/1.1"),
+            "GET /bucket/image.zip HTTP/1.1");
+  EXPECT_EQ(ScrubSecrets("Host: example.com"), "Host: example.com");
+}
+
+TEST(HttpClientUtilTest, ScrubUrlRemovesQueryAndFragment) {
+  EXPECT_EQ(
+      ScrubUrl("https://example.com/image.zip?X-Goog-Signature=1234567890"),
+      "https://example.com/image.zip");
+  EXPECT_EQ(ScrubUrl("https://example.com/image.zip#sha256=1234567890"),
+            "https://example.com/image.zip");
+  EXPECT_EQ(ScrubUrl("https://example.com/image.zip?a=1#b"),
+            "https://example.com/image.zip");
+}
+
+TEST(HttpClientUtilTest, ScrubUrlKeepsPlainUrl) {
+  EXPECT_EQ(ScrubUrl("https://example.com/image.zip"),
+            "https://example.com/image.zip");
+  EXPECT_EQ(ScrubUrl(""), "");
+}
+
 }  // namespace http_client
 }  // namespace cuttlefish

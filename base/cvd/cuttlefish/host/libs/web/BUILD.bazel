@@ -37,6 +37,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_file",
         "//cuttlefish/host/libs/web/http_client:http_json",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/host/libs/zip:remote_zip",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",

@@ -141,7 +141,7 @@ int ModemSimulatorMain(int argc, char** argv) {
     if (num_fds <= 0) {  // Ignore select error
       LOG(ERROR) << "Select call returned error : " << strerror(errno);
     } else if (read_set.IsSet(monitor_socket)) {
-      SharedFD conn = Fd::Accept(*monitor_socket);
+      SharedFD conn = Fd::Accept(*monitor_socket).value_or(Fd());
       std::string buf(4, ' ');
       auto read = ReadExact(conn, &buf);
       if (read <= 0) {

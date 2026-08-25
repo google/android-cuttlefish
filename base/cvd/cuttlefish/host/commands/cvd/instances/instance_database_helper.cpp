@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/posix/strerror.h"
@@ -47,8 +47,7 @@ std::optional<std::string> CreateTempDirectory(
 // Linux "touch" a(n empty) file
 bool Touch(const std::string& full_path) {
   // this file is required only to make FileExists() true.
-  SharedFD new_file = SharedFD::Creat(full_path, S_IRUSR | S_IWUSR);
-  return new_file->IsOpen();
+  return Fd::Creat(full_path, S_IRUSR | S_IWUSR).has_value();
 }
 
 }  // namespace
