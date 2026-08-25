@@ -19,16 +19,16 @@
 #include <string_view>
 #include <vector>
 
-#include "json/json.h"
+#include "json/value.h"
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 Result<Json::Value> ParseJson(std::string_view input);
 
-Result<Json::Value> LoadFromFile(SharedFD json_fd);
+Result<Json::Value> LoadFromFile(Reader& json_reader);
 Result<Json::Value> LoadFromFile(const std::string& path_to_file);
 
 template <typename T>

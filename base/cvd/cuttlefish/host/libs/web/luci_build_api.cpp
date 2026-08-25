@@ -28,6 +28,7 @@
 #include "fmt/format.h"
 #include "fmt/ranges.h"
 #include "json/value.h"
+#include "json/writer.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"

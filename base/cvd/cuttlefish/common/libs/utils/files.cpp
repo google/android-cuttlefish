@@ -45,6 +45,7 @@
 #include "android-base/file.h"
 #include "fmt/format.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -275,20 +276,15 @@ std::string ReadFile(const std::string& file) {
   return (contents);
 }
 
-Result<std::string> ReadFileContents(const std::string& filepath) {
-  CF_EXPECTF(FileExists(filepath), "The file at \"{}\" does not exist.",
-             filepath);
-  auto file = SharedFD::Open(filepath, O_RDONLY);
-  CF_EXPECTF(file->IsOpen(), "Failed to open file \"{}\".  Error: {}\n",
-             filepath, file->StrError());
-  return CF_EXPECT(ReadToString(*file));
+Result<std::string> ReadFileContents(const std::string& path) {
+  CF_EXPECTF(FileExists(path), "The file at '{}' does not exist.", path);
+  Fd file = CF_EXPECT(Fd::Open(path, O_RDONLY));
+  return CF_EXPECT(ReadToString(file));
 }
 Result<void> WriteNewFile(const std::string& filepath, std::string_view content,
                           mode_t mode) {
-  CF_EXPECTF(!FileExists(filepath), "File already exists: {}", filepath);
-  SharedFD file_fd = SharedFD::Open(filepath, O_CREAT | O_WRONLY, mode);
-  CF_EXPECTF(file_fd->IsOpen(), "Failed to open file \"{}\" for writing: {}",
-             filepath, file_fd->StrError());
+  SharedFD file_fd =
+      CF_EXPECT(Fd::Open(filepath, O_CREAT | O_EXCL | O_WRONLY, mode));
   const auto written_size = WriteAll(file_fd, content);
   CF_EXPECTF(written_size == content.size(),
              "Failed to write all content to file. Error:\n",
@@ -311,7 +307,7 @@ std::string CurrentDirectory() {
 }
 
 FileSizes SparseFileSizes(const std::string& path) {
-  auto fd = SharedFD::Open(path, O_RDONLY);
+  SharedFD fd = Fd::Open(path, O_RDONLY).value_or(Fd());
   if (!fd->IsOpen()) {
     LOG(ERROR) << "Could not open \"" << path << "\": " << fd->StrError();
     return {};
@@ -423,18 +419,17 @@ Result<SharedFD> CreateOrReuseAndDrainFifo(const std::string& path,
     existed = true;
   }
 
-  auto ret = SharedFD::Open(path, O_RDWR);
-  CF_EXPECTF(ret->IsOpen(), "Failed to open '{}': '{}'", path, ret->StrError());
+  Fd ret = CF_EXPECT(Fd::Open(path, O_RDWR));
 
   if (existed) {
-    int flags = ret->Fcntl(F_GETFL, 0);
+    int flags = ret.Fcntl(F_GETFL, 0);
     if (flags >= 0) {
-      ret->Fcntl(F_SETFL, flags | O_NONBLOCK);
+      ret.Fcntl(F_SETFL, flags | O_NONBLOCK);
       char buf[4096];
-      while (ret->Read(buf, sizeof(buf)).value_or(0) > 0) {
+      while (ret.Read(buf, sizeof(buf)).value_or(0) > 0) {
         // Reading while there is data to read
       }
-      ret->Fcntl(F_SETFL, flags);
+      ret.Fcntl(F_SETFL, flags);
     }
   }
 
