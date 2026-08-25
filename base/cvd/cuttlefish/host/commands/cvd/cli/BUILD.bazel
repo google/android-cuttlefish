@@ -185,7 +185,7 @@ cf_cc_library(
     deps = [
         ":command_request",
         "//cuttlefish/ansi_codes:terminal_colors",
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:gflags_xml_parser",

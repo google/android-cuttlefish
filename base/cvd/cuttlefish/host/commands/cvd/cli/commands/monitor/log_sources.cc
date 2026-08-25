@@ -27,6 +27,7 @@
 
 #include "absl/strings/str_cat.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/files/file_exists.h"
@@ -91,7 +92,7 @@ std::unique_ptr<MonitorSource> LauncherLogMonitorSource(
   if (!FileExists(path)) {
     return {};
   }
-  SharedFD fd = SharedFD::Open(path, O_RDONLY);
+  SharedFD fd = Fd::Open(path, O_RDONLY).value_or(Fd());
   if (!fd->IsOpen() || fd->LSeek(0, SEEK_END) <= 0) {
     return {};
   }
@@ -108,7 +109,7 @@ std::unique_ptr<MonitorSource> KernelLogMonitorSource(
   if (!FileExists(path)) {
     return {};
   }
-  SharedFD fd = SharedFD::Open(path, O_RDONLY);
+  SharedFD fd = Fd::Open(path, O_RDONLY).value_or(Fd());
   if (!fd->IsOpen() || fd->LSeek(0, SEEK_END) <= 0) {
     return {};
   }
@@ -125,7 +126,7 @@ std::unique_ptr<MonitorSource> LogcatMonitorSource(
   if (!FileExists(path)) {
     return {};
   }
-  SharedFD fd = SharedFD::Open(path, O_RDONLY);
+  SharedFD fd = Fd::Open(path, O_RDONLY).value_or(Fd());
   if (!fd->IsOpen() || fd->LSeek(0, SEEK_END) <= 0) {
     return {};
   }

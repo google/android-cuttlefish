@@ -29,6 +29,7 @@
 #include "absl/log/log.h"
 #include "android-base/file.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -102,7 +103,7 @@ bool LockFile::operator<(const LockFile& other) const {
 Result<SharedFD> LockFileManager::OpenLockFile(const std::string& file_path) {
   auto parent_dir = android::base::Dirname(file_path);
   CF_EXPECT(EnsureDirectoryExists(parent_dir));
-  auto fd = SharedFD::Open(file_path.data(), O_CREAT | O_RDWR, 0666);
+  Fd fd = CF_EXPECT(Fd::Open(file_path.data(), O_CREAT | O_RDWR, 0666));
   int result = chmod(file_path.c_str(), 0666);
   if (result) {
     VLOG(0) << "failed: chmod 666 " << file_path;
@@ -111,7 +112,6 @@ Result<SharedFD> LockFileManager::OpenLockFile(const std::string& file_path) {
   if (result) {
     VLOG(0) << "failed: chmod 755 " << parent_dir;
   }
-  CF_EXPECTF(fd->IsOpen(), "open(\"{}\"): {}", file_path, fd->StrError());
   return fd;
 }
 
