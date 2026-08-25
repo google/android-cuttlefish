@@ -21,18 +21,18 @@
 
 #include "absl/log/check.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/io/string.h"
 
 namespace cuttlefish {
 
 Result<SharedFD> DataViewer::LockBackingFile(int op) const {
-  auto fd = SharedFD::Open(backing_file_, O_CREAT | O_RDWR, 0640);
-  CF_EXPECTF(fd->IsOpen(), "Failed to open instance database backing file: {}",
-             fd->StrError());
-  CF_EXPECTF(fd->Flock(op),
+  Fd fd = CF_EXPECT(Fd::Open(backing_file_, O_CREAT | O_RDWR, 0640));
+  CF_EXPECTF(fd.Flock(op),
              "Failed to acquire lock for instance database backing file: {}",
-             fd->StrError());
+             fd.StrError());
   return fd;
 }
 

@@ -624,11 +624,11 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   command.RedirectStdIO(Command::StdIoChannel::kStdOut,
                         Command::StdIoChannel::kStdErr);
-  SharedFD dev_null = SharedFD::Open("/dev/null", O_RDONLY);
-  if (dev_null->IsOpen()) {
-    command.RedirectStdIO(Command::StdIoChannel::kStdIn, dev_null);
+  Result<Fd> dev_null = Fd::Open("/dev/null", O_RDONLY);
+  if (dev_null.has_value()) {
+    command.RedirectStdIO(Command::StdIoChannel::kStdIn, std::move(*dev_null));
   } else {
-    LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
+    LOG(ERROR) << "Failed to open /dev/null: " << dev_null.error();
   }
 
   const Result<void> symlink_config_res =

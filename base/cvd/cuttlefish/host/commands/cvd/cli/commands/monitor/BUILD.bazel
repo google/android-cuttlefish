@@ -133,6 +133,7 @@ cf_cc_library(
     hdrs = ["log_sources.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:file_monitor_source",
