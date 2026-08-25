@@ -19,15 +19,14 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #include <memory>
 #include <string>
 #include <string_view>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/io/io.h"
-#include "cuttlefish/io/shared_fd.h"
+#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
@@ -36,12 +35,8 @@ namespace cuttlefish {
 
 Result<std::unique_ptr<ReaderWriterSeeker>> NativeFilesystem::CreateFile(
     std::string_view path) {
-  SharedFD fd = SharedFD::Open(std::string(path),
-                               O_CLOEXEC | O_CREAT | O_EXCL | O_RDWR, 0644);
-  CF_EXPECTF(fd->IsOpen(),
-             "Failed to open '{}' with O_CREAT | O_EXCL | O_RDWR: '{}'", path,
-             fd->StrError());
-  return std::make_unique<SharedFdIo>(fd);
+  return std::make_unique<Fd>(
+      CF_EXPECT(Fd::Open(path, O_CLOEXEC | O_CREAT | O_EXCL | O_RDWR, 0644)));
 }
 
 Result<uint32_t> NativeFilesystem::FileAttributes(std::string_view path) const {
@@ -51,24 +46,18 @@ Result<uint32_t> NativeFilesystem::FileAttributes(std::string_view path) const {
 }
 
 Result<void> NativeFilesystem::DeleteFile(std::string_view path) {
-  CF_EXPECT_GE(unlink(std::string(path).c_str()), 0, StrError(errno));
+  CF_EXPECT(RemoveFile(path));
   return {};
 }
 
 Result<std::unique_ptr<ReaderSeeker>> NativeFilesystem::OpenReadOnly(
     std::string_view path) {
-  SharedFD fd = SharedFD::Open(std::string(path), O_CLOEXEC | O_RDONLY);
-  CF_EXPECTF(fd->IsOpen(), "Failed to open '{}' with O_RDONLY: '{}'", path,
-             fd->StrError());
-  return std::make_unique<SharedFdIo>(fd);
+  return std::make_unique<Fd>(CF_EXPECT(Fd::Open(path, O_CLOEXEC | O_RDONLY)));
 }
 
 Result<std::unique_ptr<ReaderWriterSeeker>> NativeFilesystem::OpenReadWrite(
     std::string_view path) {
-  SharedFD fd = SharedFD::Open(std::string(path), O_CLOEXEC | O_RDWR);
-  CF_EXPECTF(fd->IsOpen(), "Failed to open '{}' with O_RDWR: '{}'", path,
-             fd->StrError());
-  return std::make_unique<SharedFdIo>(fd);
+  return std::make_unique<Fd>(CF_EXPECT(Fd::Open(path, O_CLOEXEC | O_RDWR)));
 }
 
 }  // namespace cuttlefish

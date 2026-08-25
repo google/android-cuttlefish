@@ -100,9 +100,9 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
   impl->luci_credential_source_ = CF_EXPECT(GetCredentialSourceFromFlags(
       *impl->retrying_http_client_, flags,
       StringFromEnv("HOME", ".") + "/.config/chrome_infra/auth/tokens.json"));
-  impl->gsutil_credential_source_ = CF_EXPECT(
-      GetCredentialSourceFromFlags(*impl->retrying_http_client_, flags,
-                                   StringFromEnv("HOME", ".") + "/.boto"));
+  impl->gsutil_credential_source_ = CF_EXPECT(GetCredentialSourceFromFlags(
+      *impl->retrying_http_client_, flags,
+      StringFromEnv("HOME", ".") + "/.boto", kCloudStorageReadScope));
 
   impl->luci_build_api_ = std::make_unique<LuciBuildApi>(
       *impl->retrying_http_client_, impl->luci_credential_source_.get(),

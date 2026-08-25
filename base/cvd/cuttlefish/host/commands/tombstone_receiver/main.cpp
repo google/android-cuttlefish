@@ -90,7 +90,7 @@ int TombstoneReceiverMain(int argc, char** argv) {
 
   // Server loop
   while (true) {
-    SharedFD conn = Fd::Accept(*server_fd);
+    SharedFD conn = Fd::Accept(*server_fd).value_or(Fd());
     std::ofstream file(next_tombstone_path(tombstone_dir),
                        std::ofstream::out | std::ofstream::binary);
     auto acc = 0;

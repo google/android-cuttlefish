@@ -115,11 +115,34 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
   std::string stdout_str, stderr_str;
   RunWithManagedStdio(std::move(help_cmd), nullptr, &stdout_str, &stderr_str);
 
-  std::vector<GflagDescription> internal_flags =
-      CF_EXPECT(ParseGflagsXmlHelp(stdout_str));
-  bool has_print = std::any_of(
-      internal_flags.begin(), internal_flags.end(),
-      [](const GflagDescription& desc) { return desc.name == "print"; });
+  bool has_print = false;
+  Result<std::vector<GflagDescription>> internal_flags =
+      ParseGflagsXmlHelp(stdout_str);
+  if (internal_flags.has_value()) {
+    has_print = std::any_of(
+        internal_flags->begin(), internal_flags->end(),
+        [](const GflagDescription& desc) { return desc.name == "print"; });
+  } else {
+    LOG(INFO) << bin << " does not support --helpxml. Falling back to --help.";
+    ConstructCommandParam fallback_help_cmd_param{
+        .bin_path = bin_path,
+        .home = home,
+        .args = {"--help"},
+        .envs = envs,
+        .working_dir = working_dir,
+        .command_name = bin,
+    };
+    if (Result<Command> fallback_cmd =
+            ConstructCommand(fallback_help_cmd_param);
+        fallback_cmd.has_value()) {
+      stdout_str.clear();
+      stderr_str.clear();
+      RunWithManagedStdio(std::move(*fallback_cmd), nullptr, &stdout_str,
+                          &stderr_str);
+      has_print = stdout_str.find("--print") != std::string::npos ||
+                  stderr_str.find("--print") != std::string::npos;
+    }
+  }
 
   std::vector<std::string> args{"--wait_for_launcher",
                                 std::to_string(timeout.count())};

@@ -26,6 +26,7 @@
 
 #include "absl/strings/match.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -39,7 +40,7 @@
 namespace cuttlefish {
 
 Result<std::unique_ptr<DiskImage>> ImageFromFile(const std::string& file_path) {
-  SharedFD fd = SharedFD::Open(file_path, O_RDONLY);
+  SharedFD fd = CF_EXPECT(Fd::Open(file_path, O_RDONLY));
   CF_EXPECTF(fd->IsOpen(), "Could not open '{}': {}", file_path,
              fd->StrError());
 

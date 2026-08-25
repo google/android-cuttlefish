@@ -16,11 +16,14 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
+Result<void> RemoveFile(const char* file);
 Result<void> RemoveFile(const std::string& file);
+Result<void> RemoveFile(std::string_view file);
 
 }  // namespace cuttlefish

@@ -16,6 +16,7 @@ cf_cc_library(
         "pci.cpp",
         "qemu_manager.cpp",
         "vhost_user_block.cpp",
+        "vhost_user_net.cpp",
         "vm_manager.cpp",
     ],
     hdrs = [
@@ -58,6 +59,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/feature:inject",
+        "//cuttlefish/posix:remove",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/process:command",
         "//cuttlefish/process:execute",
@@ -68,6 +70,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
         "@fmt",
         "@fruit",
         "@jsoncpp",

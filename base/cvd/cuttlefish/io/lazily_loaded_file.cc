@@ -30,7 +30,6 @@
 
 #include "absl/log/log.h"
 
-#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -134,16 +133,15 @@ Result<void> LazilyLoadedFile::Impl::ReadMetadata() {
 }
 
 Result<void> LazilyLoadedFile::Impl::WriteMetadata() {
-  std::string new_metadata_name = MetadataFile() + ".XXXXXX";
-  SharedFD new_metadata = Fd::Mkstemp(&new_metadata_name);
-  CF_EXPECT(new_metadata->IsOpen(), new_metadata->StrError());
-  CF_EXPECT(new_metadata->Chmod(0644));
+  std::pair<SharedFD, std::string> fd_name =
+      CF_EXPECT(SharedFD::Mkostemp(MetadataFile() + "."));
+  CF_EXPECT(fd_name.first->Chmod(0644));
 
   std::string data = Serialize(already_downloaded_);
-  CF_EXPECT_EQ(WriteAll(new_metadata, data), data.size(),
-               new_metadata->StrError());
+  CF_EXPECT_EQ(WriteAll(fd_name.first, data), data.size(),
+               fd_name.first->StrError());
 
-  CF_EXPECT(RenameFile(new_metadata_name, MetadataFile()));
+  CF_EXPECT(RenameFile(fd_name.second, MetadataFile()));
 
   return {};
 }

@@ -35,6 +35,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_replace.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
@@ -232,30 +233,21 @@ Result<VendorBootImage> UnpackVendorBootImageIfNotUnpacked(
   }
 
   // Concatenates all vendor ramdisk into one single ramdisk.
-  SharedFD concat_file = SharedFD::Creat(concat_file_path, 0666);
-  CF_EXPECTF(concat_file->IsOpen(),
-             "Unable to create concatenated vendor ramdisk file: '{}'",
-             concat_file->StrError());
-  SharedFdIo concat_file_io(concat_file);
+  Fd concat_file = CF_EXPECT(Fd::Creat(concat_file_path, 0666));
+
   ReadWindowView ramdisk_in = vendor_boot.VendorRamdisk();
-  CF_EXPECT(Copy(ramdisk_in, concat_file_io));
+  CF_EXPECT(Copy(ramdisk_in, concat_file));
 
-  std::string dtb_path = unpack_dir + "/dtb";
-  SharedFD dtb_fd = SharedFD::Creat(dtb_path, 0644);
-  CF_EXPECTF(dtb_fd->IsOpen(), "Failed to open '{}': '{}'", dtb_path,
-             dtb_fd->StrError());
-  SharedFdIo dtb_io(dtb_fd);
+  Fd dtb_fd = CF_EXPECT(Fd::Creat(unpack_dir + "/dtb", 0644));
+
   ReadWindowView dtb_in = vendor_boot.Dtb();
-  CF_EXPECT(Copy(dtb_in, dtb_io));
+  CF_EXPECT(Copy(dtb_in, dtb_fd));
 
-  std::string bootconfig_path = unpack_dir + "/bootconfig";
-  SharedFD bootconfig_fd = SharedFD::Creat(bootconfig_path, 0644);
-  CF_EXPECTF(bootconfig_fd->IsOpen(), "Failed to open '{}': '{}'",
-             bootconfig_path, bootconfig_fd->StrError());
-  SharedFdIo bootconfig_io(bootconfig_fd);
+  Fd bootconfig_fd = CF_EXPECT(Fd::Creat(unpack_dir + "/bootconfig", 0644));
+
   std::optional<ReadWindowView> bootconfig_in = vendor_boot.Bootconfig();
   if (bootconfig_in.has_value()) {
-    CF_EXPECT(Copy(*bootconfig_in, bootconfig_io));
+    CF_EXPECT(Copy(*bootconfig_in, bootconfig_fd));
   }
 
   return vendor_boot;
@@ -378,10 +370,9 @@ Result<void> RepackVendorBootImageWithEmptyRamdisk(
     const std::string& vendor_boot_image_path,
     const std::string& new_vendor_boot_image_path,
     const std::string& unpack_dir, bool bootconfig_supported) {
-  std::string empty_ramdisk_path = unpack_dir + "/empty_ramdisk";
-  SharedFD empty_ramdisk = SharedFD::Creat(empty_ramdisk_path, 0666);
-  CF_EXPECTF(empty_ramdisk->IsOpen(), "Failed to open '{}': '{}'",
-             empty_ramdisk_path, empty_ramdisk->StrError());
+  const std::string empty_ramdisk_path = unpack_dir + "/empty_ramdisk";
+  CF_EXPECT(Fd::Creat(empty_ramdisk_path, 0666));
+
   CF_EXPECT(RepackVendorBootImage(empty_ramdisk_path, vendor_boot_image_path,
                                   new_vendor_boot_image_path, unpack_dir,
                                   bootconfig_supported));

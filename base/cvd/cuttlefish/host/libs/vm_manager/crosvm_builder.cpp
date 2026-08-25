@@ -33,12 +33,12 @@ std::string MacCrosvmArgument(std::optional<std::string_view> mac) {
   return mac.has_value() ? fmt::format(",mac={}", mac.value()) : "";
 }
 
-std::string PciCrosvmArgument(std::optional<pci::Address> pci) {
+}  // namespace
+
+std::string CrosvmBuilder::FormatPciArgument(std::optional<pci::Address> pci) {
   return pci.has_value() ? fmt::format(",pci-address={}", pci.value().Id())
                          : "";
 }
-
-}  // namespace
 
 CrosvmBuilder::CrosvmBuilder() : command_("crosvm") {}
 
@@ -120,12 +120,15 @@ void CrosvmBuilder::AddKvmPath(const std::string& path) {
   command_.AddParameter("--hypervisor=kvm[device=", path, "]");
 }
 
-void CrosvmBuilder::AddReadOnlyDisk(const std::string& path) {
-  command_.AddParameter("--block=path=", path, ",ro=true");
+void CrosvmBuilder::AddReadOnlyDisk(const std::string& path,
+                                    std::optional<pci::Address> pci) {
+  command_.AddParameter("--block=path=", path, ",ro=true",
+                        FormatPciArgument(pci));
 }
 
-void CrosvmBuilder::AddReadWriteDisk(const std::string& path) {
-  command_.AddParameter("--block=path=", path);
+void CrosvmBuilder::AddReadWriteDisk(const std::string& path,
+                                     std::optional<pci::Address> pci) {
+  command_.AddParameter("--block=path=", path, FormatPciArgument(pci));
 }
 
 void CrosvmBuilder::AddSerialSink() {
@@ -154,7 +157,7 @@ void CrosvmBuilder::AddTap(const std::string& tap_name,
                            std::optional<std::string_view> mac,
                            const std::optional<pci::Address>& pci) {
   command_.AddParameter("--net=tap-name=", tap_name, MacCrosvmArgument(mac),
-                        PciCrosvmArgument(pci));
+                        FormatPciArgument(pci));
 }
 #endif
 

@@ -87,7 +87,7 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
     }
 
     // Wait for control socket sending "READY".
-    SharedFD sock = Fd::Accept(*ctrl_sock_);
+    SharedFD sock = Fd::Accept(*ctrl_sock_).value_or(Fd());
     const char kExpectedReadyStr[] = "READY";
     char buf[std::size(kExpectedReadyStr)];
     Result<uint64_t> data_read = sock->Read(buf, sizeof(buf));

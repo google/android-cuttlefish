@@ -28,6 +28,8 @@ namespace cuttlefish {
 
 class CrosvmBuilder {
  public:
+  static std::string FormatPciArgument(std::optional<pci::Address> pci);
+
   CrosvmBuilder();
 
   void ApplyProcessRestarter(const std::string& crosvm_binary,
@@ -46,8 +48,10 @@ class CrosvmBuilder {
 
   void AddKvmPath(const std::string& path);
 
-  void AddReadOnlyDisk(const std::string& path);
-  void AddReadWriteDisk(const std::string& path);
+  void AddReadOnlyDisk(const std::string& path,
+                       std::optional<pci::Address> pci = std::nullopt);
+  void AddReadWriteDisk(const std::string& path,
+                        std::optional<pci::Address> pci = std::nullopt);
 
   void AddSerialSink();
   void AddSerialConsoleReadOnly(const std::string& output);

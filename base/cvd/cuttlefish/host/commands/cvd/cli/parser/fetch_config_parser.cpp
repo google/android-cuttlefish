@@ -44,8 +44,8 @@ bool ShouldFetch(const Instance& instance) {
 
   for (const auto& value :
        {disk.default_build(), disk.super_partition().system(),
-        boot.kernel().build(), boot.kernel().build(), boot.build(),
-        boot.bootloader().build(), disk.otatools()}) {
+        boot.kernel().build(), boot.build(), boot.bootloader().build(),
+        boot.android_efi_loader().build(), disk.otatools()}) {
     // expects non-prefixed build strings already converted to empty strings
     if (!value.empty()) {
       return true;

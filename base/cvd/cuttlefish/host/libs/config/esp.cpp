@@ -28,12 +28,14 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/esp/esp_builder.h"
 #include "cuttlefish/process/execute.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -262,14 +264,14 @@ bool LinuxEspBuilder::Build() const {
   auto builder = PrepareGrubESP(image_path_, *arch_);
 
   const auto tmp_grub_config = image_path_ + ".grub.cfg";
-  const auto config_file = SharedFD::Creat(tmp_grub_config, 0644);
-  if (!config_file->IsOpen()) {
-    LOG(ERROR) << "Cannot create temporary grub config: " << tmp_grub_config;
+  const Result<SharedFD> config_file = Fd::Creat(tmp_grub_config, 0644);
+  if (!config_file.has_value()) {
+    LOG(ERROR) << "Cannot create tmp grub config: " << config_file.error();
     return false;
   }
 
   const auto dumped = DumpConfig();
-  if (WriteAll(config_file, dumped) != dumped.size()) {
+  if (WriteAll(*config_file, dumped) != dumped.size()) {
     LOG(ERROR) << "Failed to write grub config content to: " << tmp_grub_config;
     return false;
   }
@@ -340,14 +342,14 @@ bool FuchsiaEspBuilder::Build() const {
   auto builder = PrepareGrubESP(image_path_, *arch_);
 
   const auto tmp_grub_config = image_path_ + ".grub.cfg";
-  const auto config_file = SharedFD::Creat(tmp_grub_config, 0644);
-  if (!config_file->IsOpen()) {
-    LOG(ERROR) << "Cannot create temporary grub config: " << tmp_grub_config;
+  const Result<SharedFD> config_file = Fd::Creat(tmp_grub_config, 0644);
+  if (!config_file.has_value()) {
+    LOG(ERROR) << "Cannot create tmp grub config: " << config_file.error();
     return false;
   }
 
   const auto dumped = DumpConfig();
-  if (WriteAll(config_file, dumped) != dumped.size()) {
+  if (WriteAll(*config_file, dumped) != dumped.size()) {
     LOG(ERROR) << "Failed to write grub config content to: " << tmp_grub_config;
     return false;
   }

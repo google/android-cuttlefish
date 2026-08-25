@@ -160,7 +160,7 @@ package_files(
         "etc/modem_simulator/files/iccprofile_for_sim1.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim1.xml",
         "etc/modem_simulator/files/numeric_operator.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/numeric_operator.xml",
         # "bin/crosvm": "@crosvm_bin//:crosvm__crosvm", # TODO: b/402274999 - currently requires --enable_sandbox=false
-        "bin/prebuilts/crosvm": "@crosvm_bin//:crosvm__crosvm",  # TODO: b/402274999 - keep in bin and symlink to prebuilts
+        "bin/prebuilts/crosvm": "//build_external/crosvm:crosvm_bin_opt",  # TODO: b/402274999 - keep in bin and symlink to prebuilts
         "usr/share/webrtc/assets/client.html": "//cuttlefish/host/frontend/webrtc/html_client:client.html",
         "usr/share/webrtc/assets/controls.css": "//cuttlefish/host/frontend/webrtc/html_client:controls.css",
         "usr/share/webrtc/assets/custom.css": "//cuttlefish/host/frontend/webrtc/html_client:custom.css",

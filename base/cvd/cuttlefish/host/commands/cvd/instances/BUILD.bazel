@@ -66,7 +66,7 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     include_cleaner_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:recursively_remove_directory",
         "//cuttlefish/host/commands/cvd/instances",

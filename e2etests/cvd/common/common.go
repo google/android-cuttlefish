@@ -148,10 +148,13 @@ func (tc *TestContext) TargetBin() string {
 
 // Common parameters passed to `cvd fetch`.
 type FetchArgs struct {
-	DefaultBuildBranch   string
-	DefaultBuildTarget   string
-	TestSuiteBuildBranch string
-	TestSuiteBuildTarget string
+	BootloaderBuildBranch string
+	BootloaderBuildTarget string
+	DefaultBuildBranch    string
+	DefaultBuildTarget    string
+	SubstituteOnly        bool
+	TestSuiteBuildBranch  string
+	TestSuiteBuildTarget  string
 }
 
 // Common parameters passed to `cvd create`.
@@ -174,8 +177,14 @@ func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
 		fmt.Sprintf("--default_build=%s/%s", args.DefaultBuildBranch, args.DefaultBuildTarget),
 		fmt.Sprintf("--target_directory=%s", tc.tempdir),
 	}
+	if args.BootloaderBuildBranch != "" && args.BootloaderBuildTarget != "" {
+		fetchCmd = append(fetchCmd, fmt.Sprintf("--bootloader_build=%s/%s", args.BootloaderBuildBranch, args.BootloaderBuildTarget))
+	}
 	if args.TestSuiteBuildBranch != "" && args.TestSuiteBuildTarget != "" {
 		fetchCmd = append(fetchCmd, fmt.Sprintf("--test_suites_build=%s/%s", args.TestSuiteBuildBranch, args.TestSuiteBuildTarget))
+	}
+	if args.SubstituteOnly {
+		fetchCmd = append(fetchCmd, "--host_substitutions=only")
 	}
 
 	credentialArg := os.Getenv("CREDENTIAL_SOURCE")
@@ -186,6 +195,14 @@ func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
 	if err != nil {
 		log.Printf("Failed to fetch: %w", err)
 		return res, err
+	}
+
+	// TODO: schuffelen - remove after packaging crosvm
+	if args.SubstituteOnly {
+		if err := os.Link(tc.tempdir + "/bin/prebuilts/crosvm", tc.tempdir + "/bin/crosvm"); err != nil {
+			log.Printf("Failed to make crosvm link: %w", err)
+			return res, err
+		}
 	}
 
 	// Android CTS includes some files with a `kernel` suffix which confuses the

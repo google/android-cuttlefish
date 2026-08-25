@@ -31,6 +31,22 @@ go_test(
 )
 
 go_test(
+    name = "cvd_create_substitute_only",
+    size = "large",
+    srcs = ["substitute_only.go"],
+    tags = [
+        "exclusive",
+        "external",
+        "no-sandbox",
+        "requires_ab",
+        "supports-graceful-termination",
+    ],
+    deps = [
+        "//cvd/common",
+    ],
+)
+
+go_test(
     name = "cvd_create_tests_additional_substitution",
     size = "large",
     srcs = ["main_test.go"],

@@ -12,6 +12,7 @@ cf_cc_library(
     hdrs = ["key_equals_value.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],

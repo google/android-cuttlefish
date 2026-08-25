@@ -128,8 +128,10 @@ VmManagerComponent();
 
 std::unique_ptr<VmManager> GetVmManager(VmmMode vmm, Arch arch);
 
+// Formats androidboot.boot_devices property to include the disks at a range of
+// PCI slots.
 Result<std::unordered_map<std::string, std::string>>
-ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,
+ConfigureMultipleBootDevices(const std::string& pci_path, int disk_pci_offset,
                              int num_disks);
 
 }  // namespace vm_manager

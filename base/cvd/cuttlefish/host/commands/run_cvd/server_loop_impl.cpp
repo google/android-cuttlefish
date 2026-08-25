@@ -129,7 +129,7 @@ Result<void> ServerLoopImpl::Run() {
     }
 
     CF_EXPECT(read_set.IsSet(server_));
-    SharedFD client = Fd::Accept(*server_);
+    SharedFD client = Fd::Accept(*server_).value_or(Fd());
     while (client->IsOpen()) {
       auto launcher_action_with_info_result = ReadLauncherActionFromFd(client);
       if (!launcher_action_with_info_result.has_value()) {
@@ -448,7 +448,7 @@ void ServerLoopImpl::RestartRunCvd(int notification_fd) {
     CHECK(RemoveFile(config_.AssemblyPath("restore")).has_value());
   }
   auto config_path = config_.AssemblyPath("cuttlefish_config.json");
-  SharedFD followup_stdin = Fd::MemfdCreate("pseudo_stdin");
+  SharedFD followup_stdin = Fd::MemfdCreate("pseudo_stdin").value_or(Fd());
   WriteAll(followup_stdin, config_path + "\n");
   // NOLINTNEXTLINE(misc-include-cleaner): unistd.h provides SEEK_SET
   followup_stdin->LSeek(0, SEEK_SET);
