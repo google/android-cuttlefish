@@ -22,11 +22,10 @@
 #include <string>
 #include <utility>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
-#include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 
@@ -34,12 +33,9 @@ namespace cuttlefish {
 
 Result<CompositeDiskImage> CompositeDiskImage::OpenExisting(
     const std::string& path) {
-  SharedFD fd = SharedFD::Open(path, O_CLOEXEC, O_RDONLY);
-  CF_EXPECTF(fd->IsOpen(), "Failed to open '{}': '{}'", path, fd->StrError());
+  Fd fd = CF_EXPECT(Fd::Open(path, O_CLOEXEC, O_RDONLY));
 
-  SharedFdIo io(fd);
-
-  return CF_EXPECT(OpenExisting(io));
+  return CF_EXPECT(OpenExisting(fd));
 }
 
 Result<CompositeDiskImage> CompositeDiskImage::OpenExisting(Reader& reader) {

@@ -23,12 +23,11 @@ cf_cc_library(
     srcs = ["composite_disk.cc"],
     hdrs = ["composite_disk.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
         "//cuttlefish/io",
         "//cuttlefish/io:read_exact",
-        "//cuttlefish/io:shared_fd",
         "//cuttlefish/io:string",
         "//cuttlefish/result",
     ],
@@ -66,6 +65,7 @@ cf_cc_library(
     hdrs = ["image_from_file.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/image_aggregator:composite_disk",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
@@ -127,7 +127,7 @@ cf_cc_library(
     srcs = ["sparse_image.cc"],
     hdrs = ["sparse_image.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
         "//cuttlefish/posix:realpath",
@@ -167,9 +167,10 @@ cf_cc_library(
         "-Wno-packed-non-pod",
     ],
     deps = [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:cf_endian",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
+        "//cuttlefish/io:read_exact",
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
