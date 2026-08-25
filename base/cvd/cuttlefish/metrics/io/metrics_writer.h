@@ -18,8 +18,8 @@
 
 #include <string_view>
 
+#include "cuttlefish/metrics/external_proto/cf_log.pb.h"
 #include "cuttlefish/result/result.h"
-#include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
 

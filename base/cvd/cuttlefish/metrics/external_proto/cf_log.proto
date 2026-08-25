@@ -17,8 +17,8 @@ edition = "2023";
 
 package logs.proto.wireless.android.cuttlefish;
 
-import "external_proto/cf_metrics_event.proto";
-import "external_proto/cf_metrics_event_v2.proto";
+import "cuttlefish/metrics/external_proto/cf_metrics_event.proto";
+import "cuttlefish/metrics/external_proto/cf_metrics_event_v2.proto";
 import "google/protobuf/cpp_features.proto";
 import "google/protobuf/timestamp.proto";
 

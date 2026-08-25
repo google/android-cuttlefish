@@ -26,8 +26,8 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/random.h"
+#include "cuttlefish/metrics/external_proto/cf_log.pb.h"
 #include "cuttlefish/result/result.h"
-#include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
 namespace {

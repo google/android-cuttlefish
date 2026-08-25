@@ -16,9 +16,9 @@
 
 #pragma once
 
+#include "cuttlefish/metrics/external_proto/clientanalytics.pb.h"
 #include "cuttlefish/metrics/io/metrics_environment.h"
 #include "cuttlefish/result/result.h"
-#include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 

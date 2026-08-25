@@ -13,29 +13,29 @@ proto_library(
 
 cc_proto_library(
     name = "cf_fetch_build_cc_proto",
-    deps = ["//external_proto:cf_fetch_build_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_fetch_build_proto"],
 )
 
 proto_library(
     name = "cf_fetch_builds_proto",
     srcs = ["cf_fetch_builds.proto"],
-    deps = ["//external_proto:cf_fetch_build_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_fetch_build_proto"],
 )
 
 cc_proto_library(
     name = "cf_fetch_builds_cc_proto",
-    deps = ["//external_proto:cf_fetch_builds_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_fetch_builds_proto"],
 )
 
 proto_library(
     name = "cf_fetch_complete_proto",
     srcs = ["cf_fetch_complete.proto"],
-    deps = ["//external_proto:cf_fetch_builds_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_fetch_builds_proto"],
 )
 
 cc_proto_library(
     name = "cf_fetch_complete_cc_proto",
-    deps = ["//external_proto:cf_fetch_complete_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_fetch_complete_proto"],
 )
 
 proto_library(
@@ -46,7 +46,7 @@ proto_library(
 
 cc_proto_library(
     name = "cf_fetch_failure_cc_proto",
-    deps = ["//external_proto:cf_fetch_failure_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_fetch_failure_proto"],
 )
 
 proto_library(
@@ -57,7 +57,7 @@ proto_library(
 
 cc_proto_library(
     name = "cf_fetch_start_cc_proto",
-    deps = ["//external_proto:cf_fetch_start_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_fetch_start_proto"],
 )
 
 proto_library(
@@ -68,7 +68,7 @@ proto_library(
 
 cc_proto_library(
     name = "cf_flags_cc_proto",
-    deps = ["//external_proto:cf_flags_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_flags_proto"],
 )
 
 proto_library(
@@ -79,7 +79,7 @@ proto_library(
 
 cc_proto_library(
     name = "cf_gce_environment_cc_proto",
-    deps = ["//external_proto:cf_gce_environment_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_gce_environment_proto"],
 )
 
 proto_library(
@@ -90,37 +90,37 @@ proto_library(
 
 cc_proto_library(
     name = "cf_github_actions_environment_cc_proto",
-    deps = ["//external_proto:cf_github_actions_environment_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_github_actions_environment_proto"],
 )
 
 proto_library(
     name = "cf_guest_proto",
     srcs = ["cf_guest.proto"],
     deps = [
-        "//external_proto:cf_flags_proto",
+        "//cuttlefish/metrics/external_proto:cf_flags_proto",
         "@protobuf//:cpp_features_proto",
     ],
 )
 
 cc_proto_library(
     name = "cf_guest_cc_proto",
-    deps = ["//external_proto:cf_guest_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_guest_proto"],
 )
 
 proto_library(
     name = "cf_host_proto",
     srcs = ["cf_host.proto"],
     deps = [
-        "//external_proto:cf_gce_environment_proto",
-        "//external_proto:cf_github_actions_environment_proto",
-        "//external_proto:cf_kokoro_environment_proto",
+        "//cuttlefish/metrics/external_proto:cf_gce_environment_proto",
+        "//cuttlefish/metrics/external_proto:cf_github_actions_environment_proto",
+        "//cuttlefish/metrics/external_proto:cf_kokoro_environment_proto",
         "@protobuf//:cpp_features_proto",
     ],
 )
 
 cc_proto_library(
     name = "cf_host_cc_proto",
-    deps = ["//external_proto:cf_host_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_host_proto"],
 )
 
 proto_library(
@@ -131,15 +131,15 @@ proto_library(
 
 cc_proto_library(
     name = "cf_kokoro_environment_cc_proto",
-    deps = ["//external_proto:cf_kokoro_environment_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_kokoro_environment_proto"],
 )
 
 proto_library(
     name = "cf_log_proto",
     srcs = ["cf_log.proto"],
     deps = [
-        "//external_proto:cf_metrics_event_proto",
-        "//external_proto:cf_metrics_event_v2_proto",
+        "//cuttlefish/metrics/external_proto:cf_metrics_event_proto",
+        "//cuttlefish/metrics/external_proto:cf_metrics_event_v2_proto",
         "@protobuf//:cpp_features_proto",
         "@protobuf//:timestamp_proto",
     ],
@@ -147,7 +147,7 @@ proto_library(
 
 cc_proto_library(
     name = "cf_log_cc_proto",
-    deps = ["//external_proto:cf_log_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_log_proto"],
 )
 
 proto_library(
@@ -161,36 +161,36 @@ proto_library(
 
 cc_proto_library(
     name = "cf_metrics_event_cc_proto",
-    deps = ["//external_proto:cf_metrics_event_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_metrics_event_proto"],
 )
 
 proto_library(
     name = "cf_metrics_event_v2_proto",
     srcs = ["cf_metrics_event_v2.proto"],
     deps = [
-        "//external_proto:cf_fetch_complete_proto",
-        "//external_proto:cf_fetch_failure_proto",
-        "//external_proto:cf_fetch_start_proto",
-        "//external_proto:cf_guest_proto",
-        "//external_proto:cf_host_proto",
+        "//cuttlefish/metrics/external_proto:cf_fetch_complete_proto",
+        "//cuttlefish/metrics/external_proto:cf_fetch_failure_proto",
+        "//cuttlefish/metrics/external_proto:cf_fetch_start_proto",
+        "//cuttlefish/metrics/external_proto:cf_guest_proto",
+        "//cuttlefish/metrics/external_proto:cf_host_proto",
         "@protobuf//:cpp_features_proto",
     ],
 )
 
 cc_proto_library(
     name = "cf_metrics_event_v2_cc_proto",
-    deps = ["//external_proto:cf_metrics_event_v2_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:cf_metrics_event_v2_proto"],
 )
 
 proto_library(
     name = "clientanalytics_proto",
     srcs = ["clientanalytics.proto"],
-    deps = ["//external_proto:log_source_enum_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:log_source_enum_proto"],
 )
 
 cc_proto_library(
     name = "clientanalytics_cc_proto",
-    deps = ["//external_proto:clientanalytics_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:clientanalytics_proto"],
 )
 
 proto_library(
@@ -200,5 +200,5 @@ proto_library(
 
 cc_proto_library(
     name = "log_source_enum_cc_proto",
-    deps = ["//external_proto:log_source_enum_proto"],
+    deps = ["//cuttlefish/metrics/external_proto:log_source_enum_proto"],
 )

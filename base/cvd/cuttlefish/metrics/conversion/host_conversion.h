@@ -16,8 +16,8 @@
 
 #pragma once
 
+#include "cuttlefish/metrics/external_proto/cf_metrics_event_v2.pb.h"
 #include "cuttlefish/metrics/host/host_metrics.h"
-#include "external_proto/cf_metrics_event_v2.pb.h"
 
 namespace cuttlefish {
 namespace {

@@ -20,13 +20,13 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
 #include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/metrics/external_proto/cf_fetch_build.pb.h"
+#include "cuttlefish/metrics/external_proto/cf_fetch_builds.pb.h"
+#include "cuttlefish/metrics/external_proto/cf_fetch_complete.pb.h"
+#include "cuttlefish/metrics/external_proto/cf_fetch_failure.pb.h"
+#include "cuttlefish/metrics/external_proto/cf_fetch_start.pb.h"
+#include "cuttlefish/metrics/external_proto/cf_metrics_event_v2.pb.h"
 #include "cuttlefish/metrics/fetch_metrics.h"
-#include "external_proto/cf_fetch_build.pb.h"
-#include "external_proto/cf_fetch_builds.pb.h"
-#include "external_proto/cf_fetch_complete.pb.h"
-#include "external_proto/cf_fetch_failure.pb.h"
-#include "external_proto/cf_fetch_start.pb.h"
-#include "external_proto/cf_metrics_event_v2.pb.h"
 
 namespace cuttlefish {
 namespace {
