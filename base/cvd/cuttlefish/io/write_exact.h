@@ -17,6 +17,10 @@
 
 #include <stdint.h>
 
+#include <string>
+#include <string_view>
+#include <vector>
+
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
@@ -24,6 +28,9 @@
 namespace cuttlefish {
 
 Result<void> WriteExact(Writer&, const char* buf, size_t size);
+Result<void> WriteExact(Writer&, const std::string&);
+Result<void> WriteExact(Writer&, std::string_view);
+Result<void> WriteExact(Writer&, const std::vector<char>&);
 
 template <typename T>
 Result<void> WriteExactBinary(Writer& writer, const T& data) {
