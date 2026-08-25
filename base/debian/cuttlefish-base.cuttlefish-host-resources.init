@@ -115,7 +115,7 @@ setup_nftables() {
         /usr/lib/cuttlefish-common/bin/cvdalloc --setup
     fi
 
-    if [ "${allocate_static_resources}" = "1"]; then
+    if [ "${allocate_static_resources}" = "1" ]; then
         # Ensure nftables tables and chains exist.
         nft add table ip cuttlefish_nat
         nft add chain ip cuttlefish_nat postrouting '{ type nat hook postrouting priority 100 ; }'
@@ -131,7 +131,7 @@ delete_nftables() {
         /usr/lib/cuttlefish-common/bin/cvdalloc --teardown
     fi
 
-    if [ "${allocate_static_resources}" = "1"]; then
+    if [ "${allocate_static_resources}" = "1" ]; then
         nft delete table ip cuttlefish_nat
         nft delete table bridge cuttlefish_bridge
     fi
@@ -345,7 +345,7 @@ start() {
 
     setup_nftables
 
-    if [ "${allocate_static_resources}" = "1"]; then
+    if [ "${allocate_static_resources}" = "1" ]; then
         # Ethernet
         # 192.168.98.X for cvd-ebr and cvd-etap-XX
         create_bridged_interfaces \
@@ -400,7 +400,7 @@ start() {
 }
 
 stop() {
-    if [ "${allocate_static_resources}" = "1"]; then
+    if [ "${allocate_static_resources}" = "1" ]; then
         # Ethernet
         destroy_bridged_interfaces \
           192.168.98 "${ethernet_bridge_interface}" cvd-etap \

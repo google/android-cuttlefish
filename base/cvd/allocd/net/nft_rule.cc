@@ -53,7 +53,7 @@ NftRule::NftRule(NftRule&& r) noexcept
 NftRule::~NftRule() {
   if (nft_ != nullptr && handle_ != 0) {
     auto res = nft_->DeleteRule(family_, table_, chain_, handle_);
-    if (!res.ok()) {
+    if (!res.has_value()) {
       LOG(ERROR) << "Failed to delete nft rule in NftRule destructor: "
                  << res.error();
     }

@@ -39,7 +39,7 @@ constexpr std::string_view kNftBinary = "nft";
 // Searches PATH, then the usual sbin locations, for the nft binary.
 Result<std::string> SearchForNft() {
   Result<std::string> p = Search(Path(), std::string(kNftBinary));
-  if (p.ok()) {
+  if (p.has_value()) {
     return p;
   }
   return CF_EXPECT(Search({"/usr/sbin", "/sbin"}, std::string(kNftBinary)),

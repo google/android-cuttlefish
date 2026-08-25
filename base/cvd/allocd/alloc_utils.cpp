@@ -120,7 +120,7 @@ Result<void> SetupFirewall(Nftables& nft, bool setup_byob) {
 
 Result<void> TeardownFirewall(Nftables& nft) {
   auto res = nft.DeleteTable(kFamilyIp, kNatTable);
-  if (!res.ok()) {
+  if (!res.has_value()) {
     LOG(WARNING) << "Failed to delete " << kNatTable
                  << " table: " << res.error();
   }
@@ -168,18 +168,18 @@ Result<NftRule> CreateMobileIface(Nftables& nft, std::string_view name,
 
   CF_EXPECTF(CreateTap(name), "Failed to create tap interface: {}", name);
 
-  if (!AddGateway(name, gateway, kMobileNetmask).ok()) {
+  if (!AddGateway(name, gateway, kMobileNetmask).has_value()) {
     (void)DestroyIface(name);
     return CF_ERRF("Failed to add gateway to interface: {}", name);
   }
 
   auto rule = NftRule::Create(nft, kFamilyIp, kNatTable, kPostroutingChain,
                               MasqueradeRule(network));
-  if (!rule.ok()) {
+  if (!rule.has_value()) {
     (void)DestroyGateway(name, gateway, kMobileNetmask);
     (void)DestroyIface(name);
-    return CF_ERRF("Failed to create NftRule for interface {}: {}", name,
-                   rule.error());
+    return CF_ERR("Failed to create NftRule for interface " << name << ": "
+                  << rule.error());
   }
 
   return rule;

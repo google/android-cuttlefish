@@ -12,27 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_test")
 
-go_library(
-    name = "common",
-    srcs = [
-        "cvdalloc.go",
-        "dnsmasq.go",
-        "init_filesystem_ns.go",
-        "init_network_ns.go",
-        "ip.go",
-        "nft.go",
-        "resolve_cvdalloc.go",
-        "sandbox.go",
-        "state.go",
-        "static_resources.go",
+go_test(
+    name = "cvdalloc_test",
+    size = "large",
+    srcs = ["main_test.go"],
+    env_inherit = ["CVDALLOC_BIN"],
+    tags = [
+        "exclusive",
+        "external",
+        "local",
+        "no-sandbox",
     ],
-    embedsrcs = ["dnsmasq_shim.sh"],
-    importpath = "github.com/google/android-cuttlefish/e2etests/host_resources/common",
-    visibility = ["//visibility:public"],
     deps = [
+        "//host_resources/common",
         "@com_github_google_go_cmp//cmp",
-        "@rules_go//go/runfiles",
+        "@com_github_google_go_cmp//cmp/cmpopts",
     ],
 )
