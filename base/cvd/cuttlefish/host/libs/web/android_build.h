@@ -21,6 +21,8 @@
 #include <variant>
 #include <vector>
 
+#include "cuttlefish/host/libs/web/android_build_url.h"
+
 namespace cuttlefish {
 
 struct DeviceBuild {
@@ -32,6 +34,7 @@ struct DeviceBuild {
   // did retrieving build details block waiting for a terminal status
   bool status_blocked = false;
   std::optional<std::string> filepath;
+  SafeLevel safe_level;
 };
 
 std::ostream& operator<<(std::ostream&, const DeviceBuild&);

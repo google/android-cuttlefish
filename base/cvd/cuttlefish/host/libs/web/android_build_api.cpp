@@ -112,10 +112,12 @@ Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string) {
       build_string.target.has_value(),
       "Given build string must have a target with the branch or build id");
   std::string proposed_build_id = build_string.branch_or_id;
+  SafeLevel proposed_safe_level = SafeLevel::kSafeLevelUnspecified;
   const std::optional<CandidateBuild> latest_build_candidate =
       CF_EXPECT(LatestBuildCandidate(proposed_build_id, *build_string.target));
   if (latest_build_candidate) {
     proposed_build_id = latest_build_candidate->build_id;
+    proposed_safe_level = latest_build_candidate->safe_level;
     VLOG(0) << fmt::format(
         "Build id({}) to be fetched for branch({}), target({}).",
         proposed_build_id, build_string.branch_or_id, *build_string.target);
@@ -133,6 +135,7 @@ Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string) {
       .is_signed = build_info.is_signed,
       .status_blocked = blocked_on_status,
       .filepath = build_string.filepath,
+      .safe_level = proposed_safe_level,
   };
 }
 
