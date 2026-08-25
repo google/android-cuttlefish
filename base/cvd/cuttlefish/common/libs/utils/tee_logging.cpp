@@ -49,6 +49,7 @@
 #include "android-base/threads.h"
 #include "fmt/format.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -192,9 +193,10 @@ std::string StripColorCodes(const std::string& str) {
 SeverityTarget SeverityTarget::FromFile(const std::string& path,
                                         MetadataLevel metadata_level,
                                         LogSeverity severity) {
-  auto log_file_fd =
-      SharedFD::Open(path, O_CREAT | O_WRONLY | O_APPEND,
-                     S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
+  SharedFD log_file_fd =
+      Fd::Open(path, O_CREAT | O_WRONLY | O_APPEND,
+               S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH)
+          .value_or(Fd());
   if (!log_file_fd->IsOpen()) {
     LOG(FATAL) << "Failed to create log file: " << log_file_fd->StrError();
   }
