@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <unistd.h>
+#include <sys/types.h>
 
 #include <string_view>
 
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 

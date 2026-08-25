@@ -15,7 +15,14 @@
  */
 #include "cuttlefish/host/commands/cvdalloc/sem.h"
 
+#include <stdint.h>
+
+#include <chrono>
+
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish::cvdalloc {
 
