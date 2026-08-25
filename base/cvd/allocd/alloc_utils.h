@@ -53,6 +53,7 @@ struct GatewayConfig {
 
 int RunExternalCommand(const std::string& command);
 Result<std::string> IptablesPath();
+Result<std::string> DnsmasqPath();
 std::optional<std::string> GetUserName(uid_t uid);
 
 bool CreateTap(std::string_view name);

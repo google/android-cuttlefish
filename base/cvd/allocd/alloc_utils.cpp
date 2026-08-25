@@ -57,6 +57,15 @@ Result<std::string> SearchForIptables() {
   return CF_EXPECT(Search({"/usr/sbin", "/sbin"}, "iptables"));
 }
 
+Result<std::string> SearchForDnsmasq() {
+  Result<std::string> p = Search(cuttlefish::Path(), "dnsmasq");
+  if (p.has_value()) {
+    return p;
+  }
+
+  return CF_EXPECT(Search({"/usr/sbin", "/sbin"}, "dnsmasq"));
+}
+
 }  // namespace
 
 bool CreateEthernetIface(std::string_view name, std::string_view bridge_name) {
@@ -284,11 +293,19 @@ void CleanupBridgeGateway(std::string_view name, std::string_view ipaddr,
 
 bool StartDnsmasq(std::string_view bridge_name, std::string_view gateway,
                   std::string_view dhcp_range) {
+  Result<std::string> dnsmasq_path = DnsmasqPath();
+  if (!dnsmasq_path.has_value()) {
+    LOG(ERROR) << "Could not find dnsmasq binary: "
+               << dnsmasq_path.error().Message();
+    return false;
+  }
+
   auto dns_servers = "8.8.8.8,8.8.4.4";
   auto dns6_servers = "2001:4860:4860::8888,2001:4860:4860::8844";
 
   return Execute(
-             {"dnsmasq", "--port=0", "--strict-order", "--except-interface=lo",
+             {*dnsmasq_path, "--port=0", "--strict-order",
+              "--except-interface=lo",
               absl::StrCat("--interface=", bridge_name),
               absl::StrCat("--listen-address=", gateway), "--bind-interfaces",
               absl::StrCat("--dhcp-range=", dhcp_range),
@@ -305,12 +322,12 @@ bool StartDnsmasq(std::string_view bridge_name, std::string_view gateway,
 bool StopDnsmasq(std::string_view name) {
   std::ifstream file;
   std::string filename =
-      absl::StrFormat("/var/run/cuttlefish-dnsmasq-%s.pid", name);
+      absl::StrCat(CvdDir(), "/cuttlefish-dnsmasq-", name, ".pid");
   LOG(INFO) << "stopping dnsmasq for interface: " << name;
   file.open(filename);
-  if (file.is_open()) {
+  if (!file.is_open()) {
     LOG(INFO) << "dnsmasq file:" << filename
-              << " could not be opened, assume dnsmaq has already stopped";
+              << " could not be opened, assume dnsmasq has already stopped";
     return true;
   }
 
@@ -364,6 +381,14 @@ Result<std::string> IptablesPath() {
 
   CF_EXPECT(!iptables_path->empty(), "could not find iptables");
   return *iptables_path;
+}
+
+Result<std::string> DnsmasqPath() {
+  static const absl::NoDestructor<std::string> dnsmasq_path(
+      SearchForDnsmasq().value_or(""));
+
+  CF_EXPECT(!dnsmasq_path->empty(), "could not find dnsmasq");
+  return *dnsmasq_path;
 }
 
 }  // namespace cuttlefish
