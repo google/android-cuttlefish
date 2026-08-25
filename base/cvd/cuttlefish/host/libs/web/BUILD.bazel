@@ -12,6 +12,7 @@ cf_cc_library(
     hdrs = ["android_build.h"],
     deps = [
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/libs/web:android_build_url",
         "@abseil-cpp//absl/strings",
         "@fmt",
     ],
