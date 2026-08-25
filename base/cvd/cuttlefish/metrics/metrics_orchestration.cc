@@ -29,13 +29,13 @@
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/metrics/conversion/metrics_data.h"
+#include "cuttlefish/metrics/external_proto/cf_log.pb.h"
 #include "cuttlefish/metrics/host/host_metrics.h"
 #include "cuttlefish/metrics/io/enabled.h"
 #include "cuttlefish/metrics/io/metrics_transmitter.h"
 #include "cuttlefish/metrics/io/metrics_writer.h"
 #include "cuttlefish/metrics/io/session_id.h"
 #include "cuttlefish/result/result.h"
-#include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
 namespace {

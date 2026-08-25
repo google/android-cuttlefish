@@ -2,11 +2,11 @@ edition = "2023";
 
 package logs.proto.wireless.android.cuttlefish.events;
 
-import "external_proto/cf_fetch_complete.proto";
-import "external_proto/cf_fetch_failure.proto";
-import "external_proto/cf_fetch_start.proto";
-import "external_proto/cf_guest.proto";
-import "external_proto/cf_host.proto";
+import "cuttlefish/metrics/external_proto/cf_fetch_complete.proto";
+import "cuttlefish/metrics/external_proto/cf_fetch_failure.proto";
+import "cuttlefish/metrics/external_proto/cf_fetch_start.proto";
+import "cuttlefish/metrics/external_proto/cf_guest.proto";
+import "cuttlefish/metrics/external_proto/cf_host.proto";
 
 import "google/protobuf/cpp_features.proto";
 

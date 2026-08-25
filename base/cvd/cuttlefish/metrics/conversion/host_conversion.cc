@@ -19,14 +19,14 @@
 #include <variant>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
+#include "cuttlefish/metrics/external_proto/cf_gce_environment.pb.h"
+#include "cuttlefish/metrics/external_proto/cf_github_actions_environment.pb.h"
+#include "cuttlefish/metrics/external_proto/cf_host.pb.h"
+#include "cuttlefish/metrics/external_proto/cf_metrics_event_v2.pb.h"
 #include "cuttlefish/metrics/host/gce_environment.h"
 #include "cuttlefish/metrics/host/github_environment.h"
 #include "cuttlefish/metrics/host/host_metrics.h"
 #include "cuttlefish/metrics/host/invoker.h"
-#include "external_proto/cf_gce_environment.pb.h"
-#include "external_proto/cf_github_actions_environment.pb.h"
-#include "external_proto/cf_host.pb.h"
-#include "external_proto/cf_metrics_event_v2.pb.h"
 
 namespace cuttlefish {
 namespace {

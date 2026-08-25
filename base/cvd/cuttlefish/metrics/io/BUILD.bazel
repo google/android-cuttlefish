@@ -27,11 +27,11 @@ cf_cc_library(
     hdrs = ["metrics_transmitter.h"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/metrics/external_proto:cf_log_cc_proto",
         "//cuttlefish/metrics/io:metrics_environment",
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
-        "//external_proto:cf_log_cc_proto",
     ],
 )
 
@@ -42,8 +42,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:random",
+        "//cuttlefish/metrics/external_proto:cf_log_cc_proto",
         "//cuttlefish/result",
-        "//external_proto:cf_log_cc_proto",
         "@fmt",
         "@protobuf",
     ],

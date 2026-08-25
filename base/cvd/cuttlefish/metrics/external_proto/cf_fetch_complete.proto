@@ -2,7 +2,7 @@ edition = "2023";
 
 package logs.proto.wireless.android.cuttlefish.events;
 
-import "external_proto/cf_fetch_builds.proto";
+import "cuttlefish/metrics/external_proto/cf_fetch_builds.proto";
 
 // Represents a successful fetch operation result
 //

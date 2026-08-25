@@ -2,9 +2,9 @@ edition = "2023";
 
 package logs.proto.wireless.android.cuttlefish.events;
 
-import "external_proto/cf_gce_environment.proto";
-import "external_proto/cf_github_actions_environment.proto";
-import "external_proto/cf_kokoro_environment.proto";
+import "cuttlefish/metrics/external_proto/cf_gce_environment.proto";
+import "cuttlefish/metrics/external_proto/cf_github_actions_environment.proto";
+import "cuttlefish/metrics/external_proto/cf_kokoro_environment.proto";
 
 import "google/protobuf/cpp_features.proto";
 

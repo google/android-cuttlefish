@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "external_proto/clientanalytics.pb.h"
+#include "cuttlefish/metrics/external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 

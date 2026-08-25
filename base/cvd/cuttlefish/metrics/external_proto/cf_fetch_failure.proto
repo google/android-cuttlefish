@@ -2,8 +2,7 @@ edition = "2023";
 
 package logs.proto.wireless.android.cuttlefish.events;
 
-// Kokoro environment a Cuttlefish device can run in
+// Represents a failed fetch operation result
 //
 // Next index: 1
-message CuttlefishKokoroEnvironment {
-}
+message CuttlefishFetchFailure {}

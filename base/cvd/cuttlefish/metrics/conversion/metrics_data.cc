@@ -23,9 +23,9 @@
 #include "cuttlefish/metrics/conversion/fetch_conversion.h"
 #include "cuttlefish/metrics/conversion/guest_conversion.h"
 #include "cuttlefish/metrics/conversion/host_conversion.h"
+#include "cuttlefish/metrics/external_proto/cf_log.pb.h"
+#include "cuttlefish/metrics/external_proto/cf_metrics_event_v2.pb.h"
 #include "cuttlefish/metrics/guest/guest_metrics.h"
-#include "external_proto/cf_log.pb.h"
-#include "external_proto/cf_metrics_event_v2.pb.h"
 
 namespace cuttlefish {
 namespace {

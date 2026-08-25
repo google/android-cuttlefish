@@ -19,12 +19,12 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/metrics/external_proto/clientanalytics.pb.h"
 #include "cuttlefish/metrics/metrics_transmitter/debug_reader.h"
 #include "cuttlefish/metrics/metrics_transmitter/metrics_conversion.h"
 #include "cuttlefish/metrics/metrics_transmitter/metrics_flags.h"
 #include "cuttlefish/metrics/metrics_transmitter/metrics_transmission.h"
 #include "cuttlefish/result/result.h"
-#include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 namespace {

@@ -19,8 +19,8 @@
 #include <chrono>
 #include <string>
 
-#include "external_proto/clientanalytics.pb.h"
-#include "external_proto/log_source_enum.pb.h"
+#include "cuttlefish/metrics/external_proto/clientanalytics.pb.h"
+#include "cuttlefish/metrics/external_proto/log_source_enum.pb.h"
 
 namespace cuttlefish {
 namespace {
