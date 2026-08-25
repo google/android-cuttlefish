@@ -6,6 +6,7 @@
 #include "audio_settings.h"
 
 #include "absl/log/check.h"
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 namespace {
@@ -194,6 +195,13 @@ void AudioMixer::OnPlayback(uint32_t stream_id, uint32_t stream_sample_rate,
     const float fc_gain = front_gain * volume;
     const float rl_gain = rear_gain * left_gain * volume;
     const float rr_gain = rear_gain * right_gain * volume;
+
+    LOG_EVERY_N_SEC(INFO, 2)
+        << "[Host AudioMixer] Spatial playback: stream=" << stream_id
+        << ", fade=" << fade << ", balance=" << balance
+        << ", volume=" << volume << ", FL=" << fl_gain
+        << ", FR=" << fr_gain << ", FC=" << fc_gain
+        << ", RL=" << rl_gain << ", RR=" << rr_gain;
 
     if (channels_count_ == 2 && stream_channels_count == 6) {
       // ITU-R BS.775 5.1-to-stereo downmixing (-3 dB = 0.7071 for center/surround, -6 dB = 0.5 for LFE)
