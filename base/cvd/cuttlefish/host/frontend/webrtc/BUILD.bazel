@@ -88,6 +88,15 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "libcuttlefish_webrtc_audio_channel_matrix",
+    srcs = ["audio_channel_matrix.cpp"],
+    hdrs = ["audio_channel_matrix.h"],
+    deps = [
+        ":libcuttlefish_webrtc_audio_settings",
+    ],
+)
+
+cf_cc_library(
     name = "libcuttlefish_webrtc_audio_mixer",
     srcs = ["audio_mixer.cpp"],
     hdrs = ["audio_mixer.h"],
@@ -95,6 +104,7 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     include_cleaner_enabled = False,
     deps = [
+        ":libcuttlefish_webrtc_audio_channel_matrix",
         ":libcuttlefish_webrtc_audio_settings",
         "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
         "//libbase",

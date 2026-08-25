@@ -2,8 +2,8 @@
 
 #include <algorithm>
 #include <chrono>
-#include <vector>
-#include "audio_settings.h"
+#include "cuttlefish/host/frontend/webrtc/audio_channel_matrix.h"
+#include "cuttlefish/host/frontend/webrtc/audio_settings.h"
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -174,51 +174,8 @@ void AudioMixer::OnPlayback(uint32_t stream_id, uint32_t stream_sample_rate,
 
   std::unique_lock<std::mutex> lock(mutex_);
 
-  // Create local channel matrix for this playback call [dst_channels x src_channels]
-  std::vector<std::vector<float>> channel_matrix(
-      channels_count_, std::vector<float>(stream_channels_count, 0.0f));
-
-  if (fade == 0.0f && balance == 0.0f) {
-    // Fast path: direct diagonal 1-to-1 volume mapping
-    for (size_t i = 0; i < std::min<size_t>(channels_count_, stream_channels_count); ++i) {
-      channel_matrix[i][i] = volume;
-    }
-  } else {
-    // Spatial path: compute 4-quadrant gains from fade and balance
-    const float front_gain = (fade >= 0.0f) ? 1.0f : (1.0f + fade);
-    const float rear_gain  = (fade <= 0.0f) ? 1.0f : (1.0f - fade);
-    const float left_gain  = (balance <= 0.0f) ? 1.0f : (1.0f - balance);
-    const float right_gain = (balance >= 0.0f) ? 1.0f : (1.0f + balance);
-
-    const float fl_gain = front_gain * left_gain * volume;
-    const float fr_gain = front_gain * right_gain * volume;
-    const float fc_gain = front_gain * volume;
-    const float rl_gain = rear_gain * left_gain * volume;
-    const float rr_gain = rear_gain * right_gain * volume;
-
-    LOG_EVERY_N_SEC(INFO, 2)
-        << "[Host AudioMixer] Spatial playback: stream=" << stream_id
-        << ", fade=" << fade << ", balance=" << balance
-        << ", volume=" << volume << ", FL=" << fl_gain
-        << ", FR=" << fr_gain << ", FC=" << fc_gain
-        << ", RL=" << rl_gain << ", RR=" << rr_gain;
-
-    if (channels_count_ == 2 && stream_channels_count == 6) {
-      // ITU-R BS.775 5.1-to-stereo downmixing (-3 dB = 0.7071 for center/surround, -6 dB = 0.5 for LFE)
-      static constexpr float kCenterSurroundDownmixGain = 0.7071f;
-      static constexpr float kLfeDownmixGain = 0.5f;
-
-      channel_matrix[0] = {fl_gain, 0.0f, kCenterSurroundDownmixGain * fc_gain,
-                           kLfeDownmixGain * volume, kCenterSurroundDownmixGain * rl_gain, 0.0f};
-      channel_matrix[1] = {0.0f, fr_gain, kCenterSurroundDownmixGain * fc_gain,
-                           kLfeDownmixGain * volume, 0.0f, kCenterSurroundDownmixGain * rr_gain};
-    } else {
-      const float spatial_gains[6] = {fl_gain, fr_gain, fc_gain, volume, rl_gain, rr_gain};
-      for (size_t i = 0; i < std::min<size_t>(channels_count_, stream_channels_count); ++i) {
-        channel_matrix[i][i] = (i < 6) ? spatial_gains[i] : volume;
-      }
-    }
-  }
+  const auto channel_matrix = BuildChannelMixingMatrix(
+      channels_count_, stream_channels_count, volume, fade, balance);
 
   const bool need_notify = next_frame_.empty();  // no active streams
 
