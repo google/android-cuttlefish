@@ -1,8 +1,10 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_binary", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
+
+cf_build_test(name = "cvdalloc_build_test")
 
 cf_cc_library(
     name = "interface",
@@ -10,7 +12,6 @@ cf_cc_library(
         "interface.cpp",
     ],
     hdrs = ["interface.h"],
-    include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/strings:str_format",
     ],
@@ -22,11 +23,11 @@ cf_cc_library(
         "sem.cpp",
     ],
     hdrs = ["sem.h"],
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/command_util",
-        "//cuttlefish/result",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
 )
 
@@ -34,12 +35,10 @@ cf_cc_library(
     name = "privilege",
     srcs = ["privilege.cpp"],
     hdrs = ["privilege.h"],
-    depend_on_what_you_use_enabled = False,
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/posix:strerror",
-        "//cuttlefish/result",
-        "//libbase",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -47,8 +46,6 @@ cf_cc_library(
 cf_cc_binary(
     name = "cvdalloc",
     srcs = ["cvdalloc.cpp"],
-    depend_on_what_you_use_enabled = False,
-    include_cleaner_enabled = False,
     deps = [
         ":interface",
         ":privilege",
@@ -56,12 +53,11 @@ cf_cc_binary(
         "//allocd:alloc_utils",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/posix:strerror",
-        "//cuttlefish/result",
-        "//libbase",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/cleanup:cleanup",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
         "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings:str_format",
     ],
 )

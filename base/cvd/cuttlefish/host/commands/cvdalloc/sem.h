@@ -18,7 +18,7 @@
 #include <chrono>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish::cvdalloc {
 
