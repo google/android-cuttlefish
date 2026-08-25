@@ -332,8 +332,7 @@ Result<void> AggregateImage(const std::vector<ImagePartition>& partitions,
 
   for (const auto& partition_info : builder.Partitions()) {
     const auto& disk = partition_info.source;
-    SharedFD disk_fd = SharedFD::Open(disk.image_file_path, O_RDONLY);
-    CF_EXPECTF(disk_fd->IsOpen(), "{}", disk_fd->StrError());
+    SharedFD disk_fd = CF_EXPECT(Fd::Open(disk.image_file_path, O_RDONLY));
 
     auto file_size = FileSize(disk.image_file_path);
     CF_EXPECTF(output->CopyFrom(*disk_fd, file_size),
