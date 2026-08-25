@@ -296,10 +296,10 @@ cf_cc_library(
     srcs = ["native_filesystem.cc"],
     hdrs = ["native_filesystem.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/io",
         "//cuttlefish/io:filesystem",
-        "//cuttlefish/io:shared_fd",
+        "//cuttlefish/posix:remove",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
