@@ -15,15 +15,16 @@
  */
 #include "cuttlefish/host/libs/config/log_string_to_dir.h"
 
-#include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
 
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "absl/strings/str_cat.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -35,17 +36,15 @@ Result<void> LogStringToDir(const CuttlefishConfig::InstanceSpecific& instance,
                             std::string_view name, std::string_view contents) {
   std::string file = instance.PerInstanceLogPath(name);
 
-  SharedFD fd = SharedFD::Open(file, O_CREAT | O_EXCL | O_RDWR, 0644);
-  for (size_t counter = 1; !fd->IsOpen(); counter++) {
-    CF_EXPECTF(fd->GetErrno() == EEXIST, "Failed to open '{}': {}", file,
-               fd->StrError());
-
+  Result<SharedFD> fd_res = Fd::Open(file, O_CREAT | O_EXCL | O_RDWR, 0644);
+  for (size_t counter = 1; !fd_res.has_value(); counter++) {
     CF_EXPECT_LT(counter, 100);
 
     file = instance.PerInstanceLogPath(absl::StrCat(name, ".", counter));
-    SharedFD fd = SharedFD::Open(file, O_CREAT | O_EXCL | O_RDWR, 0644);
+    fd_res = Fd::Open(file, O_CREAT | O_EXCL | O_RDWR, 0644);
   }
 
+  SharedFD fd = CF_EXPECT(std::move(fd_res));
   CF_EXPECT_EQ(WriteAll(fd, contents), contents.size(), fd->StrError());
 
   return {};

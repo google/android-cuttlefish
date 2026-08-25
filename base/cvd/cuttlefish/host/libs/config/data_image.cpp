@@ -26,6 +26,7 @@
 
 #include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -79,10 +80,9 @@ Result<void> ResizeImage(const std::string& data_image, int data_image_mb,
     return {};
   }
   off_t raw_target = static_cast<off_t>(data_image_mb) << 20;
-  auto fd = SharedFD::Open(data_image, O_RDWR);
-  CF_EXPECTF(fd->IsOpen(), "Can't open '{}': '{}'", data_image, fd->StrError());
-  CF_EXPECTF(fd->Truncate(raw_target), "`truncate --size={}M {} fail: {}",
-             data_image_mb, data_image, fd->StrError());
+  Fd fd = CF_EXPECT(Fd::Open(data_image, O_RDWR));
+  CF_EXPECTF(fd.Truncate(raw_target), "`truncate --size={}M {} fail: {}",
+             data_image_mb, data_image, fd.StrError());
   CF_EXPECT(ForceFsckImage(data_image, instance));
   std::string resize_path;
   if (instance.userdata_format() == "f2fs") {
@@ -162,12 +162,10 @@ Result<void> CreateBlankEmptyImage(std::string_view image, int num_mb) {
   VLOG(0) << "Creating " << image;
 
   uint64_t image_size_bytes = static_cast<uint64_t>(num_mb) << 20;
-  SharedFD fd =
-      SharedFD::Open(std::string(image), O_CREAT | O_TRUNC | O_RDWR, 0666);
-  CF_EXPECTF(fd->IsOpen(), "Failed to open '{}': '{}'", image, fd->StrError());
-  CF_EXPECTF(fd->Truncate(image_size_bytes),
+  Fd fd = CF_EXPECT(Fd::Open(image, O_CREAT | O_TRUNC | O_RDWR, 0666));
+  CF_EXPECTF(fd.Truncate(image_size_bytes),
              "`truncate --size={}M '{}'` failed: {}", num_mb, image,
-             fd->StrError());
+             fd.StrError());
   return {};
 }
 
@@ -195,8 +193,7 @@ Result<void> CreateBlankSdcardImage(std::string_view image, int num_mb) {
       }},
       .boot_signature = {0x55, 0xAA},
   };
-  SharedFD fd = SharedFD::Open(std::string(image), O_RDWR);
-  CF_EXPECTF(fd->IsOpen(), "Failed to open '{}': '{}'", image, fd->StrError());
+  SharedFD fd = CF_EXPECT(Fd::Open(image, O_RDWR));
   CF_EXPECTF(WriteAllBinary(fd, &mbr) == sizeof(MasterBootRecord),
              "Writing MBR to '{}' failed: '{}'", image, fd->StrError());
   return {};
