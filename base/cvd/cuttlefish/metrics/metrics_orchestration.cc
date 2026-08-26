@@ -81,7 +81,7 @@ Result<void> OutputMetrics(std::string_view event_type_label,
   if (AreMetricsEnabled()) {
     const CuttlefishLogEvent cf_log_event =
         BuildCuttlefishLogEvent(metrics_data);
-    CF_EXPECT(TransmitMetrics(kTransmitterPath, cf_log_event));
+    CF_EXPECT(TransmitMetrics(TransmitterPath(), cf_log_event));
     CF_EXPECT(
         WriteMetricsEvent(event_type_label, metrics_directory, cf_log_event));
   }
