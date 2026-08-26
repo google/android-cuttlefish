@@ -1,7 +1,6 @@
+use std::collections::VecDeque;
 use std::fs::File;
-use std::io::{
-    stdout, Error as IoError, ErrorKind as IoErrorKind, Read, Result as IoResult, Write,
-};
+use std::io::{Error as IoError, ErrorKind as IoErrorKind, Read, Result as IoResult, Write};
 
 use anyhow::{bail, Context, Result};
 use log::{error, trace};
@@ -10,7 +9,7 @@ use vhost::vhost_user::message::{
     VhostUserVirtioFeatures,
 };
 use vhost_user_backend::{
-    VhostUserBackend, VhostUserBackendMut, VringEpollHandler, VringRwLock, VringT,
+    VhostUserBackendMut, VringRwLock, VringT,
 };
 use virtio_bindings::bindings::{
     virtio_config::VIRTIO_F_NOTIFY_ON_EMPTY, virtio_config::VIRTIO_F_VERSION_1,
@@ -20,7 +19,7 @@ use virtio_queue::QueueOwnedT;
 use vm_memory::{GuestAddressSpace, GuestMemoryAtomic, GuestMemoryMmap};
 use vmm_sys_util::epoll::EventSet;
 
-use crate::buf_reader::BufReader;
+use crate::event_source::EventSource;
 use crate::vio_input::{trim_to_event_size_multiple, VirtioInputConfig};
 
 const VIRTIO_INPUT_NUM_QUEUES: usize = 2;
@@ -33,18 +32,19 @@ const FEATURES: u64 = 1 << VIRTIO_F_VERSION_1
 const EVENT_QUEUE: u16 = 0;
 const STATUS_QUEUE: u16 = 1;
 const EXIT_EVENT: u16 = 2;
-const STDIN_EVENT: u16 = 3;
+pub const EVENTS_AVAILABLE: u16 = 3;
 
 /// Vhost-user input backend implementation.
 #[derive(Clone)]
-pub struct VhostUserInput<R: Read + Sync + Send> {
+pub struct VhostUserInput<S: EventSource> {
     config: VirtioInputConfig,
-    event_reader: BufReader<R>,
+    event_source: S,
+    event_queue: VecDeque<u8>,
     event_idx: bool,
     mem: Option<GuestMemoryAtomic<GuestMemoryMmap>>,
 }
 
-impl<R: Read + Sync + Send> VhostUserBackendMut for VhostUserInput<R> {
+impl<S: EventSource> VhostUserBackendMut for VhostUserInput<S> {
     type Bitmap = ();
     type Vring = VringRwLock;
     fn num_queues(&self) -> usize {
@@ -142,10 +142,11 @@ impl<R: Read + Sync + Send> VhostUserBackendMut for VhostUserInput<R> {
             EXIT_EVENT => {
                 trace!("Exit event");
             }
-            STDIN_EVENT => {
-                trace!("Stdin event");
-                self.read_input_events().map_err(IoError::other)?;
-                self.send_pending_events(&vrings[EVENT_QUEUE as usize]).map_err(IoError::other)?;
+            EVENTS_AVAILABLE => {
+                trace!("Source event");
+                self.read_input_events();
+                self.send_pending_events(&vrings[EVENT_QUEUE as usize])
+                    .map_err(IoError::other)?;
             }
             _ => {
                 error!("Unknown device event: {}", device_event);
@@ -155,20 +156,20 @@ impl<R: Read + Sync + Send> VhostUserBackendMut for VhostUserInput<R> {
     }
 }
 
-impl<R: Read + Sync + Send> VhostUserInput<R> {
+impl<S: EventSource> VhostUserInput<S> {
     /// Construct a new VhostUserInput backend.
-    pub fn new(device_config: VirtioInputConfig, reader: R) -> VhostUserInput<R> {
+    pub fn new(device_config: VirtioInputConfig, event_source: S) -> VhostUserInput<S> {
         VhostUserInput {
             config: device_config,
-            event_reader: BufReader::new(reader),
+            event_source,
+            event_queue: VecDeque::new(),
             event_idx: false,
             mem: None,
         }
     }
 
     fn send_pending_events(&mut self, vring: &VringRwLock) -> Result<()> {
-        // Only if can send at least one full event
-        if trim_to_event_size_multiple(self.event_reader.buffer().len()) == 0 {
+        if self.event_queue.is_empty() {
             return Ok(());
         }
         let mut vring_state = vring.get_mut();
@@ -183,19 +184,28 @@ impl<R: Read + Sync + Send> VhostUserInput<R> {
         {
             let mem = atomic_mem.memory();
             let head_index = avail_desc.head_index();
-            let mut writer = avail_desc.writer(&mem).context("Failed to get writable buffers")?;
-            let mut write_len =
-                std::cmp::min(self.event_reader.buffer().len(), writer.available_bytes());
-            // Send only full events
-            write_len = trim_to_event_size_multiple(write_len);
-            writer.write_all(&self.event_reader.buffer()[..write_len])?;
-            self.event_reader.consume(write_len);
+            let mut writer = avail_desc
+                .writer(&mem)
+                .context("Failed to get writable buffers")?;
+            // Trim to event size to send only full events
+            let write_len = trim_to_event_size_multiple(std::cmp::min(
+                writer.available_bytes(),
+                self.event_queue.len(),
+            ));
 
+            let (slice1, slice2) = self.event_queue.as_slices();
+            let write_len1 = std::cmp::min(write_len, slice1.len());
+            let write_len2 = write_len - write_len1;
+            writer.write_all(&slice1[..write_len1])?;
+            if write_len2 > 0 {
+                writer.write_all(&slice2[..write_len2])?;
+            }
+            self.event_queue.drain(..write_len);
             vring_state
                 .add_used(head_index, write_len as u32)
                 .context("Couldn't return used descriptor to the ring")?;
 
-            if trim_to_event_size_multiple(self.event_reader.buffer().len()) == 0 {
+            if self.event_queue.is_empty() {
                 // No more events available
                 break;
             }
@@ -214,9 +224,8 @@ impl<R: Read + Sync + Send> VhostUserInput<R> {
         Ok(())
     }
 
-    fn read_input_events(&mut self) -> Result<()> {
-        self.event_reader.read_ahead()?;
-        Ok(())
+    fn read_input_events(&mut self) {
+        self.event_queue.extend(self.event_source.get_events());
     }
 
     fn write_status_updates(&mut self, vring: &VringRwLock) -> Result<()> {
@@ -236,7 +245,7 @@ impl<R: Read + Sync + Send> VhostUserInput<R> {
             let bytes = reader.available_bytes();
             let mut buf = vec![0u8; bytes];
             reader.read_exact(&mut buf)?;
-            stdout().write_all(&buf)?;
+            self.event_source.send_status_feedback(&buf);
 
             vring_state
                 .add_used(head_index, bytes as u32)
@@ -254,13 +263,5 @@ impl<R: Read + Sync + Send> VhostUserInput<R> {
             vring_state.signal_used_queue().unwrap();
         }
         Ok(())
-    }
-
-    pub fn register_handlers<T: VhostUserBackend>(
-        fd: i32,
-        handler: &VringEpollHandler<T>,
-    ) -> IoResult<()> {
-        trace!("register_handlers");
-        handler.register_listener(fd, vmm_sys_util::epoll::EventSet::IN, STDIN_EVENT as u64)
     }
 }

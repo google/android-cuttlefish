@@ -1,12 +1,13 @@
 //! vhost-user input device
 
 mod buf_reader;
+mod event_source;
 mod inherited_fd;
 mod vhu_input;
 mod vio_input;
 
 use std::fs;
-use std::os::fd::{FromRawFd, IntoRawFd};
+use std::os::fd::{AsFd, AsRawFd, FromRawFd, IntoRawFd};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
@@ -17,7 +18,8 @@ use vhost::vhost_user::Listener;
 use vhost_user_backend::VhostUserDaemon;
 use vm_memory::{GuestMemoryAtomic, GuestMemoryMmap};
 
-use vhu_input::VhostUserInput;
+use event_source::PipeEventSource;
+use vhu_input::{VhostUserInput, EVENTS_AVAILABLE};
 use vio_input::VirtioInputConfig;
 
 /// Vhost-user input server.
@@ -69,8 +71,12 @@ fn main() -> Result<()> {
     let server_fd = inherited_fd::take_fd_ownership(args.socket_fd)
         .context("Failed to take ownership of socket fd")?;
     loop {
-        let backend =
-            Arc::new(Mutex::new(VhostUserInput::new(device_config.clone(), std::io::stdin())));
+        let event_source = PipeEventSource::new(std::io::stdin(), std::io::stdout());
+        let event_source_fd = event_source.as_fd().as_raw_fd();
+        let backend = Arc::new(Mutex::new(VhostUserInput::new(
+            device_config.clone(),
+            event_source,
+        )));
         let mut daemon = VhostUserDaemon::new(
             "vhost-user-input".to_string(),
             backend.clone(),
@@ -78,14 +84,20 @@ fn main() -> Result<()> {
         )
         .map_err(|e| anyhow!("Failed to create vhost user daemon: {:?}", e))?;
 
-        VhostUserInput::<std::io::Stdin>::register_handlers(
-            0i32, // stdin
-            daemon
-                .get_epoll_handlers()
-                .first()
-                .context("Daemon created without epoll handler threads")?,
-        )
-        .context("Failed to register epoll handler")?;
+        // Ideally, this registration would be done by the backend since it is the one that knows to
+        // read the event source when the EVENTS_AVAILABLE event is generated. This is not possible
+        // because register_listener attempts to lock the backend to call num_queues() which causes
+        // a deadlock if the backend lock is already held.
+        daemon
+            .get_epoll_handlers()
+            .first()
+            .context("Daemon created without epoll handler threads")?
+            .register_listener(
+                event_source_fd,
+                vmm_sys_util::epoll::EventSet::IN,
+                EVENTS_AVAILABLE as u64,
+            )
+            .context("Failed to register epoll handler")?;
 
         let listener = {
             // vhost::vhost_user::Listener takes ownership of the underlying fd and closes it when
