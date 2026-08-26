@@ -1,4 +1,4 @@
-use std::io::Read;
+use std::io::{ErrorKind, Read};
 
 use anyhow::{bail, Context, Result};
 use log::trace;
@@ -26,11 +26,14 @@ impl<R: Read + Sync + Send> BufReader<R> {
             // events.
             bail!("Event buffer is full");
         }
-        let read = self.reader.read(&mut self.buf[self.size..]).context("Failed to read events")?;
-        trace!("Read {} bytes", read);
-        if read == 0 {
-            bail!("Event source closed");
+        let read = loop {
+            match self.reader.read(&mut self.buf[self.size..]) {
+                Err(e) if e.kind() == ErrorKind::Interrupted => continue,
+                res => break res,
+            }
         }
+        .context("Failed to read events")?;
+        trace!("Read {} bytes", read);
         self.size += read;
         Ok(())
     }
