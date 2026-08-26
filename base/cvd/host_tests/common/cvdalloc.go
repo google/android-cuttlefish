@@ -27,6 +27,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/bazelbuild/rules_go/go/runfiles"
 )
 
 const cvdallocRunDir = "/var/tmp/cvd"
@@ -42,27 +44,23 @@ type Cvdalloc struct {
 	bin     string
 }
 
-// NewCvdalloc resolves the cvdalloc binary under test, reports exactly which
-// binary (and how fresh) it is, and prepares the sandbox to run it.
+// NewCvdalloc resolves the cvdalloc binary under test and prepares the sandbox
+// to run it.
 //
 // Resolution order:
 //  1. $CVDALLOC_BIN, if set, is used verbatim (an explicit override).
-//  2. Otherwise the locally-built binary at <repo>/base/cvd/bazel-bin/... is
-//     auto-discovered. The system-installed cvdalloc is never used.
+//  2. Otherwise the binary is located through the Bazel runfiles of the
+//     //cuttlefish/host/commands/cvdalloc:cvdalloc data dependency, whose
+//     runfiles path is passed in $CVDALLOC_RLOCATION.
 func NewCvdalloc(t *testing.T, s *Sandbox) *Cvdalloc {
 	bin, err := resolveCvdallocBin()
 	if err != nil {
 		t.Fatal(err)
 	}
-	fi, err := os.Stat(bin)
-	if err != nil {
+	if _, err := os.Stat(bin); err != nil {
 		t.Fatalf("cvdalloc binary %q is not usable: %v", bin, err)
 	}
-
-	// Make it obvious exactly which binary (and how fresh) is under test.
 	log.Printf("cvdalloc binary under test: %s", bin)
-	log.Printf("cvdalloc binary mtime:      %s", fi.ModTime().Format(time.RFC3339))
-	warnIfStale(bin, fi.ModTime())
 
 	// Prepare a tmpfs for the rundir.
 	if _, err := s.Run("sh", "-c", fmt.Sprintf("mkdir -p %s && mount -t tmpfs tmpfs %s", cvdallocRunDir, cvdallocRunDir)); err != nil {
@@ -70,6 +68,30 @@ func NewCvdalloc(t *testing.T, s *Sandbox) *Cvdalloc {
 	}
 
 	return &Cvdalloc{sandbox: s, bin: bin}
+}
+
+func resolveCvdallocBin() (string, error) {
+	if bin := os.Getenv("CVDALLOC_BIN"); bin != "" {
+		fi, err := os.Stat(bin)
+		if err != nil {
+			return "", fmt.Errorf("CVDALLOC_BIN=%q is not usable: %v", bin, err)
+		}
+		if fi.IsDir() {
+			return "", fmt.Errorf("CVDALLOC_BIN=%q is a directory, expected a binary", bin)
+		}
+		return bin, nil
+	}
+
+	rloc := os.Getenv("CVDALLOC_RLOCATION")
+	if rloc == "" {
+		return "", fmt.Errorf("CVDALLOC_RLOCATION is not set (expected the runfiles path " +
+			"of //cuttlefish/host/commands/cvdalloc:cvdalloc); or set CVDALLOC_BIN to a binary")
+	}
+	bin, err := runfiles.Rlocation(rloc)
+	if err != nil {
+		return "", fmt.Errorf("failed to locate cvdalloc runfile %q: %v", rloc, err)
+	}
+	return bin, nil
 }
 
 func (c *Cvdalloc) Setup() error {

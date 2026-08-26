@@ -15,15 +15,12 @@
 load("@rules_go//go:def.bzl", "go_test")
 
 go_test(
-    name = "static_resources_init_test",
+    name = "cvdalloc_test",
     size = "large",
     srcs = ["main_test.go"],
-    data = [
-        "@cuttlefish_debian//:cuttlefish-base.cuttlefish-host-resources.init",
-    ],
-    env = {
-        "INIT_SCRIPT": "$(rlocationpath @cuttlefish_debian//:cuttlefish-base.cuttlefish-host-resources.init)",
-    },
+    data = ["//cuttlefish/host/commands/cvdalloc:cvdalloc"],
+    env = {"CVDALLOC_RLOCATION": "$(rlocationpath //cuttlefish/host/commands/cvdalloc:cvdalloc)"},
+    env_inherit = ["CVDALLOC_BIN"],
     tags = [
         "exclusive",
         "external",
@@ -31,7 +28,7 @@ go_test(
         "no-sandbox",
     ],
     deps = [
-        "//host_resources/common",
+        "//host_tests/common",
         "@com_github_google_go_cmp//cmp",
         "@com_github_google_go_cmp//cmp/cmpopts",
     ],

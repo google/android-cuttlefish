@@ -17,7 +17,7 @@ package main
 import (
 	"testing"
 
-	"github.com/google/android-cuttlefish/e2etests/host_resources/common"
+	"github.com/google/android-cuttlefish/base/cvd/host_tests/common"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )

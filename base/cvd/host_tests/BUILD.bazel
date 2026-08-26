@@ -12,22 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_go//go:def.bzl", "go_test")
-
-go_test(
-    name = "cvdalloc_test",
-    size = "large",
-    srcs = ["main_test.go"],
-    env_inherit = ["CVDALLOC_BIN"],
-    tags = [
-        "exclusive",
-        "external",
-        "local",
-        "no-sandbox",
-    ],
-    deps = [
-        "//host_resources/common",
-        "@com_github_google_go_cmp//cmp",
-        "@com_github_google_go_cmp//cmp/cmpopts",
-    ],
-)
+exports_files([
+    "go.mod",
+    "go.sum",
+])
