@@ -2,7 +2,7 @@ Source: cuttlefish-common
 Maintainer: Cuttlefish Team <cloud-android-ext@google.com>
 Section: misc
 Priority: optional
-Build-Depends: bazel [amd64],
+Build-Depends: bazelisk [amd64 arm64],
                cmake,
                config-package-dev,
                debhelper-compat (= 12),
@@ -113,7 +113,7 @@ Description: Utilities for Android cuttlefish devices in the cloud
 
 Package: cuttlefish-defaults
 Architecture: any
-Build-Depends: bazel [amd64],
+Build-Depends: bazelisk [amd64 arm64],
                dh-exec
 Depends: cuttlefish-base,
 Description: May potentially enable new or experimental cuttlefish

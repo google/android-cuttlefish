@@ -14,30 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Install bazel (https://bazel.build/install/ubuntu)
+# Install bazel via bazelisk (https://github.com/bazelbuild/bazelisk)
 
 set -e
 
-function install_bazel_x86_64() {
-  echo "Installing bazel"
-  apt install apt-transport-https curl gnupg -y
-  curl -fsSL https://releases.bazel.build/bazel-release.pub.gpg | gpg --dearmor >bazel-archive-keyring.gpg
-  mv bazel-archive-keyring.gpg /usr/share/keyrings
-  echo "deb [arch=amd64 signed-by=/usr/share/keyrings/bazel-archive-keyring.gpg] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
-  # bazel needs the zip command to gather test outputs but doesn't depend on it
-  apt-get update && apt-get install -y bazel zip unzip
-}
+BAZELISK_VERSION=v1.29.0
 
-function install_bazel_aarch64() {
-  BAZELISK_VERSION=v1.19.0
-  apt install wget
-  tmpdir="$(mktemp -t -d bazel_installer_XXXXXX)"
-  trap "rm -rf $tmpdir" EXIT
-  pushd "${tmpdir}"
-  wget "https://github.com/bazelbuild/bazelisk/releases/download/${BAZELISK_VERSION}/bazelisk-linux-arm64"
-  mv bazelisk-linux-arm64 /usr/local/bin/bazel
-  chmod 0755 /usr/local/bin/bazel
-  popd
-}
+ARCH=$(uname -m)
+if [ "${ARCH}" = "x86_64" ]; then
+  ARCH="amd64"
+elif [ "${ARCH}" = "aarch64" ]; then
+  ARCH="arm64"
+fi
 
-install_bazel_$(uname -m)
+apt install -y build-essential file unzip wget zip
+tmpdir="$(mktemp -t -d bazel_installer_XXXXXX)"
+trap "rm -rf $tmpdir" EXIT
+pushd "${tmpdir}"
+wget "https://github.com/bazelbuild/bazelisk/releases/download/${BAZELISK_VERSION}/bazelisk-${ARCH}.deb"
+apt install -y "./bazelisk-${ARCH}.deb"
+popd
