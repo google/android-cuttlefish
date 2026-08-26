@@ -11,6 +11,7 @@ cf_cc_library(
     srcs = ["enabled.cc"],
     hdrs = ["enabled.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/files:file_exists",
     ],
 )

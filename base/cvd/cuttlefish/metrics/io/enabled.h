@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <string_view>
+#include <string>
 
 namespace cuttlefish {
 
@@ -25,5 +25,7 @@ inline constexpr char kTransmitterPath[] =
 
 // trigger check for v2 metrics
 bool AreMetricsEnabled();
+
+std::string TransmitterPath();
 
 }  // namespace cuttlefish

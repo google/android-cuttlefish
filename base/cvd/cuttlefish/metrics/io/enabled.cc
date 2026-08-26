@@ -16,10 +16,17 @@
 
 #include "cuttlefish/metrics/io/enabled.h"
 
+#include <string>
+
+#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/files/file_exists.h"
 
 namespace cuttlefish {
 
-bool AreMetricsEnabled() { return FileExists(kTransmitterPath); }
+std::string TransmitterPath() {
+  return StringFromEnv("CUTTLEFISH_METRICS_TRANSMITTER_PATH", kTransmitterPath);
+}
+
+bool AreMetricsEnabled() { return FileExists(TransmitterPath()); }
 
 }  // namespace cuttlefish
