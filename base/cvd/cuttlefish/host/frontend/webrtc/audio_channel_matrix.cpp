@@ -18,6 +18,9 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <cstdint>
+#include <vector>
 
 #include "cuttlefish/host/frontend/webrtc/audio_settings.h"
 
