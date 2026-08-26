@@ -63,6 +63,13 @@ class AndroidBuildApi : public BuildApi {
     std::string target;
     bool is_signed;
   };
+
+  struct CandidateBuild {
+    std::string build_id;
+    std::chrono::system_clock::time_point creation_time;
+    SafeLevel safe_level;
+  };
+
   Result<BuildInfo> GetBuildInfo(std::string_view build_id,
                                  std::string_view target);
   Result<bool> BlockUntilTerminalStatus(std::string_view initial_status,
@@ -70,8 +77,8 @@ class AndroidBuildApi : public BuildApi {
                                         std::string_view target);
   Result<std::vector<std::string>> Headers();
 
-  Result<std::optional<std::string>> LatestBuildId(const std::string& branch,
-                                                   const std::string& target);
+  Result<std::optional<CandidateBuild>> LatestBuildCandidate(
+      const std::string& branch, const std::string& target);
 
   Result<std::unordered_set<std::string>> Artifacts(
       const DeviceBuild& build,

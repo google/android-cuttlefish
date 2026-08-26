@@ -112,10 +112,12 @@ Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string) {
       build_string.target.has_value(),
       "Given build string must have a target with the branch or build id");
   std::string proposed_build_id = build_string.branch_or_id;
-  auto latest_build_id =
-      CF_EXPECT(LatestBuildId(proposed_build_id, *build_string.target));
-  if (latest_build_id) {
-    proposed_build_id = *latest_build_id;
+  SafeLevel proposed_safe_level = SafeLevel::kSafeLevelUnspecified;
+  const std::optional<CandidateBuild> latest_build_candidate =
+      CF_EXPECT(LatestBuildCandidate(proposed_build_id, *build_string.target));
+  if (latest_build_candidate) {
+    proposed_build_id = latest_build_candidate->build_id;
+    proposed_safe_level = latest_build_candidate->safe_level;
     VLOG(0) << fmt::format(
         "Build id({}) to be fetched for branch({}), target({}).",
         proposed_build_id, build_string.branch_or_id, *build_string.target);
@@ -133,6 +135,7 @@ Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string) {
       .is_signed = build_info.is_signed,
       .status_blocked = blocked_on_status,
       .filepath = build_string.filepath,
+      .safe_level = proposed_safe_level,
   };
 }
 
@@ -193,7 +196,7 @@ Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
 
   std::string no_auth_error_message;
   if (credential_source_ == nullptr && response.http_code == 404) {
-    // In LatestBuildId we currently cannot distinguish between the cases:
+    // In LatestBuildCandidate we cannot distinguish between the cases:
     //    - user provided a build ID (not an error)
     //    - user provided a branch with a typo
     //    - user provided a branch without the necessary authentication
@@ -271,19 +274,16 @@ Result<std::vector<std::string>> AndroidBuildApi::Headers() {
   return headers;
 }
 
-Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
-    const std::string& branch, const std::string& target) {
-  struct CandidateBuild {
-    std::string build_id;
-    std::chrono::system_clock::time_point creation_time;
-  };
+Result<std::optional<AndroidBuildApi::CandidateBuild>>
+AndroidBuildApi::LatestBuildCandidate(const std::string& branch,
+                                      const std::string& target) {
   // Find the latest build at every safe level
-  std::vector<CandidateBuild> candidates;
+  std::vector<AndroidBuildApi::CandidateBuild> candidates;
   for (const SafeLevel safe_level : kAllSafeLevels) {
     VLOG(0) << "Attempting to download build at safe level '" << safe_level
             << "' for branch '" << branch << "' and target '" << target << "'";
-    const std::string url =
-        android_build_url_.GetLatestBuildIdUrl(branch, target, safe_level);
+    const std::string url = android_build_url_.GetLatestBuildCandidateUrl(
+        branch, target, safe_level);
     const std::vector<std::string> headers = CF_EXPECT(Headers());
     const HttpResponse<Json::Value> response =
         CF_EXPECT(HttpGetToJson(http_client_, url, headers));
@@ -306,9 +306,10 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
 
     const Json::Value& build = json["builds"][0];
     const std::string& completion = build["completionTimestamp"].asString();
-    candidates.emplace_back(CandidateBuild{
+    candidates.emplace_back(AndroidBuildApi::CandidateBuild{
         .build_id = build["buildId"].asString(),
         .creation_time = CF_EXPECT(ParseTime(completion)),
+        .safe_level = safe_level,
     });
   }
   if (candidates.empty()) {
@@ -325,7 +326,7 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
   // Return the first valid build (which will have the highest safe level)
   auto it = std::find_if(candidates.begin(), candidates.end(), recent);
   CHECK(it != candidates.end());
-  return it->build_id;
+  return *it;
 }
 
 Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(

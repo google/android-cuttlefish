@@ -649,14 +649,14 @@ class CuttlefishConfig {
     void set_start_wmediumd_instance(bool start);
     void set_mcu(const Json::Value& cfg);
     void set_ap_boot_flow(APBootFlow flow);
-    void set_crosvm_use_balloon(const bool use_balloon);
-    void set_crosvm_use_rng(const bool use_rng);
-    void set_crosvm_simple_media_device(const bool simple_media_device);
-    void set_crosvm_v4l2_proxy(const std::string v4l2_proxy);
-    void set_use_pmem(const bool use_pmem);
+    void set_crosvm_use_balloon(bool use_balloon);
+    void set_crosvm_use_rng(bool use_rng);
+    void set_crosvm_simple_media_device(bool simple_media_device);
+    void set_crosvm_v4l2_proxy(std::string v4l2_proxy);
+    void set_use_pmem(bool use_pmem);
     void set_enable_pkvm(bool enable_pkvm);
     // Wifi MAC address inside the guest
-    void set_wifi_mac_prefix(const int wifi_mac_prefix);
+    void set_wifi_mac_prefix(int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
     void set_gnss_grpc_proxy_server_port(int gnss_grpc_proxy_server_port);
     // Gnss grpc proxy local file path
@@ -667,8 +667,8 @@ class CuttlefishConfig {
     void set_gem5_checkpoint_dir(const std::string& gem5_checkpoint_dir);
     // Serial console
     void set_console(bool console);
-    void set_enable_sandbox(const bool enable_sandbox);
-    void set_enable_virtiofs(const bool enable_virtiofs);
+    void set_enable_sandbox(bool enable_sandbox);
+    void set_enable_virtiofs(bool enable_virtiofs);
     void set_kgdb(bool kgdb);
     void set_device_type(DeviceType type);
     void set_target_arch(Arch target_arch);
@@ -696,8 +696,8 @@ class CuttlefishConfig {
     void set_domkey_mapping_config(
         const std::string& domkey_mapping_config_json_path);
     void set_enable_usb(bool enable);
-    void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
-    void set_enable_bootanimation(const bool enable_bootanimation);
+    void set_enable_gnss_grpc_proxy(bool enable_gnss_grpc_proxy);
+    void set_enable_bootanimation(bool enable_bootanimation);
     void set_extra_bootconfig_args(const std::string& extra_bootconfig_args);
     void set_record_screen(bool record_screen);
     void set_gem5_debug_file(const std::string& gem5_debug_file);
@@ -759,14 +759,14 @@ class CuttlefishConfig {
     void set_guest_uses_bgra_framebuffers(bool uses_bgra);
     void set_frames_socket_path(const std::string& frame_socket_path);
 
-    void set_enable_gpu_udmabuf(const bool enable_gpu_udmabuf);
-    void set_enable_gpu_vhost_user(const bool enable_gpu_vhost_user);
-    void set_enable_gpu_external_blob(const bool enable_gpu_external_blob);
-    void set_enable_gpu_system_blob(const bool enable_gpu_system_blob);
+    void set_enable_gpu_udmabuf(bool enable_gpu_udmabuf);
+    void set_enable_gpu_vhost_user(bool enable_gpu_vhost_user);
+    void set_enable_gpu_external_blob(bool enable_gpu_external_blob);
+    void set_enable_gpu_system_blob(bool enable_gpu_system_blob);
 
-    void set_has_vulkan_gfxstream_apex(const bool has_apex);
-    void set_has_vulkan_lavapipe_apex(const bool has_apex);
-    void set_has_vulkan_swiftshader_apex(const bool has_apex);
+    void set_has_vulkan_gfxstream_apex(bool has_apex);
+    void set_has_vulkan_lavapipe_apex(bool has_apex);
+    void set_has_vulkan_swiftshader_apex(bool has_apex);
 
     void set_hwcomposer(const std::string&);
 
@@ -904,14 +904,14 @@ class CuttlefishConfig {
 
    public:
     // wmediumd related configs
-    void set_enable_wifi(const bool enable_wifi);
+    void set_enable_wifi(bool enable_wifi);
     void set_start_wmediumd(bool start);
     void set_vhost_user_mac80211_hwsim(const std::string& path);
     void set_wmediumd_api_server_socket(const std::string& path);
     void set_wmediumd_config(const std::string& config_path);
     void set_wmediumd_mac_prefix(int mac_prefix);
 
-    void set_group_uuid(const int group_uuid);
+    void set_group_uuid(int group_uuid);
   };
 
  private:

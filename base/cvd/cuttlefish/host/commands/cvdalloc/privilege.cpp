@@ -17,7 +17,9 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
+#include <stddef.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #if defined(__linux__)
 #include <linux/capability.h>
 #include <linux/prctl.h>
@@ -27,11 +29,14 @@
 #include <sys/types.h>
 #include <sys/xattr.h>
 #endif
-#include <sys/stat.h>
+
+#include <string_view>
 
 #include "absl/log/log.h"
 
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 

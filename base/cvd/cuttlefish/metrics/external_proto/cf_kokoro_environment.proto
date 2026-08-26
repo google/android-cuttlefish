@@ -1,0 +1,8 @@
+edition = "2023";
+
+package logs.proto.wireless.android.cuttlefish.events;
+
+// Kokoro environment a Cuttlefish device can run in
+//
+// Next index: 1
+message CuttlefishKokoroEnvironment {}

@@ -20,6 +20,6 @@
 
 namespace cuttlefish {
 
-std::string GenerateRandomString(const std::string& alphabet, const int length);
+std::string GenerateRandomString(const std::string& alphabet, int length);
 
 }  // namespace cuttlefish

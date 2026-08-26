@@ -150,6 +150,7 @@ cf_cc_library(
     hdrs = ["data_image.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/files:copy",
@@ -381,6 +382,7 @@ cf_cc_library(
     hdrs = ["log_string_to_dir.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",

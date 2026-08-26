@@ -41,7 +41,7 @@
 #include "fmt/ranges.h"  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/ansi_codes/terminal_colors.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/gflags_xml_parser.h"
@@ -114,11 +114,8 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
   }
 
   if (!param.working_dir.empty()) {
-    auto fd =
-        SharedFD::Open(param.working_dir, O_RDONLY | O_PATH | O_DIRECTORY);
-    CF_EXPECT(fd->IsOpen(), "Couldn't open \"" << param.working_dir
-                                               << "\": " << fd->StrError());
-    command.SetWorkingDirectory(fd);
+    command.SetWorkingDirectory(CF_EXPECT(
+        Fd::Open(param.working_dir, O_RDONLY | O_PATH | O_DIRECTORY)));
   }
   return {std::move(command)};
 }

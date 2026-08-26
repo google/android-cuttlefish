@@ -59,12 +59,12 @@ struct CustomDeviceStateActionConfig {
 
 class CustomActionConfigProvider : public FlagFeature, public ConfigFragment {
  public:
-  virtual const std::vector<CustomShellActionConfig> CustomShellActions(
+  virtual std::vector<CustomShellActionConfig> CustomShellActions(
       const std::string& id_str = std::string()) const = 0;
-  virtual const std::vector<CustomActionServerConfig> CustomActionServers(
+  virtual std::vector<CustomActionServerConfig> CustomActionServers(
       const std::string& id_str = std::string()) const = 0;
-  virtual const std::vector<CustomDeviceStateActionConfig>
-  CustomDeviceStateActions(const std::string& id_str = std::string()) const = 0;
+  virtual std::vector<CustomDeviceStateActionConfig> CustomDeviceStateActions(
+      const std::string& id_str = std::string()) const = 0;
 };
 
 fruit::Component<fruit::Required<ConfigFlag>, CustomActionConfigProvider>
