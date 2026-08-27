@@ -91,14 +91,20 @@ pub unsafe fn init_once() -> Result<(), std::io::Error> {
 
     INHERITED_FDS
         .set(Mutex::new(fds))
-        .or(Err(std::io::Error::other("Inherited fds were already initialized")))
+        .or(Err(std::io::Error::other(
+            "Inherited fds were already initialized",
+        )))
 }
 
 /// Take the ownership of the given `RawFd` and returns `OwnedFd` for it. The returned FD is set
 /// CLOEXEC. `Error` is returned when the ownership was already taken (by a prior call to this
 /// function with the same `RawFd`) or `RawFd` is not an inherited file descriptor.
 pub fn take_fd_ownership(raw_fd: RawFd) -> Result<OwnedFd, Error> {
-    let mut fds = INHERITED_FDS.get().ok_or(Error::NotInitialized)?.lock().unwrap();
+    let mut fds = INHERITED_FDS
+        .get()
+        .ok_or(Error::NotInitialized)?
+        .lock()
+        .unwrap();
 
     if let Some(value) = fds.get_mut(&raw_fd) {
         if let Some(owned_fd) = value.take() {
@@ -175,7 +181,10 @@ mod test {
         // this must run first to avoid it reusing a previously closed fd
         {
             let f_new = fixture.open_new_file()?;
-            assert_eq!(Some(Error::FileDescriptorNotInherited(f_new)), take_fd_ownership(f_new).err());
+            assert_eq!(
+                Some(Error::FileDescriptorNotInherited(f_new)),
+                take_fd_ownership(f_new).err()
+            );
         }
 
         // happy_case
