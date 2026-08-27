@@ -37,13 +37,13 @@
 #include "openssl/base.h"
 #include "openssl/sha.h"
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/host/libs/config/log_string_to_dir.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
 #include "cuttlefish/host/libs/image_aggregator/disk_image.h"
 #include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/pretty/liblp/liblp.h"  // IWYU pragma: keep: overloads
 #include "cuttlefish/pretty/unique_ptr.h"
 #include "cuttlefish/result/result.h"
@@ -272,10 +272,9 @@ Result<std::string> CompositeSuperImageBuilder::WriteToDirectory(
   const std::string header_path = absl::StrCat(output_dir, "/", header_name);
   unlink(header_path.c_str());  // Ignore errors
 
-  SharedFD header_fd =
+  Fd header_fd =
       CF_EXPECT(Fd::Open(header_path, O_RDWR | O_CREAT | O_EXCL, 0644));
-  CF_EXPECT_EQ(header_fd->LSeek(LP_PARTITION_RESERVED_BYTES, SEEK_SET),
-               LP_PARTITION_RESERVED_BYTES, header_fd->StrError());
+  CF_EXPECT(header_fd.SeekSet(LP_PARTITION_RESERVED_BYTES));
 
   const std::string geometry_str = SerializeGeometry(metadata->geometry);
   const std::string metadata_str = SerializeMetadata(*metadata);
@@ -286,8 +285,7 @@ Result<std::string> CompositeSuperImageBuilder::WriteToDirectory(
   // We always use 2 slots, so 2 copies of metadata_str
   const std::string super_header =
       absl::StrCat(geometry_str, geometry_str, metadata_str, metadata_str);
-  CF_EXPECT_EQ(WriteAll(header_fd, super_header), super_header.size(),
-               header_fd->StrError());
+  CF_EXPECT(WriteExact(header_fd, super_header));
 
   ComponentDisk& header_component = *components.emplace(components.begin());
   header_component.set_file_path(header_path);
@@ -326,16 +324,11 @@ Result<std::string> CompositeSuperImageBuilder::WriteToDirectory(
     *composite.add_component_disks() = component;
   }
 
-  SharedFD composite_fd =
+  Fd composite_fd =
       CF_EXPECT(Fd::Open(file_path, O_RDWR | O_CREAT | O_EXCL, 0644));
 
-  const std::string magic = CompositeDiskImage::MagicString();
-  CF_EXPECT_EQ(WriteAll(composite_fd, magic), magic.size(),
-               composite_fd->StrError());
-
-  const std::string composite_string = composite.SerializeAsString();
-  CF_EXPECT_EQ(WriteAll(composite_fd, composite_string),
-               composite_string.size(), composite_fd->StrError());
+  CF_EXPECT(WriteExact(composite_fd, CompositeDiskImage::MagicString()));
+  CF_EXPECT(WriteExact(composite_fd, composite.SerializeAsString()));
 
   return file_path;
 }
