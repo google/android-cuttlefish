@@ -21,6 +21,7 @@ cf_cc_binary(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:gflags_xml_parser",
         "//cuttlefish/common/libs/utils:tee_logging",

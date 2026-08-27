@@ -125,8 +125,7 @@ Result<void> CopyDirectoryImpl(
     CF_EXPECTF(Copy(src_path, dest_path), "Copy from {} to {} failed", src_path,
                dest_path);
 
-    auto dest_fd = SharedFD::Open(dest_path, O_RDONLY);
-    CF_EXPECT(dest_fd->IsOpen(), "Failed to open \"" << dest_path << "\"");
+    Fd dest_fd = CF_EXPECT(Fd::Open(dest_path, O_RDONLY));
     // Copy the mtime from the src file. The mtime of the disk image files can
     // be important because we later validate that the disk overlays are not
     // older than the disk components.
@@ -138,9 +137,9 @@ Result<void> CopyDirectoryImpl(
         src_stat.st_mtim,
 #endif
     };
-    if (dest_fd->Futimens(times) != 0) {
-      return CF_ERR("futimens(\""
-                    << dest_path << "\", ...) failed: " << dest_fd->StrError());
+    if (dest_fd.Futimens(times) != 0) {
+      return CF_ERRF("futimens('{}', ...) failed: {}", dest_path,
+                     dest_fd.StrError());
     }
   }
   return {};

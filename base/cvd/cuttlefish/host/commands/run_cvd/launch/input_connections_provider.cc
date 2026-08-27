@@ -31,6 +31,7 @@
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
@@ -94,7 +95,7 @@ Command NewVhostUserInputCommand(const DeviceSockets& device_sockets,
   cmd.AddParameter("--device-config=", spec);
   cmd.RedirectStdIO(Command::StdIoChannel::kStdIn, device_sockets.device_end);
   cmd.RedirectStdIO(Command::StdIoChannel::kStdOut,
-                    SharedFD::Open("/dev/null", O_WRONLY));
+                    Fd::Open("/dev/null", O_WRONLY).value_or(Fd()));
   return cmd;
 }
 

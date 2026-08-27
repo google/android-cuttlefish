@@ -209,9 +209,9 @@ Command Command::RedirectStdIO(Command::StdIoChannel subprocess_channel,
 
 Command& Command::SetWorkingDirectory(const std::string& path) & {
 #ifdef __linux__
-  auto fd = SharedFD::Open(path, O_RDONLY | O_PATH | O_DIRECTORY);
+  SharedFD fd = Fd::Open(path, O_RDONLY | O_PATH | O_DIRECTORY).value_or(Fd());
 #elif defined(__APPLE__)
-  auto fd = SharedFD::Open(path, O_RDONLY | O_DIRECTORY);
+  SharedFD fd = Fd::Open(path, O_RDONLY | O_DIRECTORY).value_or(Fd());
 #else
 #error "Unsupported operating system"
 #endif

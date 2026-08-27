@@ -69,6 +69,7 @@ cf_cc_library(
     hdrs = ["proc_file_utils.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:directory_exists",
