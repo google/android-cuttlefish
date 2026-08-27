@@ -27,7 +27,7 @@
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -51,7 +51,7 @@ Command NewCommand(const std::string& binary_path,
     cmd.AddParameter("--lens-facing=", lens_facing);
   }
   cmd.RedirectStdIO(Command::StdIoChannel::kStdOut,
-                    SharedFD::Open("/dev/null", O_WRONLY));
+                    Fd::Open("/dev/null", O_WRONLY).value_or(Fd()));
   return cmd;
 }
 

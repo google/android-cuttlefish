@@ -31,12 +31,14 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <unordered_set>
 #include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "absl/time/time.h"
 #include "android-base/file.h"
 #include "fruit/component.h"
@@ -70,6 +72,7 @@
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
@@ -90,15 +93,11 @@ DEFINE_int32(boot_timeout_secs, 600,
 namespace cuttlefish {
 namespace {
 
-Result<void> MoveSelfToCgroup(const std::string& id) {
-  auto to_path_file = "/sys/fs/cgroup/vsoc-" + id + "-cf/cgroup.procs";
-  auto pid = std::to_string(getpid());
-  SharedFD fd = SharedFD::Open(to_path_file, O_WRONLY | O_APPEND);
-  CF_EXPECT(fd->IsOpen(),
-            "failed to open " << to_path_file << ": " << fd->StrError());
-  if (WriteAll(fd, pid) != pid.size()) {
-    return CF_ERR("failed to write to" << to_path_file);
-  }
+Result<void> MoveSelfToCgroup(std::string_view id) {
+  const std::string to_path_file =
+      absl::StrCat("/sys/fs/cgroup/vsoc-", id, "-cf/cgroup.procs");
+  Fd fd = CF_EXPECT(Fd::Open(to_path_file, O_WRONLY | O_APPEND));
+  CF_EXPECT(WriteExact(fd, std::to_string(getpid())));
 
   return {};
 }
@@ -132,12 +131,9 @@ Result<void> MoveThreadsToCgroup(const std::string& from_path,
           proc_status_str.find("vcpu_throttle") == std::string::npos) {
         // other proc moved to workers cgroup
         std::string to_path_file = to_path + "/cgroup.threads";
-        SharedFD fd = SharedFD::Open(to_path_file, O_WRONLY | O_APPEND);
-        CF_EXPECT(fd->IsOpen(),
-                  "failed to open " << to_path_file << ": " << fd->StrError());
-        if (WriteAll(fd, each_id) != each_id.size()) {
-          return CF_ERR("failed to write to" << to_path_file);
-        }
+        Fd fd = CF_EXPECT(Fd::Open(to_path_file, O_WRONLY | O_APPEND));
+        CF_EXPECTF(WriteExact(fd, each_id), "Failed to write to '{}'",
+                   to_path_file);
       }
     }
   }
@@ -220,8 +216,9 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
     }
     // Redirect standard I/O
     auto log_path = instance.launcher_log_path();
-    auto log = SharedFD::Open(log_path.c_str(), O_CREAT | O_WRONLY | O_APPEND,
-                              S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    SharedFD log = Fd::Open(log_path, O_CREAT | O_WRONLY | O_APPEND,
+                            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)
+                       .value_or(Fd());
     if (!log->IsOpen()) {
       LOG(ERROR) << "Failed to create launcher log file: " << log->StrError();
       std::exit(RunnerExitCodes::kDaemonizationError);

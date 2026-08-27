@@ -177,6 +177,7 @@ cf_cc_library(
     hdrs = ["input_connections_provider.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/run_cvd/launch:enable_multitouch",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
@@ -572,7 +573,7 @@ cf_cc_library(
     srcs = ["vhost_user_media_devices.cpp"],
     hdrs = ["vhost_user_media_devices.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
