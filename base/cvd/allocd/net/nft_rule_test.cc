@@ -19,6 +19,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <cstdint>
 #include <utility>
 
 #include "allocd/test/mock_nftables.h"
@@ -55,7 +56,8 @@ TEST(NftRuleTest, MoveConstructorTransfersOwnership) {
       .WillOnce(Return(Result<void>{}));
 
   {
-    auto rule1 = NftRule::Create(mock_nft, "ip", "table1", "chain1", "content1");
+    auto rule1 =
+        NftRule::Create(mock_nft, "ip", "table1", "chain1", "content1");
     ASSERT_THAT(rule1, IsOk());
 
     NftRule rule2(std::move(*rule1));

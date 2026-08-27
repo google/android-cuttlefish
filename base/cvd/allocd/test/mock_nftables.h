@@ -18,6 +18,7 @@
 #define ALLOCD_TEST_MOCK_NFTABLES_H_
 
 #include <gmock/gmock.h>
+
 #include <string_view>
 
 #include "allocd/net/nftables.h"

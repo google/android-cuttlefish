@@ -56,8 +56,7 @@ enum class Mode {
 };
 
 void Usage() {
-  LOG(ERROR)
-      << "Usage: cvdalloc [--setup | --teardown | --id=id --socket=fd]";
+  LOG(ERROR) << "Usage: cvdalloc [--setup | --teardown | --id=id --socket=fd]";
   LOG(ERROR) << "Should only be invoked from cuttlefish-host-resources or "
                 "run_cvd.";
 }
@@ -97,9 +96,9 @@ Result<std::vector<NftRule>> Allocate(Nftables& nft, int id,
   CF_EXPECT(CreateEthernetIface(CvdallocInterfaceName("wtap", id),
                                 wireless_bridge_name));
 
-  rules.push_back(CF_EXPECT(CreateMobileIface(
-      nft, CvdallocInterfaceName("wifiap", id), id,
-      kCvdallocWirelessApIpPrefix)));
+  rules.push_back(
+      CF_EXPECT(CreateMobileIface(nft, CvdallocInterfaceName("wifiap", id), id,
+                                  kCvdallocWirelessApIpPrefix)));
 
   CF_EXPECT(CreateEthernetBridgeIface(ethernet_bridge_name,
                                       kCvdallocEthernetIpPrefix));

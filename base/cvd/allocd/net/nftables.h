@@ -43,8 +43,7 @@ class Nftables {
                                    std::string_view content) = 0;
   virtual Result<void> DeleteRule(std::string_view family,
                                   std::string_view table,
-                                  std::string_view chain,
-                                  uint32_t handle) = 0;
+                                  std::string_view chain, uint32_t handle) = 0;
 };
 
 }  // namespace cuttlefish

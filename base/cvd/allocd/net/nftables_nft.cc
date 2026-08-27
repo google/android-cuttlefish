@@ -20,9 +20,11 @@
 
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "absl/base/no_destructor.h"
-#include "absl/log/log.h"
+#include "json/value.h"
+
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/process/command.h"

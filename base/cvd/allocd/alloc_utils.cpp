@@ -33,6 +33,8 @@
 #include "absl/strings/str_format.h"
 
 #include "allocd/alloc_driver.h"
+#include "allocd/net/nft_rule.h"
+#include "allocd/net/nftables.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/network.h"
@@ -179,7 +181,7 @@ Result<NftRule> CreateMobileIface(Nftables& nft, std::string_view name,
     (void)DestroyGateway(name, gateway, kMobileNetmask);
     (void)DestroyIface(name);
     return CF_ERR("Failed to create NftRule for interface " << name << ": "
-                  << rule.error());
+                                                            << rule.error());
   }
 
   return rule;

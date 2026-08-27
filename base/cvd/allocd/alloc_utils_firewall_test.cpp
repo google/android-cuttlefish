@@ -55,9 +55,11 @@ TEST(AllocUtilsFirewallTest, SetupFirewallWithByob) {
 
   EXPECT_CALL(mock_nft, EnsureTable("bridge", "cuttlefish_bridge"))
       .WillOnce(Return(Result<void>{}));
-  EXPECT_CALL(mock_nft, EnsureChain("bridge", "cuttlefish_bridge", "prerouting", _))
+  EXPECT_CALL(mock_nft,
+              EnsureChain("bridge", "cuttlefish_bridge", "prerouting", _))
       .WillOnce(Return(Result<void>{}));
-  EXPECT_CALL(mock_nft, EnsureChain("bridge", "cuttlefish_bridge", "forward", _))
+  EXPECT_CALL(mock_nft,
+              EnsureChain("bridge", "cuttlefish_bridge", "forward", _))
       .WillOnce(Return(Result<void>{}));
 
   EXPECT_THAT(SetupFirewall(mock_nft, /*setup_byob=*/true), IsOk());
