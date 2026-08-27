@@ -58,13 +58,20 @@
 
 DEFINE_bool(multitouch, true,
             "Whether to send multi-touch or single-touch events");
-DEFINE_string(touch_fds, "",
-              "A list of fds to listen on for touch connections.");
-DEFINE_int32(mouse_fd, -1, "An fd to listen on for mouse connections.");
-DEFINE_int32(gamepad_fd, -1, "An fd to listen on for gamepad connections.");
-DEFINE_int32(rotary_fd, -1, "An fd to listen on for rotary connections.");
-DEFINE_int32(keyboard_fd, -1, "An fd to listen on for keyboard connections.");
-DEFINE_int32(switches_fd, -1, "An fd to listen on for switch connections.");
+DEFINE_string(touch_fds, "", "DEPRECATED: Use --touch_server_paths instead.");
+DEFINE_string(
+    touch_server_paths, "",
+    "A list of input server paths to connect to for touchscreen events.");
+DEFINE_int32(mouse_fd, -1, "DEPRECATED: Use --mouse_server_path instead.");
+DEFINE_string(mouse_server_path, "", "Mouse input server path.");
+DEFINE_int32(gamepad_fd, -1, "DEPRECATED: Use --gamepad_server_path instead.");
+DEFINE_string(gamepad_server_path, "", "Gamepad input server path.");
+DEFINE_int32(rotary_fd, -1, "DEPRECATED: Use --rotary_server_path instead.");
+DEFINE_string(rotary_server_path, "", "Rotary input server path.");
+DEFINE_int32(keyboard_fd, -1, "DEPRECATED: Use --rotary_server_path instead.");
+DEFINE_string(keyboard_server_path, "", "Keyboard input server path.");
+DEFINE_int32(switches_fd, -1, "DEPRECATED: Use --rotary_server_path instead.");
+DEFINE_string(switches_server_path, "", "Switches input server path.");
 DEFINE_int32(frame_server_fd, -1, "An fd to listen on for frame updates");
 DEFINE_int32(kernel_log_events_fd, -1,
              "An fd to listen on for kernel log events.");
@@ -316,49 +323,109 @@ int CuttlefishMain() {
   cuttlefish::InputConnectorBuilder inputs_builder;
 
   const auto display_count = instance.display_configs().size();
-  std::vector<std::string_view> touch_fds;
+  CHECK(FLAGS_touch_fds.empty() || FLAGS_touch_server_paths.empty())
+      << "Only one of --touch_fds or --touch_server_paths can be used at a "
+         "time";
   if (!FLAGS_touch_fds.empty()) {
-    touch_fds = absl::StrSplit(FLAGS_touch_fds, ',');
-  }
-  CHECK_EQ(touch_fds.size(), display_count + instance.touchpad_configs().size())
-      << "Number of touch FDs does not match the number of configured displays "
-         "and touchpads";
-  for (int i = 0; i < touch_fds.size(); i++) {
-    int touch_fd;
-    CHECK(absl::SimpleAtoi(touch_fds[i], &touch_fd))
-        << "Invalid touch_fd: " << touch_fds[i];
-    // Displays are listed first, then touchpads
-    auto label_prefix =
-        i < display_count ? kTouchscreenPrefix : kTouchpadPrefix;
-    auto device_idx = i < display_count ? i : i - display_count;
-    auto device_label = fmt::format("{}{}", label_prefix, device_idx);
-    auto touch_shared_fd = SharedFD::Dup(touch_fd);
-    if (FLAGS_multitouch) {
-      inputs_builder.WithMultitouchDevice(device_label, touch_shared_fd);
-    } else {
-      inputs_builder.WithTouchDevice(device_label, touch_shared_fd);
+    std::vector<std::string_view> touch_fds =
+        absl::StrSplit(FLAGS_touch_fds, ',');
+    CHECK_EQ(touch_fds.size(),
+             display_count + instance.touchpad_configs().size())
+        << "Number of touch FDs does not match the number of configured "
+           "displays "
+           "and touchpads";
+    for (int i = 0; i < touch_fds.size(); i++) {
+      int touch_fd;
+      CHECK(absl::SimpleAtoi(touch_fds[i], &touch_fd))
+          << "Invalid touch_fd: " << touch_fds[i];
+      // Displays are listed first, then touchpads
+      auto label_prefix =
+          i < display_count ? kTouchscreenPrefix : kTouchpadPrefix;
+      auto device_idx = i < display_count ? i : i - display_count;
+      auto device_label = fmt::format("{}{}", label_prefix, device_idx);
+      auto touch_shared_fd = SharedFD::Dup(touch_fd);
+      if (FLAGS_multitouch) {
+        inputs_builder.WithMultitouchDevice(device_label, touch_shared_fd);
+      } else {
+        inputs_builder.WithTouchDevice(device_label, touch_shared_fd);
+      }
+      close(touch_fd);
     }
-    close(touch_fd);
+  } else if (!FLAGS_touch_server_paths.empty()) {
+    std::vector<std::string> touch_paths =
+        absl::StrSplit(FLAGS_touch_server_paths, ',');
+    CHECK_EQ(touch_paths.size(),
+             display_count + instance.touchpad_configs().size())
+        << "Number of touch servers does not match the number of configured "
+           "displays and touchpads";
+    for (int i = 0; i < touch_paths.size(); i++) {
+      const std::string& touch_path = touch_paths[i];
+      // Displays are listed first, then touchpads
+      auto label_prefix =
+          i < display_count ? kTouchscreenPrefix : kTouchpadPrefix;
+      int device_idx = i < display_count ? i : i - display_count;
+      std::string device_label = fmt::format("{}{}", label_prefix, device_idx);
+      SharedFD touch_fd =
+          Fd::SocketLocalClient(touch_path, false, SOCK_STREAM).value_or(Fd());
+      if (FLAGS_multitouch) {
+        inputs_builder.WithMultitouchDevice(device_label, touch_fd);
+      } else {
+        inputs_builder.WithTouchDevice(device_label, touch_fd);
+      }
+    }
+  } else {
+    CHECK_EQ(0, display_count + instance.touchpad_configs().size())
+        << "Number of touch devices does not match the number of configured "
+           "displays and touchpads";
   }
-  if (FLAGS_rotary_fd >= 0) {
-    inputs_builder.WithRotary(SharedFD::Dup(FLAGS_rotary_fd));
-    close(FLAGS_rotary_fd);
-  }
+  CHECK(FLAGS_mouse_fd < 0 || FLAGS_mouse_server_path.empty())
+      << "Only one of --mouse_fd or --mouse_server_path can be used at a time";
   if (FLAGS_mouse_fd >= 0) {
     inputs_builder.WithMouse(SharedFD::Dup(FLAGS_mouse_fd));
     close(FLAGS_mouse_fd);
+  } else if (!FLAGS_mouse_server_path.empty()) {
+    inputs_builder.WithMouse(SharedFD::SocketLocalClient(
+        FLAGS_mouse_server_path, false, SOCK_STREAM));
   }
+  CHECK(FLAGS_gamepad_fd < 0 || FLAGS_gamepad_server_path.empty())
+      << "Only one of --gamepad_fd or --gamepad_server_path can be used at a "
+         "time";
   if (FLAGS_gamepad_fd >= 0) {
     inputs_builder.WithGamepad(SharedFD::Dup(FLAGS_gamepad_fd));
     close(FLAGS_gamepad_fd);
+  } else if (!FLAGS_gamepad_server_path.empty()) {
+    inputs_builder.WithGamepad(SharedFD::SocketLocalClient(
+        FLAGS_gamepad_server_path, false, SOCK_STREAM));
   }
+  CHECK(FLAGS_rotary_fd < 0 || FLAGS_rotary_server_path.empty())
+      << "Only one of --rotary_fd or --rotary_server_path can be used at a "
+         "time";
+  if (FLAGS_rotary_fd >= 0) {
+    inputs_builder.WithRotary(SharedFD::Dup(FLAGS_rotary_fd));
+    close(FLAGS_rotary_fd);
+  } else if (!FLAGS_rotary_server_path.empty()) {
+    inputs_builder.WithRotary(SharedFD::SocketLocalClient(
+        FLAGS_rotary_server_path, false, SOCK_STREAM));
+  }
+  CHECK(FLAGS_keyboard_fd < 0 || FLAGS_keyboard_server_path.empty())
+      << "Only one of --keyboard_fd or --keyboard_server_path can be used at a "
+         "time";
   if (FLAGS_keyboard_fd >= 0) {
     inputs_builder.WithKeyboard(SharedFD::Dup(FLAGS_keyboard_fd));
     close(FLAGS_keyboard_fd);
+  } else if (!FLAGS_keyboard_server_path.empty()) {
+    inputs_builder.WithKeyboard(SharedFD::SocketLocalClient(
+        FLAGS_keyboard_server_path, false, SOCK_STREAM));
   }
+  CHECK(FLAGS_switches_fd < 0 || FLAGS_switches_server_path.empty())
+      << "Only one of --switches_fd or --switches_server_path can be used at a "
+         "time";
   if (FLAGS_switches_fd >= 0) {
     inputs_builder.WithSwitches(SharedFD::Dup(FLAGS_switches_fd));
     close(FLAGS_switches_fd);
+  } else if (!FLAGS_switches_server_path.empty()) {
+    inputs_builder.WithSwitches(SharedFD::SocketLocalClient(
+        FLAGS_switches_server_path, false, SOCK_STREAM));
   }
 
   auto input_connector = std::move(inputs_builder).Build();
