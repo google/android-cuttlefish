@@ -8,9 +8,7 @@ use vhost::vhost_user::message::{
     VhostTransferStateDirection, VhostTransferStatePhase, VhostUserProtocolFeatures,
     VhostUserVirtioFeatures,
 };
-use vhost_user_backend::{
-    VhostUserBackendMut, VringRwLock, VringT,
-};
+use vhost_user_backend::{VhostUserBackendMut, VringRwLock, VringT};
 use virtio_bindings::bindings::{
     virtio_config::VIRTIO_F_NOTIFY_ON_EMPTY, virtio_config::VIRTIO_F_VERSION_1,
     virtio_ring::VIRTIO_RING_F_EVENT_IDX,
@@ -119,7 +117,9 @@ impl<S: EventSource> VhostUserBackendMut for VhostUserInput<S> {
 
     fn set_config(&mut self, offset: u32, buf: &[u8]) -> IoResult<()> {
         trace!("set_config: offset: {}, values: {:?}", offset, buf);
-        self.config.set_raw(offset, buf).map_err(|e| IoError::new(IoErrorKind::InvalidInput, e))
+        self.config
+            .set_raw(offset, buf)
+            .map_err(|e| IoError::new(IoErrorKind::InvalidInput, e))
     }
 
     fn handle_event(
@@ -132,7 +132,8 @@ impl<S: EventSource> VhostUserBackendMut for VhostUserInput<S> {
         match device_event {
             EVENT_QUEUE => {
                 trace!("event queue event");
-                self.send_pending_events(&vrings[EVENT_QUEUE as usize]).map_err(IoError::other)?;
+                self.send_pending_events(&vrings[EVENT_QUEUE as usize])
+                    .map_err(IoError::other)?;
             }
             STATUS_QUEUE => {
                 trace!("status queue event");
@@ -241,7 +242,9 @@ impl<S: EventSource> VhostUserInput<S> {
         {
             let mem = atomic_mem.memory();
             let head_index = avail_desc.head_index();
-            let mut reader = avail_desc.reader(&mem).context("Failed to get readable buffers")?;
+            let mut reader = avail_desc
+                .reader(&mem)
+                .context("Failed to get readable buffers")?;
             let bytes = reader.available_bytes();
             let mut buf = vec![0u8; bytes];
             reader.read_exact(&mut buf)?;

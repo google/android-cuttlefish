@@ -17,7 +17,11 @@ pub struct BufReader<R: Read + AsFd + Sync + Send> {
 impl<R: Read + AsFd + Sync + Send> BufReader<R> {
     /// Create a new BufReader.
     pub fn new(reader: R) -> BufReader<R> {
-        BufReader { buf: [0u8; 8192], size: 0, reader }
+        BufReader {
+            buf: [0u8; 8192],
+            size: 0,
+            reader,
+        }
     }
 
     /// Reads available bytes from the underlying reader. Returns number of bytes read during this
