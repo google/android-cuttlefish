@@ -225,9 +225,9 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
     }
     SetLoggers(
         {SeverityTarget::FromFd(log, MetadataLevel::FULL, LogFileSeverity())});
-    auto dev_null = SharedFD::Open("/dev/null", O_RDONLY);
-    if (!dev_null->IsOpen()) {
-      LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
+    Result<Fd> dev_null = Fd::Open("/dev/null", O_RDONLY);
+    if (!dev_null.has_value()) {
+      LOG(ERROR) << "Failed to open /dev/null: " << dev_null.error();
       std::exit(RunnerExitCodes::kDaemonizationError);
     }
     if (dev_null->UNMANAGED_Dup2(0) < 0) {
@@ -377,14 +377,15 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
               return;
             }
 
-            SharedFD restore_adbd_pipe = SharedFD::Open(
+            Result<Fd> restore_adbd_pipe = Fd::Open(
                 RestoreAdbdPipeName(config_.ForDefaultInstance()), O_WRONLY);
-            CHECK(restore_adbd_pipe->IsOpen())
+            CHECK(restore_adbd_pipe.has_value())
                 << "Error opening adbd restore pipe: "
-                << restore_adbd_pipe->StrError();
-            CHECK(cuttlefish::WriteAll(restore_adbd_pipe, "2") == 1)
-                << "Error writing to adbd restore pipe: "
-                << restore_adbd_pipe->StrError() << ". This is unrecoverable.";
+                << restore_adbd_pipe.error();
+            Result<void> write_res = WriteExact(*restore_adbd_pipe, "2");
+            CHECK(write_res.has_value())
+                << "Error writing to adbd restore pipe: " << write_res.error()
+                << ". This is unrecoverable.";
 
             // Restart network service in OpenWRT, broken on restore.
             CHECK(FileExists(instance_.grpc_socket_path() +

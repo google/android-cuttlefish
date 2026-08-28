@@ -17,7 +17,6 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include <iostream>
@@ -42,8 +41,6 @@
 #include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
@@ -105,6 +102,7 @@
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/io/string.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/pretty/vector.h"
@@ -297,13 +295,13 @@ Result<std::set<std::string>> PreservingOnResume(
   return preserving;
 }
 
-Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
-  SharedFD log_file;
+SharedFD SetLogger(std::string runtime_dir_parent) {
+  Result<SharedFD> log_file;
   if (InSandbox()) {
     log_file =
-        SharedFD::Open(absl::StrCat(runtime_dir_parent,
-                                    "/instances/cvd-1/logs/", kLogNameLauncher),
-                       O_WRONLY | O_APPEND);
+        Fd::Open(absl::StrCat(runtime_dir_parent, "/instances/cvd-1/logs/",
+                              kLogNameLauncher),
+                 O_WRONLY | O_APPEND);
   } else {
     while (runtime_dir_parent[runtime_dir_parent.size() - 1] == '/') {
       runtime_dir_parent =
@@ -311,22 +309,22 @@ Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
     }
     runtime_dir_parent =
         runtime_dir_parent.substr(0, FLAGS_instance_dir.rfind('/'));
-    log_file = SharedFD::Open(runtime_dir_parent, O_WRONLY | O_TMPFILE,
-                              S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    log_file = Fd::Open(runtime_dir_parent, O_WRONLY | O_TMPFILE,
+                        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
   }
-  if (!log_file->IsOpen()) {
-    LOG(ERROR) << "Could not open initial log file: " << log_file->StrError();
+  if (!log_file.has_value()) {
+    LOG(ERROR) << "Could not open initial log file: " << log_file.error();
   } else {
     std::vector<SeverityTarget> log_destinations = {
         SeverityTarget::FromFd(SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE,
                                ConsoleSeverity()),
-        SeverityTarget::FromFd(log_file, MetadataLevel::FULL,
+        SeverityTarget::FromFd(*log_file, MetadataLevel::FULL,
                                LogFileSeverity()),
 
     };
     SetLoggers(std::move(log_destinations), "");
   }
-  return log_file;
+  return log_file.value_or(Fd());
 }
 
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
@@ -357,24 +355,20 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
 
       // Add a delimiter to each log file so that we can clearly tell what
       // happened before vs after the restore.
-      const std::string snapshot_delimiter =
+      static constexpr std::string_view kSnapshotDelimiter =
           "\n\n\n"
           "============ SNAPSHOT RESTORE POINT ============\n"
           "Lines above are pre-snapshot.\n"
           "Lines below are post-restore.\n"
           "================================================\n"
           "\n\n\n";
-      for (const auto& instance : config.Instances()) {
-        const auto log_files =
-            CF_EXPECT(DirectoryContents(instance.PerInstanceLogPath("")));
-        for (const auto& filename : log_files) {
-          const std::string path = instance.PerInstanceLogPath(filename);
-          auto fd = SharedFD::Open(path, O_WRONLY | O_APPEND);
-          CF_EXPECT(fd->IsOpen(),
-                    "failed to open " << path << ": " << fd->StrError());
-          const ssize_t n = WriteAll(fd, snapshot_delimiter);
-          CF_EXPECT(n == snapshot_delimiter.size(),
-                    "failed to write to " << path << ": " << fd->StrError());
+      for (const CuttlefishConfig::InstanceSpecific& ins : config.Instances()) {
+        const std::vector<std::string> log_files =
+            CF_EXPECT(DirectoryContents(ins.PerInstanceLogPath("")));
+        for (const std::string_view filename : log_files) {
+          const std::string path = ins.PerInstanceLogPath(filename);
+          Fd fd = CF_EXPECT(Fd::Open(path, O_WRONLY | O_APPEND));
+          CF_EXPECT(WriteExact(fd, kSnapshotDelimiter));
         }
       }
     }
@@ -612,7 +606,7 @@ Result<AndroidBuilds> FindAndroidBuilds(
 }  // namespace
 
 Result<int> AssembleCvdMain(int argc, char** argv) {
-  auto log = CF_EXPECT(SetLogger(AbsolutePath(FLAGS_instance_dir)));
+  SharedFD log = SetLogger(AbsolutePath(FLAGS_instance_dir));
   VLOG(0) << "received flags: "
           << absl::StrJoin(std::vector<std::string>(argv + 1, argv + argc),
                            " ");
