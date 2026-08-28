@@ -16,6 +16,7 @@
 #include "cuttlefish/io/write_exact.h"
 
 #include <stddef.h>
+#include <string.h>
 
 #include <string>
 #include <string_view>
@@ -34,6 +35,11 @@ Result<void> WriteExact(Writer& writer, const char* buf, size_t size) {
     buf += data_written;
     size -= data_written;
   }
+  return {};
+}
+
+Result<void> WriteExact(Writer& writer, const char* buf) {
+  CF_EXPECT(WriteExact(writer, buf, strlen(buf)));
   return {};
 }
 

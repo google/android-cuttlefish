@@ -25,7 +25,6 @@ cf_cc_binary(
     name = "assemble_cvd",
     srcs = ["assemble_cvd.cc"],
     deps = [
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
@@ -87,6 +86,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/feature:inject",
         "//cuttlefish/host/libs/log_names",
         "//cuttlefish/io:string",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/posix:remove",
         "//cuttlefish/posix:symlink",
         "//cuttlefish/pretty:vector",
