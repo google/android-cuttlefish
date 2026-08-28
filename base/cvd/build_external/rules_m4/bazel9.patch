@@ -32,3 +32,16 @@ index de8588f..f3e1b1d 100644
  M4_LINKOPTS = select({{
      "//:cc_compiler_msvc": [
          # LNK4001: no object files specified; libraries used
+diff --git a/m4/internal/versions.bzl b/m4/internal/versions.bzl
+index 548c772..cf12345 100644
+--- a/m4/internal/versions.bzl
++++ b/m4/internal/versions.bzl
+@@ -17,6 +17,8 @@
+ """Supported versions of GNU M4."""
+
+ _MIRRORS = [
++    "https://mirrors.ocf.berkeley.edu/gnu/m4/",
++    "https://mirrors.rit.edu/gnu/m4/",
+     "https://mirrors.kernel.org/gnu/m4/",
+     "https://ftp.gnu.org/gnu/m4/",
+ ]

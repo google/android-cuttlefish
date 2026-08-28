@@ -1,0 +1,13 @@
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "freetype",
+    build_file = "@//build_external/freetype:BUILD.freetype.bazel",
+    strip_prefix = "freetype-2.13.3",
+    urls = [
+        "https://mirrors.ocf.berkeley.edu/nongnu/freetype/freetype-2.13.3.tar.gz",
+        "https://download-mirror.savannah.gnu.org/releases/freetype/freetype-2.13.3.tar.gz",
+        "https://download.savannah.gnu.org/releases/freetype/freetype-2.13.3.tar.gz",
+    ],
+    sha256 = "5c3a8e78f7b24c20b25b54ee575d6daa40007a5f4eea2845861c3409b3021747",
+)
