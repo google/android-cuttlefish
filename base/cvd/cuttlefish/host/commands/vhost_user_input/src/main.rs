@@ -7,6 +7,7 @@ mod vhu_input;
 mod vio_input;
 
 use std::fs;
+use std::io::ErrorKind;
 use std::os::fd::{AsRawFd, FromRawFd, IntoRawFd, OwnedFd};
 use std::os::unix::net::UnixListener;
 use std::str::FromStr;
@@ -14,7 +15,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
-use log::{info, LevelFilter};
+use log::{error, info, LevelFilter};
 use vhost::vhost_user::{Error as VError, Listener};
 use vhost_user_backend::{Error as VHUError, VhostUserDaemon};
 use vm_memory::{GuestMemoryAtomic, GuestMemoryMmap};
@@ -36,9 +37,12 @@ struct Args {
     /// Path to a file specifying the device's config in JSON format.
     #[arg(short, long, required = true)]
     device_config: String,
-    /// A file descriptor for the unix socket event sources will connect to.
+    /// File descriptor for the unix socket event sources will connect to.
     #[arg(long, default_value_t = -1i32)]
     server_fd: i32,
+    /// Path to the event capture unix socket.
+    #[arg(long, default_value_t = String::from(""))]
+    capture_server_path: String,
 }
 
 fn init_logging(verbosity: &str) -> Result<()> {
@@ -58,7 +62,9 @@ fn create_and_run_device<T: EventSource + 'static>(
     server_fd: OwnedFd,
 ) -> Result<()> {
     loop {
-        let event_source_clone = event_source.try_clone().context("Failed to clone event source")?;
+        let event_source_clone = event_source
+            .try_clone()
+            .context("Failed to clone event source")?;
         let event_source_fd = event_source_clone.as_fd().as_raw_fd();
         // vhost::vhost_user::Listener and UnixListener take ownership of the underlying fds and
         // close them when dropped, so dups of the original fds are used in each iteration.
@@ -138,9 +144,26 @@ fn main() -> Result<()> {
     if args.server_fd >= 0 {
         let server_fd = inherited_fd::take_fd_ownership(args.server_fd)
             .context("Failed to take ownership of socket fd")?;
-        let event_source = UnixSocketEventSource::new(UnixListener::from(server_fd))?;
+        let event_source = if args.capture_server_path.is_empty() {
+            UnixSocketEventSource::new(UnixListener::from(server_fd))?
+        } else {
+            match fs::remove_file(&args.capture_server_path) {
+                Err(e) if e.kind() != ErrorKind::NotFound => {
+                    error!("Failed to remove existing capture socket: {:?}", e);
+                }
+                _ => {}
+            }
+            UnixSocketEventSource::with_capture_server(
+                UnixListener::from(server_fd),
+                UnixListener::bind(&args.capture_server_path)
+                    .context("Failed to create capture server unix socket")?,
+            )?
+        };
         create_and_run_device(event_source, device_config, socket_fd)?;
     } else {
+        if !args.capture_server_path.is_empty() {
+            bail!("--capture_server_path is only supported with --server_fd");
+        }
         let event_source = StdioEventSource::new();
         create_and_run_device(event_source, device_config, socket_fd)?;
     };
