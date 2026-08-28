@@ -19,17 +19,16 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include <string>
-
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "gflags/gflags.h"
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
+#include "cuttlefish/io/write_exact.h"
+#include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 DEFINE_int32(log_pipe_fd, -1,
@@ -37,55 +36,51 @@ DEFINE_int32(log_pipe_fd, -1,
              "read the logs. If -1 is given the socket is created according to "
              "the instance configuration");
 
-int main(int argc, char** argv) {
-  cuttlefish::DefaultSubprocessLogging(argv);
+namespace cuttlefish {
+namespace {
+
+Result<void> Main(int argc, char** argv) {
+  DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto config = cuttlefish::CuttlefishConfig::Get();
-
-  CHECK(config) << "Could not open cuttlefish config";
-
-  auto instance = config->ForDefaultInstance();
+  const CuttlefishConfig::InstanceSpecific& instance =
+      CF_EXPECT(CuttlefishConfig::Get())->ForDefaultInstance();
 
   // Disable default handling of SIGPIPE
-  struct sigaction new_action{}, old_action{};
+  struct sigaction new_action{};
   new_action.sa_handler = SIG_IGN;
-  sigaction(SIGPIPE, &new_action, &old_action);
+  sigaction(SIGPIPE, &new_action, nullptr);
 
-  cuttlefish::SharedFD pipe;
+  SharedFD pipe;
 
   if (FLAGS_log_pipe_fd < 0) {
-    const std::string log_name = cuttlefish::LogcatPipeName(instance);
-    pipe = cuttlefish::SharedFD::Open(log_name, O_RDONLY);
+    pipe = CF_EXPECT(Fd::Open(LogcatPipeName(instance), O_RDONLY));
   } else {
-    pipe = cuttlefish::SharedFD::Dup(FLAGS_log_pipe_fd);
+    pipe = CF_EXPECT(Fd::Dup(FLAGS_log_pipe_fd));
     close(FLAGS_log_pipe_fd);
   }
 
-  if (!pipe->IsOpen()) {
-    LOG(ERROR) << "Error opening log pipe: " << pipe->StrError();
-    return 2;
-  }
-
-  auto path = cuttlefish::LogcatPath(instance);
-  auto logcat_file = cuttlefish::SharedFD::Open(
-      path.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
+  Fd logcat_file = CF_EXPECT(
+      Fd::Open(LogcatPath(instance), O_CREAT | O_APPEND | O_WRONLY, 0666));
 
   // Server loop
   while (true) {
     char buff[1024];
-    cuttlefish::Result<uint64_t> data_read = pipe->Read(buff, sizeof(buff));
-    if (!data_read.has_value()) {
-      LOG(ERROR) << "Could not read logcat: " << pipe->StrError();
-      break;
-    }
-    auto written = cuttlefish::WriteAll(logcat_file, buff, *data_read);
-    CHECK(written == data_read)
-        << "Error writing to log file: " << logcat_file->StrError()
-        << ". This is unrecoverable.";
+    uint64_t data_read = CF_EXPECT(pipe->Read(buff, sizeof(buff)));
+    CF_EXPECT(WriteExact(logcat_file, buff, data_read));
   }
 
-  logcat_file->Close();
-  pipe->Close();
+  return {};
+}
+
+}  // namespace
+}  // namespace cuttlefish
+
+int main(int argc, char** argv) {
+  cuttlefish::Result<void> res = cuttlefish::Main(argc, argv);
+  if (!res.has_value()) {
+    LOG(ERROR) << res.error();
+    return -1;
+  }
   return 0;
 }
