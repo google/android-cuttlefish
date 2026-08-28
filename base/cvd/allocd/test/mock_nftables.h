@@ -35,13 +35,13 @@ class MockNftables : public Nftables {
               (std::string_view family, std::string_view table,
                std::string_view chain, std::string_view content),
               (override));
-  MOCK_METHOD(Result<uint32_t>, AddRule,
+  MOCK_METHOD(Result<uint64_t>, AddRule,
               (std::string_view family, std::string_view table,
                std::string_view chain, std::string_view content),
               (override));
   MOCK_METHOD(Result<void>, DeleteRule,
               (std::string_view family, std::string_view table,
-               std::string_view chain, uint32_t handle),
+               std::string_view chain, uint64_t handle),
               (override));
 };
 

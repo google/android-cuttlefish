@@ -104,7 +104,7 @@ Result<void> NftablesNft::EnsureChain(std::string_view family,
   return {};
 }
 
-Result<uint32_t> NftablesNft::AddRule(std::string_view family,
+Result<uint64_t> NftablesNft::AddRule(std::string_view family,
                                       std::string_view table,
                                       std::string_view chain,
                                       std::string_view content) {
@@ -127,7 +127,7 @@ Result<uint32_t> NftablesNft::AddRule(std::string_view family,
   for (const auto& item : json["nftables"]) {
     if (item.isMember("add") && item["add"].isMember("rule") &&
         item["add"]["rule"].isMember("handle")) {
-      return item["add"]["rule"]["handle"].asUInt();
+      return item["add"]["rule"]["handle"].asUInt64();
     }
   }
 
@@ -136,7 +136,7 @@ Result<uint32_t> NftablesNft::AddRule(std::string_view family,
 
 Result<void> NftablesNft::DeleteRule(std::string_view family,
                                      std::string_view table,
-                                     std::string_view chain, uint32_t handle) {
+                                     std::string_view chain, uint64_t handle) {
   Command cmd{CF_EXPECT(BinaryPath())};
   cmd.AddParameter("delete");
   cmd.AddParameter("rule");

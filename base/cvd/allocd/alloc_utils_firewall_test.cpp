@@ -30,6 +30,10 @@ using ::testing::Return;
 TEST(AllocUtilsFirewallTest, SetupFirewallSuccess) {
   MockNftables mock_nft;
 
+  EXPECT_CALL(mock_nft, DeleteTable("ip", "cf_cvdalloc_nat"))
+      .WillOnce(Return(Result<void>{}));
+  EXPECT_CALL(mock_nft, DeleteTable("bridge", "cf_cvdalloc_bridge"))
+      .WillOnce(Return(Result<void>{}));
   EXPECT_CALL(mock_nft, EnsureTable("ip", "cf_cvdalloc_nat"))
       .WillOnce(Return(Result<void>{}));
   EXPECT_CALL(mock_nft, EnsureChain("ip", "cf_cvdalloc_nat", "postrouting", _))
@@ -45,6 +49,10 @@ TEST(AllocUtilsFirewallTest, SetupFirewallSuccess) {
 TEST(AllocUtilsFirewallTest, SetupFirewallWithByob) {
   MockNftables mock_nft;
 
+  EXPECT_CALL(mock_nft, DeleteTable("ip", "cf_cvdalloc_nat"))
+      .WillOnce(Return(Result<void>{}));
+  EXPECT_CALL(mock_nft, DeleteTable("bridge", "cf_cvdalloc_bridge"))
+      .WillOnce(Return(Result<void>{}));
   EXPECT_CALL(mock_nft, EnsureTable("ip", "cf_cvdalloc_nat"))
       .WillOnce(Return(Result<void>{}));
   EXPECT_CALL(mock_nft, EnsureChain("ip", "cf_cvdalloc_nat", "postrouting", _))

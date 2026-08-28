@@ -100,6 +100,10 @@ Result<std::string> SearchForDnsmasq() {
 }  // namespace
 
 Result<void> SetupFirewall(Nftables& nft, bool setup_byob) {
+  // tear down any pre-existing cvdalloc tables first so
+  // repeated --setup runs do not accumulate duplicate rules.
+  CF_EXPECT(TeardownFirewall(nft));
+
   CF_EXPECT(nft.EnsureTable(kFamilyIp, kNatTable));
   CF_EXPECT(nft.EnsureChain(kFamilyIp, kNatTable, kPostroutingChain,
                             kNatPostroutingChainDef));

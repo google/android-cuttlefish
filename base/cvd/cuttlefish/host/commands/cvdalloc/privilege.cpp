@@ -107,10 +107,10 @@ Result<void> ValidateCvdallocBinary(std::string_view path) {
 #if defined(__linux__)
   (void)st;
   /* Try and determine if the cvdalloc binary has any capabilities. */
-  struct vfs_cap_data cap;
+  struct vfs_cap_data cap = {};
   ssize_t s = getxattr(path.data(), XATTR_NAME_CAPS, &cap, sizeof(cap));
   CF_EXPECTF(
-      s != 1 && (cap.data[0].permitted & (1 << CAP_NET_ADMIN)) != 0,
+      s != -1 && (cap.data[0].permitted & (1 << CAP_NET_ADMIN)) != 0,
       "cvdalloc binary does not have permissions to allocate resources.\n"
       "As root, please\n\n    setcap cap_net_admin,cap_net_bind_service,"
       "cap_net_raw=+ep `realpath {}`",

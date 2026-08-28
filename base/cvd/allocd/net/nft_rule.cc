@@ -32,12 +32,12 @@ namespace cuttlefish {
 Result<NftRule> NftRule::Create(Nftables& nft, std::string_view family,
                                 std::string_view table, std::string_view chain,
                                 std::string_view content) {
-  uint32_t handle = CF_EXPECT(nft.AddRule(family, table, chain, content));
+  uint64_t handle = CF_EXPECT(nft.AddRule(family, table, chain, content));
   return NftRule(&nft, family, table, chain, handle);
 }
 
 NftRule::NftRule(Nftables* nft, std::string_view family, std::string_view table,
-                 std::string_view chain, uint32_t handle)
+                 std::string_view chain, uint64_t handle)
     : nft_(nft),
       family_(family),
       table_(table),

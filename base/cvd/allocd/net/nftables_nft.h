@@ -43,11 +43,11 @@ class NftablesNft : public Nftables {
   Result<void> EnsureChain(std::string_view family, std::string_view table,
                            std::string_view chain,
                            std::string_view content) override;
-  Result<uint32_t> AddRule(std::string_view family, std::string_view table,
+  Result<uint64_t> AddRule(std::string_view family, std::string_view table,
                            std::string_view chain,
                            std::string_view content) override;
   Result<void> DeleteRule(std::string_view family, std::string_view table,
-                          std::string_view chain, uint32_t handle) override;
+                          std::string_view chain, uint64_t handle) override;
 };
 
 }  // namespace cuttlefish

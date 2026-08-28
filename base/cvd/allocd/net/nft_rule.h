@@ -35,7 +35,7 @@ class NftRule {
 
   NftRule() = delete;
   NftRule(Nftables* nft, std::string_view family, std::string_view table,
-          std::string_view chain, uint32_t handle);
+          std::string_view chain, uint64_t handle);
   ~NftRule();
 
   NftRule(NftRule&& r) noexcept;
@@ -48,7 +48,7 @@ class NftRule {
   std::string family_;
   std::string table_;
   std::string chain_;
-  uint32_t handle_ = 0;
+  uint64_t handle_ = 0;
 };
 
 }  // namespace cuttlefish
