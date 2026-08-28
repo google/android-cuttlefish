@@ -522,3 +522,36 @@ jobs:
         # Run create_from_images_zip_test e2e tests
         cd e2etests
         bazel test orchestration/create_from_images_zip_test:create_from_images_zip_test_test
+  presubmit-success:
+    name: presubmit-success
+    if: always()
+    runs-on: ubuntu-22.04
+    needs:
+      - buildozer
+      - staticcheck
+      - run-frontend-unit-tests
+      - run-frontend-api-documentation-check
+      - run-cvd-unit-tests
+      - bazel-9-readiness
+      - build-debian-package-amd64
+      - build-debian-package-arm64
+      - build-docker-image-amd64
+      - build-docker-image-arm64
+      - e2e-tests-orchestration-build-image
+      - e2e-tests-orchestration-runner-1
+      - e2e-tests-orchestration-runner-2
+      - e2e-tests-orchestration-runner-3
+      - e2e-tests-orchestration-runner-special
+      - docker-image-check
+      - podman-image-check
+    steps:
+      - name: Fail if any dependency failed or was cancelled
+        run: |
+          results='${{ join(needs.*.result, ' ') }}'
+          echo "dependency results: ${results}"
+          for r in ${results}; do
+            case "${r}" in
+              failure|cancelled)
+                echo "A required job did not pass."; exit 1;;
+            esac
+          done
