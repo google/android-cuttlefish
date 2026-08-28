@@ -51,7 +51,8 @@ static_assert(sizeof(vendor_boot_img_hdr_v4) >= sizeof(vendor_boot_img_hdr_v3));
     case 4:
       return VendorBootImage(std::move(rd), v4);
     default:
-      return CF_ERRF("Unknown header version '{}'", v4.header_version);
+      return CF_ERRF("Unknown header version '{}'",
+                     static_cast<uint32_t>(v4.header_version));
   }
 }
 
