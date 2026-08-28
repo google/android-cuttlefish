@@ -1,8 +1,223 @@
-cuttlefish-common (1.57.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.57.0) unstable; urgency=medium
 
-  * 
+  * Mark release 1.56.0 as unstable by @Databean in https://github.com/google/android-cuttlefish/pull/2767
+  * Start development on 1.57 by @Databean in https://github.com/google/android-cuttlefish/pull/2768
+  * Fix some mixed build tests by @jmacnak in https://github.com/google/android-cuttlefish/pull/2765
+  * Enforce clang-format on common/libs/confui and clean up build targets by @Databean in https://github.com/google/android-cuttlefish/pull/2752
+  * Deduplicate ANSI constants around the codebase by @Databean in https://github.com/google/android-cuttlefish/pull/2766
+  * Enforce clang-format on image_aggregator by @Databean in https://github.com/google/android-cuttlefish/pull/2771
+  * Enforce clang-format on host/libs/zip by @Databean in https://github.com/google/android-cuttlefish/pull/2772
+  * Enforce clang-format on host/libs/confui by @Databean in https://github.com/google/android-cuttlefish/pull/2773
+  * Enforce misc-include-cleaner and clang-format in console_forwarder by @Databean in https://github.com/google/android-cuttlefish/pull/2775
+  * cvd selectors: Prompt once to select instance by @jemoreira in https://github.com/google/android-cuttlefish/pull/2751
+  * Ignore ancient builds with higher safe levels by @Databean in https://github.com/google/android-cuttlefish/pull/2776
+  * Suppress external libwebrtc compiler warning by @cjreynol in https://github.com/google/android-cuttlefish/pull/2777
+  * Enforce misc-include-cleaner on common/libs/confui by @Databean in https://github.com/google/android-cuttlefish/pull/2778
+  * Cherry-pick of ag/40371614 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2789
+  * Enforce clang-format on host/libs/web by @Databean in https://github.com/google/android-cuttlefish/pull/2790
+  * Drop logcat special handling for lines without tags by @Databean in https://github.com/google/android-cuttlefish/pull/2779
+  * base/setup-nodejs-env: fail fast on unsupported architectures by @monkey-jsun in https://github.com/google/android-cuttlefish/pull/2788
+  * web ui: Better handling when device has no audio by @jemoreira in https://github.com/google/android-cuttlefish/pull/2791
+  * Don't silently drop --extra_bootconfig_args overrides. by @monkey-jsun in https://github.com/google/android-cuttlefish/pull/2785
+  * assemble_cvd: default riscv64 to guest-side keymint+gatekeeper by @monkey-jsun in https://github.com/google/android-cuttlefish/pull/2784
+  * Do not check if files are identical before copying cached artifacts by @0405ysj in https://github.com/google/android-cuttlefish/pull/2781
+  * Fix double-write of bootconfig partition. by @monkey-jsun in https://github.com/google/android-cuttlefish/pull/2786
+  * Enforce clang-format on `cuttlefish/common/libs/utils` by @Databean in https://github.com/google/android-cuttlefish/pull/2793
+  * cvd logs: Allow printing logs without --print by @jemoreira in https://github.com/google/android-cuttlefish/pull/2774
+  * Use IO types in cli/commands/monitor/display.cc by @Databean in https://github.com/google/android-cuttlefish/pull/2794
+  * Enforce clang-format on assemble_cvd by @Databean in https://github.com/google/android-cuttlefish/pull/2797
+  * Enforce clang-format on host/libs/config by @Databean in https://github.com/google/android-cuttlefish/pull/2799
+  * Enforce clang-format on run_cvd by @Databean in https://github.com/google/android-cuttlefish/pull/2800
+  * Revert Ensure Proper FIFO Provisioning for Shared UWB Services by @SuperStrongDinosaur in https://github.com/google/android-cuttlefish/pull/2795
+  * package: handle empty common prefix in _remove_prefix by @monkey-jsun in https://github.com/google/android-cuttlefish/pull/2787
+  * Fallback to looking at the parent process cmdline if parent process exe is locked down by @Databean in https://github.com/google/android-cuttlefish/pull/2804
+  * Enforce clang-format on `cvd` by @Databean in https://github.com/google/android-cuttlefish/pull/2805
+  * Remove accidentally split bootconfig arg constant by @jmacnak in https://github.com/google/android-cuttlefish/pull/2801
+  * Use host monotonic clock for timestamp by @chihchiachen in https://github.com/google/android-cuttlefish/pull/2802
+  * Ignore unknown fields in graphics detector parsing by @jmacnak in https://github.com/google/android-cuttlefish/pull/2806
+  * Enforce clang-format on more of `cuttlefish/host` by @Databean in https://github.com/google/android-cuttlefish/pull/2809
+  * Remove `New*` functions for `CommandHandler` subclasses by @Databean in https://github.com/google/android-cuttlefish/pull/2816
+  * Crosvm for vhost user gpu by @jmacnak in https://github.com/google/android-cuttlefish/pull/2726
+  * Enforce clang-format on cuttlefish/host/commands by @Databean in https://github.com/google/android-cuttlefish/pull/2818
+  * Do not launch WebRtcServer for GpuMode::None by @chihchiachen in https://github.com/google/android-cuttlefish/pull/2820
+  * Enforce clang-format on cuttlefish/host/libs by @Databean in https://github.com/google/android-cuttlefish/pull/2817
+  * Validate clang-format and misc-include-cleaner on allocd by @Databean in https://github.com/google/android-cuttlefish/pull/2807
+  * Start enforcing BUILD.bazel file formatting within bazel on some files by @Databean in https://github.com/google/android-cuttlefish/pull/2825
+  * Report `cvd` stack traces failing `main` only to the log file by @Databean in https://github.com/google/android-cuttlefish/pull/2826
+  * Enforce buildifier formatting in 4 directories in build_external by @Databean in https://github.com/google/android-cuttlefish/pull/2827
+  * Move the TerminalColors type to ansi_codes by @Databean in https://github.com/google/android-cuttlefish/pull/2834
+  * Don't show monitor errors for a missing `assemble_cvd.log` by @Databean in https://github.com/google/android-cuttlefish/pull/2833
+  * Enforce clang-format formatting on host/libs/wayland by @Databean in https://github.com/google/android-cuttlefish/pull/2838
+  * Define a `should_color` library and use it by @Databean in https://github.com/google/android-cuttlefish/pull/2836
+  * Misc clang-format enforcement by @Databean in https://github.com/google/android-cuttlefish/pull/2841
+  * Implement custom lens_facing control for emulated_camera_mplane. by @ser-io in https://github.com/google/android-cuttlefish/pull/2842
+  * Remove the `cvd_common::[Args,Envs]` aliases. by @Databean in https://github.com/google/android-cuttlefish/pull/2837
+  * Generate shader `.inl` files at build time by @Databean in https://github.com/google/android-cuttlefish/pull/2843
+  * Use skiavk for hwui on gfxstream+angle based modes by @jmacnak in https://github.com/google/android-cuttlefish/pull/2830
+  * Split //cuttlefish/host/libs/wayland by @Databean in https://github.com/google/android-cuttlefish/pull/2844
+  * Create a //cuttlefish/process library by @Databean in https://github.com/google/android-cuttlefish/pull/2847
+  * Fix missing include in cuttlefish/host/commands/cvd/utils/common.h by @Databean in https://github.com/google/android-cuttlefish/pull/2850
+  * Default lens_facing to EXTERNAL. by @ser-io in https://github.com/google/android-cuttlefish/pull/2849
+  * Support linting with depend-on-what-you-use and default-enable it by @Databean in https://github.com/google/android-cuttlefish/pull/2852
+  * Remove host configuration checks from most commands by @cjreynol in https://github.com/google/android-cuttlefish/pull/2858
+  * Split apart //cuttlefish/process:command_subprocess by @Databean in https://github.com/google/android-cuttlefish/pull/2855
+  * Enforce buildifier formatting in cuttlefish/bazel/*.bzl by @Databean in https://github.com/google/android-cuttlefish/pull/2832
+  * Always run snapshot_hook_* as root by @Databean in https://github.com/google/android-cuttlefish/pull/2860
+  * depend-on-what-you-use fixes: `pretty`, `io`, `flag_parser`, `result` by @Databean in https://github.com/google/android-cuttlefish/pull/2859
+  * Better cvd acloud error by @cjreynol in https://github.com/google/android-cuttlefish/pull/2861
+  * Support ps subcommand on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2814
+  * Delete v1 metrics by @cjreynol in https://github.com/google/android-cuttlefish/pull/2835
+  * Show sizes of monitored files in `cvd monitor` by @Databean in https://github.com/google/android-cuttlefish/pull/2865
+  * Use the "alternate terminal buffer" for `cvd monitor` by @Databean in https://gihub.com/google/android-cuttlefish/pull/2866
+  * Move RecursivelyRemoveDirectory out of utils:files by @Databean in https://github.com/google/android-cuttlefish/pull/2867
+  * Trim fetch output by @cjreynol in https://github.com/google/android-cuttlefish/pull/2868
+  * Remove unused variables from cuttlefish-integration.postinst by @dxapd in https://github.com/google/android-cuttlefish/pull/2864
+  * Extract //cuttlefish/files:copy from utils:files by @Databean in https://github.com/google/android-cuttlefish/pull/2871
+  * UI: Better icon for unlock screen button by @jemoreira in https://github.com/google/android-cuttlefish/pull/2874
+  * Fix cvd start --help by @jemoreira in https://github.com/google/android-cuttlefish/pull/2869
+  * Add Weaver TA to secure_env by @karunae in https://github.com/google/android-cuttlefish/pull/2803
+  * Extract //cuttlefish/files:file_device_id from utils:files by @Databean in https://github.com/google/android-cuttlefish/pull/2875
+  * Explicitly reset the cursor in the monitor view by @Databean in https://github.com/google/android-cuttlefish/pull/2879
+  * Extract //cuttlefish/files:file_exists from utils:files by @Databean in https://github.com/google/android-cuttlefish/pull/2880
+  * Improve the LaunchSingleInstance in cvd start by @SuperStrongDinosaur in https://github.com/google/android-cuttlefish/pull/2812
+  * #VibeCoding Support AT+CEID and AT+CATR in modem simulator by @illusionaire in https://github.com/google/android-cuttlefish/pull/2876
+  * assemble_cvd: Support quiescent boot for U-Boot by @kinshu-mangal in https://github.com/google/android-cuttlefish/pull/2877
+  * cuttlefish: Add netsim_modem CLI flag and route cellular modem over VSOCK to netsimd by @schilit in https://github.com/google/android-cuttlefish/pull/2745
+  * educe log volume from libwebrtc by @jemoreira in https://github.com/google/android-cuttlefish/pull/2882
+  * Create a "monitor source" interface by @Databean in https://github.com/google/android-cuttlefish/pull/2881
+  * Enforce depend-on-what-you-use for allocd by @Databean in https://github.com/google/android-cuttlefish/pull/2889
+  * Enforce depend-on-what-you-use on cvd/cli by @Databean in https://github.com/google/android-cuttlefish/pull/2890
+  * Enforce depend-on-what-you-use on cuttlefish/process by @Databean in https://github.com/google/android-cuttlefish/pull/2893
+  * Integrate notifications into MonitorSource by @Databean in https://github.com/google/android-cuttlefish/pull/2892
+  * More depend-on-what-you-use and cf_build_test enforcement by @Databean in https://github.com/google/android-cuttlefish/pull/2896
+  * Migrate from android::base::expected to tl::expected by @Databean in https://github.com/google/android-cuttlefish/pull/2897
+  * Enable multi queue emulation when needed for hwui on skiavk by @jmacnak in https://github.com/google/android-cuttlefish/pull/2887
+  * Replace most uses of `Trace()` in tests with result matchers by @Databean in https://github.com/google/android-cuttlefish/pull/2902
+  * Remove remaining use of android::base::expected in result/error_type.h by @Databean in https://github.com/google/android-cuttlefish/pull/2904
+  * Enforce DWYU in commands/assemble_cvd by @Databean in https://github.com/google/android-cuttlefish/pull/2905
+  * Updating README to include deps by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2888
+  * Add support for Guest Lavapipe GPU mode by @jmacnak in https://github.com/google/android-cuttlefish/pull/2873
+  * Move StackTrace[Error,Entry] formatting into the .cc file by @Databean in https://github.com/google/android-cuttlefish/pull/2907
+  * Fixes for the modem simulator by @llfhdskf in https://github.com/google/android-cuttlefish/pull/2899
+  * Enforce misc-include-cleaner, build_test, DWYU for assemble_cvd/flags by @Databean in https://github.com/google/android-cuttlefish/pull/2911
+  * Remove depend_on_what_you_use_enabled = False from run_cvd/launch by @Databean in https://github.com/google/android-cuttlefish/pull/2912
+  * Fix dependency issues in `cvd/fetch`  by @Databean in https://github.com/google/android-cuttlefish/pull/2862
+  * Refactor instance manager stop by @Databean in https://github.com/google/android-cuttlefish/pull/2846
+  * Enforce DWYU and build_test on libs/web by @Databean in https://github.com/google/android-cuttlefish/pull/2915
+  * Return a Result<siginfo_t> from Subprocess::Wait by @Databean in https://github.com/google/android-cuttlefish/pull/2815
+  * Extract AreHardLinked out of utils:files by @Databean in https://github.com/google/android-cuttlefish/pull/2914
+  * Emulate signal gain for emulated_camera_mplane. by @ser-io in https://github.com/google/android-cuttlefish/pull/2913
+  * Extract LinkOrCopy from utils:files by @Databean in https://github.com/google/android-cuttlefish/pull/2919
+  * Test for logspam by @jmacnak in https://github.com/google/android-cuttlefish/pull/2895
+  * build_test, depend-on-what-you-use, misc-include-cleaner: 5 libraries by @Databean in https://github.com/google/android-cuttlefish/pull/2916
+  * Extract DirectoryContents from utils:files by @Databean in https://github.com/google/android-cuttlefish/pull/2924
+  * Update compile_commands.json generator by @Databean in https://github.com/google/android-cuttlefish/pull/2926
+  * Add `-e` and `--monitor_verbosity` to `cvd monitor` by @Databean in https://github.com/google/android-cuttlefish/pull/2921
+  * Implement the Reader interface on FileInstance by @Databean in https://github.com/google/android-cuttlefish/pull/2928
+  * build_test, DWYU, misc-include-cleaner: assemble_cvd/{boot_image,disk} by @Databean in https://github.com/google/android-cuttlefish/pull/2930
+  * Reapply "Add NVENC AV1 hardware video encoding for WebRTC" by @jemoreira in https://github.com/google/android-cuttlefish/pull/2863
+  * Report on progress of substitution at `cvd fetch` time by @Databean in https://github.com/google/android-cuttlefish/pull/2936
+  * Add a "--host_substitution=only" mode by @Databean in https://github.com/google/android-cuttlefish/pull/2937
+  * Fix file already exist error while running substitute in Docker by @k311093 in https://github.com/google/android-cuttlefish/pull/2885
+  * Enforce build_test, DWYU, and misc-include-cleaner on image_aggregator by @Databean in https://github.com/google/android-cuttlefish/pull/2939
+  * Fix build warnings in vhost_user_media by @Databean in https://github.com/google/android-cuttlefish/pull/2944
+  * Cleanup MODULE.bazel by @Databean in https://github.com/google/android-cuttlefish/pull/2945
+  * cvd: Update --media flag format to [type]:[key=value] by @ser-io in https://github.com/google/android-cuttlefish/pull/2947
+  * Don't run DWYU when layering_check is disabled by @Databean in https://github.com/google/android-cuttlefish/pull/2938
+  * Enforce build_test, DWYU, and misc-include-cleaner on casimir_control_server by @Databean in https://github.com/google/android-cuttlefish/pull/2946
+  * Support per-target clang-tidy configurations, specifically for misc-include-cleaner by @Databean in https://github.com/google/android-cuttlefish/pull/2950
+  * Add gRPC preprocessor definition by @Databean in https://github.com/google/android-cuttlefish/pull/2956
+  * Enforce include-cleaner in `assemble_cvd` by @Databean in https://github.com/google/android-cuttlefish/pull/2955
+  * Add an optional A/B pvmfw partition to the OS composite disk by @dimorinny in https://github.com/google/android-cuttlefish/pull/2953
+  * Fix run_cvd abort on graceful guest VM shutdown by @SuperStrongDinosaur in https://github.com/google/android-cuttlefish/pull/2954
+  * Fix handling build timestamps without milliseconds by @Databean in https://github.com/google/android-cuttlefish/pull/2965
+  * Extract DirectoryExists from utils:files by @Databean in https://github.com/google/android-cuttlefish/pull/2929
+  * Fix silent delete failure from bashism by @dxapd in https://github.com/google/android-cuttlefish/pull/2966
+  * Enforce misc-include-cleaner on cuttlefish/common/libs/utils by @Databean in https://github.com/google/android-cuttlefish/pull/2958
+  * Preserve weaver_storage.json on resume by @karunae in https://github.com/google/android-cuttlefish/pull/2933
+  * [emulated_camera_mplane] Support dynamic resolution selection. by @ser-io in https://github.com/google/android-cuttlefish/pull/2957
+  * Extract RealPath from utils:files by @Databean in https://github.com/google/android-cuttlefish/pull/2971
+  * #VibeCoding cuttlefish: Add iccprofile_for_sim1.xml and CTS profile for dual-SIM support by @illusionaire in https://github.com/google/android-cuttlefish/pull/2922
+  * cuttlefish: Wire up Netsim UDS socket (--grpc_uds_path) by @AlpineOolong in https://github.com/google/android-cuttlefish/pull/2851
+  * DWYU and include-cleaner: host/libs/{audio_connector,avb,command_util,config} by @Databean in https://github.com/google/android-cuttlefish/pull/2976
+  * Add a `base_dir` attribute for the package_files rule by @Databean in https://github.com/google/android-cuttlefish/pull/2978
+  * feat(cvd): Inject netsim_args as environment variables into netsimd by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2973
+  * Replace libbase's Split and ParseInt with absl equivalents by @jemoreira in https://github.com/google/android-cuttlefish/pull/2988
+  * Implement ReaderSeeker on FileInstance by @Databean in https://github.com/google/android-cuttlefish/pull/2989
+  * Clean up some more shellcheck disables. by @dxapd in https://github.com/google/android-cuttlefish/pull/2977
+  * Package etc/cvd_config in /usr/lib/cuttlefish-common by @Databean in https://github.com/google/android-cuttlefish/pull/2969
+  * Extract ScopedMMap from cuttlefish/common/libs:fs by @Databean in https://github.com/google/android-cuttlefish/pull/2991
+  * emulated_camera_mplane: Add QVGA resolution support by @chihchiachen in https://github.com/google/android-cuttlefish/pull/2995
+  * Import test keys by @Databean in https://github.com/google/android-cuttlefish/pull/2996
+  * Separate FileInstance from fs:fs by @Databean in https://github.com/google/android-cuttlefish/pull/2999
+  * Add --enable_pkvm flag to provision the guest as a pKVM host by @dimorinny in https://github.com/google/android-cuttlefish/pull/2987
+  * Create a UniqueFd counterpart to SharedFD by @Databean in https://github.com/google/android-cuttlefish/pull/3001
+  * base: cvd: cuttlefish: add missing <string> header in FlagBase by @grandpaul in https://github.com/google/android-cuttlefish/pull/3004
+  * //cuttlefish/package:package_files overhaul by @Databean in https://github.com/google/android-cuttlefish/pull/2984
+  * Use UniqueFd::Accept rather than SharedFD::Accept by @Databean in https://github.com/google/android-cuttlefish/pull/3007
+  * build_test, DWYU, include_cleaner: console_forwarder, cvd, confui_sign, cvd/cach cvd/cli by @Databean in https://github.com/google/android-cuttlefish/pull/3009
+  * base: cvd: cuttlefish: Fix name resolution collision for Build return type in FetchBuildContext by @grandpaul in https://github.com/google/android-cuttlefish/pull/3005
+  * base: cvd: cuttlefish: Fix name resolution collision for Flag return type in FlagValue by @grandpaul in https://github.com/google/android-cuttlefish/pull/3003
+  * Add new virtio-media V4l2 stream proxy virtual device by @bridadan in https://github.com/google/android-cuttlefish/pull/2935
+  * Migrate from ReadAll to ReadToString by @Databean in https://github.com/google/android-cuttlefish/pull/3014
+  * Change RecvAll to operate on FileInstance, and return a Result by @Databean in https://github.com/google/android-cuttlefish/pull/3013
+  * Use UniqueFd/FileInstance more over SharedFD by @Databean in https://github.com/google/android-cuttlefish/pull/3020
+  * base: cvd: cuttlefish: Explicitly include absl/strings/numbers.h by @grandpaul in https://github.com/google/android-cuttlefish/pull/3018
+  * FileInstance implements ReaderWriterSeeker by @Databean in https://github.com/google/android-cuttlefish/pull/3011
+  * Replace declare_symlink usage with a shell script. by @Databean in https://github.com/google/android-cuttlefish/pull/3024
+  * vhost_user_media: Uprev vhost and vhost-user-backend by @chihchiachen in https://github.com/google/android-cuttlefish/pull/3033
+  * Make FileInstance movable by @Databean in https://github.com/google/android-cuttlefish/pull/3025
+  * Initialize uninitialized variable by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3023
+  * Move RemoveFile out of utils:files by @Databean in https://github.com/google/android-cuttlefish/pull/2985
+  * Support seccomp policies baked into crosvm by @Databean in https://github.com/googlendroid-cuttlefish/pull/3036
+  * Rename FileInstance to Fd by @Databean in https://github.com/google/android-cuttlefish/pull/3037
+  * emulated_camera_mplane: Implement frame rate control by @chihchiachen in https://github.com/google/android-cuttlefish/pull/2990
+  * Hide warning from control_env_proxy_server/main.cpp by @Databean in https://github.com/google/android-cuttlefish/pull/3038
+  * Replace UniqueFd with Fd by @Databean in https://github.com/google/android-cuttlefish/pull/3044
+  * Support target configuration preset in Cuttlefish cvd load JSON by @anshu10sep in https://github.com/google/android-cuttlefish/pull/3034
+  * simplify ChromeOsStateImage::Reuse call by @fkm3 in https://github.com/google/android-cuttlefish/pull/3052
+  * run `adb connect` before `adb wait-for-device` when restoring a VM by @fkm3 in https://github.com/google/android-cuttlefish/pull/3055
+  * build_test, DWYU, include-cleaner for cvd_send_sms by @Databean in https://github.com/google/android-cuttlefish/pull/3029
+  * Consolidate cf_cc_{binary,library,test} implementations by @Databean in https://github.com/google/android-cuttlefish/pull/2983
+  * Extract FileIsSocket from utils:files by @Databean in https://github.com/google/android-cuttlefish/pull/2992
+  * Replace SharedFD::Fifo with UniqueFd::Fifo by @Databean in https://github.com/google/android-cuttlefish/pull/3059
+  * build_test, DWYU, include-cleaner for cvd/utils by @Databean in https://github.com/google/android-cuttlefish/pull/3061
+  * Include secure_env in the debian package, and disable the weaver HAL by @Databean in https://github.com/google/android-cuttlefish/pull/3060
+  * Move IsDirectoryEmpty out of utils:files by @Databean in https://github.com/google/android-cuttlefish/pull/2986
+  * Update staticcheck go version and dav1d download url to fix github actions by @Databean in https://github.com/google/android-cuttlefish/pull/3065
+  * more build_test, DWYU, include-cleaner: host_bugreport, refresh_groups, tombstone_receiver, status, log_tee by @Databean in https://github.com/google/android-cuttlefish/pull/3068
+  * Prepare to handle alternate network modes. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3056
+  * Uprev crosvm to include crrev.com/c/8260235 by @Databean in https://github.com/google/android-cuttlefish/pull/3069
+  * Replace SharedFD::Creat with Fd::Creat, and have it return a Result by @Databean in https://github.com/google/android-cuttlefish/pull/3058
+  * Fd static function overhaul by @Databean in https://github.com/google/android-cuttlefish/pull/3074
+  * build_test, DWYU, include-cleaner for logcat_receiver, record_cvd, restart_cvd, socket_vsock_proxy by @Databean in https://github.com/google/android-cuttlefish/pull/3073
+  * cvd: Fallback to --help when --helpxml is unsupported in status fetcher by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3048
+  * Support StrongBox KeyMint jcardsim JVM lookup in container images by @victorhsieh in https://github.com/google/android-cuttlefish/pull/3066
+  * More clauses for avoiding tap devices. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3057
+  * Always build crosvm in `opt` mode by @Databean in https://github.com/google/android-cuttlefish/pull/3072
+  * assign explicit virtio-block pci addrs by @fkm3 in https://github.com/google/android-cuttlefish/pull/3054
+  * verify instance nums match snapshot on restore by @fkm3 in https://github.com/google/android-cuttlefish/pull/3053
+  * Standalone cvd fetch and http client fixes by @larsers in https://github.com/google/android-cuttlefish/pull/3070
+  * Use Fd instead of SharedFd in NativeFilesystem by @Databean in https://github.com/google/android-cuttlefish/pull/3089
+  * Use Fd::Open in image_aggregator by @Databean in https://github.com/google/android-cuttlefish/pull/3090
+  * Use passt for user-mode networking on crosvm. by @3405691582 in https://github.com/google/android-cutefish/pull/3071
+  * SharedFD::Open -> Fd::Open in common/libs/utils by @Databean in https://github.com/google/android-cuttlefish/pull/3091
+  * Enforce clang-tidy lints on headers, and fix outstanding errors by @Databean in https://github.com/google/android-cuttlefish/pull/3079
+  * SharedFD::Open -> Fd::Open in host/commands/cvd by @Databean in https://github.com/google/android-cuttlefish/pull/3092
+  * build_test, DWYU, include-cleaner for defaults, cvdalloc by @Databean in https://github.com/google/android-cuttlefish/pull/3093
+  * Metrics refactors by @cjreynol in https://github.com/google/android-cuttlefish/pull/3078
+  * Add convenience overloads of WriteExact by @Databean in https://github.com/google/android-cuttlefish/pull/3094
+  * Capture fetched build safety levels for metrics by @cjreynol in https://github.com/google/android-cuttlefish/pull/3096
+  * SharedFD::Open -> Fd::Open in host/libs/config by @Databean in https://github.com/google/android-cuttlefish/pull/3095
+  * base: cvd: allocd: Search /usr/sbin for dnsmasq and fix PID file path by @grandpaul in https://github.com/google/android-cuttlefish/pull/3097
+  * Use Fd instead of SharedFD in LazilyLoadedFile by @Databean in https://github.com/google/android-cuttlefish/pull/3102
+  * Include crosvm in the debian package by @Databean in https://github.com/google/android-cuttlefish/pull/3008
+  * Reinsert commentary about tap device validation. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3099
+  * Add dynamic V4L2 test pattern controls to emulated_camera_mplane by @changyeon-jo in https://github.com/google/android-cuttlefish/pull/2845
+  * Use bazelisk for amd64 as well by @0405ysj in https://github.com/google/android-cuttlefish/pull/2981
+  * Set networking mode before configuration. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3114
 
- -- Cody Schuffelen <schuffelen@google.com>  Thu, 25 Jun 2026 20:28:28 -0700
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 28 Aug 2026 14:21:28 -0700
 
 cuttlefish-common (1.56.0) unstable; urgency=medium
 
