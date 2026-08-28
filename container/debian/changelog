@@ -1,8 +1,21 @@
-cuttlefish-container (1.57.0) UNRELEASED; urgency=medium
+cuttlefish-container (1.57.0) unstable; urgency=medium
 
-  * 
+  * Mark release 1.56.0 as unstable by @Databean in https://github.com/google/android-cuttlefish/pull/2767
+  * Start development on 1.57 by @Databean in https://github.com/google/android-cuttlefish/pull/2768
+  * Podcvd supports cache subcommand by @0405ysj in https://github.com/google/android-cuttlefish/pull/2748
+  * Podcvd shows converted operator port on JSON output properly by @0405ysj in https://github.com/google/android-cuttlefish/pull/2782
+  * Fix bugs around podcvd dealing with containers at exited status by @0405ysj in https://github.com/google/android-cuttlefish/pull/2783
+  * Update podcvd skill with more richer context by @0405ysj in https://github.com/google/android-cuttlefish/pull/2813
+  * Move podcvd skill under `skills/<skill_name>/SKILL.md` by @0405ysj in https://github.com/google/android-cuttlefish/pull/2854
+  * Reduce the number of nginx worker processes in container by @0405ysj in https://github.com/google/android-cuttlefish/pull/2856
+  * Support ps subcommand on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2814
+  * Podcvd: Support trusted TLS for operator on container instances by @0405ysj in https://github.com/google/android-cuttlefish/pull/2819
+  * Sort result by GroupName for ExecOnAllCuttlefishHosts by @k311093 in https://github.com/google/android-cuttlefish/pull/3040
+  * Disable preparing cert for operator on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/3042
+  * Podcvd: Enable cert setup logic again with moving a part of it into postinst by @0405ysj in https://github.com/google/android-cuttlefish/pull/3050
+  * Podcvd can pass CVD_INVOKER env variable to cvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/3049
 
- -- Cody Schuffelen <schuffelen@google.com>  Thu, 25 Jun 2026 20:28:41 -0700
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 28 Aug 2026 14:22:41 -0700
 
 cuttlefish-container (1.56.0) unstable; urgency=medium
 
