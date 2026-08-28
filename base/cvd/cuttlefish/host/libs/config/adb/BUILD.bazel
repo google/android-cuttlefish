@@ -17,7 +17,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:container",
         "//cuttlefish/flag_parser",
-        "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
+        "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_server",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:cuttlefish_config",
