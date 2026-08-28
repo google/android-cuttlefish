@@ -27,6 +27,7 @@ namespace cuttlefish {
 
 using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
+using cvd::config::V4l2StreamProxy;
 
 Result<std::vector<std::string>> GenerateMediaFlags(
     const EnvironmentSpecification& cfg) {
@@ -48,6 +49,16 @@ Result<std::vector<std::string>> GenerateMediaFlags(
           // TODO(b/520114678): Use device.v4l2_proxy.device_path when
           // supported.
           flag += "v4l2_proxy";
+        } else if (device.has_v4l2_stream_proxy()) {
+          const V4l2StreamProxy& v4l2_stream_proxy = device.v4l2_stream_proxy();
+
+          flag += "v4l2_stream_proxy";
+          flag += ":input_path=" + v4l2_stream_proxy.input_path();
+          flag +=
+              ":input_width=" + std::to_string(v4l2_stream_proxy.input_width());
+          flag += ":input_height=" +
+                  std::to_string(v4l2_stream_proxy.input_height());
+          flag += ":input_fps=" + v4l2_stream_proxy.input_fps();
         }
         if (device.has_lens_facing()) {
           flag += ":lens_facing=" + device.lens_facing();
