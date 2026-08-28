@@ -48,6 +48,8 @@ namespace {
 
 // Holds all sockets related to a single vhost user input device process.
 struct DeviceSockets {
+  // Path to the events capture server socket.
+  std::string capture_server_path;
   // Path to the events server socket.
   std::string events_server_path;
   // The events server fd. It's created and held at the CommandSource level to
@@ -59,9 +61,11 @@ struct DeviceSockets {
   SharedFD vhu_server;
 };
 
-Result<DeviceSockets> NewDeviceSockets(const std::string& evt_server_path,
+Result<DeviceSockets> NewDeviceSockets(const std::string& capture_server_path,
+                                       const std::string& evt_server_path,
                                        const std::string& vhu_server_path) {
   DeviceSockets ret{
+      .capture_server_path = capture_server_path,
       .events_server_path = evt_server_path,
       .events_server = CF_EXPECT(
           Fd::SocketLocalServer(evt_server_path, false, SOCK_STREAM, 0600),
@@ -81,6 +85,8 @@ Command NewVhostUserInputCommand(const DeviceSockets& device_sockets,
   cmd.AddParameter("--socket-fd=", device_sockets.vhu_server);
   cmd.AddParameter("--device-config=", spec);
   cmd.AddParameter("--server-fd=", device_sockets.events_server);
+  cmd.AddParameter("--capture-server-path=",
+                   device_sockets.capture_server_path);
   return cmd;
 }
 
@@ -266,33 +272,39 @@ class VhostInputDevices : public CommandSource, public InputPathsProvider {
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
     rotary_sockets_ =
-        CF_EXPECT(NewDeviceSockets(RotaryEventsServerPath(instance_),
+        CF_EXPECT(NewDeviceSockets(RotaryCaptureServerPath(instance_),
+                                   RotaryEventsServerPath(instance_),
                                    RotarySocketPath(instance_)),
                   "Failed to setup sockets for rotary device");
     if (instance_.enable_mouse()) {
       mouse_sockets_ =
-          CF_EXPECT(NewDeviceSockets(MouseEventsServerPath(instance_),
+          CF_EXPECT(NewDeviceSockets(MouseCaptureServerPath(instance_),
+                                     MouseEventsServerPath(instance_),
                                      MouseSocketPath(instance_)),
                     "Failed to setup sockets for mouse device");
     }
     if (instance_.enable_gamepad()) {
       gamepad_sockets_ =
-          CF_EXPECT(NewDeviceSockets(GamepadEventsServerPath(instance_),
+          CF_EXPECT(NewDeviceSockets(GamepadCaptureServerPath(instance_),
+                                     GamepadEventsServerPath(instance_),
                                      GamepadSocketPath(instance_)),
                     "Failed to setup sockets for gamepad device");
     }
     keyboard_sockets_ =
-        CF_EXPECT(NewDeviceSockets(KeyboardEventsServerPath(instance_),
+        CF_EXPECT(NewDeviceSockets(KeyboardCaptureServerPath(instance_),
+                                   KeyboardEventsServerPath(instance_),
                                    KeyboardSocketPath(instance_)),
                   "Failed to setup sockets for keyboard device");
     switches_sockets_ =
-        CF_EXPECT(NewDeviceSockets(SwitchesEventsServerPath(instance_),
+        CF_EXPECT(NewDeviceSockets(SwitchesCaptureServerPath(instance_),
+                                   SwitchesEventsServerPath(instance_),
                                    SwitchesSocketPath(instance_)),
                   "Failed to setup sockets for switches device");
     touchscreen_sockets_.reserve(instance_.display_configs().size());
     for (int i = 0; i < instance_.display_configs().size(); ++i) {
       touchscreen_sockets_.emplace_back(
-          CF_EXPECTF(NewDeviceSockets(instance_.touch_events_server_path(i),
+          CF_EXPECTF(NewDeviceSockets(instance_.touch_capture_server_path(i),
+                                      instance_.touch_events_server_path(i),
                                       instance_.touch_socket_path(i)),
                      "Failed to setup sockets for touchscreen {}", i));
     }
@@ -300,7 +312,8 @@ class VhostInputDevices : public CommandSource, public InputPathsProvider {
     for (int i = 0; i < instance_.touchpad_configs().size(); ++i) {
       int idx = touchscreen_sockets_.size() + i;
       touchpad_sockets_.emplace_back(
-          CF_EXPECTF(NewDeviceSockets(instance_.touch_events_server_path(idx),
+          CF_EXPECTF(NewDeviceSockets(instance_.touch_capture_server_path(i),
+                                      instance_.touch_events_server_path(idx),
                                       instance_.touch_socket_path(idx)),
                      "Failed to setup sockets for touchpad {}", i));
     }
