@@ -17,6 +17,10 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stddef.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #if defined(__linux__)
 #include <linux/capability.h>
@@ -29,9 +33,14 @@
 #endif
 
 #include <string_view>
+#include <sys/auxv.h>
+#include <sys/stat.h>
 
 #include <optional>
+#include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 #include "absl/log/log.h"
 
@@ -160,8 +169,32 @@ int DropPrivileges(uid_t orig) {
   return setuid(orig);
 }
 
+namespace {
+constexpr char kTrustedPath[] = "/usr/sbin:/usr/bin:/sbin:/bin";
+}  // namespace
+
 Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
   uid_t orig = getuid();
+  // Sanitize the environment only when this exec actually gained privilege
+  // e.g. file caps
+  if (getauxval(AT_SECURE) != 0) {
+    CF_EXPECTF(setenv("PATH", kTrustedPath, /*overwrite=*/1) == 0,
+               "Couldn't sanitize PATH: {}", StrError(errno));
+    unsetenv("IFS");
+    // Drop the LD_* dynamic-linker family (LD_PRELOAD, LD_LIBRARY_PATH, ...).
+    // Collect all of the names
+    std::vector<std::string> ld_vars;
+    for (char** entry = environ; *entry != nullptr; ++entry) {
+      std::string_view var(*entry);
+      if (var.substr(0, 3) == "LD_") {
+        ld_vars.emplace_back(var.substr(0, var.find('=')));
+      }
+    }
+    // unsetenv for all of the names that we collected
+    for (const std::string& name : ld_vars) {
+      unsetenv(name.c_str());
+    }
+  }
   CF_EXPECTF(BeginElevatedPrivileges() != -1,
              "Couldn't elevate permissions: {}", StrError(errno));
   return ScopedPrivileges(orig);
