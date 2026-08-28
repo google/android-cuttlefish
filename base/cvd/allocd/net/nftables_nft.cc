@@ -59,7 +59,7 @@ Result<std::string> NftablesNft::BinaryPath() {
 
 Result<void> NftablesNft::EnsureTable(std::string_view family,
                                       std::string_view table) {
-  Command cmd{std::string(kNftBinary)};
+  Command cmd{CF_EXPECT(BinaryPath())};
   cmd.AddParameter("add");
   cmd.AddParameter("table");
   cmd.AddParameter(std::string(family));
@@ -72,7 +72,7 @@ Result<void> NftablesNft::EnsureTable(std::string_view family,
 
 Result<void> NftablesNft::DeleteTable(std::string_view family,
                                       std::string_view table) {
-  Command cmd{std::string(kNftBinary)};
+  Command cmd{CF_EXPECT(BinaryPath())};
   cmd.AddParameter("delete");
   cmd.AddParameter("table");
   cmd.AddParameter(std::string(family));
@@ -87,7 +87,7 @@ Result<void> NftablesNft::EnsureChain(std::string_view family,
                                       std::string_view table,
                                       std::string_view chain,
                                       std::string_view content) {
-  Command cmd{std::string(kNftBinary)};
+  Command cmd{CF_EXPECT(BinaryPath())};
   cmd.AddParameter("add");
   cmd.AddParameter("chain");
   cmd.AddParameter(std::string(family));
@@ -108,7 +108,7 @@ Result<uint32_t> NftablesNft::AddRule(std::string_view family,
                                       std::string_view table,
                                       std::string_view chain,
                                       std::string_view content) {
-  Command cmd{std::string(kNftBinary)};
+  Command cmd{CF_EXPECT(BinaryPath())};
   cmd.AddParameter("-j");
   cmd.AddParameter("-e");
   cmd.AddParameter("add");
@@ -137,7 +137,7 @@ Result<uint32_t> NftablesNft::AddRule(std::string_view family,
 Result<void> NftablesNft::DeleteRule(std::string_view family,
                                      std::string_view table,
                                      std::string_view chain, uint32_t handle) {
-  Command cmd{std::string(kNftBinary)};
+  Command cmd{CF_EXPECT(BinaryPath())};
   cmd.AddParameter("delete");
   cmd.AddParameter("rule");
   cmd.AddParameter(std::string(family));
