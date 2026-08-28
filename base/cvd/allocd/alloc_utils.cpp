@@ -55,8 +55,8 @@ constexpr std::string_view kFamilyIp = "ip";
 constexpr std::string_view kFamilyBridge = "bridge";
 
 // nftables table names.
-constexpr std::string_view kNatTable = "cuttlefish_nat";
-constexpr std::string_view kBridgeTable = "cuttlefish_bridge";
+constexpr std::string_view kNatTable = "cf_cvdalloc_nat";
+constexpr std::string_view kBridgeTable = "cf_cvdalloc_bridge";
 
 // nftables chain names.
 constexpr std::string_view kPostroutingChain = "postrouting";

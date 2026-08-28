@@ -30,12 +30,12 @@ using ::testing::Return;
 TEST(AllocUtilsFirewallTest, SetupFirewallSuccess) {
   MockNftables mock_nft;
 
-  EXPECT_CALL(mock_nft, EnsureTable("ip", "cuttlefish_nat"))
+  EXPECT_CALL(mock_nft, EnsureTable("ip", "cf_cvdalloc_nat"))
       .WillOnce(Return(Result<void>{}));
-  EXPECT_CALL(mock_nft, EnsureChain("ip", "cuttlefish_nat", "postrouting", _))
+  EXPECT_CALL(mock_nft, EnsureChain("ip", "cf_cvdalloc_nat", "postrouting", _))
       .WillOnce(Return(Result<void>{}));
 
-  EXPECT_CALL(mock_nft, AddRule("ip", "cuttlefish_nat", "postrouting", _))
+  EXPECT_CALL(mock_nft, AddRule("ip", "cf_cvdalloc_nat", "postrouting", _))
       .Times(4)
       .WillRepeatedly(Return(1));
 
@@ -45,21 +45,21 @@ TEST(AllocUtilsFirewallTest, SetupFirewallSuccess) {
 TEST(AllocUtilsFirewallTest, SetupFirewallWithByob) {
   MockNftables mock_nft;
 
-  EXPECT_CALL(mock_nft, EnsureTable("ip", "cuttlefish_nat"))
+  EXPECT_CALL(mock_nft, EnsureTable("ip", "cf_cvdalloc_nat"))
       .WillOnce(Return(Result<void>{}));
-  EXPECT_CALL(mock_nft, EnsureChain("ip", "cuttlefish_nat", "postrouting", _))
+  EXPECT_CALL(mock_nft, EnsureChain("ip", "cf_cvdalloc_nat", "postrouting", _))
       .WillOnce(Return(Result<void>{}));
-  EXPECT_CALL(mock_nft, AddRule("ip", "cuttlefish_nat", "postrouting", _))
+  EXPECT_CALL(mock_nft, AddRule("ip", "cf_cvdalloc_nat", "postrouting", _))
       .Times(4)
       .WillRepeatedly(Return(1));
 
-  EXPECT_CALL(mock_nft, EnsureTable("bridge", "cuttlefish_bridge"))
+  EXPECT_CALL(mock_nft, EnsureTable("bridge", "cf_cvdalloc_bridge"))
       .WillOnce(Return(Result<void>{}));
   EXPECT_CALL(mock_nft,
-              EnsureChain("bridge", "cuttlefish_bridge", "prerouting", _))
+              EnsureChain("bridge", "cf_cvdalloc_bridge", "prerouting", _))
       .WillOnce(Return(Result<void>{}));
   EXPECT_CALL(mock_nft,
-              EnsureChain("bridge", "cuttlefish_bridge", "forward", _))
+              EnsureChain("bridge", "cf_cvdalloc_bridge", "forward", _))
       .WillOnce(Return(Result<void>{}));
 
   EXPECT_THAT(SetupFirewall(mock_nft, /*setup_byob=*/true), IsOk());
@@ -68,9 +68,9 @@ TEST(AllocUtilsFirewallTest, SetupFirewallWithByob) {
 TEST(AllocUtilsFirewallTest, TeardownFirewallDeletesTables) {
   MockNftables mock_nft;
 
-  EXPECT_CALL(mock_nft, DeleteTable("ip", "cuttlefish_nat"))
+  EXPECT_CALL(mock_nft, DeleteTable("ip", "cf_cvdalloc_nat"))
       .WillOnce(Return(Result<void>{}));
-  EXPECT_CALL(mock_nft, DeleteTable("bridge", "cuttlefish_bridge"))
+  EXPECT_CALL(mock_nft, DeleteTable("bridge", "cf_cvdalloc_bridge"))
       .WillOnce(Return(Result<void>{}));
 
   EXPECT_THAT(TeardownFirewall(mock_nft), IsOk());

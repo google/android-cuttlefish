@@ -45,10 +45,10 @@ func TestCvdallocLifecycle(t *testing.T) {
 	// After "--setup"
 	wantSetup := phaseState{
 		NftTables: []common.NftTable{
-			{Family: "ip", Name: "cuttlefish_nat"},
+			{Family: "ip", Name: "cf_cvdalloc_nat"},
 		},
 		NftChains: []common.NftChain{
-			{Family: "ip", Table: "cuttlefish_nat", Name: "postrouting", Type: "nat", Hook: "postrouting"},
+			{Family: "ip", Table: "cf_cvdalloc_nat", Name: "postrouting", Type: "nat", Hook: "postrouting"},
 		},
 		Masquerades: []string{
 			"192.168.160.0/24",

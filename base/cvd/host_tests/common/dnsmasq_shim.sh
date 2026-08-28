@@ -1,5 +1,5 @@
 #!/bin/sh
-# Stand-in for dnsmasq, used by both host_resources e2e tests (the init script
+# Stand-in for dnsmasq, used by both host_tests e2e tests (the init script
 # in static_resources_init_test and cvdalloc in cvdalloc_test) via a PATH shim.
 #
 # The real dnsmasq cannot run inside the rootless user namespace the sandbox
