@@ -145,7 +145,7 @@ impl<S: EventSource> VhostUserBackendMut for VhostUserInput<S> {
             }
             EVENTS_AVAILABLE => {
                 trace!("Source event");
-                self.read_input_events();
+                self.read_input_events().map_err(IoError::other)?;
                 self.send_pending_events(&vrings[EVENT_QUEUE as usize])
                     .map_err(IoError::other)?;
             }
@@ -225,8 +225,8 @@ impl<S: EventSource> VhostUserInput<S> {
         Ok(())
     }
 
-    fn read_input_events(&mut self) {
-        self.event_queue.extend(self.event_source.get_events());
+    fn read_input_events(&mut self) -> Result<()> {
+        Ok(self.event_queue.extend(self.event_source.get_events()?))
     }
 
     fn write_status_updates(&mut self, vring: &VringRwLock) -> Result<()> {
@@ -248,7 +248,7 @@ impl<S: EventSource> VhostUserInput<S> {
             let bytes = reader.available_bytes();
             let mut buf = vec![0u8; bytes];
             reader.read_exact(&mut buf)?;
-            self.event_source.send_status_feedback(&buf);
+            self.event_source.send_status_feedback(buf);
 
             vring_state
                 .add_used(head_index, bytes as u32)
