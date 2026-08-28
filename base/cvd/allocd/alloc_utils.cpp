@@ -394,6 +394,19 @@ bool CreateEthernetBridgeIface(std::string_view name, std::string_view ipaddr) {
 
 bool DestroyEthernetBridgeIface(std::string_view name,
                                 std::string_view ipaddr) {
+  Result<bool> in_use = BridgeInUse(name);
+  if (!in_use.has_value()) {
+    LOG(ERROR) << "Failed to check if bridge " << name
+               << " is in use: " << in_use.error();
+    return false;
+  }
+
+  if (*in_use) {
+    // Other instances still share this bridge; leave its gateway and dnsmasq
+    // up.
+    return true;
+  }
+
   GatewayConfig config{true, true};
 
   // Don't need to check if removing some part of the config failed, we need to

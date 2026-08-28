@@ -81,26 +81,7 @@ func TestCvdallocLifecycle(t *testing.T) {
 		DnsmasqIfaces: []string{"cvd-pi-ebr", "cvd-pi-wbr"},
 	}
 
-	opts := cmp.Options{
-		cmpopts.SortSlices(func(a, b netIface) bool { return a.Name < b.Name }),
-		cmpopts.SortSlices(func(a, b common.NftTable) bool {
-			if a.Family != b.Family {
-				return a.Family < b.Family
-			}
-			return a.Name < b.Name
-		}),
-		cmpopts.SortSlices(func(a, b common.NftChain) bool {
-			if a.Family != b.Family {
-				return a.Family < b.Family
-			}
-			if a.Table != b.Table {
-				return a.Table < b.Table
-			}
-			return a.Name < b.Name
-		}),
-		cmpopts.IgnoreFields(common.NftTable{}, "Handle"),
-		cmpopts.IgnoreFields(common.NftChain{}, "Handle"),
-	}
+	opts := cmpOptions()
 
 	s := common.NewSandbox(t)
 	defer s.Close()
@@ -173,4 +154,27 @@ func observe(t *testing.T, s *common.Sandbox) phaseState {
 		})
 	}
 	return got
+}
+
+func cmpOptions() cmp.Options {
+	return cmp.Options{
+		cmpopts.SortSlices(func(a, b netIface) bool { return a.Name < b.Name }),
+		cmpopts.SortSlices(func(a, b common.NftTable) bool {
+			if a.Family != b.Family {
+				return a.Family < b.Family
+			}
+			return a.Name < b.Name
+		}),
+		cmpopts.SortSlices(func(a, b common.NftChain) bool {
+			if a.Family != b.Family {
+				return a.Family < b.Family
+			}
+			if a.Table != b.Table {
+				return a.Table < b.Table
+			}
+			return a.Name < b.Name
+		}),
+		cmpopts.IgnoreFields(common.NftTable{}, "Handle"),
+		cmpopts.IgnoreFields(common.NftChain{}, "Handle"),
+	}
 }

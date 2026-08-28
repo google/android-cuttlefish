@@ -17,7 +17,10 @@ load("@rules_go//go:def.bzl", "go_test")
 go_test(
     name = "cvdalloc_test",
     size = "large",
-    srcs = ["main_test.go"],
+    srcs = [
+        "main_test.go",
+        "shared_bridge_test.go",
+    ],
     data = ["//cuttlefish/host/commands/cvdalloc"],
     env = {"CVDALLOC_RLOCATION": "$(rlocationpath //cuttlefish/host/commands/cvdalloc:cvdalloc)"},
     env_inherit = ["CVDALLOC_BIN"],
