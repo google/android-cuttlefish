@@ -7,18 +7,19 @@ mod vhu_input;
 mod vio_input;
 
 use std::fs;
-use std::os::fd::{AsFd, AsRawFd, FromRawFd, IntoRawFd};
+use std::os::fd::{AsRawFd, FromRawFd, IntoRawFd, OwnedFd};
+use std::os::unix::net::UnixListener;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
-use log::{error, info, LevelFilter};
-use vhost::vhost_user::Listener;
-use vhost_user_backend::VhostUserDaemon;
+use log::{info, LevelFilter};
+use vhost::vhost_user::{Error as VError, Listener};
+use vhost_user_backend::{Error as VHUError, VhostUserDaemon};
 use vm_memory::{GuestMemoryAtomic, GuestMemoryMmap};
 
-use event_source::PipeEventSource;
+use event_source::{EventSource, PipeEventSource, UnixSocketEventSource};
 use vhu_input::{VhostUserInput, EVENTS_AVAILABLE};
 use vio_input::VirtioInputConfig;
 
@@ -35,6 +36,9 @@ struct Args {
     /// Path to a file specifying the device's config in JSON format.
     #[arg(short, long, required = true)]
     device_config: String,
+    /// A file descriptor for the unix socket event sources will connect to.
+    #[arg(long, default_value_t = -1i32)]
+    server_fd: i32,
 }
 
 fn init_logging(verbosity: &str) -> Result<()> {
@@ -45,6 +49,60 @@ fn init_logging(verbosity: &str) -> Result<()> {
                 .with_context(|| format!("Invalid log level: {}", verbosity))?,
         )
         .init();
+    Ok(())
+}
+
+fn create_and_run_device<T: EventSource + 'static>(
+    event_source: T,
+    device_config: VirtioInputConfig,
+    server_fd: OwnedFd,
+) -> Result<()> {
+    let event_source_fd = event_source.as_fd().as_raw_fd();
+    let backend = Arc::new(Mutex::new(VhostUserInput::new(device_config, event_source)));
+    let mut daemon = VhostUserDaemon::new(
+        "vhost-user-input".to_string(),
+        backend.clone(),
+        GuestMemoryAtomic::new(GuestMemoryMmap::new()),
+    )
+    .map_err(|e| anyhow!("Failed to create vhost user daemon: {:?}", e))?;
+
+    // Ideally, this registration would be done by the backend since it is the one that knows to
+    // read the event source when the EVENTS_AVAILABLE event is generated. This is not possible
+    // because register_listener attempts to lock the backend to call num_queues() which causes
+    // a deadlock if the backend lock is already held.
+    daemon
+        .get_epoll_handlers()
+        .first()
+        .context("Daemon created without epoll handler threads")?
+        .register_listener(
+            event_source_fd,
+            vmm_sys_util::epoll::EventSet::IN,
+            EVENTS_AVAILABLE as u64,
+        )
+        .context("Failed to register epoll handler")?;
+
+    let listener = {
+        // SAFETY: Safe because we just dupped this fd and don't use it anywhwere else.
+        // Listener takes ownership and ensures it's properly closed when finished with it.
+        // TODO: Use safe Listener::from<UnixStream> after updating to a version that implements it
+        unsafe { Listener::from_raw_fd(server_fd.into_raw_fd()) }
+    };
+    info!("Created vhost-user daemon");
+    daemon
+        .start(listener)
+        .map_err(|e| anyhow!("Failed to start vhost-user daemon: {:?}", e))?;
+    info!("Accepted connection in vhost-user daemon");
+    match daemon.wait() {
+        Err(VHUError::HandleRequest(VError::Disconnected)) => {
+            info!("Frontend disconnected");
+        }
+        Err(e) => {
+            bail!("Daemon exited with error: {:?}", e);
+        }
+        Ok(()) => {
+            info!("Daemon exited");
+        }
+    }
     Ok(())
 }
 
@@ -67,55 +125,30 @@ fn main() -> Result<()> {
     let device_config = VirtioInputConfig::from_json(device_config_str.as_str())
         .context("Unable to parse config file")?;
 
-    // SAFETY: No choice but to trust the caller passed a valid fd representing a unix socket.
-    let server_fd = inherited_fd::take_fd_ownership(args.socket_fd)
+    let socket_fd = inherited_fd::take_fd_ownership(args.socket_fd)
         .context("Failed to take ownership of socket fd")?;
-    loop {
-        let event_source = PipeEventSource::new(std::io::stdin(), std::io::stdout());
-        let event_source_fd = event_source.as_fd().as_raw_fd();
-        let backend = Arc::new(Mutex::new(VhostUserInput::new(
-            device_config.clone(),
-            event_source,
-        )));
-        let mut daemon = VhostUserDaemon::new(
-            "vhost-user-input".to_string(),
-            backend.clone(),
-            GuestMemoryAtomic::new(GuestMemoryMmap::new()),
+    let server_fd = if args.server_fd >= 0 {
+        Some(
+            inherited_fd::take_fd_ownership(args.server_fd)
+                .context("Failed to take ownership of socket fd")?,
         )
-        .map_err(|e| anyhow!("Failed to create vhost user daemon: {:?}", e))?;
-
-        // Ideally, this registration would be done by the backend since it is the one that knows to
-        // read the event source when the EVENTS_AVAILABLE event is generated. This is not possible
-        // because register_listener attempts to lock the backend to call num_queues() which causes
-        // a deadlock if the backend lock is already held.
-        daemon
-            .get_epoll_handlers()
-            .first()
-            .context("Daemon created without epoll handler threads")?
-            .register_listener(
-                event_source_fd,
-                vmm_sys_util::epoll::EventSet::IN,
-                EVENTS_AVAILABLE as u64,
-            )
-            .context("Failed to register epoll handler")?;
-
-        let listener = {
-            // vhost::vhost_user::Listener takes ownership of the underlying fd and closes it when
-            // wait returns, so a dup of the original fd is passed to the constructor.
-            let server_dup = server_fd.try_clone().context("Failed to clone socket fd")?;
-            // SAFETY: Safe because we just dupped this fd and don't use it anywhwere else.
-            // Listener takes ownership and ensures it's properly closed when finished with it.
-            unsafe { Listener::from_raw_fd(server_dup.into_raw_fd()) }
-        };
-        info!("Created vhost-user daemon");
-        daemon
-            .start(listener)
-            .map_err(|e| anyhow!("Failed to start vhost-user daemon: {:?}", e))?;
-        info!("Accepted connection in vhost-user daemon");
-        if let Err(e) = daemon.wait() {
-            // This will print an error even when the frontend disconnects to do a restart.
-            error!("Error: {:?}", e);
-        };
-        info!("Daemon exited");
+    } else {
+        None
+    };
+    loop {
+        // vhost::vhost_user::Listener and UnixListener take ownership of the underlying fds and
+        // close them when dropped, so dups of the original fds are used in each iteration.
+        let socket_dup = socket_fd.try_clone().context("Failed to clone socket fd")?;
+        match server_fd {
+            Some(ref fd) => {
+                let server_dup = fd.try_clone().context("Failed to clone server fd")?;
+                let event_source = UnixSocketEventSource::new(UnixListener::from(server_dup))?;
+                create_and_run_device(event_source, device_config.clone(), socket_dup)?;
+            }
+            None => {
+                let event_source = PipeEventSource::new(std::io::stdin(), std::io::stdout());
+                create_and_run_device(event_source, device_config.clone(), socket_dup)?;
+            }
+        }
     }
 }
