@@ -1,24 +1,22 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_binary", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cf_build_test(name = "kernel_log_monitor_build_test")
+
 cf_cc_binary(
     name = "kernel_log_monitor",
-    srcs = [
-        "main.cc",
-    ],
-    depend_on_what_you_use_enabled = False,
+    srcs = ["main.cc"],
     deps = [
-        ":kernel_log_monitor_utils",
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_server",
+        "//cuttlefish/host/commands/kernel_log_monitor:utils",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
         "//cuttlefish/host/libs/log_names",
-        "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -28,26 +26,31 @@ cf_cc_binary(
 )
 
 cf_cc_library(
-    name = "kernel_log_monitor_utils",
-    srcs = [
-        "kernel_log_server.cc",
-        "utils.cc",
+    name = "kernel_log_server",
+    srcs = ["kernel_log_server.cc"],
+    hdrs = ["kernel_log_server.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@jsoncpp",
     ],
-    hdrs = [
-        "kernel_log_server.h",
-        "utils.h",
-    ],
-    depend_on_what_you_use_enabled = False,
+)
+
+cf_cc_library(
+    name = "utils",
+    srcs = ["utils.cc"],
+    hdrs = ["utils.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/host/libs/config:config_constants",
-        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_server",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
-        "//libbase",
         "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
         "@jsoncpp",
     ],
 )
