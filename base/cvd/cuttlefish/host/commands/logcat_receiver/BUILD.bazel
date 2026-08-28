@@ -10,10 +10,12 @@ cf_cc_binary(
     name = "logcat_receiver",
     srcs = ["main.cpp"],
     deps = [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
+        "//cuttlefish/io:write_exact",
+        "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
