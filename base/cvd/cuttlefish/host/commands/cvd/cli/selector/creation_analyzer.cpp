@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
 
-#include <sys/types.h>
+#include <stddef.h>
 
 #include <optional>
 #include <string>
@@ -30,7 +30,10 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace selector {
