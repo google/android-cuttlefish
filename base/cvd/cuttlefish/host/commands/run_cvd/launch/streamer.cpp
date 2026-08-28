@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/str_join.h"
 #include "fruit/component.h"
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
@@ -32,7 +33,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
-#include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
+#include "cuttlefish/host/commands/run_cvd/launch/input_paths_provider.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
@@ -104,48 +105,45 @@ std::vector<Command> LaunchCustomActionServers(
 class StreamerSockets : public virtual SetupFeature {
  public:
   INJECT(StreamerSockets(const CuttlefishConfig& config,
-                         InputConnectionsProvider& input_connections_provider,
+                         InputPathsProvider& input_paths_provider,
                          const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config),
         instance_(instance),
-        input_connections_provider_(input_connections_provider) {}
+        input_paths_provider_(input_paths_provider) {}
 
   void AppendCommandArguments(Command& cmd) {
     const int touch_count = instance_.display_configs().size() +
                             instance_.touchpad_configs().size();
     if (touch_count > 0) {
       cmd.AddParameter("--multitouch=", ShouldEnableMultitouch(instance_));
-      std::vector<SharedFD> touch_connections =
-          input_connections_provider_.TouchscreenConnections();
-      for (const SharedFD& touchpad_connection :
-           input_connections_provider_.TouchpadConnections()) {
-        touch_connections.push_back(touchpad_connection);
+      std::vector<std::string> touch_paths =
+          input_paths_provider_.TouchscreenPaths();
+      for (const std::string& touchpad_path :
+           input_paths_provider_.TouchpadPaths()) {
+        touch_paths.push_back(touchpad_path);
       }
-      cmd.AddParameter("-touch_fds=", touch_connections[0]);
-      for (int i = 1; i < touch_connections.size(); ++i) {
-        cmd.AppendToLastParameter(",", touch_connections[i]);
-      }
+      cmd.AddParameter("-touch_server_paths=", absl::StrJoin(touch_paths, ","));
     }
     if (instance_.enable_mouse()) {
-      cmd.AddParameter("-mouse_fd=",
-                       input_connections_provider_.MouseConnection());
+      cmd.AddParameter("-mouse_server_path=",
+                       input_paths_provider_.MousePath());
     }
     if (instance_.enable_gamepad()) {
-      cmd.AddParameter("-gamepad_fd=",
-                       input_connections_provider_.GamepadConnection());
+      cmd.AddParameter("-gamepad_server_path=",
+                       input_paths_provider_.GamepadPath());
     }
-    cmd.AddParameter("-rotary_fd=",
-                     input_connections_provider_.RotaryDeviceConnection());
-    cmd.AddParameter("-keyboard_fd=",
-                     input_connections_provider_.KeyboardConnection());
+    cmd.AddParameter("-rotary_server_path=",
+                     input_paths_provider_.RotaryDevicePath());
+    cmd.AddParameter("-keyboard_server_path=",
+                     input_paths_provider_.KeyboardPath());
     cmd.AddParameter("-frame_server_fd=", frames_server_);
     if (instance_.enable_audio()) {
       cmd.AddParameter("--audio_server_fd=", audio_server_);
     }
     cmd.AddParameter("--confui_in_fd=", confui_in_fd_);
     cmd.AddParameter("--confui_out_fd=", confui_out_fd_);
-    cmd.AddParameter("-switches_fd=",
-                     input_connections_provider_.SwitchesConnection());
+    cmd.AddParameter("-switches_server_path=",
+                     input_paths_provider_.SwitchesPath());
   }
 
   // SetupFeature
@@ -157,7 +155,7 @@ class StreamerSockets : public virtual SetupFeature {
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override {
-    return {&input_connections_provider_};
+    return {&input_paths_provider_};
   }
 
   Result<void> ResultSetup() override {
@@ -190,7 +188,7 @@ class StreamerSockets : public virtual SetupFeature {
 
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific instance_;
-  InputConnectionsProvider& input_connections_provider_;
+  InputPathsProvider& input_paths_provider_;
   SharedFD frames_server_;
   SharedFD audio_server_;
   SharedFD confui_in_fd_;   // host -> guest
@@ -300,7 +298,7 @@ class WebRtcServer : public virtual CommandSource,
 }  // namespace
 
 fruit::Component<fruit::Required<
-    const CuttlefishConfig, KernelLogPipeProvider, InputConnectionsProvider,
+    const CuttlefishConfig, KernelLogPipeProvider, InputPathsProvider,
     const CuttlefishConfig::InstanceSpecific, const CustomActionConfigProvider,
     WebRtcController>>
 launchStreamerComponent() {

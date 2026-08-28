@@ -17,7 +17,6 @@
 
 #include <vector>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/feature/feature.h"
@@ -27,21 +26,21 @@ namespace cuttlefish {
 // Feature that provides access to the connections to the input devices.
 // Such connections are file descriptors over which (virtio_) input events can
 // be written to inject them to the VM and (virtio_) status updates can be read.
-class InputConnectionsProvider : public virtual SetupFeature {
+class InputPathsProvider : public virtual SetupFeature {
  public:
-  virtual ~InputConnectionsProvider() = default;
+  virtual ~InputPathsProvider() = default;
 
-  virtual SharedFD RotaryDeviceConnection() const = 0;
-  virtual SharedFD MouseConnection() const = 0;
-  virtual SharedFD GamepadConnection() const = 0;
-  virtual SharedFD KeyboardConnection() const = 0;
-  virtual SharedFD SwitchesConnection() const = 0;
-  virtual std::vector<SharedFD> TouchscreenConnections() const = 0;
-  virtual std::vector<SharedFD> TouchpadConnections() const = 0;
+  virtual std::string RotaryDevicePath() const = 0;
+  virtual std::string MousePath() const = 0;
+  virtual std::string GamepadPath() const = 0;
+  virtual std::string KeyboardPath() const = 0;
+  virtual std::string SwitchesPath() const = 0;
+  virtual std::vector<std::string> TouchscreenPaths() const = 0;
+  virtual std::vector<std::string> TouchpadPaths() const = 0;
 };
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
-                 InputConnectionsProvider, LogTeeCreator>
+                 InputPathsProvider, LogTeeCreator>
 VhostInputDevicesComponent();
 
 }  // namespace cuttlefish

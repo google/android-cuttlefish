@@ -27,18 +27,23 @@ std::string ConsoleOutPipeName(const CuttlefishConfig::InstanceSpecific&);
 std::string ConsolePath(const CuttlefishConfig::InstanceSpecific&);
 std::string ConsolePipePrefix(const CuttlefishConfig::InstanceSpecific&);
 std::string GamepadSocketPath(const CuttlefishConfig::InstanceSpecific&);
+std::string GamepadEventsServerPath(const CuttlefishConfig::InstanceSpecific&);
 std::string HwcomposerPmemPath(const CuttlefishConfig::InstanceSpecific&);
 std::string KernelLogPipeName(const CuttlefishConfig::InstanceSpecific& ins);
 std::string KeyboardSocketPath(const CuttlefishConfig::InstanceSpecific&);
+std::string KeyboardEventsServerPath(const CuttlefishConfig::InstanceSpecific&);
 std::string LauncherMonitorSocketPath(
     const CuttlefishConfig::InstanceSpecific&);
 std::string LogcatPath(const CuttlefishConfig::InstanceSpecific&);
 std::string LogcatPipeName(const CuttlefishConfig::InstanceSpecific&);
 std::string MouseSocketPath(const CuttlefishConfig::InstanceSpecific&);
+std::string MouseEventsServerPath(const CuttlefishConfig::InstanceSpecific&);
 std::string PflashPath(const CuttlefishConfig::InstanceSpecific&);
 std::string PstorePath(const CuttlefishConfig::InstanceSpecific&);
 std::string RotarySocketPath(const CuttlefishConfig::InstanceSpecific&);
+std::string RotaryEventsServerPath(const CuttlefishConfig::InstanceSpecific&);
 std::string SwitchesSocketPath(const CuttlefishConfig::InstanceSpecific&);
+std::string SwitchesEventsServerPath(const CuttlefishConfig::InstanceSpecific&);
 std::string RestoreAdbdPipeName(const CuttlefishConfig::InstanceSpecific&);
 
 }  // namespace cuttlefish

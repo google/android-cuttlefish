@@ -13,10 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
+#include "cuttlefish/host/commands/run_cvd/launch/input_paths_provider.h"
 
-#include <fcntl.h>
-#include <sys/socket.h>
+#include <sys/socket.h>  // IWYU pragma: keep: SOCK_STREAM
 
 #include <regex>
 #include <string>
@@ -49,40 +48,28 @@ namespace {
 
 // Holds all sockets related to a single vhost user input device process.
 struct DeviceSockets {
-  // Device end of the connection between device and streamer.
-  SharedFD device_end;
-  // Streamer end of the connection between device and streamer.
-  SharedFD streamer_end;
+  // Path to the events server socket.
+  std::string events_server_path;
+  // The events server fd. It's created and held at the CommandSource level to
+  // ensure it already exists by the time the streamer attempts to connect.
+  SharedFD events_server;
   // Unix socket for the server to which the VMM connects to. It's created and
   // held at the CommandSource level to ensure it already exists by the time the
   // VMM runs and attempts to connect.
   SharedFD vhu_server;
 };
 
-Result<DeviceSockets> NewDeviceSockets(const std::string& vhu_server_path) {
-  DeviceSockets ret;
-  CF_EXPECTF(
-      SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0, &ret.device_end,
-                           &ret.streamer_end),
-      "Failed to create connection sockets (socket pair) for input device: {}",
-      ret.device_end->StrError());
-
-  // The webRTC process currently doesn't read status updates from input
-  // devices, so the vhost processes will write that to /dev/null.
-  // These calls shouldn't return errors since we already know these are a newly
-  // created socket pair.
-  CF_EXPECTF(ret.device_end->Shutdown(SHUT_WR) == 0,
-             "Failed to close input connection's device for writes: {}",
-             ret.device_end->StrError());
-  CF_EXPECTF(ret.streamer_end->Shutdown(SHUT_RD) == 0,
-             "Failed to close input connection's streamer end for reads: {}",
-             ret.streamer_end->StrError());
-
-  ret.vhu_server =
-      SharedFD::SocketLocalServer(vhu_server_path, false, SOCK_STREAM, 0600);
-  CF_EXPECTF(ret.vhu_server->IsOpen(),
-             "Failed to create vhost user socket for device: {}",
-             ret.vhu_server->StrError());
+Result<DeviceSockets> NewDeviceSockets(const std::string& evt_server_path,
+                                       const std::string& vhu_server_path) {
+  DeviceSockets ret{
+      .events_server_path = evt_server_path,
+      .events_server = CF_EXPECT(
+          Fd::SocketLocalServer(evt_server_path, false, SOCK_STREAM, 0600),
+          "Failed to create event server for device"),
+      .vhu_server = CF_EXPECT(
+          Fd::SocketLocalServer(vhu_server_path, false, SOCK_STREAM, 0600),
+          "Failed to create vhost user socket for device"),
+  };
 
   return ret;
 }
@@ -93,9 +80,7 @@ Command NewVhostUserInputCommand(const DeviceSockets& device_sockets,
   cmd.AddParameter("--verbosity=DEBUG");
   cmd.AddParameter("--socket-fd=", device_sockets.vhu_server);
   cmd.AddParameter("--device-config=", spec);
-  cmd.RedirectStdIO(Command::StdIoChannel::kStdIn, device_sockets.device_end);
-  cmd.RedirectStdIO(Command::StdIoChannel::kStdOut,
-                    Fd::Open("/dev/null", O_WRONLY).value_or(Fd()));
+  cmd.AddParameter("--server-fd=", device_sockets.events_server);
   return cmd;
 }
 
@@ -118,8 +103,7 @@ std::string BuildTouchSpec(const std::string& spec_template,
 }
 
 // Creates the commands for the vhost user input devices.
-class VhostInputDevices : public CommandSource,
-                          public InputConnectionsProvider {
+class VhostInputDevices : public CommandSource, public InputPathsProvider {
  public:
   INJECT(VhostInputDevices(const CuttlefishConfig::InstanceSpecific& instance,
                            LogTeeCreator& log_tee))
@@ -237,41 +221,41 @@ class VhostInputDevices : public CommandSource,
     return commands;
   }
 
-  // InputConnectionsProvider
-  SharedFD RotaryDeviceConnection() const override {
-    return rotary_sockets_.streamer_end;
+  // InputPathsProvider
+  std::string RotaryDevicePath() const override {
+    return rotary_sockets_.events_server_path;
   }
 
-  SharedFD MouseConnection() const override {
-    return mouse_sockets_.streamer_end;
+  std::string MousePath() const override {
+    return mouse_sockets_.events_server_path;
   }
 
-  SharedFD GamepadConnection() const override {
-    return gamepad_sockets_.streamer_end;
+  std::string GamepadPath() const override {
+    return gamepad_sockets_.events_server_path;
   }
 
-  SharedFD KeyboardConnection() const override {
-    return keyboard_sockets_.streamer_end;
+  std::string KeyboardPath() const override {
+    return keyboard_sockets_.events_server_path;
   }
 
-  SharedFD SwitchesConnection() const override {
-    return switches_sockets_.streamer_end;
+  std::string SwitchesPath() const override {
+    return switches_sockets_.events_server_path;
   }
 
-  std::vector<SharedFD> TouchscreenConnections() const override {
-    std::vector<SharedFD> conns;
+  std::vector<std::string> TouchscreenPaths() const override {
+    std::vector<std::string> conns;
     conns.reserve(touchscreen_sockets_.size());
     for (const DeviceSockets& sockets : touchscreen_sockets_) {
-      conns.emplace_back(sockets.streamer_end);
+      conns.emplace_back(sockets.events_server_path);
     }
     return conns;
   }
 
-  std::vector<SharedFD> TouchpadConnections() const override {
-    std::vector<SharedFD> conns;
+  std::vector<std::string> TouchpadPaths() const override {
+    std::vector<std::string> conns;
     conns.reserve(touchpad_sockets_.size());
     for (const DeviceSockets& sockets : touchpad_sockets_) {
-      conns.emplace_back(sockets.streamer_end);
+      conns.emplace_back(sockets.events_server_path);
     }
     return conns;
   }
@@ -281,34 +265,43 @@ class VhostInputDevices : public CommandSource,
   std::string Name() const override { return "VhostInputDevices"; }
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
-    rotary_sockets_ = CF_EXPECT(NewDeviceSockets(RotarySocketPath(instance_)),
-                                "Failed to setup sockets for rotary device");
+    rotary_sockets_ =
+        CF_EXPECT(NewDeviceSockets(RotaryEventsServerPath(instance_),
+                                   RotarySocketPath(instance_)),
+                  "Failed to setup sockets for rotary device");
     if (instance_.enable_mouse()) {
-      mouse_sockets_ = CF_EXPECT(NewDeviceSockets(MouseSocketPath(instance_)),
-                                 "Failed to setup sockets for mouse device");
+      mouse_sockets_ =
+          CF_EXPECT(NewDeviceSockets(MouseEventsServerPath(instance_),
+                                     MouseSocketPath(instance_)),
+                    "Failed to setup sockets for mouse device");
     }
     if (instance_.enable_gamepad()) {
       gamepad_sockets_ =
-          CF_EXPECT(NewDeviceSockets(GamepadSocketPath(instance_)),
+          CF_EXPECT(NewDeviceSockets(GamepadEventsServerPath(instance_),
+                                     GamepadSocketPath(instance_)),
                     "Failed to setup sockets for gamepad device");
     }
     keyboard_sockets_ =
-        CF_EXPECT(NewDeviceSockets(KeyboardSocketPath(instance_)),
+        CF_EXPECT(NewDeviceSockets(KeyboardEventsServerPath(instance_),
+                                   KeyboardSocketPath(instance_)),
                   "Failed to setup sockets for keyboard device");
     switches_sockets_ =
-        CF_EXPECT(NewDeviceSockets(SwitchesSocketPath(instance_)),
+        CF_EXPECT(NewDeviceSockets(SwitchesEventsServerPath(instance_),
+                                   SwitchesSocketPath(instance_)),
                   "Failed to setup sockets for switches device");
     touchscreen_sockets_.reserve(instance_.display_configs().size());
     for (int i = 0; i < instance_.display_configs().size(); ++i) {
       touchscreen_sockets_.emplace_back(
-          CF_EXPECTF(NewDeviceSockets(instance_.touch_socket_path(i)),
+          CF_EXPECTF(NewDeviceSockets(instance_.touch_events_server_path(i),
+                                      instance_.touch_socket_path(i)),
                      "Failed to setup sockets for touchscreen {}", i));
     }
     touchpad_sockets_.reserve(instance_.touchpad_configs().size());
     for (int i = 0; i < instance_.touchpad_configs().size(); ++i) {
       int idx = touchscreen_sockets_.size() + i;
       touchpad_sockets_.emplace_back(
-          CF_EXPECTF(NewDeviceSockets(instance_.touch_socket_path(idx)),
+          CF_EXPECTF(NewDeviceSockets(instance_.touch_events_server_path(idx),
+                                      instance_.touch_socket_path(idx)),
                      "Failed to setup sockets for touchpad {}", i));
     }
     return {};
@@ -327,10 +320,10 @@ class VhostInputDevices : public CommandSource,
 
 }  // namespace
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
-                 InputConnectionsProvider, LogTeeCreator>
+                 InputPathsProvider, LogTeeCreator>
 VhostInputDevicesComponent() {
   return fruit::createComponent()
-      .bind<InputConnectionsProvider, VhostInputDevices>()
+      .bind<InputPathsProvider, VhostInputDevices>()
       .addMultibinding<CommandSource, VhostInputDevices>()
       .addMultibinding<SetupFeature, VhostInputDevices>();
 }
