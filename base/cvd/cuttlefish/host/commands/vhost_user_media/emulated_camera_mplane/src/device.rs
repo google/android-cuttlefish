@@ -30,6 +30,11 @@ use v4l2r::bindings::v4l2_requestbuffers;
 use v4l2r::ioctl::BufferCapabilities;
 use v4l2r::ioctl::BufferField;
 use v4l2r::ioctl::BufferFlags;
+use v4l2r::ioctl::CtrlId;
+use v4l2r::ioctl::CtrlWhich;
+use v4l2r::ioctl::EventType as V4l2EventType;
+use v4l2r::ioctl::QueryCtrlFlags;
+use v4l2r::ioctl::SubscribeEventFlags;
 use v4l2r::ioctl::V4l2Buffer;
 use v4l2r::ioctl::V4l2PlanesWithBackingMut;
 use v4l2r::memory::MemoryType;
@@ -45,10 +50,84 @@ use virtio_media::ioctl::virtio_media_dispatch_ioctl;
 use virtio_media::memfd::MemFdBuffer;
 use virtio_media::mmap::MmapMappingManager;
 use virtio_media::protocol::DequeueBufferEvent;
+use virtio_media::protocol::SessionEvent;
 use virtio_media::protocol::SgEntry;
 use virtio_media::protocol::V4l2Event;
 use virtio_media::protocol::V4l2Ioctl;
 use virtio_media::protocol::VIRTIO_MEDIA_MMAP_FLAG_RW;
+use std::str::FromStr;
+
+/// Rust equivalent of the V4L2_CTRL_ID2WHICH C preprocessor macro.
+/// Extracts the control class ID from a control ID by masking out the lower 16 bits
+/// and any reserved top bits (uses mask 0x0fff0000).
+/// See: https://www.kernel.org/doc/html/latest/userspace-api/media/v4l/control.html
+const fn v4l2_ctrl_id2which(id: u32) -> u32 {
+    id & 0x0fff0000
+}
+
+/// https://developer.android.com/reference/android/hardware/camera2/CameraMetadata#LENS_FACING_FRONT
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LensFacing {
+    Front = 0,
+    Back = 1,
+    External = 2,
+}
+
+impl FromStr for LensFacing {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "FRONT" => Ok(LensFacing::Front),
+            "BACK" => Ok(LensFacing::Back),
+            "EXTERNAL" => Ok(LensFacing::External),
+            _ => Err(format!("Invalid lens facing: {}. Expected FRONT, BACK, or EXTERNAL", s)),
+        }
+    }
+}
+
+/// Encapsulates the camera gain value.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Gain(i32);
+
+impl Gain {
+    pub const MIN: i32 = 100;
+    pub const MAX: i32 = 1600;
+    pub const DEFAULT: i32 = 100;
+
+    pub fn new(value: i32) -> Result<Self, libc::c_int> {
+        if value < Self::MIN || value > Self::MAX {
+            Err(libc::ERANGE)
+        } else {
+            Ok(Gain(value))
+        }
+    }
+
+    pub fn value(&self) -> i32 {
+        self.0
+    }
+}
+
+impl Default for Gain {
+    fn default() -> Self {
+        Gain(Self::DEFAULT)
+    }
+}
+
+/// State of all camera controls.
+struct CameraControls {
+    lens_facing: LensFacing,
+    gain: Gain,
+}
+
+impl CameraControls {
+    fn new(lens_facing: LensFacing) -> Self {
+        Self {
+            lens_facing,
+            gain: Gain::default(),
+        }
+    }
+}
 
 /// Current status of a buffer.
 #[derive(Debug, PartialEq, Eq)]
@@ -123,9 +202,17 @@ impl Buffer {
                     }
                 }
                 self.v4l2_buffer.set_sequence(sequence);
+                let mut ts = libc::timespec {
+                    tv_sec: 0,
+                    tv_nsec: 0,
+                };
+                // SAFETY: clock_gettime is a standard POSIX libc call with a valid pointer.
+                unsafe {
+                    libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut ts);
+                }
                 self.v4l2_buffer.set_timestamp(bindings::timeval {
-                    tv_sec: (sequence + 1) as bindings::__time_t / 1000,
-                    tv_usec: (sequence + 1) as bindings::__time_t % 1000,
+                    tv_sec: ts.tv_sec as bindings::__time_t,
+                    tv_usec: (ts.tv_nsec / 1000) as bindings::__time_t,
                 });
                 flags &= !BufferFlags::QUEUED;
             }
@@ -158,6 +245,7 @@ impl VirtioMediaDeviceSession for EmulatedCameraSession {
 impl EmulatedCameraSession {
     fn write_pattern<WY: std::io::Write, WU: std::io::Write, WV: std::io::Write>(
         iteration: u64,
+        controls: &CameraControls,
         mut sink_y: WY,
         mut sink_u: WU,
         mut sink_v: WV,
@@ -165,7 +253,12 @@ impl EmulatedCameraSession {
         let mut writer_y = BufWriter::new(&mut sink_y);
         let mut writer_u = BufWriter::new(&mut sink_u);
         let mut writer_v = BufWriter::new(&mut sink_v);
-        let y = (iteration % 256) as u8;
+        // The base Y (luma) value changes over iterations to create a moving pattern.
+        let base_y = (iteration % 256) as u8;
+        // Apply gain to the luma channel.
+        // Gain::MIN (100) represents 1.0x gain. Higher values scale the brightness.
+        // We clamp the result to 255.0 to avoid overflow.
+        let y = ((base_y as f32) * (controls.gain.value() as f32 / Gain::MIN as f32)).min(255.0) as u8;
         let u = ((iteration + 64) % 256) as u8;
         let v = ((iteration + 128) % 256) as u8;
         for _ in 0..(WIDTH * HEIGHT) {
@@ -184,6 +277,7 @@ impl EmulatedCameraSession {
     fn process_queued_buffers<Q: VirtioMediaEventQueue>(
         &mut self,
         evt_queue: &mut Q,
+        controls: &CameraControls,
     ) -> IoctlResult<()> {
         while let Some(buf_id) = self.queued_buffers.pop_front() {
             let iteration = self.iteration;
@@ -199,6 +293,7 @@ impl EmulatedCameraSession {
 
             Self::write_pattern(
                 iteration,
+                controls,
                 buffer.planes[0].fd.as_file(),
                 buffer.planes[1].fd.as_file(),
                 buffer.planes[2].fd.as_file(),
@@ -235,6 +330,8 @@ pub struct EmulatedCamera<Q: VirtioMediaEventQueue, HM: VirtioMediaHostMemoryMap
     /// same time. It will fails if we allow simultaneous sessions to be active, so we need this
     /// artificial limitation to make it pass fully.
     active_session: Option<u32>,
+    /// Camera controls.
+    controls: CameraControls,
 }
 
 impl<Q, HM> EmulatedCamera<Q, HM>
@@ -242,11 +339,78 @@ where
     Q: VirtioMediaEventQueue,
     HM: VirtioMediaHostMemoryMapper,
 {
-    pub fn new(evt_queue: Q, mapper: HM) -> Self {
+    pub fn new(evt_queue: Q, mapper: HM, lens_facing: LensFacing) -> Self {
         Self {
             evt_queue,
             mmap_manager: MmapMappingManager::from(mapper),
             active_session: None,
+            controls: CameraControls::new(lens_facing),
+        }
+    }
+
+    fn lens_facing_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
+        let name_str = "LENS_FACING";
+        let mut name = [0u8; 32];
+        name[0..name_str.len()].copy_from_slice(name_str.as_bytes());
+        bindings::v4l2_query_ext_ctrl {
+            id: CID_LENS_FACING,
+            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER,
+            name: name.map(|b| b as i8),
+            minimum: LensFacing::Front as i64,
+            maximum: LensFacing::External as i64,
+            step: 1,
+            default_value: self.controls.lens_facing as i64,
+            flags: bindings::V4L2_CTRL_FLAG_READ_ONLY,
+            elems: 1,
+            elem_size: std::mem::size_of::<u32>() as u32,
+            ..Default::default()
+        }
+    }
+
+    fn gain_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
+        let name_str = "Gain";
+        let mut name = [0u8; 32];
+        name[0..name_str.len()].copy_from_slice(name_str.as_bytes());
+        bindings::v4l2_query_ext_ctrl {
+            id: bindings::V4L2_CID_GAIN,
+            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER,
+            name: name.map(|b| b as i8),
+            minimum: Gain::MIN as i64,
+            maximum: Gain::MAX as i64,
+            step: 1,
+            default_value: Gain::DEFAULT as i64,
+            flags: 0,
+            elems: 1,
+            elem_size: std::mem::size_of::<i32>() as u32,
+            ..Default::default()
+        }
+    }
+
+    fn user_class_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
+        let name_str = "User Controls";
+        let mut name = [0u8; 32];
+        name[0..name_str.len()].copy_from_slice(name_str.as_bytes());
+        bindings::v4l2_query_ext_ctrl {
+            id: bindings::V4L2_CID_USER_CLASS,
+            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_CTRL_CLASS,
+            name: name.map(|b| b as i8),
+            // V4L2 standard requires control class headers to be marked as both RO and WO.
+            flags: bindings::V4L2_CTRL_FLAG_READ_ONLY | bindings::V4L2_CTRL_FLAG_WRITE_ONLY,
+            ..Default::default()
+        }
+    }
+
+    fn camera_class_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
+        let name_str = "Camera Controls";
+        let mut name = [0u8; 32];
+        name[0..name_str.len()].copy_from_slice(name_str.as_bytes());
+        bindings::v4l2_query_ext_ctrl {
+            id: bindings::V4L2_CID_CAMERA_CLASS,
+            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_CTRL_CLASS,
+            name: name.map(|b| b as i8),
+            // V4L2 standard requires control class headers to be marked as both RO and WO.
+            flags: bindings::V4L2_CTRL_FLAG_READ_ONLY | bindings::V4L2_CTRL_FLAG_WRITE_ONLY,
+            ..Default::default()
         }
     }
 }
@@ -328,6 +492,10 @@ where
             .map_err(|_| libc::EINVAL)
     }
 }
+
+// Use an offset for virtio-media custom camera class control id values.
+const CID_OFFSET: u32 = bindings::V4L2_CID_CAMERA_CLASS_BASE + 0x100;
+const CID_LENS_FACING: u32 = CID_OFFSET + 1;
 
 const PIXELFORMAT: u32 = PixelFormat::from_fourcc(b"YM12").to_u32();
 const WIDTH: u32 = 640;
@@ -662,7 +830,7 @@ where
         let buffer = host_buffer.v4l2_buffer.clone();
 
         if session.streaming {
-            session.process_queued_buffers(&mut self.evt_queue)?;
+            session.process_queued_buffers(&mut self.evt_queue, &self.controls)?;
         }
 
         Ok(buffer)
@@ -674,7 +842,7 @@ where
         }
         session.streaming = true;
 
-        session.process_queued_buffers(&mut self.evt_queue)?;
+        session.process_queued_buffers(&mut self.evt_queue, &self.controls)?;
 
         Ok(())
     }
@@ -767,5 +935,281 @@ where
             },
             ..Default::default()
         })
+    }
+
+    /// https://www.kernel.org/doc/html/latest/userspace-api/media/v4l/vidioc-queryctrl.html#control-flags
+    fn query_ext_ctrl(
+        &mut self,
+        _session: &Self::Session,
+        id: CtrlId,
+        flags: QueryCtrlFlags,
+    ) -> IoctlResult<bindings::v4l2_query_ext_ctrl> {
+        let id: u32 = unsafe { std::mem::transmute(id) };
+        if flags.contains(QueryCtrlFlags::NEXT) {
+            if id < bindings::V4L2_CID_USER_CLASS {
+                return Ok(self.user_class_query_ext_ctrl());
+            } else if id < bindings::V4L2_CID_GAIN {
+                return Ok(self.gain_query_ext_ctrl());
+            } else if id < bindings::V4L2_CID_CAMERA_CLASS {
+                return Ok(self.camera_class_query_ext_ctrl());
+            } else if id < CID_LENS_FACING {
+                return Ok(self.lens_facing_query_ext_ctrl());
+            }
+        } else {
+            if id == bindings::V4L2_CID_USER_CLASS {
+                return Ok(self.user_class_query_ext_ctrl());
+            } else if id == bindings::V4L2_CID_GAIN {
+                return Ok(self.gain_query_ext_ctrl());
+            } else if id == bindings::V4L2_CID_CAMERA_CLASS {
+                return Ok(self.camera_class_query_ext_ctrl());
+            } else if id == CID_LENS_FACING {
+                return Ok(self.lens_facing_query_ext_ctrl());
+            }
+        }
+        return Err(libc::EINVAL);
+    }
+
+    fn g_ext_ctrls(
+        &mut self,
+        _session: &Self::Session,
+        which: CtrlWhich,
+        ctrls: &mut bindings::v4l2_ext_controls,
+        ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
+        _user_regions: Vec<Vec<SgEntry>>,
+    ) -> IoctlResult<()> {
+        // Validate control class. Also handles class support queries when count == 0.
+        match which {
+            CtrlWhich::Current | CtrlWhich::Default => {}
+            CtrlWhich::Class(class) => {
+                if class != bindings::V4L2_CTRL_CLASS_USER && class != bindings::V4L2_CTRL_CLASS_CAMERA {
+                    ctrls.error_idx = ctrls.count;
+                    return Err(libc::EINVAL);
+                }
+            }
+            _ => {
+                ctrls.error_idx = ctrls.count;
+                return Err(libc::EINVAL);
+            }
+        }
+
+        // Ensure all requested controls belong to the selected class.
+        if let CtrlWhich::Class(class_id) = which {
+            for (idx, ctrl) in ctrl_array.iter().enumerate() {
+                if v4l2_ctrl_id2which(ctrl.id) != class_id {
+                    ctrls.error_idx = ctrls.count;
+                    return Err(libc::EINVAL);
+                }
+            }
+        }
+
+        // Process controls. Class controls are write-only headers and must fail on read.
+        for (idx, ctrl) in ctrl_array.iter_mut().enumerate() {
+            match ctrl.id {
+                bindings::V4L2_CID_USER_CLASS | bindings::V4L2_CID_CAMERA_CLASS => {
+                    ctrls.error_idx = ctrls.count;
+                    return Err(libc::EACCES);
+                }
+                bindings::V4L2_CID_GAIN => {
+                    ctrl.__bindgen_anon_1.value = match which {
+                        CtrlWhich::Default => Gain::DEFAULT,
+                        _ => self.controls.gain.value(),
+                    };
+                }
+                CID_LENS_FACING => {
+                    ctrl.__bindgen_anon_1.value = self.controls.lens_facing as i32;
+                }
+                _ => {
+                    ctrls.error_idx = ctrls.count;
+                    return Err(libc::EINVAL);
+                }
+            }
+        }
+        ctrls.error_idx = ctrls.count;
+        Ok(())
+    }
+
+    fn try_ext_ctrls(
+        &mut self,
+        _session: &Self::Session,
+        which: CtrlWhich,
+        ctrls: &mut bindings::v4l2_ext_controls,
+        ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
+        _user_regions: Vec<Vec<SgEntry>>,
+    ) -> IoctlResult<()> {
+        // Validate control class. Setting defaults is not allowed for TRY/SET.
+        match which {
+            CtrlWhich::Current => {}
+            CtrlWhich::Class(class) => {
+                if class != bindings::V4L2_CTRL_CLASS_USER && class != bindings::V4L2_CTRL_CLASS_CAMERA {
+                    ctrls.error_idx = ctrls.count;
+                    return Err(libc::EINVAL);
+                }
+            }
+            _ => {
+                ctrls.error_idx = ctrls.count;
+                return Err(libc::EINVAL);
+            }
+        }
+
+        // Ensure all requested controls belong to the selected class.
+        if let CtrlWhich::Class(class_id) = which {
+            for (idx, ctrl) in ctrl_array.iter().enumerate() {
+                if v4l2_ctrl_id2which(ctrl.id) != class_id {
+                    ctrls.error_idx = idx as u32;
+                    return Err(libc::EINVAL);
+                }
+            }
+        }
+
+        // Validate control values. Class controls are read-only headers and must fail on write/try.
+        for (idx, ctrl) in ctrl_array.iter_mut().enumerate() {
+            match ctrl.id {
+                bindings::V4L2_CID_USER_CLASS | bindings::V4L2_CID_CAMERA_CLASS => {
+                    ctrls.error_idx = idx as u32;
+                    return Err(libc::EACCES);
+                }
+                bindings::V4L2_CID_GAIN => {
+                    let value = unsafe { ctrl.__bindgen_anon_1.value };
+                    if let Err(err) = Gain::new(value) {
+                        ctrls.error_idx = idx as u32;
+                        return Err(err);
+                    }
+                }
+                CID_LENS_FACING => {
+                    ctrls.error_idx = idx as u32;
+                    return Err(libc::EACCES);
+                }
+                _ => {
+                    ctrls.error_idx = idx as u32;
+                    return Err(libc::EINVAL);
+                }
+            }
+        }
+        ctrls.error_idx = ctrls.count;
+        Ok(())
+    }
+
+    fn s_ext_ctrls(
+        &mut self,
+        session: &mut Self::Session,
+        which: CtrlWhich,
+        ctrls: &mut bindings::v4l2_ext_controls,
+        ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
+        _user_regions: Vec<Vec<SgEntry>>,
+    ) -> IoctlResult<()> {
+        // Validate control class. Setting defaults is not allowed for TRY/SET.
+        match which {
+            CtrlWhich::Current => {}
+            CtrlWhich::Class(class) => {
+                if class != bindings::V4L2_CTRL_CLASS_USER && class != bindings::V4L2_CTRL_CLASS_CAMERA {
+                    ctrls.error_idx = ctrls.count;
+                    return Err(libc::EINVAL);
+                }
+            }
+            _ => {
+                ctrls.error_idx = ctrls.count;
+                return Err(libc::EINVAL);
+            }
+        }
+
+        // Ensure all requested controls belong to the selected class.
+        if let CtrlWhich::Class(class_id) = which {
+            for (idx, ctrl) in ctrl_array.iter().enumerate() {
+                if v4l2_ctrl_id2which(ctrl.id) != class_id {
+                    ctrls.error_idx = ctrls.count;
+                    return Err(libc::EINVAL);
+                }
+            }
+        }
+
+        // Apply control values. Class controls are read-only headers and must fail on write/try.
+        for (idx, ctrl) in ctrl_array.iter_mut().enumerate() {
+            match ctrl.id {
+                bindings::V4L2_CID_USER_CLASS | bindings::V4L2_CID_CAMERA_CLASS => {
+                    ctrls.error_idx = ctrls.count;
+                    return Err(libc::EACCES);
+                }
+                bindings::V4L2_CID_GAIN => {
+                    let value = unsafe { ctrl.__bindgen_anon_1.value };
+                    match Gain::new(value) {
+                        Ok(gain) => {
+                            if self.controls.gain != gain {
+                                self.controls.gain = gain;
+                                let ctrl_event = bindings::v4l2_event {
+                                    type_: bindings::V4L2_EVENT_CTRL,
+                                    id: bindings::V4L2_CID_GAIN,
+                                    ..Default::default()
+                                };
+                                self.evt_queue.send_event(V4l2Event::Event(SessionEvent::new(
+                                    session.id, ctrl_event,
+                                )));
+                            }
+                        }
+                        Err(err) => {
+                            ctrls.error_idx = ctrls.count;
+                            return Err(err);
+                        }
+                    }
+                }
+                CID_LENS_FACING => {
+                    ctrls.error_idx = ctrls.count;
+                    return Err(libc::EACCES);
+                }
+                _ => {
+                    ctrls.error_idx = ctrls.count;
+                    return Err(libc::EINVAL);
+                }
+            }
+        }
+        ctrls.error_idx = ctrls.count;
+        Ok(())
+    }
+
+    fn subscribe_event(
+        &mut self,
+        session: &mut Self::Session,
+        event: V4l2EventType,
+        flags: SubscribeEventFlags,
+    ) -> IoctlResult<()> {
+        if !flags.contains(SubscribeEventFlags::SEND_INITIAL) {
+            return Err(libc::EINVAL);
+        }
+        match event {
+            V4l2EventType::Ctrl(id) => match id {
+                CID_LENS_FACING | bindings::V4L2_CID_GAIN => {
+                    let ctrl_event = bindings::v4l2_event {
+                        type_: bindings::V4L2_EVENT_CTRL,
+                        id,
+                        ..Default::default()
+                    };
+                    self.evt_queue
+                        .send_event(V4l2Event::Event(SessionEvent::new(session.id, ctrl_event)));
+                    Ok(())
+                }
+                bindings::V4L2_CID_USER_CLASS | bindings::V4L2_CID_CAMERA_CLASS => {
+                    // Subscription succeeds, but we do not send any initial event.
+                    Ok(())
+                }
+                _ => Err(libc::EINVAL),
+            },
+            _ => Err(libc::EINVAL),
+        }
+    }
+
+    fn unsubscribe_event(
+        &mut self,
+        _session: &mut Self::Session,
+        event: bindings::v4l2_event_subscription,
+    ) -> IoctlResult<()> {
+        return if event.type_ == bindings::V4L2_EVENT_CTRL
+            && (event.id == CID_LENS_FACING
+                || event.id == bindings::V4L2_CID_GAIN
+                || event.id == bindings::V4L2_CID_USER_CLASS
+                || event.id == bindings::V4L2_CID_CAMERA_CLASS)
+        {
+            Ok(())
+        } else {
+            Err(libc::EINVAL)
+        };
     }
 }

@@ -410,7 +410,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                                    "_openwrt");
 
   static constexpr char kDefaultSecure[] =
-      "oemlock,guest_keymint_insecure,guest_gatekeeper_insecure,weaver";
+      "oemlock,guest_keymint_insecure,guest_gatekeeper_insecure";
   SetCommandLineOptionWithMode("secure_hals", kDefaultSecure,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   auto secure_hals = CF_EXPECT(ParseSecureHals(FLAGS_secure_hals));
@@ -456,9 +456,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_ap_rootfs_image(ap_rootfs_image);
   tmp_config_obj.set_ap_kernel_image(FLAGS_ap_kernel_image);
 
-  tmp_config_obj.set_enable_host_nfc(FLAGS_enable_host_nfc);
-  tmp_config_obj.set_enable_host_nfc_connector(FLAGS_enable_host_nfc);
-
   // get flag default values and store into map
   auto name_to_default_value = CurrentFlagsToDefaultValue();
   // old flags but vectorized for multi-device instances
@@ -467,33 +464,15 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // netsim flags allow all radios or selecting a specific radio
   std::vector<bool> netsim_all_radios_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim));
-  bool any_netsim_all_radios =
-      std::any_of(netsim_all_radios_vec.begin(), netsim_all_radios_vec.end(),
-                  [](bool e) { return e; });
   std::vector<bool> netsim_bt_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_bt));
-  bool any_netsim_bt = std::any_of(netsim_bt_vec.begin(), netsim_bt_vec.end(),
-                                   [](bool e) { return e; });
   std::vector<bool> netsim_uwb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_uwb));
   bool any_netsim_uwb = std::any_of(
       netsim_uwb_vec.begin(), netsim_uwb_vec.end(), [](bool e) { return e; });
   std::vector<bool> netsim_nfc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_nfc));
   bool any_netsim_nfc = std::any_of(
       netsim_nfc_vec.begin(), netsim_nfc_vec.end(), [](bool e) { return e; });
-  bool netsim_has_bt = any_netsim_all_radios || any_netsim_bt;
-  bool netsim_has_uwb = any_netsim_all_radios || any_netsim_uwb;
-  bool netsim_has_nfc = any_netsim_all_radios || any_netsim_nfc;
-
-  // These flags inform NetsimServer::ResultSetup which radios it owns.
-  if (netsim_has_bt) {
-    tmp_config_obj.netsim_radio_enable(
-        CuttlefishConfig::NetsimRadio::Bluetooth);
-  }
-  if (netsim_has_uwb) {
-    tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Uwb);
-  }
-  if (netsim_has_nfc) {
-    tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Nfc);
-  }
+  std::vector<bool> netsim_modem_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_modem));
 
   bool any_not_netsim_bt = false;
   bool any_not_netsim_uwb = false;
@@ -594,6 +573,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> vhost_net_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(vhost_net));
   std::vector<std::string> vhost_user_vsock_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(vhost_user_vsock));
+  std::vector<bool> enable_pkvm_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_pkvm));
   std::vector<std::string> ril_dns_vec = CF_EXPECT(GET_FLAG_STR_VALUE(ril_dns));
   std::vector<bool> enable_jcard_simulator_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_jcard_simulator));
@@ -921,6 +902,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
           vhost_user_vsock_vec[instance_index]);
     }
 
+    if (enable_pkvm_vec[instance_index]) {
+      CF_EXPECT_EQ(tmp_config_obj.vm_manager(), VmmMode::kCrosvm,
+                   "Only crosvm supports --enable_pkvm");
+      CF_EXPECT_EQ(guest_configs[instance_index].target_arch, Arch::Arm64,
+                   "--enable_pkvm requires an arm64 guest");
+    }
+    instance.set_enable_pkvm(enable_pkvm_vec[instance_index]);
+
     if (use_random_serial_vec[instance_index]) {
       instance.set_serial_number(
           RandomSerialNumber("CFCVD" + std::to_string(num)));
@@ -1027,9 +1016,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         guest_enforce_security_values.ForIndex(instance_index));
     instance.set_pause_in_bootloader(pause_in_bootloader_vec[instance_index]);
     instance.set_run_as_daemon(daemon_values.ForIndex(instance_index));
+    bool is_modem_netsim = netsim_all_radios_vec[instance_index] ||
+                           netsim_modem_vec[instance_index];
     instance.set_enable_modem_simulator(
         enable_modem_simulator_vec[instance_index] &&
-        !enable_minimal_mode_vec[instance_index]);
+        !enable_minimal_mode_vec[instance_index] && !is_modem_netsim);
+    instance.set_enable_modem_netsim(is_modem_netsim);
     instance.set_modem_simulator_instance_number(
         modem_simulator_count_vec[instance_index]);
     instance.set_modem_simulator_sim_type(
@@ -1085,7 +1077,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_enable_host_uwb_connector(FLAGS_enable_host_uwb &&
                                            !is_uwb_netsim);
 
-    bool is_any_netsim = is_netsim_all || is_bt_netsim || is_uwb_netsim;
+    bool is_nfc_netsim = is_netsim_all || netsim_nfc_vec[instance_index];
+    bool is_any_netsim = is_netsim_all || is_bt_netsim || is_uwb_netsim ||
+                         is_nfc_netsim || is_modem_netsim;
 
     instance.set_uuid(uuid_vec[instance_index]);
 

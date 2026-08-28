@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2023 The Android Open Source Project
+// Copyright (C) 2026 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,20 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "cuttlefish/host/libs/web/parse_time.h"
 
-#include <functional>
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
-namespace secure_env_impl {
+namespace {
 
-Result<void> WorkerInnerLoop(std::function<bool()> process_callback,
-                             SharedFD read_fd, SharedFD snapshot_socket);
+TEST(ParseTimeTest, WithMilliseconds) {
+  EXPECT_THAT(ParseTime("2026-08-03T11:56:20.100Z"), IsOk());
+}
 
-Result<void> WorkerStubLoop(SharedFD snapshot_socket);
+TEST(ParseTimeTest, WithoutMilliseconds) {
+  EXPECT_THAT(ParseTime("2026-08-03T11:56:20Z"), IsOk());
+}
 
-}  // namespace secure_env_impl
+}  // namespace
 }  // namespace cuttlefish

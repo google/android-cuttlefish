@@ -231,7 +231,11 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
         std::to_string(instance.vsock_guest_cid());
   }
 
-  if (instance.enable_modem_simulator() &&
+  // Export modem simulator ports for both standalone modem_simulator and
+  // netsim. The guest RIL (ag/40529282) polls ro.boot.modem_simulator_ports on
+  // startup to connect over VSOCK regardless of which daemon handles the host
+  // connection.
+  if ((instance.enable_modem_simulator() || instance.enable_modem_netsim()) &&
       !instance.modem_simulator_ports().empty()) {
     bootconfig_args["androidboot.modem_simulator_ports"] =
         instance.modem_simulator_ports();
@@ -259,15 +263,23 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   }
 
   // TODO(b/217564326): improve this checks for a hypervisor in the VM.
-  if (instance.target_arch() == Arch::X86 ||
-      instance.target_arch() == Arch::X86_64) {
-    bootconfig_args["androidboot.hypervisor.version"] =
-        "cf-" + ToString(config.vm_manager());
-    bootconfig_args["androidboot.hypervisor.vm.supported"] = "1";
-  } else {
-    bootconfig_args["androidboot.hypervisor.vm.supported"] = "0";
+  switch (instance.target_arch()) {
+    case Arch::Arm64:
+      // The guest bootloader reports the hypervisor properties.
+      break;
+    case Arch::X86:
+    case Arch::X86_64:
+      bootconfig_args["androidboot.hypervisor.version"] =
+          "cf-" + ToString(config.vm_manager());
+      bootconfig_args["androidboot.hypervisor.vm.supported"] = "1";
+      bootconfig_args["androidboot.hypervisor.protected_vm.supported"] = "0";
+      break;
+    case Arch::Arm:
+    case Arch::RiscV64:
+      bootconfig_args["androidboot.hypervisor.vm.supported"] = "0";
+      bootconfig_args["androidboot.hypervisor.protected_vm.supported"] = "0";
+      break;
   }
-  bootconfig_args["androidboot.hypervisor.protected_vm.supported"] = "0";
   if (!instance.kernel_path().empty()) {
     bootconfig_args["androidboot.kernel_hotswapped"] = "1";
   }
@@ -322,6 +334,26 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
           instance.hwcomposer() == kHwComposerDrm
               ? "com.android.hardware.graphics.composer.drm_hwcomposer"
               : "com.android.hardware.graphics.composer.ranchu";
+
+  const GpuMode gpu_mode = instance.gpu_mode();
+  if (gpu_mode != GpuMode::None) {
+    if (IsGfxstreamMode(gpu_mode)) {
+      if (instance.has_vulkan_gfxstream_apex()) {
+        bootconfig_args["androidboot.vendor.apex.com.google.cf.vulkan"] =
+            "com.google.cf.vulkan.gfxstream";
+      }
+    } else if (gpu_mode == GpuMode::GuestLavapipe) {
+      if (instance.has_vulkan_lavapipe_apex()) {
+        bootconfig_args["androidboot.vendor.apex.com.google.cf.vulkan"] =
+            "com.google.cf.vulkan.lavapipe";
+      }
+    } else if (gpu_mode == GpuMode::GuestSwiftshader) {
+      if (instance.has_vulkan_swiftshader_apex()) {
+        bootconfig_args["androidboot.vendor.apex.com.google.cf.vulkan"] =
+            "com.google.cf.vulkan.swiftshader";
+      }
+    }
+  }
 
   if (instance.vhal_proxy_server_port()) {
     bootconfig_args["androidboot.vhal_proxy_server_port"] =

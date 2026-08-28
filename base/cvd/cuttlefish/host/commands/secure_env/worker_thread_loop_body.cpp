@@ -23,6 +23,32 @@
 
 namespace cuttlefish {
 namespace secure_env_impl {
+namespace {
+
+Result<void> StubHandleSuspendRequest(SharedFD snapshot_socket) {
+  // Read the suspend request.
+  SnapshotSocketMessage suspend_request;
+  CF_EXPECT_EQ(
+      sizeof(suspend_request),
+      snapshot_socket->Read(&suspend_request, sizeof(suspend_request)),
+      "socket read failed: " << snapshot_socket->StrError());
+  CF_EXPECT_EQ(SnapshotSocketMessage::kSuspend, suspend_request);
+  // Send the ACK response.
+  const SnapshotSocketMessage ack_response = SnapshotSocketMessage::kSuspendAck;
+  CF_EXPECT_EQ(sizeof(ack_response),
+               snapshot_socket->Write(&ack_response, sizeof(ack_response)),
+               "socket write failed: " << snapshot_socket->StrError());
+  // Block until resumed.
+  SnapshotSocketMessage resume_request;
+  CF_EXPECT_EQ(
+      sizeof(resume_request),
+      snapshot_socket->Read(&resume_request, sizeof(resume_request)),
+      "socket read failed: " << snapshot_socket->StrError());
+  CF_EXPECT_EQ(SnapshotSocketMessage::kResume, resume_request);
+  return {};
+}
+
+}  // namespace
 
 Result<void> WorkerInnerLoop(std::function<bool()> process_callback,
                              SharedFD read_fd, SharedFD snapshot_socket) {
@@ -50,26 +76,26 @@ Result<void> WorkerInnerLoop(std::function<bool()> process_callback,
     }
 
     if (readable_fds.IsSet(snapshot_socket)) {
-      // Read the suspend request.
-      SnapshotSocketMessage suspend_request;
-      CF_EXPECT_EQ(
-          sizeof(suspend_request),
-          snapshot_socket->Read(&suspend_request, sizeof(suspend_request)),
-          "socket read failed: " << snapshot_socket->StrError());
-      CF_EXPECT_EQ(SnapshotSocketMessage::kSuspend, suspend_request);
-      // Send the ACK response.
-      const SnapshotSocketMessage ack_response =
-          SnapshotSocketMessage::kSuspendAck;
-      CF_EXPECT_EQ(sizeof(ack_response),
-                   snapshot_socket->Write(&ack_response, sizeof(ack_response)),
-                   "socket write failed: " << snapshot_socket->StrError());
-      // Block until resumed.
-      SnapshotSocketMessage resume_request;
-      CF_EXPECT_EQ(
-          sizeof(resume_request),
-          snapshot_socket->Read(&resume_request, sizeof(resume_request)),
-          "socket read failed: " << snapshot_socket->StrError());
-      CF_EXPECT_EQ(SnapshotSocketMessage::kResume, resume_request);
+      CF_EXPECT(StubHandleSuspendRequest(snapshot_socket));
+    }
+  }
+
+  return {};
+}
+
+Result<void> WorkerStubLoop(SharedFD snapshot_socket) {
+  for (;;) {
+    SharedFDSet readable_fds;
+    readable_fds.Set(snapshot_socket);
+
+    int num_fds = Select(&readable_fds, nullptr, nullptr, nullptr);
+    if (num_fds < 0) {
+      LOG(FATAL) << "Select() returned a negative value: " << num_fds
+                 << StrError(errno);
+    }
+
+    if (readable_fds.IsSet(snapshot_socket)) {
+      CF_EXPECT(StubHandleSuspendRequest(snapshot_socket));
     }
   }
 

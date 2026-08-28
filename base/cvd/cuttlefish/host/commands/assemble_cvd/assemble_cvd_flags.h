@@ -69,6 +69,7 @@ DECLARE_vec(netsim);
 DECLARE_vec(netsim_bt);
 DECLARE_vec(netsim_uwb);
 DECLARE_vec(netsim_nfc);
+DECLARE_vec(netsim_modem);
 DECLARE_string(netsim_args);
 
 DECLARE_bool(enable_automotive_proxy);
@@ -158,6 +159,8 @@ DECLARE_vec(use_sdcard);
 DECLARE_vec(protected_vm);
 
 DECLARE_vec(mte);
+
+DECLARE_vec(enable_pkvm);
 
 DECLARE_vec(enable_audio);
 

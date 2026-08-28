@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2023 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,18 +15,14 @@
 
 #pragma once
 
-#include <functional>
+#include <chrono>
+#include <string>
+#include <string_view>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
-namespace secure_env_impl {
 
-Result<void> WorkerInnerLoop(std::function<bool()> process_callback,
-                             SharedFD read_fd, SharedFD snapshot_socket);
+Result<std::chrono::system_clock::time_point> ParseTime(std::string_view str);
 
-Result<void> WorkerStubLoop(SharedFD snapshot_socket);
-
-}  // namespace secure_env_impl
 }  // namespace cuttlefish

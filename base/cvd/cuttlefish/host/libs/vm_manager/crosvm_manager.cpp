@@ -76,7 +76,18 @@ CrosvmManager::ConfigureGraphics(
 
   std::unordered_map<std::string, std::string> bootconfig_args;
 
-  if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
+  if (instance.gpu_mode() == GpuMode::GuestLavapipe) {
+    bootconfig_args = {
+        {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_4)},
+        {"androidboot.hardware.gralloc", "minigbm"},
+        {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
+        {"androidboot.hardware.hwcomposer.mode", "client"},
+        {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
+        {"androidboot.hardware.egl", "angle"},
+        {"androidboot.hardware.vulkan", "lvp"},
+        {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
+    };
+  } else if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_3)},
         {"androidboot.hardware.gralloc", "minigbm"},
@@ -323,7 +334,7 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
   gpu_device_cmd.Cmd().AddParameter("gpu");
 
   const GpuMode gpu_mode = instance.gpu_mode();
-  CF_EXPECT(IsGfxstreamMode(gpu_mode) || gpu_mode == GpuMode::GuestSwiftshader,
+  CF_EXPECT(IsGfxstreamMode(gpu_mode) || IsGuestRenderingMode(gpu_mode),
             "GPU mode " << GpuModeString(gpu_mode)
                         << " not yet supported with vhost user gpu.");
 
@@ -333,7 +344,7 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
   // Why does this need JSON instead of just following the normal flags style...
   Json::Value gpu_params_json;
   gpu_params_json["pci-address"] = gpu_pci_address;
-  if (gpu_mode == GpuMode::GuestSwiftshader) {
+  if (IsGuestRenderingMode(gpu_mode)) {
     gpu_params_json["backend"] = "2D";
   } else if (gpu_mode == GpuMode::Gfxstream) {
     gpu_params_json["context-types"] = "gfxstream-gles:gfxstream-vulkan";
@@ -479,7 +490,7 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
     crosvm_cmd->AddParameter("--wayland-sock=", instance.frames_socket_path());
   }
 
-  if (gpu_mode == GpuMode::GuestSwiftshader) {
+  if (IsGuestRenderingMode(gpu_mode)) {
     crosvm_cmd->AddParameter("--gpu=", gpu_displays_string, "backend=2D",
                              gpu_common_string);
   } else if (gpu_mode == GpuMode::DrmVirgl) {
@@ -563,6 +574,12 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.AddKvmPath(config.kvm_path());
   }
 
+  // A pkvm guest needs to boot at virtual EL2; crosvm verifies host support
+  // (KVM_CAP_ARM_EL2, GICv3 irqchip) and fails to start otherwise.
+  if (instance.enable_pkvm()) {
+    crosvm_cmd.Cmd().AddParameter("--nested=on");
+  }
+
   if (!instance.smt()) {
     crosvm_cmd.Cmd().AddParameter("--no-smt");
   }
@@ -618,7 +635,14 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   if (instance.hwcomposer() != kHwComposerNone) {
-    const bool pmem_disabled = instance.mte() || !instance.use_pmem();
+    // pmem is disabled for pkvm guests: the pmem backing files are mmap'd
+    // MAP_SHARED, and host writeback of storage-backed pages triggers
+    // mmu-notifiers that arm64 KVM currently handles by tearing down the
+    // guest's entire shadow stage-2 instead of a range-scoped invalidation
+    // (see the nested_mmu reverse-mapping TODO in arch/arm64/kvm/mmu.c),
+    // which makes the guest extremely slow.
+    const bool pmem_disabled =
+        instance.mte() || instance.enable_pkvm() || !instance.use_pmem();
     const std::string pmem_path = HwcomposerPmemPath(instance);
     if (!pmem_disabled && FileExists(pmem_path)) {
       crosvm_cmd.Cmd().AddParameter("--pmem=path=", pmem_path);
@@ -705,7 +729,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 #endif
 
-  const bool pmem_disabled = instance.mte() || !instance.use_pmem();
+  const bool pmem_disabled =
+      instance.mte() || instance.enable_pkvm() || !instance.use_pmem();
   const std::string access_kregistry = AccessKregistryPath(instance);
   if (!pmem_disabled && FileExists(access_kregistry)) {
     crosvm_cmd.Cmd().AddParameter("--pmem=path=", access_kregistry);

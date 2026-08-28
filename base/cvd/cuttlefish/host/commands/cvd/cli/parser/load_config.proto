@@ -52,6 +52,7 @@ message EnvironmentSpecification {
   optional bool netsim_bt = 5;
   optional bool netsim_uwb = 6;
   repeated string netsim_args = 7;
+  optional bool netsim_modem = 8;
 }
 
 // TODO: chadreynolds - when we can make breaking changes and update, use this
@@ -63,6 +64,7 @@ message EnvironmentOptions {
   optional bool netsim_bt = 4;
   optional bool netsim_uwb = 5;
   repeated string netsim_args = 6;
+  optional bool netsim_modem = 7;
 }
 
 message Common {
@@ -93,6 +95,7 @@ message Instance {
   // TODO: b/337089452 - handle outside of proto logic
   optional string import_template = 9 [json_name = "@import"];
   optional Media media = 10;
+  optional string config = 11;
 }
 
 message Boot {
@@ -190,6 +193,7 @@ message Vm {
   repeated CustomAction custom_actions = 9;
   // Desired user space page size.
   optional UserPageSize page_size = 10;
+  optional bool enable_pkvm = 11;
 }
 
 message Crosvm {

@@ -16,17 +16,14 @@
 #include "cuttlefish/host/libs/web/android_build_api.h"
 
 #include <dirent.h>
-#include <time.h>
 #include <unistd.h>
 
 #include <algorithm>
 #include <chrono>
-#include <iomanip>
 #include <memory>
 #include <optional>
 #include <ranges>
 #include <set>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -53,6 +50,7 @@
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
+#include "cuttlefish/host/libs/web/parse_time.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 #include "cuttlefish/host/libs/zip/remote_zip.h"
@@ -88,15 +86,6 @@ Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
             "Response was successful, but contains error information.  Check "
             "log file for full response.");
   return response.data;
-}
-
-Result<std::chrono::system_clock::time_point> ParseTime(std::string_view str) {
-  std::stringstream stream = std::stringstream(std::string(str));
-  tm time_tm;
-  stream >> std::get_time(&time_tm, "%Y-%m-%dT%H:%M:%S.");
-  CF_EXPECTF(!!stream, "Failed to parse time '{}'", str);
-
-  return std::chrono::system_clock::from_time_t(mktime(&time_tm));
 }
 
 }  // namespace

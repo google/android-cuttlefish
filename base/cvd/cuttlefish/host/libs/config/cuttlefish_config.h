@@ -155,16 +155,6 @@ class CuttlefishConfig {
   void set_casimir_rf_port(int port);
   int casimir_rf_port() const;
 
-  // Flags for the set of radios that are connected to netsim
-  enum NetsimRadio {
-    Bluetooth = 0b00000001,
-    Wifi = 0b00000010,
-    Uwb = 0b00000100,
-    Nfc = 0b00001000,
-  };
-
-  void netsim_radio_enable(NetsimRadio flag);
-  bool netsim_radio_enabled(NetsimRadio flag) const;
   void set_netsim_instance_num(int netsim_instance_num);
   int netsim_instance_num() const;
   // Netsim has a built-in connector to forward packets to another daemon based
@@ -414,6 +404,7 @@ class CuttlefishConfig {
     bool crosvm_simple_media_device() const;
     std::string crosvm_v4l2_proxy() const;
     bool use_pmem() const;
+    bool enable_pkvm() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -512,6 +503,7 @@ class CuttlefishConfig {
     // Configuration flags for a minimal device
     bool enable_minimal_mode() const;
     bool enable_modem_simulator() const;
+    bool enable_modem_netsim() const;
     int modem_simulator_instance_number() const;
     int modem_simulator_sim_type() const;
 
@@ -535,6 +527,10 @@ class CuttlefishConfig {
     bool enable_gpu_vhost_user() const;
     bool enable_gpu_external_blob() const;
     bool enable_gpu_system_blob() const;
+
+    bool has_vulkan_gfxstream_apex() const;
+    bool has_vulkan_lavapipe_apex() const;
+    bool has_vulkan_swiftshader_apex() const;
 
     std::string hwcomposer() const;
 
@@ -661,6 +657,7 @@ class CuttlefishConfig {
     void set_crosvm_simple_media_device(const bool simple_media_device);
     void set_crosvm_v4l2_proxy(const std::string v4l2_proxy);
     void set_use_pmem(const bool use_pmem);
+    void set_enable_pkvm(bool enable_pkvm);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
@@ -747,6 +744,7 @@ class CuttlefishConfig {
     // Configuration flags for a minimal device
     void set_enable_minimal_mode(bool enable_minimal_mode);
     void set_enable_modem_simulator(bool enable_modem_simulator);
+    void set_enable_modem_netsim(bool enable);
     void set_modem_simulator_instance_number(int instance_numbers);
     void set_modem_simulator_sim_type(int sim_type);
 
@@ -768,6 +766,10 @@ class CuttlefishConfig {
     void set_enable_gpu_vhost_user(const bool enable_gpu_vhost_user);
     void set_enable_gpu_external_blob(const bool enable_gpu_external_blob);
     void set_enable_gpu_system_blob(const bool enable_gpu_system_blob);
+
+    void set_has_vulkan_gfxstream_apex(const bool has_apex);
+    void set_has_vulkan_lavapipe_apex(const bool has_apex);
+    void set_has_vulkan_swiftshader_apex(const bool has_apex);
 
     void set_hwcomposer(const std::string&);
 
@@ -939,5 +941,7 @@ bool IsRestoring(const CuttlefishConfig&);
 bool VmManagerIsCrosvm(const CuttlefishConfig&);
 bool VmManagerIsQemu(const CuttlefishConfig&);
 bool VmManagerIsGem5(const CuttlefishConfig&);
+
+bool EnableNetsimNfc(const CuttlefishConfig& config);
 
 }  // namespace cuttlefish

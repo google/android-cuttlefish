@@ -859,6 +859,34 @@ bool CuttlefishConfig::InstanceSpecific::enable_gpu_system_blob() const {
   return (*Dictionary())[kEnableGpuSystemBlob].asBool();
 }
 
+static constexpr char kHasVulkanGfxstreamApex[] = "has_vulkan_gfxstream_apex";
+void CuttlefishConfig::MutableInstanceSpecific::set_has_vulkan_gfxstream_apex(
+    const bool has_apex) {
+  (*Dictionary())[kHasVulkanGfxstreamApex] = has_apex;
+}
+bool CuttlefishConfig::InstanceSpecific::has_vulkan_gfxstream_apex() const {
+  return (*Dictionary())[kHasVulkanGfxstreamApex].asBool();
+}
+
+static constexpr char kHasVulkanLavapipeApex[] = "has_vulkan_lavapipe_apex";
+void CuttlefishConfig::MutableInstanceSpecific::set_has_vulkan_lavapipe_apex(
+    const bool has_apex) {
+  (*Dictionary())[kHasVulkanLavapipeApex] = has_apex;
+}
+bool CuttlefishConfig::InstanceSpecific::has_vulkan_lavapipe_apex() const {
+  return (*Dictionary())[kHasVulkanLavapipeApex].asBool();
+}
+
+static constexpr char kHasVulkanSwiftshaderApex[] =
+    "has_vulkan_swiftshader_apex";
+void CuttlefishConfig::MutableInstanceSpecific::set_has_vulkan_swiftshader_apex(
+    const bool has_apex) {
+  (*Dictionary())[kHasVulkanSwiftshaderApex] = has_apex;
+}
+bool CuttlefishConfig::InstanceSpecific::has_vulkan_swiftshader_apex() const {
+  return (*Dictionary())[kHasVulkanSwiftshaderApex].asBool();
+}
+
 static constexpr char kEnableAudio[] = "enable_audio";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_audio(bool enable) {
   (*Dictionary())[kEnableAudio] = enable;
@@ -1351,6 +1379,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_ports(
   (*Dictionary())[kModemSimulatorPorts] = modem_simulator_ports;
 }
 
+static constexpr char kEnableModemNetsim[] = "enable_modem_netsim";
+bool CuttlefishConfig::InstanceSpecific::enable_modem_netsim() const {
+  return (*Dictionary())[kEnableModemNetsim].asBool();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_modem_netsim(
+    bool enable) {
+  (*Dictionary())[kEnableModemNetsim] = enable;
+}
+
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
   return AbsolutePath(PerInstanceLogPath(kLogNameLauncher));
 }
@@ -1832,6 +1869,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_use_pmem(
 }
 bool CuttlefishConfig::InstanceSpecific::use_pmem() const {
   return (*Dictionary())[kCrosvmUsePmem].asBool();
+}
+
+static constexpr char kEnablePkvm[] = "enable_pkvm";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_pkvm(
+    bool enable_pkvm) {
+  (*Dictionary())[kEnablePkvm] = enable_pkvm;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_pkvm() const {
+  return (*Dictionary())[kEnablePkvm].asBool();
 }
 
 static constexpr char kEnableTapDevices[] = "enable_tap_devices";

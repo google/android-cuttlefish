@@ -238,45 +238,24 @@ func TestStatArtifactSucceeds(t *testing.T) {
 }
 
 func TestExtractArtifactSucceedsWithZipFormat(t *testing.T) {
-	rootDir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, rootDir)
-	opts := UserArtifactsManagerOpts{RootDir: rootDir}
-	uam, err := NewUserArtifactsManagerImpl(opts)
-	if err != nil {
-		t.Fatal(err)
-	}
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
 	zipContents := map[string]string{
 		"alpha.txt":   "This is alpha.\n",
 		"bravo.txt":   "This is bravo.\n",
 		"charlie.txt": "This is charlie.\n",
 		"delta.txt":   "This is delta.\n",
 	}
-	tempDir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, tempDir)
 	zipFile, err := createZip(tempDir, zipContents)
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := ioutil.ReadFile(zipFile)
+
+	extractedDir, err := updateAndExtractArtifact(t, zipFile)
 	if err != nil {
 		t.Fatal(err)
 	}
-	checksum := getSha256Sum(data)
-	chunk := UserArtifactChunk{
-		Name:          filepath.Base(zipFile),
-		OffsetBytes:   0,
-		SizeBytes:     int64(len(data)),
-		FileSizeBytes: int64(len(data)),
-		File:          bytes.NewReader(data),
-	}
-	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := uam.ExtractArtifact(checksum); err != nil {
-		t.Fatal(err)
-	}
-	if got, err := getContents(filepath.Join(rootDir, fmt.Sprintf("%s_extracted", checksum))); err != nil {
+	if got, err := getContents(extractedDir); err != nil {
 		t.Fatal(err)
 	} else if diff := cmp.Diff(zipContents, got); diff != "" {
 		t.Fatalf("content mismatch (-want +got):\n%s", diff)
@@ -284,109 +263,59 @@ func TestExtractArtifactSucceedsWithZipFormat(t *testing.T) {
 }
 
 func TestExtractArtifactSucceedsWithTarGzFormat(t *testing.T) {
-	rootDir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, rootDir)
-	opts := UserArtifactsManagerOpts{RootDir: rootDir}
-	uam, err := NewUserArtifactsManagerImpl(opts)
-	if err != nil {
-		t.Fatal(err)
-	}
-	tarContents := map[string]string{
-		"foo/alpha.txt":   "This is alpha.\n",
-		"foo/bravo.txt":   "This is bravo.\n",
-		"bar/charlie.txt": "This is charlie.\n",
-		"delta.txt":       "This is delta.\n",
-	}
 	tempDir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, tempDir)
+	tarContents := map[string]archiveEntry{
+		"foo/alpha.txt":   {Content: "This is alpha.\n"},
+		"foo/bravo.txt":   {Content: "This is bravo.\n"},
+		"bar/charlie.txt": {Content: "This is charlie.\n"},
+		"delta.txt":       {Content: "This is delta.\n"},
+	}
 	tarFile, err := createTarGz(tempDir, tarContents)
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := ioutil.ReadFile(tarFile)
+
+	extractedDir, err := updateAndExtractArtifact(t, tarFile)
 	if err != nil {
 		t.Fatal(err)
 	}
-	checksum := getSha256Sum(data)
-	chunk := UserArtifactChunk{
-		Name:          filepath.Base(tarFile),
-		OffsetBytes:   0,
-		SizeBytes:     int64(len(data)),
-		FileSizeBytes: int64(len(data)),
-		File:          bytes.NewReader(data),
+	tarWant := map[string]string{}
+	for name, entry := range tarContents {
+		tarWant[name] = entry.Content
 	}
-	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+	if got, err := getContents(extractedDir); err != nil {
 		t.Fatal(err)
-	}
-
-	if err := uam.ExtractArtifact(checksum); err != nil {
-		t.Fatal(err)
-	}
-	if got, err := getContents(filepath.Join(rootDir, fmt.Sprintf("%s_extracted", checksum))); err != nil {
-		t.Fatal(err)
-	} else if diff := cmp.Diff(tarContents, got); diff != "" {
+	} else if diff := cmp.Diff(tarWant, got); diff != "" {
 		t.Fatalf("content mismatch (-want +got):\n%s", diff)
 	}
 }
 
 func TestExtractArtifactFailsWithInvalidFileFormat(t *testing.T) {
-	rootDir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, rootDir)
-	opts := UserArtifactsManagerOpts{RootDir: rootDir}
-	uam, err := NewUserArtifactsManagerImpl(opts)
-	if err != nil {
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
+	archive := filepath.Join(tempDir, testFileName)
+	if err := ioutil.WriteFile(archive, []byte(testFileData), 0644); err != nil {
 		t.Fatal(err)
 	}
-	checksum := getSha256Sum([]byte(testFileData))
-	chunk := UserArtifactChunk{
-		Name:          testFileName,
-		OffsetBytes:   0,
-		SizeBytes:     int64(len(testFileData)),
-		FileSizeBytes: int64(len(testFileData)),
-		File:          strings.NewReader(testFileData),
-	}
-	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := uam.ExtractArtifact(checksum); err == nil {
+	if _, err := updateAndExtractArtifact(t, archive); err == nil {
 		t.Fatal("Expected an error")
 	}
 }
 
 func TestExtractArtifactAfterArtifactIsFullyExtractedFails(t *testing.T) {
-	rootDir := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, rootDir)
-	opts := UserArtifactsManagerOpts{RootDir: rootDir}
-	uam, err := NewUserArtifactsManagerImpl(opts)
-	if err != nil {
-		t.Fatal(err)
-	}
 	tempDir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, tempDir)
-	archive, err := createTarGz(tempDir, map[string]string{"file": "content\n"})
+	archive, err := createTarGz(tempDir, map[string]archiveEntry{"file": {Content: "content\n"}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := ioutil.ReadFile(archive)
-	if err != nil {
-		t.Fatal(err)
-	}
-	checksum := getSha256Sum(data)
-	chunk := UserArtifactChunk{
-		Name:          filepath.Base(archive),
-		OffsetBytes:   0,
-		SizeBytes:     int64(len(data)),
-		FileSizeBytes: int64(len(data)),
-		File:          bytes.NewReader(data),
-	}
-	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
-		t.Fatal(err)
-	}
+	// Extract twice on the same manager: the first extraction must succeed and
+	// the second must fail because the artifact is already extracted.
+	uam, checksum := updateArtifact(t, archive)
 	if err := uam.ExtractArtifact(checksum); err != nil {
 		t.Fatal(err)
 	}
-
 	if err := uam.ExtractArtifact(checksum); err == nil {
 		t.Fatal("Expected an error")
 	}
@@ -402,6 +331,42 @@ func TestExtractArtifactFailsArtifactNotFound(t *testing.T) {
 	}
 
 	if err := uam.ExtractArtifact("foo"); err == nil {
+		t.Fatal("Expected an error")
+	}
+}
+
+func TestExtractArtifactFailsWithTarPathTraversal(t *testing.T) {
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
+	archive, err := createTarGz(tempDir, map[string]archiveEntry{"../../../../../../PWNED": {Content: "owned"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := updateAndExtractArtifact(t, archive); err == nil {
+		t.Fatal("Expected an error")
+	}
+}
+
+func TestExtractArtifactFailsWithZipPathTraversal(t *testing.T) {
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
+	archive, err := createZip(tempDir, map[string]string{"../../../../../../PWNED": "owned"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := updateAndExtractArtifact(t, archive); err == nil {
+		t.Fatal("Expected an error")
+	}
+}
+
+func TestExtractArtifactFailsWithTarSymlinkEscape(t *testing.T) {
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
+	archive, err := createTarGz(tempDir, map[string]archiveEntry{"sneak": {Symlink: "../../../../../../etc"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := updateAndExtractArtifact(t, archive); err == nil {
 		t.Fatal("Expected an error")
 	}
 }
@@ -650,7 +615,15 @@ func getSubdirs(path string) []string {
 	return subdirs
 }
 
-func createTarGz(dir string, contents map[string]string) (string, error) {
+// archiveEntry describes an entry to add to an archive built by createTarGz: a
+// regular file holding Content, or, when Symlink is non-empty, a symbolic link
+// pointing at Symlink (used to exercise the symlink-escape guard).
+type archiveEntry struct {
+	Content string
+	Symlink string
+}
+
+func createTarGz(dir string, contents map[string]archiveEntry) (string, error) {
 	tarFile, err := ioutil.TempFile(dir, "*.tar.gz")
 	if err != nil {
 		return "", err
@@ -665,7 +638,19 @@ func createTarGz(dir string, contents map[string]string) (string, error) {
 
 	directories := map[string]struct{}{}
 
-	for name, content := range contents {
+	for name, entry := range contents {
+		if entry.Symlink != "" {
+			header := tar.Header{
+				Name:     name,
+				Typeflag: tar.TypeSymlink,
+				Linkname: entry.Symlink,
+				Mode:     0777,
+			}
+			if err := tarWriter.WriteHeader(&header); err != nil {
+				return "", err
+			}
+			continue
+		}
 		dir, _ := filepath.Split(name)
 		dirPaths := getSubdirs(dir)
 		for _, dp := range dirPaths {
@@ -684,15 +669,15 @@ func createTarGz(dir string, contents map[string]string) (string, error) {
 		}
 		header := tar.Header{
 			Name: name,
-			Size: int64(len(content)),
+			Size: int64(len(entry.Content)),
 			Mode: 0555,
 		}
 		if err := tarWriter.WriteHeader(&header); err != nil {
 			return "", err
 		}
-		if n, err := tarWriter.Write([]byte(content)); err != nil {
+		if n, err := tarWriter.Write([]byte(entry.Content)); err != nil {
 			return "", err
-		} else if n != len(content) {
+		} else if n != len(entry.Content) {
 			return "", fmt.Errorf("Failed to write entire file: %s", name)
 		}
 	}
@@ -706,4 +691,39 @@ func getChunkStateItemList(cs *chunkState) []chunkStateItem {
 		return true
 	})
 	return items
+}
+
+// updateArtifact uploads the archive at archivePath as a single chunk, returning
+// the manager and the artifact checksum so callers can extract it.
+func updateArtifact(t *testing.T, archivePath string) (*UserArtifactsManagerImpl, string) {
+	rootDir := orchtesting.TempDir(t)
+	t.Cleanup(func() { orchtesting.RemoveDir(t, rootDir) })
+	uam, err := NewUserArtifactsManagerImpl(UserArtifactsManagerOpts{RootDir: rootDir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := ioutil.ReadFile(archivePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checksum := getSha256Sum(data)
+	chunk := UserArtifactChunk{
+		Name:          filepath.Base(archivePath),
+		OffsetBytes:   0,
+		SizeBytes:     int64(len(data)),
+		FileSizeBytes: int64(len(data)),
+		File:          bytes.NewReader(data),
+	}
+	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+		t.Fatal(err)
+	}
+	return uam, checksum
+}
+
+// updateAndExtractArtifact uploads the archive at archivePath as a single chunk and
+// extracts it, returning the directory the artifact was extracted into so
+// callers can inspect the result.
+func updateAndExtractArtifact(t *testing.T, archivePath string) (string, error) {
+	uam, checksum := updateArtifact(t, archivePath)
+	return uam.ExtractedArtifactPath(checksum), uam.ExtractArtifact(checksum)
 }

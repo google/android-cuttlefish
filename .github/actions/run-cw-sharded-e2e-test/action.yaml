@@ -16,6 +16,8 @@ runs:
       with:
         name: android-cuttlefish-e2etest-image-tar
         github-token: ${{ github.token }}
+    - name: Upgrade crun
+      uses: ./.github/actions/upgrade-crun
     - name: Run tests
       shell: bash
       env:
@@ -42,7 +44,7 @@ runs:
         sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
 
         # Compute tests for this runner
-        all_tests=$( sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output query --noshow_progress 'kind("go_test", orchestration/...) except attr(flaky, 1, //...) except attr(tags, "[\[ ]host-ready-special[,\]]", //...)' | grep -e "^\/\/" | sort )
+        all_tests=$( sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output query --noshow_progress 'kind("go_test", orchestration/...) except attr(flaky, 1, //...) except attr(tags, "[\[ ]host-ready-special[,\]]", //...)' | grep -e "^\/\/" | sort )
         all_tests_count=$(echo "${all_tests}" | wc --lines)
         echo "ALL TESTS: ${all_tests_count}"
         echo "${all_tests}"
@@ -70,11 +72,10 @@ runs:
         # Run tests
         targets=( $(echo ${runner_tests}) )
         for t in "${targets[@]}"; do
-          t="${t::-1}"
           echo "running test: ${t}"
           sudo podman rm -f tester
           sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-          sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test --sandbox_writable_path=/home/testrunner $t
+          sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output test --sandbox_writable_path=/home/testrunner $t
         done
     - name: Upload test logs
       if: always()

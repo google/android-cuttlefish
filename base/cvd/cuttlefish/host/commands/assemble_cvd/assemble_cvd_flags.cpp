@@ -142,6 +142,8 @@ DEFINE_vec(netsim_uwb, fmt::format("{}", CF_DEFAULTS_NETSIM_UWB),
            "[Experimental] Connect Uwb radio to netsim.");
 DEFINE_vec(netsim_nfc, fmt::format("{}", CF_DEFAULTS_NETSIM_NFC),
            "[Experimental] Connect Nfc radio to netsim.");
+DEFINE_vec(netsim_modem, fmt::format("{}", CF_DEFAULTS_NETSIM_MODEM),
+           "[Experimental] Connect Modem radio to netsim.");
 DEFINE_string(netsim_args, CF_DEFAULTS_NETSIM_ARGS,
               "Space-separated list of netsim args.");
 
@@ -336,6 +338,11 @@ DEFINE_vec(protected_vm, fmt::format("{}", CF_DEFAULTS_PROTECTED_VM),
            "Boot in Protected VM mode");
 
 DEFINE_vec(mte, fmt::format("{}", CF_DEFAULTS_MTE), "Enable MTE");
+
+DEFINE_vec(enable_pkvm, fmt::format("{}", CF_DEFAULTS_ENABLE_PKVM),
+           "Provision the guest to run pKVM so it can host its own protected "
+           "VMs; requires a nested-virt capable host, --vm_manager=crosvm "
+           "and an arm64 guest.");
 
 DEFINE_vec(enable_audio, fmt::format("{}", CF_DEFAULTS_ENABLE_AUDIO),
            "Whether to play or capture audio");

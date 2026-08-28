@@ -326,27 +326,47 @@ Result<std::vector<Flag>> GetCvdInternalStartFlags(
   return flags;
 }
 
+bool CanBypassToSingleInstance(const LocalInstance& instance,
+                               const LocalInstanceGroup& group,
+                               const std::vector<std::string>& subcmd_args) {
+  if (instance.State() != cvd::INSTANCE_STATE_STOPPED) {
+    return false;
+  }
+  if (group.StartTime() == TimeStamp{}) {
+    return false;
+  }
+
+  std::vector<std::string> args_copy = subcmd_args;
+  bool daemon = true;
+  std::vector<Flag> safe_flags = {
+      GflagsCompatFlag("daemon", daemon),
+  };
+  const Result<void> res = ConsumeFlags(safe_flags, args_copy);
+  if (!res.ok() || !daemon || !args_copy.empty()) {
+    return false;
+  }
+
+  const std::vector<LocalInstance>& instances = group.Instances();
+  if (instances.empty()) {
+    return false;
+  }
+  const LocalInstance& main_instance = instances[0];
+  if (instance.Id() == main_instance.Id()) {
+    return false;
+  }
+  if (main_instance.State() != cvd::INSTANCE_STATE_RUNNING) {
+    return false;
+  }
+
+  return true;
+}
+
 }  // namespace
 
 CvdStartCommandHandler::CvdStartCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {
   own_flags_.daemon = true;
-}
-
-static bool HasUnsafeFlagsForBypass(const std::vector<std::string>& args) {
-  std::vector<std::string> args_copy = args;
-  bool daemon = true;
-  std::string report_anonymous = "";
-  std::vector<Flag> safe_flags = {
-      GflagsCompatFlag("daemon", daemon),
-      GflagsCompatFlag("report_anonymous_usage_stats", report_anonymous),
-  };
-  auto res = ConsumeFlags(safe_flags, args_copy);
-  if (!res.ok()) {
-    return true;
-  }
-  return !args_copy.empty();
 }
 
 Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
@@ -364,13 +384,11 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
     auto [instance, group] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request));
 
-    if (instance.State() == cvd::INSTANCE_STATE_STOPPED &&
-        group.StartTime() != TimeStamp{} &&
-        !HasUnsafeFlagsForBypass(subcmd_args)) {
+    if (CanBypassToSingleInstance(instance, group, subcmd_args)) {
       CF_EXPECT(LaunchSingleInstance(instance, group, request));
       return {};
     } else {
-      VLOG(1) << "Instance is not in stopped state. Proceeding with "
+      VLOG(1) << "Cannot bypass to single instance start. Proceeding with "
                  "normal group start.";
     }
   }
