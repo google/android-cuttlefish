@@ -61,7 +61,8 @@ Result<BootImage> BootImage::Read(std::unique_ptr<ReaderSeeker> rd) {
     case 4:
       return BootImage(std::move(rd), *reinterpret_cast<boot_img_hdr_v4*>(&v2));
     default:
-      return CF_ERRF("Unknown header version '{}'", v2.header_version);
+      return CF_ERRF("Unknown header version '{}'",
+                     static_cast<uint32_t>(v2.header_version));
   }
 }
 
