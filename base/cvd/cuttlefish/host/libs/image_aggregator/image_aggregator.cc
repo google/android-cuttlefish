@@ -29,7 +29,6 @@
 #include <memory>
 #include <random>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "google/protobuf/util/message_differencer.h"
@@ -244,7 +243,9 @@ class CompositeDiskBuilder {
     gpt.footer = head.header;
     gpt.footer.partition_entries_lba =
         (DiskSize() - sizeof(gpt.entries)) / kSectorSize - 1;
-    std::swap(gpt.footer.current_lba, gpt.footer.backup_lba);
+    auto tmp_lba = gpt.footer.current_lba;
+    gpt.footer.current_lba = gpt.footer.backup_lba;
+    gpt.footer.backup_lba = tmp_lba;
     gpt.footer.header_crc32 = 0;
     gpt.footer.header_crc32 =
         crc32(0, (uint8_t*)&gpt.footer, sizeof(GptHeader));
