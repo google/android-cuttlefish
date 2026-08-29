@@ -38,17 +38,37 @@ DEFINE_string(android_efi_loader, CF_DEFAULTS_ANDROID_EFI_LOADER,
 namespace cuttlefish {
 namespace {
 
-static constexpr std::string_view kName = "/android_efi_loader.efi";
+static constexpr std::string_view kEspImageName = "/android_esp.img";
+static constexpr std::string_view kSystemEtcEspImageName =
+    "/system/etc/android_esp.img";
+static constexpr std::string_view kEfiLoaderName = "/android_efi_loader.efi";
 
 std::vector<std::string> DefaultPaths(
     const SystemImageDirFlag& system_image_dirs) {
   std::vector<std::string> paths;
   for (std::string_view system_image_dir : system_image_dirs.AsVector()) {
-    // EFI loader isn't present in the output folder by default and can be only
-    // fetched by --android_efi_loader_build in fetch_cvd, so pick it only in
-    // case it's present.
-    std::string path = absl::StrCat(system_image_dir, kName);
-    paths.emplace_back(FileExists(path) ? std::move(path) : "");
+    // 1. Check for prebuilt ESP partition image (android_esp.img)
+    std::string esp_path = absl::StrCat(system_image_dir, kEspImageName);
+    if (FileExists(esp_path)) {
+      paths.emplace_back(std::move(esp_path));
+      continue;
+    }
+    std::string system_etc_esp_path =
+        absl::StrCat(system_image_dir, kSystemEtcEspImageName);
+    if (FileExists(system_etc_esp_path)) {
+      paths.emplace_back(std::move(system_etc_esp_path));
+      continue;
+    }
+
+    // 2. Fallback to standalone EFI loader binary (android_efi_loader.efi)
+    std::string efi_loader_path =
+        absl::StrCat(system_image_dir, kEfiLoaderName);
+    if (FileExists(efi_loader_path)) {
+      paths.emplace_back(std::move(efi_loader_path));
+      continue;
+    }
+
+    paths.emplace_back("");
   }
   return paths;
 }
