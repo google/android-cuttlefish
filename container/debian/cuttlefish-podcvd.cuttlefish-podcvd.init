@@ -53,6 +53,10 @@ gen_cert() {
 }
 
 start() {
+    # Enable ip forwarding
+    echo 1 > /proc/sys/net/ipv4/ip_forward
+    echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
+
     modprobe vhost_net || true
     modprobe vhost_vsock || true
 
