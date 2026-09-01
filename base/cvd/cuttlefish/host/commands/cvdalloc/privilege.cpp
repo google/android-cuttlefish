@@ -15,20 +15,25 @@
  */
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 
+#include <elf.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stddef.h>
+#include <stdlib.h>
 #include <unistd.h>
 #if defined(__linux__)
 #include <linux/capability.h>
 #include <linux/prctl.h>
 #include <linux/xattr.h>
+#include <sys/auxv.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
-#include <sys/types.h>
 #include <sys/xattr.h>
 #endif
 
+#include <optional>
 #include <string_view>
+#include <utility>
 
 #include "absl/log/log.h"
 
@@ -95,10 +100,10 @@ Result<void> ValidateCvdallocBinary(std::string_view path) {
 #if defined(__linux__)
   (void)st;
   /* Try and determine if the cvdalloc binary has any capabilities. */
-  struct vfs_cap_data cap;
+  struct vfs_cap_data cap = {};
   ssize_t s = getxattr(path.data(), XATTR_NAME_CAPS, &cap, sizeof(cap));
   CF_EXPECTF(
-      s != 1 && (cap.data[0].permitted & (1 << CAP_NET_ADMIN)) != 0,
+      s != -1 && (cap.data[0].permitted & (1 << CAP_NET_ADMIN)) != 0,
       "cvdalloc binary does not have permissions to allocate resources.\n"
       "As root, please\n\n    setcap cap_net_admin,cap_net_bind_service,"
       "cap_net_raw=+ep `realpath {}`",
@@ -155,6 +160,45 @@ int DropPrivileges(uid_t orig) {
 #endif
 
   return setuid(orig);
+}
+
+namespace {
+constexpr char kTrustedPath[] = "/usr/sbin:/usr/bin:/sbin:/bin";
+}  // namespace
+
+Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
+  uid_t orig = getuid();
+  // The child processes we exec run with elevated privilege (CAP_NET_ADMIN via
+  // ambient caps) but with AT_SECURE=0, so the dynamic linker won't scrub their
+  // environment for us. Sanitize with an allowlist.
+#if defined(__linux__)
+  // On Linux, only sanitize when this exec actually gained privilege (e.g. via
+  // file caps), as signalled by AT_SECURE.
+  const bool should_sanitize = getauxval(AT_SECURE) != 0;
+#else
+  // Elsewhere we can't rely on AT_SECURE, so sanitize unconditionally.
+  const bool should_sanitize = true;
+#endif
+  if (should_sanitize) {
+    CF_EXPECTF(clearenv() == 0, "Couldn't clear environment: {}",
+               StrError(errno));
+    CF_EXPECTF(setenv("PATH", kTrustedPath, /*overwrite=*/1) == 0,
+               "Couldn't set PATH: {}", StrError(errno));
+  }
+  CF_EXPECTF(BeginElevatedPrivileges() != -1,
+             "Couldn't elevate permissions: {}", StrError(errno));
+  return ScopedPrivileges(orig);
+}
+
+ScopedPrivileges::ScopedPrivileges(uid_t orig) : orig_(orig) {}
+
+ScopedPrivileges::ScopedPrivileges(ScopedPrivileges&& other) noexcept
+    : orig_(std::exchange(other.orig_, std::nullopt)) {}
+
+ScopedPrivileges::~ScopedPrivileges() {
+  if (orig_.has_value() && DropPrivileges(*orig_) == -1) {
+    LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << StrError(errno);
+  }
 }
 
 }  // namespace cuttlefish
