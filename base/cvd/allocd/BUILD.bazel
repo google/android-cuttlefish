@@ -79,7 +79,10 @@ cf_cc_test(
     srcs = ["alloc_utils_firewall_test.cpp"],
     deps = [
         ":alloc_utils",
+        "//allocd/net:nftables",
+        "//allocd/test:fake_nftables",
         "//allocd/test:mock_nftables",
+        "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
     ],
 )

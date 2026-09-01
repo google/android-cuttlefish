@@ -21,8 +21,10 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "absl/base/no_destructor.h"
+#include "absl/log/log.h"
 #include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -150,6 +152,50 @@ Result<void> NftablesNft::DeleteRule(std::string_view family,
              "Failed to delete nft rule: family={}, table={}, chain={}, "
              "handle={}",
              family, table, chain, handle);
+  return {};
+}
+
+Result<void> NftablesNft::DeleteRulesByComment(std::string_view family,
+                                               std::string_view table,
+                                               std::string_view chain,
+                                               std::string_view comment) {
+  Command cmd{CF_EXPECT(BinaryPath())};
+  cmd.AddParameter("-j");
+  cmd.AddParameter("list");
+  cmd.AddParameter("chain");
+  cmd.AddParameter(std::string(family));
+  cmd.AddParameter(std::string(table));
+  cmd.AddParameter(std::string(chain));
+
+  // If the chain/table no longer exists (e.g. torn down already), there is
+  // nothing to delete; treat that as success so teardown stays idempotent.
+  Result<std::string> stdout_str = RunAndCaptureStdout(std::move(cmd));
+  if (!stdout_str.has_value()) {
+    LOG(INFO) << "nft list chain failed, treating as no-op: family=" << family
+              << ", table=" << table << ", chain=" << chain;
+    return {};
+  }
+
+  Json::Value json = CF_EXPECT(ParseJson(*stdout_str));
+  CF_EXPECT(json.isMember("nftables") && json["nftables"].isArray(),
+            "Invalid JSON output from nft: " << *stdout_str);
+
+  std::vector<uint64_t> handles;
+  for (const auto& item : json["nftables"]) {
+    if (!item.isMember("rule")) {
+      continue;
+    }
+    const Json::Value& rule = item["rule"];
+    if (rule.isMember("comment") && rule.isMember("handle") &&
+        rule["comment"].asString() == comment) {
+      handles.push_back(rule["handle"].asUInt64());
+    }
+  }
+
+  for (uint64_t handle : handles) {
+    CF_EXPECT(DeleteRule(family, table, chain, handle));
+  }
+
   return {};
 }
 

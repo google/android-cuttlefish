@@ -17,8 +17,6 @@
 #ifndef ALLOCD_NET_NFT_RULE_H_
 #define ALLOCD_NET_NFT_RULE_H_
 
-#include <stdint.h>
-
 #include <string>
 #include <string_view>
 
@@ -29,13 +27,14 @@ namespace cuttlefish {
 
 class NftRule {
  public:
+  // `tag` is a caller-supplied unique identifier (e.g. an interface name).
   static Result<NftRule> Create(Nftables& nft, std::string_view family,
                                 std::string_view table, std::string_view chain,
-                                std::string_view content);
+                                std::string_view content, std::string_view tag);
 
   NftRule() = delete;
   NftRule(Nftables* nft, std::string_view family, std::string_view table,
-          std::string_view chain, uint64_t handle);
+          std::string_view chain, std::string comment);
   ~NftRule();
 
   NftRule(NftRule&& r) noexcept;
@@ -48,7 +47,7 @@ class NftRule {
   std::string family_;
   std::string table_;
   std::string chain_;
-  uint64_t handle_ = 0;
+  std::string comment_;
 };
 
 }  // namespace cuttlefish

@@ -180,7 +180,7 @@ Result<NftRule> CreateMobileIface(Nftables& nft, std::string_view name,
   }
 
   auto rule = NftRule::Create(nft, kFamilyIp, kNatTable, kPostroutingChain,
-                              MasqueradeRule(network));
+                              MasqueradeRule(network), name);
   if (!rule.has_value()) {
     (void)DestroyGateway(name, gateway, kMobileNetmask);
     (void)DestroyIface(name);

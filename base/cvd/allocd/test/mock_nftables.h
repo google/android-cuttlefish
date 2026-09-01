@@ -43,6 +43,10 @@ class MockNftables : public Nftables {
               (std::string_view family, std::string_view table,
                std::string_view chain, uint64_t handle),
               (override));
+  MOCK_METHOD(Result<void>, DeleteRulesByComment,
+              (std::string_view family, std::string_view table,
+               std::string_view chain, std::string_view comment),
+              (override));
 };
 
 }  // namespace cuttlefish

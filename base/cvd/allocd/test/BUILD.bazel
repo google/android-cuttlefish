@@ -12,3 +12,13 @@ cf_cc_library(
         "@googletest//:gtest",
     ],
 )
+
+cf_cc_library(
+    name = "fake_nftables",
+    testonly = True,
+    hdrs = ["fake_nftables.h"],
+    deps = [
+        "//allocd/net:nftables",
+        "//cuttlefish/result",
+    ],
+)

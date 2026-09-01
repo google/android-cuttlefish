@@ -35,13 +35,16 @@ TEST(NftRuleTest, CreateAndAutoDeleteOnDestruction) {
   MockNftables mock_nft;
   constexpr uint32_t kHandle = 42;
 
-  EXPECT_CALL(mock_nft, AddRule("ip", "table1", "chain1", "content1"))
+  EXPECT_CALL(mock_nft, AddRule("ip", "table1", "chain1",
+                                "content1 comment \"cvdalloc-tag1\""))
       .WillOnce(Return(kHandle));
-  EXPECT_CALL(mock_nft, DeleteRule("ip", "table1", "chain1", kHandle))
+  EXPECT_CALL(mock_nft,
+              DeleteRulesByComment("ip", "table1", "chain1", "cvdalloc-tag1"))
       .WillOnce(Return(Result<void>{}));
 
   {
-    auto rule = NftRule::Create(mock_nft, "ip", "table1", "chain1", "content1");
+    auto rule =
+        NftRule::Create(mock_nft, "ip", "table1", "chain1", "content1", "tag1");
     EXPECT_THAT(rule, IsOk());
   }
 }
@@ -50,14 +53,16 @@ TEST(NftRuleTest, MoveConstructorTransfersOwnership) {
   MockNftables mock_nft;
   constexpr uint32_t kHandle = 100;
 
-  EXPECT_CALL(mock_nft, AddRule("ip", "table1", "chain1", "content1"))
+  EXPECT_CALL(mock_nft, AddRule("ip", "table1", "chain1",
+                                "content1 comment \"cvdalloc-tag1\""))
       .WillOnce(Return(kHandle));
-  EXPECT_CALL(mock_nft, DeleteRule("ip", "table1", "chain1", kHandle))
+  EXPECT_CALL(mock_nft,
+              DeleteRulesByComment("ip", "table1", "chain1", "cvdalloc-tag1"))
       .WillOnce(Return(Result<void>{}));
 
   {
     auto rule1 =
-        NftRule::Create(mock_nft, "ip", "table1", "chain1", "content1");
+        NftRule::Create(mock_nft, "ip", "table1", "chain1", "content1", "tag1");
     ASSERT_THAT(rule1, IsOk());
 
     NftRule rule2(std::move(*rule1));
