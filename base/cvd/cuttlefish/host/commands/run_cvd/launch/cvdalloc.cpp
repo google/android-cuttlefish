@@ -45,7 +45,7 @@
 namespace cuttlefish {
 
 constexpr std::chrono::seconds kCvdAllocateTimeout = std::chrono::seconds(30);
-constexpr std::chrono::seconds kCvdTeardownTimeout = std::chrono::seconds(2);
+constexpr std::chrono::seconds kCvdTeardownTimeout = std::chrono::seconds(30);
 
 enum class CvdallocStatus { kUnknown = 0, kAvailable, kFailed };
 

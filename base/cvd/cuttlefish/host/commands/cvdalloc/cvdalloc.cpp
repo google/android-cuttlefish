@@ -116,8 +116,7 @@ Result<void> Teardown(int id, std::string_view ethernet_bridge_name,
 
   DestroyMobileIface(CvdallocInterfaceName("mtap", id), id,
                      kCvdallocMobileIpPrefix);
-  DestroyMobileIface(CvdallocInterfaceName("wtap", id), id,
-                     kCvdallocWirelessIpPrefix);
+  DestroyEthernetIface(CvdallocInterfaceName("wtap", id));
   DestroyMobileIface(CvdallocInterfaceName("wifiap", id), id,
                      kCvdallocWirelessApIpPrefix);
   DestroyEthernetIface(CvdallocInterfaceName("etap", id));

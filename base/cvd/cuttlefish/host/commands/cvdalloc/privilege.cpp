@@ -20,23 +20,20 @@
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <sys/auxv.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #if defined(__linux__)
 #include <linux/capability.h>
 #include <linux/prctl.h>
 #include <linux/xattr.h>
+#include <sys/auxv.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <sys/xattr.h>
 #endif
 
 #include <optional>
-#include <string>
 #include <string_view>
 #include <utility>
-#include <vector>
 
 #include "absl/log/log.h"
 
@@ -171,25 +168,22 @@ constexpr char kTrustedPath[] = "/usr/sbin:/usr/bin:/sbin:/bin";
 
 Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
   uid_t orig = getuid();
-  // Sanitize the environment only when this exec actually gained privilege
-  // e.g. file caps
-  if (getauxval(AT_SECURE) != 0) {
+  // The child processes we exec run with elevated privilege (CAP_NET_ADMIN via
+  // ambient caps) but with AT_SECURE=0, so the dynamic linker won't scrub their
+  // environment for us. Sanitize with an allowlist.
+#if defined(__linux__)
+  // On Linux, only sanitize when this exec actually gained privilege (e.g. via
+  // file caps), as signalled by AT_SECURE.
+  const bool should_sanitize = getauxval(AT_SECURE) != 0;
+#else
+  // Elsewhere we can't rely on AT_SECURE, so sanitize unconditionally.
+  const bool should_sanitize = true;
+#endif
+  if (should_sanitize) {
+    CF_EXPECTF(clearenv() == 0, "Couldn't clear environment: {}",
+               StrError(errno));
     CF_EXPECTF(setenv("PATH", kTrustedPath, /*overwrite=*/1) == 0,
-               "Couldn't sanitize PATH: {}", StrError(errno));
-    unsetenv("IFS");
-    // Drop the LD_* dynamic-linker family (LD_PRELOAD, LD_LIBRARY_PATH, ...).
-    // Collect all of the names
-    std::vector<std::string> ld_vars;
-    for (char** entry = environ; *entry != nullptr; ++entry) {
-      std::string_view var(*entry);
-      if (var.substr(0, 3) == "LD_") {
-        ld_vars.emplace_back(var.substr(0, var.find('=')));
-      }
-    }
-    // unsetenv for all of the names that we collected
-    for (const std::string& name : ld_vars) {
-      unsetenv(name.c_str());
-    }
+               "Couldn't set PATH: {}", StrError(errno));
   }
   CF_EXPECTF(BeginElevatedPrivileges() != -1,
              "Couldn't elevate permissions: {}", StrError(errno));
