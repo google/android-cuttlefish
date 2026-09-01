@@ -30,6 +30,9 @@ use v4l2r::bindings::v4l2_requestbuffers;
 use v4l2r::ioctl::BufferCapabilities;
 use v4l2r::ioctl::BufferField;
 use v4l2r::ioctl::BufferFlags;
+use v4l2r::ioctl::CtrlId;
+use v4l2r::ioctl::CtrlWhich;
+use v4l2r::ioctl::QueryCtrlFlags;
 use v4l2r::ioctl::V4l2Buffer;
 use v4l2r::ioctl::V4l2PlanesWithBackingMut;
 use v4l2r::memory::MemoryType;
@@ -808,5 +811,136 @@ where
             },
             ..Default::default()
         })
+    }
+
+    fn query_ext_ctrl(
+        &mut self,
+        _session: &Self::Session,
+        id: CtrlId,
+        flags: QueryCtrlFlags,
+    ) -> IoctlResult<bindings::v4l2_query_ext_ctrl> {
+        let requested_id: u32 = unsafe { std::mem::transmute(id) };
+
+        if flags.contains(QueryCtrlFlags::NEXT) {
+            if requested_id < CID_LENS_FACING {
+                return Ok(self.lens_facing_query_ext_ctrl());
+            }
+        } else if requested_id == CID_LENS_FACING {
+            return Ok(self.lens_facing_query_ext_ctrl());
+        }
+
+        Err(libc::EINVAL)
+    }
+
+    fn g_ctrl(&mut self, _session: &Self::Session, id: u32) -> IoctlResult<bindings::v4l2_control> {
+        if id == CID_LENS_FACING {
+            return Ok(bindings::v4l2_control {
+                id,
+                value: self.config.lens_facing as i32,
+            });
+        }
+        Err(libc::EINVAL)
+    }
+
+    fn g_ext_ctrls(
+        &mut self,
+        _session: &Self::Session,
+        _which: CtrlWhich,
+        _ctrls: &mut bindings::v4l2_ext_controls,
+        ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
+        _user_regions: Vec<Vec<SgEntry>>,
+    ) -> IoctlResult<()> {
+        for ctrl in ctrl_array.iter_mut() {
+            if ctrl.id == CID_LENS_FACING {
+                ctrl.__bindgen_anon_1.value64 = self.config.lens_facing as i64;
+            } else {
+                return Err(libc::EINVAL);
+            }
+        }
+        Ok(())
+    }
+}
+
+/// https://developer.android.com/reference/android/hardware/camera2/CameraMetadata#LENS_FACING_FRONT
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LensFacing {
+    Front = 0,
+    Back = 1,
+    External = 2,
+}
+
+impl std::str::FromStr for LensFacing {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "FRONT" => Ok(LensFacing::Front),
+            "BACK" => Ok(LensFacing::Back),
+            "EXTERNAL" => Ok(LensFacing::External),
+            _ => Err(format!(
+                "Invalid lens facing: {}. Expected FRONT, BACK, or EXTERNAL",
+                s
+            )),
+        }
+    }
+}
+
+const CID_OFFSET: u32 = bindings::V4L2_CID_CAMERA_CLASS_BASE + 0x100;
+const CID_LENS_FACING: u32 = CID_OFFSET + 1;
+
+fn ctrl_name(name: &str) -> [i8; 32] {
+    let mut array = [0i8; 32];
+    let bytes = name.as_bytes();
+    let len = std::cmp::min(bytes.len(), 31);
+    for i in 0..len {
+        array[i] = bytes[i] as i8;
+    }
+    array
+}
+
+impl<Q: VirtioMediaEventQueue, HM: VirtioMediaHostMemoryMapper> V4l2Stream<Q, HM> {
+    fn lens_facing_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
+        bindings::v4l2_query_ext_ctrl {
+            id: CID_LENS_FACING,
+            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER,
+            name: ctrl_name("LENS_FACING"),
+            minimum: 0,
+            maximum: 2,
+            step: 1,
+            default_value: self.config.lens_facing as i64,
+            flags: bindings::V4L2_CTRL_FLAG_READ_ONLY,
+            elems: 1,
+            elem_size: std::mem::size_of::<u32>() as u32,
+            ..Default::default()
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lens_facing_from_str() {
+        assert_eq!("FRONT".parse::<LensFacing>().unwrap(), LensFacing::Front);
+        assert_eq!("BACK".parse::<LensFacing>().unwrap(), LensFacing::Back);
+        assert_eq!(
+            "EXTERNAL".parse::<LensFacing>().unwrap(),
+            LensFacing::External
+        );
+        assert!("INVALID".parse::<LensFacing>().is_err());
+    }
+
+    #[test]
+    fn test_ctrl_name_is_nul_padded() {
+        let name = ctrl_name("LENS_FACING");
+        assert_eq!(&name[..11], b"LENS_FACING".map(|b| b as i8));
+        assert!(name[11..].iter().all(|byte| *byte == 0));
+    }
+
+    #[test]
+    fn test_ctrl_name_truncates_and_stays_nul_terminated() {
+        let name = ctrl_name("This control name is definitely far too long to fit");
+        assert_eq!(name[31], 0);
     }
 }

@@ -49,6 +49,9 @@ struct CmdLineArgs {
     /// Frames per second (e.g. 30 or 30000/1001).
     #[clap(long = "input_fps", value_name = "INPUT_FPS")]
     input_fps: String,
+    /// Lens facing configuration: FRONT, BACK, or EXTERNAL.
+    #[clap(long, value_name = "LENS_FACING", default_value = "EXTERNAL")]
+    lens_facing: String,
 }
 
 fn parse_fps_to_interval(fps_str: &str) -> Option<(u32, u32)> {
@@ -72,6 +75,7 @@ pub struct Config {
     pub input_height: u32,
     pub fps_interval: (u32, u32),
     pub format: device::Format,
+    pub lens_facing: device::LensFacing,
 }
 
 impl TryFrom<CmdLineArgs> for Config {
@@ -81,6 +85,10 @@ impl TryFrom<CmdLineArgs> for Config {
         let fps_interval = parse_fps_to_interval(&args.input_fps).ok_or_else(|| {
             Error::InvalidArgument(format!("Invalid FPS format: {}", args.input_fps))
         })?;
+        let lens_facing = args
+            .lens_facing
+            .parse::<device::LensFacing>()
+            .map_err(Error::InvalidArgument)?;
         Ok(Config {
             socket_path: args.socket_path,
             input_path: args.input_path,
@@ -88,6 +96,7 @@ impl TryFrom<CmdLineArgs> for Config {
             input_height: args.input_height,
             fps_interval,
             format: device::Format::Yuv420M,
+            lens_facing,
         })
     }
 }
@@ -131,6 +140,55 @@ fn start_backend(config: Config) -> Result<()> {
         log::info!("vhost-user-media-backend daemon started");
         daemon.serve(&socket_path).map_err(Error::ServeFailed)?;
         log::info!("vhost-user-media-backend daemon closed gracefully");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cmdline_args_default_lens_facing() {
+        let args = CmdLineArgs::try_parse_from(&[
+            "v4l2_stream_proxy",
+            "--socket-path",
+            "/tmp/sock",
+            "--input_path",
+            "/tmp/fifo",
+            "--input_width",
+            "640",
+            "--input_height",
+            "480",
+            "--input_fps",
+            "30",
+        ])
+        .unwrap();
+        assert_eq!(args.lens_facing, "EXTERNAL");
+        let config = Config::try_from(args).unwrap();
+        assert_eq!(config.lens_facing, device::LensFacing::External);
+    }
+
+    #[test]
+    fn test_cmdline_args_custom_lens_facing() {
+        let args = CmdLineArgs::try_parse_from(&[
+            "v4l2_stream_proxy",
+            "--socket-path",
+            "/tmp/sock",
+            "--input_path",
+            "/tmp/fifo",
+            "--input_width",
+            "640",
+            "--input_height",
+            "480",
+            "--input_fps",
+            "30",
+            "--lens-facing",
+            "BACK",
+        ])
+        .unwrap();
+        assert_eq!(args.lens_facing, "BACK");
+        let config = Config::try_from(args).unwrap();
+        assert_eq!(config.lens_facing, device::LensFacing::Back);
     }
 }
 
