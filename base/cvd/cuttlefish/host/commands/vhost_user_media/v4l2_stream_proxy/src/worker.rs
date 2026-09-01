@@ -200,10 +200,14 @@ fn handle_streaming<Q: VirtioMediaEventQueue>(
         }
     }
 
+    // When the FIFO writer disconnects and the buffer is drained, Linux poll()
+    // reports only POLLHUP (without POLLIN). Handling POLLHUP ensures we call
+    // read() to consume remaining bytes and receive Ok(0) (EOF) to cleanly
+    // transition to WorkerState::Unopened rather than busy-looping on poll().
     if poll_fds[1]
         .revents()
         .unwrap_or(PollFlags::empty())
-        .contains(PollFlags::POLLIN)
+        .intersects(PollFlags::POLLIN | PollFlags::POLLHUP)
     {
         let plane_size = plane_sizes[plane_idx];
         let remaining = plane_size - plane_offset;
