@@ -46,13 +46,17 @@ constexpr std::string_view kZone = "instance/zone";
 
 // https://docs.cloud.google.com/compute/docs/instances/detect-compute-engine
 Result<bool> IsGceEnvironment(HttpClient& http_client) {
-  const HttpResponse<std::string> response =
-      CF_EXPECT(HttpGetToString(http_client, std::string(kDetectUrl)));
-  CF_EXPECTF(response.HttpSuccess(),
+  auto response = HttpGetToString(http_client, std::string(kDetectUrl));
+  if (!response.has_value()) {
+    /* Error connecting to metadata server. Interpret as not GCE. */
+    return false;
+  }
+  CF_EXPECTF(response->HttpSuccess(),
              "GCE environment detection received a failure response ({}: {}), "
              "data:  {}",
-             response.http_code, response.StatusDescription(), response.data);
-  return HeaderValue(response.headers, kDetectHeader) ==
+             response->http_code, response->StatusDescription(),
+             response->data);
+  return HeaderValue(response->headers, kDetectHeader) ==
          kExpectedDetectHeaderValue;
 }
 
