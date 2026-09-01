@@ -16,7 +16,6 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include <optional>
@@ -30,6 +29,8 @@
 #include "absl/log/log.h"
 
 #include "allocd/alloc_utils.h"
+#include "allocd/net/nft_rule.h"
+#include "allocd/net/nftables.h"
 #include "allocd/net/nftables_nft.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvdalloc/interface.h"

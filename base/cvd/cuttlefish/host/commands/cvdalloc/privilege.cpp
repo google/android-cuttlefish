@@ -15,12 +15,13 @@
  */
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 
+#include <elf.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
-#include <sys/stat.h>
 #include <stdlib.h>
-#include <string.h>
+#include <sys/auxv.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #if defined(__linux__)
 #include <linux/capability.h>
@@ -28,13 +29,8 @@
 #include <linux/xattr.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
-#include <sys/types.h>
 #include <sys/xattr.h>
 #endif
-
-#include <string_view>
-#include <sys/auxv.h>
-#include <sys/stat.h>
 
 #include <optional>
 #include <string>
