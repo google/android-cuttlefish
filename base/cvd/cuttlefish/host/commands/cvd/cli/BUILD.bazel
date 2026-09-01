@@ -133,6 +133,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/commands:display",
         "//cuttlefish/host/commands/cvd/cli/commands:env",
+        "//cuttlefish/host/commands/cvd/cli/commands:event_devices",
         "//cuttlefish/host/commands/cvd/cli/commands:fetch",
         "//cuttlefish/host/commands/cvd/cli/commands:fleet",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
