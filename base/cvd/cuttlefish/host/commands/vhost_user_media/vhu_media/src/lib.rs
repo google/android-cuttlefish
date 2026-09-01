@@ -157,7 +157,7 @@ impl VirtioMediaHostMemoryMapper for HostMemoryMapper {
             padding: [0, 0, 0, 0, 0, 0, 0],
             fd_offset: 0,
             shm_offset: shm_offset,
-            len: 1,
+            len: end - shm_offset + 1,
             flags: 0,
         };
 
