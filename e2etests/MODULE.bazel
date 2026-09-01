@@ -20,14 +20,3 @@ local_path_override(
     module_name = "com_github_google_android_cuttlefish_frontend",
     path = "../frontend",
 )
-
-# Expose the cuttlefish-host-resources init script (which lives in
-# ../base/debian, outside this Bazel module) as a data dependency for the
-# host_resources e2e tests.
-new_local_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
-
-new_local_repository(
-    name = "cuttlefish_debian",
-    build_file_content = 'exports_files(glob(["**"]))\n',
-    path = "../base/debian",
-)
