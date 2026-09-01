@@ -13,16 +13,16 @@
 // limitations under the License.
 
 use std::fs::File;
-use std::io::{Read, Write, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::os::fd::AsFd;
-use std::sync::{Arc, Mutex};
+use std::os::unix::fs::OpenOptionsExt;
 use std::sync::mpsc::{Receiver, Sender};
+use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::Instant;
-use std::os::unix::fs::OpenOptionsExt;
 
+use nix::poll::{PollFd, PollFlags, PollTimeout, poll};
 use nix::sys::eventfd::EventFd;
-use nix::poll::{poll, PollFd, PollFlags, PollTimeout};
 use virtio_media::VirtioMediaEventQueue;
 use virtio_media::protocol::{DequeueBufferEvent, V4l2Event};
 
@@ -46,9 +46,7 @@ enum WorkerState {
     /// FIFO is closed. Trying to open it.
     Unopened,
     /// FIFO is open, but waiting for buffers.
-    Idle {
-        fifo_file: File,
-    },
+    Idle { fifo_file: File },
     /// FIFO is open and streaming into a buffer.
     Streaming {
         fifo_file: File,
@@ -131,7 +129,11 @@ fn handle_idle(
         }
     }
 
-    if poll_fds[0].revents().unwrap_or(PollFlags::empty()).contains(PollFlags::POLLIN) {
+    if poll_fds[0]
+        .revents()
+        .unwrap_or(PollFlags::empty())
+        .contains(PollFlags::POLLIN)
+    {
         if should_stop(rx, event_fd) {
             return WorkerState::Stopped;
         }
@@ -170,21 +172,39 @@ fn handle_streaming<Q: VirtioMediaEventQueue>(
     match poll(&mut poll_fds, PollTimeout::NONE) {
         Ok(_) => {}
         Err(e) if e == nix::Error::EINTR => {
-            return WorkerState::Streaming { fifo_file, buffer_idx, plane_idx, plane_offset };
+            return WorkerState::Streaming {
+                fifo_file,
+                buffer_idx,
+                plane_idx,
+                plane_offset,
+            };
         }
         Err(e) => {
             log::error!("Poll error in Streaming: {:?}", e);
-            return WorkerState::Streaming { fifo_file, buffer_idx, plane_idx, plane_offset };
+            return WorkerState::Streaming {
+                fifo_file,
+                buffer_idx,
+                plane_idx,
+                plane_offset,
+            };
         }
     }
 
-    if poll_fds[0].revents().unwrap_or(PollFlags::empty()).contains(PollFlags::POLLIN) {
+    if poll_fds[0]
+        .revents()
+        .unwrap_or(PollFlags::empty())
+        .contains(PollFlags::POLLIN)
+    {
         if should_stop(rx, event_fd) {
             return WorkerState::Stopped;
         }
     }
 
-    if poll_fds[1].revents().unwrap_or(PollFlags::empty()).contains(PollFlags::POLLIN) {
+    if poll_fds[1]
+        .revents()
+        .unwrap_or(PollFlags::empty())
+        .contains(PollFlags::POLLIN)
+    {
         let plane_size = plane_sizes[plane_idx];
         let remaining = plane_size - plane_offset;
         let read_chunk = std::cmp::min(local_buf.len(), remaining);
@@ -199,12 +219,16 @@ fn handle_streaming<Q: VirtioMediaEventQueue>(
                 let session_id = s_state.id;
                 let buffer = &mut s_state.buffers[buffer_idx];
                 let plane = &mut buffer.planes[plane_idx];
-                
-                if let Err(e) = plane.fd.as_file().seek(SeekFrom::Start(plane_offset as u64)) {
+
+                if let Err(e) = plane
+                    .fd
+                    .as_file()
+                    .seek(SeekFrom::Start(plane_offset as u64))
+                {
                     log::error!("Seek error: {:?}", e);
                     return WorkerState::Stopped;
                 }
-                
+
                 if let Err(e) = plane.fd.as_file().write_all(&local_buf[..bytes_read]) {
                     log::error!("Write error: {:?}", e);
                     return WorkerState::Stopped;
@@ -214,7 +238,7 @@ fn handle_streaming<Q: VirtioMediaEventQueue>(
                 if plane_offset == plane_size {
                     plane_idx += 1;
                     plane_offset = 0;
-                    
+
                     if plane_idx == plane_sizes.len() {
                         let sequence = s_state.sequence;
                         s_state.sequence += 1;
@@ -222,15 +246,23 @@ fn handle_streaming<Q: VirtioMediaEventQueue>(
                         let delta = now.duration_since(s_state.last_frame_time);
                         s_state.last_frame_time = now;
 
-                        log::info!("Frame completed: session {}, seq {}, buf_idx {}, delta {:?}", session_id, sequence, buffer_idx, delta);
+                        log::info!(
+                            "Frame completed: session {}, seq {}, buf_idx {}, delta {:?}",
+                            session_id,
+                            sequence,
+                            buffer_idx,
+                            delta
+                        );
 
                         s_state.buffers[buffer_idx].set_state(BufferState::Outgoing { sequence });
                         let v4l2_buf = s_state.buffers[buffer_idx].v4l2_buffer.clone();
 
-                        evt_queue.lock().unwrap().send_event(V4l2Event::DequeueBuffer(DequeueBufferEvent::new(
-                            session_id,
-                            v4l2_buf,
-                        )));
+                        evt_queue
+                            .lock()
+                            .unwrap()
+                            .send_event(V4l2Event::DequeueBuffer(DequeueBufferEvent::new(
+                                session_id, v4l2_buf,
+                            )));
 
                         if let Some(next_buf_idx) = s_state.queued_buffers.pop_front() {
                             WorkerState::Streaming {
@@ -243,22 +275,40 @@ fn handle_streaming<Q: VirtioMediaEventQueue>(
                             WorkerState::Idle { fifo_file }
                         }
                     } else {
-                        WorkerState::Streaming { fifo_file, buffer_idx, plane_idx, plane_offset }
+                        WorkerState::Streaming {
+                            fifo_file,
+                            buffer_idx,
+                            plane_idx,
+                            plane_offset,
+                        }
                     }
                 } else {
-                    WorkerState::Streaming { fifo_file, buffer_idx, plane_idx, plane_offset }
+                    WorkerState::Streaming {
+                        fifo_file,
+                        buffer_idx,
+                        plane_idx,
+                        plane_offset,
+                    }
                 }
             }
-            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                WorkerState::Streaming { fifo_file, buffer_idx, plane_idx, plane_offset }
-            }
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => WorkerState::Streaming {
+                fifo_file,
+                buffer_idx,
+                plane_idx,
+                plane_offset,
+            },
             Err(e) => {
                 log::error!("Read error: {:?}", e);
                 WorkerState::Unopened
             }
         }
     } else {
-        WorkerState::Streaming { fifo_file, buffer_idx, plane_idx, plane_offset }
+        WorkerState::Streaming {
+            fifo_file,
+            buffer_idx,
+            plane_idx,
+            plane_offset,
+        }
     }
 }
 
@@ -271,16 +321,16 @@ pub(crate) fn worker_thread_loop<Q: VirtioMediaEventQueue + Send + 'static>(
 ) {
     log::info!("Worker thread started for FIFO: {:?}", config.input_path);
 
-    let plane_sizes = config.format.plane_sizes(config.input_width, config.input_height);
+    let plane_sizes = config
+        .format
+        .plane_sizes(config.input_width, config.input_height);
     let mut local_buf = [0u8; 4096];
-    
+
     let mut state = WorkerState::Unopened;
 
     while !matches!(state, WorkerState::Stopped) {
         state = match state {
-            WorkerState::Unopened => {
-                handle_unopened(&config, &session_state, &rx, &event_fd)
-            }
+            WorkerState::Unopened => handle_unopened(&config, &session_state, &rx, &event_fd),
             WorkerState::Idle { fifo_file } => {
                 handle_idle(fifo_file, &session_state, &rx, &event_fd)
             }
@@ -289,23 +339,21 @@ pub(crate) fn worker_thread_loop<Q: VirtioMediaEventQueue + Send + 'static>(
                 buffer_idx,
                 plane_idx,
                 plane_offset,
-            } => {
-                handle_streaming(
-                    fifo_file,
-                    buffer_idx,
-                    plane_idx,
-                    plane_offset,
-                    &session_state,
-                    &rx,
-                    &event_fd,
-                    &plane_sizes,
-                    &mut local_buf,
-                    &*evt_queue,
-                )
-            }
+            } => handle_streaming(
+                fifo_file,
+                buffer_idx,
+                plane_idx,
+                plane_offset,
+                &session_state,
+                &rx,
+                &event_fd,
+                &plane_sizes,
+                &mut local_buf,
+                &*evt_queue,
+            ),
             WorkerState::Stopped => WorkerState::Stopped,
         };
     }
-    
+
     log::info!("Worker thread stopped");
 }

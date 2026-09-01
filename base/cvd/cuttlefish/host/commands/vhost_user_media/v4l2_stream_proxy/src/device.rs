@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use nix::sys::eventfd::{EfdFlags, EventFd};
 use std::collections::VecDeque;
 use std::io::Result as IoResult;
 use std::os::fd::AsFd;
 use std::os::fd::BorrowedFd;
-use std::sync::{Arc, Mutex};
 use std::sync::mpsc::channel;
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
-use nix::sys::eventfd::{EventFd, EfdFlags};
-
 
 use v4l2r::PixelFormat;
 use v4l2r::QueueType;
@@ -94,11 +93,7 @@ impl Format {
         let w = width as usize;
         let h = height as usize;
         match self {
-            Self::Yuv420M => vec![
-                w * h,
-                w * h / 4,
-                w * h / 4,
-            ],
+            Self::Yuv420M => vec![w * h, w * h / 4, w * h / 4],
         }
     }
 
@@ -179,9 +174,11 @@ impl Buffer {
                     tv_usec: (ts.tv_nsec / 1000) as bindings::__time_t,
                 });
                 Self::unset_flag(&mut flags, BufferFlags::QUEUED);
-                
+
                 // Set bytesused to plane length for all planes
-                if let V4l2PlanesWithBackingMut::Mmap(planes) = self.v4l2_buffer.planes_with_backing_iter_mut() {
+                if let V4l2PlanesWithBackingMut::Mmap(planes) =
+                    self.v4l2_buffer.planes_with_backing_iter_mut()
+                {
                     for mut plane in planes {
                         let len = *plane.length;
                         *plane.bytesused = len;
@@ -194,7 +191,9 @@ impl Buffer {
     }
 
     fn clear_bytesused(&mut self) {
-        if let V4l2PlanesWithBackingMut::Mmap(planes) = self.v4l2_buffer.planes_with_backing_iter_mut() {
+        if let V4l2PlanesWithBackingMut::Mmap(planes) =
+            self.v4l2_buffer.planes_with_backing_iter_mut()
+        {
             for mut plane in planes {
                 *plane.bytesused = 0;
             }
@@ -270,13 +269,16 @@ where
     }
 
     fn default_fmt(&self, queue: QueueType) -> v4l2_format {
-        let plane_sizes = self.config.format.plane_sizes(self.config.input_width, self.config.input_height);
+        let plane_sizes = self
+            .config
+            .format
+            .plane_sizes(self.config.input_width, self.config.input_height);
         let mut plane_fmt: [bindings::v4l2_plane_pix_format; 8] = Default::default();
         for (i, &size) in plane_sizes.iter().enumerate() {
             plane_fmt[i].sizeimage = size as u32;
             plane_fmt[i].bytesperline = self.config.format.bytesperline(self.config.input_width, i);
         }
-        
+
         let pix_mp = bindings::v4l2_pix_format_mplane {
             width: self.config.input_width,
             height: self.config.input_height,
@@ -421,11 +423,7 @@ where
         Ok(self.default_fmtdesc(queue))
     }
 
-    fn g_fmt(
-        &mut self,
-        _session: &Self::Session,
-        queue: QueueType,
-    ) -> IoctlResult<v4l2_format> {
+    fn g_fmt(&mut self, _session: &Self::Session, queue: QueueType) -> IoctlResult<v4l2_format> {
         if queue != self.queue_type() {
             return Err(libc::EINVAL);
         }
@@ -549,19 +547,21 @@ where
             }
         }
 
-        let plane_sizes = self.config.format.plane_sizes(self.config.input_width, self.config.input_height);
+        let plane_sizes = self
+            .config
+            .format
+            .plane_sizes(self.config.input_width, self.config.input_height);
         let num_planes = plane_sizes.len();
 
         state.buffers = (0..count)
             .map(|i| -> Result<Buffer, i32> {
                 let mut planes = Vec::new();
-                
+
                 for &size in &plane_sizes {
-                    let fd = MemFdBuffer::new(size as u64)
-                        .map_err(|e| {
-                            log::error!("failed to allocate MMAP buffer: {:#}", e);
-                            libc::ENOMEM
-                        })?;
+                    let fd = MemFdBuffer::new(size as u64).map_err(|e| {
+                        log::error!("failed to allocate MMAP buffer: {:#}", e);
+                        libc::ENOMEM
+                    })?;
                     let offset = self
                         .mmap_manager
                         .register_buffer(None, size as u32)
@@ -570,7 +570,7 @@ where
                 }
 
                 let mut v4l2_buffer = V4l2Buffer::new(expected_queue, i, MemoryType::Mmap);
-                
+
                 if num_planes > 1 {
                     unsafe {
                         (*v4l2_buffer.as_mut_ptr()).length = num_planes as u32;
@@ -596,7 +596,7 @@ where
                         panic!()
                     }
                 }
-                
+
                 v4l2_buffer.set_field(BufferField::None);
                 v4l2_buffer.set_flags(BufferFlags::TIMESTAMP_MONOTONIC);
 
@@ -638,7 +638,7 @@ where
     ) -> IoctlResult<V4l2Buffer> {
         let mut state = session.state.lock().unwrap();
         let buf_id = qbuf.index() as usize;
-        
+
         let buf_v4l2 = {
             let buffer = state.buffers.get_mut(buf_id).ok_or(libc::EINVAL)?;
             if buffer.state == BufferState::Incoming {
@@ -647,9 +647,9 @@ where
             buffer.set_state(BufferState::Incoming);
             buffer.v4l2_buffer.clone()
         };
-        
+
         state.queued_buffers.push_back(buf_id);
-        
+
         if session.streaming {
             if let Some(ref worker) = session.worker {
                 let _ = worker.tx.send(WorkerCmd::BufferQueued);
@@ -691,10 +691,20 @@ where
         let config_clone = self.config.clone();
 
         let join_handle = std::thread::spawn(move || {
-            worker_thread_loop(config_clone, evt_queue_clone, state_clone, rx, event_fd_clone);
+            worker_thread_loop(
+                config_clone,
+                evt_queue_clone,
+                state_clone,
+                rx,
+                event_fd_clone,
+            );
         });
 
-        session.worker = Some(WorkerHandle { tx, event_fd, join_handle });
+        session.worker = Some(WorkerHandle {
+            tx,
+            event_fd,
+            join_handle,
+        });
 
         Ok(())
     }
