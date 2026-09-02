@@ -50,7 +50,8 @@ cf_cc_test(
     srcs = ["nft_rule_test.cc"],
     deps = [
         ":nftables",
-        "//allocd/test:mock_nftables",
+        "//allocd/test:fake_nftables",
+        "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
     ],
 )

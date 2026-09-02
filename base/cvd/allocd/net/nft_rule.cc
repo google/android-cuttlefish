@@ -39,9 +39,7 @@ Result<NftRule> NftRule::Create(Nftables& nft, std::string_view family,
                                 std::string_view content,
                                 std::string_view tag) {
   std::string comment = absl::StrCat(kCvdallocCommentPrefix, tag);
-  std::string full_content =
-      absl::StrCat(content, " comment \"", comment, "\"");
-  CF_EXPECT(nft.AddRule(family, table, chain, full_content));
+  CF_EXPECT(nft.AddRule(family, table, chain, content, comment));
   return NftRule(&nft, family, table, chain, std::move(comment));
 }
 
