@@ -32,9 +32,6 @@ class NftRule {
                                 std::string_view table, std::string_view chain,
                                 std::string_view content, std::string_view tag);
 
-  NftRule() = delete;
-  NftRule(Nftables* nft, std::string_view family, std::string_view table,
-          std::string_view chain, std::string comment);
   ~NftRule();
 
   NftRule(NftRule&& r) noexcept;
@@ -43,6 +40,9 @@ class NftRule {
   NftRule& operator=(const NftRule& r) = delete;
 
  private:
+  NftRule(Nftables* nft, std::string_view family, std::string_view table,
+          std::string_view chain, std::string comment);
+
   Nftables* nft_ = nullptr;
   std::string family_;
   std::string table_;

@@ -25,6 +25,7 @@
 
 #include "absl/base/no_destructor.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -61,11 +62,11 @@ Result<std::string> NftablesNft::BinaryPath() {
 
 Result<void> NftablesNft::EnsureTable(std::string_view family,
                                       std::string_view table) {
-  Command cmd{CF_EXPECT(BinaryPath())};
-  cmd.AddParameter("add");
-  cmd.AddParameter("table");
-  cmd.AddParameter(std::string(family));
-  cmd.AddParameter(std::string(table));
+  Command cmd = Command(CF_EXPECT(BinaryPath()))
+                    .AddParameter("add")
+                    .AddParameter("table")
+                    .AddParameter(family)
+                    .AddParameter(table);
 
   CF_EXPECTF(cmd.Start().Wait() == 0,
              "Failed to ensure nft table: family={}, table={}", family, table);
@@ -74,11 +75,11 @@ Result<void> NftablesNft::EnsureTable(std::string_view family,
 
 Result<void> NftablesNft::DeleteTable(std::string_view family,
                                       std::string_view table) {
-  Command cmd{CF_EXPECT(BinaryPath())};
-  cmd.AddParameter("delete");
-  cmd.AddParameter("table");
-  cmd.AddParameter(std::string(family));
-  cmd.AddParameter(std::string(table));
+  Command cmd = Command(CF_EXPECT(BinaryPath()))
+                    .AddParameter("delete")
+                    .AddParameter("table")
+                    .AddParameter(family)
+                    .AddParameter(table);
 
   CF_EXPECTF(cmd.Start().Wait() == 0,
              "Failed to delete nft table: family={}, table={}", family, table);
@@ -89,14 +90,14 @@ Result<void> NftablesNft::EnsureChain(std::string_view family,
                                       std::string_view table,
                                       std::string_view chain,
                                       std::string_view content) {
-  Command cmd{CF_EXPECT(BinaryPath())};
-  cmd.AddParameter("add");
-  cmd.AddParameter("chain");
-  cmd.AddParameter(std::string(family));
-  cmd.AddParameter(std::string(table));
-  cmd.AddParameter(std::string(chain));
+  Command cmd = Command(CF_EXPECT(BinaryPath()))
+                    .AddParameter("add")
+                    .AddParameter("chain")
+                    .AddParameter(family)
+                    .AddParameter(table)
+                    .AddParameter(chain);
   if (!content.empty()) {
-    cmd.AddParameter(std::string(content));
+    cmd.AddParameter(content);
   }
 
   CF_EXPECTF(
@@ -109,22 +110,27 @@ Result<void> NftablesNft::EnsureChain(std::string_view family,
 Result<uint64_t> NftablesNft::AddRule(std::string_view family,
                                       std::string_view table,
                                       std::string_view chain,
-                                      std::string_view content) {
-  Command cmd{CF_EXPECT(BinaryPath())};
-  cmd.AddParameter("-j");
-  cmd.AddParameter("-e");
-  cmd.AddParameter("add");
-  cmd.AddParameter("rule");
-  cmd.AddParameter(std::string(family));
-  cmd.AddParameter(std::string(table));
-  cmd.AddParameter(std::string(chain));
-  cmd.AddParameter(std::string(content));
+                                      std::string_view content,
+                                      std::string_view comment) {
+  std::string rule = comment.empty()
+                         ? std::string(content)
+                         : absl::StrCat(content, " comment \"", comment, "\"");
+
+  Command cmd = Command(CF_EXPECT(BinaryPath()))
+                    .AddParameter("-j")
+                    .AddParameter("-e")
+                    .AddParameter("add")
+                    .AddParameter("rule")
+                    .AddParameter(family)
+                    .AddParameter(table)
+                    .AddParameter(chain)
+                    .AddParameter(rule);
 
   std::string stdout_str = CF_EXPECT(RunAndCaptureStdout(std::move(cmd)));
   Json::Value json = CF_EXPECT(ParseJson(stdout_str));
 
-  CF_EXPECT(json.isMember("nftables") && json["nftables"].isArray(),
-            "Invalid JSON output from nft: " << stdout_str);
+  CF_EXPECTF(json.isMember("nftables") && json["nftables"].isArray(),
+             "Invalid JSON output from nft: {}", stdout_str);
 
   for (const auto& item : json["nftables"]) {
     if (item.isMember("add") && item["add"].isMember("rule") &&
@@ -133,20 +139,20 @@ Result<uint64_t> NftablesNft::AddRule(std::string_view family,
     }
   }
 
-  return CF_ERR("No rule handle found in nft JSON output: " << stdout_str);
+  return CF_ERRF("No rule handle found in nft JSON output: {}", stdout_str);
 }
 
 Result<void> NftablesNft::DeleteRule(std::string_view family,
                                      std::string_view table,
                                      std::string_view chain, uint64_t handle) {
-  Command cmd{CF_EXPECT(BinaryPath())};
-  cmd.AddParameter("delete");
-  cmd.AddParameter("rule");
-  cmd.AddParameter(std::string(family));
-  cmd.AddParameter(std::string(table));
-  cmd.AddParameter(std::string(chain));
-  cmd.AddParameter("handle");
-  cmd.AddParameter(std::to_string(handle));
+  Command cmd = Command(CF_EXPECT(BinaryPath()))
+                    .AddParameter("delete")
+                    .AddParameter("rule")
+                    .AddParameter(family)
+                    .AddParameter(table)
+                    .AddParameter(chain)
+                    .AddParameter("handle")
+                    .AddParameter(std::to_string(handle));
 
   CF_EXPECTF(cmd.Start().Wait() == 0,
              "Failed to delete nft rule: family={}, table={}, chain={}, "
@@ -159,13 +165,13 @@ Result<void> NftablesNft::DeleteRulesByComment(std::string_view family,
                                                std::string_view table,
                                                std::string_view chain,
                                                std::string_view comment) {
-  Command cmd{CF_EXPECT(BinaryPath())};
-  cmd.AddParameter("-j");
-  cmd.AddParameter("list");
-  cmd.AddParameter("chain");
-  cmd.AddParameter(std::string(family));
-  cmd.AddParameter(std::string(table));
-  cmd.AddParameter(std::string(chain));
+  Command cmd = Command(CF_EXPECT(BinaryPath()))
+                    .AddParameter("-j")
+                    .AddParameter("list")
+                    .AddParameter("chain")
+                    .AddParameter(family)
+                    .AddParameter(table)
+                    .AddParameter(chain);
 
   // If the chain/table no longer exists (e.g. torn down already), there is
   // nothing to delete; treat that as success so teardown stays idempotent.
@@ -177,8 +183,8 @@ Result<void> NftablesNft::DeleteRulesByComment(std::string_view family,
   }
 
   Json::Value json = CF_EXPECT(ParseJson(*stdout_str));
-  CF_EXPECT(json.isMember("nftables") && json["nftables"].isArray(),
-            "Invalid JSON output from nft: " << *stdout_str);
+  CF_EXPECTF(json.isMember("nftables") && json["nftables"].isArray(),
+             "Invalid JSON output from nft: {}", *stdout_str);
 
   std::vector<uint64_t> handles;
   for (const auto& item : json["nftables"]) {
@@ -192,11 +198,19 @@ Result<void> NftablesNft::DeleteRulesByComment(std::string_view family,
     }
   }
 
+  Result<void> deletion_result = {};
   for (uint64_t handle : handles) {
-    CF_EXPECT(DeleteRule(family, table, chain, handle));
+    Result<void> res = DeleteRule(family, table, chain, handle);
+    if (!res.has_value()) {
+      LOG(ERROR) << "Failed to delete nft rule, continuing: handle=" << handle
+                 << ": " << res.error();
+      if (deletion_result.has_value()) {
+        deletion_result = std::move(res);
+      }
+    }
   }
 
-  return {};
+  return deletion_result;
 }
 
 }  // namespace cuttlefish

@@ -19,56 +19,59 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <cstdint>
 #include <utility>
 
-#include "allocd/test/mock_nftables.h"
+#include "allocd/test/fake_nftables.h"
+#include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 namespace {
 
-using ::testing::Eq;
-using ::testing::Return;
-
-TEST(NftRuleTest, CreateAndAutoDeleteOnDestruction) {
-  MockNftables mock_nft;
-  constexpr uint32_t kHandle = 42;
-
-  EXPECT_CALL(mock_nft, AddRule("ip", "table1", "chain1",
-                                "content1 comment \"cvdalloc-tag1\""))
-      .WillOnce(Return(kHandle));
-  EXPECT_CALL(mock_nft,
-              DeleteRulesByComment("ip", "table1", "chain1", "cvdalloc-tag1"))
-      .WillOnce(Return(Result<void>{}));
-
-  {
-    auto rule =
-        NftRule::Create(mock_nft, "ip", "table1", "chain1", "content1", "tag1");
-    EXPECT_THAT(rule, IsOk());
+class NftRuleTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    ASSERT_THAT(fake_.EnsureTable("ip", "table1"), IsOk());
+    ASSERT_THAT(fake_.EnsureChain("ip", "table1", "chain1", ""), IsOk());
   }
+
+  FakeNftables fake_;
+};
+
+TEST_F(NftRuleTest, CreateAddsRuleWithPrefixedComment) {
+  Result<NftRule> rule =
+      NftRule::Create(fake_, "ip", "table1", "chain1", "content1", "tag1");
+  ASSERT_THAT(rule, IsOk());
+  EXPECT_TRUE(
+      fake_.HasRuleWithComment("ip", "table1", "chain1", "cvdalloc-tag1"));
 }
 
-TEST(NftRuleTest, MoveConstructorTransfersOwnership) {
-  MockNftables mock_nft;
-  constexpr uint32_t kHandle = 100;
-
-  EXPECT_CALL(mock_nft, AddRule("ip", "table1", "chain1",
-                                "content1 comment \"cvdalloc-tag1\""))
-      .WillOnce(Return(kHandle));
-  EXPECT_CALL(mock_nft,
-              DeleteRulesByComment("ip", "table1", "chain1", "cvdalloc-tag1"))
-      .WillOnce(Return(Result<void>{}));
-
+TEST_F(NftRuleTest, DeletesRuleOnDestruction) {
   {
-    auto rule1 =
-        NftRule::Create(mock_nft, "ip", "table1", "chain1", "content1", "tag1");
+    Result<NftRule> rule =
+        NftRule::Create(fake_, "ip", "table1", "chain1", "content1", "tag1");
+    ASSERT_THAT(rule, IsOk());
+    EXPECT_TRUE(
+        fake_.HasRuleWithComment("ip", "table1", "chain1", "cvdalloc-tag1"));
+  }
+  EXPECT_FALSE(
+      fake_.HasRuleWithComment("ip", "table1", "chain1", "cvdalloc-tag1"));
+  EXPECT_EQ(fake_.RuleCount("ip", "table1", "chain1"), 0);
+}
+
+TEST_F(NftRuleTest, MoveConstructorTransfersOwnership) {
+  {
+    Result<NftRule> rule1 =
+        NftRule::Create(fake_, "ip", "table1", "chain1", "content1", "tag1");
     ASSERT_THAT(rule1, IsOk());
 
     NftRule rule2(std::move(*rule1));
-    // When rule1 leaves scope, it should not call DeleteRule.
-    // Only rule2 leaving scope will call DeleteRule once.
+    EXPECT_TRUE(
+        fake_.HasRuleWithComment("ip", "table1", "chain1", "cvdalloc-tag1"));
   }
+  EXPECT_FALSE(
+      fake_.HasRuleWithComment("ip", "table1", "chain1", "cvdalloc-tag1"));
+  EXPECT_EQ(fake_.RuleCount("ip", "table1", "chain1"), 0);
 }
 
 }  // namespace
