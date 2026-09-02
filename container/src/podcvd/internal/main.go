@@ -109,7 +109,7 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 	if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
 		return fmt.Errorf("failed to unmarshal json: %w", err)
 	}
-	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false, false)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 	}
@@ -209,7 +209,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm CuttlefishContainerManager, cvd
 		}
 	default:
 		if cvdArgs.CommonArgs.GroupName == "" {
-			groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
+			groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false, false)
 			if err != nil {
 				return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 			}
@@ -252,7 +252,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm CuttlefishContainerManager, cvd
 }
 
 func clearAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
-	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, true, false)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 	}

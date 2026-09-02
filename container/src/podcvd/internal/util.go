@@ -25,11 +25,11 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func Ipv4AddressesByGroupNames(ccm CuttlefishContainerManager, allContainers bool) (map[string]string, error) {
+func Ipv4AddressesByGroupNames(ccm CuttlefishContainerManager, nonRunningCtrs bool, otherClientCtrs bool) (map[string]string, error) {
 	var containers []ContainerListEntry
 	var lastErr error
 	for retryCount := 0; retryCount < 10; retryCount++ {
-		containers, lastErr = ccm.ListContainers(context.Background(), allContainers)
+		containers, lastErr = ccm.ListContainers(context.Background(), nonRunningCtrs)
 		if lastErr == nil {
 			break
 		}
@@ -40,7 +40,7 @@ func Ipv4AddressesByGroupNames(ccm CuttlefishContainerManager, allContainers boo
 	groupNameIpAddrMap := make(map[string]string)
 	clientID := os.Getenv(envClientID)
 	for _, container := range containers {
-		if !allContainers && clientID != "" {
+		if !otherClientCtrs && clientID != "" {
 			if val, exists := container.Labels[labelClientID]; exists && val != clientID {
 				continue
 			}

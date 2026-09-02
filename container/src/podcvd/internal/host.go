@@ -129,7 +129,7 @@ type HostExecResult struct {
 }
 
 func ExecOnAllCuttlefishHosts(ccm CuttlefishContainerManager, subcommandArgs []string, stderr io.Writer) ([]HostExecResult, error) {
-	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 	}
@@ -443,7 +443,7 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 
 	var lastErr error
 	for retryCount := 0; retryCount < 10; retryCount++ {
-		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, true)
+		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, true, true)
 		if err != nil {
 			return "", err
 		}
