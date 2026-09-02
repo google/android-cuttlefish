@@ -407,77 +407,46 @@ jobs:
         with:
           runner-index: 3
           runners-total: 3
-  e2e-tests-orchestration-runner-special:
+  e2e-tests-orchestration-runner-special-1:
     runs-on: ubuntu-24.04
     needs: [e2e-tests-orchestration-build-image]
     steps:
-    - name: Free disk space
-      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
-      with:
-        tool-cache: true
-    - name: checkout repository
-      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
-      with:
-        persist-credentials: false
-    - name: download image
-      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
-      with:
-        name: android-cuttlefish-e2etest-image-tar
-        github-token: ${{ github.token }}
-    - name: Upgrade crun
-      uses: ./.github/actions/upgrade-crun
-    - name: Run tests
-      run: |
-        sudo podman info
-        sudo podman load --quiet -i android-cuttlefish-e2etest.tar && rm android-cuttlefish-e2etest.tar
-        mkdir -p -m 777 /tmp/cw_bazel
-        # Run flaky tests.
-        #
-        # Flaky tests would be executed in clean container everytime, rather than using `cvd reset`
-        # in a tainted container.
-        sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-        targets=$(sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output query --noshow_progress 'attr(flaky, 1, orchestration/...)' | sort)
-        echo "FLAKY TARGETS:"                                                                                                                                                                                              
-        echo "${targets}"                                                                                                                                                                                                  
-        echo ""
-        readonly ATTEMPTS=3
-        for t in ${targets}; do
-          echo "Executing target: ${t}"
-          attempt=1
-          while [[ ${attempt} -le ${ATTEMPTS} ]]; do                                                                                                                                                                       
-            echo "Attempt: ${attempt} of ${ATTEMPTS}"
-            sudo podman rm -f tester
-            sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-            sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output test --test_timeout 600 --sandbox_writable_path=/home/testrunner --flaky_test_attempts=1 ${t} && break || true 
-            attempt=$((attempt+1))                                                                                                                                                                                         
-          done
-          if [[ ${attempt} -gt ${ATTEMPTS}  ]]; then
-            # Every previous attempt failed.
+      - name: checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+        with:
+          persist-credentials: false
+      - name: Run special tests (shard 1 - flaky tests)
+        uses: ./.github/actions/run-cw-special-e2e-test
+        with:
+          runner-index: 1
+          runners-total: 2
+  e2e-tests-orchestration-runner-special-2:
+    runs-on: ubuntu-24.04
+    needs: [e2e-tests-orchestration-build-image]
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+        with:
+          persist-credentials: false
+      - name: Run special tests (shard 2 - config tests)
+        uses: ./.github/actions/run-cw-special-e2e-test
+        with:
+          runner-index: 2
+          runners-total: 2
+  e2e-tests-orchestration-runner-special:
+    runs-on: ubuntu-24.04
+    needs:
+      - e2e-tests-orchestration-runner-special-1
+      - e2e-tests-orchestration-runner-special-2
+    if: always()
+    steps:
+      - name: Check special runner shards status
+        run: |
+          if [ "${{ needs.e2e-tests-orchestration-runner-special-1.result }}" != "success" ] || \
+             [ "${{ needs.e2e-tests-orchestration-runner-special-2.result }}" != "success" ]; then
+            echo "One or more special runner shards failed."
             exit 1
           fi
-        done
-        sudo podman rm -f tester
-        # Run verify_access_token_test
-        sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-        sleep 30s # Add delay before restarting cuttlefish-host_orchestrator service.
-        sudo podman exec tester sh -c 'echo "orchestrator_android_build_url=http://localhost:8090" >> /etc/default/cuttlefish-host_orchestrator && service cuttlefish-host_orchestrator restart'
-        sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/verify_access_token_test:verify_access_token_test_test
-        sudo podman rm -f tester
-        # Run create_with_gce_metadata_credentials_test
-        sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-        sleep 30s # Add delay before restarting cuttlefish-host_orchestrator service.
-        sudo podman exec tester sh -c 'echo "build_api_credentials_use_gce_metadata=true" >> /etc/default/cuttlefish-host_orchestrator && service cuttlefish-host_orchestrator restart'
-        sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/create_with_gce_metadata_credentials_test:create_with_gce_metadata_credentials_test_test
-        sudo podman rm -f tester
-    - name: Upload test logs
-      if: always()
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
-      with:
-        name: e2e-tests-orchestration-runner-special-testlogs
-        path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main/bazel-out/k8-fastbuild/testlogs
-    - name: Used disk space
-      run: |
-        df -h
   docker-image-check:
     runs-on: ubuntu-22.04
     needs: [build-docker-image-amd64]
