@@ -15,8 +15,10 @@
 package internal
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -43,12 +45,20 @@ func ParseCvdArgs(allArgs []string) (*CvdArgs, error) {
 	fs.Parse(allArgs)
 	subcommandArgs := fs.Args()
 	if len(subcommandArgs) > 0 {
+		var err error
 		subcommandArgs[0] = mapSubcommand(subcommandArgs[0])
 		if subcommandArgs[0] == "load" {
-			var err error
 			subcommandArgs, err = substituteLoadWithCreateArgs(subcommandArgs)
 			if err != nil {
 				return nil, err
+			}
+		}
+		if subcommandArgs[0] == "create" {
+			if configFile := getStringFlagValue(subcommandArgs, "config_file"); configFile != "" {
+				commonArgs.GroupName, subcommandArgs, err = extractGroupNameFromConfigFile(subcommandArgs, configFile)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -99,23 +109,7 @@ func (a *CvdArgs) HasHelpFlagOnSubCommandArgs() bool {
 }
 
 func (a *CvdArgs) GetStringFlagValueOnSubCommandArgs(flagName string) string {
-	flags := make(map[string]struct{})
-	flags["-"+flagName] = struct{}{}
-	flags["--"+flagName] = struct{}{}
-
-	for idx, arg := range a.SubCommandArgs {
-		if _, exists := flags[arg]; exists && idx+1 < len(a.SubCommandArgs) {
-			return a.SubCommandArgs[idx+1]
-		}
-		splitArg := strings.SplitN(arg, "=", 2)
-		if len(splitArg) != 2 {
-			continue
-		}
-		if _, exists := flags[splitArg[0]]; exists {
-			return splitArg[1]
-		}
-	}
-	return ""
+	return getStringFlagValue(a.SubCommandArgs, flagName)
 }
 
 func (a *CvdArgs) ReplaceFlagValueOnSubCommandArgs(flagName, newValue string) {
@@ -174,4 +168,66 @@ func substituteLoadWithCreateArgs(subcmdArgs []string) ([]string, error) {
 		return subcmdArgs, nil
 	}
 	return nil, fmt.Errorf("missing config file path for load command")
+}
+
+type cvdConfigCommon struct {
+	GroupName string `json:"group_name"`
+}
+
+type cvdConfigFile struct {
+	Common cvdConfigCommon `json:"common"`
+}
+
+func extractGroupNameFromConfigFile(args []string, configFile string) (string, []string, error) {
+	flags := make(map[string]struct{})
+	flags["-override"] = struct{}{}
+	flags["--override"] = struct{}{}
+
+	prefix := "common.group_name:"
+	for idx, arg := range args {
+		if _, exists := flags[arg]; exists && idx+1 < len(args) && strings.HasPrefix(args[idx+1], prefix) {
+			return strings.TrimPrefix(args[idx+1], prefix), append(args[:idx], args[idx+2:]...), nil
+		}
+		splitArg := strings.SplitN(arg, "=", 2)
+		if len(splitArg) != 2 {
+			continue
+		}
+		if _, exists := flags[splitArg[0]]; exists && strings.HasPrefix(splitArg[1], prefix) {
+			return strings.TrimPrefix(splitArg[1], prefix), append(args[:idx], args[idx+1:]...), nil
+		}
+	}
+
+	absPath := resolveHostPath(configFile)
+	if absPath == "" {
+		return "", nil, fmt.Errorf("failed to resolve config file path %q", configFile)
+	}
+	data, err := os.ReadFile(absPath)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to read config file %q: %w", absPath, err)
+	}
+	var config cvdConfigFile
+	if err := json.Unmarshal(data, &config); err != nil {
+		return "", nil, fmt.Errorf("failed to parse JSON object: %w", err)
+	}
+	return strings.TrimSpace(config.Common.GroupName), args, nil
+}
+
+func getStringFlagValue(args []string, flagName string) string {
+	flags := make(map[string]struct{})
+	flags["-"+flagName] = struct{}{}
+	flags["--"+flagName] = struct{}{}
+
+	for idx, arg := range args {
+		if _, exists := flags[arg]; exists && idx+1 < len(args) {
+			return args[idx+1]
+		}
+		splitArg := strings.SplitN(arg, "=", 2)
+		if len(splitArg) != 2 {
+			continue
+		}
+		if _, exists := flags[splitArg[0]]; exists {
+			return splitArg[1]
+		}
+	}
+	return ""
 }
