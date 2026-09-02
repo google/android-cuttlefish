@@ -100,6 +100,9 @@ func disconnectAdb(ccm CuttlefishContainerManager, groupName string) error {
 func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
+	if cvdArgs.GetStringFlagValueOnSubCommandArgs("config_file") != "" {
+		args = append(args, fmt.Sprintf("--override=common.group_name:%s", cvdArgs.CommonArgs.GroupName))
+	}
 
 	var stdoutBuf bytes.Buffer
 	if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, os.Stderr); err != nil {
