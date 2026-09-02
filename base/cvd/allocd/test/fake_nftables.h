@@ -19,9 +19,10 @@
 
 #include <stdint.h>
 
-#include <algorithm>
+#include <map>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "allocd/net/nftables.h"
@@ -29,94 +30,52 @@
 
 namespace cuttlefish {
 
-// A minimal, stateful in-memory Nftables test double.
-//
-// It models a single (family, table, chain) and ignores those arguments. 
-// Its purpose is to reflect the one behaviour that we need statefulness for
-// (handle numbers).
+// A stateful, in-memory Nftables test double.
+// Statefulness is needed for testing behaviour around handles.
 class FakeNftables : public Nftables {
  public:
-  Result<void> EnsureTable(std::string_view /*family*/,
-                           std::string_view /*table*/) override {
-    return {};
-  }
+  Result<void> EnsureTable(std::string_view family,
+                           std::string_view table) override;
+  Result<void> DeleteTable(std::string_view family,
+                           std::string_view table) override;
+  Result<void> EnsureChain(std::string_view family, std::string_view table,
+                           std::string_view chain,
+                           std::string_view content) override;
+  Result<uint64_t> AddRule(std::string_view family, std::string_view table,
+                           std::string_view chain, std::string_view content,
+                           std::string_view comment) override;
+  Result<void> DeleteRule(std::string_view family, std::string_view table,
+                          std::string_view chain, uint64_t handle) override;
+  Result<void> DeleteRulesByComment(std::string_view family,
+                                    std::string_view table,
+                                    std::string_view chain,
+                                    std::string_view comment) override;
 
-  // Deleting the table drops its rules and restarts the handle counter, exactly
-  // as nft does when the table is later recreated.
-  Result<void> DeleteTable(std::string_view /*family*/,
-                           std::string_view /*table*/) override {
-    rules_.clear();
-    next_handle_ = 1;
-    return {};
-  }
-
-  Result<void> EnsureChain(std::string_view /*family*/,
-                           std::string_view /*table*/,
-                           std::string_view /*chain*/,
-                           std::string_view /*content*/) override {
-    return {};
-  }
-
-  Result<uint64_t> AddRule(std::string_view /*family*/,
-                           std::string_view /*table*/,
-                           std::string_view /*chain*/,
-                           std::string_view content) override {
-    uint64_t handle = next_handle_++;
-    rules_.push_back(Rule{handle, ParseComment(content)});
-    return handle;
-  }
-
-  Result<void> DeleteRule(std::string_view /*family*/,
-                          std::string_view /*table*/,
-                          std::string_view /*chain*/,
-                          uint64_t handle) override {
-    auto it = std::remove_if(rules_.begin(), rules_.end(),
-                             [&](const Rule& r) { return r.handle == handle; });
-    CF_EXPECTF(it != rules_.end(), "no rule with handle {}", handle);
-    rules_.erase(it, rules_.end());
-    return {};
-  }
-
-  Result<void> DeleteRulesByComment(std::string_view /*family*/,
-                                    std::string_view /*table*/,
-                                    std::string_view /*chain*/,
-                                    std::string_view comment) override {
-    // A missing match is a no-op, matching idempotent teardown semantics.
-    rules_.erase(
-        std::remove_if(rules_.begin(), rules_.end(),
-                       [&](const Rule& r) { return r.comment == comment; }),
-        rules_.end());
-    return {};
-  }
-
-  bool HasRuleWithComment(std::string_view comment) const {
-    return std::any_of(rules_.begin(), rules_.end(),
-                       [&](const Rule& r) { return r.comment == comment; });
-  }
+  bool HasTable(std::string_view family, std::string_view table) const;
+  bool HasChain(std::string_view family, std::string_view table,
+                std::string_view chain) const;
+  bool HasRuleWithComment(std::string_view family, std::string_view table,
+                          std::string_view chain,
+                          std::string_view comment) const;
+  int RuleCount(std::string_view family, std::string_view table,
+                std::string_view chain) const;
 
  private:
   struct Rule {
     uint64_t handle;
+    std::string content;
     std::string comment;
   };
+  struct Table {
+    std::map<std::string, std::vector<Rule>> chains;
+    uint64_t next_handle = 1;
+  };
+  using TableKey = std::pair<std::string, std::string>;
 
-  // Extracts the value of an nft `comment "..."` token, if present.
-  static std::string ParseComment(std::string_view content) {
-    constexpr std::string_view kMarker = "comment \"";
-    auto pos = content.find(kMarker);
-    if (pos == std::string_view::npos) {
-      return "";
-    }
-    auto start = pos + kMarker.size();
-    auto end = content.find('"', start);
-    if (end == std::string_view::npos) {
-      return "";
-    }
-    return std::string(content.substr(start, end - start));
-  }
+  const Table* FindTable(std::string_view family, std::string_view table) const;
+  Table* FindTable(std::string_view family, std::string_view table);
 
-  std::vector<Rule> rules_;
-  uint64_t next_handle_ = 1;
+  std::map<TableKey, Table> tables_;
 };
 
 }  // namespace cuttlefish

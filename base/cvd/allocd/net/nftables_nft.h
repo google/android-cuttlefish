@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 
+#include <string>
 #include <string_view>
 
 #include "allocd/net/nftables.h"
@@ -44,8 +45,8 @@ class NftablesNft : public Nftables {
                            std::string_view chain,
                            std::string_view content) override;
   Result<uint64_t> AddRule(std::string_view family, std::string_view table,
-                           std::string_view chain,
-                           std::string_view content) override;
+                           std::string_view chain, std::string_view content,
+                           std::string_view comment) override;
   Result<void> DeleteRule(std::string_view family, std::string_view table,
                           std::string_view chain, uint64_t handle) override;
   Result<void> DeleteRulesByComment(std::string_view family,
