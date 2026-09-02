@@ -212,6 +212,7 @@ func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
 func (tc *TestContext) CVDCreate(args CreateArgs) (CommandOutput, error) {
 	tempdirEnv := map[string]string{
 		"HOME": tc.tempdir,
+		"VK_LOADER_DEBUG": "all",
 	}
 
 	createCmd := []string{tc.TargetBin(), "--verbosity=DEBUG", "create"}
