@@ -31,6 +31,9 @@ cf_cc_library(
         "nftables.h",
         "nftables_nft.h",
     ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
