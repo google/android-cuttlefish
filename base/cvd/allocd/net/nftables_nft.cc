@@ -41,7 +41,9 @@ namespace {
 
 constexpr std::string_view kNftBinary = "nft";
 
-// Searches PATH, then the usual sbin locations, for the nft binary.
+// nft usually lives in an sbin directory, which is often not on PATH for
+// non-root callers, so fall back to the usual sbin locations rather than
+// bailing out if we don't find it at the PATH.
 Result<std::string> SearchForNft() {
   Result<std::string> p = Search(Path(), std::string(kNftBinary));
   if (p.has_value()) {
