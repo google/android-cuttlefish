@@ -36,6 +36,7 @@
 #include "absl/log/log.h"
 #include "gflags/gflags.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
@@ -65,11 +66,11 @@ class ConsoleForwarder {
   ConsoleForwarder(std::string console_path, SharedFD console_in,
                    SharedFD console_out, SharedFD console_log,
                    SharedFD kernel_log)
-      : console_path_(console_path),
-        console_in_(console_in),
-        console_out_(console_out),
-        console_log_(console_log),
-        kernel_log_(kernel_log) {}
+      : console_path_(std::move(console_path)),
+        console_in_(std::move(console_in)),
+        console_out_(std::move(console_out)),
+        console_log_(std::move(console_log)),
+        kernel_log_(std::move(kernel_log)) {}
   [[noreturn]] void StartServer() {
     // Create a new thread to handle writes to the console
     writer_thread_ = std::thread([this]() { WriteLoop(); });
@@ -79,7 +80,7 @@ class ConsoleForwarder {
   }
 
  private:
-  SharedFD OpenPTY() {
+  Fd OpenPTY() {
     // Remove any stale symlink to a pts device
     auto ret = unlink(console_path_.c_str());
     CHECK(!(ret < 0 && errno != ENOENT))
@@ -103,12 +104,11 @@ class ConsoleForwarder {
         << "Failed to create symlink to " << pty_dev_name << " at "
         << console_path_ << ": " << StrError(errno);
 
-    auto pty_shared_fd = SharedFD::Dup(pty);
+    Result<Fd> pty_fd = Fd::Dup(pty);
     close(pty);
-    CHECK(pty_shared_fd->IsOpen())
-        << "Error dupping fd " << pty << ": " << pty_shared_fd->StrError();
+    CHECK(pty_fd.has_value()) << pty_fd.error();
 
-    return pty_shared_fd;
+    return std::move(*pty_fd);
   }
 
   void EnqueueWrite(std::shared_ptr<std::vector<char>> buf_ptr, SharedFD fd) {
@@ -235,28 +235,28 @@ int ConsoleForwarderMain(int argc, char** argv) {
       << "Invalid file descriptors: " << FLAGS_console_in_fd << ", "
       << FLAGS_console_out_fd;
 
-  auto console_in = SharedFD::Dup(FLAGS_console_in_fd);
-  CHECK(console_in->IsOpen()) << "Error dupping fd " << FLAGS_console_in_fd
-                              << ": " << console_in->StrError();
+  Result<Fd> console_in = Fd::Dup(FLAGS_console_in_fd);
+  CHECK(console_in.has_value()) << console_in.error();
   close(FLAGS_console_in_fd);
 
-  auto console_out = SharedFD::Dup(FLAGS_console_out_fd);
-  CHECK(console_out->IsOpen()) << "Error dupping fd " << FLAGS_console_out_fd
-                               << ": " << console_out->StrError();
+  Result<Fd> console_out = Fd::Dup(FLAGS_console_out_fd);
+  CHECK(console_out.has_value()) << console_out.error();
   close(FLAGS_console_out_fd);
 
-  auto config = CuttlefishConfig::Get();
+  const CuttlefishConfig* config = CuttlefishConfig::Get();
   CHECK(config) << "Unable to get config object";
 
-  auto instance = config->ForDefaultInstance();
-  auto console_path = ConsolePath(instance);
-  auto console_log = instance.PerInstancePath("console_log");
-  auto console_log_fd =
-      SharedFD::Open(console_log.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
-  SharedFD kernel_log_fd =
-      SharedFD::Open(KernelLogPipeName(instance), O_APPEND | O_WRONLY, 0666);
-  ConsoleForwarder console_forwarder(console_path, console_in, console_out,
-                                     console_log_fd, kernel_log_fd);
+  const CuttlefishConfig::InstanceSpecific& instance =
+      config->ForDefaultInstance();
+  const std::string console_log = instance.PerInstancePath("console_log");
+  Fd console_log_fd =
+      Fd::Open(console_log, O_CREAT | O_APPEND | O_WRONLY, 0666).value_or(Fd());
+  Fd kernel_log_fd =
+      Fd::Open(KernelLogPipeName(instance), O_APPEND | O_WRONLY, 0666)
+          .value_or(Fd());
+  ConsoleForwarder console_forwarder(
+      ConsolePath(instance), std::move(*console_in), std::move(*console_out),
+      std::move(console_log_fd), std::move(kernel_log_fd));
 
   // Don't get a SIGPIPE from the clients
   CHECK(sigaction(SIGPIPE, nullptr, nullptr) == 0)
