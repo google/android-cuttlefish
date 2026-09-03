@@ -1,3 +1,9 @@
+cuttlefish-integration-gigabyte-arm64 (1.57.1) unstable; urgency=medium
+
+  * Revert "tools/*/cw/Containerfile is now based on trixie" by @ser-io in https://github.com/google/android-cuttlefish/pull/3133
+
+ -- Cody Schuffelen <schuffelen@google.com>  Thu, 03 Sep 2026 14:28:00 -0700
+
 cuttlefish-integration-gigabyte-arm64 (1.57.0) unstable; urgency=medium
 
   * Start development on 1.57 by @Databean in https://github.com/google/android-cuttlefish/pull/2768
