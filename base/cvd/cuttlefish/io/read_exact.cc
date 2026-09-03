@@ -46,4 +46,17 @@ Result<void> PReadExact(const ReaderSeeker& reader, char* buf, size_t size,
   return {};
 }
 
+Result<bool> ReadExactOrEof(Reader& reader, char* buf, size_t size) {
+  size_t read = 0;
+  while (read < size) {
+    size_t data_read = CF_EXPECT(reader.Read((void*)(buf + read), size - read));
+    if (data_read == 0 && read == 0) {
+      return false;
+    }
+    CF_EXPECT_GT(data_read, 0, "EOF, still want to read " << size - read);
+    read += data_read;
+  }
+  return true;
+}
+
 }  // namespace cuttlefish
