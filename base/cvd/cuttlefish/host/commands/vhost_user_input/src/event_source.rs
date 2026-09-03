@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::io::{ErrorKind, Read, Write};
+use std::io::{stdin, stdout, ErrorKind, Stdin, Write};
 use std::os::fd::{AsFd, AsRawFd, BorrowedFd};
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::sync::{Arc, Mutex};
@@ -16,37 +16,38 @@ use crate::buf_reader::EventReader;
 /// when new events are available. No assumption should be made about the nature of this fd, in
 /// particular it should not be assumed this is an eventfd and the caller should never attempt to
 /// read from it directly.
-pub trait EventSource: Send + Sync + AsFd {
+pub trait EventSource: Send + Sync + AsFd + Sized {
     /// Gets all input events available in this source. Input events are always delivered in groups
     /// ending with the SYN_REPORT type event. The returned list may be empty if only a partial
     /// group was read.
     fn get_events(&mut self) -> Result<Vec<u8>>;
     /// Send status feedback such as keyboard LED states back to the source.
     fn send_status_feedback(&mut self, status_buffer: Vec<u8>);
+    /// Creates a new independenlty owned handle to the same underlying event source.
+    fn try_clone(&self) -> Result<Self>;
 }
 
-/// Reads events from a pipe
-pub struct PipeEventSource<R: Read + AsFd + Send + Sync, W: Write + Send + Sync> {
-    reader: EventReader<R>,
-    writer: W,
+/// Reads events from stdin, writes status feedback to stdout. Typically these channels will be
+/// pipes connected to other processes or just /dev/null.
+pub struct StdioEventSource {
+    reader: EventReader<Stdin>,
 }
 
-impl<R: Read + AsFd + Send + Sync, W: Write + Send + Sync> PipeEventSource<R, W> {
-    pub fn new(reader: R, writer: W) -> PipeEventSource<R, W> {
-        PipeEventSource::<R, W> {
-            reader: EventReader::new(reader),
-            writer,
+impl StdioEventSource {
+    pub fn new() -> StdioEventSource {
+        StdioEventSource {
+            reader: EventReader::new(stdin()),
         }
     }
 }
 
-impl<R: Read + AsFd + Send + Sync, W: Write + Send + Sync> AsFd for PipeEventSource<R, W> {
+impl AsFd for StdioEventSource {
     fn as_fd(&self) -> BorrowedFd<'_> {
         self.reader.as_fd()
     }
 }
 
-impl<R: Read + AsFd + Send + Sync, W: Write + Send + Sync> EventSource for PipeEventSource<R, W> {
+impl EventSource for StdioEventSource {
     fn get_events(&mut self) -> Result<Vec<u8>> {
         // This implementation can't recover from an errored or closed pipe
         self.reader
@@ -55,9 +56,13 @@ impl<R: Read + AsFd + Send + Sync, W: Write + Send + Sync> EventSource for PipeE
     }
 
     fn send_status_feedback(&mut self, status_buffer: Vec<u8>) {
-        if let Err(e) = self.writer.write_all(&status_buffer) {
+        if let Err(e) = stdout().write_all(&status_buffer) {
             warn!("Failed to send status feedback: {:?}", e);
         }
+    }
+
+    fn try_clone(&self) -> Result<Self> {
+        Ok(StdioEventSource::new())
     }
 }
 
@@ -119,6 +124,14 @@ impl EventSource for UnixSocketEventSource {
     fn send_status_feedback(&mut self, mut status_buffer: Vec<u8>) {
         self.status.lock().unwrap().append(&mut status_buffer);
         let _ = self.events_fd.write_all(&[0u8; 1]);
+    }
+
+    fn try_clone(&self) -> Result<Self> {
+        Ok(Self {
+            events_fd: self.events_fd.try_clone()?,
+            events: self.events.clone(),
+            status: self.status.clone(),
+        })
     }
 }
 
