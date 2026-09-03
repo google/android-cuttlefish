@@ -16,7 +16,6 @@ use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
 use clap::Parser;
-use log::error;
 use thiserror::Error;
 use vhost_user_backend::VhostUserDaemon;
 use vhu_media::VhuMediaBackend;
@@ -25,6 +24,7 @@ use vm_memory::{GuestMemoryAtomic, GuestMemoryMmap};
 
 mod device;
 mod pattern;
+mod capture_channel;
 use device::LensFacing;
 
 #[derive(Debug, Error)]
