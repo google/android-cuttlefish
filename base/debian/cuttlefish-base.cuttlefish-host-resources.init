@@ -44,7 +44,7 @@ ipv4_bridge=${ipv4_bridge:-1}
 ipv6_bridge=${ipv6_bridge:-1}
 dns_servers=${dns_servers:-8.8.8.8,8.8.4.4}
 dns6_servers=${dns6_servers:-2001:4860:4860::8888,2001:4860:4860::8844}
-allocate_static_resources=${allocate_static_resources:-1}
+allocate_static_resources=${allocate_static_resources:-0}
 initialize_cvdalloc=${initialize_cvdalloc:-0}
 
 readonly CUTTLEFISH_RUN_DIR="/run/cuttlefish"
