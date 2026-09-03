@@ -479,6 +479,45 @@ TEST(FlagsParserTest, ParseMediaV4l2Proxy) {
       << "media flag is missing or wrongly formatted";
 }
 
+TEST(FlagsParserTest, ParseMediaV4l2StreamProxy) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_stream_proxy": {
+                  "input_path": "/tmp/v4l2_fifo",
+                  "input_width": 320,
+                  "input_height": 240,
+                  "input_fps": "10"
+                },
+                "lens_facing": "BACK"
+              }
+            ]
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(
+      *serialized_data,
+      "--media=v4l2_stream_proxy:input_path=/tmp/v4l2_fifo:input_width=320:input_height=240:input_fps=10:lens_facing=BACK"))
+      << "media flag is missing or wrongly formatted";
+}
+
+
 TEST(ConnectivityFlagsParserTest, ParseModemSimulatorSimTypeValidInt) {
   const char* test_string = R""""(
 {
