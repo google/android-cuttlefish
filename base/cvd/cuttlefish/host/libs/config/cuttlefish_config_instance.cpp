@@ -2001,6 +2001,7 @@ static constexpr char kMediaInputPath[] = "input_path";
 static constexpr char kMediaInputWidth[] = "input_width";
 static constexpr char kMediaInputHeight[] = "input_height";
 static constexpr char kMediaInputFps[] = "input_fps";
+static constexpr char kMediaInstanceIndex[] = "instance_index";
 
 std::vector<CuttlefishConfig::MediaConfig>
 CuttlefishConfig::InstanceSpecific::media_configs() const {
@@ -2011,6 +2012,9 @@ CuttlefishConfig::InstanceSpecific::media_configs() const {
         static_cast<CuttlefishConfig::MediaType>(json[kMediaType].asInt());
     if (json.isMember(kMediaLensFacing)) {
       config.lens_facing = json[kMediaLensFacing].asString();
+    }
+    if (json.isMember(kMediaInstanceIndex)) {
+      config.instance_index = json[kMediaInstanceIndex].asInt();
     }
     if (config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy) {
       CuttlefishConfig::MediaConfig::V4l2StreamProxyConfig stream_config = {};
@@ -2041,6 +2045,9 @@ void CuttlefishConfig::MutableInstanceSpecific::set_media_configs(
     Json::Value json(Json::objectValue);
     json[kMediaType] = static_cast<int>(config.type);
     json[kMediaLensFacing] = config.lens_facing;
+    if (config.instance_index.has_value()) {
+      json[kMediaInstanceIndex] = *config.instance_index;
+    }
     if (config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy &&
         config.v4l2_stream_proxy.has_value()) {
       json[kMediaInputPath] = config.v4l2_stream_proxy->input_path;

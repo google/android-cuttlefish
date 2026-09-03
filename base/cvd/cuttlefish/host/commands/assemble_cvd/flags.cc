@@ -1360,7 +1360,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     CF_EXPECT_EQ(media_configs_bindings.size(), 1,
                  "Expected a single binding?");
     auto media_configs = media_configs_bindings[0]->GetConfigs();
-    instance.set_media_configs(media_configs);
+    std::vector<CuttlefishConfig::MediaConfig> instance_media_configs;
+    for (const auto& config : media_configs) {
+      if (!config.instance_index.has_value() ||
+          config.instance_index.value() == instance_index) {
+        instance_media_configs.push_back(config);
+      }
+    }
+    instance.set_media_configs(instance_media_configs);
 
     instance_index++;
   }  // end of num_instances loop
