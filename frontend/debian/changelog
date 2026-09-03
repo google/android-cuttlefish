@@ -1,3 +1,9 @@
+cuttlefish-frontend (1.57.1) unstable; urgency=medium
+
+  * Revert "tools/*/cw/Containerfile is now based on trixie" by @ser-io in https://github.com/google/android-cuttlefish/pull/3133
+
+ -- Cody Schuffelen <schuffelen@google.com>  Thu, 03 Sep 2026 14:27:33 -0700
+
 cuttlefish-frontend (1.57.0) unstable; urgency=medium
 
   * Mark release 1.56.0 as unstable by @Databean inhttps://github.com/google/android-cuttlefish/pull/2767
