@@ -13,25 +13,16 @@
 // limitations under the License.
 
 use anyhow::{Context, Result as AnyhowResult};
-use std::collections::VecDeque;
 use std::io::Result as IoResult;
-use std::io::Seek;
-use std::io::SeekFrom;
-use std::io::Write;
-use std::os::fd::AsFd;
-use std::os::fd::BorrowedFd;
+use std::os::fd::{AsFd, BorrowedFd};
 use std::str::FromStr;
-use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
-use vmm_sys_util::eventfd::{EFD_NONBLOCK, EventFd};
-use vmm_sys_util::poll::{PollContext, PollToken};
-use vmm_sys_util::timerfd::TimerFd;
 
 use crate::pattern::FramePattern;
 use crate::pattern::julia_set::JuliaSet;
 use crate::pattern::pulse::Pulse;
 use crate::pattern::smpte::SmpteBars;
+use crate::capture_channel::{CaptureChannel, CapturePlanes};
 
 use v4l2r::PixelFormat;
 use v4l2r::QueueType;
@@ -157,7 +148,7 @@ impl TestPattern {
     }
 
     /// Frame generator backing this pattern.
-    fn generator(self) -> &'static dyn FramePattern {
+    pub(crate) fn generator(self) -> &'static dyn FramePattern {
         match self {
             TestPattern::Pulse => &Pulse,
             TestPattern::SmpteBars => &SmpteBars,
@@ -250,24 +241,24 @@ impl Buffer {
     }
 
     /// Update the state of the buffer as well as its V4L2 representation.
-    fn set_state(&mut self, state: BufferState, width: u32, height: u32) {
+    fn set_state(&mut self, state: BufferState) {
         let mut flags = self.v4l2_buffer.flags();
         match state {
             BufferState::New => {
                 let planes = self.v4l2_buffer.planes_with_backing_iter_mut();
                 if let V4l2PlanesWithBackingMut::Mmap(mut planes) = planes {
-                    *planes.next().unwrap().bytesused = 0;
-                    *planes.next().unwrap().bytesused = 0;
-                    *planes.next().unwrap().bytesused = 0;
+                    while let Some(mut plane) = planes.next() {
+                        *plane.bytesused = 0;
+                    }
                 }
                 flags &= !BufferFlags::QUEUED;
             }
             BufferState::Incoming => {
                 let planes = self.v4l2_buffer.planes_with_backing_iter_mut();
                 if let V4l2PlanesWithBackingMut::Mmap(mut planes) = planes {
-                    *planes.next().unwrap().bytesused = 0;
-                    *planes.next().unwrap().bytesused = 0;
-                    *planes.next().unwrap().bytesused = 0;
+                    while let Some(mut plane) = planes.next() {
+                        *plane.bytesused = 0;
+                    }
                 }
                 flags |= BufferFlags::QUEUED;
             }
@@ -275,9 +266,9 @@ impl Buffer {
                 {
                     let planes = self.v4l2_buffer.planes_with_backing_iter_mut();
                     if let V4l2PlanesWithBackingMut::Mmap(mut planes) = planes {
-                        *planes.next().unwrap().bytesused = width * height;
-                        *planes.next().unwrap().bytesused = width * height / 4;
-                        *planes.next().unwrap().bytesused = width * height / 4;
+                        while let Some(mut plane) = planes.next() {
+                            *plane.bytesused = *plane.length;
+                        }
                     }
                 }
                 self.v4l2_buffer.set_sequence(sequence);
@@ -301,327 +292,24 @@ impl Buffer {
     }
 }
 
-/// Device-global properties shared across all sessions and worker threads.
-pub struct DeviceSharedState<Q: VirtioMediaEventQueue> {
-    /// Queue used to send events to the guest.
-    evt_queue: Q,
-    /// Camera controls (gain, lens facing).
-    controls: CameraControls,
-    /// Width of the video.
-    width: u32,
-    /// Height of the video.
-    height: u32,
-}
-
-/// Shared session state between ioctl handlers and the background frame worker.
-pub struct SessionSharedState {
-    /// Current iteration of the pattern generation cycle.
-    iteration: u64,
-    /// Buffers currently allocated for this session.
-    buffers: Vec<Buffer>,
-    /// Queue of buffers awaiting processing.
-    queued_buffers: VecDeque<usize>,
-    /// Is the session currently streaming?
-    streaming: bool,
-    /// Monotonic counter incremented on streamoff/reset to invalidate in-flight frames.
-    stream_count: u64,
-}
-
-/// Diagnostic message streamed from the background worker thread to the main session.
-#[derive(Debug)]
-enum DiagMsg {
-    Warning(String),
-    Error(anyhow::Error),
-}
-
 /// Session data of [`EmulatedCamera`].
 pub struct EmulatedCameraSession {
     /// Id of the session.
     id: u32,
-    /// Shared state between ioctl handlers and frame worker.
-    state: Arc<Mutex<SessionSharedState>>,
-    /// EventFd to wake up the background worker thread on state changes.
-    wakeup_evt: Arc<EventFd>,
-    /// EventFd to signal the background worker thread to exit.
-    exit_evt: Arc<EventFd>,
-    /// Background frame worker thread handle.
-    worker_handle: Option<std::thread::JoinHandle<AnyhowResult<()>>>,
-    /// Channel receiver for worker diagnostics.
-    diag_rx: Mutex<Receiver<DiagMsg>>,
+    /// Buffers currently allocated for this session.
+    buffers: Arc<Mutex<Vec<Buffer>>>,
+    /// Is the session currently streaming?
+    streaming: Arc<Mutex<bool>>,
+    /// Virtual capture channel driving capture and frame pacing for this session.
+    channel: CaptureChannel,
+    /// Handle to the capture completed listener thread.
+    capture_completed_thread: Option<std::thread::JoinHandle<()>>,
 }
 
 impl VirtioMediaDeviceSession for EmulatedCameraSession {
     fn poll_fd(&self) -> Option<BorrowedFd<'_>> {
         None
     }
-}
-
-impl EmulatedCameraSession {
-    fn write_pattern(
-        iteration: u64,
-        test_pattern: TestPattern,
-        controls: &CameraControls,
-        width: u32,
-        height: u32,
-        sink_y: &mut dyn Write,
-        sink_u: &mut dyn Write,
-        sink_v: &mut dyn Write,
-    ) -> IoctlResult<()> {
-        test_pattern
-            .generator()
-            .write(iteration, controls, width, height, sink_y, sink_u, sink_v)
-            .map_err(|_| libc::EIO)
-    }
-
-    fn drain_diag(&self) {
-        if let Ok(rx) = self.diag_rx.lock() {
-            while let Ok(msg) = rx.try_recv() {
-                match msg {
-                    DiagMsg::Warning(w) => {
-                        log::warn!("Session {}: background worker warning: {}", self.id, w)
-                    }
-                    DiagMsg::Error(e) => {
-                        log::error!("Session {}: background worker error: {:#}", self.id, e)
-                    }
-                }
-            }
-        }
-    }
-
-    fn join_worker(&mut self) {
-        if let Some(handle) = self.worker_handle.take() {
-            if handle.join().is_err() {
-                log::error!("Session {}: frame worker thread panicked", self.id);
-            }
-        }
-    }
-
-    fn check_worker_status(&mut self) -> IoctlResult<()> {
-        // If the worker thread terminated unexpectedly (e.g. fatal poll_ctx error or panic),
-        // join the thread, flush any final diagnostics, and fail fast with EIO.
-        if self.worker_handle.as_ref().is_some_and(|h| h.is_finished()) {
-            self.join_worker();
-            self.drain_diag();
-            Err(libc::EIO)
-        } else {
-            self.drain_diag();
-            Ok(())
-        }
-    }
-}
-
-const FRAME_INTERVAL: Duration = Duration::from_nanos(1_000_000_000 / FRAME_RATE as u64);
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-enum WorkerToken {
-    Wakeup,
-    Timer,
-    Exit,
-}
-
-impl PollToken for WorkerToken {
-    fn as_raw_token(&self) -> u64 {
-        match self {
-            WorkerToken::Wakeup => 0,
-            WorkerToken::Timer => 1,
-            WorkerToken::Exit => 2,
-        }
-    }
-
-    fn from_raw_token(data: u64) -> Self {
-        match data {
-            0 => WorkerToken::Wakeup,
-            1 => WorkerToken::Timer,
-            2 => WorkerToken::Exit,
-            _ => unreachable!(),
-        }
-    }
-}
-
-/// Write basic pattern into the queued buffers
-fn spawn_frame_worker<Q: VirtioMediaEventQueue + Send + 'static>(
-    session_id: u32,
-    session_state: Arc<Mutex<SessionSharedState>>,
-    device_state: Arc<Mutex<DeviceSharedState<Q>>>,
-    wakeup_evt: Arc<EventFd>,
-    exit_evt: Arc<EventFd>,
-    diag_tx: Sender<DiagMsg>,
-) -> AnyhowResult<std::thread::JoinHandle<AnyhowResult<()>>> {
-    let mut timer_fd = TimerFd::new().context("Failed to create TimerFd")?;
-    let poll_ctx: PollContext<WorkerToken> =
-        PollContext::new().context("Failed to create PollContext")?;
-    poll_ctx
-        .add(&*wakeup_evt, WorkerToken::Wakeup)
-        .context("Failed to add wakeup eventfd to PollContext")?;
-    poll_ctx
-        .add(&*exit_evt, WorkerToken::Exit)
-        .context("Failed to add exit eventfd to PollContext")?;
-    poll_ctx
-        .add(&timer_fd, WorkerToken::Timer)
-        .context("Failed to add timerfd to PollContext")?;
-
-    let worker_handle = std::thread::spawn(move || -> AnyhowResult<()> {
-        let mut timer_armed = false;
-        let send_err = |err: anyhow::Error| {
-            if let Err(e) = diag_tx.send(DiagMsg::Error(err)) {
-                log::warn!(
-                    "Session {}: Failed to send diagnostic error: {}",
-                    session_id,
-                    e
-                );
-            }
-        };
-        let send_warn = |msg: String| {
-            if let Err(e) = diag_tx.send(DiagMsg::Warning(msg)) {
-                log::warn!(
-                    "Session {}: Failed to send diagnostic warning: {}",
-                    session_id,
-                    e
-                );
-            }
-        };
-
-        loop {
-            let ready_events = match poll_ctx.wait() {
-                Ok(events) => events,
-                Err(e) => {
-                    send_err(anyhow::Error::new(e).context(format!(
-                        "Session {}: PollContext wait failed in worker thread",
-                        session_id
-                    )));
-                    return Ok(());
-                }
-            };
-
-            let mut timer_triggered = false;
-            for event in ready_events.iter_readable() {
-                match event.token() {
-                    WorkerToken::Exit => return Ok(()),
-                    WorkerToken::Wakeup => {
-                        if let Err(e) = wakeup_evt.read() {
-                            if e.kind() != std::io::ErrorKind::WouldBlock {
-                                send_err(
-                                    anyhow::Error::new(e).context("Failed to read wakeup EventFd"),
-                                );
-                            }
-                        }
-                    }
-                    WorkerToken::Timer => {
-                        if let Err(e) = timer_fd.wait() {
-                            send_err(anyhow::Error::from(e).context("Failed to read TimerFd"));
-                        }
-                        timer_triggered = true;
-                    }
-                }
-            }
-
-            let (buf_id, stream_count, iteration, controls, width, height, file_y, file_u, file_v) = {
-                let mut guard = session_state.lock().unwrap();
-
-                let should_arm = guard.streaming && !guard.queued_buffers.is_empty();
-                if should_arm && !timer_armed {
-                    // Set the initial duration to 1 ns so the timer tick expires immediately
-                    // to process and deliver the first frame right after STREAMON.
-                    if let Err(e) = timer_fd.reset(Duration::from_nanos(1), Some(FRAME_INTERVAL)) {
-                        send_err(anyhow::Error::from(e).context("Failed to arm TimerFd"));
-                    } else {
-                        timer_armed = true;
-                    }
-                } else if !should_arm && timer_armed {
-                    if let Err(e) = timer_fd.clear() {
-                        send_err(anyhow::Error::from(e).context("Failed to disarm TimerFd"));
-                    } else {
-                        timer_armed = false;
-                    }
-                }
-
-                if !timer_triggered || !guard.streaming {
-                    continue;
-                }
-
-                let buf_id = match guard.queued_buffers.pop_front() {
-                    Some(id) => id,
-                    None => continue,
-                };
-                let buffer = match guard.buffers.get_mut(buf_id) {
-                    Some(b) => b,
-                    None => continue,
-                };
-
-                for plane in &mut buffer.planes {
-                    if let Err(e) = plane.fd.as_file().seek(SeekFrom::Start(0)) {
-                        send_warn(format!("Failed to seek plane buffer: {}", e));
-                    }
-                }
-
-                let file_y = buffer.planes[0].fd.as_file().try_clone().ok();
-                let file_u = buffer.planes[1].fd.as_file().try_clone().ok();
-                let file_v = buffer.planes[2].fd.as_file().try_clone().ok();
-
-                let (controls, width, height) = {
-                    let dev = device_state.lock().unwrap();
-                    (dev.controls.clone(), dev.width, dev.height)
-                };
-
-                (
-                    buf_id,
-                    guard.stream_count,
-                    guard.iteration,
-                    controls,
-                    width,
-                    height,
-                    file_y,
-                    file_u,
-                    file_v,
-                )
-            };
-
-            // Release the lock during pattern rendering:
-            if let (Some(mut fy), Some(mut fu), Some(mut fv)) = (file_y, file_u, file_v) {
-                if let Err(e) = EmulatedCameraSession::write_pattern(
-                    iteration,
-                    controls.test_pattern,
-                    &controls,
-                    width,
-                    height,
-                    &mut fy,
-                    &mut fu,
-                    &mut fv,
-                ) {
-                    send_warn(format!("Failed to write pattern: errno {}", e));
-                }
-            }
-
-            // Re-acquire lock to verify stream_count and dispatch DequeueBuffer:
-            let mut guard = session_state.lock().unwrap();
-            if guard.stream_count == stream_count {
-                if let Some(buffer) = guard.buffers.get_mut(buf_id) {
-                    // Resolution reconfiguration requires STREAMOFF (which increments stream_count),
-                    // so `width`/`height` are guaranteed to match `guard.width`/`guard.height`.
-                    buffer.set_state(
-                        BufferState::Outgoing {
-                            sequence: iteration as u32,
-                        },
-                        width,
-                        height,
-                    );
-                    let v4l2_buf_clone = buffer.v4l2_buffer.clone();
-                    guard.iteration += 1;
-
-                    device_state
-                        .lock()
-                        .unwrap()
-                        .evt_queue
-                        .send_event(V4l2Event::DequeueBuffer(DequeueBufferEvent::new(
-                            session_id,
-                            v4l2_buf_clone,
-                        )));
-                }
-            }
-        }
-    });
-
-    Ok(worker_handle)
 }
 
 /// Emulated camera used for testing Android camera stack.
@@ -638,8 +326,14 @@ pub struct EmulatedCamera<Q: VirtioMediaEventQueue, HM: VirtioMediaHostMemoryMap
     /// same time. It will fails if we allow simultaneous sessions to be active, so we need this
     /// artificial limitation to make it pass fully.
     active_session: Option<u32>,
-    /// Device-global shared state.
-    device_state: Arc<Mutex<DeviceSharedState<Q>>>,
+    /// Queue used to send events to the guest.
+    evt_queue: Arc<Mutex<Q>>,
+    /// Camera controls (gain, lens facing, test pattern).
+    controls: CameraControls,
+    /// Width of the video.
+    width: u32,
+    /// Height of the video.
+    height: u32,
 }
 
 impl<Q, HM> EmulatedCamera<Q, HM>
@@ -651,17 +345,15 @@ where
         Self {
             mmap_manager: MmapMappingManager::from(mapper),
             active_session: None,
-            device_state: Arc::new(Mutex::new(DeviceSharedState {
-                evt_queue,
-                controls: CameraControls::new(lens_facing),
-                width: WIDTH,
-                height: HEIGHT,
-            })),
+            evt_queue: Arc::new(Mutex::new(evt_queue)),
+            controls: CameraControls::new(lens_facing),
+            width: WIDTH,
+            height: HEIGHT,
         }
     }
 
     fn lens_facing_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
-        let lens_facing = self.device_state.lock().unwrap().controls.lens_facing;
+        let lens_facing = self.controls.lens_facing;
         bindings::v4l2_query_ext_ctrl {
             id: CID_LENS_FACING,
             type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER,
@@ -799,13 +491,14 @@ where
 
     /// Applies `pattern`, signalling subscribers if the value actually changed.
     fn set_test_pattern(&mut self, session_id: u32, pattern: TestPattern) -> IoctlResult<()> {
-        let mut dev = self.device_state.lock().unwrap();
-        if dev.controls.test_pattern == pattern {
+        if self.controls.test_pattern == pattern {
             return Ok(());
         }
-        dev.controls.test_pattern = pattern;
-        let event = Self::ctrl_event(&dev.controls, bindings::V4L2_CID_TEST_PATTERN)?;
-        dev.evt_queue
+        self.controls.test_pattern = pattern;
+        let event = Self::ctrl_event(&self.controls, bindings::V4L2_CID_TEST_PATTERN)?;
+        self.evt_queue
+            .lock()
+            .unwrap()
             .send_event(V4l2Event::Event(SessionEvent::new(session_id, event)));
         Ok(())
     }
@@ -822,37 +515,49 @@ where
 
     fn new_session(&mut self, session_id: u32) -> std::result::Result<Self::Session, i32> {
         let session = (|| -> AnyhowResult<Self::Session> {
-            let shared_state = Arc::new(Mutex::new(SessionSharedState {
-                iteration: 0,
-                buffers: Default::default(),
-                queued_buffers: Default::default(),
-                streaming: false,
-                stream_count: 0,
-            }));
-            let wakeup_evt = Arc::new(EventFd::new(EFD_NONBLOCK).with_context(|| {
-                format!("Failed to create wakeup EventFd for session {}", session_id)
-            })?);
-            let exit_evt = Arc::new(EventFd::new(EFD_NONBLOCK).with_context(|| {
-                format!("Failed to create exit EventFd for session {}", session_id)
-            })?);
-            let (diag_tx, diag_rx) = std::sync::mpsc::channel();
-            let worker_handle = spawn_frame_worker(
+            let buffers = Arc::new(Mutex::new(Vec::<Buffer>::new()));
+            let streaming = Arc::new(Mutex::new(false));
+            let (capture_completed_tx, capture_completed_rx) = std::sync::mpsc::channel();
+
+            let channel = CaptureChannel::new(
                 session_id,
-                Arc::clone(&shared_state),
-                Arc::clone(&self.device_state),
-                Arc::clone(&wakeup_evt),
-                Arc::clone(&exit_evt),
-                diag_tx,
+                self.controls.clone(),
+                capture_completed_tx,
             )
-            .context("Failed to spawn worker thread")?;
+            .context("Failed to initialize capture channel")?;
+
+            let buffers_clone = Arc::clone(&buffers);
+            let streaming_clone = Arc::clone(&streaming);
+            let evt_queue_clone = Arc::clone(&self.evt_queue);
+
+            let capture_completed_thread = std::thread::Builder::new()
+                .name(format!("capture-completed-thread{}", session_id))
+                .spawn(move || {
+                    while let Ok(ev) = capture_completed_rx.recv() {
+                        let is_streaming = *streaming_clone.lock().unwrap();
+                        if !is_streaming {
+                            continue;
+                        }
+                        let mut buffers = buffers_clone.lock().unwrap();
+                        if let Some(buf) = buffers.get_mut(ev.buffer_id) {
+                            buf.set_state(BufferState::Outgoing {
+                                sequence: ev.sequence,
+                            });
+                            let v4l2_buf = buf.v4l2_buffer.clone();
+                            evt_queue_clone.lock().unwrap().send_event(V4l2Event::DequeueBuffer(
+                                DequeueBufferEvent::new(session_id, v4l2_buf),
+                            ));
+                        }
+                    }
+                })
+                .context("Failed to spawn capture completed thread")?;
 
             Ok(EmulatedCameraSession {
                 id: session_id,
-                state: shared_state,
-                wakeup_evt,
-                exit_evt,
-                worker_handle: Some(worker_handle),
-                diag_rx: Mutex::new(diag_rx),
+                buffers,
+                streaming,
+                channel,
+                capture_completed_thread: Some(capture_completed_thread),
             })
         })();
 
@@ -863,11 +568,10 @@ where
     }
 
     fn close_session(&mut self, mut session: Self::Session) {
-        // Signal the worker thread to exit, wait for it to fully terminate, and
-        // then drain all remaining diagnostics to ensure no messages are missed.
-        session.exit_evt.write(1).unwrap();
-        session.join_worker();
-        session.drain_diag();
+        session.channel.shutdown();
+        if let Some(handle) = session.capture_completed_thread.take() {
+            let _ = handle.join();
+        }
 
         // Nothing to cleanup when `close_session` is called for sessions without
         // allocated buffers, hence the early return.
@@ -877,8 +581,8 @@ where
 
         self.active_session = None;
 
-        let state = session.state.lock().unwrap();
-        for buffer in &state.buffers {
+        let buffers = session.buffers.lock().unwrap();
+        for buffer in &*buffers {
             for plane in &buffer.planes {
                 self.mmap_manager.unregister_buffer(plane.offset);
             }
@@ -901,9 +605,8 @@ where
         flags: u32,
         offset: u32,
     ) -> std::result::Result<(u64, u64), i32> {
-        let mut state = session.state.lock().unwrap();
-        let buffer = state
-            .buffers
+        let mut buffers = session.buffers.lock().unwrap();
+        let buffer = buffers
             .iter_mut()
             .find(|b| b.planes.iter().any(|p| p.offset == offset))
             .ok_or(libc::EINVAL)?;
@@ -1029,9 +732,8 @@ where
         if queue != QueueType::VideoCaptureMplane {
             return Err(libc::EINVAL);
         }
-        let dev = self.device_state.lock().unwrap();
-        log::info!("g_fmt: returning {}x{}", dev.width, dev.height);
-        Ok(session_fmt(queue, dev.width, dev.height))
+        log::info!("g_fmt: returning {}x{}", self.width, self.height);
+        Ok(session_fmt(queue, self.width, self.height))
     }
 
     fn s_fmt(
@@ -1049,22 +751,21 @@ where
         let req_height = pix_mp.height;
         log::info!("s_fmt: requested {}x{}", req_width, req_height);
 
-        let mut dev = self.device_state.lock().unwrap();
         if SUPPORTED_SIZES.contains(&(req_width, req_height)) {
-            dev.width = req_width;
-            dev.height = req_height;
+            self.width = req_width;
+            self.height = req_height;
             log::info!("s_fmt: set resolution to {}x{}", req_width, req_height);
         } else {
             log::info!(
                 "s_fmt: requested resolution {}x{} not supported, keeping {}x{}",
                 req_width,
                 req_height,
-                dev.width,
-                dev.height
+                self.width,
+                self.height
             );
         }
 
-        Ok(session_fmt(queue, dev.width, dev.height))
+        Ok(session_fmt(queue, self.width, self.height))
     }
 
     fn try_fmt(
@@ -1085,8 +786,7 @@ where
         if SUPPORTED_SIZES.contains(&(req_width, req_height)) {
             Ok(session_fmt(queue, req_width, req_height))
         } else {
-            let dev = self.device_state.lock().unwrap();
-            Ok(session_fmt(queue, dev.width, dev.height))
+            Ok(session_fmt(queue, self.width, self.height))
         }
     }
 
@@ -1149,8 +849,7 @@ where
         if memory != MemoryType::Mmap {
             return Err(libc::EINVAL);
         }
-        let mut state = session.state.lock().unwrap();
-        if state.streaming {
+        if *session.streaming.lock().unwrap() {
             return Err(libc::EBUSY);
         }
         // Buffers cannot be requested on a session if there is already another session with
@@ -1160,29 +859,25 @@ where
             _ => (),
         }
 
-        let (width, height) = {
-            let dev = self.device_state.lock().unwrap();
-            (dev.width, dev.height)
-        };
+        let width = self.width;
+        let height = self.height;
+        let mut buffers = session.buffers.lock().unwrap();
 
         // Reqbufs(0) is an implicit streamoff.
         if count == 0 {
             self.active_session = None;
-            state.streaming = false;
-            state.stream_count += 1;
-            state.queued_buffers.clear();
-            session.wakeup_evt.write(1).unwrap();
+            *session.streaming.lock().unwrap() = false;
+            let _ = session.channel.stop_capture();
         } else {
-            state.queued_buffers.clear();
-            for buffer in state.buffers.iter_mut() {
-                buffer.set_state(BufferState::New, width, height);
+            for buffer in buffers.iter_mut() {
+                buffer.set_state(BufferState::New);
             }
             self.active_session = Some(session.id);
         }
 
         let count = std::cmp::min(count, 32);
 
-        for buffer in &state.buffers {
+        for buffer in &*buffers {
             for plane in &buffer.planes {
                 self.mmap_manager.unregister_buffer(plane.offset);
             }
@@ -1192,7 +887,7 @@ where
         let size_u = (width * height / 4) as u64;
         let size_v = (width * height / 4) as u64;
 
-        state.buffers = (0..count)
+        *buffers = (0..count)
             .map(|i| -> std::result::Result<Buffer, i32> {
                 let fd_y = MemFdBuffer::new(size_y).map_err(|e| {
                     log::error!("failed to allocate MMAP buffer Y: {:#}", e);
@@ -1290,8 +985,8 @@ where
         if queue != QueueType::VideoCaptureMplane {
             return Err(libc::EINVAL);
         }
-        let state = session.state.lock().unwrap();
-        let buffer = state.buffers.get(index as usize).ok_or(libc::EINVAL)?;
+        let buffers = session.buffers.lock().unwrap();
+        let buffer = buffers.get(index as usize).ok_or(libc::EINVAL)?;
 
         Ok(buffer.v4l2_buffer.clone())
     }
@@ -1302,24 +997,29 @@ where
         buffer: v4l2r::ioctl::V4l2Buffer,
         _guest_regions: Vec<Vec<SgEntry>>,
     ) -> IoctlResult<v4l2r::ioctl::V4l2Buffer> {
-        session.check_worker_status()?;
-
         let buffer_idx = buffer.index() as usize;
-        let (width, height) = {
-            let dev = self.device_state.lock().unwrap();
-            (dev.width, dev.height)
-        };
-        let mut state = session.state.lock().unwrap();
-        let host_buffer = state.buffers.get_mut(buffer_idx).ok_or(libc::EINVAL)?;
+
+        let mut buffers = session.buffers.lock().unwrap();
+        let host_buffer = buffers.get_mut(buffer_idx).ok_or(libc::EINVAL)?;
         // Attempt to queue already queued buffer.
         if matches!(host_buffer.state, BufferState::Incoming) {
             return Err(libc::EINVAL);
         }
 
-        host_buffer.set_state(BufferState::Incoming, width, height);
+        host_buffer.set_state(BufferState::Incoming);
         let buffer = host_buffer.v4l2_buffer.clone();
-        state.queued_buffers.push_back(buffer_idx);
-        session.wakeup_evt.write(1).unwrap();
+
+        let planes = CapturePlanes {
+            y: host_buffer.planes[0].fd.as_file().try_clone().map_err(|_| libc::EIO)?,
+            u: host_buffer.planes[1].fd.as_file().try_clone().map_err(|_| libc::EIO)?,
+            v: host_buffer.planes[2].fd.as_file().try_clone().map_err(|_| libc::EIO)?,
+        };
+        drop(buffers);
+
+        session
+            .channel
+            .queue_buffer(buffer_idx, planes)
+            .map_err(|_| libc::EIO)?;
 
         Ok(buffer)
     }
@@ -1328,13 +1028,16 @@ where
         if queue != QueueType::VideoCaptureMplane {
             return Err(libc::EINVAL);
         }
-        session.check_worker_status()?;
-        let mut state = session.state.lock().unwrap();
-        if state.buffers.is_empty() {
+        let buffers = session.buffers.lock().unwrap();
+        if buffers.is_empty() {
             return Err(libc::EINVAL);
         }
-        state.streaming = true;
-        session.wakeup_evt.write(1).unwrap();
+        drop(buffers);
+        *session.streaming.lock().unwrap() = true;
+        session
+            .channel
+            .start_capture(self.width, self.height)
+            .map_err(|_| libc::EIO)?;
 
         Ok(())
     }
@@ -1343,19 +1046,13 @@ where
         if queue != QueueType::VideoCaptureMplane {
             return Err(libc::EINVAL);
         }
-        session.drain_diag();
-        let (width, height) = {
-            let dev = self.device_state.lock().unwrap();
-            (dev.width, dev.height)
-        };
-        let mut state = session.state.lock().unwrap();
-        state.streaming = false;
-        state.stream_count += 1;
-        state.queued_buffers.clear();
-        for buffer in state.buffers.iter_mut() {
-            buffer.set_state(BufferState::New, width, height);
+        *session.streaming.lock().unwrap() = false;
+        let mut buffers = session.buffers.lock().unwrap();
+        for buffer in buffers.iter_mut() {
+            buffer.set_state(BufferState::New);
         }
-        session.wakeup_evt.write(1).unwrap();
+        drop(buffers);
+        session.channel.stop_capture().map_err(|_| libc::EIO)?;
 
         Ok(())
     }
@@ -1521,11 +1218,10 @@ where
     }
 
     fn g_ctrl(&mut self, _session: &Self::Session, id: u32) -> IoctlResult<bindings::v4l2_control> {
-        let dev = self.device_state.lock().unwrap();
         let value = match id {
-            CID_LENS_FACING => dev.controls.lens_facing as i32,
-            bindings::V4L2_CID_GAIN => dev.controls.gain.value(),
-            bindings::V4L2_CID_TEST_PATTERN => dev.controls.test_pattern as i32,
+            CID_LENS_FACING => self.controls.lens_facing as i32,
+            bindings::V4L2_CID_GAIN => self.controls.gain.value(),
+            bindings::V4L2_CID_TEST_PATTERN => self.controls.test_pattern as i32,
             bindings::V4L2_CID_USER_CLASS
             | bindings::V4L2_CID_CAMERA_CLASS
             | bindings::V4L2_CID_IMAGE_PROC_CLASS => return Err(libc::EACCES),
@@ -1547,12 +1243,14 @@ where
             | bindings::V4L2_CID_IMAGE_PROC_CLASS => Err(libc::EACCES),
             bindings::V4L2_CID_GAIN => {
                 let gain = Gain::new(value)?;
-                let mut dev = self.device_state.lock().unwrap();
-                if dev.controls.gain != gain {
-                    dev.controls.gain = gain;
-                    let event = Self::ctrl_event(&dev.controls, bindings::V4L2_CID_GAIN)?;
-                    dev.evt_queue
+                if self.controls.gain != gain {
+                    self.controls.gain = gain;
+                    let event = Self::ctrl_event(&self.controls, bindings::V4L2_CID_GAIN)?;
+                    self.evt_queue
+                        .lock()
+                        .unwrap()
                         .send_event(V4l2Event::Event(SessionEvent::new(session.id, event)));
+                    let _ = session.channel.set_controls(self.controls.clone());
                 }
                 Ok(bindings::v4l2_control {
                     id,
@@ -1562,6 +1260,7 @@ where
             bindings::V4L2_CID_TEST_PATTERN => {
                 let pattern = TestPattern::try_from(value)?;
                 self.set_test_pattern(session.id, pattern)?;
+                let _ = session.channel.set_controls(self.controls.clone());
                 Ok(bindings::v4l2_control {
                     id,
                     value: pattern as i32,
@@ -1617,21 +1316,18 @@ where
                     return Err(libc::EACCES);
                 }
                 bindings::V4L2_CID_GAIN => {
-                    let dev = self.device_state.lock().unwrap();
                     ctrl.__bindgen_anon_1.value = match which {
                         CtrlWhich::Default => Gain::DEFAULT,
-                        _ => dev.controls.gain.value(),
+                        _ => self.controls.gain.value(),
                     };
                 }
                 CID_LENS_FACING => {
-                    let dev = self.device_state.lock().unwrap();
-                    ctrl.__bindgen_anon_1.value = dev.controls.lens_facing as i32;
+                    ctrl.__bindgen_anon_1.value = self.controls.lens_facing as i32;
                 }
                 bindings::V4L2_CID_TEST_PATTERN => {
-                    let dev = self.device_state.lock().unwrap();
                     ctrl.__bindgen_anon_1.value = match which {
                         CtrlWhich::Default => TestPattern::DEFAULT as i32,
-                        _ => dev.controls.test_pattern as i32,
+                        _ => self.controls.test_pattern as i32,
                     };
                 }
                 _ => {
@@ -1734,15 +1430,14 @@ where
                 bindings::V4L2_CID_GAIN => {
                     let value = unsafe { ctrl.__bindgen_anon_1.value };
                     if let Ok(gain) = Gain::new(value) {
-                        let mut dev = self.device_state.lock().unwrap();
-                        if dev.controls.gain != gain {
-                            dev.controls.gain = gain;
+                        if self.controls.gain != gain {
+                            self.controls.gain = gain;
                             if let Ok(event) =
-                                Self::ctrl_event(&dev.controls, bindings::V4L2_CID_GAIN)
+                                Self::ctrl_event(&self.controls, bindings::V4L2_CID_GAIN)
                             {
-                                dev.evt_queue.send_event(V4l2Event::Event(SessionEvent::new(
-                                    session.id, event,
-                                )));
+                                self.evt_queue.lock().unwrap().send_event(
+                                    V4l2Event::Event(SessionEvent::new(session.id, event)),
+                                );
                             }
                         }
                     }
@@ -1756,6 +1451,7 @@ where
                 _ => {}
             }
         }
+        let _ = session.channel.set_controls(self.controls.clone());
         ctrls.error_idx = ctrls.count;
         Ok(())
     }
@@ -1772,9 +1468,10 @@ where
         match event {
             V4l2EventType::Ctrl(id) => match id {
                 CID_LENS_FACING | bindings::V4L2_CID_GAIN | bindings::V4L2_CID_TEST_PATTERN => {
-                    let mut dev = self.device_state.lock().unwrap();
-                    let ctrl_event = Self::ctrl_event(&dev.controls, id)?;
-                    dev.evt_queue
+                    let ctrl_event = Self::ctrl_event(&self.controls, id)?;
+                    self.evt_queue
+                        .lock()
+                        .unwrap()
                         .send_event(V4l2Event::Event(SessionEvent::new(session.id, ctrl_event)));
                     Ok(())
                 }
