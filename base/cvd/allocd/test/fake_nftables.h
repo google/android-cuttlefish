@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 
+#include <functional>
 #include <map>
 #include <string>
 #include <string_view>
@@ -67,7 +68,7 @@ class FakeNftables : public Nftables {
     std::string comment;
   };
   struct Table {
-    std::map<std::string, std::vector<Rule>> chains;
+    std::map<std::string, std::vector<Rule>, std::less<>> chains;
     uint64_t next_handle = 1;
   };
   using TableKey = std::pair<std::string, std::string>;

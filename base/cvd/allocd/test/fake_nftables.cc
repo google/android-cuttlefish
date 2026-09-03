@@ -73,7 +73,7 @@ Result<uint64_t> FakeNftables::AddRule(std::string_view family,
                                        std::string_view comment) {
   Table* t = FindTable(family, table);
   CF_EXPECTF(t != nullptr, "no such table: family={}, table={}", family, table);
-  auto chain_it = t->chains.find(std::string(chain));
+  auto chain_it = t->chains.find(chain);
   CF_EXPECTF(chain_it != t->chains.end(),
              "no such chain: family={}, table={}, chain={}", family, table,
              chain);
@@ -88,11 +88,11 @@ Result<void> FakeNftables::DeleteRule(std::string_view family,
                                       std::string_view chain, uint64_t handle) {
   Table* t = FindTable(family, table);
   CF_EXPECTF(t != nullptr, "no such table: family={}, table={}", family, table);
-  auto chain_it = t->chains.find(std::string(chain));
+  auto chain_it = t->chains.find(chain);
   CF_EXPECTF(chain_it != t->chains.end(),
              "no such chain: family={}, table={}, chain={}", family, table,
              chain);
-  auto removed = std::erase_if(
+  std::vector<Rule>::size_type removed = std::erase_if(
       chain_it->second, [&](const Rule& r) { return r.handle == handle; });
   CF_EXPECTF(removed > 0, "no rule with handle {}", handle);
   return {};
@@ -108,7 +108,7 @@ Result<void> FakeNftables::DeleteRulesByComment(std::string_view family,
   if (t == nullptr) {
     return {};
   }
-  auto chain_it = t->chains.find(std::string(chain));
+  auto chain_it = t->chains.find(chain);
   if (chain_it == t->chains.end()) {
     return {};
   }
@@ -125,7 +125,7 @@ bool FakeNftables::HasTable(std::string_view family,
 bool FakeNftables::HasChain(std::string_view family, std::string_view table,
                             std::string_view chain) const {
   const Table* t = FindTable(family, table);
-  return t != nullptr && t->chains.contains(std::string(chain));
+  return t != nullptr && t->chains.contains(chain);
 }
 
 bool FakeNftables::HasRuleWithComment(std::string_view family,
@@ -136,7 +136,7 @@ bool FakeNftables::HasRuleWithComment(std::string_view family,
   if (t == nullptr) {
     return false;
   }
-  auto chain_it = t->chains.find(std::string(chain));
+  auto chain_it = t->chains.find(chain);
   if (chain_it == t->chains.end()) {
     return false;
   }
@@ -150,7 +150,7 @@ int FakeNftables::RuleCount(std::string_view family, std::string_view table,
   if (t == nullptr) {
     return 0;
   }
-  auto chain_it = t->chains.find(std::string(chain));
+  auto chain_it = t->chains.find(chain);
   if (chain_it == t->chains.end()) {
     return 0;
   }
