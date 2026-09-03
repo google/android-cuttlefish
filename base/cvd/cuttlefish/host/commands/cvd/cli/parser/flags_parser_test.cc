@@ -479,6 +479,160 @@ TEST(FlagsParserTest, ParseMediaV4l2Proxy) {
       << "media flag is missing or wrongly formatted";
 }
 
+TEST(FlagsParserTest, ParseMediaV4l2StreamProxy) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_stream_proxy": {
+                  "input_path": "/tmp/v4l2_fifo",
+                  "input_width": 320,
+                  "input_height": 240,
+                  "input_fps": "10"
+                },
+                "lens_facing": "BACK"
+              }
+            ]
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(
+      *serialized_data,
+      "--media=v4l2_stream_proxy:input_path=/tmp/v4l2_fifo:input_width=320:input_height=240:input_fps=10:lens_facing=BACK"))
+      << "media flag is missing or wrongly formatted";
+}
+
+TEST(FlagsParserTest, ParseMediaMultiInstanceSingleMedia) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {},
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_stream_proxy": {
+                  "input_path": "/tmp/v4l2_fifo",
+                  "input_width": 320,
+                  "input_height": 240,
+                  "input_fps": "10"
+                }
+              }
+            ]
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(
+      *serialized_data,
+      "--media=v4l2_stream_proxy:input_path=/tmp/v4l2_fifo:input_width=320:input_height=240:input_fps=10:instance=1"))
+      << "media flag is missing or wrongly formatted";
+}
+
+TEST(FlagsParserTest, ParseMediaMultiInstanceFirstInstanceMedia) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_stream_proxy": {
+                  "input_path": "/tmp/v4l2_fifo",
+                  "input_width": 320,
+                  "input_height": 240,
+                  "input_fps": "10"
+                }
+              }
+            ]
+          }
+        },
+        {}
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(
+      *serialized_data,
+      "--media=v4l2_stream_proxy:input_path=/tmp/v4l2_fifo:input_width=320:input_height=240:input_fps=10:instance=0"))
+      << "media flag is missing or wrongly formatted";
+}
+
+TEST(FlagsParserTest, ParseMediaMultiInstanceMultipleMediaFails) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_stream_proxy": {
+                  "input_path": "/tmp/v4l2_fifo_1"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_stream_proxy": {
+                  "input_path": "/tmp/v4l2_fifo_2"
+                }
+              }
+            ]
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  EXPECT_FALSE(serialized_data.has_value());
+}
+
 TEST(ConnectivityFlagsParserTest, ParseModemSimulatorSimTypeValidInt) {
   const char* test_string = R""""(
 {

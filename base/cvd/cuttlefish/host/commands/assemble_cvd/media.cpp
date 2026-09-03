@@ -118,6 +118,9 @@ class MediaConfigsFragmentImpl : public MediaConfigsFragment {
       Json::Value json(Json::objectValue);
       json[kType] = static_cast<int>(config.type);
       json[kLensFacing] = config.lens_facing;
+      if (config.instance_index.has_value()) {
+        json[kInstanceIndex] = *config.instance_index;
+      }
       configs_json.append(json);
     }
     return configs_json;
@@ -139,6 +142,9 @@ class MediaConfigsFragmentImpl : public MediaConfigsFragment {
       if (json.isMember(kLensFacing)) {
         config.lens_facing = json[kLensFacing].asString();
       }
+      if (json.isMember(kInstanceIndex)) {
+        config.instance_index = json[kInstanceIndex].asInt();
+      }
       configs.emplace_back(config);
     }
 
@@ -150,6 +156,7 @@ class MediaConfigsFragmentImpl : public MediaConfigsFragment {
   static constexpr char kMediaConfigs[] = "media_configs";
   static constexpr char kType[] = "type";
   static constexpr char kLensFacing[] = "lens_facing";
+  static constexpr char kInstanceIndex[] = "instance_index";
   MediaConfigs& configs_;
 };
 
