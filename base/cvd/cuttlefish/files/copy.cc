@@ -22,73 +22,48 @@
 #include <sys/types.h>
 
 #include <string>
-#include <utility>
-
-#include "absl/log/check.h"
-#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
+#include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-bool Copy(const std::string& from, const std::string& to) {
-  Result<Fd> fd_from_res = Fd::Open(from, O_RDONLY);
-  Result<Fd> fd_to_res = Fd::Open(to, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+Result<void> Copy(const std::string& from, const std::string& to) {
+  Fd fd_from = CF_EXPECT(Fd::Open(from, O_RDONLY));
+  Fd fd_to = CF_EXPECT(Fd::Open(to, O_WRONLY | O_CREAT | O_TRUNC, 0644));
 
-  if (!fd_from_res.has_value() || !fd_to_res.has_value()) {
-    return false;
-  }
+  off_t farthest_seek = CF_EXPECT(fd_from.SeekEnd(0));
+  CF_EXPECT(fd_to.Truncate(farthest_seek));
 
-  Fd fd_from = std::move(*fd_from_res);
-  Fd fd_to = std::move(*fd_to_res);
-
-  off_t farthest_seek = fd_from.LSeek(0, SEEK_END);
-  if (farthest_seek == -1) {
-    LOG(ERROR) << "Could not lseek in \"" << from
-               << "\": " << fd_from.StrError();
-    return false;
-  }
-  if (!fd_to.Truncate(farthest_seek).has_value()) {
-    LOG(ERROR) << "Failed to truncate " << to << ": " << fd_to.StrError();
-  }
   off_t offset = 0;
   while (offset < farthest_seek) {
     off_t new_offset = fd_from.LSeek(offset, SEEK_HOLE);
     if (new_offset == -1) {
-      if (fd_from.GetErrno() == ENXIO) {
-        return true;
-      }
-      LOG(ERROR) << "Could not lseek in \"" << from
-                 << "\": " << fd_from.StrError();
-      return false;
+      CF_EXPECTF(fd_from.GetErrno() == ENXIO, "Could not lseek in '{}': {}",
+                 from, fd_from.StrError());
+      return {};
     }
-    auto data_bytes = new_offset - offset;
-    if (fd_to.LSeek(offset, SEEK_SET) < 0) {
-      LOG(ERROR) << "lseek() on " << to << " failed: " << fd_to.StrError();
-      return false;
-    }
-    if (!fd_to.SendFile(fd_from, &offset, data_bytes)) {
-      LOG(ERROR) << "SendFile failed: " << fd_to.StrError();
-      return false;
-    }
-    CHECK_EQ(offset, new_offset);
+    off_t data_bytes = new_offset - offset;
+
+    CF_EXPECT(fd_to.SeekSet(offset));
+
+    CF_EXPECTF(fd_to.SendFile(fd_from, &offset, data_bytes),
+               "SendFile failed: {}", fd_to.StrError());
+
+    CF_EXPECT_EQ(offset, new_offset);
 
     if (offset >= farthest_seek) {
-      return true;
+      return {};
     }
-    new_offset = fd_from.LSeek(offset, SEEK_DATA);
-    if (new_offset == -1) {
-      if (fd_from.GetErrno() == ENXIO) {
-        return true;
-      }
-      LOG(ERROR) << "Could not lseek in \"" << from
-                 << "\": " << fd_from.StrError();
-      return false;
+    offset = fd_from.LSeek(offset, SEEK_DATA);
+    if (offset == -1) {
+      CF_EXPECTF(fd_from.GetErrno() == ENXIO, "Could not lseek in '{}': {}",
+                 from, fd_from.StrError());
+      return {};
     }
-    offset = new_offset;
   }
-  return true;
+  return {};
 }
 
 }  // namespace cuttlefish

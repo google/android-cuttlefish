@@ -18,8 +18,10 @@
 
 #include <string>
 
+#include "cuttlefish/result/result_type.h"
+
 namespace cuttlefish {
 
-bool Copy(const std::string& from, const std::string& to);
+Result<void> Copy(const std::string& from, const std::string& to);
 
 }  // namespace cuttlefish
