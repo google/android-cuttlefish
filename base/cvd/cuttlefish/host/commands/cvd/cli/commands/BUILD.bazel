@@ -191,6 +191,28 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "event_devices",
+    srcs = ["event_devices.cpp"],
+    hdrs = ["event_devices.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/flag_parser",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:help_format",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:instance_manager",
+        "//cuttlefish/io",
+        "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:write_exact",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
     name = "lint",
     srcs = ["lint.cpp"],
     hdrs = ["lint.h"],

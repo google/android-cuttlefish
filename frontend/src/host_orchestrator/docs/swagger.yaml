@@ -52,6 +52,24 @@ definitions:
           $ref: '#/definitions/v1.CVD'
         type: array
     type: object
+  v1.ListInputDevicesResponse:
+    properties:
+      event_devices:
+        items:
+          type: string
+        type: array
+    type: object
+  v1.Operation:
+    properties:
+      done:
+        description: |-
+          If the value is `false`, it means the operation is still in progress.
+          If `true`, the operation is completed, and either `error` or `response` is
+          available.
+        type: boolean
+      name:
+        type: string
+    type: object
 info:
   contact: {}
   license:
@@ -112,6 +130,62 @@ paths:
           schema:
             $ref: '#/definitions/v1.ListCVDsResponse'
       summary: List cuttlefish instances in a group
+  /cvds/{group}/{name}/event_devices:
+    get:
+      description: List input devices for a cuttlefish instance
+      parameters:
+      - description: Group name
+        in: path
+        name: group
+        required: true
+        type: string
+      - description: Instance name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.ListInputDevicesResponse'
+      summary: List input devices
+  /cvds/{group_name}/{instance_name}/event_devices/{device_name}:inject:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Inject input device events to a cuttlefish instance
+      parameters:
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        type: string
+      - description: Instance name
+        in: path
+        name: instance_name
+        required: true
+        type: string
+      - description: Device name
+        in: path
+        name: device_name
+        required: true
+        type: string
+      - description: Input device events binary file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.Operation'
+      summary: Inject input device events
   /operations/{name}/result:
     get:
       description: The returned object varies depending on the type of the operation

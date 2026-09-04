@@ -20,10 +20,12 @@
 
 #include <chrono>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -76,6 +78,12 @@ class LocalInstance {
 
   // Return list of filenames of instance-level log files.
   Result<std::vector<std::string>> LogsFilenames() const;
+  // List names of the instance's input devices.
+  Result<std::set<std::string>> InputDevices() const;
+  Result<Fd> NewCaptureInputDeviceEventsConn(
+      const std::string& device_name) const;
+  Result<Fd> NewInjectInputDeviceEventsConn(
+      const std::string& device_name) const;
 
  private:
   LocalInstance(std::shared_ptr<cvd::InstanceGroup> group_proto,
@@ -86,6 +94,7 @@ class LocalInstance {
   Result<Json::Value> ReadJsonConfig() const;
   Result<const CuttlefishConfig*> LoadConfig();
   Result<const CuttlefishConfig::InstanceSpecific> GetInstanceConfig();
+  Result<std::string> UDSDirectory() const;
 
   // Sharing ownership of the group proto ensures the instance proto reference
   // doesn't invalidate.

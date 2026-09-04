@@ -17,6 +17,8 @@
 
 #include <stdint.h>
 
+#include <optional>
+
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
@@ -36,11 +38,25 @@ Result<T> ReadExactBinary(Reader& reader) {
 Result<void> PReadExact(const ReaderSeeker&, char* buf, size_t size,
                         uint64_t offset);
 
+// Similar to ReadExact, but returns false instead of an error if zero bytes are
+// read because of EOF. A partial read is still an error.
+Result<bool> ReadExactOrEof(Reader&, char* buf, size_t size);
+
 template <typename T>
 Result<T> PReadExactBinary(const ReaderSeeker& reader, uint64_t offset) {
   T data;
   char* const data_char = reinterpret_cast<char*>(&data);
   CF_EXPECT(PReadExact(reader, data_char, sizeof(data), offset));
+  return data;
+}
+
+template <typename T>
+Result<std::optional<T>> ReadExactBinaryOrEof(Reader& reader) {
+  T data;
+  char* data_char = reinterpret_cast<char*>(&data);
+  if (!CF_EXPECT(ReadExactOrEof(reader, data_char, sizeof(data)))) {
+    return std::nullopt;
+  }
   return data;
 }
 

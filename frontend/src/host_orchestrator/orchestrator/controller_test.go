@@ -21,6 +21,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -78,6 +79,136 @@ func TestGetCVDIsHandled(t *testing.T) {
 
 	if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
 		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestListInputDevicesIsHandled(t *testing.T) {
+	for _, path := range []string{"/cvds/foo/bar/event_devices", "/cvds/foo/bar/event_devices"} {
+		rr := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", path, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		controller := Controller{}
+
+		makeRequest(rr, req, &controller)
+
+		if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
+			t.Errorf("request for path %q was not handled. This failure implies an API breaking change.", path)
+		}
+	}
+}
+
+func createMultipartEventsRequest(t *testing.T, method, path string, fileFieldName, fileName string, content []byte) *http.Request {
+	t.Helper()
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	if fileFieldName != "" {
+		fw, err := writer.CreateFormFile(fileFieldName, fileName)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := io.Copy(fw, bytes.NewReader(content)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	req, err := http.NewRequest(method, path, body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	return req
+}
+
+func TestInjectInputDeviceEventsIsHandled(t *testing.T) {
+	paths := []string{
+		"/cvds/foo/bar/event_devices/mouse:inject",
+		"/cvds/foo/bar/event_devices/mouse/:inject",
+	}
+	for _, path := range paths {
+		rr := httptest.NewRecorder()
+		req := createMultipartEventsRequest(t, "POST", path, "file", "events.bin", []byte("fake binary event data"))
+		controller := Controller{OperationManager: NewMapOM()}
+
+		makeRequest(rr, req, &controller)
+
+		if rr.Code == http.StatusNotFound && rr.Body.String() == pageNotFoundErrMsg {
+			t.Errorf("request for path %q was not handled. This failure implies an API breaking change.", path)
+		}
+		if rr.Code != http.StatusOK {
+			t.Errorf("expected status 200 for path %q, got %d: %s", path, rr.Code, rr.Body.String())
+		}
+		var op apiv1.Operation
+		if err := json.Unmarshal(rr.Body.Bytes(), &op); err != nil {
+			t.Fatalf("failed to decode response as Operation: %v", err)
+		}
+		if op.Name == "" {
+			t.Errorf("expected non-empty operation name in response")
+		}
+	}
+}
+
+func TestInjectInputDeviceEventsNonMultipartFails(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("POST", "/cvds/foo/bar/event_devices/mouse:inject", strings.NewReader("raw binary"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/octet-stream")
+	controller := Controller{OperationManager: NewMapOM()}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for non-multipart request, got %d: %s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestSaveTempEventsFileNoExecutionPermissions(t *testing.T) {
+	req := createMultipartEventsRequest(t, "POST", "/dummy", "file", "events.bin", []byte("binary content"))
+	filePath, err := saveTempEventsFile(req)
+	if err != nil {
+		t.Fatalf("saveTempEventsFile failed: %v", err)
+	}
+	defer os.Remove(filePath)
+
+	fi, err := os.Stat(filePath)
+	if err != nil {
+		t.Fatalf("failed to stat temp file: %v", err)
+	}
+	if fi.Mode().Perm()&0111 != 0 {
+		t.Errorf("file has execution permissions: %v", fi.Mode().Perm())
+	}
+}
+
+func TestSaveTempEventsFileNonMultipartFails(t *testing.T) {
+	req, err := http.NewRequest("POST", "/dummy", strings.NewReader("binary content"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/octet-stream")
+	_, err = saveTempEventsFile(req)
+	if err == nil {
+		t.Fatal("expected error for non-multipart request, got nil")
+	}
+}
+
+func TestSaveTempEventsFileEmptyFileFails(t *testing.T) {
+	req := createMultipartEventsRequest(t, "POST", "/dummy", "file", "events.bin", []byte(""))
+	_, err := saveTempEventsFile(req)
+	if err == nil {
+		t.Fatal("expected error for empty file in multipart request, got nil")
+	}
+}
+
+func TestSaveTempEventsFileMissingFileFails(t *testing.T) {
+	req := createMultipartEventsRequest(t, "POST", "/dummy", "", "", nil)
+	_, err := saveTempEventsFile(req)
+	if err == nil {
+		t.Fatal("expected error for missing file in multipart request, got nil")
 	}
 }
 

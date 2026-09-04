@@ -346,6 +346,8 @@ class CuttlefishConfig {
 
     std::string touch_events_server_path(int touch_dev_idx) const;
 
+    std::string touch_capture_server_path(int touch_dev_idx) const;
+
     std::string media_socket_path(int index) const;
 
     std::string launcher_log_path() const;

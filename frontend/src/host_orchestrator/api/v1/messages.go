@@ -154,3 +154,7 @@ type DisplayScreenshotResponse struct {
 type ListScreenRecordingsResponse struct {
 	ScreenRecordings []string `json:"screen_recordings"`
 }
+
+type ListInputDevicesResponse struct {
+	InputDevices []string `json:"event_devices"`
+}
