@@ -8,7 +8,7 @@ bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 
 bazel_dep(name = "abseil-cpp", version = "20260107.0")
 bazel_dep(name = "aspect_bazel_lib", version = "2.22.0")
-bazel_dep(name = "boringssl", version = "0.20241024.0")
+bazel_dep(name = "boringssl", version = "0.20260813.0")
 bazel_dep(name = "brotli")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2")
 bazel_dep(name = "crc32c")
