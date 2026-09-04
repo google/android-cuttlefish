@@ -49,6 +49,10 @@ type CuttlefishContainerManager interface {
 	ImageExists(ctx context.Context, name string) (bool, error)
 	// Pull the container image
 	PullImage(ctx context.Context, name string) error
+	// List tags for container images matching image repository
+	ListTags(ctx context.Context, imageRepo string) ([]string, error)
+	// Remove container images
+	RemoveImages(ctx context.Context, images []string) error
 	// Check whether a container with the given name exists or not
 	ContainerExists(ctx context.Context, name string) (bool, error)
 	// Inspect a container to get its information
@@ -91,6 +95,36 @@ func (m *CuttlefishContainerManagerImpl) PullImage(ctx context.Context, name str
 		return fmt.Errorf("failed to pull container image %q: %w", name, err)
 	}
 	return nil
+}
+
+func (m *CuttlefishContainerManagerImpl) ListTags(ctx context.Context, imageRepo string) ([]string, error) {
+	cmd := exec.CommandContext(ctx, "podman", "image", "list", "--filter", "reference="+imageRepo, "--format", "{{.Tag}}")
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("failed to list image tags: %s: %w", stderr.String(), err)
+	}
+	return strings.Fields(stdout.String()), nil
+}
+
+func (m *CuttlefishContainerManagerImpl) RemoveImages(ctx context.Context, images []string) error {
+	if len(images) == 0 {
+		return nil
+	}
+	args := append([]string{"image", "rm", "-i"}, images...)
+	cmd := exec.CommandContext(ctx, "podman", args...)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err == nil {
+		return nil
+	}
+	if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 2 {
+		// Exit code 2 indicates an image is in use by a container.
+		return nil
+	}
+	return fmt.Errorf("failed to remove images: %s: %w", stderr.String(), err)
 }
 
 func (m *CuttlefishContainerManagerImpl) ContainerExists(ctx context.Context, name string) (bool, error) {
