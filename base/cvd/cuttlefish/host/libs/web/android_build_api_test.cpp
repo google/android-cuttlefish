@@ -50,7 +50,7 @@ TEST(AndroidBuildApiTest, FileReader) {
   };
   http_client.SetResponse(res, "http://zip-url");
 
-  Build build = DeviceBuild{.id = "123", .target = "test"};
+  DeviceBuild build = {.id = "123", .target = "test"};
   Result<SeekableZipSource> source = api.FileReader(build, "a.zip");
   ASSERT_THAT(source, IsOk());
 

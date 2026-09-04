@@ -1,0 +1,176 @@
+//
+// Copyright (C) 2026 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "cuttlefish/host/libs/web/http_build_api.h"
+
+#include <stddef.h>
+#include <stdint.h>
+
+#include <optional>
+#include <string>
+#include <string_view>
+#include <utility>
+
+#include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
+
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/build_api_zip.h"
+#include "cuttlefish/host/libs/web/digest.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/url_download.h"
+#include "cuttlefish/host/libs/web/url_namespace.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/host/libs/zip/remote_zip.h"
+#include "cuttlefish/host/libs/zip/zip_file.h"
+#include "cuttlefish/result/result.h"
+
+namespace cuttlefish {
+namespace {
+
+constexpr long kPartialContent = 206;
+
+Result<std::string> ArtifactUrl(const HttpBuild& build,
+                                const std::string& artifact_name) {
+  if (build.object.has_value()) {
+    CF_EXPECTF(artifact_name == *build.object,
+               "The build '{}' holds only '{}', so it has no '{}'.", build.id,
+               *build.object, artifact_name);
+    return build.url;
+  }
+  return build.url + artifact_name;
+}
+
+bool ServesRanges(const HttpResponse<void>& response) {
+  if (response.http_code == kPartialContent) {
+    return true;
+  }
+  const std::optional<std::string_view> ranges =
+      HeaderValue(response.headers, "accept-ranges");
+  return ranges.has_value() && absl::StrContains(*ranges, "bytes");
+}
+
+// The whole object's length: the total of a partial response's `Content-Range`
+// or, where the origin answered the range request with the whole object, its
+// `Content-Length`.
+std::optional<uint64_t> ProbedSize(const HttpResponse<void>& response) {
+  uint64_t size = 0;
+  if (std::optional<std::string_view> range =
+          HeaderValue(response.headers, "content-range")) {
+    const size_t total = range->rfind('/');
+    if (total != std::string_view::npos &&
+        absl::SimpleAtoi(range->substr(total + 1), &size)) {
+      return size;
+    }
+  }
+  const std::optional<std::string_view> length =
+      HeaderValue(response.headers, "content-length");
+  if (response.http_code != kPartialContent && length.has_value() &&
+      absl::SimpleAtoi(*length, &size)) {
+    return size;
+  }
+  return std::nullopt;
+}
+
+}  // namespace
+
+HttpBuildApi::HttpBuildApi(HttpClient& http_client)
+    : http_client_(http_client) {}
+
+Result<HttpBuild> HttpBuildApi::GetBuild(const HttpBuildString& build_string) {
+  HttpBuild build = CF_EXPECT(HttpBuild::FromBuildString(build_string));
+  // A directory of plain HTTPS URLs has nothing to list and nothing to probe,
+  // so its artifacts are only known to be absent when they answer 404.
+  if (build.object.has_value()) {
+    CF_EXPECT(ProbeObject(build));
+  }
+  return build;
+}
+
+Result<void> HttpBuildApi::ProbeObject(HttpBuild& build) {
+  // A pre-signed URL signs the verb, so this is a GET of one byte rather than
+  // the HEAD the size alone would call for.
+  const HttpRequest request = {
+      .method = HttpMethod::kGet,
+      .url = build.url,
+      .headers = {"Range: bytes=0-0"},
+  };
+  auto discard = [](char*, size_t) { return true; };
+  const HttpResponse<void> response =
+      CF_EXPECT(http_client_.DownloadToCallback(request, discard));
+
+  CF_EXPECTF(!response.HttpRedirect(),
+             "'{}' redirects with {}, and redirects are not followed.  Name "
+             "the URL it redirects to.",
+             build.id, response.http_code);
+  CF_EXPECTF(response.HttpSuccess(), "'{}' is missing or inaccessible - {}:{}",
+             build.id, response.http_code, response.StatusDescription());
+
+  if (std::optional<std::string_view> etag =
+          HeaderValue(response.headers, "etag")) {
+    build.etag = std::string(*etag);
+  }
+  build.accept_ranges = ServesRanges(response);
+  build.size = ProbedSize(response);
+  return {};
+}
+
+Result<std::string> HttpBuildApi::DownloadFile(
+    const HttpBuild& build, const std::string& target_directory,
+    const std::string& artifact_name) {
+  const std::string dest_path =
+      ConstructTargetFilepath(target_directory, artifact_name);
+  CF_EXPECT(EnsureDirectoryExists(target_directory));
+
+  if (IsArchiveMember(build.object, build.filepath, artifact_name)) {
+    CF_EXPECTF(build.accept_ranges == true,
+               "'{}' does not serve range requests, so '{}' cannot be read out "
+               "of it.",
+               build.id, artifact_name);
+    SeekableZipSource source = CF_EXPECT(FileReader(build, *build.object));
+    ReadableZip zip = CF_EXPECT(OpenZip(std::move(source)));
+    CF_EXPECTF(ExtractFile(zip, artifact_name, dest_path),
+               "Could not read '{}' out of '{}'.", artifact_name, build.id);
+    return dest_path;
+  }
+
+  const UrlDownload download = {
+      .url = CF_EXPECT(ArtifactUrl(build, artifact_name)),
+      .if_range = build.etag,
+      .resumable = build.accept_ranges && build.etag.has_value(),
+      .size = build.size,
+  };
+  CF_EXPECTF(DownloadUrlToFile(http_client_, download, dest_path),
+             "Could not download '{}' from '{}'", artifact_name, build.id);
+  if (build.sha256.has_value()) {
+    CF_EXPECT(VerifySha256(dest_path, *build.sha256, artifact_name));
+  }
+  return dest_path;
+}
+
+Result<SeekableZipSource> HttpBuildApi::FileReader(
+    const HttpBuild& build, const std::string& artifact_name) {
+  const std::string url = CF_EXPECT(ArtifactUrl(build, artifact_name));
+  if (build.size.has_value()) {
+    return CF_EXPECT(ZipSourceFromUrl(http_client_, url, {}, *build.size));
+  }
+  // Only a directory reaches here, having had no probe to learn a size from.
+  return CF_EXPECT(ZipSourceFromUrl(http_client_, url, {}));
+}
+
+}  // namespace cuttlefish

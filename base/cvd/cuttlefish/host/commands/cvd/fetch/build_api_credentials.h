@@ -36,6 +36,20 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
     const std::string& oauth_filepath,
     const std::string& scope = kAndroidBuildApiScope);
 
+// Returns whether the DMI product name identifies this machine as a GCE VM,
+// where the metadata server issues credentials without any flag being given.
+// Reading the product name costs no HTTP round trip on a machine that is not
+// one.
+bool IsRunningOnGce();
+
+// Resolves credentials for Cloud Storage. Never opens the `credential_source`
+// file, which the Android Build path may consume from a pipe, and never
+// re-uses an Android Build token, which Cloud Storage rejects. A null result
+// means anonymous access, which public buckets serve. The caller supplies
+// `running_on_gce`, so the ladder can be exercised on any machine.
+Result<std::unique_ptr<CredentialSource>> GetStorageCredentialSource(
+    HttpClient& http_client, const BuildApiFlags& flags, bool running_on_gce);
+
 std::string GetAcloudOauthFilepath();
 
 }  // namespace cuttlefish

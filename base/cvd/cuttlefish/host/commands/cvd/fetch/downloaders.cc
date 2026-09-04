@@ -18,6 +18,7 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -27,7 +28,10 @@
 #include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/caching_build_api.h"
+#include "cuttlefish/host/libs/web/composite_build_api.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/gcs_build_api.h"
+#include "cuttlefish/host/libs/web/http_build_api.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/retrying_http_client.h"
@@ -43,11 +47,12 @@ struct Downloaders::Impl {
   std::unique_ptr<CredentialSource> android_creds_;
   std::unique_ptr<AndroidBuildUrl> android_build_url_;
   std::unique_ptr<CasDownloader> cas_downloader_;
-  std::unique_ptr<AndroidBuildApi> android_build_api_;
-  std::unique_ptr<CachingBuildApi> caching_build_api_;
   std::unique_ptr<CredentialSource> luci_credential_source_;
   std::unique_ptr<CredentialSource> gsutil_credential_source_;
   std::unique_ptr<LuciBuildApi> luci_build_api_;
+  std::unique_ptr<CredentialSource> storage_credential_source_;
+  std::unique_ptr<CompositeBuildApi> composite_build_api_;
+  std::unique_ptr<CachingBuildApi> caching_build_api_;
 };
 
 Downloaders::Downloaders(std::unique_ptr<Downloaders::Impl> impl)
@@ -87,15 +92,11 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
     impl->cas_downloader_ = std::move(cas_downloader_result.value());
   }
 
-  impl->android_build_api_ = std::make_unique<AndroidBuildApi>(
-      *impl->retrying_http_client_, *impl->android_build_url_,
-      impl->android_creds_.get(), flags.wait_retry_period,
-      impl->cas_downloader_.get());
-
-  if (flags.enable_caching) {
-    impl->caching_build_api_ = std::make_unique<CachingBuildApi>(
-        *impl->android_build_api_, cache_base_path);
-  }
+  std::unique_ptr<AndroidBuildApi> android_build_api =
+      std::make_unique<AndroidBuildApi>(
+          *impl->retrying_http_client_, *impl->android_build_url_,
+          impl->android_creds_.get(), flags.wait_retry_period,
+          impl->cas_downloader_.get());
 
   impl->luci_credential_source_ = CF_EXPECT(GetCredentialSourceFromFlags(
       *impl->retrying_http_client_, flags,
@@ -108,15 +109,39 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
       *impl->retrying_http_client_, impl->luci_credential_source_.get(),
       impl->gsutil_credential_source_.get());
 
+  // Cloud Storage builds resolve a credential of their own. The gsutil ladder
+  // above stays as it is because the Luci downloads also accept a bare
+  // storage-scoped token minted outside `cvd`.
+  Result<std::unique_ptr<CredentialSource>> storage_creds =
+      CredentialForScopes(*impl->curl_, {kCloudStorageReadScope});
+
+  impl->storage_credential_source_ =
+      storage_creds.has_value() && storage_creds->get()
+          ? std::move(*storage_creds)
+          : CF_EXPECT(GetStorageCredentialSource(*impl->retrying_http_client_,
+                                                 flags, IsRunningOnGce()));
+
+  impl->composite_build_api_ = std::make_unique<CompositeBuildApi>(
+      std::move(android_build_api),
+      std::make_unique<GcsBuildApi>(*impl->retrying_http_client_,
+                                    impl->storage_credential_source_.get()),
+      std::make_unique<HttpBuildApi>(*impl->retrying_http_client_));
+
+  // One cache in front of every source, so that each build keys its artifacts
+  // the way its own source versions them.
+  if (flags.enable_caching) {
+    impl->caching_build_api_ = std::make_unique<CachingBuildApi>(
+        *impl->composite_build_api_, cache_base_path);
+  }
+
   return Downloaders(std::move(impl));
 }
 
-BuildApi& Downloaders::AndroidBuild() {
+BuildApi& Downloaders::Builds() {
   if (impl_->caching_build_api_) {
     return *impl_->caching_build_api_;
-  } else {
-    return *impl_->android_build_api_;
   }
+  return *impl_->composite_build_api_;
 }
 
 LuciBuildApi& Downloaders::Luci() { return *impl_->luci_build_api_; }
