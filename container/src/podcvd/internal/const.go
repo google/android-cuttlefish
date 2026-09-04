@@ -28,6 +28,7 @@ const (
 	labelGroupName       = "group_name"
 	labelCreatedBy       = "created_by"
 	labelAttemptID       = "attempt_id"
+	labelBaseDir         = "base_dir"
 	valueCreatedBy       = "podcvd"
 	ToolingContainerName = "tooling"
 )

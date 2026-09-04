@@ -73,22 +73,22 @@ func ParseInstanceGroups(jsonStr, groupName string) (*InstanceGroup, error) {
 	return &instanceGroup, nil
 }
 
-func UpdateCvdGroupJsonRaw(data any, podcvdHomeDir, ipAddr string) {
+func UpdateCvdGroupJsonRaw(data any, podcvdBaseDir, ipAddr string) {
 	switch v := data.(type) {
 	case map[string]any:
 		for k, val := range v {
 			if s, ok := val.(string); ok {
-				v[k] = updateStringOnCvdGroupJsonRaw(s, podcvdHomeDir, ipAddr)
+				v[k] = updateStringOnCvdGroupJsonRaw(s, podcvdBaseDir, ipAddr)
 			} else {
-				UpdateCvdGroupJsonRaw(val, podcvdHomeDir, ipAddr)
+				UpdateCvdGroupJsonRaw(val, podcvdBaseDir, ipAddr)
 			}
 		}
 	case []any:
 		for k, val := range v {
 			if s, ok := val.(string); ok {
-				v[k] = updateStringOnCvdGroupJsonRaw(s, podcvdHomeDir, ipAddr)
+				v[k] = updateStringOnCvdGroupJsonRaw(s, podcvdBaseDir, ipAddr)
 			} else {
-				UpdateCvdGroupJsonRaw(val, podcvdHomeDir, ipAddr)
+				UpdateCvdGroupJsonRaw(val, podcvdBaseDir, ipAddr)
 			}
 		}
 	}
@@ -130,11 +130,11 @@ func updateIPAndPortString(data, ipAddr string) string {
 	return data
 }
 
-var cvdPathRegex = regexp.MustCompile(`^/var/tmp/cvd/[0-9]+/[0-9]+/home`)
+var cvdPathRegex = regexp.MustCompile(`^/var/tmp/cvd/[0-9]+/[0-9]+`)
 
-func updateStringOnCvdGroupJsonRaw(data, podcvdHomeDir, ipAddr string) string {
+func updateStringOnCvdGroupJsonRaw(data, podcvdBaseDir, ipAddr string) string {
 	data = updateIPAndPortString(data, ipAddr)
-	return cvdPathRegex.ReplaceAllString(data, podcvdHomeDir)
+	return cvdPathRegex.ReplaceAllString(data, podcvdBaseDir)
 }
 
 type psColumn struct {
