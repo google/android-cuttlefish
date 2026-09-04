@@ -17,13 +17,16 @@ package orchestrator
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
@@ -105,6 +108,12 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		&getScreenRecordingHandler{Config: c.Config}).Methods("GET")
 	router.Handle("/cvds/{group}/{name}/screen_recordings",
 		httpHandler(newListScreenRecordingsHandler(c.Config))).Methods("GET")
+	router.Handle("/cvds/{group}/{name}/event_devices",
+		httpHandler(newListInputDevicesHandler(c.Config))).Methods("GET")
+	router.Handle("/cvds/{group}/{name}/event_devices/{device_name:[^/:]+}:inject",
+		httpHandler(newInjectInputDeviceEventsHandler(c.Config, c.OperationManager))).Methods("POST")
+	router.Handle("/cvds/{group}/{name}/event_devices/{device_name}/:inject",
+		httpHandler(newInjectInputDeviceEventsHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/snapshots",
 		httpHandler(newCreateSnapshotHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/operations", httpHandler(&listOperationsHandler{om: c.OperationManager})).Methods("GET")
@@ -364,6 +373,102 @@ func (h *listScreenRecordingsHandler) Handle(r *http.Request) (interface{}, erro
 		ExecContext: exec.CommandContext,
 	}
 	return NewListScreenRecordingsAction(opts).Run()
+}
+
+type listInputDevicesHandler struct {
+	Config Config
+}
+
+func newListInputDevicesHandler(c Config) *listInputDevicesHandler {
+	return &listInputDevicesHandler{Config: c}
+}
+
+func (h *listInputDevicesHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	opts := ListInputDevicesActionOpts{
+		Selector:    cvd.InstanceSelector{GroupName: group, Name: name},
+		ExecContext: exec.CommandContext,
+	}
+	return NewListInputDevicesAction(opts).Run()
+}
+
+type injectInputDeviceEventsHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newInjectInputDeviceEventsHandler(c Config, om OperationManager) *injectInputDeviceEventsHandler {
+	return &injectInputDeviceEventsHandler{Config: c, OM: om}
+}
+
+func (h *injectInputDeviceEventsHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	deviceName := vars["device_name"]
+	deviceName = strings.TrimSuffix(deviceName, "/")
+
+	tempFile, err := saveTempEventsFile(r)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := InjectInputDeviceEventsActionOpts{
+		Selector:         cvd.InstanceSelector{GroupName: group, Name: name},
+		DeviceName:       deviceName,
+		EventsFilePath:   tempFile,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	res, err := NewInjectInputDeviceEventsAction(opts).Run()
+	if err != nil {
+		os.Remove(tempFile)
+		return nil, err
+	}
+	return res, nil
+}
+
+func saveTempEventsFile(r *http.Request) (string, error) {
+	if r.Body == nil {
+		return "", operator.NewBadRequestError("empty request body", nil)
+	}
+
+	mediaType, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if mediaType != "multipart/form-data" {
+		return "", operator.NewBadRequestError("Content-Type must be multipart/form-data", nil)
+	}
+
+	if err := r.ParseMultipartForm(1 << 14 /*16KB*/); err != nil {
+		return "", operator.NewBadRequestError("Invalid multipart form request", err)
+	}
+	if r.MultipartForm != nil {
+		defer r.MultipartForm.RemoveAll()
+	}
+
+	file, fHeader, err := r.FormFile("file")
+	if err != nil {
+		return "", operator.NewBadRequestError("missing events file in multipart form request", nil)
+	}
+	defer file.Close()
+
+	if fHeader.Size == 0 {
+		return "", operator.NewBadRequestError("empty events file in request", nil)
+	}
+
+	tempFile, err := os.CreateTemp("", "cvd_events_*.bin")
+	if err != nil {
+		return "", operator.NewInternalError("failed to create temporary events file", err)
+	}
+	defer tempFile.Close()
+
+	if _, err := io.Copy(tempFile, file); err != nil {
+		os.Remove(tempFile.Name())
+		return "", operator.NewInternalError("failed to write temporary events file", err)
+	}
+
+	return tempFile.Name(), nil
 }
 
 type getScreenRecordingHandler struct {

@@ -457,6 +457,39 @@ func (i *Instance) ListScreenRecordings() ([]string, error) {
 	return parsedOutput[0].Recordings, nil
 }
 
+func (i *Instance) ListInputDevices() ([]string, error) {
+	args := i.selectorArgs()
+	args = append(args, "event_devices", "list")
+	out, err := i.cli.exec(CVDBin, args...)
+	if err != nil {
+		return nil, err
+	}
+	return parseListInputDevicesOutput(string(out), i.GroupName, i.Name, args)
+}
+
+func parseListInputDevicesOutput(out string, groupName, instanceName string, args []string) ([]string, error) {
+	target := fmt.Sprintf("%s/%s", strings.TrimSpace(groupName), strings.TrimSpace(instanceName))
+	for _, line := range strings.Split(out, "\n") {
+		trimmed := strings.TrimSpace(line)
+		parts := strings.SplitN(trimmed, ":", 2)
+		if len(parts) == 2 && strings.TrimSpace(parts[0]) == target {
+			devsStr := strings.TrimSpace(parts[1])
+			if devsStr == "" {
+				return []string{}, nil
+			}
+			return strings.Fields(devsStr), nil
+		}
+	}
+	return nil, fmt.Errorf("failed to parse output of `%v`: %q", args, out)
+}
+
+func (i *Instance) InjectInputDeviceEvents(deviceName, eventsFilePath string) error {
+	args := i.selectorArgs()
+	args = append(args, "event_devices", "inject", fmt.Sprintf("--device_name=%s", deviceName), eventsFilePath)
+	_, err := i.cli.exec(CVDBin, args...)
+	return err
+}
+
 func (i *Instance) selectorArgs() []string {
 	return (&InstanceSelector{GroupName: i.GroupName, Name: i.Name}).asArgs()
 }
