@@ -1931,6 +1931,12 @@ std::string CuttlefishConfig::InstanceSpecific::touch_events_server_path(
   return PerInstanceInternalUdsPath(name);
 }
 
+std::string CuttlefishConfig::InstanceSpecific::touch_capture_server_path(
+    int touch_dev_idx) const {
+  std::string name = absl::StrCat("touch_", touch_dev_idx, ".events.out");
+  return PerInstanceInternalUdsPath(name);
+}
+
 std::string CuttlefishConfig::InstanceSpecific::media_socket_path(
     int index) const {
   return PerInstanceInternalUdsPath(absl::StrCat("media_", index, ".sock"));

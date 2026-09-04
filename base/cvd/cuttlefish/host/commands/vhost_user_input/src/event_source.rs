@@ -6,6 +6,8 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::{bail, Context, Result};
 use log::{error, warn};
+use nix::errno::Errno;
+use nix::poll::{poll, PollFd, PollFlags, PollTimeout};
 use vmm_sys_util::epoll::{ControlOperation, Epoll, EpollEvent, EventSet};
 
 use crate::buf_reader::EventReader;
@@ -76,6 +78,7 @@ pub struct UnixSocketEventSource {
     events_fd: UnixStream,
     events: Arc<Mutex<Vec<u8>>>,
     status: Arc<Mutex<Vec<u8>>>,
+    capture_sink: Arc<Mutex<Option<UnixStream>>>,
 }
 
 impl UnixSocketEventSource {
@@ -92,12 +95,33 @@ impl UnixSocketEventSource {
         let events_clone = events.clone();
         let status = Arc::new(Mutex::new(Vec::new()));
         let status_clone = events.clone();
-        std::thread::spawn(move || server_loop(listener, bg_events_fd, events_clone, status_clone));
+        let capture_sink = Arc::new(Mutex::new(None));
+        let capture_sink_clone = capture_sink.clone();
+        std::thread::spawn(move || {
+            server_loop(
+                listener,
+                bg_events_fd,
+                events_clone,
+                status_clone,
+                capture_sink_clone,
+            )
+        });
         Ok(Self {
             events_fd: fg_events_fd,
             events,
             status,
+            capture_sink,
         })
+    }
+
+    pub fn with_capture_server(
+        listener: UnixListener,
+        capture_server: UnixListener,
+    ) -> Result<Self> {
+        let res = Self::new(listener)?;
+        let sink_clone = res.capture_sink.clone();
+        std::thread::spawn(move || capture_loop(capture_server, sink_clone));
+        Ok(res)
     }
 }
 
@@ -131,6 +155,7 @@ impl EventSource for UnixSocketEventSource {
             events_fd: self.events_fd.try_clone()?,
             events: self.events.clone(),
             status: self.status.clone(),
+            capture_sink: self.capture_sink.clone(),
         })
     }
 }
@@ -140,6 +165,7 @@ fn server_loop(
     mut events_fd: UnixStream,
     events: Arc<Mutex<Vec<u8>>>,
     status: Arc<Mutex<Vec<u8>>>,
+    capture_sink: Arc<Mutex<Option<UnixStream>>>,
 ) {
     const SERVER_TOKEN: u64 = 0;
     const EVENT_TOKEN: u64 = 1;
@@ -230,6 +256,11 @@ fn server_loop(
                         .expect("epoll token is not associated to any fd");
                     match client.read_events() {
                         Ok(mut v) => {
+                            if let Some(ref mut s) = *capture_sink.lock().unwrap() {
+                                if let Err(e) = s.write_all(&v) {
+                                    error!("Failed to write events to capture client: {:?}", e);
+                                }
+                            }
                             events.lock().unwrap().append(&mut v);
                             events_fd
                                 .write_all(&[0u8; 1])
@@ -250,6 +281,47 @@ fn server_loop(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+fn capture_loop(server: UnixListener, sink: Arc<Mutex<Option<UnixStream>>>) {
+    loop {
+        match server.accept() {
+            Err(e) => {
+                error!("Failed to accept connection on capture server: {:?}", e);
+            }
+            Ok((client, _)) => {
+                if let Err(e) = client.set_nonblocking(true) {
+                    error!(
+                        "Failed to set capture client connection non-blocking: {:?}",
+                        e
+                    );
+                    continue;
+                }
+                let client_clone = match client.try_clone() {
+                    Err(e) => {
+                        error!("Failed to clone capture client connection: {:?}", e);
+                        continue;
+                    }
+                    Ok(c) => c,
+                };
+                let _ = sink.lock().unwrap().insert(client_clone);
+                // Don't include POLLIN here, the peer could have closed its write channel
+                let mut poll_fds = [PollFd::new(client.as_fd(), PollFlags::POLLHUP)];
+                match poll(&mut poll_fds, PollTimeout::NONE) {
+                    Ok(_) => {
+                        continue;
+                    }
+                    Err(e) if e == Errno::EINTR => {
+                        continue;
+                    }
+                    Err(e) => {
+                        error!("Failed to poll capture client connection: {:?}", e);
+                    }
+                }
+                let _ = sink.lock().unwrap().take();
             }
         }
     }

@@ -34,6 +34,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/create.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/display.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/env.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/event_devices.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/fetch.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/fleet.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/help.h"
@@ -149,6 +150,8 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
       std::make_unique<CvdStopCommandHandler>(instance_manager));
   request_handlers_.emplace_back(
       std::make_unique<CvdHelpHandler>(this->request_handlers_));
+  request_handlers_.emplace_back(
+      std::make_unique<CvdInputDevicesHandler>(instance_manager));
   request_handlers_.emplace_back(std::make_unique<LintCommandHandler>());
   request_handlers_.emplace_back(
       std::make_unique<LoadConfigsCommand>(instance_manager));
