@@ -12,23 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "common",
-    srcs = [
-        "init_filesystem_ns.go",
-        "init_network_ns.go",
-        "ip.go",
-        "nft.go",
-        "sandbox.go",
-        "state.go",
-        "static_resources.go",
-    ],
-    importpath = "github.com/google/android-cuttlefish/e2etests/host_resources/common",
-    visibility = ["//visibility:public"],
-    deps = [
-        "@com_github_google_go_cmp//cmp",
-        "@rules_go//go/runfiles",
-    ],
-)
+exports_files([
+    "go.mod",
+    "go.sum",
+])
