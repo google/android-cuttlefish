@@ -182,7 +182,29 @@ func pullContainerImage(ccm CuttlefishContainerManager) error {
 		return nil
 	}
 	log.Printf("Pulling container image %q...\n", imageName)
-	return ccm.PullImage(context.Background(), imageName)
+	if err := ccm.PullImage(context.Background(), imageName); err != nil {
+		return err
+	}
+	return pruneOldContainerImages(ccm)
+}
+
+func pruneOldContainerImages(ccm CuttlefishContainerManager) error {
+	i := strings.LastIndex(imageName, ":")
+	if i == -1 {
+		return fmt.Errorf("invalid image name %q: missing tag", imageName)
+	}
+	repo, currentTag := imageName[:i], imageName[i+1:]
+	tags, err := ccm.ListTags(context.Background(), repo)
+	if err != nil {
+		return err
+	}
+	var oldImages []string
+	for _, tag := range tags {
+		if tag != currentTag {
+			oldImages = append(oldImages, repo+":"+tag)
+		}
+	}
+	return ccm.RemoveImages(context.Background(), oldImages)
 }
 
 func cvdDataHome() (string, error) {
