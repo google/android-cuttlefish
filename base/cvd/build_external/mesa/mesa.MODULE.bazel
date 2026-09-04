@@ -4,5 +4,9 @@ git_repository(
     name = "mesa",
     build_file = "@//build_external/mesa:BUILD.mesa.bazel",
     commit = "224e91e39836d3ca31f80df2e0379e55c70574f8",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/mesa:PATCH.mesa.c11_threads.patch",
+    ],
     remote = "https://android.googlesource.com/platform/external/mesa3d",
 )
