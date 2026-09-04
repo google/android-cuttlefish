@@ -264,12 +264,12 @@ func mountablePathsFromConfigFile(cvdArgs *CvdArgs) []string {
 	return extractPaths(data)
 }
 
-func collectMountSpecs(pathsToMount []string, hostOut, productOut, cvdDataHome, podcvdHomeDir, cacheDir string) []string {
+func collectMountSpecs(pathsToMount []string, hostOut, productOut, cvdDataHome, podcvdBaseDir, cacheDir string) []string {
 	bindMap := make(map[string]string)
 	bindMap["/host_out"] = fmt.Sprintf("%s:/host_out:O", hostOut)
 	bindMap["/product_out"] = fmt.Sprintf("%s:/product_out:O", productOut)
 	bindMap["/root/.local/share/cvd"] = fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome)
-	bindMap["/podcvd_home"] = fmt.Sprintf("%s:/podcvd_home:rw", podcvdHomeDir)
+	bindMap["/podcvd_base"] = fmt.Sprintf("%s:/podcvd_base:rw", podcvdBaseDir)
 	bindMap["/var/tmp/cvd/0/cache"] = fmt.Sprintf("%s:/var/tmp/cvd/0/cache:rw", cacheDir)
 	bindMap["/etc/cuttlefish-common/operator/cert/cert.pem"] = "/etc/cuttlefish-podcvd/cert.pem:/etc/cuttlefish-common/operator/cert/cert.pem:ro"
 	bindMap["/etc/cuttlefish-common/operator/cert/key.pem"] = "/etc/cuttlefish-podcvd/key.pem:/etc/cuttlefish-common/operator/cert/key.pem:ro"
@@ -388,7 +388,11 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 	if err := os.MkdirAll(podcvdRootDir, 0777); err != nil {
 		return "", fmt.Errorf("failed to create podcvd root dir: %w", err)
 	}
-	podcvdHomeDir := filepath.Join(podcvdRootDir, strconv.Itoa(os.Getuid()), attemptID)
+	podcvdBaseDir := filepath.Join(podcvdRootDir, strconv.Itoa(os.Getuid()), attemptID)
+	if err := os.MkdirAll(podcvdBaseDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create podcvd base dir: %w", err)
+	}
+	podcvdHomeDir := filepath.Join(podcvdBaseDir, "home")
 	if err := os.MkdirAll(podcvdHomeDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create podcvd home dir: %w", err)
 	}
@@ -421,12 +425,12 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 			pathsToMount = append(pathsToMount, realPath)
 		}
 	}
-	mountSpecs := collectMountSpecs(pathsToMount, hostOut, productOut, cvdDataHome, podcvdHomeDir, cacheDir)
+	mountSpecs := collectMountSpecs(pathsToMount, hostOut, productOut, cvdDataHome, podcvdBaseDir, cacheDir)
 
 	extraFlags := []string{
 		"-e", "ANDROID_HOST_OUT=/host_out",
 		"-e", "ANDROID_PRODUCT_OUT=/product_out",
-		"-e", "HOME=/podcvd_home",
+		"-e", "HOME=/podcvd_base/home",
 		"--label", fmt.Sprintf("%s=%s", labelCreatedBy, valueCreatedBy),
 		"--label", fmt.Sprintf("%s=%s", labelAttemptID, attemptID),
 		"--annotation", "run.oci.keep_original_groups=1",
