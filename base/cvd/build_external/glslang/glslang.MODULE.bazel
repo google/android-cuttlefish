@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "glslang",
+    build_file = "@//build_external/glslang:BUILD.glslang.bazel",
+    commit = "14422bdc57fb93221192a0c542dde144980dfb69",
+    remote = "https://android.googlesource.com/platform/external/deqp-deps/glslang",
+)
