@@ -44,6 +44,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
+#include "cuttlefish/host/libs/config/mte.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
 #include "cuttlefish/process/command.h"
@@ -374,7 +375,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       CF_EXPECT(instance.cpus() <= 8, "CPUs must be no more than 8 with GICv2");
     }
   }
-  if (instance.mte()) {
+  if (instance.mte() == Mte::kOn) {
     machine += ",mte=on";
   }
   qemu_cmd.AddParameter("-machine");

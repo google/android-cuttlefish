@@ -50,6 +50,7 @@
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
+#include "cuttlefish/host/libs/config/mte.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/result/result.h"
 
@@ -1025,11 +1026,11 @@ void CuttlefishConfig::MutableInstanceSpecific::set_gem5_debug_file(
 }
 
 static constexpr char kMte[] = "mte";
-void CuttlefishConfig::MutableInstanceSpecific::set_mte(bool mte) {
-  (*Dictionary())[kMte] = mte;
+void CuttlefishConfig::MutableInstanceSpecific::set_mte(Mte mte) {
+  (*Dictionary())[kMte] = static_cast<int>(mte);
 }
-bool CuttlefishConfig::InstanceSpecific::mte() const {
-  return (*Dictionary())[kMte].asBool();
+Mte CuttlefishConfig::InstanceSpecific::mte() const {
+  return static_cast<Mte>((*Dictionary())[kMte].asInt());
 }
 
 static constexpr char kEnableKernelLog[] = "enable_kernel_log";

@@ -334,7 +334,9 @@ DEFINE_vec(use_sdcard, CF_DEFAULTS_USE_SDCARD ? "true" : "false",
 DEFINE_vec(protected_vm, fmt::format("{}", CF_DEFAULTS_PROTECTED_VM),
            "Boot in Protected VM mode");
 
-DEFINE_vec(mte, fmt::format("{}", CF_DEFAULTS_MTE), "Enable MTE");
+DEFINE_vec(mte, CF_DEFAULTS_MTE,
+           "Enable MTE, one of {true, false, auto}. Auto enables MTE only when "
+           "the host supports it.");
 
 DEFINE_vec(enable_pkvm, fmt::format("{}", CF_DEFAULTS_ENABLE_PKVM),
            "Provision the guest to run pKVM so it can host its own protected "

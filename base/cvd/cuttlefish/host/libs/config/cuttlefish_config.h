@@ -38,6 +38,7 @@
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
+#include "cuttlefish/host/libs/config/mte.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/result/result.h"
@@ -468,7 +469,7 @@ class CuttlefishConfig {
     std::vector<std::string> extra_bootconfig_args() const;
     bool record_screen() const;
     std::string gem5_debug_file() const;
-    bool mte() const;
+    Mte mte() const;
     std::string boot_slot() const;
     bool fail_fast() const;
     bool vhost_user_block() const;
@@ -705,7 +706,7 @@ class CuttlefishConfig {
     void set_extra_bootconfig_args(const std::string& extra_bootconfig_args);
     void set_record_screen(bool record_screen);
     void set_gem5_debug_file(const std::string& gem5_debug_file);
-    void set_mte(bool mte);
+    void set_mte(Mte mte);
     void set_boot_slot(const std::string& boot_slot);
     void set_grpc_socket_path(const std::string& socket_path);
     void set_fail_fast(bool fail_fast);
