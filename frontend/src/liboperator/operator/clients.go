@@ -80,16 +80,17 @@ func (c *PolledClient) ToDevice(msg interface{}) error {
 func (c *PolledClient) GetMessages(start int, count int) []interface{} {
 	c.msgMtx.Lock()
 	defer c.msgMtx.Unlock()
-	if count < 0 {
+	if start < 0 {
+		start = 0
+	}
+	if start > len(c.messages) {
+		start = len(c.messages)
+	}
+	if count < 0 || count > len(c.messages)-start {
 		count = len(c.messages) - start
 	}
-	end := start + count
-	if end > len(c.messages) {
-		end = len(c.messages)
-		count = end - start
-	}
 	ret := make([]interface{}, count)
-	copy(ret, c.messages[start:end])
+	copy(ret, c.messages[start:start+count])
 	return ret
 }
 
