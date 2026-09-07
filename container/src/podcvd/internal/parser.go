@@ -112,7 +112,11 @@ func (a *CvdArgs) GetStringFlagValueOnSubCommandArgs(flagName string) string {
 	return getStringFlagValue(a.SubCommandArgs, flagName)
 }
 
-func (a *CvdArgs) ReplaceFlagValueOnSubCommandArgs(flagName, newValue string) {
+func (a *CvdArgs) AppendFlagValueOnSubCommandArgs(flagName, value string) {
+	a.SubCommandArgs = append(a.SubCommandArgs, fmt.Sprintf("-%s=%s", flagName, value))
+}
+
+func (a *CvdArgs) RemoveFlagValueOnSubCommandArgs(flagName string) {
 	flags := make(map[string]struct{})
 	flags["-"+flagName] = struct{}{}
 	flags["--"+flagName] = struct{}{}
@@ -120,22 +124,25 @@ func (a *CvdArgs) ReplaceFlagValueOnSubCommandArgs(flagName, newValue string) {
 	for idx, arg := range a.SubCommandArgs {
 		if _, exists := flags[arg]; exists {
 			if idx+1 < len(a.SubCommandArgs) && !strings.HasPrefix(a.SubCommandArgs[idx+1], "-") {
-				a.SubCommandArgs[idx+1] = newValue
+				a.SubCommandArgs = append(a.SubCommandArgs[:idx], a.SubCommandArgs[idx+2:]...)
 				return
 			}
-			a.SubCommandArgs[idx] = fmt.Sprintf("-%s=%s", flagName, newValue)
+			a.SubCommandArgs = append(a.SubCommandArgs[:idx], a.SubCommandArgs[idx+1:]...)
 			return
 		}
 		splitArg := strings.SplitN(arg, "=", 2)
 		if len(splitArg) == 2 {
 			if _, exists := flags[splitArg[0]]; exists {
-				a.SubCommandArgs[idx] = fmt.Sprintf("%s=%s", splitArg[0], newValue)
+				a.SubCommandArgs = append(a.SubCommandArgs[:idx], a.SubCommandArgs[idx+1:]...)
 				return
 			}
 		}
 	}
+}
 
-	a.SubCommandArgs = append(a.SubCommandArgs, fmt.Sprintf("-%s=%s", flagName, newValue))
+func (a *CvdArgs) ReplaceFlagValueOnSubCommandArgs(flagName, newValue string) {
+	a.RemoveFlagValueOnSubCommandArgs(flagName)
+	a.AppendFlagValueOnSubCommandArgs(flagName, newValue)
 }
 
 func mapSubcommand(subcmd string) string {
