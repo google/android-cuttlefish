@@ -85,12 +85,16 @@ func Main(args []string) error {
 	return nil
 }
 
-func disconnectAdb(ccm CuttlefishContainerManager, groupName string) error {
+func findInstanceGroup(ccm CuttlefishContainerManager, groupName string) (*InstanceGroup, error) {
 	var stdoutBuf bytes.Buffer
 	if err := ccm.ExecOnContainer(context.Background(), ContainerName(groupName), []string{"cvd", "fleet"}, nil, &stdoutBuf, nil); err != nil {
-		return err
+		return nil, err
 	}
-	instanceGroup, err := ParseInstanceGroups(stdoutBuf.String(), groupName)
+	return ParseInstanceGroups(stdoutBuf.String(), groupName)
+}
+
+func disconnectAdb(ccm CuttlefishContainerManager, groupName string) error {
+	instanceGroup, err := findInstanceGroup(ccm, groupName)
 	if err != nil {
 		return err
 	}
@@ -112,41 +116,48 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 	if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, os.Stderr); err != nil {
 		return err
 	}
-	var res map[string]any
-	if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
-		return fmt.Errorf("failed to unmarshal json: %w", err)
+	var instanceGroup *InstanceGroup
+	if cvdArgs.GetStringFlagValueOnSubCommandArgs("print_group_format") == "human" {
+		os.Stdout.Write(stdoutBuf.Bytes())
+		group, err := findInstanceGroup(ccm, cvdArgs.CommonArgs.GroupName)
+		if err != nil {
+			return err
+		}
+		instanceGroup = group
+	} else {
+		var res map[string]any
+		if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
+			return fmt.Errorf("failed to unmarshal json: %w", err)
+		}
+		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false, false)
+		if err != nil {
+			return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
+		}
+		ip, exists := groupNameIpAddrMap[cvdArgs.CommonArgs.GroupName]
+		if !exists {
+			return fmt.Errorf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
+		}
+		containerInfo, err := ccm.InspectContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
+		if err != nil {
+			return fmt.Errorf("failed to inspect container: %w", err)
+		}
+		attemptID := containerInfo.Config.Labels[labelAttemptID]
+		podcvdBaseDir := containerInfo.Config.Labels[labelBaseDir]
+		if podcvdBaseDir == "" {
+			podcvdBaseDir = filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
+		}
+		UpdateCvdGroupJsonRaw(res, podcvdBaseDir, ip)
+		stdout, err := json.MarshalIndent(res, "", "        ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal json: %w", err)
+		}
+		os.Stdout.Write(stdout)
+		instanceGroup, err = ParseInstanceGroup(string(stdout), cvdArgs.CommonArgs.GroupName)
+		if err != nil {
+			return err
+		}
 	}
-	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false, false)
-	if err != nil {
-		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
-	}
-	ip, exists := groupNameIpAddrMap[cvdArgs.CommonArgs.GroupName]
-	if !exists {
-		return fmt.Errorf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
-	}
-	containerInfo, err := ccm.InspectContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
-	if err != nil {
-		return fmt.Errorf("failed to inspect container: %w", err)
-	}
-	attemptID := containerInfo.Config.Labels[labelAttemptID]
-	podcvdBaseDir := containerInfo.Config.Labels[labelBaseDir]
-	if podcvdBaseDir == "" {
-		podcvdBaseDir = filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
-	}
-	UpdateCvdGroupJsonRaw(res, podcvdBaseDir, ip)
-	stdout, err := json.MarshalIndent(res, "", "        ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal json: %w", err)
-	}
-	os.Stdout.Write(stdout)
-	instanceGroup, err := ParseInstanceGroup(string(stdout), cvdArgs.CommonArgs.GroupName)
-	if err != nil {
-		return err
-	}
-	if err := ConnectAdb(ccm, *instanceGroup); err != nil {
-		return err
-	}
-	return nil
+	return ConnectAdb(ccm, *instanceGroup)
 }
 
 func handleBugreportExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
