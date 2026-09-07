@@ -18,7 +18,7 @@
 #include <errno.h>
 #include <sys/socket.h>
 
-#include <sstream>
+#include <optional>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -26,11 +26,13 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/str_join.h"
+#include "fmt/format.h"
 #include "fruit/component.h"
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
 #include "cuttlefish/host/commands/run_cvd/launch/input_paths_provider.h"
@@ -218,10 +220,21 @@ class WebRtcServer : public virtual CommandSource,
     if (!Enabled()) {
       return {};
     }
-    std::ostringstream out;
-    out << "Point your browser to https://localhost:"
-        << config_.sig_server_proxy_port() << " to interact with the device.";
-    return {out.str()};
+    std::string url;
+    if (StringFromEnv("CVD_INVOKER").value_or("") == "podcvd") {
+      // Container image used by podcvd always contains `cuttlefish-user` debian
+      // package. URL starting with `https://localhost:1443` is required as port
+      // 1443 in the container is exposed via port forwarding. When printing
+      // this message by run_cvd in the container, podcvd captures the message
+      // and modify URL with proper IP address and port.
+      url = fmt::format("https://localhost:1443/devices/{}/files/client.html",
+                        instance_.webrtc_device_id());
+    } else {
+      url =
+          fmt::format("https://localhost:{}", config_.sig_server_proxy_port());
+    }
+    return {fmt::format("Point your browser to {} to interact with the device.",
+                        url)};
   }
 
   // CommandSource
