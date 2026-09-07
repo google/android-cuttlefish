@@ -112,8 +112,18 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 		args = append(args, fmt.Sprintf("--override=common.group_name:%s", cvdArgs.CommonArgs.GroupName))
 	}
 
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false, false)
+	if err != nil {
+		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
+	}
+	ip, exists := groupNameIpAddrMap[cvdArgs.CommonArgs.GroupName]
+	if !exists {
+		return fmt.Errorf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
+	}
+	rewriter := NewStderrRewriter(os.Stderr, ip)
+	defer rewriter.Flush()
 	var stdoutBuf bytes.Buffer
-	if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, os.Stderr); err != nil {
+	if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, rewriter); err != nil {
 		return err
 	}
 	var instanceGroup *InstanceGroup
@@ -128,14 +138,6 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 		var res map[string]any
 		if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
 			return fmt.Errorf("failed to unmarshal json: %w", err)
-		}
-		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false, false)
-		if err != nil {
-			return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
-		}
-		ip, exists := groupNameIpAddrMap[cvdArgs.CommonArgs.GroupName]
-		if !exists {
-			return fmt.Errorf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
 		}
 		containerInfo, err := ccm.InspectContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
 		if err != nil {
