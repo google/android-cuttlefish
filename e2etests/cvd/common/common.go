@@ -337,7 +337,7 @@ func (tc *TestContext) CVDCreateWithConfigFile(load LoadArgs) error {
 }
 
 func (tc *TestContext) GetMetricsDir() (string, error) {
-	res, err := tc.RunCmd("cvd", "fleet")
+	res, err := tc.RunCmd(tc.TargetBin(), "fleet")
 	if err != nil {
 		return "", fmt.Errorf("failed to run `cvd fleet`")
 	}
