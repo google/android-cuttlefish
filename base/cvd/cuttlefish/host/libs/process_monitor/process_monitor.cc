@@ -357,18 +357,44 @@ ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties,
       monitor_(-1) {}
 
 Result<void> ProcessMonitor::StopMonitoredProcesses() {
-  CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
-  CF_EXPECT(parent_channel_.has_value(),
-            "The monitor socket is already closed");
-  CF_EXPECT(
-      SendEmptyRequest(*parent_channel_, ParentToChildMessageType::kStop));
+  if (monitor_ == -1) {
+    return {};
+  }
+  int wstatus = 0;
+  pid_t wait_res = waitpid(monitor_, &wstatus, WNOHANG);
+  if (wait_res == monitor_ || (wait_res == -1 && errno == ECHILD)) {
+    monitor_ = -1;
+    parent_channel_.reset();
+    return {};
+  }
+  bool send_success = false;
+  if (parent_channel_.has_value()) {
+    auto send_result =
+        SendEmptyRequest(*parent_channel_, ParentToChildMessageType::kStop);
+    if (!send_result.has_value()) {
+      VLOG(0) << "SendEmptyRequest failed during StopMonitoredProcesses: "
+              << send_result.error();
+    } else {
+      send_success = true;
+    }
+  }
 
   pid_t last_monitor = monitor_;
   monitor_ = -1;
   parent_channel_.reset();
-  int wstatus;
   CF_EXPECT(waitpid(last_monitor, &wstatus, 0) == last_monitor,
             "Failed to wait for monitor process");
+  if (!send_success) {
+    // Monitor process was already exiting when stop was requested.
+    if (WIFSIGNALED(wstatus)) {
+      LOG(WARNING) << "Monitor process exited due to a signal: "
+                   << WTERMSIG(wstatus);
+    } else if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) != 0) {
+      LOG(WARNING) << "Monitor process exited with code "
+                   << WEXITSTATUS(wstatus);
+    }
+    return {};
+  }
   CF_EXPECT(!WIFSIGNALED(wstatus), "Monitor process exited due to a signal");
   CF_EXPECT(WIFEXITED(wstatus), "Monitor process exited for unknown reasons");
   CF_EXPECT(WEXITSTATUS(wstatus) == 0,
