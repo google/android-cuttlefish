@@ -19,6 +19,7 @@ invocation targets.
 
 load("@aspect_rules_lint//format:defs.bzl", "format_test")
 load("@cc_compatibility_proxy//:proxy.bzl", "cc_binary", "cc_library", "cc_test")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_library.bzl", "sh_library")
 load("//:build_variables.bzl", BUILD_VAR_COPTS = "COPTS", BUILD_VAR_LINKOPTS = "LINKOPTS")
@@ -191,6 +192,24 @@ cf_cc_test = macro(
         "_target_type": attr.string(configurable = False, default = "cc_test"),
     },
     implementation = _cf_cc_target_implementation,
+)
+
+def _cf_rust_binary_implementation(name, **kwargs):
+    rust_binary(
+        name = name,
+        **kwargs
+    )
+    format_test(
+        name = name + "_format_test",
+        rust = "@rules_rust//tools/upstream_wrapper:rustfmt",
+        disable_git_attribute_checks = True,
+        srcs = (kwargs.get("srcs") or []),
+        visibility = ["//visibility:private"],
+    )
+
+cf_rust_binary = macro(
+    inherit_attrs = rust_binary,
+    implementation = _cf_rust_binary_implementation,
 )
 
 def _cf_sh_binary_implementation(name, shellcheck_enabled, **kwargs):

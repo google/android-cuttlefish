@@ -52,7 +52,10 @@ fn merge_fs(src: &Path, overlay: &Path, dest: &Path, overwrite: bool) -> Result<
     src.read_exact(&mut buffer)?;
     let magic = u32::from_le_bytes(buffer);
     if magic != SQUASHFS_MAGIC {
-        return Err(Error::new(ErrorKind::InvalidData, "The source image isn't a squashfs image."));
+        return Err(Error::new(
+            ErrorKind::InvalidData,
+            "The source image isn't a squashfs image.",
+        ));
     }
     src.seek(SeekFrom::Start(BYTES_USED_FIELD_POS))?;
     let mut buffer = [0; 8];
@@ -73,9 +76,21 @@ fn merge_fs(src: &Path, overlay: &Path, dest: &Path, overwrite: bool) -> Result<
 
 fn clap_command() -> Command {
     Command::new("append_squashfs_overlay")
-        .arg(Arg::new("src").value_parser(ValueParser::path_buf()).required(true))
-        .arg(Arg::new("overlay").value_parser(ValueParser::path_buf()).required(true))
-        .arg(Arg::new("dest").value_parser(ValueParser::path_buf()).required(true))
+        .arg(
+            Arg::new("src")
+                .value_parser(ValueParser::path_buf())
+                .required(true),
+        )
+        .arg(
+            Arg::new("overlay")
+                .value_parser(ValueParser::path_buf())
+                .required(true),
+        )
+        .arg(
+            Arg::new("dest")
+                .value_parser(ValueParser::path_buf())
+                .required(true),
+        )
         .arg(
             Arg::new("overwrite")
                 .short('w')
