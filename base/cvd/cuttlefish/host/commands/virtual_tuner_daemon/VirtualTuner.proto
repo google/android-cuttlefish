@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package cuttlefish.virtualtuner;
+
+enum RadioBand {
+    AM = 0;
+    FM = 1;
+    DAB = 2;
+}
+
+message TuneRequest {
+    RadioBand band = 1;
+    uint32 frequency_hz = 2;
+    uint32 hd_subchannel = 3;
+}
+
+message TuneResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message StopRequest {}
+
+message StopResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+service VirtualTuner {
+    rpc Tune(TuneRequest) returns (TuneResponse) {}
+    rpc Stop(StopRequest) returns (StopResponse) {}
+}
