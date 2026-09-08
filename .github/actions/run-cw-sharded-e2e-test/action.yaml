@@ -70,12 +70,13 @@ runs:
         echo "${runner_tests}"
 
         # Run tests
-        targets=( $(echo ${runner_tests}) )
+        mapfile -t targets < <(echo "${runner_tests}")
         for t in "${targets[@]}"; do
+          [ -z "$t" ] && continue
           echo "running test: ${t}"
           sudo podman rm -f tester
           sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-          sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output test --sandbox_writable_path=/home/testrunner $t
+          sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output test --sandbox_writable_path=/home/testrunner "$t"
         done
     - name: Upload test logs
       if: always()
