@@ -39,3 +39,6 @@ var InstallKernelMain string
 
 //go:embed validate_cuttlefish_image.sh
 var ValidateCuttlefishImage string
+
+//go:embed install_docker.sh
+var InstallDocker string
