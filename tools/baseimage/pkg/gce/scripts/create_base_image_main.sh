@@ -41,6 +41,11 @@ sudo chroot /mnt/image /usr/bin/apt upgrade -y
 # in /tmp by default.
 sudo chroot /mnt/image /usr/bin/systemctl mask tmp.mount
 
+# Enable socket-activated SSH so port 22 is available early during boot
+# without waiting for guest-agent and other multi-user services to finish.
+sudo chroot /mnt/image /usr/bin/systemctl disable ssh.service
+sudo chroot /mnt/image /usr/bin/systemctl enable ssh.socket
+
 # Avoid automatic updates during tests.
 # https://manpages.debian.org/trixie/unattended-upgrades/unattended-upgrade.8.en.html
 sudo chroot /mnt/image /usr/bin/apt purge -y unattended-upgrades
