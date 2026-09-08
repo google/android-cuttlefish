@@ -174,6 +174,14 @@ func (c *FakeHostOrchestratorClient) StopScreenRecording(groupName, instanceName
 	return nil
 }
 
+func (c *FakeHostOrchestratorClient) ListEventDevices(groupName, instanceName string) ([]hoapi.EventDevice, error) {
+	return []hoapi.EventDevice{}, nil
+}
+
+func (c *FakeHostOrchestratorClient) InjectInputEvents(groupName, instanceName, deviceName string, events io.Reader) error {
+	return nil
+}
+
 func (c *FakeHostOrchestratorClient) createFakeCVDs(total int) ([]*hoapi.CVD, error) {
 	cvds := []*hoapi.CVD{}
 	for cnt := 0; cnt < total; cnt++ {
