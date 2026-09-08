@@ -1,0 +1,177 @@
+name: Pull request
+
+on:
+  pull_request:
+
+concurrency:
+  # limits the workflow to a single run per branch/PR
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # previous runs are cancelled when a new run is started
+  cancel-in-progress: true
+
+jobs:
+  buildozer:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install go
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.23.1'
+    - name: Install buildozer
+      run: go install github.com/bazelbuild/buildtools/buildozer@latest
+    - name: Validate formatting
+      working-directory: base/cvd
+      if: '!cancelled()'
+      run: |
+        if [[ $(buildozer '//...:__pkg__' format 2>&1) ]]; then
+          echo "Please format BUILD.bazel files with \"buildozer '//...:__pkg__' format\"";
+          exit 1;
+        fi
+    - name: Validate no cc_binary targets under //cuttlefish
+      if: '!cancelled()'
+      working-directory: base/cvd
+      run: |
+        if [[ $(buildozer print '//cuttlefish/...:%cc_binary') ]]; then
+          buildozer print '//cuttlefish/...:%cc_binary'
+          echo "Please use cf_cc_binary rather than cc_binary";
+          exit 1;
+        fi
+    - name: Validate no cc_library targets under //cuttlefish
+      if: '!cancelled()'
+      working-directory: base/cvd
+      run: |
+        if [[ $(buildozer print '//cuttlefish/...:%cc_library') ]]; then
+          buildozer print '//cuttlefish/...:%cc_library'
+          echo "Please use cf_cc_library rather than cc_library";
+          exit 1;
+        fi
+    - name: Validate no cc_test targets under //cuttlefish
+      if: '!cancelled()'
+      working-directory: base/cvd
+      run: |
+        if [[ $(buildozer print '//cuttlefish/...:%cc_test') ]]; then
+          buildozer print '//cuttlefish/...:%cc_test'
+          echo "Please use cf_cc_test rather than cc_test";
+          exit 1;
+        fi;
+    - name: Validate no unused loads
+      if: '!cancelled()'
+      working-directory: base/cvd
+      run: |
+        if [[ $(buildozer -stdout=true '//...:__pkg__' 'fix unusedLoads') ]]; then
+          buildozer '//...:__pkg__' 'fix unusedLoads'
+          echo "Please remove unused 'load' statements with \"buildozer '//...:__pkg__' 'fix unusedLoads'\"";
+          exit 1;
+        fi
+  staticcheck:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        dir: ["e2etests", "frontend/src/host_orchestrator", "frontend/src/libhoclient", "frontend/src/liboperator", "frontend/src/operator", "tools/baseimage"]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install dependencies
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.24.2'
+    - run: go version
+    - name: Staticcheck
+      uses: dominikh/staticcheck-action@v1.3.1
+      with:
+        version: "latest"
+        install-go: false
+        working-directory: ${{ matrix.dir }}
+  run-frontend-unit-tests:
+    runs-on: ubuntu-22.04
+    container:
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+    env:
+      GOPROJECTS: ('host_orchestrator' 'libhoclient' 'liboperator' 'operator')
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Setup apt
+      run: apt update -y && apt upgrade -y
+    - name: Install dependencies
+      run: apt install -y git golang
+    - name: Go version
+      run: go version
+    - name: Run gofmt check
+      shell: bash
+      run: |
+        projects=${{ env.GOPROJECTS }}
+        for item in "${projects[@]}"; do
+          pushd "frontend/src/${item}"
+          gofmt -d -e . && test -z "$(gofmt -l .)"
+          popd
+        done
+    - name: Run go tests
+      shell: bash
+      run: |
+        projects=${{ env.GOPROJECTS }}
+        for item in "${projects[@]}"; do
+          pushd "frontend/src/${item}"
+          go test ./...
+          popd
+        done
+  run-frontend-api-documentation-check:
+    runs-on: ubuntu-22.04
+    container:
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+    env:
+      GOPROJECTS: ('host_orchestrator')
+    steps:
+    - name: Setup apt
+      run: apt update -y && apt upgrade -y
+    - name: Install dependencies
+      run: apt install -y git golang
+    - name: Setup git
+      run: |
+        git --version
+        # Fixes fatal: detected dubious ownership in repository at '/__w/android-cuttlefish/android-cuttlefish'
+        git config --global --add safe.directory /__w/android-cuttlefish/android-cuttlefish
+    - name: Go version
+      run: go version
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install swag
+      run: go install github.com/swaggo/swag/cmd/swag@v1.16.5
+    - name: Run swag check
+      shell: bash
+      run: |
+        $(go env GOPATH)/bin/swag --version
+        projects=${{ env.GOPROJECTS }}
+        for item in "${projects[@]}"; do
+          pushd "frontend/src/${item}"
+          $(go env GOPATH)/bin/swag fmt
+          git diff --exit-code || ( echo "format error: see frontend/src/host_orchestrator/README.md" && false)
+          $(go env GOPATH)/bin/swag init
+          git diff --exit-code || ( echo "This change requires REST API documentation update: see frontend/src/host_orchestrator/README.md" && false)
+          popd
+        done
+  run-cvd-unit-tests:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        large-packages: false
+        swap-storage: false
+        tool-cache: true
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Mount Bazel cache
+      uses: ./.github/actions/mount-bazel-cache
+      with:
+        action-name: "run-cvd-unit-tests"
+    - name: Run cvd unit tests
+      uses: ./.github/actions/run-cvd-unit-tests
+    - name: Upload test logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: cvd-unit-tests-logs
+        path: base/cvd/bazel-out/k8-fastbuild/testlogs
