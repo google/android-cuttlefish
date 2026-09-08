@@ -23,6 +23,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
+        "//cuttlefish/metrics/host:invoker",
         "//cuttlefish/process:command",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
