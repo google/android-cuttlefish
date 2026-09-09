@@ -21,15 +21,16 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include <string>
+#include <string_view>
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
+namespace {
 
-Result<void> Copy(const std::string& from, const std::string& to) {
+Result<void> CopyImpl(std::string_view from, std::string_view to) {
   Fd fd_from = CF_EXPECT(Fd::Open(from, O_RDONLY));
   Fd fd_to = CF_EXPECT(Fd::Open(to, O_WRONLY | O_CREAT | O_TRUNC, 0644));
 
@@ -63,6 +64,13 @@ Result<void> Copy(const std::string& from, const std::string& to) {
       return {};
     }
   }
+  return {};
+}
+
+}  // namespace
+
+Result<void> Copy(std::string_view from, std::string_view to) {
+  CF_EXPECTF(CopyImpl(from, to), "Failed to copy file '{}' to '{}'", from, to);
   return {};
 }
 
