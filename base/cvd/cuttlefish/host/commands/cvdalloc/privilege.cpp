@@ -166,20 +166,21 @@ namespace {
 constexpr char kTrustedPath[] = "/usr/sbin:/usr/bin:/sbin:/bin";
 }  // namespace
 
+// Activate this instance and gain privileges.
+// WARNING: We treat elevating privileges as a one-way
+// action. Activating an instance of ScopedPrivileges
+// will scrub its process' environment.
 Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
   uid_t orig = getuid();
+  bool should_sanitize_env = true;
+#if defined(__linux__)
   // The child processes we exec run with elevated privilege (CAP_NET_ADMIN via
   // ambient caps) but with AT_SECURE=0, so the dynamic linker won't scrub their
-  // environment for us. Sanitize with an allowlist.
-#if defined(__linux__)
-  // On Linux, only sanitize when this exec actually gained privilege (e.g. via
-  // file caps), as signalled by AT_SECURE.
-  const bool should_sanitize = getauxval(AT_SECURE) != 0;
-#else
-  // Elsewhere we can't rely on AT_SECURE, so sanitize unconditionally.
-  const bool should_sanitize = true;
+  // environment for us. Only sanitize the environment when this exec actually
+  // gained privilege (e.g. via file caps), as signalled by AT_SECURE.
+  should_sanitize_env = getauxval(AT_SECURE) != 0;
 #endif
-  if (should_sanitize) {
+  if (should_sanitize_env) {
     CF_EXPECTF(clearenv() == 0, "Couldn't clear environment: {}",
                StrError(errno));
     CF_EXPECTF(setenv("PATH", kTrustedPath, /*overwrite=*/1) == 0,
