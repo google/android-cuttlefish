@@ -16,12 +16,12 @@
 
 #pragma once
 
-#include <string>
+#include <string_view>
 
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<void> Copy(const std::string& from, const std::string& to);
+Result<void> Copy(std::string_view from, std::string_view to);
 
 }  // namespace cuttlefish
