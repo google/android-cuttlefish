@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
@@ -111,6 +112,31 @@ class ConfigReader : public FlagFeature {
   std::set<std::string> allowed_config_presets_;
 };
 
+bool ShouldPadWithUnset(const std::string& flag) {
+  static const std::unordered_set<std::string> kNonVectorizedFlags = {
+      "custom_actions",
+      "extra_bootconfig_args",
+      "extra_kernel_cmdline",
+      "gem5_debug_flags",
+      "group_id",
+      "secure_hals",
+      "straced_host_executables",
+      "touchpad",
+  };
+  if (kNonVectorizedFlags.find(flag) != kNonVectorizedFlags.end()) {
+    return false;
+  }
+  // Flags starting with "display" (e.g. display, display0, display1) use
+  // internal comma-separated key=value pairs (width=...,height=...) and cannot
+  // be comma-vectorized. Flags starting with "webrtc_" or "ap_" are also
+  // non-vectorized.
+  if (absl::StartsWith(flag, "display") || absl::StartsWith(flag, "webrtc_") ||
+      absl::StartsWith(flag, "ap_")) {
+    return false;
+  }
+  return true;
+}
+
 class ConfigFlagImpl : public ConfigFlag {
  public:
   INJECT(ConfigFlagImpl(ConfigReader& cr, SystemImageDirFlag& s))
@@ -167,7 +193,19 @@ class ConfigFlagImpl : public ConfigFlag {
         } else {
           value = config_values[flag].asString();
         }
-        flags[flag].push_back(value);
+        if (ShouldPadWithUnset(flag)) {
+          CF_EXPECTF(
+              value.find(',') == std::string::npos,
+              "Flag '--{}' contains commas in its preset value; vectorizing "
+              "with 'unset' across instances creates invalid syntax.",
+              flag);
+          auto [flag_values_it, _] =
+              flags.try_emplace(flag, configs_.size(), "unset");
+          auto& flag_values = flag_values_it->second;
+          flag_values[i] = value;
+        } else {
+          flags[flag].push_back(value);
+        }
       }
     }
     for (const auto& [flag, values] : flags) {
