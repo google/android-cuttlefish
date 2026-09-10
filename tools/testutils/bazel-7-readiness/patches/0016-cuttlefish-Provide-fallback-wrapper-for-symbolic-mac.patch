@@ -1,0 +1,27 @@
+--- a/base/cvd/cuttlefish/bazel/rules.bzl	2026-09-10 21:46:27.729380206 +0000
++++ b/base/cvd/cuttlefish/bazel/rules.bzl	2026-09-10 21:46:27.730110696 +0000
+@@ -30,6 +30,24 @@
+ COPTS = BUILD_VAR_COPTS
+ LINKOPTS = BUILD_VAR_LINKOPTS
+ 
++def _fallback_macro(inherit_attrs = None, attrs = {}, implementation = None):
++    def _wrapper(name, **kwargs):
++        call_kwargs = dict(kwargs)
++        for k, a in attrs.items():
++            if k not in call_kwargs:
++                if type(a) in ["string", "bool", "int", "list"]:
++                    call_kwargs[k] = a
++                elif hasattr(a, "default"):
++                    call_kwargs[k] = a.default
++                elif k.endswith("_enabled"):
++                    call_kwargs[k] = True
++                elif k in ["copts", "linkopts", "srcs", "hdrs", "deps", "data", "features"]:
++                    call_kwargs[k] = []
++        return implementation(name = name, **call_kwargs)
++    return _wrapper
++
++macro = _fallback_macro
++
+ def _cf_build_test_implementation(name, srcs, **kwargs):
+     native.filegroup(
+         name = name + "_LINT_TEST_starlark_files",
