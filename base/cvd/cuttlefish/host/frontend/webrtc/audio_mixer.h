@@ -27,7 +27,7 @@ class AudioMixer {
   void OnPlayback(uint32_t stream_id, uint32_t stream_sample_rate,
                   uint8_t stream_channels_count,
                   uint8_t stream_bits_per_channel, float volume,
-                  float fade, float balance,
+                  float fade, float balance, bool is_ducked,
                   const uint8_t* buffer, size_t size);
   void OnStreamStopped(uint32_t stream_id);
 

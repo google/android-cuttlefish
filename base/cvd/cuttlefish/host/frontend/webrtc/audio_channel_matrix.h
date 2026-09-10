@@ -32,9 +32,10 @@ namespace cuttlefish {
  * @param volume Master stream volume [0.0 - 1.0]
  * @param fade Front/Rear cabin fader [-1.0 (Rear) to 1.0 (Front)]
  * @param balance Left/Right cabin balance [-1.0 (Left) to 1.0 (Right)]
+ * @param is_ducked Whether the stream is ducked (-14 dB attenuation)
  */
 std::vector<std::vector<float>> BuildChannelMixingMatrix(
     uint8_t dst_channels, uint8_t src_channels, float volume, float fade,
-    float balance);
+    float balance, bool is_ducked = false);
 
 }  // namespace cuttlefish
