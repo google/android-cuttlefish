@@ -57,6 +57,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 #include "cuttlefish/host/libs/zip/remote_zip.h"
+#include "cuttlefish/posix/open_dir.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
 
@@ -69,10 +70,6 @@ bool StatusIsTerminal(const std::string& status) {
   };
   return terminal_statuses.count(status) > 0;
 }
-
-struct CloseDir {
-  void operator()(DIR* dir) { closedir(dir); }
-};
 
 Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
                                     const bool allow_redirect = false) {
@@ -363,8 +360,7 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
     const DirectoryBuild& build, const std::vector<std::string>&) {
   std::unordered_set<std::string> artifacts;
   for (const auto& path : build.paths) {
-    auto dir = std::unique_ptr<DIR, CloseDir>(opendir(path.c_str()));
-    CF_EXPECT(dir != nullptr, "Could not read files from \"" << path << "\"");
+    std::unique_ptr<DIR, CloseDir> dir = CF_EXPECT(OpenDir(path));
     for (auto entity = readdir(dir.get()); entity != nullptr;
          entity = readdir(dir.get())) {
       artifacts.emplace(std::string(entity->d_name));

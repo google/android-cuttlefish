@@ -17,20 +17,18 @@
 #include "cuttlefish/files/is_directory_empty.h"
 
 #include <dirent.h>
-#include <errno.h>
 
 #include <memory>
 #include <string>
 
-#include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/open_dir.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 Result<bool> IsDirectoryEmpty(const std::string& path) {
-  std::unique_ptr<DIR, int (*)(DIR*)> direc(opendir(path.c_str()), closedir);
-  CF_EXPECTF(direc.get(), "opendir('{}') failed: {}", path, StrError(errno));
+  std::unique_ptr<DIR, CloseDir> direc = CF_EXPECT(OpenDir(path));
 
   int cnt = 0;
   while (::readdir(direc.get())) {

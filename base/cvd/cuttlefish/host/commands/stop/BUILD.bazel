@@ -18,6 +18,7 @@ cf_cc_binary(
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/posix:open_dir",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",

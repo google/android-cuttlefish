@@ -18,6 +18,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/posix:open_dir",
         "//cuttlefish/posix:rename",
         "//cuttlefish/posix:stat",
         "//cuttlefish/posix:strerror",
