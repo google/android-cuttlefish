@@ -284,10 +284,7 @@ Result<void> FetchSystemTarget(FetchBuildContext& context,
     }
 
     static constexpr std::string_view kSystemImageFiles[] = {
-        "init_boot",
-        "product",
-        "system_ext",
-        "vbmeta_system",
+        "init_boot", "product", "pvmfw", "system_ext", "vbmeta_system",
     };
     for (std::string_view system_image : kSystemImageFiles) {
       std::string member = fmt::format("IMAGES/{}.img", system_image);
