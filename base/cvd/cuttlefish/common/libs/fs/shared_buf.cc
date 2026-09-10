@@ -74,20 +74,25 @@ ssize_t WriteAll(SharedFD fd, const std::vector<char>& buf) {
   return WriteAll(fd, buf.data(), buf.size());
 }
 
-bool SendAll(SharedFD sock, std::string_view msg) {
+bool SendAll(SharedFD sock, const void* buf, size_t size, int flags) {
   ssize_t total_written{};
   if (!sock->IsOpen()) {
     return false;
   }
-  while (total_written < static_cast<ssize_t>(msg.size())) {
-    auto just_written = sock->Send(msg.data() + total_written,
-                                   msg.size() - total_written, MSG_NOSIGNAL);
+  const char* cursor = static_cast<const char*>(buf);
+  while (total_written < static_cast<ssize_t>(size)) {
+    ssize_t just_written =
+        sock->Send(cursor + total_written, size - total_written, flags);
     if (just_written <= 0) {
       return false;
     }
     total_written += just_written;
   }
   return true;
+}
+
+bool SendAll(SharedFD sock, std::string_view msg, int flags) {
+  return SendAll(sock, msg.data(), msg.size(), flags);
 }
 
 }  // namespace cuttlefish
