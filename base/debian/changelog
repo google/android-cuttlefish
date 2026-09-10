@@ -1,3 +1,12 @@
+cuttlefish-common (1.57.2) unstable; urgency=medium
+
+  * Decouple kokoro testing and tools/*/cw/Containerfile by @0405ysj in https://github.com/google/android-cuttlefish/pull/3141
+  * Update boringssl to support newer glibc by @Databean in https://github.com/google/android-cuttlefish/pull/3147
+  * Workarounds to build with glibc 2.43 by @jemoreira in https://github.com/google/android-cuttlefish/pull/3144
+  * Downstream infra expects serial 0.0.0.0:port connected. by @ser-io in https://github.com/google/android-cuttlefish/pull/3159
+
+ -- Cody Schuffelen <schuffelen@google.com>  Wed, 09 Sep 2026 17:58:51 -0700
+
 cuttlefish-common (1.57.1) unstable; urgency=medium
 
   * Revert "tools/*/cw/Containerfile is now based on trixie" by @ser-io in https://github.com/google/android-cuttlefish/pull/3133
