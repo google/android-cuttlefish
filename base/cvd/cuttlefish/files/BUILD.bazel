@@ -48,6 +48,7 @@ cf_cc_library(
     srcs = ["directory_contents.cc"],
     hdrs = ["directory_contents.h"],
     deps = [
+        "//cuttlefish/posix:open_dir",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -90,7 +91,7 @@ cf_cc_library(
     srcs = ["is_directory_empty.cc"],
     hdrs = ["is_directory_empty.h"],
     deps = [
-        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:open_dir",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],

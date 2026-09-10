@@ -29,6 +29,7 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/posix/open_dir.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/stat.h"
 #include "cuttlefish/posix/strerror.h"
@@ -144,9 +145,7 @@ Result<std::vector<std::string>> FindCvdDataFiles(std::string_view path) {
       results.emplace_back(std::move(test_path));
       continue;
     }
-    std::unique_ptr<DIR, int (*)(DIR*)> dir_iter(opendir(test_path.c_str()),
-                                                 closedir);
-    CF_EXPECTF(dir_iter.get(), "Failed to open '{}'", path);
+    std::unique_ptr<DIR, CloseDir> dir_iter = CF_EXPECT(OpenDir(test_path));
     dirent* entry;
     while ((entry = readdir(dir_iter.get())) != nullptr) {
       std::string entry_name(entry->d_name);

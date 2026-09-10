@@ -36,6 +36,7 @@
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/posix/open_dir.h"
 #include "cuttlefish/posix/stat.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/proc_file_utils.h"
@@ -66,10 +67,7 @@ Result<void> CleanPriorFiles(const std::string& path,
     }
     return {};
   }
-  std::unique_ptr<DIR, int (*)(DIR*)> dir(opendir(path.c_str()), closedir);
-  if (!dir) {
-    return CF_ERRNO("Could not clean \"" << path << "\"");
-  }
+  std::unique_ptr<DIR, CloseDir> dir = CF_EXPECT(OpenDir(path));
   for (auto entity = readdir(dir.get()); entity != nullptr;
        entity = readdir(dir.get())) {
     std::string entity_name(entity->d_name);
