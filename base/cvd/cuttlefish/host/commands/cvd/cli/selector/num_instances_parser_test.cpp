@@ -16,11 +16,19 @@
 
 #include "cuttlefish/host/commands/cvd/cli/selector/num_instances_parser.h"
 
+#include <stddef.h>
+
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/result/result_matchers.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace selector {

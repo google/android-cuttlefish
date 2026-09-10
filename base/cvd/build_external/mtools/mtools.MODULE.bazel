@@ -5,6 +5,8 @@ http_archive(
     name = "mtools",
     build_file = "//build_external/mtools:BUILD.mtools.bazel",
     urls = [
+       "https://mirrors.ocf.berkeley.edu/gnu/mtools/mtools-4.0.48.tar.bz2",
+       "https://mirrors.rit.edu/gnu/mtools/mtools-4.0.48.tar.bz2",
        "https://mirrors.ibiblio.org/gnu/mtools/mtools-4.0.48.tar.bz2",
        "https://ftp.halifax.rwth-aachen.de/gnu/mtools/mtools-4.0.48.tar.bz2",
        "http://ftp.gnu.org/gnu/mtools/mtools-4.0.48.tar.bz2",

@@ -85,12 +85,16 @@ func Main(args []string) error {
 	return nil
 }
 
-func disconnectAdb(ccm CuttlefishContainerManager, groupName string) error {
+func findInstanceGroup(ccm CuttlefishContainerManager, groupName string) (*InstanceGroup, error) {
 	var stdoutBuf bytes.Buffer
 	if err := ccm.ExecOnContainer(context.Background(), ContainerName(groupName), []string{"cvd", "fleet"}, nil, &stdoutBuf, nil); err != nil {
-		return err
+		return nil, err
 	}
-	instanceGroup, err := ParseInstanceGroups(stdoutBuf.String(), groupName)
+	return ParseInstanceGroups(stdoutBuf.String(), groupName)
+}
+
+func disconnectAdb(ccm CuttlefishContainerManager, groupName string) error {
+	instanceGroup, err := findInstanceGroup(ccm, groupName)
 	if err != nil {
 		return err
 	}
@@ -98,18 +102,17 @@ func disconnectAdb(ccm CuttlefishContainerManager, groupName string) error {
 }
 
 func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+	hasConfigFile := cvdArgs.GetStringFlagValueOnSubCommandArgs("config_file") != ""
+	if hasConfigFile {
+		cvdArgs.ReplaceFlagValueOnSubCommandArgs("base_directory", "/podcvd_base")
+	}
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
+	if hasConfigFile {
+		args = append(args, fmt.Sprintf("--override=common.group_name:%s", cvdArgs.CommonArgs.GroupName))
+	}
 
-	var stdoutBuf bytes.Buffer
-	if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, os.Stderr); err != nil {
-		return err
-	}
-	var res map[string]any
-	if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
-		return fmt.Errorf("failed to unmarshal json: %w", err)
-	}
-	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false, false)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 	}
@@ -117,26 +120,46 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 	if !exists {
 		return fmt.Errorf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
 	}
-	containerInfo, err := ccm.InspectContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
-	if err != nil {
-		return fmt.Errorf("failed to inspect container: %w", err)
-	}
-	attemptID := containerInfo.Config.Labels["attempt_id"]
-	podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
-	UpdateCvdGroupJsonRaw(res, podcvdHomeDir, ip)
-	stdout, err := json.MarshalIndent(res, "", "        ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal json: %w", err)
-	}
-	os.Stdout.Write(stdout)
-	instanceGroup, err := ParseInstanceGroup(string(stdout), cvdArgs.CommonArgs.GroupName)
-	if err != nil {
+	rewriter := NewStderrRewriter(os.Stderr, ip)
+	defer rewriter.Flush()
+	var stdoutBuf bytes.Buffer
+	if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, rewriter); err != nil {
 		return err
 	}
-	if err := ConnectAdb(ccm, *instanceGroup); err != nil {
-		return err
+	var instanceGroup *InstanceGroup
+	if cvdArgs.GetStringFlagValueOnSubCommandArgs("print_group_format") == "human" {
+		os.Stdout.Write(stdoutBuf.Bytes())
+		group, err := findInstanceGroup(ccm, cvdArgs.CommonArgs.GroupName)
+		if err != nil {
+			return err
+		}
+		instanceGroup = group
+	} else {
+		var res map[string]any
+		if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
+			return fmt.Errorf("failed to unmarshal json: %w", err)
+		}
+		containerInfo, err := ccm.InspectContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
+		if err != nil {
+			return fmt.Errorf("failed to inspect container: %w", err)
+		}
+		attemptID := containerInfo.Config.Labels[labelAttemptID]
+		podcvdBaseDir := containerInfo.Config.Labels[labelBaseDir]
+		if podcvdBaseDir == "" {
+			podcvdBaseDir = filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
+		}
+		UpdateCvdGroupJsonRaw(res, podcvdBaseDir, ip)
+		stdout, err := json.MarshalIndent(res, "", "        ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal json: %w", err)
+		}
+		os.Stdout.Write(stdout)
+		instanceGroup, err = ParseInstanceGroup(string(stdout), cvdArgs.CommonArgs.GroupName)
+		if err != nil {
+			return err
+		}
 	}
-	return nil
+	return ConnectAdb(ccm, *instanceGroup)
 }
 
 func handleBugreportExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
@@ -189,10 +212,13 @@ func handleLogsExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error
 	if err != nil {
 		return fmt.Errorf("failed to inspect container: %w", err)
 	}
-	attemptID := containerInfo.Config.Labels["attempt_id"]
-	podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
-	regex := regexp.MustCompile(`/var/tmp/cvd/[0-9]+/[0-9]+/home`)
-	translatedOutput := regex.ReplaceAllString(stdoutBuf.String(), podcvdHomeDir)
+	attemptID := containerInfo.Config.Labels[labelAttemptID]
+	podcvdBaseDir := containerInfo.Config.Labels[labelBaseDir]
+	if podcvdBaseDir == "" {
+		podcvdBaseDir = filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
+	}
+	regex := regexp.MustCompile(`/var/tmp/cvd/[0-9]+/[0-9]+`)
+	translatedOutput := regex.ReplaceAllString(stdoutBuf.String(), podcvdBaseDir)
 	if Isatty(os.Stdout.Fd()) {
 		translatedOutput = formatLogsList(translatedOutput)
 	}
@@ -209,7 +235,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm CuttlefishContainerManager, cvd
 		}
 	default:
 		if cvdArgs.CommonArgs.GroupName == "" {
-			groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
+			groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false, false)
 			if err != nil {
 				return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 			}
@@ -252,7 +278,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm CuttlefishContainerManager, cvd
 }
 
 func clearAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
-	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, true, false)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 	}
@@ -298,11 +324,15 @@ func fleetAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
 	if err != nil {
 		return fmt.Errorf("failed to list containers: %w", err)
 	}
-	podcvdHomeDirMap := make(map[string]string)
+	podcvdBaseDirMap := make(map[string]string)
 	uid := strconv.Itoa(os.Getuid())
 	for _, c := range containers {
+		podcvdBaseDir := c.Labels[labelBaseDir]
+		if podcvdBaseDir == "" {
+			podcvdBaseDir = filepath.Join("/var/tmp/podcvd", uid, c.Labels[labelAttemptID])
+		}
 		if groupName, ok := c.Labels[labelGroupName]; ok {
-			podcvdHomeDirMap[groupName] = filepath.Join("/var/tmp/podcvd", uid, c.Labels[labelAttemptID])
+			podcvdBaseDirMap[groupName] = podcvdBaseDir
 		}
 	}
 
@@ -315,7 +345,7 @@ func fleetAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
 			return err
 		}
 		for idx := range fleetRes.Groups {
-			UpdateCvdGroupJsonRaw(fleetRes.Groups[idx], podcvdHomeDirMap[res.GroupName], res.IP)
+			UpdateCvdGroupJsonRaw(fleetRes.Groups[idx], podcvdBaseDirMap[res.GroupName], res.IP)
 		}
 		combinedRes.Groups = append(combinedRes.Groups, fleetRes.Groups...)
 	}

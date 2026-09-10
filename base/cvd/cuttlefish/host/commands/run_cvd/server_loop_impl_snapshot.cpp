@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <fcntl.h>
 #include <sys/wait.h>  // IWYU pragma: keep (siginfo_t)
 
 #include <ostream>
@@ -27,7 +26,6 @@
 #include "android-base/file.h"
 #include "json/value.h"
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/files/file_exists.h"
@@ -40,7 +38,6 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
-#include "cuttlefish/io/string.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/execute.h"
 #include "cuttlefish/process/subprocess_options.h"
@@ -268,12 +265,7 @@ Result<void> ServerLoopImpl::TakeGuestSnapshot(VmmMode vm_manager,
                                                const std::string& json_path) {
   // common code across vm_manager
   CF_EXPECTF(FileExists(json_path), "{} must exist but does not.", json_path);
-  SharedFD json_fd = SharedFD::Open(json_path, O_RDONLY);
-  CF_EXPECTF(json_fd->IsOpen(), "Failed to open {}", json_path);
-  const std::string json_contents =
-      CF_EXPECTF(ReadToString(*json_fd), "Failed to read from '{}'", json_path);
-  Json::Value meta_json = CF_EXPECTF(
-      ParseJson(json_contents), "Failed to parse json: \n{}", json_contents);
+  Json::Value meta_json = CF_EXPECT(LoadFromFile(json_path));
   CF_EXPECTF(VmManagerIsCrosvm(vm_manager),
              "{}, which is not crosvm, is not yet supported.", vm_manager);
   CF_EXPECT(TakeCrosvmGuestSnapshot(meta_json),

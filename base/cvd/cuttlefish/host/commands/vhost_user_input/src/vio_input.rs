@@ -66,7 +66,10 @@ impl VirtioInputBitmap {
 
     /// Length of the minimum array that can hold all set bits in the map.
     pub fn min_size(&self) -> u8 {
-        self.bitmap.iter().rposition(|v| *v != 0).map_or(0, |i| i + 1) as u8
+        self.bitmap
+            .iter()
+            .rposition(|v| *v != 0)
+            .map_or(0, |i| i + 1) as u8
     }
 
     fn set(&mut self, idx: u16) -> Result<()> {

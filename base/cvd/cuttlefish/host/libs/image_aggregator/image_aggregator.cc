@@ -23,15 +23,16 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include <fstream>
 #include <ios>
 #include <memory>
 #include <random>
 #include <string>
-#include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "google/protobuf/util/message_differencer.h"
 #include <zlib.h>
 
@@ -244,7 +245,9 @@ class CompositeDiskBuilder {
     gpt.footer = head.header;
     gpt.footer.partition_entries_lba =
         (DiskSize() - sizeof(gpt.entries)) / kSectorSize - 1;
-    std::swap(gpt.footer.current_lba, gpt.footer.backup_lba);
+    auto tmp_lba = gpt.footer.current_lba;
+    gpt.footer.current_lba = gpt.footer.backup_lba;
+    gpt.footer.backup_lba = tmp_lba;
     gpt.footer.header_crc32 = 0;
     gpt.footer.header_crc32 =
         crc32(0, (uint8_t*)&gpt.footer, sizeof(GptHeader));
@@ -360,7 +363,12 @@ Result<void> CreateOrUpdateCompositeDisk(
       google::protobuf::util::MessageDifferencer::Equals(
           composite_proto, composite_image_res->GetCompositeDisk())) {
     // The existing composite disk matches the given partitions, no need to
-    // regenerate
+    // regenerate, but update its modification time so it is not older than
+    // any recently updated component images.
+    if (utimensat(AT_FDCWD, output_composite_path.c_str(), nullptr, 0) != 0) {
+      PLOG(WARNING) << "Failed to update modification time for \""
+                    << output_composite_path << "\"";
+    }
     return {};
   }
 

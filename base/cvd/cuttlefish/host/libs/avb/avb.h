@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
@@ -63,8 +62,6 @@ class Avb {
   Command GenerateAddHashFooter(const std::string& image_path,
                                 const std::string& partition_name,
                                 off_t partition_size_bytes) const;
-  Command GenerateInfoImage(const std::string& image_path,
-                            const SharedFD& output_path) const;
   Command GenerateMakeVbMetaImage(
       const std::string& output_path,
       const std::vector<ChainPartition>& chained_partitions,

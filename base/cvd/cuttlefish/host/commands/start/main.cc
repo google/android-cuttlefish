@@ -28,6 +28,7 @@
 #include "fmt/format.h"
 #include "gflags/gflags.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -373,7 +374,7 @@ int CvdInternalStartMain(int argc, char** argv) {
     if (!link_res.has_value()) {
       LOG(ERROR) << "Failed to link logs to instance dir: " << link_res.error();
     }
-    SharedFD runner_stdin = SharedFD::Open("/dev/null", O_RDONLY);
+    SharedFD runner_stdin = Fd::Open("/dev/null", O_RDONLY).value_or(Fd());
     CHECK(runner_stdin->IsOpen()) << runner_stdin->StrError();
     setenv(kCuttlefishInstanceEnvVarName, instance.id().c_str(),
            /* overwrite */ 1);

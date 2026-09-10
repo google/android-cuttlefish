@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 
+#include <unistd.h>
+
 #include <iostream>
 #include <memory>
 #include <ostream>
@@ -26,15 +28,19 @@
 
 #include "absl/strings/numbers.h"
 #include "fmt/base.h"
-#include "fmt/format.h"
 #include "fmt/ostream.h"
 
 #include "cuttlefish/ansi_codes/terminal_colors.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/instances/status_fetcher.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace selector {

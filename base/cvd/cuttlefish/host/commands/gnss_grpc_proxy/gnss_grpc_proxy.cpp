@@ -64,6 +64,9 @@ DEFINE_string(gnss_file_path, "",
 DEFINE_string(fixed_location_file_path, "",
               "fixed location file path for gnss grpc");
 
+namespace cuttlefish {
+namespace {
+
 constexpr char CMD_GET_LOCATION[] = "CMD_GET_LOCATION";
 constexpr char CMD_GET_RAWMEASUREMENT[] = "CMD_GET_RAWMEASUREMENT";
 constexpr char END_OF_MSG_MARK[] = "\n\n\n\n";
@@ -85,10 +88,9 @@ std::string GenerateGpsLine(const std::string& dataPoint) {
 // Logic and data behind the server's behavior.
 class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
  public:
-  GnssGrpcProxyServiceImpl(cuttlefish::SharedFD gnss_in,
-                           cuttlefish::SharedFD gnss_out,
-                           cuttlefish::SharedFD fixed_location_in,
-                           cuttlefish::SharedFD fixed_location_out)
+  GnssGrpcProxyServiceImpl(SharedFD gnss_in, SharedFD gnss_out,
+                           SharedFD fixed_location_in,
+                           SharedFD fixed_location_out)
       : gnss_in_(gnss_in),
         gnss_out_(gnss_out),
         fixed_location_in_(fixed_location_in),
@@ -133,8 +135,8 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
 
   void sendToSerial() {
     std::lock_guard<std::mutex> lock(cached_fixed_location_mutex);
-    ssize_t bytes_written = cuttlefish::WriteAll(
-        fixed_location_in_, cached_fixed_location + END_OF_MSG_MARK);
+    ssize_t bytes_written =
+        WriteAll(fixed_location_in_, cached_fixed_location + END_OF_MSG_MARK);
     if (bytes_written < 0) {
       LOG(ERROR) << "Error writing to fd: " << gnss_in_->StrError();
     }
@@ -154,7 +156,7 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
       previous_cached_gnss_raw = cached_gnss_raw;
     }
     ssize_t bytes_written =
-        cuttlefish::WriteAll(gnss_in_, cached_gnss_raw + END_OF_MSG_MARK);
+        WriteAll(gnss_in_, cached_gnss_raw + END_OF_MSG_MARK);
     VLOG(0) << "Send Gnss Raw to serial: bytes_written: " << bytes_written;
     if (bytes_written < 0) {
       LOG(ERROR) << "Error writing to fd: " << gnss_in_->StrError();
@@ -278,8 +280,7 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
   }
 
  private:
-  void SendCommand(std::string command, cuttlefish::SharedFD source_out,
-                   int out_fd) {
+  void SendCommand(std::string command, SharedFD source_out, int out_fd) {
     std::vector<char> buffer(GNSS_SERIAL_BUFFER_SIZE);
     std::string cmd_str;
     uint64_t bytes_read =
@@ -358,10 +359,10 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
     return !inputStr.empty() && absl::StartsWith(inputStr, "# Raw");
   }
 
-  cuttlefish::SharedFD gnss_in_;
-  cuttlefish::SharedFD gnss_out_;
-  cuttlefish::SharedFD fixed_location_in_;
-  cuttlefish::SharedFD fixed_location_out_;
+  SharedFD gnss_in_;
+  SharedFD gnss_out_;
+  SharedFD fixed_location_in_;
+  SharedFD fixed_location_out_;
 
   std::thread measurement_read_thread_;
   std::thread fixed_location_read_thread_;
@@ -384,7 +385,7 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
 void RunServer() {
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-  auto gnss_in = cuttlefish::SharedFD::Dup(FLAGS_gnss_in_fd);
+  auto gnss_in = SharedFD::Dup(FLAGS_gnss_in_fd);
   close(FLAGS_gnss_in_fd);
   if (!gnss_in->IsOpen()) {
     LOG(ERROR) << "Error dupping fd " << FLAGS_gnss_in_fd << ": "
@@ -393,7 +394,7 @@ void RunServer() {
   }
   close(FLAGS_gnss_in_fd);
 
-  auto gnss_out = cuttlefish::SharedFD::Dup(FLAGS_gnss_out_fd);
+  auto gnss_out = SharedFD::Dup(FLAGS_gnss_out_fd);
   close(FLAGS_gnss_out_fd);
   if (!gnss_out->IsOpen()) {
     LOG(ERROR) << "Error dupping fd " << FLAGS_gnss_out_fd << ": "
@@ -401,8 +402,7 @@ void RunServer() {
     return;
   }
 
-  auto fixed_location_in =
-      cuttlefish::SharedFD::Dup(FLAGS_fixed_location_in_fd);
+  auto fixed_location_in = SharedFD::Dup(FLAGS_fixed_location_in_fd);
   close(FLAGS_fixed_location_in_fd);
   if (!fixed_location_in->IsOpen()) {
     LOG(ERROR) << "Error dupping fd " << FLAGS_fixed_location_in_fd << ": "
@@ -411,8 +411,7 @@ void RunServer() {
   }
   close(FLAGS_fixed_location_in_fd);
 
-  auto fixed_location_out =
-      cuttlefish::SharedFD::Dup(FLAGS_fixed_location_out_fd);
+  auto fixed_location_out = SharedFD::Dup(FLAGS_fixed_location_out_fd);
   close(FLAGS_fixed_location_out_fd);
   if (!fixed_location_out->IsOpen()) {
     LOG(ERROR) << "Error dupping fd " << FLAGS_fixed_location_out_fd << ": "
@@ -463,8 +462,8 @@ void RunServer() {
   }
 }
 
-int main(int argc, char** argv) {
-  cuttlefish::DefaultSubprocessLogging(argv);
+int Main(int argc, char** argv) {
+  DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   VLOG(0) << "Starting gnss grpc proxy server...";
@@ -472,3 +471,8 @@ int main(int argc, char** argv) {
 
   return 0;
 }
+
+}  // namespace
+}  // namespace cuttlefish
+
+int main(int argc, char** argv) { return cuttlefish::Main(argc, argv); }

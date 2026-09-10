@@ -31,12 +31,14 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <unordered_set>
 #include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "absl/time/time.h"
 #include "android-base/file.h"
 #include "fruit/component.h"
@@ -70,6 +72,7 @@
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
@@ -90,15 +93,11 @@ DEFINE_int32(boot_timeout_secs, 600,
 namespace cuttlefish {
 namespace {
 
-Result<void> MoveSelfToCgroup(const std::string& id) {
-  auto to_path_file = "/sys/fs/cgroup/vsoc-" + id + "-cf/cgroup.procs";
-  auto pid = std::to_string(getpid());
-  SharedFD fd = SharedFD::Open(to_path_file, O_WRONLY | O_APPEND);
-  CF_EXPECT(fd->IsOpen(),
-            "failed to open " << to_path_file << ": " << fd->StrError());
-  if (WriteAll(fd, pid) != pid.size()) {
-    return CF_ERR("failed to write to" << to_path_file);
-  }
+Result<void> MoveSelfToCgroup(std::string_view id) {
+  const std::string to_path_file =
+      absl::StrCat("/sys/fs/cgroup/vsoc-", id, "-cf/cgroup.procs");
+  Fd fd = CF_EXPECT(Fd::Open(to_path_file, O_WRONLY | O_APPEND));
+  CF_EXPECT(WriteExact(fd, std::to_string(getpid())));
 
   return {};
 }
@@ -132,12 +131,9 @@ Result<void> MoveThreadsToCgroup(const std::string& from_path,
           proc_status_str.find("vcpu_throttle") == std::string::npos) {
         // other proc moved to workers cgroup
         std::string to_path_file = to_path + "/cgroup.threads";
-        SharedFD fd = SharedFD::Open(to_path_file, O_WRONLY | O_APPEND);
-        CF_EXPECT(fd->IsOpen(),
-                  "failed to open " << to_path_file << ": " << fd->StrError());
-        if (WriteAll(fd, each_id) != each_id.size()) {
-          return CF_ERR("failed to write to" << to_path_file);
-        }
+        Fd fd = CF_EXPECT(Fd::Open(to_path_file, O_WRONLY | O_APPEND));
+        CF_EXPECTF(WriteExact(fd, each_id), "Failed to write to '{}'",
+                   to_path_file);
       }
     }
   }
@@ -220,17 +216,18 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
     }
     // Redirect standard I/O
     auto log_path = instance.launcher_log_path();
-    auto log = SharedFD::Open(log_path.c_str(), O_CREAT | O_WRONLY | O_APPEND,
-                              S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    SharedFD log = Fd::Open(log_path, O_CREAT | O_WRONLY | O_APPEND,
+                            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)
+                       .value_or(Fd());
     if (!log->IsOpen()) {
       LOG(ERROR) << "Failed to create launcher log file: " << log->StrError();
       std::exit(RunnerExitCodes::kDaemonizationError);
     }
     SetLoggers(
         {SeverityTarget::FromFd(log, MetadataLevel::FULL, LogFileSeverity())});
-    auto dev_null = SharedFD::Open("/dev/null", O_RDONLY);
-    if (!dev_null->IsOpen()) {
-      LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
+    Result<Fd> dev_null = Fd::Open("/dev/null", O_RDONLY);
+    if (!dev_null.has_value()) {
+      LOG(ERROR) << "Failed to open /dev/null: " << dev_null.error();
       std::exit(RunnerExitCodes::kDaemonizationError);
     }
     if (dev_null->UNMANAGED_Dup2(0) < 0) {
@@ -380,14 +377,15 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
               return;
             }
 
-            SharedFD restore_adbd_pipe = SharedFD::Open(
+            Result<Fd> restore_adbd_pipe = Fd::Open(
                 RestoreAdbdPipeName(config_.ForDefaultInstance()), O_WRONLY);
-            CHECK(restore_adbd_pipe->IsOpen())
+            CHECK(restore_adbd_pipe.has_value())
                 << "Error opening adbd restore pipe: "
-                << restore_adbd_pipe->StrError();
-            CHECK(cuttlefish::WriteAll(restore_adbd_pipe, "2") == 1)
-                << "Error writing to adbd restore pipe: "
-                << restore_adbd_pipe->StrError() << ". This is unrecoverable.";
+                << restore_adbd_pipe.error();
+            Result<void> write_res = WriteExact(*restore_adbd_pipe, "2");
+            CHECK(write_res.has_value())
+                << "Error writing to adbd restore pipe: " << write_res.error()
+                << ". This is unrecoverable.";
 
             // Restart network service in OpenWRT, broken on restore.
             CHECK(FileExists(instance_.grpc_socket_path() +

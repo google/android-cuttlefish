@@ -25,7 +25,6 @@ go_test(
         "exclusive",
         "external",
         "no-sandbox",
-        "podcvd_excluded",
         "requires_ab",
         "supports-graceful-termination",
     ],

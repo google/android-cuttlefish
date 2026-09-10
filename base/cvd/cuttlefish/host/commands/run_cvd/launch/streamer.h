@@ -17,7 +17,7 @@
 
 #include <fruit/fruit.h>
 
-#include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
+#include "cuttlefish/host/commands/run_cvd/launch/input_paths_provider.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -26,7 +26,7 @@
 namespace cuttlefish {
 
 fruit::Component<fruit::Required<
-    const CuttlefishConfig, KernelLogPipeProvider, InputConnectionsProvider,
+    const CuttlefishConfig, KernelLogPipeProvider, InputPathsProvider,
     const CuttlefishConfig::InstanceSpecific, const CustomActionConfigProvider,
     WebRtcController>>
 launchStreamerComponent();

@@ -116,11 +116,9 @@ std::string LazilyLoadedFile::Impl::MetadataFile() const {
 }
 
 Result<void> LazilyLoadedFile::Impl::ReadMetadata() {
-  SharedFD metadata_fd = SharedFD::Open(MetadataFile(), O_CREAT | O_RDWR, 0644);
-  CF_EXPECTF(metadata_fd->IsOpen(), "Failed to open {}: {}", MetadataFile(),
-             metadata_fd->StrError());
+  Fd metadata_fd = CF_EXPECT(Fd::Open(MetadataFile(), O_CREAT | O_RDWR, 0644));
 
-  const std::string data = CF_EXPECT(ReadToString(*metadata_fd));
+  const std::string data = CF_EXPECT(ReadToString(metadata_fd));
 
   Result<DisjointRangeSet> parsed_res = DeserializeDisjointRangeSet(data);
   if (parsed_res.has_value()) {

@@ -176,11 +176,7 @@ static Result<void> ListenEventsAndProxy(int events_fd,
     auto config = CF_EXPECT(CuttlefishConfig::Get());
     auto instance = config->ForDefaultInstance();
     SharedFD restore_pipe_read =
-        SharedFD::Open(RestoreAdbdPipeName(instance), O_RDONLY);
-    if (!restore_pipe_read->IsOpen()) {
-      return CF_ERR(
-          "Error opening restore pipe: " << restore_pipe_read->StrError());
-    }
+        CF_EXPECT(Fd::Open(RestoreAdbdPipeName(instance), O_RDONLY));
     // Try to read from restore pipe. IF successfully reads, that means logcat
     // has started, and the VM has resumed. Exit the thread.
     // TODO (@khei): Add a device status tracking mechanism. b/325614380

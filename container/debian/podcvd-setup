@@ -122,30 +122,33 @@ EOF
 }
 
 setup_rootless_podman() {
-    # Configure subordinate UIDs/GIDs for rootless Podman
-    local has_subuids=false
-    if [ -f /etc/subuid ] && [ -f /etc/subgid ]; then
-        local subuid_size=$(grep "^${username}:" /etc/subuid | cut -d: -f3)
-        local subgid_size=$(grep "^${username}:" /etc/subgid | cut -d: -f3)
-        if [ -n "$subuid_size" ] && [ "$subuid_size" -ge 65536 ] && \
-           [ -n "$subgid_size" ] && [ "$subgid_size" -ge 65536 ]; then
-            has_subuids=true
+    local uid=$(id -u "$username")
+    local needs_migrate=false
+
+    for kind in uid gid; do
+        local file="/etc/sub$kind"
+        local host_id_range=$(awk -F: -v u="$username" -v id="$uid" \
+            '($1 == u || $1 == id) && $3 >= 65536 {print $2 ":" $3; exit}' \
+            "$file" 2>/dev/null)
+        if [ -z "$host_id_range" ]; then
+            echo "Configuring subordinate IDs in $file for '$username'..."
+            local start_id=$(awk -F: 'BEGIN{m=100000} ($2+$3)>m {m=$2+$3} END{print m}' "$file" 2>/dev/null)
+            usermod "--add-sub${kind}s" "${start_id}-$((start_id + 65535))" "$username"
+            host_id_range="${start_id}:65536"
         fi
-    fi
 
-    if [ "$has_subuids" = true ]; then
-        echo "User '$username' already has sufficient subuid/subgid ranges configured. Skipping."
-    else
-        echo "Configuring subordinate UIDs/GIDs for '$username'..."
-        local start_id=$(awk -F: '{print $2 + $3}' /etc/subuid /etc/subgid 2>/dev/null | sort -n | tail -1)
-        start_id="${start_id:-100000}"
-        local id_range="$start_id-$((start_id + 65535))"
-        usermod --add-subuids "$id_range" --add-subgids "$id_range" "$username"
-    fi
+        local podman_id_range=$(sudo -H -u "$username" podman info --format \
+            "{{range .Host.IDMappings.${kind^^}Map}}{{if gt .ContainerID 0}}{{.HostID}}:{{.Size}}{{end}}{{end}}" \
+            2>/dev/null)
+        if [ -z "$podman_id_range" ] || [ "$podman_id_range" != "$host_id_range" ]; then
+            needs_migrate=true
+        fi
+    done
 
-    # Migrate subuid/subgid setting into rootless podman
-    echo "Migrating subuid/subgid setting into rootless podman..."
-    sudo -H -u "$username" podman system migrate
+    if [ "$needs_migrate" = true ]; then
+        echo "Migrating subuid/subgid setting into rootless podman..."
+        sudo -H -u "$username" podman system migrate
+    fi
 }
 
 setup_nvidia_gpu() {

@@ -16,8 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 
-#include <unistd.h>
-
 #include <optional>
 #include <string>
 #include <string_view>

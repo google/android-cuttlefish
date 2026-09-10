@@ -47,6 +47,16 @@ std::string GamepadSocketPath(const CuttlefishConfig::InstanceSpecific& ins) {
   return ins.PerInstanceInternalUdsPath("gamepad.sock");
 }
 
+std::string GamepadEventsServerPath(
+    const CuttlefishConfig::InstanceSpecific& ins) {
+  return ins.PerInstanceInternalUdsPath("gamepad.events.in");
+}
+
+std::string GamepadCaptureServerPath(
+    const CuttlefishConfig::InstanceSpecific& ins) {
+  return ins.PerInstanceInternalUdsPath("gamepad.events.out");
+}
+
 std::string HwcomposerPmemPath(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceInternalPath("hwcomposer-pmem"));
 }
@@ -57,6 +67,16 @@ std::string KernelLogPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
 
 std::string KeyboardSocketPath(const CuttlefishConfig::InstanceSpecific& ins) {
   return ins.PerInstanceInternalUdsPath("keyboard.sock");
+}
+
+std::string KeyboardEventsServerPath(
+    const CuttlefishConfig::InstanceSpecific& ins) {
+  return ins.PerInstanceInternalUdsPath("keyboard.events.in");
+}
+
+std::string KeyboardCaptureServerPath(
+    const CuttlefishConfig::InstanceSpecific& ins) {
+  return ins.PerInstanceInternalUdsPath("keyboard.events.out");
 }
 
 std::string LauncherMonitorSocketPath(
@@ -76,6 +96,16 @@ std::string MouseSocketPath(const CuttlefishConfig::InstanceSpecific& ins) {
   return ins.PerInstanceInternalUdsPath("mouse.sock");
 }
 
+std::string MouseEventsServerPath(
+    const CuttlefishConfig::InstanceSpecific& ins) {
+  return ins.PerInstanceInternalUdsPath("mouse.events.in");
+}
+
+std::string MouseCaptureServerPath(
+    const CuttlefishConfig::InstanceSpecific& ins) {
+  return ins.PerInstanceInternalUdsPath("mouse.events.out");
+}
+
 std::string PflashPath(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstancePath("pflash.img"));
 }
@@ -88,8 +118,28 @@ std::string RotarySocketPath(const CuttlefishConfig::InstanceSpecific& ins) {
   return ins.PerInstanceInternalUdsPath("rotary.sock");
 }
 
+std::string RotaryEventsServerPath(
+    const CuttlefishConfig::InstanceSpecific& ins) {
+  return ins.PerInstanceInternalUdsPath("rotary.events.in");
+}
+
+std::string RotaryCaptureServerPath(
+    const CuttlefishConfig::InstanceSpecific& ins) {
+  return ins.PerInstanceInternalUdsPath("rotary.events.out");
+}
+
 std::string SwitchesSocketPath(const CuttlefishConfig::InstanceSpecific& ins) {
   return ins.PerInstanceInternalUdsPath("switches.sock");
+}
+
+std::string SwitchesEventsServerPath(
+    const CuttlefishConfig::InstanceSpecific& ins) {
+  return ins.PerInstanceInternalUdsPath("switches.events.in");
+}
+
+std::string SwitchesCaptureServerPath(
+    const CuttlefishConfig::InstanceSpecific& ins) {
+  return ins.PerInstanceInternalUdsPath("switches.events.out");
 }
 
 std::string RestoreAdbdPipeName(const CuttlefishConfig::InstanceSpecific& ins) {

@@ -58,10 +58,10 @@ class DisplayRingBuffer {
   uint8_t* ComputeFrameAddressForIndex(uint32_t index);
 
  private:
-  DisplayRingBuffer(void* addr, std::string name, bool owned, ScopedMMap shm);
+  DisplayRingBuffer(std::string name, bool owned, ScopedMMap shm);
 
-  DisplayRingBufferHeader* header_;
-  void* addr_;
+  DisplayRingBufferHeader* Header();
+
   std::string name_;
   bool owned_;
   ScopedMMap shm_;

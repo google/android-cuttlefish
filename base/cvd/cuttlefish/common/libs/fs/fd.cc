@@ -883,7 +883,7 @@ Result<uint64_t> Fd::Write(const void* buf, size_t count) {
   LocalErrno record_errno(errno_);
 
   ssize_t res = TEMP_FAILURE_RETRY(write(fd_, buf, count));
-  CF_EXPECT_GE(res, 0);
+  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError(errno));
 
   return static_cast<uint64_t>(res);
 }
@@ -892,7 +892,7 @@ Result<uint64_t> Fd::PWrite(const void* buf, size_t count, size_t offset) {
   LocalErrno record_errno(errno_);
 
   ssize_t res = TEMP_FAILURE_RETRY(pwrite(fd_, buf, count, offset));
-  CF_EXPECT_GE(res, 0);
+  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError(errno));
 
   return static_cast<uint64_t>(res);
 }

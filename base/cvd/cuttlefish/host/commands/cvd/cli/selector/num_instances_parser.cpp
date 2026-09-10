@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/selector/num_instances_parser.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <functional>

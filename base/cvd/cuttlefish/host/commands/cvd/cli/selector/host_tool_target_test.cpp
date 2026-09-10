@@ -17,6 +17,7 @@
 
 #include <string>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"

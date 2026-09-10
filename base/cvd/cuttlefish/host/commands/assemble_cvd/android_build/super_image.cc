@@ -77,25 +77,20 @@ Result<std::vector<LpMetadataExtent>> PartitionExtents(
   return CF_ERRF("Could not find partition with name '{}'", name);
 }
 
-Result<void> ExtractPartition(SharedFD source,
+Result<void> ExtractPartition(Fd& source,
                               const std::vector<LpMetadataExtent>& extents,
-                              SharedFD destination) {
-  CF_EXPECT_EQ(destination->LSeek(0, SEEK_SET), 0, destination->StrError());
+                              Fd& destination) {
+  CF_EXPECT(destination.SeekSet(0));
   for (const LpMetadataExtent& extent : extents) {
-    uint64_t length = extent.num_sectors * LP_SECTOR_SIZE;
+    const uint64_t length = extent.num_sectors * LP_SECTOR_SIZE;
     switch (extent.target_type) {
-      case LP_TARGET_TYPE_LINEAR: {
-        uint64_t offset = extent.target_data * LP_SECTOR_SIZE;
-        CF_EXPECT_EQ(source->LSeek(offset, SEEK_SET), offset,
-                     source->StrError());
-        CF_EXPECT(destination->CopyFrom(*source, length));
+      case LP_TARGET_TYPE_LINEAR:
+        CF_EXPECT(source.SeekSet(extent.target_data * LP_SECTOR_SIZE));
+        CF_EXPECT(destination.CopyFrom(source, length));
         break;
-      };
-      case LP_TARGET_TYPE_ZERO: {
-        CF_EXPECT_GE(destination->LSeek(length, SEEK_CUR), 0,
-                     destination->StrError());
+      case LP_TARGET_TYPE_ZERO:
+        CF_EXPECT(destination.SeekSet(length));
         break;
-      };
       default:
         return CF_ERRF("Unknown target_type '{}'", extent.target_type);
     }
@@ -141,15 +136,12 @@ class SuperImageAsBuildImpl : public AndroidBuild {
 
     std::string super_path =
         CF_EXPECT(android_build_->ImageFile("super", true));
-    SharedFD super_fd = SharedFD::Open(super_path, O_RDONLY);
-    CF_EXPECT(super_fd->IsOpen(), super_fd->StrError());
+    Fd super_fd = CF_EXPECT(Fd::Open(super_path, O_RDONLY));
 
     std::string extract_path = absl::StrCat(extract_dir_, "/", name, ".img");
     unlink(extract_path.c_str());  // Ignore errors
-    SharedFD extract_fd =
-        SharedFD::Open(extract_path, O_RDWR | O_CREAT | O_EXCL, 0644);
-    CF_EXPECTF(extract_fd->IsOpen(), "Failed to open '{}': ", extract_path,
-               extract_fd->StrError());
+    Fd extract_fd =
+        CF_EXPECT(Fd::Open(extract_path, O_RDWR | O_CREAT | O_EXCL, 0644));
 
     CF_EXPECT(super_metadata_.get());
     std::vector<LpMetadataExtent> extents =

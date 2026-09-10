@@ -40,12 +40,10 @@ inline int RingBufferMemorySize(int w, int h) {
 }
 }  // namespace
 
-void* DisplayRingBuffer::GetAddress() { return addr_; };
+void* DisplayRingBuffer::GetAddress() { return shm_.get(); };
 
 Result<std::unique_ptr<DisplayRingBuffer>> DisplayRingBuffer::Create(
     const std::string& name, int size) {
-  void* addr = nullptr;
-
   SharedFD sfd =
       SharedFD::ShmOpen(name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 
@@ -55,10 +53,9 @@ Result<std::unique_ptr<DisplayRingBuffer>> DisplayRingBuffer::Create(
   Result<void> unused = sfd->Truncate(size);
 
   ScopedMMap smm = sfd->MMap(NULL, size, PROT_WRITE, MAP_SHARED, 0);
-  addr = smm.get();
 
   return std::unique_ptr<DisplayRingBuffer>(
-      new DisplayRingBuffer(addr, name, true, std::move(smm)));
+      new DisplayRingBuffer(name, true, std::move(smm)));
 }
 
 DisplayRingBuffer::~DisplayRingBuffer() {
@@ -71,47 +68,48 @@ DisplayRingBuffer::~DisplayRingBuffer() {
 // Allowing optional in the case the buffer doesn't yet exist.
 std::optional<std::unique_ptr<DisplayRingBuffer>> DisplayRingBuffer::ShmemGet(
     const std::string& name, int size) {
-  void* addr = nullptr;
   SharedFD sfd = SharedFD::ShmOpen(name, O_RDWR, S_IRUSR | S_IWUSR);
   if (!sfd->IsOpen()) {
     return std::nullopt;
   }
   ScopedMMap smm = sfd->MMap(NULL, size, PROT_WRITE, MAP_SHARED, 0);
-  addr = smm.get();
 
-  if (!addr) {
+  if (smm.get() == nullptr) {
     return std::nullopt;
   }
 
   return std::unique_ptr<DisplayRingBuffer>(
-      new DisplayRingBuffer(addr, name, false, std::move(smm)));
+      new DisplayRingBuffer(name, false, std::move(smm)));
 }
 
-DisplayRingBuffer::DisplayRingBuffer(void* addr, std::string name, bool owned,
+DisplayRingBuffer::DisplayRingBuffer(std::string name, bool owned,
                                      ScopedMMap shm)
-    : addr_(addr), name_(std::move(name)), owned_(owned), shm_(std::move(shm)) {
-  header_ = (DisplayRingBufferHeader*)addr;
+    : name_(std::move(name)), owned_(owned), shm_(std::move(shm)) {}
+
+DisplayRingBufferHeader* DisplayRingBuffer::Header() {
+  return reinterpret_cast<DisplayRingBufferHeader*>(GetAddress());
 }
 
 uint8_t* DisplayRingBuffer::WriteNextFrame(uint8_t* frame_data, int size) {
   int new_frame_index =
-      (header_->last_valid_frame_index_ + 1) % kNumberOfRingBufferFrames;
+      (Header()->last_valid_frame_index_ + 1) % kNumberOfRingBufferFrames;
 
   uint8_t* frame_memory_address = ComputeFrameAddressForIndex(new_frame_index);
   memcpy(frame_memory_address, frame_data, size);
 
-  header_->last_valid_frame_index_ = new_frame_index;
+  Header()->last_valid_frame_index_ = new_frame_index;
   return frame_memory_address;
 }
 
 uint8_t* DisplayRingBuffer::CurrentFrame() {
-  return ComputeFrameAddressForIndex(header_->last_valid_frame_index_);
+  return ComputeFrameAddressForIndex(Header()->last_valid_frame_index_);
 }
 
 uint8_t* DisplayRingBuffer::ComputeFrameAddressForIndex(uint32_t index) {
-  int frame_memory_index = (index * (header_->display_width_ *
-                                     header_->display_height_ * header_->bpp_));
-  return ((uint8_t*)addr_) + sizeof(DisplayRingBufferHeader) +
+  int frame_memory_index =
+      (index *
+       (Header()->display_width_ * Header()->display_height_ * Header()->bpp_));
+  return ((uint8_t*)GetAddress()) + sizeof(DisplayRingBufferHeader) +
          frame_memory_index;
 }
 

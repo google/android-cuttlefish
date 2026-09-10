@@ -81,7 +81,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/security:confui_sign",
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
+        "//cuttlefish/host/commands/kernel_log_monitor:utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
         "//cuttlefish/host/libs/input_connector",

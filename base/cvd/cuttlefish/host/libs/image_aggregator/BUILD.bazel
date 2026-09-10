@@ -99,6 +99,7 @@ cf_cc_library(
         "//cuttlefish/io",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
         "@protobuf",
         "@protobuf//:differencer",
         "@zlib",

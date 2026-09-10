@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/process/command.h"
@@ -139,14 +139,12 @@ Result<void> EnforceVbMetaSize(const std::string& path) {
   const auto vbmeta_size = FileSize(path);
   CF_EXPECT_LE(vbmeta_size, kVbMetaMaxSize);
   if (vbmeta_size != kVbMetaMaxSize) {
-    auto vbmeta_fd = SharedFD::Open(path, O_RDWR);
-    CF_EXPECTF(vbmeta_fd->IsOpen(), "Unable to open {} with error {}", path,
-               vbmeta_fd->StrError());
-    CF_EXPECTF(vbmeta_fd->Truncate(kVbMetaMaxSize),
+    Fd vbmeta_fd = CF_EXPECT(Fd::Open(path, O_RDWR));
+    CF_EXPECTF(vbmeta_fd.Truncate(kVbMetaMaxSize),
                "Truncating {} failed with error {}", path,
-               vbmeta_fd->StrError());
-    CF_EXPECTF(vbmeta_fd->Fsync() == 0, "fsync on {} failed with error {}",
-               path, vbmeta_fd->StrError());
+               vbmeta_fd.StrError());
+    CF_EXPECTF(vbmeta_fd.Fsync() == 0, "fsync on {} failed with error {}", path,
+               vbmeta_fd.StrError());
   }
   return {};
 }

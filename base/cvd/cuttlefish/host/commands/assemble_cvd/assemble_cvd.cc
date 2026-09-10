@@ -17,7 +17,6 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include <iostream>
@@ -42,8 +41,6 @@
 #include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
@@ -105,6 +102,7 @@
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/io/string.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/pretty/vector.h"
@@ -297,13 +295,13 @@ Result<std::set<std::string>> PreservingOnResume(
   return preserving;
 }
 
-Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
-  SharedFD log_file;
+SharedFD SetLogger(std::string runtime_dir_parent) {
+  Result<SharedFD> log_file;
   if (InSandbox()) {
     log_file =
-        SharedFD::Open(absl::StrCat(runtime_dir_parent,
-                                    "/instances/cvd-1/logs/", kLogNameLauncher),
-                       O_WRONLY | O_APPEND);
+        Fd::Open(absl::StrCat(runtime_dir_parent, "/instances/cvd-1/logs/",
+                              kLogNameLauncher),
+                 O_WRONLY | O_APPEND);
   } else {
     while (runtime_dir_parent[runtime_dir_parent.size() - 1] == '/') {
       runtime_dir_parent =
@@ -311,22 +309,22 @@ Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
     }
     runtime_dir_parent =
         runtime_dir_parent.substr(0, FLAGS_instance_dir.rfind('/'));
-    log_file = SharedFD::Open(runtime_dir_parent, O_WRONLY | O_TMPFILE,
-                              S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    log_file = Fd::Open(runtime_dir_parent, O_WRONLY | O_TMPFILE,
+                        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
   }
-  if (!log_file->IsOpen()) {
-    LOG(ERROR) << "Could not open initial log file: " << log_file->StrError();
+  if (!log_file.has_value()) {
+    LOG(ERROR) << "Could not open initial log file: " << log_file.error();
   } else {
     std::vector<SeverityTarget> log_destinations = {
         SeverityTarget::FromFd(SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE,
                                ConsoleSeverity()),
-        SeverityTarget::FromFd(log_file, MetadataLevel::FULL,
+        SeverityTarget::FromFd(*log_file, MetadataLevel::FULL,
                                LogFileSeverity()),
 
     };
     SetLoggers(std::move(log_destinations), "");
   }
-  return log_file;
+  return log_file.value_or(Fd());
 }
 
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
@@ -357,24 +355,20 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
 
       // Add a delimiter to each log file so that we can clearly tell what
       // happened before vs after the restore.
-      const std::string snapshot_delimiter =
+      static constexpr std::string_view kSnapshotDelimiter =
           "\n\n\n"
           "============ SNAPSHOT RESTORE POINT ============\n"
           "Lines above are pre-snapshot.\n"
           "Lines below are post-restore.\n"
           "================================================\n"
           "\n\n\n";
-      for (const auto& instance : config.Instances()) {
-        const auto log_files =
-            CF_EXPECT(DirectoryContents(instance.PerInstanceLogPath("")));
-        for (const auto& filename : log_files) {
-          const std::string path = instance.PerInstanceLogPath(filename);
-          auto fd = SharedFD::Open(path, O_WRONLY | O_APPEND);
-          CF_EXPECT(fd->IsOpen(),
-                    "failed to open " << path << ": " << fd->StrError());
-          const ssize_t n = WriteAll(fd, snapshot_delimiter);
-          CF_EXPECT(n == snapshot_delimiter.size(),
-                    "failed to write to " << path << ": " << fd->StrError());
+      for (const CuttlefishConfig::InstanceSpecific& ins : config.Instances()) {
+        const std::vector<std::string> log_files =
+            CF_EXPECT(DirectoryContents(ins.PerInstanceLogPath("")));
+        for (const std::string_view filename : log_files) {
+          const std::string path = ins.PerInstanceLogPath(filename);
+          Fd fd = CF_EXPECT(Fd::Open(path, O_WRONLY | O_APPEND));
+          CF_EXPECT(WriteExact(fd, kSnapshotDelimiter));
         }
       }
     }
@@ -382,45 +376,49 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // take the max value of modem_simulator_instance_number in each instance
     // which is used for preserving/deleting iccprofile_for_simX.xml files
     int modem_simulator_count = 0;
-
-    bool creating_os_disk = false;
-    // if any device needs to rebuild its composite disk,
-    // then don't preserve any files and delete everything.
-
-    std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files =
-        InstanceImageFiles(config, boot_image);
-
-    size_t index = 0;
     for (const auto& instance : config.Instances()) {
-      CF_EXPECT_LE(index, image_files.size());
-      const std::vector<std::unique_ptr<ImageFile>>& instance_image_files =
-          image_files[index];
-
-      std::optional<ChromeOsStateImage> chrome_os_state =
-          CF_EXPECT(ChromeOsStateImage::Reuse(instance));
-      Result<DiskBuilder> os_builder = OsCompositeDiskBuilder(
-          config, instance, chrome_os_state, instance_image_files,
-          android_builds.ForIndex(index), system_image_dir);
-      if (!os_builder.has_value()) {
-        creating_os_disk = true;
-      } else {
-        creating_os_disk |= CF_EXPECT(os_builder->WillRebuildCompositeDisk());
-      }
-      if (instance.ap_boot_flow() != APBootFlow::None) {
-        auto ap_builder = ApCompositeDiskBuilder(config, instance);
-        creating_os_disk |= CF_EXPECT(ap_builder.WillRebuildCompositeDisk());
-      }
       if (instance.modem_simulator_instance_number() > modem_simulator_count) {
         modem_simulator_count = instance.modem_simulator_instance_number();
       }
-      index++;
     }
-    // TODO(schuffelen): Add smarter decision for when to delete runtime files.
-    // Files like NVChip are tightly bound to Android keymint and should be
-    // deleted when userdata is reset. However if the user has ever run without
-    // the overlay, then we want to keep this until userdata.img was externally
-    // replaced.
-    creating_os_disk &= FLAGS_use_overlay;
+
+    bool creating_os_disk = false;
+    size_t index = 0;
+    if (snapshot_path.empty()) {
+      // if any device needs to rebuild its composite disk,
+      // then don't preserve any files and delete everything.
+
+      std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files =
+          InstanceImageFiles(config, boot_image);
+
+      for (const auto& instance : config.Instances()) {
+        CF_EXPECT_LE(index, image_files.size());
+        const std::vector<std::unique_ptr<ImageFile>>& instance_image_files =
+            image_files[index];
+
+        std::optional<ChromeOsStateImage> chrome_os_state =
+            CF_EXPECT(ChromeOsStateImage::Reuse(instance));
+        Result<DiskBuilder> os_builder = OsCompositeDiskBuilder(
+            config, instance, chrome_os_state, instance_image_files,
+            android_builds.ForIndex(index), system_image_dir);
+        if (!os_builder.has_value()) {
+          creating_os_disk = true;
+        } else {
+          creating_os_disk |= CF_EXPECT(os_builder->WillRebuildCompositeDisk());
+        }
+        if (instance.ap_boot_flow() != APBootFlow::None) {
+          auto ap_builder = ApCompositeDiskBuilder(config, instance);
+          creating_os_disk |= CF_EXPECT(ap_builder.WillRebuildCompositeDisk());
+        }
+        index++;
+      }
+      // TODO(schuffelen): Add smarter decision for when to delete runtime
+      // files. Files like NVChip are tightly bound to Android keymint and
+      // should be deleted when userdata is reset. However if the user has ever
+      // run without the overlay, then we want to keep this until userdata.img
+      // was externally replaced.
+      creating_os_disk &= FLAGS_use_overlay;
+    }
 
     std::set<std::string> preserving =
         CF_EXPECT(PreservingOnResume(creating_os_disk, modem_simulator_count),
@@ -612,7 +610,7 @@ Result<AndroidBuilds> FindAndroidBuilds(
 }  // namespace
 
 Result<int> AssembleCvdMain(int argc, char** argv) {
-  auto log = CF_EXPECT(SetLogger(AbsolutePath(FLAGS_instance_dir)));
+  SharedFD log = SetLogger(AbsolutePath(FLAGS_instance_dir));
   VLOG(0) << "received flags: "
           << absl::StrJoin(std::vector<std::string>(argv + 1, argv + argc),
                            " ");

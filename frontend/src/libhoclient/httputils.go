@@ -81,6 +81,33 @@ func (h *HTTPHelper) NewUploadFileRequest(ctx context.Context, path string, body
 	}
 }
 
+func (h *HTTPHelper) NewPostFormFileRequest(path, fieldName, filename string, r io.Reader) *HTTPRequestBuilder {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	fw, err := writer.CreateFormFile(fieldName, filename)
+	if err != nil {
+		return &HTTPRequestBuilder{helper: h, request: nil, err: err}
+	}
+	if r != nil {
+		if _, err := io.Copy(fw, r); err != nil {
+			return &HTTPRequestBuilder{helper: h, request: nil, err: err}
+		}
+	}
+	if err := writer.Close(); err != nil {
+		return &HTTPRequestBuilder{helper: h, request: nil, err: err}
+	}
+	req, err := http.NewRequest(http.MethodPost, h.RootEndpoint+path, body)
+	if err != nil {
+		return &HTTPRequestBuilder{helper: h, request: nil, err: err}
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	return &HTTPRequestBuilder{
+		helper:  h,
+		request: req,
+		err:     nil,
+	}
+}
+
 func (h *HTTPHelper) newRequestWithJson(method, path string, jsonBody any) *HTTPRequestBuilder {
 	body := []byte{}
 	var err error

@@ -8,6 +8,8 @@ http_archive(
     build_file = "@//build_external/dav1d:BUILD.dav1d.bazel",
     strip_prefix = "dav1d-1.5.3",
     urls = [
+        "https://mirrors.ocf.berkeley.edu/videolan-ftp/dav1d/1.5.3/dav1d-1.5.3.tar.xz",
+        "https://ftp.osuosl.org/pub/videolan/dav1d/1.5.3/dav1d-1.5.3.tar.xz",
         "https://downloads.videolan.org/pub/videolan/dav1d/1.5.3/dav1d-1.5.3.tar.xz",
     ],
     sha256 = "732010aa5ef461fa93355ed2c6c5fedb48ddc4b74e697eaabe8907eaeb943011",
