@@ -150,6 +150,10 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
     guest_config.has_vulkan_swiftshader_apex =
         graphics_config.vulkan_swiftshader_apex_supported();
   }
+  if (graphics_config.has_vulkan_venus_apex_supported()) {
+    guest_config.has_vulkan_venus_apex =
+        graphics_config.vulkan_venus_apex_supported();
+  }
 
   const auto& input_config = proto_config.input();
   if (input_config.has_mouse_supported()) {
@@ -248,6 +252,8 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
       MapHasValue(info, "vulkan_lavapipe_apex", "supported");
   guest_config.has_vulkan_swiftshader_apex =
       MapHasValue(info, "vulkan_swiftshader_apex", "supported");
+  guest_config.has_vulkan_venus_apex =
+      MapHasValue(info, "vulkan_venus_apex", "supported");
 
   guest_config.mouse_supported = MapHasValue(info, "mouse", "supported");
 

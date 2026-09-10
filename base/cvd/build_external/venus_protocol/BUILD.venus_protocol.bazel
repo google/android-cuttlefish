@@ -1,0 +1,162 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_python//python:defs.bzl", "py_binary")
+
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+        "@mesa//:__subpackages__",
+        "@virglrenderer//:__subpackages__",
+    ],
+)
+
+py_binary(
+    name = "vn_protocol_py",
+    srcs = [
+        "vkxml.py",
+        "vn_protocol.py",
+    ],
+    main = "vn_protocol.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+cc_library(
+    name = "vulkan_headers",
+    hdrs = glob([
+        "include/**/*.h",
+    ]),
+    includes = [
+        "include",
+    ],
+)
+
+VN_PROTOCOL_RENDERER_HEADERS = [
+    "vn_protocol_renderer.h",
+    "vn_protocol_renderer_acceleration_structure.h",
+    "vn_protocol_renderer_buffer.h",
+    "vn_protocol_renderer_buffer_view.h",
+    "vn_protocol_renderer_command_buffer.h",
+    "vn_protocol_renderer_command_pool.h",
+    "vn_protocol_renderer_cs.h",
+    "vn_protocol_renderer_defines.h",
+    "vn_protocol_renderer_descriptor_heap.h",
+    "vn_protocol_renderer_descriptor_pool.h",
+    "vn_protocol_renderer_descriptor_set.h",
+    "vn_protocol_renderer_descriptor_set_layout.h",
+    "vn_protocol_renderer_descriptor_update_template.h",
+    "vn_protocol_renderer_device.h",
+    "vn_protocol_renderer_device_memory.h",
+    "vn_protocol_renderer_dispatches.h",
+    "vn_protocol_renderer_event.h",
+    "vn_protocol_renderer_fence.h",
+    "vn_protocol_renderer_framebuffer.h",
+    "vn_protocol_renderer_handles.h",
+    "vn_protocol_renderer_host_copy.h",
+    "vn_protocol_renderer_image.h",
+    "vn_protocol_renderer_image_view.h",
+    "vn_protocol_renderer_info.h",
+    "vn_protocol_renderer_instance.h",
+    "vn_protocol_renderer_pipeline.h",
+    "vn_protocol_renderer_pipeline_cache.h",
+    "vn_protocol_renderer_pipeline_layout.h",
+    "vn_protocol_renderer_private_data_slot.h",
+    "vn_protocol_renderer_query_pool.h",
+    "vn_protocol_renderer_queue.h",
+    "vn_protocol_renderer_render_pass.h",
+    "vn_protocol_renderer_sampler.h",
+    "vn_protocol_renderer_sampler_ycbcr_conversion.h",
+    "vn_protocol_renderer_semaphore.h",
+    "vn_protocol_renderer_shader_module.h",
+    "vn_protocol_renderer_structs.h",
+    "vn_protocol_renderer_transport.h",
+    "vn_protocol_renderer_types.h",
+    "vn_protocol_renderer_util.h",
+]
+
+genrule(
+    name = "vn_protocol_renderer_gen",
+    srcs = glob([
+        "templates/**",
+        "xmls/**",
+    ]),
+    outs = VN_PROTOCOL_RENDERER_HEADERS,
+    cmd = """
+        SRCDIR=$$(dirname $$(dirname $(location xmls/vk.xml)))
+        $(location :vn_protocol_py) --srcdir $$SRCDIR --outdir $(@D) --renderer
+    """,
+    tools = [":vn_protocol_py"],
+)
+
+cc_library(
+    name = "vn_protocol_renderer",
+    hdrs = [":vn_protocol_renderer_gen"],
+    includes = ["."],
+    deps = [
+        ":vulkan_headers",
+    ],
+)
+
+VN_PROTOCOL_DRIVER_HEADERS = [
+    "vn_protocol_driver.h",
+    "vn_protocol_driver_acceleration_structure.h",
+    "vn_protocol_driver_buffer.h",
+    "vn_protocol_driver_buffer_view.h",
+    "vn_protocol_driver_command_buffer.h",
+    "vn_protocol_driver_command_pool.h",
+    "vn_protocol_driver_cs.h",
+    "vn_protocol_driver_defines.h",
+    "vn_protocol_driver_descriptor_heap.h",
+    "vn_protocol_driver_descriptor_pool.h",
+    "vn_protocol_driver_descriptor_set.h",
+    "vn_protocol_driver_descriptor_set_layout.h",
+    "vn_protocol_driver_descriptor_update_template.h",
+    "vn_protocol_driver_device.h",
+    "vn_protocol_driver_device_memory.h",
+    "vn_protocol_driver_event.h",
+    "vn_protocol_driver_fence.h",
+    "vn_protocol_driver_framebuffer.h",
+    "vn_protocol_driver_handles.h",
+    "vn_protocol_driver_host_copy.h",
+    "vn_protocol_driver_image.h",
+    "vn_protocol_driver_image_view.h",
+    "vn_protocol_driver_info.h",
+    "vn_protocol_driver_instance.h",
+    "vn_protocol_driver_pipeline.h",
+    "vn_protocol_driver_pipeline_cache.h",
+    "vn_protocol_driver_pipeline_layout.h",
+    "vn_protocol_driver_private_data_slot.h",
+    "vn_protocol_driver_query_pool.h",
+    "vn_protocol_driver_queue.h",
+    "vn_protocol_driver_render_pass.h",
+    "vn_protocol_driver_sampler.h",
+    "vn_protocol_driver_sampler_ycbcr_conversion.h",
+    "vn_protocol_driver_semaphore.h",
+    "vn_protocol_driver_shader_module.h",
+    "vn_protocol_driver_structs.h",
+    "vn_protocol_driver_transport.h",
+    "vn_protocol_driver_types.h",
+]
+
+genrule(
+    name = "vn_protocol_driver_gen",
+    srcs = glob([
+        "templates/**",
+        "xmls/**",
+    ]),
+    outs = VN_PROTOCOL_DRIVER_HEADERS,
+    cmd = """
+        SRCDIR=$$(dirname $$(dirname $(location xmls/vk.xml)))
+        $(location :vn_protocol_py) --srcdir $$SRCDIR --outdir $(@D)
+    """,
+    tools = [":vn_protocol_py"],
+)
+
+cc_library(
+    name = "vn_protocol_driver",
+    hdrs = [":vn_protocol_driver_gen"],
+    includes = ["."],
+    deps = [
+        ":vulkan_headers",
+    ],
+)

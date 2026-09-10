@@ -66,6 +66,8 @@ message VulkanPhysicalDevice {
   enum Type {
     TYPE_OTHER = 0;
     TYPE_DISCRETE_GPU = 1;
+    TYPE_INTEGRATED_GPU = 2;
+    TYPE_CPU = 3;
   }
   optional Type type = 3;
 

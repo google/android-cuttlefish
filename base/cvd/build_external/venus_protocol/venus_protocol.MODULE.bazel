@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "venus_protocol",
+    build_file = "@//build_external/venus_protocol:BUILD.venus_protocol.bazel",
+    commit = "ca19b6358d7cc491bc3e4de76f04c6700876a8fa",  # v1.1.3
+    remote = "https://gitlab.freedesktop.org/virgl/venus-protocol",
+)

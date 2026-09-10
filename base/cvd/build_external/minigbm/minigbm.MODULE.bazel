@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "minigbm",
+    build_file = "@//build_external/minigbm:BUILD.minigbm.bazel",
+    commit = "34003c9c8b50661346e49b06389a028ce970f539",
+    remote = "https://chromium.googlesource.com/chromiumos/platform/minigbm",
+)

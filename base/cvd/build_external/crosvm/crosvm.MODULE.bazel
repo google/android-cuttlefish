@@ -30,6 +30,8 @@ crosvm_bin.spec(
         "net_util",
         "qcow",
         "usb",
+        "virgl_renderer",
+        "wl-dmabuf",
     ],
     # TODO: schuffelen - fix the sandbox
     git = CROSVM_REMOTE,
@@ -42,6 +44,8 @@ crosvm_bin.annotation(
     patch_args = ["-p1"],
     deps = [
         "@@//:gfxstream_backend_import",
+        "@@//:minigbm_import",
+        "@@//:virglrenderer_import",
     ],
     rustc_flags = [
         # Look for shared libraries in the same directory as the binary.
@@ -51,8 +55,14 @@ crosvm_bin.annotation(
 
 crosvm_bin.annotation(
     crate = "rutabaga_gfx",
+    crate_features = [
+        "gbm",
+        "virgl_renderer",
+    ],
     deps = [
         "@@//:gfxstream_backend_import",
+        "@@//:minigbm_import",
+        "@@//:virglrenderer_import",
     ],
     rustc_flags = [
         # Look for shared libraries in the same directory as this object.
@@ -60,9 +70,15 @@ crosvm_bin.annotation(
     ],
     build_script_env = {
         # Disable the build script from trying to automatically locate
-        # Gfxstream as the dep is directly provided above.
+        # Gfxstream, minigbm, and virglrenderer as the dep are directly provided above.
+        "CARGO_FEATURE_GBM_STUB": "bloh",
         "CARGO_FEATURE_GFXSTREAM_STUB": "blah",
+        "CARGO_FEATURE_VIRGL_RENDERER_STUB": "bleh",
     },
+    patch_args = ["-p1"],
+    patches = [
+        "@//build_external/crosvm:PATCH.rutabaga_gfx_build_rs.patch",
+    ],
 )
 
 crosvm_bin.annotation(
