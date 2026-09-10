@@ -79,6 +79,16 @@ Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
               "Invalid lens_facing value: " << lens_facing);
   }
 
+  std::optional<int> instance_index;
+  auto instance_it = props.find("instance");
+  if (instance_it != props.end()) {
+    int idx = 0;
+    CF_EXPECT(android::base::ParseInt(instance_it->second, &idx),
+              "Failed to parse instance index: " << instance_it->second);
+    CF_EXPECT(idx >= 0, "instance index must be non-negative: " << idx);
+    instance_index = idx;
+  }
+
   std::optional<CuttlefishConfig::MediaConfig::V4l2StreamProxyConfig>
       v4l2_stream_proxy;
   if (type == CuttlefishConfig::MediaType::kV4l2StreamProxy) {
@@ -87,6 +97,8 @@ Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
     auto source_it = props.find("input_path");
     CF_EXPECT(source_it != props.end(),
               "Missing 'input_path' for v4l2_stream_proxy");
+    CF_EXPECT(!source_it->second.empty(),
+              "'input_path' must not be empty for v4l2_stream_proxy");
     stream_config.input_path = source_it->second;
 
     auto width_it = props.find("input_width");
@@ -110,6 +122,8 @@ Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
     auto fps_it = props.find("input_fps");
     CF_EXPECT(fps_it != props.end(),
               "Missing 'input_fps' for v4l2_stream_proxy");
+    CF_EXPECT(!fps_it->second.empty(),
+              "'input_fps' must not be empty for v4l2_stream_proxy");
     stream_config.input_fps = fps_it->second;
 
     v4l2_stream_proxy = stream_config;
@@ -118,6 +132,7 @@ Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
   return CuttlefishConfig::MediaConfig{
       .type = type,
       .lens_facing = lens_facing,
+      .instance_index = instance_index,
       .v4l2_stream_proxy = v4l2_stream_proxy,
   };
 }

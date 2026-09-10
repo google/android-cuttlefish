@@ -34,10 +34,11 @@ Result<std::vector<std::string>> GenerateMediaFlags(
   int has_media_count =
       std::count_if(cfg.instances().rbegin(), cfg.instances().rend(),
                     [](const auto& v) { return v.has_media(); });
-  CF_EXPECT(has_media_count == 0 || cfg.instances().size() == 1,
+  CF_EXPECT(has_media_count <= 1,
             "TODO(b/520098369): support media devices for multiple instances");
   std::vector<std::string> flags;
-  for (const auto& instance : cfg.instances()) {
+  for (size_t i = 0; i < cfg.instances().size(); ++i) {
+    const auto& instance = cfg.instances(i);
     if (instance.has_media()) {
       for (const auto& device : instance.media().devices()) {
         std::string flag = "--media=";
@@ -62,6 +63,9 @@ Result<std::vector<std::string>> GenerateMediaFlags(
         }
         if (device.has_lens_facing()) {
           flag += ":lens_facing=" + device.lens_facing();
+        }
+        if (cfg.instances().size() > 1) {
+          flag += ":instance=" + std::to_string(i);
         }
         flags.push_back(flag);
       }

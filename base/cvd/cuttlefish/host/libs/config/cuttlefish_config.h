@@ -124,6 +124,7 @@ class CuttlefishConfig {
   struct MediaConfig {
     MediaType type;
     std::string lens_facing;
+    std::optional<int> instance_index;
 
     struct V4l2StreamProxyConfig {
       std::string input_path;
