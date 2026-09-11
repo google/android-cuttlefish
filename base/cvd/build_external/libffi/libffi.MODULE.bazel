@@ -1,8 +1,19 @@
-git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-
-git_repository(
-    name = "libffi",
+archive_override(
+    module_name = "libffi",
     build_file = "@//build_external/libffi:BUILD.libffi.bazel",
-    commit = "5dcb741f1544c5e18c9dbf96aeb8b61cc556a616",  # v3.3
-    remote = "https://github.com/libffi/libffi.git",
+    files = {
+        "MODULE.bazel": "@//build_external/libffi:internal.MODULE.bazel",
+        "gen_ffi_header.sh": "@//build_external/libffi:gen_ffi_header.sh",
+        "linux-arm64/ffi.h": "@//build_external/libffi/linux-arm64:ffi.h",
+        "linux-arm64/fficonfig.h": "@//build_external/libffi/linux-arm64:fficonfig.h",
+        "linux-arm64/ffitarget.h": "@//build_external/libffi/linux-arm64:ffitarget.h",
+        "linux-riscv64/ffi.h": "@//build_external/libffi/linux-riscv64:ffi.h",
+        "linux-riscv64/fficonfig.h": "@//build_external/libffi/linux-riscv64:fficonfig.h",
+        "linux-x86/ffi.h": "@//build_external/libffi/linux-x86:ffi.h",
+        "linux-x86/fficonfig.h": "@//build_external/libffi/linux-x86:fficonfig.h",
+        "linux-x86/ffitarget.h": "@//build_external/libffi/linux-x86:ffitarget.h",
+    },
+    integrity = "sha256-cvunkicD3fp6Ao1ROsFahcjVTI1n9V+lpIAohdxlIFY=",
+    strip_prefix = "libffi-3.3",
+    urls = ["https://github.com/libffi/libffi/releases/download/v3.3/libffi-3.3.tar.gz"],
 )
