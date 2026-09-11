@@ -19,14 +19,12 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <tuple>
 #include <unordered_set>
 #include <vector>
 
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
-#include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
@@ -35,7 +33,7 @@
 
 namespace cuttlefish {
 
-class AndroidBuildApi : public BuildApi {
+class AndroidBuildApi {
  public:
   AndroidBuildApi() = delete;
   AndroidBuildApi(AndroidBuildApi&&) = delete;
@@ -46,14 +44,20 @@ class AndroidBuildApi : public BuildApi {
       std::chrono::seconds retry_period = std::chrono::seconds::zero(),
       CasDownloader* cas_downloader = nullptr);
 
-  Result<Build> GetBuild(const BuildString& build_string) override;
+  Result<DeviceBuild> GetBuild(const DeviceBuildString& build_string);
+  Result<DirectoryBuild> GetBuild(const DirectoryBuildString& build_string);
 
-  Result<std::string> DownloadFile(const Build& build,
+  Result<std::string> DownloadFile(const DeviceBuild& build,
                                    const std::string& target_directory,
-                                   const std::string& artifact_name) override;
+                                   const std::string& artifact_name);
+  Result<std::string> DownloadFile(const DirectoryBuild& build,
+                                   const std::string& target_directory,
+                                   const std::string& artifact_name);
 
-  Result<SeekableZipSource> FileReader(
-      const Build&, const std::string& artifact_name) override;
+  Result<SeekableZipSource> FileReader(const DeviceBuild&,
+                                       const std::string& artifact_name);
+  Result<SeekableZipSource> FileReader(const DirectoryBuild&,
+                                       const std::string& artifact_name);
 
  private:
   struct BuildInfo {
@@ -104,6 +108,9 @@ class AndroidBuildApi : public BuildApi {
   Result<void> ArtifactToFile(const Build& build, const std::string& artifact,
                               const std::string& path);
 
+  Result<std::string> DownloadArtifact(const Build& build,
+                                       const std::string& target_directory,
+                                       const std::string& artifact_name);
   Result<std::string> DownloadTargetFile(const Build& build,
                                          const std::string& target_directory,
                                          const std::string& artifact_name);
@@ -111,26 +118,11 @@ class AndroidBuildApi : public BuildApi {
       const Build& build, const std::string& target_directory,
       const std::string& artifact_name);
 
-  Result<Build> GetBuild(const DeviceBuildString& build_string);
-  Result<Build> GetBuild(const DirectoryBuildString& build_string);
-
-  Result<SeekableZipSource> FileReader(const DeviceBuild&,
-                                       const std::string& artifact_name);
-  Result<SeekableZipSource> FileReader(const DirectoryBuild&,
-                                       const std::string& artifact_name);
-
   HttpClient& http_client_;
   AndroidBuildUrl& android_build_url_;
   CredentialSource* credential_source_;
   std::chrono::seconds retry_period_;
   CasDownloader* cas_downloader_;
 };
-
-std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build);
-
-std::optional<std::string> GetFilepath(const Build& build);
-
-std::string ConstructTargetFilepath(const std::string& directory,
-                                    const std::string& filename);
 
 }  // namespace cuttlefish
