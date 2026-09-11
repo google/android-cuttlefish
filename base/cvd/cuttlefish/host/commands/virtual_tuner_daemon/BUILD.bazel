@@ -50,3 +50,36 @@ cf_cc_test(
         ":virtual_tuner_cc_proto",
     ],
 )
+
+cf_cc_library(
+    name = "virtual_tuner_audio",
+    srcs = [
+        "audio_generator.cpp",
+        "pcm_stream_server.cpp",
+    ],
+    hdrs = [
+        "audio_generator.h",
+        "pcm_stream_server.h",
+    ],
+    deps = [
+        ":tuner_state",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
+cf_cc_test(
+    name = "virtual_tuner_audio_test",
+    srcs = [
+        "virtual_tuner_audio_test.cpp",
+    ],
+    deps = [
+        ":tuner_state",
+        ":virtual_tuner_audio",
+        ":virtual_tuner_cc_proto",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/result",
+    ],
+)
