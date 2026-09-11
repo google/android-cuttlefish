@@ -116,16 +116,27 @@ Result<void> ServerLoopImpl::Run() {
   CF_EXPECT(process_monitor.StartAndMonitorProcesses());
   device_status_ = DeviceStatus::kActive;
 
+  bool process_monitor_active = true;
   while (true) {
     // TODO: use select to handle simultaneous connections.
     SharedFDSet read_set;
     read_set.Set(server_);
-    read_set.Set(process_monitor.status());
+    if (process_monitor_active) {
+      read_set.Set(process_monitor.status());
+    }
 
     Select(&read_set, nullptr, nullptr, nullptr);
 
-    if (read_set.IsSet(process_monitor.status())) {
-      return CF_ERR("process monitor has died");
+    if (process_monitor_active && read_set.IsSet(process_monitor.status())) {
+      LOG(INFO) << "Process monitor has exited (guest VM shut down). Server "
+                   "loop continuing to listen for status/restart.";
+      process_monitor_active = false;
+      auto stop_result = process_monitor.StopMonitoredProcesses();
+      if (!stop_result.has_value()) {
+        LOG(WARNING) << "Failed to reap process monitor: "
+                     << stop_result.error();
+      }
+      continue;
     }
 
     CF_EXPECT(read_set.IsSet(server_));
