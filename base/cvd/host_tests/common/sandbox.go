@@ -68,6 +68,8 @@ func NewSandbox(t *testing.T) *Sandbox {
 		t.Fatalf("failed to prepare network sandbox: %v", err)
 	}
 
+	installDnsmasqShim(t, s)
+
 	return s
 }
 
