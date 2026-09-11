@@ -228,6 +228,17 @@ jobs:
       with:
         name: cvd-unit-tests-logs
         path: base/cvd/bazel-out/k8-fastbuild/testlogs
+  bazel-7-readiness:
+    runs-on: ubuntu-24.04
+    container:
+      image: debian:unstable
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      with:
+        persist-credentials: false
+    - name: Check bazel 7 readiness
+      uses: ./.github/actions/bazel-7-readiness
   bazel-9-readiness:
     runs-on: ubuntu-24.04
     steps:
