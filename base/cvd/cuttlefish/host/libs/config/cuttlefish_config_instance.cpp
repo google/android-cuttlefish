@@ -231,6 +231,14 @@ void CuttlefishConfig::MutableInstanceSpecific::
     set_new_vbmeta_system_dlkm_image(const std::string& image) {
   (*Dictionary())[kNewVbmetaSystemDlkmImage] = image;
 }
+static constexpr char kAndroidEspImage[] = "android_esp_image";
+std::string CuttlefishConfig::InstanceSpecific::android_esp_image() const {
+  return (*Dictionary())[kAndroidEspImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_android_esp_image(
+    const std::string& android_esp_image) {
+  (*Dictionary())[kAndroidEspImage] = android_esp_image;
+}
 static constexpr char kOtherosEspImage[] = "otheros_esp_image";
 std::string CuttlefishConfig::InstanceSpecific::otheros_esp_image() const {
   return (*Dictionary())[kOtherosEspImage].asString();
@@ -1454,7 +1462,8 @@ std::string CuttlefishConfig::InstanceSpecific::ap_uboot_env_image_path()
   return AbsolutePath(PerInstancePath("ap_uboot_env.img"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::esp_image_path() const {
+std::string CuttlefishConfig::InstanceSpecific::generated_esp_image_path()
+    const {
   return AbsolutePath(PerInstancePath("esp.img"));
 }
 
@@ -1469,7 +1478,10 @@ std::string CuttlefishConfig::InstanceSpecific::audio_server_path() const {
 }
 
 BootFlow CuttlefishConfig::InstanceSpecific::boot_flow() const {
-  const bool android_efi_loader_flow_used = !android_efi_loader().empty();
+  // The android_esp image is either generated from the EFI loader or
+  // prebuilt by the Android build.
+  const bool android_efi_loader_flow_used =
+      !android_efi_loader().empty() || !android_esp_image().empty();
 
   const bool chromeos_disk_flow_used = !chromeos_disk().empty();
 
