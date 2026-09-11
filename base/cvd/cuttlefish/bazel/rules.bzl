@@ -18,6 +18,7 @@ invocation targets.
 """
 
 load("@aspect_rules_lint//format:defs.bzl", "format_test")
+load("@bazel_features//:features.bzl", "bazel_features")
 load("@cc_compatibility_proxy//:proxy.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
@@ -29,6 +30,26 @@ visibility(["//..."])
 
 COPTS = BUILD_VAR_COPTS
 LINKOPTS = BUILD_VAR_LINKOPTS
+
+# buildifier: disable=unused-variable
+def _fallback_macro(inherit_attrs = None, attrs = {}, implementation = None):
+    def _wrapper(name, **kwargs):
+        call_kwargs = dict(kwargs)
+        for k, a in attrs.items():
+            if k not in call_kwargs:
+                if type(a) in ["string", "bool", "int", "list"]:
+                    call_kwargs[k] = a
+                elif hasattr(a, "default"):
+                    call_kwargs[k] = a.default
+                elif k.endswith("_enabled"):
+                    call_kwargs[k] = True
+                elif k in ["copts", "linkopts", "srcs", "hdrs", "deps", "data", "features"]:
+                    call_kwargs[k] = []
+        return implementation(name = name, **call_kwargs)
+    return _wrapper
+
+_macro = getattr(bazel_features.globals, "macro", None)
+macro = _macro if _macro != None else _fallback_macro
 
 def _cf_build_test_implementation(name, srcs, **kwargs):
     native.filegroup(
