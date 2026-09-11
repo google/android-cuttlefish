@@ -19,6 +19,7 @@ package e2etests
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -34,6 +35,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 )
@@ -131,6 +133,43 @@ func (tc *TestContext) RunAdbWaitForDevice() error {
 	return nil
 }
 
+// Waits for a specific device serial to connect to adb and become reachable.
+func (tc *TestContext) RunAdbWaitForDeviceSerial(serial string) error {
+	return tc.WaitForDeviceOnline(serial, 45)
+}
+
+// Checks if adb shell is reachable for a given device serial.
+func (tc *TestContext) IsAdbShellReachable(serial string) bool {
+	res, err := tc.RunCmd("timeout", "5s", "adb", "-s", serial, "shell", "echo", "ping")
+	return err == nil && strings.Contains(res.Stdout, "ping")
+}
+
+// Waits for a device serial to become unreachable via adb shell within the given timeout.
+func (tc *TestContext) WaitForDeviceOffline(serial string, timeoutSeconds int) error {
+	for i := 0; i < timeoutSeconds; i++ {
+		if !tc.IsAdbShellReachable(serial) {
+			return nil
+		}
+		time.Sleep(1 * time.Second)
+	}
+	return fmt.Errorf("device %s did not go offline within %d seconds", serial, timeoutSeconds)
+}
+
+// Waits for a device serial to become reachable via adb shell within the given timeout.
+func (tc *TestContext) WaitForDeviceOnline(serial string, timeoutSeconds int) error {
+	tc.RunCmd("adb", "connect", serial)
+	for i := 0; i < timeoutSeconds; i++ {
+		if tc.IsAdbShellReachable(serial) {
+			return nil
+		}
+		time.Sleep(1 * time.Second)
+		if i%5 == 0 {
+			tc.RunCmd("adb", "connect", serial)
+		}
+	}
+	return fmt.Errorf("device %s did not become online within %d seconds", serial, timeoutSeconds)
+}
+
 // Runs the given command with the existing envvars.
 func (tc *TestContext) RunCmd(args ...string) (CommandOutput, error) {
 	command := []string{}
@@ -191,7 +230,7 @@ func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
 	if credentialArg != "" {
 		fetchCmd = append(fetchCmd, fmt.Sprintf("--credential_source=%s", credentialArg))
 	}
-	res, err := tc.RunCmd(fetchCmd...);
+	res, err := tc.RunCmd(fetchCmd...)
 	if err != nil {
 		log.Printf("Failed to fetch: %w", err)
 		return res, err
@@ -233,19 +272,142 @@ func (tc *TestContext) CVDCreate(args CreateArgs) (CommandOutput, error) {
 	return res, nil
 }
 
-// Performs `cvd stop`.
-func (tc *TestContext) CVDStop() error {
+// Runs a cvd command with the test environment (HOME=tempdir).
+func (tc *TestContext) RunCVD(args ...string) (CommandOutput, error) {
 	tempdirEnv := map[string]string{
 		"HOME": tc.tempdir,
 	}
+	cvdCmd := append([]string{tc.TargetBin()}, args...)
+	return tc.RunCmdWithEnv(cvdCmd, tempdirEnv)
+}
 
-	stopCmd := []string{tc.TargetBin(), "stop"}
-	if _, err := tc.RunCmdWithEnv(stopCmd, tempdirEnv); err != nil {
-		log.Printf("Failed to stop instance(s): %w", err)
+// Performs `cvd stop <args>`.
+func (tc *TestContext) CVDStop(args ...string) error {
+	stopCmd := append([]string{"stop"}, args...)
+	if _, err := tc.RunCVD(stopCmd...); err != nil {
+		log.Printf("Failed to stop instance(s): %v", err)
 		return err
 	}
-
 	return nil
+}
+
+// Performs `cvd start <args>`.
+func (tc *TestContext) CVDStart(args ...string) error {
+	startCmd := append([]string{"start"}, args...)
+	if _, err := tc.RunCVD(startCmd...); err != nil {
+		log.Printf("Failed to start instance(s): %v", err)
+		return err
+	}
+	return nil
+}
+
+// Performs `cvd restart <args>`.
+func (tc *TestContext) CVDRestart(args ...string) error {
+	restartCmd := append([]string{"restart"}, args...)
+	if _, err := tc.RunCVD(restartCmd...); err != nil {
+		log.Printf("Failed to restart instance(s): %v", err)
+		return err
+	}
+	return nil
+}
+
+// Performs `cvd status <args>`.
+func (tc *TestContext) CVDStatus(args ...string) (CommandOutput, error) {
+	statusCmd := append([]string{"status"}, args...)
+	return tc.RunCVD(statusCmd...)
+}
+
+// Performs `cvd --instance_name=<instanceName> stop <args>`.
+func (tc *TestContext) CVDInstanceStop(instanceName string, args ...string) error {
+	cmd := []string{fmt.Sprintf("--instance_name=%s", instanceName), "stop"}
+	cmd = append(cmd, args...)
+	if _, err := tc.RunCVD(cmd...); err != nil {
+		log.Printf("Failed to stop instance %s: %v", instanceName, err)
+		return err
+	}
+	return nil
+}
+
+// Performs `cvd --instance_name=<instanceName> start <args>`.
+func (tc *TestContext) CVDInstanceStart(instanceName string, args ...string) error {
+	cmd := []string{fmt.Sprintf("--instance_name=%s", instanceName), "start"}
+	cmd = append(cmd, args...)
+	if _, err := tc.RunCVD(cmd...); err != nil {
+		log.Printf("Failed to start instance %s: %v", instanceName, err)
+		return err
+	}
+	return nil
+}
+
+// Performs `cvd --instance_name=<instanceName> restart <args>`.
+func (tc *TestContext) CVDInstanceRestart(instanceName string, args ...string) error {
+	cmd := []string{fmt.Sprintf("--instance_name=%s", instanceName), "restart"}
+	cmd = append(cmd, args...)
+	if _, err := tc.RunCVD(cmd...); err != nil {
+		log.Printf("Failed to restart instance %s: %v", instanceName, err)
+		return err
+	}
+	return nil
+}
+
+// Performs `cvd --instance_name=<instanceName> status <args>`.
+func (tc *TestContext) CVDInstanceStatus(instanceName string, args ...string) (CommandOutput, error) {
+	cmd := []string{fmt.Sprintf("--instance_name=%s", instanceName), "status"}
+	cmd = append(cmd, args...)
+	return tc.RunCVD(cmd...)
+}
+
+// CVDInstanceStatusEntry represents a single instance's status in `cvd status --print` JSON output.
+type CVDInstanceStatusEntry struct {
+	AdbPort        int    `json:"adb_port"`
+	AdbSerial      string `json:"adb_serial"`
+	AssemblyDir    string `json:"assembly_dir"`
+	InstanceDir    string `json:"instance_dir"`
+	InstanceName   string `json:"instance_name"`
+	Status         string `json:"status"`
+	WebAccess      string `json:"web_access"`
+	WebRtcDeviceID string `json:"webrtc_device_id"`
+}
+
+// ParseCVDStatusJSON parses the JSON output returned by `cvd status --print`.
+// It handles both single-instance array `[...]` and group object `{"instances": [...]}` formats.
+func ParseCVDStatusJSON(output string) ([]CVDInstanceStatusEntry, error) {
+	startArray := strings.Index(output, "[")
+	startObj := strings.Index(output, "{")
+
+	if startArray == -1 && startObj == -1 {
+		return nil, fmt.Errorf("no json found in cvd status output: %s", output)
+	}
+
+	if startArray != -1 && (startObj == -1 || startArray < startObj) {
+		endArray := strings.LastIndex(output, "]")
+		if endArray == -1 || endArray < startArray {
+			return nil, fmt.Errorf("malformed json array in cvd status output: %s", output)
+		}
+		jsonStr := strings.TrimSpace(output[startArray : endArray+1])
+		var entries []CVDInstanceStatusEntry
+		if err := json.Unmarshal([]byte(jsonStr), &entries); err != nil {
+			return nil, fmt.Errorf("failed to parse cvd status array %q: %w", jsonStr, err)
+		}
+		return entries, nil
+	}
+
+	endObj := strings.LastIndex(output, "}")
+	if endObj == -1 || endObj < startObj {
+		return nil, fmt.Errorf("malformed json object in cvd status output: %s", output)
+	}
+	jsonStr := strings.TrimSpace(output[startObj : endObj+1])
+	var group struct {
+		Instances *[]CVDInstanceStatusEntry `json:"instances"`
+	}
+	if err := json.Unmarshal([]byte(jsonStr), &group); err == nil && group.Instances != nil {
+		return *group.Instances, nil
+	}
+	var single CVDInstanceStatusEntry
+	if err := json.Unmarshal([]byte(jsonStr), &single); err == nil && (single.InstanceName != "" || single.Status != "") {
+		return []CVDInstanceStatusEntry{single}, nil
+	}
+	return nil, fmt.Errorf("failed to parse cvd status object %q", jsonStr)
 }
 
 // Performs `HOME=<testdir> bin/launch_cvd <args>`.
@@ -359,6 +521,14 @@ func (tc *TestContext) GetSyspropString(key string) (string, error) {
 	res, err := tc.RunCmd("adb", "shell", "getprop", key)
 	if err != nil {
 		return "", fmt.Errorf("failed to get sysprop %s: %w", key, err)
+	}
+	return strings.TrimSpace(res.Stdout), nil
+}
+
+func (tc *TestContext) GetSyspropStringForDevice(serial, key string) (string, error) {
+	res, err := tc.RunCmd("adb", "-s", serial, "shell", "getprop", key)
+	if err != nil {
+		return "", fmt.Errorf("failed to get sysprop %s on device %s: %w", key, serial, err)
 	}
 	return strings.TrimSpace(res.Stdout), nil
 }
