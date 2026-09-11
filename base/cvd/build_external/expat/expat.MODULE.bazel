@@ -1,10 +1,10 @@
 archive_override(
     module_name = "expat",
     build_file = "@//build_external/expat:BUILD.expat.bazel",
-    strip_prefix = "expat-2.6.4",
-    urls = ["https://github.com/libexpat/libexpat/releases/download/R_2_6_4/expat-2.6.4.tar.bz2"],
     files = {
         "MODULE.bazel": "//build_external/expat:internal.MODULE.bazel",
         "expat_config.h": "//build_external/expat:expat_config.h",
     },
+    strip_prefix = "expat-2.6.4",
+    urls = ["https://github.com/libexpat/libexpat/releases/download/R_2_6_4/expat-2.6.4.tar.bz2"],
 )
