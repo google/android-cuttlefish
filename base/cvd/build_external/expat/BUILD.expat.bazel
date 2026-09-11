@@ -1,16 +1,15 @@
-load("@//:build_variables.bzl", "COPTS")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 package(
     default_visibility = [
-        "@//:android_cuttlefish",
-        "@wayland//:__subpackages__",
+        "//visibility:public",
     ],
 )
 
 cc_library(
     name = "expat",
     srcs = [
+        "expat_config.h",
         "lib/xmlparse.c",
         "lib/xmlrole.c",
         "lib/xmltok.c",
@@ -36,11 +35,5 @@ cc_library(
     copts = [
         "-DXML_POOR_ENTROPY",
     ],
-    cxxopts = COPTS,
-    includes = [
-        "expat/lib",
-    ],
-    deps = [
-        "@//build_external/expat:expat_config",
-    ],
+    strip_include_prefix = "lib",
 )
