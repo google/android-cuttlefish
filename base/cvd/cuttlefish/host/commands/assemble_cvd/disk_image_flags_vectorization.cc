@@ -22,6 +22,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 
+#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/android_efi_loader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
@@ -32,9 +33,11 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
+#include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -206,6 +209,18 @@ Result<void> DiskImageFlagsVectorization(
         const_cast<const CuttlefishConfig&>(config);
     const CuttlefishConfig::InstanceSpecific const_instance =
         const_config.ForInstance(num);
+
+    // Use the android_esp image prebuilt by the Android build, unless an EFI
+    // loader to generate it from was given or found, or another OS was
+    // requested.
+    const std::string prebuilt_esp_image =
+        system_image_dir.ForIndex(instance_index) + "/android_esp.img";
+    if ((VmManagerIsCrosvm(config.vm_manager()) ||
+         VmManagerIsQemu(config.vm_manager())) &&
+        const_instance.boot_flow() == BootFlow::Android &&
+        FileExists(prebuilt_esp_image)) {
+      instance.set_android_esp_image(prebuilt_esp_image);
+    }
 
     instance.set_data_image(system_image_dir.ForIndex(instance_index) +
                             "/userdata.img");
