@@ -33,7 +33,9 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 
 DEFINE_string(android_efi_loader, CF_DEFAULTS_ANDROID_EFI_LOADER,
-              "Location of android EFI loader for android efi load flow.");
+              "Location of android EFI loader for android efi load flow. An "
+              "ESP image is generated from it and used instead of a prebuilt "
+              "android_esp.img from the system image directory.");
 
 namespace cuttlefish {
 namespace {
