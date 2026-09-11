@@ -1,8 +1,18 @@
-git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-
-git_repository(
-    name = "avb",
+git_override(
+    module_name = "avb",
     build_file = "@//build_external/avb:BUILD.avb.bazel",
     commit = "761178607206f4cb2af79ed9eec52d8cbd814adb",
+    patch_cmds = [
+        """cat << 'EOF' > MODULE.bazel
+module(
+    name = "avb",
+    version = "0.1",
+)
+
+bazel_dep(name = "boringssl", version = "0.20260813.0")
+bazel_dep(name = "rules_cc", version = "0.2.19")
+EOF
+""",
+    ],
     remote = "https://android.googlesource.com/platform/external/avb",
 )
