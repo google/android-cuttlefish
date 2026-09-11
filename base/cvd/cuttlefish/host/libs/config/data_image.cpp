@@ -237,9 +237,19 @@ Result<void> InitializeDataImage(
   }
 }
 
-static bool EspRequiredForBootFlow(BootFlow flow) {
-  return flow == BootFlow::AndroidEfiLoader || flow == BootFlow::ChromeOs ||
-         flow == BootFlow::Linux || flow == BootFlow::Fuchsia;
+static bool GeneratedEspRequired(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  switch (instance.boot_flow()) {
+    case BootFlow::AndroidEfiLoader:
+      // Empty means a prebuilt android_esp image is used as-is.
+      return !instance.android_efi_loader().empty();
+    case BootFlow::ChromeOs:
+    case BootFlow::Linux:
+    case BootFlow::Fuchsia:
+      return true;
+    default:
+      return false;
+  }
 }
 
 static bool EspRequiredForAPBootFlow(APBootFlow ap_boot_flow) {
@@ -316,13 +326,14 @@ static bool BuildOSImage(const CuttlefishConfig::InstanceSpecific& instance) {
   switch (instance.boot_flow()) {
     case BootFlow::AndroidEfiLoader: {
       auto android_efi_loader =
-          AndroidEfiLoaderEspBuilder(instance.esp_image_path());
+          AndroidEfiLoaderEspBuilder(instance.generated_esp_image_path());
       android_efi_loader.EfiLoaderPath(instance.android_efi_loader())
           .Architecture(instance.target_arch());
       return android_efi_loader.Build();
     }
     case BootFlow::ChromeOs: {
-      auto linux_esp_builder = LinuxEspBuilder(instance.esp_image_path());
+      auto linux_esp_builder =
+          LinuxEspBuilder(instance.generated_esp_image_path());
       InitChromeOsArgs(linux_esp_builder);
 
       linux_esp_builder.Root("/dev/vda3")
@@ -332,7 +343,8 @@ static bool BuildOSImage(const CuttlefishConfig::InstanceSpecific& instance) {
       return linux_esp_builder.Build();
     }
     case BootFlow::Linux: {
-      auto linux_esp_builder = LinuxEspBuilder(instance.esp_image_path());
+      auto linux_esp_builder =
+          LinuxEspBuilder(instance.generated_esp_image_path());
       InitLinuxArgs(instance.target_arch(), linux_esp_builder);
 
       linux_esp_builder.Root("/dev/vda2")
@@ -346,7 +358,7 @@ static bool BuildOSImage(const CuttlefishConfig::InstanceSpecific& instance) {
       return linux_esp_builder.Build();
     }
     case BootFlow::Fuchsia: {
-      auto fuchsia = FuchsiaEspBuilder(instance.esp_image_path());
+      auto fuchsia = FuchsiaEspBuilder(instance.generated_esp_image_path());
       return fuchsia.Architecture(instance.target_arch())
           .Zedboot(instance.fuchsia_zedboot_path())
           .MultibootBinary(instance.fuchsia_multiboot_bin_path())
@@ -366,9 +378,8 @@ Result<void> InitializeEspImage(
     VLOG(0) << "creating esp_image: " << instance.ap_esp_image_path();
     CF_EXPECT(BuildAPImage(config, instance));
   }
-  if (EspRequiredForBootFlow(instance.boot_flow()) &&
-      !VmManagerIsGem5(config)) {
-    VLOG(0) << "creating esp_image: " << instance.esp_image_path();
+  if (GeneratedEspRequired(instance) && !VmManagerIsGem5(config)) {
+    VLOG(0) << "creating esp_image: " << instance.generated_esp_image_path();
     CF_EXPECT(BuildOSImage(instance));
   }
   return {};
