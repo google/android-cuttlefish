@@ -78,6 +78,30 @@ func TestMessages(t *testing.T) {
 	}
 }
 
+func TestGetMessagesBounds(t *testing.T) {
+	ps := NewPolledSet()
+	c := ps.NewConnection(newDevice("d1", nil, 0, ""))
+	c.Send("msg1")
+	c.Send("msg2")
+	c.Send("msg3")
+
+	// Negative start is clamped to the beginning of the buffer.
+	if msgs := c.GetMessages(-1, -1); len(msgs) != 3 {
+		t.Errorf("negative start: got %d messages, want 3", len(msgs))
+	}
+	// start past the end of the buffer returns an empty slice.
+	if msgs := c.GetMessages(10, -1); len(msgs) != 0 {
+		t.Errorf("start past end: got %d messages, want 0", len(msgs))
+	}
+	if msgs := c.GetMessages(10, 2); len(msgs) != 0 {
+		t.Errorf("start past end with count: got %d messages, want 0", len(msgs))
+	}
+	// A count larger than the remaining messages is clamped.
+	if msgs := c.GetMessages(2, 100); len(msgs) != 1 {
+		t.Errorf("oversized count: got %d messages, want 1", len(msgs))
+	}
+}
+
 func TestDestroy(t *testing.T) {
 	ps := NewPolledSet()
 	c := ps.NewConnection(newDevice("d1", nil, 0, ""))
