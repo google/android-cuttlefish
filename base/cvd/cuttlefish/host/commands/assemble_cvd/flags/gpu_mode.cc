@@ -30,8 +30,8 @@
 
 DEFINE_string(
     gpu_mode, CF_DEFAULTS_GPU_MODE,
-    "What gpu configuration to use.  One of {auto, custom, drm_virgl, "
-    "gfxstream, gfxstream_guest_angle, gfxstream_guest_angle_host_lavapipe, "
+    "What gpu configuration to use.  One of {auto, custom, gfxstream "
+    "gfxstream_guest_angle, gfxstream_guest_angle_host_lavapipe, "
     "gfxstream_guest_angle_host_swiftshader, guest_swiftshader, none}");
 
 namespace cuttlefish {

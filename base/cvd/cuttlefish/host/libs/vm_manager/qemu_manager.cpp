@@ -476,8 +476,6 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     std::string gpu_device;
     if (gpu_mode == GpuMode::GuestSwiftshader || qemu_version.first < 6) {
       gpu_device = "virtio-gpu-pci";
-    } else if (gpu_mode == GpuMode::DrmVirgl) {
-      gpu_device = "virtio-gpu-gl-pci";
     } else if (gpu_mode == GpuMode::Gfxstream) {
       gpu_device =
           "virtio-gpu-rutabaga,x-gfxstream-gles=on,gfxstream-vulkan=on,"
