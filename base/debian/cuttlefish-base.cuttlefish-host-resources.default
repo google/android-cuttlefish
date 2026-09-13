@@ -32,7 +32,9 @@
 
 # IPv6 prefixes allocated to the managed bridges. Require
 # 'bridge_interface' not to be set.
-#wifi_ipv6_prefix=
-#wifi_ipv6_prefix_length=
-#ethernet_ipv6_prefix=
-#ethernet_ipv6_prefix_length=
+wifi_ipv6_prefix=fd00:cf:22::
+wifi_ipv6_prefix_length=64
+ethernet_ipv6_prefix=fd00:cf:24::
+ethernet_ipv6_prefix_length=64
+ipv6_enable_nat66=1
+
