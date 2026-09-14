@@ -475,6 +475,38 @@ TEST(FlagsParserTest, ParseMediaV4l2Proxy) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
 
   ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         "--media=v4l2_proxy:device_path=/dev/video0"))
+      << "media flag is missing or wrongly formatted";
+}
+
+TEST(FlagsParserTest, ParseMediaV4l2ProxyDefaultDevicePath) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_proxy": {
+                }
+              }
+            ]
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data, "--media=v4l2_proxy"))
       << "media flag is missing or wrongly formatted";
 }

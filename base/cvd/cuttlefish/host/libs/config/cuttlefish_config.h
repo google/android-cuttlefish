@@ -125,6 +125,11 @@ class CuttlefishConfig {
     MediaType type;
     std::string lens_facing;
 
+    struct V4l2ProxyConfig {
+      std::string device_path;
+    };
+    std::optional<V4l2ProxyConfig> v4l2_proxy;
+
     struct V4l2StreamProxyConfig {
       std::string input_path;
       int input_width;
