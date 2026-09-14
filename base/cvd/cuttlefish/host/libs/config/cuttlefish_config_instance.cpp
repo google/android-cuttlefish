@@ -2038,6 +2038,7 @@ CuttlefishConfig::InstanceSpecific::audio_settings() const {
 static constexpr char kMediaConfigs[] = "media_configs";
 static constexpr char kMediaType[] = "type";
 static constexpr char kMediaLensFacing[] = "lens_facing";
+static constexpr char kMediaDevicePath[] = "device_path";
 static constexpr char kMediaInputPath[] = "input_path";
 static constexpr char kMediaInputWidth[] = "input_width";
 static constexpr char kMediaInputHeight[] = "input_height";
@@ -2052,6 +2053,13 @@ CuttlefishConfig::InstanceSpecific::media_configs() const {
         static_cast<CuttlefishConfig::MediaType>(json[kMediaType].asInt());
     if (json.isMember(kMediaLensFacing)) {
       config.lens_facing = json[kMediaLensFacing].asString();
+    }
+    if (config.type == CuttlefishConfig::MediaType::kV4l2Proxy) {
+      CuttlefishConfig::MediaConfig::V4l2ProxyConfig proxy_config = {};
+      if (json.isMember(kMediaDevicePath)) {
+        proxy_config.device_path = json[kMediaDevicePath].asString();
+      }
+      config.v4l2_proxy = proxy_config;
     }
     if (config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy) {
       CuttlefishConfig::MediaConfig::V4l2StreamProxyConfig stream_config = {};
@@ -2082,6 +2090,10 @@ void CuttlefishConfig::MutableInstanceSpecific::set_media_configs(
     Json::Value json(Json::objectValue);
     json[kMediaType] = static_cast<int>(config.type);
     json[kMediaLensFacing] = config.lens_facing;
+    if (config.type == CuttlefishConfig::MediaType::kV4l2Proxy &&
+        config.v4l2_proxy.has_value()) {
+      json[kMediaDevicePath] = config.v4l2_proxy->device_path;
+    }
     if (config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy &&
         config.v4l2_stream_proxy.has_value()) {
       json[kMediaInputPath] = config.v4l2_stream_proxy->input_path;
