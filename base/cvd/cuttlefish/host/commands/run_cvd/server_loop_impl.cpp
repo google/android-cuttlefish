@@ -128,14 +128,15 @@ Result<void> ServerLoopImpl::Run() {
     Select(&read_set, nullptr, nullptr, nullptr);
 
     if (process_monitor_active && read_set.IsSet(process_monitor.status())) {
-      LOG(INFO) << "Process monitor has exited (guest VM shut down). Server "
-                   "loop continuing to listen for status/restart.";
       process_monitor_active = false;
       auto stop_result = process_monitor.StopMonitoredProcesses();
       if (!stop_result.has_value()) {
-        LOG(WARNING) << "Failed to reap process monitor: "
-                     << stop_result.error();
+        return CF_ERR(
+            "process monitor exited unexpectedly: " << stop_result.error());
       }
+      LOG(INFO)
+          << "Process monitor has exited gracefully (guest VM shut down). "
+             "Server loop continuing to listen for status/restart.";
       continue;
     }
 
