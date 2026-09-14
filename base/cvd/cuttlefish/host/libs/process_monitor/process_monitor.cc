@@ -138,12 +138,38 @@ Result<void> MonitorLoop(std::atomic_bool& running,
         it->proc.reset(new Subprocess(it->cmd->Start(std::move(options))));
       } else {
         bool is_critical = it->is_critical;
+        std::string name = it->cmd->GetShortName();
         monitored.erase(it);
         if (running.load() && is_critical) {
-          LOG(ERROR) << "Stopping all monitored processes due to unexpected "
-                        "exit of critical process";
           running.store(false);
-          break;
+          const bool is_vmm =
+              (name.find("crosvm") != std::string::npos ||
+               name.find("qemu") != std::string::npos ||
+               name.find("gem5") != std::string::npos ||
+               name.find("process_restarter") != std::string::npos);
+          if (is_vmm && WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == 0) {
+            LOG(INFO)
+                << "Stopping all monitored processes due to graceful exit "
+                   "of critical process "
+                << name;
+            break;
+          } else {
+            LOG(ERROR) << "Stopping all monitored processes due to unexpected "
+                          "exit of critical process "
+                       << name;
+            if (WIFSIGNALED(wstatus)) {
+              return CF_ERRF("Critical process {} was killed by signal {}",
+                             name, WTERMSIG(wstatus));
+            } else if (WEXITSTATUS(wstatus) != 0) {
+              return CF_ERRF(
+                  "Critical process {} exited with non-zero exit code {}", name,
+                  WEXITSTATUS(wstatus));
+            } else {
+              return CF_ERRF(
+                  "Critical process {} exited unexpectedly with exit code 0",
+                  name);
+            }
+          }
         }
       }
     }
@@ -357,11 +383,17 @@ ProcessMonitor::ProcessMonitor(ProcessMonitor::Properties&& properties,
       monitor_(-1) {}
 
 Result<void> ProcessMonitor::StopMonitoredProcesses() {
-  CF_EXPECT(monitor_ != -1, "The monitor process has already exited.");
-  CF_EXPECT(parent_channel_.has_value(),
-            "The monitor socket is already closed");
-  CF_EXPECT(
-      SendEmptyRequest(*parent_channel_, ParentToChildMessageType::kStop));
+  if (monitor_ == -1) {
+    return {};
+  }
+  if (parent_channel_.has_value()) {
+    auto send_result =
+        SendEmptyRequest(*parent_channel_, ParentToChildMessageType::kStop);
+    if (!send_result.has_value()) {
+      VLOG(0) << "SendEmptyRequest failed during StopMonitoredProcesses: "
+              << send_result.error();
+    }
+  }
 
   pid_t last_monitor = monitor_;
   monitor_ = -1;
@@ -450,16 +482,26 @@ Result<void> ProcessMonitor::MonitorRoutine() {
   auto parent_comms = std::async(std::launch::async, read_monitor_socket_loop,
                                  std::ref(running));
 
-  CF_EXPECT(MonitorLoop(running, properties_mutex_,
-                        properties_.restart_subprocesses_,
-                        properties_.entries_));
+  auto monitor_loop_result =
+      MonitorLoop(running, properties_mutex_, properties_.restart_subprocesses_,
+                  properties_.entries_);
   running.store(false);
   if (child_sock_->IsOpen()) {
     child_sock_->Shutdown(SHUT_RDWR);
   }
-  CF_EXPECT(parent_comms.get(), "Should have exited if monitoring stopped");
+  auto parent_comms_result = parent_comms.get();
+  if (!parent_comms_result.has_value()) {
+    LOG(WARNING) << "Parent comms thread failed: "
+                 << parent_comms_result.error();
+  }
 
-  CF_EXPECT(StopSubprocesses(properties_.entries_));
+  auto stop_result = StopSubprocesses(properties_.entries_);
+  if (!stop_result.has_value()) {
+    LOG(WARNING) << "Failed to stop subprocesses: " << stop_result.error();
+  }
+  CF_EXPECT(std::move(monitor_loop_result));
+  CF_EXPECT(std::move(parent_comms_result));
+  CF_EXPECT(std::move(stop_result));
   VLOG(0) << "Done monitoring subprocesses";
   return {};
 }
