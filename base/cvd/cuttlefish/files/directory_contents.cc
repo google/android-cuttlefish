@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/posix/open_dir.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -30,8 +31,7 @@ namespace cuttlefish {
 
 Result<std::vector<std::string>> DirectoryContents(const std::string& path) {
   std::vector<std::string> ret;
-  std::unique_ptr<DIR, int (*)(DIR*)> dir(opendir(path.c_str()), closedir);
-  CF_EXPECTF(dir != nullptr, "Could not read from dir \"{}\"", path);
+  std::unique_ptr<DIR, CloseDir> dir = CF_EXPECT(OpenDir(path));
   struct dirent* ent{};
   while ((ent = readdir(dir.get()))) {
     if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {

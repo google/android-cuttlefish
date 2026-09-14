@@ -47,6 +47,7 @@
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/posix/open_dir.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -63,14 +64,13 @@ std::set<std::string> FallbackDirs() {
   std::string parent_path = StringFromEnv("HOME", ".");
   paths.insert(parent_path + "/cuttlefish_assembly");
 
-  std::unique_ptr<DIR, int (*)(DIR*)> dir(opendir(parent_path.c_str()),
-                                          closedir);
-  if (!dir) {
+  Result<std::unique_ptr<DIR, CloseDir>> dir = OpenDir(parent_path);
+  if (!dir.has_value()) {
     return paths;
   }
 
-  for (auto entity = readdir(dir.get()); entity != nullptr;
-       entity = readdir(dir.get())) {
+  for (auto entity = readdir(dir->get()); entity != nullptr;
+       entity = readdir(dir->get())) {
     std::string subdir(entity->d_name);
     if (!absl::StartsWith(subdir, "cuttlefish_runtime.")) {
       continue;
