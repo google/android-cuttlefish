@@ -34,7 +34,7 @@ class Downloaders {
   Downloaders(Downloaders&&);
   ~Downloaders();
 
-  BuildApi& AndroidBuild();
+  BuildApi& Builds();
   LuciBuildApi& Luci();
 
  private:

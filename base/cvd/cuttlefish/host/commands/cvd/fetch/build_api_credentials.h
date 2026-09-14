@@ -36,6 +36,19 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
     const std::string& oauth_filepath,
     const std::string& scope = kAndroidBuildApiScope);
 
+// Resolves credentials for Cloud Storage. Never opens the `credential_source`
+// file, which the Android Build path may consume from a pipe, and never
+// re-uses an Android Build token, which Cloud Storage rejects. A null result
+// means anonymous access, which public buckets serve.
+Result<std::unique_ptr<CredentialSource>> GetStorageCredentialSource(
+    HttpClient& http_client, const BuildApiFlags& flags);
+
+// Resolves credentials for Cloud Storage with `running_on_gce` given instead
+// of read from the DMI product name, so that the ladder can be exercised on
+// any machine.
+Result<std::unique_ptr<CredentialSource>> GetStorageCredentialSource(
+    HttpClient& http_client, const BuildApiFlags& flags, bool running_on_gce);
+
 std::string GetAcloudOauthFilepath();
 
 }  // namespace cuttlefish
