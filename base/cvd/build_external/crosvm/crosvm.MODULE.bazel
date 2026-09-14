@@ -26,6 +26,7 @@ crosvm_bin.spec(
         "gfxstream",
         "gpu",
         "gpu_display",
+        "media",
         "net",
         "net_util",
         "qcow",
