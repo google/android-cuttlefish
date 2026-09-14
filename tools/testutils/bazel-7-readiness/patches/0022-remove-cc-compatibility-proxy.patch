@@ -1,0 +1,17 @@
+Description: Remove cc_compatibility_proxy extension call for Bazel 7
+ Bazel 8 introduced @cc_compatibility_proxy to bridge C++ rules, but Bazel 7 in Debian
+ does not have the compatibility_proxy module extension in rules_cc. Remove the extension
+ call from toolchain/bazel.MODULE.bazel.
+Author: Ying-Chun Liu (PaulLiu) <paulliu@debian.org>
+Forwarded: not-needed
+Last-Update: 2026-07-05
+
+Index: android-cuttlefish/base/cvd/toolchain/bazel.MODULE.bazel
+===================================================================
+--- a/base/cvd/toolchain/bazel.MODULE.bazel
++++ b/base/cvd/toolchain/bazel.MODULE.bazel
+@@ -1,2 +1,2 @@
+-cc_compatibility_proxy = use_extension("@rules_cc//cc:extensions.bzl", "compatibility_proxy")
+-use_repo(cc_compatibility_proxy, "cc_compatibility_proxy")
++# cc_compatibility_proxy = use_extension("@rules_cc//cc:extensions.bzl", "compatibility_proxy")
++# use_repo(cc_compatibility_proxy, "cc_compatibility_proxy")
