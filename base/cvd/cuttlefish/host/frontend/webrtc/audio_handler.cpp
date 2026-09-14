@@ -130,6 +130,76 @@ virtio_snd_ctl_info GetVirtioCtlInfoMute(
   return info;
 }
 
+virtio_snd_ctl_info GetVirtioCtlInfoDuck(
+    AudioStreamSettings::Direction stream_direction, uint32_t card_id,
+    uint32_t device_id, uint32_t control_index) {
+  virtio_snd_ctl_info info{
+      .hdr =
+          {
+              .hda_fn_nid = Le32(control_index),
+          },
+      .role = Le32(0),
+      .type = Le32(static_cast<uint8_t>(AudioControlType::VIRTIO_SND_CTL_TYPE_BOOLEAN)),
+      .access = Le32((1 << AudioControlAccess::VIRTIO_SND_CTL_ACCESS_READ) |
+                     (1 << AudioControlAccess::VIRTIO_SND_CTL_ACCESS_WRITE)),
+      .count = Le32(1),
+      .index = Le32(0),
+      .name = {},
+      .value = {}  // Ignored when VIRTIO_SND_CTL_TYPE_BOOLEAN
+  };
+  std::format_to_n(info.name, sizeof(info.name) - 1, "Master {} Duck (C{}D{})",
+                   GetDirectionString(stream_direction), card_id, device_id);
+  return info;
+}
+
+virtio_snd_ctl_info GetVirtioCtlInfoFade(
+    AudioStreamSettings::Direction stream_direction, uint32_t card_id,
+    uint32_t device_id, uint32_t ctl_id) {
+  virtio_snd_ctl_info info = {
+      .hdr = {.hda_fn_nid = Le32(ctl_id)},
+      .role = Le32(
+          static_cast<uint8_t>(AudioControlRole::VIRTIO_SND_CTL_ROLE_VOLUME)),
+      .type = Le32(
+          static_cast<uint8_t>(AudioControlType::VIRTIO_SND_CTL_TYPE_INTEGER)),
+      .access = Le32((1 << AudioControlAccess::VIRTIO_SND_CTL_ACCESS_READ) |
+                     (1 << AudioControlAccess::VIRTIO_SND_CTL_ACCESS_WRITE)),
+      .count = Le32(1),
+      .index = Le32(0),
+      .name = {},
+      .value = {.integer = {
+                    .min = Le32(static_cast<uint32_t>(-100)),
+                    .max = Le32(100),
+                    .step = Le32(1),
+                }}};
+  std::format_to_n(info.name, sizeof(info.name) - 1, "{} Fade (C{}D{})",
+                   GetDirectionString(stream_direction), card_id, device_id);
+  return info;
+}
+
+virtio_snd_ctl_info GetVirtioCtlInfoBalance(
+    AudioStreamSettings::Direction stream_direction, uint32_t card_id,
+    uint32_t device_id, uint32_t ctl_id) {
+  virtio_snd_ctl_info info = {
+      .hdr = {.hda_fn_nid = Le32(ctl_id)},
+      .role = Le32(
+          static_cast<uint8_t>(AudioControlRole::VIRTIO_SND_CTL_ROLE_VOLUME)),
+      .type = Le32(
+          static_cast<uint8_t>(AudioControlType::VIRTIO_SND_CTL_TYPE_INTEGER)),
+      .access = Le32((1 << AudioControlAccess::VIRTIO_SND_CTL_ACCESS_READ) |
+                     (1 << AudioControlAccess::VIRTIO_SND_CTL_ACCESS_WRITE)),
+      .count = Le32(1),
+      .index = Le32(0),
+      .name = {},
+      .value = {.integer = {
+                    .min = Le32(static_cast<uint32_t>(-100)),
+                    .max = Le32(100),
+                    .step = Le32(1),
+                }}};
+  std::format_to_n(info.name, sizeof(info.name) - 1, "{} Balance (C{}D{})",
+                   GetDirectionString(stream_direction), card_id, device_id);
+  return info;
+}
+
 virtio_snd_pcm_info GetVirtioSndPcmInfo(const AudioStreamSettings& settings) {
   return {
       .hdr =
@@ -333,7 +403,8 @@ AudioHandler::AudioHandler(
     chmaps_[stream_id] = GetVirtioSndChmapInfo(settings);
 
     constexpr uint32_t kCardId = 0;  // As of now only one card is supported
-    if (settings.has_mute_control) {
+    if (settings.direction == AudioStreamSettings::Direction::Playback ||
+        settings.has_mute_control) {
       controls_.push_back(GetVirtioCtlInfoMute(settings.direction, kCardId,
                                                settings.id, controls_.size()));
       controls_to_streams_map_.push_back(
@@ -356,7 +427,26 @@ AudioHandler::AudioHandler(
           .current = control.max,
       };
     }
+
+    if (settings.direction == AudioStreamSettings::Direction::Playback) {
+      controls_.push_back(GetVirtioCtlInfoDuck(settings.direction, kCardId,
+                                               settings.id, controls_.size()));
+      controls_to_streams_map_.push_back(
+          ControlDesc{.type = ControlDesc::Type::Duck, .stream_id = stream_id});
+
+      controls_.push_back(GetVirtioCtlInfoFade(settings.direction, kCardId,
+                                               settings.id, controls_.size()));
+      controls_to_streams_map_.push_back(
+          ControlDesc{.type = ControlDesc::Type::Fade, .stream_id = stream_id});
+
+      controls_.push_back(GetVirtioCtlInfoBalance(settings.direction, kCardId,
+                                                  settings.id, controls_.size()));
+      controls_to_streams_map_.push_back(
+          ControlDesc{.type = ControlDesc::Type::Balance, .stream_id = stream_id});
+    }
   }
+  LOG(INFO) << "[Host AudioHandler] Initialized " << streams_.size()
+            << " streams and " << controls_.size() << " virtio-snd controls.";
 }
 
 AudioHandler::~AudioHandler() { audio_mixer_->Stop(); }
@@ -545,12 +635,107 @@ AudioStatus AudioHandler::HandleControlVolume(ControlCommand& cmd) {
   return AudioStatus::VIRTIO_SND_S_NOT_SUPP;
 }
 
+AudioStatus AudioHandler::HandleControlFade(ControlCommand& cmd) {
+  const auto stream_id = controls_to_streams_map_[cmd.control_id()].stream_id;
+  auto& stream = stream_descs_[stream_id];
+  std::lock_guard<std::mutex> lock(stream.mtx);
+
+  if (cmd.type() == AudioCommandType::VIRTIO_SND_R_CTL_READ) {
+    auto& val = cmd.value()->value.integer;
+    val[0] = Le32(static_cast<uint32_t>(static_cast<int32_t>(stream.fade * 100.0f)));
+    LOG(INFO) << "[Host AudioHandler] HandleControlFade READ for stream " << stream_id
+              << " -> returning " << static_cast<int32_t>(stream.fade * 100.0f);
+    return AudioStatus::VIRTIO_SND_S_OK;
+  }
+
+  if (cmd.type() == AudioCommandType::VIRTIO_SND_R_CTL_WRITE) {
+    const auto raw_val = cmd.value()->value.integer[0].as_uint32_t();
+    const auto val = static_cast<int32_t>(raw_val);
+    if (val < -100 || val > 100) {
+      LOG(ERROR) << "[Host AudioHandler] Wrong Fade value for control " << cmd.control_id()
+                 << " (stream " << stream_id << ") provided: " << val;
+      return AudioStatus::VIRTIO_SND_S_BAD_MSG;
+    }
+    stream.fade = static_cast<float>(val) / 100.0f;
+    LOG(INFO) << "[Host AudioHandler] Setting Fade for stream " << stream_id
+              << " to " << val << " (fade level: " << stream.fade << ")";
+    return AudioStatus::VIRTIO_SND_S_OK;
+  }
+
+  return AudioStatus::VIRTIO_SND_S_NOT_SUPP;
+}
+
+AudioStatus AudioHandler::HandleControlBalance(ControlCommand& cmd) {
+  const auto stream_id = controls_to_streams_map_[cmd.control_id()].stream_id;
+  auto& stream = stream_descs_[stream_id];
+  std::lock_guard<std::mutex> lock(stream.mtx);
+
+  if (cmd.type() == AudioCommandType::VIRTIO_SND_R_CTL_READ) {
+    auto& val = cmd.value()->value.integer;
+    val[0] = Le32(static_cast<uint32_t>(static_cast<int32_t>(stream.balance * 100.0f)));
+    LOG(INFO) << "[Host AudioHandler] HandleControlBalance READ for stream " << stream_id
+              << " -> returning " << static_cast<int32_t>(stream.balance * 100.0f);
+    return AudioStatus::VIRTIO_SND_S_OK;
+  }
+
+  if (cmd.type() == AudioCommandType::VIRTIO_SND_R_CTL_WRITE) {
+    const auto raw_val = cmd.value()->value.integer[0].as_uint32_t();
+    const auto val = static_cast<int32_t>(raw_val);
+    if (val < -100 || val > 100) {
+      LOG(ERROR) << "[Host AudioHandler] Wrong Balance value for control " << cmd.control_id()
+                 << " (stream " << stream_id << ") provided: " << val;
+      return AudioStatus::VIRTIO_SND_S_BAD_MSG;
+    }
+    stream.balance = static_cast<float>(val) / 100.0f;
+    LOG(INFO) << "[Host AudioHandler] Setting Balance for stream " << stream_id
+              << " to " << val << " (balance level: " << stream.balance << ")";
+    return AudioStatus::VIRTIO_SND_S_OK;
+  }
+
+  return AudioStatus::VIRTIO_SND_S_NOT_SUPP;
+}
+
+AudioStatus AudioHandler::HandleControlDuck(ControlCommand& cmd) {
+  const auto stream_id = controls_to_streams_map_[cmd.control_id()].stream_id;
+  auto& stream = stream_descs_[stream_id];
+  std::lock_guard<std::mutex> lock(stream.mtx);
+
+  if (cmd.type() == AudioCommandType::VIRTIO_SND_R_CTL_READ) {
+    auto& val = cmd.value()->value.integer;
+    val[0] = Le32(stream.is_ducked ? 1 : 0);
+    LOG(INFO) << "[Host AudioHandler] HandleControlDuck READ for stream " << stream_id
+              << " -> returning " << (stream.is_ducked ? 1 : 0);
+    return AudioStatus::VIRTIO_SND_S_OK;
+  }
+
+  if (cmd.type() == AudioCommandType::VIRTIO_SND_R_CTL_WRITE) {
+    const auto val = cmd.value()->value.integer[0].as_uint32_t();
+    if (val > 1) {
+      LOG(ERROR) << "[Host AudioHandler] Wrong Duck value for control " << cmd.control_id()
+                 << " (stream " << stream_id << ") provided: " << val;
+      return AudioStatus::VIRTIO_SND_S_BAD_MSG;
+    }
+    stream.is_ducked = (val == 1);
+    LOG(INFO) << "[Host AudioHandler] Setting Duck for stream " << stream_id
+              << " to " << (stream.is_ducked ? "DUCKED (1)" : "UNDUCKED (0)");
+    return AudioStatus::VIRTIO_SND_S_OK;
+  }
+
+  return AudioStatus::VIRTIO_SND_S_NOT_SUPP;
+}
+
 void AudioHandler::OnControlCommand(ControlCommand& cmd) {
   const auto id = cmd.control_id();
   if (id >= controls_.size()) {
+    LOG(ERROR) << "[Host AudioHandler] OnControlCommand with invalid control ID: "
+               << id << " (max: " << controls_.size() << ")";
     cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG);
     return;
   }
+
+  LOG(INFO) << "[Host AudioHandler] OnControlCommand: control_id=" << id
+            << " ('" << controls_[id].name << "'), type="
+            << (cmd.type() == AudioCommandType::VIRTIO_SND_R_CTL_WRITE ? "WRITE" : "READ");
 
   auto result = AudioStatus::VIRTIO_SND_S_NOT_SUPP;
   switch (controls_to_streams_map_[id].type) {
@@ -559,6 +744,15 @@ void AudioHandler::OnControlCommand(ControlCommand& cmd) {
       break;
     case ControlDesc::Type::Volume:
       result = HandleControlVolume(cmd);
+      break;
+    case ControlDesc::Type::Fade:
+      result = HandleControlFade(cmd);
+      break;
+    case ControlDesc::Type::Balance:
+      result = HandleControlBalance(cmd);
+      break;
+    case ControlDesc::Type::Duck:
+      result = HandleControlDuck(cmd);
       break;
   }
   cmd.Reply(result);
@@ -577,6 +771,9 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
   uint8_t channels = 0;
   uint8_t bits_per_channel = 0;
   float volume = 0;
+  float fade = 0;
+  float balance = 0;
+  bool is_ducked = false;
   {
     auto& stream_desc = stream_descs_[stream_id];
     std::lock_guard<std::mutex> lock(stream_desc.mtx);
@@ -594,9 +791,13 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
     sample_rate = stream_desc.sample_rate;
     channels = stream_desc.channels;
     bits_per_channel = stream_desc.bits_per_sample;
+    fade = stream_desc.fade;
+    balance = stream_desc.balance;
+    is_ducked = stream_desc.is_ducked;
   }
   audio_mixer_->OnPlayback(stream_id, sample_rate, channels, bits_per_channel,
-                           volume, buffer.get(), buffer.len());
+                           volume, fade, balance, is_ducked, buffer.get(),
+                           buffer.len());
   buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());
 }
 
