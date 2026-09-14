@@ -5,6 +5,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update -y && apt upgrade -y
 RUN apt install -y sudo devscripts
 
+# DO NOT INSTALL custom packages here!
+# Only install packages found in https://github.com/google/android-cuttlefish/blob/main/tools/buildutils/build_packages.sh
+
 COPY ./tools/buildutils/installbazel.sh /installbazel.sh
 RUN /installbazel.sh && rm /installbazel.sh
 
