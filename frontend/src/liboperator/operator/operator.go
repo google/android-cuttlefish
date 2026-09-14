@@ -26,8 +26,11 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/gorilla/mux"
@@ -101,6 +104,85 @@ func SetupControlEndpoint(pool *DevicePool, path string) (func() error, error) {
 	}, nil
 }
 
+type InfraConfigProvider interface {
+	Get() (apiv1.InfraConfig, error)
+}
+
+type StaticInfraConfigProvider struct {
+	config apiv1.InfraConfig
+}
+
+func NewStaticInfraConfigProvider(
+	config apiv1.InfraConfig,
+) *StaticInfraConfigProvider {
+	return &StaticInfraConfigProvider{config: config}
+}
+
+func (s *StaticInfraConfigProvider) Get() (apiv1.InfraConfig, error) {
+	return s.config, nil
+}
+
+const DefaultDelegateTimeout = 10 * time.Second
+
+type DelegateInfraConfigProvider struct {
+	staticConfig apiv1.InfraConfig
+	delegatePath string
+	defaultTTL   time.Duration
+	timeout      time.Duration
+
+	mu        sync.Mutex
+	cfg       apiv1.InfraConfig
+	expiresAt time.Time
+}
+
+func NewDelegateInfraConfigProvider(
+	staticConfig apiv1.InfraConfig,
+	delegatePath string,
+	defaultTTL, timeout time.Duration,
+) *DelegateInfraConfigProvider {
+	if timeout <= 0 {
+		timeout = DefaultDelegateTimeout
+	}
+	return &DelegateInfraConfigProvider{
+		staticConfig: staticConfig,
+		delegatePath: delegatePath,
+		defaultTTL:   defaultTTL,
+		timeout:      timeout,
+	}
+}
+
+func (p *DelegateInfraConfigProvider) Get() (apiv1.InfraConfig, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if time.Now().Before(p.expiresAt) {
+		return p.cfg, nil
+	}
+
+	p.cfg = p.runDelegate()
+	p.expiresAt = time.Now().Add(p.defaultTTL)
+	return p.cfg, nil
+}
+
+func (p *DelegateInfraConfigProvider) runDelegate() apiv1.InfraConfig {
+	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, p.delegatePath)
+	out, err := cmd.Output()
+	if err != nil {
+		log.Printf("runDelegate failed: %v", err)
+		return p.staticConfig
+	}
+
+	var cfg apiv1.InfraConfig
+	if err := json.Unmarshal(out, &cfg); err != nil {
+		log.Printf("runDelegate failed: %v", err)
+		return p.staticConfig
+	}
+	return cfg
+}
+
 // Creates a router with handlers for the following endpoints:
 // GET  /infra_config
 // GET  /devices
@@ -125,7 +207,7 @@ func SetupControlEndpoint(pool *DevicePool, path string) (func() error, error) {
 func CreateHttpHandlers(
 	pool *DevicePool,
 	polledSet *PolledSet,
-	config apiv1.InfraConfig,
+	infraConfigProvider InfraConfigProvider,
 	maybeIntercept func(string) *string) *mux.Router {
 	router := mux.NewRouter()
 	// The path parameter needs to include the leading '/'
@@ -172,7 +254,13 @@ func CreateHttpHandlers(
 		createPolledConnection(w, r, pool, polledSet)
 	}).Methods("POST")
 	router.HandleFunc("/infra_config", func(w http.ResponseWriter, r *http.Request) {
-		ReplyJSONOK(w, config)
+		cfg, err := infraConfigProvider.Get()
+		if err != nil {
+			ReplyJSONErr(w, err)
+			return
+		}
+		w.Header().Set("Cache-Control", "no-cache")
+		ReplyJSONOK(w, cfg)
 	}).Methods("GET")
 	return router
 }
