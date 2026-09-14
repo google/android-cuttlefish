@@ -1,14 +1,21 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
-load("@//:build_variables.bzl", "COPTS")
-
 package(
     default_visibility = [
-        "@//:android_cuttlefish",
-        "@crosvm//:__subpackages__",
-        "@wayland_protocols_freedesktop//:__subpackages__",
+        "//visibility:public",
     ],
+)
+
+cc_library(
+    name = "config",
+    hdrs = ["config.h"],
+)
+
+cc_library(
+    name = "wayland_version",
+    hdrs = ["src/wayland-version.h"],
+    strip_include_prefix = "src/",
 )
 
 cc_binary(
@@ -19,10 +26,10 @@ cc_binary(
     ] + glob([
         "src/*.h",
     ]),
-    cxxopts = COPTS,
     deps = [
+        ":config",
+        ":wayland_version",
         "@expat",
-        "@//build_external/wayland:wayland_overlay",
     ],
 )
 
@@ -65,7 +72,7 @@ cc_library(
     ] + glob([
         "src/*.h",
     ]),
-    cxxopts = COPTS + [
+    cxxopts = [
         "-Wno-unused-variable",
     ],
     includes = [
@@ -73,7 +80,8 @@ cc_library(
         "src",
     ],
     deps = [
+        ":config",
+        ":wayland_version",
         "@libffi",
-        "@//build_external/wayland:wayland_overlay",
     ],
 )
