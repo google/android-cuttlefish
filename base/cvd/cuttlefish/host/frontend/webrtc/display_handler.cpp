@@ -16,12 +16,9 @@
 
 #include "cuttlefish/host/frontend/webrtc/display_handler.h"
 
-#include <fcntl.h>
 #include <libyuv.h>
 #include <stdint.h>
-#include <unistd.h>
 
-#include <cerrno>
 #include <chrono>
 #include <memory>
 #include <optional>
@@ -35,29 +32,24 @@
 #include "cuttlefish/host/frontend/webrtc/cvd_abgr_video_frame_buffer.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/streamer.h"
 #include "cuttlefish/host/libs/screen_connector/composition_manager.h"
+#include "cuttlefish/host/libs/screen_connector/frame_source.h"
 #include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
-#include "cuttlefish/host/libs/wayland/wayland_server.h"
 #include "cuttlefish/host/libs/wayland/wayland_server_callbacks.h"
 
 namespace cuttlefish {
 
 DisplayHandler::DisplayHandler(
     webrtc_streaming::Streamer& streamer, ScreenshotHandler& screenshot_handler,
-    int wayland_socket_fd, bool wayland_frames_are_rgba,
+    std::unique_ptr<FrameSource> frame_source,
     std::optional<std::unique_ptr<CompositionManager>> composition_manager)
     : composition_manager_(std::move(composition_manager)),
       streamer_(streamer),
-      screenshot_handler_(screenshot_handler) {
+      screenshot_handler_(screenshot_handler),
+      frame_source_(std::move(frame_source)) {
   // Initialize the thread after the rest of the class
   frame_repeater_ = std::thread([this]() { RepeatFramesPeriodically(); });
 
-  const int wayland_fd = fcntl(wayland_socket_fd, F_DUPFD_CLOEXEC, 3);
-  CHECK(wayland_fd != -1) << "Unable to dup server, errno " << errno;
-  close(wayland_socket_fd);
-
-  wayland_server_ = std::make_unique<wayland::WaylandServer>(
-      wayland_fd, wayland_frames_are_rgba);
-  wayland_server_->SetDisplayEventCallback([this](const DisplayEvent& event) {
+  frame_source_->SetDisplayEventCallback([this](const DisplayEvent& event) {
     std::visit(
         [this](auto&& e) {
           using T = std::decay_t<decltype(e)>;
@@ -95,7 +87,7 @@ DisplayHandler::DisplayHandler(
         },
         event);
   });
-  wayland_server_->SetFrameCallback(
+  frame_source_->SetFrameCallback(
       [this](uint32_t display_number, uint32_t frame_width,
              uint32_t frame_height, uint32_t frame_fourcc_format,
              uint32_t frame_stride_bytes, uint8_t* frame_pixels) {
@@ -125,7 +117,7 @@ DisplayHandler::DisplayHandler(
 
 DisplayHandler::~DisplayHandler() {
   // Stop the frame callbacks before tearing down the state they use.
-  wayland_server_.reset();
+  frame_source_.reset();
   {
     std::lock_guard lock(repeater_state_mutex_);
     repeater_state_ = RepeaterState::STOPPED;

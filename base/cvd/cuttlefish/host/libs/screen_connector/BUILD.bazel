@@ -7,8 +7,28 @@ package(
 cf_build_test(name = "screen_connector_build_test")
 
 cf_cc_library(
+    name = "frame_source",
+    hdrs = ["frame_source.h"],
+    deps = [
+        "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
+    ],
+)
+
+cf_cc_library(
     name = "video_frame_buffer",
     hdrs = ["video_frame_buffer.h"],
+)
+
+cf_cc_library(
+    name = "wayland_frame_source",
+    srcs = ["wayland_frame_source.cpp"],
+    hdrs = ["wayland_frame_source.h"],
+    deps = [
+        ":frame_source",
+        "//cuttlefish/host/libs/wayland:wayland_server",
+        "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
+        "@abseil-cpp//absl/log:check",
+    ],
 )
 
 cf_cc_library(

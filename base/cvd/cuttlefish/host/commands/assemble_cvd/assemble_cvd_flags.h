@@ -181,6 +181,7 @@ DECLARE_vec(crosvm_use_balloon);
 DECLARE_vec(crosvm_use_rng);
 
 DECLARE_vec(use_pmem);
+DECLARE_vec(enable_display_server);
 
 DECLARE_vec(crosvm_hugepages);
 
