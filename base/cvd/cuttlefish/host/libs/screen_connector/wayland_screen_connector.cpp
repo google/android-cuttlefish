@@ -21,30 +21,61 @@
 
 #include "absl/log/check.h"
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/display_server/display_server_frame_source.h"
 #include "cuttlefish/host/libs/wayland/wayland_server.h"
 
 namespace cuttlefish {
+namespace {
+
+// A FrameSource that runs the wayland compositor in-process, serving crosvm's
+// wayland display socket directly.
+class WaylandFrameSource : public FrameSource {
+ public:
+  WaylandFrameSource(int wayland_fd, bool frames_are_rgba)
+      : server_(wayland_fd, frames_are_rgba) {}
+
+  void SetFrameCallback(GenerateProcessedFrameCallbackImpl callback) override {
+    server_.SetFrameCallback(std::move(callback));
+  }
+  void SetDisplayEventCallback(DisplayEventCallback callback) override {
+    server_.SetDisplayEventCallback(std::move(callback));
+  }
+
+ private:
+  wayland::WaylandServer server_;
+};
+
+}  // namespace
 
 WaylandScreenConnector::WaylandScreenConnector(ANNOTATED(FramesFd, int)
                                                    frames_fd,
                                                ANNOTATED(FramesAreRgba, bool)
                                                    wayland_frames_are_rgba) {
+  const auto instance = CuttlefishConfig::Get()->ForDefaultInstance();
+  if (instance.enable_display_server()) {
+    frame_source_ = std::make_unique<display_server::DisplayServerFrameSource>(
+        instance.DisplayServerSocketPath());
+    return;
+  }
+
   int wayland_fd = fcntl(frames_fd, F_DUPFD_CLOEXEC, 3);
   CHECK(wayland_fd != -1) << "Unable to dup server, errno " << errno;
   close(frames_fd);
 
-  server_.reset(
-      new wayland::WaylandServer(wayland_fd, wayland_frames_are_rgba));
+  frame_source_ =
+      std::make_unique<WaylandFrameSource>(wayland_fd, wayland_frames_are_rgba);
 }
 
 void WaylandScreenConnector::SetFrameCallback(
     GenerateProcessedFrameCallbackImpl frame_callback) {
-  server_->SetFrameCallback(std::move(frame_callback));
+  frame_source_->SetFrameCallback(std::move(frame_callback));
 }
 
 void WaylandScreenConnector::SetDisplayEventCallback(
     DisplayEventCallback event_callback) {
-  server_->SetDisplayEventCallback(std::move(event_callback));
+  frame_source_->SetDisplayEventCallback(std::move(event_callback));
 }
 
 }  // namespace cuttlefish

@@ -56,6 +56,7 @@ package_files(
         "bin/crosvm": "//build_external/crosvm:crosvm_bin_opt",
         "bin/cuttlefish_example_action_server": "//cuttlefish/host/example_custom_actions:cuttlefish_example_action_server",
         "bin/cvd": "//cuttlefish/host/commands/cvd",
+        "bin/cvd_display_server": "//cuttlefish/host/commands/display_server:cvd_display_server",
         "bin/cvd_import_locations": "//cuttlefish/host/commands/cvd_import_locations",
         "bin/cvd_internal_display": "//cuttlefish/host/commands/display:cvd_internal_display",
         "bin/cvd_internal_env": "//cuttlefish/host/commands/cvd_env:cvd_internal_env",
