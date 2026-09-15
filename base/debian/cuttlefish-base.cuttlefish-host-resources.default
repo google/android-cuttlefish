@@ -40,16 +40,11 @@
 # Behavioural settings during the transition to cvdalloc.
 #
 # allocate_static_resources sets up all of the resources
-# expected by the legacy flow. initialize_cvdalloc simply invokes
-# cvdalloc to perform its own per-install setup.
-# Note that for cvd itself to use cvdalloc, it will need the
-# use_cvdalloc flag to be set on its own end.
+# expected by the legacy flow.
 #
 # Static resources are disjoint to those allocated by cvdalloc.
-# Thus, the legacy behaviour is maintained by the below defaults.
-#
-# The only invalid combination is `allocate_static_resources=0`
-# with the cvd flag `use_cvdalloc` flipped off.
+# Thus, the legacy behaviour is maintained by the below default.
+# It is invalid to flip the below flag off while use_cvdalloc is
+# also disabled.
 #
 #allocate_static_resources=1
-#initialize_cvdalloc=0
