@@ -84,7 +84,7 @@ func TestMetrics(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := c.CVDStop(); err != nil {
+	if err := e2etests.CVDStop(&c); err != nil {
 		t.Fatal(err)
 	}
 

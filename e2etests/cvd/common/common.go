@@ -34,6 +34,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 )
@@ -118,15 +119,43 @@ func (tc *TestContext) RunCmdWithEnv(command []string, envvars map[string]string
 
 // Waits for a device to be available via adb.
 func (tc *TestContext) RunAdbWaitForDevice() error {
-	adbCommand := []string{
-		"timeout",
-		"--kill-after=30s",
-		"29s",
-		"adb",
-		"wait-for-device",
-	}
-	if _, err := tc.RunCmd(adbCommand...); err != nil {
+	ctx, cancel := context.WithTimeout(tc.context, 30*time.Second)
+	defer cancel()
+	if _, err := runCmdWithContextEnv(ctx, []string{"adb", "wait-for-device"}, map[string]string{}); err != nil {
 		return fmt.Errorf("timed out waiting for Cuttlefish device to connect to adb: %w", err)
+	}
+	return nil
+}
+
+// Waits for a specific device serial to connect to adb and become reachable.
+func (tc *TestContext) RunAdbWaitForDeviceSerial(serial string) error {
+	return tc.WaitForDeviceOnline(serial, 45)
+}
+
+// Checks if adb shell is reachable for a given device serial.
+func (tc *TestContext) IsAdbShellReachable(serial string) bool {
+	ctx, cancel := context.WithTimeout(tc.context, 5*time.Second)
+	defer cancel()
+	res, err := runCmdWithContextEnv(ctx, []string{"adb", "-s", serial, "shell", "echo", "ping"}, map[string]string{})
+	return err == nil && strings.Contains(res.Stdout, "ping")
+}
+
+// Waits for a device serial to disconnect from adb within the given timeout.
+func (tc *TestContext) WaitForDeviceOffline(serial string, timeoutSeconds int) error {
+	ctx, cancel := context.WithTimeout(tc.context, time.Duration(timeoutSeconds)*time.Second)
+	defer cancel()
+	if _, err := runCmdWithContextEnv(ctx, []string{"adb", "-s", serial, "wait-for-disconnect"}, map[string]string{}); err != nil {
+		return fmt.Errorf("device %s did not disconnect within %d seconds: %w", serial, timeoutSeconds, err)
+	}
+	return nil
+}
+
+// Waits for a device serial to become reachable via adb within the given timeout.
+func (tc *TestContext) WaitForDeviceOnline(serial string, timeoutSeconds int) error {
+	ctx, cancel := context.WithTimeout(tc.context, time.Duration(timeoutSeconds)*time.Second)
+	defer cancel()
+	if _, err := runCmdWithContextEnv(ctx, []string{"adb", "-s", serial, "wait-for-device"}, map[string]string{}); err != nil {
+		return fmt.Errorf("device %s did not become online within %d seconds: %w", serial, timeoutSeconds, err)
 	}
 	return nil
 }
@@ -191,7 +220,7 @@ func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
 	if credentialArg != "" {
 		fetchCmd = append(fetchCmd, fmt.Sprintf("--credential_source=%s", credentialArg))
 	}
-	res, err := tc.RunCmd(fetchCmd...);
+	res, err := tc.RunCmd(fetchCmd...)
 	if err != nil {
 		log.Printf("Failed to fetch: %w", err)
 		return res, err
@@ -229,23 +258,17 @@ func (tc *TestContext) CVDCreate(args CreateArgs) (CommandOutput, error) {
 		return res, err
 	}
 
-	tc.Cleanup(func() { tc.CVDStop() })
+	tc.Cleanup(func() { CVDStop(tc) })
 	return res, nil
 }
 
-// Performs `cvd stop`.
-func (tc *TestContext) CVDStop() error {
+// Runs a cvd command with the test environment (HOME=tempdir).
+func (tc *TestContext) RunCVD(args ...string) (CommandOutput, error) {
 	tempdirEnv := map[string]string{
 		"HOME": tc.tempdir,
 	}
-
-	stopCmd := []string{tc.TargetBin(), "stop"}
-	if _, err := tc.RunCmdWithEnv(stopCmd, tempdirEnv); err != nil {
-		log.Printf("Failed to stop instance(s): %w", err)
-		return err
-	}
-
-	return nil
+	cvdCmd := append([]string{tc.TargetBin()}, args...)
+	return tc.RunCmdWithEnv(cvdCmd, tempdirEnv)
 }
 
 // Performs `HOME=<testdir> bin/launch_cvd <args>`.
@@ -332,7 +355,7 @@ func (tc *TestContext) CVDCreateWithConfigFile(load LoadArgs) error {
 	}
 	log.Printf("Created instance(s) via `cvd create --config_file`!")
 
-	tc.Cleanup(func() { tc.CVDStop() })
+	tc.Cleanup(func() { CVDStop(tc) })
 	return nil
 }
 
@@ -363,6 +386,14 @@ func (tc *TestContext) GetSyspropString(key string) (string, error) {
 	return strings.TrimSpace(res.Stdout), nil
 }
 
+func (tc *TestContext) GetSyspropStringForDevice(serial, key string) (string, error) {
+	res, err := tc.RunCmd("adb", "-s", serial, "shell", "getprop", key)
+	if err != nil {
+		return "", fmt.Errorf("failed to get sysprop %s on device %s: %w", key, serial, err)
+	}
+	return strings.TrimSpace(res.Stdout), nil
+}
+
 // Creates a standard environment for an e2etests.
 func (tc *TestContext) SetUp(t *testing.T) {
 	tc.t = t
@@ -378,6 +409,11 @@ func (tc *TestContext) SetUp(t *testing.T) {
 		log.Printf("Failed to cleanup any pre-existing instances: %w", err)
 	}
 	log.Printf("Finished cleaning up any pre-existing instances!")
+
+	log.Printf("Starting adb server...")
+	if _, err := tc.RunCmd("adb", "start-server"); err != nil {
+		log.Printf("Failed to start adb server: %w", err)
+	}
 
 	tc.tempdir = tc.t.TempDir()
 
