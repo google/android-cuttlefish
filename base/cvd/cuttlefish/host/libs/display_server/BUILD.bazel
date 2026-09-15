@@ -1,0 +1,29 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_build_test(name = "display_server_build_test")
+
+cf_cc_library(
+    name = "protocol",
+    hdrs = ["protocol.h"],
+)
+
+cf_cc_library(
+    name = "display_server_frame_source",
+    srcs = ["display_server_frame_source.cpp"],
+    hdrs = ["display_server_frame_source.h"],
+    deps = [
+        ":protocol",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:scoped_mmap",
+        "//cuttlefish/host/libs/screen_connector:frame_source",
+        "//cuttlefish/host/libs/screen_connector:screen_connector_common",
+        "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+    ],
+)
