@@ -20,6 +20,7 @@
 
 #include "fruit/fruit.h"
 
+#include "cuttlefish/host/libs/screen_connector/frame_source.h"
 #include "cuttlefish/host/libs/screen_connector/screen_connector_common.h"
 #include "cuttlefish/host/libs/wayland/wayland_server.h"
 
@@ -34,11 +35,10 @@ class WaylandScreenConnector {
                                     frames_are_rgba));
 
   void SetFrameCallback(GenerateProcessedFrameCallbackImpl frame_callback);
-
   void SetDisplayEventCallback(DisplayEventCallback event_callback);
 
  private:
-  std::unique_ptr<wayland::WaylandServer> server_;
+  std::unique_ptr<FrameSource> frame_source_;
 };
 
 }  // namespace cuttlefish
