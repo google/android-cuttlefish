@@ -33,3 +33,11 @@ struct DisplayDestroyedEvent {
 
 using DisplayEvent = std::variant<DisplayCreatedEvent, DisplayDestroyedEvent>;
 using DisplayEventCallback = std::function<void(const DisplayEvent&)>;
+
+// The frame bytes are only valid for the duration of the call.
+using FrameCallback = std::function<void(uint32_t /*display_number*/,       //
+                                         uint32_t /*frame_width*/,          //
+                                         uint32_t /*frame_height*/,         //
+                                         uint32_t /*frame_fourcc_format*/,  //
+                                         uint32_t /*frame_stride_bytes*/,   //
+                                         uint8_t* /*frame_bytes*/)>;

@@ -136,7 +136,9 @@ class StreamerSockets : public virtual SetupFeature {
                      input_paths_provider_.RotaryDevicePath());
     cmd.AddParameter("-keyboard_server_path=",
                      input_paths_provider_.KeyboardPath());
-    cmd.AddParameter("-frame_server_fd=", frames_server_);
+    if (!instance_.enable_display_server()) {
+      cmd.AddParameter("-frame_server_fd=", frames_server_);
+    }
     if (instance_.enable_audio()) {
       cmd.AddParameter("--audio_server_fd=", audio_server_);
       if (HasVirtualTunerStream(instance_)) {
@@ -147,6 +149,9 @@ class StreamerSockets : public virtual SetupFeature {
     cmd.AddParameter("-switches_server_path=",
                      input_paths_provider_.SwitchesPath());
   }
+
+  SharedFD frames_server() const { return frames_server_; }
+  SharedFD display_server() const { return display_server_; }
 
   // SetupFeature
   std::string Name() const override { return "StreamerSockets"; }
@@ -163,6 +168,11 @@ class StreamerSockets : public virtual SetupFeature {
   Result<void> ResultSetup() override {
     frames_server_ = CreateUnixInputServer(instance_.frames_socket_path());
     CF_EXPECT(frames_server_->IsOpen(), frames_server_->StrError());
+    if (instance_.enable_display_server()) {
+      display_server_ = SharedFD::SocketLocalServer(
+          instance_.DisplayServerSocketPath(), false, SOCK_SEQPACKET, 0666);
+      CF_EXPECT(display_server_->IsOpen(), display_server_->StrError());
+    }
     // TODO(schuffelen): Make this a separate optional feature?
     if (instance_.enable_audio()) {
       auto path = config_.ForDefaultInstance().audio_server_path();
@@ -177,6 +187,7 @@ class StreamerSockets : public virtual SetupFeature {
   const CuttlefishConfig::InstanceSpecific instance_;
   InputPathsProvider& input_paths_provider_;
   SharedFD frames_server_;
+  SharedFD display_server_;
   SharedFD audio_server_;
 };
 
@@ -243,6 +254,13 @@ class WebRtcServer : public virtual CommandSource,
     webrtc.AddParameter("-kernel_log_events_fd=", kernel_log_events_pipe_);
     webrtc.AddParameter("-client_dir=",
                         DefaultHostArtifactsPath("usr/share/webrtc/assets"));
+
+    if (instance_.enable_display_server()) {
+      commands.emplace_back(
+          Command(HostBinaryPath("cvd_display_server"))
+              .AddParameter("--frame_server_fd=", sockets_.frames_server())
+              .AddParameter("--display_server_fd=", sockets_.display_server()));
+    }
 
     // TODO get from launcher params
     const auto& actions =
