@@ -219,6 +219,7 @@ cf_cc_library(
     srcs = ["io.cc"],
     hdrs = ["io.h"],
     deps = [
+        "//cuttlefish/io:visitable",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -382,6 +383,14 @@ cf_cc_library(
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
+    name = "visitable",
+    hdrs = ["visitable.h"],
+    deps = [
         "//cuttlefish/result:result_type",
     ],
 )
