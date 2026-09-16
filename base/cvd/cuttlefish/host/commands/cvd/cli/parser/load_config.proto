@@ -107,6 +107,7 @@ message Boot {
   optional string build = 4;
   optional Build bootloader = 5;
   optional Build android_efi_loader = 6;
+  optional bool use_vendor_boot_debug = 7;
 }
 
 message Build {
