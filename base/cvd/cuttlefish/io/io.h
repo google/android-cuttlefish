@@ -17,22 +17,14 @@
 
 #include <stdint.h>
 
+#include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 class ConcatReaderSeeker;
-class IoVisitor;
 class ReadWindowView;
 class SharedFdIo;
-
-/** Used to determine the runtime type of an IO instance object. */
-class IoVisitable {
- public:
-  virtual ~IoVisitable() = default;
-
-  virtual Result<void> Visit(IoVisitor&) = 0;
-};
 
 class Reader : public virtual IoVisitable {
  public:
