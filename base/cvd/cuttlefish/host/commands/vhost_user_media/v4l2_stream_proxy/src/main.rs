@@ -78,8 +78,9 @@ impl TryFrom<CmdLineArgs> for Config {
     type Error = Error;
 
     fn try_from(args: CmdLineArgs) -> Result<Self> {
-        let fps_interval = parse_fps_to_interval(&args.input_fps)
-            .ok_or_else(|| Error::InvalidArgument(format!("Invalid FPS format: {}", args.input_fps)))?;
+        let fps_interval = parse_fps_to_interval(&args.input_fps).ok_or_else(|| {
+            Error::InvalidArgument(format!("Invalid FPS format: {}", args.input_fps))
+        })?;
         Ok(Config {
             socket_path: args.socket_path,
             input_path: args.input_path,
@@ -106,7 +107,7 @@ fn start_backend(config: Config) -> Result<()> {
     let mut card = [0u8; 32];
     let card_name = "v4l2_stream_proxy";
     card[0..card_name.len()].copy_from_slice(card_name.as_bytes());
-    
+
     loop {
         let caps = Capabilities::VIDEO_CAPTURE_MPLANE | Capabilities::STREAMING;
         let device_config = VirtioMediaDeviceConfig {
