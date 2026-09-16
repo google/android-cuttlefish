@@ -83,8 +83,8 @@ class VhostUserMediaDevices : public CommandSource {
         CF_EXPECT(config.v4l2_stream_proxy.has_value(),
                   "Missing v4l2_stream_proxy config");
         binary_path = VhostUserMediaV4l2StreamProxyBinary();
-        cmd.emplace(
-            NewCommand(binary_path, instance_.media_socket_path(index), ""));
+        cmd.emplace(NewCommand(binary_path, instance_.media_socket_path(index),
+                               config.lens_facing));
         cmd->AddParameter("--input_path=",
                           config.v4l2_stream_proxy->input_path);
         cmd->AddParameter(
