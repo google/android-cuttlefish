@@ -74,6 +74,11 @@ class Lz4LegacyReaderImpl : public Reader {
     return len;
   }
 
+  Result<void> Visit(IoVisitor& visitor) override {
+    CF_EXPECT(visitor.Accept(*this));
+    return {};
+  }
+
  private:
   std::unique_ptr<Reader> source_;
   std::vector<char> compressed_;

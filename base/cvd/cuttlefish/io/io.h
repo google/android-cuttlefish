@@ -30,7 +30,6 @@ class Reader : public virtual IoVisitable {
  public:
   virtual ~Reader() = default;
 
-  Result<void> Visit(IoVisitor&) override;
   // Has the semantics of read(2)
   virtual Result<uint64_t> Read(void* buf, uint64_t count) = 0;
 };
