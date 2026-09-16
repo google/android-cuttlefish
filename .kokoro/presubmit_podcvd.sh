@@ -33,8 +33,21 @@ if [ -f "$CACHE_CONFIG_FILE" ]; then
 fi
 
 "${TOOL_DIR}/buildutils/build_packages.sh" -r "${BAZEL_REMOTE_CACHE}" -c "${CACHE_VERSION}"
-# Add test user to the kokoro group so it has access to the source dir
-"${TOOL_DIR}/testutils/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro
+
+if [[ "${ANDROID_CUTTLEFISH_KOKORO_BUILD_SCRIPT_ARGS:-}" == *"-g"* ]]; then
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey -o /etc/apt/keyrings/nvidia-container-toolkit.asc
+    sudo curl -sL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list -o /etc/apt/sources.list.d/nvidia-container-toolkit.list
+    sudo sed -i 's#deb https://#deb [signed-by=/etc/apt/keyrings/nvidia-container-toolkit.asc] https://#g' /etc/apt/sources.list.d/nvidia-container-toolkit.list
+    retry sudo apt update
+    retry sudo apt-get install -y nvidia-container-toolkit
+fi
+
+retry sudo apt-get install -y podman
+
+"${TOOL_DIR}/testutils/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro -p
+
+sudo -u testrunner "${REPO_DIR}/container/image/image-builder.sh" -c podman -m dev -t localhost/cuttlefish-orchestration:latest
 
 # Allow kokoro group to the source dir:
 sudo chmod -R g+w /tmpfs/src
