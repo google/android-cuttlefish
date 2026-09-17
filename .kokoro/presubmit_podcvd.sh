@@ -26,7 +26,7 @@ retry sudo DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confde
 # realpath .kokoro/..
 REPO_DIR="$(realpath "$(dirname "$0")"/..)"
 TOOL_DIR="${REPO_DIR}/tools"
-CACHE_CONFIG_FILE="${REPO_DIR}/.config/cache-config.env"
+CACHE_CONFIG_FILE="${REPO_DIR}/.config/cache-config-debian-13.env"
 
 if [ -f "$CACHE_CONFIG_FILE" ]; then
     source "$CACHE_CONFIG_FILE"
