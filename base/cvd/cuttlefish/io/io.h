@@ -30,7 +30,6 @@ class Writer : public virtual IoVisitable {
  public:
   virtual ~Writer() = default;
 
-  Result<void> Visit(IoVisitor&) override;
   // Has the semantics of write(2)
   virtual Result<uint64_t> Write(const void* buf, uint64_t count) = 0;
 };
