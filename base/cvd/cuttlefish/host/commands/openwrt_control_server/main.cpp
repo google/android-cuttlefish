@@ -194,6 +194,9 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
   }
 
   Result<std::string> FindIpaddrLauncherLog() {
+    if (!cached_ipaddr_.empty()) {
+      return cached_ipaddr_;
+    }
     if (!FileExists(FLAGS_launcher_log_path)) {
       return CF_ERR("launcher.log doesn't exist");
     }
@@ -211,13 +214,15 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
     if (last_match.empty()) {
       return CF_ERR("IP address is not found from launcher.log");
     } else {
-      return last_match.substr(last_match.find('=') + 1);
+      cached_ipaddr_ = last_match.substr(last_match.find('=') + 1);
+      return cached_ipaddr_;
     }
   }
 
   HttpClient& http_client_;
   const std::vector<std::string> header_{"Content-Type: application/json"};
   std::string auth_key_;
+  std::string cached_ipaddr_;
 };
 
 void RunServer() {
