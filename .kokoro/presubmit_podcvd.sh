@@ -45,7 +45,7 @@ fi
 
 retry sudo apt-get install -y podman
 
-"${TOOL_DIR}/testutils/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro -p
+"${TOOL_DIR}/testutils/prepare_host_podcvd.sh" -d "${REPO_DIR}" -u testrunner -g kokoro
 
 sudo -u testrunner "${REPO_DIR}/container/image/image-builder.sh" -c podman -m dev -t localhost/cuttlefish-orchestration:latest
 
