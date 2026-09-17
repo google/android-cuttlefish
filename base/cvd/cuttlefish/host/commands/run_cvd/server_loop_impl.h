@@ -62,6 +62,7 @@ class ServerLoopImpl : public ServerLoop,
     kUnknown = 0,
     kActive = 1,
     kSuspended = 2,
+    kGuestOff = 3,
   };
 
  private:

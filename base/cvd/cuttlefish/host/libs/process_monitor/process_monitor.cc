@@ -43,6 +43,8 @@
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/temp_failure_retry.h"
+#include "cuttlefish/process/command.h"
 #include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/result/result.h"
 
@@ -75,6 +77,22 @@ Result<void> SendEmptyResponse(Channel& channel, uint32_t type) {
   ManagedMessage message = CF_EXPECT(CreateMessage(type, true, 0));
   CF_EXPECT(channel.SendResponse(*message));
   return {};
+}
+
+bool IsVmmCommand(const Command& cmd) {
+  const std::string name = cmd.GetShortName();
+  if (name.find("crosvm") != std::string::npos ||
+      name.find("qemu") != std::string::npos ||
+      name.find("gem5") != std::string::npos) {
+    return true;
+  }
+  if (name.find("process_restarter") != std::string::npos) {
+    const std::string full_cmd = cmd.ToString();
+    return full_cmd.find("crosvm") != std::string::npos ||
+           full_cmd.find("qemu") != std::string::npos ||
+           full_cmd.find("gem5") != std::string::npos;
+  }
+  return false;
 }
 
 void LogSubprocessExit(const std::string& name, pid_t pid, int wstatus) {
@@ -139,14 +157,10 @@ Result<void> MonitorLoop(std::atomic_bool& running,
       } else {
         bool is_critical = it->is_critical;
         std::string name = it->cmd->GetShortName();
+        const bool is_vmm = IsVmmCommand(*it->cmd);
         monitored.erase(it);
         if (running.load() && is_critical) {
           running.store(false);
-          const bool is_vmm =
-              (name.find("crosvm") != std::string::npos ||
-               name.find("qemu") != std::string::npos ||
-               name.find("gem5") != std::string::npos ||
-               name.find("process_restarter") != std::string::npos);
           if (is_vmm && WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == 0) {
             LOG(INFO)
                 << "Stopping all monitored processes due to graceful exit "
@@ -181,11 +195,13 @@ Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
   VLOG(0) << "Stopping monitored subprocesses";
   for (const auto& it : monitored) {
     if (it.proc) {
-      (void)it.proc->SendSignal(SIGCONT);
       (void)it.proc->SendSignalToGroup(SIGCONT);
     }
   }
   auto stop = [](const auto& it) {
+    if (!it.proc) {
+      return true;
+    }
     auto stop_result = it.proc->Stop();
     if (stop_result == StopperResult::kFailure) {
       LOG(WARNING) << "Error in stopping \"" << it.cmd->GetShortName() << "\"";
@@ -397,7 +413,7 @@ Result<void> ProcessMonitor::StopMonitoredProcesses() {
   monitor_ = -1;
 
   int wstatus = 0;
-  pid_t wait_res = waitpid(last_monitor, &wstatus, WNOHANG);
+  pid_t wait_res = TEMP_FAILURE_RETRY(waitpid(last_monitor, &wstatus, WNOHANG));
   if (wait_res == 0) {
     if (parent_channel_.has_value()) {
       auto send_result =
@@ -407,7 +423,7 @@ Result<void> ProcessMonitor::StopMonitoredProcesses() {
                 << send_result.error();
       }
     }
-    wait_res = waitpid(last_monitor, &wstatus, 0);
+    wait_res = TEMP_FAILURE_RETRY(waitpid(last_monitor, &wstatus, 0));
   }
 
   parent_channel_.reset();
@@ -511,7 +527,6 @@ Result<void> ProcessMonitor::MonitorRoutine() {
     LOG(WARNING) << "Failed to stop subprocesses: " << stop_result.error();
   }
   CF_EXPECT(std::move(monitor_loop_result));
-  CF_EXPECT(std::move(parent_comms_result));
   CF_EXPECT(std::move(stop_result));
   VLOG(0) << "Done monitoring subprocesses";
   return {};

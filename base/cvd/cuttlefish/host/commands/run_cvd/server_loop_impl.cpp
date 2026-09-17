@@ -134,6 +134,7 @@ Result<void> ServerLoopImpl::Run() {
         return CF_ERR(
             "process monitor exited unexpectedly: " << stop_result.error());
       }
+      device_status_ = DeviceStatus::kGuestOff;
       LOG(INFO)
           << "Process monitor has exited gracefully (guest VM shut down). "
              "Server loop continuing to listen for status/restart.";
@@ -195,6 +196,8 @@ Result<void> ServerLoopImpl::HandleExtended(
   switch (action_info.extended_action.actions_case()) {
     case ActionsCase::kSuspend: {
       VLOG(0) << "Run_cvd received suspend request.";
+      CF_EXPECT(device_status_.load() != DeviceStatus::kGuestOff,
+                "Device is powered off, cannot suspend");
       if (device_status_.load() == DeviceStatus::kActive) {
         CF_EXPECT(HandleSuspend(process_monitor));
       }
@@ -203,6 +206,8 @@ Result<void> ServerLoopImpl::HandleExtended(
     }
     case ActionsCase::kResume: {
       VLOG(0) << "Run_cvd received resume request.";
+      CF_EXPECT(device_status_.load() != DeviceStatus::kGuestOff,
+                "Device is powered off, cannot resume");
       if (device_status_.load() == DeviceStatus::kSuspended) {
         CF_EXPECT(HandleResume(process_monitor));
       }
@@ -219,6 +224,8 @@ Result<void> ServerLoopImpl::HandleExtended(
     }
     case ActionsCase::kStartScreenRecording: {
       VLOG(0) << "Run_cvd received start screen recording request.";
+      CF_EXPECT(device_status_.load() == DeviceStatus::kActive,
+                "Device is not active, cannot start screen recording");
       CF_EXPECT(HandleStartScreenRecording());
       return {};
     }
@@ -229,6 +236,8 @@ Result<void> ServerLoopImpl::HandleExtended(
     }
     case ActionsCase::kScreenshotDisplay: {
       VLOG(0) << "Run_cvd received screenshot display request.";
+      CF_EXPECT(device_status_.load() == DeviceStatus::kActive,
+                "Device is not active, cannot take screenshot");
       const auto& request = action_info.extended_action.screenshot_display();
       CF_EXPECT(HandleScreenshotDisplay(request));
       return {};

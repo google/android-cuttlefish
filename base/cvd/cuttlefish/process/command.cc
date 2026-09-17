@@ -283,6 +283,7 @@ Subprocess Command::Start(SubprocessOptions options) const {
       prctl(PR_SET_PDEATHSIG, SIGHUP);  // Die when parent dies
     }
 #endif
+    signal(SIGPIPE, SIG_DFL);
 
     do_redirects(redirects_);
 
