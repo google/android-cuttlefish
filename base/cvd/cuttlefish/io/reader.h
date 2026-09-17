@@ -17,13 +17,17 @@
 
 #include <stdint.h>
 
-#include <string>
-
-#include "cuttlefish/io/reader.h"
+#include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<std::string> ReadToString(Reader&, size_t buffer_size = 1 << 16);
+class Reader : public virtual IoVisitable {
+ public:
+  virtual ~Reader() = default;
+
+  // Has the semantics of read(2)
+  virtual Result<uint64_t> Read(void* buf, uint64_t count) = 0;
+};
 
 }  // namespace cuttlefish

@@ -147,6 +147,7 @@ cf_cc_library(
         "//cuttlefish/io:length",
         "//cuttlefish/io:lz4_legacy",
         "//cuttlefish/io:native_filesystem",
+        "//cuttlefish/io:reader",
         "//cuttlefish/io:shared_fd",
         "//cuttlefish/io:string",
         "//cuttlefish/io:write_exact",
