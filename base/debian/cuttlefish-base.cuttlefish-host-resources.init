@@ -61,8 +61,8 @@ mkdir -p /run /var/run
 # $4 = IPv6 address prefix ("a:b::")
 # $5 = IPv6 address prefix length
 start_dnsmasq() {
-    if [ -n "${4}" -a -n "${5}" ]; then
-        ipv6_args="--dhcp-range=${4},ra-stateless,${5} --enable-ra"
+    if [ -n "${4}" ]; then
+        ipv6_args="--dhcp-range=${4},ra-only --enable-ra"
     else
         ipv6_args=""
     fi
@@ -113,6 +113,9 @@ setup_nftables() {
     nft add table ip cuttlefish_nat
     nft add chain ip cuttlefish_nat postrouting '{ type nat hook postrouting priority 100 ; }'
 
+    nft add table ip6 cuttlefish_nat6
+    nft add chain ip6 cuttlefish_nat6 postrouting '{ type nat hook postrouting priority 100 ; }'
+
     nft add table bridge cuttlefish_bridge
     nft add chain bridge cuttlefish_bridge prerouting '{ type filter hook prerouting priority -250 ; }'
     nft add chain bridge cuttlefish_bridge forward '{ type filter hook forward priority 0 ; }'
@@ -120,6 +123,7 @@ setup_nftables() {
 
 delete_nftables() {
     nft delete table ip cuttlefish_nat
+    nft delete table ip6 cuttlefish_nat6 2>/dev/null || true
     nft delete table bridge cuttlefish_bridge
 }
 
@@ -128,7 +132,7 @@ manage_nft_rule() {
     local op="$1"
     local type="$2"
     local id="$3"
-    local contents="$4"
+    local contents="${4:-}"
 
     local family=""
     local table=""
@@ -138,6 +142,11 @@ manage_nft_rule() {
         masq)
             family="ip"
             table="cuttlefish_nat"
+            chain="postrouting"
+            ;;
+        masq6)
+            family="ip6"
+            table="cuttlefish_nat6"
             chain="postrouting"
             ;;
         broute4|broute6)
@@ -212,6 +221,11 @@ create_interface() {
         ip -6 addr add "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${tap}"
     fi
     manage_nft_rule add masq "${tap}" "ip saddr ${network} masquerade"
+    if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
+        if [ "${ipv6_enable_nat66:-1}" = "1" ] || [ "${ipv6_enable_nat66}" = "true" ]; then
+            manage_nft_rule add masq6 "${tap}" "ip6 saddr ${ipv6_prefix}/${ipv6_prefix_length} masquerade"
+        fi
+    fi
 }
 
 # Destroy a tap interface
@@ -228,6 +242,11 @@ destroy_interface() {
     ipv6_prefix="${4}"
     ipv6_prefix_length="${5}"
 
+    if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
+        if [ "${ipv6_enable_nat66:-1}" = "1" ] || [ "${ipv6_enable_nat66}" = "true" ]; then
+            manage_nft_rule delete masq6 "${tap}"
+        fi
+    fi
     manage_nft_rule delete masq "${tap}"
     ip addr del "${gateway}${netmask}" dev "${tap}"
     if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
@@ -281,6 +300,11 @@ create_bridged_interfaces() {
           "${2}" "${gateway}" "${dhcp_range}" \
           "${ipv6_prefix}" "${ipv6_prefix_length}"
         manage_nft_rule add masq "br-${2}" "ip saddr ${network} masquerade"
+        if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
+            if [ "${ipv6_enable_nat66:-1}" = "1" ] || [ "${ipv6_enable_nat66}" = "true" ]; then
+                manage_nft_rule add masq6 "br-${2}" "ip6 saddr ${ipv6_prefix}/${ipv6_prefix_length} masquerade"
+            fi
+        fi
     fi
 }
 
@@ -297,6 +321,11 @@ destroy_bridged_interfaces() {
         network="${1}.0${netmask}"
         ipv6_prefix="${4}"
         ipv6_prefix_length="${5}"
+        if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
+            if [ "${ipv6_enable_nat66:-1}" = "1" ] || [ "${ipv6_enable_nat66}" = "true" ]; then
+                manage_nft_rule delete masq6 "br-${2}"
+            fi
+        fi
         manage_nft_rule delete masq "br-${2}"
         stop_dnsmasq "${2}"
         if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
