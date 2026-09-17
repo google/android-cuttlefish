@@ -113,6 +113,11 @@ class Lz4LegacyWriterImpl : public Writer {
     return to_write;
   }
 
+  Result<void> Visit(IoVisitor& visitor) override {
+    CF_EXPECT(visitor.Accept(*this));
+    return {};
+  }
+
  private:
   std::unique_ptr<Writer> sink_;
   std::vector<char> compressed_;
