@@ -39,10 +39,10 @@
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/write_exact.h"
+#include "cuttlefish/io/writer.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

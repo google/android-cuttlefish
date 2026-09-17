@@ -17,8 +17,8 @@
 
 #include <memory>
 
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/reader.h"
+#include "cuttlefish/io/writer.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {

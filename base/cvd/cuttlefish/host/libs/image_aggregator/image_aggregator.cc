@@ -47,8 +47,8 @@
 #include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/write_exact.h"
+#include "cuttlefish/io/writer.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
