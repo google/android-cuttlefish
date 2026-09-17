@@ -230,7 +230,9 @@ Result<std::vector<bool>> GetFlagBoolValueForInstances(
       if (flag_vec[instance_index] == "unset" ||
           flag_vec[instance_index] == "\"unset\"") {
         std::string_view default_value = default_value_vec[0];
-        if (instance_index < default_value_vec.size()) {
+        if (instance_index < default_value_vec.size() &&
+            default_value_vec[instance_index] != "unset" &&
+            default_value_vec[instance_index] != "\"unset\"") {
           default_value = default_value_vec[instance_index];
         }
         value_vec[instance_index] =
@@ -264,7 +266,9 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
       if (flag_vec[instance_index] == "unset" ||
           flag_vec[instance_index] == "\"unset\"") {
         std::string_view default_value = default_value_vec[0];
-        if (instance_index < default_value_vec.size()) {
+        if (instance_index < default_value_vec.size() &&
+            default_value_vec[instance_index] != "unset" &&
+            default_value_vec[instance_index] != "\"unset\"") {
           default_value = default_value_vec[instance_index];
         }
         CF_EXPECTF(absl::SimpleAtoi(default_value, &value_vec[instance_index]),
@@ -304,7 +308,9 @@ Result<std::vector<std::string>> GetFlagStrValueForInstances(
       if (flag_vec[instance_index] == "unset" ||
           flag_vec[instance_index] == "\"unset\"") {
         std::string_view default_value = default_value_vec[0];
-        if (instance_index < default_value_vec.size()) {
+        if (instance_index < default_value_vec.size() &&
+            default_value_vec[instance_index] != "unset" &&
+            default_value_vec[instance_index] != "\"unset\"") {
           default_value = default_value_vec[instance_index];
         }
         value_vec[instance_index] = default_value;
