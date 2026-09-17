@@ -26,7 +26,7 @@
 #include "json/value.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 

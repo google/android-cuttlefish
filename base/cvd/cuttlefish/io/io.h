@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -25,14 +26,6 @@ namespace cuttlefish {
 class ConcatReaderSeeker;
 class ReadWindowView;
 class SharedFdIo;
-
-class Reader : public virtual IoVisitable {
- public:
-  virtual ~Reader() = default;
-
-  // Has the semantics of read(2)
-  virtual Result<uint64_t> Read(void* buf, uint64_t count) = 0;
-};
 
 class Writer : public virtual IoVisitable {
  public:

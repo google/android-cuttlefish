@@ -66,6 +66,7 @@ cf_cc_library(
     hdrs = ["copy.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:reader",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -119,6 +120,7 @@ cf_cc_library(
         "//cuttlefish/io",
         "//cuttlefish/io:concat",
         "//cuttlefish/io:read_window_view",
+        "//cuttlefish/io:reader",
         "//cuttlefish/io:shared_fd",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
@@ -219,6 +221,7 @@ cf_cc_library(
     srcs = ["io.cc"],
     hdrs = ["io.h"],
     deps = [
+        "//cuttlefish/io:reader",
         "//cuttlefish/io:visitable",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
@@ -271,6 +274,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:reader",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
@@ -286,6 +290,7 @@ cf_cc_test(
         "//cuttlefish/io:filesystem",
         "//cuttlefish/io:in_memory",
         "//cuttlefish/io:lz4_legacy",
+        "//cuttlefish/io:reader",
         "//cuttlefish/io:string",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/result",
@@ -314,6 +319,7 @@ cf_cc_library(
     hdrs = ["read_exact.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:reader",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -340,6 +346,15 @@ cf_cc_test(
         "//cuttlefish/io:read_window_view",
         "//cuttlefish/io:string",
         "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
+    name = "reader",
+    hdrs = ["reader.h"],
+    deps = [
+        "//cuttlefish/io:visitable",
+        "//cuttlefish/result:result_type",
     ],
 )
 
@@ -381,7 +396,7 @@ cf_cc_library(
     srcs = ["string.cc"],
     hdrs = ["string.h"],
     deps = [
-        "//cuttlefish/io",
+        "//cuttlefish/io:reader",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
