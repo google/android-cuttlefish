@@ -58,6 +58,7 @@
 #include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
+#include "cuttlefish/io/writer.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/execute.h"
