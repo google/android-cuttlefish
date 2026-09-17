@@ -150,6 +150,7 @@ cf_cc_library(
         "//cuttlefish/io:reader",
         "//cuttlefish/io:string",
         "//cuttlefish/io:write_exact",
+        "//cuttlefish/io:writer",
         "//cuttlefish/posix:remove",
         "//cuttlefish/process:command",
         "//cuttlefish/process:execute",

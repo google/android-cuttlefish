@@ -67,6 +67,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:reader",
+        "//cuttlefish/io:writer",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -121,6 +122,7 @@ cf_cc_library(
         "//cuttlefish/io:concat",
         "//cuttlefish/io:read_window_view",
         "//cuttlefish/io:reader",
+        "//cuttlefish/io:writer",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -222,6 +224,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/io:reader",
         "//cuttlefish/io:visitable",
+        "//cuttlefish/io:writer",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -271,10 +274,11 @@ cf_cc_library(
     srcs = ["lz4_legacy.cc"],
     hdrs = ["lz4_legacy.h"],
     deps = [
-        "//cuttlefish/io",
         "//cuttlefish/io:read_exact",
         "//cuttlefish/io:reader",
+        "//cuttlefish/io:visitable",
         "//cuttlefish/io:write_exact",
+        "//cuttlefish/io:writer",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@lz4",
@@ -292,6 +296,7 @@ cf_cc_test(
         "//cuttlefish/io:reader",
         "//cuttlefish/io:string",
         "//cuttlefish/io:write_exact",
+        "//cuttlefish/io:writer",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
     ],
@@ -402,8 +407,17 @@ cf_cc_library(
     srcs = ["write_exact.cc"],
     hdrs = ["write_exact.h"],
     deps = [
-        "//cuttlefish/io",
+        "//cuttlefish/io:writer",
         "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
+    name = "writer",
+    hdrs = ["writer.h"],
+    deps = [
+        "//cuttlefish/io:visitable",
         "//cuttlefish/result:result_type",
     ],
 )

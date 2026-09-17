@@ -19,20 +19,13 @@
 
 #include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/visitable.h"
+#include "cuttlefish/io/writer.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 class ConcatReaderSeeker;
 class ReadWindowView;
-
-class Writer : public virtual IoVisitable {
- public:
-  virtual ~Writer() = default;
-
-  // Has the semantics of write(2)
-  virtual Result<uint64_t> Write(const void* buf, uint64_t count) = 0;
-};
 
 class Seeker : public virtual IoVisitable {
  public:
