@@ -231,6 +231,8 @@ Result<void> ServerLoopImpl::HandleExtended(
     }
     case ActionsCase::kStopScreenRecording: {
       VLOG(0) << "Run_cvd received stop screen recording request.";
+      CF_EXPECT(device_status_.load() == DeviceStatus::kActive,
+                "Device is not active, cannot stop screen recording");
       CF_EXPECT(HandleStopScreenRecording());
       return {};
     }
@@ -282,7 +284,13 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       break;
     }
     case LauncherAction::kStatus: {
-      // TODO(schuffelen): Return more information on a side channel
+      // TODO(schuffelen): Return more information on a side channel.
+      // Note: When device_status_ == DeviceStatus::kGuestOff, returning
+      // kSuccess keeps the socket responsive so that `cvd restart` can power
+      // the VM back on. Because `cvd status` hardcodes "Running" upon
+      // receiving LauncherResponse::kSuccess, reporting a distinct
+      // "Powered Off" status requires extending the
+      // LauncherAction/LauncherResponse protocol.
       auto response = LauncherResponse::kSuccess;
       // TODO(schuffelen): Handle unused result
       (void)client->Write(&response, sizeof(response));

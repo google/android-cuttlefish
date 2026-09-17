@@ -81,13 +81,18 @@ Result<void> SendEmptyResponse(Channel& channel, uint32_t type) {
 
 bool IsVmmCommand(const Command& cmd) {
   const std::string name = cmd.GetShortName();
+  const std::string full_cmd = cmd.ToString();
+  // Auxiliary VMs like OpenWRT should not be treated as the main guest VMM.
+  if (full_cmd.find("openwrt") != std::string::npos ||
+      full_cmd.find("crosvm_openwrt") != std::string::npos) {
+    return false;
+  }
   if (name.find("crosvm") != std::string::npos ||
       name.find("qemu") != std::string::npos ||
       name.find("gem5") != std::string::npos) {
     return true;
   }
   if (name.find("process_restarter") != std::string::npos) {
-    const std::string full_cmd = cmd.ToString();
     return full_cmd.find("crosvm") != std::string::npos ||
            full_cmd.find("qemu") != std::string::npos ||
            full_cmd.find("gem5") != std::string::npos;
