@@ -12,23 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_go//go:def.bzl", "go_library", "go_test")
-
-go_library(
-    name = "common",
-    srcs = [
-        "common.go",
-        "cvd.go",
-    ],
-    importpath = "github.com/google/android-cuttlefish/e2etests/cvd/common",
-    visibility = ["//visibility:public"],
-    deps = [
-        "@rules_go//go/runfiles",
-    ],
-)
+load("@rules_go//go:def.bzl", "go_test")
 
 go_test(
-    name = "common_test",
-    srcs = ["cvd_test.go"],
-    embed = [":common"],
+    name = "sdv_tests",
+    size = "large",
+    srcs = [
+        "main_test.go",
+        "sdv_1vm_test.go",
+        "sdv_2vm_test.go",
+    ],
+    tags = [
+        "exclusive",
+        "external",
+        "no-sandbox",
+        "podcvd_excluded",
+        "requires_ab",
+        "supports-graceful-termination",
+    ],
+    deps = [
+        "//cvd/common:common",
+    ],
 )
