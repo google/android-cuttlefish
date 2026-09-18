@@ -367,7 +367,7 @@ class CuttlefishConfig {
 
     std::string ap_esp_image_path() const;
 
-    std::string esp_image_path() const;
+    std::string generated_esp_image_path() const;
 
     std::string audio_server_path() const;
 
@@ -559,6 +559,7 @@ class CuttlefishConfig {
     std::string vvmtruststore_path() const;
     std::string default_target_zip() const;
     std::string system_target_zip() const;
+    std::string android_esp_image() const;
 
     // otheros artifacts
     std::string otheros_esp_image() const;
@@ -802,6 +803,7 @@ class CuttlefishConfig {
         const std::string& vbmeta_system_dlkm_image);
     void set_new_vbmeta_system_dlkm_image(
         const std::string& vbmeta_system_dlkm_image);
+    void set_android_esp_image(const std::string& android_esp_image);
     void set_vvmtruststore_path(const std::string& vvmtruststore_path);
     void set_default_target_zip(const std::string& default_target_zip);
     void set_system_target_zip(const std::string& system_target_zip);
