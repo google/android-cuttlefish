@@ -56,7 +56,6 @@
 #include "cuttlefish/io/lz4_legacy.h"
 #include "cuttlefish/io/native_filesystem.h"
 #include "cuttlefish/io/reader.h"
-#include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/remove.h"
@@ -220,12 +219,10 @@ Result<void> UnpackBootImage(const std::string& boot_image_path,
 
 Result<VendorBootImage> UnpackVendorBootImageIfNotUnpacked(
     const std::string& vendor_boot_image_path, const std::string& unpack_dir) {
-  SharedFD vendor_boot_fd = SharedFD::Open(vendor_boot_image_path, O_RDONLY);
-  CF_EXPECTF(vendor_boot_fd->IsOpen(), "Failed to open '{}': '{}'",
-             vendor_boot_image_path, vendor_boot_fd->StrError());
+  Fd vendor_boot_fd = CF_EXPECT(Fd::Open(vendor_boot_image_path, O_RDONLY));
 
   VendorBootImage vendor_boot = CF_EXPECT(
-      VendorBootImage::Read(std::make_unique<SharedFdIo>(vendor_boot_fd)));
+      VendorBootImage::Read(std::make_unique<Fd>(std::move(vendor_boot_fd))));
   // The ramdisk file is created during the first unpack. If it's already there,
   // a unpack has occurred and there's no need to repeat the process.
   std::string concat_file_path = unpack_dir + "/" + kConcatenatedVendorRamdisk;

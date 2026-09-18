@@ -28,7 +28,6 @@
 #include "absl/strings/str_cat.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/file_monitor_source.h"
@@ -40,7 +39,6 @@
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/io/io.h"
-#include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -92,11 +90,11 @@ std::unique_ptr<MonitorSource> LauncherLogMonitorSource(
   if (!FileExists(path)) {
     return {};
   }
-  SharedFD fd = Fd::Open(path, O_RDONLY).value_or(Fd());
-  if (!fd->IsOpen() || fd->LSeek(0, SEEK_END) <= 0) {
+  Result<Fd> fd = Fd::Open(path, O_RDONLY);
+  if (!fd.has_value() || !fd->SeekEnd(0).has_value()) {
     return {};
   }
-  std::unique_ptr<ReaderSeeker> io = std::make_unique<SharedFdIo>(fd);
+  std::unique_ptr<ReaderSeeker> io = std::make_unique<Fd>(std::move(*fd));
   return std::make_unique<FileMonitorSource>(
       path, std::move(io), ColorLauncherOrLogTee,
       std::bind_front(FilterLauncherOrLogTee, severity));
@@ -109,11 +107,11 @@ std::unique_ptr<MonitorSource> KernelLogMonitorSource(
   if (!FileExists(path)) {
     return {};
   }
-  SharedFD fd = Fd::Open(path, O_RDONLY).value_or(Fd());
-  if (!fd->IsOpen() || fd->LSeek(0, SEEK_END) <= 0) {
+  Result<Fd> fd = Fd::Open(path, O_RDONLY);
+  if (!fd.has_value() || !fd->SeekEnd(0).has_value()) {
     return {};
   }
-  std::unique_ptr<ReaderSeeker> io = std::make_unique<SharedFdIo>(fd);
+  std::unique_ptr<ReaderSeeker> io = std::make_unique<Fd>(std::move(*fd));
   return std::make_unique<FileMonitorSource>(
       path, std::move(io), ColorKernelLine,
       [](std::string_view) { return true; });
@@ -126,11 +124,11 @@ std::unique_ptr<MonitorSource> LogcatMonitorSource(
   if (!FileExists(path)) {
     return {};
   }
-  SharedFD fd = Fd::Open(path, O_RDONLY).value_or(Fd());
-  if (!fd->IsOpen() || fd->LSeek(0, SEEK_END) <= 0) {
+  Result<Fd> fd = Fd::Open(path, O_RDONLY);
+  if (!fd.has_value() || !fd->SeekEnd(0).has_value()) {
     return {};
   }
-  std::unique_ptr<ReaderSeeker> io = std::make_unique<SharedFdIo>(fd);
+  std::unique_ptr<ReaderSeeker> io = std::make_unique<Fd>(std::move(*fd));
   return std::make_unique<FileMonitorSource>(
       path, std::move(io), ColorLogcatLine,
       std::bind_front(FilterLogcatLine, severity));
