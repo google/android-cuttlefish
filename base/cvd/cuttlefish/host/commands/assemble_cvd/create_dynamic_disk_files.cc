@@ -34,6 +34,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
+#include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/access_kregistry.h"
@@ -85,6 +86,10 @@ uint64_t AvailableSpaceAtPath(const std::string& path) {
 
 Result<void> CheckDataImageSpace(
     const CuttlefishConfig::InstanceSpecific& instance) {
+  if (FLAGS_use_overlay) {
+    return {};
+  }
+
   // Check if filling in the sparse image would run out of disk space.
   std::string data_image = instance.data_image();
   auto existing_sizes = SparseFileSizes(data_image);
