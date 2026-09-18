@@ -30,7 +30,6 @@ class DefaultIoVisitor : public IoVisitor {
   Result<void> Accept(ReaderSeeker&);
   Result<void> Accept(ReaderWriterSeeker&);
   Result<void> Accept(Seeker&);
-  Result<void> Accept(SharedFdIo&);
   Result<void> Accept(Writer&);
   Result<void> Accept(WriterSeeker&);
 };
