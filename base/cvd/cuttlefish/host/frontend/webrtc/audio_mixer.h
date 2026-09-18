@@ -58,16 +58,6 @@ class AudioMixer {
   // Frame index per stream to put next available data to
   std::unordered_map<uint32_t, size_t> next_frame_;
 
-  // Used to remap channels and apply volume levels
-  std::vector<std::vector<float>> channles_map = {{
-      {1, 0, 0, 0, 0, 0},
-      {0, 1, 0, 0, 0, 0},
-      {0, 0, 1, 0, 0, 0},
-      {0, 0, 0, 1, 0, 0},
-      {0, 0, 0, 0, 1, 0},
-      {0, 0, 0, 0, 0, 1},
-  }};
-
   ////////////////////////////////////////////////////
   ////////////////////////////////////////////////////
 
