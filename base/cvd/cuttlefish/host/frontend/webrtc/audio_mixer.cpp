@@ -7,6 +7,8 @@
 
 #include "absl/log/check.h"
 
+#include "cuttlefish/host/frontend/webrtc/audio_channel_matrix.h"
+
 namespace cuttlefish {
 namespace {
 
@@ -170,12 +172,11 @@ void AudioMixer::OnPlayback(uint32_t stream_id, uint32_t stream_sample_rate,
   const auto frames_count = GetFrameCountAfterResampling(
       sample_rate_, stream_sample_rate, stream_frames_count);
 
-  std::unique_lock<std::mutex> lock(mutex_);
-
   // As of now we only use direct channel mapping
-  for(size_t i = 0; i < channles_map.size(); ++i) {
-    channles_map[i][i] = volume;
-  }
+  const std::vector<std::vector<float>> channels_map =
+      BuildChannelMixingMatrix(channels_count_, stream_channels_count, volume);
+
+  std::unique_lock<std::mutex> lock(mutex_);
 
   const bool need_notify = next_frame_.empty();  // no active streams
 
@@ -204,7 +205,7 @@ void AudioMixer::OnPlayback(uint32_t stream_id, uint32_t stream_sample_rate,
   const auto filled_frames_count =
       convert_fn(mixed_buffer_.data() + next_frame_id * frame_size_bytes_,
                  channels_count_, sample_rate_, buffer, stream_channels_count,
-                 stream_sample_rate, stream_frames_count, channles_map);
+                 stream_sample_rate, stream_frames_count, channels_map);
   CHECK(filled_frames_count <= frames_count);
 
   next_frame_[stream_id] = next_frame_id + filled_frames_count;
