@@ -351,7 +351,7 @@ Result<Fd> Fd::SocketLocalServer(int port, int type) {
              "Bind failed: {}", rval.StrError());
 
   if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
-    CF_EXPECTF(rval.Listen(4) >= 0, "Listen failed: {}", rval.StrError());
+    CF_EXPECT(rval.Listen(4));
   }
   return rval;
 }
@@ -383,7 +383,7 @@ Result<Fd> Fd::SocketLocalServer(std::string_view name, bool abstract,
   // Connection oriented sockets: start listening.
   if (socket_type == SOCK_STREAM || socket_type == SOCK_SEQPACKET) {
     // Follows the default from socket_local_server
-    CF_EXPECTF(rval.Listen(4) >= 0, "Listen failed: {}", rval.StrError());
+    CF_EXPECT(rval.Listen(4));
   }
 
   if (!abstract) {
@@ -416,8 +416,7 @@ Result<Fd> Fd::VsockServer(unsigned int port, int type,
              "Bind failed port {}: {}", port, vsock.StrError());
 
   if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
-    CF_EXPECTF(vsock.Listen(4) >= 0, "Listen on port {} failed: {}", port,
-               vsock.StrError());
+    CF_EXPECTF(vsock.Listen(4), "Listen on port {} failed", port);
   }
   return vsock;
 }
@@ -729,10 +728,10 @@ int Fd::LinkAtCwd(const std::string& path) {
                 AT_SYMLINK_FOLLOW);
 }
 
-int Fd::Listen(int backlog) {
+Result<void> Fd::Listen(int backlog) {
   LocalErrno record_errno(errno_);
-
-  return listen(fd_, backlog);
+  CF_EXPECT_GE(listen(fd_, backlog), 0, ::cuttlefish::StrError(errno));
+  return {};
 }
 
 off_t Fd::LSeek(off_t offset, int whence) {
@@ -826,31 +825,6 @@ int Fd::GetSockOpt(int level, int optname, void* optval, socklen_t* optlen) {
   LocalErrno record_errno(errno_);
 
   return getsockopt(fd_, level, optname, optval, optlen);
-}
-
-int Fd::SetTerminalRaw() {
-  LocalErrno record_errno(errno_);
-
-  termios terminal_settings;
-  if (int rval = tcgetattr(fd_, &terminal_settings); rval < 0) {
-    return rval;
-  }
-  cfmakeraw(&terminal_settings);
-  if (int rval = tcsetattr(fd_, TCSANOW, &terminal_settings); rval < 0) {
-    return rval;
-  }
-
-  // tcsetattr() succeeds if any of the requested change success.
-  // So double check whether everything is applied.
-  termios raw_settings;
-  if (int rval = tcgetattr(fd_, &raw_settings); rval < 0) {
-    return rval;
-  }
-  if (memcmp(&terminal_settings, &raw_settings, sizeof(terminal_settings))) {
-    errno = EPROTO;
-    return -1;
-  }
-  return 0;
 }
 
 std::string Fd::StrError() const {

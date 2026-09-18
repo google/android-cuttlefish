@@ -209,7 +209,6 @@ class Fd : public ReaderWriterSeeker {
    */
   // Used with O_TMPFILE files to attach them to the filesystem.
   int LinkAtCwd(const std::string& path);
-  int Listen(int backlog);
   static void Log(const char* message);
   off_t LSeek(off_t offset, int whence);
   ssize_t Recv(void* buf, size_t len, int flags);
@@ -241,7 +240,6 @@ class Fd : public ReaderWriterSeeker {
   void Set(fd_set* dest, int* max_index) const;
   int SetSockOpt(int level, int optname, const void* optval, socklen_t optlen);
   int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen);
-  int SetTerminalRaw();
   std::string StrError() const;
   ScopedMMap MMap(void* addr, size_t length, int prot, int flags, off_t offset);
   Result<void> Truncate(uint64_t length) override;
@@ -269,6 +267,8 @@ class Fd : public ReaderWriterSeeker {
 
  private:
   Fd(int fd, int in_errno);
+
+  Result<void> Listen(int backlog);
 
   static Fd ErrorFD(int error);
 
