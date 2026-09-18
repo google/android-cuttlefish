@@ -119,7 +119,6 @@ cf_cc_library(
         "//cuttlefish/io",
         "//cuttlefish/io:concat",
         "//cuttlefish/io:read_window_view",
-        "//cuttlefish/io:shared_fd",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -361,18 +360,6 @@ cf_cc_test(
         "//cuttlefish/io:disjoint_range_set",
         "//cuttlefish/io:serialize_disjoint_range_set",
         "//cuttlefish/result:result_matchers",
-    ],
-)
-
-cf_cc_library(
-    name = "shared_fd",
-    srcs = ["shared_fd.cc"],
-    hdrs = ["shared_fd.h"],
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/io",
-        "//cuttlefish/result:expect",
-        "//cuttlefish/result:result_type",
     ],
 )
 

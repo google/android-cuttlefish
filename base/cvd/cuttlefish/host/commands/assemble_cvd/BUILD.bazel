@@ -147,7 +147,6 @@ cf_cc_library(
         "//cuttlefish/io:length",
         "//cuttlefish/io:lz4_legacy",
         "//cuttlefish/io:native_filesystem",
-        "//cuttlefish/io:shared_fd",
         "//cuttlefish/io:string",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/posix:remove",
@@ -629,6 +628,7 @@ cf_cc_library(
     hdrs = ["vendor_dlkm_utils.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:disk_usage",
         "//cuttlefish/common/libs/utils:environment",
@@ -640,7 +640,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:known_paths",
-        "//cuttlefish/io:shared_fd",
         "//cuttlefish/process:command",
         "//cuttlefish/process:execute",
         "//cuttlefish/result",
