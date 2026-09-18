@@ -1,3 +1,10 @@
+cuttlefish-common (1.57.3) unstable; urgency=medium
+
+  * Don't ship netsim as part of our debian package for now by @Databean in https://github.com/google/android-cuttlefish/pull/3185
+  * Fix CI by @ser-io in https://github.com/google/android-cuttlefish/pull/3184
+
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 18 Sep 2026 09:10:58 -0700
+
 cuttlefish-common (1.57.2) unstable; urgency=medium
 
   * Decouple kokoro testing and tools/*/cw/Containerfile by @0405ysj in https://github.com/google/android-cuttlefish/pull/3141
