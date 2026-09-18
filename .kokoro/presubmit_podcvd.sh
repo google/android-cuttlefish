@@ -33,6 +33,7 @@ if [ -f "$CACHE_CONFIG_FILE" ]; then
 fi
 
 "${TOOL_DIR}/buildutils/build_packages.sh" -r "${BAZEL_REMOTE_CACHE}" -c "${CACHE_VERSION}"
+"${TOOL_DIR}/buildutils/build_package.sh" "${REPO_DIR}/container"
 
 if [[ "${ANDROID_CUTTLEFISH_KOKORO_BUILD_SCRIPT_ARGS:-}" == *"-g"* ]]; then
     sudo install -m 0755 -d /etc/apt/keyrings
