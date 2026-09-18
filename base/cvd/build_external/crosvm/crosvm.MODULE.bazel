@@ -116,5 +116,8 @@ git_repository(
     remote = CROSVM_REMOTE,
     init_submodules = True,
     patch_strip = 1,
-    patches = ["@//build_external/crosvm:PATCH.minijail-sys_common_mk.patch"],
+    patches = [
+        "@//build_external/crosvm:PATCH.minijail-sys_common_mk.patch",
+        "@//build_external/crosvm:PATCH.minijail_gen_constants.patch",
+    ],
 )

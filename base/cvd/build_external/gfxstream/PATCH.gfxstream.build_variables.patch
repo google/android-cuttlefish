@@ -1,6 +1,6 @@
-From 07f547d5ef3234bd04befd995bb82aeb0095b042 Mon Sep 17 00:00:00 2001
+From 6d48bad6d162f2f31cfc6f1d26d9748ce33709b3 Mon Sep 17 00:00:00 2001
 From: Jason Macnak <natsu@google.com>
-Date: Wed, 17 Jun 2026 08:51:21 -0700
+Date: Mon, 14 Sep 2026 10:20:20 -0700
 Subject: [PATCH] Disable some build warnings for Cuttlefish build
 
 ---
@@ -9,12 +9,12 @@ Subject: [PATCH] Disable some build warnings for Cuttlefish build
  2 files changed, 8 insertions(+)
 
 diff --git a/build_variables.bzl b/build_variables.bzl
-index 73f196c86..4b60babee 100644
+index b567c66..3c2921e 100644
 --- a/build_variables.bzl
 +++ b/build_variables.bzl
-@@ -27,6 +27,13 @@ GFXSTREAM_COMMON_COPTS = [
-     "//conditions:default": [],
+@@ -29,6 +29,13 @@ GFXSTREAM_COMMON_COPTS = [
  })
+ 
  GFXSTREAM_HOST_COPTS = GFXSTREAM_COMMON_COPTS + [
 +    "-Wno-deprecated-declarations",
 +    "-Wno-thread-safety-analysis",
@@ -27,7 +27,7 @@ index 73f196c86..4b60babee 100644
      "@platforms//os:windows": [
          "/EHs-c-",
 diff --git a/common/base/BUILD.bazel b/common/base/BUILD.bazel
-index 1c3ae6942..f36bdcfcc 100644
+index dde59b3..12a0402 100644
 --- a/common/base/BUILD.bazel
 +++ b/common/base/BUILD.bazel
 @@ -14,6 +14,7 @@ cc_library(
@@ -38,6 +38,6 @@ index 1c3ae6942..f36bdcfcc 100644
      defines = select({
          "@platforms//os:windows": [
              "WIN32_LEAN_AND_MEAN",
---
-2.54.0.1136.gdb2ca164c4-goog
+-- 
+2.55.0.1032.g73a4cd73de-goog
 
