@@ -208,7 +208,6 @@ class Fd : public ReaderWriterSeeker {
   // whether this is a regular file or not
   bool IsRegular() const { return is_regular_file_; }
 
-  Result<void, int> Listen(int backlog);
   static void Log(const char* message);
   off_t LSeek(off_t offset, int whence);
   ssize_t Recv(void* buf, size_t len, int flags);
@@ -270,6 +269,8 @@ class Fd : public ReaderWriterSeeker {
 
  private:
   Fd(int fd, int in_errno);
+
+  Result<void, int> Listen(int backlog);
 
   static Fd ErrorFD(int error);
 
