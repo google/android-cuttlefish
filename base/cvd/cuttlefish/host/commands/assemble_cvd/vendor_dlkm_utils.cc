@@ -38,6 +38,7 @@
 #include "android-base/file.h"
 #include "fmt/format.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -51,7 +52,6 @@
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
-#include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
@@ -473,11 +473,9 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
     if (!FileExists(module_location)) {
       continue;
     }
-    SharedFD module_fd = SharedFD::Open(module_location, O_RDONLY);
-    CF_EXPECT(module_fd->IsOpen(), module_fd->StrError());
-    SharedFdIo module_io(module_fd);
+    Fd module_fd = CF_EXPECT(Fd::Open(module_location, O_RDONLY));
 
-    if (IsKernelModuleSigned(module_io).value_or(false)) {
+    if (IsKernelModuleSigned(module_fd).value_or(false)) {
       const auto system_dlkm_module_location =
           fmt::format("{}/{}", system_modules_dir, module_path);
 

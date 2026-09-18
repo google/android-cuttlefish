@@ -25,7 +25,6 @@ namespace cuttlefish {
 
 class ConcatReaderSeeker;
 class ReadWindowView;
-class SharedFdIo;
 
 class Writer : public virtual IoVisitable {
  public:
@@ -105,7 +104,6 @@ class IoVisitor {
   virtual Result<void> Accept(ReaderSeeker&) = 0;
   virtual Result<void> Accept(ReaderWriterSeeker&) = 0;
   virtual Result<void> Accept(Seeker&) = 0;
-  virtual Result<void> Accept(SharedFdIo&) = 0;
   virtual Result<void> Accept(Writer&) = 0;
   virtual Result<void> Accept(WriterSeeker&) = 0;
 };
