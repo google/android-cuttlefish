@@ -79,27 +79,6 @@ Result<void> SendEmptyResponse(Channel& channel, uint32_t type) {
   return {};
 }
 
-bool IsVmmCommand(const Command& cmd) {
-  const std::string name = cmd.GetShortName();
-  const std::string full_cmd = cmd.ToString();
-  // Auxiliary VMs like OpenWRT should not be treated as the main guest VMM.
-  if (full_cmd.find("openwrt") != std::string::npos ||
-      full_cmd.find("crosvm_openwrt") != std::string::npos) {
-    return false;
-  }
-  if (name.find("crosvm") != std::string::npos ||
-      name.find("qemu") != std::string::npos ||
-      name.find("gem5") != std::string::npos) {
-    return true;
-  }
-  if (name.find("process_restarter") != std::string::npos) {
-    return full_cmd.find("crosvm") != std::string::npos ||
-           full_cmd.find("qemu") != std::string::npos ||
-           full_cmd.find("gem5") != std::string::npos;
-  }
-  return false;
-}
-
 void LogSubprocessExit(const std::string& name, pid_t pid, int wstatus) {
   LOG(INFO) << "Detected unexpected exit of monitored subprocess " << name;
   if (WIFEXITED(wstatus)) {
@@ -160,16 +139,16 @@ Result<void> MonitorLoop(std::atomic_bool& running,
         // in the future, cmd->Start might not run exec()
         it->proc.reset(new Subprocess(it->cmd->Start(std::move(options))));
       } else {
-        bool is_critical = it->is_critical;
+        const bool is_critical = it->is_critical;
+        const bool is_vmm = it->category == ProcessCategory::kVmm;
         std::string name = it->cmd->GetShortName();
-        const bool is_vmm = IsVmmCommand(*it->cmd);
         monitored.erase(it);
         if (running.load() && is_critical) {
           running.store(false);
           if (is_vmm && WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == 0) {
             LOG(INFO)
                 << "Stopping all monitored processes due to graceful exit "
-                   "of critical process "
+                   "of VMM process "
                 << name;
             break;
           } else {
@@ -387,7 +366,7 @@ ProcessMonitor::Properties& ProcessMonitor::Properties::RestartSubprocesses(
 
 ProcessMonitor::Properties& ProcessMonitor::Properties::AddCommand(
     MonitorCommand cmd) & {
-  entries_.emplace_back(std::move(cmd.command), cmd.is_critical);
+  entries_.emplace_back(std::move(cmd.command), cmd.category);
   return *this;
 }
 

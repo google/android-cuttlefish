@@ -17,7 +17,9 @@
 #pragma once
 
 #include <atomic>
+#include <ostream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -114,6 +116,15 @@ class ServerLoopImpl : public ServerLoop,
   std::unordered_map<std::string, std::string> vm_name_to_control_sock_;
   std::atomic<DeviceStatus> device_status_;
 };
+
+std::string_view format_as(ServerLoopImpl::DeviceStatus status);
+std::ostream& operator<<(std::ostream& out,
+                         ServerLoopImpl::DeviceStatus status);
+
+template <typename Sink>
+void AbslStringify(Sink& sink, ServerLoopImpl::DeviceStatus status) {
+  sink.Append(format_as(status));
+}
 
 }  // namespace run_cvd_impl
 }  // namespace cuttlefish

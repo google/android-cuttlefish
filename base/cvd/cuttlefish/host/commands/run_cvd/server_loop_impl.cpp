@@ -24,7 +24,9 @@
 #include <algorithm>
 #include <cstdlib>
 #include <memory>
+#include <ostream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -57,6 +59,24 @@
 
 namespace cuttlefish {
 namespace run_cvd_impl {
+
+std::string_view format_as(ServerLoopImpl::DeviceStatus status) {
+  switch (status) {
+    case ServerLoopImpl::DeviceStatus::kUnknown:
+      return "Unknown";
+    case ServerLoopImpl::DeviceStatus::kActive:
+      return "Active";
+    case ServerLoopImpl::DeviceStatus::kSuspended:
+      return "Suspended";
+    case ServerLoopImpl::DeviceStatus::kGuestOff:
+      return "GuestOff";
+  }
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         ServerLoopImpl::DeviceStatus status) {
+  return out << format_as(status);
+}
 
 bool ServerLoopImpl::CreateQcowOverlay(const std::string& crosvm_path,
                                        const std::string& backing_file,
@@ -129,11 +149,7 @@ Result<void> ServerLoopImpl::Run() {
 
     if (process_monitor_active && read_set.IsSet(process_monitor.status())) {
       process_monitor_active = false;
-      auto stop_result = process_monitor.StopMonitoredProcesses();
-      if (!stop_result.has_value()) {
-        return CF_ERR(
-            "process monitor exited unexpectedly: " << stop_result.error());
-      }
+      CF_EXPECT(process_monitor.StopMonitoredProcesses());
       device_status_ = DeviceStatus::kGuestOff;
       LOG(INFO)
           << "Process monitor has exited gracefully (guest VM shut down). "
@@ -196,8 +212,8 @@ Result<void> ServerLoopImpl::HandleExtended(
   switch (action_info.extended_action.actions_case()) {
     case ActionsCase::kSuspend: {
       VLOG(0) << "Run_cvd received suspend request.";
-      CF_EXPECT(device_status_.load() != DeviceStatus::kGuestOff,
-                "Device is powered off, cannot suspend");
+      CF_EXPECT_NE(device_status_.load(), DeviceStatus::kGuestOff,
+                   "Device is powered off, cannot suspend");
       if (device_status_.load() == DeviceStatus::kActive) {
         CF_EXPECT(HandleSuspend(process_monitor));
       }
@@ -206,8 +222,8 @@ Result<void> ServerLoopImpl::HandleExtended(
     }
     case ActionsCase::kResume: {
       VLOG(0) << "Run_cvd received resume request.";
-      CF_EXPECT(device_status_.load() != DeviceStatus::kGuestOff,
-                "Device is powered off, cannot resume");
+      CF_EXPECT_NE(device_status_.load(), DeviceStatus::kGuestOff,
+                   "Device is powered off, cannot resume");
       if (device_status_.load() == DeviceStatus::kSuspended) {
         CF_EXPECT(HandleResume(process_monitor));
       }
@@ -216,30 +232,30 @@ Result<void> ServerLoopImpl::HandleExtended(
     }
     case ActionsCase::kSnapshotTake: {
       VLOG(0) << "Run_cvd received snapshot request.";
-      CF_EXPECT(device_status_.load() == DeviceStatus::kSuspended,
-                "The device is not suspended, and snapshot cannot be taken");
+      CF_EXPECT_EQ(device_status_.load(), DeviceStatus::kSuspended,
+                   "The device is not suspended, and snapshot cannot be taken");
       CF_EXPECT(
           HandleSnapshotTake(action_info.extended_action.snapshot_take()));
       return {};
     }
     case ActionsCase::kStartScreenRecording: {
       VLOG(0) << "Run_cvd received start screen recording request.";
-      CF_EXPECT(device_status_.load() == DeviceStatus::kActive,
-                "Device is not active, cannot start screen recording");
+      CF_EXPECT_EQ(device_status_.load(), DeviceStatus::kActive,
+                   "Device is not active, cannot start screen recording");
       CF_EXPECT(HandleStartScreenRecording());
       return {};
     }
     case ActionsCase::kStopScreenRecording: {
       VLOG(0) << "Run_cvd received stop screen recording request.";
-      CF_EXPECT(device_status_.load() == DeviceStatus::kActive,
-                "Device is not active, cannot stop screen recording");
+      CF_EXPECT_EQ(device_status_.load(), DeviceStatus::kActive,
+                   "Device is not active, cannot stop screen recording");
       CF_EXPECT(HandleStopScreenRecording());
       return {};
     }
     case ActionsCase::kScreenshotDisplay: {
       VLOG(0) << "Run_cvd received screenshot display request.";
-      CF_EXPECT(device_status_.load() == DeviceStatus::kActive,
-                "Device is not active, cannot take screenshot");
+      CF_EXPECT_EQ(device_status_.load(), DeviceStatus::kActive,
+                   "Device is not active, cannot take screenshot");
       const auto& request = action_info.extended_action.screenshot_display();
       CF_EXPECT(HandleScreenshotDisplay(request));
       return {};
