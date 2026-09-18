@@ -1,0 +1,81 @@
+name: 'Validate bazel 7 readiness'
+runs:
+  using: "composite"
+  steps:
+  - name: Setup apt
+    run: |
+      apt-get update -y && apt-get upgrade -y && apt-get install -y sudo
+      sudo apt-get purge firefox
+      sudo apt-get update -y && sudo apt-get upgrade -y
+    shell: bash
+  - name: Install dependencies
+    run: |
+      sudo apt-get install -y xxd cmake libvpx-dev libopus-dev libaom-dev autoconf libtool
+      sudo apt-get install -y android-libbase-dev
+      sudo apt-get install -y android-libboringssl-dev
+      sudo apt-get install -y android-libcutils-dev
+      sudo apt-get install -y android-libext4-utils-dev
+      sudo apt-get install -y android-liblog-dev
+      sudo apt-get install -y android-libsparse-dev
+      sudo apt-get install -y android-libutils-dev
+      sudo apt-get install -y android-libziparchive-dev
+      sudo apt-get install -y android-sdk-platform-tools-common
+      sudo apt-get install -y bazel-rules-shell
+      sudo apt-get install -y config-package-dev
+      sudo apt-get install -y git
+      sudo apt-get install -y libabsl-dev
+      sudo apt-get install -y libarchive-dev
+      sudo apt-get install -y libbrotli-dev
+      sudo apt-get install -y libbz2-dev
+      sudo apt-get install -y libc-ares-dev
+      sudo apt-get install -y libcurl4-openssl-dev
+      sudo apt-get install -y libdrm-dev
+      sudo apt-get install -y libegl-dev
+      sudo apt-get install -y libevent-dev
+      sudo apt-get install -y libexpected-dev
+      sudo apt-get install -y libfmt-dev
+      sudo apt-get install -y libfreetype-dev
+      sudo apt-get install -y libgbm-dev
+      sudo apt-get install -y libgflags-dev
+      sudo apt-get install -y libgl-dev
+      sudo apt-get install -y libgles-dev
+      sudo apt-get install -y libgoogle-fruit-dev
+      sudo apt-get install -y libgoogle-glog-dev
+      sudo apt-get install -y libgrpc++-dev
+      sudo apt-get install -y libgrpc-dev
+      sudo apt-get install -y libgtest-dev
+      sudo apt-get install -y libicu-dev
+      sudo apt-get install -y libjpeg-dev
+      sudo apt-get install -y libjsoncpp-dev
+      sudo apt-get install -y liblz4-dev
+      sudo apt-get install -y liblzma-dev
+      sudo apt-get install -y libncurses-dev
+      sudo apt-get install -y libpcre2-dev
+      sudo apt-get install -y libpng-dev
+      sudo apt-get install -y libprotobuf-c-dev
+      sudo apt-get install -y libprotobuf-dev
+      sudo apt-get install -y libre2-dev
+      sudo apt-get install -y libssl-dev
+      sudo apt-get install -y libtinyxml2-dev
+      sudo apt-get install -y libvulkan-dev
+      sudo apt-get install -y libwayland-dev
+      sudo apt-get install -y libxml2-dev
+      sudo apt-get install -y libz3-dev
+      sudo apt-get install -y libzip-dev
+      sudo apt-get install -y mesa-common-dev
+      sudo apt-get install -y nasm
+      sudo apt-get install -y pkgconf
+      sudo apt-get install -y protobuf-compiler
+      sudo apt-get install -y protobuf-compiler-grpc
+      sudo apt-get install -y python3-googleapis-common-protos
+      sudo apt-get install -y uuid-dev
+      sudo apt-get install -y xsltproc
+      sudo apt-get install -y zlib1g-dev
+    shell: bash
+  - name: Install bazel
+    run: sudo apt-get install -y bazel-bootstrap
+    shell: bash
+  - name: Test whether package can build
+    run: |
+      ./tools/testutils/bazel-7-readiness/run_bazel_7_readiness_test.sh
+    shell: bash
