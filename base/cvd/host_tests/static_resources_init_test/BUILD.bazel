@@ -31,7 +31,7 @@ go_test(
         "no-sandbox",
     ],
     deps = [
-        "//host_resources/common",
+        "//host_tests/common",
         "@com_github_google_go_cmp//cmp",
         "@com_github_google_go_cmp//cmp/cmpopts",
     ],
