@@ -65,7 +65,7 @@ EOF
 PKG_DIR=""
 TEST_USER=""
 EXTRA_GROUPS=""
-while getopts "d:u:g" opt; do
+while getopts "d:u:g:" opt; do
   case "${opt}" in
     u)
       TEST_USER="${OPTARG}"
