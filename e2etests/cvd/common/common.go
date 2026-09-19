@@ -191,7 +191,7 @@ func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
 	if credentialArg != "" {
 		fetchCmd = append(fetchCmd, fmt.Sprintf("--credential_source=%s", credentialArg))
 	}
-	res, err := tc.RunCmd(fetchCmd...);
+	res, err := tc.RunCmd(fetchCmd...)
 	if err != nil {
 		log.Printf("Failed to fetch: %w", err)
 		return res, err
@@ -302,6 +302,7 @@ func (tc *TestContext) CVDPowerwash() error {
 // Common parameters for `cvd create --config_file`.
 type LoadArgs struct {
 	LoadConfig string
+	Env        map[string]string
 }
 
 // Performs `cvd create --config_file`.
@@ -326,7 +327,7 @@ func (tc *TestContext) CVDCreateWithConfigFile(load LoadArgs) error {
 	if credentialArg != "" {
 		loadCmd = append(loadCmd, fmt.Sprintf("--credential_source=%s", credentialArg))
 	}
-	if _, err := tc.RunCmd(loadCmd...); err != nil {
+	if _, err := tc.RunCmdWithEnv(loadCmd, load.Env); err != nil {
 		log.Printf("Failed to perform `cvd create --config_file`: %w", err)
 		return err
 	}

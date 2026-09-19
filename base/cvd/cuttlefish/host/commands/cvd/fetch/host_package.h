@@ -25,6 +25,10 @@
 
 namespace cuttlefish {
 
+// Returns the artifact name the host package is downloaded from, which is the
+// filepath of the build string when it names one.
+std::string HostPackageName(const Build& build);
+
 Result<void> FetchHostPackage(
     BuildApi& build_api, const Build& build, const std::string& target_dir,
     bool keep_archives, const std::vector<std::string>& host_substitutions,

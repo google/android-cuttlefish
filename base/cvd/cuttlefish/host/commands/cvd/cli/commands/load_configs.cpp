@@ -292,10 +292,14 @@ std::vector<HelpParagraph> LoadConfigsCommand::CommonCommandDescription() {
   description.emplace_back(
       "While most config file properties are self explanatory, the build "
       "properties (default_build, kernel.build, bootloader.build, etc) require "
-      "more explanation. These properties support two types of values:");
+      "more explanation. These properties support the following values:");
 
   description.emplace_back(HelpParagraph::Raw(
       R"( - "@ab/<branch_or_build_id>[/<target>[{<filepath>}]]"
+ - "gs://<bucket>/<prefix>/"
+ - "gs://<bucket>/<object>[{<filepath>}]"
+ - "https://<host>/<directory>/"
+ - "https://<host>/<object>[{<filepath>}]"
  - "<absolute_path>")"));
 
   description.emplace_back(
@@ -306,6 +310,18 @@ std::vector<HelpParagraph> LoadConfigsCommand::CommonCommandDescription() {
       "server can be specified with the <filepath> optional parameter in curly "
       "braces. For more information on build fetching and caching operations "
       "refer to `cvd help fetch`.");
+
+  description.emplace_back(
+      "A \"gs://\" or \"https://\" value names a build outside the Android "
+      "build servers. A URL ending in '/' names the directory holding the "
+      "build's artifacts, which cvd picks from by name; a URL naming a single "
+      "object is a build of just that artifact, and <filepath> then selects a "
+      "member of it if it is a zip. A \"gs://\" build is read with the "
+      "credentials `cvd fetch` would use for the build servers, while an "
+      "\"https://\" build is read as given, so any credential has to travel "
+      "in the URL itself as in a pre-signed URL. A directory URL over plain "
+      "\"https://\" cannot be listed, so a build named that way needs the "
+      "host package named separately.");
 
   description.emplace_back(
       "Alternatively, the build value may point to an absolute path (starts "

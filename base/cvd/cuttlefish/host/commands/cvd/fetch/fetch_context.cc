@@ -39,9 +39,9 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/build_api_zip.h"
+#include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
 #include "cuttlefish/posix/remove.h"
@@ -183,11 +183,26 @@ FetchBuildContext::FetchBuildContext(FetchContext& fetch_context,
 
 const cuttlefish::Build& FetchBuildContext::Build() const { return build_; }
 
-std::string FetchBuildContext::GetBuildZipName(const std::string& name) const {
-  std::string product =
+Result<std::string> FetchBuildContext::GetBuildZipName(
+    BuildZipKind kind) const {
+  if (const GcsBuild* gcs = std::get_if<GcsBuild>(&build_)) {
+    if (gcs->object.has_value()) {
+      return CF_EXPECT(ResolveUrlZipName(*gcs->object, kind));
+    }
+    return CF_EXPECT(ResolveUrlZipName(GcsArtifactNames(*gcs), kind));
+  }
+  if (const HttpBuild* http = std::get_if<HttpBuild>(&build_)) {
+    CF_EXPECTF(http->object.has_value(),
+               "Cannot discover the '{}' zip of a directory that has no "
+               "listing.  Name the archive itself in the URL, or use a "
+               "'gs://' URL, which lists its contents.",
+               kind);
+    return CF_EXPECT(ResolveUrlZipName(*http->object, kind));
+  }
+  const std::string product =
       std::visit([](auto&& arg) { return arg.product; }, build_);
-  std::string id = std::get<0>(GetBuildIdAndTarget(build_));
-  return product + "-" + name + "-" + id + ".zip";
+  const std::string id = std::get<0>(GetBuildIdAndTarget(build_));
+  return fmt::format("{}-{}-{}.zip", product, kind, id);
 }
 
 std::optional<std::string> FetchBuildContext::GetFilepath() const {

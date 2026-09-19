@@ -29,11 +29,14 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 #include "cuttlefish/host/commands/cvd/fetch/substitute.h"
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+
+std::string HostPackageName(const Build& build) {
+  return GetFilepath(build).value_or("cvd-host_package.tar.gz");
+}
 
 Result<void> FetchHostPackage(
     BuildApi& build_api, const Build& build, const std::string& target_dir,
@@ -47,7 +50,7 @@ Result<void> FetchHostPackage(
   // The download time will still include time spent waiting for the mutex in
   // the build_api though.
   trace.CompletePhase("Async start delay");
-  auto host_tools_name = GetFilepath(build).value_or("cvd-host_package.tar.gz");
+  const std::string host_tools_name = HostPackageName(build);
   std::string host_tools_filepath =
       CF_EXPECT(build_api.DownloadFile(build, target_dir, host_tools_name));
   trace.CompletePhase("Download", FileSize(host_tools_filepath));
