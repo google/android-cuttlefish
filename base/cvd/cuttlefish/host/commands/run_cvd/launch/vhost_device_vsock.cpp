@@ -120,6 +120,10 @@ Result<void> VhostDeviceVsock::WaitForAvailability() {
         fmt::format("{}/vsock_{}_{}/vm.vsock", TempDir(),
                     instance_.vsock_guest_cid(), std::to_string(getuid())),
         30));
+    CF_EXPECT(WaitForUnixSocketListeningWithoutConnect(
+        fmt::format("{}/vsock_{}_{}/vhost.socket", TempDir(),
+                    instance_.vsock_guest_cid(), std::to_string(getuid())),
+        30));
   }
   return {};
 }
