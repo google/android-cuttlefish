@@ -1189,7 +1189,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     if (hwcomposer_vec[instance_index] == kHwComposerAuto) {
-      if (gpu_mode == GpuMode::DrmVirgl) {
+      if (gpu_mode == GpuMode::DrmVirgl || gpu_mode == GpuMode::Venus) {
         instance.set_hwcomposer(kHwComposerDrm);
       } else if (gpu_mode == GpuMode::None) {
         instance.set_hwcomposer(kHwComposerNone);
@@ -1220,10 +1220,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // then SetCommandLineOptionWithMode false as original code did,
     // otherwise keep default enable_sandbox value.
     // 3. Sepolicy rules need to be updated to support gpu mode. Temporarily
-    // disable auto-enabling sandbox when gpu is enabled (b/152323505).
+    // disable auto-enabling sandbox when gpu is enabled for gfxstream
+    // (b/152323505). This doesn't affect Venus, which can support full
+    // sandboxing.
     default_enable_sandbox += comma_str;
     default_enable_virtiofs += comma_str;
-    if (gpu_mode != GpuMode::GuestSwiftshader) {
+    if (gpu_mode != GpuMode::GuestSwiftshader && gpu_mode != GpuMode::Venus) {
       // original code, just moved to each instance setting block
       default_enable_sandbox += "false";
       default_enable_virtiofs += "false";

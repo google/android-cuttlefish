@@ -70,3 +70,27 @@ cc_import(
     shared_library = ":gfxstream_backend",
     visibility = ["//visibility:public"],
 )
+
+alias(
+    name = "virglrenderer",
+    actual = "@virglrenderer//:libvirglrenderer.so.1",
+    visibility = ["//visibility:public"],
+)
+
+cc_import(
+    name = "virglrenderer_import",
+    shared_library = ":virglrenderer",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "minigbm",
+    actual = "@minigbm//:libgbm.so.1",
+    visibility = ["//visibility:public"],
+)
+
+cc_import(
+    name = "minigbm_import",
+    shared_library = ":minigbm",
+    visibility = ["//visibility:public"],
+)
