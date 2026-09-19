@@ -1,0 +1,750 @@
+From 4d439a3686758dde1a6707781988f2a4efdd57f3 Mon Sep 17 00:00:00 2001
+From: Elie Kheirallah <khei@google.com>
+Date: Fri, 4 Sep 2026 17:40:12 +0000
+Subject: [PATCH] wmediumd: Implement device state save and restore for
+ snapshot
+
+Implement serialization and deserialization of wmediumd device state
+(stations, dynamic MAC addresses, positions, tx power, LCI/civicloc, and
+SNR matrix) over the vhost-user device state file descriptor.
+
+This allows preserving dynamically registered MAC addresses (via
+HWSIM_CMD_ADD_MAC_ADDR) and wmediumd state across VM snapshot and
+restore, enabling Wi-Fi connectivity to restore immediately without
+needing post-restore network service restarts.
+
+TAG=agy
+CONV=5df97b60-361a-4803-9dc9-6c486b536214
+
+Bug: 354026289
+Test: cvd snapshot_take, cvd start --snapshot_path, verify Wi-Fi and ping gateway
+Flag: EXEMPT host_tool
+Change-Id: I419b2a42cdd6a080c8e35d3ddbc20e3a6e2e951f
+---
+ wmediumd/config.c   |   2 +
+ wmediumd/wmediumd.c | 473 +++++++++++++++++++++++++++++++++++++++++---
+ wmediumd/wmediumd.h |   7 +
+ 3 files changed, 454 insertions(+), 28 deletions(-)
+
+diff --git a/wmediumd/config.c b/wmediumd/config.c
+index e0317ec..9e9d011 100644
+--- a/wmediumd/config.c
++++ b/wmediumd/config.c
+@@ -210,11 +210,13 @@ static void move_stations_to_direction(struct usfstl_job *job)
+ 	struct wmediumd *ctx = job->data;
+ 	struct station *station;
+ 
++	pthread_mutex_lock(&ctx->state_mutex);
+ 	list_for_each_entry(station, &ctx->stations, list) {
+ 		station->x += station->dir_x;
+ 		station->y += station->dir_y;
+ 	}
+ 	recalc_path_loss(ctx);
++	pthread_mutex_unlock(&ctx->state_mutex);
+ 
+ 	job->start += MOVE_INTERVAL * 1000000;
+ 	usfstl_sched_add_job(&scheduler, job);
+diff --git a/wmediumd/wmediumd.c b/wmediumd/wmediumd.c
+index 210f6f9..bf424db 100644
+--- a/wmediumd/wmediumd.c
++++ b/wmediumd/wmediumd.c
+@@ -1251,22 +1251,28 @@ static void _process_messages(struct nl_msg *msg,
+ 			break;
+ 		hwaddr = (u8 *)nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]);
+ 		addr = (u8 *)nla_data(attrs[HWSIM_ATTR_ADDR_RECEIVER]);
++		pthread_mutex_lock(&ctx->state_mutex);
+ 		sender = get_station_by_addr(ctx, hwaddr);
+-		if (!sender)
++		if (!sender) {
++			pthread_mutex_unlock(&ctx->state_mutex);
+ 			break;
++		}
+ 		for (i = 0; i < sender->n_addrs; i++) {
+ 			if (memcmp(sender->addrs[i].addr, addr, ETH_ALEN) == 0) {
+ 				sender->addrs[i].count += 1;
+-				return;
++				break;
+ 			}
+ 		}
+-		new_addrs = realloc(sender->addrs, sizeof(struct addr) * (sender->n_addrs + 1));
+-		if (!new_addrs)
+-			break;
+-		sender->addrs = new_addrs;
+-		sender->addrs[sender->n_addrs].count = 1;
+-		memcpy(sender->addrs[sender->n_addrs].addr, addr, ETH_ALEN);
+-		sender->n_addrs += 1;
++		if (i == sender->n_addrs) {
++			new_addrs = realloc(sender->addrs, sizeof(struct addr) * (sender->n_addrs + 1));
++			if (new_addrs) {
++				sender->addrs = new_addrs;
++				sender->addrs[sender->n_addrs].count = 1;
++				memcpy(sender->addrs[sender->n_addrs].addr, addr, ETH_ALEN);
++				sender->n_addrs += 1;
++			}
++		}
++		pthread_mutex_unlock(&ctx->state_mutex);
+ 		break;
+ 	case HWSIM_CMD_DEL_MAC_ADDR:
+ 		if (!attrs[HWSIM_ATTR_ADDR_TRANSMITTER] ||
+@@ -1274,9 +1280,12 @@ static void _process_messages(struct nl_msg *msg,
+ 			break;
+ 		hwaddr = (u8 *)nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]);
+ 		addr = (u8 *)nla_data(attrs[HWSIM_ATTR_ADDR_RECEIVER]);
++		pthread_mutex_lock(&ctx->state_mutex);
+ 		sender = get_station_by_addr(ctx, hwaddr);
+-		if (!sender)
++		if (!sender) {
++			pthread_mutex_unlock(&ctx->state_mutex);
+ 			break;
++		}
+ 		for (i = 0; i < sender->n_addrs; i++) {
+ 			if (memcmp(sender->addrs[i].addr, addr, ETH_ALEN))
+ 				continue;
+@@ -1289,6 +1298,7 @@ static void _process_messages(struct nl_msg *msg,
+ 			}
+ 			break;
+ 		}
++		pthread_mutex_unlock(&ctx->state_mutex);
+ 		break;
+ 	case HWSIM_CMD_START_PMSR:
+ 		process_start_pmsr(attrs, ctx, client);
+@@ -1349,28 +1359,393 @@ static void wmediumd_vu_disconnected(struct usfstl_vhost_user_dev *dev)
+ 	wmediumd_remove_client(dev->server->data, client);
+ }
+ 
++static bool write_all(int fd, const void *buf, size_t count) {
++	const uint8_t *p = (const uint8_t *)buf;
++	while (count > 0) {
++		ssize_t n = write(fd, p, count);
++		if (n < 0) {
++			if (errno == EINTR)
++				continue;
++			return false;
++		}
++		if (n == 0) {
++			errno = EIO;
++			return false;
++		}
++		p += n;
++		count -= n;
++	}
++	return true;
++}
++
++static bool read_all(int fd, void *buf, size_t count) {
++	uint8_t *p = (uint8_t *)buf;
++	while (count > 0) {
++		ssize_t n = read(fd, p, count);
++		if (n < 0) {
++			if (errno == EINTR)
++				continue;
++			return false;
++		}
++		if (n == 0) {
++			errno = EIO;
++			return false;
++		}
++		p += n;
++		count -= n;
++	}
++	return true;
++}
++
++#define WMEDIUMD_STATE_MAGIC 0x574d4544
++#define WMEDIUMD_STATE_VERSION 1
++
++/*
++ * Wmediumd Device State Snapshot Format
++ * =====================================
++ *
++ * The serialized state format consists of:
++ * 1. struct wmediumd_state_header:
++ *    - magic:        0x574d4544 ('WMED')
++ *    - version:      WMEDIUMD_STATE_VERSION (1)
++ *    - num_stations: Number of serialized station entries
++ *
++ * 2. An array of num_stations entries, each consisting of:
++ *    - struct wmediumd_station_entry:
++ *        - addr:           Interface MAC address (6 bytes)
++ *        - hwaddr:         Hardware MAC address (6 bytes)
++ *        - x, y:           Coordinates in meters (double, 8 bytes each)
++ *        - tx_power:       Tx power in dBm (int32_t, 4 bytes)
++ *        - lci_len:        Length of LCI string (uint32_t)
++ *        - civicloc_len:   Length of Civic Location string (uint32_t)
++ *        - n_addrs:        Number of associated addresses (uint32_t)
++ *    - If lci_len > 0:
++ *        - LCI string bytes (not null-terminated on wire)
++ *    - If civicloc_len > 0:
++ *        - Civic Location string bytes (not null-terminated on wire)
++ *    - An array of n_addrs entries of struct wmediumd_addr_entry:
++ *        - addr:           Address (6 bytes)
++ *        - count:          Association counter (uint16_t, 2 bytes)
++ *
++ * 3. SNR Matrix (optional):
++ *    - has_snr_matrix:     1 if present, 0 if absent (uint32_t)
++ *    - If has_snr_matrix == 1:
++ *        - snr_matrix_size: Number of int entries (uint32_t, num_stations^2)
++ *        - Array of int (snr_matrix_size * sizeof(int))
++ */
++
++struct wmediumd_state_header {
++	uint32_t magic;
++	uint32_t version;
++	uint32_t num_stations;
++} __attribute__((packed));
++
++struct wmediumd_station_entry {
++	uint8_t addr[ETH_ALEN];
++	uint8_t hwaddr[ETH_ALEN];
++	double x;
++	double y;
++	int32_t tx_power;
++	uint32_t lci_len;
++	uint32_t civicloc_len;
++	uint32_t n_addrs;
++} __attribute__((packed));
++
++struct wmediumd_addr_entry {
++	uint8_t addr[ETH_ALEN];
++	uint16_t count;
++} __attribute__((packed));
++
++static int save_device_state(struct wmediumd *ctx, int fd) {
++	struct wmediumd_state_header header = {
++		.magic = WMEDIUMD_STATE_MAGIC,
++		.version = WMEDIUMD_STATE_VERSION,
++		.num_stations = 0,
++	};
++	struct station *station;
++
++	pthread_mutex_lock(&ctx->state_mutex);
++
++	list_for_each_entry(station, &ctx->stations, list) {
++		header.num_stations++;
++	}
++
++	if (!write_all(fd, &header, sizeof(header))) {
++		w_logf(ctx, LOG_ERR, "%s: failed to write header: %s\n", __func__, strerror(errno));
++		pthread_mutex_unlock(&ctx->state_mutex);
++		return -1;
++	}
++
++	list_for_each_entry(station, &ctx->stations, list) {
++		uint32_t lci_len = station->lci ? strlen(station->lci) : 0;
++		uint32_t civicloc_len = station->civicloc ? strlen(station->civicloc) : 0;
++		struct wmediumd_station_entry entry = {
++			.x = station->x,
++			.y = station->y,
++			.tx_power = station->tx_power,
++			.lci_len = lci_len,
++			.civicloc_len = civicloc_len,
++			.n_addrs = station->n_addrs,
++		};
++		memcpy(entry.addr, station->addr, ETH_ALEN);
++		memcpy(entry.hwaddr, station->hwaddr, ETH_ALEN);
++
++		if (!write_all(fd, &entry, sizeof(entry))) {
++			w_logf(ctx, LOG_ERR, "%s: failed to write station entry: %s\n", __func__, strerror(errno));
++			pthread_mutex_unlock(&ctx->state_mutex);
++			return -1;
++		}
++
++		if (lci_len > 0 && !write_all(fd, station->lci, lci_len)) {
++			pthread_mutex_unlock(&ctx->state_mutex);
++			return -1;
++		}
++
++		if (civicloc_len > 0 && !write_all(fd, station->civicloc, civicloc_len)) {
++			pthread_mutex_unlock(&ctx->state_mutex);
++			return -1;
++		}
++
++		for (uint32_t i = 0; i < station->n_addrs; i++) {
++			struct wmediumd_addr_entry addr_entry;
++			memcpy(addr_entry.addr, station->addrs[i].addr, ETH_ALEN);
++			addr_entry.count = station->addrs[i].count;
++			if (!write_all(fd, &addr_entry, sizeof(addr_entry))) {
++				pthread_mutex_unlock(&ctx->state_mutex);
++				return -1;
++			}
++		}
++	}
++
++	uint32_t has_snr_matrix = (ctx->snr_matrix != NULL) ? 1 : 0;
++	if (!write_all(fd, &has_snr_matrix, sizeof(has_snr_matrix))) {
++		pthread_mutex_unlock(&ctx->state_mutex);
++		return -1;
++	}
++	if (has_snr_matrix) {
++		uint32_t snr_matrix_size = ctx->num_stas * ctx->num_stas;
++		if (!write_all(fd, &snr_matrix_size, sizeof(snr_matrix_size))) {
++			pthread_mutex_unlock(&ctx->state_mutex);
++			return -1;
++		}
++		if (!write_all(fd, ctx->snr_matrix, snr_matrix_size * sizeof(int))) {
++			pthread_mutex_unlock(&ctx->state_mutex);
++			return -1;
++		}
++	}
++
++	uint32_t saved_stations = header.num_stations;
++	pthread_mutex_unlock(&ctx->state_mutex);
++
++	w_logf(ctx, LOG_INFO, "%s: successfully saved state for %u stations\n", __func__, saved_stations);
++	return 0;
++}
++
++/*
++ * Threading and Concurrency:
++ * wmediumd operates as a single-threaded event loop driven by usfstl_loop.
++ * The only background thread created in wmediumd is data_transfer_thread,
++ * spawned by wmediumd_vu_start_data_transfer specifically to stream the device
++ * state over the vhost-user pipe without blocking the main event loop.
++ *
++ * During snapshot save and restore:
++ * - The guest VM is suspended by crosvm (migration phase 0), so no virtq kicks
++ *   or wireless frames arrive from the guest.
++ * - state_mutex guards all mutable station state (the stations list, station
++ *   coordinates, tx_power, dynamic addresses, LCI/civicloc, and snr_matrix)
++ *   against concurrent access between data_transfer_thread and event loop
++ *   handlers on the main thread (periodic station movement, netlink address
++ *   registration, and control socket requests).
++ */
++static int load_device_state(struct wmediumd *ctx, int fd) {
++	struct wmediumd_state_header header;
++
++	if (!read_all(fd, &header, sizeof(header))) {
++		w_logf(ctx, LOG_ERR, "%s: failed to read header: %s\n", __func__, strerror(errno));
++		return -1;
++	}
++	if (header.magic != WMEDIUMD_STATE_MAGIC) {
++		w_logf(ctx, LOG_ERR, "%s: invalid magic: 0x%08x\n", __func__, header.magic);
++		return -1;
++	}
++	if (header.version != WMEDIUMD_STATE_VERSION) {
++		w_logf(ctx, LOG_ERR, "%s: unsupported version: %u\n", __func__, header.version);
++		return -1;
++	}
++
++	pthread_mutex_lock(&ctx->state_mutex);
++
++	uint32_t current_num_stations = 0;
++	struct station *st;
++	list_for_each_entry(st, &ctx->stations, list) {
++		current_num_stations++;
++	}
++	if (header.num_stations != current_num_stations) {
++		w_logf(ctx, LOG_ERR, "%s: station count mismatch (snapshot=%u, current=%u)\n",
++		       __func__, header.num_stations, current_num_stations);
++		pthread_mutex_unlock(&ctx->state_mutex);
++		return -1;
++	}
++
++	for (uint32_t s = 0; s < header.num_stations; s++) {
++		struct wmediumd_station_entry entry;
++
++		if (!read_all(fd, &entry, sizeof(entry))) {
++			w_logf(ctx, LOG_ERR, "%s: failed to read station entry\n", __func__);
++			pthread_mutex_unlock(&ctx->state_mutex);
++			return -1;
++		}
++
++		char *lci = NULL;
++		if (entry.lci_len > 0) {
++			lci = malloc(entry.lci_len + 1);
++			if (!lci || !read_all(fd, lci, entry.lci_len)) {
++				free(lci);
++				pthread_mutex_unlock(&ctx->state_mutex);
++				return -1;
++			}
++			lci[entry.lci_len] = '\0';
++		}
++
++		char *civicloc = NULL;
++		if (entry.civicloc_len > 0) {
++			civicloc = malloc(entry.civicloc_len + 1);
++			if (!civicloc || !read_all(fd, civicloc, entry.civicloc_len)) {
++				free(lci);
++				free(civicloc);
++				pthread_mutex_unlock(&ctx->state_mutex);
++				return -1;
++			}
++			civicloc[entry.civicloc_len] = '\0';
++		}
++
++		struct addr *addrs = NULL;
++		if (entry.n_addrs > 0) {
++			addrs = malloc(sizeof(struct addr) * entry.n_addrs);
++			if (!addrs) {
++				free(lci);
++				free(civicloc);
++				pthread_mutex_unlock(&ctx->state_mutex);
++				return -1;
++			}
++			for (uint32_t i = 0; i < entry.n_addrs; i++) {
++				struct wmediumd_addr_entry addr_entry;
++				if (!read_all(fd, &addr_entry, sizeof(addr_entry))) {
++					free(lci);
++					free(civicloc);
++					free(addrs);
++					pthread_mutex_unlock(&ctx->state_mutex);
++					return -1;
++				}
++				memcpy(addrs[i].addr, addr_entry.addr, ETH_ALEN);
++				addrs[i].count = addr_entry.count;
++			}
++		}
++
++		struct station *station = get_station_by_addr(ctx, entry.addr);
++		if (!station) {
++			w_logf(ctx, LOG_ERR, "%s: station " MAC_FMT " not found in current config\n",
++			       __func__, MAC_ARGS(entry.addr));
++			free(lci);
++			free(civicloc);
++			free(addrs);
++			pthread_mutex_unlock(&ctx->state_mutex);
++			return -1;
++		}
++
++		memcpy(station->hwaddr, entry.hwaddr, ETH_ALEN);
++		station->x = entry.x;
++		station->y = entry.y;
++		station->tx_power = entry.tx_power;
++
++		if (station->lci)
++			free(station->lci);
++		station->lci = lci;
++
++		if (station->civicloc)
++			free(station->civicloc);
++		station->civicloc = civicloc;
++
++		if (station->addrs)
++			free(station->addrs);
++		station->addrs = addrs;
++		station->n_addrs = entry.n_addrs;
++
++		w_logf(ctx, LOG_INFO, "%s: restored station " MAC_FMT " (hwaddr " MAC_FMT ") with %u addrs\n",
++		       __func__, MAC_ARGS(entry.addr), MAC_ARGS(entry.hwaddr), entry.n_addrs);
++	}
++
++	uint32_t has_snr_matrix = 0;
++	if (!read_all(fd, &has_snr_matrix, sizeof(has_snr_matrix))) {
++		pthread_mutex_unlock(&ctx->state_mutex);
++		return -1;
++	}
++	uint32_t current_has_snr_matrix = (ctx->snr_matrix != NULL) ? 1 : 0;
++	if (has_snr_matrix != current_has_snr_matrix) {
++		w_logf(ctx, LOG_ERR,
++		       "%s: SNR matrix presence mismatch (snapshot=%u, current=%u)\n",
++		       __func__, has_snr_matrix, current_has_snr_matrix);
++		pthread_mutex_unlock(&ctx->state_mutex);
++		return -1;
++	}
++	if (has_snr_matrix) {
++		uint32_t snr_matrix_size = 0;
++		if (!read_all(fd, &snr_matrix_size, sizeof(snr_matrix_size))) {
++			pthread_mutex_unlock(&ctx->state_mutex);
++			return -1;
++		}
++		uint32_t expected_size = (uint32_t)(ctx->num_stas * ctx->num_stas);
++		if (snr_matrix_size != expected_size) {
++			w_logf(ctx, LOG_ERR,
++			       "%s: SNR matrix size mismatch (snapshot=%u, expected=%u)\n",
++			       __func__, snr_matrix_size, expected_size);
++			pthread_mutex_unlock(&ctx->state_mutex);
++			return -1;
++		}
++		if (!read_all(fd, ctx->snr_matrix, snr_matrix_size * sizeof(int))) {
++			pthread_mutex_unlock(&ctx->state_mutex);
++			return -1;
++		}
++	}
++
++	uint32_t loaded_stations = header.num_stations;
++	pthread_mutex_unlock(&ctx->state_mutex);
++
++	uint8_t trailing;
++	ssize_t n;
++	do {
++		n = read(fd, &trailing, 1);
++	} while (n < 0 && errno == EINTR);
++	if (n < 0) {
++		w_logf(ctx, LOG_ERR, "%s: read failed: %s\n", __func__, strerror(errno));
++		return -1;
++	}
++	if (n > 0) {
++		w_logf(ctx, LOG_ERR, "%s: unexpected trailing data in snapshot state\n", __func__);
++		return -1;
++	}
++
++	w_logf(ctx, LOG_INFO, "%s: successfully loaded state for %u stations\n", __func__, loaded_stations);
++	return 0;
++}
++
+ static void *do_data_transfer(void *cookie) {
+ 	struct wmediumd *ctx = cookie;
+ 	switch (ctx->data_transfer_direction) {
+ 	case 0: // save
+-		// No device state to save yet, just close the FD.
+-		close(ctx->data_transfer_fd);
+-		break;
+-	case 1: { // load
+-		// No device state to load yet, just verify it is empty.
+-		uint8_t buf;
+-		int n = read(ctx->data_transfer_fd, &buf, 1);
+-		if (n < 0) {
+-			w_logf(ctx, LOG_ERR, "%s: read failed: %s\n", __func__, strerror(errno));
++		if (save_device_state(ctx, ctx->data_transfer_fd) < 0) {
++			w_logf(ctx, LOG_ERR, "%s: save_device_state failed\n", __func__);
+ 			abort();
+ 		}
+-		if (n != 0) {
+-			w_logf(ctx, LOG_ERR, "%s: loaded device state is non-empty. BUG!\n", __func__);
++		close(ctx->data_transfer_fd);
++		break;
++	case 1: // load
++		if (load_device_state(ctx, ctx->data_transfer_fd) < 0) {
++			w_logf(ctx, LOG_ERR, "%s: load_device_state failed\n", __func__);
+ 			abort();
+ 		}
+ 		close(ctx->data_transfer_fd);
+ 		break;
+-	}
+ 	default:
+ 		w_logf(ctx, LOG_ERR, "%s: invalid transfer_direction: %d\n", __func__, ctx->data_transfer_direction);
+ 		abort();
+@@ -1407,15 +1782,18 @@ static void wmediumd_vu_check_data_transfer(struct usfstl_vhost_user_dev *dev) {
+ }
+ 
+ static int process_set_snr_message(struct wmediumd *ctx, struct wmediumd_set_snr *set_snr) {
++	pthread_mutex_lock(&ctx->state_mutex);
+ 	struct station *node1 = get_station_by_addr(ctx, set_snr->node1_mac);
+ 	struct station *node2 = get_station_by_addr(ctx, set_snr->node2_mac);
+ 
+ 	if (node1 == NULL || node2 == NULL) {
++		pthread_mutex_unlock(&ctx->state_mutex);
+ 		return -1;
+ 	}
+ 
+ 	ctx->snr_matrix[ctx->num_stas * node2->index + node1->index] = set_snr->snr;
+ 	ctx->snr_matrix[ctx->num_stas * node1->index + node2->index] = set_snr->snr;
++	pthread_mutex_unlock(&ctx->state_mutex);
+ 
+ 	return 0;
+ }
+@@ -1427,12 +1805,14 @@ static int process_load_config_message(struct wmediumd *ctx,
+ 
+ 	config_path = reload_config->config_path;
+ 
++	pthread_mutex_lock(&ctx->state_mutex);
+ 	if (validate_config(config_path)) {
+ 		clear_config(ctx);
+ 		load_config(ctx, config_path, NULL);
+ 	} else {
+ 		result = -1;
+ 	}
++	pthread_mutex_unlock(&ctx->state_mutex);
+ 
+ 	return result;
+ }
+@@ -1441,7 +1821,17 @@ static int process_reload_current_config_message(struct wmediumd *ctx) {
+ 	char *config_path;
+ 	int result = 0;
+ 
++	pthread_mutex_lock(&ctx->state_mutex);
++	if (!ctx->config_path) {
++		pthread_mutex_unlock(&ctx->state_mutex);
++		return -1;
++	}
++
+ 	config_path = strdup(ctx->config_path);
++	if (!config_path) {
++		pthread_mutex_unlock(&ctx->state_mutex);
++		return -1;
++	}
+ 
+ 	if (validate_config(config_path)) {
+ 		clear_config(ctx);
+@@ -1449,6 +1839,7 @@ static int process_reload_current_config_message(struct wmediumd *ctx) {
+ 	} else {
+ 		result = -1;
+ 	}
++	pthread_mutex_unlock(&ctx->state_mutex);
+ 
+ 	free(config_path);
+ 
+@@ -1460,6 +1851,8 @@ static int process_get_stations_message(struct wmediumd *ctx, ssize_t *response_
+ 	int station_count = 0;
+ 	int extra_data_len = 0;
+ 
++	pthread_mutex_lock(&ctx->state_mutex);
++
+ 	// *reponse_data contains struct wmediumd_station_infos
+ 	// and then lci and civiclocs for each station follows afterwards.
+ 	list_for_each_entry(station, &ctx->stations, list) {
+@@ -1476,6 +1869,7 @@ static int process_get_stations_message(struct wmediumd *ctx, ssize_t *response_
+ 
+ 	if (*response_data == NULL) {
+ 		w_logf(ctx, LOG_ERR, "%s: failed allocate response data\n", __func__);
++		pthread_mutex_unlock(&ctx->state_mutex);
+ 		return -1;
+ 	}
+ 
+@@ -1503,13 +1897,16 @@ static int process_get_stations_message(struct wmediumd *ctx, ssize_t *response_
+ 		}
+ 	}
+ 
++	pthread_mutex_unlock(&ctx->state_mutex);
+ 	return 0;
+ }
+ 
+ static int process_set_position_message(struct wmediumd *ctx, struct wmediumd_set_position *set_position) {
++	pthread_mutex_lock(&ctx->state_mutex);
+ 	struct station *node = get_station_by_addr(ctx, set_position->mac);
+ 
+ 	if (node == NULL) {
++		pthread_mutex_unlock(&ctx->state_mutex);
+ 		return -1;
+ 	}
+ 
+@@ -1517,32 +1914,39 @@ static int process_set_position_message(struct wmediumd *ctx, struct wmediumd_se
+ 	node->y = set_position->y;
+ 
+ 	calc_path_loss(ctx);
++	pthread_mutex_unlock(&ctx->state_mutex);
+ 
+ 	return 0;
+ }
+ 
+ static int process_set_tx_power_message(struct wmediumd *ctx, struct wmediumd_set_tx_power *set_tx_power) {
++	pthread_mutex_lock(&ctx->state_mutex);
+ 	struct station *node = get_station_by_addr(ctx, set_tx_power->mac);
+ 
+ 	if (node == NULL) {
++		pthread_mutex_unlock(&ctx->state_mutex);
+ 		return -1;
+ 	}
+ 
+ 	node->tx_power = set_tx_power->tx_power;
+ 
+ 	calc_path_loss(ctx);
++	pthread_mutex_unlock(&ctx->state_mutex);
+ 
+ 	return 0;
+ }
+ 
+ static int process_set_lci_message(struct wmediumd *ctx, struct wmediumd_set_lci *set_lci, size_t data_len) {
++	pthread_mutex_lock(&ctx->state_mutex);
+ 	struct station *node = get_station_by_addr(ctx, set_lci->mac);
+ 
+ 	if (node == NULL) {
++		pthread_mutex_unlock(&ctx->state_mutex);
+ 		return -1;
+ 	}
+ 	int expected_len = data_len - offsetof(struct wmediumd_set_lci, lci) - 1;
+ 	if (set_lci->lci[expected_len] != '\0') {
++		pthread_mutex_unlock(&ctx->state_mutex);
+ 		return -1;
+ 	}
+ 
+@@ -1550,18 +1954,23 @@ static int process_set_lci_message(struct wmediumd *ctx, struct wmediumd_set_lci
+ 		free(node->lci);
+ 	}
+ 	node->lci = strdup(set_lci->lci);
++	int ret = (node->lci == NULL ? -1 : 0);
++	pthread_mutex_unlock(&ctx->state_mutex);
+ 
+-	return node->lci == NULL ? -1 : 0;
++	return ret;
+ }
+ 
+ static int process_set_civicloc_message(struct wmediumd *ctx, struct wmediumd_set_civicloc *set_civicloc, size_t data_len) {
++	pthread_mutex_lock(&ctx->state_mutex);
+ 	struct station *node = get_station_by_addr(ctx, set_civicloc->mac);
+ 
+ 	if (node == NULL) {
++		pthread_mutex_unlock(&ctx->state_mutex);
+ 		return -1;
+ 	}
+ 	int expected_len = data_len - offsetof(struct wmediumd_set_civicloc, civicloc) - 1;
+ 	if (set_civicloc->civicloc[expected_len] != '\0') {
++		pthread_mutex_unlock(&ctx->state_mutex);
+ 		return -1;
+ 	}
+ 
+@@ -1569,8 +1978,10 @@ static int process_set_civicloc_message(struct wmediumd *ctx, struct wmediumd_se
+ 		free(node->civicloc);
+ 	}
+ 	node->civicloc = strdup(set_civicloc->civicloc);
++	int ret = (node->civicloc == NULL ? -1 : 0);
++	pthread_mutex_unlock(&ctx->state_mutex);
+ 
+-	return node->civicloc == NULL ? -1 : 0;
++	return ret;
+ }
+ 
+ static const struct usfstl_vhost_user_ops wmediumd_vu_ops = {
+@@ -2158,15 +2569,21 @@ int wmediumd_main(int argc, char *argv[], int event_fd, int msq_id)
+ 	INIT_LIST_HEAD(&ctx.stations);
+ 	INIT_LIST_HEAD(&ctx.clients);
+ 	INIT_LIST_HEAD(&ctx.clients_to_free);
++	ctx.data_transfer_fd = -1;
++	pthread_mutex_init(&ctx.state_mutex, NULL);
+ 
+-	if (load_config(&ctx, config_file, per_file))
++	if (load_config(&ctx, config_file, per_file)) {
++		pthread_mutex_destroy(&ctx.state_mutex);
+ 		return EXIT_FAILURE;
++	}
+ 
+ 	use_netlink = force_netlink || !vusrv.socket;
+ 
+ 	/* init netlink */
+-	if (use_netlink && init_netlink(&ctx) < 0)
++	if (use_netlink && init_netlink(&ctx) < 0) {
++		pthread_mutex_destroy(&ctx.state_mutex);
+ 		return EXIT_FAILURE;
++	}
+ 
+ 	if (ctx.intf) {
+ 		ctx.intf_job.start = 10000; // usec
+@@ -2217,8 +2634,6 @@ int wmediumd_main(int argc, char *argv[], int event_fd, int msq_id)
+ 	usfstl_loop_register(&ctx.grpc_loop);
+ 	ctx.msq_id = msq_id;
+ 
+-	ctx.data_transfer_fd = -1;
+-
+ 	while (1) {
+ 		if (time_socket) {
+ 			usfstl_sched_next(&scheduler);
+@@ -2240,6 +2655,8 @@ int wmediumd_main(int argc, char *argv[], int event_fd, int msq_id)
+ 		}
+ 	}
+ 
++	pthread_mutex_destroy(&ctx.state_mutex);
++
+ 	free(ctx.sock);
+ 	free(ctx.cb);
+ 	free(ctx.intf);
+diff --git a/wmediumd/wmediumd.h b/wmediumd/wmediumd.h
+index 6731c63..bc41332 100644
+--- a/wmediumd/wmediumd.h
++++ b/wmediumd/wmediumd.h
+@@ -263,6 +263,13 @@ struct wmediumd {
+ 	int data_transfer_fd;
+ 	uint32_t data_transfer_direction;
+ 	pthread_t data_transfer_thread;
++	/*
++	 * Mutex protecting mutable device state (stations list, station
++	 * coordinates, tx_power, dynamic addresses, LCI/civicloc, and snr_matrix)
++	 * against concurrent access between data_transfer_thread (snapshot save
++	 * and restore) and event loop handlers on the main thread.
++	 */
++	pthread_mutex_t state_mutex;
+ };
+ 
+ struct hwsim_tx_rate {
+-- 
+2.55.0.1082.g2b9226bbc0-goog
+

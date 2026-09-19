@@ -27,6 +27,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstdlib>
+#include <functional>
 #include <mutex>
 #include <optional>
 #include <sstream>
@@ -45,26 +46,25 @@
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
 #include "gflags/gflags.h"
-#include "grpcpp/client_context.h"
-#include "grpcpp/create_channel.h"
-#include "grpcpp/security/credentials.h"
-#include "grpcpp/support/status.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/files/directory_contents.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
-#include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.grpc.pb.h"
-#include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.pb.h"
 #include "cuttlefish/host/commands/run_cvd/validate.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
+#include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -75,13 +75,8 @@
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/command.h"
+#include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
-
-using grpc::ClientContext;
-using openwrtcontrolserver::LuciRpcReply;
-using openwrtcontrolserver::LuciRpcRequest;
-using openwrtcontrolserver::OpenwrtControlService;
-using openwrtcontrolserver::OpenwrtIpaddrReply;
 
 DEFINE_int32(reboot_notification_fd, CF_DEFAULTS_REBOOT_NOTIFICATION_FD,
              "A file descriptor to notify when boot completes.");
@@ -367,85 +362,9 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
                                &restore_complete_stop_write_),
                 "unable to create pipe");
 
-      restore_complete_handler_ = std::thread(
-          [this, restore_complete_pipe_write, restore_complete_stop_read]() {
-            const auto result =
-                vm_manager_.WaitForRestoreComplete(restore_complete_stop_read);
-            CHECK(result.has_value())
-                << "Failed to wait for restore complete: " << result.error();
-            if (!result.value()) {
-              return;
-            }
-
-            Result<Fd> restore_adbd_pipe = Fd::Open(
-                RestoreAdbdPipeName(config_.ForDefaultInstance()), O_WRONLY);
-            CHECK(restore_adbd_pipe.has_value())
-                << "Error opening adbd restore pipe: "
-                << restore_adbd_pipe.error();
-            Result<void> write_res = WriteExact(*restore_adbd_pipe, "2");
-            CHECK(write_res.has_value())
-                << "Error writing to adbd restore pipe: " << write_res.error()
-                << ". This is unrecoverable.";
-
-            // Restart network service in OpenWRT, broken on restore.
-            CHECK(FileExists(instance_.grpc_socket_path() +
-                             "/OpenwrtControlServer.sock"))
-                << "unable to find grpc socket for OpenwrtControlServer";
-            auto openwrt_channel =
-                grpc::CreateChannel("unix:" + instance_.grpc_socket_path() +
-                                        "/OpenwrtControlServer.sock",
-                                    grpc::InsecureChannelCredentials());
-            auto stub_ = OpenwrtControlService::NewStub(openwrt_channel);
-            LuciRpcRequest request;
-            request.set_subpath("sys");
-            request.set_method("exec");
-            request.add_params("service network restart");
-            LuciRpcReply response;
-            ClientContext context;
-            grpc::Status status = stub_->LuciRpc(&context, request, &response);
-            CHECK(status.ok())
-                << "Failed to send network service reset" << status.error_code()
-                << ": " << status.error_message();
-            VLOG(0) << "OpenWRT `service network restart` response: "
-                    << response.result();
-
-            auto SubtoolPath = [](const std::string& subtool_name) {
-              auto my_own_dir = android::base::GetExecutableDirectory();
-              std::stringstream subtool_path_stream;
-              subtool_path_stream << my_own_dir << "/" << subtool_name;
-              auto subtool_path = subtool_path_stream.str();
-              if (my_own_dir.empty() || !FileExists(subtool_path)) {
-                return HostBinaryPath(subtool_name);
-              }
-              return subtool_path;
-            };
-            // Connect adb.
-            Command adb_connect(SubtoolPath("adb"));
-            adb_connect.SetWorkingDirectory("/");
-            adb_connect.AddParameter("connect").AddParameter(
-                instance_.adb_ip_and_port());
-            CHECK_EQ(adb_connect.Start().Wait(), 0)
-                << "Failed to run adb connect";
-            // Run the in-guest post-restore script.
-            Command adb_command(SubtoolPath("adb"));
-            // Avoid the adb server being started in the runtime directory and
-            // looking like a process that is still using the directory.
-            adb_command.SetWorkingDirectory("/");
-            adb_command.AddParameter("-s").AddParameter(
-                instance_.adb_ip_and_port());
-            adb_command.AddParameter("wait-for-device");
-            adb_command.AddParameter("shell");
-            adb_command.AddParameter(
-                "su root /vendor/bin/snapshot_hook_post_resume");
-            CHECK_EQ(adb_command.Start().Wait(), 0)
-                << "Failed to run su root "
-                   "/vendor/bin/snapshot_hook_post_resume";
-            // Done last so that adb is more likely to be ready.
-            CHECK(cuttlefish::WriteAll(restore_complete_pipe_write, "1") == 1)
-                << "Error writing to restore complete pipe: "
-                << restore_complete_pipe_write->StrError()
-                << ". This is unrecoverable.";
-          });
+      restore_complete_handler_ = std::thread(std::bind_front(
+          &CvdBootStateMachine::RestoreComplete, this,
+          restore_complete_pipe_write, restore_complete_stop_read));
     }
 
     boot_event_handler_ =
@@ -456,6 +375,99 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     timeout_thread_ = std::thread([this]() { TimeoutThreadLoop(); });
 
     return {};
+  }
+
+  void RestoreComplete(SharedFD restore_complete_pipe_write,
+                       SharedFD restore_complete_stop_read) {
+    const auto result =
+        vm_manager_.WaitForRestoreComplete(restore_complete_stop_read);
+    CHECK(result.has_value())
+        << "Failed to wait for restore complete: " << result.error();
+    if (!result.value()) {
+      return;
+    }
+
+    Result<Fd> restore_adbd_pipe =
+        Fd::Open(RestoreAdbdPipeName(config_.ForDefaultInstance()), O_WRONLY);
+    CHECK(restore_adbd_pipe.has_value())
+        << "Error opening adbd restore pipe: " << restore_adbd_pipe.error();
+    Result<void> write_res = WriteExact(*restore_adbd_pipe, "2");
+    CHECK(write_res.has_value())
+        << "Error writing to adbd restore pipe: " << write_res.error()
+        << ". This is unrecoverable.";
+
+    bool openwrt_restored = false;
+    const bool has_openwrt = instance_.ap_boot_flow() != APBootFlow::None &&
+                             VmManagerIsCrosvm(config_);
+    if (has_openwrt && IsRestoring(config_)) {
+      const std::string snapshot_dir_path = config_.snapshot_path();
+      auto meta_info_json = LoadMetaJson(snapshot_dir_path);
+      if (meta_info_json.has_value()) {
+        const std::vector<std::string> selectors{kGuestSnapshotField,
+                                                 instance_.id()};
+        auto guest_snapshot_dir_suffix =
+            GetValue<std::string>(*meta_info_json, selectors);
+        if (guest_snapshot_dir_suffix.has_value()) {
+          const auto restore_path = snapshot_dir_path + "/" +
+                                    *guest_snapshot_dir_suffix + "/" +
+                                    kGuestSnapshotBase + "_openwrt";
+          openwrt_restored = DirectoryExists(restore_path);
+        }
+      }
+    }
+    if (openwrt_restored) {
+      const auto openwrt_sock = instance_.OpenwrtCrosvmSocketPath();
+      auto wait_res =
+          WaitForUnixSocketListeningWithoutConnect(openwrt_sock, 30);
+      CHECK(wait_res.has_value())
+          << "Failed waiting for OpenWRT crosvm control socket: "
+          << wait_res.error();
+
+      // Ask crosvm to resume the OpenWRT VM. crosvm promises to not
+      // complete this command until the vCPUs are started.
+      int exit_status = Execute(std::vector<std::string>{
+          instance_.crosvm_binary(),
+          "resume",
+          openwrt_sock,
+          "--full",
+      });
+      CHECK_EQ(exit_status, 0)
+          << "crosvm resume for OpenWRT returned non-zero code " << exit_status;
+    }
+
+    auto SubtoolPath = [](const std::string& subtool_name) {
+      auto my_own_dir = android::base::GetExecutableDirectory();
+      std::stringstream subtool_path_stream;
+      subtool_path_stream << my_own_dir << "/" << subtool_name;
+      auto subtool_path = subtool_path_stream.str();
+      if (my_own_dir.empty() || !FileExists(subtool_path)) {
+        return HostBinaryPath(subtool_name);
+      }
+      return subtool_path;
+    };
+    // Connect adb.
+    Command adb_connect(SubtoolPath("adb"));
+    adb_connect.SetWorkingDirectory("/");
+    adb_connect.AddParameter("connect").AddParameter(
+        instance_.adb_ip_and_port());
+    CHECK_EQ(adb_connect.Start().Wait(), 0) << "Failed to run adb connect";
+    // Run the in-guest post-restore script.
+    Command adb_command(SubtoolPath("adb"));
+    // Avoid the adb server being started in the runtime directory and
+    // looking like a process that is still using the directory.
+    adb_command.SetWorkingDirectory("/");
+    adb_command.AddParameter("-s").AddParameter(instance_.adb_ip_and_port());
+    adb_command.AddParameter("wait-for-device");
+    adb_command.AddParameter("shell");
+    adb_command.AddParameter("su root /vendor/bin/snapshot_hook_post_resume");
+    CHECK_EQ(adb_command.Start().Wait(), 0)
+        << "Failed to run su root "
+           "/vendor/bin/snapshot_hook_post_resume";
+    // Done last so that adb is more likely to be ready.
+    CHECK(cuttlefish::WriteAll(restore_complete_pipe_write, "1") == 1)
+        << "Error writing to restore complete pipe: "
+        << restore_complete_pipe_write->StrError()
+        << ". This is unrecoverable.";
   }
 
   void ThreadLoop(SharedFD boot_events_pipe, SharedFD restore_complete_pipe) {
