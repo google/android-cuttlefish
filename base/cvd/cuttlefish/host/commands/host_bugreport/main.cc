@@ -59,11 +59,15 @@ Result<void> AddNetsimdLogs(WritableZip& archive) {
                         : fmt::format("{}/android-{}/netsimd", TempDir(), user);
   CF_EXPECTF(DirectoryExists(dir),
              "netsimd logs directory: `{}` does not exist.", dir);
-  auto names = CF_EXPECTF(DirectoryContents(dir),
-                          "Cannot read from netsimd directory `{}`", dir);
-  for (const auto& name : names) {
-    LogError(AddFileAt(archive, dir + "/" + name, "netsimd/" + name));
-  }
+  // netsimd nests capture files under `pcap/`, so this has to recurse.
+  CF_EXPECT(WalkDirectoryFiles(
+      dir, [&archive, &dir](const std::string& path) -> Result<void> {
+        // Logged rather than returned: an error here would abort the walk and
+        // drop the remaining netsimd logs.
+        LogError(AddFileAt(archive, path,
+                           "netsimd/" + path.substr(dir.size() + 1)));
+        return {};
+      }));
   return {};
 }
 
