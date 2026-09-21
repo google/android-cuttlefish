@@ -11,6 +11,7 @@ cf_cc_binary(
     srcs = ["main.cc"],
     deps = [
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:directory_exists",
