@@ -82,8 +82,16 @@ Result<std::string> FindFile(const std::string& path,
 
 using WalkDirectoryCallback = std::function<Result<void>(const std::string&)>;
 
+// Invokes `callback` on every entry beneath `dir`, recursively. Note that the
+// callback receives directories as well as files.
 Result<void> WalkDirectory(const std::string& dir,
                            const WalkDirectoryCallback& callback);
+
+// Like `WalkDirectory`, but only invokes `callback` on entries that are not
+// directories. Symlinked directories are not descended into, so a symlink loop
+// cannot trap the walk.
+Result<void> WalkDirectoryFiles(const std::string& dir,
+                                const WalkDirectoryCallback& callback);
 
 std::vector<std::string> Path(const std::string& env_name = "PATH");
 
