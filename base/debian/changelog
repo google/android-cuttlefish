@@ -1,3 +1,10 @@
+cuttlefish-common (1.57.4) unstable; urgency=medium
+
+  * Always launch cvd load devices with --enable_sandbox=false by @Databean in https://github.com/google/android-cuttlefish/pull/3219
+  * cvd host_bugreport: don't discard the whole archive on a directory entry by @shuowanghsu in https://github.com/google/android-cuttlefish/pull/3211
+
+ -- Cody Schuffelen <schuffelen@google.com>  Tue, 22 Sep 2026 14:41:59 -0700
+
 cuttlefish-common (1.57.3) unstable; urgency=medium
 
   * Don't ship netsim as part of our debian package for now by @Databean in https://github.com/google/android-cuttlefish/pull/3185
