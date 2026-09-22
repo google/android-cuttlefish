@@ -127,6 +127,8 @@ std::string PerUserDir() { return fmt::format("{}/{}", CvdDir(), getuid()); }
 
 std::string PerUserCacheDir() { return fmt::format("{}/cache", PerUserDir()); }
 
+std::string RoCacheDir() { return fmt::format("{}/cache-ro", CvdDir()); }
+
 std::string InstanceDatabasePath() {
   return fmt::format("{}/instance_database.binpb", PerUserDir());
 }
