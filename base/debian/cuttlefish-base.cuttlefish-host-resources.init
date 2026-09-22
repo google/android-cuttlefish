@@ -96,6 +96,9 @@ stop_dnsmasq() {
 # $1 = tap name
 create_tap() {
     ip tuntap add dev "${1}" mode tap group cvdnetwork vnet_hdr
+    echo 0 > /proc/sys/net/ipv6/conf/${1}/accept_dad
+    echo 1 > /proc/sys/net/ipv4/conf/${1}/rp_filter
+    echo 0 > /proc/sys/net/ipv4/conf/${1}/ignore_routes_with_linkdown
     ip link set dev "${1}" up
 }
 
@@ -245,11 +248,17 @@ destroy_interface() {
 create_bridged_interfaces() {
     if [ "${create_bridges}" = "1" ]; then
         ip link add name "${2}" type bridge forward_delay 0 stp_state 0
-        ip link set dev "${2}" up
-
         echo 0 > /proc/sys/net/ipv6/conf/${2}/disable_ipv6
         echo 0 > /proc/sys/net/ipv6/conf/${2}/addr_gen_mode
         echo 1 > /proc/sys/net/ipv6/conf/${2}/autoconf
+        echo 0 > /proc/sys/net/ipv6/conf/${2}/accept_dad
+        echo 1 > /proc/sys/net/ipv4/conf/${2}/rp_filter
+        echo 0 > /proc/sys/net/ipv4/conf/${2}/ignore_routes_with_linkdown
+
+        ip link show "${2}-dummy" >/dev/null 2>&1 || ip link add name "${2}-dummy" type dummy
+        ip link set dev "${2}-dummy" master "${2}"
+        ip link set dev "${2}-dummy" up
+        ip link set dev "${2}" up
     fi
     for i in $(seq ${num_cvd_accounts}); do
         tap="$(printf ${3}-%02d $i)"
@@ -319,6 +328,8 @@ destroy_bridged_interfaces() {
         destroy_tap "${tap}"
     done
     if [ "${create_bridges}" = "1" ]; then
+        ip link set dev "${2}-dummy" down 2>/dev/null || true
+        ip link delete "${2}-dummy" 2>/dev/null || true
         ip link set dev "${2}" down
         ip link delete "${2}"
     fi
