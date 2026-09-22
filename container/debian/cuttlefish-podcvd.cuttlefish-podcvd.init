@@ -65,6 +65,14 @@ start() {
     ip route add local "${podcvd_cidr}" dev "${podcvd_ifname}"
 
     gen_cert
+
+    # Execute setfacl directly when udevd is not running.
+    if ! udevadm control --ping --timeout=0 && [ -f /etc/podcvd.users ]; then
+        while IFS=: read -r username _; do
+            [[ -z "$username" || "$username" =~ ^# ]] && continue
+            setfacl -m "u:$username:rw" /dev/kvm /dev/vhost-net /dev/vhost-vsock
+        done < /etc/podcvd.users
+    fi
 }
 
 stop() {
