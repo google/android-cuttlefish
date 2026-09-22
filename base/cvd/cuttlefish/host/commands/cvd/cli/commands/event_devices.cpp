@@ -41,6 +41,7 @@
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
+#include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/result.h"
 

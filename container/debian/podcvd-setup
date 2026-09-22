@@ -112,8 +112,8 @@ KERNEL=="vhost-vsock", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
 EOF
 
     # Ensure vhost_net and vhost_vsock exists
-    modprobe vhost_net
-    modprobe vhost_vsock
+    [ -c /dev/vhost-net ] && [ -e /sys/class/misc/vhost-net ] || modprobe vhost_net
+    [ -c /dev/vhost-vsock ] && [ -e /sys/class/misc/vhost-vsock ] || modprobe vhost_vsock
 
     udevadm control --reload-rules
     udevadm trigger --action=change /dev/kvm

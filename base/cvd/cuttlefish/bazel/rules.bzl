@@ -46,6 +46,7 @@ def _fallback_macro(inherit_attrs = None, attrs = {}, implementation = None):
                 elif k in ["copts", "linkopts", "srcs", "hdrs", "deps", "data", "features"]:
                     call_kwargs[k] = []
         return implementation(name = name, **call_kwargs)
+
     return _wrapper
 
 _macro = getattr(bazel_features.globals, "macro", None)

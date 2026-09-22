@@ -20,6 +20,7 @@
 #include <optional>
 
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 

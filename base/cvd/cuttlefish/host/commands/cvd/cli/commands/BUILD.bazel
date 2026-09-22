@@ -205,6 +205,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances:instance_manager",
         "//cuttlefish/io",
         "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:reader",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",

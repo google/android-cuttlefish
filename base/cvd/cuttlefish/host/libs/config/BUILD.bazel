@@ -405,8 +405,9 @@ cf_cc_library(
     srcs = ["mkenvimage_slim.cc"],
     hdrs = ["mkenvimage_slim.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@zlib",

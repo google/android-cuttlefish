@@ -13,13 +13,13 @@ runs:
       version: '>= 363.0.0'
   - name: Deploy deb packages into Artifact Registry
     run: |
+      # TODO(b/561649046): Include `cuttlefish-podcvd` again after recovering its build procedure.
       PACKAGES=(
         "cuttlefish-base"
         "cuttlefish-integration-gigabyte-arm64"
         "cuttlefish-metrics"
         "cuttlefish-orchestration"
         "cuttlefish-user"
-        "cuttlefish-podcvd"
       )
 
       if [[ ${INPUTS_DEPLOY_CHANNEL} == "stable" ]]; then
