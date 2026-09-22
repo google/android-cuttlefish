@@ -16,6 +16,7 @@
 
 set -o errexit -o nounset -o pipefail
 
+readonly CONFIGS_DIR="$(realpath "$(dirname "$0")")/runcvde2etests_configs"
 readonly REPO_DIR="$(realpath "$(dirname "$0")/../..")"
 readonly OUTPUT_DIR="$(pwd)"
 readonly CREDENTIAL_SOURCE="${CREDENTIAL_SOURCE:-}"
@@ -87,16 +88,37 @@ function gather_test_results() {
   chmod -R a+rw "${output_tests_directory}"
 }
 
+echo "${CONFIGS_DIR}"
+
+readonly QUERY_FILE="${CONFIGS_DIR}/cvd.query"
+readonly TESTS_FILE="${CONFIGS_DIR}/cvd.tests"
+
+if [[ ! -f "${QUERY_FILE}" ]]; then
+  echo "ERROR: query file ${QUERY_FILE} not found" >&2
+  exit 1
+fi
+
+if [[ ! -f "${TESTS_FILE}" ]]; then
+  echo "ERROR: tests file ${TESTS_FILE} not found" >&2
+  exit 1
+fi
+
+readonly QUERY=$(cat "${QUERY_FILE}")
+readonly EXPECTED_TESTS=$(cat "${TESTS_FILE}")
+
 cd "${REPO_DIR}/e2etests"
 
-readonly QUERY='kind("go_test", cvd/...) except attr(tags, "[\[ ]requires_gpu[,\]]", //...)'
-
-all_tests=$(bazel query --noshow_progress "${QUERY}" | grep -e "^\/\/" | sort)
+all_tests=$(bazel query --noshow_progress "${QUERY}" | grep -e "^\/\/" | LC_ALL=C sort)
 all_tests_count=$(echo "${all_tests}" | wc --lines)
-echo "all tests count: ${all_tests_count}"
-echo "all tests"
-echo "${all_tests}"
-echo ""
+
+if [[ "${EXPECTED_TESTS}" == "${all_tests}" ]]; then
+  echo "all tests count: ${all_tests_count}"
+  echo "all tests"
+  echo "${all_tests}"
+else
+  echo "ERROR: Expected tests mismatch" >&2
+  diff -u <(echo "${EXPECTED_TESTS}") <(echo "${all_tests}") >&2
+fi
 
 remainder=$(( all_tests_count % runners_total ))
 prev_runners_count=$(( runner_index - 1 ))
