@@ -36,6 +36,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/metrics/io:notification",
         "//cuttlefish/posix:readlink",
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/posix:symlink",
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
