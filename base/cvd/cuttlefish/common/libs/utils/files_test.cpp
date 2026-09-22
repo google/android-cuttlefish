@@ -92,6 +92,21 @@ TEST_F(FilesTests, LinkOrCopyRecursively) {
   EXPECT_THAT(resultHardLinked.value(), IsTrue());
 }
 
+TEST_F(FilesTests, WalkDirectoryFilesRecursesAndSkipsDirectories) {
+  std::vector<std::string> visited;
+  Result<void> result = WalkDirectoryFiles(
+      src_dir_, [&visited](const std::string& path) -> Result<void> {
+        visited.push_back(path);
+        return {};
+      });
+
+  EXPECT_THAT(result, IsOk());
+  // `sub_dir` itself must not be reported, but the file inside it must be.
+  EXPECT_THAT(visited, testing::UnorderedElementsAre(
+                           src_dir_ + "/file1.txt",
+                           src_dir_ + "/sub_dir/file2.txt"));
+}
+
 TEST_F(FilesTests, MoveDirectoryContentsFailsIfSourceIsNotADirectory) {
   Result<void> result =
       MoveDirectoryContents(src_dir_ + "/file1.txt", dst_dir_ + "/file1.txt");
