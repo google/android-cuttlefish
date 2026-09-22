@@ -283,10 +283,25 @@ void DataService::HandleReadDynamicParam(const Client& client,
   if (iter == pdp_context_.end()) {
     responses.push_back(kCmeErrorInvalidIndex);  // number
   } else {
-    std::stringstream ss;
-    ss << "+CGCONTRDP: " << iter->cid << ",5," << iter->apn << ","
-       << iter->addresses << "," << iter->gateways << "," << iter->dnses;
-    responses.push_back(ss.str());
+    if (iter->conn_types != "\"IPV6\"" && iter->conn_types != "IPV6") {
+      std::stringstream ss;
+      ss << "+CGCONTRDP: " << iter->cid << ",5," << iter->apn << ","
+         << iter->addresses << "," << iter->gateways << "," << iter->dnses;
+      responses.push_back(ss.str());
+    }
+    std::stringstream ss6;
+    ss6 << "+CGCONTRDP: " << iter->cid << ",5," << iter->apn << ","
+        << cuttlefish::modem::DeviceConfig::ril_ipv6_address_and_prefix() << ","
+        << cuttlefish::modem::DeviceConfig::ril_ipv6_gateway() << ","
+        << cuttlefish::modem::DeviceConfig::ril_ipv6_dns();
+    responses.push_back(ss6.str());
+
+    std::stringstream ss6_ula;
+    ss6_ula << "+CGCONTRDP: " << iter->cid << ",5," << iter->apn << ","
+            << cuttlefish::modem::DeviceConfig::ril_ipv6_ula_address_and_prefix() << ","
+            << cuttlefish::modem::DeviceConfig::ril_ipv6_ula_gateway() << ","
+            << cuttlefish::modem::DeviceConfig::ril_ipv6_dns();
+    responses.push_back(ss6_ula.str());
     responses.push_back("OK");
   }
 

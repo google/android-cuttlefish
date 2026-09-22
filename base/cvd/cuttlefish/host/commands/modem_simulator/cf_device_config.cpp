@@ -61,6 +61,31 @@ std::string DeviceConfig::ril_dns() {
   return instance.ril_dns();
 }
 
+static int GetModemInstanceNumber() {
+  int id = DeviceConfig::host_id() - 1000;
+  return (id >= 1 && id <= 128) ? id : 1;
+}
+
+std::string DeviceConfig::ril_ipv6_address_and_prefix() {
+  return "2001:db8:cf:21:" + std::to_string(GetModemInstanceNumber()) + "::2/64";
+}
+
+std::string DeviceConfig::ril_ipv6_ula_address_and_prefix() {
+  return "fd00:cf:21:" + std::to_string(GetModemInstanceNumber()) + "::2/64";
+}
+
+std::string DeviceConfig::ril_ipv6_gateway() {
+  return "2001:db8:cf:21:" + std::to_string(GetModemInstanceNumber()) + "::1";
+}
+
+std::string DeviceConfig::ril_ipv6_ula_gateway() {
+  return "fd00:cf:21:" + std::to_string(GetModemInstanceNumber()) + "::1";
+}
+
+std::string DeviceConfig::ril_ipv6_dns() {
+  return "2001:4860:4860::8888,2001:4860:4860::8844";
+}
+
 std::ifstream DeviceConfig::open_ifstream_crossplat(const char* filename) {
   return std::ifstream(filename);
 }

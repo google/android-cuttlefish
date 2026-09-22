@@ -37,7 +37,30 @@ func checkHostIPv6Support(t *testing.T, c *e2etests.TestContext) {
 	}
 }
 
-// pollIPv6Address polls the guest network interfaces until an expected ULA prefix is assigned via SLAAC.
+// pollInterfaceIPv6Address polls a specific guest interface until an expected Cuttlefish IPv6 prefix is assigned.
+func pollInterfaceIPv6Address(c *e2etests.TestContext, iface string, expectedPrefixes []string, gatewayIP string, timeout time.Duration) (guestIP string, err error) {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		out, runErr := c.RunCmd("adb", "shell", fmt.Sprintf("ip -6 -o addr show dev %s scope global 2>/dev/null || true", iface))
+		if runErr == nil && out.Stdout != "" {
+			for _, line := range strings.Split(out.Stdout, "\n") {
+				fields := strings.Fields(line)
+				if len(fields) >= 4 {
+					addrWithMask := fields[3]
+					for _, prefix := range expectedPrefixes {
+						if strings.Contains(addrWithMask, prefix) {
+							return strings.Split(addrWithMask, "/")[0], nil
+						}
+					}
+				}
+			}
+		}
+		time.Sleep(pollInterval)
+	}
+	return "", fmt.Errorf("timed out after %v waiting for IPv6 assignment on %s (expected prefixes %v)", timeout, iface, expectedPrefixes)
+}
+
+// pollIPv6Address polls the guest network interfaces until an expected ULA or GUA prefix is assigned via SLAAC.
 func pollIPv6Address(c *e2etests.TestContext, t *testing.T, timeout time.Duration) (dev string, guestIP string, gatewayIP string, err error) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
@@ -47,10 +70,14 @@ func pollIPv6Address(c *e2etests.TestContext, t *testing.T, timeout time.Duratio
 				fields := strings.Fields(line)
 				if len(fields) >= 4 {
 					addrWithMask := fields[3]
-					if strings.Contains(addrWithMask, "fd00:cf:24:") {
+					if strings.Contains(addrWithMask, "fd00:cf:24:") || strings.Contains(addrWithMask, "2001:db8:cf:24:") {
 						return fields[1], strings.Split(addrWithMask, "/")[0], "fd00:cf:24::1", nil
-					} else if strings.Contains(addrWithMask, "fd00:cf:22:") {
+					} else if strings.Contains(addrWithMask, "fd00:cf:22:") || strings.Contains(addrWithMask, "2001:db8:cf:22:") {
 						return fields[1], strings.Split(addrWithMask, "/")[0], "fd00:cf:22::1", nil
+					} else if strings.Contains(addrWithMask, "fd00:cf:23:") || strings.Contains(addrWithMask, "2001:db8:cf:23:") {
+						return fields[1], strings.Split(addrWithMask, "/")[0], "fd00:cf:23:1::1", nil
+					} else if strings.Contains(addrWithMask, "fd00:cf:21:") || strings.Contains(addrWithMask, "2001:db8:cf:21:") {
+						return fields[1], strings.Split(addrWithMask, "/")[0], "fd00:cf:21:1::1", nil
 					}
 				}
 			}
@@ -60,11 +87,15 @@ func pollIPv6Address(c *e2etests.TestContext, t *testing.T, timeout time.Duratio
 	return "", "", "", fmt.Errorf("timed out after %v waiting for guest SLAAC IPv6 assignment", timeout)
 }
 
-// configureGuestIPv6Routes installs explicit on-link routing rules for the assigned ULA prefix.
+// configureGuestIPv6Routes installs explicit on-link routing rules for the assigned ULA/GUA prefix.
 func configureGuestIPv6Routes(c *e2etests.TestContext, dev, gatewayIP string) error {
 	prefix := "fd00:cf:24::/64"
-	if strings.Contains(gatewayIP, "22") {
+	if strings.Contains(gatewayIP, ":22:") {
 		prefix = "fd00:cf:22::/64"
+	} else if strings.Contains(gatewayIP, ":23:") {
+		prefix = "fd00:cf:23:1::/64"
+	} else if strings.Contains(gatewayIP, ":21:") {
+		prefix = "fd00:cf:21:1::/64"
 	}
 	cmds := []string{
 		"su 0 ip -6 rule add pref 50 lookup main 2>/dev/null || true",
@@ -119,24 +150,49 @@ func TestIPv6DualStackConnectivity(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log("Verifying in-guest SLAAC IPv6 assignment...")
-	dev, guestIP, gatewayIP, err := pollIPv6Address(&c, t, defaultIPv6Timeout)
-	if err != nil {
-		logDiagnostics(&c, t)
-		t.Fatalf("Failed to obtain IPv6 SLAAC address: %v", err)
+	// Verify Ethernet (eth1), Cellular (buried_eth0), and Wi-Fi (wlan0) IPv6 assignment and reachability.
+	ifaceChecks := []struct {
+		iface            string
+		expectedPrefixes []string
+		gatewayIP        string
+	}{
+		{
+			iface:            "eth1",
+			expectedPrefixes: []string{"fd00:cf:24:", "2001:db8:cf:24:"},
+			gatewayIP:        "fd00:cf:24::1",
+		},
+		{
+			iface:            "buried_eth0",
+			expectedPrefixes: []string{"fd00:cf:21:", "2001:db8:cf:21:"},
+			gatewayIP:        "fd00:cf:21:1::1",
+		},
+		{
+			iface:            "wlan0",
+			expectedPrefixes: []string{"fd00:cf:23:", "2001:db8:cf:23:", "fd00:cf:22:", "2001:db8:cf:22:"},
+			gatewayIP:        "fd00:cf:23:1::1",
+		},
 	}
-	t.Logf("Acquired IPv6 ULA address %s on device %s (gateway %s)", guestIP, dev, gatewayIP)
 
-	if err := configureGuestIPv6Routes(&c, dev, gatewayIP); err != nil {
-		t.Fatalf("Failed configuring guest routes: %v", err)
-	}
+	for _, check := range ifaceChecks {
+		t.Logf("Verifying IPv6 assignment on %s...", check.iface)
+		guestIP, err := pollInterfaceIPv6Address(&c, check.iface, check.expectedPrefixes, check.gatewayIP, defaultIPv6Timeout)
+		if err != nil {
+			logDiagnostics(&c, t)
+			t.Fatalf("Failed to obtain IPv6 address on %s: %v", check.iface, err)
+		}
+		t.Logf("Acquired IPv6 address %s on %s (gateway %s)", guestIP, check.iface, check.gatewayIP)
 
-	t.Logf("Verifying ICMPv6 reachability to gateway %s...", gatewayIP)
-	if !pingIPv6Target(&c, t, dev, guestIP, gatewayIP, defaultIPv6Timeout) {
-		logDiagnostics(&c, t)
-		t.Fatalf("Failed to ping IPv6 gateway %s", gatewayIP)
+		if err := configureGuestIPv6Routes(&c, check.iface, check.gatewayIP); err != nil {
+			t.Fatalf("Failed configuring guest routes on %s: %v", check.iface, err)
+		}
+
+		t.Logf("Verifying ICMPv6 reachability to gateway %s on %s...", check.gatewayIP, check.iface)
+		if !pingIPv6Target(&c, t, check.iface, guestIP, check.gatewayIP, defaultIPv6Timeout) {
+			logDiagnostics(&c, t)
+			t.Fatalf("Failed to ping IPv6 gateway %s on %s", check.gatewayIP, check.iface)
+		}
 	}
-	t.Log("IPv6 dual-stack connectivity verified successfully.")
+	t.Log("IPv6 dual-stack connectivity verified successfully across eth1, buried_eth0, and wlan0.")
 }
 
 func TestIPv6OnlyMode(t *testing.T) {
