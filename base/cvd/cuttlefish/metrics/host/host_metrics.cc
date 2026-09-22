@@ -17,7 +17,9 @@
 #include "cuttlefish/metrics/host/host_metrics.h"
 
 #include <optional>
+#include <string_view>
 
+#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/metrics/host/gce_environment.h"
 #include "cuttlefish/metrics/host/github_environment.h"
@@ -26,6 +28,8 @@
 
 namespace cuttlefish {
 namespace {
+
+constexpr std::string_view kUserVariable = "USER";
 
 Result<Environment> GetEnvironment() {
   const std::optional<GitHubRepository> github_environment =
@@ -45,11 +49,10 @@ Result<Environment> GetEnvironment() {
 }  // namespace
 
 Result<HostMetrics> GetHostMetrics() {
-  return HostMetrics{
-      .os = GetHostInfo(),
-      .invoker = GetInvoker(),
-      .environment = CF_EXPECT(GetEnvironment()),
-  };
+  return HostMetrics{.os = GetHostInfo(),
+                     .invoker = GetInvoker(),
+                     .environment = CF_EXPECT(GetEnvironment()),
+                     .username = StringFromEnv(kUserVariable, "")};
 }
 
 }  // namespace cuttlefish

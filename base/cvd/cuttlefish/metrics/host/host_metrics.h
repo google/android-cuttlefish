@@ -17,6 +17,7 @@
 #pragma once
 
 #include <optional>
+#include <string>
 #include <variant>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
@@ -36,6 +37,7 @@ struct HostMetrics {
   HostInfo os;
   Invoker invoker;
   Environment environment;
+  std::string username;
 };
 
 Result<HostMetrics> GetHostMetrics();
