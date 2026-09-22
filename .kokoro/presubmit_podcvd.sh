@@ -26,13 +26,14 @@ retry sudo DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confde
 # realpath .kokoro/..
 REPO_DIR="$(realpath "$(dirname "$0")"/..)"
 TOOL_DIR="${REPO_DIR}/tools"
-CACHE_CONFIG_FILE="${REPO_DIR}/.config/cache-config.env"
+CACHE_CONFIG_FILE="${REPO_DIR}/.config/cache-config-debian-13.env"
 
 if [ -f "$CACHE_CONFIG_FILE" ]; then
     source "$CACHE_CONFIG_FILE"
 fi
 
 "${TOOL_DIR}/buildutils/build_packages.sh" -r "${BAZEL_REMOTE_CACHE}" -c "${CACHE_VERSION}"
+"${TOOL_DIR}/buildutils/build_package.sh" "${REPO_DIR}/container"
 
 if [[ "${ANDROID_CUTTLEFISH_KOKORO_BUILD_SCRIPT_ARGS:-}" == *"-g"* ]]; then
     sudo install -m 0755 -d /etc/apt/keyrings
@@ -45,7 +46,7 @@ fi
 
 retry sudo apt-get install -y podman
 
-"${TOOL_DIR}/testutils/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro -p
+"${TOOL_DIR}/testutils/prepare_host_podcvd.sh" -d "${REPO_DIR}" -u testrunner -g kokoro
 
 sudo -u testrunner "${REPO_DIR}/container/image/image-builder.sh" -c podman -m dev -t localhost/cuttlefish-orchestration:latest
 

@@ -226,7 +226,7 @@ cf_cc_library(
     hdrs = ["json.h"],
     deps = [
         "//cuttlefish/common/libs/fs:fd",
-        "//cuttlefish/io",
+        "//cuttlefish/io:reader",
         "//cuttlefish/io:string",
         "//cuttlefish/result",
         "@jsoncpp",

@@ -15,15 +15,18 @@
 
 #pragma once
 
-#include <stdint.h>
-
-#include <string>
-
-#include "cuttlefish/io/reader.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<std::string> ReadToString(Reader&, size_t buffer_size = 1 << 16);
+class IoVisitor;
+
+/** Used to determine the runtime type of an IO instance object. */
+class IoVisitable {
+ public:
+  virtual ~IoVisitable() = default;
+
+  virtual Result<void> Visit(IoVisitor&) = 0;
+};
 
 }  // namespace cuttlefish

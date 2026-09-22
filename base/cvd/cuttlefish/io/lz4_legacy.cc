@@ -28,6 +28,7 @@
 
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
+#include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
@@ -72,6 +73,11 @@ class Lz4LegacyReaderImpl : public Reader {
     memcpy(buf, decompressed_.data(), std::min(count, len));
     decompressed_.erase(decompressed_.begin(), decompressed_.begin() + len);
     return len;
+  }
+
+  Result<void> Visit(IoVisitor& visitor) override {
+    CF_EXPECT(visitor.Accept(*this));
+    return {};
   }
 
  private:
