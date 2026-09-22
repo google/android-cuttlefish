@@ -94,8 +94,8 @@ func ExecFetchCmdOnDisposableHost(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
 		return fmt.Errorf("failed to ensure cache directory at %q: %w", cacheDir, err)
 	}
-	targetDir := cvdArgs.GetStringFlagValueOnSubCommandArgs("target_directory")
-	if targetDir == "" {
+	targetDir, exists := cvdArgs.GetStringFlagValueOnSubCommandArgs("target_directory")
+	if !exists {
 		return fmt.Errorf("target_directory is missing")
 	}
 	if info, err := os.Stat(targetDir); err != nil || !info.IsDir() {
@@ -266,8 +266,8 @@ func extractPaths(data any) []string {
 }
 
 func mountablePathsFromConfigFile(cvdArgs *CvdArgs) []string {
-	configFile := cvdArgs.GetStringFlagValueOnSubCommandArgs("config_file")
-	if configFile == "" {
+	configFile, exists := cvdArgs.GetStringFlagValueOnSubCommandArgs("config_file")
+	if !exists {
 		return nil
 	}
 	absConfigFile := resolveHostPath(configFile)
@@ -410,9 +410,10 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 	if err := os.MkdirAll(podcvdRootDir, 0777); err != nil {
 		return "", fmt.Errorf("failed to create podcvd root dir: %w", err)
 	}
-	baseDir := cvdArgs.GetStringFlagValueOnSubCommandArgs("base_directory")
-	cvdArgs.RemoveFlagValueOnSubCommandArgs("base_directory")
-	if baseDir == "" {
+	baseDir, exists := cvdArgs.GetStringFlagValueOnSubCommandArgs("base_directory")
+	if exists {
+		cvdArgs.RemoveFlagValueOnSubCommandArgs("base_directory")
+	} else {
 		baseDir = filepath.Join(podcvdRootDir, strconv.Itoa(os.Getuid()), attemptID)
 	}
 	podcvdBaseDir, err := filepath.Abs(baseDir)
