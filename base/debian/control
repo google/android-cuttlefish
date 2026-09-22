@@ -90,6 +90,7 @@ Architecture: any
 Depends: cuttlefish-base,
          cuttlefish-user,
          cuttlefish-defaults,
+         cuttlefish-podcvd | base-files (<< 13),
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
 Description: Cuttlefish Android Virtual Device companion package
