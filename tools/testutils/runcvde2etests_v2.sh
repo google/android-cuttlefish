@@ -89,7 +89,9 @@ function gather_test_results() {
 
 cd "${REPO_DIR}/e2etests"
 
-all_tests=$(bazel query --noshow_progress 'kind("go_test", cvd/...)' | grep -e "^\/\/" | sort)
+readonly QUERY='kind("go_test", cvd/...) except attr(tags, "[\[ ]requires_gpu[,\]]", //...)'
+
+all_tests=$(bazel query --noshow_progress "${QUERY}" | grep -e "^\/\/" | sort)
 all_tests_count=$(echo "${all_tests}" | wc --lines)
 echo "all tests count: ${all_tests_count}"
 echo "all tests"
