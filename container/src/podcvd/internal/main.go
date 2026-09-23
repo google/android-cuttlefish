@@ -102,7 +102,7 @@ func disconnectAdb(ccm CuttlefishContainerManager, groupName string) error {
 }
 
 func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
-	hasConfigFile := cvdArgs.GetStringFlagValueOnSubCommandArgs("config_file") != ""
+	_, hasConfigFile := cvdArgs.GetStringFlagValueOnSubCommandArgs("config_file")
 	if hasConfigFile {
 		cvdArgs.ReplaceFlagValueOnSubCommandArgs("base_directory", "/podcvd_base")
 	}
@@ -127,7 +127,7 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 		return err
 	}
 	var instanceGroup *InstanceGroup
-	if cvdArgs.GetStringFlagValueOnSubCommandArgs("print_group_format") == "human" {
+	if format, exists := cvdArgs.GetStringFlagValueOnSubCommandArgs("print_group_format"); exists && format == "human" {
 		os.Stdout.Write(stdoutBuf.Bytes())
 		group, err := findInstanceGroup(ccm, cvdArgs.CommonArgs.GroupName)
 		if err != nil {
@@ -163,8 +163,8 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 }
 
 func handleBugreportExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
-	hostOutputPath := cvdArgs.GetStringFlagValueOnSubCommandArgs("output")
-	if hostOutputPath == "" {
+	hostOutputPath, exists := cvdArgs.GetStringFlagValueOnSubCommandArgs("output")
+	if !exists {
 		hostOutputPath = "host_bugreport.zip"
 	}
 	absHostOutputPath, err := filepath.Abs(hostOutputPath)
@@ -200,7 +200,9 @@ func formatLogsList(output string) string {
 func handleLogsExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
-	if cvdArgs.GetStringFlagValueOnSubCommandArgs("print") != "" || cvdArgs.GetStringFlagValueOnSubCommandArgs("p") != "" {
+	_, hasPrint := cvdArgs.GetStringFlagValueOnSubCommandArgs("print")
+	_, hasP := cvdArgs.GetStringFlagValueOnSubCommandArgs("p")
+	if hasPrint || hasP {
 		return ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, os.Stdout, os.Stderr)
 	}
 
