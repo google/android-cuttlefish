@@ -1,5 +1,6 @@
 //cvd/bugreport_tests:bugreport_tests
 //cvd/bugreport_tests:bugreport_tests_with_substitution
+//cvd/common:common_test
 //cvd/cvd_create_tests:cvd_create_substitute_only
 //cvd/cvd_create_tests:cvd_create_tests
 //cvd/cvd_create_tests:cvd_create_tests_additional_substitution
@@ -21,4 +22,5 @@
 //cvd/media_tests/v4l2compliance:media_tests
 //cvd/metrics_tests:metrics_tests
 //cvd/networking_tests:networking_tests
+//cvd/sdv_tests:sdv_tests
 
