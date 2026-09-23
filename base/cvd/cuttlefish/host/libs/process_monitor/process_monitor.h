@@ -34,9 +34,18 @@ struct MonitorEntry {
   std::unique_ptr<Command> cmd;
   std::unique_ptr<Subprocess> proc;
   bool is_critical;
+  ProcessCategory category;
+
+  MonitorEntry(Command command, ProcessCategory category)
+      : cmd(new Command(std::move(command))),
+        is_critical(category != ProcessCategory::kNonCriticalSupport),
+        category(category) {}
 
   MonitorEntry(Command command, bool is_critical)
-      : cmd(new Command(std::move(command))), is_critical(is_critical) {}
+      : cmd(new Command(std::move(command))),
+        is_critical(is_critical),
+        category(is_critical ? ProcessCategory::kCriticalSupport
+                             : ProcessCategory::kNonCriticalSupport) {}
 };
 
 // Launches and keeps track of subprocesses, decides response if they

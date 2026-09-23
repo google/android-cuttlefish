@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <ostream>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -26,12 +28,42 @@
 
 namespace cuttlefish {
 
+enum class ProcessCategory {
+  kNonCriticalSupport,
+  kCriticalSupport,
+  kVmm,
+};
+
+inline constexpr std::string_view format_as(ProcessCategory category) {
+  switch (category) {
+    case ProcessCategory::kVmm:
+      return "vmm";
+    case ProcessCategory::kCriticalSupport:
+      return "critical support";
+    case ProcessCategory::kNonCriticalSupport:
+      return "non-critical support";
+  }
+}
+
+inline std::ostream& operator<<(std::ostream& out, ProcessCategory category) {
+  return out << format_as(category);
+}
+
 struct MonitorCommand {
   Command command;
   bool is_critical;
+  ProcessCategory category;
 
   MonitorCommand(Command command, bool is_critical = true)
-      : command(std::move(command)), is_critical(is_critical) {}
+      : command(std::move(command)),
+        is_critical(is_critical),
+        category(is_critical ? ProcessCategory::kCriticalSupport
+                             : ProcessCategory::kNonCriticalSupport) {}
+
+  MonitorCommand(Command command, ProcessCategory category)
+      : command(std::move(command)),
+        is_critical(category != ProcessCategory::kNonCriticalSupport),
+        category(category) {}
 };
 
 class CommandSource : public virtual SetupFeature {
