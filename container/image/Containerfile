@@ -16,7 +16,7 @@ EXPOSE 15550-15560
 # Expose ADB Port
 # Corresponding ADB port for CF instance is, 6520+instance_num-1.
 EXPOSE 6520-6620
-# to make sure this file always exist
+# to make sure this file always exists
 RUN touch /.dockerenv
 
 USER root
@@ -36,10 +36,10 @@ ENV JAVA_HOME=/usr/lib/jvm/default-java
 
 # When setting `auto` value, nginx spawns worker processes as the number of CPU
 # cores. It's discouraged in any multiple container scenarios, as it spawns too
-# much worker processes in huge machines, but not actually required.
+# many worker processes in huge machines, but not actually required.
 RUN sed -i 's/worker_processes auto;/worker_processes 2;/' \
     /etc/nginx/nginx.conf
-# When setting `auto` value, nginx select which CPU core executing worker
+# When setting `auto` value, nginx selects which CPU core executes worker
 # processes. It's discouraged in any multiple container scenarios, as all
 # containers may use CPU core `0`-`N` when `worker_processes` is set as `N+1`.
 # When setting no values, OS scheduler manages it instead.
