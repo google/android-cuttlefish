@@ -168,9 +168,9 @@ setup_nvidia_gpu() {
     local VERSION=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -n 1)
     [ -n "$VERSION" ] || return 1
     local CDI_CONFIG_PATH=/etc/cdi/nvidia-podcvd.yaml
-    sudo mkdir -p /etc/cdi
-    sudo nvidia-ctk cdi generate --output=$CDI_CONFIG_PATH 2>/dev/null || return 1
-    sudo yq -y '.kind = "android.com/gpu-podcvd"' -i $CDI_CONFIG_PATH 2>/dev/null || return 1
+    mkdir -p /etc/cdi
+    nvidia-ctk cdi generate --output=$CDI_CONFIG_PATH 2>/dev/null || return 1
+    yq -y '.kind = "android.com/gpu-podcvd"' -i $CDI_CONFIG_PATH 2>/dev/null || return 1
 
     # Some nvidia libraries were missing from the configuration file created by
     # executing `nvidia-ctk cdi generate`. This leads an error to launch
@@ -182,7 +182,7 @@ setup_nvidia_gpu() {
         if grep -qF "$lib" "$CDI_CONFIG_PATH"; then
             continue
         fi
-        sudo yq -y "
+        yq -y "
         .containerEdits.mounts += [
             {
             \"hostPath\": \"$lib\",
