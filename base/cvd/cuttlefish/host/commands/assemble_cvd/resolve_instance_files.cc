@@ -82,7 +82,9 @@ Result<void> ResolveInstanceFiles(
         comma_str + cur_system_image_dir + "/vbmeta_system_dlkm.img";
 
     if (instance_index < default_vvmtruststore_file_name.size()) {
-      if (default_vvmtruststore_file_name[instance_index].empty()) {
+      if (default_vvmtruststore_file_name[instance_index].empty() ||
+          default_vvmtruststore_file_name[instance_index] == "unset" ||
+          default_vvmtruststore_file_name[instance_index] == "\"unset\"") {
         vvmtruststore_path += comma_str;
       } else {
         vvmtruststore_path +=
