@@ -80,7 +80,7 @@ case "${container_type}" in
   podman)
     ;;
   *)
-    echo "Invalid container type: ${container type}" >&2
+    echo "Invalid container type: ${container_type}" >&2
     usage
     exit 1
 esac
