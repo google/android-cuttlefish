@@ -120,5 +120,5 @@ git_repository(
         "@//build_external/android_tools_netsim:0004-Remove-unused-global-client-context.patch",
         "@//build_external/android_tools_netsim:0005-Fix-conflict-for-v-between-vsock-and-verbose-args.patch",
     ],
-    patch_strip = 1,
+    patch_args = ["-p1"],
 )
