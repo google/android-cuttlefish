@@ -26,7 +26,8 @@ namespace cuttlefish {
 
 class CachingBuildApi : public BuildApi {
  public:
-  CachingBuildApi(BuildApi& build_api, std::string cache_base_path);
+  CachingBuildApi(BuildApi& build_api, std::string cache_base_path,
+                  std::string ro_cache_base_path);
 
   Result<Build> GetBuild(const BuildString& build_string) override;
   Result<std::string> DownloadFile(const Build& build,
@@ -39,6 +40,7 @@ class CachingBuildApi : public BuildApi {
  private:
   BuildApi& build_api_;
   std::string cache_base_path_;
+  std::string ro_cache_base_path_;
 };
 
 }  // namespace cuttlefish
