@@ -24,7 +24,9 @@
 #include <algorithm>
 #include <cstdlib>
 #include <memory>
+#include <ostream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -57,6 +59,24 @@
 
 namespace cuttlefish {
 namespace run_cvd_impl {
+
+std::string_view format_as(ServerLoopImpl::DeviceStatus status) {
+  switch (status) {
+    case ServerLoopImpl::DeviceStatus::kUnknown:
+      return "Unknown";
+    case ServerLoopImpl::DeviceStatus::kActive:
+      return "Active";
+    case ServerLoopImpl::DeviceStatus::kSuspended:
+      return "Suspended";
+    case ServerLoopImpl::DeviceStatus::kGuestOff:
+      return "GuestOff";
+  }
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         ServerLoopImpl::DeviceStatus status) {
+  return out << format_as(status);
+}
 
 bool ServerLoopImpl::CreateQcowOverlay(const std::string& crosvm_path,
                                        const std::string& backing_file,
@@ -116,16 +136,25 @@ Result<void> ServerLoopImpl::Run() {
   CF_EXPECT(process_monitor.StartAndMonitorProcesses());
   device_status_ = DeviceStatus::kActive;
 
+  bool process_monitor_active = true;
   while (true) {
     // TODO: use select to handle simultaneous connections.
     SharedFDSet read_set;
     read_set.Set(server_);
-    read_set.Set(process_monitor.status());
+    if (process_monitor_active) {
+      read_set.Set(process_monitor.status());
+    }
 
     Select(&read_set, nullptr, nullptr, nullptr);
 
-    if (read_set.IsSet(process_monitor.status())) {
-      return CF_ERR("process monitor has died");
+    if (process_monitor_active && read_set.IsSet(process_monitor.status())) {
+      process_monitor_active = false;
+      CF_EXPECT(process_monitor.StopMonitoredProcesses());
+      device_status_ = DeviceStatus::kGuestOff;
+      LOG(INFO)
+          << "Process monitor has exited gracefully (guest VM shut down). "
+             "Server loop continuing to listen for status/restart.";
+      continue;
     }
 
     CF_EXPECT(read_set.IsSet(server_));
@@ -183,6 +212,8 @@ Result<void> ServerLoopImpl::HandleExtended(
   switch (action_info.extended_action.actions_case()) {
     case ActionsCase::kSuspend: {
       VLOG(0) << "Run_cvd received suspend request.";
+      CF_EXPECT_NE(device_status_.load(), DeviceStatus::kGuestOff,
+                   "Device is powered off, cannot suspend");
       if (device_status_.load() == DeviceStatus::kActive) {
         CF_EXPECT(HandleSuspend(process_monitor));
       }
@@ -191,6 +222,8 @@ Result<void> ServerLoopImpl::HandleExtended(
     }
     case ActionsCase::kResume: {
       VLOG(0) << "Run_cvd received resume request.";
+      CF_EXPECT_NE(device_status_.load(), DeviceStatus::kGuestOff,
+                   "Device is powered off, cannot resume");
       if (device_status_.load() == DeviceStatus::kSuspended) {
         CF_EXPECT(HandleResume(process_monitor));
       }
@@ -199,24 +232,30 @@ Result<void> ServerLoopImpl::HandleExtended(
     }
     case ActionsCase::kSnapshotTake: {
       VLOG(0) << "Run_cvd received snapshot request.";
-      CF_EXPECT(device_status_.load() == DeviceStatus::kSuspended,
-                "The device is not suspended, and snapshot cannot be taken");
+      CF_EXPECT_EQ(device_status_.load(), DeviceStatus::kSuspended,
+                   "The device is not suspended, and snapshot cannot be taken");
       CF_EXPECT(
           HandleSnapshotTake(action_info.extended_action.snapshot_take()));
       return {};
     }
     case ActionsCase::kStartScreenRecording: {
       VLOG(0) << "Run_cvd received start screen recording request.";
+      CF_EXPECT_EQ(device_status_.load(), DeviceStatus::kActive,
+                   "Device is not active, cannot start screen recording");
       CF_EXPECT(HandleStartScreenRecording());
       return {};
     }
     case ActionsCase::kStopScreenRecording: {
       VLOG(0) << "Run_cvd received stop screen recording request.";
+      CF_EXPECT_EQ(device_status_.load(), DeviceStatus::kActive,
+                   "Device is not active, cannot stop screen recording");
       CF_EXPECT(HandleStopScreenRecording());
       return {};
     }
     case ActionsCase::kScreenshotDisplay: {
       VLOG(0) << "Run_cvd received screenshot display request.";
+      CF_EXPECT_EQ(device_status_.load(), DeviceStatus::kActive,
+                   "Device is not active, cannot take screenshot");
       const auto& request = action_info.extended_action.screenshot_display();
       CF_EXPECT(HandleScreenshotDisplay(request));
       return {};
@@ -261,7 +300,13 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       break;
     }
     case LauncherAction::kStatus: {
-      // TODO(schuffelen): Return more information on a side channel
+      // TODO(schuffelen): Return more information on a side channel.
+      // Note: When device_status_ == DeviceStatus::kGuestOff, returning
+      // kSuccess keeps the socket responsive so that `cvd restart` can power
+      // the VM back on. Because `cvd status` hardcodes "Running" upon
+      // receiving LauncherResponse::kSuccess, reporting a distinct
+      // "Powered Off" status requires extending the
+      // LauncherAction/LauncherResponse protocol.
       auto response = LauncherResponse::kSuccess;
       // TODO(schuffelen): Handle unused result
       (void)client->Write(&response, sizeof(response));
