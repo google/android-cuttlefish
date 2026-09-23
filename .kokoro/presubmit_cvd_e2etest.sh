@@ -47,6 +47,16 @@ done
 echo "runner_index: ${runner_index}"
 echo "runners_total: ${runners_total}"
 
+readonly PKGS_DIR="${KOKORO_GFILE_DIR:-}/github/android-cuttlefish"
+
+debs="$(find "${PKGS_DIR}" -maxdepth 1 -name '*.deb' 2>/dev/null || true)"
+if [[ -z "${debs}" ]]; then
+  echo "Error: no package found in ${PKGS_DIR}!" >&2
+  exit 1
+fi
+echo "Packages found in ${PKGS_DIR}:"
+echo "${debs}"
+
 sudo apt update
 
 # environment variable and options to force answer prompts
@@ -55,18 +65,15 @@ sudo DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o 
 # realpath .kokoro/..
 REPO_DIR="$(realpath "$(dirname "$0")"/..)"
 TOOL_DIR="${REPO_DIR}/tools"
-CACHE_CONFIG_FILE="${REPO_DIR}/.config/cache-config.env"
 
-if [ -f "$CACHE_CONFIG_FILE" ]; then
-    source "$CACHE_CONFIG_FILE"
-fi
-
-"${TOOL_DIR}/buildutils/build_packages.sh" -r "${BAZEL_REMOTE_CACHE}" -c "${CACHE_VERSION}"
 # Add test user to the kokoro group so it has access to the source dir
-"${TOOL_DIR}/testutils/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro
+"${TOOL_DIR}/testutils/prepare_host.sh" -d "${PKGS_DIR}" -u testrunner -g kokoro
 
 # Allow kokoro group to the source dir:
 sudo chmod -R g+w /tmpfs/src
+
+# Install bazel
+command -v bazel &> /dev/null || sudo "${TOOL_DIR}/buildutils/installbazel.sh"
 
 # Run as different user without sudo privileges
 sudo -u testrunner CREDENTIAL_SOURCE=gce "${TOOL_DIR}/testutils/runcvde2etests_v2.sh" \
