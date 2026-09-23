@@ -88,7 +88,7 @@ func ExecFetchCmdOnDisposableHost(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 		return fmt.Errorf("failed to get cvd data home: %w", err)
 	}
 	if err := os.MkdirAll(cvdDataHome, 0755); err != nil {
-		return fmt.Errorf("failed to eusure directory at %q: %w", cvdDataHome, err)
+		return fmt.Errorf("failed to ensure directory at %q: %w", cvdDataHome, err)
 	}
 	cacheDir := hostCacheDir()
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
@@ -388,7 +388,7 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		return "", fmt.Errorf("failed to get cvd data home: %w", err)
 	}
 	if err := os.MkdirAll(cvdDataHome, 0755); err != nil {
-		return "", fmt.Errorf("failed to eusure directory at %q: %w", cvdDataHome, err)
+		return "", fmt.Errorf("failed to ensure directory at %q: %w", cvdDataHome, err)
 	}
 	cacheDir := hostCacheDir()
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
@@ -554,7 +554,7 @@ func createAndStartToolingContainer(ccm CuttlefishContainerManager) error {
 		return fmt.Errorf("failed to get cvd data home: %w", err)
 	}
 	if err := os.MkdirAll(cvdDataHome, 0755); err != nil {
-		return fmt.Errorf("failed to eusure directory at %q: %w", cvdDataHome, err)
+		return fmt.Errorf("failed to ensure directory at %q: %w", cvdDataHome, err)
 	}
 	cacheDir := hostCacheDir()
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
