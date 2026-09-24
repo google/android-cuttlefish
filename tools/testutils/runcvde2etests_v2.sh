@@ -21,15 +21,22 @@ readonly REPO_DIR="$(realpath "$(dirname "$0")/../..")"
 readonly OUTPUT_DIR="$(pwd)"
 readonly CREDENTIAL_SOURCE="${CREDENTIAL_SOURCE:-}"
 
+readonly CONFIG_CVD="cvd"
+readonly CONFIG_CVD_WITH_GPU="cvd_with_gpu"
+
 function print_usage() {
-  >&2 echo "usage: $0 [-i <runner_index>] [-n <runners_total>]"
+  >&2 echo "usage: $0 [-c <config>] [-i <runner_index>] [-n <runners_total>]"
 }
 
+config="${CONFIG_CVD}"
 runner_index="1"
 runners_total="1"
 
-while getopts ":i:n:" opt; do
+while getopts ":c:i:n:" opt; do
   case "${opt}" in
+    c)
+      config="${OPTARG}"
+      ;;
     i)
       runner_index="${OPTARG}"
       ;;
@@ -49,6 +56,16 @@ while getopts ":i:n:" opt; do
   esac
 done
 
+case "${config}" in
+  "${CONFIG_CVD}") ;;
+  "${CONFIG_CVD_WITH_GPU}") true ;;
+  *)
+    echo "ERROR: invalid configuration name '${config}'" >&2
+    print_usage
+    exit 1
+    ;;
+esac
+
 if [[ ${runner_index} -lt 1 ]]; then
   echo "runner_index must be greater than 0" >&2
   print_usage
@@ -61,6 +78,7 @@ if [[ ${runner_index} -gt ${runners_total} ]]; then
   exit 1
 fi
 
+echo "config: ${config}"
 echo "runner_index: ${runner_index}"
 echo "runners_total: ${runners_total}"
 
@@ -90,8 +108,8 @@ function gather_test_results() {
 
 echo "${CONFIGS_DIR}"
 
-readonly QUERY_FILE="${CONFIGS_DIR}/cvd.query"
-readonly TESTS_FILE="${CONFIGS_DIR}/cvd.tests"
+readonly QUERY_FILE="${CONFIGS_DIR}/${config}.query"
+readonly TESTS_FILE="${CONFIGS_DIR}/${config}.tests"
 
 if [[ ! -f "${QUERY_FILE}" ]]; then
   echo "ERROR: query file ${QUERY_FILE} not found" >&2

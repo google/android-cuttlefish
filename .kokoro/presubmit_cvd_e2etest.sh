@@ -17,14 +17,18 @@
 set -o errexit -o nounset -o pipefail
 
 function print_usage() {
-  >&2 echo "usage: $0 [-i <runner_index>] [-n <runners_total>]"
+  >&2 echo "usage: $0 [-c <config>] [-i <runner_index>] [-n <runners_total>]"
 }
 
+config="cvd"
 runner_index="1"
 runners_total="1"
 
-while getopts ":i:n:" opt; do
+while getopts ":c:i:n:" opt; do
   case "${opt}" in
+    c)
+      config="${OPTARG}"
+      ;;
     i)
       runner_index="${OPTARG}"
       ;;
@@ -44,6 +48,7 @@ while getopts ":i:n:" opt; do
   esac
 done
 
+echo "config: ${config}"
 echo "runner_index: ${runner_index}"
 echo "runners_total: ${runners_total}"
 
@@ -77,6 +82,7 @@ command -v bazel &> /dev/null || sudo "${TOOL_DIR}/buildutils/installbazel.sh"
 
 # Run as different user without sudo privileges
 sudo -u testrunner CREDENTIAL_SOURCE=gce "${TOOL_DIR}/testutils/runcvde2etests_v2.sh" \
+  -c ${config} \
   -i ${runner_index} \
   -n ${runners_total}
 

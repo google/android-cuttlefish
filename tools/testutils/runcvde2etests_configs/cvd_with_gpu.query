@@ -1,0 +1,1 @@
+attr(tags, "[\[ ]requires_gpu[,\]]", kind("go_test", cvd/...))
