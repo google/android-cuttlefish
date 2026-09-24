@@ -35,6 +35,8 @@ Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
       .memory_mb = parsed_flags.memory_mb.ForIndex(guest_index),
       .restart_subprocesses =
           parsed_flags.restart_subprocesses.ForIndex(guest_index),
+      .super_image_specified =
+          !parsed_flags.super_image.IsDefaultForIndex(guest_index),
       .system_image_dir_specified = !parsed_flags.system_image_dir.IsDefault(),
   };
 }
