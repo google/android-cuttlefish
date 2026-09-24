@@ -33,11 +33,15 @@ class SuperImageFlag {
 
   bool IsDefault() const;
 
+  bool IsDefaultForIndex(size_t index) const;
+
  private:
-  SuperImageFlag(const SystemImageDirFlag&, std::vector<std::string>);
+  SuperImageFlag(const SystemImageDirFlag&, std::vector<std::string>,
+                 std::vector<bool>);
 
   const SystemImageDirFlag& system_image_dir_;
   std::vector<std::string> super_images_;
+  std::vector<bool> is_default_values_;
 };
 
 }  // namespace cuttlefish
