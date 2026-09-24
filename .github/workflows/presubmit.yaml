@@ -204,7 +204,7 @@ jobs:
           popd
         done
   run-cvd-unit-tests:
-    runs-on: ubuntu-24.04-4core
+    runs-on: ubuntu-24.04-64core
     steps:
     - name: Free disk space
       uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be  # v1.3.1
