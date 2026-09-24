@@ -93,6 +93,30 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "http_probe",
+    srcs = ["http_probe.cc"],
+    hdrs = ["http_probe.h"],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "http_probe_test",
+    srcs = ["http_probe_test.cc"],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:fake_http_client",
+        "//cuttlefish/host/libs/web/http_client:http_probe",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
     name = "http_string",
     srcs = ["http_string.cc"],
     hdrs = ["http_string.h"],

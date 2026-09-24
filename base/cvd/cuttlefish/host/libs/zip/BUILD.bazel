@@ -64,11 +64,11 @@ cf_cc_library(
     hdrs = ["remote_zip.h"],
     deps = [
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_probe",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
