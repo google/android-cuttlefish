@@ -35,6 +35,7 @@ LINKOPTS = BUILD_VAR_LINKOPTS
 def _fallback_macro(inherit_attrs = None, attrs = {}, implementation = None):
     def _wrapper(name, **kwargs):
         call_kwargs = dict(kwargs)
+        call_kwargs.setdefault("deprecation", None)
         for k, a in attrs.items():
             if k not in call_kwargs:
                 if type(a) in ["string", "bool", "int", "list"]:
@@ -52,6 +53,19 @@ def _fallback_macro(inherit_attrs = None, attrs = {}, implementation = None):
 _macro = getattr(bazel_features.globals, "macro", None)
 macro = _macro if _macro != None else _fallback_macro
 
+def _wrap_attr_fn(default_val):
+    def _wrapped(**kwargs):
+        return struct(default = kwargs.get("default", default_val))
+
+    return _wrapped
+
+_attr = attr if _macro != None else struct(
+    boot = _wrap_attr_fn(False),
+    label_list = _wrap_attr_fn([]),
+    string = _wrap_attr_fn(""),
+    string_list = _wrap_attr_fn([]),
+)
+
 def _cf_build_test_implementation(name, srcs, **kwargs):
     native.filegroup(
         name = name + "_LINT_TEST_starlark_files",
@@ -67,7 +81,7 @@ def _cf_build_test_implementation(name, srcs, **kwargs):
 cf_build_test = macro(
     inherit_attrs = "common",
     attrs = {
-        "srcs": attr.label_list(
+        "srcs": _attr.label_list(
             configurable = False,
             default = [],
         ),
@@ -155,35 +169,35 @@ def _cf_cc_target_implementation(
         )
 
 _CC_COMMON_ATTRS = {
-    "clang_format_enabled": attr.bool(
+    "clang_format_enabled": _attr.bool(
         configurable = False,
         default = True,
         doc = "Decide if a corresponding format_test target is generated",
     ),
-    "clang_tidy_enabled": attr.bool(
+    "clang_tidy_enabled": _attr.bool(
         configurable = False,
         default = True,
         doc = "Decide if a corresponding clang_tidy_test target is generated",
     ),
-    "copts": attr.string_list(
+    "copts": _attr.string_list(
         configurable = False,
         default = [],
     ),
-    "depend_on_what_you_use_enabled": attr.bool(
+    "depend_on_what_you_use_enabled": _attr.bool(
         configurable = False,
         default = True,
         doc = "Decide if a corresponding depend-on-what-you-use target is generated",
     ),
-    "features": attr.string_list(
+    "features": _attr.string_list(
         configurable = False,
         default = [],
     ),
-    "include_cleaner_enabled": attr.bool(
+    "include_cleaner_enabled": _attr.bool(
         configurable = False,
         default = True,
         doc = "Run clang-tidy with misc-include-cleaner",
     ),
-    "linkopts": attr.string_list(
+    "linkopts": _attr.string_list(
         configurable = True,
         default = [],
     ),
@@ -192,8 +206,8 @@ _CC_COMMON_ATTRS = {
 cf_cc_binary = macro(
     inherit_attrs = cc_binary,
     attrs = _CC_COMMON_ATTRS | {
-        "deps": attr.label_list(configurable = True),
-        "_target_type": attr.string(configurable = False, default = "cc_binary"),
+        "deps": _attr.label_list(configurable = True),
+        "_target_type": _attr.string(configurable = False, default = "cc_binary"),
     },
     implementation = _cf_cc_target_implementation,
 )
@@ -201,8 +215,8 @@ cf_cc_binary = macro(
 cf_cc_library = macro(
     inherit_attrs = cc_library,
     attrs = _CC_COMMON_ATTRS | {
-        "deps": attr.label_list(configurable = True),
-        "_target_type": attr.string(configurable = False, default = "cc_library"),
+        "deps": _attr.label_list(configurable = True),
+        "_target_type": _attr.string(configurable = False, default = "cc_library"),
     },
     implementation = _cf_cc_target_implementation,
 )
@@ -210,8 +224,8 @@ cf_cc_library = macro(
 cf_cc_test = macro(
     inherit_attrs = cc_test,
     attrs = _CC_COMMON_ATTRS | {
-        "deps": attr.label_list(configurable = False),
-        "_target_type": attr.string(configurable = False, default = "cc_test"),
+        "deps": _attr.label_list(configurable = False),
+        "_target_type": _attr.string(configurable = False, default = "cc_test"),
     },
     implementation = _cf_cc_target_implementation,
 )
@@ -250,7 +264,7 @@ def _cf_sh_binary_implementation(name, shellcheck_enabled, **kwargs):
 cf_sh_binary = macro(
     inherit_attrs = sh_binary,
     attrs = {
-        "shellcheck_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding shellcheck_test target is generated"),
+        "shellcheck_enabled": _attr.bool(configurable = False, default = True, doc = "Decide if a corresponding shellcheck_test target is generated"),
     },
     implementation = _cf_sh_binary_implementation,
 )
@@ -271,7 +285,7 @@ def _cf_sh_library_implementation(name, shellcheck_enabled, **kwargs):
 cf_sh_library = macro(
     inherit_attrs = sh_library,
     attrs = {
-        "shellcheck_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding shellcheck_test target is generated"),
+        "shellcheck_enabled": _attr.bool(configurable = False, default = True, doc = "Decide if a corresponding shellcheck_test target is generated"),
     },
     implementation = _cf_sh_library_implementation,
 )
