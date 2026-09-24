@@ -38,7 +38,7 @@ namespace {
 
 class ProxyPair {
  public:
-  ProxyPair() : stop_fd_(SharedFD::Event()) {
+  ProxyPair() : stop_fd_(Fd::Event().value_or(Fd())) {
     if (!stop_fd_->IsOpen()) {
       LOG(FATAL) << "Failed to open eventfd: " << stop_fd_->StrError();
       return;
@@ -112,7 +112,7 @@ class ProxyPair {
 
 ProxyServer::ProxyServer(SharedFD server,
                          std::function<SharedFD()> clients_factory)
-    : stop_fd_(SharedFD::Event()) {
+    : stop_fd_(Fd::Event().value_or(Fd())) {
   if (!stop_fd_->IsOpen()) {
     LOG(FATAL) << "Failed to open eventfd: " << stop_fd_->StrError();
     return;
