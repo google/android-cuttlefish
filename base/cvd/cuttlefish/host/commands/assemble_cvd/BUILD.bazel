@@ -360,6 +360,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:mcu_config_path",
         "//cuttlefish/host/commands/assemble_cvd/flags:memory_mb",
         "//cuttlefish/host/commands/assemble_cvd/flags:parser",
+        "//cuttlefish/host/commands/assemble_cvd/flags:qemu_binary_dir",
         "//cuttlefish/host/commands/assemble_cvd/flags:restart_subprocesses",
         "//cuttlefish/host/commands/assemble_cvd/flags:super_image",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",

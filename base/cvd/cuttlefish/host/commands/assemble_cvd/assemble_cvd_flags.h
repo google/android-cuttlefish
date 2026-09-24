@@ -107,7 +107,6 @@ DECLARE_vec(enable_bootanimation);
 
 DECLARE_vec(extra_bootconfig_args_base64);
 
-DECLARE_string(qemu_binary_dir);
 DECLARE_string(crosvm_binary);
 DECLARE_vec(gem5_binary_dir);
 DECLARE_vec(gem5_checkpoint_dir);
