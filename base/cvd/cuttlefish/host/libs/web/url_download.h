@@ -22,6 +22,7 @@
 #include <string_view>
 #include <vector>
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
 
@@ -30,18 +31,18 @@ namespace cuttlefish {
 struct UrlDownload {
   std::string url;
   std::vector<std::string> headers;
-  // Sent as `If-Range` on a resumed request, so an origin whose object changed
-  // answers with the whole of it rather than the tail of something else. Unset
-  // for a URL that already names one version of the object.
-  std::optional<std::string> if_range;
-  // The version the probe found `url` serves, set only where it also serves
-  // ranges. Only then is a partial download worth keeping.
-  std::optional<std::string> version;
+  std::optional<std::string> if_range;  // unset when `url` pins one version
+  std::optional<std::string> version;   // set where the origin serves ranges
   std::optional<uint64_t> size;
 };
 
 // Returns where a download of `version` to `path` keeps its partial file.
 std::string PartialFilePath(const std::string& path, std::string_view version);
+
+// Returns whether `path` still names the file `fd` holds open. A download
+// that another process finished renames its partial file away, so whoever was
+// waiting for the lock on it wakes up holding a file that is gone.
+Result<bool> HoldsFileAt(Fd& fd, const std::string& path);
 
 // Writes `download` to `path`. Where the version and the size are known, it
 // reads the object in large ranges through `ZipSourceFromUrl` and picks up
