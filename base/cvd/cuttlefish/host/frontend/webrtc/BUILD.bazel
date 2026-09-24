@@ -132,6 +132,7 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
@@ -275,6 +276,7 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_server",
         "//cuttlefish/host/commands/kernel_log_monitor:utils",
         "//cuttlefish/host/libs/config:config_constants",
