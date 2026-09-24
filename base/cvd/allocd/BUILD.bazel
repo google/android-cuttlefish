@@ -34,7 +34,7 @@ cf_cc_library(
         ":netlink": [":alloc_netlink"],
         "//conditions:default": [":alloc_iproute2"],
     }) + [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/host/commands/cvd/utils:common",
@@ -64,7 +64,7 @@ cf_cc_library(
     hdrs = ["alloc_driver.h"],
     deps = [
         "//allocd/net:netlink",
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/process:execute",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
