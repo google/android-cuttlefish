@@ -29,7 +29,6 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -43,6 +42,7 @@
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 #include "cuttlefish/io/string.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -83,9 +83,7 @@ Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
                "Failed to create image at '{}'", bootconfig_path);
   }
 
-  auto bootconfig_fd = SharedFD::Open(bootconfig_path, O_RDWR);
-  CF_EXPECT(bootconfig_fd->IsOpen(),
-            "Unable to open bootconfig file: " << bootconfig_fd->StrError());
+  Fd bootconfig_fd = CF_EXPECT(Fd::Open(bootconfig_path, O_RDWR));
 
   auto builtin_bootconfig_args = CF_EXPECT(ReadBuiltInBootconfigArgs(instance));
 
@@ -95,24 +93,23 @@ Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
       CF_EXPECT(BootconfigArgsString(bootconfig_args, "\n")) + "\n";
 
   VLOG(0) << "bootconfig size is " << bootconfig.size();
-  ssize_t bytesWritten = WriteAll(bootconfig_fd, bootconfig);
-  CF_EXPECT(bytesWritten == bootconfig.size(),
-            "Failed to write bootconfig to \"" << bootconfig_path << "\"");
+  CF_EXPECTF(WriteExact(bootconfig_fd, bootconfig),
+             "Failed to write bootconfig to '{}'", bootconfig_path);
   VLOG(0) << "Bootconfig parameters from vendor boot image and config are "
           << ReadFile(bootconfig_path);
 
-  CF_EXPECT(bootconfig_fd->Truncate(bootconfig.size()),
+  CF_EXPECT(bootconfig_fd.Truncate(bootconfig.size()),
             "`truncate --size=" << bootconfig.size() << " bytes "
                                 << bootconfig_path
-                                << "` failed:" << bootconfig_fd->StrError());
+                                << "` failed:" << bootconfig_fd.StrError());
 
   if (VmManagerIsGem5(config)) {
     const off_t bootconfig_size_bytes_gem5 =
-        AlignToPowerOf2(bytesWritten, PARTITION_SIZE_SHIFT);
-    CF_EXPECT(bootconfig_fd->Truncate(bootconfig_size_bytes_gem5));
-    bootconfig_fd->Close();
+        AlignToPowerOf2(bootconfig.size(), PARTITION_SIZE_SHIFT);
+    CF_EXPECT(bootconfig_fd.Truncate(bootconfig_size_bytes_gem5));
+    bootconfig_fd.Close();
   } else {
-    bootconfig_fd->Close();
+    bootconfig_fd.Close();
     const off_t bootconfig_size_bytes = AlignToPowerOf2(
         kMaxAvbMetadataSize + bootconfig.size(), PARTITION_SIZE_SHIFT);
 

@@ -164,6 +164,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/image_aggregator",
         "//cuttlefish/io:string",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
     ],
