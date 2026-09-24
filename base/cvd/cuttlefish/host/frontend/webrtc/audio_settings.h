@@ -45,6 +45,8 @@ struct AudioStreamSettings {
   bool virtual_tuner = false;
 
   bool has_mute_control = false;
+  bool has_duck_control = false;
+  bool has_fade_balance_control = false;
   std::optional<VolumeControl> master_volume_control;
 };
 
