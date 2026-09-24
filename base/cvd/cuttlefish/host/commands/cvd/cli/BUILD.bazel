@@ -63,6 +63,7 @@ cf_cc_library(
     hdrs = ["interruptible_terminal.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "@abseil-cpp//absl/cleanup",

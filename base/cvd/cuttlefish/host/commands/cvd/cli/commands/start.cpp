@@ -423,10 +423,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   if (!own_flags_.daemon) {
     memfd = CF_EXPECT(Fd::MemfdCreate("cvd_internal_start_output"));
 
-    stop_eventfd = SharedFD::Event();
-    CF_EXPECT(stop_eventfd->IsOpen(),
-              "Failed to create eventfd for stopping monitor: "
-                  << stop_eventfd->StrError());
+    stop_eventfd = CF_EXPECT(Fd::Event());
   }
 
   Command command = CF_EXPECT(ConstructCvdNonHelpCommand(

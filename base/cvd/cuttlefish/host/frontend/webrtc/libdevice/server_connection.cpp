@@ -23,6 +23,7 @@
 #include "absl/log/log.h"
 #include "json/json.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
 
@@ -102,7 +103,7 @@ void UnixServerConnection::Connect() {
     }
     return;
   }
-  thread_notifier_ = SharedFD::Event();
+  thread_notifier_ = Fd::Event().value_or(Fd());
   if (!thread_notifier_->IsOpen()) {
     LOG(ERROR) << "Failed to create eventfd for background thread: "
                << thread_notifier_->StrError();

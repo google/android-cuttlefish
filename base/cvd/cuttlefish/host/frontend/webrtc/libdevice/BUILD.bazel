@@ -199,6 +199,7 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/frontend/webrtc/libcommon:utils",
         "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
