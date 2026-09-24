@@ -31,6 +31,7 @@
 #include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
+#include "cuttlefish/io/writer.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
