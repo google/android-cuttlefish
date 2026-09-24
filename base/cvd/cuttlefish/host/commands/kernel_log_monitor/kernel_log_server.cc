@@ -30,6 +30,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -102,8 +103,8 @@ void ProcessSubscriptions(Json::Value message,
 
 KernelLogServer::KernelLogServer(SharedFD pipe_fd, const std::string& log_name)
     : pipe_fd_(pipe_fd),
-      log_fd_(SharedFD::Open(log_name.c_str(), O_CREAT | O_RDWR | O_APPEND,
-                             0666)) {}
+      log_fd_(Fd::Open(log_name, O_CREAT | O_RDWR | O_APPEND, 0666)
+                  .value_or(Fd())) {}
 
 void KernelLogServer::BeforeSelect(SharedFDSet* fd_read) const {
   fd_read->Set(pipe_fd_);

@@ -29,6 +29,7 @@
 #include "gflags/gflags.h"
 #include "json/value.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
@@ -92,7 +93,7 @@ int KernelLogMonitorMain(int argc, char** argv) {
   SharedFD pipe;
   if (FLAGS_log_pipe_fd < 0) {
     std::string log_name = KernelLogPipeName(instance);
-    pipe = SharedFD::Open(log_name, O_RDONLY);
+    pipe = Fd::Open(log_name, O_RDONLY).value_or(Fd());
   } else {
     pipe = SharedFD::Dup(FLAGS_log_pipe_fd);
     close(FLAGS_log_pipe_fd);
