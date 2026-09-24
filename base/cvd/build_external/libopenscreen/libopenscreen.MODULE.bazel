@@ -6,7 +6,7 @@ git_repository(
     build_file = "@//build_external/libopenscreen:BUILD.libopenscreen.bazel",
     commit = "3f982cf4871df8771c9d4abe6e9a6f8d829b2736",
     remote = "https://android.googlesource.com/platform/external/openscreen",
-    patch_strip = 1,
+    patch_args = ["-p1"],
     patches = [
         "@//build_external/libopenscreen:PATCH.bazelignore.patch",
     ],
