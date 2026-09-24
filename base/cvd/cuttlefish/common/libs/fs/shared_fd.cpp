@@ -207,14 +207,6 @@ Result<std::pair<SharedFD, SharedFD>> SharedFD::SocketPair(int domain, int type,
   return std::make_pair(std::move(a), std::move(b));
 }
 
-SharedFD SharedFD::Open(const std::string& path, int flags, mode_t mode) {
-  return Fd::Open(path, flags, mode).value_or(Fd());
-}
-
-SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
-  return Fd::Open(path, flags, mode).value_or(Fd());
-}
-
 SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   return Fd::Socket(domain, socket_type, protocol).value_or(Fd());
 }
