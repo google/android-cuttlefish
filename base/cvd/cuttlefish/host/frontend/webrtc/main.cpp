@@ -244,6 +244,8 @@ cuttlefish::AudioStreamSettings ParseAudioStreamSettings(
   if (stream.has_controls()) {
     const auto& controls = stream.controls();
     settings.has_mute_control = controls.mute_control_enabled();
+    settings.has_duck_control = controls.duck_control_enabled();
+    settings.has_fade_balance_control = controls.fade_balance_control_enabled();
     if (controls.has_volume_control()) {
       const auto& volume = controls.volume_control();
       settings.master_volume_control = {{
