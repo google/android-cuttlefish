@@ -186,11 +186,6 @@ class SharedFD {
   // necessary.
   // TODO: combining them when vhost-user-vsock impl supports a kind of
   // VMADDR_CID_HOST
-  static SharedFD VsockServer(unsigned int port, int type,
-                              std::optional<int> vhost_user_vsock_listening_cid,
-                              unsigned int cid = VMADDR_CID_ANY);
-  static SharedFD VsockServer(
-      int type, std::optional<int> vhost_user_vsock_listening_cid);
   static SharedFD VsockClient(unsigned int cid, unsigned int port, int type,
                               bool vhost_user);
   static std::string GetVhostUserVsockServerAddr(
