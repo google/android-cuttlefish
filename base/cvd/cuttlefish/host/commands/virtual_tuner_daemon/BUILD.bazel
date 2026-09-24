@@ -1,7 +1,7 @@
 load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -81,5 +81,56 @@ cf_cc_test(
         ":virtual_tuner_cc_proto",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
+    name = "virtual_tuner_service",
+    srcs = [
+        "virtual_tuner_service.cpp",
+    ],
+    hdrs = [
+        "virtual_tuner_service.h",
+    ],
+    deps = [
+        ":libcvd_virtual_tuner",
+        ":tuner_state",
+        ":virtual_tuner_cc_proto",
+        "@abseil-cpp//absl/log",
+        "@grpc//:grpc++",
+    ],
+)
+
+cf_cc_test(
+    name = "virtual_tuner_service_test",
+    srcs = [
+        "virtual_tuner_service_test.cpp",
+    ],
+    deps = [
+        ":libcvd_virtual_tuner",
+        ":tuner_state",
+        ":virtual_tuner_cc_proto",
+        ":virtual_tuner_service",
+        "@grpc//:grpc++",
+    ],
+)
+
+cf_cc_binary(
+    name = "virtual_tuner_daemon",
+    srcs = [
+        "main.cpp",
+    ],
+    deps = [
+        ":tuner_state",
+        ":virtual_tuner_audio",
+        ":virtual_tuner_service",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/flag_parser",
+        "//cuttlefish/flag_parser:shared_fd_flag",
+        "//cuttlefish/host/libs/config:logging",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
+        "@grpc//:grpc++",
+        "@grpc//:grpc++_reflection",
     ],
 )
