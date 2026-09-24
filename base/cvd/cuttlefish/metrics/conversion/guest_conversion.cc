@@ -136,6 +136,8 @@ void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
   flags.set_guest_enforce_security(
       guest_metrics.flag_metrics.guest_enforce_security);
   flags.set_memory_mb(guest_metrics.flag_metrics.memory_mb);
+  flags.set_qemu_binary_specified(
+      guest_metrics.flag_metrics.qemu_binary_specified);
   flags.set_restart_subprocesses(
       guest_metrics.flag_metrics.restart_subprocesses);
   flags.set_system_image_dir_specified(
