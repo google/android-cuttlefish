@@ -86,6 +86,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/media.h"
 #include "cuttlefish/host/commands/assemble_cvd/network_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
+#include "cuttlefish/host/commands/assemble_cvd/system_image_dir_path_resolution.h"
 #include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
@@ -855,18 +856,30 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     instance.set_crosvm_binary(crosvm_binary_vec[instance_index]);
-    instance.set_crosvm_acpi_table(crosvm_acpi_table_vec[instance_index]);
+    // These three options carry paths for some files on the host.
+    // Resolve relative paths by finding them in system_image_dir here.
+    // We only handle the case of at most one path for each of them.
+    const std::string cur_system_image_dir =
+        system_image_dir.ForIndex(instance_index);
+    // --crosvm_acpi_table accepts a bare path.
+    instance.set_crosvm_acpi_table(CF_EXPECT(
+        ResolveSystemImageDirPath(crosvm_acpi_table_vec[instance_index],
+                                  cur_system_image_dir, "crosvm_acpi_table")));
     instance.set_crosvm_device_tree_overlay(
-        crosvm_device_tree_overlay_vec[instance_index]);
-    instance.set_crosvm_file_backed_mapping(
-        crosvm_file_backed_mapping_vec[instance_index]);
+        CF_EXPECT(ResolveCrosvmDeviceTreeOverlayPath(
+            crosvm_device_tree_overlay_vec[instance_index],
+            cur_system_image_dir)));
+    std::string crosvm_file_backed_mapping =
+        crosvm_file_backed_mapping_vec[instance_index];
     if (!crosvm_file_backed_mapping_base64_vec[instance_index].empty()) {
       std::vector<uint8_t> decoded_mapping = CF_EXPECT(
           DecodeBase64(crosvm_file_backed_mapping_base64_vec[instance_index]));
-      std::string decoded_mapping_str(decoded_mapping.begin(),
-                                      decoded_mapping.end());
-      instance.set_crosvm_file_backed_mapping(decoded_mapping_str);
+      crosvm_file_backed_mapping.assign(decoded_mapping.begin(),
+                                        decoded_mapping.end());
     }
+    instance.set_crosvm_file_backed_mapping(
+        CF_EXPECT(ResolveCrosvmFileBackedMappingPath(crosvm_file_backed_mapping,
+                                                     cur_system_image_dir)));
     instance.set_seccomp_policy_dir(seccomp_policy_dir_vec[instance_index]);
     instance.set_qemu_binary_dir(qemu_binary_dir_vec[instance_index]);
 

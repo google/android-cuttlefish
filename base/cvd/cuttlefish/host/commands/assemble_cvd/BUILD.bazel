@@ -248,6 +248,29 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "system_image_dir_path_resolution",
+    srcs = ["system_image_dir_path_resolution.cc"],
+    hdrs = ["system_image_dir_path_resolution.h"],
+    deps = [
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "system_image_dir_path_resolution_test",
+    srcs = ["system_image_dir_path_resolution_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:system_image_dir_path_resolution",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
     name = "disk_builder",
     srcs = ["disk_builder.cpp"],
     hdrs = ["disk_builder.h"],
@@ -341,6 +364,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:media",
         "//cuttlefish/host/commands/assemble_cvd:network_flags",
+        "//cuttlefish/host/commands/assemble_cvd:system_image_dir_path_resolution",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
         "//cuttlefish/host/commands/assemble_cvd/flags:android_efi_loader",
         "//cuttlefish/host/commands/assemble_cvd/flags:blank_data_image_mb",
