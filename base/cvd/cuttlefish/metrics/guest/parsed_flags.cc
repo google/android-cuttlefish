@@ -24,12 +24,16 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 Result<ParsedFlags> GetParsedFlags() {
+  const SystemImageDirFlag system_image_dir =
+      CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
+
   return ParsedFlags{
       .cpus = CF_EXPECT(CpusFlag::FromGlobalGflags()),
       .daemon = CF_EXPECT(DaemonFlag::FromGlobalGflags()),
@@ -41,7 +45,8 @@ Result<ParsedFlags> GetParsedFlags() {
       .memory_mb = CF_EXPECT(MemoryMbFlag::FromGlobalGflags()),
       .restart_subprocesses =
           CF_EXPECT(RestartSubprocessesFlag::FromGlobalGflags()),
-      .system_image_dir = CF_EXPECT(SystemImageDirFlag::FromGlobalGflags()),
+      .super_image = SuperImageFlag::FromGlobalGflags(system_image_dir),
+      .system_image_dir = system_image_dir,
   };
 }
 

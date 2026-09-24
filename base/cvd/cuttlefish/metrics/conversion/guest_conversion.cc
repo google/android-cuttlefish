@@ -138,6 +138,8 @@ void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
   flags.set_memory_mb(guest_metrics.flag_metrics.memory_mb);
   flags.set_restart_subprocesses(
       guest_metrics.flag_metrics.restart_subprocesses);
+  flags.set_super_image_specified(
+      guest_metrics.flag_metrics.super_image_specified);
   flags.set_system_image_dir_specified(
       guest_metrics.flag_metrics.system_image_dir_specified);
 }
