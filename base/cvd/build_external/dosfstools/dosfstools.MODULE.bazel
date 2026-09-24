@@ -5,7 +5,7 @@ git_repository(
     build_file = "@//build_external/dosfstools:BUILD.dosfstools.bazel",
     commit = "289a48b9cb5b3c589391d28aa2515c325c932c7a",
     remote = "https://github.com/dosfstools/dosfstools",
-    patch_strip = 1,
+    patch_args = ["-p1"],
     patches = [
         "@//build_external/dosfstools:PATCH.vasprintf.patch",
     ],
