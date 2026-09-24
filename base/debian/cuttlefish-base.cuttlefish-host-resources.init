@@ -111,22 +111,25 @@ destroy_tap() {
 setup_nftables() {
     mkdir -p "$CUTTLEFISH_RUN_DIR"
 
-    if [ "${allocate_static_resources}" = "1" ]; then
-        # Ensure nftables tables and chains exist.
-        nft add table ip cuttlefish_nat
-        nft add chain ip cuttlefish_nat postrouting '{ type nat hook postrouting priority 100 ; }'
-
-        nft add table bridge cuttlefish_bridge
-        nft add chain bridge cuttlefish_bridge prerouting '{ type filter hook prerouting priority -250 ; }'
-        nft add chain bridge cuttlefish_bridge forward '{ type filter hook forward priority 0 ; }'
+    if [ "${allocate_static_resources}" != "1" ]; then
+        return
     fi
+
+    # Ensure nftables tables and chains exist.
+    nft add table ip cuttlefish_nat
+    nft add chain ip cuttlefish_nat postrouting '{ type nat hook postrouting priority 100 ; }'
+
+    nft add table bridge cuttlefish_bridge
+    nft add chain bridge cuttlefish_bridge prerouting '{ type filter hook prerouting priority -250 ; }'
+    nft add chain bridge cuttlefish_bridge forward '{ type filter hook forward priority 0 ; }'
 }
 
 delete_nftables() {
-    if [ "${allocate_static_resources}" = "1" ]; then
-        nft delete table ip cuttlefish_nat
-        nft delete table bridge cuttlefish_bridge
+    if [ "${allocate_static_resources}" != "1" ]; then
+        return
     fi
+    nft delete table ip cuttlefish_nat
+    nft delete table bridge cuttlefish_bridge
 }
 
 
@@ -330,6 +333,49 @@ destroy_bridged_interfaces() {
     fi
 }
 
+create_static_interfaces() {
+    if [ "${allocate_static_resources}" != "1" ]; then
+        return
+    fi
+
+    # Ethernet
+    # 192.168.98.X for cvd-ebr and cvd-etap-XX
+    create_bridged_interfaces \
+      192.168.98 "${ethernet_bridge_interface}" cvd-etap \
+      "${ethernet_ipv6_prefix}" "${ethernet_ipv6_prefix_length}"
+
+    # Mobile Network
+    # 192.168.97.X from cvd-mtap-01 to cvd-mtap-64
+    # 192.168.93.X from cvd-mtap-65 to cvd-mtap-128
+    for i in $(seq ${num_cvd_accounts}); do
+        tap="$(printf cvd-mtap-%02d $i)"
+        if [ $i -lt 65 ]; then
+            create_interface $tap 192.168.97 $i
+        elif [ $i -lt 129 ]; then
+            create_interface $tap 192.168.93 $(($i - 64))
+        fi
+    done
+
+    # Wireless Network
+    # cvd-wbr and cvd-wtap-XX for legacy wireless network without distinguished
+    # subnet between tap interfaces, cvd-wifiap-XX with distinguished subnet for
+    # running several OpenWRT instances simultaneously.
+    # 192.168.96.X for cvd-wbr and cvd-wtap-XX
+    # 192.168.94.X from cvd-wifiap-01 to cvd-wifiap-64
+    # 192.168.95.X from cvd-wifiap-65 to cvd-wifiap-128
+    create_bridged_interfaces \
+      192.168.96 "${wifi_bridge_interface}" cvd-wtap \
+      "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
+    for i in $(seq ${num_cvd_accounts}); do
+        tap="$(printf cvd-wifiap-%02d $i)"
+        if [ $i -lt 65 ]; then
+            create_interface $tap 192.168.94 $i
+        elif [ $i -lt 129 ]; then
+            create_interface $tap 192.168.95 $(($i - 64))
+        fi
+    done
+}
+
 start() {
     # Enable ip forwarding
     echo 1 > /proc/sys/net/ipv4/ip_forward
@@ -337,44 +383,7 @@ start() {
 
     setup_nftables
 
-    if [ "${allocate_static_resources}" = "1" ]; then
-        # Ethernet
-        # 192.168.98.X for cvd-ebr and cvd-etap-XX
-        create_bridged_interfaces \
-          192.168.98 "${ethernet_bridge_interface}" cvd-etap \
-          "${ethernet_ipv6_prefix}" "${ethernet_ipv6_prefix_length}"
-
-        # Mobile Network
-        # 192.168.97.X from cvd-mtap-01 to cvd-mtap-64
-        # 192.168.93.X from cvd-mtap-65 to cvd-mtap-128
-        for i in $(seq ${num_cvd_accounts}); do
-            tap="$(printf cvd-mtap-%02d $i)"
-            if [ $i -lt 65 ]; then
-                create_interface $tap 192.168.97 $i
-            elif [ $i -lt 129 ]; then
-                create_interface $tap 192.168.93 $(($i - 64))
-            fi
-        done
-
-        # Wireless Network
-        # cvd-wbr and cvd-wtap-XX for legacy wireless network without distinguished
-        # subnet between tap interfaces, cvd-wifiap-XX with distinguished subnet for
-        # running several OpenWRT instances simultaneously.
-        # 192.168.96.X for cvd-wbr and cvd-wtap-XX
-        # 192.168.94.X from cvd-wifiap-01 to cvd-wifiap-64
-        # 192.168.95.X from cvd-wifiap-65 to cvd-wifiap-128
-        create_bridged_interfaces \
-          192.168.96 "${wifi_bridge_interface}" cvd-wtap \
-          "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
-        for i in $(seq ${num_cvd_accounts}); do
-            tap="$(printf cvd-wifiap-%02d $i)"
-            if [ $i -lt 65 ]; then
-                create_interface $tap 192.168.94 $i
-            elif [ $i -lt 129 ]; then
-                create_interface $tap 192.168.95 $(($i - 64))
-            fi
-        done
-    fi
+    create_static_interfaces
 
     # When running inside a privileged container, set the ownership and access
     # of these device nodes.
@@ -392,35 +401,38 @@ start() {
 }
 
 stop() {
-    if [ "${allocate_static_resources}" = "1" ]; then
-        # Ethernet
-        destroy_bridged_interfaces \
-          192.168.98 "${ethernet_bridge_interface}" cvd-etap \
-          "${ethernet_ipv6_prefix}" "${ethernet_ipv6_prefix_length}"
-
-        # Mobile Network
-        for i in $(seq ${num_cvd_accounts}); do
-            tap="$(printf cvd-mtap-%02d $i)"
-            if [ $i -lt 65 ]; then
-                destroy_interface $tap 192.168.97 $i
-            elif [ $i -lt 129 ]; then
-                destroy_interface $tap 192.168.93 $(($i - 64))
-            fi
-        done
-
-        # Wireless Network
-        destroy_bridged_interfaces \
-          192.168.96 "${wifi_bridge_interface}" cvd-wtap \
-          "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
-        for i in $(seq ${num_cvd_accounts}); do
-            tap="$(printf cvd-wifiap-%02d $i)"
-            if [ $i -lt 65 ]; then
-                destroy_interface $tap 192.168.94 $i
-            elif [ $i -lt 129 ]; then
-                destroy_interface $tap 192.168.95 $(($i - 64))
-            fi
-        done
+    if [ "${allocate_static_resources}" != "1" ]; then
+        delete_nftables
+        return
     fi
+
+    # Ethernet
+    destroy_bridged_interfaces \
+      192.168.98 "${ethernet_bridge_interface}" cvd-etap \
+      "${ethernet_ipv6_prefix}" "${ethernet_ipv6_prefix_length}"
+
+    # Mobile Network
+    for i in $(seq ${num_cvd_accounts}); do
+        tap="$(printf cvd-mtap-%02d $i)"
+        if [ $i -lt 65 ]; then
+            destroy_interface $tap 192.168.97 $i
+        elif [ $i -lt 129 ]; then
+            destroy_interface $tap 192.168.93 $(($i - 64))
+        fi
+    done
+
+    # Wireless Network
+    destroy_bridged_interfaces \
+      192.168.96 "${wifi_bridge_interface}" cvd-wtap \
+      "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
+    for i in $(seq ${num_cvd_accounts}); do
+        tap="$(printf cvd-wifiap-%02d $i)"
+        if [ $i -lt 65 ]; then
+            destroy_interface $tap 192.168.94 $i
+        elif [ $i -lt 129 ]; then
+            destroy_interface $tap 192.168.95 $(($i - 64))
+        fi
+    done
     delete_nftables
 }
 
