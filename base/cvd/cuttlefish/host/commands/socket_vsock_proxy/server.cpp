@@ -89,7 +89,10 @@ VsockServer::VsockServer(int port, std::optional<int> vhost_user_vsock_cid)
 Result<SharedFD> VsockServer::Start() {
   SharedFD server;
   do {
-    server = SharedFD::VsockServer(port_, SOCK_STREAM, vhost_user_vsock_cid_);
+    // TODO(schuffelen): Expose errno from Fd results so
+    // socketErrorIsRecoverable works correctly
+    server = Fd::VsockServer(port_, SOCK_STREAM, vhost_user_vsock_cid_)
+                 .value_or(Fd());
     if (!server->IsOpen() && !socketErrorIsRecoverable(server->GetErrno())) {
       LOG(ERROR) << "Could not open vsock socket: " << server->StrError();
       // socket_vsock_proxy will now wait forever in the guest on encountering
