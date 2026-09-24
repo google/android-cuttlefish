@@ -255,6 +255,47 @@ TEST_F(UrlDownloadTests, AnOpenFileReplacedAtItsPathIsNotFoundSuccess) {
   EXPECT_THAT(HoldsFileAt(*part, PartPath()), IsOkAndValue(false));
 }
 
+TEST_F(UrlDownloadTests, APartialFileOfAnotherVersionIsRemovedSuccess) {
+  ServeContents();
+  WritePart("xxxxxx", "\"v0\"");
+  UrlDownload download = {
+      .url = kUrl,
+      .if_range = kVersion,
+      .version = kVersion,
+      .size = kSize,
+  };
+
+  EXPECT_THAT(DownloadUrlToFile(http_client_, download, Path()), IsOk());
+  EXPECT_FALSE(FileExists(PartPath("\"v0\"")));
+}
+
+TEST_F(UrlDownloadTests, ALockedPartialFileOfAnotherVersionIsKeptSuccess) {
+  ServeContents();
+  WritePart("xxxxxx", "\"v0\"");
+  Result<Fd> other = Fd::Open(PartPath("\"v0\""), O_RDWR);
+  ASSERT_THAT(other, IsOk());
+  ASSERT_THAT(other->Flock(LOCK_EX), IsOk());
+  UrlDownload download = {
+      .url = kUrl,
+      .if_range = kVersion,
+      .version = kVersion,
+      .size = kSize,
+  };
+
+  EXPECT_THAT(DownloadUrlToFile(http_client_, download, Path()), IsOk());
+  EXPECT_TRUE(FileExists(PartPath("\"v0\"")));
+}
+
+TEST_F(UrlDownloadTests, OtherFilesNextToTheArtifactAreKeptSuccess) {
+  ServeContents();
+  const std::string notes = absl::StrCat(Path(), ".notes.part");
+  ASSERT_THAT(WriteNewFile(notes, "notes"), IsOk());
+  UrlDownload download = {.url = kUrl, .version = kVersion, .size = kSize};
+
+  EXPECT_THAT(DownloadUrlToFile(http_client_, download, Path()), IsOk());
+  EXPECT_TRUE(FileExists(notes));
+}
+
 TEST_F(UrlDownloadTests, AMissingObjectLeavesNoPartialFileFail) {
   UrlDownload download = {.url = kUrl, .version = kVersion, .size = kSize};
 
