@@ -39,24 +39,44 @@ type Sandbox struct {
 	pid     int
 	tempdir string
 	closed  bool
+
+	keeperStderr *bytes.Buffer
+	keeperDone   chan struct{}
+	keeperErr    error
 }
+
+const RequireSandboxEnv = "HOST_TESTS_REQUIRE_SANDBOX"
 
 func NewSandbox(t *testing.T) *Sandbox {
 	if err := checkPrereqs(); err != nil {
-		t.Fatalf("sandbox prerequisites not met: %v", err)
+		if os.Getenv(RequireSandboxEnv) == "1" {
+			t.Fatalf("sandbox prerequisites not met and %s=1: %v", RequireSandboxEnv, err)
+		}
+		// t.Skipf alone is invisible unless the test runs with -test.v, which
+		// would make this look indistinguishable from a pass. Log it too.
+		log.Printf("[sandbox] SKIPPING %s: sandbox prerequisites not met: %v", t.Name(), err)
+		t.Skipf("sandbox prerequisites not met, skipping: %v", err)
 	}
 
 	ctx := t.Context()
-	s := &Sandbox{ctx: ctx, tempdir: t.TempDir()}
+	s := &Sandbox{ctx: ctx, tempdir: t.TempDir(), keeperDone: make(chan struct{})}
 	t.Cleanup(s.Close)
 
 	// spawn the process that will keep the sandbox alive.
 	// we use a PID namespace to ensure everything is torn down.
 	cmd := exec.CommandContext(ctx, "unshare", "--user", "--map-root-user", "--net", "--mount", "--pid", "--fork", "--kill-child", "--mount-proc", "sleep", "infinity")
+	s.keeperStderr = &bytes.Buffer{}
+	cmd.Stderr = s.keeperStderr
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("cannot create rootless user+net namespace: %v", err)
 	}
 	s.keeper = cmd
+	// Reap the keeper here so waitReady can tell "not ready yet" apart from
+	// "already dead". Close() waits on keeperDone instead of calling Wait().
+	go func() {
+		s.keeperErr = cmd.Wait()
+		close(s.keeperDone)
+	}()
 
 	if err := s.waitReady(); err != nil {
 		t.Fatalf("namespace not usable on this host: %v", err)
@@ -67,6 +87,8 @@ func NewSandbox(t *testing.T) *Sandbox {
 	if err := s.setupNetwork(); err != nil {
 		t.Fatalf("failed to prepare network sandbox: %v", err)
 	}
+
+	installDnsmasqShim(t, s)
 
 	return s
 }
@@ -84,6 +106,12 @@ func checkNamespacePrereqs() error {
 			return errors.New("unprivileged user namespaces are disabled (unprivileged_userns_clone=0)")
 		}
 	}
+	if b, err := os.ReadFile("/proc/sys/kernel/apparmor_restrict_unprivileged_userns"); err == nil {
+		if strings.TrimSpace(string(b)) == "1" && os.Geteuid() != 0 {
+			return errors.New("unprivileged user namespaces are restricted by AppArmor " +
+				"(apparmor_restrict_unprivileged_userns=1); set it to 0 to run these tests")
+		}
+	}
 	for _, bin := range []string{"unshare", "nsenter", "sleep"} {
 		if _, err := exec.LookPath(bin); err != nil {
 			return fmt.Errorf("required binary %q not found on PATH: %w", bin, err)
@@ -96,6 +124,11 @@ func (s *Sandbox) waitReady() error {
 	deadline := time.Now().Add(5 * time.Second)
 	var lastErr error
 	for time.Now().Before(deadline) {
+		// If the keeper is already gone there is nothing to wait for, and its
+		// stderr holds the real reason
+		if err := s.keeperExited(); err != nil {
+			return err
+		}
 		if s.pid == 0 {
 			pid, err := childPid(s.keeper.Process.Pid)
 			if err != nil {
@@ -113,7 +146,33 @@ func (s *Sandbox) waitReady() error {
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
+	if err := s.keeperExited(); err != nil {
+		return err
+	}
 	return fmt.Errorf("namespace did not become ready: %w", lastErr)
+}
+
+// keeperExited returns a non-nil error if the keeper process has already
+// terminated, quoting whatever it wrote to stderr.
+func (s *Sandbox) keeperExited() error {
+	select {
+	case <-s.keeperDone:
+		return fmt.Errorf("the keeper process (unshare) exited before the namespace was ready: %v%s",
+			s.keeperErr, s.keeperStderrSuffix())
+	default:
+		return nil
+	}
+}
+
+func (s *Sandbox) keeperStderrSuffix() string {
+	if s.keeperStderr == nil {
+		return ""
+	}
+	out := strings.TrimSpace(s.keeperStderr.String())
+	if out == "" {
+		return ""
+	}
+	return "\n--- unshare stderr ---\n" + out
 }
 
 // we need to find the child PID since the keeper process stays in
@@ -179,6 +238,6 @@ func (s *Sandbox) Close() {
 	s.closed = true
 	if s.keeper != nil && s.keeper.Process != nil {
 		s.keeper.Process.Kill()
-		s.keeper.Wait()
+		<-s.keeperDone
 	}
 }

@@ -31,6 +31,14 @@ runs:
   - name: Install bazel
     run: sudo tools/buildutils/installbazel.sh
     shell: bash
+  - name: Allow unprivileged user namespaces
+    run: |
+      # The host_tests sandbox harness is rootless and needs unprivileged user
+      # namespaces.
+      if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      fi
+    shell: bash
   - name: Run unit tests
-    run: cd base/cvd && bazel test --disk_cache=$HOME/bazel-disk-cache --sandbox_writable_path=$HOME --test_output=errors ...
+    run: cd base/cvd && bazel test --disk_cache=$HOME/bazel-disk-cache --sandbox_writable_path=$HOME --test_output=errors --test_env=HOST_TESTS_REQUIRE_SANDBOX=1 ...
     shell: bash
