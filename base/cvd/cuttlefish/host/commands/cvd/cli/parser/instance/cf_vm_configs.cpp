@@ -167,7 +167,8 @@ static std::string Uuid(const Instance& instance) {
 
 static bool EnableSandbox(const Instance& instance) {
   const auto& crosvm = instance.vm().crosvm();
-  const auto& default_val = CF_DEFAULTS_ENABLE_SANDBOX;
+  // TODO(b/554100008): Try to enable the sandbox in Android CI
+  const auto& default_val = false;
   return crosvm.has_enable_sandbox() ? crosvm.enable_sandbox() : default_val;
 }
 
@@ -269,10 +270,10 @@ Result<std::vector<std::string>> GenerateVmFlags(
   if (used_names.contains(kFlagUuid)) {
     flags.push_back(GenerateInstanceFlag(kFlagUuid, cfg, Uuid));
   }
-  if (used_names.contains(kFlagEnableSandbox)) {
-    flags.push_back(
-        GenerateInstanceFlag(kFlagEnableSandbox, cfg, EnableSandbox));
-  }
+  // TODO(b/554100008): Try to enable the sandbox in Android CI
+  // if (used_names.contains(kFlagEnableSandbox)) {
+  flags.push_back(GenerateInstanceFlag(kFlagEnableSandbox, cfg, EnableSandbox));
+  // }
   if (used_names.contains(kFlagCrosvmSimpleMediaDevice)) {
     flags.push_back(GenerateInstanceFlag(kFlagCrosvmSimpleMediaDevice, cfg,
                                          SimpleMediaDevice));
