@@ -47,10 +47,12 @@ Result<FromGflags<T>> FromGlobalGflags(
   std::vector<std::string> string_values =
       absl::StrSplit(flag_info.current_value, ',');
   std::vector<T> values(string_values.size());
+  std::vector<bool> is_default_values(values.size(), flag_info.is_default);
 
   for (int i = 0; i < string_values.size(); i++) {
     if (string_values[i] == "unset" || string_values[i] == "\"unset\"") {
       values[i] = default_values[i < default_values.size() ? i : 0];
+      is_default_values[i] = true;
     } else {
       values[i] = CF_EXPECT(parse_func(string_values[i], flag_name));
     }
@@ -62,6 +64,7 @@ Result<FromGflags<T>> FromGlobalGflags(
       // That function is more accurate at determining if the flag was
       // user-provided
       .is_default = flag_info.is_default,
+      .is_default_values = std::move(is_default_values),
   };
 }
 
