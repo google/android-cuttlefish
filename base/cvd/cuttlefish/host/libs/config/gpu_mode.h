@@ -38,7 +38,6 @@ enum class GpuMode {
 
 inline constexpr std::string_view kGpuModeAuto = "auto";
 inline constexpr std::string_view kGpuModeCustom = "custom";
-inline constexpr std::string_view kGpuModeDrmVirgl = "drm_virgl";
 inline constexpr std::string_view kGpuModeGfxstream = "gfxstream";
 inline constexpr std::string_view kGpuModeGfxstreamGuestAngle =
     "gfxstream_guest_angle";

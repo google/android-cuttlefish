@@ -66,7 +66,6 @@ class ScreenConnector : public ScreenConnectorFrameRenderer {
     auto instance = config->ForDefaultInstance();
     std::unordered_set<GpuMode> valid_gpu_modes{
         GpuMode::Custom,
-        GpuMode::DrmVirgl,
         GpuMode::Gfxstream,
         GpuMode::GfxstreamGuestAngle,
         GpuMode::GfxstreamGuestAngleHostSwiftshader,
