@@ -23,6 +23,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/gpu_mode.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/qemu_binary_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/result/result.h"
@@ -39,6 +40,7 @@ Result<ParsedFlags> GetParsedFlags() {
       .guest_enforce_security =
           CF_EXPECT(GuestEnforceSecurityFlag::FromGlobalGflags()),
       .memory_mb = CF_EXPECT(MemoryMbFlag::FromGlobalGflags()),
+      .qemu_binary_dir = CF_EXPECT(QemuBinaryDirFlag::FromGlobalGflags()),
       .restart_subprocesses =
           CF_EXPECT(RestartSubprocessesFlag::FromGlobalGflags()),
       .system_image_dir = CF_EXPECT(SystemImageDirFlag::FromGlobalGflags()),

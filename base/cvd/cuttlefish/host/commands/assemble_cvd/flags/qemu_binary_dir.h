@@ -30,7 +30,8 @@ class QemuBinaryDirFlag : public FlagBase<std::string> {
 
  private:
   explicit QemuBinaryDirFlag(std::vector<std::string> flag_values,
-                             bool is_default);
+                             bool is_default,
+                             std::vector<bool> is_default_values);
 };
 
 }  // namespace cuttlefish

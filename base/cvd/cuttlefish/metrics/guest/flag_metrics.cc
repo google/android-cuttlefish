@@ -33,6 +33,8 @@ Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
       .guest_enforce_security =
           parsed_flags.guest_enforce_security.ForIndex(guest_index),
       .memory_mb = parsed_flags.memory_mb.ForIndex(guest_index),
+      .qemu_binary_specified =
+          !parsed_flags.qemu_binary_dir.IsDefaultForIndex(guest_index),
       .restart_subprocesses =
           parsed_flags.restart_subprocesses.ForIndex(guest_index),
       .system_image_dir_specified = !parsed_flags.system_image_dir.IsDefault(),
