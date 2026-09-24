@@ -68,7 +68,7 @@ AdbHandler::AdbHandler(
     std::function<void(const uint8_t *, size_t)> send_to_client)
     : send_to_client_(send_to_client),
       adb_socket_(SetupAdbSocket(adb_host_and_port)),
-      shutdown_(SharedFD::Event(0,0))
+      shutdown_(Fd::Event(0, 0).value_or(Fd()))
 {
     std::thread loop([this]() { ReadLoop(); });
     read_thread_.swap(loop);

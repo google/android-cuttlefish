@@ -20,6 +20,8 @@
 
 #include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
+
 using namespace android;
 
 namespace cuttlefish {
@@ -31,7 +33,7 @@ BluetoothHandler::BluetoothHandler(
     : send_to_client_(send_to_client),
       rootcanal_socket_(
           SharedFD::SocketLocalClient(rootCanalTestPort, SOCK_STREAM)),
-      shutdown_(SharedFD::Event(0, 0)) {
+      shutdown_(Fd::Event(0, 0).value_or(Fd())) {
   std::thread loop([this]() { ReadLoop(); });
   read_thread_.swap(loop);
 }

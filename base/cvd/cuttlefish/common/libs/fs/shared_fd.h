@@ -141,7 +141,6 @@ class SharedFD {
   static SharedFD Open(const std::string& pathname, int flags, mode_t mode = 0);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
 #ifdef __linux__
-  static SharedFD Event(int initval = 0, int flags = 0);
   static SharedFD ShmOpen(const std::string& name, int oflag, int mode);
 #endif
   static SharedFD MemfdCreateWithData(const std::string& name,

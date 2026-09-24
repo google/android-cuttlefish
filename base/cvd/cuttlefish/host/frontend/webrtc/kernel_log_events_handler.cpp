@@ -20,6 +20,7 @@
 #include "absl/log/log.h"
 #include "json/value.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
@@ -35,7 +36,7 @@ namespace cuttlefish {
 KernelLogEventsHandler::KernelLogEventsHandler(
     SharedFD kernel_log_fd)
     : kernel_log_fd_(kernel_log_fd),
-      eventfd_(SharedFD::Event()),
+      eventfd_(Fd::Event().value_or(Fd())),
       running_(true) {
   // Start the thread after all class members have been initialized,
   // since the thread relies on them.
