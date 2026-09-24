@@ -41,11 +41,14 @@ Result<QemuBinaryDirFlag> QemuBinaryDirFlag::FromGlobalGflags() {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
   FromGflags<std::string> result =
       CF_EXPECT(StringFromGlobalGflags(flag_info, kFlagName));
-  return QemuBinaryDirFlag(std::move(result.values), result.is_default);
+  return QemuBinaryDirFlag(std::move(result.values), result.is_default,
+                           std::move(result.is_default_values));
 }
 
 QemuBinaryDirFlag::QemuBinaryDirFlag(std::vector<std::string> flag_values,
-                                     bool is_default)
-    : FlagBase<std::string>(std::move(flag_values), is_default) {}
+                                     bool is_default,
+                                     std::vector<bool> is_default_values)
+    : FlagBase<std::string>(std::move(flag_values), is_default,
+                            std::move(is_default_values)) {}
 
 }  // namespace cuttlefish

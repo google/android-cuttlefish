@@ -23,6 +23,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/gpu_mode.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/qemu_binary_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 
@@ -36,6 +37,7 @@ struct ParsedFlags {
   GpuModeFlag gpu_mode;
   GuestEnforceSecurityFlag guest_enforce_security;
   MemoryMbFlag memory_mb;
+  QemuBinaryDirFlag qemu_binary_dir;
   RestartSubprocessesFlag restart_subprocesses;
   SystemImageDirFlag system_image_dir;
 };

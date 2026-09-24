@@ -33,6 +33,7 @@ struct FlagMetrics {
   GpuMode gpu_mode;
   bool guest_enforce_security;
   int memory_mb;
+  bool qemu_binary_specified;
   bool restart_subprocesses;
   bool system_image_dir_specified;
 };
