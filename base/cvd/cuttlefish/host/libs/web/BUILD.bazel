@@ -458,6 +458,7 @@ cf_cc_library(
     hdrs = ["url_download.h"],
     deps = [
         "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/web:digest",
         "//cuttlefish/host/libs/web/http_client",
@@ -471,6 +472,7 @@ cf_cc_library(
         "//cuttlefish/posix:stat",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )

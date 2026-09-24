@@ -16,6 +16,7 @@
 #include "cuttlefish/host/libs/web/url_download.h"
 
 #include <fcntl.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <sys/file.h>
 
@@ -26,9 +27,12 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
+#include "absl/strings/strip.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
+#include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/web/digest.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
@@ -47,6 +51,7 @@ namespace {
 
 constexpr int kLockAttempts = 4;
 constexpr uint64_t kReadSize = 64 << 20;
+constexpr size_t kVersionHashLength = 16;
 
 Result<void> FullDownload(HttpClient& http_client, const UrlDownload& download,
                           const std::string& path) {
@@ -106,10 +111,38 @@ Result<void> ResumeDownload(HttpClient& http_client,
   return {};
 }
 
+Result<void> RemoveOtherPartialFiles(const std::string& path) {
+  const size_t slash = path.rfind('/');
+  CF_EXPECTF(slash != std::string::npos, "'{}' has no directory", path);
+  const std::string directory = path.substr(0, slash);
+  const std::string prefix = fmt::format("{}.", path.substr(slash + 1));
+  const std::vector<std::string> names =
+      CF_EXPECT(DirectoryContents(directory));
+  for (const std::string& name : names) {
+    std::string_view hash = name;
+    if (!absl::ConsumePrefix(&hash, prefix) ||
+        !absl::ConsumeSuffix(&hash, ".part") ||
+        hash.size() != kVersionHashLength ||
+        !std::all_of(hash.begin(), hash.end(), absl::ascii_isxdigit)) {
+      continue;
+    }
+    const std::string other_path = fmt::format("{}/{}", directory, name);
+    Result<Fd> other = Fd::Open(other_path, O_RDWR);
+    if (!other.has_value() || !other->Flock(LOCK_EX | LOCK_NB).has_value()) {
+      continue;
+    }
+    if (CF_EXPECT(HoldsFileAt(*other, other_path))) {
+      CF_EXPECT(RemoveFile(other_path));
+    }
+  }
+  return {};
+}
+
 }  // namespace
 
 std::string PartialFilePath(const std::string& path, std::string_view version) {
-  return fmt::format("{}.{}.part", path, Sha256Hex(version).substr(0, 16));
+  return fmt::format("{}.{}.part", path,
+                     Sha256Hex(version).substr(0, kVersionHashLength));
 }
 
 Result<bool> HoldsFileAt(Fd& fd, const std::string& path) {
@@ -142,6 +175,7 @@ Result<void> DownloadUrlToFile(HttpClient& http_client,
 
     if (CF_EXPECT(HoldsFileAt(part, part_path))) {
       CF_EXPECT(ResumeDownload(http_client, download, part, part_path, path));
+      CF_EXPECT(RemoveOtherPartialFiles(path));
       return {};
     }
     // Another download of this version renamed the partial file away while
