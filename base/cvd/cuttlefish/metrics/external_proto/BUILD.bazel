@@ -8,7 +8,7 @@ package(
 proto_library(
     name = "cf_fetch_build_proto",
     srcs = ["cf_fetch_build.proto"],
-    deps = [],
+    deps = ["//cuttlefish/metrics/external_proto:cf_safe_level_proto"],
 )
 
 cc_proto_library(
@@ -180,6 +180,17 @@ proto_library(
 cc_proto_library(
     name = "cf_metrics_event_v2_cc_proto",
     deps = ["//cuttlefish/metrics/external_proto:cf_metrics_event_v2_proto"],
+)
+
+proto_library(
+    name = "cf_safe_level_proto",
+    srcs = ["cf_safe_level.proto"],
+    deps = [],
+)
+
+cc_proto_library(
+    name = "cf_safe_level_cc_proto",
+    deps = ["//cuttlefish/metrics/external_proto:cf_safe_level_proto"],
 )
 
 proto_library(
