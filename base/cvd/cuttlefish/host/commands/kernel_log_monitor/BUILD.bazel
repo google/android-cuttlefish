@@ -11,6 +11,7 @@ cf_cc_binary(
     srcs = ["main.cc"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_server",
         "//cuttlefish/host/commands/kernel_log_monitor:utils",
         "//cuttlefish/host/libs/config:config_instance_derived",
@@ -31,6 +32,7 @@ cf_cc_library(
     hdrs = ["kernel_log_server.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result:result_type",
