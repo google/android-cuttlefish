@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 The Android Open Source Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
-
-#include <string>
-#include <vector>
-
-#include "json/value.h"
 
 #include "cuttlefish/host/libs/config/mte.h"
+
+#include <string_view>
+
+#include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
+
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<std::vector<std::string>> CrosvmCpuArguments(
-    const Json::Value& vcpu_config, Mte mte = Mte::kOff);
+Result<Mte> ParseMte(std::string_view str) {
+  if (absl::EqualsIgnoreCase(str, "auto")) {
+    return Mte::kAuto;
+  }
+  bool bool_res;
+  CF_EXPECTF(absl::SimpleAtob(str, &bool_res),
+             "Failed to parse mte option \"{}\"", str);
+  return bool_res ? Mte::kOn : Mte::kOff;
 }
+
+}  // namespace cuttlefish
