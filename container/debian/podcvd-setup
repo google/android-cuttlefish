@@ -103,7 +103,7 @@ setup_cidr() {
 }
 
 setup_device_permissions() {
-    # Ensure vhost_net and vhost_vsock exists
+    # Ensure vhost_net and vhost_vsock exist
     [ -c /dev/vhost-net ] && [ -e /sys/class/misc/vhost-net ] || modprobe vhost_net
     [ -c /dev/vhost-vsock ] && [ -e /sys/class/misc/vhost-vsock ] || modprobe vhost_vsock
 
@@ -219,7 +219,7 @@ fi
 setup_cidr
 setup_device_permissions
 setup_rootless_podman
-# This is working only when both nvidia-smi and nvidia-ctk works fine.
+# This is working only when both nvidia-smi and nvidia-ctk work fine.
 setup_nvidia_gpu || echo "Skipping NVIDIA GPU setup."
 trust_ca_in_browsers
 
