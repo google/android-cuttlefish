@@ -28,6 +28,7 @@
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
@@ -261,17 +262,17 @@ class NetsimServer : public CommandSource {
               absl::SimpleAtoi(port_strings[i], &port),
               "Failed to parse modem simulator port: " << port_strings[i]);
 
-          auto vsock = SharedFD::VsockServer(
-              port, SOCK_STREAM,
-              instance.vhost_user_vsock()
-                  ? std::make_optional(instance.vsock_guest_cid())
-                  : std::nullopt);
-          CF_EXPECT(vsock->IsOpen(), vsock->StrError()
-                                         << " (try `cvd reset`, or `pkill "
-                                            "run_cvd` and `pkill crosvm`)");
+          Fd vsock =
+              CF_EXPECT(Fd::VsockServer(
+                            port, SOCK_STREAM,
+                            instance.vhost_user_vsock()
+                                ? std::make_optional(instance.vsock_guest_cid())
+                                : std::nullopt),
+                        " (try `cvd reset`, or `pkill "
+                        "run_cvd` and `pkill crosvm`)");
 
           Chip chip("CELLULAR");
-          chip.vsock_fd = vsock;
+          chip.vsock_fd = std::move(vsock);
           chip.sim_type = instance.modem_simulator_sim_type();
           device.chips.emplace_back(chip);
         }
