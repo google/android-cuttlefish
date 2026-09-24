@@ -240,8 +240,8 @@ void VsockServerConnection::ServerShutdown() {
 bool VsockServerConnection::Connect(unsigned int port, unsigned int cid,
                                     std::optional<int> vhost_user_vsock_cid) {
   if (!server_fd_->IsOpen()) {
-    server_fd_ = cuttlefish::SharedFD::VsockServer(port, SOCK_STREAM,
-                                                   vhost_user_vsock_cid, cid);
+    server_fd_ = Fd::VsockServer(port, SOCK_STREAM, vhost_user_vsock_cid, cid)
+                     .value_or(Fd());
   }
   if (server_fd_->IsOpen()) {
     fd_ = Fd::Accept(*server_fd_).value_or(Fd());

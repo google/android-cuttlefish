@@ -18,12 +18,12 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-#include <cstring>
 #include <optional>
+#include <utility>
 
 #include "absl/log/log.h"
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -47,16 +47,14 @@ Result<MonitorCommand> TombstoneReceiver(
   }
 
   auto port = instance.tombstone_receiver_port();
-  auto socket =
-      SharedFD::VsockServer(port, SOCK_STREAM,
-                            instance.vhost_user_vsock()
-                                ? std::make_optional(instance.vsock_guest_cid())
-                                : std::nullopt);
-  CF_EXPECTF(socket->IsOpen(), "Can't tombstone server socket: '{}'",
-             socket->StrError());
+  Fd socket = CF_EXPECT(
+      Fd::VsockServer(port, SOCK_STREAM,
+                      instance.vhost_user_vsock()
+                          ? std::make_optional(instance.vsock_guest_cid())
+                          : std::nullopt));
 
   return Command(TombstoneReceiverBinary())
-      .AddParameter("-server_fd=", socket)
+      .AddParameter("-server_fd=", std::move(socket))
       .AddParameter("-tombstone_dir=", tombstone_dir);
 }
 
