@@ -75,6 +75,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/mcu_config_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/parser.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/qemu_binary_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
@@ -632,8 +633,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(crosvm_file_backed_mapping_base64));
   std::vector<std::string> seccomp_policy_dir_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(seccomp_policy_dir));
-  std::vector<std::string> qemu_binary_dir_vec =
-      CF_EXPECT(GET_FLAG_STR_VALUE(qemu_binary_dir));
+  QemuBinaryDirFlag qemu_binary_dir_values =
+      CF_EXPECT(QemuBinaryDirFlag::FromGlobalGflags());
 
   // new instance specific flags (moved from common flags)
   std::vector<std::string> gem5_binary_dir_vec =
@@ -868,7 +869,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       instance.set_crosvm_file_backed_mapping(decoded_mapping_str);
     }
     instance.set_seccomp_policy_dir(seccomp_policy_dir_vec[instance_index]);
-    instance.set_qemu_binary_dir(qemu_binary_dir_vec[instance_index]);
+    instance.set_qemu_binary_dir(
+        qemu_binary_dir_values.ForIndex(instance_index));
 
     // wifi, bluetooth, Thread, connectivity setup
 

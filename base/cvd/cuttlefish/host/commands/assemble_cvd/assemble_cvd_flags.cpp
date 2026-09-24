@@ -214,8 +214,6 @@ DEFINE_vec(extra_bootconfig_args_base64, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
            "This is base64 encoded version of extra_bootconfig_args"
            "Used for multi device clusters.");
 
-DEFINE_string(qemu_binary_dir, CF_DEFAULTS_QEMU_BINARY_DIR,
-              "Path to the directory containing the qemu binary to use");
 DEFINE_string(crosvm_binary, CF_DEFAULTS_CROSVM_BINARY,
               "The Crosvm binary to use");
 DEFINE_vec(gem5_binary_dir, CF_DEFAULTS_GEM5_BINARY_DIR,
