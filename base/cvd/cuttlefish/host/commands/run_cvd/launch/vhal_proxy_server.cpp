@@ -22,7 +22,7 @@
 #include "fmt/core.h"
 #include "fmt/format.h"
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -42,9 +42,9 @@ std::optional<MonitorCommand> VhalProxyServer(
                         .AddParameter(fmt::format(
                             "{}:{}", vhal_proxy_server::kEthAddr, port));
   if (instance.vhost_user_vsock()) {
-    command.AddParameter(
-        fmt::format("unix://{}", SharedFD::GetVhostUserVsockServerAddr(
-                                     port, instance.vsock_guest_cid())));
+    command.AddParameter(fmt::format(
+        "unix://{}",
+        Fd::GetVhostUserVsockServerAddr(port, instance.vsock_guest_cid())));
   } else {
     command.AddParameter(fmt::format("vsock:{}:{}", VMADDR_CID_HOST, port));
   }

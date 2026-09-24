@@ -188,9 +188,6 @@ class SharedFD {
   // VMADDR_CID_HOST
   static SharedFD VsockClient(unsigned int cid, unsigned int port, int type,
                               bool vhost_user);
-  static std::string GetVhostUserVsockServerAddr(
-      unsigned int port, int vhost_user_vsock_listening_cid);
-  static std::string GetVhostUserVsockClientAddr(int cid);
 #endif
 
   auto operator<=>(const SharedFD&) const = default;
