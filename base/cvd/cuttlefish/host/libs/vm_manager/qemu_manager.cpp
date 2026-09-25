@@ -32,11 +32,13 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
+#include "fmt/format.h"
 #include "vulkan/vulkan.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
+#include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -873,9 +875,20 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("timestamp=on");
 
 #ifdef __linux__
-  qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("vhost-vsock-pci-non-transitional,guest-cid=",
-                        instance.vsock_guest_cid());
+  if (instance.vhost_user_vsock()) {
+    const std::string vhost_socket =
+        fmt::format("{}/vsock_{}_{}/vhost.socket", TempDir(),
+                    instance.vsock_guest_cid(), getuid());
+    qemu_cmd.AddParameter("-chardev");
+    qemu_cmd.AddParameter("socket,id=char_vsock,path=", vhost_socket);
+    qemu_cmd.AddParameter("-device");
+    qemu_cmd.AddParameter(
+        "vhost-user-vsock-pci-non-transitional,chardev=char_vsock");
+  } else {
+    qemu_cmd.AddParameter("-device");
+    qemu_cmd.AddParameter("vhost-vsock-pci-non-transitional,guest-cid=",
+                          instance.vsock_guest_cid());
+  }
 #endif
 
   qemu_cmd.AddParameter("-device");
