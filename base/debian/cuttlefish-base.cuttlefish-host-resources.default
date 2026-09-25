@@ -30,9 +30,21 @@
 # to resolve domain names. There must be no spaces after the commas.
 #dns6_servers=2001:4860:4860::8888,2001:4860:4860::8844
 
-# IPv6 prefixes allocated to the managed bridges. Require
-# 'bridge_interface' not to be set.
-#wifi_ipv6_prefix=
-#wifi_ipv6_prefix_length=
-#ethernet_ipv6_prefix=
-#ethernet_ipv6_prefix_length=
+# IPv6 prefixes allocated to the managed bridges and point-to-point taps.
+# Both Unique Local Address (ULA, fd00:cf::/32) and Global Unicast Address
+# (GUA, 2001:db8:cf::/48) prefixes are configured so guests pass both ULA
+# checks and Android ConnectivityService hasGlobalIPv6Address() checks.
+wifi_ipv6_prefix=fd00:cf:20::
+wifi_ipv6_gua_prefix=2001:db8:cf:20::
+wifi_ipv6_prefix_length=64
+wifiap_ipv6_prefix_base=fd00:cf:22
+wifiap_ipv6_gua_prefix_base=2001:db8:cf:22
+wifiap_lan_ipv6_prefix_base=fd00:cf:23
+wifiap_lan_ipv6_gua_prefix_base=2001:db8:cf:23
+ethernet_ipv6_prefix=fd00:cf:24::
+ethernet_ipv6_gua_prefix=2001:db8:cf:24::
+ethernet_ipv6_prefix_length=64
+mobile_ipv6_prefix_base=fd00:cf:21
+mobile_ipv6_gua_prefix_base=2001:db8:cf:21
+mobile_ipv6_prefix_length=64
+ipv6_enable_nat66=1
