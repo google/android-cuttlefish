@@ -24,6 +24,8 @@ namespace cuttlefish {
 Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
                                    const int guest_index) {
   return FlagMetrics{
+      .bootloader_specified =
+          !parsed_flags.bootloader.IsDefaultForIndex(guest_index),
       .boot_image_specified =
           !parsed_flags.boot_image.IsDefaultForIndex(guest_index),
       .cpus = parsed_flags.cpus.ForIndex(guest_index),
