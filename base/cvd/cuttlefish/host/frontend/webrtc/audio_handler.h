@@ -22,6 +22,7 @@
 #include <mutex>
 #include <optional>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include "cuttlefish/host/frontend/webrtc/audio_mixer.h"
@@ -76,6 +77,12 @@ class AudioHandler : public AudioServerExecutor {
 
   void Start();
 
+  // Overrides the audio source for a single capture stream. Streams without an
+  // override use the source passed to the constructor. Must be called before
+  // Start(); the mapping is read-only afterwards.
+  void SetCaptureSource(uint32_t stream_id,
+                        std::shared_ptr<webrtc_streaming::AudioSource> source);
+
   // AudioServerExecutor implementation
   void StreamsInfo(StreamInfoCommand& cmd) override;
   void SetStreamParameters(StreamSetParamsCommand& cmd) override;
@@ -94,6 +101,7 @@ class AudioHandler : public AudioServerExecutor {
  private:
   [[noreturn]] void Loop();
   bool IsCapture(uint32_t stream_id) const;
+  webrtc_streaming::AudioSource& CaptureSourceFor(uint32_t stream_id) const;
 
   AudioStatus HandleControlMute(ControlCommand& cmd);
   AudioStatus HandleControlVolume(ControlCommand& cmd);
@@ -101,6 +109,8 @@ class AudioHandler : public AudioServerExecutor {
   std::unique_ptr<AudioServer> audio_server_;
   std::thread server_thread_;
   std::shared_ptr<webrtc_streaming::AudioSource> audio_source_;
+  std::unordered_map<uint32_t, std::shared_ptr<webrtc_streaming::AudioSource>>
+      capture_sources_;
   std::vector<virtio_snd_pcm_info> streams_;
   std::vector<StreamDesc> stream_descs_ = {};
   std::vector<virtio_snd_chmap_info> chmaps_;

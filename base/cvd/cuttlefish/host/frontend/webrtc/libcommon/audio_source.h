@@ -32,6 +32,11 @@ class AudioSource {
                                int samples_per_channel, int num_channels,
                                int sample_rate, bool& muted) = 0;
 
+  // Discards any audio buffered before the guest (re)started the stream. May be
+  // called from a different thread than GetMoreAudioData(). The default
+  // implementation does nothing.
+  virtual void Reset() {}
+
  protected:
   virtual ~AudioSource() = default;
 };
