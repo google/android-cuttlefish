@@ -16,21 +16,29 @@
 
 #include "cuttlefish/metrics/guest/parsed_flags.h"
 
+#include <vector>
+
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/find_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/cpus.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/extra_kernel_cmdline.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/gpu_mode.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/qemu_binary_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
+#include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
+#include "cuttlefish/host/commands/assemble_cvd/resolve_instance_files.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/result/result.h"
 
@@ -44,8 +52,30 @@ Result<ParsedFlags> GetParsedFlags() {
   AndroidBuilds android_builds =
       CF_EXPECT(FindAndroidBuilds(system_image_dir, fetcher_configs));
 
+  const BootImageFlag boot_image =
+      CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds));
+  const SuperImageFlag super_image =
+      SuperImageFlag::FromGlobalGflags(system_image_dir);
+  const VendorBootImageFlag vendor_boot =
+      VendorBootImageFlag::FromGlobalGflags(system_image_dir);
+
+  const InitramfsPathFlag initramfs_path =
+      InitramfsPathFlag::FromGlobalGflags(fetcher_configs);
+  const KernelPathFlag kernel_path =
+      KernelPathFlag::FromGlobalGflags(fetcher_configs);
+  CF_EXPECT(ResolveInstanceFiles(boot_image, initramfs_path, kernel_path,
+                                 super_image, system_image_dir, vendor_boot),
+            "Failed to resolve instance files");
+  // Depends on ResolveInstanceFiles to set flag globals
+  const std::vector<GuestConfig> guest_configs =
+      CF_EXPECT(ReadGuestConfig(boot_image, kernel_path, system_image_dir));
+  const VmManagerFlag vm_manager_flag =
+      CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs));
+
   return ParsedFlags{
-      .boot_image = CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds)),
+      .bootloader = CF_EXPECT(BootloaderFlag::FromGlobalGflags(
+          guest_configs, system_image_dir, vm_manager_flag)),
+      .boot_image = boot_image,
       .cpus = CF_EXPECT(CpusFlag::FromGlobalGflags()),
       .daemon = CF_EXPECT(DaemonFlag::FromGlobalGflags()),
       .data_policy = CF_EXPECT(DataPolicyFlag::FromGlobalGflags()),
@@ -57,9 +87,9 @@ Result<ParsedFlags> GetParsedFlags() {
       .qemu_binary_dir = CF_EXPECT(QemuBinaryDirFlag::FromGlobalGflags()),
       .restart_subprocesses =
           CF_EXPECT(RestartSubprocessesFlag::FromGlobalGflags()),
-      .super_image = SuperImageFlag::FromGlobalGflags(system_image_dir),
+      .super_image = super_image,
       .system_image_dir = system_image_dir,
-      .vendor_boot = VendorBootImageFlag::FromGlobalGflags(system_image_dir),
+      .vendor_boot = vendor_boot,
   };
 }
 
