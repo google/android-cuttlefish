@@ -55,7 +55,7 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
-#include "cuttlefish/host/commands/assemble_cvd/android_build/identify_build.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/find_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/clean.h"
 #include "cuttlefish/host/commands/assemble_cvd/create_dynamic_disk_files.h"
@@ -95,7 +95,6 @@
 #include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
-#include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/config/log_string_to_dir.h"
 #include "cuttlefish/host/libs/feature/feature.h"
@@ -589,22 +588,6 @@ Result<std::vector<std::string>> ReadInputFiles() {
   const std::string input_files_str =
       CF_EXPECT(ReadToString(*input_fd), "Failed to read input files");
   return absl::StrSplit(input_files_str, "\n");
-}
-
-Result<AndroidBuilds> FindAndroidBuilds(
-    const SystemImageDirFlag& system_image_dir,
-    const FetcherConfigs& fetcher_configs) {
-  CF_EXPECT_EQ(system_image_dir.Size(), fetcher_configs.Size());
-  std::vector<std::unique_ptr<AndroidBuild>> android_builds;
-
-  std::vector<AndroidBuildKey> keys;
-  for (size_t i = 0; i < system_image_dir.Size(); i++) {
-    keys.emplace_back(system_image_dir.ForIndex(i),
-                      fetcher_configs.ForInstance(i),
-                      FileSource::DEFAULT_BUILD);
-  }
-
-  return CF_EXPECT(AndroidBuilds::Identify(std::move(keys)));
 }
 
 }  // namespace
