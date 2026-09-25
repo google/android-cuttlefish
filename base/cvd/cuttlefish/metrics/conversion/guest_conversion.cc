@@ -127,6 +127,8 @@ void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
   CuttlefishFlags& flags = *guest.mutable_flags();
   flags.set_boot_image_specified(
       guest_metrics.flag_metrics.boot_image_specified);
+  flags.set_bootloader_specified(
+      guest_metrics.flag_metrics.bootloader_specified);
   flags.set_cpus(guest_metrics.flag_metrics.cpus);
   flags.set_daemon(guest_metrics.flag_metrics.daemon);
   flags.set_data_policy(
