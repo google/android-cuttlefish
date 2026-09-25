@@ -58,7 +58,8 @@ message CuttlefishFlags {
   // launching.
   bool daemon = 5;
 
-  bool data_image_specified = 6;
+  // data_image_specified
+  reserved 6;
 
   // Whether to reuse, alter, or replace the userdata.img file produced by the
   // build system.
@@ -111,9 +112,11 @@ message CuttlefishFlags {
   // machine.
   uint64 memory_mb = 13;
 
-  bool metadata_image_specified = 14;
+  // metadata_image_specified
+  reserved 14;
 
-  bool misc_image_specified = 15;
+  // misc_image_specified
+  reserved 15;
 
   bool qemu_binary_specified = 16;
 
