@@ -109,6 +109,7 @@ message Audio {
     repeated Stream capture_streams = 1;
     repeated Stream playback_streams = 2;
     AudioMixer mixer = 3;
+    Stream virtual_tuner = 4;
   }
 
   repeated PCMDevice pcm_devices = 1;
