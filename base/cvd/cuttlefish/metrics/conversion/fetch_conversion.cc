@@ -16,6 +16,7 @@
 
 #include "cuttlefish/metrics/conversion/fetch_conversion.h"
 
+#include <string>
 #include <variant>
 
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
@@ -41,13 +42,20 @@ using logs::proto::wireless::android::cuttlefish::events::CuttlefishFetchStart;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
 
 void PopulateCuttlefishBuild(CuttlefishBuild& cf_build, const Build& build) {
-  cf_build.set_build_id(std::visit([](auto&& arg) { return arg.id; }, build));
+  std::string build_id = std::visit([](auto&& arg) { return arg.id; }, build);
+  if (const DeviceBuild* device_build = std::get_if<DeviceBuild>(&build)) {
+    cf_build.set_branch(device_build->branch);
+  } else if (std::holds_alternative<GcsBuild>(build)) {
+    // A URL can name a private bucket or an internal host, so only its scheme
+    // is reported. The rest stays in the local fetcher config.
+    build_id = "gs";
+  } else if (std::holds_alternative<HttpBuild>(build)) {
+    build_id = "https";
+  }
+  cf_build.set_build_id(build_id);
   cf_build.set_target(std::visit([](auto&& arg) { return arg.target; }, build));
   cf_build.set_product(
       std::visit([](auto&& arg) { return arg.product; }, build));
-  if (const DeviceBuild* device_build = std::get_if<DeviceBuild>(&build)) {
-    cf_build.set_branch(device_build->branch);
-  }
 }
 
 void PopulateFetchBuilds(CuttlefishFetchBuilds& fetch_builds,

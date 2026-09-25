@@ -20,9 +20,12 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+
+Result<ReadableZip> OpenZip(SeekableZipSource source);
 
 Result<ReadableZip> OpenZip(BuildApi&, const Build&, const std::string& name);
 

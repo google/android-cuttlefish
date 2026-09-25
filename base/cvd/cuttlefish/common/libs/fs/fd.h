@@ -183,6 +183,8 @@ class Fd : public ReaderWriterSeeker {
 
   Result<void> Flock(int operation);
 
+  Result<struct stat> Fstat();
+
   int GetErrno() const { return errno_; }
   int GetSockName(struct sockaddr* addr, socklen_t* addrlen);
 
