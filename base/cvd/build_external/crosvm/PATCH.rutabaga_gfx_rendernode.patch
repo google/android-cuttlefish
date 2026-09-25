@@ -1,0 +1,97 @@
+diff --git a/src/rutabaga_gralloc/rendernode.rs b/src/rutabaga_gralloc/rendernode.rs
+new file mode 100644
+index 0000000..55dc672
+--- /dev/null
++++ b/src/rutabaga_gralloc/rendernode.rs
+@@ -0,0 +1,91 @@
++// Copyright 2018 The ChromiumOS Authors
++// Use of this source code is governed by a BSD-style license that can be
++// found in the LICENSE file.
++
++#![cfg(feature = "gbm")]
++
++use std::fs::File;
++use std::fs::OpenOptions;
++use std::os::raw::c_char;
++use std::os::raw::c_int;
++use std::os::unix::io::AsRawFd;
++use std::path::Path;
++
++use crate::rutabaga_utils::RutabagaResult;
++use magma_gpu::util::Error as MagmaGpuError;
++
++#[repr(C)]
++#[derive(Copy, Clone)]
++pub struct drm_version {
++    version_major: c_int,
++    version_minor: c_int,
++    version_patchlevel: c_int,
++    name_len: usize,
++    name: *mut c_char,
++    date_len: usize,
++    date: *mut c_char,
++    desc_len: usize,
++    desc: *mut c_char,
++}
++
++const DRM_IOCTL_BASE: u32 = 0x64;
++const DRM_IOCTL_VERSION: libc::c_ulong = {
++    let dir = 3u32; // _IOC_READ | _IOC_WRITE
++    let type_ = DRM_IOCTL_BASE;
++    let nr = 0x00u32;
++    let size = std::mem::size_of::<drm_version>() as u32;
++    ((dir << 30) | (size << 16) | (type_ << 8) | nr) as libc::c_ulong
++};
++
++fn get_drm_device_name(fd: &File) -> RutabagaResult<String> {
++    let mut version = drm_version {
++        version_major: 0,
++        version_minor: 0,
++        version_patchlevel: 0,
++        name_len: 0,
++        name: std::ptr::null_mut(),
++        date_len: 0,
++        date: std::ptr::null_mut(),
++        desc_len: 0,
++        desc: std::ptr::null_mut(),
++    };
++
++    let ret = unsafe { libc::ioctl(fd.as_raw_fd(), DRM_IOCTL_VERSION, &mut version) };
++    if ret < 0 {
++        return Err(MagmaGpuError::IoError(std::io::Error::last_os_error()).into());
++    }
++
++    let mut name_bytes: Vec<u8> = vec![0; version.name_len + 1];
++    version.name = name_bytes.as_mut_ptr() as *mut c_char;
++
++    let ret = unsafe { libc::ioctl(fd.as_raw_fd(), DRM_IOCTL_VERSION, &mut version) };
++    if ret < 0 {
++        return Err(MagmaGpuError::IoError(std::io::Error::last_os_error()).into());
++    }
++
++    let c_str = unsafe { std::ffi::CStr::from_ptr(name_bytes.as_ptr() as *const c_char) };
++    c_str
++        .to_str()
++        .map(String::from)
++        .map_err(|_| MagmaGpuError::WithContext("couldn't convert string").into())
++}
++
++pub fn open_device(undesired: &[&str]) -> RutabagaResult<(File, String)> {
++    const DRM_DIR_NAME: &str = "/dev/dri";
++    const DRM_MAX_MINOR: u32 = 15;
++    const RENDER_NODE_START: u32 = 128;
++
++    for n in RENDER_NODE_START..=RENDER_NODE_START + DRM_MAX_MINOR {
++        let path = Path::new(DRM_DIR_NAME).join(format!("renderD{n}"));
++
++        if let Ok(fd) = OpenOptions::new().read(true).write(true).open(path) {
++            if let Ok(name) = get_drm_device_name(&fd) {
++                if !undesired.iter().any(|item| *item == name) {
++                    return Ok((fd, name));
++                }
++            }
++        }
++    }
++
++    Err(MagmaGpuError::WithContext("no DRM rendernode opened").into())
++}
