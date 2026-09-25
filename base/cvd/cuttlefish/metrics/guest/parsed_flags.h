@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/cpus.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
@@ -29,6 +30,7 @@
 namespace cuttlefish {
 
 struct ParsedFlags {
+  BootImageFlag boot_image;
   CpusFlag cpus;
   DaemonFlag daemon;
   DataPolicyFlag data_policy;
