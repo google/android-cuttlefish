@@ -632,7 +632,7 @@ func DefaultUploadOptions() UploadOptions {
 			MaxElapsedTime:      2 * time.Minute,
 		},
 		ChunkSizeBytes: 16 * 1024 * 1024, // 16 MB
-		NumWorkers:     32,
+		NumWorkers:     4,
 	}
 }
 
