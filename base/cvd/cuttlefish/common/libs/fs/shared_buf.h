@@ -149,6 +149,17 @@ ssize_t WriteAllBinary(SharedFD fd, const T* binary_data) {
 }
 
 /**
+ * Sends contents of buf through sock, checking for socket error conditions
+ *
+ * On successful Send, returns true
+ *
+ * If a Send error is encountered, returns false. Some data may have already
+ * been written to 'sock' at that point.
+ */
+bool SendAll(SharedFD sock, const void* buf, size_t size,
+             int flags = MSG_NOSIGNAL);
+
+/**
  * Sends contents of msg through sock, checking for socket error conditions
  *
  * On successful Send, returns true
@@ -156,6 +167,6 @@ ssize_t WriteAllBinary(SharedFD fd, const T* binary_data) {
  * If a Send error is encountered, returns false. Some data may have already
  * been written to 'sock' at that point.
  */
-bool SendAll(SharedFD sock, std::string_view msg);
+bool SendAll(SharedFD sock, std::string_view msg, int flags = MSG_NOSIGNAL);
 
 }  // namespace cuttlefish
