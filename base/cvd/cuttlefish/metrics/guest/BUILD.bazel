@@ -43,6 +43,9 @@ cf_cc_library(
     srcs = ["parsed_flags.cc"],
     hdrs = ["parsed_flags.h"],
     deps = [
+        "//cuttlefish/host/commands/assemble_cvd/android_build:android_builds",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:find_builds",
+        "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
         "//cuttlefish/host/commands/assemble_cvd/flags:cpus",
         "//cuttlefish/host/commands/assemble_cvd/flags:daemon",
         "//cuttlefish/host/commands/assemble_cvd/flags:data_policy",
@@ -52,6 +55,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:memory_mb",
         "//cuttlefish/host/commands/assemble_cvd/flags:restart_subprocesses",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//cuttlefish/host/libs/config:fetcher_configs",
         "//cuttlefish/result",
     ],
 )
