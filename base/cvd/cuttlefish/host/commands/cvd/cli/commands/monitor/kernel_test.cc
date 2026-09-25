@@ -16,40 +16,39 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/kernel.h"
 
-#include <string>
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 
 TEST(KernelTest, ParseKernelLineValid) {
-  std::string line = "[    0.123456] init: starting service";
-  auto parsed = ParseKernelLine(line);
-  ASSERT_THAT(parsed, IsOk());
-  EXPECT_EQ(parsed->timestamp, "[    0.123456]");
-  EXPECT_EQ(parsed->prefix, " init:");
-  EXPECT_EQ(parsed->message, " starting service");
+  static constexpr char kLine[] = "[    0.123456] init: starting service";
+  KernelLine parsed = CF_ASSERT(ParseKernelLine(kLine));
+
+  EXPECT_EQ(parsed.timestamp, "[    0.123456]");
+  EXPECT_EQ(parsed.prefix, " init:");
+  EXPECT_EQ(parsed.message, " starting service");
 }
 
 TEST(KernelTest, ParseKernelLineNoColon) {
-  std::string line = "[    0.123456] Linux version 6.1.0";
-  auto parsed = ParseKernelLine(line);
-  ASSERT_THAT(parsed, IsOk());
-  EXPECT_EQ(parsed->timestamp, "[    0.123456]");
-  EXPECT_EQ(parsed->prefix, "");
-  EXPECT_EQ(parsed->message, " Linux version 6.1.0");
+  static constexpr char kLine[] = "[    0.123456] Linux version 6.1.0";
+  KernelLine parsed = CF_ASSERT(ParseKernelLine(kLine));
+
+  EXPECT_EQ(parsed.timestamp, "[    0.123456]");
+  EXPECT_EQ(parsed.prefix, "");
+  EXPECT_EQ(parsed.message, " Linux version 6.1.0");
 }
 
 TEST(KernelTest, ParseKernelLineParens) {
-  std::string line = "[    0.123456] driver(param:val): message";
-  auto parsed = ParseKernelLine(line);
-  ASSERT_THAT(parsed, IsOk());
-  EXPECT_EQ(parsed->timestamp, "[    0.123456]");
-  EXPECT_EQ(parsed->prefix, " driver(param:val):");
-  EXPECT_EQ(parsed->message, " message");
+  static constexpr char kLine[] = "[    0.123456] driver(param:val): message";
+  KernelLine parsed = CF_ASSERT(ParseKernelLine(kLine));
+
+  EXPECT_EQ(parsed.timestamp, "[    0.123456]");
+  EXPECT_EQ(parsed.prefix, " driver(param:val):");
+  EXPECT_EQ(parsed.message, " message");
 }
 
 TEST(KernelTest, ParseKernelLineInvalid) {
