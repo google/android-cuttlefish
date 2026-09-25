@@ -26,6 +26,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 
 namespace cuttlefish {
 
@@ -40,6 +41,7 @@ struct ParsedFlags {
   RestartSubprocessesFlag restart_subprocesses;
   SuperImageFlag super_image;
   SystemImageDirFlag system_image_dir;
+  VendorBootImageFlag vendor_boot;
 };
 
 // depends on gflags::ParseCommandLineFlags being called previously
