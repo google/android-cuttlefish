@@ -666,7 +666,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
       SuperImageFlag::FromGlobalGflags(system_image_dir);
 
   VendorBootImageFlag vendor_boot_image =
-      VendorBootImageFlag::FromGlobalGflags(system_image_dir);
+      CF_EXPECT(VendorBootImageFlag::FromGlobalGflags(system_image_dir));
 
   fruit::Injector<> injector(FlagsComponent, &system_image_dir);
 

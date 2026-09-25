@@ -192,6 +192,12 @@ Result<std::string> SaveConfig(FetcherConfig& config,
   return fetcher_path;
 }
 
+Result<void> DownloadVendorBootDebug(FetchBuildContext& context) {
+  FetchArtifact vendor_boot_debug = context.Artifact("vendor_boot-debug.img");
+  CF_EXPECT(vendor_boot_debug.Download());
+  return {};
+}
+
 Result<void> FetchDefaultTarget(FetchBuildContext& context,
                                 bool keep_downloaded_archives,
                                 const DownloadFlags& flags,
@@ -252,6 +258,10 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
         CF_EXPECT(target_files.ExtractOneTo(member, output));
       }
     }
+  }
+
+  if (flags.download_vendor_boot_debug) {
+    CF_EXPECT(DownloadVendorBootDebug(context));
   }
   return {};
 }
@@ -314,7 +324,8 @@ Result<void> FetchKernelTarget(FetchBuildContext context) {
 }
 
 Result<void> FetchBootTarget(FetchBuildContext& context,
-                             bool keep_downloaded_archives) {
+                             bool keep_downloaded_archives,
+                             bool download_vendor_boot_debug) {
   const std::optional<std::string> filepath = context.GetFilepath();
   const std::string to_download =
       filepath.has_value() ? *filepath : context.GetBuildZipName("img");
@@ -323,7 +334,11 @@ Result<void> FetchBootTarget(FetchBuildContext& context,
 
   if (!filepath.has_value()) {
     CF_EXPECT(artifact.ExtractOne("boot.img"));
-    CF_EXPECT(artifact.ExtractOne("vendor_boot.img"));
+    if (download_vendor_boot_debug) {
+      CF_EXPECT(DownloadVendorBootDebug(context));
+    } else {
+      CF_EXPECT(artifact.ExtractOne("vendor_boot.img"));
+    }
     if (!keep_downloaded_archives) {
       CF_EXPECT(artifact.DeleteLocalFile());
     }
@@ -422,7 +437,8 @@ Result<void> FetchTarget(FetchContext& fetch_context,
   }
 
   if (std::optional<FetchBuildContext> context = fetch_context.BootBuild()) {
-    CF_EXPECT(FetchBootTarget(*context, keep_downloaded_archives));
+    CF_EXPECT(FetchBootTarget(*context, keep_downloaded_archives,
+                              flags.download_vendor_boot_debug));
   }
 
   if (std::optional<FetchBuildContext> ctx = fetch_context.BootloaderBuild()) {
