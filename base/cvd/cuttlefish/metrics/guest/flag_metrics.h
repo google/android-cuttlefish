@@ -26,6 +26,7 @@
 namespace cuttlefish {
 
 struct FlagMetrics {
+  bool bootloader_specified = false;
   bool boot_image_specified = false;
   int cpus = 0;
   bool daemon = false;
