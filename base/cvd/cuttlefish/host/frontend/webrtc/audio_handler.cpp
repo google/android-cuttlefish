@@ -131,6 +131,23 @@ virtio_snd_ctl_info GetVirtioCtlInfoMute(
 }
 
 virtio_snd_pcm_info GetVirtioSndPcmInfo(const AudioStreamSettings& settings) {
+  if (settings.virtual_tuner) {
+    // Only the format produced by the virtual tuner daemon is offered, so the
+    // guest can't open the stream with one that TunerAudioSource can't serve.
+    // TODO(b/558539923): Support more formats once they're needed.
+    return {
+        .hdr = {.hda_fn_nid = Le32(settings.id)},
+        .features = Le32(0),
+        .formats = Le64(((uint64_t)1)
+                        << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S16),
+        .rates = Le64(((uint64_t)1)
+                      << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_48000),
+        .direction =
+            static_cast<uint8_t>(ToVirtioDirection(settings.direction)),
+        .channels_min = GetChannelsCount(settings.channels_layout),
+        .channels_max = GetChannelsCount(settings.channels_layout),
+    };
+  }
   return {
       .hdr =
           {
