@@ -16,18 +16,25 @@
 
 #include "cuttlefish/metrics/guest/parsed_flags.h"
 
+#include <vector>
+
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/find_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/cpus.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/extra_kernel_cmdline.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/gpu_mode.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
+#include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/result/result.h"
 
@@ -41,7 +48,25 @@ Result<ParsedFlags> GetParsedFlags() {
   AndroidBuilds android_builds =
       CF_EXPECT(FindAndroidBuilds(system_image_dir, fetcher_configs));
 
+  InitramfsPathFlag initramfs_path =
+      InitramfsPathFlag::FromGlobalGflags(fetcher_configs);
+  KernelPathFlag kernel_path =
+      KernelPathFlag::FromGlobalGflags(fetcher_configs);
+  // TODO CJR: need to come back when I have super_image and vendor_boot_image
+  // changes merged
+  CF_EXPECT(
+      ResolveInstanceFiles(boot_image, initramfs_path, kernel_path, super_image,
+                           system_image_dir, vendor_boot_image),
+      "Failed to resolve instance files");
+  // Depends on ResolveInstanceFiles to set flag globals
+  std::vector<GuestConfig> guest_configs =
+      CF_EXPECT(ReadGuestConfig(boot_image, kernel_path, system_image_dir));
+  VmManagerFlag vm_manager_flag =
+      CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs));
+
   return ParsedFlags{
+      .bootloader = CF_EXPECT(BootloaderFlag::FromGlobalGflags(
+          guest_configs, system_image_dir, vm_manager_flag)),
       .boot_image = CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds)),
       .cpus = CF_EXPECT(CpusFlag::FromGlobalGflags()),
       .daemon = CF_EXPECT(DaemonFlag::FromGlobalGflags()),
