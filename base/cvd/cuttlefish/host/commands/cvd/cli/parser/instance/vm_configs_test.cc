@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
+#include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "gtest/gtest.h"
 
+#include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
+#include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -810,6 +815,291 @@ TEST(VmFlagsParserTest, ParseTwoInstancesVhostUserVsockFlagFullJson) {
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--vhost_user_vsock=true,false)"))
       << "vhost_user_vsock flag is missing or wrongly formatted";
+}
+
+TEST(VmFlagsParserTest, ParseTwoInstancesCrosvmAcpiTableFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                    "acpi_table": ["product/etc/opendice_a.aml"]
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                    "acpi_table": ["product/etc/opendice_b.aml"]
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(
+      *serialized_data,
+      R"(--crosvm_acpi_table=product/etc/opendice_a.aml,product/etc/opendice_b.aml)"))
+      << "crosvm_acpi_table flag is missing or wrongly formatted";
+}
+
+TEST(VmFlagsParserTest, ParseTwoInstancesCrosvmAcpiTableFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                    "acpi_table": ["product/etc/opendice_b.aml"]
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         R"(--crosvm_acpi_table=,product/etc/opendice_b.aml)"))
+      << "crosvm_acpi_table flag is missing or wrongly formatted";
+}
+
+TEST(VmFlagsParserTest, ParseOneInstanceCrosvmAcpiTableAbsolutePath) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                    "acpi_table": ["/abs/opendice.aml"]
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+  // An already-absolute value must reach assemble_cvd byte-identical.
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--crosvm_acpi_table=/abs/opendice.aml)"))
+      << "crosvm_acpi_table flag is missing or wrongly formatted";
+}
+
+TEST(VmFlagsParserTest, ParseTwoInstancesCrosvmDeviceTreeOverlayFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                    "device_tree_overlay": ["product/etc/a.dtbo"]
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                    "device_tree_overlay": ["product/etc/b.dtbo"]
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(
+      *serialized_data,
+      R"(--crosvm_device_tree_overlay=product/etc/a.dtbo,product/etc/b.dtbo)"))
+      << "crosvm_device_tree_overlay flag is missing or wrongly formatted";
+}
+
+TEST(VmFlagsParserTest, ParseOneInstanceCrosvmFileBackedMappingBase64) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                    "file_backed_mapping": ["path=dice_handover_instance1,addr=0x9D1C3000,size=0x10000"]
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+
+  // Base64 of the two values above
+  // cGF0aD1kaWNlX2hhbmRvdmVyX2luc3RhbmNlMSxhZGRyPTB4OUQxQzMwMDAsc2l6ZT0weDEwMDAw
+  EXPECT_TRUE(FindConfig(
+      *serialized_data,
+      R"(--crosvm_file_backed_mapping_base64=cGF0aD1kaWNlX2hhbmRvdmVyX2luc3RhbmNlMSxhZGRyPTB4OUQxQzMwMDAsc2l6ZT0weDEwMDAw)"))
+      << "file_backed_mapping flag is missing or wrongly formatted";
+}
+
+TEST(VmFlagsParserTest, ParseTwoInstancesCrosvmFileBackedMappingBase64) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                    "file_backed_mapping": ["path=dice_handover_instance1,addr=0x9D1C3000,size=0x10000"]
+                }
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                    "file_backed_mapping": ["size=0x10000,path=dice_handover_instance2,addr=0x9D1C3000"]
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+
+  // Base64 of the two values above
+  // cGF0aD1kaWNlX2hhbmRvdmVyX2luc3RhbmNlMSxhZGRyPTB4OUQxQzMwMDAsc2l6ZT0weDEwMDAw
+  // c2l6ZT0weDEwMDAwLHBhdGg9ZGljZV9oYW5kb3Zlcl9pbnN0YW5jZTIsYWRkcj0weDlEMUMzMDAw
+  EXPECT_TRUE(FindConfig(
+      *serialized_data,
+      R"(--crosvm_file_backed_mapping_base64=cGF0aD1kaWNlX2hhbmRvdmVyX2luc3RhbmNlMSxhZGRyPTB4OUQxQzMwMDAsc2l6ZT0weDEwMDAw,c2l6ZT0weDEwMDAwLHBhdGg9ZGljZV9oYW5kb3Zlcl9pbnN0YW5jZTIsYWRkcj0weDlEMUMzMDAw)"))
+      << "file_backed_mapping flag is missing or wrongly formatted";
+}
+
+// The crosvm fields are repeated to match crosvm, but only one entry per
+// instance is supported for now. Remove/adjust these once multiple entries
+// are plumbed through.
+TEST(VmFlagsParserTest, RejectsMultipleCrosvmAcpiTables) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                    "acpi_table": ["a.aml", "b.aml"]
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  EXPECT_THAT(LaunchCvdParserTester(json_configs), IsError());
+}
+
+TEST(VmFlagsParserTest, RejectsMultipleCrosvmDeviceTreeOverlays) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                    "device_tree_overlay": ["a.dtbo", "b.dtbo"]
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  EXPECT_THAT(LaunchCvdParserTester(json_configs), IsError());
+}
+
+TEST(VmFlagsParserTest, RejectsMultipleCrosvmFileBackedMappings) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                    "file_backed_mapping": [
+                        "path=a,addr=0x9D1C3000,size=0x10000",
+                        "path=b,addr=0x9D1D3000,size=0x10000"
+                    ]
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  EXPECT_THAT(LaunchCvdParserTester(json_configs), IsError());
 }
 
 }  // namespace cuttlefish
