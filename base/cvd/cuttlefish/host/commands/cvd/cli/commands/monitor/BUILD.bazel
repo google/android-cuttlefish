@@ -100,6 +100,7 @@ cf_cc_test(
     srcs = ["kernel_test.cc"],
     deps = [
         ":kernel",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
     ],
 )
