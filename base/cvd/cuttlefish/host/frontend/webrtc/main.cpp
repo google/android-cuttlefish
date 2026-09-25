@@ -44,6 +44,7 @@
 #include "cuttlefish/host/frontend/webrtc/libdevice/streamer.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/video_sink.h"
 #include "cuttlefish/host/frontend/webrtc/screenshot_handler.h"
+#include "cuttlefish/host/frontend/webrtc/tuner_audio_source.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_command_channel.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_commands.pb.h"
 #include "cuttlefish/host/libs/audio_connector/server.h"
@@ -84,6 +85,10 @@ DEFINE_string(action_servers, "",
               "A comma-separated list of server_name:fd pairs, "
               "where each entry corresponds to one custom action server.");
 DEFINE_int32(audio_server_fd, -1, "An fd to listen on for audio frames");
+DEFINE_string(tuner_pcm_socket_path, "",
+              "Path to the virtual tuner daemon's PCM socket. Feeds the "
+              "capture stream marked virtual_tuner in the guest audio "
+              "config.");
 DEFINE_int32(camera_streamer_fd, -1, "An fd to send client camera frames");
 DEFINE_int32(sensors_fd, -1, "An fd to communicate with sensors_simulator.");
 DEFINE_string(client_dir, "webrtc", "Location of the client files");
@@ -265,6 +270,7 @@ std::shared_ptr<AudioHandler> SetupAudio(
 
   AudioMixerSettings mixer_settings;
   std::vector<cuttlefish::AudioStreamSettings> streams;
+  std::shared_ptr<TunerAudioSource> tuner_source;
   const auto audio_settings = instance.audio_settings();
   if (!audio_settings.has_value()) {
     const auto output_streams_count = instance.audio_output_streams_count();
@@ -291,6 +297,17 @@ std::shared_ptr<AudioHandler> SetupAudio(
       streams.push_back(ParseAudioStreamSettings(
           stream, AudioStreamSettings::Direction::Capture));
     }
+    if (pcm.has_virtual_tuner()) {
+      CHECK(!FLAGS_tuner_pcm_socket_path.empty())
+          << "The guest audio config has a virtual_tuner stream, but "
+             "--tuner_pcm_socket_path is not set";
+      AudioStreamSettings tuner = ParseAudioStreamSettings(
+          pcm.virtual_tuner(), AudioStreamSettings::Direction::Capture);
+      tuner.virtual_tuner = true;
+      tuner_source = std::make_shared<TunerAudioSource>(
+          FLAGS_tuner_pcm_socket_path, GetChannelsCount(tuner.channels_layout));
+      streams.push_back(tuner);
+    }
     if (pcm.has_mixer()) {
       const auto& mixer = pcm.mixer();
       if (mixer.has_channel_layout()) {
@@ -308,6 +325,15 @@ std::shared_ptr<AudioHandler> SetupAudio(
   auto audio_server = CreateAudioServer();
   auto audio_source = streamer.GetAudioSource();
 
+  if (tuner_source) {
+    return std::make_shared<AudioHandler>(
+        std::move(audio_server), std::move(audio_sink), audio_source,
+        std::move(tuner_source), streams, mixer_settings);
+  }
+  if (!FLAGS_tuner_pcm_socket_path.empty()) {
+    LOG(WARNING) << "--tuner_pcm_socket_path is set, but the guest audio "
+                    "config has no virtual_tuner stream";
+  }
   return std::make_shared<AudioHandler>(std::move(audio_server),
                                         std::move(audio_sink), audio_source,
                                         streams, mixer_settings);
