@@ -36,3 +36,15 @@
 #wifi_ipv6_prefix_length=
 #ethernet_ipv6_prefix=
 #ethernet_ipv6_prefix_length=
+
+# Behavioural settings during the transition to cvdalloc.
+#
+# allocate_static_resources sets up all of the resources
+# expected by the legacy flow.
+#
+# Static resources are disjoint to those allocated by cvdalloc.
+# Thus, the legacy behaviour is maintained by the below default.
+# It is invalid to flip the below flag off while use_cvdalloc is
+# also disabled.
+#
+#allocate_static_resources=1
