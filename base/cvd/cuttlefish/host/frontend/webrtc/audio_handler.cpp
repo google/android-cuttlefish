@@ -311,8 +311,19 @@ AudioHandler::AudioHandler(
     std::shared_ptr<webrtc_streaming::AudioSource> audio_source,
     const std::vector<AudioStreamSettings>& stream_settings,
     const AudioMixerSettings& mixer_settings)
+    : AudioHandler(std::move(audio_server), std::move(audio_sink),
+                   std::move(audio_source), nullptr, stream_settings,
+                   mixer_settings) {}
+
+AudioHandler::AudioHandler(
+    std::unique_ptr<AudioServer> audio_server,
+    std::shared_ptr<webrtc_streaming::AudioSink> audio_sink,
+    std::shared_ptr<webrtc_streaming::AudioSource> audio_source,
+    std::shared_ptr<webrtc_streaming::AudioSource> virtual_tuner_source,
+    const std::vector<AudioStreamSettings>& stream_settings,
+    const AudioMixerSettings& mixer_settings)
     : audio_server_(std::move(audio_server)),
-      audio_source_(audio_source),
+      capture_sources_(stream_settings.size()),
       stream_descs_(stream_settings.size()),
       chmaps_(stream_descs_.size()),
       audio_mixer_(
@@ -331,6 +342,16 @@ AudioHandler::AudioHandler(
              : 0);
     streams_[stream_id] = GetVirtioSndPcmInfo(settings);
     chmaps_[stream_id] = GetVirtioSndChmapInfo(settings);
+    if (settings.virtual_tuner) {
+      CHECK(settings.direction == AudioStreamSettings::Direction::Capture)
+          << "The virtual tuner stream must be a capture stream";
+      CHECK(virtual_tuner_source != nullptr)
+          << "A stream is marked virtual_tuner, but no virtual tuner source "
+             "was given";
+      capture_sources_[stream_id] = virtual_tuner_source;
+    } else if (settings.direction == AudioStreamSettings::Direction::Capture) {
+      capture_sources_[stream_id] = audio_source;
+    }
 
     constexpr uint32_t kCardId = 0;  // As of now only one card is supported
     if (settings.has_mute_control) {
@@ -447,6 +468,10 @@ void AudioHandler::StartStream(StreamControlCommand& cmd) {
   }
   auto& stream_desc = stream_descs_[cmd.stream_id()];
   stream_desc.active = true;
+  if (IsCapture(cmd.stream_id())) {
+    // Drop audio the source buffered while the stream was stopped.
+    capture_sources_[cmd.stream_id()]->Reset();
+  }
   cmd.Reply(AudioStatus::VIRTIO_SND_S_OK);
 }
 
@@ -643,7 +668,7 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
       // Skip the holding buffer in as many reads as possible to avoid the extra
       // copies
       const auto write_pos = rx_buffer + bytes_read;
-      auto res = audio_source_->GetMoreAudioData(
+      int res = capture_sources_[stream_id]->GetMoreAudioData(
           write_pos, bytes_per_sample, samples_per_channel,
           stream_desc.channels, stream_desc.sample_rate, muted);
       if (res < 0) {
@@ -665,7 +690,7 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
       // There is some buffer left to fill, but it's less than 10ms, read into
       // holding buffer to ensure the remainder is kept around for future reads
       holding_buffer.resize(bytes_per_request);
-      auto res = audio_source_->GetMoreAudioData(
+      int res = capture_sources_[stream_id]->GetMoreAudioData(
           holding_buffer.data(), bytes_per_sample, samples_per_channel,
           stream_desc.channels, stream_desc.sample_rate, muted);
       if (res < 0) {

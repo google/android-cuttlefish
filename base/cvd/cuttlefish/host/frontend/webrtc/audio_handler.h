@@ -72,6 +72,15 @@ class AudioHandler : public AudioServerExecutor {
                std::shared_ptr<webrtc_streaming::AudioSource> audio_source,
                const std::vector<AudioStreamSettings>& stream_settings,
                const AudioMixerSettings& mixer_settings);
+  // Feeds the capture stream marked `virtual_tuner` from `virtual_tuner_source`
+  // instead of `audio_source`.
+  AudioHandler(
+      std::unique_ptr<AudioServer> audio_server,
+      std::shared_ptr<webrtc_streaming::AudioSink> audio_sink,
+      std::shared_ptr<webrtc_streaming::AudioSource> audio_source,
+      std::shared_ptr<webrtc_streaming::AudioSource> virtual_tuner_source,
+      const std::vector<AudioStreamSettings>& stream_settings,
+      const AudioMixerSettings& mixer_settings);
   ~AudioHandler() override;
 
   void Start();
@@ -100,7 +109,8 @@ class AudioHandler : public AudioServerExecutor {
 
   std::unique_ptr<AudioServer> audio_server_;
   std::thread server_thread_;
-  std::shared_ptr<webrtc_streaming::AudioSource> audio_source_;
+  // Indexed like `streams_`; null for playback streams.
+  std::vector<std::shared_ptr<webrtc_streaming::AudioSource>> capture_sources_;
   std::vector<virtio_snd_pcm_info> streams_;
   std::vector<StreamDesc> stream_descs_ = {};
   std::vector<virtio_snd_chmap_info> chmaps_;
