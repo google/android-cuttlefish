@@ -42,8 +42,15 @@ SuperImageFlag SuperImageFlag::FromGlobalGflags(
   std::vector<std::string> super_images =
       flag_info.is_default ? std::vector<std::string>{}
                            : absl::StrSplit(FLAGS_super_image, ',');
+  std::vector<bool> is_default_values(super_images.size(),
+                                      flag_info.is_default);
+  for (int i = 0; i < is_default_values.size(); i++) {
+    if (super_images[i].empty()) {
+      is_default_values[i] = true;
+    }
+  }
 
-  return SuperImageFlag(system_image_dir, super_images);
+  return SuperImageFlag(system_image_dir, super_images, is_default_values);
 }
 
 std::string SuperImageFlag::SuperImageForIndex(size_t index) const {
@@ -58,9 +65,21 @@ std::string SuperImageFlag::SuperImageForIndex(size_t index) const {
 
 bool SuperImageFlag::IsDefault() const { return super_images_.empty(); }
 
+bool SuperImageFlag::IsDefaultForIndex(size_t index) const {
+  if (is_default_values_.empty()) {
+    return IsDefault();
+  } else if (index < is_default_values_.size()) {
+    return is_default_values_[index];
+  } else {
+    return is_default_values_[0];
+  }
+}
+
 SuperImageFlag::SuperImageFlag(const SystemImageDirFlag& system_image_dir,
-                               std::vector<std::string> super_images)
+                               std::vector<std::string> super_images,
+                               std::vector<bool> is_default_values)
     : system_image_dir_(system_image_dir),
-      super_images_(std::move(super_images)) {}
+      super_images_(std::move(super_images)),
+      is_default_values_(std::move(is_default_values)) {}
 
 }  // namespace cuttlefish

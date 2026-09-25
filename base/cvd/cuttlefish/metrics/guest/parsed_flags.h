@@ -24,6 +24,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 
 namespace cuttlefish {
@@ -37,6 +38,7 @@ struct ParsedFlags {
   GuestEnforceSecurityFlag guest_enforce_security;
   MemoryMbFlag memory_mb;
   RestartSubprocessesFlag restart_subprocesses;
+  SuperImageFlag super_image;
   SystemImageDirFlag system_image_dir;
 };
 
