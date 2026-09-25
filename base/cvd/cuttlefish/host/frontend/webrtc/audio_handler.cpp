@@ -447,6 +447,10 @@ void AudioHandler::StartStream(StreamControlCommand& cmd) {
   }
   auto& stream_desc = stream_descs_[cmd.stream_id()];
   stream_desc.active = true;
+  if (IsCapture(cmd.stream_id())) {
+    // Drop audio the source buffered while the stream was stopped.
+    CaptureSourceFor(cmd.stream_id()).Reset();
+  }
   cmd.Reply(AudioStatus::VIRTIO_SND_S_OK);
 }
 
@@ -639,11 +643,12 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
     holding_buffer.clear();
 
     bool muted = false;
+    webrtc_streaming::AudioSource& capture_source = CaptureSourceFor(stream_id);
     while (buffer.len() - bytes_read >= bytes_per_request) {
       // Skip the holding buffer in as many reads as possible to avoid the extra
       // copies
       const auto write_pos = rx_buffer + bytes_read;
-      auto res = audio_source_->GetMoreAudioData(
+      int res = capture_source.GetMoreAudioData(
           write_pos, bytes_per_sample, samples_per_channel,
           stream_desc.channels, stream_desc.sample_rate, muted);
       if (res < 0) {
@@ -665,7 +670,7 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
       // There is some buffer left to fill, but it's less than 10ms, read into
       // holding buffer to ensure the remainder is kept around for future reads
       holding_buffer.resize(bytes_per_request);
-      auto res = audio_source_->GetMoreAudioData(
+      int res = capture_source.GetMoreAudioData(
           holding_buffer.data(), bytes_per_sample, samples_per_channel,
           stream_desc.channels, stream_desc.sample_rate, muted);
       if (res < 0) {
@@ -723,6 +728,25 @@ bool AudioHandler::IsCapture(uint32_t stream_id) const {
   CHECK(stream_id < streams_.size()) << "Invalid stream id: " << stream_id;
   return streams_[stream_id].direction ==
          (uint8_t)AudioStreamDirection::VIRTIO_SND_D_INPUT;
+}
+
+void AudioHandler::SetCaptureSource(
+    uint32_t stream_id, std::shared_ptr<webrtc_streaming::AudioSource> source) {
+  // The capture thread reads capture_sources_ without a lock.
+  CHECK(!server_thread_.joinable())
+      << "SetCaptureSource must be called before Start()";
+  CHECK(IsCapture(stream_id))
+      << "Stream " << stream_id << " is not a capture stream";
+  CHECK(source != nullptr) << "Null capture source for stream " << stream_id;
+  capture_sources_[stream_id] = std::move(source);
+}
+
+webrtc_streaming::AudioSource& AudioHandler::CaptureSourceFor(
+    uint32_t stream_id) const {
+  std::unordered_map<uint32_t,
+                     std::shared_ptr<webrtc_streaming::AudioSource>>::
+      const_iterator it = capture_sources_.find(stream_id);
+  return it == capture_sources_.end() ? *audio_source_ : *it->second;
 }
 
 }  // namespace cuttlefish

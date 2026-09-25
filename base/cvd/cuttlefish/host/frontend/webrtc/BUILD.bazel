@@ -1,6 +1,6 @@
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -85,6 +85,23 @@ cf_cc_library(
         "@fruit",
         "@jsoncpp",
         "@libwebrtc",
+    ],
+)
+
+cf_cc_test(
+    name = "audio_handler_test",
+    srcs = ["audio_handler_test.cpp"],
+    # libvpx (via libwebrtc) defines hidden symbols in a separate asm library,
+    # which can't be resolved across shared objects.
+    linkstatic = True,
+    deps = [
+        ":libcuttlefish_webrtc_audio_handler",
+        ":libcuttlefish_webrtc_audio_settings",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
+        "//cuttlefish/host/frontend/webrtc/libdevice:audio_frame_buffer",
+        "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
+        "//cuttlefish/host/libs/audio_connector",
     ],
 )
 
