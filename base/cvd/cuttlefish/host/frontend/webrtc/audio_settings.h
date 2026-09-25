@@ -44,6 +44,8 @@ struct AudioStreamSettings {
   Direction direction = Direction::Playback;
 
   bool has_mute_control = false;
+  bool has_duck_control = false;
+  bool has_fade_balance_control = false;
   std::optional<VolumeControl> master_volume_control;
 };
 
