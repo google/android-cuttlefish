@@ -17,28 +17,21 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
-#include "cuttlefish/host/libs/config/data_image_policy.h"
-#include "cuttlefish/host/libs/config/gpu_mode.h"
-#include "cuttlefish/metrics/guest/parsed_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-struct FlagMetrics {
-  int cpus;
-  bool daemon;
-  DataImagePolicy data_policy;
-  std::string extra_kernel_cmdline;
-  GpuMode gpu_mode;
-  bool guest_enforce_security;
-  int memory_mb;
-  bool qemu_binary_specified;
-  bool restart_subprocesses;
-  bool system_image_dir_specified;
-};
+class QemuBinaryDirFlag : public FlagBase<std::string> {
+ public:
+  static Result<QemuBinaryDirFlag> FromGlobalGflags();
 
-Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
-                                   int guest_index);
+ private:
+  explicit QemuBinaryDirFlag(std::vector<std::string> flag_values,
+                             bool is_default,
+                             std::vector<bool> is_default_values);
+};
 
 }  // namespace cuttlefish
