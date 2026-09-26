@@ -232,6 +232,69 @@ static constexpr std::string_view kFoldableInstanceTemplate = R""""(
 }
   )"""";
 
+// Definition of sdv_media instance template in Json format
+static constexpr std::string_view kSdvMediaTemplate = R""""(
+{
+    "vm": {
+        "cpus": 4,
+        "memory_mb": 4096
+    },
+    "boot": {
+        "extra_bootconfig_args": "androidboot.sdv.instance_name=instance1 androidboot.virt.address=3 androidboot.sdv.boot_mode=unlocked"
+    },
+    "security": {
+        "guest_enforce_security": false
+    },
+    "graphics":{
+        "gpu_mode": "gfxstream_guest_angle_host_swiftshader",
+        "displays":[
+            {
+                "width": 1920,
+                "height": 1080,
+                "dpi": 160
+            },
+            {
+                "width": 1920,
+                "height": 720,
+                "dpi": 160
+            }
+        ]
+    }
+}
+  )"""";
+
+// Definition of sdv_ivi instance template in Json format
+static constexpr std::string_view kSdvIviTemplate = R""""(
+{
+    "vm": {
+        "cpus": 4,
+        "memory_mb": 8192,
+        "setupwizard_mode": "OPTIONAL"
+    },
+    "boot": {
+        "extra_bootconfig_args": "androidboot.sdv.instance_name=instance2 androidboot.virt.address=4 androidboot.sdv.boot_mode=unlocked"
+    },
+    "security": {
+        "guest_enforce_security": false
+    },
+    "graphics":{
+        "gpu_mode": "guest_swiftshader",
+        "displays":[
+            {
+                "width": 1920,
+                "height": 1080,
+                "dpi": 160
+            },
+            {
+                "width": 1920,
+                "height": 720,
+                "dpi": 160
+            }
+        ]
+    }
+}
+  )"""";
+
 static Result<Json::Value> LoadTemplateByName(
     const std::string& template_name) {
   static auto* kSupportedTemplatesKeyMap =
@@ -243,7 +306,9 @@ static Result<Json::Value> LoadTemplateByName(
           {"auto", kAutoInstanceTemplate},
           {"slim", kSlimInstanceTemplate},
           {"go", kGoInstanceTemplate},
-          {"foldable", kFoldableInstanceTemplate}};
+          {"foldable", kFoldableInstanceTemplate},
+          {"sdv_media", kSdvMediaTemplate},
+          {"sdv_ivi", kSdvIviTemplate}};
 
   auto template_it = kSupportedTemplatesKeyMap->find(template_name);
   CF_EXPECTF(template_it != kSupportedTemplatesKeyMap->end(),
