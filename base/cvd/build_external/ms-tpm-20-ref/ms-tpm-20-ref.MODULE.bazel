@@ -10,5 +10,5 @@ git_repository(
         "@//build_external/ms-tpm-20-ref:0002-Use-the-BoringSSL-bignum_st-structure.patch",
         "@//build_external/ms-tpm-20-ref:0003-Don-t-use-EC_POINTs_mul.patch",
     ],
-    patch_strip = 1,
+    patch_args = ["-p1"],
 )
