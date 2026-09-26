@@ -624,38 +624,20 @@ Result<GpuMode> SelectGpuMode(
   return selected_gpu_mode;
 }
 
-Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
-                                    const std::string& gpu_vhost_user_mode_arg,
+Result<bool> SelectGpuVhostUserMode(const std::string& gpu_vhost_user_mode_arg,
                                     VmmMode vmm) {
   CF_EXPECT(gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto ||
             gpu_vhost_user_mode_arg == kGpuVhostUserModeOn ||
             gpu_vhost_user_mode_arg == kGpuVhostUserModeOff);
   if (gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto) {
-    if (IsGuestRenderingMode(gpu_mode)) {
-      VLOG(0) << "GPU vhost user auto mode: not needed for --gpu_mode="
-              << GpuModeString(gpu_mode) << ". Not enabling vhost user gpu.";
-      return false;
-    }
-
     if (!VmManagerIsCrosvm(vmm)) {
       VLOG(0) << "GPU vhost user auto mode: not yet supported with " << vmm
               << ". Not enabling vhost user gpu.";
       return false;
     }
 
-    // Android built ARM host tools seem to be incompatible with host GPU
-    // libraries. Enable vhost user gpu which will run the virtio GPU device
-    // in a separate process with a VMM prebuilt. See b/200592498.
-    const auto host_arch = HostArch();
-    if (host_arch == Arch::Arm64) {
-      VLOG(0) << "GPU vhost user auto mode: detected arm64 host. Enabling "
-                 "vhost user gpu.";
-      return true;
-    }
-
-    VLOG(0) << "GPU vhost user auto mode: not needed. Not enabling vhost "
-               "user gpu.";
-    return false;
+    VLOG(0) << "GPU vhost user auto mode: enabling vhost user gpu.";
+    return true;
   }
 
   return gpu_vhost_user_mode_arg == kGpuVhostUserModeOn;
@@ -939,7 +921,7 @@ Result<GpuMode> ConfigureGpuSettings(
   const GpuMode gpu_mode = CF_EXPECT(
       SelectGpuMode(gpu_mode_arg, vmm, guest_config, graphics_availability));
   const bool enable_gpu_vhost_user =
-      CF_EXPECT(SelectGpuVhostUserMode(gpu_mode, gpu_vhost_user_mode_arg, vmm));
+      CF_EXPECT(SelectGpuVhostUserMode(gpu_vhost_user_mode_arg, vmm));
 
   if (gpu_mode == GpuMode::Custom) {
     std::vector<std::string> requested_types =
