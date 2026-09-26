@@ -33,11 +33,15 @@ class VendorBootImageFlag {
 
   bool IsDefault() const;
 
+  bool IsDefaultForIndex(size_t index) const;
+
  private:
-  VendorBootImageFlag(const SystemImageDirFlag&, std::vector<std::string>);
+  VendorBootImageFlag(const SystemImageDirFlag&, std::vector<std::string>,
+                      std::vector<bool>);
 
   const SystemImageDirFlag& system_image_dir_;
   std::vector<std::string> vendor_boot_images_;
+  std::vector<bool> is_default_values_;
 };
 
 }  // namespace cuttlefish

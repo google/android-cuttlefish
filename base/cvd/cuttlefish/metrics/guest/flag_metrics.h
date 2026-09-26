@@ -35,6 +35,7 @@ struct FlagMetrics {
   int memory_mb;
   bool restart_subprocesses;
   bool system_image_dir_specified;
+  bool vendor_boot_image_specified;
 };
 
 Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,

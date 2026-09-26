@@ -140,6 +140,8 @@ void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
       guest_metrics.flag_metrics.restart_subprocesses);
   flags.set_system_image_dir_specified(
       guest_metrics.flag_metrics.system_image_dir_specified);
+  flags.set_vendor_boot_image_specified(
+      guest_metrics.flag_metrics.vendor_boot_image_specified);
 }
 
 }  // namespace cuttlefish

@@ -25,6 +25,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 
 namespace cuttlefish {
 
@@ -38,6 +39,7 @@ struct ParsedFlags {
   MemoryMbFlag memory_mb;
   RestartSubprocessesFlag restart_subprocesses;
   SystemImageDirFlag system_image_dir;
+  VendorBootImageFlag vendor_boot;
 };
 
 // depends on gflags::ParseCommandLineFlags being called previously
