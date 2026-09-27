@@ -5,8 +5,8 @@
 
 # Network bridge to use with the cuttlefish wifi and ethernet tap devices.
 # By default, we will create and destroy managed bridges called 'cvd-wbr'
-# and 'cvd-ebr'. These bridges will be assigned IPv4 addresses and NAT'ed.
-# IPv6 will not be configured unless '*_ipv6_prefix' is given. Setting a
+# and 'cvd-ebr'. These bridges will be assigned IPv4 addresses and NAT'ed,
+# and IPv6 prefixes (see '*_ipv6_prefix' below). Setting a
 # preconfigured bridge interface here (usually with just one physical
 # ethernet controller in it) suppresses bridge management, and instead
 # adds the cuttlefish wifi and ethernet tap devices to the specified
@@ -30,17 +30,33 @@
 # to resolve domain names. There must be no spaces after the commas.
 #dns6_servers=2001:4860:4860::8888,2001:4860:4860::8844
 
+# IPv6 is set up after IPv4, only if the host has IPv6 enabled
+# (net.ipv6.conf.all.disable_ipv6=0). An IPv6 failure does not affect IPv4.
+# The default prefixes are Unique Local Addresses (ULA, RFC 4193). Guest
+# traffic from fd00:cf:20::/44, which covers all the defaults below, is NATed
+# (NAT66) when it leaves the host. Prefixes outside that range are not NATed,
+# so they must be routed to this host.
+
 # IPv6 prefixes allocated to the managed bridges. Require
-# 'bridge_interface' not to be set.
-#wifi_ipv6_prefix=
-#wifi_ipv6_prefix_length=
-#ethernet_ipv6_prefix=
-#ethernet_ipv6_prefix_length=
+# 'bridge_interface' not to be set. The host sends router advertisements on
+# the bridges, and guests configure their addresses with SLAAC.
+#wifi_ipv6_prefix=fd00:cf:22::
+#wifi_ipv6_prefix_length=64
+#ethernet_ipv6_prefix=fd00:cf:24::
+#ethernet_ipv6_prefix_length=64
+
+# Bases of the per-instance IPv6 prefixes of the point-to-point taps. Instance
+# i gets <base>:<i in hex>::/64, for example cvd-mtap-10 gets fd00:cf:21:a::/64.
+# The host sends router advertisements on cvd-wifiap-XX (OpenWrt WAN), but not
+# on cvd-mtap-XX: the mobile network gets its IPv6 address from the modem.
+#mobile_ipv6_prefix_base=fd00:cf:21
+#wifiap_ipv6_prefix_base=fd00:cf:23
 
 # allocate_static_resources creates resources like tap devices
 # statically for instance networking at boot.
 #
 # Static resources are disjoint to those allocated by cvdalloc.
 # Thus, the legacy behaviour is maintained by the below default.
+# The IPv6 setup above applies to the static resources only.
 #
 #allocate_static_resources=1
