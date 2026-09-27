@@ -556,6 +556,14 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "network_flags_test",
+    srcs = ["network_flags_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:network_flags",
+    ],
+)
+
 cf_cc_library(
     name = "required_directories",
     srcs = ["required_directories.cc"],

@@ -64,6 +64,16 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "data_service_test",
+    srcs = ["unittest/data_service_test.cpp"],
+    depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
+    deps = [
+        "//cuttlefish/host/commands/modem_simulator:data_service",
+    ],
+)
+
 cf_cc_library(
     name = "device_config",
     srcs = ["cf_device_config.cpp"],
