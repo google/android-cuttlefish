@@ -4,9 +4,11 @@ on:
   pull_request:
     paths:
       - 'gigabyte-ampere-cloud-installer/**'
+      - '.github/workflows/gigabyte-ampere-cloud-installer.yaml'
   push:
-    branchs:
-      - '**'
+    paths:
+      - 'gigabyte-ampere-cloud-installer/**'
+      - '.github/workflows/gigabyte-ampere-cloud-installer.yaml'
 
 permissions:
   contents: read
@@ -104,6 +106,7 @@ jobs:
         path: gigabyte-ampere-cloud-installer/live-image-arm64.iso.xz
 
   download-cidata-job:
+    if: github.repository_owner == 'google'
     runs-on: ubuntu-22.04
     permissions:
       actions: read
