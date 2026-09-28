@@ -4,9 +4,11 @@ on:
   pull_request:
     paths:
       - 'cloud-init-image-for-cuttlefish/**'
+      - '.github/workflows/cloud-init-image-for-cuttlefish.yaml'
   push:
-    branchs:
-      - '**'
+    paths:
+      - 'cloud-init-image-for-cuttlefish/**'
+      - '.github/workflows/cloud-init-image-for-cuttlefish.yaml'
 
 permissions:
   contents: read
