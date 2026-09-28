@@ -15,7 +15,7 @@ option features.(pb.cpp).string_type = VIEW;
 //
 // See go/cf-metrics-prd-v2 for more information.
 //
-// Next index: 7
+// Next index: 9
 message CuttlefishHost {
   // Category of operating system outside the Cuttlefish VM.
   // Next index: 6
@@ -38,10 +38,22 @@ message CuttlefishHost {
     CUTTLEFISH_HOST_INVOKER_UNSPECIFIED = 0;
     // direct `cvd` invocation
     CUTTLEFISH_HOST_INVOKER_NONE = 1;
-    // invoked by `acloud`
     CUTTLEFISH_HOST_INVOKER_ACLOUD = 2;
-    // invoked by `host orchestrator`
     CUTTLEFISH_HOST_INVOKER_HOST_ORCHESTRATOR = 3;
+    CUTTLEFISH_HOST_INVOKER_CVDR = 4;
+    CUTTLEFISH_HOST_INVOKER_PODCVD = 5;
+    // launch_cvd/cvd_internal_start invocation converted to `cvd` invocation
+    CUTTLEFISH_HOST_INVOKER_LAUNCH_CVD = 6;
+  }
+
+  // types of containers Cuttlefish devices are launched in
+  enum ContainerType {
+    // default or unknown value
+    CUTTLEFISH_HOST_CONTAINER_TYPE_UNSPECIFIED = 0;
+    // no container environment present
+    CUTTLEFISH_HOST_CONTAINER_TYPE_NONE = 1;
+    CUTTLEFISH_HOST_CONTAINER_TYPE_DOCKER = 2;
+    CUTTLEFISH_HOST_CONTAINER_TYPE_PODMAN = 3;
   }
 
   // Category of operating system outside the Cuttlefish VM.
@@ -59,4 +71,9 @@ message CuttlefishHost {
     CuttlefishGitHubActionsEnvironment github = 5;
     CuttlefishKokoroEnvironment kokoro = 6;
   }
+
+  // value of the $USER environment variable
+  string user = 7;
+
+  ContainerType container_type = 8;
 }

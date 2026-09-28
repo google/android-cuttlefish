@@ -1,0 +1,11 @@
+edition = "2023";
+
+package logs.proto.wireless.android.cuttlefish.events;
+
+enum SafeLevel {
+  SAFE_LEVEL_UNSPECIFIED = 0;
+  SAFE_0 = 1;
+  SAFE_1 = 2;
+  SAFE_2 = 3;
+  PLATINUM = 4;
+}
