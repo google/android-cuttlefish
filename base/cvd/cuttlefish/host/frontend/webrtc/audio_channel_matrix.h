@@ -22,19 +22,23 @@
 namespace cuttlefish {
 
 /**
- * Builds the matrix used to mix a stream's source channels into a sink's
- * destination channels.
+ * Builds the channel mixing matrix of dimension [dst_channels][src_channels].
  *
- * Each source channel is mapped to the destination channel of the same index
- * and scaled by `volume`. Channels present on only one side are dropped.
+ * Implements standard ITU-R BS.775 downmixing (e.g. 5.1 -> Stereo, 5.1 -> Mono)
+ * combined with per-stream spatial cabin attenuation (fade and balance).
  *
- * @param dst_channels Destination sink channels (e.g. 2 for a stereo sink)
- * @param src_channels Source stream channels (e.g. 6 for 5.1 surround)
+ * @param dst_channels Destination speaker channels (e.g. 2 for Stereo host
+ * sink)
+ * @param src_channels Source stream channels (e.g. 6 for 5.1 Surround, 2 for
+ * Stereo)
  * @param volume Master stream volume [0.0 - 1.0]
+ * @param fade Front/Rear cabin fader [-1.0 (Rear) to 1.0 (Front)]
+ * @param balance Left/Right cabin balance [-1.0 (Left) to 1.0 (Right)]
+ * @param is_ducked Whether the stream is ducked (-14 dB attenuation)
  * @return Mixing coefficients, indexed [destination channel][source channel]
  */
-std::vector<std::vector<float>> BuildChannelMixingMatrix(uint8_t dst_channels,
-                                                         uint8_t src_channels,
-                                                         float volume);
+std::vector<std::vector<float>> BuildChannelMixingMatrix(
+    uint8_t dst_channels, uint8_t src_channels, float volume, float fade,
+    float balance, bool is_ducked = false);
 
 }  // namespace cuttlefish
