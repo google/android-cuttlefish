@@ -133,6 +133,83 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagFullJson) {
       << "enable_bootanimation flag is missing or wrongly formatted";
 }
 
+TEST(BootFlagsParserTest, ParseTwoInstancesUseVendorBootDebugFlagPartialJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "boot": {
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "boot": {
+                "use_vendor_boot_debug": true
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--use_vendor_boot_debug=false,true)"))
+      << "use_vendor_boot_debug flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseTwoInstancesUseVendorBootDebugFlagFullJson) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "boot": {
+                "use_vendor_boot_debug": true
+            }
+        },
+        {
+            "vm": {
+                "crosvm":{
+                }
+            },
+            "boot": {
+                "use_vendor_boot_debug": true
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, R"(--use_vendor_boot_debug=true,true)"))
+      << "use_vendor_boot_debug flag is missing or wrongly formatted";
+}
+
 TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagEmptyJson) {
   const char* test_string = R""""(
 {

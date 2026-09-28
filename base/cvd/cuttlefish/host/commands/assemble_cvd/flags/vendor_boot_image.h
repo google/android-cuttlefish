@@ -21,23 +21,27 @@
 #include <vector>
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 /* Vendor boot image flag, `--vendor_boot_image` */
 class VendorBootImageFlag {
  public:
-  static VendorBootImageFlag FromGlobalGflags(const SystemImageDirFlag&);
+  static Result<VendorBootImageFlag> FromGlobalGflags(
+      const SystemImageDirFlag&);
 
   std::string VendorBootImageForIndex(size_t index) const;
 
   bool IsDefault() const;
 
  private:
-  VendorBootImageFlag(const SystemImageDirFlag&, std::vector<std::string>);
+  VendorBootImageFlag(const SystemImageDirFlag&, std::vector<std::string>,
+                      std::vector<bool>);
 
   const SystemImageDirFlag& system_image_dir_;
   std::vector<std::string> vendor_boot_images_;
+  std::vector<bool> use_vendor_boot_debugs_;
 };
 
 }  // namespace cuttlefish

@@ -137,6 +137,14 @@ static bool DownloadTargetFilesZip(const Instance& instance) {
   }
 }
 
+static bool UseVendorBootDebug(const Instance& instance) {
+  if (instance.boot().has_use_vendor_boot_debug()) {
+    return instance.boot().use_vendor_boot_debug();
+  } else {
+    return kDefaultUseVendorBootDebug;
+  }
+}
+
 }  // namespace
 
 Result<std::vector<std::string>> ParseFetchCvdConfigs(
@@ -211,6 +219,8 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
                                            DownloadImgZip));
   result.emplace_back(GenerateInstanceFlag(
       "download_target_files_zip", fetch_instances, DownloadTargetFilesZip));
+  result.emplace_back(GenerateInstanceFlag(
+      "download_vendor_boot_debug", fetch_instances, UseVendorBootDebug));
 
   return result;
 }

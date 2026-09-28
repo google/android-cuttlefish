@@ -30,6 +30,7 @@ inline constexpr bool kDefaultDownloadImgZip = true;
 inline constexpr bool kDefaultDownloadTargetFilesZip = false;
 // TODO: schuffelen - Enable this by default.
 inline constexpr bool kDefaultDynamicSuperImageFragments = false;
+inline constexpr bool kDefaultUseVendorBootDebug = false;
 
 struct VectorFlags {
   std::vector<Flag> Flags();
@@ -49,6 +50,7 @@ struct VectorFlags {
   std::vector<bool> download_target_files_zip;
   std::vector<std::string> boot_artifact;
   std::vector<bool> dynamic_super_image;
+  std::vector<bool> download_vendor_boot_debug;
 };
 
 }  // namespace cuttlefish

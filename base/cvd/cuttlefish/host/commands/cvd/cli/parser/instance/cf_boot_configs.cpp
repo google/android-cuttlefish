@@ -47,12 +47,19 @@ static Result<std::string> BootCfgArgs(const Instance& instance) {
   return encoded;
 }
 
+static bool UseVendorBootDebug(const Instance& instance) {
+  const auto& boot = instance.boot();
+  return boot.has_use_vendor_boot_debug() ? boot.use_vendor_boot_debug()
+                                          : CF_DEFAULTS_USE_VENDOR_BOOT_DEBUG;
+}
+
 Result<std::vector<std::string>> GenerateBootFlags(
     const EnvironmentSpecification& cfg) {
   return std::vector<std::string>{
       GenerateInstanceFlag("enable_bootanimation", cfg, EnableBootAnimation),
       CF_EXPECT(
           ResultInstanceFlag("extra_bootconfig_args_base64", cfg, BootCfgArgs)),
+      GenerateInstanceFlag("use_vendor_boot_debug", cfg, UseVendorBootDebug),
   };
 }
 

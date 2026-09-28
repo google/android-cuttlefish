@@ -76,6 +76,10 @@ std::vector<Flag> VectorFlags::Flags() {
       GflagsCompatFlag("dynamic_super_image", this->dynamic_super_image,
                        kDefaultDynamicSuperImageFragments)
           .Help("Fetch the super image members as independent files."));
+  flags.emplace_back(GflagsCompatFlag("download_vendor_boot_debug",
+                                      this->download_vendor_boot_debug,
+                                      kDefaultUseVendorBootDebug)
+                         .Help("Fetch vendor_boot-debug.img."));
 
   return flags;
 }
