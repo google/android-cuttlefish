@@ -9,7 +9,7 @@ function install_debuild_dependencies() {
     -o Dpkg::Options::="--force-confold" \
     -o Dpkg::Options::="--force-confdef" \
     upgrade
-  sudo apt-get install -y devscripts config-package-dev debhelper-compat equivs
+  sudo apt-get install -y devscripts config-package-dev debhelper-compat equivs linux-headers-6.12-$(dpkg --print-architecture)
 }
 
 REPO_DIR="$(realpath "$(dirname "$0")/../..")"

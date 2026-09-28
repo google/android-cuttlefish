@@ -23,6 +23,7 @@
 namespace cuttlefish {
 
 constexpr const char kMediaFlag[] = "media";
+inline constexpr char kDefaultV4l2ProxyDevicePath[] = "/dev/video0";
 constexpr const char kMediaHelp[] =
     "Colon separated media device properties: "
     "\"[type]:[key1]=[val1]:[key2]=[val2]\". "
@@ -34,6 +35,9 @@ constexpr const char kMediaHelp[] =
     "    'v4l2_proxy': proxy a host V4L2 device into the guest\n"
     "    'v4l2_stream_proxy': stream video from a host named pipe into the "
     "guest\n\n"
+    "v4l2_proxy properties:\n"
+    "    'device_path': optional, path to host V4L2 device (defaults to "
+    "/dev/video0)\n\n"
     "v4l2_stream_proxy properties:\n"
     "    'input_path': path to the host named pipe\n"
     "    'input_width': width of the video stream in pixels\n"
@@ -44,6 +48,7 @@ constexpr const char kMediaHelp[] =
     "'EXTERNAL'\n\n"
     "Example usage:\n"
     "  --media=v4l2_emulated_camera_mplane:lens_facing=BACK\n"
+    "  --media=v4l2_proxy:device_path=/dev/video0\n"
     "  --media=v4l2_stream_proxy:input_path=/tmp/fifo:"
     "input_width=640:input_height=480:input_fps=30\n";
 

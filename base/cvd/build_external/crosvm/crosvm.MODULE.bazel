@@ -26,6 +26,7 @@ crosvm_bin.spec(
         "gfxstream",
         "gpu",
         "gpu_display",
+        "media",
         "net",
         "net_util",
         "qcow",
@@ -121,3 +122,8 @@ git_repository(
         "@//build_external/crosvm:PATCH.minijail_gen_constants.patch",
     ],
 )
+
+crosvm_bin.annotation(
+    crate = "v4l2r",
+    build_script_env = {"V4L2R_VIDEODEV2_H_PATH": "/usr/src/linux-headers-6.12.101+deb12-common/include/uapi/linux"},
+}

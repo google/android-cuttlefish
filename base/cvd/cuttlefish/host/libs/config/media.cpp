@@ -20,6 +20,7 @@
 
 #include <cstddef>
 #include <optional>
+#include <regex>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -79,6 +80,24 @@ Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
               "Invalid lens_facing value: " << lens_facing);
   }
 
+  std::optional<CuttlefishConfig::MediaConfig::V4l2ProxyConfig> v4l2_proxy;
+  if (type == CuttlefishConfig::MediaType::kV4l2Proxy) {
+    CuttlefishConfig::MediaConfig::V4l2ProxyConfig proxy_config = {
+        .device_path = kDefaultV4l2ProxyDevicePath,
+    };
+    const auto device_path_it = props.find("device_path");
+    if (device_path_it != props.end()) {
+      static const std::regex kDevicePathRegex(R"(/dev/video[0-9]+)");
+      CF_EXPECT(
+          std::regex_match(device_path_it->second, kDevicePathRegex),
+          "Invalid device_path: \""
+              << device_path_it->second
+              << "\", must be of the form /dev/videoX where X is a number");
+      proxy_config.device_path = device_path_it->second;
+    }
+    v4l2_proxy = proxy_config;
+  }
+
   std::optional<CuttlefishConfig::MediaConfig::V4l2StreamProxyConfig>
       v4l2_stream_proxy;
   if (type == CuttlefishConfig::MediaType::kV4l2StreamProxy) {
@@ -118,6 +137,7 @@ Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
   return CuttlefishConfig::MediaConfig{
       .type = type,
       .lens_facing = lens_facing,
+      .v4l2_proxy = v4l2_proxy,
       .v4l2_stream_proxy = v4l2_stream_proxy,
   };
 }

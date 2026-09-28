@@ -27,6 +27,7 @@ namespace cuttlefish {
 
 using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
+using cvd::config::V4l2Proxy;
 using cvd::config::V4l2StreamProxy;
 
 Result<std::vector<std::string>> GenerateMediaFlags(
@@ -46,9 +47,12 @@ Result<std::vector<std::string>> GenerateMediaFlags(
         } else if (device.has_v4l2_emulated_camera_mplane()) {
           flag += "v4l2_emulated_camera_mplane";
         } else if (device.has_v4l2_proxy()) {
-          // TODO(b/520114678): Use device.v4l2_proxy.device_path when
-          // supported.
+          const V4l2Proxy& v4l2_proxy = device.v4l2_proxy();
           flag += "v4l2_proxy";
+          if (v4l2_proxy.has_device_path() &&
+              !v4l2_proxy.device_path().empty()) {
+            flag += ":device_path=" + v4l2_proxy.device_path();
+          }
         } else if (device.has_v4l2_stream_proxy()) {
           const V4l2StreamProxy& v4l2_stream_proxy = device.v4l2_stream_proxy();
 
