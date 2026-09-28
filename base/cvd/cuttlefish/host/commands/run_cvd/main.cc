@@ -15,6 +15,7 @@
  */
 
 #include <errno.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -245,6 +246,7 @@ void ConfigureLogs(const CuttlefishConfig& config,
 }  // namespace
 
 Result<void> RunCvdMain(int argc, char** argv) {
+  signal(SIGPIPE, SIG_IGN);
   google::ParseCommandLineFlags(&argc, &argv, false);
 
   CF_EXPECT(StdinValid(), "Invalid stdin");

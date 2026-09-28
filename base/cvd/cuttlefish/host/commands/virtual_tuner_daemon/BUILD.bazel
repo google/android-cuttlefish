@@ -1,0 +1,52 @@
+load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
+load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+proto_library(
+    name = "virtual_tuner_proto",
+    srcs = ["VirtualTuner.proto"],
+)
+
+cc_proto_library(
+    name = "virtual_tuner_cc_proto",
+    deps = [":virtual_tuner_proto"],
+)
+
+cc_grpc_library(
+    name = "libcvd_virtual_tuner",
+    srcs = [":virtual_tuner_proto"],
+    grpc_only = True,
+    deps = [
+        ":virtual_tuner_cc_proto",
+        "@grpc//:grpc++",
+    ],
+)
+
+cf_cc_library(
+    name = "tuner_state",
+    srcs = [
+        "tuner_state.cpp",
+    ],
+    hdrs = [
+        "tuner_state.h",
+    ],
+    deps = [
+        ":virtual_tuner_cc_proto",
+    ],
+)
+
+cf_cc_test(
+    name = "tuner_state_test",
+    srcs = [
+        "tuner_state_test.cpp",
+    ],
+    deps = [
+        ":tuner_state",
+        ":virtual_tuner_cc_proto",
+    ],
+)

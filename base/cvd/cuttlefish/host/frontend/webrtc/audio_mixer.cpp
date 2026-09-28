@@ -2,11 +2,11 @@
 
 #include <algorithm>
 #include <chrono>
-#include "cuttlefish/host/frontend/webrtc/audio_channel_matrix.h"
-#include "cuttlefish/host/frontend/webrtc/audio_settings.h"
-
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+
+#include "cuttlefish/host/frontend/webrtc/audio_channel_matrix.h"
+#include "cuttlefish/host/frontend/webrtc/audio_settings.h"
 
 namespace cuttlefish {
 namespace {
@@ -172,10 +172,11 @@ void AudioMixer::OnPlayback(uint32_t stream_id, uint32_t stream_sample_rate,
   const auto frames_count = GetFrameCountAfterResampling(
       sample_rate_, stream_sample_rate, stream_frames_count);
 
-  std::unique_lock<std::mutex> lock(mutex_);
+  const std::vector<std::vector<float>> channel_matrix =
+      BuildChannelMixingMatrix(channels_count_, stream_channels_count, volume,
+                               fade, balance, is_ducked);
 
-  const auto channel_matrix = BuildChannelMixingMatrix(
-      channels_count_, stream_channels_count, volume, fade, balance, is_ducked);
+  std::unique_lock<std::mutex> lock(mutex_);
 
   const bool need_notify = next_frame_.empty();  // no active streams
 

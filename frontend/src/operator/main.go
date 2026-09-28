@@ -24,20 +24,23 @@ import (
 	"net/url"
 	"os"
 	"sync"
+	"time"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 const (
-	DefaultSocketPath        = "/run/cuttlefish/operator"
-	DefaultControlSocketPath = "/run/cuttlefish/operator_control"
-	DefaultHttpPort          = 1080
-	DefaultTLSCertDir        = "/etc/cuttlefish-common/operator/cert"
-	DefaultStaticFilesDir    = "static"    // relative path
-	DefaultInterceptDir      = "intercept" // relative path
-	DefaultWebUIUrl          = ""
-	DefaultListenAddress     = "127.0.0.1"
+	DefaultSocketPath         = "/run/cuttlefish/operator"
+	DefaultControlSocketPath  = "/run/cuttlefish/operator_control"
+	DefaultHttpPort           = 1080
+	DefaultTLSCertDir         = "/etc/cuttlefish-common/operator/cert"
+	DefaultStaticFilesDir     = "static"    // relative path
+	DefaultInterceptDir       = "intercept" // relative path
+	DefaultWebUIUrl           = ""
+	DefaultListenAddress      = "127.0.0.1"
+	DefaultInfraConfigTTL     = 6 * time.Hour
+	DefaultInfraConfigTimeout = 10 * time.Second
 )
 
 func startHttpServer(address string, port int) error {
@@ -91,6 +94,9 @@ func main() {
 	webUiUrlStr := flag.String("webui_url", DefaultWebUIUrl, "WebUI URL.")
 	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
 	logFile := flag.String("log_file", "", "Path to file to write logs to.")
+	infraConfigDelegate := flag.String("infra_config_delegate", "", "Path to delegate binary returning infrastructure config JSON.")
+	infraConfigTTL := flag.Duration("infra_config_ttl", DefaultInfraConfigTTL, "Default TTL for cached infrastructure config.")
+	infraConfigTimeout := flag.Duration("infra_config_timeout", DefaultInfraConfigTimeout, "Timeout for executing infrastructure config delegate.")
 
 	flag.Parse()
 
@@ -116,7 +122,13 @@ func main() {
 		},
 	}
 
-	r := operator.CreateHttpHandlers(pool, polledSet, config, maybeIntercept)
+	var infraConfigProvider operator.InfraConfigProvider = operator.NewStaticInfraConfigProvider(config)
+	if *infraConfigDelegate != "" {
+		infraConfigProvider = operator.NewDelegateInfraConfigProvider(
+			config, *infraConfigDelegate, *infraConfigTTL, *infraConfigTimeout)
+	}
+
+	r := operator.CreateHttpHandlers(pool, polledSet, infraConfigProvider, maybeIntercept)
 	if *webUiUrlStr != "" {
 		webUiUrl, _ := url.Parse(*webUiUrlStr)
 		proxy := httputil.NewSingleHostReverseProxy(webUiUrl)

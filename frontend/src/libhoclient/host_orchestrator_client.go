@@ -153,6 +153,10 @@ type InstanceOperationsClient interface {
 	StartScreenRecording(groupName, instanceName string) error
 	// Stop recording the screen
 	StopScreenRecording(groupName, instanceName string) error
+	// List event devices
+	ListEventDevices(groupName, instanceName string) ([]hoapi.EventDevice, error)
+	// Inject input events
+	InjectInputEvents(groupName, instanceName, deviceName string, events io.Reader) error
 }
 
 // Manage direct two-way communication channels with remote instances.
@@ -564,6 +568,22 @@ func (c *HostOrchestratorClientImpl) StopScreenRecording(groupName, instanceName
 	return c.doEmptyResponseRequest(rb)
 }
 
+func (c *HostOrchestratorClientImpl) ListEventDevices(groupName, instanceName string) ([]hoapi.EventDevice, error) {
+	path := fmt.Sprintf("/cvds/%s/%s/event_devices", groupName, instanceName)
+	rb := c.HTTPHelper.NewGetRequest(path)
+	response := &hoapi.ListEventDevicesResponse{}
+	if err := rb.JSONResDo(response); err != nil {
+		return nil, err
+	}
+	return response.EventDevices, nil
+}
+
+func (c *HostOrchestratorClientImpl) InjectInputEvents(groupName, instanceName, deviceName string, events io.Reader) error {
+	path := fmt.Sprintf("/cvds/%s/%s/event_devices/%s:inject", groupName, instanceName, deviceName)
+	rb := c.HTTPHelper.NewPostFormFileRequest(path, "file", "events.bin", events)
+	return c.doEmptyResponseRequest(rb)
+}
+
 func (c *HostOrchestratorClientImpl) doEmptyResponseRequest(rb *HTTPRequestBuilder) error {
 	op := &hoapi.Operation{}
 	if err := rb.JSONResDo(op); err != nil {
@@ -612,7 +632,7 @@ func DefaultUploadOptions() UploadOptions {
 			MaxElapsedTime:      2 * time.Minute,
 		},
 		ChunkSizeBytes: 16 * 1024 * 1024, // 16 MB
-		NumWorkers:     32,
+		NumWorkers:     4,
 	}
 }
 

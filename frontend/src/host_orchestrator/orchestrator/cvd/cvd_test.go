@@ -42,5 +42,4 @@ func TestSliceItoa(t *testing.T) {
 			t.Errorf("result mismatch (-want +got):\n%s", diff)
 		}
 	}
-
 }

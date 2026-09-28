@@ -1,15 +1,12 @@
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test")
 
-package(
-    default_visibility = [
-        "@expat//:__subpackages__",
-    ],
-)
+package(default_visibility = ["//:android_cuttlefish"])
 
-cc_library(
-    name = "expat_config",
-    hdrs = [
-        "expat_config.h",
+cf_build_test(
+    name = "cf_build_test",
+    srcs = [
+        "BUILD.expat.bazel",
+        "expat.MODULE.bazel",
+        "internal.MODULE.bazel",
     ],
-    strip_include_prefix = "//build_external/expat",
 )

@@ -616,6 +616,19 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   crosvm_cmd.AddControlSocket(instance.CrosvmSocketPath(),
                               instance.crosvm_binary());
 
+  if (!instance.crosvm_acpi_table().empty()) {
+    crosvm_cmd.Cmd().AddParameter("--acpi-table=",
+                                  instance.crosvm_acpi_table());
+  }
+  if (!instance.crosvm_device_tree_overlay().empty()) {
+    crosvm_cmd.Cmd().AddParameter("--device-tree-overlay=",
+                                  instance.crosvm_device_tree_overlay());
+  }
+  if (!instance.crosvm_file_backed_mapping().empty()) {
+    crosvm_cmd.Cmd().AddParameter("--file-backed-mapping=",
+                                  instance.crosvm_file_backed_mapping());
+  }
+
   if (!config.kvm_path().empty()) {
     crosvm_cmd.AddKvmPath(config.kvm_path());
   }
@@ -1089,11 +1102,12 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
                                       gpu_capture_logs);
 
     commands.emplace_back(std::move(gpu_capture_log_tee_cmd));
-    commands.emplace_back(std::move(gpu_capture_command));
+    commands.emplace_back(std::move(gpu_capture_command),
+                          ProcessCategory::kVmm);
   } else {
     crosvm_cmd.Cmd().RedirectStdIO(Command::StdIoChannel::kStdOut, crosvm_logs);
     crosvm_cmd.Cmd().RedirectStdIO(Command::StdIoChannel::kStdErr, crosvm_logs);
-    commands.emplace_back(std::move(crosvm_cmd.Cmd()), true);
+    commands.emplace_back(std::move(crosvm_cmd.Cmd()), ProcessCategory::kVmm);
   }
 
   return commands;

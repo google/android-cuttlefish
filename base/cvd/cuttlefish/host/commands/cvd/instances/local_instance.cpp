@@ -21,10 +21,14 @@
 
 #include <fstream>
 #include <memory>
+#include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "absl/log/log.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/directory_contents.h"
@@ -255,6 +259,19 @@ LocalInstance::GetInstanceConfig() {
   return config->ForInstance(Id());
 }
 
+Result<std::string> LocalInstance::UDSDirectory() const {
+  // Newer cuttlefish instances put launcher monitor socket in a directory
+  // under /tmp, and store this path in the config. Older instances just put
+  // them in the instance directory.
+  Json::Value config = CF_EXPECT(ReadJsonConfig());
+  if (config.isMember("instances_uds_dir") &&
+      config["instances_uds_dir"].isString()) {
+    return fmt::format("{}/cvd-{}", config["instances_uds_dir"].asString(),
+                       Id());
+  }
+  return InstanceDirectory();
+}
+
 Result<SharedFD> LocalInstance::GetLauncherMonitor(
     std::chrono::seconds timeout) const {
   // Newer cuttlefish instances put launcher monitor socket in a directory
@@ -294,6 +311,49 @@ Result<std::vector<std::string>> LocalInstance::LogsFilenames() const {
   };
   CF_EXPECT(WalkDirectory(logs_dir, callback));
   return result;
+}
+
+Result<std::set<std::string>> LocalInstance::InputDevices() const {
+  std::string uds_dir =
+      CF_EXPECT(UDSDirectory(), "Unable to get instance's UDS directory") +
+      "/internal";
+  std::vector<std::string> files = CF_EXPECT(DirectoryContents(uds_dir));
+  std::set<std::string> event_devices;
+  for (std::string_view file : files) {
+    if (absl::ConsumeSuffix(&file, ".events.in") ||
+        absl::ConsumeSuffix(&file, ".events.out")) {
+      event_devices.emplace(file);
+    }
+  }
+  return event_devices;
+}
+
+Result<Fd> LocalInstance::NewCaptureInputDeviceEventsConn(
+    const std::string& device_name) const {
+  std::set<std::string> devices = CF_EXPECT(InputDevices());
+  CF_EXPECTF(devices.find(device_name) != devices.end(),
+             "'{}' not found among existing input devices ({})", device_name,
+             absl::StrJoin(devices, ", "));
+  std::string uds_dir =
+      CF_EXPECT(UDSDirectory(), "Unable to get instance's UDS directory");
+  std::string socket =
+      fmt::format("{}/internal/{}.events.out", uds_dir, device_name);
+  return CF_EXPECTF(Fd::SocketLocalClient(socket, false, SOCK_STREAM),
+                    "Unable to connect to {}'s capture socket", device_name);
+}
+
+Result<Fd> LocalInstance::NewInjectInputDeviceEventsConn(
+    const std::string& device_name) const {
+  std::set<std::string> devices = CF_EXPECT(InputDevices());
+  CF_EXPECTF(devices.find(device_name) != devices.end(),
+             "'{}' not found among existing input devices ({})", device_name,
+             absl::StrJoin(devices, ", "));
+  std::string uds_dir =
+      CF_EXPECT(UDSDirectory(), "Unable to get instance's UDS directory");
+  std::string socket =
+      fmt::format("{}/internal/{}.events.in", uds_dir, device_name);
+  return CF_EXPECTF(Fd::SocketLocalClient(socket, false, SOCK_STREAM),
+                    "Unable to connect to {}'s inject socket", device_name);
 }
 
 }  // namespace cuttlefish

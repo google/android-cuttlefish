@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
@@ -30,7 +31,6 @@ class DefaultIoVisitor : public IoVisitor {
   Result<void> Accept(ReaderSeeker&);
   Result<void> Accept(ReaderWriterSeeker&);
   Result<void> Accept(Seeker&);
-  Result<void> Accept(SharedFdIo&);
   Result<void> Accept(Writer&);
   Result<void> Accept(WriterSeeker&);
 };

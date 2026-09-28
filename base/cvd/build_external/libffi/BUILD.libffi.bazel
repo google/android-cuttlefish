@@ -1,10 +1,8 @@
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 package(
-    default_visibility = [
-        "@//:android_cuttlefish",
-        "@wayland//:__subpackages__",
-    ],
+    default_visibility = ["//visibility:public"],
 )
 
 COMMON_SRCS = [
@@ -50,24 +48,58 @@ COPTS_ARM64 = [
 COPTS_RISCV64 = [
 ]
 
+sh_binary(
+    name = "gen_ffi_header",
+    srcs = ["gen_ffi_header.sh"],
+)
+
+cc_library(
+    name = "libffi_linux_x86",
+    hdrs = [
+        "linux-x86/ffi.h",
+        "linux-x86/fficonfig.h",
+        "linux-x86/ffitarget.h",
+    ],
+    includes = ["linux-x86"],
+)
+
+cc_library(
+    name = "libffi_linux_arm64",
+    hdrs = [
+        "linux-arm64/ffi.h",
+        "linux-arm64/fficonfig.h",
+        "linux-arm64/ffitarget.h",
+    ],
+    includes = ["linux-arm64"],
+)
+
+cc_library(
+    name = "libffi_linux_riscv64",
+    hdrs = [
+        "linux-riscv64/ffi.h",
+        "linux-riscv64/fficonfig.h",
+    ],
+    includes = ["linux-riscv64"],
+)
+
 DEPS_X86_64 = [
-    "@//build_external/libffi/linux-x86:libffi_linux_x86",
+    ":libffi_linux_x86",
 ]
 
 DEPS_ARM64 = [
-    "@//build_external/libffi/linux-arm64:libffi_linux_arm64",
+    ":libffi_linux_arm64",
 ]
 
 DEPS_RISCV64 = [
-    "@//build_external/libffi/linux-riscv64:libffi_linux_riscv64",
+    ":libffi_linux_riscv64",
 ]
 
 genrule(
     name = "ffi_header",
     srcs = ["include/ffi.h.in"],
     outs = ["ffi_gen.h"],
-    cmd = "$(location @//build_external/libffi:gen_ffi_header) < $(SRCS) > $(OUTS)",
-    tools = ["@//build_external/libffi:gen_ffi_header"],
+    cmd = "$(location :gen_ffi_header) < $(SRCS) > $(OUTS)",
+    tools = [":gen_ffi_header"],
 )
 
 cc_library(

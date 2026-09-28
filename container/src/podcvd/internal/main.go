@@ -102,7 +102,7 @@ func disconnectAdb(ccm CuttlefishContainerManager, groupName string) error {
 }
 
 func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
-	hasConfigFile := cvdArgs.GetStringFlagValueOnSubCommandArgs("config_file") != ""
+	_, hasConfigFile := cvdArgs.GetStringFlagValueOnSubCommandArgs("config_file")
 	if hasConfigFile {
 		cvdArgs.ReplaceFlagValueOnSubCommandArgs("base_directory", "/podcvd_base")
 	}
@@ -112,12 +112,22 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 		args = append(args, fmt.Sprintf("--override=common.group_name:%s", cvdArgs.CommonArgs.GroupName))
 	}
 
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false, false)
+	if err != nil {
+		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
+	}
+	ip, exists := groupNameIpAddrMap[cvdArgs.CommonArgs.GroupName]
+	if !exists {
+		return fmt.Errorf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
+	}
+	rewriter := NewStderrRewriter(os.Stderr, ip)
+	defer rewriter.Flush()
 	var stdoutBuf bytes.Buffer
-	if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, os.Stderr); err != nil {
+	if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, rewriter); err != nil {
 		return err
 	}
 	var instanceGroup *InstanceGroup
-	if cvdArgs.GetStringFlagValueOnSubCommandArgs("print_group_format") == "human" {
+	if format, exists := cvdArgs.GetStringFlagValueOnSubCommandArgs("print_group_format"); exists && format == "human" {
 		os.Stdout.Write(stdoutBuf.Bytes())
 		group, err := findInstanceGroup(ccm, cvdArgs.CommonArgs.GroupName)
 		if err != nil {
@@ -128,14 +138,6 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 		var res map[string]any
 		if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
 			return fmt.Errorf("failed to unmarshal json: %w", err)
-		}
-		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false, false)
-		if err != nil {
-			return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
-		}
-		ip, exists := groupNameIpAddrMap[cvdArgs.CommonArgs.GroupName]
-		if !exists {
-			return fmt.Errorf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
 		}
 		containerInfo, err := ccm.InspectContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
 		if err != nil {
@@ -161,8 +163,8 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 }
 
 func handleBugreportExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
-	hostOutputPath := cvdArgs.GetStringFlagValueOnSubCommandArgs("output")
-	if hostOutputPath == "" {
+	hostOutputPath, exists := cvdArgs.GetStringFlagValueOnSubCommandArgs("output")
+	if !exists {
 		hostOutputPath = "host_bugreport.zip"
 	}
 	absHostOutputPath, err := filepath.Abs(hostOutputPath)
@@ -198,7 +200,9 @@ func formatLogsList(output string) string {
 func handleLogsExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
-	if cvdArgs.GetStringFlagValueOnSubCommandArgs("print") != "" || cvdArgs.GetStringFlagValueOnSubCommandArgs("p") != "" {
+	_, hasPrint := cvdArgs.GetStringFlagValueOnSubCommandArgs("print")
+	_, hasP := cvdArgs.GetStringFlagValueOnSubCommandArgs("p")
+	if hasPrint || hasP {
 		return ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, os.Stdout, os.Stderr)
 	}
 

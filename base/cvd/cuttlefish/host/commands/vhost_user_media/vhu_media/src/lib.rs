@@ -157,7 +157,8 @@ impl VirtioMediaHostMemoryMapper for HostMemoryMapper {
             padding: [0, 0, 0, 0, 0, 0, 0],
             fd_offset: 0,
             shm_offset: shm_offset,
-            len: 1,
+            // The frontend (crosvm) removes mappings keyed solely by shm_offset, `len` is not used.
+            len: 0,
             flags: 0,
         };
 

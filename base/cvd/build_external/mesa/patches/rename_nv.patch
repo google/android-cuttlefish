@@ -1,0 +1,8 @@
+--- a/src/vulkan/util/vk_physical_device_features_gen.py
++++ b/src/vulkan/util/vk_physical_device_features_gen.py
+@@ -50,4 +50,5 @@
+     ('CooperativeMatrixFeaturesNV', 'cooperativeMatrixRobustBufferAccess'): 'cooperativeMatrixRobustBufferAccessNV',
+ 
+     ('DeviceGeneratedCommandsFeaturesNV', 'deviceGeneratedCommands'): 'deviceGeneratedCommandsNV',
++    ('RayTracingInvocationReorderFeaturesNV', 'rayTracingInvocationReorder'): 'rayTracingInvocationReorderNV',
+ }

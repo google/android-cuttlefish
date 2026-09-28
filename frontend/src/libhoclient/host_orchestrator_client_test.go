@@ -15,11 +15,14 @@
 package libhoclient
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -367,4 +370,100 @@ func write(w http.ResponseWriter, data any, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 	encoder.Encode(data)
+}
+
+func TestListEventDevices(t *testing.T) {
+	fakeRes := &hoapi.ListEventDevicesResponse{
+		EventDevices: []hoapi.EventDevice{
+			hoapi.EventDevice{Name: "keyboard"},
+			hoapi.EventDevice{Name: "mouse"},
+			hoapi.EventDevice{Name: "touchscreen"},
+		},
+	}
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "GET /cvds/mygroup/myinstance/event_devices":
+			writeOK(w, fakeRes)
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	srv := NewHostOrchestratorClient(ts.URL)
+
+	devices, err := srv.ListEventDevices("mygroup", "myinstance")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []hoapi.EventDevice{
+		hoapi.EventDevice{Name: "keyboard"},
+		hoapi.EventDevice{Name: "mouse"},
+		hoapi.EventDevice{Name: "touchscreen"},
+	}
+	if diff := cmp.Diff(want, devices); diff != "" {
+		t.Fatalf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestListEventDevicesServerError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeErr(w, http.StatusInternalServerError)
+	}))
+	defer ts.Close()
+	srv := NewHostOrchestratorClient(ts.URL)
+
+	_, err := srv.ListEventDevices("mygroup", "myinstance")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestInjectInputEvents(t *testing.T) {
+	expectedData := []byte("binary event payload")
+	var receivedData []byte
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "POST /cvds/mygroup/myinstance/event_devices/mouse:inject":
+			if !strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+				t.Fatalf("unexpected content type: %s", r.Header.Get("Content-Type"))
+			}
+			f, _, err := r.FormFile("file")
+			if err != nil {
+				t.Fatalf("failed to read form file: %v", err)
+			}
+			defer f.Close()
+			receivedData, err = io.ReadAll(f)
+			if err != nil {
+				t.Fatalf("failed to read file content: %v", err)
+			}
+			writeOK(w, hoapi.Operation{Name: "inject-op"})
+		case "POST /operations/inject-op/:wait":
+			writeOK(w, &hoapi.EmptyResponse{})
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	srv := NewHostOrchestratorClient(ts.URL)
+
+	err := srv.InjectInputEvents("mygroup", "myinstance", "mouse", bytes.NewReader(expectedData))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(expectedData, receivedData); diff != "" {
+		t.Fatalf("data mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestInjectInputEventsServerError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeErr(w, http.StatusBadRequest)
+	}))
+	defer ts.Close()
+	srv := NewHostOrchestratorClient(ts.URL)
+
+	err := srv.InjectInputEvents("mygroup", "myinstance", "mouse", bytes.NewReader([]byte("data")))
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
 }

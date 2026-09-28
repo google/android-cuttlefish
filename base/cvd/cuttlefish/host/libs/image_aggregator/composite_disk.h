@@ -21,7 +21,7 @@
 
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/host/libs/image_aggregator/disk_image.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

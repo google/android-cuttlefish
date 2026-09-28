@@ -16,7 +16,9 @@ Depends: acl,
          crun,
          libnss3-tools,
          mkcert,
+         passt,
          podman (>= 4.4),
+         uidmap,
          yq,
 Pre-Depends: ${misc:Pre-Depends}
 Description: Cuttlefish Android Virtual Device companion package

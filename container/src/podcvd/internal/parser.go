@@ -54,7 +54,7 @@ func ParseCvdArgs(allArgs []string) (*CvdArgs, error) {
 			}
 		}
 		if subcommandArgs[0] == "create" {
-			if configFile := getStringFlagValue(subcommandArgs, "config_file"); configFile != "" {
+			if configFile, exists := getStringFlagValue(subcommandArgs, "config_file"); exists {
 				commonArgs.GroupName, subcommandArgs, err = extractGroupNameFromConfigFile(subcommandArgs, configFile)
 				if err != nil {
 					return nil, err
@@ -108,7 +108,7 @@ func (a *CvdArgs) HasHelpFlagOnSubCommandArgs() bool {
 	return false
 }
 
-func (a *CvdArgs) GetStringFlagValueOnSubCommandArgs(flagName string) string {
+func (a *CvdArgs) GetStringFlagValueOnSubCommandArgs(flagName string) (string, bool) {
 	return getStringFlagValue(a.SubCommandArgs, flagName)
 }
 
@@ -219,22 +219,22 @@ func extractGroupNameFromConfigFile(args []string, configFile string) (string, [
 	return strings.TrimSpace(config.Common.GroupName), args, nil
 }
 
-func getStringFlagValue(args []string, flagName string) string {
+func getStringFlagValue(args []string, flagName string) (string, bool) {
 	flags := make(map[string]struct{})
 	flags["-"+flagName] = struct{}{}
 	flags["--"+flagName] = struct{}{}
 
 	for idx, arg := range args {
 		if _, exists := flags[arg]; exists && idx+1 < len(args) {
-			return args[idx+1]
+			return args[idx+1], true
 		}
 		splitArg := strings.SplitN(arg, "=", 2)
 		if len(splitArg) != 2 {
 			continue
 		}
 		if _, exists := flags[splitArg[0]]; exists {
-			return splitArg[1]
+			return splitArg[1], true
 		}
 	}
-	return ""
+	return "", false
 }

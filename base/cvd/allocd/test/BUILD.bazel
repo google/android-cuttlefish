@@ -1,0 +1,26 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "fake_nftables",
+    testonly = True,
+    srcs = ["fake_nftables.cc"],
+    hdrs = ["fake_nftables.h"],
+    deps = [
+        "//allocd/net:nftables",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_test(
+    name = "fake_nftables_test",
+    srcs = ["fake_nftables_test.cc"],
+    deps = [
+        ":fake_nftables",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+    ],
+)

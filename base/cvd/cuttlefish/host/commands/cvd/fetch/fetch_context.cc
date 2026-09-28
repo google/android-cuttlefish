@@ -24,6 +24,7 @@
 #include <variant>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
@@ -36,6 +37,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/de_android_sparse.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 #include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
+#include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/web/android_build.h"
@@ -52,6 +54,28 @@ namespace cuttlefish {
 static constexpr mode_t kRwxAllMode = S_IRWXU | S_IRWXG | S_IRWXO;
 
 using android::base::Dirname;
+
+namespace {
+
+bool IsVbmetaImage(std::string_view path) {
+  return absl::EndsWith(path, "/vbmeta.img") ||
+         absl::EndsWith(path, "/vbmeta_system.img") ||
+         absl::EndsWith(path, "/vbmeta_system_dlkm.img") ||
+         absl::EndsWith(path, "/vbmeta_vendor_dlkm.img");
+}
+
+void PadVbmetaImage(const std::string& path) {
+  /*
+   * Try enforcing the vbmeta size now. If it fails, then let
+   * `assemble_cvd` trip on it later; don't fail the fetch.
+   */
+  if (Result<void> result = EnforceVbMetaSize(path); !result.has_value()) {
+    LOG(WARNING) << "PadVbmetaImage: failed padding " << path << ": "
+                 << result.error();
+  }
+}
+
+}  // namespace
 
 FetchArtifact::FetchArtifact(FetchBuildContext& context,
                              std::string artifact_name)
@@ -85,6 +109,10 @@ Result<void> FetchArtifact::DownloadTo(std::string local_path) {
     }
   } else {
     CF_EXPECT(Copy(downloaded_path_, new_path));
+  }
+
+  if (IsVbmetaImage(new_path)) {
+    PadVbmetaImage(new_path);
   }
 
   CF_EXPECT(fetch_build_context_.AddFileToConfig(downloaded_path_));
@@ -150,6 +178,10 @@ Result<void> FetchArtifact::ExtractOneTo(const std::string& member_name,
 
   // TODO: b/471069557 - diagnose unused
   Result<void> unused = fetch_build_context_.DesparseFiles({local_path});
+
+  if (IsVbmetaImage(extract_path)) {
+    PadVbmetaImage(extract_path);
+  }
 
   return {};
 }

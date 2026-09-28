@@ -368,7 +368,7 @@ Result<std::vector<MonitorCommand>> Gem5Manager::StartCommands(
   gem5_cmd.AddEnvironmentVariable("M5_PATH", config.assembly_dir());
 
   std::vector<MonitorCommand> commands;
-  commands.emplace_back(std::move(gem5_cmd), true);
+  commands.emplace_back(std::move(gem5_cmd), ProcessCategory::kVmm);
   return commands;
 }
 

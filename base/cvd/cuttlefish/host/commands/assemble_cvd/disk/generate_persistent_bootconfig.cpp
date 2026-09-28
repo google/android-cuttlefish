@@ -28,6 +28,7 @@
 
 #include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
@@ -41,7 +42,6 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
-#include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 
@@ -51,11 +51,9 @@ namespace {
 Result<std::map<std::string, std::string, std::less<void>>>
 ReadBuiltInBootconfigArgs(const CuttlefishConfig::InstanceSpecific& instance) {
   std::string image_path = instance.vendor_boot_image();
-  SharedFD fd = SharedFD::Open(image_path, O_RDONLY);
-  CF_EXPECTF(fd->IsOpen(), "Failed to open '{}': '{}'", image_path,
-             fd->StrError());
+  Fd fd = CF_EXPECT(Fd::Open(image_path, O_RDONLY));
   VendorBootImage vendor_boot =
-      CF_EXPECT(VendorBootImage::Read(std::make_unique<SharedFdIo>(fd)));
+      CF_EXPECT(VendorBootImage::Read(std::make_unique<Fd>(std::move(fd))));
   auto bootconfig_opt = vendor_boot.Bootconfig();
   if (!bootconfig_opt) {
     return {};

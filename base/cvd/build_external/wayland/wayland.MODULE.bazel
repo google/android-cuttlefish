@@ -1,7 +1,5 @@
-git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-
-git_repository(
-    name = "wayland",
+git_override(
+    module_name = "wayland",
     build_file = "@//build_external/wayland:BUILD.wayland.bazel",
     # TODO: b/414448658 - gitlab.freedesktop.org having an outage
     #commit = "b2649cb3ee6bd70828a17e50beb16591e6066288", # 1.22.0
@@ -11,5 +9,18 @@ git_repository(
     patch_strip = 1,
     patches = [
         "@//build_external/wayland:PATCH.wayland.wayland_config.patch",
+    ],
+    patch_cmds = [
+        """cat << 'EOF' > MODULE.bazel
+module(
+    name = "wayland",
+    version = "0.1",
+)
+
+bazel_dep(name = "expat")
+bazel_dep(name = "libffi")
+bazel_dep(name = "rules_cc", version = "0.2.19")
+EOF
+""",
     ],
 )

@@ -77,6 +77,8 @@ class ZipSourceReader : public Reader {
    * 0 on EOF. */
   Result<uint64_t> Read(void* data, uint64_t length) override;
 
+  Result<void> Visit(IoVisitor&) override;
+
  protected:
   std::recursive_mutex mutex_;
 

@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include <fstream>
 #include <ios>
@@ -31,6 +32,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "google/protobuf/util/message_differencer.h"
 #include <zlib.h>
 
@@ -361,7 +363,12 @@ Result<void> CreateOrUpdateCompositeDisk(
       google::protobuf::util::MessageDifferencer::Equals(
           composite_proto, composite_image_res->GetCompositeDisk())) {
     // The existing composite disk matches the given partitions, no need to
-    // regenerate
+    // regenerate, but update its modification time so it is not older than
+    // any recently updated component images.
+    if (utimensat(AT_FDCWD, output_composite_path.c_str(), nullptr, 0) != 0) {
+      PLOG(WARNING) << "Failed to update modification time for \""
+                    << output_composite_path << "\"";
+    }
     return {};
   }
 

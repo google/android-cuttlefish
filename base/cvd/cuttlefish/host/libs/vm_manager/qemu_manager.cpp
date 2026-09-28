@@ -917,7 +917,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     add_hvc_sink();
   }
 
-  commands.emplace_back(std::move(qemu_cmd), true);
+  commands.emplace_back(std::move(qemu_cmd), ProcessCategory::kVmm);
   return commands;
 }
 

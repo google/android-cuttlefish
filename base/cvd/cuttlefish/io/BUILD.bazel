@@ -66,6 +66,7 @@ cf_cc_library(
     hdrs = ["copy.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:reader",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -119,7 +120,7 @@ cf_cc_library(
         "//cuttlefish/io",
         "//cuttlefish/io:concat",
         "//cuttlefish/io:read_window_view",
-        "//cuttlefish/io:shared_fd",
+        "//cuttlefish/io:reader",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -219,6 +220,8 @@ cf_cc_library(
     srcs = ["io.cc"],
     hdrs = ["io.h"],
     deps = [
+        "//cuttlefish/io:reader",
+        "//cuttlefish/io:visitable",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -270,6 +273,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:reader",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
@@ -285,6 +289,7 @@ cf_cc_test(
         "//cuttlefish/io:filesystem",
         "//cuttlefish/io:in_memory",
         "//cuttlefish/io:lz4_legacy",
+        "//cuttlefish/io:reader",
         "//cuttlefish/io:string",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/result",
@@ -313,6 +318,7 @@ cf_cc_library(
     hdrs = ["read_exact.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:reader",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -343,6 +349,15 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "reader",
+    hdrs = ["reader.h"],
+    deps = [
+        "//cuttlefish/io:visitable",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "serialize_disjoint_range_set",
     srcs = ["serialize_disjoint_range_set.cc"],
     hdrs = ["serialize_disjoint_range_set.h"],
@@ -364,24 +379,20 @@ cf_cc_test(
 )
 
 cf_cc_library(
-    name = "shared_fd",
-    srcs = ["shared_fd.cc"],
-    hdrs = ["shared_fd.h"],
+    name = "string",
+    srcs = ["string.cc"],
+    hdrs = ["string.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/io",
+        "//cuttlefish/io:reader",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
 )
 
 cf_cc_library(
-    name = "string",
-    srcs = ["string.cc"],
-    hdrs = ["string.h"],
+    name = "visitable",
+    hdrs = ["visitable.h"],
     deps = [
-        "//cuttlefish/io",
-        "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
 )

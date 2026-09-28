@@ -21,7 +21,7 @@
 
 #include "json/value.h"
 
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

@@ -37,6 +37,7 @@
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/is_symlink.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_pkg_migration.pb.h"
+#include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
@@ -63,6 +64,11 @@ Result<void> Substitute(const std::string& target,
   if (!FileExists(target)) {
     LOG(WARNING) << "Target file " << target << " missing; not making "
                  << "substitution " << target << " to " << full_link_name;
+    return {};
+  }
+
+  if (Result<std::string> existing = ReadLink(full_link_name);
+      existing.has_value() && *existing == target) {
     return {};
   }
 

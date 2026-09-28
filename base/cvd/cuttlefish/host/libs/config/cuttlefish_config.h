@@ -367,7 +367,7 @@ class CuttlefishConfig {
 
     std::string ap_esp_image_path() const;
 
-    std::string esp_image_path() const;
+    std::string generated_esp_image_path() const;
 
     std::string audio_server_path() const;
 
@@ -406,6 +406,9 @@ class CuttlefishConfig {
     std::string crosvm_v4l2_proxy() const;
     bool use_pmem() const;
     bool enable_pkvm() const;
+    std::string crosvm_acpi_table() const;
+    std::string crosvm_device_tree_overlay() const;
+    std::string crosvm_file_backed_mapping() const;
 
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
@@ -556,6 +559,7 @@ class CuttlefishConfig {
     std::string vvmtruststore_path() const;
     std::string default_target_zip() const;
     std::string system_target_zip() const;
+    std::string android_esp_image() const;
 
     // otheros artifacts
     std::string otheros_esp_image() const;
@@ -659,6 +663,9 @@ class CuttlefishConfig {
     void set_crosvm_v4l2_proxy(std::string v4l2_proxy);
     void set_use_pmem(bool use_pmem);
     void set_enable_pkvm(bool enable_pkvm);
+    void set_crosvm_acpi_table(const std::string& acpi_table);
+    void set_crosvm_device_tree_overlay(const std::string& device_tree_overlay);
+    void set_crosvm_file_backed_mapping(const std::string& file_backed_mapping);
     // Wifi MAC address inside the guest
     void set_wifi_mac_prefix(int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
@@ -796,6 +803,7 @@ class CuttlefishConfig {
         const std::string& vbmeta_system_dlkm_image);
     void set_new_vbmeta_system_dlkm_image(
         const std::string& vbmeta_system_dlkm_image);
+    void set_android_esp_image(const std::string& android_esp_image);
     void set_vvmtruststore_path(const std::string& vvmtruststore_path);
     void set_default_target_zip(const std::string& default_target_zip);
     void set_system_target_zip(const std::string& system_target_zip);

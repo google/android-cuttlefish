@@ -31,6 +31,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -212,6 +213,11 @@ Result<uint64_t> ZipSourceReader::Read(void* data, uint64_t length) {
   CF_EXPECTF(read_res >= 0, "Read failed: '{}'", ZipErrorString(raw_source));
 
   return read_res;
+}
+
+Result<void> ZipSourceReader::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
 }
 
 }  // namespace cuttlefish

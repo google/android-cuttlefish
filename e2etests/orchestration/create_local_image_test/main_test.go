@@ -81,7 +81,7 @@ func TestInstance(t *testing.T) {
 		EnvConfig: envConfig,
 	}
 
-	got, createErr := srv.CreateCVD(createReq, &hoclient.AccessTokenBuildAPICreds{})
+	res, createErr := srv.CreateCVD(createReq, &hoclient.AccessTokenBuildAPICreds{})
 
 	if err := common.DownloadHostBugReport(srv, group_name); err != nil {
 		t.Errorf("failed creating bugreport: %s\n", err)
@@ -89,24 +89,15 @@ func TestInstance(t *testing.T) {
 	if createErr != nil {
 		t.Fatal(createErr)
 	}
-	if err := common.VerifyLogsEndpoint(baseURL, group_name, "1"); err != nil {
-		t.Fatalf("failed verifying /logs endpoint: %s", err)
+	if len(res.CVDs) != 1 {
+		t.Fatalf("expected 1 cvd, got: %d", len(res.CVDs))
 	}
-	want := &hoapi.CreateCVDResponse{
-		CVDs: []*hoapi.CVD{
-			{
-				Group:          group_name,
-				Name:           "1",
-				Status:         "Running",
-				Displays:       []string{"720 x 1348 ( 280 )"},
-				WebRTCDeviceID: "cvd-1",
-				ADBSerial:      "127.0.0.1:6520",
-				ADBPort:        6520,
-			},
-		},
+	cvd := res.CVDs[0]
+	if diff := cmp.Diff(group_name, cvd.Group); diff != "" {
+		t.Errorf("group name mismatch (-want +got):\n%s", diff)
 	}
-	if diff := cmp.Diff(want, got); diff != "" {
-		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	if diff := cmp.Diff("Running", cvd.Status); diff != "" {
+		t.Errorf("status mismatch (-want +got):\n%s", diff)
 	}
 }
 

@@ -31,7 +31,7 @@ std::vector<ImagePartition> LinuxCompositeDiskConfig(
 
   partitions.push_back(ImagePartition{
       .label = "linux_esp",
-      .image_file_path = AbsolutePath(instance.esp_image_path()),
+      .image_file_path = AbsolutePath(instance.generated_esp_image_path()),
       .type = GptPartitionType::kEfiSystemPartition,
   });
   partitions.push_back(ImagePartition{

@@ -22,24 +22,29 @@
 #include <cstdint>
 #include <vector>
 
+#include "absl/log/check.h"
 #include "cuttlefish/host/frontend/webrtc/audio_settings.h"
 
 namespace cuttlefish {
 namespace {
 
 constexpr float kMinus3dB = 0.7071f;  // 1 / sqrt(2) for Center & Surround
-constexpr float kMinus6dB = 0.5000f;  // 1 / 2 for LFE (Subwoofer) and Stereo-to-Mono
-constexpr float kDuckingGain = 0.2000f; // -14 dB (AAOS standard ducking)
+constexpr float kMinus6dB =
+    0.5000f;  // 1 / 2 for LFE (Subwoofer) and Stereo-to-Mono
+constexpr float kDuckingGain = 0.2000f;  // -14 dB (AAOS standard ducking)
 
 }  // namespace
 
 std::vector<std::vector<float>> BuildChannelMixingMatrix(
     uint8_t dst_channels, uint8_t src_channels, float volume, float fade,
     float balance, bool is_ducked) {
-  constexpr uint8_t kMono = GetChannelsCount(AudioChannelsLayout::Mono);        // 1
-  constexpr uint8_t kStereo = GetChannelsCount(AudioChannelsLayout::Stereo);    // 2
+  CHECK(volume >= 0) << "volume can't be negative";
+
+  constexpr uint8_t kMono = GetChannelsCount(AudioChannelsLayout::Mono);  // 1
+  constexpr uint8_t kStereo =
+      GetChannelsCount(AudioChannelsLayout::Stereo);  // 2
   constexpr uint8_t kSurround51 =
-      GetChannelsCount(AudioChannelsLayout::Surround51);                        // 6
+      GetChannelsCount(AudioChannelsLayout::Surround51);  // 6
 
   // 1. Fold ducking into effective volume
   const float duck_factor = is_ducked ? kDuckingGain : 1.0f;
@@ -60,12 +65,14 @@ std::vector<std::vector<float>> BuildChannelMixingMatrix(
   // Case 1: Stereo Destination Output (Laptop Speakers / WebRTC sink)
   if (dst_channels == kStereo) {
     if (src_channels == kSurround51) {
-      // 5.1 Surround -> Stereo (ITU-R BS.775 with left/right balance & front/rear fade)
+      // 5.1 Surround -> Stereo (ITU-R BS.775 with left/right balance &
+      // front/rear fade)
       return {
           {fl_gain, 0.0f, kMinus3dB * fc_gain * left_gain,
            kMinus6dB * effective_volume * left_gain, kMinus3dB * rl_gain, 0.0f},
           {0.0f, fr_gain, kMinus3dB * fc_gain * right_gain,
-           kMinus6dB * effective_volume * right_gain, 0.0f, kMinus3dB * rr_gain},
+           kMinus6dB * effective_volume * right_gain, 0.0f,
+           kMinus3dB * rr_gain},
       };
     }
     if (src_channels == kStereo) {
@@ -89,7 +96,8 @@ std::vector<std::vector<float>> BuildChannelMixingMatrix(
     if (src_channels == kSurround51) {
       return {
           {kMinus3dB * fl_gain, kMinus3dB * fr_gain, fc_gain,
-           kMinus6dB * effective_volume, kMinus3dB * rl_gain, kMinus3dB * rr_gain},
+           kMinus6dB * effective_volume, kMinus3dB * rl_gain,
+           kMinus3dB * rr_gain},
       };
     }
     if (src_channels == kStereo) {
@@ -107,10 +115,11 @@ std::vector<std::vector<float>> BuildChannelMixingMatrix(
   // Fallback: generic diagonal matrix
   std::vector<std::vector<float>> matrix(
       dst_channels, std::vector<float>(src_channels, 0.0f));
-  const std::array<float, 6> spatial_gains = {fl_gain, fr_gain, fc_gain,
-                                              effective_volume,  rl_gain, rr_gain};
+  const std::array<float, 6> spatial_gains = {
+      fl_gain, fr_gain, fc_gain, effective_volume, rl_gain, rr_gain};
   for (size_t i = 0; i < std::min(dst_channels, src_channels); ++i) {
-    matrix[i][i] = (i < spatial_gains.size()) ? spatial_gains[i] : effective_volume;
+    matrix[i][i] =
+        (i < spatial_gains.size()) ? spatial_gains[i] : effective_volume;
   }
   return matrix;
 }

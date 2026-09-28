@@ -1,0 +1,17 @@
+diff --git a/third_party/minijail/gen_constants-inl.h b/third_party/minijail/gen_constants-inl.h
+--- a/third_party/minijail/gen_constants-inl.h
++++ b/third_party/minijail/gen_constants-inl.h
+@@ -74,3 +74,13 @@ struct fscrypt_policy_v1 {
+ #if !defined(FS_IOC_GET_ENCRYPTION_POLICY_EX)
+ #define FS_IOC_GET_ENCRYPTION_POLICY_EX _IOWR('f', 22, __u8[9])
+ #endif
++
++#if !defined(PR_GET_AUXV)
++#define PR_GET_AUXV 0x41555856
++#endif
++#if !defined(PR_SET_MDWE)
++#define PR_SET_MDWE 65
++#endif
++#if !defined(PR_GET_MDWE)
++#define PR_GET_MDWE 66
++#endif

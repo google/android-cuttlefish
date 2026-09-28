@@ -132,7 +132,6 @@ cf_cc_library(
     srcs = ["log_sources.cc"],
     hdrs = ["log_sources.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/files:file_exists",
@@ -145,7 +144,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/libs/log_names",
         "//cuttlefish/io",
-        "//cuttlefish/io:shared_fd",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],
