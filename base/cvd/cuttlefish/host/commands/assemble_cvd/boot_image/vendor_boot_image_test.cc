@@ -30,7 +30,7 @@
 #include "cuttlefish/io/in_memory.h"
 #include "cuttlefish/io/read_window_view.h"
 #include "cuttlefish/io/string.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -48,7 +48,7 @@ TEST(VendorBootImageTest, AllFieldsSet) {
   static constexpr uint64_t kDtbAddr = 4;
   static constexpr std::string_view kBootconfig = "bootconfig";
 
-  Result<ConcatReaderSeeker> image =
+  VendorBootImageBuilder builder =
       VendorBootImageBuilder()
           .PageSize(kPageSize)
           .KernelAddr(kKernelAddr)
@@ -59,66 +59,62 @@ TEST(VendorBootImageTest, AllFieldsSet) {
           .Name(kName)
           .Dtb(InMemoryIo(kDtb))
           .DtbAddr(kDtbAddr)
-          .Bootconfig(InMemoryIo(kBootconfig))
-          .BuildV4();
-  ASSERT_THAT(image, IsOk());
+          .Bootconfig(InMemoryIo(kBootconfig));
+  ConcatReaderSeeker image = CF_ASSERT(builder.BuildV4());
 
-  Result<VendorBootImage> parsed = VendorBootImage::Read(
-      std::make_unique<ConcatReaderSeeker>(std::move(*image)));
-  ASSERT_THAT(parsed, IsOk());
+  VendorBootImage parsed = CF_ASSERT(VendorBootImage::Read(
+      std::make_unique<ConcatReaderSeeker>(std::move(image))));
 
-  EXPECT_EQ(parsed->PageSize(), kPageSize);
-  EXPECT_EQ(parsed->KernelAddr(), kKernelAddr);
-  EXPECT_EQ(parsed->RamdiskAddr(), kRamdiskAddr);
+  EXPECT_EQ(parsed.PageSize(), kPageSize);
+  EXPECT_EQ(parsed.KernelAddr(), kKernelAddr);
+  EXPECT_EQ(parsed.RamdiskAddr(), kRamdiskAddr);
 
-  ReadWindowView vendor_ramdisk = parsed->VendorRamdisk();
+  ReadWindowView vendor_ramdisk = parsed.VendorRamdisk();
   EXPECT_THAT(ReadToString(vendor_ramdisk), IsOkAndValue(kVendorRamdisk));
 
-  EXPECT_EQ(parsed->KernelCommandLine(), kKernelCommandLine);
-  EXPECT_EQ(parsed->TagsAddr(), kTagsAddr);
-  EXPECT_EQ(parsed->Name(), kName);
+  EXPECT_EQ(parsed.KernelCommandLine(), kKernelCommandLine);
+  EXPECT_EQ(parsed.TagsAddr(), kTagsAddr);
+  EXPECT_EQ(parsed.Name(), kName);
 
-  ReadWindowView dtb = parsed->Dtb();
+  ReadWindowView dtb = parsed.Dtb();
   EXPECT_THAT(ReadToString(dtb), IsOkAndValue(kDtb));
 
-  EXPECT_EQ(parsed->DtbAddr(), kDtbAddr);
+  EXPECT_EQ(parsed.DtbAddr(), kDtbAddr);
 
-  std::optional<ReadWindowView> bootconfig = parsed->Bootconfig();
+  std::optional<ReadWindowView> bootconfig = parsed.Bootconfig();
   ASSERT_TRUE(bootconfig.has_value());
   EXPECT_THAT(ReadToString(*bootconfig), IsOkAndValue(kBootconfig));
 }
 
 TEST(VendorBootImageTest, NoFieldsSet) {
-  Result<ConcatReaderSeeker> image = VendorBootImageBuilder().BuildV4();
-  ASSERT_THAT(image, IsOk());
+  ConcatReaderSeeker image = CF_ASSERT(VendorBootImageBuilder().BuildV4());
 
-  Result<VendorBootImage> parsed = VendorBootImage::Read(
-      std::make_unique<ConcatReaderSeeker>(std::move(*image)));
-  ASSERT_THAT(parsed, IsOk());
+  VendorBootImage parsed = CF_ASSERT(VendorBootImage::Read(
+      std::make_unique<ConcatReaderSeeker>(std::move(image))));
 
-  EXPECT_EQ(parsed->PageSize(), VendorBootImageBuilder::kDefaultPageSize);
-  EXPECT_EQ(parsed->KernelAddr(),
+  EXPECT_EQ(parsed.PageSize(), VendorBootImageBuilder::kDefaultPageSize);
+  EXPECT_EQ(parsed.KernelAddr(),
             VendorBootImageBuilder::kDefaultBaseAddress +
                 VendorBootImageBuilder::kDefaultKernelOffset);
-  EXPECT_EQ(parsed->RamdiskAddr(),
+  EXPECT_EQ(parsed.RamdiskAddr(),
             VendorBootImageBuilder::kDefaultBaseAddress +
                 VendorBootImageBuilder::kDefaultRamdiskOffset);
 
-  ReadWindowView vendor_ramdisk = parsed->VendorRamdisk();
+  ReadWindowView vendor_ramdisk = parsed.VendorRamdisk();
   EXPECT_THAT(ReadToString(vendor_ramdisk), IsOkAndValue(""));
 
-  EXPECT_EQ(parsed->KernelCommandLine(), "");
-  EXPECT_EQ(parsed->TagsAddr(), VendorBootImageBuilder::kDefaultBaseAddress +
-                                    VendorBootImageBuilder::kDefaultTagsOffset);
-  EXPECT_EQ(parsed->Name(), "");
+  EXPECT_EQ(parsed.KernelCommandLine(), "");
+  EXPECT_EQ(parsed.TagsAddr(), VendorBootImageBuilder::kDefaultBaseAddress +
+                                   VendorBootImageBuilder::kDefaultTagsOffset);
+  EXPECT_EQ(parsed.Name(), "");
 
-  ReadWindowView dtb = parsed->Dtb();
+  ReadWindowView dtb = parsed.Dtb();
   EXPECT_THAT(ReadToString(dtb), IsOkAndValue(""));
 
-  EXPECT_EQ(parsed->DtbAddr(), VendorBootImageBuilder::kDefaultBaseAddress +
-                                   VendorBootImageBuilder::kDefaultDtbOffset);
+  EXPECT_EQ(parsed.DtbAddr(), VendorBootImageBuilder::kDefaultBaseAddress +
+                                  VendorBootImageBuilder::kDefaultDtbOffset);
 
-  std::optional<ReadWindowView> bootconfig = parsed->Bootconfig();
+  std::optional<ReadWindowView> bootconfig = parsed.Bootconfig();
   ASSERT_TRUE(bootconfig.has_value());
   EXPECT_THAT(ReadToString(*bootconfig), IsOkAndValue(""));
 }
