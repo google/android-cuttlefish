@@ -58,6 +58,9 @@ std::unordered_map<std::string, std::string> OpenwrtArgsFromConfig(
   // (AOSP) external/openwrt-prebuilts/shared/uci-defaults/0_default_config
   if (instance.use_bridged_wifi_tap()) {
     openwrt_args["bridged_wifi_tap"] = "true";
+    openwrt_args["wan_ip6gw"] = "2001:db8:cf:22::1";
+    openwrt_args["wan_ip6addr"] =
+        "2001:db8:cf:22::" + std::to_string(instance_num + 1) + "/64";
 
     if (instance.use_cvdalloc()) {
       openwrt_args["wan_gateway"] =
@@ -74,6 +77,10 @@ std::unordered_map<std::string, std::string> OpenwrtArgsFromConfig(
     }
   } else {
     openwrt_args["bridged_wifi_tap"] = "false";
+    openwrt_args["wan_ip6gw"] =
+        "2001:db8:cf:22:" + std::to_string(instance_num) + "::1";
+    openwrt_args["wan_ip6addr"] =
+        "2001:db8:cf:22:" + std::to_string(instance_num) + "::2/64";
 
     if (instance.use_cvdalloc()) {
       openwrt_args["wan_gateway"] = InstanceToWifiGatewayAddress(instance_num);
@@ -88,6 +95,11 @@ std::unordered_map<std::string, std::string> OpenwrtArgsFromConfig(
           getIpAddress(94 + c_class_base, d_class_base + 3);
     }
   }
+
+  openwrt_args["wifi0_ip6addr"] =
+      "2001:db8:cf:23:" + std::to_string(instance_num) + "::1/64";
+  openwrt_args["wifi0_ula_ip6addr"] =
+      "fd00:cf:23:" + std::to_string(instance_num) + "::1/64";
 
   return openwrt_args;
 }

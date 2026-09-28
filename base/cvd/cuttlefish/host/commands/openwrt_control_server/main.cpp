@@ -16,13 +16,17 @@
  *
  */
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <regex>
 #include <string>
+#include <thread>
 
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 #include "fmt/format.h"
 #include "gflags/gflags.h"
 #include "google/protobuf/empty.pb.h"
@@ -69,13 +73,30 @@ static Status ErrorResultToStatus(const std::string_view prefix,
   return Status(StatusCode::UNAVAILABLE, msg);
 }
 
+static int ParseInstanceNumFromDeviceId(const std::string& device_id) {
+  auto pos = device_id.rfind('-');
+  int num = 1;
+  if (pos != std::string::npos &&
+      absl::SimpleAtoi(device_id.substr(pos + 1), &num) && num >= 1 &&
+      num <= 128) {
+    return num;
+  }
+  return 1;
+}
+
 class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
  public:
   OpenwrtControlServiceImpl(HttpClient& http_client)
-      : http_client_(http_client) {}
+      : http_client_(http_client) {
+    ipv6_provisioning_thread_ = std::thread([this]() {
+      ProvisionOpenwrtIpv6Loop();
+    });
+    ipv6_provisioning_thread_.detach();
+  }
 
   Status LuciRpc(ServerContext* context, const LuciRpcRequest* request,
                  LuciRpcReply* response) override {
+    std::lock_guard<std::mutex> lock(rpc_mutex_);
     // Update authentication key when it's empty.
     if (auth_key_.empty()) {
       Result<void> auth_res = UpdateLuciRpcAuthKey();
@@ -105,6 +126,14 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
     response->set_error((*reply)["error"].asString());
     response->set_result(writer.write((*reply)["result"]));
 
+    // If the caller restarted OpenWrt network service (e.g. on snapshot restore),
+    // re-apply the IPv6 configuration.
+    if (request->subpath() == "sys" && request->method() == "exec" &&
+        request->params_size() > 0 &&
+        absl::StrContains(request->params(0), "network")) {
+      (void)ConfigureOpenwrtIpv6Locked();
+    }
+
     return Status::OK;
   }
 
@@ -122,6 +151,102 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
   }
 
  private:
+  void ProvisionOpenwrtIpv6Loop() {
+    // Poll OpenWrt Luci RPC and ensure IPv6 SLAAC/RA + routing are configured
+    // both before and after OpenWrt's initial hostapd reboot (b/305102099).
+    int success_count = 0;
+    for (int attempt = 0; attempt < 60 && success_count < 3; ++attempt) {
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+      std::lock_guard<std::mutex> lock(rpc_mutex_);
+      if (ConfigureOpenwrtIpv6Locked().has_value()) {
+        ++success_count;
+      }
+    }
+  }
+
+  std::string BuildOpenwrtIpv6SetupCommand() const {
+    const int id = ParseInstanceNumFromDeviceId(FLAGS_webrtc_device_id);
+    const std::string wan_gua_gw =
+        FLAGS_bridged_wifi_tap
+            ? "2001:db8:cf:20::1"
+            : fmt::format("2001:db8:cf:22:{}::1", id);
+    const std::string wan_gua_addr =
+        FLAGS_bridged_wifi_tap
+            ? fmt::format("2001:db8:cf:20::{}/64", id + 1)
+            : fmt::format("2001:db8:cf:22:{}::2/64", id);
+    const std::string wan_ula_gw =
+        FLAGS_bridged_wifi_tap
+            ? "fd00:cf:20::1"
+            : fmt::format("fd00:cf:22:{}::1", id);
+    const std::string wan_ula_addr =
+        FLAGS_bridged_wifi_tap
+            ? fmt::format("fd00:cf:20::{}/64", id + 1)
+            : fmt::format("fd00:cf:22:{}::2/64", id);
+    const std::string wifi0_gua_addr =
+        (id == 1) ? "2001:db8:cf:23::1/64"
+                  : fmt::format("2001:db8:cf:23:{}::1/64", id);
+    const std::string wifi0_ula_addr =
+        fmt::format("fd00:cf:23:{}::1/64", id);
+
+    return fmt::format(
+        "if ! ip -6 addr show dev br-wifi0 2>/dev/null | grep -q '2001:db8:cf:23'; then "
+        "uci set network.globals.ula_prefix='fd00:cf:23::/48'; "
+        "uci set network.wan.ip6addr='{0}'; "
+        "uci set network.wan.ip6gw='{1}'; "
+        "uci set network.wan.ip6prefix='2001:db8:cf:23::/48'; "
+        "uci set network.wifi0.ip6assign='64'; "
+        "uci set network.wifi0.ip6hint='{4}'; "
+        "uci delete network.wifi0.ip6addr 2>/dev/null || true; "
+        "uci add_list network.wifi0.ip6addr='{2}'; "
+        "uci add_list network.wifi0.ip6addr='{3}'; "
+        "uci set network.wifi1.ip6assign='64'; "
+        "uci commit network; "
+        "uci set dhcp.wifi0.dhcpv6='server'; "
+        "uci set dhcp.wifi0.ra='server'; "
+        "uci set dhcp.wifi0.ra_slaac='1'; "
+        "uci set dhcp.wifi0.ra_default='1'; "
+        "uci set dhcp.wifi0.ra_maxinterval='10'; "
+        "uci set dhcp.wifi0.ra_mininterval='3'; "
+        "uci delete dhcp.wifi0.dns 2>/dev/null || true; "
+        "uci add_list dhcp.wifi0.dns='2001:4860:4860::8888'; "
+        "uci add_list dhcp.wifi0.dns='2001:4860:4860::8844'; "
+        "uci set dhcp.wifi1.dhcpv6='server'; "
+        "uci set dhcp.wifi1.ra='server'; "
+        "uci set dhcp.wifi1.ra_slaac='1'; "
+        "uci set dhcp.wifi1.ra_default='1'; "
+        "uci commit dhcp; "
+        "ubus call network reload 2>/dev/null || true; "
+        "fi; "
+        "sysctl -w net.ipv6.conf.all.forwarding=1 >/dev/null 2>&1 || true; "
+        "sysctl -w net.ipv6.conf.default.forwarding=1 >/dev/null 2>&1 || true; "
+        "ip -6 addr replace {0} dev br-lan 2>/dev/null || true; "
+        "ip -6 addr replace {5} dev br-lan 2>/dev/null || true; "
+        "ip -6 addr replace {2} dev br-wifi0 2>/dev/null || true; "
+        "ip -6 addr replace {3} dev br-wifi0 2>/dev/null || true; "
+        "ip -6 route replace default via {1} dev br-lan 2>/dev/null || true; "
+        "ip -6 route append default via {6} dev br-lan 2>/dev/null || true; "
+        "nft insert rule inet fw4 forward accept 2>/dev/null || nft flush ruleset 2>/dev/null || true; "
+        "ip6tables -P FORWARD ACCEPT 2>/dev/null || true; "
+        "ip6tables -I FORWARD 1 -j ACCEPT 2>/dev/null || true; "
+        "/etc/init.d/odhcpd restart >/dev/null 2>&1 || true",
+        wan_gua_addr, wan_gua_gw, wifi0_gua_addr, wifi0_ula_addr, id,
+        wan_ula_addr, wan_ula_gw);
+  }
+
+  Result<void> ConfigureOpenwrtIpv6Locked() {
+    if (auth_key_.empty()) {
+      CF_EXPECT(UpdateLuciRpcAuthKey());
+    }
+    const std::string cmd = BuildOpenwrtIpv6SetupCommand();
+    auto reply = RequestLuciRpc("sys", "exec", {cmd});
+    if (!reply.has_value()) {
+      CF_EXPECT(UpdateLuciRpcAuthKey());
+      reply = RequestLuciRpc("sys", "exec", {cmd});
+      CF_EXPECT(std::move(reply));
+    }
+    return {};
+  }
+
   template <typename T>
   std::vector<T> ToVector(const RepeatedPtrField<T>& repeated_field) {
     std::vector<T> vec;
@@ -218,6 +343,8 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
   HttpClient& http_client_;
   const std::vector<std::string> header_{"Content-Type: application/json"};
   std::string auth_key_;
+  std::mutex rpc_mutex_;
+  std::thread ipv6_provisioning_thread_;
 };
 
 void RunServer() {

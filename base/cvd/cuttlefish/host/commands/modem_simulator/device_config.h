@@ -33,6 +33,11 @@ class DeviceConfig {
   static std::string ril_address_and_prefix();
   static std::string ril_gateway();
   static std::string ril_dns();
+  static std::string ril_ipv6_address_and_prefix();
+  static std::string ril_ipv6_ula_address_and_prefix();
+  static std::string ril_ipv6_gateway();
+  static std::string ril_ipv6_ula_gateway();
+  static std::string ril_ipv6_dns();
   static std::ifstream open_ifstream_crossplat(const char* filename);
   static std::ofstream open_ofstream_crossplat(
       const char* filename, std::ios_base::openmode mode = std::ios_base::out);
