@@ -1169,8 +1169,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         guest_hwui_renderer_vec[instance_index],
         guest_renderer_preload_vec[instance_index], vm_manager_flag.Mode(),
         guest_configs[instance_index], instance));
-    calculated_gpu_mode_vec[instance_index] =
-        gpu_mode_values.ForIndex(instance_index);
+    calculated_gpu_mode_vec[instance_index] = gpu_mode;
 
     instance.set_restart_subprocesses(
         restart_subprocesses_values.ForIndex(instance_index));
