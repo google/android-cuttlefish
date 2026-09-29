@@ -32,8 +32,10 @@
 #endif
 
 #include <optional>
+#include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "absl/log/log.h"
 
@@ -41,6 +43,8 @@
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
+
+extern char** environ;
 
 namespace cuttlefish {
 
@@ -163,15 +167,44 @@ int DropPrivileges(uid_t orig) {
 }
 
 namespace {
+
 constexpr char kTrustedPath[] = "/usr/sbin:/usr/bin:/sbin:/bin";
+
+std::vector<std::string> CopyEnv() {
+  std::vector<std::string> env;
+  for (char** var = environ; var != nullptr && *var != nullptr; ++var) {
+    env.emplace_back(*var);
+  }
+  return env;
+}
+
+void RestoreEnv(const std::vector<std::string>& env) {
+  clearenv();
+  for (const std::string& var : env) {
+    size_t eq = var.find('=');
+    if (eq != std::string::npos) {
+      // Don't overwrite, so the first of any duplicates wins, as in getenv().
+      setenv(var.substr(0, eq).c_str(), var.c_str() + eq + 1,
+             /*overwrite=*/0);
+    }
+  }
+  if (environ == nullptr) {
+    // clearenv() leaves environ null if nothing was set again, which callers
+    // like Command don't expect. Leave it pointing at an empty list instead.
+    static char* empty_env[] = {nullptr};
+    environ = empty_env;
+  }
+}
+
 }  // namespace
 
-// Activate this instance and gain privileges.
-// WARNING: We treat elevating privileges as a one-way
-// action. Activating an instance of ScopedPrivileges
-// will scrub its process' environment.
+// Gains privileges until the returned instance is destroyed. If this process
+// gained privilege at exec, the environment is also replaced with a minimal
+// trusted one until then.
 Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
-  uid_t orig = getuid();
+  // Constructed first so that a failure below drops any partially raised
+  // capabilities and restores the environment.
+  ScopedPrivileges privileges(getuid());
   bool should_sanitize_env = true;
 #if defined(__linux__)
   // The child processes we exec run with elevated privilege (CAP_NET_ADMIN via
@@ -181,6 +214,7 @@ Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
   should_sanitize_env = getauxval(AT_SECURE) != 0;
 #endif
   if (should_sanitize_env) {
+    privileges.saved_env_ = CopyEnv();
     CF_EXPECTF(clearenv() == 0, "Couldn't clear environment: {}",
                StrError(errno));
     CF_EXPECTF(setenv("PATH", kTrustedPath, /*overwrite=*/1) == 0,
@@ -188,17 +222,26 @@ Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
   }
   CF_EXPECTF(BeginElevatedPrivileges() != -1,
              "Couldn't elevate permissions: {}", StrError(errno));
-  return ScopedPrivileges(orig);
+  return privileges;
 }
 
 ScopedPrivileges::ScopedPrivileges(uid_t orig) : orig_(orig) {}
 
 ScopedPrivileges::ScopedPrivileges(ScopedPrivileges&& other) noexcept
-    : orig_(std::exchange(other.orig_, std::nullopt)) {}
+    : orig_(std::exchange(other.orig_, std::nullopt)),
+      saved_env_(std::exchange(other.saved_env_, std::nullopt)) {}
 
 ScopedPrivileges::~ScopedPrivileges() {
-  if (orig_.has_value() && DropPrivileges(*orig_) == -1) {
+  if (!orig_.has_value()) {
+    return;
+  }
+  if (DropPrivileges(*orig_) == -1) {
+    // We may still be privileged, so keep the trusted environment.
     LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << StrError(errno);
+    return;
+  }
+  if (saved_env_.has_value()) {
+    RestoreEnv(*saved_env_);
   }
 }
 
