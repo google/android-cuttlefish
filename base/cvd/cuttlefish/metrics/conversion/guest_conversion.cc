@@ -22,6 +22,7 @@
 
 #include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/metrics/external_proto/cf_flags.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_guest.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_metrics_event_v2.pb.h"
@@ -36,6 +37,8 @@ using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishFlags_DataPolicy;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishFlags_GpuMode;
+using logs::proto::wireless::android::cuttlefish::events::
+    CuttlefishFlags_VmmMode;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishGuest;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishGuest_EventType;
@@ -116,6 +119,23 @@ CuttlefishGuest_EventType ConvertDeviceEventType(DeviceEventType event_type) {
   }
 }
 
+CuttlefishFlags_VmmMode ConvertVmmMode(VmmMode vmm_mode) {
+  switch (vmm_mode) {
+    case VmmMode::kUnknown:
+      return CuttlefishFlags_VmmMode::
+          CuttlefishFlags_VmmMode_CUTTLEFISH_GUEST_VMM_TYPE_UNSPECIFIED;
+    case VmmMode::kCrosvm:
+      return CuttlefishFlags_VmmMode::
+          CuttlefishFlags_VmmMode_CUTTLEFISH_GUEST_VMM_TYPE_CROSVM;
+    case VmmMode::kQemu:
+      return CuttlefishFlags_VmmMode::
+          CuttlefishFlags_VmmMode_CUTTLEFISH_GUEST_VMM_TYPE_QEMU;
+    case VmmMode::kGem5:
+      return CuttlefishFlags_VmmMode::
+          CuttlefishFlags_VmmMode_CUTTLEFISH_GUEST_VMM_TYPE_GEM5;
+  }
+}
+
 }  // namespace
 
 void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
@@ -153,6 +173,7 @@ void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
       guest_metrics.flag_metrics.system_image_dir_specified);
   flags.set_vendor_boot_image_specified(
       guest_metrics.flag_metrics.vendor_boot_image_specified);
+  flags.set_vmm_mode(ConvertVmmMode(guest_metrics.flag_metrics.vmm_mode));
 }
 
 }  // namespace cuttlefish
