@@ -1,3 +1,10 @@
+cuttlefish-common (1.57.5) unstable; urgency=medium
+
+  * Revert "Substitute all artifacts when the build has the debian_substitution_marker present."
+  * Substitute all if "media" flag is present
+
+ -- Ram Muthiah <rammuthiah@google.com>  Tue, 29 Sep 2026 23:20:00 +0000
+
 cuttlefish-common (1.57.4) unstable; urgency=medium
 
   * Always launch cvd load devices with --enable_sandbox=false by @Databean in https://github.com/google/android-cuttlefish/pull/3219
