@@ -1161,7 +1161,22 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     // gpu related settings
-    const GpuMode gpu_mode = CF_EXPECT(ConfigureGpuSettings(
+    instance.set_has_vulkan_gfxstream_apex(
+        guest_configs[instance_index].has_vulkan_gfxstream_apex);
+    instance.set_has_vulkan_lavapipe_apex(
+        guest_configs[instance_index].has_vulkan_lavapipe_apex);
+    instance.set_has_vulkan_swiftshader_apex(
+        guest_configs[instance_index].has_vulkan_swiftshader_apex);
+    instance.set_has_vulkan_venus_apex(
+        guest_configs[instance_index].has_vulkan_venus_apex);
+
+#ifdef __APPLE__
+    const GpuMode gpu_mode = CF_EXPECT(
+        CalculateGpuSettings(gpu_mode_values.ForIndex(instance_index)));
+    instance.set_gpu_mode(gpu_mode);
+    instance.set_enable_gpu_vhost_user(false);
+#else
+    const GpuMode gpu_mode = CF_EXPECT(CalculateGpuSettings(
         graphics_availability, gpu_mode_values.ForIndex(instance_index),
         gpu_vhost_user_mode_vec[instance_index],
         gpu_renderer_features_vec[instance_index],
@@ -1169,6 +1184,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         guest_hwui_renderer_vec[instance_index],
         guest_renderer_preload_vec[instance_index], vm_manager_flag.Mode(),
         guest_configs[instance_index], instance));
+#endif
     calculated_gpu_mode_vec[instance_index] = gpu_mode;
 
     instance.set_restart_subprocesses(
