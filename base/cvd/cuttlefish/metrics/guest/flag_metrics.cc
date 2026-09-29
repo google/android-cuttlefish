@@ -24,6 +24,9 @@ namespace cuttlefish {
 Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
                                    const int guest_index) {
   return FlagMetrics{
+      // TODO CJR: replace with `.IsDefaultForIndex(guest_index)`
+      .boot_image_specified = !parsed_flags.boot_image.IsDefault(),
+      .bootloader_specified = !parsed_flags.bootloader.IsDefaultForIndex(),
       .cpus = parsed_flags.cpus.ForIndex(guest_index),
       .daemon = parsed_flags.daemon.ForIndex(guest_index),
       .data_policy = parsed_flags.data_policy.ForIndex(guest_index),
@@ -36,6 +39,7 @@ Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
       .restart_subprocesses =
           parsed_flags.restart_subprocesses.ForIndex(guest_index),
       .system_image_dir_specified = !parsed_flags.system_image_dir.IsDefault(),
+      .vmm_mode = parsed_flags.vm_manager.Mode(),
   };
 }
 
