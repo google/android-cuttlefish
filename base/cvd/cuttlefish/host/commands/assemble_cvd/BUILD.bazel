@@ -679,6 +679,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/config:media",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/result",

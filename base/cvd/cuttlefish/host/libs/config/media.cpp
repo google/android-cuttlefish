@@ -42,6 +42,10 @@ static constexpr char kMediaTypeV4l2Stream[] = "v4l2_stream_proxy";
 
 Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
     const std::string& flag) {
+  if (flag.empty()) {
+    return std::nullopt;
+  }
+
   const std::vector<std::string> parts = absl::StrSplit(flag, ":");
   CF_EXPECT(!parts.empty(), "Invalid media flag: \"" << flag << "\"");
 
@@ -122,8 +126,8 @@ Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
   };
 }
 
-Result<std::vector<CuttlefishConfig::MediaConfig>> ParseMediaConfigsFromArgs(
-    std::vector<std::string>& args) {
+Result<std::vector<std::vector<CuttlefishConfig::MediaConfig>>>
+ParseMediaConfigsFromArgs(std::vector<std::string>& args, int num_instances) {
   std::vector<std::string> repeated_media_flag_values;
   const std::vector<Flag> media_flags = {
       Flag::StringFlag(kMediaFlag)
@@ -134,11 +138,29 @@ Result<std::vector<CuttlefishConfig::MediaConfig>> ParseMediaConfigsFromArgs(
           }),
   };
   CF_EXPECT(ConsumeFlags(media_flags, args), "Failed to parse media flags.");
-  std::vector<CuttlefishConfig::MediaConfig> configs;
-  for (const std::string& param : repeated_media_flag_values) {
-    auto config = CF_EXPECT(ParseMediaConfig(param));
-    if (config) {
-      configs.push_back(*config);
+
+  CF_EXPECT_GT(num_instances, 0,
+               "num_instances must be positive: " << num_instances);
+
+  std::vector<std::vector<CuttlefishConfig::MediaConfig>> configs(
+      num_instances);
+  for (const std::string& flag_val : repeated_media_flag_values) {
+    const std::vector<std::string_view> per_instance =
+        absl::StrSplit(flag_val, ',');
+    CF_EXPECTF(per_instance.size() == static_cast<size_t>(num_instances),
+               "Invalid media flag, number of comma separated values ({}) does "
+               "not match the number of instances ({}) for --media=\"{}\"",
+               per_instance.size(), num_instances, flag_val);
+
+    for (int i = 0; i < num_instances; ++i) {
+      const std::string media_str(per_instance[i]);
+      if (!media_str.empty()) {
+        const std::optional<CuttlefishConfig::MediaConfig> config =
+            CF_EXPECT(ParseMediaConfig(media_str));
+        if (config.has_value()) {
+          configs[i].push_back(*config);
+        }
+      }
     }
   }
   return configs;
