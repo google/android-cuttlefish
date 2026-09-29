@@ -9,6 +9,19 @@ package(
 
 cf_build_test(name = "parser")
 
+cf_cc_test(
+    name = "boot_flags_parser_test",
+    srcs = ["boot_flags_parser_test.cc"],
+    include_cleaner_enabled = False,
+    deps = [
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/flag_parser",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
 cf_cc_library(
     name = "cf_configs_instances",
     srcs = ["cf_configs_instances.cpp"],
@@ -56,6 +69,16 @@ cf_cc_library(
 )
 
 cf_cc_test(
+    name = "config_flags_parser_test",
+    srcs = ["config_flags_parser_test.cc"],
+    include_cleaner_enabled = False,
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_test(
     name = "configs_inheritance_test",
     srcs = ["configs_inheritance_test.cc"],
     include_cleaner_enabled = False,
@@ -63,6 +86,28 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//libbase",
+    ],
+)
+
+cf_cc_test(
+    name = "connectivity_flags_parser_test",
+    srcs = ["connectivity_flags_parser_test.cc"],
+    include_cleaner_enabled = False,
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_test(
+    name = "cvd_load_flags_test",
+    srcs = ["cvd_load_flags_test.cc"],
+    include_cleaner_enabled = False,
+    deps = [
+        "//cuttlefish/flag_parser",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 
@@ -99,7 +144,6 @@ cf_cc_test(
     srcs = ["flags_parser_test.cc"],
     include_cleaner_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
