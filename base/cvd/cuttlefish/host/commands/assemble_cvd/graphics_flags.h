@@ -15,6 +15,13 @@
  */
 #pragma once
 
+#ifdef __APPLE__
+
+#include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
+
+#else
+
 #include <string>
 
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
@@ -24,12 +31,20 @@
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/result/result.h"
 
+#endif
+
 namespace cuttlefish {
 
 gfxstream::proto::GraphicsAvailability
 GetGraphicsAvailabilityWithSubprocessCheck();
 
-Result<GpuMode> ConfigureGpuSettings(
+#ifdef __APPLE__
+
+Result<GpuMode> CalculateGpuSettings(const GpuMode given_gpu_mode);
+
+#else
+
+Result<GpuMode> CalculateGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
     GpuMode gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
     const std::string& gpu_renderer_features_arg,
@@ -38,5 +53,7 @@ Result<GpuMode> ConfigureGpuSettings(
     const std::string& guest_renderer_preload_arg, VmmMode vmm,
     const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance);
+
+#endif
 
 }  // namespace cuttlefish
