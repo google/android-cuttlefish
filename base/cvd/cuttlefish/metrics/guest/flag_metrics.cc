@@ -46,6 +46,7 @@ Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
       .system_image_dir_specified = !parsed_flags.system_image_dir.IsDefault(),
       .vendor_boot_image_specified =
           !parsed_flags.vendor_boot.IsDefaultForIndex(guest_index),
+      .vmm_mode = parsed_flags.vm_manager.Mode(),
   };
 }
 

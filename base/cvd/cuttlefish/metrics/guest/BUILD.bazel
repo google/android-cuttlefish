@@ -19,6 +19,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/libs/config:data_image_policy",
         "//cuttlefish/host/libs/config:gpu_mode",
+        "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/metrics/guest:parsed_flags",
         "//cuttlefish/result",
     ],

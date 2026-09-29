@@ -69,12 +69,12 @@ Result<ParsedFlags> GetParsedFlags() {
   // Depends on ResolveInstanceFiles to set flag globals
   const std::vector<GuestConfig> guest_configs =
       CF_EXPECT(ReadGuestConfig(boot_image, kernel_path, system_image_dir));
-  const VmManagerFlag vm_manager_flag =
+  const VmManagerFlag vm_manager =
       CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs));
 
   return ParsedFlags{
       .bootloader = CF_EXPECT(BootloaderFlag::FromGlobalGflags(
-          guest_configs, system_image_dir, vm_manager_flag)),
+          guest_configs, system_image_dir, vm_manager)),
       .boot_image = boot_image,
       .cpus = CF_EXPECT(CpusFlag::FromGlobalGflags()),
       .daemon = CF_EXPECT(DaemonFlag::FromGlobalGflags()),
@@ -90,6 +90,7 @@ Result<ParsedFlags> GetParsedFlags() {
       .super_image = super_image,
       .system_image_dir = system_image_dir,
       .vendor_boot = vendor_boot,
+      .vm_manager = vm_manager,
   };
 }
 
