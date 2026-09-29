@@ -946,7 +946,22 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
 #endif
 }
 
-Result<GpuMode> ConfigureGpuSettings(
+#ifdef __APPLE__
+
+Result<GpuMode> CalculateGpuSettings(const GpuMode given_gpu_mode) {
+  CF_EXPECT(given_gpu_mode == GpuMode::Auto ||
+            given_gpu_mode == GpuMode::GuestSwiftshader ||
+            given_gpu_mode == GpuMode::DrmVirgl ||
+            given_gpu_mode == GpuMode::None);
+  if (given_gpu_mode == GpuMode::Auto) {
+    return GpuMode::GuestSwiftshader;
+  }
+  return given_gpu_mode;
+}
+
+#else
+
+Result<GpuMode> CalculateGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
     GpuMode gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
     const std::string& gpu_renderer_features_arg,
@@ -955,27 +970,6 @@ Result<GpuMode> ConfigureGpuSettings(
     const std::string& guest_renderer_preload_arg, VmmMode vmm,
     const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
-  instance.set_has_vulkan_gfxstream_apex(
-      guest_config.has_vulkan_gfxstream_apex);
-  instance.set_has_vulkan_lavapipe_apex(guest_config.has_vulkan_lavapipe_apex);
-  instance.set_has_vulkan_swiftshader_apex(
-      guest_config.has_vulkan_swiftshader_apex);
-  instance.set_has_vulkan_venus_apex(guest_config.has_vulkan_venus_apex);
-
-#ifdef __APPLE__
-  (void)graphics_availability;
-  (void)gpu_vhost_user_mode_arg;
-  (void)vmm;
-  (void)guest_config;
-  CF_EXPECT(gpu_mode_arg == GpuMode::Auto ||
-            gpu_mode_arg == GpuMode::GuestSwiftshader ||
-            gpu_mode_arg == GpuMode::DrmVirgl || gpu_mode_arg == GpuMode::None);
-  if (gpu_mode_arg == GpuMode::Auto) {
-    gpu_mode_arg = GpuMode::GuestSwiftshader;
-  }
-  instance.set_gpu_mode(gpu_mode_arg);
-  instance.set_enable_gpu_vhost_user(false);
-#else
   const GpuMode gpu_mode = CF_EXPECT(
       SelectGpuMode(gpu_mode_arg, vmm, guest_config, graphics_availability));
   const bool enable_gpu_vhost_user =
@@ -1026,9 +1020,8 @@ Result<GpuMode> ConfigureGpuSettings(
   instance.set_gpu_mode(gpu_mode);
   instance.set_enable_gpu_vhost_user(enable_gpu_vhost_user);
 
-#endif
-
   return gpu_mode;
 }
+#endif
 
 }  // namespace cuttlefish
