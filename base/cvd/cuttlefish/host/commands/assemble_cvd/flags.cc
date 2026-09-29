@@ -1171,19 +1171,28 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         guest_configs[instance_index].has_vulkan_venus_apex);
 
 #ifdef __APPLE__
-    const GpuMode gpu_mode = CF_EXPECT(
-        CalculateGpuSettings(gpu_mode_values.ForIndex(instance_index)));
+    const GpuMode gpu_mode =
+        CF_EXPECT(SelectGpuMode(gpu_mode_values.ForIndex(instance_index)));
     instance.set_gpu_mode(gpu_mode);
     instance.set_enable_gpu_vhost_user(false);
 #else
-    const GpuMode gpu_mode = CF_EXPECT(CalculateGpuSettings(
-        graphics_availability, gpu_mode_values.ForIndex(instance_index),
-        gpu_vhost_user_mode_vec[instance_index],
-        gpu_renderer_features_vec[instance_index],
-        gpu_context_types_vec[instance_index],
-        guest_hwui_renderer_vec[instance_index],
-        guest_renderer_preload_vec[instance_index], vm_manager_flag.Mode(),
-        guest_configs[instance_index], instance));
+    const GpuMode gpu_mode = CF_EXPECT(SelectGpuMode(
+        gpu_mode_values.ForIndex(instance_index), vm_manager_flag.Mode(),
+        guest_configs[instance_index], gpu_context_types_vec[instance_index],
+        graphics_availability));
+    instance.set_gpu_mode(gpu_mode);
+
+    const bool enable_gpu_vhost_user = CF_EXPECT(SelectGpuVhostUserMode(
+        gpu_mode, gpu_vhost_user_mode_vec[instance_index],
+        vm_manager_flag.Mode()));
+    instance.set_enable_gpu_vhost_user(enable_gpu_vhost_user);
+
+    CF_EXPECT(SelectGpuSettings(graphics_availability, gpu_mode,
+                                gpu_renderer_features_vec[instance_index],
+                                guest_hwui_renderer_vec[instance_index],
+                                guest_renderer_preload_vec[instance_index],
+                                guest_configs[instance_index],
+                                enable_gpu_vhost_user, instance));
 #endif
     calculated_gpu_mode_vec[instance_index] = gpu_mode;
 
