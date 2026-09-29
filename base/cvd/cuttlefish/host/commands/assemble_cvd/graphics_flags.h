@@ -40,18 +40,25 @@ GetGraphicsAvailabilityWithSubprocessCheck();
 
 #ifdef __APPLE__
 
-Result<GpuMode> CalculateGpuSettings(const GpuMode given_gpu_mode);
+Result<GpuMode> SelectGpuMode(GpuMode given_gpu_mode);
 
 #else
 
-Result<GpuMode> CalculateGpuSettings(
+Result<GpuMode> SelectGpuMode(
+    GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
+    const std::string& gpu_context_types,
+    const gfxstream::proto::GraphicsAvailability& graphics_availability);
+
+Result<bool> SelectGpuVhostUserMode(GpuMode gpu_mode,
+                                    const std::string& gpu_vhost_user_mode_arg,
+                                    VmmMode vmm);
+
+Result<void> SelectGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
-    GpuMode gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
-    const std::string& gpu_renderer_features_arg,
-    std::string& gpu_context_types_arg,
+    GpuMode gpu_mode, const std::string& gpu_renderer_features_arg,
     const std::string& guest_hwui_renderer_arg,
-    const std::string& guest_renderer_preload_arg, VmmMode vmm,
-    const GuestConfig& guest_config,
+    const std::string& guest_renderer_preload_arg,
+    const GuestConfig& guest_config, bool enable_gpu_vhost_user,
     CuttlefishConfig::MutableInstanceSpecific& instance);
 
 #endif

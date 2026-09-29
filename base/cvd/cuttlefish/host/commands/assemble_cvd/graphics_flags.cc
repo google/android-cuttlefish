@@ -607,93 +607,6 @@ Result<std::vector<GpuMode>> GetSupportedGpuModeCandidates(
   return supported_candidates;
 }
 
-Result<GpuMode> SelectGpuMode(
-    const GpuMode gpu_mode_arg, VmmMode vmm, const GuestConfig& guest_config,
-    const gfxstream::proto::GraphicsAvailability& graphics_availability) {
-  const CommonState common = {
-      .vmm_mode = vmm,
-      .guest_config = guest_config,
-      .host_info = GetHostInfo(),
-      .graphics_availability = graphics_availability,
-  };
-  if (gpu_mode_arg != GpuMode::Auto) {
-    // User explicitly supplied a mode. Double check the requirements but only
-    // log warnings and respect their choice:
-    if (!CF_EXPECT(GpuModeRequirementsMet(common, gpu_mode_arg))) {
-      LOG(ERROR)
-          << "--gpu_mode=" << GpuModeString(gpu_mode_arg)
-          << " was requested but the prerequisites were not detected "
-             "so the device may not function correctly. Please consider "
-             "switching to --gpu_mode=auto or --gpu_mode=guest_swiftshader.";
-    }
-    return gpu_mode_arg;
-  }
-
-  const std::vector<GpuMode> gpu_mode_candidates =
-      GetGpuModeCandidates(guest_config);
-  VLOG(0) << "Initial GPU mode candidates:";
-  for (size_t i = 0; i < gpu_mode_candidates.size(); i++) {
-    VLOG(0) << "  " << (i + 1) << ": " << GpuModeString(gpu_mode_candidates[i]);
-  }
-  VLOG(0) << "";
-
-  const std::vector<GpuMode> supported_gpu_mode_candidates =
-      CF_EXPECT(GetSupportedGpuModeCandidates(common, gpu_mode_candidates));
-
-  if (supported_gpu_mode_candidates.empty()) {
-    LOG(ERROR) << "Unexpected empty list of candidates...";
-    return GpuMode::GuestSwiftshader;
-  }
-
-  VLOG(0) << "GPU mode candidates with satisfied requirements:";
-  for (size_t i = 0; i < supported_gpu_mode_candidates.size(); i++) {
-    VLOG(0) << "  " << (i + 1) << ": "
-            << GpuModeString(supported_gpu_mode_candidates[i]);
-  }
-  VLOG(0) << "";
-
-  const GpuMode selected_gpu_mode = supported_gpu_mode_candidates[0];
-  VLOG(0) << "GPU auto mode: selecting --gpu_mode=" << selected_gpu_mode;
-  return selected_gpu_mode;
-}
-
-Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
-                                    const std::string& gpu_vhost_user_mode_arg,
-                                    VmmMode vmm) {
-  CF_EXPECT(gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto ||
-            gpu_vhost_user_mode_arg == kGpuVhostUserModeOn ||
-            gpu_vhost_user_mode_arg == kGpuVhostUserModeOff);
-  if (gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto) {
-    if (IsGuestRenderingMode(gpu_mode) || gpu_mode == GpuMode::Venus) {
-      VLOG(0) << "GPU vhost user auto mode: not needed for --gpu_mode="
-              << GpuModeString(gpu_mode) << ". Not enabling vhost user gpu.";
-      return false;
-    }
-
-    if (!VmManagerIsCrosvm(vmm)) {
-      VLOG(0) << "GPU vhost user auto mode: not yet supported with " << vmm
-              << ". Not enabling vhost user gpu.";
-      return false;
-    }
-
-    // Android built ARM host tools seem to be incompatible with host GPU
-    // libraries. Enable vhost user gpu which will run the virtio GPU device
-    // in a separate process with a VMM prebuilt. See b/200592498.
-    const auto host_arch = HostArch();
-    if (host_arch == Arch::Arm64) {
-      VLOG(0) << "GPU vhost user auto mode: detected arm64 host. Enabling "
-                 "vhost user gpu.";
-      return true;
-    }
-
-    VLOG(0) << "GPU vhost user auto mode: not needed. Not enabling vhost "
-               "user gpu.";
-    return false;
-  }
-
-  return gpu_vhost_user_mode_arg == kGpuVhostUserModeOn;
-}
-
 Result<GuestHwuiRenderer> SelectGuestHwuiRenderer(
     const GpuMode gpu_mode, const GuestConfig& guest_config,
     const std::string& guest_hwui_renderer_arg) {
@@ -948,7 +861,7 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
 
 #ifdef __APPLE__
 
-Result<GpuMode> CalculateGpuSettings(const GpuMode given_gpu_mode) {
+Result<GpuMode> SelectGpuMode(const GpuMode given_gpu_mode) {
   CF_EXPECT(given_gpu_mode == GpuMode::Auto ||
             given_gpu_mode == GpuMode::GuestSwiftshader ||
             given_gpu_mode == GpuMode::DrmVirgl ||
@@ -961,29 +874,111 @@ Result<GpuMode> CalculateGpuSettings(const GpuMode given_gpu_mode) {
 
 #else
 
-Result<GpuMode> CalculateGpuSettings(
-    const gfxstream::proto::GraphicsAvailability& graphics_availability,
-    GpuMode gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
-    const std::string& gpu_renderer_features_arg,
-    std::string& gpu_context_types_arg,
-    const std::string& guest_hwui_renderer_arg,
-    const std::string& guest_renderer_preload_arg, VmmMode vmm,
-    const GuestConfig& guest_config,
-    CuttlefishConfig::MutableInstanceSpecific& instance) {
-  const GpuMode gpu_mode = CF_EXPECT(
-      SelectGpuMode(gpu_mode_arg, vmm, guest_config, graphics_availability));
-  const bool enable_gpu_vhost_user =
-      CF_EXPECT(SelectGpuVhostUserMode(gpu_mode, gpu_vhost_user_mode_arg, vmm));
+Result<GpuMode> SelectGpuMode(
+    const GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
+    const std::string& gpu_context_types,
+    const gfxstream::proto::GraphicsAvailability& graphics_availability) {
+  const CommonState common = {
+      .vmm_mode = vmm,
+      .guest_config = guest_config,
+      .host_info = GetHostInfo(),
+      .graphics_availability = graphics_availability,
+  };
+  if (given_gpu_mode != GpuMode::Auto) {
+    // User explicitly supplied a mode. Double check the requirements but only
+    // log warnings and respect their choice:
+    if (!CF_EXPECT(GpuModeRequirementsMet(common, given_gpu_mode))) {
+      LOG(ERROR)
+          << "--gpu_mode=" << GpuModeString(given_gpu_mode)
+          << " was requested but the prerequisites were not detected "
+             "so the device may not function correctly. Please consider "
+             "switching to --gpu_mode=auto or --gpu_mode=guest_swiftshader.";
+    }
+    return given_gpu_mode;
+  }
 
-  if (gpu_mode == GpuMode::Custom) {
+  const std::vector<GpuMode> gpu_mode_candidates =
+      GetGpuModeCandidates(guest_config);
+  VLOG(0) << "Initial GPU mode candidates:";
+  for (size_t i = 0; i < gpu_mode_candidates.size(); i++) {
+    VLOG(0) << "  " << (i + 1) << ": " << GpuModeString(gpu_mode_candidates[i]);
+  }
+  VLOG(0) << "";
+
+  const std::vector<GpuMode> supported_gpu_mode_candidates =
+      CF_EXPECT(GetSupportedGpuModeCandidates(common, gpu_mode_candidates));
+
+  if (supported_gpu_mode_candidates.empty()) {
+    LOG(ERROR) << "Unexpected empty list of candidates...";
+    return GpuMode::GuestSwiftshader;
+  }
+
+  VLOG(0) << "GPU mode candidates with satisfied requirements:";
+  for (size_t i = 0; i < supported_gpu_mode_candidates.size(); i++) {
+    VLOG(0) << "  " << (i + 1) << ": "
+            << GpuModeString(supported_gpu_mode_candidates[i]);
+  }
+  VLOG(0) << "";
+
+  const GpuMode selected_gpu_mode = supported_gpu_mode_candidates[0];
+  VLOG(0) << "GPU auto mode: selecting --gpu_mode=" << selected_gpu_mode;
+
+  if (selected_gpu_mode == GpuMode::Custom) {
     std::vector<std::string> requested_types =
-        absl::StrSplit(gpu_context_types_arg, ':');
+        absl::StrSplit(gpu_context_types, ':');
     for (const std::string& requested : requested_types) {
       CF_EXPECT(kSupportedGpuContexts.count(requested) == 1,
                 "unsupported context type: " + requested);
     }
   }
 
+  return selected_gpu_mode;
+}
+
+Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
+                                    const std::string& gpu_vhost_user_mode_arg,
+                                    VmmMode vmm) {
+  CF_EXPECT(gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto ||
+            gpu_vhost_user_mode_arg == kGpuVhostUserModeOn ||
+            gpu_vhost_user_mode_arg == kGpuVhostUserModeOff);
+  if (gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto) {
+    if (IsGuestRenderingMode(gpu_mode) || gpu_mode == GpuMode::Venus) {
+      VLOG(0) << "GPU vhost user auto mode: not needed for --gpu_mode="
+              << GpuModeString(gpu_mode) << ". Not enabling vhost user gpu.";
+      return false;
+    }
+
+    if (!VmManagerIsCrosvm(vmm)) {
+      VLOG(0) << "GPU vhost user auto mode: not yet supported with " << vmm
+              << ". Not enabling vhost user gpu.";
+      return false;
+    }
+
+    // Android built ARM host tools seem to be incompatible with host GPU
+    // libraries. Enable vhost user gpu which will run the virtio GPU device
+    // in a separate process with a VMM prebuilt. See b/200592498.
+    const auto host_arch = HostArch();
+    if (host_arch == Arch::Arm64) {
+      VLOG(0) << "GPU vhost user auto mode: detected arm64 host. Enabling "
+                 "vhost user gpu.";
+      return true;
+    }
+
+    VLOG(0) << "GPU vhost user auto mode: not needed. Not enabling vhost "
+               "user gpu.";
+    return false;
+  }
+
+  return gpu_vhost_user_mode_arg == kGpuVhostUserModeOn;
+}
+
+Result<void> SelectGpuSettings(
+    const gfxstream::proto::GraphicsAvailability& graphics_availability,
+    const GpuMode gpu_mode, const std::string& gpu_renderer_features_arg,
+    const std::string& guest_hwui_renderer_arg,
+    const std::string& guest_renderer_preload_arg,
+    const GuestConfig& guest_config, const bool enable_gpu_vhost_user,
+    CuttlefishConfig::MutableInstanceSpecific& instance) {
   const auto angle_features =
       CF_EXPECT(GetNeededAngleFeatures(gpu_mode, graphics_availability));
   instance.set_gpu_angle_feature_overrides_enabled(
@@ -1016,11 +1011,7 @@ Result<GpuMode> CalculateGpuSettings(
                                 gpu_renderer_features_arg, guest_config,
                                 graphics_availability, instance));
   }
-
-  instance.set_gpu_mode(gpu_mode);
-  instance.set_enable_gpu_vhost_user(enable_gpu_vhost_user);
-
-  return gpu_mode;
+  return {};
 }
 #endif
 
