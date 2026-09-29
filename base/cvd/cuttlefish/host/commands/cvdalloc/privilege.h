@@ -19,7 +19,9 @@
 #include <unistd.h>
 
 #include <optional>
+#include <string>
 #include <string_view>
+#include <vector>
 
 #include "cuttlefish/result/result_type.h"
 
@@ -43,6 +45,8 @@ class ScopedPrivileges {
   explicit ScopedPrivileges(uid_t orig);
 
   std::optional<uid_t> orig_;
+  // The environment from before Elevate() replaced it, if it did.
+  std::optional<std::vector<std::string>> saved_env_;
 };
 
 }  // namespace cuttlefish
