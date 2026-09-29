@@ -101,8 +101,9 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
   CF_EXPECT(file_descriptor >= 0);
 
   google::protobuf::io::FileInputStream file_stream(file_descriptor);
-  const auto result =
-      google::protobuf::TextFormat::Parse(&file_stream, &proto_config);
+  google::protobuf::TextFormat::Parser parser;
+  parser.AllowUnknownField(true);
+  const bool result = parser.Parse(&file_stream, &proto_config);
   CF_EXPECT(close(file_descriptor) == 0);
   CF_EXPECT(result == true);
 
