@@ -85,7 +85,7 @@ class DataViewer {
     CF_EXPECTF(fd->Truncate(0), "Failed to truncate fd: {}", fd->StrError());
     CF_EXPECTF(fd->LSeek(0, SEEK_SET) >= 0, "Failed to seek to 0: {}",
                fd->StrError());
-    CF_EXPECT(StoreData(fd, std::move(data)));
+    CF_EXPECT(StoreData(fd, data));
     return res;
   }
 
@@ -96,7 +96,7 @@ class DataViewer {
 
   Result<cvd::PersistentData> LoadData(SharedFD fd) const;
 
-  Result<void> StoreData(SharedFD fd, cvd::PersistentData data);
+  Result<void> StoreData(SharedFD fd, const cvd::PersistentData& data);
 
   /**
    * Utility class to prevent deadlocks due to function reentry.
