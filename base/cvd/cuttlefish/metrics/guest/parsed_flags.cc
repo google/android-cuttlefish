@@ -61,12 +61,12 @@ Result<ParsedFlags> GetParsedFlags() {
   // Depends on ResolveInstanceFiles to set flag globals
   std::vector<GuestConfig> guest_configs =
       CF_EXPECT(ReadGuestConfig(boot_image, kernel_path, system_image_dir));
-  VmManagerFlag vm_manager_flag =
+  VmManagerFlag vm_manager =
       CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs));
 
   return ParsedFlags{
       .bootloader = CF_EXPECT(BootloaderFlag::FromGlobalGflags(
-          guest_configs, system_image_dir, vm_manager_flag)),
+          guest_configs, system_image_dir, vm_manager)),
       .boot_image = CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds)),
       .cpus = CF_EXPECT(CpusFlag::FromGlobalGflags()),
       .daemon = CF_EXPECT(DaemonFlag::FromGlobalGflags()),
@@ -79,6 +79,7 @@ Result<ParsedFlags> GetParsedFlags() {
       .restart_subprocesses =
           CF_EXPECT(RestartSubprocessesFlag::FromGlobalGflags()),
       .system_image_dir = system_image_dir,
+      .vm_manager = vm_manager,
   };
 }
 

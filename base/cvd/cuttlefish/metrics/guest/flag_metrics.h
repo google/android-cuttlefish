@@ -20,6 +20,7 @@
 
 #include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/metrics/guest/parsed_flags.h"
 #include "cuttlefish/result/result.h"
 
@@ -37,6 +38,7 @@ struct FlagMetrics {
   int memory_mb;
   bool restart_subprocesses;
   bool system_image_dir_specified;
+  VmmMode vmm_mode;
 };
 
 Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
