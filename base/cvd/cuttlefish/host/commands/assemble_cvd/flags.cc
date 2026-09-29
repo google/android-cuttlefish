@@ -1382,10 +1382,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_enable_tap_devices(enable_tap_devices_vec[instance_index]);
 
-    auto media_configs_bindings = injector.getMultibindings<MediaConfigs>();
+    const auto media_configs_bindings =
+        injector.getMultibindings<MediaConfigs>();
     CF_EXPECT_EQ(media_configs_bindings.size(), 1,
                  "Expected a single binding?");
-    auto media_configs = media_configs_bindings[0]->GetConfigs();
+    const std::vector<CuttlefishConfig::MediaConfig>& media_configs =
+        media_configs_bindings[0]->GetConfigs(instance_index);
     instance.set_media_configs(media_configs);
 
     instance_index++;

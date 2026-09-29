@@ -15,9 +15,12 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/media.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <ostream>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
@@ -31,6 +34,7 @@
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/config/media.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/result/result.h"
@@ -42,20 +46,29 @@ class MediaConfigsImpl : public MediaConfigs {
  public:
   INJECT(MediaConfigsImpl()) {}
 
-  const std::vector<CuttlefishConfig::MediaConfig>& GetConfigs()
+  const std::vector<CuttlefishConfig::MediaConfig>& GetConfigs(
+      size_t instance_index) const override {
+    if (instance_index < media_configs_.size()) {
+      return media_configs_[instance_index];
+    }
+    static const std::vector<CuttlefishConfig::MediaConfig> kEmptyConfigs;
+    return kEmptyConfigs;
+  }
+
+  const std::vector<std::vector<CuttlefishConfig::MediaConfig>>& GetAllConfigs()
       const override {
     return media_configs_;
   }
 
-  void SetConfigs(
-      const std::vector<CuttlefishConfig::MediaConfig>& configs) override {
+  void SetConfigs(const std::vector<std::vector<CuttlefishConfig::MediaConfig>>&
+                      configs) override {
     media_configs_ = configs;
   }
 
   std::string Name() const override { return "MediaConfigsImpl"; }
 
  private:
-  std::vector<CuttlefishConfig::MediaConfig> media_configs_;
+  std::vector<std::vector<CuttlefishConfig::MediaConfig>> media_configs_;
 };
 
 }  // namespace
@@ -80,7 +93,10 @@ class MediaConfigsFlagImpl : public MediaConfigsFlag {
   }
 
   Result<void> Process(std::vector<std::string>& args) override {
-    media_configs_.SetConfigs(CF_EXPECT(ParseMediaConfigsFromArgs(args)));
+    const std::vector<int32_t> instance_nums =
+        CF_EXPECT(InstanceNumsCalculator().FromFlags(args).Calculate());
+    media_configs_.SetConfigs(
+        CF_EXPECT(ParseMediaConfigsFromArgs(args, instance_nums.size())));
     return {};
   }
 
@@ -113,36 +129,52 @@ class MediaConfigsFragmentImpl : public MediaConfigsFragment {
   std::string Name() const override { return "MediaConfigsFragmentImpl"; }
 
   Json::Value Serialize() const override {
-    Json::Value configs_json(Json::arrayValue);
-    for (const auto& config : configs_.GetConfigs()) {
-      Json::Value json(Json::objectValue);
-      json[kType] = static_cast<int>(config.type);
-      json[kLensFacing] = config.lens_facing;
-      configs_json.append(json);
+    Json::Value instances_json(Json::arrayValue);
+    for (const std::vector<CuttlefishConfig::MediaConfig>& instance_configs :
+         configs_.GetAllConfigs()) {
+      Json::Value configs_json(Json::arrayValue);
+      for (const CuttlefishConfig::MediaConfig& config : instance_configs) {
+        Json::Value json(Json::objectValue);
+        json[kType] = static_cast<int>(config.type);
+        json[kLensFacing] = config.lens_facing;
+        configs_json.append(json);
+      }
+      instances_json.append(configs_json);
     }
-    return configs_json;
+    Json::Value root(Json::objectValue);
+    root[kMediaConfigs] = instances_json;
+    return root;
   }
 
   bool Deserialize(const Json::Value& json) override {
-    if (!json.isMember(kMediaConfigs)) {
+    const Json::Value& configs_json =
+        json.isMember(kMediaConfigs) ? json[kMediaConfigs] : json;
+    if (!configs_json.isArray()) {
       LOG(ERROR) << "Invalid value for " << kMediaConfigs;
       return false;
     }
 
-    const Json::Value& configs_json = json[kMediaConfigs];
-
-    std::vector<CuttlefishConfig::MediaConfig> configs;
-    for (auto& json : configs_json) {
-      CuttlefishConfig::MediaConfig config = {};
-      config.type =
-          static_cast<CuttlefishConfig::MediaType>(json[kType].asInt());
-      if (json.isMember(kLensFacing)) {
-        config.lens_facing = json[kLensFacing].asString();
+    std::vector<std::vector<CuttlefishConfig::MediaConfig>> all_configs;
+    for (const auto& instance_json : configs_json) {
+      if (!instance_json.isArray()) {
+        LOG(ERROR) << "Invalid instance value for " << kMediaConfigs
+                   << ", expected array of devices";
+        return false;
       }
-      configs.emplace_back(config);
+      std::vector<CuttlefishConfig::MediaConfig> instance_configs;
+      for (const auto& item : instance_json) {
+        CuttlefishConfig::MediaConfig config = {};
+        config.type =
+            static_cast<CuttlefishConfig::MediaType>(item[kType].asInt());
+        if (item.isMember(kLensFacing)) {
+          config.lens_facing = item[kLensFacing].asString();
+        }
+        instance_configs.emplace_back(config);
+      }
+      all_configs.emplace_back(std::move(instance_configs));
     }
 
-    configs_.SetConfigs(configs);
+    configs_.SetConfigs(all_configs);
     return true;
   }
 

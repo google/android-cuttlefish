@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -469,5 +469,16 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "media_test",
+    srcs = ["media_test.cpp"],
+    deps = [
+        ":cuttlefish_config",
+        ":media",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
     ],
 )

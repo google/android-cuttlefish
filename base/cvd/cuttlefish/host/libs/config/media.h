@@ -50,7 +50,7 @@ constexpr const char kMediaHelp[] =
 Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
     const std::string& flag);
 
-Result<std::vector<CuttlefishConfig::MediaConfig>> ParseMediaConfigsFromArgs(
-    std::vector<std::string>& args);
+Result<std::vector<std::vector<CuttlefishConfig::MediaConfig>>>
+ParseMediaConfigsFromArgs(std::vector<std::string>& args, int num_instances);
 
 }  // namespace cuttlefish
