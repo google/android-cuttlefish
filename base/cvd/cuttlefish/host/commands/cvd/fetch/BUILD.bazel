@@ -10,27 +10,6 @@ package(
 cf_build_test(name = "fetch_build_test")
 
 cf_cc_library(
-    name = "auto_login",
-    srcs = [
-        "auto_login.cc",
-    ],
-    hdrs = [
-        "auto_login.h",
-    ],
-    include_cleaner_enabled = False,
-    deps = [
-        "//cuttlefish/common/libs/utils:is_google_corp",
-        "//cuttlefish/files:file_exists",
-        "//cuttlefish/host/commands/cvd/fetch:build_api_credentials",
-        "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
-        "//cuttlefish/host/libs/web:oauth2_consent",
-        "//cuttlefish/process:command",
-        "//cuttlefish/process:managed_stdio",
-        "//cuttlefish/result",
-    ],
-)
-
-cf_cc_library(
     name = "build_api_credentials",
     srcs = [
         "build_api_credentials.cc",
@@ -45,6 +24,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
+        "//cuttlefish/host/commands/cvd/fetch:luci_credential_helper_source",
         "//cuttlefish/host/libs/web:credential_source",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/result",
@@ -323,6 +303,26 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/libs/web:android_build_string",
+    ],
+)
+
+cf_cc_library(
+    name = "luci_credential_helper_source",
+    srcs = [
+        "luci_credential_helper_source.cc",
+    ],
+    hdrs = [
+        "luci_credential_helper_source.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/process:command",
+        "//cuttlefish/process:managed_stdio",
+        "//cuttlefish/result",
+        "@jsoncpp",
     ],
 )
 
