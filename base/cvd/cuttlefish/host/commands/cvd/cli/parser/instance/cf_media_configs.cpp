@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+#include "fmt/format.h"
+
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/result/result.h"
@@ -45,11 +47,11 @@ std::string MediaDeviceToFlagValue(const MediaDevice& device) {
     res = "v4l2_proxy";
   } else if (device.has_v4l2_stream_proxy()) {
     const V4l2StreamProxy& v4l2_stream_proxy = device.v4l2_stream_proxy();
-    res = "v4l2_stream_proxy";
-    res += ":input_path=" + v4l2_stream_proxy.input_path();
-    res += ":input_width=" + std::to_string(v4l2_stream_proxy.input_width());
-    res += ":input_height=" + std::to_string(v4l2_stream_proxy.input_height());
-    res += ":input_fps=" + v4l2_stream_proxy.input_fps();
+    res = fmt::format(
+        "v4l2_stream_proxy:input_path={}:input_width={}:input_height={}:"
+        "input_fps={}",
+        v4l2_stream_proxy.input_path(), v4l2_stream_proxy.input_width(),
+        v4l2_stream_proxy.input_height(), v4l2_stream_proxy.input_fps());
   }
   if (device.has_lens_facing()) {
     res += ":lens_facing=" + device.lens_facing();
