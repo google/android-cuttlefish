@@ -237,6 +237,8 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("ap_composite_gpt_footer.img");
   preserving.insert("ap_composite_gpt_header.img");
   preserving.insert("ap_overlay.img");
+  preserving.insert("metadata");
+  preserving.insert("misc");
   preserving.insert("os_composite_disk_config.txt");
   preserving.insert("os_composite_gpt_header.img");
   preserving.insert("os_composite_gpt_footer.img");
