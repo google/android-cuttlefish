@@ -479,6 +479,179 @@ TEST(FlagsParserTest, ParseMediaV4l2Proxy) {
       << "media flag is missing or wrongly formatted";
 }
 
+TEST(FlagsParserTest, ParseMediaTwoInstancesBothWithDevices) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_emulated_camera_splane": {},
+                "lens_facing": "BACK"
+              }
+            ]
+          }
+        },
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_emulated_camera_splane": {},
+                "lens_facing": "FRONT"
+              }
+            ]
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+
+  const Result<std::vector<std::string>> serialized_data =
+      LaunchCvdParserTester(json_configs);
+
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"
+                         "v4l2_emulated_camera_splane:lens_facing=FRONT"))
+      << "media flag is missing or wrongly formatted";
+}
+
+TEST(FlagsParserTest, ParseMediaTwoInstancesMultipleRepeatedDevices) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_emulated_camera_splane": {},
+                "lens_facing": "FRONT"
+              },
+              {
+                "v4l2_emulated_camera_splane": {},
+                "lens_facing": "BACK"
+              }
+            ]
+          }
+        },
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_emulated_camera_splane": {},
+                "lens_facing": "FRONT"
+              },
+              {
+                "v4l2_emulated_camera_splane": {},
+                "lens_facing": "BACK"
+              }
+            ]
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+
+  const Result<std::vector<std::string>> serialized_data =
+      LaunchCvdParserTester(json_configs);
+
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(
+      FindConfig(*serialized_data,
+                 "--media=v4l2_emulated_camera_splane:lens_facing=FRONT,"
+                 "v4l2_emulated_camera_splane:lens_facing=FRONT"))
+      << "First media flag is missing or wrongly formatted";
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"
+                         "v4l2_emulated_camera_splane:lens_facing=BACK"))
+      << "Second media flag is missing or wrongly formatted";
+}
+
+TEST(FlagsParserTest, ParseMediaTwoInstancesOnlyFirstHasDevice) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_emulated_camera_splane": {},
+                "lens_facing": "BACK"
+              }
+            ]
+          }
+        },
+        {
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+
+  const Result<std::vector<std::string>> serialized_data =
+      LaunchCvdParserTester(json_configs);
+
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(
+      FindConfig(*serialized_data,
+                 "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"))
+      << "media flag is missing or wrongly formatted";
+}
+
+TEST(FlagsParserTest, ParseMediaTwoInstancesOnlySecondHasDevice) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+        },
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_emulated_camera_splane": {},
+                "lens_facing": "FRONT"
+              }
+            ]
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+
+  const Result<std::vector<std::string>> serialized_data =
+      LaunchCvdParserTester(json_configs);
+
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(
+      FindConfig(*serialized_data,
+                 "--media=,v4l2_emulated_camera_splane:lens_facing=FRONT"))
+      << "media flag is missing or wrongly formatted";
+}
+
 TEST(ConnectivityFlagsParserTest, ParseModemSimulatorSimTypeValidInt) {
   const char* test_string = R""""(
 {
