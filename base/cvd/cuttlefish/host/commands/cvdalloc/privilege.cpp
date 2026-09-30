@@ -15,13 +15,13 @@
  */
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 
-#include <elf.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
 #if defined(__linux__)
+#include <elf.h>
 #include <linux/capability.h>
 #include <linux/prctl.h>
 #include <linux/xattr.h>
@@ -31,6 +31,7 @@
 #include <sys/xattr.h>
 #endif
 
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -170,29 +171,28 @@ namespace {
 
 constexpr char kTrustedPath[] = "/usr/sbin:/usr/bin:/sbin:/bin";
 
-std::vector<std::string> CopyEnv() {
-  std::vector<std::string> env;
+std::map<std::string, std::string> CopyEnv() {
+  std::vector<std::string> names;
   for (char** var = environ; var != nullptr && *var != nullptr; ++var) {
-    env.emplace_back(*var);
+    std::string_view entry(*var);
+    names.emplace_back(entry.substr(0, entry.find('=')));
+  }
+  std::map<std::string, std::string> env;
+  for (const std::string& name : names) {
+    const char* value = getenv(name.c_str());
+    if (value != nullptr) {
+      env.emplace(name, value);
+    }
   }
   return env;
 }
 
-void RestoreEnv(const std::vector<std::string>& env) {
-  clearenv();
-  for (const std::string& var : env) {
-    size_t eq = var.find('=');
-    if (eq != std::string::npos) {
-      // Don't overwrite, so the first of any duplicates wins, as in getenv().
-      setenv(var.substr(0, eq).c_str(), var.c_str() + eq + 1,
-             /*overwrite=*/0);
-    }
+void RestoreEnv(const std::map<std::string, std::string>& env) {
+  for (const auto& [name, value] : CopyEnv()) {
+    unsetenv(name.c_str());
   }
-  if (environ == nullptr) {
-    // clearenv() leaves environ null if nothing was set again, which callers
-    // like Command don't expect. Leave it pointing at an empty list instead.
-    static char* empty_env[] = {nullptr};
-    environ = empty_env;
+  for (const auto& [name, value] : env) {
+    setenv(name.c_str(), value.c_str(), /*overwrite=*/1);
   }
 }
 
