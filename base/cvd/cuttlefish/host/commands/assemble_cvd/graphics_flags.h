@@ -44,6 +44,23 @@ Result<GpuMode> SelectGpuMode(GpuMode given_gpu_mode);
 
 #else
 
+struct VhostUserGpuHostRendererFeatures {
+  // If true, host Virtio GPU blob resources will be allocated with
+  // external memory and exported file descriptors will be shared
+  // with the VMM for mapping resources into the guest address space.
+  bool external_blob = false;
+
+  // If true, host Virtio GPU blob resources will be allocated with
+  // shmem and exported file descriptors will be shared with the VMM
+  // for mapping resources into the guest address space.
+  //
+  // This is an extension of the above external_blob that allows the
+  // VMM to map resources without graphics API support but requires
+  // additional features (VK_EXT_external_memory_host) from the GPU
+  // driver and is potentially less performant.
+  bool system_blob = false;
+};
+
 Result<GpuMode> SelectGpuMode(
     GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
     const std::string& gpu_context_types,
@@ -53,12 +70,16 @@ Result<bool> SelectGpuVhostUserMode(GpuMode gpu_mode,
                                     const std::string& gpu_vhost_user_mode_arg,
                                     VmmMode vmm);
 
+Result<VhostUserGpuHostRendererFeatures>
+GetNeededVhostUserGpuHostRendererFeatures(
+    GpuMode mode, const ::gfxstream::proto::GraphicsAvailability& availability);
+
 Result<void> SelectGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
     GpuMode gpu_mode, const std::string& gpu_renderer_features_arg,
     const std::string& guest_hwui_renderer_arg,
     const std::string& guest_renderer_preload_arg,
-    const GuestConfig& guest_config, bool enable_gpu_vhost_user,
+    const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance);
 
 #endif
