@@ -1,3 +1,9 @@
+cuttlefish-common (1.57.5) unstable; urgency=medium
+
+  * Fix repeated snapshot launches
+
+ -- Cody Schuffelen <schuffelen@google.com>  Tue, 29 Sep 2026 18:36:56 -0700
+
 cuttlefish-common (1.57.4) unstable; urgency=medium
 
   * Always launch cvd load devices with --enable_sandbox=false by @Databean in https://github.com/google/android-cuttlefish/pull/3219
