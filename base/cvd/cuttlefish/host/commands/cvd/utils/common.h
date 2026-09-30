@@ -42,6 +42,8 @@ std::string PerUserDir();
 
 std::string PerUserCacheDir();
 
+std::string RoCacheDir();
+
 std::string InstanceDatabasePath();
 
 std::string InstanceLocksPath();

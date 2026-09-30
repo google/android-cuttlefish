@@ -47,13 +47,17 @@ struct CachingPaths {
   std::string cache_backup_artifact;
 };
 
+std::string CacheDir(const std::string& cache_base, const Build& build) {
+  const auto [id, target] = GetBuildIdAndTarget(build);
+  return fmt::format("{}/{}/{}", cache_base, id, target);
+}
+
 Result<CachingPaths> ConstructCachePaths(
     const std::string& cache_base, const Build& build,
     const std::string& target_directory, const std::string& artifact,
     const std::string& backup_artifact = "") {
-  const auto [id, target] = GetBuildIdAndTarget(build);
   auto result = CachingPaths{
-      .build_cache = fmt::format("{}/{}/{}", cache_base, id, target),
+      .build_cache = CacheDir(cache_base, build),
       .target_artifact = ConstructTargetFilepath(target_directory, artifact),
   };
   result.cache_artifact = ConstructTargetFilepath(result.build_cache, artifact);
@@ -84,8 +88,11 @@ bool IsInCache(const std::string& filepath) {
 }  // namespace
 
 CachingBuildApi::CachingBuildApi(BuildApi& build_api,
-                                 std::string cache_base_path)
-    : build_api_(build_api), cache_base_path_(std::move(cache_base_path)) {};
+                                 std::string cache_base_path,
+                                 std::string ro_cache_base_path)
+    : build_api_(build_api),
+      cache_base_path_(std::move(cache_base_path)),
+      ro_cache_base_path_(std::move(ro_cache_base_path)) {};
 
 Result<Build> CachingBuildApi::GetBuild(const BuildString& build_string) {
   return CF_EXPECT(build_api_.GetBuild(build_string));
@@ -94,6 +101,20 @@ Result<Build> CachingBuildApi::GetBuild(const BuildString& build_string) {
 Result<std::string> CachingBuildApi::DownloadFile(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name) {
+  const std::string ro_artifact = ConstructTargetFilepath(
+      CacheDir(ro_cache_base_path_, build), artifact_name);
+  if (IsInCache(ro_artifact)) {
+    const std::string target_artifact =
+        ConstructTargetFilepath(target_directory, artifact_name);
+    CF_EXPECT(EnsureDirectoryExists(android::base::Dirname(target_artifact)));
+    Result<std::string> result =
+        LinkOrCopy(ro_artifact, target_artifact, kOverwriteExistingFile);
+    if (result.has_value()) {
+      return result;
+    }
+    /* Failed link or copy; fallback to downloading into rw cache. */
+  }
+
   const auto paths = CF_EXPECT(ConstructCachePaths(
       cache_base_path_, build, target_directory, artifact_name));
   if (!IsInCache(paths.cache_artifact)) {
