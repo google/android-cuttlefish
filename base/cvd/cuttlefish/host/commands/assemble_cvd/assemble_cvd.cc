@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -34,7 +33,6 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/str_split.h"
 #include "fmt/format.h"
 #include "fruit/component.h"
 #include "fruit/injector.h"
@@ -101,7 +99,6 @@
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
-#include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/symlink.h"
@@ -570,27 +567,6 @@ fruit::Component<> FlagsComponent(SystemImageDirFlag* system_image_dir) {
       .install(MediaConfigsFragmentComponent);
 }
 
-Result<void> CheckNoTTY() {
-  int tty = isatty(0);
-  int error_num = errno;
-  CF_EXPECT(tty == 0,
-            "stdin was a tty, expected to be passed the output of a "
-            "previous stage. Did you mean to run launch_cvd?");
-  CF_EXPECT(error_num != EBADF,
-            "stdin was not a valid file descriptor, expected to be "
-            "passed the output of launch_cvd. Did you mean to run launch_cvd?");
-  return {};
-}
-
-Result<std::vector<std::string>> ReadInputFiles() {
-  auto input_fd = SharedFD::Dup(0);
-  CF_EXPECTF(input_fd->IsOpen(), "Failed to dup stdin: {}",
-             input_fd->StrError());
-  const std::string input_files_str =
-      CF_EXPECT(ReadToString(*input_fd), "Failed to read input files");
-  return absl::StrSplit(input_files_str, "\n");
-}
-
 Result<AndroidBuilds> FindAndroidBuilds(
     const SystemImageDirFlag& system_image_dir,
     const FetcherConfigs& fetcher_configs) {
@@ -614,12 +590,6 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   VLOG(0) << "received flags: "
           << absl::StrJoin(std::vector<std::string>(argv + 1, argv + argc),
                            " ");
-
-  CF_EXPECT(CheckNoTTY());
-
-  // Read everything that cvd_internal_start writes, but ignore it since
-  // fetcher_config.json will be searched for in the system image directory.
-  (void)CF_EXPECT(ReadInputFiles());
 
   std::vector<std::string> args(argv + 1, argv + argc);
 
