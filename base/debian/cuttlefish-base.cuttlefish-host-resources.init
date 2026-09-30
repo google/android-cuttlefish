@@ -245,6 +245,9 @@ destroy_interface() {
 create_bridged_interfaces() {
     if [ "${create_bridges}" = "1" ]; then
         ip link add name "${2}" type bridge forward_delay 0 stp_state 0
+        ip link show "${2}-dummy" >/dev/null 2>&1 || ip link add name "${2}-dummy" type dummy
+        ip link set dev "${2}-dummy" master "${2}"
+        ip link set dev "${2}-dummy" up
         ip link set dev "${2}" up
 
         echo 0 > /proc/sys/net/ipv6/conf/${2}/disable_ipv6
@@ -319,6 +322,8 @@ destroy_bridged_interfaces() {
         destroy_tap "${tap}"
     done
     if [ "${create_bridges}" = "1" ]; then
+        ip link set dev "${2}-dummy" down 2>/dev/null || true
+        ip link delete "${2}-dummy" 2>/dev/null || true
         ip link set dev "${2}" down
         ip link delete "${2}"
     fi
