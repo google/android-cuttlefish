@@ -1,4 +1,5 @@
-FROM mirror.gcr.io/library/debian:bookworm-20250811 AS base
+ARG BASE_IMAGE=mirror.gcr.io/library/debian:bookworm-20250811
+FROM ${BASE_IMAGE} AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 

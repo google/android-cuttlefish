@@ -30,9 +30,15 @@ runs:
         IMAGE_OPT="-e container_image_name=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:${INPUTS_IMAGE_VERSION}"
       fi
 
+      # Build cuttlefish-podcvd package with Debian 13 (Trixie)
+      sudo docker build --file "tools/buildutils/cw/Containerfile" \
+        --build-arg BASE_IMAGE=mirror.gcr.io/library/debian:13 \
+        --tag "android-cuttlefish-build-trixie" .
+      sudo docker run ${IMAGE_OPT} -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build-trixie container
+
+      # Build other packages with Debian 12 (Bookworm)
       sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .
       sudo docker run -v=$PWD:/mnt/build -w /mnt/build -v=$HOME/bazel-disk-cache:/root/bazel-disk-cache android-cuttlefish-build base -d /root/bazel-disk-cache
-      # sudo docker run ${IMAGE_OPT} -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build container
       sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build frontend
       sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build cuttlefish-integration-gigabyte-arm64
     shell: bash
