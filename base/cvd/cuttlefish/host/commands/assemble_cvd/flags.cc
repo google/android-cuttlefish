@@ -1187,12 +1187,23 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         vm_manager_flag.Mode()));
     instance.set_enable_gpu_vhost_user(enable_gpu_vhost_user);
 
+    if (enable_gpu_vhost_user) {
+      const VhostUserGpuHostRendererFeatures gpu_vhost_user_features =
+          CF_EXPECT(GetNeededVhostUserGpuHostRendererFeatures(
+              gpu_mode, graphics_availability));
+      instance.set_enable_gpu_external_blob(
+          gpu_vhost_user_features.external_blob);
+      instance.set_enable_gpu_system_blob(gpu_vhost_user_features.system_blob);
+    } else {
+      instance.set_enable_gpu_external_blob(false);
+      instance.set_enable_gpu_system_blob(false);
+    }
+
     CF_EXPECT(SelectGpuSettings(graphics_availability, gpu_mode,
                                 gpu_renderer_features_vec[instance_index],
                                 guest_hwui_renderer_vec[instance_index],
                                 guest_renderer_preload_vec[instance_index],
-                                guest_configs[instance_index],
-                                enable_gpu_vhost_user, instance));
+                                guest_configs[instance_index], instance));
 #endif
     calculated_gpu_mode_vec[instance_index] = gpu_mode;
 

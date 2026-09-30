@@ -464,60 +464,6 @@ Result<AngleFeatureOverrides> GetNeededAngleFeatures(
   };
 }
 
-struct VhostUserGpuHostRendererFeatures {
-  // If true, host Virtio GPU blob resources will be allocated with
-  // external memory and exported file descriptors will be shared
-  // with the VMM for mapping resources into the guest address space.
-  bool external_blob = false;
-
-  // If true, host Virtio GPU blob resources will be allocated with
-  // shmem and exported file descriptors will be shared with the VMM
-  // for mapping resources into the guest address space.
-  //
-  // This is an extension of the above external_blob that allows the
-  // VMM to map resources without graphics API support but requires
-  // additional features (VK_EXT_external_memory_host) from the GPU
-  // driver and is potentially less performant.
-  bool system_blob = false;
-};
-
-CF_UNUSED_ON_MACOS
-Result<VhostUserGpuHostRendererFeatures>
-GetNeededVhostUserGpuHostRendererFeatures(
-    GpuMode mode,
-    const ::gfxstream::proto::GraphicsAvailability& availability) {
-  VhostUserGpuHostRendererFeatures features = {};
-
-  // No features needed for guest rendering.
-  if (mode == GpuMode::GuestSwiftshader) {
-    return features;
-  }
-
-  // For any passthrough graphics mode, external blob is needed for sharing
-  // buffers between the vhost-user-gpu VMM process and the main VMM process.
-  features.external_blob = true;
-
-  // Prebuilt SwiftShader includes VK_EXT_external_memory_host.
-  if (mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
-    features.system_blob = true;
-  } else {
-    const bool has_external_memory_host =
-        availability.has_vulkan() &&
-        !availability.vulkan().physical_devices().empty() &&
-        Contains(availability.vulkan().physical_devices(0).extensions(),
-                 "VK_EXT_external_memory_host");
-
-    CF_EXPECT(
-        has_external_memory_host || mode != GpuMode::GfxstreamGuestAngle,
-        "VK_EXT_external_memory_host is required for running with "
-        "--gpu_mode=gfxstream_guest_angle and --enable_gpu_vhost_user=true");
-
-    features.system_blob = has_external_memory_host;
-  }
-
-  return features;
-}
-
 #ifndef __APPLE__
 
 // TODO(b/503397840): remove after default updated.
@@ -972,12 +918,48 @@ Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
   return gpu_vhost_user_mode_arg == kGpuVhostUserModeOn;
 }
 
+Result<VhostUserGpuHostRendererFeatures>
+GetNeededVhostUserGpuHostRendererFeatures(
+    GpuMode mode,
+    const ::gfxstream::proto::GraphicsAvailability& availability) {
+  VhostUserGpuHostRendererFeatures features = {};
+
+  // No features needed for guest rendering.
+  if (mode == GpuMode::GuestSwiftshader) {
+    return features;
+  }
+
+  // For any passthrough graphics mode, external blob is needed for sharing
+  // buffers between the vhost-user-gpu VMM process and the main VMM process.
+  features.external_blob = true;
+
+  // Prebuilt SwiftShader includes VK_EXT_external_memory_host.
+  if (mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
+    features.system_blob = true;
+  } else {
+    const bool has_external_memory_host =
+        availability.has_vulkan() &&
+        !availability.vulkan().physical_devices().empty() &&
+        Contains(availability.vulkan().physical_devices(0).extensions(),
+                 "VK_EXT_external_memory_host");
+
+    CF_EXPECT(
+        has_external_memory_host || mode != GpuMode::GfxstreamGuestAngle,
+        "VK_EXT_external_memory_host is required for running with "
+        "--gpu_mode=gfxstream_guest_angle and --enable_gpu_vhost_user=true");
+
+    features.system_blob = has_external_memory_host;
+  }
+
+  return features;
+}
+
 Result<void> SelectGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
     const GpuMode gpu_mode, const std::string& gpu_renderer_features_arg,
     const std::string& guest_hwui_renderer_arg,
     const std::string& guest_renderer_preload_arg,
-    const GuestConfig& guest_config, const bool enable_gpu_vhost_user,
+    const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
   const auto angle_features =
       CF_EXPECT(GetNeededAngleFeatures(gpu_mode, graphics_availability));
@@ -985,18 +967,6 @@ Result<void> SelectGpuSettings(
       angle_features.angle_feature_overrides_enabled);
   instance.set_gpu_angle_feature_overrides_disabled(
       angle_features.angle_feature_overrides_disabled);
-
-  if (enable_gpu_vhost_user) {
-    const auto gpu_vhost_user_features =
-        CF_EXPECT(GetNeededVhostUserGpuHostRendererFeatures(
-            gpu_mode, graphics_availability));
-    instance.set_enable_gpu_external_blob(
-        gpu_vhost_user_features.external_blob);
-    instance.set_enable_gpu_system_blob(gpu_vhost_user_features.system_blob);
-  } else {
-    instance.set_enable_gpu_external_blob(false);
-    instance.set_enable_gpu_system_blob(false);
-  }
 
   const GuestHwuiRenderer hwui_renderer = CF_EXPECT(
       SelectGuestHwuiRenderer(gpu_mode, guest_config, guest_hwui_renderer_arg));
