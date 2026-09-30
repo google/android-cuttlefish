@@ -43,7 +43,6 @@ struct GuestConfig {
   bool guest_lavapipe_supported = false;
   bool vhost_user_vsock = false;
   bool supports_bgra_framebuffers = false;
-  bool prefer_drm_virgl_when_supported = false;
   bool mouse_supported = false;
   bool gamepad_supported = false;
   std::string ti50_emulator;
