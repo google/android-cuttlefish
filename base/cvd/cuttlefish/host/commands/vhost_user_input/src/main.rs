@@ -2,7 +2,6 @@
 
 mod buf_reader;
 mod event_source;
-mod inherited_fd;
 mod vhu_input;
 mod vio_input;
 
@@ -15,6 +14,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
+use command_fds::inherited::{init_inherited_fds, take_fd_ownership};
 use log::{error, info, LevelFilter};
 use vhost::vhost_user::{Error as VError, Listener};
 use vhost_user_backend::{Error as VHUError, VhostUserDaemon};
@@ -123,8 +123,7 @@ fn create_and_run_device<T: EventSource + 'static>(
 fn main() -> Result<()> {
     // SAFETY: First thing after main
     unsafe {
-        inherited_fd::init_once()
-            .context("Failed to take ownership of process' file descriptors")?
+        init_inherited_fds().context("Failed to take ownership of process' file descriptors")?
     };
     let args = Args::parse();
     init_logging(&args.verbosity)?;
@@ -139,11 +138,11 @@ fn main() -> Result<()> {
     let device_config = VirtioInputConfig::from_json(device_config_str.as_str())
         .context("Unable to parse config file")?;
 
-    let socket_fd = inherited_fd::take_fd_ownership(args.socket_fd)
-        .context("Failed to take ownership of socket fd")?;
+    let socket_fd =
+        take_fd_ownership(args.socket_fd).context("Failed to take ownership of socket fd")?;
     if args.server_fd >= 0 {
-        let server_fd = inherited_fd::take_fd_ownership(args.server_fd)
-            .context("Failed to take ownership of socket fd")?;
+        let server_fd =
+            take_fd_ownership(args.server_fd).context("Failed to take ownership of socket fd")?;
         let event_source = if args.capture_server_path.is_empty() {
             UnixSocketEventSource::new(UnixListener::from(server_fd))?
         } else {

@@ -12,7 +12,6 @@ rust_binary(
     srcs = [
         "src/buf_reader.rs",
         "src/event_source.rs",
-        "src/inherited_fd.rs",
         "src/main.rs",
         "src/vhu_input.rs",
         "src/vio_input.rs",
