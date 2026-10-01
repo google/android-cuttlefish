@@ -99,8 +99,6 @@
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
-#include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
-#include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
@@ -1181,51 +1179,28 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 #ifdef __APPLE__
     instance.set_enable_gpu_vhost_user(false);
 #else
-    const bool enable_gpu_vhost_user = CF_EXPECT(SelectGpuVhostUserMode(
+    const GraphicsSettings graphics_settings = CF_EXPECT(GetGraphicsSettings(
         gpu_mode, gpu_vhost_user_mode_vec[instance_index],
-        vm_manager_flag.Mode()));
-    instance.set_enable_gpu_vhost_user(enable_gpu_vhost_user);
-
-    if (enable_gpu_vhost_user) {
-      const VhostUserGpuHostRendererFeatures gpu_vhost_user_features =
-          CF_EXPECT(GetNeededVhostUserGpuHostRendererFeatures(
-              gpu_mode, graphics_availability));
-      instance.set_enable_gpu_external_blob(
-          gpu_vhost_user_features.external_blob);
-      instance.set_enable_gpu_system_blob(gpu_vhost_user_features.system_blob);
-    } else {
-      instance.set_enable_gpu_external_blob(false);
-      instance.set_enable_gpu_system_blob(false);
-    }
-
-    const AngleFeatureOverrides angle_features =
-        CF_EXPECT(GetNeededAngleFeatures(gpu_mode, graphics_availability));
+        vm_manager_flag.Mode(), graphics_availability,
+        guest_configs[instance_index], guest_hwui_renderer_vec[instance_index],
+        guest_renderer_preload_vec[instance_index],
+        gpu_renderer_features_vec[instance_index]));
+    instance.set_enable_gpu_vhost_user(graphics_settings.enable_gpu_vhost_user);
+    instance.set_enable_gpu_external_blob(
+        graphics_settings.enable_gpu_external_blob);
+    instance.set_enable_gpu_system_blob(
+        graphics_settings.enable_gpu_system_blob);
     instance.set_gpu_angle_feature_overrides_enabled(
-        angle_features.angle_feature_overrides_enabled);
+        graphics_settings.angle_feature_overrides_enabled);
     instance.set_gpu_angle_feature_overrides_disabled(
-        angle_features.angle_feature_overrides_disabled);
-
-    const GuestHwuiRenderer hwui_renderer = CF_EXPECT(
-        SelectGuestHwuiRenderer(gpu_mode, guest_configs[instance_index],
-                                guest_hwui_renderer_vec[instance_index]));
-    instance.set_guest_hwui_renderer(hwui_renderer);
-
-    const GuestRendererPreload guest_renderer_preload = CF_EXPECT(
-        SelectGuestRendererPreload(gpu_mode, hwui_renderer,
-                                   guest_renderer_preload_vec[instance_index]));
-    instance.set_guest_renderer_preload(guest_renderer_preload);
-
-    if (IsGfxstreamMode(gpu_mode)) {
-      const std::string gfxstream_transport =
-          SelectGfxstreamTransport(guest_configs[instance_index]);
-      instance.set_gpu_gfxstream_transport(gfxstream_transport);
-
-      const std::string features_string = CF_EXPECT(GetGfxstreamFeatures(
-          gpu_mode, hwui_renderer, gpu_renderer_features_vec[instance_index],
-          guest_configs[instance_index], graphics_availability));
-      if (!features_string.empty()) {
-        instance.set_gpu_renderer_features(features_string);
-      }
+        graphics_settings.angle_feature_overrides_disabled);
+    instance.set_guest_hwui_renderer(graphics_settings.hwui_renderer);
+    instance.set_guest_renderer_preload(
+        graphics_settings.guest_renderer_preload);
+    instance.set_gpu_gfxstream_transport(graphics_settings.gfxstream_transport);
+    if (!graphics_settings.gfxstream_features_string.empty()) {
+      instance.set_gpu_renderer_features(
+          graphics_settings.gfxstream_features_string);
     }
 #endif
     calculated_gpu_mode_vec[instance_index] = gpu_mode;
