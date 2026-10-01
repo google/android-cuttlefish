@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 
-#include <errno.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -118,7 +117,7 @@ Result<void> MonitorLoop(std::atomic_bool& running,
   while (running.load()) {
     int wstatus;
     pid_t pid = wait(&wstatus);
-    CF_EXPECTF(pid != -1, "Wait failed: {}", StrError(errno));
+    CF_EXPECTF(pid != -1, "Wait failed: {}", StrError());
     if (!WIFSIGNALED(wstatus) && !WIFEXITED(wstatus)) {
       VLOG(0) << "Unexpected status from wait: " << wstatus << " for pid "
               << pid;

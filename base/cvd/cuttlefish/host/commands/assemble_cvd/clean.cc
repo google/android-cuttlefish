@@ -87,7 +87,7 @@ Result<void> CleanPriorFiles(const std::string& path,
           errno == EBUSY)) {
       // If EEXIST or ENOTEMPTY, probably because a file was preserved. EROFS
       // or EBUSY likely means a bind mount for host-sandboxing mode.
-      return CF_ERRF("Could not rmdir '{}': '{}'", path, StrError(errno));
+      return CF_ERRF("Could not rmdir '{}': '{}'", path, StrError());
     }
   }
   return {};

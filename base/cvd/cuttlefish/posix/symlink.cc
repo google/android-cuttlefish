@@ -28,8 +28,7 @@ namespace cuttlefish {
 
 Result<void, int> Symlink(const char* target, const char* linkpath) {
   CF_EXPECTVF(symlink(target, linkpath) >= 0, errno,
-              "symlink('{}', '{}') failed: {}", target, linkpath,
-              StrError(errno));
+              "symlink('{}', '{}') failed: {}", target, linkpath, StrError());
   return {};
 }
 

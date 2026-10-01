@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/create.h"
 
-#include <errno.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <stddef.h>
@@ -168,7 +167,7 @@ Result<void> EnsureSymlink(const std::string& target, const std::string link) {
   }
   if (FileExists(link, /* follow_symlinks */ false)) {
     CF_EXPECTF(RemoveFile(link), "Failed to remove file \"{}\": {}", link,
-               StrError(errno));
+               StrError());
   }
   CF_EXPECT(Symlink(target, link));
   return {};

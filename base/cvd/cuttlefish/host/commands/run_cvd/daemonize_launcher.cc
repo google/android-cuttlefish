@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/run_cvd/daemonize_launcher.h"
 
-#include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <sys/stat.h>
@@ -92,7 +91,7 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
   } else {
     // The child returns the write end of the pipe
     if (daemon(/*nochdir*/ 1, /*noclose*/ 1) != 0) {
-      LOG(ERROR) << "Failed to daemonize child process: " << StrError(errno);
+      LOG(ERROR) << "Failed to daemonize child process: " << StrError();
       std::exit(RunnerExitCodes::kDaemonizationError);
     }
     // Redirect standard I/O

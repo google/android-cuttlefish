@@ -33,8 +33,7 @@ namespace cuttlefish {
 Result<struct stat, int> Stat(const char* path) {
   struct stat ret;
   int success = TEMP_FAILURE_RETRY(stat(path, &ret));
-  CF_EXPECTVF(success == 0, errno, "Stat('{}') failed: ", path,
-              StrError(errno));
+  CF_EXPECTVF(success == 0, errno, "Stat('{}') failed: ", path, StrError());
   return ret;
 }
 
@@ -49,8 +48,7 @@ Result<struct stat, int> Stat(std::string_view path) {
 Result<struct stat, int> Lstat(const char* path) {
   struct stat ret;
   int success = TEMP_FAILURE_RETRY(lstat(path, &ret));
-  CF_EXPECTVF(success == 0, errno, "Lstat('{}') failed: {}", path,
-              StrError(errno));
+  CF_EXPECTVF(success == 0, errno, "Lstat('{}') failed: {}", path, StrError());
   return ret;
 }
 

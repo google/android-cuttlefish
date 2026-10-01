@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/frontend/webrtc/screenshot_handler.h"
 
-#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <strings.h>
@@ -68,7 +67,7 @@ Result<void> PngScreenshot(const std::shared_ptr<VideoFrameBuffer>& frame,
   const std::vector<uint8_t> rgb_frame = CF_EXPECT(FrameToRgb(frame));
   FILE* outfile = fopen(screenshot_path.c_str(), "wb");
   CF_EXPECTF(outfile != NULL, "opening {} failed: {}", screenshot_path,
-             StrError(errno));
+             StrError());
   absl::Cleanup close_file = [outfile]() { fclose(outfile); };
 
   png_structp png_ptr =
