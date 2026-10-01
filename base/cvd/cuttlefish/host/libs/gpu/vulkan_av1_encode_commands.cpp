@@ -20,10 +20,12 @@
 #include <stdint.h>
 
 #include <array>
+#include <optional>
 #include <vector>
 
 #include "vulkan/vulkan_core.h"
 
+#include "cuttlefish/host/libs/gpu/vulkan_av1_dpb.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_encode_settings.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_session_setup.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_syntax.h"
@@ -53,15 +55,18 @@ std::vector<VkVideoPictureResourceInfoKHR> DpbPictureResources(
 }
 
 std::vector<VkVideoReferenceSlotInfoKHR> BeginSlots(
-    const std::vector<VkVideoPictureResourceInfoKHR>& dpb_resources) {
+    const std::vector<VkVideoPictureResourceInfoKHR>& dpb_resources,
+    std::optional<int32_t> reference_slot) {
   std::vector<VkVideoReferenceSlotInfoKHR> slots;
   for (size_t slot = 0; slot < dpb_resources.size(); slot++) {
-    // The slot being reconstructed into is bound as a resource and takes its
-    // slot index from the setup slot of the encode command.
+    // Only the slot this frame predicts from is named as active; the one
+    // being reconstructed into is bound as a resource and takes its slot
+    // index from the setup slot of the encode command.
     slots.push_back(VkVideoReferenceSlotInfoKHR{
         .sType = VK_STRUCTURE_TYPE_VIDEO_REFERENCE_SLOT_INFO_KHR,
         .pNext = nullptr,
-        .slotIndex = -1,
+        .slotIndex =
+            reference_slot == static_cast<int32_t>(slot) ? *reference_slot : -1,
         .pPictureResource = &dpb_resources[slot],
     });
   }
@@ -69,14 +74,21 @@ std::vector<VkVideoReferenceSlotInfoKHR> BeginSlots(
 }
 
 Av1PictureParams PictureParams(const VulkanAv1EncodeSettings& settings,
-                               const VulkanAv1FrameCommands& frame) {
+                               const Av1DpbPingPong& dpb,
+                               const VulkanFrameCommit& commit) {
   return Av1PictureParams{
-      .order_hint = frame.order_hint,
+      .key_frame = commit.key_frame,
+      .order_hint = commit.order_hint,
+      .setup_slot = dpb.SetupSlot(commit.key_frame),
+      .reference_slot = commit.key_frame ? std::nullopt : dpb.ReferenceSlot(),
       .width = settings.width,
       .height = settings.height,
       .coded_extent = settings.coded_extent,
       .q_index = settings.q_index,
       .constant_q_index = settings.q_index,
+      .ref_order_hints = dpb.RefOrderHints(),
+      .reference_frame_type = dpb.ReferenceFrameType(),
+      .reference_order_hint = dpb.ReferenceOrderHint(),
   };
 }
 
@@ -184,9 +196,18 @@ void RecordEncode(
   const VkVideoReferenceSlotInfoKHR setup_slot_info = {
       .sType = VK_STRUCTURE_TYPE_VIDEO_REFERENCE_SLOT_INFO_KHR,
       .pNext = &picture.setup_slot_info(),
-      .slotIndex = 0,
-      .pPictureResource = &dpb_resources[0],
+      .slotIndex = params.setup_slot,
+      .pPictureResource = &dpb_resources[params.setup_slot],
   };
+  std::optional<VkVideoReferenceSlotInfoKHR> reference_slot_info;
+  if (params.reference_slot.has_value()) {
+    reference_slot_info = VkVideoReferenceSlotInfoKHR{
+        .sType = VK_STRUCTURE_TYPE_VIDEO_REFERENCE_SLOT_INFO_KHR,
+        .pNext = &picture.reference_slot_info(),
+        .slotIndex = *params.reference_slot,
+        .pPictureResource = &dpb_resources[*params.reference_slot],
+    };
+  }
   const VkVideoEncodeInfoKHR encode_info = {
       .sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_INFO_KHR,
       .pNext = &picture.info(),
@@ -204,8 +225,10 @@ void RecordEncode(
               .imageViewBinding = resources.input.view.get(),
           },
       .pSetupReferenceSlot = &setup_slot_info,
-      .referenceSlotCount = 0,
-      .pReferenceSlots = nullptr,
+      .referenceSlotCount = reference_slot_info.has_value() ? 1u : 0u,
+      .pReferenceSlots = reference_slot_info.has_value()
+                             ? &reference_slot_info.value()
+                             : nullptr,
       .precedingExternallyEncodedBytes = 0,
   };
 
@@ -255,7 +278,7 @@ std::array<VkBufferImageCopy, 2> Nv12PlaneCopyRegions(VkExtent2D coded_extent) {
 Result<void> RecordVulkanAv1EncodeCommands(
     const VulkanVideoContext& context,
     const VulkanAv1SessionResources& resources,
-    const VulkanAv1EncodeSettings& settings,
+    const VulkanAv1EncodeSettings& settings, const Av1DpbPingPong& dpb,
     const VulkanAv1FrameCommands& frame) {
   const VulkanDeviceFunctions& vk = context.device_functions();
   const VkCommandBuffer command_buffer = resources.commands.encode.buffer;
@@ -265,11 +288,12 @@ Result<void> RecordVulkanAv1EncodeCommands(
                       frame.first_frame);
   vk.vkCmdResetQueryPool(command_buffer, resources.query_pool.get(), 0, 1);
 
-  const Av1PictureParams picture_params = PictureParams(settings, frame);
+  const Av1PictureParams picture_params =
+      PictureParams(settings, dpb, frame.commit);
   const std::vector<VkVideoPictureResourceInfoKHR> dpb_resources =
       DpbPictureResources(resources.dpb, settings.coded_extent);
   const std::vector<VkVideoReferenceSlotInfoKHR> begin_slots =
-      BeginSlots(dpb_resources);
+      BeginSlots(dpb_resources, picture_params.reference_slot);
 
   RecordBeginCoding(context, command_buffer, resources, frame, begin_slots);
   RecordControlCommands(vk, command_buffer, frame);

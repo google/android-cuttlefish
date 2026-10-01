@@ -18,6 +18,9 @@
 
 #include <stdint.h>
 
+#include <array>
+#include <optional>
+
 #include "vk_video/vulkan_video_codec_av1std.h"
 #include "vk_video/vulkan_video_codec_av1std_encode.h"
 #include "vulkan/vulkan_core.h"
@@ -53,17 +56,23 @@ class Av1SequenceHeaderInfo {
 
 // What the AV1 picture syntax of one frame is built from.
 struct Av1PictureParams {
+  bool key_frame = false;
   uint8_t order_hint = 0;
+  int32_t setup_slot = 0;
+  std::optional<int32_t> reference_slot;
   uint32_t width = 0;
   uint32_t height = 0;
   VkExtent2D coded_extent = {};
   uint32_t q_index = 0;
   uint32_t constant_q_index = 0;
+  std::array<uint8_t, STD_VIDEO_AV1_NUM_REF_FRAMES> ref_order_hints = {};
+  StdVideoAV1FrameType reference_frame_type = STD_VIDEO_AV1_FRAME_TYPE_KEY;
+  uint8_t reference_order_hint = 0;
 };
 
 // The AV1 picture information an encode command carries, with the reference
-// information of its setup slot. The structures point at each other, so this
-// is neither copied nor moved.
+// information of its setup and reference slots. The structures point at each
+// other, so this is neither copied nor moved.
 class Av1PictureInfo {
  public:
   explicit Av1PictureInfo(const Av1PictureParams& params);
@@ -77,6 +86,9 @@ class Av1PictureInfo {
   const VkVideoEncodeAV1DpbSlotInfoKHR& setup_slot_info() const {
     return setup_dpb_slot_info_;
   }
+  const VkVideoEncodeAV1DpbSlotInfoKHR& reference_slot_info() const {
+    return reference_dpb_slot_info_;
+  }
 
  private:
   StdVideoAV1TileInfo tile_info_;
@@ -87,6 +99,8 @@ class Av1PictureInfo {
   VkVideoEncodeAV1PictureInfoKHR av1_picture_info_;
   StdVideoEncodeAV1ReferenceInfo setup_reference_info_;
   VkVideoEncodeAV1DpbSlotInfoKHR setup_dpb_slot_info_;
+  StdVideoEncodeAV1ReferenceInfo reference_info_;
+  VkVideoEncodeAV1DpbSlotInfoKHR reference_dpb_slot_info_;
 };
 
 }  // namespace cuttlefish

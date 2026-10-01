@@ -33,8 +33,11 @@ VulkanAv1EncodeCapabilities FilledCapabilities() {
       .min_coded_extent = {64, 64},
       .max_coded_extent = {4096, 4096},
       .max_dpb_slots = 8,
+      .max_active_reference_pictures = 1,
       .rate_control_modes = VK_VIDEO_ENCODE_RATE_CONTROL_MODE_DISABLED_BIT_KHR,
       .coded_picture_alignment = {64, 16},
+      .max_single_reference_count = 1,
+      .single_reference_name_mask = 1,
       .min_q_index = 1,
       .max_q_index = 255,
   };
@@ -94,7 +97,18 @@ TEST(SelectVulkanAv1EncodeSettingsTest, SettlesAgainstTheCapabilities) {
   EXPECT_EQ(settings->coded_extent.width, 1920u);
   EXPECT_EQ(settings->coded_extent.height, 1088u);
   EXPECT_EQ(settings->q_index, 128u);
-  EXPECT_EQ(settings->dpb_slots, 1u);
+  EXPECT_EQ(settings->dpb_slots, 2u);
+  EXPECT_TRUE(settings->inter_frames_supported);
+}
+
+TEST(SelectVulkanAv1EncodeSettingsTest, EncodesKeyFramesOnlyWithoutLastFrame) {
+  VulkanAv1EncodeCapabilities capabilities = FilledCapabilities();
+  capabilities.single_reference_name_mask = 0;
+
+  const Result<VulkanAv1EncodeSettings> settings =
+      SelectVulkanAv1EncodeSettings(capabilities, Config1080p());
+  ASSERT_THAT(settings, IsOk());
+  EXPECT_FALSE(settings->inter_frames_supported);
 }
 
 TEST(SelectVulkanAv1EncodeSettingsTest, RejectsFramesAboveTheMaximumExtent) {

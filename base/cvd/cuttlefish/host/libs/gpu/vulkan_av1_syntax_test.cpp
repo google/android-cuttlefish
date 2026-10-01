@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/libs/gpu/vulkan_av1_syntax.h"
 
+#include <optional>
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "vk_video/vulkan_video_codec_av1std.h"
@@ -26,13 +28,32 @@ namespace cuttlefish {
 namespace {
 
 using ::testing::Each;
+using ::testing::ElementsAreArray;
 
 Av1PictureParams KeyFrameParams() {
   return Av1PictureParams{
+      .key_frame = true,
       .order_hint = 0,
+      .setup_slot = 0,
+      .reference_slot = std::nullopt,
       .width = 1920,
       .height = 1080,
       .coded_extent = {1920, 1088},
+  };
+}
+
+Av1PictureParams InterFrameParams() {
+  return Av1PictureParams{
+      .key_frame = false,
+      .order_hint = 7,
+      .setup_slot = 1,
+      .reference_slot = 0,
+      .width = 1920,
+      .height = 1080,
+      .coded_extent = {1920, 1088},
+      .ref_order_hints = {6, 6, 6, 6, 6, 6, 6, 6},
+      .reference_frame_type = STD_VIDEO_AV1_FRAME_TYPE_INTER,
+      .reference_order_hint = 6,
   };
 }
 
@@ -49,6 +70,37 @@ TEST(Av1PictureInfoTest, KeyFrameRefreshesEveryBuffer) {
   EXPECT_EQ(picture.info().predictionMode,
             VK_VIDEO_ENCODE_AV1_PREDICTION_MODE_INTRA_ONLY_KHR);
   EXPECT_THAT(picture.info().referenceNameSlotIndices, Each(-1));
+}
+
+TEST(Av1PictureInfoTest, InterFrameRefreshesItsSetupSlotOnly) {
+  const Av1PictureParams params = InterFrameParams();
+  const Av1PictureInfo picture(params);
+  const StdVideoEncodeAV1PictureInfo& std_info =
+      *picture.info().pStdPictureInfo;
+
+  EXPECT_EQ(std_info.frame_type, STD_VIDEO_AV1_FRAME_TYPE_INTER);
+  EXPECT_EQ(std_info.order_hint, 7);
+  EXPECT_EQ(std_info.refresh_frame_flags, 1u << 1);
+  EXPECT_THAT(std_info.ref_frame_idx, Each(0));
+  EXPECT_THAT(std_info.ref_order_hint,
+              ElementsAreArray(params.ref_order_hints));
+  EXPECT_EQ(picture.info().predictionMode,
+            VK_VIDEO_ENCODE_AV1_PREDICTION_MODE_SINGLE_REFERENCE_KHR);
+  EXPECT_EQ(picture.info().referenceNameSlotIndices[0], 0);
+}
+
+TEST(Av1PictureInfoTest, SlotInfoCarriesFrameTypeAndOrderHint) {
+  const Av1PictureInfo picture(InterFrameParams());
+
+  const StdVideoEncodeAV1ReferenceInfo& setup =
+      *picture.setup_slot_info().pStdReferenceInfo;
+  EXPECT_EQ(setup.frame_type, STD_VIDEO_AV1_FRAME_TYPE_INTER);
+  EXPECT_EQ(setup.OrderHint, 7);
+
+  const StdVideoEncodeAV1ReferenceInfo& reference =
+      *picture.reference_slot_info().pStdReferenceInfo;
+  EXPECT_EQ(reference.frame_type, STD_VIDEO_AV1_FRAME_TYPE_INTER);
+  EXPECT_EQ(reference.OrderHint, 6);
 }
 
 TEST(Av1PictureInfoTest, PointsAtItsOwnStructures) {

@@ -28,8 +28,13 @@
 namespace cuttlefish {
 namespace {
 
-// One slot, which takes the reconstructed picture of every frame.
-constexpr uint32_t kDpbSlots = 1;
+// Two slots, one holding the reference and one taking the reconstructed
+// picture, swapping every frame.
+constexpr uint32_t kDpbSlots = 2;
+
+// Bit 0 of singleReferenceNameMask, the only reference name this encoder
+// uses.
+constexpr uint32_t kLastFrameNameBit = 1;
 
 // Middle of the qindex range.
 constexpr uint32_t kDefaultQIndex = 128;
@@ -88,6 +93,11 @@ Result<VulkanAv1EncodeSettings> SelectVulkanAv1EncodeSettings(
       .q_index = std::clamp(kDefaultQIndex, capabilities.min_q_index,
                             capabilities.max_q_index),
       .dpb_slots = dpb_slots,
+      .inter_frames_supported =
+          dpb_slots >= kDpbSlots &&
+          capabilities.max_single_reference_count > 0 &&
+          capabilities.max_active_reference_pictures > 0 &&
+          (capabilities.single_reference_name_mask & kLastFrameNameBit) != 0,
   };
 }
 

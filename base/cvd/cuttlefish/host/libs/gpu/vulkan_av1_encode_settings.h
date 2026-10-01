@@ -44,6 +44,9 @@ struct VulkanAv1EncodeSettings {
   VkExtent2D coded_extent = {};
   uint32_t q_index = 0;
   uint32_t dpb_slots = 0;
+  // False where the driver offers no single reference prediction with
+  // LAST_FRAME, or fewer than two DPB slots. Every frame is then a key frame.
+  bool inter_frames_supported = false;
 };
 
 // Fails where the driver cannot encode the configured size or reports

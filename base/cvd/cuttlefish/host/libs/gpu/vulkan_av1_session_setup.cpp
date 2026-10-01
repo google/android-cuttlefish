@@ -47,6 +47,8 @@ namespace {
 constexpr VkImageUsageFlags kInputImageUsage =
     VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_VIDEO_ENCODE_SRC_BIT_KHR;
 
+constexpr uint32_t kMaxActiveReferencePictures = 1;
+
 Result<std::vector<UniqueVkHandle<VkDeviceMemory>>> BindVideoSessionMemory(
     const VulkanVideoContext& context, VkVideoSessionKHR session) {
   const VulkanDeviceFunctions& vk = context.device_functions();
@@ -118,7 +120,9 @@ Result<VulkanAv1VideoSession> CreateVideoSession(
       .maxCodedExtent = settings.coded_extent,
       .referencePictureFormat = kVulkanAv1EncodeFormat,
       .maxDpbSlots = settings.dpb_slots,
-      .maxActiveReferencePictures = 0,
+      .maxActiveReferencePictures =
+          std::min(kMaxActiveReferencePictures,
+                   context.av1_capabilities().max_active_reference_pictures),
       .pStdHeaderVersion = &std_header_version,
   };
 

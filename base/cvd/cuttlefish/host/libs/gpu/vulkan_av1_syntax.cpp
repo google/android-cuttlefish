@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 
+#include <algorithm>
 #include <bit>
 
 #include "vk_video/vulkan_video_codec_av1std.h"
@@ -210,8 +211,15 @@ StdVideoEncodeAV1PictureInfoFlags PictureFlags(const Av1PictureParams& params) {
       .UsesLr = 0,
       .usesChromaLr = 0,
       .show_frame = 1,
-      .showable_frame = 0,
+      .showable_frame = params.key_frame ? 0u : 1u,
   };
+}
+
+// A key frame refreshes every reference buffer; an inter frame refreshes the
+// one buffer that shares its index with the slot it reconstructs into.
+uint8_t RefreshFrameFlags(const Av1PictureParams& params) {
+  return params.key_frame ? kRefreshAllFrames
+                          : static_cast<uint8_t>(1u << params.setup_slot);
 }
 
 StdVideoEncodeAV1PictureInfo StdPictureInfo(
@@ -220,14 +228,15 @@ StdVideoEncodeAV1PictureInfo StdPictureInfo(
     const StdVideoAV1LoopFilter* loop_filter, const StdVideoAV1CDEF* cdef) {
   StdVideoEncodeAV1PictureInfo picture_info = {
       .flags = PictureFlags(params),
-      .frame_type = STD_VIDEO_AV1_FRAME_TYPE_KEY,
+      .frame_type = params.key_frame ? STD_VIDEO_AV1_FRAME_TYPE_KEY
+                                     : STD_VIDEO_AV1_FRAME_TYPE_INTER,
       .frame_presentation_time = 0,
       .current_frame_id = 0,
       .order_hint = params.order_hint,
       // Error resilient mode leaves no primary reference, so every frame
       // starts from the default probabilities.
       .primary_ref_frame = STD_VIDEO_AV1_PRIMARY_REF_NONE,
-      .refresh_frame_flags = kRefreshAllFrames,
+      .refresh_frame_flags = RefreshFrameFlags(params),
       .coded_denom = 0,
       .render_width_minus_1 = static_cast<uint16_t>(params.width - 1),
       .render_height_minus_1 = static_cast<uint16_t>(params.height - 1),
@@ -249,6 +258,13 @@ StdVideoEncodeAV1PictureInfo StdPictureInfo(
       .pExtensionHeader = nullptr,
       .pBufferRemovalTimes = nullptr,
   };
+  if (params.reference_slot.has_value()) {
+    std::ranges::copy(params.ref_order_hints, picture_info.ref_order_hint);
+    // Every reference name resolves to the one buffer this frame predicts
+    // from, which is the only one the driver is allowed to use.
+    std::ranges::fill(picture_info.ref_frame_idx,
+                      static_cast<int8_t>(*params.reference_slot));
+  }
   return picture_info;
 }
 
@@ -258,14 +274,23 @@ VkVideoEncodeAV1PictureInfoKHR EncodePictureInfo(
   VkVideoEncodeAV1PictureInfoKHR picture_info = {
       .sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_PICTURE_INFO_KHR,
       .pNext = nullptr,
-      .predictionMode = VK_VIDEO_ENCODE_AV1_PREDICTION_MODE_INTRA_ONLY_KHR,
-      .rateControlGroup = VK_VIDEO_ENCODE_AV1_RATE_CONTROL_GROUP_INTRA_KHR,
+      .predictionMode =
+          params.key_frame
+              ? VK_VIDEO_ENCODE_AV1_PREDICTION_MODE_INTRA_ONLY_KHR
+              : VK_VIDEO_ENCODE_AV1_PREDICTION_MODE_SINGLE_REFERENCE_KHR,
+      .rateControlGroup =
+          params.key_frame
+              ? VK_VIDEO_ENCODE_AV1_RATE_CONTROL_GROUP_INTRA_KHR
+              : VK_VIDEO_ENCODE_AV1_RATE_CONTROL_GROUP_PREDICTIVE_KHR,
       .constantQIndex = params.constant_q_index,
       .pStdPictureInfo = std_picture_info,
       .referenceNameSlotIndices = {-1, -1, -1, -1, -1, -1, -1},
       .primaryReferenceCdfOnly = VK_FALSE,
       .generateObuExtensionHeader = VK_FALSE,
   };
+  if (params.reference_slot.has_value()) {
+    picture_info.referenceNameSlotIndices[0] = *params.reference_slot;
+  }
   return picture_info;
 }
 
@@ -309,6 +334,9 @@ Av1PictureInfo::Av1PictureInfo(const Av1PictureParams& params)
       av1_picture_info_(EncodePictureInfo(params, &picture_info_)),
       setup_reference_info_(
           ReferenceInfo(picture_info_.frame_type, params.order_hint)),
-      setup_dpb_slot_info_(DpbSlotInfo(&setup_reference_info_)) {}
+      setup_dpb_slot_info_(DpbSlotInfo(&setup_reference_info_)),
+      reference_info_(ReferenceInfo(params.reference_frame_type,
+                                    params.reference_order_hint)),
+      reference_dpb_slot_info_(DpbSlotInfo(&reference_info_)) {}
 
 }  // namespace cuttlefish

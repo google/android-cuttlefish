@@ -165,7 +165,7 @@ int32_t VulkanVideoEncoder::Encode(
     return WEBRTC_VIDEO_CODEC_UNINITIALIZED;
   }
 
-  const Result<void> result = EncodeInner(frame);
+  const Result<void> result = EncodeInner(frame, frame_types);
   if (!result.has_value()) {
     LOG(ERROR) << "Encode failed: " << result.error();
     return WEBRTC_VIDEO_CODEC_ERROR;
@@ -173,16 +173,21 @@ int32_t VulkanVideoEncoder::Encode(
   return WEBRTC_VIDEO_CODEC_OK;
 }
 
-Result<void> VulkanVideoEncoder::EncodeInner(const webrtc::VideoFrame& frame) {
+Result<void> VulkanVideoEncoder::EncodeInner(
+    const webrtc::VideoFrame& frame,
+    const std::vector<webrtc::VideoFrameType>* frame_types) {
   CF_EXPECT_EQ(static_cast<uint32_t>(frame.width()), width_,
                "Frame width changed since InitEncode");
   CF_EXPECT_EQ(static_cast<uint32_t>(frame.height()), height_,
                "Frame height changed since InitEncode");
 
+  const bool key_frame_requested =
+      frame_types != nullptr && !frame_types->empty() &&
+      (*frame_types)[0] == webrtc::VideoFrameType::kVideoFrameKey;
   const FrameSource source = CF_EXPECT(
       ReadFrameSource(frame, width_, height_, session_->coded_extent()));
-  const VulkanAv1EncodedFrame encoded =
-      CF_EXPECT(session_->EncodeFrame(source.pixels, source.params));
+  const VulkanAv1EncodedFrame encoded = CF_EXPECT(
+      session_->EncodeFrame(source.pixels, source.params, key_frame_requested));
 
   webrtc::EncodedImage encoded_image;
   encoded_image.SetEncodedData(webrtc::EncodedImageBuffer::Create(
@@ -191,7 +196,9 @@ Result<void> VulkanVideoEncoder::EncodeInner(const webrtc::VideoFrame& frame) {
   encoded_image._encodedHeight = height_;
   encoded_image.SetTimestamp(frame.timestamp());
   encoded_image.ntp_time_ms_ = frame.ntp_time_ms();
-  encoded_image._frameType = webrtc::VideoFrameType::kVideoFrameKey;
+  encoded_image._frameType = encoded.key_frame
+                                 ? webrtc::VideoFrameType::kVideoFrameKey
+                                 : webrtc::VideoFrameType::kVideoFrameDelta;
 
   webrtc::CodecSpecificInfo codec_specific = {};
   codec_specific.codecType = config_.webrtc_codec_type;

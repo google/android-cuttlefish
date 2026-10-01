@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 
+#include "cuttlefish/host/libs/gpu/vulkan_av1_dpb.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_encode_settings.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_session_setup.h"
 #include "cuttlefish/host/libs/gpu/vulkan_video_context.h"
@@ -25,9 +26,16 @@
 
 namespace cuttlefish {
 
+// What a recorded frame changes about the session once the device has
+// accepted it.
+struct VulkanFrameCommit {
+  bool key_frame = false;
+  uint8_t order_hint = 0;
+};
+
 // What the encode command buffer of one frame is recorded from.
 struct VulkanAv1FrameCommands {
-  uint8_t order_hint = 0;
+  VulkanFrameCommit commit;
   bool first_frame = false;
 };
 
@@ -37,7 +45,7 @@ struct VulkanAv1FrameCommands {
 Result<void> RecordVulkanAv1EncodeCommands(
     const VulkanVideoContext& context,
     const VulkanAv1SessionResources& resources,
-    const VulkanAv1EncodeSettings& settings,
+    const VulkanAv1EncodeSettings& settings, const Av1DpbPingPong& dpb,
     const VulkanAv1FrameCommands& frame);
 
 // Records the copy of an NV12 frame from the staging buffer into the encode

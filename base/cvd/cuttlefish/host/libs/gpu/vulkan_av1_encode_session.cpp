@@ -27,6 +27,7 @@
 #include "vulkan/vulkan_core.h"
 
 #include "cuttlefish/host/libs/gpu/rgba_to_nv12.h"
+#include "cuttlefish/host/libs/gpu/vulkan_av1_dpb.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_encode_commands.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_encode_settings.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_session_setup.h"
@@ -66,7 +67,8 @@ Result<std::unique_ptr<VulkanAv1EncodeSession>> VulkanAv1EncodeSession::Create(
 
   LOG(INFO) << "Vulkan AV1 encoder initialized: " << config.width << "x"
             << config.height << " coded as " << settings.coded_extent.width
-            << "x" << settings.coded_extent.height;
+            << "x" << settings.coded_extent.height
+            << (settings.inter_frames_supported ? "" : ", intra only");
   return std::unique_ptr<VulkanAv1EncodeSession>(new VulkanAv1EncodeSession(
       std::move(context), settings, std::move(resources)));
 }
@@ -77,7 +79,8 @@ VulkanAv1EncodeSession::VulkanAv1EncodeSession(
     VulkanAv1SessionResources resources)
     : context_(std::move(context)),
       settings_(settings),
-      resources_(std::move(resources)) {}
+      resources_(std::move(resources)),
+      dpb_(settings.dpb_slots) {}
 
 VulkanAv1EncodeSession::~VulkanAv1EncodeSession() {
   std::mutex& encode_mutex = context_->encode_queue_mutex();
@@ -92,26 +95,38 @@ VulkanAv1EncodeSession::~VulkanAv1EncodeSession() {
 }
 
 Result<VulkanAv1EncodedFrame> VulkanAv1EncodeSession::EncodeFrame(
-    const uint8_t* pixels, const Nv12ConversionParams& params) {
+    const uint8_t* pixels, const Nv12ConversionParams& params,
+    bool key_frame_requested) {
+  const bool key_frame = key_frame_requested ||
+                         !settings_.inter_frames_supported ||
+                         !dpb_.ReferenceSlot().has_value();
+
   const VkSemaphore input_ready = CF_EXPECT(Upload(pixels, params));
   const VulkanAv1FrameCommands frame = {
-      .order_hint =
-          static_cast<uint8_t>(frame_count_ % (1u << kAv1OrderHintBits)),
+      .commit =
+          {
+              .key_frame = key_frame,
+              .order_hint = static_cast<uint8_t>(frame_count_ %
+                                                 (1u << kAv1OrderHintBits)),
+          },
       .first_frame = frame_count_ == 0,
   };
-  CF_EXPECT(
-      RecordVulkanAv1EncodeCommands(*context_, resources_, settings_, frame));
+  CF_EXPECT(RecordVulkanAv1EncodeCommands(*context_, resources_, settings_,
+                                          dpb_, frame));
   CF_EXPECT(SubmitAndWait(input_ready));
   const VulkanBitstreamRange range = CF_EXPECT(ReadBitstreamRange());
-  frame_count_++;
+  CommitFrame(frame.commit);
 
   // The sequence header ahead of every key frame makes each one self
   // contained.
   const std::vector<uint8_t>& sequence_header = resources_.sequence_header;
-  VulkanAv1EncodedFrame encoded;
-  encoded.bitstream.reserve(sequence_header.size() + range.size);
-  encoded.bitstream.insert(encoded.bitstream.end(), sequence_header.begin(),
-                           sequence_header.end());
+  VulkanAv1EncodedFrame encoded = {.key_frame = key_frame};
+  encoded.bitstream.reserve((key_frame ? sequence_header.size() : 0) +
+                            range.size);
+  if (key_frame) {
+    encoded.bitstream.insert(encoded.bitstream.end(), sequence_header.begin(),
+                             sequence_header.end());
+  }
   const uint8_t* const frame_data =
       resources_.output.mapping.data() + range.offset;
   encoded.bitstream.insert(encoded.bitstream.end(), frame_data,
@@ -236,6 +251,11 @@ Result<VulkanBitstreamRange> VulkanAv1EncodeSession::ReadBitstreamRange() {
       .offset = feedback.offset,
       .size = feedback.bytes_written,
   };
+}
+
+void VulkanAv1EncodeSession::CommitFrame(const VulkanFrameCommit& commit) {
+  dpb_.Commit(commit.key_frame, commit.order_hint);
+  frame_count_++;
 }
 
 }  // namespace cuttlefish

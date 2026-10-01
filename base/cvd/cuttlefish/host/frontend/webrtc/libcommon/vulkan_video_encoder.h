@@ -54,7 +54,9 @@ class VulkanVideoEncoder : public webrtc::VideoEncoder {
 
  private:
   Result<void> InitEncodeInner();
-  Result<void> EncodeInner(const webrtc::VideoFrame& frame);
+  Result<void> EncodeInner(
+      const webrtc::VideoFrame& frame,
+      const std::vector<webrtc::VideoFrameType>* frame_types);
 
   VulkanEncoderConfig config_;
   uint32_t width_ = 0;

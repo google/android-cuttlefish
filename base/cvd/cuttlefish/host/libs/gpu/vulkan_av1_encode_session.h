@@ -24,6 +24,8 @@
 #include "vulkan/vulkan_core.h"
 
 #include "cuttlefish/host/libs/gpu/rgba_to_nv12.h"
+#include "cuttlefish/host/libs/gpu/vulkan_av1_dpb.h"
+#include "cuttlefish/host/libs/gpu/vulkan_av1_encode_commands.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_encode_settings.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_session_setup.h"
 #include "cuttlefish/host/libs/gpu/vulkan_video_context.h"
@@ -34,6 +36,7 @@ namespace cuttlefish {
 // One encoded frame, with the sequence header in front of a key frame.
 struct VulkanAv1EncodedFrame {
   std::vector<uint8_t> bitstream;
+  bool key_frame = false;
 };
 
 // Where the driver placed a frame's bitstream in the output buffer, as the
@@ -47,8 +50,9 @@ struct VulkanBitstreamRange {
 //
 // Takes packed RGBA frames and converts them to NV12 on the host. The frame
 // reaches the encode source image through a copy on the compute queue, since a
-// video encode queue need not accept copy commands. Encodes every frame as a
-// key frame. Used from one thread.
+// video encode queue need not accept copy commands. Encodes low delay P frames
+// that reference LAST_FRAME only, with the reconstructed pictures ping-ponging
+// between two DPB slots. Used from one thread.
 class VulkanAv1EncodeSession {
  public:
   static Result<std::unique_ptr<VulkanAv1EncodeSession>> Create(
@@ -63,9 +67,11 @@ class VulkanAv1EncodeSession {
   // driver's alignment.
   VkExtent2D coded_extent() const { return settings_.coded_extent; }
 
-  // Encodes one frame as a key frame.
+  // Encodes one frame. The frame is a key frame when one is requested or when
+  // there is nothing to predict from.
   Result<VulkanAv1EncodedFrame> EncodeFrame(const uint8_t* pixels,
-                                            const Nv12ConversionParams& params);
+                                            const Nv12ConversionParams& params,
+                                            bool key_frame_requested);
 
  private:
   VulkanAv1EncodeSession(std::shared_ptr<VulkanVideoContext> context,
@@ -80,10 +86,14 @@ class VulkanAv1EncodeSession {
   Result<void> SubmitStagingCopy();
   Result<void> SubmitAndWait(VkSemaphore wait_semaphore);
   Result<VulkanBitstreamRange> ReadBitstreamRange();
+  // Applies what a submitted frame changed. Called only after the device
+  // accepted the submission, so a failed encode leaves the DPB as it was.
+  void CommitFrame(const VulkanFrameCommit& commit);
 
   std::shared_ptr<VulkanVideoContext> context_;
   VulkanAv1EncodeSettings settings_;
   VulkanAv1SessionResources resources_;
+  Av1DpbPingPong dpb_;
   uint64_t frame_count_ = 0;
 };
 
