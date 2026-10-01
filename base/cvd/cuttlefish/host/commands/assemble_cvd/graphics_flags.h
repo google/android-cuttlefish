@@ -26,7 +26,6 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
@@ -92,11 +91,13 @@ Result<GuestRendererPreload> SelectGuestRendererPreload(
     GpuMode gpu_mode, GuestHwuiRenderer guest_hwui_renderer,
     const std::string& guest_renderer_preload_arg);
 
-Result<void> SelectGpuSettings(
-    const gfxstream::proto::GraphicsAvailability& graphics_availability,
-    GpuMode gpu_mode, const std::string& gpu_renderer_features_arg,
-    GuestHwuiRenderer hwui_renderer, const GuestConfig& guest_config,
-    CuttlefishConfig::MutableInstanceSpecific& instance);
+std::string SelectGfxstreamTransport(const GuestConfig& guest_config);
+
+Result<std::string> GetGfxstreamFeatures(
+    GpuMode gpu_mode, GuestHwuiRenderer hwui_renderer,
+    const std::string& gpu_renderer_features_arg,
+    const GuestConfig& guest_config,
+    const gfxstream::proto::GraphicsAvailability& availability);
 
 #endif
 

@@ -45,7 +45,6 @@
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
@@ -939,26 +938,6 @@ Result<std::string> GetGfxstreamFeatures(
 
   // Convert features back to a string for passing to the VMM.
   return GetGfxstreamRendererFeaturesString(features);
-}
-
-Result<void> SelectGpuSettings(
-    const gfxstream::proto::GraphicsAvailability& graphics_availability,
-    const GpuMode gpu_mode, const std::string& gpu_renderer_features_arg,
-    const GuestHwuiRenderer hwui_renderer, const GuestConfig& guest_config,
-    CuttlefishConfig::MutableInstanceSpecific& instance) {
-  if (IsGfxstreamMode(gpu_mode)) {
-    const std::string gfxstream_transport =
-        SelectGfxstreamTransport(guest_config);
-    instance.set_gpu_gfxstream_transport(gfxstream_transport);
-
-    const std::string features_string = CF_EXPECT(
-        GetGfxstreamFeatures(gpu_mode, hwui_renderer, gpu_renderer_features_arg,
-                             guest_config, graphics_availability));
-    if (!features_string.empty()) {
-      instance.set_gpu_renderer_features(features_string);
-    }
-  }
-  return {};
 }
 #endif
 
