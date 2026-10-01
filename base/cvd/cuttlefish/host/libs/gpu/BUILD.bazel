@@ -87,3 +87,27 @@ cf_cc_test(
         "@vulkan_headers",
     ],
 )
+
+cf_cc_library(
+    name = "vulkan_video_context",
+    srcs = ["vulkan_video_context.cpp"],
+    hdrs = ["vulkan_video_context.h"],
+    deps = [
+        ":vulkan_av1_capabilities",
+        ":vulkan_loader",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_test(
+    name = "vulkan_video_context_test",
+    srcs = ["vulkan_video_context_test.cpp"],
+    deps = [
+        ":vulkan_video_context",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@vulkan_headers",
+    ],
+)
