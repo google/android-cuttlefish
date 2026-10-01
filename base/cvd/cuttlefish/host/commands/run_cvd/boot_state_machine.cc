@@ -53,7 +53,6 @@
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/file_exists.h"
@@ -62,6 +61,7 @@
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
 #include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.grpc.pb.h"
 #include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.pb.h"
+#include "cuttlefish/host/commands/run_cvd/move_threads_to_cgroup.h"
 #include "cuttlefish/host/commands/run_cvd/validate.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
@@ -98,45 +98,6 @@ Result<void> MoveSelfToCgroup(std::string_view id) {
       absl::StrCat("/sys/fs/cgroup/vsoc-", id, "-cf/cgroup.procs");
   Fd fd = CF_EXPECT(Fd::Open(to_path_file, O_WRONLY | O_APPEND));
   CF_EXPECT(WriteExact(fd, std::to_string(getpid())));
-
-  return {};
-}
-
-Result<void> MoveThreadsToCgroup(const std::string& from_path,
-                                 const std::string& to_path) {
-  std::string file_path = from_path + "/cgroup.threads";
-
-  if (FileExists(file_path)) {
-    Result<std::string> content_result = ReadFileContents(file_path);
-    if (!content_result.has_value()) {
-      LOG(INFO) << "Failed to open threads file and assume it is empty: "
-                << file_path;
-      return {};
-    }
-
-    std::istringstream is(content_result.value());
-    std::string each_id;
-    while (std::getline(is, each_id)) {
-      std::string proc_status_path = "/proc/" + each_id;
-      proc_status_path.append("/status");
-      Result<std::string> proc_status = ReadFileContents(proc_status_path);
-      if (!proc_status.has_value()) {
-        LOG(INFO) << "Failed to open proc status file and skip: "
-                  << proc_status_path;
-        continue;
-      }
-
-      std::string proc_status_str = proc_status.value();
-      if (proc_status_str.find("crosvm_vcpu") == std::string::npos &&
-          proc_status_str.find("vcpu_throttle") == std::string::npos) {
-        // other proc moved to workers cgroup
-        std::string to_path_file = to_path + "/cgroup.threads";
-        Fd fd = CF_EXPECT(Fd::Open(to_path_file, O_WRONLY | O_APPEND));
-        CF_EXPECTF(WriteExact(fd, each_id), "Failed to write to '{}'",
-                   to_path_file);
-      }
-    }
-  }
 
   return {};
 }
