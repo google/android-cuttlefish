@@ -15,35 +15,29 @@
  */
 #pragma once
 
-#ifdef __APPLE__
-
-#include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
-#include "cuttlefish/host/libs/config/gpu_mode.h"
-
-#else
-
 #include <string>
 
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
+#ifndef __APPLE__
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
+#endif
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/result/result.h"
-
-#endif
 
 namespace cuttlefish {
 
 gfxstream::proto::GraphicsAvailability
 GetGraphicsAvailabilityWithSubprocessCheck();
 
-#ifdef __APPLE__
+Result<GpuMode> SelectGpuMode(
+    GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
+    const std::string& gpu_context_types,
+    const gfxstream::proto::GraphicsAvailability& graphics_availability);
 
-Result<GpuMode> SelectGpuMode(GpuMode given_gpu_mode);
-
-#else
+#ifndef __APPLE__
 
 struct VhostUserGpuHostRendererFeatures {
   // If true, host Virtio GPU blob resources will be allocated with
@@ -61,11 +55,6 @@ struct VhostUserGpuHostRendererFeatures {
   // driver and is potentially less performant.
   bool system_blob = false;
 };
-
-Result<GpuMode> SelectGpuMode(
-    GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
-    const std::string& gpu_context_types,
-    const gfxstream::proto::GraphicsAvailability& graphics_availability);
 
 Result<bool> SelectGpuVhostUserMode(GpuMode gpu_mode,
                                     const std::string& gpu_vhost_user_mode_arg,
