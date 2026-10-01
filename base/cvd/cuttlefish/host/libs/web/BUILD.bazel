@@ -150,6 +150,7 @@ cf_cc_library(
     hdrs = ["caching_build_api.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:link_or_copy",
         "//cuttlefish/host/libs/web:android_build",
@@ -162,6 +163,25 @@ cf_cc_library(
         "//libbase",
         "@abseil-cpp//absl/log",
         "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "caching_build_api_test",
+    srcs = ["caching_build_api_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/web:caching_build_api",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
     ],
 )
 
