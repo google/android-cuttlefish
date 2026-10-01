@@ -211,6 +211,22 @@ cf_cc_test(
     ],
 )
 
+cf_cc_test(
+    name = "vulkan_video_encoder_round_trip_test",
+    srcs = ["vulkan_video_encoder_round_trip_test.cpp"],
+    linkstatic = True,  # libvpx inside libwebrtc has undefined symbols
+    deps = [
+        ":abgr_buffer",
+        ":vulkan_encoder_config",
+        ":vulkan_video_encoder",
+        "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_cvd_abgr_video_frame_buffer",
+        "//cuttlefish/host/libs/gpu:vulkan_video_context",
+        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
+        "@libdrm//:libdrm_fourcc",
+        "@libwebrtc",
+    ],
+)
+
 # Injection point for future private repo providers.
 # Currently a no-op cc_library. When the public/private repo split
 # happens, replace with a label_flag that points to private repo
