@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <mutex>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -30,6 +31,7 @@
 #include "cuttlefish/host/libs/gpu/vulkan_av1_dpb.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_encode_commands.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_encode_settings.h"
+#include "cuttlefish/host/libs/gpu/vulkan_av1_rate_control.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_session_setup.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_syntax.h"
 #include "cuttlefish/host/libs/gpu/vulkan_handle.h"
@@ -51,6 +53,22 @@ struct EncodeFeedback {
   VkQueryResultStatusKHR status;
 };
 
+std::string_view RateControlModeName(
+    VkVideoEncodeRateControlModeFlagBitsKHR mode) {
+  switch (mode) {
+    case VK_VIDEO_ENCODE_RATE_CONTROL_MODE_DEFAULT_KHR:
+      return "default";
+    case VK_VIDEO_ENCODE_RATE_CONTROL_MODE_DISABLED_BIT_KHR:
+      return "disabled";
+    case VK_VIDEO_ENCODE_RATE_CONTROL_MODE_CBR_BIT_KHR:
+      return "cbr";
+    case VK_VIDEO_ENCODE_RATE_CONTROL_MODE_VBR_BIT_KHR:
+      return "vbr";
+    default:
+      return "unknown";
+  }
+}
+
 }  // namespace
 
 Result<std::unique_ptr<VulkanAv1EncodeSession>> VulkanAv1EncodeSession::Create(
@@ -67,7 +85,9 @@ Result<std::unique_ptr<VulkanAv1EncodeSession>> VulkanAv1EncodeSession::Create(
 
   LOG(INFO) << "Vulkan AV1 encoder initialized: " << config.width << "x"
             << config.height << " coded as " << settings.coded_extent.width
-            << "x" << settings.coded_extent.height
+            << "x" << settings.coded_extent.height << ", rate_control="
+            << RateControlModeName(settings.rate_control.mode)
+            << ", quality_level=" << settings.quality_level
             << (settings.inter_frames_supported ? "" : ", intra only");
   return std::unique_ptr<VulkanAv1EncodeSession>(new VulkanAv1EncodeSession(
       std::move(context), settings, std::move(resources)));
@@ -96,7 +116,7 @@ VulkanAv1EncodeSession::~VulkanAv1EncodeSession() {
 
 Result<VulkanAv1EncodedFrame> VulkanAv1EncodeSession::EncodeFrame(
     const uint8_t* pixels, const Nv12ConversionParams& params,
-    bool key_frame_requested) {
+    bool key_frame_requested, int32_t bitrate_bps, uint32_t framerate) {
   const bool key_frame = key_frame_requested ||
                          !settings_.inter_frames_supported ||
                          !dpb_.ReferenceSlot().has_value();
@@ -108,8 +128,12 @@ Result<VulkanAv1EncodedFrame> VulkanAv1EncodeSession::EncodeFrame(
               .key_frame = key_frame,
               .order_hint = static_cast<uint8_t>(frame_count_ %
                                                  (1u << kAv1OrderHintBits)),
+              .bitrate_bps = bitrate_bps,
+              .framerate = framerate,
           },
       .first_frame = frame_count_ == 0,
+      .active_bitrate_bps = active_bitrate_bps_,
+      .active_framerate = active_framerate_,
   };
   CF_EXPECT(RecordVulkanAv1EncodeCommands(*context_, resources_, settings_,
                                           dpb_, frame));
@@ -255,6 +279,8 @@ Result<VulkanBitstreamRange> VulkanAv1EncodeSession::ReadBitstreamRange() {
 
 void VulkanAv1EncodeSession::CommitFrame(const VulkanFrameCommit& commit) {
   dpb_.Commit(commit.key_frame, commit.order_hint);
+  active_bitrate_bps_ = commit.bitrate_bps;
+  active_framerate_ = commit.framerate;
   frame_count_++;
 }
 

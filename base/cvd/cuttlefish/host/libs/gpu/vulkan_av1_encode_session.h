@@ -67,11 +67,13 @@ class VulkanAv1EncodeSession {
   // driver's alignment.
   VkExtent2D coded_extent() const { return settings_.coded_extent; }
 
-  // Encodes one frame. The frame is a key frame when one is requested or when
-  // there is nothing to predict from.
+  // Encodes one frame at the given rate control target. The frame is a key
+  // frame when one is requested or when there is nothing to predict from.
   Result<VulkanAv1EncodedFrame> EncodeFrame(const uint8_t* pixels,
                                             const Nv12ConversionParams& params,
-                                            bool key_frame_requested);
+                                            bool key_frame_requested,
+                                            int32_t bitrate_bps,
+                                            uint32_t framerate);
 
  private:
   VulkanAv1EncodeSession(std::shared_ptr<VulkanVideoContext> context,
@@ -87,7 +89,8 @@ class VulkanAv1EncodeSession {
   Result<void> SubmitAndWait(VkSemaphore wait_semaphore);
   Result<VulkanBitstreamRange> ReadBitstreamRange();
   // Applies what a submitted frame changed. Called only after the device
-  // accepted the submission, so a failed encode leaves the DPB as it was.
+  // accepted the submission, so a failed encode leaves the DPB and the rate
+  // control state as they were.
   void CommitFrame(const VulkanFrameCommit& commit);
 
   std::shared_ptr<VulkanVideoContext> context_;
@@ -95,6 +98,8 @@ class VulkanAv1EncodeSession {
   VulkanAv1SessionResources resources_;
   Av1DpbPingPong dpb_;
   uint64_t frame_count_ = 0;
+  int32_t active_bitrate_bps_ = 0;
+  uint32_t active_framerate_ = 0;
 };
 
 }  // namespace cuttlefish

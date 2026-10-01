@@ -20,12 +20,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "api/scoped_refptr.h"
 #include "api/video/encoded_image.h"
+#include "api/video/video_bitrate_allocation.h"
 #include "api/video/video_frame.h"
 #include "api/video/video_frame_buffer.h"
 #include "api/video/video_frame_type.h"
@@ -131,6 +133,11 @@ int VulkanVideoEncoder::InitEncode(
 
   width_ = codec_settings->width;
   height_ = codec_settings->height;
+  bitrate_bps_ =
+      std::max(static_cast<int32_t>(codec_settings->startBitrate * 1000),
+               config_.min_bitrate_bps);
+  framerate_ =
+      std::max(1u, static_cast<uint32_t>(codec_settings->maxFramerate));
 
   const Result<void> result = InitEncodeInner();
   if (!result.has_value()) {
@@ -144,8 +151,13 @@ Result<void> VulkanVideoEncoder::InitEncodeInner() {
   const VulkanAv1SessionConfig session_config = {
       .width = width_,
       .height = height_,
+      .virtual_buffer_size_ms = config_.virtual_buffer_size_ms,
+      .initial_virtual_buffer_size_ms = config_.initial_virtual_buffer_size_ms,
+      .quality_level = config_.quality_level,
   };
   session_ = CF_EXPECT(VulkanAv1EncodeSession::Create(session_config));
+  VLOG(1) << "Vulkan AV1 encoder start rates: " << bitrate_bps_ << "bps @"
+          << framerate_ << "fps";
   return {};
 }
 
@@ -155,8 +167,27 @@ int32_t VulkanVideoEncoder::RegisterEncodeCompleteCallback(
   return WEBRTC_VIDEO_CODEC_OK;
 }
 
-// The session encodes at a constant quantizer index, so the rates go unused.
-void VulkanVideoEncoder::SetRates(const RateControlParameters& parameters) {}
+void VulkanVideoEncoder::SetRates(const RateControlParameters& parameters) {
+  if (session_ == nullptr) {
+    return;
+  }
+
+  const int32_t new_bitrate =
+      parameters.bitrate.get_sum_bps() != 0
+          ? std::clamp(static_cast<int32_t>(parameters.bitrate.get_sum_bps()),
+                       config_.min_bitrate_bps, config_.max_bitrate_bps)
+          : bitrate_bps_;
+  const uint32_t new_framerate =
+      std::max(1u, static_cast<uint32_t>(parameters.framerate_fps));
+
+  if (new_bitrate == bitrate_bps_ && new_framerate == framerate_) {
+    return;
+  }
+  bitrate_bps_ = new_bitrate;
+  framerate_ = new_framerate;
+  VLOG(1) << "Vulkan AV1 encoder rates: " << bitrate_bps_ << "bps @"
+          << framerate_ << "fps";
+}
 
 int32_t VulkanVideoEncoder::Encode(
     const webrtc::VideoFrame& frame,
@@ -187,7 +218,8 @@ Result<void> VulkanVideoEncoder::EncodeInner(
   const FrameSource source = CF_EXPECT(
       ReadFrameSource(frame, width_, height_, session_->coded_extent()));
   const VulkanAv1EncodedFrame encoded = CF_EXPECT(
-      session_->EncodeFrame(source.pixels, source.params, key_frame_requested));
+      session_->EncodeFrame(source.pixels, source.params, key_frame_requested,
+                            bitrate_bps_, framerate_));
 
   webrtc::EncodedImage encoded_image;
   encoded_image.SetEncodedData(webrtc::EncodedImageBuffer::Create(
@@ -211,6 +243,7 @@ webrtc::VideoEncoder::EncoderInfo VulkanVideoEncoder::GetEncoderInfo() const {
   EncoderInfo info;
   info.supports_native_handle = true;
   info.implementation_name = config_.implementation_name;
+  info.has_trusted_rate_controller = true;
   info.is_hardware_accelerated = true;
 
   info.preferred_pixel_formats = {webrtc::VideoFrameBuffer::Type::kNative};

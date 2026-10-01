@@ -47,6 +47,11 @@ const VulkanEncoderConfig kTestConfig = {
     .implementation_name = "VulkanAv1",
     .bitrate_limits = kTestBitrateLimits,
     .bitrate_limits_count = std::size(kTestBitrateLimits),
+    .min_bitrate_bps = 50000,
+    .max_bitrate_bps = 12000000,
+    .virtual_buffer_size_ms = 1000,
+    .initial_virtual_buffer_size_ms = 1000,
+    .quality_level = 0,
 };
 
 webrtc::SdpVideoFormat Av1Format() {
@@ -69,6 +74,7 @@ TEST(VulkanVideoEncoderTest, EncoderInfoComesFromTheConfig) {
   EXPECT_EQ(info.implementation_name, "VulkanAv1");
   EXPECT_TRUE(info.is_hardware_accelerated);
   EXPECT_TRUE(info.supports_native_handle);
+  EXPECT_TRUE(info.has_trusted_rate_controller);
   EXPECT_THAT(info.preferred_pixel_formats,
               ElementsAre(webrtc::VideoFrameBuffer::Type::kNative));
   ASSERT_EQ(info.resolution_bitrate_limits.size(), 2u);

@@ -166,6 +166,24 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "vulkan_av1_rate_control",
+    srcs = ["vulkan_av1_rate_control.cpp"],
+    hdrs = ["vulkan_av1_rate_control.h"],
+    deps = [
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_test(
+    name = "vulkan_av1_rate_control_test",
+    srcs = ["vulkan_av1_rate_control_test.cpp"],
+    deps = [
+        ":vulkan_av1_rate_control",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_library(
     name = "vulkan_av1_syntax",
     srcs = ["vulkan_av1_syntax.cpp"],
     hdrs = ["vulkan_av1_syntax.h"],
@@ -189,6 +207,7 @@ cf_cc_library(
     hdrs = ["vulkan_av1_encode_settings.h"],
     deps = [
         ":vulkan_av1_capabilities",
+        ":vulkan_av1_rate_control",
         "//cuttlefish/result",
         "@vulkan_headers",
     ],
@@ -230,8 +249,10 @@ cf_cc_library(
     srcs = ["vulkan_av1_encode_commands.cpp"],
     hdrs = ["vulkan_av1_encode_commands.h"],
     deps = [
+        ":vulkan_av1_capabilities",
         ":vulkan_av1_dpb",
         ":vulkan_av1_encode_settings",
+        ":vulkan_av1_rate_control",
         ":vulkan_av1_session_setup",
         ":vulkan_av1_syntax",
         ":vulkan_handle",
@@ -252,6 +273,7 @@ cf_cc_library(
         ":vulkan_av1_dpb",
         ":vulkan_av1_encode_commands",
         ":vulkan_av1_encode_settings",
+        ":vulkan_av1_rate_control",
         ":vulkan_av1_session_setup",
         ":vulkan_av1_syntax",
         ":vulkan_handle",

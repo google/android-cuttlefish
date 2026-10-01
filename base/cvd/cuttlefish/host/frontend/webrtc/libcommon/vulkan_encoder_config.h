@@ -17,6 +17,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include <type_traits>
 
@@ -36,6 +37,20 @@ struct VulkanEncoderConfig {
   // Resolution-based bitrate limits for WebRTC rate control.
   const webrtc::VideoEncoder::ResolutionBitrateLimits* bitrate_limits;
   size_t bitrate_limits_count;
+
+  // Clamping range for SetRates(). min is the technical floor, not a quality
+  // floor, so WebRTC's bandwidth estimator keeps its full range.
+  int32_t min_bitrate_bps;
+  int32_t max_bitrate_bps;
+
+  // Coded picture buffer size and its initial fullness, in milliseconds of
+  // the target bitrate. The buffer size must not be zero: a driver handed a
+  // zero sized buffer has nothing to pace against.
+  uint32_t virtual_buffer_size_ms;
+  uint32_t initial_virtual_buffer_size_ms;
+
+  // Encode quality level, clamped to the range the driver reports.
+  uint32_t quality_level;
 };
 
 static_assert(std::is_trivially_destructible_v<VulkanEncoderConfig>,

@@ -23,6 +23,7 @@
 #include "vulkan/vulkan_core.h"
 
 #include "cuttlefish/host/libs/gpu/vulkan_av1_capabilities.h"
+#include "cuttlefish/host/libs/gpu/vulkan_av1_rate_control.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -36,7 +37,7 @@ constexpr uint32_t kDpbSlots = 2;
 // uses.
 constexpr uint32_t kLastFrameNameBit = 1;
 
-// Middle of the qindex range.
+// Middle of the qindex range. Only the constant quality mode encodes with it.
 constexpr uint32_t kDefaultQIndex = 128;
 
 uint32_t RoundUpTo(uint32_t value, uint32_t alignment) {
@@ -82,9 +83,14 @@ Result<VulkanAv1EncodeSettings> SelectVulkanAv1EncodeSettings(
   const uint32_t dpb_slots = std::min(kDpbSlots, capabilities.max_dpb_slots);
   CF_EXPECT_GT(dpb_slots, 0u, "Driver reports no DPB slots");
 
-  CF_EXPECT((capabilities.rate_control_modes &
-             VK_VIDEO_ENCODE_RATE_CONTROL_MODE_DISABLED_BIT_KHR) != 0,
-            "Driver cannot switch rate control off");
+  const VkVideoEncodeRateControlModeFlagBitsKHR rate_control_mode =
+      SelectRateControlMode(capabilities.rate_control_modes);
+  CF_EXPECT(
+      capabilities.max_rate_control_layers > 0 ||
+          rate_control_mode ==
+              VK_VIDEO_ENCODE_RATE_CONTROL_MODE_DISABLED_BIT_KHR ||
+          rate_control_mode == VK_VIDEO_ENCODE_RATE_CONTROL_MODE_DEFAULT_KHR,
+      "Driver accepts no rate control layer");
 
   return VulkanAv1EncodeSettings{
       .width = config.width,
@@ -98,6 +104,19 @@ Result<VulkanAv1EncodeSettings> SelectVulkanAv1EncodeSettings(
           capabilities.max_single_reference_count > 0 &&
           capabilities.max_active_reference_pictures > 0 &&
           (capabilities.single_reference_name_mask & kLastFrameNameBit) != 0,
+      .rate_control =
+          {
+              .mode = rate_control_mode,
+              .max_bitrate_bps = capabilities.max_bitrate_bps,
+              .min_q_index = capabilities.min_q_index,
+              .max_q_index = capabilities.max_q_index,
+              .vbv = DeriveVbvSettings(config.virtual_buffer_size_ms,
+                                       config.initial_virtual_buffer_size_ms),
+          },
+      .quality_level = capabilities.max_quality_levels > 0
+                           ? std::min(config.quality_level,
+                                      capabilities.max_quality_levels - 1)
+                           : 0,
   };
 }
 

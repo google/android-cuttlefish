@@ -61,6 +61,8 @@ class VulkanVideoEncoder : public webrtc::VideoEncoder {
   VulkanEncoderConfig config_;
   uint32_t width_ = 0;
   uint32_t height_ = 0;
+  int32_t bitrate_bps_ = 0;
+  uint32_t framerate_ = 30;
   webrtc::EncodedImageCallback* callback_ = nullptr;
   std::unique_ptr<VulkanAv1EncodeSession> session_;
 };

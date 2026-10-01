@@ -31,12 +31,19 @@ namespace cuttlefish {
 struct VulkanFrameCommit {
   bool key_frame = false;
   uint8_t order_hint = 0;
+  int32_t bitrate_bps = 0;
+  uint32_t framerate = 0;
 };
 
 // What the encode command buffer of one frame is recorded from.
 struct VulkanAv1FrameCommands {
   VulkanFrameCommit commit;
   bool first_frame = false;
+  // The rate control state the session holds. Every begin of a coding scope
+  // has to carry it, so a change goes out as a control command inside the
+  // scope and takes effect from the next begin.
+  int32_t active_bitrate_bps = 0;
+  uint32_t active_framerate = 0;
 };
 
 // Records the encode command buffer of one frame: the input barriers, the

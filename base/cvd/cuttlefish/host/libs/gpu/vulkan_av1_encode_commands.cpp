@@ -25,8 +25,10 @@
 
 #include "vulkan/vulkan_core.h"
 
+#include "cuttlefish/host/libs/gpu/vulkan_av1_capabilities.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_dpb.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_encode_settings.h"
+#include "cuttlefish/host/libs/gpu/vulkan_av1_rate_control.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_session_setup.h"
 #include "cuttlefish/host/libs/gpu/vulkan_av1_syntax.h"
 #include "cuttlefish/host/libs/gpu/vulkan_handle.h"
@@ -37,6 +39,11 @@
 
 namespace cuttlefish {
 namespace {
+
+// Predictive frames reported as still pending where the driver requires a
+// count. The stream has no fixed group structure, so more inter frames are
+// always pending.
+constexpr uint32_t kGopRemainingPredictive = 60;
 
 std::vector<VkVideoPictureResourceInfoKHR> DpbPictureResources(
     const VulkanAv1DpbImage& dpb, VkExtent2D coded_extent) {
@@ -85,7 +92,13 @@ Av1PictureParams PictureParams(const VulkanAv1EncodeSettings& settings,
       .height = settings.height,
       .coded_extent = settings.coded_extent,
       .q_index = settings.q_index,
-      .constant_q_index = settings.q_index,
+      // The quantizer index is the encoder's to pick only where rate control
+      // is switched off; otherwise it has to be zero.
+      .constant_q_index =
+          settings.rate_control.mode ==
+                  VK_VIDEO_ENCODE_RATE_CONTROL_MODE_DISABLED_BIT_KHR
+              ? settings.q_index
+              : 0,
       .ref_order_hints = dpb.RefOrderHints(),
       .reference_frame_type = dpb.ReferenceFrameType(),
       .reference_order_hint = dpb.ReferenceOrderHint(),
@@ -127,34 +140,39 @@ void RecordInputBarriers(const VulkanDeviceFunctions& vk,
       });
 }
 
-// Rate control is off, so the driver encodes every frame at the constant
-// quantizer index of its picture information.
-VkVideoEncodeRateControlInfoKHR RateControlOffInfo() {
-  return VkVideoEncodeRateControlInfoKHR{
-      .sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_RATE_CONTROL_INFO_KHR,
-      .pNext = nullptr,
-      .flags = 0,
-      .rateControlMode = VK_VIDEO_ENCODE_RATE_CONTROL_MODE_DISABLED_BIT_KHR,
-      .layerCount = 0,
-      .pLayers = nullptr,
-      .virtualBufferSizeInMs = 0,
-      .initialVirtualBufferSizeInMs = 0,
-  };
-}
-
 void RecordBeginCoding(
     const VulkanVideoContext& context, VkCommandBuffer command_buffer,
     const VulkanAv1SessionResources& resources,
+    const VulkanAv1EncodeSettings& settings,
     const VulkanAv1FrameCommands& frame,
     const std::vector<VkVideoReferenceSlotInfoKHR>& begin_slots) {
-  const VkVideoEncodeRateControlInfoKHR rate_control = RateControlOffInfo();
+  const VulkanRateControlChain active_chain(
+      settings.rate_control, frame.active_bitrate_bps, frame.active_framerate);
+
+  const VkVideoEncodeAV1GopRemainingFrameInfoKHR gop_remaining = {
+      .sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_GOP_REMAINING_FRAME_INFO_KHR,
+      .pNext = &active_chain.info(),
+      .useGopRemainingFrames = VK_TRUE,
+      .gopRemainingIntra = frame.commit.key_frame ? 1u : 0u,
+      .gopRemainingPredictive = kGopRemainingPredictive,
+      .gopRemainingBipredictive = 0,
+  };
+  const bool needs_gop_remaining =
+      IsPacedRateControlMode(settings.rate_control.mode) &&
+      context.av1_capabilities().requires_gop_remaining_frames;
 
   // The begin of a coding scope has to describe the rate control state the
   // session holds, so it carries the state as last applied, and nothing at
   // all before the first control command sets one.
+  const void* begin_next = nullptr;
+  if (!frame.first_frame) {
+    begin_next = needs_gop_remaining
+                     ? static_cast<const void*>(&gop_remaining)
+                     : static_cast<const void*>(&active_chain.info());
+  }
   const VkVideoBeginCodingInfoKHR begin_coding = {
       .sType = VK_STRUCTURE_TYPE_VIDEO_BEGIN_CODING_INFO_KHR,
-      .pNext = frame.first_frame ? nullptr : &rate_control,
+      .pNext = begin_next,
       .flags = 0,
       .videoSession = resources.video_session.session.get(),
       .videoSessionParameters = resources.session_parameters.get(),
@@ -167,6 +185,7 @@ void RecordBeginCoding(
 
 void RecordControlCommands(const VulkanDeviceFunctions& vk,
                            VkCommandBuffer command_buffer,
+                           const VulkanAv1EncodeSettings& settings,
                            const VulkanAv1FrameCommands& frame) {
   if (frame.first_frame) {
     const VkVideoCodingControlInfoKHR reset_control = {
@@ -176,10 +195,33 @@ void RecordControlCommands(const VulkanDeviceFunctions& vk,
     };
     vk.vkCmdControlVideoCodingKHR(command_buffer, &reset_control);
 
-    const VkVideoEncodeRateControlInfoKHR rate_control = RateControlOffInfo();
+    // A reset leaves the session at quality level zero, and the session
+    // parameters in use were created for the level below. The rate control
+    // command that follows carries the state this level wants.
+    if (settings.quality_level != 0) {
+      const VkVideoEncodeQualityLevelInfoKHR quality_level_info = {
+          .sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_QUALITY_LEVEL_INFO_KHR,
+          .pNext = nullptr,
+          .qualityLevel = settings.quality_level,
+      };
+      const VkVideoCodingControlInfoKHR quality_control = {
+          .sType = VK_STRUCTURE_TYPE_VIDEO_CODING_CONTROL_INFO_KHR,
+          .pNext = &quality_level_info,
+          .flags = VK_VIDEO_CODING_CONTROL_ENCODE_QUALITY_LEVEL_BIT_KHR,
+      };
+      vk.vkCmdControlVideoCodingKHR(command_buffer, &quality_control);
+    }
+  }
+
+  if (frame.first_frame ||
+      frame.commit.bitrate_bps != frame.active_bitrate_bps ||
+      frame.commit.framerate != frame.active_framerate) {
+    const VulkanRateControlChain pending_chain(settings.rate_control,
+                                               frame.commit.bitrate_bps,
+                                               frame.commit.framerate);
     const VkVideoCodingControlInfoKHR rate_control_command = {
         .sType = VK_STRUCTURE_TYPE_VIDEO_CODING_CONTROL_INFO_KHR,
-        .pNext = &rate_control,
+        .pNext = &pending_chain.info(),
         .flags = VK_VIDEO_CODING_CONTROL_ENCODE_RATE_CONTROL_BIT_KHR,
     };
     vk.vkCmdControlVideoCodingKHR(command_buffer, &rate_control_command);
@@ -295,8 +337,9 @@ Result<void> RecordVulkanAv1EncodeCommands(
   const std::vector<VkVideoReferenceSlotInfoKHR> begin_slots =
       BeginSlots(dpb_resources, picture_params.reference_slot);
 
-  RecordBeginCoding(context, command_buffer, resources, frame, begin_slots);
-  RecordControlCommands(vk, command_buffer, frame);
+  RecordBeginCoding(context, command_buffer, resources, settings, frame,
+                    begin_slots);
+  RecordControlCommands(vk, command_buffer, settings, frame);
   RecordEncode(vk, command_buffer, resources, picture_params, dpb_resources);
 
   const VkVideoEndCodingInfoKHR end_coding = {

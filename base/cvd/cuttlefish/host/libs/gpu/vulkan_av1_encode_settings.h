@@ -21,6 +21,7 @@
 #include "vulkan/vulkan_core.h"
 
 #include "cuttlefish/host/libs/gpu/vulkan_av1_capabilities.h"
+#include "cuttlefish/host/libs/gpu/vulkan_av1_rate_control.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -35,6 +36,9 @@ VkExtent2D AlignedCodedExtent(uint32_t width, uint32_t height,
 struct VulkanAv1SessionConfig {
   uint32_t width = 0;
   uint32_t height = 0;
+  uint32_t virtual_buffer_size_ms = 0;
+  uint32_t initial_virtual_buffer_size_ms = 0;
+  uint32_t quality_level = 0;
 };
 
 // How a session encodes, settled against what the driver reports.
@@ -47,6 +51,8 @@ struct VulkanAv1EncodeSettings {
   // False where the driver offers no single reference prediction with
   // LAST_FRAME, or fewer than two DPB slots. Every frame is then a key frame.
   bool inter_frames_supported = false;
+  VulkanRateControlSettings rate_control;
+  uint32_t quality_level = 0;
 };
 
 // Fails where the driver cannot encode the configured size or reports

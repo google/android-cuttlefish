@@ -34,7 +34,11 @@ VulkanAv1EncodeCapabilities FilledCapabilities() {
       .max_coded_extent = {4096, 4096},
       .max_dpb_slots = 8,
       .max_active_reference_pictures = 1,
-      .rate_control_modes = VK_VIDEO_ENCODE_RATE_CONTROL_MODE_DISABLED_BIT_KHR,
+      .rate_control_modes = VK_VIDEO_ENCODE_RATE_CONTROL_MODE_CBR_BIT_KHR |
+                            VK_VIDEO_ENCODE_RATE_CONTROL_MODE_VBR_BIT_KHR,
+      .max_rate_control_layers = 1,
+      .max_bitrate_bps = 50000000,
+      .max_quality_levels = 4,
       .coded_picture_alignment = {64, 16},
       .max_single_reference_count = 1,
       .single_reference_name_mask = 1,
@@ -47,6 +51,9 @@ VulkanAv1SessionConfig Config1080p() {
   return VulkanAv1SessionConfig{
       .width = 1920,
       .height = 1080,
+      .virtual_buffer_size_ms = 200,
+      .initial_virtual_buffer_size_ms = 500,
+      .quality_level = 9,
   };
 }
 
@@ -99,6 +106,14 @@ TEST(SelectVulkanAv1EncodeSettingsTest, SettlesAgainstTheCapabilities) {
   EXPECT_EQ(settings->q_index, 128u);
   EXPECT_EQ(settings->dpb_slots, 2u);
   EXPECT_TRUE(settings->inter_frames_supported);
+  EXPECT_EQ(settings->rate_control.mode,
+            VK_VIDEO_ENCODE_RATE_CONTROL_MODE_CBR_BIT_KHR);
+  EXPECT_EQ(settings->rate_control.max_bitrate_bps, 50000000u);
+  EXPECT_EQ(settings->rate_control.min_q_index, 1u);
+  EXPECT_EQ(settings->rate_control.max_q_index, 255u);
+  EXPECT_EQ(settings->rate_control.vbv.buffer_size_ms, 200u);
+  EXPECT_EQ(settings->rate_control.vbv.initial_size_ms, 200u);
+  EXPECT_EQ(settings->quality_level, 3u);
 }
 
 TEST(SelectVulkanAv1EncodeSettingsTest, EncodesKeyFramesOnlyWithoutLastFrame) {

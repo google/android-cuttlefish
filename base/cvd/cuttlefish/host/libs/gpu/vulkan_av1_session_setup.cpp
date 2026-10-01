@@ -144,10 +144,17 @@ Result<UniqueVkHandle<VkVideoSessionParametersKHR>> CreateSessionParameters(
   const VulkanDeviceFunctions& vk = context.device_functions();
 
   const Av1SequenceHeaderInfo sequence_header(settings.coded_extent);
+  // The parameters belong to the quality level the session encodes at, which
+  // is why the two are set from the same value.
+  const VkVideoEncodeQualityLevelInfoKHR quality_level_info = {
+      .sType = VK_STRUCTURE_TYPE_VIDEO_ENCODE_QUALITY_LEVEL_INFO_KHR,
+      .pNext = nullptr,
+      .qualityLevel = settings.quality_level,
+  };
   const VkVideoEncodeAV1SessionParametersCreateInfoKHR av1_parameters = {
       .sType =
           VK_STRUCTURE_TYPE_VIDEO_ENCODE_AV1_SESSION_PARAMETERS_CREATE_INFO_KHR,
-      .pNext = nullptr,
+      .pNext = &quality_level_info,
       .pStdSequenceHeader = &sequence_header.sequence_header(),
       .pStdDecoderModelInfo = nullptr,
       .stdOperatingPointCount = 1,
