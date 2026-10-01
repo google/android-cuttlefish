@@ -403,7 +403,7 @@ Result<SharedFD> CreateOrReuseAndDrainFifo(const std::string& path,
                path);
   } else {
     CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
-               "Failed to mkfifo('{}', {:o}): {}", path, mode, StrError(errno));
+               "Failed to mkfifo('{}', {:o}): {}", path, mode, StrError());
   }
 
   Fd ret = CF_EXPECT(Fd::Open(path, O_RDWR));

@@ -1143,7 +1143,7 @@ Result<bool> CrosvmManager::WaitForRestoreComplete(SharedFD stop_fd) const {
     std::vector<PollSharedFd> poll = {{.fd = stop_fd, .events = POLLIN}};
     const int result = SharedFD::Poll(poll, 50 /* ms */);
     // Check for errors.
-    CF_EXPECTF(result >= 0, "failed to wait on stop_fd: {}", StrError(errno));
+    CF_EXPECTF(result >= 0, "failed to wait on stop_fd: {}", StrError());
     // Check if pipe became readable or closed.
     if (result > 0) {
       return false;

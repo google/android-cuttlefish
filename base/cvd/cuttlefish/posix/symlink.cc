@@ -17,7 +17,6 @@
 
 #include <unistd.h>
 
-#include <cerrno>
 #include <string>
 
 #include "cuttlefish/posix/strerror.h"
@@ -28,7 +27,7 @@ namespace cuttlefish {
 Result<void> Symlink(const std::string& target, const std::string& linkpath) {
   if (symlink(target.c_str(), linkpath.c_str()) < 0) {
     return CF_ERRF("symlink(\"{}\", \"{}\") failed: {}", target, linkpath,
-                   StrError(errno));
+                   StrError());
   }
   return {};
 }

@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/tombstone_receiver.h"
 
-#include <errno.h>
 #include <sys/stat.h>
 
 #include <optional>
@@ -43,7 +42,7 @@ Result<MonitorCommand> TombstoneReceiver(
                      // NOLINTNEXTLINE(misc-include-cleaner)
                      S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0,
                "Failed to create tombstone directory: '{}'. error: '{}'",
-               tombstone_dir, StrError(errno));
+               tombstone_dir, StrError());
   }
 
   auto port = instance.tombstone_receiver_port();

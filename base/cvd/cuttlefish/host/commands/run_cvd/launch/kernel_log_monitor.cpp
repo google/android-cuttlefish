@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/kernel_log_monitor.h"
 
-#include <errno.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -106,7 +105,7 @@ class KernelLogMonitor : public CommandSource,
     for (unsigned int i = 0; i < number_of_event_pipes_; ++i) {
       SharedFD event_pipe_write_end, event_pipe_read_end;
       CF_EXPECT(SharedFD::Pipe(&event_pipe_read_end, &event_pipe_write_end),
-                "Failed creating kernel log pipe: " << StrError(errno));
+                "Failed creating kernel log pipe: " << StrError());
       event_pipe_write_ends_.push_back(event_pipe_write_end);
       event_pipe_read_ends_.push_back(event_pipe_read_end);
     }

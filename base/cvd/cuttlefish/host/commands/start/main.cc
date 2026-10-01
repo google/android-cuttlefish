@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -250,7 +249,7 @@ void ExecCvd(std::vector<std::string> args) {
   const int enable_overwrite = 1;
   const int return_value =
       setenv(invoker_name.c_str(), invoker_value.c_str(), enable_overwrite);
-  CHECK(return_value == 0) << StrError(errno);
+  CHECK(return_value == 0) << StrError();
 
   const std::string cvd_path = CvdPath();
   execv(cvd_path.c_str(), args_cstr.data());

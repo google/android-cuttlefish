@@ -61,7 +61,7 @@ Result<std::string> InstanceLockFileManager::LockFilePath(
 
 Result<void> InstanceLockFileManager::RemoveLockFile(unsigned instance_num) {
   const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
-  CF_EXPECT(RemoveFile(lock_file_path), StrError(errno));
+  CF_EXPECT(RemoveFile(lock_file_path), StrError());
   return {};
 }
 

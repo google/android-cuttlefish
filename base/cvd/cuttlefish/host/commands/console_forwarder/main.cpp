@@ -84,25 +84,25 @@ class ConsoleForwarder {
     // Remove any stale symlink to a pts device
     auto ret = unlink(console_path_.c_str());
     CHECK(!(ret < 0 && errno != ENOENT))
-        << "Failed to unlink " << console_path_ << ": " << StrError(errno);
+        << "Failed to unlink " << console_path_ << ": " << StrError();
 
     auto pty = posix_openpt(O_RDWR | O_NOCTTY | O_NONBLOCK);
-    CHECK(pty >= 0) << "Failed to open a PTY: " << StrError(errno);
+    CHECK(pty >= 0) << "Failed to open a PTY: " << StrError();
 
-    CHECK_EQ(grantpt(pty), 0) << StrError(errno);
-    CHECK_EQ(unlockpt(pty), 0) << StrError(errno);
+    CHECK_EQ(grantpt(pty), 0) << StrError();
+    CHECK_EQ(unlockpt(pty), 0) << StrError();
 
     int packet_mode_enabled = 1;
     // NOLINTNEXTLINE(misc-include-cleaner)
-    CHECK_EQ(ioctl(pty, TIOCPKT, &packet_mode_enabled), 0) << StrError(errno);
+    CHECK_EQ(ioctl(pty, TIOCPKT, &packet_mode_enabled), 0) << StrError();
 
     auto pty_dev_name = ptsname(pty);
     CHECK(pty_dev_name != nullptr)
-        << "Failed to obtain PTY device name: " << StrError(errno);
+        << "Failed to obtain PTY device name: " << StrError();
 
     CHECK(symlink(pty_dev_name, console_path_.c_str()) >= 0)
         << "Failed to create symlink to " << pty_dev_name << " at "
-        << console_path_ << ": " << StrError(errno);
+        << console_path_ << ": " << StrError();
 
     Result<Fd> pty_fd = Fd::Dup(pty);
     close(pty);
@@ -260,7 +260,7 @@ int ConsoleForwarderMain(int argc, char** argv) {
 
   // Don't get a SIGPIPE from the clients
   CHECK(sigaction(SIGPIPE, nullptr, nullptr) == 0)
-      << "Failed to set SIGPIPE to be ignored: " << StrError(errno);
+      << "Failed to set SIGPIPE to be ignored: " << StrError();
 
   console_forwarder.StartServer();
 }
