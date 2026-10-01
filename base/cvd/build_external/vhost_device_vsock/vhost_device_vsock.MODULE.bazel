@@ -1,0 +1,28 @@
+vhost_device_vsock_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+
+vhost_device_vsock_crates.spec(
+    artifact = "bin",
+    git = "https://github.com/rust-vmm/vhost-device.git",
+    package = "vhost-device-vsock",
+    repositories = ["vhost_device_vsock_crates"],
+    rev = "20fa14c4c56e40a12104794a934dd70dc7642ff2",
+)
+
+vhost_device_vsock_crates.annotation(
+    crate = "vhost-device-vsock",
+    gen_all_binaries = True,
+    patch_args = ["-p2"],
+    patches = [
+        "@//build_external/vhost_device_vsock:vhost-device-vsock-snapshot.patch",
+    ],
+    repositories = ["vhost_device_vsock_crates"],
+)
+
+vhost_device_vsock_crates.from_specs(
+    name = "vhost_device_vsock_crates",
+    # Needed because it shares the extension with crosvm
+    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
+    host_tools = "@rust_host_tools_nightly",
+)
+
+use_repo(vhost_device_vsock_crates, "vhost_device_vsock_crates")
