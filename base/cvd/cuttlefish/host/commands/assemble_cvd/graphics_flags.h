@@ -19,8 +19,11 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
+#ifndef __APPLE__
+#include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
+#include "cuttlefish/host/libs/config/guest_renderer_preload.h"
+#endif
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/result/result.h"
 
@@ -29,14 +32,32 @@ namespace cuttlefish {
 gfxstream::proto::GraphicsAvailability
 GetGraphicsAvailabilityWithSubprocessCheck();
 
-Result<GpuMode> ConfigureGpuSettings(
-    const gfxstream::proto::GraphicsAvailability& graphics_availability,
-    GpuMode gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
-    const std::string& gpu_renderer_features_arg,
-    std::string& gpu_context_types_arg,
-    const std::string& guest_hwui_renderer_arg,
-    const std::string& guest_renderer_preload_arg, VmmMode vmm,
-    const GuestConfig& guest_config,
-    CuttlefishConfig::MutableInstanceSpecific& instance);
+Result<GpuMode> SelectGpuMode(
+    GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
+    const std::string& gpu_context_types,
+    const gfxstream::proto::GraphicsAvailability& graphics_availability);
+
+#ifndef __APPLE__
+
+struct GraphicsSettings {
+  bool enable_gpu_vhost_user = false;
+  bool enable_gpu_external_blob = false;
+  bool enable_gpu_system_blob = false;
+  std::string angle_feature_overrides_enabled;
+  std::string angle_feature_overrides_disabled;
+  GuestHwuiRenderer hwui_renderer;
+  GuestRendererPreload guest_renderer_preload;
+  std::string gfxstream_transport;
+  std::string gfxstream_features_string;
+};
+
+Result<GraphicsSettings> GetGraphicsSettings(
+    GpuMode gpu_mode, const std::string& gpu_vhost_user_mode, VmmMode vmm_mode,
+    const ::gfxstream::proto::GraphicsAvailability& graphics_availability,
+    const GuestConfig& guest_config, const std::string& guest_hwui_renderer,
+    const std::string& guest_renderer_preload,
+    const std::string& gpu_renderer_features);
+
+#endif
 
 }  // namespace cuttlefish

@@ -1161,16 +1161,49 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     // gpu related settings
-    const GpuMode gpu_mode = CF_EXPECT(ConfigureGpuSettings(
-        graphics_availability, gpu_mode_values.ForIndex(instance_index),
-        gpu_vhost_user_mode_vec[instance_index],
-        gpu_renderer_features_vec[instance_index],
-        gpu_context_types_vec[instance_index],
-        guest_hwui_renderer_vec[instance_index],
-        guest_renderer_preload_vec[instance_index], vm_manager_flag.Mode(),
-        guest_configs[instance_index], instance));
-    calculated_gpu_mode_vec[instance_index] =
-        gpu_mode_values.ForIndex(instance_index);
+    instance.set_has_vulkan_gfxstream_apex(
+        guest_configs[instance_index].has_vulkan_gfxstream_apex);
+    instance.set_has_vulkan_lavapipe_apex(
+        guest_configs[instance_index].has_vulkan_lavapipe_apex);
+    instance.set_has_vulkan_swiftshader_apex(
+        guest_configs[instance_index].has_vulkan_swiftshader_apex);
+    instance.set_has_vulkan_venus_apex(
+        guest_configs[instance_index].has_vulkan_venus_apex);
+
+    const GpuMode gpu_mode = CF_EXPECT(SelectGpuMode(
+        gpu_mode_values.ForIndex(instance_index), vm_manager_flag.Mode(),
+        guest_configs[instance_index], gpu_context_types_vec[instance_index],
+        graphics_availability));
+    instance.set_gpu_mode(gpu_mode);
+
+#ifdef __APPLE__
+    instance.set_enable_gpu_vhost_user(false);
+#else
+    const GraphicsSettings graphics_settings = CF_EXPECT(GetGraphicsSettings(
+        gpu_mode, gpu_vhost_user_mode_vec[instance_index],
+        vm_manager_flag.Mode(), graphics_availability,
+        guest_configs[instance_index], guest_hwui_renderer_vec[instance_index],
+        guest_renderer_preload_vec[instance_index],
+        gpu_renderer_features_vec[instance_index]));
+    instance.set_enable_gpu_vhost_user(graphics_settings.enable_gpu_vhost_user);
+    instance.set_enable_gpu_external_blob(
+        graphics_settings.enable_gpu_external_blob);
+    instance.set_enable_gpu_system_blob(
+        graphics_settings.enable_gpu_system_blob);
+    instance.set_gpu_angle_feature_overrides_enabled(
+        graphics_settings.angle_feature_overrides_enabled);
+    instance.set_gpu_angle_feature_overrides_disabled(
+        graphics_settings.angle_feature_overrides_disabled);
+    instance.set_guest_hwui_renderer(graphics_settings.hwui_renderer);
+    instance.set_guest_renderer_preload(
+        graphics_settings.guest_renderer_preload);
+    instance.set_gpu_gfxstream_transport(graphics_settings.gfxstream_transport);
+    if (!graphics_settings.gfxstream_features_string.empty()) {
+      instance.set_gpu_renderer_features(
+          graphics_settings.gfxstream_features_string);
+    }
+#endif
+    calculated_gpu_mode_vec[instance_index] = gpu_mode;
 
     instance.set_restart_subprocesses(
         restart_subprocesses_values.ForIndex(instance_index));
