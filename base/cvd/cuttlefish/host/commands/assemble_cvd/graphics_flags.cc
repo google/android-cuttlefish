@@ -586,145 +586,8 @@ bool HasMultipleGraphicsQueues(
 static std::unordered_set<std::string> kSupportedGpuContexts{
     "gfxstream-vulkan", "gfxstream-composer", "cross-domain", "magma"};
 
-}  // namespace
-
-gfxstream::proto::GraphicsAvailability
-GetGraphicsAvailabilityWithSubprocessCheck() {
-#ifdef __APPLE__
-  return {};
-#else
-  TemporaryFile graphics_availability_file;
-
-  Command graphics_detector_cmd(HostBinaryPath("graphics_detector"));
-  graphics_detector_cmd.AddParameter(graphics_availability_file.path);
-
-  Result<std::string> graphics_detector_stdout =
-      RunAndCaptureStdout(std::move(graphics_detector_cmd));
-  if (!graphics_detector_stdout.has_value()) {
-    LOG(ERROR)
-        << "Failed to run graphics detector, assuming no availability: \n"
-        << graphics_detector_stdout.error();
-    return {};
-  }
-  VLOG(0) << *graphics_detector_stdout;
-
-  auto graphics_availability_content_result =
-      ReadFileContents(graphics_availability_file.path);
-  if (!graphics_availability_content_result.has_value()) {
-    LOG(ERROR) << "Failed to read graphics availability from file "
-               << graphics_availability_file.path << ":"
-               << graphics_availability_content_result.error()
-               << ". Assuming no availability.";
-    return {};
-  }
-  const std::string& graphics_availability_content =
-      graphics_availability_content_result.value();
-
-  gfxstream::proto::GraphicsAvailability availability;
-
-  google::protobuf::TextFormat::Parser parser;
-  parser.AllowUnknownField(true);
-  AggregatingErrorCollector error_collector;
-  parser.RecordErrorsTo(&error_collector);
-  if (!parser.ParseFromString(graphics_availability_content, &availability)) {
-    LOG(ERROR) << "Failed to parse graphics detector output: "
-               << graphics_availability_content
-               << ". Error(s): " << error_collector.error_message
-               << ". Assuming no availability.";
-    return {};
-  }
-
-  VLOG(0) << "Host Graphics Availability:";
-  for (std::string_view line :
-       absl::StrSplit(graphics_availability_content, '\n')) {
-    VLOG(0) << line;
-  }
-
-  return availability;
-#endif
-}
-
-Result<GpuMode> SelectGpuMode(
-    const GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
-    const std::string& gpu_context_types,
-    const gfxstream::proto::GraphicsAvailability& graphics_availability) {
-#ifdef __APPLE__
-
-  (void)vmm;
-  (void)guest_config;
-  (void)gpu_context_types;
-  (void)graphics_availability;
-
-  CF_EXPECT(given_gpu_mode == GpuMode::Auto ||
-            given_gpu_mode == GpuMode::GuestSwiftshader ||
-            given_gpu_mode == GpuMode::DrmVirgl ||
-            given_gpu_mode == GpuMode::None);
-  if (given_gpu_mode == GpuMode::Auto) {
-    return GpuMode::GuestSwiftshader;
-  }
-  return given_gpu_mode;
-
-#else
-
-  const CommonState common = {
-      .vmm_mode = vmm,
-      .guest_config = guest_config,
-      .host_info = GetHostInfo(),
-      .graphics_availability = graphics_availability,
-  };
-  if (given_gpu_mode != GpuMode::Auto) {
-    // User explicitly supplied a mode. Double check the requirements but only
-    // log warnings and respect their choice:
-    if (!CF_EXPECT(GpuModeRequirementsMet(common, given_gpu_mode))) {
-      LOG(ERROR)
-          << "--gpu_mode=" << GpuModeString(given_gpu_mode)
-          << " was requested but the prerequisites were not detected "
-             "so the device may not function correctly. Please consider "
-             "switching to --gpu_mode=auto or --gpu_mode=guest_swiftshader.";
-    }
-    return given_gpu_mode;
-  }
-
-  const std::vector<GpuMode> gpu_mode_candidates =
-      GetGpuModeCandidates(guest_config);
-  VLOG(0) << "Initial GPU mode candidates:";
-  for (size_t i = 0; i < gpu_mode_candidates.size(); i++) {
-    VLOG(0) << "  " << (i + 1) << ": " << GpuModeString(gpu_mode_candidates[i]);
-  }
-  VLOG(0) << "";
-
-  const std::vector<GpuMode> supported_gpu_mode_candidates =
-      CF_EXPECT(GetSupportedGpuModeCandidates(common, gpu_mode_candidates));
-
-  if (supported_gpu_mode_candidates.empty()) {
-    LOG(ERROR) << "Unexpected empty list of candidates...";
-    return GpuMode::GuestSwiftshader;
-  }
-
-  VLOG(0) << "GPU mode candidates with satisfied requirements:";
-  for (size_t i = 0; i < supported_gpu_mode_candidates.size(); i++) {
-    VLOG(0) << "  " << (i + 1) << ": "
-            << GpuModeString(supported_gpu_mode_candidates[i]);
-  }
-  VLOG(0) << "";
-
-  const GpuMode selected_gpu_mode = supported_gpu_mode_candidates[0];
-  VLOG(0) << "GPU auto mode: selecting --gpu_mode=" << selected_gpu_mode;
-
-  if (selected_gpu_mode == GpuMode::Custom) {
-    std::vector<std::string> requested_types =
-        absl::StrSplit(gpu_context_types, ':');
-    for (const std::string& requested : requested_types) {
-      CF_EXPECT(kSupportedGpuContexts.count(requested) == 1,
-                "unsupported context type: " + requested);
-    }
-  }
-
-  return selected_gpu_mode;
-#endif
-}
-
 #ifndef __APPLE__
+
 Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
                                     const std::string& gpu_vhost_user_mode_arg,
                                     VmmMode vmm) {
@@ -966,6 +829,148 @@ Result<std::string> GetGfxstreamFeatures(
   // Convert features back to a string for passing to the VMM.
   return GetGfxstreamRendererFeaturesString(features);
 }
+
+#endif
+
+}  // namespace
+
+gfxstream::proto::GraphicsAvailability
+GetGraphicsAvailabilityWithSubprocessCheck() {
+#ifdef __APPLE__
+  return {};
+#else
+  TemporaryFile graphics_availability_file;
+
+  Command graphics_detector_cmd(HostBinaryPath("graphics_detector"));
+  graphics_detector_cmd.AddParameter(graphics_availability_file.path);
+
+  Result<std::string> graphics_detector_stdout =
+      RunAndCaptureStdout(std::move(graphics_detector_cmd));
+  if (!graphics_detector_stdout.has_value()) {
+    LOG(ERROR)
+        << "Failed to run graphics detector, assuming no availability: \n"
+        << graphics_detector_stdout.error();
+    return {};
+  }
+  VLOG(0) << *graphics_detector_stdout;
+
+  auto graphics_availability_content_result =
+      ReadFileContents(graphics_availability_file.path);
+  if (!graphics_availability_content_result.has_value()) {
+    LOG(ERROR) << "Failed to read graphics availability from file "
+               << graphics_availability_file.path << ":"
+               << graphics_availability_content_result.error()
+               << ". Assuming no availability.";
+    return {};
+  }
+  const std::string& graphics_availability_content =
+      graphics_availability_content_result.value();
+
+  gfxstream::proto::GraphicsAvailability availability;
+
+  google::protobuf::TextFormat::Parser parser;
+  parser.AllowUnknownField(true);
+  AggregatingErrorCollector error_collector;
+  parser.RecordErrorsTo(&error_collector);
+  if (!parser.ParseFromString(graphics_availability_content, &availability)) {
+    LOG(ERROR) << "Failed to parse graphics detector output: "
+               << graphics_availability_content
+               << ". Error(s): " << error_collector.error_message
+               << ". Assuming no availability.";
+    return {};
+  }
+
+  VLOG(0) << "Host Graphics Availability:";
+  for (std::string_view line :
+       absl::StrSplit(graphics_availability_content, '\n')) {
+    VLOG(0) << line;
+  }
+
+  return availability;
+#endif
+}
+
+Result<GpuMode> SelectGpuMode(
+    const GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
+    const std::string& gpu_context_types,
+    const gfxstream::proto::GraphicsAvailability& graphics_availability) {
+#ifdef __APPLE__
+
+  (void)vmm;
+  (void)guest_config;
+  (void)gpu_context_types;
+  (void)graphics_availability;
+
+  CF_EXPECT(given_gpu_mode == GpuMode::Auto ||
+            given_gpu_mode == GpuMode::GuestSwiftshader ||
+            given_gpu_mode == GpuMode::DrmVirgl ||
+            given_gpu_mode == GpuMode::None);
+  if (given_gpu_mode == GpuMode::Auto) {
+    return GpuMode::GuestSwiftshader;
+  }
+  return given_gpu_mode;
+
+#else
+
+  const CommonState common = {
+      .vmm_mode = vmm,
+      .guest_config = guest_config,
+      .host_info = GetHostInfo(),
+      .graphics_availability = graphics_availability,
+  };
+  if (given_gpu_mode != GpuMode::Auto) {
+    // User explicitly supplied a mode. Double check the requirements but only
+    // log warnings and respect their choice:
+    if (!CF_EXPECT(GpuModeRequirementsMet(common, given_gpu_mode))) {
+      LOG(ERROR)
+          << "--gpu_mode=" << GpuModeString(given_gpu_mode)
+          << " was requested but the prerequisites were not detected "
+             "so the device may not function correctly. Please consider "
+             "switching to --gpu_mode=auto or --gpu_mode=guest_swiftshader.";
+    }
+    return given_gpu_mode;
+  }
+
+  const std::vector<GpuMode> gpu_mode_candidates =
+      GetGpuModeCandidates(guest_config);
+  VLOG(0) << "Initial GPU mode candidates:";
+  for (size_t i = 0; i < gpu_mode_candidates.size(); i++) {
+    VLOG(0) << "  " << (i + 1) << ": " << GpuModeString(gpu_mode_candidates[i]);
+  }
+  VLOG(0) << "";
+
+  const std::vector<GpuMode> supported_gpu_mode_candidates =
+      CF_EXPECT(GetSupportedGpuModeCandidates(common, gpu_mode_candidates));
+
+  if (supported_gpu_mode_candidates.empty()) {
+    LOG(ERROR) << "Unexpected empty list of candidates...";
+    return GpuMode::GuestSwiftshader;
+  }
+
+  VLOG(0) << "GPU mode candidates with satisfied requirements:";
+  for (size_t i = 0; i < supported_gpu_mode_candidates.size(); i++) {
+    VLOG(0) << "  " << (i + 1) << ": "
+            << GpuModeString(supported_gpu_mode_candidates[i]);
+  }
+  VLOG(0) << "";
+
+  const GpuMode selected_gpu_mode = supported_gpu_mode_candidates[0];
+  VLOG(0) << "GPU auto mode: selecting --gpu_mode=" << selected_gpu_mode;
+
+  if (selected_gpu_mode == GpuMode::Custom) {
+    std::vector<std::string> requested_types =
+        absl::StrSplit(gpu_context_types, ':');
+    for (const std::string& requested : requested_types) {
+      CF_EXPECT(kSupportedGpuContexts.count(requested) == 1,
+                "unsupported context type: " + requested);
+    }
+  }
+
+  return selected_gpu_mode;
+#endif
+}
+
+#ifndef __APPLE__
 
 Result<GraphicsSettings> GetGraphicsSettings(
     const GpuMode gpu_mode, const std::string& gpu_vhost_user_mode,
