@@ -16,14 +16,10 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 
-#ifdef __linux__
-#include <linux/fs.h>
-#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -294,55 +290,6 @@ std::string CurrentDirectory() {
   }
   // Will find the null terminator and size the string appropriately.
   return std::string(process_wd.data());
-}
-
-FileSizes SparseFileSizes(const std::string& path) {
-  SharedFD fd = Fd::Open(path, O_RDONLY).value_or(Fd());
-  if (!fd->IsOpen()) {
-    LOG(ERROR) << "Could not open \"" << path << "\": " << fd->StrError();
-    return {};
-  }
-  off_t farthest_seek = fd->LSeek(0, SEEK_END);
-  VLOG(1) << "Farthest seek: " << farthest_seek;
-  if (farthest_seek == -1) {
-    LOG(ERROR) << "Could not lseek in \"" << path << "\": " << fd->StrError();
-    return {};
-  }
-  off_t data_bytes = 0;
-  off_t offset = 0;
-  while (offset < farthest_seek) {
-    off_t new_offset = fd->LSeek(offset, SEEK_HOLE);
-    if (new_offset == -1) {
-      // ENXIO is returned when there are no more blocks of this type coming.
-      if (fd->GetErrno() == ENXIO) {
-        break;
-      } else {
-        LOG(ERROR) << "Could not lseek in \"" << path
-                   << "\": " << fd->StrError();
-        return {};
-      }
-    } else {
-      data_bytes += new_offset - offset;
-      offset = new_offset;
-    }
-    if (offset >= farthest_seek) {
-      break;
-    }
-    new_offset = fd->LSeek(offset, SEEK_DATA);
-    if (new_offset == -1) {
-      // ENXIO is returned when there are no more blocks of this type coming.
-      if (fd->GetErrno() == ENXIO) {
-        break;
-      } else {
-        LOG(ERROR) << "Could not lseek in \"" << path
-                   << "\": " << fd->StrError();
-        return {};
-      }
-    } else {
-      offset = new_offset;
-    }
-  }
-  return (FileSizes){.sparse_size = farthest_seek, .disk_size = data_bytes};
 }
 
 Result<std::string> FindFile(const std::string& path,
