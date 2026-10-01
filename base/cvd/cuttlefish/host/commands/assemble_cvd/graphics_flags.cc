@@ -584,71 +584,6 @@ bool HasMultipleGraphicsQueues(
   return false;
 }
 
-CF_UNUSED_ON_MACOS
-Result<void> SetGfxstreamFlags(
-    const GpuMode gpu_mode, const GuestHwuiRenderer hwui_renderer,
-    const std::string& gpu_renderer_features_arg,
-    const GuestConfig& guest_config,
-    const gfxstream::proto::GraphicsAvailability& availability,
-    CuttlefishConfig::MutableInstanceSpecific& instance) {
-  std::string gfxstream_transport = kGfxstreamTransportAsg;
-
-  // Some older R branches are missing some Gfxstream backports
-  // which introduced a backward incompatible change (b/267483000).
-  if (guest_config.android_version_number == "11.0.0") {
-    gfxstream_transport = kGfxstreamTransportPipe;
-  }
-
-  std::unordered_map<std::string, bool> features;
-
-  // Apply features from host/mode requirements.
-  if (gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
-    features["VulkanUseDedicatedAhbMemoryType"] = true;
-  }
-
-  // Apply features from guest/mode requirements.
-  if (guest_config.gfxstream_gl_program_binary_link_status_supported) {
-    features["GlProgramBinaryLinkStatus"] = true;
-  }
-
-  if (hwui_renderer == GuestHwuiRenderer::kSkiaVk) {
-    // SkiaVK requires a second graphics queue for AHB transfers.
-    const bool needs_multi_queue_emulation =
-        (gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
-         gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader)
-            ?
-            // The SwiftShader driver packaged with the Cuttlefish host tools
-            // does not appear in `availability` and does not have multiple
-            // queues.
-            true
-            : !HasMultipleGraphicsQueues(availability);
-
-    if (needs_multi_queue_emulation) {
-      features["VulkanVirtualQueue"] = true;
-    }
-  }
-
-  // Apply feature overrides from --gpu_renderer_features.
-  const auto feature_overrides =
-      CF_EXPECT(ParseGfxstreamRendererFlag(gpu_renderer_features_arg));
-  for (const auto& [feature_name, feature_enabled] : feature_overrides) {
-    VLOG(0) << "GPU renderer feature " << feature_name << " overridden to "
-            << (feature_enabled ? "enabled" : "disabled")
-            << " via command line argument.";
-    features[feature_name] = feature_enabled;
-  }
-
-  // Convert features back to a string for passing to the VMM.
-  const std::string features_string =
-      GetGfxstreamRendererFeaturesString(features);
-  if (!features_string.empty()) {
-    instance.set_gpu_renderer_features(features_string);
-  }
-
-  instance.set_gpu_gfxstream_transport(gfxstream_transport);
-  return {};
-}
-
 static std::unordered_set<std::string> kSupportedGpuContexts{
     "gfxstream-vulkan", "gfxstream-composer", "cross-domain", "magma"};
 
@@ -948,15 +883,80 @@ Result<GuestRendererPreload> SelectGuestRendererPreload(
   return guest_renderer_preload;
 }
 
+std::string SelectGfxstreamTransport(const GuestConfig& guest_config) {
+  std::string gfxstream_transport = kGfxstreamTransportAsg;
+  // Some older R branches are missing some Gfxstream backports
+  // which introduced a backward incompatible change (b/267483000).
+  if (guest_config.android_version_number == "11.0.0") {
+    gfxstream_transport = kGfxstreamTransportPipe;
+  }
+  return gfxstream_transport;
+}
+
+Result<std::string> GetGfxstreamFeatures(
+    const GpuMode gpu_mode, const GuestHwuiRenderer hwui_renderer,
+    const std::string& gpu_renderer_features_arg,
+    const GuestConfig& guest_config,
+    const gfxstream::proto::GraphicsAvailability& availability) {
+  std::unordered_map<std::string, bool> features;
+
+  // Apply features from host/mode requirements.
+  if (gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
+    features["VulkanUseDedicatedAhbMemoryType"] = true;
+  }
+
+  // Apply features from guest/mode requirements.
+  if (guest_config.gfxstream_gl_program_binary_link_status_supported) {
+    features["GlProgramBinaryLinkStatus"] = true;
+  }
+
+  if (hwui_renderer == GuestHwuiRenderer::kSkiaVk) {
+    // SkiaVK requires a second graphics queue for AHB transfers.
+    const bool needs_multi_queue_emulation =
+        (gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
+         gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader)
+            ?
+            // The SwiftShader driver packaged with the Cuttlefish host tools
+            // does not appear in `availability` and does not have multiple
+            // queues.
+            true
+            : !HasMultipleGraphicsQueues(availability);
+
+    if (needs_multi_queue_emulation) {
+      features["VulkanVirtualQueue"] = true;
+    }
+  }
+
+  // Apply feature overrides from --gpu_renderer_features.
+  const auto feature_overrides =
+      CF_EXPECT(ParseGfxstreamRendererFlag(gpu_renderer_features_arg));
+  for (const auto& [feature_name, feature_enabled] : feature_overrides) {
+    VLOG(0) << "GPU renderer feature " << feature_name << " overridden to "
+            << (feature_enabled ? "enabled" : "disabled")
+            << " via command line argument.";
+    features[feature_name] = feature_enabled;
+  }
+
+  // Convert features back to a string for passing to the VMM.
+  return GetGfxstreamRendererFeaturesString(features);
+}
+
 Result<void> SelectGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
     const GpuMode gpu_mode, const std::string& gpu_renderer_features_arg,
     const GuestHwuiRenderer hwui_renderer, const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
   if (IsGfxstreamMode(gpu_mode)) {
-    CF_EXPECT(SetGfxstreamFlags(gpu_mode, hwui_renderer,
-                                gpu_renderer_features_arg, guest_config,
-                                graphics_availability, instance));
+    const std::string gfxstream_transport =
+        SelectGfxstreamTransport(guest_config);
+    instance.set_gpu_gfxstream_transport(gfxstream_transport);
+
+    const std::string features_string = CF_EXPECT(
+        GetGfxstreamFeatures(gpu_mode, hwui_renderer, gpu_renderer_features_arg,
+                             guest_config, graphics_availability));
+    if (!features_string.empty()) {
+      instance.set_gpu_renderer_features(features_string);
+    }
   }
   return {};
 }
