@@ -39,54 +39,24 @@ Result<GpuMode> SelectGpuMode(
 
 #ifndef __APPLE__
 
-struct VhostUserGpuHostRendererFeatures {
-  // If true, host Virtio GPU blob resources will be allocated with
-  // external memory and exported file descriptors will be shared
-  // with the VMM for mapping resources into the guest address space.
-  bool external_blob = false;
-
-  // If true, host Virtio GPU blob resources will be allocated with
-  // shmem and exported file descriptors will be shared with the VMM
-  // for mapping resources into the guest address space.
-  //
-  // This is an extension of the above external_blob that allows the
-  // VMM to map resources without graphics API support but requires
-  // additional features (VK_EXT_external_memory_host) from the GPU
-  // driver and is potentially less performant.
-  bool system_blob = false;
-};
-
-Result<bool> SelectGpuVhostUserMode(GpuMode gpu_mode,
-                                    const std::string& gpu_vhost_user_mode_arg,
-                                    VmmMode vmm);
-
-Result<VhostUserGpuHostRendererFeatures>
-GetNeededVhostUserGpuHostRendererFeatures(
-    GpuMode mode, const ::gfxstream::proto::GraphicsAvailability& availability);
-
-struct AngleFeatureOverrides {
+struct GraphicsSettings {
+  bool enable_gpu_vhost_user = false;
+  bool enable_gpu_external_blob = false;
+  bool enable_gpu_system_blob = false;
   std::string angle_feature_overrides_enabled;
   std::string angle_feature_overrides_disabled;
+  GuestHwuiRenderer hwui_renderer;
+  GuestRendererPreload guest_renderer_preload;
+  std::string gfxstream_transport;
+  std::string gfxstream_features_string;
 };
 
-Result<AngleFeatureOverrides> GetNeededAngleFeatures(
-    GpuMode mode, const ::gfxstream::proto::GraphicsAvailability& availability);
-
-Result<GuestHwuiRenderer> SelectGuestHwuiRenderer(
-    GpuMode gpu_mode, const GuestConfig& guest_config,
-    const std::string& guest_hwui_renderer_arg);
-
-Result<GuestRendererPreload> SelectGuestRendererPreload(
-    GpuMode gpu_mode, GuestHwuiRenderer guest_hwui_renderer,
-    const std::string& guest_renderer_preload_arg);
-
-std::string SelectGfxstreamTransport(const GuestConfig& guest_config);
-
-Result<std::string> GetGfxstreamFeatures(
-    GpuMode gpu_mode, GuestHwuiRenderer hwui_renderer,
-    const std::string& gpu_renderer_features_arg,
-    const GuestConfig& guest_config,
-    const gfxstream::proto::GraphicsAvailability& availability);
+Result<GraphicsSettings> GetGraphicsSettings(
+    GpuMode gpu_mode, const std::string& gpu_vhost_user_mode, VmmMode vmm_mode,
+    const ::gfxstream::proto::GraphicsAvailability& graphics_availability,
+    const GuestConfig& guest_config, const std::string& guest_hwui_renderer,
+    const std::string& guest_renderer_preload,
+    const std::string& gpu_renderer_features);
 
 #endif
 
