@@ -186,6 +186,10 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:copy",
+        "//cuttlefish/files:directory_exists",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/files:link_or_copy",
+        "//cuttlefish/files:recursively_remove_directory",
         "//cuttlefish/host/commands/cvd/fetch:builds",
         "//cuttlefish/host/commands/cvd/fetch:de_android_sparse",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
@@ -205,6 +209,28 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "fetch_context_test",
+    srcs = ["fetch_context_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/host/commands/cvd/fetch:builds",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_context",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
+        "//cuttlefish/host/commands/cvd/fetch:target_directories",
+        "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
     ],
 )
 
