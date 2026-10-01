@@ -36,7 +36,7 @@ struct ParsedFlags {
   DaemonFlag daemon;
   DataPolicyFlag data_policy;
   ExtraKernelCmdlineFlag extra_kernel_cmdline;
-  GpuModeFlag gpu_mode;
+  GpuModeFlag gpu_mode_requested;
   GuestEnforceSecurityFlag guest_enforce_security;
   MemoryMbFlag memory_mb;
   QemuBinaryDirFlag qemu_binary_dir;

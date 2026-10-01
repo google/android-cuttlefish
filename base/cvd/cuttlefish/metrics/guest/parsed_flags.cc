@@ -41,7 +41,7 @@ Result<ParsedFlags> GetParsedFlags() {
       .daemon = CF_EXPECT(DaemonFlag::FromGlobalGflags()),
       .data_policy = CF_EXPECT(DataPolicyFlag::FromGlobalGflags()),
       .extra_kernel_cmdline = ExtraKernelCmdlineFlag::FromGlobalGflags(),
-      .gpu_mode = CF_EXPECT(GpuModeFlag::FromGlobalGflags()),
+      .gpu_mode_requested = CF_EXPECT(GpuModeFlag::FromGlobalGflags()),
       .guest_enforce_security =
           CF_EXPECT(GuestEnforceSecurityFlag::FromGlobalGflags()),
       .memory_mb = CF_EXPECT(MemoryMbFlag::FromGlobalGflags()),
