@@ -15,6 +15,9 @@
 
 #include "cuttlefish/host/libs/web/caching_build_api.h"
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <string>
 #include <vector>
 
@@ -24,8 +27,10 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/is_directory_empty.h"
+#include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
@@ -174,6 +179,64 @@ TEST_F(CachingBuildApiTests, DownloadFileChecksTheCachedDigestFail) {
               IsOk());
   EXPECT_THAT(api_.DownloadFile(build, target_.path, "phone-img-1.zip"),
               IsErrorAndMessage(HasSubstr(kContentsSha256)));
+}
+
+// Writes each artifact as a directory, as the CAS downloader does with
+// `prefer-uncompressed`.
+class UncompressedBuildApi : public BuildApi {
+ public:
+  Result<Build> GetBuild(const BuildString&) override {
+    return CF_ERR("not used");
+  }
+
+  Result<std::string> DownloadFile(const Build&,
+                                   const std::string& target_directory,
+                                   const std::string& artifact_name) override {
+    download_count++;
+    const std::string path = absl::StrCat(target_directory, "/", artifact_name);
+    CF_EXPECT(EnsureDirectoryExists(path + "/nested"));
+    CF_EXPECT(WriteNewFile(path + "/a.img", "a"));
+    CF_EXPECT(WriteNewFile(path + "/nested/b.img", "b"));
+    return path;
+  }
+
+  Result<SeekableZipSource> FileReader(const Build&,
+                                       const std::string&) override {
+    return CF_ERR("not used");
+  }
+
+  int download_count = 0;
+};
+
+ino_t Inode(const std::string& path) {
+  struct stat st{};
+  EXPECT_EQ(stat(path.c_str(), &st), 0) << path;
+  return st.st_ino;
+}
+
+TEST(CachingBuildApiDirectoryTests,
+     DownloadFileLinksADirectoryOutOfTheCacheSuccess) {
+  UncompressedBuildApi inner;
+  TemporaryDir cache;
+  TemporaryDir target_root;
+  CachingBuildApi api(inner, std::string(cache.path));
+  const Build build = DeviceBuild{.id = "123", .target = "test_target"};
+  const std::string target_dir = absl::StrCat(target_root.path, "/target");
+  const std::string target = target_dir + "/img.zip";
+  const std::string cached =
+      absl::StrCat(cache.path, "/123/test_target/img.zip");
+
+  ASSERT_THAT(api.DownloadFile(build, target_dir, "img.zip"),
+              IsOkAndValue(target));
+  // A second fetch into a fresh target directory is served from the cache.
+  ASSERT_THAT(RecursivelyRemoveDirectory(target_dir), IsOk());
+  ASSERT_THAT(api.DownloadFile(build, target_dir, "img.zip"),
+              IsOkAndValue(target));
+
+  EXPECT_EQ(inner.download_count, 1);
+  EXPECT_TRUE(DirectoryExists(target));
+  EXPECT_TRUE(FileExists(target + "/a.img"));
+  EXPECT_EQ(Inode(target + "/nested/b.img"), Inode(cached + "/nested/b.img"));
 }
 
 }  // namespace
