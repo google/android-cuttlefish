@@ -87,7 +87,6 @@ message Audio {
   }
 
   message PCMDevice {
-
     message Controls {
       message Volume {
         uint32 min = 1;
@@ -96,6 +95,8 @@ message Audio {
       }
       bool mute_control_enabled = 1;
       Volume volume_control = 2;
+      bool duck_control_enabled = 3;
+      bool fade_balance_control_enabled = 4;
     }
 
     message Stream {
