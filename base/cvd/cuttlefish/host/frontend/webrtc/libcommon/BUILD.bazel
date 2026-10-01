@@ -184,6 +184,22 @@ cf_cc_library(
     ],
 )
 
+cf_cc_library(
+    name = "av1_vulkan_encoder_provider",
+    srcs = ["av1_vulkan_encoder_provider.cpp"],
+    deps = [
+        ":encoder_provider",
+        ":encoder_provider_registry",
+        ":vulkan_encoder_config",
+        ":vulkan_video_encoder",
+        "//cuttlefish/host/libs/gpu:vulkan_video_context",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@libwebrtc",
+    ],
+    alwayslink = True,
+)
+
 cf_cc_test(
     name = "vulkan_video_encoder_test",
     srcs = ["vulkan_video_encoder_test.cpp"],
@@ -269,6 +285,7 @@ cf_cc_library(
     deps = [
         ":audio_device",
         ":av1_nvenc_encoder_provider",
+        ":av1_vulkan_encoder_provider",
         ":builtin_decoder_provider",
         ":builtin_encoder_provider",
         ":composite_decoder_factory",

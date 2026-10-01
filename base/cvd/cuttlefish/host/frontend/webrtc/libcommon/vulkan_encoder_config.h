@@ -26,8 +26,8 @@
 
 namespace cuttlefish {
 
-// Codec-specific configuration for VulkanVideoEncoder, defined as a
-// namespace-scope constant.
+// Codec-specific configuration for VulkanVideoEncoder. Each Vulkan provider
+// defines one as a namespace-scope constant.
 struct VulkanEncoderConfig {
   webrtc::VideoCodecType webrtc_codec_type;
 
