@@ -40,7 +40,7 @@ Result<std::string, int> RealPath(const char* path) {
     res = realpath(path, buffer.data());
   } while (res == nullptr && errno == EINTR);
   CF_EXPECTVF(res != nullptr, errno, "realpath('{}') failed: {}", path,
-              StrError(errno));
+              StrError());
   return std::string(buffer.data());
 }
 

@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/libs/image_aggregator/raw.h"
 
-#include <errno.h>
 #include <stdint.h>
 #include <sys/types.h>
 
@@ -31,7 +30,7 @@ namespace cuttlefish {
 
 Result<RawImage> RawImage::OpenExisting(const std::string& path) {
   off_t size = FileSize(path);
-  CF_EXPECT_GE(size, 0, StrError(errno));
+  CF_EXPECT_GE(size, 0, StrError());
 
   return RawImage(size);
 }

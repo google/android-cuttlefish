@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/run_cvd/boot_state_machine.h"
 
-#include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <sys/poll.h>
@@ -122,7 +121,7 @@ Result<SharedFD> ProcessLeader(
   // in the foreground
   if (getsid(0) != getpid()) {
     CF_EXPECTF(setpgid(0, 0) == 0, "Failed to create new process group: {}",
-               StrError(errno));
+               StrError());
   }
   return {};
 }

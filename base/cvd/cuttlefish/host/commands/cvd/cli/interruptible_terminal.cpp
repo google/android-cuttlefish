@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
 
-#include <errno.h>
 #include <stdint.h>
 #include <sys/eventfd.h>
 
@@ -66,7 +65,7 @@ Result<std::string> InterruptibleTerminal::ReadLine() {
     CF_EXPECT(interrupted_ == false, "Interrupted");
     CF_EXPECTF(num_fds >= 0,
                "Select call to read the user input returned error: {}",
-               StrError(errno));
+               StrError());
 
     if (read_set.IsSet(interrupt_event_fd_)) {
       eventfd_t val;
