@@ -48,10 +48,11 @@ struct VulkanBitstreamRange {
 
 // Hardware AV1 encoder built on VK_KHR_video_encode_av1.
 //
-// Takes packed RGBA frames and converts them to NV12 on the host. The frame
-// reaches the encode source image through a copy on the compute queue, since a
-// video encode queue need not accept copy commands. Encodes low delay P frames
-// that reference LAST_FRAME only, with the reconstructed pictures ping-ponging
+// Takes packed RGBA frames and converts them to NV12, with a compute shader
+// where the device supports it and on the host otherwise. The frame reaches
+// the encode source image through a copy on the compute queue, since a video
+// encode queue need not accept copy commands. Encodes low delay P frames that
+// reference LAST_FRAME only, with the reconstructed pictures ping-ponging
 // between two DPB slots. Used from one thread.
 class VulkanAv1EncodeSession {
  public:
@@ -82,9 +83,12 @@ class VulkanAv1EncodeSession {
 
   Result<VkSemaphore> Upload(const uint8_t* pixels,
                              const Nv12ConversionParams& params);
+  Result<VkSemaphore> UploadForShader(const uint8_t* pixels,
+                                      const Nv12ConversionParams& params);
   Result<void> FlushStaging();
-  // Copies the converted frame from the staging buffer into the encode source
-  // image on the compute queue, signalling the copy semaphore.
+  // Host conversion path: copies the converted frame from the staging buffer
+  // into the encode source image on the compute queue, signalling the copy
+  // semaphore.
   Result<void> SubmitStagingCopy();
   Result<void> SubmitAndWait(VkSemaphore wait_semaphore);
   Result<VulkanBitstreamRange> ReadBitstreamRange();

@@ -135,6 +135,32 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "vulkan_nv12_converter",
+    srcs = ["vulkan_nv12_converter.cpp"],
+    hdrs = ["vulkan_nv12_converter.h"],
+    deps = [
+        ":rgba_to_nv12",
+        ":vulkan_handle",
+        ":vulkan_loader",
+        ":vulkan_resources",
+        ":vulkan_video_context",
+        "//cuttlefish/host/libs/gpu/shaders:vulkan_nv12_shaders",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log:check",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_test(
+    name = "vulkan_nv12_converter_test",
+    srcs = ["vulkan_nv12_converter_test.cpp"],
+    deps = [
+        ":vulkan_nv12_converter",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_library(
     name = "vulkan_resources",
     srcs = ["vulkan_resources.cpp"],
     hdrs = ["vulkan_resources.h"],
@@ -236,6 +262,7 @@ cf_cc_library(
         ":vulkan_av1_syntax",
         ":vulkan_handle",
         ":vulkan_loader",
+        ":vulkan_nv12_converter",
         ":vulkan_resources",
         ":vulkan_video_context",
         "//cuttlefish/result",
@@ -278,6 +305,7 @@ cf_cc_library(
         ":vulkan_av1_syntax",
         ":vulkan_handle",
         ":vulkan_loader",
+        ":vulkan_nv12_converter",
         ":vulkan_resources",
         ":vulkan_video_context",
         "//cuttlefish/result",

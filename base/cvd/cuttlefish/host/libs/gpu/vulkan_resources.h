@@ -18,6 +18,8 @@
 
 #include <stdint.h>
 
+#include <span>
+
 #include "vulkan/vulkan_core.h"
 
 #include "cuttlefish/host/libs/gpu/vulkan_handle.h"
@@ -103,6 +105,15 @@ struct VulkanImageTransition {
   VkAccessFlags2 dst_access = VK_ACCESS_2_NONE;
   uint32_t layer_count = 1;
 };
+
+// Returns the image memory barrier that performs `transition` on `image`.
+VkImageMemoryBarrier2 ImageTransitionBarrier(
+    VkImage image, const VulkanImageTransition& transition);
+
+// Records a pipeline barrier holding `barriers`.
+void RecordImageBarriers(const VulkanDeviceFunctions& vk,
+                         VkCommandBuffer command_buffer,
+                         std::span<const VkImageMemoryBarrier2> barriers);
 
 // Records a pipeline barrier holding one image memory barrier.
 void RecordImageTransition(const VulkanDeviceFunctions& vk,

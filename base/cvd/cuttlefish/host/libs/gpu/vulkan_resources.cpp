@@ -20,6 +20,7 @@
 
 #include <mutex>
 #include <optional>
+#include <span>
 
 #include "vulkan/vulkan_core.h"
 
@@ -213,10 +214,9 @@ Result<VulkanCommandBuffer> CreateVulkanCommandBuffer(
   return command_buffer;
 }
 
-void RecordImageTransition(const VulkanDeviceFunctions& vk,
-                           VkCommandBuffer command_buffer, VkImage image,
-                           const VulkanImageTransition& transition) {
-  const VkImageMemoryBarrier2 barrier = {
+VkImageMemoryBarrier2 ImageTransitionBarrier(
+    VkImage image, const VulkanImageTransition& transition) {
+  return VkImageMemoryBarrier2{
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
       .pNext = nullptr,
       .srcStageMask = transition.src_stage,
@@ -237,6 +237,11 @@ void RecordImageTransition(const VulkanDeviceFunctions& vk,
               .layerCount = transition.layer_count,
           },
   };
+}
+
+void RecordImageBarriers(const VulkanDeviceFunctions& vk,
+                         VkCommandBuffer command_buffer,
+                         std::span<const VkImageMemoryBarrier2> barriers) {
   const VkDependencyInfo dependency = {
       .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
       .pNext = nullptr,
@@ -245,10 +250,18 @@ void RecordImageTransition(const VulkanDeviceFunctions& vk,
       .pMemoryBarriers = nullptr,
       .bufferMemoryBarrierCount = 0,
       .pBufferMemoryBarriers = nullptr,
-      .imageMemoryBarrierCount = 1,
-      .pImageMemoryBarriers = &barrier,
+      .imageMemoryBarrierCount = static_cast<uint32_t>(barriers.size()),
+      .pImageMemoryBarriers = barriers.data(),
   };
   vk.vkCmdPipelineBarrier2(command_buffer, &dependency);
+}
+
+void RecordImageTransition(const VulkanDeviceFunctions& vk,
+                           VkCommandBuffer command_buffer, VkImage image,
+                           const VulkanImageTransition& transition) {
+  const VkImageMemoryBarrier2 barrier =
+      ImageTransitionBarrier(image, transition);
+  RecordImageBarriers(vk, command_buffer, {&barrier, 1});
 }
 
 Result<void> BeginOneTimeCommands(const VulkanDeviceFunctions& vk,

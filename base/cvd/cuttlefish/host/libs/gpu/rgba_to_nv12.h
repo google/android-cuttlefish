@@ -23,9 +23,9 @@ namespace cuttlefish {
 // Bytes per pixel of the packed RGBA frames the encoder takes.
 constexpr uint32_t kRgbaBytesPerPixel = 4;
 
-// Frame geometry of a conversion. A source coordinate beyond the visible frame
-// repeats the edge pixel, which keeps the padding the coded alignment adds
-// cheap to encode.
+// Frame geometry shared by the host converter and the shader. A source
+// coordinate beyond the visible frame repeats the edge pixel, which keeps the
+// padding the coded alignment adds cheap to encode.
 struct Nv12ConversionParams {
   uint32_t visible_width = 0;
   uint32_t visible_height = 0;
@@ -40,6 +40,7 @@ struct Nv12ConversionParams {
 
 // Converts packed RGBA to NV12 (BT.709 limited range) on the host. Writes the
 // luma plane followed by the interleaved chroma plane, both at the coded size.
+// The shader produces the same bytes.
 void ConvertRgbaToNv12(const uint8_t* source,
                        const Nv12ConversionParams& params,
                        uint8_t* destination);

@@ -41,6 +41,10 @@ struct VulkanInstanceFunctions {
       nullptr;
   PFN_vkGetPhysicalDeviceQueueFamilyProperties
       vkGetPhysicalDeviceQueueFamilyProperties = nullptr;
+  PFN_vkGetPhysicalDeviceFormatProperties vkGetPhysicalDeviceFormatProperties =
+      nullptr;
+  PFN_vkGetPhysicalDeviceImageFormatProperties2
+      vkGetPhysicalDeviceImageFormatProperties2 = nullptr;
   PFN_vkEnumerateDeviceExtensionProperties
       vkEnumerateDeviceExtensionProperties = nullptr;
   PFN_vkGetPhysicalDeviceVideoCapabilitiesKHR
@@ -85,6 +89,22 @@ struct VulkanDeviceFunctions {
   PFN_vkResetFences vkResetFences = nullptr;
   PFN_vkCreateSemaphore vkCreateSemaphore = nullptr;
   PFN_vkDestroySemaphore vkDestroySemaphore = nullptr;
+  PFN_vkCreateShaderModule vkCreateShaderModule = nullptr;
+  PFN_vkDestroyShaderModule vkDestroyShaderModule = nullptr;
+  PFN_vkCreateDescriptorSetLayout vkCreateDescriptorSetLayout = nullptr;
+  PFN_vkDestroyDescriptorSetLayout vkDestroyDescriptorSetLayout = nullptr;
+  PFN_vkCreateDescriptorPool vkCreateDescriptorPool = nullptr;
+  PFN_vkDestroyDescriptorPool vkDestroyDescriptorPool = nullptr;
+  PFN_vkAllocateDescriptorSets vkAllocateDescriptorSets = nullptr;
+  PFN_vkUpdateDescriptorSets vkUpdateDescriptorSets = nullptr;
+  PFN_vkCreatePipelineLayout vkCreatePipelineLayout = nullptr;
+  PFN_vkDestroyPipelineLayout vkDestroyPipelineLayout = nullptr;
+  PFN_vkCreateComputePipelines vkCreateComputePipelines = nullptr;
+  PFN_vkDestroyPipeline vkDestroyPipeline = nullptr;
+  PFN_vkCmdBindPipeline vkCmdBindPipeline = nullptr;
+  PFN_vkCmdBindDescriptorSets vkCmdBindDescriptorSets = nullptr;
+  PFN_vkCmdPushConstants vkCmdPushConstants = nullptr;
+  PFN_vkCmdDispatch vkCmdDispatch = nullptr;
   PFN_vkCreateQueryPool vkCreateQueryPool = nullptr;
   PFN_vkDestroyQueryPool vkDestroyQueryPool = nullptr;
   PFN_vkGetQueryPoolResults vkGetQueryPoolResults = nullptr;
@@ -92,6 +112,7 @@ struct VulkanDeviceFunctions {
   PFN_vkCmdBeginQuery vkCmdBeginQuery = nullptr;
   PFN_vkCmdEndQuery vkCmdEndQuery = nullptr;
   PFN_vkCmdCopyBufferToImage vkCmdCopyBufferToImage = nullptr;
+  PFN_vkCmdCopyImage vkCmdCopyImage = nullptr;
   PFN_vkCmdPipelineBarrier2 vkCmdPipelineBarrier2 = nullptr;
   PFN_vkCreateVideoSessionKHR vkCreateVideoSessionKHR = nullptr;
   PFN_vkDestroyVideoSessionKHR vkDestroyVideoSessionKHR = nullptr;

@@ -108,6 +108,12 @@ Result<VulkanInstanceFunctions> LoadVulkanInstanceFunctions(
                              "vkGetPhysicalDeviceQueueFamilyProperties",
                              &f.vkGetPhysicalDeviceQueueFamilyProperties));
   CF_EXPECT(LoadVulkanSymbol(get, instance,
+                             "vkGetPhysicalDeviceFormatProperties",
+                             &f.vkGetPhysicalDeviceFormatProperties));
+  CF_EXPECT(LoadVulkanSymbol(get, instance,
+                             "vkGetPhysicalDeviceImageFormatProperties2",
+                             &f.vkGetPhysicalDeviceImageFormatProperties2));
+  CF_EXPECT(LoadVulkanSymbol(get, instance,
                              "vkEnumerateDeviceExtensionProperties",
                              &f.vkEnumerateDeviceExtensionProperties));
   CF_EXPECT(LoadVulkanSymbol(get, instance,
@@ -198,6 +204,38 @@ Result<VulkanDeviceFunctions> LoadVulkanDeviceFunctions(
   CF_EXPECT(LoadVulkanSymbol(get, device, "vkDestroySemaphore",
                              &f.vkDestroySemaphore));
 
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkCreateShaderModule",
+                             &f.vkCreateShaderModule));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkDestroyShaderModule",
+                             &f.vkDestroyShaderModule));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkCreateDescriptorSetLayout",
+                             &f.vkCreateDescriptorSetLayout));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkDestroyDescriptorSetLayout",
+                             &f.vkDestroyDescriptorSetLayout));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkCreateDescriptorPool",
+                             &f.vkCreateDescriptorPool));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkDestroyDescriptorPool",
+                             &f.vkDestroyDescriptorPool));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkAllocateDescriptorSets",
+                             &f.vkAllocateDescriptorSets));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkUpdateDescriptorSets",
+                             &f.vkUpdateDescriptorSets));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkCreatePipelineLayout",
+                             &f.vkCreatePipelineLayout));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkDestroyPipelineLayout",
+                             &f.vkDestroyPipelineLayout));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkCreateComputePipelines",
+                             &f.vkCreateComputePipelines));
+  CF_EXPECT(
+      LoadVulkanSymbol(get, device, "vkDestroyPipeline", &f.vkDestroyPipeline));
+  CF_EXPECT(
+      LoadVulkanSymbol(get, device, "vkCmdBindPipeline", &f.vkCmdBindPipeline));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkCmdBindDescriptorSets",
+                             &f.vkCmdBindDescriptorSets));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkCmdPushConstants",
+                             &f.vkCmdPushConstants));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkCmdDispatch", &f.vkCmdDispatch));
+
   CF_EXPECT(
       LoadVulkanSymbol(get, device, "vkCreateQueryPool", &f.vkCreateQueryPool));
   CF_EXPECT(LoadVulkanSymbol(get, device, "vkDestroyQueryPool",
@@ -211,6 +249,7 @@ Result<VulkanDeviceFunctions> LoadVulkanDeviceFunctions(
   CF_EXPECT(LoadVulkanSymbol(get, device, "vkCmdEndQuery", &f.vkCmdEndQuery));
   CF_EXPECT(LoadVulkanSymbol(get, device, "vkCmdCopyBufferToImage",
                              &f.vkCmdCopyBufferToImage));
+  CF_EXPECT(LoadVulkanSymbol(get, device, "vkCmdCopyImage", &f.vkCmdCopyImage));
   CF_EXPECT(LoadVulkanSymbol(get, device, "vkCmdPipelineBarrier2",
                              &f.vkCmdPipelineBarrier2));
 

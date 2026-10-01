@@ -16,7 +16,9 @@
 
 #include "cuttlefish/host/libs/gpu/vulkan_av1_encode_session.h"
 
+#include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <memory>
 #include <mutex>
@@ -36,6 +38,7 @@
 #include "cuttlefish/host/libs/gpu/vulkan_av1_syntax.h"
 #include "cuttlefish/host/libs/gpu/vulkan_handle.h"
 #include "cuttlefish/host/libs/gpu/vulkan_loader.h"
+#include "cuttlefish/host/libs/gpu/vulkan_nv12_converter.h"
 #include "cuttlefish/host/libs/gpu/vulkan_resources.h"
 #include "cuttlefish/host/libs/gpu/vulkan_video_context.h"
 #include "cuttlefish/result/result.h"
@@ -87,7 +90,9 @@ Result<std::unique_ptr<VulkanAv1EncodeSession>> VulkanAv1EncodeSession::Create(
             << config.height << " coded as " << settings.coded_extent.width
             << "x" << settings.coded_extent.height << ", rate_control="
             << RateControlModeName(settings.rate_control.mode)
-            << ", quality_level=" << settings.quality_level
+            << ", quality_level=" << settings.quality_level << ", "
+            << (resources.converter != nullptr ? "shader color conversion"
+                                               : "host color conversion")
             << (settings.inter_frames_supported ? "" : ", intra only");
   return std::unique_ptr<VulkanAv1EncodeSession>(new VulkanAv1EncodeSession(
       std::move(context), settings, std::move(resources)));
@@ -160,10 +165,28 @@ Result<VulkanAv1EncodedFrame> VulkanAv1EncodeSession::EncodeFrame(
 
 Result<VkSemaphore> VulkanAv1EncodeSession::Upload(
     const uint8_t* pixels, const Nv12ConversionParams& params) {
+  if (resources_.converter != nullptr) {
+    return CF_EXPECT(UploadForShader(pixels, params));
+  }
   ConvertRgbaToNv12(pixels, params, resources_.staging.mapping.data());
   CF_EXPECT(FlushStaging());
   CF_EXPECT(SubmitStagingCopy());
   return resources_.commands.copy_semaphore.get();
+}
+
+Result<VkSemaphore> VulkanAv1EncodeSession::UploadForShader(
+    const uint8_t* pixels, const Nv12ConversionParams& params) {
+  const VulkanMappedBuffer& staging = resources_.staging;
+  const size_t source_stride =
+      static_cast<size_t>(params.source_stride_pixels) * kRgbaBytesPerPixel;
+  const size_t source_size = source_stride * (settings_.height - 1) +
+                             settings_.width * kRgbaBytesPerPixel;
+  CF_EXPECT_LE(source_size, staging.size,
+               "Frame does not fit the staging buffer");
+  memcpy(staging.mapping.data(), pixels, source_size);
+  CF_EXPECT(FlushStaging());
+  CF_EXPECT(resources_.converter->Convert(params));
+  return resources_.converter->done_semaphore();
 }
 
 Result<void> VulkanAv1EncodeSession::FlushStaging() {

@@ -35,6 +35,7 @@
 #include "cuttlefish/host/libs/gpu/vulkan_av1_syntax.h"
 #include "cuttlefish/host/libs/gpu/vulkan_handle.h"
 #include "cuttlefish/host/libs/gpu/vulkan_loader.h"
+#include "cuttlefish/host/libs/gpu/vulkan_nv12_converter.h"
 #include "cuttlefish/host/libs/gpu/vulkan_resources.h"
 #include "cuttlefish/host/libs/gpu/vulkan_video_context.h"
 #include "cuttlefish/result/result.h"
@@ -42,12 +43,23 @@
 namespace cuttlefish {
 namespace {
 
-// What the encode source image is used for. The converted frame reaches it
-// through a transfer from the staging buffer.
+// What the encode source image is used for. Both conversion paths reach it
+// through a transfer, one from the staging buffer and one from the images the
+// shader writes.
 constexpr VkImageUsageFlags kInputImageUsage =
     VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_VIDEO_ENCODE_SRC_BIT_KHR;
 
 constexpr uint32_t kMaxActiveReferencePictures = 1;
+
+// Uses the shader where the device can run it and the host converter
+// otherwise.
+bool UseConversionShader(const VulkanVideoContext& context) {
+  const Result<void> supported = CheckNv12ConversionSupport(context);
+  if (!supported.has_value()) {
+    VLOG(1) << "Converting frames on the host: " << supported.error();
+  }
+  return supported.has_value();
+}
 
 Result<std::vector<UniqueVkHandle<VkDeviceMemory>>> BindVideoSessionMemory(
     const VulkanVideoContext& context, VkVideoSessionKHR session) {
@@ -317,13 +329,17 @@ Result<VulkanMappedBuffer> CreateStagingBuffer(
   const uint32_t queue_family = context.compute_queue_family();
   const VkExtent2D extent = settings.coded_extent;
 
-  // Holds the converted NV12 frame. Only the compute queue reads it.
+  // Holds the converted NV12 frame or the packed RGBA frame the shader reads.
+  // Only the compute queue reads it, whichever path converts.
   const VkBufferCreateInfo buffer_info = {
       .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
       .pNext = nullptr,
       .flags = 0,
-      .size = Nv12FrameSize(extent.width, extent.height),
-      .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      .size = std::max<VkDeviceSize>(Nv12FrameSize(extent.width, extent.height),
+                                     static_cast<VkDeviceSize>(extent.width) *
+                                         extent.height * kRgbaBytesPerPixel),
+      .usage =
+          VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
       .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
       .queueFamilyIndexCount = 1,
       .pQueueFamilyIndices = &queue_family,
@@ -415,6 +431,7 @@ Result<VulkanAv1SessionResources> CreateVulkanAv1SessionResources(
       .profileCount = 1,
       .pProfiles = &profile.info(),
   };
+  const bool gpu_conversion = UseConversionShader(*context);
 
   VulkanAv1SessionResources resources;
   resources.video_session =
@@ -427,6 +444,11 @@ Result<VulkanAv1SessionResources> CreateVulkanAv1SessionResources(
   resources.input =
       CF_EXPECT(CreateInputImage(*context, settings, profile_list));
   resources.staging = CF_EXPECT(CreateStagingBuffer(*context, settings));
+  if (gpu_conversion) {
+    resources.converter = CF_EXPECT(VulkanNv12Converter::Create(
+        context, resources.input.image.get(), settings.coded_extent,
+        resources.staging.buffer.get(), resources.staging.size));
+  }
   resources.output =
       CF_EXPECT(CreateBitstreamBuffer(*context, settings, profile_list));
   resources.query_pool = CF_EXPECT(CreateFeedbackQueryPool(*context, profile));

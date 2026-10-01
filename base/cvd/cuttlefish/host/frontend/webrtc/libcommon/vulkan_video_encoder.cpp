@@ -81,8 +81,8 @@ Result<FrameSource> ReadFrameSource(const webrtc::VideoFrame& frame,
   const uint8_t* const pixels = rgba_buffer->Data();
   CF_EXPECT(pixels != nullptr, "Frame has no pixel data");
   const size_t source_stride = static_cast<size_t>(rgba_buffer->Stride());
-  // The converter takes the stride in pixels, so a row has to start on a pixel
-  // boundary.
+  // The shader reads the source one pixel at a time, so a row has to start on
+  // a pixel boundary.
   CF_EXPECT_EQ(
       source_stride % kRgbaBytesPerPixel, 0u,
       "Frame stride " << source_stride << " is not a whole pixel count");

@@ -25,6 +25,7 @@
 
 #include "cuttlefish/host/libs/gpu/vulkan_av1_encode_settings.h"
 #include "cuttlefish/host/libs/gpu/vulkan_handle.h"
+#include "cuttlefish/host/libs/gpu/vulkan_nv12_converter.h"
 #include "cuttlefish/host/libs/gpu/vulkan_resources.h"
 #include "cuttlefish/host/libs/gpu/vulkan_video_context.h"
 #include "cuttlefish/result/result.h"
@@ -54,8 +55,8 @@ struct VulkanAv1InputImage {
 struct VulkanAv1CommandResources {
   VulkanCommandBuffer encode;
   UniqueVkHandle<VkFence> fence;
-  // On the compute queue family: the staging copy. The semaphore orders the
-  // copy before the encode.
+  // On the compute queue family: the staging copy of the host conversion
+  // path. The semaphore orders the copy before the encode.
   VulkanCommandBuffer copy;
   UniqueVkHandle<VkSemaphore> copy_semaphore;
 };
@@ -74,9 +75,14 @@ struct VulkanAv1SessionResources {
   VulkanMappedBuffer output;
   UniqueVkHandle<VkQueryPool> query_pool;
   VulkanAv1CommandResources commands;
+  // Null where the conversion runs on the host. The converter records copies
+  // into the encode input image and reads the staging buffer, so it goes
+  // first.
+  std::unique_ptr<VulkanNv12Converter> converter;
 };
 
-// Creates every Vulkan object an encode session holds.
+// Creates every Vulkan object an encode session holds, and the conversion
+// shader where the device can run it.
 Result<VulkanAv1SessionResources> CreateVulkanAv1SessionResources(
     const std::shared_ptr<VulkanVideoContext>& context,
     const VulkanAv1EncodeSettings& settings);

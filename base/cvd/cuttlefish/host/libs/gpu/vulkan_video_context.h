@@ -40,8 +40,9 @@ bool HasRequiredVideoEncodeExtensions(
 std::optional<uint32_t> FindVideoEncodeQueueFamily(
     const std::vector<VkQueueFamilyProperties>& families);
 
-// Returns the first queue family with compute support. The frame copies need
-// one, and the encode family need not support compute.
+// Returns the first queue family that can run compute shaders. The color
+// conversion shader and the frame copies need one, and the encode family need
+// not support compute.
 std::optional<uint32_t> FindComputeQueueFamily(
     const std::vector<VkQueueFamilyProperties>& families);
 
@@ -67,6 +68,7 @@ class VulkanVideoContext {
   VulkanVideoContext(const VulkanVideoContext&) = delete;
   VulkanVideoContext& operator=(const VulkanVideoContext&) = delete;
 
+  VkPhysicalDevice physical_device() const { return physical_device_; }
   VkDevice device() const { return device_.get(); }
   VkQueue encode_queue() const { return encode_queue_.queue; }
   uint32_t encode_queue_family() const { return encode_queue_.family; }
@@ -87,6 +89,9 @@ class VulkanVideoContext {
   const VkPhysicalDeviceMemoryProperties& memory_properties() const {
     return memory_properties_;
   }
+  const VulkanInstanceFunctions& instance_functions() const {
+    return instance_funcs_;
+  }
   const VulkanDeviceFunctions& device_functions() const {
     return device_funcs_;
   }
@@ -97,8 +102,8 @@ class VulkanVideoContext {
   std::mutex& encode_queue_mutex() { return encode_queue_mutex_; }
 
   // The same for the compute queue, which every encoder in the process shares
-  // for frame copies. Where the compute queue is the encode queue, one mutex
-  // guards it.
+  // for color conversion and frame copies. Where the compute queue is the
+  // encode queue, one mutex guards it.
   std::mutex& compute_queue_mutex() {
     return compute_queue_.queue == encode_queue_.queue ? encode_queue_mutex_
                                                        : compute_queue_mutex_;

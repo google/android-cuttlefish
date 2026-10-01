@@ -125,9 +125,9 @@ void RecordInputBarriers(const VulkanDeviceFunctions& vk,
         });
   }
 
-  // The staging copy on the compute queue fills the image and leaves it as a
-  // transfer destination. The semaphore that copy signals is what orders its
-  // writes before this barrier, so the source scope here is empty.
+  // Both paths fill the image with a copy on the compute queue and leave it
+  // as a transfer destination. The semaphore that copy signals is what orders
+  // its writes before this barrier, so the source scope here is empty.
   RecordImageTransition(
       vk, command_buffer, resources.input.image.get(),
       {
