@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/libs/command_util/util.h"
 
-#include <errno.h>
 #include <stdint.h>
 #include <sys/time.h>  // IWYU pragma: keep: timeval
 #include <sys/types.h>
@@ -152,9 +151,8 @@ Result<void> WaitForRead(SharedFD monitor_socket, const int timeout_seconds) {
                              timeout_seconds <= 0 ? nullptr : &timeout);
   CF_EXPECT(select_result != 0,
             "Timeout expired waiting for launcher monitor to respond");
-  CF_EXPECT(
-      select_result > 0,
-      "Failed communication with the launcher monitor: " << StrError(errno));
+  CF_EXPECT(select_result > 0,
+            "Failed communication with the launcher monitor: " << StrError());
   return {};
 }
 

@@ -72,12 +72,11 @@ Result<int> MemfdCreateWrapper(const std::string& name, unsigned int flags) {
 #ifdef __linux__
   int fd = TEMP_FAILURE_RETRY(memfd_create(name.c_str(), flags));
   CF_EXPECTF(fd >= 0, "memfd_create('{}', {}) failed: {}", name, flags,
-             StrError(errno));
+             StrError());
 #else
   (void)flags;
   int fd = TEMP_FAILURE_RETRY(shm_open(name.c_str(), O_RDWR));
-  CF_EXPECTF(fd >= 0, "shm_open('{}', O_RDWR) failed: {}", name,
-             StrError(errno));
+  CF_EXPECTF(fd >= 0, "shm_open('{}', O_RDWR) failed: {}", name, StrError());
 #endif
   return fd;
 }
@@ -139,14 +138,14 @@ Fd& Fd::operator=(Fd&& other) {
 Result<Fd> Fd::Accept(const Fd& listener) {
   const int fd = TEMP_FAILURE_RETRY(accept(listener.fd_, nullptr, nullptr));
   CF_EXPECTF(fd >= 0, "accept(..., nullptr, nullptr) failed: '{}",
-             ::cuttlefish::StrError(errno));
+             ::cuttlefish::StrError());
   return Fd(fd, 0);
 }
 
 Result<Fd> Fd::Dup(int unmanaged_fd) {
   const int fd = TEMP_FAILURE_RETRY(fcntl(unmanaged_fd, F_DUPFD_CLOEXEC, 3));
   CF_EXPECTF(fd >= 0, "fcntl(..., F_DUPFD_CLOEXEC, 3) failed: {}",
-             ::cuttlefish::StrError(errno));
+             ::cuttlefish::StrError());
   return Fd(fd, 0);
 }
 
@@ -155,10 +154,10 @@ Result<std::pair<Fd, Fd>> Fd::Pipe() {
 #ifdef __linux__
   const int rval = TEMP_FAILURE_RETRY(pipe2(fds, O_CLOEXEC));
   CF_EXPECTF(rval != -1, "pipe2(..., O_CLOEXEC) failed: {}",
-             ::cuttlefish::StrError(errno));
+             ::cuttlefish::StrError());
 #else
   const int rval = TEMP_FAILURE_RETRY(pipe(fds));
-  CF_EXPECTF(rval != -1, "pipe(...) failed: {}", ::cuttlefish::StrError(errno));
+  CF_EXPECTF(rval != -1, "pipe(...) failed: {}", ::cuttlefish::StrError());
 #endif
   return std::make_pair(Fd(fds[0], 0), Fd(fds[1], 0));
 }
@@ -167,7 +166,7 @@ Result<std::pair<Fd, Fd>> Fd::Pipe() {
 Result<Fd> Fd::Event(int initval, int flags) {
   int fd = TEMP_FAILURE_RETRY(eventfd(initval, flags));
   CF_EXPECTF(fd >= 0, "eventfd({}, {}) failed: {}", initval, flags,
-             ::cuttlefish::StrError(errno));
+             ::cuttlefish::StrError());
   return Fd(fd, 0);
 }
 
@@ -175,7 +174,7 @@ Result<Fd> Fd::ShmOpen(std::string_view name, int oflag, int mode) {
   std::string name_str(name);
   const int fd = TEMP_FAILURE_RETRY(shm_open(name_str.c_str(), oflag, mode));
   CF_EXPECTF(fd >= 0, "shm_open('{}', {}, {}) failed: {}", name, oflag, mode,
-             ::cuttlefish::StrError(errno));
+             ::cuttlefish::StrError());
   return Fd(fd, 0);
 }
 #endif
@@ -188,7 +187,7 @@ Result<std::pair<Fd, Fd>> Fd::SocketPair(int domain, int type, int protocol) {
   int fds[2];
   int rval = TEMP_FAILURE_RETRY(socketpair(domain, type, protocol, fds));
   CF_EXPECTF(rval != -1, "socketpair({}, {}, {}) failed: {}", domain, type,
-             protocol, ::cuttlefish::StrError(errno));
+             protocol, ::cuttlefish::StrError());
   return std::make_pair(Fd(fds[0], 0), Fd(fds[1], 0));
 }
 
@@ -196,14 +195,14 @@ Result<Fd> Fd::Open(std::string_view path, int flags, mode_t mode) {
   const int fd =
       TEMP_FAILURE_RETRY(open(std::string(path).c_str(), flags, mode));
   CF_EXPECTF(fd >= 0, "open('{}', {}, {}) failed: {}", path, flags, mode,
-             ::cuttlefish::StrError(errno));
+             ::cuttlefish::StrError());
   return Fd(fd, 0);
 }
 
 Result<Fd> Fd::InotifyFd(void) {
   const int fd = TEMP_FAILURE_RETRY(inotify_init1(IN_CLOEXEC));
   CF_EXPECTF(fd >= 0, "inotify_init1(IN_CLOEXEC) failed: {}",
-             ::cuttlefish::StrError(errno));
+             ::cuttlefish::StrError());
   return Fd(fd, 0);
 }
 
@@ -217,7 +216,7 @@ Result<Fd> Fd::Fifo(std::string_view path, mode_t mode) {
   if (TEMP_FAILURE_RETRY(stat(path_str.c_str(), &st)) == 0) {
     CF_EXPECTF(TEMP_FAILURE_RETRY(remove(path_str.c_str())) == 0,
                "Failed to delete old file at '{}': '{}'", path,
-               ::cuttlefish::StrError(errno));
+               ::cuttlefish::StrError());
   }
 
   CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path_str.c_str(), mode)) == 0,
@@ -228,7 +227,7 @@ Result<Fd> Fd::Fifo(std::string_view path, mode_t mode) {
 Result<Fd> Fd::Socket(int domain, int socket_type, int protocol) {
   const int fd = TEMP_FAILURE_RETRY(socket(domain, socket_type, protocol));
   CF_EXPECTF(fd >= 0, "socket({}, {}, {}) failed: {}", domain, socket_type,
-             protocol, ::cuttlefish::StrError(errno));
+             protocol, ::cuttlefish::StrError());
   return Fd(fd, 0);
 }
 
@@ -238,7 +237,7 @@ Result<std::pair<Fd, std::string>> Fd::Mkostemp(const std::string_view path,
   std::string temp_path = fmt::format("{}XXXXXX", path);
   const int fd = TEMP_FAILURE_RETRY(mkostemp(temp_path.data(), flags));
   CF_EXPECTF(fd != -1, "mkostemp('{}', {}) failed: {}", path, flags,
-             ::cuttlefish::StrError(errno));
+             ::cuttlefish::StrError());
   return std::make_pair<Fd, std::string>(Fd(fd, 0), std::move(temp_path));
 }
 
@@ -388,7 +387,7 @@ Result<Fd> Fd::SocketLocalServer(std::string_view name, bool abstract,
 
   if (!abstract) {
     if (TEMP_FAILURE_RETRY(chmod(name_str.c_str(), mode)) == -1) {
-      LOG(ERROR) << "chmod failed: " << ::cuttlefish::StrError(errno);
+      LOG(ERROR) << "chmod failed: " << ::cuttlefish::StrError();
       // However, continue since we do have a listening socket
     }
   }
@@ -695,7 +694,7 @@ Result<void, int> Fd::Flock(int operation) {
   LocalErrno record_errno(errno_);
 
   CF_EXPECTVF(TEMP_FAILURE_RETRY(flock(fd_, operation)) >= 0, errno, "{}",
-              ::cuttlefish::StrError(errno));
+              ::cuttlefish::StrError());
 
   return {};
 }
@@ -758,7 +757,7 @@ Result<uint64_t> Fd::Read(void* buf, uint64_t count) {
   LocalErrno record_errno(errno_);
 
   ssize_t res = TEMP_FAILURE_RETRY(read(fd_, buf, count));
-  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError(errno));
+  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError());
 
   return static_cast<uint64_t>(res);
 }
@@ -767,7 +766,7 @@ Result<uint64_t> Fd::PRead(void* buf, size_t count, size_t offset) const {
   LocalErrno record_errno(const_cast<int&>(errno_));
 
   ssize_t res = TEMP_FAILURE_RETRY(pread(fd_, buf, count, offset));
-  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError(errno));
+  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError());
 
   return static_cast<uint64_t>(res);
 }
@@ -871,7 +870,7 @@ Result<void> Fd::Truncate(uint64_t length) {
   LocalErrno record_errno(errno_);
 
   ssize_t res = TEMP_FAILURE_RETRY(ftruncate(fd_, length));
-  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError(errno));
+  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError());
 
   return {};
 }
@@ -884,7 +883,7 @@ Result<uint64_t> Fd::Write(const void* buf, size_t count) {
   LocalErrno record_errno(errno_);
 
   ssize_t res = TEMP_FAILURE_RETRY(write(fd_, buf, count));
-  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError(errno));
+  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError());
 
   return static_cast<uint64_t>(res);
 }
@@ -893,7 +892,7 @@ Result<uint64_t> Fd::PWrite(const void* buf, size_t count, size_t offset) {
   LocalErrno record_errno(errno_);
 
   ssize_t res = TEMP_FAILURE_RETRY(pwrite(fd_, buf, count, offset));
-  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError(errno));
+  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError());
 
   return static_cast<uint64_t>(res);
 }

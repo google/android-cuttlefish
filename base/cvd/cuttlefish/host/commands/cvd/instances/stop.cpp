@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/instances/stop.h"
 
-#include <errno.h>
 #include <signal.h>
 #include <unistd.h>
 
@@ -104,7 +103,7 @@ static bool IsStillRunCvd(const pid_t pid) {
 
 Result<void> SendSignal(pid_t pid) {
   int kill_res = kill(pid, SIGKILL);
-  CF_EXPECTF(kill_res == 0, "Failed to kill {}: {}", pid, StrError(errno));
+  CF_EXPECTF(kill_res == 0, "Failed to kill {}: {}", pid, StrError());
   return {};
 }
 

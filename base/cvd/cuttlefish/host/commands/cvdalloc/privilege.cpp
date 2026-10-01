@@ -15,7 +15,6 @@
  */
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 
-#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #if defined(__linux__)
@@ -143,13 +142,13 @@ int DropPrivileges(uid_t orig) {
   data[1] = {0, 0, 0};
   int r = syscall(SYS_capset, &h, data);
   if (r == -1) {
-    LOG(INFO) << "SYS_capset: " << StrError(errno);
+    LOG(INFO) << "SYS_capset: " << StrError();
     return -1;
   }
 
   r = prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL, 0L, 0L, 0L);
   if (r == -1) {
-    LOG(INFO) << "prctl: " << StrError(errno);
+    LOG(INFO) << "prctl: " << StrError();
     return -1;
   }
 #endif

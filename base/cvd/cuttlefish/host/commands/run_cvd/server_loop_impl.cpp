@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 
-#include <errno.h>
 #include <stddef.h>
 #include <unistd.h>
 #include <utime.h>
@@ -477,7 +476,7 @@ bool ServerLoopImpl::PowerwashFiles() {
     // where otherwise the composite disk looks older than the member partitions
     // which were regenerated above.
     if (utime(composite_disk_path.c_str(), nullptr) < 0) {
-      LOG(ERROR) << "Failed to update composite disk time" << StrError(errno);
+      LOG(ERROR) << "Failed to update composite disk time" << StrError();
     }
   }
 
