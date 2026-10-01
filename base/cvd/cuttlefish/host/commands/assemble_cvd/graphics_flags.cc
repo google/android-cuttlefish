@@ -644,9 +644,17 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
 #endif
 }
 
+Result<GpuMode> SelectGpuMode(
+    const GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
+    const std::string& gpu_context_types,
+    const gfxstream::proto::GraphicsAvailability& graphics_availability) {
 #ifdef __APPLE__
 
-Result<GpuMode> SelectGpuMode(const GpuMode given_gpu_mode) {
+  (void)vmm;
+  (void)guest_config;
+  (void)gpu_context_types;
+  (void)graphics_availability;
+
   CF_EXPECT(given_gpu_mode == GpuMode::Auto ||
             given_gpu_mode == GpuMode::GuestSwiftshader ||
             given_gpu_mode == GpuMode::DrmVirgl ||
@@ -655,14 +663,9 @@ Result<GpuMode> SelectGpuMode(const GpuMode given_gpu_mode) {
     return GpuMode::GuestSwiftshader;
   }
   return given_gpu_mode;
-}
 
 #else
 
-Result<GpuMode> SelectGpuMode(
-    const GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
-    const std::string& gpu_context_types,
-    const gfxstream::proto::GraphicsAvailability& graphics_availability) {
   const CommonState common = {
       .vmm_mode = vmm,
       .guest_config = guest_config,
@@ -718,8 +721,10 @@ Result<GpuMode> SelectGpuMode(
   }
 
   return selected_gpu_mode;
+#endif
 }
 
+#ifndef __APPLE__
 Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
                                     const std::string& gpu_vhost_user_mode_arg,
                                     VmmMode vmm) {
