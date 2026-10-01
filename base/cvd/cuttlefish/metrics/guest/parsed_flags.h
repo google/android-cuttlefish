@@ -17,6 +17,7 @@
 #pragma once
 
 #include <optional>
+#include <vector>
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
@@ -33,6 +34,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 
 namespace cuttlefish {
 
@@ -44,6 +46,7 @@ struct ParsedFlags {
   DataPolicyFlag data_policy;
   ExtraKernelCmdlineFlag extra_kernel_cmdline;
   GpuModeFlag gpu_mode_requested;
+  std::vector<GpuMode> gpu_mode_used;
   GuestEnforceSecurityFlag guest_enforce_security;
   MemoryMbFlag memory_mb;
   QemuBinaryDirFlag qemu_binary_dir;
