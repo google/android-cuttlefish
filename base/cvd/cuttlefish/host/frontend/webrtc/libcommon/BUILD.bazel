@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -156,6 +156,43 @@ cf_cc_library(
         "@nv_codec_headers//:nv_headers",
     ],
     alwayslink = True,
+)
+
+cf_cc_library(
+    name = "vulkan_encoder_config",
+    hdrs = ["vulkan_encoder_config.h"],
+    deps = [
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "vulkan_video_encoder",
+    srcs = ["vulkan_video_encoder.cpp"],
+    hdrs = ["vulkan_video_encoder.h"],
+    deps = [
+        ":abgr_buffer",
+        ":vulkan_encoder_config",
+        "//cuttlefish/host/libs/gpu:rgba_to_nv12",
+        "//cuttlefish/host/libs/gpu:vulkan_av1_encode_session",
+        "//cuttlefish/host/libs/gpu:vulkan_av1_encode_settings",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@libdrm//:libdrm_fourcc",
+        "@libwebrtc",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_test(
+    name = "vulkan_video_encoder_test",
+    srcs = ["vulkan_video_encoder_test.cpp"],
+    linkstatic = True,  # libvpx inside libwebrtc has undefined symbols
+    deps = [
+        ":vulkan_encoder_config",
+        ":vulkan_video_encoder",
+        "@libwebrtc",
+    ],
 )
 
 # Injection point for future private repo providers.

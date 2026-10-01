@@ -67,6 +67,14 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "vulkan_handle",
+    hdrs = ["vulkan_handle.h"],
+    deps = [
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_library(
     name = "vulkan_av1_capabilities",
     srcs = ["vulkan_av1_capabilities.cpp"],
     hdrs = ["vulkan_av1_capabilities.h"],
@@ -108,6 +116,130 @@ cf_cc_test(
         ":vulkan_video_context",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_library(
+    name = "rgba_to_nv12",
+    srcs = ["rgba_to_nv12.cpp"],
+    hdrs = ["rgba_to_nv12.h"],
+)
+
+cf_cc_test(
+    name = "rgba_to_nv12_test",
+    srcs = ["rgba_to_nv12_test.cpp"],
+    deps = [
+        ":rgba_to_nv12",
+    ],
+)
+
+cf_cc_library(
+    name = "vulkan_resources",
+    srcs = ["vulkan_resources.cpp"],
+    hdrs = ["vulkan_resources.h"],
+    deps = [
+        ":vulkan_handle",
+        ":vulkan_loader",
+        ":vulkan_video_context",
+        "//cuttlefish/result",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_library(
+    name = "vulkan_av1_syntax",
+    srcs = ["vulkan_av1_syntax.cpp"],
+    hdrs = ["vulkan_av1_syntax.h"],
+    deps = [
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_test(
+    name = "vulkan_av1_syntax_test",
+    srcs = ["vulkan_av1_syntax_test.cpp"],
+    deps = [
+        ":vulkan_av1_syntax",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_library(
+    name = "vulkan_av1_encode_settings",
+    srcs = ["vulkan_av1_encode_settings.cpp"],
+    hdrs = ["vulkan_av1_encode_settings.h"],
+    deps = [
+        ":vulkan_av1_capabilities",
+        "//cuttlefish/result",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_test(
+    name = "vulkan_av1_encode_settings_test",
+    srcs = ["vulkan_av1_encode_settings_test.cpp"],
+    deps = [
+        ":vulkan_av1_capabilities",
+        ":vulkan_av1_encode_settings",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_library(
+    name = "vulkan_av1_session_setup",
+    srcs = ["vulkan_av1_session_setup.cpp"],
+    hdrs = ["vulkan_av1_session_setup.h"],
+    deps = [
+        ":rgba_to_nv12",
+        ":vulkan_av1_capabilities",
+        ":vulkan_av1_encode_settings",
+        ":vulkan_av1_syntax",
+        ":vulkan_handle",
+        ":vulkan_loader",
+        ":vulkan_resources",
+        ":vulkan_video_context",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_library(
+    name = "vulkan_av1_encode_commands",
+    srcs = ["vulkan_av1_encode_commands.cpp"],
+    hdrs = ["vulkan_av1_encode_commands.h"],
+    deps = [
+        ":vulkan_av1_encode_settings",
+        ":vulkan_av1_session_setup",
+        ":vulkan_av1_syntax",
+        ":vulkan_handle",
+        ":vulkan_loader",
+        ":vulkan_resources",
+        ":vulkan_video_context",
+        "//cuttlefish/result",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_library(
+    name = "vulkan_av1_encode_session",
+    srcs = ["vulkan_av1_encode_session.cpp"],
+    hdrs = ["vulkan_av1_encode_session.h"],
+    deps = [
+        ":rgba_to_nv12",
+        ":vulkan_av1_encode_commands",
+        ":vulkan_av1_encode_settings",
+        ":vulkan_av1_session_setup",
+        ":vulkan_av1_syntax",
+        ":vulkan_handle",
+        ":vulkan_loader",
+        ":vulkan_resources",
+        ":vulkan_video_context",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
         "@vulkan_headers",
     ],
 )
