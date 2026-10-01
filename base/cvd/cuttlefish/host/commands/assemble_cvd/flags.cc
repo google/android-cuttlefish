@@ -1218,10 +1218,18 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                                    guest_renderer_preload_vec[instance_index]));
     instance.set_guest_renderer_preload(guest_renderer_preload);
 
-    CF_EXPECT(SelectGpuSettings(graphics_availability, gpu_mode,
-                                gpu_renderer_features_vec[instance_index],
-                                hwui_renderer, guest_configs[instance_index],
-                                instance));
+    if (IsGfxstreamMode(gpu_mode)) {
+      const std::string gfxstream_transport =
+          SelectGfxstreamTransport(guest_configs[instance_index]);
+      instance.set_gpu_gfxstream_transport(gfxstream_transport);
+
+      const std::string features_string = CF_EXPECT(GetGfxstreamFeatures(
+          gpu_mode, hwui_renderer, gpu_renderer_features_vec[instance_index],
+          guest_configs[instance_index], graphics_availability));
+      if (!features_string.empty()) {
+        instance.set_gpu_renderer_features(features_string);
+      }
+    }
 #endif
     calculated_gpu_mode_vec[instance_index] = gpu_mode;
 
