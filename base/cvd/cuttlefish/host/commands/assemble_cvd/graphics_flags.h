@@ -74,6 +74,14 @@ Result<VhostUserGpuHostRendererFeatures>
 GetNeededVhostUserGpuHostRendererFeatures(
     GpuMode mode, const ::gfxstream::proto::GraphicsAvailability& availability);
 
+struct AngleFeatureOverrides {
+  std::string angle_feature_overrides_enabled;
+  std::string angle_feature_overrides_disabled;
+};
+
+Result<AngleFeatureOverrides> GetNeededAngleFeatures(
+    GpuMode mode, const ::gfxstream::proto::GraphicsAvailability& availability);
+
 Result<void> SelectGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
     GpuMode gpu_mode, const std::string& gpu_renderer_features_arg,
