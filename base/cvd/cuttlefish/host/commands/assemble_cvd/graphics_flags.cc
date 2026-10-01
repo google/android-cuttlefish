@@ -762,6 +762,23 @@ Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
   return gpu_vhost_user_mode_arg == kGpuVhostUserModeOn;
 }
 
+struct VhostUserGpuHostRendererFeatures {
+  // If true, host Virtio GPU blob resources will be allocated with
+  // external memory and exported file descriptors will be shared
+  // with the VMM for mapping resources into the guest address space.
+  bool external_blob = false;
+
+  // If true, host Virtio GPU blob resources will be allocated with
+  // shmem and exported file descriptors will be shared with the VMM
+  // for mapping resources into the guest address space.
+  //
+  // This is an extension of the above external_blob that allows the
+  // VMM to map resources without graphics API support but requires
+  // additional features (VK_EXT_external_memory_host) from the GPU
+  // driver and is potentially less performant.
+  bool system_blob = false;
+};
+
 Result<VhostUserGpuHostRendererFeatures>
 GetNeededVhostUserGpuHostRendererFeatures(
     GpuMode mode,
@@ -797,6 +814,11 @@ GetNeededVhostUserGpuHostRendererFeatures(
 
   return features;
 }
+
+struct AngleFeatureOverrides {
+  std::string angle_feature_overrides_enabled;
+  std::string angle_feature_overrides_disabled;
+};
 
 Result<AngleFeatureOverrides> GetNeededAngleFeatures(
     const GpuMode mode,
@@ -944,6 +966,51 @@ Result<std::string> GetGfxstreamFeatures(
   // Convert features back to a string for passing to the VMM.
   return GetGfxstreamRendererFeaturesString(features);
 }
+
+Result<GraphicsSettings> GetGraphicsSettings(
+    const GpuMode gpu_mode, const std::string& gpu_vhost_user_mode,
+    const VmmMode vmm_mode,
+    const ::gfxstream::proto::GraphicsAvailability& graphics_availability,
+    const GuestConfig& guest_config, const std::string& guest_hwui_renderer,
+    const std::string& guest_renderer_preload,
+    const std::string& gpu_renderer_features) {
+  auto graphics_settings = GraphicsSettings{
+      .enable_gpu_vhost_user = CF_EXPECT(
+          SelectGpuVhostUserMode(gpu_mode, gpu_vhost_user_mode, vmm_mode)),
+      .hwui_renderer = CF_EXPECT(
+          SelectGuestHwuiRenderer(gpu_mode, guest_config, guest_hwui_renderer)),
+  };
+  const AngleFeatureOverrides angle_features =
+      CF_EXPECT(GetNeededAngleFeatures(gpu_mode, graphics_availability));
+  graphics_settings.angle_feature_overrides_enabled =
+      angle_features.angle_feature_overrides_enabled;
+  graphics_settings.angle_feature_overrides_disabled =
+      angle_features.angle_feature_overrides_disabled;
+
+  if (graphics_settings.enable_gpu_vhost_user) {
+    const VhostUserGpuHostRendererFeatures gpu_vhost_user_features =
+        CF_EXPECT(GetNeededVhostUserGpuHostRendererFeatures(
+            gpu_mode, graphics_availability));
+    graphics_settings.enable_gpu_external_blob =
+        gpu_vhost_user_features.external_blob;
+    graphics_settings.enable_gpu_system_blob =
+        gpu_vhost_user_features.system_blob;
+  }
+  graphics_settings.guest_renderer_preload =
+      CF_EXPECT(SelectGuestRendererPreload(
+          gpu_mode, graphics_settings.hwui_renderer, guest_renderer_preload));
+  if (IsGfxstreamMode(gpu_mode)) {
+    graphics_settings.gfxstream_transport =
+        SelectGfxstreamTransport(guest_config);
+    graphics_settings.gfxstream_features_string =
+        CF_EXPECT(GetGfxstreamFeatures(
+            gpu_mode, graphics_settings.hwui_renderer, gpu_renderer_features,
+            guest_config, graphics_availability));
+  }
+
+  return graphics_settings;
+}
+
 #endif
 
 }  // namespace cuttlefish
