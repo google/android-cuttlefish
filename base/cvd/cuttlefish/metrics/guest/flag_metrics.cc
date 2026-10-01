@@ -31,6 +31,7 @@ Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
       .extra_kernel_cmdline = parsed_flags.extra_kernel_cmdline.ForIndex(0),
       .gpu_mode_requested =
           parsed_flags.gpu_mode_requested.ForIndex(guest_index),
+      .gpu_mode_used = parsed_flags.gpu_mode_used[guest_index],
       .guest_enforce_security =
           parsed_flags.guest_enforce_security.ForIndex(guest_index),
       .memory_mb = parsed_flags.memory_mb.ForIndex(guest_index),

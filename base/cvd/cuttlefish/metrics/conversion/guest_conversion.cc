@@ -136,6 +136,8 @@ void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
       guest_metrics.flag_metrics.extra_kernel_cmdline);
   flags.set_gpu_mode_requested(
       ConvertGpuMode(guest_metrics.flag_metrics.gpu_mode_requested));
+  flags.set_gpu_mode_used(
+      ConvertGpuMode(guest_metrics.flag_metrics.gpu_mode_used));
   flags.set_guest_enforce_security(
       guest_metrics.flag_metrics.guest_enforce_security);
   flags.set_memory_mb(guest_metrics.flag_metrics.memory_mb);
