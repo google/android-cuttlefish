@@ -20,8 +20,8 @@ cf_cc_library(
         "//cuttlefish/host/commands/kernel_log_monitor:utils",
         "//cuttlefish/host/commands/openwrt_control_server:libopenwrt_control_server",
         "//cuttlefish/host/commands/openwrt_control_server:openwrt_control_server_cc_proto",
-        "//cuttlefish/host/commands/run_cvd:move_threads_to_cgroup",
         "//cuttlefish/host/commands/run_cvd:validate",
+        "//cuttlefish/host/commands/run_cvd:wattson_rebalance_threads",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_instance_derived",
@@ -207,5 +207,17 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "wattson_rebalance_threads",
+    srcs = ["wattson_rebalance_threads.cc"],
+    hdrs = ["wattson_rebalance_threads.h"],
+    deps = [
+        "//cuttlefish/files:directory_contents",
+        "//cuttlefish/host/commands/run_cvd:move_threads_to_cgroup",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
 )

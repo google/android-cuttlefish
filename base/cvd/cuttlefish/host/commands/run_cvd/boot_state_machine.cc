@@ -54,15 +54,14 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
-#include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
 #include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.grpc.pb.h"
 #include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.pb.h"
-#include "cuttlefish/host/commands/run_cvd/move_threads_to_cgroup.h"
 #include "cuttlefish/host/commands/run_cvd/validate.h"
+#include "cuttlefish/host/commands/run_cvd/wattson_rebalance_threads.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -99,23 +98,6 @@ Result<void> MoveSelfToCgroup(std::string_view id) {
   Fd fd = CF_EXPECT(Fd::Open(to_path_file, O_WRONLY | O_APPEND));
   CF_EXPECT(WriteExact(fd, std::to_string(getpid())));
 
-  return {};
-}
-
-// See go/vcpuinheritance for more context on why this Rebalance is
-// required and what the stop gap/longterm solutions are.
-Result<void> WattsonRebalanceThreads(const std::string& id) {
-  auto root_path = "/sys/fs/cgroup/vsoc-" + id + "-cf";
-  const auto files = CF_EXPECT(DirectoryContents(root_path));
-
-  CF_EXPECT(MoveThreadsToCgroup(root_path, root_path + "/workers"));
-
-  for (const auto& filename : files) {
-    if (filename.find("vcpu-domain") != std::string::npos) {
-      CF_EXPECT(MoveThreadsToCgroup(root_path + "/" + filename,
-                                    root_path + "/workers"));
-    }
-  }
   return {};
 }
 
