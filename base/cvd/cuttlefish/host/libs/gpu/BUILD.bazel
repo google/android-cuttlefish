@@ -54,3 +54,14 @@ cf_cc_library(
         "@nv_codec_headers//:nv_headers",
     ],
 )
+
+cf_cc_library(
+    name = "vulkan_loader",
+    srcs = ["vulkan_loader.cpp"],
+    hdrs = ["vulkan_loader.h"],
+    linkopts = ["-ldl"],
+    deps = [
+        "//cuttlefish/result",
+        "@vulkan_headers",
+    ],
+)
