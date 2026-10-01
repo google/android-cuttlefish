@@ -28,6 +28,8 @@
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
+#include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
+#include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/result/result.h"
 
@@ -82,12 +84,18 @@ struct AngleFeatureOverrides {
 Result<AngleFeatureOverrides> GetNeededAngleFeatures(
     GpuMode mode, const ::gfxstream::proto::GraphicsAvailability& availability);
 
+Result<GuestHwuiRenderer> SelectGuestHwuiRenderer(
+    GpuMode gpu_mode, const GuestConfig& guest_config,
+    const std::string& guest_hwui_renderer_arg);
+
+Result<GuestRendererPreload> SelectGuestRendererPreload(
+    GpuMode gpu_mode, GuestHwuiRenderer guest_hwui_renderer,
+    const std::string& guest_renderer_preload_arg);
+
 Result<void> SelectGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
     GpuMode gpu_mode, const std::string& gpu_renderer_features_arg,
-    const std::string& guest_hwui_renderer_arg,
-    const std::string& guest_renderer_preload_arg,
-    const GuestConfig& guest_config,
+    GuestHwuiRenderer hwui_renderer, const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance);
 
 #endif

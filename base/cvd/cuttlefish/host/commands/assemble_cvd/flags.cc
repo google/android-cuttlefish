@@ -99,6 +99,8 @@
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
+#include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
+#include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
@@ -1206,11 +1208,20 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_gpu_angle_feature_overrides_disabled(
         angle_features.angle_feature_overrides_disabled);
 
+    const GuestHwuiRenderer hwui_renderer = CF_EXPECT(
+        SelectGuestHwuiRenderer(gpu_mode, guest_configs[instance_index],
+                                guest_hwui_renderer_vec[instance_index]));
+    instance.set_guest_hwui_renderer(hwui_renderer);
+
+    const GuestRendererPreload guest_renderer_preload = CF_EXPECT(
+        SelectGuestRendererPreload(gpu_mode, hwui_renderer,
+                                   guest_renderer_preload_vec[instance_index]));
+    instance.set_guest_renderer_preload(guest_renderer_preload);
+
     CF_EXPECT(SelectGpuSettings(graphics_availability, gpu_mode,
                                 gpu_renderer_features_vec[instance_index],
-                                guest_hwui_renderer_vec[instance_index],
-                                guest_renderer_preload_vec[instance_index],
-                                guest_configs[instance_index], instance));
+                                hwui_renderer, guest_configs[instance_index],
+                                instance));
 #endif
     calculated_gpu_mode_vec[instance_index] = gpu_mode;
 
