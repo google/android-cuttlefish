@@ -129,6 +129,21 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "find_builds",
+    srcs = ["find_builds.cc"],
+    hdrs = ["find_builds.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:android_builds",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:identify_build",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//cuttlefish/host/libs/config:fetcher_configs",
+        "//cuttlefish/host/libs/config:file_source",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
     name = "find_build_archive",
     srcs = ["find_build_archive.cc"],
     hdrs = ["find_build_archive.h"],

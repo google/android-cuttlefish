@@ -41,7 +41,7 @@ DEFINE_string(bootloader, CF_DEFAULTS_BOOTLOADER, "Bootloader binary path");
 namespace cuttlefish {
 namespace {
 
-std::string_view ArchDirName(Arch arch) {
+constexpr std::string_view ArchDirName(Arch arch) {
   switch (arch) {
     case Arch::Arm64:
       return "aarch64";
@@ -65,7 +65,16 @@ Result<BootloaderFlag> BootloaderFlag::FromGlobalGflags(
   gflags::CommandLineFlagInfo flag_info =
       gflags::GetCommandLineFlagInfoOrDie("bootloader");
   if (!flag_info.is_default) {
-    return BootloaderFlag(absl::StrSplit(FLAGS_bootloader, ','));
+    std::vector<std::string> bootloader_values =
+        absl::StrSplit(FLAGS_bootloader, ',');
+    std::vector<bool> is_default_values(bootloader_values.size(),
+                                        flag_info.is_default);
+    for (size_t i = 0; i < is_default_values.size(); i++) {
+      if (bootloader_values[i].empty()) {
+        is_default_values[i] = true;
+      }
+    }
+    return BootloaderFlag(bootloader_values, is_default_values);
   }
 
   std::string_view vmm;
@@ -77,7 +86,7 @@ Result<BootloaderFlag> BootloaderFlag::FromGlobalGflags(
       vmm = "qemu";
       break;
     default:
-      return BootloaderFlag({});
+      return BootloaderFlag({}, {});
   }
 
   std::vector<std::string> bootloaders;
@@ -95,11 +104,15 @@ Result<BootloaderFlag> BootloaderFlag::FromGlobalGflags(
     }
     bootloaders.emplace_back(std::move(path));
   }
-  return BootloaderFlag(std::move(bootloaders));
+  return BootloaderFlag(
+      std::move(bootloaders),
+      std::vector<bool>(bootloaders.size(), flag_info.is_default));
 }
 
-BootloaderFlag::BootloaderFlag(std::vector<std::string> bootloaders)
-    : bootloaders_(std::move(bootloaders)) {}
+BootloaderFlag::BootloaderFlag(std::vector<std::string> bootloaders,
+                               std::vector<bool> is_default_values)
+    : bootloaders_(std::move(bootloaders)),
+      is_default_values_(std::move(is_default_values)) {}
 
 std::string BootloaderFlag::BootloaderForInstance(size_t instance_index) const {
   if (bootloaders_.empty()) {
@@ -108,6 +121,16 @@ std::string BootloaderFlag::BootloaderForInstance(size_t instance_index) const {
     return bootloaders_[instance_index];
   } else {
     return bootloaders_[0];
+  }
+}
+
+bool BootloaderFlag::IsDefaultForIndex(size_t index) const {
+  if (is_default_values_.empty()) {
+    return bootloaders_.empty();
+  } else if (index < is_default_values_.size()) {
+    return is_default_values_[index];
+  } else {
+    return is_default_values_[0];
   }
 }
 
