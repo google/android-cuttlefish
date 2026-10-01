@@ -131,3 +131,14 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
     ],
 )
+
+cf_cc_library(
+    name = "sparse_file_sizes",
+    srcs = ["sparse_file_sizes.cc"],
+    hdrs = ["sparse_file_sizes.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
+        "@abseil-cpp//absl/log",
+    ],
+)
