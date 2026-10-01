@@ -53,14 +53,10 @@
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 
-#ifdef __APPLE__
-#define CF_UNUSED_ON_MACOS [[maybe_unused]]
-#else
-#define CF_UNUSED_ON_MACOS
-#endif
-
 namespace cuttlefish {
 namespace {
+
+#ifndef __APPLE__
 
 struct AggregatingErrorCollector : public google::protobuf::io::ErrorCollector {
   void RecordError(int /* line */, int /* column */,
@@ -370,65 +366,6 @@ GetGpuModeRequirementsMap() {
   return *kGpuModeRequirements;
 };
 
-struct AngleFeatures {
-  // Prefer linear filtering for YUV AHBs to pass
-  // android.media.decoder.cts.DecodeAccuracyTest on older branches.
-  // Generally not needed after b/315387961.
-  bool prefer_linear_filtering_for_yuv = false;
-
-  // Map unspecified color spaces to PASS_THROUGH to pass
-  // android.media.codec.cts.DecodeEditEncodeTest and
-  // android.media.codec.cts.EncodeDecodeTest.
-  bool map_unspecified_color_space_to_pass_through = true;
-
-  // b/264575911: Nvidia seems to have issues with YUV samplers with
-  // 'lowp' and 'mediump' precision qualifiers.
-  bool ignore_precision_qualifiers = false;
-
-  // ANGLE has a feature to expose 3.2 early even if the device does
-  // not fully support all of the 3.2 features. This should be
-  // disabled for Cuttlefish as SwiftShader does not have geometry
-  // shader nor tesselation shader support.
-  bool disable_expose_opengles_3_2_for_testing = false;
-};
-
-std::ostream& operator<<(std::ostream& stream, const AngleFeatures& features) {
-  fmt::print(stream, "ANGLE features: \n");
-  fmt::print(stream, " - prefer_linear_filtering_for_yuv: {}\n",
-             features.prefer_linear_filtering_for_yuv);
-  fmt::print(stream, " - map_unspecified_color_space_to_pass_through: {}\n",
-             features.map_unspecified_color_space_to_pass_through);
-  fmt::print(stream, " - ignore_precision_qualifiers: {}\n",
-             features.ignore_precision_qualifiers);
-  return stream;
-}
-
-Result<AngleFeatures> GetNeededAngleFeaturesBasedOnQuirks(
-    const GpuMode mode,
-    const ::gfxstream::proto::GraphicsAvailability& availability) {
-  AngleFeatures features = {};
-  if (mode == GpuMode::GfxstreamGuestAngle) {
-    if (availability.has_vulkan() &&
-        !availability.vulkan().physical_devices().empty() &&
-        availability.vulkan().physical_devices(0).has_quirks() &&
-        availability.vulkan()
-            .physical_devices(0)
-            .quirks()
-            .has_issue_with_precision_qualifiers_on_yuv_samplers()) {
-      features.ignore_precision_qualifiers = true;
-    }
-  }
-
-  if (mode == GpuMode::GuestSwiftshader ||
-      mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
-    features.disable_expose_opengles_3_2_for_testing = true;
-  }
-
-  return features;
-}
-
-#ifndef __APPLE__
-
 // TODO(b/503397840): remove after default updated.
 bool EnableHostRenderingByDefault() { return false; }
 
@@ -516,12 +453,9 @@ Result<std::vector<GpuMode>> GetSupportedGpuModeCandidates(
   return supported_candidates;
 }
 
-#endif
-
 const std::string kGfxstreamTransportAsg = "virtio-gpu-asg";
 const std::string kGfxstreamTransportPipe = "virtio-gpu-pipe";
 
-CF_UNUSED_ON_MACOS
 Result<std::unordered_map<std::string, bool>> ParseGfxstreamRendererFlag(
     const std::string& gpu_renderer_features_arg) {
   std::unordered_map<std::string, bool> features;
@@ -550,7 +484,6 @@ Result<std::unordered_map<std::string, bool>> ParseGfxstreamRendererFlag(
   return features;
 }
 
-CF_UNUSED_ON_MACOS
 std::string GetGfxstreamRendererFeaturesString(
     const std::unordered_map<std::string, bool>& features) {
   std::vector<std::string> parts;
@@ -561,7 +494,6 @@ std::string GetGfxstreamRendererFeaturesString(
   return absl::StrJoin(parts, ",");
 }
 
-CF_UNUSED_ON_MACOS
 bool HasMultipleGraphicsQueues(
     const gfxstream::proto::GraphicsAvailability& availability) {
   if (!availability.has_vulkan()) {
@@ -585,8 +517,6 @@ bool HasMultipleGraphicsQueues(
 
 static std::unordered_set<std::string> kSupportedGpuContexts{
     "gfxstream-vulkan", "gfxstream-composer", "cross-domain", "magma"};
-
-#ifndef __APPLE__
 
 Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
                                     const std::string& gpu_vhost_user_mode_arg,
@@ -682,6 +612,63 @@ struct AngleFeatureOverrides {
   std::string angle_feature_overrides_enabled;
   std::string angle_feature_overrides_disabled;
 };
+
+struct AngleFeatures {
+  // Prefer linear filtering for YUV AHBs to pass
+  // android.media.decoder.cts.DecodeAccuracyTest on older branches.
+  // Generally not needed after b/315387961.
+  bool prefer_linear_filtering_for_yuv = false;
+
+  // Map unspecified color spaces to PASS_THROUGH to pass
+  // android.media.codec.cts.DecodeEditEncodeTest and
+  // android.media.codec.cts.EncodeDecodeTest.
+  bool map_unspecified_color_space_to_pass_through = true;
+
+  // b/264575911: Nvidia seems to have issues with YUV samplers with
+  // 'lowp' and 'mediump' precision qualifiers.
+  bool ignore_precision_qualifiers = false;
+
+  // ANGLE has a feature to expose 3.2 early even if the device does
+  // not fully support all of the 3.2 features. This should be
+  // disabled for Cuttlefish as SwiftShader does not have geometry
+  // shader nor tesselation shader support.
+  bool disable_expose_opengles_3_2_for_testing = false;
+};
+
+std::ostream& operator<<(std::ostream& stream, const AngleFeatures& features) {
+  fmt::print(stream, "ANGLE features: \n");
+  fmt::print(stream, " - prefer_linear_filtering_for_yuv: {}\n",
+             features.prefer_linear_filtering_for_yuv);
+  fmt::print(stream, " - map_unspecified_color_space_to_pass_through: {}\n",
+             features.map_unspecified_color_space_to_pass_through);
+  fmt::print(stream, " - ignore_precision_qualifiers: {}\n",
+             features.ignore_precision_qualifiers);
+  return stream;
+}
+
+Result<AngleFeatures> GetNeededAngleFeaturesBasedOnQuirks(
+    const GpuMode mode,
+    const ::gfxstream::proto::GraphicsAvailability& availability) {
+  AngleFeatures features = {};
+  if (mode == GpuMode::GfxstreamGuestAngle) {
+    if (availability.has_vulkan() &&
+        !availability.vulkan().physical_devices().empty() &&
+        availability.vulkan().physical_devices(0).has_quirks() &&
+        availability.vulkan()
+            .physical_devices(0)
+            .quirks()
+            .has_issue_with_precision_qualifiers_on_yuv_samplers()) {
+      features.ignore_precision_qualifiers = true;
+    }
+  }
+
+  if (mode == GpuMode::GuestSwiftshader ||
+      mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
+    features.disable_expose_opengles_3_2_for_testing = true;
+  }
+
+  return features;
+}
 
 Result<AngleFeatureOverrides> GetNeededAngleFeatures(
     const GpuMode mode,
