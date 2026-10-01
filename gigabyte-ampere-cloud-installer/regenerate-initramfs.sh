@@ -10,6 +10,9 @@ apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 ins
 sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install zstd
 sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install initramfs-tools
 sudo apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install lvm2
+
+sudo apt install -y \$(apt-cache search ^linux-image-[0-9] | awk '{print \$1}' | grep -E '^linux-image-[0-9][0-9\.]+(\+deb[0-9]+u?[0-9]*)?-${CURRENTARCH}\$' | sort -V | tail -n 3)
+
 DEBIAN_FRONTEND=noninteractive sudo -E apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" install debian-cloud-images-packages
 cp /boot/initrd.img-* "${RESULTDIR}"
 
