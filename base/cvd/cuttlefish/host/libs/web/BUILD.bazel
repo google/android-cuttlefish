@@ -170,6 +170,7 @@ cf_cc_library(
     hdrs = ["caching_build_api.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:link_or_copy",
         "//cuttlefish/host/libs/web:android_build",
@@ -190,8 +191,10 @@ cf_cc_test(
     srcs = ["caching_build_api_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:is_directory_empty",
+        "//cuttlefish/files:recursively_remove_directory",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:build_api",
