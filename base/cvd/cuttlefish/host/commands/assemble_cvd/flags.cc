@@ -1199,6 +1199,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       instance.set_enable_gpu_system_blob(false);
     }
 
+    const AngleFeatureOverrides angle_features =
+        CF_EXPECT(GetNeededAngleFeatures(gpu_mode, graphics_availability));
+    instance.set_gpu_angle_feature_overrides_enabled(
+        angle_features.angle_feature_overrides_enabled);
+    instance.set_gpu_angle_feature_overrides_disabled(
+        angle_features.angle_feature_overrides_disabled);
+
     CF_EXPECT(SelectGpuSettings(graphics_availability, gpu_mode,
                                 gpu_renderer_features_vec[instance_index],
                                 guest_hwui_renderer_vec[instance_index],

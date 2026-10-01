@@ -428,42 +428,6 @@ Result<AngleFeatures> GetNeededAngleFeaturesBasedOnQuirks(
   return features;
 }
 
-struct AngleFeatureOverrides {
-  std::string angle_feature_overrides_enabled;
-  std::string angle_feature_overrides_disabled;
-};
-
-CF_UNUSED_ON_MACOS
-Result<AngleFeatureOverrides> GetNeededAngleFeatures(
-    const GpuMode mode,
-    const ::gfxstream::proto::GraphicsAvailability& availability) {
-  const AngleFeatures features =
-      CF_EXPECT(GetNeededAngleFeaturesBasedOnQuirks(mode, availability));
-  VLOG(0) << features;
-
-  std::vector<std::string> enable_feature_strings;
-  std::vector<std::string> disable_feature_strings;
-  if (features.prefer_linear_filtering_for_yuv) {
-    enable_feature_strings.push_back("preferLinearFilterForYUV");
-  }
-  if (features.map_unspecified_color_space_to_pass_through) {
-    enable_feature_strings.push_back("mapUnspecifiedColorSpaceToPassThrough");
-  }
-  if (features.ignore_precision_qualifiers) {
-    disable_feature_strings.push_back("enablePrecisionQualifiers");
-  }
-  if (features.disable_expose_opengles_3_2_for_testing) {
-    disable_feature_strings.push_back("exposeES32ForTesting");
-  }
-
-  return AngleFeatureOverrides{
-      .angle_feature_overrides_enabled =
-          absl::StrJoin(enable_feature_strings, ":"),
-      .angle_feature_overrides_disabled =
-          absl::StrJoin(disable_feature_strings, ":"),
-  };
-}
-
 #ifndef __APPLE__
 
 // TODO(b/503397840): remove after default updated.
@@ -954,6 +918,36 @@ GetNeededVhostUserGpuHostRendererFeatures(
   return features;
 }
 
+Result<AngleFeatureOverrides> GetNeededAngleFeatures(
+    const GpuMode mode,
+    const ::gfxstream::proto::GraphicsAvailability& availability) {
+  const AngleFeatures features =
+      CF_EXPECT(GetNeededAngleFeaturesBasedOnQuirks(mode, availability));
+  VLOG(0) << features;
+
+  std::vector<std::string> enable_feature_strings;
+  std::vector<std::string> disable_feature_strings;
+  if (features.prefer_linear_filtering_for_yuv) {
+    enable_feature_strings.push_back("preferLinearFilterForYUV");
+  }
+  if (features.map_unspecified_color_space_to_pass_through) {
+    enable_feature_strings.push_back("mapUnspecifiedColorSpaceToPassThrough");
+  }
+  if (features.ignore_precision_qualifiers) {
+    disable_feature_strings.push_back("enablePrecisionQualifiers");
+  }
+  if (features.disable_expose_opengles_3_2_for_testing) {
+    disable_feature_strings.push_back("exposeES32ForTesting");
+  }
+
+  return AngleFeatureOverrides{
+      .angle_feature_overrides_enabled =
+          absl::StrJoin(enable_feature_strings, ":"),
+      .angle_feature_overrides_disabled =
+          absl::StrJoin(disable_feature_strings, ":"),
+  };
+}
+
 Result<void> SelectGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
     const GpuMode gpu_mode, const std::string& gpu_renderer_features_arg,
@@ -961,13 +955,6 @@ Result<void> SelectGpuSettings(
     const std::string& guest_renderer_preload_arg,
     const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
-  const auto angle_features =
-      CF_EXPECT(GetNeededAngleFeatures(gpu_mode, graphics_availability));
-  instance.set_gpu_angle_feature_overrides_enabled(
-      angle_features.angle_feature_overrides_enabled);
-  instance.set_gpu_angle_feature_overrides_disabled(
-      angle_features.angle_feature_overrides_disabled);
-
   const GuestHwuiRenderer hwui_renderer = CF_EXPECT(
       SelectGuestHwuiRenderer(gpu_mode, guest_config, guest_hwui_renderer_arg));
   instance.set_guest_hwui_renderer(hwui_renderer);
