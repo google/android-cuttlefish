@@ -26,6 +26,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/extra_kernel_cmdline.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/gpu_context_types.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/gpu_mode.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
@@ -37,8 +38,10 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
+#include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/resolve_instance_files.h"
+#include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/result/result.h"
 
@@ -47,6 +50,7 @@ namespace cuttlefish {
 Result<ParsedFlags> GetParsedFlags() {
   const SystemImageDirFlag system_image_dir =
       CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
+
   auto parsed_flags = ParsedFlags{
       .cpus = CF_EXPECT(CpusFlag::FromGlobalGflags()),
       .daemon = CF_EXPECT(DaemonFlag::FromGlobalGflags()),
@@ -92,6 +96,19 @@ Result<ParsedFlags> GetParsedFlags() {
         CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs)));
     parsed_flags.bootloader.emplace(CF_EXPECT(BootloaderFlag::FromGlobalGflags(
         guest_configs, system_image_dir, *parsed_flags.vm_manager)));
+
+    const gfxstream::proto::GraphicsAvailability graphics_availability =
+        GetGraphicsAvailabilityWithSubprocessCheck();
+    const GpuContextTypesFlag gpu_context_types =
+        CF_EXPECT(GpuContextTypesFlag::FromGlobalGflags());
+
+    parsed_flags.gpu_mode_used.reserve(parsed_flags.gpu_mode_requested.Size());
+    for (int i = 0; i < parsed_flags.gpu_mode_requested.Size(); i++) {
+      parsed_flags.gpu_mode_used[i] = CF_EXPECT(SelectGpuMode(
+          parsed_flags.gpu_mode_requested.ForIndex(i),
+          parsed_flags.vm_manager.value().Mode(), guest_configs[i],
+          gpu_context_types.ForIndex(i), graphics_availability));
+    }
   }
   return parsed_flags;
 }

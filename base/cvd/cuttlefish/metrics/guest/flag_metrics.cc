@@ -48,6 +48,9 @@ Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
     flag_metrics.boot_image_specified =
         !parsed_flags.boot_image.value().IsDefaultForIndex(guest_index);
   }
+  if (!parsed_flags.gpu_mode_used.empty()) {
+    flag_metrics.gpu_mode_used = parsed_flags.gpu_mode_used[guest_index];
+  }
   if (parsed_flags.super_image) {
     flag_metrics.super_image_specified =
         !parsed_flags.super_image.value().IsDefaultForIndex(guest_index);
