@@ -29,7 +29,8 @@ Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
       .data_policy = parsed_flags.data_policy.ForIndex(guest_index),
       // the same extra_kernel_cmdline value is used for all guests
       .extra_kernel_cmdline = parsed_flags.extra_kernel_cmdline.ForIndex(0),
-      .gpu_mode = parsed_flags.gpu_mode.ForIndex(guest_index),
+      .gpu_mode_requested =
+          parsed_flags.gpu_mode_requested.ForIndex(guest_index),
       .guest_enforce_security =
           parsed_flags.guest_enforce_security.ForIndex(guest_index),
       .memory_mb = parsed_flags.memory_mb.ForIndex(guest_index),
