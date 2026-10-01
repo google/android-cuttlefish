@@ -108,6 +108,26 @@ sudo tee /mnt/image/etc/sysctl.d/80-nsjail.conf >/dev/null <<EOF
 kernel.unprivileged_userns_clone=1
 EOF
 
+# Provide vendor-level defaults in /usr/lib so images paired with older
+# cuttlefish-base .deb packages still isolate cvd-* interfaces, without
+# conflicting with /etc conffiles in newer cuttlefish-base .deb packages.
+sudo chroot /mnt/image /usr/bin/mkdir -p /usr/lib/systemd/network /usr/lib/sysctl.d
+sudo tee /mnt/image/usr/lib/systemd/network/10-cuttlefish.network >/dev/null <<EOF
+[Match]
+Name=cvd-*
+
+[Link]
+Unmanaged=yes
+EOF
+
+sudo tee /mnt/image/usr/lib/sysctl.d/90-cuttlefish-net.conf >/dev/null <<EOF
+net.ipv4.ip_forward = 1
+net.ipv6.conf.all.forwarding = 1
+net.ipv4.conf.cvd-*.ignore_routes_with_linkdown = 0
+net.ipv4.conf.cvd-*.rp_filter = 1
+net.ipv6.conf.cvd-*.accept_dad = 0
+EOF
+
 kmodver_end=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
 echo "IMAGE ENDS WITH KERNEL: ${kmodver_end}"
