@@ -34,6 +34,7 @@ struct FlagMetrics {
   DataImagePolicy data_policy = DataImagePolicy::Unknown;
   std::string extra_kernel_cmdline;
   GpuMode gpu_mode_requested = GpuMode::Auto;
+  GpuMode gpu_mode_used = GpuMode::Auto;
   bool guest_enforce_security = false;
   int memory_mb = 0;
   bool qemu_binary_specified = false;
