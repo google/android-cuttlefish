@@ -12,7 +12,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
-        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
@@ -20,10 +19,10 @@ cf_cc_library(
         "//cuttlefish/host/commands/kernel_log_monitor:utils",
         "//cuttlefish/host/commands/openwrt_control_server:libopenwrt_control_server",
         "//cuttlefish/host/commands/openwrt_control_server:openwrt_control_server_cc_proto",
+        "//cuttlefish/host/commands/run_cvd:daemonize_launcher",
         "//cuttlefish/host/commands/run_cvd:validate",
         "//cuttlefish/host/commands/run_cvd:wattson_rebalance_threads",
         "//cuttlefish/host/libs/command_util",
-        "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -42,6 +41,25 @@ cf_cc_library(
         "@gflags",
         "@grpc",
         "@grpc//:grpc++",
+    ],
+)
+
+cf_cc_library(
+    name = "daemonize_launcher",
+    srcs = ["daemonize_launcher.cc"],
+    hdrs = ["daemonize_launcher.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/run_cvd:wattson_rebalance_threads",
+        "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
     ],
 )
 
