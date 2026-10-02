@@ -23,8 +23,8 @@
 namespace cuttlefish {
 
 // Wrapper for readlink(2).
-Result<std::string> ReadLink(const char* path);
-Result<std::string> ReadLink(const std::string& path);
-Result<std::string> ReadLink(std::string_view path);
+Result<std::string, int> ReadLink(const char* path);
+Result<std::string, int> ReadLink(const std::string& path);
+Result<std::string, int> ReadLink(std::string_view path);
 
 }  // namespace cuttlefish
