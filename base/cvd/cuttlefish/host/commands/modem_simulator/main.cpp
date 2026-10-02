@@ -54,10 +54,9 @@ std::vector<SharedFD> ServerFdsFromCmdline() {
   std::vector<std::string> fds = absl::StrSplit(fd_list, ',');
   std::vector<SharedFD> shared_fds;
   for (auto& fd_str : fds) {
-    auto fd = std::stoi(fd_str);
-    auto shared_fd = SharedFD::Dup(fd);
-    close(fd);
-    shared_fds.push_back(shared_fd);
+    auto fd_num = std::stoi(fd_str);
+    shared_fds.emplace_back(Fd::Dup(fd_num).value_or(Fd()));
+    close(fd_num);
   }
 
   return shared_fds;

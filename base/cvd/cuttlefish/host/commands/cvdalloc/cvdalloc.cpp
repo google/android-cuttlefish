@@ -29,6 +29,7 @@
 #include "absl/log/log.h"
 
 #include "allocd/alloc_utils.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
@@ -98,10 +99,7 @@ Result<int> CvdallocMain(int argc, char* argv[]) {
 
   int id = absl::GetFlag(FLAGS_id);
 
-  auto sock = SharedFD::Dup(absl::GetFlag(FLAGS_socket));
-  if (!sock->IsOpen()) {
-    return CF_ERRNO("cvdalloc: socket is closed: " << sock->StrError());
-  }
+  SharedFD sock = CF_EXPECT(Fd::Dup(absl::GetFlag(FLAGS_socket)));
   int r = TEMP_FAILURE_RETRY(close(absl::GetFlag(FLAGS_socket)));
   if (r == -1) {
     return CF_ERRNO("close: " << StrError(errno));
