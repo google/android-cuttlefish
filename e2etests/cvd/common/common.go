@@ -339,6 +339,7 @@ func (tc *TestContext) CVDCreateWithConfigFile(load LoadArgs) error {
 		tc.TargetBin(),
 		"create",
 		"--config_file=" + configpath,
+		"--base_directory=" + tc.tempdir,
 	}
 	credentialArg := os.Getenv("CREDENTIAL_SOURCE")
 	if credentialArg != "" {
@@ -483,6 +484,11 @@ func (tc *TestContext) TearDown() {
 				"cuttlefish_runtime/logcat",
 				"cuttlefish_runtime/*.log",
 				"fetch.log",
+				// `cvd create --config_file=` cases have an extra directory layer
+				"home/cuttlefish_runtime/cuttlefish_config.json",
+				"home/cuttlefish_runtime/logcat",
+				"home/cuttlefish_runtime/*.log",
+				"artifacts/fetch.log",
 			}
 			for _, pattern := range patterns {
 				matches, err := filepath.Glob(path.Join(tc.tempdir, pattern))
@@ -514,7 +520,9 @@ func (tc *TestContext) TearDown() {
 					}
 				}
 			}
+			// duplicate for load with base/home/cuttlefish
 
+			// check how to make this work for load (directory is under base/home)
 			// gather cvd V2 metrics files, if they exist
 			metricsdir, err := tc.GetMetricsDir()
 			if err != nil {
