@@ -45,7 +45,6 @@
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
@@ -54,14 +53,10 @@
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 
-#ifdef __APPLE__
-#define CF_UNUSED_ON_MACOS [[maybe_unused]]
-#else
-#define CF_UNUSED_ON_MACOS
-#endif
-
 namespace cuttlefish {
 namespace {
+
+#ifndef __APPLE__
 
 struct AggregatingErrorCollector : public google::protobuf::io::ErrorCollector {
   void RecordError(int /* line */, int /* column */,
@@ -371,155 +366,6 @@ GetGpuModeRequirementsMap() {
   return *kGpuModeRequirements;
 };
 
-struct AngleFeatures {
-  // Prefer linear filtering for YUV AHBs to pass
-  // android.media.decoder.cts.DecodeAccuracyTest on older branches.
-  // Generally not needed after b/315387961.
-  bool prefer_linear_filtering_for_yuv = false;
-
-  // Map unspecified color spaces to PASS_THROUGH to pass
-  // android.media.codec.cts.DecodeEditEncodeTest and
-  // android.media.codec.cts.EncodeDecodeTest.
-  bool map_unspecified_color_space_to_pass_through = true;
-
-  // b/264575911: Nvidia seems to have issues with YUV samplers with
-  // 'lowp' and 'mediump' precision qualifiers.
-  bool ignore_precision_qualifiers = false;
-
-  // ANGLE has a feature to expose 3.2 early even if the device does
-  // not fully support all of the 3.2 features. This should be
-  // disabled for Cuttlefish as SwiftShader does not have geometry
-  // shader nor tesselation shader support.
-  bool disable_expose_opengles_3_2_for_testing = false;
-};
-
-std::ostream& operator<<(std::ostream& stream, const AngleFeatures& features) {
-  fmt::print(stream, "ANGLE features: \n");
-  fmt::print(stream, " - prefer_linear_filtering_for_yuv: {}\n",
-             features.prefer_linear_filtering_for_yuv);
-  fmt::print(stream, " - map_unspecified_color_space_to_pass_through: {}\n",
-             features.map_unspecified_color_space_to_pass_through);
-  fmt::print(stream, " - ignore_precision_qualifiers: {}\n",
-             features.ignore_precision_qualifiers);
-  return stream;
-}
-
-Result<AngleFeatures> GetNeededAngleFeaturesBasedOnQuirks(
-    const GpuMode mode,
-    const ::gfxstream::proto::GraphicsAvailability& availability) {
-  AngleFeatures features = {};
-  if (mode == GpuMode::GfxstreamGuestAngle) {
-    if (availability.has_vulkan() &&
-        !availability.vulkan().physical_devices().empty() &&
-        availability.vulkan().physical_devices(0).has_quirks() &&
-        availability.vulkan()
-            .physical_devices(0)
-            .quirks()
-            .has_issue_with_precision_qualifiers_on_yuv_samplers()) {
-      features.ignore_precision_qualifiers = true;
-    }
-  }
-
-  if (mode == GpuMode::GuestSwiftshader ||
-      mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
-    features.disable_expose_opengles_3_2_for_testing = true;
-  }
-
-  return features;
-}
-
-struct AngleFeatureOverrides {
-  std::string angle_feature_overrides_enabled;
-  std::string angle_feature_overrides_disabled;
-};
-
-CF_UNUSED_ON_MACOS
-Result<AngleFeatureOverrides> GetNeededAngleFeatures(
-    const GpuMode mode,
-    const ::gfxstream::proto::GraphicsAvailability& availability) {
-  const AngleFeatures features =
-      CF_EXPECT(GetNeededAngleFeaturesBasedOnQuirks(mode, availability));
-  VLOG(0) << features;
-
-  std::vector<std::string> enable_feature_strings;
-  std::vector<std::string> disable_feature_strings;
-  if (features.prefer_linear_filtering_for_yuv) {
-    enable_feature_strings.push_back("preferLinearFilterForYUV");
-  }
-  if (features.map_unspecified_color_space_to_pass_through) {
-    enable_feature_strings.push_back("mapUnspecifiedColorSpaceToPassThrough");
-  }
-  if (features.ignore_precision_qualifiers) {
-    disable_feature_strings.push_back("enablePrecisionQualifiers");
-  }
-  if (features.disable_expose_opengles_3_2_for_testing) {
-    disable_feature_strings.push_back("exposeES32ForTesting");
-  }
-
-  return AngleFeatureOverrides{
-      .angle_feature_overrides_enabled =
-          absl::StrJoin(enable_feature_strings, ":"),
-      .angle_feature_overrides_disabled =
-          absl::StrJoin(disable_feature_strings, ":"),
-  };
-}
-
-struct VhostUserGpuHostRendererFeatures {
-  // If true, host Virtio GPU blob resources will be allocated with
-  // external memory and exported file descriptors will be shared
-  // with the VMM for mapping resources into the guest address space.
-  bool external_blob = false;
-
-  // If true, host Virtio GPU blob resources will be allocated with
-  // shmem and exported file descriptors will be shared with the VMM
-  // for mapping resources into the guest address space.
-  //
-  // This is an extension of the above external_blob that allows the
-  // VMM to map resources without graphics API support but requires
-  // additional features (VK_EXT_external_memory_host) from the GPU
-  // driver and is potentially less performant.
-  bool system_blob = false;
-};
-
-CF_UNUSED_ON_MACOS
-Result<VhostUserGpuHostRendererFeatures>
-GetNeededVhostUserGpuHostRendererFeatures(
-    GpuMode mode,
-    const ::gfxstream::proto::GraphicsAvailability& availability) {
-  VhostUserGpuHostRendererFeatures features = {};
-
-  // No features needed for guest rendering.
-  if (mode == GpuMode::GuestSwiftshader) {
-    return features;
-  }
-
-  // For any passthrough graphics mode, external blob is needed for sharing
-  // buffers between the vhost-user-gpu VMM process and the main VMM process.
-  features.external_blob = true;
-
-  // Prebuilt SwiftShader includes VK_EXT_external_memory_host.
-  if (mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
-    features.system_blob = true;
-  } else {
-    const bool has_external_memory_host =
-        availability.has_vulkan() &&
-        !availability.vulkan().physical_devices().empty() &&
-        Contains(availability.vulkan().physical_devices(0).extensions(),
-                 "VK_EXT_external_memory_host");
-
-    CF_EXPECT(
-        has_external_memory_host || mode != GpuMode::GfxstreamGuestAngle,
-        "VK_EXT_external_memory_host is required for running with "
-        "--gpu_mode=gfxstream_guest_angle and --enable_gpu_vhost_user=true");
-
-    features.system_blob = has_external_memory_host;
-  }
-
-  return features;
-}
-
-#ifndef __APPLE__
-
 // TODO(b/503397840): remove after default updated.
 bool EnableHostRenderingByDefault() { return false; }
 
@@ -607,55 +453,70 @@ Result<std::vector<GpuMode>> GetSupportedGpuModeCandidates(
   return supported_candidates;
 }
 
-Result<GpuMode> SelectGpuMode(
-    const GpuMode gpu_mode_arg, VmmMode vmm, const GuestConfig& guest_config,
-    const gfxstream::proto::GraphicsAvailability& graphics_availability) {
-  const CommonState common = {
-      .vmm_mode = vmm,
-      .guest_config = guest_config,
-      .host_info = GetHostInfo(),
-      .graphics_availability = graphics_availability,
-  };
-  if (gpu_mode_arg != GpuMode::Auto) {
-    // User explicitly supplied a mode. Double check the requirements but only
-    // log warnings and respect their choice:
-    if (!CF_EXPECT(GpuModeRequirementsMet(common, gpu_mode_arg))) {
-      LOG(ERROR)
-          << "--gpu_mode=" << GpuModeString(gpu_mode_arg)
-          << " was requested but the prerequisites were not detected "
-             "so the device may not function correctly. Please consider "
-             "switching to --gpu_mode=auto or --gpu_mode=guest_swiftshader.";
+const std::string kGfxstreamTransportAsg = "virtio-gpu-asg";
+const std::string kGfxstreamTransportPipe = "virtio-gpu-pipe";
+
+Result<std::unordered_map<std::string, bool>> ParseGfxstreamRendererFlag(
+    const std::string& gpu_renderer_features_arg) {
+  std::unordered_map<std::string, bool> features;
+
+  for (const std::string_view feature :
+       absl::StrSplit(gpu_renderer_features_arg, ';')) {
+    if (feature.empty()) {
+      continue;
     }
-    return gpu_mode_arg;
+
+    const std::vector<std::string_view> feature_parts =
+        absl::StrSplit(feature, ':');
+    CF_EXPECT(feature_parts.size() == 2,
+              "Failed to parse renderer features from --gpu_renderer_features="
+                  << gpu_renderer_features_arg);
+
+    const std::string_view feature_name = feature_parts[0];
+    const std::string_view feature_enabled = feature_parts[1];
+    CF_EXPECT(feature_enabled == "enabled" || feature_enabled == "disabled",
+              "Failed to parse renderer features from --gpu_renderer_features="
+                  << gpu_renderer_features_arg);
+
+    features.emplace(feature_name, feature_enabled == "enabled");
   }
 
-  const std::vector<GpuMode> gpu_mode_candidates =
-      GetGpuModeCandidates(guest_config);
-  VLOG(0) << "Initial GPU mode candidates:";
-  for (size_t i = 0; i < gpu_mode_candidates.size(); i++) {
-    VLOG(0) << "  " << (i + 1) << ": " << GpuModeString(gpu_mode_candidates[i]);
-  }
-  VLOG(0) << "";
-
-  const std::vector<GpuMode> supported_gpu_mode_candidates =
-      CF_EXPECT(GetSupportedGpuModeCandidates(common, gpu_mode_candidates));
-
-  if (supported_gpu_mode_candidates.empty()) {
-    LOG(ERROR) << "Unexpected empty list of candidates...";
-    return GpuMode::GuestSwiftshader;
-  }
-
-  VLOG(0) << "GPU mode candidates with satisfied requirements:";
-  for (size_t i = 0; i < supported_gpu_mode_candidates.size(); i++) {
-    VLOG(0) << "  " << (i + 1) << ": "
-            << GpuModeString(supported_gpu_mode_candidates[i]);
-  }
-  VLOG(0) << "";
-
-  const GpuMode selected_gpu_mode = supported_gpu_mode_candidates[0];
-  VLOG(0) << "GPU auto mode: selecting --gpu_mode=" << selected_gpu_mode;
-  return selected_gpu_mode;
+  return features;
 }
+
+std::string GetGfxstreamRendererFeaturesString(
+    const std::unordered_map<std::string, bool>& features) {
+  std::vector<std::string> parts;
+  for (const auto& [feature_name, feature_enabled] : features) {
+    parts.push_back(feature_name + ":" +
+                    (feature_enabled ? "enabled" : "disabled"));
+  }
+  return absl::StrJoin(parts, ",");
+}
+
+bool HasMultipleGraphicsQueues(
+    const gfxstream::proto::GraphicsAvailability& availability) {
+  if (!availability.has_vulkan()) {
+    return false;
+  }
+  const gfxstream::proto::VulkanAvailability& vulkan_availability =
+      availability.vulkan();
+  if (vulkan_availability.physical_devices().empty()) {
+    return false;
+  }
+  const auto& physical_device = vulkan_availability.physical_devices(0);
+  for (const auto& queue_family : physical_device.queue_families()) {
+    if (!queue_family.has_supports_graphics()) continue;
+    if (!queue_family.supports_graphics()) continue;
+
+    // HWUI seems to only check the first queue family supporting graphics:
+    return queue_family.has_queue_count() && queue_family.queue_count() >= 2;
+  }
+  return false;
+}
+
+static std::unordered_set<std::string> kSupportedGpuContexts{
+    "gfxstream-vulkan", "gfxstream-composer", "cross-domain", "magma"};
 
 Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
                                     const std::string& gpu_vhost_user_mode_arg,
@@ -692,6 +553,151 @@ Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
   }
 
   return gpu_vhost_user_mode_arg == kGpuVhostUserModeOn;
+}
+
+struct VhostUserGpuHostRendererFeatures {
+  // If true, host Virtio GPU blob resources will be allocated with
+  // external memory and exported file descriptors will be shared
+  // with the VMM for mapping resources into the guest address space.
+  bool external_blob = false;
+
+  // If true, host Virtio GPU blob resources will be allocated with
+  // shmem and exported file descriptors will be shared with the VMM
+  // for mapping resources into the guest address space.
+  //
+  // This is an extension of the above external_blob that allows the
+  // VMM to map resources without graphics API support but requires
+  // additional features (VK_EXT_external_memory_host) from the GPU
+  // driver and is potentially less performant.
+  bool system_blob = false;
+};
+
+Result<VhostUserGpuHostRendererFeatures>
+GetNeededVhostUserGpuHostRendererFeatures(
+    GpuMode mode,
+    const ::gfxstream::proto::GraphicsAvailability& availability) {
+  VhostUserGpuHostRendererFeatures features = {};
+
+  // No features needed for guest rendering.
+  if (mode == GpuMode::GuestSwiftshader) {
+    return features;
+  }
+
+  // For any passthrough graphics mode, external blob is needed for sharing
+  // buffers between the vhost-user-gpu VMM process and the main VMM process.
+  features.external_blob = true;
+
+  // Prebuilt SwiftShader includes VK_EXT_external_memory_host.
+  if (mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
+    features.system_blob = true;
+  } else {
+    const bool has_external_memory_host =
+        availability.has_vulkan() &&
+        !availability.vulkan().physical_devices().empty() &&
+        Contains(availability.vulkan().physical_devices(0).extensions(),
+                 "VK_EXT_external_memory_host");
+
+    CF_EXPECT(
+        has_external_memory_host || mode != GpuMode::GfxstreamGuestAngle,
+        "VK_EXT_external_memory_host is required for running with "
+        "--gpu_mode=gfxstream_guest_angle and --enable_gpu_vhost_user=true");
+
+    features.system_blob = has_external_memory_host;
+  }
+
+  return features;
+}
+
+struct AngleFeatureOverrides {
+  std::string angle_feature_overrides_enabled;
+  std::string angle_feature_overrides_disabled;
+};
+
+struct AngleFeatures {
+  // Prefer linear filtering for YUV AHBs to pass
+  // android.media.decoder.cts.DecodeAccuracyTest on older branches.
+  // Generally not needed after b/315387961.
+  bool prefer_linear_filtering_for_yuv = false;
+
+  // Map unspecified color spaces to PASS_THROUGH to pass
+  // android.media.codec.cts.DecodeEditEncodeTest and
+  // android.media.codec.cts.EncodeDecodeTest.
+  bool map_unspecified_color_space_to_pass_through = true;
+
+  // b/264575911: Nvidia seems to have issues with YUV samplers with
+  // 'lowp' and 'mediump' precision qualifiers.
+  bool ignore_precision_qualifiers = false;
+
+  // ANGLE has a feature to expose 3.2 early even if the device does
+  // not fully support all of the 3.2 features. This should be
+  // disabled for Cuttlefish as SwiftShader does not have geometry
+  // shader nor tesselation shader support.
+  bool disable_expose_opengles_3_2_for_testing = false;
+};
+
+std::ostream& operator<<(std::ostream& stream, const AngleFeatures& features) {
+  fmt::print(stream, "ANGLE features: \n");
+  fmt::print(stream, " - prefer_linear_filtering_for_yuv: {}\n",
+             features.prefer_linear_filtering_for_yuv);
+  fmt::print(stream, " - map_unspecified_color_space_to_pass_through: {}\n",
+             features.map_unspecified_color_space_to_pass_through);
+  fmt::print(stream, " - ignore_precision_qualifiers: {}\n",
+             features.ignore_precision_qualifiers);
+  return stream;
+}
+
+Result<AngleFeatures> GetNeededAngleFeaturesBasedOnQuirks(
+    const GpuMode mode,
+    const ::gfxstream::proto::GraphicsAvailability& availability) {
+  AngleFeatures features = {};
+  if (mode == GpuMode::GfxstreamGuestAngle) {
+    if (availability.has_vulkan() &&
+        !availability.vulkan().physical_devices().empty() &&
+        availability.vulkan().physical_devices(0).has_quirks() &&
+        availability.vulkan()
+            .physical_devices(0)
+            .quirks()
+            .has_issue_with_precision_qualifiers_on_yuv_samplers()) {
+      features.ignore_precision_qualifiers = true;
+    }
+  }
+
+  if (mode == GpuMode::GuestSwiftshader ||
+      mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
+    features.disable_expose_opengles_3_2_for_testing = true;
+  }
+
+  return features;
+}
+
+Result<AngleFeatureOverrides> GetNeededAngleFeatures(
+    const GpuMode mode,
+    const ::gfxstream::proto::GraphicsAvailability& availability) {
+  const AngleFeatures features =
+      CF_EXPECT(GetNeededAngleFeaturesBasedOnQuirks(mode, availability));
+  VLOG(0) << features;
+
+  std::vector<std::string> enable_feature_strings;
+  std::vector<std::string> disable_feature_strings;
+  if (features.prefer_linear_filtering_for_yuv) {
+    enable_feature_strings.push_back("preferLinearFilterForYUV");
+  }
+  if (features.map_unspecified_color_space_to_pass_through) {
+    enable_feature_strings.push_back("mapUnspecifiedColorSpaceToPassThrough");
+  }
+  if (features.ignore_precision_qualifiers) {
+    disable_feature_strings.push_back("enablePrecisionQualifiers");
+  }
+  if (features.disable_expose_opengles_3_2_for_testing) {
+    disable_feature_strings.push_back("exposeES32ForTesting");
+  }
+
+  return AngleFeatureOverrides{
+      .angle_feature_overrides_enabled =
+          absl::StrJoin(enable_feature_strings, ":"),
+      .angle_feature_overrides_disabled =
+          absl::StrJoin(disable_feature_strings, ":"),
+  };
 }
 
 Result<GuestHwuiRenderer> SelectGuestHwuiRenderer(
@@ -753,88 +759,21 @@ Result<GuestRendererPreload> SelectGuestRendererPreload(
   return guest_renderer_preload;
 }
 
-#endif
-
-const std::string kGfxstreamTransportAsg = "virtio-gpu-asg";
-const std::string kGfxstreamTransportPipe = "virtio-gpu-pipe";
-
-CF_UNUSED_ON_MACOS
-Result<std::unordered_map<std::string, bool>> ParseGfxstreamRendererFlag(
-    const std::string& gpu_renderer_features_arg) {
-  std::unordered_map<std::string, bool> features;
-
-  for (const std::string_view feature :
-       absl::StrSplit(gpu_renderer_features_arg, ';')) {
-    if (feature.empty()) {
-      continue;
-    }
-
-    const std::vector<std::string_view> feature_parts =
-        absl::StrSplit(feature, ':');
-    CF_EXPECT(feature_parts.size() == 2,
-              "Failed to parse renderer features from --gpu_renderer_features="
-                  << gpu_renderer_features_arg);
-
-    const std::string_view feature_name = feature_parts[0];
-    const std::string_view feature_enabled = feature_parts[1];
-    CF_EXPECT(feature_enabled == "enabled" || feature_enabled == "disabled",
-              "Failed to parse renderer features from --gpu_renderer_features="
-                  << gpu_renderer_features_arg);
-
-    features.emplace(feature_name, feature_enabled == "enabled");
-  }
-
-  return features;
-}
-
-CF_UNUSED_ON_MACOS
-std::string GetGfxstreamRendererFeaturesString(
-    const std::unordered_map<std::string, bool>& features) {
-  std::vector<std::string> parts;
-  for (const auto& [feature_name, feature_enabled] : features) {
-    parts.push_back(feature_name + ":" +
-                    (feature_enabled ? "enabled" : "disabled"));
-  }
-  return absl::StrJoin(parts, ",");
-}
-
-CF_UNUSED_ON_MACOS
-bool HasMultipleGraphicsQueues(
-    const gfxstream::proto::GraphicsAvailability& availability) {
-  if (!availability.has_vulkan()) {
-    return false;
-  }
-  const gfxstream::proto::VulkanAvailability& vulkan_availability =
-      availability.vulkan();
-  if (vulkan_availability.physical_devices().empty()) {
-    return false;
-  }
-  const auto& physical_device = vulkan_availability.physical_devices(0);
-  for (const auto& queue_family : physical_device.queue_families()) {
-    if (!queue_family.has_supports_graphics()) continue;
-    if (!queue_family.supports_graphics()) continue;
-
-    // HWUI seems to only check the first queue family supporting graphics:
-    return queue_family.has_queue_count() && queue_family.queue_count() >= 2;
-  }
-  return false;
-}
-
-CF_UNUSED_ON_MACOS
-Result<void> SetGfxstreamFlags(
-    const GpuMode gpu_mode, const GuestHwuiRenderer hwui_renderer,
-    const std::string& gpu_renderer_features_arg,
-    const GuestConfig& guest_config,
-    const gfxstream::proto::GraphicsAvailability& availability,
-    CuttlefishConfig::MutableInstanceSpecific& instance) {
+std::string SelectGfxstreamTransport(const GuestConfig& guest_config) {
   std::string gfxstream_transport = kGfxstreamTransportAsg;
-
   // Some older R branches are missing some Gfxstream backports
   // which introduced a backward incompatible change (b/267483000).
   if (guest_config.android_version_number == "11.0.0") {
     gfxstream_transport = kGfxstreamTransportPipe;
   }
+  return gfxstream_transport;
+}
 
+Result<std::string> GetGfxstreamFeatures(
+    const GpuMode gpu_mode, const GuestHwuiRenderer hwui_renderer,
+    const std::string& gpu_renderer_features_arg,
+    const GuestConfig& guest_config,
+    const gfxstream::proto::GraphicsAvailability& availability) {
   std::unordered_map<std::string, bool> features;
 
   // Apply features from host/mode requirements.
@@ -875,18 +814,10 @@ Result<void> SetGfxstreamFlags(
   }
 
   // Convert features back to a string for passing to the VMM.
-  const std::string features_string =
-      GetGfxstreamRendererFeaturesString(features);
-  if (!features_string.empty()) {
-    instance.set_gpu_renderer_features(features_string);
-  }
-
-  instance.set_gpu_gfxstream_transport(gfxstream_transport);
-  return {};
+  return GetGfxstreamRendererFeaturesString(features);
 }
 
-static std::unordered_set<std::string> kSupportedGpuContexts{
-    "gfxstream-vulkan", "gfxstream-composer", "cross-domain", "magma"};
+#endif
 
 }  // namespace
 
@@ -946,89 +877,132 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
 #endif
 }
 
-Result<GpuMode> ConfigureGpuSettings(
-    const gfxstream::proto::GraphicsAvailability& graphics_availability,
-    GpuMode gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
-    const std::string& gpu_renderer_features_arg,
-    std::string& gpu_context_types_arg,
-    const std::string& guest_hwui_renderer_arg,
-    const std::string& guest_renderer_preload_arg, VmmMode vmm,
-    const GuestConfig& guest_config,
-    CuttlefishConfig::MutableInstanceSpecific& instance) {
-  instance.set_has_vulkan_gfxstream_apex(
-      guest_config.has_vulkan_gfxstream_apex);
-  instance.set_has_vulkan_lavapipe_apex(guest_config.has_vulkan_lavapipe_apex);
-  instance.set_has_vulkan_swiftshader_apex(
-      guest_config.has_vulkan_swiftshader_apex);
-  instance.set_has_vulkan_venus_apex(guest_config.has_vulkan_venus_apex);
-
+Result<GpuMode> SelectGpuMode(
+    const GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
+    const std::string& gpu_context_types,
+    const gfxstream::proto::GraphicsAvailability& graphics_availability) {
 #ifdef __APPLE__
-  (void)graphics_availability;
-  (void)gpu_vhost_user_mode_arg;
+
   (void)vmm;
   (void)guest_config;
-  CF_EXPECT(gpu_mode_arg == GpuMode::Auto ||
-            gpu_mode_arg == GpuMode::GuestSwiftshader ||
-            gpu_mode_arg == GpuMode::DrmVirgl || gpu_mode_arg == GpuMode::None);
-  if (gpu_mode_arg == GpuMode::Auto) {
-    gpu_mode_arg = GpuMode::GuestSwiftshader;
-  }
-  instance.set_gpu_mode(gpu_mode_arg);
-  instance.set_enable_gpu_vhost_user(false);
-#else
-  const GpuMode gpu_mode = CF_EXPECT(
-      SelectGpuMode(gpu_mode_arg, vmm, guest_config, graphics_availability));
-  const bool enable_gpu_vhost_user =
-      CF_EXPECT(SelectGpuVhostUserMode(gpu_mode, gpu_vhost_user_mode_arg, vmm));
+  (void)gpu_context_types;
+  (void)graphics_availability;
 
-  if (gpu_mode == GpuMode::Custom) {
+  CF_EXPECT(given_gpu_mode == GpuMode::Auto ||
+            given_gpu_mode == GpuMode::GuestSwiftshader ||
+            given_gpu_mode == GpuMode::DrmVirgl ||
+            given_gpu_mode == GpuMode::None);
+  if (given_gpu_mode == GpuMode::Auto) {
+    return GpuMode::GuestSwiftshader;
+  }
+  return given_gpu_mode;
+
+#else
+
+  const CommonState common = {
+      .vmm_mode = vmm,
+      .guest_config = guest_config,
+      .host_info = GetHostInfo(),
+      .graphics_availability = graphics_availability,
+  };
+  if (given_gpu_mode != GpuMode::Auto) {
+    // User explicitly supplied a mode. Double check the requirements but only
+    // log warnings and respect their choice:
+    if (!CF_EXPECT(GpuModeRequirementsMet(common, given_gpu_mode))) {
+      LOG(ERROR)
+          << "--gpu_mode=" << GpuModeString(given_gpu_mode)
+          << " was requested but the prerequisites were not detected "
+             "so the device may not function correctly. Please consider "
+             "switching to --gpu_mode=auto or --gpu_mode=guest_swiftshader.";
+    }
+    return given_gpu_mode;
+  }
+
+  const std::vector<GpuMode> gpu_mode_candidates =
+      GetGpuModeCandidates(guest_config);
+  VLOG(0) << "Initial GPU mode candidates:";
+  for (size_t i = 0; i < gpu_mode_candidates.size(); i++) {
+    VLOG(0) << "  " << (i + 1) << ": " << GpuModeString(gpu_mode_candidates[i]);
+  }
+  VLOG(0) << "";
+
+  const std::vector<GpuMode> supported_gpu_mode_candidates =
+      CF_EXPECT(GetSupportedGpuModeCandidates(common, gpu_mode_candidates));
+
+  if (supported_gpu_mode_candidates.empty()) {
+    LOG(ERROR) << "Unexpected empty list of candidates...";
+    return GpuMode::GuestSwiftshader;
+  }
+
+  VLOG(0) << "GPU mode candidates with satisfied requirements:";
+  for (size_t i = 0; i < supported_gpu_mode_candidates.size(); i++) {
+    VLOG(0) << "  " << (i + 1) << ": "
+            << GpuModeString(supported_gpu_mode_candidates[i]);
+  }
+  VLOG(0) << "";
+
+  const GpuMode selected_gpu_mode = supported_gpu_mode_candidates[0];
+  VLOG(0) << "GPU auto mode: selecting --gpu_mode=" << selected_gpu_mode;
+
+  if (selected_gpu_mode == GpuMode::Custom) {
     std::vector<std::string> requested_types =
-        absl::StrSplit(gpu_context_types_arg, ':');
+        absl::StrSplit(gpu_context_types, ':');
     for (const std::string& requested : requested_types) {
       CF_EXPECT(kSupportedGpuContexts.count(requested) == 1,
                 "unsupported context type: " + requested);
     }
   }
 
-  const auto angle_features =
-      CF_EXPECT(GetNeededAngleFeatures(gpu_mode, graphics_availability));
-  instance.set_gpu_angle_feature_overrides_enabled(
-      angle_features.angle_feature_overrides_enabled);
-  instance.set_gpu_angle_feature_overrides_disabled(
-      angle_features.angle_feature_overrides_disabled);
+  return selected_gpu_mode;
+#endif
+}
 
-  if (enable_gpu_vhost_user) {
-    const auto gpu_vhost_user_features =
+#ifndef __APPLE__
+
+Result<GraphicsSettings> GetGraphicsSettings(
+    const GpuMode gpu_mode, const std::string& gpu_vhost_user_mode,
+    const VmmMode vmm_mode,
+    const ::gfxstream::proto::GraphicsAvailability& graphics_availability,
+    const GuestConfig& guest_config, const std::string& guest_hwui_renderer,
+    const std::string& guest_renderer_preload,
+    const std::string& gpu_renderer_features) {
+  auto graphics_settings = GraphicsSettings{
+      .enable_gpu_vhost_user = CF_EXPECT(
+          SelectGpuVhostUserMode(gpu_mode, gpu_vhost_user_mode, vmm_mode)),
+      .hwui_renderer = CF_EXPECT(
+          SelectGuestHwuiRenderer(gpu_mode, guest_config, guest_hwui_renderer)),
+  };
+  const AngleFeatureOverrides angle_features =
+      CF_EXPECT(GetNeededAngleFeatures(gpu_mode, graphics_availability));
+  graphics_settings.angle_feature_overrides_enabled =
+      angle_features.angle_feature_overrides_enabled;
+  graphics_settings.angle_feature_overrides_disabled =
+      angle_features.angle_feature_overrides_disabled;
+
+  if (graphics_settings.enable_gpu_vhost_user) {
+    const VhostUserGpuHostRendererFeatures gpu_vhost_user_features =
         CF_EXPECT(GetNeededVhostUserGpuHostRendererFeatures(
             gpu_mode, graphics_availability));
-    instance.set_enable_gpu_external_blob(
-        gpu_vhost_user_features.external_blob);
-    instance.set_enable_gpu_system_blob(gpu_vhost_user_features.system_blob);
-  } else {
-    instance.set_enable_gpu_external_blob(false);
-    instance.set_enable_gpu_system_blob(false);
+    graphics_settings.enable_gpu_external_blob =
+        gpu_vhost_user_features.external_blob;
+    graphics_settings.enable_gpu_system_blob =
+        gpu_vhost_user_features.system_blob;
   }
-
-  const GuestHwuiRenderer hwui_renderer = CF_EXPECT(
-      SelectGuestHwuiRenderer(gpu_mode, guest_config, guest_hwui_renderer_arg));
-  instance.set_guest_hwui_renderer(hwui_renderer);
-
-  const auto guest_renderer_preload = CF_EXPECT(SelectGuestRendererPreload(
-      gpu_mode, hwui_renderer, guest_renderer_preload_arg));
-  instance.set_guest_renderer_preload(guest_renderer_preload);
-
+  graphics_settings.guest_renderer_preload =
+      CF_EXPECT(SelectGuestRendererPreload(
+          gpu_mode, graphics_settings.hwui_renderer, guest_renderer_preload));
   if (IsGfxstreamMode(gpu_mode)) {
-    CF_EXPECT(SetGfxstreamFlags(gpu_mode, hwui_renderer,
-                                gpu_renderer_features_arg, guest_config,
-                                graphics_availability, instance));
+    graphics_settings.gfxstream_transport =
+        SelectGfxstreamTransport(guest_config);
+    graphics_settings.gfxstream_features_string =
+        CF_EXPECT(GetGfxstreamFeatures(
+            gpu_mode, graphics_settings.hwui_renderer, gpu_renderer_features,
+            guest_config, graphics_availability));
   }
 
-  instance.set_gpu_mode(gpu_mode);
-  instance.set_enable_gpu_vhost_user(enable_gpu_vhost_user);
+  return graphics_settings;
+}
 
 #endif
-
-  return gpu_mode;
-}
 
 }  // namespace cuttlefish
