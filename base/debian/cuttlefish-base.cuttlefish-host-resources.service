@@ -3,6 +3,7 @@ SourcePath=/etc/init.d/cuttlefish-host-resources
 Description=Set up initial cuttlefish environment
 After=network-online.target
 After=remote-fs.target
+Before=docker.service
 Wants=network-online.target
 
 [Service]
