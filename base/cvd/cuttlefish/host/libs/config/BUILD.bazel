@@ -25,6 +25,7 @@ cf_cc_library(
     hdrs = ["config_flag.h"],
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
+        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/files:directory_contents",
