@@ -16,8 +16,11 @@
 
 #include <libyuv.h>
 
+#include <algorithm>
 #include <memory>
+#include <string>
 #include <string_view>
+#include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -44,6 +47,7 @@
 #include "cuttlefish/host/frontend/webrtc/libdevice/streamer.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/video_sink.h"
 #include "cuttlefish/host/frontend/webrtc/screenshot_handler.h"
+#include "cuttlefish/host/frontend/webrtc/tuner_audio_source.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_command_channel.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_commands.pb.h"
 #include "cuttlefish/host/libs/audio_connector/server.h"
@@ -84,6 +88,10 @@ DEFINE_string(action_servers, "",
               "A comma-separated list of server_name:fd pairs, "
               "where each entry corresponds to one custom action server.");
 DEFINE_int32(audio_server_fd, -1, "An fd to listen on for audio frames");
+DEFINE_string(tuner_pcm_socket_path, "",
+              "Path to the virtual tuner daemon's PCM socket. Feeds the "
+              "capture stream marked virtual_tuner in the guest audio "
+              "config.");
 DEFINE_int32(camera_streamer_fd, -1, "An fd to send client camera frames");
 DEFINE_int32(sensors_fd, -1, "An fd to communicate with sensors_simulator.");
 DEFINE_string(client_dir, "webrtc", "Location of the client files");
@@ -256,6 +264,25 @@ cuttlefish::AudioStreamSettings ParseAudioStreamSettings(
   return settings;
 }
 
+void ValidateStreamIds(const std::vector<AudioStreamSettings>& streams,
+                       AudioStreamSettings::Direction direction) {
+  std::vector<int> ids;
+  for (const AudioStreamSettings& stream : streams) {
+    if (stream.direction == direction) {
+      ids.push_back(stream.id);
+    }
+  }
+  std::sort(ids.begin(), ids.end());
+  for (int i = 0; i < static_cast<int>(ids.size()); ++i) {
+    CHECK_EQ(ids[i], i)
+        << (direction == AudioStreamSettings::Direction::Capture ? "capture"
+                                                                 : "playback")
+        << " stream ids must be unique and contiguous from 0, but "
+        << (ids[i] < i ? "id " + std::to_string(ids[i]) + " is duplicated"
+                       : "id " + std::to_string(i) + " is missing");
+  }
+}
+
 std::shared_ptr<AudioHandler> SetupAudio(
     const cuttlefish::CuttlefishConfig::InstanceSpecific& instance,
     cuttlefish::webrtc_streaming::Streamer& streamer) {
@@ -291,6 +318,12 @@ std::shared_ptr<AudioHandler> SetupAudio(
       streams.push_back(ParseAudioStreamSettings(
           stream, AudioStreamSettings::Direction::Capture));
     }
+    if (pcm.has_virtual_tuner()) {
+      AudioStreamSettings tuner = ParseAudioStreamSettings(
+          pcm.virtual_tuner(), AudioStreamSettings::Direction::Capture);
+      tuner.virtual_tuner = true;
+      streams.push_back(tuner);
+    }
     if (pcm.has_mixer()) {
       const auto& mixer = pcm.mixer();
       if (mixer.has_channel_layout()) {
@@ -302,15 +335,39 @@ std::shared_ptr<AudioHandler> SetupAudio(
       }
     }
   }
+  ValidateStreamIds(streams, AudioStreamSettings::Direction::Capture);
+  ValidateStreamIds(streams, AudioStreamSettings::Direction::Playback);
 
   std::shared_ptr<webrtc_streaming::AudioSink> audio_sink =
       streamer.AddAudioStream("audio-0");
   auto audio_server = CreateAudioServer();
   auto audio_source = streamer.GetAudioSource();
 
-  return std::make_shared<AudioHandler>(std::move(audio_server),
-                                        std::move(audio_sink), audio_source,
-                                        streams, mixer_settings);
+  std::shared_ptr<AudioHandler> handler = std::make_shared<AudioHandler>(
+      std::move(audio_server), std::move(audio_sink), audio_source, streams,
+      mixer_settings);
+  auto tuner_stream = std::find_if(
+      streams.cbegin(), streams.cend(),
+      [](const AudioStreamSettings& s) { return s.virtual_tuner; });
+  if (tuner_stream == streams.cend()) {
+    if (!FLAGS_tuner_pcm_socket_path.empty()) {
+      LOG(WARNING) << "--tuner_pcm_socket_path is set, but the guest audio "
+                      "config has no virtual_tuner stream";
+    }
+  } else {
+    CHECK(!FLAGS_tuner_pcm_socket_path.empty())
+        << "The guest audio config has a virtual_tuner stream (capture id "
+        << static_cast<int>(tuner_stream->id)
+        << "), but --tuner_pcm_socket_path is not set";
+    handler->SetCaptureSource(
+        tuner_stream->id, std::make_shared<TunerAudioSource>(
+                              FLAGS_tuner_pcm_socket_path,
+                              GetChannelsCount(tuner_stream->channels_layout)));
+    LOG(INFO) << "Virtual tuner audio on capture stream "
+              << static_cast<int>(tuner_stream->id) << " from "
+              << FLAGS_tuner_pcm_socket_path;
+  }
+  return handler;
 }
 
 int CuttlefishMain() {

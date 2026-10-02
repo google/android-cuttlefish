@@ -42,6 +42,7 @@ struct AudioStreamSettings {
   uint8_t id = 0;
   AudioChannelsLayout channels_layout = AudioChannelsLayout::Stereo;
   Direction direction = Direction::Playback;
+  bool virtual_tuner = false;
 
   bool has_mute_control = false;
   std::optional<VolumeControl> master_volume_control;

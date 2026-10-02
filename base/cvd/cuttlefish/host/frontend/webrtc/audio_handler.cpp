@@ -131,6 +131,23 @@ virtio_snd_ctl_info GetVirtioCtlInfoMute(
 }
 
 virtio_snd_pcm_info GetVirtioSndPcmInfo(const AudioStreamSettings& settings) {
+  if (settings.virtual_tuner) {
+    // Only the format produced by the virtual tuner daemon is offered, so the
+    // guest can't open the stream with one that TunerAudioSource can't serve.
+    // TODO(b/558539923): Support more formats once they're needed.
+    return {
+        .hdr = {.hda_fn_nid = Le32(settings.id)},
+        .features = Le32(0),
+        .formats = Le64(((uint64_t)1)
+                        << (uint8_t)AudioStreamFormat::VIRTIO_SND_PCM_FMT_S16),
+        .rates = Le64(((uint64_t)1)
+                      << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_48000),
+        .direction =
+            static_cast<uint8_t>(ToVirtioDirection(settings.direction)),
+        .channels_min = GetChannelsCount(settings.channels_layout),
+        .channels_max = GetChannelsCount(settings.channels_layout),
+    };
+  }
   return {
       .hdr =
           {
@@ -447,6 +464,10 @@ void AudioHandler::StartStream(StreamControlCommand& cmd) {
   }
   auto& stream_desc = stream_descs_[cmd.stream_id()];
   stream_desc.active = true;
+  if (IsCapture(cmd.stream_id())) {
+    // Drop audio the source buffered while the stream was stopped.
+    CaptureSourceFor(cmd.stream_id()).Reset();
+  }
   cmd.Reply(AudioStatus::VIRTIO_SND_S_OK);
 }
 
@@ -639,11 +660,12 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
     holding_buffer.clear();
 
     bool muted = false;
+    webrtc_streaming::AudioSource& capture_source = CaptureSourceFor(stream_id);
     while (buffer.len() - bytes_read >= bytes_per_request) {
       // Skip the holding buffer in as many reads as possible to avoid the extra
       // copies
       const auto write_pos = rx_buffer + bytes_read;
-      auto res = audio_source_->GetMoreAudioData(
+      int res = capture_source.GetMoreAudioData(
           write_pos, bytes_per_sample, samples_per_channel,
           stream_desc.channels, stream_desc.sample_rate, muted);
       if (res < 0) {
@@ -665,7 +687,7 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
       // There is some buffer left to fill, but it's less than 10ms, read into
       // holding buffer to ensure the remainder is kept around for future reads
       holding_buffer.resize(bytes_per_request);
-      auto res = audio_source_->GetMoreAudioData(
+      int res = capture_source.GetMoreAudioData(
           holding_buffer.data(), bytes_per_sample, samples_per_channel,
           stream_desc.channels, stream_desc.sample_rate, muted);
       if (res < 0) {
@@ -723,6 +745,23 @@ bool AudioHandler::IsCapture(uint32_t stream_id) const {
   CHECK(stream_id < streams_.size()) << "Invalid stream id: " << stream_id;
   return streams_[stream_id].direction ==
          (uint8_t)AudioStreamDirection::VIRTIO_SND_D_INPUT;
+}
+
+void AudioHandler::SetCaptureSource(
+    uint32_t stream_id, std::shared_ptr<webrtc_streaming::AudioSource> source) {
+  // The capture thread reads capture_sources_ without a lock.
+  CHECK(!server_thread_.joinable())
+      << "SetCaptureSource must be called before Start()";
+  CHECK(IsCapture(stream_id))
+      << "Stream " << stream_id << " is not a capture stream";
+  CHECK(source != nullptr) << "Null capture source for stream " << stream_id;
+  capture_sources_[stream_id] = std::move(source);
+}
+
+webrtc_streaming::AudioSource& AudioHandler::CaptureSourceFor(
+    uint32_t stream_id) const {
+  auto it = capture_sources_.find(stream_id);
+  return it == capture_sources_.end() ? *audio_source_ : *it->second;
 }
 
 }  // namespace cuttlefish
