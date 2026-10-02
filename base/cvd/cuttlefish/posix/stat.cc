@@ -30,18 +30,19 @@
 
 namespace cuttlefish {
 
-Result<struct stat> Stat(const char* path) {
+Result<struct stat, int> Stat(const char* path) {
   struct stat ret;
   int success = TEMP_FAILURE_RETRY(stat(path, &ret));
-  CF_EXPECTF(success == 0, "Stat('{}') failed: ", path, StrError(errno));
+  CF_EXPECTVF(success == 0, errno, "Stat('{}') failed: ", path,
+              StrError(errno));
   return ret;
 }
 
-Result<struct stat> Stat(const std::string& path) {
+Result<struct stat, int> Stat(const std::string& path) {
   return CF_EXPECT(Stat(path.c_str()));
 }
 
-Result<struct stat> Stat(std::string_view path) {
+Result<struct stat, int> Stat(std::string_view path) {
   return CF_EXPECT(Stat(std::string(path)));
 }
 

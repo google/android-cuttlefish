@@ -207,7 +207,7 @@ Result<void> InitializeDataImage(
       VLOG(0) << instance.data_image() << " exists. Not creating it.";
       return {};
     case DataImageAction::kCreateBlankImage: {
-      if (Result<void> res = RemoveFile(instance.new_data_image());
+      if (Result<void, int> res = RemoveFile(instance.new_data_image());
           !res.has_value()) {
         LOG(ERROR) << res.error();
       }

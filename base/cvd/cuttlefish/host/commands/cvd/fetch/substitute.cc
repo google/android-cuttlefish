@@ -79,14 +79,15 @@ Result<void> Substitute(const std::string& target,
   constexpr int kMaxRetries = 10;
   for (int attempt = 0; attempt < kMaxRetries; ++attempt) {
     tmp_link_name = fmt::format("{}.tmp_{}_{}", full_link_name, getpid(), rd());
-    auto symlink_res = Symlink(target, tmp_link_name);
+    Result<void, int> symlink_res = Symlink(target, tmp_link_name);
     if (symlink_res.has_value()) {
       break;
     }
-    if (errno == EEXIST && attempt + 1 < kMaxRetries) {
+    if (*symlink_res.error() == EEXIST && attempt + 1 < kMaxRetries) {
       continue;
     }
-    return symlink_res;
+    CF_EXPECT(std::move(symlink_res));
+    return CF_ERR("unreachable");
   }
 
   if (rename(tmp_link_name.c_str(), full_link_name.c_str()) != 0) {

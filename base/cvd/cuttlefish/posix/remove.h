@@ -22,8 +22,8 @@
 
 namespace cuttlefish {
 
-Result<void> RemoveFile(const char* file);
-Result<void> RemoveFile(const std::string& file);
-Result<void> RemoveFile(std::string_view file);
+Result<void, int> RemoveFile(const char* file);
+Result<void, int> RemoveFile(const std::string& file);
+Result<void, int> RemoveFile(std::string_view file);
 
 }  // namespace cuttlefish

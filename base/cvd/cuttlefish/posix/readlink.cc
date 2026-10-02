@@ -29,11 +29,12 @@
 
 namespace cuttlefish {
 
-Result<std::string> ReadLink(const char* path) {
+Result<std::string, int> ReadLink(const char* path) {
   std::vector<char> buf(4096);
   while (true) {
     ssize_t size = readlink(path, buf.data(), buf.size());
-    CF_EXPECTF(size != -1, "readlink('{}') failed: {}", path, StrError(errno));
+    CF_EXPECTVF(size != -1, errno, "readlink('{}') failed: {}", path,
+                StrError(errno));
     if (static_cast<size_t>(size) < buf.size()) {
       return std::string(buf.data(), size);
     }
@@ -41,12 +42,12 @@ Result<std::string> ReadLink(const char* path) {
   }
 }
 
-Result<std::string> ReadLink(const std::string& path) {
-  return ReadLink(path.c_str());
+Result<std::string, int> ReadLink(const std::string& path) {
+  return CF_EXPECT(ReadLink(path.c_str()));
 }
 
-Result<std::string> ReadLink(std::string_view path) {
-  return ReadLink(std::string(path));
+Result<std::string, int> ReadLink(std::string_view path) {
+  return CF_EXPECT(ReadLink(std::string(path)));
 }
 
 }  // namespace cuttlefish
