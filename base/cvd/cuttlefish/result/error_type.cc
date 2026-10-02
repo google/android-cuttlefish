@@ -18,7 +18,6 @@
 #include <cstddef>
 #include <cstdlib>
 #include <optional>
-#include <ostream>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -259,7 +258,7 @@ struct fmt::formatter<cuttlefish::StackTraceEntry> {
  * innermost stack entry, and <abc> to all other stack entries.
  */
 template <>
-struct fmt::formatter<cuttlefish::StackTraceError> {
+struct fmt::formatter<cuttlefish::StackTraceError<void>> {
  public:
   constexpr auto parse(format_parse_context& ctx)
       -> format_parse_context::iterator {
@@ -286,8 +285,9 @@ struct fmt::formatter<cuttlefish::StackTraceError> {
     return it;
   }
 
-  format_context::iterator format(const cuttlefish::StackTraceError& error,
-                                  format_context& ctx) const {
+  format_context::iterator format(
+      const cuttlefish::StackTraceError<void>& error,
+      format_context& ctx) const {
     auto out = ctx.out();
     auto& stack = error.Stack();
     int begin = inner_to_outer_ ? 0 : stack.size() - 1;
@@ -306,7 +306,7 @@ struct fmt::formatter<cuttlefish::StackTraceError> {
 
  private:
   using StackTraceEntry = cuttlefish::StackTraceEntry;
-  using StackTraceError = cuttlefish::StackTraceError;
+  using StackTraceError = cuttlefish::StackTraceError<void>;
 
   bool inner_to_outer_ = false;
   bool has_inner_fmt_spec_ = false;
@@ -361,28 +361,18 @@ const std::string& StackTraceEntry::PrettyFunction() const {
 size_t StackTraceEntry::Line() const { return line_; }
 std::string StackTraceEntry::Message() const { return message_.str(); }
 
-StackTraceError& StackTraceError::PushEntry(StackTraceEntry entry) & {
-  stack_.emplace_back(std::move(entry));
-  return *this;
-}
-
-StackTraceError StackTraceError::PushEntry(StackTraceEntry entry) && {
-  return std::move(this->PushEntry(entry));
-}
-
-const std::vector<StackTraceEntry>& StackTraceError::Stack() const {
-  return stack_;
-}
-
-std::string StackTraceError::Message() const {
+template <>
+std::string StackTraceError<void>::Message() const {
   return fmt::format(fmt::runtime("{:m}"), *this);
 }
 
-std::string StackTraceError::Trace() const {
+template <>
+std::string StackTraceError<void>::Trace() const {
   return fmt::format(fmt::runtime("{:v}"), *this);
 }
 
-std::string StackTraceError::FormatForEnv(bool color) const {
+template <>
+std::string StackTraceError<void>::FormatForEnv(bool color) const {
   return fmt::format(fmt::runtime(ResultErrorFormat(color)), *this);
 }
 
@@ -395,10 +385,6 @@ std::string ResultErrorFormat(bool color) {
     fmt_str = "v";
   }
   return "{:" + fmt_str + "}";
-}
-
-std::ostream& operator<<(std::ostream& out, const StackTraceError& error) {
-  return out << error.FormatForEnv();
 }
 
 }  // namespace cuttlefish

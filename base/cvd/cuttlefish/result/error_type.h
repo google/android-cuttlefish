@@ -29,6 +29,7 @@
 
 namespace cuttlefish {
 
+template <typename E = void>
 class StackTraceError;
 
 class StackTraceEntry {
@@ -56,9 +57,9 @@ class StackTraceEntry {
     return std::move(*this);
   }
 
-  operator StackTraceError() &&;
+  operator StackTraceError<void>() &&;
   template <typename T>
-  operator tl::expected<T, StackTraceError>() &&;
+  operator tl::expected<T, StackTraceError<void>>() &&;
 
   bool HasMessage() const;
   const std::string& Expression() const;
@@ -82,11 +83,48 @@ std::string ResultErrorFormat(bool color);
 #define CF_STACK_TRACE_ENTRY(expression) \
   StackTraceEntry(__FILE__, __LINE__, __PRETTY_FUNCTION__, __func__, expression)
 
+template <typename E>
 class StackTraceError {
  public:
-  StackTraceError& PushEntry(StackTraceEntry entry) &;
-  StackTraceError PushEntry(StackTraceEntry entry) &&;
-  const std::vector<StackTraceEntry>& Stack() const;
+  friend class StackTraceError<void>;
+  using ValueOrBool = std::conditional_t<std::is_void_v<E>, bool, E>;
+
+  explicit StackTraceError()
+    requires std::is_void_v<E>
+  {}
+  explicit StackTraceError(StackTraceEntry first_entry)
+    requires std::is_void_v<E>
+  {
+    stack_.emplace_back(std::move(first_entry));
+  }
+  explicit StackTraceError(std::vector<StackTraceEntry> stack)
+    requires std::is_void_v<E>
+      : stack_(std::move(stack)) {}
+  explicit StackTraceError(ValueOrBool value)
+    requires(!std::is_void_v<E>)
+      : value_(std::move(value)) {}
+  explicit StackTraceError(ValueOrBool value,
+                           std::vector<StackTraceEntry> stack)
+    requires(!std::is_void_v<E>)
+      : value_(std::move(value)), stack_(std::move(stack)) {}
+  explicit StackTraceError(ValueOrBool value, StackTraceEntry first_entry)
+    requires(!std::is_void_v<E>)
+      : value_(std::move(value)) {
+    stack_.emplace_back(std::move(first_entry));
+  }
+  template <typename E2>
+  explicit StackTraceError(StackTraceError<E2> other)
+    requires std::is_void_v<E>
+      : stack_(std::move(other.stack_)) {}
+
+  StackTraceError<E>& PushEntry(StackTraceEntry entry) & {
+    stack_.emplace_back(std::move(entry));
+    return *this;
+  }
+  StackTraceError<E> PushEntry(StackTraceEntry entry) && {
+    return std::move(this->PushEntry(entry));
+  }
+  const std::vector<StackTraceEntry>& Stack() const { return stack_; }
 
   std::string Message() const;
 
@@ -99,19 +137,66 @@ class StackTraceError {
     return tl::unexpected(std::move(*this));
   }
 
+  ValueOrBool& Value()
+    requires(!std::is_void_v<E>)
+  {
+    return value_;
+  }
+
+  const ValueOrBool& Value() const
+    requires(!std::is_void_v<E>)
+  {
+    return value_;
+  }
+
+  ValueOrBool& operator*()
+    requires(!std::is_void_v<E>)
+  {
+    return value_;
+  }
+
+  const ValueOrBool& operator*() const
+    requires(!std::is_void_v<E>)
+  {
+    return value_;
+  }
+
+  template <typename E2>
+  StackTraceError<E2> WithValue(E2 value) & {
+    return StackTraceError<E2>(std::move(value), stack_);
+  }
+
+  template <typename E2>
+  StackTraceError<E2> WithValue(E2 value) && {
+    return StackTraceError<E2>(std::move(value), std::move(stack_));
+  }
+
+  operator StackTraceError<void>() & { return StackTraceError<void>(stack_); }
+
+  operator StackTraceError<void>() && {
+    return StackTraceError<void>(std::move(stack_));
+  }
+
  private:
+  ValueOrBool value_;
   std::vector<StackTraceEntry> stack_;
 };
 
-inline StackTraceEntry::operator StackTraceError() && {
+template <class E>
+StackTraceError(E, StackTraceEntry) -> StackTraceError<E>;
+
+inline StackTraceEntry::operator StackTraceError<void>() && {
   return StackTraceError().PushEntry(std::move(*this));
 }
 
 template <typename T>
-inline StackTraceEntry::operator tl::expected<T, StackTraceError>() && {
+inline StackTraceEntry::operator tl::expected<T, StackTraceError<void>>() && {
   return tl::unexpected(std::move(*this));
 }
 
-std::ostream& operator<<(std::ostream&, const StackTraceError&);
+template <typename E>
+std::ostream& operator<<(std::ostream& out, const StackTraceError<E>& error) {
+  return out << StackTraceError<void>(error).FormatForEnv();
+}
 
 }  // namespace cuttlefish

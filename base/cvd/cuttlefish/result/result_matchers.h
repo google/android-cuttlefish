@@ -54,11 +54,11 @@ MATCHER_P(IsOkAndValue, result_value_matcher, "") {
 MATCHER_P(IsErrorAndMessage, message_matcher, "") {
   auto get_error = [](const auto& res) -> auto { return res.error(); };
   return ExplainMatchResult(
-      ::testing::AllOf(
-          IsError(),
-          ::testing::ResultOf(
-              "error", get_error,
-              ::testing::Property(&StackTraceError::Message, message_matcher))),
+      ::testing::AllOf(IsError(),
+                       ::testing::ResultOf(
+                           "error", get_error,
+                           ::testing::Property(&StackTraceError<void>::Message,
+                                               message_matcher))),
       arg, result_listener);
 }
 
