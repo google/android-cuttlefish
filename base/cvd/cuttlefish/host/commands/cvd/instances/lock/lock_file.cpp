@@ -55,7 +55,7 @@ LockFile::LockFileReleaser::~LockFileReleaser() {
                << " is closed and unable to un-flock()";
     return;
   }
-  auto funlock_result = flocked_file_fd_->Flock(LOCK_UN | LOCK_NB);
+  Result<void, int> funlock_result = flocked_file_fd_->Flock(LOCK_UN | LOCK_NB);
   if (!funlock_result.has_value()) {
     LOG(ERROR) << "Unlock the \"" << lock_file_path_
                << "\" failed: " << funlock_result.error();
@@ -100,7 +100,7 @@ bool LockFile::operator<(const LockFile& other) const {
                            other.LockFilePath().size())) < 0);
 }
 
-Result<SharedFD> LockFileManager::OpenLockFile(const std::string& file_path) {
+Result<Fd> LockFileManager::OpenLockFile(const std::string& file_path) {
   auto parent_dir = android::base::Dirname(file_path);
   CF_EXPECT(EnsureDirectoryExists(parent_dir));
   Fd fd = CF_EXPECT(Fd::Open(file_path.data(), O_CREAT | O_RDWR, 0666));
@@ -117,19 +117,18 @@ Result<SharedFD> LockFileManager::OpenLockFile(const std::string& file_path) {
 
 Result<LockFile> LockFileManager::AcquireLock(
     const std::string& lock_file_path) {
-  auto fd = CF_EXPECT(OpenLockFile(lock_file_path));
+  SharedFD fd = CF_EXPECT(OpenLockFile(lock_file_path));
   CF_EXPECT(fd->Flock(LOCK_EX));
   return LockFile(fd, lock_file_path);
 }
 
 Result<std::optional<LockFile>> LockFileManager::TryAcquireLock(
     const std::string& lock_file_path) {
-  auto fd = CF_EXPECT(OpenLockFile(lock_file_path));
-  auto flock_result = fd->Flock(LOCK_EX | LOCK_NB);
-  if (flock_result.has_value()) {
+  SharedFD fd = CF_EXPECT(OpenLockFile(lock_file_path));
+  Result<void, int> flock_result = fd->Flock(LOCK_EX | LOCK_NB);
+  if (flock_result) {
     return std::optional<LockFile>(LockFile(fd, lock_file_path));
-    // TODO(schuffelen): Include the error code in the Result
-  } else if (!flock_result.has_value() && fd->GetErrno() == EWOULDBLOCK) {
+  } else if (!flock_result && *flock_result.error() == EWOULDBLOCK) {
     return {};
   }
   CF_EXPECT(std::move(flock_result));

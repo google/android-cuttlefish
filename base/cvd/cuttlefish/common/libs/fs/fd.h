@@ -181,7 +181,7 @@ class Fd : public ReaderWriterSeeker {
   int Fcntl(int command, int value);
   int Fsync();
 
-  Result<void> Flock(int operation);
+  Result<void, int> Flock(int operation);
 
   int GetErrno() const { return errno_; }
   int GetSockName(struct sockaddr* addr, socklen_t* addrlen);

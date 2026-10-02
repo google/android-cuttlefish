@@ -691,11 +691,12 @@ int Fd::Fsync() {
   return TEMP_FAILURE_RETRY(fsync(fd_));
 }
 
-Result<void> Fd::Flock(int operation) {
+Result<void, int> Fd::Flock(int operation) {
   LocalErrno record_errno(errno_);
 
-  CF_EXPECT(TEMP_FAILURE_RETRY(flock(fd_, operation)) == 0,
-            ::cuttlefish::StrError(errno));
+  CF_EXPECTVF(TEMP_FAILURE_RETRY(flock(fd_, operation)) >= 0, errno, "{}",
+              ::cuttlefish::StrError(errno));
+
   return {};
 }
 

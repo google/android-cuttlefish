@@ -19,6 +19,7 @@
 #include <optional>
 #include <string>
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/result/result.h"
 
@@ -86,7 +87,7 @@ class LockFileManager {
   Result<std::optional<LockFile>> TryAcquireLock(
       const std::string& lock_file_path);
 
-  static Result<SharedFD> OpenLockFile(const std::string& file_path);
+  static Result<Fd> OpenLockFile(const std::string& file_path);
 };
 
 }  // namespace cuttlefish
