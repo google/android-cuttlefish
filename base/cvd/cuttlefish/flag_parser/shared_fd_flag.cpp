@@ -22,6 +22,7 @@
 
 #include "absl/strings/numbers.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/result/result.h"
@@ -35,9 +36,7 @@ Flag SharedFDFlag(const std::string& name, SharedFD& out) {
         CF_EXPECTF(absl::SimpleAtoi(arg, &raw_fd),
                    "Failed to parse value \"{}\" for fd flag \"--{}\"", arg,
                    name);
-        out = SharedFD::Dup(raw_fd);
-        CF_EXPECTF(out->IsOpen(), "Unable to dup file descriptor '{}': {}",
-                   raw_fd, out->StrError());
+        out = CF_EXPECT(Fd::Dup(raw_fd));
         close(raw_fd);
         return {};
       });
