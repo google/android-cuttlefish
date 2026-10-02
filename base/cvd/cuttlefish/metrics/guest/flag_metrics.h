@@ -26,7 +26,7 @@
 namespace cuttlefish {
 
 struct FlagMetrics {
-  bool boot_image_specified;
+  // bool boot_image_specified;
   int cpus;
   bool daemon;
   DataImagePolicy data_policy;

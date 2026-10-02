@@ -39,13 +39,14 @@ namespace cuttlefish {
 Result<ParsedFlags> GetParsedFlags() {
   const SystemImageDirFlag system_image_dir =
       CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
-  const FetcherConfigs fetcher_configs =
-      FetcherConfigs::ReadFromDirectories(system_image_dir.AsVector());
-  AndroidBuilds android_builds =
-      CF_EXPECT(FindAndroidBuilds(system_image_dir, fetcher_configs));
+  // const FetcherConfigs fetcher_configs =
+  FetcherConfigs::ReadFromDirectories(system_image_dir.AsVector());
+  // AndroidBuilds android_builds =
+  //     CF_EXPECT(FindAndroidBuilds(system_image_dir, fetcher_configs));
 
   return ParsedFlags{
-      .boot_image = CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds)),
+      //.boot_image =
+      //CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds)),
       .cpus = CF_EXPECT(CpusFlag::FromGlobalGflags()),
       .daemon = CF_EXPECT(DaemonFlag::FromGlobalGflags()),
       .data_policy = CF_EXPECT(DataPolicyFlag::FromGlobalGflags()),

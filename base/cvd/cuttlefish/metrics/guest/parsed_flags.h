@@ -33,7 +33,7 @@
 namespace cuttlefish {
 
 struct ParsedFlags {
-  BootImageFlag boot_image;
+  // BootImageFlag boot_image;
   CpusFlag cpus;
   DaemonFlag daemon;
   DataPolicyFlag data_policy;
