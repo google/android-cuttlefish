@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <errno.h>
 #include <stdlib.h>
 
 #include <string>
@@ -115,7 +114,7 @@ Result<void> AddAdbBugreport(const CuttlefishConfig::InstanceSpecific& instance,
   // TODO(b/359657254) Create the `adb bugreport` asynchronously.
   std::string device_br_dir = TempDir() + "/cvd_dbrXXXXXX";
   CF_EXPECTF(mkdtemp(device_br_dir.data()) != nullptr, "mkdtemp failed: '{}'",
-             StrError(errno));
+             StrError());
   CF_EXPECT(CreateDeviceBugreport(instance, device_br_dir),
             "Failed to create device bugreport");
   auto names = CF_EXPECT(DirectoryContents(device_br_dir),

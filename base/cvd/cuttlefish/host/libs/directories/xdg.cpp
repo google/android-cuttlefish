@@ -166,10 +166,10 @@ Result<void> WriteCvdDataFile(std::string_view path, std::string contents) {
   std::string full_path_template = full_path + ".temp.XXXXXX";
   int file_raw_fd = mkstemp(full_path_template.data());
   CF_EXPECTF(file_raw_fd >= 0, "Failed to create '{}': '{}'",
-             full_path_template, StrError(errno));
+             full_path_template, StrError());
 
   SharedFD file_fd = SharedFD::Dup(file_raw_fd);
-  CF_EXPECT_EQ(close(file_raw_fd), 0, StrError(errno));
+  CF_EXPECT_EQ(close(file_raw_fd), 0, StrError());
 
   CF_EXPECT_EQ(WriteAll(file_fd, contents), contents.size(),
                file_fd->StrError());

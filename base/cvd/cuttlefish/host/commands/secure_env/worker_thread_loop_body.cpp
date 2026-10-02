@@ -61,7 +61,7 @@ Result<void> WorkerInnerLoop(std::function<bool()> process_callback,
     int num_fds = Select(&readable_fds, nullptr, nullptr, nullptr);
     if (num_fds < 0) {
       LOG(FATAL) << "Select() returned a negative value: " << num_fds
-                 << StrError(errno);
+                 << StrError();
     }
 
     if (readable_fds.IsSet(read_fd)) {
@@ -92,7 +92,7 @@ Result<void> WorkerStubLoop(SharedFD snapshot_socket) {
     int num_fds = Select(&readable_fds, nullptr, nullptr, nullptr);
     if (num_fds < 0) {
       LOG(FATAL) << "Select() returned a negative value: " << num_fds
-                 << StrError(errno);
+                 << StrError();
     }
 
     if (readable_fds.IsSet(snapshot_socket)) {

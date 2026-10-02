@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/run_cvd/boot_state_machine.h"
 
-#include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <stdint.h>
@@ -211,7 +210,7 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
   } else {
     // The child returns the write end of the pipe
     if (daemon(/*nochdir*/ 1, /*noclose*/ 1) != 0) {
-      LOG(ERROR) << "Failed to daemonize child process: " << StrError(errno);
+      LOG(ERROR) << "Failed to daemonize child process: " << StrError();
       std::exit(RunnerExitCodes::kDaemonizationError);
     }
     // Redirect standard I/O
@@ -272,7 +271,7 @@ Result<SharedFD> ProcessLeader(
   // in the foreground
   if (getsid(0) != getpid()) {
     CF_EXPECTF(setpgid(0, 0) == 0, "Failed to create new process group: {}",
-               StrError(errno));
+               StrError());
   }
   return {};
 }

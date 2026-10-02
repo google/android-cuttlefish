@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 
-#include <errno.h>
 #include <signal.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -63,8 +62,7 @@ void RunnerLoop(const int read_end) {
     auto bytes_read =
         TEMP_FAILURE_RETRY(recv(read_end, &signal, sizeof(signal), 0));
     if (bytes_read < 0) {
-      LOG(ERROR) << "Failed to receive signal from handler: "
-                 << StrError(errno);
+      LOG(ERROR) << "Failed to receive signal from handler: " << StrError();
       // This is unrecoverable, so stop running (this is unlikely)
       break;
     }

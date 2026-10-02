@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor.h"
 
-#include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -156,7 +155,7 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd,
     // Block until file changes occur. If any watch failed or is missing, use
     // a fallback timeout to awake and retry.
     int poll_res = SharedFD::Poll(poll_fds, missing_source ? 200 : -1);
-    CF_EXPECT_GE(poll_res, 0, StrError(errno));
+    CF_EXPECT_GE(poll_res, 0, StrError());
 
     if (stop_eventfd->IsOpen() && (poll_fds[1].revents & POLLIN)) {
       // Stop requested via eventfd

@@ -23,4 +23,7 @@ namespace cuttlefish {
 // exact strings as strerror(3).
 std::string StrError(int error_num);
 
+// The same as `StrError(errno)`.
+std::string StrError();
+
 }  // namespace cuttlefish

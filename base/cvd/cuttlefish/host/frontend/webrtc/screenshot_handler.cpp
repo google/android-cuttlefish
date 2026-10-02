@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/frontend/webrtc/screenshot_handler.h"
 
-#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <strings.h>
@@ -49,7 +48,7 @@ Result<void> PngScreenshot(std::shared_ptr<PlanarVideoFrameBuffer> frame,
   CF_EXPECT(convert_res == 0, "Failed to convert I420 frame to RGB");
   FILE* outfile = fopen(screenshot_path.c_str(), "wb");
   CF_EXPECTF(outfile != NULL, "opening {} failed: {}", screenshot_path,
-             StrError(errno));
+             StrError());
   absl::Cleanup close_file = [outfile]() { fclose(outfile); };
 
   png_structp png_ptr =
