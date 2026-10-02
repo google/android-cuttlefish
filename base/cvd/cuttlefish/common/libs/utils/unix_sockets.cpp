@@ -27,6 +27,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/result/result.h"
 
@@ -153,9 +154,7 @@ Result<std::vector<SharedFD>> ControlMessage::AsSharedFDs() const {
     // Use memcpy as CMSG_DATA may be unaligned
     int fd = -1;
     memcpy(&fd, CMSG_DATA(Raw()) + (i * sizeof(int)), sizeof(fd));
-    SharedFD shared_fd = SharedFD::Dup(fd);
-    CF_EXPECT(shared_fd->IsOpen(), "Could not dup FD " << fd);
-    shared_fds.push_back(shared_fd);
+    shared_fds.push_back(CF_EXPECT(Fd::Dup(fd)));
   }
   return shared_fds;
 }

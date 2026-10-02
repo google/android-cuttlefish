@@ -17,7 +17,8 @@ cf_cc_binary(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",

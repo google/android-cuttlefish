@@ -45,6 +45,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -198,8 +199,8 @@ Command Command::RedirectStdIO(Command::StdIoChannel channel,
 }
 Command& Command::RedirectStdIO(Command::StdIoChannel subprocess_channel,
                                 Command::StdIoChannel parent_channel) & {
-  return RedirectStdIO(subprocess_channel,
-                       SharedFD::Dup(static_cast<int>(parent_channel)));
+  Fd fd = Fd::Dup(static_cast<int>(parent_channel)).value_or(Fd());
+  return RedirectStdIO(subprocess_channel, std::move(fd));
 }
 Command Command::RedirectStdIO(Command::StdIoChannel subprocess_channel,
                                Command::StdIoChannel parent_channel) && {
