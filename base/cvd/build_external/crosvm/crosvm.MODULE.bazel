@@ -57,6 +57,7 @@ crosvm_bin.annotation(
 
 crosvm_bin.annotation(
     crate = "rutabaga_gfx",
+    gen_build_script = "off",
     crate_features = [
         "gbm",
         "virgl_renderer",
@@ -72,16 +73,8 @@ crosvm_bin.annotation(
         "-Clink-arg=-Wl,-rpath,$$ORIGIN",
         "-Clink-arg=-Wl,-rpath,$$ORIGIN/../lib64",
     ],
-    build_script_env = {
-        # Disable the build script from trying to automatically locate
-        # Gfxstream, gbm, and virglrenderer as the deps are directly provided above.
-        "CARGO_FEATURE_GBM_STUB": "bloh",
-        "CARGO_FEATURE_GFXSTREAM_STUB": "blah",
-        "CARGO_FEATURE_VIRGL_RENDERER_STUB": "bleh",
-    },
     patch_args = ["-p1"],
     patches = [
-        "@//build_external/crosvm:PATCH.rutabaga_gfx_build_rs.patch",
         "@//build_external/crosvm:PATCH.rutabaga_gfx_rendernode.patch",
         "@//build_external/crosvm:PATCH.rutabaga_gfx_mod_rs.patch",
         "@//build_external/crosvm:PATCH.rutabaga_gfx_minigbm_rs.patch",
