@@ -30,18 +30,19 @@
 
 namespace cuttlefish {
 
-Result<void> RemoveFile(const char* file) {
+Result<void, int> RemoveFile(const char* file) {
   VLOG(0) << "Removing file " << file;
-  CF_EXPECTF(remove(file) == 0, "remove('{}) error: {}", file, StrError(errno));
+  CF_EXPECTVF(remove(file) == 0, errno, "remove('{}') error: {}", file,
+              StrError(errno));
   return {};
 }
 
-Result<void> RemoveFile(const std::string& file) {
+Result<void, int> RemoveFile(const std::string& file) {
   CF_EXPECT(RemoveFile(file.c_str()));
   return {};
 }
 
-Result<void> RemoveFile(std::string_view file) {
+Result<void, int> RemoveFile(std::string_view file) {
   CF_EXPECT(RemoveFile(std::string(file)));
   return {};
 }

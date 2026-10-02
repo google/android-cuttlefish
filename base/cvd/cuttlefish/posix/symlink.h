@@ -16,12 +16,16 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 // Wrapper for symlink(2).
-Result<void> Symlink(const std::string& target, const std::string& linkpath);
+Result<void, int> Symlink(const char* target, const char* linkpath);
+Result<void, int> Symlink(const std::string& target,
+                          const std::string& linkpath);
+Result<void, int> Symlink(std::string_view target, std::string_view linkpath);
 
 }  // namespace cuttlefish

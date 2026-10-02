@@ -24,8 +24,8 @@
 
 namespace cuttlefish {
 
-Result<struct stat> Stat(const char*);
-Result<struct stat> Stat(const std::string&);
-Result<struct stat> Stat(std::string_view);
+Result<struct stat, int> Stat(const char*);
+Result<struct stat, int> Stat(const std::string&);
+Result<struct stat, int> Stat(std::string_view);
 
 }  // namespace cuttlefish

@@ -490,7 +490,8 @@ Result<CasIdentifier> CasDownloader::GetCasIdentifier(
     const std::string digests_filename = "cas_digests.json";
     std::string digests_filepath = CF_EXPECT(digests_fetcher(digests_filename));
     Json::Value cas_digests = CF_EXPECT(ParseJson(ReadFile(digests_filepath)));
-    if (Result<void> res = RemoveFile(digests_filepath); !res.has_value()) {
+    if (Result<void, int> res = RemoveFile(digests_filepath);
+        !res.has_value()) {
       LOG(ERROR) << res.error();
     }
     std::vector<std::string> mandatory_keys{

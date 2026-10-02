@@ -23,6 +23,7 @@
 
 #include <array>
 #include <string>
+#include <string_view>
 
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/expect.h"
@@ -30,15 +31,23 @@
 
 namespace cuttlefish {
 
-Result<std::string> RealPath(const std::string& path) {
+Result<std::string, int> RealPath(const char* path) {
   std::array<char, PATH_MAX> buffer{};
   char* res;
   do {
-    res = realpath(path.c_str(), buffer.data());
+    res = realpath(path, buffer.data());
   } while (res == nullptr && errno == EINTR);
-  CF_EXPECTF(res != nullptr, "Could not get real path for path \"{}\": {}",
-             path, StrError(errno));
+  CF_EXPECTVF(res != nullptr, errno, "realpath('{}') failed: {}", path,
+              StrError(errno));
   return std::string(buffer.data());
+}
+
+Result<std::string, int> RealPath(const std::string& path) {
+  return CF_EXPECT(RealPath(path.c_str()));
+}
+
+Result<std::string, int> RealPath(std::string_view path) {
+  return CF_EXPECT(RealPath(std::string(path)));
 }
 
 }  // namespace cuttlefish

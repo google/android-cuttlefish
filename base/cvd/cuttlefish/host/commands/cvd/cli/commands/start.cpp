@@ -468,9 +468,9 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
     const LocalInstance& instance = *group.Instances().begin();
     const std::string assemble_log =
         absl::StrCat(instance.AssemblyDirectory(), "/", kLogNameAssembleCvd);
-    Result<void> unused = RemoveFile(assemble_log);
+    (void)RemoveFile(assemble_log);
     for (const auto& log : CF_EXPECT(instance.LogsFilenames())) {
-      Result<void> unused = RemoveFile(log);
+      (void)RemoveFile(log);
     }
     monitor_thread = std::thread([&group, stop_eventfd, &monitor_res]() {
       const LocalInstance& first_instance = *group.Instances().begin();

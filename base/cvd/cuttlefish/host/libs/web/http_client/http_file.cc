@@ -51,7 +51,7 @@ Result<HttpResponse<std::string>> HttpGetToFile(
     // "beginning of download" case, which can come multiple times.
     if (data == nullptr) {
       if (!temp_path.empty()) {
-        if (Result<void> res = RemoveFile(temp_path); !res.has_value()) {
+        if (Result<void, int> res = RemoveFile(temp_path); !res.has_value()) {
           LOG(ERROR) << res.error();
         }
       }
