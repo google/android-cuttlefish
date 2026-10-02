@@ -102,10 +102,11 @@ std::vector<std::string> CreateCasFlags(std::string downloader_path,
     return supported_flags.find(flag) != supported_flags.end();
   };
 
-  std::set<std::string> auto_populated_flags = {
-      kFlagCasInstance, kFlagCasAddr,      kFlagDigest,
-      kFlagDir,         kFlagDisableCache, kFlagServiceAccountJson,
-      kFlagUseAdc};
+  // service-account-json is accepted in the config and handled by
+  // CasDownloader::CreateImpl, which removes it before calling this function.
+  std::set<std::string> auto_populated_flags = {kFlagCasInstance,  kFlagCasAddr,
+                                                kFlagDigest,       kFlagDir,
+                                                kFlagDisableCache, kFlagUseAdc};
   auto is_autopopulated = [&auto_populated_flags](std::string flag) {
     return auto_populated_flags.find(flag) != auto_populated_flags.end();
   };
@@ -311,6 +312,7 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::CreateImpl(
   std::string downloader_path = cas_downloader_flags.downloader_path.value();
   bool prefer_uncompressed = cas_downloader_flags.prefer_uncompressed.value();
   std::vector<std::string> cas_flags;
+  std::string config_service_account_filepath;
 
   Json::Value config_flags;
   bool has_config_file =
@@ -344,6 +346,15 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::CreateImpl(
         prefer_uncompressed = config["prefer-uncompressed"].asBool();
       }
     }
+    // service-account-json is a casdownloader flag, but it is mutually
+    // exclusive with -use-adc and with the service account from the command
+    // line. Take it out of the pass-through flags so that the credential
+    // selection below emits exactly one credential flag.
+    if (config_flags.isMember(kFlagServiceAccountJson)) {
+      config_service_account_filepath =
+          config_flags[kFlagServiceAccountJson].asString();
+      config_flags.removeMember(kFlagServiceAccountJson);
+    }
 
     // For each supported flag key we merge CLI values (if provided) on top of
     // the config file values so CLI wins. Use the same keys as
@@ -371,11 +382,36 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::CreateImpl(
   // above)
   cas_flags = CreateCasFlags(downloader_path, config_flags);
 
-  if (!service_account_filepath.empty() &&
-      FileExists(service_account_filepath)) {
+  // Credential precedence: service-account-json from the config file, which is
+  // specific to CAS; then the Android Build API service account
+  // (--service_account_filepath), which is reused for CAS when present; then
+  // application default credentials. Exactly one credential flag is passed to
+  // casdownloader.
+  if (!config_service_account_filepath.empty()) {
+    // Fail rather than fall back to other credentials: a configured key that
+    // is missing is a deployment error that should be visible.
+    CF_EXPECTF(FileExists(config_service_account_filepath),
+               "CAS service account key from config file not found: '{}'",
+               config_service_account_filepath);
+    VLOG(0) << "CAS credentials: service account from config file: "
+            << config_service_account_filepath;
     cas_flags.push_back("-" + std::string(kFlagServiceAccountJson) + "=" +
-                        std::string(service_account_filepath));
+                        config_service_account_filepath);
+  } else if (!service_account_filepath.empty() &&
+             FileExists(service_account_filepath)) {
+    // The Build API service account may not have CAS access, in which case
+    // CAS downloads fail and fall back to Android Build. Make the implicit
+    // reuse visible so the CAS credential can be configured explicitly.
+    LOG(WARNING) << "CAS credentials: reusing the Android Build API service "
+                    "account '"
+                 << service_account_filepath
+                 << "', which may not have CAS access. Set "
+                    "flags.service-account-json in the CAS config to use a "
+                    "specific key.";
+    cas_flags.push_back("-" + std::string(kFlagServiceAccountJson) + "=" +
+                        service_account_filepath);
   } else {
+    VLOG(0) << "CAS credentials: application default credentials";
     cas_flags.push_back("-" + std::string(kFlagUseAdc));
   }
 

@@ -22,9 +22,9 @@
 #include "absl/log/check.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/io/string.h"
+#include "cuttlefish/io/write_exact.h"
 
 namespace cuttlefish {
 
@@ -40,16 +40,15 @@ Result<cvd::PersistentData> DataViewer::LoadData(SharedFD fd) const {
   const std::string str =
       CF_EXPECT(ReadToString(*fd), "Failed to read from backing file");
   cvd::PersistentData data;
-  data.ParseFromString(str);
+  CF_EXPECT(data.ParseFromString(str));
   return std::move(data);
 }
 
-Result<void> DataViewer::StoreData(SharedFD fd, cvd::PersistentData data) {
+Result<void> DataViewer::StoreData(SharedFD fd,
+                                   const cvd::PersistentData& data) {
   std::string str;
   CF_EXPECT(data.SerializeToString(&str), "Failed to serialize data");
-  auto write_size = WriteAll(fd, str);
-  CF_EXPECTF(write_size == (ssize_t)str.size(),
-             "Failed to write to backing file: {}", fd->StrError());
+  CF_EXPECT(WriteExact(*fd, str), "Failed to write to backing file");
   return {};
 }
 

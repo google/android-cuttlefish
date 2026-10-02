@@ -58,6 +58,7 @@
 #include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
+#include "cuttlefish/io/writer.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/execute.h"
@@ -74,9 +75,8 @@ constexpr char kConcatenatedVendorRamdisk[] = "concatenated_vendor_ramdisk";
 
 Result<void> RunMkBootFs(const std::string& input_dir,
                          const std::string& output) {
-  SharedFD output_fd = SharedFD::Open(output, O_CREAT | O_RDWR | O_TRUNC, 0644);
-  CF_EXPECTF(output_fd->IsOpen(), "Failed to open '{}': '{}'", output,
-             output_fd->StrError());
+  SharedFD output_fd =
+      CF_EXPECT(Fd::Open(output, O_CREAT | O_RDWR | O_TRUNC, 0644));
 
   int success = Command(HostBinaryPath("mkbootfs"))
                     .AddParameter(input_dir)
@@ -154,9 +154,9 @@ Result<void> RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
 
 bool IsCpioArchive(const std::string& path) {
   static constexpr std::string_view CPIO_MAGIC = "070701";
-  auto fd = SharedFD::Open(path, O_RDONLY);
+  Fd fd = Fd::Open(path, O_RDONLY).value_or(Fd());
   std::array<char, CPIO_MAGIC.size()> buf{};
-  if (fd->Read(buf.data(), buf.size()) != CPIO_MAGIC.size()) {
+  if (fd.Read(buf.data(), buf.size()) != CPIO_MAGIC.size()) {
     return false;
   }
   return memcmp(buf.data(), CPIO_MAGIC.data(), CPIO_MAGIC.size()) == 0;
@@ -190,7 +190,8 @@ Result<void> UnpackRamdisk(const std::string& original_ramdisk_path,
 
   CF_EXPECT(EnsureDirectoryExists(ramdisk_stage_dir));
 
-  SharedFD input = SharedFD::Open(original_ramdisk_path + kCpioExt, O_RDONLY);
+  SharedFD input =
+      Fd::Open(original_ramdisk_path + kCpioExt, O_RDONLY).value_or(Fd());
   Command(CpioBinary())
       .AddParameter("-idu")
       .SetWorkingDirectory(ramdisk_stage_dir)

@@ -25,21 +25,20 @@
 #include <vector>
 
 #include "fmt/base.h"
-#include "fmt/format.h"
 #include "fmt/ostream.h"
-#include "json/json.h"
+#include "json/value.h"
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 namespace {
-Result<Json::Value> BuildPregistrationMsg(const LocalInstanceGroup& group) {
+Result<Json::Value> BuildPreRegistrationMsg(const LocalInstanceGroup& group) {
   Json::Value msg;
   msg["message_type"] = "pre-register";
   msg["group_name"] = group.GroupName();
@@ -54,13 +53,6 @@ Result<Json::Value> BuildPregistrationMsg(const LocalInstanceGroup& group) {
   }
   msg["devices"] = devices;
   return msg;
-}
-
-Result<void> SendMsg(SharedFD fd, const Json::Value& msg) {
-  std::string buf = msg.toStyledString();
-  CF_EXPECT_EQ(WriteAll(fd, buf), (ssize_t)buf.size(),
-               "Failed to send message: " << fd->StrError());
-  return {};
 }
 
 Result<Json::Value> RecvMsg(SharedFD fd) {
@@ -85,7 +77,8 @@ Result<std::unique_ptr<OperatorControlConn>> OperatorControlConn::Create(
  * Pre-registers an instance group with the operator
  */
 Result<void> OperatorControlConn::Preregister(const LocalInstanceGroup& group) {
-  CF_EXPECT(SendMsg(conn_, CF_EXPECT(BuildPregistrationMsg(group))),
+  Json::Value pre_registration_msg = CF_EXPECT(BuildPreRegistrationMsg(group));
+  CF_EXPECT(WriteExact(*conn_, pre_registration_msg.toStyledString()),
             "Failed to send pre-registration message to operator");
   Json::Value response =
       CF_EXPECT(RecvMsg(conn_), "Error receiving pre-registration response");

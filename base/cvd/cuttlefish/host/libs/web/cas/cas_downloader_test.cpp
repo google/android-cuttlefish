@@ -311,6 +311,64 @@ TEST_F(CasDownloaderTests, UsesServiceAccountIfAvailable) {
   EXPECT_THAT(output, HasSubstr("-service-account-json"));
 }
 
+TEST_F(CasDownloaderTests, UsesServiceAccountFromConfig) {
+  downloader_path_ =
+      FakeDownloaderForArtifactAndFlags(target_dir_ + "/artifact_name");
+  const std::string config_service_account_filepath = CreateTempFileWithText(
+      std::string(temp_dir_.path) + "/config_sa.json", "service_account");
+  std::unique_ptr<CasDownloader> cas =
+      CasUsingConfig("service-account-json=" + config_service_account_filepath);
+  ASSERT_THAT(cas, Not(Eq(nullptr)));
+
+  Result<void> download = cas->DownloadFile(
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
+      [this](std::string filename) -> Result<std::string> {
+        return CasDigestsFile(filename, "_chunked_artifact_name=digest");
+      });
+
+  EXPECT_THAT(download, IsOk());
+  std::string output = ReadFile(cas_output_filepath_);
+  EXPECT_THAT(output, Not(HasSubstr("-use-adc")));
+  EXPECT_THAT(output, HasSubstr("-service-account-json=" +
+                                config_service_account_filepath));
+}
+
+TEST_F(CasDownloaderTests, ConfigServiceAccountOverridesCommandLine) {
+  downloader_path_ =
+      FakeDownloaderForArtifactAndFlags(target_dir_ + "/artifact_name");
+  const std::string config_service_account_filepath = CreateTempFileWithText(
+      std::string(temp_dir_.path) + "/config_sa.json", "service_account");
+  service_account_filepath_ = CreateTempFileWithText(
+      std::string(temp_dir_.path) + "/cli_sa.json", "service_account");
+  std::unique_ptr<CasDownloader> cas = CasWithServiceAccountUsingConfig(
+      service_account_filepath_, false,
+      "service-account-json=" + config_service_account_filepath);
+  ASSERT_THAT(cas, Not(Eq(nullptr)));
+
+  Result<void> download = cas->DownloadFile(
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
+      [this](std::string filename) -> Result<std::string> {
+        return CasDigestsFile(filename, "_chunked_artifact_name=digest");
+      });
+
+  EXPECT_THAT(download, IsOk());
+  std::string output = ReadFile(cas_output_filepath_);
+  EXPECT_THAT(output, Not(HasSubstr("-use-adc")));
+  EXPECT_THAT(output, HasSubstr("-service-account-json=" +
+                                config_service_account_filepath));
+  EXPECT_THAT(output, Not(HasSubstr(service_account_filepath_)));
+}
+
+TEST_F(CasDownloaderTests, FailsToCreateWithMissingConfigServiceAccount) {
+  downloader_path_ =
+      FakeDownloaderForArtifactAndFlags(target_dir_ + "/artifact_name");
+  std::unique_ptr<CasDownloader> cas =
+      CasUsingConfig("service-account-json=" + std::string(temp_dir_.path) +
+                     "/does_not_exist.json");
+
+  EXPECT_THAT(cas, Eq(nullptr));
+}
+
 TEST_F(CasDownloaderTests, IgnoresUnsupportedFlags) {
   downloader_path_ =
       FakeDownloaderForArtifactAndFlags(target_dir_ + "/artifact_name");

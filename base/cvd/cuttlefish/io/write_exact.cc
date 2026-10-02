@@ -22,7 +22,7 @@
 #include <string_view>
 #include <vector>
 
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/writer.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 

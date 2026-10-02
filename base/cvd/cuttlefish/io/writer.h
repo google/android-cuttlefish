@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2026 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,10 +15,19 @@
 
 #pragma once
 
-#include "cuttlefish/host/libs/config/fetcher_config.h"
+#include <stdint.h>
+
+#include "cuttlefish/io/visitable.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-FetcherConfig AvailableFilesReport();
+class Writer : public virtual IoVisitable {
+ public:
+  virtual ~Writer() = default;
 
-}
+  // Has the semantics of write(2)
+  virtual Result<uint64_t> Write(const void* buf, uint64_t count) = 0;
+};
+
+}  // namespace cuttlefish

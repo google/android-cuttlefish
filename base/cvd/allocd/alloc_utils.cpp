@@ -33,7 +33,7 @@
 #include "absl/strings/str_format.h"
 
 #include "allocd/alloc_driver.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -178,18 +178,16 @@ Result<void> ValidateTapInterfaceIsUsable(const std::string& interface_name) {
 
   constexpr auto kTunTapDev = "/dev/net/tun";
 
-  auto tap_fd = SharedFD::Open(kTunTapDev, O_RDWR | O_NONBLOCK);
-  CF_EXPECTF(tap_fd->IsOpen(), "Unable to open tun device: {}",
-             tap_fd->StrError());
+  Fd tap_fd = CF_EXPECT(Fd::Open(kTunTapDev, O_RDWR | O_NONBLOCK));
 
   struct ifreq ifr;
   memset(&ifr, 0, sizeof(ifr));
   ifr.ifr_flags = IFF_TAP | IFF_NO_PI | IFF_VNET_HDR;
   strncpy(ifr.ifr_name, interface_name.c_str(), IFNAMSIZ);
 
-  int err = tap_fd->Ioctl(TUNSETIFF, &ifr);
+  int err = tap_fd.Ioctl(TUNSETIFF, &ifr);
   CF_EXPECTF(err == 0, "Unable to connect to tap interface: {}",
-             tap_fd->StrError());
+             tap_fd.StrError());
 
   return {};
 }

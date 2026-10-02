@@ -6,8 +6,9 @@ on:
       - '.github/workflows/gigabyte-ampere-cuttlefish-installer.yaml'
       - 'gigabyte-ampere-cuttlefish-installer/**'
   push:
-    branchs:
-      - '**'
+    paths:
+      - '.github/workflows/gigabyte-ampere-cuttlefish-installer.yaml'
+      - 'gigabyte-ampere-cuttlefish-installer/**'
 
 permissions:
   contents: read

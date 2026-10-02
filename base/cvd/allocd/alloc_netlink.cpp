@@ -42,7 +42,7 @@
 #include "allocd/alloc_driver.h"
 #include "allocd/net/netlink_client.h"
 #include "allocd/net/netlink_request.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
 
@@ -72,27 +72,26 @@ int Prefix(std::string_view textual_netmask) {
 }  // namespace
 
 Result<void> AddTapIface(std::string_view name) {
-  SharedFD tunfd = SharedFD::Open("/dev/net/tun", O_RDWR | O_CLOEXEC);
-  CF_EXPECT(tunfd->IsOpen(), "AddTapIface: open: " << tunfd->StrError());
+  Fd tunfd = CF_EXPECT(Fd::Open("/dev/net/tun", O_RDWR | O_CLOEXEC),
+                       "AddTapIface: open");
 
   struct ifreq ifr;
   strncpy(ifr.ifr_name, std::string(name).c_str(), IFNAMSIZ);
   ifr.ifr_name[IFNAMSIZ - 1] = '\0';
   ifr.ifr_flags = IFF_TAP | IFF_VNET_HDR;
   ifr.ifr_flags |= IFF_TUN_EXCL;
-  int r = tunfd->Ioctl(TUNSETIFF, (void*)&ifr);
-  CF_EXPECT(r != -1, "AddTapIface: TUNSETIFF: " << tunfd->StrError());
+  int r = tunfd.Ioctl(TUNSETIFF, (void*)&ifr);
+  CF_EXPECT(r != -1, "AddTapIface: TUNSETIFF: " << tunfd.StrError());
 
   struct group* g = getgrnam(kCvdNetworkGroupName);
-  CF_EXPECT(g != NULL, "AddTapIface: getgrnam: " << tunfd->StrError());
+  CF_EXPECT(g != NULL, "AddTapIface: getgrnam: " << tunfd.StrError());
 
-  r = tunfd->Ioctl(TUNSETGROUP, (void*)(intptr_t)g->gr_gid);
-  CF_EXPECT(r != -1, "AddTapIface: TUNSETGROUP: " << tunfd->StrError());
+  r = tunfd.Ioctl(TUNSETGROUP, (void*)(intptr_t)g->gr_gid);
+  CF_EXPECT(r != -1, "AddTapIface: TUNSETGROUP: " << tunfd.StrError());
 
-  r = tunfd->Ioctl(TUNSETPERSIST, (void*)1);
-  CF_EXPECT(r != -1, "AddTapIface: TUNSETPERSIST: " << tunfd->StrError());
+  r = tunfd.Ioctl(TUNSETPERSIST, (void*)1);
+  CF_EXPECT(r != -1, "AddTapIface: TUNSETPERSIST: " << tunfd.StrError());
 
-  tunfd->Close();
   return {};
 }
 

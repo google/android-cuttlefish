@@ -24,8 +24,12 @@ This skill fully orchestrates the lifecycle of Cuttlefish instances and their gr
 
 ## Setup & Installation Guidance
 
-* **Missing `podcvd` Command**: If `podcvd` is not installed (e.g., `which podcvd` fails), install the package using `sudo apt install cuttlefish-podcvd -y`.
-* **Host Initialization Required**: If executing `podcvd` fails due to an unconfigured host (e.g., explicit prompts to run `podcvd-setup` or missing device permissions such as `/dev/kvm`), execute `podcvd-setup` to initialize the host.
+If `podcvd` is not installed (e.g., `which podcvd` fails) or executing `podcvd` fails due to an unconfigured host (e.g., explicit prompts to run `podcvd-setup` or missing device permissions such as `/dev/kvm`), follow the rule below:
+
+### Execution Rule (Mandatory)
+* You **MUST** check if the reference file `references/installation.md` exists within this skill directory.
+* **If `references/installation.md` exists**: You **MUST** read its contents using `view_file` and strictly follow the environment-specific instructions provided inside to install `cuttlefish-podcvd`, initialize the host, or guide the user through the required setup steps.
+* **If `references/installation.md` does NOT exist**: Do not execute installation or setup commands directly. Instead, guide the user to manually run `sudo apt install -y cuttlefish-podcvd` (if `podcvd` is not installed) or `podcvd-setup` (if the host is unconfigured) in their terminal, and finish.
 
 ## Mandatory Environment Configuration (Client ID Tracking)
 

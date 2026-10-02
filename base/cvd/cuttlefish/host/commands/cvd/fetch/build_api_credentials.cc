@@ -28,6 +28,7 @@
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
+#include "cuttlefish/host/commands/cvd/fetch/luci_credential_helper_source.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
@@ -74,8 +75,12 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
                    << oauth_filepath << "\":" << attempt_load.error();
       }
     } else {
-      VLOG(0) << "\"" << oauth_filepath
-              << "\" is missing, running without credentials";
+      result = LuciCredentialHelperSource::Make(scope);
+      if (!result) {
+        VLOG(0) << "\"" << oauth_filepath
+                << "\" is missing and no LUCI compatible credential helper "
+                   "binary found, running without credentials";
+      }
     }
   } else if (!FileExists(credential_source)) {
     // If the parameter doesn't point to an existing file it must be the

@@ -35,10 +35,24 @@ gfxstream::expected<Ok, vk::Result> PopulateVulkanAvailabilityImpl(
 
     const auto props = physicalDevice.getProperties();
     outPhysicalDevice->set_name(std::string(props.deviceName));
-    outPhysicalDevice->set_type(
-        props.deviceType == vk::PhysicalDeviceType::eDiscreteGpu
-            ? ::gfxstream::proto::VulkanPhysicalDevice::TYPE_DISCRETE_GPU
-            : ::gfxstream::proto::VulkanPhysicalDevice::TYPE_OTHER);
+    switch (props.deviceType) {
+      case vk::PhysicalDeviceType::eDiscreteGpu:
+        outPhysicalDevice->set_type(
+            ::gfxstream::proto::VulkanPhysicalDevice::TYPE_DISCRETE_GPU);
+        break;
+      case vk::PhysicalDeviceType::eIntegratedGpu:
+        outPhysicalDevice->set_type(
+            ::gfxstream::proto::VulkanPhysicalDevice::TYPE_INTEGRATED_GPU);
+        break;
+      case vk::PhysicalDeviceType::eCpu:
+        outPhysicalDevice->set_type(
+            ::gfxstream::proto::VulkanPhysicalDevice::TYPE_CPU);
+        break;
+      default:
+        outPhysicalDevice->set_type(
+            ::gfxstream::proto::VulkanPhysicalDevice::TYPE_OTHER);
+        break;
+    }
 
     const auto exts =
         VK_EXPECT_RV(physicalDevice.enumerateDeviceExtensionProperties());
