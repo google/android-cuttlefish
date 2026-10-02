@@ -102,37 +102,41 @@ class Fd : public ReaderWriterSeeker {
   // All Fds have the O_CLOEXEC flag after creation. To remove use the
   // Fcntl or Dup functions.
 
-  static Result<Fd> Accept(const Fd& listener);
-  static Result<Fd> Creat(std::string_view path, mode_t mode);
-  static Result<Fd> Dup(int unmanaged_fd);
-  static Result<Fd> Fifo(std::string_view pathname, mode_t mode);
-  static Result<Fd> MemfdCreate(std::string_view name, unsigned int flags = 0);
-  static Result<std::pair<Fd, std::string>> Mkostemp(std::string_view path,
-                                                     int flags = O_CLOEXEC);
-  static Result<Fd> Open(std::string_view pathname, int flags, mode_t mode = 0);
-  static Result<std::pair<Fd, Fd>> Pipe();
-  static Result<std::pair<Fd, Fd>> SocketPair(int domain, int type,
-                                              int protocol);
-  static Result<Fd> Socket(int domain, int socket_type, int protocol);
-  static Result<Fd> Socket6Client(
+  static Result<Fd, int> Accept(const Fd& listener);
+  static Result<Fd, int> Creat(std::string_view path, mode_t mode);
+  static Result<Fd, int> Dup(int unmanaged_fd);
+  static Result<Fd, int> Fifo(std::string_view pathname, mode_t mode);
+  static Result<Fd, int> MemfdCreate(std::string_view name,
+                                     unsigned int flags = 0);
+  static Result<std::pair<Fd, std::string>, int> Mkostemp(
+      std::string_view path, int flags = O_CLOEXEC);
+  static Result<Fd, int> Open(std::string_view pathname, int flags,
+                              mode_t mode = 0);
+  static Result<std::pair<Fd, Fd>, int> Pipe();
+  static Result<std::pair<Fd, Fd>, int> SocketPair(int domain, int type,
+                                                   int protocol);
+  static Result<Fd, int> Socket(int domain, int socket_type, int protocol);
+  static Result<Fd, int> Socket6Client(
       std::string_view host, std::string_view interface, int port, int type,
       std::chrono::seconds timeout = std::chrono::seconds(0));
-  static Result<Fd> SocketClient(
+  static Result<Fd, int> SocketClient(
       std::string_view host, int port, int type,
       std::chrono::seconds timeout = std::chrono::seconds(0));
-  static Result<Fd> SocketLocalClient(std::string_view name, bool is_abstract,
-                                      int in_type);
-  static Result<Fd> SocketLocalClient(std::string_view name, bool is_abstract,
-                                      int in_type, int timeout_seconds);
-  static Result<Fd> SocketLocalClient(int port, int type);
-  static Result<Fd> SocketLocalServer(std::string_view name, bool is_abstract,
-                                      int in_type, mode_t mode);
-  static Result<Fd> SocketLocalServer(int port, int type);
+  static Result<Fd, int> SocketLocalClient(std::string_view name,
+                                           bool is_abstract, int in_type);
+  static Result<Fd, int> SocketLocalClient(std::string_view name,
+                                           bool is_abstract, int in_type,
+                                           int timeout_seconds);
+  static Result<Fd, int> SocketLocalClient(int port, int type);
+  static Result<Fd, int> SocketLocalServer(std::string_view name,
+                                           bool is_abstract, int in_type,
+                                           mode_t mode);
+  static Result<Fd, int> SocketLocalServer(int port, int type);
 
 #ifdef __linux__
-  static Result<Fd> Event(int initval = 0, int flags = 0);
-  static Result<Fd> InotifyFd();
-  static Result<Fd> ShmOpen(std::string_view name, int oflag, int mode);
+  static Result<Fd, int> Event(int initval = 0, int flags = 0);
+  static Result<Fd, int> InotifyFd();
+  static Result<Fd, int> ShmOpen(std::string_view name, int oflag, int mode);
   // For binding in vsock, svm_cid from `cid` param would be either
   // VMADDR_CID_ANY, VMADDR_CID_LOCAL, VMADDR_CID_HOST or their own CID, and it
   // is used for indicating connections which it accepts from.
@@ -150,11 +154,11 @@ class Fd : public ReaderWriterSeeker {
   static std::string GetVhostUserVsockServerAddr(
       unsigned int port, int vhost_user_vsock_listening_cid);
   static std::string GetVhostUserVsockClientAddr(int cid);
-  static Result<Fd> VsockServer(
+  static Result<Fd, int> VsockServer(
       unsigned int port, int type,
       std::optional<int> vhost_user_vsock_listening_cid,
       unsigned int cid = VMADDR_CID_ANY);
-  static Result<Fd> VsockServer(
+  static Result<Fd, int> VsockServer(
       int type, std::optional<int> vhost_user_vsock_listening_cid);
 #endif
 
