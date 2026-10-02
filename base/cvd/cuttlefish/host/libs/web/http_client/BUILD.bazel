@@ -30,6 +30,16 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "curl_url",
+    srcs = ["curl_url.cc"],
+    hdrs = ["curl_url.h"],
+    deps = [
+        "//cuttlefish/result",
+        "@curl",
+    ],
+)
+
+cf_cc_library(
     name = "fake_http_client",
     testonly = True,
     srcs = ["fake_http_client.cc"],
@@ -86,9 +96,34 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_string",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "http_probe",
+    srcs = ["http_probe.cc"],
+    hdrs = ["http_probe.h"],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "http_probe_test",
+    srcs = ["http_probe_test.cc"],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:fake_http_client",
+        "//cuttlefish/host/libs/web/http_client:http_probe",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 

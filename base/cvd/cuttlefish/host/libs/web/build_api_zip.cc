@@ -31,10 +31,7 @@ Result<ReadableZip> OpenZip(BuildApi& build_api, const Build& build,
                             const std::string& name) {
   SeekableZipSource source = CF_EXPECT(build_api.FileReader(build, name));
 
-  SeekableZipSource buffered =
-      CF_EXPECT(BufferZipSource(std::move(source), 1 << 26));
-
-  return CF_EXPECT(ReadableZip::FromSource(std::move(buffered)));
+  return CF_EXPECT(BufferAndOpenZip(std::move(source)));
 }
 
 }  // namespace cuttlefish

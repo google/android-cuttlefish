@@ -21,16 +21,15 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
-#include "absl/strings/numbers.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_probe.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/result/result.h"
@@ -111,25 +110,11 @@ class RemoteZip : public SeekableZipSourceCallback {
 Result<uint64_t> GetSizeIfSupportsRangeRequests(
     HttpClient& http_client_, const std::string& url,
     const std::vector<std::string>& headers) {
-  HttpRequest request = {
-      .method = HttpMethod::kHead,
-      .url = url,
-      .headers = headers,
-  };
-  auto empty_cb = [](char*, size_t) { return true; };
-  HttpResponse<void> http_response =
-      CF_EXPECT(http_client_.DownloadToCallback(request, empty_cb));
-  std::string_view ranges_header =
-      CF_EXPECT(HeaderValue(http_response.headers, "accept-ranges"));
-  CF_EXPECT_NE(ranges_header.find("bytes"), std::string_view::npos);
-
-  std::string_view content_length_str =
-      CF_EXPECT(HeaderValue(http_response.headers, "content-length"));
-
-  uint64_t content_length;
-  CF_EXPECT(absl::SimpleAtoi(content_length_str, &content_length));
-
-  return content_length;
+  const HttpObjectInfo info =
+      CF_EXPECT(ProbeHttpObject(http_client_, url, headers));
+  CF_EXPECT(!!info.accept_ranges);
+  CF_EXPECT(info.size.has_value());
+  return *info.size;
 }
 
 }  // namespace
@@ -140,6 +125,14 @@ Result<SeekableZipSource> ZipSourceFromUrl(HttpClient& http_client,
   uint64_t size =
       CF_EXPECT(GetSizeIfSupportsRangeRequests(http_client, url, headers));
 
+  return CF_EXPECT(
+      ZipSourceFromUrl(http_client, url, std::move(headers), size));
+}
+
+Result<SeekableZipSource> ZipSourceFromUrl(HttpClient& http_client,
+                                           const std::string& url,
+                                           std::vector<std::string> headers,
+                                           uint64_t size) {
   std::unique_ptr<RemoteZip> callbacks =
       std::make_unique<RemoteZip>(http_client, url, size, std::move(headers));
   CF_EXPECT(callbacks.get());

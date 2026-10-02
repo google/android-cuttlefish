@@ -9,6 +9,8 @@
 //cvd/cvd_logspam_tests:cvd_logspam_tests_additional_substitution
 //cvd/cvd_powerwash_tests:cvd_powerwash_tests
 //cvd/cvd_powerwash_tests:cvd_powerwash_tests_additional_substitution
+//cvd/cvd_url_build_tests:cvd_url_build_boot_tests
+//cvd/cvd_url_build_tests:cvd_url_build_tests
 //cvd/display_tests:display_tests
 //cvd/display_tests:display_tests_with_substitution
 //cvd/env_tests:env_tests

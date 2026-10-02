@@ -19,6 +19,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
@@ -90,6 +91,15 @@ Result<HttpResponse<void>> FakeHttpClient::DownloadToCallback(
   response.http_code = handler_res.http_code;
   response.headers = std::move(handler_res.headers);
   return response;
+}
+
+bool HasAuthorization(const std::vector<std::string>& headers) {
+  for (const std::string& header : headers) {
+    if (header.starts_with("Authorization:")) {
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace cuttlefish

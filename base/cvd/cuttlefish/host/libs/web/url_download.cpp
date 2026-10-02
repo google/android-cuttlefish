@@ -1,0 +1,190 @@
+//
+// Copyright (C) 2026 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "cuttlefish/host/libs/web/url_download.h"
+
+#include <fcntl.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <sys/file.h>
+
+#include <algorithm>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include "absl/log/log.h"
+#include "absl/strings/ascii.h"
+#include "absl/strings/strip.h"
+#include "fmt/format.h"
+
+#include "cuttlefish/common/libs/fs/fd.h"
+#include "cuttlefish/files/directory_contents.h"
+#include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/host/libs/web/digest.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_file.h"
+#include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/host/libs/zip/remote_zip.h"
+#include "cuttlefish/io/write_exact.h"
+#include "cuttlefish/posix/remove.h"
+#include "cuttlefish/posix/rename.h"
+#include "cuttlefish/posix/stat.h"
+#include "cuttlefish/result/result.h"
+
+namespace cuttlefish {
+namespace {
+
+constexpr int kLockAttempts = 4;
+constexpr uint64_t kReadSize = 64 << 20;
+constexpr size_t kVersionHashLength = 16;
+
+Result<void> FullDownload(HttpClient& http_client, const UrlDownload& download,
+                          const std::string& path) {
+  const HttpResponse<std::string> response = CF_EXPECT(
+      HttpGetToFile(http_client, download.url, path, download.headers));
+  CF_EXPECTF(response.HttpSuccess(), "'{}' - {}:{}", ScrubUrl(download.url),
+             response.http_code, response.StatusDescription());
+  return {};
+}
+
+// Resuming keeps the file HttpGetToFile would hide in a temporary: the offset
+// an interrupted attempt left off at comes from that file, and the lock that
+// serializes other `cvd` invocations sits on its descriptor.
+Result<void> ResumeDownload(HttpClient& http_client,
+                            const UrlDownload& download, Fd& part,
+                            const std::string& part_path,
+                            const std::string& path) {
+  const uint64_t size = *download.size;
+  uint64_t offset =
+      CF_EXPECTF(part.SeekEnd(0), "Could not measure '{}'", part_path);
+  // A partial file is shorter than the object; anything else starts over.
+  if (offset >= size) {
+    offset = 0;
+    CF_EXPECTF(part.Truncate(0), "Could not truncate '{}'", part_path);
+    CF_EXPECTF(part.SeekSet(0), "Could not seek '{}'", part_path);
+  }
+
+  std::vector<std::string> headers = download.headers;
+  if (download.if_range.has_value()) {
+    headers.push_back(fmt::format("If-Range: {}", *download.if_range));
+  }
+  SeekableZipSource source = CF_EXPECT(
+      ZipSourceFromUrl(http_client, download.url, std::move(headers), size));
+  SeekingZipSourceReader reader = CF_EXPECT(source.Reader());
+  CF_EXPECT(reader.SeekSet(offset));
+
+  std::vector<char> buffer(std::min(kReadSize, size - offset));
+  while (offset < size) {
+    const uint64_t length = std::min<uint64_t>(buffer.size(), size - offset);
+    Result<uint64_t> chunk = reader.Read(buffer.data(), length);
+    if (!chunk.has_value() && offset == 0) {
+      CF_EXPECT(RemoveFile(part_path));
+    }
+    const uint64_t read_length = CF_EXPECTF(
+        std::move(chunk), "Could not download '{}'", ScrubUrl(download.url));
+    CF_EXPECTF(read_length > 0, "'{}' ended after {} of {} bytes",
+               ScrubUrl(download.url), offset, size);
+    CF_EXPECTF(WriteExact(part, buffer.data(), read_length),
+               "Could not write '{}'", part_path);
+    offset += read_length;
+    VLOG(0) << "Downloaded " << offset << " of " << size << " bytes";
+  }
+
+  VLOG(0) << "Downloaded '" << ScrubUrl(download.url) << "' to '" << path
+          << "'.";
+  CF_EXPECT(Rename(part_path, path));
+  return {};
+}
+
+Result<void> RemoveOtherPartialFiles(const std::string& path) {
+  const size_t slash = path.rfind('/');
+  CF_EXPECTF(slash != std::string::npos, "'{}' has no directory", path);
+  const std::string directory = path.substr(0, slash);
+  const std::string prefix = fmt::format("{}.", path.substr(slash + 1));
+  const std::vector<std::string> names =
+      CF_EXPECT(DirectoryContents(directory));
+  for (const std::string& name : names) {
+    std::string_view hash = name;
+    if (!absl::ConsumePrefix(&hash, prefix) ||
+        !absl::ConsumeSuffix(&hash, ".part") ||
+        hash.size() != kVersionHashLength ||
+        !std::all_of(hash.begin(), hash.end(), absl::ascii_isxdigit)) {
+      continue;
+    }
+    const std::string other_path = fmt::format("{}/{}", directory, name);
+    Result<Fd> other = Fd::Open(other_path, O_RDWR);
+    if (!other.has_value() || !other->Flock(LOCK_EX | LOCK_NB).has_value()) {
+      continue;
+    }
+    if (CF_EXPECT(HoldsFileAt(*other, other_path))) {
+      CF_EXPECT(RemoveFile(other_path));
+    }
+  }
+  return {};
+}
+
+}  // namespace
+
+std::string PartialFilePath(const std::string& path, std::string_view version) {
+  return fmt::format("{}.{}.part", path,
+                     Sha256Hex(version).substr(0, kVersionHashLength));
+}
+
+Result<bool> HoldsFileAt(Fd& fd, const std::string& path) {
+  // The descriptor is open before the lock says whose file it is, so comparing
+  // two paths would race with the rename that ends another download.
+  const Result<struct stat> by_path = Stat(path);
+  if (!by_path.has_value()) {
+    return false;
+  }
+  const struct stat by_fd = CF_EXPECTF(fd.Fstat(), "Could not read '{}'", path);
+  return by_path->st_dev == by_fd.st_dev && by_path->st_ino == by_fd.st_ino;
+}
+
+Result<void> DownloadUrlToFile(HttpClient& http_client,
+                               const UrlDownload& download,
+                               const std::string& path) {
+  // Without something to resume against, a unique temporary file per attempt
+  // keeps concurrent downloads of the same artifact out of each other's way.
+  if (!download.version.has_value() || !download.size.has_value()) {
+    CF_EXPECT(FullDownload(http_client, download, path));
+    return {};
+  }
+
+  const std::string part_path = PartialFilePath(path, *download.version);
+  // The lock serializes other `cvd` invocations downloading this artifact into
+  // the shared generation-keyed cache; a fetch itself is single-threaded.
+  for (int attempt = 0; attempt < kLockAttempts; attempt++) {
+    Fd part = CF_EXPECT(Fd::Open(part_path, O_RDWR | O_CREAT, 0644));
+    CF_EXPECTF(part.Flock(LOCK_EX), "Could not lock '{}'", part_path);
+
+    if (CF_EXPECT(HoldsFileAt(part, part_path))) {
+      CF_EXPECT(ResumeDownload(http_client, download, part, part_path, path));
+      CF_EXPECT(RemoveOtherPartialFiles(path));
+      return {};
+    }
+    // Another download of this version renamed the partial file away while
+    // this one waited for its lock.
+    if (FileExists(path)) {
+      return {};
+    }
+  }
+  return CF_ERRF("Gave up waiting for another download of '{}'", part_path);
+}
+
+}  // namespace cuttlefish
