@@ -119,7 +119,7 @@ bool DeleteTmpFileIfNotChanged(const std::string& tmp_file,
     VLOG(0) << "Updated " << current_file;
   } else {
     VLOG(0) << "Didn't update " << current_file;
-    if (Result<void> res = RemoveFile(tmp_file); !res.has_value()) {
+    if (Result<void, int> res = RemoveFile(tmp_file); !res.has_value()) {
       LOG(ERROR) << res.error();
     }
   }

@@ -287,11 +287,11 @@ Result<void> InstanceManager::Clear() {
       }
     }
     std::string runtime_link = group.HomeDir() + "/cuttlefish_runtime";
-    if (Result<void> res = RemoveFile(runtime_link); !res.has_value()) {
+    if (Result<void, int> res = RemoveFile(runtime_link); !res.has_value()) {
       LOG(ERROR) << res.error();
     }
     std::string config_link = group.HomeDir() + "/" + config_json_name;
-    if (Result<void> res = RemoveFile(config_link); !res.has_value()) {
+    if (Result<void, int> res = RemoveFile(config_link); !res.has_value()) {
       LOG(ERROR) << res.error();
     }
     // TODO: b/471069557 - diagnose unused

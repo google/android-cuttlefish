@@ -25,20 +25,20 @@
 
 namespace cuttlefish {
 
-Result<void> Rename(const char* oldpath, const char* newpath) {
-  if (rename(oldpath, newpath) < 0) {
-    return CF_ERRF("rename('{}', '{}') failed: {}", oldpath, newpath,
-                   StrError(errno));
-  }
+Result<void, int> Rename(const char* oldpath, const char* newpath) {
+  CF_EXPECTVF(rename(oldpath, newpath) >= 0, errno,
+              "rename('{}', '{}') failed: {}", oldpath, newpath,
+              StrError(errno));
   return {};
 }
 
-Result<void> Rename(const std::string& oldpath, const std::string& newpath) {
+Result<void, int> Rename(const std::string& oldpath,
+                         const std::string& newpath) {
   CF_EXPECT(Rename(oldpath.c_str(), newpath.c_str()));
   return {};
 }
 
-Result<void> Rename(std::string_view oldpath, std::string_view newpath) {
+Result<void, int> Rename(std::string_view oldpath, std::string_view newpath) {
   CF_EXPECT(Rename(std::string(oldpath), std::string(newpath)));
   return {};
 }

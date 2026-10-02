@@ -23,8 +23,9 @@
 namespace cuttlefish {
 
 // Wrapper for rename(2).
-Result<void> Rename(const char* oldpath, const char* newpath);
-Result<void> Rename(const std::string& oldpath, const std::string& newpath);
-Result<void> Rename(std::string_view oldpath, std::string_view newpath);
+Result<void, int> Rename(const char* oldpath, const char* newpath);
+Result<void, int> Rename(const std::string& oldpath,
+                         const std::string& newpath);
+Result<void, int> Rename(std::string_view oldpath, std::string_view newpath);
 
 }  // namespace cuttlefish

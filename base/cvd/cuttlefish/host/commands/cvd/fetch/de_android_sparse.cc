@@ -72,7 +72,7 @@ bool ConvertToRawImageNoBinary(const std::string& image_path) {
     PLOG(FATAL) << "Unable to delete original sparse image";
   }
 
-  Result<void> result = Rename(tmp_raw_image_path, image_path.c_str());
+  Result<void, int> result = Rename(tmp_raw_image_path, image_path.c_str());
   CHECK(result.has_value()) << "Unable to rename raw image: " << result.error();
 
   return true;

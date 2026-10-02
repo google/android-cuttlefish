@@ -15,21 +15,32 @@
  */
 #include "cuttlefish/posix/symlink.h"
 
+#include <errno.h>
 #include <unistd.h>
 
-#include <cerrno>
 #include <string>
+#include <string_view>
 
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<void> Symlink(const std::string& target, const std::string& linkpath) {
-  if (symlink(target.c_str(), linkpath.c_str()) < 0) {
-    return CF_ERRF("symlink(\"{}\", \"{}\") failed: {}", target, linkpath,
-                   StrError(errno));
-  }
+Result<void, int> Symlink(const char* target, const char* linkpath) {
+  CF_EXPECTVF(symlink(target, linkpath) >= 0, errno,
+              "symlink('{}', '{}') failed: {}", target, linkpath,
+              StrError(errno));
+  return {};
+}
+
+Result<void, int> Symlink(const std::string& target,
+                          const std::string& linkpath) {
+  CF_EXPECT(Symlink(target.c_str(), linkpath.c_str()));
+  return {};
+}
+
+Result<void, int> Symlink(std::string_view target, std::string_view linkpath) {
+  CF_EXPECT(Symlink(std::string(target), std::string(linkpath)));
   return {};
 }
 
