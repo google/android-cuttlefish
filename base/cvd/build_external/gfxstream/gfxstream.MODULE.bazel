@@ -4,7 +4,7 @@ git_repository(
     name = "gfxstream",
     commit = "7c0c660288202e5e4087de36c38648a8ca987364",
     remote = "https://github.com/google/gfxstream.git",
-    patch_strip = 1,
+    patch_args = ["-p1"],
     patches = [
         "@//build_external/gfxstream:PATCH.gfxstream.build_variables.patch",
     ],
