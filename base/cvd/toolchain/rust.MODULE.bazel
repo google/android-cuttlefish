@@ -1,4 +1,12 @@
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 rust_host_tools = use_extension("@rules_rust//rust:extensions.bzl", "rust_host_tools")
+
+rust.toolchain(
+    # TODO(schuffelen): Explicitly request this only in our projects that need it (netsim?)
+    edition = "2021",
+    versions = ["1.99.0"],
+)
+
 rust_host_tools.host_tools(
     name = "rust_host_tools_nightly",
     version = "nightly",
