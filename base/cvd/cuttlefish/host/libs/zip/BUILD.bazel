@@ -96,7 +96,6 @@ cf_cc_library(
     srcs = ["zip_file.cc"],
     hdrs = ["zip_file.h"],
     deps = [
-        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
@@ -105,6 +104,17 @@ cf_cc_library(
         "//cuttlefish/io:native_filesystem",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
+    ],
+)
+
+cf_cc_test(
+    name = "zip_file_test",
+    srcs = ["zip_file_test.cc"],
+    deps = [
+        "//cuttlefish/host/libs/zip:zip_file",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 
