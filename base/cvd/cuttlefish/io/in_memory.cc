@@ -62,13 +62,13 @@ class InMemoryIo : public ReaderWriterSeeker {
     return count;
   }
 
-  Result<uint64_t> SeekSet(uint64_t offset) override {
+  Result<uint64_t, int> SeekSet(uint64_t offset) override {
     std::lock_guard lock(mutex_);
     GrowTo(offset);
     return cursor_ = offset;
   }
 
-  Result<uint64_t> SeekCur(int64_t offset) override {
+  Result<uint64_t, int> SeekCur(int64_t offset) override {
     std::lock_guard lock(mutex_);
     uint64_t new_pos =
         std::max<int64_t>(static_cast<int64_t>(cursor_) + offset, 0);
@@ -76,7 +76,7 @@ class InMemoryIo : public ReaderWriterSeeker {
     return cursor_ = new_pos;
   }
 
-  Result<uint64_t> SeekEnd(int64_t offset) override {
+  Result<uint64_t, int> SeekEnd(int64_t offset) override {
     std::lock_guard lock(mutex_);
     uint64_t new_pos =
         std::max<int64_t>(static_cast<int64_t>(data_.size()) + offset, 0);

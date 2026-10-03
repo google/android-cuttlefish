@@ -93,15 +93,15 @@ class ZipSourceAsReaderSeekerImpl : public ReaderSeeker {
     return CF_EXPECT(reader_.Read(buf, size));
   }
 
-  Result<uint64_t> SeekSet(uint64_t offset) override {
+  Result<uint64_t, int> SeekSet(uint64_t offset) override {
     return CF_EXPECT(reader_.SeekSet(offset));
   }
 
-  Result<uint64_t> SeekCur(int64_t offset) override {
+  Result<uint64_t, int> SeekCur(int64_t offset) override {
     return CF_EXPECT(reader_.SeekCur(offset));
   }
 
-  Result<uint64_t> SeekEnd(int64_t offset) override {
+  Result<uint64_t, int> SeekEnd(int64_t offset) override {
     return CF_EXPECT(reader_.SeekEnd(offset));
   }
 
@@ -155,15 +155,15 @@ Result<void> SeekingZipSourceReader::Visit(IoVisitor& visitor) {
   return {};
 }
 
-Result<uint64_t> SeekingZipSourceReader::SeekSet(uint64_t offset) {
+Result<uint64_t, int> SeekingZipSourceReader::SeekSet(uint64_t offset) {
   return CF_EXPECT(Seek(offset, SEEK_SET));
 }
 
-Result<uint64_t> SeekingZipSourceReader::SeekCur(int64_t offset) {
+Result<uint64_t, int> SeekingZipSourceReader::SeekCur(int64_t offset) {
   return CF_EXPECT(Seek(offset, SEEK_CUR));
 }
 
-Result<uint64_t> SeekingZipSourceReader::SeekEnd(int64_t offset) {
+Result<uint64_t, int> SeekingZipSourceReader::SeekEnd(int64_t offset) {
   return CF_EXPECT(Seek(offset, SEEK_END));
 }
 
@@ -174,16 +174,19 @@ Result<uint64_t> SeekingZipSourceReader::Read(void* data, uint64_t length) {
 SeekingZipSourceReader::SeekingZipSourceReader(SeekableZipSource* ptr)
     : ZipSourceReader(ptr) {}
 
-Result<uint64_t> SeekingZipSourceReader::Seek(int64_t offset, int whence) {
+Result<uint64_t, int> SeekingZipSourceReader::Seek(int64_t offset, int whence) {
   std::lock_guard lock(mutex_);
-  CF_EXPECT_NE(source_, nullptr);
-  zip_source_t* raw_source = CF_EXPECT(source_->raw_.get());
+  CF_EXPECTVF(source_ != nullptr, EBADF, "Seek({}, {}) failed", offset, whence);
+  zip_source_t* raw_source = CF_EXPECTVF(source_->raw_.get(), EBADF,
+                                         "Seek({}, {}) failed", offset, whence);
 
-  CF_EXPECT_EQ(zip_source_seek(raw_source, offset, whence), 0,
-               ZipErrorString(raw_source));
+  CF_EXPECTVF(zip_source_seek(raw_source, offset, whence) == 0,
+              ZipErrno(raw_source), "zip_source_seek(..., {}, {}) failed: {}",
+              offset, whence, ZipErrorString(raw_source));
 
   int64_t tell = zip_source_tell(raw_source);
-  CF_EXPECT_GE(tell, 0, ZipErrorString(raw_source));
+  CF_EXPECTVF(tell >= 0, ZipErrno(raw_source),
+              "zip_source_tell(...) failed: {}", ZipErrorString(raw_source));
 
   return tell;
 }

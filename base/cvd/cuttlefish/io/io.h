@@ -33,11 +33,11 @@ class Seeker : public virtual IoVisitable {
 
   Result<void> Visit(IoVisitor&) override;
   // Has the semantics of lseek(2) with SEEK_SET
-  virtual Result<uint64_t> SeekSet(uint64_t offset) = 0;
+  virtual Result<uint64_t, int> SeekSet(uint64_t offset) = 0;
   // Has the semantics of lseek(2) with SEEK_CUR
-  virtual Result<uint64_t> SeekCur(int64_t offset) = 0;
+  virtual Result<uint64_t, int> SeekCur(int64_t offset) = 0;
   // Has the semantics of lseek(2) with SEEK_END
-  virtual Result<uint64_t> SeekEnd(int64_t offset) = 0;
+  virtual Result<uint64_t, int> SeekEnd(int64_t offset) = 0;
 };
 
 class ReaderSeeker : public Reader, public Seeker {
@@ -65,9 +65,9 @@ class ReaderWriterSeeker : public ReaderSeeker, public WriterSeeker {
 
   Result<uint64_t> Read(void* buf, uint64_t count) override = 0;
   Result<uint64_t> Write(const void* buf, uint64_t count) override = 0;
-  Result<uint64_t> SeekSet(uint64_t offset) override = 0;
-  Result<uint64_t> SeekCur(int64_t offset) override = 0;
-  Result<uint64_t> SeekEnd(int64_t offset) override = 0;
+  Result<uint64_t, int> SeekSet(uint64_t offset) override = 0;
+  Result<uint64_t, int> SeekCur(int64_t offset) override = 0;
+  Result<uint64_t, int> SeekEnd(int64_t offset) override = 0;
   Result<uint64_t> PRead(void* buf, uint64_t count,
                          uint64_t offset) const override = 0;
   Result<uint64_t> PWrite(const void* buf, uint64_t count,
