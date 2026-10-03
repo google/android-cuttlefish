@@ -17,18 +17,26 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stddef.h>
+#include <stdlib.h>
 #include <unistd.h>
 #if defined(__linux__)
+#include <elf.h>
 #include <linux/capability.h>
 #include <linux/prctl.h>
 #include <linux/xattr.h>
+#include <sys/auxv.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
-#include <sys/types.h>
 #include <sys/xattr.h>
 #endif
 
+#include <map>
+#include <optional>
+#include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "absl/log/log.h"
 
@@ -36,6 +44,8 @@
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
+
+extern char** environ;
 
 namespace cuttlefish {
 
@@ -95,10 +105,10 @@ Result<void> ValidateCvdallocBinary(std::string_view path) {
 #if defined(__linux__)
   (void)st;
   /* Try and determine if the cvdalloc binary has any capabilities. */
-  struct vfs_cap_data cap;
+  struct vfs_cap_data cap = {};
   ssize_t s = getxattr(path.data(), XATTR_NAME_CAPS, &cap, sizeof(cap));
   CF_EXPECTF(
-      s != 1 && (cap.data[0].permitted & (1 << CAP_NET_ADMIN)) != 0,
+      s != -1 && (cap.data[0].permitted & (1 << CAP_NET_ADMIN)) != 0,
       "cvdalloc binary does not have permissions to allocate resources.\n"
       "As root, please\n\n    setcap cap_net_admin,cap_net_bind_service,"
       "cap_net_raw=+ep `realpath {}`",
@@ -155,6 +165,84 @@ int DropPrivileges(uid_t orig) {
 #endif
 
   return setuid(orig);
+}
+
+namespace {
+
+constexpr char kTrustedPath[] = "/usr/sbin:/usr/bin:/sbin:/bin";
+
+std::map<std::string, std::string> CopyEnv() {
+  std::vector<std::string> names;
+  for (char** var = environ; var != nullptr && *var != nullptr; ++var) {
+    std::string_view entry(*var);
+    names.emplace_back(entry.substr(0, entry.find('=')));
+  }
+  std::map<std::string, std::string> env;
+  for (const std::string& name : names) {
+    const char* value = getenv(name.c_str());
+    if (value != nullptr) {
+      env.emplace(name, value);
+    }
+  }
+  return env;
+}
+
+void RestoreEnv(const std::map<std::string, std::string>& env) {
+  for (const auto& [name, value] : CopyEnv()) {
+    unsetenv(name.c_str());
+  }
+  for (const auto& [name, value] : env) {
+    setenv(name.c_str(), value.c_str(), /*overwrite=*/1);
+  }
+}
+
+}  // namespace
+
+// Gains privileges until the returned instance is destroyed. If this process
+// gained privilege at exec, the environment is also replaced with a minimal
+// trusted one until then.
+Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
+  // Constructed first so that a failure below drops any partially raised
+  // capabilities and restores the environment.
+  ScopedPrivileges privileges(getuid());
+  bool should_sanitize_env = true;
+#if defined(__linux__)
+  // The child processes we exec run with elevated privilege (CAP_NET_ADMIN via
+  // ambient caps) but with AT_SECURE=0, so the dynamic linker won't scrub their
+  // environment for us. Only sanitize the environment when this exec actually
+  // gained privilege (e.g. via file caps), as signalled by AT_SECURE.
+  should_sanitize_env = getauxval(AT_SECURE) != 0;
+#endif
+  if (should_sanitize_env) {
+    privileges.saved_env_ = CopyEnv();
+    CF_EXPECTF(clearenv() == 0, "Couldn't clear environment: {}",
+               StrError(errno));
+    CF_EXPECTF(setenv("PATH", kTrustedPath, /*overwrite=*/1) == 0,
+               "Couldn't set PATH: {}", StrError(errno));
+  }
+  CF_EXPECTF(BeginElevatedPrivileges() != -1,
+             "Couldn't elevate permissions: {}", StrError(errno));
+  return privileges;
+}
+
+ScopedPrivileges::ScopedPrivileges(uid_t orig) : orig_(orig) {}
+
+ScopedPrivileges::ScopedPrivileges(ScopedPrivileges&& other) noexcept
+    : orig_(std::exchange(other.orig_, std::nullopt)),
+      saved_env_(std::exchange(other.saved_env_, std::nullopt)) {}
+
+ScopedPrivileges::~ScopedPrivileges() {
+  if (!orig_.has_value()) {
+    return;
+  }
+  if (DropPrivileges(*orig_) == -1) {
+    // We may still be privileged, so keep the trusted environment.
+    LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << StrError(errno);
+    return;
+  }
+  if (saved_env_.has_value()) {
+    RestoreEnv(*saved_env_);
+  }
 }
 
 }  // namespace cuttlefish
