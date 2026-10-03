@@ -15,6 +15,8 @@
 
 #include "cuttlefish/host/libs/zip/libzip_cc/error.h"
 
+#include <errno.h>
+
 #include <string>
 
 #include "zip.h"
@@ -40,5 +42,19 @@ std::string ZipErrorString(zip_source_t* source) {
 std::string ZipErrorString(zip_t* source) {
   return ZipErrorString(zip_get_error(source));
 }
+
+int ZipErrno(zip_error_t* error) {
+  if (zip_error_system_type(error) == ZIP_ET_SYS) {
+    return zip_error_code_system(error);
+  } else {
+    return EPROTO;
+  }
+}
+
+int ZipErrno(zip_source_t* source) {
+  return ZipErrno(zip_source_error(source));
+}
+
+int ZipErrno(zip_t* source) { return ZipErrno(zip_get_error(source)); }
 
 }  // namespace cuttlefish

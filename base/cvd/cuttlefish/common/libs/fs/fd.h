@@ -223,9 +223,9 @@ class Fd : public ReaderWriterSeeker {
   ssize_t Send(const void* buf, size_t len, int flags);
   ssize_t SendMsg(const struct msghdr* msg, int flags);
 
-  Result<uint64_t> SeekSet(uint64_t) override;
-  Result<uint64_t> SeekCur(int64_t) override;
-  Result<uint64_t> SeekEnd(int64_t) override;
+  Result<uint64_t, int> SeekSet(uint64_t) override;
+  Result<uint64_t, int> SeekCur(int64_t) override;
+  Result<uint64_t, int> SeekEnd(int64_t) override;
 
   template <typename... Args>
   ssize_t SendFileDescriptors(const void* buf, size_t len, Args&&... sent_fds) {

@@ -15,6 +15,7 @@
 
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -97,15 +98,15 @@ Result<uint64_t> ZipSourceWriter::Write(const void* data, uint64_t length) {
   return static_cast<uint64_t>(written);
 }
 
-Result<uint64_t> ZipSourceWriter::SeekSet(uint64_t offset) {
+Result<uint64_t, int> ZipSourceWriter::SeekSet(uint64_t offset) {
   return CF_EXPECT(Seek(offset, SEEK_SET));
 }
 
-Result<uint64_t> ZipSourceWriter::SeekCur(int64_t offset) {
+Result<uint64_t, int> ZipSourceWriter::SeekCur(int64_t offset) {
   return CF_EXPECT(Seek(offset, SEEK_CUR));
 }
 
-Result<uint64_t> ZipSourceWriter::SeekEnd(int64_t offset) {
+Result<uint64_t, int> ZipSourceWriter::SeekEnd(int64_t offset) {
   return CF_EXPECT(Seek(offset, SEEK_END));
 }
 
@@ -125,17 +126,21 @@ Result<void> ZipSourceWriter::Finalize(ZipSourceWriter writer) {
   return {};
 }
 
-Result<uint64_t> ZipSourceWriter::Seek(int64_t offset, int whence) {
+Result<uint64_t, int> ZipSourceWriter::Seek(int64_t offset, int whence) {
   std::lock_guard lock(mutex_);
 
-  CF_EXPECT_NE(source_, nullptr);
-  zip_source_t* raw_source = CF_EXPECT(source_->raw_.get());
+  CF_EXPECTVF(source_ != nullptr, EBADF, "Seek({}, {}) failed", offset, whence);
+  zip_source_t* raw_source = CF_EXPECTVF(source_->raw_.get(), EBADF,
+                                         "Seek({}, {}) failed", offset, whence);
 
-  CF_EXPECT_EQ(zip_source_seek_write(raw_source, offset, whence), 0,
-               ZipErrorString(raw_source));
+  CF_EXPECTVF(zip_source_seek_write(raw_source, offset, whence) == 0,
+              ZipErrno(raw_source), "zip_source_seek(..., {}, {}) failed: {}",
+              offset, whence, ZipErrorString(raw_source));
 
   int64_t tell = zip_source_tell_write(raw_source);
-  CF_EXPECT_GE(tell, 0, ZipErrorString(raw_source));
+  CF_EXPECTVF(tell >= 0, ZipErrno(raw_source),
+              "zip_source_tell_write(...) failed: {}",
+              ZipErrorString(raw_source));
 
   return tell;
 }

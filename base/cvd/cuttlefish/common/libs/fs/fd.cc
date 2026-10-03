@@ -792,21 +792,24 @@ ssize_t Fd::SendMsg(const struct msghdr* msg, int flags) {
   return TEMP_FAILURE_RETRY(sendmsg(fd_, msg, flags));
 }
 
-Result<uint64_t> Fd::SeekSet(uint64_t offset) {
+Result<uint64_t, int> Fd::SeekSet(uint64_t offset) {
   off_t ret = LSeek(static_cast<off_t>(offset), SEEK_SET);
-  CF_EXPECT_GE(ret, 0, StrError());
+  CF_EXPECTVF(ret >= 0, GetErrno(), "LSeek({}, SEEK_SET) failed: {}", offset,
+              StrError());
   return ret;
 }
 
-Result<uint64_t> Fd::SeekCur(int64_t offset) {
+Result<uint64_t, int> Fd::SeekCur(int64_t offset) {
   off_t ret = LSeek(static_cast<off_t>(offset), SEEK_CUR);
-  CF_EXPECT_GE(ret, 0, StrError());
+  CF_EXPECTVF(ret >= 0, GetErrno(), "LSeek({}, SEEK_CUR) failed: {}", offset,
+              StrError());
   return ret;
 }
 
-Result<uint64_t> Fd::SeekEnd(int64_t offset) {
+Result<uint64_t, int> Fd::SeekEnd(int64_t offset) {
   off_t ret = LSeek(static_cast<off_t>(offset), SEEK_END);
-  CF_EXPECT_GE(ret, 0, StrError());
+  CF_EXPECTVF(ret >= 0, GetErrno(), "LSeek({}, SEEK_END) failed: {}", offset,
+              StrError());
   return ret;
 }
 

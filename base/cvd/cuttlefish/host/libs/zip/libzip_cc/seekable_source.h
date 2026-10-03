@@ -63,12 +63,12 @@ class SeekingZipSourceReader : public ZipSourceReader, public ReaderSeeker {
   Result<uint64_t> PRead(void* buf, uint64_t count,
                          uint64_t offset) const override;
 
-  Result<uint64_t> SeekSet(uint64_t offset) override;
-  Result<uint64_t> SeekCur(int64_t offset) override;
-  Result<uint64_t> SeekEnd(int64_t offset) override;
+  Result<uint64_t, int> SeekSet(uint64_t offset) override;
+  Result<uint64_t, int> SeekCur(int64_t offset) override;
+  Result<uint64_t, int> SeekEnd(int64_t offset) override;
 
  private:
-  Result<uint64_t> Seek(int64_t offset, int whence);
+  Result<uint64_t, int> Seek(int64_t offset, int whence);
 
   SeekingZipSourceReader(SeekableZipSource*);
 };

@@ -26,9 +26,11 @@ namespace cuttlefish {
 ManagedZipError NewZipError();
 
 std::string ZipErrorString(zip_error_t*);
-
 std::string ZipErrorString(zip_source_t*);
-
 std::string ZipErrorString(zip_t*);
+
+int ZipErrno(zip_error_t*);
+int ZipErrno(zip_source_t*);
+int ZipErrno(zip_t*);
 
 }  // namespace cuttlefish
