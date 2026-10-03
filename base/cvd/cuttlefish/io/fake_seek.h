@@ -34,9 +34,9 @@ class ReaderFakeSeeker : public ReaderSeeker {
   ReaderFakeSeeker(uint64_t length);
 
   Result<uint64_t> Read(void* buf, uint64_t count) final override;
-  Result<uint64_t> SeekSet(uint64_t) final override;
-  Result<uint64_t> SeekCur(int64_t) final override;
-  Result<uint64_t> SeekEnd(int64_t) final override;
+  Result<uint64_t, int> SeekSet(uint64_t) final override;
+  Result<uint64_t, int> SeekCur(int64_t) final override;
+  Result<uint64_t, int> SeekEnd(int64_t) final override;
 
   // Subclasses only need to implement PRead
  private:

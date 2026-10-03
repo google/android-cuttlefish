@@ -33,16 +33,16 @@ Result<uint64_t> ReaderFakeSeeker::Read(void* buf, uint64_t count) {
   return data_read;
 }
 
-Result<uint64_t> ReaderFakeSeeker::SeekSet(const uint64_t offset) {
+Result<uint64_t, int> ReaderFakeSeeker::SeekSet(const uint64_t offset) {
   return seek_pos_ = std::min(offset, length_);
 }
 
-Result<uint64_t> ReaderFakeSeeker::SeekCur(const int64_t off) {
+Result<uint64_t, int> ReaderFakeSeeker::SeekCur(const int64_t off) {
   int64_t seek_pos_signed = std::max(static_cast<int64_t>(seek_pos_) + off, 0L);
   return seek_pos_ = std::min(static_cast<uint64_t>(seek_pos_signed), length_);
 }
 
-Result<uint64_t> ReaderFakeSeeker::SeekEnd(int64_t off) {
+Result<uint64_t, int> ReaderFakeSeeker::SeekEnd(int64_t off) {
   int64_t seek_pos_signed = std::max(static_cast<int64_t>(length_) + off, 0L);
   return seek_pos_ = std::min(static_cast<uint64_t>(seek_pos_signed), length_);
 }
