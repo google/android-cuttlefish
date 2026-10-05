@@ -55,6 +55,7 @@ namespace {
 
 static constexpr std::string_view kLegacyBoardBootconfigKeysShared[] = {
     // clang-format off
+    "androidboot.display_device",
     "androidboot.hardware",
     "androidboot.vendor.apex.com.android.wifi.hal",
     "androidboot.vendor.apex.com.google.emulated.camera.provider.hal",
