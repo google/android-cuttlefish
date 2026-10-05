@@ -1,3 +1,12 @@
+cuttlefish-common (1.57.6) unstable; urgency=medium
+
+  * Allow unknown fields in guest config proto file by @jemoreira in https://github.com/google/android-cuttlefish/pull/3260
+  * Explicitly choose a rust toolchain version by @Databean in https://github.com/google/android-cuttlefish/pull/3297
+  * Allow new bootconfig key
+  * Stop packaging secure_env
+
+ -- Cody Schuffelen <schuffelen@google.com>  Mon, 05 Oct 2026 18:26:09 +0000
+
 cuttlefish-common (1.57.5) unstable; urgency=medium
 
   * Fix repeated snapshot launches
