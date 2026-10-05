@@ -720,7 +720,7 @@ Result<GuestHwuiRenderer> SelectGuestHwuiRenderer(
     return GuestHwuiRenderer::kSkiaVk;
   }
 
-  if (gpu_mode == GpuMode::Venus) {
+  if (gpu_mode == GpuMode::GuestLavapipe || gpu_mode == GpuMode::Venus) {
     VLOG(0) << "Selecting SkiaVk as the HWUI renderer for "
             << GpuModeString(gpu_mode) << " GPU mode.";
     return GuestHwuiRenderer::kSkiaVk;
