@@ -65,10 +65,10 @@ cf_cc_library(
 
 cf_cc_library(
     name = "proc_file_utils",
-    srcs = [
-        "proc_file_utils.cc",
-        "proc_file_utils_linux.cc",
-    ],
+    srcs = ["proc_file_utils.cc"] + select({
+        "@platforms//os:openbsd": ["proc_file_utils_openbsd.cc"],
+        "//conditions:default": ["proc_file_utils_linux.cc"],
+    }),
     hdrs = ["proc_file_utils.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
@@ -83,7 +83,10 @@ cf_cc_library(
         "@abseil-cpp//absl/strings",
         "@android_system_libbase//:file_logging",
         "@fmt",
-    ],
+    ] + select({
+        "@platforms//os:openbsd": ["//cuttlefish/posix:strerror"],
+        "//conditions:default": [],
+    }),
 )
 
 cf_cc_test(
