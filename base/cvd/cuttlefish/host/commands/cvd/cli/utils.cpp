@@ -16,12 +16,14 @@
 
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 
-#include <asm-generic/ioctls.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>  // IWYU pragma: keep: siginfo_t
 #include <stddef.h>
 #include <string.h>
+#ifdef __linux__
+#include <asm-generic/ioctls.h>  // IWYU pragma: keep: TIOCGWINSZ
+#endif
 #include <sys/ioctl.h>
 #include <unistd.h>
 
