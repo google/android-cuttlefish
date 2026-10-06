@@ -105,6 +105,7 @@ Depends: cuttlefish-base,
          qemu-system-arm (>= 2.8.0),
          qemu-system-x86 (>= 2.8.0),
          qemu-system-misc (>= 2.8.0),
+         qemu-utils,
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
 Conflicts: ${diverted-files}
