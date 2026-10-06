@@ -36,3 +36,11 @@
 #wifi_ipv6_prefix_length=
 #ethernet_ipv6_prefix=
 #ethernet_ipv6_prefix_length=
+
+# allocate_static_resources creates resources like tap devices
+# statically for instance networking at boot.
+#
+# Static resources are disjoint to those allocated by cvdalloc.
+# Thus, the legacy behaviour is maintained by the below default.
+#
+#allocate_static_resources=1
