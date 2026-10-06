@@ -127,13 +127,13 @@ Result<std::string> CvdEnvCommandHandler::DetailedHelp(
     // Couldn't find an underlying binary to defer to for help
     return kDetailedHelpText;
   }
-  std::string stdout;
+  std::string stdout_str;
   int res = RunWithManagedStdio(std::move(help_cmd_res.value()), nullptr,
-                                &stdout, nullptr);
+                                &stdout_str, nullptr);
   // gflags returns exit code 1 when --help is given
   CF_EXPECTF(res == 0 || res == 1,
              "Failed to execute internal env binary, exit code: {}", res);
-  return stdout;
+  return stdout_str;
 }
 
 }  // namespace cuttlefish

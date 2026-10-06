@@ -147,15 +147,16 @@ Result<std::string> CvdBugreportCommandHandler::DetailedHelp(
     const CommandRequest& request) {
   Command command = CF_EXPECT(ConstructSiblingHelpCommand(
       kHostBugreportBin, request.Env(), request.SubcommandArguments()));
-  std::string stdout;
-  std::string stderr;
-  int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, &stderr);
+  std::string stdout_str;
+  std::string stderr_str;
+  int res = RunWithManagedStdio(std::move(command), nullptr, &stdout_str,
+                                &stderr_str);
   // gflags returns exit code 1 when --help is given
   if (res != 0 && res != 1) {
-    std::cerr << stderr;
+    std::cerr << stderr_str;
     return CF_ERRF("Failed to execute bugreport binary, exit code: {}", res);
   }
-  return stdout;
+  return stdout_str;
 }
 
 }  // namespace cuttlefish
