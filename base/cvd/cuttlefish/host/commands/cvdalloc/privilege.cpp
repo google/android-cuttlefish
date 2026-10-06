@@ -169,11 +169,9 @@ namespace {
 
 constexpr char kTrustedPath[] = "/usr/sbin:/usr/bin:/sbin:/bin";
 
-// Copies the environ array, including its terminating null, since libc may
-// free the original once environ points elsewhere. It's a shallow copy that
-// points at the same strings as environ, so those must not be removed from
-// environ via libc before RestoreEnv(): musl, for one, frees the ones its
-// setenv() allocated as they're removed.
+// Shallow copy environ.
+// Keep pointers alive, since some libcs (e.g. musl)
+// will free them if setenv() is used.
 std::vector<char*> CopyEnv() {
   std::vector<char*> env;
   for (char** var = environ; var != nullptr && *var != nullptr; ++var) {
@@ -183,12 +181,10 @@ std::vector<char*> CopyEnv() {
   return env;
 }
 
-// Replaces the whole environment with `env`, from CopyEnv(), by pointing
-// environ at it. POSIX allows this, unlike assigning to environ's slots.
-// environ has to stay valid after the ScopedPrivileges that held `env` is
-// destroyed, so `env` is kept in never-destroyed storage, and the previously
-// restored array is only freed once environ no longer points at it.
+// POSIX allows us to simply restore the saved environment
+// directly into environ.
 void RestoreEnv(std::vector<char*> env) {
+  // Keep restored alive to mirror CopyEnv.
   static std::vector<char*>& restored = *new std::vector<char*>();
   restored.swap(env);
   environ = restored.data();
@@ -199,7 +195,7 @@ void RestoreEnv(std::vector<char*> env) {
 // Gains privileges until the returned instance is destroyed. If this process
 // gained privilege at exec, the environment is also replaced with a minimal
 // trusted one until then. Call this, and destroy the result, while no other
-// threads exist: the environment is shared by every thread, and on Linux,
+// threads exist. The environment is shared by every thread, and on Linux,
 // the destructor only drops capabilities for its own thread, so threads
 // started in between would stay privileged.
 Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
