@@ -1,20 +1,19 @@
 # podcvd
 
-**Note: Currently `podcvd` is very unstable and it's under development. Please
-be aware to use.**
-
-`podcvd` is CLI binary which aims to provide identical interface as `cvd`, but
-creating each Cuttlefish instance group on a container instance not to
-interfere host environment of each other.
+`podcvd` is a containerized Cuttlefish Virtual Device (CVD) management CLI tool
+that runs each Cuttlefish instance group inside an isolated rootless Podman
+container. It provides an identical CLI interface to standard `cvd` while
+preventing inter-group resource conflicts and host environment interference.
 
 ## User setup guide
 
 ### podcvd
 
 <!-- TODO(seungjaeyoo): Modify repository after we have deb at stable -->
-Execute following commands to register apt repository containing
-`cuttlefish-podcvd` package on your machine.
-```
+Execute the following commands to register the APT repository containing the
+`cuttlefish-podcvd` package on your machine:
+
+```bash
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://us-apt.pkg.dev/doc/repo-signing-key.gpg -o /etc/apt/keyrings/android-cuttlefish-artifacts.asc
 sudo chmod a+r /etc/apt/keyrings/android-cuttlefish-artifacts.asc
@@ -25,31 +24,39 @@ echo \
 sudo apt update
 ```
 
-Execute following commands to install `cuttlefish-podcvd` and setup your
-machine.
-```
-sudo apt install cuttlefish-podcvd
+Execute the following commands to install `cuttlefish-podcvd` and configure
+your host environment:
+
+```bash
+sudo apt install -y cuttlefish-podcvd
 podcvd-setup
 ```
 
-Now it's available to execute `podcvd help` or `podcvd create` as you could
-execute `cvd help` or `cvd create` after installing `cuttlefish-base`.
+Once setup is complete, you can run `podcvd` commands (such as `podcvd help` or
+`podcvd create`) just as you would run `cvd` commands after installing
+`cuttlefish-base`.
 
 ### Skill for agents
 
-Podcvd skill for AI agents is located under `skills/podcvd` directory of this
-repository.
+The `podcvd` skill for AI agents is located under the
+[`skills/podcvd`](../../../skills/podcvd) directory of this repository.
 
 ## Development guide
 
-### Manually build podcvd binary
+### Manually build `podcvd` binary
 
-Execute `go build ./cmd/podcvd` from `container/src/podcvd` directory.
+Execute `go build ./cmd/podcvd` from the `container/src/podcvd` directory.
 
-### Manually build cuttlefish-podcvd debian package
+### Manually build `cuttlefish-podcvd` Debian package
 
-[tools/buildutils/cw/README.md#container](/tools/buildutils/cw/README.md#container)
-describes how to build `cuttlefish-podcvd` debian package.
+Refer to
+[`tools/buildutils/cw/README.md#container`](../../../tools/buildutils/cw/README.md#container)
+for instructions on building the `cuttlefish-podcvd` Debian package.
 
-Execute `sudo apt install ./cuttlefish-podcvd_*.deb` to install it on your
-machine.
+Execute the following commands to install the built package and configure your
+host:
+
+```bash
+sudo apt install ./cuttlefish-podcvd_*.deb
+podcvd-setup
+```

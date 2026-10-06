@@ -339,6 +339,7 @@ func (tc *TestContext) CVDCreateWithConfigFile(load LoadArgs) error {
 		tc.TargetBin(),
 		"create",
 		"--config_file=" + configpath,
+		"--base_directory=" + tc.tempdir,
 	}
 	credentialArg := os.Getenv("CREDENTIAL_SOURCE")
 	if credentialArg != "" {
@@ -483,6 +484,11 @@ func (tc *TestContext) TearDown() {
 				"cuttlefish_runtime/logcat",
 				"cuttlefish_runtime/*.log",
 				"fetch.log",
+				// `cvd create --config_file=` cases have an extra directory layer
+				"home/cuttlefish_runtime/cuttlefish_config.json",
+				"home/cuttlefish_runtime/logcat",
+				"home/cuttlefish_runtime/*.log",
+				"artifacts/fetch.log",
 			}
 			for _, pattern := range patterns {
 				matches, err := filepath.Glob(path.Join(tc.tempdir, pattern))
@@ -498,18 +504,24 @@ func (tc *TestContext) TearDown() {
 				}
 			}
 
-			matches, err := filepath.Glob(path.Join(tc.tempdir, "cuttlefish/instances/*"))
-			if err == nil {
-				for _, instancedir := range matches {
-					instance := filepath.Base(instancedir)
+			instancePatterns := [...]string{
+				"cuttlefish/instances/*",
+				"home/cuttlefish/instances/*",
+			}
+			for _, pattern := range instancePatterns {
+				matches, err := filepath.Glob(path.Join(tc.tempdir, pattern))
+				if err == nil {
+					for _, instancedir := range matches {
+						instance := filepath.Base(instancedir)
 
-					outinstancedir := path.Join(testoutdir, fmt.Sprintf("instance_%s", instance))
-					err := os.MkdirAll(outinstancedir, os.ModePerm)
-					if err == nil {
-						logdir := path.Join(instancedir, "logs")
-						_, err := runCmdWithContextEnv(context.TODO(), []string{"cp", "-r", "--dereference", logdir, outinstancedir}, map[string]string{})
-						if err != nil {
-							log.Printf("failed to copy %s to %s: %w", logdir, outinstancedir, err)
+						outinstancedir := path.Join(testoutdir, fmt.Sprintf("instance_%s", instance))
+						err := os.MkdirAll(outinstancedir, os.ModePerm)
+						if err == nil {
+							logdir := path.Join(instancedir, "logs")
+							_, err := runCmdWithContextEnv(context.TODO(), []string{"cp", "-r", "--dereference", logdir, outinstancedir}, map[string]string{})
+							if err != nil {
+								log.Printf("failed to copy %s to %s: %w", logdir, outinstancedir, err)
+							}
 						}
 					}
 				}

@@ -56,6 +56,7 @@ cf_cc_library(
     deps = [
         ":flag_parser",
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],

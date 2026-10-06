@@ -40,7 +40,7 @@ InterruptibleTerminal::InterruptibleTerminal()
 
 // only up to one thread can call this function
 Result<std::string> InterruptibleTerminal::ReadLine() {
-  SharedFD stdin_fd = SharedFD::Dup(0);
+  SharedFD stdin_fd = CF_EXPECT(Fd::Dup(0));
   {
     std::lock_guard lock(terminal_mutex_);
     CF_EXPECT(interrupted_ == false, "Interrupted");
