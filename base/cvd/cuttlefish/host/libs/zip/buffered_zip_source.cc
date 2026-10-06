@@ -95,7 +95,7 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
       }
     }
     if (buffer_remaining_ > 0) {
-      uint64_t to_read = std::min(len, buffer_remaining_);
+      size_t to_read = std::min<size_t>(len, buffer_remaining_);
       memcpy(data, &buffer_[offset_in_buffer_], to_read);
       buffer_remaining_ -= to_read;
       offset_in_buffer_ += to_read;
