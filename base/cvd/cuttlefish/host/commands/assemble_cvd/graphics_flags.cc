@@ -878,8 +878,8 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
 }
 
 Result<GpuMode> SelectGpuMode(
-    const GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
-    const std::string& gpu_context_types,
+    const GpuMode requested_gpu_mode, VmmMode vmm,
+    const GuestConfig& guest_config, const std::string& gpu_context_types,
     const gfxstream::proto::GraphicsAvailability& graphics_availability) {
 #ifdef __APPLE__
 
@@ -889,13 +889,13 @@ Result<GpuMode> SelectGpuMode(
   (void)graphics_availability;
 
   CF_EXPECT(given_gpu_mode == GpuMode::Auto ||
-            given_gpu_mode == GpuMode::GuestSwiftshader ||
-            given_gpu_mode == GpuMode::DrmVirgl ||
-            given_gpu_mode == GpuMode::None);
-  if (given_gpu_mode == GpuMode::Auto) {
+            requested_gpu_mode == GpuMode::GuestSwiftshader ||
+            requested_gpu_mode == GpuMode::DrmVirgl ||
+            requested_gpu_mode == GpuMode::None);
+  if (requested_gpu_mode == GpuMode::Auto) {
     return GpuMode::GuestSwiftshader;
   }
-  return given_gpu_mode;
+  return requested_gpu_mode;
 
 #else
 
@@ -905,17 +905,17 @@ Result<GpuMode> SelectGpuMode(
       .host_info = GetHostInfo(),
       .graphics_availability = graphics_availability,
   };
-  if (given_gpu_mode != GpuMode::Auto) {
+  if (requested_gpu_mode != GpuMode::Auto) {
     // User explicitly supplied a mode. Double check the requirements but only
     // log warnings and respect their choice:
-    if (!CF_EXPECT(GpuModeRequirementsMet(common, given_gpu_mode))) {
+    if (!CF_EXPECT(GpuModeRequirementsMet(common, requested_gpu_mode))) {
       LOG(ERROR)
-          << "--gpu_mode=" << GpuModeString(given_gpu_mode)
+          << "--gpu_mode=" << GpuModeString(requested_gpu_mode)
           << " was requested but the prerequisites were not detected "
              "so the device may not function correctly. Please consider "
              "switching to --gpu_mode=auto or --gpu_mode=guest_swiftshader.";
     }
-    return given_gpu_mode;
+    return requested_gpu_mode;
   }
 
   const std::vector<GpuMode> gpu_mode_candidates =

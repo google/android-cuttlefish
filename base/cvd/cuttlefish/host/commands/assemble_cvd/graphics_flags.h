@@ -33,7 +33,7 @@ gfxstream::proto::GraphicsAvailability
 GetGraphicsAvailabilityWithSubprocessCheck();
 
 Result<GpuMode> SelectGpuMode(
-    GpuMode given_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
+    GpuMode requested_gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
     const std::string& gpu_context_types,
     const gfxstream::proto::GraphicsAvailability& graphics_availability);
 
