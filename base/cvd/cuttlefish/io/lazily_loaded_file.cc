@@ -156,7 +156,8 @@ Result<size_t> LazilyLoadedFile::Impl::Read(char* data, size_t size) {
   // In terms of IO performance, this aims to minimize round trips over
   // minimizing bandwidth usage.
   if (end_of_present_data.has_value()) {
-    size_t read_request = std::min(*end_of_present_data - seek_pos_, size);
+    size_t read_request =
+        std::min<size_t>(*end_of_present_data - seek_pos_, size);
     size_t data_read = CF_EXPECT(contents_file_.Read(data, read_request));
     VLOG(1) << "Read " << data_read << " from local storage, seek pos was "
             << seek_pos_;

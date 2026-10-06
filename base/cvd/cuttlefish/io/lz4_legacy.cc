@@ -70,7 +70,7 @@ class Lz4LegacyReaderImpl : public Reader {
       }
       decompressed_.resize(lz4_length);
     }
-    uint64_t len = std::min(count, decompressed_.size());
+    uint64_t len = std::min<uint64_t>(count, decompressed_.size());
     memcpy(buf, decompressed_.data(), std::min(count, len));
     decompressed_.erase(decompressed_.begin(), decompressed_.begin() + len);
     return len;
