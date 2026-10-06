@@ -38,6 +38,11 @@ Result<void> CopyImpl(std::string_view from, std::string_view to) {
   CF_EXPECT(fd_to.Truncate(farthest_seek));
 
   off_t offset = 0;
+#if !defined(SEEK_HOLE) || !defined(SEEK_DATA)
+  CF_EXPECTF(fd_to.SendFile(fd_from, &offset, farthest_seek),
+             "SendFile failed: {}", fd_to.StrError());
+  return {};
+#else
   while (offset < farthest_seek) {
     off_t new_offset = fd_from.LSeek(offset, SEEK_HOLE);
     if (new_offset == -1) {
@@ -65,6 +70,7 @@ Result<void> CopyImpl(std::string_view from, std::string_view to) {
     }
   }
   return {};
+#endif
 }
 
 }  // namespace
