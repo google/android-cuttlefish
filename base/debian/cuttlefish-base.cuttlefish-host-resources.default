@@ -36,10 +36,18 @@
 # traffic from fd00:cf:20::/44, which covers all the defaults below, is NATed
 # (NAT66) when it leaves the host. Prefixes outside that range are not NATed,
 # so they must be routed to this host.
+# The defaults use fixed Global IDs (the fd00:cf:2X::/48 prefixes) instead of
+# the pseudo-random ones that RFC 4193 section 3.2 asks for, so that addresses
+# are the same on every host and easy to recognize in tests and documentation.
+# The guest networks are private to this host and NATed, so they are not
+# routed to other sites. If they overlap a ULA prefix used on your network,
+# set a random prefix below (and ipv6_nat_source to match).
 
 # IPv6 prefixes allocated to the managed bridges. Require
 # 'bridge_interface' not to be set. The host sends router advertisements on
-# the bridges, and guests configure their addresses with SLAAC.
+# the bridges, and guests configure their addresses with SLAAC, which needs a
+# prefix length of 64. dnsmasq does not send router advertisements for other
+# lengths.
 #wifi_ipv6_prefix=fd00:cf:22::
 #wifi_ipv6_prefix_length=64
 #ethernet_ipv6_prefix=fd00:cf:24::
@@ -51,6 +59,33 @@
 # on cvd-mtap-XX: the mobile network gets its IPv6 address from the modem.
 #mobile_ipv6_prefix_base=fd00:cf:21
 #wifiap_ipv6_prefix_base=fd00:cf:23
+
+# Guest IPv6 source prefix that is NATed (NAT66) when it leaves the host.
+# Change it together with the prefixes above. In routed mode (below) the
+# default is the routed /48.
+#ipv6_nat_source=fd00:cf:20::/44
+
+# Routed mode. Set this to a global IPv6 /48 that the upstream network routes
+# to this host (for example from a lab router or an ISP prefix delegation) to
+# give every guest network its own /64 from it, with no NAT66. Guests are then
+# reachable from outside, and servers see each guest's own address. Empty
+# (the default) means private mode: the ULA prefixes above plus NAT66. The
+# value must be written as "a:b:c::/48" (or "a:b::/48", "a::/48"); any other
+# value is rejected with a message and private mode is used. When set, the
+# *_ipv6_prefix and *_ipv6_prefix_base settings above are ignored, and with
+# P = the first three hextets and NN = the instance number as two hex digits:
+#   cvd-ebr        P:24::/64    host P:24::1, guests use SLAAC
+#   cvd-wbr        P:22::/64    host P:22::1, guests use SLAAC
+#   cvd-mtap-NN    P:21NN::/64  host ::1, guest ::2 (from the modem simulator)
+#   cvd-wifiap-NN  P:23NN::/64  host ::1, OpenWrt WAN ::2
+#   OpenWrt LAN    P:25NN::/64  routed by the host via P:23NN::2
+# A prefix smaller than a /48 (for example the /96 a cloud VM network
+# interface may get) cannot be used: SLAAC needs a /64 per network.
+#ipv6_routed_prefix=
+
+# NAT66 of guest IPv6 traffic, 1 (on) or 0 (off). Defaults to 1 in private
+# mode and 0 in routed mode.
+#ipv6_nat=
 
 # allocate_static_resources creates resources like tap devices
 # statically for instance networking at boot.

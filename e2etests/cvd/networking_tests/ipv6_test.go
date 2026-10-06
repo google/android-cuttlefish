@@ -31,8 +31,8 @@ import (
 
 // Image capabilities. The IPv6 host setup of cuttlefish-host-resources
 // (static mode) works with any image, but some guest adapters only get IPv6
-// when the image carries the matching AOSP change. The Bazel targets in
-// BUILD.bazel set these flags; the test never probes the image to decide
+// when the image carries the matching AOSP change. Pass these flags with
+// --test_arg (see BUILD.bazel); the test never probes the image to decide
 // what to check.
 var (
 	imageRilIPv6 = flag.Bool("image_ril_ipv6", false,
@@ -41,7 +41,7 @@ var (
 	imageOpenwrtIPv6 = flag.Bool("image_openwrt_ipv6", false,
 		"The image connects Wi-Fi at boot and its OpenWrt build advertises the "+
 			"fd00:cf:25::/48 LAN prefix with NAT66 on the WAN side "+
-			"(docs/networking/openwrt_0_default_config_ipv6.patch).")
+			"(docs/networking/openwrt_ipv6_static.md).")
 	imageManagesEth1 = flag.Bool("image_manages_eth1", false,
 		"Android runs a network (IpClient) on eth1. Phone images do not; there the "+
 			"test only checks the kernel SLAAC state of eth1.")
@@ -167,10 +167,9 @@ func guestAdapters(d deviceInstance) []guestAdapter {
 		},
 	}
 	if *imageOpenwrtIPv6 {
+		// wlan0 is an OpenWrt LAN client in both Wi-Fi tap modes; the tap mode
+		// only selects the OpenWrt WAN segment (wifiHost).
 		lan := netip.MustParsePrefix(openwrtLanPrefix)
-		if d.useBridgedWifiTap {
-			lan = netip.MustParsePrefix(wifiBridgePrefix)
-		}
 		adapters = append(adapters, guestAdapter{
 			iface:          "wlan0",
 			ipv6:           true,
@@ -358,6 +357,16 @@ func waitForIPv4(c *e2etests.TestContext, a guestAdapter) (string, error) {
 	return addr + "; " + route, nil
 }
 
+// skipUnderPodcvd skips t under podcvd: the static-mode bridges and taps and
+// cuttlefish_runtime/cuttlefish_config.json live inside the podcvd container,
+// not on the host where the test runs.
+func skipUnderPodcvd(t *testing.T) {
+	t.Helper()
+	if os.Getenv("USE_PODCVD") == "true" {
+		t.Skip("skipping: IPv6 host checks need the static-mode host setup outside a podcvd container")
+	}
+}
+
 // launchDevice fetches and launches the phone image used by the IPv6 tests.
 func launchDevice(t *testing.T, c *e2etests.TestContext) deviceInstance {
 	t.Log("Fetching Cuttlefish artifacts...")
@@ -418,10 +427,11 @@ func requireHostStaticIPv6(t *testing.T) {
 //     --image_ril_ipv6, also the RIL address fd00:cf:21:<i>::2, a RIL (not RA)
 //     default route and IPv6 DNS in LinkProperties.
 //   - wlan0 (--image_openwrt_ipv6 only): SLAAC address in the OpenWrt LAN
-//     prefix fd00:cf:25::/48 (fd00:cf:22::/64 with a bridged Wi-Fi tap), an
+//     prefix fd00:cf:25::/48 (in both Wi-Fi tap modes), an
 //     RA default route, IPv6 DNS in LinkProperties and an IPv4 address.
 //   - No guest address is in the 2001:db8::/32 documentation range.
 func TestIPv6Provisioning(t *testing.T) {
+	skipUnderPodcvd(t)
 	c := e2etests.TestContext{}
 	c.SetUp(t)
 	defer c.TearDown()
@@ -526,10 +536,11 @@ func checkHostNat66(t *testing.T, c *e2etests.TestContext, prefix netip.Prefix) 
 }
 
 // TestIPv6Nat66Egress checks off-link IPv6 from each Android network through
-// the host NAT66. It needs an IPv6 upstream on the host, so its Bazel target
-// carries the requires_ipv6_egress tag. It checks the adapters that the image
-// capability flags enable and fails when none is enabled.
+// the host NAT66. It needs an IPv6 upstream on the host, so the Bazel target
+// skips it by default (-test.skip in BUILD.bazel). It checks the adapters that
+// the image capability flags enable and fails when none is enabled.
 func TestIPv6Nat66Egress(t *testing.T) {
+	skipUnderPodcvd(t)
 	requireHostStaticIPv6(t)
 	c := e2etests.TestContext{}
 	c.SetUp(t)

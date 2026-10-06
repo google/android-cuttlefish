@@ -1,8 +1,11 @@
 load("@rules_go//go:def.bzl", "go_test")
 
 _SRCS = [
+    "ipv6_helpers_test.go",
     "ipv6_test.go",
     "main_test.go",
+    "routed_echo_helpers_test.go",
+    "routed_echo_test.go",
 ]
 
 _TAGS = [
@@ -18,6 +21,8 @@ _TAGS = [
 # 2001:db8::/32 addresses. Pass --test_arg=--image_ril_ipv6,
 # --test_arg=--image_openwrt_ipv6, --test_arg=--image_manages_eth1, and
 # --test_arg=-test.skip= to also run RIL/OpenWrt IPv6 and NAT66 egress checks.
+# TestIPv6RoutedEcho (IPv6 routed mode) is skipped unless
+# --test_arg=--routed_echo_url=<url> is given; see routed_echo_test.go.
 go_test(
     name = "networking_tests",
     size = "large",
@@ -28,5 +33,6 @@ go_test(
     tags = _TAGS,
     deps = [
         "//cvd/common",
+        "@com_github_google_go_cmp//cmp",
     ],
 )

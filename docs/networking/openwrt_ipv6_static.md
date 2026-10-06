@@ -1,8 +1,8 @@
 # OpenWrt IPv6 in static networking mode
 
-Status: companion AOSP change to
-[`platform/external/openwrt-prebuilts`](https://android.googlesource.com/platform/external/openwrt-prebuilts/+/main/shared/config/).
-Bug: b/549899406.
+The OpenWrt side of this configuration lives in
+[`platform/external/openwrt-prebuilts`](https://android.googlesource.com/platform/external/openwrt-prebuilts/+/main/shared/config/)
+(`shared/config/{network,dhcp,firewall}`).
 
 ## Topology
 
@@ -45,9 +45,10 @@ configuration (`wifi0` `192.168.99.1/25`) lives in `shared/config/network`;
 the IPv6 LAN configuration sits next to it. This needs no new host arguments,
 no new shell logic, and works for every instance number and both Wi-Fi modes.
 
-The earlier runtime approach in `openwrt_control_server` (a root shell script
-sent over LuCI RPC after boot, which flushed nftables and added accept-all
-rules) is removed.
+This applies to the default (private) mode. In IPv6 routed mode the LAN
+prefix is a per-instance global `/64` with no NAT66, so the host passes
+`wan_ip6addr`, `wan_ip6gw` and `lan_ip6prefix` on `/proc/cmdline`; see
+[ipv6_routed_mode.md](ipv6_routed_mode.md).
 
 ## Compatibility
 
@@ -58,11 +59,10 @@ rules) is removed.
   nowhere (OpenWrt answers with ICMPv6 unreachable). Android does not count a
   ULA-only address as IPv6 provisioning (`LinkAddress.isGlobalPreferred()`
   excludes ULA), so IPv4 stays the provisioned family. IPv4 is unaffected.
-- cvdalloc (dynamic) mode: the dynamic-mode patch to `0_default_config`
-  (`wan_ip6addr`, `wifi0_ip6addr`) adds a routed prefix on `wifi0`. With this
-  change also present, `masq6` NATs that traffic too (it still works, but is
-  no longer routed end to end). If both land, the dynamic patch should set
-  `firewall.@zone[wan].masq6=0` when `wifi0_ip6addr` is given.
+- cvdalloc (dynamic) mode: not covered by this configuration. A routed
+  (non-NATed) guest prefix would require `firewall.@zone[wan].masq6=0`.
+  Static mode supports a routed prefix: see
+  [ipv6_routed_mode.md](ipv6_routed_mode.md).
 
 ## Local test (no sudo)
 

@@ -241,6 +241,27 @@ cf_cc_test(
 )
 
 cf_cc_test(
+    name = "service_ipv6_test",
+    srcs = [
+        "unittest/iccfile.h",
+        "unittest/service_ipv6_test.cpp",
+    ],
+    clang_format_enabled = False,
+    depend_on_what_you_use_enabled = False,
+    include_cleaner_enabled = False,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/commands/modem_simulator:channel_monitor",
+        "//cuttlefish/host/commands/modem_simulator:client",
+        "//cuttlefish/host/commands/modem_simulator:device_config",
+        "//cuttlefish/host/commands/modem_simulator:modem_simulator_class",
+        "//cuttlefish/host/commands/modem_simulator:modem_simulator_lib",
+        "//cuttlefish/host/commands/modem_simulator:nvram_config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+    ],
+)
+
+cf_cc_test(
     name = "service_test",
     srcs = [
         "unittest/iccfile.h",

@@ -17,7 +17,11 @@ load("@rules_go//go:def.bzl", "go_test")
 go_test(
     name = "static_resources_init_test",
     size = "large",
-    srcs = ["main_test.go"],
+    srcs = [
+        "ipv6_test.go",
+        "main_test.go",
+        "routed_test.go",
+    ],
     data = [
         "@cuttlefish_debian//:cuttlefish-base.cuttlefish-host-resources.init",
     ],
@@ -34,5 +38,6 @@ go_test(
         "//host_tests/common",
         "@com_github_google_go_cmp//cmp",
         "@com_github_google_go_cmp//cmp/cmpopts",
+        "@rules_go//go/runfiles",
     ],
 )

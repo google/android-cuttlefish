@@ -51,16 +51,81 @@ ethernet_ipv6_prefix=${ethernet_ipv6_prefix:-fd00:cf:24::}
 ethernet_ipv6_prefix_length=${ethernet_ipv6_prefix_length:-64}
 mobile_ipv6_prefix_base=${mobile_ipv6_prefix_base:-fd00:cf:21}
 wifiap_ipv6_prefix_base=${wifiap_ipv6_prefix_base:-fd00:cf:23}
+ipv6_routed_prefix=${ipv6_routed_prefix:-}
 allocate_static_resources=${allocate_static_resources:-1}
 
 readonly CUTTLEFISH_RUN_DIR="/run/cuttlefish"
 # Present while IPv6 state set up by start() exists, so stop() removes it
 # even if IPv6 was disabled on the host in between.
 readonly CUTTLEFISH_IPV6_MARKER="${CUTTLEFISH_RUN_DIR}/ipv6-enabled"
+# Routes added by start_ipv6 in routed mode, one "<prefix> <device>" per line,
+# so stop_ipv6 removes them even if the configuration changed in between.
+readonly CUTTLEFISH_IPV6_ROUTES="${CUTTLEFISH_RUN_DIR}/ipv6-routes"
+
+# Prints the first three hextets ("a:b:c") of a /48 prefix written as
+# "a:b:c::/48", "a:b::/48" or "a::/48", in lower case. Fails for any other
+# value, including prefixes that are not /48 and /48s with bits set after the
+# first three hextets.
+# $1 = prefix
+routed_prefix_base() {
+    case "${1}" in
+        *::/48) ;;
+        *) return 1 ;;
+    esac
+    routed_head="${1%::/48}"
+    if ! echo "${routed_head}" | grep -Eq '^[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){0,2}$'; then
+        return 1
+    fi
+    case "${routed_head}" in
+        *:*:*) ;;
+        *:*) routed_head="${routed_head}:0" ;;
+        *) routed_head="${routed_head}:0:0" ;;
+    esac
+    echo "${routed_head}" | tr 'A-F' 'a-f'
+}
+
+# Routed mode: the guest networks get /64s from a /48 routed to this host,
+# with no NAT66 (see ipv6_routed_prefix in /etc/default/cuttlefish-host-resources).
+# An invalid value falls back to private mode.
+ipv6_routed_base=""
+if [ -n "${ipv6_routed_prefix}" ]; then
+    if ipv6_routed_base="$(routed_prefix_base "${ipv6_routed_prefix}")"; then
+        echo "IPv6 routed mode: guest networks use ${ipv6_routed_base}::/48"
+    else
+        ipv6_routed_base=""
+        echo "invalid ipv6_routed_prefix '${ipv6_routed_prefix}' (want a /48 such as 2001:db8:cf00::/48), using private IPv6 addresses" >&2
+    fi
+fi
+
+if [ -n "${ipv6_routed_base}" ]; then
+    ipv6_nat_default=0
+    # The *_ipv6_prefix settings are ignored in routed mode.
+    ethernet_ipv6_prefix="${ipv6_routed_base}:24::"
+    ethernet_ipv6_prefix_length=64
+    wifi_ipv6_prefix="${ipv6_routed_base}:22::"
+    wifi_ipv6_prefix_length=64
+else
+    ipv6_nat_default=1
+fi
+case "${ipv6_nat:-}" in
+    0|1) ;;
+    "") ipv6_nat="${ipv6_nat_default}" ;;
+    *)
+        echo "invalid ipv6_nat '${ipv6_nat}' (want 0 or 1), using ${ipv6_nat_default}" >&2
+        ipv6_nat="${ipv6_nat_default}"
+        ;;
+esac
+
 # Guest IPv6 source addresses that are NATed (NAT66) when they leave the
-# host. fd00:cf:20::/44 covers fd00:cf:20:: to fd00:cf:2f:ffff::, so every
-# default prefix above, and the OpenWrt LAN prefix fd00:cf:25::/48.
-readonly CUTTLEFISH_IPV6_NAT_SOURCE="fd00:cf:20::/44"
+# host, if ipv6_nat is 1. fd00:cf:20::/44 covers fd00:cf:20:: to
+# fd00:cf:2f:ffff::, so every default prefix above. In routed mode the
+# default is the routed /48.
+if [ -n "${ipv6_routed_base}" ]; then
+    ipv6_nat_source=${ipv6_nat_source:-${ipv6_routed_base}::/48}
+else
+    ipv6_nat_source=${ipv6_nat_source:-fd00:cf:20::/44}
+fi
+readonly CUTTLEFISH_IPV6_NAT_SOURCE="${ipv6_nat_source}"
 
 if [ -z ${bridge_interface} ]; then
   create_bridges=1
@@ -134,10 +199,10 @@ start_ra_dnsmasq() {
 stop_ra_dnsmasq() {
     if [ -f /var/run/cuttlefish-dnsmasq-ra-"${1}".pid ]; then
         kill "$(cat /var/run/cuttlefish-dnsmasq-ra-"${1}".pid)"
-        rm /var/run/cuttlefish-dnsmasq-ra-"${1}".pid
+        rm -f /var/run/cuttlefish-dnsmasq-ra-"${1}".pid
     fi
     if [ -f /var/run/cuttlefish-dnsmasq-ra-"${1}".leases ]; then
-        rm /var/run/cuttlefish-dnsmasq-ra-"${1}".leases
+        rm -f /var/run/cuttlefish-dnsmasq-ra-"${1}".leases
     fi
 }
 
@@ -195,11 +260,15 @@ delete_nftables() {
 # change and IPv6 can be skipped or removed on its own.
 setup_ipv6_nftables() {
     # NAT66 of guest traffic that leaves through a non-cuttlefish interface.
-    # Traffic between two cuttlefish interfaces keeps its addresses.
+    # Traffic between two cuttlefish interfaces keeps its addresses. The table
+    # exists also without NAT66 (ipv6_nat=0, the routed mode default), so
+    # stop removes the same tables in both modes.
     nft add table ip6 cuttlefish_nat6
     nft add chain ip6 cuttlefish_nat6 postrouting '{ type nat hook postrouting priority 100 ; }'
-    nft add rule ip6 cuttlefish_nat6 postrouting \
-      "ip6 saddr ${CUTTLEFISH_IPV6_NAT_SOURCE} oifname != \"cvd-*\" counter masquerade"
+    if [ "${ipv6_nat}" = "1" ]; then
+        nft add rule ip6 cuttlefish_nat6 postrouting \
+          "ip6 saddr ${CUTTLEFISH_IPV6_NAT_SOURCE} oifname != \"cvd-*\" counter masquerade"
+    fi
 
     # RA guard: drop router advertisements and redirects sent by guests, so a
     # guest cannot change the routes of other guests on the same bridge, or of
@@ -410,10 +479,31 @@ ipv6_enabled() {
 
 # Prints the per-instance /64 prefix of a point-to-point tap:
 # "<base>:<instance in hex>::". Example: fd00:cf:21 and 10 give fd00:cf:21:a::
+# The base must be exactly three hextets ("a:b:c", no "::"), so the instance
+# number is the fourth hextet and every instance gets its own /64.
 # $1 = prefix base ("a:b:c")
 # $2 = instance number
 instance_ipv6_prefix() {
+    if ! echo "${1}" | grep -Eq '^[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){2}$'; then
+        echo "invalid IPv6 prefix base '${1}' (want three hextets, e.g. fd00:cf:21)" >&2
+        return 1
+    fi
     printf '%s:%x::' "${1}" "${2}"
+}
+
+# Prints the /64 prefix of a point-to-point tap or routed network of an
+# instance. Private mode: instance_ipv6_prefix of the private base. Routed
+# mode: "<routed base>:<network><instance as 2 hex digits>::", for example
+# 2001:db8:cf00:210a:: for network 21 and instance 10.
+# $1 = private prefix base ("a:b:c")
+# $2 = routed network number (21 mobile, 23 OpenWrt WAN, 25 OpenWrt LAN)
+# $3 = instance number (1 to 128)
+tap_ipv6_prefix() {
+    if [ -n "${ipv6_routed_base}" ]; then
+        printf '%s:%s%02x::' "${ipv6_routed_base}" "${2}" "${3}"
+    else
+        instance_ipv6_prefix "${1}" "${3}"
+    fi
 }
 
 # Set up IPv6 on the interfaces created for IPv4: gateway address ::1 on each
@@ -421,6 +511,12 @@ instance_ipv6_prefix() {
 # Runs after all IPv4 setup, so a failure here cannot affect IPv4. Applies to
 # the static resources only; cvdalloc-managed interfaces are not touched.
 start_ipv6() {
+    # The marker is still present when an earlier start was not followed by
+    # stop_ipv6, for example when the package was replaced by a version that
+    # does not set up IPv6 and then installed again. Remove the leftovers
+    # first, so router advertisement daemons and nftables rules are not
+    # duplicated.
+    stop_ipv6
     if [ "${allocate_static_resources}" != "1" ]; then
         return
     fi
@@ -437,17 +533,28 @@ start_ipv6() {
 
     for i in $(seq "${num_cvd_accounts}"); do
         if [ "$i" -lt 129 ]; then
-            # Mobile Network: fd00:cf:21:<i>::/64 on cvd-mtap-XX. No RA: the
-            # guest gets its IPv6 address from the modem simulator (RIL).
+            # Mobile Network: fd00:cf:21:<i>::/64 (routed: P:21<i>::/64) on
+            # cvd-mtap-XX. No RA: the guest gets its IPv6 address from the
+            # modem simulator (RIL).
             tap="$(printf cvd-mtap-%02d "$i")"
-            prefix="$(instance_ipv6_prefix "${mobile_ipv6_prefix_base}" "$i")"
-            ip -6 addr add "${prefix}1/64" dev "${tap}"
+            if prefix="$(tap_ipv6_prefix "${mobile_ipv6_prefix_base}" 21 "$i")"; then
+                ip -6 addr add "${prefix}1/64" dev "${tap}"
+            fi
 
-            # Wireless Network (OpenWrt WAN): fd00:cf:23:<i>::/64 on cvd-wifiap-XX
+            # Wireless Network (OpenWrt WAN): fd00:cf:23:<i>::/64 (routed:
+            # P:23<i>::/64) on cvd-wifiap-XX
             tap="$(printf cvd-wifiap-%02d "$i")"
-            prefix="$(instance_ipv6_prefix "${wifiap_ipv6_prefix_base}" "$i")"
-            ip -6 addr add "${prefix}1/64" dev "${tap}"
-            start_ra_dnsmasq "${tap}" "${prefix}" 64
+            if prefix="$(tap_ipv6_prefix "${wifiap_ipv6_prefix_base}" 23 "$i")"; then
+                ip -6 addr add "${prefix}1/64" dev "${tap}"
+                start_ra_dnsmasq "${tap}" "${prefix}" 64
+                if [ -n "${ipv6_routed_base}" ]; then
+                    # OpenWrt Wi-Fi LAN P:25<i>::/64, routed through the
+                    # OpenWrt WAN address P:23<i>::2.
+                    lan_prefix="$(tap_ipv6_prefix "" 25 "$i")/64"
+                    ip -6 route add "${lan_prefix}" via "${prefix}2" dev "${tap}" &&
+                      echo "${lan_prefix} ${tap}" >> "${CUTTLEFISH_IPV6_ROUTES}"
+                fi
+            fi
         fi
     done
 
@@ -458,6 +565,12 @@ start_ipv6() {
 stop_ipv6() {
     if [ -f "${CUTTLEFISH_IPV6_MARKER}" ]; then
         delete_ipv6_nftables
+        if [ -f "${CUTTLEFISH_IPV6_ROUTES}" ]; then
+            while read -r route_prefix route_dev; do
+                ip -6 route del "${route_prefix}" dev "${route_dev}"
+            done < "${CUTTLEFISH_IPV6_ROUTES}"
+            rm -f "${CUTTLEFISH_IPV6_ROUTES}"
+        fi
         for i in $(seq "${num_cvd_accounts}"); do
             if [ "$i" -lt 129 ]; then
                 stop_ra_dnsmasq "$(printf cvd-wifiap-%02d "$i")"

@@ -138,8 +138,9 @@ class NetConfig {
   }
 };
 
-// Design doc "Cuttlefish IPv6 enablement" §4.3.2: the RIL gives the guest
-// Google Public DNS over IPv6. It is reached through the host's NAT66.
+// The RIL gives the guest Google Public DNS over IPv6, matching the IPv4
+// default (8.8.8.8). It is reached through the host's NAT66, or with no NAT in
+// the host's IPv6 routed mode.
 constexpr char kMobileIpv6Dns[] = "2001:4860:4860::8888";
 
 uint8_t Ipv6PrefixLength(const in6_addr& netmask) {
