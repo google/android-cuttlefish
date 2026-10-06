@@ -24,9 +24,10 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 
 // Messages are always 128 bytes.
 static constexpr size_t kMessageSize = 128;
@@ -39,7 +40,8 @@ int main(int argc, char** argv) {
   // Connect to WebRTC
   int fd = std::atoi(argv[1]);
   LOG(INFO) << "Connecting to WebRTC server...";
-  cuttlefish::SharedFD webrtc_socket = cuttlefish::SharedFD::Dup(fd);
+  cuttlefish::SharedFD webrtc_socket =
+      cuttlefish::Fd::Dup(fd).value_or(cuttlefish::Fd());
   close(fd);
   if (webrtc_socket->IsOpen()) {
     LOG(INFO) << "Connected";

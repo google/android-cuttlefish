@@ -363,9 +363,10 @@ void LogToStderrAndFiles(const std::vector<std::string>& files,
                          MetadataLevel stderr_level,
                          std::optional<LogSeverity> stderr_severity) {
   std::vector<SeverityTarget> log_severities = SeverityTargetsForFiles(files);
+  SharedFD std_err_fd = Fd::Dup(2).value_or(Fd());
   log_severities.push_back(
       SeverityTarget{stderr_severity ? *stderr_severity : ConsoleSeverity(),
-                     SharedFD::Dup(/* stderr */ 2), stderr_level});
+                     std_err_fd, stderr_level});
   SetLoggers(log_severities, log_prefix);
 }
 
