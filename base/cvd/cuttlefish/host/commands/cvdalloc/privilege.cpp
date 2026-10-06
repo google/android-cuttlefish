@@ -31,9 +31,7 @@
 #include <sys/xattr.h>
 #endif
 
-#include <map>
 #include <optional>
-#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -171,36 +169,39 @@ namespace {
 
 constexpr char kTrustedPath[] = "/usr/sbin:/usr/bin:/sbin:/bin";
 
-std::map<std::string, std::string> CopyEnv() {
-  std::vector<std::string> names;
+// Copies the environ array, including its terminating null, since libc may
+// free the original once environ points elsewhere. It's a shallow copy that
+// points at the same strings as environ, so those must not be removed from
+// environ via libc before RestoreEnv(): musl, for one, frees the ones its
+// setenv() allocated as they're removed.
+std::vector<char*> CopyEnv() {
+  std::vector<char*> env;
   for (char** var = environ; var != nullptr && *var != nullptr; ++var) {
-    std::string_view entry(*var);
-    names.emplace_back(entry.substr(0, entry.find('=')));
+    env.push_back(*var);
   }
-  std::map<std::string, std::string> env;
-  for (const std::string& name : names) {
-    const char* value = getenv(name.c_str());
-    if (value != nullptr) {
-      env.emplace(name, value);
-    }
-  }
+  env.push_back(nullptr);
   return env;
 }
 
-void RestoreEnv(const std::map<std::string, std::string>& env) {
-  for (const auto& [name, value] : CopyEnv()) {
-    unsetenv(name.c_str());
-  }
-  for (const auto& [name, value] : env) {
-    setenv(name.c_str(), value.c_str(), /*overwrite=*/1);
-  }
+// Replaces the whole environment with `env`, from CopyEnv(), by pointing
+// environ at it. POSIX allows this, unlike assigning to environ's slots.
+// environ has to stay valid after the ScopedPrivileges that held `env` is
+// destroyed, so `env` is kept in never-destroyed storage, and the previously
+// restored array is only freed once environ no longer points at it.
+void RestoreEnv(std::vector<char*> env) {
+  static std::vector<char*>& restored = *new std::vector<char*>();
+  restored.swap(env);
+  environ = restored.data();
 }
 
 }  // namespace
 
 // Gains privileges until the returned instance is destroyed. If this process
 // gained privilege at exec, the environment is also replaced with a minimal
-// trusted one until then.
+// trusted one until then. Call this, and destroy the result, while no other
+// threads exist: the environment is shared by every thread, and on Linux,
+// the destructor only drops capabilities for its own thread, so threads
+// started in between would stay privileged.
 Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
   // Constructed first so that a failure below drops any partially raised
   // capabilities and restores the environment.
@@ -215,8 +216,10 @@ Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
 #endif
   if (should_sanitize_env) {
     privileges.saved_env_ = CopyEnv();
-    CF_EXPECTF(clearenv() == 0, "Couldn't clear environment: {}",
-               StrError(errno));
+    // Swap the environment out rather than clearenv() it, so that libc doesn't
+    // free the strings saved_env_ points at (see CopyEnv()).
+    static char* empty_env[] = {nullptr};
+    environ = empty_env;
     CF_EXPECTF(setenv("PATH", kTrustedPath, /*overwrite=*/1) == 0,
                "Couldn't set PATH: {}", StrError(errno));
   }
@@ -241,7 +244,7 @@ ScopedPrivileges::~ScopedPrivileges() {
     return;
   }
   if (saved_env_.has_value()) {
-    RestoreEnv(*saved_env_);
+    RestoreEnv(std::move(*saved_env_));
   }
 }
 
