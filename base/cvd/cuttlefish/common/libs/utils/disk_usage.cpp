@@ -17,57 +17,67 @@
 #include "cuttlefish/common/libs/utils/disk_usage.h"
 
 #include <stddef.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
+#include <set>
 #include <string>
-#include <string_view>
 #include <utility>
-#include <vector>
 
-#include "absl/strings/numbers.h"
-#include "absl/strings/str_split.h"
-
-#include "cuttlefish/process/command.h"
-#include "cuttlefish/process/managed_stdio.h"
+#include "cuttlefish/files/directory_contents.h"
+#include "cuttlefish/posix/stat.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
 
-static constexpr char kWhitespaceCharacters[] = " \n\t\r\v\f";
+using InodeSet = std::set<std::pair<dev_t, ino_t>>;
 
-// return unit determined by the `--block-size` argument
-Result<size_t> GetDiskUsage(const std::string& path,
-                            const std::string& size_arg) {
-  Command du_cmd("du");
-  du_cmd.AddParameter("-s");  // summarize, only output total
-  du_cmd.AddParameter(
-      "--apparent-size");  // apparent size rather than device usage
-  du_cmd.AddParameter("--block-size=" + size_arg);
-  du_cmd.AddParameter(path);
+Result<size_t> DirectoryApparentSize(const std::string& dir,
+                                     const struct stat& dir_st,
+                                     InodeSet& counted_inodes) {
+  size_t total = static_cast<size_t>(dir_st.st_size);
+  for (const std::string& name : CF_EXPECT(DirectoryContents(dir))) {
+    const std::string entry = dir + "/" + name;
+    const struct stat st = CF_EXPECT(Lstat(entry));
+    if (S_ISDIR(st.st_mode)) {
+      total += CF_EXPECT(DirectoryApparentSize(entry, st, counted_inodes));
+      continue;
+    }
+    // Hard links show up once per name; count each inode once.
+    if (S_ISREG(st.st_mode) && st.st_nlink > 1 &&
+        !counted_inodes.insert({st.st_dev, st.st_ino}).second) {
+      continue;
+    }
+    total += static_cast<size_t>(st.st_size);
+  }
+  return total;
+}
 
-  std::string out = CF_EXPECT(RunAndCaptureStdout(std::move(du_cmd)));
-  std::vector<std::string_view> split_out = absl::StrSplit(
-      out, absl::ByAnyChar(kWhitespaceCharacters), absl::SkipEmpty());
-  CF_EXPECTF(!split_out.empty(),
-             "No valid output read from `du` command in \"{}\"", out);
-  std::string_view total = split_out.front();
-
-  size_t result;
-  CF_EXPECTF(absl::SimpleAtoi(total, &result),
-             "Failure parsing \"{}\" to integer.", total);
-  return result;
+Result<size_t> ApparentSize(const std::string& path) {
+  const struct stat st = CF_EXPECT(Stat(path));
+  if (S_ISREG(st.st_mode)) {
+    return static_cast<size_t>(st.st_size);
+  }
+  CF_EXPECTF(S_ISDIR(st.st_mode),
+             "\"{}\" is neither a regular file nor a directory", path);
+  InodeSet counted_inodes;
+  return CF_EXPECT(DirectoryApparentSize(path, st, counted_inodes));
 }
 
 }  // namespace
 
 Result<size_t> GetDiskUsageBytes(const std::string& path) {
-  return CF_EXPECTF(GetDiskUsage(path, "1"),
+  return CF_EXPECTF(ApparentSize(path),
                     "Unable to determine disk usage of file \"{}\"", path);
 }
 
 Result<size_t> GetDiskUsageGigabytes(const std::string& path) {
-  return CF_EXPECTF(GetDiskUsage(path, "1G"),
-                    "Unable to determine disk usage of file \"{}\"", path);
+  size_t bytes =
+      CF_EXPECTF(ApparentSize(path),
+                 "Unable to determine disk usage of file \"{}\"", path);
+  static constexpr size_t kGigabyte = size_t{1} << 30;
+  return (bytes + kGigabyte - 1) / kGigabyte;
 }
 
 }  // namespace cuttlefish
