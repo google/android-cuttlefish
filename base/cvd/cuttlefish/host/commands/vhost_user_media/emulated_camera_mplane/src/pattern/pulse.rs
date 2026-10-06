@@ -16,7 +16,7 @@ use super::FramePattern;
 use crate::device::{CameraControls, Gain};
 use std::io::Write;
 
-/// Fills the whole frame with a single color that cycles as frames are produced.
+/// Fills the frame with two horizontal color bands that cycle as frames are produced.
 pub struct Pulse;
 
 impl FramePattern for Pulse {
@@ -31,19 +31,23 @@ impl FramePattern for Pulse {
         sink_v: &mut dyn Write,
     ) -> Result<(), i32> {
         let sequence = iteration;
-        // The base Y (luma) value changes over iterations to create a moving pattern.
-        let base_y = (sequence % 256) as u8;
+        // The base Y (luma) values change over iterations to create a moving pattern,
+        // with the bottom half offset by 32 so each frame contains more than one color.
+        let base_y_top = (sequence % 256) as u8;
+        let base_y_bottom = ((sequence + 32) % 256) as u8;
         // Apply gain to the luma channel.
         // Gain::MIN (100) represents 1.0x gain. Higher values scale the brightness.
         // We clamp the result to 255.0 to avoid overflow.
-        let y =
-            ((base_y as f32) * (controls.gain.value() as f32 / Gain::MIN as f32)).min(255.0) as u8;
+        let gain_scale = controls.gain.value() as f32 / Gain::MIN as f32;
+        let y_top = ((base_y_top as f32) * gain_scale).min(255.0) as u8;
+        let y_bottom = ((base_y_bottom as f32) * gain_scale).min(255.0) as u8;
         let u = ((sequence + 64) % 256) as u8;
         let v = ((sequence + 128) % 256) as u8;
-        let y_plane = vec![y; (width * height) as usize];
+        let half_y_len = (width * height / 2) as usize;
         let u_plane = vec![u; (width * height / 4) as usize];
         let v_plane = vec![v; (width * height / 4) as usize];
-        sink_y.write_all(&y_plane).map_err(|_| libc::EIO)?;
+        sink_y.write_all(&vec![y_top; half_y_len]).map_err(|_| libc::EIO)?;
+        sink_y.write_all(&vec![y_bottom; half_y_len]).map_err(|_| libc::EIO)?;
         sink_u.write_all(&u_plane).map_err(|_| libc::EIO)?;
         sink_v.write_all(&v_plane).map_err(|_| libc::EIO)?;
         Ok(())

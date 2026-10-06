@@ -88,7 +88,7 @@ mod tests {
         let mut plane_y = Vec::new();
         let mut plane_u = Vec::new();
         let mut plane_v = Vec::new();
-        // iteration 50: base_y = 50. With 2.0x gain, y should be 100.
+        // iteration 50: base_y_top = 50 (100 at 2.0x gain), base_y_bottom = 82 (164 at 2.0x gain).
         pulse::Pulse
             .write(
                 50,
@@ -101,8 +101,9 @@ mod tests {
             )
             .expect("writing into Vec must succeed");
         assert_eq!(plane_y[0], 100);
+        assert_eq!(plane_y[plane_y.len() / 2], 164);
 
-        // iteration 200: base_y = 200. With 2.0x gain, 400 clamped to 255.
+        // iteration 200: base_y_top = 200 and base_y_bottom = 232. With 2.0x gain, both clamp to 255.
         let mut plane_y_clamped = Vec::new();
         pulse::Pulse
             .write(
@@ -116,6 +117,7 @@ mod tests {
             )
             .expect("writing into Vec must succeed");
         assert_eq!(plane_y_clamped[0], 255);
+        assert_eq!(plane_y_clamped[plane_y_clamped.len() / 2], 255);
     }
 
     #[test]
