@@ -16,7 +16,6 @@
 
 #include "cuttlefish/posix/remove.h"
 
-#include <errno.h>
 #include <stdio.h>
 
 #include <string>
@@ -32,7 +31,7 @@ namespace cuttlefish {
 
 Result<void> RemoveFile(const char* file) {
   VLOG(0) << "Removing file " << file;
-  CF_EXPECTF(remove(file) == 0, "remove('{}) error: {}", file, StrError(errno));
+  CF_EXPECTF(remove(file) == 0, "remove('{}) error: {}", file, StrError());
   return {};
 }
 

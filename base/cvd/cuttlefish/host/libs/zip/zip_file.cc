@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/libs/zip/zip_file.h"
 
-#include <errno.h>
 #include <stdint.h>
 #include <sys/stat.h>
 
@@ -78,7 +77,7 @@ Result<void> ExtractFile(ReadableZip& zip, std::string_view zip_path,
     if (*attr == 0) {
       *attr = 0640;
     }
-    CF_EXPECT_EQ(chmod(host_path.c_str(), *attr), 0, StrError(errno));
+    CF_EXPECT_EQ(chmod(host_path.c_str(), *attr), 0, StrError());
   }
   return {};
 }

@@ -16,7 +16,6 @@
 
 #include "cuttlefish/posix/stat.h"
 
-#include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -33,7 +32,7 @@ namespace cuttlefish {
 Result<struct stat> Stat(const char* path) {
   struct stat ret;
   int success = TEMP_FAILURE_RETRY(stat(path, &ret));
-  CF_EXPECTF(success == 0, "Stat('{}') failed: ", path, StrError(errno));
+  CF_EXPECTF(success == 0, "Stat('{}') failed: ", path, StrError());
   return ret;
 }
 

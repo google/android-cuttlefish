@@ -80,7 +80,7 @@ Result<void> Gem5ImageUnpacker(const CuttlefishConfig& config,
   CF_EXPECT(
       mkdir(binaries_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0 ||
           errno == EEXIST,
-      "\"" << binaries_dir << "\": " << StrError(errno));
+      "\"" << binaries_dir << "\": " << StrError());
   CF_EXPECT(Copy(
       instance_.bootloader(),
       binaries_dir + "/" + android::base::Basename(instance_.bootloader())));

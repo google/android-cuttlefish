@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/streamer.h"
 
-#include <errno.h>
 #include <sys/socket.h>
 
 #include <optional>
@@ -78,7 +77,7 @@ std::vector<Command> LaunchCustomActionServers(
     if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &webrtc_socket,
                               &action_server_socket)) {
       LOG(ERROR) << "Unable to create custom action server socket pair: "
-                 << StrError(errno);
+                 << StrError();
       continue;
     }
 

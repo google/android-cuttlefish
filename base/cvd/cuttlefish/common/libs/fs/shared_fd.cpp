@@ -198,7 +198,7 @@ Result<std::pair<SharedFD, SharedFD>> SharedFD::SocketPair(int domain, int type,
                                                            int protocol) {
   SharedFD a, b;
   if (!SharedFD::SocketPair(domain, type, protocol, &a, &b)) {
-    return CF_ERR("socketpair failed: " << ::cuttlefish::StrError(errno));
+    return CF_ERR("socketpair failed: " << ::cuttlefish::StrError());
   }
   return std::make_pair(std::move(a), std::move(b));
 }

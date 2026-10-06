@@ -37,7 +37,7 @@ Result<std::string> RealPath(const std::string& path) {
     res = realpath(path.c_str(), buffer.data());
   } while (res == nullptr && errno == EINTR);
   CF_EXPECTF(res != nullptr, "Could not get real path for path \"{}\": {}",
-             path, StrError(errno));
+             path, StrError());
   return std::string(buffer.data());
 }
 
