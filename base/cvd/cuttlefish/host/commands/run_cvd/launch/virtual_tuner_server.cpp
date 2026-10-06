@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/virtual_tuner_server.h"
 
-#include <linux/vm_sockets.h>
 #include <sys/socket.h>  // IWYU pragma: keep: SOCK_STREAM
 
 #include <optional>
@@ -26,6 +25,7 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
+#include "cuttlefish/common/libs/fs/vm_sockets.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 #include "cuttlefish/host/libs/audio/channel_layout.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"

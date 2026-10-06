@@ -15,14 +15,13 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/vhal_proxy_server.h"
 
-#include <linux/vm_sockets.h>
-
 #include <optional>
 
 #include "fmt/core.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
+#include "cuttlefish/common/libs/fs/vm_sockets.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"

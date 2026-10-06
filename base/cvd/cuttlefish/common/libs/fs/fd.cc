@@ -413,7 +413,6 @@ Result<Fd, int> Fd::SocketLocalServer(std::string_view name, bool abstract,
   return rval;
 }
 
-#ifdef __linux__
 Result<Fd, int> Fd::VsockServer(
     unsigned int port, int type,
     std::optional<int> vhost_user_vsock_listening_cid, unsigned int cid) {
@@ -423,6 +422,7 @@ Result<Fd, int> Fd::VsockServer(
         false /* abstract */, type, 0666 /* mode */));
   }
 
+#ifdef __linux__
   Fd vsock = CF_EXPECT(Fd::Socket(AF_VSOCK, type, 0));
 
   sockaddr_vm addr{};
@@ -436,6 +436,12 @@ Result<Fd, int> Fd::VsockServer(
     CF_EXPECT(vsock.Listen(4));
   }
   return vsock;
+#else
+  (void)cid;
+  return CF_ERRVF(
+      EAFNOSUPPORT,
+      "Bind failed port {}: vsock is not supported on this platform", port);
+#endif
 }
 
 Result<Fd, int> Fd::VsockServer(
@@ -456,8 +462,6 @@ std::string Fd::GetVhostUserVsockClientAddr(int cid) {
   // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock_{}
   return fmt::format("{}/vsock_{}_{}/vm.vsock", TempDir(), cid, getuid());
 }
-
-#endif
 
 bool Fd::CopyFrom(Fd& in, size_t length, Fd* stop) {
   LocalErrno record_errno(errno_);
