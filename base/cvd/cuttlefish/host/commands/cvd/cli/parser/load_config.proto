@@ -136,6 +136,8 @@ message Display {
   repeated DisplayOverlay overlays = 5;
 }
 
+message DiskArtifacts {}
+
 message Disk {
   optional string default_build = 1;
   optional Super super_partition = 2 [json_name = "super"];
@@ -143,6 +145,7 @@ message Disk {
   optional bool download_target_files_zip = 4;
   optional uint32 blank_data_image_mb = 5;
   optional string otatools = 6;
+  optional DiskArtifacts disk_artifacts = 7;
 }
 
 message Super {
