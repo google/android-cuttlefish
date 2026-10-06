@@ -38,6 +38,7 @@ void PushOptional(std::vector<T>& vec, std::optional<T> opt) {
   }
 }
 
+#ifdef __linux__
 Result<std::optional<HostConfigurationAction>> PutUserInGroup(
     const std::string& group) {
   if (InGroup(group)) {
@@ -78,12 +79,13 @@ Result<std::optional<HostConfigurationAction>> EnforceLinuxVersionAtLeast(
                      std::to_string(major) + "." + std::to_string(minor),
   };
 }
+#endif
 
 }  // namespace
 
 Result<std::vector<HostConfigurationAction>> ValidateHostConfiguration() {
   std::vector<HostConfigurationAction> actions;
-#ifndef __APPLE__
+#ifdef __linux__
   // if we can't detect the kernel version, just fail
   std::pair<int, int> version = CF_EXPECT(GetLinuxVersion());
 
