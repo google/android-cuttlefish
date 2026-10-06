@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "gtest/gtest.h"
 
@@ -414,6 +415,98 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesOnlySecondHasDevice) {
       FindConfig(*serialized_data,
                  "--media=,v4l2_emulated_camera_splane:lens_facing=FRONT"))
       << "media flag is missing or wrongly formatted";
+}
+
+TEST(DiskArtifactsValidationTest, ConflictWithLegacyOverrideFails) {
+  const std::vector<std::string> invalid_configs = {
+      R""""(
+{
+    "instances": [
+        {
+          "disk": {
+            "super": {
+              "system": "@ab/git_main/cf_x86_64_auto"
+            },
+            "disk_artifacts": {}
+          }
+        }
+    ]
+}
+      )"""",
+      R""""(
+{
+    "instances": [
+        {
+          "boot": {
+            "kernel": {
+              "build": "@ab/git_main/cf_x86_64_auto"
+            }
+          },
+          "disk": {
+            "disk_artifacts": {}
+          }
+        }
+    ]
+}
+      )"""",
+      R""""(
+{
+    "instances": [
+        {
+          "boot": {
+            "build": "@ab/git_main/cf_x86_64_auto"
+          },
+          "disk": {
+            "disk_artifacts": {}
+          }
+        }
+    ]
+}
+      )"""",
+      R""""(
+{
+    "instances": [
+        {
+          "boot": {
+            "bootloader": {
+              "build": "@ab/git_main/cf_x86_64_auto"
+            }
+          },
+          "disk": {
+            "disk_artifacts": {}
+          }
+        }
+    ]
+}
+      )"""",
+      R""""(
+{
+    "instances": [
+        {
+          "boot": {
+            "android_efi_loader": {
+              "build": "@ab/git_main/cf_x86_64_auto"
+            }
+          },
+          "disk": {
+            "disk_artifacts": {}
+          }
+        }
+    ]
+}
+      )"""",
+  };
+
+  for (const std::string& test_string : invalid_configs) {
+    SCOPED_TRACE(test_string);
+    Json::Value json_configs;
+    std::string json_text(test_string);
+
+    EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+        << "Invalid Json string";
+    auto serialized_data = LaunchCvdParserTester(json_configs);
+    EXPECT_FALSE(serialized_data.has_value());
+  }
 }
 
 }  // namespace

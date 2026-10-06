@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_flags_validator.h"
 
 #include <sstream>
+#include <string>
 
 #include "google/protobuf/util/json_util.h"
 #include "json/value.h"
@@ -25,9 +26,40 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+namespace {
 
+using cvd::config::Boot;
+using cvd::config::Disk;
 using cvd::config::EnvironmentSpecification;
+using cvd::config::Instance;
 using google::protobuf::util::JsonStringToMessage;
+
+bool HasLegacyArtifacts(const Instance& instance) {
+  const Disk& disk = instance.disk();
+  const Boot& boot = instance.boot();
+  return disk.has_super_partition() || boot.has_kernel() || boot.has_build() ||
+         boot.has_bootloader() || boot.has_android_efi_loader();
+}
+
+Result<void> ValidateDiskArtifacts(
+    const EnvironmentSpecification& launch_config) {
+  bool has_legacy_artifacts = false;
+  bool has_disk_artifacts = false;
+  for (const Instance& instance : launch_config.instances()) {
+    if (HasLegacyArtifacts(instance)) {
+      has_legacy_artifacts = true;
+    }
+    if (instance.disk().has_disk_artifacts()) {
+      has_disk_artifacts = true;
+    }
+  }
+  CF_EXPECT(!(has_legacy_artifacts && has_disk_artifacts),
+            "Cannot use disk_artifacts together with legacy disk/boot "
+            "artifact options");
+  return {};
+}
+
+}  // namespace
 
 Result<EnvironmentSpecification> ValidateCfConfigs(const Json::Value& root) {
   std::stringstream json_as_stringstream;
@@ -37,6 +69,7 @@ Result<EnvironmentSpecification> ValidateCfConfigs(const Json::Value& root) {
   EnvironmentSpecification launch_config;
   auto status = JsonStringToMessage(json_str, &launch_config);
   CF_EXPECTF(status.ok(), "{}", status.ToString());
+  CF_EXPECT(ValidateDiskArtifacts(launch_config));
 
   return launch_config;
 }
