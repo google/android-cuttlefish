@@ -383,7 +383,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   if (IsHostCompatible(arch_)) {
     qemu_cmd.AddParameter("-accel");
-    std::string accel;
+    std::string accel = "tcg";
 #ifdef __linux__
     accel = "kvm";
     if (!config.kvm_path().empty()) {
@@ -391,8 +391,6 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     }
 #elif defined(__APPLE__)
     accel = "hvf";
-#else
-#error "Unknown OS"
 #endif
     qemu_cmd.AddParameter(accel);
   }
