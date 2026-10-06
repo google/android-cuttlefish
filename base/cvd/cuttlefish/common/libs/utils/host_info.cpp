@@ -56,7 +56,7 @@ Arch HostArch(std::string_view arch_str) {
     return Arch::Arm;
   } else if (arch_str == "riscv64") {
     return Arch::RiscV64;
-  } else if (arch_str == "x86_64") {
+  } else if (arch_str == "x86_64" || arch_str == "amd64") {
     return Arch::X86_64;
   } else if (arch_str.size() == 4 && arch_str[0] == 'i' && arch_str[2] == '8' &&
              arch_str[3] == '6') {
