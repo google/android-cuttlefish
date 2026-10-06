@@ -772,7 +772,7 @@ Result<uint64_t> Fd::Read(void* buf, uint64_t count) {
   return static_cast<uint64_t>(res);
 }
 
-Result<uint64_t> Fd::PRead(void* buf, size_t count, size_t offset) const {
+Result<uint64_t> Fd::PRead(void* buf, uint64_t count, uint64_t offset) const {
   LocalErrno record_errno(const_cast<int&>(errno_));
 
   ssize_t res = TEMP_FAILURE_RETRY(pread(fd_, buf, count, offset));
@@ -888,7 +888,7 @@ Result<void> Fd::Truncate(uint64_t length) {
   return {};
 }
 
-Result<uint64_t> Fd::Write(const void* buf, size_t count) {
+Result<uint64_t> Fd::Write(const void* buf, uint64_t count) {
   if (count == 0 && !IsRegular()) {
     return 0;
   }
@@ -901,7 +901,7 @@ Result<uint64_t> Fd::Write(const void* buf, size_t count) {
   return static_cast<uint64_t>(res);
 }
 
-Result<uint64_t> Fd::PWrite(const void* buf, size_t count, size_t offset) {
+Result<uint64_t> Fd::PWrite(const void* buf, uint64_t count, uint64_t offset) {
   LocalErrno record_errno(errno_);
 
   ssize_t res = TEMP_FAILURE_RETRY(pwrite(fd_, buf, count, offset));
