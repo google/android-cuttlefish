@@ -379,10 +379,15 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   if (instance.mte()) {
     machine += ",mte=on";
   }
+  machine += ",usb=off";
+#ifdef __linux__
+  machine += ",dump-guest-core=off";  // Uses MADV_DONTDUMP; Linux only.
+#endif
+  machine += ",memory-backend=vm_ram";
   qemu_cmd.AddParameter("-machine");
-  qemu_cmd.AddParameter(machine,
-                        ",usb=off,dump-guest-core=off,memory-backend=vm_ram");
+  qemu_cmd.AddParameter(machine);
 
+  bool uses_host_cpu_flag = false;
   if (IsHostCompatible(arch_)) {
     qemu_cmd.AddParameter("-accel");
     std::string accel = "tcg";
@@ -391,8 +396,10 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     if (!config.kvm_path().empty()) {
       accel += ",device=" + config.kvm_path();
     }
+    uses_host_cpu_flag = true;
 #elif defined(__APPLE__)
     accel = "hvf";
+    uses_host_cpu_flag = true;
 #endif
     qemu_cmd.AddParameter(accel);
   }
@@ -770,7 +777,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-keyboard-pci,disable-legacy=on");
 
-  // device padding for unsupported "switches" input
+#ifdef __linux__
   qemu_cmd.AddParameter("-chardev");
   qemu_cmd.AddParameter("socket,path=", SwitchesSocketPath(instance),
                         ",id=switches0");
@@ -782,6 +789,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
                         ",id=rotary0");
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("vhost-user-input-pci,chardev=rotary0");
+#endif
 
   auto vhost_net = instance.vhost_net() ? ",vhost=on" : "";
 
@@ -858,7 +866,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   if (is_x86 || is_arm) {
     qemu_cmd.AddParameter("-cpu");
-    qemu_cmd.AddParameter(IsHostCompatible(arch_) ? "host" : "max");
+    qemu_cmd.AddParameter(uses_host_cpu_flag ? "host" : "max");
   }
 
   // Explicitly enable the optional extensions of interest, in case the default
