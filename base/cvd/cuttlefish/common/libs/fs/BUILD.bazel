@@ -23,7 +23,10 @@ cf_cc_library(
 cf_cc_library(
     name = "fd",
     srcs = ["fd.cc"],
-    hdrs = ["fd.h"],
+    hdrs = [
+        "fd.h",
+        "vm_sockets.h",
+    ],
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs:scoped_mmap",
