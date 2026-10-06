@@ -1,0 +1,24 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "android_system_logging",
+    srcs = ["liblog/include/private/android_logger.h"],
+    hdrs = [
+        "liblog/include/android/log.h",
+        "liblog/include/android/log_macros.h",
+        "liblog/include/log/log_id.h",
+        "liblog/include/log/log_main.h",
+        "liblog/include/log/log_properties.h",
+        "liblog/include/log/log_radio.h",
+        "liblog/include/log/log_read.h",
+        "liblog/include/log/log_safetynet.h",
+        "liblog/include/log/log_system.h",
+    ],
+    strip_include_prefix = "liblog/include",
+)
+
+exports_files(["avbtool.py"])

@@ -1,0 +1,17 @@
+git_override(
+    module_name = "android_system_logging",
+    build_file = "@//build_external/android_system_logging:BUILD.android_system_logging.bazel",
+    commit = "bcac7c30d88a3773a7c0bc9f5617a23a886331fd",
+    patch_cmds = [
+        """cat << 'EOF' > MODULE.bazel
+module(
+    name = "android_system_logging",
+    version = "0.1",
+)
+
+bazel_dep(name = "rules_cc", version = "0.2.19")
+EOF
+""",
+    ],
+    remote = "https://android.googlesource.com/platform/system/logging",
+)

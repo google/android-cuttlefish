@@ -82,7 +82,7 @@ cc_library(
     includes = ["include"],
     deps = [
         ":libbase_posix_strerror",
-        "//android:log_header",
+        "@android_system_logging",
         "@fmt",
     ],
 )

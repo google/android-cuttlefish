@@ -7,6 +7,7 @@ bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 
 bazel_dep(name = "abseil-cpp", version = "20260107.0")
+bazel_dep(name = "android_system_logging")
 bazel_dep(name = "aspect_bazel_lib", version = "2.22.0")
 bazel_dep(name = "avb")
 bazel_dep(name = "bazel_features", version = "1.11.0")
