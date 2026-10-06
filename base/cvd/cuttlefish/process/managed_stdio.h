@@ -38,8 +38,8 @@ Result<std::string> RunAndCaptureStdout(Command);
  * If some setup fails, `command` fails to start, or `command` exits due to a
  * signal, the return value will be negative.
  */
-int RunWithManagedStdio(Command, const std::string* stdin, std::string* stdout,
-                        std::string* stderr,
+int RunWithManagedStdio(Command, const std::string* stdin_str,
+                        std::string* stdout_str, std::string* stderr_str,
                         SubprocessOptions options = SubprocessOptions());
 
 }  // namespace cuttlefish
