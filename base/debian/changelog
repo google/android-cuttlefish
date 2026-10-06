@@ -1,3 +1,10 @@
+cuttlefish-common (1.57.7) unstable; urgency=medium
+
+  * Use a prebuilt android_esp.img from the Android build for the EFI loader flow by @dimorinny in https://github.com/google/android-cuttlefish/pull/3299
+  * cvd fetch: Extract pvmfw.img from system target files by @dimorinny in https://github.com/google/android-cuttlefish/pull/3300
+
+ -- Cody Schuffelen <schuffelen@google.com>  Tue, 06 Oct 2026 07:36:20 +0000
+
 cuttlefish-common (1.57.6) unstable; urgency=medium
 
   * Allow unknown fields in guest config proto file by @jemoreira in https://github.com/google/android-cuttlefish/pull/3260
