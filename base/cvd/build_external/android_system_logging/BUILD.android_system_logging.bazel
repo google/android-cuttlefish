@@ -1,0 +1,50 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "liblog",
+    srcs = [
+        "liblog/log_event_list.cpp",
+        "liblog/log_event_write.cpp",
+        "liblog/logd_reader.h",
+        "liblog/logger.h",
+        "liblog/logger_name.cpp",
+        "liblog/logger_read.cpp",
+        "liblog/logger_write.cpp",
+        "liblog/logger_write.h",
+        "liblog/logprint.cpp",
+        "liblog/pmsg_reader.cpp",
+        "liblog/pmsg_reader.h",
+        "liblog/properties.cpp",
+        "liblog/uio.h",
+    ],
+    hdrs = [
+        "liblog/include/android/log.h",
+        "liblog/include/android/log_macros.h",
+        "liblog/include/log/event_tag_map.h",
+        "liblog/include/log/log.h",
+        "liblog/include/log/log_event_list.h",
+        "liblog/include/log/log_id.h",
+        "liblog/include/log/log_main.h",
+        "liblog/include/log/log_properties.h",
+        "liblog/include/log/log_radio.h",
+        "liblog/include/log/log_read.h",
+        "liblog/include/log/log_safetynet.h",
+        "liblog/include/log/log_system.h",
+        "liblog/include/log/log_time.h",
+        "liblog/include/log/logprint.h",
+        "liblog/include/private/android_logger.h",
+    ],
+    cxxopts = ["-std=c++23"],
+    strip_include_prefix = "liblog/include",
+    deps = [
+        "@android_system_core//:cutils_android_filesystem_config",
+        "@android_system_core//:cutils_list",
+        "@android_system_libbase//:errno_restorer",
+        "@android_system_libbase//:macros",
+        "@android_system_libbase//:parseint",
+    ],
+)

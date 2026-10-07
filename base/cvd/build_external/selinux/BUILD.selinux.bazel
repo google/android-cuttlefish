@@ -94,7 +94,6 @@ cc_library(
         "BUILD_HOST",
         "DISABLE_BOOL",
         "DISABLE_SETRANS",
-        "LOG_PRI=ALOG",
         "NO_DB_BACKEND",
         "NO_MEDIA_BACKEND",
         "NO_PERSISTENTLY_STORED_PATTERNS",
@@ -105,7 +104,7 @@ cc_library(
     strip_include_prefix = "libselinux/include",
     deps = [
         ":libsepol_headers",
-        "@//android:log_header",
+        "@android_system_logging//:liblog",
         "@android_system_core//:libcutils",
         "@pcre2",
     ],

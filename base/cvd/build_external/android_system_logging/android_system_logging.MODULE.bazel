@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "android_system_logging",
+    build_file = "@//build_external/android_system_logging:BUILD.android_system_logging.bazel",
+    commit = "bcac7c30d88a3773a7c0bc9f5617a23a886331fd",
+    remote = "https://android.googlesource.com/platform/system/logging",
+)
