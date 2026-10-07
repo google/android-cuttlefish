@@ -12,8 +12,8 @@ cc_binary(
     copts = ["-std=gnu++17"],
     includes = ["include"],
     deps = [
-        "//android:log_header",
         "//libbase",
         "@android_system_core//:libcutils",
+        "@android_system_logging//:liblog",
     ],
 )

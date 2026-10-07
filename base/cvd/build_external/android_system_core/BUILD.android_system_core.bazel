@@ -116,7 +116,7 @@ cc_library(
     ]),
     strip_include_prefix = "libcutils/include",
     deps = [
-        "@//android:log_header",
         "@//libbase",
+        "@android_system_logging//:liblog",
     ],
 )
