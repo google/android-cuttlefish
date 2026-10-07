@@ -48,7 +48,7 @@ class FetchCvdTests : public ::testing::Test {
 
     // Create a fake cas client that outputs the command line when invoked.
     std::string script = fmt::format(
-        R"(#!/bin/bash
+        R"(#!/usr/bin/env bash
 # leave evidence that the script executed
 rm -rf {CAS_OUTPUT_FILEPATH}
 echo $@ > {CAS_OUTPUT_FILEPATH}
