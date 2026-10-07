@@ -6,6 +6,18 @@ package(
 )
 
 cc_library(
+    name = "cutils_android_filesystem_config",
+    hdrs = ["libcutils/include/private/android_filesystem_config.h"],
+    strip_include_prefix = "libcutils/include",
+)
+
+cc_library(
+    name = "cutils_list",
+    hdrs = ["libcutils/include/cutils/list.h"],
+    strip_include_prefix = "libcutils/include",
+)
+
+cc_library(
     name = "liblp",
     srcs = [
         "fs_mgr/liblp/builder.cpp",
