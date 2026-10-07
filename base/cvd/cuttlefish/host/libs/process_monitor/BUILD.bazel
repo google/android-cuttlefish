@@ -24,8 +24,8 @@ cf_cc_library(
         "//cuttlefish/process:command",
         "//cuttlefish/process:subprocess",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )

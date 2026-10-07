@@ -38,7 +38,7 @@ cf_cc_test(
         "//cuttlefish/posix:remove",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
+        "@android_system_libbase//:file_logging",
         "@fmt",
     ],
 )
@@ -48,7 +48,7 @@ cf_cc_test(
     srcs = ["cas_flags_test.cpp"],
     deps = [
         "//cuttlefish/host/libs/web/cas:cas_flags",
-        "//libbase",
+        "@android_system_libbase//:file_logging",
     ],
 )
 

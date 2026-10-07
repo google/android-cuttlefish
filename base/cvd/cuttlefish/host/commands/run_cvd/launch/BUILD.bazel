@@ -187,7 +187,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/process:command",
         "//cuttlefish/result",
-        "//libbase",
+        "@android_system_libbase//:file_logging",
         "@fmt",
         "@fruit",
     ],

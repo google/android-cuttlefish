@@ -36,9 +36,9 @@ cf_cc_library(
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
         "@fmt",
     ],
 )
@@ -256,8 +256,8 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:instance_manager",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -370,8 +370,8 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/process:command",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
+        "@android_system_libbase//:file_logging",
     ],
 )
 

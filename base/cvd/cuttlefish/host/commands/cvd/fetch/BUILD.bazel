@@ -49,8 +49,8 @@ cf_cc_test(
         "//cuttlefish/host/libs/web/http_client:fake_http_client",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
         "@fmt",
     ],
 )
@@ -111,10 +111,10 @@ cf_cc_library(
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
         "//cuttlefish/posix:rename",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@android_system_core//:libsparse",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -165,7 +165,7 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
+        "@android_system_libbase//:file_logging",
         "@fmt",
     ],
 )
@@ -206,9 +206,9 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/posix:remove",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
         "@fmt",
     ],
 )
@@ -325,8 +325,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:build_api",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -386,9 +386,9 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
         "@fmt",
         "@protobuf",
     ],
@@ -405,8 +405,8 @@ cf_cc_library(
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
-        "//libbase",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 

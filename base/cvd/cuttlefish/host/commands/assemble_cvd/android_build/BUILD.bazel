@@ -47,8 +47,8 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/android_build:img_zip",
         "//cuttlefish/host/commands/assemble_cvd/android_build:target_files",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 

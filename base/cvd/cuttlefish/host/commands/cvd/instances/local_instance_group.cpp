@@ -16,9 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 
-#include <android-base/file.h>
-#include <json/json.h>
-
 #include <algorithm>
 #include <functional>
 #include <iterator>
@@ -28,6 +25,8 @@
 #include <vector>
 
 #include "absl/strings/str_join.h"
+#include "android-base/file.h"
+#include "json/json.h"
 
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"

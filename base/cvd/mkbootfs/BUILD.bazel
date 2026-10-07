@@ -6,14 +6,11 @@ package(
 
 cc_binary(
     name = "mkbootfs",
-    srcs = [
-        "mkbootfs.cpp",
-    ],
+    srcs = ["mkbootfs.cpp"],
     copts = ["-std=gnu++17"],
-    includes = ["include"],
     deps = [
-        "//libbase",
         "@android_system_core//:libcutils",
+        "@android_system_libbase//:file_logging",
         "@android_system_logging//:liblog",
     ],
 )

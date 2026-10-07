@@ -193,9 +193,9 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
         "@fmt",
     ],
 )
@@ -256,8 +256,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/image_aggregator",
         "//cuttlefish/host/libs/image_aggregator:qcow2",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -461,9 +461,9 @@ cf_cc_library(
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
         "@fmt",
         "@protobuf",
         "@protobuf//src/google/protobuf/io:tokenizer",
@@ -648,9 +648,9 @@ cf_cc_library(
         "//cuttlefish/process:command",
         "//cuttlefish/process:execute",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
         "@fmt",
     ],
 )
