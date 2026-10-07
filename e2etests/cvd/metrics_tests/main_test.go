@@ -15,14 +15,21 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"path"
 	"path/filepath"
-	"regexp"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/cvd/common"
 )
+
+type fleetGroup struct {
+	MetricsDir string `json:"metrics_dir"`
+}
+
+type fleetOutput struct {
+	Groups []fleetGroup `json:"groups"`
+}
 
 func anyFileExists(pattern string) bool {
 	matches, err := filepath.Glob(pattern)
@@ -37,55 +44,59 @@ func TestMetrics(t *testing.T) {
 	c.SetUp(t)
 	defer c.TearDown()
 
-	if _, err := c.CVDFetch(e2etests.FetchArgs{
+	fetchArgs := e2etests.FetchArgs{
 		DefaultBuildBranch: "aosp-android-latest-release",
 		DefaultBuildTarget: "aosp_cf_x86_64_only_phone-userdebug",
-	}); err != nil {
-		t.Fatal(err)
+	}
+	if _, err := c.CVDFetch(fetchArgs); err != nil {
+		t.Fatalf("failed to run `%s fetch`: %v", c.TargetBin(), err)
+	}
+
+	// The test's tempdir is the `--target_directory` of fetch.
+	fetchMetricsDir := path.Join(c.TempDir(), "metrics")
+	fetchPatterns := []string{
+		"fetch_start*.txtpb",
+		"fetch_complete*.txtpb",
+	}
+	for _, p := range fetchPatterns {
+		if !anyFileExists(path.Join(fetchMetricsDir, p)) {
+			t.Fatalf("failed to find a file matching %q in %q", p, fetchMetricsDir)
+		}
 	}
 
 	if _, err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to run `%s create`: %v", c.TargetBin(), err)
 	}
 
-	var metricsdir string
-	err := func() error {
-		res, err := c.RunCmd(c.TargetBin(), "fleet")
-		if err != nil {
-			return fmt.Errorf("failed to run `cvd fleet`")
-		}
-
-		re := regexp.MustCompile(`"metrics_dir" : "(.*)",`)
-		matches := re.FindStringSubmatch(res.Stdout)
-		if len(matches) != 2 {
-			return fmt.Errorf("failed to find metrics directory.")
-		}
-
-		metricsdir = matches[1]
-		if !e2etests.DirectoryExists(metricsdir) {
-			return fmt.Errorf("failed to find directory %s", metricsdir)
-		}
-
-		patterns := []string{
-			"fetch_start*.txtpb",
-			"fetch_complete*.txtpb",
-			"device_instantiation*.txtpb",
-			"device_boot_start*.txtpb",
-			"device_boot_complete*.txtpb",
-		}
-		for _, p := range patterns {
-			if !anyFileExists(path.Join(metricsdir, p)) {
-				return fmt.Errorf("failed to find a file matching `%s` in `%s`", p, metricsdir)
-			}
-		}
-		return nil
-	}()
+	res, err := c.RunCmd(c.TargetBin(), "fleet")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to run `%s fleet`: %v", c.TargetBin(), err)
+	}
+	var fleet fleetOutput
+	if err := json.Unmarshal([]byte(res.Stdout), &fleet); err != nil {
+		t.Fatalf("failed to parse `%s fleet` output: %v", c.TargetBin(), err)
+	}
+	if len(fleet.Groups) == 0 || fleet.Groups[0].MetricsDir == "" {
+		t.Fatalf("failed to find metrics directory in `%s fleet` output: %s", c.TargetBin(), res.Stdout)
+	}
+	metricsdir := fleet.Groups[0].MetricsDir
+	if !e2etests.DirectoryExists(metricsdir) {
+		t.Fatalf("failed to find directory %q", metricsdir)
+	}
+
+	devicePatterns := []string{
+		"device_instantiation*.txtpb",
+		"device_boot_start*.txtpb",
+		"device_boot_complete*.txtpb",
+	}
+	for _, p := range devicePatterns {
+		if !anyFileExists(path.Join(metricsdir, p)) {
+			t.Fatalf("failed to find a file matching %q in %q", p, metricsdir)
+		}
 	}
 
 	if err := c.CVDStop(); err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to run `%s stop`: %v", c.TargetBin(), err)
 	}
 
 	if !anyFileExists(path.Join(metricsdir, "device_stop*.txtpb")) {
