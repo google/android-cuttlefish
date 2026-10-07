@@ -40,6 +40,12 @@ cc_library(
 )
 
 cc_library(
+    name = "thread_annotations",
+    hdrs = ["include/android-base/thread_annotations.h"],
+    strip_include_prefix = "include",
+)
+
+cc_library(
     name = "threads",
     srcs = ["threads.cpp"],
     hdrs = ["include/android-base/threads.h"],
