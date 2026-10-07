@@ -38,7 +38,6 @@ cc_library(
         "mapped_file.cpp",
         "parsenetaddress.cpp",
         "properties.cpp",
-        "stringprintf.cpp",
         "strings.cpp",
         "threads.cpp",
     ],
@@ -63,7 +62,6 @@ cc_library(
         "include/android-base/properties.h",
         "include/android-base/result.h",
         "include/android-base/scopeguard.h",
-        "include/android-base/stringprintf.h",
         "include/android-base/strings.h",
         "include/android-base/thread_annotations.h",
         "include/android-base/threads.h",
@@ -82,6 +80,7 @@ cc_library(
         "//android:log_header",
         "@android_system_libbase//:macros",
         "@android_system_libbase//:parsebool",
+        "@android_system_libbase//:stringprintf",
         "@fmt",
     ],
 )
