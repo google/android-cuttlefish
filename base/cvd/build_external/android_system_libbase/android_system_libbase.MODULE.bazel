@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "android_system_libbase",
+    build_file = "@//build_external/android_system_libbase:BUILD.android_system_libbase.bazel",
+    commit = "6d19b5c690fa4220c10e42c2326150bbd4d4b7bb",
+    remote = "https://android.googlesource.com/platform/system/libbase",
+)

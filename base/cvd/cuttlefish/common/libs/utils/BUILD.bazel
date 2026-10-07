@@ -335,6 +335,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log:log_sink_registry",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
+        "@android_system_libbase//:macros",
         "@fmt",
     ],
 )

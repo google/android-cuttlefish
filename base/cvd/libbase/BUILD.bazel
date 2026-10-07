@@ -54,7 +54,6 @@ cc_library(
         "include/android-base/format.h",
         "include/android-base/hex.h",
         "include/android-base/logging.h",
-        "include/android-base/macros.h",
         "include/android-base/mapped_file.h",
         "include/android-base/memory.h",
         "include/android-base/no_destructor.h",
@@ -83,6 +82,7 @@ cc_library(
     deps = [
         ":libbase_posix_strerror",
         "//android:log_header",
+        "@android_system_libbase//:macros",
         "@fmt",
     ],
 )
