@@ -73,6 +73,12 @@ case $(uname -sm) in
     suffix=windows-x86_64.exe
     ;;
   *)
+    if [ "${BAZEL_REAL}" != "" ] ; then
+      cat >&2 <<EOF
+INFO: No prebuilt bazel for $(uname -sm); using ${BAZEL_REAL} instead of bazel $VERSION.
+EOF
+      exec -a "$0" "${BAZEL_REAL}" "$@"
+    fi
     cat >&2 <<EOF
 ERROR: Unsupported architecture: $(uname -sm)
 ERROR: Please set DISABLE_BAZEL_WRAPPER="yes"
