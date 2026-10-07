@@ -16,3 +16,10 @@ cc_library(
     hdrs = ["include/android-base/parsebool.h"],
     strip_include_prefix = "include",
 )
+
+cc_library(
+    name = "stringprintf",
+    srcs = ["stringprintf.cpp"],
+    hdrs = ["include/android-base/stringprintf.h"],
+    strip_include_prefix = "include",
+)
