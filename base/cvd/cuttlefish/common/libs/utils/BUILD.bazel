@@ -336,6 +336,7 @@ cf_cc_library(
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
         "@android_system_libbase//:macros",
+        "@android_system_libbase//:threads",
         "@fmt",
     ],
 )
