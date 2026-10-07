@@ -23,6 +23,7 @@ genrule(
 #define VIRGL_RENDERER_UNSTABLE_APIS 1
 #define ENABLE_VENUS 1
 #define ENABLE_DRM 1
+#define ENABLE_DRM_MSM 1
 #define ENABLE_LIBDRM 1
 #define ENABLE_RENDER_SERVER 1
 #define ENABLE_RENDER_SERVER_WORKER_THREAD 1
@@ -162,6 +163,7 @@ cc_library(
         "src/drm/drm_fence.c",
         "src/drm/drm_renderer.c",
         "src/drm/drm_util.c",
+        "src/drm/msm/msm_renderer.c",
         "src/proxy/proxy_client.c",
         "src/proxy/proxy_common.c",
         "src/proxy/proxy_context.c",
