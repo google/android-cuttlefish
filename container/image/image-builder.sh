@@ -8,7 +8,7 @@ script_location=`realpath -s $(dirname ${BASH_SOURCE[0]})`
 android_cuttlefish_root_dir=$(realpath -s $script_location/../..)
 
 usage() {
-  echo "usage: $0 [-t <tag>] [-m <mode>] [-c <container_type>]"
+  echo "usage: $0 [-t <tag>] [-m <mode>] [-c <container_type>] [-M]"
   echo "  -t: name or name:tag of container image (default: cuttlefish-orchestration)"
   echo "  -m: set mode for build image (default: stable)"
   echo "      stable   - Downloads and installs host packages from stable channel"
@@ -17,12 +17,14 @@ usage() {
   echo "      dev      - Use *.deb files under repo dir as prebuilt of host packages"
   echo "  -c: type of container (default: docker)"
   echo "      Available container type: docker, podman"
+  echo "  -M: include cuttlefish-metrics package in the container image"
 }
 
 name=cuttlefish-orchestration
 mode=stable
 container_type=docker
-while getopts ":hm:t:c:" opt; do
+include_metrics=false
+while getopts ":hm:t:c:M" opt; do
   case "${opt}" in
     h)
       usage
@@ -36,6 +38,9 @@ while getopts ":hm:t:c:" opt; do
       ;;
     t)
       name="${OPTARG}"
+      ;;
+    M)
+      include_metrics=true
       ;;
     \?)
       echo "Invalid option: ${OPTARG}" >&2
@@ -94,5 +99,6 @@ pushd $android_cuttlefish_root_dir
   --target runner \
   --build-arg "BUILD_OPTION=${build_option}" \
   --build-arg "REPO=${repo}" \
+  --build-arg "INCLUDE_METRICS=${include_metrics}" \
   .
 popd

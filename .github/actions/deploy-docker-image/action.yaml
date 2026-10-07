@@ -2,6 +2,9 @@ name: 'Deploy docker image cuttlefish-orchestration'
 inputs:
   arch:
     required: true
+  image-name:
+    required: false
+    default: 'cuttlefish-orchestration'
   image-version:
     required: true
 runs:
@@ -10,11 +13,12 @@ runs:
   - name: Deploy docker image into Artifact Registry
     run: |
       TAG=${INPUTS_IMAGE_VERSION}-${INPUTS_ARCH}
-      REMOTE_IMAGE_TAG=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:${TAG}
+      REMOTE_IMAGE_TAG=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/${INPUTS_IMAGE_NAME}:${TAG}
 
-      docker tag cuttlefish-orchestration ${REMOTE_IMAGE_TAG}
+      docker tag ${INPUTS_IMAGE_NAME} ${REMOTE_IMAGE_TAG}
       docker push ${REMOTE_IMAGE_TAG}
     shell: bash
     env:
       INPUTS_ARCH: ${{ inputs.arch }}
+      INPUTS_IMAGE_NAME: ${{ inputs.image-name }}
       INPUTS_IMAGE_VERSION: ${{ inputs.image-version }}
