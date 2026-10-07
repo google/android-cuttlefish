@@ -14,5 +14,5 @@
 /usr/lib/cuttlefish-common/bin/graphics_detector        /usr/lib/cuttlefish-common/bin/aarch64-linux-gnu/gfxstream_graphics_detector
 /usr/lib/cuttlefish-common/bin/libvk_swiftshader.so     /usr/lib/cuttlefish-common/bin/aarch64-linux-gnu/libvk_swiftshader.so
 /usr/lib/cuttlefish-common/bin/graphics_detector        /usr/lib/cuttlefish-common/bin/x86_64-linux-gnu/gfxstream_graphics_detector
-/usr/lib/cuttlefish-common/bin/libvk_lavapipe.so        /usr/lib/cuttlefish-common/lib64/vulkan.lvp.so
+/usr/lib/cuttlefish-common/bin/libvulkan_lvp.so         /usr/lib/cuttlefish-common/lib64/vulkan.lvp.so
 /usr/lib/cuttlefish-common/bin/libvk_swiftshader.so     /usr/lib/cuttlefish-common/lib64/vulkan.pastel.so
