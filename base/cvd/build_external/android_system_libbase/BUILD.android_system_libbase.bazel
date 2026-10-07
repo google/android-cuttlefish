@@ -9,3 +9,10 @@ cc_library(
     hdrs = ["include/android-base/macros.h"],
     strip_include_prefix = "include",
 )
+
+cc_library(
+    name = "parsebool",
+    srcs = ["parsebool.cpp"],
+    hdrs = ["include/android-base/parsebool.h"],
+    strip_include_prefix = "include",
+)
