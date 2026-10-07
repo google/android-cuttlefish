@@ -23,6 +23,7 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_api_credentials.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/build_api.h"
@@ -94,7 +95,7 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
 
   if (flags.enable_caching) {
     impl->caching_build_api_ = std::make_unique<CachingBuildApi>(
-        *impl->android_build_api_, cache_base_path);
+        *impl->android_build_api_, cache_base_path, RoCacheDir());
   }
 
   impl->luci_credential_source_ = CF_EXPECT(GetCredentialSourceFromFlags(
