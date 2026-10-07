@@ -15,24 +15,35 @@
 load("@rules_go//go:def.bzl", "go_test")
 
 go_test(
-    name = "static_resources_init_test",
+    name = "cvd_snapshot_tests",
     size = "large",
     srcs = ["main_test.go"],
-    data = [
-        "@cuttlefish_debian//:cuttlefish-base.cuttlefish-host-resources.init",
-    ],
-    env = {
-        "INIT_SCRIPT": "$(rlocationpath @cuttlefish_debian//:cuttlefish-base.cuttlefish-host-resources.init)",
-    },
     tags = [
         "exclusive",
         "external",
-        "local",
         "no-sandbox",
+        "requires_ab",
+        "supports-graceful-termination",
     ],
     deps = [
-        "//host_resources/common",
-        "@com_github_google_go_cmp//cmp",
-        "@com_github_google_go_cmp//cmp/cmpopts",
+        "//cvd/common",
+    ],
+)
+
+go_test(
+    name = "cvd_snapshot_tests_additional_substitution",
+    size = "large",
+    srcs = ["main_test.go"],
+    data = ["//:debian_substitution_marker"],
+    env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(rlocationpath //:debian_substitution_marker)"},
+    tags = [
+        "exclusive",
+        "external",
+        "no-sandbox",
+        "requires_ab",
+        "supports-graceful-termination",
+    ],
+    deps = [
+        "//cvd/common",
     ],
 )

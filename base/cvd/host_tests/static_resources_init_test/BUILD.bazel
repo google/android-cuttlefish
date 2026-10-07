@@ -12,23 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_test")
 
-go_library(
-    name = "common",
-    srcs = [
-        "init_filesystem_ns.go",
-        "init_network_ns.go",
-        "ip.go",
-        "nft.go",
-        "sandbox.go",
-        "state.go",
-        "static_resources.go",
+go_test(
+    name = "static_resources_init_test",
+    size = "large",
+    srcs = ["main_test.go"],
+    data = [
+        "@cuttlefish_debian//:cuttlefish-base.cuttlefish-host-resources.init",
     ],
-    importpath = "github.com/google/android-cuttlefish/e2etests/host_resources/common",
-    visibility = ["//visibility:public"],
+    env = {
+        "INIT_SCRIPT": "$(rlocationpath @cuttlefish_debian//:cuttlefish-base.cuttlefish-host-resources.init)",
+    },
+    tags = [
+        "exclusive",
+        "external",
+        "local",
+        "no-sandbox",
+    ],
     deps = [
+        "//host_tests/common",
         "@com_github_google_go_cmp//cmp",
-        "@rules_go//go/runfiles",
+        "@com_github_google_go_cmp//cmp/cmpopts",
     ],
 )
