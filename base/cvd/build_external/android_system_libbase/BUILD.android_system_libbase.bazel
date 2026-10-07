@@ -64,3 +64,9 @@ cc_library(
     hdrs = ["include/android-base/threads.h"],
     strip_include_prefix = "include",
 )
+
+cc_library(
+    name = "unique_fd",
+    hdrs = ["include/android-base/unique_fd.h"],
+    strip_include_prefix = "include",
+)

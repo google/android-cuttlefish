@@ -26,8 +26,8 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/libs/wayland:wayland_utils",
-        "//libbase",
         "@abseil-cpp//absl/log",
+        "@android_system_libbase//:unique_fd",
         "@crosvm//:crosvm_gpu_display_wayland_protocols",
         "@libdrm//:libdrm_fourcc",
         "@wayland//:wayland_server",
