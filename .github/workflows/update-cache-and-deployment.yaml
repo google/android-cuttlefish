@@ -191,8 +191,10 @@ jobs:
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
       with:
         persist-credentials: false
-    - name: Build docker image
-      run: container/image/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL}
+    - name: Build docker images
+      run: |
+        container/image/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL} -t cuttlefish-orchestration
+        container/image/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL} -t cuttlefish-orchestration-with-metrics -M
       env:
         INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
@@ -205,10 +207,17 @@ jobs:
         registry: us-docker.pkg.dev
         username: _json_key
         password: '${{ secrets.artifact-registry-uploader-json-creds }}'
-    - name: Deploy docker image
+    - name: Deploy docker image (without metrics)
       uses: ./.github/actions/deploy-docker-image
       with:
         arch: amd64
+        image-name: cuttlefish-orchestration
+        image-version: ${{ needs.set-variables.outputs.image-version }}
+    - name: Deploy docker image (with metrics)
+      uses: ./.github/actions/deploy-docker-image
+      with:
+        arch: amd64
+        image-name: cuttlefish-orchestration-with-metrics
         image-version: ${{ needs.set-variables.outputs.image-version }}
   deploy-docker-image-arm64:
     if: inputs.deploy-channel != ''
@@ -220,8 +229,10 @@ jobs:
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
       with:
         persist-credentials: false
-    - name: Build docker image
-      run: container/image/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL}
+    - name: Build docker images
+      run: |
+        container/image/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL} -t cuttlefish-orchestration
+        container/image/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL} -t cuttlefish-orchestration-with-metrics -M
       env:
         INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
@@ -234,10 +245,17 @@ jobs:
         registry: us-docker.pkg.dev
         username: _json_key
         password: '${{ secrets.artifact-registry-uploader-json-creds }}'
-    - name: Deploy docker image
+    - name: Deploy docker image (without metrics)
       uses: ./.github/actions/deploy-docker-image
       with:
         arch: arm64
+        image-name: cuttlefish-orchestration
+        image-version: ${{ needs.set-variables.outputs.image-version }}
+    - name: Deploy docker image (with metrics)
+      uses: ./.github/actions/deploy-docker-image
+      with:
+        arch: arm64
+        image-name: cuttlefish-orchestration-with-metrics
         image-version: ${{ needs.set-variables.outputs.image-version }}
   deploy-docker-manifest:
     if: inputs.deploy-channel != ''
@@ -261,14 +279,16 @@ jobs:
         password: '${{ secrets.artifact-registry-uploader-json-creds }}'
     - name: Deploy manifests
       run: |
-        IMAGE=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration
         TAG=${NEEDS_SET_VARIABLES_OUTPUTS_IMAGE_VERSION}
 
-        for MANIFEST_TAG in ${TAG} ${INPUTS_DEPLOY_CHANNEL}; do
-          docker manifest create ${IMAGE}:${MANIFEST_TAG} \
-            --amend ${IMAGE}:${TAG}-amd64 \
-            --amend ${IMAGE}:${TAG}-arm64
-          docker manifest push ${IMAGE}:${MANIFEST_TAG}
+        for IMAGE_NAME in cuttlefish-orchestration cuttlefish-orchestration-with-metrics; do
+          IMAGE=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/${IMAGE_NAME}
+          for MANIFEST_TAG in ${TAG} ${INPUTS_DEPLOY_CHANNEL}; do
+            docker manifest create ${IMAGE}:${MANIFEST_TAG} \
+              --amend ${IMAGE}:${TAG}-amd64 \
+              --amend ${IMAGE}:${TAG}-arm64
+            docker manifest push ${IMAGE}:${MANIFEST_TAG}
+          done
         done
       env:
         INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
