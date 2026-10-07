@@ -23,3 +23,10 @@ cc_library(
     hdrs = ["include/android-base/stringprintf.h"],
     strip_include_prefix = "include",
 )
+
+cc_library(
+    name = "threads",
+    srcs = ["threads.cpp"],
+    hdrs = ["include/android-base/threads.h"],
+    strip_include_prefix = "include",
+)
