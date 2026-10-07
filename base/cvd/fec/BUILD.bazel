@@ -39,6 +39,7 @@ cc_binary(
         "//libbase",
         "//libext4_utils",
         "@android_system_core//:libsparse",
+        "@android_system_libbase//:strings",
         "@android_system_libbase//:threads",
         "@avb//:libavb",
         "@boringssl//:crypto",
