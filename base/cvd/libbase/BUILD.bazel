@@ -31,7 +31,6 @@ cc_library(
     srcs = [
         "cmsg.cpp",
         "errors_unix.cpp",
-        "hex.cpp",
         "mapped_file.cpp",
         "parsenetaddress.cpp",
     ],
@@ -41,7 +40,6 @@ cc_library(
         "include/android-base/errors.h",
         "include/android-base/expected.h",
         "include/android-base/format.h",
-        "include/android-base/hex.h",
         "include/android-base/mapped_file.h",
         "include/android-base/memory.h",
         "include/android-base/no_destructor.h",
