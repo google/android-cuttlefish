@@ -5,6 +5,12 @@ package(
 )
 
 cc_library(
+    name = "collections",
+    hdrs = ["include/android-base/collections.h"],
+    strip_include_prefix = "include",
+)
+
+cc_library(
     name = "macros",
     hdrs = ["include/android-base/macros.h"],
     strip_include_prefix = "include",
