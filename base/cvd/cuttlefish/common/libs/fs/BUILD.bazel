@@ -32,9 +32,9 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
+        "@android_system_libbase//:cmsg",
         "@fmt",
     ],
 )
