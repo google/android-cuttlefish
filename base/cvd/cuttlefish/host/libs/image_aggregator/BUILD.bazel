@@ -136,8 +136,8 @@ cf_cc_library(
         "//cuttlefish/posix:rename",
         "//cuttlefish/process:execute",
         "//cuttlefish/result",
-        "//libbase",
         "@android_system_core//:libsparse",
+        "@android_system_libbase//:unique_fd",
     ],
 )
 

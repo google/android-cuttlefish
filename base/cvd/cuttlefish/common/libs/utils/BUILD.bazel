@@ -423,6 +423,7 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/result",
         "//libbase",
+        "@android_system_libbase//:unique_fd",
     ],
 )
 
