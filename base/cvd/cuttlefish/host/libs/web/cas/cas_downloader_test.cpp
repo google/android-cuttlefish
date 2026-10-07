@@ -168,7 +168,7 @@ class CasDownloaderTests : public ::testing::Test {
     }
     std::string create_artifact_string = "touch " + artifact_path;
     std::string script =
-        fmt::format(R"(#!/bin/bash
+        fmt::format(R"(#!/usr/bin/env bash
 if [[ "$1" == "-help" ]]; then
   echo "Usage of casdownloader:" >&2
   {FLAGS}
@@ -421,7 +421,7 @@ TEST_F(CasDownloaderTests, HandlesInvocationIdFlag) {
 
 TEST_F(CasDownloaderTests, HandlesUnexpectedHelpOutput) {
   std::string script = fmt::format(
-      R"(#!/bin/bash
+      R"(#!/usr/bin/env bash
 if [[ "$1" == "-help" ]]; then
   echo "Usage of casdownloader:" >&2
   echo "  -use-hardlink" >&2  # missing the ending "=...", should never occur.
