@@ -170,6 +170,11 @@ func (tc *TestContext) TargetBin() string {
 	return "cvd"
 }
 
+// Returns the test's temporary directory.
+func (tc *TestContext) TempDir() string {
+	return tc.tempdir
+}
+
 // Common parameters passed to `cvd fetch`.
 type FetchArgs struct {
 	BootloaderBuildBranch string
