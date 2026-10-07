@@ -14,6 +14,6 @@ cf_cc_test(
     deps = [
         "//cuttlefish/host/libs/location",
         "//cuttlefish/host/libs/location:string_parse",
-        "//libbase",
+        "@android_system_libbase//:file_logging",
     ],
 )

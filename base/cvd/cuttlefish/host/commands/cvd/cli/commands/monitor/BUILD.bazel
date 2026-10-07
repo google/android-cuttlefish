@@ -36,9 +36,9 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:monitor_source",
         "//cuttlefish/host/commands/cvd/cli/commands/monitor:truncate",
-        "//libbase",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -78,9 +78,9 @@ cf_cc_library(
         "//cuttlefish/io:read_exact",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
-        "//libbase",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 

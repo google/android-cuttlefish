@@ -17,8 +17,37 @@ cc_library(
 )
 
 cc_library(
+    name = "file_logging",
+    srcs = [
+        "file.cpp",
+        "logging.cpp",
+        "logging_splitters.h",
+    ],
+    hdrs = [
+        "include/android-base/file.h",
+        "include/android-base/logging.h",
+        "include/android-base/utf8.h",
+    ],
+    strip_include_prefix = "include",
+    deps = [
+        ":macros",
+        ":off64_t",
+        ":strings",
+        ":threads",
+        ":unique_fd",
+        "@android_system_logging//:liblog",
+    ],
+)
+
+cc_library(
     name = "macros",
     hdrs = ["include/android-base/macros.h"],
+    strip_include_prefix = "include",
+)
+
+cc_library(
+    name = "off64_t",
+    hdrs = ["include/android-base/off64_t.h"],
     strip_include_prefix = "include",
 )
 
@@ -33,6 +62,12 @@ cc_library(
     name = "parseint",
     hdrs = ["include/android-base/parseint.h"],
     strip_include_prefix = "include",
+)
+
+cc_library(
+    name = "posix_strerror_r",
+    srcs = ["posix_strerror_r.cpp"],
+    copts = ["-D_POSIX_C_SOURCE=200112"],
 )
 
 cc_library(
@@ -61,7 +96,10 @@ cc_library(
     hdrs = ["include/android-base/strings.h"],
     cxxopts = ["-std=c++20"],
     strip_include_prefix = "include",
-    deps = [":stringprintf"],
+    deps = [
+        ":posix_strerror_r",
+        ":stringprintf",
+    ],
 )
 
 cc_library(

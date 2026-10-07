@@ -85,7 +85,7 @@ cf_cc_test(
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
-        "//libbase",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -222,9 +222,9 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances:instance_manager",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
         "@fmt",
         "@jsoncpp",
     ],

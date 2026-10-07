@@ -16,7 +16,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/secure_env/storage",
         "//cuttlefish/result",
-        "//libbase",
+        "@android_system_libbase//:file_logging",
         "@jsoncpp",
     ],
 )

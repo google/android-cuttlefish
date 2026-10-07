@@ -60,9 +60,9 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
+        "@android_system_libbase//:file_logging",
         "@fmt",
         "@jsoncpp",
     ],
@@ -179,8 +179,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip:cached_zip_source",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
+        "@android_system_libbase//:file_logging",
         "@fmt",
     ],
 )
@@ -200,8 +200,8 @@ cf_cc_test(
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -248,7 +248,7 @@ cf_cc_test(
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -289,8 +289,8 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/web:digest",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -341,8 +341,8 @@ cf_cc_test(
         "//cuttlefish/io:string",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -385,8 +385,8 @@ cf_cc_test(
         "//cuttlefish/io:string",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -489,8 +489,8 @@ cf_cc_test(
         "//cuttlefish/host/libs/web/http_client:fake_http_client",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 

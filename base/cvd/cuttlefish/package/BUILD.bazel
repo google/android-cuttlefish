@@ -14,8 +14,8 @@ cf_cc_binary(
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
-        "//libbase",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 

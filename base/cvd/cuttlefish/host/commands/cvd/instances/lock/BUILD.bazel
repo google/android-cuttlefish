@@ -29,7 +29,7 @@ cf_cc_library(
         "//cuttlefish/posix:remove",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
+        "@android_system_libbase//:file_logging",
     ],
 )

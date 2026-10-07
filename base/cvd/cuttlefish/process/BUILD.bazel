@@ -76,9 +76,9 @@ cf_cc_library(
         "//cuttlefish/posix:readlink",
         "//cuttlefish/posix:stat",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
         "@fmt",
     ],
 )

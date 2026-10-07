@@ -128,10 +128,10 @@ cf_cc_library(
         "//cuttlefish/posix:stat",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
         "@fmt",
     ],
 )
@@ -146,9 +146,9 @@ cf_cc_test(
         "//cuttlefish/files:is_directory_empty",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -325,7 +325,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/base:log_severity",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:globals",
@@ -335,6 +334,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log:log_sink_registry",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
+        "@android_system_libbase//:file_logging",
         "@android_system_libbase//:macros",
         "@android_system_libbase//:threads",
         "@fmt",
@@ -422,7 +422,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:inotify",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/result",
-        "//libbase",
+        "@android_system_libbase//:file_logging",
         "@android_system_libbase//:unique_fd",
     ],
 )

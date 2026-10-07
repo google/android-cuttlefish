@@ -243,8 +243,8 @@ cf_cc_library(
         "//cuttlefish/pretty:set",
         "//cuttlefish/pretty:struct",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -256,9 +256,9 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:file_source",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
         "@jsoncpp",
     ],
 )
