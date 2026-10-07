@@ -3,13 +3,13 @@ Host tools used to run Android Cuttlefish Virtual Devices.
 """
 
 bazel_dep(name = "aspect_rules_lint", version = "2.5.2", dev_dependency = True)
-bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)
+bazel_dep(name = "bazel_skylib", version = "1.9.0", dev_dependency = True)
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 
 bazel_dep(name = "abseil-cpp", version = "20260107.0")
 bazel_dep(name = "aspect_bazel_lib", version = "2.22.0")
 bazel_dep(name = "avb")
-bazel_dep(name = "bazel_features", version = "1.11.0")
+bazel_dep(name = "bazel_features", version = "1.50.0")
 bazel_dep(name = "boringssl", version = "0.20260813.0")
 bazel_dep(name = "brotli")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2")
@@ -43,7 +43,7 @@ bazel_dep(name = "pcre2", version = "10.45")
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "protobuf", version = "33.0")
 bazel_dep(name = "rootcanal")
-bazel_dep(name = "rules_cc", version = "0.2.19")
+bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "rules_cuda")  # CUDA support for NVENC (hermetic headers via redist_json, runtime dlopen)
 bazel_dep(name = "rules_flex", version = "0.4")
 bazel_dep(name = "rules_foreign_cc", version = "0.15.1")  # this is normally an indirect dependency, but for bazel 9 we need a higher version
