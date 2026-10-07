@@ -16,8 +16,6 @@
 
 #include "cuttlefish/host/libs/config/media.h"
 
-#include <android-base/parseint.h>
-
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -26,6 +24,7 @@
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "android-base/parseint.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
