@@ -114,8 +114,8 @@ Result<Command> ConstructCommand(const ConstructCommandParam& param) {
   }
 
   if (!param.working_dir.empty()) {
-    command.SetWorkingDirectory(CF_EXPECT(
-        Fd::Open(param.working_dir, O_RDONLY | O_PATH | O_DIRECTORY)));
+    command.SetWorkingDirectory(
+        CF_EXPECT(Fd::Open(param.working_dir, O_RDONLY | O_DIRECTORY)));
   }
   return {std::move(command)};
 }
