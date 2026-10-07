@@ -555,6 +555,9 @@ int CuttlefishMain() {
         "Gfxstream (Accelerated Rendering using Host Vulkan)";
   } else if (instance.gpu_mode() == GpuMode::Venus) {
     user_friendly_gpu_mode = "Venus (Accelerated Rendering using Host Vulkan)";
+  } else if (instance.gpu_mode() == GpuMode::DrmNctx) {
+    user_friendly_gpu_mode =
+        "DRM Native Context (Accelerated Rendering using Host Vulkan)";
   } else {
     user_friendly_gpu_mode = GpuModeString(instance.gpu_mode());
   }

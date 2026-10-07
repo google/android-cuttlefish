@@ -30,6 +30,8 @@ Result<GpuMode> GpuModeFromString(std::string_view mode) {
     return GpuMode::Auto;
   } else if (mode == kGpuModeCustom) {
     return GpuMode::Custom;
+  } else if (mode == kGpuModeDrmNctx) {
+    return GpuMode::DrmNctx;
   } else if (mode == kGpuModeDrmVirgl) {
     return GpuMode::DrmVirgl;
   } else if (mode == kGpuModeGfxstream) {
@@ -40,12 +42,12 @@ Result<GpuMode> GpuModeFromString(std::string_view mode) {
     return GpuMode::GfxstreamGuestAngleHostSwiftshader;
   } else if (mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
     return GpuMode::GfxstreamGuestAngleHostLavapipe;
-  } else if (mode == kGpuModeVenus) {
-    return GpuMode::Venus;
   } else if (mode == kGpuModeGuestLavapipe) {
     return GpuMode::GuestLavapipe;
   } else if (mode == kGpuModeGuestSwiftshader) {
     return GpuMode::GuestSwiftshader;
+  } else if (mode == kGpuModeVenus) {
+    return GpuMode::Venus;
   } else if (mode == kGpuModeNone) {
     return GpuMode::None;
   } else {
@@ -62,6 +64,9 @@ std::string_view format_as(GpuMode mode) {
     case GpuMode::Custom:
       return kGpuModeCustom;
       break;
+    case GpuMode::DrmNctx:
+      return kGpuModeDrmNctx;
+      break;
     case GpuMode::DrmVirgl:
       return kGpuModeDrmVirgl;
       break;
@@ -77,14 +82,14 @@ std::string_view format_as(GpuMode mode) {
     case GpuMode::GfxstreamGuestAngleHostSwiftshader:
       return kGpuModeGfxstreamGuestAngleHostSwiftshader;
       break;
-    case GpuMode::Venus:
-      return kGpuModeVenus;
-      break;
     case GpuMode::GuestLavapipe:
       return kGpuModeGuestLavapipe;
       break;
     case GpuMode::GuestSwiftshader:
       return kGpuModeGuestSwiftshader;
+      break;
+    case GpuMode::Venus:
+      return kGpuModeVenus;
       break;
     case GpuMode::None:
       return kGpuModeNone;

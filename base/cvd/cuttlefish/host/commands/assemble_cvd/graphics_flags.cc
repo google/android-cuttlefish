@@ -165,6 +165,18 @@ GetGpuModeRequirementsMap() {
           "configured in the `android-info.txt` file associated with the guest "
           "target build.",
   };
+  const RequirementWithReason kGuestSupportsTurnip{
+      .func =
+          [](const CommonState& common) {
+            return common.guest_config.turnip_supported ||
+                   common.guest_config.has_vulkan_turnip_apex;
+          },
+      .success_explanation = "The guest supports Turnip.",
+      .failure_explanation =
+          "The guest does not claim support for Turnip. This is "
+          "configured in the `android-info.txt` file associated with the guest "
+          "target build.",
+  };
   const RequirementWithReason kGuestSupportsLavapipe{
       .func =
           [](const CommonState& common) {
@@ -347,6 +359,16 @@ GetGpuModeRequirementsMap() {
               GpuMode::Venus,
               {
                   kGuestSupportsVenus,
+                  kHostVulkanLoaderAvailable,
+                  kHostVulkanDriverAvailable,
+                  kHostVulkanIsNonSoftwareRenderer,
+                  kNotUsingHostQemu,
+              },
+          },
+          {
+              GpuMode::DrmNctx,
+              {
+                  kGuestSupportsTurnip,
                   kHostVulkanLoaderAvailable,
                   kHostVulkanDriverAvailable,
                   kHostVulkanIsNonSoftwareRenderer,
@@ -546,6 +568,9 @@ std::vector<GpuMode> GetGpuModeCandidates(const GuestConfig& guest_config) {
     if (guest_config.venus_supported) {
       gpu_mode_candidates.push_back(GpuMode::Venus);
     }
+    if (guest_config.turnip_supported) {
+      gpu_mode_candidates.push_back(GpuMode::DrmNctx);
+    }
     if (guest_config.guest_lavapipe_supported) {
       gpu_mode_candidates.push_back(GpuMode::GuestLavapipe);
     }
@@ -557,6 +582,9 @@ std::vector<GpuMode> GetGpuModeCandidates(const GuestConfig& guest_config) {
     gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostLavapipe);
     if (guest_config.venus_supported) {
       gpu_mode_candidates.push_back(GpuMode::Venus);
+    }
+    if (guest_config.turnip_supported) {
+      gpu_mode_candidates.push_back(GpuMode::DrmNctx);
     }
     if (guest_config.guest_lavapipe_supported) {
       gpu_mode_candidates.push_back(GpuMode::GuestLavapipe);
@@ -664,7 +692,8 @@ Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
             gpu_vhost_user_mode_arg == kGpuVhostUserModeOn ||
             gpu_vhost_user_mode_arg == kGpuVhostUserModeOff);
   if (gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto) {
-    if (IsGuestRenderingMode(gpu_mode) || gpu_mode == GpuMode::Venus) {
+    if (IsGuestRenderingMode(gpu_mode) || gpu_mode == GpuMode::Venus ||
+        gpu_mode == GpuMode::DrmNctx) {
       VLOG(0) << "GPU vhost user auto mode: not needed for --gpu_mode="
               << GpuModeString(gpu_mode) << ". Not enabling vhost user gpu.";
       return false;
@@ -720,7 +749,8 @@ Result<GuestHwuiRenderer> SelectGuestHwuiRenderer(
     return GuestHwuiRenderer::kSkiaVk;
   }
 
-  if (gpu_mode == GpuMode::GuestLavapipe || gpu_mode == GpuMode::Venus) {
+  if (gpu_mode == GpuMode::GuestLavapipe || gpu_mode == GpuMode::Venus ||
+      gpu_mode == GpuMode::DrmNctx) {
     VLOG(0) << "Selecting SkiaVk as the HWUI renderer for "
             << GpuModeString(gpu_mode) << " GPU mode.";
     return GuestHwuiRenderer::kSkiaVk;
@@ -961,6 +991,7 @@ Result<GpuMode> ConfigureGpuSettings(
   instance.set_has_vulkan_swiftshader_apex(
       guest_config.has_vulkan_swiftshader_apex);
   instance.set_has_vulkan_venus_apex(guest_config.has_vulkan_venus_apex);
+  instance.set_has_vulkan_turnip_apex(guest_config.has_vulkan_turnip_apex);
 
 #ifdef __APPLE__
   (void)graphics_availability;

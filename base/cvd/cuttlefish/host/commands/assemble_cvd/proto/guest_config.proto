@@ -60,6 +60,9 @@ message Graphics {
 
   // Whether the guest has a separate apex for the Venus Vulkan driver.
   bool vulkan_venus_apex_supported = 9;
+
+  // Whether the guest has a separate apex for the Turnip Vulkan driver.
+  bool vulkan_turnip_apex_supported = 10;
 }
 
 message Audio {
