@@ -17,7 +17,7 @@ use std::collections::VecDeque;
 use std::fs::File;
 use std::io::{Seek, Write};
 use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::device::{CameraControls, TestPattern};
 
@@ -68,6 +68,111 @@ pub enum ChannelCmd {
     Shutdown,
 }
 
+/// Paces periodic capture events with zero cumulative drift.
+///
+/// Each tick deadline is calculated from the initial start time:
+///
+///     target_time(k) = stream_start + (k * interval)
+///     wait_duration  = max(0, target_time(k) - now)
+///
+/// For example, at 30 FPS (`interval ≈ 33.333 ms`):
+/// - Tick 1 target: `stream_start + 1 * 33.333 ms` = 33.333 ms
+/// - Tick 2 target: `stream_start + 2 * 33.333 ms` = 66.666 ms
+/// - Tick 3 target: `stream_start + 3 * 33.333 ms` = 99.999 ms
+///
+/// Processing time between ticks is absorbed into `wait_duration`, maintaining
+/// a constant average interval over time. For example, if processing tick 1 takes 2.0 ms
+/// (`now = 35.333 ms`), the wait for tick 2 is:
+///
+///     wait_duration = 66.666 ms - 35.333 ms = 31.333 ms
+///
+/// If execution stalls beyond an entire interval:
+///
+///     expected_ticks_count = (now - stream_start) / interval
+///     dropped_ticks        = expected_ticks_count - last_ticks_count
+///
+/// For example, if a 100 ms stall occurs after tick 1 (`now = 134.8 ms`):
+/// - `expected_ticks_count = 134.8 ms / 33.333 ms = 4`
+/// - `dropped_ticks = 4 - 1 = 3` (ticks 2, 3, and 4 missed during the stall)
+/// - Next scheduled deadline is tick 5: `stream_start + 5 * 33.333 ms` = 166.665 ms
+///
+/// Missed ticks are skipped so the schedule stays locked to elapsed time without burst-firing.
+#[derive(Debug)]
+pub struct CaptureClock {
+    interval: Duration,
+    stream_start: Instant,
+    next_tick: Instant,
+    ticks_count: u64,
+}
+
+impl CaptureClock {
+    /// Creates a new capture clock configured with the specified tick interval.
+    pub fn new(interval: Duration) -> Self {
+        let now = Instant::now();
+        Self {
+            interval,
+            stream_start: now,
+            next_tick: now,
+            ticks_count: 0,
+        }
+    }
+
+    /// Creates a new capture clock pacing at the specified rate in ticks per second.
+    pub fn for_fps(fps: u32) -> Self {
+        Self::new(Duration::from_nanos(1_000_000_000 / fps as u64))
+    }
+
+    /// Starts the timeline from the current instant.
+    pub fn start(&mut self) {
+        let now = Instant::now();
+        self.stream_start = now;
+        self.ticks_count = 1;
+        self.next_tick = now + self.interval;
+    }
+
+    /// Returns the exact duration remaining until the next scheduled tick.
+    ///
+    /// If the scheduled tick deadline has already passed, returns `Duration::ZERO`.
+    pub fn time_until_next_tick(&self) -> Duration {
+        let now = Instant::now();
+        if now >= self.next_tick {
+            Duration::ZERO
+        } else {
+            self.next_tick - now
+        }
+    }
+
+    /// Advances the clock to the next periodic tick deadline, detecting and compensating for overruns.
+    ///
+    /// Returns the number of dropped ticks if execution was delayed longer than an entire interval
+    pub fn advance(&mut self) -> u64 {
+        let now = Instant::now();
+        let target = self.stream_start + Duration::from_nanos(
+            self.ticks_count.saturating_mul(self.interval.as_nanos() as u64),
+        );
+
+        let mut dropped = 0;
+        if now > target + self.interval {
+            let elapsed = now.duration_since(self.stream_start);
+            let expected_ticks_count = (elapsed.as_nanos() / self.interval.as_nanos()) as u64;
+            assert!(
+                expected_ticks_count >= self.ticks_count,
+                "expected_ticks_count ({expected_ticks_count}) cannot be less than ticks_count ({})",
+                self.ticks_count
+            );
+            dropped = expected_ticks_count - self.ticks_count;
+            self.ticks_count = expected_ticks_count;
+        }
+
+        self.ticks_count += 1;
+        self.next_tick = self.stream_start + Duration::from_nanos(
+            self.ticks_count.saturating_mul(self.interval.as_nanos() as u64),
+        );
+
+        dropped
+    }
+}
+
 /// Generate capture data.
 pub struct CaptureProcessor {
     session_id: u32,
@@ -78,6 +183,7 @@ pub struct CaptureProcessor {
     iteration: u64,
     pending_requests: VecDeque<CaptureRequest>,
     completion_tx: Sender<CaptureCompletedEvent>,
+    clock: CaptureClock,
 }
 
 impl CaptureProcessor {
@@ -95,35 +201,44 @@ impl CaptureProcessor {
             iteration: 0,
             pending_requests: VecDeque::new(),
             completion_tx,
+            clock: CaptureClock::for_fps(30),
         }
     }
 
-    /// Runs the processor loop waiting on channel commands with a 30 FPS timeout.
+    /// Runs the processor loop waiting on channel commands with periodic drift-free cadence.
     pub fn run(&mut self, cmd_rx: Receiver<ChannelCmd>) -> AnyhowResult<()> {
-        const FRAME_INTERVAL: Duration = Duration::from_nanos(1_000_000_000 / 30);
-
         loop {
-            let timeout = if self.streaming {
-                FRAME_INTERVAL
+            if self.streaming {
+                let delay = self.clock.time_until_next_tick();
+                match cmd_rx.recv_timeout(delay) {
+                    Ok(ChannelCmd::Shutdown) => {
+                        log::info!("Channel {}: shutdown received", self.session_id);
+                        break;
+                    }
+                    Ok(cmd) => self.handle_cmd(cmd),
+                    Err(RecvTimeoutError::Timeout) => self.produce_capture()?,
+                    Err(RecvTimeoutError::Disconnected) => {
+                        log::info!(
+                            "Channel {}: command sender disconnected, shutting down",
+                            self.session_id
+                        );
+                        break;
+                    }
+                }
             } else {
-                Duration::MAX
-            };
-
-            match cmd_rx.recv_timeout(timeout) {
-                Ok(ChannelCmd::Shutdown) => {
-                    log::info!("Channel {}: shutdown received", self.session_id);
-                    break;
-                }
-                Ok(cmd) => self.handle_cmd(cmd),
-                Err(RecvTimeoutError::Timeout) => {
-                    self.produce_capture()?;
-                }
-                Err(RecvTimeoutError::Disconnected) => {
-                    log::info!(
-                        "Channel {}: command sender disconnected, shutting down",
-                        self.session_id
-                    );
-                    break;
+                match cmd_rx.recv() {
+                    Ok(ChannelCmd::Shutdown) => {
+                        log::info!("Channel {}: shutdown received", self.session_id);
+                        break;
+                    }
+                    Ok(cmd) => self.handle_cmd(cmd),
+                    Err(_) => {
+                        log::info!(
+                            "Channel {}: command sender disconnected, shutting down",
+                            self.session_id
+                        );
+                        break;
+                    }
                 }
             }
         }
@@ -137,6 +252,7 @@ impl CaptureProcessor {
                 self.height = h;
                 self.streaming = true;
                 self.iteration = 0;
+                self.clock.start();
             }
             ChannelCmd::StopCapture => {
                 self.streaming = false;
@@ -153,8 +269,10 @@ impl CaptureProcessor {
     }
 
     fn produce_capture(&mut self) -> AnyhowResult<()> {
-        if self.streaming && !self.pending_requests.is_empty() {
-            let mut req = self.pending_requests.pop_front().unwrap();
+        let seq = self.iteration as u32;
+        self.iteration += 1;
+
+        if let Some(mut req) = self.pending_requests.pop_front() {
             if let Err(e) = req.planes.rewind() {
                 log::warn!(
                     "Channel {}: failed to rewind capture planes: {:#}",
@@ -162,9 +280,8 @@ impl CaptureProcessor {
                     e
                 );
             }
-
             if let Err(e) = Self::write_pattern(
-                self.iteration,
+                seq as u64,
                 self.controls.test_pattern,
                 &self.controls,
                 self.width,
@@ -179,12 +296,26 @@ impl CaptureProcessor {
                     e
                 );
             }
-            let seq = self.iteration as u32;
-            self.iteration += 1;
             let _ = self.completion_tx.send(CaptureCompletedEvent {
                 buffer_id: req.buffer_id,
                 sequence: seq,
             });
+        } else {
+            log::trace!(
+                "Channel {}: capture tick underrun (sequence {}, no request queued)",
+                self.session_id,
+                seq
+            );
+        }
+
+        let dropped = self.clock.advance();
+        if dropped > 0 {
+            log::debug!(
+                "Channel {}: timing overrun, skipping {} ticks",
+                self.session_id,
+                dropped
+            );
+            self.iteration += dropped;
         }
         Ok(())
     }
