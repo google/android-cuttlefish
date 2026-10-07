@@ -11,6 +11,12 @@ cc_library(
 )
 
 cc_library(
+    name = "errno_restorer",
+    hdrs = ["include/android-base/errno_restorer.h"],
+    strip_include_prefix = "include",
+)
+
+cc_library(
     name = "macros",
     hdrs = ["include/android-base/macros.h"],
     strip_include_prefix = "include",
