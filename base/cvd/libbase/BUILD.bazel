@@ -33,7 +33,6 @@ cc_library(
     ],
     hdrs = [
         "include/android-base/endian.h",
-        "include/android-base/expected.h",
         "include/android-base/format.h",
         "include/android-base/memory.h",
         "include/android-base/no_destructor.h",
@@ -53,6 +52,7 @@ cc_library(
         "@android_system_libbase//:collections",
         "@android_system_libbase//:errno_restorer",
         "@android_system_libbase//:errors",
+        "@android_system_libbase//:expected",
         "@android_system_libbase//:file_logging",
         "@android_system_libbase//:macros",
         "@android_system_libbase//:mapped_file",
