@@ -30,7 +30,6 @@ cc_library(
     name = "libbase",
     srcs = [
         "errors_unix.cpp",
-        "mapped_file.cpp",
         "parsenetaddress.cpp",
     ],
     hdrs = [
@@ -38,7 +37,6 @@ cc_library(
         "include/android-base/errors.h",
         "include/android-base/expected.h",
         "include/android-base/format.h",
-        "include/android-base/mapped_file.h",
         "include/android-base/memory.h",
         "include/android-base/no_destructor.h",
         "include/android-base/parsedouble.h",
@@ -58,6 +56,7 @@ cc_library(
         "@android_system_libbase//:errno_restorer",
         "@android_system_libbase//:file_logging",
         "@android_system_libbase//:macros",
+        "@android_system_libbase//:mapped_file",
         "@android_system_libbase//:off64_t",
         "@android_system_libbase//:parsebool",
         "@android_system_libbase//:parseint",
