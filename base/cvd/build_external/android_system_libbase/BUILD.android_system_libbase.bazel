@@ -59,6 +59,18 @@ cc_library(
 )
 
 cc_library(
+    name = "mapped_file",
+    srcs = ["mapped_file.cpp"],
+    hdrs = ["include/android-base/mapped_file.h"],
+    strip_include_prefix = "include",
+    deps = [
+        ":macros",
+        ":off64_t",
+        ":unique_fd",
+    ],
+)
+
+cc_library(
     name = "off64_t",
     hdrs = ["include/android-base/off64_t.h"],
     strip_include_prefix = "include",
