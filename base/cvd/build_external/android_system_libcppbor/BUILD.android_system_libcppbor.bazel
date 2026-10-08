@@ -1,0 +1,23 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "android_system_libcppbor",
+    srcs = [
+        "src/cppbor.cpp",
+        "src/cppbor_parse.cpp",
+    ],
+    hdrs = [
+        "include/cppbor/cppbor.h",
+        "include/cppbor/cppbor_parse.h",
+    ],
+    includes = ["include/cppbor"],
+    strip_include_prefix = "include",
+    cxxopts = ["-std=c++20"],
+    deps = [
+        "@android_system_libbase//:file_logging",
+    ],
+)

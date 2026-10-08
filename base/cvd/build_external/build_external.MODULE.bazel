@@ -1,6 +1,7 @@
 include("//build_external/android_system_core:android_system_core.MODULE.bazel")
 include("//build_external/android_system_extras:android_system_extras.MODULE.bazel")
 include("//build_external/android_system_libbase:android_system_libbase.MODULE.bazel")
+include("//build_external/android_system_libcppbor:android_system_libcppbor.MODULE.bazel")
 include("//build_external/android_system_logging:android_system_logging.MODULE.bazel")
 include("//build_external/android_tools_netsim:android_tools_netsim.MODULE.bazel")
 include("//build_external/arm_optimized_routines:arm_optimized_routines.MODULE.bazel")
