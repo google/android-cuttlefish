@@ -71,7 +71,6 @@ cc_library(
         "WITH_ANDROID",
     ],
     deps = [
-        "@//libbase",
         "@android_system_core//:libsparse",
         "@e2fsprogs//:libext2_uuid",
     ],
