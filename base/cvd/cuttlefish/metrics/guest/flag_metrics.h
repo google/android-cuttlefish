@@ -26,18 +26,18 @@
 namespace cuttlefish {
 
 struct FlagMetrics {
-  int cpus;
-  bool daemon;
-  DataImagePolicy data_policy;
+  int cpus = 0;
+  bool daemon = false;
+  DataImagePolicy data_policy = DataImagePolicy::Unknown;
   std::string extra_kernel_cmdline;
-  GpuMode gpu_mode;
-  bool guest_enforce_security;
-  int memory_mb;
-  bool qemu_binary_specified;
-  bool restart_subprocesses;
-  bool super_image_specified;
-  bool system_image_dir_specified;
-  bool vendor_boot_image_specified;
+  GpuMode gpu_mode = GpuMode::Auto;
+  bool guest_enforce_security = false;
+  int memory_mb = 0;
+  bool qemu_binary_specified = false;
+  bool restart_subprocesses = false;
+  bool super_image_specified = false;
+  bool system_image_dir_specified = false;
+  bool vendor_boot_image_specified = false;
 };
 
 Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
