@@ -181,6 +181,7 @@ cc_binary(
         ":libadb_cc_protos",
         "//libbase",
         "@android_system_core//:libcutils",
+        "@android_system_libbase//:scopeguard",
         "@boringssl//:crypto",
         "@boringssl//:ssl",
         "@brotli//:brotlidec",
