@@ -62,10 +62,11 @@ cc_binary(
         "ANDROID_BASE_UNIQUE_FD_DISABLE_IMPLICIT_CONVERSION",
     ],
     deps = [
-        "//libbase",
         "@android_system_core//:libcutils",
         "@android_system_core//:liblp",
         "@android_system_core//:libsparse",
+        "@android_system_libbase//:endian",
+        "@android_system_libbase//:parsenetaddress",
         "@avb//:libavb",
         "@googletest//:gtest",
         "@libzip",
