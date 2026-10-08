@@ -93,13 +93,4 @@ Result<void> CreateBridge(absl::string_view name) {
   return {};
 }
 
-Result<void> IptableConfig(absl::string_view iptables_path,
-                           absl::string_view network, bool add) {
-  CF_EXPECT(Execute({std::string(iptables_path), "-t", "nat", add ? "-A" : "-D",
-                     "POSTROUTING", "-s", std::string(network), "-j",
-                     "MASQUERADE"}) == 0,
-            "IptableConfig");
-  return {};
-}
-
 }  // namespace cuttlefish
