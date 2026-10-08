@@ -18,7 +18,10 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 type NftRuleset struct {
@@ -28,9 +31,10 @@ type NftRuleset struct {
 }
 
 type NftTable struct {
-	Family string `json:"family"`
-	Name   string `json:"name"`
-	Handle int    `json:"handle"`
+	Family string
+	Name   string
+	Flags  []string
+	Handle int
 }
 
 func (t NftTable) compare(o NftTable) int {
@@ -89,16 +93,15 @@ func compareBool(a, b bool) int {
 	return 1
 }
 
-// The types below mirror the schema of `nft -j list ruleset`. Each element of
-// the top-level "nftables" array is an object with a single populated key
-// ("table", "chain", or "rule".
+// The types below mirror the schema of `nft -j list chains` and
+// `nft -j list chain`. Each element of the top-level "nftables" array is an
+// object with a single populated key ("chain" or "rule").
 //
 // An abridged example:
 //
 //	{
 //	  "nftables": [
 //	    {"metainfo": {"version": "1.0.6", "json_schema_version": 1}},
-//	    {"table": {"family": "ip", "name": "cuttlefish_nat", "handle": 2}},
 //	    {"chain": {"family": "ip", "table": "cuttlefish_nat", "name": "postrouting",
 //	               "handle": 1, "type": "nat", "hook": "postrouting", "prio": 100, "policy": "accept"}},
 //	    {"rule": {"family": "ip", "table": "cuttlefish_nat", "chain": "postrouting", "handle": 4,
@@ -111,7 +114,6 @@ func compareBool(a, b bool) int {
 //	  ]
 //	}
 type nftElement struct {
-	Table *NftTable `json:"table"`
 	Chain *NftChain `json:"chain"`
 	Rule  *nftRule  `json:"rule"`
 }
@@ -151,25 +153,87 @@ type nftPrefix struct {
 	Len  int    `json:"len"`
 }
 
-func parseNftRuleset(s string) NftRuleset {
+func snapshotNft(s *Sandbox) (NftRuleset, error) {
+	var rs NftRuleset
+	// nft 1.0.x prints a table's only flag from freed memory in json output.
+	// Read tables from the text output instead, and list one chain at a time
+	// to get rules, since that leaves tables out of the json.
+	out, err := s.Run("nft", "-a", "list", "ruleset")
+	if err != nil {
+		return rs, err
+	}
+	if rs.Tables, err = parseNftTables(out.Stdout); err != nil {
+		return rs, err
+	}
+
+	if out, err = s.Run("nft", "-j", "list", "chains"); err != nil {
+		return rs, err
+	}
+	elements, err := parseNftElements(out.Stdout)
+	if err != nil {
+		return rs, err
+	}
+	for _, el := range elements {
+		if el.Chain != nil {
+			rs.Chains = append(rs.Chains, *el.Chain)
+		}
+	}
+
+	for _, c := range rs.Chains {
+		if out, err = s.Run("nft", "-j", "list", "chain", c.Family, c.Table, c.Name); err != nil {
+			return rs, err
+		}
+		if elements, err = parseNftElements(out.Stdout); err != nil {
+			return rs, err
+		}
+		for _, el := range elements {
+			if el.Rule != nil {
+				rs.Rules = append(rs.Rules, convertNftRule(*el.Rule))
+			}
+		}
+	}
+	return rs, nil
+}
+
+// header line of a table in `nft -a list ruleset`, with " progname <name>"
+// added for a table with the owner flag
+var nftTableLine = regexp.MustCompile(`^table (\S+) (\S+) \{ # handle (\d+)(?: progname .*)?$`)
+
+func parseNftTables(text string) ([]NftTable, error) {
+	var tables []NftTable
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		if !strings.HasPrefix(line, "table ") {
+			continue
+		}
+		m := nftTableLine.FindStringSubmatch(line)
+		if m == nil {
+			return nil, fmt.Errorf("unexpected table line %q in nft output:\n%s", line, text)
+		}
+		handle, err := strconv.Atoi(m[3])
+		if err != nil {
+			return nil, fmt.Errorf("table handle in %q: %w", line, err)
+		}
+		t := NftTable{Family: m[1], Name: m[2], Handle: handle}
+		// nft prints the flags, if any, on the line after the header
+		if i+1 < len(lines) {
+			if flags, ok := strings.CutPrefix(lines[i+1], "\tflags "); ok {
+				t.Flags = strings.Split(flags, ",")
+			}
+		}
+		tables = append(tables, t)
+	}
+	return tables, nil
+}
+
+func parseNftElements(s string) ([]nftElement, error) {
 	var top struct {
 		Nftables []nftElement `json:"nftables"`
 	}
 	if err := json.Unmarshal([]byte(s), &top); err != nil {
-		return NftRuleset{}
+		return nil, fmt.Errorf("parse nft json: %w\n%s", err, s)
 	}
-	var rs NftRuleset
-	for _, el := range top.Nftables {
-		switch {
-		case el.Table != nil:
-			rs.Tables = append(rs.Tables, *el.Table)
-		case el.Chain != nil:
-			rs.Chains = append(rs.Chains, *el.Chain)
-		case el.Rule != nil:
-			rs.Rules = append(rs.Rules, convertNftRule(*el.Rule))
-		}
-	}
-	return rs
+	return top.Nftables, nil
 }
 
 // convertNftRule flattens the nft json rule schema into the NftRule domain type,
@@ -195,5 +259,22 @@ func (rs NftRuleset) MasqueradeSaddrs() []string {
 		}
 	}
 	sort.Strings(out)
+	return out
+}
+
+func (rs NftRuleset) MasqueradeSaddrsByTable() map[string][]string {
+	var out map[string][]string
+	for _, r := range rs.Rules {
+		if !r.Masquerade || r.SaddrPrefix == "" {
+			continue
+		}
+		if out == nil {
+			out = map[string][]string{}
+		}
+		out[r.Table] = append(out[r.Table], r.SaddrPrefix)
+	}
+	for _, saddrs := range out {
+		sort.Strings(saddrs)
+	}
 	return out
 }

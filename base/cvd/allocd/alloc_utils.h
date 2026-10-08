@@ -31,14 +31,15 @@ namespace cuttlefish {
 // Exceeding 63 would result in an overflow when calculating the netmask
 inline constexpr uint32_t kMaxIfaceNameId = 63;
 
+// Netmask of the per-instance mobile and wifiap networks.
+inline constexpr char kMobileNetmask[] = "/30";
+
 // struct for managing configuration state
 struct GatewayConfig {
   bool has_gateway = false;
   bool has_dnsmasq = false;
-  bool has_iptable = false;
 };
 
-Result<std::string> IptablesPath();
 Result<std::string> DnsmasqPath();
 
 bool CreateTap(std::string_view name);
@@ -50,6 +51,9 @@ Result<void> ValidateTapInterfaceIsUsable(const std::string& interface_name);
 bool DestroyIface(std::string_view name);
 
 bool DestroyBridge(std::string_view name);
+
+std::string MobileNetworkName(std::string_view ipaddr, std::string_view netmask,
+                              uint16_t id);
 
 bool CreateMobileIface(std::string_view name, uint16_t id,
                        std::string_view ipaddr);
