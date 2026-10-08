@@ -135,6 +135,18 @@ cc_library(
 )
 
 cc_library(
+    name = "result",
+    srcs = ["result.cpp"],
+    hdrs = ["include/android-base/result.h"],
+    strip_include_prefix = "include",
+    deps = [
+        ":errors",
+        ":expected",
+        ":format",
+    ],
+)
+
+cc_library(
     name = "scopeguard",
     hdrs = ["include/android-base/scopeguard.h"],
     strip_include_prefix = "include",
