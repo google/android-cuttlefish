@@ -30,6 +30,13 @@ cc_library(
 )
 
 cc_library(
+    name = "errors",
+    srcs = ["errors_unix.cpp"],
+    hdrs = ["include/android-base/errors.h"],
+    strip_include_prefix = "include",
+)
+
+cc_library(
     name = "file_logging",
     srcs = [
         "file.cpp",

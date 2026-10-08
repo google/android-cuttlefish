@@ -29,12 +29,10 @@ cc_library(
 cc_library(
     name = "libbase",
     srcs = [
-        "errors_unix.cpp",
         "parsenetaddress.cpp",
     ],
     hdrs = [
         "include/android-base/endian.h",
-        "include/android-base/errors.h",
         "include/android-base/expected.h",
         "include/android-base/format.h",
         "include/android-base/memory.h",
@@ -54,6 +52,7 @@ cc_library(
         ":libbase_posix_strerror",
         "@android_system_libbase//:collections",
         "@android_system_libbase//:errno_restorer",
+        "@android_system_libbase//:errors",
         "@android_system_libbase//:file_logging",
         "@android_system_libbase//:macros",
         "@android_system_libbase//:mapped_file",
