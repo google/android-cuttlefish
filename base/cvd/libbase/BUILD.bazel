@@ -32,7 +32,6 @@ cc_library(
         "parsenetaddress.cpp",
     ],
     hdrs = [
-        "include/android-base/format.h",
         "include/android-base/memory.h",
         "include/android-base/no_destructor.h",
         "include/android-base/parsedouble.h",
@@ -54,6 +53,7 @@ cc_library(
         "@android_system_libbase//:errors",
         "@android_system_libbase//:expected",
         "@android_system_libbase//:file_logging",
+        "@android_system_libbase//:format",
         "@android_system_libbase//:macros",
         "@android_system_libbase//:mapped_file",
         "@android_system_libbase//:off64_t",
