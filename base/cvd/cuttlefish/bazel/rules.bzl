@@ -60,7 +60,7 @@ def _wrap_attr_fn(default_val):
     return _wrapped
 
 _attr = attr if _macro != None else struct(
-    boot = _wrap_attr_fn(False),
+    bool = _wrap_attr_fn(False),
     label_list = _wrap_attr_fn([]),
     string = _wrap_attr_fn(""),
     string_list = _wrap_attr_fn([]),
