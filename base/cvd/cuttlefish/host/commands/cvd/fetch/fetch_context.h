@@ -58,6 +58,9 @@ class FetchArtifact {
   std::string artifact_name_;
   std::string downloaded_path_;
   std::optional<ReadableZip> zip_;
+  // The archive was downloaded already extracted, e.g. by CAS with
+  // `prefer-uncompressed`.
+  bool is_directory_ = false;
 };
 
 /**
