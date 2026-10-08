@@ -97,6 +97,12 @@ cc_library(
 )
 
 cc_library(
+    name = "no_destructor",
+    hdrs = ["include/android-base/no_destructor.h"],
+    strip_include_prefix = "include",
+)
+
+cc_library(
     name = "off64_t",
     hdrs = ["include/android-base/off64_t.h"],
     strip_include_prefix = "include",
