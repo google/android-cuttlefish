@@ -13,34 +13,9 @@ package(
     ],
 )
 
-# This file needs to change the signature of strerror_r exposed
-# by a system header by defining a feature macro, which requires
-# header modules to be disabled.
-cc_library(
-    name = "libbase_posix_strerror",
-    srcs = [
-        "posix_strerror_r.cpp",
-    ],
-    copts = ["-D_POSIX_C_SOURCE=200112"],
-    features = ["-use_header_modules"],
-    visibility = ["//visibility:private"],
-)
-
 cc_library(
     name = "libbase",
-    hdrs = [
-        "include/android-base/memory.h",
-        "include/android-base/parsedouble.h",
-    ],
-    copts = COPTS + [
-        "-Wno-vla-cxx-extension",
-        "-Wno-c99-designator",
-        "-Wno-unused-function",
-        "-Wno-thread-safety",
-    ],
-    includes = ["include"],
     deps = [
-        ":libbase_posix_strerror",
         "@android_system_libbase//:collections",
         "@android_system_libbase//:endian",
         "@android_system_libbase//:errno_restorer",
