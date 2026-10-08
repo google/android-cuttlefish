@@ -97,6 +97,12 @@ cc_library(
 )
 
 cc_library(
+    name = "scopeguard",
+    hdrs = ["include/android-base/scopeguard.h"],
+    strip_include_prefix = "include",
+)
+
+cc_library(
     name = "stringprintf",
     srcs = ["stringprintf.cpp"],
     hdrs = ["include/android-base/stringprintf.h"],
