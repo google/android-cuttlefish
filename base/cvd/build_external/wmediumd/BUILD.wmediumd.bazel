@@ -99,8 +99,8 @@ cc_binary(
         "-Wno-unused-variable",
     ],
     deps = [
-        "@//libbase",
         "@//linux_headers",
+        "@android_system_libbase//:file_logging",
         "@gflags",
         "@grpc//:grpc",
         "@grpc//:grpc++",
