@@ -177,6 +177,7 @@ func TestCvdLoad(t *testing.T) {
 
 			err := c.CVDCreateWithConfigFile(e2etests.LoadArgs{
 				LoadConfig: tc.loadconfig,
+        Env:        map[string]string{"HOME": tc.tempdir},
 			})
 			if err != nil {
 				t.Fatal(err)

@@ -96,6 +96,7 @@ func runSdv2VMTest(t *testing.T) {
 	log.Printf("Creating 2-VM SDV environment via cvd create --config_file...")
 	if err := c.CVDCreateWithConfigFile(e2etests.LoadArgs{
 		LoadConfig: sdv2VMLoadConfig,
+		Env:        map[string]string{"HOME": c.tempdir},
 	}); err != nil {
 		t.Fatalf("CVDCreateWithConfigFile failed: %v", err)
 	}

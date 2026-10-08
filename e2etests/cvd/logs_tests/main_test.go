@@ -63,7 +63,10 @@ func TestPrintLogs(t *testing.T) {
 }
 `
 
-	if err := c.CVDCreateWithConfigFile(e2etests.LoadArgs{LoadConfig: env_config}); err != nil {
+	if err := c.CVDCreateWithConfigFile(e2etests.LoadArgs{
+			LoadConfig: env_config,
+			Env:        map[string]string{"HOME": c.tempdir},
+	}); err != nil {
 		t.Fatal(err)
 	}
 
