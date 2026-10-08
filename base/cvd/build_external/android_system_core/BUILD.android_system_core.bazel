@@ -49,8 +49,11 @@ cc_library(
     ],
     deps = [
         ":libsparse",
-        "@//libbase",
         "@//libext4_utils",
+        "@android_system_libbase//:file_logging",
+        "@android_system_libbase//:parseint",
+        "@android_system_libbase//:properties",
+        "@android_system_libbase//:result",
         "@boringssl//:crypto",
     ],
 )
