@@ -82,7 +82,8 @@ cc_library(
     ],
     includes = ["libsparse/include"],
     deps = [
-        "@//libbase",
+        "@android_system_libbase//:mapped_file",
+        "@android_system_libbase//:stringprintf",
         "@zlib",
     ],
 )
