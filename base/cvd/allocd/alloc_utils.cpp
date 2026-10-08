@@ -46,15 +46,6 @@ namespace cuttlefish {
 
 namespace {
 
-Result<std::string> SearchForIptables() {
-  Result<std::string> p = Search(Path(), "iptables");
-  if (p.has_value()) {
-    return p;
-  }
-
-  return CF_EXPECT(Search({"/usr/sbin", "/sbin"}, "iptables"));
-}
-
 Result<std::string> SearchForDnsmasq() {
   Result<std::string> p = Search(cuttlefish::Path(), "dnsmasq");
   if (p.has_value()) {
@@ -102,49 +93,30 @@ bool CreateMobileIface(absl::string_view name, uint16_t id,
     return false;
   }
 
-  auto netmask = "/30";
-  Result<std::string> iptables_path = IptablesPath();
-  if (!iptables_path.has_value()) {
-    return false;
-  }
-
   auto gateway = MobileGatewayName(ipaddr, id);
-  auto network = MobileNetworkName(ipaddr, netmask, id);
 
   if (!CreateTap(name)) {
     return false;
   }
 
-  if (!AddGateway(name, gateway, netmask).has_value()) {
+  if (!AddGateway(name, gateway, kMobileNetmask).has_value()) {
     DestroyIface(name);
-  }
-
-  if (!IptableConfig(*iptables_path, network, true).has_value()) {
-    (void)DestroyGateway(name, gateway, netmask);
-    (void)DestroyIface(name);
     return false;
-  };
+  }
 
   return true;
 }
 
 bool DestroyMobileIface(absl::string_view name, uint16_t id,
                         absl::string_view ipaddr) {
-  if (id > 63) {
+  if (id > kMaxIfaceNameId) {
     LOG(ERROR) << "ID exceeds maximum value to assign a netmask: " << id;
     return false;
   }
 
-  auto netmask = "/30";
   auto gateway = MobileGatewayName(ipaddr, id);
-  auto network = MobileNetworkName(ipaddr, netmask, id);
 
-  Result<std::string> iptables_path = IptablesPath();
-  if (!iptables_path.has_value()) {
-    return false;
-  }
-  (void)IptableConfig(*iptables_path, network, false);
-  (void)DestroyGateway(name, gateway, netmask);
+  (void)DestroyGateway(name, gateway, kMobileNetmask);
   return DestroyIface(name);
 }
 
@@ -224,15 +196,9 @@ bool DestroyBridge(absl::string_view name) {
 
 bool SetupBridgeGateway(absl::string_view bridge_name,
                         absl::string_view ipaddr) {
-  Result<std::string> iptables_path = IptablesPath();
-  if (!iptables_path.has_value()) {
-    return false;
-  }
-
-  GatewayConfig config{false, false, false};
+  GatewayConfig config{false, false};
   auto gateway = absl::StrFormat("%s.1", ipaddr);
   auto netmask = "/24";
-  auto network = absl::StrFormat("%s.0%s", ipaddr, netmask);
   auto dhcp_range = absl::StrFormat("%s.2,%s.255", ipaddr, ipaddr);
 
   if (!AddGateway(bridge_name, gateway, netmask).has_value()) {
@@ -246,30 +212,13 @@ bool SetupBridgeGateway(absl::string_view bridge_name,
     return false;
   }
 
-  config.has_dnsmasq = true;
-
-  auto ret = IptableConfig(*iptables_path, network, true).has_value();
-  if (!ret) {
-    CleanupBridgeGateway(bridge_name, ipaddr, config);
-    LOG(WARNING) << "Failed to setup ip tables";
-  }
-
-  return ret;
+  return true;
 }
 
 void CleanupBridgeGateway(absl::string_view name, absl::string_view ipaddr,
                           const GatewayConfig& config) {
   auto gateway = absl::StrFormat("%s.1", ipaddr);
   auto netmask = "/24";
-  auto network = absl::StrFormat("%s.0%s", ipaddr, netmask);
-  auto dhcp_range = absl::StrFormat("%s.2,%s.255", ipaddr, ipaddr);
-
-  if (config.has_iptable) {
-    Result<std::string> iptables_path = IptablesPath();
-    if (iptables_path.has_value()) {
-      (void)IptableConfig(*iptables_path, network, false);
-    }
-  }
 
   if (config.has_dnsmasq) {
     StopDnsmasq(name);
@@ -356,21 +305,24 @@ bool CreateEthernetBridgeIface(absl::string_view name,
 
 bool DestroyEthernetBridgeIface(absl::string_view name,
                                 absl::string_view ipaddr) {
-  GatewayConfig config{true, true, true};
+  const Result<bool> in_use = BridgeInUse(name);
+  if (!in_use.has_value()) {
+    LOG(ERROR) << "Failed to check if bridge " << name
+               << " is in use: " << in_use.error();
+    return false;
+  }
+  if (*in_use) {
+    // Keep the bridge's gateway and dnsmasq.
+    return true;
+  }
+
+  const GatewayConfig config{true, true};
 
   // Don't need to check if removing some part of the config failed, we need to
   // remove the entire interface, so just ignore any error until the end
   CleanupBridgeGateway(name, ipaddr, config);
 
   return DestroyBridge(name);
-}
-
-Result<std::string> IptablesPath() {
-  static const absl::NoDestructor<std::string> iptables_path(
-      SearchForIptables().value_or(""));
-
-  CF_EXPECT(!iptables_path->empty(), "could not find iptables");
-  return *iptables_path;
 }
 
 Result<std::string> DnsmasqPath() {

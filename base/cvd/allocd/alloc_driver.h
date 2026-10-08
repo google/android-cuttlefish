@@ -34,9 +34,6 @@ Result<void> LinkTapToBridge(absl::string_view tap_name,
 Result<void> DeleteIface(absl::string_view name);
 Result<bool> BridgeInUse(absl::string_view name);
 Result<bool> BridgeExists(absl::string_view name);
-Result<bool> BridgeInUse(absl::string_view name);
 Result<void> CreateBridge(absl::string_view name);
-Result<void> IptableConfig(absl::string_view iptables_path,
-                           absl::string_view network, bool add);
 
 }  // namespace cuttlefish

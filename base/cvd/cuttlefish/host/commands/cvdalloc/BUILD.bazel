@@ -54,6 +54,7 @@ cf_cc_binary(
         ":privilege",
         ":sem",
         "//allocd:alloc_utils",
+        "//allocd/net:nft_nat_table",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/posix:strerror",
@@ -64,6 +65,7 @@ cf_cc_binary(
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:string_view",
     ],
 )

@@ -94,16 +94,6 @@ func resolveCvdallocBin() (string, error) {
 	return bin, nil
 }
 
-func (c *Cvdalloc) Setup() error {
-	_, err := c.sandbox.Run(c.bin, "--setup")
-	return err
-}
-
-func (c *Cvdalloc) Teardown() error {
-	_, err := c.sandbox.Run(c.bin, "--teardown")
-	return err
-}
-
 type Instance struct {
 	ID     int
 	conn   net.Conn

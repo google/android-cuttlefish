@@ -27,8 +27,6 @@
 
 namespace cuttlefish {
 
-int BeginElevatedPrivileges();
-int DropPrivileges(uid_t orig);
 Result<void> ValidateCvdallocBinary(absl::string_view path);
 
 class ScopedPrivileges {

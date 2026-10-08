@@ -121,6 +121,8 @@ Result<void> ValidateCvdallocBinary(absl::string_view path) {
   return {};
 }
 
+namespace {
+
 int BeginElevatedPrivileges() {
   int r;
 
@@ -162,8 +164,6 @@ int DropPrivileges(uid_t orig) {
 
   return setuid(orig);
 }
-
-namespace {
 
 constexpr char kTrustedPath[] = "/usr/sbin:/usr/bin:/sbin:/bin";
 
