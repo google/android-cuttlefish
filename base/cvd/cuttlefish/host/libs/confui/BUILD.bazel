@@ -87,7 +87,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/input_connector",
         "//cuttlefish/host/libs/screen_connector:screen_connector_common",
         "//cuttlefish/result",
-        "//libbase",
         "//teeui/libteeui",
         "//teeui/libteeui/prebuilt/localization:libteeui_localization",
         "@abseil-cpp//absl/log",

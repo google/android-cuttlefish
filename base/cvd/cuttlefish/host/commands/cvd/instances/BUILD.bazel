@@ -55,7 +55,6 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -73,7 +72,6 @@ cf_cc_library(
         "//cuttlefish/files:recursively_remove_directory",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/posix:strerror",
-        "//libbase",
         "@googletest//:gtest",
     ],
 )

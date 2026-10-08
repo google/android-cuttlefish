@@ -40,7 +40,6 @@ cf_cc_library(
     deps = [
         ":libcuttlefish_webrtc_commands_proto",
         "//cuttlefish/common/libs/transport",
-        "//libbase",
     ],
 )
 
@@ -54,7 +53,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -77,7 +75,6 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
         "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
         "//cuttlefish/host/libs/audio_connector",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -126,7 +123,6 @@ cf_cc_library(
         ":libcuttlefish_webrtc_audio_channel_matrix",
         ":libcuttlefish_webrtc_audio_settings",
         "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -151,7 +147,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -168,7 +163,6 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     include_cleaner_enabled = False,
     deps = [
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -206,7 +200,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/input_connector",
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -227,7 +220,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -251,7 +243,6 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libdevice:video_sink",
         "//cuttlefish/host/libs/screen_connector",
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -274,7 +265,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/location",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -300,7 +290,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -320,7 +309,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/location",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -342,7 +330,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/location",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -363,7 +350,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
@@ -387,7 +373,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/sensors",
         "//cuttlefish/common/libs/transport",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -475,7 +460,6 @@ cf_cc_binary(
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/cleanup",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
