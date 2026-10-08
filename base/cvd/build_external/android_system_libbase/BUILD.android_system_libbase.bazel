@@ -116,6 +116,17 @@ cc_library(
 )
 
 cc_library(
+    name = "parsenetaddress",
+    srcs = ["parsenetaddress.cpp"],
+    hdrs = ["include/android-base/parsenetaddress.h"],
+    strip_include_prefix = "include",
+    deps = [
+        ":stringprintf",
+        ":strings",
+    ],
+)
+
+cc_library(
     name = "posix_strerror_r",
     srcs = ["posix_strerror_r.cpp"],
     copts = ["-D_POSIX_C_SOURCE=200112"],
