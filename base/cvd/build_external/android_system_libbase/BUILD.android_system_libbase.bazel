@@ -72,6 +72,13 @@ cc_library(
 )
 
 cc_library(
+    name = "format",
+    hdrs = ["include/android-base/format.h"],
+    strip_include_prefix = "include",
+    deps = ["@fmt"],
+)
+
+cc_library(
     name = "macros",
     hdrs = ["include/android-base/macros.h"],
     strip_include_prefix = "include",
