@@ -54,7 +54,6 @@ cf_cc_library(
         ":camera_controller",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:vsock_connection",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@jsoncpp",
@@ -125,7 +124,6 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     include_cleaner_enabled = False,
     deps = [
-        "//libbase",
     ],
 )
 
@@ -136,7 +134,6 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     include_cleaner_enabled = False,
     deps = [
-        "//libbase",
     ],
 )
 
@@ -148,7 +145,6 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:vsock_connection",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@jsoncpp",
     ],
@@ -166,7 +162,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@libvpx",
@@ -204,7 +199,6 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libcommon:utils",
         "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@boringssl//:crypto",
         "@jsoncpp",
@@ -238,7 +232,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@jsoncpp",

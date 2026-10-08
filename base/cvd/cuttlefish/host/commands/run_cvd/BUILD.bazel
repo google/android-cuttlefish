@@ -53,7 +53,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/ansi_codes",
         "//cuttlefish/ansi_codes:should_color",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@fruit",
     ],
@@ -118,7 +117,6 @@ cf_cc_binary(
         "//cuttlefish/host/libs/version",
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@fruit",
         "@gflags",
@@ -188,7 +186,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",

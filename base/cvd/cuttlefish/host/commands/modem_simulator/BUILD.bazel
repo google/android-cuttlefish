@@ -17,7 +17,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/commands/modem_simulator:client",
         "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
@@ -31,7 +30,6 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -43,7 +41,6 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     include_cleaner_enabled = False,
     deps = [
-        "//libbase",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -64,7 +61,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:modem_service",
-        "//libbase",
     ],
 )
 
@@ -100,7 +96,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:command_parser",
         "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:thread_looper",
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -121,7 +116,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:sup_service",
         "//cuttlefish/host/commands/modem_simulator:thread_looper",
         "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -169,7 +163,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:thread_looper",
         "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
         "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@jsoncpp",
         "@tinyxml2",
@@ -188,7 +181,6 @@ cf_cc_binary(
         "//cuttlefish/host/commands/modem_simulator:modem_simulator_class",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/log_names",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -218,7 +210,6 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:modem_technology",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@jsoncpp",
     ],
@@ -257,7 +248,6 @@ cf_cc_test(
         "//cuttlefish/host/commands/modem_simulator:modem_simulator_class",
         "//cuttlefish/host/commands/modem_simulator:modem_simulator_lib",
         "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@gflags",
@@ -281,7 +271,6 @@ cf_cc_library(
     depend_on_what_you_use_enabled = False,
     include_cleaner_enabled = False,
     deps = [
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
     ],

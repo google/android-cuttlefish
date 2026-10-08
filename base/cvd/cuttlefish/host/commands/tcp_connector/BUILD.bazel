@@ -6,23 +6,13 @@ package(
 
 cf_cc_binary(
     name = "tcp_connector",
-    srcs = [
-        "main.cpp",
-    ],
+    srcs = ["main.cpp"],
     depend_on_what_you_use_enabled = False,
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/config:logging",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@gflags",
     ],
 )
-
-# TODO: 403693113 - fix warnings after migration
-#clang_tidy_test(
-#    name = "tcp_connector_clang_tidy",
-#    srcs = [":tcp_connector"],
-#    tags = ["clang_tidy", "clang-tidy"],
-#)

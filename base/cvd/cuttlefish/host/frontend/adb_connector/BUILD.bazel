@@ -21,7 +21,6 @@ cf_cc_binary(
         "//cuttlefish/host/commands/kernel_log_monitor:utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",

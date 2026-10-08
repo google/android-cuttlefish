@@ -18,7 +18,6 @@ cf_cc_binary(
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@gflags",
     ],

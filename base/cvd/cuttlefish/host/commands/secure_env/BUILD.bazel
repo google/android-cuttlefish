@@ -21,7 +21,6 @@ cf_cc_binary(
         "//cuttlefish/host/commands/secure_env/storage:insecure_json_storage",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config:logging",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@gflags",
@@ -38,7 +37,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )

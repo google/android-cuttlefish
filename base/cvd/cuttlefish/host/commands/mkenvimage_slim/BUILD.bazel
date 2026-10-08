@@ -12,7 +12,6 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:mkenvimage_slim",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@gflags",
     ],

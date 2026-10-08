@@ -27,7 +27,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/gnss_grpc_proxy:libcvd_gnss_grpc_proxy",
         "//cuttlefish/host/libs/location:string_parse",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@grpc",
         "@grpc//:grpc++",

@@ -193,7 +193,6 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
-        "//libbase",
         "@libwebrtc",
     ],
 )
@@ -214,7 +213,6 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libcommon:peer_signaling_handler",
         "//cuttlefish/host/frontend/webrtc/libcommon:utils",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@fmt",
@@ -263,7 +261,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
         "@fmt",
         "@jsoncpp",
