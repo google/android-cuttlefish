@@ -137,5 +137,12 @@ TEST(BufferedZipSourceTest, ManySmallReadsInMemoryIo) {
   EXPECT_EQ(data_in, data_out);
 }
 
+TEST(BufferedZipSourceTest, OpenMissingFileFails) {
+  Result<WritableZipSource> source =
+      WritableZipSource::FromFile("/nonexistent/path/does_not_exist.zip");
+  ASSERT_THAT(source, IsOk());
+  EXPECT_THAT(source->Reader(), IsError());
+}
+
 }  // namespace
 }  // namespace cuttlefish
