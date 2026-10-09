@@ -37,6 +37,7 @@
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
 #include "cuttlefish/host/commands/run_cvd/launch/input_paths_provider.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
+#include "cuttlefish/host/commands/run_cvd/launch/virtual_tuner_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -141,6 +142,10 @@ class StreamerSockets : public virtual SetupFeature {
     cmd.AddParameter("-frame_server_fd=", frames_server_);
     if (instance_.enable_audio()) {
       cmd.AddParameter("--audio_server_fd=", audio_server_);
+      if (HasVirtualTunerStream(instance_)) {
+        cmd.AddParameter("--tuner_pcm_socket_path=",
+                         VirtualTunerPcmSocketPath(instance_));
+      }
     }
     cmd.AddParameter("--confui_in_fd=", confui_in_fd_);
     cmd.AddParameter("--confui_out_fd=", confui_out_fd_);
