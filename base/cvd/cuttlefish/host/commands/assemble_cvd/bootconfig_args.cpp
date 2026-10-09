@@ -251,6 +251,11 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
         std::to_string(instance.vsock_guest_cid());
   }
 
+  if (instance.virtual_tuner_server_port()) {
+    bootconfig_args["androidboot.vsock_virtual_tuner_port"] =
+        std::to_string(instance.virtual_tuner_server_port());
+  }
+
   // Export modem simulator ports for both standalone modem_simulator and
   // netsim. The guest RIL (ag/40529282) polls ro.boot.modem_simulator_ports on
   // startup to connect over VSOCK regardless of which daemon handles the host

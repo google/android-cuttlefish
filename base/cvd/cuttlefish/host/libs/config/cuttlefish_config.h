@@ -597,6 +597,8 @@ class CuttlefishConfig {
     bool enable_vhal_proxy_server() const;
     int vhal_proxy_server_port() const;
 
+    int virtual_tuner_server_port() const;
+
     int audio_output_streams_count() const;
     std::optional<::cuttlefish::config::Audio> audio_settings() const;
 
@@ -836,6 +838,8 @@ class CuttlefishConfig {
 
     void set_enable_vhal_proxy_server(bool enable_vhal_proxy_server);
     void set_vhal_proxy_server_port(int port);
+
+    void set_virtual_tuner_server_port(int port);
 
     void set_audio_output_streams_count(int count);
     void set_audio_settings(const ::cuttlefish::config::Audio& audio_settings);

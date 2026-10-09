@@ -2038,6 +2038,15 @@ int CuttlefishConfig::InstanceSpecific::vhal_proxy_server_port() const {
   return (*Dictionary())[kVhalProxyServerPort].asInt();
 }
 
+static constexpr char kVirtualTunerServerPort[] = "virtual_tuner_server_port";
+void CuttlefishConfig::MutableInstanceSpecific::set_virtual_tuner_server_port(
+    int port) {
+  (*Dictionary())[kVirtualTunerServerPort] = port;
+}
+int CuttlefishConfig::InstanceSpecific::virtual_tuner_server_port() const {
+  return (*Dictionary())[kVirtualTunerServerPort].asInt();
+}
+
 static constexpr char kAudioOutputStreamsCount[] = "audio_output_streams_count";
 void CuttlefishConfig::MutableInstanceSpecific::set_audio_output_streams_count(
     int count) {
