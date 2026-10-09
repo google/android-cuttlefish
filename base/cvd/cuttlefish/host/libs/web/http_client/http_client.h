@@ -94,13 +94,17 @@ struct HttpRequest {
 
 class HttpClient {
  public:
-  typedef std::function<bool(char*, size_t)> DataCallback;
+  typedef std::function<bool(char*, size_t)> BoolDataCallback;
+  typedef std::function<Result<void>(char*, size_t)> ResultDataCallback;
 
   virtual ~HttpClient();
 
   // Returns response's status code.
   virtual Result<HttpResponse<void>> DownloadToCallback(
-      HttpRequest, DataCallback callback) = 0;
+      HttpRequest, ResultDataCallback callback) = 0;
+
+  Result<HttpResponse<void>> DownloadToCallback(HttpRequest,
+                                                BoolDataCallback callback);
 };
 
 }  // namespace cuttlefish
