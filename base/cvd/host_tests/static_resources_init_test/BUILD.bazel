@@ -24,9 +24,11 @@ go_test(
     ],
     data = [
         "@cuttlefish_debian//:cuttlefish-base.cuttlefish-host-resources.init",
+        "@cuttlefish_debian//:cuttlefish-base.postrm",
     ],
     env = {
         "INIT_SCRIPT": "$(rlocationpath @cuttlefish_debian//:cuttlefish-base.cuttlefish-host-resources.init)",
+        "POSTRM_SCRIPT": "$(rlocationpath @cuttlefish_debian//:cuttlefish-base.postrm)",
     },
     tags = [
         "exclusive",

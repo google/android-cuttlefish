@@ -61,6 +61,7 @@ func TestStaticResourcesInit(t *testing.T) {
 				NftTables: []common.NftTable{
 					{Family: "ip", Name: "cuttlefish_nat"},
 					{Family: "ip6", Name: "cuttlefish_nat6"},
+					{Family: "ip6", Name: "filter"},
 					{Family: "bridge", Name: "cuttlefish_bridge"},
 					{Family: "bridge", Name: "cuttlefish_ra_guard"},
 					{Family: "inet", Name: "cuttlefish_ra_guard"},
@@ -68,6 +69,7 @@ func TestStaticResourcesInit(t *testing.T) {
 				NftChains: []common.NftChain{
 					{Family: "ip", Table: "cuttlefish_nat", Name: "postrouting", Type: "nat", Hook: "postrouting"},
 					{Family: "ip6", Table: "cuttlefish_nat6", Name: "postrouting", Type: "nat", Hook: "postrouting"},
+					{Family: "ip6", Table: "filter", Name: "FORWARD", Type: "filter", Hook: "forward"},
 					{Family: "bridge", Table: "cuttlefish_bridge", Name: "prerouting", Type: "filter", Hook: "prerouting"},
 					{Family: "bridge", Table: "cuttlefish_bridge", Name: "forward", Type: "filter", Hook: "forward"},
 					{Family: "bridge", Table: "cuttlefish_ra_guard", Name: "prerouting", Type: "filter", Hook: "prerouting"},
@@ -75,7 +77,7 @@ func TestStaticResourcesInit(t *testing.T) {
 				},
 				Masquerades:   []string{"192.168.94.0/30", "192.168.96.0/24", "192.168.97.0/30", "192.168.98.0/24", "fd00:cf:20::/44"},
 				Sysctls:       map[string]string{"net.ipv4.ip_forward": "1", "net.ipv6.conf.all.forwarding": "1"},
-				HandleFiles:   []string{"ipv6-enabled", "masq-br-cvd-ebr.handle", "masq-br-cvd-wbr.handle", "masq-cvd-mtap-01.handle", "masq-cvd-wifiap-01.handle"},
+				HandleFiles:   []string{"ip6fwd-in.handle", "ip6fwd-out.handle", "ipv6-enabled", "masq-br-cvd-ebr.handle", "masq-br-cvd-wbr.handle", "masq-cvd-mtap-01.handle", "masq-cvd-wifiap-01.handle"},
 				DnsmasqIfaces: []string{"cvd-ebr", "cvd-wbr", "ra-cvd-ebr", "ra-cvd-wbr", "ra-cvd-wifiap-01"},
 			},
 		},

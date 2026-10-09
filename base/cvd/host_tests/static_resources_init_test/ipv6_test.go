@@ -20,6 +20,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strconv"
@@ -136,13 +137,15 @@ func (f *ipv6Fixture) nftTables() []string {
 	return out
 }
 
-// dnsmasqProcesses returns the command lines of live dnsmasq processes, one
-// per line. Zombies are skipped: the sandbox's pid 1 (sleep) does not reap.
+// dnsmasqProcesses returns the command lines of live dnsmasq (or dnsmasq-shim)
+// processes, one per line. Zombies are skipped: the sandbox's pid 1 (sleep)
+// does not reap.
 func (f *ipv6Fixture) dnsmasqProcesses() string {
 	f.t.Helper()
-	return strings.TrimSpace(f.sh(`for p in $(pgrep -x dnsmasq); do
+	return strings.TrimSpace(f.sh(`for p in $({ pgrep -x dnsmasq; pgrep -f '[d]nsmasq-shim'; } 2>/dev/null | sort -u); do
   [ "$(awk '{print $3}' /proc/$p/stat 2>/dev/null)" = Z ] && continue
-  tr '\0' ' ' < /proc/$p/cmdline 2>/dev/null && echo
+  tr '\0' ' ' < /proc/$p/cmdline 2>/dev/null
+  echo
 done`))
 }
 
@@ -511,12 +514,13 @@ func TestStaticIPv6StartTwice(t *testing.T) {
 
 	for chain, want := range map[string]int{
 		"ip6 cuttlefish_nat6 postrouting":       1,
+		"ip6 filter FORWARD":                    2,
 		"bridge cuttlefish_ra_guard prerouting": 2,
 		"inet cuttlefish_ra_guard input":        2,
 	} {
 		out := f.sh("nft list chain " + chain)
-		if got := strings.Count(out, "masquerade") + strings.Count(out, "drop"); got != want {
-			t.Errorf("%s: %d rules after second start, want %d:\n%s", chain, got, want, out)
+		if got := strings.Count(out, "counter packets"); got != want {
+			t.Errorf("%s: unexpected rules after second start, got %d want %d:\n%s", chain, got, want, out)
 		}
 	}
 	const wantRA = 2 + 2 // cvd-ebr, cvd-wbr, cvd-wifiap-01, cvd-wifiap-02
@@ -533,7 +537,7 @@ func TestStaticIPv6StartTwice(t *testing.T) {
 		t.Errorf("RA dnsmasq pidfiles left after stop: %v", ra)
 	}
 	for _, tb := range f.nftTables() {
-		if strings.Contains(tb, "nat6") || strings.Contains(tb, "ra_guard") {
+		if strings.Contains(tb, "nat6") || strings.Contains(tb, "ra_guard") || strings.Contains(tb, "ip6 filter") {
 			t.Errorf("IPv6 nft table left after stop: %s", tb)
 		}
 	}
@@ -563,3 +567,400 @@ func TestStaticIPv6UnmanagedBridge(t *testing.T) {
 	f.initScript("stop")
 	f.requireNoLeak(base)
 }
+
+// TestStaticIPv6PreservesUpstreamRA checks that enabling
+// net.ipv6.conf.all.forwarding=1 promotes accept_ra from 1 to 2 on default and
+// on existing upstream interfaces (or interfaces with RTF_ADDRCONF default
+// routes) so kernel RA default routes are not purged by rt6_purge_dflt_routers
+// and future RAs continue to be accepted, while interfaces with accept_ra=0
+// (e.g. NetworkManager userspace RA or cvd-*) stay at 0.
+func TestStaticIPv6PreservesUpstreamRA(t *testing.T) {
+	f := newIPv6Fixture(t)
+	if _, err := f.s.Run("python3", "-c", "import socket"); err != nil {
+		t.Skipf("python3 is required to craft ICMPv6: %v", err)
+	}
+	f.writeDefaults("num_cvd_accounts=1")
+
+	// Simulate an upstream interface eth0 (accept_ra=1) that received an RA
+	// from upstream-rtr, plus a dhclient0 interface that received an RA and
+	// then had accept_ra reset to 0 by dhclient-script, plus an nm0 interface
+	// with accept_ra=0 and no kernel RA route.
+	f.sh(`set -e
+echo 0 > /proc/sys/net/ipv6/conf/all/forwarding
+ip link add eth0 type veth peer name upstream-rtr
+ip link add dhclient0 type veth peer name dhclient-rtr
+ip link add nm0 type dummy
+for dev in eth0 upstream-rtr dhclient0 dhclient-rtr nm0; do
+  echo 0 > /proc/sys/net/ipv6/conf/$dev/accept_dad
+done
+echo 1 > /proc/sys/net/ipv6/conf/eth0/accept_ra
+echo 1 > /proc/sys/net/ipv6/conf/dhclient0/accept_ra
+echo 0 > /proc/sys/net/ipv6/conf/nm0/accept_ra
+ip link set eth0 up
+ip link set upstream-rtr up
+ip link set dhclient0 up
+ip link set dhclient-rtr up
+ip link set nm0 up`)
+
+	if _, err := f.s.Run("python3", "-c", sendICMPv6, "upstream-rtr", "134"); err != nil {
+		t.Fatalf("sending RA on upstream-rtr: %v", err)
+	}
+	if _, err := f.s.Run("python3", "-c", sendICMPv6, "dhclient-rtr", "134"); err != nil {
+		t.Fatalf("sending RA on dhclient-rtr: %v", err)
+	}
+	// Simulate Debian 12 dhclient-script resetting accept_ra=0 after kernel RA route installation.
+	f.sh("echo 0 > /proc/sys/net/ipv6/conf/dhclient0/accept_ra")
+
+	routesBefore := f.sh("ip -6 route show default")
+	if !strings.Contains(routesBefore, "dev eth0 proto ra") || !strings.Contains(routesBefore, "dev dhclient0 proto ra") {
+		t.Fatalf("expected proto ra default routes on eth0 and dhclient0 before start, got:\n%s", routesBefore)
+	}
+
+	f.initScript("start")
+	t.Cleanup(func() { f.s.Run("sh", f.script, "stop") })
+
+	for _, dev := range []string{"default", "eth0", "dhclient0"} {
+		if got := strings.TrimSpace(f.sh("cat /proc/sys/net/ipv6/conf/" + dev + "/accept_ra")); got != "2" {
+			t.Errorf("%s/accept_ra = %s after start, want 2", dev, got)
+		}
+	}
+	if got := strings.TrimSpace(f.sh("cat /proc/sys/net/ipv6/conf/nm0/accept_ra")); got != "0" {
+		t.Errorf("nm0/accept_ra = %s after start, want 0", got)
+	}
+
+	routesAfter := f.sh("ip -6 route show default")
+	if !strings.Contains(routesAfter, "dev eth0 proto ra") || !strings.Contains(routesAfter, "dev dhclient0 proto ra") {
+		t.Errorf("RA default routes were purged by start:\n%s", routesAfter)
+	}
+
+	// Flush eth0's default route and send another RA while forwarding=1 to
+	// verify future RAs are still accepted on eth0.
+	f.sh("ip -6 route flush default dev eth0")
+	if _, err := f.s.Run("python3", "-c", sendICMPv6, "upstream-rtr", "134"); err != nil {
+		t.Fatalf("sending second RA on upstream-rtr: %v", err)
+	}
+	if routes := f.sh("ip -6 route show default dev eth0"); !strings.Contains(routes, "proto ra") {
+		t.Errorf("eth0 did not accept RA with forwarding=1: %q", routes)
+	}
+}
+
+// TestStaticIPv6ForwardAcceptWithDockerDrop checks that explicit
+// iifname/oifname "cvd-*" accept rules in ip6 filter FORWARD allow routed
+// Cuttlefish IPv6 traffic in both directions (outbound from cvd-* and inbound
+// to cvd-*) while dropping non-cvd-* traffic when Docker sets
+// ip6tables -P FORWARD DROP (both when Docker starts before Cuttlefish and
+// when Docker starts after Cuttlefish), remain compatible with ip6tables-nft,
+// and are cleanly removed on stop without disturbing Docker's chains or policy.
+func TestStaticIPv6ForwardAcceptWithDockerDrop(t *testing.T) {
+	for _, dockerFirst := range []bool{true, false} {
+		name := "cuttlefish_before_docker"
+		if dockerFirst {
+			name = "docker_before_cuttlefish"
+		}
+		t.Run(name, func(t *testing.T) {
+			f := newIPv6Fixture(t)
+			f.writeDefaults("num_cvd_accounts=1")
+
+			setupDocker := func() {
+				f.sh(`set -e
+ip6tables -P FORWARD DROP
+ip6tables -N DOCKER-USER
+ip6tables -A DOCKER-USER -j RETURN
+ip6tables -I FORWARD 1 -j DOCKER-USER`)
+			}
+
+			if dockerFirst {
+				setupDocker()
+				f.initScript("start")
+			} else {
+				f.initScript("start")
+				setupDocker()
+			}
+
+			rules := f.sh("ip6tables -S FORWARD")
+			for _, want := range []string{
+				"-P FORWARD DROP",
+				"-A FORWARD -j DOCKER-USER",
+				"-A FORWARD -i cvd-+ -j ACCEPT",
+				"-A FORWARD -o cvd-+ -j ACCEPT",
+			} {
+				if !strings.Contains(rules, want) {
+					t.Errorf("ip6tables -S FORWARD lacks %q:\n%s", want, rules)
+				}
+			}
+
+			// Send:
+			// 1. Outbound packet from guest-m -> cvd-mtap-99 destined to 2001:db8:1::1 (via eth0), matching iifname "cvd-*".
+			// 2. Inbound packet from wan0 -> eth0 destined to fd00:cf:21:99::2 (via cvd-mtap-99), matching oifname "cvd-*".
+			// 3. Non-Cuttlefish packet from other-peer -> other0 destined to 2001:db8:1::1 (via eth0), which must be dropped by policy DROP.
+			f.sh(`set -e
+ip link add cvd-mtap-99 address 02:00:00:00:00:01 type veth peer name guest-m address 02:00:00:00:00:02
+ip link add eth0 address 02:00:00:00:00:11 type veth peer name wan0 address 02:00:00:00:00:12
+ip link add other0 address 02:00:00:00:00:21 type veth peer name other-peer address 02:00:00:00:00:22
+for d in cvd-mtap-99 guest-m eth0 wan0 other0 other-peer; do
+  echo 0 > /proc/sys/net/ipv6/conf/$d/accept_dad
+  ip link set $d up
+done
+echo 0 > /proc/sys/net/ipv6/conf/guest-m/forwarding
+echo 0 > /proc/sys/net/ipv6/conf/wan0/forwarding
+ip -6 addr add fd00:cf:21:99::1/64 dev cvd-mtap-99
+ip -6 neigh add fd00:cf:21:99::2 lladdr 02:00:00:00:00:02 dev cvd-mtap-99
+ip -6 addr add 2001:db8:1::2/64 dev eth0
+ip -6 neigh add 2001:db8:1::1 lladdr 02:00:00:00:00:12 dev eth0
+ip -6 addr add fd00:99::1/64 dev other0
+python3 -c '
+import socket, struct
+def send_pkt(tx_if, dst_mac, src_mac, src_ip_str, dst_ip_str):
+    eth = dst_mac + src_mac + b"\x86\xdd"
+    src_ip = socket.inet_pton(socket.AF_INET6, src_ip_str)
+    dst_ip = socket.inet_pton(socket.AF_INET6, dst_ip_str)
+    icmp6 = struct.pack("!BBHHH", 128, 0, 0, 1, 1)
+    ip6 = struct.pack("!IHBB", (6 << 28), len(icmp6), 58, 64) + src_ip + dst_ip
+    s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
+    s.bind((tx_if, 0))
+    s.send(eth + ip6 + icmp6)
+    s.close()
+
+send_pkt("guest-m", b"\x02\x00\x00\x00\x00\x01", b"\x02\x00\x00\x00\x00\x02", "fd00:cf:21:99::2", "2001:db8:1::1")
+send_pkt("wan0", b"\x02\x00\x00\x00\x00\x11", b"\x02\x00\x00\x00\x00\x12", "2001:db8:1::1", "fd00:cf:21:99::2")
+send_pkt("other-peer", b"\x02\x00\x00\x00\x00\x21", b"\x02\x00\x00\x00\x00\x22", "fd00:99::2", "2001:db8:1::1")
+'
+ip link del cvd-mtap-99
+ip link del eth0
+ip link del other0`)
+
+			fwdChain := f.sh("nft list chain ip6 filter FORWARD")
+			if !regexp.MustCompile(`iifname "cvd-\*" counter packets [1-9]\d* bytes [1-9]\d* accept`).MatchString(fwdChain) {
+				t.Errorf("expected iifname cvd-* accept counter > 0 in ip6 filter FORWARD:\n%s", fwdChain)
+			}
+			if !regexp.MustCompile(`oifname "cvd-\*" counter packets [1-9]\d* bytes [1-9]\d* accept`).MatchString(fwdChain) {
+				t.Errorf("expected oifname cvd-* accept counter > 0 in ip6 filter FORWARD:\n%s", fwdChain)
+			}
+			iptVerbose := f.sh("ip6tables -v -L FORWARD")
+			if !regexp.MustCompile(`policy DROP [1-9]\d* packets`).MatchString(iptVerbose) {
+				t.Errorf("expected non-cvd-* packet to be dropped by FORWARD policy DROP:\n%s", iptVerbose)
+			}
+
+			f.initScript("stop")
+			afterStop := f.sh("ip6tables -S FORWARD")
+			if !strings.Contains(afterStop, "-P FORWARD DROP") || !strings.Contains(afterStop, "-A FORWARD -j DOCKER-USER") {
+				t.Errorf("Docker FORWARD state lost after stop:\n%s", afterStop)
+			}
+			if strings.Contains(afterStop, "cvd-") {
+				t.Errorf("cvd-* FORWARD rule leaked after stop:\n%s", afterStop)
+			}
+		})
+	}
+}
+
+// TestStaticIPv6ForwardingReadOnly checks read-only sysctl handling for both
+// IPv6 and IPv4 forwarding, as well as the packaged sysctl.d configuration:
+//   - when /proc/sys/net/ipv6/conf/all/forwarding is read-only and 0, start logs
+//     an explicit error to stderr and skips IPv6 setup while keeping IPv4 working;
+//   - when it is read-only and already 1 (as in podcvd with --sysctl), start
+//     succeeds and configures IPv6 normally;
+//   - when /proc/sys/net/ipv4/ip_forward is read-only and 0, start fails with an
+//     explicit error when allocate_static_resources=1, but succeeds without
+//     mutating sysctls (and still sets up /.dockerenv device permissions) when
+//     allocate_static_resources=0;
+//   - 90-cuttlefish-ip-forward.conf sets net.ipv4.ip_forward=1 and
+//     net.ipv6.conf.default.accept_ra=2 without enabling early-boot
+//     net.ipv6.conf.all.forwarding=1.
+func TestStaticIPv6ForwardingReadOnly(t *testing.T) {
+	t.Run("read_only_zero_logs_and_skips_ipv6", func(t *testing.T) {
+		f := newIPv6Fixture(t)
+		f.writeDefaults("num_cvd_accounts=1")
+		f.sh(`set -e
+echo 0 > /proc/sys/net/ipv6/conf/all/forwarding
+echo 0 > /tmp/ro_zero
+mount --bind /tmp/ro_zero /proc/sys/net/ipv6/conf/all/forwarding
+mount -o remount,bind,ro /proc/sys/net/ipv6/conf/all/forwarding`)
+		t.Cleanup(func() { f.s.Run("umount", "/proc/sys/net/ipv6/conf/all/forwarding") })
+
+		out, err := f.s.Run("sh", f.script, "start")
+		if err != nil {
+			t.Fatalf("start failed: %v", err)
+		}
+		if want := "failed to enable net.ipv6.conf.all.forwarding; skipping IPv6 setup"; !strings.Contains(out.Stderr, want) {
+			t.Errorf("stderr lacks %q:\n%s", want, out.Stderr)
+		}
+		hs := f.snapshot()
+		if got := hs.PrimaryIPv4("cvd-ebr"); got != "192.168.98.1/24" {
+			t.Errorf("cvd-ebr IPv4 = %q, want 192.168.98.1/24", got)
+		}
+		if g := globalIPv6(hs, "cvd-ebr"); len(g) != 0 {
+			t.Errorf("cvd-ebr got IPv6 %v when forwarding could not be enabled", g)
+		}
+		f.initScript("stop")
+	})
+
+	t.Run("read_only_preset_one_succeeds", func(t *testing.T) {
+		f := newIPv6Fixture(t)
+		f.writeDefaults("num_cvd_accounts=1")
+		f.sh(`set -e
+echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
+echo 1 > /tmp/ro_one
+mount --bind /tmp/ro_one /proc/sys/net/ipv6/conf/all/forwarding
+mount -o remount,bind,ro /proc/sys/net/ipv6/conf/all/forwarding`)
+		t.Cleanup(func() { f.s.Run("umount", "/proc/sys/net/ipv6/conf/all/forwarding") })
+
+		f.initScript("start")
+		hs := f.snapshot()
+		if diff := cmp.Diff([]string{"fd00:cf:21:1::1/64"}, globalIPv6(hs, "cvd-mtap-01")); diff != "" {
+			t.Errorf("cvd-mtap-01 IPv6 (-want +got):\n%s", diff)
+		}
+		f.initScript("stop")
+	})
+
+	t.Run("ipv4_read_only_zero_fails_when_static_allocated", func(t *testing.T) {
+		f := newIPv6Fixture(t)
+		f.writeDefaults("num_cvd_accounts=1", "allocate_static_resources=1")
+		f.sh(`set -e
+echo 0 > /proc/sys/net/ipv4/ip_forward
+echo 0 > /tmp/ro_v4_zero
+mount --bind /tmp/ro_v4_zero /proc/sys/net/ipv4/ip_forward
+mount -o remount,bind,ro /proc/sys/net/ipv4/ip_forward`)
+		t.Cleanup(func() { f.s.Run("umount", "/proc/sys/net/ipv4/ip_forward") })
+
+		out, err := f.s.Run("sh", f.script, "start")
+		if err == nil {
+			t.Fatalf("expected start to fail when ip_forward is read-only 0 and allocate_static_resources=1")
+		}
+		if want := "failed to enable net.ipv4.ip_forward"; !strings.Contains(out.Stderr, want) {
+			t.Errorf("stderr lacks %q:\n%s", want, out.Stderr)
+		}
+	})
+
+	t.Run("ipv4_read_only_zero_succeeds_when_cvdalloc", func(t *testing.T) {
+		f := newIPv6Fixture(t)
+		f.writeDefaults("allocate_static_resources=0")
+		f.sh(`set -e
+echo 0 > /proc/sys/net/ipv4/ip_forward
+echo 0 > /proc/sys/net/ipv6/conf/all/forwarding
+echo 0 > /tmp/ro_v4_zero
+mount --bind /tmp/ro_v4_zero /proc/sys/net/ipv4/ip_forward
+mount -o remount,bind,ro /proc/sys/net/ipv4/ip_forward`)
+		t.Cleanup(func() { f.s.Run("umount", "/proc/sys/net/ipv4/ip_forward") })
+
+		f.initScript("start")
+		if got := strings.TrimSpace(f.sh("cat /proc/sys/net/ipv6/conf/all/forwarding")); got != "0" {
+			t.Errorf("all/forwarding mutated to %s when allocate_static_resources=0, want 0", got)
+		}
+		f.initScript("stop")
+	})
+
+	t.Run("sysctl_d_conf_sets_default_accept_ra_2", func(t *testing.T) {
+		f := newIPv6Fixture(t)
+		realInit, err := filepath.EvalSymlinks(f.script)
+		if err != nil {
+			t.Fatalf("EvalSymlinks(%q): %v", f.script, err)
+		}
+		sysctlConf := filepath.Join(filepath.Dir(realInit), "../host/packages/cuttlefish-base/usr/lib/sysctl.d/90-cuttlefish-ip-forward.conf")
+		f.sh(fmt.Sprintf(`set -e
+echo 0 > /proc/sys/net/ipv4/ip_forward
+echo 1 > /proc/sys/net/ipv6/conf/default/accept_ra
+echo 0 > /proc/sys/net/ipv6/conf/all/forwarding
+sysctl -p %q`, sysctlConf))
+		if got := strings.TrimSpace(f.sh("cat /proc/sys/net/ipv4/ip_forward")); got != "1" {
+			t.Errorf("net.ipv4.ip_forward = %s, want 1", got)
+		}
+		if got := strings.TrimSpace(f.sh("cat /proc/sys/net/ipv6/conf/default/accept_ra")); got != "2" {
+			t.Errorf("net.ipv6.conf.default.accept_ra = %s, want 2", got)
+		}
+		if got := strings.TrimSpace(f.sh("cat /proc/sys/net/ipv6/conf/all/forwarding")); got != "0" {
+			t.Errorf("net.ipv6.conf.all.forwarding = %s after loading sysctl.d conf, want 0", got)
+		}
+	})
+}
+
+// TestStaticIPv6DefaultDisableIPv6 checks that when a host sets
+// net.ipv6.conf.default.disable_ipv6=1 while net.ipv6.conf.all.disable_ipv6=0,
+// start_ipv6 enables IPv6 on the cvd-* bridges and taps and configures IPv6
+// addresses without error.
+func TestStaticIPv6DefaultDisableIPv6(t *testing.T) {
+	f := newIPv6Fixture(t)
+	f.writeDefaults("num_cvd_accounts=1")
+	f.sh("echo 1 > /proc/sys/net/ipv6/conf/default/disable_ipv6")
+	base := f.snapshot()
+	f.initScript("start")
+
+	hs := f.snapshot()
+	for ifname, w := range map[string]string{
+		"cvd-ebr":       "fd00:cf:24::1/64",
+		"cvd-wbr":       "fd00:cf:22::1/64",
+		"cvd-mtap-01":   "fd00:cf:21:1::1/64",
+		"cvd-wifiap-01": "fd00:cf:23:1::1/64",
+	} {
+		if diff := cmp.Diff([]string{w}, globalIPv6(hs, ifname)); diff != "" {
+			t.Errorf("global IPv6 of %s (-want +got):\n%s", ifname, diff)
+		}
+	}
+
+	f.initScript("stop")
+	f.requireNoLeak(base)
+}
+
+// TestStaticIPv6ShrinkAccountsStopsOrphanRaDnsmasq checks that when
+// num_cvd_accounts is reduced in /etc/default/cuttlefish-host-resources
+// between start and stop, stop_ipv6 terminates all RA dnsmasq daemons via
+// /var/run/cuttlefish-dnsmasq-ra-*.pid rather than leaving higher-numbered
+// instances running.
+func TestStaticIPv6ShrinkAccountsStopsOrphanRaDnsmasq(t *testing.T) {
+	f := newIPv6Fixture(t)
+	f.writeDefaults("num_cvd_accounts=2")
+	f.initScript("start")
+
+	if diff := cmp.Diff([]string{"cvd-ebr", "cvd-wbr", "cvd-wifiap-01", "cvd-wifiap-02"}, raDnsmasqIfaces(f.s)); diff != "" {
+		t.Fatalf("RA dnsmasq interfaces after start (-want +got):\n%s", diff)
+	}
+
+	// Shrink num_cvd_accounts from 2 to 1 before stopping.
+	f.writeDefaults("num_cvd_accounts=1")
+	f.initScript("stop")
+
+	if ra := raDnsmasqIfaces(f.s); len(ra) != 0 {
+		t.Errorf("RA dnsmasq pidfiles left after stop with shrunk num_cvd_accounts: %v", ra)
+	}
+	if p := f.waitDnsmasq(func(s string) bool { return s == "" }); p != "" {
+		t.Errorf("dnsmasq still running after stop with shrunk num_cvd_accounts:\n%s", p)
+	}
+}
+
+// TestStaticIPv6PostrmPurgeCleanup checks that running
+// cuttlefish-base.postrm purge removes routed IPv6 prefixes, cuttlefish_*
+// nftables tables, ip6 filter FORWARD rules, dnsmasq processes, and
+// /run/cuttlefish state even if stop was not run prior to purge.
+func TestStaticIPv6PostrmPurgeCleanup(t *testing.T) {
+	f := newIPv6Fixture(t)
+	postrmRel := os.Getenv("POSTRM_SCRIPT")
+	if postrmRel == "" {
+		t.Fatal("POSTRM_SCRIPT env var is not set")
+	}
+	postrm, err := runfiles.Rlocation(postrmRel)
+	if err != nil {
+		t.Fatalf("locating %q: %v", postrmRel, err)
+	}
+	f.writeDefaults("num_cvd_accounts=1", "ipv6_routed_prefix=2001:db8:cf00::/48")
+	f.initScript("start")
+
+	if routes := f.sh("ip -6 route show 2001:db8:cf00:2501::/64"); !strings.Contains(routes, "via 2001:db8:cf00:2301::2") {
+		t.Fatalf("expected routed OpenWrt LAN route before purge, got: %q", routes)
+	}
+
+	if _, err := f.s.Run("sh", postrm, "purge"); err != nil {
+		t.Fatalf("postrm purge: %v", err)
+	}
+	if routes := strings.TrimSpace(f.sh("ip -6 route show 2001:db8:cf00:2501::/64")); routes != "" {
+		t.Errorf("routed OpenWrt LAN route left after postrm purge: %q", routes)
+	}
+	if tables := f.nftTables(); len(tables) != 0 {
+		t.Errorf("nft tables left after postrm purge: %v", tables)
+	}
+	if files := common.HandleFiles(f.s); len(files) != 0 {
+		t.Errorf("/run/cuttlefish not empty after postrm purge: %v", files)
+	}
+	if p := f.waitDnsmasq(func(s string) bool { return s == "" }); p != "" {
+		t.Errorf("dnsmasq still running after postrm purge:\n%s", p)
+	}
+}
+

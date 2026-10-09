@@ -292,6 +292,17 @@ func TestRoutedIPv6ModeSwitch(t *testing.T) {
 	if r := f.lanRoutes(); len(r) != 0 {
 		t.Errorf("routed mode routes left after switching to private mode: %v", r)
 	}
+	hs := f.snapshot()
+	for ifname, w := range map[string]string{
+		"cvd-ebr":       "fd00:cf:24::1/64",
+		"cvd-wbr":       "fd00:cf:22::1/64",
+		"cvd-mtap-01":   "fd00:cf:21:1::1/64",
+		"cvd-wifiap-01": "fd00:cf:23:1::1/64",
+	} {
+		if diff := cmp.Diff([]string{w}, globalIPv6(hs, ifname)); diff != "" {
+			t.Errorf("global IPv6 of %s after mode switch (-want +got):\n%s", ifname, diff)
+		}
+	}
 	nat6 := f.sh("nft list chain ip6 cuttlefish_nat6 postrouting")
 	if !strings.Contains(nat6, "ip6 saddr fd00:cf:20::/44") {
 		t.Errorf("want the private mode NAT66 rule after the switch:\n%s", nat6)
