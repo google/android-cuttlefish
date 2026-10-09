@@ -1,3 +1,9 @@
+cuttlefish-common (1.57.9) unstable; urgency=medium
+
+  * Accommodate secure_env executables with fewer CLI flags
+
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 09 Oct 2026 12:20:35 -0700
+
 cuttlefish-common (1.57.8) unstable; urgency=medium
 
   * Update Gfxstream by @jmacnak in https://github.com/google/android-cuttlefish/pull/3323
