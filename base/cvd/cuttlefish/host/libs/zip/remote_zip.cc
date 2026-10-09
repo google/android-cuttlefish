@@ -54,18 +54,16 @@ class RemoteZip : public SeekableZipSourceCallback {
   int64_t Read(char* zip_data, uint64_t zip_len) override {
     uint64_t already_read = 0;
 
-    auto cb = [&already_read, &zip_data, &zip_len](char* http_data,
-                                                   size_t http_len) -> bool {
+    auto cb = [&already_read, &zip_data, &zip_len](
+                  char* http_data, size_t http_len) -> Result<void> {
       if (http_data == nullptr) {
         already_read = 0;
-        return true;
+        return {};
       }
-      if (http_len + already_read > zip_len) {
-        return false;
-      }
+      CF_EXPECT_LE(http_len + already_read, zip_len);
       memcpy(zip_data + already_read, http_data, http_len);
       already_read += http_len;
-      return true;
+      return {};
     };
     std::vector<std::string> headers = headers_;
     headers.push_back(
