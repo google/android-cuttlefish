@@ -32,7 +32,9 @@ ManagedZipError NewZipError() {
 }
 
 std::string ZipErrorString(zip_error_t* error) {
-  return std::string(zip_error_strerror(error));
+  const std::string err_str(zip_error_strerror(error));
+  zip_error_fini(error);
+  return err_str;
 }
 
 std::string ZipErrorString(zip_source_t* source) {
