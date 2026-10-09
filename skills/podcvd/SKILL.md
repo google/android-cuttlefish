@@ -57,7 +57,7 @@ To ensure high success rates and avoid malformed options, prefer using the fully
 ### 1. Create Instance Group (Establishes ADB Connection)
 Creates an instance group with standard configurations and **automatically establishes ADB connections**. (For bulk creation, see the concurrency policy below).
 ```bash
-PODCVD_CLIENT_ID="<client_id>" podcvd create --vhost_user_vsock=true --report_anonymous_usage_stats=n
+PODCVD_CLIENT_ID="<client_id>" podcvd create --report_anonymous_usage_stats=n
 ```
 
 ### 2. List Active Fleets

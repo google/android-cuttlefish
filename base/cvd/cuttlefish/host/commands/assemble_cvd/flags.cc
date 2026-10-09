@@ -48,6 +48,7 @@
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/common/libs/utils/container.h"
 #include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
@@ -913,9 +914,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       if (guest_configs[instance_index].vhost_user_vsock) {
         instance.set_vhost_user_vsock(true);
       } else if (VmManagerIsCrosvm(tmp_config_obj) &&
-                 default_on_arch.find(
-                     guest_configs[instance_index].target_arch) !=
-                     default_on_arch.end()) {
+                 (default_on_arch.find(
+                      guest_configs[instance_index].target_arch) !=
+                      default_on_arch.end() ||
+                  StringFromEnv("CVD_INVOKER").value_or("") == "podcvd")) {
         instance.set_vhost_user_vsock(true);
       } else {
         instance.set_vhost_user_vsock(false);
