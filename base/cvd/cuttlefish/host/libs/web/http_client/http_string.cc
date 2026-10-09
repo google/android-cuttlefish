@@ -31,13 +31,13 @@ namespace {
 Result<HttpResponse<std::string>> Download(HttpClient& http_client,
                                            HttpRequest request) {
   std::stringstream stream;
-  auto callback = [&stream](char* data, size_t size) -> bool {
+  auto callback = [&stream](char* data, size_t size) -> Result<void> {
     if (data == nullptr) {
       stream = std::stringstream();
-      return true;
+      return {};
     }
     stream.write(data, size);
-    return true;
+    return {};
   };
   HttpResponse<void> http_response =
       CF_EXPECT(http_client.DownloadToCallback(request, callback));
