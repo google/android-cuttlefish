@@ -86,15 +86,25 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
       + this.displayMargin;
 
   private totalHorizontalSpacing(item: DeviceGridItem): number {
-    const iconPanelWidth = 58;
+    const controlPanelDefaultButtonsWidth = 62;
+    const controlPanelCustomButtonsWidth = 62;
+    const displayControlButtonsWidth = 54;
+    const deviceDisplayColumnWidth = 10;
+    const deviceViewerDisplayWidthInset = 12;
+    const iconPanelWidth =
+      controlPanelDefaultButtonsWidth +
+      controlPanelCustomButtonsWidth +
+      displayControlButtonsWidth +
+      deviceDisplayColumnWidth +
+      deviceViewerDisplayWidthInset;
     const cnt = item.display_count || 1;
 
     // Separate displays are shown in a row left-to-right, so each new devices
     // adds more margin space.
-    // Note we assume control-panel-custom-buttons are not visible. The risk is
-    // that they really are, in which case the zoom will be over-calculated and
-    // extra vertical space will appear below the displays. Ideally the device
-    // would report how much spacing is required in each direction.
+    // Note we assume control-panel-custom-buttons are visible. The risk is
+    // that they are not, in which case the zoom will be under-calculated and
+    // extra horizontal space will appear beside the displays. Ideally the
+    // device would report how much spacing is required in each direction.
     return cnt * this.displayMargin + iconPanelWidth;
   }
 
