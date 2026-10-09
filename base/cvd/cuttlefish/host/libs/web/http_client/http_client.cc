@@ -51,4 +51,14 @@ std::optional<std::string_view> HeaderValue(
   return std::nullopt;
 }
 
+Result<HttpResponse<void>> HttpClient::DownloadToCallback(
+    HttpRequest request, HttpClient::BoolDataCallback callback) {
+  auto callback_ret_result = [&callback](char* data,
+                                         size_t size) -> Result<void> {
+    CF_EXPECT(callback(data, size));
+    return {};
+  };
+  return CF_EXPECT(DownloadToCallback(std::move(request), callback_ret_result));
+}
+
 }  // namespace cuttlefish
