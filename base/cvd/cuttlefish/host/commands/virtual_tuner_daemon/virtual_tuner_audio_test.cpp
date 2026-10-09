@@ -20,8 +20,10 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <numbers>
 #include <span>
 #include <string>
 #include <vector>
@@ -120,6 +122,94 @@ TEST(AudioGeneratorTest, GeneratorsAreIndependent) {
   second.GenerateChunk(second_buffer, TunedSnapshot());
 
   EXPECT_NE(first_buffer, second_buffer);
+}
+
+// Goertzel power of `tone_hz` in the first channel of `samples`.
+double TonePower(std::span<const int16_t> samples, double tone_hz) {
+  const double coeff =
+      2.0 * std::cos(2.0 * std::numbers::pi * tone_hz / kSampleRate);
+  double s1 = 0.0;
+  double s2 = 0.0;
+  for (size_t frame = 0; frame + kChannels <= samples.size();
+       frame += kChannels) {
+    const double s0 = samples[frame] + coeff * s1 - s2;
+    s2 = s1;
+    s1 = s0;
+  }
+  return s1 * s1 + s2 * s2 - coeff * s1 * s2;
+}
+
+// Programs of the guest's default AM/FM and DAB VirtualRadios
+// (hardware/interfaces/broadcastradio/aidl/default/VirtualRadio.cpp).
+std::vector<TunerStateSnapshot> DefaultVirtualRadioPrograms() {
+  std::vector<TunerStateSnapshot> programs;
+  for (uint32_t khz :
+       {94900u, 96500u, 101300u, 103700u, 106100u, 97300u, 99700u}) {
+    programs.push_back({RadioBand::FM, khz * 1000, 0, true});
+  }
+  for (uint32_t subchannel : {0u, 1u, 2u}) {
+    programs.push_back({RadioBand::FM, 97700000, subchannel, true});
+  }
+  for (uint32_t subchannel : {0u, 1u}) {
+    programs.push_back({RadioBand::FM, 98500000, subchannel, true});
+  }
+  for (uint32_t khz : {560u, 680u, 1170u}) {
+    programs.push_back({RadioBand::AM, khz * 1000, 0, true});
+  }
+  for (uint32_t khz : {218640u, 222064u, 223936u, 225648u}) {
+    programs.push_back({RadioBand::DAB, khz * 1000, 0, true});
+  }
+  return programs;
+}
+
+TEST(AudioGeneratorTest, DefaultStationsHaveDistinctTones) {
+  std::vector<double> tones;
+  for (const TunerStateSnapshot& program : DefaultVirtualRadioPrograms()) {
+    tones.push_back(StationToneHz(program));
+  }
+  std::sort(tones.begin(), tones.end());
+  ASSERT_GT(tones.front(), 0.0);
+  for (size_t i = 1; i < tones.size(); ++i) {
+    EXPECT_GE(tones[i] - tones[i - 1], 20.0)
+        << "tones " << tones[i - 1] << " and " << tones[i];
+  }
+}
+
+TEST(AudioGeneratorTest, BandsHaveNonOverlappingToneRanges) {
+  EXPECT_LT(StationToneHz({RadioBand::AM, 1700000, 0, true}),
+            StationToneHz({RadioBand::FM, 87500000, 0, true}));
+  EXPECT_LT(StationToneHz({RadioBand::FM, 108000000, 1, true}),
+            StationToneHz({RadioBand::DAB, 174000000, 0, true}));
+}
+
+TEST(AudioGeneratorTest, NoToneWithoutFrequency) {
+  EXPECT_EQ(StationToneHz({RadioBand::AM, 0, 0, true}), 0.0);
+  EXPECT_EQ(StationToneHz({RadioBand::FM, 0, 0, true}), 0.0);
+  EXPECT_EQ(StationToneHz({RadioBand::DAB, 0, 0, true}), 0.0);
+}
+
+TEST(AudioGeneratorTest, PlaysWhiteNoiseWithoutFrequency) {
+  AudioGenerator generator;
+  std::vector<int16_t> buffer(kChunkFrames * kChannels, 0);
+
+  generator.GenerateChunk(buffer,
+                          {RadioBand::FM, 0, 0, /* is_playing= */ true});
+
+  EXPECT_FALSE(AllSamplesZero(buffer));
+  EXPECT_TRUE(AllSamplesWithinAmplitude(buffer, kNoiseAmplitude));
+  EXPECT_TRUE(EveryFrameIsMono(buffer));
+}
+
+TEST(AudioGeneratorTest, ChunkCarriesStationTone) {
+  const TunerStateSnapshot kiss_fm{RadioBand::FM, 101300000, 0, true};
+  const TunerStateSnapshot koit{RadioBand::FM, 96500000, 0, true};
+  AudioGenerator generator;
+  std::vector<int16_t> buffer(kChunkFrames * kChannels, 0);
+
+  generator.GenerateChunk(buffer, kiss_fm);
+
+  EXPECT_GT(TonePower(buffer, StationToneHz(kiss_fm)),
+            100.0 * TonePower(buffer, StationToneHz(koit)));
 }
 
 class PcmStreamServerTest : public ::testing::Test {

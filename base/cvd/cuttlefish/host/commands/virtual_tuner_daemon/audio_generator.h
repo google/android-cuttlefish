@@ -34,15 +34,29 @@ inline constexpr size_t kFrameSizeBytes = kChannels * kBytesPerSample;
 inline constexpr size_t kChunkFrames = 4096;
 inline constexpr size_t kChunkSizeBytes = kChunkFrames * kFrameSizeBytes;
 
+// Tone that identifies the tuned station, so that stations can be told apart
+// by ear and by FFT. AM: 300 Hz at 530 kHz plus 0.5 Hz per kHz (300..885 Hz).
+// FM: 1000 Hz at 87.5 MHz plus 10 Hz per 100 kHz (1000..3050 Hz); each HD
+// subchannel above HD1 adds 1 kHz (HD1 simulcasts the analog program). DAB:
+// 5000 Hz at 174 MHz plus 20 Hz per MHz (5000..6320 Hz). Returns 0 when no
+// station is broadcasting on the tuned frequency, in which case only white
+// noise is played.
+double StationToneHz(const TunerStateSnapshot& snapshot);
+
 class AudioGenerator {
  public:
   AudioGenerator();
 
+  // Fills `samples` with silence while the tuner is stopped, white noise when
+  // no station is broadcasting on the tuned frequency, and the station tone
+  // otherwise.
   void GenerateChunk(std::span<int16_t> samples,
                      const TunerStateSnapshot& snapshot);
 
  private:
   std::minstd_rand rng_;
+  // Kept across chunks so the tone stays continuous.
+  double phase_ = 0.0;
 };
 
 }  // namespace virtualtuner
