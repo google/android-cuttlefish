@@ -114,7 +114,9 @@ mkdir -p "$STATE"
 docker run --rm --network none --user "$(id -u):$(id -g)" -v "$STATE:/certs" \
   --entrypoint /sim/gen_certs.sh "$IMAGE" /certs "$NAMES" "$ECHO_ADDR"
 
-docker rm -f "$NAME" >/dev/null 2>&1 || true
+if docker inspect "$NAME" >/dev/null 2>&1; then
+  docker rm -f "$NAME" >/dev/null
+fi
 docker run -d --name "$NAME" --network none --cap-add NET_ADMIN \
   --sysctl net.ipv6.conf.all.disable_ipv6=0 \
   --sysctl net.ipv6.conf.default.disable_ipv6=0 \
@@ -142,8 +144,12 @@ docker run --rm --privileged --pid=host --network none "${HELPER_MOUNT[@]}" \
     touch /run/netns/sim /run/netns/tgt
     mount --bind /proc/$CPID/ns/net /run/netns/sim
     mount --bind "$TGT_NS" /run/netns/tgt
-    ip -n sim link del transit0 2>/dev/null || true
-    ip -n tgt link del "$HOST_IF" 2>/dev/null || true
+    if ip -n sim link show transit0 >/dev/null 2>&1; then
+      ip -n sim link del transit0
+    fi
+    if ip -n tgt link show "$HOST_IF" >/dev/null 2>&1; then
+      ip -n tgt link del "$HOST_IF"
+    fi
     ip -n sim link add transit0 type veth peer name "$HOST_IF" netns tgt
     ip -n sim -6 addr add "$SIM_T/64" dev transit0 nodad
     ip -n tgt -6 addr add "$HOST_T/64" dev "$HOST_IF" nodad

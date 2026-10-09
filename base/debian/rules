@@ -80,7 +80,7 @@ override_dh_installinit:
 .PHONY: override_dh_installsystemd
 override_dh_installsystemd:
 	dh_installsystemd --name=cuttlefish-host-resources
-	dh_installsystemd
+	dh_installsystemd --remaining-packages
 
 .PHONY: cf_bazel_build
 cf_bazel_build:

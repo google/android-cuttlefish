@@ -27,10 +27,10 @@ Private mode stays the default. Routed mode only adds behavior.
   [Compute Engine](https://cloud.google.com/compute/docs/ip-addresses/configure-ipv6-address)),
   cannot be split into `/64`s for SLAAC. Such a host can only use private
   mode.
-- The init script enables IPv6 forwarding (`net.ipv6.conf.all.forwarding=1`).
-  If the host itself configures its uplink from router advertisements, set
-  `net.ipv6.conf.<uplink>.accept_ra=2` so it keeps doing so with forwarding
-  on.
+- The init script promotes `accept_ra` to `2` on `default` and on existing
+  non-Cuttlefish interfaces that use kernel router advertisements before
+  enabling IPv6 forwarding (`net.ipv6.conf.all.forwarding=1`), so the host's
+  uplink keeps its RA default route with forwarding on.
 
 ## Host configuration
 
@@ -78,7 +78,8 @@ The host:
 - adds `ip -6 route add P:25NN::/64 via P:23NN::2 dev cvd-wifiap-NN` for every
   instance and records the routes in `/run/cuttlefish/ipv6-routes`, so `stop`
   (and a repeated `start`) removes them even if the configuration changed;
-- keeps the router advertisement guard (guests cannot send RAs or redirects);
+- keeps the router advertisement guard (guests cannot send RAs or redirects)
+  and explicit `iifname`/`oifname "cvd-*"` accept rules in `ip6 filter FORWARD`;
 - adds no NAT66 rule (the `ip6 cuttlefish_nat6` table exists, but is empty).
 
 ## How the device learns routed mode

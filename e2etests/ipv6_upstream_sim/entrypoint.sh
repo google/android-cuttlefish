@@ -45,7 +45,7 @@ fi
 ip link set inet0 up
 ip -6 addr replace "$SIM_ECHO_ADDR/128" dev inet0 nodad
 ip -6 addr replace "$SIM_DNS_ADDR/128" dev inet0 nodad
-ip -6 route replace "$SIM_INET_PREFIX" dev inet0 2>/dev/null || true
+ip -6 route replace "$SIM_INET_PREFIX" dev inet0
 
 if [ ! -s "$SIM_CERT_DIR/server.crt" ]; then
   /sim/gen_certs.sh "$SIM_CERT_DIR" "$SIM_NAMES" "$SIM_ECHO_ADDR"
@@ -90,5 +90,9 @@ while kill -0 $dns_pid 2>/dev/null && kill -0 $echo_pid 2>/dev/null; do
   sleep 2
 done
 log "a service exited; stopping"
-kill $dns_pid $echo_pid 2>/dev/null || true
+for p in $dns_pid $echo_pid; do
+  if kill -0 "$p" 2>/dev/null; then
+    kill "$p" 2>/dev/null
+  fi
+done
 exit 1
