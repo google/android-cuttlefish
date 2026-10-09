@@ -149,17 +149,50 @@ class NetConfig {
 
 constexpr char kHostResourcesDefaultsPath[] =
     "/etc/default/cuttlefish-host-resources";
+constexpr char kIpv6EgressMarkerPath[] = "/run/cuttlefish/ipv6-egress";
 constexpr char kDefaultMobileIpv6Dns[] =
     "2001:4860:4860::8888,2001:4860:4860::8844";
 
-std::string ObtainMobileIpv6Dns() {
-  std::ifstream in(kHostResourcesDefaultsPath);
-  if (!in.is_open()) {
-    return kDefaultMobileIpv6Dns;
+std::optional<std::string> ParseSettingFromDefaults(std::string_view contents,
+                                                    std::string_view key) {
+  std::optional<std::string> raw_value;
+  std::string prefix = std::string(key) + "=";
+  for (std::string_view line : absl::StrSplit(contents, '\n')) {
+    line = absl::StripAsciiWhitespace(line);
+    if (line.empty() || line.front() == '#') {
+      continue;
+    }
+    if (!absl::ConsumePrefix(&line, prefix)) {
+      continue;
+    }
+    if (size_t hash = line.find('#'); hash != std::string_view::npos) {
+      line = absl::StripAsciiWhitespace(line.substr(0, hash));
+    }
+    if (line.size() >= 2 && ((line.front() == '"' && line.back() == '"') ||
+                             (line.front() == '\'' && line.back() == '\''))) {
+      line = line.substr(1, line.size() - 2);
+    }
+    raw_value = std::string(line);
   }
-  std::ostringstream ss;
-  ss << in.rdbuf();
-  return ParseDns6ServersFromDefaults(ss.str());
+  return raw_value;
+}
+
+std::string ObtainMobileIpv6Dns() {
+  std::string contents;
+  std::ifstream in(kHostResourcesDefaultsPath);
+  if (in.is_open()) {
+    std::ostringstream ss;
+    ss << in.rdbuf();
+    contents = ss.str();
+  }
+  bool has_egress = std::ifstream(kIpv6EgressMarkerPath).good();
+  std::string dns = ResolveMobileIpv6Dns(contents, has_egress);
+  if (dns.empty()) {
+    LOG(INFO) << "No host IPv6 egress (" << kIpv6EgressMarkerPath
+              << " absent); omitting ril_ipv6_dns while keeping mobile ULA "
+                 "addressing.";
+  }
+  return dns;
 }
 
 uint8_t Ipv6PrefixLength(const in6_addr& netmask) {
@@ -232,24 +265,8 @@ std::optional<MobileIpv6Config> ObtainMobileIpv6Config(
 }  // namespace
 
 std::string ParseDns6ServersFromDefaults(std::string_view contents) {
-  std::optional<std::string> raw_value;
-  for (std::string_view line : absl::StrSplit(contents, '\n')) {
-    line = absl::StripAsciiWhitespace(line);
-    if (line.empty() || line.front() == '#') {
-      continue;
-    }
-    if (!absl::ConsumePrefix(&line, "dns6_servers=")) {
-      continue;
-    }
-    if (size_t hash = line.find('#'); hash != std::string_view::npos) {
-      line = absl::StripAsciiWhitespace(line.substr(0, hash));
-    }
-    if (line.size() >= 2 && ((line.front() == '"' && line.back() == '"') ||
-                             (line.front() == '\'' && line.back() == '\''))) {
-      line = line.substr(1, line.size() - 2);
-    }
-    raw_value = std::string(line);
-  }
+  std::optional<std::string> raw_value =
+      ParseSettingFromDefaults(contents, "dns6_servers");
   if (!raw_value || raw_value->empty()) {
     return kDefaultMobileIpv6Dns;
   }
@@ -275,6 +292,32 @@ std::string ParseDns6ServersFromDefaults(std::string_view contents) {
     return kDefaultMobileIpv6Dns;
   }
   return absl::StrJoin(valid_addrs, ",");
+}
+
+std::string ResolveMobileIpv6Dns(std::string_view defaults_contents,
+                                 bool has_ipv6_egress) {
+  std::optional<std::string> egress_override =
+      ParseSettingFromDefaults(defaults_contents, "ipv6_egress");
+  if (egress_override == "0") {
+    return "";
+  }
+  if (egress_override == "1") {
+    has_ipv6_egress = true;
+  }
+  std::optional<std::string> explicit_dns6 =
+      ParseSettingFromDefaults(defaults_contents, "dns6_servers");
+  if (explicit_dns6 && !explicit_dns6->empty()) {
+    return ParseDns6ServersFromDefaults(defaults_contents);
+  }
+  std::optional<std::string> routed_prefix =
+      ParseSettingFromDefaults(defaults_contents, "ipv6_routed_prefix");
+  if (routed_prefix && !routed_prefix->empty()) {
+    has_ipv6_egress = true;
+  }
+  if (!has_ipv6_egress) {
+    return "";
+  }
+  return ParseDns6ServersFromDefaults(defaults_contents);
 }
 
 std::optional<MobileIpv6Config> MobileIpv6ConfigFromHostAddress(
@@ -363,7 +406,9 @@ Result<void> ConfigureNetworkSettings(
             << ", prefix length = " << static_cast<int>(ipv6->prefixlen);
     instance.set_ril_ipv6_ipaddr(ipv6->ipaddr);
     instance.set_ril_ipv6_gateway(ipv6->gateway);
-    instance.set_ril_ipv6_dns(ipv6_dns);
+    if (!ipv6_dns.empty()) {
+      instance.set_ril_ipv6_dns(ipv6_dns);
+    }
     instance.set_ril_ipv6_prefixlen(ipv6->prefixlen);
   } else {
     VLOG(0) << "No global IPv6 address on the mobile interface; the mobile "

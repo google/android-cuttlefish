@@ -177,5 +177,37 @@ TEST(ParseDns6ServersFromDefaults, InvalidFallsBackToDefault) {
             "2001:4860:4860::8888,2001:4860:4860::8844");
 }
 
+TEST(ResolveMobileIpv6Dns, OmitsDnsWhenNoHostEgressAndUnsetInDefaults) {
+  EXPECT_EQ(ResolveMobileIpv6Dns("", /*has_ipv6_egress=*/false), "");
+  EXPECT_EQ(ResolveMobileIpv6Dns(
+                "# defaults for cuttlefish-host-resources\n"
+                "#dns6_servers=2001:4860:4860::8888,2001:4860:4860::8844\n",
+                /*has_ipv6_egress=*/false),
+            "");
+}
+
+TEST(ResolveMobileIpv6Dns, EmitsDefaultDnsWhenHostHasEgress) {
+  EXPECT_EQ(ResolveMobileIpv6Dns("", /*has_ipv6_egress=*/true),
+            "2001:4860:4860::8888,2001:4860:4860::8844");
+  EXPECT_EQ(ResolveMobileIpv6Dns("dns6_servers=2001:db8:eeee::53\n",
+                                 /*has_ipv6_egress=*/true),
+            "2001:db8:eeee::53");
+}
+
+TEST(ResolveMobileIpv6Dns, ExplicitOverrideOrRoutedPrefixWithoutEgressMarker) {
+  EXPECT_EQ(ResolveMobileIpv6Dns("dns6_servers=fd00:cf:2e::53\n",
+                                 /*has_ipv6_egress=*/false),
+            "fd00:cf:2e::53");
+  EXPECT_EQ(ResolveMobileIpv6Dns("ipv6_egress=1\n",
+                                 /*has_ipv6_egress=*/false),
+            "2001:4860:4860::8888,2001:4860:4860::8844");
+  EXPECT_EQ(ResolveMobileIpv6Dns("ipv6_routed_prefix=2001:db8:cf00::/48\n",
+                                 /*has_ipv6_egress=*/false),
+            "2001:4860:4860::8888,2001:4860:4860::8844");
+  EXPECT_EQ(ResolveMobileIpv6Dns("ipv6_egress=0\n",
+                                 /*has_ipv6_egress=*/true),
+            "");
+}
+
 }  // namespace
 }  // namespace cuttlefish

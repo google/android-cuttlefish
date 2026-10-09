@@ -964,3 +964,92 @@ func TestStaticIPv6PostrmPurgeCleanup(t *testing.T) {
 	}
 }
 
+// TestStaticIPv6EgressDetectionControlsDnsServerAndMarker checks that when the
+// host has kernel IPv6 enabled (disable_ipv6=0) but no IPv6 default route and
+// no explicit dns6_servers override, start_ipv6 keeps ULA + RA prefix
+// advertisements on cvd-* while omitting option6:dns-server and leaving
+// /run/cuttlefish/ipv6-egress absent (so OpenWrt dnsmasq and RIL do not blackhole
+// DNS queries to unreachable IPv6 servers), whereas when an IPv6 default route
+// is present, start_ipv6 advertises option6:dns-server and writes
+// /run/cuttlefish/ipv6-egress.
+func TestStaticIPv6EgressDetectionControlsDnsServerAndMarker(t *testing.T) {
+	t.Run("no_default_route_omits_dns_server_and_marker", func(t *testing.T) {
+		f := newIPv6Fixture(t)
+		f.writeDefaults("num_cvd_accounts=1")
+		base := f.snapshot()
+
+		out, err := f.s.Run("sh", f.script, "start")
+		if err != nil {
+			t.Fatalf("start: %v", err)
+		}
+		if want := "no IPv6 default route on host; omitting IPv6 DNS servers"; !strings.Contains(out.Stderr, want) {
+			t.Errorf("stderr lacks %q:\n%s", want, out.Stderr)
+		}
+
+		hs := f.snapshot()
+		for ifname, w := range map[string]string{
+			"cvd-ebr":       "fd00:cf:24::1/64",
+			"cvd-wbr":       "fd00:cf:22::1/64",
+			"cvd-mtap-01":   "fd00:cf:21:1::1/64",
+			"cvd-wifiap-01": "fd00:cf:23:1::1/64",
+		} {
+			if diff := cmp.Diff([]string{w}, globalIPv6(hs, ifname)); diff != "" {
+				t.Errorf("global IPv6 of %s (-want +got):\n%s", ifname, diff)
+			}
+		}
+
+		for _, ifname := range []string{"cvd-ebr", "cvd-wbr", "cvd-wifiap-01"} {
+			cmdline := f.sh(fmt.Sprintf("tr '\\0' ' ' < /proc/$(cat /run/cuttlefish-dnsmasq-ra-%s.pid)/cmdline", ifname))
+			if !strings.Contains(cmdline, "--enable-ra") {
+				t.Errorf("RA dnsmasq on %s lacks --enable-ra: %s", ifname, cmdline)
+			}
+			if strings.Contains(cmdline, "option6:dns-server") {
+				t.Errorf("RA dnsmasq on %s unexpectedly advertised option6:dns-server without host IPv6 default route: %s", ifname, cmdline)
+			}
+		}
+
+		files := common.HandleFiles(f.s)
+		if !slices.Contains(files, "ipv6-enabled") {
+			t.Errorf("expected ipv6-enabled marker in /run/cuttlefish, got: %v", files)
+		}
+		if slices.Contains(files, "ipv6-egress") {
+			t.Errorf("unexpected ipv6-egress marker in /run/cuttlefish without host IPv6 default route: %v", files)
+		}
+
+		f.initScript("stop")
+		f.requireNoLeak(base)
+	})
+
+	t.Run("with_default_route_emits_dns_server_and_marker", func(t *testing.T) {
+		f := newIPv6Fixture(t)
+		f.writeDefaults("num_cvd_accounts=1")
+		f.sh(`set -e
+ip link add eth0 type dummy
+echo 0 > /proc/sys/net/ipv6/conf/eth0/accept_dad
+ip link set eth0 up
+ip -6 addr add 2001:db8:ffff::2/64 dev eth0
+ip -6 route add default via 2001:db8:ffff::1 dev eth0`)
+		base := f.snapshot()
+
+		f.initScript("start")
+
+		for _, ifname := range []string{"cvd-ebr", "cvd-wbr", "cvd-wifiap-01"} {
+			cmdline := f.sh(fmt.Sprintf("tr '\\0' ' ' < /proc/$(cat /run/cuttlefish-dnsmasq-ra-%s.pid)/cmdline", ifname))
+			want := "--dhcp-option=option6:dns-server,2001:4860:4860::8888,2001:4860:4860::8844"
+			if !strings.Contains(cmdline, want) {
+				t.Errorf("RA dnsmasq on %s lacks %q when host has IPv6 default route: %s", ifname, want, cmdline)
+			}
+		}
+
+		files := common.HandleFiles(f.s)
+		if !slices.Contains(files, "ipv6-egress") {
+			t.Errorf("expected ipv6-egress marker in /run/cuttlefish when host has IPv6 default route, got: %v", files)
+		}
+		if got := strings.TrimSpace(f.sh("cat /run/cuttlefish/ipv6-egress")); got != "2001:4860:4860::8888,2001:4860:4860::8844" {
+			t.Errorf("/run/cuttlefish/ipv6-egress = %q, want 2001:4860:4860::8888,2001:4860:4860::8844", got)
+		}
+
+		f.initScript("stop")
+		f.requireNoLeak(base)
+	})
+}

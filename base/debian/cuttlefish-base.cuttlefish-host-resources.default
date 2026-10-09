@@ -28,7 +28,12 @@
 
 # A comma separated list of IPv6 addresses used by cuttlefish guests
 # to resolve domain names. There must be no spaces after the commas.
+# When left unset and the host has no IPv6 default route at service start,
+# IPv6 DNS servers are omitted from RAs and RIL so guest DNS resolves over
+# IPv4 without blackholing. Set dns6_servers explicitly (or ipv6_egress=1)
+# to advertise IPv6 DNS servers even without a host IPv6 default route.
 #dns6_servers=2001:4860:4860::8888,2001:4860:4860::8844
+#ipv6_egress=
 
 # IPv6 is set up after IPv4, only if the host has IPv6 enabled
 # (net.ipv6.conf.all.disable_ipv6=0). An IPv6 failure does not affect IPv4.

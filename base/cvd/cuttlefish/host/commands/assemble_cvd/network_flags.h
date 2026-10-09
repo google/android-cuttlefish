@@ -49,6 +49,14 @@ std::optional<MobileIpv6Config> MobileIpv6ConfigFromHostAddress(
 // invalid.
 std::string ParseDns6ServersFromDefaults(std::string_view contents);
 
+// Resolves the IPv6 DNS server list for the mobile network given the contents
+// of /etc/default/cuttlefish-host-resources and whether the host has IPv6
+// egress (/run/cuttlefish/ipv6-egress). When the host has no IPv6 egress and
+// dns6_servers is not explicitly configured in defaults, returns an empty
+// string so RIL does not advertise unreachable IPv6 DNS servers.
+std::string ResolveMobileIpv6Dns(std::string_view defaults_contents,
+                                 bool has_ipv6_egress);
+
 Result<void> ConfigureNetworkSettings(
     const std::string& ril_dns_arg, const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& const_instance,

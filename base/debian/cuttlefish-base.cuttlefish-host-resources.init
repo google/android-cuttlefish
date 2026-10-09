@@ -44,7 +44,9 @@ ethernet_bridge_interface=${bridge_interface:-cvd-ebr}
 ipv4_bridge=${ipv4_bridge:-1}
 ipv6_bridge=${ipv6_bridge:-1}
 dns_servers=${dns_servers:-8.8.8.8,8.8.4.4}
+dns6_servers_explicit="${dns6_servers:+1}"
 dns6_servers=${dns6_servers:-2001:4860:4860::8888,2001:4860:4860::8844}
+effective_dns6_servers="${dns6_servers}"
 wifi_ipv6_prefix=${wifi_ipv6_prefix:-fd00:cf:22::}
 wifi_ipv6_prefix_length=${wifi_ipv6_prefix_length:-64}
 ethernet_ipv6_prefix=${ethernet_ipv6_prefix:-fd00:cf:24::}
@@ -58,6 +60,11 @@ readonly CUTTLEFISH_RUN_DIR="/run/cuttlefish"
 # Present while IPv6 state set up by start() exists, so stop() removes it
 # even if IPv6 was disabled on the host in between.
 readonly CUTTLEFISH_IPV6_MARKER="${CUTTLEFISH_RUN_DIR}/ipv6-enabled"
+# Present while the host has IPv6 egress (an IPv6 default route at start_ipv6
+# time, routed mode, or an explicit dns6_servers / ipv6_egress=1 override in
+# /etc/default/cuttlefish-host-resources). Read by assemble_cvd so ril_ipv6_dns
+# is omitted when the host has no IPv6 egress.
+readonly CUTTLEFISH_IPV6_EGRESS="${CUTTLEFISH_RUN_DIR}/ipv6-egress"
 # Routes added by start_ipv6 in routed mode, one "<prefix> <device>" per line,
 # so stop_ipv6 removes them even if the configuration changed in between.
 readonly CUTTLEFISH_IPV6_ROUTES="${CUTTLEFISH_RUN_DIR}/ipv6-routes"
@@ -181,7 +188,7 @@ stop_dnsmasq() {
 # $2 = IPv6 prefix ("a:b::")
 # $3 = IPv6 prefix length
 start_ra_dnsmasq() {
-    dnsmasq \
+    set -- \
       --port=0 \
       --except-interface=lo \
       --interface="${1}" \
@@ -189,9 +196,12 @@ start_ra_dnsmasq() {
       --conf-file="" \
       --enable-ra \
       --dhcp-range="${2},ra-only,${3}" \
-      --dhcp-option="option6:dns-server,${dns6_servers}" \
       --pid-file=/var/run/cuttlefish-dnsmasq-ra-"${1}".pid \
       --dhcp-leasefile=/var/run/cuttlefish-dnsmasq-ra-"${1}".leases
+    if [ -n "${effective_dns6_servers}" ]; then
+        set -- "$@" --dhcp-option="option6:dns-server,${effective_dns6_servers}"
+    fi
+    dnsmasq "$@"
 }
 
 # Stop IPv6 router advertisements on an interface
@@ -608,6 +618,26 @@ tap_ipv6_prefix() {
     fi
 }
 
+# Succeeds when the host has IPv6 egress for guest DNS, or when IPv6 DNS /
+# egress is explicitly overridden in /etc/default/cuttlefish-host-resources.
+# On a host with kernel IPv6 enabled (disable_ipv6=0) but no IPv6 default route,
+# advertising default external IPv6 DNS servers in RAs or RIL causes OpenWrt
+# dnsmasq and guest resolvers to send queries that blackhole at the host.
+host_has_ipv6_egress() {
+    case "${ipv6_egress:-}" in
+        1) return 0 ;;
+        0) return 1 ;;
+        "") ;;
+        *)
+            echo "cuttlefish-host-resources: invalid ipv6_egress '${ipv6_egress}' (want 0 or 1), auto-detecting from default route" >&2
+            ;;
+    esac
+    if [ -n "${dns6_servers_explicit}" ] || [ -n "${ipv6_routed_base}" ]; then
+        return 0
+    fi
+    [ -n "$(ip -6 route show default 2>/dev/null)" ]
+}
+
 # Set up IPv6 on the interfaces created for IPv4: gateway address ::1 on each
 # segment, router advertisements where guests use SLAAC, NAT66 and RA guard.
 # Runs after all IPv4 setup, so a failure here cannot affect IPv4. Applies to
@@ -629,6 +659,14 @@ start_ipv6() {
         return 0
     fi
     touch "${CUTTLEFISH_IPV6_MARKER}"
+    if host_has_ipv6_egress; then
+        effective_dns6_servers="${dns6_servers}"
+        printf '%s\n' "${effective_dns6_servers}" > "${CUTTLEFISH_IPV6_EGRESS}"
+    else
+        effective_dns6_servers=""
+        rm -f "${CUTTLEFISH_IPV6_EGRESS}"
+        echo "cuttlefish-host-resources: no IPv6 default route on host; omitting IPv6 DNS servers (${dns6_servers}) from RA and RIL while keeping ULA addressing" >&2
+    fi
 
     if [ "${create_bridges}" = "1" ]; then
         for br in "${ethernet_bridge_interface}" "${wifi_bridge_interface}"; do
@@ -716,6 +754,7 @@ stop_ipv6() {
         for tap in $(ip -o link show | awk -F': ' '{print $2}' | sed 's/@.*//' | grep -E '^cvd-(mtap|wifiap)-'); do
             ip -6 addr flush dev "${tap}" scope global
         done
+        rm -f "${CUTTLEFISH_IPV6_EGRESS}"
         rm "${CUTTLEFISH_IPV6_MARKER}"
     fi
 }
