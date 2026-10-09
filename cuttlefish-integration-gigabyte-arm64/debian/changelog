@@ -1,3 +1,9 @@
+cuttlefish-integration-gigabyte-arm64 (1.57.8) UNRELEASED; urgency=medium
+
+  * N/A
+
+ -- Cody Schuffelen <schuffelen@google.com>  Thu, 08 Oct 2026 17:53:03 -0700
+
 cuttlefish-integration-gigabyte-arm64 (1.57.7) unstable; urgency=medium
 
   * N/A
