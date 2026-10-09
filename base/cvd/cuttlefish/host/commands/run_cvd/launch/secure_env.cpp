@@ -97,6 +97,10 @@ Result<MonitorCommand> SecureEnv(
       secure_hals.count(SecureHal::kGuestStrongboxInsecure) > 0;
   command.AddParameter("--enable_jcard_simulator=", enable_jcard_simulator);
 
+  command.AddParameter(
+      "-undefok=jcardsim_fd_out,jcardsim_fd_in,weaver_fd_out,weaver_fd_in,"
+      "weaver_storage_path,enable_jcard_simulator");
+
   return command;
 }
 
