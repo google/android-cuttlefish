@@ -1,6 +1,11 @@
 ktd-grid {
   transition: height 500ms ease;
   margin: 20px;
+  width: auto;
+
+  &:has(.ktd-grid-item-dragging) iframe {
+    pointer-events: none;
+  }
 }
 
 .view-pane {
@@ -9,16 +14,19 @@ ktd-grid {
     width: 330px;
     max-width: 100%;
     height: 100px;
+    box-sizing: border-box;
+    padding: 0 12px 12px 0;
 
     .device-viewer-display {
       display: flex;
       flex-direction: column;
-      height: 98%;
-      width: 98%;
+      height: 100%;
+      width: 100%;
       background-color: #000;
       border-radius: 10px 10px 10px 10px;
 
       .viewer-header {
+        position: relative;
         display: flex;
         align-items: center;
         background-color: #073042;
@@ -30,6 +38,7 @@ ktd-grid {
         color: #eee;
         height: 40px;
         padding-left: 20px;
+        cursor: grab;
 
         .grid-item-remove-handle {
           position: absolute;
@@ -40,7 +49,7 @@ ktd-grid {
           width: 20px;
           height: 20px;
           top: auto;
-          right: 4%;
+          right: 12px;
 
           &::after {
             content: '\00d7';
@@ -64,6 +73,10 @@ ktd-grid {
         } // iframe
       } // .fit-iframe
     } // .device-viewer-display
+
+    &.ktd-grid-item-dragging .device-viewer-display .viewer-header {
+      cursor: grabbing;
+    }
   } // .device-viewer
 } // .view-pane
 
