@@ -20,6 +20,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
@@ -41,6 +42,12 @@ struct MobileIpv6Config {
 // no room for a guest address.
 std::optional<MobileIpv6Config> MobileIpv6ConfigFromHostAddress(
     const in6_addr& host_addr, const in6_addr& netmask);
+
+// Parses the dns6_servers setting from /etc/default/cuttlefish-host-resources
+// content, validating each comma-separated IPv6 address with inet_pton.
+// Falls back to "2001:4860:4860::8888,2001:4860:4860::8844" when unset or
+// invalid.
+std::string ParseDns6ServersFromDefaults(std::string_view contents);
 
 Result<void> ConfigureNetworkSettings(
     const std::string& ril_dns_arg, const CuttlefishConfig& config,

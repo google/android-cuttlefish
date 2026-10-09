@@ -145,5 +145,37 @@ TEST(MobileIpv6ConfigFromHostAddress, RoutedModeGlobalPrefix) {
   }
 }
 
+TEST(ParseDns6ServersFromDefaults, DefaultWhenUnsetOrCommented) {
+  EXPECT_EQ(ParseDns6ServersFromDefaults(""),
+            "2001:4860:4860::8888,2001:4860:4860::8844");
+  EXPECT_EQ(ParseDns6ServersFromDefaults(
+                "# defaults for cuttlefish-host-resources\n"
+                "#dns6_servers=2001:4860:4860::8888,2001:4860:4860::8844\n"),
+            "2001:4860:4860::8888,2001:4860:4860::8844");
+}
+
+TEST(ParseDns6ServersFromDefaults, SingleCustomServer) {
+  EXPECT_EQ(ParseDns6ServersFromDefaults("dns6_servers=fd00:cf:2e::53\n"),
+            "fd00:cf:2e::53");
+}
+
+TEST(ParseDns6ServersFromDefaults, MultipleServersQuotesAndInlineComments) {
+  EXPECT_EQ(
+      ParseDns6ServersFromDefaults(
+          "dns_servers=8.8.8.8\n"
+          "dns6_servers=\"2001:db8:eeee::53, 2001:db8:eeee::54\" # lab\n"),
+      "2001:db8:eeee::53,2001:db8:eeee::54");
+  EXPECT_EQ(ParseDns6ServersFromDefaults("dns6_servers=fd00:cf:2e::1\n"
+                                         "dns6_servers='fd00:cf:2e::2'\n"),
+            "fd00:cf:2e::2");
+}
+
+TEST(ParseDns6ServersFromDefaults, InvalidFallsBackToDefault) {
+  EXPECT_EQ(ParseDns6ServersFromDefaults("dns6_servers=not-an-ipv6,8.8.8.8\n"),
+            "2001:4860:4860::8888,2001:4860:4860::8844");
+  EXPECT_EQ(ParseDns6ServersFromDefaults("dns6_servers=\n"),
+            "2001:4860:4860::8888,2001:4860:4860::8844");
+}
+
 }  // namespace
 }  // namespace cuttlefish

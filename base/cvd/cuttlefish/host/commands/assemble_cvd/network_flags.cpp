@@ -23,11 +23,20 @@
 #include <string.h>
 #include <sys/socket.h>
 
+#include <fstream>
 #include <optional>
+#include <sstream>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/strip.h"
 
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -138,10 +147,20 @@ class NetConfig {
   }
 };
 
-// The RIL gives the guest Google Public DNS over IPv6, matching the IPv4
-// default (8.8.8.8). It is reached through the host's NAT66, or with no NAT in
-// the host's IPv6 routed mode.
-constexpr char kMobileIpv6Dns[] = "2001:4860:4860::8888";
+constexpr char kHostResourcesDefaultsPath[] =
+    "/etc/default/cuttlefish-host-resources";
+constexpr char kDefaultMobileIpv6Dns[] =
+    "2001:4860:4860::8888,2001:4860:4860::8844";
+
+std::string ObtainMobileIpv6Dns() {
+  std::ifstream in(kHostResourcesDefaultsPath);
+  if (!in.is_open()) {
+    return kDefaultMobileIpv6Dns;
+  }
+  std::ostringstream ss;
+  ss << in.rdbuf();
+  return ParseDns6ServersFromDefaults(ss.str());
+}
 
 uint8_t Ipv6PrefixLength(const in6_addr& netmask) {
   uint8_t ret = 0;
@@ -211,6 +230,52 @@ std::optional<MobileIpv6Config> ObtainMobileIpv6Config(
 }
 
 }  // namespace
+
+std::string ParseDns6ServersFromDefaults(std::string_view contents) {
+  std::optional<std::string> raw_value;
+  for (std::string_view line : absl::StrSplit(contents, '\n')) {
+    line = absl::StripAsciiWhitespace(line);
+    if (line.empty() || line.front() == '#') {
+      continue;
+    }
+    if (!absl::ConsumePrefix(&line, "dns6_servers=")) {
+      continue;
+    }
+    if (size_t hash = line.find('#'); hash != std::string_view::npos) {
+      line = absl::StripAsciiWhitespace(line.substr(0, hash));
+    }
+    if (line.size() >= 2 && ((line.front() == '"' && line.back() == '"') ||
+                             (line.front() == '\'' && line.back() == '\''))) {
+      line = line.substr(1, line.size() - 2);
+    }
+    raw_value = std::string(line);
+  }
+  if (!raw_value || raw_value->empty()) {
+    return kDefaultMobileIpv6Dns;
+  }
+  std::vector<std::string> valid_addrs;
+  for (std::string_view token : absl::StrSplit(*raw_value, ',')) {
+    token = absl::StripAsciiWhitespace(token);
+    if (token.empty()) {
+      continue;
+    }
+    std::string addr_str(token);
+    in6_addr dummy{};
+    if (inet_pton(AF_INET6, addr_str.c_str(), &dummy) == 1) {
+      valid_addrs.push_back(std::move(addr_str));
+    } else {
+      LOG(WARNING) << "Ignoring invalid IPv6 DNS server '" << addr_str
+                   << "' in dns6_servers from " << kHostResourcesDefaultsPath;
+    }
+  }
+  if (valid_addrs.empty()) {
+    LOG(WARNING) << "Invalid dns6_servers='" << *raw_value << "' in "
+                 << kHostResourcesDefaultsPath << "; falling back to "
+                 << kDefaultMobileIpv6Dns;
+    return kDefaultMobileIpv6Dns;
+  }
+  return absl::StrJoin(valid_addrs, ",");
+}
 
 std::optional<MobileIpv6Config> MobileIpv6ConfigFromHostAddress(
     const in6_addr& host_addr, const in6_addr& netmask) {
@@ -292,12 +357,13 @@ Result<void> ConfigureNetworkSettings(
     ipv6 = ObtainMobileIpv6Config(const_instance.mobile_tap_name());
   }
   if (ipv6) {
+    std::string ipv6_dns = ObtainMobileIpv6Dns();
     VLOG(0) << "Mobile IPv6 config: ipaddr = " << ipv6->ipaddr
-            << ", gateway = " << ipv6->gateway
+            << ", gateway = " << ipv6->gateway << ", dns = " << ipv6_dns
             << ", prefix length = " << static_cast<int>(ipv6->prefixlen);
     instance.set_ril_ipv6_ipaddr(ipv6->ipaddr);
     instance.set_ril_ipv6_gateway(ipv6->gateway);
-    instance.set_ril_ipv6_dns(kMobileIpv6Dns);
+    instance.set_ril_ipv6_dns(ipv6_dns);
     instance.set_ril_ipv6_prefixlen(ipv6->prefixlen);
   } else {
     VLOG(0) << "No global IPv6 address on the mobile interface; the mobile "
