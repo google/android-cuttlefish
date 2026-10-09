@@ -41,9 +41,11 @@ Result<MonitorCommand> SecureEnv(
                        snapshot_control_files->confui_server_fd);
   command.AddParameter("-snapshot_control_fd=",
                        snapshot_control_files->secure_env_snapshot_control_fd);
-  // Weaver flags are not understood by older Android images.
+  // Weaver and Strongbox/JCardSimulator flags are not understood by older
+  // Android images.
   command.AddParameter(
-      "--undefok=weaver_fd_out,weaver_fd_in,weaver_storage_path");
+      "--undefok=jcardsim_fd_out,jcardsim_fd_in,weaver_fd_out,weaver_fd_in,"
+      "weaver_storage_path,enable_jcard_simulator");
 
   std::vector<std::string> fifo_paths = {
       instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
