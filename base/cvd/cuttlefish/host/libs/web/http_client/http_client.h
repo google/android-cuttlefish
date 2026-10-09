@@ -107,9 +107,6 @@ class HttpClient {
   // Returns response's status code.
   virtual Result<HttpResponse<void>> DownloadToCallback(
       HttpRequest, ResultDataCallback callback) = 0;
-
-  Result<HttpResponse<void>> DownloadToCallback(HttpRequest,
-                                                BoolDataCallback callback);
 };
 
 }  // namespace cuttlefish
