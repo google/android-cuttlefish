@@ -63,6 +63,7 @@ cf_cc_library(
     ],
     deps = [
         ":tuner_state",
+        ":virtual_tuner_cc_proto",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/result",
@@ -95,6 +96,7 @@ cf_cc_library(
     deps = [
         ":libcvd_virtual_tuner",
         ":tuner_state",
+        ":virtual_tuner_audio",
         ":virtual_tuner_cc_proto",
         "@abseil-cpp//absl/log",
         "@grpc//:grpc++",
