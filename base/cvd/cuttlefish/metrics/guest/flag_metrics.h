@@ -30,7 +30,8 @@ struct FlagMetrics {
   bool daemon;
   DataImagePolicy data_policy;
   std::string extra_kernel_cmdline;
-  GpuMode gpu_mode;
+  GpuMode gpu_mode_requested;
+  GpuMode gpu_mode_used;
   bool guest_enforce_security;
   int memory_mb;
   bool qemu_binary_specified;
