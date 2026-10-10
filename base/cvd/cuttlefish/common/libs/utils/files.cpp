@@ -376,6 +376,23 @@ Result<void> WalkDirectory(const std::string& dir,
   return {};
 }
 
+Result<void> WalkDirectoryFiles(const std::string& dir,
+                                const WalkDirectoryCallback& callback) {
+  for (const std::string& filename : CF_EXPECT(DirectoryContents(dir))) {
+    auto file_path = dir + "/";
+    file_path.append(filename);
+    // Checking the link itself rather than its target keeps a symlink loop
+    // from trapping the walk. A symlink to a directory is reported to the
+    // callback like any other non-directory entry.
+    if (DirectoryExists(file_path, /* follow_symlinks= */ false)) {
+      CF_EXPECT(WalkDirectoryFiles(file_path, callback));
+    } else {
+      CF_EXPECT(callback(file_path));
+    }
+  }
+  return {};
+}
+
 std::vector<std::string> Path(const std::string& env_name) {
   // TODO: Assumes a SUS system. Elsewhere we may need to change the delimiter.
   // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap08.html
