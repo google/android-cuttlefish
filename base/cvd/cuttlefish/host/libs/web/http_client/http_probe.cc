@@ -46,7 +46,7 @@ Result<HttpResponse<void>> Probe(HttpClient& http_client, HttpMethod method,
       .url = url,
       .headers = std::move(headers),
   };
-  auto discard = [](char*, size_t) { return true; };
+  auto discard = [](char*, size_t) -> Result<void> { return {}; };
   return CF_EXPECT(http_client.DownloadToCallback(request, discard));
 }
 

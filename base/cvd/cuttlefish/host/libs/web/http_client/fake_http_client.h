@@ -39,7 +39,7 @@ class FakeHttpClient : public HttpClient {
   bool RequestMade(std::string_view url) const;
   // Returns response's status code.
   Result<HttpResponse<void>> DownloadToCallback(
-      HttpRequest request, HttpClient::DataCallback callback) override;
+      HttpRequest request, HttpClient::ResultDataCallback callback) override;
 
  private:
   const Handler* FindHandler(std::string_view url) const;

@@ -36,7 +36,7 @@ class ServerErrorRetryClient : public HttpClient {
         retry_delay_(retry_delay) {}
 
   Result<HttpResponse<void>> DownloadToCallback(
-      HttpRequest request, DataCallback callback) override {
+      HttpRequest request, ResultDataCallback callback) override {
     HttpResponse<void> response;
     for (int attempt = 0; attempt != retry_attempts_; ++attempt) {
       if (attempt != 0) {
