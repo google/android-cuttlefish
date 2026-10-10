@@ -1,0 +1,78 @@
+diff --git a/vhost-device-vsock/src/vhu_vsock_thread.rs b/vhost-device-vsock/src/vhu_vsock_thread.rs
+index 1c096a3fbb18ba8a18a02a0ed0fb093ad8f20aef..24ce05b88e8e12c73bf85882865d7853c937c8ef 100644
+--- a/vhost-device-vsock/src/vhu_vsock_thread.rs
++++ b/vhost-device-vsock/src/vhu_vsock_thread.rs
+@@ -382,10 +382,6 @@ impl VhostUserVsockThread {
+                 self.thread_backend.listener_map.entry(fd)
+             {
+                 // New connection from the host
+-                if evset.bits() != epoll::Events::EPOLLIN.bits() {
+-                    // Has to be EPOLLIN as it was not connected previously
+-                    return;
+-                }
+                 let mut stream = match self.thread_backend.stream_map.remove(&fd) {
+                     Some(s) => s,
+                     None => {
+@@ -393,6 +389,11 @@ impl VhostUserVsockThread {
+                         return;
+                     }
+                 };
++                if !evset.contains(epoll::Events::EPOLLIN) {
++                    // Has to include EPOLLIN as it was not connected previously
++                    let _ = Self::epoll_unregister(self.epoll_file.as_raw_fd(), fd);
++                    return;
++                }
+ 
+                 match stream {
+                     #[cfg(feature = "backend_vsock")]
+@@ -405,6 +406,7 @@ impl VhostUserVsockThread {
+                             Ok(port) => port,
+                             Err(err) => {
+                                 warn!("Error while parsing \"connect PORT\n\" command: {err:?}");
++                                let _ = Self::epoll_unregister(self.epoll_file.as_raw_fd(), fd);
+                                 return;
+                             }
+                         };
+@@ -414,6 +416,7 @@ impl VhostUserVsockThread {
+                             Ok(lp) => lp,
+                             Err(err) => {
+                                 warn!("Error while allocating local port: {err:?}");
++                                let _ = Self::epoll_unregister(self.epoll_file.as_raw_fd(), fd);
+                                 return;
+                             }
+                         };
+@@ -466,8 +469,13 @@ impl VhostUserVsockThread {
+                 // established with the guest
+                 Self::epoll_unregister(self.epoll_file.as_raw_fd(), fd).unwrap();
+ 
+-                // Enqueue a read request
+-                conn.rx_queue.enqueue(RxOps::Rw);
++                if conn.connect {
++                    // Enqueue a read request
++                    conn.rx_queue.enqueue(RxOps::Rw);
++                } else {
++                    // Host peer closed or wrote data before guest accepted connection
++                    conn.rx_queue.enqueue(RxOps::Reset);
++                }
+                 self.thread_backend
+                     .backend_rxq
+                     .push_back(ConnMapKey::new(conn.local_port, conn.peer_port));
+diff --git a/vhost-device-vsock/src/vsock_conn.rs b/vhost-device-vsock/src/vsock_conn.rs
+index aee4fc124fbd2d18273049f043b8e40630d01efa..6933a754ff8b5db6cdd13d324d88bb413c5992ca 100644
+--- a/vhost-device-vsock/src/vsock_conn.rs
++++ b/vhost-device-vsock/src/vsock_conn.rs
+@@ -233,9 +233,12 @@ impl<S: AsRawFd + ReadVolatile + Write + WriteVolatile + IsHybridVsock> VsockCon
+             VSOCK_OP_RESPONSE => {
+                 if self.stream.is_hybrid_vsock() {
+                     // Confirmation for a host initiated connection
+-                    // TODO: Handle stream write error in a better manner
+                     let response = format!("OK {}\n", self.peer_port);
+-                    self.stream.write_all(response.as_bytes()).unwrap();
++                    if let Err(err) = self.stream.write_all(response.as_bytes()) {
++                        log::debug!("Error writing confirmation to stream: {err:?}");
++                        self.rx_queue.enqueue(RxOps::Reset);
++                        return Ok(());
++                    }
+                 }
+                 self.connect = true;
+             }

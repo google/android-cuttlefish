@@ -13,7 +13,10 @@ vhost_device_vsock_crates.annotation(
     gen_all_binaries = True,
     patch_args = ["-p2"],
     patches = [
+        "@//build_external/vhost_device_vsock:vhost-device-vsock-backend-rxq-cleanup.patch",
+        "@//build_external/vhost_device_vsock:vhost-device-vsock-handshake-cleanup.patch",
         "@//build_external/vhost_device_vsock:vhost-device-vsock-snapshot.patch",
+        "@//build_external/vhost_device_vsock:vhost-device-vsock-stream-io-error-reset.patch",
     ],
     repositories = ["vhost_device_vsock_crates"],
 )
