@@ -149,6 +149,15 @@ DiskBuilder DiskBuilder::ReadOnly(bool read_only) && {
   return *this;
 }
 
+DiskBuilder& DiskBuilder::ProtectUserData(bool protect_user_data) & {
+  protect_user_data_ = protect_user_data;
+  return *this;
+}
+DiskBuilder DiskBuilder::ProtectUserData(bool protect_user_data) && {
+  protect_user_data_ = protect_user_data;
+  return *this;
+}
+
 Result<std::string> DiskBuilder::TextConfig() {
   std::ostringstream disk_conf;
 
@@ -250,6 +259,18 @@ Result<bool> DiskBuilder::BuildOverlayIfNecessary() {
     can_reuse_overlay = false;
   } else if (overlay_mod_time < composite_disk_mod_time) {
     VLOG(0) << "Overlay is out of date";
+    // Never silently replace user data. This happens, for example, when an
+    // overlay restored from a backup keeps its old timestamp while the
+    // composite disk has been rebuilt since.
+    CF_EXPECTF(!(protect_user_data_ && resume_if_possible_ &&
+                 FileHasContent(overlay_path_)),
+               "Refusing to start: '{}' holds user data but is older than "
+               "the composite disk '{}', and resuming would replace it with "
+               "an empty disk. Nothing was deleted. If the overlay belongs to "
+               "this composite disk (for example it was restored from a "
+               "backup), update its modification time; use `cvd powerwash` "
+               "or --resume=false to reset this device deliberately.",
+               overlay_path_, composite_disk_path_);
     can_reuse_overlay = false;
   }
 
