@@ -43,7 +43,6 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
-#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
@@ -55,6 +54,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/identify_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_logger.h"
 #include "cuttlefish/host/commands/assemble_cvd/clean.h"
 #include "cuttlefish/host/commands/assemble_cvd/create_dynamic_disk_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/ap_composite_disk.h"
@@ -292,38 +292,6 @@ Result<std::set<std::string>> PreservingOnResume(
     preserving.insert(ss.str());
   }
   return preserving;
-}
-
-SharedFD SetLogger(std::string runtime_dir_parent) {
-  Result<SharedFD> log_file;
-  if (InSandbox()) {
-    log_file =
-        Fd::Open(absl::StrCat(runtime_dir_parent, "/instances/cvd-1/logs/",
-                              kLogNameLauncher),
-                 O_WRONLY | O_APPEND);
-  } else {
-    while (runtime_dir_parent[runtime_dir_parent.size() - 1] == '/') {
-      runtime_dir_parent =
-          runtime_dir_parent.substr(0, FLAGS_instance_dir.rfind('/'));
-    }
-    runtime_dir_parent =
-        runtime_dir_parent.substr(0, FLAGS_instance_dir.rfind('/'));
-    log_file = Fd::Open(runtime_dir_parent, O_WRONLY | O_TMPFILE,
-                        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-  }
-  if (!log_file.has_value()) {
-    LOG(ERROR) << "Could not open initial log file: " << log_file.error();
-  } else {
-    std::vector<SeverityTarget> log_destinations = {
-        SeverityTarget::FromFd(SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE,
-                               ConsoleSeverity()),
-        SeverityTarget::FromFd(*log_file, MetadataLevel::FULL,
-                               LogFileSeverity()),
-
-    };
-    SetLoggers(std::move(log_destinations), "");
-  }
-  return log_file.value_or(Fd());
 }
 
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
@@ -588,7 +556,7 @@ Result<AndroidBuilds> FindAndroidBuilds(
 }  // namespace
 
 Result<int> AssembleCvdMain(int argc, char** argv) {
-  SharedFD log = SetLogger(AbsolutePath(FLAGS_instance_dir));
+  SharedFD log = AssembleCvdLogger(AbsolutePath(FLAGS_instance_dir));
   VLOG(0) << "received flags: "
           << absl::StrJoin(std::vector<std::string>(argv + 1, argv + argc),
                            " ");
