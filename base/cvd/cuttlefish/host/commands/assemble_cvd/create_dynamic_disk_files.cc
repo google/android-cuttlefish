@@ -34,6 +34,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
+#include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/access_kregistry.h"
@@ -81,6 +82,43 @@ uint64_t AvailableSpaceAtPath(const std::string& path) {
   }
   // f_frsize (block size) * f_bavail (free blocks) for unprivileged users.
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
+}
+
+Result<void> CheckDataImageSpace(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (FLAGS_use_overlay) {
+    return {};
+  }
+
+  // Check if filling in the sparse image would run out of disk space.
+  std::string data_image = instance.data_image();
+  auto existing_sizes = SparseFileSizes(data_image);
+  if (existing_sizes.sparse_size == 0 && existing_sizes.disk_size == 0) {
+    data_image = instance.new_data_image();
+    existing_sizes = SparseFileSizes(data_image);
+    CF_EXPECT(existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0,
+              "Unable to determine size of \"" << data_image
+                                               << "\". Does this file exist?");
+  }
+  if (existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0) {
+    auto available_space = AvailableSpaceAtPath(data_image);
+    if (available_space <
+        existing_sizes.sparse_size - existing_sizes.disk_size) {
+      // TODO(schuffelen): Duplicate this check in run_cvd when it can run on
+      // a separate machine
+      return CF_ERR("Not enough space remaining in fs containing \""
+                    << data_image << "\", wanted "
+                    << (existing_sizes.sparse_size - existing_sizes.disk_size)
+                    << ", got " << available_space);
+    } else {
+      VLOG(0) << "Available space: " << available_space;
+      VLOG(0) << "Sparse size of \"" << data_image
+              << "\": " << existing_sizes.sparse_size;
+      VLOG(0) << "Disk size of \"" << data_image
+              << "\": " << existing_sizes.disk_size;
+    }
+  }
+  return {};
 }
 
 Result<BuildArchive> FindImgZip(const FetcherConfig& fetcher_config,
@@ -139,35 +177,7 @@ Result<void> CreateDynamicDiskFiles(
     CF_EXPECT(InitializeSdCard(config, instance));
     CF_EXPECT(InitializeDataImage(instance));
     CF_EXPECT(InitializePflash(instance));
-
-    // Check if filling in the sparse image would run out of disk space.
-    std::string data_image = instance.data_image();
-    auto existing_sizes = SparseFileSizes(data_image);
-    if (existing_sizes.sparse_size == 0 && existing_sizes.disk_size == 0) {
-      data_image = instance.new_data_image();
-      existing_sizes = SparseFileSizes(data_image);
-      CF_EXPECT(existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0,
-                "Unable to determine size of \""
-                    << data_image << "\". Does this file exist?");
-    }
-    if (existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0) {
-      auto available_space = AvailableSpaceAtPath(data_image);
-      if (available_space <
-          existing_sizes.sparse_size - existing_sizes.disk_size) {
-        // TODO(schuffelen): Duplicate this check in run_cvd when it can run on
-        // a separate machine
-        return CF_ERR("Not enough space remaining in fs containing \""
-                      << data_image << "\", wanted "
-                      << (existing_sizes.sparse_size - existing_sizes.disk_size)
-                      << ", got " << available_space);
-      } else {
-        VLOG(0) << "Available space: " << available_space;
-        VLOG(0) << "Sparse size of \"" << data_image
-                << "\": " << existing_sizes.sparse_size;
-        VLOG(0) << "Disk size of \"" << data_image
-                << "\": " << existing_sizes.disk_size;
-      }
-    }
+    CF_EXPECT(CheckDataImageSpace(instance));
 
     CF_EXPECT_LE(instance_index, image_files.size());
     const std::vector<std::unique_ptr<ImageFile>>& instance_image_files =
