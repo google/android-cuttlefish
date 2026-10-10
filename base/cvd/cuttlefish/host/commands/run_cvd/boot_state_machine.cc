@@ -19,9 +19,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <stdint.h>
 #include <sys/poll.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 #include <chrono>
@@ -53,19 +51,17 @@
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/tee_logging.h"
-#include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
 #include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.grpc.pb.h"
 #include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.pb.h"
+#include "cuttlefish/host/commands/run_cvd/daemonize_launcher.h"
 #include "cuttlefish/host/commands/run_cvd/validate.h"
+#include "cuttlefish/host/commands/run_cvd/wattson_rebalance_threads.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -100,152 +96,6 @@ Result<void> MoveSelfToCgroup(std::string_view id) {
   CF_EXPECT(WriteExact(fd, std::to_string(getpid())));
 
   return {};
-}
-
-Result<void> MoveThreadsToCgroup(const std::string& from_path,
-                                 const std::string& to_path) {
-  std::string file_path = from_path + "/cgroup.threads";
-
-  if (FileExists(file_path)) {
-    Result<std::string> content_result = ReadFileContents(file_path);
-    if (!content_result.has_value()) {
-      LOG(INFO) << "Failed to open threads file and assume it is empty: "
-                << file_path;
-      return {};
-    }
-
-    std::istringstream is(content_result.value());
-    std::string each_id;
-    while (std::getline(is, each_id)) {
-      std::string proc_status_path = "/proc/" + each_id;
-      proc_status_path.append("/status");
-      Result<std::string> proc_status = ReadFileContents(proc_status_path);
-      if (!proc_status.has_value()) {
-        LOG(INFO) << "Failed to open proc status file and skip: "
-                  << proc_status_path;
-        continue;
-      }
-
-      std::string proc_status_str = proc_status.value();
-      if (proc_status_str.find("crosvm_vcpu") == std::string::npos &&
-          proc_status_str.find("vcpu_throttle") == std::string::npos) {
-        // other proc moved to workers cgroup
-        std::string to_path_file = to_path + "/cgroup.threads";
-        Fd fd = CF_EXPECT(Fd::Open(to_path_file, O_WRONLY | O_APPEND));
-        CF_EXPECTF(WriteExact(fd, each_id), "Failed to write to '{}'",
-                   to_path_file);
-      }
-    }
-  }
-
-  return {};
-}
-
-// See go/vcpuinheritance for more context on why this Rebalance is
-// required and what the stop gap/longterm solutions are.
-Result<void> WattsonRebalanceThreads(const std::string& id) {
-  auto root_path = "/sys/fs/cgroup/vsoc-" + id + "-cf";
-  const auto files = CF_EXPECT(DirectoryContents(root_path));
-
-  CF_EXPECT(MoveThreadsToCgroup(root_path, root_path + "/workers"));
-
-  for (const auto& filename : files) {
-    if (filename.find("vcpu-domain") != std::string::npos) {
-      CF_EXPECT(MoveThreadsToCgroup(root_path + "/" + filename,
-                                    root_path + "/workers"));
-    }
-  }
-  return {};
-}
-
-// Forks run_cvd into a daemonized child process. The current process continues
-// only until the child has signalled that the boot is finished.
-//
-// `DaemonizeLauncher` returns the write end of a pipe. The child is expected
-// to write a `RunnerExitCodes` into the pipe when the boot finishes.
-Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
-  auto instance = config.ForDefaultInstance();
-  SharedFD read_end, write_end;
-  CF_EXPECT(SharedFD::Pipe(&read_end, &write_end), "Unable to create pipe");
-  auto pid = fork();
-  if (pid) {
-    // Explicitly close here, otherwise we may end up reading forever if the
-    // child process dies.
-    write_end->Close();
-    RunnerExitCodes exit_code;
-    uint64_t bytes_read =
-        read_end->Read(&exit_code, sizeof(exit_code)).value_or(0);
-    if (bytes_read != sizeof(exit_code)) {
-      LOG(ERROR) << "Failed to read a complete exit code, read " << bytes_read
-                 << " bytes only instead of the expected " << sizeof(exit_code);
-      exit_code = RunnerExitCodes::kPipeIOError;
-    } else if (exit_code == RunnerExitCodes::kSuccess) {
-      if (IsRestoring(config)) {
-        LOG(INFO) << "Virtual device restored successfully";
-      } else {
-        LOG(INFO) << "Virtual device booted successfully";
-        if (!instance.vcpu_config_path().empty()) {
-          CF_EXPECT(WattsonRebalanceThreads(instance.id()));
-        }
-      }
-    } else if (exit_code == RunnerExitCodes::kVirtualDeviceBootFailed) {
-      if (IsRestoring(config)) {
-        LOG(ERROR) << "Virtual device failed to restore";
-      } else {
-        LOG(ERROR) << "Virtual device failed to boot";
-      }
-      if (!instance.fail_fast()) {
-        LOG(ERROR) << "Device has been left running for debug";
-      }
-    } else {
-      LOG(ERROR) << "Unexpected exit code: " << exit_code;
-    }
-    if (!IsRestoring(config)) {
-      if (exit_code == RunnerExitCodes::kSuccess) {
-        VLOG(0) << kBootCompletedMessage;
-      } else {
-        LOG(ERROR) << kBootFailedMessage;
-      }
-    }
-    std::exit(exit_code);
-  } else {
-    // The child returns the write end of the pipe
-    if (daemon(/*nochdir*/ 1, /*noclose*/ 1) != 0) {
-      LOG(ERROR) << "Failed to daemonize child process: " << StrError(errno);
-      std::exit(RunnerExitCodes::kDaemonizationError);
-    }
-    // Redirect standard I/O
-    auto log_path = instance.launcher_log_path();
-    SharedFD log = Fd::Open(log_path, O_CREAT | O_WRONLY | O_APPEND,
-                            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)
-                       .value_or(Fd());
-    if (!log->IsOpen()) {
-      LOG(ERROR) << "Failed to create launcher log file: " << log->StrError();
-      std::exit(RunnerExitCodes::kDaemonizationError);
-    }
-    SetLoggers(
-        {SeverityTarget::FromFd(log, MetadataLevel::FULL, LogFileSeverity())});
-    Result<Fd> dev_null = Fd::Open("/dev/null", O_RDONLY);
-    if (!dev_null.has_value()) {
-      LOG(ERROR) << "Failed to open /dev/null: " << dev_null.error();
-      std::exit(RunnerExitCodes::kDaemonizationError);
-    }
-    if (dev_null->UNMANAGED_Dup2(0) < 0) {
-      LOG(ERROR) << "Failed dup2 stdin: " << dev_null->StrError();
-      std::exit(RunnerExitCodes::kDaemonizationError);
-    }
-    if (log->UNMANAGED_Dup2(1) < 0) {
-      LOG(ERROR) << "Failed dup2 stdout: " << log->StrError();
-      std::exit(RunnerExitCodes::kDaemonizationError);
-    }
-    if (log->UNMANAGED_Dup2(2) < 0) {
-      LOG(ERROR) << "Failed dup2 seterr: " << log->StrError();
-      std::exit(RunnerExitCodes::kDaemonizationError);
-    }
-
-    read_end->Close();
-    return write_end;
-  }
 }
 
 Result<SharedFD> ProcessLeader(
