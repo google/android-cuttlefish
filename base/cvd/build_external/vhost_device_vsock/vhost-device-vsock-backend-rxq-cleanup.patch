@@ -1,0 +1,70 @@
+diff --git a/vhost-device-vsock/src/thread_backend.rs b/vhost-device-vsock/src/thread_backend.rs
+index 44a1f1e11ece451e7bdfb252e936c0b52ccba3a1..4156402a278b8678ca6193808878a763ab3686bd 100644
+--- a/vhost-device-vsock/src/thread_backend.rs
++++ b/vhost-device-vsock/src/thread_backend.rs
+@@ -265,14 +265,15 @@ impl VsockThreadBackend {
+     /// - `Err(Error::EmptyBackendRxQ) if there was no available data
+     pub fn recv_pkt<B: BitmapSlice>(&mut self, pkt: &mut VsockPacket<B>) -> Result<()> {
+         // Pop an event from the backend_rxq
+-        let key = self.backend_rxq.pop_front().ok_or(Error::EmptyBackendRxQ)?;
+-        let conn = match self.conn_map.get_mut(&key) {
+-            Some(conn) => conn,
+-            None => {
+-                // assume that the connection does not exist
+-                return Ok(());
++        let key = loop {
++            let k = self.backend_rxq.pop_front().ok_or(Error::EmptyBackendRxQ)?;
++            if let Some(conn) = self.conn_map.get(&k) {
++                if conn.rx_queue.pending_rx() {
++                    break k;
++                }
+             }
+         };
++        let conn = self.conn_map.get_mut(&key).unwrap();
+ 
+         if conn.rx_queue.peek() == Some(RxOps::Reset) {
+             // Handle RST events here
+@@ -307,6 +308,10 @@ impl VsockThreadBackend {
+         // Handle other packet types per connection
+         conn.recv_pkt(pkt)?;
+ 
++        if conn.rx_queue.pending_rx() {
++            self.backend_rxq.push_back(key);
++        }
++
+         Ok(())
+     }
+ 
+@@ -582,7 +587,7 @@ mod tests {
+         packet.set_op(VSOCK_OP_RST);
+         vtp.send_pkt(&packet).unwrap();
+ 
+-        vtp.recv_pkt(&mut packet).unwrap();
++        assert!(vtp.recv_pkt(&mut packet).is_err());
+ 
+         // TODO: it is a nop for now
+         vtp.enq_rst();
+diff --git a/vhost-device-vsock/src/vhu_vsock_thread.rs b/vhost-device-vsock/src/vhu_vsock_thread.rs
+index 0799728287f6001f6724bfd09fccba4a41ea3869..1c096a3fbb18ba8a18a02a0ed0fb093ad8f20aef 100644
+--- a/vhost-device-vsock/src/vhu_vsock_thread.rs
++++ b/vhost-device-vsock/src/vhu_vsock_thread.rs
+@@ -444,6 +444,9 @@ impl VhostUserVsockThread {
+                             if cnt > 0 {
+                                 conn.fwd_cnt += Wrapping(cnt as u32);
+                                 conn.rx_queue.enqueue(RxOps::CreditUpdate);
++                                self.thread_backend
++                                    .backend_rxq
++                                    .push_back(ConnMapKey::new(conn.local_port, conn.peer_port));
+                             } else {
+                                 // If no remaining data to flush, try to disable EPOLLOUT
+                                 if Self::epoll_modify(epoll_fd, fd, epoll::Events::EPOLLIN).is_err()
+@@ -451,9 +454,6 @@ impl VhostUserVsockThread {
+                                     error!("Failed to disable EPOLLOUT");
+                                 }
+                             }
+-                            self.thread_backend
+-                                .backend_rxq
+-                                .push_back(ConnMapKey::new(conn.local_port, conn.peer_port));
+                         }
+                         Err(e) => {
+                             log::debug!("Error: {e:?}");

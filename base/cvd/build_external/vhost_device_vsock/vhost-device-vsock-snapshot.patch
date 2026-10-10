@@ -170,20 +170,19 @@ index d5d236d..d6e0f0a 100644
  
          if evset != EventSet::IN {
              return Err(Error::HandleEventNotEpollIn.into());
-@@ -349,7 +369,11 @@ impl VhostUserBackend for VhostUserVsockBackend {
+@@ -349,7 +369,10 @@ impl VhostUserBackend for VhostUserVsockBackend {
                  thread.process_tx(vring_tx, evt_idx)?;
              }
              EVT_QUEUE_EVENT => {
 -                warn!("Received an unexpected EVT_QUEUE_EVENT");
 +                let reset_pending = &mut *self.transport_reset_pending.lock().unwrap();
-+                if *reset_pending {
-+                    thread.reset_transport(vring_evt, evt_idx)?;
++                if *reset_pending && thread.reset_transport(vring_evt, evt_idx)? {
 +                    *reset_pending = false;
 +                }
              }
              BACKEND_EVENT => {
                  thread.process_backend_evt(evset);
-@@ -389,6 +413,15 @@ impl VhostUserBackend for VhostUserVsockBackend {
+@@ -389,6 +412,15 @@ impl VhostUserBackend for VhostUserVsockBackend {
              return Vec::new();
          }
  
@@ -199,7 +198,7 @@ index d5d236d..d6e0f0a 100644
          buf[offset..offset + size].to_vec()
      }
  
-@@ -401,6 +434,23 @@ impl VhostUserBackend for VhostUserVsockBackend {
+@@ -401,6 +433,23 @@ impl VhostUserBackend for VhostUserVsockBackend {
          let notifier = self.exit_notifier.try_clone().ok()?;
          Some((consumer, notifier))
      }
@@ -223,7 +222,7 @@ index d5d236d..d6e0f0a 100644
  }
  
  #[cfg(test)]
-@@ -436,17 +486,20 @@ mod tests {
+@@ -436,17 +485,20 @@ mod tests {
          let vrings = [
              VringRwLock::new(mem.clone(), 0x1000).unwrap(),
              VringRwLock::new(mem.clone(), 0x2000).unwrap(),
@@ -245,7 +244,7 @@ index d5d236d..d6e0f0a 100644
  
          let config = backend.get_config(0, 8);
          assert_eq!(config.len(), 8);
-@@ -569,6 +622,7 @@ mod tests {
+@@ -569,6 +621,7 @@ mod tests {
          let vrings = [
              VringRwLock::new(mem.clone(), 0x1000).unwrap(),
              VringRwLock::new(mem.clone(), 0x2000).unwrap(),
@@ -361,7 +360,19 @@ index 2a05e56..958bbc8 100644
          let queue = vring_mut.get_queue_mut();
  
          while let Some(mut avail_desc) = queue
-@@ -696,6 +708,11 @@ impl VhostUserVsockThread {
+@@ -677,6 +689,11 @@ impl VhostUserVsockThread {
+     /// Wrapper to process raw vsock packets queue based on whether event idx is
+     /// enabled or not.
+     pub fn process_raw_pkts(&mut self, vring: &VringRwLock, event_idx: bool) -> Result<()> {
++        if !vring.get_ref().get_queue().ready() {
++            // A VHOST_USER_GET_VRING_BASE request can cause the vring to not be ready.
++            return Ok(());
++        }
++
+         if event_idx {
+             loop {
+                 if !self.thread_backend.pending_raw_pkts() {
+@@ -696,6 +713,11 @@ impl VhostUserVsockThread {
      }
  
      pub fn process_rx(&mut self, vring: &VringRwLock, event_idx: bool) -> Result<()> {
@@ -373,7 +384,7 @@ index 2a05e56..958bbc8 100644
          match self.last_processed {
              RxQueueType::Standard => {
                  if self.thread_backend.pending_raw_pkts() {
-@@ -748,14 +765,20 @@ impl VhostUserVsockThread {
+@@ -748,14 +770,20 @@ impl VhostUserVsockThread {
                  }
              };
  
@@ -402,7 +413,7 @@ index 2a05e56..958bbc8 100644
              }
  
              // TODO: Check if the protocol requires read length to be correct
-@@ -779,6 +802,11 @@ impl VhostUserVsockThread {
+@@ -779,6 +807,11 @@ impl VhostUserVsockThread {
      /// Wrapper to process tx queue based on whether event idx is enabled or
      /// not.
      pub fn process_tx(&mut self, vring_lock: &VringRwLock, event_idx: bool) -> Result<()> {
@@ -414,14 +425,14 @@ index 2a05e56..958bbc8 100644
          if event_idx {
              // To properly handle EVENT_IDX we need to keep calling
              // process_rx_queue until it stops finding new requests
-@@ -796,6 +824,44 @@ impl VhostUserVsockThread {
+@@ -796,6 +829,44 @@ impl VhostUserVsockThread {
          }
          Ok(())
      }
 +
 +    /// Sends a TRANSPORT_RESET event to the guest driver. Returns true if it was able to send it,
 +    /// false if there were no buffers available in the vring.
-+    pub fn reset_transport(&mut self, vring: &VringRwLock, event_idx: bool) -> Result<()> {
++    pub fn reset_transport(&mut self, vring: &VringRwLock, event_idx: bool) -> Result<bool> {
 +        let mut vring_mut = vring.get_mut();
 +        let queue = vring_mut.get_queue_mut();
 +
@@ -433,7 +444,7 @@ index 2a05e56..958bbc8 100644
 +        let avail_desc = match queue.pop_descriptor_chain(atomic_mem.memory()) {
 +            Some(d) => d,
 +            None => {
-+                return Ok(());
++                return Ok(false);
 +            }
 +        };
 +
@@ -454,12 +465,12 @@ index 2a05e56..958bbc8 100644
 +            })
 +            .unwrap();
 +
-+        Ok(())
++        Ok(true)
 +    }
  }
  
  impl Drop for VhostUserVsockThread {
-@@ -955,6 +1021,7 @@ mod tests {
+@@ -955,6 +1026,7 @@ mod tests {
              cid_map.clone(),
          )
          .unwrap();
@@ -467,7 +478,7 @@ index 2a05e56..958bbc8 100644
          assert!(VhostUserVsockThread::epoll_register(-1, -1, epoll::Events::EPOLLIN).is_err());
          assert!(VhostUserVsockThread::epoll_modify(-1, -1, epoll::Events::EPOLLIN).is_err());
          assert!(VhostUserVsockThread::epoll_unregister(-1, -1).is_err());
-@@ -964,6 +1031,7 @@ mod tests {
+@@ -964,6 +1036,7 @@ mod tests {
          );
  
          let vring = VringRwLock::new(mem, 0x1000).unwrap();
@@ -475,7 +486,7 @@ index 2a05e56..958bbc8 100644
  
          // memory is not configured, so processing TX should fail
          assert!(t.process_tx(&vring, false).is_err());
-@@ -1007,6 +1075,7 @@ mod tests {
+@@ -1007,6 +1080,7 @@ mod tests {
          );
  
          let mut t = t.unwrap();
@@ -483,7 +494,7 @@ index 2a05e56..958bbc8 100644
  
          let mem = GuestMemoryAtomic::new(
              GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap(),
-@@ -1061,6 +1130,7 @@ mod tests {
+@@ -1061,6 +1135,7 @@ mod tests {
          );
  
          t.mem = Some(mem.clone());
@@ -491,4 +502,3 @@ index 2a05e56..958bbc8 100644
  
          let mut vs1 = VsockStream::connect_with_cid_port(VMADDR_CID_LOCAL, 9003).unwrap();
          let mut vs2 = VsockStream::connect_with_cid_port(VMADDR_CID_LOCAL, 9004).unwrap();
-

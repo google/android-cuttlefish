@@ -1,0 +1,123 @@
+diff --git a/vhost-device-vsock/src/thread_backend.rs b/vhost-device-vsock/src/thread_backend.rs
+index 369aa149868a6012f592ee3e9e1f3d88b42fdf5f..e7b47b313215dc98b2a48d5f9a71c310c826c654 100644
+--- a/vhost-device-vsock/src/thread_backend.rs
++++ b/vhost-device-vsock/src/thread_backend.rs
+@@ -275,7 +275,7 @@ impl VsockThreadBackend {
+         };
+         let conn = self.conn_map.get_mut(&key).unwrap();
+ 
+-        if conn.rx_queue.peek() == Some(RxOps::Reset) {
++        if conn.rx_queue.contains(RxOps::Reset.bitmask()) {
+             // Handle RST events here
+             let conn = self.conn_map.remove(&key).unwrap();
+             self.listener_map.remove(&conn.stream.as_raw_fd());
+@@ -308,7 +308,13 @@ impl VsockThreadBackend {
+         // Handle other packet types per connection
+         conn.recv_pkt(pkt)?;
+ 
+-        if conn.rx_queue.pending_rx() {
++        if conn.rx_queue.contains(RxOps::Reset.bitmask()) {
++            let conn = self.conn_map.remove(&key).unwrap();
++            self.listener_map.remove(&conn.stream.as_raw_fd());
++            self.stream_map.remove(&conn.stream.as_raw_fd());
++            self.local_port_set.remove(&conn.local_port);
++            let _ = VhostUserVsockThread::epoll_unregister(conn.epoll_fd, conn.stream.as_raw_fd());
++        } else if conn.rx_queue.pending_rx() {
+             self.backend_rxq.push_back(key);
+         }
+ 
+diff --git a/vhost-device-vsock/src/vhu_vsock_thread.rs b/vhost-device-vsock/src/vhu_vsock_thread.rs
+index 2d89e537c1ffdf542206d454d79d39204d9a5368..d20c608ba8b1ea0055cd13f65b344fa7cd3f44ab 100644
+--- a/vhost-device-vsock/src/vhu_vsock_thread.rs
++++ b/vhost-device-vsock/src/vhu_vsock_thread.rs
+@@ -473,6 +473,18 @@ impl VhostUserVsockThread {
+                         }
+                         Err(e) => {
+                             log::debug!("Error: {e:?}");
++                            if !matches!(
++                                &e,
++                                Error::LocalTxBufFlush(io_err)
++                                    if io_err.kind() == std::io::ErrorKind::WouldBlock
++                                        || io_err.kind() == std::io::ErrorKind::Interrupted
++                            ) {
++                                let _ = Self::epoll_unregister(epoll_fd, fd);
++                                conn.rx_queue.enqueue(RxOps::Reset);
++                                self.thread_backend
++                                    .backend_rxq
++                                    .push_back(ConnMapKey::new(conn.local_port, conn.peer_port));
++                            }
+                         }
+                     }
+                     return;
+diff --git a/vhost-device-vsock/src/vsock_conn.rs b/vhost-device-vsock/src/vsock_conn.rs
+index 6933a754ff8b5db6cdd13d324d88bb413c5992ca..c728eb4d52085c4f2766c75ab0cbc4a7e72fa186 100644
+--- a/vhost-device-vsock/src/vsock_conn.rs
++++ b/vhost-device-vsock/src/vsock_conn.rs
+@@ -144,6 +144,7 @@ impl<S: AsRawFd + ReadVolatile + Write + WriteVolatile + IsHybridVsock> VsockCon
+                     // There is no host-side application listening for this
+                     // packet, hence send back an RST.
+                     pkt.set_op(VSOCK_OP_RST);
++                    self.rx_queue.enqueue(RxOps::Reset);
+                     return Ok(());
+                 }
+ 
+@@ -163,7 +164,17 @@ impl<S: AsRawFd + ReadVolatile + Write + WriteVolatile + IsHybridVsock> VsockCon
+                     .subslice(0, max_read_len)
+                     .expect("subslicing should work since length was checked");
+                 // Read data from the stream directly into the buffer
+-                if let Ok(read_cnt) = self.stream.read_volatile(&mut buf) {
++                match loop {
++                    match self.stream.read_volatile(&mut buf) {
++                        Err(vm_memory::VolatileMemoryError::IOError(err))
++                            if err.kind() == ErrorKind::Interrupted =>
++                        {
++                            continue;
++                        }
++                        res => break res,
++                    }
++                } {
++                    Ok(read_cnt) => {
+                     if read_cnt == 0 {
+                         // If no data was read then the stream was closed down unexpectedly.
+                         // Send a shutdown packet to the guest-side application.
+@@ -198,6 +209,30 @@ impl<S: AsRawFd + ReadVolatile + Write + WriteVolatile + IsHybridVsock> VsockCon
+                     // Update the rx_cnt with the amount of data in the vsock packet.
+                     self.rx_cnt += Wrapping(pkt.len());
+                     self.last_fwd_cnt = self.fwd_cnt;
++                    }
++                    Err(vm_memory::VolatileMemoryError::IOError(err))
++                        if err.kind() == ErrorKind::WouldBlock =>
++                    {
++                        if VhostUserVsockThread::epoll_modify(
++                            self.epoll_fd,
++                            self.stream.as_raw_fd(),
++                            epoll::Events::EPOLLIN | epoll::Events::EPOLLOUT,
++                        )
++                        .is_err()
++                        {
++                            let _ = VhostUserVsockThread::epoll_register(
++                                self.epoll_fd,
++                                self.stream.as_raw_fd(),
++                                epoll::Events::EPOLLIN | epoll::Events::EPOLLOUT,
++                            );
++                        }
++                        return Err(Error::NoRequestRx);
++                    }
++                    Err(err) => {
++                        log::debug!("Error reading data from stream: {err:?}");
++                        pkt.set_op(VSOCK_OP_RST);
++                        self.rx_queue.enqueue(RxOps::Reset);
++                    }
+                 }
+                 Ok(())
+             }
+@@ -254,8 +289,8 @@ impl<S: AsRawFd + ReadVolatile + Write + WriteVolatile + IsHybridVsock> VsockCon
+                     }
+                     Some(buf) => {
+                         if let Err(err) = self.send_bytes(buf) {
+-                            // TODO: Terminate this connection
+                             log::debug!("err:{err:?}");
++                            self.rx_queue.enqueue(RxOps::Reset);
+                             return Ok(());
+                         }
+                     }
