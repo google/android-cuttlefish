@@ -29,6 +29,7 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
+#include "cuttlefish/result/stack_trace_entry.h"
 
 namespace cuttlefish {
 namespace {

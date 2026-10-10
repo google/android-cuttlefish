@@ -22,6 +22,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/ansi_codes",
         "//cuttlefish/ansi_codes:should_color",
+        "//cuttlefish/result:stack_trace_entry",
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@tl-expected",
@@ -75,4 +76,10 @@ cf_cc_library(
         "@googletest//:gtest",
         "@tl-expected",
     ],
+)
+
+cf_cc_library(
+    name = "stack_trace_entry",
+    srcs = ["stack_trace_entry.cc"],
+    hdrs = ["stack_trace_entry.h"],
 )
