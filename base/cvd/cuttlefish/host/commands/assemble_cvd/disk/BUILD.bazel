@@ -240,6 +240,8 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
         "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/image_aggregator:sparse_image",
+        "//cuttlefish/posix:rename",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",

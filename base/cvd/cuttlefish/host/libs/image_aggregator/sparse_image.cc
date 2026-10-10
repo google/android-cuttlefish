@@ -68,6 +68,17 @@ Result<bool> IsSparseImage(const std::string& image_path) {
   return buffer == kAndroidSparseImageMagic;
 }
 
+Result<void> ConvertSparseImageToRaw(const std::string& source_path,
+                                     const std::string& destination_path) {
+  CF_EXPECT(IsSparseImage(source_path),
+            "Source image is not an Android sparse image");
+  int status = Execute({Simg2ImgBinary(), source_path, destination_path});
+  CF_EXPECT_EQ(status, 0, "Unable to convert Android sparse image '"
+                              << source_path << "' to raw image '"
+                              << destination_path << "': " << status);
+  return {};
+}
+
 Result<void> ForceRawImage(const std::string& image_path) {
   if (!CF_EXPECT(IsSparseImage(image_path))) {
     return {};
@@ -78,13 +89,7 @@ Result<void> ForceRawImage(const std::string& image_path) {
   }
 
   std::string tmp_raw_image_path = image_path + ".raw";
-  // Use simg2img to convert sparse image to raw images.
-  int simg2img_status =
-      Execute({Simg2ImgBinary(), image_path, tmp_raw_image_path});
-
-  CF_EXPECT_EQ(simg2img_status, 0,
-               "Unable to convert Android sparse image '"
-                   << image_path << "' to raw image: " << simg2img_status);
+  CF_EXPECT(ConvertSparseImageToRaw(image_path, tmp_raw_image_path));
 
   // Replace the original sparse image with the raw image.
   // `rename` can fail if these are on different mounts, but they are files

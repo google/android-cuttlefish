@@ -29,6 +29,8 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
+#include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
@@ -83,9 +85,15 @@ Result<void> RepackSuperAndVbmeta(
   const auto new_super_img = instance.new_super_image();
   // This file may have already been created by super_image_mixer.cc
   if (!FileExists(new_super_img)) {
-    CF_EXPECTF(Copy(instance.super_image(), new_super_img),
-               "Failed to copy super image '{}' to '{}': '{}'",
-               instance.super_image(), new_super_img, StrError(errno));
+    if (CF_EXPECT(IsSparseImage(instance.super_image()))) {
+      const auto tmp_super_img = new_super_img + ".tmp";
+      CF_EXPECT(ConvertSparseImageToRaw(instance.super_image(), tmp_super_img));
+      CF_EXPECT(Rename(tmp_super_img, new_super_img));
+    } else {
+      CF_EXPECTF(Copy(instance.super_image(), new_super_img),
+                 "Failed to copy super image '{}' to '{}': '{}'",
+                 instance.super_image(), new_super_img, StrError(errno));
+    }
   }
 
   CF_EXPECT(RepackSuperWithPartition(new_super_img, new_vendor_dlkm_img,
