@@ -24,6 +24,7 @@
 
 #include "google/protobuf/util/json_util.h"
 
+#include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/common/libs/utils/flags_validator.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
@@ -50,6 +51,11 @@ inline constexpr char kFlagCrosvmSimpleMediaDevice[] =
     "crosvm_simple_media_device";
 inline constexpr char kFlagCrosvmV4l2Proxy[] = "crosvm_v4l2_proxy";
 inline constexpr char kFlagVhostUserVsock[] = "vhost_user_vsock";
+inline constexpr char kFlagCrosvmAcpiTable[] = "crosvm_acpi_table";
+inline constexpr char kFlagCrosvmDeviceTreeOverlay[] =
+    "crosvm_device_tree_overlay";
+inline constexpr char kFlagCrosvmFileBackedMappingBase64[] =
+    "crosvm_file_backed_mapping_base64";
 inline constexpr char kFlagEnablePkvm[] = "enable_pkvm";
 
 std::set<std::string> GatherFlagNamesUsedInInstanceConfig(const Instance& ins) {
@@ -87,6 +93,18 @@ std::set<std::string> GatherFlagNamesUsedInInstanceConfig(const Instance& ins) {
   if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
       ins.vm().crosvm().has_vhost_user_vsock()) {
     names.insert(kFlagVhostUserVsock);
+  }
+  if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
+      !ins.vm().crosvm().acpi_table().empty()) {
+    names.insert(kFlagCrosvmAcpiTable);
+  }
+  if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
+      !ins.vm().crosvm().device_tree_overlay().empty()) {
+    names.insert(kFlagCrosvmDeviceTreeOverlay);
+  }
+  if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
+      !ins.vm().crosvm().file_backed_mapping().empty()) {
+    names.insert(kFlagCrosvmFileBackedMappingBase64);
   }
   if (ins.vm().has_enable_pkvm()) {
     names.insert(kFlagEnablePkvm);
@@ -191,6 +209,39 @@ static std::string VhostUserVsock(const Instance& instance) {
                                        : default_val;
 }
 
+static Result<std::string> CrosvmAcpiTable(const Instance& instance) {
+  const auto& values = instance.vm().crosvm().acpi_table();
+  CF_EXPECTF(
+      values.size() <= 1,
+      "Only one `crosvm.acpi_table` entry per instance is supported for now, "
+      "got {}",
+      values.size());
+  return values.empty() ? "" : values[0];
+}
+
+static Result<std::string> CrosvmDeviceTreeOverlay(const Instance& instance) {
+  const auto& values = instance.vm().crosvm().device_tree_overlay();
+  CF_EXPECTF(values.size() <= 1,
+             "Only one `crosvm.device_tree_overlay` entry per instance is "
+             "supported for now, got {}",
+             values.size());
+  return values.empty() ? "" : values[0];
+}
+
+// Base64-encode before GenerateVecFlag joins the per-instance values with
+// commas: a file-backed mapping natively contains commas and would otherwise
+// be split across instances by assemble_cvd.
+static Result<std::string> CrosvmFileBackedMappingBase64(
+    const Instance& instance) {
+  const auto& values = instance.vm().crosvm().file_backed_mapping();
+  CF_EXPECTF(values.size() <= 1,
+             "Only one `crosvm.file_backed_mapping` entry per instance is "
+             "supported for now, got {}",
+             values.size());
+  const std::string value = values.empty() ? "" : values[0];
+  return CF_EXPECT(EncodeBase64(value));
+}
+
 static bool EnablePkvm(const Instance& instance) {
   const auto& vm = instance.vm();
   return vm.has_enable_pkvm() ? vm.enable_pkvm() : CF_DEFAULTS_ENABLE_PKVM;
@@ -284,6 +335,19 @@ Result<std::vector<std::string>> GenerateVmFlags(
   if (used_names.contains(kFlagVhostUserVsock)) {
     flags.emplace_back(
         GenerateInstanceFlag(kFlagVhostUserVsock, cfg, VhostUserVsock));
+  }
+  if (used_names.contains(kFlagCrosvmAcpiTable)) {
+    flags.emplace_back(CF_EXPECT(
+        ResultInstanceFlag(kFlagCrosvmAcpiTable, cfg, CrosvmAcpiTable)));
+  }
+  if (used_names.contains(kFlagCrosvmDeviceTreeOverlay)) {
+    flags.emplace_back(CF_EXPECT(ResultInstanceFlag(
+        kFlagCrosvmDeviceTreeOverlay, cfg, CrosvmDeviceTreeOverlay)));
+  }
+  if (used_names.contains(kFlagCrosvmFileBackedMappingBase64)) {
+    flags.emplace_back(
+        CF_EXPECT(ResultInstanceFlag(kFlagCrosvmFileBackedMappingBase64, cfg,
+                                     CrosvmFileBackedMappingBase64)));
   }
   if (used_names.contains(kFlagEnablePkvm)) {
     flags.emplace_back(GenerateInstanceFlag(kFlagEnablePkvm, cfg, EnablePkvm));
