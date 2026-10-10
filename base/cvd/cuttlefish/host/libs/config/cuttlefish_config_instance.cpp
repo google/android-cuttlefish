@@ -1271,6 +1271,43 @@ uint8_t CuttlefishConfig::InstanceSpecific::ril_prefixlen() const {
   return static_cast<uint8_t>((*Dictionary())[kRilPrefixlen].asUInt());
 }
 
+static constexpr char kRilIpv6Ipaddr[] = "ril_ipv6_ipaddr";
+void CuttlefishConfig::MutableInstanceSpecific::set_ril_ipv6_ipaddr(
+    const std::string& ril_ipv6_ipaddr) {
+  (*Dictionary())[kRilIpv6Ipaddr] = ril_ipv6_ipaddr;
+}
+std::string CuttlefishConfig::InstanceSpecific::ril_ipv6_ipaddr() const {
+  return (*Dictionary())[kRilIpv6Ipaddr].asString();
+}
+
+static constexpr char kRilIpv6Gateway[] = "ril_ipv6_gateway";
+void CuttlefishConfig::MutableInstanceSpecific::set_ril_ipv6_gateway(
+    const std::string& ril_ipv6_gateway) {
+  (*Dictionary())[kRilIpv6Gateway] = ril_ipv6_gateway;
+}
+std::string CuttlefishConfig::InstanceSpecific::ril_ipv6_gateway() const {
+  return (*Dictionary())[kRilIpv6Gateway].asString();
+}
+
+static constexpr char kRilIpv6Dns[] = "ril_ipv6_dns";
+void CuttlefishConfig::MutableInstanceSpecific::set_ril_ipv6_dns(
+    const std::string& ril_ipv6_dns) {
+  (*Dictionary())[kRilIpv6Dns] = ril_ipv6_dns;
+}
+std::string CuttlefishConfig::InstanceSpecific::ril_ipv6_dns() const {
+  return (*Dictionary())[kRilIpv6Dns].asString();
+}
+
+static constexpr char kRilIpv6Prefixlen[] = "ril_ipv6_prefixlen";
+void CuttlefishConfig::MutableInstanceSpecific::set_ril_ipv6_prefixlen(
+    uint8_t ril_ipv6_prefixlen) {
+  (*Dictionary())[kRilIpv6Prefixlen] =
+      static_cast<Json::UInt>(ril_ipv6_prefixlen);
+}
+uint8_t CuttlefishConfig::InstanceSpecific::ril_ipv6_prefixlen() const {
+  return static_cast<uint8_t>((*Dictionary())[kRilIpv6Prefixlen].asUInt());
+}
+
 static constexpr char kDisplayConfigs[] = "display_configs";
 static constexpr char kXRes[] = "x_res";
 static constexpr char kYRes[] = "y_res";

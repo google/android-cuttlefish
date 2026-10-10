@@ -23,10 +23,20 @@
 #include <string.h>
 #include <sys/socket.h>
 
+#include <fstream>
+#include <optional>
+#include <sstream>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/strip.h"
 
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -137,7 +147,204 @@ class NetConfig {
   }
 };
 
+constexpr char kHostResourcesDefaultsPath[] =
+    "/etc/default/cuttlefish-host-resources";
+constexpr char kIpv6EgressMarkerPath[] = "/run/cuttlefish/ipv6-egress";
+constexpr char kDefaultMobileIpv6Dns[] =
+    "2001:4860:4860::8888,2001:4860:4860::8844";
+
+std::optional<std::string> ParseSettingFromDefaults(std::string_view contents,
+                                                    std::string_view key) {
+  std::optional<std::string> raw_value;
+  std::string prefix = std::string(key) + "=";
+  for (std::string_view line : absl::StrSplit(contents, '\n')) {
+    line = absl::StripAsciiWhitespace(line);
+    if (line.empty() || line.front() == '#') {
+      continue;
+    }
+    if (!absl::ConsumePrefix(&line, prefix)) {
+      continue;
+    }
+    if (size_t hash = line.find('#'); hash != std::string_view::npos) {
+      line = absl::StripAsciiWhitespace(line.substr(0, hash));
+    }
+    if (line.size() >= 2 && ((line.front() == '"' && line.back() == '"') ||
+                             (line.front() == '\'' && line.back() == '\''))) {
+      line = line.substr(1, line.size() - 2);
+    }
+    raw_value = std::string(line);
+  }
+  return raw_value;
+}
+
+std::string ObtainMobileIpv6Dns() {
+  std::string contents;
+  std::ifstream in(kHostResourcesDefaultsPath);
+  if (in.is_open()) {
+    std::ostringstream ss;
+    ss << in.rdbuf();
+    contents = ss.str();
+  }
+  bool has_egress = std::ifstream(kIpv6EgressMarkerPath).good();
+  std::string dns = ResolveMobileIpv6Dns(contents, has_egress);
+  if (dns.empty()) {
+    LOG(INFO) << "No host IPv6 egress (" << kIpv6EgressMarkerPath
+              << " absent); omitting ril_ipv6_dns while keeping mobile ULA "
+                 "addressing.";
+  }
+  return dns;
+}
+
+uint8_t Ipv6PrefixLength(const in6_addr& netmask) {
+  uint8_t ret = 0;
+  for (uint8_t byte : netmask.s6_addr) {
+    ret += number_of_ones(byte);
+  }
+  return ret;
+}
+
+// Adds one to a big-endian 128-bit address.
+void IncrementIpv6Address(in6_addr& addr) {
+  for (int i = 15; i >= 0; --i) {
+    if (++addr.s6_addr[i] != 0) {
+      return;
+    }
+  }
+}
+
+bool Ipv6AddressInPrefix(const in6_addr& addr, const in6_addr& network,
+                         const in6_addr& netmask) {
+  for (int i = 0; i < 16; ++i) {
+    if ((addr.s6_addr[i] & netmask.s6_addr[i]) != network.s6_addr[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+std::optional<std::string> Ipv6AddressToString(const in6_addr& addr) {
+  char buf[INET6_ADDRSTRLEN];
+  if (inet_ntop(AF_INET6, &addr, buf, sizeof(buf)) == nullptr) {
+    return std::nullopt;
+  }
+  return std::string(buf);
+}
+
+// Uses the first global IPv6 address of the interface. Link-local addresses
+// are skipped: they cannot be handed to the guest as a data call address.
+std::optional<MobileIpv6Config> ObtainMobileIpv6Config(
+    const std::string& interface) {
+  struct ifaddrs* ifa_list = nullptr;
+  if (getifaddrs(&ifa_list) != 0) {
+    return std::nullopt;
+  }
+  std::optional<MobileIpv6Config> ret;
+  for (struct ifaddrs* ifa = ifa_list; ifa; ifa = ifa->ifa_next) {
+    if (strcmp(ifa->ifa_name, interface.c_str()) != 0 ||
+        ifa->ifa_addr == nullptr || ifa->ifa_netmask == nullptr ||
+        ifa->ifa_addr->sa_family != AF_INET6) {
+      continue;
+    }
+    const in6_addr& addr =
+        reinterpret_cast<const sockaddr_in6*>(ifa->ifa_addr)->sin6_addr;
+    if (IN6_IS_ADDR_LINKLOCAL(&addr) || IN6_IS_ADDR_LOOPBACK(&addr) ||
+        IN6_IS_ADDR_MULTICAST(&addr)) {
+      continue;
+    }
+    const in6_addr& netmask =
+        reinterpret_cast<const sockaddr_in6*>(ifa->ifa_netmask)->sin6_addr;
+    ret = MobileIpv6ConfigFromHostAddress(addr, netmask);
+    if (ret) {
+      break;
+    }
+  }
+  freeifaddrs(ifa_list);
+  return ret;
+}
+
 }  // namespace
+
+std::string ParseDns6ServersFromDefaults(std::string_view contents) {
+  std::optional<std::string> raw_value =
+      ParseSettingFromDefaults(contents, "dns6_servers");
+  if (!raw_value || raw_value->empty()) {
+    return kDefaultMobileIpv6Dns;
+  }
+  std::vector<std::string> valid_addrs;
+  for (std::string_view token : absl::StrSplit(*raw_value, ',')) {
+    token = absl::StripAsciiWhitespace(token);
+    if (token.empty()) {
+      continue;
+    }
+    std::string addr_str(token);
+    in6_addr dummy{};
+    if (inet_pton(AF_INET6, addr_str.c_str(), &dummy) == 1) {
+      valid_addrs.push_back(std::move(addr_str));
+    } else {
+      LOG(WARNING) << "Ignoring invalid IPv6 DNS server '" << addr_str
+                   << "' in dns6_servers from " << kHostResourcesDefaultsPath;
+    }
+  }
+  if (valid_addrs.empty()) {
+    LOG(WARNING) << "Invalid dns6_servers='" << *raw_value << "' in "
+                 << kHostResourcesDefaultsPath << "; falling back to "
+                 << kDefaultMobileIpv6Dns;
+    return kDefaultMobileIpv6Dns;
+  }
+  return absl::StrJoin(valid_addrs, ",");
+}
+
+std::string ResolveMobileIpv6Dns(std::string_view defaults_contents,
+                                 bool has_ipv6_egress) {
+  std::optional<std::string> egress_override =
+      ParseSettingFromDefaults(defaults_contents, "ipv6_egress");
+  if (egress_override == "0") {
+    return "";
+  }
+  if (egress_override == "1") {
+    has_ipv6_egress = true;
+  }
+  std::optional<std::string> explicit_dns6 =
+      ParseSettingFromDefaults(defaults_contents, "dns6_servers");
+  if (explicit_dns6 && !explicit_dns6->empty()) {
+    return ParseDns6ServersFromDefaults(defaults_contents);
+  }
+  std::optional<std::string> routed_prefix =
+      ParseSettingFromDefaults(defaults_contents, "ipv6_routed_prefix");
+  if (routed_prefix && !routed_prefix->empty()) {
+    has_ipv6_egress = true;
+  }
+  if (!has_ipv6_egress) {
+    return "";
+  }
+  return ParseDns6ServersFromDefaults(defaults_contents);
+}
+
+std::optional<MobileIpv6Config> MobileIpv6ConfigFromHostAddress(
+    const in6_addr& host_addr, const in6_addr& netmask) {
+  in6_addr network;
+  for (int i = 0; i < 16; ++i) {
+    network.s6_addr[i] = host_addr.s6_addr[i] & netmask.s6_addr[i];
+  }
+  in6_addr guest_addr = network;
+  IncrementIpv6Address(guest_addr);
+  if (memcmp(&guest_addr, &host_addr, sizeof(in6_addr)) == 0) {
+    IncrementIpv6Address(guest_addr);
+  }
+  if (!Ipv6AddressInPrefix(guest_addr, network, netmask)) {
+    return std::nullopt;
+  }
+  std::optional<std::string> ipaddr = Ipv6AddressToString(guest_addr);
+  std::optional<std::string> gateway = Ipv6AddressToString(host_addr);
+  if (!ipaddr || !gateway) {
+    return std::nullopt;
+  }
+  return MobileIpv6Config{
+      .ipaddr = *ipaddr,
+      .gateway = *gateway,
+      .prefixlen = Ipv6PrefixLength(netmask),
+  };
+}
 
 Result<void> ConfigureNetworkSettings(
     const std::string& ril_dns_arg, const CuttlefishConfig& config,
@@ -183,6 +390,30 @@ Result<void> ConfigureNetworkSettings(
   instance.set_ril_gateway(netconfig.ril_gateway);
   instance.set_ril_ipaddr(netconfig.ril_ipaddr);
   instance.set_ril_prefixlen(netconfig.ril_prefixlen);
+
+  // IPv6 is optional and independent of IPv4. The host init script assigns
+  // fd00:cf:21:<i>::1/64 to cvd-mtap-<i>; without a global IPv6 address the
+  // ril_ipv6_* values stay empty and the modem simulator is IPv4-only.
+  std::optional<MobileIpv6Config> ipv6 =
+      ObtainMobileIpv6Config(const_instance.mobile_bridge_name());
+  if (!ipv6) {
+    ipv6 = ObtainMobileIpv6Config(const_instance.mobile_tap_name());
+  }
+  if (ipv6) {
+    std::string ipv6_dns = ObtainMobileIpv6Dns();
+    VLOG(0) << "Mobile IPv6 config: ipaddr = " << ipv6->ipaddr
+            << ", gateway = " << ipv6->gateway << ", dns = " << ipv6_dns
+            << ", prefix length = " << static_cast<int>(ipv6->prefixlen);
+    instance.set_ril_ipv6_ipaddr(ipv6->ipaddr);
+    instance.set_ril_ipv6_gateway(ipv6->gateway);
+    if (!ipv6_dns.empty()) {
+      instance.set_ril_ipv6_dns(ipv6_dns);
+    }
+    instance.set_ril_ipv6_prefixlen(ipv6->prefixlen);
+  } else {
+    VLOG(0) << "No global IPv6 address on the mobile interface; the mobile "
+               "network is IPv4-only.";
+  }
 
   return {};
 }

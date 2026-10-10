@@ -33,6 +33,11 @@ class DeviceConfig {
   static std::string ril_address_and_prefix();
   static std::string ril_gateway();
   static std::string ril_dns();
+  // Mobile network IPv6 parameters. All empty when the instance has no IPv6
+  // on the mobile network.
+  static std::string ril_ipv6_address_and_prefix();
+  static std::string ril_ipv6_gateway();
+  static std::string ril_ipv6_dns();
   static std::ifstream open_ifstream_crossplat(const char* filename);
   static std::ofstream open_ofstream_crossplat(
       const char* filename, std::ios_base::openmode mode = std::ios_base::out);

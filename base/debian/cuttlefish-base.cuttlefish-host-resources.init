@@ -44,10 +44,95 @@ ethernet_bridge_interface=${bridge_interface:-cvd-ebr}
 ipv4_bridge=${ipv4_bridge:-1}
 ipv6_bridge=${ipv6_bridge:-1}
 dns_servers=${dns_servers:-8.8.8.8,8.8.4.4}
+dns6_servers_explicit="${dns6_servers:+1}"
 dns6_servers=${dns6_servers:-2001:4860:4860::8888,2001:4860:4860::8844}
+effective_dns6_servers="${dns6_servers}"
+wifi_ipv6_prefix=${wifi_ipv6_prefix:-fd00:cf:22::}
+wifi_ipv6_prefix_length=${wifi_ipv6_prefix_length:-64}
+ethernet_ipv6_prefix=${ethernet_ipv6_prefix:-fd00:cf:24::}
+ethernet_ipv6_prefix_length=${ethernet_ipv6_prefix_length:-64}
+mobile_ipv6_prefix_base=${mobile_ipv6_prefix_base:-fd00:cf:21}
+wifiap_ipv6_prefix_base=${wifiap_ipv6_prefix_base:-fd00:cf:23}
+ipv6_routed_prefix=${ipv6_routed_prefix:-}
 allocate_static_resources=${allocate_static_resources:-1}
 
 readonly CUTTLEFISH_RUN_DIR="/run/cuttlefish"
+# Present while IPv6 state set up by start() exists, so stop() removes it
+# even if IPv6 was disabled on the host in between.
+readonly CUTTLEFISH_IPV6_MARKER="${CUTTLEFISH_RUN_DIR}/ipv6-enabled"
+# Present while the host has IPv6 egress (an IPv6 default route at start_ipv6
+# time, routed mode, or an explicit dns6_servers / ipv6_egress=1 override in
+# /etc/default/cuttlefish-host-resources). Read by assemble_cvd so ril_ipv6_dns
+# is omitted when the host has no IPv6 egress.
+readonly CUTTLEFISH_IPV6_EGRESS="${CUTTLEFISH_RUN_DIR}/ipv6-egress"
+# Routes added by start_ipv6 in routed mode, one "<prefix> <device>" per line,
+# so stop_ipv6 removes them even if the configuration changed in between.
+readonly CUTTLEFISH_IPV6_ROUTES="${CUTTLEFISH_RUN_DIR}/ipv6-routes"
+
+# Prints the first three hextets ("a:b:c") of a /48 prefix written as
+# "a:b:c::/48", "a:b::/48" or "a::/48", in lower case. Fails for any other
+# value, including prefixes that are not /48 and /48s with bits set after the
+# first three hextets.
+# $1 = prefix
+routed_prefix_base() {
+    case "${1}" in
+        *::/48) ;;
+        *) return 1 ;;
+    esac
+    routed_head="${1%::/48}"
+    if ! echo "${routed_head}" | grep -Eq '^[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){0,2}$'; then
+        return 1
+    fi
+    case "${routed_head}" in
+        *:*:*) ;;
+        *:*) routed_head="${routed_head}:0" ;;
+        *) routed_head="${routed_head}:0:0" ;;
+    esac
+    echo "${routed_head}" | tr 'A-F' 'a-f'
+}
+
+# Routed mode: the guest networks get /64s from a /48 routed to this host,
+# with no NAT66 (see ipv6_routed_prefix in /etc/default/cuttlefish-host-resources).
+# An invalid value falls back to private mode.
+ipv6_routed_base=""
+if [ -n "${ipv6_routed_prefix}" ]; then
+    if ipv6_routed_base="$(routed_prefix_base "${ipv6_routed_prefix}")"; then
+        echo "IPv6 routed mode: guest networks use ${ipv6_routed_base}::/48"
+    else
+        ipv6_routed_base=""
+        echo "invalid ipv6_routed_prefix '${ipv6_routed_prefix}' (want a /48 such as 2001:db8:cf00::/48), using private IPv6 addresses" >&2
+    fi
+fi
+
+if [ -n "${ipv6_routed_base}" ]; then
+    ipv6_nat_default=0
+    # The *_ipv6_prefix settings are ignored in routed mode.
+    ethernet_ipv6_prefix="${ipv6_routed_base}:24::"
+    ethernet_ipv6_prefix_length=64
+    wifi_ipv6_prefix="${ipv6_routed_base}:22::"
+    wifi_ipv6_prefix_length=64
+else
+    ipv6_nat_default=1
+fi
+case "${ipv6_nat:-}" in
+    0|1) ;;
+    "") ipv6_nat="${ipv6_nat_default}" ;;
+    *)
+        echo "invalid ipv6_nat '${ipv6_nat}' (want 0 or 1), using ${ipv6_nat_default}" >&2
+        ipv6_nat="${ipv6_nat_default}"
+        ;;
+esac
+
+# Guest IPv6 source addresses that are NATed (NAT66) when they leave the
+# host, if ipv6_nat is 1. fd00:cf:20::/44 covers fd00:cf:20:: to
+# fd00:cf:2f:ffff::, so every default prefix above. In routed mode the
+# default is the routed /48.
+if [ -n "${ipv6_routed_base}" ]; then
+    ipv6_nat_source=${ipv6_nat_source:-${ipv6_routed_base}::/48}
+else
+    ipv6_nat_source=${ipv6_nat_source:-fd00:cf:20::/44}
+fi
+readonly CUTTLEFISH_IPV6_NAT_SOURCE="${ipv6_nat_source}"
 
 if [ -z ${bridge_interface} ]; then
   create_bridges=1
@@ -94,10 +179,63 @@ stop_dnsmasq() {
     fi
 }
 
+# Start IPv6 router advertisements (RA) on an interface.
+# This dnsmasq is separate from the IPv4 one, so an IPv6 failure (for example
+# no ICMPv6 socket) cannot stop DHCPv4. It only sends RAs with the prefix and
+# the DNS servers (RDNSS): no DNS (--port=0), no DHCPv4 range, and an ra-only
+# range does not start a DHCPv6 server.
+# $1 = interface to bind to
+# $2 = IPv6 prefix ("a:b::")
+# $3 = IPv6 prefix length
+start_ra_dnsmasq() {
+    set -- \
+      --port=0 \
+      --except-interface=lo \
+      --interface="${1}" \
+      --bind-interfaces \
+      --conf-file="" \
+      --enable-ra \
+      --dhcp-range="${2},ra-only,${3}" \
+      --pid-file=/var/run/cuttlefish-dnsmasq-ra-"${1}".pid \
+      --dhcp-leasefile=/var/run/cuttlefish-dnsmasq-ra-"${1}".leases
+    if [ -n "${effective_dns6_servers}" ]; then
+        set -- "$@" --dhcp-option="option6:dns-server,${effective_dns6_servers}"
+    fi
+    dnsmasq "$@"
+}
+
+# Stop IPv6 router advertisements on an interface
+# $1 = interface to stop on
+stop_ra_dnsmasq() {
+    if [ -f /var/run/cuttlefish-dnsmasq-ra-"${1}".pid ]; then
+        kill "$(cat /var/run/cuttlefish-dnsmasq-ra-"${1}".pid)"
+        rm -f /var/run/cuttlefish-dnsmasq-ra-"${1}".pid
+    fi
+    if [ -f /var/run/cuttlefish-dnsmasq-ra-"${1}".leases ]; then
+        rm -f /var/run/cuttlefish-dnsmasq-ra-"${1}".leases
+    fi
+}
+
+# Make the host ignore IPv6 router advertisements on an interface, so a guest
+# cannot give the host addresses or routes. Link-local addresses are kept.
+# Does nothing if the kernel has no IPv6 (booted with ipv6.disable=1).
+# $1 = interface name
+ignore_router_advertisements() {
+    if [ -d /proc/sys/net/ipv6/conf/"${1}" ]; then
+        if [ -w /proc/sys/net/ipv6/conf/"${1}"/accept_ra ]; then
+            echo 0 > /proc/sys/net/ipv6/conf/"${1}"/accept_ra
+        fi
+        if [ -w /proc/sys/net/ipv6/conf/"${1}"/autoconf ]; then
+            echo 0 > /proc/sys/net/ipv6/conf/"${1}"/autoconf
+        fi
+    fi
+}
+
 # Create a tap interface (with no address)
 # $1 = tap name
 create_tap() {
     ip tuntap add dev "${1}" mode tap group cvdnetwork vnet_hdr
+    ignore_router_advertisements "${1}"
     ip link set dev "${1}" up
 }
 
@@ -128,8 +266,81 @@ delete_nftables() {
     if [ "${allocate_static_resources}" != "1" ]; then
         return
     fi
-    nft delete table ip cuttlefish_nat
-    nft delete table bridge cuttlefish_bridge
+    if nft list table ip cuttlefish_nat >/dev/null 2>&1; then
+        nft delete table ip cuttlefish_nat
+    fi
+    if nft list table bridge cuttlefish_bridge >/dev/null 2>&1; then
+        nft delete table bridge cuttlefish_bridge
+    fi
+}
+
+# IPv6 tables are separate from the IPv4 ones, so the IPv4 ruleset does not
+# change and IPv6 can be skipped or removed on its own.
+setup_ipv6_nftables() {
+    # Explicit FORWARD accept rules in ip6 filter FORWARD so guest IPv6 traffic
+    # is forwarded even when Docker, libvirt, or UFW sets ip6 filter FORWARD
+    # policy to DROP. Using iifname/oifname + counter + accept produces an
+    # ip6tables-nft-compatible rule AST and is tracked by handle so stop removes
+    # only Cuttlefish's rules.
+    nft add table ip6 filter
+    nft add chain ip6 filter FORWARD '{ type filter hook forward priority 0 ; }'
+    manage_nft_rule add ip6fwd in 'iifname "cvd-*" counter accept'
+    manage_nft_rule add ip6fwd out 'oifname "cvd-*" counter accept'
+
+    # NAT66 of guest traffic that leaves through a non-cuttlefish interface.
+    # Traffic between two cuttlefish interfaces keeps its addresses. The table
+    # exists also without NAT66 (ipv6_nat=0, the routed mode default), so
+    # stop removes the same tables in both modes.
+    nft add table ip6 cuttlefish_nat6
+    nft add chain ip6 cuttlefish_nat6 postrouting '{ type nat hook postrouting priority 100 ; }'
+    if [ "${ipv6_nat}" = "1" ]; then
+        nft add rule ip6 cuttlefish_nat6 postrouting \
+          "ip6 saddr ${CUTTLEFISH_IPV6_NAT_SOURCE} oifname != \"cvd-*\" counter masquerade"
+    fi
+
+    # RA guard: drop router advertisements and redirects sent by guests, so a
+    # guest cannot change the routes of other guests on the same bridge, or of
+    # the host. Neighbor discovery (NS/NA) and router solicitations pass.
+    # Bridged taps: checked when the frame enters the bridge, before the
+    # cuttlefish_bridge prerouting chain (priority -250).
+    nft add table bridge cuttlefish_ra_guard
+    nft add chain bridge cuttlefish_ra_guard prerouting '{ type filter hook prerouting priority -300 ; }'
+    # "meta protocol ip6" matches the frame's IPv6 payload also when it carries
+    # an 802.1Q tag (for example VLAN 0). A bare "icmpv6 type" match in the
+    # bridge family checks the outer Ethernet type, so it misses tagged frames.
+    for ifname_pattern in "cvd-etap-*" "cvd-wtap-*"; do
+        nft add rule bridge cuttlefish_ra_guard prerouting \
+          "iifname \"${ifname_pattern}\" meta protocol ip6 meta l4proto ipv6-icmp icmpv6 type { nd-router-advert, nd-redirect } counter drop"
+    done
+    # Routed taps: RAs and redirects are link-local, so they only reach the
+    # host's input path. accept_ra=0 already ignores RAs; this is a second layer.
+    nft add table inet cuttlefish_ra_guard
+    nft add chain inet cuttlefish_ra_guard input '{ type filter hook input priority -300 ; }'
+    for ifname_pattern in "cvd-mtap-*" "cvd-wifiap-*"; do
+        nft add rule inet cuttlefish_ra_guard input \
+          "iifname \"${ifname_pattern}\" icmpv6 type { nd-router-advert, nd-redirect } counter drop"
+    done
+}
+
+delete_ipv6_nftables() {
+    manage_nft_rule delete ip6fwd out
+    manage_nft_rule delete ip6fwd in
+    if nft list table ip6 filter >/dev/null 2>&1; then
+        if [ "$(nft -j list table ip6 filter | jq '[.nftables[] | select(has("rule"))] | length')" = "0" ] &&
+           [ "$(nft -j list table ip6 filter | jq '[.nftables[] | select(has("chain"))] | length')" = "1" ] &&
+           [ "$(nft -j list table ip6 filter | jq -r '.nftables[] | select(has("chain")) | .chain.policy')" = "accept" ]; then
+            nft delete table ip6 filter
+        fi
+    fi
+    if nft list table inet cuttlefish_ra_guard >/dev/null 2>&1; then
+        nft delete table inet cuttlefish_ra_guard
+    fi
+    if nft list table bridge cuttlefish_ra_guard >/dev/null 2>&1; then
+        nft delete table bridge cuttlefish_ra_guard
+    fi
+    if nft list table ip6 cuttlefish_nat6 >/dev/null 2>&1; then
+        nft delete table ip6 cuttlefish_nat6
+    fi
 }
 
 
@@ -159,6 +370,11 @@ manage_nft_rule() {
             table="cuttlefish_bridge"
             chain="forward"
             ;;
+        ip6fwd)
+            family="ip6"
+            table="filter"
+            chain="FORWARD"
+            ;;
     esac
 
     if [ -z "$family" ] || [ -z "$table" ] || [ -z "$chain" ]; then
@@ -177,6 +393,9 @@ manage_nft_rule() {
                 echo "Contents required for add operation"
                 return 1
             fi
+            if [ -f "$handle_file" ]; then
+                manage_nft_rule delete "$type" "$id"
+            fi
             # Add the rule and store the handle.
             handle=$(nft -j -e add rule "$family" "$table" "$chain" "$contents" | jq -r '.nftables[] | select(has("add")) | .add.rule.handle')
             echo "$handle" > "$handle_file"
@@ -185,8 +404,10 @@ manage_nft_rule() {
             if [ -f "$handle_file" ]; then
                 # Find the handle file and use it to clean things up.
                 handle=$(cat "$handle_file")
-                nft delete rule "$family" "$table" "$chain" handle "$handle"
-                rm "$handle_file"
+                if nft -a list chain "$family" "$table" "$chain" 2>/dev/null | grep -q "# handle ${handle}$"; then
+                    nft delete rule "$family" "$table" "$chain" handle "$handle"
+                fi
+                rm -f "$handle_file"
             else
                 echo "Handle file not found: $handle_file"
             fi
@@ -205,21 +426,14 @@ manage_nft_rule() {
 # $1 = tap interface name
 # $2 = ip address base ("a.b.c")
 # $3 = interface index within ip address base
-# $4 = IPv6 prefix ("a:b::")
-# $5 = IPv6 prefix length
 create_interface() {
     tap="${1}"
     gateway="${2}.$((4*$3 - 3))"
     netmask="/30"
     network="${2}.$((4*$3 - 4))${netmask}"
-    ipv6_prefix="${4}"
-    ipv6_prefix_length="${5}"
 
     create_tap "${tap}"
     ip addr add "${gateway}${netmask}" broadcast + dev "${tap}"
-    if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
-        ip -6 addr add "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${tap}"
-    fi
     manage_nft_rule add masq "${tap}" "ip saddr ${network} masquerade"
 }
 
@@ -227,21 +441,14 @@ create_interface() {
 # $1 = tap interface name
 # $2 = ip address base ("a.b.c")
 # $3 = interface index within ip address base
-# $4 = IPv6 prefix ("a:b::")
-# $5 = IPv6 prefix length
 destroy_interface() {
     tap="${1}"
     gateway="${2}.$((4*$3 - 3))"
     netmask="/30"
     network="${2}.$((4*$3 - 4))${netmask}"
-    ipv6_prefix="${4}"
-    ipv6_prefix_length="${5}"
 
     manage_nft_rule delete masq "${tap}"
     ip addr del "${gateway}${netmask}" dev "${tap}"
-    if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
-        ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${tap}"
-    fi
     destroy_tap "${tap}"
 }
 
@@ -249,16 +456,20 @@ destroy_interface() {
 # $1 = IPv4 address base ("a.b.c")
 # $2 = bridge interface name
 # $3 = tap base name
-# $4 = IPv6 prefix ("a:b::")
-# $5 = IPv6 prefix length
 create_bridged_interfaces() {
     if [ "${create_bridges}" = "1" ]; then
         ip link add name "${2}" type bridge forward_delay 0 stp_state 0
         ip link set dev "${2}" up
 
-        echo 0 > /proc/sys/net/ipv6/conf/${2}/disable_ipv6
-        echo 0 > /proc/sys/net/ipv6/conf/${2}/addr_gen_mode
-        echo 1 > /proc/sys/net/ipv6/conf/${2}/autoconf
+        if ipv6_enabled && [ -d /proc/sys/net/ipv6/conf/"${2}" ]; then
+            if [ -w /proc/sys/net/ipv6/conf/"${2}"/disable_ipv6 ]; then
+                echo 0 > /proc/sys/net/ipv6/conf/"${2}"/disable_ipv6
+            fi
+            if [ -w /proc/sys/net/ipv6/conf/"${2}"/addr_gen_mode ]; then
+                echo 0 > /proc/sys/net/ipv6/conf/"${2}"/addr_gen_mode
+            fi
+        fi
+        ignore_router_advertisements "${2}"
     fi
     for i in $(seq ${num_cvd_accounts}); do
         tap="$(printf ${3}-%02d $i)"
@@ -280,15 +491,8 @@ create_bridged_interfaces() {
         netmask="/24"
         network="${1}.0${netmask}"
         dhcp_range="${1}.2,${1}.255"
-        ipv6_prefix="${4}"
-        ipv6_prefix_length="${5}"
         ip addr add "${gateway}${netmask}" broadcast + dev "${2}"
-        if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
-            ip -6 addr add "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${2}"
-        fi
-        start_dnsmasq \
-          "${2}" "${gateway}" "${dhcp_range}" \
-          "${ipv6_prefix}" "${ipv6_prefix_length}"
+        start_dnsmasq "${2}" "${gateway}" "${dhcp_range}"
         manage_nft_rule add masq "br-${2}" "ip saddr ${network} masquerade"
     fi
 }
@@ -297,20 +501,13 @@ create_bridged_interfaces() {
 # $1 = ip address base ("a.b.c")
 # $2 = bridge interface name
 # $3 = tap base name
-# $4 = IPv6 prefix ("a:b::")
-# $5 = IPv6 prefix length
 destroy_bridged_interfaces() {
     if [ "${create_bridges}" = "1" ]; then
         gateway="${1}.1"
         netmask="/24"
         network="${1}.0${netmask}"
-        ipv6_prefix="${4}"
-        ipv6_prefix_length="${5}"
         manage_nft_rule delete masq "br-${2}"
         stop_dnsmasq "${2}"
-        if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
-            ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${2}"
-        fi
         ip addr del "${gateway}${netmask}" dev "${2}"
     fi
     for i in $(seq ${num_cvd_accounts}); do
@@ -333,6 +530,235 @@ destroy_bridged_interfaces() {
     fi
 }
 
+# Returns success if the host has IPv6 enabled.
+ipv6_enabled() {
+    [ -d /proc/sys/net/ipv6 ] &&
+      [ "$(cat /proc/sys/net/ipv6/conf/all/disable_ipv6)" = "0" ]
+}
+
+# Enable IPv6 forwarding while preserving kernel Router Advertisement
+# acceptance on host interfaces. Setting net.ipv6.conf.all.forwarding=1 sets
+# forwarding=1 on all interfaces and calls rt6_purge_dflt_routers(), which
+# deletes kernel RA default routes (RTF_ADDRCONF) on any interface where
+# accept_ra != 2. Promote accept_ra to 2 on default, on any non-Cuttlefish
+# interface with accept_ra=1, and on any interface holding an RTF_ADDRCONF
+# default route in /proc/net/ipv6_route before enabling all/forwarding.
+enable_ipv6_forwarding() {
+    if [ ! -d /proc/sys/net/ipv6/conf ]; then
+        return 0
+    fi
+    ra_ifaces=""
+    if [ -r /proc/net/ipv6_route ]; then
+        ra_ifaces="$(awk '
+            $1 == "00000000000000000000000000000000" && $2 == "00" {
+                flags = substr($9, length($9) - 4, 1)
+                if (flags ~ /[4567cdefCDEF]/) print $10
+            }
+        ' /proc/net/ipv6_route)"
+    fi
+    for conf_dir in /proc/sys/net/ipv6/conf/*; do
+        [ -d "${conf_dir}" ] || continue
+        ifname="${conf_dir##*/}"
+        case "${ifname}" in
+            all|lo|cvd-*) continue ;;
+        esac
+        accept_ra_file="${conf_dir}/accept_ra"
+        [ -r "${accept_ra_file}" ] || continue
+        need_hybrid=0
+        if [ "$(cat "${accept_ra_file}")" = "1" ]; then
+            need_hybrid=1
+        else
+            for ra_if in ${ra_ifaces}; do
+                if [ "${ifname}" = "${ra_if}" ]; then
+                    need_hybrid=1
+                    break
+                fi
+            done
+        fi
+        if [ "${need_hybrid}" = "1" ] && [ "$(cat "${accept_ra_file}")" != "2" ]; then
+            if [ -w "${accept_ra_file}" ]; then
+                echo 2 > "${accept_ra_file}"
+            fi
+        fi
+    done
+    if [ "$(cat /proc/sys/net/ipv6/conf/all/forwarding 2>/dev/null)" != "1" ]; then
+        if ! echo 1 > /proc/sys/net/ipv6/conf/all/forwarding; then
+            echo "cuttlefish-host-resources: failed to enable net.ipv6.conf.all.forwarding; skipping IPv6 setup" >&2
+            return 1
+        fi
+    fi
+}
+
+# Prints the per-instance /64 prefix of a point-to-point tap:
+# "<base>:<instance in hex>::". Example: fd00:cf:21 and 10 give fd00:cf:21:a::
+# The base must be exactly three hextets ("a:b:c", no "::"), so the instance
+# number is the fourth hextet and every instance gets its own /64.
+# $1 = prefix base ("a:b:c")
+# $2 = instance number
+instance_ipv6_prefix() {
+    if ! echo "${1}" | grep -Eq '^[0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}){2}$'; then
+        echo "invalid IPv6 prefix base '${1}' (want three hextets, e.g. fd00:cf:21)" >&2
+        return 1
+    fi
+    printf '%s:%x::' "${1}" "${2}"
+}
+
+# Prints the /64 prefix of a point-to-point tap or routed network of an
+# instance. Private mode: instance_ipv6_prefix of the private base. Routed
+# mode: "<routed base>:<network><instance as 2 hex digits>::", for example
+# 2001:db8:cf00:210a:: for network 21 and instance 10.
+# $1 = private prefix base ("a:b:c")
+# $2 = routed network number (21 mobile, 23 OpenWrt WAN, 25 OpenWrt LAN)
+# $3 = instance number (1 to 128)
+tap_ipv6_prefix() {
+    if [ -n "${ipv6_routed_base}" ]; then
+        printf '%s:%s%02x::' "${ipv6_routed_base}" "${2}" "${3}"
+    else
+        instance_ipv6_prefix "${1}" "${3}"
+    fi
+}
+
+# Succeeds when the host has IPv6 egress for guest DNS, or when IPv6 DNS /
+# egress is explicitly overridden in /etc/default/cuttlefish-host-resources.
+# On a host with kernel IPv6 enabled (disable_ipv6=0) but no IPv6 default route,
+# advertising default external IPv6 DNS servers in RAs or RIL causes OpenWrt
+# dnsmasq and guest resolvers to send queries that blackhole at the host.
+host_has_ipv6_egress() {
+    case "${ipv6_egress:-}" in
+        1) return 0 ;;
+        0) return 1 ;;
+        "") ;;
+        *)
+            echo "cuttlefish-host-resources: invalid ipv6_egress '${ipv6_egress}' (want 0 or 1), auto-detecting from default route" >&2
+            ;;
+    esac
+    if [ -n "${dns6_servers_explicit}" ] || [ -n "${ipv6_routed_base}" ]; then
+        return 0
+    fi
+    [ -n "$(ip -6 route show default 2>/dev/null)" ]
+}
+
+# Set up IPv6 on the interfaces created for IPv4: gateway address ::1 on each
+# segment, router advertisements where guests use SLAAC, NAT66 and RA guard.
+# Runs after all IPv4 setup, so a failure here cannot affect IPv4. Applies to
+# the static resources only; cvdalloc-managed interfaces are not touched.
+start_ipv6() {
+    # The marker is still present when an earlier start was not followed by
+    # stop_ipv6, for example when the package was replaced by a version that
+    # does not set up IPv6 and then installed again. Remove the leftovers
+    # first, so router advertisement daemons and nftables rules are not
+    # duplicated.
+    stop_ipv6
+    if ! ipv6_enabled; then
+        return
+    fi
+    if [ "${allocate_static_resources}" != "1" ]; then
+        return
+    fi
+    if ! enable_ipv6_forwarding; then
+        return 0
+    fi
+    touch "${CUTTLEFISH_IPV6_MARKER}"
+    if host_has_ipv6_egress; then
+        effective_dns6_servers="${dns6_servers}"
+        printf '%s\n' "${effective_dns6_servers}" > "${CUTTLEFISH_IPV6_EGRESS}"
+    else
+        effective_dns6_servers=""
+        rm -f "${CUTTLEFISH_IPV6_EGRESS}"
+        echo "cuttlefish-host-resources: no IPv6 default route on host; omitting IPv6 DNS servers (${dns6_servers}) from RA and RIL while keeping ULA addressing" >&2
+    fi
+
+    if [ "${create_bridges}" = "1" ]; then
+        for br in "${ethernet_bridge_interface}" "${wifi_bridge_interface}"; do
+            if [ -w /proc/sys/net/ipv6/conf/"${br}"/disable_ipv6 ]; then
+                echo 0 > /proc/sys/net/ipv6/conf/"${br}"/disable_ipv6
+            fi
+        done
+        # Ethernet (default fd00:cf:24::/64) on cvd-ebr, shared by the cvd-etap-XX guests
+        ip -6 addr add "${ethernet_ipv6_prefix}1/${ethernet_ipv6_prefix_length}" dev "${ethernet_bridge_interface}"
+        start_ra_dnsmasq "${ethernet_bridge_interface}" "${ethernet_ipv6_prefix}" "${ethernet_ipv6_prefix_length}"
+        # Legacy wireless (default fd00:cf:22::/64) on cvd-wbr, shared by the cvd-wtap-XX guests
+        ip -6 addr add "${wifi_ipv6_prefix}1/${wifi_ipv6_prefix_length}" dev "${wifi_bridge_interface}"
+        start_ra_dnsmasq "${wifi_bridge_interface}" "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
+    fi
+
+    for i in $(seq "${num_cvd_accounts}"); do
+        if [ "$i" -lt 129 ]; then
+            # Mobile Network: fd00:cf:21:<i>::/64 (routed: P:21<i>::/64) on
+            # cvd-mtap-XX. No RA: the guest gets its IPv6 address from the
+            # modem simulator (RIL).
+            tap="$(printf cvd-mtap-%02d "$i")"
+            if [ -w /proc/sys/net/ipv6/conf/"${tap}"/disable_ipv6 ]; then
+                echo 0 > /proc/sys/net/ipv6/conf/"${tap}"/disable_ipv6
+            fi
+            if prefix="$(tap_ipv6_prefix "${mobile_ipv6_prefix_base}" 21 "$i")"; then
+                ip -6 addr add "${prefix}1/64" dev "${tap}"
+            fi
+
+            # Wireless Network (OpenWrt WAN): fd00:cf:23:<i>::/64 (routed:
+            # P:23<i>::/64) on cvd-wifiap-XX
+            tap="$(printf cvd-wifiap-%02d "$i")"
+            if [ -w /proc/sys/net/ipv6/conf/"${tap}"/disable_ipv6 ]; then
+                echo 0 > /proc/sys/net/ipv6/conf/"${tap}"/disable_ipv6
+            fi
+            if prefix="$(tap_ipv6_prefix "${wifiap_ipv6_prefix_base}" 23 "$i")"; then
+                ip -6 addr add "${prefix}1/64" dev "${tap}"
+                start_ra_dnsmasq "${tap}" "${prefix}" 64
+                if [ -n "${ipv6_routed_base}" ]; then
+                    # OpenWrt Wi-Fi LAN P:25<i>::/64, routed through the
+                    # OpenWrt WAN address P:23<i>::2.
+                    lan_prefix="$(tap_ipv6_prefix "" 25 "$i")/64"
+                    ip -6 route add "${lan_prefix}" via "${prefix}2" dev "${tap}" &&
+                      echo "${lan_prefix} ${tap}" >> "${CUTTLEFISH_IPV6_ROUTES}"
+                fi
+            fi
+        fi
+    done
+
+    setup_ipv6_nftables
+}
+
+# Remove what start_ipv6 set up, including global/ULA IPv6 addresses when
+# stop_ipv6 runs before a second start while the interfaces still exist.
+stop_ipv6() {
+    if [ -f "${CUTTLEFISH_IPV6_MARKER}" ]; then
+        delete_ipv6_nftables
+        if [ -f "${CUTTLEFISH_IPV6_ROUTES}" ]; then
+            while read -r route_prefix route_dev; do
+                if [ -n "$(ip -6 route show "${route_prefix}" dev "${route_dev}" 2>/dev/null)" ]; then
+                    ip -6 route del "${route_prefix}" dev "${route_dev}"
+                fi
+            done < "${CUTTLEFISH_IPV6_ROUTES}"
+            rm -f "${CUTTLEFISH_IPV6_ROUTES}"
+        fi
+        for pidfile in /var/run/cuttlefish-dnsmasq-ra-*.pid; do
+            [ -f "${pidfile}" ] || continue
+            ra_if="${pidfile#/var/run/cuttlefish-dnsmasq-ra-}"
+            stop_ra_dnsmasq "${ra_if%.pid}"
+        done
+        for i in $(seq "${num_cvd_accounts}"); do
+            if [ "$i" -lt 129 ]; then
+                stop_ra_dnsmasq "$(printf cvd-wifiap-%02d "$i")"
+            fi
+        done
+        if [ "${create_bridges}" = "1" ]; then
+            stop_ra_dnsmasq "${wifi_bridge_interface}"
+            stop_ra_dnsmasq "${ethernet_bridge_interface}"
+            if ip link show "${wifi_bridge_interface}" >/dev/null 2>&1; then
+                ip -6 addr flush dev "${wifi_bridge_interface}" scope global
+            fi
+            if ip link show "${ethernet_bridge_interface}" >/dev/null 2>&1; then
+                ip -6 addr flush dev "${ethernet_bridge_interface}" scope global
+            fi
+        fi
+        for tap in $(ip -o link show | awk -F': ' '{print $2}' | sed 's/@.*//' | grep -E '^cvd-(mtap|wifiap)-'); do
+            ip -6 addr flush dev "${tap}" scope global
+        done
+        rm -f "${CUTTLEFISH_IPV6_EGRESS}"
+        rm "${CUTTLEFISH_IPV6_MARKER}"
+    fi
+}
+
 create_static_interfaces() {
     if [ "${allocate_static_resources}" != "1" ]; then
         return
@@ -341,8 +767,7 @@ create_static_interfaces() {
     # Ethernet
     # 192.168.98.X for cvd-ebr and cvd-etap-XX
     create_bridged_interfaces \
-      192.168.98 "${ethernet_bridge_interface}" cvd-etap \
-      "${ethernet_ipv6_prefix}" "${ethernet_ipv6_prefix_length}"
+      192.168.98 "${ethernet_bridge_interface}" cvd-etap
 
     # Mobile Network
     # 192.168.97.X from cvd-mtap-01 to cvd-mtap-64
@@ -364,8 +789,7 @@ create_static_interfaces() {
     # 192.168.94.X from cvd-wifiap-01 to cvd-wifiap-64
     # 192.168.95.X from cvd-wifiap-65 to cvd-wifiap-128
     create_bridged_interfaces \
-      192.168.96 "${wifi_bridge_interface}" cvd-wtap \
-      "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
+      192.168.96 "${wifi_bridge_interface}" cvd-wtap
     for i in $(seq ${num_cvd_accounts}); do
         tap="$(printf cvd-wifiap-%02d $i)"
         if [ $i -lt 65 ]; then
@@ -377,16 +801,8 @@ create_static_interfaces() {
 }
 
 start() {
-    # Enable ip forwarding
-    echo 1 > /proc/sys/net/ipv4/ip_forward
-    echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
-
-    setup_nftables
-
-    create_static_interfaces
-
     # When running inside a privileged container, set the ownership and access
-    # of these device nodes.
+    # of these device nodes before any conditional network return.
     if test -f /.dockerenv; then
         chown root:kvm /dev/kvm
         chown root:cvdnetwork /dev/vhost-net
@@ -396,11 +812,34 @@ start() {
         chmod ug+rw /dev/vhost-vsock
     fi
 
+    if [ "${allocate_static_resources}" = "1" ]; then
+        # Enable IPv4 forwarding for static bridge/TAP routing
+        if [ "$(cat /proc/sys/net/ipv4/ip_forward 2>/dev/null)" != "1" ]; then
+            if ! echo 1 > /proc/sys/net/ipv4/ip_forward; then
+                echo "cuttlefish-host-resources: failed to enable net.ipv4.ip_forward" >&2
+                return 1
+            fi
+        fi
+    fi
+
+    setup_nftables
+
+    create_static_interfaces
+
+    # IPv6, after IPv4 is fully set up
+    if ipv6_enabled; then
+        start_ipv6
+    else
+        echo "IPv6 is disabled on this host, skipping IPv6 setup"
+    fi
+
     # Try to preload the Nvidia modeset kernel module.
     /usr/bin/nvidia-modprobe --modeset || /bin/true
 }
 
 stop() {
+    stop_ipv6
+
     if [ "${allocate_static_resources}" != "1" ]; then
         delete_nftables
         return
@@ -408,8 +847,7 @@ stop() {
 
     # Ethernet
     destroy_bridged_interfaces \
-      192.168.98 "${ethernet_bridge_interface}" cvd-etap \
-      "${ethernet_ipv6_prefix}" "${ethernet_ipv6_prefix_length}"
+      192.168.98 "${ethernet_bridge_interface}" cvd-etap
 
     # Mobile Network
     for i in $(seq ${num_cvd_accounts}); do
@@ -423,8 +861,7 @@ stop() {
 
     # Wireless Network
     destroy_bridged_interfaces \
-      192.168.96 "${wifi_bridge_interface}" cvd-wtap \
-      "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
+      192.168.96 "${wifi_bridge_interface}" cvd-wtap
     for i in $(seq ${num_cvd_accounts}); do
         tap="$(printf cvd-wifiap-%02d $i)"
         if [ $i -lt 65 ]; then
@@ -443,30 +880,37 @@ usage() {
 if test $# != 1; then
     usage
 fi
+RETVAL=0
 case "$1" in
     --help)
         usage 0
         ;;
     start|stop)
         "$1"
+        RETVAL=$?
         ;;
     restart)
         stop && start
+        RETVAL=$?
         ;;
     condrestart|try-restart)
         stop && start
+        RETVAL=$?
         ;;
     reload|force-reload)
         # Nothing to do; we reread configuration on each invocation
         ;;
     status)
         rh_status
+        RETVAL=$?
         ;;
     shutdown)
         stop
+        RETVAL=$?
         ;;
     *)
         usage
+        RETVAL=$?
         ;;
 esac
 exit $RETVAL

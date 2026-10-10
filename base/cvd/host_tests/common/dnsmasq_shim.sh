@@ -34,6 +34,6 @@ setsid /bin/sh -c '
 	child=$!
 	wait "$child"
 	cleanup
-' dnsmasq-shim "$pidfile" </dev/null >/dev/null 2>&1 &
+' dnsmasq-shim "$pidfile" "$@" </dev/null >/dev/null 2>&1 &
 
 exit 0

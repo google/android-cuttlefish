@@ -15,10 +15,47 @@
  */
 #pragma once
 
+#include <netinet/in.h>
+#include <stdint.h>
+
+#include <optional>
+#include <string>
+#include <string_view>
+
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+
+// IPv6 parameters the modem simulator hands to the guest RIL for the mobile
+// network.
+struct MobileIpv6Config {
+  std::string ipaddr;
+  std::string gateway;
+  uint8_t prefixlen = 0;
+};
+
+// Derives the guest's IPv6 parameters from the host's address on a routed
+// mobile tap, the same way the IPv4 parameters are derived: the host address
+// is the gateway and the guest gets the lowest other address in the prefix
+// (prefix::2 when the host has prefix::1). Returns nullopt when the prefix has
+// no room for a guest address.
+std::optional<MobileIpv6Config> MobileIpv6ConfigFromHostAddress(
+    const in6_addr& host_addr, const in6_addr& netmask);
+
+// Parses the dns6_servers setting from /etc/default/cuttlefish-host-resources
+// content, validating each comma-separated IPv6 address with inet_pton.
+// Falls back to "2001:4860:4860::8888,2001:4860:4860::8844" when unset or
+// invalid.
+std::string ParseDns6ServersFromDefaults(std::string_view contents);
+
+// Resolves the IPv6 DNS server list for the mobile network given the contents
+// of /etc/default/cuttlefish-host-resources and whether the host has IPv6
+// egress (/run/cuttlefish/ipv6-egress). When the host has no IPv6 egress and
+// dns6_servers is not explicitly configured in defaults, returns an empty
+// string so RIL does not advertise unreachable IPv6 DNS servers.
+std::string ResolveMobileIpv6Dns(std::string_view defaults_contents,
+                                 bool has_ipv6_egress);
 
 Result<void> ConfigureNetworkSettings(
     const std::string& ril_dns_arg, const CuttlefishConfig& config,
