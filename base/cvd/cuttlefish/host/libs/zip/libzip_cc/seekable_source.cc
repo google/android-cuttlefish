@@ -89,7 +89,7 @@ class ZipSourceAsReaderSeekerImpl : public ReaderSeeker {
                               SeekingZipSourceReader reader)
       : source_(std::move(source)), reader_(std::move(reader)) {}
 
-  Result<size_t> Read(void* buf, size_t size) override {
+  Result<uint64_t> Read(void* buf, uint64_t size) override {
     return CF_EXPECT(reader_.Read(buf, size));
   }
 

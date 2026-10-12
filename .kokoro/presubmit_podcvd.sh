@@ -55,5 +55,5 @@ sudo -u testrunner "${REPO_DIR}/container/image/image-builder.sh" -c podman -m d
 sudo chmod -R g+w /tmpfs/src
 
 # Run as different user without sudo privileges
-sudo -u testrunner CREDENTIAL_SOURCE=gce "${TOOL_DIR}/testutils/runcvde2etests.sh" \
+sudo -u testrunner CREDENTIAL_SOURCE=gce "${TOOL_DIR}/testutils/runpodcvde2etests.sh" \
     ${ANDROID_CUTTLEFISH_KOKORO_BUILD_SCRIPT_ARGS}

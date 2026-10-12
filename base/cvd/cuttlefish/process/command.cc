@@ -209,13 +209,7 @@ Command Command::RedirectStdIO(Command::StdIoChannel subprocess_channel,
 }
 
 Command& Command::SetWorkingDirectory(const std::string& path) & {
-#ifdef __linux__
-  SharedFD fd = Fd::Open(path, O_RDONLY | O_PATH | O_DIRECTORY).value_or(Fd());
-#elif defined(__APPLE__)
   SharedFD fd = Fd::Open(path, O_RDONLY | O_DIRECTORY).value_or(Fd());
-#else
-#error "Unsupported operating system"
-#endif
   CHECK(fd->IsOpen()) << "Could not open \"" << path
                       << "\" dir fd: " << fd->StrError();
   return SetWorkingDirectory(fd);

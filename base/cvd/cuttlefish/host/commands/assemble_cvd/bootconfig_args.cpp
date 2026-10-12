@@ -380,6 +380,11 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     }
   }
 
+  if (gpu_mode == GpuMode::GuestLavapipe || gpu_mode == GpuMode::Venus) {
+    bootconfig_args["androidboot.hardware.guest_renderengine_backend"] =
+        "skiavkthreaded";
+  }
+
   if (instance.vhal_proxy_server_port()) {
     bootconfig_args["androidboot.vhal_proxy_server_port"] =
         std::to_string(instance.vhal_proxy_server_port());

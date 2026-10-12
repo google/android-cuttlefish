@@ -86,8 +86,7 @@ Result<void> RunStopCvdAll(bool clear_runtime_dirs) {
 }
 
 static bool IsStillRunCvd(const pid_t pid) {
-  std::string pid_dir = fmt::format("/proc/{}", pid);
-  if (!FileExists(pid_dir)) {
+  if (pid <= 0 || kill(pid, 0) != 0) {
     return false;
   }
   auto owner_result = OwnerUid(pid);

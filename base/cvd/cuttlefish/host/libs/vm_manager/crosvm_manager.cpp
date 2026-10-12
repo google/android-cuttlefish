@@ -164,7 +164,6 @@ CrosvmManager::ConfigureGraphics(
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", "0"},
         {"androidboot.hardware.gralloc", "minigbm"},
-        {"androidboot.hardware.guest_renderengine_backend", "skiavkthreaded"},
         {"androidboot.hardware.hwcomposer", instance.hwcomposer()},
         {"androidboot.hardware.hwcomposer.mode", "client"},
         {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},

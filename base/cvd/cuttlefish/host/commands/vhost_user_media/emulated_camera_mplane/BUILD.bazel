@@ -14,6 +14,7 @@ alias(
 rust_binary(
     name = "emulated_camera_mplane_binary",
     srcs = [
+        "src/capture_channel.rs",
         "src/device.rs",
         "src/main.rs",
         "src/pattern/julia_set.rs",

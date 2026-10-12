@@ -25,6 +25,7 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/link_or_copy.h"
 #include "cuttlefish/host/libs/web/android_build.h"
@@ -121,6 +122,12 @@ Result<std::string> CachingBuildApi::DownloadFile(
     }
   } else {
     CF_EXPECT(build_api_.DownloadFile(build, paths.build_cache, artifact_name));
+  }
+  if (DirectoryExists(paths.cache_artifact)) {
+    // Downloaded already extracted, e.g. by CAS with `prefer-uncompressed`.
+    CF_EXPECT(LinkOrCopyDirectoryContentsRecursively(paths.cache_artifact,
+                                                     paths.target_artifact));
+    return paths.target_artifact;
   }
   return CF_EXPECT(LinkOrCopy(paths.cache_artifact, paths.target_artifact,
                               kOverwriteExistingFile));
