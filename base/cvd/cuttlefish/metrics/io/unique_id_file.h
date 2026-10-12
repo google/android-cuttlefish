@@ -17,14 +17,15 @@
 #pragma once
 
 #include <string>
-#include <string_view>
 
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 Result<std::string> ReadSessionIdFile(const std::string& metrics_directory);
-
 Result<void> GenerateSessionIdFile(const std::string& metrics_directory);
+
+Result<std::string> ReadUserIdFile();
+Result<void> GenerateUserIdFile();
 
 }  // namespace cuttlefish
