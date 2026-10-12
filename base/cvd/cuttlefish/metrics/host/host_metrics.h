@@ -37,7 +37,7 @@ struct HostMetrics {
   HostInfo os;
   Invoker invoker;
   Environment environment;
-  std::string username;
+  std::string user_id;
 };
 
 Result<HostMetrics> GetHostMetrics();
