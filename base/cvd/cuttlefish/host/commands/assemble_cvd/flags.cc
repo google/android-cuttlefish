@@ -68,6 +68,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/extra_kernel_cmdline.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/gpu_context_types.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/gpu_mode.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
@@ -601,8 +602,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_vhost_user_mode));
   std::vector<std::string> gpu_renderer_features_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_renderer_features));
-  std::vector<std::string> gpu_context_types_vec =
-      CF_EXPECT(GET_FLAG_STR_VALUE(gpu_context_types));
+  GpuContextTypesFlag gpu_context_types_values =
+      CF_EXPECT(GpuContextTypesFlag::FromGlobalGflags());
   std::vector<std::string> guest_hwui_renderer_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(guest_hwui_renderer));
   std::vector<std::string> guest_renderer_preload_vec =
@@ -1170,10 +1171,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_has_vulkan_venus_apex(
         guest_configs[instance_index].has_vulkan_venus_apex);
 
-    const GpuMode gpu_mode = CF_EXPECT(SelectGpuMode(
-        gpu_mode_values.ForIndex(instance_index), vm_manager_flag.Mode(),
-        guest_configs[instance_index], gpu_context_types_vec[instance_index],
-        graphics_availability));
+    const GpuMode gpu_mode = CF_EXPECT(
+        SelectGpuMode(gpu_mode_values.ForIndex(instance_index),
+                      vm_manager_flag.Mode(), guest_configs[instance_index],
+                      gpu_context_types_values.ForIndex(instance_index),
+                      graphics_availability));
     instance.set_gpu_mode(gpu_mode);
 
 #ifdef __APPLE__
@@ -1239,7 +1241,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_enable_gpu_udmabuf(enable_gpu_udmabuf_vec[instance_index]);
 
-    instance.set_gpu_context_types(gpu_context_types_vec[instance_index]);
+    instance.set_gpu_context_types(
+        gpu_context_types_values.ForIndex(instance_index));
     instance.set_guest_vulkan_driver(guest_vulkan_driver_vec[instance_index]);
 
     instance.set_guest_uses_bgra_framebuffers(

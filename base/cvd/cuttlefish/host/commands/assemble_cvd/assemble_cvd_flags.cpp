@@ -74,11 +74,6 @@ DEFINE_vec(
     "be a semicolon separated list of \"<feature name>:[enabled|disabled]\""
     "pairs.");
 
-DEFINE_vec(gpu_context_types, CF_DEFAULTS_GPU_CONTEXT_TYPES,
-           "A colon separated list of virtio-gpu context types.  Only valid "
-           "with --gpu_mode=custom."
-           " For example \"--gpu_context_types=cross_domain:gfxstream\"");
-
 DEFINE_vec(
     guest_hwui_renderer, CF_DEFAULTS_GUEST_HWUI_RENDERER,
     "The default renderer that HWUI should use, one of {skiagl, skiavk}.");

@@ -20,17 +20,21 @@
 
 #include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/metrics/guest/parsed_flags.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 struct FlagMetrics {
+  bool bootloader_specified = false;
+  bool boot_image_specified = false;
   int cpus = 0;
   bool daemon = false;
   DataImagePolicy data_policy = DataImagePolicy::Unknown;
   std::string extra_kernel_cmdline;
-  GpuMode gpu_mode = GpuMode::Auto;
+  GpuMode gpu_mode_requested = GpuMode::Auto;
+  GpuMode gpu_mode_used = GpuMode::Auto;
   bool guest_enforce_security = false;
   int memory_mb = 0;
   bool qemu_binary_specified = false;
@@ -38,6 +42,7 @@ struct FlagMetrics {
   bool super_image_specified = false;
   bool system_image_dir_specified = false;
   bool vendor_boot_image_specified = false;
+  VmmMode vmm_mode = VmmMode::kUnknown;
 };
 
 Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,

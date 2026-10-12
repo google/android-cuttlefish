@@ -24,12 +24,18 @@ namespace cuttlefish {
 Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
                                    const int guest_index) {
   return FlagMetrics{
+      .bootloader_specified =
+          !parsed_flags.bootloader.IsDefaultForIndex(guest_index),
+      .boot_image_specified =
+          !parsed_flags.boot_image.IsDefaultForIndex(guest_index),
       .cpus = parsed_flags.cpus.ForIndex(guest_index),
       .daemon = parsed_flags.daemon.ForIndex(guest_index),
       .data_policy = parsed_flags.data_policy.ForIndex(guest_index),
       // the same extra_kernel_cmdline value is used for all guests
       .extra_kernel_cmdline = parsed_flags.extra_kernel_cmdline.ForIndex(0),
-      .gpu_mode = parsed_flags.gpu_mode.ForIndex(guest_index),
+      .gpu_mode_requested =
+          parsed_flags.gpu_mode_requested.ForIndex(guest_index),
+      .gpu_mode_used = parsed_flags.gpu_mode_used[guest_index],
       .guest_enforce_security =
           parsed_flags.guest_enforce_security.ForIndex(guest_index),
       .memory_mb = parsed_flags.memory_mb.ForIndex(guest_index),
@@ -42,6 +48,7 @@ Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
       .system_image_dir_specified = !parsed_flags.system_image_dir.IsDefault(),
       .vendor_boot_image_specified =
           !parsed_flags.vendor_boot.IsDefaultForIndex(guest_index),
+      .vmm_mode = parsed_flags.vm_manager.Mode(),
   };
 }
 
