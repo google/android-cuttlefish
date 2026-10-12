@@ -490,6 +490,12 @@ class CuttlefishConfig {
     std::string ril_gateway() const;
     std::string ril_broadcast() const;
     uint8_t ril_prefixlen() const;
+    // Mobile network IPv6 info (RIL). Empty when IPv6 is not provided over
+    // the RIL for this instance.
+    std::string ril_ipv6_ipaddr() const;
+    std::string ril_ipv6_gateway() const;
+    std::string ril_ipv6_dns() const;
+    uint8_t ril_ipv6_prefixlen() const;
 
     std::string webrtc_assets_dir() const;
 
@@ -749,6 +755,10 @@ class CuttlefishConfig {
     void set_ril_gateway(const std::string& ril_gateway);
     void set_ril_broadcast(const std::string& ril_broadcast);
     void set_ril_prefixlen(uint8_t ril_prefixlen);
+    void set_ril_ipv6_ipaddr(const std::string& ril_ipv6_ipaddr);
+    void set_ril_ipv6_gateway(const std::string& ril_ipv6_gateway);
+    void set_ril_ipv6_dns(const std::string& ril_ipv6_dns);
+    void set_ril_ipv6_prefixlen(uint8_t ril_ipv6_prefixlen);
 
     // Configuration flags for a minimal device
     void set_enable_minimal_mode(bool enable_minimal_mode);

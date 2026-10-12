@@ -61,6 +61,28 @@ std::string DeviceConfig::ril_dns() {
   return instance.ril_dns();
 }
 
+std::string DeviceConfig::ril_ipv6_address_and_prefix() {
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto instance = config->ForDefaultInstance();
+  if (instance.ril_ipv6_ipaddr().empty()) {
+    return "";
+  }
+  return instance.ril_ipv6_ipaddr() + "/" +
+         std::to_string(instance.ril_ipv6_prefixlen());
+}
+
+std::string DeviceConfig::ril_ipv6_gateway() {
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto instance = config->ForDefaultInstance();
+  return instance.ril_ipv6_gateway();
+}
+
+std::string DeviceConfig::ril_ipv6_dns() {
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto instance = config->ForDefaultInstance();
+  return instance.ril_ipv6_dns();
+}
+
 std::ifstream DeviceConfig::open_ifstream_crossplat(const char* filename) {
   return std::ifstream(filename);
 }

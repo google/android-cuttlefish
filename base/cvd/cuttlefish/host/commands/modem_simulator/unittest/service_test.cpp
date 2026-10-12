@@ -15,11 +15,12 @@
 
 #include <gtest/gtest.h>
 #include <stdlib.h>
-#include "absl/log/log.h"
-#include "absl/strings/str_replace.h"
 
 #include <filesystem>
 #include <fstream>
+
+#include "absl/log/log.h"
+#include "absl/strings/str_replace.h"
 
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -47,8 +48,9 @@ class ModemServiceTest : public ::testing::Test {
       for (int i = 0; i < 1; i++) {
         instance_nums.push_back(cuttlefish::GetInstance() + i);
       }
-      for (const auto &num : instance_nums) {
-        auto instance = tmp_config_obj.ForInstance(num);  // Trigger creation in map
+      for (const auto& num : instance_nums) {
+        auto instance =
+            tmp_config_obj.ForInstance(num);  // Trigger creation in map
         instance.set_ril_dns(CF_DEFAULTS_RIL_DNS);
       }
 
@@ -61,7 +63,8 @@ class ModemServiceTest : public ::testing::Test {
         }
         std::string icfilename =
             instance.PerInstancePath("/iccprofile_for_sim0.xml");
-        std::ofstream offile = modem::DeviceConfig::open_ofstream_crossplat(icfilename.c_str(), std::ofstream::out);
+        std::ofstream offile = modem::DeviceConfig::open_ofstream_crossplat(
+            icfilename.c_str(), std::ofstream::out);
         offile << std::string(myiccfile);
         offile.close();
         fs::copy_file(instance.PerInstancePath("/cuttlefish_config.json"),
@@ -136,16 +139,17 @@ class ModemServiceTest : public ::testing::Test {
           auto command = commands.substr(pos, r_pos - pos);
           if (!command.empty()) {  // "\r\r" ?
             VLOG(0) << "AT< " << command;
-            if (IsFinalResponseSuccess(command) || IsFinalResponseError(command)) {
+            if (IsFinalResponseSuccess(command) ||
+                IsFinalResponseError(command)) {
               response.push_back(command);
               return;
             } else if (IsIntermediateResponse(command)) {
               response.push_back(command);
             } else {
-              ; // Ignore unsolicited command
+              ;  // Ignore unsolicited command
             }
           }
-          pos = r_pos + 1;  // skip '\r'
+          pos = r_pos + 1;                     // skip '\r'
         } else if (pos < commands.length()) {  // incomplete command
           incomplete_command = commands.substr(pos);
           VLOG(1) << "incomplete command: " << incomplete_command;
@@ -207,21 +211,19 @@ class ModemServiceTest : public ::testing::Test {
     return (response[0].compare(0, expect.size(), expect) == 0);
   }
 
-  const std::vector<std::string> kFinalResponseSuccess = {"OK", "CONNECT", "> "};
+  const std::vector<std::string> kFinalResponseSuccess = {"OK", "CONNECT",
+                                                          "> "};
   const std::vector<std::string> kFinalResponseError = {
-      "ERROR",
-      "+CMS ERROR:",
-      "+CME ERROR:",
-      "NO CARRIER", /* sometimes! */
-      "NO ANSWER",
-      "NO DIALTONE",
+      "ERROR",     "+CMS ERROR:", "+CME ERROR:", "NO CARRIER", /* sometimes! */
+      "NO ANSWER", "NO DIALTONE",
   };
 
   static Client* ril_side_;
   static Client* modem_side_;
   static ModemSimulator* modem_simulator_;
 
-  // For distinguishing the response from command response or unsolicited command
+  // For distinguishing the response from command response or unsolicited
+  // command
   std::string command_prefix_;
 };
 
@@ -231,8 +233,7 @@ Client* ModemServiceTest::modem_side_ = nullptr;
 
 /* Sim Service Test */
 TEST_F(ModemServiceTest, GetIccCardStatus) {
-  const char *expects[]  = {"+CPIN: READY",
-                            "OK"};
+  const char* expects[] = {"+CPIN: READY", "OK"};
 
   std::string command = "AT+CPIN?";
   std::vector<std::string> response;
@@ -244,13 +245,18 @@ TEST_F(ModemServiceTest, GetIccCardStatus) {
 }
 
 TEST_F(ModemServiceTest, ChangeOrEnterPIN) {
-  std::vector<std::string> commands = {"AT+CPIN=1234,0000",
-                                       "AT+CPIN=1111,2222",};
-  std::vector<std::string> expects  = {"OK",
-                                       "+CME ERROR: 16",};
+  std::vector<std::string> commands = {
+      "AT+CPIN=1234,0000",
+      "AT+CPIN=1111,2222",
+  };
+  std::vector<std::string> expects = {
+      "OK",
+      "+CME ERROR: 16",
+  };
   std::vector<std::string> response;
   auto expects_iter = expects.begin();
-  for (auto iter = commands.begin(); iter != commands.end(); ++iter, ++expects_iter) {
+  for (auto iter = commands.begin(); iter != commands.end();
+       ++iter, ++expects_iter) {
     SendCommand(*iter);
     ReadCommandResponse(response);
     ASSERT_STREQ(response[0].c_str(), (*expects_iter).c_str());
@@ -262,13 +268,14 @@ TEST_F(ModemServiceTest, SIM_IO) {
   std::vector<std::string> commands = {"AT+CRSM=192,12258,0,0,15",
                                        "AT+CRSM=192,28436,0,0,15",
                                        "AT+CRSM=220,28618,1,4,5,0000000000"};
-  std::vector<std::string> expects  = {"+CRSM: 144,0,62178202412183022FE28A01058B032F06038002000A880110",
-                                       "+CRSM: 106,130",
-                                       "+CRSM: 144,0"};
+  std::vector<std::string> expects = {
+      "+CRSM: 144,0,62178202412183022FE28A01058B032F06038002000A880110",
+      "+CRSM: 106,130", "+CRSM: 144,0"};
 
   std::vector<std::string> response;
   auto expects_iter = expects.begin();
-  for (auto iter = commands.begin(); iter != commands.end(); ++iter, ++expects_iter) {
+  for (auto iter = commands.begin(); iter != commands.end();
+       ++iter, ++expects_iter) {
     SendCommand(*iter);
     ReadCommandResponse(response);
     ASSERT_EQ(response.size(), 2);
@@ -283,8 +290,8 @@ TEST_F(ModemServiceTest, GetIMSI) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  const char *expect = "460110031689666";
-  ASSERT_STREQ(response[0].c_str(),expect);
+  const char* expect = "460110031689666";
+  ASSERT_STREQ(response[0].c_str(), expect);
 }
 
 TEST_F(ModemServiceTest, GetIccId) {
@@ -293,26 +300,23 @@ TEST_F(ModemServiceTest, GetIccId) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  const char *expect = "89860318640220133897";
-  ASSERT_STREQ(response[0].c_str(),expect);
+  const char* expect = "89860318640220133897";
+  ASSERT_STREQ(response[0].c_str(), expect);
 }
 
 TEST_F(ModemServiceTest, FacilityLock) {
-  std::vector<std::string> commands =
-        { "AT+CLCK=\"FD\",2,"",7",
-          "AT+CLCK=\"SC\",2,"",7",
-          "AT+CLCK=\"SC\",1,\"1234\",7",
-          "AT+CLCK=\"SC\",1,\"023000\",7"
-  };
-  std::vector<std::string> expects =
-        { "+CLCK: 0",
-          "+CLCK: 0",
-          "+CME ERROR: 16",
-          "+CME ERROR: 16"
-  };
+  std::vector<std::string> commands = {
+      "AT+CLCK=\"FD\",2,"
+      ",7",
+      "AT+CLCK=\"SC\",2,"
+      ",7",
+      "AT+CLCK=\"SC\",1,\"1234\",7", "AT+CLCK=\"SC\",1,\"023000\",7"};
+  std::vector<std::string> expects = {"+CLCK: 0", "+CLCK: 0", "+CME ERROR: 16",
+                                      "+CME ERROR: 16"};
   std::vector<std::string> response;
   auto expects_iter = expects.begin();
-  for (auto iter = commands.begin(); iter != commands.end(); ++iter, ++expects_iter) {
+  for (auto iter = commands.begin(); iter != commands.end();
+       ++iter, ++expects_iter) {
     SendCommand(*iter);
     ReadCommandResponse(response);
     ASSERT_STREQ(response[0].c_str(), (*expects_iter).c_str());
@@ -321,11 +325,11 @@ TEST_F(ModemServiceTest, FacilityLock) {
 }
 
 TEST_F(ModemServiceTest, OpenLogicalChannel) {
-  std::string command= "A000000063504B43532D3135";
+  std::string command = "A000000063504B43532D3135";
   int firstChannel = openLogicalChannel(command);
   ASSERT_EQ(firstChannel, 1);
 
-  command= "A000000063504B43532D3135";
+  command = "A000000063504B43532D3135";
   int secondChannel = openLogicalChannel(command);
   ASSERT_GE(secondChannel, 1);
 
@@ -334,7 +338,7 @@ TEST_F(ModemServiceTest, OpenLogicalChannel) {
 }
 
 TEST_F(ModemServiceTest, CloseLogicalChannel) {
-  std::string command= "A000000063504B43532D3135";
+  std::string command = "A000000063504B43532D3135";
   int channel = openLogicalChannel(command);
   ASSERT_EQ(channel, 1);
 
@@ -343,7 +347,7 @@ TEST_F(ModemServiceTest, CloseLogicalChannel) {
 }
 
 TEST_F(ModemServiceTest, TransmitLogicalChannel) {
-  std::string command= "A000000063504B43532D3135";
+  std::string command = "A000000063504B43532D3135";
   int channel = openLogicalChannel(command);
   ASSERT_EQ(channel, 1);
   command = "AT+CGLA=";
@@ -352,8 +356,8 @@ TEST_F(ModemServiceTest, TransmitLogicalChannel) {
   std::vector<std::string> response;
   SendCommand(command);
   ReadCommandResponse(response);
-  const char *expect = "+CME ERROR: 21";
-  ASSERT_STREQ(response[0].c_str(),expect);
+  const char* expect = "+CME ERROR: 21";
+  ASSERT_STREQ(response[0].c_str(), expect);
   ASSERT_TRUE(closeLogicalChannel(channel));
 }
 
@@ -364,7 +368,8 @@ TEST_F(ModemServiceTest, testRadioPowerReq) {
   SendCommand(command, "+CFUN:");
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testSetRadioPower) {
@@ -373,7 +378,8 @@ TEST_F(ModemServiceTest, testSetRadioPower) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 1);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testSignalStrength) {
@@ -382,7 +388,8 @@ TEST_F(ModemServiceTest, testSignalStrength) {
   SendCommand(command, "+CSQ:");
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testQueryNetworkSelectionMode) {
@@ -391,7 +398,8 @@ TEST_F(ModemServiceTest, testQueryNetworkSelectionMode) {
   SendCommand(command, "+COPS:");
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testRequestOperator) {
@@ -408,7 +416,8 @@ TEST_F(ModemServiceTest, testVoiceNetworkRegistration) {
   SendCommand(command, "+CREG:");
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testDataNetworkRegistration) {
@@ -417,7 +426,8 @@ TEST_F(ModemServiceTest, testDataNetworkRegistration) {
   SendCommand(command, "+CGREG:");
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testDataNetworkRegistrationWithLte2) {
@@ -426,7 +436,8 @@ TEST_F(ModemServiceTest, testDataNetworkRegistrationWithLte2) {
   SendCommand(command, "+CEREG:");
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testGetPreferredNetworkType) {
@@ -435,7 +446,8 @@ TEST_F(ModemServiceTest, testGetPreferredNetworkType) {
   SendCommand(command, "+CTEC:");
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testQuerySupportedTechs) {
@@ -444,7 +456,8 @@ TEST_F(ModemServiceTest, testQuerySupportedTechs) {
   SendCommand(command, "+CTEC:");
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testSetPreferredNetworkType) {
@@ -453,7 +466,8 @@ TEST_F(ModemServiceTest, testSetPreferredNetworkType) {
   SendCommand(command, "+CTEC:");
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 /* Call Service Test */
@@ -466,7 +480,7 @@ TEST_F(ModemServiceTest, testCurrentCalls) {
 }
 
 TEST_F(ModemServiceTest, testHangup) {
-  for (int i = 0; i < 5; i ++) {
+  for (int i = 0; i < 5; i++) {
     std::stringstream ss;
     ss.clear();
     ss << "AT+CHLD=" << i;
@@ -475,7 +489,8 @@ TEST_F(ModemServiceTest, testHangup) {
   std::vector<std::string> response;
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 1);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testMute) {
@@ -484,7 +499,8 @@ TEST_F(ModemServiceTest, testMute) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 1);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testSendDtmf) {
@@ -493,7 +509,8 @@ TEST_F(ModemServiceTest, testSendDtmf) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 1);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testExitEmergencyMode) {
@@ -502,7 +519,8 @@ TEST_F(ModemServiceTest, testExitEmergencyMode) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 1);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 /* Data Service Test */
@@ -516,7 +534,7 @@ TEST_F(ModemServiceTest, SetPDPContext) {
 }
 
 TEST_F(ModemServiceTest, QueryPDPContextList) {
-  for (int i = 1; i < 5; i ++) {
+  for (int i = 1; i < 5; i++) {
     std::stringstream ss;
     ss.clear();
     ss << "AT+CGDCONT=" << i << ",\"IPV4V6\",\"ctlte\",,0,0";
@@ -526,7 +544,7 @@ TEST_F(ModemServiceTest, QueryPDPContextList) {
   std::vector<std::string> response;
   SendCommand(command, "+CGDCONT:");
   ReadCommandResponse(response);
-  const char *result = response[response.size() - 1].c_str();
+  const char* result = response[response.size() - 1].c_str();
   ASSERT_EQ(response.size(), 1);
   ASSERT_STREQ(result, kFinalResponseSuccess[0].c_str());
 }
@@ -536,7 +554,7 @@ TEST_F(ModemServiceTest, ActivateDataCall) {
   std::vector<std::string> response;
   SendCommand(command);
   ReadCommandResponse(response);
-  const char *result = response[0].c_str();
+  const char* result = response[0].c_str();
   ASSERT_STREQ(result, kFinalResponseSuccess[0].c_str());
 }
 
@@ -545,7 +563,7 @@ TEST_F(ModemServiceTest, QueryDataCallList) {
   std::vector<std::string> response;
   SendCommand(command, "+CGACT:");
   ReadCommandResponse(response);
-  const char *result = response[response.size() - 1].c_str();
+  const char* result = response[response.size() - 1].c_str();
   ASSERT_STREQ(result, kFinalResponseSuccess[0].c_str());
 }
 
@@ -554,7 +572,7 @@ TEST_F(ModemServiceTest, ReadDynamicParamTrue) {
   std::vector<std::string> response;
   SendCommand(command);
   ReadCommandResponse(response);
-  const char *result = response[response.size() - 1].c_str();
+  const char* result = response[response.size() - 1].c_str();
   ASSERT_STREQ(result, kFinalResponseSuccess[0].c_str());
 }
 
@@ -563,9 +581,38 @@ TEST_F(ModemServiceTest, ReadDynamicParamFalse) {
   std::vector<std::string> response;
   SendCommand(command);
   ReadCommandResponse(response);
-  const char *result = response[response.size() - 1].c_str();
-  const char *expect = "+CME ERROR: 21";
+  const char* result = response[response.size() - 1].c_str();
+  const char* expect = "+CME ERROR: 21";
   ASSERT_STREQ(result, expect);
+}
+
+// The test config has no mobile IPv6, so every PDP type must produce the
+// single IPv4 line that the simulator returned before IPv6 support.
+TEST_F(ModemServiceTest, ReadDynamicParamWithoutIpv6PerPdpType) {
+  ASSERT_TRUE(modem::DeviceConfig::ril_ipv6_address_and_prefix().empty());
+  const std::string expected_suffix =
+      ",5,\"ctlte\"," + modem::DeviceConfig::ril_address_and_prefix() + "," +
+      modem::DeviceConfig::ril_gateway() + "," + modem::DeviceConfig::ril_dns();
+  int cid = 11;
+  for (const char* pdp_type : {"IP", "IPV6", "IPV4V6"}) {
+    std::stringstream set_cmd;
+    set_cmd << "AT+CGDCONT=" << cid << ",\"" << pdp_type << "\",\"ctlte\",,0,0";
+    std::vector<std::string> set_response;
+    SendCommand(set_cmd.str());
+    ReadCommandResponse(set_response);
+    ASSERT_EQ(set_response.size(), 1);
+    ASSERT_EQ(set_response[0], "OK");
+
+    std::vector<std::string> response;
+    SendCommand("AT+CGCONTRDP=" + std::to_string(cid), "+CGCONTRDP:");
+    ReadCommandResponse(response);
+    ASSERT_EQ(response.size(), 2) << pdp_type;
+    EXPECT_EQ(response[0],
+              "+CGCONTRDP: " + std::to_string(cid) + expected_suffix)
+        << pdp_type;
+    EXPECT_EQ(response[1], "OK");
+    ++cid;
+  }
 }
 
 TEST_F(ModemServiceTest, EnterDataState) {
@@ -573,7 +620,7 @@ TEST_F(ModemServiceTest, EnterDataState) {
   std::vector<std::string> response;
   SendCommand(command);
   ReadCommandResponse(response);
-  const char *result = response[response.size() - 1].c_str();
+  const char* result = response[response.size() - 1].c_str();
   ASSERT_STREQ(result, kFinalResponseSuccess[1].c_str());
 }
 
@@ -583,11 +630,13 @@ TEST_F(ModemServiceTest, SendSMS) {
   std::vector<std::string> response;
   SendCommand(command);
   ReadCommandResponse(response);
-  const char *result = response[response.size() - 1].c_str();
-  const char *expect = "> ";
+  const char* result = response[response.size() - 1].c_str();
+  const char* expect = "> ";
   ASSERT_STREQ(result, expect);
-  command = "0001000D91688118109844F0000017AFD7903AB55A9BBA69D639D4ADCBF99E3DCCAE9701^Z";
-  //command += '\032';
+  command =
+      "0001000D91688118109844F0000017AFD7903AB55A9BBA69D639D4ADCBF99E3DCCAE9701"
+      "^Z";
+  // command += '\032';
   SendCommand(command);
   ReadCommandResponse(response);
   // TODO (bohu) for some reason the following asserts fail, fix them
@@ -601,14 +650,15 @@ TEST_F(ModemServiceTest, WriteSMSToSim) {
   std::vector<std::string> response;
   SendCommand(command);
   ReadCommandResponse(response);
-  const char *result = response[response.size() - 1].c_str();
-  const char *expect = "> ";
+  const char* result = response[response.size() - 1].c_str();
+  const char* expect = "> ";
   ASSERT_STREQ(result, expect);
   command = "00240B815123106351F100000240516054410005C8329BFD06^Z";
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 3);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, SMSAcknowledge) {
@@ -616,7 +666,7 @@ TEST_F(ModemServiceTest, SMSAcknowledge) {
   std::vector<std::string> response;
   SendCommand(command);
   ReadCommandResponse(response);
-  const char *result = response[response.size() - 1].c_str();
+  const char* result = response[response.size() - 1].c_str();
   ASSERT_STREQ(result, kFinalResponseSuccess[0].c_str());
 }
 
@@ -625,7 +675,7 @@ TEST_F(ModemServiceTest, DeleteSmsOnSimTure) {
   std::vector<std::string> response;
   SendCommand(command);
   ReadCommandResponse(response);
-  const char *result = response[0].c_str();
+  const char* result = response[0].c_str();
   ASSERT_STREQ(result, kFinalResponseSuccess[0].c_str());
 }
 
@@ -634,8 +684,8 @@ TEST_F(ModemServiceTest, DeleteSmsOnSimFalse) {
   std::vector<std::string> response;
   SendCommand(command);
   ReadCommandResponse(response);
-  const char *result = response[0].c_str();
-  const char *expect = "+CME ERROR: 21";
+  const char* result = response[0].c_str();
+  const char* expect = "+CME ERROR: 21";
   ASSERT_STREQ(result, expect);
 }
 
@@ -644,7 +694,7 @@ TEST_F(ModemServiceTest, SetBroadcastConfig) {
   std::vector<std::string> response;
   SendCommand(command);
   ReadCommandResponse(response);
-  const char *result = response[0].c_str();
+  const char* result = response[0].c_str();
   ASSERT_STREQ(result, kFinalResponseSuccess[0].c_str());
 }
 
@@ -654,7 +704,7 @@ TEST_F(ModemServiceTest, GetBroadcastConfig) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  const char *result = response[response.size() - 1].c_str();
+  const char* result = response[response.size() - 1].c_str();
   ASSERT_STREQ(result, kFinalResponseSuccess[0].c_str());
 }
 
@@ -664,7 +714,7 @@ TEST_F(ModemServiceTest, SetSmscAddress) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 1);
-  const char *result = response[response.size() - 1].c_str();
+  const char* result = response[response.size() - 1].c_str();
   ASSERT_STREQ(result, kFinalResponseSuccess[0].c_str());
 }
 
@@ -674,7 +724,7 @@ TEST_F(ModemServiceTest, GetSmscAddress) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  const char *result = response[response.size() - 1].c_str();
+  const char* result = response[response.size() - 1].c_str();
   ASSERT_STREQ(result, kFinalResponseSuccess[0].c_str());
 }
 
@@ -685,7 +735,8 @@ TEST_F(ModemServiceTest, testUSSD) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 1);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testCLIR) {
@@ -694,7 +745,8 @@ TEST_F(ModemServiceTest, testCLIR) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 1);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testQueryCLIR) {
@@ -711,7 +763,8 @@ TEST_F(ModemServiceTest, testCallWaiting) {
   SendCommand(command, "+CCWA:");
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 1);
-  ASSERT_STREQ(response[response.size() - 1].c_str(), kFinalResponseSuccess[0].c_str());
+  ASSERT_STREQ(response[response.size() - 1].c_str(),
+               kFinalResponseSuccess[0].c_str());
 }
 
 TEST_F(ModemServiceTest, testCLIP) {
@@ -737,8 +790,8 @@ TEST_F(ModemServiceTest, ReportStkServiceIsRunning) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  const char *result = response[0].c_str();
-  const char *expect = "+CUSATD: 0,1";
+  const char* result = response[0].c_str();
+  const char* expect = "+CUSATD: 0,1";
   ASSERT_STREQ(result, expect);
 }
 
@@ -748,8 +801,8 @@ TEST_F(ModemServiceTest, SendEnvelope) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  const char *result = response[0].c_str();
-  const char *expect = "+CUSATT: 0";
+  const char* result = response[0].c_str();
+  const char* expect = "+CUSATT: 0";
   ASSERT_STREQ(result, expect);
 }
 
@@ -759,8 +812,8 @@ TEST_F(ModemServiceTest, GetSendTerminalResponseToSim) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  const char *result = response[0].c_str();
-  const char *expect = "+CUSATE: 0";
+  const char* result = response[0].c_str();
+  const char* expect = "+CUSATE: 0";
   ASSERT_STREQ(result, expect);
 }
 
@@ -771,7 +824,7 @@ TEST_F(ModemServiceTest, GetIMEI) {
   SendCommand(command);
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
-  const char *result = response[0].c_str();
-  const char *expect = "867400022047199";
+  const char* result = response[0].c_str();
+  const char* expect = "867400022047199";
   ASSERT_STREQ(result, expect);
 }

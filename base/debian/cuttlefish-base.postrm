@@ -1,4 +1,62 @@
 #!/bin/sh
 set -e
 
+if [ "$1" = "purge" ]; then
+    for pidfile in /run/cuttlefish-dnsmasq-*.pid /var/run/cuttlefish-dnsmasq-*.pid; do
+        [ -f "$pidfile" ] || continue
+        pid="$(cat "$pidfile" 2>/dev/null)"
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            if ! kill "$pid" 2>/dev/null; then
+                if kill -0 "$pid" 2>/dev/null; then
+                    exit 1
+                fi
+            fi
+        fi
+        rm -f "$pidfile"
+    done
+    rm -f /run/cuttlefish-dnsmasq-*.leases /var/run/cuttlefish-dnsmasq-*.leases
+    if [ -f /run/cuttlefish/ipv6-routes ] && command -v ip >/dev/null 2>&1; then
+        while read -r route_prefix route_dev; do
+            if [ -n "$route_prefix" ] && [ -n "$route_dev" ] &&
+               [ -n "$(ip -6 route show "$route_prefix" dev "$route_dev" 2>/dev/null)" ]; then
+                ip -6 route del "$route_prefix" dev "$route_dev"
+            fi
+        done < /run/cuttlefish/ipv6-routes
+        rm -f /run/cuttlefish/ipv6-routes
+    fi
+    if command -v nft >/dev/null 2>&1; then
+        for hfile in /run/cuttlefish/ip6fwd-*.handle; do
+            [ -f "$hfile" ] || continue
+            handle="$(cat "$hfile" 2>/dev/null)"
+            if [ -n "$handle" ] && nft -a list chain ip6 filter FORWARD 2>/dev/null | grep -q "# handle ${handle}$"; then
+                nft delete rule ip6 filter FORWARD handle "$handle"
+            fi
+            rm -f "$hfile"
+        done
+        if command -v jq >/dev/null 2>&1 && nft list table ip6 filter >/dev/null 2>&1; then
+            if [ "$(nft -j list table ip6 filter | jq '[.nftables[] | select(has("rule"))] | length')" = "0" ] &&
+               [ "$(nft -j list table ip6 filter | jq '[.nftables[] | select(has("chain"))] | length')" = "1" ] &&
+               [ "$(nft -j list table ip6 filter | jq -r '.nftables[] | select(has("chain")) | .chain.policy')" = "accept" ]; then
+                nft delete table ip6 filter
+            fi
+        fi
+        if nft list table inet cuttlefish_ra_guard >/dev/null 2>&1; then
+            nft delete table inet cuttlefish_ra_guard
+        fi
+        if nft list table bridge cuttlefish_ra_guard >/dev/null 2>&1; then
+            nft delete table bridge cuttlefish_ra_guard
+        fi
+        if nft list table ip6 cuttlefish_nat6 >/dev/null 2>&1; then
+            nft delete table ip6 cuttlefish_nat6
+        fi
+        if nft list table bridge cuttlefish_bridge >/dev/null 2>&1; then
+            nft delete table bridge cuttlefish_bridge
+        fi
+        if nft list table ip cuttlefish_nat >/dev/null 2>&1; then
+            nft delete table ip cuttlefish_nat
+        fi
+    fi
+    rm -rf /run/cuttlefish
+fi
+
 #DEBHELPER#
