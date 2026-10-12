@@ -229,6 +229,23 @@ TEST_F(FetchArtifactDirectoryTest, ExtractAllLinksDirectoryContents) {
   EXPECT_EQ(files.at("super.img").archive_source, kImgZip);
 }
 
+// b/571068789: the downloaded directory may be a download cache entry, so
+// padding the extracted vbmeta image must not modify it.
+TEST_F(FetchArtifactDirectoryTest, ExtractAllPadsVbmetaWithoutModifyingSource) {
+  std::optional<FetchBuildContext> build = context_.DefaultBuild();
+  ASSERT_TRUE(build.has_value());
+  FetchArtifact img_zip = build->Artifact(kImgZip);
+
+  ASSERT_THAT(img_zip.Download(), IsOk());
+  ASSERT_THAT(img_zip.ExtractAll(), IsOk());
+
+  const std::string vbmeta = "vbmeta";
+  EXPECT_THAT(ReadFileContents(Root() + "/vbmeta.img"),
+              IsOkAndValue(vbmeta + std::string(65536 - vbmeta.size(), '\0')));
+  EXPECT_THAT(ReadFileContents(Root() + "/" + kImgZip + "/vbmeta.img"),
+              IsOkAndValue(vbmeta));
+}
+
 TEST_F(FetchArtifactDirectoryTest, DeleteLocalFileRemovesDirectory) {
   std::optional<FetchBuildContext> build = context_.DefaultBuild();
   ASSERT_TRUE(build.has_value());
