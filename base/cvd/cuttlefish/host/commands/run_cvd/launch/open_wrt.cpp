@@ -27,6 +27,7 @@
 
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/host/commands/run_cvd/launch/cvdalloc.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
@@ -87,7 +88,12 @@ class OpenWrt : public CommandSource {
       const auto restore_path = snapshot_dir_path + "/" +
                                 guest_snapshot_dir_suffix + "/" +
                                 kGuestSnapshotBase + "_openwrt";
-      first_time_argument = "--restore=" + restore_path;
+      if (DirectoryExists(restore_path)) {
+        first_time_argument = "--restore=" + restore_path;
+      } else {
+        LOG(WARNING) << "OpenWRT snapshot path does not exist: " << restore_path
+                     << ", booting OpenWRT without restoring";
+      }
     }
 
     /* TODO(b/305102099): Due to hostapd issue of OpenWRT 22.03.X versions,
