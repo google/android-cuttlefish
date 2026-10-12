@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -10,10 +10,32 @@ cf_cc_library(
     hdrs = ["avb.h"],
     deps = [
         "//cuttlefish/common/libs/fs:fd",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:copy",
         "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/posix:remove",
+        "//cuttlefish/posix:rename",
+        "//cuttlefish/posix:stat",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:temp_failure_retry",
         "//cuttlefish/process:command",
         "//cuttlefish/result",
+        "@android_system_libbase//:unique_fd",
+    ],
+)
+
+cf_cc_test(
+    name = "avb_test",
+    srcs = ["avb_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_contents",
+        "//cuttlefish/files:is_symlink",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/posix:stat",
+        "//cuttlefish/posix:symlink",
+        "//cuttlefish/result:assert",
+        "//cuttlefish/result:result_matchers",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
