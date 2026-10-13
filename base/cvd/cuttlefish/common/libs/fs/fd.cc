@@ -156,7 +156,7 @@ Result<Fd, int> Fd::Dup(int unmanaged_fd) {
 
 Result<std::pair<Fd, Fd>, int> Fd::Pipe() {
   int fds[2];
-#ifdef __linux__
+#ifndef __APPLE__
   const int rval = TEMP_FAILURE_RETRY(pipe2(fds, O_CLOEXEC));
   CF_EXPECTVF(rval != -1, errno, "pipe2(..., O_CLOEXEC) failed: {}",
               ::cuttlefish::StrError(errno));
