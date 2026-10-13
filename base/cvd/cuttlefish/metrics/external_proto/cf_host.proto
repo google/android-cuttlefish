@@ -42,6 +42,10 @@ message CuttlefishHost {
     CUTTLEFISH_HOST_INVOKER_ACLOUD = 2;
     // invoked by `host orchestrator`
     CUTTLEFISH_HOST_INVOKER_HOST_ORCHESTRATOR = 3;
+    // invoked by `podcvd`
+    CUTTLEFISH_HOST_INVOKER_PODCVD = 4;
+    // invoked by `launch_cvd`
+    CUTTLEFISH_HOST_INVOKER_LAUNCH_CVD = 5;
   }
 
   // Category of operating system outside the Cuttlefish VM.

@@ -77,9 +77,15 @@ CuttlefishHost_Invoker ConvertInvoker(const Invoker invoker) {
     case Invoker::HostOrchestrator:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_HOST_ORCHESTRATOR;
+    case Invoker::LaunchCvd:
+      return CuttlefishHost_Invoker::
+          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_LAUNCH_CVD;
     case Invoker::None:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_NONE;
+    case Invoker::Podcvd:
+      return CuttlefishHost_Invoker::
+          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_PODCVD;
     case Invoker::Unknown:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_UNSPECIFIED;

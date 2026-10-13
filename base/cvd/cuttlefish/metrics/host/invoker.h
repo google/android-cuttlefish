@@ -21,7 +21,9 @@ namespace cuttlefish {
 enum class Invoker {
   Acloud,
   HostOrchestrator,
+  LaunchCvd,
   None,
+  Podcvd,
   Unknown,
 };
 
