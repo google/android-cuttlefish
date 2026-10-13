@@ -28,6 +28,9 @@
 
 namespace cuttlefish {
 
+static constexpr int kTooManyRequestsCode = 429;
+static constexpr std::string_view kRetryAfterHeaderName = "Retry-After";
+
 struct HttpVoidResponse {};
 
 struct HttpHeader {
@@ -59,6 +62,8 @@ struct HttpResponse {
         return "Forbidden";
       case 404:
         return "File Not Found";
+      case 429:
+        return "Too Many Requests";
       case 500:
         return "Internal Server Error";
       case 502:
