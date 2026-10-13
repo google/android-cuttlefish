@@ -25,7 +25,9 @@
 #include <stdlib.h>
 #include <sys/file.h>
 #include <sys/mman.h>
+#ifdef __linux__
 #include <sys/sendfile.h>
+#endif
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
@@ -528,12 +530,37 @@ bool Fd::SendFile(Fd& in, off_t* offset, size_t count) {
       return false;
     }
 #elif defined(__APPLE__)
+    // TODO: On EINTR, sendfile(2) may return 0 bytes without having reached
+    // EOF, and TEMP_FAILURE_RETRY retries with the updated bytes_written.
     off_t bytes_written = count;
     auto success = TEMP_FAILURE_RETRY(
         sendfile(in.fd_, fd_, *offset, &bytes_written, nullptr, 0));
     *offset += bytes_written;
     if (success < 0 || bytes_written == 0) {
       return false;
+    }
+#else
+    uint8_t buf[kPreferredBufferSize];
+    const size_t chunk = std::min(count, sizeof(buf));
+    // Match the Linux sendfile(2) semantics.
+    const ssize_t bytes_read =
+        offset ? TEMP_FAILURE_RETRY(pread(in.fd_, buf, chunk, *offset))
+               : TEMP_FAILURE_RETRY(read(in.fd_, buf, chunk));
+    if (bytes_read <= 0) {
+      return false;
+    }
+
+    ssize_t bytes_written = 0;
+    while (bytes_written < bytes_read) {
+      const ssize_t res = TEMP_FAILURE_RETRY(
+          write(fd_, buf + bytes_written, bytes_read - bytes_written));
+      if (res <= 0) {
+        return false;
+      }
+      bytes_written += res;
+      if (offset) {
+        *offset += res;
+      }
     }
 #endif
     count -= bytes_written;
