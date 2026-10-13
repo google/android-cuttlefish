@@ -307,6 +307,7 @@ FileSizes SparseFileSizes(const std::string& path) {
     return {};
   }
   off_t data_bytes = 0;
+#if defined(SEEK_HOLE) && defined(SEEK_DATA)
   off_t offset = 0;
   while (offset < farthest_seek) {
     off_t new_offset = fd->LSeek(offset, SEEK_HOLE);
@@ -340,6 +341,15 @@ FileSizes SparseFileSizes(const std::string& path) {
       offset = new_offset;
     }
   }
+#else
+  Result<struct stat> st = fd->Fstat();
+  if (!st.has_value()) {
+    LOG(ERROR) << "Could not fstat \"" << path
+               << "\": " << st.error().FormatForEnv();
+    return {};
+  }
+  data_bytes = static_cast<off_t>(st->st_blocks) * S_BLKSIZE;
+#endif
   return (FileSizes){.sparse_size = farthest_seek, .disk_size = data_bytes};
 }
 
