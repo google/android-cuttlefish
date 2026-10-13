@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <asm/ioctls.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
