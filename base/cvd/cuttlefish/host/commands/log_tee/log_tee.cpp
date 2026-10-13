@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <errno.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdint.h>
 #ifdef __linux__
@@ -105,13 +106,13 @@ int main(int argc, char** argv) {
   auto poll_fds = std::vector<cuttlefish::PollSharedFd>{
       cuttlefish::PollSharedFd{
           .fd = log_fd,
-          .events = POLL_IN,
+          .events = POLLIN,  // NOLINT(misc-include-cleaner): poll.h
           .revents = 0,
       },
 #ifdef __linux__
       cuttlefish::PollSharedFd{
           .fd = int_fd,
-          .events = POLL_IN,
+          .events = POLLIN,  // NOLINT(misc-include-cleaner): poll.h
           .revents = 0,
       },
 #endif
