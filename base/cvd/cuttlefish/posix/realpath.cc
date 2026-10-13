@@ -18,7 +18,9 @@
 
 #include <errno.h>
 #include <limits.h>
+#ifdef __linux__
 #include <linux/limits.h>
+#endif
 #include <stdlib.h>
 
 #include <array>
