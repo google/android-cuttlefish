@@ -123,8 +123,11 @@ class NetsimServer : public CommandSource {
     AddDevicesParameter(netsimd);
     // Release SharedFDs, they've been duped by Command
     devices_.clear();
-    // Port configuration.
-    netsimd.AddParameter("--hci_port=", config_.rootcanal_hci_port());
+    // Port configuration. Only take over rootcanal's HCI port when netsim
+    // emulates Bluetooth, otherwise rootcanal may be listening on it.
+    if (has_bluetooth_chip_) {
+      netsimd.AddParameter("--hci_port=", config_.rootcanal_hci_port());
+    }
 
     if (EnableNetsimNfc(config_)) {
       netsimd.AddParameter("--grpc_uds_path=", grpc_socket_.CreateGrpcSocket(
@@ -222,6 +225,7 @@ class NetsimServer : public CommandSource {
         chip.fd_in = CF_EXPECT(MakeFifo(instance, "bt_fifo_vm.in"));
         chip.fd_out = CF_EXPECT(MakeFifo(instance, "bt_fifo_vm.out"));
         device.chips.emplace_back(chip);
+        has_bluetooth_chip_ = true;
       }
       // Add uwb chip if enabled
       if (config_.enable_host_uwb() && !instance.enable_host_uwb_connector()) {
@@ -283,6 +287,7 @@ class NetsimServer : public CommandSource {
 
  private:
   std::vector<Device> devices_;
+  bool has_bluetooth_chip_ = false;
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific instance_;
   GrpcSocketCreator& grpc_socket_;
