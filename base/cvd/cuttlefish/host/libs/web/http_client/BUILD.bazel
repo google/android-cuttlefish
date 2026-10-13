@@ -144,6 +144,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
