@@ -332,7 +332,10 @@ Result<Fd, int> Fd::Socket6Client(std::string_view host,
                "SetSockOpt(IPPROTO_IP, IP_BOUND_IF, {}, ...) failed: {}", idx,
                rval.StrError());
 #else
-#error "Unsupported operating system"
+    addr.sin6_scope_id = if_nametoindex(std::string(interface).c_str());
+    CF_EXPECTVF(addr.sin6_scope_id != 0, errno,
+                "if_nametoindex('{}') failed: {}", interface,
+                ::cuttlefish::StrError(errno));
 #endif
   }
 
