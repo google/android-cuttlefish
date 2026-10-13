@@ -106,9 +106,6 @@ cf_cc_library(
     name = "files",
     srcs = ["files.cpp"],
     hdrs = ["files.h"],
-    target_compatible_with = [
-        "@platforms//os:linux",  # SEEK_DATA
-    ],
     deps = [
         ":environment",
         "//cuttlefish/common/libs/fs",
