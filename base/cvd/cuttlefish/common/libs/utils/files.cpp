@@ -227,12 +227,10 @@ bool MakeFileExecutable(const std::string& path) {
 Result<std::chrono::system_clock::time_point> FileModificationTime(
     const std::string& path) {
   struct stat st = CF_EXPECT(Stat(path));
-#ifdef __linux__
-  std::chrono::seconds seconds(st.st_mtim.tv_sec);
-#elif defined(__APPLE__)
+#ifdef __APPLE__
   std::chrono::seconds seconds(st.st_mtimespec.tv_sec);
 #else
-#error "Unsupported operating system"
+  std::chrono::seconds seconds(st.st_mtim.tv_sec);
 #endif
   return std::chrono::system_clock::time_point(seconds);
 }
