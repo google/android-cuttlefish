@@ -131,6 +131,7 @@ void PopulateCuttlefishHost(MetricsEventV2& metrics_event,
   host.set_host_os(ConvertHostOs(host_metrics.os));
   host.set_host_os_version(host_metrics.os.release);
   host.set_invoker(ConvertInvoker(host_metrics.invoker));
+  host.set_user_id(host_metrics.user_id);
   PopulateCuttlefishHostEnvironment(host, host_metrics.environment);
 }
 
