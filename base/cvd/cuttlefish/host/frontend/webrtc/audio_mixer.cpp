@@ -166,15 +166,15 @@ void AudioMixer::OnStreamStopped(uint32_t stream_id) {
 void AudioMixer::OnPlayback(uint32_t stream_id, uint32_t stream_sample_rate,
                             uint8_t stream_channels_count,
                             uint8_t stream_bits_per_channel, float volume,
-                            const uint8_t* buffer, size_t size) {
+                            float fade, float balance, const uint8_t* buffer,
+                            size_t size) {
   const auto stream_frames_count =
       GetFramesCount(size, stream_channels_count, stream_bits_per_channel);
   const auto frames_count = GetFrameCountAfterResampling(
       sample_rate_, stream_sample_rate, stream_frames_count);
 
-  // As of now we only use direct channel mapping
-  const std::vector<std::vector<float>> channels_map =
-      BuildChannelMixingMatrix(channels_count_, stream_channels_count, volume);
+  const std::vector<std::vector<float>> channels_map = BuildChannelMixingMatrix(
+      channels_count_, stream_channels_count, volume, fade, balance);
 
   std::unique_lock<std::mutex> lock(mutex_);
 
