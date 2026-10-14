@@ -21,12 +21,14 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
 #include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/metrics/external_proto/cf_fetch_build.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_fetch_builds.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_fetch_complete.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_fetch_failure.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_fetch_start.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_metrics_event_v2.pb.h"
+#include "cuttlefish/metrics/external_proto/cf_safe_level.pb.h"
 #include "cuttlefish/metrics/fetch_metrics.h"
 
 namespace cuttlefish {
@@ -40,11 +42,29 @@ using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishFetchFailure;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishFetchStart;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
+using ProtoSafeLevel =
+    logs::proto::wireless::android::cuttlefish::events::SafeLevel;
+
+ProtoSafeLevel ConvertSafeLevel(const SafeLevel& safe_level) {
+  switch (safe_level) {
+    case SafeLevel::kSafeLevelUnspecified:
+      return ProtoSafeLevel::SAFE_LEVEL_UNSPECIFIED;
+    case SafeLevel::kSafe0:
+      return ProtoSafeLevel::SAFE_0;
+    case SafeLevel::kSafe1:
+      return ProtoSafeLevel::SAFE_1;
+    case SafeLevel::kSafe2:
+      return ProtoSafeLevel::SAFE_2;
+    case SafeLevel::kPlatinum:
+      return ProtoSafeLevel::PLATINUM;
+  }
+}
 
 void PopulateCuttlefishBuild(CuttlefishBuild& cf_build, const Build& build) {
   std::string build_id = std::visit([](auto&& arg) { return arg.id; }, build);
   if (const DeviceBuild* device_build = std::get_if<DeviceBuild>(&build)) {
     cf_build.set_branch(device_build->branch);
+    cf_build.set_safe_level(ConvertSafeLevel(device_build->safe_level));
   } else if (std::holds_alternative<GcsBuild>(build)) {
     // A URL can name a private bucket or an internal host, so only its scheme
     // is reported. The rest stays in the local fetcher config.
