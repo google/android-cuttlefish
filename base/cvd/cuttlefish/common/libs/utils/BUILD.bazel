@@ -424,12 +424,14 @@ cf_cc_library(
     hdrs = ["wait_for_file.h"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:inotify",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/result",
         "@android_system_libbase//:file_logging",
         "@android_system_libbase//:unique_fd",
-    ],
+    ] + select({
+        "@platforms//os:linux": ["//cuttlefish/common/libs/utils:inotify"],
+        "//conditions:default": [],
+    }),
 )
 
 cf_cc_library(
