@@ -54,12 +54,16 @@ class AudioHandler : public AudioServerExecutor {
     };
     Volume volume;
     bool muted = false;
+    float fade = 0.0f;
+    float balance = 0.0f;
   };
 
   struct ControlDesc {
     enum class Type {
       Mute,
       Volume,
+      Fade,
+      Balance,
     };
 
     Type type = Type::Mute;
@@ -106,6 +110,7 @@ class AudioHandler : public AudioServerExecutor {
 
   AudioStatus HandleControlMute(ControlCommand& cmd);
   AudioStatus HandleControlVolume(ControlCommand& cmd);
+  AudioStatus HandleControlFadeBalance(ControlCommand& cmd);
 
   std::unique_ptr<AudioServer> audio_server_;
   std::thread server_thread_;
