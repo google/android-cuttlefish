@@ -21,7 +21,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <sys/inotify.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/select.h>
@@ -39,6 +38,7 @@
 #include <linux/vm_sockets.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
+#include <sys/inotify.h>
 #endif
 
 #include <chrono>
