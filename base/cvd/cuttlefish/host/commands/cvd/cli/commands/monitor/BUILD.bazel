@@ -10,6 +10,9 @@ cf_cc_library(
     name = "command_handler",
     srcs = ["command_handler.cc"],
     hdrs = ["command_handler.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
@@ -56,6 +59,9 @@ cf_cc_library(
     name = "drain_inotify",
     srcs = ["drain_inotify.cc"],
     hdrs = ["drain_inotify.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/posix:strerror",
@@ -68,6 +74,9 @@ cf_cc_library(
     name = "file_monitor_source",
     srcs = ["file_monitor_source.cc"],
     hdrs = ["file_monitor_source.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
@@ -133,6 +142,9 @@ cf_cc_library(
     name = "log_sources",
     srcs = ["log_sources.cc"],
     hdrs = ["log_sources.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
     deps = [
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:tee_logging",
@@ -201,6 +213,9 @@ cf_cc_library(
     name = "monitor",
     srcs = ["monitor.cc"],
     hdrs = ["monitor.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
     deps = [
         "//cuttlefish/ansi_codes",
         "//cuttlefish/common/libs/fs",

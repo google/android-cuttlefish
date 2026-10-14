@@ -44,7 +44,9 @@ class InterruptibleTerminal {
   Result<std::string> ReadLine();
 
  private:
+#ifdef __linux__
   SharedFD interrupt_event_fd_;
+#endif
   bool interrupted_ = false;
   // one owner per InterruptibleTerminal
   // also protecting interrupted_

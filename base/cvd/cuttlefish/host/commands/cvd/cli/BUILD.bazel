@@ -154,7 +154,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:status",
         "//cuttlefish/host/commands/cvd/cli/commands:stop",
         "//cuttlefish/host/commands/cvd/cli/commands:version",
-        "//cuttlefish/host/commands/cvd/cli/commands/monitor:command_handler",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
         "//cuttlefish/host/commands/cvd/cli/selector",
@@ -177,7 +176,10 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
-    ],
+    ] + select({
+        "@platforms//os:linux": ["//cuttlefish/host/commands/cvd/cli/commands/monitor:command_handler"],
+        "//conditions:default": [],
+    }),
 )
 
 cf_cc_library(
