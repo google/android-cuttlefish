@@ -108,6 +108,7 @@ cf_cc_library(
     srcs = ["audio_channel_matrix.cpp"],
     hdrs = ["audio_channel_matrix.h"],
     deps = [
+        ":libcuttlefish_webrtc_audio_settings",
         "@abseil-cpp//absl/log:check",
     ],
 )
