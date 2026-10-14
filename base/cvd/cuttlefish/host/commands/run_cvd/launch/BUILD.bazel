@@ -493,7 +493,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
-        "//cuttlefish/common/libs/utils:socket2socket_proxy",
         "//cuttlefish/common/libs/utils:wait_for_unix_socket",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -503,7 +502,10 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@fruit",
-    ],
+    ] + select({
+        "@platforms//os:linux": ["//cuttlefish/common/libs/utils:socket2socket_proxy"],
+        "//conditions:default": [],
+    }),
 )
 
 cf_cc_library(
