@@ -32,13 +32,16 @@
 #include "android-base/unique_fd.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
+#ifdef __linux__
 #include "cuttlefish/common/libs/utils/inotify.h"
+#endif
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/result/result.h"
 
+namespace cuttlefish {
+
 #ifdef __linux__
 
-namespace cuttlefish {
 namespace {
 class InotifyWatcher {
  public:
