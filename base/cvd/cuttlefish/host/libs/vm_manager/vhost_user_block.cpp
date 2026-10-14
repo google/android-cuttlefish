@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <signal.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
