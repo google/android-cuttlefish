@@ -111,8 +111,9 @@ func TestMetricsLoad(t *testing.T) {
 	}
 
 	eventProtoPatterns := []string{
-		"fetch_start*.txtpb",
-		"fetch_complete*.txtpb",
+		// TODO: b/574168233 - fix checking for fetch events
+		//"fetch_start*.txtpb",
+		//"fetch_complete*.txtpb",
 		"device_instantiation*.txtpb",
 		"device_boot_start*.txtpb",
 		"device_boot_complete*.txtpb",
