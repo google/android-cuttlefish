@@ -1922,6 +1922,15 @@ bool CuttlefishConfig::InstanceSpecific::use_pmem() const {
   return (*Dictionary())[kCrosvmUsePmem].asBool();
 }
 
+static constexpr char kCrosvmHugepages[] = "crosvm_hugepages";
+void CuttlefishConfig::MutableInstanceSpecific::set_crosvm_hugepages(
+    const bool hugepages) {
+  (*Dictionary())[kCrosvmHugepages] = hugepages;
+}
+bool CuttlefishConfig::InstanceSpecific::crosvm_hugepages() const {
+  return (*Dictionary())[kCrosvmHugepages].asBool();
+}
+
 static constexpr char kEnablePkvm[] = "enable_pkvm";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_pkvm(
     bool enable_pkvm) {

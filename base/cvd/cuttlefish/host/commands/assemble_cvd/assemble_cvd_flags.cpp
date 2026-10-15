@@ -389,6 +389,13 @@ DEFINE_vec(
 DEFINE_vec(use_pmem, "true",
            "Make this flag false to disable pmem with crosvm");
 
+DEFINE_vec(crosvm_hugepages, "true",
+           "Pass --hugepages to crosvm, which asks the host kernel to back "
+           "guest memory with transparent huge pages. Guest memory is shared "
+           "memory, so this has no effect unless the host's "
+           "/sys/kernel/mm/transparent_hugepage/shmem_enabled is advise, "
+           "within_size or always.");
+
 DEFINE_vec(crosvm_acpi_table, "",
            "Passed directly to crosvm as --acpi-table. "
            "Path to user provided ACPI table");

@@ -730,6 +730,11 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   // crosvm_cmd.Cmd().AddParameter("--null-audio");
   crosvm_cmd.Cmd().AddParameter("--mem=", instance.memory_mb());
+  // Guest memory is a memfd, so this is a no-op unless the host enables
+  // transparent huge pages for shared memory.
+  if (instance.crosvm_hugepages()) {
+    crosvm_cmd.Cmd().AddParameter("--hugepages");
+  }
   if (instance.mte()) {
     crosvm_cmd.Cmd().AddParameter("--mte");
   }
