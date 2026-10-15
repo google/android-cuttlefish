@@ -57,14 +57,18 @@ type CuttlefishContainerManager interface {
 	ContainerExists(ctx context.Context, name string) (bool, error)
 	// Inspect a container to get its information
 	InspectContainer(ctx context.Context, name string) (*ContainerInfo, error)
-	// Create and start a container instance with raw extra flags
-	CreateAndStartContainer(ctx context.Context, extraFlags []string, name string) (string, error)
+	// Create and start a container instance of the image with raw extra flags
+	CreateAndStartContainer(ctx context.Context, image string, extraFlags []string, name string) (string, error)
 	// List containers managed by podcvd
 	ListContainers(ctx context.Context, all bool) ([]ContainerListEntry, error)
 	// Copy files/folders from a container instance
 	CopyFromContainer(ctx context.Context, ctr string, srcPath string, dstPath string) error
+	// Copy files/folders on the host in the user namespace of rootless containers
+	CopyInUserNamespace(ctx context.Context, srcPath string, dstPath string) error
 	// Execute a command on a running container instance
 	ExecOnContainer(ctx context.Context, ctr string, cmd []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error
+	// Create an image from the filesystem of a container instance
+	CommitContainer(ctx context.Context, ctr string, image string) error
 	// Stop and remove a container instance
 	StopAndRemoveContainer(ctx context.Context, ctr string) error
 }
@@ -158,7 +162,7 @@ func (m *CuttlefishContainerManagerImpl) InspectContainer(ctx context.Context, n
 	return &infos[0], nil
 }
 
-func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Context, extraFlags []string, name string) (string, error) {
+func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Context, image string, extraFlags []string, name string) (string, error) {
 	args := []string{"run", "-d", "-t", "--rm", "--cap-add", "NET_ADMIN"}
 	devices := []string{
 		"/dev/kvm",
@@ -180,7 +184,7 @@ func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Con
 	if name != "" {
 		args = append(args, "--name", name)
 	}
-	args = append(args, imageName)
+	args = append(args, image)
 	cmd := exec.CommandContext(ctx, "podman", args...)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -223,6 +227,16 @@ func (m *CuttlefishContainerManagerImpl) CopyFromContainer(ctx context.Context, 
 	return nil
 }
 
+func (m *CuttlefishContainerManagerImpl) CopyInUserNamespace(ctx context.Context, srcPath string, dstPath string) error {
+	cmd := exec.CommandContext(ctx, "podman", "unshare", "cp", "-a", srcPath, dstPath)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to copy %q to %q: %s: %w", srcPath, dstPath, stderr.String(), err)
+	}
+	return nil
+}
+
 func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ctr string, cmd []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 	args := []string{"exec"}
 	if stdin != nil {
@@ -245,6 +259,16 @@ func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ct
 		return fmt.Errorf("failed to run command on the container with exit code %d: %w", exitErr.ExitCode(), err)
 	}
 	return fmt.Errorf("failed to run command on the container: %w", err)
+}
+
+func (m *CuttlefishContainerManagerImpl) CommitContainer(ctx context.Context, ctr string, image string) error {
+	cmd := exec.CommandContext(ctx, "podman", "commit", "-q", ctr, image)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to commit container %q: %s: %w", ctr, stderr.String(), err)
+	}
+	return nil
 }
 
 func (m *CuttlefishContainerManagerImpl) StopAndRemoveContainer(ctx context.Context, ctr string) error {

@@ -60,7 +60,7 @@ func (f *fakeContainerManager) InspectContainer(ctx context.Context, name string
 	}, nil
 }
 
-func (f *fakeContainerManager) CreateAndStartContainer(ctx context.Context, extraFlags []string, name string) (string, error) {
+func (f *fakeContainerManager) CreateAndStartContainer(ctx context.Context, image string, extraFlags []string, name string) (string, error) {
 	return "ctr-id", nil
 }
 
@@ -72,11 +72,19 @@ func (f *fakeContainerManager) CopyFromContainer(ctx context.Context, ctr string
 	return nil
 }
 
+func (f *fakeContainerManager) CopyInUserNamespace(ctx context.Context, srcPath string, dstPath string) error {
+	return nil
+}
+
 func (f *fakeContainerManager) ExecOnContainer(ctx context.Context, ctr string, cmd []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 	f.lastExec = append([]string(nil), cmd...)
 	if f.execFn != nil {
 		return f.execFn(ctr, cmd, stderr)
 	}
+	return nil
+}
+
+func (f *fakeContainerManager) CommitContainer(ctx context.Context, ctr string, image string) error {
 	return nil
 }
 

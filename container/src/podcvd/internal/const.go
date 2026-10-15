@@ -21,15 +21,18 @@ const (
 	portOperatorHttpsOnHost = 11443
 	ifName                  = "podcvd"
 	containerSnapshotsDir   = "/podcvd_snapshot"
+	cloneImageRepo          = "localhost/podcvd-clone"
 )
 
 const (
 	envClientID          = "PODCVD_CLIENT_ID"
 	labelClientID        = "client_id"
 	labelGroupName       = "group_name"
+	labelInnerGroupName  = "inner_group_name"
 	labelCreatedBy       = "created_by"
 	labelAttemptID       = "attempt_id"
 	labelBaseDir         = "base_dir"
+	labelMountSpecs      = "mount_specs"
 	valueCreatedBy       = "podcvd"
 	ToolingContainerName = "tooling"
 )

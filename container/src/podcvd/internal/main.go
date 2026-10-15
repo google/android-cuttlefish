@@ -53,7 +53,7 @@ func Main(args []string) error {
 		}
 	}
 	switch subcommand {
-	case "bugreport", "create", "display", "env", "logs", "monitor", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
+	case "bugreport", "clone", "create", "display", "env", "logs", "monitor", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
 		if err := handleSubcommandsForSingleInstanceGroup(ccm, cvdArgs); err != nil {
 			return err
 		}
@@ -90,7 +90,12 @@ func findInstanceGroup(ccm CuttlefishContainerManager, groupName string) (*Insta
 	if err := ccm.ExecOnContainer(context.Background(), ContainerName(groupName), []string{"cvd", "fleet"}, nil, &stdoutBuf, nil); err != nil {
 		return nil, err
 	}
-	return ParseInstanceGroups(stdoutBuf.String(), groupName)
+	instanceGroup, err := ParseInstanceGroups(stdoutBuf.String(), lookupInnerGroupName(ccm, groupName))
+	if err != nil {
+		return nil, err
+	}
+	instanceGroup.GroupName = groupName
+	return instanceGroup, nil
 }
 
 func disconnectAdb(ccm CuttlefishContainerManager, groupName string) error {
@@ -112,6 +117,18 @@ func podcvdBaseDirForGroup(ccm CuttlefishContainerManager, groupName string) (st
 		podcvdBaseDir = filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
 	}
 	return podcvdBaseDir, nil
+}
+
+// lookupInnerGroupName returns the group name known by cvd in the group container.
+func lookupInnerGroupName(ccm CuttlefishContainerManager, groupName string) string {
+	containerInfo, err := ccm.InspectContainer(context.Background(), ContainerName(groupName))
+	if err != nil {
+		return groupName
+	}
+	if innerGroupName := containerInfo.Config.Labels[labelInnerGroupName]; innerGroupName != "" {
+		return innerGroupName
+	}
+	return groupName
 }
 
 func resolveSnapshotForRestore(cvdArgs *CvdArgs, snapshotsDir string) error {
@@ -183,6 +200,7 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 		if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
 			return fmt.Errorf("failed to unmarshal json: %w", err)
 		}
+		RenameCvdGroupJsonRaw(res, cvdArgs.CommonArgs.InnerGroupName, cvdArgs.CommonArgs.GroupName)
 		podcvdBaseDir, err := podcvdBaseDirForGroup(ccm, cvdArgs.CommonArgs.GroupName)
 		if err != nil {
 			return err
@@ -295,6 +313,62 @@ func handleSnapshotTakeExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArg
 	return nil
 }
 
+func handleCloneExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+	groupName := cvdArgs.CommonArgs.GroupName
+	innerGroupName := cvdArgs.CommonArgs.InnerGroupName
+	containerName := ContainerName(groupName)
+	mountSpecs, err := cuttlefishHostMountSpecs(ccm, groupName)
+	if err != nil {
+		return err
+	}
+	podcvdBaseDir, err := podcvdBaseDirForGroup(ccm, groupName)
+	if err != nil {
+		return err
+	}
+	snapshotID := uuid.New().String()
+	snapshotArgs := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
+	snapshotArgs = append(snapshotArgs, "snapshot_take", "--auto_suspend", "--snapshot_path="+filepath.Join(containerSnapshotsDir, snapshotID))
+	if err := ccm.ExecOnContainer(context.Background(), containerName, snapshotArgs, nil, os.Stderr, os.Stderr); err != nil {
+		return fmt.Errorf("failed to take snapshot of group %q: %w", groupName, err)
+	}
+	if err := disconnectAdb(ccm, groupName); err != nil {
+		return err
+	}
+	stopArgs := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
+	stopArgs = append(stopArgs, "stop")
+	if err := ccm.ExecOnContainer(context.Background(), containerName, stopArgs, nil, os.Stderr, os.Stderr); err != nil {
+		return fmt.Errorf("failed to stop group %q: %w", groupName, err)
+	}
+	image := cloneImageRepo + ":" + snapshotID
+	var cloneGroupName string
+	cloneErr := ccm.CommitContainer(context.Background(), containerName, image)
+	if cloneErr == nil {
+		// Create the clone while the group is stopped, as it copies the group's home.
+		cloneGroupName, cloneErr = CreateClonedCuttlefishHost(ccm, image, innerGroupName, podcvdBaseDir, mountSpecs)
+	}
+	hostSnapshotPath := filepath.Join(hostSnapshotsDir(), snapshotID)
+	// Restart the source group even if cloning failed.
+	if err := startGroupFromSnapshot(ccm, groupName, innerGroupName, hostSnapshotPath); err != nil {
+		return errors.Join(cloneErr, err)
+	}
+	if cloneErr != nil {
+		return cloneErr
+	}
+	return startGroupFromSnapshot(ccm, cloneGroupName, innerGroupName, hostSnapshotPath)
+}
+
+func startGroupFromSnapshot(ccm CuttlefishContainerManager, groupName, innerGroupName, hostSnapshotPath string) error {
+	cvdArgs, err := ParseCvdArgs([]string{"--group_name=" + groupName, "start", "--snapshot_path=" + hostSnapshotPath})
+	if err != nil {
+		return err
+	}
+	cvdArgs.CommonArgs.InnerGroupName = innerGroupName
+	if err := handleCreateOrStartExecution(ccm, cvdArgs); err != nil {
+		return fmt.Errorf("failed to start group %q from snapshot %q: %w", groupName, hostSnapshotPath, err)
+	}
+	return nil
+}
+
 func formatLogsList(output string) string {
 	lines := strings.Split(output, "\n")
 	for i, line := range lines {
@@ -354,6 +428,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm CuttlefishContainerManager, cvd
 				break
 			}
 		}
+		cvdArgs.CommonArgs.InnerGroupName = lookupInnerGroupName(ccm, cvdArgs.CommonArgs.GroupName)
 	}
 	switch subcommand {
 	case "remove", "stop":
@@ -371,6 +446,8 @@ func handleSubcommandsForSingleInstanceGroup(ccm CuttlefishContainerManager, cvd
 		return handleCreateOrStartExecution(ccm, cvdArgs)
 	case "bugreport":
 		return handleBugreportExecution(ccm, cvdArgs)
+	case "clone":
+		return handleCloneExecution(ccm, cvdArgs)
 	case "snapshot_take":
 		return handleSnapshotTakeExecution(ccm, cvdArgs, hostSnapshotsDir())
 	case "logs":
@@ -410,6 +487,9 @@ func clearAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
 	errs := []error{}
 	for err := range errCh {
 		errs = append(errs, err)
+	}
+	if err := pruneCloneImages(ccm); err != nil {
+		errs = append(errs, fmt.Errorf("failed to remove clone images: %w", err))
 	}
 	uidDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()))
 	if err := os.RemoveAll(uidDir); err != nil {
@@ -453,6 +533,7 @@ func fleetAllCuttlefishHosts(ccm CuttlefishContainerManager) error {
 			return err
 		}
 		for idx := range fleetRes.Groups {
+			RenameCvdGroupJsonRaw(fleetRes.Groups[idx], res.InnerGroupName, res.GroupName)
 			UpdateCvdGroupJsonRaw(fleetRes.Groups[idx], podcvdBaseDirMap[res.GroupName], res.IP)
 		}
 		combinedRes.Groups = append(combinedRes.Groups, fleetRes.Groups...)
