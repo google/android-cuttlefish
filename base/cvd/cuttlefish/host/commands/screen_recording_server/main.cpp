@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <string>
@@ -66,32 +67,23 @@ class ScreenRecordingServiceImpl final
  private:
   template <typename R>
   Status Handle(R* reply, StartStopFn fn) {
-    Result<std::vector<bool>> successes_res = OnAllInstances(fn);
-    if (successes_res.has_value()) {
-      reply->mutable_successes()->Assign(successes_res->begin(),
-                                         successes_res->end());
-      return Status::OK;
-    } else {
-      LOG(ERROR) << "Failed to start recording: " << successes_res.error();
-      reply->mutable_successes()->Add(false);
-      return Status(StatusCode::ABORTED,
-                    successes_res.error().FormatForEnv(false));
+    const Result<void> res = OnDefaultInstance(fn);
+    if (!res.has_value()) {
+      LOG(ERROR) << "Failed to execute screen recording command: "
+                 << res.error();
+      return Status(StatusCode::ABORTED, res.error().FormatForEnv(false));
     }
+    reply->add_successes(true);
+    return Status::OK;
   }
 
-  Result<std::vector<bool>> OnAllInstances(StartStopFn fn) {
-    std::vector<bool> successes;
+  Result<void> OnDefaultInstance(StartStopFn fn) {
     const CuttlefishConfig* config = CF_EXPECT(CuttlefishConfig::Get());
-    for (const auto& instance : config->Instances()) {
-      Result<void> result =
-          fn(instance, std::chrono::seconds(COMMAND_TIMEOUT_SEC));
-      successes.push_back(result.has_value());
-      if (!result.has_value()) {
-        LOG(ERROR) << "Failed to communicate with instance " << instance.id()
-                   << ": " << result.error();
-      }
-    }
-    return successes;
+    const CuttlefishConfig::InstanceSpecific instance =
+        config->ForDefaultInstance();
+    CF_EXPECT(fn(instance, std::chrono::seconds(COMMAND_TIMEOUT_SEC)),
+              "Failed to communicate with instance " << instance.id());
+    return {};
   }
 };
 
