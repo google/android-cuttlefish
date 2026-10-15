@@ -17,6 +17,7 @@
 #include "cuttlefish/host/frontend/webrtc/libdevice/data_channels.h"
 
 #include "absl/log/log.h"
+#include "absl/types/span.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/frontend/webrtc/libcommon/utils.h"
@@ -412,7 +413,8 @@ class DataChannelHandlerImpl : public H {
 }  // namespace
 
 bool DataChannelHandler::Send(const uint8_t *msg, size_t size, bool binary) {
-  webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(msg, size), binary);
+  webrtc::DataBuffer buffer(
+      rtc::CopyOnWriteBuffer(absl::MakeSpan(msg, size)), binary);
   // TODO (b/185832105): When the SCTP channel is congested data channel
   // messages are buffered up to 16MB, when the buffer is full the channel
   // is abruptly closed. Keep track of the buffered data to avoid losing the
