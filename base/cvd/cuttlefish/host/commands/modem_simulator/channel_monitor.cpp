@@ -101,13 +101,7 @@ void ChannelMonitor::ReadCommand(Client& client) {
     client.client_read_fd_->Close();  // Ignore errors here
     client.client_write_fd_->Close();
     // Erase client from the vector clients
-    auto& clients = client.type == Client::REMOTE ? remote_clients_ : clients_;
-    auto iter = std::find_if(
-        clients.begin(), clients.end(),
-        [&](std::unique_ptr<Client>& other) { return *other == client; });
-    if (iter != clients.end()) {
-      clients.erase(iter);
-    }
+    client.is_valid = false;
     return;
   }
 
@@ -249,11 +243,13 @@ void ChannelMonitor::MonitorLoop() {
           ReadCommand(*client);
         }
       }
+      removeInvalidClients(clients_);
       for (auto& client : remote_clients_) {
         if (read_set.IsSet(client->client_read_fd_)) {
           ReadCommand(*client);
         }
       }
+      removeInvalidClients(remote_clients_);
     } else {
       // Ignore errors here
       LOG(ERROR) << "Select call returned error : " << strerror(errno);
