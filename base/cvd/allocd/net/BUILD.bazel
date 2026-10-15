@@ -21,6 +21,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "nfnetlink_socket",
+    srcs = ["nfnetlink_socket.cc"],
+    hdrs = ["nfnetlink_socket.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
     name = "nft_messages",
     srcs = ["nft_messages.cc"],
     hdrs = ["nft_messages.h"],
@@ -50,40 +63,30 @@ cf_cc_test(
 )
 
 cf_cc_library(
-    name = "nftables",
-    srcs = [
-        "nft_rule.cc",
-        "nftables_nft.cc",
-    ],
-    hdrs = [
-        "nft_rule.h",
-        "nftables.h",
-        "nftables_nft.h",
-    ],
+    name = "nft_nat_table",
+    srcs = ["nft_nat_table.cc"],
+    hdrs = ["nft_nat_table.h"],
     target_compatible_with = [
         "@platforms//os:linux",
     ],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/process:command",
-        "//cuttlefish/process:managed_stdio",
-        "//cuttlefish/process:subprocess",
+        ":netlink",
+        ":nfnetlink_socket",
+        ":nft_messages",
         "//cuttlefish/result",
-        "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
-        "@jsoncpp",
     ],
 )
 
 cf_cc_test(
-    name = "nft_rule_test",
-    srcs = ["nft_rule_test.cc"],
+    name = "nft_nat_table_test",
+    srcs = ["nft_nat_table_test.cc"],
     deps = [
-        ":nftables",
-        "//allocd/test:fake_nftables",
+        ":nft_nat_table",
+        "//allocd/test:fake_nfnetlink_socket",
+        "//allocd/test:nft_messages_helper",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
+        "//linux_headers",
     ],
 )
