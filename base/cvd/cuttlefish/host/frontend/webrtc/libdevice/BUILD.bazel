@@ -112,6 +112,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/types:span",
         "@jsoncpp",
         "@libwebrtc",
     ],
