@@ -56,8 +56,6 @@ while getopts ":hb:t:a:o:" opt; do
   esac
 done
 
-getSignedUrlUrl="https://androidbuildinternal.googleapis.com/android/internal/build/v3/builds/${build_id}/${build_target}/attempts/latest/artifacts/${artifact_name}/url?redirect=false"
-res=$(curl --fail "${getSignedUrlUrl}") 
-signedUrl=$(echo "${res}" | jq -r '.signedUrl')
-curl --fail ${signedUrl} -o ${output}
+url="https://ci.android.com/builds/submitted/${build_id}/${build_target}/latest/raw/${artifact_name}"
+curl --fail -L --retry 3 "${url}" -o "${output}"
 
