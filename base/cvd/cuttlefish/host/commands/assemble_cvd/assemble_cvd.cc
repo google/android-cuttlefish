@@ -267,8 +267,10 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("uboot_env.img");
   preserving.insert(FactoryResetProtectedImage::FileName());
   preserving.insert(absl::StrCat(MiscImage::kName, ".img"));
+  preserving.insert(std::string(MiscImage::kName));
   preserving.insert("vmmtruststore.img");
   preserving.insert(absl::StrCat(MetadataImage::kName, ".img"));
+  preserving.insert(std::string(MetadataImage::kName));
   preserving.insert("persistent_vbmeta.img");
   preserving.insert("oemlock_secure");
   preserving.insert("oemlock_insecure");
@@ -417,6 +419,22 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       // run without the overlay, then we want to keep this until userdata.img
       // was externally replaced.
       creating_os_disk &= FLAGS_use_overlay;
+
+      // Never silently wipe a device that already holds user data. A
+      // deliberate reset is still possible with `cvd powerwash` or
+      // --resume=false.
+      if (creating_os_disk && FLAGS_resume) {
+        for (const auto& instance : config.Instances()) {
+          const std::string overlay = instance.PerInstancePath("overlay.img");
+          CF_EXPECTF(!FileHasContent(overlay),
+                     "Refusing to start: the disk inputs for '{}' changed "
+                     "since the last run, and resuming would wipe the "
+                     "existing user data in '{}'. Nothing was deleted. Use "
+                     "`cvd powerwash` or --resume=false to reset this device "
+                     "deliberately.",
+                     instance.instance_dir(), overlay);
+        }
+      }
     }
 
     std::set<std::string> preserving =
