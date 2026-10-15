@@ -114,7 +114,7 @@ func podcvdBaseDirForGroup(ccm CuttlefishContainerManager, groupName string) (st
 	return podcvdBaseDir, nil
 }
 
-func resolveSnapshotForRestore(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+func resolveSnapshotForRestore(cvdArgs *CvdArgs, snapshotsDir string) error {
 	hostSnapshotPath, exists := cvdArgs.GetStringFlagValueOnSubCommandArgs("snapshot_path")
 	if !exists || hostSnapshotPath == "" {
 		return nil
@@ -127,15 +127,15 @@ func resolveSnapshotForRestore(ccm CuttlefishContainerManager, cvdArgs *CvdArgs)
 	if err != nil {
 		return fmt.Errorf("failed to resolve absolute path for %q: %w", resolvedPath, err)
 	}
-	podcvdBaseDir, err := podcvdBaseDirForGroup(ccm, cvdArgs.CommonArgs.GroupName)
+	resolvedSnapshotsDir, err := filepath.EvalSymlinks(snapshotsDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to resolve snapshots dir %q: %w", snapshotsDir, err)
 	}
-	rel, err := filepath.Rel(podcvdBaseDir, absResolvedPath)
+	rel, err := filepath.Rel(resolvedSnapshotsDir, absResolvedPath)
 	if err != nil || rel == "." || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return fmt.Errorf("snapshot path %q (resolved to %q) is outside group base dir %q", hostSnapshotPath, absResolvedPath, podcvdBaseDir)
+		return fmt.Errorf("snapshot path %q (resolved to %q) is outside snapshots dir %q", hostSnapshotPath, absResolvedPath, snapshotsDir)
 	}
-	containerSnapshotPath := filepath.Join("/podcvd_base", rel)
+	containerSnapshotPath := filepath.Join(containerSnapshotsDir, rel)
 	cvdArgs.ReplaceFlagValueOnSubCommandArgs("snapshot_path", containerSnapshotPath)
 	return nil
 }
@@ -146,7 +146,7 @@ func handleCreateOrStartExecution(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 		cvdArgs.ReplaceFlagValueOnSubCommandArgs("base_directory", "/podcvd_base")
 	}
 	if cvdArgs.SubCommandArgs[0] == "start" {
-		if err := resolveSnapshotForRestore(ccm, cvdArgs); err != nil {
+		if err := resolveSnapshotForRestore(cvdArgs, hostSnapshotsDir()); err != nil {
 			return err
 		}
 	}
@@ -225,7 +225,7 @@ func handleBugreportExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) 
 	return nil
 }
 
-func handleSnapshotTakeExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+func handleSnapshotTakeExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs, snapshotsDir string) error {
 	hostSnapshotPath, exists := cvdArgs.GetStringFlagValueOnSubCommandArgs("snapshot_path")
 	if !exists || hostSnapshotPath == "" {
 		args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
@@ -243,17 +243,12 @@ func handleSnapshotTakeExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArg
 	if err := os.MkdirAll(filepath.Dir(absHostSnapshotPath), 0755); err != nil {
 		return fmt.Errorf("failed to create parent directory for %q: %w", absHostSnapshotPath, err)
 	}
-	podcvdBaseDir, err := podcvdBaseDirForGroup(ccm, cvdArgs.CommonArgs.GroupName)
-	if err != nil {
-		return err
-	}
-	snapshotsDir := filepath.Join(podcvdBaseDir, "snapshots")
 	if err := os.MkdirAll(snapshotsDir, 0755); err != nil {
 		return fmt.Errorf("failed to create snapshots dir: %w", err)
 	}
 	snapshotID := uuid.New().String()
 	hostStagingPath := filepath.Join(snapshotsDir, snapshotID)
-	containerSnapshotPath := filepath.Join("/podcvd_base/snapshots", snapshotID)
+	containerSnapshotPath := filepath.Join(containerSnapshotsDir, snapshotID)
 	succeeded := false
 	defer func() {
 		if !succeeded {
@@ -368,9 +363,6 @@ func handleSubcommandsForSingleInstanceGroup(ccm CuttlefishContainerManager, cvd
 		// If the subcommand is 'remove', it doesn't need to execute cvd on the
 		// container instance as it should be removed in the end.
 		if subcommand == "remove" {
-			if podcvdBaseDir, err := podcvdBaseDirForGroup(ccm, cvdArgs.CommonArgs.GroupName); err == nil {
-				_ = os.RemoveAll(filepath.Join(podcvdBaseDir, "snapshots"))
-			}
 			return DeleteCuttlefishHost(ccm, cvdArgs.CommonArgs.GroupName)
 		}
 	}
@@ -380,7 +372,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm CuttlefishContainerManager, cvd
 	case "bugreport":
 		return handleBugreportExecution(ccm, cvdArgs)
 	case "snapshot_take":
-		return handleSnapshotTakeExecution(ccm, cvdArgs)
+		return handleSnapshotTakeExecution(ccm, cvdArgs, hostSnapshotsDir())
 	case "logs":
 		return handleLogsExecution(ccm, cvdArgs)
 	default:

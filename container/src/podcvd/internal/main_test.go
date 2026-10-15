@@ -26,7 +26,6 @@ import (
 )
 
 type fakeContainerManager struct {
-	baseDir  string
 	execFn   func(ctr string, cmd []string, stderr io.Writer) error
 	lastExec []string
 }
@@ -56,7 +55,6 @@ func (f *fakeContainerManager) InspectContainer(ctx context.Context, name string
 		Config: &ContainerConfig{
 			Labels: map[string]string{
 				labelAttemptID: "test-attempt",
-				labelBaseDir:   f.baseDir,
 			},
 		},
 	}, nil
@@ -87,12 +85,11 @@ func (f *fakeContainerManager) StopAndRemoveContainer(ctx context.Context, ctr s
 }
 
 func TestHandleSnapshotTakeExecution(t *testing.T) {
-	baseDir := t.TempDir()
+	snapshotsDir := t.TempDir()
 	hostDestDir := filepath.Join(t.TempDir(), "out_snapshot")
 
 	failExec := false
 	ccm := &fakeContainerManager{
-		baseDir: baseDir,
 		execFn: func(ctr string, cmd []string, stderr io.Writer) error {
 			if failExec {
 				return fmt.Errorf("simulated container snapshot_take failure")
@@ -105,11 +102,11 @@ func TestHandleSnapshotTakeExecution(t *testing.T) {
 					containerSnapPath = v
 				}
 			}
-			if !strings.HasPrefix(containerSnapPath, "/podcvd_base/snapshots/") {
+			if !strings.HasPrefix(containerSnapPath, "/podcvd_snapshot/") {
 				t.Fatalf("unexpected container snapshot_path %q in cmd %v", containerSnapPath, cmd)
 			}
-			rel := strings.TrimPrefix(containerSnapPath, "/podcvd_base/")
-			hostStageDir := filepath.Join(baseDir, rel)
+			rel := strings.TrimPrefix(containerSnapPath, "/podcvd_snapshot/")
+			hostStageDir := filepath.Join(snapshotsDir, rel)
 			// Simulate snapshot_util_cvd's native --force check on the staging directory.
 			if _, err := os.Stat(hostStageDir); err == nil {
 				if !slices.Contains(cmd, "--force") {
@@ -133,7 +130,7 @@ func TestHandleSnapshotTakeExecution(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseCvdArgs failed: %v", err)
 	}
-	if err := handleSnapshotTakeExecution(ccm, cvdArgs); err != nil {
+	if err := handleSnapshotTakeExecution(ccm, cvdArgs, snapshotsDir); err != nil {
 		t.Fatalf("handleSnapshotTakeExecution failed: %v", err)
 	}
 	fi, err := os.Lstat(hostDestDir)
@@ -156,7 +153,7 @@ func TestHandleSnapshotTakeExecution(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseCvdArgs failed: %v", err)
 	}
-	if err := handleSnapshotTakeExecution(ccm, cvdArgsNoForce); err == nil {
+	if err := handleSnapshotTakeExecution(ccm, cvdArgsNoForce, snapshotsDir); err == nil {
 		t.Fatalf("expected error when snapshot_path already exists without --force")
 	}
 
@@ -166,7 +163,7 @@ func TestHandleSnapshotTakeExecution(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseCvdArgs failed: %v", err)
 	}
-	if err := handleSnapshotTakeExecution(ccm, cvdArgsForceFail); err == nil {
+	if err := handleSnapshotTakeExecution(ccm, cvdArgsForceFail, snapshotsDir); err == nil {
 		t.Fatalf("expected error when container snapshot_take fails")
 	}
 	if _, err := os.Stat(filepath.Join(hostDestDir, "marker.txt")); err != nil {
@@ -179,7 +176,7 @@ func TestHandleSnapshotTakeExecution(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseCvdArgs failed: %v", err)
 	}
-	if err := handleSnapshotTakeExecution(ccm, cvdArgsForce); err != nil {
+	if err := handleSnapshotTakeExecution(ccm, cvdArgsForce, snapshotsDir); err != nil {
 		t.Fatalf("handleSnapshotTakeExecution with --force failed: %v", err)
 	}
 	secondTarget, err := os.Readlink(hostDestDir)
@@ -195,9 +192,9 @@ func TestHandleSnapshotTakeExecution(t *testing.T) {
 }
 
 func TestResolveSnapshotForRestore(t *testing.T) {
-	baseDir := t.TempDir()
-	snap1Target := filepath.Join(baseDir, "snapshots", "uuid-1")
-	snap2Target := filepath.Join(baseDir, "snapshots", "uuid-2")
+	snapshotsDir := t.TempDir()
+	snap1Target := filepath.Join(snapshotsDir, "uuid-1")
+	snap2Target := filepath.Join(snapshotsDir, "uuid-2")
 	for _, dir := range []string{snap1Target, snap2Target} {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			t.Fatal(err)
@@ -212,19 +209,18 @@ func TestResolveSnapshotForRestore(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ccm := &fakeContainerManager{baseDir: baseDir}
 	for _, tc := range []struct {
 		hostPath string
 		want     string
 	}{
-		{hostSnap1, "/podcvd_base/snapshots/uuid-1"},
-		{hostSnap2, "/podcvd_base/snapshots/uuid-2"},
+		{hostSnap1, "/podcvd_snapshot/uuid-1"},
+		{hostSnap2, "/podcvd_snapshot/uuid-2"},
 	} {
 		cvdArgs, err := ParseCvdArgs([]string{"--group_name=cvd_1", "start", "--snapshot_path=" + tc.hostPath})
 		if err != nil {
 			t.Fatalf("ParseCvdArgs failed: %v", err)
 		}
-		if err := resolveSnapshotForRestore(ccm, cvdArgs); err != nil {
+		if err := resolveSnapshotForRestore(cvdArgs, snapshotsDir); err != nil {
 			t.Fatalf("resolveSnapshotForRestore(%q) failed: %v", tc.hostPath, err)
 		}
 		got, ok := cvdArgs.GetStringFlagValueOnSubCommandArgs("snapshot_path")
@@ -233,8 +229,8 @@ func TestResolveSnapshotForRestore(t *testing.T) {
 		}
 	}
 
-	entries, err := os.ReadDir(filepath.Join(baseDir, "snapshots"))
+	entries, err := os.ReadDir(snapshotsDir)
 	if err != nil || len(entries) != 2 {
-		t.Fatalf("expected both snapshots to remain in %s/snapshots, got %d (err=%v)", baseDir, len(entries), err)
+		t.Fatalf("expected both snapshots to remain in %s, got %d (err=%v)", snapshotsDir, len(entries), err)
 	}
 }

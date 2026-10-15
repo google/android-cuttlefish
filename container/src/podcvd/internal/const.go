@@ -20,6 +20,7 @@ const (
 	portOperatorHttps       = 1443
 	portOperatorHttpsOnHost = 11443
 	ifName                  = "podcvd"
+	containerSnapshotsDir   = "/podcvd_snapshot"
 )
 
 const (

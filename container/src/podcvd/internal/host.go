@@ -222,6 +222,10 @@ func hostCacheDir() string {
 	return filepath.Join("/var/tmp/cvd", strconv.Itoa(uid), "cache")
 }
 
+func hostSnapshotsDir() string {
+	return filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), "snapshots")
+}
+
 func resolveHostPath(path string) string {
 	if strings.TrimSpace(path) == "" {
 		return ""
@@ -286,12 +290,13 @@ func mountablePathsFromConfigFile(cvdArgs *CvdArgs) []string {
 	return extractPaths(data)
 }
 
-func collectMountSpecs(pathsToMount []string, hostOut, productOut, cvdDataHome, podcvdBaseDir, cacheDir string) []string {
+func collectMountSpecs(pathsToMount []string, hostOut, productOut, cvdDataHome, podcvdBaseDir, cacheDir, snapshotsDir string) []string {
 	bindMap := make(map[string]string)
 	bindMap["/host_out"] = fmt.Sprintf("%s:/host_out:O", hostOut)
 	bindMap["/product_out"] = fmt.Sprintf("%s:/product_out:O", productOut)
 	bindMap["/root/.local/share/cvd"] = fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome)
 	bindMap["/podcvd_base"] = fmt.Sprintf("%s:/podcvd_base:rw", podcvdBaseDir)
+	bindMap[containerSnapshotsDir] = fmt.Sprintf("%s:%s:rw", snapshotsDir, containerSnapshotsDir)
 	bindMap["/var/tmp/cvd/0/cache"] = fmt.Sprintf("%s:/var/tmp/cvd/0/cache:rw", cacheDir)
 	bindMap["/etc/cuttlefish-common/operator/cert/cert.pem"] = "/etc/cuttlefish-podcvd/cert.pem:/etc/cuttlefish-common/operator/cert/cert.pem:ro"
 	bindMap["/etc/cuttlefish-common/operator/cert/key.pem"] = "/etc/cuttlefish-podcvd/key.pem:/etc/cuttlefish-common/operator/cert/key.pem:ro"
@@ -427,6 +432,10 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 	if err := os.MkdirAll(podcvdHomeDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create podcvd home dir: %w", err)
 	}
+	snapshotsDir := hostSnapshotsDir()
+	if err := os.MkdirAll(snapshotsDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create podcvd snapshots dir: %w", err)
+	}
 	var pathsToMount []string
 	for idx, arg := range cvdArgs.SubCommandArgs {
 		path := arg
@@ -456,7 +465,7 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 			pathsToMount = append(pathsToMount, realPath)
 		}
 	}
-	mountSpecs := collectMountSpecs(pathsToMount, hostOut, productOut, cvdDataHome, podcvdBaseDir, cacheDir)
+	mountSpecs := collectMountSpecs(pathsToMount, hostOut, productOut, cvdDataHome, podcvdBaseDir, cacheDir, snapshotsDir)
 
 	extraFlags := []string{
 		"-e", "ANDROID_HOST_OUT=/host_out",
