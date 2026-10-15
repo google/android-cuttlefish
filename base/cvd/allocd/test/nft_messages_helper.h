@@ -66,10 +66,8 @@ std::vector<Expression> GetRuleExpressions(const Message& rule);
 
 uint16_t NftType(uint16_t message);
 
-// `error` is a positive errno, and 0 is an ack.
 std::vector<char> BuildErrorReply(int error);
 
-// Builds the reply to a successful NFT_MSG_GETTABLE.
 std::vector<char> BuildTableReply(std::string_view name);
 std::vector<char> Concat(std::vector<char> a, const std::vector<char>& b);
 
