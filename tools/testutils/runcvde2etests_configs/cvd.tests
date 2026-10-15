@@ -24,7 +24,7 @@
 //cvd/media_tests/cts:media_tests
 //cvd/media_tests/v4l2_stream_proxy/v4l2compliance:media_tests
 //cvd/media_tests/v4l2compliance:media_tests
-//cvd/metrics_tests:metrics_tests
+//cvd/metrics_create_tests:metrics_create_tests
 //cvd/networking_tests:networking_tests
 //cvd/sdv_tests:sdv_tests
 
