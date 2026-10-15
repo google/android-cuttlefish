@@ -1,0 +1,15 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "channel_layout",
+    srcs = ["channel_layout.cpp"],
+    hdrs = ["channel_layout.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
+        "@abseil-cpp//absl/log",
+    ],
+)
