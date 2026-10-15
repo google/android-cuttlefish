@@ -21,6 +21,33 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "nft_messages",
+    srcs = ["nft_messages.cc"],
+    hdrs = ["nft_messages.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    deps = [
+        ":netlink",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "nft_messages_test",
+    srcs = ["nft_messages_test.cc"],
+    deps = [
+        ":netlink",
+        ":nft_messages",
+        "//allocd/test:nft_messages_helper",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
     name = "nftables",
     srcs = [
         "nft_rule.cc",
