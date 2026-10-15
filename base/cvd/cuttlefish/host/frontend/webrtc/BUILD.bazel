@@ -136,6 +136,7 @@ cf_cc_library(
 cf_cc_library(
     name = "libcuttlefish_webrtc_audio_settings",
     hdrs = ["audio_settings.h"],
+    deps = ["//cuttlefish/host/libs/audio:channel_layout"],
 )
 
 cf_cc_library(
@@ -426,6 +427,7 @@ cf_cc_binary(
         "//cuttlefish/host/frontend/webrtc/libdevice:local_recorder",
         "//cuttlefish/host/frontend/webrtc/libdevice:streamer",
         "//cuttlefish/host/frontend/webrtc/libdevice:video_sink",
+        "//cuttlefish/host/libs/audio:channel_layout",
         "//cuttlefish/host/libs/audio_connector",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_utils",
