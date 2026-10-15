@@ -63,7 +63,7 @@ message GpsCoordinates {
 // The request message containing array of gps locations
 message SendGpsCoordinatesRequest {
   //Delay in millisecond
-  int32 delay =1;
+  int32 delay = 1;
   repeated GpsCoordinates coordinates = 2;
 }
 
