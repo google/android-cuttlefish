@@ -297,18 +297,10 @@ Subprocess Command::Start(SubprocessOptions options) const {
         exit(-errno);
       }
     }
-    int rval;
     const char* executable = executable_ ? executable_->c_str() : cmd[0];
-#ifdef __linux__
-    rval = execvpe(executable, const_cast<char* const*>(cmd.data()),
-                   const_cast<char* const*>(envp.data()));
-#elif defined(__APPLE__)
-    rval = execve(executable, const_cast<char* const*>(cmd.data()),
-                  const_cast<char* const*>(envp.data()));
-#else
-#error "Unsupported architecture"
-#endif
-    // No need to check for error, execvpe/execve don't return on success.
+    environ = const_cast<char**>(envp.data());
+    int rval = execvp(executable, const_cast<char* const*>(cmd.data()));
+    // No need to check for error, execvp doesn't return on success.
     exit(rval);
   }
   if (pid == -1) {
