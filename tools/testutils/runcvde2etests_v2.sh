@@ -23,6 +23,7 @@ readonly CREDENTIAL_SOURCE="${CREDENTIAL_SOURCE:-}"
 
 readonly CONFIG_CVD="cvd"
 readonly CONFIG_CVD_WITH_GPU="cvd_with_gpu"
+readonly CONFIG_PODCVD="podcvd"
 
 function print_usage() {
   >&2 echo "usage: $0 [-c <config>] [-i <runner_index>] [-n <runners_total>]"
@@ -56,9 +57,18 @@ while getopts ":c:i:n:" opt; do
   esac
 done
 
+config_test_args=()
 case "${config}" in
   "${CONFIG_CVD}") ;;
   "${CONFIG_CVD_WITH_GPU}") true ;;
+  "${CONFIG_PODCVD}")
+    config_test_args+=(
+      --test_env="USE_PODCVD=true"
+      --test_env="CONTAINERS_STORAGE_CONF=/tmp/podcvd-podman-config/storage.conf"
+      --test_env="HOME=${HOME}"
+      --test_env="XDG_RUNTIME_DIR=/run/user/$(id -u)"
+    )
+    ;;
   *)
     echo "ERROR: invalid configuration name '${config}'" >&2
     print_usage
@@ -172,5 +182,6 @@ fi
 bazel test \
   ${credential_arg} \
   --zip_undeclared_test_outputs \
+  ${config_test_args[@]+"${config_test_args[@]}"} \
   ${runner_tests}
 
