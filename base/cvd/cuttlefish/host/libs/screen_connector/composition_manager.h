@@ -45,7 +45,7 @@ class CompositionManager {
                uint32_t frame_stride_bytes, uint8_t* frame_pixels);
 
   void ComposeFrame(int display_index,
-                    std::shared_ptr<PlanarVideoFrameBuffer> buffer);
+                    std::shared_ptr<VideoFrameBuffer> buffer);
 
  private:
   explicit CompositionManager(
@@ -78,7 +78,7 @@ class CompositionManager {
                             int frame_height);
   void ComposeFrame(int display, int width, int height,
                     uint32_t frame_fourcc_format, uint32_t frame_stride_bytes,
-                    std::shared_ptr<PlanarVideoFrameBuffer> buffer);
+                    std::shared_ptr<VideoFrameBuffer> buffer);
   DisplayRingBufferManager display_ring_buffer_manager_;
   int cluster_index_;
   std::string group_uuid_;
