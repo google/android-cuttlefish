@@ -181,7 +181,7 @@ class Fd : public ReaderWriterSeeker {
 
   int UNMANAGED_Dup();
   int UNMANAGED_Dup2(int newfd);
-  int Fchdir();
+  Result<void, int> Fchdir();
   int Fcntl(int command, int value);
   int Fsync();
 

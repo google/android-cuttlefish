@@ -704,13 +704,13 @@ int Fd::UNMANAGED_Dup2(int newfd) {
   return TEMP_FAILURE_RETRY(dup2(fd_, newfd));
 }
 
-int Fd::Fchdir() {
-  if (fd_ < 0) {
-    return -1;
-  }
+Result<void, int> Fd::Fchdir() {
+  CF_EXPECTV(fd_ >= 0, EBADF, "Fd is not open");
   LocalErrno record_errno(errno_);
-
-  return TEMP_FAILURE_RETRY(fchdir(fd_));
+  int res = TEMP_FAILURE_RETRY(fchdir(fd_));
+  CF_EXPECTVF(res >= 0, errno, "fchdir failed: {}",
+              ::cuttlefish::StrError(errno));
+  return {};
 }
 
 int Fd::Fcntl(int command, int value) {
