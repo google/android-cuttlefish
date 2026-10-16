@@ -31,3 +31,4 @@ if [ -f "$CACHE_CONFIG_FILE" ]; then
 fi
 
 "${TOOL_DIR}/buildutils/build_packages.sh" -r "${BAZEL_REMOTE_CACHE}" -c "${CACHE_VERSION}"
+"${TOOL_DIR}/buildutils/build_package.sh" "${REPO_DIR}/container"
