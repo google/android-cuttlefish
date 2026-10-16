@@ -74,12 +74,21 @@ CuttlefishHost_Invoker ConvertInvoker(const Invoker invoker) {
     case Invoker::Acloud:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_ACLOUD;
+    case Invoker::Cvdr:
+      return CuttlefishHost_Invoker::
+          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_CVDR;
     case Invoker::HostOrchestrator:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_HOST_ORCHESTRATOR;
+    case Invoker::LaunchCvd:
+      return CuttlefishHost_Invoker::
+          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_LAUNCH_CVD;
     case Invoker::None:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_NONE;
+    case Invoker::Podcvd:
+      return CuttlefishHost_Invoker::
+          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_PODCVD;
     case Invoker::Unknown:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_UNSPECIFIED;
@@ -131,6 +140,8 @@ void PopulateCuttlefishHost(MetricsEventV2& metrics_event,
   host.set_host_os(ConvertHostOs(host_metrics.os));
   host.set_host_os_version(host_metrics.os.release);
   host.set_invoker(ConvertInvoker(host_metrics.invoker));
+  // TODO CJR: waiting on PR 3340 to work
+  host.set_user_id(host_metrics.user_id);
   PopulateCuttlefishHostEnvironment(host, host_metrics.environment);
 }
 
