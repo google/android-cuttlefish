@@ -29,8 +29,14 @@
 
 set -o errexit -o nounset -o pipefail
 
-readonly CVD_DIR="$(cd "$(dirname "$0")/../../base/cvd" && pwd)"
+readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+readonly CVD_DIR="$(cd "${SCRIPT_DIR}/../../base/cvd" && pwd)"
 readonly ATTEMPTS="${VENDOR_ATTEMPTS:-3}"
+
+# Populate local git mirrors for crosvm and its submodules and configure git
+# url.<mirror>.insteadOf so crate_universe's ~136 non-vendored crosvm crate
+# repositories fetch from the cached local mirror (b/574521063).
+"${SCRIPT_DIR}/setup_git_mirrors.sh"
 
 cd "${CVD_DIR}"
 

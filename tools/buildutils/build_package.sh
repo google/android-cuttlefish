@@ -68,6 +68,10 @@ if [ -n "${container_image_name:-}" ]; then
   preserve_envvar+=" -e container_image_name=${container_image_name}"
 fi
 
+if [ -f "${PKGDIR}/cvd/MODULE.bazel" ]; then
+  "$(dirname "$0")/setup_git_mirrors.sh"
+fi
+
 pushd "${PKGDIR}"
 echo "Installing package dependencies"
 sudo mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
