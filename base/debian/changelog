@@ -1,3 +1,15 @@
+cuttlefish-common (1.55.5) unstable; urgency=medium
+
+  * Update to Debian Trixie and glibc 2.43
+  * Enable IP forwarding via sysctl.d and order cuttlefish-host-resources before docker
+  * Lock zip 0.6.6 in netsim Cargo.lock
+  * Avoid adding `safe_level=` to the AB URLs in cvd fetch
+  * Don't discard the whole bug report on a directory entry
+  * Fix minijail policy parsing errors building with Linux 6.1 headers
+  * Explicitly choose a rust toolchain version
+
+ -- Ram Muthiah <rammuthiah@google.com>  Thu, 15 Oct 2026 21:55:03 +0000
+
 cuttlefish-common (1.55.4) unstable; urgency=medium
 
   * Support target configuration preset in Cuttlefish cvd load JSON
