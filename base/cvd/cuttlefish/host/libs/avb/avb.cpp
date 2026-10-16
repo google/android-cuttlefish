@@ -62,8 +62,7 @@ Result<void> WritePaddedCopy(const std::string& path,
              tmp_fd.StrError());
   CF_EXPECTF(tmp_fd.Truncate(kVbMetaMaxSize), "Truncating '{}' failed",
              tmp_path);
-  CF_EXPECTF(tmp_fd.Fsync() == 0, "fsync on '{}' failed: {}", tmp_path,
-             tmp_fd.StrError());
+  CF_EXPECTF(tmp_fd.Fsync(), "fsync on '{}' failed", tmp_path);
   return {};
 }
 
