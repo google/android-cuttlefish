@@ -692,10 +692,13 @@ int Fd::Fcntl(int command, int value) {
   return TEMP_FAILURE_RETRY(fcntl(fd_, command, value));
 }
 
-int Fd::Fsync() {
+Result<void, int> Fd::Fsync() {
   LocalErrno record_errno(errno_);
 
-  return TEMP_FAILURE_RETRY(fsync(fd_));
+  int res = TEMP_FAILURE_RETRY(fsync(fd_));
+  CF_EXPECTVF(res >= 0, errno, "fsync failed: {}",
+              ::cuttlefish::StrError(errno));
+  return {};
 }
 
 Result<void, int> Fd::Flock(int operation) {
