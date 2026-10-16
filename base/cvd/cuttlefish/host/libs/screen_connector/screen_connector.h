@@ -66,14 +66,15 @@ class ScreenConnector : public ScreenConnectorFrameRenderer {
     auto instance = config->ForDefaultInstance();
     std::unordered_set<GpuMode> valid_gpu_modes{
         GpuMode::Custom,
+        GpuMode::DrmNctx,
         GpuMode::DrmVirgl,
         GpuMode::Gfxstream,
         GpuMode::GfxstreamGuestAngle,
         GpuMode::GfxstreamGuestAngleHostSwiftshader,
         GpuMode::GfxstreamGuestAngleHostLavapipe,
-        GpuMode::Venus,
         GpuMode::GuestLavapipe,
         GpuMode::GuestSwiftshader,
+        GpuMode::Venus,
     };
     if (!Contains(valid_gpu_modes, instance.gpu_mode())) {
       LOG(FATAL) << "Invalid gpu mode: " << GpuModeString(instance.gpu_mode());

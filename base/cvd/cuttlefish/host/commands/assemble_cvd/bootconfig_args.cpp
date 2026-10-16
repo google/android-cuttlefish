@@ -377,10 +377,16 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
         bootconfig_args["androidboot.vendor.apex.com.google.cf.vulkan"] =
             "com.google.cf.vulkan.venus";
       }
+    } else if (gpu_mode == GpuMode::DrmNctx) {
+      if (instance.has_vulkan_turnip_apex()) {
+        bootconfig_args["androidboot.vendor.apex.com.google.cf.vulkan"] =
+            "com.google.cf.vulkan.turnip";
+      }
     }
   }
 
-  if (gpu_mode == GpuMode::GuestLavapipe || gpu_mode == GpuMode::Venus) {
+  if (gpu_mode == GpuMode::GuestLavapipe || gpu_mode == GpuMode::Venus ||
+      gpu_mode == GpuMode::DrmNctx) {
     bootconfig_args["androidboot.hardware.guest_renderengine_backend"] =
         "skiavkthreaded";
   }
