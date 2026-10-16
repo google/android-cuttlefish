@@ -75,9 +75,9 @@ class CompositionManager {
   static std::map<int, std::vector<CompositionManager::DisplayOverlay>>
   ParseOverlays(std::vector<std::string> overlay_items);
   uint8_t* AlphaBlendLayers(uint8_t* frame_pixels, int display, int frame_width,
-                            int frame_height);
+                            int frame_height, uint32_t frame_stride_bytes);
   void ComposeFrame(int display, int width, int height,
-                    uint32_t frame_fourcc_format, uint32_t frame_stride_bytes,
+                    uint32_t frame_fourcc_format,
                     std::shared_ptr<VideoFrameBuffer> buffer);
   DisplayRingBufferManager display_ring_buffer_manager_;
   int cluster_index_;
