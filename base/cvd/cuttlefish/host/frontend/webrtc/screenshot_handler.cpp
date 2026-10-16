@@ -27,26 +27,97 @@
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/strings/match.h"
+#include "drm/drm_fourcc.h"
 #include "jpeglib.h"
 #include "libyuv.h"
 #include "png.h"
 
+#include "cuttlefish/host/frontend/webrtc/cvd_video_frame_buffer.h"
+#include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
 
-Result<void> PngScreenshot(std::shared_ptr<PlanarVideoFrameBuffer> frame,
-                           const std::string& screenshot_path) {
-  int width = frame->width();
-  int height = frame->height();
+Result<std::vector<uint8_t>> FrameToRgb(
+    const std::shared_ptr<VideoFrameBuffer>& frame) {
+  const int width = frame->width();
+  const int height = frame->height();
   std::vector<uint8_t> rgb_frame(width * height * 3, 0);
-  auto convert_res =
-      libyuv::I420ToRAW(frame->DataY(), frame->StrideY(), frame->DataU(),
-                        frame->StrideU(), frame->DataV(), frame->StrideV(),
-                        rgb_frame.data(), frame->width() * 3, width, height);
-  CF_EXPECT(convert_res == 0, "Failed to convert I420 frame to RGB");
+
+  const std::shared_ptr<PlanarVideoFrameBuffer> planar =
+      std::dynamic_pointer_cast<PlanarVideoFrameBuffer>(frame);
+  if (planar != nullptr) {
+    const int convert_res =
+        libyuv::I420ToRAW(planar->DataY(), planar->StrideY(), planar->DataU(),
+                          planar->StrideU(), planar->DataV(), planar->StrideV(),
+                          rgb_frame.data(), width * 3, width, height);
+    CF_EXPECT(convert_res == 0, "Failed to convert I420 frame to RGB");
+    return rgb_frame;
+  }
+
+  const std::shared_ptr<PackedVideoFrameBuffer> packed =
+      std::dynamic_pointer_cast<PackedVideoFrameBuffer>(frame);
+  CF_EXPECT(packed != nullptr, "Screenshot requires a planar or packed frame");
+
+  const uint32_t format = packed->PixelFormat();
+  int convert_res = -1;
+  if (format == DRM_FORMAT_ARGB8888 || format == DRM_FORMAT_XRGB8888) {
+    convert_res = libyuv::ARGBToRAW(packed->Data(), packed->Stride(),
+                                    rgb_frame.data(), width * 3, width, height);
+  } else if (format == DRM_FORMAT_ABGR8888 || format == DRM_FORMAT_XBGR8888) {
+    convert_res = libyuv::ABGRToRAW(packed->Data(), packed->Stride(),
+                                    rgb_frame.data(), width * 3, width, height);
+  } else {
+    return CF_ERRF("Unsupported pixel format for PNG screenshot: 0x{:x}",
+                   format);
+  }
+  CF_EXPECT(convert_res == 0, "Failed to convert packed frame to RGB");
+  return rgb_frame;
+}
+
+Result<std::shared_ptr<PlanarVideoFrameBuffer>> ToPlanarFrame(
+    const std::shared_ptr<VideoFrameBuffer>& frame) {
+  const std::shared_ptr<PlanarVideoFrameBuffer> planar =
+      std::dynamic_pointer_cast<PlanarVideoFrameBuffer>(frame);
+  if (planar != nullptr) {
+    return planar;
+  }
+
+  const std::shared_ptr<PackedVideoFrameBuffer> packed =
+      std::dynamic_pointer_cast<PackedVideoFrameBuffer>(frame);
+  CF_EXPECT(packed != nullptr, "Screenshot requires a planar or packed frame");
+
+  const int width = packed->width();
+  const int height = packed->height();
+  const uint32_t format = packed->PixelFormat();
+  std::shared_ptr<CvdVideoFrameBuffer> i420 =
+      std::make_shared<CvdVideoFrameBuffer>(width, height);
+  int convert_res = -1;
+  if (format == DRM_FORMAT_ARGB8888 || format == DRM_FORMAT_XRGB8888) {
+    convert_res =
+        libyuv::ARGBToI420(packed->Data(), packed->Stride(), i420->DataY(),
+                           i420->StrideY(), i420->DataU(), i420->StrideU(),
+                           i420->DataV(), i420->StrideV(), width, height);
+  } else if (format == DRM_FORMAT_ABGR8888 || format == DRM_FORMAT_XBGR8888) {
+    convert_res =
+        libyuv::ABGRToI420(packed->Data(), packed->Stride(), i420->DataY(),
+                           i420->StrideY(), i420->DataU(), i420->StrideU(),
+                           i420->DataV(), i420->StrideV(), width, height);
+  } else {
+    return CF_ERRF("Unsupported pixel format for JPEG screenshot: 0x{:x}",
+                   format);
+  }
+  CF_EXPECT(convert_res == 0, "Failed to convert packed frame to I420");
+  return i420;
+}
+
+Result<void> PngScreenshot(const std::shared_ptr<VideoFrameBuffer>& frame,
+                           const std::string& screenshot_path) {
+  const int width = frame->width();
+  const int height = frame->height();
+  const std::vector<uint8_t> rgb_frame = CF_EXPECT(FrameToRgb(frame));
   FILE* outfile = fopen(screenshot_path.c_str(), "wb");
   CF_EXPECTF(outfile != NULL, "opening {} failed: {}", screenshot_path,
              StrError(errno));
@@ -189,14 +260,15 @@ Result<void> ScreenshotHandler::Screenshot(uint32_t display_number,
             "Failed to get screenshot from webrtc display handler within "
                 << kScreenshotTimeoutSeconds << " seconds.");
 
-  SharedFrame frame = frame_future.get();
-  auto planar = std::dynamic_pointer_cast<PlanarVideoFrameBuffer>(frame);
-  CF_EXPECT(planar != nullptr, "Screenshot requires a planar frame");
+  const SharedFrame frame = frame_future.get();
+  CF_EXPECT(frame != nullptr, "Received null frame for screenshot");
 
   if (absl::EndsWith(screenshot_path, ".jpg")) {
+    const std::shared_ptr<PlanarVideoFrameBuffer> planar =
+        CF_EXPECT(ToPlanarFrame(frame));
     CF_EXPECT(JpegScreenshot(planar, screenshot_path));
   } else if (absl::EndsWith(screenshot_path, ".png")) {
-    CF_EXPECT(PngScreenshot(planar, screenshot_path));
+    CF_EXPECT(PngScreenshot(frame, screenshot_path));
   } else {
     return CF_ERR("Unsupport file format: " << screenshot_path);
   }
