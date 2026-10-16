@@ -41,11 +41,12 @@ Result<void> MakeFatImage(const std::string& data_image, int data_image_mb,
                "`truncate --size={}M '{}'` failed: {}", data_image_mb,
                data_image, fd.StrError());
 
-    CF_EXPECT_EQ(
-        Execute({MkfsFat(), "-F", "32", "-M", "0xf8", "-h", "0", "-s", "8",
-                 "-g", "255/63", "-S", "512",
-                 "--offset=" + std::to_string(offset_size_bytes), data_image}),
-        0);
+    const off_t offset_size_sectors = offset_size_bytes / 512;
+    CF_EXPECT_EQ(Execute({MkfsFat(), "-F", "32", "-M", "0xf8", "-h", "0", "-s",
+                          "8", "-g", "255/63", "-S", "512",
+                          "--offset=" + std::to_string(offset_size_sectors),
+                          data_image}),
+                 0);
   } else {
     image_size_bytes -= offset_size_bytes;
     off_t image_size_sectors = image_size_bytes / 512;
