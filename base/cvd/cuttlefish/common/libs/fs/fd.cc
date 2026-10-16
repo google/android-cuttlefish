@@ -280,9 +280,8 @@ Result<Fd, int> Fd::SocketLocalClient(int port, int type) {
   Fd rval = CF_EXPECT(Fd::Socket(AF_INET, type, 0));
 
   auto addr_ptr = reinterpret_cast<const sockaddr*>(&addr);
-  CF_EXPECTVF(rval.Connect(addr_ptr, sizeof addr) >= 0, rval.GetErrno(),
-              "Connect failed to port {} with type {}: {}", port, type,
-              rval.StrError());
+  CF_EXPECTF(rval.Connect(addr_ptr, sizeof addr),
+             "Connect failed to port {} with type {}", port, type);
 
   return rval;
 }
@@ -606,10 +605,10 @@ int Fd::ConnectWithTimeout(const struct sockaddr* addr, socklen_t addrlen,
     return -1;
   }
 
-  auto connect_res = Connect(
+  Result<void, int> connect_res = Connect(
       addr, addrlen);  // This will return immediately because of O_NONBLOCK
 
-  if (connect_res == 0) {  // Immediate success
+  if (connect_res.has_value()) {  // Immediate success
     if (Fcntl(F_SETFL, original_flags) == -1) {
       LOG(ERROR) << "Failed to restore original flags: " << StrError();
       return -1;
@@ -617,7 +616,7 @@ int Fd::ConnectWithTimeout(const struct sockaddr* addr, socklen_t addrlen,
     return 0;
   }
 
-  if (GetErrno() != EAGAIN && GetErrno() != EINPROGRESS) {
+  if (*connect_res.error() != EAGAIN && *connect_res.error() != EINPROGRESS) {
     VLOG(0) << "Immediate connection failure: " << StrError();
     if (Fcntl(F_SETFL, original_flags) == -1) {
       LOG(ERROR) << "Failed to restore original flags: " << StrError();
@@ -688,10 +687,12 @@ Result<void, int> Fd::Bind(const struct sockaddr* addr, socklen_t addrlen) {
   return {};
 }
 
-int Fd::Connect(const struct sockaddr* addr, socklen_t addrlen) {
+Result<void, int> Fd::Connect(const struct sockaddr* addr, socklen_t addrlen) {
   LocalErrno record_errno(errno_);
 
-  return connect(fd_, addr, addrlen);
+  CF_EXPECTVF(connect(fd_, addr, addrlen) == 0, errno,
+              "connect(...) failed: {}", ::cuttlefish::StrError(errno));
+  return {};
 }
 
 int Fd::UNMANAGED_Dup() {

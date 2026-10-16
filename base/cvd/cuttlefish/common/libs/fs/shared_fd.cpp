@@ -284,8 +284,9 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
   addr.svm_port = port;
   addr.svm_cid = cid;
   auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
-  if (vsock->Connect(casted_addr, sizeof(addr)) == -1) {
-    return SharedFD::ErrorFD(vsock->GetErrno());
+  Result<void, int> connect_res = vsock->Connect(casted_addr, sizeof(addr));
+  if (!connect_res.has_value()) {
+    return SharedFD::ErrorFD(*connect_res.error());
   }
   return vsock;
 }
