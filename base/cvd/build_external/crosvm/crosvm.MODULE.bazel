@@ -1,6 +1,6 @@
 # this needs to be at parity with with build_external/crosvm/crosvm.config.toml
 CROSVM_REMOTE = "https://chromium.googlesource.com/crosvm/crosvm"
-CROSVM_REV = "fd4df63707aee57092a28db63bc1ff8945c76058"
+CROSVM_REV = "597fa65c644c3880e2eba24a6708ab93b3321d4a"
 
 # note that this won't use the same source checkout as the git_repository directive below
 #
