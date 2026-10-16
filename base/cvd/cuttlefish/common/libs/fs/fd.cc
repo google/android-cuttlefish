@@ -355,8 +355,7 @@ Result<Fd, int> Fd::SocketLocalServer(int port, int type) {
   CF_EXPECTVF(rval.SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) >= 0,
               rval.GetErrno(), "SetSockOpt failed: {}", rval.StrError());
 
-  CF_EXPECTVF(rval.Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) >= 0,
-              rval.GetErrno(), "Bind failed: {}", rval.StrError());
+  CF_EXPECT(rval.Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)));
 
   if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
     CF_EXPECTVF(rval.Listen(4) >= 0, rval.GetErrno(), "Listen failed: {}",
@@ -382,8 +381,7 @@ Result<Fd, int> Fd::SocketLocalServer(std::string_view name, bool abstract,
   int n = 1;
   CF_EXPECTVF(rval.SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) >= 0,
               rval.GetErrno(), "SetSockOpt failed: {}", rval.StrError());
-  CF_EXPECTVF(rval.Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) >= 0,
-              rval.GetErrno(), "Bind failed: {}", rval.StrError());
+  CF_EXPECT(rval.Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)));
 
   /* Only the bottom bits are really the socket type; there are flags too. */
   constexpr int SOCK_TYPE_MASK = 0xf;
@@ -422,8 +420,7 @@ Result<Fd, int> Fd::VsockServer(
   addr.svm_port = port;
   addr.svm_cid = cid;
   auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
-  CF_EXPECTVF(vsock.Bind(casted_addr, sizeof(addr)) >= 0, vsock.GetErrno(),
-              "Bind failed port {}: {}", port, vsock.StrError());
+  CF_EXPECTF(vsock.Bind(casted_addr, sizeof(addr)), "Port {}", port);
 
   if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
     CF_EXPECTVF(vsock.Listen(4) >= 0, vsock.GetErrno(),
@@ -656,10 +653,12 @@ void Fd::Set(fd_set* dest, int* max_index) const {
   FD_SET(fd_, dest);
 }
 
-int Fd::Bind(const struct sockaddr* addr, socklen_t addrlen) {
+Result<void, int> Fd::Bind(const struct sockaddr* addr, socklen_t addrlen) {
   LocalErrno record_errno(errno_);
 
-  return bind(fd_, addr, addrlen);
+  CF_EXPECTVF(bind(fd_, addr, addrlen) == 0, errno, "bind(...) failed: {}",
+              ::cuttlefish::StrError(errno));
+  return {};
 }
 
 int Fd::Connect(const struct sockaddr* addr, socklen_t addrlen) {
