@@ -27,8 +27,9 @@ cf_cc_test(
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
         "//cuttlefish/io:in_memory",
-        "//cuttlefish/result",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
+        "//cuttlefish/result:result_type",
     ],
 )
 
