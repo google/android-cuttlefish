@@ -20,10 +20,11 @@
 
 #include "json/value.h"
 
+#include "cuttlefish/host/libs/config/mte.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 Result<std::vector<std::string>> CrosvmCpuArguments(
-    const Json::Value& vcpu_config);
+    const Json::Value& vcpu_config, Mte mte = Mte::kOff);
 }
