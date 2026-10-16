@@ -34,7 +34,7 @@
 #include "cuttlefish/metrics/io/enabled.h"
 #include "cuttlefish/metrics/io/metrics_transmitter.h"
 #include "cuttlefish/metrics/io/metrics_writer.h"
-#include "cuttlefish/metrics/io/session_id.h"
+#include "cuttlefish/metrics/io/unique_id_file.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -52,6 +52,7 @@ std::chrono::milliseconds GetEpochTime() {
 Result<void> SetUpMetrics(const std::string& metrics_directory) {
   CF_EXPECT(EnsureDirectoryExists(metrics_directory));
   CF_EXPECT(GenerateSessionIdFile(metrics_directory));
+  CF_EXPECT(GenerateUserIdFile());
   return {};
 }
 
