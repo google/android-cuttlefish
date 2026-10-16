@@ -163,7 +163,7 @@ class Fd : public ReaderWriterSeeker {
 #endif
 
   Result<void, int> Bind(const struct sockaddr* addr, socklen_t addrlen);
-  int Connect(const struct sockaddr* addr, socklen_t addrlen);
+  Result<void, int> Connect(const struct sockaddr* addr, socklen_t addrlen);
   int ConnectWithTimeout(const struct sockaddr* addr, socklen_t addrlen,
                          struct timeval* timeout);
   void Close();
