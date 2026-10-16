@@ -17,12 +17,10 @@
 
 #include <fcntl.h>
 #include <net/if.h>
-#include <pwd.h>
 #include <stdint.h>
 #include <string.h>
 
 #include <fstream>
-#include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -207,15 +205,6 @@ bool DestroyIface(std::string_view name) {
   }
 
   return true;
-}
-
-std::optional<std::string> GetUserName(uid_t uid) {
-  passwd* pw = getpwuid(uid);
-  if (pw) {
-    std::string ret(pw->pw_name);
-    return ret;
-  }
-  return std::nullopt;
 }
 
 bool DestroyBridge(std::string_view name) {

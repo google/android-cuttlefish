@@ -20,7 +20,6 @@
 #include <netinet/in.h>
 #include <stddef.h>
 
-#include <array>
 #include <cstdint>
 #include <string>
 #include <type_traits>
@@ -60,9 +59,6 @@ class NetlinkRequest {
 
   // Add an address info to a specific interface.
   void AddAddrInfo(int32_t if_index, int prefix_len = 24);
-
-  // Add an ethernet address/mac address
-  void AddMacAddress(const std::array<unsigned char, 6>& address);
 
   // Add an ipv4 address
   void AddInAddr(uint16_t type, in_addr_t* addr);
