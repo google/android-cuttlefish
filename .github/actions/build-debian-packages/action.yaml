@@ -38,6 +38,9 @@ runs:
 
       # Build other packages with Debian 12 (Bookworm)
       sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .
+      # Pre-fetch git_repository deps into base/cvd/vendor_src (cached by
+      # mount-bazel-vendor-cache) so the debuild below needs no git access.
+      sudo docker run -v=$PWD:/mnt/build -w /mnt/build --entrypoint tools/buildutils/vendor_git_repos.sh android-cuttlefish-build
       sudo docker run -v=$PWD:/mnt/build -w /mnt/build -v=$HOME/bazel-disk-cache:/root/bazel-disk-cache android-cuttlefish-build base -d /root/bazel-disk-cache
       sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build frontend
       sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build cuttlefish-integration-gigabyte-arm64

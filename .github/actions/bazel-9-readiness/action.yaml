@@ -16,6 +16,11 @@ runs:
   - name: Install bazel
     run: sudo tools/buildutils/installbazel.sh
     shell: bash
+  - name: Vendor git dependencies
+    env:
+      OVERRIDE_BAZEL_VERSION: 9.0.0
+    run: tools/buildutils/vendor_git_repos.sh
+    shell: bash
   - name: Test whether package can build
     working-directory: base/cvd
     env:
