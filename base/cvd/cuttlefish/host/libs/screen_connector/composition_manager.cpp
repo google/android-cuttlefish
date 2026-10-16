@@ -216,7 +216,7 @@ void CompositionManager::OnFrame(uint32_t display_number, uint32_t frame_width,
 // triggered by a thread to force displays to constantly update so that when
 // layers are updated, the user will see the blended result.
 void CompositionManager::ComposeFrame(
-    int display_index, std::shared_ptr<PlanarVideoFrameBuffer> buffer) {
+    int display_index, std::shared_ptr<VideoFrameBuffer> buffer) {
   if (!last_frame_info_map_.count(display_index)) {
     return;
   }
@@ -263,8 +263,7 @@ uint8_t* CompositionManager::AlphaBlendLayers(uint8_t* frame_pixels,
 
 void CompositionManager::ComposeFrame(
     int display, int width, int height, uint32_t frame_fourcc_format,
-    uint32_t frame_stride_bytes,
-    std::shared_ptr<PlanarVideoFrameBuffer> buffer) {
+    uint32_t frame_stride_bytes, std::shared_ptr<VideoFrameBuffer> buffer) {
   uint8_t* shmem_local_display = display_ring_buffer_manager_.ReadFrame(
       cluster_index_, display, width, height);
 
@@ -276,16 +275,29 @@ void CompositionManager::ComposeFrame(
 
   AlphaBlendLayers(tmp_buffer, display, width, height);
 
+  if (const std::shared_ptr<PackedVideoFrameBuffer> packed =
+          std::dynamic_pointer_cast<PackedVideoFrameBuffer>(buffer);
+      packed != nullptr) {
+    memcpy(packed->Data(), tmp_buffer, width * height * 4);
+    return;
+  }
+
+  const std::shared_ptr<PlanarVideoFrameBuffer> planar =
+      std::dynamic_pointer_cast<PlanarVideoFrameBuffer>(buffer);
+  if (planar == nullptr) {
+    return;
+  }
+
   if (frame_fourcc_format == DRM_FORMAT_ARGB8888 ||
       frame_fourcc_format == DRM_FORMAT_XRGB8888) {
-    libyuv::ARGBToI420(tmp_buffer, frame_stride_bytes, buffer->DataY(),
-                       buffer->StrideY(), buffer->DataU(), buffer->StrideU(),
-                       buffer->DataV(), buffer->StrideV(), width, height);
+    libyuv::ARGBToI420(tmp_buffer, frame_stride_bytes, planar->DataY(),
+                       planar->StrideY(), planar->DataU(), planar->StrideU(),
+                       planar->DataV(), planar->StrideV(), width, height);
   } else if (frame_fourcc_format == DRM_FORMAT_ABGR8888 ||
              frame_fourcc_format == DRM_FORMAT_XBGR8888) {
-    libyuv::ABGRToI420(tmp_buffer, frame_stride_bytes, buffer->DataY(),
-                       buffer->StrideY(), buffer->DataU(), buffer->StrideU(),
-                       buffer->DataV(), buffer->StrideV(), width, height);
+    libyuv::ABGRToI420(tmp_buffer, frame_stride_bytes, planar->DataY(),
+                       planar->StrideY(), planar->DataU(), planar->StrideU(),
+                       planar->DataV(), planar->StrideV(), width, height);
   }
 }
 
