@@ -177,50 +177,64 @@ impl<S: EventSource> VhostUserInput<S> {
         let Some(atomic_mem) = &self.mem else {
             bail!("Guest memory not available");
         };
-        while let Some(avail_desc) = vring_state
-            .get_queue_mut()
-            .iter(atomic_mem.memory())
-            .context("Failed to iterate over queue descriptors")?
-            .next()
-        {
-            let mem = atomic_mem.memory();
-            let head_index = avail_desc.head_index();
-            let mut writer = avail_desc
-                .writer(&mem)
-                .context("Failed to get writable buffers")?;
-            // Trim to event size to send only full events
-            let write_len = trim_to_event_size_multiple(std::cmp::min(
-                writer.available_bytes(),
-                self.event_queue.len(),
-            ));
-
-            let (slice1, slice2) = self.event_queue.as_slices();
-            let write_len1 = std::cmp::min(write_len, slice1.len());
-            let write_len2 = write_len - write_len1;
-            writer.write_all(&slice1[..write_len1])?;
-            if write_len2 > 0 {
-                writer.write_all(&slice2[..write_len2])?;
+        loop {
+            if self.event_idx {
+                vring_state.disable_notification()?;
             }
-            self.event_queue.drain(..write_len);
-            vring_state
-                .add_used(head_index, write_len as u32)
-                .context("Couldn't return used descriptor to the ring")?;
+            while let Some(avail_desc) = vring_state
+                .get_queue_mut()
+                .iter(atomic_mem.memory())
+                .context("Failed to iterate over queue descriptors")?
+                .next()
+            {
+                let mem = atomic_mem.memory();
+                let head_index = avail_desc.head_index();
+                let mut writer = avail_desc
+                    .writer(&mem)
+                    .context("Failed to get writable buffers")?;
+                // Trim to event size to send only full events
+                let write_len = trim_to_event_size_multiple(std::cmp::min(
+                    writer.available_bytes(),
+                    self.event_queue.len(),
+                ));
 
-            if self.event_queue.is_empty() {
-                // No more events available
+                let (slice1, slice2) = self.event_queue.as_slices();
+                let write_len1 = std::cmp::min(write_len, slice1.len());
+                let write_len2 = write_len - write_len1;
+                writer.write_all(&slice1[..write_len1])?;
+                if write_len2 > 0 {
+                    writer.write_all(&slice2[..write_len2])?;
+                }
+                self.event_queue.drain(..write_len);
+                vring_state
+                    .add_used(head_index, write_len as u32)
+                    .context("Couldn't return used descriptor to the ring")?;
+
+                if self.event_queue.is_empty() {
+                    // No more events available
+                    break;
+                }
+            }
+            let needs_notification = !self.event_idx
+                || match vring_state.needs_notification() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error!("Couldn't check if vring needs notification: {:?}", e);
+                        true
+                    }
+                };
+            if needs_notification {
+                vring_state
+                    .signal_used_queue()
+                    .context("Failed to signal used queue");
+            }
+
+            if self.event_queue.is_empty()
+                || !self.event_idx
+                || !vring_state.enable_notification()?
+            {
                 break;
             }
-        }
-        let needs_notification = !self.event_idx
-            || match vring_state.needs_notification() {
-                Ok(v) => v,
-                Err(e) => {
-                    error!("Couldn't check if vring needs notification: {:?}", e);
-                    true
-                }
-            };
-        if needs_notification {
-            vring_state.signal_used_queue().unwrap();
         }
         Ok(())
     }
@@ -234,36 +248,46 @@ impl<S: EventSource> VhostUserInput<S> {
         let Some(atomic_mem) = &self.mem else {
             bail!("Guest memory not available");
         };
-        while let Some(avail_desc) = vring_state
-            .get_queue_mut()
-            .iter(atomic_mem.memory())
-            .context("Failed to iterate over queue descriptors")?
-            .next()
-        {
-            let mem = atomic_mem.memory();
-            let head_index = avail_desc.head_index();
-            let mut reader = avail_desc
-                .reader(&mem)
-                .context("Failed to get readable buffers")?;
-            let bytes = reader.available_bytes();
-            let mut buf = vec![0u8; bytes];
-            reader.read_exact(&mut buf)?;
-            self.event_source.send_status_feedback(buf);
+        loop {
+            if self.event_idx {
+                vring_state.disable_notification()?;
+            }
+            while let Some(avail_desc) = vring_state
+                .get_queue_mut()
+                .iter(atomic_mem.memory())
+                .context("Failed to iterate over queue descriptors")?
+                .next()
+            {
+                let mem = atomic_mem.memory();
+                let head_index = avail_desc.head_index();
+                let mut reader = avail_desc
+                    .reader(&mem)
+                    .context("Failed to get readable buffers")?;
+                let bytes = reader.available_bytes();
+                let mut buf = vec![0u8; bytes];
+                reader.read_exact(&mut buf)?;
+                self.event_source.send_status_feedback(buf);
 
-            vring_state
-                .add_used(head_index, bytes as u32)
-                .context("Couldn't return used descriptor to the ring")?;
-        }
-        let needs_notification = !self.event_idx
-            || match vring_state.needs_notification() {
-                Ok(v) => v,
-                Err(e) => {
-                    error!("Couldn't check if vring needs notification: {:?}", e);
-                    true
-                }
-            };
-        if needs_notification {
-            vring_state.signal_used_queue().unwrap();
+                vring_state
+                    .add_used(head_index, bytes as u32)
+                    .context("Couldn't return used descriptor to the ring")?;
+            }
+            let needs_notification = !self.event_idx
+                || match vring_state.needs_notification() {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error!("Couldn't check if vring needs notification: {:?}", e);
+                        true
+                    }
+                };
+            if needs_notification {
+                vring_state
+                    .signal_used_queue()
+                    .context("Failed to signal used queue");
+            }
+            if !self.event_idx || !vring_state.enable_notification()? {
+                break;
+            }
         }
         Ok(())
     }
