@@ -101,6 +101,7 @@ netsim_crates.from_cargo(
     ],
     # Needed because it shares the extension with crosvm
     cargo_config = "@//build_external/crosvm:crosvm.config.toml",
+    cargo_lockfile = "@android_tools_netsim//:rust/Cargo.lock",
     host_tools = "@rust_host_tools_nightly",
 )
 
@@ -119,6 +120,7 @@ git_repository(
         "@//build_external/android_tools_netsim:0003-Pin-cxx.patch",
         "@//build_external/android_tools_netsim:0004-Remove-unused-global-client-context.patch",
         "@//build_external/android_tools_netsim:0005-Fix-conflict-for-v-between-vsock-and-verbose-args.patch",
+        "@//build_external/android_tools_netsim:0006-Lock-zip-0.6.6-in-Cargo.lock.patch",
     ],
     patch_strip = 1,
 )
