@@ -231,4 +231,8 @@ std::string VhostUserMediaV4l2StreamProxyBinary() {
   return HostBinaryPath("vhu_media_v4l2_stream_proxy");
 }
 
+std::string VirtualTunerDaemonBinary() {
+  return HostBinaryPath("virtual_tuner_daemon");
+}
+
 }  // namespace cuttlefish
