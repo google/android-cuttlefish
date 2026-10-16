@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include <sys/file.h>
 #include <sys/mman.h>
-#include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
