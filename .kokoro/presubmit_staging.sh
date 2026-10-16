@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e -x
+set -o errexit -o nounset -o pipefail -o xtrace
 
 sudo apt update
 
@@ -10,7 +10,20 @@ sudo DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o 
 # realpath .kokoro/..
 readonly REPO_DIR="$(realpath "$(dirname "$0")"/..)"
 readonly TOOL_DIR="${REPO_DIR}/tools"
-readonly CACHE_CONFIG_FILE="${REPO_DIR}/.config/cache-config.env"
+
+if [[ -r /etc/os-release ]]; then
+    source /etc/os-release
+fi
+
+if [[ "${VERSION_ID:-}" == "12" ]]; then
+    CACHE_CONFIG_FILE="${REPO_DIR}/.config/cache-config.env"
+elif [[ "${VERSION_ID:-}" == "13" ]]; then
+    CACHE_CONFIG_FILE="${REPO_DIR}/.config/cache-config-debian-13.env"
+else
+    echo "Unsupported Debian version: ${VERSION_ID:-unknown}" >&2
+    exit 1
+fi
+readonly CACHE_CONFIG_FILE
 
 if [ -f "$CACHE_CONFIG_FILE" ]; then
     source "$CACHE_CONFIG_FILE"
