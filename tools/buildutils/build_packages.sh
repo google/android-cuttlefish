@@ -4,11 +4,6 @@ set -e -x
 
 function install_debuild_dependencies() {
   echo "Installing debuild dependencies"
-  sudo apt-get update
-  sudo DEBIAN_FRONTEND=noninteractive apt-get -y --allow-downgrades \
-    -o Dpkg::Options::="--force-confold" \
-    -o Dpkg::Options::="--force-confdef" \
-    upgrade
   sudo apt-get install -y devscripts config-package-dev debhelper-compat equivs
 }
 
