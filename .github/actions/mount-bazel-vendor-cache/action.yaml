@@ -1,0 +1,27 @@
+name: 'Mount Bazel vendor cache'
+description: >
+  Restores and saves the pre-fetched git_repository dependencies in
+  base/cvd/vendor_src so Bazel does not have to talk to the git hosts.
+  Populated by tools/buildutils/vendor_git_repos.sh. See b/574473449.
+inputs:
+  bazel-version:
+    description: 'Bazel major version. The vendor directory layout differs between majors.'
+    required: false
+    default: "8"
+runs:
+  using: "composite"
+  steps:
+  - name: Generate vendor cache key
+    run: |
+      echo "VENDOR_CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-vendor-${INPUTS_BAZEL_VERSION}" >> $GITHUB_ENV
+      echo "VENDOR_DEPS_HASH=${{ hashFiles('base/cvd/MODULE.bazel', 'base/cvd/build_external/**/*.MODULE.bazel', 'base/cvd/build_external/**/*.patch') }}" >> $GITHUB_ENV
+    shell: bash
+    env:
+      INPUTS_BAZEL_VERSION: ${{ inputs.bazel-version }}
+  - name: Restore and save vendor cache
+    uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+    with:
+      path: base/cvd/vendor_src
+      key: ${{ env.VENDOR_CACHE_KEY_PREFIX }}-${{ env.VENDOR_DEPS_HASH }}
+      restore-keys: |
+        ${{ env.VENDOR_CACHE_KEY_PREFIX }}-

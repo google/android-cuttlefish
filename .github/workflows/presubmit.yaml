@@ -220,6 +220,8 @@ jobs:
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "run-cvd-unit-tests"
+    - name: Mount Bazel vendor cache
+      uses: ./.github/actions/mount-bazel-vendor-cache
     - name: Run cvd unit tests
       uses: ./.github/actions/run-cvd-unit-tests
     - name: Upload test logs
@@ -241,6 +243,10 @@ jobs:
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
       with:
         persist-credentials: false
+    - name: Mount Bazel vendor cache
+      uses: ./.github/actions/mount-bazel-vendor-cache
+      with:
+        bazel-version: "9"
     - name: Check bazel 9 readiness
       uses: ./.github/actions/bazel-9-readiness
   build-debian-package-amd64:
@@ -260,6 +266,8 @@ jobs:
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "build-debian-packages"
+    - name: Mount Bazel vendor cache
+      uses: ./.github/actions/mount-bazel-vendor-cache
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
     - name: Build debs_amd64.tar
@@ -285,6 +293,8 @@ jobs:
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "build-debian-packages"
+    - name: Mount Bazel vendor cache
+      uses: ./.github/actions/mount-bazel-vendor-cache
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
     - name: Build debs_arm64.tar
