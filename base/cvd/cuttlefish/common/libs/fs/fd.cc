@@ -359,8 +359,7 @@ Result<Fd, int> Fd::SocketLocalServer(int port, int type) {
   CF_EXPECT(rval.Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)));
 
   if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
-    CF_EXPECTVF(rval.Listen(4) >= 0, rval.GetErrno(), "Listen failed: {}",
-                rval.StrError());
+    CF_EXPECT(rval.Listen(4));
   }
   return rval;
 }
@@ -391,8 +390,7 @@ Result<Fd, int> Fd::SocketLocalServer(std::string_view name, bool abstract,
   // Connection oriented sockets: start listening.
   if (socket_type == SOCK_STREAM || socket_type == SOCK_SEQPACKET) {
     // Follows the default from socket_local_server
-    CF_EXPECTVF(rval.Listen(4) >= 0, rval.GetErrno(), "Listen failed: {}",
-                rval.StrError());
+    CF_EXPECT(rval.Listen(4));
   }
 
   if (!abstract) {
@@ -424,8 +422,7 @@ Result<Fd, int> Fd::VsockServer(
   CF_EXPECTF(vsock.Bind(casted_addr, sizeof(addr)), "Port {}", port);
 
   if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
-    CF_EXPECTVF(vsock.Listen(4) >= 0, vsock.GetErrno(),
-                "Listen on port {} failed: {}", port, vsock.StrError());
+    CF_EXPECT(vsock.Listen(4));
   }
   return vsock;
 }
@@ -776,10 +773,12 @@ int Fd::LinkAtCwd(const std::string& path) {
                 AT_SYMLINK_FOLLOW);
 }
 
-int Fd::Listen(int backlog) {
+Result<void, int> Fd::Listen(int backlog) {
   LocalErrno record_errno(errno_);
 
-  return listen(fd_, backlog);
+  CF_EXPECTVF(listen(fd_, backlog) == 0, errno, "listen({}) failed: {}",
+              backlog, ::cuttlefish::StrError(errno));
+  return {};
 }
 
 off_t Fd::LSeek(off_t offset, int whence) {
