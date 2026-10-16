@@ -215,7 +215,7 @@ class Fd : public ReaderWriterSeeker {
    */
   // Used with O_TMPFILE files to attach them to the filesystem.
   int LinkAtCwd(const std::string& path);
-  int Listen(int backlog);
+  Result<void, int> Listen(int backlog);
   static void Log(const char* message);
   off_t LSeek(off_t offset, int whence);
   ssize_t Recv(void* buf, size_t len, int flags);
