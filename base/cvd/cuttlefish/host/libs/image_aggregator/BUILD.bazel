@@ -172,6 +172,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:cf_endian",
+        "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
         "//cuttlefish/io:read_exact",
         "//cuttlefish/process:command",
