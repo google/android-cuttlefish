@@ -53,7 +53,8 @@ class DisplayRingBuffer {
 
   void* GetAddress();
 
-  uint8_t* WriteNextFrame(uint8_t* frame_data, int size);
+  uint8_t* WriteNextFrame(const uint8_t* frame_data, int stride, int width,
+                          int height);
   uint8_t* CurrentFrame();
   uint8_t* ComputeFrameAddressForIndex(uint32_t index);
 
@@ -72,8 +73,9 @@ class DisplayRingBufferManager {
   DisplayRingBufferManager(int vm_index, std::string group_uuid);
   Result<void> CreateLocalDisplayBuffer(int vm_index, int display_index,
                                         int display_width, int display_height);
-  uint8_t* WriteFrame(int vm_index, int display_index, uint8_t* frame_data,
-                      int size);
+  uint8_t* WriteFrame(int vm_index, int display_index,
+                      const uint8_t* frame_data, int stride, int width,
+                      int height);
   uint8_t* ReadFrame(int vm_index, int display_index, int frame_width,
                      int frame_height);
 
