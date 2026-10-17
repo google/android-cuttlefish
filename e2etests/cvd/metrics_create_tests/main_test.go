@@ -39,7 +39,7 @@ func anyFileExists(pattern string) bool {
 	return len(matches) > 0
 }
 
-func TestMetrics(t *testing.T) {
+func TestMetricsCreate(t *testing.T) {
 	c := e2etests.TestContext{}
 	c.SetUp(t)
 	defer c.TearDown()
