@@ -27,8 +27,9 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 #include "cuttlefish/io/in_memory.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace {
@@ -138,10 +139,9 @@ TEST(BufferedZipSourceTest, ManySmallReadsInMemoryIo) {
 }
 
 TEST(BufferedZipSourceTest, OpenMissingFileFails) {
-  Result<WritableZipSource> source =
-      WritableZipSource::FromFile("/nonexistent/path/does_not_exist.zip");
-  ASSERT_THAT(source, IsOk());
-  EXPECT_THAT(source->Reader(), IsError());
+  WritableZipSource source = CF_ASSERT(WritableZipSource::FromFile(
+      testing::TempDir() + "/file_does_not_exist.zip"));
+  EXPECT_THAT(source.Reader(), IsError());
 }
 
 }  // namespace
