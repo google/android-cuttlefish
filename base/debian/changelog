@@ -1,3 +1,12 @@
+cuttlefish-common (1.57.11) unstable; urgency=medium
+
+  * Lock zip 0.6.6 in netsim Cargo.lock
+  * Uprev crosvm to include snapshot restore fixes
+  * Ignore BootCompleted kernel event while restoring from snapshot
+  * Pass sector offset instead of byte offset to mkfs.fat --offset
+
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 16 Oct 2026 16:21:59 -0700
+
 cuttlefish-common (1.57.10) unstable; urgency=medium
 
   * Fix modem_simulator vector erase during iteration
