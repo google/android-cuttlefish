@@ -17,17 +17,27 @@
 
 #include "cuttlefish/host/libs/avb/avb.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
+#include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "android-base/unique_fd.h"
+
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/copy.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/posix/remove.h"
+#include "cuttlefish/posix/rename.h"
+#include "cuttlefish/posix/stat.h"
+#include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
@@ -40,6 +50,39 @@ constexpr char kMakeVbmetaImage[] = "make_vbmeta_image";
 // Taken from external/avb/libavb/avb_slot_verify.c; this define is not in the
 // headers
 constexpr size_t kVbMetaMaxSize = 65536ul;
+
+// Writes the contents of `path`, zero padded to `kVbMetaMaxSize`, to the file
+// `tmp_path` opened as `tmp_fd`, with the permission bits of `mode`, and
+// flushes it to disk so it can be renamed over `path`.
+Result<void> WritePaddedCopy(const std::string& path,
+                             const std::string& tmp_path, const mode_t mode,
+                             Fd& tmp_fd) {
+  CF_EXPECT(Copy(path, tmp_path));
+  CF_EXPECTF(tmp_fd.Chmod(mode & 07777), "chmod on '{}' failed: {}", tmp_path,
+             tmp_fd.StrError());
+  CF_EXPECTF(tmp_fd.Truncate(kVbMetaMaxSize), "Truncating '{}' failed",
+             tmp_path);
+  CF_EXPECTF(tmp_fd.Fsync() == 0, "fsync on '{}' failed: {}", tmp_path,
+             tmp_fd.StrError());
+  return {};
+}
+
+// Pads `path` by renaming a padded copy over it, so other hard links to the
+// original file keep their contents and a symlink at `path` is replaced rather
+// than followed.
+Result<void> PadByCopy(const std::string& path, const mode_t mode) {
+  auto [tmp_fd, tmp_path] = CF_EXPECT(Fd::Mkostemp(path + "."));
+  if (Result<void> res = WritePaddedCopy(path, tmp_path, mode, tmp_fd);
+      !res.has_value()) {
+    (void)RemoveFile(tmp_path);
+    CF_EXPECTF(std::move(res), "Failed to pad a copy of '{}'", path);
+  }
+  if (Result<void, int> res = Rename(tmp_path, path); !res.has_value()) {
+    (void)RemoveFile(tmp_path);
+    CF_EXPECTF(std::move(res), "Failed to rename '{}' to '{}'", tmp_path, path);
+  }
+  return {};
+}
 
 }  // namespace
 
@@ -136,16 +179,55 @@ Result<void> Avb::MakeVbMetaImage(
 }
 
 Result<void> EnforceVbMetaSize(const std::string& path) {
-  const auto vbmeta_size = FileSize(path);
-  CF_EXPECT_LE(vbmeta_size, kVbMetaMaxSize);
-  if (vbmeta_size != kVbMetaMaxSize) {
-    Fd vbmeta_fd = CF_EXPECT(Fd::Open(path, O_RDWR));
-    CF_EXPECTF(vbmeta_fd.Truncate(kVbMetaMaxSize),
-               "Truncating {} failed with error {}", path,
-               vbmeta_fd.StrError());
-    CF_EXPECTF(vbmeta_fd.Fsync() == 0, "fsync on {} failed with error {}", path,
-               vbmeta_fd.StrError());
+  struct stat link_stat{};
+  CF_EXPECTF(lstat(path.c_str(), &link_stat) == 0, "lstat('{}') failed: {}",
+             path, StrError(errno));
+  if (!S_ISREG(link_stat.st_mode)) {
+    // A symlink or other special file may refer to a file that is shared, so
+    // pad a copy of its contents rather than writing through it.
+    const struct stat target_stat = CF_EXPECT(Stat(path));
+    CF_EXPECT_LE(target_stat.st_size, kVbMetaMaxSize);
+    if (target_stat.st_size != kVbMetaMaxSize) {
+      CF_EXPECT(PadByCopy(path, target_stat.st_mode));
+    }
+    return {};
   }
+  CF_EXPECT_LE(link_stat.st_size, kVbMetaMaxSize);
+  if (link_stat.st_size == kVbMetaMaxSize) {
+    return {};
+  }
+
+  const int raw_fd =
+      TEMP_FAILURE_RETRY(open(path.c_str(), O_RDWR | O_NOFOLLOW | O_CLOEXEC));
+  if (raw_fd < 0) {
+    const int open_errno = errno;
+    // EACCES: the file is not writable. ELOOP: `path` became a symlink after
+    // the lstat. Neither can be padded in place, but a copy can.
+    CF_EXPECTF(open_errno == EACCES || open_errno == ELOOP,
+               "open('{}') failed: {}", path, StrError(open_errno));
+    CF_EXPECT(PadByCopy(path, link_stat.st_mode));
+    return {};
+  }
+  android::base::unique_fd vbmeta_fd(raw_fd);
+
+  // The link count check and the truncation both go through `vbmeta_fd`, so
+  // they apply to the same file even if `path` is replaced in between. A hard
+  // link created between the fstat and the ftruncate would be missed, but
+  // nothing in the fetch or assemble flows creates links at that point.
+  struct stat fd_stat{};
+  CF_EXPECTF(fstat(vbmeta_fd.get(), &fd_stat) == 0, "fstat('{}') failed: {}",
+             path, StrError(errno));
+  if (fd_stat.st_nlink > 1) {
+    // Other links share this file, so it must not be modified in place.
+    CF_EXPECT(PadByCopy(path, fd_stat.st_mode));
+    return {};
+  }
+  // Growing the file only extends it with a hole; no data is written.
+  CF_EXPECTF(
+      TEMP_FAILURE_RETRY(ftruncate(vbmeta_fd.get(), kVbMetaMaxSize)) == 0,
+      "Truncating '{}' failed: {}", path, StrError(errno));
+  CF_EXPECTF(fsync(vbmeta_fd.get()) == 0, "fsync on '{}' failed: {}", path,
+             StrError(errno));
   return {};
 }
 

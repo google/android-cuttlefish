@@ -217,19 +217,10 @@ Result<void> FetchArtifact::ExtractOneTo(const std::string& member_name,
         fmt::format("{}/{}", downloaded_path_, member_name);
     CF_EXPECTF(FileExists(member_path) && !DirectoryExists(member_path),
                "'{}' not found in '{}'", member_name, downloaded_path_);
-    if (IsVbmetaImage(extract_path)) {
-      // Padding below resizes the file in place, so don't share its inode
-      // with the source, which may be a download cache entry.
-      if (FileExists(extract_path)) {
-        CF_EXPECT(RemoveFile(extract_path));
-      }
-      CF_EXPECT(Copy(member_path, extract_path));
-    } else {
-      // De-sparsing below replaces the file rather than writing to it, so a
-      // hard link is safe.
-      CF_EXPECT(LinkOrCopy(member_path, extract_path,
-                           /* overwrite_existing = */ true));
-    }
+    // Padding and de-sparsing below never modify a shared file in place, so
+    // a hard link to the source is safe even if it is a download cache entry.
+    CF_EXPECT(LinkOrCopy(member_path, extract_path,
+                         /* overwrite_existing = */ true));
   } else {
     ReadableZip* zip = CF_EXPECT(AsZip());
     CF_EXPECT(ExtractFile(*zip, member_name, extract_path),
