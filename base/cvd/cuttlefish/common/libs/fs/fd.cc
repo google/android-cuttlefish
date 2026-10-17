@@ -44,6 +44,7 @@
 #include "cuttlefish/common/libs/fs/scoped_mmap.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -277,9 +278,8 @@ Result<Fd, int> Fd::SocketLocalClient(int port, int type) {
   Fd rval = CF_EXPECT(Fd::Socket(AF_INET, type, 0));
 
   auto addr_ptr = reinterpret_cast<const sockaddr*>(&addr);
-  CF_EXPECTVF(rval.Connect(addr_ptr, sizeof addr) >= 0, rval.GetErrno(),
-              "Connect failed to port {} with type {}: {}", port, type,
-              rval.StrError());
+  CF_EXPECTF(rval.Connect(addr_ptr, sizeof addr),
+             "Connect failed to port {} with type {}", port, type);
 
   return rval;
 }
@@ -354,12 +354,10 @@ Result<Fd, int> Fd::SocketLocalServer(int port, int type) {
   CF_EXPECTVF(rval.SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) >= 0,
               rval.GetErrno(), "SetSockOpt failed: {}", rval.StrError());
 
-  CF_EXPECTVF(rval.Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) >= 0,
-              rval.GetErrno(), "Bind failed: {}", rval.StrError());
+  CF_EXPECT(rval.Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)));
 
   if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
-    CF_EXPECTVF(rval.Listen(4) >= 0, rval.GetErrno(), "Listen failed: {}",
-                rval.StrError());
+    CF_EXPECT(rval.Listen(4));
   }
   return rval;
 }
@@ -381,8 +379,7 @@ Result<Fd, int> Fd::SocketLocalServer(std::string_view name, bool abstract,
   int n = 1;
   CF_EXPECTVF(rval.SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) >= 0,
               rval.GetErrno(), "SetSockOpt failed: {}", rval.StrError());
-  CF_EXPECTVF(rval.Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) >= 0,
-              rval.GetErrno(), "Bind failed: {}", rval.StrError());
+  CF_EXPECT(rval.Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)));
 
   /* Only the bottom bits are really the socket type; there are flags too. */
   constexpr int SOCK_TYPE_MASK = 0xf;
@@ -391,8 +388,7 @@ Result<Fd, int> Fd::SocketLocalServer(std::string_view name, bool abstract,
   // Connection oriented sockets: start listening.
   if (socket_type == SOCK_STREAM || socket_type == SOCK_SEQPACKET) {
     // Follows the default from socket_local_server
-    CF_EXPECTVF(rval.Listen(4) >= 0, rval.GetErrno(), "Listen failed: {}",
-                rval.StrError());
+    CF_EXPECT(rval.Listen(4));
   }
 
   if (!abstract) {
@@ -421,12 +417,10 @@ Result<Fd, int> Fd::VsockServer(
   addr.svm_port = port;
   addr.svm_cid = cid;
   auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
-  CF_EXPECTVF(vsock.Bind(casted_addr, sizeof(addr)) >= 0, vsock.GetErrno(),
-              "Bind failed port {}: {}", port, vsock.StrError());
+  CF_EXPECTF(vsock.Bind(casted_addr, sizeof(addr)), "Port {}", port);
 
   if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
-    CF_EXPECTVF(vsock.Listen(4) >= 0, vsock.GetErrno(),
-                "Listen on port {} failed: {}", port, vsock.StrError());
+    CF_EXPECT(vsock.Listen(4));
   }
   return vsock;
 }
@@ -581,10 +575,10 @@ int Fd::ConnectWithTimeout(const struct sockaddr* addr, socklen_t addrlen,
     return -1;
   }
 
-  auto connect_res = Connect(
+  Result<void, int> connect_res = Connect(
       addr, addrlen);  // This will return immediately because of O_NONBLOCK
 
-  if (connect_res == 0) {  // Immediate success
+  if (connect_res.has_value()) {  // Immediate success
     if (Fcntl(F_SETFL, original_flags) == -1) {
       LOG(ERROR) << "Failed to restore original flags: " << StrError();
       return -1;
@@ -592,7 +586,7 @@ int Fd::ConnectWithTimeout(const struct sockaddr* addr, socklen_t addrlen,
     return 0;
   }
 
-  if (GetErrno() != EAGAIN && GetErrno() != EINPROGRESS) {
+  if (*connect_res.error() != EAGAIN && *connect_res.error() != EINPROGRESS) {
     VLOG(0) << "Immediate connection failure: " << StrError();
     if (Fcntl(F_SETFL, original_flags) == -1) {
       LOG(ERROR) << "Failed to restore original flags: " << StrError();
@@ -655,16 +649,20 @@ void Fd::Set(fd_set* dest, int* max_index) const {
   FD_SET(fd_, dest);
 }
 
-int Fd::Bind(const struct sockaddr* addr, socklen_t addrlen) {
+Result<void, int> Fd::Bind(const struct sockaddr* addr, socklen_t addrlen) {
   LocalErrno record_errno(errno_);
 
-  return bind(fd_, addr, addrlen);
+  CF_EXPECTVF(bind(fd_, addr, addrlen) == 0, errno, "bind(...) failed: {}",
+              ::cuttlefish::StrError(errno));
+  return {};
 }
 
-int Fd::Connect(const struct sockaddr* addr, socklen_t addrlen) {
+Result<void, int> Fd::Connect(const struct sockaddr* addr, socklen_t addrlen) {
   LocalErrno record_errno(errno_);
 
-  return connect(fd_, addr, addrlen);
+  CF_EXPECTVF(connect(fd_, addr, addrlen) == 0, errno,
+              "connect(...) failed: {}", ::cuttlefish::StrError(errno));
+  return {};
 }
 
 int Fd::UNMANAGED_Dup() {
@@ -679,13 +677,13 @@ int Fd::UNMANAGED_Dup2(int newfd) {
   return TEMP_FAILURE_RETRY(dup2(fd_, newfd));
 }
 
-int Fd::Fchdir() {
-  if (fd_ < 0) {
-    return -1;
-  }
+Result<void, int> Fd::Fchdir() {
+  CF_EXPECTV(fd_ >= 0, EBADF, "Fd is not open");
   LocalErrno record_errno(errno_);
-
-  return TEMP_FAILURE_RETRY(fchdir(fd_));
+  int res = TEMP_FAILURE_RETRY(fchdir(fd_));
+  CF_EXPECTVF(res >= 0, errno, "fchdir failed: {}",
+              ::cuttlefish::StrError(errno));
+  return {};
 }
 
 int Fd::Fcntl(int command, int value) {
@@ -694,10 +692,13 @@ int Fd::Fcntl(int command, int value) {
   return TEMP_FAILURE_RETRY(fcntl(fd_, command, value));
 }
 
-int Fd::Fsync() {
+Result<void, int> Fd::Fsync() {
   LocalErrno record_errno(errno_);
 
-  return TEMP_FAILURE_RETRY(fsync(fd_));
+  int res = TEMP_FAILURE_RETRY(fsync(fd_));
+  CF_EXPECTVF(res >= 0, errno, "fsync failed: {}",
+              ::cuttlefish::StrError(errno));
+  return {};
 }
 
 Result<void, int> Fd::Flock(int operation) {
@@ -748,10 +749,12 @@ int Fd::LinkAtCwd(const std::string& path) {
                 AT_SYMLINK_FOLLOW);
 }
 
-int Fd::Listen(int backlog) {
+Result<void, int> Fd::Listen(int backlog) {
   LocalErrno record_errno(errno_);
 
-  return listen(fd_, backlog);
+  CF_EXPECTVF(listen(fd_, backlog) == 0, errno, "listen({}) failed: {}",
+              backlog, ::cuttlefish::StrError(errno));
+  return {};
 }
 
 off_t Fd::LSeek(off_t offset, int whence) {

@@ -140,11 +140,9 @@ Result<void> EnforceVbMetaSize(const std::string& path) {
   CF_EXPECT_LE(vbmeta_size, kVbMetaMaxSize);
   if (vbmeta_size != kVbMetaMaxSize) {
     Fd vbmeta_fd = CF_EXPECT(Fd::Open(path, O_RDWR));
-    CF_EXPECTF(vbmeta_fd.Truncate(kVbMetaMaxSize),
-               "Truncating {} failed with error {}", path,
-               vbmeta_fd.StrError());
-    CF_EXPECTF(vbmeta_fd.Fsync() == 0, "fsync on {} failed with error {}", path,
-               vbmeta_fd.StrError());
+    CF_EXPECTF(vbmeta_fd.Truncate(kVbMetaMaxSize), "Truncating '{}' failed",
+               path);
+    CF_EXPECTF(vbmeta_fd.Fsync(), "fsync on '{}' failed", path);
   }
   return {};
 }

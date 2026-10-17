@@ -162,8 +162,8 @@ class Fd : public ReaderWriterSeeker {
       int type, std::optional<int> vhost_user_vsock_listening_cid);
 #endif
 
-  int Bind(const struct sockaddr* addr, socklen_t addrlen);
-  int Connect(const struct sockaddr* addr, socklen_t addrlen);
+  Result<void, int> Bind(const struct sockaddr* addr, socklen_t addrlen);
+  Result<void, int> Connect(const struct sockaddr* addr, socklen_t addrlen);
   int ConnectWithTimeout(const struct sockaddr* addr, socklen_t addrlen,
                          struct timeval* timeout);
   void Close();
@@ -181,9 +181,9 @@ class Fd : public ReaderWriterSeeker {
 
   int UNMANAGED_Dup();
   int UNMANAGED_Dup2(int newfd);
-  int Fchdir();
+  Result<void, int> Fchdir();
   int Fcntl(int command, int value);
-  int Fsync();
+  Result<void, int> Fsync();
 
   Result<void, int> Flock(int operation);
 
@@ -215,7 +215,7 @@ class Fd : public ReaderWriterSeeker {
    */
   // Used with O_TMPFILE files to attach them to the filesystem.
   int LinkAtCwd(const std::string& path);
-  int Listen(int backlog);
+  Result<void, int> Listen(int backlog);
   static void Log(const char* message);
   off_t LSeek(off_t offset, int whence);
   ssize_t Recv(void* buf, size_t len, int flags);

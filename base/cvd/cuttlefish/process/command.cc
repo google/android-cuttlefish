@@ -293,8 +293,9 @@ Subprocess Command::Start(SubprocessOptions options) const {
       }
     }
     if (working_directory_->IsOpen()) {
-      if (working_directory_->Fchdir() != 0) {
-        exit(-errno);
+      Result<void, int> fchdir_res = working_directory_->Fchdir();
+      if (!fchdir_res.has_value()) {
+        exit(-*fchdir_res.error());
       }
     }
     int rval;
