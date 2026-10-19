@@ -18,55 +18,36 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include <sstream>
+#include <source_location>
 #include <string>
 #include <utility>
 
 namespace cuttlefish {
 
-StackTraceEntry::StackTraceEntry(std::string file, size_t line,
-                                 std::string pretty_function,
-                                 std::string function)
-    : file_(std::move(file)),
-      line_(line),
-      pretty_function_(std::move(pretty_function)),
-      function_(std::move(function)) {}
+StackTraceEntry::StackTraceEntry(std::source_location location)
+    : location_(std::move(location)) {}
 
-StackTraceEntry::StackTraceEntry(std::string file, size_t line,
-                                 std::string pretty_function,
-                                 std::string function, std::string expression)
-    : file_(std::move(file)),
-      line_(line),
-      pretty_function_(std::move(pretty_function)),
-      function_(std::move(function)),
-      expression_(std::move(expression)) {}
+StackTraceEntry::StackTraceEntry(std::string expression,
+                                 std::source_location location)
+    : expression_(std::move(expression)), location_(std::move(location)) {}
 
 StackTraceEntry::StackTraceEntry(const StackTraceEntry& other)
-    : file_(other.file_),
-      line_(other.line_),
-      pretty_function_(other.pretty_function_),
-      function_(other.function_),
-      expression_(other.expression_),
+    : expression_(other.expression_),
+      location_(other.location_),
       message_(other.message_.str()) {}
 
 StackTraceEntry& StackTraceEntry::operator=(const StackTraceEntry& other) {
-  file_ = other.file_;
-  line_ = other.line_;
-  pretty_function_ = other.pretty_function_;
-  function_ = other.function_;
   expression_ = other.expression_;
+  location_ = other.location_;
   message_.str(other.message_.str());
   return *this;
 }
 
 bool StackTraceEntry::HasMessage() const { return !message_.str().empty(); }
 const std::string& StackTraceEntry::Expression() const { return expression_; }
-const std::string& StackTraceEntry::File() const { return file_; }
-const std::string& StackTraceEntry::Function() const { return function_; }
-const std::string& StackTraceEntry::PrettyFunction() const {
-  return pretty_function_;
+const std::source_location& StackTraceEntry::Location() const {
+  return location_;
 }
-size_t StackTraceEntry::Line() const { return line_; }
 std::string StackTraceEntry::Message() const { return message_.str(); }
 
 }  // namespace cuttlefish

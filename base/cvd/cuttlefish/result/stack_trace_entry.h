@@ -17,6 +17,7 @@
 
 #include <unistd.h>
 
+#include <source_location>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -25,11 +26,11 @@ namespace cuttlefish {
 
 class StackTraceEntry {
  public:
-  StackTraceEntry(std::string file, size_t line, std::string pretty_function,
-                  std::string function);
+  StackTraceEntry(
+      std::source_location location = std::source_location::current());
 
-  StackTraceEntry(std::string file, size_t line, std::string pretty_function,
-                  std::string function, std::string expression);
+  StackTraceEntry(std::string expression, std::source_location location =
+                                              std::source_location::current());
 
   StackTraceEntry(const StackTraceEntry& other);
 
@@ -50,22 +51,13 @@ class StackTraceEntry {
 
   bool HasMessage() const;
   const std::string& Expression() const;
-  const std::string& File() const;
-  const std::string& Function() const;
-  const std::string& PrettyFunction() const;
-  size_t Line() const;
+  const std::source_location& Location() const;
   std::string Message() const;
 
  private:
-  std::string file_;
-  size_t line_;
-  std::string pretty_function_;
-  std::string function_;
   std::string expression_;
+  std::source_location location_;
   std::stringstream message_;
 };
-
-#define CF_STACK_TRACE_ENTRY(expression) \
-  StackTraceEntry(__FILE__, __LINE__, __PRETTY_FUNCTION__, __func__, expression)
 
 }  // namespace cuttlefish
