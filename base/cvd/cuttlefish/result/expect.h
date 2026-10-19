@@ -45,13 +45,15 @@ namespace cuttlefish {
  *       at path/to/file.cpp:50
  *       in Result<std::string> MyFunction()
  */
-#define CF_ERR(MSG) StackTraceError<void>(CF_STACK_TRACE_ENTRY("") << MSG)
-#define CF_ERRNO(MSG) StackTraceError<void>(CF_STACK_TRACE_ENTRY("") << MSG)
-#define CF_ERRF(MSG, ...)                        \
-  StackTraceError<void>(CF_STACK_TRACE_ENTRY("") \
+#define CF_ERR(MSG) \
+  StackTraceError<void>(::cuttlefish::StackTraceEntry("") << MSG)
+#define CF_ERRNO(MSG) \
+  StackTraceError<void>(::cuttlefish::StackTraceEntry("") << MSG)
+#define CF_ERRF(MSG, ...)                                 \
+  StackTraceError<void>(::cuttlefish::StackTraceEntry("") \
                         << fmt::format(FMT_STRING(MSG), __VA_ARGS__))
-#define CF_ERRVF(VALUE, MSG, ...)                 \
-  StackTraceError(VALUE, CF_STACK_TRACE_ENTRY("") \
+#define CF_ERRVF(VALUE, MSG, ...)                          \
+  StackTraceError(VALUE, ::cuttlefish::StackTraceEntry("") \
                              << fmt::format(FMT_STRING(MSG), __VA_ARGS__))
 
 template <typename T>
@@ -99,17 +101,17 @@ auto ErrorFromType(Result<T, E>& value) {
 
 #define CF_EXPECT_OVERLOAD(_1, _2, NAME, ...) NAME
 
-#define CF_EXPECT2(RESULT, MSG)                               \
-  ({                                                          \
-    decltype(RESULT)&& macro_intermediate_result = RESULT;    \
-    if (!TypeIsSuccess(macro_intermediate_result)) {          \
-      auto current_entry = CF_STACK_TRACE_ENTRY(#RESULT);     \
-      current_entry << MSG;                                   \
-      auto error = ErrorFromType(macro_intermediate_result);  \
-      error.PushEntry(std::move(current_entry));              \
-      return tl::unexpected(std::move(error));                \
-    };                                                        \
-    OutcomeDereference(std::move(macro_intermediate_result)); \
+#define CF_EXPECT2(RESULT, MSG)                                    \
+  ({                                                               \
+    decltype(RESULT)&& macro_intermediate_result = RESULT;         \
+    if (!TypeIsSuccess(macro_intermediate_result)) {               \
+      auto current_entry = ::cuttlefish::StackTraceEntry(#RESULT); \
+      current_entry << MSG;                                        \
+      auto error = ErrorFromType(macro_intermediate_result);       \
+      error.PushEntry(std::move(current_entry));                   \
+      return tl::unexpected(std::move(error));                     \
+    };                                                             \
+    OutcomeDereference(std::move(macro_intermediate_result));      \
   })
 
 #define CF_EXPECT1(RESULT) CF_EXPECT2(RESULT, "")
@@ -118,7 +120,7 @@ auto ErrorFromType(Result<T, E>& value) {
   ({                                                                          \
     decltype(RESULT)&& macro_intermediate_result = RESULT;                    \
     if (!TypeIsSuccess(macro_intermediate_result)) {                          \
-      auto current_entry = CF_STACK_TRACE_ENTRY(#RESULT);                     \
+      auto current_entry = ::cuttlefish::StackTraceEntry(#RESULT);            \
       current_entry << MSG;                                                   \
       auto error = ErrorFromType(macro_intermediate_result).WithValue(VALUE); \
       error.PushEntry(std::move(current_entry));                              \
@@ -195,7 +197,7 @@ auto ErrorFromType(Result<T, E>& value) {
     bool comparison_result = lhs_macro_intermediate_result COMPARE_OP       \
         rhs_macro_intermediate_result;                                      \
     if (!comparison_result) {                                               \
-      auto current_entry = CF_STACK_TRACE_ENTRY("");                        \
+      auto current_entry = ::cuttlefish::StackTraceEntry("");               \
       current_entry << "Expected \"" << #LHS_RESULT << "\" " << #COMPARE_OP \
                     << " \"" << #RHS_RESULT << "\" but was "                \
                     << lhs_macro_intermediate_result << " vs "              \
