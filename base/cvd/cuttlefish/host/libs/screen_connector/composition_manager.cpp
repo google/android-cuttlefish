@@ -226,8 +226,7 @@ void CompositionManager::ComposeFrame(
   LastFrameInfo& last_frame_info = last_frame_info_map_[display_index];
 
   ComposeFrame(display_index, last_frame_info.frame_width_,
-               last_frame_info.frame_height_,
-               last_frame_info.frame_fourcc_format_, buffer);
+               last_frame_info.frame_height_, buffer);
 }
 
 uint8_t* CompositionManager::AlphaBlendLayers(uint8_t* frame_pixels,
@@ -265,7 +264,7 @@ uint8_t* CompositionManager::AlphaBlendLayers(uint8_t* frame_pixels,
 }
 
 void CompositionManager::ComposeFrame(
-    int display, int width, int height, uint32_t frame_fourcc_format,
+    int display, int width, int height,
     std::shared_ptr<VideoFrameBuffer> buffer) {
   uint8_t* shmem_local_display = display_ring_buffer_manager_.ReadFrame(
       cluster_index_, display, width, height);
@@ -279,31 +278,8 @@ void CompositionManager::ComposeFrame(
 
   AlphaBlendLayers(tmp_buffer, display, width, height, tmp_stride);
 
-  if (const std::shared_ptr<PackedVideoFrameBuffer> packed =
-          std::dynamic_pointer_cast<PackedVideoFrameBuffer>(buffer);
-      packed != nullptr) {
-    libyuv::CopyPlane(tmp_buffer, tmp_stride, packed->Data(), packed->Stride(),
-                      width * 4, height);
-    return;
-  }
-
-  const std::shared_ptr<PlanarVideoFrameBuffer> planar =
-      std::dynamic_pointer_cast<PlanarVideoFrameBuffer>(buffer);
-  if (planar == nullptr) {
-    return;
-  }
-
-  if (frame_fourcc_format == DRM_FORMAT_ARGB8888 ||
-      frame_fourcc_format == DRM_FORMAT_XRGB8888) {
-    libyuv::ARGBToI420(tmp_buffer, tmp_stride, planar->DataY(),
-                       planar->StrideY(), planar->DataU(), planar->StrideU(),
-                       planar->DataV(), planar->StrideV(), width, height);
-  } else if (frame_fourcc_format == DRM_FORMAT_ABGR8888 ||
-             frame_fourcc_format == DRM_FORMAT_XBGR8888) {
-    libyuv::ABGRToI420(tmp_buffer, tmp_stride, planar->DataY(),
-                       planar->StrideY(), planar->DataU(), planar->StrideU(),
-                       planar->DataV(), planar->StrideV(), width, height);
-  }
+  libyuv::CopyPlane(tmp_buffer, tmp_stride, buffer->Data(), buffer->Stride(),
+                    width * 4, height);
 }
 
 }  // namespace cuttlefish
