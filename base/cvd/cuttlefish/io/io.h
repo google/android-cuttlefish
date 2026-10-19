@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "cuttlefish/io/reader.h"
+#include "cuttlefish/io/seeker.h"
 #include "cuttlefish/io/visitable.h"
 #include "cuttlefish/io/writer.h"
 #include "cuttlefish/result/result_type.h"
@@ -26,19 +27,6 @@ namespace cuttlefish {
 
 class ConcatReaderSeeker;
 class ReadWindowView;
-
-class Seeker : public virtual IoVisitable {
- public:
-  virtual ~Seeker() = default;
-
-  Result<void> Visit(IoVisitor&) override;
-  // Has the semantics of lseek(2) with SEEK_SET
-  virtual Result<uint64_t, int> SeekSet(uint64_t offset) = 0;
-  // Has the semantics of lseek(2) with SEEK_CUR
-  virtual Result<uint64_t, int> SeekCur(int64_t offset) = 0;
-  // Has the semantics of lseek(2) with SEEK_END
-  virtual Result<uint64_t, int> SeekEnd(int64_t offset) = 0;
-};
 
 class ReaderSeeker : public Reader, public Seeker {
  public:

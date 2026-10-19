@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/seeker.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 

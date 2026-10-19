@@ -122,6 +122,7 @@ cf_cc_library(
         "//cuttlefish/io:concat",
         "//cuttlefish/io:read_window_view",
         "//cuttlefish/io:reader",
+        "//cuttlefish/io:seeker",
         "//cuttlefish/io:writer",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
@@ -223,6 +224,7 @@ cf_cc_library(
     hdrs = ["io.h"],
     deps = [
         "//cuttlefish/io:reader",
+        "//cuttlefish/io:seeker",
         "//cuttlefish/io:visitable",
         "//cuttlefish/io:writer",
         "//cuttlefish/result:expect",
@@ -253,6 +255,7 @@ cf_cc_library(
     hdrs = ["length.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -356,6 +359,15 @@ cf_cc_test(
 cf_cc_library(
     name = "reader",
     hdrs = ["reader.h"],
+    deps = [
+        "//cuttlefish/io:visitable",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
+    name = "seeker",
+    hdrs = ["seeker.h"],
     deps = [
         "//cuttlefish/io:visitable",
         "//cuttlefish/result:result_type",
