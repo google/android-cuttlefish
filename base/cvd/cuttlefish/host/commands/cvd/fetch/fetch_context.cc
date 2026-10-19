@@ -395,6 +395,16 @@ std::optional<FetchBuildContext> FetchContext::BootBuild() {
   }
 }
 
+std::optional<FetchBuildContext> FetchContext::VendorBootImageBuild() {
+  if (builds_.vendor_boot_image) {
+    return FetchBuildContext(
+        *this, *builds_.vendor_boot_image, target_directories_.root,
+        FileSource::VENDOR_BOOT_IMAGE_BUILD, tracer_.NewTrace("Vendor Boot"));
+  } else {
+    return {};
+  }
+}
+
 std::optional<FetchBuildContext> FetchContext::BootloaderBuild() {
   if (builds_.bootloader) {
     return FetchBuildContext(

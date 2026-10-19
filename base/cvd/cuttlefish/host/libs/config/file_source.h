@@ -41,6 +41,7 @@ enum class FileSource {
   HOST_PACKAGE_BUILD,
   CHROME_OS_BUILD,
   TEST_SUITES_BUILD,
+  VENDOR_BOOT_IMAGE_BUILD,
 };
 
 FileSource SourceStringToEnum(std::string_view source);

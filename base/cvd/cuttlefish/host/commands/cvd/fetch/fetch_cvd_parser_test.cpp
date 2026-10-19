@@ -15,12 +15,15 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
@@ -58,6 +61,21 @@ TEST(FetchCvdParserTests, CreatesCasDownloaderFlags) {
               Eq("/tmp/cas_cache"));
   EXPECT_THAT(flags.build_api_flags.cas_downloader_flags.cache_max_size.value(),
               Eq(10000000000));
+}
+
+TEST(FetchCvdParserTests, ParsesVendorBootImageBuildFlag) {
+  std::vector<std::string> args = {
+      std::string(kTargetDirectory),
+      std::string(kDefaultBuild),
+      "--vendor_boot_image_build=git_main/"
+      "cf_x86_64_auto{vendor_boot-debug.img}",
+  };
+
+  FetchFlags flags = CF_ASSERT(FetchFlags::Parse(args));
+  ASSERT_EQ(flags.vector_flags.vendor_boot_image_build.size(), 1);
+  ASSERT_TRUE(flags.vector_flags.vendor_boot_image_build[0].has_value());
+  EXPECT_THAT(GetFilepath(*flags.vector_flags.vendor_boot_image_build[0]),
+              Eq(std::optional<std::string>("vendor_boot-debug.img")));
 }
 
 }  // namespace cuttlefish
