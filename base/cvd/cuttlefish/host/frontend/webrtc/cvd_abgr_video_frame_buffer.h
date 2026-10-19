@@ -24,7 +24,7 @@
 
 namespace cuttlefish {
 
-class CvdAbgrVideoFrameBuffer : public PackedVideoFrameBuffer {
+class CvdAbgrVideoFrameBuffer : public VideoFrameBuffer {
  public:
   CvdAbgrVideoFrameBuffer(int width, int height, uint32_t format, int stride,
                           const uint8_t* data);

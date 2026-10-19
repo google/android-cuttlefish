@@ -26,8 +26,7 @@ namespace cuttlefish {
 
 class AbgrBuffer : public webrtc::VideoFrameBuffer {
  public:
-  explicit AbgrBuffer(
-      std::shared_ptr<cuttlefish::PackedVideoFrameBuffer> buffer);
+  explicit AbgrBuffer(std::shared_ptr<cuttlefish::VideoFrameBuffer> buffer);
 
   Type type() const override { return Type::kNative; }
   int width() const override;
@@ -40,7 +39,7 @@ class AbgrBuffer : public webrtc::VideoFrameBuffer {
   uint32_t PixelFormat() const { return buffer_->PixelFormat(); }
 
  private:
-  std::shared_ptr<cuttlefish::PackedVideoFrameBuffer> buffer_;
+  std::shared_ptr<cuttlefish::VideoFrameBuffer> buffer_;
 };
 
 }  // namespace cuttlefish
