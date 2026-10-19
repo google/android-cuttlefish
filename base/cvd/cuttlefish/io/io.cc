@@ -22,11 +22,6 @@
 
 namespace cuttlefish {
 
-Result<void> Seeker::Visit(IoVisitor& visitor) {
-  CF_EXPECT(visitor.Accept(*this));
-  return {};
-}
-
 Result<void> ReaderSeeker::Visit(IoVisitor& visitor) {
   CF_EXPECT(visitor.Accept(*this));
   return {};
