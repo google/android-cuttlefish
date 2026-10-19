@@ -1,0 +1,173 @@
+diff --git a/crate_universe/extensions.bzl b/crate_universe/extensions.bzl
+index 3d4e646..d3162e9 100644
+--- a/crate_universe/extensions.bzl
++++ b/crate_universe/extensions.bzl
+@@ -379,6 +379,7 @@ load(
+     "//crate_universe/private:common_utils.bzl",
+     "new_cargo_bazel_fn",
+ )
++load("//crate_universe/private:crate_from_git_source.bzl", "crate_from_git_source")
+ load("//crate_universe/private:crates_repository.bzl", "SUPPORTED_PLATFORM_TRIPLES")
+ load(
+     "//crate_universe/private:crates_vendor.bzl",
+@@ -549,6 +550,31 @@ def _collect_splicing_config(module, repository):
+ 
+     return config
+ 
++def _git_source_repo_name(hub_name, remote, commitish):
++    """Returns a deterministic repository name for a shared git checkout.
++
++    Args:
++        hub_name (str): The name of the hub repository.
++        remote (str): The git remote URL.
++        commitish (dict): The `commit`, `tag` or `branch` of the checkout.
++
++    Returns:
++        str: A valid repository name unique to `(remote, commitish)`.
++    """
++
++    # Bazel repository names only allow letters, digits, '-', '_' and '.', so
++    # reduce the remote URL (minus scheme and `.git` suffix) and the commitish
++    # to that alphabet, e.g. `https://chromium.googlesource.com/crosvm/crosvm`
++    # at `fd4df637...` becomes
++    # `<hub>__git_chromium_googlesource_com_crosvm_crosvm_fd4df63707ae`.
++    remote_name = remote.split("://")[-1].rstrip("/")
++    if remote_name.endswith(".git"):
++        remote_name = remote_name[:-len(".git")]
++    remote_name = "".join([c if c.isalnum() else "_" for c in remote_name.elems()])
++    ref = commitish.get("commit") or commitish.get("tag") or commitish.get("branch") or ""
++    ref = "".join([c if c.isalnum() else "_" for c in ref.elems()])
++    return "{}__git_{}_{}".format(hub_name, remote_name, ref[:12])
++
+ def _generate_hub_and_spokes(
+         *,
+         module_ctx,
+@@ -717,6 +743,9 @@ def _generate_hub_and_spokes(
+ 
+     contents = json.decode(module_ctx.read(lockfile))
+ 
++    # Shared git checkouts already declared, keyed by repository name.
++    git_sources = {}
++
+     for crate in contents["crates"].values():
+         repo = crate["repository"]
+         if repo == None:
+@@ -757,17 +786,30 @@ def _generate_hub_and_spokes(
+                     kwargs["commit"] = v
+                 else:
+                     kwargs[k.lower()] = v
+-            new_git_repository(
++
++            # The remote is fetched once per (remote, commitish) rather than once
++            # per crate (e.g. members of a Cargo workspace). Each crate then links
++            # its subdirectory out of that checkout, or copies it when it carries
++            # patches, so the checkout itself is never modified.
++            source_repo = _git_source_repo_name(cfg.name, repo["remote"], kwargs)
++            if source_repo not in git_sources:
++                git_sources[source_repo] = True
++                new_git_repository(
++                    name = source_repo,
++                    init_submodules = True,
++                    shallow_since = repo.get("shallow_since", None),
++                    remote = repo["remote"],
++                    build_file_content = "# Shared checkout of {} for crates in @{}".format(repo["remote"], cfg.name),
++                    **kwargs
++                )
++            crate_from_git_source(
+                 name = crate_repo_name,
+-                init_submodules = True,
++                source = "@{}//:BUILD.bazel".format(source_repo),
++                strip_prefix = repo.get("strip_prefix", None),
+                 patch_args = repo.get("patch_args", None),
+                 patch_tool = repo.get("patch_tool", None),
+                 patches = repo.get("patches", None),
+-                shallow_since = repo.get("shallow_since", None),
+-                remote = repo["remote"],
+                 build_file_content = build_file_content,
+-                strip_prefix = repo.get("strip_prefix", None),
+-                **kwargs
+             )
+         elif "Path" in repo:
+             options = {
+diff --git a/crate_universe/private/crate_from_git_source.bzl b/crate_universe/private/crate_from_git_source.bzl
+new file mode 100644
+index 0000000..a69219d
+--- /dev/null
++++ b/crate_universe/private/crate_from_git_source.bzl
+@@ -0,0 +1,76 @@
++"""A repository rule exposing one crate out of a shared git checkout.
++
++`crate_universe` resolves crates that come from git by cloning the remote. A
++Cargo workspace hosted in git therefore produces one `new_git_repository` per
++workspace member, each cloning the same remote at the same commit. For large
++workspaces this means dozens of identical clones per build, which is slow and
++trips server-side rate limiting.
++
++Instead, the `crate` module extension creates a single `new_git_repository` per
++`(remote, commitish)` and one `crate_from_git_source` repository per crate,
++which merely links the crate's subdirectory out of that shared checkout.
++"""
++
++load("@bazel_tools//tools/build_defs/repo:utils.bzl", "patch")
++
++# Files that belong to the repository rule output rather than the crate.
++_REPO_FILES = ["BUILD", "BUILD.bazel", "WORKSPACE", "WORKSPACE.bazel", "REPO.bazel", "MODULE.bazel"]
++
++def _crate_from_git_source_impl(repository_ctx):
++    # Resolving the label fetches the shared checkout if necessary.
++    source_root = repository_ctx.path(repository_ctx.attr.source).dirname
++    crate_dir = source_root
++    if repository_ctx.attr.strip_prefix:
++        crate_dir = source_root.get_child(*repository_ctx.attr.strip_prefix.split("/"))
++    if not crate_dir.exists:
++        fail("strip_prefix at {} does not exist in {}".format(
++            repository_ctx.attr.strip_prefix,
++            repository_ctx.attr.source,
++        ))
++
++    # Patched crates get a private copy so the shared checkout stays pristine;
++    # everything else is symlinked, like `git_repository` does for `strip_prefix`.
++    copy = bool(repository_ctx.attr.patches)
++    for entry in crate_dir.readdir():
++        if entry.basename in _REPO_FILES:
++            continue
++        if copy:
++            result = repository_ctx.execute(["cp", "-a", str(entry), entry.basename])
++            if result.return_code != 0:
++                fail("Failed to copy {}: {}".format(entry, result.stderr))
++        else:
++            repository_ctx.symlink(entry, entry.basename)
++
++    if copy:
++        patch(repository_ctx)
++
++    repository_ctx.file("BUILD.bazel", repository_ctx.attr.build_file_content)
++    repository_ctx.file("REPO.bazel", "")
++
++crate_from_git_source = repository_rule(
++    implementation = _crate_from_git_source_impl,
++    doc = "Exposes a single crate from a shared git checkout.",
++    attrs = {
++        "build_file_content": attr.string(
++            doc = "The content of the BUILD file for the crate.",
++            mandatory = True,
++        ),
++        "patch_args": attr.string_list(
++            doc = "The arguments given to the patch tool.",
++            default = ["-p0"],
++        ),
++        "patch_tool": attr.string(
++            doc = "The patch(1) utility to use.",
++        ),
++        "patches": attr.label_list(
++            doc = "A list of files that are to be applied as patches after linking the crate.",
++        ),
++        "source": attr.label(
++            doc = "A file at the root of the shared git checkout, typically its `BUILD.bazel`.",
++            mandatory = True,
++        ),
++        "strip_prefix": attr.string(
++            doc = "The directory of the crate within the shared checkout.",
++        ),
++    },
++)
