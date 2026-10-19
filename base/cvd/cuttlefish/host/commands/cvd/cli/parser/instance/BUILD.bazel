@@ -125,6 +125,7 @@ cf_cc_test(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
     ],
 )

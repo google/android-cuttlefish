@@ -504,9 +504,30 @@ TEST(DiskArtifactsValidationTest, ConflictWithLegacyOverrideFails) {
 
     EXPECT_TRUE(ParseJsonString(json_text, json_configs))
         << "Invalid Json string";
-    auto serialized_data = LaunchCvdParserTester(json_configs);
-    EXPECT_FALSE(serialized_data.has_value());
+    EXPECT_THAT(LaunchCvdParserTester(json_configs), IsError());
   }
+}
+
+TEST(DiskArtifactsValidationTest, EmptyVendorBootBuildFails) {
+  const std::string test_string = R""""(
+{
+    "instances": [
+        {
+          "disk": {
+            "disk_artifacts": {
+              "vendor_boot": ""
+            }
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  EXPECT_THAT(LaunchCvdParserTester(json_configs), IsError());
 }
 
 }  // namespace

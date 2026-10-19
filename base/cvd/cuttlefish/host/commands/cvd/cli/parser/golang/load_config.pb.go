@@ -933,6 +933,7 @@ func (x *Display) GetOverlays() []*DisplayOverlay {
 
 type DiskArtifacts struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	VendorBoot    *string                `protobuf:"bytes,1,opt,name=vendor_boot,json=vendorBoot,proto3,oneof" json:"vendor_boot,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -965,6 +966,13 @@ func (x *DiskArtifacts) ProtoReflect() protoreflect.Message {
 // Deprecated: Use DiskArtifacts.ProtoReflect.Descriptor instead.
 func (*DiskArtifacts) Descriptor() ([]byte, []int) {
 	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *DiskArtifacts) GetVendorBoot() string {
+	if x != nil && x.VendorBoot != nil {
+		return *x.VendorBoot
+	}
+	return ""
 }
 
 type Disk struct {
@@ -2275,8 +2283,11 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\x06_widthB\t\n" +
 	"\a_heightB\x06\n" +
 	"\x04_dpiB\x15\n" +
-	"\x13_refresh_rate_hertz\"\x0f\n" +
-	"\rDiskArtifacts\"\x9a\x04\n" +
+	"\x13_refresh_rate_hertz\"E\n" +
+	"\rDiskArtifacts\x12$\n" +
+	"\vvendor_boot\x18\x01 \x01(\tH\x00R\n" +
+	"vendorBoot\x88\x01\x01B\x0e\n" +
+	"\f_vendor_boot\"\x9a\x04\n" +
 	"\x04Disk\x12(\n" +
 	"\rdefault_build\x18\x01 \x01(\tH\x00R\fdefaultBuild\x88\x01\x01\x12A\n" +
 	"\x0fsuper_partition\x18\x02 \x01(\v2\x1c.cuttlefish.cvd.config.SuperH\x01R\x05super\x88\x01\x01\x12-\n" +
@@ -2517,6 +2528,7 @@ func file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_init() {
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[8].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[9].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[10].OneofWrappers = []any{}
+	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[11].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[12].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[13].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[14].OneofWrappers = []any{}

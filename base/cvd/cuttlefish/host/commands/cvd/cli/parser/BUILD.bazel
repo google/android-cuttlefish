@@ -136,6 +136,7 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//cuttlefish/result",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
         "@jsoncpp",
     ],
