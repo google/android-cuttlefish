@@ -262,7 +262,6 @@ cf_cc_library(
     deps = [
         ":video_sink",
         "//cuttlefish/host/frontend/webrtc/libcommon:abgr_buffer",
-        "@libdrm//:libdrm_fourcc",
         "@libwebrtc",
     ],
 )
