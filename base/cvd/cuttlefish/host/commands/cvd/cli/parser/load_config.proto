@@ -136,7 +136,9 @@ message Display {
   repeated DisplayOverlay overlays = 5;
 }
 
-message DiskArtifacts {}
+message DiskArtifacts {
+  optional string vendor_boot = 1;
+}
 
 message Disk {
   optional string default_build = 1;

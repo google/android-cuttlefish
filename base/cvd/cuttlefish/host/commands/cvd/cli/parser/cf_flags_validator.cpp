@@ -30,6 +30,7 @@ namespace {
 
 using cvd::config::Boot;
 using cvd::config::Disk;
+using cvd::config::DiskArtifacts;
 using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
 using google::protobuf::util::JsonStringToMessage;
@@ -51,6 +52,11 @@ Result<void> ValidateDiskArtifacts(
     }
     if (instance.disk().has_disk_artifacts()) {
       has_disk_artifacts = true;
+      const DiskArtifacts& disk_artifacts = instance.disk().disk_artifacts();
+      if (disk_artifacts.has_vendor_boot()) {
+        CF_EXPECT(!disk_artifacts.vendor_boot().empty(),
+                  "disk_artifacts vendor_boot build must not be empty");
+      }
     }
   }
   CF_EXPECT(!(has_legacy_artifacts && has_disk_artifacts),

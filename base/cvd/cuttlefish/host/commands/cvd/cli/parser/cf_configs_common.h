@@ -17,6 +17,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -29,6 +30,8 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+
+inline constexpr std::string_view kFetchPrefix = "@ab/";
 
 template <typename T>
 std::string GenerateFlag(const std::string& name, const T& value) {
