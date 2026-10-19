@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -100,6 +101,8 @@
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/remove.h"
+#include "cuttlefish/posix/rename.h"
+#include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/pretty/vector.h"
 #include "cuttlefish/result/result.h"
@@ -130,9 +133,54 @@ Result<void> SaveConfig(const CuttlefishConfig& tmp_config_obj) {
   return {};
 }
 
-#ifndef O_TMPFILE
-#define O_TMPFILE (020000000 | O_DIRECTORY)
-#endif
+struct TemporaryPathDeleter {
+  void operator()(std::string* path) const {
+    unlink(path->c_str());
+    delete path;
+  }
+};
+
+using TemporaryPath = std::unique_ptr<std::string, TemporaryPathDeleter>;
+
+class InitialLog {
+ public:
+  InitialLog() = default;
+
+  static Result<InitialLog> AppendTo(std::string file) {
+    SharedFD fd = CF_EXPECT(Fd::Open(file, O_WRONLY | O_APPEND));
+    return InitialLog(std::move(fd), std::move(file), TemporaryPath());
+  }
+
+  static Result<InitialLog> InDirectory(const std::string& dir) {
+    auto [fd, path] = CF_EXPECT(
+        SharedFD::Mkostemp(dir + "/assemble_cvd.log.", O_CLOEXEC | O_APPEND));
+    return InitialLog(std::move(fd), "",
+                      TemporaryPath(new std::string(std::move(path))));
+  }
+
+  const SharedFD& fd() const { return fd_; }
+
+  Result<void> Persist(const std::string& final_path) const {
+    if (temporary_) {
+      CF_EXPECT(Rename(*temporary_, final_path));
+    } else if (!existing_.empty()) {
+      CF_EXPECTF(link(existing_.c_str(), final_path.c_str()) == 0,
+                 "link(\"{}\", \"{}\") failed: {}", existing_, final_path,
+                 StrError(errno));
+    }
+    return {};
+  }
+
+ private:
+  InitialLog(SharedFD fd, std::string existing, TemporaryPath temporary)
+      : fd_(std::move(fd)),
+        existing_(std::move(existing)),
+        temporary_(std::move(temporary)) {}
+
+  SharedFD fd_;
+  std::string existing_;
+  TemporaryPath temporary_;
+};
 
 Result<void> CreateLegacySymlinks(
     const CuttlefishConfig::InstanceSpecific& instance,
@@ -293,13 +341,11 @@ Result<std::set<std::string>> PreservingOnResume(
   return preserving;
 }
 
-SharedFD SetLogger(std::string runtime_dir_parent) {
-  Result<SharedFD> log_file;
+Result<InitialLog> SetLogger(std::string runtime_dir_parent) {
+  Result<InitialLog> log_file;
   if (InSandbox()) {
-    log_file =
-        Fd::Open(absl::StrCat(runtime_dir_parent, "/instances/cvd-1/logs/",
-                              kLogNameLauncher),
-                 O_WRONLY | O_APPEND);
+    log_file = InitialLog::AppendTo(absl::StrCat(
+        runtime_dir_parent, "/instances/cvd-1/logs/", kLogNameLauncher));
   } else {
     while (runtime_dir_parent[runtime_dir_parent.size() - 1] == '/') {
       runtime_dir_parent =
@@ -307,28 +353,24 @@ SharedFD SetLogger(std::string runtime_dir_parent) {
     }
     runtime_dir_parent =
         runtime_dir_parent.substr(0, FLAGS_instance_dir.rfind('/'));
-    log_file = Fd::Open(runtime_dir_parent, O_WRONLY | O_TMPFILE,
-                        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    log_file = InitialLog::InDirectory(runtime_dir_parent);
   }
-  if (!log_file.has_value()) {
-    LOG(ERROR) << "Could not open initial log file: " << log_file.error();
-  } else {
-    std::vector<SeverityTarget> log_destinations = {
-        SeverityTarget::FromFd(SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE,
-                               ConsoleSeverity()),
-        SeverityTarget::FromFd(*log_file, MetadataLevel::FULL,
-                               LogFileSeverity()),
+  InitialLog log =
+      CF_EXPECT(std::move(log_file), "Could not open initial log file");
+  std::vector<SeverityTarget> log_destinations = {
+      SeverityTarget::FromFd(SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE,
+                             ConsoleSeverity()),
+      SeverityTarget::FromFd(log.fd(), MetadataLevel::FULL, LogFileSeverity()),
 
-    };
-    SetLoggers(std::move(log_destinations), "");
-  }
-  return log_file.value_or(Fd());
+  };
+  SetLoggers(std::move(log_destinations), "");
+  return log;
 }
 
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     FetcherConfigs fetcher_configs,
     const std::vector<GuestConfig>& guest_configs, fruit::Injector<>& injector,
-    SharedFD log, const BootImageFlag& boot_image,
+    const InitialLog& log, const BootImageFlag& boot_image,
     const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
     const SuperImageFlag& super_image,
     const SystemImageDirFlag& system_image_dir,
@@ -468,10 +510,10 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       CF_EXPECT(CreateLegacySymlinks(instance, environment));
     }
 
-    if (log->LinkAtCwd(config.AssemblyPath(kLogNameAssembleCvd))) {
-      LOG(ERROR) << "Unable to persist assemble_cvd log at "
-                 << config.AssemblyPath(kLogNameAssembleCvd) << ": "
-                 << log->StrError();
+    Result<void> persisted =
+        log.Persist(config.AssemblyPath(kLogNameAssembleCvd));
+    if (!persisted.has_value()) {
+      LOG(ERROR) << "Unable to persist assemble_cvd log: " << persisted.error();
     }
 
     CF_EXPECT(SaveConfig(config), "Failed to initialize configuration");
@@ -571,7 +613,7 @@ fruit::Component<> FlagsComponent(SystemImageDirFlag* system_image_dir) {
 }  // namespace
 
 Result<int> AssembleCvdMain(int argc, char** argv) {
-  SharedFD log = SetLogger(AbsolutePath(FLAGS_instance_dir));
+  InitialLog log = CF_EXPECT(SetLogger(AbsolutePath(FLAGS_instance_dir)));
   VLOG(0) << "received flags: "
           << absl::StrJoin(std::vector<std::string>(argv + 1, argv + argc),
                            " ");
