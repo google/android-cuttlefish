@@ -137,6 +137,9 @@ Result<Builds> GetBuilds(BuildApi& build_api,
           GetBuildHelper(build_api, build_sources.kernel_build, "kernel")),
       .boot = CF_EXPECT(GetBuildHelper(build_api, build_sources.boot_build,
                                        "gki_x86_64-user")),
+      .vendor_boot_image = CF_EXPECT(
+          GetBuildHelper(build_api, build_sources.vendor_boot_image_build,
+                         kDefaultBuildTarget)),
       .bootloader = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.bootloader_build, "u-boot_crosvm_x86_64")),
       .android_efi_loader = CF_EXPECT(
@@ -377,6 +380,26 @@ Result<void> FetchBootTarget(FetchBuildContext& context,
   return {};
 }
 
+Result<void> FetchVendorBootImageTarget(FetchBuildContext& context,
+                                        const bool keep_downloaded_archives) {
+  if (const std::optional<std::string> filepath = context.GetFilepath();
+      filepath.has_value()) {
+    LOG(INFO) << "Downloading " << *filepath << " to vendor_boot.img for "
+              << context;
+    CF_EXPECT(context.Artifact(*filepath).DownloadTo("vendor_boot.img"));
+  } else {
+    LOG(INFO) << "Extracting vendor_boot.img from image zip for " << context;
+    FetchArtifact img_zip = context.Artifact(
+        CF_EXPECT(context.GetBuildZipName(BuildZipKind::kImages)));
+    CF_EXPECT(img_zip.Download());
+    CF_EXPECT(img_zip.ExtractOne("vendor_boot.img"));
+    if (!keep_downloaded_archives) {
+      CF_EXPECT(img_zip.DeleteLocalFile());
+    }
+  }
+  return {};
+}
+
 Result<void> FetchBootloaderTarget(FetchBuildContext& context) {
   if (std::optional<std::string> filepath = context.GetFilepath()) {
     CF_EXPECT(context.Artifact(*filepath).DownloadTo("bootloader"));
@@ -485,6 +508,11 @@ Result<void> FetchTarget(FetchContext& fetch_context,
 
   if (std::optional<FetchBuildContext> ctx = fetch_context.TestSuitesBuild()) {
     CF_EXPECT(FetchTestSuitesTarget(*ctx, keep_downloaded_archives));
+  }
+
+  if (std::optional<FetchBuildContext> context =
+          fetch_context.VendorBootImageBuild()) {
+    CF_EXPECT(FetchVendorBootImageTarget(*context, keep_downloaded_archives));
   }
 
   return {};

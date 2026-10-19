@@ -300,7 +300,9 @@ cf_cc_test(
     srcs = ["fetch_cvd_parser_test.cpp"],
     deps = [
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/result",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
     ],
 )

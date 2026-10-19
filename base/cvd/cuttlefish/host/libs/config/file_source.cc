@@ -46,6 +46,8 @@ FileSource SourceStringToEnum(std::string_view source) {
     return FileSource::CHROME_OS_BUILD;
   } else if (absl::EqualsIgnoreCase(source, "test_suites_build")) {
     return FileSource::TEST_SUITES_BUILD;
+  } else if (absl::EqualsIgnoreCase(source, "vendor_boot_image_build")) {
+    return FileSource::VENDOR_BOOT_IMAGE_BUILD;
   } else {
     return FileSource::UNKNOWN_PURPOSE;
   }
@@ -74,6 +76,8 @@ std::string_view SourceEnumToString(FileSource source) {
     return "chrome_os_build";
   } else if (source == FileSource::TEST_SUITES_BUILD) {
     return "test_suites_build";
+  } else if (source == FileSource::VENDOR_BOOT_IMAGE_BUILD) {
+    return "vendor_boot_image_build";
   } else {
     return "unknown";
   }
