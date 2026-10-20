@@ -1,7 +1,0 @@
-# Only the hand-vendored f2fs-tools is tracked. Everything else in here is
-# produced by tools/buildutils/vendor_git_repos.sh and cached by CI.
-/*
-!/.gitignore
-!/VENDOR.bazel
-!/+_repo_rules3+f2fs_tools/
-!/@+_repo_rules3+f2fs_tools.marker
