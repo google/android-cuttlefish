@@ -1,0 +1,26 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_build_test(name = "cf_build_test")
+
+genrule(
+    name = "gen_rgba_to_nv12.comp.inl",
+    srcs = [
+        "rgba_to_nv12.comp",
+        "rgba_to_nv12.comp.spv",
+    ],
+    outs = ["rgba_to_nv12.comp.inl"],
+    cmd = "$(location //cuttlefish/host/graphics_detector/shaders:generate_shader_embed) $(location :rgba_to_nv12.comp) $(location :rgba_to_nv12.comp.spv) kRgbaToNv12Comp $@",
+    tools = ["//cuttlefish/host/graphics_detector/shaders:generate_shader_embed"],
+)
+
+cf_cc_library(
+    name = "vulkan_nv12_shaders",
+    clang_format_enabled = False,
+    textual_hdrs = [
+        ":gen_rgba_to_nv12.comp.inl",
+    ],
+)
