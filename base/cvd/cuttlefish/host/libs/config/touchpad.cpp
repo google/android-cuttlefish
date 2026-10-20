@@ -49,15 +49,29 @@ Result<CuttlefishConfig::TouchpadConfig> ParseTouchpadConfig(
             "Touchpad configuration missing 'width' in \"" << flag << "\"");
   CF_EXPECT(Contains(props, "height"),
             "Touchpad configuration missing 'height' in \"" << flag << "\"");
-  CF_EXPECT_EQ(
-      props.size(), 2,
-      "Touchpad configuration should only have width and height properties");
 
   CuttlefishConfig::TouchpadConfig config = {};
   CF_EXPECT(absl::SimpleAtoi(props["width"], &config.width),
             "Touchpad configuration invalid 'width' in \"" << flag << "\"");
   CF_EXPECT(absl::SimpleAtoi(props["height"], &config.height),
             "Touchpad configuration invalid 'height' in \"" << flag << "\"");
+  for (const auto& [k, v] : props) {
+    if (k == "width" || k == "height") {
+      continue;
+    } else if (k == "type") {
+      if (v == "touchpad") {
+        config.type = CuttlefishConfig::TouchpadConfig::Type::kTouchpad;
+      } else if (v == "touch_navigation") {
+        config.type = CuttlefishConfig::TouchpadConfig::Type::kTouchNavigation;
+      } else {
+        return CF_ERR("Touchpad configuration invalid 'type' \""
+                      << v << "\" in \"" << flag << "\"");
+      }
+    } else {
+      return CF_ERR("Touchpad configuration unknown property '"
+                    << k << "' in \"" << flag << "\"");
+    }
+  }
 
   return config;
 }
