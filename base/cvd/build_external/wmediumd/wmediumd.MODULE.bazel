@@ -4,6 +4,10 @@ git_repository(
     name = "wmediumd",
     build_file = "@//build_external/wmediumd:BUILD.wmediumd.bazel",
     commit = "f44d2af28b8045eb31ff045d3c078e60865afa98",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/wmediumd:0001-wmediumd-Implement-device-state-save-and-restore-for.patch",
+    ],
     remote = "https://android.googlesource.com/platform/external/wmediumd",
 )
 
