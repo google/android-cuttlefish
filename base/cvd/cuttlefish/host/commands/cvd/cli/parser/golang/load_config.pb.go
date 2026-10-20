@@ -935,16 +935,123 @@ func (x *Display) GetOverlays() []*DisplayOverlay {
 	return nil
 }
 
+type DiceHandover struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Build string                 `protobuf:"bytes,1,opt,name=build,proto3" json:"build,omitempty"`
+	Addr  string                 `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
+	Size  *string                `protobuf:"bytes,5,opt,name=size,proto3,oneof" json:"size,omitempty"`
+	// Types that are valid to be assigned to FirmwareTable:
+	//
+	//	*DiceHandover_AcpiTable
+	//	*DiceHandover_DeviceTreeOverlay
+	FirmwareTable isDiceHandover_FirmwareTable `protobuf_oneof:"firmware_table"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DiceHandover) Reset() {
+	*x = DiceHandover{}
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DiceHandover) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DiceHandover) ProtoMessage() {}
+
+func (x *DiceHandover) ProtoReflect() protoreflect.Message {
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DiceHandover.ProtoReflect.Descriptor instead.
+func (*DiceHandover) Descriptor() ([]byte, []int) {
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *DiceHandover) GetBuild() string {
+	if x != nil {
+		return x.Build
+	}
+	return ""
+}
+
+func (x *DiceHandover) GetAddr() string {
+	if x != nil {
+		return x.Addr
+	}
+	return ""
+}
+
+func (x *DiceHandover) GetSize() string {
+	if x != nil && x.Size != nil {
+		return *x.Size
+	}
+	return ""
+}
+
+func (x *DiceHandover) GetFirmwareTable() isDiceHandover_FirmwareTable {
+	if x != nil {
+		return x.FirmwareTable
+	}
+	return nil
+}
+
+func (x *DiceHandover) GetAcpiTable() string {
+	if x != nil {
+		if x, ok := x.FirmwareTable.(*DiceHandover_AcpiTable); ok {
+			return x.AcpiTable
+		}
+	}
+	return ""
+}
+
+func (x *DiceHandover) GetDeviceTreeOverlay() string {
+	if x != nil {
+		if x, ok := x.FirmwareTable.(*DiceHandover_DeviceTreeOverlay); ok {
+			return x.DeviceTreeOverlay
+		}
+	}
+	return ""
+}
+
+type isDiceHandover_FirmwareTable interface {
+	isDiceHandover_FirmwareTable()
+}
+
+type DiceHandover_AcpiTable struct {
+	AcpiTable string `protobuf:"bytes,3,opt,name=acpi_table,json=acpiTable,proto3,oneof"`
+}
+
+type DiceHandover_DeviceTreeOverlay struct {
+	DeviceTreeOverlay string `protobuf:"bytes,4,opt,name=device_tree_overlay,json=deviceTreeOverlay,proto3,oneof"`
+}
+
+func (*DiceHandover_AcpiTable) isDiceHandover_FirmwareTable() {}
+
+func (*DiceHandover_DeviceTreeOverlay) isDiceHandover_FirmwareTable() {}
+
 type DiskArtifacts struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	VendorBoot    *string                `protobuf:"bytes,1,opt,name=vendor_boot,json=vendorBoot,proto3,oneof" json:"vendor_boot,omitempty"`
+	DiceHandover  *DiceHandover          `protobuf:"bytes,2,opt,name=dice_handover,json=diceHandover,proto3,oneof" json:"dice_handover,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DiskArtifacts) Reset() {
 	*x = DiskArtifacts{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[11]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -956,7 +1063,7 @@ func (x *DiskArtifacts) String() string {
 func (*DiskArtifacts) ProtoMessage() {}
 
 func (x *DiskArtifacts) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[11]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -969,7 +1076,7 @@ func (x *DiskArtifacts) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiskArtifacts.ProtoReflect.Descriptor instead.
 func (*DiskArtifacts) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{11}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DiskArtifacts) GetVendorBoot() string {
@@ -977,6 +1084,13 @@ func (x *DiskArtifacts) GetVendorBoot() string {
 		return *x.VendorBoot
 	}
 	return ""
+}
+
+func (x *DiskArtifacts) GetDiceHandover() *DiceHandover {
+	if x != nil {
+		return x.DiceHandover
+	}
+	return nil
 }
 
 type Disk struct {
@@ -994,7 +1108,7 @@ type Disk struct {
 
 func (x *Disk) Reset() {
 	*x = Disk{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[12]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1006,7 +1120,7 @@ func (x *Disk) String() string {
 func (*Disk) ProtoMessage() {}
 
 func (x *Disk) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[12]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1019,7 +1133,7 @@ func (x *Disk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Disk.ProtoReflect.Descriptor instead.
 func (*Disk) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{12}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Disk) GetDefaultBuild() string {
@@ -1080,7 +1194,7 @@ type Super struct {
 
 func (x *Super) Reset() {
 	*x = Super{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[13]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1092,7 +1206,7 @@ func (x *Super) String() string {
 func (*Super) ProtoMessage() {}
 
 func (x *Super) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[13]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1105,7 +1219,7 @@ func (x *Super) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Super.ProtoReflect.Descriptor instead.
 func (*Super) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{13}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Super) GetSystem() string {
@@ -1126,7 +1240,7 @@ type Security struct {
 
 func (x *Security) Reset() {
 	*x = Security{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[14]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1138,7 +1252,7 @@ func (x *Security) String() string {
 func (*Security) ProtoMessage() {}
 
 func (x *Security) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[14]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1151,7 +1265,7 @@ func (x *Security) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Security.ProtoReflect.Descriptor instead.
 func (*Security) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{14}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *Security) GetSerialNumber() string {
@@ -1184,7 +1298,7 @@ type Streaming struct {
 
 func (x *Streaming) Reset() {
 	*x = Streaming{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[15]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1196,7 +1310,7 @@ func (x *Streaming) String() string {
 func (*Streaming) ProtoMessage() {}
 
 func (x *Streaming) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[15]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1209,7 +1323,7 @@ func (x *Streaming) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Streaming.ProtoReflect.Descriptor instead.
 func (*Streaming) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{15}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *Streaming) GetDeviceId() string {
@@ -1228,7 +1342,7 @@ type Media struct {
 
 func (x *Media) Reset() {
 	*x = Media{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[16]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1240,7 +1354,7 @@ func (x *Media) String() string {
 func (*Media) ProtoMessage() {}
 
 func (x *Media) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[16]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1253,7 +1367,7 @@ func (x *Media) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Media.ProtoReflect.Descriptor instead.
 func (*Media) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{16}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Media) GetDevices() []*MediaDevice {
@@ -1278,7 +1392,7 @@ type MediaDevice struct {
 
 func (x *MediaDevice) Reset() {
 	*x = MediaDevice{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[17]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1290,7 +1404,7 @@ func (x *MediaDevice) String() string {
 func (*MediaDevice) ProtoMessage() {}
 
 func (x *MediaDevice) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[17]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1303,7 +1417,7 @@ func (x *MediaDevice) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MediaDevice.ProtoReflect.Descriptor instead.
 func (*MediaDevice) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{17}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *MediaDevice) GetDevice() isMediaDevice_Device {
@@ -1377,7 +1491,7 @@ type V4L2EmulatedCameraMplane struct {
 
 func (x *V4L2EmulatedCameraMplane) Reset() {
 	*x = V4L2EmulatedCameraMplane{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[18]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1389,7 +1503,7 @@ func (x *V4L2EmulatedCameraMplane) String() string {
 func (*V4L2EmulatedCameraMplane) ProtoMessage() {}
 
 func (x *V4L2EmulatedCameraMplane) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[18]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1402,7 +1516,7 @@ func (x *V4L2EmulatedCameraMplane) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use V4L2EmulatedCameraMplane.ProtoReflect.Descriptor instead.
 func (*V4L2EmulatedCameraMplane) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{18}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{19}
 }
 
 type V4L2Proxy struct {
@@ -1414,7 +1528,7 @@ type V4L2Proxy struct {
 
 func (x *V4L2Proxy) Reset() {
 	*x = V4L2Proxy{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[19]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1426,7 +1540,7 @@ func (x *V4L2Proxy) String() string {
 func (*V4L2Proxy) ProtoMessage() {}
 
 func (x *V4L2Proxy) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[19]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1439,7 +1553,7 @@ func (x *V4L2Proxy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use V4L2Proxy.ProtoReflect.Descriptor instead.
 func (*V4L2Proxy) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{19}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *V4L2Proxy) GetDevicePath() string {
@@ -1461,7 +1575,7 @@ type V4L2StreamProxy struct {
 
 func (x *V4L2StreamProxy) Reset() {
 	*x = V4L2StreamProxy{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[20]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1473,7 +1587,7 @@ func (x *V4L2StreamProxy) String() string {
 func (*V4L2StreamProxy) ProtoMessage() {}
 
 func (x *V4L2StreamProxy) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[20]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1486,7 +1600,7 @@ func (x *V4L2StreamProxy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use V4L2StreamProxy.ProtoReflect.Descriptor instead.
 func (*V4L2StreamProxy) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{20}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *V4L2StreamProxy) GetInputPath() string {
@@ -1539,7 +1653,7 @@ type Vm struct {
 
 func (x *Vm) Reset() {
 	*x = Vm{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[21]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1551,7 +1665,7 @@ func (x *Vm) String() string {
 func (*Vm) ProtoMessage() {}
 
 func (x *Vm) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[21]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1564,7 +1678,7 @@ func (x *Vm) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Vm.ProtoReflect.Descriptor instead.
 func (*Vm) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{21}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *Vm) GetCpus() uint32 {
@@ -1689,7 +1803,7 @@ type Crosvm struct {
 
 func (x *Crosvm) Reset() {
 	*x = Crosvm{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[22]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1701,7 +1815,7 @@ func (x *Crosvm) String() string {
 func (*Crosvm) ProtoMessage() {}
 
 func (x *Crosvm) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[22]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1714,7 +1828,7 @@ func (x *Crosvm) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Crosvm.ProtoReflect.Descriptor instead.
 func (*Crosvm) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{22}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *Crosvm) GetEnableSandbox() bool {
@@ -1739,7 +1853,7 @@ type Gem5 struct {
 
 func (x *Gem5) Reset() {
 	*x = Gem5{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[23]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1751,7 +1865,7 @@ func (x *Gem5) String() string {
 func (*Gem5) ProtoMessage() {}
 
 func (x *Gem5) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[23]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1764,7 +1878,7 @@ func (x *Gem5) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Gem5.ProtoReflect.Descriptor instead.
 func (*Gem5) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{23}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{24}
 }
 
 type Qemu struct {
@@ -1775,7 +1889,7 @@ type Qemu struct {
 
 func (x *Qemu) Reset() {
 	*x = Qemu{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[24]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1787,7 +1901,7 @@ func (x *Qemu) String() string {
 func (*Qemu) ProtoMessage() {}
 
 func (x *Qemu) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[24]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1800,7 +1914,7 @@ func (x *Qemu) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Qemu.ProtoReflect.Descriptor instead.
 func (*Qemu) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{24}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{25}
 }
 
 type CustomAction struct {
@@ -1816,7 +1930,7 @@ type CustomAction struct {
 
 func (x *CustomAction) Reset() {
 	*x = CustomAction{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[25]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1828,7 +1942,7 @@ func (x *CustomAction) String() string {
 func (*CustomAction) ProtoMessage() {}
 
 func (x *CustomAction) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[25]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1841,7 +1955,7 @@ func (x *CustomAction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CustomAction.ProtoReflect.Descriptor instead.
 func (*CustomAction) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{25}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *CustomAction) GetShellCommand() string {
@@ -1890,7 +2004,7 @@ type Button struct {
 
 func (x *Button) Reset() {
 	*x = Button{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[26]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1902,7 +2016,7 @@ func (x *Button) String() string {
 func (*Button) ProtoMessage() {}
 
 func (x *Button) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[26]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1915,7 +2029,7 @@ func (x *Button) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Button.ProtoReflect.Descriptor instead.
 func (*Button) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{26}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *Button) GetCommand() string {
@@ -1949,7 +2063,7 @@ type DeviceState struct {
 
 func (x *DeviceState) Reset() {
 	*x = DeviceState{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[27]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1961,7 +2075,7 @@ func (x *DeviceState) String() string {
 func (*DeviceState) ProtoMessage() {}
 
 func (x *DeviceState) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[27]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1974,7 +2088,7 @@ func (x *DeviceState) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceState.ProtoReflect.Descriptor instead.
 func (*DeviceState) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{27}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *DeviceState) GetLidSwitchOpen() bool {
@@ -2000,7 +2114,7 @@ type Metrics struct {
 
 func (x *Metrics) Reset() {
 	*x = Metrics{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[28]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2012,7 +2126,7 @@ func (x *Metrics) String() string {
 func (*Metrics) ProtoMessage() {}
 
 func (x *Metrics) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[28]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2025,7 +2139,7 @@ func (x *Metrics) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Metrics.ProtoReflect.Descriptor instead.
 func (*Metrics) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{28}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *Metrics) GetEnable() bool {
@@ -2045,7 +2159,7 @@ type DisplayOverlay struct {
 
 func (x *DisplayOverlay) Reset() {
 	*x = DisplayOverlay{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[29]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2057,7 +2171,7 @@ func (x *DisplayOverlay) String() string {
 func (*DisplayOverlay) ProtoMessage() {}
 
 func (x *DisplayOverlay) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[29]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2070,7 +2184,7 @@ func (x *DisplayOverlay) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisplayOverlay.ProtoReflect.Descriptor instead.
 func (*DisplayOverlay) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{29}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *DisplayOverlay) GetVmIndex() int32 {
@@ -2219,11 +2333,22 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\x06_widthB\t\n" +
 	"\a_heightB\x06\n" +
 	"\x04_dpiB\x15\n" +
-	"\x13_refresh_rate_hertz\"E\n" +
+	"\x13_refresh_rate_hertz\"\xbf\x01\n" +
+	"\fDiceHandover\x12\x14\n" +
+	"\x05build\x18\x01 \x01(\tR\x05build\x12\x12\n" +
+	"\x04addr\x18\x02 \x01(\tR\x04addr\x12\x17\n" +
+	"\x04size\x18\x05 \x01(\tH\x01R\x04size\x88\x01\x01\x12\x1f\n" +
+	"\n" +
+	"acpi_table\x18\x03 \x01(\tH\x00R\tacpiTable\x120\n" +
+	"\x13device_tree_overlay\x18\x04 \x01(\tH\x00R\x11deviceTreeOverlayB\x10\n" +
+	"\x0efirmware_tableB\a\n" +
+	"\x05_size\"\xa6\x01\n" +
 	"\rDiskArtifacts\x12$\n" +
 	"\vvendor_boot\x18\x01 \x01(\tH\x00R\n" +
-	"vendorBoot\x88\x01\x01B\x0e\n" +
-	"\f_vendor_boot\"\x9a\x04\n" +
+	"vendorBoot\x88\x01\x01\x12M\n" +
+	"\rdice_handover\x18\x02 \x01(\v2#.cuttlefish.cvd.config.DiceHandoverH\x01R\fdiceHandover\x88\x01\x01B\x0e\n" +
+	"\f_vendor_bootB\x10\n" +
+	"\x0e_dice_handover\"\x9a\x04\n" +
 	"\x04Disk\x12(\n" +
 	"\rdefault_build\x18\x01 \x01(\tH\x00R\fdefaultBuild\x88\x01\x01\x12A\n" +
 	"\x0fsuper_partition\x18\x02 \x01(\v2\x1c.cuttlefish.cvd.config.SuperH\x01R\x05super\x88\x01\x01\x12-\n" +
@@ -2360,7 +2485,7 @@ func file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(
 }
 
 var file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
+var file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_goTypes = []any{
 	(UserPageSize)(0),                // 0: cuttlefish.cvd.config.UserPageSize
 	(ModemSimulatorSimType)(0),       // 1: cuttlefish.cvd.config.ModemSimulatorSimType
@@ -2375,68 +2500,70 @@ var file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_goTypes = []a
 	(*Vsock)(nil),                    // 10: cuttlefish.cvd.config.Vsock
 	(*Graphics)(nil),                 // 11: cuttlefish.cvd.config.Graphics
 	(*Display)(nil),                  // 12: cuttlefish.cvd.config.Display
-	(*DiskArtifacts)(nil),            // 13: cuttlefish.cvd.config.DiskArtifacts
-	(*Disk)(nil),                     // 14: cuttlefish.cvd.config.Disk
-	(*Super)(nil),                    // 15: cuttlefish.cvd.config.Super
-	(*Security)(nil),                 // 16: cuttlefish.cvd.config.Security
-	(*Streaming)(nil),                // 17: cuttlefish.cvd.config.Streaming
-	(*Media)(nil),                    // 18: cuttlefish.cvd.config.Media
-	(*MediaDevice)(nil),              // 19: cuttlefish.cvd.config.MediaDevice
-	(*V4L2EmulatedCameraMplane)(nil), // 20: cuttlefish.cvd.config.V4l2EmulatedCameraMplane
-	(*V4L2Proxy)(nil),                // 21: cuttlefish.cvd.config.V4l2Proxy
-	(*V4L2StreamProxy)(nil),          // 22: cuttlefish.cvd.config.V4l2StreamProxy
-	(*Vm)(nil),                       // 23: cuttlefish.cvd.config.Vm
-	(*Crosvm)(nil),                   // 24: cuttlefish.cvd.config.Crosvm
-	(*Gem5)(nil),                     // 25: cuttlefish.cvd.config.Gem5
-	(*Qemu)(nil),                     // 26: cuttlefish.cvd.config.Qemu
-	(*CustomAction)(nil),             // 27: cuttlefish.cvd.config.CustomAction
-	(*Button)(nil),                   // 28: cuttlefish.cvd.config.Button
-	(*DeviceState)(nil),              // 29: cuttlefish.cvd.config.DeviceState
-	(*Metrics)(nil),                  // 30: cuttlefish.cvd.config.Metrics
-	(*DisplayOverlay)(nil),           // 31: cuttlefish.cvd.config.DisplayOverlay
+	(*DiceHandover)(nil),             // 13: cuttlefish.cvd.config.DiceHandover
+	(*DiskArtifacts)(nil),            // 14: cuttlefish.cvd.config.DiskArtifacts
+	(*Disk)(nil),                     // 15: cuttlefish.cvd.config.Disk
+	(*Super)(nil),                    // 16: cuttlefish.cvd.config.Super
+	(*Security)(nil),                 // 17: cuttlefish.cvd.config.Security
+	(*Streaming)(nil),                // 18: cuttlefish.cvd.config.Streaming
+	(*Media)(nil),                    // 19: cuttlefish.cvd.config.Media
+	(*MediaDevice)(nil),              // 20: cuttlefish.cvd.config.MediaDevice
+	(*V4L2EmulatedCameraMplane)(nil), // 21: cuttlefish.cvd.config.V4l2EmulatedCameraMplane
+	(*V4L2Proxy)(nil),                // 22: cuttlefish.cvd.config.V4l2Proxy
+	(*V4L2StreamProxy)(nil),          // 23: cuttlefish.cvd.config.V4l2StreamProxy
+	(*Vm)(nil),                       // 24: cuttlefish.cvd.config.Vm
+	(*Crosvm)(nil),                   // 25: cuttlefish.cvd.config.Crosvm
+	(*Gem5)(nil),                     // 26: cuttlefish.cvd.config.Gem5
+	(*Qemu)(nil),                     // 27: cuttlefish.cvd.config.Qemu
+	(*CustomAction)(nil),             // 28: cuttlefish.cvd.config.CustomAction
+	(*Button)(nil),                   // 29: cuttlefish.cvd.config.Button
+	(*DeviceState)(nil),              // 30: cuttlefish.cvd.config.DeviceState
+	(*Metrics)(nil),                  // 31: cuttlefish.cvd.config.Metrics
+	(*DisplayOverlay)(nil),           // 32: cuttlefish.cvd.config.DisplayOverlay
 }
 var file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_depIdxs = []int32{
 	6,  // 0: cuttlefish.cvd.config.EnvironmentSpecification.instances:type_name -> cuttlefish.cvd.config.Instance
 	5,  // 1: cuttlefish.cvd.config.EnvironmentSpecification.fetch:type_name -> cuttlefish.cvd.config.Fetch
-	30, // 2: cuttlefish.cvd.config.EnvironmentSpecification.metrics:type_name -> cuttlefish.cvd.config.Metrics
+	31, // 2: cuttlefish.cvd.config.EnvironmentSpecification.metrics:type_name -> cuttlefish.cvd.config.Metrics
 	4,  // 3: cuttlefish.cvd.config.EnvironmentSpecification.common:type_name -> cuttlefish.cvd.config.Common
 	5,  // 4: cuttlefish.cvd.config.EnvironmentOptions.fetch:type_name -> cuttlefish.cvd.config.Fetch
-	30, // 5: cuttlefish.cvd.config.EnvironmentOptions.metrics:type_name -> cuttlefish.cvd.config.Metrics
+	31, // 5: cuttlefish.cvd.config.EnvironmentOptions.metrics:type_name -> cuttlefish.cvd.config.Metrics
 	4,  // 6: cuttlefish.cvd.config.EnvironmentOptions.common:type_name -> cuttlefish.cvd.config.Common
-	23, // 7: cuttlefish.cvd.config.Instance.vm:type_name -> cuttlefish.cvd.config.Vm
+	24, // 7: cuttlefish.cvd.config.Instance.vm:type_name -> cuttlefish.cvd.config.Vm
 	7,  // 8: cuttlefish.cvd.config.Instance.boot:type_name -> cuttlefish.cvd.config.Boot
-	16, // 9: cuttlefish.cvd.config.Instance.security:type_name -> cuttlefish.cvd.config.Security
-	14, // 10: cuttlefish.cvd.config.Instance.disk:type_name -> cuttlefish.cvd.config.Disk
+	17, // 9: cuttlefish.cvd.config.Instance.security:type_name -> cuttlefish.cvd.config.Security
+	15, // 10: cuttlefish.cvd.config.Instance.disk:type_name -> cuttlefish.cvd.config.Disk
 	11, // 11: cuttlefish.cvd.config.Instance.graphics:type_name -> cuttlefish.cvd.config.Graphics
-	17, // 12: cuttlefish.cvd.config.Instance.streaming:type_name -> cuttlefish.cvd.config.Streaming
+	18, // 12: cuttlefish.cvd.config.Instance.streaming:type_name -> cuttlefish.cvd.config.Streaming
 	9,  // 13: cuttlefish.cvd.config.Instance.connectivity:type_name -> cuttlefish.cvd.config.Connectivity
-	18, // 14: cuttlefish.cvd.config.Instance.media:type_name -> cuttlefish.cvd.config.Media
+	19, // 14: cuttlefish.cvd.config.Instance.media:type_name -> cuttlefish.cvd.config.Media
 	8,  // 15: cuttlefish.cvd.config.Boot.kernel:type_name -> cuttlefish.cvd.config.Build
 	8,  // 16: cuttlefish.cvd.config.Boot.bootloader:type_name -> cuttlefish.cvd.config.Build
 	8,  // 17: cuttlefish.cvd.config.Boot.android_efi_loader:type_name -> cuttlefish.cvd.config.Build
 	10, // 18: cuttlefish.cvd.config.Connectivity.vsock:type_name -> cuttlefish.cvd.config.Vsock
 	1,  // 19: cuttlefish.cvd.config.Connectivity.modem_simulator_sim_type:type_name -> cuttlefish.cvd.config.ModemSimulatorSimType
 	12, // 20: cuttlefish.cvd.config.Graphics.displays:type_name -> cuttlefish.cvd.config.Display
-	31, // 21: cuttlefish.cvd.config.Display.overlays:type_name -> cuttlefish.cvd.config.DisplayOverlay
-	15, // 22: cuttlefish.cvd.config.Disk.super_partition:type_name -> cuttlefish.cvd.config.Super
-	13, // 23: cuttlefish.cvd.config.Disk.disk_artifacts:type_name -> cuttlefish.cvd.config.DiskArtifacts
-	19, // 24: cuttlefish.cvd.config.Media.devices:type_name -> cuttlefish.cvd.config.MediaDevice
-	20, // 25: cuttlefish.cvd.config.MediaDevice.v4l2_emulated_camera_mplane:type_name -> cuttlefish.cvd.config.V4l2EmulatedCameraMplane
-	21, // 26: cuttlefish.cvd.config.MediaDevice.v4l2_proxy:type_name -> cuttlefish.cvd.config.V4l2Proxy
-	22, // 27: cuttlefish.cvd.config.MediaDevice.v4l2_stream_proxy:type_name -> cuttlefish.cvd.config.V4l2StreamProxy
-	24, // 28: cuttlefish.cvd.config.Vm.crosvm:type_name -> cuttlefish.cvd.config.Crosvm
-	25, // 29: cuttlefish.cvd.config.Vm.gem5:type_name -> cuttlefish.cvd.config.Gem5
-	26, // 30: cuttlefish.cvd.config.Vm.qemu:type_name -> cuttlefish.cvd.config.Qemu
-	27, // 31: cuttlefish.cvd.config.Vm.custom_actions:type_name -> cuttlefish.cvd.config.CustomAction
-	0,  // 32: cuttlefish.cvd.config.Vm.page_size:type_name -> cuttlefish.cvd.config.UserPageSize
-	28, // 33: cuttlefish.cvd.config.CustomAction.button:type_name -> cuttlefish.cvd.config.Button
-	28, // 34: cuttlefish.cvd.config.CustomAction.buttons:type_name -> cuttlefish.cvd.config.Button
-	29, // 35: cuttlefish.cvd.config.CustomAction.device_states:type_name -> cuttlefish.cvd.config.DeviceState
-	36, // [36:36] is the sub-list for method output_type
-	36, // [36:36] is the sub-list for method input_type
-	36, // [36:36] is the sub-list for extension type_name
-	36, // [36:36] is the sub-list for extension extendee
-	0,  // [0:36] is the sub-list for field type_name
+	32, // 21: cuttlefish.cvd.config.Display.overlays:type_name -> cuttlefish.cvd.config.DisplayOverlay
+	13, // 22: cuttlefish.cvd.config.DiskArtifacts.dice_handover:type_name -> cuttlefish.cvd.config.DiceHandover
+	16, // 23: cuttlefish.cvd.config.Disk.super_partition:type_name -> cuttlefish.cvd.config.Super
+	14, // 24: cuttlefish.cvd.config.Disk.disk_artifacts:type_name -> cuttlefish.cvd.config.DiskArtifacts
+	20, // 25: cuttlefish.cvd.config.Media.devices:type_name -> cuttlefish.cvd.config.MediaDevice
+	21, // 26: cuttlefish.cvd.config.MediaDevice.v4l2_emulated_camera_mplane:type_name -> cuttlefish.cvd.config.V4l2EmulatedCameraMplane
+	22, // 27: cuttlefish.cvd.config.MediaDevice.v4l2_proxy:type_name -> cuttlefish.cvd.config.V4l2Proxy
+	23, // 28: cuttlefish.cvd.config.MediaDevice.v4l2_stream_proxy:type_name -> cuttlefish.cvd.config.V4l2StreamProxy
+	25, // 29: cuttlefish.cvd.config.Vm.crosvm:type_name -> cuttlefish.cvd.config.Crosvm
+	26, // 30: cuttlefish.cvd.config.Vm.gem5:type_name -> cuttlefish.cvd.config.Gem5
+	27, // 31: cuttlefish.cvd.config.Vm.qemu:type_name -> cuttlefish.cvd.config.Qemu
+	28, // 32: cuttlefish.cvd.config.Vm.custom_actions:type_name -> cuttlefish.cvd.config.CustomAction
+	0,  // 33: cuttlefish.cvd.config.Vm.page_size:type_name -> cuttlefish.cvd.config.UserPageSize
+	29, // 34: cuttlefish.cvd.config.CustomAction.button:type_name -> cuttlefish.cvd.config.Button
+	29, // 35: cuttlefish.cvd.config.CustomAction.buttons:type_name -> cuttlefish.cvd.config.Button
+	30, // 36: cuttlefish.cvd.config.CustomAction.device_states:type_name -> cuttlefish.cvd.config.DeviceState
+	37, // [37:37] is the sub-list for method output_type
+	37, // [37:37] is the sub-list for method input_type
+	37, // [37:37] is the sub-list for extension type_name
+	37, // [37:37] is the sub-list for extension extendee
+	0,  // [0:37] is the sub-list for field type_name
 }
 
 func init() { file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_init() }
@@ -2455,34 +2582,38 @@ func file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_init() {
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[8].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[9].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[10].OneofWrappers = []any{}
-	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[11].OneofWrappers = []any{}
+	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[11].OneofWrappers = []any{
+		(*DiceHandover_AcpiTable)(nil),
+		(*DiceHandover_DeviceTreeOverlay)(nil),
+	}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[12].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[13].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[14].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[15].OneofWrappers = []any{}
-	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[17].OneofWrappers = []any{
+	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[16].OneofWrappers = []any{}
+	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[18].OneofWrappers = []any{
 		(*MediaDevice_V4L2EmulatedCameraMplane)(nil),
 		(*MediaDevice_V4L2Proxy)(nil),
 		(*MediaDevice_V4L2StreamProxy)(nil),
 	}
-	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[19].OneofWrappers = []any{}
-	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[21].OneofWrappers = []any{
+	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[20].OneofWrappers = []any{}
+	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[22].OneofWrappers = []any{
 		(*Vm_Crosvm)(nil),
 		(*Vm_Gem5)(nil),
 		(*Vm_Qemu)(nil),
 	}
-	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[22].OneofWrappers = []any{}
-	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[25].OneofWrappers = []any{}
+	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[23].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[26].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[27].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[28].OneofWrappers = []any{}
+	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[29].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc), len(file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   30,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

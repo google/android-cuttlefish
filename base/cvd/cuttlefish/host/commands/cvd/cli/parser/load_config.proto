@@ -138,8 +138,31 @@ message Display {
   repeated DisplayOverlay overlays = 5;
 }
 
+message DiceHandover {
+  // The path of the dice handover file, can be a file in default_build,
+  // or a remote build path, e.g. `@ab/<branch>/<target>{<file path>}`.
+  string build = 1;
+  // Hexadecimal number with 0x prefix, the base address of the mapping.
+  string addr = 2;
+  // Hexadecimal number with 0x prefix, the size of the mapping. Defaults to
+  // 0x1000 when unset.
+  optional string size = 5;
+  // The firmware table describing the dice handover region to the guest.
+  // Exactly one must be set. The file is expected to be bundled with the
+  // image, i.e. a file in default_build.
+  oneof firmware_table {
+    // The ACPI table, usually used on x86_64 guests.
+    string acpi_table = 3;
+    // The device tree overlay, usually used on non-x86_64 guests.
+    string device_tree_overlay = 4;
+  }
+}
+
 message DiskArtifacts {
   optional string vendor_boot = 1;
+  // The dice handover for the VM, when set, it will also request the
+  // firmware table (acpi_table or device_tree_overlay) set in DiceHandover.
+  optional DiceHandover dice_handover = 2;
 }
 
 message Disk {
