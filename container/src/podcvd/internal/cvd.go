@@ -94,6 +94,13 @@ func UpdateCvdGroupJsonRaw(data any, podcvdBaseDir, ipAddr string) {
 	}
 }
 
+// RenameCvdGroupJsonRaw replaces the cvd group name of a group JSON object with the podcvd one.
+func RenameCvdGroupJsonRaw(data any, innerGroupName, groupName string) {
+	if group, ok := data.(map[string]any); ok && group["group_name"] == innerGroupName {
+		group["group_name"] = groupName
+	}
+}
+
 // TODO(b/535387856): Gather information from `cvd fleet` rather than parsing
 // `cvd ps`, as it makes the behavior of `podcvd ps` much more complicated.
 func PrintPsOutputs(results []HostExecResult, out io.Writer) error {
@@ -103,6 +110,11 @@ func PrintPsOutputs(results []HostExecResult, out io.Writer) error {
 		rows, cols, err := parsePsOutput(string(res.Stdout), res.IP)
 		if err != nil {
 			return fmt.Errorf("failed to parse cvd ps output from group %q: %w", res.GroupName, err)
+		}
+		for _, row := range rows {
+			if row["GROUPS"] == res.InnerGroupName {
+				row["GROUPS"] = res.GroupName
+			}
 		}
 		allRows = append(allRows, rows...)
 		for _, col := range cols {

@@ -107,7 +107,7 @@ func ExecFetchCmdOnDisposableHost(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 		"-v", fmt.Sprintf("%s:%s:rw", targetDir, targetDir),
 		"-v", fmt.Sprintf("%s:/var/tmp/cvd/0/cache:rw", cacheDir),
 	}
-	containerID, err := ccm.CreateAndStartContainer(context.Background(), extraFlags, "")
+	containerID, err := ccm.CreateAndStartContainer(context.Background(), imageName, extraFlags, "")
 	if err != nil {
 		return fmt.Errorf("failed to create and start container: %w", err)
 	}
@@ -123,9 +123,10 @@ func ExecFetchCmdOnDisposableHost(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 }
 
 type HostExecResult struct {
-	GroupName string
-	IP        string
-	Stdout    []byte
+	GroupName      string
+	InnerGroupName string
+	IP             string
+	Stdout         []byte
 }
 
 func ExecOnAllCuttlefishHosts(ccm CuttlefishContainerManager, subcommandArgs []string, stderr io.Writer) ([]HostExecResult, error) {
@@ -148,9 +149,10 @@ func ExecOnAllCuttlefishHosts(ccm CuttlefishContainerManager, subcommandArgs []s
 				return
 			}
 			resCh <- HostExecResult{
-				GroupName: groupName,
-				IP:        ip,
-				Stdout:    stdoutBuf.Bytes(),
+				GroupName:      groupName,
+				InnerGroupName: lookupInnerGroupName(ccm, groupName),
+				IP:             ip,
+				Stdout:         stdoutBuf.Bytes(),
 			}
 		}(groupName, ip)
 	}
@@ -207,6 +209,18 @@ func pruneOldContainerImages(ccm CuttlefishContainerManager) error {
 	return ccm.RemoveImages(context.Background(), oldImages)
 }
 
+func pruneCloneImages(ccm CuttlefishContainerManager) error {
+	tags, err := ccm.ListTags(context.Background(), cloneImageRepo)
+	if err != nil {
+		return err
+	}
+	var images []string
+	for _, tag := range tags {
+		images = append(images, cloneImageRepo+":"+tag)
+	}
+	return ccm.RemoveImages(context.Background(), images)
+}
+
 func cvdDataHome() (string, error) {
 	if xdgDataHome := os.Getenv("XDG_DATA_HOME"); xdgDataHome != "" {
 		return filepath.Join(xdgDataHome, "cvd"), nil
@@ -220,6 +234,10 @@ func cvdDataHome() (string, error) {
 func hostCacheDir() string {
 	uid := os.Getuid()
 	return filepath.Join("/var/tmp/cvd", strconv.Itoa(uid), "cache")
+}
+
+func hostSnapshotsDir() string {
+	return filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), "snapshots")
 }
 
 func resolveHostPath(path string) string {
@@ -286,12 +304,13 @@ func mountablePathsFromConfigFile(cvdArgs *CvdArgs) []string {
 	return extractPaths(data)
 }
 
-func collectMountSpecs(pathsToMount []string, hostOut, productOut, cvdDataHome, podcvdBaseDir, cacheDir string) []string {
+func collectMountSpecs(pathsToMount []string, hostOut, productOut, cvdDataHome, podcvdBaseDir, cacheDir, snapshotsDir string) []string {
 	bindMap := make(map[string]string)
 	bindMap["/host_out"] = fmt.Sprintf("%s:/host_out:O", hostOut)
 	bindMap["/product_out"] = fmt.Sprintf("%s:/product_out:O", productOut)
 	bindMap["/root/.local/share/cvd"] = fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome)
 	bindMap["/podcvd_base"] = fmt.Sprintf("%s:/podcvd_base:rw", podcvdBaseDir)
+	bindMap[containerSnapshotsDir] = fmt.Sprintf("%s:%s:rw", snapshotsDir, containerSnapshotsDir)
 	bindMap["/var/tmp/cvd/0/cache"] = fmt.Sprintf("%s:/var/tmp/cvd/0/cache:rw", cacheDir)
 	bindMap["/etc/cuttlefish-common/operator/cert/cert.pem"] = "/etc/cuttlefish-podcvd/cert.pem:/etc/cuttlefish-common/operator/cert/cert.pem:ro"
 	bindMap["/etc/cuttlefish-common/operator/cert/key.pem"] = "/etc/cuttlefish-podcvd/key.pem:/etc/cuttlefish-common/operator/cert/key.pem:ro"
@@ -427,6 +446,10 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 	if err := os.MkdirAll(podcvdHomeDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create podcvd home dir: %w", err)
 	}
+	snapshotsDir := hostSnapshotsDir()
+	if err := os.MkdirAll(snapshotsDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create podcvd snapshots dir: %w", err)
+	}
 	var pathsToMount []string
 	for idx, arg := range cvdArgs.SubCommandArgs {
 		path := arg
@@ -456,8 +479,36 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 			pathsToMount = append(pathsToMount, realPath)
 		}
 	}
-	mountSpecs := collectMountSpecs(pathsToMount, hostOut, productOut, cvdDataHome, podcvdBaseDir, cacheDir)
+	mountSpecs := collectMountSpecs(pathsToMount, hostOut, productOut, cvdDataHome, podcvdBaseDir, cacheDir, snapshotsDir)
+	extraFlags, err := cuttlefishHostFlags(attemptID, podcvdBaseDir, mountSpecs)
+	if err != nil {
+		return "", err
+	}
+	chooseGroupName := func(groupNameIpAddrMap map[string]string) (string, error) {
+		groupName := commonArgs.GroupName
+		if groupName != "" {
+			if _, exists := groupNameIpAddrMap[groupName]; exists {
+				return "", fmt.Errorf("container instance for group name %q already exists", groupName)
+			}
+		} else {
+			groupName = findAvailableGroupName(groupNameIpAddrMap)
+		}
+		return groupName, nil
+	}
+	groupName, ip, err := runCuttlefishHostContainer(ccm, imageName, extraFlags, attemptID, chooseGroupName)
+	if err != nil {
+		return "", err
+	}
+	commonArgs.GroupName = groupName
+	return ip, nil
+}
 
+// cuttlefishHostFlags returns the podman flags shared by all group containers.
+func cuttlefishHostFlags(attemptID, podcvdBaseDir string, mountSpecs []string) ([]string, error) {
+	mountSpecsJSON, err := json.Marshal(mountSpecs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal mount specs: %w", err)
+	}
 	extraFlags := []string{
 		"-e", "ANDROID_HOST_OUT=/host_out",
 		"-e", "ANDROID_PRODUCT_OUT=/product_out",
@@ -465,6 +516,7 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		"--label", fmt.Sprintf("%s=%s", labelCreatedBy, valueCreatedBy),
 		"--label", fmt.Sprintf("%s=%s", labelAttemptID, attemptID),
 		"--label", fmt.Sprintf("%s=%s", labelBaseDir, podcvdBaseDir),
+		"--label", fmt.Sprintf("%s=%s", labelMountSpecs, mountSpecsJSON),
 		"--annotation", "run.oci.keep_original_groups=1",
 		"--cap-add", "NET_RAW",
 		"--pids-limit", "8192",
@@ -476,16 +528,20 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 	if clientID != "" {
 		extraFlags = append(extraFlags, "--label", fmt.Sprintf("%s=%s", labelClientID, clientID))
 	}
+	return extraFlags, nil
+}
 
+// runCuttlefishHostContainer runs image as a group container and returns its group name and IP.
+func runCuttlefishHostContainer(ccm CuttlefishContainerManager, image string, extraFlags []string, attemptID string, chooseGroupName func(groupNameIpAddrMap map[string]string) (string, error)) (string, string, error) {
 	var lastErr error
 	for retryCount := 0; retryCount < 10; retryCount++ {
 		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, true, true)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 		ip, err := findAvailableIPv4Addr(groupNameIpAddrMap)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 		attemptFlags := make([]string, len(extraFlags))
 		copy(attemptFlags, extraFlags)
@@ -496,16 +552,12 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		attemptFlags = appendPortFlags(attemptFlags, ip, "tcp", 15550, 15599)
 		attemptFlags = appendPortFlags(attemptFlags, ip, "udp", 15550, 15599)
 		attemptFlags = append(attemptFlags, "--network", fmt.Sprintf("pasta:-a,%s", ip))
-		groupName := commonArgs.GroupName
-		if groupName != "" {
-			if _, exists := groupNameIpAddrMap[groupName]; exists {
-				return "", fmt.Errorf("container instance for group name %q already exists", groupName)
-			}
-		} else {
-			groupName = findAvailableGroupName(groupNameIpAddrMap)
+		groupName, err := chooseGroupName(groupNameIpAddrMap)
+		if err != nil {
+			return "", "", err
 		}
 		attemptFlags = append(attemptFlags, "--label", fmt.Sprintf("%s=%s", labelGroupName, groupName))
-		if _, err := ccm.CreateAndStartContainer(context.Background(), attemptFlags, ContainerName(groupName)); err != nil {
+		if _, err := ccm.CreateAndStartContainer(context.Background(), image, attemptFlags, ContainerName(groupName)); err != nil {
 			lastErr = err
 			// Cleanup created container if it failed.
 			containerInfo, inspectErr := ccm.InspectContainer(context.Background(), ContainerName(groupName))
@@ -516,10 +568,69 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 			time.Sleep(retryInterval)
 			continue
 		}
-		commonArgs.GroupName = groupName
-		return ip, nil
+		return groupName, ip, nil
 	}
-	return "", lastErr
+	return "", "", lastErr
+}
+
+// cuttlefishHostMountSpecs returns the mount specs of the group container.
+func cuttlefishHostMountSpecs(ccm CuttlefishContainerManager, groupName string) ([]string, error) {
+	containerInfo, err := ccm.InspectContainer(context.Background(), ContainerName(groupName))
+	if err != nil {
+		return nil, fmt.Errorf("failed to inspect container: %w", err)
+	}
+	value, exists := containerInfo.Config.Labels[labelMountSpecs]
+	if !exists {
+		return nil, fmt.Errorf("mount specs of group %q not found, recreate the group to clone it", groupName)
+	}
+	var mountSpecs []string
+	if err := json.Unmarshal([]byte(value), &mountSpecs); err != nil {
+		return nil, fmt.Errorf("failed to parse mount specs of group %q: %w", groupName, err)
+	}
+	return mountSpecs, nil
+}
+
+func findAvailableCloneGroupName(innerGroupName string, groupNameIpAddrMap map[string]string) string {
+	for num := 0; ; num++ {
+		name := fmt.Sprintf("%s_%d", innerGroupName, num)
+		if _, exists := groupNameIpAddrMap[name]; !exists {
+			return name
+		}
+	}
+}
+
+// CreateClonedCuttlefishHost runs a clone image with the given mounts and a copy of the home in srcBaseDir, and returns its group name.
+func CreateClonedCuttlefishHost(ccm CuttlefishContainerManager, image, innerGroupName, srcBaseDir string, mountSpecs []string) (string, error) {
+	attemptID := uuid.New().String()
+	podcvdBaseDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
+	if err := os.MkdirAll(podcvdBaseDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create podcvd base dir: %w", err)
+	}
+	if err := ccm.CopyInUserNamespace(context.Background(), filepath.Join(srcBaseDir, "home"), filepath.Join(podcvdBaseDir, "home")); err != nil {
+		return "", fmt.Errorf("failed to copy podcvd home dir: %w", err)
+	}
+	cloneMountSpecs := []string{fmt.Sprintf("%s:/podcvd_base:rw", podcvdBaseDir)}
+	for _, spec := range mountSpecs {
+		if !strings.HasSuffix(spec, ":/podcvd_base:rw") {
+			cloneMountSpecs = append(cloneMountSpecs, spec)
+		}
+	}
+	extraFlags, err := cuttlefishHostFlags(attemptID, podcvdBaseDir, cloneMountSpecs)
+	if err != nil {
+		return "", err
+	}
+	extraFlags = append(extraFlags, "--label", fmt.Sprintf("%s=%s", labelInnerGroupName, innerGroupName))
+	chooseGroupName := func(groupNameIpAddrMap map[string]string) (string, error) {
+		return findAvailableCloneGroupName(innerGroupName, groupNameIpAddrMap), nil
+	}
+	groupName, ip, err := runCuttlefishHostContainer(ccm, image, extraFlags, attemptID, chooseGroupName)
+	if err != nil {
+		return "", err
+	}
+	if err := ensureOperatorHealthy(ip); err != nil {
+		return "", err
+	}
+	return groupName, nil
 }
 
 func ensureOperatorHealthy(ip string) error {
@@ -566,7 +677,7 @@ func createAndStartToolingContainer(ccm CuttlefishContainerManager) error {
 		"-v", fmt.Sprintf("%s:/root/.local/share/cvd:rw", cvdDataHome),
 		"-v", fmt.Sprintf("%s:/var/tmp/cvd/0/cache:rw", cacheDir),
 	}
-	if _, err := ccm.CreateAndStartContainer(context.Background(), extraFlags, ToolingContainerName); err != nil {
+	if _, err := ccm.CreateAndStartContainer(context.Background(), imageName, extraFlags, ToolingContainerName); err != nil {
 		return err
 	}
 	return nil

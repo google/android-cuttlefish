@@ -27,6 +27,9 @@ type CvdCommonArgs struct {
 	InstanceName string
 	Help         bool
 	Verbosity    string
+
+	// InnerGroupName, if set, is passed to cvd in the container instead of GroupName.
+	InnerGroupName string
 }
 
 type CvdArgs struct {
@@ -76,8 +79,12 @@ func ParseCvdArgs(allArgs []string) (*CvdArgs, error) {
 func (a *CvdArgs) SerializeCommonArgs() []string {
 	var args []string
 	a.flagSet.VisitAll(func(f *flag.Flag) {
-		if f.Value.String() != f.DefValue {
-			args = append(args, fmt.Sprintf("--%s=%s", f.Name, f.Value.String()))
+		value := f.Value.String()
+		if f.Name == "group_name" && a.CommonArgs.InnerGroupName != "" {
+			value = a.CommonArgs.InnerGroupName
+		}
+		if value != f.DefValue {
+			args = append(args, fmt.Sprintf("--%s=%s", f.Name, value))
 		}
 	})
 	return args
