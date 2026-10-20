@@ -66,7 +66,7 @@ class ScreenRecordingServiceImpl final
  private:
   template <typename R>
   Status Handle(R* reply, StartStopFn fn) {
-    Result<std::vector<bool>> successes_res = OnAllInstances(fn);
+    Result<std::vector<bool>> successes_res = OnDefaultInstance(fn);
     if (successes_res.has_value()) {
       reply->mutable_successes()->Assign(successes_res->begin(),
                                          successes_res->end());
@@ -79,19 +79,17 @@ class ScreenRecordingServiceImpl final
     }
   }
 
-  Result<std::vector<bool>> OnAllInstances(StartStopFn fn) {
-    std::vector<bool> successes;
+  Result<std::vector<bool>> OnDefaultInstance(StartStopFn fn) {
     const CuttlefishConfig* config = CF_EXPECT(CuttlefishConfig::Get());
-    for (const auto& instance : config->Instances()) {
-      Result<void> result =
-          fn(instance, std::chrono::seconds(COMMAND_TIMEOUT_SEC));
-      successes.push_back(result.has_value());
-      if (!result.has_value()) {
-        LOG(ERROR) << "Failed to communicate with instance " << instance.id()
-                   << ": " << result.error();
-      }
+    const CuttlefishConfig::InstanceSpecific instance =
+        config->ForDefaultInstance();
+    Result<void> result =
+        fn(instance, std::chrono::seconds(COMMAND_TIMEOUT_SEC));
+    if (!result.has_value()) {
+      LOG(ERROR) << "Failed to communicate with instance " << instance.id()
+                 << ": " << result.error();
     }
-    return successes;
+    return std::vector<bool>{result.has_value()};
   }
 };
 
