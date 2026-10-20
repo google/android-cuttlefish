@@ -90,12 +90,17 @@ DisplayRingBufferHeader* DisplayRingBuffer::Header() {
   return reinterpret_cast<DisplayRingBufferHeader*>(GetAddress());
 }
 
-uint8_t* DisplayRingBuffer::WriteNextFrame(uint8_t* frame_data, int size) {
+uint8_t* DisplayRingBuffer::WriteNextFrame(const uint8_t* frame_data,
+                                           int stride, int width, int height) {
   int new_frame_index =
       (Header()->last_valid_frame_index_ + 1) % kNumberOfRingBufferFrames;
 
   uint8_t* frame_memory_address = ComputeFrameAddressForIndex(new_frame_index);
-  memcpy(frame_memory_address, frame_data, size);
+  const int row_bytes = width * Header()->bpp_;
+  for (int y = 0; y < height; ++y) {
+    memcpy(frame_memory_address + y * row_bytes, frame_data + y * stride,
+           row_bytes);
+  }
 
   Header()->last_valid_frame_index_ = new_frame_index;
   return frame_memory_address;
@@ -151,10 +156,13 @@ Result<void> DisplayRingBufferManager::CreateLocalDisplayBuffer(
 }
 
 uint8_t* DisplayRingBufferManager::WriteFrame(int vm_index, int display_index,
-                                              uint8_t* frame_data, int size) {
+                                              const uint8_t* frame_data,
+                                              int stride, int width,
+                                              int height) {
   auto buffer_key = std::make_pair(vm_index, display_index);
   if (display_buffer_cache_.count(buffer_key)) {
-    return display_buffer_cache_[buffer_key]->WriteNextFrame(frame_data, size);
+    return display_buffer_cache_[buffer_key]->WriteNextFrame(frame_data, stride,
+                                                             width, height);
   }
   // It's possible to request a write to buffer that doesn't yet exist.
   return nullptr;

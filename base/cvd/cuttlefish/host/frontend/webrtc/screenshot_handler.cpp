@@ -27,26 +27,45 @@
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/strings/match.h"
+#include "drm/drm_fourcc.h"
 #include "jpeglib.h"
 #include "libyuv.h"
 #include "png.h"
 
+#include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
 
-Result<void> PngScreenshot(std::shared_ptr<PlanarVideoFrameBuffer> frame,
-                           const std::string& screenshot_path) {
-  int width = frame->width();
-  int height = frame->height();
+Result<std::vector<uint8_t>> FrameToRgb(
+    const std::shared_ptr<VideoFrameBuffer>& frame) {
+  const int width = frame->width();
+  const int height = frame->height();
   std::vector<uint8_t> rgb_frame(width * height * 3, 0);
-  auto convert_res =
-      libyuv::I420ToRAW(frame->DataY(), frame->StrideY(), frame->DataU(),
-                        frame->StrideU(), frame->DataV(), frame->StrideV(),
-                        rgb_frame.data(), frame->width() * 3, width, height);
-  CF_EXPECT(convert_res == 0, "Failed to convert I420 frame to RGB");
+
+  const uint32_t format = frame->PixelFormat();
+  int convert_res = -1;
+  if (format == DRM_FORMAT_ARGB8888 || format == DRM_FORMAT_XRGB8888) {
+    convert_res = libyuv::ARGBToRAW(frame->Data(), frame->Stride(),
+                                    rgb_frame.data(), width * 3, width, height);
+  } else if (format == DRM_FORMAT_ABGR8888 || format == DRM_FORMAT_XBGR8888) {
+    convert_res = libyuv::ABGRToRAW(frame->Data(), frame->Stride(),
+                                    rgb_frame.data(), width * 3, width, height);
+  } else {
+    return CF_ERRF("Unsupported pixel format for PNG screenshot: 0x{:x}",
+                   format);
+  }
+  CF_EXPECT(convert_res == 0, "Failed to convert frame to RGB");
+  return rgb_frame;
+}
+
+Result<void> PngScreenshot(const std::shared_ptr<VideoFrameBuffer>& frame,
+                           const std::string& screenshot_path) {
+  const int width = frame->width();
+  const int height = frame->height();
+  const std::vector<uint8_t> rgb_frame = CF_EXPECT(FrameToRgb(frame));
   FILE* outfile = fopen(screenshot_path.c_str(), "wb");
   CF_EXPECTF(outfile != NULL, "opening {} failed: {}", screenshot_path,
              StrError(errno));
@@ -84,16 +103,43 @@ Result<void> PngScreenshot(std::shared_ptr<PlanarVideoFrameBuffer> frame,
   return {};
 }
 
-Result<void> JpegScreenshot(std::shared_ptr<PlanarVideoFrameBuffer> frame,
+Result<void> JpegScreenshot(const std::shared_ptr<VideoFrameBuffer>& frame,
                             const std::string& screenshot_path) {
+  const int width = frame->width();
+  const int height = frame->height();
   // libjpeg uses an MCU size of 16x16 so we require the stride to be a multiple
   // of 16 bytes and to have at least 16 rows (we'll use the previous rows as
   // padding if the height is not a multiple of 16).
-  // In practice this restriction will hold most times because the
-  // CvdVideoFrameBuffer aligns its stride to a multiple of 64.
-  CF_EXPECTF(frame->StrideY() % 16 == 0 && frame->height() >= 16,
+  CF_EXPECTF(height >= 16,
              "Frame size not compatible with required MCU size of 16x16: {}x{}",
-             frame->width(), frame->height());
+             width, height);
+
+  constexpr int kPlanePadding = 1024;
+  constexpr int kStrideAlignment = 64;
+  const int stride_y =
+      ((width + kStrideAlignment - 1) / kStrideAlignment) * kStrideAlignment;
+  const int stride_uv =
+      (((width + 1) / 2 + kStrideAlignment - 1) / kStrideAlignment) *
+      kStrideAlignment;
+  std::vector<uint8_t> y_plane(stride_y * height + kPlanePadding);
+  std::vector<uint8_t> u_plane(stride_uv * ((height + 1) / 2) + kPlanePadding);
+  std::vector<uint8_t> v_plane(stride_uv * ((height + 1) / 2) + kPlanePadding);
+
+  const uint32_t format = frame->PixelFormat();
+  int convert_res = -1;
+  if (format == DRM_FORMAT_ARGB8888 || format == DRM_FORMAT_XRGB8888) {
+    convert_res = libyuv::ARGBToI420(
+        frame->Data(), frame->Stride(), y_plane.data(), stride_y,
+        u_plane.data(), stride_uv, v_plane.data(), stride_uv, width, height);
+  } else if (format == DRM_FORMAT_ABGR8888 || format == DRM_FORMAT_XBGR8888) {
+    convert_res = libyuv::ABGRToI420(
+        frame->Data(), frame->Stride(), y_plane.data(), stride_y,
+        u_plane.data(), stride_uv, v_plane.data(), stride_uv, width, height);
+  } else {
+    return CF_ERRF("Unsupported pixel format for JPEG screenshot: 0x{:x}",
+                   format);
+  }
+  CF_EXPECT(convert_res == 0, "Failed to convert frame to I420");
 
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
@@ -113,8 +159,8 @@ Result<void> JpegScreenshot(std::shared_ptr<PlanarVideoFrameBuffer> frame,
   absl::Cleanup close_file = [&outfile]() { fclose(outfile); };
   jpeg_stdio_dest(&cinfo, outfile);
 
-  cinfo.image_width = frame->width();
-  cinfo.image_height = frame->height();
+  cinfo.image_width = width;
+  cinfo.image_height = height;
   cinfo.input_components = 3;
   cinfo.in_color_space = JCS_YCbCr;
   jpeg_set_defaults(&cinfo);
@@ -146,15 +192,15 @@ Result<void> JpegScreenshot(std::shared_ptr<PlanarVideoFrameBuffer> frame,
     // If the image height is not a multiple of kScanRows it will be padded with
     // rows from the previous iteration.
     for (int r = 0; r < kScanRows && r + row < cinfo.image_height; ++r) {
-      int offset = (row + r) * frame->StrideY();
-      y_rows[r] = &frame->DataY()[offset];
+      int offset = (row + r) * stride_y;
+      y_rows[r] = &y_plane[offset];
     }
     for (int r = 0;
          r < kScanRows / 2 && r + row / 2 < (cinfo.image_height + 1) / 2; ++r) {
-      int offset_u = (row / 2 + r) * frame->StrideU();
-      u_rows[r] = &frame->DataU()[offset_u];
-      int offset_v = (row / 2 + r) * frame->StrideV();
-      v_rows[r] = &frame->DataV()[offset_v];
+      int offset_u = (row / 2 + r) * stride_uv;
+      u_rows[r] = &u_plane[offset_u];
+      int offset_v = (row / 2 + r) * stride_uv;
+      v_rows[r] = &v_plane[offset_v];
     }
     jpeg_write_raw_data(&cinfo, rows, kScanRows);
   }
@@ -189,14 +235,13 @@ Result<void> ScreenshotHandler::Screenshot(uint32_t display_number,
             "Failed to get screenshot from webrtc display handler within "
                 << kScreenshotTimeoutSeconds << " seconds.");
 
-  SharedFrame frame = frame_future.get();
-  auto planar = std::dynamic_pointer_cast<PlanarVideoFrameBuffer>(frame);
-  CF_EXPECT(planar != nullptr, "Screenshot requires a planar frame");
+  const SharedFrame frame = frame_future.get();
+  CF_EXPECT(frame != nullptr, "Received null frame for screenshot");
 
   if (absl::EndsWith(screenshot_path, ".jpg")) {
-    CF_EXPECT(JpegScreenshot(planar, screenshot_path));
+    CF_EXPECT(JpegScreenshot(frame, screenshot_path));
   } else if (absl::EndsWith(screenshot_path, ".png")) {
-    CF_EXPECT(PngScreenshot(planar, screenshot_path));
+    CF_EXPECT(PngScreenshot(frame, screenshot_path));
   } else {
     return CF_ERR("Unsupport file format: " << screenshot_path);
   }

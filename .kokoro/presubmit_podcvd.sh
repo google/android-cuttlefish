@@ -18,11 +18,6 @@ retry() {
   done
 }
 
-retry sudo apt update
-
-# environment variable and options to force answer prompts
-retry sudo DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -y
-
 # realpath .kokoro/..
 REPO_DIR="$(realpath "$(dirname "$0")"/..)"
 TOOL_DIR="${REPO_DIR}/tools"

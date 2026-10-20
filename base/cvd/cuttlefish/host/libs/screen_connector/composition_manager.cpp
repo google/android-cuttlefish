@@ -53,19 +53,21 @@ static const int kAlphaIdx = 3;
 namespace cuttlefish {
 
 void alpha_blend_layer(uint8_t* frame_pixels, uint32_t h, uint32_t w,
-                       uint8_t* overlay) {
-  uint8_t* dst = frame_pixels;
+                       uint32_t stride, uint8_t* overlay) {
   uint8_t* src = overlay;
-  int max = w * h;
-  for (int idx = 0; idx < max; idx++) {
-    float a = ((float)src[kAlphaIdx]) / 255.0f;
-    float a_inv = 1.0f - a;
-    dst[kRedIdx] = (uint8_t)((src[kRedIdx] * a) + (dst[kRedIdx] * a_inv));
-    dst[kBlueIdx] = (uint8_t)((src[kBlueIdx] * a) + (dst[kBlueIdx] * a_inv));
-    dst[kGreenIdx] = (uint8_t)((src[kGreenIdx] * a) + (dst[kGreenIdx] * a_inv));
-    dst[kAlphaIdx] = 255;
-    dst += 4;
-    src += 4;
+  for (uint32_t y = 0; y < h; y++) {
+    uint8_t* dst = frame_pixels + y * stride;
+    for (uint32_t x = 0; x < w; x++) {
+      float a = ((float)src[kAlphaIdx]) / 255.0f;
+      float a_inv = 1.0f - a;
+      dst[kRedIdx] = (uint8_t)((src[kRedIdx] * a) + (dst[kRedIdx] * a_inv));
+      dst[kBlueIdx] = (uint8_t)((src[kBlueIdx] * a) + (dst[kBlueIdx] * a_inv));
+      dst[kGreenIdx] =
+          (uint8_t)((src[kGreenIdx] * a) + (dst[kGreenIdx] * a_inv));
+      dst[kAlphaIdx] = 255;
+      dst += 4;
+      src += 4;
+    }
   }
 }
 
@@ -196,8 +198,8 @@ void CompositionManager::OnFrame(uint32_t display_number, uint32_t frame_width,
   // First step is to push the local display pixels to the shared memory region
   // ringbuffer
   uint8_t* shmem_local_display = display_ring_buffer_manager_.WriteFrame(
-      cluster_index_, display_number, frame_pixels,
-      frame_width * frame_height * 4);
+      cluster_index_, display_number, frame_pixels, frame_stride_bytes,
+      frame_width, frame_height);
 
   // Next some upkeep, the format of the frame is needed for blending
   // computations.
@@ -209,29 +211,28 @@ void CompositionManager::OnFrame(uint32_t display_number, uint32_t frame_width,
 
   // Lastly, the pixels of the current frame are modified by blending any
   // configured layers over the top of the current 'base layer'
-  AlphaBlendLayers(frame_pixels, display_number, frame_width, frame_height);
+  AlphaBlendLayers(frame_pixels, display_number, frame_width, frame_height,
+                   frame_stride_bytes);
 }
 
 // This is called to 'Force a Display Composition Refresh' on a display.  It is
 // triggered by a thread to force displays to constantly update so that when
 // layers are updated, the user will see the blended result.
 void CompositionManager::ComposeFrame(
-    int display_index, std::shared_ptr<PlanarVideoFrameBuffer> buffer) {
+    int display_index, std::shared_ptr<VideoFrameBuffer> buffer) {
   if (!last_frame_info_map_.count(display_index)) {
     return;
   }
   LastFrameInfo& last_frame_info = last_frame_info_map_[display_index];
 
   ComposeFrame(display_index, last_frame_info.frame_width_,
-               last_frame_info.frame_height_,
-               last_frame_info.frame_fourcc_format_,
-               last_frame_info.frame_stride_bytes_, buffer);
+               last_frame_info.frame_height_, buffer);
 }
 
 uint8_t* CompositionManager::AlphaBlendLayers(uint8_t* frame_pixels,
                                               int display_number,
-                                              int frame_width,
-                                              int frame_height) {
+                                              int frame_width, int frame_height,
+                                              uint32_t frame_stride_bytes) {
   if (cfg_overlays_.count(display_number) == 0) {
     return frame_pixels;
   }
@@ -255,38 +256,30 @@ uint8_t* CompositionManager::AlphaBlendLayers(uint8_t* frame_pixels,
 
   for (auto i : overlays) {
     if (i) {
-      alpha_blend_layer(frame_pixels, frame_height, frame_width, (uint8_t*)i);
+      alpha_blend_layer(frame_pixels, frame_height, frame_width,
+                        frame_stride_bytes, (uint8_t*)i);
     }
   }
   return (uint8_t*)frame_pixels;
 }
 
 void CompositionManager::ComposeFrame(
-    int display, int width, int height, uint32_t frame_fourcc_format,
-    uint32_t frame_stride_bytes,
-    std::shared_ptr<PlanarVideoFrameBuffer> buffer) {
+    int display, int width, int height,
+    std::shared_ptr<VideoFrameBuffer> buffer) {
   uint8_t* shmem_local_display = display_ring_buffer_manager_.ReadFrame(
       cluster_index_, display, width, height);
 
   if (frame_work_buffer_.find(display) == frame_work_buffer_.end()) {
     frame_work_buffer_[display] = std::vector<uint8_t>(width * height * 4);
   }
+  const int tmp_stride = width * 4;
   uint8_t* tmp_buffer = frame_work_buffer_[display].data();
   memcpy(tmp_buffer, shmem_local_display, width * height * 4);
 
-  AlphaBlendLayers(tmp_buffer, display, width, height);
+  AlphaBlendLayers(tmp_buffer, display, width, height, tmp_stride);
 
-  if (frame_fourcc_format == DRM_FORMAT_ARGB8888 ||
-      frame_fourcc_format == DRM_FORMAT_XRGB8888) {
-    libyuv::ARGBToI420(tmp_buffer, frame_stride_bytes, buffer->DataY(),
-                       buffer->StrideY(), buffer->DataU(), buffer->StrideU(),
-                       buffer->DataV(), buffer->StrideV(), width, height);
-  } else if (frame_fourcc_format == DRM_FORMAT_ABGR8888 ||
-             frame_fourcc_format == DRM_FORMAT_XBGR8888) {
-    libyuv::ABGRToI420(tmp_buffer, frame_stride_bytes, buffer->DataY(),
-                       buffer->StrideY(), buffer->DataU(), buffer->StrideU(),
-                       buffer->DataV(), buffer->StrideV(), width, height);
-  }
+  libyuv::CopyPlane(tmp_buffer, tmp_stride, buffer->Data(), buffer->Stride(),
+                    width * 4, height);
 }
 
 }  // namespace cuttlefish

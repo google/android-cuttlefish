@@ -211,25 +211,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "libcuttlefish_webrtc_cvd_video_frame_buffer",
-    srcs = ["cvd_video_frame_buffer.cpp"],
-    hdrs = ["cvd_video_frame_buffer.h"],
-    clang_format_enabled = False,
-    depend_on_what_you_use_enabled = False,
-    include_cleaner_enabled = False,
-    deps = [
-        "//cuttlefish/common/libs/utils:size_utils",
-        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
-        "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/log:check",
-        "@abseil-cpp//absl/strings",
-        "@fmt",
-        "@fruit",
-        "@jsoncpp",
-    ],
-)
-
-cf_cc_library(
     name = "libcuttlefish_webrtc_display_handler",
     srcs = ["display_handler.cpp"],
     hdrs = ["display_handler.h"],
@@ -237,7 +218,6 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         ":libcuttlefish_webrtc_cvd_abgr_video_frame_buffer",
-        ":libcuttlefish_webrtc_cvd_video_frame_buffer",
         ":libcuttlefish_webrtc_screenshot_handler",
         "//cuttlefish/host/frontend/webrtc/libdevice:streamer",
         "//cuttlefish/host/frontend/webrtc/libdevice:video_sink",
@@ -357,6 +337,7 @@ cf_cc_library(
         "@fmt",
         "@fruit",
         "@jsoncpp",
+        "@libdrm//:libdrm_fourcc",
         "@libjpeg_turbo//:jpeg",
         "@libpng",
         "@libyuv",
@@ -421,7 +402,6 @@ cf_cc_binary(
         ":libcuttlefish_webrtc_commands_proto",
         ":libcuttlefish_webrtc_connection_observer",
         ":libcuttlefish_webrtc_cvd_abgr_video_frame_buffer",
-        ":libcuttlefish_webrtc_cvd_video_frame_buffer",
         ":libcuttlefish_webrtc_display_handler",
         ":libcuttlefish_webrtc_gpx_locations_handler",
         ":libcuttlefish_webrtc_kernel_log_events_handler",
