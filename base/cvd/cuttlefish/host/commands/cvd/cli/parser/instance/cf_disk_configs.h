@@ -20,10 +20,11 @@
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-std::vector<std::string> GenerateDiskFlags(
+Result<std::vector<std::string>> GenerateDiskFlags(
     const cvd::config::EnvironmentSpecification&);
 
 };  // namespace cuttlefish
