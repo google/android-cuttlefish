@@ -326,9 +326,11 @@ Result<Fd, int> Fd::Socket6Client(std::string_view host,
         rval.StrError());
 #elif defined(__APPLE__)
     int idx = if_nametoindex(std::string(interface).c_str());
-    CF_EXPECTF(rval.SetSockOpt(IPPROTO_IP, IP_BOUND_IF, &idx, sizeof(idx)) >= 0,
-               "SetSockOpt(IPPROTO_IP, IP_BOUND_IF, {}, ...) failed: {}", idx,
-               rval.StrError());
+    CF_EXPECTVF(
+        rval.SetSockOpt(IPPROTO_IP, IP_BOUND_IF, &idx, sizeof(idx)) >= 0,
+        rval.GetErrno(),
+        "SetSockOpt(IPPROTO_IP, IP_BOUND_IF, {}, ...) failed: {}", idx,
+        rval.StrError());
 #else
 #error "Unsupported operating system"
 #endif
