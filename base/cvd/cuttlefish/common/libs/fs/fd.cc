@@ -772,15 +772,6 @@ int Fd::Ioctl(int request, void* val) {
   return TEMP_FAILURE_RETRY(ioctl(fd_, request, val));
 }
 
-int Fd::LinkAtCwd(const std::string& path) {
-  LocalErrno record_errno(errno_);
-
-  std::string name = "/proc/self/fd/";
-  name += std::to_string(fd_);
-  return linkat(AT_FDCWD, name.c_str(), AT_FDCWD, path.c_str(),
-                AT_SYMLINK_FOLLOW);
-}
-
 Result<void, int> Fd::Listen(int backlog) {
   LocalErrno record_errno(errno_);
 
