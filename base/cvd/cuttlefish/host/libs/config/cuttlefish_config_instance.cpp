@@ -1310,12 +1310,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_display_configs(
 }
 
 static constexpr char kTouchpadConfigs[] = "touchpad_configs";
+static constexpr char kTouchpadType[] = "type";
 
 Json::Value CuttlefishConfig::TouchpadConfig::Serialize(
     const CuttlefishConfig::TouchpadConfig& config) {
   Json::Value config_json(Json::objectValue);
   config_json[kXRes] = config.width;
   config_json[kYRes] = config.height;
+  config_json[kTouchpadType] = static_cast<int>(config.type);
 
   return config_json;
 }
@@ -1325,6 +1327,10 @@ CuttlefishConfig::TouchpadConfig CuttlefishConfig::TouchpadConfig::Deserialize(
   TouchpadConfig touchpad_config = {};
   touchpad_config.width = config_json[kXRes].asInt();
   touchpad_config.height = config_json[kYRes].asInt();
+  if (config_json.isMember(kTouchpadType)) {
+    touchpad_config.type =
+        static_cast<TouchpadConfig::Type>(config_json[kTouchpadType].asInt());
+  }
 
   return touchpad_config;
 }
