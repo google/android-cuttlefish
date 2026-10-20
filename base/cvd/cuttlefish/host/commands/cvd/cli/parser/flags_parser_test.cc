@@ -562,5 +562,27 @@ TEST(DiskArtifactsValidationTest, EmptyVendorBootBuildFails) {
   EXPECT_THAT(LaunchCvdParserTester(json_configs), IsError());
 }
 
+TEST(DiskArtifactsValidationTest, EmptySystemBuildFails) {
+  const std::string test_string = R""""(
+{
+    "instances": [
+        {
+          "disk": {
+            "disk_artifacts": {
+              "system": ""
+            }
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  EXPECT_THAT(LaunchCvdParserTester(json_configs), IsError());
+}
+
 }  // namespace
 }  // namespace cuttlefish

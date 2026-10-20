@@ -46,8 +46,8 @@ bool ShouldFetch(const Instance& instance) {
 
   for (const auto& value :
        {disk.default_build(), disk.super_partition().system(),
-        disk.disk_artifacts().vendor_boot(), boot.kernel().build(),
-        boot.build(), boot.bootloader().build(),
+        disk.disk_artifacts().vendor_boot(), disk.disk_artifacts().system(),
+        boot.kernel().build(), boot.build(), boot.bootloader().build(),
         boot.android_efi_loader().build(), disk.otatools()}) {
     // expects non-prefixed build strings already converted to empty strings
     if (!value.empty()) {
@@ -95,6 +95,14 @@ Result<Instance> RemoveNonPrefixedBuildStrings(const Instance& instance) {
       *disk.mutable_disk_artifacts()->mutable_vendor_boot();
   vendor_boot = CF_EXPECT(GetFetchBuildString(vendor_boot));
 
+  if (disk.disk_artifacts().has_system() &&
+      !disk.has_download_target_files_zip()) {
+    disk.set_download_target_files_zip(true);
+  }
+  std::string& disk_artifacts_system =
+      *disk.mutable_disk_artifacts()->mutable_system();
+  disk_artifacts_system = CF_EXPECT(GetFetchBuildString(disk_artifacts_system));
+
   auto& boot = *result.mutable_boot();
   boot.set_build(CF_EXPECT(GetFetchBuildString(boot.build())));
 
@@ -141,6 +149,10 @@ static std::string OtaToolsBuild(const Instance& instance) {
 
 static std::string VendorBootImageBuild(const Instance& instance) {
   return instance.disk().disk_artifacts().vendor_boot();
+}
+
+static std::string SystemImageBuild(const Instance& instance) {
+  return instance.disk().disk_artifacts().system();
 }
 
 static bool DownloadImgZip(const Instance& instance) {
@@ -231,6 +243,8 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
       GenerateInstanceFlag("otatools_build", fetch_instances, OtaToolsBuild));
   result.emplace_back(GenerateInstanceFlag(
       "vendor_boot_image_build", fetch_instances, VendorBootImageBuild));
+  result.emplace_back(GenerateInstanceFlag("system_image_build",
+                                           fetch_instances, SystemImageBuild));
   result.emplace_back(GenerateInstanceFlag("download_img_zip", fetch_instances,
                                            DownloadImgZip));
   result.emplace_back(GenerateInstanceFlag(

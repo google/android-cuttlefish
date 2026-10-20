@@ -934,6 +934,7 @@ func (x *Display) GetOverlays() []*DisplayOverlay {
 type DiskArtifacts struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	VendorBoot    *string                `protobuf:"bytes,1,opt,name=vendor_boot,json=vendorBoot,proto3,oneof" json:"vendor_boot,omitempty"`
+	System        *string                `protobuf:"bytes,2,opt,name=system,proto3,oneof" json:"system,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -971,6 +972,13 @@ func (*DiskArtifacts) Descriptor() ([]byte, []int) {
 func (x *DiskArtifacts) GetVendorBoot() string {
 	if x != nil && x.VendorBoot != nil {
 		return *x.VendorBoot
+	}
+	return ""
+}
+
+func (x *DiskArtifacts) GetSystem() string {
+	if x != nil && x.System != nil {
+		return *x.System
 	}
 	return ""
 }
@@ -2283,11 +2291,13 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\x06_widthB\t\n" +
 	"\a_heightB\x06\n" +
 	"\x04_dpiB\x15\n" +
-	"\x13_refresh_rate_hertz\"E\n" +
+	"\x13_refresh_rate_hertz\"m\n" +
 	"\rDiskArtifacts\x12$\n" +
 	"\vvendor_boot\x18\x01 \x01(\tH\x00R\n" +
-	"vendorBoot\x88\x01\x01B\x0e\n" +
-	"\f_vendor_boot\"\x9a\x04\n" +
+	"vendorBoot\x88\x01\x01\x12\x1b\n" +
+	"\x06system\x18\x02 \x01(\tH\x01R\x06system\x88\x01\x01B\x0e\n" +
+	"\f_vendor_bootB\t\n" +
+	"\a_system\"\x9a\x04\n" +
 	"\x04Disk\x12(\n" +
 	"\rdefault_build\x18\x01 \x01(\tH\x00R\fdefaultBuild\x88\x01\x01\x12A\n" +
 	"\x0fsuper_partition\x18\x02 \x01(\v2\x1c.cuttlefish.cvd.config.SuperH\x01R\x05super\x88\x01\x01\x12-\n" +

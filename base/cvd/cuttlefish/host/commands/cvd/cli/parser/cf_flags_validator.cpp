@@ -57,6 +57,10 @@ Result<void> ValidateDiskArtifacts(
         CF_EXPECT(!disk_artifacts.vendor_boot().empty(),
                   "disk_artifacts vendor_boot build must not be empty");
       }
+      if (disk_artifacts.has_system()) {
+        CF_EXPECT(!disk_artifacts.system().empty(),
+                  "disk_artifacts system build must not be empty");
+      }
     }
   }
   CF_EXPECT(!(has_legacy_artifacts && has_disk_artifacts),

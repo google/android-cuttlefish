@@ -138,6 +138,7 @@ message Display {
 
 message DiskArtifacts {
   optional string vendor_boot = 1;
+  optional string system = 2;
 }
 
 message Disk {

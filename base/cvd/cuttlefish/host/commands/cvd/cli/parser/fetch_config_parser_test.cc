@@ -413,4 +413,54 @@ TEST(FetchConfigParserTests,
               IsOkAndValue(std::vector<std::string>()));
 }
 
+TEST(FetchConfigParserTests, SystemImageBuildOnlySuccess) {
+  const char* test_string = R""""(
+{
+    "instances": [
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "system": "@ab/branch/target{system-custom.img}"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  ASSERT_TRUE(ParseJsonString(json_text, json_configs));
+
+  const std::vector<std::string> flags =
+      CF_ASSERT(FetchCvdParserTester(json_configs));
+  EXPECT_TRUE(FindConfig(
+      flags, "--system_image_build=branch/target{system-custom.img}"));
+  EXPECT_TRUE(FindConfig(flags, "--download_target_files_zip=true"));
+}
+
+TEST(FetchConfigParserTests, LocalSystemOverrideProducesNoFetchFlagsSuccess) {
+  const char* test_string = R""""(
+{
+    "instances": [
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "system": "/path/to/system.img"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  ASSERT_TRUE(ParseJsonString(json_text, json_configs));
+
+  const std::vector<std::string> flags =
+      CF_ASSERT(FetchCvdParserTester(json_configs));
+  EXPECT_TRUE(flags.empty());
+}
+
 }  // namespace cuttlefish
