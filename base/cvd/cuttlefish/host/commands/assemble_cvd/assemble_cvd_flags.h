@@ -186,6 +186,7 @@ DECLARE_vec(crosvm_simple_media_device);
 DECLARE_vec(crosvm_v4l2_proxy);
 
 DECLARE_vec(use_pmem);
+DECLARE_vec(enable_display_server);
 
 DECLARE_vec(crosvm_hugepages);
 

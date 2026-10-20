@@ -944,6 +944,15 @@ bool CuttlefishConfig::InstanceSpecific::enable_gamepad() const {
   return (*Dictionary())[kEnableGamepad].asBool();
 }
 
+static constexpr char kEnableDisplayServer[] = "enable_display_server";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_display_server(
+    bool enable) {
+  (*Dictionary())[kEnableDisplayServer] = enable;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_display_server() const {
+  return (*Dictionary())[kEnableDisplayServer].asBool();
+}
+
 static constexpr char kCustomKeyboardConfig[] = "custom_keyboard_config";
 void CuttlefishConfig::MutableInstanceSpecific::set_custom_keyboard_config(
     const std::string& custom_keyboard_config_json_path) {
@@ -1717,6 +1726,11 @@ std::string CuttlefishConfig::InstanceSpecific::CrosvmSocketPath() const {
 std::string CuttlefishConfig::InstanceSpecific::OpenwrtCrosvmSocketPath()
     const {
   return PerInstanceInternalUdsPath("ap_control.sock");
+}
+
+std::string CuttlefishConfig::InstanceSpecific::DisplayServerSocketPath()
+    const {
+  return PerInstanceInternalUdsPath("display_server.sock");
 }
 
 static constexpr char kHostPort[] = "adb_host_port";

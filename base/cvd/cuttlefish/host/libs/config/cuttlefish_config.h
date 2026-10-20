@@ -327,6 +327,7 @@ class CuttlefishConfig {
 
     std::string CrosvmSocketPath() const;
     std::string OpenwrtCrosvmSocketPath() const;
+    std::string DisplayServerSocketPath() const;
     std::string instance_dir() const;
 
     std::string instance_internal_dir() const;
@@ -464,6 +465,9 @@ class CuttlefishConfig {
     bool enable_audio() const;
     bool enable_mouse() const;
     bool enable_gamepad() const;
+    // Whether cvd_display_server, rather than the webRTC process, terminates
+    // crosvm's wayland display socket.
+    bool enable_display_server() const;
     std::optional<std::string> custom_keyboard_config() const;
     const Json::Value& domkey_mapping_config() const;
     bool enable_gnss_grpc_proxy() const;
@@ -705,6 +709,7 @@ class CuttlefishConfig {
     void set_enable_audio(bool enable);
     void set_enable_mouse(bool enable);
     void set_enable_gamepad(bool enable);
+    void set_enable_display_server(bool enable);
     void set_custom_keyboard_config(
         const std::string& custom_keyboard_config_json_path);
     void set_domkey_mapping_config(

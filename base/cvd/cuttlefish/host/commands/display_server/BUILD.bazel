@@ -1,0 +1,23 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_binary(
+    name = "cvd_display_server",
+    srcs = ["main.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:scoped_mmap",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:logging",
+        "//cuttlefish/host/libs/display_server:protocol",
+        "//cuttlefish/host/libs/wayland:wayland_server",
+        "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
+        "@fmt",
+        "@gflags",
+    ],
+)
