@@ -1,3 +1,13 @@
+cuttlefish-common (1.57.11) unstable; urgency=medium
+
+  * Lock zip 0.6.6 in netsim Cargo.lock by @zhangxp1998 in https://github.com/google/android-cuttlefish/pull/3369
+  * Uprev crosvm to include snapshot restore fixes
+  * Ignore BootCompleted kernel event while restoring from snapshot
+  * Pass sector offset instead of byte offset to mkfs.fat --offset
+  * Support packed video frame buffers for screenshots and replaying last frame in webRTC by @jemoreira in https://github.com/google/android-cuttlefish/pull/3376
+
+ -- Cody Schuffelen <schuffelen@google.com>  Mon, 19 Oct 2026 17:10:07 -0700
+
 cuttlefish-common (1.57.10) unstable; urgency=medium
 
   * Fix modem_simulator vector erase during iteration
