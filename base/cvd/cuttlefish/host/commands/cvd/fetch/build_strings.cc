@@ -25,6 +25,7 @@ BuildStrings BuildStrings::Create(const VectorFlags& flags, const int index) {
   BuildStrings build_strings = BuildStrings{
       .default_build = GetOptional(flags.default_build, index),
       .system_build = GetOptional(flags.system_build, index),
+      .system_image_build = GetOptional(flags.system_image_build, index),
       .kernel_build = GetOptional(flags.kernel_build, index),
       .boot_build = GetOptional(flags.boot_build, index),
       .vendor_boot_image_build =

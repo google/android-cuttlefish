@@ -38,6 +38,7 @@ struct VectorFlags {
   std::vector<std::string> target_subdirectory;
   std::vector<std::optional<BuildString>> default_build;
   std::vector<std::optional<BuildString>> system_build;
+  std::vector<std::optional<BuildString>> system_image_build;
   std::vector<std::optional<BuildString>> kernel_build;
   std::vector<std::optional<BuildString>> boot_build;
   std::vector<std::optional<BuildString>> vendor_boot_image_build;

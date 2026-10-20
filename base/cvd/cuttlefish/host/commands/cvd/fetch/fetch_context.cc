@@ -376,6 +376,16 @@ std::optional<FetchBuildContext> FetchContext::SystemBuild() {
   }
 }
 
+std::optional<FetchBuildContext> FetchContext::SystemImageBuild() {
+  if (builds_.system_image) {
+    return FetchBuildContext(
+        *this, *builds_.system_image, target_directories_.root,
+        FileSource::SYSTEM_IMAGE_BUILD, tracer_.NewTrace("System Image"));
+  } else {
+    return {};
+  }
+}
+
 std::optional<FetchBuildContext> FetchContext::KernelBuild() {
   if (builds_.kernel) {
     return FetchBuildContext(*this, *builds_.kernel, target_directories_.root,

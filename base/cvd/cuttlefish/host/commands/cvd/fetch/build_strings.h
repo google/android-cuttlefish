@@ -28,6 +28,7 @@ struct BuildStrings {
 
   std::optional<BuildString> default_build;
   std::optional<BuildString> system_build;
+  std::optional<BuildString> system_image_build;
   std::optional<BuildString> kernel_build;
   std::optional<BuildString> boot_build;
   std::optional<BuildString> vendor_boot_image_build;

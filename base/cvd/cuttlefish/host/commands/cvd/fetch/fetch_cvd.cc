@@ -133,6 +133,8 @@ Result<Builds> GetBuilds(BuildApi<BuildString, Build>& build_api,
           build_api, build_sources.default_build, kDefaultBuildTarget)),
       .system = CF_EXPECT(GetBuildHelper(build_api, build_sources.system_build,
                                          kDefaultBuildTarget)),
+      .system_image = CF_EXPECT(GetBuildHelper(
+          build_api, build_sources.system_image_build, kDefaultBuildTarget)),
       .kernel = CF_EXPECT(
           GetBuildHelper(build_api, build_sources.kernel_build, "kernel")),
       .boot = CF_EXPECT(GetBuildHelper(build_api, build_sources.boot_build,
@@ -400,6 +402,26 @@ Result<void> FetchVendorBootImageTarget(FetchBuildContext& context,
   return {};
 }
 
+Result<void> FetchSystemImageTarget(FetchBuildContext& context,
+                                    const bool keep_downloaded_archives) {
+  if (const std::optional<std::string> filepath = context.GetFilepath();
+      filepath.has_value()) {
+    LOG(INFO) << "Downloading " << *filepath << " to system.img for "
+              << context;
+    CF_EXPECT(context.Artifact(*filepath).DownloadTo("system.img"));
+  } else {
+    LOG(INFO) << "Extracting system.img from image zip for " << context;
+    FetchArtifact img_zip = context.Artifact(
+        CF_EXPECT(context.GetBuildZipName(BuildZipKind::kImages)));
+    CF_EXPECT(img_zip.Download());
+    CF_EXPECT(img_zip.ExtractOne("system.img"));
+    if (!keep_downloaded_archives) {
+      CF_EXPECT(img_zip.DeleteLocalFile());
+    }
+  }
+  return {};
+}
+
 Result<void> FetchBootloaderTarget(FetchBuildContext& context) {
   if (std::optional<std::string> filepath = context.GetFilepath()) {
     CF_EXPECT(context.Artifact(*filepath).DownloadTo("bootloader"));
@@ -475,7 +497,8 @@ Result<void> FetchTarget(FetchContext& fetch_context,
                          const DownloadFlags& flags,
                          const bool keep_downloaded_archives) {
   if (std::optional<FetchBuildContext> context = fetch_context.DefaultBuild()) {
-    bool has_system_build = fetch_context.SystemBuild().has_value();
+    const bool has_system_build = fetch_context.SystemBuild().has_value() ||
+                                  fetch_context.SystemImageBuild().has_value();
     CF_EXPECT(FetchDefaultTarget(*context, keep_downloaded_archives, flags,
                                  has_system_build));
   }
@@ -483,6 +506,11 @@ Result<void> FetchTarget(FetchContext& fetch_context,
   if (std::optional<FetchBuildContext> context = fetch_context.SystemBuild()) {
     CF_EXPECT(FetchSystemTarget(*context, flags.download_img_zip,
                                 keep_downloaded_archives));
+  }
+
+  if (std::optional<FetchBuildContext> context =
+          fetch_context.SystemImageBuild()) {
+    CF_EXPECT(FetchSystemImageTarget(*context, keep_downloaded_archives));
   }
 
   if (std::optional<FetchBuildContext> context = fetch_context.KernelBuild()) {

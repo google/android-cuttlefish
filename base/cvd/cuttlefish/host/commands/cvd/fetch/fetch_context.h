@@ -122,6 +122,7 @@ class FetchContext {
 
   std::optional<FetchBuildContext> DefaultBuild();
   std::optional<FetchBuildContext> SystemBuild();
+  std::optional<FetchBuildContext> SystemImageBuild();
   std::optional<FetchBuildContext> KernelBuild();
   std::optional<FetchBuildContext> BootBuild();
   std::optional<FetchBuildContext> VendorBootImageBuild();

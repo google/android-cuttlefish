@@ -41,6 +41,9 @@ std::vector<Flag> VectorFlags::Flags() {
           .Help("source for the cuttlefish build to use (vendor.img + host)"));
   flags.emplace_back(GflagsCompatFlag("system_build", this->system_build)
                          .Help("source for system.img and product.img"));
+  flags.emplace_back(
+      GflagsCompatFlag("system_image_build", this->system_image_build)
+          .Help("source for the system image"));
   flags.emplace_back(GflagsCompatFlag("kernel_build", this->kernel_build)
                          .Help("source for the kernel or gki target"));
   flags.emplace_back(GflagsCompatFlag("boot_build", this->boot_build)
@@ -87,12 +90,12 @@ Result<int> VectorFlags::NumberOfBuilds() const {
   std::optional<size_t> number_of_builds;
   for (const auto& flag_size :
        {this->default_build.size(), this->system_build.size(),
-        this->kernel_build.size(), this->boot_build.size(),
-        this->vendor_boot_image_build.size(), this->bootloader_build.size(),
-        this->android_efi_loader_build.size(), this->otatools_build.size(),
-        this->test_suites_build.size(), this->chrome_os_build.size(),
-        this->boot_artifact.size(), this->download_img_zip.size(),
-        this->download_target_files_zip.size(),
+        this->system_image_build.size(), this->kernel_build.size(),
+        this->boot_build.size(), this->vendor_boot_image_build.size(),
+        this->bootloader_build.size(), this->android_efi_loader_build.size(),
+        this->otatools_build.size(), this->test_suites_build.size(),
+        this->chrome_os_build.size(), this->boot_artifact.size(),
+        this->download_img_zip.size(), this->download_target_files_zip.size(),
         this->target_subdirectory.size()}) {
     if (flag_size == 0) {
       // a size zero flag vector means the flag was not given

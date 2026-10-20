@@ -78,4 +78,20 @@ TEST(FetchCvdParserTests, ParsesVendorBootImageBuildFlag) {
               Eq(std::optional<std::string>("vendor_boot-debug.img")));
 }
 
+TEST(FetchCvdParserTests, ParsesSystemImageBuildFlag) {
+  std::vector<std::string> args = {
+      std::string(kTargetDirectory),
+      std::string(kDefaultBuild),
+      "--system_image_build=git_main/cf_x86_64_auto{system-custom.img}",
+  };
+
+  const Result<FetchFlags> flags_res = FetchFlags::Parse(args);
+
+  ASSERT_THAT(flags_res, IsOk());
+  ASSERT_EQ(flags_res->vector_flags.system_image_build.size(), 1);
+  ASSERT_TRUE(flags_res->vector_flags.system_image_build[0].has_value());
+  EXPECT_THAT(GetFilepath(*flags_res->vector_flags.system_image_build[0]),
+              Eq(std::optional<std::string>("system-custom.img")));
+}
+
 }  // namespace cuttlefish
