@@ -20,7 +20,7 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -36,10 +36,5 @@ class BuildApi {
   virtual Result<SeekableZipSource> FileReader(
       const Build&, const std::string& artifact_name) = 0;
 };
-
-Result<std::string> DownloadFileWithBackup(
-    BuildApi& build_api, const Build& build,
-    const std::string& target_directory, const std::string& artifact_name,
-    const std::string& backup_artifact_name);
 
 }  // namespace cuttlefish
