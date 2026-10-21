@@ -393,6 +393,9 @@ cf_cc_binary(
     ],
     depend_on_what_you_use_enabled = False,
     include_cleaner_enabled = False,
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
     deps = [
         ":libcuttlefish_webrtc_adb_handler",
         ":libcuttlefish_webrtc_audio_handler",
