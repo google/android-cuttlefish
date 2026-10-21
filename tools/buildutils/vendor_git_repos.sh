@@ -37,7 +37,7 @@ cd "${CVD_DIR}"
 # Every `name = "..."` that appears inside a `git_repository(...)` block.
 shopt -s globstar nullglob
 mapfile -t repos < <(
-  sed -n '/^git_repository(/,/^)/{s/^ *name = "\([^"]*\)".*/\1/p}' \
+  sed -n '/^git_repository(/,/^)/{s/^ *name = "\([^"]*\)".*/@\1/p}' \
     MODULE.bazel build_external/**/*.MODULE.bazel | sort -u
 )
 if [[ ${#repos[@]} -eq 0 ]]; then
@@ -45,9 +45,25 @@ if [[ ${#repos[@]} -eq 0 ]]; then
   exit 1
 fi
 
+# The shared crosvm checkout generated for crosvm_bin by rules_rust's
+# `_git_source_repo_name` (b/574521063). The explicit @crosvm above is a
+# separate checkout and does not cache this one.
+crosvm_remote="$(sed -n 's/^CROSVM_REMOTE = "\([^"]*\)".*/\1/p' build_external/crosvm/crosvm.MODULE.bazel)"
+crosvm_rev="$(sed -n 's/^CROSVM_REV = "\([^"]*\)".*/\1/p' build_external/crosvm/crosvm.MODULE.bazel)"
+if [[ -z "${crosvm_remote}" || -z "${crosvm_rev}" ]]; then
+  >&2 echo "Missing CROSVM_REMOTE or CROSVM_REV in build_external/crosvm/crosvm.MODULE.bazel"
+  exit 1
+fi
+crosvm_remote="${crosvm_remote#*://}"
+crosvm_remote="${crosvm_remote%/}"
+crosvm_remote="${crosvm_remote%.git}"
+crosvm_remote="${crosvm_remote//[^[:alnum:]]/_}"
+crosvm_rev="${crosvm_rev//[^[:alnum:]]/_}"
+repos+=("@@rules_rust++crate+crosvm_bin__git_${crosvm_remote}_${crosvm_rev:0:12}")
+
 repo_flags=()
 for repo in "${repos[@]}"; do
-  repo_flags+=("--repo=@${repo}")
+  repo_flags+=("--repo=${repo}")
 done
 
 echo "Vendoring ${#repos[@]} git repositories: ${repos[*]}"

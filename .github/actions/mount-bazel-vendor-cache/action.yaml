@@ -14,7 +14,7 @@ runs:
   - name: Generate vendor cache key
     run: |
       echo "VENDOR_CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-vendor-${INPUTS_BAZEL_VERSION}" >> $GITHUB_ENV
-      echo "VENDOR_DEPS_HASH=${{ hashFiles('base/cvd/MODULE.bazel', 'base/cvd/build_external/**/*.MODULE.bazel', 'base/cvd/build_external/**/*.patch') }}" >> $GITHUB_ENV
+      echo "VENDOR_DEPS_HASH=${{ hashFiles('base/cvd/MODULE.bazel', 'base/cvd/build_external/**/*.MODULE.bazel', 'base/cvd/build_external/**/*.patch', 'tools/buildutils/vendor_git_repos.sh') }}" >> $GITHUB_ENV
     shell: bash
     env:
       INPUTS_BAZEL_VERSION: ${{ inputs.bazel-version }}
