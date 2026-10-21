@@ -24,6 +24,7 @@ readonly CREDENTIAL_SOURCE="${CREDENTIAL_SOURCE:-}"
 readonly CONFIG_CVD="cvd"
 readonly CONFIG_CVD_WITH_GPU="cvd_with_gpu"
 readonly CONFIG_PODCVD="podcvd"
+readonly CONFIG_SMOKE="smoke"
 
 function print_usage() {
   >&2 echo "usage: $0 [-c <config>] [-i <runner_index>] [-n <runners_total>]"
@@ -61,6 +62,7 @@ config_test_args=()
 case "${config}" in
   "${CONFIG_CVD}") ;;
   "${CONFIG_CVD_WITH_GPU}") true ;;
+  "${CONFIG_SMOKE}") ;;
   "${CONFIG_PODCVD}")
     config_test_args+=(
       --test_env="USE_PODCVD=true"
