@@ -33,6 +33,7 @@
 #include "fmt/ranges.h"
 
 #include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/host/libs/web/android_build_string/parse_filepath.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/result/result.h"
@@ -84,38 +85,6 @@ ParseSha256Fragment(std::string_view build_string) {
              "'#sha256=<64 hex digits>'.  Input: '{}'",
              ScrubUrl(build_string));
   return {{build_string.substr(0, fragment_start), digest}};
-}
-
-Result<std::pair<std::string, std::optional<std::string>>> ParseFilepath(
-    std::string_view build_string) {
-  std::string_view remaining_build_string = build_string;
-  std::optional<std::string> filepath;
-  size_t open_bracket = build_string.find('{');
-  size_t close_bracket = build_string.find('}');
-
-  bool has_open = open_bracket != std::string::npos;
-  bool has_close = close_bracket != std::string::npos;
-  CF_EXPECTF(
-      has_open == has_close,
-      "Open or close curly bracket exists without its complement in \"{}\"",
-      build_string);
-  if (has_open && has_close) {
-    std::string_view remaining_substring = build_string.substr(0, open_bracket);
-    CF_EXPECTF(
-        !remaining_substring.empty(),
-        "The build string excluding filepath cannot be empty.  Input: {}",
-        build_string);
-    size_t filepath_start = open_bracket + 1;
-    std::string_view filepath_substring =
-        build_string.substr(filepath_start, close_bracket - filepath_start);
-    CF_EXPECTF(
-        !filepath_substring.empty(),
-        "The filepath between positions {},{} cannot be empty.  Input: {}",
-        filepath_start, close_bracket, build_string);
-    remaining_build_string = remaining_substring;
-    filepath = filepath_substring;
-  }
-  return {{std::string(remaining_build_string), filepath}};
 }
 
 Result<BuildString> ParseDeviceBuildString(
