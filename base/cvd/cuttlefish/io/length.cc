@@ -31,8 +31,16 @@ Result<uint64_t> Length(Seeker& seeker) {
   return end;
 }
 
+Result<uint64_t> Length(Seeker&& seeker) {
+  return CF_EXPECT(Length(static_cast<Seeker&>(seeker)));
+}
+
 Result<uint64_t> Length(ReaderWriterSeeker& seeker) {
   return CF_EXPECT(Length(static_cast<ReaderSeeker&>(seeker)));
+}
+
+Result<uint64_t> Length(ReaderWriterSeeker&& seeker) {
+  return CF_EXPECT(Length(static_cast<ReaderWriterSeeker&>(seeker)));
 }
 
 }  // namespace cuttlefish

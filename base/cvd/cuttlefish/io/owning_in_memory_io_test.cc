@@ -13,9 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/io/in_memory.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 
-#include <memory>
 #include <string>
 #include <string_view>
 
@@ -23,64 +22,59 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 
-TEST(InMemoryIoTest, WriteSeek) {
-  std::unique_ptr<ReaderWriterSeeker> instance = InMemoryIo();
+TEST(OwningInMemoryIoTest, WriteSeek) {
+  OwningInMemoryIo instance;
 
   constexpr std::string_view str = "hello";
-  ASSERT_THAT(instance->Write(str.data(), str.size()),
-              IsOkAndValue(str.size()));
+  ASSERT_THAT(instance.Write(str.data(), str.size()), IsOkAndValue(str.size()));
 
-  ASSERT_THAT(instance->SeekCur(-2), IsOkAndValue(str.size() - 2));
-  ASSERT_THAT(instance->SeekCur(-2), IsOkAndValue(str.size() - 4));
-  ASSERT_THAT(instance->SeekEnd(-2), IsOkAndValue(str.size() - 2));
+  ASSERT_THAT(instance.SeekCur(-2), IsOkAndValue(str.size() - 2));
+  ASSERT_THAT(instance.SeekCur(-2), IsOkAndValue(str.size() - 4));
+  ASSERT_THAT(instance.SeekEnd(-2), IsOkAndValue(str.size() - 2));
 }
 
-TEST(InMemoryIoTest, WriteSeekRead) {
-  std::unique_ptr<ReaderWriterSeeker> instance = InMemoryIo();
+TEST(OwningInMemoryIoTest, WriteSeekRead) {
+  OwningInMemoryIo instance;
 
   constexpr std::string_view str = "hello";
-  ASSERT_THAT(instance->Write(str.data(), str.size()),
-              IsOkAndValue(str.size()));
+  ASSERT_THAT(instance.Write(str.data(), str.size()), IsOkAndValue(str.size()));
 
-  ASSERT_THAT(instance->SeekSet(0), IsOkAndValue(0));
+  ASSERT_THAT(instance.SeekSet(0), IsOkAndValue(0));
 
   std::string data_read(str.size(), '\0');
-  ASSERT_THAT(instance->Read(data_read.data(), str.size()),
+  ASSERT_THAT(instance.Read(data_read.data(), str.size()),
               IsOkAndValue(str.size()));
 
   ASSERT_EQ(str, data_read);
 }
 
-TEST(InMemoryIoTest, WriteAtReadAt) {
-  std::unique_ptr<ReaderWriterSeeker> instance = InMemoryIo();
+TEST(OwningInMemoryIoTest, WriteAtReadAt) {
+  OwningInMemoryIo instance;
 
   constexpr std::string_view str = "hello";
-  ASSERT_THAT(instance->PWrite(str.data(), str.size(), 2),
+  ASSERT_THAT(instance.PWrite(str.data(), str.size(), 2),
               IsOkAndValue(str.size()));
 
   std::string data_read(str.size() + 1, '\0');
-  ASSERT_THAT(instance->PRead(data_read.data(), str.size() + 1, 1),
+  ASSERT_THAT(instance.PRead(data_read.data(), str.size() + 1, 1),
               IsOkAndValue(str.size() + 1));
 
   ASSERT_EQ(absl::StrCat(std::string_view("\0", 1), str), data_read);
 }
 
-TEST(InMemoryIoTest, WriteWriteReadAt) {
-  std::unique_ptr<ReaderWriterSeeker> instance = InMemoryIo();
+TEST(OwningInMemoryIoTest, WriteWriteReadAt) {
+  OwningInMemoryIo instance;
 
   constexpr std::string_view str = "hello";
-  ASSERT_THAT(instance->Write(str.data(), str.size()),
-              IsOkAndValue(str.size()));
-  ASSERT_THAT(instance->Write(str.data(), str.size()),
-              IsOkAndValue(str.size()));
+  ASSERT_THAT(instance.Write(str.data(), str.size()), IsOkAndValue(str.size()));
+  ASSERT_THAT(instance.Write(str.data(), str.size()), IsOkAndValue(str.size()));
 
   std::string data_read(str.size() * 2, '\0');
-  ASSERT_THAT(instance->PRead(data_read.data(), data_read.size(), 0),
+  ASSERT_THAT(instance.PRead(data_read.data(), data_read.size(), 0),
               IsOkAndValue(data_read.size()));
 
   ASSERT_EQ(absl::StrCat(str, str), data_read);

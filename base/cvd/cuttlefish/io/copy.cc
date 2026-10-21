@@ -47,6 +47,11 @@ Result<void> Copy(Reader& reader, Writer& writer, const size_t buffer_size) {
   return {};
 }
 
+Result<void> Copy(Reader&& reader, Writer& writer, const size_t buffer_size) {
+  CF_EXPECT(Copy(static_cast<Reader&>(reader), writer, buffer_size));
+  return {};
+}
+
 Result<void> SparseCopy(Reader& reader, WriterSeeker& writer,
                         size_t buffer_size) {
   CF_EXPECT(writer.SeekSet(0));

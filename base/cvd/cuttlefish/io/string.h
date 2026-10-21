@@ -25,5 +25,6 @@
 namespace cuttlefish {
 
 Result<std::string> ReadToString(Reader&, size_t buffer_size = 1 << 16);
+Result<std::string> ReadToString(Reader&&, size_t buffer_size = 1 << 16);
 
 }  // namespace cuttlefish

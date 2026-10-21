@@ -39,4 +39,8 @@ Result<std::string> ReadToString(Reader& reader, size_t buffer_size) {
   return out.str();
 }
 
+Result<std::string> ReadToString(Reader&& reader, size_t buffer_size) {
+  return CF_EXPECT(ReadToString(static_cast<Reader&>(reader), buffer_size));
+}
+
 }  // namespace cuttlefish

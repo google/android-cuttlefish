@@ -490,8 +490,7 @@ cf_cc_test(
     srcs = ["kernel_module_parser_test.cc"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:kernel_module_parser",
-        "//cuttlefish/io",
-        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/result:result_matchers",
     ],
 )
