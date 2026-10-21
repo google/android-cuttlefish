@@ -47,35 +47,7 @@ namespace cuttlefish {
 Result<ParsedFlags> GetParsedFlags() {
   const SystemImageDirFlag system_image_dir =
       CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
-  const FetcherConfigs fetcher_configs =
-      FetcherConfigs::ReadFromDirectories(system_image_dir.AsVector());
-  AndroidBuilds android_builds =
-      CF_EXPECT(FindAndroidBuilds(system_image_dir, fetcher_configs));
-
-  const BootImageFlag boot_image =
-      CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds));
-  const SuperImageFlag super_image =
-      SuperImageFlag::FromGlobalGflags(system_image_dir);
-  const VendorBootImageFlag vendor_boot =
-      VendorBootImageFlag::FromGlobalGflags(system_image_dir);
-
-  const InitramfsPathFlag initramfs_path =
-      InitramfsPathFlag::FromGlobalGflags(fetcher_configs);
-  const KernelPathFlag kernel_path =
-      KernelPathFlag::FromGlobalGflags(fetcher_configs);
-  CF_EXPECT(ResolveInstanceFiles(boot_image, initramfs_path, kernel_path,
-                                 super_image, system_image_dir, vendor_boot),
-            "Failed to resolve instance files");
-  // Depends on ResolveInstanceFiles to set flag globals
-  const std::vector<GuestConfig> guest_configs =
-      CF_EXPECT(ReadGuestConfig(boot_image, kernel_path, system_image_dir));
-  const VmManagerFlag vm_manager =
-      CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs));
-
-  return ParsedFlags{
-      .bootloader = CF_EXPECT(BootloaderFlag::FromGlobalGflags(
-          guest_configs, system_image_dir, vm_manager)),
-      .boot_image = boot_image,
+  auto parsed_flags = ParsedFlags{
       .cpus = CF_EXPECT(CpusFlag::FromGlobalGflags()),
       .daemon = CF_EXPECT(DaemonFlag::FromGlobalGflags()),
       .data_policy = CF_EXPECT(DataPolicyFlag::FromGlobalGflags()),
@@ -87,11 +59,40 @@ Result<ParsedFlags> GetParsedFlags() {
       .qemu_binary_dir = CF_EXPECT(QemuBinaryDirFlag::FromGlobalGflags()),
       .restart_subprocesses =
           CF_EXPECT(RestartSubprocessesFlag::FromGlobalGflags()),
-      .super_image = super_image,
       .system_image_dir = system_image_dir,
-      .vendor_boot = vendor_boot,
-      .vm_manager = vm_manager,
   };
-}
 
+  const FetcherConfigs fetcher_configs =
+      FetcherConfigs::ReadFromDirectories(system_image_dir.AsVector());
+  // the artifacts might not yet exist for certain device events
+  // for example, cvd create --config_file VM_INSTATIATION is pre-fetching
+  Result<AndroidBuilds> android_builds_result =
+      FindAndroidBuilds(system_image_dir, fetcher_configs);
+  if (android_builds_result) {
+    parsed_flags.boot_image.emplace(
+        CF_EXPECT(BootImageFlag::FromGlobalGflags(*android_builds_result)));
+    parsed_flags.super_image.emplace(
+        SuperImageFlag::FromGlobalGflags(system_image_dir));
+    parsed_flags.vendor_boot.emplace(
+        VendorBootImageFlag::FromGlobalGflags(system_image_dir));
+
+    const InitramfsPathFlag initramfs_path =
+        InitramfsPathFlag::FromGlobalGflags(fetcher_configs);
+    const KernelPathFlag kernel_path =
+        KernelPathFlag::FromGlobalGflags(fetcher_configs);
+    CF_EXPECT(ResolveInstanceFiles(*parsed_flags.boot_image, initramfs_path,
+                                   kernel_path, *parsed_flags.super_image,
+                                   system_image_dir, *parsed_flags.vendor_boot),
+              "Failed to resolve instance files");
+    // Depends on ResolveInstanceFiles to set flag globals
+    const std::vector<GuestConfig> guest_configs = CF_EXPECT(ReadGuestConfig(
+        *parsed_flags.boot_image, kernel_path, system_image_dir));
+
+    parsed_flags.vm_manager.emplace(
+        CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs)));
+    parsed_flags.bootloader.emplace(CF_EXPECT(BootloaderFlag::FromGlobalGflags(
+        guest_configs, system_image_dir, *parsed_flags.vm_manager)));
+  }
+  return parsed_flags;
+}
 }  // namespace cuttlefish
