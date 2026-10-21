@@ -205,6 +205,7 @@ cf_cc_library(
         "//cuttlefish/io",
         "//cuttlefish/io:filesystem",
         "//cuttlefish/io:in_memory_io",
+        "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -331,6 +332,15 @@ cf_cc_library(
         "//cuttlefish/posix:stat",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
+    name = "owning_in_memory_io",
+    srcs = ["owning_in_memory_io.cc"],
+    hdrs = ["owning_in_memory_io.h"],
+    deps = [
+        "//cuttlefish/io:in_memory_io",
     ],
 )
 
