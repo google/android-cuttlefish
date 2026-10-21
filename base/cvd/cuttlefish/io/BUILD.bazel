@@ -204,8 +204,19 @@ cf_cc_library(
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:filesystem",
-        "//cuttlefish/io:in_memory_io",
+        "//cuttlefish/io:in_memory_fs",
         "//cuttlefish/io:owning_in_memory_io",
+    ],
+)
+
+cf_cc_library(
+    name = "in_memory_fs",
+    srcs = ["in_memory_fs.cc"],
+    hdrs = ["in_memory_fs.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:filesystem",
+        "//cuttlefish/io:in_memory_io",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
