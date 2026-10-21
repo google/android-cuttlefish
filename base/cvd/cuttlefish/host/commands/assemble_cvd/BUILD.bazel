@@ -550,9 +550,19 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvdalloc:interface",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:external_network_mode",
+        "//cuttlefish/host/libs/config:ipv6_utils",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "network_flags_test",
+    srcs = ["network_flags_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:network_flags",
+        "//cuttlefish/host/libs/config:ipv6_utils",
     ],
 )
 

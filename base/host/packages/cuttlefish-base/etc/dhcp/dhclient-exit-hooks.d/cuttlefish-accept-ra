@@ -1,0 +1,43 @@
+# Sourced by /sbin/dhclient-script (POSIX sh; do not call exit).
+#
+# Debian's /sbin/dhclient-script sets net.ipv6.conf.${interface}.accept_ra=0
+# on BOUND6/RENEW6/REBIND6 whenever net.ipv6.conf.all.forwarding=1, which
+# causes the host kernel to stop refreshing its SLAAC default route on DHCPv6
+# lease renewal while cuttlefish-host-resources IPv6 forwarding is active.
+# Restore accept_ra=2 on the upstream interface when Cuttlefish IPv6 is active.
+
+cuttlefish_restore_accept_ra() {
+    if [ ! -f /run/cuttlefish/ipv6-enabled ] &&
+       [ "$(cat /proc/sys/net/ipv6/conf/all/forwarding 2>/dev/null)" != "1" ]; then
+        return 0
+    fi
+    case "${reason:-}" in
+        PREINIT6|BOUND6|RENEW6|REBIND6|DEPREF6|EXPIRE6|RELEASE6|STOP6|REBOOT6|"")
+            ;;
+        *)
+            return 0
+            ;;
+    esac
+    if [ -n "${interface:-}" ]; then
+        case "${interface}" in
+            lo|cvd-*) return 0 ;;
+        esac
+        if [ -w "/proc/sys/net/ipv6/conf/${interface}/accept_ra" ]; then
+            echo 2 > "/proc/sys/net/ipv6/conf/${interface}/accept_ra"
+        fi
+        return 0
+    fi
+    for _cf_ra_file in /proc/sys/net/ipv6/conf/*/accept_ra; do
+        [ -w "${_cf_ra_file}" ] || continue
+        _cf_if="${_cf_ra_file#/proc/sys/net/ipv6/conf/}"
+        _cf_if="${_cf_if%/accept_ra}"
+        case "${_cf_if}" in
+            all|lo|cvd-*) continue ;;
+        esac
+        if [ "$(cat "${_cf_ra_file}" 2>/dev/null)" = "1" ]; then
+            echo 2 > "${_cf_ra_file}"
+        fi
+    done
+}
+
+cuttlefish_restore_accept_ra

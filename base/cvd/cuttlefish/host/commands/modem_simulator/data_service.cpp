@@ -153,14 +153,21 @@ void DataService::HandlePDPContext(const Client& client,
   std::string ip_type(cmd.GetNextStr(','));
   std::string apn(cmd.GetNextStr(','));
 
-  auto address = cuttlefish::modem::DeviceConfig::ril_address_and_prefix();
-  auto dnses = cuttlefish::modem::DeviceConfig::ril_dns();
-  auto gateways = cuttlefish::modem::DeviceConfig::ril_gateway();
+  IpParams ipv4 = {
+      .address_and_prefix =
+          cuttlefish::modem::DeviceConfig::ril_address_and_prefix(),
+      .gateways = cuttlefish::modem::DeviceConfig::ril_gateway(),
+      .dnses = cuttlefish::modem::DeviceConfig::ril_dns(),
+  };
+  IpParams ipv6 = {
+      .address_and_prefix =
+          cuttlefish::modem::DeviceConfig::ril_ipv6_address_and_prefix(),
+      .gateways = cuttlefish::modem::DeviceConfig::ril_ipv6_gateway(),
+      .dnses = cuttlefish::modem::DeviceConfig::ril_ipv6_dns(),
+  };
 
-  PDPContext pdp_context = {cid,     PDPContext::ACTIVE,
-                            ip_type,  // IPV4 or IPV6 or IPV4V6
-                            apn,     address,
-                            dnses,   gateways};
+  // IPV4 or IPV6 or IPV4V6
+  PDPContext pdp_context = MakePDPContext(cid, ip_type, apn, ipv4, ipv6);
 
   // check cid
   auto iter = pdp_context_.begin();
@@ -184,15 +191,47 @@ void DataService::HandlePDPContext(const Client& client,
 void DataService::HandleQueryPDPContextList(const Client& client) {
   std::vector<std::string> responses;
 
-  std::stringstream ss;
   for (auto it = pdp_context_.begin(); it != pdp_context_.end(); ++it) {
-    std::stringstream ss;
-    ss << "+CGDCONT: " << it->cid << "," << it->conn_types << "," << it->apn
-       << "," << it->addresses << ",0,0";
-    responses.push_back(ss.str());
+    responses.push_back(PDPContextLine(*it));
   }
   responses.push_back("OK");
   client.SendCommandResponse(responses);
+}
+
+// Always keep IPv4 as the first +CGCONTRDP line and append IPv6 as the second
+// line whenever IPv6 is configured, regardless of the requested pdp_type ("IP",
+// "IPV6", or "IPV4V6"):
+// (1) On unpatched stock guests whose Radio HAL reads only the first
+//     +CGCONTRDP line, sim_type=2 ("IPV6") retains IPv4 instead of losing IPv4.
+// (2) On guests with the dual-stack Goldfish/Cuttlefish Radio HAL, both
+//     sim_type=1 ("IP" in apns-conf.xml/CarrierSettings) and sim_type=2
+//     ("IPV6") receive dual-stack IPv4+IPv6 (IPV4V6).
+DataService::PDPContext DataService::MakePDPContext(int cid,
+                                                    const std::string& pdp_type,
+                                                    const std::string& apn,
+                                                    const IpParams& ipv4,
+                                                    const IpParams& ipv6) {
+  PDPContext context = {
+      .cid = cid,
+      .state = PDPContext::ACTIVE,
+      .conn_types = pdp_type,
+      .apn = apn,
+      .addresses = ipv4.address_and_prefix,
+      .dnses = ipv4.dnses,
+      .gateways = ipv4.gateways,
+      .ipv6 = {},
+  };
+  if (!ipv6.address_and_prefix.empty()) {
+    context.ipv6 = ipv6;
+  }
+  return context;
+}
+
+std::string DataService::PDPContextLine(const PDPContext& context) {
+  std::stringstream ss;
+  ss << "+CGDCONT: " << context.cid << "," << context.conn_types << ","
+     << context.apn << "," << context.addresses << ",0,0";
+  return ss.str();
 }
 
 /**
@@ -283,14 +322,41 @@ void DataService::HandleReadDynamicParam(const Client& client,
   if (iter == pdp_context_.end()) {
     responses.push_back(kCmeErrorInvalidIndex);  // number
   } else {
-    std::stringstream ss;
-    ss << "+CGCONTRDP: " << iter->cid << ",5," << iter->apn << ","
-       << iter->addresses << "," << iter->gateways << "," << iter->dnses;
-    responses.push_back(ss.str());
+    for (auto& line : DynamicParamLines(*iter)) {
+      responses.push_back(std::move(line));
+    }
     responses.push_back("OK");
   }
 
   client.SendCommandResponse(responses);
+}
+
+static std::string DynamicParamLine(int cid, const std::string& apn,
+                                    const std::string& addresses,
+                                    const std::string& gateways,
+                                    const std::string& dnses) {
+  std::stringstream ss;
+  ss << "+CGCONTRDP: " << cid << ",5," << apn << "," << addresses << ","
+     << gateways << "," << dnses;
+  return ss.str();
+}
+
+// 3GPP TS 27.007 §10.1.23: for a dual-stack (IPV4V6) context the MT returns
+// two lines per <cid>, the IPv4 parameters first, then the IPv6 parameters.
+// Addresses use the "address/prefix length" notation that this simulator
+// already uses for IPv4 (for IPv6: colon notation with a CIDR prefix, as
+// selected by AT+CGPIAF=1,1 in TS 27.007).
+std::vector<std::string> DataService::DynamicParamLines(
+    const PDPContext& context) {
+  std::vector<std::string> lines;
+  lines.push_back(DynamicParamLine(context.cid, context.apn, context.addresses,
+                                   context.gateways, context.dnses));
+  if (!context.ipv6.address_and_prefix.empty()) {
+    lines.push_back(DynamicParamLine(
+        context.cid, context.apn, context.ipv6.address_and_prefix,
+        context.ipv6.gateways, context.ipv6.dnses));
+  }
+  return lines;
 }
 
 void DataService::sendOnePhysChanCfgUpdate(int status, int bandwidth, int rat,

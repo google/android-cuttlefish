@@ -130,8 +130,8 @@ type nftExpr struct {
 }
 
 type nftMatch struct {
-	Left  nftMatchLeft  `json:"left"`
-	Right nftMatchRight `json:"right"`
+	Left  nftMatchLeft    `json:"left"`
+	Right json.RawMessage `json:"right"`
 }
 
 type nftMatchLeft struct {
@@ -180,8 +180,11 @@ func convertNftRule(r nftRule) NftRule {
 		if len(e.Masquerade) > 0 {
 			nr.Masquerade = true
 		}
-		if e.Match != nil && e.Match.Left.Payload != nil && e.Match.Left.Payload.Field == "saddr" && e.Match.Right.Prefix != nil {
-			nr.SaddrPrefix = fmt.Sprintf("%s/%d", e.Match.Right.Prefix.Addr, e.Match.Right.Prefix.Len)
+		if e.Match != nil && e.Match.Left.Payload != nil && e.Match.Left.Payload.Field == "saddr" {
+			var right nftMatchRight
+			if err := json.Unmarshal(e.Match.Right, &right); err == nil && right.Prefix != nil {
+				nr.SaddrPrefix = fmt.Sprintf("%s/%d", right.Prefix.Addr, right.Prefix.Len)
+			}
 		}
 	}
 	return nr

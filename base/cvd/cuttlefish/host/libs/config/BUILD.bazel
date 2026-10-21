@@ -415,13 +415,28 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "ipv6_utils",
+    srcs = ["ipv6_utils.cpp"],
+    hdrs = ["ipv6_utils.h"],
+)
+
+cf_cc_library(
     name = "openwrt_args",
     srcs = ["openwrt_args.cpp"],
     hdrs = ["openwrt_args.h"],
     deps = [
         "//cuttlefish/host/commands/cvdalloc:interface",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:ipv6_utils",
         "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "openwrt_args_test",
+    srcs = ["openwrt_args_test.cc"],
+    deps = [
+        "//cuttlefish/host/libs/config:openwrt_args",
     ],
 )
 
