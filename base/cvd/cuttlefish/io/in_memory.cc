@@ -30,22 +30,12 @@
 #include "cuttlefish/io/filesystem.h"
 #include "cuttlefish/io/in_memory_io.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace {
-
-class OwningInMemoryIo : public InMemoryIo {
- public:
-  OwningInMemoryIo() : InMemoryIo(data_, mutex_) {}
-  OwningInMemoryIo(std::vector<char> data)
-      : InMemoryIo(data_, mutex_), data_(std::move(data)) {}
-
- private:
-  std::vector<char> data_;
-  std::shared_mutex mutex_;
-};
 
 class InMemoryFilesystemImpl : public ReadWriteFilesystem {
  public:
