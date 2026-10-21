@@ -99,8 +99,6 @@ netsim_crates.from_cargo(
         "@android_tools_netsim//:rust/packets/Cargo.toml",
         "@android_tools_netsim//:rust/proto/Cargo.toml",
     ],
-    # Needed because it shares the extension with crosvm
-    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
     cargo_lockfile = "@android_tools_netsim//:rust/Cargo.lock",
     host_tools = "@rust_host_tools_nightly",
 )
