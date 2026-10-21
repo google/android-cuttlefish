@@ -110,6 +110,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/io:visitable",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/result",
         "@libzip",
         "@zlib",

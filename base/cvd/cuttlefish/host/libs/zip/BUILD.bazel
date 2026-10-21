@@ -103,6 +103,7 @@ cf_cc_library(
         "//cuttlefish/io",
         "//cuttlefish/io:copy",
         "//cuttlefish/io:native_filesystem",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
     ],

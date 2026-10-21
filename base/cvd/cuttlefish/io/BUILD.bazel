@@ -65,9 +65,9 @@ cf_cc_library(
     srcs = ["copy.cc"],
     hdrs = ["copy.h"],
     deps = [
-        "//cuttlefish/io",
         "//cuttlefish/io:reader",
         "//cuttlefish/io:writer",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -124,6 +124,7 @@ cf_cc_library(
         "//cuttlefish/io:reader",
         "//cuttlefish/io:seeker",
         "//cuttlefish/io:writer",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -160,6 +161,7 @@ cf_cc_library(
     hdrs = ["fake_pread_pwrite.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -227,6 +229,7 @@ cf_cc_library(
         "//cuttlefish/io:seeker",
         "//cuttlefish/io:visitable",
         "//cuttlefish/io:writer",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -430,6 +433,16 @@ cf_cc_library(
     hdrs = ["writer.h"],
     deps = [
         "//cuttlefish/io:visitable",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
+    name = "writer_seeker",
+    hdrs = ["writer_seeker.h"],
+    deps = [
+        "//cuttlefish/io:seeker",
+        "//cuttlefish/io:writer",
         "//cuttlefish/result:result_type",
     ],
 )

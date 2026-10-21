@@ -29,6 +29,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/io/fake_pread_pwrite.h"
+#include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -85,6 +86,11 @@ ZipSourceWriter::~ZipSourceWriter() {
   }
 }
 
+Result<void> ZipSourceWriter::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
+
 Result<uint64_t> ZipSourceWriter::Write(const void* data, uint64_t length) {
   std::lock_guard lock(mutex_);
 
@@ -114,6 +120,10 @@ Result<uint64_t> ZipSourceWriter::PWrite(const void* data, uint64_t count,
                                          uint64_t offset) {
   auto& non_const = const_cast<ZipSourceWriter&>(*this);
   return CF_EXPECT(FakePWrite(non_const, data, count, offset));
+}
+
+Result<void> ZipSourceWriter::Truncate(uint64_t size) {
+  return CF_ERR("Unimplemented");
 }
 
 Result<void> ZipSourceWriter::Finalize(ZipSourceWriter writer) {

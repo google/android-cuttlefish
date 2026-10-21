@@ -149,6 +149,7 @@ cf_cc_library(
         "//cuttlefish/io:string",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/io:writer",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/posix:remove",
         "//cuttlefish/process:command",
         "//cuttlefish/process:execute",
