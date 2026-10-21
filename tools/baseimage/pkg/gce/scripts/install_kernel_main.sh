@@ -40,20 +40,9 @@ version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | g
   cut -d: -f2 | cut -d" " -f2 )
 echo "AFTER UPGRADE VERSION: ${version}"
 
-sudo chroot /mnt/image /usr/bin/apt-get install -y ${linux_image_deb}
-
-version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
-  cut -d: -f2 | cut -d" " -f2)
-echo "END VERSION: ${version}"
-
-if [ "${version}" != "${linux_image_deb}" ]; then
-  echo "CREATE IMAGE FAILED!!!"
-  echo "Expected ${linux_image_deb}, got: ${version}"
-  exit 1
-fi
-
-# Remove old kernel packages, keeping only the target kernel and the
-# linux-image-cloud-${arch} meta-package.
+# Remove old kernel packages before installing the new one, keeping only the target kernel (if present) and the
+# linux-image-cloud-${arch} meta-package. This ensures DKMS hooks during the new kernel install
+# do not get confused by multiple kernels when they run `head -n1` to find the kernel version.
 old_kernels=$(sudo chroot /mnt/image /usr/bin/dpkg -l | grep '^ii' | awk '{print $2}' | \
   grep '^linux-image-' | grep -v "^${linux_image_deb}$" | grep -v "^linux-image-cloud-${arch}$" || true)
 if [ -n "${old_kernels}" ]; then
@@ -64,6 +53,18 @@ if [ -n "${old_kernels}" ]; then
   sudo chroot /mnt/image /bin/sh -c 'command -v update-grub >/dev/null && update-grub || true'
 else
   echo "No old kernel packages to remove"
+fi
+
+sudo chroot /mnt/image /usr/bin/apt-get install -y ${linux_image_deb}
+
+version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
+  cut -d: -f2 | cut -d" " -f2)
+echo "END VERSION: ${version}"
+
+if [ "${version}" != "${linux_image_deb}" ]; then
+  echo "CREATE IMAGE FAILED!!!"
+  echo "Expected ${linux_image_deb}, got: ${version}"
+  exit 1
 fi
 
 # Skip unmounting:
