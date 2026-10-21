@@ -1,0 +1,33 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library", "cf_cc_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_build_test(name = "android_build_string_build_test")
+
+cf_cc_library(
+    name = "android_build_string",
+    srcs = ["android_build_string.cpp"],
+    hdrs = ["android_build_string.h"],
+    deps = [
+        "//cuttlefish/flag_parser",
+        "//cuttlefish/host/libs/web:url_namespace",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "android_build_string_test",
+    srcs = ["android_build_string_tests.cpp"],
+    deps = [
+        ":android_build_string",
+        "//cuttlefish/flag_parser",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings",
+    ],
+)
