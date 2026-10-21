@@ -171,6 +171,7 @@ Result<Fd, int> Fd::Event(int initval, int flags) {
               ::cuttlefish::StrError());
   return Fd(fd, 0);
 }
+#endif
 
 Result<Fd, int> Fd::ShmOpen(std::string_view name, int oflag, int mode) {
   std::string name_str(name);
@@ -179,7 +180,6 @@ Result<Fd, int> Fd::ShmOpen(std::string_view name, int oflag, int mode) {
               mode, ::cuttlefish::StrError());
   return Fd(fd, 0);
 }
-#endif
 
 Result<Fd, int> Fd::MemfdCreate(std::string_view name, unsigned int flags) {
 #ifdef __linux__

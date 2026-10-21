@@ -132,11 +132,11 @@ class Fd : public ReaderWriterSeeker {
                                            bool is_abstract, int in_type,
                                            mode_t mode);
   static Result<Fd, int> SocketLocalServer(int port, int type);
+  static Result<Fd, int> ShmOpen(std::string_view name, int oflag, int mode);
 
 #ifdef __linux__
   static Result<Fd, int> Event(int initval = 0, int flags = 0);
   static Result<Fd, int> InotifyFd();
-  static Result<Fd, int> ShmOpen(std::string_view name, int oflag, int mode);
   // For binding in vsock, svm_cid from `cid` param would be either
   // VMADDR_CID_ANY, VMADDR_CID_LOCAL, VMADDR_CID_HOST or their own CID, and it
   // is used for indicating connections which it accepts from.
