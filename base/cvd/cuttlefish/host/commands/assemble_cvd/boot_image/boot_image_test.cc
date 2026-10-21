@@ -28,10 +28,10 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/boot_image_builder.h"
 #include "cuttlefish/io/concat.h"
-#include "cuttlefish/io/in_memory.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/io/read_window_view.h"
 #include "cuttlefish/io/string.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -44,51 +44,41 @@ TEST(BootImageTest, AllFieldsSet) {
   static constexpr std::string_view kRamdisk = "ramdisk";
   static constexpr std::string_view kSignature = "signature";
 
-  Result<ConcatReaderSeeker> image = BootImageBuilder()
-                                         .OsVersion(kOsVersion)
-                                         .KernelCommandLine(kKernelCmdLine)
-                                         .Kernel(InMemoryIo(kKernel))
-                                         .Ramdisk(InMemoryIo(kRamdisk))
-                                         .Signature(InMemoryIo(kSignature))
-                                         .BuildV4();
-  ASSERT_THAT(image, IsOk());
+  ConcatReaderSeeker image =
+      CF_ASSERT(BootImageBuilder()
+                    .OsVersion(kOsVersion)
+                    .KernelCommandLine(kKernelCmdLine)
+                    .Kernel(std::make_unique<OwningInMemoryIo>(kKernel))
+                    .Ramdisk(std::make_unique<OwningInMemoryIo>(kRamdisk))
+                    .Signature(std::make_unique<OwningInMemoryIo>(kSignature))
+                    .BuildV4());
 
-  Result<BootImage> parsed =
-      BootImage::Read(std::make_unique<ConcatReaderSeeker>(std::move(*image)));
-  ASSERT_THAT(parsed, IsOk());
+  BootImage parsed = CF_ASSERT(
+      BootImage::Read(std::make_unique<ConcatReaderSeeker>(std::move(image))));
 
-  EXPECT_EQ(parsed->OsVersion(), kOsVersion);
-  EXPECT_EQ(parsed->KernelCommandLine(), kKernelCmdLine);
+  EXPECT_EQ(parsed.OsVersion(), kOsVersion);
+  EXPECT_EQ(parsed.KernelCommandLine(), kKernelCmdLine);
+  EXPECT_THAT(ReadToString(parsed.Kernel()), IsOkAndValue(kKernel));
+  EXPECT_THAT(ReadToString(parsed.Ramdisk()), IsOkAndValue(kRamdisk));
 
-  ReadWindowView kernel = parsed->Kernel();
-  EXPECT_THAT(ReadToString(kernel), IsOkAndValue(kKernel));
-
-  ReadWindowView ramdisk = parsed->Ramdisk();
-  EXPECT_THAT(ReadToString(ramdisk), IsOkAndValue(kRamdisk));
-
-  std::optional<ReadWindowView> signature = parsed->Signature();
+  std::optional<ReadWindowView> signature = parsed.Signature();
   ASSERT_TRUE(signature.has_value());
   EXPECT_THAT(ReadToString(*signature), IsOkAndValue(kSignature));
 }
 
 TEST(BootImageTest, AllFieldsEmpty) {
-  Result<ConcatReaderSeeker> image = BootImageBuilder().BuildV4();
-  ASSERT_THAT(image, IsOk());
+  ConcatReaderSeeker image = CF_ASSERT(BootImageBuilder().BuildV4());
 
-  Result<BootImage> parsed =
-      BootImage::Read(std::make_unique<ConcatReaderSeeker>(std::move(*image)));
-  ASSERT_THAT(parsed, IsOk());
+  BootImage parsed = CF_ASSERT(
+      BootImage::Read(std::make_unique<ConcatReaderSeeker>(std::move(image))));
 
-  EXPECT_EQ(parsed->OsVersion(), 0);
-  EXPECT_EQ(parsed->KernelCommandLine(), "");
+  EXPECT_EQ(parsed.OsVersion(), 0);
+  EXPECT_EQ(parsed.KernelCommandLine(), "");
 
-  ReadWindowView kernel = parsed->Kernel();
-  EXPECT_THAT(ReadToString(kernel), IsOkAndValue(""));
+  EXPECT_THAT(ReadToString(parsed.Kernel()), IsOkAndValue(""));
+  EXPECT_THAT(ReadToString(parsed.Ramdisk()), IsOkAndValue(""));
 
-  ReadWindowView ramdisk = parsed->Ramdisk();
-  EXPECT_THAT(ReadToString(ramdisk), IsOkAndValue(""));
-
-  std::optional<ReadWindowView> signature = parsed->Signature();
+  std::optional<ReadWindowView> signature = parsed.Signature();
   ASSERT_TRUE(signature.has_value());
   EXPECT_THAT(ReadToString(*signature), IsOkAndValue(""));
 }
@@ -96,34 +86,29 @@ TEST(BootImageTest, AllFieldsEmpty) {
 TEST(BootImageTest, AllFieldsLongValue) {
   std::string over_one_page(kBootImagePageSize + 1, ' ');
 
-  Result<ConcatReaderSeeker> image = BootImageBuilder()
-                                         .Kernel(InMemoryIo(over_one_page))
-                                         .Ramdisk(InMemoryIo(over_one_page))
-                                         .Signature(InMemoryIo(over_one_page))
-                                         .BuildV4();
-  ASSERT_THAT(image, IsOk());
+  ConcatReaderSeeker image = CF_ASSERT(
+      BootImageBuilder()
+          .Kernel(std::make_unique<OwningInMemoryIo>(over_one_page))
+          .Ramdisk(std::make_unique<OwningInMemoryIo>(over_one_page))
+          .Signature(std::make_unique<OwningInMemoryIo>(over_one_page))
+          .BuildV4());
 
-  Result<BootImage> parsed =
-      BootImage::Read(std::make_unique<ConcatReaderSeeker>(std::move(*image)));
-  ASSERT_THAT(parsed, IsOk());
+  BootImage parsed = CF_ASSERT(
+      BootImage::Read(std::make_unique<ConcatReaderSeeker>(std::move(image))));
 
-  ReadWindowView kernel = parsed->Kernel();
-  EXPECT_THAT(ReadToString(kernel), IsOkAndValue(over_one_page));
+  EXPECT_THAT(ReadToString(parsed.Kernel()), IsOkAndValue(over_one_page));
+  EXPECT_THAT(ReadToString(parsed.Ramdisk()), IsOkAndValue(over_one_page));
 
-  ReadWindowView ramdisk = parsed->Ramdisk();
-  EXPECT_THAT(ReadToString(ramdisk), IsOkAndValue(over_one_page));
-
-  std::optional<ReadWindowView> signature = parsed->Signature();
+  std::optional<ReadWindowView> signature = parsed.Signature();
   ASSERT_TRUE(signature.has_value());
   EXPECT_THAT(ReadToString(*signature), IsOkAndValue(over_one_page));
 }
 
 TEST(BootImageTest, KernelCommandLineTooLong) {
-  Result<ConcatReaderSeeker> image =
-      BootImageBuilder()
-          .KernelCommandLine(std::string(kBootImagePageSize, ' '))
-          .BuildV4();
-  EXPECT_THAT(image, IsError());
+  EXPECT_THAT(BootImageBuilder()
+                  .KernelCommandLine(std::string(kBootImagePageSize, ' '))
+                  .BuildV4(),
+              IsError());
 }
 
 }  // namespace

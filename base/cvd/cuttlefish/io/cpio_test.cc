@@ -25,10 +25,10 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/io/in_memory.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/io/string.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -79,16 +79,11 @@ TEST(CpioReaderTest, ReadNewc) {
   // 110 + 11 = 121. Pad to 124.
   archive += std::string(3, '\0');
 
-  std::unique_ptr<ReaderWriterSeeker> io = InMemoryIo(archive);
-  Result<std::unique_ptr<CpioReader>> reader_result =
-      CpioReader::Open(std::move(io));
-  ASSERT_THAT(reader_result, IsOk());
-  std::unique_ptr<CpioReader> reader = std::move(*reader_result);
+  auto io = std::make_unique<OwningInMemoryIo>(archive);
+  std::unique_ptr<CpioReader> reader =
+      CF_ASSERT(CpioReader::Open(std::move(io)));
 
-  Result<std::unique_ptr<ReaderSeeker>> file_result =
-      reader->OpenReadOnly("file1");
-  ASSERT_THAT(file_result, IsOk());
-  std::unique_ptr<ReaderSeeker> file = std::move(*file_result);
+  std::unique_ptr<ReaderSeeker> file = CF_ASSERT(reader->OpenReadOnly("file1"));
 
   EXPECT_THAT(ReadToString(*file), IsOkAndValue("Hello World\n"));
 
@@ -130,16 +125,11 @@ TEST(CpioReaderTest, ReadOdc) {
   archive += "TRAILER!!!";
   archive += '\0';
 
-  std::unique_ptr<ReaderWriterSeeker> io = InMemoryIo(archive);
-  Result<std::unique_ptr<CpioReader>> reader_result =
-      CpioReader::Open(std::move(io));
-  ASSERT_THAT(reader_result, IsOk());
-  std::unique_ptr<CpioReader> reader = std::move(*reader_result);
+  auto io = std::make_unique<OwningInMemoryIo>(archive);
+  std::unique_ptr<CpioReader> reader =
+      CF_ASSERT(CpioReader::Open(std::move(io)));
 
-  Result<std::unique_ptr<ReaderSeeker>> file_result =
-      reader->OpenReadOnly("file1");
-  ASSERT_THAT(file_result, IsOk());
-  std::unique_ptr<ReaderSeeker> file = std::move(*file_result);
+  std::unique_ptr<ReaderSeeker> file = CF_ASSERT(reader->OpenReadOnly("file1"));
 
   EXPECT_THAT(ReadToString(*file), IsOkAndValue("Hello World\n"));
 
@@ -200,17 +190,11 @@ TEST(CpioReaderTest, ReadBin) {
   archive.push_back('\0');
   archive.push_back('\0');  // Pad to 2 bytes (37 + 1 = 38)
 
-  std::unique_ptr<ReaderWriterSeeker> io =
-      InMemoryIo(std::string_view(archive.data(), archive.size()));
-  Result<std::unique_ptr<CpioReader>> reader_result =
-      CpioReader::Open(std::move(io));
-  ASSERT_THAT(reader_result, IsOk());
-  std::unique_ptr<CpioReader> reader = std::move(*reader_result);
+  auto io = std::make_unique<OwningInMemoryIo>(archive);
+  std::unique_ptr<CpioReader> reader =
+      CF_ASSERT(CpioReader::Open(std::move(io)));
 
-  Result<std::unique_ptr<ReaderSeeker>> file_result =
-      reader->OpenReadOnly("file1");
-  ASSERT_THAT(file_result, IsOk());
-  std::unique_ptr<ReaderSeeker> file = std::move(*file_result);
+  std::unique_ptr<ReaderSeeker> file = CF_ASSERT(reader->OpenReadOnly("file1"));
 
   EXPECT_THAT(ReadToString(*file), IsOkAndValue("Hello World\n"));
 
@@ -278,24 +262,18 @@ TEST(CpioReaderTest, ReadMultipleFiles) {
   archive += '\0';
   archive += std::string(3, '\0');  // Pad to 4 bytes (110 + 11 = 121 -> 124)
 
-  std::unique_ptr<ReaderWriterSeeker> io = InMemoryIo(archive);
-  Result<std::unique_ptr<CpioReader>> reader_result =
-      CpioReader::Open(std::move(io));
-  ASSERT_THAT(reader_result, IsOk());
-  std::unique_ptr<CpioReader> reader = std::move(*reader_result);
+  auto io = std::make_unique<OwningInMemoryIo>(archive);
+  std::unique_ptr<CpioReader> reader =
+      CF_ASSERT(CpioReader::Open(std::move(io)));
 
   // Verify File 1
-  Result<std::unique_ptr<ReaderSeeker>> file1_result =
-      reader->OpenReadOnly("file1");
-  ASSERT_THAT(file1_result, IsOk());
-  std::unique_ptr<ReaderSeeker> file1 = std::move(*file1_result);
+  std::unique_ptr<ReaderSeeker> file1 =
+      CF_ASSERT(reader->OpenReadOnly("file1"));
   EXPECT_THAT(ReadToString(*file1), IsOkAndValue("Hello World\n"));
 
   // Verify File 2
-  Result<std::unique_ptr<ReaderSeeker>> file2_result =
-      reader->OpenReadOnly("file2");
-  ASSERT_THAT(file2_result, IsOk());
-  std::unique_ptr<ReaderSeeker> file2 = std::move(*file2_result);
+  std::unique_ptr<ReaderSeeker> file2 =
+      CF_ASSERT(reader->OpenReadOnly("file2"));
   EXPECT_THAT(ReadToString(*file2), IsOkAndValue("Goodbye World\n"));
 }
 

@@ -18,6 +18,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -26,10 +27,9 @@
 
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
-#include "cuttlefish/io/in_memory.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
-#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace {
@@ -49,27 +49,23 @@ TEST(BufferedZipSourceTest, ManySmallReads) {
   for (int i = 0; i < kPrimeUnderlyingDataSize; i++) {
     data_in.push_back(i);
   }
-  Result<WritableZipSource> data_source =
-      WritableZipSource::BorrowData(data_in.data(), data_in.size());
-  ASSERT_THAT(data_source, IsOk());
+  WritableZipSource data_source =
+      CF_ASSERT(WritableZipSource::BorrowData(data_in.data(), data_in.size()));
 
-  Result<SeekableZipSource> buffered =
-      BufferZipSource(std::move(*data_source), kPrimeBufferSize);
-  ASSERT_THAT(buffered, IsOk());
+  SeekableZipSource buffered =
+      CF_ASSERT(BufferZipSource(std::move(data_source), kPrimeBufferSize));
 
-  Result<SeekingZipSourceReader> reader = buffered->Reader();
-  ASSERT_THAT(reader, IsOk());
+  SeekingZipSourceReader reader = CF_ASSERT(buffered.Reader());
 
   std::vector<uint8_t> data_out(data_in.size() + kPrimeReadSize);
   size_t read_offset = 0;
   while (true) {
     uint8_t* ptr = &data_out[read_offset];
-    Result<size_t> amount_read = reader->Read(ptr, kPrimeReadSize);
-    ASSERT_THAT(amount_read, IsOk());
-    if (*amount_read == 0) {
+    size_t amount_read = CF_ASSERT(reader.Read(ptr, kPrimeReadSize));
+    if (amount_read == 0) {
       break;
     }
-    read_offset += *amount_read;
+    read_offset += amount_read;
   }
   data_out.resize(read_offset);
   EXPECT_EQ(data_in, data_out);
@@ -81,24 +77,21 @@ TEST(BufferedZipSourceTest, ReadBackwards) {
   for (int i = 0; i < kCommonUnderlyingDataSize; i++) {
     data_in.push_back(i);
   }
-  Result<WritableZipSource> data_source =
-      WritableZipSource::BorrowData(data_in.data(), data_in.size());
-  ASSERT_THAT(data_source, IsOk());
+  WritableZipSource data_source =
+      CF_ASSERT(WritableZipSource::BorrowData(data_in.data(), data_in.size()));
 
-  Result<SeekableZipSource> buffered =
-      BufferZipSource(std::move(*data_source), kCommonBufferSize);
-  ASSERT_THAT(buffered, IsOk());
+  SeekableZipSource buffered =
+      CF_ASSERT(BufferZipSource(std::move(data_source), kCommonBufferSize));
 
-  Result<SeekingZipSourceReader> reader = buffered->Reader();
-  ASSERT_THAT(reader, IsOk());
+  SeekingZipSourceReader reader = CF_ASSERT(buffered.Reader());
 
   std::vector<uint8_t> data_out(data_in.size());
   size_t read_offset = data_out.size() - kCommonReadSize;
   while (true) {
-    ASSERT_THAT(reader->SeekSet(read_offset), IsOk());
+    ASSERT_THAT(reader.SeekSet(read_offset), IsOk());
     uint8_t* ptr = &data_out[read_offset];
-    Result<size_t> amount_read = reader->Read(ptr, kCommonReadSize);
-    ASSERT_THAT(amount_read, IsOkAndValue(kCommonReadSize));
+    ASSERT_THAT(reader.Read(ptr, kCommonReadSize),
+                IsOkAndValue(kCommonReadSize));
     if (read_offset == 0) {
       break;
     }
@@ -112,27 +105,23 @@ TEST(BufferedZipSourceTest, ManySmallReadsInMemoryIo) {
   for (int i = 0; i < kPrimeUnderlyingDataSize; i++) {
     data_in.push_back(i);
   }
-  Result<WritableZipSource> data_source =
-      WritableZipSource::BorrowData(data_in.data(), data_in.size());
-  ASSERT_THAT(data_source, IsOk());
+  WritableZipSource data_source =
+      CF_ASSERT(WritableZipSource::BorrowData(data_in.data(), data_in.size()));
 
-  Result<SeekableZipSource> buffered =
-      BufferZipSource(InMemoryIo(data_in), kPrimeBufferSize);
-  ASSERT_THAT(buffered, IsOk());
+  SeekableZipSource buffered = CF_ASSERT(BufferZipSource(
+      std::make_unique<OwningInMemoryIo>(data_in), kPrimeBufferSize));
 
-  Result<SeekingZipSourceReader> reader = buffered->Reader();
-  ASSERT_THAT(reader, IsOk());
+  SeekingZipSourceReader reader = CF_ASSERT(buffered.Reader());
 
   std::vector<char> data_out(data_in.size() + kPrimeReadSize);
   size_t read_offset = 0;
   while (true) {
     char* ptr = &data_out[read_offset];
-    Result<size_t> amount_read = reader->Read(ptr, kPrimeReadSize);
-    ASSERT_THAT(amount_read, IsOk());
-    if (*amount_read == 0) {
+    size_t amount_read = CF_ASSERT(reader.Read(ptr, kPrimeReadSize));
+    if (amount_read == 0) {
       break;
     }
-    read_offset += *amount_read;
+    read_offset += amount_read;
   }
   data_out.resize(read_offset);
   EXPECT_EQ(data_in, data_out);

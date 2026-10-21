@@ -15,32 +15,29 @@
 
 #include "cuttlefish/io/length.h"
 
-#include <memory>
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/io/in_memory.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 namespace {
 
 TEST(LengthTest, LengthEmpty) {
-  ASSERT_THAT(Length(*InMemoryIo()), IsOkAndValue(0));
+  ASSERT_THAT(Length(OwningInMemoryIo()), IsOkAndValue(0));
 }
 
 TEST(LengthTest, LengthWithData) {
-  ASSERT_THAT(Length(*InMemoryIo({1, 2, 3})), IsOkAndValue(3));
+  ASSERT_THAT(Length(OwningInMemoryIo({1, 2, 3})), IsOkAndValue(3));
 }
 
 TEST(LengthTest, ResetsSeekPos) {
-  std::unique_ptr<ReaderWriterSeeker> data = InMemoryIo({1, 2, 3, 4, 5});
+  OwningInMemoryIo data({1, 2, 3, 4, 5});
 
-  ASSERT_THAT(data->SeekSet(2), IsOkAndValue(2));
-  ASSERT_THAT(Length(*data), IsOkAndValue(5));
-  ASSERT_THAT(data->SeekCur(0), IsOkAndValue(2));
+  ASSERT_THAT(data.SeekSet(2), IsOkAndValue(2));
+  ASSERT_THAT(Length(data), IsOkAndValue(5));
+  ASSERT_THAT(data.SeekCur(0), IsOkAndValue(2));
 }
 
 }  // namespace

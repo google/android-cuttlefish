@@ -25,14 +25,14 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/io/filesystem.h"
-#include "cuttlefish/io/in_memory.h"
+#include "cuttlefish/io/in_memory_fs.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/io/writer.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -48,96 +48,81 @@ TEST(Lz4LegacyTest, RoundTrip) {
     original_data += original_data;
   }
 
-  std::unique_ptr<ReadWriteFilesystem> fs = InMemoryFilesystem();
+  InMemoryFilesystem fs;
 
-  Result<std::unique_ptr<ReaderWriterSeeker>> writer_sink =
-      fs->CreateFile(kTestFile);
-  ASSERT_THAT(writer_sink, IsOk());
-  Result<std::unique_ptr<Writer>> writer =
-      Lz4LegacyWriter(std::move(*writer_sink));
-  ASSERT_THAT(writer, IsOk());
+  std::unique_ptr<ReaderWriterSeeker> writer_sink =
+      CF_ASSERT(fs.CreateFile(kTestFile));
+  std::unique_ptr<Writer> writer =
+      CF_ASSERT(Lz4LegacyWriter(std::move(writer_sink)));
 
-  EXPECT_THAT((*writer)->Write(original_data.data(), original_data.size()),
+  EXPECT_THAT(writer->Write(original_data.data(), original_data.size()),
               IsOkAndValue(original_data.size()));
 
-  Result<std::unique_ptr<ReaderSeeker>> reader_source =
-      fs->OpenReadOnly(kTestFile);
-  ASSERT_THAT(reader_source, IsOk());
-  Result<std::unique_ptr<Reader>> reader =
-      Lz4LegacyReader(std::move(*reader_source));
-  ASSERT_THAT(reader, IsOk());
+  std::unique_ptr<ReaderSeeker> reader_source =
+      CF_ASSERT(fs.OpenReadOnly(kTestFile));
+  std::unique_ptr<Reader> reader =
+      CF_ASSERT(Lz4LegacyReader(std::move(reader_source)));
 
-  Result<std::string> decompressed_data = ReadToString(**reader);
-  EXPECT_THAT(decompressed_data, IsOkAndValue(original_data));
+  EXPECT_THAT(ReadToString(*reader), IsOkAndValue(original_data));
 }
 
 TEST(Lz4LegacyTest, MultipleBlocks) {
   static constexpr size_t kTotalSize = 10 << 20;
   const std::string original_data(kTotalSize, 'a');
 
-  std::unique_ptr<ReadWriteFilesystem> fs = InMemoryFilesystem();
+  InMemoryFilesystem fs;
 
-  Result<std::unique_ptr<ReaderWriterSeeker>> writer_sink =
-      fs->CreateFile(kTestFile);
-  ASSERT_THAT(writer_sink, IsOk());
-  Result<std::unique_ptr<Writer>> writer =
-      Lz4LegacyWriter(std::move(*writer_sink));
-  ASSERT_THAT(writer, IsOk());
+  std::unique_ptr<ReaderWriterSeeker> writer_sink =
+      CF_ASSERT(fs.CreateFile(kTestFile));
+  std::unique_ptr<Writer> writer =
+      CF_ASSERT(Lz4LegacyWriter(std::move(writer_sink)));
 
-  EXPECT_THAT(WriteExact(**writer, original_data.data(), original_data.size()),
+  EXPECT_THAT(WriteExact(*writer, original_data.data(), original_data.size()),
               IsOk());
 
-  Result<std::unique_ptr<ReaderSeeker>> reader_source =
-      fs->OpenReadOnly(kTestFile);
-  ASSERT_THAT(reader_source, IsOk());
-  Result<std::unique_ptr<Reader>> reader =
-      Lz4LegacyReader(std::move(*reader_source));
-  ASSERT_THAT(reader, IsOk());
+  std::unique_ptr<ReaderSeeker> reader_source =
+      CF_ASSERT(fs.OpenReadOnly(kTestFile));
+  std::unique_ptr<Reader> reader =
+      CF_ASSERT(Lz4LegacyReader(std::move(reader_source)));
 
-  Result<std::string> decompressed_data = ReadToString(**reader);
-  EXPECT_THAT(decompressed_data, IsOkAndValue(original_data));
+  EXPECT_THAT(ReadToString(*reader), IsOkAndValue(original_data));
 }
 
 TEST(Lz4LegacyTest, RejectsWriteAfterFooter) {
-  Result<std::unique_ptr<Writer>> writer = Lz4LegacyWriter(InMemoryIo());
-  ASSERT_THAT(writer, IsOk());
+  std::unique_ptr<Writer> writer =
+      CF_ASSERT(Lz4LegacyWriter(std::make_unique<OwningInMemoryIo>()));
 
   // A small write triggers the footer
   std::string data = "some data";
-  EXPECT_THAT((*writer)->Write(data.data(), data.size()),
+  EXPECT_THAT(writer->Write(data.data(), data.size()),
               IsOkAndValue(data.size()));
 
   // Future writes should fail
-  EXPECT_THAT((*writer)->Write(data.data(), data.size()), IsError());
+  EXPECT_THAT(writer->Write(data.data(), data.size()), IsError());
 }
 
 TEST(Lz4LegacyTest, ExactlyBlockSizeTriggersFooter) {
-  std::unique_ptr<ReadWriteFilesystem> fs = InMemoryFilesystem();
+  InMemoryFilesystem fs;
 
-  Result<std::unique_ptr<ReaderWriterSeeker>> writer_sink =
-      fs->CreateFile(kTestFile);
-  ASSERT_THAT(writer_sink, IsOk());
-  Result<std::unique_ptr<Writer>> writer =
-      Lz4LegacyWriter(std::move(*writer_sink));
-  ASSERT_THAT(writer, IsOk());
+  std::unique_ptr<ReaderWriterSeeker> writer_sink =
+      CF_ASSERT(fs.CreateFile(kTestFile));
+  std::unique_ptr<Writer> writer =
+      CF_ASSERT(Lz4LegacyWriter(std::move(writer_sink)));
 
   std::string data(kLz4LegacyFrameBlockSize, 'x');
-  EXPECT_THAT((*writer)->Write(data.data(), data.size()),
+  EXPECT_THAT(writer->Write(data.data(), data.size()),
               IsOkAndValue(kLz4LegacyFrameBlockSize));
 
   // It should be closed now; try adding a bit more.
-  EXPECT_THAT((*writer)->Write("more", 4), IsError());
+  EXPECT_THAT(writer->Write("more", 4), IsError());
 
   // Verify it can be read back
-  Result<std::unique_ptr<ReaderSeeker>> reader_source =
-      fs->OpenReadOnly(kTestFile);
-  ASSERT_THAT(reader_source, IsOk());
-  Result<std::unique_ptr<Reader>> reader =
-      Lz4LegacyReader(std::move(*reader_source));
-  ASSERT_THAT(reader, IsOk());
+  std::unique_ptr<ReaderSeeker> reader_source =
+      CF_ASSERT(fs.OpenReadOnly(kTestFile));
+  std::unique_ptr<Reader> reader =
+      CF_ASSERT(Lz4LegacyReader(std::move(reader_source)));
 
-  Result<std::string> decompressed_data = ReadToString(**reader);
-  EXPECT_THAT(decompressed_data, IsOkAndValue(data));
+  EXPECT_THAT(ReadToString(*reader), IsOkAndValue(data));
 }
 
 }  // namespace

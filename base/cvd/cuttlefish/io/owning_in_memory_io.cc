@@ -15,6 +15,7 @@
 
 #include "cuttlefish/io/owning_in_memory_io.h"
 
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -26,5 +27,8 @@ OwningInMemoryIo::OwningInMemoryIo() : InMemoryIo(data_, mutex_) {}
 
 OwningInMemoryIo::OwningInMemoryIo(std::vector<char> data)
     : InMemoryIo(data_, mutex_), data_(std::move(data)) {}
+
+OwningInMemoryIo::OwningInMemoryIo(std::string_view data)
+    : InMemoryIo(data_, mutex_), data_(data.begin(), data.end()) {}
 
 }  // namespace cuttlefish
