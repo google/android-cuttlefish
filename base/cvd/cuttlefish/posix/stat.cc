@@ -46,4 +46,20 @@ Result<struct stat, int> Stat(std::string_view path) {
   return CF_EXPECT(Stat(std::string(path)));
 }
 
+Result<struct stat, int> Lstat(const char* path) {
+  struct stat ret;
+  int success = TEMP_FAILURE_RETRY(lstat(path, &ret));
+  CF_EXPECTVF(success == 0, errno, "Lstat('{}') failed: {}", path,
+              StrError(errno));
+  return ret;
+}
+
+Result<struct stat, int> Lstat(const std::string& path) {
+  return CF_EXPECT(Lstat(path.c_str()));
+}
+
+Result<struct stat, int> Lstat(std::string_view path) {
+  return CF_EXPECT(Lstat(std::string(path)));
+}
+
 }  // namespace cuttlefish
