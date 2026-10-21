@@ -57,5 +57,5 @@ while getopts ":hb:t:a:o:" opt; do
 done
 
 url="https://ci.android.com/builds/submitted/${build_id}/${build_target}/latest/raw/${artifact_name}"
-curl --fail -L --retry 3 "${url}" -o "${output}"
+curl --fail -L --retry 8 "${url}" -o "${output}"
 
