@@ -69,12 +69,6 @@ std::string AbsolutePath(std::string_view path);
 
 std::string CurrentDirectory();
 
-struct FileSizes {
-  off_t sparse_size;
-  off_t disk_size;
-};
-FileSizes SparseFileSizes(const std::string& path);
-
 // Find file with name |target_name| under directory |path|, return path to
 // found file(if any)
 Result<std::string> FindFile(const std::string& path,
