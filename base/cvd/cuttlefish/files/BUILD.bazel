@@ -100,6 +100,7 @@ cf_cc_library(
     srcs = ["is_symlink.cc"],
     hdrs = ["is_symlink.h"],
     deps = [
+        "//cuttlefish/posix:lstat",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],

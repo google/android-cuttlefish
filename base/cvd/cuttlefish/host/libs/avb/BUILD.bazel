@@ -12,6 +12,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/files:copy",
         "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/posix:lstat",
         "//cuttlefish/posix:remove",
         "//cuttlefish/posix:rename",
         "//cuttlefish/posix:stat",

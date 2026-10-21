@@ -25,6 +25,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
@@ -36,6 +37,7 @@
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/posix/lstat.h"
 #include "cuttlefish/posix/stat.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/proc_file_utils.h"
@@ -50,15 +52,11 @@ Result<void> CleanPriorFiles(const std::string& path,
     VLOG(0) << "Preserving: " << path;
     return {};
   }
-  struct stat statbuf;
-  if (lstat(path.c_str(), &statbuf) < 0) {
-    int error_num = errno;
-    if (error_num == ENOENT) {
-      return {};
-    } else {
-      return CF_ERRNO("Could not stat \"" << path);
-    }
+  Result<struct stat, int> statbuf_res = Lstat(path);
+  if (!statbuf_res.has_value() && *statbuf_res.error() == ENOENT) {
+    return {};
   }
+  struct stat statbuf = CF_EXPECT(std::move(statbuf_res));
   if ((statbuf.st_mode & S_IFMT) != S_IFDIR) {
     VLOG(0) << "Deleting: " << path;
     if (unlink(path.c_str()) < 0) {

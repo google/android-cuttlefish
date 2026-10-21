@@ -33,6 +33,7 @@
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/files/copy.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/posix/lstat.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/stat.h"
@@ -178,9 +179,7 @@ Result<void> Avb::MakeVbMetaImage(
 }
 
 Result<void> EnforceVbMetaSize(const std::string& path) {
-  struct stat link_stat{};
-  CF_EXPECTF(lstat(path.c_str(), &link_stat) == 0, "lstat('{}') failed: {}",
-             path, StrError(errno));
+  struct stat link_stat = CF_EXPECT(Lstat(path));
   if (!S_ISREG(link_stat.st_mode)) {
     // A symlink or other special file may refer to a file that is shared, so
     // pad a copy of its contents rather than writing through it.

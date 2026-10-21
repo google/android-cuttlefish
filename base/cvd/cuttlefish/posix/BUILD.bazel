@@ -5,6 +5,18 @@ package(
 )
 
 cf_cc_library(
+    name = "lstat",
+    srcs = ["lstat.cc"],
+    hdrs = ["lstat.h"],
+    deps = [
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:temp_failure_retry",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "rename",
     srcs = ["rename.cc"],
     hdrs = ["rename.h"],

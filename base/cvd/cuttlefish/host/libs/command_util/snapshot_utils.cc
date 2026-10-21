@@ -40,6 +40,7 @@
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/posix/lstat.h"
 #include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/posix/realpath.h"
 #include "cuttlefish/posix/remove.h"
@@ -88,9 +89,7 @@ Result<void> CopyDirectoryImpl(
 
     VLOG(0) << "Handling... " << src_path;
 
-    struct stat src_stat;
-    CF_EXPECTF(lstat(src_path.data(), &src_stat) != -1, "Failed in lstat({})",
-               src_path);
+    struct stat src_stat = CF_EXPECT(Lstat(src_path));
     if (IsSymlink(src_stat)) {
       std::string target =
           CF_EXPECTF(ReadLink(src_path), "Readlink failed for {}", src_path);

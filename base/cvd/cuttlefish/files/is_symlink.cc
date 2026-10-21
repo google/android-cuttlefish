@@ -20,15 +20,14 @@
 
 #include <string>
 
+#include "cuttlefish/posix/lstat.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 Result<bool> IsSymlink(const std::string& path) {
-  struct stat st{};
-  CF_EXPECT_EQ(lstat(path.c_str(), &st), 0);
-  return S_ISLNK(st.st_mode);
+  return S_ISLNK(CF_EXPECT(Lstat(path)).st_mode);
 }
 
 }  // namespace cuttlefish
