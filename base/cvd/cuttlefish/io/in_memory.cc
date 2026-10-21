@@ -15,71 +15,17 @@
 
 #include "cuttlefish/io/in_memory.h"
 
-#include <stdint.h>
-
-#include <functional>
-#include <map>
 #include <memory>
-#include <mutex>
-#include <shared_mutex>
-#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
 #include "cuttlefish/io/filesystem.h"
-#include "cuttlefish/io/in_memory_io.h"
+#include "cuttlefish/io/in_memory_fs.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/owning_in_memory_io.h"
-#include "cuttlefish/result/expect.h"
-#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
-namespace {
-
-class InMemoryFilesystemImpl : public ReadWriteFilesystem {
- public:
-  Result<std::unique_ptr<ReaderSeeker>> OpenReadOnly(
-      std::string_view path) override {
-    return CF_EXPECT(OpenReadWrite(path));
-  }
-
-  Result<uint32_t> FileAttributes(std::string_view path) const override {
-    return 0644;
-  }
-
-  Result<std::unique_ptr<ReaderWriterSeeker>> CreateFile(
-      std::string_view path) override {
-    std::lock_guard lock(mutex_);
-    auto [it, inserted] =
-        files_.try_emplace(std::string(path), std::vector<char>{});
-    CF_EXPECTF(!!inserted, "'{}' already exists", path);
-    return std::make_unique<class InMemoryIo>(it->second, mutex_);
-  }
-
-  Result<void> DeleteFile(std::string_view path) override {
-    std::lock_guard lock(mutex_);
-    auto it = files_.find(path);
-    CF_EXPECTF(it != files_.end(), "No such file '{}'", path);
-    files_.erase(it);
-    return {};
-  }
-
-  Result<std::unique_ptr<ReaderWriterSeeker>> OpenReadWrite(
-      std::string_view path) override {
-    std::lock_guard lock(mutex_);
-    auto it = files_.find(path);
-    CF_EXPECTF(it != files_.end(), "'{}' does not exist", path);
-    return std::make_unique<class InMemoryIo>(it->second, mutex_);
-  }
-
- private:
-  // TODO: schuffelen - add per-file mutexes
-  std::map<std::string, std::vector<char>, std::less<void>> files_;
-  std::shared_mutex mutex_;
-};
-
-}  // namespace
 
 std::unique_ptr<ReaderWriterSeeker> InMemoryIo() {
   return std::make_unique<OwningInMemoryIo>();
@@ -95,7 +41,7 @@ std::unique_ptr<ReaderWriterSeeker> InMemoryIo(std::vector<char> data) {
 }
 
 std::unique_ptr<ReadWriteFilesystem> InMemoryFilesystem() {
-  return std::make_unique<InMemoryFilesystemImpl>();
+  return std::make_unique<class InMemoryFilesystem>();
 }
 
 }  // namespace cuttlefish
