@@ -83,6 +83,8 @@ jobs:
         writable: true
     - name: Mount Bazel vendor cache
       uses: ./.github/actions/mount-bazel-vendor-cache
+      with:
+        writable: true
     - name: Run cvd unit tests
       uses: ./.github/actions/run-cvd-unit-tests
   update-bazel-cache-and-deploy-debian-package-amd64:
@@ -106,6 +108,8 @@ jobs:
         writable: '${{ inputs.update-cache }}'
     - name: Mount Bazel vendor cache
       uses: ./.github/actions/mount-bazel-vendor-cache
+      with:
+        writable: '${{ inputs.update-cache }}'
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
       with:
@@ -143,6 +147,8 @@ jobs:
         writable: '${{ inputs.update-cache }}'
     - name: Mount Bazel vendor cache
       uses: ./.github/actions/mount-bazel-vendor-cache
+      with:
+        writable: '${{ inputs.update-cache }}'
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
       with:

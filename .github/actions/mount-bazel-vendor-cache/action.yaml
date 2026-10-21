@@ -8,6 +8,10 @@ inputs:
     description: 'Bazel major version. The vendor directory layout differs between majors.'
     required: false
     default: "8"
+  writable:
+    description: 'Save the cache on a miss. Only the cache update on main should write.'
+    required: false
+    default: "false"
 runs:
   using: "composite"
   steps:
@@ -18,7 +22,16 @@ runs:
     shell: bash
     env:
       INPUTS_BAZEL_VERSION: ${{ inputs.bazel-version }}
+  - name: Restore vendor cache
+    if: inputs.writable != 'true'
+    uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
+    with:
+      path: base/cvd/vendor_src
+      key: ${{ env.VENDOR_CACHE_KEY_PREFIX }}-${{ env.VENDOR_DEPS_HASH }}
+      restore-keys: |
+        ${{ env.VENDOR_CACHE_KEY_PREFIX }}-
   - name: Restore and save vendor cache
+    if: inputs.writable == 'true'
     uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
     with:
       path: base/cvd/vendor_src
