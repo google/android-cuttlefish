@@ -40,22 +40,27 @@ version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | g
   cut -d: -f2 | cut -d" " -f2 )
 echo "AFTER UPGRADE VERSION: ${version}"
 
-sudo chroot /mnt/image /usr/bin/apt-get install -y ${linux_image_deb}
+if sudo chroot /mnt/image /usr/bin/apt-cache policy "${linux_image_deb}" | grep -q -- '-backports/'; then
+  codename=$(sudo chroot /mnt/image /bin/sh -c '. /etc/os-release && echo "${VERSION_CODENAME}"')
+  sudo chroot /mnt/image /usr/bin/apt-get install -y -t "${codename}-backports" "${linux_image_deb}"
+else
+  sudo chroot /mnt/image /usr/bin/apt-get install -y "${linux_image_deb}"
+fi
 
-version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
-  cut -d: -f2 | cut -d" " -f2)
+version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -l | grep '^ii' | awk '{print $2}' | grep "^${linux_image_deb}$" || true)
 echo "END VERSION: ${version}"
 
 if [ "${version}" != "${linux_image_deb}" ]; then
   echo "CREATE IMAGE FAILED!!!"
-  echo "Expected ${linux_image_deb}, got: ${version}"
+  echo "Expected ${linux_image_deb} to be installed, but it was not found."
   exit 1
 fi
 
-# Remove old kernel packages, keeping only the target kernel and the
-# linux-image-cloud-${arch} meta-package.
+# Remove old kernel packages (including the linux-image-cloud-${arch}
+# meta-package, which would otherwise cause apt to pull in the default
+# security kernel when its dependency is purged), keeping only the target kernel.
 old_kernels=$(sudo chroot /mnt/image /usr/bin/dpkg -l | grep '^ii' | awk '{print $2}' | \
-  grep '^linux-image-' | grep -v "^${linux_image_deb}$" | grep -v "^linux-image-cloud-${arch}$" || true)
+  grep '^linux-image-' | grep -v "^${linux_image_deb}$" || true)
 if [ -n "${old_kernels}" ]; then
   echo "Removing old kernel packages: ${old_kernels}"
   sudo chroot /mnt/image /usr/bin/apt-get purge -y ${old_kernels}
