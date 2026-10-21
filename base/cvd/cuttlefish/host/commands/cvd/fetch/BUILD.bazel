@@ -85,8 +85,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:get_optional",
-        "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:chrome_os_build_string",
+        "//cuttlefish/host/libs/web/android_build_string",
     ],
 )
 
@@ -136,7 +136,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_api",
-        "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:android_build_url",
         "//cuttlefish/host/libs/web:build_api",
         "//cuttlefish/host/libs/web:caching_build_api",
@@ -145,6 +144,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:http_build_api",
         "//cuttlefish/host/libs/web:luci_build_api",
         "//cuttlefish/host/libs/web:oauth2_consent",
+        "//cuttlefish/host/libs/web/android_build_string",
         "//cuttlefish/host/libs/web/credential_source",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
@@ -229,9 +229,9 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/fetch:target_directories",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/web:android_build",
-        "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:build_api",
         "//cuttlefish/host/libs/web:url_namespace",
+        "//cuttlefish/host/libs/web/android_build_string",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
@@ -265,10 +265,10 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:file_source",
         "//cuttlefish/host/libs/log_names",
         "//cuttlefish/host/libs/web:android_build",
-        "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:chrome_os_build_string",
         "//cuttlefish/host/libs/web:luci_build_api",
         "//cuttlefish/host/libs/web:url_namespace",
+        "//cuttlefish/host/libs/web/android_build_string",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/io",
         "//cuttlefish/io:string",
@@ -298,7 +298,7 @@ cf_cc_test(
     srcs = ["fetch_cvd_parser_test.cpp"],
     deps = [
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
-        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web/android_build_string",
         "//cuttlefish/result",
         "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
@@ -354,7 +354,7 @@ cf_cc_library(
     hdrs = ["host_tools_target.h"],
     deps = [
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
-        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web/android_build_string",
     ],
 )
 
@@ -435,8 +435,8 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/flag_parser",
-        "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:chrome_os_build_string",
+        "//cuttlefish/host/libs/web/android_build_string",
         "//cuttlefish/result",
     ],
 )

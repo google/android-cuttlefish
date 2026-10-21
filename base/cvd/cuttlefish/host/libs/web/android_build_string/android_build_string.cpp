@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 
 #include <stddef.h>
 
