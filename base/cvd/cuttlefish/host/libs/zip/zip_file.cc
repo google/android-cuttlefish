@@ -31,6 +31,7 @@
 #include "cuttlefish/io/copy.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/native_filesystem.h"
+#include "cuttlefish/io/writer_seeker.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 

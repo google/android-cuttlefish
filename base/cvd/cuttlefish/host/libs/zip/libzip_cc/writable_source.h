@@ -22,7 +22,8 @@
 #include <string>
 
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/visitable.h"
+#include "cuttlefish/io/writer_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -59,6 +60,8 @@ class ZipSourceWriter : public WriterSeeker {
   ~ZipSourceWriter();
   ZipSourceWriter& operator=(ZipSourceWriter&&);
 
+  Result<void> Visit(IoVisitor&) override;
+
   /* Writes are not committed until `Finalize` is called. Returns number of
    * bytes written. */
   Result<uint64_t> Write(const void* data, uint64_t length) override;
@@ -67,6 +70,8 @@ class ZipSourceWriter : public WriterSeeker {
   Result<uint64_t, int> SeekEnd(int64_t offset) override;
   Result<uint64_t> PWrite(const void* data, uint64_t count,
                           uint64_t offset) override;
+
+  Result<void> Truncate(uint64_t size) override;
 
   /* Commits writes and closes the writer. */
   static Result<void> Finalize(ZipSourceWriter);

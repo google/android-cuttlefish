@@ -21,6 +21,7 @@
 #include "cuttlefish/io/seeker.h"
 #include "cuttlefish/io/visitable.h"
 #include "cuttlefish/io/writer.h"
+#include "cuttlefish/io/writer_seeker.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
@@ -34,15 +35,6 @@ class ReaderSeeker : public Reader, public Seeker {
   // Has the semantics of pread(2)
   virtual Result<uint64_t> PRead(void* buf, uint64_t count,
                                  uint64_t offset) const = 0;
-};
-
-class WriterSeeker : public Writer, public Seeker {
- public:
-  Result<void> Visit(IoVisitor&) override;
-  // Has the semantics of pwrite(2)
-  virtual Result<uint64_t> PWrite(const void* buf, uint64_t count,
-                                  uint64_t offset) = 0;
-  virtual Result<void> Truncate(uint64_t size);
 };
 
 class ReaderWriterSeeker : public ReaderSeeker, public WriterSeeker {
