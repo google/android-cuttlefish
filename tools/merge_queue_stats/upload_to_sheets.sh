@@ -5,13 +5,38 @@
 # Dashboard tab with time-series charts using `/google/bin/releases/gemini-agents-gsheets/gsheets`.
 #
 # Usage:
-#   ./upload_to_sheets.sh [SPREADSHEET_ID]
+#   ./upload_to_sheets.sh [--since YYYY-MM-DD] [SPREADSHEET_ID]
 #   (If SPREADSHEET_ID is omitted, creates a new spreadsheet and prints its URL.)
+#   --since YYYY-MM-DD  Only include merge queue attempts enqueued on/after this
+#                       date (default: full history).
 
 set -euo pipefail
 
 GSHEETS="${GSHEETS_BIN:-/google/bin/releases/gemini-agents-gsheets/gsheets}"
-SPREADSHEET_ID="${1:-}"
+SINCE=""
+SPREADSHEET_ID=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --since)
+      SINCE="$2"
+      shift 2
+      ;;
+    --since=*)
+      SINCE="${1#--since=}"
+      shift
+      ;;
+    *)
+      SPREADSHEET_ID="$1"
+      shift
+      ;;
+  esac
+done
+
+if [[ -n "${SINCE}" ]] && ! date -d "${SINCE}" +%Y-%m-%d 2>/dev/null | grep -qx "${SINCE}"; then
+  echo "ERROR: --since must be a valid date in YYYY-MM-DD format (got '${SINCE}')." >&2
+  exit 1
+fi
 
 if [[ -z "${SPREADSHEET_ID}" ]]; then
   create_out=$("${GSHEETS}" mutate create --title "Android Cuttlefish Merge Queue Health Report")
@@ -20,7 +45,7 @@ fi
 
 echo "Populating Google Sheet: https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}"
 
-python3 - "${SPREADSHEET_ID}" "${GSHEETS}" <<'PYEOF'
+python3 - "${SPREADSHEET_ID}" "${GSHEETS}" "${SINCE}" <<'PYEOF'
 import bisect
 import csv
 from collections import defaultdict
@@ -34,6 +59,7 @@ import time
 
 sheet_id_str = sys.argv[1]
 gsheets_bin = sys.argv[2]
+since_str = sys.argv[3] if len(sys.argv) > 3 else ""
 
 
 def run_gsheets(*args):
@@ -128,6 +154,9 @@ with open("merge_queue_attempts.json") as f:
     attempts = json.load(f)
 with open("merge_queue_rejections.json") as f:
     rejections = json.load(f)
+if since_str:
+    attempts = [a for a in attempts if a["enqueued_at"][:10] >= since_str]
+    rejections = [r for r in rejections if r["enqueued_at"][:10] >= since_str]
 with open("workflow_rejection_summary.csv") as f:
     wf_rows = list(csv.reader(f))
 with open("action_rejection_summary.csv") as f:
