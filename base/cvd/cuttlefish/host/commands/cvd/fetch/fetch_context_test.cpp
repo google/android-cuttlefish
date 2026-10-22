@@ -49,7 +49,7 @@ using ::testing::HasSubstr;
 using ::testing::Key;
 using ::testing::Not;
 
-class MockBuildApi : public BuildApi {
+class MockBuildApi : public BuildApi<BuildString, Build> {
  public:
   MOCK_METHOD(Result<Build>, GetBuild, (const BuildString&), (override));
   MOCK_METHOD(Result<std::string>, DownloadFile,
@@ -151,7 +151,7 @@ constexpr char kImgZip[] = "product-img-123.zip";
 
 // Delivers every artifact as an already-extracted directory, the way the CAS
 // downloader does with `prefer-uncompressed`.
-class UncompressedBuildApi : public BuildApi {
+class UncompressedBuildApi : public BuildApi<BuildString, Build> {
  public:
   Result<Build> GetBuild(const BuildString&) override {
     return CF_ERR("Not implemented");

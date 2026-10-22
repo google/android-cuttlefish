@@ -52,7 +52,7 @@ constexpr char kContentsSha256[] =
 
 // Records where the caching layer asked for each download and writes the bytes
 // a real API would have written.
-class RecordingBuildApi : public BuildApi {
+class RecordingBuildApi : public BuildApi<BuildString, Build> {
  public:
   Result<Build> GetBuild(const BuildString&) override {
     return CF_ERR("not used");
@@ -183,7 +183,7 @@ TEST_F(CachingBuildApiTests, DownloadFileChecksTheCachedDigestFail) {
 
 // Writes each artifact as a directory, as the CAS downloader does with
 // `prefer-uncompressed`.
-class UncompressedBuildApi : public BuildApi {
+class UncompressedBuildApi : public BuildApi<BuildString, Build> {
  public:
   Result<Build> GetBuild(const BuildString&) override {
     return CF_ERR("not used");

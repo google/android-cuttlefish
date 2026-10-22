@@ -137,7 +137,7 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
   return Downloaders(std::move(impl));
 }
 
-BuildApi& Downloaders::Builds() {
+BuildApi<BuildString, Build>& Downloaders::Builds() {
   if (impl_->caching_build_api_) {
     return *impl_->caching_build_api_;
   }

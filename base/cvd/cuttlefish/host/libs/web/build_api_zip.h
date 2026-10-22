@@ -18,12 +18,14 @@
 #include <string>
 
 #include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<ReadableZip> OpenZip(BuildApi&, const Build&, const std::string& name);
+Result<ReadableZip> OpenZip(BuildApi<BuildString, Build>&, const Build&,
+                            const std::string& name);
 
 }  // namespace cuttlefish
