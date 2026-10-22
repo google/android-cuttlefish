@@ -1144,6 +1144,22 @@ CuttlefishConfig::InstanceSpecific::webrtc_udp_port_range() const {
   return ret;
 }
 
+static constexpr char kWebrtcFrameRepeatIntervalMs[] =
+    "webrtc_frame_repeat_interval_ms";
+void CuttlefishConfig::MutableInstanceSpecific::
+    set_webrtc_frame_repeat_interval_ms(int interval_ms) {
+  (*Dictionary())[kWebrtcFrameRepeatIntervalMs] = interval_ms;
+}
+int CuttlefishConfig::InstanceSpecific::webrtc_frame_repeat_interval_ms()
+    const {
+  // Configs written before this setting existed don't have the key; keep the
+  // historical 20ms rather than reading 0, which would busy-loop the repeater.
+  if (!Dictionary()->isMember(kWebrtcFrameRepeatIntervalMs)) {
+    return 20;
+  }
+  return (*Dictionary())[kWebrtcFrameRepeatIntervalMs].asInt();
+}
+
 static constexpr char kGrpcConfig[] = "grpc_config";
 std::string CuttlefishConfig::InstanceSpecific::grpc_socket_path() const {
   return (*Dictionary())[kGrpcConfig].asString();

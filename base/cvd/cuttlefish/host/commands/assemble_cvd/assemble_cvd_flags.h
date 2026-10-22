@@ -98,6 +98,8 @@ DECLARE_vec(tcp_port_range);
 
 DECLARE_vec(udp_port_range);
 
+DECLARE_vec(webrtc_frame_repeat_interval_ms);
+
 DECLARE_vec(webrtc_device_id);
 
 DECLARE_vec(uuid);

@@ -66,7 +66,8 @@ class DisplayHandler {
   DisplayHandler(
       webrtc_streaming::Streamer& streamer,
       ScreenshotHandler& screenshot_handler, ScreenConnector& screen_connector,
-      std::optional<std::unique_ptr<CompositionManager>> composition_manager);
+      std::optional<std::unique_ptr<CompositionManager>> composition_manager,
+      std::chrono::milliseconds repeat_interval);
   ~DisplayHandler();
 
   [[noreturn]] void Loop();
@@ -95,6 +96,8 @@ class DisplayHandler {
   webrtc_streaming::Streamer& streamer_;
   ScreenshotHandler& screenshot_handler_;
   ScreenConnector& screen_connector_;
+  // How long a display's last frame may go unsent before it is repeated.
+  const std::chrono::milliseconds repeat_interval_;
   std::map<uint32_t, std::shared_ptr<BufferInfo>> display_last_buffers_;
   std::mutex last_buffers_mutex_;
   std::mutex send_mutex_;

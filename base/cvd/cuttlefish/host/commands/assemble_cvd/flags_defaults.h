@@ -231,6 +231,7 @@
 #define CF_DEFAULTS_WEBRTC_SIG_SERVER_PATH "/register_device"
 #define CF_DEFAULTS_TCP_PORT_RANGE "15550:15599"
 #define CF_DEFAULTS_UDP_PORT_RANGE "15550:15599"
+#define CF_DEFAULTS_WEBRTC_FRAME_REPEAT_INTERVAL_MS 20
 
 // Adb default parameters
 // TODO : Replaceconstants with these flags, they're currently defined through

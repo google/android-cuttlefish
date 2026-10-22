@@ -195,6 +195,13 @@ DEFINE_vec(udp_port_range, CF_DEFAULTS_UDP_PORT_RANGE,
            "The minimum and maximum UDP port numbers to allocate for ICE "
            "candidates as 'min:max'. To use any port just specify '0:0'");
 
+DEFINE_vec(webrtc_frame_repeat_interval_ms,
+           std::to_string(CF_DEFAULTS_WEBRTC_FRAME_REPEAT_INTERVAL_MS),
+           "How often, in milliseconds, the WebRTC streamer re-sends the last "
+           "frame of a display that has not changed while clients are "
+           "connected. Higher values save bandwidth and encoder CPU on idle "
+           "screens, at the cost of slower recovery from packet loss.");
+
 DEFINE_vec(
     webrtc_device_id, CF_DEFAULTS_WEBRTC_DEVICE_ID,
     "The for the device to register with the signaling server. Every "

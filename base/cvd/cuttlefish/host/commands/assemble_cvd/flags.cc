@@ -581,6 +581,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(tcp_port_range));
   std::vector<std::string> udp_port_range_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(udp_port_range));
+  std::vector<int> webrtc_frame_repeat_interval_ms_vec =
+      CF_EXPECT(GET_FLAG_INT_VALUE(webrtc_frame_repeat_interval_ms));
   std::vector<bool> vhost_net_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(vhost_net));
   std::vector<std::string> vhost_user_vsock_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(vhost_user_vsock));
@@ -1345,6 +1347,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     std::pair<uint16_t, uint16_t> udp_range =
         CF_EXPECT(ParsePortRange(udp_port_range_vec[instance_index]));
     instance.set_webrtc_udp_port_range(udp_range);
+
+    const int frame_repeat_interval_ms =
+        webrtc_frame_repeat_interval_ms_vec[instance_index];
+    CF_EXPECTF(frame_repeat_interval_ms > 0,
+               "--webrtc_frame_repeat_interval_ms must be positive, got {}",
+               frame_repeat_interval_ms);
+    instance.set_webrtc_frame_repeat_interval_ms(frame_repeat_interval_ms);
 
     // end of streaming, webrtc setup
 
