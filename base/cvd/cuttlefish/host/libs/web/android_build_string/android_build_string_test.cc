@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
+
 #include <optional>
 #include <string>
 #include <vector>
@@ -22,7 +24,6 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/directory_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"
