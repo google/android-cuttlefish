@@ -18,7 +18,7 @@
 #include <string>
 
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/http_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
