@@ -226,7 +226,7 @@ impl<S: EventSource> VhostUserInput<S> {
             if needs_notification {
                 vring_state
                     .signal_used_queue()
-                    .context("Failed to signal used queue");
+                    .context("Failed to signal used queue")?;
             }
 
             if self.event_queue.is_empty()
@@ -283,7 +283,7 @@ impl<S: EventSource> VhostUserInput<S> {
             if needs_notification {
                 vring_state
                     .signal_used_queue()
-                    .context("Failed to signal used queue");
+                    .context("Failed to signal used queue")?;
             }
             if !self.event_idx || !vring_state.enable_notification()? {
                 break;

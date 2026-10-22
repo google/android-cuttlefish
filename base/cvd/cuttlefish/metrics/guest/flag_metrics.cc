@@ -23,11 +23,7 @@ namespace cuttlefish {
 
 Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
                                    const int guest_index) {
-  return FlagMetrics{
-      .bootloader_specified =
-          !parsed_flags.bootloader.IsDefaultForIndex(guest_index),
-      .boot_image_specified =
-          !parsed_flags.boot_image.IsDefaultForIndex(guest_index),
+  auto flag_metrics = FlagMetrics{
       .cpus = parsed_flags.cpus.ForIndex(guest_index),
       .daemon = parsed_flags.daemon.ForIndex(guest_index),
       .data_policy = parsed_flags.data_policy.ForIndex(guest_index),
@@ -41,12 +37,28 @@ Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
           !parsed_flags.qemu_binary_dir.IsDefaultForIndex(guest_index),
       .restart_subprocesses =
           parsed_flags.restart_subprocesses.ForIndex(guest_index),
-      .super_image_specified =
-          !parsed_flags.super_image.IsDefaultForIndex(guest_index),
       .system_image_dir_specified = !parsed_flags.system_image_dir.IsDefault(),
-      .vendor_boot_image_specified =
-          !parsed_flags.vendor_boot.IsDefaultForIndex(guest_index),
   };
+  if (parsed_flags.bootloader) {
+    flag_metrics.bootloader_specified =
+        !parsed_flags.bootloader.value().IsDefaultForIndex(guest_index);
+  }
+  if (parsed_flags.boot_image) {
+    flag_metrics.boot_image_specified =
+        !parsed_flags.boot_image.value().IsDefaultForIndex(guest_index);
+  }
+  if (parsed_flags.super_image) {
+    flag_metrics.super_image_specified =
+        !parsed_flags.super_image.value().IsDefaultForIndex(guest_index);
+  }
+  if (parsed_flags.vendor_boot) {
+    flag_metrics.vendor_boot_image_specified =
+        !parsed_flags.vendor_boot.value().IsDefaultForIndex(guest_index);
+  }
+  if (parsed_flags.vm_manager) {
+    flag_metrics.vmm_mode = parsed_flags.vm_manager.value().Mode();
+  }
+  return flag_metrics;
 }
 
 }  // namespace cuttlefish

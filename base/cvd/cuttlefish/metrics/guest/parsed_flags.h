@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/cpus.h"
@@ -30,12 +32,13 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 
 namespace cuttlefish {
 
 struct ParsedFlags {
-  BootloaderFlag bootloader;
-  BootImageFlag boot_image;
+  std::optional<BootloaderFlag> bootloader;
+  std::optional<BootImageFlag> boot_image;
   CpusFlag cpus;
   DaemonFlag daemon;
   DataPolicyFlag data_policy;
@@ -45,9 +48,10 @@ struct ParsedFlags {
   MemoryMbFlag memory_mb;
   QemuBinaryDirFlag qemu_binary_dir;
   RestartSubprocessesFlag restart_subprocesses;
-  SuperImageFlag super_image;
+  std::optional<SuperImageFlag> super_image;
   SystemImageDirFlag system_image_dir;
-  VendorBootImageFlag vendor_boot;
+  std::optional<VendorBootImageFlag> vendor_boot;
+  std::optional<VmManagerFlag> vm_manager;
 };
 
 // depends on gflags::ParseCommandLineFlags being called previously

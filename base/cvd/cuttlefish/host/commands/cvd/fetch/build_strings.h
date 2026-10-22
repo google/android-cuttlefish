@@ -30,6 +30,7 @@ struct BuildStrings {
   std::optional<BuildString> system_build;
   std::optional<BuildString> kernel_build;
   std::optional<BuildString> boot_build;
+  std::optional<BuildString> vendor_boot_image_build;
   std::optional<BuildString> bootloader_build;
   std::optional<BuildString> android_efi_loader_build;
   std::optional<BuildString> otatools_build;

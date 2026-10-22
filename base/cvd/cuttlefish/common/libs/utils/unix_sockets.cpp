@@ -275,12 +275,10 @@ Result<UnixSocketMessage> UnixMessageSocket::ReadMessage() {
   message_header.msg_namelen = 0;
   message_header.msg_flags = 0;
 
-#ifdef __linux__
+#ifdef MSG_CMSG_CLOEXEC
   auto bytes_read = socket_->RecvMsg(&message_header, MSG_CMSG_CLOEXEC);
-#elif defined(__APPLE__)
-  auto bytes_read = socket_->RecvMsg(&message_header, 0);
 #else
-#error "Unsupported operating system"
+  auto bytes_read = socket_->RecvMsg(&message_header, 0);
 #endif
   CF_EXPECT(bytes_read >= 0, "Read error: " << socket_->StrError());
   CF_EXPECT(!(message_header.msg_flags & MSG_TRUNC),

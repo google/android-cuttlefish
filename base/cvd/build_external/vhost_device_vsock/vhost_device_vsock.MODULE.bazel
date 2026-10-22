@@ -23,8 +23,6 @@ vhost_device_vsock_crates.annotation(
 
 vhost_device_vsock_crates.from_specs(
     name = "vhost_device_vsock_crates",
-    # Needed because it shares the extension with crosvm
-    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
     host_tools = "@rust_host_tools_nightly",
 )
 

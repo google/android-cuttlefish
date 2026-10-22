@@ -74,10 +74,19 @@ cf_cc_library(
     srcs = ["disk_usage.cpp"],
     hdrs = ["disk_usage.h"],
     deps = [
-        "//cuttlefish/process:command",
-        "//cuttlefish/process:managed_stdio",
+        "//cuttlefish/files:directory_contents",
+        "//cuttlefish/posix:stat",
         "//cuttlefish/result",
-        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "disk_usage_test",
+    srcs = ["disk_usage_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:disk_usage",
+        "//cuttlefish/result:result_matchers",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -106,9 +115,6 @@ cf_cc_library(
     name = "files",
     srcs = ["files.cpp"],
     hdrs = ["files.h"],
-    target_compatible_with = [
-        "@platforms//os:linux",  # SEEK_DATA
-    ],
     deps = [
         ":environment",
         "//cuttlefish/common/libs/fs",

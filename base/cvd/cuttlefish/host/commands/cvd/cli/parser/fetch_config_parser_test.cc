@@ -26,6 +26,7 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_flags_validator.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
@@ -360,6 +361,56 @@ TEST(FetchConfigParserTests, UnprefixedRelativeValuesProduceNoFlagsSuccess) {
 
   Result<std::vector<std::string>> flags = FetchCvdParserTester(json_configs);
   EXPECT_THAT(flags, IsOkAndValue(std::vector<std::string>{}));
+}
+
+TEST(FetchConfigParserTests, VendorBootImageBuildOnlySuccess) {
+  const char* test_string = R""""(
+{
+    "instances": [
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "vendor_boot": "@ab/branch/target{vendor_boot-debug.img}"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  ASSERT_TRUE(ParseJsonString(json_text, json_configs));
+
+  const std::vector<std::string> flags =
+      CF_ASSERT(FetchCvdParserTester(json_configs));
+  EXPECT_TRUE(FindConfig(flags,
+                         "--vendor_boot_image_build=branch/"
+                         "target{vendor_boot-debug.img}"));
+}
+
+TEST(FetchConfigParserTests,
+     LocalVendorBootOverrideProducesNoFetchFlagsSuccess) {
+  const char* test_string = R""""(
+{
+    "instances": [
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "vendor_boot": "/path/to/vendor_boot.img"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  ASSERT_TRUE(ParseJsonString(json_text, json_configs));
+
+  EXPECT_THAT(FetchCvdParserTester(json_configs),
+              IsOkAndValue(std::vector<std::string>()));
 }
 
 }  // namespace cuttlefish

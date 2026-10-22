@@ -888,7 +888,7 @@ Result<GpuMode> SelectGpuMode(
   (void)gpu_context_types;
   (void)graphics_availability;
 
-  CF_EXPECT(given_gpu_mode == GpuMode::Auto ||
+  CF_EXPECT(requested_gpu_mode == GpuMode::Auto ||
             requested_gpu_mode == GpuMode::GuestSwiftshader ||
             requested_gpu_mode == GpuMode::DrmVirgl ||
             requested_gpu_mode == GpuMode::None);
