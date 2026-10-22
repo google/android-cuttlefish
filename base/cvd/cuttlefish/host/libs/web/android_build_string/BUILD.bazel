@@ -13,6 +13,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/web:url_namespace",
+        "//cuttlefish/host/libs/web/android_build_string:device_build_string",
         "//cuttlefish/host/libs/web/android_build_string:parse_filepath",
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
@@ -30,6 +31,17 @@ cf_cc_test(
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
+    name = "device_build_string",
+    srcs = ["device_build_string.cc"],
+    hdrs = ["device_build_string.h"],
+    deps = [
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@fmt",
     ],
 )
 

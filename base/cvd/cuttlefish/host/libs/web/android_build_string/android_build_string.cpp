@@ -33,6 +33,7 @@
 #include "fmt/ranges.h"
 
 #include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/parse_filepath.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
@@ -85,24 +86,6 @@ ParseSha256Fragment(std::string_view build_string) {
              "'#sha256=<64 hex digits>'.  Input: '{}'",
              ScrubUrl(build_string));
   return {{build_string.substr(0, fragment_start), digest}};
-}
-
-Result<BuildString> ParseDeviceBuildString(
-    const std::string& build_string,
-    const std::optional<std::string>& filepath) {
-  size_t slash_pos = build_string.find('/');
-  std::string branch_or_id = build_string.substr(0, slash_pos);
-  auto result = DeviceBuildString{
-      .branch_or_id = build_string.substr(0, slash_pos), .filepath = filepath};
-  if (slash_pos != std::string::npos) {
-    size_t next_slash_pos = build_string.find('/', slash_pos + 1);
-    CF_EXPECTF(next_slash_pos == std::string::npos,
-               "Build string argument cannot have more than one '/'.  Found at "
-               "positions {},{}.",
-               slash_pos, next_slash_pos);
-    result.target = build_string.substr(slash_pos + 1);
-  }
-  return result;
 }
 
 Result<DirectoryBuildString> ParseDirectoryBuildString(
@@ -166,14 +149,6 @@ Result<BuildString> ParseUrlBuildString(std::string_view scheme,
 }
 
 }  // namespace
-
-std::ostream& operator<<(std::ostream& out,
-                         const DeviceBuildString& build_string) {
-  fmt::print(out, "(branch_or_id=\"{}\", target=\"{}\", filepath=\"{}\")",
-             build_string.branch_or_id, build_string.target.value_or(""),
-             build_string.filepath.value_or(""));
-  return out;
-}
 
 std::ostream& operator<<(std::ostream& out,
                          const DirectoryBuildString& build_string) {
