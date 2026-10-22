@@ -1,0 +1,7 @@
+prs_*.json
+commits_*.json
+*.json.tmp
+timeline_events.json
+commit_rollups.json
+merge_queue_*.json
+*.csv
