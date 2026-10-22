@@ -25,6 +25,7 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
+#include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
@@ -33,7 +34,8 @@
 
 namespace cuttlefish {
 
-class AndroidBuildApi {
+class AndroidBuildApi : public BuildApi<DeviceBuildString, DeviceBuild>,
+                        public BuildApi<DirectoryBuildString, DirectoryBuild> {
  public:
   AndroidBuildApi() = delete;
   AndroidBuildApi(AndroidBuildApi&&) = delete;
@@ -44,20 +46,21 @@ class AndroidBuildApi {
       std::chrono::seconds retry_period = std::chrono::seconds::zero(),
       CasDownloader* cas_downloader = nullptr);
 
-  Result<DeviceBuild> GetBuild(const DeviceBuildString& build_string);
-  Result<DirectoryBuild> GetBuild(const DirectoryBuildString& build_string);
+  Result<DeviceBuild> GetBuild(const DeviceBuildString& build_string) override;
+  Result<DirectoryBuild> GetBuild(
+      const DirectoryBuildString& build_string) override;
 
   Result<std::string> DownloadFile(const DeviceBuild& build,
                                    const std::string& target_directory,
-                                   const std::string& artifact_name);
+                                   const std::string& artifact_name) override;
   Result<std::string> DownloadFile(const DirectoryBuild& build,
                                    const std::string& target_directory,
-                                   const std::string& artifact_name);
+                                   const std::string& artifact_name) override;
 
-  Result<SeekableZipSource> FileReader(const DeviceBuild&,
-                                       const std::string& artifact_name);
-  Result<SeekableZipSource> FileReader(const DirectoryBuild&,
-                                       const std::string& artifact_name);
+  Result<SeekableZipSource> FileReader(
+      const DeviceBuild&, const std::string& artifact_name) override;
+  Result<SeekableZipSource> FileReader(
+      const DirectoryBuild&, const std::string& artifact_name) override;
 
  private:
   struct BuildInfo {
