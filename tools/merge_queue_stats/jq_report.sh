@@ -4,9 +4,9 @@
 #
 #   1. Merge Queue Attempts (`merge_queue_attempts.json`, `merge_queue_attempts.csv`):
 #      Every submission of a PR to the merge queue, how long it stayed in the
-#      queue (`duration_seconds` / `duration_minutes`), and whether it was
-#      `"merged"` or `"rejected"` (with manual removals and queue clears counted
-#      as `"rejected"`).
+#      queue (`duration_seconds` / `duration_minutes`), how long the required
+#      checks ran (`checks_duration_minutes`), and whether it was `"merged"` or `"rejected"`
+#      (with manual removals and queue clears counted as `"rejected"`).
 #
 #   2. Merge Queue Rejections (`merge_queue_rejections.json`, `merge_queue_rejections.csv`,
 #      `merge_queue_rejection_causes.csv`, `workflow_rejection_summary.csv`,
@@ -75,10 +75,17 @@ jq -s "${JQ_COMMIT_ROLLUPS}" commits_*.json > commit_rollups.json
 #     (including `"failed_checks"`, `"manual"`, `"queue_cleared"`,
 #      `"checks_timed_out"`, `"merge_conflict"`, etc.).
 #   - `duration_seconds`: `removed_at - enqueued_at` via ISO-8601 epoch conversion.
+#   - `checks_started_at`: earliest `startedAt` across GitHub Actions `CheckRun`s on
+#     the merge-group commit, i.e. when CI actually began for this attempt (null if
+#     the commit rollup hasn't been fetched or has no check runs).
+#   - `checks_duration_minutes`: `removed_at - checks_started_at`. For merged attempts
+#     this is how long the required workflows took to pass; for rejected attempts it is
+#     the time from checks start until the queue evicted the PR.
 # ------------------------------------------------------------------------------
 err "Generating merge_queue_attempts.json and merge_queue_attempts.csv..."
 JQ_MERGE_QUEUE_ATTEMPTS=$(cat <<'END'
-[
+$rollups[0] as $commits
+| [
   .[]
   | . as $pr
   | [
@@ -107,6 +114,14 @@ JQ_MERGE_QUEUE_ATTEMPTS=$(cat <<'END'
   | (.value.added.createdAt | fromdateiso8601) as $start_ts
   | (.value.removed.createdAt | fromdateiso8601) as $end_ts
   | ($end_ts - $start_ts) as $dur_sec
+  | (.value.removed.beforeCommit.oid // "") as $oid
+  | (
+      [ ($commits[$oid].contexts // [])[]
+        | select(.__typename == "CheckRun" and .startedAt != null)
+        | .startedAt
+      ] | min
+    ) as $checks_started_at
+  | (if $checks_started_at != null then ($checks_started_at | fromdateiso8601) else null end) as $checks_ts
   | {
       pr_number: $pr.number,
       pr_url: $pr.url,
@@ -120,12 +135,14 @@ JQ_MERGE_QUEUE_ATTEMPTS=$(cat <<'END'
       removal_reason: .value.removed.reason,
       enqueued_by: (.value.added.actor.login // ""),
       removed_by: (.value.removed.actor.login // ""),
-      merge_group_commit: (.value.removed.beforeCommit.oid // "")
+      merge_group_commit: $oid,
+      checks_started_at: $checks_started_at,
+      checks_duration_minutes: (if $checks_ts != null then ((($end_ts - $checks_ts) / 60 * 100 | round) / 100) else null end)
     }
 ]
 END
 )
-jq "${JQ_MERGE_QUEUE_ATTEMPTS}" timeline_events.json > merge_queue_attempts.json
+jq --slurpfile rollups commit_rollups.json "${JQ_MERGE_QUEUE_ATTEMPTS}" timeline_events.json > merge_queue_attempts.json
 
 JQ_ATTEMPTS_CSV=$(cat <<'END'
 (
@@ -142,7 +159,9 @@ JQ_ATTEMPTS_CSV=$(cat <<'END'
     "removal_reason",
     "enqueued_by",
     "removed_by",
-    "merge_group_commit"
+    "merge_group_commit",
+    "checks_started_at",
+    "checks_duration_minutes"
   ]
 ),
 (
@@ -160,7 +179,9 @@ JQ_ATTEMPTS_CSV=$(cat <<'END'
       .removal_reason,
       .enqueued_by,
       .removed_by,
-      .merge_group_commit
+      .merge_group_commit,
+      .checks_started_at,
+      .checks_duration_minutes
     ]
 )
 | @csv
