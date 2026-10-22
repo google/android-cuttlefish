@@ -14,6 +14,7 @@ cf_cc_library(
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/web:url_namespace",
         "//cuttlefish/host/libs/web/android_build_string:device_build_string",
+        "//cuttlefish/host/libs/web/android_build_string:directory_build_string",
         "//cuttlefish/host/libs/web/android_build_string:parse_filepath",
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
@@ -41,6 +42,16 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "directory_build_string",
+    srcs = ["directory_build_string.cc"],
+    hdrs = ["directory_build_string.h"],
+    deps = [
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
