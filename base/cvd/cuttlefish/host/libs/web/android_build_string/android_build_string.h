@@ -23,20 +23,10 @@
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"  // IWYU pragma: export
+#include "cuttlefish/host/libs/web/android_build_string/directory_build_string.h"  // IWYU pragma: export
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-struct DirectoryBuildString {
-  std::vector<std::string> paths;
-  std::string target;
-  std::optional<std::string> filepath;
-
-  auto operator<=>(const DirectoryBuildString&) const = default;
-};
-
-std::ostream& operator<<(std::ostream& out,
-                         const DirectoryBuildString& build_string);
 
 // Names either a single object or, with a trailing '/', the prefix holding a
 // build's artifacts.

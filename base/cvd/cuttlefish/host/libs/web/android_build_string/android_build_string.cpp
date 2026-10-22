@@ -30,7 +30,6 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
 #include "fmt/ostream.h"
-#include "fmt/ranges.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
@@ -88,17 +87,6 @@ ParseSha256Fragment(std::string_view build_string) {
   return {{build_string.substr(0, fragment_start), digest}};
 }
 
-Result<DirectoryBuildString> ParseDirectoryBuildString(
-    const std::string& build_string,
-    const std::optional<std::string>& filepath) {
-  auto result = DirectoryBuildString{.filepath = filepath};
-  std::vector<std::string> split = absl::StrSplit(build_string, ':');
-  result.target = split.back();
-  split.pop_back();
-  result.paths = std::move(split);
-  return result;
-}
-
 Result<BuildString> ParseUrlBuildString(std::string_view scheme,
                                         std::string_view build_string) {
   CF_EXPECTF(scheme == "gs" || scheme == "https",
@@ -151,14 +139,6 @@ Result<BuildString> ParseUrlBuildString(std::string_view scheme,
 }  // namespace
 
 std::ostream& operator<<(std::ostream& out,
-                         const DirectoryBuildString& build_string) {
-  fmt::print(out, "(paths=\"{}\", target=\"{}\", filepath=\"{}\")",
-             fmt::join(build_string.paths, ":"), build_string.target,
-             build_string.filepath.value_or(""));
-  return out;
-}
-
-std::ostream& operator<<(std::ostream& out,
                          const GcsBuildString& build_string) {
   fmt::print(out, "(url=\"{}\", filepath=\"{}\", sha256=\"{}\")",
              ScrubUrl(build_string.url), build_string.filepath.value_or(""),
@@ -208,8 +188,7 @@ Result<BuildString> ParseBuildString(std::string_view build_string) {
   auto [remaining_build_string, filepath] =
       CF_EXPECT(ParseFilepath(build_string));
   if (remaining_build_string.find(':') != std::string::npos) {
-    return CF_EXPECT(
-        ParseDirectoryBuildString(remaining_build_string, filepath));
+    return ParseDirectoryBuildString(remaining_build_string, filepath);
   } else {
     return CF_EXPECT(ParseDeviceBuildString(remaining_build_string, filepath));
   }
