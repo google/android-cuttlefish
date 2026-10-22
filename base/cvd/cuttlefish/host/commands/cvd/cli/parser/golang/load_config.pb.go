@@ -1728,13 +1728,11 @@ func (*Vm_Gem5) isVm_Vmm() {}
 func (*Vm_Qemu) isVm_Vmm() {}
 
 type Crosvm struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	EnableSandbox     *bool                  `protobuf:"varint,1,opt,name=enable_sandbox,json=enableSandbox,proto3,oneof" json:"enable_sandbox,omitempty"`
-	SimpleMediaDevice *bool                  `protobuf:"varint,2,opt,name=simple_media_device,json=simpleMediaDevice,proto3,oneof" json:"simple_media_device,omitempty"`
-	V4L2Proxy         *string                `protobuf:"bytes,3,opt,name=v4l2_proxy,json=v4l2Proxy,proto3,oneof" json:"v4l2_proxy,omitempty"`
-	VhostUserVsock    *string                `protobuf:"bytes,4,opt,name=vhost_user_vsock,json=vhostUserVsock,proto3,oneof" json:"vhost_user_vsock,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	EnableSandbox  *bool                  `protobuf:"varint,1,opt,name=enable_sandbox,json=enableSandbox,proto3,oneof" json:"enable_sandbox,omitempty"`
+	VhostUserVsock *string                `protobuf:"bytes,4,opt,name=vhost_user_vsock,json=vhostUserVsock,proto3,oneof" json:"vhost_user_vsock,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Crosvm) Reset() {
@@ -1772,20 +1770,6 @@ func (x *Crosvm) GetEnableSandbox() bool {
 		return *x.EnableSandbox
 	}
 	return false
-}
-
-func (x *Crosvm) GetSimpleMediaDevice() bool {
-	if x != nil && x.SimpleMediaDevice != nil {
-		return *x.SimpleMediaDevice
-	}
-	return false
-}
-
-func (x *Crosvm) GetV4L2Proxy() string {
-	if x != nil && x.V4L2Proxy != nil {
-		return *x.V4L2Proxy
-	}
-	return ""
 }
 
 func (x *Crosvm) GetVhostUserVsock() string {
@@ -2366,17 +2350,12 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\x05_uuidB\f\n" +
 	"\n" +
 	"_page_sizeB\x0e\n" +
-	"\f_enable_pkvm\"\x8b\x02\n" +
+	"\f_enable_pkvm\"\x97\x01\n" +
 	"\x06Crosvm\x12*\n" +
-	"\x0eenable_sandbox\x18\x01 \x01(\bH\x00R\renableSandbox\x88\x01\x01\x123\n" +
-	"\x13simple_media_device\x18\x02 \x01(\bH\x01R\x11simpleMediaDevice\x88\x01\x01\x12\"\n" +
-	"\n" +
-	"v4l2_proxy\x18\x03 \x01(\tH\x02R\tv4l2Proxy\x88\x01\x01\x12-\n" +
-	"\x10vhost_user_vsock\x18\x04 \x01(\tH\x03R\x0evhostUserVsock\x88\x01\x01B\x11\n" +
-	"\x0f_enable_sandboxB\x16\n" +
-	"\x14_simple_media_deviceB\r\n" +
-	"\v_v4l2_proxyB\x13\n" +
-	"\x11_vhost_user_vsock\"\x06\n" +
+	"\x0eenable_sandbox\x18\x01 \x01(\bH\x00R\renableSandbox\x88\x01\x01\x12-\n" +
+	"\x10vhost_user_vsock\x18\x04 \x01(\tH\x01R\x0evhostUserVsock\x88\x01\x01B\x11\n" +
+	"\x0f_enable_sandboxB\x13\n" +
+	"\x11_vhost_user_vsockJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04\"\x06\n" +
 	"\x04Gem5\"\x06\n" +
 	"\x04Qemu\"\xbb\x02\n" +
 	"\fCustomAction\x12(\n" +

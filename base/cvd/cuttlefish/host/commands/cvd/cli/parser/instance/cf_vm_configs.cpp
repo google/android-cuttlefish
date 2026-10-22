@@ -46,9 +46,6 @@ inline constexpr char kFlagUseSdcard[] = "use_sdcard";
 inline constexpr char kFlagSetupWizardMode[] = "setupwizard_mode";
 inline constexpr char kFlagUuid[] = "uuid";
 inline constexpr char kFlagEnableSandbox[] = "enable_sandbox";
-inline constexpr char kFlagCrosvmSimpleMediaDevice[] =
-    "crosvm_simple_media_device";
-inline constexpr char kFlagCrosvmV4l2Proxy[] = "crosvm_v4l2_proxy";
 inline constexpr char kFlagVhostUserVsock[] = "vhost_user_vsock";
 inline constexpr char kFlagEnablePkvm[] = "enable_pkvm";
 
@@ -75,14 +72,6 @@ std::set<std::string> GatherFlagNamesUsedInInstanceConfig(const Instance& ins) {
   if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
       ins.vm().crosvm().has_enable_sandbox()) {
     names.insert(kFlagEnableSandbox);
-  }
-  if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
-      ins.vm().crosvm().has_simple_media_device()) {
-    names.insert(kFlagCrosvmSimpleMediaDevice);
-  }
-  if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
-      ins.vm().crosvm().has_v4l2_proxy()) {
-    names.insert(kFlagCrosvmV4l2Proxy);
   }
   if (ins.vm().vmm_case() == Vm::VmmCase::kCrosvm &&
       ins.vm().crosvm().has_vhost_user_vsock()) {
@@ -170,19 +159,6 @@ static bool EnableSandbox(const Instance& instance) {
   // TODO(b/554100008): Try to enable the sandbox in Android CI
   const auto& default_val = false;
   return crosvm.has_enable_sandbox() ? crosvm.enable_sandbox() : default_val;
-}
-
-static bool SimpleMediaDevice(const Instance& instance) {
-  const auto& crosvm = instance.vm().crosvm();
-  const auto& default_val = CF_DEFAULTS_CROSVM_SIMPLE_MEDIA_DEVICE;
-  return crosvm.has_simple_media_device() ? crosvm.simple_media_device()
-                                          : default_val;
-}
-
-static std::string V4l2Proxy(const Instance& instance) {
-  const auto& crosvm = instance.vm().crosvm();
-  const auto& default_val = CF_DEFAULTS_CROSVM_V4L2_PROXY;
-  return crosvm.has_v4l2_proxy() ? crosvm.v4l2_proxy() : default_val;
 }
 
 static std::string VhostUserVsock(const Instance& instance) {
@@ -274,14 +250,6 @@ Result<std::vector<std::string>> GenerateVmFlags(
   // if (used_names.contains(kFlagEnableSandbox)) {
   flags.push_back(GenerateInstanceFlag(kFlagEnableSandbox, cfg, EnableSandbox));
   // }
-  if (used_names.contains(kFlagCrosvmSimpleMediaDevice)) {
-    flags.push_back(GenerateInstanceFlag(kFlagCrosvmSimpleMediaDevice, cfg,
-                                         SimpleMediaDevice));
-  }
-  if (used_names.contains(kFlagCrosvmV4l2Proxy)) {
-    flags.emplace_back(
-        GenerateInstanceFlag(kFlagCrosvmV4l2Proxy, cfg, V4l2Proxy));
-  }
   if (used_names.contains(kFlagVhostUserVsock)) {
     flags.emplace_back(
         GenerateInstanceFlag(kFlagVhostUserVsock, cfg, VhostUserVsock));
