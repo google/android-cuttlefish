@@ -8,7 +8,7 @@ cf_build_test(name = "android_build_string_build_test")
 
 cf_cc_library(
     name = "android_build_string",
-    srcs = ["android_build_string.cpp"],
+    srcs = ["android_build_string.cc"],
     hdrs = ["android_build_string.h"],
     deps = [
         "//cuttlefish/flag_parser",
@@ -26,7 +26,7 @@ cf_cc_library(
 
 cf_cc_test(
     name = "android_build_string_test",
-    srcs = ["android_build_string_tests.cpp"],
+    srcs = ["android_build_string_test.cc"],
     deps = [
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/libs/web/android_build_string",
