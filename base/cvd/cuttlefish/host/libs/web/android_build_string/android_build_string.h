@@ -25,23 +25,10 @@
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"  // IWYU pragma: export
 #include "cuttlefish/host/libs/web/android_build_string/directory_build_string.h"  // IWYU pragma: export
 #include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"  // IWYU pragma: export
+#include "cuttlefish/host/libs/web/android_build_string/http_build_string.h"  // IWYU pragma: export
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-// Names either a single file or, with a trailing '/', the prefix holding a
-// build's artifacts, over `https://`. Any credential travels in the URL
-// itself, as in a pre-signed URL.
-struct HttpBuildString {
-  std::string url;
-  std::optional<std::string> filepath;
-  std::optional<std::string> sha256;
-
-  auto operator<=>(const HttpBuildString&) const = default;
-};
-
-std::ostream& operator<<(std::ostream& out,
-                         const HttpBuildString& build_string);
 
 using BuildString = std::variant<DeviceBuildString, DirectoryBuildString,
                                  GcsBuildString, HttpBuildString>;
