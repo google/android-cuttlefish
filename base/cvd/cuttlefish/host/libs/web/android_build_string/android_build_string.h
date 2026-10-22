@@ -15,7 +15,6 @@
 
 #pragma once
 
-#include <compare>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -23,20 +22,10 @@
 #include <vector>
 
 #include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"  // IWYU pragma: export
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-struct DeviceBuildString {
-  std::string branch_or_id;
-  std::optional<std::string> target;
-  std::optional<std::string> filepath;
-
-  auto operator<=>(const DeviceBuildString&) const = default;
-};
-
-std::ostream& operator<<(std::ostream& out,
-                         const DeviceBuildString& build_string);
 
 struct DirectoryBuildString {
   std::vector<std::string> paths;
