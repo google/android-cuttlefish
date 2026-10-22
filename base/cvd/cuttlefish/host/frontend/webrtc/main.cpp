@@ -498,7 +498,8 @@ int CuttlefishMain() {
 
   auto display_handler = std::make_shared<DisplayHandler>(
       *streamer, screenshot_handler, frames_fd, frames_are_rgba,
-      std::move(composition_manager));
+      std::move(composition_manager),
+      std::chrono::milliseconds(instance.webrtc_frame_repeat_interval_ms()));
 
   if (instance.camera_server_port()) {
     auto camera_controller = streamer->AddCamera(instance.camera_server_port(),

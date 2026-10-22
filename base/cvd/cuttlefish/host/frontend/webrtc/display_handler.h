@@ -44,7 +44,8 @@ class DisplayHandler {
       webrtc_streaming::Streamer& streamer,
       ScreenshotHandler& screenshot_handler, int wayland_socket_fd,
       bool wayland_frames_are_rgba,
-      std::optional<std::unique_ptr<CompositionManager>> composition_manager);
+      std::optional<std::unique_ptr<CompositionManager>> composition_manager,
+      std::chrono::milliseconds repeat_interval);
   ~DisplayHandler();
 
   [[noreturn]] void Loop();
@@ -75,6 +76,8 @@ class DisplayHandler {
   std::map<uint32_t, std::shared_ptr<VideoFrameBuffer>> pending_buffers_;
   std::mutex next_frame_mutex_;
   std::condition_variable next_frame_cv_;
+  // How long a display's last frame may go unsent before it is repeated.
+  const std::chrono::milliseconds repeat_interval_;
   std::map<uint32_t, std::shared_ptr<BufferInfo>> display_last_buffers_;
   std::mutex last_buffers_mutex_;
   std::mutex send_mutex_;
