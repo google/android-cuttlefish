@@ -23,6 +23,7 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/directory_build_api.h"
 #include "cuttlefish/host/libs/web/gcs_build_api.h"
 #include "cuttlefish/host/libs/web/http_build_api.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
@@ -33,6 +34,7 @@ namespace {
 
 struct GetBuildVisitor {
   AndroidBuildApi& android;
+  DirectoryBuildApi& directory;
   GcsBuildApi& gcs;
   HttpBuildApi& http;
 
@@ -41,7 +43,7 @@ struct GetBuildVisitor {
   }
 
   Result<Build> operator()(const DirectoryBuildString& build_string) {
-    return CF_EXPECT(android.GetBuild(build_string));
+    return CF_EXPECT(directory.GetBuild(build_string));
   }
 
   Result<Build> operator()(const GcsBuildString& build_string) {
@@ -55,6 +57,7 @@ struct GetBuildVisitor {
 
 struct DownloadFileVisitor {
   AndroidBuildApi& android;
+  DirectoryBuildApi& directory;
   GcsBuildApi& gcs;
   HttpBuildApi& http;
   const std::string& target_directory;
@@ -67,7 +70,7 @@ struct DownloadFileVisitor {
 
   Result<std::string> operator()(const DirectoryBuild& build) {
     return CF_EXPECT(
-        android.DownloadFile(build, target_directory, artifact_name));
+        directory.DownloadFile(build, target_directory, artifact_name));
   }
 
   Result<std::string> operator()(const GcsBuild& build) {
@@ -81,6 +84,7 @@ struct DownloadFileVisitor {
 
 struct FileReaderVisitor {
   AndroidBuildApi& android;
+  DirectoryBuildApi& directory;
   GcsBuildApi& gcs;
   HttpBuildApi& http;
   const std::string& artifact_name;
@@ -90,7 +94,7 @@ struct FileReaderVisitor {
   }
 
   Result<SeekableZipSource> operator()(const DirectoryBuild& build) {
-    return CF_EXPECT(android.FileReader(build, artifact_name));
+    return CF_EXPECT(directory.FileReader(build, artifact_name));
   }
 
   Result<SeekableZipSource> operator()(const GcsBuild& build) {
@@ -114,6 +118,7 @@ CompositeBuildApi::CompositeBuildApi(std::unique_ptr<AndroidBuildApi> android,
 Result<Build> CompositeBuildApi::GetBuild(const BuildString& build_string) {
   GetBuildVisitor visitor{
       .android = *android_,
+      .directory = directory_,
       .gcs = *gcs_,
       .http = *http_,
   };
@@ -125,6 +130,7 @@ Result<std::string> CompositeBuildApi::DownloadFile(
     const std::string& artifact_name) {
   DownloadFileVisitor visitor{
       .android = *android_,
+      .directory = directory_,
       .gcs = *gcs_,
       .http = *http_,
       .target_directory = target_directory,
@@ -137,6 +143,7 @@ Result<SeekableZipSource> CompositeBuildApi::FileReader(
     const Build& build, const std::string& artifact_name) {
   FileReaderVisitor visitor{
       .android = *android_,
+      .directory = directory_,
       .gcs = *gcs_,
       .http = *http_,
       .artifact_name = artifact_name,

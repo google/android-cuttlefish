@@ -34,8 +34,7 @@
 
 namespace cuttlefish {
 
-class AndroidBuildApi : public BuildApi<DeviceBuildString, DeviceBuild>,
-                        public BuildApi<DirectoryBuildString, DirectoryBuild> {
+class AndroidBuildApi : public BuildApi<DeviceBuildString, DeviceBuild> {
  public:
   AndroidBuildApi() = delete;
   AndroidBuildApi(AndroidBuildApi&&) = delete;
@@ -47,20 +46,13 @@ class AndroidBuildApi : public BuildApi<DeviceBuildString, DeviceBuild>,
       CasDownloader* cas_downloader = nullptr);
 
   Result<DeviceBuild> GetBuild(const DeviceBuildString& build_string) override;
-  Result<DirectoryBuild> GetBuild(
-      const DirectoryBuildString& build_string) override;
 
   Result<std::string> DownloadFile(const DeviceBuild& build,
-                                   const std::string& target_directory,
-                                   const std::string& artifact_name) override;
-  Result<std::string> DownloadFile(const DirectoryBuild& build,
                                    const std::string& target_directory,
                                    const std::string& artifact_name) override;
 
   Result<SeekableZipSource> FileReader(
       const DeviceBuild&, const std::string& artifact_name) override;
-  Result<SeekableZipSource> FileReader(
-      const DirectoryBuild&, const std::string& artifact_name) override;
 
  private:
   struct BuildInfo {
@@ -91,34 +83,20 @@ class AndroidBuildApi : public BuildApi<DeviceBuildString, DeviceBuild>,
       const DeviceBuild& build,
       const std::vector<std::string>& artifact_filenames);
 
-  Result<std::unordered_set<std::string>> Artifacts(
-      const DirectoryBuild& build,
-      const std::vector<std::string>& artifact_filenames);
-
-  Result<std::unordered_set<std::string>> Artifacts(
-      const Build& build, const std::vector<std::string>& artifact_filenames);
-
   Result<std::string> GetArtifactDownloadUrl(const DeviceBuild& build,
                                              const std::string& artifact);
   Result<void> ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
                               const std::string& path);
 
-  Result<void> ArtifactToFile(const DirectoryBuild& build,
-                              const std::string& artifact,
-                              const std::string& path);
-
-  Result<void> ArtifactToFile(const Build& build, const std::string& artifact,
-                              const std::string& path);
-
-  Result<std::string> DownloadArtifact(const Build& build,
+  Result<std::string> DownloadArtifact(const DeviceBuild& build,
                                        const std::string& target_directory,
                                        const std::string& artifact_name);
-  Result<std::string> DownloadTargetFile(const Build& build,
+  Result<std::string> DownloadTargetFile(const DeviceBuild& build,
                                          const std::string& target_directory,
                                          const std::string& artifact_name);
   Result<std::string> DownloadTargetFileFromCas(
-      const Build& build, const std::string& target_directory,
+      const DeviceBuild& build, const std::string& target_directory,
       const std::string& artifact_name);
 
   HttpClient& http_client_;
