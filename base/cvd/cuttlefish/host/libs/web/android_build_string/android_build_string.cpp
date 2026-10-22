@@ -32,6 +32,7 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/directory_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/parse_filepath.h"
 #include "cuttlefish/host/libs/web/android_build_string/url_build_string.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"

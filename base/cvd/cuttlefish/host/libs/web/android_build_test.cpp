@@ -24,6 +24,7 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
