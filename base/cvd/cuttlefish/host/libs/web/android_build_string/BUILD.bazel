@@ -18,10 +18,9 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/android_build_string:gcs_build_string",
         "//cuttlefish/host/libs/web/android_build_string:http_build_string",
         "//cuttlefish/host/libs/web/android_build_string:parse_filepath",
-        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/host/libs/web/android_build_string:url_build_string",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
-        "@fmt",
     ],
 )
 
@@ -85,5 +84,19 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
+    name = "url_build_string",
+    srcs = ["url_build_string.cc"],
+    hdrs = ["url_build_string.h"],
+    deps = [
+        "//cuttlefish/host/libs/web/android_build_string:parse_filepath",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
     ],
 )
