@@ -17,7 +17,7 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/fetch/get_optional.h"
-#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 
 namespace cuttlefish {
 

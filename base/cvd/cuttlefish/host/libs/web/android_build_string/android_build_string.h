@@ -15,7 +15,6 @@
 
 #pragma once
 
-#include <compare>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -23,57 +22,13 @@
 #include <vector>
 
 #include "cuttlefish/flag_parser/flag.h"
+#include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/directory_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/http_build_string.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-struct DeviceBuildString {
-  std::string branch_or_id;
-  std::optional<std::string> target;
-  std::optional<std::string> filepath;
-
-  auto operator<=>(const DeviceBuildString&) const = default;
-};
-
-std::ostream& operator<<(std::ostream& out,
-                         const DeviceBuildString& build_string);
-
-struct DirectoryBuildString {
-  std::vector<std::string> paths;
-  std::string target;
-  std::optional<std::string> filepath;
-
-  auto operator<=>(const DirectoryBuildString&) const = default;
-};
-
-std::ostream& operator<<(std::ostream& out,
-                         const DirectoryBuildString& build_string);
-
-// Names either a single object or, with a trailing '/', the prefix holding a
-// build's artifacts.
-struct GcsBuildString {
-  std::string url;
-  std::optional<std::string> filepath;
-  std::optional<std::string> sha256;
-
-  auto operator<=>(const GcsBuildString&) const = default;
-};
-
-std::ostream& operator<<(std::ostream& out, const GcsBuildString& build_string);
-
-// Names either a single file or, with a trailing '/', the prefix holding a
-// build's artifacts, over `https://`. Any credential travels in the URL
-// itself, as in a pre-signed URL.
-struct HttpBuildString {
-  std::string url;
-  std::optional<std::string> filepath;
-  std::optional<std::string> sha256;
-
-  auto operator<=>(const HttpBuildString&) const = default;
-};
-
-std::ostream& operator<<(std::ostream& out,
-                         const HttpBuildString& build_string);
 
 using BuildString = std::variant<DeviceBuildString, DirectoryBuildString,
                                  GcsBuildString, HttpBuildString>;

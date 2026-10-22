@@ -25,7 +25,8 @@
 #include <variant>
 #include <vector>
 
-#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/http_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/http_client/http_probe.h"
 #include "cuttlefish/result/result.h"
