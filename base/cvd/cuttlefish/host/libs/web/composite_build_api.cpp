@@ -30,83 +30,6 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-namespace {
-
-struct GetBuildVisitor {
-  AndroidBuildApi& android;
-  DirectoryBuildApi& directory;
-  GcsBuildApi& gcs;
-  HttpBuildApi& http;
-
-  Result<Build> operator()(const DeviceBuildString& build_string) {
-    return CF_EXPECT(android.GetBuild(build_string));
-  }
-
-  Result<Build> operator()(const DirectoryBuildString& build_string) {
-    return CF_EXPECT(directory.GetBuild(build_string));
-  }
-
-  Result<Build> operator()(const GcsBuildString& build_string) {
-    return CF_EXPECT(gcs.GetBuild(build_string));
-  }
-
-  Result<Build> operator()(const HttpBuildString& build_string) {
-    return CF_EXPECT(http.GetBuild(build_string));
-  }
-};
-
-struct DownloadFileVisitor {
-  AndroidBuildApi& android;
-  DirectoryBuildApi& directory;
-  GcsBuildApi& gcs;
-  HttpBuildApi& http;
-  const std::string& target_directory;
-  const std::string& artifact_name;
-
-  Result<std::string> operator()(const DeviceBuild& build) {
-    return CF_EXPECT(
-        android.DownloadFile(build, target_directory, artifact_name));
-  }
-
-  Result<std::string> operator()(const DirectoryBuild& build) {
-    return CF_EXPECT(
-        directory.DownloadFile(build, target_directory, artifact_name));
-  }
-
-  Result<std::string> operator()(const GcsBuild& build) {
-    return CF_EXPECT(gcs.DownloadFile(build, target_directory, artifact_name));
-  }
-
-  Result<std::string> operator()(const HttpBuild& build) {
-    return CF_EXPECT(http.DownloadFile(build, target_directory, artifact_name));
-  }
-};
-
-struct FileReaderVisitor {
-  AndroidBuildApi& android;
-  DirectoryBuildApi& directory;
-  GcsBuildApi& gcs;
-  HttpBuildApi& http;
-  const std::string& artifact_name;
-
-  Result<SeekableZipSource> operator()(const DeviceBuild& build) {
-    return CF_EXPECT(android.FileReader(build, artifact_name));
-  }
-
-  Result<SeekableZipSource> operator()(const DirectoryBuild& build) {
-    return CF_EXPECT(directory.FileReader(build, artifact_name));
-  }
-
-  Result<SeekableZipSource> operator()(const GcsBuild& build) {
-    return CF_EXPECT(gcs.FileReader(build, artifact_name));
-  }
-
-  Result<SeekableZipSource> operator()(const HttpBuild& build) {
-    return CF_EXPECT(http.FileReader(build, artifact_name));
-  }
-};
-
-}  // namespace
 
 CompositeBuildApi::CompositeBuildApi(std::unique_ptr<AndroidBuildApi> android,
                                      std::unique_ptr<GcsBuildApi> gcs,
@@ -116,39 +39,96 @@ CompositeBuildApi::CompositeBuildApi(std::unique_ptr<AndroidBuildApi> android,
       http_(std::move(http)) {}
 
 Result<Build> CompositeBuildApi::GetBuild(const BuildString& build_string) {
-  GetBuildVisitor visitor{
-      .android = *android_,
-      .directory = directory_,
-      .gcs = *gcs_,
-      .http = *http_,
-  };
-  return CF_EXPECT(std::visit(visitor, build_string));
+  return CF_EXPECT(std::visit(
+      [&, this](const auto& build_string) -> Result<Build> {
+        return CF_EXPECT(GetBuild(build_string));
+      },
+      build_string));
+}
+
+Result<DeviceBuild> CompositeBuildApi::GetBuild(
+    const DeviceBuildString& build_string) {
+  return CF_EXPECT(android_->GetBuild(build_string));
+}
+
+Result<DirectoryBuild> CompositeBuildApi::GetBuild(
+    const DirectoryBuildString& build_string) {
+  return CF_EXPECT(directory_.GetBuild(build_string));
+}
+
+Result<GcsBuild> CompositeBuildApi::GetBuild(
+    const GcsBuildString& build_string) {
+  return CF_EXPECT(gcs_->GetBuild(build_string));
+}
+
+Result<HttpBuild> CompositeBuildApi::GetBuild(
+    const HttpBuildString& build_string) {
+  return CF_EXPECT(http_->GetBuild(build_string));
 }
 
 Result<std::string> CompositeBuildApi::DownloadFile(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name) {
-  DownloadFileVisitor visitor{
-      .android = *android_,
-      .directory = directory_,
-      .gcs = *gcs_,
-      .http = *http_,
-      .target_directory = target_directory,
-      .artifact_name = artifact_name,
-  };
-  return CF_EXPECT(std::visit(visitor, build));
+  return CF_EXPECT(std::visit(
+      [&, this](const auto& build) -> Result<std::string> {
+        return CF_EXPECT(DownloadFile(build, target_directory, artifact_name));
+      },
+      build));
+}
+
+Result<std::string> CompositeBuildApi::DownloadFile(
+    const DeviceBuild& build, const std::string& target_directory,
+    const std::string& artifact_name) {
+  return CF_EXPECT(
+      android_->DownloadFile(build, target_directory, artifact_name));
+}
+
+Result<std::string> CompositeBuildApi::DownloadFile(
+    const DirectoryBuild& build, const std::string& target_directory,
+    const std::string& artifact_name) {
+  return CF_EXPECT(
+      directory_.DownloadFile(build, target_directory, artifact_name));
+}
+
+Result<std::string> CompositeBuildApi::DownloadFile(
+    const GcsBuild& build, const std::string& target_directory,
+    const std::string& artifact_name) {
+  return CF_EXPECT(gcs_->DownloadFile(build, target_directory, artifact_name));
+}
+
+Result<std::string> CompositeBuildApi::DownloadFile(
+    const HttpBuild& build, const std::string& target_directory,
+    const std::string& artifact_name) {
+  return CF_EXPECT(http_->DownloadFile(build, target_directory, artifact_name));
 }
 
 Result<SeekableZipSource> CompositeBuildApi::FileReader(
     const Build& build, const std::string& artifact_name) {
-  FileReaderVisitor visitor{
-      .android = *android_,
-      .directory = directory_,
-      .gcs = *gcs_,
-      .http = *http_,
-      .artifact_name = artifact_name,
-  };
-  return CF_EXPECT(std::visit(visitor, build));
+  return CF_EXPECT(std::visit(
+      [&, this](const auto& build) -> Result<SeekableZipSource> {
+        return CF_EXPECT(FileReader(build, artifact_name));
+      },
+      build));
+}
+
+Result<SeekableZipSource> CompositeBuildApi::FileReader(
+    const DeviceBuild& build, const std::string& artifact_name) {
+  return CF_EXPECT(android_->FileReader(build, artifact_name));
+}
+
+Result<SeekableZipSource> CompositeBuildApi::FileReader(
+    const DirectoryBuild& build, const std::string& artifact_name) {
+  return CF_EXPECT(directory_.FileReader(build, artifact_name));
+}
+
+Result<SeekableZipSource> CompositeBuildApi::FileReader(
+    const GcsBuild& build, const std::string& artifact_name) {
+  return CF_EXPECT(gcs_->FileReader(build, artifact_name));
+}
+
+Result<SeekableZipSource> CompositeBuildApi::FileReader(
+    const HttpBuild& build, const std::string& artifact_name) {
+  return CF_EXPECT(http_->FileReader(build, artifact_name));
 }
 
 }  // namespace cuttlefish
