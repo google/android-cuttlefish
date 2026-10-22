@@ -24,7 +24,7 @@
 
 namespace cuttlefish {
 
-class CachingBuildApi : public BuildApi {
+class CachingBuildApi : public BuildApi<BuildString, Build> {
  public:
   CachingBuildApi(BuildApi& build_api, std::string cache_base_path);
 

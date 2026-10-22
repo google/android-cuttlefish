@@ -346,7 +346,7 @@ std::ostream& operator<<(std::ostream& out, const FetchBuildContext& context) {
   return out << FetchLabel(context.Build());
 }
 
-FetchContext::FetchContext(BuildApi& build_api,
+FetchContext::FetchContext(BuildApi<BuildString, Build>& build_api,
                            const TargetDirectories& target_directories,
                            const Builds& builds, FetcherConfig& fetcher_config,
                            FetchTracer& tracer)

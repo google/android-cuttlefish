@@ -19,6 +19,8 @@
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
+#include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 #include "cuttlefish/result/result.h"
@@ -34,7 +36,7 @@ class Downloaders {
   Downloaders(Downloaders&&);
   ~Downloaders();
 
-  BuildApi& Builds();
+  BuildApi<BuildString, Build>& Builds();
   LuciBuildApi& Luci();
 
  private:

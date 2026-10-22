@@ -32,7 +32,7 @@ namespace cuttlefish {
 // Sends every build to the API that owns the source it names. This is the
 // only `BuildApi` the fetch code sees; each API it holds takes the build
 // types it can serve and nothing else.
-class CompositeBuildApi : public BuildApi {
+class CompositeBuildApi : public BuildApi<BuildString, Build> {
  public:
   CompositeBuildApi(std::unique_ptr<AndroidBuildApi> android,
                     std::unique_ptr<GcsBuildApi> gcs,

@@ -129,8 +129,6 @@ cf_cc_library(
     name = "build_api",
     hdrs = ["build_api.h"],
     deps = [
-        "//cuttlefish/host/libs/web:android_build",
-        "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/result:result_type",
     ],
@@ -142,6 +140,7 @@ cf_cc_library(
     hdrs = ["build_api_zip.h"],
     deps = [
         "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:build_api",
         "//cuttlefish/host/libs/zip:buffered_zip_source",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
