@@ -139,14 +139,6 @@ Result<BuildString> ParseUrlBuildString(std::string_view scheme,
 }  // namespace
 
 std::ostream& operator<<(std::ostream& out,
-                         const GcsBuildString& build_string) {
-  fmt::print(out, "(url=\"{}\", filepath=\"{}\", sha256=\"{}\")",
-             ScrubUrl(build_string.url), build_string.filepath.value_or(""),
-             build_string.sha256.value_or(""));
-  return out;
-}
-
-std::ostream& operator<<(std::ostream& out,
                          const HttpBuildString& build_string) {
   fmt::print(out, "(url=\"{}\", filepath=\"{}\", sha256=\"{}\")",
              ScrubUrl(build_string.url), build_string.filepath.value_or(""),
