@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"  // IWYU pragma: export
+#include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/directory_build_string.h"  // IWYU pragma: export
 #include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"  // IWYU pragma: export
 #include "cuttlefish/host/libs/web/android_build_string/http_build_string.h"  // IWYU pragma: export
