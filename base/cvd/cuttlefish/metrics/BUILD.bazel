@@ -73,7 +73,7 @@ cf_cc_library(
         "//cuttlefish/metrics/io:enabled",
         "//cuttlefish/metrics/io:metrics_transmitter",
         "//cuttlefish/metrics/io:metrics_writer",
-        "//cuttlefish/metrics/io:session_id",
+        "//cuttlefish/metrics/io:unique_id_file",
         "//cuttlefish/result",
         "@fmt",
     ],

@@ -65,14 +65,16 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "session_id",
-    srcs = ["session_id.cc"],
-    hdrs = ["session_id.h"],
+    name = "unique_id_file",
+    srcs = ["unique_id_file.cc"],
+    hdrs = ["unique_id_file.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:uuid",
         "//cuttlefish/files:file_exists",
+        "//cuttlefish/host/libs/directories",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
         "@fmt",
     ],
 )
