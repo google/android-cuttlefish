@@ -5,9 +5,12 @@
 # Usage:
 #   ./pull_request_timeline_events.sh          # Fetches pages (resuming if interrupted)
 #   ./pull_request_timeline_events.sh --clean  # Wipes prs_*.json and fetches from scratch
+#   ./pull_request_timeline_events.sh --jsonl  # Also writes prs.jsonl (one PR per line)
 #
 # Output files:
 #   prs_<page>.json - Paginated GraphQL responses (newest PRs first).
+#   prs.jsonl       - With --jsonl: one compact PR node per line, deduplicated by
+#                     PR number.
 #
 # Design notes:
 #   - Filtering timelineItems by itemTypes (ADDED_TO_MERGE_QUEUE_EVENT,
@@ -28,7 +31,16 @@ err() {
 }
 
 rm -f prs_*.json.tmp
-if [[ "${1:-}" == "--clean" ]]; then
+clean=false
+jsonl=false
+for arg in "$@"; do
+  case "${arg}" in
+    --clean) clean=true ;;
+    --jsonl) jsonl=true ;;
+    *) err "Usage: $0 [--clean] [--jsonl]"; exit 1 ;;
+  esac
+done
+if [[ "${clean}" == true ]]; then
   err "Removing existing prs_*.json files (--clean specified)."
   rm -f prs_*.json
 fi
@@ -153,3 +165,12 @@ EOF
   fi
   page_token=$(jq "${page_info}.startCursor" "prs_${page_num}.json")
 done
+
+if [[ "${jsonl}" == true ]]; then
+  # One PR per line, nesting kept. Pages can shift while paginating, so a PR
+  # may appear on two pages; keep one copy.
+  jq -cs '[.[].data.repository.pullRequests.nodes[]] | unique_by(.number)[]' \
+    prs_*.json > prs.jsonl.tmp
+  mv prs.jsonl.tmp prs.jsonl
+  err "Wrote prs.jsonl ($(wc -l < prs.jsonl | tr -d ' ') PRs)."
+fi

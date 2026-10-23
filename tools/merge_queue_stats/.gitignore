@@ -1,6 +1,8 @@
 prs_*.json
 commits_*.json
 *.json.tmp
+*.jsonl
+*.jsonl.tmp
 timeline_events.json
 commit_rollups.json
 merge_queue_*.json
