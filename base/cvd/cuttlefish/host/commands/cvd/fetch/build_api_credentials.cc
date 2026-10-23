@@ -33,6 +33,7 @@
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/credential_source/fixed_credential_source.h"
 #include "cuttlefish/host/libs/web/credential_source/gce_metadata_credential_source.h"
+#include "cuttlefish/host/libs/web/credential_source/refresh_token_credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
 

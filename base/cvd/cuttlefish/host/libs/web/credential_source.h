@@ -23,42 +23,11 @@
 #include "json/value.h"
 #include "openssl/evp.h"
 
-#include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/credential_source/refreshing_credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-// OAuth2 tokens from a desktop refresh token.
-//
-// https://developers.google.com/identity/protocols/oauth2/native-app
-class RefreshTokenCredentialSource : public RefreshingCredentialSource {
- public:
-  static Result<std::unique_ptr<RefreshTokenCredentialSource>>
-  FromOauth2ClientFile(HttpClient& http_client,
-                       const std::string& oauth_contents);
-
-  static Result<std::unique_ptr<CredentialSource>> Make(
-      HttpClient& http_client, const std::string& client_id,
-      const std::string& client_secret, const std::string& refresh_token);
-
- private:
-  RefreshTokenCredentialSource(HttpClient& http_client,
-                               const std::string& client_id,
-                               const std::string& client_secret,
-                               const std::string& refresh_token);
-
-  static Result<std::unique_ptr<RefreshTokenCredentialSource>> FromJson(
-      HttpClient& http_client, const Json::Value& credential);
-
-  Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
-
-  HttpClient& http_client_;
-  std::string client_id_;
-  std::string client_secret_;
-  std::string refresh_token_;
-};
 
 // OAuth2 tokens from service account files.
 //

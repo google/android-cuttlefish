@@ -49,3 +49,21 @@ cf_cc_library(
         "//cuttlefish/result:result_type",
     ],
 )
+
+cf_cc_library(
+    name = "refresh_token_credential_source",
+    srcs = ["refresh_token_credential_source.cc"],
+    hdrs = ["refresh_token_credential_source.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/host/libs/web/credential_source",
+        "//cuttlefish/host/libs/web/credential_source:refreshing_credential_source",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_json",
+        "//cuttlefish/host/libs/web/http_client:url_escape",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings",
+        "@jsoncpp",
+    ],
+)
