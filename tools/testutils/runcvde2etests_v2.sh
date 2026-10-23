@@ -24,6 +24,7 @@ readonly CREDENTIAL_SOURCE="${CREDENTIAL_SOURCE:-}"
 readonly CONFIG_CVD="cvd"
 readonly CONFIG_CVD_WITH_GPU="cvd_with_gpu"
 readonly CONFIG_PODCVD="podcvd"
+readonly CONFIG_PODCVD_WITH_GPU="podcvd_with_gpu"
 
 function print_usage() {
   >&2 echo "usage: $0 [-c <config>] [-i <runner_index>] [-n <runners_total>]"
@@ -61,7 +62,7 @@ config_test_args=()
 case "${config}" in
   "${CONFIG_CVD}") ;;
   "${CONFIG_CVD_WITH_GPU}") true ;;
-  "${CONFIG_PODCVD}")
+  "${CONFIG_PODCVD}" | "${CONFIG_PODCVD_WITH_GPU}")
     config_test_args+=(
       --test_env="USE_PODCVD=true"
       --test_env="CONTAINERS_STORAGE_CONF=/tmp/podcvd-podman-config/storage.conf"

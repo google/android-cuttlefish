@@ -17,15 +17,21 @@
 set -o errexit -o nounset -o pipefail
 
 function print_usage() {
-  >&2 echo "usage: $0 [-i <runner_index>] [-n <runners_total>]"
+  >&2 echo "usage: $0 [-c <config>] [-i <runner_index>] [-n <runners_total>]"
 }
 
-readonly config="podcvd"
+readonly CONFIG_PODCVD="podcvd"
+readonly CONFIG_PODCVD_WITH_GPU="podcvd_with_gpu"
+
+config="${CONFIG_PODCVD}"
 runner_index="1"
 runners_total="1"
 
-while getopts ":i:n:" opt; do
+while getopts ":c:i:n:" opt; do
   case "${opt}" in
+    c)
+      config="${OPTARG}"
+      ;;
     i)
       runner_index="${OPTARG}"
       ;;
@@ -44,6 +50,15 @@ while getopts ":i:n:" opt; do
       ;;
   esac
 done
+
+case "${config}" in
+  "${CONFIG_PODCVD}" | "${CONFIG_PODCVD_WITH_GPU}") ;;
+  *)
+    echo "ERROR: invalid configuration name '${config}'" >&2
+    print_usage
+    exit 1
+    ;;
+esac
 
 echo "config: ${config}"
 echo "runner_index: ${runner_index}"
@@ -67,6 +82,15 @@ sudo DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o 
 # realpath .kokoro/..
 REPO_DIR="$(realpath "$(dirname "$0")"/..)"
 TOOL_DIR="${REPO_DIR}/tools"
+
+if [[ "${config}" == "${CONFIG_PODCVD_WITH_GPU}" ]]; then
+  sudo install -m 0755 -d /etc/apt/keyrings
+  sudo curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey -o /etc/apt/keyrings/nvidia-container-toolkit.asc
+  sudo curl -sL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list -o /etc/apt/sources.list.d/nvidia-container-toolkit.list
+  sudo sed -i 's#deb https://#deb [signed-by=/etc/apt/keyrings/nvidia-container-toolkit.asc] https://#g' /etc/apt/sources.list.d/nvidia-container-toolkit.list
+  sudo apt update
+  sudo apt-get install -y nvidia-container-toolkit
+fi
 
 sudo apt-get install -y podman
 
