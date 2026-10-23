@@ -171,6 +171,7 @@ Result<Fd, int> Fd::Event(int initval, int flags) {
               ::cuttlefish::StrError(errno));
   return Fd(fd, 0);
 }
+#endif
 
 Result<Fd, int> Fd::ShmOpen(std::string_view name, int oflag, int mode) {
   std::string name_str(name);
@@ -179,7 +180,6 @@ Result<Fd, int> Fd::ShmOpen(std::string_view name, int oflag, int mode) {
               mode, ::cuttlefish::StrError(errno));
   return Fd(fd, 0);
 }
-#endif
 
 Result<Fd, int> Fd::MemfdCreate(std::string_view name, unsigned int flags) {
 #ifdef __linux__
@@ -210,12 +210,14 @@ Result<Fd, int> Fd::Open(std::string_view path, int flags, mode_t mode) {
   return Fd(fd, 0);
 }
 
+#ifdef __linux__
 Result<Fd, int> Fd::InotifyFd(void) {
   const int fd = TEMP_FAILURE_RETRY(inotify_init1(IN_CLOEXEC));
   CF_EXPECTVF(fd >= 0, errno, "inotify_init1(IN_CLOEXEC) failed: {}",
               ::cuttlefish::StrError(errno));
   return Fd(fd, 0);
 }
+#endif
 
 Result<Fd, int> Fd::Creat(std::string_view path, mode_t mode) {
   return CF_EXPECT(Fd::Open(path, O_CREAT | O_WRONLY | O_TRUNC, mode));
@@ -969,12 +971,14 @@ int Fd::Futimens(const struct timespec times[2]) {
   return TEMP_FAILURE_RETRY(futimens(fd_, times));
 }
 
+#ifdef __linux__
 // inotify related functions
 int Fd::InotifyAddWatch(const std::string& pathname, uint32_t mask) {
   return inotify_add_watch(fd_, pathname.c_str(), mask);
 }
 
 void Fd::InotifyRmWatch(int watch) { inotify_rm_watch(fd_, watch); }
+#endif
 
 Fd::Fd(int fd, int in_errno)
     : fd_(fd), errno_(in_errno), is_regular_file_(IsRegularFile(fd_)) {

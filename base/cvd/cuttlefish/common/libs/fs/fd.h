@@ -22,7 +22,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <sys/inotify.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/select.h>
@@ -40,6 +39,7 @@
 #include <linux/vm_sockets.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
+#include <sys/inotify.h>
 #endif
 
 #include <chrono>
@@ -132,11 +132,11 @@ class Fd : public ReaderWriterSeeker {
                                            bool is_abstract, int in_type,
                                            mode_t mode);
   static Result<Fd, int> SocketLocalServer(int port, int type);
+  static Result<Fd, int> ShmOpen(std::string_view name, int oflag, int mode);
 
 #ifdef __linux__
   static Result<Fd, int> Event(int initval = 0, int flags = 0);
   static Result<Fd, int> InotifyFd();
-  static Result<Fd, int> ShmOpen(std::string_view name, int oflag, int mode);
   // For binding in vsock, svm_cid from `cid` param would be either
   // VMADDR_CID_ANY, VMADDR_CID_LOCAL, VMADDR_CID_HOST or their own CID, and it
   // is used for indicating connections which it accepts from.
@@ -259,9 +259,11 @@ class Fd : public ReaderWriterSeeker {
 
   int Futimens(const struct timespec times[2]);
 
+#ifdef __linux__
   // inotify related functions
   int InotifyAddWatch(const std::string& pathname, uint32_t mask);
   void InotifyRmWatch(int watch);
+#endif
 
  private:
   Fd(int fd, int in_errno);

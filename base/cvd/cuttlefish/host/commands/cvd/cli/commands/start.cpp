@@ -58,7 +58,9 @@
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
+#ifdef __linux__
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor.h"
+#endif
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
@@ -419,22 +421,25 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
                                     own_flags_.host_substitutions));
 
   SharedFD memfd;
-  SharedFD stop_eventfd;
+  SharedFD stop_read;
+  SharedFD stop_write;
   if (!own_flags_.daemon) {
     memfd = CF_EXPECT(Fd::MemfdCreate("cvd_internal_start_output"));
-
-    stop_eventfd = CF_EXPECT(Fd::Event());
+    CF_EXPECT(SharedFD::Pipe(&stop_read, &stop_write), stop_read->StrError());
   }
+  auto stop_monitor = [stop_write]() {
+    if (stop_write->IsOpen()) {
+      (void)stop_write->Write("", 1);
+    }
+  };
 
   Command command = CF_EXPECT(ConstructCvdNonHelpCommand(
       bin, group, subcmd_args, envs, request, memfd));
 
   Result<std::unique_ptr<InterruptListenerHandle>> handle_res =
-      PushInterruptListener([this, &group, stop_eventfd](int signal) {
+      PushInterruptListener([this, &group, stop_monitor](int signal) {
         LOG(WARNING) << strsignal(signal) << " signal received, cleanning up";
-        if (stop_eventfd->IsOpen()) {
-          stop_eventfd->EventfdWrite(1);
-        }
+        stop_monitor();
         Result<void> interrupt_res = subprocess_waiter_.Interrupt();
         if (!interrupt_res.has_value()) {
           LOG(ERROR) << "Failed to stop subprocesses: "
@@ -461,8 +466,9 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   group.SetStartTime(CvdServerClock::now());
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
-  std::thread monitor_thread;
   Result<void> monitor_res;
+#ifdef __linux__
+  std::thread monitor_thread;
 
   if (!own_flags_.daemon) {
     const LocalInstance& instance = *group.Instances().begin();
@@ -472,23 +478,33 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
     for (const auto& log : CF_EXPECT(instance.LogsFilenames())) {
       (void)RemoveFile(log);
     }
-    monitor_thread = std::thread([&group, stop_eventfd, &monitor_res]() {
+    monitor_thread = std::thread([&group, stop_read, &monitor_res]() {
       const LocalInstance& first_instance = *group.Instances().begin();
-      monitor_res = MonitorLogs(first_instance, stop_eventfd);
+      monitor_res = MonitorLogs(first_instance, stop_read);
     });
   }
+  auto wait_for_monitor = [&monitor_thread]() {
+    if (monitor_thread.joinable()) {
+      monitor_thread.join();
+    }
+  };
+#else
+  // Without the log monitor the foreground start just waits for the stop.
+  auto wait_for_monitor = [stop_read]() {
+    if (stop_read->IsOpen()) {
+      char unused;
+      (void)stop_read->Read(&unused, 1);
+    }
+  };
+#endif
 
   Result<void> launch_res =
       LaunchDeviceInterruptible(std::move(command), group, envs, request);
 
   if (!launch_res.has_value()) {
     if (!own_flags_.daemon) {
-      if (stop_eventfd->IsOpen()) {
-        stop_eventfd->EventfdWrite(1);
-      }
-      if (monitor_thread.joinable()) {
-        monitor_thread.join();
-      }
+      stop_monitor();
+      wait_for_monitor();
       memfd->LSeek(0, SEEK_SET);
       std::cout << ReadToString(*memfd).value_or("") << std::flush;
     }
@@ -500,13 +516,10 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
 
   if (!own_flags_.daemon) {
     listener_handle.reset();
-    std::unique_ptr<InterruptListenerHandle> stop_listener =
-        CF_EXPECT(PushInterruptListener(
-            [stop_eventfd](int) { stop_eventfd->EventfdWrite(1); }));
+    std::unique_ptr<InterruptListenerHandle> stop_listener = CF_EXPECT(
+        PushInterruptListener([stop_monitor](int) { stop_monitor(); }));
 
-    if (monitor_thread.joinable()) {
-      monitor_thread.join();
-    }
+    wait_for_monitor();
     stop_listener.reset();
 
     LOG(INFO) << "Stopping device...";

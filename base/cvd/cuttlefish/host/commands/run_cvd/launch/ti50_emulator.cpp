@@ -35,7 +35,9 @@
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#ifdef __linux__
 #include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
+#endif
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -121,7 +123,11 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
   Result<void> ResetGPIO() const {
     // Write '1' to 'gpioPltRst' to initialize the emulator.
     std::string gpio_sock = instance_.PerInstancePath("gpioPltRst");
+#ifdef __linux__
     CF_EXPECT(WaitForUnixSocket(gpio_sock, 30));
+#else
+    return CF_ERR("Cannot start the ti50 emulator outside of Linux.");
+#endif
 
     // Wait for the emulator's internal state to be initialized.
     // Since the emulator polls the socket at 100 ms intervals before
@@ -145,7 +151,11 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
     // Connects to direct_tpm_fifo socket, which is a bi-directional Unix domain
     // socket.
     std::string fifo_sock = instance_.PerInstancePath("direct_tpm_fifo");
+#ifdef __linux__
     CF_EXPECT(WaitForUnixSocket(fifo_sock, 30));
+#else
+    return CF_ERR("Cannot start the ti50 emulator outside of Linux.");
+#endif
 
     auto cl = SharedFD::SocketLocalClient(fifo_sock, false, SOCK_STREAM);
     if (!cl->IsOpen()) {
@@ -208,7 +218,9 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
   const CuttlefishConfig::InstanceSpecific instance_;
   LogTeeCreator& log_tee_;
 
+#ifdef __linux__
   std::unique_ptr<ProxyServer> socket_proxy_;
+#endif
 
   SharedFD ctrl_sock_;
   SharedFD gpio_sock_;
