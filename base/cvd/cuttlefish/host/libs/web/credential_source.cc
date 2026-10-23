@@ -168,18 +168,6 @@ std::unique_ptr<CredentialSource> GceMetadataCredentialSource::Make(
       new GceMetadataCredentialSource(http_client));
 }
 
-FixedCredentialSource::FixedCredentialSource(const std::string& credential) {
-  this->credential_ = credential;
-}
-
-Result<std::string> FixedCredentialSource::Credential() { return credential_; }
-
-std::unique_ptr<CredentialSource> FixedCredentialSource::Make(
-    const std::string& credential) {
-  return std::unique_ptr<CredentialSource>(
-      new FixedCredentialSource(credential));
-}
-
 Result<std::unique_ptr<RefreshTokenCredentialSource>>
 RefreshTokenCredentialSource::FromJson(HttpClient& http_client,
                                        const Json::Value& credential) {

@@ -64,18 +64,6 @@ class GceMetadataCredentialSource : public RefreshingCredentialSource {
   HttpClient& http_client_;
 };
 
-// Pass through a string as an authentication token with unknown expiration.
-class FixedCredentialSource : public CredentialSource {
- public:
-  Result<std::string> Credential() override;
-
-  static std::unique_ptr<CredentialSource> Make(const std::string& credential);
-
- private:
-  FixedCredentialSource(const std::string& credential);
-  std::string credential_;
-};
-
 // OAuth2 tokens from a desktop refresh token.
 //
 // https://developers.google.com/identity/protocols/oauth2/native-app
