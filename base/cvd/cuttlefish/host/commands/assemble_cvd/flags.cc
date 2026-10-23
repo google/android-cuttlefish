@@ -654,10 +654,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_balloon));
   std::vector<bool> use_rng_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_rng));
-  std::vector<bool> simple_media_device_vec =
-      CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_simple_media_device));
-  std::vector<std::string> v4l2_proxy_vec =
-      CF_EXPECT(GET_FLAG_STR_VALUE(crosvm_v4l2_proxy));
   std::vector<bool> use_pmem_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_pmem));
   const std::vector<bool> hugepages_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_hugepages));
@@ -820,9 +816,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_crosvm_use_balloon(use_balloon_vec[instance_index]);
     instance.set_crosvm_use_rng(use_rng_vec[instance_index]);
-    instance.set_crosvm_simple_media_device(
-        simple_media_device_vec[instance_index]);
-    instance.set_crosvm_v4l2_proxy(v4l2_proxy_vec[instance_index]);
     instance.set_use_pmem(use_pmem_vec[instance_index]);
     instance.set_crosvm_hugepages(hugepages_vec[instance_index]);
     instance.set_bootconfig_supported(

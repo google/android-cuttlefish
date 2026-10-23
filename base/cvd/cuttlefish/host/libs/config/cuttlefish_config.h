@@ -412,8 +412,6 @@ class CuttlefishConfig {
 
     bool crosvm_use_balloon() const;
     bool crosvm_use_rng() const;
-    bool crosvm_simple_media_device() const;
-    std::string crosvm_v4l2_proxy() const;
     bool use_pmem() const;
     bool crosvm_hugepages() const;
     bool enable_pkvm() const;
@@ -673,8 +671,6 @@ class CuttlefishConfig {
     void set_ap_boot_flow(APBootFlow flow);
     void set_crosvm_use_balloon(bool use_balloon);
     void set_crosvm_use_rng(bool use_rng);
-    void set_crosvm_simple_media_device(bool simple_media_device);
-    void set_crosvm_v4l2_proxy(std::string v4l2_proxy);
     void set_use_pmem(bool use_pmem);
     void set_crosvm_hugepages(bool hugepages);
     void set_enable_pkvm(bool enable_pkvm);

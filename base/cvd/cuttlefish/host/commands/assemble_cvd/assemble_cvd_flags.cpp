@@ -370,17 +370,6 @@ DEFINE_vec(crosvm_use_rng, "true",
            "Controls the crosvm --no-rng flag"
            "The flag is given if crosvm_use_rng is false");
 
-DEFINE_vec(crosvm_simple_media_device, "false",
-           "Controls the crosvm --simple-media-device flag"
-           "The flag is given if crosvm_simple_media_device is true.");
-
-DEFINE_vec(
-    crosvm_v4l2_proxy, CF_DEFAULTS_CROSVM_V4L2_PROXY,
-    "Controls the crosvm --v4l2-proxy flag"
-    "The flag is given if crosvm_v4l2_proxy is set with a valid string "
-    "literal. "
-    "When this flag is set, crosvm_simple_media_device becomes ineffective.");
-
 DEFINE_vec(use_pmem, "true",
            "Make this flag false to disable pmem with crosvm");
 
