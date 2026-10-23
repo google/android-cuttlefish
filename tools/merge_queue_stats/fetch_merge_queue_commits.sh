@@ -8,7 +8,8 @@
 #
 # Output files:
 #   commits_<batch>.json - Batched GraphQL responses mapping `c_<oid>` to its
-#                          Commit `statusCheckRollup` (`CheckRun` + `StatusContext`).
+#                          Commit `statusCheckRollup` (`CheckRun` + `StatusContext`),
+#                          plus a `patchId` added by this script (see below).
 #
 # Why we query `statusCheckRollup.contexts` on `RemovedFromMergeQueueEvent.beforeCommit`:
 #   - On GitHub merge queues, `RemovedFromMergeQueueEvent.beforeCommit` is the
@@ -21,6 +22,14 @@
 #     `CheckRun`s AND external `StatusContext` checks in one unified connection.
 #   - Incrementally checks existing `commits_*.json` files and only queries missing
 #     commit SHAs, making future re-runs nearly instant.
+#
+# Why `patchId`:
+#   - A merge-group commit is the PR squashed onto whatever was ahead of it in
+#     the queue, so its diff against its parent is the PR's change, already
+#     rebased. `git patch-id --stable` over that diff fingerprints the change
+#     independently of the base, so two attempts of the same PR with equal
+#     patchIds had the same content. This lets us compare what was tested on
+#     an earlier attempt with what eventually merged.
 
 set -euo pipefail
 
@@ -147,3 +156,35 @@ for (( batch_idx = 0; batch_idx < total_batches; batch_idx++ )); do
 done
 
 err "Finished fetching commit rollups (${missing_count} new commits added)."
+
+# Add a patchId to every commit that doesn't have one yet, in place, so
+# the field survives incremental runs and is also backfilled for commits
+# cached before this script computed it.
+diff_file=$(mktemp)
+trap 'rm -f "${existing_oids_file}" "${diff_file}"' EXIT
+patch_ids_added=0
+for commits_file in commits_*.json; do
+  [[ -f "${commits_file}" ]] || continue
+  mapfile -t oids < <(
+    jq -r '.data.repository[] | select(. != null) | select(has("patchId") | not) | .oid' \
+      "${commits_file}"
+  )
+  for oid in "${oids[@]}"; do
+    if gh api -H 'Accept: application/vnd.github.diff' \
+        "repos/google/android-cuttlefish/commits/${oid}" > "${diff_file}" 2>&1; then
+      patch_id=$(git patch-id --stable < "${diff_file}" | cut -d' ' -f1)
+    elif grep -qE 'HTTP (404|406|422)' "${diff_file}"; then
+      # Commit is gone or the diff is too large; nothing to retry.
+      patch_id=""
+    else
+      err "WARNING: could not fetch diff for ${oid}; will retry next run."
+      continue
+    fi
+    jq --arg oid "${oid}" --arg patch_id "${patch_id}" \
+      '.data.repository["c_" + $oid].patchId = (if $patch_id == "" then null else $patch_id end)' \
+      "${commits_file}" > "${commits_file}.tmp"
+    mv "${commits_file}.tmp" "${commits_file}"
+    patch_ids_added=$(( patch_ids_added + 1 ))
+  done
+done
+err "Finished computing patch ids (${patch_ids_added} added)."
