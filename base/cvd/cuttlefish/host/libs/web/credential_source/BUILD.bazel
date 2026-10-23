@@ -67,3 +67,21 @@ cf_cc_library(
         "@jsoncpp",
     ],
 )
+
+cf_cc_library(
+    name = "service_account_oauth_credential_source",
+    srcs = ["service_account_oauth_credential_source.cc"],
+    hdrs = ["service_account_oauth_credential_source.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/host/libs/web/credential_source:refreshing_credential_source",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_json",
+        "//cuttlefish/host/libs/web/http_client:url_escape",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings",
+        "@boringssl//:crypto",
+        "@jsoncpp",
+    ],
+)

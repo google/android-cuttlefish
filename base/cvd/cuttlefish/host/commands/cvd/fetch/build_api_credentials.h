@@ -19,7 +19,7 @@
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
-#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
 

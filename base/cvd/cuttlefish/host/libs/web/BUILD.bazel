@@ -240,23 +240,6 @@ cf_cc_test(
 )
 
 cf_cc_library(
-    name = "credential_source",
-    srcs = ["credential_source.cc"],
-    hdrs = ["credential_source.h"],
-    deps = [
-        "//cuttlefish/common/libs/utils:base64",
-        "//cuttlefish/host/libs/web/credential_source:refreshing_credential_source",
-        "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/web/http_client:http_json",
-        "//cuttlefish/host/libs/web/http_client:url_escape",
-        "//cuttlefish/result",
-        "@abseil-cpp//absl/strings",
-        "@boringssl//:crypto",
-        "@jsoncpp",
-    ],
-)
-
-cf_cc_library(
     name = "digest",
     srcs = ["digest.cpp"],
     hdrs = ["digest.h"],
