@@ -46,9 +46,12 @@ cf_cc_library(
     srcs = ["cf_disk_configs.cpp"],
     hdrs = ["cf_disk_configs.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/host/libs/config:data_image_policy",
+        "//cuttlefish/result",
+        "@fmt",
     ],
 )
 
@@ -125,6 +128,7 @@ cf_cc_test(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/result",
         "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
     ],
