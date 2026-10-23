@@ -25,7 +25,6 @@
 #include "absl/strings/str_split.h"
 #include "fmt/format.h"
 
-#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_string.h"
@@ -89,7 +88,6 @@ Result<std::string> GetZoneValue(std::string_view response_string) {
 }  // namespace
 
 Result<std::optional<GceEnvironment>> DetectGceEnvironment() {
-  CurlGlobalInit curl_init;
   std::unique_ptr<HttpClient> http_client =
       CurlHttpClient(/*use_logging_debug_function=*/true);
   if (!CF_EXPECT(IsGceEnvironment(*http_client))) {

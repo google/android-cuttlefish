@@ -24,7 +24,6 @@
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/oauth2_consent.h"
@@ -71,7 +70,6 @@ Result<void> CvdLoginCommand::Handle(const CommandRequest& request) {
     return {};
   }
 
-  CurlGlobalInit init;
   std::unique_ptr<HttpClient> http_client =
       CurlHttpClient(/*use_logging_debug_function=*/true);
   CF_EXPECT(http_client.get(), "Failed to create a http client");

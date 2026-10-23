@@ -236,7 +236,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/libs/web:oauth2_consent",
         "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/web/http_client:curl_global_init",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
         "//cuttlefish/result",
     ],
