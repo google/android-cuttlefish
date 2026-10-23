@@ -108,8 +108,8 @@ sudo tee /mnt/image/etc/sysctl.d/80-nsjail.conf >/dev/null <<EOF
 kernel.unprivileged_userns_clone=1
 EOF
 
-kmodver_end=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
-  cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
+kmodver_end=$(sudo chroot /mnt/image/ /usr/bin/dpkg -l | grep '^ii' | \
+  awk '{print $2}' | grep '^linux-image-[0-9]' | head -n1 | sed 's/linux-image-//')
 echo "IMAGE ENDS WITH KERNEL: ${kmodver_end}"
 
 if [ "${kmodver_begin}" != "${kmodver_end}" ]; then
