@@ -21,7 +21,6 @@
 #include <chrono>
 #include <cstddef>
 #include <memory>
-#include <mutex>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -52,8 +51,6 @@
 
 namespace cuttlefish {
 namespace {
-
-constexpr auto kRefreshWindow = std::chrono::minutes(2);
 
 std::string CollectSslErrors() {
   std::stringstream errors;
@@ -121,19 +118,6 @@ Result<std::string> CreateJwt(const std::string& email,
 }
 
 }  // namespace
-
-RefreshingCredentialSource::RefreshingCredentialSource()
-    : expiration_(std::chrono::steady_clock::time_point::min()) {}
-
-Result<std::string> RefreshingCredentialSource::Credential() {
-  std::lock_guard lock(latest_credential_mutex_);
-  if (expiration_ + kRefreshWindow < std::chrono::steady_clock::now()) {
-    const auto& [credential, expiration] = CF_EXPECT(Refresh());
-    latest_credential_ = credential;
-    expiration_ = std::chrono::steady_clock::now() + expiration;
-  }
-  return latest_credential_;
-}
 
 GceMetadataCredentialSource::GceMetadataCredentialSource(
     HttpClient& http_client)

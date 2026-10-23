@@ -17,7 +17,6 @@
 
 #include <chrono>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <utility>
 
@@ -25,27 +24,11 @@
 #include "openssl/evp.h"
 
 #include "cuttlefish/host/libs/web/credential_source/credential_source.h"
+#include "cuttlefish/host/libs/web/credential_source/refreshing_credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-// Credentials with known expiration times with behavior to load new
-// credentials.
-class RefreshingCredentialSource : public CredentialSource {
- public:
-  virtual Result<std::string> Credential() final override;
-
- protected:
-  RefreshingCredentialSource();
-
- private:
-  virtual Result<std::pair<std::string, std::chrono::seconds>> Refresh() = 0;
-
-  std::string latest_credential_;
-  std::mutex latest_credential_mutex_;
-  std::chrono::steady_clock::time_point expiration_;
-};
 
 // OAuth2 credentials from the GCE metadata server.
 //
