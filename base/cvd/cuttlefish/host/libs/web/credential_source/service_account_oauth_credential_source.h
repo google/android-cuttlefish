@@ -25,7 +25,7 @@
 
 #include "cuttlefish/host/libs/web/credential_source/refreshing_credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 

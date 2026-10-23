@@ -29,7 +29,7 @@
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/caching_build_api.h"
 #include "cuttlefish/host/libs/web/composite_build_api.h"
-#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/gcs_build_api.h"
 #include "cuttlefish/host/libs/web/http_build_api.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
