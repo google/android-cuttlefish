@@ -23,7 +23,6 @@
 #include <string_view>
 #include <vector>
 
-#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/flag_parser/flag.h"
@@ -107,13 +106,15 @@ Result<void> CvdMonitorCommandHandler::Handle(const CommandRequest& request) {
       CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                 "Unable to select an instance");
 
-  SharedFD stop_eventfd = CF_EXPECT(Fd::Event());
+  SharedFD stop_read;
+  SharedFD stop_write;
+  CF_EXPECT(SharedFD::Pipe(&stop_read, &stop_write), stop_read->StrError());
 
   std::unique_ptr<InterruptListenerHandle> stop_listener =
       CF_EXPECT(PushInterruptListener(
-          [stop_eventfd](int) { stop_eventfd->EventfdWrite(1); }));
+          [stop_write](int) { (void)stop_write->Write("", 1); }));
 
-  CF_EXPECT(MonitorLogs(instance, stop_eventfd, flags_.severity_));
+  CF_EXPECT(MonitorLogs(instance, stop_read, flags_.severity_));
 
   return {};
 }

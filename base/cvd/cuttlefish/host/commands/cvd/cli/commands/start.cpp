@@ -34,10 +34,6 @@
 #include <set>
 #include <string>
 #include <thread>
-#ifndef __linux__
-#include <condition_variable>
-#include <mutex>
-#endif
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -425,30 +421,17 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
                                     own_flags_.host_substitutions));
 
   SharedFD memfd;
+  SharedFD stop_read;
+  SharedFD stop_write;
   if (!own_flags_.daemon) {
     memfd = CF_EXPECT(Fd::MemfdCreate("cvd_internal_start_output"));
+    CF_EXPECT(SharedFD::Pipe(&stop_read, &stop_write), stop_read->StrError());
   }
-#ifdef __linux__
-  SharedFD stop_eventfd;
-  if (!own_flags_.daemon) {
-    stop_eventfd = CF_EXPECT(Fd::Event());
-  }
-  auto stop_monitor = [stop_eventfd]() {
-    if (stop_eventfd->IsOpen()) {
-      stop_eventfd->EventfdWrite(1);
+  auto stop_monitor = [stop_write]() {
+    if (stop_write->IsOpen()) {
+      (void)stop_write->Write("", 1);
     }
   };
-#else
-  // Without the log monitor the foreground start just waits for a signal.
-  std::mutex stop_mutex;
-  std::condition_variable stop_cv;
-  bool stop_requested = false;
-  auto stop_monitor = [&stop_mutex, &stop_cv, &stop_requested]() {
-    std::lock_guard lock(stop_mutex);
-    stop_requested = true;
-    stop_cv.notify_all();
-  };
-#endif
 
   Command command = CF_EXPECT(ConstructCvdNonHelpCommand(
       bin, group, subcmd_args, envs, request, memfd));
@@ -495,9 +478,9 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
     for (const auto& log : CF_EXPECT(instance.LogsFilenames())) {
       (void)RemoveFile(log);
     }
-    monitor_thread = std::thread([&group, stop_eventfd, &monitor_res]() {
+    monitor_thread = std::thread([&group, stop_read, &monitor_res]() {
       const LocalInstance& first_instance = *group.Instances().begin();
-      monitor_res = MonitorLogs(first_instance, stop_eventfd);
+      monitor_res = MonitorLogs(first_instance, stop_read);
     });
   }
   auto wait_for_monitor = [&monitor_thread]() {
@@ -506,9 +489,12 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
     }
   };
 #else
-  auto wait_for_monitor = [&stop_mutex, &stop_cv, &stop_requested]() {
-    std::unique_lock lock(stop_mutex);
-    stop_cv.wait(lock, [&stop_requested]() { return stop_requested; });
+  // Without the log monitor the foreground start just waits for the stop.
+  auto wait_for_monitor = [stop_read]() {
+    if (stop_read->IsOpen()) {
+      char unused;
+      (void)stop_read->Read(&unused, 1);
+    }
   };
 #endif
 

@@ -20,7 +20,6 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <sys/eventfd.h>
 #include <sys/inotify.h>
 #include <sys/poll.h>
 #include <unistd.h>
@@ -52,7 +51,7 @@
 
 namespace cuttlefish {
 
-Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd,
+Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_fd,
                          LogSeverity severity) {
   CF_EXPECT(isatty(0), "The monitor command requires an interactive terminal.");
 
@@ -136,9 +135,9 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd,
     std::vector<PollSharedFd> poll_fds = {
         PollSharedFd{.fd = dir_inotify_fd, .events = POLLIN, .revents = 0},
     };
-    if (stop_eventfd->IsOpen()) {
+    if (stop_fd->IsOpen()) {
       poll_fds.push_back(
-          PollSharedFd{.fd = stop_eventfd, .events = POLLIN, .revents = 0});
+          PollSharedFd{.fd = stop_fd, .events = POLLIN, .revents = 0});
     }
     for (MonitorSource* source : sources) {
       if (source == nullptr) {
@@ -158,10 +157,7 @@ Result<void> MonitorLogs(const LocalInstance& instance, SharedFD stop_eventfd,
     int poll_res = SharedFD::Poll(poll_fds, missing_source ? 200 : -1);
     CF_EXPECT_GE(poll_res, 0, StrError(errno));
 
-    if (stop_eventfd->IsOpen() && (poll_fds[1].revents & POLLIN)) {
-      // Stop requested via eventfd
-      eventfd_t val;
-      stop_eventfd->EventfdRead(&val);
+    if (stop_fd->IsOpen() && (poll_fds[1].revents & POLLIN)) {
       return {};
     }
 
