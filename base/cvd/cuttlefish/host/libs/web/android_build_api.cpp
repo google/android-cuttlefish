@@ -40,7 +40,7 @@
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
-#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"

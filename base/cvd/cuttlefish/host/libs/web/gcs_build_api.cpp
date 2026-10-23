@@ -35,7 +35,7 @@
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
-#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/digest.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
