@@ -5,10 +5,14 @@
 # Usage:
 #   ./fetch_merge_queue_commits.sh          # Incrementally fetches any missing commit SHAs
 #   ./fetch_merge_queue_commits.sh --clean  # Wipes commits_*.json and fetches from scratch
+#   ./fetch_merge_queue_commits.sh --jsonl  # Also writes commits.jsonl (one commit per line)
 #
 # Output files:
 #   commits_<batch>.json - Batched GraphQL responses mapping `c_<oid>` to its
 #                          Commit `statusCheckRollup` (`CheckRun` + `StatusContext`).
+#   commits.jsonl        - With --jsonl: one compact Commit object per line (the
+#                          `c_<oid>` keys are dropped; `oid` is inside each
+#                          object).
 #
 # Why we query `statusCheckRollup.contexts` on `RemovedFromMergeQueueEvent.beforeCommit`:
 #   - On GitHub merge queues, `RemovedFromMergeQueueEvent.beforeCommit` is the
@@ -34,7 +38,16 @@ if ! compgen -G "prs_*.json" >/dev/null; then
 fi
 
 rm -f commits_*.json.tmp
-if [[ "${1:-}" == "--clean" ]]; then
+clean=false
+jsonl=false
+for arg in "$@"; do
+  case "${arg}" in
+    --clean) clean=true ;;
+    --jsonl) jsonl=true ;;
+    *) err "Usage: $0 [--clean] [--jsonl]"; exit 1 ;;
+  esac
+done
+if [[ "${clean}" == true ]]; then
   err "Removing existing commits_*.json files (--clean specified)."
   rm -f commits_*.json
 fi
@@ -147,3 +160,15 @@ for (( batch_idx = 0; batch_idx < total_batches; batch_idx++ )); do
 done
 
 err "Finished fetching commit rollups (${missing_count} new commits added)."
+
+if [[ "${jsonl}" == true ]]; then
+  # One commit per line, nesting kept. Null entries (SHAs GitHub no longer
+  # resolves) are dropped.
+  cat /dev/null > commits.jsonl.tmp
+  if compgen -G "commits_*.json" >/dev/null; then
+    jq -c '.data.repository[] | select(. != null)' commits_*.json \
+      > commits.jsonl.tmp
+  fi
+  mv commits.jsonl.tmp commits.jsonl
+  err "Wrote commits.jsonl ($(wc -l < commits.jsonl | tr -d ' ') commits)."
+fi

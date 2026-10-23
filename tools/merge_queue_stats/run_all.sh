@@ -7,6 +7,8 @@
 #                                          # rejected merge-queue commit rollups, and runs jq reports.
 #   ./run_all.sh --clean                   # Wipes cached JSON files (`prs_*.json`, `commits_*.json`)
 #                                          # and rebuilds everything from scratch.
+#   ./run_all.sh --jsonl                   # Also writes `prs.jsonl` and `commits.jsonl` (one record
+#                                          # per line).
 #   ./run_all.sh --sheets [SPREADSHEET_ID] # Uploads data & charts to Google Sheets (creates a new
 #                                          # spreadsheet if SPREADSHEET_ID is omitted).
 
@@ -15,6 +17,7 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 CLEAN_FLAG=""
+JSONL_FLAG=""
 UPDATE_SHEETS=false
 SHEET_ID=""
 
@@ -22,6 +25,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --clean)
       CLEAN_FLAG="--clean"
+      shift
+      ;;
+    --jsonl)
+      JSONL_FLAG="--jsonl"
       shift
       ;;
     --sheets)
@@ -39,8 +46,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-./pull_request_timeline_events.sh --clean
-./fetch_merge_queue_commits.sh ${CLEAN_FLAG}
+./pull_request_timeline_events.sh --clean ${JSONL_FLAG}
+./fetch_merge_queue_commits.sh ${CLEAN_FLAG} ${JSONL_FLAG}
 ./jq_report.sh
 
 if [[ "${UPDATE_SHEETS}" == "true" ]]; then
