@@ -15,12 +15,12 @@
 
 #include "cuttlefish/result/error_type.h"
 
-#include <cstddef>
-#include <cstdlib>
+#include <stddef.h>
+#include <stdlib.h>
+
 #include <optional>
-#include <sstream>
+#include <source_location>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
@@ -29,6 +29,7 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
+#include "cuttlefish/result/function_name.h"
 #include "cuttlefish/result/stack_trace_entry.h"
 
 namespace cuttlefish {
@@ -116,6 +117,7 @@ fmt::format_context::iterator FormatEntry(
   if (filtered_specs.empty()) {
     filtered_specs.push_back(FormatSpecifier::kShort);
   }
+  const std::source_location& location = entry.Location();
   for (size_t i = 0; i < filtered_specs.size(); i++) {
     if (index.has_value() && numbers) {
       if (color) {
@@ -139,17 +141,14 @@ fmt::format_context::iterator FormatEntry(
     }
     switch (filtered_specs[i]) {
       case FormatSpecifier::kFunction:
-        out = fmt::format_to(out, "{}", entry.Function());
+        out = fmt::format_to(out, "{}", FunctionName(location));
         break;
       case FormatSpecifier::kLongExpression:
         out = fmt::format_to(out, "CF_EXPECT({})", entry.Expression());
         break;
       case FormatSpecifier::kLongLocation:
-        if (color) {
-          out = fmt::format_to(out, "{}:{}", entry.File(), entry.Line());
-        } else {
-          out = fmt::format_to(out, "{}:{}", entry.File(), entry.Line());
-        }
+        out =
+            fmt::format_to(out, "{}:{}", location.file_name(), location.line());
         break;
       case FormatSpecifier::kMessage:
         if (color) {
@@ -160,38 +159,31 @@ fmt::format_context::iterator FormatEntry(
         }
         break;
       case FormatSpecifier::kPrettyFunction:
-        out = fmt::format_to(out, "{}", entry.PrettyFunction());
+        out = fmt::format_to(out, "{}", location.function_name());
         break;
       case FormatSpecifier::kShort: {
-        auto last_slash = entry.File().rfind("/");
-        auto short_file = entry.File().substr(
+        std::string name_str(location.file_name());
+        size_t last_slash = name_str.rfind("/");
+        std::string short_file = name_str.substr(
             last_slash == std::string::npos ? 0 : last_slash + 1);
         std::string last;
         if (entry.HasMessage()) {
           last = color ? absl::StrCat(kAnsiRed, entry.Message(), kAnsiReset)
                        : entry.Message();
         }
-        if (color) {
-          out = fmt::format_to(out, "{}:{} | {} | {}", short_file, entry.Line(),
-                               entry.Function(), last);
-        } else {
-          out = fmt::format_to(out, "{}:{} | {} | {}", short_file, entry.Line(),
-                               entry.Function(), last);
-        }
+        out = fmt::format_to(out, "{}:{} | {} | {}", short_file,
+                             location.line(), FunctionName(location), last);
         break;
       }
       case FormatSpecifier::kShortExpression:
         out = fmt::format_to(out, "{}", entry.Expression());
         break;
       case FormatSpecifier::kShortLocation: {
-        auto last_slash = entry.File().rfind("/");
-        auto short_file = entry.File().substr(
+        std::string name_str(location.file_name());
+        size_t last_slash = name_str.rfind("/");
+        std::string short_file = name_str.substr(
             last_slash == std::string::npos ? 0 : last_slash + 1);
-        if (color) {
-          out = fmt::format_to(out, "{}:{}", short_file, entry.Line());
-        } else {
-          out = fmt::format_to(out, "{}:{}", short_file, entry.Line());
-        }
+        out = fmt::format_to(out, "{}:{}", short_file, location.line());
         break;
       }
       default:
@@ -316,51 +308,6 @@ struct fmt::formatter<cuttlefish::StackTraceError<void>> {
 };
 
 namespace cuttlefish {
-
-StackTraceEntry::StackTraceEntry(std::string file, size_t line,
-                                 std::string pretty_function,
-                                 std::string function)
-    : file_(std::move(file)),
-      line_(line),
-      pretty_function_(std::move(pretty_function)),
-      function_(std::move(function)) {}
-
-StackTraceEntry::StackTraceEntry(std::string file, size_t line,
-                                 std::string pretty_function,
-                                 std::string function, std::string expression)
-    : file_(std::move(file)),
-      line_(line),
-      pretty_function_(std::move(pretty_function)),
-      function_(std::move(function)),
-      expression_(std::move(expression)) {}
-
-StackTraceEntry::StackTraceEntry(const StackTraceEntry& other)
-    : file_(other.file_),
-      line_(other.line_),
-      pretty_function_(other.pretty_function_),
-      function_(other.function_),
-      expression_(other.expression_),
-      message_(other.message_.str()) {}
-
-StackTraceEntry& StackTraceEntry::operator=(const StackTraceEntry& other) {
-  file_ = other.file_;
-  line_ = other.line_;
-  pretty_function_ = other.pretty_function_;
-  function_ = other.function_;
-  expression_ = other.expression_;
-  message_.str(other.message_.str());
-  return *this;
-}
-
-bool StackTraceEntry::HasMessage() const { return !message_.str().empty(); }
-const std::string& StackTraceEntry::Expression() const { return expression_; }
-const std::string& StackTraceEntry::File() const { return file_; }
-const std::string& StackTraceEntry::Function() const { return function_; }
-const std::string& StackTraceEntry::PrettyFunction() const {
-  return pretty_function_;
-}
-size_t StackTraceEntry::Line() const { return line_; }
-std::string StackTraceEntry::Message() const { return message_.str(); }
 
 template <>
 std::string StackTraceError<void>::Message() const {

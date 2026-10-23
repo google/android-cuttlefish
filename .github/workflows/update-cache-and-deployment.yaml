@@ -87,6 +87,25 @@ jobs:
         writable: true
     - name: Run cvd unit tests
       uses: ./.github/actions/run-cvd-unit-tests
+  update-bazel-9-vendor-cache:
+    if: inputs.update-cache
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
+    - name: Mount Bazel vendor cache
+      uses: ./.github/actions/mount-bazel-vendor-cache
+      with:
+        bazel-version: "9"
+        writable: true
+    - name: Install bazel
+      run: sudo tools/buildutils/installbazel.sh
+    - name: Vendor git dependencies
+      env:
+        OVERRIDE_BAZEL_VERSION: 9.0.0
+      run: tools/buildutils/vendor_git_repos.sh
   update-bazel-cache-and-deploy-debian-package-amd64:
     needs: [set-variables]
     environment: deployment

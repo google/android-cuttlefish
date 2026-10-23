@@ -1,6 +1,6 @@
 #!/bin/bash
 # Fetches check suite / status context rollups for every unique `beforeCommit` SHA
-# on rejected `RemovedFromMergeQueueEvent` events across `prs_*.json`.
+# on `RemovedFromMergeQueueEvent` events across `prs_*.json`.
 #
 # Usage:
 #   ./fetch_merge_queue_commits.sh          # Incrementally fetches any missing commit SHAs
@@ -50,14 +50,14 @@ if compgen -G "commits_*.json" >/dev/null; then
   next_batch_num=$(( max_existing + 1 ))
 fi
 
-# Extract all unique non-null merge-group commit SHAs from rejected merge queue events
-# that have not yet been fetched into commits_*.json.
+# Extract all unique non-null merge-group commit SHAs from merge queue removal events
+# (merged and rejected) that have not yet been fetched into commits_*.json.
 mapfile -t missing_oids < <(
   comm -23 \
     <(jq -r '
         .data.repository.pullRequests.nodes[]
         | .timelineItems.nodes[]
-        | select(.__typename == "RemovedFromMergeQueueEvent" and .reason != "merged" and .beforeCommit.oid != null)
+        | select(.__typename == "RemovedFromMergeQueueEvent" and .beforeCommit.oid != null)
         | .beforeCommit.oid
       ' prs_*.json | sort -u) \
     "${existing_oids_file}"

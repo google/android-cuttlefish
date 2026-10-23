@@ -15,39 +15,31 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/kernel_module_parser.h"
 
-#include <memory>
-
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/io/in_memory.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 namespace {
 
 TEST(KernelModuleParserTest, IsSigned) {
-  std::unique_ptr<ReaderSeeker> file =
-      InMemoryIo("something\n~Module signature appended~\n");
-  ASSERT_NE(file.get(), nullptr);
+  OwningInMemoryIo file("something\n~Module signature appended~\n");
 
-  EXPECT_THAT(IsKernelModuleSigned(*file), IsOkAndValue(true));
+  EXPECT_THAT(IsKernelModuleSigned(file), IsOkAndValue(true));
 }
 
 TEST(KernelModuleParserTest, IsNotSigned) {
-  std::unique_ptr<ReaderSeeker> file =
-      InMemoryIo("something\n~Module signature not appended~\n");
-  ASSERT_NE(file.get(), nullptr);
+  OwningInMemoryIo file("something\n~Module signature not appended~\n");
 
-  EXPECT_THAT(IsKernelModuleSigned(*file), IsOkAndValue(false));
+  EXPECT_THAT(IsKernelModuleSigned(file), IsOkAndValue(false));
 }
 
 TEST(KernelModuleParserTest, EmptyIsNotSigned) {
-  std::unique_ptr<ReaderSeeker> file = InMemoryIo();
-  ASSERT_NE(file.get(), nullptr);
+  OwningInMemoryIo file;
 
-  EXPECT_THAT(IsKernelModuleSigned(*file), IsOkAndValue(false));
+  EXPECT_THAT(IsKernelModuleSigned(file), IsOkAndValue(false));
 }
 
 }  // namespace

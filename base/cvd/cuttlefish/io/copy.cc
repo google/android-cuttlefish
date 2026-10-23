@@ -21,9 +21,9 @@
 #include <array>
 #include <memory>
 
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/writer.h"
+#include "cuttlefish/io/writer_seeker.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -44,6 +44,11 @@ Result<void> Copy(Reader& reader, Writer& writer, const size_t buffer_size) {
       chunk_written += written;
     }
   }
+  return {};
+}
+
+Result<void> Copy(Reader&& reader, Writer& writer, const size_t buffer_size) {
+  CF_EXPECT(Copy(static_cast<Reader&>(reader), writer, buffer_size));
   return {};
 }
 

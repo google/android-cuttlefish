@@ -26,10 +26,10 @@ cf_cc_test(
         "//cuttlefish/io",
         "//cuttlefish/io:chroot",
         "//cuttlefish/io:copy",
-        "//cuttlefish/io:filesystem",
-        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:in_memory_fs",
+        "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/io:string",
-        "//cuttlefish/result",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
     ],
 )
@@ -53,7 +53,7 @@ cf_cc_test(
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:concat",
-        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/io:string",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
@@ -65,9 +65,9 @@ cf_cc_library(
     srcs = ["copy.cc"],
     hdrs = ["copy.h"],
     deps = [
-        "//cuttlefish/io",
         "//cuttlefish/io:reader",
         "//cuttlefish/io:writer",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -77,9 +77,8 @@ cf_cc_test(
     name = "copy_test",
     srcs = ["copy_test.cc"],
     deps = [
-        "//cuttlefish/io",
         "//cuttlefish/io:copy",
-        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/io:read_exact",
         "//cuttlefish/result:result_matchers",
     ],
@@ -106,9 +105,9 @@ cf_cc_test(
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:cpio",
-        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/io:string",
-        "//cuttlefish/result",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
     ],
 )
@@ -124,6 +123,7 @@ cf_cc_library(
         "//cuttlefish/io:reader",
         "//cuttlefish/io:seeker",
         "//cuttlefish/io:writer",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -160,6 +160,7 @@ cf_cc_library(
     hdrs = ["fake_pread_pwrite.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -196,25 +197,25 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "in_memory",
-    srcs = ["in_memory.cc"],
-    hdrs = ["in_memory.h"],
+    name = "in_memory_fs",
+    srcs = ["in_memory_fs.cc"],
+    hdrs = ["in_memory_fs.h"],
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:filesystem",
+        "//cuttlefish/io:in_memory_io",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
 )
 
-cf_cc_test(
-    name = "in_memory_test",
-    srcs = ["in_memory_test.cc"],
+cf_cc_library(
+    name = "in_memory_io",
+    srcs = ["in_memory_io.cc"],
+    hdrs = ["in_memory_io.h"],
     deps = [
         "//cuttlefish/io",
-        "//cuttlefish/io:in_memory",
-        "//cuttlefish/result:result_matchers",
-        "@abseil-cpp//absl/strings",
+        "//cuttlefish/result:result_type",
     ],
 )
 
@@ -227,6 +228,7 @@ cf_cc_library(
         "//cuttlefish/io:seeker",
         "//cuttlefish/io:visitable",
         "//cuttlefish/io:writer",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -265,9 +267,8 @@ cf_cc_test(
     name = "length_test",
     srcs = ["length_test.cc"],
     deps = [
-        "//cuttlefish/io",
-        "//cuttlefish/io:in_memory",
         "//cuttlefish/io:length",
+        "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/result:result_matchers",
     ],
 )
@@ -293,14 +294,14 @@ cf_cc_test(
     srcs = ["lz4_legacy_test.cc"],
     deps = [
         "//cuttlefish/io",
-        "//cuttlefish/io:filesystem",
-        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:in_memory_fs",
         "//cuttlefish/io:lz4_legacy",
+        "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/io:reader",
         "//cuttlefish/io:string",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/io:writer",
-        "//cuttlefish/result",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
     ],
 )
@@ -317,6 +318,25 @@ cf_cc_library(
         "//cuttlefish/posix:stat",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
+    name = "owning_in_memory_io",
+    srcs = ["owning_in_memory_io.cc"],
+    hdrs = ["owning_in_memory_io.h"],
+    deps = [
+        "//cuttlefish/io:in_memory_io",
+    ],
+)
+
+cf_cc_test(
+    name = "owning_in_memory_io_test",
+    srcs = ["owning_in_memory_io_test.cc"],
+    deps = [
+        "//cuttlefish/io:owning_in_memory_io",
+        "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -349,7 +369,7 @@ cf_cc_test(
     srcs = ["read_window_view_test.cc"],
     deps = [
         "//cuttlefish/io",
-        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/io:read_window_view",
         "//cuttlefish/io:string",
         "//cuttlefish/result:result_matchers",
@@ -430,6 +450,16 @@ cf_cc_library(
     hdrs = ["writer.h"],
     deps = [
         "//cuttlefish/io:visitable",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
+    name = "writer_seeker",
+    hdrs = ["writer_seeker.h"],
+    deps = [
+        "//cuttlefish/io:seeker",
+        "//cuttlefish/io:writer",
         "//cuttlefish/result:result_type",
     ],
 )

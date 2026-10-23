@@ -205,16 +205,6 @@ class Fd : public ReaderWriterSeeker {
   // whether this is a regular file or not
   bool IsRegular() const { return is_regular_file_; }
 
-  /**
-   * Adds a hard link to a file descriptor, based on the current working
-   * directory of the process or to some absolute path.
-   *
-   * https://www.man7.org/linux/man-pages/man2/linkat.2.html
-   *
-   * Using this on a file opened with O_TMPFILE can link it into the filesystem.
-   */
-  // Used with O_TMPFILE files to attach them to the filesystem.
-  int LinkAtCwd(const std::string& path);
   Result<void, int> Listen(int backlog);
   static void Log(const char* message);
   off_t LSeek(off_t offset, int whence);

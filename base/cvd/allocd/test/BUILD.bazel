@@ -24,3 +24,17 @@ cf_cc_test(
         "//cuttlefish/result:result_matchers",
     ],
 )
+
+cf_cc_library(
+    name = "nft_messages_helper",
+    testonly = True,
+    srcs = ["nft_messages_helper.cc"],
+    hdrs = ["nft_messages_helper.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    deps = [
+        "//allocd/net:netlink",
+        "@googletest//:gtest",
+    ],
+)

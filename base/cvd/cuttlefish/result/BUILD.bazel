@@ -22,6 +22,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/ansi_codes",
         "//cuttlefish/ansi_codes:should_color",
+        "//cuttlefish/result:function_name",
         "//cuttlefish/result:stack_trace_entry",
         "@abseil-cpp//absl/strings",
         "@fmt",
@@ -37,6 +38,24 @@ cf_cc_library(
         "//cuttlefish/result:result_type",
         "@fmt",
         "@tl-expected",
+    ],
+)
+
+cf_cc_library(
+    name = "function_name",
+    srcs = ["function_name.cc"],
+    hdrs = ["function_name.h"],
+    deps = [
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "function_name_test",
+    srcs = ["function_name_test.cc"],
+    deps = [
+        "//cuttlefish/result:function_name",
+        "//cuttlefish/result:result_type",
     ],
 )
 

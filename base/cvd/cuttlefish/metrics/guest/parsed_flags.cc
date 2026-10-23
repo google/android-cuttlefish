@@ -26,6 +26,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/extra_kernel_cmdline.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/gpu_context_types.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/gpu_mode.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
@@ -37,8 +38,10 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
+#include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/resolve_instance_files.h"
+#include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/result/result.h"
 
@@ -47,51 +50,66 @@ namespace cuttlefish {
 Result<ParsedFlags> GetParsedFlags() {
   const SystemImageDirFlag system_image_dir =
       CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
-  const FetcherConfigs fetcher_configs =
-      FetcherConfigs::ReadFromDirectories(system_image_dir.AsVector());
-  AndroidBuilds android_builds =
-      CF_EXPECT(FindAndroidBuilds(system_image_dir, fetcher_configs));
 
-  const BootImageFlag boot_image =
-      CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds));
-  const SuperImageFlag super_image =
-      SuperImageFlag::FromGlobalGflags(system_image_dir);
-  const VendorBootImageFlag vendor_boot =
-      VendorBootImageFlag::FromGlobalGflags(system_image_dir);
-
-  const InitramfsPathFlag initramfs_path =
-      InitramfsPathFlag::FromGlobalGflags(fetcher_configs);
-  const KernelPathFlag kernel_path =
-      KernelPathFlag::FromGlobalGflags(fetcher_configs);
-  CF_EXPECT(ResolveInstanceFiles(boot_image, initramfs_path, kernel_path,
-                                 super_image, system_image_dir, vendor_boot),
-            "Failed to resolve instance files");
-  // Depends on ResolveInstanceFiles to set flag globals
-  const std::vector<GuestConfig> guest_configs =
-      CF_EXPECT(ReadGuestConfig(boot_image, kernel_path, system_image_dir));
-  const VmManagerFlag vm_manager =
-      CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs));
-
-  return ParsedFlags{
-      .bootloader = CF_EXPECT(BootloaderFlag::FromGlobalGflags(
-          guest_configs, system_image_dir, vm_manager)),
-      .boot_image = boot_image,
+  auto parsed_flags = ParsedFlags{
       .cpus = CF_EXPECT(CpusFlag::FromGlobalGflags()),
       .daemon = CF_EXPECT(DaemonFlag::FromGlobalGflags()),
       .data_policy = CF_EXPECT(DataPolicyFlag::FromGlobalGflags()),
       .extra_kernel_cmdline = ExtraKernelCmdlineFlag::FromGlobalGflags(),
-      .gpu_mode = CF_EXPECT(GpuModeFlag::FromGlobalGflags()),
+      .gpu_mode_requested = CF_EXPECT(GpuModeFlag::FromGlobalGflags()),
       .guest_enforce_security =
           CF_EXPECT(GuestEnforceSecurityFlag::FromGlobalGflags()),
       .memory_mb = CF_EXPECT(MemoryMbFlag::FromGlobalGflags()),
       .qemu_binary_dir = CF_EXPECT(QemuBinaryDirFlag::FromGlobalGflags()),
       .restart_subprocesses =
           CF_EXPECT(RestartSubprocessesFlag::FromGlobalGflags()),
-      .super_image = super_image,
       .system_image_dir = system_image_dir,
-      .vendor_boot = vendor_boot,
-      .vm_manager = vm_manager,
   };
-}
 
+  const FetcherConfigs fetcher_configs =
+      FetcherConfigs::ReadFromDirectories(system_image_dir.AsVector());
+  // the artifacts might not yet exist for certain device events
+  // for example, cvd create --config_file VM_INSTATIATION is pre-fetching
+  Result<AndroidBuilds> android_builds_result =
+      FindAndroidBuilds(system_image_dir, fetcher_configs);
+  if (android_builds_result) {
+    parsed_flags.boot_image.emplace(
+        CF_EXPECT(BootImageFlag::FromGlobalGflags(*android_builds_result)));
+    parsed_flags.super_image.emplace(
+        SuperImageFlag::FromGlobalGflags(system_image_dir));
+    parsed_flags.vendor_boot.emplace(
+        VendorBootImageFlag::FromGlobalGflags(system_image_dir));
+
+    const InitramfsPathFlag initramfs_path =
+        InitramfsPathFlag::FromGlobalGflags(fetcher_configs);
+    const KernelPathFlag kernel_path =
+        KernelPathFlag::FromGlobalGflags(fetcher_configs);
+    CF_EXPECT(ResolveInstanceFiles(*parsed_flags.boot_image, initramfs_path,
+                                   kernel_path, *parsed_flags.super_image,
+                                   system_image_dir, *parsed_flags.vendor_boot),
+              "Failed to resolve instance files");
+    // Depends on ResolveInstanceFiles to set flag globals
+    const std::vector<GuestConfig> guest_configs = CF_EXPECT(ReadGuestConfig(
+        *parsed_flags.boot_image, kernel_path, system_image_dir));
+
+    parsed_flags.vm_manager.emplace(
+        CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs)));
+    parsed_flags.bootloader.emplace(CF_EXPECT(BootloaderFlag::FromGlobalGflags(
+        guest_configs, system_image_dir, *parsed_flags.vm_manager)));
+
+    const gfxstream::proto::GraphicsAvailability graphics_availability =
+        GetGraphicsAvailabilityWithSubprocessCheck();
+    const GpuContextTypesFlag gpu_context_types =
+        CF_EXPECT(GpuContextTypesFlag::FromGlobalGflags());
+
+    parsed_flags.gpu_mode_used.reserve(parsed_flags.gpu_mode_requested.Size());
+    for (int i = 0; i < parsed_flags.gpu_mode_requested.Size(); i++) {
+      parsed_flags.gpu_mode_used[i] = CF_EXPECT(SelectGpuMode(
+          parsed_flags.gpu_mode_requested.ForIndex(i),
+          parsed_flags.vm_manager.value().Mode(), guest_configs[i],
+          gpu_context_types.ForIndex(i), graphics_availability));
+    }
+  }
+  return parsed_flags;
+}
 }  // namespace cuttlefish

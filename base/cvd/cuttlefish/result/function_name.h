@@ -13,26 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/libs/web/build_api.h"
+#pragma once
 
+#include <source_location>
 #include <string>
-
-#include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/result/result.h"
+#include <string_view>
 
 namespace cuttlefish {
 
-Result<std::string> DownloadFileWithBackup(
-    BuildApi& build_api, const Build& build,
-    const std::string& target_directory, const std::string& artifact_name,
-    const std::string& backup_artifact_name) {
-  Result<std::string> result =
-      build_api.DownloadFile(build, target_directory, artifact_name);
-  if (result.has_value()) {
-    return result;
-  }
-  return CF_EXPECT(
-      build_api.DownloadFile(build, target_directory, backup_artifact_name));
-}
+/* Best-effort attempt to extract the bare function name from a signature. */
+std::string FunctionName(std::string function_signature);
+std::string FunctionName(std::string_view function_signature);
+std::string FunctionName(const char* function_signature);
+std::string FunctionName(
+    std::source_location location = std::source_location::current());
 
 }  // namespace cuttlefish

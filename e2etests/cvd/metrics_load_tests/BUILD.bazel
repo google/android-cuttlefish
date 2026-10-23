@@ -15,7 +15,7 @@
 load("@rules_go//go:def.bzl", "go_test")
 
 go_test(
-    name = "metrics_tests",
+    name = "metrics_load_tests",
     srcs = ["main_test.go"],
     deps = [
         "//cvd/common:common",

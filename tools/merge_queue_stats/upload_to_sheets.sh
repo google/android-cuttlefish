@@ -5,13 +5,38 @@
 # Dashboard tab with time-series charts using `/google/bin/releases/gemini-agents-gsheets/gsheets`.
 #
 # Usage:
-#   ./upload_to_sheets.sh [SPREADSHEET_ID]
+#   ./upload_to_sheets.sh [--since YYYY-MM-DD] [SPREADSHEET_ID]
 #   (If SPREADSHEET_ID is omitted, creates a new spreadsheet and prints its URL.)
+#   --since YYYY-MM-DD  Only include merge queue attempts enqueued on/after this
+#                       date (default: full history).
 
 set -euo pipefail
 
 GSHEETS="${GSHEETS_BIN:-/google/bin/releases/gemini-agents-gsheets/gsheets}"
-SPREADSHEET_ID="${1:-}"
+SINCE=""
+SPREADSHEET_ID=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --since)
+      SINCE="$2"
+      shift 2
+      ;;
+    --since=*)
+      SINCE="${1#--since=}"
+      shift
+      ;;
+    *)
+      SPREADSHEET_ID="$1"
+      shift
+      ;;
+  esac
+done
+
+if [[ -n "${SINCE}" ]] && ! date -d "${SINCE}" +%Y-%m-%d 2>/dev/null | grep -qx "${SINCE}"; then
+  echo "ERROR: --since must be a valid date in YYYY-MM-DD format (got '${SINCE}')." >&2
+  exit 1
+fi
 
 if [[ -z "${SPREADSHEET_ID}" ]]; then
   create_out=$("${GSHEETS}" mutate create --title "Android Cuttlefish Merge Queue Health Report")
@@ -20,7 +45,7 @@ fi
 
 echo "Populating Google Sheet: https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}"
 
-python3 - "${SPREADSHEET_ID}" "${GSHEETS}" <<'PYEOF'
+python3 - "${SPREADSHEET_ID}" "${GSHEETS}" "${SINCE}" <<'PYEOF'
 import bisect
 import csv
 from collections import defaultdict
@@ -34,6 +59,7 @@ import time
 
 sheet_id_str = sys.argv[1]
 gsheets_bin = sys.argv[2]
+since_str = sys.argv[3] if len(sys.argv) > 3 else ""
 
 
 def run_gsheets(*args):
@@ -78,7 +104,7 @@ setup_requests.append({
             "sheetId": 0,
             "title": "Dashboard",
             "index": 0,
-            "gridProperties": {"rowCount": 115, "columnCount": 15, "hideGridlines": True}
+            "gridProperties": {"rowCount": 140, "columnCount": 15, "hideGridlines": True}
         },
         "fields": "title,index,gridProperties.rowCount,gridProperties.columnCount,gridProperties.hideGridlines"
     }
@@ -87,7 +113,7 @@ setup_requests.append({
 tab_specs = [
     (100, "Monthly Metrics", 1, 50, 15),
     (150, "Weekly Metrics", 2, 130, 8),
-    (200, "Merge Queue Attempts", 3, 3000, 15),
+    (200, "Merge Queue Attempts", 3, 3000, 16),
     (300, "Merge Queue Rejections", 4, 1000, 14),
     (400, "Workflow & Action Summary", 5, 150, 10),
 ]
@@ -128,6 +154,9 @@ with open("merge_queue_attempts.json") as f:
     attempts = json.load(f)
 with open("merge_queue_rejections.json") as f:
     rejections = json.load(f)
+if since_str:
+    attempts = [a for a in attempts if a["enqueued_at"][:10] >= since_str]
+    rejections = [r for r in rejections if r["enqueued_at"][:10] >= since_str]
 with open("workflow_rejection_summary.csv") as f:
     wf_rows = list(csv.reader(f))
 with open("action_rejection_summary.csv") as f:
@@ -269,6 +298,7 @@ attempt_sheet_rows = [[
     "Submit Time (UTC)",
     "Merged Duration (min)",
     "Rejected Duration (min)",
+    "Required Checks Duration (min, merged)",
     "Duration (min)",
     "Queue Depth at Submit",
     "Status",
@@ -288,10 +318,13 @@ for a in attempts_sorted:
     dur_m = a["duration_minutes"]
     merged_val = dur_m if a["status"] == "merged" else ""
     rejected_val = dur_m if a["status"] == "rejected" else ""
+    checks_val = a.get("checks_duration_minutes")
+    checks_val = checks_val if (a["status"] == "merged" and checks_val is not None) else ""
     attempt_sheet_rows.append([
         dt_str,
         merged_val,
         rejected_val,
+        checks_val,
         dur_m,
         a["queue_depth_at_submit"],
         a["status"],
@@ -408,6 +441,7 @@ BLUE = {"red": 0.102, "green": 0.451, "blue": 0.910, "alpha": 1.0}
 LIGHT_BLUE = {"red": 0.541, "green": 0.706, "blue": 0.973, "alpha": 1.0}
 PURPLE = {"red": 0.576, "green": 0.200, "blue": 0.918, "alpha": 1.0}
 TEAL = {"red": 0.0, "green": 0.537, "blue": 0.482, "alpha": 1.0}
+YELLOW = {"red": 0.984, "green": 0.737, "blue": 0.016, "alpha": 1.0}
 
 style_and_charts = [
     # Title banner styling on Dashboard!A1:N1
@@ -503,7 +537,7 @@ style_and_charts = [
                 "fields": "userEnteredFormat(backgroundColor,textFormat)"
             }
         }
-        for sid, cend in [(100, 15), (150, 7), (200, 14), (300, 12), (400, 9)]
+        for sid, cend in [(100, 15), (150, 7), (200, 15), (300, 12), (400, 9)]
     ],
     # ==========================================================================
     # CHART 1: Primary Requested Scatter Plot (Y-Axis Zoomed 0–250 min)!
@@ -897,6 +931,64 @@ style_and_charts = [
             }
         }
     },
+    # ==========================================================================
+    # CHART 7: Required Checks Duration for Merged PRs (Yellow Scatter)
+    # Submit Time (X-axis) vs minutes from first required check starting on the
+    # merge-group commit until the PR merged.
+    # ==========================================================================
+    {
+        "addChart": {
+            "chart": {
+                "spec": {
+                    "title": "Required Checks Duration for Merged PRs — Time for Required Workflows to Pass",
+                    "subtitle": "Submit Time (UTC) vs minutes from first check run start on the merge-group commit until merge (excludes time waiting in queue before CI started)",
+                    "basicChart": {
+                        "chartType": "SCATTER",
+                        "legendPosition": "NO_LEGEND",
+                        "headerCount": 1,
+                        "axis": [
+                            {"position": "BOTTOM_AXIS", "title": "Submit Time (UTC)"},
+                            {
+                                "position": "LEFT_AXIS",
+                                "title": "Required Checks Duration (Minutes, 0–250m)",
+                                "viewWindowOptions": {
+                                    "viewWindowMin": 0,
+                                    "viewWindowMax": 250,
+                                    "viewWindowMode": "EXPLICIT"
+                                }
+                            }
+                        ],
+                        "domains": [
+                            {
+                                "domain": {
+                                    "sourceRange": {
+                                        "sources": [
+                                            {"sheetId": 200, "startRowIndex": 0, "endRowIndex": num_attempts_end, "startColumnIndex": 0, "endColumnIndex": 1}
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        "series": [
+                            {
+                                "series": {"sourceRange": {"sources": [{"sheetId": 200, "startRowIndex": 0, "endRowIndex": num_attempts_end, "startColumnIndex": 3, "endColumnIndex": 4}]}},
+                                "targetAxis": "LEFT_AXIS",
+                                "color": YELLOW,
+                                "pointStyle": {"shape": "CIRCLE", "size": 4}
+                            }
+                        ]
+                    }
+                },
+                "position": {
+                    "overlayPosition": {
+                        "anchorCell": {"sheetId": 0, "rowIndex": 92, "columnIndex": 0},
+                        "widthPixels": 1415,
+                        "heightPixels": 460
+                    }
+                }
+            }
+        }
+    },
     # Auto-resize data columns on data tabs (100, 150, 200, 300, 400)
     *[
         {
@@ -904,7 +996,7 @@ style_and_charts = [
                 "dimensions": {"sheetId": sid, "dimension": "COLUMNS", "startIndex": 0, "endIndex": cend}
             }
         }
-        for sid, cend in [(100, 15), (150, 7), (200, 14), (300, 12), (400, 9)]
+        for sid, cend in [(100, 15), (150, 7), (200, 15), (300, 12), (400, 9)]
     ]
 ]
 

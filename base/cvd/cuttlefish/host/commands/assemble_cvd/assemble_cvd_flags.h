@@ -44,7 +44,6 @@ DECLARE_vec(hwcomposer);
 DECLARE_vec(gpu_capture_binary);
 DECLARE_vec(enable_gpu_udmabuf);
 DECLARE_vec(gpu_renderer_features);
-DECLARE_vec(gpu_context_types);
 DECLARE_vec(guest_hwui_renderer);
 
 DECLARE_vec(guest_renderer_preload);

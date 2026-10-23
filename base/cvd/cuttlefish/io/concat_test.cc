@@ -16,15 +16,14 @@
 #include "cuttlefish/io/concat.h"
 
 #include <memory>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/io/in_memory.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
@@ -34,9 +33,9 @@ namespace {
 
 TEST(ConcatTest, ConcatThreeStrings) {
   std::vector<std::unique_ptr<ReaderSeeker>> members;
-  members.emplace_back(InMemoryIo("hello"));
-  members.emplace_back(InMemoryIo(" "));
-  members.emplace_back(InMemoryIo("world"));
+  members.emplace_back(std::make_unique<OwningInMemoryIo>("hello"));
+  members.emplace_back(std::make_unique<OwningInMemoryIo>(" "));
+  members.emplace_back(std::make_unique<OwningInMemoryIo>("world"));
 
   Result<ConcatReaderSeeker> concatenated =
       ConcatReaderSeeker::Create(std::move(members));
@@ -51,7 +50,7 @@ TEST(ConcatTest, CannotBeEmpty) {
 
 TEST(ConcatTest, CannotHaveNulls) {
   std::vector<std::unique_ptr<ReaderSeeker>> members;
-  members.emplace_back(InMemoryIo("hello"));
+  members.emplace_back(std::make_unique<OwningInMemoryIo>("hello"));
   members.emplace_back(nullptr);
 
   ASSERT_THAT(ConcatReaderSeeker::Create(std::move(members)), IsError());

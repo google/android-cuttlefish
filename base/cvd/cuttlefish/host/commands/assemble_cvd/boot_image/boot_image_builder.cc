@@ -28,9 +28,9 @@
 #include "bootimg.h"
 
 #include "cuttlefish/io/concat.h"
-#include "cuttlefish/io/in_memory.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/length.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -38,7 +38,7 @@ namespace cuttlefish {
 static std::unique_ptr<ReaderSeeker> PagePadding(uint64_t size) {
   static constexpr uint64_t kPageSize = 4096;
   uint64_t padding = (kPageSize - (size % kPageSize)) % kPageSize;
-  return InMemoryIo(std::vector<char>(padding));
+  return std::make_unique<OwningInMemoryIo>(std::vector<char>(padding));
 }
 
 BootImageBuilder& BootImageBuilder::KernelCommandLine(std::string_view cmd) & {
@@ -97,7 +97,7 @@ Result<ConcatReaderSeeker> BootImageBuilder::BuildV4() {
   header.signature_size = signature_ ? CF_EXPECT(Length(*signature_)) : 0;
 
   std::vector<std::unique_ptr<ReaderSeeker>> members;
-  members.emplace_back(InMemoryIo(
+  members.emplace_back(std::make_unique<OwningInMemoryIo>(
       std::string_view(reinterpret_cast<char*>(&header), sizeof(header))));
   members.emplace_back(PagePadding(sizeof(header)));
   if (kernel_) {

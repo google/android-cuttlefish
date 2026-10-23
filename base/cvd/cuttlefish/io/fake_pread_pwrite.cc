@@ -19,6 +19,7 @@
 #include <utility>
 
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/writer_seeker.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 

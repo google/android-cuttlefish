@@ -40,7 +40,8 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "fmt/chrono.h"  // IWYU pragma: keep
+#include "absl/strings/str_format.h"  // IWYU pragma: keep
+#include "fmt/chrono.h"               // IWYU pragma: keep
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/scoped_mmap.h"
@@ -71,20 +72,15 @@ class LocalErrno {
   int preserved_;
 };
 
+#ifdef __linux__
 Result<int, int> MemfdCreateWrapper(const std::string& name,
                                     unsigned int flags) {
-#ifdef __linux__
   int fd = TEMP_FAILURE_RETRY(memfd_create(name.c_str(), flags));
   CF_EXPECTVF(fd >= 0, errno, "memfd_create('{}', {}) failed: {}", name, flags,
               StrError(errno));
-#else
-  (void)flags;
-  int fd = TEMP_FAILURE_RETRY(shm_open(name.c_str(), O_RDWR));
-  CF_EXPECTVF(fd >= 0, errno, "shm_open('{}', O_RDWR) failed: {}", name,
-              StrError(errno));
-#endif
   return fd;
 }
+#endif
 
 bool IsRegularFile(const int fd) {
   struct stat info;
@@ -156,7 +152,7 @@ Result<Fd, int> Fd::Dup(int unmanaged_fd) {
 
 Result<std::pair<Fd, Fd>, int> Fd::Pipe() {
   int fds[2];
-#ifdef __linux__
+#ifndef __APPLE__
   const int rval = TEMP_FAILURE_RETRY(pipe2(fds, O_CLOEXEC));
   CF_EXPECTVF(rval != -1, errno, "pipe2(..., O_CLOEXEC) failed: {}",
               ::cuttlefish::StrError(errno));
@@ -186,7 +182,15 @@ Result<Fd, int> Fd::ShmOpen(std::string_view name, int oflag, int mode) {
 #endif
 
 Result<Fd, int> Fd::MemfdCreate(std::string_view name, unsigned int flags) {
+#ifdef __linux__
   return Fd(CF_EXPECT(MemfdCreateWrapper(std::string(name), flags)), 0);
+#else
+  (void)flags;
+  std::pair<Fd, std::string> fd_path =
+      CF_EXPECT(Mkostemp(absl::StrFormat("%s/%s.", TempDir(), name)));
+  unlink(fd_path.second.c_str());
+  return std::move(fd_path.first);
+#endif
 }
 
 Result<std::pair<Fd, Fd>, int> Fd::SocketPair(int domain, int type,
@@ -770,15 +774,6 @@ int Fd::Ioctl(int request, void* val) {
   LocalErrno record_errno(errno_);
 
   return TEMP_FAILURE_RETRY(ioctl(fd_, request, val));
-}
-
-int Fd::LinkAtCwd(const std::string& path) {
-  LocalErrno record_errno(errno_);
-
-  std::string name = "/proc/self/fd/";
-  name += std::to_string(fd_);
-  return linkat(AT_FDCWD, name.c_str(), AT_FDCWD, path.c_str(),
-                AT_SYMLINK_FOLLOW);
 }
 
 Result<void, int> Fd::Listen(int backlog) {

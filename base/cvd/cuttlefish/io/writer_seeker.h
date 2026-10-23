@@ -15,17 +15,20 @@
 
 #pragma once
 
-#include <string_view>
-#include <vector>
+#include <stdint.h>
 
-#include "cuttlefish/io/filesystem.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/seeker.h"
+#include "cuttlefish/io/writer.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<ReaderWriterSeeker> InMemoryIo();
-std::unique_ptr<ReaderWriterSeeker> InMemoryIo(std::string_view);
-std::unique_ptr<ReaderWriterSeeker> InMemoryIo(std::vector<char>);
-std::unique_ptr<ReadWriteFilesystem> InMemoryFilesystem();
+class WriterSeeker : public Writer, public Seeker {
+ public:
+  // Has the semantics of pwrite(2)
+  virtual Result<uint64_t> PWrite(const void* buf, uint64_t count,
+                                  uint64_t offset) = 0;
+  virtual Result<void> Truncate(uint64_t size) = 0;
+};
 
 }  // namespace cuttlefish
