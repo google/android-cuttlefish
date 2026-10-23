@@ -247,6 +247,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/libs/web/credential_source",
+        "//cuttlefish/host/libs/web/credential_source:refreshing_credential_source",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_json",
         "//cuttlefish/host/libs/web/http_client:url_escape",

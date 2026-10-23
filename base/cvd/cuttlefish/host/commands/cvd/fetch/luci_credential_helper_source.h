@@ -20,7 +20,8 @@
 #include <string>
 #include <utility>
 
-#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/credential_source/credential_source.h"
+#include "cuttlefish/host/libs/web/credential_source/refreshing_credential_source.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

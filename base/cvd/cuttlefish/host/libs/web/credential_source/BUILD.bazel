@@ -23,3 +23,14 @@ cf_cc_library(
         "//cuttlefish/result:result_type",
     ],
 )
+
+cf_cc_library(
+    name = "refreshing_credential_source",
+    srcs = ["refreshing_credential_source.cc"],
+    hdrs = ["refreshing_credential_source.h"],
+    deps = [
+        "//cuttlefish/host/libs/web/credential_source",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
