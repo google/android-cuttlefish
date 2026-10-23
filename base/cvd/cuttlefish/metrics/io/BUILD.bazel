@@ -74,6 +74,7 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/directories",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
         "@fmt",
     ],
 )

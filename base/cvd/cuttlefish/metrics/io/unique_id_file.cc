@@ -17,7 +17,9 @@
 #include "cuttlefish/metrics/io/unique_id_file.h"
 
 #include <string>
+#include <utility>
 
+#include "absl/log/log.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -46,7 +48,13 @@ Result<void> GenerateUniqueIdFile(const std::string& directory,
     return {};
   }
   const std::string unique_id = GenerateUuid();
-  CF_EXPECT(WriteNewFile(filepath, unique_id));
+  LOG(ERROR) << "\n\nTODO CJR\nwrite user_id file start";
+  Result<void> result = WriteNewFile(filepath, unique_id);
+  if (!result) {
+    LOG(ERROR) << "\n\nTODO CJR\n" << result.error();
+  }
+  CF_EXPECT(std::move(result));
+  LOG(ERROR) << "\n\nTODO CJR\nwrite user_id file end";
   return {};
 }
 
