@@ -1175,6 +1175,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         guest_configs[instance_index].has_vulkan_lavapipe_apex);
     instance.set_has_vulkan_swiftshader_apex(
         guest_configs[instance_index].has_vulkan_swiftshader_apex);
+    instance.set_has_vulkan_turnip_apex(
+        guest_configs[instance_index].has_vulkan_turnip_apex);
     instance.set_has_vulkan_venus_apex(
         guest_configs[instance_index].has_vulkan_venus_apex);
 
@@ -1237,7 +1239,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     if (hwcomposer_vec[instance_index] == kHwComposerAuto) {
-      if (gpu_mode == GpuMode::DrmVirgl || gpu_mode == GpuMode::Venus) {
+      if (gpu_mode == GpuMode::DrmVirgl || gpu_mode == GpuMode::Venus ||
+          gpu_mode == GpuMode::DrmNctx) {
         instance.set_hwcomposer(kHwComposerDrm);
       } else if (gpu_mode == GpuMode::None) {
         instance.set_hwcomposer(kHwComposerNone);

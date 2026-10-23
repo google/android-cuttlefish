@@ -69,6 +69,9 @@ CuttlefishFlags_GpuMode ConvertGpuMode(GpuMode mode) {
     case GpuMode::Custom:
       return CuttlefishFlags_GpuMode::
           CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_CUSTOM;
+    case GpuMode::DrmNctx:
+      return CuttlefishFlags_GpuMode::
+          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_DRM_NCTX;
     case GpuMode::DrmVirgl:
       return CuttlefishFlags_GpuMode::
           CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_VIRGL_RENDERER;
@@ -84,15 +87,15 @@ CuttlefishFlags_GpuMode ConvertGpuMode(GpuMode mode) {
     case GpuMode::GfxstreamGuestAngleHostSwiftshader:
       return CuttlefishFlags_GpuMode::
           CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM_GUEST_ANGLE_HOST_SWIFTSHADER;
-    case GpuMode::Venus:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_VENUS;
     case GpuMode::GuestSwiftshader:
       return CuttlefishFlags_GpuMode::
           CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_SWIFTSHADER;
     case GpuMode::GuestLavapipe:
       return CuttlefishFlags_GpuMode::
           CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_LAVAPIPE;
+    case GpuMode::Venus:
+      return CuttlefishFlags_GpuMode::
+          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_VENUS;
     case GpuMode::None:
       return CuttlefishFlags_GpuMode::
           CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_NONE;

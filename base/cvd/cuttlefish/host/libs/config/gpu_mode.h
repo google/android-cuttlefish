@@ -26,19 +26,21 @@ namespace cuttlefish {
 enum class GpuMode {
   Auto,
   Custom,
+  DrmNctx,
   DrmVirgl,
   Gfxstream,
   GfxstreamGuestAngle,
   GfxstreamGuestAngleHostLavapipe,
   GfxstreamGuestAngleHostSwiftshader,
-  Venus,
   GuestLavapipe,
   GuestSwiftshader,
+  Venus,
   None,
 };
 
 inline constexpr std::string_view kGpuModeAuto = "auto";
 inline constexpr std::string_view kGpuModeCustom = "custom";
+inline constexpr std::string_view kGpuModeDrmNctx = "drm_nctx";
 inline constexpr std::string_view kGpuModeDrmVirgl = "drm_virgl";
 inline constexpr std::string_view kGpuModeGfxstream = "gfxstream";
 inline constexpr std::string_view kGpuModeGfxstreamGuestAngle =
@@ -47,10 +49,10 @@ inline constexpr std::string_view kGpuModeGfxstreamGuestAngleHostLavapipe =
     "gfxstream_guest_angle_host_lavapipe";
 inline constexpr std::string_view kGpuModeGfxstreamGuestAngleHostSwiftshader =
     "gfxstream_guest_angle_host_swiftshader";
-inline constexpr std::string_view kGpuModeVenus = "venus";
 inline constexpr std::string_view kGpuModeGuestLavapipe = "guest_lavapipe";
 inline constexpr std::string_view kGpuModeGuestSwiftshader =
     "guest_swiftshader";
+inline constexpr std::string_view kGpuModeVenus = "venus";
 inline constexpr std::string_view kGpuModeNone = "none";
 
 template <typename Sink>
@@ -61,6 +63,9 @@ void AbslStringify(Sink& sink, GpuMode mode) {
       break;
     case GpuMode::Custom:
       sink.Append(kGpuModeCustom);
+      break;
+    case GpuMode::DrmNctx:
+      sink.Append(kGpuModeDrmNctx);
       break;
     case GpuMode::DrmVirgl:
       sink.Append(kGpuModeDrmVirgl);
@@ -77,14 +82,14 @@ void AbslStringify(Sink& sink, GpuMode mode) {
     case GpuMode::GfxstreamGuestAngleHostSwiftshader:
       sink.Append(kGpuModeGfxstreamGuestAngleHostSwiftshader);
       break;
-    case GpuMode::Venus:
-      sink.Append(kGpuModeVenus);
-      break;
     case GpuMode::GuestLavapipe:
       sink.Append(kGpuModeGuestLavapipe);
       break;
     case GpuMode::GuestSwiftshader:
       sink.Append(kGpuModeGuestSwiftshader);
+      break;
+    case GpuMode::Venus:
+      sink.Append(kGpuModeVenus);
       break;
     case GpuMode::None:
       sink.Append(kGpuModeNone);

@@ -910,6 +910,15 @@ bool CuttlefishConfig::InstanceSpecific::has_vulkan_swiftshader_apex() const {
   return (*Dictionary())[kHasVulkanSwiftshaderApex].asBool();
 }
 
+static constexpr char kHasVulkanTurnipApex[] = "has_vulkan_turnip_apex";
+void CuttlefishConfig::MutableInstanceSpecific::set_has_vulkan_turnip_apex(
+    const bool has_apex) {
+  (*Dictionary())[kHasVulkanTurnipApex] = has_apex;
+}
+bool CuttlefishConfig::InstanceSpecific::has_vulkan_turnip_apex() const {
+  return (*Dictionary())[kHasVulkanTurnipApex].asBool();
+}
+
 static constexpr char kHasVulkanVenusApex[] = "has_vulkan_venus_apex";
 void CuttlefishConfig::MutableInstanceSpecific::set_has_vulkan_venus_apex(
     const bool has_apex) {
