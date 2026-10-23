@@ -1,0 +1,15 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_build_test(name = "credential_source_build_test")
+
+cf_cc_library(
+    name = "credential_source",
+    hdrs = ["credential_source.h"],
+    deps = [
+        "//cuttlefish/result:result_type",
+    ],
+)

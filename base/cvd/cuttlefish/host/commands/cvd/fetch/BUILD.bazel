@@ -375,6 +375,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/host/libs/web/credential_source",
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",

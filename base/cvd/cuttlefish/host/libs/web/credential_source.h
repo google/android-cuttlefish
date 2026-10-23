@@ -24,16 +24,11 @@
 #include "json/value.h"
 #include "openssl/evp.h"
 
+#include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-class CredentialSource {
- public:
-  virtual ~CredentialSource() = default;
-  virtual Result<std::string> Credential() = 0;
-};
 
 // Credentials with known expiration times with behavior to load new
 // credentials.
