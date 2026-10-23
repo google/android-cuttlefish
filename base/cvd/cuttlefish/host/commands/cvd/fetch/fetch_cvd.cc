@@ -52,7 +52,6 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
-#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
@@ -528,7 +527,6 @@ Result<FetchResult> Fetch(const FetchFlags& flags,
   setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);
   setenv("ANDROID_ROOT", "/", /* overwrite */ 0);
 #endif
-  CurlGlobalInit curl_init;
 
   Downloaders downloaders = CF_EXPECT(Downloaders::Create(
       flags.build_api_flags, flags.target_directory, cache_base_path));

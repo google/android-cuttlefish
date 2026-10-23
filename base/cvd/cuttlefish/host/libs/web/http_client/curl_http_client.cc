@@ -34,6 +34,7 @@
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/result/result.h"
@@ -223,6 +224,7 @@ class CurlClient : public HttpClient {
   }
 
  private:
+  const CurlGlobalInit ensure_init_;
   CURL* curl_;
   std::mutex mutex_;
   bool use_logging_debug_function_;

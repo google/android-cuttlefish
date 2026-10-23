@@ -10,6 +10,7 @@ cf_cc_library(
     name = "curl_global_init",
     srcs = ["curl_global_init.cpp"],
     hdrs = ["curl_global_init.h"],
+    visibility = ["//visibility:private"],
     deps = ["@curl"],
 )
 
@@ -21,6 +22,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
@@ -34,6 +36,7 @@ cf_cc_library(
     srcs = ["curl_url.cc"],
     hdrs = ["curl_url.h"],
     deps = [
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
         "//cuttlefish/result",
         "@curl",
     ],
@@ -167,5 +170,8 @@ cf_cc_library(
     name = "url_escape",
     srcs = ["url_escape.cc"],
     hdrs = ["url_escape.h"],
-    deps = ["@curl"],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
+        "@curl",
+    ],
 )

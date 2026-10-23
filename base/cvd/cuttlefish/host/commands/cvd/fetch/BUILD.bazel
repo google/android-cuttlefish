@@ -272,7 +272,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:chrome_os_build_string",
         "//cuttlefish/host/libs/web:luci_build_api",
         "//cuttlefish/host/libs/web:url_namespace",
-        "//cuttlefish/host/libs/web/http_client:curl_global_init",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/io",
         "//cuttlefish/io:string",
