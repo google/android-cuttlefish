@@ -23,10 +23,9 @@
 
 namespace cuttlefish {
 
-// The monitor will stop and return if `stop_eventfd` becomes readable (receives
-// an event).
+// The monitor will stop and return if `stop_fd` becomes readable.
 Result<void> MonitorLogs(const LocalInstance& instance,
-                         SharedFD stop_eventfd = SharedFD(),
+                         SharedFD stop_fd = SharedFD(),
                          LogSeverity severity = LogSeverity::Verbose);
 
 }  // namespace cuttlefish
