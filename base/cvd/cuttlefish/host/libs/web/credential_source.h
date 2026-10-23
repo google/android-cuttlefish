@@ -30,23 +30,6 @@
 
 namespace cuttlefish {
 
-// OAuth2 credentials from the GCE metadata server.
-//
-// -
-// https://cloud.google.com/compute/docs/access/authenticate-workloads#applications
-// - https://cloud.google.com/compute/docs/metadata/overview
-class GceMetadataCredentialSource : public RefreshingCredentialSource {
- public:
-  static std::unique_ptr<CredentialSource> Make(HttpClient&);
-
- private:
-  GceMetadataCredentialSource(HttpClient&);
-
-  Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
-
-  HttpClient& http_client_;
-};
-
 // OAuth2 tokens from a desktop refresh token.
 //
 // https://developers.google.com/identity/protocols/oauth2/native-app

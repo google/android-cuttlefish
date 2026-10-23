@@ -25,6 +25,21 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "gce_metadata_credential_source",
+    srcs = ["gce_metadata_credential_source.cc"],
+    hdrs = ["gce_metadata_credential_source.h"],
+    deps = [
+        "//cuttlefish/host/libs/web/credential_source",
+        "//cuttlefish/host/libs/web/credential_source:refreshing_credential_source",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_json",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
     name = "refreshing_credential_source",
     srcs = ["refreshing_credential_source.cc"],
     hdrs = ["refreshing_credential_source.h"],

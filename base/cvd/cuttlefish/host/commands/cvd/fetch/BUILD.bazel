@@ -27,6 +27,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:luci_credential_helper_source",
         "//cuttlefish/host/libs/web:credential_source",
         "//cuttlefish/host/libs/web/credential_source:fixed_credential_source",
+        "//cuttlefish/host/libs/web/credential_source:gce_metadata_credential_source",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
