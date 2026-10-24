@@ -510,6 +510,9 @@ class CuttlefishConfig {
     // The range of UDP ports available for webrtc sessions.
     std::pair<uint16_t, uint16_t> webrtc_udp_port_range() const;
 
+    // How often the webrtc streamer re-sends an unchanged display frame.
+    int webrtc_frame_repeat_interval_ms() const;
+
     bool smt() const;
     std::string crosvm_binary() const;
     std::string seccomp_policy_dir() const;
@@ -746,6 +749,9 @@ class CuttlefishConfig {
 
     // The range of UDP ports available for webrtc sessions.
     void set_webrtc_udp_port_range(std::pair<uint16_t, uint16_t> range);
+
+    // How often the webrtc streamer re-sends an unchanged display frame.
+    void set_webrtc_frame_repeat_interval_ms(int interval_ms);
 
     void set_smt(bool smt);
     void set_crosvm_binary(const std::string& crosvm_binary);
