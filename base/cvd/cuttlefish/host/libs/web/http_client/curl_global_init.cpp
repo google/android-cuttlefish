@@ -15,12 +15,34 @@
 
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 
+#include <stddef.h>
+
+#include <mutex>
+
 #include "curl/curl.h"
 
 namespace cuttlefish {
 
-CurlGlobalInit::CurlGlobalInit() { curl_global_init(CURL_GLOBAL_DEFAULT); }
+static size_t curl_initialized_count = 0;
+static std::mutex* const initialize_curl_mutex = new std::mutex;
 
-CurlGlobalInit::~CurlGlobalInit() { curl_global_cleanup(); }
+CurlGlobalInit::CurlGlobalInit() {
+  std::lock_guard lock(*initialize_curl_mutex);
+  if (curl_initialized_count == 0) {
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+  }
+  curl_initialized_count++;
+}
+
+CurlGlobalInit::CurlGlobalInit(const CurlGlobalInit&) : CurlGlobalInit() {}
+CurlGlobalInit::CurlGlobalInit(CurlGlobalInit&&) : CurlGlobalInit() {}
+
+CurlGlobalInit::~CurlGlobalInit() {
+  std::lock_guard lock(*initialize_curl_mutex);
+  curl_initialized_count--;
+  if (curl_initialized_count == 0) {
+    curl_global_cleanup();
+  }
+}
 
 }  // namespace cuttlefish

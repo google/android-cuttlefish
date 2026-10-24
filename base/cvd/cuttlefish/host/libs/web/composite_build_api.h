@@ -22,6 +22,7 @@
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/host/libs/web/directory_build_api.h"
 #include "cuttlefish/host/libs/web/gcs_build_api.h"
 #include "cuttlefish/host/libs/web/http_build_api.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
@@ -32,23 +33,53 @@ namespace cuttlefish {
 // Sends every build to the API that owns the source it names. This is the
 // only `BuildApi` the fetch code sees; each API it holds takes the build
 // types it can serve and nothing else.
-class CompositeBuildApi : public BuildApi {
+class CompositeBuildApi : public BuildApi<BuildString, Build>,
+                          public BuildApi<DeviceBuildString, DeviceBuild>,
+                          public BuildApi<DirectoryBuildString, DirectoryBuild>,
+                          public BuildApi<GcsBuildString, GcsBuild>,
+                          public BuildApi<HttpBuildString, HttpBuild> {
  public:
   CompositeBuildApi(std::unique_ptr<AndroidBuildApi> android,
                     std::unique_ptr<GcsBuildApi> gcs,
                     std::unique_ptr<HttpBuildApi> http);
 
   Result<Build> GetBuild(const BuildString& build_string) override;
+  Result<DeviceBuild> GetBuild(const DeviceBuildString& build_string) override;
+  Result<DirectoryBuild> GetBuild(
+      const DirectoryBuildString& build_string) override;
+  Result<GcsBuild> GetBuild(const GcsBuildString& build_string) override;
+  Result<HttpBuild> GetBuild(const HttpBuildString& build_string) override;
 
   Result<std::string> DownloadFile(const Build& build,
+                                   const std::string& target_directory,
+                                   const std::string& artifact_name) override;
+  Result<std::string> DownloadFile(const DeviceBuild& build,
+                                   const std::string& target_directory,
+                                   const std::string& artifact_name) override;
+  Result<std::string> DownloadFile(const DirectoryBuild& build,
+                                   const std::string& target_directory,
+                                   const std::string& artifact_name) override;
+  Result<std::string> DownloadFile(const GcsBuild& build,
+                                   const std::string& target_directory,
+                                   const std::string& artifact_name) override;
+  Result<std::string> DownloadFile(const HttpBuild& build,
                                    const std::string& target_directory,
                                    const std::string& artifact_name) override;
 
   Result<SeekableZipSource> FileReader(
       const Build& build, const std::string& artifact_name) override;
+  Result<SeekableZipSource> FileReader(
+      const DeviceBuild& build, const std::string& artifact_name) override;
+  Result<SeekableZipSource> FileReader(
+      const DirectoryBuild& build, const std::string& artifact_name) override;
+  Result<SeekableZipSource> FileReader(
+      const GcsBuild& build, const std::string& artifact_name) override;
+  Result<SeekableZipSource> FileReader(
+      const HttpBuild& build, const std::string& artifact_name) override;
 
  private:
   std::unique_ptr<AndroidBuildApi> android_;
+  DirectoryBuildApi directory_;
   std::unique_ptr<GcsBuildApi> gcs_;
   std::unique_ptr<HttpBuildApi> http_;
 };

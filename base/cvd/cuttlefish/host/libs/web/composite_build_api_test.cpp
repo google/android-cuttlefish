@@ -80,9 +80,9 @@ TEST_F(CompositeBuildApiTests, GetBuildRoutesByStringAlternativeSuccess) {
   EXPECT_THAT(device, IsError());
   EXPECT_TRUE(http_client_.RequestMade(kAndroidBuildHost));
 
-  EXPECT_THAT(api_.GetBuild(DirectoryBuildString{
+  EXPECT_THAT(api_.GetBuild(BuildString(DirectoryBuildString{
                   .paths = std::vector<std::string>{directory_.path},
-                  .target = "target"}),
+                  .target = "target"})),
               IsOkAndValue(VariantWith<DirectoryBuild>(_)));
 
   Result<Build> gcs = api_.GetBuild(GcsBuildString{.url = "gs://bucket/dist/"});

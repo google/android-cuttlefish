@@ -29,7 +29,7 @@
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/caching_build_api.h"
 #include "cuttlefish/host/libs/web/composite_build_api.h"
-#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/gcs_build_api.h"
 #include "cuttlefish/host/libs/web/http_build_api.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
@@ -137,7 +137,7 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
   return Downloaders(std::move(impl));
 }
 
-BuildApi& Downloaders::Builds() {
+BuildApi<BuildString, Build>& Downloaders::Builds() {
   if (impl_->caching_build_api_) {
     return *impl_->caching_build_api_;
   }

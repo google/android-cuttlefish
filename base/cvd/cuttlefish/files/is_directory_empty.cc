@@ -17,7 +17,6 @@
 #include "cuttlefish/files/is_directory_empty.h"
 
 #include <dirent.h>
-#include <errno.h>
 
 #include <memory>
 #include <string>
@@ -30,7 +29,7 @@ namespace cuttlefish {
 
 Result<bool> IsDirectoryEmpty(const std::string& path) {
   std::unique_ptr<DIR, int (*)(DIR*)> direc(opendir(path.c_str()), closedir);
-  CF_EXPECTF(direc.get(), "opendir('{}') failed: {}", path, StrError(errno));
+  CF_EXPECTF(direc.get(), "opendir('{}') failed: {}", path, StrError());
 
   int cnt = 0;
   while (::readdir(direc.get())) {

@@ -15,7 +15,6 @@
  */
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 
-#include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -151,13 +150,13 @@ int DropPrivileges(uid_t orig) {
   data[1] = {0, 0, 0};
   int r = syscall(SYS_capset, &h, data);
   if (r == -1) {
-    LOG(INFO) << "SYS_capset: " << StrError(errno);
+    LOG(INFO) << "SYS_capset: " << StrError();
     return -1;
   }
 
   r = prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL, 0L, 0L, 0L);
   if (r == -1) {
-    LOG(INFO) << "prctl: " << StrError(errno);
+    LOG(INFO) << "prctl: " << StrError();
     return -1;
   }
 #endif
@@ -217,10 +216,10 @@ Result<ScopedPrivileges> ScopedPrivileges::Elevate() {
     static char* empty_env[] = {nullptr};
     environ = empty_env;
     CF_EXPECTF(setenv("PATH", kTrustedPath, /*overwrite=*/1) == 0,
-               "Couldn't set PATH: {}", StrError(errno));
+               "Couldn't set PATH: {}", StrError());
   }
   CF_EXPECTF(BeginElevatedPrivileges() != -1,
-             "Couldn't elevate permissions: {}", StrError(errno));
+             "Couldn't elevate permissions: {}", StrError());
   return privileges;
 }
 
@@ -236,7 +235,7 @@ ScopedPrivileges::~ScopedPrivileges() {
   }
   if (DropPrivileges(*orig_) == -1) {
     // We may still be privileged, so keep the trusted environment.
-    LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << StrError(errno);
+    LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << StrError();
     return;
   }
   if (saved_env_.has_value()) {

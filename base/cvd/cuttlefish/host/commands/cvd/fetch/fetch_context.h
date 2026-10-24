@@ -117,8 +117,8 @@ std::ostream& operator<<(std::ostream&, const FetchBuildContext&);
  */
 class FetchContext {
  public:
-  FetchContext(BuildApi&, const TargetDirectories&, const Builds&,
-               FetcherConfig&, FetchTracer&);
+  FetchContext(BuildApi<BuildString, Build>&, const TargetDirectories&,
+               const Builds&, FetcherConfig&, FetchTracer&);
 
   std::optional<FetchBuildContext> DefaultBuild();
   std::optional<FetchBuildContext> SystemBuild();
@@ -134,7 +134,7 @@ class FetchContext {
   friend class FetchArtifact;
   friend class FetchBuildContext;
 
-  BuildApi& build_api_;
+  BuildApi<BuildString, Build>& build_api_;
   const TargetDirectories& target_directories_;
   const Builds& builds_;
   FetcherConfig& fetcher_config_;

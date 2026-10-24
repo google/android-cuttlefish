@@ -21,7 +21,8 @@
 
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
-#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/result/result.h"
@@ -30,18 +31,18 @@ namespace cuttlefish {
 
 // Reads builds held in Cloud Storage through the JSON API. The credential
 // source is optional because public buckets are readable without one.
-class GcsBuildApi {
+class GcsBuildApi : public BuildApi<GcsBuildString, GcsBuild> {
  public:
   GcsBuildApi(HttpClient& http_client, CredentialSource* credential_source);
 
-  Result<GcsBuild> GetBuild(const GcsBuildString& build_string);
+  Result<GcsBuild> GetBuild(const GcsBuildString& build_string) override;
 
   Result<std::string> DownloadFile(const GcsBuild& build,
                                    const std::string& target_directory,
-                                   const std::string& artifact_name);
+                                   const std::string& artifact_name) override;
 
-  Result<SeekableZipSource> FileReader(const GcsBuild& build,
-                                       const std::string& artifact_name);
+  Result<SeekableZipSource> FileReader(
+      const GcsBuild& build, const std::string& artifact_name) override;
 
  private:
   Result<std::vector<std::string>> Headers();

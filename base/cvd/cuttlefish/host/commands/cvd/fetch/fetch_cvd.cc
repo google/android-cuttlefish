@@ -52,7 +52,6 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
-#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
@@ -116,7 +115,8 @@ Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
 }
 
 Result<std::optional<Build>> GetBuildHelper(
-    BuildApi& build_api, const std::optional<BuildString>& build_source,
+    BuildApi<BuildString, Build>& build_api,
+    const std::optional<BuildString>& build_source,
     const std::string& fallback_target) {
   if (!build_source) {
     return std::nullopt;
@@ -126,7 +126,7 @@ Result<std::optional<Build>> GetBuildHelper(
                    "Unable to create build from (" << source << ")");
 }
 
-Result<Builds> GetBuilds(BuildApi& build_api,
+Result<Builds> GetBuilds(BuildApi<BuildString, Build>& build_api,
                          const BuildStrings& build_sources) {
   return Builds{
       .default_build = CF_EXPECT(GetBuildHelper(
@@ -153,7 +153,7 @@ Result<Builds> GetBuilds(BuildApi& build_api,
   };
 }
 
-Result<void> UpdateTargetsWithBuilds(BuildApi& build_api,
+Result<void> UpdateTargetsWithBuilds(BuildApi<BuildString, Build>& build_api,
                                      std::vector<Target>& targets) {
   for (auto& target : targets) {
     target.builds = CF_EXPECT(GetBuilds(build_api, target.build_strings));
@@ -161,7 +161,7 @@ Result<void> UpdateTargetsWithBuilds(BuildApi& build_api,
   return {};
 }
 
-Result<Build> GetHostBuild(BuildApi& build_api,
+Result<Build> GetHostBuild(BuildApi<BuildString, Build>& build_api,
                            const HostToolsTarget& host_target,
                            const std::optional<Build>& fallback_host_build) {
   std::optional<Build> host_package_build = CF_EXPECT(
@@ -527,7 +527,6 @@ Result<FetchResult> Fetch(const FetchFlags& flags,
   setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);
   setenv("ANDROID_ROOT", "/", /* overwrite */ 0);
 #endif
-  CurlGlobalInit curl_init;
 
   Downloaders downloaders = CF_EXPECT(Downloaders::Create(
       flags.build_api_flags, flags.target_directory, cache_base_path));

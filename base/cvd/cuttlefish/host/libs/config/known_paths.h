@@ -71,6 +71,7 @@ std::string VhostUserInputBinary();
 std::string VhostUserMediaEmulatedCameraSPlaneBinary();
 std::string VhostUserMediaEmulatedCameraMPlaneBinary();
 std::string VhostUserMediaV4l2StreamProxyBinary();
+std::string VirtualTunerDaemonBinary();
 std::string WebRtcBinary();
 std::string WebRtcSigServerBinary();
 std::string WebRtcSigServerProxyBinary();

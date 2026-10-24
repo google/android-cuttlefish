@@ -20,18 +20,22 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/random.h"
+#include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/process/execute.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -109,19 +113,42 @@ std::string DefaultHostArtifactsPath(const std::string& file_name) {
 
 std::string HostBinaryDir() { return DefaultHostArtifactsPath("bin"); }
 
+namespace {
+
+std::string SystemQemuBinaryDir() {
+  for (const std::string& dir : Path()) {
+    Result<std::vector<std::string>> entries = DirectoryContents(dir);
+    if (!entries.has_value()) {
+      continue;
+    }
+    for (const std::string& entry : *entries) {
+      if (absl::StartsWith(entry, "qemu-system-")) {
+        return dir;
+      }
+    }
+  }
+  return "/usr/bin";
+}
+
+}  // namespace
+
 bool UseQemuPrebuilt() {
+#ifndef __linux__
+  return false;
+#else
   const std::string target_prod_str = StringFromEnv("TARGET_PRODUCT", "");
   if (!Contains(target_prod_str, "arm")) {
     return true;
   }
   return false;
+#endif
 }
 
 std::string DefaultQemuBinaryDir() {
   if (UseQemuPrebuilt()) {
     return HostBinaryDir() + "/" + HostArchStr() + "-linux-gnu/qemu";
   }
-  return "/usr/bin";
+  return SystemQemuBinaryDir();
 }
 
 std::string HostBinaryPath(const std::string& binary_name) {
@@ -140,6 +167,12 @@ std::string HostQemuBiosPath() {
   if (UseQemuPrebuilt()) {
     return DefaultHostArtifactsPath("usr/share/qemu/" + HostArchStr() +
                                     "-linux-gnu");
+  }
+  const std::string bin_dir = SystemQemuBinaryDir();
+  if (absl::EndsWith(bin_dir, "/bin")) {
+    // QEMU installs its firmware next to its binaries: <prefix>/bin and
+    // <prefix>/share/qemu.
+    return bin_dir.substr(0, bin_dir.size() - 4) + "/share/qemu";
   }
   return "/usr/share/qemu";
 }

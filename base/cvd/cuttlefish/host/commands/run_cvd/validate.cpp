@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/run_cvd/validate.h"
 
-#include <errno.h>
 #include <sys/utsname.h>
 
 #include <string>
@@ -101,7 +100,7 @@ Result<void> ValidateHostConfiguration() {
 
 Result<void> ValidateHostKernel() {
   struct utsname uname_data;
-  CF_EXPECT_EQ(uname(&uname_data), 0, "uname failed: " << StrError(errno));
+  CF_EXPECT_EQ(uname(&uname_data), 0, "uname failed: " << StrError());
   VLOG(0) << "uts.sysname = \"" << uname_data.sysname << "\"";
   VLOG(0) << "uts.nodename = \"" << uname_data.nodename << "\"";
   VLOG(0) << "uts.release = \"" << uname_data.release << "\"";

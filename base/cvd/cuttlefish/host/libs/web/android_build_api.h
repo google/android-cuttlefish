@@ -25,15 +25,16 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
+#include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
-#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-class AndroidBuildApi {
+class AndroidBuildApi : public BuildApi<DeviceBuildString, DeviceBuild> {
  public:
   AndroidBuildApi() = delete;
   AndroidBuildApi(AndroidBuildApi&&) = delete;
@@ -44,20 +45,14 @@ class AndroidBuildApi {
       std::chrono::seconds retry_period = std::chrono::seconds::zero(),
       CasDownloader* cas_downloader = nullptr);
 
-  Result<DeviceBuild> GetBuild(const DeviceBuildString& build_string);
-  Result<DirectoryBuild> GetBuild(const DirectoryBuildString& build_string);
+  Result<DeviceBuild> GetBuild(const DeviceBuildString& build_string) override;
 
   Result<std::string> DownloadFile(const DeviceBuild& build,
                                    const std::string& target_directory,
-                                   const std::string& artifact_name);
-  Result<std::string> DownloadFile(const DirectoryBuild& build,
-                                   const std::string& target_directory,
-                                   const std::string& artifact_name);
+                                   const std::string& artifact_name) override;
 
-  Result<SeekableZipSource> FileReader(const DeviceBuild&,
-                                       const std::string& artifact_name);
-  Result<SeekableZipSource> FileReader(const DirectoryBuild&,
-                                       const std::string& artifact_name);
+  Result<SeekableZipSource> FileReader(
+      const DeviceBuild&, const std::string& artifact_name) override;
 
  private:
   struct BuildInfo {
@@ -88,34 +83,20 @@ class AndroidBuildApi {
       const DeviceBuild& build,
       const std::vector<std::string>& artifact_filenames);
 
-  Result<std::unordered_set<std::string>> Artifacts(
-      const DirectoryBuild& build,
-      const std::vector<std::string>& artifact_filenames);
-
-  Result<std::unordered_set<std::string>> Artifacts(
-      const Build& build, const std::vector<std::string>& artifact_filenames);
-
   Result<std::string> GetArtifactDownloadUrl(const DeviceBuild& build,
                                              const std::string& artifact);
   Result<void> ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
                               const std::string& path);
 
-  Result<void> ArtifactToFile(const DirectoryBuild& build,
-                              const std::string& artifact,
-                              const std::string& path);
-
-  Result<void> ArtifactToFile(const Build& build, const std::string& artifact,
-                              const std::string& path);
-
-  Result<std::string> DownloadArtifact(const Build& build,
+  Result<std::string> DownloadArtifact(const DeviceBuild& build,
                                        const std::string& target_directory,
                                        const std::string& artifact_name);
-  Result<std::string> DownloadTargetFile(const Build& build,
+  Result<std::string> DownloadTargetFile(const DeviceBuild& build,
                                          const std::string& target_directory,
                                          const std::string& artifact_name);
   Result<std::string> DownloadTargetFileFromCas(
-      const Build& build, const std::string& target_directory,
+      const DeviceBuild& build, const std::string& target_directory,
       const std::string& artifact_name);
 
   HttpClient& http_client_;

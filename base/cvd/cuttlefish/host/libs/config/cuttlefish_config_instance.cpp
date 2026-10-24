@@ -1326,12 +1326,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_display_configs(
 }
 
 static constexpr char kTouchpadConfigs[] = "touchpad_configs";
+static constexpr char kTouchpadType[] = "type";
 
 Json::Value CuttlefishConfig::TouchpadConfig::Serialize(
     const CuttlefishConfig::TouchpadConfig& config) {
   Json::Value config_json(Json::objectValue);
   config_json[kXRes] = config.width;
   config_json[kYRes] = config.height;
+  config_json[kTouchpadType] = static_cast<int>(config.type);
 
   return config_json;
 }
@@ -1341,6 +1343,10 @@ CuttlefishConfig::TouchpadConfig CuttlefishConfig::TouchpadConfig::Deserialize(
   TouchpadConfig touchpad_config = {};
   touchpad_config.width = config_json[kXRes].asInt();
   touchpad_config.height = config_json[kYRes].asInt();
+  if (config_json.isMember(kTouchpadType)) {
+    touchpad_config.type =
+        static_cast<TouchpadConfig::Type>(config_json[kTouchpadType].asInt());
+  }
 
   return touchpad_config;
 }
@@ -2054,6 +2060,15 @@ int CuttlefishConfig::InstanceSpecific::vhal_proxy_server_port() const {
   return (*Dictionary())[kVhalProxyServerPort].asInt();
 }
 
+static constexpr char kVirtualTunerServerPort[] = "virtual_tuner_server_port";
+void CuttlefishConfig::MutableInstanceSpecific::set_virtual_tuner_server_port(
+    int port) {
+  (*Dictionary())[kVirtualTunerServerPort] = port;
+}
+int CuttlefishConfig::InstanceSpecific::virtual_tuner_server_port() const {
+  return (*Dictionary())[kVirtualTunerServerPort].asInt();
+}
+
 static constexpr char kAudioOutputStreamsCount[] = "audio_output_streams_count";
 void CuttlefishConfig::MutableInstanceSpecific::set_audio_output_streams_count(
     int count) {
@@ -2084,6 +2099,7 @@ CuttlefishConfig::InstanceSpecific::audio_settings() const {
 static constexpr char kMediaConfigs[] = "media_configs";
 static constexpr char kMediaType[] = "type";
 static constexpr char kMediaLensFacing[] = "lens_facing";
+static constexpr char kMediaDevicePath[] = "device_path";
 static constexpr char kMediaInputPath[] = "input_path";
 static constexpr char kMediaInputWidth[] = "input_width";
 static constexpr char kMediaInputHeight[] = "input_height";
@@ -2098,6 +2114,13 @@ CuttlefishConfig::InstanceSpecific::media_configs() const {
         static_cast<CuttlefishConfig::MediaType>(json[kMediaType].asInt());
     if (json.isMember(kMediaLensFacing)) {
       config.lens_facing = json[kMediaLensFacing].asString();
+    }
+    if (config.type == CuttlefishConfig::MediaType::kV4l2Proxy) {
+      CuttlefishConfig::MediaConfig::V4l2ProxyConfig proxy_config = {};
+      if (json.isMember(kMediaDevicePath)) {
+        proxy_config.device_path = json[kMediaDevicePath].asString();
+      }
+      config.v4l2_proxy = proxy_config;
     }
     if (config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy) {
       CuttlefishConfig::MediaConfig::V4l2StreamProxyConfig stream_config = {};
@@ -2128,6 +2151,10 @@ void CuttlefishConfig::MutableInstanceSpecific::set_media_configs(
     Json::Value json(Json::objectValue);
     json[kMediaType] = static_cast<int>(config.type);
     json[kMediaLensFacing] = config.lens_facing;
+    if (config.type == CuttlefishConfig::MediaType::kV4l2Proxy &&
+        config.v4l2_proxy.has_value()) {
+      json[kMediaDevicePath] = config.v4l2_proxy->device_path;
+    }
     if (config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy &&
         config.v4l2_stream_proxy.has_value()) {
       json[kMediaInputPath] = config.v4l2_stream_proxy->input_path;

@@ -1062,7 +1062,11 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
       crosvm_cmd.Cmd().AddParameter("--vhost-user=type=media,socket=",
                                     instance.media_socket_path(index));
     } else if (config.type == CuttlefishConfig::MediaType::kV4l2Proxy) {
-      crosvm_cmd.Cmd().AddParameter("--v4l2-proxy=", "/dev/video0");
+      CF_EXPECT(config.v4l2_proxy.has_value() &&
+                    !config.v4l2_proxy->device_path.empty(),
+                "Missing v4l2_proxy device_path");
+      crosvm_cmd.Cmd().AddParameter("--v4l2-proxy=",
+                                    config.v4l2_proxy->device_path);
     }
   }
 
@@ -1147,7 +1151,7 @@ Result<bool> CrosvmManager::WaitForRestoreComplete(SharedFD stop_fd) const {
     std::vector<PollSharedFd> poll = {{.fd = stop_fd, .events = POLLIN}};
     const int result = SharedFD::Poll(poll, 50 /* ms */);
     // Check for errors.
-    CF_EXPECTF(result >= 0, "failed to wait on stop_fd: {}", StrError(errno));
+    CF_EXPECTF(result >= 0, "failed to wait on stop_fd: {}", StrError());
     // Check if pipe became readable or closed.
     if (result > 0) {
       return false;

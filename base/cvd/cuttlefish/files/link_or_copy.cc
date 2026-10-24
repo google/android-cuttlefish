@@ -16,7 +16,6 @@
 
 #include "cuttlefish/files/link_or_copy.h"
 
-#include <errno.h>
 #include <unistd.h>
 
 #include <string>
@@ -49,7 +48,7 @@ Result<std::string> LinkOrCopy(const std::string& target,
                  << "\" with \"" << target << "\" from the cache";
     CF_EXPECTF(unlink(destination.c_str()) == 0,
                "Failed to unlink \"{}\" with error: {}", destination,
-               StrError(errno));
+               StrError());
   }
   if (link(target.c_str(), destination.c_str()) == 0) {
     VLOG(1) << "Created hard link from \"" << target << "\" to \""

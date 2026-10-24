@@ -16,7 +16,6 @@
 
 #include "cuttlefish/files/recursively_remove_directory.h"
 
-#include <errno.h>
 #include <ftw.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -64,7 +63,7 @@ Result<void> RecursivelyRemoveDirectory(const std::string& path) {
   };
 
   if (nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_PHYS) < 0) {
-    return CF_ERRF("Failed to remove dir '{}': {}", path, StrError(errno));
+    return CF_ERRF("Failed to remove dir '{}': {}", path, StrError());
   }
   return {};
 }

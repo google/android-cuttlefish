@@ -13,6 +13,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/cvd/fetch:builds",
         "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_url",
         "//cuttlefish/metrics:fetch_metrics",
         "//cuttlefish/metrics/external_proto:cf_fetch_build_cc_proto",
         "//cuttlefish/metrics/external_proto:cf_fetch_builds_cc_proto",
@@ -20,6 +21,7 @@ cf_cc_library(
         "//cuttlefish/metrics/external_proto:cf_fetch_failure_cc_proto",
         "//cuttlefish/metrics/external_proto:cf_fetch_start_cc_proto",
         "//cuttlefish/metrics/external_proto:cf_metrics_event_v2_cc_proto",
+        "//cuttlefish/metrics/external_proto:cf_safe_level_cc_proto",
     ],
 )
 

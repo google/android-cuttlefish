@@ -15,7 +15,6 @@
  */
 
 #include <dirent.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <signal.h>
 #include <stdint.h>
@@ -100,7 +99,7 @@ std::set<pid_t> GetCandidateProcessGroups(const std::set<std::string>& dirs) {
   std::string cmd_str = cmd.str();
   std::shared_ptr<FILE> cmd_out(popen(cmd_str.c_str(), "r"), pclose);
   if (!cmd_out) {
-    LOG(ERROR) << "Unable to execute '" << cmd_str << "': " << StrError(errno);
+    LOG(ERROR) << "Unable to execute '" << cmd_str << "': " << StrError();
     return {};
   }
   int64_t pid;
@@ -109,7 +108,7 @@ std::set<pid_t> GetCandidateProcessGroups(const std::set<std::string>& dirs) {
     pid_t pgid = getpgid(static_cast<pid_t>(pid));
     if (pgid < 0) {
       LOG(ERROR) << "Unable to get process group of " << pid << ": "
-                 << StrError(errno);
+                 << StrError();
       continue;
     }
     ret.insert(pgid);
@@ -128,7 +127,7 @@ int FallBackStop(const std::set<std::string>& dirs) {
     auto retval = killpg(pgid, SIGKILL);
     if (retval < 0) {
       LOG(ERROR) << "Failed to kill process group " << pgid << ": "
-                 << StrError(errno);
+                 << StrError();
       exit_code |= kFallbackErrorBit;
     }
   }

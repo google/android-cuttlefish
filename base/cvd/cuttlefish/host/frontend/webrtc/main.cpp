@@ -47,6 +47,7 @@
 #include "cuttlefish/host/frontend/webrtc/tuner_audio_source.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_command_channel.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_commands.pb.h"
+#include "cuttlefish/host/libs/audio/channel_layout.h"
 #include "cuttlefish/host/libs/audio_connector/server.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
@@ -199,24 +200,6 @@ Result<void> ControlLoop(SharedFD control_socket,
 
     CF_EXPECT(channel.SendResponse(response));
   }
-}
-
-AudioChannelsLayout ConvertChannelLayout(
-    ::cuttlefish::config::Audio_ChannelLayout layout) {
-  using ChannelLayout = ::cuttlefish::config::Audio_ChannelLayout;
-
-  switch (layout) {
-    case ChannelLayout::Audio_ChannelLayout_MONO:
-      return AudioChannelsLayout::Mono;
-    case ChannelLayout::Audio_ChannelLayout_STEREO:
-      return AudioChannelsLayout::Stereo;
-    case ChannelLayout::Audio_ChannelLayout_SURROUND51:
-      return AudioChannelsLayout::Surround51;
-    default:
-      VLOG(0) << "Unsupported channel layout: " << layout;
-  }
-
-  return AudioChannelsLayout::Stereo;
 }
 
 uint32_t ConvertSampleRate(::cuttlefish::config::Audio_SampleRate rate) {

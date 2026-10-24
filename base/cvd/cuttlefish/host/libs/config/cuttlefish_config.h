@@ -105,8 +105,13 @@ class CuttlefishConfig {
   };
 
   struct TouchpadConfig {
+    enum class Type {
+      kTouchpad,
+      kTouchNavigation,
+    };
     int width;
     int height;
+    Type type = Type::kTouchpad;
 
     static Json::Value Serialize(
         const CuttlefishConfig::TouchpadConfig& config);
@@ -124,6 +129,11 @@ class CuttlefishConfig {
   struct MediaConfig {
     MediaType type;
     std::string lens_facing;
+
+    struct V4l2ProxyConfig {
+      std::string device_path;
+    };
+    std::optional<V4l2ProxyConfig> v4l2_proxy;
 
     struct V4l2StreamProxyConfig {
       std::string input_path;
@@ -600,6 +610,8 @@ class CuttlefishConfig {
     bool enable_vhal_proxy_server() const;
     int vhal_proxy_server_port() const;
 
+    int virtual_tuner_server_port() const;
+
     int audio_output_streams_count() const;
     std::optional<::cuttlefish::config::Audio> audio_settings() const;
 
@@ -842,6 +854,8 @@ class CuttlefishConfig {
 
     void set_enable_vhal_proxy_server(bool enable_vhal_proxy_server);
     void set_vhal_proxy_server_port(int port);
+
+    void set_virtual_tuner_server_port(int port);
 
     void set_audio_output_streams_count(int count);
     void set_audio_settings(const ::cuttlefish::config::Audio& audio_settings);

@@ -19,13 +19,9 @@
 #include <cstdint>
 #include <optional>
 
-namespace cuttlefish {
+#include "cuttlefish/host/libs/audio/channel_layout.h"  // IWYU pragma: export
 
-enum class AudioChannelsLayout {
-  Mono,
-  Stereo,
-  Surround51,
-};
+namespace cuttlefish {
 
 struct AudioStreamSettings {
   enum class Direction {
@@ -54,16 +50,5 @@ struct AudioMixerSettings {
   AudioChannelsLayout channels_layout = AudioChannelsLayout::Stereo;
   uint32_t sample_rate = 48000;
 };
-
-static constexpr inline uint8_t GetChannelsCount(AudioChannelsLayout layout) {
-  switch (layout) {
-    case AudioChannelsLayout::Mono:
-      return 1;
-    case AudioChannelsLayout::Stereo:
-      return 2;
-    case AudioChannelsLayout::Surround51:
-      return 6;
-  }
-}
 
 }  // namespace cuttlefish

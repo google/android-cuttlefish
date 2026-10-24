@@ -1148,6 +1148,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         enable_vhal_proxy_server_vec[instance_index]);
     instance.set_vhal_proxy_server_port(
         cuttlefish::vhal_proxy_server::kDefaultEthPort + num - 1);
+    instance.set_virtual_tuner_server_port(7000 + num - 1);
 
     uint8_t ethernet_mac[6] = {};
     uint8_t mobile_mac[6] = {};
