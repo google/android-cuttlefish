@@ -17,10 +17,15 @@
 
 #include <memory>
 
+#include "cuttlefish/host/libs/web/http_client/curl_share.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 
+// `share` can optionally be used to hold resources between multiple
+// CurlHttpClient instances, but must outlive those instances.
+std::unique_ptr<HttpClient> CurlHttpClient(
+    CurlShare&, bool use_logging_debug_function = false);
 std::unique_ptr<HttpClient> CurlHttpClient(
     bool use_logging_debug_function = false);
 
