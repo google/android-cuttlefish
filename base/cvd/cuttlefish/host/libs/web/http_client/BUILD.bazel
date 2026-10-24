@@ -23,10 +23,22 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:curl_global_init",
+        "//cuttlefish/host/libs/web/http_client:curl_share",
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@curl",
+    ],
+)
+
+cf_cc_library(
+    name = "curl_share",
+    srcs = ["curl_share.cc"],
+    hdrs = ["curl_share.h"],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
+        "@abseil-cpp//absl/log:check",
         "@curl",
     ],
 )

@@ -35,6 +35,7 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
+#include "cuttlefish/host/libs/web/http_client/curl_share.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/result/result.h"
@@ -149,6 +150,12 @@ class CurlClient : public HttpClient {
       return;
     }
   }
+  CurlClient(CurlShare& share, const bool use_logging_debug_function)
+      : CurlClient(use_logging_debug_function) {
+    if (curl_ != nullptr && share.Raw()) {
+      curl_easy_setopt(curl_, CURLOPT_SHARE, share.Raw());
+    }
+  }
   ~CurlClient() { curl_easy_cleanup(curl_); }
 
   Result<HttpResponse<void>> DownloadToCallback(
@@ -234,6 +241,11 @@ class CurlClient : public HttpClient {
 
 std::unique_ptr<HttpClient> CurlHttpClient(bool use_logging_debug_function) {
   return std::make_unique<CurlClient>(use_logging_debug_function);
+}
+
+std::unique_ptr<HttpClient> CurlHttpClient(CurlShare& share,
+                                           bool use_logging_debug_function) {
+  return std::make_unique<CurlClient>(share, use_logging_debug_function);
 }
 
 }  // namespace cuttlefish
