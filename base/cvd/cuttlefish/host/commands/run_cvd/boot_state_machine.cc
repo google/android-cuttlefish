@@ -537,7 +537,9 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
     }
 
     if ((*read_result)->event == monitor::Event::BootCompleted) {
-      state_ |= kGuestBootCompleted;
+      if (!IsRestoring(config_)) {
+        state_ |= kGuestBootCompleted;
+      }
       if (!instance_.vcpu_config_path().empty()) {
         auto res = WattsonRebalanceThreads(instance_.id());
         if (!res.has_value()) {
