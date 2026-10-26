@@ -22,14 +22,12 @@
 #include <string>
 #include <thread>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 class InterruptibleTerminal {
  public:
-  InterruptibleTerminal();
   /*
    * Returns a line from the stdin_fd, which is the client stdin
    *
@@ -44,9 +42,6 @@ class InterruptibleTerminal {
   Result<std::string> ReadLine();
 
  private:
-#ifdef __linux__
-  SharedFD interrupt_event_fd_;
-#endif
   bool interrupted_ = false;
   // one owner per InterruptibleTerminal
   // also protecting interrupted_
