@@ -88,6 +88,18 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "http_client_pool",
+    srcs = ["http_client_pool.cc"],
+    hdrs = ["http_client_pool.h"],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log:check",
+    ],
+)
+
+cf_cc_library(
     name = "http_file",
     srcs = ["http_file.cc"],
     hdrs = ["http_file.h"],
