@@ -42,6 +42,7 @@ cf_cc_library(
         "//cuttlefish/io",
         "//cuttlefish/io:fake_seek",
         "//cuttlefish/io:length",
+        "//cuttlefish/io:visitable",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -182,6 +183,8 @@ cf_cc_test(
     srcs = ["fake_seek_test.cc"],
     deps = [
         "//cuttlefish/io:fake_seek",
+        "//cuttlefish/io:visitable",
+        "//cuttlefish/result:expect",
         "//cuttlefish/result:result_matchers",
         "//cuttlefish/result:result_type",
     ],

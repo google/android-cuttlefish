@@ -32,6 +32,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/io/fake_pread_pwrite.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -88,6 +89,11 @@ class ZipSourceAsReaderSeekerImpl : public ReaderSeeker {
   ZipSourceAsReaderSeekerImpl(std::unique_ptr<SeekableZipSource> source,
                               SeekingZipSourceReader reader)
       : source_(std::move(source)), reader_(std::move(reader)) {}
+
+  Result<void> Visit(IoVisitor& visitor) override {
+    CF_EXPECT(visitor.Accept(*this));
+    return {};
+  }
 
   Result<uint64_t> Read(void* buf, uint64_t size) override {
     return CF_EXPECT(reader_.Read(buf, size));

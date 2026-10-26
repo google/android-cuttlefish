@@ -25,6 +25,7 @@
 #include "cuttlefish/io/fake_seek.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/length.h"
+#include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -34,6 +35,11 @@ ConcatReaderSeeker::ConcatReaderSeeker(
     std::map<uint64_t, std::unique_ptr<ReaderSeeker>> off_to_reader,
     uint64_t length)
     : ReaderFakeSeeker(length), off_to_reader_(std::move(off_to_reader)) {}
+
+Result<void> ConcatReaderSeeker::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
 
 Result<uint64_t> ConcatReaderSeeker::PRead(void* buf, uint64_t count,
                                            uint64_t offset) const {
