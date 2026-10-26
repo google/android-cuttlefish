@@ -17,6 +17,7 @@
 #include "cuttlefish/metrics/host/host_metrics.h"
 
 #include <optional>
+#include <string>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/metrics/host/gce_environment.h"
@@ -46,10 +47,15 @@ Result<Environment> GetEnvironment() {
 }  // namespace
 
 Result<HostMetrics> GetHostMetrics() {
+  Invoker invoker = GetInvoker();
+  std::string user_id;
+  if (invoker != Invoker::Podcvd) {
+    user_id = CF_EXPECT(ReadUserIdFile());
+  }
   return HostMetrics{.os = GetHostInfo(),
-                     .invoker = GetInvoker(),
+                     .invoker = invoker,
                      .environment = CF_EXPECT(GetEnvironment()),
-                     .user_id = CF_EXPECT(ReadUserIdFile())};
+                     .user_id = user_id};
 }
 
 }  // namespace cuttlefish
