@@ -228,6 +228,7 @@ cf_cc_library(
     hdrs = ["io.h"],
     deps = [
         "//cuttlefish/io:reader",
+        "//cuttlefish/io:reader_seeker",
         "//cuttlefish/io:seeker",
         "//cuttlefish/io:visitable",
         "//cuttlefish/io:writer",
@@ -384,6 +385,16 @@ cf_cc_library(
     hdrs = ["reader.h"],
     deps = [
         "//cuttlefish/io:visitable",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
+    name = "reader_seeker",
+    hdrs = ["reader_seeker.h"],
+    deps = [
+        "//cuttlefish/io:reader",
+        "//cuttlefish/io:seeker",
         "//cuttlefish/result:result_type",
     ],
 )
