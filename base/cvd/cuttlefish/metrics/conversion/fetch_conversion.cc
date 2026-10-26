@@ -43,20 +43,20 @@ using logs::proto::wireless::android::cuttlefish::events::
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishFetchStart;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
 using ProtoSafeLevel =
-    logs::proto::wireless::android::cuttlefish::events::SafeLevel;
+    logs::proto::wireless::android::cuttlefish::events::Build::SafeLevel;
 
 ProtoSafeLevel ConvertSafeLevel(const SafeLevel& safe_level) {
   switch (safe_level) {
     case SafeLevel::kSafeLevelUnspecified:
-      return ProtoSafeLevel::SAFE_LEVEL_UNSPECIFIED;
+      return ProtoSafeLevel::Build_SafeLevel_SAFE_LEVEL_UNSPECIFIED;
     case SafeLevel::kSafe0:
-      return ProtoSafeLevel::SAFE_0;
+      return ProtoSafeLevel::Build_SafeLevel_SAFE_0;
     case SafeLevel::kSafe1:
-      return ProtoSafeLevel::SAFE_1;
+      return ProtoSafeLevel::Build_SafeLevel_SAFE_1;
     case SafeLevel::kSafe2:
-      return ProtoSafeLevel::SAFE_2;
+      return ProtoSafeLevel::Build_SafeLevel_SAFE_2;
     case SafeLevel::kPlatinum:
-      return ProtoSafeLevel::PLATINUM;
+      return ProtoSafeLevel::Build_SafeLevel_PLATINUM;
   }
 }
 
