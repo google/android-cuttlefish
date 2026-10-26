@@ -238,4 +238,123 @@ TEST(BootFlagsParserTest, VendorBootLocalOverrideMultiInstanceFull) {
       "vendor_boot.img"));
 }
 
+TEST(BootFlagsParserTest, SystemRemoteOverrideEmitsNoSystemImageFlag) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "system": "@ab/git_main/cf_x86_64_only_phone-userdebug"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  const std::vector<std::string> serialized_data =
+      CF_ASSERT(LaunchCvdParserTester(json_configs));
+  EXPECT_FALSE(FindConfig(serialized_data, "--system_image="));
+}
+
+TEST(BootFlagsParserTest, SystemLocalOverrideSingleInstance) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "system": "/path/to/system.img"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  const std::vector<std::string> serialized_data =
+      CF_ASSERT(LaunchCvdParserTester(json_configs));
+  EXPECT_TRUE(
+      FindConfig(serialized_data, "--system_image=/path/to/system.img"));
+}
+
+TEST(BootFlagsParserTest, SystemLocalOverrideMultiInstancePartial) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "disk": {
+            }
+        },
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "system": "/path/to/system.img"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  const std::vector<std::string> serialized_data =
+      CF_ASSERT(LaunchCvdParserTester(json_configs));
+  EXPECT_TRUE(
+      FindConfig(serialized_data, "--system_image=,/path/to/system.img"));
+}
+
+TEST(BootFlagsParserTest, SystemLocalOverrideMultiInstanceFull) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "system": "/path/to/first/system.img"
+                }
+            }
+        },
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "system": "/path/to/second/system.img"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  const std::vector<std::string> serialized_data =
+      CF_ASSERT(LaunchCvdParserTester(json_configs));
+  EXPECT_TRUE(FindConfig(
+      serialized_data,
+      "--system_image=/path/to/first/system.img,/path/to/second/system.img"));
+}
+
 }  // namespace cuttlefish

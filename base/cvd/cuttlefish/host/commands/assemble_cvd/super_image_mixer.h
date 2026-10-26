@@ -27,5 +27,6 @@ Result<void> RebuildSuperImageIfNecessary(
 
 Result<bool> SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config,
                                        const std::string& default_target_zip,
-                                       const std::string& system_target_zip);
+                                       const std::string& system_target_zip,
+                                       const std::string& system_image);
 }  // namespace cuttlefish

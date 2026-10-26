@@ -73,6 +73,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/system_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
@@ -372,7 +373,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     const std::vector<GuestConfig>& guest_configs, fruit::Injector<>& injector,
     const InitialLog& log, const BootImageFlag& boot_image,
     const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
-    const SuperImageFlag& super_image,
+    const SuperImageFlag& super_image, const SystemImageFlag& system_image,
     const SystemImageDirFlag& system_image_dir,
     const VendorBootImageFlag& vendor_boot_image,
     const VmManagerFlag& vm_manager_flag, const Defaults& defaults,
@@ -385,7 +386,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     auto config = CF_EXPECT(
         InitializeCuttlefishConfiguration(
             FLAGS_instance_dir, guest_configs, injector, fetcher_configs,
-            boot_image, initramfs_path, kernel_path, super_image,
+            boot_image, initramfs_path, kernel_path, super_image, system_image,
             system_image_dir, vendor_boot_image, vm_manager_flag, defaults),
         "cuttlefish configuration initialization failed");
 
@@ -662,6 +663,9 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   SuperImageFlag super_image =
       SuperImageFlag::FromGlobalGflags(system_image_dir);
 
+  SystemImageFlag system_image =
+      SystemImageFlag::FromGlobalGflags(fetcher_configs);
+
   VendorBootImageFlag vendor_boot_image =
       VendorBootImageFlag::FromGlobalGflags(system_image_dir);
 
@@ -723,12 +727,13 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
                   "aborting: "
                << defaults.error().Message();
   }
-  const CuttlefishConfig* config = CF_EXPECT(
-      InitFilesystemAndCreateConfig(
-          std::move(fetcher_configs), guest_configs, injector, log, boot_image,
-          initramfs_path, kernel_path, super_image, system_image_dir,
-          vendor_boot_image, vm_manager_flag, *defaults, android_builds),
-      "Failed to create config");
+  const CuttlefishConfig* config =
+      CF_EXPECT(InitFilesystemAndCreateConfig(
+                    std::move(fetcher_configs), guest_configs, injector, log,
+                    boot_image, initramfs_path, kernel_path, super_image,
+                    system_image, system_image_dir, vendor_boot_image,
+                    vm_manager_flag, *defaults, android_builds),
+                "Failed to create config");
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;

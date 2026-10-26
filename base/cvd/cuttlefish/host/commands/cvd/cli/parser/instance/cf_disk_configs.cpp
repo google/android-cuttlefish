@@ -31,6 +31,14 @@ namespace {
 using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
 
+std::string SystemImageFlag(const Instance& instance) {
+  const std::string& system = instance.disk().disk_artifacts().system();
+  if (!system.starts_with(kFetchPrefix)) {
+    return system;
+  }
+  return "";
+}
+
 std::string VendorBootImageFlag(const Instance& instance) {
   const std::string& vendor_boot =
       instance.disk().disk_artifacts().vendor_boot();
@@ -65,6 +73,13 @@ std::vector<std::string> GenerateDiskFlags(
     }
     flags.emplace_back(GenerateVecFlag("blank_data_image_mb", data_image_mbs));
     flags.emplace_back(GenerateVecFlag("data_policy", data_policies));
+  }
+  if (std::any_of(config.instances().cbegin(), config.instances().cend(),
+                  [](const Instance& instance) {
+                    return !SystemImageFlag(instance).empty();
+                  })) {
+    flags.emplace_back(
+        GenerateInstanceFlag("system_image", config, SystemImageFlag));
   }
   if (std::any_of(config.instances().cbegin(), config.instances().cend(),
                   [](const Instance& instance) {

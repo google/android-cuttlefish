@@ -246,15 +246,25 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
   if (!context.Artifact("misc_info.txt").Download().has_value()) {
     VLOG(0) << "Failed to download misc_info.txt, continuing";
   }
+  const bool download_target_files =
+      has_system_build || flags.download_target_files_zip;
+  const bool use_target_files =
+      download_target_files || flags.dynamic_super_image;
   if (flags.download_img_zip) {
     LOG(INFO) << "Downloading image zip for " << context;
     const std::string img_zip_name =
         CF_EXPECT(context.GetBuildZipName(BuildZipKind::kImages));
     std::string img_zip_artifact_name = img_zip_name;
     if (IsSignedBuild(context.Build())) {
-      img_zip_artifact_name = kSignedPrefix + img_zip_artifact_name;
-      LOG(INFO) << "Attempting to fetch SIGNED default image zip: "
-                << img_zip_artifact_name;
+      if (!use_target_files) {
+        img_zip_artifact_name = kSignedPrefix + img_zip_artifact_name;
+        LOG(INFO) << "Attempting to fetch SIGNED default image zip: "
+                  << img_zip_artifact_name;
+      } else {
+        LOG(INFO) << "Signed build is available, but using the unsigned "
+                     "build because other unsigned builds will be used "
+                     "to mix a new super image.";
+      }
     }
     FetchArtifact img_zip = context.Artifact(img_zip_artifact_name);
     CF_EXPECT(img_zip.Download());
@@ -263,9 +273,7 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
       CF_EXPECT(img_zip.DeleteLocalFile());
     }
   }
-  const bool download_target_files =
-      has_system_build || flags.download_target_files_zip;
-  if (download_target_files || flags.dynamic_super_image) {
+  if (use_target_files) {
     const std::string target_files_name =
         CF_EXPECT(context.GetBuildZipName(BuildZipKind::kTargetFiles));
     FetchArtifact target_files = context.Artifact(target_files_name);

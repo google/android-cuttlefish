@@ -30,6 +30,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/system_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
@@ -47,7 +48,7 @@ Result<void> DiskImageFlagsVectorization(
     const AndroidEfiLoaderFlag& android_efi_loader,
     const BootImageFlag& boot_image, const BootloaderFlag& bootloader,
     const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
-    const SuperImageFlag& super_image,
+    const SuperImageFlag& super_image, const SystemImageFlag& system_image,
     const SystemImageDirFlag& system_image_dir,
     const VendorBootImageFlag& vendor_boot_image) {
   std::vector<std::string> vbmeta_image =
@@ -136,6 +137,7 @@ Result<void> DiskImageFlagsVectorization(
       instance.set_vvmtruststore_path(vvmtruststore_path[instance_index]);
     }
     instance.set_super_image(super_image.SuperImageForIndex(instance_index));
+    instance.set_system_image(system_image.SystemImageForIndex(instance_index));
     instance.set_android_efi_loader(
         android_efi_loader.ForIndex(instance_index));
     if (instance_index >= chromeos_disk.size()) {
@@ -255,7 +257,8 @@ Result<void> DiskImageFlagsVectorization(
     if (CF_EXPECT(SuperImageNeedsRebuilding(
             fetcher_configs.ForInstance(instance_index),
             const_instance.default_target_zip(),
-            const_instance.system_target_zip())) ||
+            const_instance.system_target_zip(),
+            const_instance.system_image())) ||
         has_initramfs) {
       const std::string new_super_image_path =
           const_instance.PerInstancePath("super.img");

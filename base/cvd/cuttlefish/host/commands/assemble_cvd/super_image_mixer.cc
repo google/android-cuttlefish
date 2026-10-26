@@ -32,6 +32,7 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/files/link_or_copy.h"
 #include "cuttlefish/host/commands/assemble_cvd/misc_info.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -47,6 +48,7 @@ namespace {
 
 constexpr char kMiscInfoPath[] = "META/misc_info.txt";
 constexpr char kDynamicPartitionsPath[] = "META/dynamic_partitions_info.txt";
+constexpr char kSystemImagePath[] = "IMAGES/system.img";
 constexpr std::array kVendorTargetImages = {
     "IMAGES/boot.img",
     "IMAGES/dtbo.img",
@@ -76,6 +78,7 @@ constexpr std::array kVendorTargetBuildProps = {
 struct RebuildPaths {
   std::string vendor_target_zip;
   std::string system_target_zip;
+  std::string system_image;
   std::string combined_target_zip;
   std::string super_image_output;
   std::string vbmeta_image_output;
@@ -131,11 +134,15 @@ Result<TargetFiles> GetTargetFiles(const std::string& vendor_zip_path,
       .system_zip = system_zip_path,
   };
   result.vendor_contents = ArchiveContents(result.vendor_zip);
-  result.system_contents = ArchiveContents(result.system_zip);
   CF_EXPECTF(!result.vendor_contents.empty(), "Could not open {}",
              vendor_zip_path);
-  CF_EXPECTF(!result.system_contents.empty(), "Could not open {}",
-             system_zip_path);
+  if (vendor_zip_path == system_zip_path) {
+    result.system_contents = result.vendor_contents;
+  } else {
+    result.system_contents = ArchiveContents(result.system_zip);
+    CF_EXPECTF(!result.system_contents.empty(), "Could not open {}",
+               system_zip_path);
+  }
   return result;
 }
 
@@ -181,7 +188,8 @@ Result<MiscInfo> CombineMiscInfo(
 }
 
 Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
-                                     const std::string& combined_output_path) {
+                                     const std::string& combined_output_path,
+                                     const std::string& system_image) {
   Extracted extracted;
   for (const auto& name : target_files.vendor_contents) {
     if (!IsTargetFilesImage(name)) {
@@ -212,6 +220,8 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
       continue;
     } else if (Contains(kVendorTargetImages, name)) {
       continue;
+    } else if (!system_image.empty() && name == kSystemImagePath) {
+      continue;
     }
     VLOG(0) << "Writing " << name << " from system target";
     CF_EXPECT(ExtractImage(target_files.system_zip, combined_output_path, name),
@@ -219,6 +229,16 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
     const auto partition = CF_EXPECT(GetPartitionNameFromPath(name));
     extracted.images.emplace(partition);
     extracted.system_partitions.emplace_back(partition);
+  }
+  if (!system_image.empty()) {
+    const std::string system_image_target =
+        combined_output_path + "/" + kSystemImagePath;
+    VLOG(0) << "Writing " << system_image_target << " from " << system_image;
+    CF_EXPECT(EnsureDirectoryExists(combined_output_path + "/IMAGES"));
+    CF_EXPECT(LinkOrCopy(system_image, system_image_target,
+                         /* overwrite_existing = */ true));
+    extracted.images.emplace("system");
+    extracted.system_partitions.emplace_back("system");
   }
   for (const auto& name : target_files.system_contents) {
     if (!IsTargetFilesBuildProp(name)) {
@@ -251,8 +271,8 @@ Result<void> CombineTargetZipFiles(const RebuildPaths& paths) {
   CF_EXPECT(EnsureDirectoryExists(paths.combined_target_zip + "/META"));
   auto target_files = CF_EXPECT(
       GetTargetFiles(paths.vendor_target_zip, paths.system_target_zip));
-  const auto extracted =
-      CF_EXPECT(ExtractTargetFiles(target_files, paths.combined_target_zip));
+  const auto extracted = CF_EXPECT(ExtractTargetFiles(
+      target_files, paths.combined_target_zip, paths.system_image));
   const auto misc_output_path = paths.combined_target_zip + "/" + kMiscInfoPath;
   const auto combined_info =
       CF_EXPECT(CombineMiscInfo(target_files, misc_output_path,
@@ -307,15 +327,21 @@ Result<RebuildPaths> GetRebuildPaths(
         TargetFilesZip(fetcher_config, FileSource::DEFAULT_BUILD);
     CF_EXPECT(!default_target_zip.empty(),
               "Unable to find default target zip file.");
+  }
 
+  if (system_target_zip.empty() || system_target_zip == "unset") {
     system_target_zip =
         TargetFilesZip(fetcher_config, FileSource::SYSTEM_BUILD);
+    if (system_target_zip.empty() && !instance_config.system_image().empty()) {
+      system_target_zip = default_target_zip;
+    }
     CF_EXPECT(!system_target_zip.empty(),
               "Unable to find system target zip file.");
   }
   return RebuildPaths{
       .vendor_target_zip = default_target_zip,
       .system_target_zip = system_target_zip,
+      .system_image = instance_config.system_image(),
       // TODO(schuffelen): Use cuttlefish_assembly
       .combined_target_zip =
           instance_config.PerInstanceInternalPath("target_combined"),
@@ -340,9 +366,9 @@ Result<void> RebuildSuperImage(const RebuildPaths& paths) {
 Result<void> RebuildSuperImageIfNecessary(
     const FetcherConfig& fetcher_config,
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (!CF_EXPECT(SuperImageNeedsRebuilding(fetcher_config,
-                                           instance.default_target_zip(),
-                                           instance.system_target_zip()))) {
+  if (!CF_EXPECT(SuperImageNeedsRebuilding(
+          fetcher_config, instance.default_target_zip(),
+          instance.system_target_zip(), instance.system_image()))) {
     return {};
   }
   const RebuildPaths paths =
@@ -351,6 +377,9 @@ Result<void> RebuildSuperImageIfNecessary(
                "system target files.";
   LOG(INFO) << "Vendor target files at: " << paths.vendor_target_zip;
   LOG(INFO) << "System target files at: " << paths.system_target_zip;
+  if (!paths.system_image.empty()) {
+    LOG(INFO) << "System image override at: " << paths.system_image;
+  }
   CF_EXPECT(RebuildSuperImage(paths));
   LOG(INFO) << "Rebuild complete.";
   LOG(INFO) << "Combined target files at: " << paths.combined_target_zip;
@@ -362,7 +391,12 @@ Result<void> RebuildSuperImageIfNecessary(
 
 Result<bool> SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config,
                                        const std::string& default_target_zip,
-                                       const std::string& system_target_zip) {
+                                       const std::string& system_target_zip,
+                                       const std::string& system_image) {
+  if (!system_image.empty()) {
+    return true;
+  }
+
   bool has_default_target_zip = false;
   bool has_system_target_zip = false;
   if (!default_target_zip.empty() && default_target_zip != "unset") {

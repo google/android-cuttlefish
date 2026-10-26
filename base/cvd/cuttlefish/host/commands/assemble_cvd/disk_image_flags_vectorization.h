@@ -22,6 +22,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/system_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -34,6 +35,7 @@ Result<void> DiskImageFlagsVectorization(
     CuttlefishConfig& config, const FetcherConfigs& fetcher_configs,
     const AndroidEfiLoaderFlag&, const BootImageFlag&, const BootloaderFlag&,
     const InitramfsPathFlag&, const KernelPathFlag&, const SuperImageFlag&,
-    const SystemImageDirFlag&, const VendorBootImageFlag&);
+    const SystemImageFlag&, const SystemImageDirFlag&,
+    const VendorBootImageFlag&);
 
 }  // namespace cuttlefish

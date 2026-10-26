@@ -153,6 +153,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_new_super_image(
     const std::string& super_image) {
   (*Dictionary())[kNewSuperImage] = super_image;
 }
+static constexpr char kSystemImage[] = "system_image";
+std::string CuttlefishConfig::InstanceSpecific::system_image() const {
+  return (*Dictionary())[kSystemImage].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_system_image(
+    const std::string& system_image) {
+  (*Dictionary())[kSystemImage] = system_image;
+}
 static constexpr char kVendorBootImage[] = "vendor_boot_image";
 std::string CuttlefishConfig::InstanceSpecific::vendor_boot_image() const {
   return (*Dictionary())[kVendorBootImage].asString();
