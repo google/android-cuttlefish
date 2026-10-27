@@ -28,30 +28,15 @@
 namespace cuttlefish {
 namespace {
 
-using cvd::config::Boot;
-using cvd::config::Disk;
 using cvd::config::DiskArtifacts;
 using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
 using google::protobuf::util::JsonStringToMessage;
 
-bool HasLegacyArtifacts(const Instance& instance) {
-  const Disk& disk = instance.disk();
-  const Boot& boot = instance.boot();
-  return disk.has_super_partition() || boot.has_kernel() || boot.has_build() ||
-         boot.has_bootloader() || boot.has_android_efi_loader();
-}
-
 Result<void> ValidateDiskArtifacts(
     const EnvironmentSpecification& launch_config) {
-  bool has_legacy_artifacts = false;
-  bool has_disk_artifacts = false;
   for (const Instance& instance : launch_config.instances()) {
-    if (HasLegacyArtifacts(instance)) {
-      has_legacy_artifacts = true;
-    }
     if (instance.disk().has_disk_artifacts()) {
-      has_disk_artifacts = true;
       const DiskArtifacts& disk_artifacts = instance.disk().disk_artifacts();
       if (disk_artifacts.has_vendor_boot()) {
         CF_EXPECT(!disk_artifacts.vendor_boot().empty(),
@@ -59,9 +44,7 @@ Result<void> ValidateDiskArtifacts(
       }
     }
   }
-  CF_EXPECT(!(has_legacy_artifacts && has_disk_artifacts),
-            "Cannot use disk_artifacts together with legacy disk/boot "
-            "artifact options");
+
   return {};
 }
 
