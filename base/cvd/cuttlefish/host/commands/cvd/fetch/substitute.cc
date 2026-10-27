@@ -72,6 +72,15 @@ Result<void> Substitute(const std::string& target,
     return {};
   }
 
+  // TODO(schuffelen): actually substitute things when migrations are complete
+  if (StringFromEnv("CVD_FORCE_SUBSTITUTE").value_or("") != "true") {
+    std::string base = android::base::Basename(full_link_name);
+    if (base == "netsim" || base == "netsimd" || base == "secure_env") {
+      VLOG(0) << "Not substituting '" << base << "' pending migration";
+      return {};
+    }
+  }
+
   CF_EXPECT(EnsureDirectoryExists(android::base::Dirname(full_link_name)));
 
   std::random_device rd;
