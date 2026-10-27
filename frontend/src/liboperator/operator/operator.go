@@ -262,7 +262,21 @@ func CreateHttpHandlers(
 		w.Header().Set("Cache-Control", "no-cache")
 		ReplyJSONOK(w, cfg)
 	}).Methods("GET")
+	router.HandleFunc("/context", func(w http.ResponseWriter, r *http.Request) {
+		getContext(w, r)
+	}).Methods("GET")
 	return router
+}
+
+func getContext(w http.ResponseWriter, r *http.Request) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	ctx := make(map[string]interface{})
+	ctx["hostname"] = hostname
+	ReplyJSONOK(w, ctx)
 }
 
 // Control endpoint
