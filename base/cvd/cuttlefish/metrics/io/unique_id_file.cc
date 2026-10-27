@@ -46,6 +46,7 @@ Result<void> GenerateUniqueIdFile(const std::string& directory,
     return {};
   }
   const std::string unique_id = GenerateUuid();
+  CF_EXPECT(EnsureDirectoryExists(directory));
   CF_EXPECT(WriteNewFile(filepath, unique_id));
   return {};
 }
