@@ -22,6 +22,7 @@
 #include <string>
 #include <string_view>
 
+#include "absl/log/log.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -31,7 +32,6 @@
 #include "cuttlefish/metrics/conversion/metrics_data.h"
 #include "cuttlefish/metrics/external_proto/cf_log.pb.h"
 #include "cuttlefish/metrics/host/host_metrics.h"
-#include "cuttlefish/metrics/host/invoker.h"
 #include "cuttlefish/metrics/io/enabled.h"
 #include "cuttlefish/metrics/io/metrics_transmitter.h"
 #include "cuttlefish/metrics/io/metrics_writer.h"
@@ -53,9 +53,9 @@ std::chrono::milliseconds GetEpochTime() {
 Result<void> SetUpMetrics(const std::string& metrics_directory) {
   CF_EXPECT(EnsureDirectoryExists(metrics_directory));
   CF_EXPECT(GenerateSessionIdFile(metrics_directory));
-  // TODO: b/578071683 - remove restriction once user id filepath is writable
-  if (GetInvoker() != Invoker::Podcvd) {
-    CF_EXPECT(GenerateUserIdFile());
+  Result<void> user_id_result = GenerateUserIdFile();
+  if (!user_id_result) {
+    VLOG(0) << "Failed to generate user ID file:  " << user_id_result.error();
   }
   return {};
 }
