@@ -48,7 +48,6 @@
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/common/libs/utils/container.h"
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
@@ -109,6 +108,7 @@
 #include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/metrics/host/invoker.h"
 #include "cuttlefish/result/result.h"
 
 #define GET_FLAG_STR_VALUE(name)                                   \
@@ -915,7 +915,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                  (default_on_arch.find(
                       guest_configs[instance_index].target_arch) !=
                       default_on_arch.end() ||
-                  StringFromEnv("CVD_INVOKER").value_or("") == "podcvd")) {
+                  GetInvoker() == Invoker::Podcvd)) {
         instance.set_vhost_user_vsock(true);
       } else {
         instance.set_vhost_user_vsock(false);

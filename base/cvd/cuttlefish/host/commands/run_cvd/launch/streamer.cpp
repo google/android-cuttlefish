@@ -17,7 +17,6 @@
 
 #include <sys/socket.h>
 
-#include <optional>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -31,7 +30,6 @@
 #include "fruit/macro.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
 #include "cuttlefish/host/commands/run_cvd/launch/input_paths_provider.h"
@@ -47,6 +45,7 @@
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
+#include "cuttlefish/metrics/host/invoker.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/subprocess.h"
@@ -225,7 +224,7 @@ class WebRtcServer : public virtual CommandSource,
       return {};
     }
     std::string url;
-    if (StringFromEnv("CVD_INVOKER").value_or("") == "podcvd") {
+    if (GetInvoker() == Invoker::Podcvd) {
       // Container image used by podcvd always contains `cuttlefish-user` debian
       // package. URL starting with `https://localhost:1443` is required as port
       // 1443 in the container is exposed via port forwarding. When printing
