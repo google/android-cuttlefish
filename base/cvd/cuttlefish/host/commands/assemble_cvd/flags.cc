@@ -657,6 +657,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> use_pmem_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_pmem));
   const std::vector<bool> hugepages_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_hugepages));
+  std::vector<bool> enable_display_server_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_display_server));
   std::vector<std::string> device_external_network_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(device_external_network));
 
@@ -818,6 +820,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_crosvm_use_rng(use_rng_vec[instance_index]);
     instance.set_use_pmem(use_pmem_vec[instance_index]);
     instance.set_crosvm_hugepages(hugepages_vec[instance_index]);
+    instance.set_enable_display_server(
+        enable_display_server_vec[instance_index]);
     instance.set_bootconfig_supported(
         guest_configs[instance_index].bootconfig_supported);
     instance.set_enable_mouse(guest_configs[instance_index].mouse_supported);

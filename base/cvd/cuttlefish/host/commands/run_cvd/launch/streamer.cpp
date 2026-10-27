@@ -138,7 +138,9 @@ class StreamerSockets : public virtual SetupFeature {
                      input_paths_provider_.RotaryDevicePath());
     cmd.AddParameter("-keyboard_server_path=",
                      input_paths_provider_.KeyboardPath());
-    cmd.AddParameter("-frame_server_fd=", frames_server_);
+    if (!instance_.enable_display_server()) {
+      cmd.AddParameter("-frame_server_fd=", frames_server_);
+    }
     if (instance_.enable_audio()) {
       cmd.AddParameter("--audio_server_fd=", audio_server_);
       if (HasVirtualTunerStream(instance_)) {
@@ -151,6 +153,8 @@ class StreamerSockets : public virtual SetupFeature {
     cmd.AddParameter("-switches_server_path=",
                      input_paths_provider_.SwitchesPath());
   }
+
+  SharedFD frames_server() const { return frames_server_; }
 
   // SetupFeature
   std::string Name() const override { return "StreamerSockets"; }
@@ -264,6 +268,12 @@ class WebRtcServer : public virtual CommandSource,
     webrtc.AddParameter("-kernel_log_events_fd=", kernel_log_events_pipe_);
     webrtc.AddParameter("-client_dir=",
                         DefaultHostArtifactsPath("usr/share/webrtc/assets"));
+
+    if (instance_.enable_display_server()) {
+      commands.emplace_back(
+          Command(HostBinaryPath("cvd_display_server"))
+              .AddParameter("--frame_server_fd=", sockets_.frames_server()));
+    }
 
     // TODO get from launcher params
     const auto& actions =

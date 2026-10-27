@@ -380,6 +380,10 @@ DEFINE_vec(crosvm_hugepages, "true",
            "/sys/kernel/mm/transparent_hugepage/shmem_enabled is advise, "
            "within_size or always.");
 
+DEFINE_vec(enable_display_server, "false",
+           "Run cvd_display_server, which proxies frames from crosvm's "
+           "wayland display socket to consumers.");
+
 DEFINE_vec(crosvm_acpi_table, "",
            "Passed directly to crosvm as --acpi-table. "
            "Path to user provided ACPI table");

@@ -18,6 +18,15 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "frame_source",
+    hdrs = ["frame_source.h"],
+    deps = [
+        ":screen_connector_common",
+        "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
+    ],
+)
+
+cf_cc_library(
     name = "video_frame_buffer",
     hdrs = ["video_frame_buffer.h"],
 )
@@ -41,6 +50,7 @@ cf_cc_library(
     ],
     include_cleaner_enabled = False,
     deps = [
+        ":frame_source",
         ":screen_connector_common",
         ":video_frame_buffer",
         "//cuttlefish/common/libs/concurrency",
@@ -51,6 +61,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/confui:host_confui",
+        "//cuttlefish/host/libs/display_server:display_server_frame_source",
         "//cuttlefish/host/libs/wayland:wayland_server",
         "//cuttlefish/host/libs/wayland:wayland_server_callbacks",
         "//cuttlefish/result",
