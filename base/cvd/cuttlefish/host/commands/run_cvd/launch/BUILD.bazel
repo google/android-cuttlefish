@@ -560,7 +560,7 @@ cf_cc_library(
     srcs = ["vhost_device_vsock.cpp"],
     hdrs = ["vhost_device_vsock.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:known_paths",
         "//cuttlefish/common/libs/utils:wait_for_unix_socket",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config:config_utils",

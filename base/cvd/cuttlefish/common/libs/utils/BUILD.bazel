@@ -94,11 +94,9 @@ cf_cc_library(
     name = "environment",
     srcs = [
         "environment.cpp",
-        "known_paths.cpp",
     ],
     hdrs = [
         "environment.h",
-        "known_paths.h",
     ],
 )
 
@@ -236,6 +234,19 @@ cf_cc_library(
         "//cuttlefish/io:string",
         "//cuttlefish/result",
         "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "known_paths",
+    srcs = [
+        "known_paths.cpp",
+    ],
+    hdrs = [
+        "known_paths.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
     ],
 )
 

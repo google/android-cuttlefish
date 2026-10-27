@@ -27,7 +27,7 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs:scoped_mmap",
-        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:known_paths",
         "//cuttlefish/io",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/posix:temp_failure_retry",

@@ -1,5 +1,4 @@
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-
 load("//:build_variables.bzl", "COPTS")
 
 package(
@@ -28,8 +27,8 @@ cc_library(
     copts = COPTS + [
         "-Wno-module-import-in-extern-c",
     ],
-    strip_include_prefix = "include",
     features = ["-parse_headers"],
+    strip_include_prefix = "include",
 )
 
 exports_files([
