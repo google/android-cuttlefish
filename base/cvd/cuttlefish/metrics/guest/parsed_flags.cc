@@ -102,12 +102,11 @@ Result<ParsedFlags> GetParsedFlags() {
     const GpuContextTypesFlag gpu_context_types =
         CF_EXPECT(GpuContextTypesFlag::FromGlobalGflags());
 
-    parsed_flags.gpu_mode_used.reserve(parsed_flags.gpu_mode_requested.Size());
     for (int i = 0; i < parsed_flags.gpu_mode_requested.Size(); i++) {
-      parsed_flags.gpu_mode_used[i] = CF_EXPECT(SelectGpuMode(
+      parsed_flags.gpu_mode_used.emplace_back(CF_EXPECT(SelectGpuMode(
           parsed_flags.gpu_mode_requested.ForIndex(i),
           parsed_flags.vm_manager.value().Mode(), guest_configs[i],
-          gpu_context_types.ForIndex(i), graphics_availability));
+          gpu_context_types.ForIndex(i), graphics_availability)));
     }
   }
   return parsed_flags;
