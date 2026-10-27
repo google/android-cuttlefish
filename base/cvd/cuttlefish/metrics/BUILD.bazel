@@ -70,12 +70,12 @@ cf_cc_library(
         "//cuttlefish/metrics/conversion:metrics_data",
         "//cuttlefish/metrics/external_proto:cf_log_cc_proto",
         "//cuttlefish/metrics/host:host_metrics",
-        "//cuttlefish/metrics/host:invoker",
         "//cuttlefish/metrics/io:enabled",
         "//cuttlefish/metrics/io:metrics_transmitter",
         "//cuttlefish/metrics/io:metrics_writer",
         "//cuttlefish/metrics/io:unique_id_file",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
         "@fmt",
     ],
 )
