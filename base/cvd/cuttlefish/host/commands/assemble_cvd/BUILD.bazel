@@ -148,6 +148,7 @@ cf_cc_library(
         "//cuttlefish/io:lz4_legacy",
         "//cuttlefish/io:native_filesystem",
         "//cuttlefish/io:reader",
+        "//cuttlefish/io:reader_seeker",
         "//cuttlefish/io:string",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/io:writer",
@@ -478,7 +479,7 @@ cf_cc_library(
     srcs = ["kernel_module_parser.cc"],
     hdrs = ["kernel_module_parser.h"],
     deps = [
-        "//cuttlefish/io",
+        "//cuttlefish/io:reader_seeker",
         "//cuttlefish/io:string",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",

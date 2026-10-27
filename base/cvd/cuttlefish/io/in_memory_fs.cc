@@ -27,6 +27,7 @@
 
 #include "cuttlefish/io/in_memory_io.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 

@@ -27,8 +27,8 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/lazily_loaded_file.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

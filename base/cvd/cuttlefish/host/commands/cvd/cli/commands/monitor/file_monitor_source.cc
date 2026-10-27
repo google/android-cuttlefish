@@ -39,8 +39,8 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/drain_inotify.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor_source.h"
 #include "cuttlefish/host/commands/cvd/cli/format_byte_size.h"
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 

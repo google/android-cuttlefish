@@ -18,7 +18,7 @@
 #include <stdint.h>
 
 #include "cuttlefish/io/reader.h"
-#include "cuttlefish/io/reader_seeker.h"  // IWYU pragma: export
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/seeker.h"
 #include "cuttlefish/io/visitable.h"
 #include "cuttlefish/io/writer.h"

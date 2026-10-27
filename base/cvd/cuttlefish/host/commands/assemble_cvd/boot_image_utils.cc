@@ -56,6 +56,7 @@
 #include "cuttlefish/io/lz4_legacy.h"
 #include "cuttlefish/io/native_filesystem.h"
 #include "cuttlefish/io/reader.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/io/writer.h"

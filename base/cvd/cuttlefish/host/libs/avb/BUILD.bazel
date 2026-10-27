@@ -44,8 +44,8 @@ cf_cc_library(
     srcs = ["parser.cc"],
     hdrs = ["parser.h"],
     deps = [
-        "//cuttlefish/io",
         "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:reader_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@avb//:libavb",

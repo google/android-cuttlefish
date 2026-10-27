@@ -31,6 +31,7 @@
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/io/read_window_view.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/expect.h"
 
 // For the CPIO file format specification, see:
