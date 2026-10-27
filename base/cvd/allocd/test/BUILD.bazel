@@ -35,6 +35,7 @@ cf_cc_library(
     ],
     deps = [
         "//allocd/net:netlink",
+        "//linux_headers",
         "@googletest//:gtest",
     ],
 )

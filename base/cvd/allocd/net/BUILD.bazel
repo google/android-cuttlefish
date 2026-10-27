@@ -31,6 +31,7 @@ cf_cc_library(
         ":netlink",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
+        "//linux_headers",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -44,6 +45,7 @@ cf_cc_test(
         "//allocd/test:nft_messages_helper",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
+        "//linux_headers",
     ],
 )
 
