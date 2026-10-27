@@ -33,7 +33,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/zip_over_ranges.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"

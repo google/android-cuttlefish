@@ -23,7 +23,7 @@
 #include <string_view>
 
 #include "cuttlefish/io/filesystem.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {

@@ -25,8 +25,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/owning_in_memory_io.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"

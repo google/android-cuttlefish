@@ -32,6 +32,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/io/fake_pread_pwrite.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result.h"
 

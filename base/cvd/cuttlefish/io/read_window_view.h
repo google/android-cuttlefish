@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "cuttlefish/io/fake_seek.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {

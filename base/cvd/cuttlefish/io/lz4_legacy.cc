@@ -26,6 +26,7 @@
 
 #include "lz4.h"
 
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/visitable.h"

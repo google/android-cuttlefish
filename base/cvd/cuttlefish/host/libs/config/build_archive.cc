@@ -39,7 +39,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/pretty/map.h"       // IWYU pragma: keep: overloads
 #include "cuttlefish/pretty/optional.h"  // IWYU pragma: keep: overloads
