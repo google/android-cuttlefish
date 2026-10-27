@@ -1,8 +1,8 @@
 diff --git a/vhost-device-vsock/src/vhu_vsock_thread.rs b/vhost-device-vsock/src/vhu_vsock_thread.rs
-index 1c096a3fbb18ba8a18a02a0ed0fb093ad8f20aef..24ce05b88e8e12c73bf85882865d7853c937c8ef 100644
+index 7d3e260..5cd18e0 100644
 --- a/vhost-device-vsock/src/vhu_vsock_thread.rs
 +++ b/vhost-device-vsock/src/vhu_vsock_thread.rs
-@@ -382,10 +382,6 @@ impl VhostUserVsockThread {
+@@ -375,10 +375,6 @@ impl VhostUserVsockThread {
                  self.thread_backend.listener_map.entry(fd)
              {
                  // New connection from the host
@@ -13,7 +13,7 @@ index 1c096a3fbb18ba8a18a02a0ed0fb093ad8f20aef..24ce05b88e8e12c73bf85882865d7853
                  let mut stream = match self.thread_backend.stream_map.remove(&fd) {
                      Some(s) => s,
                      None => {
-@@ -393,6 +389,11 @@ impl VhostUserVsockThread {
+@@ -386,6 +382,11 @@ impl VhostUserVsockThread {
                          return;
                      }
                  };
@@ -25,7 +25,7 @@ index 1c096a3fbb18ba8a18a02a0ed0fb093ad8f20aef..24ce05b88e8e12c73bf85882865d7853
  
                  match stream {
                      #[cfg(feature = "backend_vsock")]
-@@ -405,6 +406,7 @@ impl VhostUserVsockThread {
+@@ -398,6 +399,7 @@ impl VhostUserVsockThread {
                              Ok(port) => port,
                              Err(err) => {
                                  warn!("Error while parsing \"connect PORT\n\" command: {err:?}");
@@ -33,7 +33,7 @@ index 1c096a3fbb18ba8a18a02a0ed0fb093ad8f20aef..24ce05b88e8e12c73bf85882865d7853
                                  return;
                              }
                          };
-@@ -414,6 +416,7 @@ impl VhostUserVsockThread {
+@@ -407,6 +409,7 @@ impl VhostUserVsockThread {
                              Ok(lp) => lp,
                              Err(err) => {
                                  warn!("Error while allocating local port: {err:?}");
@@ -41,7 +41,7 @@ index 1c096a3fbb18ba8a18a02a0ed0fb093ad8f20aef..24ce05b88e8e12c73bf85882865d7853
                                  return;
                              }
                          };
-@@ -466,8 +469,13 @@ impl VhostUserVsockThread {
+@@ -459,8 +462,13 @@ impl VhostUserVsockThread {
                  // established with the guest
                  Self::epoll_unregister(self.epoll_file.as_raw_fd(), fd).unwrap();
  
@@ -57,8 +57,24 @@ index 1c096a3fbb18ba8a18a02a0ed0fb093ad8f20aef..24ce05b88e8e12c73bf85882865d7853
                  self.thread_backend
                      .backend_rxq
                      .push_back(ConnMapKey::new(conn.local_port, conn.peer_port));
+@@ -1007,6 +1015,15 @@ mod tests {
+ 
+         t.mem = Some(mem.clone());
+ 
++        // A host client that disconnects before sending "connect PORT\n" must
++        // be removed from stream_map rather than leaking its fd.
++        let uds_aborted = UnixStream::connect(&vsock_path).unwrap();
++        t.process_backend_evt(EventSet::empty());
++        assert_eq!(t.thread_backend.stream_map.len(), 1);
++        drop(uds_aborted);
++        t.process_backend_evt(EventSet::empty());
++        assert!(t.thread_backend.stream_map.is_empty());
++
+         let mut uds = UnixStream::connect(vsock_path).unwrap();
+         t.process_backend_evt(EventSet::empty());
+ 
 diff --git a/vhost-device-vsock/src/vsock_conn.rs b/vhost-device-vsock/src/vsock_conn.rs
-index aee4fc124fbd2d18273049f043b8e40630d01efa..6933a754ff8b5db6cdd13d324d88bb413c5992ca 100644
+index 6f095bc..4e49ad2 100644
 --- a/vhost-device-vsock/src/vsock_conn.rs
 +++ b/vhost-device-vsock/src/vsock_conn.rs
 @@ -233,9 +233,12 @@ impl<S: AsRawFd + ReadVolatile + Write + WriteVolatile + IsHybridVsock> VsockCon
@@ -75,4 +91,36 @@ index aee4fc124fbd2d18273049f043b8e40630d01efa..6933a754ff8b5db6cdd13d324d88bb41
 +                    }
                  }
                  self.connect = true;
-             }
+                 if VhostUserVsockThread::epoll_register(
+@@ -412,6 +415,7 @@ mod tests {
+         collections::VecDeque,
+         io::{Read, Result as IoResult},
+         ops::Deref,
++        os::unix::net::UnixStream,
+         sync::{Arc, Mutex},
+     };
+ 
+@@ -911,5 +915,23 @@ mod tests {
+         let shutdown_response = conn_local.send_pkt(&pkt);
+         shutdown_response.unwrap();
+         assert!(conn_local.rx_queue.contains(RxOps::Reset.bitmask()));
++
++        // VSOCK_OP_RESPONSE when host peer closed before guest accepted:
++        // must enqueue RxOps::Reset instead of panicking on BrokenPipe.
++        let (host_unix, backend_unix) = UnixStream::pair().unwrap();
++        drop(host_unix);
++        let mut conn_aborted = VsockConnection::new_local_init(
++            crate::thread_backend::StreamType::Unix(backend_unix),
++            VSOCK_HOST_CID,
++            5000,
++            3,
++            5001,
++            -1,
++            CONN_TX_BUF_SIZE,
++        );
++        pkt.set_op(VSOCK_OP_RESPONSE);
++        conn_aborted.send_pkt(&pkt).unwrap();
++        assert!(!conn_aborted.connect);
++        assert!(conn_aborted.rx_queue.contains(RxOps::Reset.bitmask()));
+     }
+ }
