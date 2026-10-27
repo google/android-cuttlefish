@@ -1,8 +1,8 @@
 diff --git a/vhost-device-vsock/src/thread_backend.rs b/vhost-device-vsock/src/thread_backend.rs
-index 44a1f1e..700aaca 100644
+index 6921591..3d71d58 100644
 --- a/vhost-device-vsock/src/thread_backend.rs
 +++ b/vhost-device-vsock/src/thread_backend.rs
-@@ -332,7 +332,7 @@ impl VsockThreadBackend {
+@@ -335,7 +335,7 @@ impl VsockThreadBackend {
              if dst_cid != VSOCK_HOST_CID {
                  let cid_map = self.cid_map.read().unwrap();
                  if cid_map.contains_key(&dst_cid) {
@@ -11,7 +11,7 @@ index 44a1f1e..700aaca 100644
                          cid_map.get(&dst_cid).unwrap();
  
                      if self
-@@ -345,11 +345,18 @@ impl VsockThreadBackend {
+@@ -348,11 +348,18 @@ impl VsockThreadBackend {
                          return Ok(());
                      }
  
@@ -35,7 +35,7 @@ index 44a1f1e..700aaca 100644
                  } else {
                      warn!("vsock: dropping packet for unknown cid: {dst_cid:?}");
                  }
-@@ -525,6 +532,7 @@ mod tests {
+@@ -531,6 +538,7 @@ mod tests {
      #[cfg(feature = "backend_vsock")]
      use crate::vhu_vsock::VsockProxyInfo;
      use crate::vhu_vsock::{BackendType, VhostUserVsockBackend, VsockConfig, VSOCK_OP_RW};
@@ -43,7 +43,7 @@ index 44a1f1e..700aaca 100644
  
      const DATA_LEN: usize = 16;
      const CONN_TX_BUF_SIZE: u32 = 64 * 1024;
-@@ -698,11 +706,28 @@ mod tests {
+@@ -704,11 +712,28 @@ mod tests {
          // SAFETY: Safe as hdr_raw and data_raw are guaranteed to be valid.
          let mut packet = unsafe { VsockPacket::new(hdr_raw, Some(data_raw)).unwrap() };
  
@@ -73,18 +73,23 @@ index 44a1f1e..700aaca 100644
          packet.set_src_cid(CID);
          packet.set_dst_cid(SIBLING_CID);
 diff --git a/vhost-device-vsock/src/vhu_vsock.rs b/vhost-device-vsock/src/vhu_vsock.rs
-index d5d236d..d6e0f0a 100644
+index d5d236d..2caab60 100644
 --- a/vhost-device-vsock/src/vhu_vsock.rs
 +++ b/vhost-device-vsock/src/vhu_vsock.rs
-@@ -2,6 +2,7 @@
+@@ -2,14 +2,21 @@
  
  use std::{
      collections::{HashMap, HashSet},
+-    io::Result as IoResult,
 +    fs::File,
-     io::Result as IoResult,
++    io::{Read, Result as IoResult, Write},
      path::PathBuf,
-     sync::{Arc, Mutex, RwLock},
-@@ -9,7 +10,10 @@ use std::{
+-    sync::{Arc, Mutex, RwLock},
++    sync::{
++        atomic::{AtomicBool, Ordering},
++        Arc, Mutex, RwLock,
++    },
+ };
  
  use log::warn;
  use thiserror::Error as ThisError;
@@ -96,7 +101,7 @@ index d5d236d..d6e0f0a 100644
  use vhost_user_backend::{VhostUserBackend, VringRwLock};
  use virtio_bindings::bindings::{
      virtio_config::{VIRTIO_F_NOTIFY_ON_EMPTY, VIRTIO_F_VERSION_1},
-@@ -24,8 +28,14 @@ use vmm_sys_util::{
+@@ -24,8 +31,14 @@ use vmm_sys_util::{
  
  use crate::{thread_backend::RawPktsQ, vhu_vsock_thread::*};
  
@@ -113,7 +118,7 @@ index d5d236d..d6e0f0a 100644
  
  const NUM_QUEUES: usize = 3;
  
-@@ -72,8 +82,11 @@ pub(crate) const VSOCK_FLAGS_SHUTDOWN_RCV: u32 = 1;
+@@ -72,8 +85,11 @@ pub(crate) const VSOCK_FLAGS_SHUTDOWN_RCV: u32 = 1;
  /// data
  pub(crate) const VSOCK_FLAGS_SHUTDOWN_SEND: u32 = 2;
  
@@ -126,32 +131,38 @@ index d5d236d..d6e0f0a 100644
  
  pub(crate) type Result<T> = std::result::Result<T, Error>;
  
-@@ -141,6 +154,8 @@ pub(crate) enum Error {
+@@ -141,6 +157,10 @@ pub(crate) enum Error {
      EmptyRawPktsQueue,
      #[error("CID already in use by another vsock device")]
      CidAlreadyInUse,
 +    #[error("Failed to write to event virtqueue")]
 +    EventQueueWrite,
++    #[error("Invalid device state data")]
++    InvalidDeviceState,
  }
  
  impl std::convert::From<Error> for std::io::Error {
-@@ -261,6 +276,7 @@ pub(crate) struct VhostUserVsockBackend {
+@@ -261,6 +281,9 @@ pub(crate) struct VhostUserVsockBackend {
      queues_per_thread: Vec<u64>,
      exit_consumer: EventConsumer,
      exit_notifier: EventNotifier,
-+    transport_reset_pending: Arc<Mutex<bool>>,
++    transport_reset_pending: AtomicBool,
++    driver_read_config: AtomicBool,
++    state_load_file: Mutex<Option<File>>,
  }
  
  impl VhostUserVsockBackend {
-@@ -286,6 +302,7 @@ impl VhostUserVsockBackend {
+@@ -286,6 +309,9 @@ impl VhostUserVsockBackend {
              queues_per_thread,
              exit_consumer,
              exit_notifier,
-+            transport_reset_pending: Arc::new(Mutex::new(false)),
++            transport_reset_pending: AtomicBool::new(false),
++            driver_read_config: AtomicBool::new(false),
++            state_load_file: Mutex::new(None),
          })
      }
  }
-@@ -310,7 +327,9 @@ impl VhostUserBackend for VhostUserVsockBackend {
+@@ -310,7 +336,9 @@ impl VhostUserBackend for VhostUserVsockBackend {
      }
  
      fn protocol_features(&self) -> VhostUserProtocolFeatures {
@@ -162,7 +173,7 @@ index d5d236d..d6e0f0a 100644
      }
  
      fn set_event_idx(&self, enabled: bool) {
-@@ -335,6 +354,7 @@ impl VhostUserBackend for VhostUserVsockBackend {
+@@ -335,6 +363,7 @@ impl VhostUserBackend for VhostUserVsockBackend {
      ) -> IoResult<()> {
          let vring_rx = &vrings[0];
          let vring_tx = &vrings[1];
@@ -170,35 +181,47 @@ index d5d236d..d6e0f0a 100644
  
          if evset != EventSet::IN {
              return Err(Error::HandleEventNotEpollIn.into());
-@@ -349,7 +369,10 @@ impl VhostUserBackend for VhostUserVsockBackend {
+@@ -349,7 +378,13 @@ impl VhostUserBackend for VhostUserVsockBackend {
                  thread.process_tx(vring_tx, evt_idx)?;
              }
              EVT_QUEUE_EVENT => {
 -                warn!("Received an unexpected EVT_QUEUE_EVENT");
-+                let reset_pending = &mut *self.transport_reset_pending.lock().unwrap();
-+                if *reset_pending && thread.reset_transport(vring_evt, evt_idx)? {
-+                    *reset_pending = false;
++                let reset_pending = self.transport_reset_pending.load(Ordering::Acquire);
++                if reset_pending {
++                    let reset_sent = thread.reset_transport(vring_evt, evt_idx)?;
++                    if reset_sent {
++                        self.transport_reset_pending.store(false, Ordering::Release);
++                    }
 +                }
              }
              BACKEND_EVENT => {
                  thread.process_backend_evt(evset);
-@@ -389,6 +412,15 @@ impl VhostUserBackend for VhostUserVsockBackend {
+@@ -389,6 +424,24 @@ impl VhostUserBackend for VhostUserVsockBackend {
              return Vec::new();
          }
  
 +        if offset + size == buf.len() {
-+            // The last byte of the config is read when the driver is initializing or after it has
-+            // processed a transport reset event. Either way, no transport reset will be pending
-+            // after this. Activate all threads once it's known a reset event is not pending.
-+            for thread in self.threads.iter() {
-+                thread.lock().unwrap().activate();
++            self.driver_read_config.store(true, Ordering::Release);
++
++            // Lock the threads before checking `transport_reset_pending` so we
++            // don't race with `EVT_QUEUE_EVENT` clearing
++            // `transport_reset_pending` after queueing the reset event.
++            let mut threads: Vec<_> = self.threads.iter().map(|t| t.lock().unwrap()).collect();
++            if !self.transport_reset_pending.load(Ordering::Acquire) {
++                // The last byte of the config is read when the driver is
++                // initializing or after it has processed a
++                // transport reset event. Activate all threads once no reset
++                // event is pending.
++                for thread in threads.iter_mut() {
++                    thread.activate();
++                }
 +            }
 +        }
 +
          buf[offset..offset + size].to_vec()
      }
  
-@@ -401,6 +433,23 @@ impl VhostUserBackend for VhostUserVsockBackend {
+@@ -401,6 +454,45 @@ impl VhostUserBackend for VhostUserVsockBackend {
          let notifier = self.exit_notifier.try_clone().ok()?;
          Some((consumer, notifier))
      }
@@ -207,22 +230,44 @@ index d5d236d..d6e0f0a 100644
 +        &self,
 +        direction: VhostTransferStateDirection,
 +        _phase: VhostTransferStatePhase,
-+        _file: File,
++        mut file: File,
 +    ) -> std::result::Result<Option<File>, std::io::Error> {
-+        if let VhostTransferStateDirection::LOAD = direction {
-+            *self.transport_reset_pending.lock().unwrap() = true;
++        match direction {
++            VhostTransferStateDirection::LOAD => {
++                // The frontend writes the device state to the pipe after
++                // `set_device_state_fd` returns and before
++                // calling `check_device_state`, so defer reading until then.
++                *self.state_load_file.lock().unwrap() = Some(file);
++            }
++            VhostTransferStateDirection::SAVE => {
++                *self.state_load_file.lock().unwrap() = None;
++                let driver_read_config = self.driver_read_config.load(Ordering::Acquire);
++                file.write_all(&[u8::from(driver_read_config)])?;
++            }
 +        }
 +        Ok(None)
 +    }
 +
 +    fn check_device_state(&self) -> std::result::Result<(), std::io::Error> {
-+        // We had nothing to read/write to the fd, so always return Ok.
++        if let Some(file) = self.state_load_file.lock().unwrap().take() {
++            let mut buf = Vec::new();
++            file.take(2).read_to_end(&mut buf)?;
++            let driver_read_config = match buf.as_slice() {
++                [0] => false,
++                [1] => true,
++                _ => return Err(Error::InvalidDeviceState.into()),
++            };
++            self.driver_read_config
++                .store(driver_read_config, Ordering::Release);
++            self.transport_reset_pending
++                .store(driver_read_config, Ordering::Release);
++        }
 +        Ok(())
 +    }
  }
  
  #[cfg(test)]
-@@ -436,17 +485,20 @@ mod tests {
+@@ -436,17 +528,20 @@ mod tests {
          let vrings = [
              VringRwLock::new(mem.clone(), 0x1000).unwrap(),
              VringRwLock::new(mem.clone(), 0x2000).unwrap(),
@@ -244,7 +289,7 @@ index d5d236d..d6e0f0a 100644
  
          let config = backend.get_config(0, 8);
          assert_eq!(config.len(), 8);
-@@ -569,6 +621,7 @@ mod tests {
+@@ -569,6 +664,7 @@ mod tests {
          let vrings = [
              VringRwLock::new(mem.clone(), 0x1000).unwrap(),
              VringRwLock::new(mem.clone(), 0x2000).unwrap(),
@@ -252,8 +297,189 @@ index d5d236d..d6e0f0a 100644
          ];
  
          backend.update_memory(mem).unwrap();
+@@ -643,4 +739,180 @@ mod tests {
+         let error = Error::HandleEventNotEpollIn;
+         assert_eq!(format!("{error:?}"), "HandleEventNotEpollIn");
+     }
++
++    fn pipe_pair() -> (File, File) {
++        let (r, w) = std::os::unix::net::UnixStream::pair().unwrap();
++        (
++            File::from(std::os::fd::OwnedFd::from(r)),
++            File::from(std::os::fd::OwnedFd::from(w)),
++        )
++    }
++
++    fn save_state(backend: &VhostUserVsockBackend) -> Vec<u8> {
++        let (mut r, w) = pipe_pair();
++        assert!(backend
++            .set_device_state_fd(
++                VhostTransferStateDirection::SAVE,
++                VhostTransferStatePhase::STOPPED,
++                w,
++            )
++            .unwrap()
++            .is_none());
++        let mut buf = Vec::new();
++        r.read_to_end(&mut buf).unwrap();
++        backend.check_device_state().unwrap();
++        buf
++    }
++
++    fn load_state(backend: &VhostUserVsockBackend, data: &[u8]) -> IoResult<()> {
++        let (r, mut w) = pipe_pair();
++        assert!(backend
++            .set_device_state_fd(
++                VhostTransferStateDirection::LOAD,
++                VhostTransferStatePhase::STOPPED,
++                r,
++            )
++            .unwrap()
++            .is_none());
++        w.write_all(data).unwrap();
++        drop(w);
++        backend.check_device_state()
++    }
++
++    #[test]
++    fn test_vsock_backend_save_restore() {
++        use virtio_bindings::bindings::virtio_ring::VRING_DESC_F_WRITE;
++        use virtio_queue::desc::{split::Descriptor as SplitDescriptor, RawDescriptor};
++        use vm_memory::{Bytes, GuestAddressSpace};
++
++        const CID: u64 = 3;
++        let test_dir = tempdir().expect("Could not create a temp test directory.");
++
++        let make_backend = |idx: usize| {
++            let cid_map: Arc<RwLock<CidMap>> = Arc::new(RwLock::new(HashMap::new()));
++            let config = VsockConfig::new(
++                CID,
++                test_dir.path().join(format!("vhost_{idx}.socket")),
++                BackendType::UnixDomainSocket(test_dir.path().join(format!("vsock_{idx}.vsock"))),
++                CONN_TX_BUF_SIZE,
++                QUEUE_SIZE,
++                vec![String::from("default")],
++            );
++            let backend = VhostUserVsockBackend::new(config, cid_map.clone()).unwrap();
++            (backend, cid_map)
++        };
++
++        let is_active =
++            |cid_map: &Arc<RwLock<CidMap>>| cid_map.read().unwrap().get(&CID).unwrap().0.is_some();
++
++        // 1. Save before driver reads config -> saves [0].
++        let (backend1, cid_map1) = make_backend(1);
++        assert!(!is_active(&cid_map1));
++        let state_before_config = save_state(&backend1);
++        assert_eq!(state_before_config, vec![0]);
++
++        // 2. Load [0] into a new backend -> no reset pending, activates on
++        //    first config read.
++        let (backend2, cid_map2) = make_backend(2);
++        load_state(&backend2, &state_before_config).unwrap();
++        assert!(!backend2.driver_read_config.load(Ordering::Acquire));
++        assert!(!backend2.transport_reset_pending.load(Ordering::Acquire));
++        assert!(!is_active(&cid_map2));
++
++        // Partial config read (first 4 bytes) does not activate yet.
++        assert_eq!(backend2.get_config(0, 4).len(), 4);
++        assert!(!backend2.driver_read_config.load(Ordering::Acquire));
++        assert!(!is_active(&cid_map2));
++
++        // Reading the end of config activates the backend and marks config as
++        // read.
++        assert_eq!(backend2.get_config(4, 4).len(), 4);
++        assert!(backend2.driver_read_config.load(Ordering::Acquire));
++        assert!(is_active(&cid_map2));
++
++        // 3. Save after driver read config -> saves [1].
++        let state_after_config = save_state(&backend2);
++        assert_eq!(state_after_config, vec![1]);
++
++        // 4. Load [1] into a new backend -> reset is pending, config reads
++        //    before reset do not activate, and saving again before reset
++        //    completes preserves [1].
++        let (backend3, cid_map3) = make_backend(3);
++        load_state(&backend3, &state_after_config).unwrap();
++        assert!(backend3.driver_read_config.load(Ordering::Acquire));
++        assert!(backend3.transport_reset_pending.load(Ordering::Acquire));
++        assert!(!is_active(&cid_map3));
++
++        // Config read while reset is still pending must not activate.
++        assert_eq!(backend3.get_config(0, 8).len(), 8);
++        assert!(!is_active(&cid_map3));
++
++        // Back-to-back save while reset is still pending still saves [1].
++        assert_eq!(save_state(&backend3), vec![1]);
++
++        // Set up memory and an available descriptor in the event queue, then
++        // send reset.
++        let mem = GuestMemoryAtomic::new(
++            GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap(),
++        );
++        let vrings = [
++            VringRwLock::new(mem.clone(), 0x100).unwrap(),
++            VringRwLock::new(mem.clone(), 0x100).unwrap(),
++            VringRwLock::new(mem.clone(), 0x100).unwrap(),
++        ];
++        vrings[2].set_queue_info(0x2100, 0x2200, 0x2300).unwrap();
++        vrings[2].set_queue_ready(true);
++        backend3.update_memory(mem.clone()).unwrap();
++
++        // Event queue has no buffers yet -> reset stays pending.
++        backend3
++            .handle_event(EVT_QUEUE_EVENT, EventSet::IN, &vrings, 0)
++            .unwrap();
++        assert!(backend3.transport_reset_pending.load(Ordering::Acquire));
++
++        // Populate 1 writable 4-byte buffer at GPA 0x3000 in event queue
++        // descriptor 0.
++        let guest_mem = mem.memory();
++        guest_mem
++            .write_obj(0xffff_ffffu32, GuestAddress(0x3000))
++            .unwrap();
++        let desc = RawDescriptor::from(SplitDescriptor::new(
++            0x3000,
++            4,
++            VRING_DESC_F_WRITE as u16,
++            0,
++        ));
++        guest_mem.write_obj(desc, GuestAddress(0x2100)).unwrap();
++        guest_mem.write_obj(0u16, GuestAddress(0x2200 + 4)).unwrap();
++        guest_mem.write_obj(1u16, GuestAddress(0x2200 + 2)).unwrap();
++
++        // Kick event queue -> writes TRANSPORT_RESET and clears
++        // `transport_reset_pending`.
++        backend3
++            .handle_event(EVT_QUEUE_EVENT, EventSet::IN, &vrings, 0)
++            .unwrap();
++        assert!(!backend3.transport_reset_pending.load(Ordering::Acquire));
++        assert_eq!(
++            u32::from_le(guest_mem.read_obj::<u32>(GuestAddress(0x3000)).unwrap()),
++            VSOCK_EVENT_TRANSPORT_RESET
++        );
++        assert!(!is_active(&cid_map3));
++
++        // Saving even after reset was queued (before post-reset config read)
++        // still saves [1].
++        assert_eq!(save_state(&backend3), vec![1]);
++
++        // Post-reset config read unlocks communication.
++        assert_eq!(backend3.get_config(0, 8).len(), 8);
++        assert!(is_active(&cid_map3));
++
++        // 5. Invalid state payloads are rejected in `check_device_state`.
++        let (backend4, _) = make_backend(4);
++        for bad_state in [&[][..], &[2][..], &[1, 0][..]] {
++            assert_eq!(
++                load_state(&backend4, bad_state).unwrap_err().to_string(),
++                Error::InvalidDeviceState.to_string()
++            );
++        }
++    }
+ }
 diff --git a/vhost-device-vsock/src/vhu_vsock_thread.rs b/vhost-device-vsock/src/vhu_vsock_thread.rs
-index 2a05e56..958bbc8 100644
+index e413954..403ceca 100644
 --- a/vhost-device-vsock/src/vhu_vsock_thread.rs
 +++ b/vhost-device-vsock/src/vhu_vsock_thread.rs
 @@ -3,7 +3,7 @@
@@ -352,7 +578,7 @@ index 2a05e56..958bbc8 100644
                          match conn {
                              Ok((stream, addr)) => {
                                  if let Err(err) = stream.set_nonblocking(true) {
-@@ -587,7 +600,6 @@ impl VhostUserVsockThread {
+@@ -580,7 +593,6 @@ impl VhostUserVsockThread {
          };
  
          let mut vring_mut = vring.get_mut();
@@ -360,7 +586,7 @@ index 2a05e56..958bbc8 100644
          let queue = vring_mut.get_queue_mut();
  
          while let Some(mut avail_desc) = queue
-@@ -677,6 +689,11 @@ impl VhostUserVsockThread {
+@@ -670,6 +682,10 @@ impl VhostUserVsockThread {
      /// Wrapper to process raw vsock packets queue based on whether event idx is
      /// enabled or not.
      pub fn process_raw_pkts(&mut self, vring: &VringRwLock, event_idx: bool) -> Result<()> {
@@ -368,11 +594,10 @@ index 2a05e56..958bbc8 100644
 +            // A VHOST_USER_GET_VRING_BASE request can cause the vring to not be ready.
 +            return Ok(());
 +        }
-+
          if event_idx {
              loop {
                  if !self.thread_backend.pending_raw_pkts() {
-@@ -696,6 +713,11 @@ impl VhostUserVsockThread {
+@@ -689,6 +705,11 @@ impl VhostUserVsockThread {
      }
  
      pub fn process_rx(&mut self, vring: &VringRwLock, event_idx: bool) -> Result<()> {
@@ -384,7 +609,7 @@ index 2a05e56..958bbc8 100644
          match self.last_processed {
              RxQueueType::Standard => {
                  if self.thread_backend.pending_raw_pkts() {
-@@ -748,14 +770,20 @@ impl VhostUserVsockThread {
+@@ -741,14 +762,20 @@ impl VhostUserVsockThread {
                  }
              };
  
@@ -409,11 +634,11 @@ index 2a05e56..958bbc8 100644
 +            } else {
 +                // A tx packet can only arrive before we're active if it was sent before a
 +                // transport reset completed.
-+                warn!("vsock: Dropping packet received before reset completes");
++                warn!("vsock: Dropping tx packet received before reset completes");
              }
  
              // TODO: Check if the protocol requires read length to be correct
-@@ -779,6 +807,11 @@ impl VhostUserVsockThread {
+@@ -772,6 +799,11 @@ impl VhostUserVsockThread {
      /// Wrapper to process tx queue based on whether event idx is enabled or
      /// not.
      pub fn process_tx(&mut self, vring_lock: &VringRwLock, event_idx: bool) -> Result<()> {
@@ -425,7 +650,7 @@ index 2a05e56..958bbc8 100644
          if event_idx {
              // To properly handle EVENT_IDX we need to keep calling
              // process_rx_queue until it stops finding new requests
-@@ -796,6 +829,44 @@ impl VhostUserVsockThread {
+@@ -789,6 +821,48 @@ impl VhostUserVsockThread {
          }
          Ok(())
      }
@@ -435,6 +660,10 @@ index 2a05e56..958bbc8 100644
 +    pub fn reset_transport(&mut self, vring: &VringRwLock, event_idx: bool) -> Result<bool> {
 +        let mut vring_mut = vring.get_mut();
 +        let queue = vring_mut.get_queue_mut();
++
++        if !queue.ready() {
++            return Ok(false);
++        }
 +
 +        let atomic_mem = match &self.mem {
 +            Some(m) => m,
@@ -470,7 +699,7 @@ index 2a05e56..958bbc8 100644
  }
  
  impl Drop for VhostUserVsockThread {
-@@ -955,6 +1026,7 @@ mod tests {
+@@ -948,6 +1022,7 @@ mod tests {
              cid_map.clone(),
          )
          .unwrap();
@@ -478,7 +707,7 @@ index 2a05e56..958bbc8 100644
          assert!(VhostUserVsockThread::epoll_register(-1, -1, epoll::Events::EPOLLIN).is_err());
          assert!(VhostUserVsockThread::epoll_modify(-1, -1, epoll::Events::EPOLLIN).is_err());
          assert!(VhostUserVsockThread::epoll_unregister(-1, -1).is_err());
-@@ -964,6 +1036,7 @@ mod tests {
+@@ -957,6 +1032,7 @@ mod tests {
          );
  
          let vring = VringRwLock::new(mem, 0x1000).unwrap();
@@ -486,7 +715,7 @@ index 2a05e56..958bbc8 100644
  
          // memory is not configured, so processing TX should fail
          assert!(t.process_tx(&vring, false).is_err());
-@@ -1007,6 +1080,7 @@ mod tests {
+@@ -1000,6 +1076,7 @@ mod tests {
          );
  
          let mut t = t.unwrap();
@@ -494,7 +723,7 @@ index 2a05e56..958bbc8 100644
  
          let mem = GuestMemoryAtomic::new(
              GuestMemoryMmap::<()>::from_ranges(&[(GuestAddress(0), 0x10000)]).unwrap(),
-@@ -1061,6 +1135,7 @@ mod tests {
+@@ -1054,6 +1131,7 @@ mod tests {
          );
  
          t.mem = Some(mem.clone());

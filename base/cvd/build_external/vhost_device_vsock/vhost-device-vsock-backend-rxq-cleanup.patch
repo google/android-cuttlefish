@@ -1,5 +1,5 @@
 diff --git a/vhost-device-vsock/src/thread_backend.rs b/vhost-device-vsock/src/thread_backend.rs
-index 44a1f1e11ece451e7bdfb252e936c0b52ccba3a1..4156402a278b8678ca6193808878a763ab3686bd 100644
+index 6921591..3362d98 100644
 --- a/vhost-device-vsock/src/thread_backend.rs
 +++ b/vhost-device-vsock/src/thread_backend.rs
 @@ -265,14 +265,15 @@ impl VsockThreadBackend {
@@ -24,7 +24,7 @@ index 44a1f1e11ece451e7bdfb252e936c0b52ccba3a1..4156402a278b8678ca6193808878a763
  
          if conn.rx_queue.peek() == Some(RxOps::Reset) {
              // Handle RST events here
-@@ -307,6 +308,10 @@ impl VsockThreadBackend {
+@@ -310,6 +311,10 @@ impl VsockThreadBackend {
          // Handle other packet types per connection
          conn.recv_pkt(pkt)?;
  
@@ -35,20 +35,51 @@ index 44a1f1e11ece451e7bdfb252e936c0b52ccba3a1..4156402a278b8678ca6193808878a763
          Ok(())
      }
  
-@@ -582,7 +587,7 @@ mod tests {
+@@ -582,13 +587,38 @@ mod tests {
+         packet.set_op(VSOCK_OP_REQUEST);
+         vtp.send_pkt(&packet).unwrap();
+ 
++        // Push a stale key ahead of the active connection and queue a second
++        // RxOp on the active connection while keeping a single entry for it in
++        // backend_rxq. recv_pkt must skip the stale key, deliver the first op
++        // (VSOCK_OP_RESPONSE), and re-queue the active key for the remaining op.
++        let key = ConnMapKey::new(VSOCK_PEER_PORT, 0);
++        vtp.conn_map
++            .get_mut(&key)
++            .unwrap()
++            .rx_queue
++            .enqueue(RxOps::CreditUpdate);
++        vtp.backend_rxq.push_front(ConnMapKey::new(9999, 9999));
++
++        vtp.recv_pkt(&mut packet).unwrap();
++        assert_eq!(packet.op(), crate::vhu_vsock::VSOCK_OP_RESPONSE);
++        assert!(vtp.pending_rx());
++
++        // Restore packet fields overwritten by recv_pkt for subsequent send_pkt calls.
++        packet.set_src_cid(CID);
++        packet.set_dst_cid(VSOCK_HOST_CID);
++        packet.set_src_port(0);
++        packet.set_dst_port(VSOCK_PEER_PORT);
++
+         packet.set_op(VSOCK_OP_RW);
+         vtp.send_pkt(&packet).unwrap();
+ 
          packet.set_op(VSOCK_OP_RST);
          vtp.send_pkt(&packet).unwrap();
  
 -        vtp.recv_pkt(&mut packet).unwrap();
-+        assert!(vtp.recv_pkt(&mut packet).is_err());
++        assert_eq!(
++            vtp.recv_pkt(&mut packet).unwrap_err().to_string(),
++            Error::EmptyBackendRxQ.to_string()
++        );
  
          // TODO: it is a nop for now
          vtp.enq_rst();
 diff --git a/vhost-device-vsock/src/vhu_vsock_thread.rs b/vhost-device-vsock/src/vhu_vsock_thread.rs
-index 0799728287f6001f6724bfd09fccba4a41ea3869..1c096a3fbb18ba8a18a02a0ed0fb093ad8f20aef 100644
+index e413954..7d3e260 100644
 --- a/vhost-device-vsock/src/vhu_vsock_thread.rs
 +++ b/vhost-device-vsock/src/vhu_vsock_thread.rs
-@@ -444,6 +444,9 @@ impl VhostUserVsockThread {
+@@ -437,6 +437,9 @@ impl VhostUserVsockThread {
                              if cnt > 0 {
                                  conn.fwd_cnt += Wrapping(cnt as u32);
                                  conn.rx_queue.enqueue(RxOps::CreditUpdate);
@@ -58,7 +89,7 @@ index 0799728287f6001f6724bfd09fccba4a41ea3869..1c096a3fbb18ba8a18a02a0ed0fb093a
                              } else {
                                  // If no remaining data to flush, try to disable EPOLLOUT
                                  if Self::epoll_modify(epoll_fd, fd, epoll::Events::EPOLLIN).is_err()
-@@ -451,9 +454,6 @@ impl VhostUserVsockThread {
+@@ -444,9 +447,6 @@ impl VhostUserVsockThread {
                                      error!("Failed to disable EPOLLOUT");
                                  }
                              }
