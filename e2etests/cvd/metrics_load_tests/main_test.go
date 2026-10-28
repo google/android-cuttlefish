@@ -80,7 +80,6 @@ func TestMetricsLoad(t *testing.T) {
       }
     }
   ],
-  "netsim_bt": false,
   "metrics": {
     "enable": true
   },

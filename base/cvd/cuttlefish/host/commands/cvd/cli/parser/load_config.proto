@@ -50,7 +50,8 @@ message EnvironmentSpecification {
   // deprecated v1 metrics enabling field, is not read/used
   optional Metrics metrics = 3;
   optional Common common = 4;
-  optional bool netsim_bt = 5;
+  // deprecated, netsim_bt is always enabled and is not read/used
+  optional bool netsim_bt = 5 [deprecated = true];
   optional bool netsim_uwb = 6;
   repeated string netsim_args = 7;
   optional bool netsim_modem = 8;
@@ -63,7 +64,8 @@ message EnvironmentOptions {
   // deprecated v1 metrics enabling field, is not read/used
   optional Metrics metrics = 2;
   optional Common common = 3;
-  optional bool netsim_bt = 4;
+  // deprecated, netsim_bt is always enabled and is not read/used
+  optional bool netsim_bt = 4 [deprecated = true];
   optional bool netsim_uwb = 5;
   repeated string netsim_args = 6;
   optional bool netsim_modem = 7;

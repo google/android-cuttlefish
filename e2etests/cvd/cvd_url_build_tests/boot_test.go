@@ -52,7 +52,6 @@ const urlLoadConfig = `
       }
     }
   ],
-  "netsim_bt": false,
   "metrics": {
     "enable": true
   },
