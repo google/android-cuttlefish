@@ -1047,8 +1047,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   for (int index = 0; index < instance.media_configs().size(); index++) {
     auto config = instance.media_configs()[index];
-    if (config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane ||
-        config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane ||
+    if (config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane ||
         config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy) {
       crosvm_cmd.Cmd().AddParameter("--vhost-user=type=media,socket=",
                                     instance.media_socket_path(index));
