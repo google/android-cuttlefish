@@ -341,7 +341,7 @@ Result<std::set<std::string>> PreservingOnResume(
   return preserving;
 }
 
-Result<InitialLog> SetLogger(std::string runtime_dir_parent) {
+InitialLog SetLogger(std::string runtime_dir_parent) {
   Result<InitialLog> log_file;
   if (InSandbox()) {
     log_file = InitialLog::AppendTo(absl::StrCat(
@@ -355,16 +355,19 @@ Result<InitialLog> SetLogger(std::string runtime_dir_parent) {
         runtime_dir_parent.substr(0, FLAGS_instance_dir.rfind('/'));
     log_file = InitialLog::InDirectory(runtime_dir_parent);
   }
-  InitialLog log =
-      CF_EXPECT(std::move(log_file), "Could not open initial log file");
+  if (!log_file.has_value()) {
+    LOG(ERROR) << "Could not open initial log file: " << log_file.error();
+    return InitialLog();
+  }
   std::vector<SeverityTarget> log_destinations = {
       SeverityTarget::FromFd(SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE,
                              ConsoleSeverity()),
-      SeverityTarget::FromFd(log.fd(), MetadataLevel::FULL, LogFileSeverity()),
+      SeverityTarget::FromFd(log_file->fd(), MetadataLevel::FULL,
+                             LogFileSeverity()),
 
   };
   SetLoggers(std::move(log_destinations), "");
-  return log;
+  return std::move(*log_file);
 }
 
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
@@ -613,7 +616,7 @@ fruit::Component<> FlagsComponent(SystemImageDirFlag* system_image_dir) {
 }  // namespace
 
 Result<int> AssembleCvdMain(int argc, char** argv) {
-  InitialLog log = CF_EXPECT(SetLogger(AbsolutePath(FLAGS_instance_dir)));
+  InitialLog log = SetLogger(AbsolutePath(FLAGS_instance_dir));
   VLOG(0) << "received flags: "
           << absl::StrJoin(std::vector<std::string>(argv + 1, argv + argc),
                            " ");
