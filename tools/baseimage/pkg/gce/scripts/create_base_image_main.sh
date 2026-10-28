@@ -108,6 +108,35 @@ sudo tee /mnt/image/etc/sysctl.d/80-nsjail.conf >/dev/null <<EOF
 kernel.unprivileged_userns_clone=1
 EOF
 
+# Problem: On N4D (AMD Zen 5) VMs, Linux 6.12 (6.12.49 and later, as in
+# Debian 13) mitigates SRSO (CVE-2023-20569) with an IBPB on every VMEXIT,
+# which makes nested Cuttlefish boots significantly slower. Linux 6.1
+# (Debian 12) reports these CPUs as not affected. GCE does not expose the
+# cheaper BpSpecReduce mitigation to N4D guests.
+# Workaround: Disable the SRSO mitigation on images with Linux 6.12 or newer.
+# This assumes each host serves a single user or test; hosts shared by
+# different users or tests (e.g. bare metal) should delete the drop-in, run
+# update-grub and reboot (or do this while building a derived image).
+# Trade-offs and measurements: b/578987884.
+# TODO(b/578987884): Remove once GCE exposes BpSpecReduce (CPUID 0x80000021
+# EAX[31]) to N4D guests, so that the kernel selects "Mitigation: Reduced
+# Speculation" instead.
+if [[ "${arch}" == "amd64" ]] && dpkg --compare-versions "${kmodver_begin}" ge 6.12; then
+  sudo tee /mnt/image/etc/default/grub.d/90_cuttlefish_srso.cfg >/dev/null <<'EOF'
+# Added by Cuttlefish tools/baseimage to disable the SRSO mitigation; see
+# b/578987884. Hosts shared by different users or tests need it: delete
+# this file, run update-grub and reboot.
+GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT spec_rstack_overflow=off"
+EOF
+  sudo chroot /mnt/image /usr/sbin/update-grub
+  if ! sudo grep -q 'spec_rstack_overflow=off' /mnt/image/boot/grub/grub.cfg; then
+    echo "spec_rstack_overflow=off is missing from /boot/grub/grub.cfg"
+    exit 1
+  fi
+else
+  echo "Skipping the SRSO drop-in (arch ${arch}, kernel ${kmodver_begin})"
+fi
+
 kmodver_end=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
 echo "IMAGE ENDS WITH KERNEL: ${kmodver_end}"
