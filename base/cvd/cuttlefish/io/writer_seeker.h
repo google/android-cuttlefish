@@ -25,9 +25,9 @@ namespace cuttlefish {
 
 class WriterSeeker : public Writer, public Seeker {
  public:
-  // Has the semantics of pwrite(2)
-  virtual Result<uint64_t> PWrite(const void* buf, uint64_t count,
-                                  uint64_t offset) = 0;
+  // Has the semantics of pwrite(2).
+  virtual Result<uint64_t, int> PWrite(const void* buf, uint64_t count,
+                                       uint64_t offset) = 0;
   virtual Result<void> Truncate(uint64_t size) = 0;
 };
 

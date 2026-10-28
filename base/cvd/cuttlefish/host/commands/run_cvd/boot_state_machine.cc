@@ -231,7 +231,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
             CHECK(restore_adbd_pipe.has_value())
                 << "Error opening adbd restore pipe: "
                 << restore_adbd_pipe.error();
-            Result<void> write_res = WriteExact(*restore_adbd_pipe, "2");
+            Result<void, int> write_res = WriteExact(*restore_adbd_pipe, "2");
             CHECK(write_res.has_value())
                 << "Error writing to adbd restore pipe: " << write_res.error()
                 << ". This is unrecoverable.";

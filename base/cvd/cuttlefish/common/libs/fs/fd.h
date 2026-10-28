@@ -249,9 +249,9 @@ class Fd : public ReaderWriterSeeker {
    * will do nothing and just return 0.
    *
    */
-  Result<uint64_t> Write(const void* buf, uint64_t count) override;
-  Result<uint64_t> PWrite(const void* buf, uint64_t count,
-                          uint64_t offset) override;
+  Result<uint64_t, int> Write(const void* buf, uint64_t count) override;
+  Result<uint64_t, int> PWrite(const void* buf, uint64_t count,
+                               uint64_t offset) override;
 #ifdef __linux__
   int EventfdWrite(eventfd_t value);
 #endif

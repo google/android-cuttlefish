@@ -16,6 +16,7 @@
 #include "cuttlefish/io/lz4_legacy.h"
 
 #include <endian.h>
+#include <errno.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -92,8 +93,9 @@ class Lz4LegacyWriterImpl : public Writer {
  public:
   Lz4LegacyWriterImpl(std::unique_ptr<Writer> sink) : sink_(std::move(sink)) {}
 
-  Result<uint64_t> Write(const void* buf, uint64_t count) override {
-    CF_EXPECT(!footer_written_, "Write called after LZ4 frame was closed");
+  Result<uint64_t, int> Write(const void* buf, uint64_t count) override {
+    CF_EXPECTVF(!footer_written_, EBADF,
+                "Write called after LZ4 frame was closed, given {}", count);
     uint64_t to_write = std::min<uint64_t>(count, kLz4LegacyFrameBlockSize);
 
     if (to_write > 0) {
@@ -101,7 +103,8 @@ class Lz4LegacyWriterImpl : public Writer {
       int compressed_size = LZ4_compress_default(
           reinterpret_cast<const char*>(buf), compressed_.data(), to_write,
           compressed_.size());
-      CF_EXPECT_GT(compressed_size, 0, "LZ4 compression failed");
+      CF_EXPECTVF(compressed_size > 0, EINVAL,
+                  "LZ4 compression of {} bytes failed", to_write);
 
       CF_EXPECT(WriteExactBinary<uint32_t>(*sink_, htole32(compressed_size)));
       CF_EXPECT(WriteExact(*sink_, compressed_.data(), compressed_size));

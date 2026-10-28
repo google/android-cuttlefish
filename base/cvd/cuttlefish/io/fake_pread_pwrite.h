@@ -33,7 +33,7 @@ Result<uint64_t> FakePRead(ReaderSeeker&, void* buf, uint64_t count,
  *
  * Will not call PWrite() on the WriterSeeker instance.
  */
-Result<uint64_t> FakePWrite(WriterSeeker&, const void* buf, uint64_t count,
-                            uint64_t offset);
+Result<uint64_t, int> FakePWrite(WriterSeeker&, const void* buf, uint64_t count,
+                                 uint64_t offset);
 
 }  // namespace cuttlefish
