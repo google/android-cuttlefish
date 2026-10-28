@@ -40,7 +40,7 @@ Result<uint64_t> InMemoryIo::Read(void* buf, uint64_t count) {
   return to_read;
 }
 
-Result<uint64_t> InMemoryIo::Write(const void* buf, uint64_t count) {
+Result<uint64_t, int> InMemoryIo::Write(const void* buf, uint64_t count) {
   std::lock_guard lock(mutex_);
   GrowTo(cursor_ + count);
   if (count > 0) {
@@ -82,8 +82,8 @@ Result<uint64_t> InMemoryIo::PRead(void* buf, uint64_t count,
   return to_read;
 }
 
-Result<uint64_t> InMemoryIo::PWrite(const void* buf, uint64_t count,
-                                    uint64_t offset) {
+Result<uint64_t, int> InMemoryIo::PWrite(const void* buf, uint64_t count,
+                                         uint64_t offset) {
   std::lock_guard lock(mutex_);
   GrowTo(offset + count);
   if (count > 0) {

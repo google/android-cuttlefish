@@ -29,18 +29,18 @@ Result<uint64_t> FakePRead(ReaderSeeker& reader_seeker, void* buf,
                            uint64_t count, uint64_t offset) {
   size_t original_offset = CF_EXPECT(reader_seeker.SeekCur(0));
   CF_EXPECT(reader_seeker.SeekSet(offset));
-  Result<size_t> read_res = reader_seeker.Read(buf, count);
+  Result<uint64_t> read_res = reader_seeker.Read(buf, count);
   CF_EXPECT(reader_seeker.SeekSet(original_offset));
   return CF_EXPECT(std::move(read_res));
 }
 
-Result<uint64_t> FakePWrite(WriterSeeker& writer_seeker, const void* buf,
-                            uint64_t count, uint64_t offset) {
+Result<uint64_t, int> FakePWrite(WriterSeeker& writer_seeker, const void* buf,
+                                 uint64_t count, uint64_t offset) {
   size_t original_offset = CF_EXPECT(writer_seeker.SeekCur(0));
   CF_EXPECT(writer_seeker.SeekSet(offset));
-  Result<size_t> read_res = writer_seeker.Write(buf, count);
+  Result<uint64_t, int> write_res = writer_seeker.Write(buf, count);
   CF_EXPECT(writer_seeker.SeekSet(original_offset));
-  return CF_EXPECT(std::move(read_res));
+  return CF_EXPECT(std::move(write_res));
 }
 
 }  // namespace cuttlefish

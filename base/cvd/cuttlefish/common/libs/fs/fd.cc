@@ -929,7 +929,7 @@ Result<void> Fd::Truncate(uint64_t length) {
   return {};
 }
 
-Result<uint64_t> Fd::Write(const void* buf, uint64_t count) {
+Result<uint64_t, int> Fd::Write(const void* buf, uint64_t count) {
   if (count == 0 && !IsRegular()) {
     return 0;
   }
@@ -937,16 +937,19 @@ Result<uint64_t> Fd::Write(const void* buf, uint64_t count) {
   LocalErrno record_errno(errno_);
 
   ssize_t res = TEMP_FAILURE_RETRY(write(fd_, buf, count));
-  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError());
+  CF_EXPECTVF(res >= 0, errno, "write(..., {}) failed: {}", count,
+              ::cuttlefish::StrError());
 
   return static_cast<uint64_t>(res);
 }
 
-Result<uint64_t> Fd::PWrite(const void* buf, uint64_t count, uint64_t offset) {
+Result<uint64_t, int> Fd::PWrite(const void* buf, uint64_t count,
+                                 uint64_t offset) {
   LocalErrno record_errno(errno_);
 
   ssize_t res = TEMP_FAILURE_RETRY(pwrite(fd_, buf, count, offset));
-  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError());
+  CF_EXPECTVF(res >= 0, errno, "pwrite(..., {}, {}) failed: {}", count, offset,
+              ::cuttlefish::StrError());
 
   return static_cast<uint64_t>(res);
 }

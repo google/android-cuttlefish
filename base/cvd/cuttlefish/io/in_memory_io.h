@@ -31,7 +31,7 @@ class InMemoryIo : public ReaderWriterSeeker {
 
   Result<uint64_t> Read(void* buf, uint64_t count) override;
 
-  Result<uint64_t> Write(const void* buf, uint64_t count) override;
+  Result<uint64_t, int> Write(const void* buf, uint64_t count) override;
 
   Result<uint64_t, int> SeekSet(uint64_t offset) override;
 
@@ -42,8 +42,8 @@ class InMemoryIo : public ReaderWriterSeeker {
   Result<uint64_t> PRead(void* buf, uint64_t count,
                          uint64_t offset) const override;
 
-  Result<uint64_t> PWrite(const void* buf, uint64_t count,
-                          uint64_t offset) override;
+  Result<uint64_t, int> PWrite(const void* buf, uint64_t count,
+                               uint64_t offset) override;
 
  private:
   // Must be called with the lock held for reading or writing
