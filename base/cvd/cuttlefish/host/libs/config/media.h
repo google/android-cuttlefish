@@ -28,8 +28,6 @@ constexpr const char kMediaHelp[] =
     "Colon separated media device properties: "
     "\"[type]:[key1]=[val1]:[key2]=[val2]\". "
     "Supported types:\n"
-    "    'v4l2_emulated_camera_splane': emulated media capture device "
-    "(single-plane)\n"
     "    'v4l2_emulated_camera_mplane': emulated media capture device "
     "(multi-plane)\n"
     "    'v4l2_proxy': proxy a host V4L2 device into the guest\n"

@@ -33,7 +33,7 @@ using ::testing::Not;
 
 TEST(MediaTest, ParseSingleInstanceSingleDevice) {
   std::vector<std::string> args = {
-      "--media=v4l2_emulated_camera_splane:lens_facing=BACK"};
+      "--media=v4l2_emulated_camera_mplane:lens_facing=BACK"};
   const Result<std::vector<std::vector<CuttlefishConfig::MediaConfig>>>
       configs_res = ParseMediaConfigsFromArgs(args, /*num_instances=*/1);
 
@@ -46,14 +46,14 @@ TEST(MediaTest, ParseSingleInstanceSingleDevice) {
 
   ASSERT_EQ(configs[0].size(), 1);
   EXPECT_EQ(configs[0][0].type,
-            CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane);
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane);
   EXPECT_EQ(configs[0][0].lens_facing, "BACK");
 }
 
 TEST(MediaTest, ParseSingleInstanceMultipleDevices) {
   std::vector<std::string> args = {
-      "--media=v4l2_emulated_camera_splane:lens_facing=BACK",
-      "--media=v4l2_emulated_camera_splane:lens_facing=FRONT"};
+      "--media=v4l2_emulated_camera_mplane:lens_facing=BACK",
+      "--media=v4l2_emulated_camera_mplane:lens_facing=FRONT"};
   const Result<std::vector<std::vector<CuttlefishConfig::MediaConfig>>>
       configs_res = ParseMediaConfigsFromArgs(args, /*num_instances=*/1);
 
@@ -66,17 +66,17 @@ TEST(MediaTest, ParseSingleInstanceMultipleDevices) {
 
   ASSERT_EQ(configs[0].size(), 2);
   EXPECT_EQ(configs[0][0].type,
-            CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane);
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane);
   EXPECT_EQ(configs[0][0].lens_facing, "BACK");
   EXPECT_EQ(configs[0][1].type,
-            CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane);
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane);
   EXPECT_EQ(configs[0][1].lens_facing, "FRONT");
 }
 
 TEST(MediaTest, ParseTwoInstancesBothWithDevices) {
   std::vector<std::string> args = {
-      "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"
-      "v4l2_emulated_camera_splane:lens_facing=FRONT"};
+      "--media=v4l2_emulated_camera_mplane:lens_facing=BACK,"
+      "v4l2_emulated_camera_mplane:lens_facing=FRONT"};
   const Result<std::vector<std::vector<CuttlefishConfig::MediaConfig>>>
       configs_res = ParseMediaConfigsFromArgs(args, /*num_instances=*/2);
 
@@ -89,17 +89,17 @@ TEST(MediaTest, ParseTwoInstancesBothWithDevices) {
 
   ASSERT_EQ(configs[0].size(), 1);
   EXPECT_EQ(configs[0][0].type,
-            CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane);
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane);
   EXPECT_EQ(configs[0][0].lens_facing, "BACK");
   ASSERT_EQ(configs[1].size(), 1);
   EXPECT_EQ(configs[1][0].type,
-            CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane);
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane);
   EXPECT_EQ(configs[1][0].lens_facing, "FRONT");
 }
 
 TEST(MediaTest, ParseTwoInstancesOnlyFirstWithDevice) {
   std::vector<std::string> args = {
-      "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"};
+      "--media=v4l2_emulated_camera_mplane:lens_facing=BACK,"};
   const Result<std::vector<std::vector<CuttlefishConfig::MediaConfig>>>
       configs_res = ParseMediaConfigsFromArgs(args, /*num_instances=*/2);
 
@@ -112,7 +112,7 @@ TEST(MediaTest, ParseTwoInstancesOnlyFirstWithDevice) {
 
   ASSERT_EQ(configs[0].size(), 1);
   EXPECT_EQ(configs[0][0].type,
-            CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane);
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane);
   EXPECT_EQ(configs[0][0].lens_facing, "BACK");
 
   EXPECT_TRUE(configs[1].empty());
@@ -120,7 +120,7 @@ TEST(MediaTest, ParseTwoInstancesOnlyFirstWithDevice) {
 
 TEST(MediaTest, ParseTwoInstancesOnlySecondWithDevice) {
   std::vector<std::string> args = {
-      "--media=,v4l2_emulated_camera_splane:lens_facing=FRONT"};
+      "--media=,v4l2_emulated_camera_mplane:lens_facing=FRONT"};
   const Result<std::vector<std::vector<CuttlefishConfig::MediaConfig>>>
       configs_res = ParseMediaConfigsFromArgs(args, /*num_instances=*/2);
   ASSERT_THAT(configs_res, IsOk());
@@ -132,16 +132,16 @@ TEST(MediaTest, ParseTwoInstancesOnlySecondWithDevice) {
 
   ASSERT_EQ(configs[1].size(), 1);
   EXPECT_EQ(configs[1][0].type,
-            CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane);
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane);
   EXPECT_EQ(configs[1][0].lens_facing, "FRONT");
 }
 
 TEST(MediaTest, ParseTwoInstancesMultipleRepeatedFlags) {
   std::vector<std::string> args = {
-      "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"
-      "v4l2_emulated_camera_splane:lens_facing=BACK",
-      "--media=v4l2_emulated_camera_splane:lens_facing=FRONT,"
-      "v4l2_emulated_camera_splane:lens_facing=FRONT"};
+      "--media=v4l2_emulated_camera_mplane:lens_facing=BACK,"
+      "v4l2_emulated_camera_mplane:lens_facing=BACK",
+      "--media=v4l2_emulated_camera_mplane:lens_facing=FRONT,"
+      "v4l2_emulated_camera_mplane:lens_facing=FRONT"};
   const Result<std::vector<std::vector<CuttlefishConfig::MediaConfig>>>
       configs_res = ParseMediaConfigsFromArgs(args, /*num_instances=*/2);
 
@@ -154,24 +154,24 @@ TEST(MediaTest, ParseTwoInstancesMultipleRepeatedFlags) {
 
   ASSERT_EQ(configs[0].size(), 2);
   EXPECT_EQ(configs[0][0].type,
-            CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane);
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane);
   EXPECT_EQ(configs[0][0].lens_facing, "BACK");
   EXPECT_EQ(configs[0][1].type,
-            CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane);
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane);
   EXPECT_EQ(configs[0][1].lens_facing, "FRONT");
 
   ASSERT_EQ(configs[1].size(), 2);
   EXPECT_EQ(configs[1][0].type,
-            CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane);
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane);
   EXPECT_EQ(configs[1][0].lens_facing, "BACK");
   EXPECT_EQ(configs[1][1].type,
-            CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane);
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane);
   EXPECT_EQ(configs[1][1].lens_facing, "FRONT");
 }
 
 TEST(MediaTest, RejectMismatchedCommasWhenNumInstancesDefined) {
   std::vector<std::string> args = {
-      "--media=v4l2_emulated_camera_splane:lens_facing=BACK"};
+      "--media=v4l2_emulated_camera_mplane:lens_facing=BACK"};
 
   const Result<std::vector<std::vector<CuttlefishConfig::MediaConfig>>>
       configs_res = ParseMediaConfigsFromArgs(args, /*num_instances=*/2);
@@ -181,8 +181,8 @@ TEST(MediaTest, RejectMismatchedCommasWhenNumInstancesDefined) {
 
 TEST(MediaTest, RejectCommasWhenSingleInstance) {
   std::vector<std::string> args = {
-      "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"
-      "v4l2_emulated_camera_splane:lens_facing=FRONT"};
+      "--media=v4l2_emulated_camera_mplane:lens_facing=BACK,"
+      "v4l2_emulated_camera_mplane:lens_facing=FRONT"};
 
   const Result<std::vector<std::vector<CuttlefishConfig::MediaConfig>>>
       configs_res = ParseMediaConfigsFromArgs(args, /*num_instances=*/1);
@@ -192,9 +192,9 @@ TEST(MediaTest, RejectCommasWhenSingleInstance) {
 
 TEST(MediaTest, RejectDifferingCommaCountsAcrossFlags) {
   std::vector<std::string> args = {
-      "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"
-      "v4l2_emulated_camera_splane:lens_facing=BACK",
-      "--media=v4l2_emulated_camera_splane:lens_facing=FRONT"};
+      "--media=v4l2_emulated_camera_mplane:lens_facing=BACK,"
+      "v4l2_emulated_camera_mplane:lens_facing=BACK",
+      "--media=v4l2_emulated_camera_mplane:lens_facing=FRONT"};
 
   const Result<std::vector<std::vector<CuttlefishConfig::MediaConfig>>>
       configs_res = ParseMediaConfigsFromArgs(args, /*num_instances=*/2);
@@ -204,7 +204,7 @@ TEST(MediaTest, RejectDifferingCommaCountsAcrossFlags) {
 
 TEST(MediaTest, RejectNonPositiveNumInstances) {
   std::vector<std::string> args = {
-      "--media=v4l2_emulated_camera_splane:lens_facing=BACK"};
+      "--media=v4l2_emulated_camera_mplane:lens_facing=BACK"};
 
   EXPECT_THAT(ParseMediaConfigsFromArgs(args, /*num_instances=*/0),
               Not(IsOk()));
