@@ -1,3 +1,4 @@
+include("//build_external/android_hardware_libhardware:android_hardware_libhardware.MODULE.bazel")
 include("//build_external/android_system_core:android_system_core.MODULE.bazel")
 include("//build_external/android_system_extras:android_system_extras.MODULE.bazel")
 include("//build_external/android_system_libbase:android_system_libbase.MODULE.bazel")

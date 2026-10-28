@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "android_hardware_libhardware",
+    build_file = "@//build_external/android_hardware_libhardware:BUILD.android_hardware_libhardware.bazel",
+    commit = "97ee3e33ec5ba48c0eca8341ed377ac4497a0678",
+    remote = "https://android.googlesource.com/platform/hardware/libhardware",
+)
