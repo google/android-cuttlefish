@@ -40,6 +40,7 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/posix:readlink",
         "//cuttlefish/posix:realpath",
         "//cuttlefish/posix:remove",

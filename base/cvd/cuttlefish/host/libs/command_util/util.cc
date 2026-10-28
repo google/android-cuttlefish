@@ -31,6 +31,7 @@
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -48,14 +49,6 @@ bool IsShortAction(const LauncherAction action) {
     default:
       return false;
   };
-}
-
-template <typename T>
-static Result<void> WriteAllBinaryResult(const SharedFD& fd, const T* t) {
-  ssize_t n = WriteAllBinary(fd, t);
-  CF_EXPECTF(n > 0, "Write error: {}", fd->StrError());
-  CF_EXPECT(n == sizeof(*t), "Unexpected EOF on write");
-  return {};
 }
 
 // Rerturns true if something was read, false if the file descriptor reached
@@ -161,7 +154,7 @@ Result<void> RunLauncherAction(SharedFD monitor_socket, LauncherAction action,
   CF_EXPECTF(IsShortAction(action),
              "PerformActionRequest doesn't support extended action \"{}\"",
              static_cast<const char>(action));
-  CF_EXPECT(WriteAllBinaryResult(monitor_socket, &action),
+  CF_EXPECT(WriteExactBinary(*monitor_socket, action),
             "Error writing LauncherAction");
 
   if (timeout_seconds.has_value()) {
@@ -181,18 +174,12 @@ Result<void> RunLauncherAction(
   const std::string serialized_data = extended_action.SerializeAsString();
   CF_EXPECT(!serialized_data.empty(), "failed to serialize proto");
 
-  const LauncherAction action = LauncherAction::kExtended;
-  CF_EXPECT(WriteAllBinaryResult(monitor_socket, &action),
+  CF_EXPECT(WriteExactBinary(*monitor_socket, LauncherAction::kExtended),
             "Error writing LauncherAction");
-  const uint32_t length = serialized_data.size();
-  CF_EXPECT(WriteAllBinaryResult(monitor_socket, &length),
+  const uint32_t length = serialized_data.size();  // Recipient expects uint32_t
+  CF_EXPECT(WriteExactBinary(*monitor_socket, length),
             "Error writing proto length");
-  if (!serialized_data.empty()) {
-    ssize_t n = WriteAll(monitor_socket, serialized_data.data(),
-                         serialized_data.size());
-    CF_EXPECTF(n > 0, "Write error: {}", monitor_socket->StrError());
-    CF_EXPECT(n == serialized_data.size(), "Unexpected EOF on write");
-  }
+  CF_EXPECT(WriteExact(*monitor_socket, serialized_data));
 
   if (timeout_seconds.has_value()) {
     CF_EXPECT(WaitForRead(monitor_socket, timeout_seconds.value()));
