@@ -111,26 +111,46 @@ Result<ParsedFlags> GetParsedFlags() {
   Result<AndroidBuilds> android_builds_result =
       FindAndroidBuilds(parsed_flags.system_image_dir, fetcher_configs);
   if (android_builds_result) {
-    parsed_flags.boot_image.emplace(
-        CF_EXPECT(BootImageFlag::FromGlobalGflags(*android_builds_result)));
+    Result<BootImageFlag> boot_image_result =
+        BootImageFlag::FromGlobalGflags(*android_builds_result);
+    if (boot_image_result) {
+      parsed_flags.boot_image.emplace(*boot_image_result);
+    }
     parsed_flags.super_image.emplace(
         SuperImageFlag::FromGlobalGflags(parsed_flags.system_image_dir));
     parsed_flags.vendor_boot.emplace(
         VendorBootImageFlag::FromGlobalGflags(parsed_flags.system_image_dir));
 
-    const std::vector<GuestConfig> guest_configs = CF_EXPECT(GetGuestConfigs(
-        fetcher_configs, *parsed_flags.boot_image, *parsed_flags.super_image,
-        parsed_flags.system_image_dir, *parsed_flags.vendor_boot));
+    std::vector<GuestConfig> guest_configs;
+    if (parsed_flags.boot_image && parsed_flags.super_image &&
+        parsed_flags.vendor_boot) {
+      guest_configs = CF_EXPECT(GetGuestConfigs(
+          fetcher_configs, *parsed_flags.boot_image, *parsed_flags.super_image,
+          parsed_flags.system_image_dir, *parsed_flags.vendor_boot));
+    }
 
-    parsed_flags.vm_manager.emplace(
-        CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs)));
-    parsed_flags.bootloader.emplace(CF_EXPECT(BootloaderFlag::FromGlobalGflags(
-        guest_configs, parsed_flags.system_image_dir,
-        *parsed_flags.vm_manager)));
+    if (!guest_configs.empty()) {
+      Result<VmManagerFlag> vm_manager_result =
+          VmManagerFlag::FromGlobalGflags(guest_configs);
+      if (vm_manager_result) {
+        parsed_flags.vm_manager.emplace(*vm_manager_result);
+      }
+    }
+    if (!guest_configs.empty() && parsed_flags.vm_manager) {
+      Result<BootloaderFlag> bootloader_flag_result =
+          BootloaderFlag::FromGlobalGflags(guest_configs,
+                                           parsed_flags.system_image_dir,
+                                           *parsed_flags.vm_manager);
+      if (bootloader_flag_result) {
+        parsed_flags.bootloader.emplace(*bootloader_flag_result);
+      }
+    }
 
-    parsed_flags.gpu_mode_used =
-        CF_EXPECT(GetGpuModeUsed(parsed_flags.gpu_mode_requested,
-                                 *parsed_flags.vm_manager, guest_configs));
+    if (!guest_configs.empty() && parsed_flags.vm_manager) {
+      parsed_flags.gpu_mode_used =
+          CF_EXPECT(GetGpuModeUsed(parsed_flags.gpu_mode_requested,
+                                   *parsed_flags.vm_manager, guest_configs));
+    }
   }
   return parsed_flags;
 }
