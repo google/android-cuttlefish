@@ -476,7 +476,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // netsim flags allow all radios or selecting a specific radio
   std::vector<bool> netsim_all_radios_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim));
-  std::vector<bool> netsim_bt_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_bt));
   std::vector<bool> netsim_uwb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_uwb));
   bool any_netsim_uwb = std::any_of(
       netsim_uwb_vec.begin(), netsim_uwb_vec.end(), [](bool e) { return e; });
@@ -486,11 +485,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> netsim_modem_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_modem));
 
-  bool any_not_netsim_bt = false;
   bool any_not_netsim_uwb = false;
   bool any_not_netsim_nfc = false;
   for (int32_t i = 0; i < instances_size; ++i) {
-    any_not_netsim_bt |= !netsim_all_radios_vec[i] && !netsim_bt_vec[i];
     any_not_netsim_uwb |= !netsim_all_radios_vec[i] && !netsim_uwb_vec[i];
     any_not_netsim_nfc |= !netsim_all_radios_vec[i] && !netsim_nfc_vec[i];
   }
@@ -1108,7 +1105,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // crosvm should create fifos for Bluetooth
     bool enable_host_bluetooth = enable_host_bluetooth_vec[instance_index];
     bool is_netsim_all = netsim_all_radios_vec[instance_index];
-    bool is_bt_netsim = is_netsim_all || netsim_bt_vec[instance_index];
+    bool is_bt_netsim = true;
     // or is_bt_netsim is here for backwards compatibility only
     instance.set_has_bluetooth(enable_host_bluetooth || is_bt_netsim);
     // rootcanal and bt_connector should handle Bluetooth (instead of netsim)
@@ -1354,8 +1351,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     tmp_config_obj.set_sig_server_proxy_port(port);
     instance.set_start_netsim(is_first_instance && is_any_netsim);
 
-    instance.set_start_rootcanal(is_first_instance && any_not_netsim_bt &&
-                                 (FLAGS_rootcanal_instance_num <= 0));
+    instance.set_start_rootcanal(false);
 
     instance.set_start_casimir(is_first_instance && any_not_netsim_nfc &&
                                FLAGS_casimir_instance_num <= 0);

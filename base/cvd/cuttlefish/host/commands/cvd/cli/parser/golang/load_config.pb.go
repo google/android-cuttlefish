@@ -120,15 +120,16 @@ func (ModemSimulatorSimType) EnumDescriptor() ([]byte, []int) {
 }
 
 type EnvironmentSpecification struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Instances     []*Instance            `protobuf:"bytes,1,rep,name=instances,proto3" json:"instances,omitempty"`
-	Fetch         *Fetch                 `protobuf:"bytes,2,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
-	Metrics       *Metrics               `protobuf:"bytes,3,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
-	Common        *Common                `protobuf:"bytes,4,opt,name=common,proto3,oneof" json:"common,omitempty"`
-	NetsimBt      *bool                  `protobuf:"varint,5,opt,name=netsim_bt,json=netsimBt,proto3,oneof" json:"netsim_bt,omitempty"`
-	NetsimUwb     *bool                  `protobuf:"varint,6,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
-	NetsimArgs    []string               `protobuf:"bytes,7,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
-	NetsimModem   *bool                  `protobuf:"varint,8,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Instances []*Instance            `protobuf:"bytes,1,rep,name=instances,proto3" json:"instances,omitempty"`
+	Fetch     *Fetch                 `protobuf:"bytes,2,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
+	Metrics   *Metrics               `protobuf:"bytes,3,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
+	Common    *Common                `protobuf:"bytes,4,opt,name=common,proto3,oneof" json:"common,omitempty"`
+	// Deprecated: Marked as deprecated in cuttlefish/host/commands/cvd/cli/parser/load_config.proto.
+	NetsimBt      *bool    `protobuf:"varint,5,opt,name=netsim_bt,json=netsimBt,proto3,oneof" json:"netsim_bt,omitempty"`
+	NetsimUwb     *bool    `protobuf:"varint,6,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
+	NetsimArgs    []string `protobuf:"bytes,7,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
+	NetsimModem   *bool    `protobuf:"varint,8,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -191,6 +192,7 @@ func (x *EnvironmentSpecification) GetCommon() *Common {
 	return nil
 }
 
+// Deprecated: Marked as deprecated in cuttlefish/host/commands/cvd/cli/parser/load_config.proto.
 func (x *EnvironmentSpecification) GetNetsimBt() bool {
 	if x != nil && x.NetsimBt != nil {
 		return *x.NetsimBt
@@ -220,14 +222,15 @@ func (x *EnvironmentSpecification) GetNetsimModem() bool {
 }
 
 type EnvironmentOptions struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Fetch         *Fetch                 `protobuf:"bytes,1,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
-	Metrics       *Metrics               `protobuf:"bytes,2,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
-	Common        *Common                `protobuf:"bytes,3,opt,name=common,proto3,oneof" json:"common,omitempty"`
-	NetsimBt      *bool                  `protobuf:"varint,4,opt,name=netsim_bt,json=netsimBt,proto3,oneof" json:"netsim_bt,omitempty"`
-	NetsimUwb     *bool                  `protobuf:"varint,5,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
-	NetsimArgs    []string               `protobuf:"bytes,6,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
-	NetsimModem   *bool                  `protobuf:"varint,7,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Fetch   *Fetch                 `protobuf:"bytes,1,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
+	Metrics *Metrics               `protobuf:"bytes,2,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
+	Common  *Common                `protobuf:"bytes,3,opt,name=common,proto3,oneof" json:"common,omitempty"`
+	// Deprecated: Marked as deprecated in cuttlefish/host/commands/cvd/cli/parser/load_config.proto.
+	NetsimBt      *bool    `protobuf:"varint,4,opt,name=netsim_bt,json=netsimBt,proto3,oneof" json:"netsim_bt,omitempty"`
+	NetsimUwb     *bool    `protobuf:"varint,5,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
+	NetsimArgs    []string `protobuf:"bytes,6,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
+	NetsimModem   *bool    `protobuf:"varint,7,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -283,6 +286,7 @@ func (x *EnvironmentOptions) GetCommon() *Common {
 	return nil
 }
 
+// Deprecated: Marked as deprecated in cuttlefish/host/commands/cvd/cli/parser/load_config.proto.
 func (x *EnvironmentOptions) GetNetsimBt() bool {
 	if x != nil && x.NetsimBt != nil {
 		return *x.NetsimBt
@@ -2139,13 +2143,13 @@ var File_cuttlefish_host_commands_cvd_cli_parser_load_config_proto protoreflect.
 
 const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "" +
 	"\n" +
-	"9cuttlefish/host/commands/cvd/cli/parser/load_config.proto\x12\x15cuttlefish.cvd.config\"\xeb\x03\n" +
+	"9cuttlefish/host/commands/cvd/cli/parser/load_config.proto\x12\x15cuttlefish.cvd.config\"\xef\x03\n" +
 	"\x18EnvironmentSpecification\x12=\n" +
 	"\tinstances\x18\x01 \x03(\v2\x1f.cuttlefish.cvd.config.InstanceR\tinstances\x127\n" +
 	"\x05fetch\x18\x02 \x01(\v2\x1c.cuttlefish.cvd.config.FetchH\x00R\x05fetch\x88\x01\x01\x12=\n" +
 	"\ametrics\x18\x03 \x01(\v2\x1e.cuttlefish.cvd.config.MetricsH\x01R\ametrics\x88\x01\x01\x12:\n" +
-	"\x06common\x18\x04 \x01(\v2\x1d.cuttlefish.cvd.config.CommonH\x02R\x06common\x88\x01\x01\x12 \n" +
-	"\tnetsim_bt\x18\x05 \x01(\bH\x03R\bnetsimBt\x88\x01\x01\x12\"\n" +
+	"\x06common\x18\x04 \x01(\v2\x1d.cuttlefish.cvd.config.CommonH\x02R\x06common\x88\x01\x01\x12$\n" +
+	"\tnetsim_bt\x18\x05 \x01(\bB\x02\x18\x01H\x03R\bnetsimBt\x88\x01\x01\x12\"\n" +
 	"\n" +
 	"netsim_uwb\x18\x06 \x01(\bH\x04R\tnetsimUwb\x88\x01\x01\x12\x1f\n" +
 	"\vnetsim_args\x18\a \x03(\tR\n" +
@@ -2158,12 +2162,12 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\n" +
 	"_netsim_btB\r\n" +
 	"\v_netsim_uwbB\x0f\n" +
-	"\r_netsim_modem\"\xa6\x03\n" +
+	"\r_netsim_modem\"\xaa\x03\n" +
 	"\x12EnvironmentOptions\x127\n" +
 	"\x05fetch\x18\x01 \x01(\v2\x1c.cuttlefish.cvd.config.FetchH\x00R\x05fetch\x88\x01\x01\x12=\n" +
 	"\ametrics\x18\x02 \x01(\v2\x1e.cuttlefish.cvd.config.MetricsH\x01R\ametrics\x88\x01\x01\x12:\n" +
-	"\x06common\x18\x03 \x01(\v2\x1d.cuttlefish.cvd.config.CommonH\x02R\x06common\x88\x01\x01\x12 \n" +
-	"\tnetsim_bt\x18\x04 \x01(\bH\x03R\bnetsimBt\x88\x01\x01\x12\"\n" +
+	"\x06common\x18\x03 \x01(\v2\x1d.cuttlefish.cvd.config.CommonH\x02R\x06common\x88\x01\x01\x12$\n" +
+	"\tnetsim_bt\x18\x04 \x01(\bB\x02\x18\x01H\x03R\bnetsimBt\x88\x01\x01\x12\"\n" +
 	"\n" +
 	"netsim_uwb\x18\x05 \x01(\bH\x04R\tnetsimUwb\x88\x01\x01\x12\x1f\n" +
 	"\vnetsim_args\x18\x06 \x03(\tR\n" +

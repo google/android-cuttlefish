@@ -54,7 +54,6 @@ func TestCvdLoad(t *testing.T) {
       }
     }
   ],
-  "netsim_bt": false,
   "metrics": {
     "enable": true
   },
@@ -100,7 +99,6 @@ func TestCvdLoad(t *testing.T) {
       }
     }
   ],
-  "netsim_bt": false,
   "metrics": {
     "enable": true
   },
@@ -159,7 +157,6 @@ func TestCvdLoad(t *testing.T) {
       }
     }
   ],
-  "netsim_bt": false,
   "metrics": {
     "enable": true
   },

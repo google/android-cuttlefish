@@ -81,10 +81,35 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   ASSERT_THAT(serialized_data, IsOk());
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=false)"))
-      << "netsim_bt flag is missing or wrongly formatted";
+  EXPECT_FALSE(FindConfig(*serialized_data, R"(--netsim_bt=)"))
+      << "deprecated netsim_bt flag should not be set";
   EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_uwb=true)"))
       << "netsim_uwb flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, ParseDeprecatedNetSimBtFlagTrueIgnored) {
+  const char* test_string = R""""(
+{
+  "netsim_bt": true,
+  "instances": [
+    {
+      "vm": {
+        "crosvm": {}
+      }
+    }
+  ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_FALSE(FindConfig(*serialized_data, R"(--netsim_bt=)"))
+      << "deprecated netsim_bt flag should not be set";
 }
 
 TEST(BootFlagsParserTest, ParseNetSimArgs) {

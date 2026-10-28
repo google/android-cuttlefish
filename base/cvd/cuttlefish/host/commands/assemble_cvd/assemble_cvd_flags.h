@@ -65,7 +65,6 @@ DECLARE_bool(enable_host_uwb);
 DECLARE_int32(pica_instance_num);
 DECLARE_vec(netsim);
 
-DECLARE_vec(netsim_bt);
 DECLARE_vec(netsim_uwb);
 DECLARE_vec(netsim_nfc);
 DECLARE_vec(netsim_modem);

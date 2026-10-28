@@ -131,8 +131,8 @@ DEFINE_int32(pica_instance_num, CF_DEFAULTS_ENABLE_PICA_INSTANCE_NUM,
 
 DEFINE_vec(netsim, fmt::format("{}", CF_DEFAULTS_NETSIM),
            "[Experimental] Connect all radios to netsim.");
-DEFINE_vec(netsim_bt, fmt::format("{}", CF_DEFAULTS_NETSIM_BT),
-           "Connect Bluetooth radio to netsim.");
+DEFINE_vec(netsim_bt, "true",
+           "(Deprecated, Bluetooth radio is always connected to netsim)");
 DEFINE_vec(netsim_uwb, fmt::format("{}", CF_DEFAULTS_NETSIM_UWB),
            "[Experimental] Connect Uwb radio to netsim.");
 DEFINE_vec(netsim_nfc, fmt::format("{}", CF_DEFAULTS_NETSIM_NFC),

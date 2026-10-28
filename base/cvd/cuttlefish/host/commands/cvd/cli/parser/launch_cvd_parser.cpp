@@ -58,10 +58,6 @@ Result<std::vector<std::string>> GenerateCfFlags(
   std::vector<std::string> flags;
   flags.emplace_back(GenerateFlag("num_instances", launch.instances().size()));
 
-  if (launch.has_netsim_bt()) {
-    flags.emplace_back(GenerateFlag("netsim_bt", launch.netsim_bt()));
-  }
-
   if (launch.has_netsim_uwb()) {
     flags.emplace_back(GenerateFlag("netsim_uwb", launch.netsim_uwb()));
   }

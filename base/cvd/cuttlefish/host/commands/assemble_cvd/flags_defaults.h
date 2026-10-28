@@ -170,7 +170,6 @@
 #define CF_DEFAULTS_RIL_DNS "8.8.8.8"
 // Default network handler
 #define CF_DEFAULTS_NETSIM false
-#define CF_DEFAULTS_NETSIM_BT true
 #define CF_DEFAULTS_NETSIM_UWB true
 #define CF_DEFAULTS_NETSIM_NFC false
 #define CF_DEFAULTS_NETSIM_MODEM false

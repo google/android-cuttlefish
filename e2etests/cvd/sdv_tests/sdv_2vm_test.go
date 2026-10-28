@@ -78,7 +78,6 @@ const (
       }
     }
   ],
-  "netsim_bt": false,
   "metrics": {
     "enable": true
   },
