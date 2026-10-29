@@ -33,7 +33,9 @@
 #include "cuttlefish/host/libs/web/gcs_build_api.h"
 #include "cuttlefish/host/libs/web/http_build_api.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
+#include "cuttlefish/host/libs/web/http_client/curl_share.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_client_pool.h"
 #include "cuttlefish/host/libs/web/http_client/retrying_http_client.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 #include "cuttlefish/host/libs/web/oauth2_consent.h"
@@ -42,7 +44,14 @@
 namespace cuttlefish {
 
 struct Downloaders::Impl {
-  std::unique_ptr<HttpClient> curl_;
+  Impl() = default;
+  Impl(Impl&) = delete;
+  Impl(Impl&&) = delete;
+  Impl& operator=(Impl&) = delete;
+  Impl& operator=(Impl&&) = delete;
+
+  CurlShare curl_share_;
+  std::unique_ptr<HttpClient> http_pool_;
   std::unique_ptr<HttpClient> retrying_http_client_;
   std::unique_ptr<CredentialSource> android_creds_;
   std::unique_ptr<AndroidBuildUrl> android_build_url_;
@@ -53,6 +62,10 @@ struct Downloaders::Impl {
   std::unique_ptr<CredentialSource> storage_credential_source_;
   std::unique_ptr<CompositeBuildApi> composite_build_api_;
   std::unique_ptr<CachingBuildApi> caching_build_api_;
+
+  std::unique_ptr<HttpClient> MakeHttpClient() {
+    return CurlHttpClient(curl_share_, /* use_logging_debug_function = */ true);
+  }
 };
 
 Downloaders::Downloaders(std::unique_ptr<Downloaders::Impl> impl)
@@ -65,16 +78,18 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
                                         const std::string& cache_base_path) {
   std::unique_ptr<Downloaders::Impl> impl(new Downloaders::Impl());
 
-  impl->curl_ = CurlHttpClient(/*use_logging_debug_function=*/true);
+  impl->http_pool_ = std::make_unique<HttpClientPool>(
+      [impl = impl.get()]() { return impl->MakeHttpClient(); });
+
   impl->retrying_http_client_ = RetryingServerErrorHttpClient(
-      *impl->curl_, 10, std::chrono::milliseconds(5000));
+      *impl->http_pool_, 10, std::chrono::milliseconds(5000));
 
   std::vector<std::string> scopes = {
       kAndroidBuildApiScope,
       "https://www.googleapis.com/auth/userinfo.email",
   };
   Result<std::unique_ptr<CredentialSource>> cvd_creds =
-      CredentialForScopes(*impl->curl_, scopes);
+      CredentialForScopes(*impl->retrying_http_client_, scopes);
 
   impl->android_creds_ =
       cvd_creds.has_value() && cvd_creds->get()
@@ -112,8 +127,8 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
   // Cloud Storage builds resolve a credential of their own. The gsutil ladder
   // above stays as it is because the Luci downloads also accept a bare
   // storage-scoped token minted outside `cvd`.
-  Result<std::unique_ptr<CredentialSource>> storage_creds =
-      CredentialForScopes(*impl->curl_, {kCloudStorageReadScope});
+  Result<std::unique_ptr<CredentialSource>> storage_creds = CredentialForScopes(
+      *impl->retrying_http_client_, {kCloudStorageReadScope});
 
   impl->storage_credential_source_ =
       storage_creds.has_value() && storage_creds->get()
