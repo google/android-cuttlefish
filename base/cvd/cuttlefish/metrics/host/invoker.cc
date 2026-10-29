@@ -30,6 +30,7 @@ constexpr absl::string_view kAcloud = "acloud";
 constexpr absl::string_view kCvdr = "cvdr";
 constexpr absl::string_view kHostOrchestrator = "host_orchestrator";
 constexpr absl::string_view kLaunchCvd = "launch_cvd";
+constexpr absl::string_view kOxygenationContainer = "oxygenation_container";
 constexpr absl::string_view kPodcvd = "podcvd";
 constexpr absl::string_view kInvokerVariable = "CVD_INVOKER";
 
@@ -48,6 +49,8 @@ Invoker GetInvoker() {
     return Invoker::HostOrchestrator;
   } else if (invoker_value == kLaunchCvd) {
     return Invoker::LaunchCvd;
+  } else if (invoker_value == kOxygenationContainer) {
+    return Invoker::OxygenationContainer;
   } else if (invoker_value == kPodcvd) {
     return Invoker::Podcvd;
   } else {

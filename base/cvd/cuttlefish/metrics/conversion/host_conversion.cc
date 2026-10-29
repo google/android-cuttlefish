@@ -93,6 +93,9 @@ CuttlefishHost_Invoker ConvertInvoker(const Invoker invoker) {
     case Invoker::None:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_NONE;
+    case Invoker::OxygenationContainer:
+      return CuttlefishHost_Invoker::
+          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_OXYGENATION_CONTAINER;
     case Invoker::Podcvd:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_PODCVD;
