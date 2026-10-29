@@ -1,0 +1,36 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@vhost_user_media_workspace_crates//:defs.bzl", "crate_deps")
+
+package(default_visibility = ["//:android_cuttlefish"])
+
+alias(
+    name = "emulated_camera_mplane_external",
+    actual = select({
+        "@platforms//cpu:x86_64": ":emulated_camera_mplane_external_binary",
+        "//conditions:default": ":unsupported_binary",
+    }),
+)
+
+rust_binary(
+    name = "emulated_camera_mplane_external_binary",
+    srcs = ["src/main.rs"],
+    edition = "2024",
+    deps = crate_deps([
+        "clap",
+        "env_logger",
+        "log",
+    ]) + [
+        "//cuttlefish/host/commands/vhost_user_media/emulated_camera",
+    ],
+)
+
+genrule(
+    name = "unsupported_binary",
+    outs = ["unsupported.sh"],
+    cmd = """cat << 'EOF' > $@
+#!/bin/bash
+echo "platform unsupported" >&2
+exit 1
+EOF""",
+    executable = True,
+)
