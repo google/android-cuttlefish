@@ -156,14 +156,12 @@ void CrosvmBuilder::AddSerial(const std::string& output,
                         ",type=file,path=", output, ",input=", input);
 }
 
-#ifdef __linux__
 void CrosvmBuilder::AddTap(const std::string& tap_name,
                            std::optional<std::string_view> mac,
                            const std::optional<pci::Address>& pci) {
   command_.AddParameter("--net=tap-name=", tap_name, MacCrosvmArgument(mac),
                         FormatPciArgument(pci));
 }
-#endif
 
 void CrosvmBuilder::AddVhostUser(const std::string& type,
                                  const std::string& socket_path,
