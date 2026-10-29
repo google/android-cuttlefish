@@ -15,12 +15,14 @@ runs:
     run: |
       PACKAGES=(
         "cuttlefish-base"
-        "cuttlefish-integration-gigabyte-arm64"
         "cuttlefish-metrics"
         "cuttlefish-orchestration"
         "cuttlefish-user"
         "cuttlefish-podcvd"
       )
+      if [[ ${RUNNER_ARCH} == "ARM64" ]]; then
+        PACKAGES+=("cuttlefish-integration-gigabyte-arm64")
+      fi
 
       if [[ ${INPUTS_DEPLOY_CHANNEL} == "stable" ]]; then
         REPO=android-cuttlefish
