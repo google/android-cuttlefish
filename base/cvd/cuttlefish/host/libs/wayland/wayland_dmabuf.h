@@ -16,47 +16,37 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
-
-#include <map>
 
 #include "android-base/unique_fd.h"
 #include "wayland-server-core.h"
 
 namespace wayland {
 
-struct DmabufPlane {
+struct DmabufBuffer {
   android::base::unique_fd fd;
-  uint32_t plane = 0;
-  uint32_t offset = 0;
-  uint32_t stride = 0;
-  uint32_t modifier_hi = 0;
-  uint32_t modifier_lo = 0;
-};
-
-struct DmabufParams {
-  DmabufParams() = default;
-
-  DmabufParams(const DmabufParams& rhs) = delete;
-  DmabufParams& operator=(const DmabufParams& rhs) = delete;
-
-  DmabufParams(DmabufParams&& rhs) = default;
-  DmabufParams& operator=(DmabufParams&& rhs) = default;
-
-  std::map<int32_t, DmabufPlane> planes;
-};
-
-struct Dmabuf {
-  uint32_t width = 0;
-  uint32_t height = 0;
+  int32_t width = 0;
+  int32_t height = 0;
   uint32_t format = 0;
   uint32_t flags = 0;
-  DmabufParams params;
+  uint32_t offset = 0;
+  uint32_t stride = 0;
+  uint64_t modifier = 0;
+  uint8_t* mapped_ptr = nullptr;
+  size_t mapped_size = 0;
+
+  ~DmabufBuffer();
 };
+
+// Returns the DmabufBuffer associated with the given wl_buffer resource,
+// or nullptr if the resource is not a dmabuf wl_buffer.
+DmabufBuffer* GetDmabufBuffer(wl_resource* buffer);
+
+void DmabufBufferBeginAccess(DmabufBuffer* buffer);
+void DmabufBufferEndAccess(DmabufBuffer* buffer);
 
 // Binds the dmabuf interface to the given wayland server.
 void BindDmabufInterface(wl_display* display);
-
-bool IsDmabufResource(struct wl_resource* resource);
 
 }  // namespace wayland
