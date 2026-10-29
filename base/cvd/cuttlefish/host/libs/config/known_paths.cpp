@@ -223,6 +223,10 @@ std::string VhostUserMediaEmulatedCameraMPlaneBinary() {
   return HostBinaryPath("vhu_media_emulated_camera_mplane");
 }
 
+std::string VhostUserMediaEmulatedCameraMPlaneExternalBinary() {
+  return HostBinaryPath("vhu_media_emulated_camera_mplane_external");
+}
+
 std::string VhostUserMediaV4l2StreamProxyBinary() {
   return HostBinaryPath("vhu_media_v4l2_stream_proxy");
 }

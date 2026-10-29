@@ -123,6 +123,7 @@ class CuttlefishConfig {
     kV4l2EmulatedCameraMPlane,
     kV4l2Proxy,
     kV4l2StreamProxy,
+    kV4l2EmulatedCameraMPlaneExternal,
   };
 
   struct MediaConfig {

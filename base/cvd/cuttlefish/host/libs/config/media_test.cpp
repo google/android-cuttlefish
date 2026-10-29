@@ -213,5 +213,23 @@ TEST(MediaTest, RejectNonPositiveNumInstances) {
               Not(IsOk()));
 }
 
+TEST(MediaTest, ParseEmulatedCameraMPlaneExternal) {
+  std::vector<std::string> args = {
+      "--media=v4l2_emulated_camera_mplane_external"};
+  const Result<std::vector<std::vector<CuttlefishConfig::MediaConfig>>>
+      configs_res = ParseMediaConfigsFromArgs(args, /*num_instances=*/1);
+
+  ASSERT_THAT(configs_res, IsOk());
+
+  const std::vector<std::vector<CuttlefishConfig::MediaConfig>>& configs =
+      *configs_res;
+
+  ASSERT_EQ(configs.size(), 1);
+  ASSERT_EQ(configs[0].size(), 1);
+  EXPECT_EQ(configs[0][0].type,
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlaneExternal);
+  EXPECT_EQ(configs[0][0].lens_facing, "");
+}
+
 }  // namespace
 }  // namespace cuttlefish

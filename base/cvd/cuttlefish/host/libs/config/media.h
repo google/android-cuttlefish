@@ -30,6 +30,8 @@ constexpr const char kMediaHelp[] =
     "Supported types:\n"
     "    'v4l2_emulated_camera_mplane': emulated media capture device "
     "(multi-plane)\n"
+    "    'v4l2_emulated_camera_mplane_external': emulated media capture "
+    "device (multi-plane) for the reference external camera HAL\n"
     "    'v4l2_proxy': proxy a host V4L2 device into the guest\n"
     "    'v4l2_stream_proxy': stream video from a host named pipe into the "
     "guest\n\n"
