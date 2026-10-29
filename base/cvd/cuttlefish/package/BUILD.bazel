@@ -127,6 +127,7 @@ package_files(
         "bin/unpack_bootimg.py": "@mkbootimg//:unpack_bootimg.py",
         "bin/vhost_device_vsock": "@vhost_device_vsock_crates//:vhost-device-vsock__vhost-device-vsock",
         "bin/vhu_media_emulated_camera_mplane": "//cuttlefish/host/commands/vhost_user_media/emulated_camera_mplane",
+        "bin/vhu_media_emulated_camera_mplane_external": "//cuttlefish/host/commands/vhost_user_media/emulated_camera_mplane_external",
         "bin/vhu_media_v4l2_stream_proxy": "//cuttlefish/host/commands/vhost_user_media/v4l2_stream_proxy",
         "bin/virgl_render_server": "@virglrenderer//:virgl_render_server",
         "bin/virtual_tuner_daemon": "//cuttlefish/host/commands/virtual_tuner_daemon",

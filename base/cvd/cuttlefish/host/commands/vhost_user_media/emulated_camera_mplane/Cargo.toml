@@ -4,15 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = { workspace = true }
 clap = { workspace = true }
+emulated_camera = { workspace = true }
 env_logger = { workspace = true }
-libc = { workspace = true }
 log = { workspace = true }
 thiserror = { workspace = true }
-v4l2r = { workspace = true }
-vhost-user-backend = { workspace = true }
-vhu_media = { workspace = true }
-virtio-media = { workspace = true }
-vm-memory = { workspace = true }
-vmm-sys-util = { workspace = true }
