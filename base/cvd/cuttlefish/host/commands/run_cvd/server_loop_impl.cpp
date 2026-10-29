@@ -54,6 +54,7 @@
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/process/proc_file_utils.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -506,7 +507,12 @@ void ServerLoopImpl::RestartRunCvd(int notification_fd) {
   argv[argv_vec.size()] = reboot_notification.data();
   argv[argv_vec.size() + 1] = nullptr;
 
-  execv("/proc/self/exe", argv.get());
+  Result<std::string> exe = GetExecutablePath(getpid());
+  if (!exe.has_value()) {
+    LOG(ERROR) << "Cannot find own executable: " << exe.error().FormatForEnv();
+    return;
+  }
+  execv(exe->c_str(), argv.get());
   // execve should not return, so something went wrong.
   PLOG(ERROR) << "execv returned: ";
 }
