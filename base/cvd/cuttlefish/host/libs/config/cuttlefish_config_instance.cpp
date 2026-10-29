@@ -68,7 +68,6 @@ CuttlefishConfig::MutableInstanceSpecific::MutableInstanceSpecific(
     : config_(config), id_(id) {
   // Legacy for acloud
   (*Dictionary())[kInstanceDir] = config_->InstancesPath(IdToName(id));
-  (*Dictionary())["enable_webrtc"] = true;
 }
 
 Json::Value* CuttlefishConfig::MutableInstanceSpecific::Dictionary() {
@@ -984,6 +983,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_enable_gnss_grpc_proxy(
 }
 bool CuttlefishConfig::InstanceSpecific::enable_gnss_grpc_proxy() const {
   return (*Dictionary())[kEnableGnssGrpcProxy].asBool();
+}
+
+static constexpr char kEnableWebRTC[] = "enable_webrtc";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_webrtc(
+    const bool enable_webrtc) {
+  (*Dictionary())[kEnableWebRTC] = enable_webrtc;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_webrtc() const {
+  return (*Dictionary())[kEnableWebRTC].asBool();
 }
 
 static constexpr char kEnableBootAnimation[] = "enable_bootanimation";

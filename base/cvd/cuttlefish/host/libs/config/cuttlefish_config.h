@@ -475,6 +475,7 @@ class CuttlefishConfig {
     std::optional<std::string> custom_keyboard_config() const;
     const Json::Value& domkey_mapping_config() const;
     bool enable_gnss_grpc_proxy() const;
+    bool enable_webrtc() const;
     bool enable_bootanimation() const;
     bool enable_usb() const;
     std::vector<std::string> extra_bootconfig_args() const;
@@ -719,6 +720,7 @@ class CuttlefishConfig {
         const std::string& domkey_mapping_config_json_path);
     void set_enable_usb(bool enable);
     void set_enable_gnss_grpc_proxy(bool enable_gnss_grpc_proxy);
+    void set_enable_webrtc(bool enable_webrtc);
     void set_enable_bootanimation(bool enable_bootanimation);
     void set_extra_bootconfig_args(const std::string& extra_bootconfig_args);
     void set_record_screen(bool record_screen);
