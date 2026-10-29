@@ -63,12 +63,12 @@ std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
 }  // namespace
 
 static constexpr char kInstanceDir[] = "instance_dir";
+static constexpr char kEnableWebRTC[] = "enable_webrtc";
 CuttlefishConfig::MutableInstanceSpecific::MutableInstanceSpecific(
     CuttlefishConfig* config, const std::string& id)
     : config_(config), id_(id) {
   // Legacy for acloud
   (*Dictionary())[kInstanceDir] = config_->InstancesPath(IdToName(id));
-  (*Dictionary())["enable_webrtc"] = true;
 }
 
 Json::Value* CuttlefishConfig::MutableInstanceSpecific::Dictionary() {
@@ -984,6 +984,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_enable_gnss_grpc_proxy(
 }
 bool CuttlefishConfig::InstanceSpecific::enable_gnss_grpc_proxy() const {
   return (*Dictionary())[kEnableGnssGrpcProxy].asBool();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_webrtc(
+    const bool enable_webrtc) {
+  (*Dictionary())[kEnableWebRTC] = enable_webrtc;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_webrtc() const {
+  return (*Dictionary())[kEnableWebRTC].asBool();
 }
 
 static constexpr char kEnableBootAnimation[] = "enable_bootanimation";
