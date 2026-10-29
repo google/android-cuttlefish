@@ -60,11 +60,9 @@ class CrosvmBuilder {
   // [[deprecated("do not add any more users")]]
   void AddSerial(const std::string& output, const std::string& input);
 
-#ifdef __linux__
   void AddTap(const std::string& tap_name,
               std::optional<std::string_view> mac = std::nullopt,
               const std::optional<pci::Address>& pci = std::nullopt);
-#endif
   // Adds a vhost-user device to the crosvm command.
   // The max_queue_size parameter represents the maximum number of buffers the
   // virtqueues can hold at a given time and must be a power of 2. It must be
