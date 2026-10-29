@@ -34,9 +34,21 @@ bool IsRunningInPodman() { return FileExists("/run/.containerenv"); }
 
 }  // namespace
 
+ContainerRuntime GetContainerRuntime() {
+  // Podman is checked first: some podman configurations also create
+  // /.dockerenv for compatibility, but docker never creates /run/.containerenv.
+  if (IsRunningInPodman()) {
+    return ContainerRuntime::Podman;
+  }
+  if (IsRunningInDocker()) {
+    return ContainerRuntime::Docker;
+  }
+  return ContainerRuntime::None;
+}
+
 bool IsRunningInContainer() {
   // TODO: add more if we support other containers than docker
-  return IsRunningInDocker() || IsRunningInPodman();
+  return GetContainerRuntime() != ContainerRuntime::None;
 }
 
 }  // namespace cuttlefish

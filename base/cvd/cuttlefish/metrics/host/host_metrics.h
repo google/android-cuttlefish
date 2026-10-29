@@ -20,6 +20,7 @@
 #include <string>
 #include <variant>
 
+#include "cuttlefish/common/libs/utils/container.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/metrics/host/gce_environment.h"
 #include "cuttlefish/metrics/host/github_environment.h"
@@ -39,6 +40,7 @@ struct HostMetrics {
   Invoker invoker;
   Environment environment;
   std::string user_id;
+  ContainerRuntime container_runtime;
 };
 
 Result<HostMetrics> GetHostMetrics();

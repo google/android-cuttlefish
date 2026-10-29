@@ -18,6 +18,7 @@
 
 #include <optional>
 
+#include "cuttlefish/common/libs/utils/container.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/metrics/host/gce_environment.h"
 #include "cuttlefish/metrics/host/github_environment.h"
@@ -57,7 +58,8 @@ Result<HostMetrics> GetHostMetrics() {
   return HostMetrics{.os = GetHostInfo(),
                      .invoker = GetInvoker(),
                      .environment = CF_EXPECT(GetEnvironment()),
-                     .user_id = ReadUserIdFile().value_or("")};
+                     .user_id = ReadUserIdFile().value_or(""),
+                     .container_runtime = GetContainerRuntime()};
 }
 
 }  // namespace cuttlefish
