@@ -48,6 +48,7 @@ cf_cc_library(
     srcs = ["host_conversion.cc"],
     hdrs = ["host_conversion.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:container",
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/metrics/external_proto:cf_gce_environment_cc_proto",
         "//cuttlefish/metrics/external_proto:cf_github_actions_environment_cc_proto",

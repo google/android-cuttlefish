@@ -36,6 +36,7 @@ cf_cc_library(
     srcs = ["host_metrics.cc"],
     hdrs = ["host_metrics.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:container",
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/metrics/host:gce_environment",
         "//cuttlefish/metrics/host:github_environment",

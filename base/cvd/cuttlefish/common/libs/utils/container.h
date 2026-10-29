@@ -17,6 +17,15 @@
 
 namespace cuttlefish {
 
+// The container runtime, if any, that the current process is running inside.
+enum class ContainerRuntime {
+  None,
+  Docker,
+  Podman,
+};
+
+ContainerRuntime GetContainerRuntime();
+
 bool IsRunningInContainer();
 
 }  // namespace cuttlefish

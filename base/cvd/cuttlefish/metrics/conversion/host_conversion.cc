@@ -18,6 +18,7 @@
 
 #include <variant>
 
+#include "cuttlefish/common/libs/utils/container.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/metrics/external_proto/cf_gce_environment.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_github_actions_environment.pb.h"
@@ -40,6 +41,8 @@ using logs::proto::wireless::android::cuttlefish::events::
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishGitHubActionsEnvironment_Repository;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost;
+using logs::proto::wireless::android::cuttlefish::events::
+    CuttlefishHost_ContainerType;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishHost_Invoker;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost_OsType;
@@ -99,6 +102,21 @@ CuttlefishHost_Invoker ConvertInvoker(const Invoker invoker) {
   }
 }
 
+CuttlefishHost_ContainerType ConvertContainerType(
+    const ContainerRuntime container_runtime) {
+  switch (container_runtime) {
+    case ContainerRuntime::None:
+      return CuttlefishHost_ContainerType::
+          CuttlefishHost_ContainerType_CUTTLEFISH_HOST_CONTAINER_TYPE_NONE;
+    case ContainerRuntime::Docker:
+      return CuttlefishHost_ContainerType::
+          CuttlefishHost_ContainerType_CUTTLEFISH_HOST_CONTAINER_TYPE_DOCKER;
+    case ContainerRuntime::Podman:
+      return CuttlefishHost_ContainerType::
+          CuttlefishHost_ContainerType_CUTTLEFISH_HOST_CONTAINER_TYPE_PODMAN;
+  }
+}
+
 CuttlefishGitHubActionsEnvironment_Repository ConvertGitHubRepository(
     const GitHubRepository repository) {
   switch (repository) {
@@ -151,6 +169,7 @@ void PopulateCuttlefishHost(MetricsEventV2& metrics_event,
   host.set_host_os_version(host_metrics.os.release);
   host.set_invoker(ConvertInvoker(host_metrics.invoker));
   host.set_user_id(host_metrics.user_id);
+  host.set_container_type(ConvertContainerType(host_metrics.container_runtime));
   PopulateCuttlefishHostEnvironment(host, host_metrics.environment);
 }
 
