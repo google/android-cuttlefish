@@ -196,6 +196,7 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/process:command",
         "//cuttlefish/process:execute",
+        "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/process:subprocess_options",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
