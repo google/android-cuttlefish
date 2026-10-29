@@ -5,6 +5,11 @@ if [[ "${USE_GCE_METADATA}" == "true" ]]; then
     >> /etc/default/cuttlefish-host_orchestrator
 fi
 
+if [[ -n "${CVD_INVOKER}" ]]; then
+  printf 'export CVD_INVOKER=%q\n' "${CVD_INVOKER}" \
+    >> /etc/default/cuttlefish-host_orchestrator
+fi
+
 # Android T host packages ship crosvm with syslog dependency.
 service busybox-syslogd start
 

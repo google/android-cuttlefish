@@ -24,6 +24,7 @@ enum class Invoker {
   HostOrchestrator,
   LaunchCvd,
   None,
+  OxygenationContainer,
   Podcvd,
   Unknown,
 };
