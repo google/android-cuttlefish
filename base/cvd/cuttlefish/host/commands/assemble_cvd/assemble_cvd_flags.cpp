@@ -172,7 +172,8 @@ DEFINE_string(
     "With sandbox'ed crosvm, overrieds the security comp policy directory");
 
 DEFINE_vec(start_webrtc, fmt::format("{}", CF_DEFAULTS_START_WEBRTC),
-           "(Deprecated, webrtc is enabled depending on the VMM)");
+           "Whether to start the webrtc streamer. Ignored with a warning "
+           "when --vm_manager=crosvm, which requires it.");
 
 DEFINE_vec(webrtc_assets_dir, CF_DEFAULTS_WEBRTC_ASSETS_DIR,
            "Path to WebRTC webpage assets.");

@@ -120,6 +120,7 @@ DECLARE_vec(ril_dns);
 DECLARE_vec(kgdb);
 
 DECLARE_vec(start_gnss_proxy);
+DECLARE_vec(start_webrtc);
 
 DECLARE_vec(gnss_file_path);
 
