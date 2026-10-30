@@ -37,8 +37,6 @@
 #include <zlib.h>
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -48,6 +46,7 @@
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
 #include "cuttlefish/host/libs/web/http_client/url_escape.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
 
@@ -77,8 +76,8 @@ class HttpServer {
   static Result<HttpServer> Create() {
     HttpServer server;
     // TODO: schuffelen - let the kernel choose the port
-    server.server_ = SharedFD::SocketLocalServer(server.Port(), SOCK_STREAM);
-    CF_EXPECT(server.server_->IsOpen(), server.server_->StrError());
+    server.server_ =
+        CF_EXPECT(Fd::SocketLocalServer(server.Port(), SOCK_STREAM));
 
     return server;
   }
@@ -86,20 +85,19 @@ class HttpServer {
   uint16_t Port() { return 8888; }
 
   Result<std::string> CodeFromClient() {
-    SharedFD client = CF_EXPECT(Fd::Accept(*server_));
+    Fd client = CF_EXPECT(Fd::Accept(server_));
 
     std::stringstream request;
     char buffer[512];
     ssize_t bytes_read;
-    while ((bytes_read = client->Read(buffer, sizeof(buffer)).value_or(0)) >
-           0) {
+    while ((bytes_read = client.Read(buffer, sizeof(buffer)).value_or(0)) > 0) {
       request.write(buffer, bytes_read);
       std::string_view buffer_view(buffer, bytes_read);
       if (buffer_view.find("\r\n\r\n") != std::string_view::npos) {
         break;
       }
     }
-    CF_EXPECT_EQ(client->GetErrno(), 0, client->StrError());
+    CF_EXPECT_EQ(client.GetErrno(), 0, client.StrError());
 
     std::string request_str = request.str();
     CF_EXPECT(request_str.find("\r\n") != std::string::npos);
@@ -115,15 +113,14 @@ class HttpServer {
         "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Type: text/plain; "
         "charset=utf-8\r\n\r\n{}",
         kResponse.size(), kResponse);
-    CF_EXPECT_EQ(WriteAll(client, response), (ssize_t)response.size(),
-                 client->StrError());
+    CF_EXPECT(WriteExact(client, response));
 
     return code;
   }
 
  private:
   HttpServer() = default;
-  SharedFD server_;
+  Fd server_;
 };
 
 uint32_t ScopeChecksum(const std::vector<std::string>& scopes) {
