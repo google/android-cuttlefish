@@ -39,8 +39,8 @@ Result<void> ReadWindowView::Visit(IoVisitor& visitor) {
   return {};
 }
 
-Result<uint64_t> ReadWindowView::PRead(void* const buf, uint64_t count,
-                                       uint64_t offset) const {
+Result<uint64_t, int> ReadWindowView::PRead(void* const buf, uint64_t count,
+                                            uint64_t offset) const {
   if (offset >= length_) {
     return 0;
   }

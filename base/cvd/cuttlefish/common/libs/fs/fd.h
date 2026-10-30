@@ -210,9 +210,9 @@ class Fd : public ReaderWriterSeeker {
   off_t LSeek(off_t offset, int whence);
   ssize_t Recv(void* buf, size_t len, int flags);
   ssize_t RecvMsg(struct msghdr* msg, int flags);
-  Result<uint64_t> Read(void* buf, uint64_t count) override;
-  Result<uint64_t> PRead(void* buf, uint64_t count,
-                         uint64_t offset) const override;
+  Result<uint64_t, int> Read(void* buf, uint64_t count) override;
+  Result<uint64_t, int> PRead(void* buf, uint64_t count,
+                              uint64_t offset) const override;
 #ifdef __linux__
   int EventfdRead(eventfd_t* value);
 #endif

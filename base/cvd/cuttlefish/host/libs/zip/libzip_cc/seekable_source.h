@@ -60,9 +60,9 @@ class SeekingZipSourceReader : public ZipSourceReader, public ReaderSeeker {
 
   Result<void> Visit(IoVisitor&) override;
 
-  Result<uint64_t> Read(void* data, uint64_t length) override;
-  Result<uint64_t> PRead(void* buf, uint64_t count,
-                         uint64_t offset) const override;
+  Result<uint64_t, int> Read(void* data, uint64_t length) override;
+  Result<uint64_t, int> PRead(void* buf, uint64_t count,
+                              uint64_t offset) const override;
 
   Result<uint64_t, int> SeekSet(uint64_t offset) override;
   Result<uint64_t, int> SeekCur(int64_t offset) override;

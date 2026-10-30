@@ -202,15 +202,17 @@ ZipSourceReader::~ZipSourceReader() {
   }
 }
 
-Result<uint64_t> ZipSourceReader::Read(void* data, uint64_t length) {
+Result<uint64_t, int> ZipSourceReader::Read(void* data, uint64_t length) {
   std::lock_guard lock(mutex_);
 
-  CF_EXPECT_NE(source_, nullptr);
-  zip_source_t* raw_source = CF_EXPECT(source_->raw_.get());
+  CF_EXPECTV(source_ != nullptr, EBADF, "Empty internal source");
+  zip_source_t* raw_source =
+      CF_EXPECTV(source_->raw_.get(), EBADF, "Empty internal source");
 
   int64_t read_res = zip_source_read(raw_source, data, length);
 
-  CF_EXPECTF(read_res >= 0, "Read failed: '{}'", ZipErrorString(raw_source));
+  CF_EXPECTVF(read_res >= 0, ZipErrno(raw_source), "Read failed: '{}'",
+              ZipErrorString(raw_source));
 
   return read_res;
 }

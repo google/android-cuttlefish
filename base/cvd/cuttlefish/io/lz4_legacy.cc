@@ -46,7 +46,7 @@ class Lz4LegacyReaderImpl : public Reader {
   Lz4LegacyReaderImpl(std::unique_ptr<Reader> source)
       : source_(std::move(source)) {}
 
-  Result<uint64_t> Read(void* buf, uint64_t count) override {
+  Result<uint64_t, int> Read(void* buf, uint64_t count) override {
     if (decompressed_.empty()) {
       uint32_t length = 0;
       // We should get either an EOF or a block of 4 bytes which is a block
@@ -66,7 +66,7 @@ class Lz4LegacyReaderImpl : public Reader {
       int lz4_length =
           LZ4_decompress_safe(compressed_.data(), decompressed_.data(),
                               compressed_.size(), decompressed_.size());
-      CF_EXPECT_GE(lz4_length, 0);
+      CF_EXPECTVF(lz4_length >= 0, EIO, "decompress error {}", lz4_length);
       if (lz4_length == 0) {
         return 0;
       }

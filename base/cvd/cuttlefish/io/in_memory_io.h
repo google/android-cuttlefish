@@ -29,7 +29,7 @@ class InMemoryIo : public ReaderWriterSeeker {
  public:
   InMemoryIo(std::vector<char>& data, std::shared_mutex& mutex);
 
-  Result<uint64_t> Read(void* buf, uint64_t count) override;
+  Result<uint64_t, int> Read(void* buf, uint64_t count) override;
 
   Result<uint64_t, int> Write(const void* buf, uint64_t count) override;
 
@@ -39,8 +39,8 @@ class InMemoryIo : public ReaderWriterSeeker {
 
   Result<uint64_t, int> SeekEnd(int64_t offset) override;
 
-  Result<uint64_t> PRead(void* buf, uint64_t count,
-                         uint64_t offset) const override;
+  Result<uint64_t, int> PRead(void* buf, uint64_t count,
+                              uint64_t offset) const override;
 
   Result<uint64_t, int> PWrite(const void* buf, uint64_t count,
                                uint64_t offset) override;

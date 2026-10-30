@@ -75,7 +75,7 @@ class ZipSourceReader : public Reader {
 
   /* Returns a failed Result on error, or a successful result with bytes read or
    * 0 on EOF. */
-  Result<uint64_t> Read(void* data, uint64_t length) override;
+  Result<uint64_t, int> Read(void* data, uint64_t length) override;
 
   Result<void> Visit(IoVisitor&) override;
 
