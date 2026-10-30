@@ -49,6 +49,9 @@ type Config struct {
 	Paths                  IMPaths
 	AndroidBuildServiceURL string
 	BuildAPICredentials    BuildAPICredentialsConfig
+	// DisableCVDFetchCaching stops `cvd fetch` from keeping downloaded
+	// artifacts in its local file cache.
+	DisableCVDFetchCaching bool
 }
 
 type BuildAPICredentialsConfig struct {
@@ -229,6 +232,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		UserArtifactsDirResolver: h.UADirResolver,
 		FetchCredentials:         creds,
 		BuildAPIBaseURL:          h.Config.AndroidBuildServiceURL,
+		DisableFetchCaching:      h.Config.DisableCVDFetchCaching,
 	}
 	return NewCreateCVDAction(opts).Run()
 }

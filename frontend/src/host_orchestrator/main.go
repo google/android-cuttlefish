@@ -130,6 +130,7 @@ func main() {
 	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
 	logFile := flag.String("log_file", "", "Path to file to write logs to.")
 	buildAPICredsUseGCEMetadata := flag.Bool("build_api_credentials_use_gce_metadata", false, "Indicates whether to use the GCE metadata to get the Build API credentials")
+	disableCVDFetchCaching := flag.Bool("disable_cvd_fetch_caching", false, "Stop `cvd fetch` from keeping downloaded artifacts in its local file cache.")
 
 	flag.Parse()
 
@@ -177,6 +178,7 @@ func main() {
 			BuildAPICredentials: orchestrator.BuildAPICredentialsConfig{
 				UseGCEMetadata: *buildAPICredsUseGCEMetadata,
 			},
+			DisableCVDFetchCaching: *disableCVDFetchCaching,
 		},
 		OperationManager:        om,
 		WaitOperationDuration:   2 * time.Minute,
