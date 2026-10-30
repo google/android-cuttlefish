@@ -8,15 +8,17 @@ inputs:
 runs:
   using: "composite"
   steps:
-  - name: Load cache config
-    run: |
-      cat .config/cache-config.env >> $GITHUB_ENV
-      echo "JOB_HASH=$(yq . .github/actions/${INPUTS_ACTION_NAME}/action.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
-    shell: bash
-    env:
-      INPUTS_ACTION_NAME: ${{ inputs.action-name }}
   - name: Generate cache key prefix
-    run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${CACHE_VERSION}-${INPUTS_ACTION_NAME}-${JOB_HASH}" >> $GITHUB_ENV
+    # Cache is keyed by action definition and target branch. Release branches
+    # (version-*) never fall back to main's cache.
+    run: |
+      JOB_HASH=$(yq . .github/actions/${INPUTS_ACTION_NAME}/action.yaml | sha256sum | cut -d' ' -f1)
+      BRANCH="${GITHUB_BASE_REF:-${GITHUB_REF_NAME}}"
+      PREFIX="${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${INPUTS_ACTION_NAME}-${JOB_HASH}"
+      echo "CACHE_KEY_PREFIX=${PREFIX}-${BRANCH}" >> $GITHUB_ENV
+      if [[ "${BRANCH}" != version-* ]]; then
+        echo "FALLBACK_CACHE_KEY_PREFIX=${PREFIX}-main" >> $GITHUB_ENV
+      fi
     shell: bash
     env:
       INPUTS_ACTION_NAME: ${{ inputs.action-name }}
@@ -25,18 +27,16 @@ runs:
     uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
     with:
       path: ~/bazel-disk-cache
-      key: ${{ format('{0}-{1}-{2}-{3}', env.CACHE_KEY_PREFIX, github.ref_name, github.sha, github.event_name) }}
+      key: ${{ format('{0}-{1}-{2}', env.CACHE_KEY_PREFIX, github.sha, github.event_name) }}
       restore-keys: |
-        ${{ format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) }}
-        ${{ format('{0}-main-', env.CACHE_KEY_PREFIX) }}
         ${{ format('{0}-', env.CACHE_KEY_PREFIX) }}
+        ${{ env.FALLBACK_CACHE_KEY_PREFIX && format('{0}-', env.FALLBACK_CACHE_KEY_PREFIX) || '' }}
   - name: Restore and save cache
     if: inputs.writable == 'true'
     uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4
     with:
       path: ~/bazel-disk-cache
-      key: ${{ format('{0}-{1}-{2}-{3}', env.CACHE_KEY_PREFIX, github.ref_name, github.sha, github.event_name) }}
+      key: ${{ format('{0}-{1}-{2}', env.CACHE_KEY_PREFIX, github.sha, github.event_name) }}
+      # Scheduled runs rebuild the cache from scratch.
       restore-keys: |
-        ${{ github.event_name == 'push' && format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) || '' }}
-        ${{ github.event_name == 'push' && format('{0}-main-', env.CACHE_KEY_PREFIX) || '' }}
         ${{ github.event_name == 'push' && format('{0}-', env.CACHE_KEY_PREFIX) || '' }}
