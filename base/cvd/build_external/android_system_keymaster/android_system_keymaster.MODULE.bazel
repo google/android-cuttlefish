@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "android_system_keymaster",
+    build_file = "@//build_external/android_system_keymaster:BUILD.android_system_keymaster.bazel",
+    commit = "f9007833c668b90f0c0f9b78808788cb86275113",
+    remote = "https://android.googlesource.com/platform/system/keymaster",
+)
