@@ -220,7 +220,7 @@
 #define CF_DEFAULTS_ENABLE_JCARD_SIMULATOR false
 
 // Streaming default parameters
-#define CF_DEFAULTS_START_WEBRTC false
+#define CF_DEFAULTS_START_WEBRTC true
 #define CF_DEFAULTS_WEBRTC_DEVICE_ID "cvd-{num}"
 #define CF_DEFAULTS_WEBRTC_ASSETS_DIR \
   cuttlefish::DefaultHostArtifactsPath("usr/share/webrtc/assets")

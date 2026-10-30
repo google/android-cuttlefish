@@ -555,6 +555,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> enable_usb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_usb));
   std::vector<bool> start_gnss_proxy_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(start_gnss_proxy));
+  std::vector<bool> start_webrtc_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(start_webrtc));
   std::vector<bool> enable_bootanimation_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_bootanimation));
 
@@ -833,6 +835,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_enable_audio(enable_audio_vec[instance_index]);
     instance.set_enable_usb(enable_usb_vec[instance_index]);
     instance.set_enable_gnss_grpc_proxy(start_gnss_proxy_vec[instance_index]);
+    instance.set_enable_webrtc(start_webrtc_vec[instance_index]);
     instance.set_enable_bootanimation(enable_bootanimation_vec[instance_index]);
 
     instance.set_extra_bootconfig_args(
