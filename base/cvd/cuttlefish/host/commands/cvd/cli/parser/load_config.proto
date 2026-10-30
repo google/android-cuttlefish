@@ -138,8 +138,29 @@ message Display {
   repeated DisplayOverlay overlays = 5;
 }
 
+message DeviceTreeOverlayArtifact {
+  // The path of the dtb, can be a file in default_build.
+  string build = 1;
+  // TODO: Support filter and select_symbols options.
+}
+
+message FileBackedMapping {
+  // The path of the backed file, can be a file in default_build, or a remote
+  // build path, e.g. `@ab/<branch>/<target>{<file path>}`.
+  string build = 1;
+  // Hexadecimal number with 0x prefix, the base address of the mapping.
+  string addr = 2;
+  // Hexadecimal number with 0x prefix, the size of the mapping.
+  string size = 3;
+  // TODO: Support offset, rw, sync, align, and ram options.
+}
+
 message DiskArtifacts {
   optional string vendor_boot = 1;
+  // The path of the ACPI file, can be a file in default_build.
+  optional string acpi_table = 2;
+  optional DeviceTreeOverlayArtifact device_tree_overlay = 3;
+  optional FileBackedMapping file_backed_mapping = 4;
 }
 
 message Disk {
