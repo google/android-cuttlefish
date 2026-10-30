@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 
+#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
@@ -24,8 +25,11 @@
 #include "absl/strings/str_split.h"
 #include "gflags/gflags.h"
 
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/result/result.h"
 
 DEFINE_string(
     vendor_boot_image, CF_DEFAULTS_VENDOR_BOOT_IMAGE,
@@ -35,18 +39,25 @@ DEFINE_string(
 namespace cuttlefish {
 
 VendorBootImageFlag VendorBootImageFlag::FromGlobalGflags(
-    const SystemImageDirFlag& system_image_dir) {
+    const SystemImageDirFlag& system_image_dir, AndroidBuilds* android_builds) {
   gflags::CommandLineFlagInfo flag_info =
       gflags::GetCommandLineFlagInfoOrDie("vendor_boot_image");
 
   std::vector<std::string> vendor_boot_images =
-      flag_info.is_default ? std::vector<std::string>{}
+      flag_info.is_default ? std::vector<std::string>(system_image_dir.Size())
                            : absl::StrSplit(FLAGS_vendor_boot_image, ',');
   std::vector<bool> is_default_values(vendor_boot_images.size(),
                                       flag_info.is_default);
-  for (int i = 0; i < is_default_values.size(); i++) {
+  for (size_t i = 0; i < is_default_values.size(); i++) {
     if (vendor_boot_images[i].empty()) {
       is_default_values[i] = true;
+      if (android_builds != nullptr && i < android_builds->Size()) {
+        if (Result<std::string> res =
+                android_builds->ForIndex(i).ImageFile("vendor_boot");
+            res.has_value()) {
+          vendor_boot_images[i] = std::move(*res);
+        }
+      }
     }
   }
 
@@ -67,7 +78,8 @@ std::string VendorBootImageFlag::VendorBootImageForIndex(size_t index) const {
 }
 
 bool VendorBootImageFlag::IsDefault() const {
-  return vendor_boot_images_.empty();
+  return std::all_of(is_default_values_.begin(), is_default_values_.end(),
+                     [](bool is_default) { return is_default; });
 }
 
 bool VendorBootImageFlag::IsDefaultForIndex(size_t index) const {

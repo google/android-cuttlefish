@@ -118,8 +118,8 @@ Result<ParsedFlags> GetParsedFlags() {
     }
     parsed_flags.super_image.emplace(
         SuperImageFlag::FromGlobalGflags(parsed_flags.system_image_dir));
-    parsed_flags.vendor_boot.emplace(
-        VendorBootImageFlag::FromGlobalGflags(parsed_flags.system_image_dir));
+    parsed_flags.vendor_boot.emplace(VendorBootImageFlag::FromGlobalGflags(
+        parsed_flags.system_image_dir, &*android_builds_result));
 
     std::vector<GuestConfig> guest_configs;
     if (parsed_flags.boot_image && parsed_flags.super_image &&

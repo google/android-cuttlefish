@@ -16,7 +16,14 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
 
+#include <functional>
+#include <set>
+#include <string>
+#include <string_view>
+#include <utility>
+
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
@@ -24,17 +31,34 @@
 namespace cuttlefish {
 
 Result<void> VbmetaEnforceMinimumSize(
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    const CuttlefishConfig::InstanceSpecific& instance,
+    AndroidBuild& android_build) {
+  const std::set<std::string, std::less<void>> logical_partitions =
+      CF_EXPECT(android_build.LogicalPartitions());
+
   // libavb expects to be able to read the maximum vbmeta size, so we must
-  // provide a partition which matches this or the read will fail
-  for (const auto& vbmeta_image :
-       {instance.vbmeta_image(), instance.new_vbmeta_image(),
-        instance.vbmeta_system_image(), instance.vbmeta_vendor_dlkm_image(),
-        instance.vbmeta_system_dlkm_image()}) {
-    // In some configurations of cuttlefish, the vendor dlkm vbmeta image does
-    // not exist
-    if (FileExists(vbmeta_image)) {
+  // provide a partition which matches this or the read will fail. Skip base
+  // vbmeta images in system_image_dir when they are logical partitions inside
+  // super.img so read-only build artifact directories are never mutated.
+  const std::pair<std::string_view, std::string> base_vbmetas[] = {
+      {"vbmeta", instance.vbmeta_image()},
+      {"vbmeta_system", instance.vbmeta_system_image()},
+      {"vbmeta_vendor_dlkm", instance.vbmeta_vendor_dlkm_image()},
+      {"vbmeta_system_dlkm", instance.vbmeta_system_dlkm_image()},
+  };
+  for (const auto& [name, vbmeta_image] : base_vbmetas) {
+    if (logical_partitions.count(name) > 0) {
+      continue;
+    }
+    if (!vbmeta_image.empty() && FileExists(vbmeta_image)) {
       CF_EXPECT(EnforceVbMetaSize(vbmeta_image));
+    }
+  }
+  for (const auto& new_vbmeta :
+       {instance.new_vbmeta_image(), instance.new_vbmeta_vendor_dlkm_image(),
+        instance.new_vbmeta_system_dlkm_image()}) {
+    if (!new_vbmeta.empty() && FileExists(new_vbmeta)) {
+      CF_EXPECT(EnforceVbMetaSize(new_vbmeta));
     }
   }
   return {};
