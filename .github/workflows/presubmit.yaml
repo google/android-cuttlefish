@@ -245,8 +245,15 @@ jobs:
       uses: ./.github/actions/bazel-9-readiness
   build-debian-package-amd64:
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        package:
+          - "container"
+          - "base"
+          - "frontend"
     steps:
     - name: Free disk space
+      if: matrix.package == 'base'
       uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
       with:
         docker-images: false
@@ -257,24 +264,36 @@ jobs:
       with:
         persist-credentials: false
     - name: Mount Bazel cache
+      if: matrix.package == 'base'
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "build-debian-packages"
     - name: Mount Bazel vendor cache
+      if: matrix.package == 'base'
       uses: ./.github/actions/mount-bazel-vendor-cache
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
-    - name: Build debs_amd64.tar
-      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_amd64.tar --null --files-from -
-    - name: Publish debs_amd64.tar
+      with:
+        package: ${{ matrix.package }}
+    - name: Build debs_amd64_${{ matrix.package }}.tar
+      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_amd64_${{ matrix.package }}.tar --null --files-from -
+    - name: Publish debs_amd64_${{ matrix.package }}.tar
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
       with:
-        name: debs_amd64
-        path: debs_amd64.tar
+        name: debs_amd64_${{ matrix.package }}
+        path: debs_amd64_${{ matrix.package }}.tar
   build-debian-package-arm64:
     runs-on: ubuntu-22.04-arm
+    strategy:
+      matrix:
+        package:
+          - "container"
+          - "base"
+          - "frontend"
+          - "cuttlefish-integration-gigabyte-arm64"
     steps:
     - name: Free disk space
+      if: matrix.package == 'base'
       uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
       with:
         docker-images: false
@@ -284,20 +303,24 @@ jobs:
       with:
         persist-credentials: false
     - name: Mount Bazel cache
+      if: matrix.package == 'base'
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "build-debian-packages"
     - name: Mount Bazel vendor cache
+      if: matrix.package == 'base'
       uses: ./.github/actions/mount-bazel-vendor-cache
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
-    - name: Build debs_arm64.tar
-      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_arm64.tar --null --files-from -
-    - name: Publish debs_arm64.tar
+      with:
+        package: ${{ matrix.package }}
+    - name: Build debs_arm64_${{ matrix.package }}.tar
+      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_arm64_${{ matrix.package }}.tar --null --files-from -
+    - name: Publish debs_arm64_${{ matrix.package }}.tar
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
       with:
-        name: debs_arm64
-        path: debs_arm64.tar
+        name: debs_arm64_${{ matrix.package }}
+        path: debs_arm64_${{ matrix.package }}.tar
   build-docker-image-amd64:
     needs: [build-debian-package-amd64]
     runs-on: ubuntu-22.04
@@ -309,11 +332,12 @@ jobs:
     - name: Download cuttlefish debs
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
       with:
-        name: debs_amd64
+        pattern: debs_amd64_*
+        merge-multiple: true
     - name: Build docker image
       shell: bash
       run: |
-        tar -xvf debs_amd64.tar
+        for t in debs_amd64_*.tar; do tar -xvf "${t}"; done
         container/image/image-builder.sh -m dev
     - name: Save docker image
       run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration:latest
@@ -333,11 +357,12 @@ jobs:
     - name: Download cuttlefish debs
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
       with:
-        name: debs_arm64
+        pattern: debs_arm64_*
+        merge-multiple: true
     - name: Build docker image
       shell: bash
       run: |
-        tar -xvf debs_arm64.tar
+        for t in debs_arm64_*.tar; do tar -xvf "${t}"; done
         container/image/image-builder.sh -m dev
     - name: Save docker image
       run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration:latest
@@ -357,13 +382,14 @@ jobs:
     - name: Download cuttlefish debs
       uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
       with:
-        name: debs_amd64
+        pattern: debs_amd64_*
+        merge-multiple: true
         github-token: ${{ github.token }}
     - name: Upgrade crun
       uses: ./.github/actions/upgrade-crun
     - name: Build image
       run: |
-        tar -xvf debs_amd64.tar
+        for t in debs_amd64_*.tar; do tar -xvf "${t}"; done
         sudo podman info
         sudo podman build -f "tools/testutils/cw/Containerfile" --tag "android-cuttlefish-e2etest:latest" .
         sudo podman save --quiet -o android-cuttlefish-e2etest.tar localhost/android-cuttlefish-e2etest

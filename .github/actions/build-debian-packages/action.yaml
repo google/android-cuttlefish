@@ -4,6 +4,8 @@ inputs:
     required: false
   image-version:
     required: false
+  package:
+    required: true
 runs:
   using: "composite"
   steps:
@@ -30,20 +32,55 @@ runs:
         IMAGE_OPT="-e container_image_name=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:${INPUTS_IMAGE_VERSION}"
       fi
 
-      # Build cuttlefish-podcvd package with Debian 13 (Trixie)
-      sudo docker build --file "tools/buildutils/cw/Containerfile" \
-        --build-arg BASE_IMAGE=mirror.gcr.io/library/debian:13 \
-        --tag "android-cuttlefish-build-trixie" .
-      sudo docker run ${IMAGE_OPT} -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build-trixie container
-
-      # Build other packages with Debian 12 (Bookworm)
-      sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .
-      # Pre-fetch git_repository deps into base/cvd/vendor_src (cached by
-      # mount-bazel-vendor-cache) so the debuild below needs no git access.
-      sudo docker run -v=$PWD:/mnt/build -w /mnt/build --entrypoint tools/buildutils/vendor_git_repos.sh android-cuttlefish-build
-      sudo docker run -v=$PWD:/mnt/build -w /mnt/build -v=$HOME/bazel-disk-cache:/root/bazel-disk-cache android-cuttlefish-build base -d /root/bazel-disk-cache
-      sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build frontend
-      sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build cuttlefish-integration-gigabyte-arm64
+      case "${INPUTS_PACKAGE}" in
+        container)
+          # Build cuttlefish-podcvd package with Debian 13 (Trixie)
+          sudo docker build \
+            --file "tools/buildutils/cw/Containerfile" \
+            --build-arg BASE_IMAGE=mirror.gcr.io/library/debian:13 \
+            --tag "android-cuttlefish-build-trixie" \
+            .
+          sudo docker run \
+            ${IMAGE_OPT} \
+            -v=$PWD:/mnt/build \
+            -w /mnt/build \
+            android-cuttlefish-build-trixie \
+            container
+          ;;
+        base)
+          # Build other packages with Debian 12 (Bookworm)
+          sudo docker build \
+            --file "tools/buildutils/cw/Containerfile" \
+            --tag "android-cuttlefish-build" \
+            .
+          # Pre-fetch git_repository deps into base/cvd/vendor_src (cached by
+          # mount-bazel-vendor-cache) so the debuild below needs no git access.
+          sudo docker run \
+            -v=$PWD:/mnt/build \
+            -w /mnt/build \
+            --entrypoint tools/buildutils/vendor_git_repos.sh \
+            android-cuttlefish-build
+          sudo docker run \
+            -v=$PWD:/mnt/build \
+            -w /mnt/build \
+            -v=$HOME/bazel-disk-cache:/root/bazel-disk-cache \
+            android-cuttlefish-build \
+            base -d /root/bazel-disk-cache
+          ;;
+        *)
+          # Build other packages with Debian 12 (Bookworm)
+          sudo docker build \
+            --file "tools/buildutils/cw/Containerfile" \
+            --tag "android-cuttlefish-build" \
+            .
+          sudo docker run \
+            -v=$PWD:/mnt/build \
+            -w /mnt/build \
+            android-cuttlefish-build \
+            "${INPUTS_PACKAGE}"
+          ;;
+      esac
     shell: bash
     env:
       INPUTS_IMAGE_VERSION: ${{ inputs.image-version }}
+      INPUTS_PACKAGE: ${{ inputs.package }}
