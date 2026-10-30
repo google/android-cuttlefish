@@ -71,7 +71,8 @@ class AdbHelper {
   bool TcpConnectorEnabled() const {
     bool vsock_tunnel = VsockTunnelEnabled();
     bool vsock_half_tunnel = VsockHalfTunnelEnabled();
-    return config_.RunConnector() && (vsock_tunnel || vsock_half_tunnel);
+    bool tcp = ModeEnabled(AdbMode::Tcp);
+    return config_.RunConnector() && (vsock_tunnel || vsock_half_tunnel || tcp);
   }
 
   bool VsockConnectorEnabled() const {

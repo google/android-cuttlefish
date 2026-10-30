@@ -58,6 +58,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:guest_renderer_preload",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config:vmm_mode",
+        "//cuttlefish/host/libs/config/adb",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/feature:inject",
         "//cuttlefish/posix:remove",

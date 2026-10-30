@@ -69,7 +69,12 @@ class AdbConfigFlagImpl : public AdbConfigFlag {
 
   Result<void> Process(std::vector<std::string>& args) override {
     // Defaults
+#ifdef __linux__
     config_.SetModes({AdbMode::VsockHalfTunnel});
+#else
+    // The vsock devices are only configured on Linux for now.
+    config_.SetModes({AdbMode::Tcp});
+#endif
     bool run_adb_connector = !IsRunningInContainer();
     Flag run_flag = GflagsCompatFlag("run_adb_connector", run_adb_connector);
     CF_EXPECT(ConsumeFlags({run_flag, mode_flag_}, args),
@@ -100,7 +105,9 @@ class AdbConfigFlagImpl : public AdbConfigFlag {
       "'vsock_tunnel' for a TCP connection tunneled through vsock, "
       "'native_vsock' for a  direct connection to the guest ADB over "
       "vsock, 'vsock_half_tunnel' for a TCP connection forwarded to "
-      "the guest ADB server, or a comma separated list of types as in "
+      "the guest ADB server, 'tcp' for a direct TCP connection to the "
+      "guest ADB through qemu user-mode networking, "
+      "or a comma separated list of types as in "
       "'native_vsock,vsock_half_tunnel'";
 
   AdbConfig& config_;

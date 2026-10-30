@@ -46,6 +46,7 @@
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
+#include "cuttlefish/host/libs/config/adb/adb.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -561,7 +562,7 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
 }
 
 Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
-    const CuttlefishConfig& config,
+    const CuttlefishConfig& config, const AdbConfig&,
     std::vector<VmmDependencyCommand*>& dependencyCommands) {
   auto instance = config.ForDefaultInstance();
   auto environment = config.ForDefaultEnvironment();

@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/config/adb/adb.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 #include "cuttlefish/result/result.h"
@@ -45,7 +46,7 @@ class QemuManager : public VmManager {
       const CuttlefishConfig::InstanceSpecific& instance) override;
 
   Result<std::vector<MonitorCommand>> StartCommands(
-      const CuttlefishConfig& config,
+      const CuttlefishConfig& config, const AdbConfig& adb_config,
       std::vector<VmmDependencyCommand*>& dependency_commands) override;
 
  private:

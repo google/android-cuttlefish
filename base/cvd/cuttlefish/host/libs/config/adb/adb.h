@@ -32,6 +32,7 @@ enum class AdbMode {
   VsockTunnel,
   VsockHalfTunnel,
   NativeVsock,
+  Tcp,
   Unknown,
 };
 

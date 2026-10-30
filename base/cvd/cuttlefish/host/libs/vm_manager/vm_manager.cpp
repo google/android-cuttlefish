@@ -27,6 +27,7 @@
 #include "absl/log/log.h"
 #include "fruit/fruit.h"
 
+#include "cuttlefish/host/libs/config/adb/adb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/inject.h"
@@ -81,12 +82,13 @@ ConfigureMultipleBootDevices(const std::string& pci_path, int disk_pci_offset,
 
 class VmmCommands : public CommandSource, public LateInjected {
  public:
-  INJECT(VmmCommands(const CuttlefishConfig& config, VmManager& vmm))
-      : config_(config), vmm_(vmm) {}
+  INJECT(VmmCommands(const CuttlefishConfig& config,
+                     const AdbConfig& adb_config, VmManager& vmm))
+      : config_(config), adb_config_(adb_config), vmm_(vmm) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
-    return vmm_.StartCommands(config_, dependencyCommands_);
+    return vmm_.StartCommands(config_, adb_config_, dependencyCommands_);
   }
 
   // SetupFeature
@@ -104,13 +106,15 @@ class VmmCommands : public CommandSource, public LateInjected {
   Result<void> ResultSetup() override { return {}; }
 
   const CuttlefishConfig& config_;
+  const AdbConfig& adb_config_;
   VmManager& vmm_;
   std::vector<VmmDependencyCommand*> dependencyCommands_;
 };
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>,
-                 VmManager>
+fruit::Component<
+    fruit::Required<const CuttlefishConfig,
+                    const CuttlefishConfig::InstanceSpecific, const AdbConfig>,
+    VmManager>
 VmManagerComponent() {
   return fruit::createComponent()
       .registerProvider([](const CuttlefishConfig& config,

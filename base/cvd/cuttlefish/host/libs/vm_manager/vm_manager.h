@@ -23,6 +23,7 @@
 #include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/utils/host_info.h"
+#include "cuttlefish/host/libs/config/adb/adb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -107,7 +108,7 @@ class VmManager {
   // command_starter function allows to customize the way vmm commands are
   // started/tracked/etc.
   virtual Result<std::vector<MonitorCommand>> StartCommands(
-      const CuttlefishConfig& config,
+      const CuttlefishConfig& config, const AdbConfig& adb_config,
       std::vector<VmmDependencyCommand*>& dependencyCommands) = 0;
 
   // Block until the restore work is finished and the guest is running. Only
@@ -121,9 +122,10 @@ class VmManager {
   }
 };
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>,
-                 VmManager>
+fruit::Component<
+    fruit::Required<const CuttlefishConfig,
+                    const CuttlefishConfig::InstanceSpecific, const AdbConfig>,
+    VmManager>
 VmManagerComponent();
 
 std::unique_ptr<VmManager> GetVmManager(VmmMode vmm, Arch arch);
