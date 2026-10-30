@@ -371,6 +371,7 @@ type Fetch struct {
 	KeepDownloadedArchives *bool                  `protobuf:"varint,5,opt,name=keep_downloaded_archives,json=keepDownloadedArchives,proto3,oneof" json:"keep_downloaded_archives,omitempty"`
 	ApiBaseUrl             *string                `protobuf:"bytes,6,opt,name=api_base_url,json=apiBaseUrl,proto3,oneof" json:"api_base_url,omitempty"`
 	ProjectId              *string                `protobuf:"bytes,7,opt,name=project_id,json=projectId,proto3,oneof" json:"project_id,omitempty"`
+	EnableCaching          *bool                  `protobuf:"varint,8,opt,name=enable_caching,json=enableCaching,proto3,oneof" json:"enable_caching,omitempty"`
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
@@ -445,6 +446,13 @@ func (x *Fetch) GetProjectId() string {
 		return *x.ProjectId
 	}
 	return ""
+}
+
+func (x *Fetch) GetEnableCaching() bool {
+	if x != nil && x.EnableCaching != nil {
+		return *x.EnableCaching
+	}
+	return false
 }
 
 type Instance struct {
@@ -2182,7 +2190,7 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"group_name\x18\x01 \x01(\tH\x00R\tgroupName\x88\x01\x01\x12&\n" +
 	"\fhost_package\x18\x02 \x01(\tH\x01R\vhostPackage\x88\x01\x01B\r\n" +
 	"\v_group_nameB\x0f\n" +
-	"\r_host_package\"\x9f\x03\n" +
+	"\r_host_package\"\xde\x03\n" +
 	"\x05Fetch\x12\x1c\n" +
 	"\aapi_key\x18\x01 \x01(\tH\x00R\x06apiKey\x88\x01\x01\x120\n" +
 	"\x11credential_source\x18\x02 \x01(\tH\x01R\x10credentialSource\x88\x01\x01\x129\n" +
@@ -2191,14 +2199,16 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\fapi_base_url\x18\x06 \x01(\tH\x04R\n" +
 	"apiBaseUrl\x88\x01\x01\x12\"\n" +
 	"\n" +
-	"project_id\x18\a \x01(\tH\x05R\tprojectId\x88\x01\x01B\n" +
+	"project_id\x18\a \x01(\tH\x05R\tprojectId\x88\x01\x01\x12*\n" +
+	"\x0eenable_caching\x18\b \x01(\bH\x06R\renableCaching\x88\x01\x01B\n" +
 	"\n" +
 	"\b_api_keyB\x14\n" +
 	"\x12_credential_sourceB\x1c\n" +
 	"\x1a_wait_retry_period_secondsB\x1b\n" +
 	"\x19_keep_downloaded_archivesB\x0f\n" +
 	"\r_api_base_urlB\r\n" +
-	"\v_project_idJ\x04\b\x04\x10\x05\"\xd7\x05\n" +
+	"\v_project_idB\x11\n" +
+	"\x0f_enable_cachingJ\x04\b\x04\x10\x05\"\xd7\x05\n" +
 	"\bInstance\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tH\x00R\x04name\x88\x01\x01\x12.\n" +
 	"\x02vm\x18\x02 \x01(\v2\x19.cuttlefish.cvd.config.VmH\x01R\x02vm\x88\x01\x01\x124\n" +
