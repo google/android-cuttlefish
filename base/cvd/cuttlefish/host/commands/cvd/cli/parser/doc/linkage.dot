@@ -7,7 +7,6 @@ common--vhost_user_mac80211_hwsim
 common--wmediumd_config
 common--enable_host_bluetooth
 common--netsim
-common--netsim_bt
 instances--vm
 instances--disk
 instances--graphics
