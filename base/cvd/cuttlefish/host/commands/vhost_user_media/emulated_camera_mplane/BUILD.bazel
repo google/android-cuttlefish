@@ -1,4 +1,4 @@
-load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@vhost_user_media_workspace_crates//:defs.bzl", "crate_deps")
 
 package(default_visibility = ["//:android_cuttlefish"])
@@ -13,37 +13,16 @@ alias(
 
 rust_binary(
     name = "emulated_camera_mplane_binary",
-    srcs = [
-        "src/capture_channel.rs",
-        "src/device.rs",
-        "src/main.rs",
-        "src/pattern/julia_set.rs",
-        "src/pattern/mod.rs",
-        "src/pattern/pulse.rs",
-        "src/pattern/smpte.rs",
-    ],
+    srcs = ["src/main.rs"],
     edition = "2024",
     deps = crate_deps([
-        "anyhow",
         "clap",
         "env_logger",
-        "libc",
         "log",
         "thiserror",
-        "v4l2r",
-        "vhost-user-backend",
-        "virtio-media",
-        "vm-memory",
-        "vmm-sys-util",
     ]) + [
-        "//cuttlefish/host/commands/vhost_user_media/vhu_media",
+        "//cuttlefish/host/commands/vhost_user_media/emulated_camera",
     ],
-)
-
-rust_test(
-    name = "emulated_camera_mplane_test",
-    crate = ":emulated_camera_mplane_binary",
-    target_compatible_with = ["@platforms//cpu:x86_64"],
 )
 
 genrule(

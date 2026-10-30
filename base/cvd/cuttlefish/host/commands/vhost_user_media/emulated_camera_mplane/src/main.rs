@@ -12,29 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! Emulated multi-planar V4L2 camera for the cuttlefish virtio-media camera HAL.
+
 use std::path::PathBuf;
-use std::sync::{Arc, RwLock};
 
 use clap::Parser;
+use emulated_camera::LensFacing;
 use thiserror::Error;
-use vhost_user_backend::VhostUserDaemon;
-use vhu_media::VhuMediaBackend;
-use virtio_media::protocol::VirtioMediaDeviceConfig;
-use vm_memory::{GuestMemoryAtomic, GuestMemoryMmap};
 
-mod device;
-mod pattern;
-mod capture_channel;
-use device::LensFacing;
+/// Name reported to the guest through `VIDIOC_QUERYCAP`.
+const CARD_NAME: &str = "emulated_camera";
 
 #[derive(Debug, Error)]
-pub(crate) enum Error {
+enum Error {
     #[error("Invalid argument: {0}")]
     InvalidArgument(String),
-    #[error("Could not create daemon: {0}")]
-    CouldNotCreateDaemon(vhost_user_backend::Error),
-    #[error("Fatal error: {0}")]
-    ServeFailed(vhost_user_backend::Error),
+    #[error(transparent)]
+    Serve(#[from] emulated_camera::Error),
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -74,53 +68,19 @@ impl TryFrom<CmdLineArgs> for Config {
     }
 }
 
-fn init_logging(verbosity: log::LevelFilter) -> Result<()> {
+fn init_logging(verbosity: log::LevelFilter) {
     env_logger::builder()
         .format_timestamp_secs()
         .filter_level(verbosity)
         .init();
-    Ok(())
-}
-
-const VFL_TYPE_VIDEO: u32 = 0;
-
-fn start_backend(config: Config) -> Result<()> {
-    let socket_path = config.socket_path.clone();
-    let mut card = [0u8; 32];
-    let card_name = "emulated_camera";
-    card[0..card_name.len()].copy_from_slice(card_name.as_bytes());
-    // When the main vm shuts down, the damon exits gracefully. Using an infinite loop to work
-    // across VMs restarts rather than having to manually start the binary again.
-    loop {
-        use virtio_media::v4l2r::ioctl::Capabilities;
-        let device_config = VirtioMediaDeviceConfig {
-            device_caps: (Capabilities::VIDEO_CAPTURE_MPLANE | Capabilities::STREAMING).bits(),
-            device_type: VFL_TYPE_VIDEO,
-            card,
-        };
-        let lens_facing = config.lens_facing;
-        let backend = Arc::new(RwLock::new(VhuMediaBackend::new(
-            device_config,
-            move |event_queue, host_mapper| {
-                crate::device::EmulatedCamera::new(event_queue, host_mapper, lens_facing)
-            },
-        )));
-        let mut daemon = VhostUserDaemon::new(
-            String::from("vhost-user-media-backend"),
-            backend,
-            GuestMemoryAtomic::new(GuestMemoryMmap::new()),
-        )
-        .map_err(Error::CouldNotCreateDaemon)?;
-        log::info!("vhost-user-media-backend daemon started");
-        daemon.serve(&socket_path).map_err(Error::ServeFailed)?;
-        log::info!("vhost-user-media-backend daemon closed gracefully");
-    }
 }
 
 fn main() -> Result<()> {
     let args = CmdLineArgs::parse();
 
-    init_logging(args.verbosity)?;
+    init_logging(args.verbosity);
 
-    start_backend(Config::try_from(args)?)
+    let config = Config::try_from(args)?;
+    emulated_camera::serve(&config.socket_path, CARD_NAME, config.lens_facing)?;
+    Ok(())
 }

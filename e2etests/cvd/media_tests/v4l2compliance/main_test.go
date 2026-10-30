@@ -30,12 +30,12 @@ func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 		{
 			branch:    "git_main",
 			target:    "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
-			mediaType: "v4l2_emulated_camera_mplane",
+			mediaType: "v4l2_emulated_camera_mplane_external",
 		},
 		{
 			branch:    "git_main-throttled-nightly",
 			target:    "aosp_cf_x86_64_auto-trunk_staging-userdebug",
-			mediaType: "v4l2_emulated_camera_mplane",
+			mediaType: "v4l2_emulated_camera_mplane_external",
 		},
 	}
 	c := e2etests.TestContext{}
