@@ -85,6 +85,9 @@ message Fetch {
   optional bool keep_downloaded_archives = 5;
   optional string api_base_url = 6;
   optional string project_id = 7;
+  // Whether `cvd fetch` keeps downloaded artifacts in its local file cache.
+  // When unset, `cvd fetch` uses its own default.
+  optional bool enable_caching = 8;
 }
 
 message Instance {
