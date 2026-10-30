@@ -1105,7 +1105,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // crosvm should create fifos for Bluetooth
     bool enable_host_bluetooth = enable_host_bluetooth_vec[instance_index];
     bool is_netsim_all = netsim_all_radios_vec[instance_index];
-    bool is_bt_netsim = true;
+    bool is_bt_netsim = !VmManagerIsQemu(tmp_config_obj) || is_netsim_all ||
+                        enable_host_bluetooth;
     // or is_bt_netsim is here for backwards compatibility only
     instance.set_has_bluetooth(enable_host_bluetooth || is_bt_netsim);
     // rootcanal and bt_connector should handle Bluetooth (instead of netsim)

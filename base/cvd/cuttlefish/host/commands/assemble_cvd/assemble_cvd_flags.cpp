@@ -105,7 +105,8 @@ DEFINE_vec(
     "to the device console and typing in \"boot\".");
 DEFINE_vec(enable_host_bluetooth,
            fmt::format("{}", CF_DEFAULTS_ENABLE_HOST_BLUETOOTH),
-           "Enable the rootcanal which is Bluetooth emulator in the host.");
+           "Enable host-side Bluetooth emulation. Always on except with "
+           "qemu, where it can be turned off.");
 DEFINE_int32(
     rootcanal_instance_num, CF_DEFAULTS_ROOTCANAL_INSTANCE_NUM,
     "If it is greater than 0, use an existing rootcanal instance which is "
