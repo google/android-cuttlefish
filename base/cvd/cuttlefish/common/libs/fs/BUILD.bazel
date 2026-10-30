@@ -25,6 +25,10 @@ cf_cc_library(
     srcs = ["fd.cc"],
     hdrs = ["fd.h"],
     include_cleaner_enabled = False,
+    linkopts = select({
+        "@platforms//os:linux": ["-lrt"],  # for shm_open
+        "//conditions:default": [],
+    }),
     deps = [
         "//cuttlefish/common/libs/fs:scoped_mmap",
         "//cuttlefish/common/libs/utils:known_paths",
@@ -53,10 +57,6 @@ cf_cc_library(
         "shared_select.h",
     ],
     include_cleaner_enabled = False,
-    linkopts = select({
-        "@platforms//os:linux": ["-lrt"],
-        "//conditions:default": [],
-    }),
     deps = [
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/posix:strerror",
