@@ -108,7 +108,6 @@
 #include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
-#include "cuttlefish/metrics/host/invoker.h"
 #include "cuttlefish/result/result.h"
 
 #define GET_FLAG_STR_VALUE(name)                                   \
@@ -904,19 +903,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     if (vhost_user_vsock_vec[instance_index] == kVhostUserVsockModeAuto) {
-      std::set<Arch> default_on_arch = {Arch::Arm64, Arch::RiscV64};
-      if (guest_configs[instance_index].vhost_user_vsock) {
-        instance.set_vhost_user_vsock(true);
-      } else if ((VmManagerIsCrosvm(tmp_config_obj) ||
-                  VmManagerIsQemu(tmp_config_obj)) &&
-                 (default_on_arch.find(
-                      guest_configs[instance_index].target_arch) !=
-                      default_on_arch.end() ||
-                  GetInvoker() == Invoker::Podcvd)) {
-        instance.set_vhost_user_vsock(true);
-      } else {
-        instance.set_vhost_user_vsock(false);
-      }
+      instance.set_vhost_user_vsock(
+          guest_configs[instance_index].vhost_user_vsock ||
+          VmManagerIsCrosvm(tmp_config_obj) || VmManagerIsQemu(tmp_config_obj));
     } else if (vhost_user_vsock_vec[instance_index] ==
                kVhostUserVsockModeTrue) {
       CF_EXPECT(
