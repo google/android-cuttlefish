@@ -213,6 +213,10 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
     auto value = fetch_config.api_base_url();
     result.emplace_back(GenerateFlag("api_base_url", std::move(value)));
   }
+  if (fetch_config.has_enable_caching()) {
+    result.emplace_back(
+        GenerateFlag("enable_caching", fetch_config.enable_caching()));
+  }
   result.emplace_back(GenerateFlag("host_package_build", host_package_build));
 
   result.emplace_back(

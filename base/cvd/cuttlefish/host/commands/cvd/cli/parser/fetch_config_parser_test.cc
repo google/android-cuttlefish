@@ -43,6 +43,7 @@ Result<std::vector<std::string>> FetchCvdParserTester(const Json::Value& root) {
 
 using ::testing::AllOf;
 using ::testing::HasSubstr;
+using ::testing::Not;
 
 TEST(FetchConfigParserTests, AndroidEfiLoaderBuildOnlySuccess) {
   const char* test_string = R""""(
@@ -411,6 +412,55 @@ TEST(FetchConfigParserTests,
 
   EXPECT_THAT(FetchCvdParserTester(json_configs),
               IsOkAndValue(std::vector<std::string>()));
+}
+
+TEST(FetchConfigParserTests, EnableCachingPassedThroughSuccess) {
+  const char* test_string = R""""(
+{
+    "fetch": {
+        "enable_caching": false
+    },
+    "instances": [
+        {
+            "disk": {
+                "default_build": "@ab/branch/target"
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  ASSERT_TRUE(ParseJsonString(json_text, json_configs));
+
+  const std::vector<std::string> flags =
+      CF_ASSERT(FetchCvdParserTester(json_configs));
+  EXPECT_TRUE(FindConfig(flags, "--enable_caching=false"));
+}
+
+TEST(FetchConfigParserTests, EnableCachingOmittedWhenUnsetSuccess) {
+  const char* test_string = R""""(
+{
+    "instances": [
+        {
+            "disk": {
+                "default_build": "@ab/branch/target"
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  ASSERT_TRUE(ParseJsonString(json_text, json_configs));
+
+  const std::vector<std::string> flags =
+      CF_ASSERT(FetchCvdParserTester(json_configs));
+  for (const std::string& flag : flags) {
+    EXPECT_THAT(flag, Not(HasSubstr("enable_caching")));
+  }
 }
 
 }  // namespace cuttlefish
