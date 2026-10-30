@@ -30,7 +30,7 @@ namespace cuttlefish {
 InMemoryIo::InMemoryIo(std::vector<char>& data, std::shared_mutex& mutex)
     : data_(data), mutex_(mutex) {}
 
-Result<uint64_t> InMemoryIo::Read(void* buf, uint64_t count) {
+Result<uint64_t, int> InMemoryIo::Read(void* buf, uint64_t count) {
   std::lock_guard lock(mutex_);
   uint64_t to_read = ClampRange(cursor_, count);
   if (to_read > 0) {
@@ -72,8 +72,8 @@ Result<uint64_t, int> InMemoryIo::SeekEnd(int64_t offset) {
   return cursor_ = new_pos;
 }
 
-Result<uint64_t> InMemoryIo::PRead(void* buf, uint64_t count,
-                                   uint64_t offset) const {
+Result<uint64_t, int> InMemoryIo::PRead(void* buf, uint64_t count,
+                                        uint64_t offset) const {
   std::shared_lock lock(mutex_);
   uint64_t to_read = ClampRange(offset, count);
   if (to_read > 0) {

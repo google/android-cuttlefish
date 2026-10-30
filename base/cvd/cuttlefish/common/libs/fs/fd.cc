@@ -804,20 +804,23 @@ ssize_t Fd::RecvMsg(struct msghdr* msg, int flags) {
   return TEMP_FAILURE_RETRY(recvmsg(fd_, msg, flags));
 }
 
-Result<uint64_t> Fd::Read(void* buf, uint64_t count) {
+Result<uint64_t, int> Fd::Read(void* buf, uint64_t count) {
   LocalErrno record_errno(errno_);
 
   ssize_t res = TEMP_FAILURE_RETRY(read(fd_, buf, count));
-  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError());
+  CF_EXPECTVF(res >= 0, errno, "Read(..., {}) error: {}", count,
+              ::cuttlefish::StrError());
 
   return static_cast<uint64_t>(res);
 }
 
-Result<uint64_t> Fd::PRead(void* buf, uint64_t count, uint64_t offset) const {
+Result<uint64_t, int> Fd::PRead(void* buf, uint64_t count,
+                                uint64_t offset) const {
   LocalErrno record_errno(const_cast<int&>(errno_));
 
   ssize_t res = TEMP_FAILURE_RETRY(pread(fd_, buf, count, offset));
-  CF_EXPECT_GE(res, 0, ::cuttlefish::StrError());
+  CF_EXPECTVF(res >= 0, errno, "PRead(..., {}, {}) error: {}", count, offset,
+              ::cuttlefish::StrError());
 
   return static_cast<uint64_t>(res);
 }

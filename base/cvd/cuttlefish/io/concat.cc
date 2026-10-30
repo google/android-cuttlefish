@@ -15,6 +15,7 @@
 
 #include "cuttlefish/io/concat.h"
 
+#include <errno.h>
 #include <stdint.h>
 
 #include <map>
@@ -42,12 +43,12 @@ Result<void> ConcatReaderSeeker::Visit(IoVisitor& visitor) {
   return {};
 }
 
-Result<uint64_t> ConcatReaderSeeker::PRead(void* buf, uint64_t count,
-                                           uint64_t offset) const {
+Result<uint64_t, int> ConcatReaderSeeker::PRead(void* buf, uint64_t count,
+                                                uint64_t offset) const {
   auto it = off_to_reader_.upper_bound(offset);
-  CF_EXPECT(it != off_to_reader_.begin(), "Could not find first reader");
+  CF_EXPECTV(it != off_to_reader_.begin(), EIO, "Could not find first reader");
   it--;
-  CF_EXPECT(it->second.get());
+  CF_EXPECTV(it->second.get(), EIO, "Reader was null");
   // Relies on callees to cut short longer reads, and on callers to retry
   // incomplete reads.
   uint64_t segment_begin = offset - it->first;

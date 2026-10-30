@@ -25,11 +25,11 @@
 
 namespace cuttlefish {
 
-Result<uint64_t> FakePRead(ReaderSeeker& reader_seeker, void* buf,
-                           uint64_t count, uint64_t offset) {
+Result<uint64_t, int> FakePRead(ReaderSeeker& reader_seeker, void* buf,
+                                uint64_t count, uint64_t offset) {
   size_t original_offset = CF_EXPECT(reader_seeker.SeekCur(0));
   CF_EXPECT(reader_seeker.SeekSet(offset));
-  Result<uint64_t> read_res = reader_seeker.Read(buf, count);
+  Result<uint64_t, int> read_res = reader_seeker.Read(buf, count);
   CF_EXPECT(reader_seeker.SeekSet(original_offset));
   return CF_EXPECT(std::move(read_res));
 }

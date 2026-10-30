@@ -96,7 +96,7 @@ class ZipSourceAsReaderSeekerImpl : public ReaderSeeker {
     return {};
   }
 
-  Result<uint64_t> Read(void* buf, uint64_t size) override {
+  Result<uint64_t, int> Read(void* buf, uint64_t size) override {
     return CF_EXPECT(reader_.Read(buf, size));
   }
 
@@ -112,8 +112,8 @@ class ZipSourceAsReaderSeekerImpl : public ReaderSeeker {
     return CF_EXPECT(reader_.SeekEnd(offset));
   }
 
-  Result<uint64_t> PRead(void* buf, uint64_t count,
-                         uint64_t offset) const override {
+  Result<uint64_t, int> PRead(void* buf, uint64_t count,
+                              uint64_t offset) const override {
     return CF_EXPECT(reader_.PRead(buf, count, offset));
   }
 
@@ -174,7 +174,8 @@ Result<uint64_t, int> SeekingZipSourceReader::SeekEnd(int64_t offset) {
   return CF_EXPECT(Seek(offset, SEEK_END));
 }
 
-Result<uint64_t> SeekingZipSourceReader::Read(void* data, uint64_t length) {
+Result<uint64_t, int> SeekingZipSourceReader::Read(void* data,
+                                                   uint64_t length) {
   return CF_EXPECT(ZipSourceReader::Read(data, length));
 }
 
@@ -198,8 +199,8 @@ Result<uint64_t, int> SeekingZipSourceReader::Seek(int64_t offset, int whence) {
   return tell;
 }
 
-Result<uint64_t> SeekingZipSourceReader::PRead(void* buf, uint64_t count,
-                                               uint64_t offset) const {
+Result<uint64_t, int> SeekingZipSourceReader::PRead(void* buf, uint64_t count,
+                                                    uint64_t offset) const {
   auto& non_const = const_cast<SeekingZipSourceReader&>(*this);
   std::lock_guard lock(non_const.mutex_);
   return CF_EXPECT(FakePRead(non_const, buf, count, offset));

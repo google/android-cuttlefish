@@ -29,8 +29,8 @@ class ReadWindowView;
 class ReaderSeeker : public Reader, public Seeker {
  public:
   // Has the semantics of pread(2)
-  virtual Result<uint64_t> PRead(void* buf, uint64_t count,
-                                 uint64_t offset) const = 0;
+  virtual Result<uint64_t, int> PRead(void* buf, uint64_t count,
+                                      uint64_t offset) const = 0;
 };
 
 }  // namespace cuttlefish
