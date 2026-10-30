@@ -385,9 +385,9 @@ cf_cc_library(
     srcs = ["log_string_to_dir.cc"],
     hdrs = ["log_string_to_dir.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],

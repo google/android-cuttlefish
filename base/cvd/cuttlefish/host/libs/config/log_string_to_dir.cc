@@ -25,9 +25,8 @@
 #include "absl/strings/str_cat.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -36,7 +35,7 @@ Result<void> LogStringToDir(const CuttlefishConfig::InstanceSpecific& instance,
                             std::string_view name, std::string_view contents) {
   std::string file = instance.PerInstanceLogPath(name);
 
-  Result<SharedFD> fd_res = Fd::Open(file, O_CREAT | O_EXCL | O_RDWR, 0644);
+  Result<Fd> fd_res = Fd::Open(file, O_CREAT | O_EXCL | O_RDWR, 0644);
   for (size_t counter = 1; !fd_res.has_value(); counter++) {
     CF_EXPECT_LT(counter, 100);
 
@@ -44,8 +43,8 @@ Result<void> LogStringToDir(const CuttlefishConfig::InstanceSpecific& instance,
     fd_res = Fd::Open(file, O_CREAT | O_EXCL | O_RDWR, 0644);
   }
 
-  SharedFD fd = CF_EXPECT(std::move(fd_res));
-  CF_EXPECT_EQ(WriteAll(fd, contents), contents.size(), fd->StrError());
+  Fd fd = CF_EXPECT(std::move(fd_res));
+  CF_EXPECT(WriteExact(fd, contents));
 
   return {};
 }
