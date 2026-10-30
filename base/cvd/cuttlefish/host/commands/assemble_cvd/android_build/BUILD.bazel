@@ -236,7 +236,12 @@ cf_cc_library(
     hdrs = ["super_image.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/host/libs/image_aggregator:sparse_image",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/pretty:map",
         "//cuttlefish/pretty:result",
         "//cuttlefish/pretty:set",
@@ -244,6 +249,25 @@ cf_cc_library(
         "//cuttlefish/pretty:unique_ptr",
         "//cuttlefish/pretty/liblp",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@android_system_core//:liblp",
+        "@android_system_core//:libsparse",
+        "@android_system_libbase//:unique_fd",
+    ],
+)
+
+cf_cc_test(
+    name = "super_image_test",
+    srcs = ["super_image_test.cc"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:fake_android_build",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:super_image",
+        "//cuttlefish/host/libs/image_aggregator:sparse_image",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
         "@abseil-cpp//absl/strings",
         "@android_system_core//:liblp",
     ],

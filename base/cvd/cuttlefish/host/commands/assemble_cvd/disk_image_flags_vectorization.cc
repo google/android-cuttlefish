@@ -251,15 +251,21 @@ Result<void> DiskImageFlagsVectorization(
     }
 
     // We will need to rebuild vendor_dlkm if custom ramdisk is specified, as a
-    // result super image would need to be rebuilt as well.
-    if (CF_EXPECT(SuperImageNeedsRebuilding(
-            fetcher_configs.ForInstance(instance_index),
-            const_instance.default_target_zip(),
-            const_instance.system_target_zip())) ||
-        has_initramfs) {
+    // result super image would need to be rebuilt as well. A custom kernel also
+    // requires a per-instance super.img path if boot is a logical partition
+    // (CreateDynamicDiskFiles only materializes it when needed).
+    const bool rebuild_super = CF_EXPECT(
+        SuperImageNeedsRebuilding(fetcher_configs.ForInstance(instance_index),
+                                  const_instance.default_target_zip(),
+                                  const_instance.system_target_zip()));
+    const bool repack_kernel_for_boot =
+        has_kernel && !VmManagerIsGem5(config.vm_manager());
+    if (rebuild_super || has_initramfs || repack_kernel_for_boot) {
       const std::string new_super_image_path =
           const_instance.PerInstancePath("super.img");
       instance.set_new_super_image(new_super_image_path);
+    }
+    if (rebuild_super || has_initramfs) {
       const std::string new_vbmeta_image_path =
           const_instance.PerInstancePath("os_vbmeta.img");
       instance.set_new_vbmeta_image(new_vbmeta_image_path);
