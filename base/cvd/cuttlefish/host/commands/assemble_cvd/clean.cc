@@ -93,6 +93,7 @@ Result<void> CleanPriorFiles(const std::string& path,
   return {};
 }
 
+#ifdef __linux__
 Result<std::vector<pid_t>> GetPidsUsingFiles(
     const std::set<std::string>& prior_dirs,
     const std::set<std::string>& prior_files) {
@@ -144,6 +145,7 @@ Result<std::vector<pid_t>> GetPidsUsingFiles(
 
   return pids_in_use;
 }
+#endif
 
 Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
                              const std::set<std::string>& preserving) {
@@ -163,7 +165,9 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
   VLOG(0) << fmt::format("Prior dirs: {}", fmt::join(prior_dirs, ", "));
   VLOG(0) << fmt::format("Prior files: {}", fmt::join(prior_files, ", "));
 
+#ifdef __linux__
   // TODO(schuffelen): Fix logic for host-sandboxing mode.
+  // TODO: Other platforms skip this check; implement alternative.
   if (!InSandbox() && (!prior_dirs.empty() || !prior_files.empty())) {
     auto pids = CF_EXPECT(GetPidsUsingFiles(prior_dirs, prior_files));
     CF_EXPECTF(
@@ -171,6 +175,7 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
         "Instance directory files in use. Try `cvd reset`? Observed PIDs: {}",
         fmt::join(pids, ", "));
   }
+#endif
 
   for (const auto& path : paths) {
     CF_EXPECT(CleanPriorFiles(path, preserving),
