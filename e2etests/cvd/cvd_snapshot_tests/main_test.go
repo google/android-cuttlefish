@@ -52,7 +52,6 @@ func TestCvdSnapshot(t *testing.T) {
 					"--enable_virtiofs=false",
 					"--enable_usb=false",
 					"--snapshot_compatible=true",
-					"--vhost_user_vsock=true",
 				},
 			})
 			if err != nil {
