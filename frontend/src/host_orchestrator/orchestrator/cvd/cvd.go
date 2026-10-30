@@ -113,15 +113,22 @@ func (cli *CLI) Create(selector GroupSelector, createOpts CreateOptions, startOp
 type LoadOpts struct {
 	BuildAPIBaseURL string
 	Credentials     FetchCredentials
+	// DisableFetchCaching stops `cvd fetch` from keeping downloaded artifacts
+	// in its local file cache.
+	DisableFetchCaching bool
 }
 
-// Create and start a new instance group from environment configuration file
-func (cli *CLI) Load(configPath string, opts LoadOpts) (*Group, error) {
+// loadCmd returns the `cvd load` command for configPath and opts. When it
+// passes access token credentials, the read end of the pipe that carries them
+// is in cmd.ExtraFiles, and the caller closes it once the command has run.
+func (cli *CLI) loadCmd(configPath string, opts LoadOpts) (*exec.Cmd, error) {
 	args := []string{"load", configPath}
 	if opts.BuildAPIBaseURL != "" {
 		args = append(args, fmt.Sprintf("--override=fetch.api_base_url:%s", opts.BuildAPIBaseURL))
 	}
-
+	if opts.DisableFetchCaching {
+		args = append(args, "--override=fetch.enable_caching:false")
+	}
 	cmd := cli.buildCmd(CVDBin, args...)
 
 	if opts.Credentials.UseGCEServiceAccountCredentials {
@@ -131,7 +138,6 @@ func (cli *CLI) Load(configPath string, opts LoadOpts) (*Group, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer file.Close()
 		// This is necessary for the subprocess to inherit the file.
 		cmd.ExtraFiles = append(cmd.ExtraFiles, file)
 		// The actual fd number is not retained, the lowest available number is used instead.
@@ -139,6 +145,20 @@ func (cli *CLI) Load(configPath string, opts LoadOpts) (*Group, error) {
 		// TODO(b/401592023) Use --credential_filepath when cvd load supports it
 		cmd.Args = append(cmd.Args, fmt.Sprintf("--credential_source=/proc/self/fd/%d", fd))
 	}
+	return cmd, nil
+}
+
+// Create and start a new instance group from environment configuration file
+func (cli *CLI) Load(configPath string, opts LoadOpts) (*Group, error) {
+	cmd, err := cli.loadCmd(configPath, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		for _, f := range cmd.ExtraFiles {
+			f.Close()
+		}
+	}()
 
 	out, err := cli.runCmd(cmd)
 	if err != nil {

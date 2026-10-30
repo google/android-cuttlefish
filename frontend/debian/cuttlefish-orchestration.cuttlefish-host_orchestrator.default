@@ -28,3 +28,9 @@ orchestrator_cvd_artifacts_dir=/var/lib/cuttlefish-common
 # Indicates whether to use the GCE metadata to get the Build API credentials.
 # Defaults to false.
 # build_api_credentials_use_gce_metadata=
+#
+# Stops `cvd fetch` from keeping downloaded artifacts in its local file cache.
+# Hosts with a shared download cache can set this to true to avoid a second
+# copy of every artifact per user.
+# Defaults to false.
+# orchestrator_disable_cvd_fetch_caching=

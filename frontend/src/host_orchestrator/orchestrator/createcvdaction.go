@@ -36,6 +36,7 @@ type CreateCVDActionOpts struct {
 	UserArtifactsDirResolver UserArtifactsDirResolver
 	FetchCredentials         cvd.FetchCredentials
 	BuildAPIBaseURL          string
+	DisableFetchCaching      bool
 }
 
 type CreateCVDAction struct {
@@ -47,6 +48,7 @@ type CreateCVDAction struct {
 	cvdCLI           *cvd.CLI
 	fetchCredentials cvd.FetchCredentials
 	buildAPIBaseURL  string
+	disableCaching   bool
 }
 
 func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
@@ -58,6 +60,7 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		om:               opts.OperationManager,
 		fetchCredentials: opts.FetchCredentials,
 		buildAPIBaseURL:  opts.BuildAPIBaseURL,
+		disableCaching:   opts.DisableFetchCaching,
 		execContext:      execCtx,
 		cvdCLI:           cvd.NewCLI(execCtx),
 	}
@@ -98,8 +101,9 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 		return nil, err
 	}
 	opts := cvd.LoadOpts{
-		BuildAPIBaseURL: a.buildAPIBaseURL,
-		Credentials:     a.fetchCredentials,
+		BuildAPIBaseURL:     a.buildAPIBaseURL,
+		Credentials:         a.fetchCredentials,
+		DisableFetchCaching: a.disableCaching,
 	}
 	group, err := a.cvdCLI.Load(configFile.Name(), opts)
 	if err != nil {
