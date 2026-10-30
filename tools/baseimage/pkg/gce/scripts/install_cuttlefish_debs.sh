@@ -25,8 +25,11 @@ arch=$(uname -m)
 [ "${arch}" = "x86_64" ] && arch=amd64
 [ "${arch}" = "aarch64" ] && arch=arm64
 
-kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -l | grep '^ii' | \
-  awk '{print $2}' | grep '^linux-image-[0-9]' | head -n1 | sed 's/linux-image-//')
+query_kmodver() {
+  sudo chroot /mnt/image/ /usr/bin/dpkg -l | grep '^ii' | \
+    awk '{print $2}' | grep '^linux-image-[0-9]' | sort -V | tail -n1 | sed 's/linux-image-//'
+}
+kmodver_begin=$(query_kmodver)
 echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
 
 # Make sure we don't update the kernel image or headers during this process
@@ -47,8 +50,7 @@ do
   sudo chroot /mnt/image /usr/bin/apt install -y "/tmp/install/${name}"
 done
 
-kmodver_end=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
-  cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
+kmodver_end=$(query_kmodver)
 echo "IMAGE ENDS WITH KERNEL: ${kmodver_end}"
 
 if [ "${kmodver_begin}" != "${kmodver_end}" ]; then
