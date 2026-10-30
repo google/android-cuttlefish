@@ -26,8 +26,7 @@
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -47,13 +46,9 @@ template <typename Comp>
 Result<void> GenericWriteKeyEqualsValue(
     const std::map<std::string, std::string, Comp>& key_equals_value,
     const std::string& path) {
-  SharedFD output = CF_EXPECT(Fd::Creat(path, 0644));
-
-  std::string serialized = SerializeKeyEqualsValue(key_equals_value);
-
-  CF_EXPECTF(WriteAll(output, serialized) == serialized.size(),
-             "Failed to write to '{}': '{}'", path, output->StrError());
-
+  Fd output = CF_EXPECT(Fd::Creat(path, 0644));
+  CF_EXPECTF(WriteExact(output, SerializeKeyEqualsValue(key_equals_value)),
+             "Failed to write to '{}'", path);
   return {};
 }
 

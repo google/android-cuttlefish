@@ -394,7 +394,6 @@ cf_cc_library(
     srcs = ["oauth2_consent.cpp"],
     hdrs = ["oauth2_consent.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
@@ -405,6 +404,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_json",
         "//cuttlefish/host/libs/web/http_client:url_escape",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/process:execute",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",

@@ -44,6 +44,7 @@
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
@@ -136,12 +137,9 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
     // https://crrev.com/7447dbd20aee11809e89e04bb2fcb2a1476febe1/tpm2-simulator/tpm_executor_ti50_impl.cc#171
     sleep(1);
 
-    SharedFD cl = SharedFD::SocketLocalClient(gpio_sock, false, SOCK_STREAM);
-    if (!cl->IsOpen()) {
-      return CF_ERR("Failed to connect to gpioPltRst");
-    }
-    uint64_t written = CF_EXPECT(cl->Write("1", 1));
-    CF_EXPECT_EQ(written, 1);
+    Fd cl = CF_EXPECT(Fd::SocketLocalClient(gpio_sock, false, SOCK_STREAM),
+                      "Failed to connect to gpioPltRst");
+    CF_EXPECT(WriteExact(cl, "1"));
 
     LOG(INFO) << "ti50 emulator: reset GPIO!";
     return {};
@@ -157,10 +155,9 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
     return CF_ERR("Cannot start the ti50 emulator outside of Linux.");
 #endif
 
-    auto cl = SharedFD::SocketLocalClient(fifo_sock, false, SOCK_STREAM);
-    if (!cl->IsOpen()) {
-      return CF_ERR("Failed to connect to direct_tpm_fifo");
-    }
+    SharedFD cl =
+        CF_EXPECT(Fd::SocketLocalClient(fifo_sock, false, SOCK_STREAM),
+                  "Failed to connect to direct_tpm_fifo");
 
     const uint32_t kMaxRetryCount = 5;
     // TPM2_Startup command with SU_CLEAR
@@ -171,8 +168,7 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
                                          0x0a, 0x00, 0x00, 0x00, 0x00};
     ssize_t expected_response_size = sizeof(kExpectedResponse);
     for (int i = 0; i < kMaxRetryCount; i++) {
-      CF_EXPECT_EQ(WriteAll(cl, (char*)kTpm2StartupCmd, cmd_size), cmd_size,
-                   "failed to write TPM2_startup command");
+      CF_EXPECT(WriteExact(*cl, (char*)kTpm2StartupCmd, cmd_size));
 
       // Read a response.
       // First, read a 2-byte tag and 4-byte size.
