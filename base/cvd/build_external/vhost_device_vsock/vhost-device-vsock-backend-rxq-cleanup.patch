@@ -1,5 +1,5 @@
 diff --git a/vhost-device-vsock/src/thread_backend.rs b/vhost-device-vsock/src/thread_backend.rs
-index 6921591..3362d98 100644
+index 3d71d58..41662be 100644
 --- a/vhost-device-vsock/src/thread_backend.rs
 +++ b/vhost-device-vsock/src/thread_backend.rs
 @@ -265,14 +265,15 @@ impl VsockThreadBackend {
@@ -35,7 +35,7 @@ index 6921591..3362d98 100644
          Ok(())
      }
  
-@@ -582,13 +587,38 @@ mod tests {
+@@ -590,13 +595,38 @@ mod tests {
          packet.set_op(VSOCK_OP_REQUEST);
          vtp.send_pkt(&packet).unwrap();
  
@@ -76,10 +76,10 @@ index 6921591..3362d98 100644
          // TODO: it is a nop for now
          vtp.enq_rst();
 diff --git a/vhost-device-vsock/src/vhu_vsock_thread.rs b/vhost-device-vsock/src/vhu_vsock_thread.rs
-index e413954..7d3e260 100644
+index 74b05e8..4582921 100644
 --- a/vhost-device-vsock/src/vhu_vsock_thread.rs
 +++ b/vhost-device-vsock/src/vhu_vsock_thread.rs
-@@ -437,6 +437,9 @@ impl VhostUserVsockThread {
+@@ -451,6 +451,9 @@ impl VhostUserVsockThread {
                              if cnt > 0 {
                                  conn.fwd_cnt += Wrapping(cnt as u32);
                                  conn.rx_queue.enqueue(RxOps::CreditUpdate);
@@ -89,7 +89,7 @@ index e413954..7d3e260 100644
                              } else {
                                  // If no remaining data to flush, try to disable EPOLLOUT
                                  if Self::epoll_modify(epoll_fd, fd, epoll::Events::EPOLLIN).is_err()
-@@ -444,9 +447,6 @@ impl VhostUserVsockThread {
+@@ -458,9 +461,6 @@ impl VhostUserVsockThread {
                                      error!("Failed to disable EPOLLOUT");
                                  }
                              }

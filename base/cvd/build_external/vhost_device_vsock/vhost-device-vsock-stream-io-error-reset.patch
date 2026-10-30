@@ -1,5 +1,5 @@
 diff --git a/vhost-device-vsock/src/thread_backend.rs b/vhost-device-vsock/src/thread_backend.rs
-index 3362d98..8284efe 100644
+index 41662be..82b73ca 100644
 --- a/vhost-device-vsock/src/thread_backend.rs
 +++ b/vhost-device-vsock/src/thread_backend.rs
 @@ -275,7 +275,7 @@ impl VsockThreadBackend {
@@ -27,10 +27,10 @@ index 3362d98..8284efe 100644
          }
  
 diff --git a/vhost-device-vsock/src/vhu_vsock_thread.rs b/vhost-device-vsock/src/vhu_vsock_thread.rs
-index 5cd18e0..a3e7e31 100644
+index 047b980..bfc5c9b 100644
 --- a/vhost-device-vsock/src/vhu_vsock_thread.rs
 +++ b/vhost-device-vsock/src/vhu_vsock_thread.rs
-@@ -453,6 +453,18 @@ impl VhostUserVsockThread {
+@@ -467,6 +467,18 @@ impl VhostUserVsockThread {
                          }
                          Err(e) => {
                              log::debug!("Error: {e:?}");

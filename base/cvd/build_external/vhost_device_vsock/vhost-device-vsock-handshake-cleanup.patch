@@ -1,8 +1,8 @@
 diff --git a/vhost-device-vsock/src/vhu_vsock_thread.rs b/vhost-device-vsock/src/vhu_vsock_thread.rs
-index 7d3e260..5cd18e0 100644
+index 4582921..047b980 100644
 --- a/vhost-device-vsock/src/vhu_vsock_thread.rs
 +++ b/vhost-device-vsock/src/vhu_vsock_thread.rs
-@@ -375,10 +375,6 @@ impl VhostUserVsockThread {
+@@ -389,10 +389,6 @@ impl VhostUserVsockThread {
                  self.thread_backend.listener_map.entry(fd)
              {
                  // New connection from the host
@@ -13,7 +13,7 @@ index 7d3e260..5cd18e0 100644
                  let mut stream = match self.thread_backend.stream_map.remove(&fd) {
                      Some(s) => s,
                      None => {
-@@ -386,6 +382,11 @@ impl VhostUserVsockThread {
+@@ -400,6 +396,11 @@ impl VhostUserVsockThread {
                          return;
                      }
                  };
@@ -25,7 +25,7 @@ index 7d3e260..5cd18e0 100644
  
                  match stream {
                      #[cfg(feature = "backend_vsock")]
-@@ -398,6 +399,7 @@ impl VhostUserVsockThread {
+@@ -412,6 +413,7 @@ impl VhostUserVsockThread {
                              Ok(port) => port,
                              Err(err) => {
                                  warn!("Error while parsing \"connect PORT\n\" command: {err:?}");
@@ -33,7 +33,7 @@ index 7d3e260..5cd18e0 100644
                                  return;
                              }
                          };
-@@ -407,6 +409,7 @@ impl VhostUserVsockThread {
+@@ -421,6 +423,7 @@ impl VhostUserVsockThread {
                              Ok(lp) => lp,
                              Err(err) => {
                                  warn!("Error while allocating local port: {err:?}");
@@ -41,7 +41,7 @@ index 7d3e260..5cd18e0 100644
                                  return;
                              }
                          };
-@@ -459,8 +462,13 @@ impl VhostUserVsockThread {
+@@ -473,8 +476,13 @@ impl VhostUserVsockThread {
                  // established with the guest
                  Self::epoll_unregister(self.epoll_file.as_raw_fd(), fd).unwrap();
  
@@ -57,7 +57,7 @@ index 7d3e260..5cd18e0 100644
                  self.thread_backend
                      .backend_rxq
                      .push_back(ConnMapKey::new(conn.local_port, conn.peer_port));
-@@ -1007,6 +1015,15 @@ mod tests {
+@@ -1085,6 +1093,15 @@ mod tests {
  
          t.mem = Some(mem.clone());
  

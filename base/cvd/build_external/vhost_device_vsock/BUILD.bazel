@@ -1,6 +1,5 @@
 exports_files([
     "vhost-device-vsock-backend-rxq-cleanup.patch",
     "vhost-device-vsock-handshake-cleanup.patch",
-    "vhost-device-vsock-snapshot.patch",
     "vhost-device-vsock-stream-io-error-reset.patch",
 ])

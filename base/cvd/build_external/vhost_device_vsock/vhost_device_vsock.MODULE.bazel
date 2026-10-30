@@ -5,7 +5,7 @@ vhost_device_vsock_crates.spec(
     git = "https://github.com/rust-vmm/vhost-device.git",
     package = "vhost-device-vsock",
     repositories = ["vhost_device_vsock_crates"],
-    rev = "c0bfee92d28ffa7199ebe894c16d877a6f216fc3",
+    rev = "ec31e650e4f6c9d903487c4267fe5b5411b638b8",
 )
 
 vhost_device_vsock_crates.annotation(
@@ -15,7 +15,6 @@ vhost_device_vsock_crates.annotation(
     patches = [
         "@//build_external/vhost_device_vsock:vhost-device-vsock-backend-rxq-cleanup.patch",
         "@//build_external/vhost_device_vsock:vhost-device-vsock-handshake-cleanup.patch",
-        "@//build_external/vhost_device_vsock:vhost-device-vsock-snapshot.patch",
         "@//build_external/vhost_device_vsock:vhost-device-vsock-stream-io-error-reset.patch",
     ],
     repositories = ["vhost_device_vsock_crates"],
