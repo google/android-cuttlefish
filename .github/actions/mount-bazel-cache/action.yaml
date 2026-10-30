@@ -8,15 +8,16 @@ inputs:
 runs:
   using: "composite"
   steps:
-  - name: Load cache config
-    run: |
-      cat .config/cache-config.env >> $GITHUB_ENV
-      echo "JOB_HASH=$(yq . .github/actions/${INPUTS_ACTION_NAME}/action.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+  - name: Generate job hash
+    # Hash of the consuming action definition: any change to the build steps
+    # starts a fresh cache. To force a reset without touching the action, use
+    # `gh cache delete` or the Actions cache UI.
+    run: echo "JOB_HASH=$(yq . .github/actions/${INPUTS_ACTION_NAME}/action.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
     shell: bash
     env:
       INPUTS_ACTION_NAME: ${{ inputs.action-name }}
   - name: Generate cache key prefix
-    run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${CACHE_VERSION}-${INPUTS_ACTION_NAME}-${JOB_HASH}" >> $GITHUB_ENV
+    run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${INPUTS_ACTION_NAME}-${JOB_HASH}" >> $GITHUB_ENV
     shell: bash
     env:
       INPUTS_ACTION_NAME: ${{ inputs.action-name }}
