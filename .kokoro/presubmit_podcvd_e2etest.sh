@@ -74,11 +74,6 @@ fi
 echo "Packages found in ${PKGS_DIR}:"
 echo "${debs}"
 
-sudo apt update
-
-# environment variable and options to force answer prompts
-sudo DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -y
-
 # realpath .kokoro/..
 REPO_DIR="$(realpath "$(dirname "$0")"/..)"
 TOOL_DIR="${REPO_DIR}/tools"
@@ -88,7 +83,12 @@ if [[ "${config}" == "${CONFIG_PODCVD_WITH_GPU}" ]]; then
   sudo curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey -o /etc/apt/keyrings/nvidia-container-toolkit.asc
   sudo curl -sL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list -o /etc/apt/sources.list.d/nvidia-container-toolkit.list
   sudo sed -i 's#deb https://#deb [signed-by=/etc/apt/keyrings/nvidia-container-toolkit.asc] https://#g' /etc/apt/sources.list.d/nvidia-container-toolkit.list
-  sudo apt update
+  # Only refresh the NVIDIA source just added above, leave the rest of the
+  # package index untouched.
+  sudo apt-get update \
+    -o Dir::Etc::sourcelist=/etc/apt/sources.list.d/nvidia-container-toolkit.list \
+    -o Dir::Etc::sourceparts=- \
+    -o APT::Get::List-Cleanup=0
   sudo apt-get install -y nvidia-container-toolkit
 fi
 
