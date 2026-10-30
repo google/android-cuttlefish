@@ -33,6 +33,7 @@
 #include "vulkan/vulkan.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/host/libs/config/adb/adb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -316,7 +317,8 @@ Gem5Manager::ConfigureBootDevices(
 }
 
 Result<std::vector<MonitorCommand>> Gem5Manager::StartCommands(
-    const CuttlefishConfig& config, std::vector<VmmDependencyCommand*>&) {
+    const CuttlefishConfig& config, const AdbConfig&,
+    std::vector<VmmDependencyCommand*>&) {
   auto instance = config.ForDefaultInstance();
 
   std::string gem5_binary = instance.gem5_binary_dir();

@@ -32,6 +32,7 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "fmt/format.h"
 #include "vulkan/vulkan.h"
@@ -42,6 +43,7 @@
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/host/libs/config/adb/adb.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -229,10 +231,13 @@ QemuManager::ConfigureBootDevices(
 }
 
 Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
-    const CuttlefishConfig& config,
+    const CuttlefishConfig& config, const AdbConfig& adb_config,
     std::vector<VmmDependencyCommand*>& dependency_commands) {
   std::vector<MonitorCommand> commands;
   auto instance = config.ForDefaultInstance();
+  const bool adb_over_nic =
+      instance.external_network_mode() == ExternalNetworkMode::kSlirp &&
+      adb_config.Modes().count(AdbMode::Tcp) > 0;
   std::string qemu_binary = instance.qemu_binary_dir();
   switch (arch_) {
     case Arch::Arm:
@@ -825,6 +830,12 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
         qemu_cmd.AddParameter("-netdev");
         qemu_cmd.AddParameter("user,id=hostnet2,net=10.0.2.1/24,dns=1.1.1.1");
       }
+      if (adb_over_nic) {
+        qemu_cmd.AddParameter("-netdev");
+        qemu_cmd.AddParameter(
+            "user,id=hostnet3,net=10.0.3.1/24,dns=10.0.3.3,ipv6=off",
+            ",hostfwd=tcp:127.0.0.1:", instance.adb_host_port(), "-:5555");
+      }
       break;
     }
     default:
@@ -848,6 +859,15 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       qemu_cmd.AddParameter(
           "virtio-net-pci-non-transitional,netdev=hostnet2,id=net2,mac=",
           instance.wifi_mac());
+    }
+    if (adb_over_nic) {
+      // The MAC follows the instance's scheme (00:1a:11:eX:cf:NN) with the
+      // next free X.
+      // TODO: Generate this alongside the other MAC addresses.
+      qemu_cmd.AddParameter("-device");
+      qemu_cmd.AddParameter(
+          "virtio-net-pci-non-transitional,netdev=hostnet3,id=net3,mac=",
+          absl::StrReplaceAll(instance.wifi_mac(), {{":e2:", ":e3:"}}));
     }
   }
 
