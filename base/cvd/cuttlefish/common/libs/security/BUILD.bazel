@@ -7,15 +7,6 @@ package(
 cf_build_test(name = "security_build_test")
 
 cf_cc_library(
-    name = "confui_sign",
-    srcs = ["confui_sign.cpp"],
-    hdrs = ["confui_sign.h"],
-    deps = [
-        "//cuttlefish/common/libs/fs",
-    ],
-)
-
-cf_cc_library(
     name = "oemlock",
     hdrs = ["oemlock.h"],
 )
