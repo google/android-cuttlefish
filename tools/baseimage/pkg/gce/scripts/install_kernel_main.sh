@@ -40,7 +40,15 @@ version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | g
   cut -d: -f2 | cut -d" " -f2 )
 echo "AFTER UPGRADE VERSION: ${version}"
 
-sudo chroot /mnt/image /usr/bin/apt-get install -y ${linux_image_deb}
+target_release=$(sudo chroot /mnt/image /usr/bin/apt-cache policy "${linux_image_deb}" | \
+  grep ' Packages$' | head -n1 | awk '{print $3}' | cut -d/ -f1 || true)
+if [[ -z "${target_release}" ]]; then
+  echo "CREATE IMAGE FAILED!!!"
+  echo "Package ${linux_image_deb} is not available in any apt repository"
+  exit 1
+fi
+echo "TARGET RELEASE: ${target_release}"
+sudo chroot /mnt/image /usr/bin/apt-get install -y -t "${target_release}" "${linux_image_deb}"
 
 version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2)
