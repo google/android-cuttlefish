@@ -27,8 +27,8 @@
 
 #include "fmt/format.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/scoped_mmap.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 
@@ -44,15 +44,14 @@ void* DisplayRingBuffer::GetAddress() { return shm_.get(); };
 
 Result<std::unique_ptr<DisplayRingBuffer>> DisplayRingBuffer::Create(
     const std::string& name, int size) {
-  SharedFD sfd =
-      SharedFD::ShmOpen(name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-
-  CF_EXPECTF(sfd->IsOpen(), "Display buffer create failed {}", sfd->StrError());
+  Fd fd = CF_EXPECT(
+      Fd::ShmOpen(name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR),
+      "Display buffer create failed");
 
   // TODO(schuffelen): Handle unused result
-  Result<void> unused = sfd->Truncate(size);
+  Result<void> unused = fd.Truncate(size);
 
-  ScopedMMap smm = sfd->MMap(NULL, size, PROT_WRITE, MAP_SHARED, 0);
+  ScopedMMap smm = fd.MMap(NULL, size, PROT_WRITE, MAP_SHARED, 0);
 
   return std::unique_ptr<DisplayRingBuffer>(
       new DisplayRingBuffer(name, true, std::move(smm)));
@@ -68,11 +67,11 @@ DisplayRingBuffer::~DisplayRingBuffer() {
 // Allowing optional in the case the buffer doesn't yet exist.
 std::optional<std::unique_ptr<DisplayRingBuffer>> DisplayRingBuffer::ShmemGet(
     const std::string& name, int size) {
-  SharedFD sfd = SharedFD::ShmOpen(name, O_RDWR, S_IRUSR | S_IWUSR);
-  if (!sfd->IsOpen()) {
+  Result<Fd, int> fd = Fd::ShmOpen(name, O_RDWR, S_IRUSR | S_IWUSR);
+  if (!fd.has_value()) {
     return std::nullopt;
   }
-  ScopedMMap smm = sfd->MMap(NULL, size, PROT_WRITE, MAP_SHARED, 0);
+  ScopedMMap smm = fd->MMap(NULL, size, PROT_WRITE, MAP_SHARED, 0);
 
   if (smm.get() == nullptr) {
     return std::nullopt;

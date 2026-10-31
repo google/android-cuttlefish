@@ -160,10 +160,6 @@ bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   return false;
 }
 
-SharedFD SharedFD::ShmOpen(const std::string& name, int oflag, int mode) {
-  return Fd::ShmOpen(name, oflag, mode).value_or(Fd());
-}
-
 SharedFD SharedFD::MemfdCreateWithData(const std::string& name,
                                        const std::string& data,
                                        unsigned int flags) {
