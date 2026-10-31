@@ -933,9 +933,9 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   // /dev/hvc8 = confirmationui
-  crosvm_cmd.AddHvcReadWrite(
-      instance.PerInstanceInternalPath("confui_fifo_vm.out"),
-      instance.PerInstanceInternalPath("confui_fifo_vm.in"));
+  // The host no longer implements confirmation UI. Keep the port as a sink so
+  // guests with the HAL can still open it and later PCI IDs do not move.
+  crosvm_cmd.AddHvcSink();
 
   // /dev/hvc9 = uwb
   if (config.enable_host_uwb()) {

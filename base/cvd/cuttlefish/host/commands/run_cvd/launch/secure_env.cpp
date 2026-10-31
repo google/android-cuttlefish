@@ -37,6 +37,9 @@ Result<MonitorCommand> SecureEnv(
     AutoSnapshotControlFiles::Type& snapshot_control_files,
     KernelLogPipeProvider& kernel_log_pipe_provider) {
   Command command(SecureEnvBinary());
+  // Nothing serves confirmation UI anymore, but secure_env from Android builds
+  // is not substituted from the host package and still CHECK-fails without
+  // this socket.
   command.AddParameter("-confui_server_fd=",
                        snapshot_control_files->confui_server_fd);
   command.AddParameter("-snapshot_control_fd=",

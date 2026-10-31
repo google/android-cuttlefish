@@ -56,7 +56,7 @@ class VmManager {
   // - /dev/hvc5 = bt
   // - /dev/hvc6 = gnss
   // - /dev/hvc7 = location
-  // - /dev/hvc8 = confirmationui
+  // - /dev/hvc8 = confirmationui (always a sink)
   // - /dev/hvc9 = uwb
   // - /dev/hvc10 = oemlock
   // - /dev/hvc11 = keymint
