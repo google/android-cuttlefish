@@ -398,8 +398,6 @@ void ServerLoopImpl::DeleteFifos() {
       instance_.PerInstanceInternalPath("gnsshvc_fifo_vm.out"),
       instance_.PerInstanceInternalPath("locationhvc_fifo_vm.in"),
       instance_.PerInstanceInternalPath("locationhvc_fifo_vm.out"),
-      instance_.PerInstanceInternalPath("confui_fifo_vm.in"),
-      instance_.PerInstanceInternalPath("confui_fifo_vm.out"),
       instance_.PerInstanceInternalPath("sensors_control_fifo_vm.in"),
       instance_.PerInstanceInternalPath("sensors_control_fifo_vm.out"),
       instance_.PerInstanceInternalPath("sensors_data_fifo_vm.in"),

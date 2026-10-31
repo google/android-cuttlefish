@@ -16,14 +16,18 @@
 
 #include "cuttlefish/host/frontend/webrtc/display_handler.h"
 
+#include <fcntl.h>
 #include <libyuv.h>
 #include <stdint.h>
+#include <unistd.h>
 
+#include <cerrno>
 #include <chrono>
 #include <memory>
 #include <optional>
 #include <string>
 
+#include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "drm/drm_fourcc.h"
 
@@ -31,21 +35,28 @@
 #include "cuttlefish/host/frontend/webrtc/libdevice/streamer.h"
 #include "cuttlefish/host/libs/screen_connector/composition_manager.h"
 #include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
+#include "cuttlefish/host/libs/wayland/wayland_server.h"
+#include "cuttlefish/host/libs/wayland/wayland_server_callbacks.h"
 
 namespace cuttlefish {
 
 DisplayHandler::DisplayHandler(
     webrtc_streaming::Streamer& streamer, ScreenshotHandler& screenshot_handler,
-    ScreenConnector& screen_connector,
+    int wayland_socket_fd, bool wayland_frames_are_rgba,
     std::optional<std::unique_ptr<CompositionManager>> composition_manager)
     : composition_manager_(std::move(composition_manager)),
       streamer_(streamer),
-      screenshot_handler_(screenshot_handler),
-      screen_connector_(screen_connector) {
+      screenshot_handler_(screenshot_handler) {
   // Initialize the thread after the rest of the class
   frame_repeater_ = std::thread([this]() { RepeatFramesPeriodically(); });
-  screen_connector_.SetCallback(GetScreenConnectorCallback());
-  screen_connector_.SetDisplayEventCallback([this](const DisplayEvent& event) {
+
+  const int wayland_fd = fcntl(wayland_socket_fd, F_DUPFD_CLOEXEC, 3);
+  CHECK(wayland_fd != -1) << "Unable to dup server, errno " << errno;
+  close(wayland_socket_fd);
+
+  wayland_server_ = std::make_unique<wayland::WaylandServer>(
+      wayland_fd, wayland_frames_are_rgba);
+  wayland_server_->SetDisplayEventCallback([this](const DisplayEvent& event) {
     std::visit(
         [this](auto&& e) {
           using T = std::decay_t<decltype(e)>;
@@ -83,67 +94,47 @@ DisplayHandler::DisplayHandler(
         },
         event);
   });
+  wayland_server_->SetFrameCallback(
+      [this](std::uint32_t display_number, std::uint32_t frame_width,
+             std::uint32_t frame_height, std::uint32_t frame_fourcc_format,
+             std::uint32_t frame_stride_bytes, std::uint8_t* frame_pixels) {
+        if (composition_manager_.has_value()) {
+          composition_manager_.value()->OnFrame(
+              display_number, frame_width, frame_height, frame_fourcc_format,
+              frame_stride_bytes, frame_pixels);
+        }
+        if (frame_fourcc_format != DRM_FORMAT_ARGB8888 &&
+            frame_fourcc_format != DRM_FORMAT_XRGB8888 &&
+            frame_fourcc_format != DRM_FORMAT_ABGR8888 &&
+            frame_fourcc_format != DRM_FORMAT_XBGR8888) {
+          LOG(ERROR) << "Unhandled frame format: " << frame_fourcc_format;
+          return;
+        }
+        std::shared_ptr<VideoFrameBuffer> buffer =
+            std::make_shared<CvdAbgrVideoFrameBuffer>(
+                frame_width, frame_height, frame_fourcc_format,
+                frame_stride_bytes, frame_pixels);
+        {
+          std::lock_guard<std::mutex> lock(last_buffers_mutex_);
+          display_last_buffers_[display_number] =
+              std::make_shared<BufferInfo>(BufferInfo{
+                  .last_sent_time_stamp = std::chrono::system_clock::now(),
+                  .buffer = buffer,
+              });
+        }
+        SendLastFrame(display_number);
+      });
 }
 
 DisplayHandler::~DisplayHandler() {
+  // Stop the frame callbacks before tearing down the state they use.
+  wayland_server_.reset();
   {
     std::lock_guard lock(repeater_state_mutex_);
     repeater_state_ = RepeaterState::STOPPED;
     repeater_state_condvar_.notify_one();
   }
   frame_repeater_.join();
-}
-
-DisplayHandler::GenerateProcessedFrameCallback
-DisplayHandler::GetScreenConnectorCallback() {
-  // only to tell the producer how to create a ProcessedFrame to cache into the
-  // queue
-  auto& composition_manager = composition_manager_;
-  DisplayHandler::GenerateProcessedFrameCallback callback =
-      [&composition_manager](
-          uint32_t display_number, uint32_t frame_width, uint32_t frame_height,
-          uint32_t frame_fourcc_format, uint32_t frame_stride_bytes,
-          uint8_t* frame_pixels, WebRtcScProcessedFrame& processed_frame) {
-        processed_frame.display_number_ = display_number;
-        if (composition_manager.has_value()) {
-          composition_manager.value()->OnFrame(
-              display_number, frame_width, frame_height, frame_fourcc_format,
-              frame_stride_bytes, frame_pixels);
-        }
-        if (frame_fourcc_format == DRM_FORMAT_ARGB8888 ||
-            frame_fourcc_format == DRM_FORMAT_XRGB8888 ||
-            frame_fourcc_format == DRM_FORMAT_ABGR8888 ||
-            frame_fourcc_format == DRM_FORMAT_XBGR8888) {
-          processed_frame.buf_ = std::make_unique<CvdAbgrVideoFrameBuffer>(
-              frame_width, frame_height, frame_fourcc_format,
-              frame_stride_bytes, frame_pixels);
-          processed_frame.is_success_ = true;
-        } else {
-          processed_frame.is_success_ = false;
-        }
-      };
-  return callback;
-}
-
-[[noreturn]] void DisplayHandler::Loop() {
-  for (;;) {
-    auto processed_frame = screen_connector_.OnNextFrame();
-
-    std::shared_ptr<VideoFrameBuffer> buffer = std::move(processed_frame.buf_);
-
-    const uint32_t display_number = processed_frame.display_number_;
-    {
-      std::lock_guard<std::mutex> lock(last_buffers_mutex_);
-      display_last_buffers_[display_number] =
-          std::make_shared<BufferInfo>(BufferInfo{
-              .last_sent_time_stamp = std::chrono::system_clock::now(),
-              .buffer = buffer,
-          });
-    }
-    if (processed_frame.is_success_) {
-      SendLastFrame(display_number);
-    }
-  }
 }
 
 void DisplayHandler::SendLastFrame(std::optional<uint32_t> display_number) {

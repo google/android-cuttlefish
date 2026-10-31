@@ -13,10 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <functional>
-#include <mutex>
-#include <thread>
-
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 #include <keymaster/android_keymaster.h>
@@ -25,17 +21,19 @@
 #include <tss2/tss2_esys.h>
 #include <tss2/tss2_rc.h>
 
+#include <functional>
+#include <mutex>
+#include <thread>
+
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/security/confui_sign.h"
 #include "cuttlefish/common/libs/security/gatekeeper_channel_sharedfd.h"
 #include "cuttlefish/common/libs/security/keymaster_channel_sharedfd.h"
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
-#include "cuttlefish/host/commands/secure_env/confui_sign_server.h"
 #include "cuttlefish/host/commands/secure_env/device_tpm.h"
 #include "cuttlefish/host/commands/secure_env/gatekeeper_responder.h"
 #include "cuttlefish/host/commands/secure_env/in_process_tpm.h"
@@ -58,7 +56,9 @@
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/config/logging.h"
 
-DEFINE_int32(confui_server_fd, -1, "A named socket to serve confirmation UI");
+DEFINE_int32(confui_server_fd, -1,
+             "UNUSED - Kept because run_cvd still passes it to support older "
+             "secure_env binaries");
 DEFINE_int32(snapshot_control_fd, -1,
              "A socket connected to run_cvd for snapshot operations and"
              "responses");
@@ -420,13 +420,6 @@ Result<void> SecureEnvMain(int argc, char** argv) {
           }
         }
       });
-
-  auto confui_server_fd = DupFdFlag(FLAGS_confui_server_fd);
-  threads.emplace_back([confui_server_fd, resource_manager]() {
-    ConfUiSignServer confui_sign_server(*resource_manager, confui_server_fd);
-    // no return, infinite loop
-    confui_sign_server.MainLoop();
-  });
 
   auto kernel_events_fd = DupFdFlag(FLAGS_kernel_events_fd);
   threads.emplace_back(StartKernelEventMonitor(kernel_events_fd, oemlock_lock));

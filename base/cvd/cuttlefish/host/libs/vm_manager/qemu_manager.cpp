@@ -598,18 +598,9 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     }
   }
 
-  /* Added one for confirmation UI.
-   *
-   * b/237452165
-   *
-   * Confirmation UI is not supported with QEMU for now. In order
-   * to not conflict with confirmation UI-related configurations used
-   * w/ Crosvm, we should add one generic avc.
-   *
-   * confui_fifo_vm.{in/out} are created along with the streamer process,
-   * which is not created w/ QEMU.
-   */
   // /dev/hvc8 = confirmationui
+  // The host no longer implements confirmation UI. Keep the port as a sink so
+  // guests with the HAL can still open it and later PCI IDs do not move.
   add_hvc_sink();
 
   // /dev/hvc9 = uwb

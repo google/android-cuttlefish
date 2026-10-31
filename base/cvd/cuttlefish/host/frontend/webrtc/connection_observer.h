@@ -26,7 +26,6 @@
 #include "cuttlefish/host/frontend/webrtc/libdevice/connection_observer.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/lights_observer.h"
 #include "cuttlefish/host/frontend/webrtc/sensors_handler.h"
-#include "cuttlefish/host/libs/confui/host_virtual_input.h"
 #include "cuttlefish/host/libs/input_connector/input_connector.h"
 
 namespace cuttlefish {
@@ -54,8 +53,7 @@ class CfConnectionObserverFactory
  private:
   InputConnector& input_connector_;
   KernelLogEventsHandler& kernel_log_events_handler_;
-  std::map<std::string, SharedFD>
-      commands_to_custom_action_servers_;
+  std::map<std::string, SharedFD> commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
   cuttlefish::CameraController* camera_controller_ = nullptr;
   webrtc_streaming::SensorsHandler& sensors_handler_;

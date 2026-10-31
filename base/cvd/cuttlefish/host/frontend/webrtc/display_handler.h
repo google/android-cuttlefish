@@ -17,6 +17,9 @@
 #pragma once
 
 #include <chrono>
+#include <condition_variable>
+#include <cstdint>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -25,32 +28,11 @@
 #include "cuttlefish/host/frontend/webrtc/libdevice/video_sink.h"
 #include "cuttlefish/host/frontend/webrtc/screenshot_handler.h"
 #include "cuttlefish/host/libs/screen_connector/ring_buffer_manager.h"
-#include "cuttlefish/host/libs/screen_connector/screen_connector.h"
 #include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
+#include "cuttlefish/host/libs/wayland/wayland_server.h"
 
 namespace cuttlefish {
 class CompositionManager;
-/**
- * ScreenConnectorImpl will generate this, and enqueue
- *
- * It's basically a (processed) frame, so it:
- *   must be efficiently std::move-able
- * Also, for the sake of algorithm simplicity:
- *   must be default-constructable & assignable
- *
- */
-struct WebRtcScProcessedFrame : public ScreenConnectorFrameInfo {
-  // must support move semantic
-  std::unique_ptr<VideoFrameBuffer> buf_;
-  std::unique_ptr<WebRtcScProcessedFrame> Clone() {
-    // copy internal buffer, not move
-    auto cloned_frame = std::make_unique<WebRtcScProcessedFrame>();
-    if (buf_) {
-      cloned_frame->buf_ = buf_->Clone();
-    }
-    return cloned_frame;
-  }
-};
 
 namespace webrtc_streaming {
 class Streamer;
@@ -58,18 +40,13 @@ class Streamer;
 
 class DisplayHandler {
  public:
-  using ScreenConnector = cuttlefish::ScreenConnector<WebRtcScProcessedFrame>;
-  using GenerateProcessedFrameCallback =
-      ScreenConnector::GenerateProcessedFrameCallback;
-  using WebRtcScProcessedFrame = cuttlefish::WebRtcScProcessedFrame;
-
   DisplayHandler(
       webrtc_streaming::Streamer& streamer,
-      ScreenshotHandler& screenshot_handler, ScreenConnector& screen_connector,
+      ScreenshotHandler& screenshot_handler, int wayland_socket_fd,
+      bool wayland_frames_are_rgba,
       std::optional<std::unique_ptr<CompositionManager>> composition_manager);
   ~DisplayHandler();
 
-  [[noreturn]] void Loop();
   // If std::nullopt, send last frame for all displays.
   void SendLastFrame(std::optional<uint32_t> display_number);
 
@@ -85,7 +62,6 @@ class DisplayHandler {
     RUNNING,
     STOPPED,
   };
-  GenerateProcessedFrameCallback GetScreenConnectorCallback();
   void SendBuffers(std::map<uint32_t, std::shared_ptr<BufferInfo>> buffers);
   void RepeatFramesPeriodically();
 
@@ -94,7 +70,7 @@ class DisplayHandler {
       display_sinks_;
   webrtc_streaming::Streamer& streamer_;
   ScreenshotHandler& screenshot_handler_;
-  ScreenConnector& screen_connector_;
+  std::unique_ptr<wayland::WaylandServer> wayland_server_;
   std::map<uint32_t, std::shared_ptr<BufferInfo>> display_last_buffers_;
   std::mutex last_buffers_mutex_;
   std::mutex send_mutex_;

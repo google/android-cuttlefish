@@ -30,7 +30,6 @@
 #include "fruit/macro.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
 #include "cuttlefish/host/commands/run_cvd/launch/input_paths_provider.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
@@ -145,8 +144,6 @@ class StreamerSockets : public virtual SetupFeature {
                          VirtualTunerPcmSocketPath(instance_));
       }
     }
-    cmd.AddParameter("--confui_in_fd=", confui_in_fd_);
-    cmd.AddParameter("--confui_out_fd=", confui_out_fd_);
     cmd.AddParameter("-switches_server_path=",
                      input_paths_provider_.SwitchesPath());
   }
@@ -173,21 +170,6 @@ class StreamerSockets : public virtual SetupFeature {
           SharedFD::SocketLocalServer(path, false, SOCK_SEQPACKET, 0666);
       CF_EXPECT(audio_server_->IsOpen(), audio_server_->StrError());
     }
-    CF_EXPECT(InitializeVConsoles());
-    return {};
-  }
-
-  Result<void> InitializeVConsoles() {
-    std::vector<std::string> fifo_files = {
-        instance_.PerInstanceInternalPath("confui_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("confui_fifo_vm.out"),
-    };
-    std::vector<SharedFD> fds;
-    for (const auto& path : fifo_files) {
-      fds.emplace_back(CF_EXPECT(CreateOrReuseAndDrainFifo(path, 0660)));
-    }
-    confui_in_fd_ = fds[0];
-    confui_out_fd_ = fds[1];
     return {};
   }
 
@@ -196,8 +178,6 @@ class StreamerSockets : public virtual SetupFeature {
   InputPathsProvider& input_paths_provider_;
   SharedFD frames_server_;
   SharedFD audio_server_;
-  SharedFD confui_in_fd_;   // host -> guest
-  SharedFD confui_out_fd_;  // guest -> host
 };
 
 class WebRtcServer : public virtual CommandSource,

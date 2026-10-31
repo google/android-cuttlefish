@@ -34,7 +34,9 @@
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/config/logging.h"
 
-DEFINE_int32(confui_server_fd, -1, "A named socket to serve confirmation UI");
+DEFINE_int32(confui_server_fd, -1,
+             "UNUSED - Kept because run_cvd still passes it to support older "
+             "secure_env binaries");
 DEFINE_int32(snapshot_control_fd, -1,
              "A socket connected to run_cvd for snapshot operations and"
              "responses");
