@@ -50,3 +50,14 @@ go run ./cmd/gce_validate_image \
   -image-project <project> \
   -image <output_image_name>
 ```
+
+## Step 5. [Optional] Create a resized copy of an image
+
+```
+go run ./cmd/gce_resize_image \
+  -project <project> \
+  -source-image-project <source_image_project> \
+  -source-image <output_image_name> \
+  -dest-image-project <dest_image_project> \
+  -size-gb 160
+```
