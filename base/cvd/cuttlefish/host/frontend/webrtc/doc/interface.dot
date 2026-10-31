@@ -2,17 +2,13 @@ digraph {
   rankdir = "BT"
   audio_server [label = "internal/audio_server.sock", shape = "rectangle"]
   browser [label = "Browser"]
-  confirmationui_sign [label = "internal/confui_sign.sock", shape = "rectangle"]
   gnss_grpc_proxy
   gnss_grpc_server [label = "GNSS gRPC server", shape = "rectangle"]
   host_bluetooth [label = "Host bluetooth (netsim / rootcanal)"]
-  host_confirmationui_in [label = "internal/confui_fifo_vm.in", shape = "rectangle"]
-  host_confirmationui_out [label = "internal/confui_fifo_vm.out", shape = "rectangle"]
   keyboard_server [label = "internal/keyboard.sock", shape = "rectangle"]
   touch_server [label = "internal/touch_N.sock", shape = "rectangle"]
   run_cvd
   operator_proxy
-  secure_env
   socket_vsock_proxy
   wayland_socket [label = "internal/frames.sock", shape = "rectangle"]
   webrtc [label = < <B>webrtc</B> >, penwidth = 2]
@@ -29,12 +25,10 @@ digraph {
     label = "Cuttlefish VM"
     subgraph devices {
       rank = same;
-      confirmationui_console [label = "/dev/hvc8", shape = "rectangle"]
       keyboard_input [label = "/dev/input/event3 | keyboard", shape = "rectangle"]
       touch_input [label = "/dev/input/event2 | touch", shape = "rectangle"]
     }
     adb_daemon [label = "ADB Daemon"]
-    confirmationui [label = "ConfirmationUI HAL"]
   }
 
   operator -> browser [label = < <I>HTTPS</I> (1443) >, dir = both]
@@ -46,7 +40,6 @@ digraph {
   webrtc -> run_cvd [dir = back]
   webrtc -> host_bluetooth
 
-  webrtc -> confirmationui_sign -> secure_env [dir = both]
   webrtc -> gnss_grpc_server -> gnss_grpc_proxy [dir = both, label = "TCP"]
 
   adb_daemon -> socket_vsock_proxy -> webrtc [dir = both]
@@ -59,11 +52,6 @@ digraph {
   vmm -> keyboard_server -> webrtc [dir = back]
 
   vmm -> touch_server -> webrtc [dir = back]
-
-  vmm -> host_confirmationui_out -> webrtc
-  vmm -> host_confirmationui_in -> webrtc [dir = back]
-
-  confirmationui -> confirmationui_console -> vmm [dir = both]
 
   keyboard_input -> vmm
   touch_input -> vmm
