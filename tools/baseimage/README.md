@@ -31,9 +31,24 @@ go run ./cmd/create_gce_base_image \
 
 ## Step 3. Create image with cuttlefish debian packages installed.
 
+Using a directory containing the Cuttlefish `.deb` packages (auto-discovers the 6 packages, configures Host Orchestrator to use GCE metadata credentials, attaches the `base_image` label, and auto-generates `cuttlefish-image-<timestamp>--cvd<major>-<minor>` if `-image-name` is omitted):
+
 ```
 go run ./cmd/gce_install_cuttlefish_packages \
   -project <project> \
+  -arch x86_64 \
+  -source-image-project <source_image_project> \
+  -source-image <base_image_name> \
+  -dest-image-project <dest_image_project> \
+  -debs-dir <path/to/debs_dir>
+```
+
+Or specifying individual `.deb` files and an explicit output image name:
+
+```
+go run ./cmd/gce_install_cuttlefish_packages \
+  -project <project> \
+  -arch x86_64 \
   -source-image-project <project> \
   -source-image <base_image_name> \
   -image-name <output_image_name> \
