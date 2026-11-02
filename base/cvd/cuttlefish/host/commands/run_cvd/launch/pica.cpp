@@ -31,7 +31,7 @@ Result<std::vector<MonitorCommand>> Pica(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
     LogTeeCreator& log_tee) {
-  if (!instance.start_pica()) {
+  if (!config.enable_host_uwb() || !instance.start_pica()) {
     return {};
   }
   auto pcap_dir = instance.PerInstanceLogPath("/pica/");
