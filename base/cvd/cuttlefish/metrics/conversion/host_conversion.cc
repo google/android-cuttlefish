@@ -22,11 +22,13 @@
 #include "cuttlefish/metrics/external_proto/cf_gce_environment.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_github_actions_environment.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_host.pb.h"
+#include "cuttlefish/metrics/external_proto/cf_kokoro_environment.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_metrics_event_v2.pb.h"
 #include "cuttlefish/metrics/host/gce_environment.h"
 #include "cuttlefish/metrics/host/github_environment.h"
 #include "cuttlefish/metrics/host/host_metrics.h"
 #include "cuttlefish/metrics/host/invoker.h"
+#include "cuttlefish/metrics/host/kokoro_environment.h"
 
 namespace cuttlefish {
 namespace {
@@ -41,6 +43,8 @@ using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishHost_Invoker;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost_OsType;
+using logs::proto::wireless::android::cuttlefish::events::
+    CuttlefishKokoroEnvironment;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
 
 CuttlefishHost_OsType ConvertHostOs(const HostInfo& host_info) {
@@ -122,6 +126,12 @@ struct PopulateEnvironment {
   void operator()(GitHubRepository repository) {
     CuttlefishGitHubActionsEnvironment& github = *host.mutable_github();
     github.set_repository(ConvertGitHubRepository(repository));
+  }
+
+  void operator()(const KokoroEnvironment& environment) {
+    CuttlefishKokoroEnvironment& kokoro = *host.mutable_kokoro();
+    kokoro.set_numeric_project_id(environment.numeric_project_id);
+    kokoro.set_zone(environment.zone);
   }
 
   void operator()(const UnknownEnvironment&) {}

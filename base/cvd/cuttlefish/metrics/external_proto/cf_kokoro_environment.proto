@@ -4,5 +4,10 @@ package logs.proto.wireless.android.cuttlefish.events;
 
 // Kokoro environment a Cuttlefish device can run in
 //
-// Next index: 1
-message CuttlefishKokoroEnvironment {}
+// Next index: 3
+message CuttlefishKokoroEnvironment {
+  // unique identifier for the project
+  string numeric_project_id = 1;
+  // the zone where this VM is located
+  string zone = 2;
+}

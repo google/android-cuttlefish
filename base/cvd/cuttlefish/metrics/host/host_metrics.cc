@@ -22,6 +22,7 @@
 #include "cuttlefish/metrics/host/gce_environment.h"
 #include "cuttlefish/metrics/host/github_environment.h"
 #include "cuttlefish/metrics/host/invoker.h"
+#include "cuttlefish/metrics/host/kokoro_environment.h"
 #include "cuttlefish/metrics/io/unique_id_file.h"
 #include "cuttlefish/result/result.h"
 
@@ -33,6 +34,13 @@ Result<Environment> GetEnvironment() {
       DetectGitHubRepository();
   if (github_environment) {
     return *github_environment;
+  }
+
+  // must be called before GCE detection, because it is a special case of GCE
+  const std::optional<KokoroEnvironment> kokoroEnvironment =
+      CF_EXPECT(DetectKokoroEnvironment());
+  if (kokoroEnvironment) {
+    return *kokoroEnvironment;
   }
 
   const std::optional gce_environment = CF_EXPECT(DetectGceEnvironment());
