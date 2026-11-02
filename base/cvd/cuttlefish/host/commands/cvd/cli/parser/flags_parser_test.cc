@@ -118,7 +118,7 @@ TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
       << "num_instances flag is missing or wrongly formatted";
 }
 
-TEST(FlagsParserTest, ParseMediaMplaneTwoDevices) {
+TEST(FlagsParserTest, ParseMediaSplaneSingleInstance) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -127,10 +127,40 @@ TEST(FlagsParserTest, ParseMediaMplaneTwoDevices) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_mplane": {}
+                "v4l2_emulated_camera_splane": {}
+              }
+            ]
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+  ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(
+      FindConfig(*serialized_data, "--media=v4l2_emulated_camera_splane"))
+      << "media flag is missing or wrongly formatted";
+}
+
+TEST(FlagsParserTest, ParseMediaSplaneTwoDevices) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_emulated_camera_splane": {}
               },
               {
-                "v4l2_emulated_camera_mplane": {}
+                "v4l2_emulated_camera_splane": {}
               }
             ]
           }
@@ -147,7 +177,7 @@ TEST(FlagsParserTest, ParseMediaMplaneTwoDevices) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_EQ(std::count(serialized_data->begin(), serialized_data->end(),
-                       "--media=v4l2_emulated_camera_mplane"),
+                       "--media=v4l2_emulated_camera_splane"),
             2);
 }
 
@@ -255,7 +285,7 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesBothWithDevices) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_mplane": {},
+                "v4l2_emulated_camera_splane": {},
                 "lens_facing": "BACK"
               }
             ]
@@ -265,7 +295,7 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesBothWithDevices) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_mplane": {},
+                "v4l2_emulated_camera_splane": {},
                 "lens_facing": "FRONT"
               }
             ]
@@ -285,8 +315,8 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesBothWithDevices) {
 
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data,
-                         "--media=v4l2_emulated_camera_mplane:lens_facing=BACK,"
-                         "v4l2_emulated_camera_mplane:lens_facing=FRONT"))
+                         "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"
+                         "v4l2_emulated_camera_splane:lens_facing=FRONT"))
       << "media flag is missing or wrongly formatted";
 }
 
@@ -299,11 +329,11 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesMultipleRepeatedDevices) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_mplane": {},
+                "v4l2_emulated_camera_splane": {},
                 "lens_facing": "FRONT"
               },
               {
-                "v4l2_emulated_camera_mplane": {},
+                "v4l2_emulated_camera_splane": {},
                 "lens_facing": "BACK"
               }
             ]
@@ -313,11 +343,11 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesMultipleRepeatedDevices) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_mplane": {},
+                "v4l2_emulated_camera_splane": {},
                 "lens_facing": "FRONT"
               },
               {
-                "v4l2_emulated_camera_mplane": {},
+                "v4l2_emulated_camera_splane": {},
                 "lens_facing": "BACK"
               }
             ]
@@ -338,12 +368,12 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesMultipleRepeatedDevices) {
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data,
-                 "--media=v4l2_emulated_camera_mplane:lens_facing=FRONT,"
-                 "v4l2_emulated_camera_mplane:lens_facing=FRONT"))
+                 "--media=v4l2_emulated_camera_splane:lens_facing=FRONT,"
+                 "v4l2_emulated_camera_splane:lens_facing=FRONT"))
       << "First media flag is missing or wrongly formatted";
   EXPECT_TRUE(FindConfig(*serialized_data,
-                         "--media=v4l2_emulated_camera_mplane:lens_facing=BACK,"
-                         "v4l2_emulated_camera_mplane:lens_facing=BACK"))
+                         "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"
+                         "v4l2_emulated_camera_splane:lens_facing=BACK"))
       << "Second media flag is missing or wrongly formatted";
 }
 
@@ -356,7 +386,7 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesOnlyFirstHasDevice) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_mplane": {},
+                "v4l2_emulated_camera_splane": {},
                 "lens_facing": "BACK"
               }
             ]
@@ -379,7 +409,7 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesOnlyFirstHasDevice) {
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data,
-                 "--media=v4l2_emulated_camera_mplane:lens_facing=BACK,"))
+                 "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"))
       << "media flag is missing or wrongly formatted";
 }
 
@@ -394,7 +424,7 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesOnlySecondHasDevice) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_mplane": {},
+                "v4l2_emulated_camera_splane": {},
                 "lens_facing": "FRONT"
               }
             ]
@@ -415,7 +445,7 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesOnlySecondHasDevice) {
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data,
-                 "--media=,v4l2_emulated_camera_mplane:lens_facing=FRONT"))
+                 "--media=,v4l2_emulated_camera_splane:lens_facing=FRONT"))
       << "media flag is missing or wrongly formatted";
 }
 
