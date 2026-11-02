@@ -47,19 +47,25 @@ CURLSH* CurlShare::Raw() { return share_; }
 
 void CurlShare::LockCallback(CURL* const, const curl_lock_data data,
                              const curl_lock_access, void* const userdata) {
-  CurlShare* const share = reinterpret_cast<CurlShare*>(userdata);
-  CHECK_LT(data, share->mutexes_.size());
   // The curl_lock_access argument tells us if we need to lock it for
   // reading or writing, but we don't get this information at unlock time,
   // which is inconvenient for managing shared_mutex state.
-  share->mutexes_[data].lock();
+  reinterpret_cast<CurlShare*>(userdata)->Lock(data);
 }
 
 void CurlShare::UnlockCallback(CURL* const, const curl_lock_data data,
                                void* const userdata) {
-  CurlShare* const share = reinterpret_cast<CurlShare*>(userdata);
-  CHECK_LT(data, share->mutexes_.size());
-  share->mutexes_[data].unlock();
+  reinterpret_cast<CurlShare*>(userdata)->Unlock(data);
+}
+
+void CurlShare::Lock(curl_lock_data data) {
+  CHECK_LT(data, mutexes_.size());
+  mutexes_[data].lock();
+}
+
+void CurlShare::Unlock(curl_lock_data data) {
+  CHECK_LT(data, mutexes_.size());
+  mutexes_[data].unlock();
 }
 
 }  // namespace cuttlefish

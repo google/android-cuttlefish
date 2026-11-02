@@ -22,10 +22,17 @@
 
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 
+#if defined(__clang__) && (!defined(SWIG)) && \
+    (!defined(THREAD_ANNOTATION_ATTRIBUTE__))
+#define THREAD_ANNOTATION_ATTRIBUTE__(x) __attribute__((x))
+#else
+#define THREAD_ANNOTATION_ATTRIBUTE__(x)  // no-op
+#endif
+
 namespace cuttlefish {
 
 // https://curl.se/libcurl/c/libcurl-share.html
-class CurlShare {
+class THREAD_ANNOTATION_ATTRIBUTE__(capability("mutex")) CurlShare {
  public:
   CurlShare();
   CurlShare(const CurlShare&) = delete;
@@ -35,8 +42,17 @@ class CurlShare {
   CURLSH* Raw();
 
  private:
-  static void LockCallback(CURL*, curl_lock_data, curl_lock_access, void*);
-  static void UnlockCallback(CURL*, curl_lock_data, void*);
+  static void LockCallback(CURL*, curl_lock_data, curl_lock_access,
+                           void* userdata)
+      THREAD_ANNOTATION_ATTRIBUTE__(
+          acquire_capability(reinterpret_cast<CurlShare*>(userdata)));
+  static void UnlockCallback(CURL*, curl_lock_data, void* userdata)
+      THREAD_ANNOTATION_ATTRIBUTE__(
+          release_capability(reinterpret_cast<CurlShare*>(userdata)));
+
+  void Lock(curl_lock_data) THREAD_ANNOTATION_ATTRIBUTE__(acquire_capability());
+  void Unlock(curl_lock_data)
+      THREAD_ANNOTATION_ATTRIBUTE__(release_capability());
 
   const CurlGlobalInit ensure_init_;
   std::array<std::mutex, CURL_LOCK_DATA_LAST> mutexes_;
