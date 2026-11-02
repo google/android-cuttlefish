@@ -91,6 +91,16 @@ sudo cp install_nvidia.sh /mnt/image/
 sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh
 sudo rm /mnt/image/install_nvidia.sh
 
+# GPU support for containers.
+sudo chroot /mnt/image /usr/bin/apt install -y gpg
+sudo chroot /mnt/image /usr/bin/wget -qO- https://nvidia.github.io/libnvidia-container/gpgkey \
+  | sudo chroot /mnt/image /usr/bin/gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+sudo tee /mnt/image/etc/apt/sources.list.d/nvidia-container-toolkit.list >/dev/null <<'EOF'
+deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH) /
+EOF
+sudo chroot /mnt/image /usr/bin/apt update
+sudo chroot /mnt/image /usr/bin/apt install -y nvidia-container-toolkit
+
 # Vulkan loader
 sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1
 
