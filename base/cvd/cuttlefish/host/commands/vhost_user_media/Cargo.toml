@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "emulated_camera_mplane",
-    "emulated_camera_splane",
     "vhu_media",
     "v4l2_stream_proxy",
 ]
