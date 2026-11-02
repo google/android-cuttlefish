@@ -39,9 +39,7 @@ using cvd::config::V4l2StreamProxy;
 
 std::string MediaDeviceToFlagValue(const MediaDevice& device) {
   std::string res;
-  if (device.has_v4l2_emulated_camera_splane()) {
-    res = "v4l2_emulated_camera_splane";
-  } else if (device.has_v4l2_emulated_camera_mplane()) {
+  if (device.has_v4l2_emulated_camera_mplane()) {
     res = "v4l2_emulated_camera_mplane";
   } else if (device.has_v4l2_proxy()) {
     const V4l2Proxy& v4l2_proxy = device.v4l2_proxy();

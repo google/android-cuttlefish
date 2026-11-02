@@ -30,7 +30,7 @@ func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 		{
 			branch:    "git_main",
 			target:    "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
-			mediaType: "v4l2_emulated_camera_splane",
+			mediaType: "v4l2_emulated_camera_mplane",
 		},
 		{
 			branch:    "git_main-throttled-nightly",
