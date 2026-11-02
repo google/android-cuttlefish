@@ -6,7 +6,6 @@
 ```
 sudo setfacl -m "u:$(whoami):rw" /dev/kvm
 sudo setfacl -m "u:$(whoami):rw" /dev/vhost-net
-sudo setfacl -m "u:$(whoami):rw" /dev/vhost-vsock
 ```
 
 ## Build the image
@@ -39,7 +38,6 @@ podman run --name tester \
   --device=/dev/kvm:/dev/kvm:rwm \
   --device=/dev/net/tun:/dev/net/tun:rwm \
   --device=/dev/vhost-net:/dev/vhost-net:rwm \
-  --device=/dev/vhost-vsock:/dev/vhost-vsock:rwm \
   android-cuttlefish-e2etest:latest
 ```
 

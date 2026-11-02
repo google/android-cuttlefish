@@ -39,7 +39,6 @@ func CheckDeviceAccessible() error {
 		"/dev/kvm",
 		"/dev/net/tun",
 		"/dev/vhost-net",
-		"/dev/vhost-vsock",
 	}
 	const R_OK = 4
 	const W_OK = 2

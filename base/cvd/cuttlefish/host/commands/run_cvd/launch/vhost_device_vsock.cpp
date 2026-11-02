@@ -112,7 +112,9 @@ Result<std::vector<MonitorCommand>> VhostDeviceVsock::Commands() {
 
 std::string VhostDeviceVsock::Name() const { return "VhostDeviceVsock"; }
 
-bool VhostDeviceVsock::Enabled() const { return instance_.vhost_user_vsock(); }
+bool VhostDeviceVsock::Enabled() const {
+  return VmManagerIsCrosvm(cfconfig_) || VmManagerIsQemu(cfconfig_);
+}
 
 Result<void> VhostDeviceVsock::WaitForAvailability() {
   if (Enabled()) {

@@ -164,7 +164,6 @@ func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Con
 		"/dev/kvm",
 		"/dev/net/tun",
 		"/dev/vhost-net",
-		"/dev/vhost-vsock",
 	}
 	for _, dev := range devices {
 		args = append(args, "--device", dev+":"+dev+":rwm")

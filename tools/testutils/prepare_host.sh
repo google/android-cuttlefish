@@ -71,8 +71,8 @@ fi
 install_pkgs "${PKG_DIR}" cuttlefish-base cuttlefish-metrics cuttlefish-user
 
 check_service_started cuttlefish-host-resources
-load_kernel_modules kvm vhost-vsock vhost-net bridge
-grant_device_access vhost-vsock vhost-net kvm
+load_kernel_modules kvm vhost-net bridge
+grant_device_access vhost-net kvm
 check_service_started cuttlefish-operator
 
 if [[ "${TEST_USER}" != "" ]]; then

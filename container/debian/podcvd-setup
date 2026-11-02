@@ -103,9 +103,8 @@ setup_cidr() {
 }
 
 setup_device_permissions() {
-    # Ensure vhost_net and vhost_vsock exist
+    # Ensure vhost_net exists
     [ -c /dev/vhost-net ] && [ -e /sys/class/misc/vhost-net ] || modprobe vhost_net
-    [ -c /dev/vhost-vsock ] && [ -e /sys/class/misc/vhost-vsock ] || modprobe vhost_vsock
 
     if udevadm control --ping --timeout=0; then
         # Add udev rule for applying ACLs and triggers immediately.
@@ -113,16 +112,14 @@ setup_device_permissions() {
         cat <<EOF > /etc/udev/rules.d/99-podcvd-acls-$username.rules
 KERNEL=="kvm", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
 KERNEL=="vhost-net", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
-KERNEL=="vhost-vsock", RUN+="/usr/bin/setfacl -m u:$username:rw /dev/%k"
 EOF
 
         udevadm control --reload-rules
         udevadm trigger --action=change /dev/kvm
         udevadm trigger --action=change /dev/vhost-net
-        udevadm trigger --action=change /dev/vhost-vsock
     else
         echo "Applying ACLs directly for user '$username'..."
-        setfacl -m "u:$username:rw" /dev/kvm /dev/vhost-net /dev/vhost-vsock
+        setfacl -m "u:$username:rw" /dev/kvm /dev/vhost-net
     fi
 }
 

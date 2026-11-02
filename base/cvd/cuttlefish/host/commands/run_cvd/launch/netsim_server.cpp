@@ -16,7 +16,6 @@
 #include "cuttlefish/host/commands/run_cvd/launch/netsim_server.h"
 
 #include <cstddef>
-#include <optional>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -164,9 +163,6 @@ class NetsimServer : public CommandSource {
     hci_vsock_proxy.AddParameter("--client_tcp_host=127.0.0.1");
     hci_vsock_proxy.AddParameter("--client_tcp_port=",
                                  config_.rootcanal_hci_port());
-    if (instance_.vhost_user_vsock()) {
-      hci_vsock_proxy.AddParameter("--vhost_user_vsock=true");
-    }
 
     // Add command for forwarding the test port to a vsock server.
     Command test_vsock_proxy(SocketVsockProxyBinary());
@@ -179,9 +175,6 @@ class NetsimServer : public CommandSource {
     test_vsock_proxy.AddParameter("--client_tcp_host=127.0.0.1");
     test_vsock_proxy.AddParameter("--client_tcp_port=",
                                   config_.rootcanal_test_port());
-    if (instance_.vhost_user_vsock()) {
-      test_vsock_proxy.AddParameter("--vhost_user_vsock=true");
-    }
 
     std::vector<MonitorCommand> commands;
     commands.emplace_back(std::move(netsimd));
@@ -258,14 +251,10 @@ class NetsimServer : public CommandSource {
               absl::SimpleAtoi(port_strings[i], &port),
               "Failed to parse modem simulator port: " << port_strings[i]);
 
-          Fd vsock =
-              CF_EXPECT(Fd::VsockServer(
-                            port, SOCK_STREAM,
-                            instance.vhost_user_vsock()
-                                ? std::make_optional(instance.vsock_guest_cid())
-                                : std::nullopt),
-                        " (try `cvd reset`, or `pkill "
-                        "run_cvd` and `pkill crosvm`)");
+          Fd vsock = CF_EXPECT(
+              Fd::VsockServer(port, SOCK_STREAM, instance.vsock_guest_cid()),
+              " (try `cvd reset`, or `pkill "
+              "run_cvd` and `pkill crosvm`)");
 
           Chip chip("CELLULAR");
           chip.vsock_fd = std::move(vsock);

@@ -34,7 +34,7 @@ namespace webrtc_streaming {
 class CameraStreamer : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
                        public CameraController {
  public:
-  CameraStreamer(unsigned int port, unsigned int cid, bool vhost_user);
+  CameraStreamer(unsigned int port, unsigned int cid);
   ~CameraStreamer();
 
   CameraStreamer(const CameraStreamer& other) = delete;
@@ -66,7 +66,6 @@ class CameraStreamer : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
   rtc::scoped_refptr<webrtc::I420Buffer> scaled_frame_;
   unsigned int cid_;
   unsigned int port_;
-  bool vhost_user_;
   std::thread reader_thread_;
   std::atomic<bool> camera_session_active_;
 };

@@ -35,7 +35,6 @@
 
 // Must be below sys/socket.h to support older libc
 #ifdef __linux__
-#include <linux/vm_sockets.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 #include <sys/inotify.h>
@@ -75,8 +74,6 @@ namespace cuttlefish {
 struct PollSharedFd;
 class Epoll;
 class Fd;
-struct VhostUserVsockCid;
-struct VsockCid;
 
 /**
  * Counted reference to a Fd.
@@ -165,24 +162,7 @@ class SharedFD {
                                     int in_type, mode_t mode);
   static SharedFD SocketLocalServer(int port, int type);
 
-#ifdef __linux__
-  // For binding in vsock, svm_cid from `cid` param would be either
-  // VMADDR_CID_ANY, VMADDR_CID_LOCAL, VMADDR_CID_HOST or their own CID, and it
-  // is used for indicating connections which it accepts from.
-  //  * VMADDR_CID_ANY: accept from any
-  //  * VMADDR_CID_LOCAL: accept from local
-  //  * VMADDR_CID_HOST: accept from child vm
-  //  * their own CID: accept from parent vm
-  // With vhost-user-vsock, it is basically similar to VMADDR_CID_HOST, but for
-  // now it has limitations that it should bind to a specific socket file which
-  // is for a certain cid. So for vhost-user-vsock, we need to specify the
-  // expected client's cid. That's why vhost_user_vsock_listening_cid is
-  // necessary.
-  // TODO: combining them when vhost-user-vsock impl supports a kind of
-  // VMADDR_CID_HOST
-  static SharedFD VsockClient(unsigned int cid, unsigned int port, int type,
-                              bool vhost_user);
-#endif
+  static SharedFD VsockClient(unsigned int cid, unsigned int port, int type);
 
   auto operator<=>(const SharedFD&) const = default;
 

@@ -21,14 +21,13 @@
 #include <utility>
 #include <vector>
 
-#include "cuttlefish/host/libs/config/custom_actions.h"
-
 #include "cuttlefish/host/frontend/webrtc/libcommon/audio_source.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/audio_sink.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/camera_controller.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/connection_observer.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/recording_manager.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/video_sink.h"
+#include "cuttlefish/host/libs/config/custom_actions.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -102,8 +101,7 @@ class Streamer {
   // stream here.
   std::shared_ptr<AudioSource> GetAudioSource();
 
-  CameraController* AddCamera(unsigned int port, unsigned int cid,
-                              bool vhost_user);
+  CameraController* AddCamera(unsigned int port, unsigned int cid);
 
   // Add a custom button to the control panel.
   void AddCustomControlPanelButton(const std::string& command,
@@ -134,4 +132,3 @@ class Streamer {
 
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish
-

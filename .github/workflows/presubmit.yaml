@@ -504,7 +504,6 @@ jobs:
           --device /dev/kvm \
           --device /dev/net/tun \
           --device /dev/vhost-net \
-          --device /dev/vhost-vsock \
           --cap-add NET_ADMIN \
           --security-opt seccomp=unconfined \
           -p 2080:2080 \
@@ -543,7 +542,6 @@ jobs:
           --device /dev/kvm \
           --device /dev/net/tun \
           --device /dev/vhost-net \
-          --device /dev/vhost-vsock \
           --cap-add NET_ADMIN \
           -p 2080:2080 \
           localhost/cuttlefish-orchestration:latest
