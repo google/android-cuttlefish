@@ -68,6 +68,7 @@ std::string UnpackBootimgBinary();
 std::string VhalProxyServerBinary();
 std::string VhalProxyServerConfig();
 std::string VhostUserInputBinary();
+std::string VhostUserMediaEmulatedCameraSPlaneBinary();
 std::string VhostUserMediaEmulatedCameraMPlaneBinary();
 std::string VhostUserMediaV4l2StreamProxyBinary();
 std::string VirtualTunerDaemonBinary();
