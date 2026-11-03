@@ -24,7 +24,7 @@
 #include <string_view>
 #include <vector>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -92,7 +92,6 @@ std::vector<std::string> Path(const std::string& env_name = "PATH");
 Result<std::string> Search(const std::vector<std::string>& path,
                            std::string_view name);
 
-Result<SharedFD> CreateOrReuseAndDrainFifo(const std::string& path,
-                                           mode_t mode);
+Result<Fd> CreateOrReuseAndDrainFifo(const std::string& path, mode_t mode);
 
 }  // namespace cuttlefish

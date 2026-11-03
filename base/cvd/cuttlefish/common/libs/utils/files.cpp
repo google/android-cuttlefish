@@ -42,8 +42,6 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
@@ -54,6 +52,7 @@
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/link_or_copy.h"
 #include "cuttlefish/io/string.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/realpath.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/rename.h"
@@ -267,12 +266,8 @@ Result<std::string> ReadFileContents(const std::string& path) {
 }
 Result<void> WriteNewFile(const std::string& filepath, std::string_view content,
                           mode_t mode) {
-  SharedFD file_fd =
-      CF_EXPECT(Fd::Open(filepath, O_CREAT | O_EXCL | O_WRONLY, mode));
-  const auto written_size = WriteAll(file_fd, content);
-  CF_EXPECTF(written_size == content.size(),
-             "Failed to write all content to file. Error:\n",
-             file_fd->StrError());
+  Fd fd = CF_EXPECT(Fd::Open(filepath, O_CREAT | O_EXCL | O_WRONLY, mode));
+  CF_EXPECT(WriteExact(fd, content));
   return {};
 }
 
@@ -357,8 +352,7 @@ Result<std::string> Search(const std::vector<std::string>& path,
   return CF_ERRF("Not found: '{}', path '{}'", name, absl::StrJoin(path, ":"));
 }
 
-Result<SharedFD> CreateOrReuseAndDrainFifo(const std::string& path,
-                                           mode_t mode) {
+Result<Fd> CreateOrReuseAndDrainFifo(const std::string& path, mode_t mode) {
   Result<struct stat> st = Stat(path);
   if (st.has_value()) {
     CF_EXPECTF(S_ISFIFO(st->st_mode), "File at '{}' exists but is not a FIFO",

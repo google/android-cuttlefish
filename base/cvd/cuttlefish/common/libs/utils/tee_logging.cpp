@@ -50,9 +50,9 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/process/proc_file_utils.h"
 #include "cuttlefish/result/result.h"
 
@@ -248,11 +248,10 @@ class LogSink : public absl::LogSink {
         break;
     }
     if (severity >= destination_.severity) {
-      if (destination_.target->IsATTY()) {
-        WriteAll(destination_.target, output_string);
-      } else {
-        WriteAll(destination_.target, StripColorCodes(output_string));
-      }
+      (void)WriteExact(*destination_.target,
+                       destination_.target->IsATTY()
+                           ? output_string
+                           : StripColorCodes(output_string));
     }
   }
 

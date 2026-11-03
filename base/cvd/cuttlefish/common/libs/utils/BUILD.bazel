@@ -115,7 +115,6 @@ cf_cc_library(
     hdrs = ["files.h"],
     deps = [
         ":environment",
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:users",
@@ -126,6 +125,7 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:link_or_copy",
         "//cuttlefish/io:string",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/posix:realpath",
         "//cuttlefish/posix:remove",
         "//cuttlefish/posix:rename",
@@ -340,6 +340,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/result",
         "@abseil-cpp//absl/base:log_severity",
@@ -396,9 +397,10 @@ cf_cc_test(
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:unix_sockets",
         "//cuttlefish/io:string",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/result",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
-        "@abseil-cpp//absl/log:check",
     ],
 )
 
