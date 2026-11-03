@@ -4,10 +4,12 @@ package logs.proto.wireless.android.cuttlefish.events;
 
 // GCE environment a Cuttlefish device can run in
 //
-// Next index: 3
+// Next index: 4
 message CuttlefishGceEnvironment {
   // unique identifier for the project
   string numeric_project_id = 1;
   // the zone where this VM is located
   string zone = 2;
+  // does the environment appear as a Cloudtop instance
+  bool is_cloudtop = 3;
 }

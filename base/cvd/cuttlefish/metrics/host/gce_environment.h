@@ -26,6 +26,7 @@ namespace cuttlefish {
 struct GceEnvironment {
   std::string numeric_project_id;
   std::string zone;
+  bool is_cloudtop;
 };
 
 Result<std::optional<GceEnvironment>> DetectGceEnvironment();

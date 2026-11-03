@@ -121,6 +121,7 @@ struct PopulateEnvironment {
     CuttlefishGceEnvironment& gce = *host.mutable_gce();
     gce.set_numeric_project_id(environment.numeric_project_id);
     gce.set_zone(environment.zone);
+    gce.set_is_cloudtop(environment.is_cloudtop);
   }
 
   void operator()(GitHubRepository repository) {

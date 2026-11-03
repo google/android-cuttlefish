@@ -28,6 +28,7 @@
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_string.h"
+#include "cuttlefish/metrics/host/cloudtop_detection.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -99,6 +100,7 @@ Result<std::optional<GceEnvironment>> DetectGceEnvironment() {
       .numeric_project_id =
           CF_EXPECT(QueryGceMetadata(*http_client, kNumericProjectId)),
       .zone = CF_EXPECT(GetZoneValue(zone_response)),
+      .is_cloudtop = CF_EXPECT(IsCloudtop()),
   };
 }
 
