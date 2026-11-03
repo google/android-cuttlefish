@@ -1,0 +1,21 @@
+[package]
+name = "vhost_user_sound"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { version = "1.0.104", features = ["default", "std"] }
+clap = { version = "4.6.7", features = ["derive", "error-context", "help", "std", "usage"] }
+clap_derive = { version = "4.6.7" }
+command-fds = "0.3.3"
+env_logger = "0.11.11"
+log = { version = "0.4.34", features = ["std"] }
+num_enum = "0.7.6"
+thiserror = "2.0.20"
+vhost = { version = "0.17.0", features = ["default", "vhost-user", "vhost-user-backend"] }
+vhost-user-backend = "0.23.0"
+virtio-bindings = "0.2.7"
+virtio-queue = "0.18.0"
+vm-memory = "0.18.0"
+vmm-sys-util = "0.15.0"
+zerocopy = { version = "0.8.57", features = ["alloc", "derive", "simd", "std", "zerocopy-derive"] }
