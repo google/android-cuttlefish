@@ -15,13 +15,8 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/ti50_emulator.h"
 
-#include <stdint.h>
-#include <string.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <signal.h>
 
-#include <iterator>
-#include <memory>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -31,27 +26,21 @@
 #include "fruit/component.h"
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
+#include "json/value.h"
 
-#include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
-#ifdef __linux__
-#include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
-#endif
-#include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
+#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
-#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/process/command.h"
+#include "cuttlefish/process/managed_stdio.h"
+#include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
-
-static constexpr char kControlSocketName[] = "control_sock";
 
 class Ti50Emulator : public vm_manager::VmmDependencyCommand {
  public:
@@ -66,11 +55,20 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
       return {};
     }
 
+#ifndef __linux__
+    return CF_ERR("Cannot start the ti50 emulator outside of Linux.");
+#endif
+
     Command command(instance_.ti50_emulator());
     command.AddParameter("-s");
-    command.AddParameter("--control_socket=",
-                         instance_.PerInstancePath(kControlSocketName));
+    command.AddParameter("--autonomous_ap_reset");
     command.AddParameter("-p=", instance_.instance_dir());
+    command.SetStopper(
+        KillSubprocessFallback(SubprocessStopper([](Subprocess* proc) {
+          return proc->SendSignal(SIGTERM).has_value()
+                     ? StopperResult::kSuccess
+                     : StopperResult::kFailure;
+        })));
 
     std::vector<MonitorCommand> commands;
     commands.emplace_back(
@@ -89,137 +87,30 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
       return {};
     }
 
-    // Wait for control socket sending "READY".
-    SharedFD sock = Fd::Accept(*ctrl_sock_).value_or(Fd());
-    const char kExpectedReadyStr[] = "READY";
-    char buf[std::size(kExpectedReadyStr)];
-    Result<uint64_t> data_read = sock->Read(buf, sizeof(buf));
-    CF_EXPECT(!data_read.has_value() || *data_read != 0);
-    CF_EXPECT(!strcmp(buf, "READY"), "Ti50 emulator should return 'READY'");
+    Command status_cmd(instance_.ti50_emulator());
+    status_cmd.AddParameter("-p=", instance_.instance_dir());
+    status_cmd.AddParameter("status");
+    status_cmd.AddParameter("--timeout=5s");
 
-    CF_EXPECT(ResetGPIO());
-
-    // Initialize TPM socket
-    CF_EXPECT(InitializeTpm());
-
+    std::string stdout_str;
+    std::string stderr_str;
+    const int ret = RunWithManagedStdio(std::move(status_cmd), nullptr,
+                                        &stdout_str, &stderr_str);
+    CF_EXPECTF(ret == 0, "ti50 emulator status command failed (exit {}): {}",
+               ret, stderr_str);
+    const Result<Json::Value> status_json = CF_EXPECT(ParseJson(stdout_str));
+    CF_EXPECT(status_json->isObject() && (*status_json)["status"] == "ok",
+              "ti50 emulator status not ok: " << stdout_str);
+    LOG(INFO) << "ti50 emulator is ready: " << stdout_str;
     return {};
   }
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-
-  Result<void> ResultSetup() override {
-    // Socket proxy
-    ctrl_sock_ = SharedFD::SocketLocalServer(
-        instance_.PerInstancePath(kControlSocketName), false, SOCK_STREAM,
-        0777);
-    if (!ctrl_sock_->IsOpen()) {
-      LOG(ERROR) << "Unable to create unix ctrl_sock server: "
-                 << ctrl_sock_->StrError();
-    }
-
-    return {};
-  }
-
-  Result<void> ResetGPIO() const {
-    // Write '1' to 'gpioPltRst' to initialize the emulator.
-    std::string gpio_sock = instance_.PerInstancePath("gpioPltRst");
-#ifdef __linux__
-    CF_EXPECT(WaitForUnixSocket(gpio_sock, 30));
-#else
-    return CF_ERR("Cannot start the ti50 emulator outside of Linux.");
-#endif
-
-    // Wait for the emulator's internal state to be initialized.
-    // Since the emulator polls the socket at 100 ms intervals before
-    // initializing , 1 second sleep after the socket being ready should be a
-    // sufficiently long.
-    // https://crrev.com/7447dbd20aee11809e89e04bb2fcb2a1476febe1/tpm2-simulator/tpm_executor_ti50_impl.cc#171
-    sleep(1);
-
-    Fd cl = CF_EXPECT(Fd::SocketLocalClient(gpio_sock, false, SOCK_STREAM),
-                      "Failed to connect to gpioPltRst");
-    CF_EXPECT(WriteExact(cl, "1"));
-
-    LOG(INFO) << "ti50 emulator: reset GPIO!";
-    return {};
-  }
-
-  Result<void> InitializeTpm() const {
-    // Connects to direct_tpm_fifo socket, which is a bi-directional Unix domain
-    // socket.
-    std::string fifo_sock = instance_.PerInstancePath("direct_tpm_fifo");
-#ifdef __linux__
-    CF_EXPECT(WaitForUnixSocket(fifo_sock, 30));
-#else
-    return CF_ERR("Cannot start the ti50 emulator outside of Linux.");
-#endif
-
-    SharedFD cl =
-        CF_EXPECT(Fd::SocketLocalClient(fifo_sock, false, SOCK_STREAM),
-                  "Failed to connect to direct_tpm_fifo");
-
-    const uint32_t kMaxRetryCount = 5;
-    // TPM2_Startup command with SU_CLEAR
-    const uint8_t kTpm2StartupCmd[] = {0x80, 0x01, 0x00, 0x00, 0x00, 0x0c,
-                                       0x00, 0x00, 0x01, 0x44, 0x00, 0x00};
-    ssize_t cmd_size = sizeof(kTpm2StartupCmd);
-    const uint8_t kExpectedResponse[] = {0x80, 0x01, 0x00, 0x00, 0x00,
-                                         0x0a, 0x00, 0x00, 0x00, 0x00};
-    ssize_t expected_response_size = sizeof(kExpectedResponse);
-    for (int i = 0; i < kMaxRetryCount; i++) {
-      CF_EXPECT(WriteExact(*cl, (char*)kTpm2StartupCmd, cmd_size));
-
-      // Read a response.
-      // First, read a 2-byte tag and 4-byte size.
-      constexpr ssize_t kHeaderSize = 6;
-      uint8_t resp_header[kHeaderSize] = {0};
-      CF_EXPECT_EQ(ReadExact(cl, (char*)resp_header, kHeaderSize), kHeaderSize,
-                   "failed to read TPM2_startup response header");
-      uint8_t resp_size[4] = {resp_header[5], resp_header[4], resp_header[3],
-                              resp_header[2]};
-      uint32_t* response_size = reinterpret_cast<uint32_t*>(&resp_size);
-
-      // Then, read the response body.
-      uint32_t body_size = *response_size - kHeaderSize;
-      std::vector<char> resp_body(body_size);
-      CF_EXPECT_EQ(ReadExact(cl, &resp_body), body_size,
-                   "failed to read TPM2_startup response body");
-
-      // Check if the response is the expected one.
-      if (*response_size != expected_response_size) {
-        LOG(INFO) << "TPM response size mismatch. Try again: " << *response_size
-                  << " != " << expected_response_size;
-        sleep(1);
-        continue;
-      }
-
-      bool ok = true;
-      for (int i = 0; i < expected_response_size - kHeaderSize; i++) {
-        ok &= (resp_body.at(i) == kExpectedResponse[kHeaderSize + i]);
-      }
-      if (!ok) {
-        LOG(INFO) << "TPM response body mismatch. Try again.";
-        sleep(1);
-        continue;
-      }
-
-      LOG(INFO) << "TPM initialized successfully for Ti50";
-      return {};
-    }
-
-    return CF_ERR("Failed to initialize Ti50 emulator");
-  }
+  Result<void> ResultSetup() override { return {}; }
 
   const CuttlefishConfig::InstanceSpecific instance_;
   LogTeeCreator& log_tee_;
-
-#ifdef __linux__
-  std::unique_ptr<ProxyServer> socket_proxy_;
-#endif
-
-  SharedFD ctrl_sock_;
-  SharedFD gpio_sock_;
 };
 }  // namespace
 
