@@ -8,6 +8,7 @@ package(
 rust_binary(
     name = "cf_vhost_user_sound",
     srcs = [
+        "src/convert.rs",
         "src/main.rs",
         "src/virtio_snd.rs",
     ],
