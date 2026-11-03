@@ -66,6 +66,10 @@ Result<std::vector<std::string>> GenerateCfFlags(
     flags.emplace_back(GenerateFlag("netsim_modem", launch.netsim_modem()));
   }
 
+  if (launch.has_netsim_nfc()) {
+    flags.emplace_back(GenerateFlag("netsim_nfc", launch.netsim_nfc()));
+  }
+
   if (!launch.netsim_args().empty()) {
     for (const auto& arg : launch.netsim_args()) {
       CF_EXPECTF(arg.find_first_of(" \t\n\v\f\r") == std::string::npos,
