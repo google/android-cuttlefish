@@ -490,22 +490,19 @@ cf_cc_library(
     srcs = ["ti50_emulator.cpp"],
     hdrs = ["ti50_emulator.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/fs:fd",
-        "//cuttlefish/common/libs/utils:wait_for_unix_socket",
+        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/vm_manager",
-        "//cuttlefish/io:write_exact",
         "//cuttlefish/process:command",
+        "//cuttlefish/process:managed_stdio",
+        "//cuttlefish/process:subprocess",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@fruit",
-    ] + select({
-        "@platforms//os:linux": ["//cuttlefish/common/libs/utils:socket2socket_proxy"],
-        "//conditions:default": [],
-    }),
+        "@jsoncpp",
+    ],
 )
 
 cf_cc_library(
