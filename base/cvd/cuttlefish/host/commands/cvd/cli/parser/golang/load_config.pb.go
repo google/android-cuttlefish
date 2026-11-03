@@ -130,6 +130,7 @@ type EnvironmentSpecification struct {
 	NetsimUwb     *bool    `protobuf:"varint,6,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
 	NetsimArgs    []string `protobuf:"bytes,7,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
 	NetsimModem   *bool    `protobuf:"varint,8,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
+	NetsimNfc     *bool    `protobuf:"varint,9,opt,name=netsim_nfc,json=netsimNfc,proto3,oneof" json:"netsim_nfc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -221,6 +222,13 @@ func (x *EnvironmentSpecification) GetNetsimModem() bool {
 	return false
 }
 
+func (x *EnvironmentSpecification) GetNetsimNfc() bool {
+	if x != nil && x.NetsimNfc != nil {
+		return *x.NetsimNfc
+	}
+	return false
+}
+
 type EnvironmentOptions struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	Fetch   *Fetch                 `protobuf:"bytes,1,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
@@ -231,6 +239,7 @@ type EnvironmentOptions struct {
 	NetsimUwb     *bool    `protobuf:"varint,5,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
 	NetsimArgs    []string `protobuf:"bytes,6,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
 	NetsimModem   *bool    `protobuf:"varint,7,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
+	NetsimNfc     *bool    `protobuf:"varint,8,opt,name=netsim_nfc,json=netsimNfc,proto3,oneof" json:"netsim_nfc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -311,6 +320,13 @@ func (x *EnvironmentOptions) GetNetsimArgs() []string {
 func (x *EnvironmentOptions) GetNetsimModem() bool {
 	if x != nil && x.NetsimModem != nil {
 		return *x.NetsimModem
+	}
+	return false
+}
+
+func (x *EnvironmentOptions) GetNetsimNfc() bool {
+	if x != nil && x.NetsimNfc != nil {
+		return *x.NetsimNfc
 	}
 	return false
 }
@@ -2091,7 +2107,7 @@ var File_cuttlefish_host_commands_cvd_cli_parser_load_config_proto protoreflect.
 
 const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "" +
 	"\n" +
-	"9cuttlefish/host/commands/cvd/cli/parser/load_config.proto\x12\x15cuttlefish.cvd.config\"\xef\x03\n" +
+	"9cuttlefish/host/commands/cvd/cli/parser/load_config.proto\x12\x15cuttlefish.cvd.config\"\xa2\x04\n" +
 	"\x18EnvironmentSpecification\x12=\n" +
 	"\tinstances\x18\x01 \x03(\v2\x1f.cuttlefish.cvd.config.InstanceR\tinstances\x127\n" +
 	"\x05fetch\x18\x02 \x01(\v2\x1c.cuttlefish.cvd.config.FetchH\x00R\x05fetch\x88\x01\x01\x12=\n" +
@@ -2102,7 +2118,9 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"netsim_uwb\x18\x06 \x01(\bH\x04R\tnetsimUwb\x88\x01\x01\x12\x1f\n" +
 	"\vnetsim_args\x18\a \x03(\tR\n" +
 	"netsimArgs\x12&\n" +
-	"\fnetsim_modem\x18\b \x01(\bH\x05R\vnetsimModem\x88\x01\x01B\b\n" +
+	"\fnetsim_modem\x18\b \x01(\bH\x05R\vnetsimModem\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"netsim_nfc\x18\t \x01(\bH\x06R\tnetsimNfc\x88\x01\x01B\b\n" +
 	"\x06_fetchB\n" +
 	"\n" +
 	"\b_metricsB\t\n" +
@@ -2110,7 +2128,8 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\n" +
 	"_netsim_btB\r\n" +
 	"\v_netsim_uwbB\x0f\n" +
-	"\r_netsim_modem\"\xaa\x03\n" +
+	"\r_netsim_modemB\r\n" +
+	"\v_netsim_nfc\"\xdd\x03\n" +
 	"\x12EnvironmentOptions\x127\n" +
 	"\x05fetch\x18\x01 \x01(\v2\x1c.cuttlefish.cvd.config.FetchH\x00R\x05fetch\x88\x01\x01\x12=\n" +
 	"\ametrics\x18\x02 \x01(\v2\x1e.cuttlefish.cvd.config.MetricsH\x01R\ametrics\x88\x01\x01\x12:\n" +
@@ -2120,7 +2139,9 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"netsim_uwb\x18\x05 \x01(\bH\x04R\tnetsimUwb\x88\x01\x01\x12\x1f\n" +
 	"\vnetsim_args\x18\x06 \x03(\tR\n" +
 	"netsimArgs\x12&\n" +
-	"\fnetsim_modem\x18\a \x01(\bH\x05R\vnetsimModem\x88\x01\x01B\b\n" +
+	"\fnetsim_modem\x18\a \x01(\bH\x05R\vnetsimModem\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"netsim_nfc\x18\b \x01(\bH\x06R\tnetsimNfc\x88\x01\x01B\b\n" +
 	"\x06_fetchB\n" +
 	"\n" +
 	"\b_metricsB\t\n" +
@@ -2128,7 +2149,8 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\n" +
 	"_netsim_btB\r\n" +
 	"\v_netsim_uwbB\x0f\n" +
-	"\r_netsim_modem\"t\n" +
+	"\r_netsim_modemB\r\n" +
+	"\v_netsim_nfc\"t\n" +
 	"\x06Common\x12\"\n" +
 	"\n" +
 	"group_name\x18\x01 \x01(\tH\x00R\tgroupName\x88\x01\x01\x12&\n" +
