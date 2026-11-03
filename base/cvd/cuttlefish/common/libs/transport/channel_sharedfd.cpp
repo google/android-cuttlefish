@@ -28,6 +28,7 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/transport/channel.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -81,9 +82,7 @@ Result<void> SharedFdChannel::SendMessage(RawMessage& message, bool response) {
   message.is_response = response;
   const size_t write_size = sizeof(RawMessage) + message.payload_size;
   const char* message_bytes = reinterpret_cast<const char*>(&message);
-  const size_t written = WriteAll(output_, message_bytes, write_size);
-  CF_EXPECT_EQ(written, write_size,
-               "Could not write message: " << output_->StrError());
+  CF_EXPECT(WriteExact(*output_, message_bytes, write_size));
   return {};
 }
 
