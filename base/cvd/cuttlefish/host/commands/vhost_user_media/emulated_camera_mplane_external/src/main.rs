@@ -16,10 +16,14 @@
 //!
 //! This backend targets the AOSP external (USB) camera HAL and the V4L2 compliance suite.
 
+mod mmap;
+
 use std::path::PathBuf;
 
 use clap::Parser;
 use emulated_camera::LensFacing;
+
+use crate::mmap::MmapHandler;
 
 /// Name reported to the guest through `VIDIOC_QUERYCAP`.
 const CARD_NAME: &str = "emulated_camera";
@@ -47,5 +51,10 @@ fn main() -> emulated_camera::Result<()> {
 
     init_logging(args.verbosity);
 
-    emulated_camera::serve(&args.socket_path, CARD_NAME, LensFacing::External)
+    emulated_camera::serve(
+        &args.socket_path,
+        CARD_NAME,
+        LensFacing::External,
+        |mapper, _guest_mem| MmapHandler::new(mapper),
+    )
 }
