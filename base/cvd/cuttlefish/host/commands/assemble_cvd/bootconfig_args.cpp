@@ -21,6 +21,7 @@
 #include <array>
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -41,15 +42,10 @@
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
-#include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
-#include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-using vm_manager::CrosvmManager;
-using vm_manager::QemuManager;
 
 namespace {
 
@@ -187,6 +183,8 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
 
   auto vmm =
       vm_manager::GetVmManager(config.vm_manager(), instance.target_arch());
+  CF_EXPECT(vmm != nullptr,
+            "Invalid or unsupported VM manager: " << config.vm_manager());
   AppendMapWithReplacement(&bootconfig_args,
                            CF_EXPECT(vmm->ConfigureBootDevices(instance)));
 
@@ -317,7 +315,10 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   }
 
   const auto& secure_hals = CF_EXPECT(config.secure_hals());
-  if (secure_hals.count(SecureHal::kGuestKeymintInsecure)) {
+  if (secure_hals.count(SecureHal::kGuestKeymintNone)) {
+    bootconfig_args["androidboot.vendor.apex.com.android.hardware.keymint"] =
+        "none";
+  } else if (secure_hals.count(SecureHal::kGuestKeymintInsecure)) {
     bootconfig_args["androidboot.vendor.apex.com.android.hardware.keymint"] =
         "com.android.hardware.keymint.rust_nonsecure";
   } else if (secure_hals.count(SecureHal::kGuestKeymintTrustyInsecure)) {
@@ -329,10 +330,16 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   }
 
   // Preemptive for when we set up the HAL to be runtime selectable
-  bootconfig_args["androidboot.vendor.apex.com.android.hardware.gatekeeper"] =
-      secure_hals.count(SecureHal::kGuestGatekeeperInsecure)
-          ? "com.android.hardware.gatekeeper.nonsecure"
-          : "com.android.hardware.gatekeeper.cf_remote";
+  if (secure_hals.count(SecureHal::kGuestGatekeeperNone)) {
+    bootconfig_args["androidboot.vendor.apex.com.android.hardware.gatekeeper"] =
+        "none";
+  } else if (secure_hals.count(SecureHal::kGuestGatekeeperInsecure)) {
+    bootconfig_args["androidboot.vendor.apex.com.android.hardware.gatekeeper"] =
+        "com.android.hardware.gatekeeper.nonsecure";
+  } else {
+    bootconfig_args["androidboot.vendor.apex.com.android.hardware.gatekeeper"] =
+        "com.android.hardware.gatekeeper.cf_remote";
+  }
 
   // jcardsimulator
   if (secure_hals.count(SecureHal::kGuestStrongboxInsecure)) {
