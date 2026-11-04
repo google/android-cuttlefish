@@ -23,6 +23,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/uuid.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/files/write_new_file.h"
 #include "cuttlefish/host/libs/directories/xdg.h"
 #include "cuttlefish/result/result.h"
 

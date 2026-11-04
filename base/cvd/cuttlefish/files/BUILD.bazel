@@ -142,3 +142,15 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
     ],
 )
+
+cf_cc_library(
+    name = "write_new_file",
+    srcs = ["write_new_file.cc"],
+    hdrs = ["write_new_file.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/io:write_exact",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)

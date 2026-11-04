@@ -41,8 +41,8 @@ cf_cc_library(
     srcs = ["metrics_writer.cc"],
     hdrs = ["metrics_writer.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:random",
+        "//cuttlefish/files:write_new_file",
         "//cuttlefish/metrics/external_proto:cf_log_cc_proto",
         "//cuttlefish/result",
         "@fmt",
@@ -72,6 +72,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:uuid",
         "//cuttlefish/files:file_exists",
+        "//cuttlefish/files:write_new_file",
         "//cuttlefish/host/libs/directories",
         "//cuttlefish/result",
         "@fmt",

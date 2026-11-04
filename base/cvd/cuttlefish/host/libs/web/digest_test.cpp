@@ -24,7 +24,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/write_new_file.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {

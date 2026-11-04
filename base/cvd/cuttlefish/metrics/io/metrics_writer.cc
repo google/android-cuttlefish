@@ -24,8 +24,8 @@
 #include "fmt/format.h"
 #include "google/protobuf/text_format.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/random.h"
+#include "cuttlefish/files/write_new_file.h"
 #include "cuttlefish/metrics/external_proto/cf_log.pb.h"
 #include "cuttlefish/result/result.h"
 

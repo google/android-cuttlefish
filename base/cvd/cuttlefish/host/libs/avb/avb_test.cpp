@@ -29,6 +29,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/is_symlink.h"
+#include "cuttlefish/files/write_new_file.h"
 #include "cuttlefish/posix/stat.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/assert.h"

@@ -38,7 +38,7 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:write_new_file",
         "//cuttlefish/host/commands/cvd/fetch:build_api_credentials",
         "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
         "//cuttlefish/host/libs/web/credential_source",
@@ -226,6 +226,7 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_exists",
+        "//cuttlefish/files:write_new_file",
         "//cuttlefish/host/commands/cvd/fetch:builds",
         "//cuttlefish/host/commands/cvd/fetch:fetch_context",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
