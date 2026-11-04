@@ -2,6 +2,14 @@
 
 set -e -x
 
+function disable_apt_daily() {
+  echo 'DPkg::Lock::Timeout "120";' | sudo tee /etc/apt/apt.conf.d/99lock-timeout >/dev/null
+  sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer \
+    apt-daily.service apt-daily-upgrade.service 2>/dev/null || true
+  sudo systemctl mask apt-daily.timer apt-daily-upgrade.timer \
+    apt-daily.service apt-daily-upgrade.service 2>/dev/null || true
+}
+
 function install_pkgs() {
   local pkgdir="$1"
   shift
@@ -89,6 +97,7 @@ if [[ "${PKG_DIR}" == "" ]] || ! [[ -d "${PKG_DIR}" ]]; then
   exit 1
 fi
 
+disable_apt_daily
 install_pkgs "${PKG_DIR}" cuttlefish-podcvd
 load_kernel_modules kvm vhost-vsock vhost-net bridge
 grant_device_access vhost-vsock vhost-net kvm

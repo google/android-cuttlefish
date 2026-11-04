@@ -78,6 +78,12 @@ echo "${debs}"
 REPO_DIR="$(realpath "$(dirname "$0")"/..)"
 TOOL_DIR="${REPO_DIR}/tools"
 
+echo 'DPkg::Lock::Timeout "120";' | sudo tee /etc/apt/apt.conf.d/99lock-timeout >/dev/null
+sudo systemctl stop apt-daily.timer apt-daily-upgrade.timer \
+  apt-daily.service apt-daily-upgrade.service 2>/dev/null || true
+sudo systemctl mask apt-daily.timer apt-daily-upgrade.timer \
+  apt-daily.service apt-daily-upgrade.service 2>/dev/null || true
+
 if [[ "${config}" == "${CONFIG_PODCVD_WITH_GPU}" ]]; then
   sudo install -m 0755 -d /etc/apt/keyrings
   sudo curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey -o /etc/apt/keyrings/nvidia-container-toolkit.asc

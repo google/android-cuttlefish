@@ -48,6 +48,9 @@ sudo chroot /mnt/image /usr/bin/systemctl mask tmp.mount
 # Avoid automatic updates during tests.
 # https://manpages.debian.org/trixie/unattended-upgrades/unattended-upgrade.8.en.html
 sudo chroot /mnt/image /usr/bin/apt purge -y unattended-upgrades
+sudo chroot /mnt/image /usr/bin/systemctl mask \
+  apt-daily.timer apt-daily-upgrade.timer \
+  apt-daily.service apt-daily-upgrade.service
 
 # Install JDK.
 #
