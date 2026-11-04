@@ -54,6 +54,8 @@ NoDestructor<absl::flat_hash_map<absl::string_view, SecureHal>> kMapping([] {
       {"weaver", SecureHal::kHostWeaverSecure},
       {"host_weaver_secure", SecureHal::kHostWeaverSecure},
       {"host_secure_weaver", SecureHal::kHostWeaverSecure},
+      {"guest_keymint_none", SecureHal::kGuestKeymintNone},
+      {"guest_gatekeeper_none", SecureHal::kGuestGatekeeperNone},
   };
 }());
 
@@ -79,6 +81,7 @@ Result<std::set<SecureHal>> ParseSecureHals(const std::string& hals) {
 
 Result<void> ValidateSecureHals(const std::set<SecureHal>& secure_hals) {
   auto keymint_impls =
+      secure_hals.count(SecureHal::kGuestKeymintNone) +
       secure_hals.count(SecureHal::kGuestKeymintInsecure) +
       secure_hals.count(SecureHal::kGuestKeymintTrustyInsecure) +
       secure_hals.count(SecureHal::kHostKeymintInsecure) +
@@ -86,6 +89,7 @@ Result<void> ValidateSecureHals(const std::set<SecureHal>& secure_hals) {
   CF_EXPECT_LE(keymint_impls, 1, "Choose at most one keymint implementation");
 
   auto gatekeeper_impls =
+      secure_hals.count(SecureHal::kGuestGatekeeperNone) +
       secure_hals.count(SecureHal::kGuestGatekeeperInsecure) +
       secure_hals.count(SecureHal::kHostGatekeeperInsecure) +
       secure_hals.count(SecureHal::kHostGatekeeperSecure);
@@ -103,8 +107,12 @@ std::string ToString(SecureHal hal_in) {
   switch (hal_in) {
     case SecureHal::kGuestGatekeeperInsecure:
       return "guest_gatekeeper_insecure";
+    case SecureHal::kGuestGatekeeperNone:
+      return "guest_gatekeeper_none";
     case SecureHal::kGuestKeymintInsecure:
       return "guest_keymint_insecure";
+    case SecureHal::kGuestKeymintNone:
+      return "guest_keymint_none";
     case SecureHal::kGuestKeymintTrustyInsecure:
       return "guest_keymint_trusty_insecure";
     case SecureHal::kHostKeymintInsecure:

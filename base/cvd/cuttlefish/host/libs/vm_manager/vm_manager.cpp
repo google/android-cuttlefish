@@ -39,8 +39,8 @@
 namespace cuttlefish {
 namespace vm_manager {
 
-static std::unique_ptr<VmManager> Allocate(VmmMode mode, Arch arch) {
-  switch (mode) {
+std::unique_ptr<VmManager> GetVmManager(VmmMode vmm_mode, Arch arch) {
+  switch (vmm_mode) {
     case VmmMode::kCrosvm:
       return std::make_unique<CrosvmManager>();
     case VmmMode::kQemu:
@@ -48,19 +48,9 @@ static std::unique_ptr<VmManager> Allocate(VmmMode mode, Arch arch) {
     case VmmMode::kGem5:
       return std::make_unique<Gem5Manager>(arch);
     case VmmMode::kUnknown:
-      LOG(ERROR) << "Invalid VM manager: " << mode;
+      LOG(ERROR) << "Invalid VM manager: " << vmm_mode;
       return {};
   }
-}
-
-std::unique_ptr<VmManager> GetVmManager(VmmMode vmm_mode, Arch arch) {
-  std::unique_ptr<VmManager> vmm = Allocate(vmm_mode, arch);
-  if (vmm != nullptr && !vmm->IsSupported()) {
-    LOG(ERROR) << "VM manager " << vmm_mode
-               << " is not supported on this machine.";
-    return {};
-  }
-  return vmm;
 }
 
 Result<std::unordered_map<std::string, std::string>>
@@ -120,8 +110,9 @@ VmManagerComponent() {
       .registerProvider([](const CuttlefishConfig& config,
                            const CuttlefishConfig::InstanceSpecific& instance) {
         auto vmm = GetVmManager(config.vm_manager(), instance.target_arch());
-        CHECK(vmm) << "Invalid VMM/Arch: \"" << config.vm_manager() << "\""
-                   << (int)instance.target_arch() << "\"";
+        CHECK(vmm && vmm->IsSupported())
+            << "Invalid or unsupported VMM/Arch: \"" << config.vm_manager()
+            << "\"" << (int)instance.target_arch() << "\"";
         return vmm.release();  // fruit takes ownership of raw pointers
       })
       .addMultibinding<CommandSource, VmmCommands>()
