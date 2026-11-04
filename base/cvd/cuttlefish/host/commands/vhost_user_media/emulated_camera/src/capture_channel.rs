@@ -14,37 +14,23 @@
 
 use anyhow::{Context, Result as AnyhowResult};
 use std::collections::VecDeque;
-use std::fs::File;
-use std::io::{Seek, Write};
+use std::io::Write;
 use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
 use std::time::{Duration, Instant};
 
 use crate::device::{CameraControls, TestPattern};
+use crate::format::Yuv420m;
 
-/// Triple of planar files (Y, U, V) representing the capture target.
-pub struct CapturePlanes {
-    pub y: File,
-    pub u: File,
-    pub v: File,
-}
-
-impl CapturePlanes {
-    /// Rewinds all plane file offsets back to 0.
-    ///
-    /// Buffers are reused across capture requests. Rewinding ensures each write
-    /// starts at the beginning of the plane rather than appending past prior frames.
-    pub fn rewind(&mut self) -> std::io::Result<()> {
-        self.y.rewind()?;
-        self.u.rewind()?;
-        self.v.rewind()?;
-        Ok(())
-    }
+/// Where a capture request is rendered.
+pub trait CaptureSink: Send + Sync {
+    /// Returns the planes as sequential sinks, each positioned at its start.
+    fn planes(&mut self) -> std::io::Result<[&mut dyn Write; Yuv420m::NUM_PLANES]>;
 }
 
 /// A capture request submitted to the channel for processing.
 pub struct CaptureRequest {
     pub buffer_id: usize,
-    pub planes: CapturePlanes,
+    pub sink: Box<dyn CaptureSink>,
 }
 
 /// Event emitted by the capture channel when a request has been completed.
@@ -273,28 +259,26 @@ impl CaptureProcessor {
         self.iteration += 1;
 
         if let Some(mut req) = self.pending_requests.pop_front() {
-            if let Err(e) = req.planes.rewind() {
-                log::warn!(
-                    "Channel {}: failed to rewind capture planes: {:#}",
+            match req.sink.planes() {
+                Ok([sink_y, sink_u, sink_v]) => {
+                    if let Err(e) = Self::write_pattern(
+                        seq as u64,
+                        self.controls.test_pattern,
+                        &self.controls,
+                        self.width,
+                        self.height,
+                        sink_y,
+                        sink_u,
+                        sink_v,
+                    ) {
+                        log::warn!("Channel {}: write_pattern failed: {:#}", self.session_id, e);
+                    }
+                }
+                Err(e) => log::warn!(
+                    "Channel {}: failed to access capture planes: {:#}",
                     self.session_id,
                     e
-                );
-            }
-            if let Err(e) = Self::write_pattern(
-                seq as u64,
-                self.controls.test_pattern,
-                &self.controls,
-                self.width,
-                self.height,
-                &mut req.planes.y,
-                &mut req.planes.u,
-                &mut req.planes.v,
-            ) {
-                log::warn!(
-                    "Channel {}: write_pattern failed: {:#}",
-                    self.session_id,
-                    e
-                );
+                ),
             }
             let _ = self.completion_tx.send(CaptureCompletedEvent {
                 buffer_id: req.buffer_id,
@@ -371,9 +355,9 @@ impl CaptureChannel {
         self.send_cmd(ChannelCmd::StopCapture)
     }
 
-    /// Queues target destination planes into the capture channel.
-    pub fn queue_buffer(&self, buffer_id: usize, planes: CapturePlanes) -> AnyhowResult<()> {
-        self.send_cmd(ChannelCmd::Queue(CaptureRequest { buffer_id, planes }))
+    /// Queues a capture request for `buffer_id` into the capture channel.
+    pub fn queue_buffer(&self, buffer_id: usize, sink: Box<dyn CaptureSink>) -> AnyhowResult<()> {
+        self.send_cmd(ChannelCmd::Queue(CaptureRequest { buffer_id, sink }))
     }
 
     /// Updates channel controls (e.g. test pattern, gain).

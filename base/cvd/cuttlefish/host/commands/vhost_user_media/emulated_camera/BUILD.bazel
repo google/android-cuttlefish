@@ -8,7 +8,9 @@ rust_library(
     srcs = [
         "src/capture_channel.rs",
         "src/device.rs",
+        "src/format.rs",
         "src/lib.rs",
+        "src/memory.rs",
         "src/pattern/julia_set.rs",
         "src/pattern/mod.rs",
         "src/pattern/pulse.rs",

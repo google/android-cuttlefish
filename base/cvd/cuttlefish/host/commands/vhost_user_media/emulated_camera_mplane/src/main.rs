@@ -14,11 +14,15 @@
 
 //! Emulated multi-planar V4L2 camera for the cuttlefish virtio-media camera HAL.
 
+mod userptr;
+
 use std::path::PathBuf;
 
 use clap::Parser;
 use emulated_camera::LensFacing;
 use thiserror::Error;
+
+use crate::userptr::UserPtrHandler;
 
 /// Name reported to the guest through `VIDIOC_QUERYCAP`.
 const CARD_NAME: &str = "emulated_camera";
@@ -81,6 +85,11 @@ fn main() -> Result<()> {
     init_logging(args.verbosity);
 
     let config = Config::try_from(args)?;
-    emulated_camera::serve(&config.socket_path, CARD_NAME, config.lens_facing)?;
+    emulated_camera::serve(
+        &config.socket_path,
+        CARD_NAME,
+        config.lens_facing,
+        |_mapper, guest_mem| UserPtrHandler::new(guest_mem),
+    )?;
     Ok(())
 }

@@ -13,14 +13,22 @@ alias(
 
 rust_binary(
     name = "emulated_camera_mplane_external_binary",
-    srcs = ["src/main.rs"],
+    srcs = [
+        "src/main.rs",
+        "src/mmap.rs",
+    ],
     edition = "2024",
     deps = crate_deps([
         "clap",
         "env_logger",
+        "libc",
         "log",
+        "v4l2r",
+        "virtio-media",
+        "vm-memory",
     ]) + [
         "//cuttlefish/host/commands/vhost_user_media/emulated_camera",
+        "//cuttlefish/host/commands/vhost_user_media/vhu_media",
     ],
 )
 

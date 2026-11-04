@@ -14,17 +14,18 @@
 
 use anyhow::{Context, Result as AnyhowResult};
 use std::io::Result as IoResult;
-use std::os::fd::{AsFd, BorrowedFd};
+use std::os::fd::BorrowedFd;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
+use crate::capture_channel::CaptureChannel;
+use crate::format::Yuv420m;
+use crate::memory::{BufferMemoryHandler, QbufRequest, QueuedBuffer};
 use crate::pattern::FramePattern;
 use crate::pattern::julia_set::JuliaSet;
 use crate::pattern::pulse::Pulse;
 use crate::pattern::smpte::SmpteBars;
-use crate::capture_channel::{CaptureChannel, CapturePlanes};
 
-use v4l2r::PixelFormat;
 use v4l2r::QueueType;
 use v4l2r::bindings;
 use v4l2r::bindings::v4l2_fmtdesc;
@@ -39,25 +40,20 @@ use v4l2r::ioctl::EventType as V4l2EventType;
 use v4l2r::ioctl::QueryCtrlFlags;
 use v4l2r::ioctl::SubscribeEventFlags;
 use v4l2r::ioctl::V4l2Buffer;
-use v4l2r::ioctl::V4l2PlanesWithBackingMut;
 use v4l2r::memory::MemoryType;
 use virtio_media::VirtioMediaDevice;
 use virtio_media::VirtioMediaDeviceSession;
 use virtio_media::VirtioMediaEventQueue;
-use virtio_media::VirtioMediaHostMemoryMapper;
 use virtio_media::io::ReadFromDescriptorChain;
 use virtio_media::io::WriteToDescriptorChain;
 use virtio_media::ioctl::IoctlResult;
 use virtio_media::ioctl::VirtioMediaIoctlHandler;
 use virtio_media::ioctl::virtio_media_dispatch_ioctl;
-use virtio_media::memfd::MemFdBuffer;
-use virtio_media::mmap::MmapMappingManager;
 use virtio_media::protocol::DequeueBufferEvent;
 use virtio_media::protocol::SessionEvent;
 use virtio_media::protocol::SgEntry;
 use virtio_media::protocol::V4l2Event;
 use virtio_media::protocol::V4l2Ioctl;
-use virtio_media::protocol::VIRTIO_MEDIA_MMAP_FLAG_RW;
 
 /// Rust equivalent of the V4L2_CTRL_ID2WHICH C preprocessor macro.
 /// Extracts the control class ID from a control ID by masking out the lower 16 bits
@@ -213,30 +209,59 @@ enum BufferState {
     },
 }
 
-/// Information about a single plane of a multi-planar buffer.
-struct Plane {
-    /// Backing memory file descriptor.
-    fd: MemFdBuffer,
-    /// Offset that can be used to map the plane's memory.
-    offset: u32,
+/// Builds the V4L2 representation of buffer `index` of `queue` before its [`BufferMemoryHandler`]
+/// fills in the memory specific plane fields.
+fn new_v4l2_buffer(
+    queue: QueueType,
+    index: u32,
+    memory: MemoryType,
+    plane_sizes: [u32; Yuv420m::NUM_PLANES],
+) -> V4l2Buffer {
+    let mut v4l2_buffer = V4l2Buffer::new(queue, index, memory);
+    // TODO(b/520129053): The v4l2r crate's `set_num_planes()` doesn't allow sizing-up.
+    // So we directly set the plane count on the raw buffer so that the plane
+    // iterator yields all planes.
+    unsafe {
+        (*v4l2_buffer.as_mut_ptr()).length = Yuv420m::NUM_PLANES as u32;
+    }
+    for (plane, size) in v4l2_buffer.planes_iter_mut().zip(plane_sizes) {
+        *plane.length = size;
+    }
+    v4l2_buffer.set_field(BufferField::None);
+    v4l2_buffer.set_flags(BufferFlags::TIMESTAMP_MONOTONIC);
+    v4l2_buffer
 }
 
 /// Information about a single buffer.
-struct Buffer {
+struct Buffer<A> {
     /// Current state of the buffer.
     state: BufferState,
     /// V4L2 representation of this buffer to be sent to the guest when requested.
     v4l2_buffer: V4l2Buffer,
-    /// Backing storage and offsets for the planes of the buffer.
-    planes: [Plane; 3],
+    /// Memory allocated for the planes of the buffer, see [`BufferMemoryHandler::Allocation`].
+    allocation: A,
 }
 
-impl Buffer {
-    fn new(v4l2_buffer: V4l2Buffer, planes: [Plane; 3]) -> Self {
+impl<A> Buffer<A> {
+    fn new(v4l2_buffer: V4l2Buffer, allocation: A) -> Self {
         Self {
             state: BufferState::New,
             v4l2_buffer,
-            planes,
+            allocation,
+        }
+    }
+
+    /// Sets `bytesused` to zero on every plane.
+    fn set_bytes_used_to_zero(&mut self) {
+        for plane in self.v4l2_buffer.planes_iter_mut() {
+            *plane.bytesused = 0;
+        }
+    }
+
+    /// Sets `bytesused` to `length` on every plane.
+    fn set_bytes_used_to_length(&mut self) {
+        for plane in self.v4l2_buffer.planes_iter_mut() {
+            *plane.bytesused = *plane.length;
         }
     }
 
@@ -245,32 +270,15 @@ impl Buffer {
         let mut flags = self.v4l2_buffer.flags();
         match state {
             BufferState::New => {
-                let planes = self.v4l2_buffer.planes_with_backing_iter_mut();
-                if let V4l2PlanesWithBackingMut::Mmap(mut planes) = planes {
-                    while let Some(mut plane) = planes.next() {
-                        *plane.bytesused = 0;
-                    }
-                }
+                self.set_bytes_used_to_zero();
                 flags &= !BufferFlags::QUEUED;
             }
             BufferState::Incoming => {
-                let planes = self.v4l2_buffer.planes_with_backing_iter_mut();
-                if let V4l2PlanesWithBackingMut::Mmap(mut planes) = planes {
-                    while let Some(mut plane) = planes.next() {
-                        *plane.bytesused = 0;
-                    }
-                }
+                self.set_bytes_used_to_zero();
                 flags |= BufferFlags::QUEUED;
             }
             BufferState::Outgoing { sequence } => {
-                {
-                    let planes = self.v4l2_buffer.planes_with_backing_iter_mut();
-                    if let V4l2PlanesWithBackingMut::Mmap(mut planes) = planes {
-                        while let Some(mut plane) = planes.next() {
-                            *plane.bytesused = *plane.length;
-                        }
-                    }
-                }
+                self.set_bytes_used_to_length();
                 self.v4l2_buffer.set_sequence(sequence);
                 let mut ts = libc::timespec {
                     tv_sec: 0,
@@ -293,11 +301,11 @@ impl Buffer {
 }
 
 /// Session data of [`EmulatedCamera`].
-pub struct EmulatedCameraSession {
+pub struct EmulatedCameraSession<A> {
     /// Id of the session.
     id: u32,
     /// Buffers currently allocated for this session.
-    buffers: Arc<Mutex<Vec<Buffer>>>,
+    buffers: Arc<Mutex<Vec<Buffer<A>>>>,
     /// Is the session currently streaming?
     streaming: Arc<Mutex<bool>>,
     /// Virtual capture channel driving capture and frame pacing for this session.
@@ -306,7 +314,7 @@ pub struct EmulatedCameraSession {
     capture_completed_thread: Option<std::thread::JoinHandle<()>>,
 }
 
-impl VirtioMediaDeviceSession for EmulatedCameraSession {
+impl<A> VirtioMediaDeviceSession for EmulatedCameraSession<A> {
     fn poll_fd(&self) -> Option<BorrowedFd<'_>> {
         None
     }
@@ -316,9 +324,11 @@ impl VirtioMediaDeviceSession for EmulatedCameraSession {
 ///
 /// This implementation looks forward to have feature parity with existing Android Guest Emulated
 /// camera https://cs.android.com/android/platform/superproject/main/+/main:hardware/google/camera/devices/EmulatedCamera/
-pub struct EmulatedCamera<Q: VirtioMediaEventQueue, HM: VirtioMediaHostMemoryMapper> {
-    /// Host MMAP mapping manager.
-    mmap_manager: MmapMappingManager<HM>,
+///
+/// `M` decides how buffers are backed, see [`BufferMemoryHandler`].
+pub struct EmulatedCamera<Q: VirtioMediaEventQueue, M: BufferMemoryHandler> {
+    /// Memory handler of the capture buffers.
+    buffer_memory_handler: M,
     /// ID of the session with allocated buffers, if any.
     ///
     /// v4l2-compliance checks that only a single session can have allocated buffers at a given
@@ -336,20 +346,39 @@ pub struct EmulatedCamera<Q: VirtioMediaEventQueue, HM: VirtioMediaHostMemoryMap
     height: u32,
 }
 
-impl<Q, HM> EmulatedCamera<Q, HM>
+impl<Q, M> EmulatedCamera<Q, M>
 where
     Q: VirtioMediaEventQueue + Send + 'static,
-    HM: VirtioMediaHostMemoryMapper,
+    M: BufferMemoryHandler,
 {
-    pub fn new(evt_queue: Q, mapper: HM, lens_facing: LensFacing) -> Self {
+    pub fn new(evt_queue: Q, buffer_memory_handler: M, lens_facing: LensFacing) -> Self {
         Self {
-            mmap_manager: MmapMappingManager::from(mapper),
+            buffer_memory_handler,
             active_session: None,
             evt_queue: Arc::new(Mutex::new(evt_queue)),
             controls: CameraControls::new(lens_facing),
             width: WIDTH,
             height: HEIGHT,
         }
+    }
+
+    fn plane_sizes(&self) -> [u32; Yuv420m::NUM_PLANES] {
+        Yuv420m::plane_sizes(self.width, self.height)
+    }
+
+    fn free_buffers(&mut self, buffers: &[Buffer<M::Allocation>]) {
+        for buffer in buffers {
+            self.buffer_memory_handler.free(&buffer.allocation);
+        }
+    }
+
+    fn new_buffer(&mut self, queue: QueueType, index: u32) -> IoctlResult<Buffer<M::Allocation>> {
+        let plane_sizes = self.plane_sizes();
+        let mut v4l2_buffer = new_v4l2_buffer(queue, index, M::MEMORY_TYPE, plane_sizes);
+        let allocation = self
+            .buffer_memory_handler
+            .alloc(&mut v4l2_buffer, plane_sizes)?;
+        Ok(Buffer::new(v4l2_buffer, allocation))
     }
 
     fn lens_facing_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
@@ -504,18 +533,18 @@ where
     }
 }
 
-impl<Q, HM, Reader, Writer> VirtioMediaDevice<Reader, Writer> for EmulatedCamera<Q, HM>
+impl<Q, M, Reader, Writer> VirtioMediaDevice<Reader, Writer> for EmulatedCamera<Q, M>
 where
     Q: VirtioMediaEventQueue + Send + 'static,
-    HM: VirtioMediaHostMemoryMapper,
+    M: BufferMemoryHandler,
     Reader: ReadFromDescriptorChain,
     Writer: WriteToDescriptorChain,
 {
-    type Session = EmulatedCameraSession;
+    type Session = EmulatedCameraSession<M::Allocation>;
 
     fn new_session(&mut self, session_id: u32) -> std::result::Result<Self::Session, i32> {
         let session = (|| -> AnyhowResult<Self::Session> {
-            let buffers = Arc::new(Mutex::new(Vec::<Buffer>::new()));
+            let buffers = Arc::new(Mutex::new(Vec::<Buffer<M::Allocation>>::new()));
             let streaming = Arc::new(Mutex::new(false));
             let (capture_completed_tx, capture_completed_rx) = std::sync::mpsc::channel();
 
@@ -582,11 +611,7 @@ where
         self.active_session = None;
 
         let buffers = session.buffers.lock().unwrap();
-        for buffer in &*buffers {
-            for plane in &buffer.planes {
-                self.mmap_manager.unregister_buffer(plane.offset);
-            }
-        }
+        self.free_buffers(&buffers);
     }
 
     fn do_ioctl(
@@ -605,30 +630,13 @@ where
         flags: u32,
         offset: u32,
     ) -> std::result::Result<(u64, u64), i32> {
-        let mut buffers = session.buffers.lock().unwrap();
-        let buffer = buffers
-            .iter_mut()
-            .find(|b| b.planes.iter().any(|p| p.offset == offset))
-            .ok_or(libc::EINVAL)?;
-        let plane = buffer
-            .planes
-            .iter()
-            .find(|p| p.offset == offset)
-            .ok_or(libc::EINVAL)?;
-        let rw = (flags & VIRTIO_MEDIA_MMAP_FLAG_RW) != 0;
-        let fd = plane.fd.as_file().as_fd();
-        let (guest_addr, size) = self
-            .mmap_manager
-            .create_mapping(offset, fd, rw)
-            .map_err(|_| libc::EINVAL)?;
-        Ok((guest_addr, size))
+        let buffers = session.buffers.lock().unwrap();
+        self.buffer_memory_handler
+            .mmap(buffers.iter().map(|b| &b.allocation), flags, offset)
     }
 
     fn do_munmap(&mut self, guest_addr: u64) -> std::result::Result<(), i32> {
-        self.mmap_manager
-            .remove_mapping(guest_addr)
-            .map(|_| ())
-            .map_err(|_| libc::EINVAL)
+        self.buffer_memory_handler.munmap(guest_addr)
     }
 }
 
@@ -636,7 +644,6 @@ where
 const CID_OFFSET: u32 = bindings::V4L2_CID_CAMERA_CLASS_BASE + 0x100;
 const CID_LENS_FACING: u32 = CID_OFFSET + 1;
 
-const PIXELFORMAT: u32 = PixelFormat::from_fourcc(b"YM12").to_u32();
 const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 const FRAME_RATE: u32 = 30;
@@ -654,8 +661,18 @@ fn default_fmtdesc(queue: QueueType) -> v4l2_fmtdesc {
     v4l2_fmtdesc {
         index: 0,
         type_: queue as u32,
-        pixelformat: PIXELFORMAT,
+        pixelformat: Yuv420m::PIXELFORMAT,
         ..Default::default()
+    }
+}
+
+/// `V4L2_BUF_CAP_SUPPORTS_*` flag advertising `memory` in `VIDIOC_REQBUFS`.
+fn memory_type_to_buffer_capability(memory: MemoryType) -> BufferCapabilities {
+    match memory {
+        MemoryType::Mmap => BufferCapabilities::SUPPORTS_MMAP,
+        MemoryType::UserPtr => BufferCapabilities::SUPPORTS_USERPTR,
+        MemoryType::DmaBuf => BufferCapabilities::SUPPORTS_DMABUF,
+        MemoryType::Overlay => BufferCapabilities::empty(),
     }
 }
 
@@ -663,7 +680,7 @@ fn session_fmt(queue: QueueType, width: u32, height: u32) -> v4l2_format {
     let pix_mp = bindings::v4l2_pix_format_mplane {
         width,
         height,
-        pixelformat: PIXELFORMAT,
+        pixelformat: Yuv420m::PIXELFORMAT,
         field: bindings::v4l2_field_V4L2_FIELD_NONE,
         colorspace: bindings::v4l2_colorspace_V4L2_COLORSPACE_SRGB,
         num_planes: 3,
@@ -705,12 +722,12 @@ fn session_fmt(queue: QueueType, width: u32, height: u32) -> v4l2_format {
 }
 
 /// Implementations of the ioctls required by a v4l2 CAPTURE device.
-impl<Q, HM> VirtioMediaIoctlHandler for EmulatedCamera<Q, HM>
+impl<Q, M> VirtioMediaIoctlHandler for EmulatedCamera<Q, M>
 where
     Q: VirtioMediaEventQueue + Send + 'static,
-    HM: VirtioMediaHostMemoryMapper,
+    M: BufferMemoryHandler,
 {
-    type Session = EmulatedCameraSession;
+    type Session = EmulatedCameraSession<M::Allocation>;
 
     fn enum_fmt(
         &mut self,
@@ -846,7 +863,7 @@ where
         if queue != QueueType::VideoCaptureMplane {
             return Err(libc::EINVAL);
         }
-        if memory != MemoryType::Mmap {
+        if memory != M::MEMORY_TYPE {
             return Err(libc::EINVAL);
         }
         if *session.streaming.lock().unwrap() {
@@ -859,8 +876,6 @@ where
             _ => (),
         }
 
-        let width = self.width;
-        let height = self.height;
         let mut buffers = session.buffers.lock().unwrap();
 
         // Reqbufs(0) is an implicit streamoff.
@@ -877,96 +892,17 @@ where
 
         let count = std::cmp::min(count, 32);
 
-        for buffer in &*buffers {
-            for plane in &buffer.planes {
-                self.mmap_manager.unregister_buffer(plane.offset);
-            }
-        }
-
-        let size_y = (width * height) as u64;
-        let size_u = (width * height / 4) as u64;
-        let size_v = (width * height / 4) as u64;
+        self.free_buffers(&buffers);
 
         *buffers = (0..count)
-            .map(|i| -> std::result::Result<Buffer, i32> {
-                let fd_y = MemFdBuffer::new(size_y).map_err(|e| {
-                    log::error!("failed to allocate MMAP buffer Y: {:#}", e);
-                    libc::ENOMEM
-                })?;
-                let fd_u = MemFdBuffer::new(size_u).map_err(|e| {
-                    log::error!("failed to allocate MMAP buffer U: {:#}", e);
-                    libc::ENOMEM
-                })?;
-                let fd_v = MemFdBuffer::new(size_v).map_err(|e| {
-                    log::error!("failed to allocate MMAP buffer V: {:#}", e);
-                    libc::ENOMEM
-                })?;
-                let offset_y = self
-                    .mmap_manager
-                    .register_buffer(None, size_y as u32)
-                    .map_err(|_| libc::EINVAL)?;
-                let offset_u = self
-                    .mmap_manager
-                    .register_buffer(None, size_u as u32)
-                    .map_err(|_| libc::EINVAL)?;
-                let offset_v = self
-                    .mmap_manager
-                    .register_buffer(None, size_v as u32)
-                    .map_err(|_| libc::EINVAL)?;
-
-                let planes_structs = [
-                    Plane {
-                        fd: fd_y,
-                        offset: offset_y,
-                    },
-                    Plane {
-                        fd: fd_u,
-                        offset: offset_u,
-                    },
-                    Plane {
-                        fd: fd_v,
-                        offset: offset_v,
-                    },
-                ];
-
-                let mut v4l2_buffer = V4l2Buffer::new(queue, i, MemoryType::Mmap);
-                // TODO(b/520129053): The v4l2r crate's `set_num_planes()` doesn't allow sizing-up.
-                // So we directly set the plane count to 3 on the raw buffer so that the plane
-                // iterator yields all 3 planes (Y, U, V).
-                unsafe {
-                    (*v4l2_buffer.as_mut_ptr()).length = 3;
-                }
-                if let V4l2PlanesWithBackingMut::Mmap(mut planes) =
-                    v4l2_buffer.planes_with_backing_iter_mut()
-                {
-                    let mut plane = planes.next().unwrap();
-                    plane.set_mem_offset(offset_y);
-                    *plane.length = size_y as u32;
-
-                    let mut plane = planes.next().unwrap();
-                    plane.set_mem_offset(offset_u);
-                    *plane.length = size_u as u32;
-
-                    let mut plane = planes.next().unwrap();
-                    plane.set_mem_offset(offset_v);
-                    *plane.length = size_v as u32;
-                } else {
-                    // SAFETY: we have just set the buffer type to MMAP. Reaching this point means a bug in
-                    // the code.
-                    panic!()
-                }
-                v4l2_buffer.set_field(BufferField::None);
-                v4l2_buffer.set_flags(BufferFlags::TIMESTAMP_MONOTONIC);
-
-                Ok(Buffer::new(v4l2_buffer, planes_structs))
-            })
+            .map(|i| self.new_buffer(queue, i))
             .collect::<std::result::Result<_, _>>()?;
 
         Ok(v4l2_requestbuffers {
             count,
             type_: queue as u32,
             memory: memory as u32,
-            capabilities: (BufferCapabilities::SUPPORTS_MMAP
+            capabilities: (memory_type_to_buffer_capability(M::MEMORY_TYPE)
                 | BufferCapabilities::SUPPORTS_ORPHANED_BUFS)
                 .bits(),
             // This device does not support V4L2_BUF_CAP_SUPPORTS_MMAP_CACHE_HINTS,
@@ -995,9 +931,12 @@ where
         &mut self,
         session: &mut Self::Session,
         buffer: v4l2r::ioctl::V4l2Buffer,
-        _guest_regions: Vec<Vec<SgEntry>>,
+        guest_regions: Vec<Vec<SgEntry>>,
     ) -> IoctlResult<v4l2r::ioctl::V4l2Buffer> {
         let buffer_idx = buffer.index() as usize;
+        if buffer.memory() != M::MEMORY_TYPE {
+            return Err(libc::EINVAL);
+        }
 
         let mut buffers = session.buffers.lock().unwrap();
         let host_buffer = buffers.get_mut(buffer_idx).ok_or(libc::EINVAL)?;
@@ -1006,19 +945,25 @@ where
             return Err(libc::EINVAL);
         }
 
+        let plane_sizes = self.plane_sizes();
+        let QueuedBuffer { buffer, sink } = self.buffer_memory_handler.queue(
+            &host_buffer.allocation,
+            host_buffer.v4l2_buffer.clone(),
+            QbufRequest {
+                buffer,
+                guest_regions,
+            },
+            plane_sizes,
+        )?;
+        host_buffer.v4l2_buffer = buffer;
+
         host_buffer.set_state(BufferState::Incoming);
         let buffer = host_buffer.v4l2_buffer.clone();
-
-        let planes = CapturePlanes {
-            y: host_buffer.planes[0].fd.as_file().try_clone().map_err(|_| libc::EIO)?,
-            u: host_buffer.planes[1].fd.as_file().try_clone().map_err(|_| libc::EIO)?,
-            v: host_buffer.planes[2].fd.as_file().try_clone().map_err(|_| libc::EIO)?,
-        };
         drop(buffers);
 
         session
             .channel
-            .queue_buffer(buffer_idx, planes)
+            .queue_buffer(buffer_idx, sink)
             .map_err(|_| libc::EIO)?;
 
         Ok(buffer)
@@ -1080,7 +1025,7 @@ where
         pixel_format: u32,
     ) -> IoctlResult<bindings::v4l2_frmsizeenum> {
         log::info!("enum_framesizes: index {}, format {}", index, pixel_format);
-        if pixel_format != PIXELFORMAT {
+        if pixel_format != Yuv420m::PIXELFORMAT {
             log::info!("enum_framesizes: format {} not supported", pixel_format);
             return Err(libc::EINVAL);
         }
@@ -1117,7 +1062,7 @@ where
             width,
             height
         );
-        if pixel_format != PIXELFORMAT {
+        if pixel_format != Yuv420m::PIXELFORMAT {
             log::info!("enum_frameintervals: format {} not supported", pixel_format);
             return Err(libc::EINVAL);
         }
