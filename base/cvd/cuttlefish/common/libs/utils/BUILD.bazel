@@ -426,6 +426,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/io:write_exact",
         "@abseil-cpp//absl/log",
         "@jsoncpp",
     ],

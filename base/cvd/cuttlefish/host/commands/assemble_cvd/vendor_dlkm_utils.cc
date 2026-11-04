@@ -39,8 +39,6 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/disk_usage.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -70,25 +68,13 @@ constexpr size_t RoundUp(size_t a, size_t divisor) {
 }
 
 template <typename Container>
-bool WriteLinesToFile(const Container& lines, const std::string& path) {
-  SharedFD fd = Fd::Open(path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0640)
-                    .value_or(Fd());
-  if (!fd->IsOpen()) {
-    PLOG(ERROR) << "Failed to open " << path;
-    return false;
-  }
+Result<void> WriteLinesToFile(const Container& lines, const std::string& path) {
+  Fd fd =
+      CF_EXPECT(Fd::Open(path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0640));
   for (const auto& line : lines) {
-    if (WriteAll(fd, line) != line.size()) {
-      PLOG(ERROR) << "Failed to write to " << path;
-      return false;
-    }
-    const char c = '\n';
-    if (fd->Write(&c, 1) != 1) {
-      PLOG(ERROR) << "Failed to write to " << path;
-      return false;
-    }
+    CF_EXPECT(WriteExact(fd, line + "\n"));
   }
-  return true;
+  return {};
 }
 
 // Generate a filesystem_config.txt for all files in |fs_root|

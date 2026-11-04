@@ -38,6 +38,7 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/io/write_exact.h"
 
 namespace cuttlefish {
 
@@ -169,7 +170,7 @@ std::future<Json::Value> VsockConnection::ReadJsonMessageAsync() {
 
 bool VsockConnection::Write(int32_t data) {
   std::lock_guard<std::recursive_mutex> lock(write_mutex_);
-  if (WriteAllBinary(fd_, &data) != sizeof(data)) {
+  if (!WriteExactBinary(*fd_, data).has_value()) {
     Disconnect();
     return false;
   }
@@ -178,7 +179,7 @@ bool VsockConnection::Write(int32_t data) {
 
 bool VsockConnection::Write(const char* data, unsigned int size) {
   std::lock_guard<std::recursive_mutex> lock(write_mutex_);
-  if (WriteAll(fd_, data, size) != size) {
+  if (!WriteExact(*fd_, data, size).has_value()) {
     Disconnect();
     return false;
   }

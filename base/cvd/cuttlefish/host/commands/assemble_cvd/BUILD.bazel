@@ -635,7 +635,6 @@ cf_cc_library(
     srcs = ["vendor_dlkm_utils.cc"],
     hdrs = ["vendor_dlkm_utils.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:disk_usage",
