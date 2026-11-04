@@ -142,6 +142,73 @@ struct TemporaryPathDeleter {
 
 using TemporaryPath = std::unique_ptr<std::string, TemporaryPathDeleter>;
 
+class ScopedTempDir {
+ public:
+  static Result<ScopedTempDir> Create(std::string_view prefix) {
+    std::string tmpl = absl::StrCat(TempDir(), "/", prefix, "XXXXXX");
+    char* created = mkdtemp(tmpl.data());
+    CF_EXPECTF(created != nullptr, "mkdtemp('{}') failed: {}", tmpl,
+               StrError(errno));
+    return ScopedTempDir(std::string(created));
+  }
+
+  ScopedTempDir(ScopedTempDir&& other) noexcept
+      : path_(std::exchange(other.path_, {})) {}
+  ScopedTempDir& operator=(ScopedTempDir&& other) noexcept {
+    if (this != &other) {
+      Cleanup();
+      path_ = std::exchange(other.path_, {});
+    }
+    return *this;
+  }
+  ~ScopedTempDir() { Cleanup(); }
+
+  const std::string& path() const { return path_; }
+
+ private:
+  explicit ScopedTempDir(std::string path) : path_(std::move(path)) {}
+
+  void Cleanup() {
+    if (!path_.empty()) {
+      (void)RecursivelyRemoveDirectory(path_);
+      path_.clear();
+    }
+  }
+
+  std::string path_;
+};
+
+Result<void> SetBuildExtractDirsAndRefreshImages(
+    CuttlefishConfig& config, AndroidBuilds& android_builds,
+    const SystemImageDirFlag& system_image_dir, BootImageFlag& boot_image,
+    const VendorBootImageFlag& initial_vendor_boot_image) {
+  for (size_t i = 0; i < android_builds.Size(); i++) {
+    CF_EXPECT(android_builds.ForIndex(i).SetExtractDir(
+        absl::StrCat(config.AssemblyPath("extracted_images"), "/", i)));
+  }
+  boot_image = CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds));
+  VendorBootImageFlag refreshed_vendor_boot =
+      VendorBootImageFlag::FromGlobalGflags(system_image_dir, &android_builds);
+  const std::vector<int> instance_nums =
+      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+  const CuttlefishConfig& const_config = config;
+  for (size_t instance_index = 0; instance_index < instance_nums.size();
+       instance_index++) {
+    if (!initial_vendor_boot_image.IsDefaultForIndex(instance_index)) {
+      continue;
+    }
+    const int num = instance_nums[instance_index];
+    const std::string refreshed =
+        refreshed_vendor_boot.VendorBootImageForIndex(instance_index);
+    auto mut_instance = config.ForInstance(num);
+    mut_instance.set_vendor_boot_image(refreshed);
+    if (const_config.ForInstance(num).initramfs_path().empty()) {
+      mut_instance.set_new_vendor_boot_image(refreshed);
+    }
+  }
+  return {};
+}
+
 class InitialLog {
  public:
   InitialLog() = default;
@@ -294,6 +361,13 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("sdcard.img");
   preserving.insert("sdcard_overlay.img");
   preserving.insert("boot_repacked.img");
+  preserving.insert("extracted_images");
+  preserving.insert("super.img");
+  preserving.insert("super_composite.img");
+  preserving.insert("super_header.img");
+  preserving.insert("unsparsed_images");
+  preserving.insert("vbmeta_vendor_dlkm_repacked.img");
+  preserving.insert("vbmeta_system_dlkm_repacked.img");
   preserving.insert("vendor_dlkm_repacked.img");
   preserving.insert("vendor_boot_repacked.img");
   preserving.insert("access-kregistry");
@@ -373,7 +447,7 @@ InitialLog SetLogger(std::string runtime_dir_parent) {
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     FetcherConfigs fetcher_configs,
     const std::vector<GuestConfig>& guest_configs, fruit::Injector<>& injector,
-    const InitialLog& log, const BootImageFlag& boot_image,
+    const InitialLog& log, BootImageFlag boot_image,
     const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
     const SuperImageFlag& super_image,
     const SystemImageDirFlag& system_image_dir,
@@ -414,6 +488,12 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
           CF_EXPECT(WriteExact(fd, kSnapshotDelimiter));
         }
       }
+    }
+
+    if (FLAGS_resume && snapshot_path.empty()) {
+      CF_EXPECT(SetBuildExtractDirsAndRefreshImages(
+          config, android_builds, system_image_dir, boot_image,
+          vendor_boot_image));
     }
 
     // take the max value of modem_simulator_instance_number in each instance
@@ -484,13 +564,9 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       CF_EXPECT(EnsureDirectoryExists(dir, default_mode, default_group));
     }
 
-    index = 0;
-    for (const CuttlefishConfig::InstanceSpecific& instance :
-         config.Instances()) {
-      AndroidBuild& build = android_builds.ForIndex(index);
-      CF_EXPECT(build.SetExtractDir(instance.instance_dir()));
-      index++;
-    }
+    CF_EXPECT(SetBuildExtractDirsAndRefreshImages(config, android_builds,
+                                                  system_image_dir, boot_image,
+                                                  vendor_boot_image));
 
     if (!snapshot_path.empty()) {
       CF_EXPECT(Fd::Creat(config.AssemblyPath("restore"), 0660));
@@ -665,9 +741,6 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   SuperImageFlag super_image =
       SuperImageFlag::FromGlobalGflags(system_image_dir);
 
-  VendorBootImageFlag vendor_boot_image =
-      VendorBootImageFlag::FromGlobalGflags(system_image_dir);
-
   fruit::Injector<> injector(FlagsComponent, &system_image_dir);
 
   for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
@@ -692,10 +765,20 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   AndroidBuilds android_builds =
       CF_EXPECT(FindAndroidBuilds(system_image_dir, fetcher_configs));
 
+  ScopedTempDir early_extract_dir =
+      CF_EXPECT(ScopedTempDir::Create("cf_assemble_extract_"));
+  for (size_t i = 0; i < android_builds.Size(); i++) {
+    CF_EXPECT(android_builds.ForIndex(i).SetExtractDir(
+        absl::StrCat(early_extract_dir.path(), "/", i)));
+  }
+
   VLOG(0) << android_builds;
 
   BootImageFlag boot_image =
       CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds));
+
+  VendorBootImageFlag vendor_boot_image =
+      VendorBootImageFlag::FromGlobalGflags(system_image_dir, &android_builds);
 
   CF_EXPECT(VerifyConditionsOnSnapshotRestore(FLAGS_snapshot_path),
             "The conditions for --snapshot_path=<dir> do not meet.");

@@ -16,12 +16,14 @@
 
 #pragma once
 
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 Result<void> VbmetaEnforceMinimumSize(
-    const CuttlefishConfig::InstanceSpecific& instance);
+    const CuttlefishConfig::InstanceSpecific& instance,
+    AndroidBuild& android_build);
 
 }  // namespace cuttlefish

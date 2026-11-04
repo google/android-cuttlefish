@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 
 namespace cuttlefish {
@@ -27,7 +28,8 @@ namespace cuttlefish {
 /* Vendor boot image flag, `--vendor_boot_image` */
 class VendorBootImageFlag {
  public:
-  static VendorBootImageFlag FromGlobalGflags(const SystemImageDirFlag&);
+  static VendorBootImageFlag FromGlobalGflags(
+      const SystemImageDirFlag&, AndroidBuilds* android_builds = nullptr);
 
   std::string VendorBootImageForIndex(size_t index) const;
 

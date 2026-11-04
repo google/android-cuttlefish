@@ -15,15 +15,20 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <algorithm>
 #include <array>
 #include <deque>
 #include <map>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <string>
@@ -36,7 +41,13 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
+#include "android-base/unique_fd.h"
 #include "fmt/format.h"
+#include "liblp/builder.h"
+#include "liblp/liblp.h"
+#include "liblp/metadata_format.h"
+#include "liblp/partition_opener.h"
+#include "sparse/sparse.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -47,12 +58,17 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/files/recursively_remove_directory.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/kernel_module_parser.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 #include "cuttlefish/io/write_exact.h"
+#include "cuttlefish/posix/remove.h"
+#include "cuttlefish/posix/rename.h"
+#include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
@@ -336,7 +352,271 @@ Result<void> AddVbmetaFooter(const std::string& output_image,
   return {};
 }
 
+class ScopedTempDir {
+ public:
+  static Result<ScopedTempDir> Create(std::string_view prefix) {
+    std::string tmpl =
+        absl::StrCat(StringFromEnv("TMPDIR", "/tmp"), "/", prefix, "XXXXXX");
+    char* created = mkdtemp(tmpl.data());
+    CF_EXPECTF(created != nullptr, "mkdtemp('{}') failed: {}", tmpl,
+               StrError(errno));
+    return ScopedTempDir(std::string(created));
+  }
+
+  ScopedTempDir() = default;
+  ScopedTempDir(ScopedTempDir&& other) noexcept
+      : path_(std::exchange(other.path_, {})) {}
+  ScopedTempDir& operator=(ScopedTempDir&& other) noexcept {
+    if (this != &other) {
+      Cleanup();
+      path_ = std::exchange(other.path_, {});
+    }
+    return *this;
+  }
+  ~ScopedTempDir() { Cleanup(); }
+
+  const std::string& path() const { return path_; }
+
+ private:
+  explicit ScopedTempDir(std::string path) : path_(std::move(path)) {}
+
+  void Cleanup() {
+    if (!path_.empty()) {
+      (void)RecursivelyRemoveDirectory(path_);
+      path_.clear();
+    }
+  }
+
+  std::string path_;
+};
+
+Result<std::vector<uint8_t>> ReadSparseSuperPrefix(sparse_file* sf,
+                                                   size_t prefix_len) {
+  struct PrefixContext {
+    std::vector<uint8_t> buf;
+    size_t offset = 0;
+  };
+  PrefixContext ctx{.buf = std::vector<uint8_t>(prefix_len, 0)};
+  int rc = sparse_file_callback(
+      sf, /* sparse= */ false, /* crc= */ false,
+      [](void* priv, const void* data, size_t len) -> int {
+        auto* c = static_cast<PrefixContext*>(priv);
+        if (c->offset < c->buf.size() && data != nullptr) {
+          const size_t to_copy = std::min(len, c->buf.size() - c->offset);
+          memcpy(c->buf.data() + c->offset, data, to_copy);
+        }
+        c->offset += len;
+        return c->offset >= c->buf.size() ? -ECANCELED : 0;
+      },
+      &ctx);
+  CF_EXPECTF(rc == 0 || rc == -ECANCELED,
+             "sparse_file_callback failed with rc={}", rc);
+  ctx.buf.resize(std::min(ctx.offset, ctx.buf.size()));
+  return std::move(ctx.buf);
+}
+
+class FdPartitionOpener final : public android::fs_mgr::PartitionOpener {
+ public:
+  explicit FdPartitionOpener(int fd) : fd_(fd) {}
+
+  android::base::unique_fd Open(const std::string&, int) const override {
+    return android::base::unique_fd(dup(fd_));
+  }
+
+ private:
+  int fd_;
+};
+
+Result<void> UnsparseToRawFile(const std::string& src_path,
+                               const std::string& dst_path) {
+  android::base::unique_fd in_fd(open(src_path.c_str(), O_RDONLY | O_CLOEXEC));
+  CF_EXPECTF(in_fd.ok(), "Failed to open sparse image '{}'", src_path);
+  std::unique_ptr<sparse_file, decltype(&sparse_file_destroy)> sf(
+      sparse_file_import(in_fd.get(), /* verbose= */ false, /* crc= */ false),
+      sparse_file_destroy);
+  CF_EXPECTF(sf != nullptr, "sparse_file_import failed on '{}'", src_path);
+
+  android::base::unique_fd out_fd(
+      open(dst_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
+  CF_EXPECTF(out_fd.ok(), "Failed to open output raw image '{}'", dst_path);
+  CF_EXPECT_EQ(sparse_file_write(sf.get(), out_fd.get(), /* gz= */ false,
+                                 /* sparse= */ false, /* crc= */ false),
+               0);
+  return {};
+}
+
+Result<std::unique_ptr<android::fs_mgr::LpMetadata>> ReadSuperMetadata(
+    const std::string& super_path) {
+  if (!CF_EXPECT(IsSparseImage(super_path))) {
+    if (android::fs_mgr::IsEmptySuperImage(super_path)) {
+      std::unique_ptr<android::fs_mgr::LpMetadata> metadata =
+          android::fs_mgr::ReadFromImageFile(super_path);
+      CF_EXPECTF(metadata != nullptr, "Failed to parse empty super image '{}'",
+                 super_path);
+      return std::move(metadata);
+    }
+    std::unique_ptr<android::fs_mgr::LpMetadata> metadata =
+        android::fs_mgr::ReadMetadata(super_path, 0);
+    CF_EXPECTF(metadata != nullptr, "Failed to parse raw super image '{}'",
+               super_path);
+    return std::move(metadata);
+  }
+
+  android::base::unique_fd raw_fd(
+      open(super_path.c_str(), O_RDONLY | O_CLOEXEC));
+  CF_EXPECTF(raw_fd.ok(), "Failed to open sparse super image '{}'", super_path);
+  std::unique_ptr<sparse_file, decltype(&sparse_file_destroy)> sf(
+      sparse_file_import(raw_fd.get(), /* verbose= */ false, /* crc= */ false),
+      sparse_file_destroy);
+  CF_EXPECTF(sf != nullptr, "sparse_file_import failed on '{}'", super_path);
+
+  static constexpr size_t kInitialPrefixBytes = 512 * 1024;
+  static constexpr uint64_t kMaxSuperMetadataBytes = 64ULL * 1024 * 1024;
+  std::vector<uint8_t> prefix =
+      CF_EXPECT(ReadSparseSuperPrefix(sf.get(), kInitialPrefixBytes));
+  CF_EXPECT_GE(prefix.size(),
+               LP_PARTITION_RESERVED_BYTES + sizeof(LpMetadataGeometry));
+  LpMetadataGeometry geometry{};
+  memcpy(&geometry, prefix.data() + LP_PARTITION_RESERVED_BYTES,
+         sizeof(geometry));
+  if (geometry.magic != LP_METADATA_GEOMETRY_MAGIC &&
+      prefix.size() >= LP_PARTITION_RESERVED_BYTES + LP_METADATA_GEOMETRY_SIZE +
+                           sizeof(LpMetadataGeometry)) {
+    memcpy(
+        &geometry,
+        prefix.data() + LP_PARTITION_RESERVED_BYTES + LP_METADATA_GEOMETRY_SIZE,
+        sizeof(geometry));
+  }
+  CF_EXPECT_EQ(geometry.magic, uint32_t{LP_METADATA_GEOMETRY_MAGIC});
+
+  const uint64_t per_copy_bytes =
+      LP_METADATA_GEOMETRY_SIZE +
+      static_cast<uint64_t>(geometry.metadata_max_size) *
+          geometry.metadata_slot_count;
+  const uint64_t required_bytes =
+      LP_PARTITION_RESERVED_BYTES + per_copy_bytes * 2;
+  CF_EXPECT_LE(required_bytes, kMaxSuperMetadataBytes);
+  if (required_bytes > prefix.size()) {
+    prefix = CF_EXPECT(
+        ReadSparseSuperPrefix(sf.get(), static_cast<size_t>(required_bytes)));
+  }
+
+  std::unique_ptr<FILE, int (*)(FILE*)> mem_file(tmpfile(), fclose);
+  CF_EXPECT(mem_file != nullptr, "tmpfile() failed");
+  CF_EXPECT_EQ(fwrite(prefix.data(), 1, prefix.size(), mem_file.get()),
+               prefix.size());
+  CF_EXPECT_EQ(fflush(mem_file.get()), 0);
+
+  FdPartitionOpener opener(fileno(mem_file.get()));
+  std::unique_ptr<android::fs_mgr::LpMetadata> metadata =
+      android::fs_mgr::ReadMetadata(opener, "super", 0);
+  CF_EXPECTF(metadata != nullptr, "Failed to parse sparse super image '{}'",
+             super_path);
+  return std::move(metadata);
+}
+
+Result<void> PReadExact(const Fd& fd, void* buf, size_t size, uint64_t offset) {
+  auto* out = static_cast<uint8_t*>(buf);
+  size_t done = 0;
+  while (done < size) {
+    uint64_t got = CF_EXPECT(fd.PRead(out + done, size - done, offset + done));
+    CF_EXPECT_GT(got, 0u);
+    done += static_cast<size_t>(got);
+  }
+  return {};
+}
+
+bool RawSuperPartitionMatchesFile(const android::fs_mgr::LpMetadata& metadata,
+                                  const LpMetadataPartition& part,
+                                  const std::string& super_path,
+                                  const Fd& raw_image_fd, uint64_t raw_size,
+                                  uint64_t expected_aligned_size) {
+  uint64_t total_extent_bytes = 0;
+  for (uint32_t i = 0; i < part.num_extents; i++) {
+    const size_t extent_index =
+        static_cast<size_t>(part.first_extent_index) + i;
+    if (extent_index >= metadata.extents.size()) {
+      return false;
+    }
+    const LpMetadataExtent& extent = metadata.extents[extent_index];
+    if (extent.target_type != LP_TARGET_TYPE_LINEAR ||
+        extent.target_source != 0) {
+      return false;
+    }
+    total_extent_bytes += extent.num_sectors * LP_SECTOR_SIZE;
+  }
+  if (total_extent_bytes != expected_aligned_size) {
+    return false;
+  }
+
+  Result<Fd, int> super_fd_res = Fd::Open(super_path, O_RDONLY);
+  if (!super_fd_res.has_value()) {
+    return false;
+  }
+  const Fd& super_fd = *super_fd_res;
+
+  std::vector<uint8_t> super_buf(64 * 1024);
+  std::vector<uint8_t> image_buf(64 * 1024);
+  uint64_t file_pos = 0;
+  for (uint32_t i = 0; i < part.num_extents; i++) {
+    const LpMetadataExtent& extent =
+        metadata.extents[static_cast<size_t>(part.first_extent_index) + i];
+    uint64_t super_off = extent.target_data * LP_SECTOR_SIZE;
+    uint64_t ext_rem = extent.num_sectors * LP_SECTOR_SIZE;
+    while (ext_rem > 0) {
+      const size_t chunk =
+          static_cast<size_t>(std::min<uint64_t>(ext_rem, super_buf.size()));
+      if (!PReadExact(super_fd, super_buf.data(), chunk, super_off)
+               .has_value()) {
+        return false;
+      }
+      size_t file_chunk = 0;
+      if (file_pos < raw_size) {
+        file_chunk =
+            static_cast<size_t>(std::min<uint64_t>(chunk, raw_size - file_pos));
+        if (!PReadExact(raw_image_fd, image_buf.data(), file_chunk, file_pos)
+                 .has_value()) {
+          return false;
+        }
+        if (memcmp(super_buf.data(), image_buf.data(), file_chunk) != 0) {
+          return false;
+        }
+      }
+      for (size_t z = file_chunk; z < chunk; z++) {
+        if (super_buf[z] != 0) {
+          return false;
+        }
+      }
+      super_off += chunk;
+      file_pos += chunk;
+      ext_rem -= chunk;
+    }
+  }
+  return true;
+}
+
+bool DefaultPreferSystemGroup(std::string_view partition_name) {
+  return partition_name == "boot" || partition_name == "init_boot" ||
+         partition_name == "vbmeta" || partition_name == "vbmeta_system" ||
+         partition_name == "vbmeta_system_dlkm" ||
+         partition_name == "system_dlkm" || partition_name == "system" ||
+         partition_name == "system_ext" || partition_name == "product";
+}
+
 }  // namespace
+
+Result<bool> SuperHasPartition(const std::string& superimg_path,
+                               std::string_view partition_name) {
+  if (superimg_path.empty() || !FileExists(superimg_path)) {
+    return false;
+  }
+  std::unique_ptr<android::fs_mgr::LpMetadata> metadata =
+      CF_EXPECT(ReadSuperMetadata(superimg_path));
+  const std::string exact(partition_name);
+  const std::string slot_a = absl::StrCat(partition_name, "_a");
+  return android::fs_mgr::FindPartition(*metadata, exact) != nullptr ||
+         android::fs_mgr::FindPartition(*metadata, slot_a) != nullptr;
+}
 
 // Steps for building a vendor_dlkm.img:
 // 1. Generate filesystem_config.txt , which contains standard linux file
@@ -404,16 +684,143 @@ Result<void> BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
 Result<void> RepackSuperWithPartition(const std::string& superimg_path,
                                       const std::string& image_path,
                                       const std::string& partition_name) {
-  int exit_code = Execute({
-      HostBinaryPath("lpadd"),
-      "--replace",
-      superimg_path,
-      partition_name + "_a",
-      "google_vendor_dynamic_partitions_a",
-      image_path,
-  });
-  CF_EXPECT_EQ(exit_code, 0);
+  CF_EXPECTF(FileExists(superimg_path), "Super image '{}' does not exist",
+             superimg_path);
+  CF_EXPECTF(FileExists(image_path), "Partition image '{}' does not exist",
+             image_path);
 
+  const std::string abs_super_path = AbsolutePath(superimg_path);
+  if (CF_EXPECT(IsSparseImage(abs_super_path))) {
+    const std::string tmp_super = absl::StrCat(abs_super_path, ".raw.tmp");
+    (void)RemoveFile(tmp_super);
+    Result<void> conv_res = UnsparseToRawFile(abs_super_path, tmp_super);
+    if (!conv_res.has_value()) {
+      (void)RemoveFile(tmp_super);
+    }
+    CF_EXPECT(std::move(conv_res));
+    Result<void, int> rename_res = Rename(tmp_super, abs_super_path);
+    if (!rename_res.has_value()) {
+      (void)RemoveFile(tmp_super);
+    }
+    CF_EXPECT(std::move(rename_res));
+  }
+
+  ScopedTempDir temp_dir;
+  std::string raw_image_path = image_path;
+  if (CF_EXPECT(IsSparseImage(image_path))) {
+    temp_dir = CF_EXPECT(ScopedTempDir::Create("cf_repack_super_"));
+    raw_image_path = absl::StrCat(temp_dir.path(), "/partition.raw");
+    CF_EXPECT(UnsparseToRawFile(image_path, raw_image_path));
+  }
+
+  std::unique_ptr<android::fs_mgr::LpMetadata> metadata =
+      android::fs_mgr::ReadMetadata(abs_super_path, 0);
+  CF_EXPECTF(metadata != nullptr, "Failed to read super metadata from '{}'",
+             abs_super_path);
+
+  std::string target_name = absl::StrCat(partition_name, "_a");
+  if (android::fs_mgr::FindPartition(*metadata, target_name) == nullptr &&
+      android::fs_mgr::FindPartition(*metadata, partition_name) != nullptr) {
+    target_name = partition_name;
+  }
+
+  Fd raw_image_fd = CF_EXPECT(Fd::Open(raw_image_path, O_RDONLY));
+  const uint64_t raw_size = CF_EXPECT(raw_image_fd.SeekEnd(0));
+  CF_EXPECT(raw_image_fd.SeekSet(0));
+
+  const uint64_t block_size =
+      std::max<uint64_t>(metadata->geometry.logical_block_size, LP_SECTOR_SIZE);
+  CF_EXPECT_GE(raw_size + block_size - 1, raw_size);
+  const uint64_t aligned_size =
+      ((raw_size + block_size - 1) / block_size) * block_size;
+
+  if (const LpMetadataPartition* existing_raw =
+          android::fs_mgr::FindPartition(*metadata, target_name);
+      existing_raw != nullptr &&
+      RawSuperPartitionMatchesFile(*metadata, *existing_raw, abs_super_path,
+                                   raw_image_fd, raw_size, aligned_size)) {
+    return {};
+  }
+
+  std::unique_ptr<android::fs_mgr::MetadataBuilder> builder =
+      android::fs_mgr::MetadataBuilder::New(*metadata);
+  CF_EXPECTF(builder != nullptr, "MetadataBuilder::New failed on '{}'",
+             abs_super_path);
+
+  std::string group_name = "default";
+  uint32_t attributes = LP_PARTITION_ATTR_READONLY;
+  if (android::fs_mgr::Partition* existing =
+          builder->FindPartition(target_name);
+      existing != nullptr) {
+    group_name = existing->group_name();
+    attributes = existing->attributes();
+    builder->RemovePartition(target_name);
+  } else {
+    const bool prefer_system = DefaultPreferSystemGroup(partition_name);
+    const std::string preferred = prefer_system
+                                      ? "google_system_dynamic_partitions_a"
+                                      : "google_vendor_dynamic_partitions_a";
+    const std::string alternate = prefer_system
+                                      ? "google_vendor_dynamic_partitions_a"
+                                      : "google_system_dynamic_partitions_a";
+    if (builder->FindGroup(preferred) != nullptr) {
+      group_name = preferred;
+    } else if (builder->FindGroup(alternate) != nullptr) {
+      group_name = alternate;
+    }
+  }
+
+  android::fs_mgr::Partition* part =
+      CF_EXPECT(builder->AddPartition(target_name, group_name, attributes));
+  CF_EXPECTF(builder->ResizePartition(part, raw_size),
+             "Failed to resize '{}' to {} bytes in '{}'", target_name, raw_size,
+             abs_super_path);
+
+  std::unique_ptr<android::fs_mgr::LpMetadata> exported = builder->Export();
+  CF_EXPECT(exported != nullptr, "Failed to export updated super metadata");
+
+  const uint32_t slots =
+      std::min<uint32_t>(exported->geometry.metadata_slot_count, 2u);
+  for (uint32_t slot = 0; slot < slots; slot++) {
+    CF_EXPECTF(
+        android::fs_mgr::UpdatePartitionTable(abs_super_path, *exported, slot),
+        "Failed to update metadata slot {} in '{}'", slot, abs_super_path);
+  }
+
+  const LpMetadataPartition* updated_part =
+      android::fs_mgr::FindPartition(*exported, target_name);
+  CF_EXPECT(updated_part != nullptr);
+
+  Fd super_fd = CF_EXPECT(Fd::Open(abs_super_path, O_RDWR));
+  CF_EXPECT(raw_image_fd.SeekSet(0));
+
+  uint64_t file_pos = 0;
+  std::vector<char> zeroes(64 * 1024, 0);
+  for (uint32_t i = 0; i < updated_part->num_extents; i++) {
+    const size_t extent_index =
+        static_cast<size_t>(updated_part->first_extent_index) + i;
+    CF_EXPECT_LT(extent_index, exported->extents.size());
+    const LpMetadataExtent& extent = exported->extents[extent_index];
+    CF_EXPECT_EQ(extent.target_type, uint32_t{LP_TARGET_TYPE_LINEAR});
+    CF_EXPECT_EQ(extent.target_source, 0u);
+
+    const uint64_t dst_offset = extent.target_data * LP_SECTOR_SIZE;
+    uint64_t ext_bytes = extent.num_sectors * LP_SECTOR_SIZE;
+    CF_EXPECT(super_fd.SeekSet(dst_offset));
+    if (file_pos < raw_size) {
+      const uint64_t copy_bytes = std::min(raw_size - file_pos, ext_bytes);
+      CF_EXPECT(super_fd.CopyFrom(raw_image_fd, copy_bytes));
+      file_pos += copy_bytes;
+      ext_bytes -= copy_bytes;
+    }
+    while (ext_bytes > 0) {
+      const size_t z_len =
+          static_cast<size_t>(std::min<uint64_t>(ext_bytes, zeroes.size()));
+      CF_EXPECT(WriteExact(super_fd, zeroes.data(), z_len));
+      ext_bytes -= z_len;
+    }
+  }
+  CF_EXPECT_EQ(file_pos, raw_size);
   return {};
 }
 

@@ -30,15 +30,20 @@
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/build_super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/image_aggregator/disk_image.h"
 #include "cuttlefish/host/libs/image_aggregator/gpt_type_guid.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
+#include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 #include "cuttlefish/host/libs/image_aggregator/super_builder.h"
+#include "cuttlefish/posix/rename.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -143,27 +148,62 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
 
   const BuildSuperImageFlag build_super_image =
       CF_EXPECT(BuildSuperImageFlag::FromGlobalGflags());
+  const std::set<std::string, std::less<void>> logical_partitions =
+      CF_EXPECT(android_build.LogicalPartitions());
 
   for (const auto& [partition, path] : primary_paths) {
+    if (logical_partitions.count(partition)) {
+      continue;
+    }
     std::string path_used;
     if (partition == "super" && build_super_image.ForIndex(instance.index())) {
       CompositeSuperImageBuilder super_builder;
 
       const std::string super_from_build =
           CF_EXPECT(android_build.ImageFile("super"));
-      super_builder.BlockDeviceSize(FileSize(super_from_build));
+      std::unique_ptr<DiskImage> super_image =
+          CF_EXPECT(ImageFromFile(super_from_build));
+      super_builder.BlockDeviceSize(CF_EXPECT(super_image->VirtualSizeBytes()));
 
       const std::set<std::string, std::less<void>> system_partitions =
           CF_EXPECT(android_build.SystemPartitions());
       const std::set<std::string, std::less<void>> vendor_partitions =
           CF_EXPECT(android_build.VendorPartitions());
-      for (const std::string& logical :
-           CF_EXPECT(android_build.LogicalPartitions())) {
-        const std::string path = CF_EXPECT(android_build.ImageFile(logical));
-        if (system_partitions.count(logical)) {
-          super_builder.SystemPartition(logical, path);
+      for (const std::string& logical : logical_partitions) {
+        std::string logical_path;
+        if (auto it = dynamic_paths.find(logical); it != dynamic_paths.end()) {
+          logical_path = it->second;
+        } else if (auto it = primary_paths.find(logical);
+                   it != primary_paths.end() && FileExists(it->second)) {
+          logical_path = it->second;
+        } else if (auto it = fallback_paths.find(logical);
+                   it != fallback_paths.end() && FileExists(it->second)) {
+          logical_path = it->second;
         } else {
-          super_builder.VendorPartition(logical, path);
+          logical_path = CF_EXPECT(android_build.ImageFile(logical));
+        }
+        if (CF_EXPECT(IsSparseImage(logical_path))) {
+          CF_EXPECTF(DirectoryExists(instance.instance_dir()),
+                     "Instance directory '{}' does not exist yet",
+                     instance.instance_dir());
+          const std::string unsparsed_dir =
+              instance.PerInstancePath("unsparsed_images");
+          CF_EXPECT(EnsureDirectoryExists(unsparsed_dir));
+          std::string unsparsed_path =
+              absl::StrCat(unsparsed_dir, "/", logical, ".img");
+          if (!FileExists(unsparsed_path) ||
+              CF_EXPECT(FileModificationTime(logical_path)) >
+                  CF_EXPECT(FileModificationTime(unsparsed_path))) {
+            std::string tmp_path = absl::StrCat(unsparsed_path, ".tmp");
+            CF_EXPECT(ConvertSparseImageToRaw(logical_path, tmp_path));
+            CF_EXPECT(Rename(tmp_path, unsparsed_path));
+          }
+          logical_path = std::move(unsparsed_path);
+        }
+        if (system_partitions.count(logical)) {
+          super_builder.SystemPartition(logical, logical_path);
+        } else {
+          super_builder.VendorPartition(logical, logical_path);
         }
       }
       // TODO: b/480197663: system_other should be written as system_b

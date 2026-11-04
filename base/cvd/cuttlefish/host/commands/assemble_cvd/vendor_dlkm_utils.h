@@ -16,6 +16,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 #include "cuttlefish/result/result.h"
 
@@ -25,6 +26,9 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
                                  const std::string& ramdisk_stage_dir,
                                  const std::string& vendor_dlkm_build_dir,
                                  const std::string& system_dlkm_build_dir);
+
+Result<bool> SuperHasPartition(const std::string& superimg_path,
+                               std::string_view partition_name);
 
 Result<void> RepackSuperWithPartition(const std::string& superimg_path,
                                       const std::string& image_path,

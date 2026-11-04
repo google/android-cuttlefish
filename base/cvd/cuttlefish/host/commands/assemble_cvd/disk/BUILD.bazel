@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -25,6 +25,7 @@ cf_cc_library(
     hdrs = ["android_composite_disk_config.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
@@ -32,10 +33,34 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
         "//cuttlefish/host/libs/image_aggregator:gpt_type_guid",
+        "//cuttlefish/host/libs/image_aggregator:image_from_file",
+        "//cuttlefish/host/libs/image_aggregator:sparse_image",
         "//cuttlefish/host/libs/image_aggregator:super_builder",
+        "//cuttlefish/posix:rename",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "android_composite_disk_config_test",
+    srcs = ["android_composite_disk_config_test.cc"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:fake_android_build",
+        "//cuttlefish/host/commands/assemble_cvd/disk:android_composite_disk_config",
+        "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:gpt_type_guid",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings",
+        "@gflags",
     ],
 )
 
@@ -357,6 +382,7 @@ cf_cc_library(
     hdrs = ["vbmeta_enforce_minimum_size.h"],
     deps = [
         "//cuttlefish/files:file_exists",
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",

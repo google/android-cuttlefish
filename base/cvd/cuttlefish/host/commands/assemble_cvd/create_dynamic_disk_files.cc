@@ -22,18 +22,24 @@
 #include <string.h>
 #include <sys/statvfs.h>
 
+#include <functional>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/copy.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/sparse_file_sizes.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
@@ -56,9 +62,11 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/build_super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/instance_image_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
+#include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/build_archive.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
@@ -67,6 +75,9 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
+#include "cuttlefish/posix/rename.h"
+#include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -106,6 +117,8 @@ Result<void> CreateDynamicDiskFiles(
     const FetcherConfigs& fetcher_configs, const CuttlefishConfig& config,
     AndroidBuilds& android_builds, const BootImageFlag& boot_image,
     const SystemImageDirFlag& system_image_dirs) {
+  const BuildSuperImageFlag build_super_image =
+      CF_EXPECT(BuildSuperImageFlag::FromGlobalGflags());
   std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files =
       InstanceImageFiles(config, boot_image);
   size_t instance_index = 0;
@@ -113,6 +126,7 @@ Result<void> CreateDynamicDiskFiles(
     const FetcherConfig& fetcher_config =
         fetcher_configs.ForInstance(instance_index);
     std::string system_image_dir = system_image_dirs.ForIndex(instance_index);
+    AndroidBuild& android_build = android_builds.ForIndex(instance_index);
 
     if (Result<BuildArchive> img_zip =
             FindImgZip(fetcher_config, system_image_dir);
@@ -128,7 +142,7 @@ Result<void> CreateDynamicDiskFiles(
 
     CF_EXPECT(RebuildSuperImageIfNecessary(fetcher_config, instance));
     CF_EXPECT(RepackKernelRamdisk(config, instance));
-    CF_EXPECT(VbmetaEnforceMinimumSize(instance));
+    CF_EXPECT(VbmetaEnforceMinimumSize(instance, android_build));
     CF_EXPECT(BootloaderPresentCheck(instance));
     CF_EXPECT(
         Gem5ImageUnpacker(config, boot_image));  // Requires RepackKernelRamdisk
@@ -178,9 +192,91 @@ Result<void> CreateDynamicDiskFiles(
       CF_EXPECT(image_file->Generate());
     }
 
+    if (!build_super_image.ForIndex(instance_index) &&
+        !instance.new_super_image().empty()) {
+      const std::string& check_super = FileExists(instance.new_super_image())
+                                           ? instance.new_super_image()
+                                           : instance.super_image();
+      if (!check_super.empty() && FileExists(check_super)) {
+        std::vector<std::pair<std::string, std::string>> repacked_candidates;
+        for (const auto& image_file : instance_image_files) {
+          if (image_file->Name() == "boot") {
+            std::string generated_boot = CF_EXPECT(image_file->Path());
+            if (generated_boot != boot_image.ForIndex(instance_index) &&
+                FileExists(generated_boot)) {
+              repacked_candidates.emplace_back("boot",
+                                               std::move(generated_boot));
+            }
+          }
+        }
+        if (!instance.new_vendor_boot_image().empty() &&
+            instance.new_vendor_boot_image() != instance.vendor_boot_image() &&
+            FileExists(instance.new_vendor_boot_image())) {
+          repacked_candidates.emplace_back("vendor_boot",
+                                           instance.new_vendor_boot_image());
+        }
+        if (!instance.new_vbmeta_vendor_dlkm_image().empty() &&
+            instance.new_vbmeta_vendor_dlkm_image() !=
+                instance.vbmeta_vendor_dlkm_image() &&
+            FileExists(instance.new_vbmeta_vendor_dlkm_image())) {
+          repacked_candidates.emplace_back(
+              "vbmeta_vendor_dlkm", instance.new_vbmeta_vendor_dlkm_image());
+        }
+        if (!instance.new_vbmeta_system_dlkm_image().empty() &&
+            instance.new_vbmeta_system_dlkm_image() !=
+                instance.vbmeta_system_dlkm_image() &&
+            FileExists(instance.new_vbmeta_system_dlkm_image())) {
+          repacked_candidates.emplace_back(
+              "vbmeta_system_dlkm", instance.new_vbmeta_system_dlkm_image());
+        }
+        if (!instance.new_vbmeta_image().empty() &&
+            instance.new_vbmeta_image() != instance.vbmeta_image() &&
+            FileExists(instance.new_vbmeta_image())) {
+          repacked_candidates.emplace_back("vbmeta",
+                                           instance.new_vbmeta_image());
+        }
+
+        if (!repacked_candidates.empty()) {
+          const std::set<std::string, std::less<void>> logical_partitions =
+              CF_EXPECT(android_build.LogicalPartitions());
+          std::vector<std::pair<std::string, std::string>> logical_repacks;
+          for (auto& [part_name, part_path] : repacked_candidates) {
+            if (logical_partitions.count(part_name) > 0 ||
+                CF_EXPECT(SuperHasPartition(check_super, part_name))) {
+              logical_repacks.emplace_back(std::move(part_name),
+                                           std::move(part_path));
+            }
+          }
+          if (!logical_repacks.empty()) {
+            const std::string& new_super_img = instance.new_super_image();
+            if (!FileExists(new_super_img)) {
+              if (CF_EXPECT(IsSparseImage(instance.super_image()))) {
+                const std::string tmp_super =
+                    absl::StrCat(new_super_img, ".tmp");
+                CF_EXPECT(
+                    ConvertSparseImageToRaw(instance.super_image(), tmp_super));
+                CF_EXPECT(Rename(tmp_super, new_super_img));
+              } else {
+                CF_EXPECTF(Copy(instance.super_image(), new_super_img),
+                           "Failed to copy super image '{}' to '{}': {}",
+                           instance.super_image(), new_super_img,
+                           StrError(errno));
+              }
+            }
+            for (const auto& [part_name, part_path] : logical_repacks) {
+              CF_EXPECTF(
+                  RepackSuperWithPartition(new_super_img, part_path, part_name),
+                  "Failed to repack logical partition '{}' into '{}'",
+                  part_name, new_super_img);
+            }
+          }
+        }
+      }
+    }
+
     DiskBuilder os_disk_builder = CF_EXPECT(OsCompositeDiskBuilder(
-        config, instance, chrome_os_state, instance_image_files,
-        android_builds.ForIndex(instance_index), system_image_dirs));
+        config, instance, chrome_os_state, instance_image_files, android_build,
+        system_image_dirs));
     const auto os_built_composite =
         CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 
