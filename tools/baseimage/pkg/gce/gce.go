@@ -235,29 +235,47 @@ func (h *GceHelper) DeleteInstance(name string) error {
 	return h.waitForOperation(op)
 }
 
-func (h *GceHelper) CreateImage(ins, disk, name string) error {
+type CreateImageOpts struct {
+	DestProject string
+	Labels      map[string]string
+}
+
+func (h *GceHelper) CreateImage(disk, name string, opts CreateImageOpts) error {
+	destProject := opts.DestProject
+	if destProject == "" {
+		destProject = h.Project
+	}
 	payload := &compute.Image{
 		Name:       name,
 		SourceDisk: fmt.Sprintf("projects/%s/zones/%s/disks/%s", h.Project, h.Zone, disk),
 		Licenses:   []string{"https://www.googleapis.com/compute/v1/projects/vm-options/global/licenses/enable-vmx"},
+		Labels:     opts.Labels,
 	}
-	op, err := h.Service.Images.Insert(h.Project, payload).Do()
+	op, err := h.Service.Images.Insert(destProject, payload).Do()
 	if err != nil {
 		return err
 	}
-	return h.waitForGlobalOperation(op)
+	return h.waitForGlobalOperation(destProject, op)
 }
 
-func (h *GceHelper) ImageExists(project, name string) (bool, error) {
-	_, err := h.Service.Images.Get(project, name).Do()
+func (h *GceHelper) GetImage(project, name string) (*compute.Image, error) {
+	img, err := h.Service.Images.Get(project, name).Do()
 	if err != nil {
 		var apiErr *googleapi.Error
 		if errors.As(err, &apiErr) && apiErr.Code == http.StatusNotFound {
-			return false, nil
+			return nil, nil
 		}
+		return nil, err
+	}
+	return img, nil
+}
+
+func (h *GceHelper) ImageExists(project, name string) (bool, error) {
+	img, err := h.GetImage(project, name)
+	if err != nil {
 		return false, err
 	}
-	return true, nil
+	return img != nil, nil
 }
 
 func (h *GceHelper) DiskExists(project, zone, name string) (bool, error) {
@@ -276,16 +294,47 @@ type BuildImageOpts struct {
 	Arch                   Arch
 	SourceImageProject     string
 	SourceImage            string
+	DestImageProject       string
 	ImageName              string
+	Labels                 map[string]string
 	CreateAttachedDiskOpts CreateDiskOpts
 	ModifyFunc             func(project, zone, insName string) error
 }
 
-const BuildImageMountPoint = "/mnt/image"
+const (
+	BuildImageMountPoint  = "/mnt/image"
+	MaxGceResourceNameLen = 63
+)
+
+func GceResourceNameWithSuffix(base, suffix string) string {
+	maxPrefixLen := MaxGceResourceNameLen - len(suffix)
+	prefix := base
+	if len(prefix) > maxPrefixLen {
+		prefix = strings.TrimRight(prefix[:maxPrefixLen], "-")
+	}
+	return prefix + suffix
+}
 
 func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error {
+	destImageProject := opts.DestImageProject
+	if destImageProject == "" {
+		destImageProject = project
+	}
+	if srcExists, err := h.ImageExists(opts.SourceImageProject, opts.SourceImage); err != nil || !srcExists {
+		if err != nil {
+			return fmt.Errorf("failed to check if source image %q exists: %w", opts.SourceImage, err)
+		}
+		return fmt.Errorf("source image %q does not exist in project %q", opts.SourceImage, opts.SourceImageProject)
+	}
+	if exists, err := h.ImageExists(destImageProject, opts.ImageName); err != nil || exists {
+		if err != nil {
+			return fmt.Errorf("failed to check if image %q exists: %w", opts.ImageName, err)
+		}
+		return fmt.Errorf("image %q already exists in project %q", opts.ImageName, destImageProject)
+	}
+
 	insName := opts.ImageName
-	attachedDiskName := fmt.Sprintf("%s-attached-disk", insName)
+	attachedDiskName := GceResourceNameWithSuffix(insName, "-attached-disk")
 	if diskExists, err := h.DiskExists(project, zone, attachedDiskName); err != nil || diskExists {
 		if err != nil {
 			return fmt.Errorf("failed to check if disk %q exists: %w", attachedDiskName, err)
@@ -361,8 +410,12 @@ func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error 
 	}
 	log.Println("instance deleted")
 
-	log.Printf("creating image %q...", opts.ImageName)
-	if err := h.CreateImage(insName, attachedDiskName, opts.ImageName); err != nil {
+	log.Printf("creating image %q in project %q...", opts.ImageName, destImageProject)
+	createImageOpts := CreateImageOpts{
+		DestProject: destImageProject,
+		Labels:      opts.Labels,
+	}
+	if err := h.CreateImage(attachedDiskName, opts.ImageName, createImageOpts); err != nil {
 		return fmt.Errorf("failed to create image: %w", err)
 	}
 	log.Println("image created")
@@ -391,10 +444,10 @@ func (h *GceHelper) waitForOperation(op *compute.Operation) error {
 	return nil
 }
 
-func (h *GceHelper) waitForGlobalOperation(op *compute.Operation) error {
+func (h *GceHelper) waitForGlobalOperation(project string, op *compute.Operation) error {
 	for attempt := 0; attempt < 3 && op.Status != "DONE"; attempt++ {
 		var err error
-		op, err = h.Service.GlobalOperations.Wait(h.Project, op.Name).Do()
+		op, err = h.Service.GlobalOperations.Wait(project, op.Name).Do()
 		if err != nil {
 			return err
 		}
