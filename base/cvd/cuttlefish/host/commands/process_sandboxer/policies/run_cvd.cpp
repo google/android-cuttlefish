@@ -15,8 +15,8 @@
  */
 #include <linux/bpf_common.h>
 #include <linux/filter.h>
-#include <linux/prctl.h>
 #include <sys/mman.h>
+#include <sys/prctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <syscall.h>
