@@ -44,6 +44,7 @@ message CuttlefishHost {
     CUTTLEFISH_HOST_INVOKER_PODCVD = 5;
     // launch_cvd/cvd_internal_start invocation converted to `cvd` invocation
     CUTTLEFISH_HOST_INVOKER_LAUNCH_CVD = 6;
+    CUTTLEFISH_HOST_INVOKER_OXYGENATION_CONTAINER = 7;
   }
 
   // types of containers Cuttlefish devices are launched in
