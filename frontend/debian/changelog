@@ -1,8 +1,16 @@
-cuttlefish-frontend (1.58.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.58.0) unstable; urgency=medium
 
-  * 
+  * Fill in the 1.57.0 changelog by @Databean in https://github.com/google/android-cuttlefish/pull/3116
+  * Start development on 1.58.0 by @Databean in https://github.com/google/android-cuttlefish/pull/3117
+  * Host Orchestrator endpoints to list event devices and inject events by @jemoreira in https://github.com/google/android-cuttlefish/pull/3148
+  * Operator can now delegate its infra_config values. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3161
+  * Remove listcvdsaction unit tests. by @ser-io in https://github.com/google/android-cuttlefish/pull/3210
+  * libhoclient: reduce default upload NumWorkers from to 4 by @ser-io in https://github.com/google/android-cuttlefish/pull/3250
+  * Optimize Operator WebUI layout, spacing and drag/resize UX by @minut1bc in https://github.com/google/android-cuttlefish/pull/3327
+  * Allow delegate flags to be wired up. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3181
+  * webui: Update Angular 21 dependencies to 21.2.27 by @zhangxp1998 in https://github.com/google/android-cuttlefish/pull/3409
 
- -- Cody Schuffelen <schuffelen@google.com>  Fri, 28 Aug 2026 15:30:22 -0700
+ -- Ram Muthiah <rammuthiah@google.com>  Wed, 04 Nov 2026 22:06:39 +0000
 
 cuttlefish-frontend (1.57.0) unstable; urgency=medium
 

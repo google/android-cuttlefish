@@ -1,8 +1,34 @@
-cuttlefish-container (1.58.0) UNRELEASED; urgency=medium
+cuttlefish-container (1.58.0) unstable; urgency=medium
 
-  * 
+  * Fill in the 1.57.0 changelog by @Databean in https://github.com/google/android-cuttlefish/pull/3116
+  * Start development on 1.58.0 by @Databean in https://github.com/google/android-cuttlefish/pull/3117
+  * Enable IP forwarding on cuttlefish-podcvd.init by @0405ysj in https://github.com/google/android-cuttlefish/pull/3122
+  * Enable cvd_load_tests on podcvd kokoro testing by @0405ysj in https://github.com/google/android-cuttlefish/pull/3085
+  * Prune old container images when pulling new image on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/3145
+  * Enable log tests on podcvd kokoro testing by @0405ysj in https://github.com/google/android-cuttlefish/pull/3132
+  * Enable cvd_logspam_tests for podcvd E2E testing by @0405ysj in https://github.com/google/android-cuttlefish/pull/3150
+  * Print stderr message without any confusing logs by @0405ysj in https://github.com/google/android-cuttlefish/pull/3151
+  * Execute podman system migrate by podcvd-setup, only when it's required by @0405ysj in https://github.com/google/android-cuttlefish/pull/3160
+  * Hardening `podcvd-setup` to be working properly on various situation by @0405ysj in https://github.com/google/android-cuttlefish/pull/3209
+  * `podcvd-setup` applies setfacl directly when udevd doesn't exist by @0405ysj in https://github.com/google/android-cuttlefish/pull/3213
+  * Eliminate any typo error under container/, assisted by AI by @0405ysj in https://github.com/google/android-cuttlefish/pull/3227
+  * Refactor: Return exists together on GetStringFlagValueOnSubCommandArgs by @0405ysj in https://github.com/google/android-cuttlefish/pull/3225
+  * Remove redundant sudo invocations in podcvd-setup by @0405ysj in https://github.com/google/android-cuttlefish/pull/3226
+  * Build and deploy cuttlefish-podcvd package again using Debian 13 by @0405ysj in https://github.com/google/android-cuttlefish/pull/3268
+  * Refine podcvd README.md by @0405ysj in https://github.com/google/android-cuttlefish/pull/3287
+  * Build & deploy container image installed cuttlefish-metrics by @0405ysj in https://github.com/google/android-cuttlefish/pull/3313
+  * podcvd: Default vhost_user_vsock=auto to true when CVD_INVOKER=podcvd by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3336
+  * podcvd: Support --snapshot_path for snapshot_take, create, and start by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3338
+  * Use env variable to use GCE metadata. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2993
+  * Add podcvd unit tests for parse.go and stderr_writer.go by @0405ysj in https://github.com/google/android-cuttlefish/pull/3466
+  * podcvd: Add unit tests for cvd.go by @0405ysj in https://github.com/google/android-cuttlefish/pull/3467
+  * Revert "podcvd: Add unit tests for cvd" by @ser-io in https://github.com/google/android-cuttlefish/pull/3472
+  * podcvd: Add unit tests for container.go by @0405ysj in https://github.com/google/android-cuttlefish/pull/3468
+  * podcvd: Add unit tests for cvd again by @0405ysj in https://github.com/google/android-cuttlefish/pull/3488
+  * podcvd: Add unit tests for util by @0405ysj in https://github.com/google/android-cuttlefish/pull/3490
+  * podcvd: Add unit tests for adb by @0405ysj in https://github.com/google/android-cuttlefish/pull/3504
 
- -- Cody Schuffelen <schuffelen@google.com>  Fri, 28 Aug 2026 15:30:00 -0700
+ -- Ram Muthiah <rammuthiah@google.com>  Wed, 04 Nov 2026 22:06:39 +0000
 
 cuttlefish-container (1.57.0) unstable; urgency=medium
 
