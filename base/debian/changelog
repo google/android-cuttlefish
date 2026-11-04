@@ -1,3 +1,9 @@
+cuttlefish-common (1.57.13) unstable; urgency=medium
+
+  * Exclude `cuttlefish-podcvd` from deployment by @0405ysj in https://github.com/google/android-cuttlefish/pull/3208
+
+ -- Ram Muthiah <rammuthiah@google.com>  Wed, 04 Nov 2026 15:33:00 +0000
+
 cuttlefish-common (1.57.12) unstable; urgency=medium
 
   * Enable IP forwarding via sysctl.d and order cuttlefish-host-resources before docker by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3257
