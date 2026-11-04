@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -68,6 +69,7 @@
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/instances/operator_client.h"
 #include "cuttlefish/host/commands/cvd/instances/stop.h"
@@ -256,6 +258,15 @@ Result<std::unique_ptr<OperatorControlConn>> PreregisterGroup(
   return operator_conn;
 }
 
+Result<std::unique_ptr<OperatorControlConn>> PreregisterInstances(
+    const LocalInstanceGroup& group,
+    const std::vector<LocalInstance>& instances) {
+  std::unique_ptr<OperatorControlConn> operator_conn =
+      CF_EXPECT(OperatorControlConn::Create());
+  CF_EXPECT(operator_conn->Preregister(group, instances));
+  return operator_conn;
+}
+
 Result<void> CvdResetGroup(const LocalInstanceGroup& group) {
   // We can't run stop_cvd here. It may hang forever, and doesn't make sense
   // to interrupt it.
@@ -334,7 +345,8 @@ Result<std::vector<Flag>> GetCvdInternalStartFlags(
 bool CanBypassToSingleInstance(const LocalInstance& instance,
                                const LocalInstanceGroup& group,
                                const std::vector<std::string>& subcmd_args) {
-  if (instance.State() != cvd::INSTANCE_STATE_STOPPED) {
+  if (instance.State() != cvd::INSTANCE_STATE_STOPPED &&
+      instance.State() != cvd::INSTANCE_STATE_BOOT_FAILED) {
     return false;
   }
   if (group.StartTime() == TimeStamp{}) {
@@ -343,8 +355,11 @@ bool CanBypassToSingleInstance(const LocalInstance& instance,
 
   std::vector<std::string> args_copy = subcmd_args;
   bool daemon = true;
+  std::string report_anonymous_usage_stats;
   std::vector<Flag> safe_flags = {
       GflagsCompatFlag("daemon", daemon),
+      GflagsCompatFlag("report_anonymous_usage_stats",
+                       report_anonymous_usage_stats),
   };
   const Result<void> res = ConsumeFlags(safe_flags, args_copy);
   if (!res.has_value() || !daemon || !args_copy.empty()) {
@@ -617,6 +632,7 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
     const CommandRequest& request) {
   const std::string bin_path = group.HostArtifactsPath() + "/bin/run_cvd";
   std::unordered_map<std::string, std::string> run_cvd_envs = request.Env();
+  run_cvd_envs.erase(kCuttlefishConfigEnvVarName);
   run_cvd_envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.Id());
   run_cvd_envs["HOME"] = group.HomeDir();
   run_cvd_envs[kAndroidHostOut] = group.HostArtifactsPath();
@@ -624,12 +640,13 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
   run_cvd_envs[kAndroidSoongHostOut] = group.HostArtifactsPath();
   run_cvd_envs[kCvdMarkEnv] = "true";
 
-  ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
-                                            .home = group.HomeDir(),
-                                            .args = std::vector<std::string>{},
-                                            .envs = run_cvd_envs,
-                                            .working_dir = CurrentDirectory(),
-                                            .command_name = "run_cvd"};
+  const ConstructCommandParam construct_cmd_param{
+      .bin_path = bin_path,
+      .home = group.HomeDir(),
+      .args = std::vector<std::string>{},
+      .envs = run_cvd_envs,
+      .working_dir = instance.InstanceDirectory(),
+      .command_name = "run_cvd"};
 
   Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
   command.RedirectStdIO(Command::StdIoChannel::kStdOut,
@@ -649,7 +666,7 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
   }
 
   auto set_instance_state = [&group, &instance](cvd::InstanceState state) {
-    for (auto& inst : group.Instances()) {
+    for (LocalInstance& inst : group.Instances()) {
       if (inst.Id() == instance.Id()) {
         inst.SetState(state);
         break;
@@ -661,8 +678,36 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
   group.SetStartTime(CvdServerClock::now());
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
-  Result<void> start_res =
-      LaunchDevice(std::move(command), group, run_cvd_envs, request);
+  const Result<std::unique_ptr<OperatorControlConn>> conn_res =
+      PreregisterInstances(group, {instance});
+  if (!conn_res.has_value()) {
+    LOG(ERROR) << "Failed to pre-register instance with operator, group "
+                  "information won't show in the UI: "
+               << conn_res.error();
+  }
+  VLOG(0) << "launch command: " << command;
+
+  const Result<void> start_res = [&]() -> Result<void> {
+    CF_EXPECT(subprocess_waiter_.Setup(command));
+    GatherVmStartMetrics(group);
+
+    // NOLINTNEXTLINE(misc-include-cleaner)
+    const siginfo_t infop = CF_EXPECT(subprocess_waiter_.Wait());
+    // NOLINTNEXTLINE(misc-include-cleaner)
+    if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
+      LOG(INFO) << "Instance launch failed, cleaning up";
+      GatherVmBootFailedMetrics(group);
+      const Result<void> stop_res = instance_manager_.StopInstanceGroup(
+          group, InstanceDirActionOnStop::Keep, std::chrono::seconds(5),
+          {instance.Id()});
+      if (!stop_res.has_value()) {
+        LOG(ERROR) << "Failed to stop failed instance: " << stop_res.error();
+      }
+    }
+    CF_EXPECT(CheckProcessExitedNormally(infop));
+    GatherVmBootCompleteMetrics(group);
+    return {};
+  }();
 
   if (!start_res.has_value()) {
     set_instance_state(cvd::INSTANCE_STATE_BOOT_FAILED);

@@ -15,6 +15,8 @@
 package cvd
 
 import (
+	"context"
+	"os/exec"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -41,5 +43,83 @@ func TestSliceItoa(t *testing.T) {
 		if diff := cmp.Diff(tc.out, res); diff != "" {
 			t.Errorf("result mismatch (-want +got):\n%s", diff)
 		}
+	}
+}
+
+func TestInstanceStartArgs(t *testing.T) {
+	tests := []struct {
+		name     string
+		opts     StartOptions
+		wantArgs []string
+	}{
+		{
+			name: "default options",
+			opts: StartOptions{},
+			wantArgs: []string{
+				"--group_name=cvd_1",
+				"--instance_name=instance2",
+				"start",
+			},
+		},
+		{
+			name: "with snapshot path",
+			opts: StartOptions{SnapshotPath: "/snapshots/snap_1"},
+			wantArgs: []string{
+				"--group_name=cvd_1",
+				"--instance_name=instance2",
+				"start",
+				"--snapshot_path",
+				"/snapshots/snap_1",
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var gotBin string
+			var gotArgs []string
+			execCtx := func(ctx context.Context, name string, args ...string) *exec.Cmd {
+				gotBin = name
+				gotArgs = append([]string(nil), args...)
+				return exec.CommandContext(ctx, "true")
+			}
+			cli := NewCLI(execCtx)
+			ins := cli.LazySelectInstance(InstanceSelector{
+				GroupName: "cvd_1",
+				Name:      "instance2",
+			})
+
+			if err := ins.Start(tc.opts); err != nil {
+				t.Fatalf("Start failed: %v", err)
+			}
+			if diff := cmp.Diff(CVDBin, gotBin); diff != "" {
+				t.Errorf("binary mismatch (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.wantArgs, gotArgs); diff != "" {
+				t.Errorf("args mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGroupStartArgs(t *testing.T) {
+	var gotBin string
+	var gotArgs []string
+	execCtx := func(ctx context.Context, name string, args ...string) *exec.Cmd {
+		gotBin = name
+		gotArgs = append([]string(nil), args...)
+		return exec.CommandContext(ctx, "true")
+	}
+	cli := NewCLI(execCtx)
+	group := cli.LazySelectGroup(GroupSelector{Name: "cvd_1"})
+
+	if err := group.Start(StartOptions{}); err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+	if diff := cmp.Diff(CVDBin, gotBin); diff != "" {
+		t.Errorf("binary mismatch (-want +got):\n%s", diff)
+	}
+	wantArgs := []string{"--group_name=cvd_1", "start"}
+	if diff := cmp.Diff(wantArgs, gotArgs); diff != "" {
+		t.Errorf("args mismatch (-want +got):\n%s", diff)
 	}
 }

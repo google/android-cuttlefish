@@ -81,12 +81,16 @@ std::set<std::string> FallbackDirs() {
 
 std::set<std::string> DirsForInstance(
     const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific instance) {
-  return {
-      config.assembly_dir(),
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const bool include_assembly_dir) {
+  std::set<std::string> dirs = {
       instance.instance_dir(),
       instance.instance_uds_dir(),
   };
+  if (include_assembly_dir) {
+    dirs.insert(config.assembly_dir());
+  }
+  return dirs;
 }
 
 // Gets a set of the possible process groups of a previous launch
@@ -152,11 +156,13 @@ Result<void> CleanStopInstance(
 
 int StopInstance(const CuttlefishConfig& config,
                  const CuttlefishConfig::InstanceSpecific& instance,
-                 const int32_t wait_for_launcher) {
-  auto result = CleanStopInstance(instance, wait_for_launcher);
+                 const int32_t wait_for_launcher,
+                 const bool include_assembly_dir) {
+  const Result<void> result = CleanStopInstance(instance, wait_for_launcher);
   if (!result.has_value()) {
     LOG(ERROR) << "Clean stop failed: " << result.error();
-    return FallBackStop(DirsForInstance(config, instance));
+    return FallBackStop(
+        DirsForInstance(config, instance, include_assembly_dir));
   }
 
   return 0;
@@ -205,10 +211,12 @@ int StopCvdMain(const int32_t wait_for_launcher, const bool clear_instance_dirs,
     return FallBackStop(FallbackDirs());
   }
 
-  std::set<unsigned> instance_ids(instance_nums.begin(), instance_nums.end());
+  const std::set<unsigned> instance_ids(instance_nums.begin(),
+                                        instance_nums.end());
 
   int exit_code = 0;
-  auto instances = config->Instances();
+  const std::vector<CuttlefishConfig::InstanceSpecific> instances =
+      config->Instances();
 
   if (!instance_ids.empty() && !instances.empty()) {
     unsigned first_instance_id;
@@ -223,9 +231,22 @@ int StopCvdMain(const int32_t wait_for_launcher, const bool clear_instance_dirs,
     }
   }
 
+  bool stopping_all_instances = instance_ids.empty();
+  if (!stopping_all_instances && !instances.empty()) {
+    stopping_all_instances = true;
+    for (const CuttlefishConfig::InstanceSpecific& instance : instances) {
+      unsigned id = 0;
+      if (!absl::SimpleAtoi(instance.id(), &id) ||
+          instance_ids.count(id) == 0) {
+        stopping_all_instances = false;
+        break;
+      }
+    }
+  }
+
   std::vector<std::future<int>> exit_state_futures;
   exit_state_futures.reserve(instances.size());
-  for (const auto& instance : instances) {
+  for (const CuttlefishConfig::InstanceSpecific& instance : instances) {
     unsigned id;
     if (!absl::SimpleAtoi(instance.id(), &id)) {
       LOG(ERROR) << "Failed to parse instance ID \"" << instance.id()
@@ -238,9 +259,10 @@ int StopCvdMain(const int32_t wait_for_launcher, const bool clear_instance_dirs,
     }
     std::future<int> exit_code_from_thread = std::async(
         std::launch::async,
-        [&instance, &config, &wait_for_launcher,
-         &clear_instance_dirs]() -> int {
-          int exit_status = StopInstance(*config, instance, wait_for_launcher);
+        [&instance, &config, &wait_for_launcher, &clear_instance_dirs,
+         stopping_all_instances]() -> int {
+          const int exit_status = StopInstance(
+              *config, instance, wait_for_launcher, stopping_all_instances);
           if (clear_instance_dirs && DirectoryExists(instance.instance_dir())) {
             LOG(INFO) << "Deleting instance dir " << instance.instance_dir();
             if (!RecursivelyRemoveDirectory(instance.instance_dir())
