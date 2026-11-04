@@ -125,7 +125,6 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:link_or_copy",
         "//cuttlefish/io:string",
-        "//cuttlefish/io:write_exact",
         "//cuttlefish/posix:realpath",
         "//cuttlefish/posix:remove",
         "//cuttlefish/posix:rename",

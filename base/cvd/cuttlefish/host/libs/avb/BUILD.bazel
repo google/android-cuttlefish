@@ -30,6 +30,7 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:is_symlink",
+        "//cuttlefish/files:write_new_file",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/posix:stat",
         "//cuttlefish/posix:symlink",

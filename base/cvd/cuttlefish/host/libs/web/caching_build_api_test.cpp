@@ -31,6 +31,7 @@
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/is_directory_empty.h"
 #include "cuttlefish/files/recursively_remove_directory.h"
+#include "cuttlefish/files/write_new_file.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"

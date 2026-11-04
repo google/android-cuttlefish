@@ -89,10 +89,10 @@ cf_cc_test(
     name = "log_files_test",
     srcs = ["log_files_test.cpp"],
     deps = [
-        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/files:write_new_file",
         "//cuttlefish/host/commands/cvd/cli:log_files",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",

@@ -52,7 +52,6 @@
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/link_or_copy.h"
 #include "cuttlefish/io/string.h"
-#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/realpath.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/rename.h"
@@ -263,12 +262,6 @@ Result<std::string> ReadFileContents(const std::string& path) {
   CF_EXPECTF(FileExists(path), "The file at '{}' does not exist.", path);
   Fd file = CF_EXPECT(Fd::Open(path, O_RDONLY));
   return CF_EXPECT(ReadToString(file));
-}
-Result<void> WriteNewFile(const std::string& filepath, std::string_view content,
-                          mode_t mode) {
-  Fd fd = CF_EXPECT(Fd::Open(filepath, O_CREAT | O_EXCL | O_WRONLY, mode));
-  CF_EXPECT(WriteExact(fd, content));
-  return {};
 }
 
 std::string CurrentDirectory() {
