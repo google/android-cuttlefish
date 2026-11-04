@@ -15,10 +15,10 @@
  */
 
 #include <linux/filter.h>
-#include <linux/prctl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/mman.h>
+#include <sys/prctl.h>
 #include <sys/socket.h>
 #include <syscall.h>
 

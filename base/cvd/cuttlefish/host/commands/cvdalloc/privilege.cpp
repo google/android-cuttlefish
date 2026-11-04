@@ -22,7 +22,6 @@
 #if defined(__linux__)
 #include <elf.h>
 #include <linux/capability.h>
-#include <linux/prctl.h>
 #include <linux/xattr.h>
 #include <sys/auxv.h>
 #include <sys/prctl.h>
