@@ -184,6 +184,20 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "bootconfig_args_test",
+    srcs = ["bootconfig_args_test.cc"],
+    deps = [
+        "//cuttlefish/common/libs/utils:host_info",
+        "//cuttlefish/host/commands/assemble_cvd:bootconfig_args",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:gpu_mode",
+        "//cuttlefish/host/libs/config:secure_hals",
+        "//cuttlefish/host/libs/config:vmm_mode",
+        "//cuttlefish/result:assert",
+    ],
+)
+
 cf_cc_library(
     name = "clean",
     srcs = ["clean.cc"],

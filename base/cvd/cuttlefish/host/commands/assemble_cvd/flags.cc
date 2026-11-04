@@ -423,10 +423,20 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_ap_vm_manager(ToString(vm_manager_flag.Mode()) +
                                    "_openwrt");
 
-  static constexpr char kDefaultSecure[] =
-      "oemlock,guest_keymint_insecure,guest_gatekeeper_insecure";
-  SetCommandLineOptionWithMode("secure_hals", kDefaultSecure,
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  if (guest_configs[0].ti50_emulator.empty()) {
+    static constexpr char kDefaultSecure[] =
+        "oemlock,guest_keymint_insecure,guest_gatekeeper_insecure";
+    SetCommandLineOptionWithMode("secure_hals", kDefaultSecure,
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  } else {
+    // Keep host secure_env's TPM-backed oemlock on /dev/hvc10, and omit
+    // guest_keymint_insecure and guest_gatekeeper_insecure so bootconfig_args
+    // disables Cuttlefish's KeyMint and Gatekeeper vendor APEXes in favor of
+    // the Desktop Trusty VM and Ti50 HALs.
+    static constexpr char kTi50Secure[] = "oemlock";
+    SetCommandLineOptionWithMode("secure_hals", kTi50Secure,
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  }
   auto secure_hals = CF_EXPECT(ParseSecureHals(FLAGS_secure_hals));
   CF_EXPECT(ValidateSecureHals(secure_hals));
   tmp_config_obj.set_secure_hals(secure_hals);
