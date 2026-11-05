@@ -18,6 +18,7 @@ cf_build_test(
     name = "cf_build_test",
     srcs = [
         "local.bzl",
+        "musl.bzl",
         "rules.bzl",
     ],
 )
