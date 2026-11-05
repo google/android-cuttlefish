@@ -19,6 +19,10 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>
 
+#include <cstdint>
+#include <optional>
+#include <utility>
+
 #include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/virtual_tuner_daemon/VirtualTuner.pb.h"
@@ -55,6 +59,64 @@ VirtualTunerServiceImpl::VirtualTunerServiceImpl(TunerState& tuner_state)
 
   response->set_success(true);
   response->set_message("Stopped successfully");
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerServiceImpl::GetStatus(::grpc::ServerContext*,
+                                                  const GetStatusRequest*,
+                                                  GetStatusResponse* response) {
+  *response->mutable_status() = tuner_state_.GetStatus();
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerServiceImpl::GetStations(
+    ::grpc::ServerContext*, const GetStationsRequest* request,
+    GetStationsResponse* response) {
+  std::optional<RadioBand> band;
+  if (request->has_band()) {
+    band = request->band();
+  }
+  for (StationProgram& station : tuner_state_.GetStations(band)) {
+    *response->add_stations() = std::move(station);
+  }
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerServiceImpl::Seek(::grpc::ServerContext*,
+                                             const SeekRequest* request,
+                                             SeekResponse* response) {
+  std::optional<StationProgram> found =
+      tuner_state_.Seek(request->band(), request->start_frequency_hz(),
+                        request->start_hd_subchannel(), request->direction_up(),
+                        request->skip_subchannel());
+  if (found.has_value()) {
+    *response->mutable_station() = std::move(*found);
+  }
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerServiceImpl::UpsertStation(
+    ::grpc::ServerContext*, const UpsertStationRequest* request,
+    UpsertStationResponse* response) {
+  if (request->station().frequency_hz() == 0) {
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                          "frequency_hz must be non-zero");
+  }
+  *response->mutable_station() = tuner_state_.UpsertStation(request->station());
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerServiceImpl::RemoveStation(
+    ::grpc::ServerContext*, const RemoveStationRequest* request,
+    RemoveStationResponse* response) {
+  std::optional<uint32_t> hd_subchannel;
+  if (request->has_hd_subchannel()) {
+    hd_subchannel = request->hd_subchannel();
+  }
+  const bool removed =
+      tuner_state_.RemoveStation(request->band(), request->frequency_hz(),
+                                 hd_subchannel, request->dab_sid_ext());
+  response->set_removed(removed);
   return ::grpc::Status::OK;
 }
 

@@ -32,10 +32,7 @@ namespace virtualtuner {
 namespace {
 
 constexpr int16_t kNoiseAmplitude = 4000;
-// A tuned station plays its tone plus a little static. The peaks add up to
-// kNoiseAmplitude, so the output stays within the same range as plain noise.
-constexpr double kToneAmplitude = 3400.0;
-constexpr int16_t kStationNoiseAmplitude = 600;
+constexpr double kToneAmplitude = kNoiseAmplitude;
 constexpr double kTwoPi = 2.0 * std::numbers::pi;
 
 // Writes `sample` to every channel of the frame starting at `frame`.
@@ -48,6 +45,9 @@ void WriteFrame(std::span<int16_t> samples, size_t frame, int16_t sample) {
 }  // namespace
 
 double StationToneHz(const TunerStateSnapshot& snapshot) {
+  if (!snapshot.station_present) {
+    return 0.0;
+  }
   const uint32_t khz = snapshot.frequency_hz / 1000;
   if (khz == 0) {
     return 0.0;
@@ -77,8 +77,8 @@ void AudioGenerator::GenerateChunk(std::span<int16_t> samples,
     return;
   }
 
-  // Plays StationToneHz() with a little static when tuned to a station, or
-  // white noise when no station is broadcasting on the current frequency.
+  // Plays StationToneHz() when tuned to a station, or white noise when no
+  // station is broadcasting on the current frequency.
   const double tone_hz = StationToneHz(snapshot);
   if (tone_hz <= 0.0) {
     std::uniform_int_distribution<int> noise(-kNoiseAmplitude, kNoiseAmplitude);
@@ -89,14 +89,12 @@ void AudioGenerator::GenerateChunk(std::span<int16_t> samples,
     return;
   }
 
-  std::uniform_int_distribution<int> noise(-kStationNoiseAmplitude,
-                                           kStationNoiseAmplitude);
   const double phase_step = kTwoPi * tone_hz / kSampleRate;
   for (size_t frame = 0; frame + kChannels <= samples.size();
        frame += kChannels) {
-    const int tone =
-        static_cast<int>(std::lround(kToneAmplitude * std::sin(phase_)));
-    WriteFrame(samples, frame, static_cast<int16_t>(tone + noise(rng_)));
+    const auto tone =
+        static_cast<int16_t>(std::lround(kToneAmplitude * std::sin(phase_)));
+    WriteFrame(samples, frame, tone);
     phase_ = std::fmod(phase_ + phase_step, kTwoPi);
   }
 }
