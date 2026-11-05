@@ -15,6 +15,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/posix:temp_failure_retry",
         "//cuttlefish/process:subprocess",
         "//cuttlefish/process:subprocess_options",
         "//cuttlefish/result",

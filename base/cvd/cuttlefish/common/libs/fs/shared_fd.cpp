@@ -43,6 +43,7 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
 #include "cuttlefish/result/result.h"
 
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1

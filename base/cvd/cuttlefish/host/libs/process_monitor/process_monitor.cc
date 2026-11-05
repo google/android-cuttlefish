@@ -42,7 +42,7 @@
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/posix/strerror.h"
-#include "cuttlefish/posix/temp_failure_retry.h"
+#include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/result/result.h"
