@@ -63,10 +63,10 @@ cc_library(
     strip_include_prefix = "include",
     deps = [
         ":macros",
-        ":off64_t",
         ":strings",
         ":threads",
         ":unique_fd",
+        "@//build_external/android_system_libbase:android_system_libbase_off64_t_h",
         "@android_system_logging//:liblog",
     ],
 )
@@ -91,20 +91,14 @@ cc_library(
     strip_include_prefix = "include",
     deps = [
         ":macros",
-        ":off64_t",
         ":unique_fd",
+        "@//build_external/android_system_libbase:android_system_libbase_off64_t_h",
     ],
 )
 
 cc_library(
     name = "no_destructor",
     hdrs = ["include/android-base/no_destructor.h"],
-    strip_include_prefix = "include",
-)
-
-cc_library(
-    name = "off64_t",
-    hdrs = ["include/android-base/off64_t.h"],
     strip_include_prefix = "include",
 )
 
