@@ -36,6 +36,9 @@ else
   endif
 endif
 
+# Hack for musl toolchain
+filters := ${filters} -fcf-protection
+
 # Convert dpkg-buildflags to bazel flags, filtering out debug and optimization
 # flags as necessary
 conlyopts := $(foreach flag,${CFLAGS},$(if $(filter ${filters},${flag}),,--conlyopt="${flag}"))
