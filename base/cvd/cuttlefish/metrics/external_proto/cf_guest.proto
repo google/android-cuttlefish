@@ -11,7 +11,7 @@ option features.(pb.cpp).string_type = VIEW;
 //
 // See go/cf-metrics-prd-v2 for more information.
 //
-// Next index: 8
+// Next index: 9
 message CuttlefishGuest {
   // The newest event to happen to this guest virtual machine that was not
   // already reported in a previous metrics message.
@@ -42,6 +42,48 @@ message CuttlefishGuest {
     CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_FAILED = 6;
   }
 
+  // Deterministic failure category when the guest fails to boot
+  // (event_type == CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_FAILED).
+  // Next index: 11
+  enum BootFailureCategory {
+    CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_UNSPECIFIED = 0;
+
+    // assemble_cvd failed before run_cvd started.
+    CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_ASSEMBLY_FAILURE = 1;
+
+    // The Virtual Machine Manager (e.g. crosvm, qemu) exited with an error.
+    CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_VMM_FAILURE = 2;
+
+    // A monitored host subprocess (e.g. webRTC, openwrt, netsimd) crashed or
+    // exited unexpectedly before shutdown.
+    CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_HOST_SUBPROCESS_CRASH = 3;
+
+    // The VMM started, but neither bootloader nor kernel output was reached.
+    CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_PRE_BOOTLOADER_FAILURE = 4;
+
+    // The bootloader (e.g. U-Boot) started, but the guest kernel was never
+    // reached.
+    CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_BOOTLOADER_FAILURE = 5;
+
+    // The guest kernel started and experienced a kernel panic or oops.
+    CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_KERNEL_PANIC = 6;
+
+    // The guest kernel started, but Android init was never reached.
+    CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_KERNEL_HANG = 7;
+
+    // Guest userspace (e.g. system_server or an init critical/updatable
+    // service) crashed during boot.
+    CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_USERSPACE_CRASH = 8;
+
+    // Kernel and init started without detected crashes, but timed out before
+    // VIRTUAL_DEVICE_BOOT_STARTED.
+    CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_BOOT_TIMEOUT_PRE_BOOT_STARTED = 9;
+
+    // VIRTUAL_DEVICE_BOOT_STARTED was reached without detected crashes, but
+    // timed out before VIRTUAL_DEVICE_BOOT_COMPLETED.
+    CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_BOOT_TIMEOUT_POST_BOOT_STARTED = 10;
+  }
+
   // The newest event to happen to this guest virtual machine that was not
   // already reported in a previous metrics message.
   EventType event_type = 1;
@@ -60,4 +102,7 @@ message CuttlefishGuest {
   string vmm_version = 6;
 
   CuttlefishFlags flags = 7;
+
+  // Deterministic failure category when the instance fails to boot.
+  BootFailureCategory boot_failure_category = 8;
 }

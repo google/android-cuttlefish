@@ -36,6 +36,7 @@ cf_cc_library(
         "//cuttlefish/metrics/external_proto:cf_flags_cc_proto",
         "//cuttlefish/metrics/external_proto:cf_guest_cc_proto",
         "//cuttlefish/metrics/external_proto:cf_metrics_event_v2_cc_proto",
+        "//cuttlefish/metrics/guest:boot_failure",
         "//cuttlefish/metrics/guest:device_event_type",
         "//cuttlefish/metrics/guest:guest_metrics",
         "@fmt",

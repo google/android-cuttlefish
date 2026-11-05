@@ -22,6 +22,8 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/metrics/guest/boot_failure.h"
+#include "cuttlefish/metrics/guest/device_event_type.h"
 #include "cuttlefish/metrics/guest/flag_metrics.h"
 #include "cuttlefish/result/result.h"
 
@@ -37,14 +39,21 @@ Result<std::vector<GuestMetrics>> GetGuestMetrics(const Guests& guests) {
     // allow failure here because the boot image is not always available when a
     // device group is created
     // for example, in `cvd create --config_file` cases
-    std::string os_version =
+    const std::string os_version =
         ReadAndroidVersionFromBootImage(boot_image_path).value_or("");
+
+    const BootFailureCategory boot_failure_category =
+        guests.event_type == DeviceEventType::DeviceBootFailed
+            ? CategorizeBootFailureFromDirs(guests.guest_infos[i].assembly_dir,
+                                            guests.guest_infos[i].instance_dir)
+            : BootFailureCategory::kUnspecified;
 
     result.emplace_back(GuestMetrics{
         .instance_id = guests.guest_infos[i].instance_id,
         .os_version = os_version,
         .event_type = guests.event_type,
         .flag_metrics = CF_EXPECT(GetFlagMetrics(guests.parsed_flags, i)),
+        .boot_failure_category = boot_failure_category,
     });
   }
   return result;

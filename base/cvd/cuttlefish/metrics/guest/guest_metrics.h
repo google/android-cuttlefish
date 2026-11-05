@@ -21,6 +21,7 @@
 #include <string_view>
 #include <vector>
 
+#include "cuttlefish/metrics/guest/boot_failure.h"
 #include "cuttlefish/metrics/guest/device_event_type.h"
 #include "cuttlefish/metrics/guest/flag_metrics.h"
 #include "cuttlefish/metrics/guest/parsed_flags.h"
@@ -31,6 +32,8 @@ namespace cuttlefish {
 struct GuestInfo {
   uint32_t instance_id;
   std::string product_out;
+  std::string assembly_dir;
+  std::string instance_dir;
 };
 
 struct Guests {
@@ -45,6 +48,7 @@ struct GuestMetrics {
   std::string os_version;
   DeviceEventType event_type;
   FlagMetrics flag_metrics;
+  BootFailureCategory boot_failure_category = BootFailureCategory::kUnspecified;
 };
 
 Result<std::vector<GuestMetrics>> GetGuestMetrics(const Guests& guests);
