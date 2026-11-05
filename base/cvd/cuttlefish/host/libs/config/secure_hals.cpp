@@ -19,9 +19,9 @@
 #include <set>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 
 #include "absl/base/no_destructor.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/result/result.h"
@@ -31,8 +31,8 @@ using absl::NoDestructor;
 namespace cuttlefish {
 namespace {
 
-NoDestructor<std::unordered_map<std::string_view, SecureHal>> kMapping([] {
-  return std::unordered_map<std::string_view, SecureHal>{
+NoDestructor<absl::flat_hash_map<std::string_view, SecureHal>> kMapping([] {
+  return absl::flat_hash_map<std::string_view, SecureHal>{
       {"keymint", SecureHal::kHostKeymintSecure},
       {"host_secure_keymint", SecureHal::kHostKeymintSecure},
       {"host_keymint_secure", SecureHal::kHostKeymintSecure},

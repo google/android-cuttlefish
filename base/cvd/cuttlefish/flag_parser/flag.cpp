@@ -24,11 +24,11 @@
 #include <span>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include "absl/cleanup/cleanup.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
@@ -237,7 +237,7 @@ std::ostream& operator<<(std::ostream& out, const Flag& flag) {
 Result<void> ConsumeFlags(const std::vector<Flag>& flags,
                           std::vector<std::string>& args,
                           ConsumeFlagsOpts opts) {
-  std::unordered_set<std::string_view> aliases;
+  absl::flat_hash_set<std::string_view> aliases;
   for (const Flag& flag : flags) {
     for (std::string_view alias : flag.aliases_) {
       const auto [_, inserted] = aliases.insert(alias);
