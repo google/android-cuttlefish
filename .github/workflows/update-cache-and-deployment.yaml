@@ -106,12 +106,19 @@ jobs:
       env:
         OVERRIDE_BAZEL_VERSION: 9.0.0
       run: tools/buildutils/vendor_git_repos.sh
-  update-bazel-cache-and-deploy-debian-package-amd64:
+  update-bazel-cache-and-build-debian-package-amd64:
     needs: [set-variables]
     environment: deployment
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        package:
+          - "container"
+          - "base"
+          - "frontend"
     steps:
     - name: Free disk space
+      if: matrix.package == 'base'
       uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
       with:
         docker-images: false
@@ -121,11 +128,13 @@ jobs:
       with:
         persist-credentials: false
     - name: Mount bazel cache
+      if: matrix.package == 'base'
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: build-debian-packages
         writable: '${{ inputs.update-cache }}'
     - name: Mount Bazel vendor cache
+      if: matrix.package == 'base'
       uses: ./.github/actions/mount-bazel-vendor-cache
       with:
         writable: '${{ inputs.update-cache }}'
@@ -134,23 +143,54 @@ jobs:
       with:
         debian-version: ${{ needs.set-variables.outputs.debian-version }}
         image-version: ${{ needs.set-variables.outputs.image-version }}
+        package: ${{ matrix.package }}
+    - name: Build debs_amd64_${{ matrix.package }}.tar
+      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_amd64_${{ matrix.package }}.tar --null --files-from -
+    - name: Publish debs_amd64_${{ matrix.package }}.tar
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
+      with:
+        name: debs_amd64_${{ matrix.package }}
+        path: debs_amd64_${{ matrix.package }}.tar
+  deploy-debian-package-amd64:
+    if: inputs.deploy-channel != ''
+    needs: [update-bazel-cache-and-build-debian-package-amd64]
+    environment: deployment
+    runs-on: ubuntu-22.04
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
+    - name: Download cuttlefish debs
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
+      with:
+        pattern: debs_amd64_*
+        merge-multiple: true
+    - name: Extract cuttlefish debs
+      run: for t in debs_amd64_*.tar; do tar -xvf "${t}"; done
     - name: Authentication on GCP project android-cuttlefish-artifacts
-      if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093'  # v3
       with:
         credentials_json: '${{ secrets.artifact-registry-uploader-json-creds }}'
     - name: Deploy CF host debian packages
-      if: inputs.deploy-channel != ''
       uses: ./.github/actions/deploy-debian-packages
       with:
         deploy-channel: ${{ inputs.deploy-channel }}
         path: .
-  update-bazel-cache-and-deploy-debian-package-arm64:
+  update-bazel-cache-and-build-debian-package-arm64:
     needs: [set-variables]
     environment: deployment
     runs-on: ubuntu-22.04-arm
+    strategy:
+      matrix:
+        package:
+          - "container"
+          - "base"
+          - "frontend"
+          - "cuttlefish-integration-gigabyte-arm64"
     steps:
     - name: Free disk space
+      if: matrix.package == 'base'
       uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
       with:
         docker-images: false
@@ -160,11 +200,13 @@ jobs:
       with:
         persist-credentials: false
     - name: Mount bazel cache
+      if: matrix.package == 'base'
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: build-debian-packages
         writable: '${{ inputs.update-cache }}'
     - name: Mount Bazel vendor cache
+      if: matrix.package == 'base'
       uses: ./.github/actions/mount-bazel-vendor-cache
       with:
         writable: '${{ inputs.update-cache }}'
@@ -173,20 +215,43 @@ jobs:
       with:
         debian-version: ${{ needs.set-variables.outputs.debian-version }}
         image-version: ${{ needs.set-variables.outputs.image-version }}
+        package: ${{ matrix.package }}
+    - name: Build debs_arm64_${{ matrix.package }}.tar
+      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_arm64_${{ matrix.package }}.tar --null --files-from -
+    - name: Publish debs_arm64_${{ matrix.package }}.tar
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
+      with:
+        name: debs_arm64_${{ matrix.package }}
+        path: debs_arm64_${{ matrix.package }}.tar
+  deploy-debian-package-arm64:
+    if: inputs.deploy-channel != ''
+    needs: [update-bazel-cache-and-build-debian-package-arm64]
+    environment: deployment
+    runs-on: ubuntu-22.04-arm
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
+    - name: Download cuttlefish debs
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
+      with:
+        pattern: debs_arm64_*
+        merge-multiple: true
+    - name: Extract cuttlefish debs
+      run: for t in debs_arm64_*.tar; do tar -xvf "${t}"; done
     - name: Authentication on GCP project android-cuttlefish-artifacts
-      if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093'  # v3
       with:
         credentials_json: '${{ secrets.artifact-registry-uploader-json-creds }}'
     - name: Deploy CF host debian packages
-      if: inputs.deploy-channel != ''
       uses: ./.github/actions/deploy-debian-packages
       with:
         deploy-channel: ${{ inputs.deploy-channel }}
         path: .
   deploy-gigabyte-ampere-installer-arm64:
     if: inputs.deploy-channel != ''
-    needs: [set-variables, update-bazel-cache-and-deploy-debian-package-arm64]
+    needs: [set-variables, deploy-debian-package-arm64]
     environment: deployment
     runs-on: ubuntu-22.04
     container:
@@ -214,7 +279,7 @@ jobs:
 
   deploy-docker-image-amd64:
     if: inputs.deploy-channel != ''
-    needs: [set-variables, update-bazel-cache-and-deploy-debian-package-amd64]
+    needs: [set-variables, deploy-debian-package-amd64]
     environment: deployment
     runs-on: ubuntu-22.04
     steps:
@@ -252,7 +317,7 @@ jobs:
         image-version: ${{ needs.set-variables.outputs.image-version }}
   deploy-docker-image-arm64:
     if: inputs.deploy-channel != ''
-    needs: [set-variables, update-bazel-cache-and-deploy-debian-package-arm64]
+    needs: [set-variables, deploy-debian-package-arm64]
     environment: deployment
     runs-on: ubuntu-22.04-arm
     steps:
