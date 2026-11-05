@@ -41,6 +41,7 @@ cc_library(
     cxxopts = ["-std=c++23"],
     strip_include_prefix = "liblog/include",
     deps = [
+        "@//build_external/android_system_logging:android_system_logging_cdefs_h",
         "@android_system_core//:cutils_android_filesystem_config",
         "@android_system_core//:cutils_list",
         "@android_system_libbase//:errno_restorer",
