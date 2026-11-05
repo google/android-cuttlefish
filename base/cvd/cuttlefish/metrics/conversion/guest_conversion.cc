@@ -26,6 +26,7 @@
 #include "cuttlefish/metrics/external_proto/cf_flags.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_guest.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_metrics_event_v2.pb.h"
+#include "cuttlefish/metrics/guest/boot_failure.h"
 #include "cuttlefish/metrics/guest/device_event_type.h"
 #include "cuttlefish/metrics/guest/guest_metrics.h"
 
@@ -40,6 +41,8 @@ using logs::proto::wireless::android::cuttlefish::events::
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishFlags_VmmMode;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishGuest;
+using logs::proto::wireless::android::cuttlefish::events::
+    CuttlefishGuest_BootFailureCategory;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishGuest_EventType;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
@@ -116,6 +119,45 @@ CuttlefishGuest_EventType ConvertDeviceEventType(DeviceEventType event_type) {
   }
 }
 
+CuttlefishGuest_BootFailureCategory ConvertBootFailureCategory(
+    BootFailureCategory category) {
+  switch (category) {
+    case BootFailureCategory::kUnspecified:
+      return CuttlefishGuest_BootFailureCategory::
+          CuttlefishGuest_BootFailureCategory_CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_UNSPECIFIED;
+    case BootFailureCategory::kAssemblyFailure:
+      return CuttlefishGuest_BootFailureCategory::
+          CuttlefishGuest_BootFailureCategory_CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_ASSEMBLY_FAILURE;
+    case BootFailureCategory::kVmmFailure:
+      return CuttlefishGuest_BootFailureCategory::
+          CuttlefishGuest_BootFailureCategory_CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_VMM_FAILURE;
+    case BootFailureCategory::kHostSubprocessCrash:
+      return CuttlefishGuest_BootFailureCategory::
+          CuttlefishGuest_BootFailureCategory_CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_HOST_SUBPROCESS_CRASH;
+    case BootFailureCategory::kPreBootloaderFailure:
+      return CuttlefishGuest_BootFailureCategory::
+          CuttlefishGuest_BootFailureCategory_CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_PRE_BOOTLOADER_FAILURE;
+    case BootFailureCategory::kBootloaderFailure:
+      return CuttlefishGuest_BootFailureCategory::
+          CuttlefishGuest_BootFailureCategory_CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_BOOTLOADER_FAILURE;
+    case BootFailureCategory::kKernelPanic:
+      return CuttlefishGuest_BootFailureCategory::
+          CuttlefishGuest_BootFailureCategory_CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_KERNEL_PANIC;
+    case BootFailureCategory::kKernelHang:
+      return CuttlefishGuest_BootFailureCategory::
+          CuttlefishGuest_BootFailureCategory_CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_KERNEL_HANG;
+    case BootFailureCategory::kUserspaceCrash:
+      return CuttlefishGuest_BootFailureCategory::
+          CuttlefishGuest_BootFailureCategory_CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_USERSPACE_CRASH;
+    case BootFailureCategory::kBootTimeoutPreBootStarted:
+      return CuttlefishGuest_BootFailureCategory::
+          CuttlefishGuest_BootFailureCategory_CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_BOOT_TIMEOUT_PRE_BOOT_STARTED;
+    case BootFailureCategory::kBootTimeoutPostBootStarted:
+      return CuttlefishGuest_BootFailureCategory::
+          CuttlefishGuest_BootFailureCategory_CUTTLEFISH_GUEST_BOOT_FAILURE_CATEGORY_BOOT_TIMEOUT_POST_BOOT_STARTED;
+  }
+}
+
 CuttlefishFlags_VmmMode ConvertVmmMode(VmmMode vmm_mode) {
   switch (vmm_mode) {
     case VmmMode::kUnknown:
@@ -143,6 +185,11 @@ void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
   guest.set_guest_id(
       fmt::format("{}-{}", session_id, guest_metrics.instance_id));
   guest.set_guest_os_version(guest_metrics.os_version);
+  if (guest_metrics.boot_failure_category !=
+      BootFailureCategory::kUnspecified) {
+    guest.set_boot_failure_category(
+        ConvertBootFailureCategory(guest_metrics.boot_failure_category));
+  }
 
   CuttlefishFlags& flags = *guest.mutable_flags();
   flags.set_boot_image_specified(

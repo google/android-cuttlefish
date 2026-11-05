@@ -52,8 +52,10 @@ std::vector<GuestInfo> GetGuestInfos(
   std::vector<std::string> product_out_paths =
       absl::StrSplit(group_product_out, ',');
   for (int i = 0; i < instances.size(); i++) {
-    auto guest = GuestInfo{
+    GuestInfo guest{
         .instance_id = instances[i].Id(),
+        .assembly_dir = instances[i].AssemblyDirectory(),
+        .instance_dir = instances[i].InstanceDirectory(),
     };
     if (product_out_paths.size() > i) {
       guest.product_out = product_out_paths[i];
