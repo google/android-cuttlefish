@@ -1,6 +1,9 @@
 #!/bin/sh
 
-awk '/# Install kernel/,/# End of Install kernel/' preseed/after_install_1.sh > after_install_1_kernel.sh
+awk '
+    /# Retry helper/,/# End of Retry helper/
+    /# Install kernel/,/# End of Install kernel/
+' preseed/after_install_1.sh > after_install_1_kernel.sh
 
 if [ x"${EMULATE_NVIDIA_GPU}" = x"true" ]; then
     sed -i 's/^nvidia_gpu=.*/nvidia_gpu="nVidia"/' after_install_1_kernel.sh

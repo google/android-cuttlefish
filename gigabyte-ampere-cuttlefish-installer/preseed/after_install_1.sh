@@ -1,5 +1,29 @@
 #!/bin/sh
 
+# Retry helper
+# Run a command up to MAX_ATTEMPTS times with a growing delay between attempts.
+# Network downloads (especially from snapshot.debian.org) fail intermittently and
+# a single failure here aborts the preseed late_command, which leaves the
+# installer hung and the host unreachable.
+MAX_ATTEMPTS=3
+retry() {
+    attempt=1
+    while true; do
+        "$@" && return 0
+        status=$?
+        if [ "${attempt}" -ge "${MAX_ATTEMPTS}" ]; then
+            echo "retry: '$*' failed after ${attempt} attempts (exit ${status})" >&2
+            return "${status}"
+        fi
+        echo "retry: '$*' failed (exit ${status}), attempt ${attempt}/${MAX_ATTEMPTS}; retrying" >&2
+        # Repair any half-configured packages before trying again.
+        DEBIAN_FRONTEND=noninteractive dpkg --configure -a || true
+        sleep $((attempt * 30))
+        attempt=$((attempt + 1))
+    done
+}
+# End of Retry helper
+
 apt-get update
 
 # Install necessary packages
@@ -39,8 +63,8 @@ if [ x"$has_backports" != x"" ]; then
 else
     KERNEL_ABI="6.18.15+deb13-arm64"
     KERNEL_DEB_VERSION="6.18.15-1~bpo13+1"
-    apt-get -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" -o Acquire::Retries=5 update
-    apt-get install -y -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" -o Acquire::Retries=5 \
+    retry apt-get -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" -o Acquire::Retries=5 update
+    retry apt-get install -y -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" -o Acquire::Retries=5 \
         "linux-image-${KERNEL_ABI}=${KERNEL_DEB_VERSION}" \
         "linux-headers-${KERNEL_ABI}=${KERNEL_DEB_VERSION}" || exit 1
 fi
@@ -66,8 +90,8 @@ elif [ x"$nvidia_gpu" != x"" ]; then
         DEBIAN_FRONTEND=noninteractive apt-get install -y -t "${DEBIAN_DISTRIBUTION}-backports" -q --force-yes firmware-misc-nonfree
     else
         NVIDIA_DEB_VERSION="550.163.01-4~bpo13+1"
-        apt-get -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" -o Acquire::Retries=5 update
-        DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" \
+        retry apt-get -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" -o Acquire::Retries=5 update
+        retry env DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" \
             -o Acquire::Retries=5 -t ${DEBIAN_DISTRIBUTION}-backports \
             "nvidia-open-kernel-dkms=${NVIDIA_DEB_VERSION}" \
             "nvidia-driver=${NVIDIA_DEB_VERSION}" || exit 1
