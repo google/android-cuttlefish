@@ -133,6 +133,21 @@ message RemoveStationResponse {
   string message = 2;
 }
 
+message SetStationAudioRequest {
+  RadioBand band = 1;
+  uint32 frequency_hz = 2;
+  uint32 hd_subchannel = 3;
+  // Path to a 48 kHz, 16-bit mono or stereo PCM WAV file on the host
+  // filesystem. Empty clears any custom WAV audio for the station and reverts
+  // it to the default sinusoid tone.
+  string wav_path = 4;
+}
+
+message SetStationAudioResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 service VirtualTuner {
   rpc Tune(TuneRequest) returns (TuneResponse) {}
   rpc Stop(StopRequest) returns (StopResponse) {}
@@ -141,4 +156,5 @@ service VirtualTuner {
   rpc Seek(SeekRequest) returns (SeekResponse) {}
   rpc UpsertStation(UpsertStationRequest) returns (UpsertStationResponse) {}
   rpc RemoveStation(RemoveStationRequest) returns (RemoveStationResponse) {}
+  rpc SetStationAudio(SetStationAudioRequest) returns (SetStationAudioResponse) {}
 }

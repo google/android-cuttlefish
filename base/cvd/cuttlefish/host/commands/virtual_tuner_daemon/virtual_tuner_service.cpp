@@ -22,12 +22,14 @@
 #include <cstdint>
 #include <optional>
 #include <utility>
+#include <vector>
 
 #include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/virtual_tuner_daemon/VirtualTuner.pb.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/audio_generator.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/tuner_state.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace virtualtuner {
@@ -123,6 +125,37 @@ VirtualTunerServiceImpl::VirtualTunerServiceImpl(TunerState& tuner_state)
                                  hd_subchannel, request->dab_sid_ext());
   response->set_removed(removed);
   response->set_message(removed ? "Station removed" : "Station not found");
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerServiceImpl::SetStationAudio(
+    ::grpc::ServerContext*, const SetStationAudioRequest* request,
+    SetStationAudioResponse* response) {
+  if (request->frequency_hz() == 0) {
+    response->set_success(false);
+    response->set_message("frequency_hz must be non-zero");
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                          response->message());
+  }
+
+  std::vector<int16_t> wav_samples;
+  if (!request->wav_path().empty()) {
+    Result<std::vector<int16_t>> loaded = LoadWavFile(request->wav_path());
+    if (!loaded.has_value()) {
+      response->set_success(false);
+      response->set_message(loaded.error().Message());
+      return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                            response->message());
+    }
+    wav_samples = std::move(*loaded);
+  }
+
+  tuner_state_.SetStationWav(request->band(), request->frequency_hz(),
+                             request->hd_subchannel(), std::move(wav_samples));
+  response->set_success(true);
+  response->set_message(request->wav_path().empty()
+                            ? "Cleared station WAV audio"
+                            : "Loaded station WAV audio");
   return ::grpc::Status::OK;
 }
 

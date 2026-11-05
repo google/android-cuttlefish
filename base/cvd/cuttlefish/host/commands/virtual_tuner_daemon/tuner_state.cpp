@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -167,6 +168,10 @@ void TunerState::SetTune(RadioBand band, uint32_t frequency_hz,
   state_.is_playing = true;
   current_station_ = FindStationLocked(band, frequency_hz, hd_subchannel);
   state_.station_present = current_station_.has_value();
+  auto wav_it = station_wav_samples_.find(
+      StationKey{band, frequency_hz, hd_subchannel, 0});
+  state_.station_wav_samples =
+      (wav_it != station_wav_samples_.end()) ? wav_it->second : nullptr;
 }
 
 void TunerState::Stop() {
@@ -174,7 +179,28 @@ void TunerState::Stop() {
   state_.frequency_hz = 0;
   state_.is_playing = false;
   state_.station_present = false;
+  state_.station_wav_samples.reset();
   current_station_.reset();
+}
+
+void TunerState::SetStationWav(RadioBand band, uint32_t frequency_hz,
+                               uint32_t hd_subchannel,
+                               std::vector<int16_t> wav_samples) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  const StationKey key{band, frequency_hz, hd_subchannel, 0};
+  std::shared_ptr<const std::vector<int16_t>> shared_samples;
+  if (wav_samples.empty()) {
+    station_wav_samples_.erase(key);
+  } else {
+    shared_samples =
+        std::make_shared<const std::vector<int16_t>>(std::move(wav_samples));
+    station_wav_samples_[key] = shared_samples;
+  }
+  if (state_.is_playing && state_.band == band &&
+      state_.frequency_hz == frequency_hz &&
+      state_.hd_subchannel == hd_subchannel) {
+    state_.station_wav_samples = std::move(shared_samples);
+  }
 }
 
 std::vector<StationProgram> TunerState::GetStations(

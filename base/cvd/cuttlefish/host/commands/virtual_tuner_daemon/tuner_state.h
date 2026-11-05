@@ -19,6 +19,7 @@
 #include <compare>
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <vector>
@@ -34,6 +35,7 @@ struct TunerStateSnapshot {
   uint32_t hd_subchannel = 0;
   bool is_playing = false;
   bool station_present = false;
+  std::shared_ptr<const std::vector<int16_t>> station_wav_samples;
 };
 
 class TunerState {
@@ -42,6 +44,8 @@ class TunerState {
 
   void SetTune(RadioBand band, uint32_t frequency_hz, uint32_t hd_subchannel);
   void Stop();
+  void SetStationWav(RadioBand band, uint32_t frequency_hz,
+                     uint32_t hd_subchannel, std::vector<int16_t> wav_samples);
 
   std::vector<StationProgram> GetStations(std::optional<RadioBand> band) const;
   std::optional<StationProgram> FindStation(RadioBand band,
@@ -84,6 +88,8 @@ class TunerState {
   TunerStateSnapshot state_;
   std::optional<StationProgram> current_station_;
   std::map<StationKey, StationProgram> stations_;
+  std::map<StationKey, std::shared_ptr<const std::vector<int16_t>>>
+      station_wav_samples_;
 };
 
 }  // namespace virtualtuner

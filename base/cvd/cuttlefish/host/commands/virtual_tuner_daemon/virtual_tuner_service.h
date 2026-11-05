@@ -57,6 +57,10 @@ class VirtualTunerServiceImpl final : public VirtualTuner::Service {
                                const RemoveStationRequest* request,
                                RemoveStationResponse* response) override;
 
+  ::grpc::Status SetStationAudio(::grpc::ServerContext* context,
+                                 const SetStationAudioRequest* request,
+                                 SetStationAudioResponse* response) override;
+
  private:
   TunerState& tuner_state_;
 };
