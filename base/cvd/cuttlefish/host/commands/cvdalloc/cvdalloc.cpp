@@ -15,9 +15,9 @@
  */
 
 #include <stdlib.h>
-#include <sys/types.h>
 #include <unistd.h>
 
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -26,8 +26,10 @@
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 
 #include "allocd/alloc_utils.h"
+#include "allocd/net/nft_nat_table.h"
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
@@ -74,15 +76,29 @@ Result<void> Teardown(int id, std::string_view ethernet_bridge_name,
 
   DestroyMobileIface(CvdallocInterfaceName("mtap", id), id,
                      kCvdallocMobileIpPrefix);
-  DestroyMobileIface(CvdallocInterfaceName("wtap", id), id,
-                     kCvdallocWirelessIpPrefix);
+  DestroyEthernetIface(CvdallocInterfaceName("wtap", id));
   DestroyMobileIface(CvdallocInterfaceName("wifiap", id), id,
                      kCvdallocWirelessApIpPrefix);
   DestroyEthernetIface(CvdallocInterfaceName("etap", id));
-  DestroyBridge(ethernet_bridge_name);
-  DestroyBridge(wireless_bridge_name);
+  DestroyEthernetBridgeIface(ethernet_bridge_name, kCvdallocEthernetIpPrefix);
+  DestroyEthernetBridgeIface(wireless_bridge_name, kCvdallocWirelessIpPrefix);
 
   return {};
+}
+
+std::string NatTableName(int id) { return absl::StrCat("cvdalloc_", id); }
+
+Result<NftNatTable> CreateNatTable(int id) {
+  // Masquerade the shared bridges in every instance's table, since we don't
+  // know which one will be the last to use them.
+  return NftNatTable::Create(
+      NatTableName(id),
+      {
+          MobileNetworkName(kCvdallocMobileIpPrefix, kMobileNetmask, id),
+          MobileNetworkName(kCvdallocWirelessApIpPrefix, kMobileNetmask, id),
+          absl::StrCat(kCvdallocWirelessIpPrefix, ".0/24"),
+          absl::StrCat(kCvdallocEthernetIpPrefix, ".0/24"),
+      });
 }
 
 }  // namespace
@@ -96,32 +112,24 @@ Result<int> CvdallocMain(int argc, char* argv[]) {
     return 1;
   }
 
-  int id = absl::GetFlag(FLAGS_id);
+  const int id = absl::GetFlag(FLAGS_id);
+  CF_EXPECTF(id >= 1 && id <= static_cast<int>(kMaxIfaceNameId),
+             "id must be between 1 and {}, got {}", kMaxIfaceNameId, id);
 
   SharedFD sock = CF_EXPECT(Fd::Dup(absl::GetFlag(FLAGS_socket)));
-  int r = TEMP_FAILURE_RETRY(close(absl::GetFlag(FLAGS_socket)));
+  const int r = TEMP_FAILURE_RETRY(close(absl::GetFlag(FLAGS_socket)));
   if (r == -1) {
     return CF_ERRNO("close: " << StrError());
   }
 
   absl::Cleanup shutdown = [sock]() { sock->Shutdown(SHUT_RDWR); };
 
-  /*
-   * Save our current uid, so we can restore it to drop privileges later.
-   */
-  uid_t orig = getuid();
-
-  absl::Cleanup drop_privileges = [orig]() {
-    int r = DropPrivileges(orig);
-    if (r == -1) {
-      LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << StrError();
-    }
-  };
-
-  r = BeginElevatedPrivileges();
-  if (r == -1) {
-    return CF_ERRF("Couldn't elevate permissions: {}", StrError());
-  }
+  // Elevate before creating the table and taps, so they're cleaned up before
+  // privileges are dropped.
+  const ScopedPrivileges privileges = CF_EXPECT(ScopedPrivileges::Elevate());
+  // Create the table before the taps and delete it after them. If another
+  // cvdalloc is using this id, we stop here before touching its taps.
+  const NftNatTable nat = CF_EXPECT(CreateNatTable(id));
 
   absl::Cleanup teardown = [id]() {
     LOG(INFO) << "cvdalloc: teardown started";

@@ -33,9 +33,6 @@ Result<void> LinkTapToBridge(std::string_view tap_name,
 Result<void> DeleteIface(std::string_view name);
 Result<bool> BridgeInUse(std::string_view name);
 Result<bool> BridgeExists(std::string_view name);
-Result<bool> BridgeInUse(std::string_view name);
 Result<void> CreateBridge(std::string_view name);
-Result<void> IptableConfig(std::string_view iptables_path,
-                           std::string_view network, bool add);
 
 }  // namespace cuttlefish

@@ -34,13 +34,13 @@ type HostState struct {
 func Snapshot(s *Sandbox) (HostState, error) {
 	hs := HostState{Sysctls: map[string]string{}}
 
-	out, err := s.Run("nft", "-j", "list", "ruleset")
+	nft, err := snapshotNft(s)
 	if err != nil {
-		return hs, fmt.Errorf("snapshot: nft list failed: %w", err)
+		return hs, fmt.Errorf("snapshot: %w", err)
 	}
-	hs.Nft = parseNftRuleset(out.Stdout)
+	hs.Nft = nft
 
-	out, err = s.Run("ip", "-details", "-json", "link")
+	out, err := s.Run("ip", "-details", "-json", "link")
 	if err != nil {
 		return hs, fmt.Errorf("snapshot: ip link failed: %w", err)
 	}
