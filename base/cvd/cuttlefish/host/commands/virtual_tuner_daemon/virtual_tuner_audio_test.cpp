@@ -145,19 +145,19 @@ std::vector<TunerStateSnapshot> DefaultVirtualRadioPrograms() {
   std::vector<TunerStateSnapshot> programs;
   for (uint32_t khz :
        {94900u, 96500u, 101300u, 103700u, 106100u, 97300u, 99700u}) {
-    programs.push_back({RadioBand::FM, khz * 1000, 0, true});
+    programs.push_back({RadioBand::FM, khz * 1000, 0, true, true});
   }
   for (uint32_t subchannel : {0u, 1u, 2u}) {
-    programs.push_back({RadioBand::FM, 97700000, subchannel, true});
+    programs.push_back({RadioBand::FM, 97700000, subchannel, true, true});
   }
   for (uint32_t subchannel : {0u, 1u}) {
-    programs.push_back({RadioBand::FM, 98500000, subchannel, true});
+    programs.push_back({RadioBand::FM, 98500000, subchannel, true, true});
   }
   for (uint32_t khz : {560u, 680u, 1170u}) {
-    programs.push_back({RadioBand::AM, khz * 1000, 0, true});
+    programs.push_back({RadioBand::AM, khz * 1000, 0, true, true});
   }
   for (uint32_t khz : {218640u, 222064u, 223936u, 225648u}) {
-    programs.push_back({RadioBand::DAB, khz * 1000, 0, true});
+    programs.push_back({RadioBand::DAB, khz * 1000, 0, true, true});
   }
   return programs;
 }
@@ -176,16 +176,17 @@ TEST(AudioGeneratorTest, DefaultStationsHaveDistinctTones) {
 }
 
 TEST(AudioGeneratorTest, BandsHaveNonOverlappingToneRanges) {
-  EXPECT_LT(StationToneHz({RadioBand::AM, 1700000, 0, true}),
-            StationToneHz({RadioBand::FM, 87500000, 0, true}));
-  EXPECT_LT(StationToneHz({RadioBand::FM, 108000000, 1, true}),
-            StationToneHz({RadioBand::DAB, 174000000, 0, true}));
+  EXPECT_LT(StationToneHz({RadioBand::AM, 1700000, 0, true, true}),
+            StationToneHz({RadioBand::FM, 87500000, 0, true, true}));
+  EXPECT_LT(StationToneHz({RadioBand::FM, 108000000, 1, true, true}),
+            StationToneHz({RadioBand::DAB, 174000000, 0, true, true}));
 }
 
-TEST(AudioGeneratorTest, NoToneWithoutFrequency) {
-  EXPECT_EQ(StationToneHz({RadioBand::AM, 0, 0, true}), 0.0);
-  EXPECT_EQ(StationToneHz({RadioBand::FM, 0, 0, true}), 0.0);
-  EXPECT_EQ(StationToneHz({RadioBand::DAB, 0, 0, true}), 0.0);
+TEST(AudioGeneratorTest, NoToneWithoutFrequencyOrStationPresence) {
+  EXPECT_EQ(StationToneHz({RadioBand::AM, 0, 0, true, true}), 0.0);
+  EXPECT_EQ(StationToneHz({RadioBand::FM, 0, 0, true, true}), 0.0);
+  EXPECT_EQ(StationToneHz({RadioBand::DAB, 0, 0, true, true}), 0.0);
+  EXPECT_EQ(StationToneHz({RadioBand::FM, 88500000, 0, true, false}), 0.0);
 }
 
 TEST(AudioGeneratorTest, PlaysWhiteNoiseWithoutFrequency) {
@@ -201,8 +202,8 @@ TEST(AudioGeneratorTest, PlaysWhiteNoiseWithoutFrequency) {
 }
 
 TEST(AudioGeneratorTest, ChunkCarriesStationTone) {
-  const TunerStateSnapshot kiss_fm{RadioBand::FM, 101300000, 0, true};
-  const TunerStateSnapshot koit{RadioBand::FM, 96500000, 0, true};
+  const TunerStateSnapshot kiss_fm{RadioBand::FM, 101300000, 0, true, true};
+  const TunerStateSnapshot koit{RadioBand::FM, 96500000, 0, true, true};
   AudioGenerator generator;
   std::vector<int16_t> buffer(kChunkFrames * kChannels, 0);
 

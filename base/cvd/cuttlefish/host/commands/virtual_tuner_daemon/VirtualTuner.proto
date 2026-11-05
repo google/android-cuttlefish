@@ -1,32 +1,144 @@
+// Copyright (C) 2026 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 syntax = "proto3";
 
 package cuttlefish.virtualtuner;
 
 enum RadioBand {
-    AM = 0;
-    FM = 1;
-    DAB = 2;
+  AM = 0;
+  FM = 1;
+  DAB = 2;
+}
+
+// Authoritative station definition and RDS/HD/DAB metadata hosted by
+// virtual_tuner_daemon.
+message StationProgram {
+  RadioBand band = 1;
+  uint32 frequency_hz = 2;
+  // 0-based HD subchannel: 0 is MPS (HD1), 1..7 are SPS (HD2..HD8).
+  // Unset for analog AM/FM or DAB stations.
+  optional uint32 hd_subchannel = 3;
+  uint32 hd_station_id = 4;
+  // 44-bit DAB service ID extended (32-bit SId + 8-bit ECC + 4-bit SCIdS).
+  uint64 dab_sid_ext = 5;
+  uint32 dab_ensemble = 6;
+
+  string program_name = 7;
+  string song_artist = 8;
+  string song_title = 9;
+  string song_album = 10;
+  int32 rds_pty = 11;
+  int32 rbds_pty = 12;
+  string rds_ps = 13;
+  string rds_rt = 14;
+  string genre = 15;
+  string hd_station_name_short = 16;
+  string hd_station_name_long = 17;
+  // Bitmask of available HD subchannels on this carrier (e.g. 0b111 for HD1-3).
+  int32 hd_subchannels_available = 18;
+  string comment_short_description = 19;
+  string comment_actual_text = 20;
+  string commercial = 21;
+  repeated string ufids = 22;
+  optional int32 station_icon_id = 23;
+  optional int32 album_art_id = 24;
+}
+
+message TunerStatus {
+  bool is_playing = 1;
+  RadioBand band = 2;
+  uint32 frequency_hz = 3;
+  optional uint32 hd_subchannel = 4;
+  // Populated when a station is broadcasting at the tuned position.
+  optional StationProgram current_station = 5;
 }
 
 message TuneRequest {
-    RadioBand band = 1;
-    uint32 frequency_hz = 2;
-    uint32 hd_subchannel = 3;
+  RadioBand band = 1;
+  uint32 frequency_hz = 2;
+  optional uint32 hd_subchannel = 3;
 }
 
 message TuneResponse {
-    bool success = 1;
-    string message = 2;
+  bool success = 1;
+  string message = 2;
 }
 
 message StopRequest {}
 
 message StopResponse {
-    bool success = 1;
-    string message = 2;
+  bool success = 1;
+  string message = 2;
+}
+
+message GetStatusRequest {}
+
+message GetStatusResponse {
+  TunerStatus status = 1;
+}
+
+message GetStationsRequest {
+  // When set, returns only stations on this band; otherwise returns all bands.
+  optional RadioBand band = 1;
+}
+
+message GetStationsResponse {
+  repeated StationProgram stations = 1;
+}
+
+message SeekRequest {
+  RadioBand band = 1;
+  uint32 start_frequency_hz = 2;
+  optional uint32 start_hd_subchannel = 3;
+  bool direction_up = 4;
+  bool skip_subchannel = 5;
+}
+
+message SeekResponse {
+  bool found = 1;
+  StationProgram station = 2;
+}
+
+message UpsertStationRequest {
+  StationProgram station = 1;
+}
+
+message UpsertStationResponse {
+  bool success = 1;
+  string message = 2;
+  StationProgram station = 3;
+}
+
+message RemoveStationRequest {
+  RadioBand band = 1;
+  uint32 frequency_hz = 2;
+  optional uint32 hd_subchannel = 3;
+  uint64 dab_sid_ext = 4;
+}
+
+message RemoveStationResponse {
+  bool removed = 1;
+  string message = 2;
 }
 
 service VirtualTuner {
-    rpc Tune(TuneRequest) returns (TuneResponse) {}
-    rpc Stop(StopRequest) returns (StopResponse) {}
+  rpc Tune(TuneRequest) returns (TuneResponse) {}
+  rpc Stop(StopRequest) returns (StopResponse) {}
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {}
+  rpc GetStations(GetStationsRequest) returns (GetStationsResponse) {}
+  rpc Seek(SeekRequest) returns (SeekResponse) {}
+  rpc UpsertStation(UpsertStationRequest) returns (UpsertStationResponse) {}
+  rpc RemoveStation(RemoveStationRequest) returns (RemoveStationResponse) {}
 }

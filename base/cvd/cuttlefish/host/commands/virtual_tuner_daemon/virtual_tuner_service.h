@@ -37,6 +37,26 @@ class VirtualTunerServiceImpl final : public VirtualTuner::Service {
                       const StopRequest* request,
                       StopResponse* response) override;
 
+  ::grpc::Status GetStatus(::grpc::ServerContext* context,
+                           const GetStatusRequest* request,
+                           GetStatusResponse* response) override;
+
+  ::grpc::Status GetStations(::grpc::ServerContext* context,
+                             const GetStationsRequest* request,
+                             GetStationsResponse* response) override;
+
+  ::grpc::Status Seek(::grpc::ServerContext* context,
+                      const SeekRequest* request,
+                      SeekResponse* response) override;
+
+  ::grpc::Status UpsertStation(::grpc::ServerContext* context,
+                               const UpsertStationRequest* request,
+                               UpsertStationResponse* response) override;
+
+  ::grpc::Status RemoveStation(::grpc::ServerContext* context,
+                               const RemoveStationRequest* request,
+                               RemoveStationResponse* response) override;
+
  private:
   TunerState& tuner_state_;
 };
