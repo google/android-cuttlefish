@@ -21,6 +21,7 @@ cf_cc_library(
         "//cuttlefish/io:filesystem",
         "//cuttlefish/io:reader_seeker",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/strings:string_view",
         "@libzip",
         "@zlib",
     ],

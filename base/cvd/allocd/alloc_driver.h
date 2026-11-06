@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -21,21 +22,21 @@ namespace cuttlefish {
 
 inline constexpr char kCvdNetworkGroupName[] = "cvdnetwork";
 
-Result<void> AddTapIface(std::string_view name);
-Result<void> ShutdownIface(std::string_view name);
-Result<void> BringUpIface(std::string_view name);
-Result<void> AddGateway(std::string_view name, std::string_view gateway,
-                        std::string_view netmask);
-Result<void> DestroyGateway(std::string_view name, std::string_view gateway,
-                            std::string_view netmask);
-Result<void> LinkTapToBridge(std::string_view tap_name,
-                             std::string_view bridge_name);
-Result<void> DeleteIface(std::string_view name);
-Result<bool> BridgeInUse(std::string_view name);
-Result<bool> BridgeExists(std::string_view name);
-Result<bool> BridgeInUse(std::string_view name);
-Result<void> CreateBridge(std::string_view name);
-Result<void> IptableConfig(std::string_view iptables_path,
-                           std::string_view network, bool add);
+Result<void> AddTapIface(absl::string_view name);
+Result<void> ShutdownIface(absl::string_view name);
+Result<void> BringUpIface(absl::string_view name);
+Result<void> AddGateway(absl::string_view name, absl::string_view gateway,
+                        absl::string_view netmask);
+Result<void> DestroyGateway(absl::string_view name, absl::string_view gateway,
+                            absl::string_view netmask);
+Result<void> LinkTapToBridge(absl::string_view tap_name,
+                             absl::string_view bridge_name);
+Result<void> DeleteIface(absl::string_view name);
+Result<bool> BridgeInUse(absl::string_view name);
+Result<bool> BridgeExists(absl::string_view name);
+Result<bool> BridgeInUse(absl::string_view name);
+Result<void> CreateBridge(absl::string_view name);
+Result<void> IptableConfig(absl::string_view iptables_path,
+                           absl::string_view network, bool add);
 
 }  // namespace cuttlefish

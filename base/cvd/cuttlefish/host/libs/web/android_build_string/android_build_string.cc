@@ -21,13 +21,13 @@
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
 
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
@@ -64,11 +64,11 @@ void SetFilepath(BuildString& build_string, const std::string& value) {
   std::visit([&value](auto&& arg) { arg.filepath = value; }, build_string);
 }
 
-Result<BuildString> ParseBuildString(std::string_view build_string) {
+Result<BuildString> ParseBuildString(absl::string_view build_string) {
   CF_EXPECT(!build_string.empty(), "The given build string cannot be empty");
   // Checked before the ':' of a directory build string, which every URL also
   // contains.
-  const std::optional<std::string_view> scheme = UrlScheme(build_string);
+  const std::optional<absl::string_view> scheme = UrlScheme(build_string);
   if (scheme) {
     UrlBuildString build =
         CF_EXPECT(ParseUrlBuildString(*scheme, build_string));
@@ -96,7 +96,7 @@ Flag GflagsCompatFlag(const std::string& name,
         result << value;
         return result.str();
       })
-      .Setter([&value](std::string_view arg) -> Result<void> {
+      .Setter([&value](absl::string_view arg) -> Result<void> {
         value = std::nullopt;
         if (!arg.empty()) {
           value = CF_EXPECT(ParseBuildString(arg));
@@ -111,7 +111,7 @@ Flag GflagsCompatFlag(const std::string& name,
       .Getter([&value]() {
         return absl::StrJoin(value, ",", absl::StreamFormatter());
       })
-      .Setter([&value](std::string_view arg) -> Result<void> {
+      .Setter([&value](absl::string_view arg) -> Result<void> {
         if (arg.empty()) {
           value.clear();
           return {};

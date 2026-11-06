@@ -31,12 +31,12 @@
 #include <unistd.h>
 
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
@@ -201,7 +201,7 @@ SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
 }
 
 Result<std::pair<SharedFD, std::string>> SharedFD::Mkostemp(
-    const std::string_view path, const int flags) {
+    const absl::string_view path, const int flags) {
   std::pair<Fd, std::string> fd_path = CF_EXPECT(Fd::Mkostemp(path, flags));
   return std::make_pair<SharedFD, std::string>(std::move(fd_path.first),
                                                std::move(fd_path.second));

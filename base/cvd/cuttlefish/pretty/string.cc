@@ -16,25 +16,25 @@
 #include "cuttlefish/pretty/string.h"
 
 #include <string>
-#include <string_view>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/pretty/pretty.h"
 
 namespace cuttlefish {
 
 // TODO: schuffelen - escape inner special characters
-std::string Pretty(const std::string_view& value, PrettyAdlPlaceholder) {
+std::string Pretty(const absl::string_view& value, PrettyAdlPlaceholder) {
   return absl::StrCat("\"", value, "\"");
 }
 
 std::string Pretty(const char* const& value, PrettyAdlPlaceholder) {
-  return Pretty(std::string_view(value));
+  return Pretty(absl::string_view(value));
 }
 
 std::string Pretty(const std::string& value, PrettyAdlPlaceholder) {
-  return Pretty(std::string_view(value));
+  return Pretty(absl::string_view(value));
 }
 
 }  // namespace cuttlefish

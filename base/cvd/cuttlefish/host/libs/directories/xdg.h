@@ -16,8 +16,9 @@
 #pragma once
 
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -34,9 +35,9 @@ std::string CvdRuntimeDir();
 Result<std::vector<std::string>> CvdDataDirs();
 Result<std::vector<std::string>> CvdConfigDirs();
 
-Result<std::string> ReadCvdDataFile(std::string_view path);
-Result<std::vector<std::string>> FindCvdDataFiles(std::string_view path);
-Result<void> WriteCvdDataFile(std::string_view path, std::string contents);
+Result<std::string> ReadCvdDataFile(absl::string_view path);
+Result<std::vector<std::string>> FindCvdDataFiles(absl::string_view path);
+Result<void> WriteCvdDataFile(absl::string_view path, std::string contents);
 
 // TODO: schuffelen - Decide between merging or overriding for config files
 

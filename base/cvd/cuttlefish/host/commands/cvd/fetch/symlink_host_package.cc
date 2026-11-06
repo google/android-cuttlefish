@@ -18,6 +18,7 @@
 #include <string>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
 
@@ -51,7 +52,7 @@ Result<void> SymlinkHostPackage(const std::string& target_dir) {
   const std::string common_dir = CF_EXPECT(GetCuttlefishCommonDir());
   auto make_symlinks = [&common_dir,
                         &target_dir](const std::string& path) -> Result<void> {
-    std::string_view local_path(path);
+    absl::string_view local_path(path);
     CF_EXPECTF(absl::ConsumePrefix(&local_path, common_dir),
                "Unexpected prefix in : '{}'", local_path);
 

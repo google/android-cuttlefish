@@ -17,17 +17,18 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
 std::optional<std::string> StringFromEnv(const std::string& varname);
 std::optional<std::string> StringFromEnv(const char* varname);
-std::optional<std::string> StringFromEnv(std::string_view varname);
+std::optional<std::string> StringFromEnv(absl::string_view varname);
 
 std::string StringFromEnv(const std::string& varname,
                           const std::string& defval);
 std::string StringFromEnv(const char* varname, const std::string& defval);
-std::string StringFromEnv(std::string_view varname, const std::string& defval);
+std::string StringFromEnv(absl::string_view varname, const std::string& defval);
 
 }  // namespace cuttlefish

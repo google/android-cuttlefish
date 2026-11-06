@@ -47,6 +47,7 @@ cf_cc_library(
     hdrs = ["function_name.h"],
     deps = [
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 

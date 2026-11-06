@@ -18,6 +18,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -93,6 +94,7 @@ cf_cc_binary(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@fruit",
         "@gflags",
@@ -119,6 +121,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -160,6 +163,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -180,6 +184,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )
@@ -247,6 +252,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -392,6 +398,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@fruit",
         "@gflags",
@@ -440,6 +447,7 @@ cf_cc_library(
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@protobuf",
         "@protobuf//src/google/protobuf/io",
@@ -468,6 +476,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:file_logging",
         "@fmt",
         "@protobuf",
@@ -484,6 +493,7 @@ cf_cc_library(
         "//cuttlefish/io:string",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -542,6 +552,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )
@@ -586,6 +597,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@gflags",
     ],
@@ -612,6 +624,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -653,6 +666,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:file_logging",
         "@fmt",
     ],

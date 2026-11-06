@@ -19,8 +19,8 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 
+#include "absl/strings/string_view.h"
 #include "json/config.h"
 #include "json/reader.h"
 #include "json/value.h"
@@ -32,7 +32,7 @@
 
 namespace cuttlefish {
 
-Result<Json::Value> ParseJson(std::string_view input) {
+Result<Json::Value> ParseJson(absl::string_view input) {
   Json::Value root;
   JSONCPP_STRING err;
   Json::CharReaderBuilder builder;

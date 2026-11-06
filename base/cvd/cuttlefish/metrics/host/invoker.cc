@@ -18,19 +18,20 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 
 namespace cuttlefish {
 namespace {
 
-constexpr std::string_view kAcloud = "acloud";
-constexpr std::string_view kCvdr = "cvdr";
-constexpr std::string_view kHostOrchestrator = "host_orchestrator";
-constexpr std::string_view kLaunchCvd = "launch_cvd";
-constexpr std::string_view kPodcvd = "podcvd";
-constexpr std::string_view kInvokerVariable = "CVD_INVOKER";
+constexpr absl::string_view kAcloud = "acloud";
+constexpr absl::string_view kCvdr = "cvdr";
+constexpr absl::string_view kHostOrchestrator = "host_orchestrator";
+constexpr absl::string_view kLaunchCvd = "launch_cvd";
+constexpr absl::string_view kPodcvd = "podcvd";
+constexpr absl::string_view kInvokerVariable = "CVD_INVOKER";
 
 }  // namespace
 

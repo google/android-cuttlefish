@@ -22,6 +22,7 @@
 #include <string>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
@@ -122,7 +123,7 @@ Result<std::vector<std::string>> CvdConfigDirs() {
   return dirs;
 }
 
-Result<std::string> ReadCvdDataFile(std::string_view path) {
+Result<std::string> ReadCvdDataFile(absl::string_view path) {
   for (const auto& dir : CF_EXPECT(CvdDataDirs())) {
     Result<std::string> contents =
         ReadFileContents(fmt::format("{}/{}", dir, path));
@@ -133,7 +134,7 @@ Result<std::string> ReadCvdDataFile(std::string_view path) {
   return CF_ERRF("Not able to open '{}'", path);
 }
 
-Result<std::vector<std::string>> FindCvdDataFiles(std::string_view path) {
+Result<std::vector<std::string>> FindCvdDataFiles(absl::string_view path) {
   std::vector<std::string> results;
   for (const std::string& dir : CF_EXPECT(CvdDataDirs())) {
     std::string test_path = fmt::format("{}/{}", dir, path);
@@ -160,7 +161,7 @@ Result<std::vector<std::string>> FindCvdDataFiles(std::string_view path) {
   return results;
 }
 
-Result<void> WriteCvdDataFile(std::string_view path, std::string contents) {
+Result<void> WriteCvdDataFile(absl::string_view path, std::string contents) {
   std::string full_path = fmt::format("{}/{}", CF_EXPECT(CvdDataHome()), path);
   CF_EXPECT(EnsureDirectoryExists(android::base::Dirname(full_path), 0700));
 

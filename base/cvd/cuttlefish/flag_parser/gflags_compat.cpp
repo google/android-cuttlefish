@@ -24,7 +24,6 @@
 #include <optional>
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -35,6 +34,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/flag_parser/flag.h"
@@ -44,7 +44,7 @@ namespace cuttlefish {
 
 namespace {
 
-bool ShouldBeNullOpt(std::string_view value, CoerceToNullopt opt) {
+bool ShouldBeNullOpt(absl::string_view value, CoerceToNullopt opt) {
   switch (opt) {
     case CoerceToNullopt::None:
       return false;
@@ -72,7 +72,7 @@ std::string FlagValueToString(const T& value) {
 }
 
 template <typename T>
-Result<T> ParseFlagValue(std::string_view str);
+Result<T> ParseFlagValue(absl::string_view str);
 
 // Setting and getting strings
 template <>
@@ -80,13 +80,13 @@ std::string FlagValueToString<std::string>(const std::string& value) {
   return fmt::format("{}", value);
 }
 template <>
-Result<std::string> ParseFlagValue<std::string>(std::string_view str) {
+Result<std::string> ParseFlagValue<std::string>(absl::string_view str) {
   return std::string(str);
 }
 
 // Setter for integral types, default getter is fine
 template <std::integral T>
-Result<T> ParseFlagValue(std::string_view str) {
+Result<T> ParseFlagValue(absl::string_view str) {
   T value;
   CF_EXPECT(absl::SimpleAtoi(str, &value));
   return value;
@@ -94,7 +94,7 @@ Result<T> ParseFlagValue(std::string_view str) {
 
 // Setter for bool, default getter is fine
 template <>
-Result<bool> ParseFlagValue<bool>(std::string_view str) {
+Result<bool> ParseFlagValue<bool>(absl::string_view str) {
   bool result;
   CF_EXPECT(absl::SimpleAtob(str, &result));
   return result;
@@ -115,15 +115,15 @@ std::string FlagValueToString(const std::vector<T>& values) {
 // ParseFlagValue too and just be an overload but using a different name makes
 // it clear which implementation the compiler is choosing.
 template <typename T>
-Result<std::vector<T>> ParseFlagVectorValue(std::string_view str,
+Result<std::vector<T>> ParseFlagVectorValue(absl::string_view str,
                                             T default_value) {
   if (str.empty()) {
     return {};
   }
-  std::vector<std::string_view> elements = absl::StrSplit(str, ',');
+  std::vector<absl::string_view> elements = absl::StrSplit(str, ',');
   std::vector<T> parsed;
   parsed.reserve(elements.size());
-  for (std::string_view element : elements) {
+  for (absl::string_view element : elements) {
     if (element.empty()) {
       parsed.push_back(default_value);
     } else {
@@ -133,11 +133,11 @@ Result<std::vector<T>> ParseFlagVectorValue(std::string_view str,
   return parsed;
 }
 template <>
-Result<std::vector<std::string>> ParseFlagValue(std::string_view str) {
+Result<std::vector<std::string>> ParseFlagValue(absl::string_view str) {
   return CF_EXPECT(ParseFlagVectorValue<std::string>(str, ""));
 }
 template <>
-Result<std::vector<unsigned>> ParseFlagValue(std::string_view str) {
+Result<std::vector<unsigned>> ParseFlagValue(absl::string_view str) {
   return CF_EXPECT(ParseFlagVectorValue<unsigned>(str, 0));
 }
 
@@ -151,7 +151,7 @@ std::string FlagValueToString(const std::optional<T>& value,
   return FlagValueToString(*value);
 }
 template <typename T>
-Result<std::optional<T>> ParseFlagOptionalValue(std::string_view str,
+Result<std::optional<T>> ParseFlagOptionalValue(absl::string_view str,
                                                 CoerceToNullopt opt) {
   if (ShouldBeNullOpt(str, opt)) {
     return std::nullopt;
@@ -165,7 +165,7 @@ template <std::integral T>
 Flag GflagsCompatFlagImpl(const std::string& name, T& value) {
   return Flag::StringFlag(name)
       .Getter([&value]() { return std::to_string(value); })
-      .Setter([&value](std::string_view arg) -> Result<void> {
+      .Setter([&value](absl::string_view arg) -> Result<void> {
         if constexpr (std::is_unsigned_v<T>) {
           CF_EXPECTF(absl::SimpleAtoi<T>(arg, &value),
                      "Failed to parse \"{}\" as an unsigned integer", arg);
@@ -183,7 +183,7 @@ Flag GflagsCompatFlagImpl(const std::string& name, std::vector<T>& value,
   return Flag::StringFlag(name)
       .Getter([&value]() { return FlagValueToString(value); })
       .Setter(
-          [name, &value, default_value](std::string_view arg) -> Result<void> {
+          [name, &value, default_value](absl::string_view arg) -> Result<void> {
             value = CF_EXPECT(ParseFlagVectorValue(arg, default_value));
             return {};
           });
@@ -194,7 +194,7 @@ Flag GflagsCompatFlagImpl(const std::string& name, std::optional<T>& value,
                           CoerceToNullopt opt) {
   return Flag::StringFlag(name)
       .Getter([&value, opt]() { return FlagValueToString(value, opt); })
-      .Setter([&value, opt](std::string_view arg) -> Result<void> {
+      .Setter([&value, opt](absl::string_view arg) -> Result<void> {
         value = CF_EXPECT(ParseFlagOptionalValue<T>(arg, opt));
         return {};
       });
@@ -240,7 +240,7 @@ void WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
 }
 
 Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {
-  auto setter = [&flags, text](std::string_view) -> Result<void> {
+  auto setter = [&flags, text](absl::string_view) -> Result<void> {
     if (!text.empty()) {
       LOG(INFO) << text;
     }
@@ -258,7 +258,7 @@ Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out,
                  bool& print_xml, std::string text) {
   const std::string name = "helpxml";
   auto setter = [name, &out, &print_xml, text,
-                 &flags](std::string_view arg) -> Result<void> {
+                 &flags](absl::string_view arg) -> Result<void> {
     print_xml = CF_EXPECTF(ParseFlagValue<bool>(arg),
                            "Unexpected value for '--helpxml': '{}'", arg);
     if (!print_xml) {
@@ -280,7 +280,7 @@ Flag HelpXmlFlag(const std::vector<Flag>& flags, std::ostream& out,
 Flag GflagsCompatFlag(const std::string& name, std::string& value) {
   return Flag::StringFlag(name)
       .Getter([&value]() { return value; })
-      .Setter([&value](std::string_view arg) -> Result<void> {
+      .Setter([&value](absl::string_view arg) -> Result<void> {
         value = arg;
         return {};
       });
@@ -297,7 +297,7 @@ Flag GflagsCompatFlag(const std::string& name, size_t& value) {
 Flag GflagsCompatFlag(const std::string& name, bool& value) {
   return Flag::BoolFlag(name)
       .Getter([&value]() { return fmt::format("{}", value); })
-      .Setter([name, &value](std::string_view arg) -> Result<void> {
+      .Setter([name, &value](absl::string_view arg) -> Result<void> {
         value = CF_EXPECTF(ParseFlagValue<bool>(arg),
                            "Unexpected value for \"--{}\": \"{}\"", arg, name);
         return {};
@@ -352,7 +352,7 @@ Flag GflagsCompatFlag(const std::string& name, std::optional<bool>& value,
       .Getter([&value]() -> std::string {
         return value ? fmt::format("{}", *value) : "";
       })
-      .Setter([name, &value, opt](std::string_view arg) -> Result<void> {
+      .Setter([name, &value, opt](absl::string_view arg) -> Result<void> {
         value = CF_EXPECT(ParseFlagOptionalValue<bool>(arg, opt));
         return {};
       });

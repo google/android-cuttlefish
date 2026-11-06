@@ -17,8 +17,9 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
@@ -66,7 +67,7 @@ ssize_t ReadExact(SharedFD fd, std::vector<char>* buf) {
   return ReadExact(fd, buf->data(), buf->size());
 }
 
-ssize_t WriteAll(SharedFD fd, std::string_view buf) {
+ssize_t WriteAll(SharedFD fd, absl::string_view buf) {
   return WriteAll(fd, buf.data(), buf.size());
 }
 
@@ -91,7 +92,7 @@ bool SendAll(SharedFD sock, const void* buf, size_t size, int flags) {
   return true;
 }
 
-bool SendAll(SharedFD sock, std::string_view msg, int flags) {
+bool SendAll(SharedFD sock, absl::string_view msg, int flags) {
   return SendAll(sock, msg.data(), msg.size(), flags);
 }
 

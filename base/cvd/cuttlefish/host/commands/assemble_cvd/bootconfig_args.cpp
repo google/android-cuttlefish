@@ -22,7 +22,6 @@
 #include <functional>
 #include <map>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -31,6 +30,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/device_type.h"
@@ -53,7 +53,7 @@ using vm_manager::QemuManager;
 
 namespace {
 
-static constexpr std::string_view kLegacyBoardBootconfigKeysShared[] = {
+static constexpr absl::string_view kLegacyBoardBootconfigKeysShared[] = {
     // clang-format off
     "androidboot.display_device",
     "androidboot.hardware",
@@ -64,7 +64,7 @@ static constexpr std::string_view kLegacyBoardBootconfigKeysShared[] = {
     // clang-format on
 };
 
-static constexpr std::string_view kLegacyBoardBootconfigKeysAuto[] = {
+static constexpr absl::string_view kLegacyBoardBootconfigKeysAuto[] = {
     "androidboot.cuttlefish_service_bluetooth_checker",
     "androidboot.hibernation_resume_device",
 
@@ -73,13 +73,13 @@ static constexpr std::string_view kLegacyBoardBootconfigKeysAuto[] = {
     "androidboot.sdv.telemetry.enabled",
 };
 
-static constexpr std::string_view kLegacyBoardBootconfigKeysMinidroid[] = {
+static constexpr absl::string_view kLegacyBoardBootconfigKeysMinidroid[] = {
     "androidboot.adb.enabled",
     "androidboot.init_rc",
     "androidboot.microdroid.debuggable",
 };
 
-static constexpr std::string_view kLegacyBoardBootconfigKeysSdvCore[] = {
+static constexpr absl::string_view kLegacyBoardBootconfigKeysSdvCore[] = {
     "androidboot.adb.enabled",
     "androidboot.init_rc",
     "androidboot.microdroid.debuggable",
@@ -93,7 +93,7 @@ static constexpr std::string_view kLegacyBoardBootconfigKeysSdvCore[] = {
     "androidboot.sdv.telemetry.enabled:",
 };
 
-static constexpr std::string_view kLegacyBoardBootconfigKeysDesktop[] = {
+static constexpr absl::string_view kLegacyBoardBootconfigKeysDesktop[] = {
     "androidboot.vendor.apex.com.android.hardware.radio.desktop",
 };
 
@@ -451,7 +451,7 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     if (kv.empty()) {
       continue;
     }
-    const std::vector<std::string_view> parts = absl::StrSplit(kv, '=');
+    const std::vector<absl::string_view> parts = absl::StrSplit(kv, '=');
     CF_EXPECT_EQ(parts.size(), 2,
                  "Failed to parse --extra_bootconfig_args: \"" << kv << "\"");
     bootconfig_args.insert_or_assign(std::string(parts[0]),

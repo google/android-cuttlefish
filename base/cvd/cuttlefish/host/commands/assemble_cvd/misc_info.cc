@@ -20,7 +20,6 @@
 #include <iterator>
 #include <set>
 #include <string>
-#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -30,6 +29,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -126,7 +126,7 @@ Result<int> ResolveRollbackIndexConflicts(
   return index;
 }
 
-Result<std::string> GetKeyPath(const std::string_view algorithm) {
+Result<std::string> GetKeyPath(const absl::string_view algorithm) {
   if (algorithm == kRsa4096Algorithm) {
     return TestKeyRsa4096();
   } else if (algorithm == kRsa2048Algorithm) {
@@ -136,7 +136,7 @@ Result<std::string> GetKeyPath(const std::string_view algorithm) {
   }
 }
 
-Result<std::string> GetPubKeyPath(const std::string_view algorithm) {
+Result<std::string> GetPubKeyPath(const absl::string_view algorithm) {
   if (algorithm == kRsa4096Algorithm) {
     return TestPubKeyRsa4096();
   } else if (algorithm == kRsa2048Algorithm) {
@@ -176,7 +176,7 @@ Result<MiscInfo> GetCombinedDynamicPartitions(
       GetExpected(vendor_info, kSuperBlockDevices);
   if (block_devices_result.has_value()) {
     result[kSuperBlockDevices] = *block_devices_result;
-    for (std::string_view block_device :
+    for (absl::string_view block_device :
          absl::StrSplit(result[kSuperBlockDevices], ' ', absl::SkipEmpty())) {
       const std::string key =
           absl::StrCat("super_", block_device, "_device_size");
@@ -186,7 +186,7 @@ Result<MiscInfo> GetCombinedDynamicPartitions(
 
   result[kSuperPartitionGroups] =
       CF_EXPECT(GetExpected(vendor_info, kSuperPartitionGroups));
-  for (std::string_view group :
+  for (absl::string_view group :
        absl::StrSplit(result[kSuperPartitionGroups], ' ', absl::SkipEmpty())) {
     const auto group_size_key = absl::StrCat("super_", group, "_group_size");
     result[group_size_key] =
@@ -261,7 +261,7 @@ Result<VbmetaArgs> GetVbmetaArgs(const MiscInfo& misc_info,
   // due to how Command.AddParameter handles each argument
   const auto extra_args_result = GetExpected(misc_info, kAvbVbmetaArgs);
   if (extra_args_result.has_value()) {
-    for (std::string_view arg :
+    for (absl::string_view arg :
          absl::StrSplit(*extra_args_result, ' ', absl::SkipEmpty())) {
       result.extra_arguments.emplace_back(arg);
     }

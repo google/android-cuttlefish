@@ -16,7 +16,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/libs/config/build_archive.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
@@ -31,12 +32,12 @@ namespace cuttlefish {
  * file that was downloaded.
  */
 Result<BuildArchive> FindBuildArchive(const FetcherConfig&, FileSource,
-                                      std::string_view pattern);
+                                      absl::string_view pattern);
 /**
  * Scan the contents of `directory_path` to find a file whose name contains
  * `pattern` as a substring, and is a zip archive.
  */
 Result<BuildArchive> FindBuildArchive(const std::string& directory_path,
-                                      std::string_view pattern);
+                                      absl::string_view pattern);
 
 }  // namespace cuttlefish

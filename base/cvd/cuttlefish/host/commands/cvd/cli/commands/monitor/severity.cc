@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/severity.h"
 
-#include <string_view>
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -42,7 +42,7 @@ Result<LogSeverity> CharToLogSeverity(char severity) {
   }
 }
 
-std::string_view GetColorForSeverity(LogSeverity severity) {
+absl::string_view GetColorForSeverity(LogSeverity severity) {
   switch (severity) {
     case LogSeverity::Error:
       return kAnsiRed;

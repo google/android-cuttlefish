@@ -19,9 +19,9 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 
+#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -39,7 +39,7 @@
 namespace cuttlefish {
 namespace {
 
-static constexpr std::string_view kTestFile = "filename.lz4";
+static constexpr absl::string_view kTestFile = "filename.lz4";
 
 TEST(Lz4LegacyTest, RoundTrip) {
   std::string original_data =

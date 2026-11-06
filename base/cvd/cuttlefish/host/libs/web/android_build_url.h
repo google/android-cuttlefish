@@ -20,6 +20,8 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/strings/string_view.h"
+
 namespace cuttlefish {
 
 enum class SafeLevel {
@@ -56,15 +58,15 @@ class AndroidBuildUrl {
                   std::string project_id);
 
   std::string GetLatestBuildCandidateUrl(
-      std::string_view branch, std::string_view target,
+      absl::string_view branch, absl::string_view target,
       SafeLevel safe_level = SafeLevel::kSafeLevelUnspecified);
-  std::string GetBuildUrl(std::string_view id, std::string_view target);
-  std::string GetArtifactUrl(std::string_view id, std::string_view target,
+  std::string GetBuildUrl(absl::string_view id, absl::string_view target);
+  std::string GetArtifactUrl(absl::string_view id, absl::string_view target,
                              const std::vector<std::string>& artifact_filenames,
-                             std::string_view page_token);
-  std::string GetArtifactDownloadUrl(std::string_view id,
-                                     std::string_view target,
-                                     std::string_view artifact);
+                             absl::string_view page_token);
+  std::string GetArtifactDownloadUrl(absl::string_view id,
+                                     absl::string_view target,
+                                     absl::string_view artifact);
 
  private:
   std::string api_base_url_;

@@ -17,7 +17,8 @@
 
 #include <regex>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
@@ -43,7 +44,7 @@ std::string ScrubSecrets(const std::string& data) {
   return result;
 }
 
-std::string ScrubUrl(std::string_view url) {
+std::string ScrubUrl(absl::string_view url) {
   return std::string(url.substr(0, url.find_first_of("?#")));
 }
 

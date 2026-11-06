@@ -17,12 +17,12 @@
 
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/pretty/numeric.h"  // IWYU pragma: export
 #include "cuttlefish/pretty/pretty.h"
@@ -74,7 +74,7 @@ class PrettyContainerType {
  private:
   PrettyContainerType() = default;
 
-  void MemberInternal(std::string_view);
+  void MemberInternal(absl::string_view);
 
   std::vector<std::string> members_;
 };

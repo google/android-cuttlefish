@@ -19,10 +19,10 @@
 #include <cstdlib>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include "fmt/ranges.h"  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -54,7 +54,7 @@ static bool ShouldRestartProcess(siginfo_t const& info, const Parser& parsed) {
   return false;
 }
 
-std::string_view ExecutableShortName(std::string_view short_name) {
+absl::string_view ExecutableShortName(absl::string_view short_name) {
   auto last_slash = short_name.find_last_of('/');
   if (last_slash != std::string::npos) {
     short_name = short_name.substr(last_slash + 1);
@@ -62,7 +62,7 @@ std::string_view ExecutableShortName(std::string_view short_name) {
   return short_name;
 }
 
-Result<SubprocessOptions> OptionsForExecutable(std::string_view name) {
+Result<SubprocessOptions> OptionsForExecutable(absl::string_view name) {
   const auto& config = CF_EXPECT(CuttlefishConfig::Get());
   auto options = SubprocessOptions().ExitWithParent(true);
   std::string short_name{ExecutableShortName(name)};

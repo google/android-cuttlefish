@@ -18,7 +18,8 @@
 #include <stdint.h>
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result_type.h"
@@ -29,7 +30,7 @@ class AvbParser {
  public:
   static Result<AvbParser> Parse(ReaderSeeker&);
 
-  Result<std::string> LookupProperty(std::string_view key) const;
+  Result<std::string> LookupProperty(absl::string_view key) const;
 
  private:
   AvbParser(std::vector<uint8_t> vbmeta);

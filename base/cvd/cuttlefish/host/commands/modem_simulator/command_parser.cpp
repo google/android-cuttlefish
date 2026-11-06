@@ -18,6 +18,8 @@
 #include <sstream>
 #include <string>
 
+#include "absl/strings/string_view.h"
+
 namespace cuttlefish {
 
 /**
@@ -25,14 +27,14 @@ namespace cuttlefish {
  * returns the string on success and "" on fail
  * updates command_
  */
-std::string_view CommandParser::GetNextStr() {
+absl::string_view CommandParser::GetNextStr() {
   auto fpos = command_.find('\"');
-  if (fpos == std::string_view::npos) {
+  if (fpos == absl::string_view::npos) {
     return {};
   }
 
   auto spos = command_.find('\"', fpos + 1);
-  if (spos == std::string_view::npos) {
+  if (spos == absl::string_view::npos) {
     command_ = command_.substr(fpos + 1);
     return {};
   }
@@ -48,10 +50,10 @@ std::string_view CommandParser::GetNextStr() {
  * If flag not exists, returns the whole command_
  * updates command_
  */
-std::string_view CommandParser::GetNextStr(char flag) {
+absl::string_view CommandParser::GetNextStr(char flag) {
   auto pos = command_.find(flag);
   auto str = command_.substr(0, pos);
-  if (pos != std::string_view::npos) {
+  if (pos != absl::string_view::npos) {
     pos += 1;  // npos + 1 = 0
   }
   command_.remove_prefix(std::min(pos, command_.size()));

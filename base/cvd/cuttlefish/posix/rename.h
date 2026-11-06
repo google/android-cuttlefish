@@ -16,7 +16,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -26,6 +27,6 @@ namespace cuttlefish {
 Result<void, int> Rename(const char* oldpath, const char* newpath);
 Result<void, int> Rename(const std::string& oldpath,
                          const std::string& newpath);
-Result<void, int> Rename(std::string_view oldpath, std::string_view newpath);
+Result<void, int> Rename(absl::string_view oldpath, absl::string_view newpath);
 
 }  // namespace cuttlefish

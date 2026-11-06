@@ -18,11 +18,11 @@
 #include <stddef.h>
 
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 #include "gflags/gflags.h"
 
@@ -41,7 +41,7 @@ DEFINE_string(bootloader, CF_DEFAULTS_BOOTLOADER, "Bootloader binary path");
 namespace cuttlefish {
 namespace {
 
-constexpr std::string_view ArchDirName(Arch arch) {
+constexpr absl::string_view ArchDirName(Arch arch) {
   switch (arch) {
     case Arch::Arm64:
       return "aarch64";
@@ -77,7 +77,7 @@ Result<BootloaderFlag> BootloaderFlag::FromGlobalGflags(
     return BootloaderFlag(bootloader_values, is_default_values);
   }
 
-  std::string_view vmm;
+  absl::string_view vmm;
   switch (vm_manager.Mode()) {
     case VmmMode::kCrosvm:
       vmm = "crosvm";
@@ -96,7 +96,7 @@ Result<BootloaderFlag> BootloaderFlag::FromGlobalGflags(
     // present.
     std::string path = system_image_dir.ForIndex(instance) + "/bootloader";
     if (!FileExists(path)) {
-      std::string_view arch = ArchDirName(guest_configs[instance].target_arch);
+      absl::string_view arch = ArchDirName(guest_configs[instance].target_arch);
       std::string rel_path =
           fmt::format("etc/bootloader_{}/bootloader.{}", arch, vmm);
       path = DefaultHostArtifactsPath(rel_path);

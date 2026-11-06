@@ -17,7 +17,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -27,7 +28,7 @@ namespace cuttlefish {
 
 class MetadataImage : public ImageFile {
  public:
-  static constexpr std::string_view kName = "metadata";
+  static constexpr absl::string_view kName = "metadata";
 
   MetadataImage(const CuttlefishConfig::InstanceSpecific&);
 

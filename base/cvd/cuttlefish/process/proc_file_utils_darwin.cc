@@ -22,12 +22,12 @@
 
 #include <cstring>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 
 #include "cuttlefish/posix/strerror.h"
@@ -73,8 +73,8 @@ Result<ProcStrings> GetProcStrings(const pid_t pid) {
   std::memcpy(&argc, buffer.data(), sizeof(argc));
 
   // Empty strings are legal argv elements, so only the padding is skipped.
-  std::vector<std::string_view> parts =
-      absl::StrSplit(std::string_view(buffer.data() + sizeof(argc),
+  std::vector<absl::string_view> parts =
+      absl::StrSplit(absl::string_view(buffer.data() + sizeof(argc),
                                       buffer.size() - sizeof(argc)),
                      '\0');
   auto it = parts.begin();
@@ -132,8 +132,8 @@ Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
   std::vector<pid_t> output_pids;
   for (const struct kinfo_proc& kp : CF_EXPECT(KinfoProcs(uid))) {
     // p_comm is the executable's basename, truncated to MAXCOMLEN.
-    std::string_view comm(kp.kp_proc.p_comm);
-    std::string_view name(exec_name);
+    absl::string_view comm(kp.kp_proc.p_comm);
+    absl::string_view name(exec_name);
     if (name.size() >= sizeof(kp.kp_proc.p_comm)) {
       name = name.substr(0, sizeof(kp.kp_proc.p_comm) - 1);
     }

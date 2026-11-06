@@ -23,10 +23,10 @@
 #include <cstring>
 #include <optional>
 #include <string>
-#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish::process_sandboxer {
 
@@ -79,7 +79,7 @@ const std::optional<ucred>& Message::Credentials() const {
   return credentials_;
 }
 
-absl::StatusOr<size_t> SendStringMsg(int sock, std::string_view msg) {
+absl::StatusOr<size_t> SendStringMsg(int sock, absl::string_view msg) {
   iovec msg_iovec = iovec{
       .iov_base = (void*)msg.data(),
       .iov_len = msg.length(),

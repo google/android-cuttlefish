@@ -26,10 +26,10 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "liblp/builder.h"
 #include "liblp/liblp.h"
 #include "liblp/metadata_format.h"
@@ -125,8 +125,8 @@ std::string SerializeMetadata(LpMetadata& metadata) {
   memset(header.header_checksum, 0, sizeof(header.header_checksum));
   SHA256(&header, header.header_size, header.header_checksum);
 
-  const std::string_view header_blob(reinterpret_cast<const char*>(&header),
-                                     header.header_size);
+  const absl::string_view header_blob(reinterpret_cast<const char*>(&header),
+                                      header.header_size);
 
   std::string ret = absl::StrCat(header_blob, tables);
   ret.resize(metadata.geometry.metadata_max_size);
@@ -152,9 +152,9 @@ Result<std::unique_ptr<MetadataBuilder>> CreateMetadataBuilder(uint64_t size) {
   return builder;
 }
 
-Result<ComponentDisk> AddPartition(const std::string_view name,
-                                   const std::string_view host_path,
-                                   const std::string_view group_name,
+Result<ComponentDisk> AddPartition(const absl::string_view name,
+                                   const absl::string_view host_path,
+                                   const absl::string_view group_name,
                                    const uint32_t attributes,
                                    MetadataBuilder& metadata_builder) {
   std::unique_ptr<DiskImage> disk_image =
@@ -214,38 +214,38 @@ CompositeSuperImageBuilder CompositeSuperImageBuilder::BlockDeviceSize(
 }
 
 CompositeSuperImageBuilder& CompositeSuperImageBuilder::SystemPartition(
-    const std::string_view name, const std::string_view host_path) & {
+    const absl::string_view name, const absl::string_view host_path) & {
   system_partitions_.emplace(name, host_path);
   return *this;
 }
 
 CompositeSuperImageBuilder CompositeSuperImageBuilder::SystemPartition(
-    const std::string_view name, const std::string_view host_path) && {
+    const absl::string_view name, const absl::string_view host_path) && {
   SystemPartition(name, host_path);
   return *this;
 }
 
 CompositeSuperImageBuilder& CompositeSuperImageBuilder::VendorPartition(
-    const std::string_view name, const std::string_view host_path) & {
+    const absl::string_view name, const absl::string_view host_path) & {
   vendor_partitions_.emplace(name, host_path);
   return *this;
 }
 
 CompositeSuperImageBuilder CompositeSuperImageBuilder::VendorPartition(
-    const std::string_view name, const std::string_view host_path) && {
+    const absl::string_view name, const absl::string_view host_path) && {
   VendorPartition(name, host_path);
   return *this;
 }
 
 Result<std::string> CompositeSuperImageBuilder::WriteToDirectory(
-    const std::string_view output_dir, const std::string_view file_name,
-    const std::string_view header_name) {
+    const absl::string_view output_dir, const absl::string_view file_name,
+    const absl::string_view header_name) {
   std::unique_ptr<MetadataBuilder> metadata_builder =
       CF_EXPECT(CreateMetadataBuilder(size_));
 
-  static constexpr std::string_view kSystemGroup =
+  static constexpr absl::string_view kSystemGroup =
       "google_system_dynamic_partitions";
-  static constexpr std::string_view kVendorGroup =
+  static constexpr absl::string_view kVendorGroup =
       "google_vendor_dynamic_partitions";
 
   CF_EXPECT(metadata_builder->AddGroup(absl::StrCat(kSystemGroup, "_a"), 0));

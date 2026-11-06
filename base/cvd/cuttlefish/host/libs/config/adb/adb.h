@@ -16,8 +16,8 @@
 #pragma once
 
 #include <set>
-#include <string_view>
 
+#include "absl/strings/string_view.h"
 #include "fruit/fruit.h"
 
 #include "cuttlefish/host/libs/config/config_flag.h"
@@ -35,7 +35,7 @@ enum class AdbMode {
   Unknown,
 };
 
-AdbMode StringToAdbMode(std::string_view mode);
+AdbMode StringToAdbMode(absl::string_view mode);
 std::string AdbModeToString(AdbMode mode);
 
 class AdbConfig {

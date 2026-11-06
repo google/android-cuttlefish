@@ -21,7 +21,6 @@
 
 #include <regex>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -30,6 +29,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
 #include "fmt/core.h"
@@ -69,7 +69,7 @@ static Result<ProcStatusUids> OwnerUids(const pid_t pid) {
   std::string status_path = fmt::format("/proc/{}/status", pid);
   std::string status_content = CF_EXPECT(ReadFileContents(status_path));
   std::vector<uid_t> uids;
-  for (std::string_view line :
+  for (absl::string_view line :
        absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
     std::smatch matches;
     std::string line_str(line);
@@ -165,7 +165,7 @@ static Result<void> CheckExecNameFromStatus(const std::string& exec_name,
   std::string status_path = fmt::format("/proc/{}/status", pid);
   std::string status_content = CF_EXPECT(ReadFileContents(status_path));
   bool found = false;
-  for (std::string_view line :
+  for (absl::string_view line :
        absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
     if (!absl::ConsumePrefix(&line, "Name:")) {
       continue;
@@ -217,7 +217,7 @@ Result<std::unordered_map<std::string, std::string>> GetEnvs(const pid_t pid) {
   std::string environ = CF_EXPECT(ReadAll(environ_file_path));
   // now, each line looks like:  HOME=/home/user
   std::unordered_map<std::string, std::string> envs;
-  for (std::string_view line :
+  for (absl::string_view line :
        absl::StrSplit(environ, '\0', absl::SkipEmpty())) {
     envs.emplace(absl::StrSplit(line, absl::MaxSplits('=', 1)));
   }
@@ -239,7 +239,7 @@ Result<pid_t> Ppid(const pid_t pid) {
   std::regex uid_pattern(R"(PPid:\s*([0-9]+))");
   std::string status_path = fmt::format("/proc/{}/status", pid);
   std::string status_content = CF_EXPECT(ReadFileContents(status_path));
-  for (std::string_view line :
+  for (absl::string_view line :
        absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
     std::smatch matches;
     std::string line_str(line);

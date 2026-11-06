@@ -17,12 +17,12 @@
 #include "cuttlefish/process/envp_to_map.h"
 
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
@@ -32,7 +32,7 @@ std::unordered_map<std::string, std::string> EnvpToMap(char** envp) {
     return env_map;
   }
   for (char** e = envp; *e != nullptr; e++) {
-    std::vector<std::string_view> key_value =
+    std::vector<absl::string_view> key_value =
         absl::StrSplit(*e, absl::MaxSplits('=', 1));
     if (key_value.size() != 2) {
       LOG(WARNING) << "Environment var in unknown format: " << *e;

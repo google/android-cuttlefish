@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 
 namespace cuttlefish {
@@ -36,23 +37,23 @@ class CommandParser {
   inline void SkipComma();
   inline void SkipWhiteSpace();
 
-  std::string_view GetNextStr();
-  std::string_view GetNextStr(char flag);
+  absl::string_view GetNextStr();
+  absl::string_view GetNextStr(char flag);
   std::string GetNextStrDeciToHex(); /* for AT+CRSM */
 
   int GetNextInt();
   int GetNextHexInt();
 
-  const std::string_view* operator->() const { return &command_; }
-  const std::string_view& operator*() const { return command_; }
+  const absl::string_view* operator->() const { return &command_; }
+  const absl::string_view& operator*() const { return command_; }
   bool operator==(const std::string& rhs) const { return command_ == rhs; }
-  std::string_view::const_reference& operator[](int index) const {
+  absl::string_view::const_reference& operator[](int index) const {
     return command_[index];
   }
 
  private:
   std::string copy_command_;
-  std::string_view command_;
+  absl::string_view command_;
 };
 
 /**
@@ -62,7 +63,7 @@ class CommandParser {
  */
 inline void CommandParser::SkipPrefix() {
   auto pos = command_.find('=');
-  if (pos != std::string_view::npos) {
+  if (pos != absl::string_view::npos) {
     command_.remove_prefix(std::min(pos + 1, command_.size()));
   }
 }
@@ -72,7 +73,7 @@ inline void CommandParser::SkipPrefix() {
  * updates command_
  */
 inline void CommandParser::SkipPrefixAT() {
-  absl::ConsumePrefix(&command_, std::string_view("AT"));
+  absl::ConsumePrefix(&command_, absl::string_view("AT"));
 }
 
 /**
@@ -81,7 +82,7 @@ inline void CommandParser::SkipPrefixAT() {
  */
 inline void CommandParser::SkipComma() {
   auto pos = command_.find(',');
-  if (pos != std::string_view::npos) {
+  if (pos != absl::string_view::npos) {
     command_.remove_prefix(std::min(pos + 1, command_.size()));
   }
 }
@@ -92,7 +93,7 @@ inline void CommandParser::SkipComma() {
  */
 inline void CommandParser::SkipWhiteSpace() {
   auto pos = command_.find(' ');
-  if (pos != std::string_view::npos) {
+  if (pos != absl::string_view::npos) {
     command_.remove_prefix(std::min(pos + 1, command_.size()));
   }
 }

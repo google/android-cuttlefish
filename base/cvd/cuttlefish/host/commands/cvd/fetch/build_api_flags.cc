@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "absl/strings/numbers.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
@@ -32,7 +33,7 @@ Flag GflagsCompatFlagSeconds(const std::string& name,
                              std::chrono::seconds& value) {
   return Flag::StringFlag(name)
       .Getter([&value]() { return std::to_string(value.count()); })
-      .Setter([&value](std::string_view arg) -> Result<void> {
+      .Setter([&value](absl::string_view arg) -> Result<void> {
         int parsed_int;
         CF_EXPECTF(absl::SimpleAtoi(arg, &parsed_int),
                    "Failed to parse \"{}\" as an integer", arg);

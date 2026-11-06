@@ -18,6 +18,7 @@
 #include <optional>
 #include <string>
 
+#include "absl/strings/string_view.h"
 #include "json/value.h"
 
 #include "cuttlefish/host/libs/vm_manager/pci.h"
@@ -61,7 +62,7 @@ class CrosvmBuilder {
   void AddSerial(const std::string& output, const std::string& input);
 
   void AddTap(const std::string& tap_name,
-              std::optional<std::string_view> mac = std::nullopt,
+              std::optional<absl::string_view> mac = std::nullopt,
               const std::optional<pci::Address>& pci = std::nullopt);
   // Adds a vhost-user device to the crosvm command.
   // The max_queue_size parameter represents the maximum number of buffers the

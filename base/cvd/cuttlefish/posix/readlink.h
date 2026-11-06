@@ -16,7 +16,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -25,6 +26,6 @@ namespace cuttlefish {
 // Wrapper for readlink(2).
 Result<std::string, int> ReadLink(const char* path);
 Result<std::string, int> ReadLink(const std::string& path);
-Result<std::string, int> ReadLink(std::string_view path);
+Result<std::string, int> ReadLink(absl::string_view path);
 
 }  // namespace cuttlefish

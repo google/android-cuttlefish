@@ -17,7 +17,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/result/result_type.h"
@@ -25,15 +26,15 @@
 namespace cuttlefish {
 
 struct LogTeeLine {
-  std::string_view date;
-  std::string_view severity;
-  std::string_view subsystem;
-  std::string_view message;
+  absl::string_view date;
+  absl::string_view severity;
+  absl::string_view subsystem;
+  absl::string_view message;
 };
 
-Result<LogTeeLine> ParseLogTeeLine(std::string_view line);
+Result<LogTeeLine> ParseLogTeeLine(absl::string_view line);
 std::string FormatLogTeeLine(const LogTeeLine& line);
-Result<std::string> ColorLogTeeLine(std::string_view line);
-Result<bool> FilterLogTeeLine(LogSeverity filter, std::string_view line);
+Result<std::string> ColorLogTeeLine(absl::string_view line);
+Result<bool> FilterLogTeeLine(LogSeverity filter, absl::string_view line);
 
 }  // namespace cuttlefish

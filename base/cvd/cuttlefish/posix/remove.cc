@@ -20,9 +20,9 @@
 #include <stdio.h>
 
 #include <string>
-#include <string_view>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/expect.h"
@@ -42,7 +42,7 @@ Result<void, int> RemoveFile(const std::string& file) {
   return {};
 }
 
-Result<void, int> RemoveFile(std::string_view file) {
+Result<void, int> RemoveFile(absl::string_view file) {
   CF_EXPECT(RemoveFile(std::string(file)));
   return {};
 }

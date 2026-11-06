@@ -21,14 +21,14 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 
 #include "absl/status/statusor.h"
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish::process_sandboxer {
 
-static const constexpr std::string_view kHandshakeBegin = "hello";
-static const constexpr std::string_view kManagerSocketPath = "/manager.sock";
+static const constexpr absl::string_view kHandshakeBegin = "hello";
+static const constexpr absl::string_view kManagerSocketPath = "/manager.sock";
 
 class Message {
  public:
@@ -48,7 +48,7 @@ class Message {
   std::optional<ucred> credentials_;
 };
 
-absl::StatusOr<size_t> SendStringMsg(int sock, std::string_view msg);
+absl::StatusOr<size_t> SendStringMsg(int sock, absl::string_view msg);
 
 }  // namespace cuttlefish::process_sandboxer
 #endif

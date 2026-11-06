@@ -29,6 +29,7 @@
 #include "absl/base/no_destructor.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 namespace {
@@ -49,7 +50,7 @@ HostUname GetHostUname() {
   };
 }
 
-Arch HostArch(std::string_view arch_str) {
+Arch HostArch(absl::string_view arch_str) {
   if (arch_str == "aarch64" || arch_str == "arm64") {
     return Arch::Arm64;
   } else if (arch_str == "arm") {
@@ -67,7 +68,7 @@ Arch HostArch(std::string_view arch_str) {
   }
 }
 
-Os HostOs(std::string_view os_str) {
+Os HostOs(absl::string_view os_str) {
   if (os_str == "GNU/Linux") {
     return Os::Linux;
   }
@@ -76,7 +77,7 @@ Os HostOs(std::string_view os_str) {
 
 }  // namespace
 
-std::string_view ArchToStringView(Arch arch) {
+absl::string_view ArchToStringView(Arch arch) {
   switch (arch) {
     case Arch::Arm64:
       return "arm64";

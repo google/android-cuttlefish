@@ -19,11 +19,11 @@
 #include <array>
 #include <initializer_list>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 
 #include "cuttlefish/flag_parser/flag.h"
@@ -77,13 +77,13 @@ CommandRequest::CommandRequest(std::vector<std::string> args,
 }
 
 CommandRequestBuilder& CommandRequestBuilder::AddArguments(
-    std::initializer_list<std::string_view> args) & {
-  return AddArguments(std::vector<std::string_view>(args));
+    std::initializer_list<absl::string_view> args) & {
+  return AddArguments(std::vector<absl::string_view>(args));
 }
 
 CommandRequestBuilder CommandRequestBuilder::AddArguments(
-    std::initializer_list<std::string_view> args) && {
-  return AddArguments(std::vector<std::string_view>(args));
+    std::initializer_list<absl::string_view> args) && {
+  return AddArguments(std::vector<absl::string_view>(args));
 }
 
 CommandRequestBuilder& CommandRequestBuilder::SetEnv(

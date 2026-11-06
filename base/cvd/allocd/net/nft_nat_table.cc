@@ -18,11 +18,11 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 
 #include "allocd/net/netlink_request.h"
 #include "allocd/net/nfnetlink_socket.h"
@@ -32,7 +32,7 @@
 namespace cuttlefish {
 namespace {
 
-constexpr std::string_view kChain = "postrouting";
+constexpr absl::string_view kChain = "postrouting";
 
 Result<void> SendBatch(NfnetlinkSocket& socket,
                        const std::vector<NetlinkRequest>& changes) {
@@ -45,12 +45,13 @@ Result<void> SendBatch(NfnetlinkSocket& socket,
 }  // namespace
 
 Result<NftNatTable> NftNatTable::Create(
-    std::string_view name, const std::vector<std::string>& masquerade_sources) {
+    absl::string_view name,
+    const std::vector<std::string>& masquerade_sources) {
   return Create(CF_EXPECT(NfnetlinkSocket::Open()), name, masquerade_sources);
 }
 
 Result<NftNatTable> NftNatTable::Create(
-    std::unique_ptr<NfnetlinkSocket> socket, std::string_view name,
+    std::unique_ptr<NfnetlinkSocket> socket, absl::string_view name,
     const std::vector<std::string>& masquerade_sources) {
   std::vector<NetlinkRequest> changes;
   changes.push_back(nft::NewTable(name));
@@ -63,14 +64,14 @@ Result<NftNatTable> NftNatTable::Create(
   return NftNatTable(std::move(socket), name);
 }
 
-Result<bool> NftNatTable::Exists(std::string_view name) {
+Result<bool> NftNatTable::Exists(absl::string_view name) {
   const std::unique_ptr<NfnetlinkSocket> socket =
       CF_EXPECT(NfnetlinkSocket::Open());
   return Exists(*socket, name);
 }
 
 Result<bool> NftNatTable::Exists(NfnetlinkSocket& socket,
-                                 std::string_view name) {
+                                 absl::string_view name) {
   const std::vector<char> replies =
       CF_EXPECT(socket.Transact(nft::GetTable(name)));
   return CF_EXPECTF(nft::TableExistsFromReply(replies),
@@ -78,7 +79,7 @@ Result<bool> NftNatTable::Exists(NfnetlinkSocket& socket,
 }
 
 NftNatTable::NftNatTable(std::unique_ptr<NfnetlinkSocket> socket,
-                         std::string_view name)
+                         absl::string_view name)
     : socket_(std::move(socket)), name_(name) {}
 
 NftNatTable::~NftNatTable() {

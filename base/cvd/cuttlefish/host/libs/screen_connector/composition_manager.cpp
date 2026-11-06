@@ -31,13 +31,13 @@
 
 #include <map>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "drm/drm_fourcc.h"
 #include "libyuv.h"
 
@@ -79,7 +79,7 @@ CompositionManager::ParseOverlays(std::vector<std::string> overlay_items) {
   // index within that vm.  Structured types are created as result.
   for (int display_index = 0; display_index < overlay_items.size();
        display_index++) {
-    std::string_view overlay_item =
+    absl::string_view overlay_item =
         absl::StripAsciiWhitespace(overlay_items[display_index]);
 
     if (overlay_item.empty() || overlay_item == "_") {
@@ -88,11 +88,11 @@ CompositionManager::ParseOverlays(std::vector<std::string> overlay_items) {
 
     std::vector<DisplayOverlay>& display_overlays = overlays[display_index];
 
-    std::vector<std::string_view> overlay_list =
+    std::vector<absl::string_view> overlay_list =
         absl::StrSplit(overlay_item, ' ');
 
     for (const auto& overlay_tuple_str : overlay_list) {
-      std::vector<std::string_view> overlay_tuple =
+      std::vector<absl::string_view> overlay_tuple =
           absl::StrSplit(overlay_tuple_str, ':');
 
       DisplayOverlay docfg;

@@ -16,12 +16,12 @@
 #include <ostream>
 #include <set>
 #include <sstream>
-#include <string_view>
 #include <unordered_set>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fruit/component.h"
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
@@ -50,10 +50,10 @@ class AdbConfigFlagImpl : public AdbConfigFlag {
       }
       return modes.str().substr(1);  // First comma
     });
-    mode_flag_.Setter([this](std::string_view arg) -> Result<void> {
+    mode_flag_.Setter([this](absl::string_view arg) -> Result<void> {
       // TODO(schuffelen): Error on unknown types?
       std::set<AdbMode> modes;
-      for (std::string_view mode : absl::StrSplit(arg, ',')) {
+      for (absl::string_view mode : absl::StrSplit(arg, ',')) {
         modes.insert(StringToAdbMode(mode));
       }
       CF_EXPECT(config_.SetModes(modes));

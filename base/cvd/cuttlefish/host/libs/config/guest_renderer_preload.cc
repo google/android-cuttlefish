@@ -18,9 +18,9 @@
 
 #include <ostream>
 #include <string>
-#include <string_view>
 
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -43,7 +43,7 @@ std::string ToString(GuestRendererPreload preload) {
   }
 }
 
-Result<GuestRendererPreload> ParseGuestRendererPreload(std::string_view str) {
+Result<GuestRendererPreload> ParseGuestRendererPreload(absl::string_view str) {
   if (absl::EqualsIgnoreCase(str, "auto")) {
     return GuestRendererPreload::kAuto;
   } else if (absl::EqualsIgnoreCase(str, "default")) {

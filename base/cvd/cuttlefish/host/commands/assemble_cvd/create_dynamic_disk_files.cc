@@ -25,11 +25,11 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
@@ -85,7 +85,7 @@ uint64_t AvailableSpaceAtPath(const std::string& path) {
 }
 
 Result<BuildArchive> FindImgZip(const FetcherConfig& fetcher_config,
-                                std::string_view system_image_dir) {
+                                absl::string_view system_image_dir) {
   for (const auto& [member_name, member] : fetcher_config.get_cvd_files()) {
     if (member.source != FileSource::DEFAULT_BUILD) {
       continue;

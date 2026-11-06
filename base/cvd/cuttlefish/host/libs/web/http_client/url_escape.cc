@@ -16,15 +16,15 @@
 #include "cuttlefish/host/libs/web/http_client/url_escape.h"
 
 #include <string>
-#include <string_view>
 
+#include "absl/strings/string_view.h"
 #include "curl/curl.h"
 
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 
 namespace cuttlefish {
 
-std::string UrlEscape(std::string_view text) {
+std::string UrlEscape(absl::string_view text) {
   const CurlGlobalInit init_curl;
   char* escaped_str = curl_escape(text.data(), text.size());
   std::string ret{escaped_str};

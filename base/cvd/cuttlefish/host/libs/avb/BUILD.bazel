@@ -49,6 +49,7 @@ cf_cc_library(
         "//cuttlefish/io:reader_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings:string_view",
         "@avb//:libavb",
     ],
 )

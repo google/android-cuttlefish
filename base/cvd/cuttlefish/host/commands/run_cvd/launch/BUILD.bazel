@@ -130,6 +130,7 @@ cf_cc_library(
         "//cuttlefish/process:subprocess",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings:string_view",
         "@fruit",
     ],
 )

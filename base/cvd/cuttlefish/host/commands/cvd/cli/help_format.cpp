@@ -20,24 +20,24 @@
 
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 
 namespace cuttlefish {
 namespace {
 
-std::vector<std::string> WrapAroundLine(std::string_view str,
+std::vector<std::string> WrapAroundLine(absl::string_view str,
                                         size_t max_line_length) {
   std::vector<std::string> ret;
   size_t total_word_sizes = 0;
-  std::vector<std::string_view> line;
-  for (std::string_view word :
+  std::vector<absl::string_view> line;
+  for (absl::string_view word :
        absl::StrSplit(str, absl::ByAnyChar(" \t\r\n"))) {
     // line.size() accounts for the spaces added when joining the words.
     if (total_word_sizes + word.size() + line.size() >= max_line_length) {
@@ -95,7 +95,7 @@ std::string FormatFlagsHelp(const std::vector<Flag>& flags,
   std::stringstream ss;
   for (const Flag& flag : flags) {
     ss << " " << flag.Synopsis() << "\n";
-    for (std::string_view wrapped_line :
+    for (absl::string_view wrapped_line :
          WrapAroundLine(flag.Description(), max_line_width - 4)) {
       ss << "    " << wrapped_line << "\n";
     }

@@ -23,6 +23,7 @@
 #include <string>
 
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 #include "gflags/gflags.h"
 #include "google/protobuf/empty.pb.h"
@@ -63,7 +64,7 @@ namespace {
 constexpr char kErrorMessageRpc[] = "Luci RPC request failed";
 constexpr char kErrorMessageRpcAuth[] = "Luci authentication request failed";
 
-static Status ErrorResultToStatus(const std::string_view prefix,
+static Status ErrorResultToStatus(const absl::string_view prefix,
                                   const StackTraceError<void>& error) {
   std::string msg = fmt::format("{}:\n\n{}", prefix, error.FormatForEnv(false));
   return Status(StatusCode::UNAVAILABLE, msg);

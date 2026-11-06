@@ -23,12 +23,12 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <string_view>
 
 #include "absl/base/no_destructor.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 #include "allocd/alloc_driver.h"
 #include "cuttlefish/common/libs/fs/fd.h"
@@ -66,7 +66,8 @@ Result<std::string> SearchForDnsmasq() {
 
 }  // namespace
 
-bool CreateEthernetIface(std::string_view name, std::string_view bridge_name) {
+bool CreateEthernetIface(absl::string_view name,
+                         absl::string_view bridge_name) {
   // assume bridge exists
 
   if (!CreateTap(name)) {
@@ -81,21 +82,21 @@ bool CreateEthernetIface(std::string_view name, std::string_view bridge_name) {
   return true;
 }
 
-std::string MobileGatewayName(std::string_view ipaddr, uint16_t id) {
+std::string MobileGatewayName(absl::string_view ipaddr, uint16_t id) {
   std::stringstream ss;
   ss << ipaddr << "." << (4 * id - 3);
   return ss.str();
 }
 
-std::string MobileNetworkName(std::string_view ipaddr, std::string_view netmask,
-                              uint16_t id) {
+std::string MobileNetworkName(absl::string_view ipaddr,
+                              absl::string_view netmask, uint16_t id) {
   std::stringstream ss;
   ss << ipaddr << "." << (4 * id - 4) << netmask;
   return ss.str();
 }
 
-bool CreateMobileIface(std::string_view name, uint16_t id,
-                       std::string_view ipaddr) {
+bool CreateMobileIface(absl::string_view name, uint16_t id,
+                       absl::string_view ipaddr) {
   if (id > kMaxIfaceNameId) {
     LOG(ERROR) << "ID exceeds maximum value to assign a netmask: " << id;
     return false;
@@ -127,8 +128,8 @@ bool CreateMobileIface(std::string_view name, uint16_t id,
   return true;
 }
 
-bool DestroyMobileIface(std::string_view name, uint16_t id,
-                        std::string_view ipaddr) {
+bool DestroyMobileIface(absl::string_view name, uint16_t id,
+                        absl::string_view ipaddr) {
   if (id > 63) {
     LOG(ERROR) << "ID exceeds maximum value to assign a netmask: " << id;
     return false;
@@ -147,11 +148,11 @@ bool DestroyMobileIface(std::string_view name, uint16_t id,
   return DestroyIface(name);
 }
 
-bool DestroyEthernetIface(std::string_view name) { return DestroyIface(name); }
+bool DestroyEthernetIface(absl::string_view name) { return DestroyIface(name); }
 
-void CleanupEthernetIface(std::string_view name) { DestroyIface(name); }
+void CleanupEthernetIface(absl::string_view name) { DestroyIface(name); }
 
-bool CreateTap(std::string_view name) {
+bool CreateTap(absl::string_view name) {
   LOG(INFO) << "Attempt to create tap interface: " << name;
   if (!AddTapIface(name).has_value()) {
     LOG(WARNING) << "Failed to create tap interface: " << name;
@@ -191,7 +192,7 @@ Result<void> ValidateTapInterfaceIsUsable(const std::string& interface_name) {
 }
 #endif
 
-bool DestroyIface(std::string_view name) {
+bool DestroyIface(absl::string_view name) {
   if (!ShutdownIface(name).has_value()) {
     LOG(WARNING) << "Failed to shutdown tap interface: " << name;
     // the interface might have already shutdown ... so ignore and try to remove
@@ -207,7 +208,7 @@ bool DestroyIface(std::string_view name) {
   return true;
 }
 
-bool DestroyBridge(std::string_view name) {
+bool DestroyBridge(absl::string_view name) {
   Result<bool> r = BridgeInUse(name);
   if (!r.has_value()) {
     return false;
@@ -221,7 +222,8 @@ bool DestroyBridge(std::string_view name) {
   return DeleteIface(name).has_value();
 }
 
-bool SetupBridgeGateway(std::string_view bridge_name, std::string_view ipaddr) {
+bool SetupBridgeGateway(absl::string_view bridge_name,
+                        absl::string_view ipaddr) {
   Result<std::string> iptables_path = IptablesPath();
   if (!iptables_path.has_value()) {
     return false;
@@ -255,7 +257,7 @@ bool SetupBridgeGateway(std::string_view bridge_name, std::string_view ipaddr) {
   return ret;
 }
 
-void CleanupBridgeGateway(std::string_view name, std::string_view ipaddr,
+void CleanupBridgeGateway(absl::string_view name, absl::string_view ipaddr,
                           const GatewayConfig& config) {
   auto gateway = absl::StrFormat("%s.1", ipaddr);
   auto netmask = "/24";
@@ -278,8 +280,8 @@ void CleanupBridgeGateway(std::string_view name, std::string_view ipaddr,
   }
 }
 
-bool StartDnsmasq(std::string_view bridge_name, std::string_view gateway,
-                  std::string_view dhcp_range) {
+bool StartDnsmasq(absl::string_view bridge_name, absl::string_view gateway,
+                  absl::string_view dhcp_range) {
   Result<std::string> dnsmasq_path = DnsmasqPath();
   if (!dnsmasq_path.has_value()) {
     LOG(ERROR) << "Could not find dnsmasq binary: "
@@ -306,7 +308,7 @@ bool StartDnsmasq(std::string_view bridge_name, std::string_view gateway,
               "--dhcp-no-override"}) == 0;
 }
 
-bool StopDnsmasq(std::string_view name) {
+bool StopDnsmasq(absl::string_view name) {
   std::ifstream file;
   std::string filename =
       absl::StrCat(CvdDir(), "/cuttlefish-dnsmasq-", name, ".pid");
@@ -332,7 +334,8 @@ bool StopDnsmasq(std::string_view name) {
   return ret;
 }
 
-bool CreateEthernetBridgeIface(std::string_view name, std::string_view ipaddr) {
+bool CreateEthernetBridgeIface(absl::string_view name,
+                               absl::string_view ipaddr) {
   auto exists = BridgeExists(name);
   if (exists.has_value() && *exists) {
     LOG(INFO) << "Bridge " << name << " exists already, doing nothing.";
@@ -351,8 +354,8 @@ bool CreateEthernetBridgeIface(std::string_view name, std::string_view ipaddr) {
   return true;
 }
 
-bool DestroyEthernetBridgeIface(std::string_view name,
-                                std::string_view ipaddr) {
+bool DestroyEthernetBridgeIface(absl::string_view name,
+                                absl::string_view ipaddr) {
   GatewayConfig config{true, true, true};
 
   // Don't need to check if removing some part of the config failed, we need to

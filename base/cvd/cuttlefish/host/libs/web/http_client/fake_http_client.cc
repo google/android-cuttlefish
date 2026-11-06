@@ -17,9 +17,10 @@
 
 #include <mutex>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
@@ -43,10 +44,10 @@ void FakeHttpClient::SetResponse(HttpResponse<std::string> response,
   SetResponse(std::move(handler), std::move(url));
 }
 
-bool FakeHttpClient::RequestMade(std::string_view url) const {
+bool FakeHttpClient::RequestMade(absl::string_view url) const {
   std::lock_guard lock(mutex_);
   for (const auto& requested : requested_urls_) {
-    if (requested.find(url) != std::string_view::npos) {
+    if (requested.find(url) != absl::string_view::npos) {
       return true;
     }
   }
@@ -60,11 +61,11 @@ void FakeHttpClient::SetResponse(FakeHttpClient::Handler handler,
 }
 
 const FakeHttpClient::Handler* FakeHttpClient::FindHandler(
-    std::string_view url) const {
-  std::string_view best_url;
+    absl::string_view url) const {
+  absl::string_view best_url;
   const FakeHttpClient::Handler* best_handler = nullptr;
   for (const auto& [response_url, response_handler] : responses_) {
-    bool has_url = url.find(response_url) != std::string_view::npos;
+    bool has_url = url.find(response_url) != absl::string_view::npos;
     bool url_longer = response_url.size() > best_url.size();
     bool needs_handler = best_handler == nullptr;
     if (has_url && (url_longer || needs_handler)) {

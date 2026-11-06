@@ -20,10 +20,10 @@
 
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/log/check.h"
+#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -44,7 +44,7 @@ class SmsSenderTest : public ::testing::Test {
     CHECK(fake_server_fd_->IsOpen());
   }
 
-  void AssertCommandIsSent(std::string_view expected_command) {
+  void AssertCommandIsSent(absl::string_view expected_command) {
     std::stringstream ss;
     std::vector<char> buffer(4096);
     Result<uint64_t> bytes_read;

@@ -21,11 +21,11 @@
 #include <optional>
 #include <random>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
@@ -122,7 +122,7 @@ Result<void> SubstituteWithFlag(
       if (DirectoryExists(path)) {
         return {};
       }
-      std::string_view local_path(path);
+      absl::string_view local_path(path);
       CF_EXPECTF(absl::ConsumePrefix(&local_path, bin_dir_parent),
                  "Unexpected prefix in : '{}'", local_path);
 
@@ -155,7 +155,7 @@ Result<void> SubstituteWithFlag(
 }
 
 bool SubstituteCheckTargetExists(const fetch::HostPkgMigrationConfig& config,
-                                 std::string_view target_keyword) {
+                                 absl::string_view target_keyword) {
   for (int j = 0; j < config.symlinks_size(); j++) {
     if (config.symlinks(j).target().find(target_keyword) != std::string::npos) {
       return true;
@@ -166,8 +166,8 @@ bool SubstituteCheckTargetExists(const fetch::HostPkgMigrationConfig& config,
 
 Result<void> SubstituteWithMarker(const std::string& target_dir,
                                   const std::string& marker_file) {
-  static constexpr std::string_view kRunCvdKeyword = "bin/run_cvd";
-  static constexpr std::string_view kSensorsSimulatorKeyword =
+  static constexpr absl::string_view kRunCvdKeyword = "bin/run_cvd";
+  static constexpr absl::string_view kSensorsSimulatorKeyword =
       "bin/sensors_simulator";
 
   std::string content = CF_EXPECTF(ReadFileContents(marker_file),

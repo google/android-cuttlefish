@@ -24,9 +24,9 @@
 #include <ios>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 
+#include "absl/strings/string_view.h"
 #include "android-base/unique_fd.h"
 #include "sparse/sparse.h"
 
@@ -40,7 +40,7 @@
 namespace cuttlefish {
 namespace {
 
-constexpr std::string_view kAndroidSparseImageMagic = "\x3A\xFF\x26\xED";
+constexpr absl::string_view kAndroidSparseImageMagic = "\x3A\xFF\x26\xED";
 
 Result<Fd> AcquireLockForImage(const std::string& image_path) {
   std::string image_realpath = CF_EXPECT(RealPath(image_path));

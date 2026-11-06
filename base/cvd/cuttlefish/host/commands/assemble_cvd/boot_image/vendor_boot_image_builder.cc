@@ -21,10 +21,10 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "bootimg.h"
 
 #include "cuttlefish/io/concat.h"
@@ -81,12 +81,12 @@ VendorBootImageBuilder VendorBootImageBuilder::VendorRamdisk(
 }
 
 VendorBootImageBuilder& VendorBootImageBuilder::KernelCommandLine(
-    std::string_view cmdline) & {
+    absl::string_view cmdline) & {
   kernel_command_line_ = cmdline;
   return *this;
 }
 VendorBootImageBuilder VendorBootImageBuilder::KernelCommandLine(
-    std::string_view cmdline) && {
+    absl::string_view cmdline) && {
   return std::move(this->KernelCommandLine(cmdline));
 }
 
@@ -98,11 +98,11 @@ VendorBootImageBuilder VendorBootImageBuilder::TagsAddr(uint32_t tags) && {
   return std::move(this->TagsAddr(tags));
 }
 
-VendorBootImageBuilder& VendorBootImageBuilder::Name(std::string_view name) & {
+VendorBootImageBuilder& VendorBootImageBuilder::Name(absl::string_view name) & {
   name_ = name;
   return *this;
 }
-VendorBootImageBuilder VendorBootImageBuilder::Name(std::string_view name) && {
+VendorBootImageBuilder VendorBootImageBuilder::Name(absl::string_view name) && {
   return std::move(this->Name(name));
 }
 
@@ -161,7 +161,7 @@ Result<ConcatReaderSeeker> VendorBootImageBuilder::BuildV4() {
 
   std::vector<std::unique_ptr<ReaderSeeker>> members;
   members.emplace_back(std::make_unique<OwningInMemoryIo>(
-      std::string_view(reinterpret_cast<char*>(&header), sizeof(header))));
+      absl::string_view(reinterpret_cast<char*>(&header), sizeof(header))));
   members.emplace_back(PagePadding(sizeof(header), page_size_));
   if (vendor_ramdisk_) {
     members.emplace_back(std::move(vendor_ramdisk_));

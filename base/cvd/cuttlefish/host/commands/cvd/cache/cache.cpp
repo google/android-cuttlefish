@@ -22,13 +22,13 @@
 #include <chrono>
 #include <iterator>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/disk_usage.h"
@@ -46,7 +46,7 @@ Result<std::vector<std::string>> CacheFilesDesc(
       DirectoryContentsPaths(cache_directory),
       "Failure retrieving contents of directory at \"{}\"", cache_directory);
 
-  auto not_self_or_parent_directory = [](std::string_view filepath) {
+  auto not_self_or_parent_directory = [](absl::string_view filepath) {
     return !absl::EndsWith(filepath, ".") && !absl::EndsWith(filepath, "..");
   };
   std::vector<std::string> filtered;

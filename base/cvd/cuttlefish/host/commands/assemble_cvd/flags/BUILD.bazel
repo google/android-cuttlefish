@@ -31,6 +31,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/commands/assemble_cvd/flags:vm_manager",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@gflags",
     ],
 )
@@ -60,6 +61,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@gflags",
     ],
 )
@@ -79,6 +81,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@gflags",
     ],
@@ -176,6 +179,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -378,6 +382,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@gflags",
     ],
 )

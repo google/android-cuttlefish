@@ -27,7 +27,6 @@
 #include <set>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -35,6 +34,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
 
@@ -83,7 +83,7 @@ Result<void> WriteFsConfig(const std::string& output_path,
                            const std::string& mount_point) {
   Fd fd = CF_EXPECT(
       Fd::Open(output_path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
-  static constexpr std::string_view kBeginning =
+  static constexpr absl::string_view kBeginning =
       " 0 0 755 selabel=u:object_r:rootfs:s0 capabilities=0x0\n";
   CF_EXPECTF(WriteExact(fd, kBeginning), "Failed to write to '{}'",
              output_path);
@@ -231,7 +231,8 @@ std::map<std::string, std::vector<std::string>> LoadModuleDeps(
     const std::string& filename) {
   std::map<std::string, std::vector<std::string>> dependency_map;
   const std::string dep_str(absl::StripAsciiWhitespace(ReadFile(filename)));
-  const std::vector<std::string_view> dep_lines = absl::StrSplit(dep_str, "\n");
+  const std::vector<absl::string_view> dep_lines =
+      absl::StrSplit(dep_str, "\n");
   for (const auto& line : dep_lines) {
     const auto mod_name = line.substr(0, line.find(":"));
     std::vector<std::string> deps = absl::StrSplit(
@@ -270,8 +271,8 @@ std::set<std::string> ComputeTransitiveClosure(
 // Generate a file_context.bin file which can be used by selinux tools to assign
 // selinux labels to files
 Result<void> GenerateFileContexts(const std::string& output_path,
-                                  std::string_view mount_point,
-                                  std::string_view file_label) {
+                                  absl::string_view mount_point,
+                                  absl::string_view file_label) {
   const std::string file_contexts_txt = output_path + ".txt";
   Fd fd = CF_EXPECT(Fd::Open(file_contexts_txt,
                              O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));

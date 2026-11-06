@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/string_view.h"
+
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
@@ -29,7 +31,7 @@
 namespace cuttlefish {
 namespace {
 
-std::string MacCrosvmArgument(std::optional<std::string_view> mac) {
+std::string MacCrosvmArgument(std::optional<absl::string_view> mac) {
   return mac.has_value() ? fmt::format(",mac={}", mac.value()) : "";
 }
 
@@ -157,7 +159,7 @@ void CrosvmBuilder::AddSerial(const std::string& output,
 }
 
 void CrosvmBuilder::AddTap(const std::string& tap_name,
-                           std::optional<std::string_view> mac,
+                           std::optional<absl::string_view> mac,
                            const std::optional<pci::Address>& pci) {
   command_.AddParameter("--net=tap-name=", tap_name, MacCrosvmArgument(mac),
                         FormatPciArgument(pci));

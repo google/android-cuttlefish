@@ -19,11 +19,11 @@
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -118,15 +118,15 @@ class Command {
     return std::move(SetEnvironment(std::move(env)));
   }
 
-  Command& AddEnvironmentVariable(std::string_view env_var,
-                                  std::string_view value) &;
-  Command AddEnvironmentVariable(std::string_view env_var,
-                                 std::string_view value) &&;
+  Command& AddEnvironmentVariable(absl::string_view env_var,
+                                  absl::string_view value) &;
+  Command AddEnvironmentVariable(absl::string_view env_var,
+                                 absl::string_view value) &&;
 
   // Specify an environment variable to be unset from the parent's
   // environment for the subprocesses to be started.
-  Command& UnsetFromEnvironment(std::string_view env_var) &;
-  Command UnsetFromEnvironment(std::string_view env_var) &&;
+  Command& UnsetFromEnvironment(absl::string_view env_var) &;
+  Command UnsetFromEnvironment(absl::string_view env_var) &&;
 
   // Adds a single parameter to the command. All arguments are concatenated into
   // a single string to form a parameter. If one of those arguments is a

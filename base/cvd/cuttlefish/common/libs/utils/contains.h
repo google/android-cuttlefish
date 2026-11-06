@@ -19,8 +19,9 @@
 #include <algorithm>
 #include <iterator>
 #include <string>
-#include <string_view>
 #include <type_traits>
+
+#include "absl/strings/string_view.h"
 
 /**
  * @file: Implement Contains(container, key)
@@ -84,7 +85,7 @@ template <typename T>
 struct IsString : IsSame<std::string, T> {};
 
 template <typename T>
-struct IsStringView : IsSame<std::string_view, T> {};
+struct IsStringView : IsSame<absl::string_view, T> {};
 
 }  // namespace contains_internal_impl
 
@@ -111,15 +112,15 @@ constexpr bool Contains(Container&& container, U&& u) {
   return itr != std::end(container);
 }
 
-// std::string:: or std::string_view::find() returns index, not iterator
+// std::string:: or absl::string_view::find() returns index, not iterator
 template <typename T>
 constexpr bool Contains(const std::string& s, T&& t) {
   return s.find(std::forward<T>(t)) != std::string::npos;
 }
 
 template <typename T>
-constexpr bool Contains(const std::string_view& s, T&& t) {
-  return s.find(std::forward<T>(t)) != std::string_view::npos;
+constexpr bool Contains(const absl::string_view& s, T&& t) {
+  return s.find(std::forward<T>(t)) != absl::string_view::npos;
 }
 
 }  // namespace cuttlefish

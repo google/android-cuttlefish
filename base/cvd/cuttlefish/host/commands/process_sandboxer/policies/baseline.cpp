@@ -17,9 +17,9 @@
 #include <linux/filter.h>
 #include <sys/mman.h>
 
-#include <string_view>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "sandboxed_api/sandbox2/allowlists/map_exec.h"
 #include "sandboxed_api/sandbox2/policybuilder.h"
 #include "sandboxed_api/sandbox2/util/bpf_helper.h"
@@ -32,7 +32,7 @@ namespace cuttlefish::process_sandboxer {
 using sapi::file::JoinPath;
 
 sandbox2::PolicyBuilder BaselinePolicy(const HostInfo& host,
-                                       std::string_view exe) {
+                                       absl::string_view exe) {
   return sandbox2::PolicyBuilder()
       .AddLibrariesForBinary(exe, JoinPath(host.host_artifacts_path, "lib64"))
       // For dynamic linking and memory allocation

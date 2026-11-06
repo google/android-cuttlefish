@@ -31,11 +31,11 @@
 #endif
 
 #include <optional>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/posix/stat.h"
 #include "cuttlefish/posix/strerror.h"
@@ -97,7 +97,7 @@ static int SetAmbientCapabilities() {
 }
 #endif
 
-Result<void> ValidateCvdallocBinary(std::string_view path) {
+Result<void> ValidateCvdallocBinary(absl::string_view path) {
   struct stat st = CF_EXPECT(Stat(path));
 #if defined(__linux__)
   (void)st;

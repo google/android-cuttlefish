@@ -17,7 +17,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
@@ -28,7 +29,7 @@ enum class DataImagePolicy {
   UseExisting,
 };
 
-DataImagePolicy DataImagePolicyFromString(std::string_view policy);
+DataImagePolicy DataImagePolicyFromString(absl::string_view policy);
 
 std::string DataImagePolicyString(DataImagePolicy policy);
 

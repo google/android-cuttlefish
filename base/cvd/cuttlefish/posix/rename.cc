@@ -19,7 +19,8 @@
 #include <stdio.h>
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -38,7 +39,7 @@ Result<void, int> Rename(const std::string& oldpath,
   return {};
 }
 
-Result<void, int> Rename(std::string_view oldpath, std::string_view newpath) {
+Result<void, int> Rename(absl::string_view oldpath, absl::string_view newpath) {
   CF_EXPECT(Rename(std::string(oldpath), std::string(newpath)));
   return {};
 }

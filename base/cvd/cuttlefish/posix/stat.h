@@ -18,7 +18,8 @@
 #include <sys/stat.h>
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result_type.h"
 
@@ -26,10 +27,10 @@ namespace cuttlefish {
 
 Result<struct stat, int> Stat(const char*);
 Result<struct stat, int> Stat(const std::string&);
-Result<struct stat, int> Stat(std::string_view);
+Result<struct stat, int> Stat(absl::string_view);
 
 Result<struct stat, int> Lstat(const char*);
 Result<struct stat, int> Lstat(const std::string&);
-Result<struct stat, int> Lstat(std::string_view);
+Result<struct stat, int> Lstat(absl::string_view);
 
 }  // namespace cuttlefish

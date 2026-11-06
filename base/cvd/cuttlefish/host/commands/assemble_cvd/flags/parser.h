@@ -17,13 +17,14 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<bool> ParseBool(std::string_view value, std::string_view name);
-Result<int> ParseInt(const std::string& value, std::string_view name);
+Result<bool> ParseBool(absl::string_view value, absl::string_view name);
+Result<int> ParseInt(const std::string& value, absl::string_view name);
 
 }  // namespace cuttlefish

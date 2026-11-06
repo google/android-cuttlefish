@@ -17,9 +17,10 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <variant>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
@@ -42,7 +43,7 @@ std::optional<std::string> GetFilepath(const BuildString& build_string);
 
 void SetFilepath(BuildString& build_string, const std::string& value);
 
-Result<BuildString> ParseBuildString(std::string_view build_string);
+Result<BuildString> ParseBuildString(absl::string_view build_string);
 
 Flag GflagsCompatFlag(const std::string& name,
                       std::optional<BuildString>& value);

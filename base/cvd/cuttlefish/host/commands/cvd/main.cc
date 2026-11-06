@@ -22,7 +22,6 @@
 #include <iostream>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -30,6 +29,7 @@
 #include "absl/cleanup/cleanup.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
 
@@ -181,11 +181,11 @@ std::string ColoredUrl(const std::string& url) {
   std::string coloring_prefix = "\033[01;31m";
   std::string output;
   auto ls_colors = StringFromEnv("LS_COLORS", "");
-  std::vector<std::string_view> colors_vec =
+  std::vector<absl::string_view> colors_vec =
       absl::StrSplit(ls_colors, ':', absl::SkipEmpty());
   std::unordered_map<std::string, std::string> colors;
   for (const auto& color_entry : colors_vec) {
-    std::vector<std::string_view> tokenized =
+    std::vector<absl::string_view> tokenized =
         absl::StrSplit(color_entry, '=', absl::SkipEmpty());
     if (tokenized.size() != 2) {
       continue;

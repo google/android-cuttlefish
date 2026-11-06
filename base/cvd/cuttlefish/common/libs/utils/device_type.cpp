@@ -20,11 +20,12 @@
 #include <string_view>
 
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
 // Parse device type from android-info.txt config field.
-DeviceType ParseDeviceType(std::string_view type_name) {
+DeviceType ParseDeviceType(absl::string_view type_name) {
   if (type_name == "phone") {
     return DeviceType::Phone;
   } else if (type_name == "wear") {
@@ -46,7 +47,7 @@ DeviceType ParseDeviceType(std::string_view type_name) {
   }
 }
 
-std::string_view DeviceTypeToStringView(DeviceType device_type) {
+absl::string_view DeviceTypeToStringView(DeviceType device_type) {
   switch (device_type) {
     case DeviceType::Unknown:
       return "unknown";

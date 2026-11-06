@@ -16,7 +16,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -26,18 +27,18 @@ namespace cuttlefish {
 Result<std::string> Sha256File(const std::string& path);
 
 // Returns the SHA-256 of `data`, in lowercase hexadecimal.
-std::string Sha256Hex(std::string_view data);
+std::string Sha256Hex(absl::string_view data);
 
 // Fails unless `path` holds the hexadecimal SHA-256 `expected`, which is
 // compared without regard to case. `artifact_name` names the file in the error.
-Result<void> VerifySha256(const std::string& path, std::string_view expected,
-                          std::string_view artifact_name);
+Result<void> VerifySha256(const std::string& path, absl::string_view expected,
+                          absl::string_view artifact_name);
 
 // Fails unless `path` holds the MD5 `expected_base64`, in the base64 form
 // Cloud Storage reports for an object. `artifact_name` names the file in the
 // error.
 Result<void> VerifyMd5(const std::string& path,
-                       std::string_view expected_base64,
-                       std::string_view artifact_name);
+                       absl::string_view expected_base64,
+                       absl::string_view artifact_name);
 
 }  // namespace cuttlefish

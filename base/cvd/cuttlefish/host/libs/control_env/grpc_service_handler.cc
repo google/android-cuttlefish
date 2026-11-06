@@ -19,7 +19,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -27,6 +26,7 @@
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "grpcpp/security/credentials.h"
 #include "json/json.h"
 #include "test/cpp/util/cli_credentials.h"
@@ -196,7 +196,7 @@ Result<std::string> HandleLsCmd(
 
       Json::Value json;
       json["services"] = Json::Value(Json::arrayValue);
-      for (std::string_view full_service_name :
+      for (absl::string_view full_service_name :
            StrSplit(absl::StripAsciiWhitespace(command_output), "\n")) {
         if (full_service_name == kServiceServerReflection ||
             full_service_name == kServiceHealth ||

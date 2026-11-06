@@ -18,6 +18,7 @@
 #include <memory>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/commands/modem_simulator/call_service.h"
 #include "cuttlefish/host/commands/modem_simulator/data_service.h"
@@ -155,7 +156,7 @@ void ModemSimulator::SetTimeZone(std::string timezone) {
   }
 }
 
-bool ModemSimulator::SetPhoneNumber(std::string_view number) {
+bool ModemSimulator::SetPhoneNumber(absl::string_view number) {
   if (sim_service_) {
     return sim_service_->SetPhoneNumber(number);
   }

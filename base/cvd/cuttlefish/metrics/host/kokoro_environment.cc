@@ -17,7 +17,8 @@
 #include "cuttlefish/metrics/host/kokoro_environment.h"
 
 #include <optional>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/metrics/host/gce_environment.h"
@@ -26,7 +27,7 @@
 namespace cuttlefish {
 namespace {
 
-constexpr std::string_view kKokoroBuildId = "KOKORO_BUILD_ID";
+constexpr absl::string_view kKokoroBuildId = "KOKORO_BUILD_ID";
 
 }  // namespace
 

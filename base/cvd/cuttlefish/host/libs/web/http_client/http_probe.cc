@@ -20,12 +20,12 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
@@ -54,7 +54,7 @@ bool ServesRanges(const HttpResponse<void>& response) {
   if (response.http_code == kPartialContent) {
     return true;
   }
-  const std::optional<std::string_view> ranges =
+  const std::optional<absl::string_view> ranges =
       HeaderValue(response.headers, "accept-ranges");
   return ranges.has_value() && absl::StrContains(*ranges, "bytes");
 }
@@ -64,15 +64,15 @@ bool ServesRanges(const HttpResponse<void>& response) {
 // `Content-Length`.
 std::optional<uint64_t> ProbedSize(const HttpResponse<void>& response) {
   uint64_t size = 0;
-  if (std::optional<std::string_view> range =
+  if (std::optional<absl::string_view> range =
           HeaderValue(response.headers, "content-range")) {
     const size_t total = range->rfind('/');
-    if (total != std::string_view::npos &&
+    if (total != absl::string_view::npos &&
         absl::SimpleAtoi(range->substr(total + 1), &size)) {
       return size;
     }
   }
-  const std::optional<std::string_view> length =
+  const std::optional<absl::string_view> length =
       HeaderValue(response.headers, "content-length");
   if (response.http_code != kPartialContent && length.has_value() &&
       absl::SimpleAtoi(*length, &size)) {
@@ -109,7 +109,7 @@ Result<HttpObjectInfo> ProbeHttpObject(
       .accept_ranges = ServesRanges(response),
       .size = ProbedSize(response),
   };
-  if (std::optional<std::string_view> etag =
+  if (std::optional<absl::string_view> etag =
           HeaderValue(response.headers, "etag")) {
     info.etag = std::string(*etag);
   }

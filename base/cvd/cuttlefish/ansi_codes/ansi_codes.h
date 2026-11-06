@@ -17,25 +17,26 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
-inline constexpr std::string_view kAnsiCursorTopLeft = "\033[;H";
-inline constexpr std::string_view kAnsiBoldBlue = "\033[1;34m";
-inline constexpr std::string_view kAnsiBoldCyan = "\033[1;36m";
-inline constexpr std::string_view kAnsiClearScreen = "\033[2J";
-inline constexpr std::string_view kAnsiClearScreenAfterCursor = "\033[J";
-inline constexpr std::string_view kAnsiCsi = "\033[";
-inline constexpr std::string_view kAnsiCyan = "\033[0;36m";
-inline constexpr std::string_view kAnsiGreen = "\033[0;32m";
-inline constexpr std::string_view kAnsiGrey = "\033[90m";
-inline constexpr std::string_view kAnsiRed = "\033[0;31m";
-inline constexpr std::string_view kAnsiReset = "\033[0m";
-inline constexpr std::string_view kAnsiWhite = "\033[0;37m";
-inline constexpr std::string_view kAnsiYellow = "\033[0;33m";
-inline constexpr std::string_view kXtermUseAlternateScreen = "\033[?1049h";
-inline constexpr std::string_view kXtermUseMainScreen = "\033[?1049l";
+inline constexpr absl::string_view kAnsiCursorTopLeft = "\033[;H";
+inline constexpr absl::string_view kAnsiBoldBlue = "\033[1;34m";
+inline constexpr absl::string_view kAnsiBoldCyan = "\033[1;36m";
+inline constexpr absl::string_view kAnsiClearScreen = "\033[2J";
+inline constexpr absl::string_view kAnsiClearScreenAfterCursor = "\033[J";
+inline constexpr absl::string_view kAnsiCsi = "\033[";
+inline constexpr absl::string_view kAnsiCyan = "\033[0;36m";
+inline constexpr absl::string_view kAnsiGreen = "\033[0;32m";
+inline constexpr absl::string_view kAnsiGrey = "\033[90m";
+inline constexpr absl::string_view kAnsiRed = "\033[0;31m";
+inline constexpr absl::string_view kAnsiReset = "\033[0m";
+inline constexpr absl::string_view kAnsiWhite = "\033[0;37m";
+inline constexpr absl::string_view kAnsiYellow = "\033[0;33m";
+inline constexpr absl::string_view kXtermUseAlternateScreen = "\033[?1049h";
+inline constexpr absl::string_view kXtermUseMainScreen = "\033[?1049l";
 
 // CSI final bytes are in the range 0x40–0x7E (ASCII @ to ~).
 bool IsCsiFinalByte(char c);

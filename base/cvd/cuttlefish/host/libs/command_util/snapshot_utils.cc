@@ -23,11 +23,11 @@
 
 #include <functional>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "json/value.h"
 
@@ -230,7 +230,7 @@ Result<Json::Value> CreateMetaInfo(const CuttlefishConfig& cuttlefish_config,
   for (const auto& instance : instances) {
     const std::string instance_snapshot_dir =
         instance.instance_dir() + "/" + kGuestSnapshotField;
-    std::string_view sv_relative_path(instance_snapshot_dir);
+    absl::string_view sv_relative_path(instance_snapshot_dir);
 
     CF_EXPECTF(absl::ConsumePrefix(&sv_relative_path, cuttlefish_home),
                "Instance Guest Snapshot Directory \"{}\""

@@ -30,7 +30,6 @@
 #include <ios>
 #include <iosfwd>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/log/check.h"
@@ -38,6 +37,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
 
@@ -186,7 +186,7 @@ bool CanAccess(const std::string& path, const int mode) {
   return access(path.c_str(), mode) == 0;
 }
 
-std::string AbsolutePath(std::string_view path) {
+std::string AbsolutePath(absl::string_view path) {
   if (path.empty()) {
     return {};
   }
@@ -332,7 +332,7 @@ std::vector<std::string> Path(const std::string& env_name) {
 }
 
 Result<std::string> Search(const std::vector<std::string>& path,
-                           std::string_view name) {
+                           absl::string_view name) {
   // TODO: Assumes a SUS system. Elsewhere we may need to change the delimiter.
   // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap08.html
   for (const auto& dir : path) {

@@ -20,9 +20,9 @@
 
 #include <chrono>
 #include <string>
-#include <string_view>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -60,7 +60,7 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
   return {};
 }
 
-ScopedLogger CreateLogger(std::string_view metrics_directory) {
+ScopedLogger CreateLogger(absl::string_view metrics_directory) {
   MetadataLevel metadata_level =
       isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
   return ScopedLogger(
@@ -80,8 +80,8 @@ Result<MetricsData> GatherMetrics(const MetricsInput& metrics_input) {
   };
 }
 
-Result<void> OutputMetrics(std::string_view event_type_label,
-                           std::string_view metrics_directory,
+Result<void> OutputMetrics(absl::string_view event_type_label,
+                           absl::string_view metrics_directory,
                            const MetricsData& metrics_data) {
   if (AreMetricsEnabled()) {
     const CuttlefishLogEvent cf_log_event =

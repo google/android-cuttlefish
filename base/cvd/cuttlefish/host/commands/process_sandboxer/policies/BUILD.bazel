@@ -56,6 +56,7 @@ cf_cc_library(
     copts = COPTS + ALLOW_C,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@abseil-cpp//absl/strings:string_view",
         "@sandboxed_api//sandboxed_api/sandbox2",
         "@sandboxed_api//sandboxed_api/sandbox2/allowlists:map_exec",
         "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",

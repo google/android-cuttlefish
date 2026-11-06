@@ -27,6 +27,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "fmt/format.h"
 
@@ -40,15 +41,15 @@ namespace {
 // Returns whether `name` names the `kind` archive of a build. Android Build
 // names archives "<product>-<kind>-<id>.zip"; a republished artifact set drops
 // the build id, leaving "<product>-<kind>.zip".
-bool NameMatchesZipKind(std::string_view name, BuildZipKind kind) {
+bool NameMatchesZipKind(absl::string_view name, BuildZipKind kind) {
   return absl::StrContains(name, fmt::format("-{}-", kind)) ||
          absl::EndsWith(name, fmt::format("-{}.zip", kind));
 }
 
 }  // namespace
 
-std::optional<std::string_view> UrlScheme(std::string_view url) {
-  constexpr std::string_view kSchemeCharacters =
+std::optional<absl::string_view> UrlScheme(absl::string_view url) {
+  constexpr absl::string_view kSchemeCharacters =
       "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-.";
   // The allowed set also holds digits and "+-.", which cannot open a scheme,
   // and an empty scheme has no opening character at all.
@@ -56,19 +57,19 @@ std::optional<std::string_view> UrlScheme(std::string_view url) {
     return std::nullopt;
   }
   const size_t separator = url.find_first_not_of(kSchemeCharacters);
-  if (separator == std::string_view::npos ||
+  if (separator == absl::string_view::npos ||
       !url.substr(separator).starts_with("://")) {
     return std::nullopt;
   }
   return url.substr(0, separator);
 }
 
-Result<ParsedUrl> ParseUrl(std::string_view url) {
-  const std::optional<std::string_view> scheme = UrlScheme(url);
+Result<ParsedUrl> ParseUrl(absl::string_view url) {
+  const std::optional<absl::string_view> scheme = UrlScheme(url);
   CF_EXPECTF(scheme.has_value(), "'{}' is not a URL.", ScrubUrl(url));
-  const std::string_view authority_and_path = url.substr(scheme->size() + 3);
+  const absl::string_view authority_and_path = url.substr(scheme->size() + 3);
   const size_t authority_end = authority_and_path.find('/');
-  CF_EXPECTF(authority_end != std::string_view::npos,
+  CF_EXPECTF(authority_end != absl::string_view::npos,
              "The URL '{}' has no '/' after its host or bucket.",
              ScrubUrl(url));
   CF_EXPECTF(authority_end != 0, "The URL '{}' has no host or bucket.",
@@ -76,7 +77,7 @@ Result<ParsedUrl> ParseUrl(std::string_view url) {
 
   UrlParts parts =
       CF_EXPECTF(SplitUrl(url), "'{}' is not a valid URL.", ScrubUrl(url));
-  std::string_view path = parts.path;
+  absl::string_view path = parts.path;
   absl::ConsumePrefix(&path, "/");
   std::string authority = std::move(parts.host);
   if (parts.port.has_value()) {
@@ -89,12 +90,12 @@ Result<ParsedUrl> ParseUrl(std::string_view url) {
   };
 }
 
-std::optional<std::string> DeriveProduct(std::string_view basename) {
+std::optional<std::string> DeriveProduct(absl::string_view basename) {
   if (!absl::ConsumeSuffix(&basename, ".zip")) {
     return std::nullopt;
   }
   const size_t infix = basename.find("-img-");
-  if (infix != 0 && infix != std::string_view::npos) {
+  if (infix != 0 && infix != absl::string_view::npos) {
     return std::string(basename.substr(0, infix));
   }
   if (absl::ConsumeSuffix(&basename, "-img") && !basename.empty()) {
@@ -114,7 +115,7 @@ std::string_view format_as(BuildZipKind kind) {
   }
 }
 
-Result<std::string> ResolveUrlZipName(std::string_view object,
+Result<std::string> ResolveUrlZipName(absl::string_view object,
                                       BuildZipKind kind) {
   // A build that is one archive has no other candidate, but its name must not
   // claim to be a different kind of archive. target_files and otatools are the

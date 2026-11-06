@@ -21,10 +21,10 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "bootimg.h"
 
 #include "cuttlefish/io/concat.h"
@@ -42,11 +42,11 @@ static std::unique_ptr<ReaderSeeker> PagePadding(uint64_t size) {
   return std::make_unique<OwningInMemoryIo>(std::vector<char>(padding));
 }
 
-BootImageBuilder& BootImageBuilder::KernelCommandLine(std::string_view cmd) & {
+BootImageBuilder& BootImageBuilder::KernelCommandLine(absl::string_view cmd) & {
   kernel_command_line_ = cmd;
   return *this;
 }
-BootImageBuilder BootImageBuilder::KernelCommandLine(std::string_view cmd) && {
+BootImageBuilder BootImageBuilder::KernelCommandLine(absl::string_view cmd) && {
   return std::move(this->KernelCommandLine(cmd));
 }
 
@@ -99,7 +99,7 @@ Result<ConcatReaderSeeker> BootImageBuilder::BuildV4() {
 
   std::vector<std::unique_ptr<ReaderSeeker>> members;
   members.emplace_back(std::make_unique<OwningInMemoryIo>(
-      std::string_view(reinterpret_cast<char*>(&header), sizeof(header))));
+      absl::string_view(reinterpret_cast<char*>(&header), sizeof(header))));
   members.emplace_back(PagePadding(sizeof(header)));
   if (kernel_) {
     members.emplace_back(std::move(kernel_));

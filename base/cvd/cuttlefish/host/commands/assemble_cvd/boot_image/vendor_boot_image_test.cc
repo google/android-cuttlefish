@@ -19,9 +19,9 @@
 
 #include <memory>
 #include <optional>
-#include <string_view>
 #include <utility>
 
+#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -40,13 +40,13 @@ TEST(VendorBootImageTest, AllFieldsSet) {
   static constexpr uint32_t kPageSize = 4096;
   static constexpr uint32_t kKernelAddr = 1;
   static constexpr uint32_t kRamdiskAddr = 2;
-  static constexpr std::string_view kVendorRamdisk = "vendor ramdisk";
-  static constexpr std::string_view kKernelCommandLine = "kernel cmdline";
+  static constexpr absl::string_view kVendorRamdisk = "vendor ramdisk";
+  static constexpr absl::string_view kKernelCommandLine = "kernel cmdline";
   static constexpr uint32_t kTagsAddr = 3;
-  static constexpr std::string_view kName = "name";
-  static constexpr std::string_view kDtb = "dtb";
+  static constexpr absl::string_view kName = "name";
+  static constexpr absl::string_view kDtb = "dtb";
   static constexpr uint64_t kDtbAddr = 4;
-  static constexpr std::string_view kBootconfig = "bootconfig";
+  static constexpr absl::string_view kBootconfig = "bootconfig";
 
   VendorBootImageBuilder builder =
       VendorBootImageBuilder()

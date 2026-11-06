@@ -24,13 +24,13 @@
 #include <set>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 #include "json/value.h"
@@ -55,12 +55,12 @@ namespace {
 
 using absl::StrJoin;
 
-Result<std::string> AuthorizationCodeFromUrl(const std::string_view url) {
-  std::string_view code = url;
+Result<std::string> AuthorizationCodeFromUrl(const absl::string_view url) {
+  absl::string_view code = url;
 
-  static constexpr std::string_view kCodeEq = "code=";
+  static constexpr absl::string_view kCodeEq = "code=";
   size_t code_eq_pos = code.find(kCodeEq);
-  CF_EXPECTF(code_eq_pos != std::string_view::npos, "No '{}'", kCodeEq);
+  CF_EXPECTF(code_eq_pos != absl::string_view::npos, "No '{}'", kCodeEq);
   code.remove_prefix(code_eq_pos + kCodeEq.size());
 
   size_t code_end_pos = code.find("&");
@@ -92,8 +92,8 @@ class HttpServer {
     ssize_t bytes_read;
     while ((bytes_read = client.Read(buffer, sizeof(buffer)).value_or(0)) > 0) {
       request.write(buffer, bytes_read);
-      std::string_view buffer_view(buffer, bytes_read);
-      if (buffer_view.find("\r\n\r\n") != std::string_view::npos) {
+      absl::string_view buffer_view(buffer, bytes_read);
+      if (buffer_view.find("\r\n\r\n") != absl::string_view::npos) {
         break;
       }
     }
@@ -101,13 +101,13 @@ class HttpServer {
 
     std::string request_str = request.str();
     CF_EXPECT(request_str.find("\r\n") != std::string::npos);
-    std::vector<std::string_view> request_lines =
+    std::vector<absl::string_view> request_lines =
         absl::StrSplit(request_str, absl::ByAnyChar("\r\n"), absl::SkipEmpty());
     CF_EXPECT(!request_lines.empty(), "no lines in input");
 
     std::string code = CF_EXPECT(AuthorizationCodeFromUrl(request_lines[0]));
 
-    static constexpr std::string_view kResponse = "Please return to the CLI.";
+    static constexpr absl::string_view kResponse = "Please return to the CLI.";
 
     std::string response = fmt::format(
         "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nContent-Type: text/plain; "
@@ -199,9 +199,9 @@ Result<std::string> GetRefreshToken(HttpClient& http_client,
   CF_EXPECTF(token_json.isMember(kScope), "No '{}'", kScope);
   CF_EXPECT_EQ(token_json[kScope].type(), Json::ValueType::stringValue);
   std::string response_scope = token_json[kScope].asString();
-  std::set<std::string_view> response_scopes =
+  std::set<absl::string_view> response_scopes =
       absl::StrSplit(response_scope, ' ', absl::SkipEmpty());
-  for (std::string_view scope : request.scopes) {
+  for (absl::string_view scope : request.scopes) {
     CF_EXPECTF(Contains(response_scopes, scope), "Response missing '{}'",
                scope);
   }

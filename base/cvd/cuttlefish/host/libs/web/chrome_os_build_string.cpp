@@ -18,10 +18,10 @@
 #include <optional>
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 #include "fmt/ostream.h"
@@ -67,7 +67,7 @@ std::ostream& operator<<(std::ostream& stream,
 Flag GflagsCompatFlag(const std::string& name,
                       std::vector<std::optional<ChromeOsBuildString>>& value) {
   return Flag::StringFlag(name)
-      .Setter([&value](std::string_view arg) -> Result<void> {
+      .Setter([&value](absl::string_view arg) -> Result<void> {
         if (arg.empty()) {
           value.clear();
           return {};

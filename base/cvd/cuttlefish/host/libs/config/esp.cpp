@@ -21,12 +21,12 @@
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -96,7 +96,7 @@ bool CanGenerateGrubEsp(Arch arch) {
     }
     case Arch::X86:
     case Arch::X86_64: {
-      for (std::string_view module_name : kGrubModules) {
+      for (absl::string_view module_name : kGrubModules) {
         const std::string path =
             absl::StrCat(kGrubModulesPath, "/", kGrubModulesX64Name, "/",
                          module_name, ".mod");

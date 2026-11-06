@@ -18,10 +18,10 @@
 #include <functional>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <type_traits>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/result/result.h"
@@ -29,7 +29,7 @@
 namespace cuttlefish {
 
 static constexpr int kTooManyRequestsCode = 429;
-static constexpr std::string_view kRetryAfterHeaderName = "Retry-After";
+static constexpr absl::string_view kRetryAfterHeaderName = "Retry-After";
 
 struct HttpVoidResponse {};
 
@@ -80,8 +80,8 @@ struct HttpResponse {
   std::vector<HttpHeader> headers;
 };
 
-std::optional<std::string_view> HeaderValue(
-    const std::vector<HttpHeader>& headers, std::string_view header_name);
+std::optional<absl::string_view> HeaderValue(
+    const std::vector<HttpHeader>& headers, absl::string_view header_name);
 
 enum class HttpMethod {
   kGet,

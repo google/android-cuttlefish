@@ -23,8 +23,9 @@
 #include <optional>
 #include <set>
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
@@ -73,22 +74,22 @@ class CuttlefishConfig {
   void set_root_dir(const std::string& root_dir);
 
   std::string instances_dir() const;
-  std::string InstancesPath(std::string_view) const;
+  std::string InstancesPath(absl::string_view) const;
 
   std::string assembly_dir() const;
-  std::string AssemblyPath(std::string_view) const;
+  std::string AssemblyPath(absl::string_view) const;
 
   void set_instances_uds_dir(const std::string&);
   std::string instances_uds_dir() const;
-  std::string InstancesUdsPath(std::string_view) const;
+  std::string InstancesUdsPath(absl::string_view) const;
 
   void set_environments_dir(const std::string&);
   std::string environments_dir() const;
-  std::string EnvironmentsPath(std::string_view) const;
+  std::string EnvironmentsPath(absl::string_view) const;
 
   void set_environments_uds_dir(const std::string&);
   std::string environments_uds_dir() const;
-  std::string EnvironmentsUdsPath(std::string_view) const;
+  std::string EnvironmentsUdsPath(absl::string_view) const;
 
   VmmMode vm_manager() const;
   void set_vm_manager(VmmMode vmm);
@@ -331,9 +332,9 @@ class CuttlefishConfig {
 
     // Returns the path to a file with the given name in the instance
     // directory..
-    std::string PerInstancePath(std::string_view file_name) const;
-    std::string PerInstanceInternalPath(std::string_view file_name) const;
-    std::string PerInstanceLogPath(std::string_view file_name) const;
+    std::string PerInstancePath(absl::string_view file_name) const;
+    std::string PerInstanceInternalPath(absl::string_view file_name) const;
+    std::string PerInstanceLogPath(absl::string_view file_name) const;
 
     std::string CrosvmSocketPath() const;
     std::string OpenwrtCrosvmSocketPath() const;
@@ -344,9 +345,9 @@ class CuttlefishConfig {
     // Return the Unix domain socket path with given name. Because the
     // length limitation of Unix domain socket name, it needs to be in
     // the another directory than normal Instance path.
-    std::string PerInstanceUdsPath(std::string_view file_name) const;
-    std::string PerInstanceInternalUdsPath(std::string_view file_name) const;
-    std::string PerInstanceGrpcSocketPath(std::string_view socket_name) const;
+    std::string PerInstanceUdsPath(absl::string_view file_name) const;
+    std::string PerInstanceInternalUdsPath(absl::string_view file_name) const;
+    std::string PerInstanceGrpcSocketPath(absl::string_view socket_name) const;
 
     std::string instance_uds_dir() const;
 

@@ -21,7 +21,8 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor_source.h"
@@ -34,8 +35,8 @@ class FileMonitorSource : public MonitorSource {
  public:
   FileMonitorSource(
       std::string path, std::unique_ptr<ReaderSeeker> file_io,
-      std::function<Result<std::string>(std::string_view)> colorize_line,
-      std::function<Result<bool>(std::string_view)> filter_line);
+      std::function<Result<std::string>(absl::string_view)> colorize_line,
+      std::function<Result<bool>(absl::string_view)> filter_line);
   ~FileMonitorSource() override;
 
   MonitorOutput Report(size_t rows, size_t columns) override;
@@ -45,8 +46,8 @@ class FileMonitorSource : public MonitorSource {
  private:
   std::string path_;
   std::unique_ptr<ReaderSeeker> file_io_;
-  std::function<Result<std::string>(std::string_view)> colorize_line_;
-  std::function<Result<bool>(std::string_view)> filter_line_;
+  std::function<Result<std::string>(absl::string_view)> colorize_line_;
+  std::function<Result<bool>(absl::string_view)> filter_line_;
   SharedFD inotify_fd_;
 };
 

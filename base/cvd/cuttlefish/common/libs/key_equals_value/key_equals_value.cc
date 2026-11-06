@@ -19,11 +19,11 @@
 #include <map>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/io/write_exact.h"
@@ -57,8 +57,8 @@ Result<void> GenericWriteKeyEqualsValue(
 Result<std::map<std::string, std::string, std::less<void>>> ParseKeyEqualsValue(
     const std::string& contents) {
   std::map<std::string, std::string, std::less<void>> key_equals_value;
-  for (std::string_view line : absl::StrSplit(contents, '\n')) {
-    std::pair<std::string_view, std::string_view> key_value =
+  for (absl::string_view line : absl::StrSplit(contents, '\n')) {
+    std::pair<absl::string_view, absl::string_view> key_value =
         absl::StrSplit(line, absl::MaxSplits('=', 1));
     key_value.first = absl::StripAsciiWhitespace(key_value.first);
 

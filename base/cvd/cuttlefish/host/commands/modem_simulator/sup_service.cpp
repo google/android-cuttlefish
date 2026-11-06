@@ -15,6 +15,8 @@
 
 #include "cuttlefish/host/commands/modem_simulator/sup_service.h"
 
+#include "absl/strings/string_view.h"
+
 namespace cuttlefish {
 
 SupService::SupService(int32_t service_id, ChannelMonitor* channel_monitor,
@@ -211,7 +213,7 @@ void SupService::HandleCallForward(const Client& client, std::string& command) {
   int status = cmd.GetNextInt();
   int number_type = cmd.GetNextInt();
   int ton = cmd.GetNextInt();
-  std::string_view number = cmd.GetNextStr();
+  absl::string_view number = cmd.GetNextStr();
   int classx = cmd.GetNextInt();
 
   switch (reason) {

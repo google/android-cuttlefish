@@ -17,10 +17,10 @@
 #pragma once
 
 #include <string>
-#include <string_view>
 #include <type_traits>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 #include "fmt/ranges.h"  // NOLINT(misc-include-cleaner): version difference
 #include "google/protobuf/message.h"
@@ -31,7 +31,7 @@
 
 namespace cuttlefish {
 
-inline constexpr std::string_view kFetchPrefix = "@ab/";
+inline constexpr absl::string_view kFetchPrefix = "@ab/";
 
 template <typename T>
 std::string GenerateFlag(const std::string& name, const T& value) {

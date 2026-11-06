@@ -20,12 +20,12 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "fmt/format.h"
 
@@ -56,7 +56,7 @@ Result<ZipOverRanges> ZipOverRanges::Create(
 
 HttpResponse<std::string> ZipOverRanges::operator()(
     const HttpRequest& request) {
-  static constexpr std::string_view kPrefix = "Range: bytes=";
+  static constexpr absl::string_view kPrefix = "Range: bytes=";
   std::vector<HttpHeader> headers = {{"etag", "\"abc\""}};
   if (serve_ranges_) {
     headers.push_back({"accept-ranges", "bytes"});
@@ -76,11 +76,11 @@ HttpResponse<std::string> ZipOverRanges::operator()(
   size_t end = data_.size();
   bool ranged = false;
   for (const std::string& header : request.headers) {
-    std::string_view range = header;
+    absl::string_view range = header;
     if (!absl::ConsumePrefix(&range, kPrefix) || !serve_ranges_) {
       continue;
     }
-    const std::vector<std::string_view> parts = absl::StrSplit(range, '-');
+    const std::vector<absl::string_view> parts = absl::StrSplit(range, '-');
     if (parts.size() == 2 && absl::SimpleAtoi(parts[0], &start) &&
         absl::SimpleAtoi(parts[1], &end)) {
       end++;  // HTTP ranges are inclusive at both ends

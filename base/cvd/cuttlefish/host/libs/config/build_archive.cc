@@ -24,11 +24,11 @@
 #include <ostream>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
 
@@ -64,7 +64,7 @@ Result<std::set<std::string, std::less<void>>> ZipMembers(ReadableZip& zip) {
 
 Result<BuildArchive> BuildArchive::FromFetcherConfig(
     const FetcherConfig& fetcher_config, FileSource source,
-    std::string_view archive) {
+    absl::string_view archive) {
   std::optional<ReadableZip> zip_file;
   std::set<std::string, std::less<void>> members;
   std::map<std::string, std::string, std::less<void>> extracted_members;
@@ -88,7 +88,7 @@ Result<BuildArchive> BuildArchive::FromFetcherConfig(
       continue;
     }
 
-    std::string_view archive_path = member.archive_path;
+    absl::string_view archive_path = member.archive_path;
     while (absl::ConsumePrefix(&archive_path, "/")) {
     }
 
@@ -134,7 +134,8 @@ const std::set<std::string, std::less<void>>& BuildArchive::Members() const {
 }
 
 Result<std::string> BuildArchive::MemberFilepath(
-    std::string_view member_name, std::optional<std::string_view> extract_dir) {
+    absl::string_view member_name,
+    std::optional<absl::string_view> extract_dir) {
   CF_EXPECTF(members_.count(member_name), "'{}' not in archive", member_name);
   if (auto it = extracted_.find(member_name); it != extracted_.end()) {
     return it->second;
@@ -155,7 +156,7 @@ Result<std::string> BuildArchive::MemberFilepath(
   return it.first->second;
 }
 
-Result<std::string> BuildArchive::MemberContents(std::string_view name) {
+Result<std::string> BuildArchive::MemberContents(absl::string_view name) {
   CF_EXPECTF(members_.count(name), "'{}' not in archive", name);
   if (auto it = extracted_.find(name); it != extracted_.end()) {
     return CF_EXPECTF(ReadFileContents(it->second), "Failed to read '{}'",

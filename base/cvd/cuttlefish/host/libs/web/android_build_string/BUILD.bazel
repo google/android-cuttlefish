@@ -21,6 +21,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/android_build_string:url_build_string",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -88,6 +89,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -101,6 +103,7 @@ cf_cc_library(
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )

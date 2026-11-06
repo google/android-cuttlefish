@@ -17,12 +17,12 @@
 #include <libyuv.h>
 
 #include <memory>
-#include <string_view>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fruit/fruit.h"
 #include "gflags/gflags.h"
 #include "google/protobuf/text_format.h"
@@ -338,7 +338,7 @@ int CuttlefishMain() {
       << "Only one of --touch_fds or --touch_server_paths can be used at a "
          "time";
   if (!FLAGS_touch_fds.empty()) {
-    std::vector<std::string_view> touch_fds =
+    std::vector<absl::string_view> touch_fds =
         absl::StrSplit(FLAGS_touch_fds, ',');
     CHECK_EQ(touch_fds.size(),
              display_count + instance.touchpad_configs().size())
@@ -570,7 +570,7 @@ int CuttlefishMain() {
 
   // Parse the -action_servers flag, storing a map of action server name -> fd
   std::map<std::string, int> action_server_fds;
-  for (const std::string_view action_server :
+  for (const absl::string_view action_server :
        absl::StrSplit(FLAGS_action_servers, ',')) {
     if (action_server.empty()) {
       continue;

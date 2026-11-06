@@ -58,5 +58,6 @@ cf_cc_library(
     deps = [
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )

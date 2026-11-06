@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include <string_view>
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
@@ -23,6 +23,6 @@
 namespace cuttlefish {
 
 Result<void> LogStringToDir(const CuttlefishConfig::InstanceSpecific& instance,
-                            std::string_view name, std::string_view contents);
+                            absl::string_view name, absl::string_view contents);
 
 }  // namespace cuttlefish

@@ -19,11 +19,11 @@
 #include <stddef.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -33,7 +33,7 @@
 
 namespace cuttlefish {
 
-Result<LogcatLine> ParseLogcatLine(std::string_view line) {
+Result<LogcatLine> ParseLogcatLine(absl::string_view line) {
   // clang-format off
   // Sample line for reference:
   // 05-15 15:28:15.123  1000  1000 I TagName: message
@@ -44,7 +44,7 @@ Result<LogcatLine> ParseLogcatLine(std::string_view line) {
   // Note: We avoid absl::MaxSplits here because it counts delimiter matches
   // *before* absl::SkipWhitespace filters them, which breaks index alignment on
   // double-spaces.
-  const std::vector<std::string_view> fields =
+  const std::vector<absl::string_view> fields =
       absl::StrSplit(line, absl::ByAnyChar(" \t"), absl::SkipWhitespace());
 
   CF_EXPECT_GT(fields.size(), 6, "Failed to parse Logcat line");
@@ -62,25 +62,25 @@ Result<LogcatLine> ParseLogcatLine(std::string_view line) {
       .pid = fields[3],
       .severity = fields[4][0],
       .tag = fields[5],
-      .message = std::string_view(remainder_start, remainder_len),
+      .message = absl::string_view(remainder_start, remainder_len),
   };
 }
 
 std::string FormatLogcatLine(const LogcatLine& line) {
-  const std::string_view severity_color = CharToLogSeverity(line.severity)
-                                              .transform(GetColorForSeverity)
-                                              .value_or("");
+  const absl::string_view severity_color = CharToLogSeverity(line.severity)
+                                               .transform(GetColorForSeverity)
+                                               .value_or("");
   return absl::StrCat(kAnsiGreen, line.date, " ", line.time, " ",
                       severity_color, line.uid, " ", line.pid, " ",
-                      std::string_view(&line.severity, 1), " ", kAnsiYellow,
+                      absl::string_view(&line.severity, 1), " ", kAnsiYellow,
                       line.tag, kAnsiReset, " ", line.message);
 }
 
-Result<std::string> ColorLogcatLine(std::string_view line) {
+Result<std::string> ColorLogcatLine(absl::string_view line) {
   return FormatLogcatLine(CF_EXPECT(ParseLogcatLine(line)));
 }
 
-Result<bool> FilterLogcatLine(LogSeverity filter, std::string_view line) {
+Result<bool> FilterLogcatLine(LogSeverity filter, absl::string_view line) {
   LogcatLine parsed = CF_EXPECT(ParseLogcatLine(line));
   LogSeverity line_severity = CF_EXPECT(CharToLogSeverity(parsed.severity));
   return FilterSeverity(filter, line_severity);

@@ -17,23 +17,23 @@
 #include "cuttlefish/common/libs/utils/semver.h"
 
 #include <regex>
-#include <string_view>
 
 #include "absl/strings/numbers.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<SemVer> ParseSemVer(std::string_view str) {
+Result<SemVer> ParseSemVer(absl::string_view str) {
   // From
   // https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string:
   std::regex semver_regex(
       R"(^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$)");
 
-  std::string_view::const_iterator begin = str.begin();
-  std::string_view::const_iterator end = str.end();
-  std::match_results<std::string_view::const_iterator> matches;
+  absl::string_view::const_iterator begin = str.begin();
+  absl::string_view::const_iterator end = str.end();
+  std::match_results<absl::string_view::const_iterator> matches;
   CF_EXPECT(std::regex_match(begin, end, matches, semver_regex),
             "Failed to parse semver from " << str);
 

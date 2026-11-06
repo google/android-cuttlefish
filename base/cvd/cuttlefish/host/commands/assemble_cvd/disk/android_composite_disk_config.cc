@@ -22,12 +22,12 @@
 #include <optional>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/file_exists.h"
@@ -46,21 +46,21 @@ namespace {
 
 // Defined as constants to avoid typos in repeated names
 constexpr struct {
-  std::string_view android_esp = "android_esp";
-  std::string_view boot = "boot";
-  std::string_view hibernation = "hibernation";
-  std::string_view init_boot = "init_boot";
-  std::string_view metadata = "metadata";
-  std::string_view misc = "misc";
-  std::string_view pvmfw = "pvmfw";
-  std::string_view super = "super";
-  std::string_view userdata = "userdata";
-  std::string_view vbmeta = "vbmeta";
-  std::string_view vbmeta_system = "vbmeta_system";
-  std::string_view vbmeta_system_dlkm = "vbmeta_system_dlkm";
-  std::string_view vbmeta_vendor_dlkm = "vbmeta_vendor_dlkm";
-  std::string_view vendor_boot = "vendor_boot";
-  std::string_view vvmtruststore = "vvmtruststore";
+  absl::string_view android_esp = "android_esp";
+  absl::string_view boot = "boot";
+  absl::string_view hibernation = "hibernation";
+  absl::string_view init_boot = "init_boot";
+  absl::string_view metadata = "metadata";
+  absl::string_view misc = "misc";
+  absl::string_view pvmfw = "pvmfw";
+  absl::string_view super = "super";
+  absl::string_view userdata = "userdata";
+  absl::string_view vbmeta = "vbmeta";
+  absl::string_view vbmeta_system = "vbmeta_system";
+  absl::string_view vbmeta_system_dlkm = "vbmeta_system_dlkm";
+  absl::string_view vbmeta_vendor_dlkm = "vbmeta_vendor_dlkm";
+  absl::string_view vendor_boot = "vendor_boot";
+  absl::string_view vvmtruststore = "vvmtruststore";
 } kPartitions;
 
 std::optional<ImagePartition> HibernationImage(
@@ -83,7 +83,7 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
     AndroidBuild& android_build, const SystemImageDirFlag& system_image_dir) {
   std::vector<ImagePartition> partitions;
 
-  const std::set<std::string_view> ab_partitions = {
+  const std::set<absl::string_view> ab_partitions = {
       kPartitions.boot,
       kPartitions.init_boot,
       kPartitions.pvmfw,
@@ -94,13 +94,13 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
       kPartitions.vendor_boot,
   };
 
-  const std::set<std::string_view> optional_partitions = {
+  const std::set<absl::string_view> optional_partitions = {
       kPartitions.android_esp,        kPartitions.init_boot,
       kPartitions.vbmeta_vendor_dlkm, kPartitions.vbmeta_system_dlkm,
       kPartitions.hibernation,        kPartitions.vvmtruststore,
   };
 
-  const std::set<std::string_view> efi_partitions = {
+  const std::set<absl::string_view> efi_partitions = {
       kPartitions.android_esp,
   };
 
@@ -126,7 +126,7 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
     primary_paths.try_emplace(std::move(partition), std::move(path));
   }
 
-  const std::map<std::string_view, std::string> fallback_paths = {
+  const std::map<absl::string_view, std::string> fallback_paths = {
       {kPartitions.super, instance.super_image()},
       {kPartitions.vbmeta, instance.vbmeta_image()},
       {kPartitions.vbmeta_vendor_dlkm, instance.vbmeta_vendor_dlkm_image()},
@@ -215,7 +215,7 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
 
   const auto custom_partition_path = instance.custom_partition_path();
   if (!custom_partition_path.empty()) {
-    std::vector<std::string_view> custom_partition_paths =
+    std::vector<absl::string_view> custom_partition_paths =
         absl::StrSplit(custom_partition_path, ';');
     for (int i = 0; i < custom_partition_paths.size(); i++) {
       partitions.push_back(ImagePartition{

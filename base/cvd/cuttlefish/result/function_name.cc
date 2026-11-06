@@ -20,11 +20,11 @@
 #include <set>
 #include <source_location>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 namespace {
@@ -86,7 +86,7 @@ std::string FunctionName(const char* function_signature) {
   return FunctionName(std::string(function_signature));
 }
 
-std::string FunctionName(std::string_view function_signature) {
+std::string FunctionName(absl::string_view function_signature) {
   return FunctionName(std::string(function_signature));
 }
 

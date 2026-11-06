@@ -17,13 +17,14 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
-inline constexpr std::string_view kClearcutLocal = "local";
-inline constexpr std::string_view kClearcutStaging = "staging";
-inline constexpr std::string_view kClearcutProduction = "production";
+inline constexpr absl::string_view kClearcutLocal = "local";
+inline constexpr absl::string_view kClearcutStaging = "staging";
+inline constexpr absl::string_view kClearcutProduction = "production";
 
 enum class ClearcutEnvironment {
   Local,

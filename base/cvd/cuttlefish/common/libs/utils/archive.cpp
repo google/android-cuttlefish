@@ -19,13 +19,13 @@
 #include <unistd.h>
 
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 
 #include "cuttlefish/process/command.h"
@@ -82,10 +82,10 @@ Result<std::vector<std::string>> ExtractFiles(
              exit_code, bsdtar_stdout, bsdtar_stderr);
   VLOG(0) << bsdtar_stderr;
 
-  std::vector<std::string_view> split = absl::StrSplit(bsdtar_stderr, '\n');
+  std::vector<absl::string_view> split = absl::StrSplit(bsdtar_stderr, '\n');
   std::vector<std::string> outputs;
   outputs.reserve(split.size());
-  for (std::string_view& view : split) {
+  for (absl::string_view& view : split) {
     absl::ConsumePrefix(&view, "x ");
     outputs.emplace_back(view);
   }

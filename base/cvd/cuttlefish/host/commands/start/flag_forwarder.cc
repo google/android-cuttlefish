@@ -27,6 +27,7 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "gflags/gflags.h"
 
@@ -300,7 +301,7 @@ std::vector<std::string> FlagForwarder::ArgvForSubprocess(
 
   if (!args.empty()) {
     for (int index = 0; index < args.size(); index++) {
-      std::string_view argument = args[index];
+      absl::string_view argument = args[index];
       if (!absl::ConsumePrefix(&argument, "-")) {
         continue;
       }

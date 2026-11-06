@@ -64,6 +64,7 @@ cf_cc_library(
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@jsoncpp",
     ],
 )

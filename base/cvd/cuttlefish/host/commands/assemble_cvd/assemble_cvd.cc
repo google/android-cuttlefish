@@ -26,7 +26,6 @@
 #include <set>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -34,6 +33,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 #include "fruit/component.h"
 #include "fruit/injector.h"
@@ -398,7 +398,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
 
       // Add a delimiter to each log file so that we can clearly tell what
       // happened before vs after the restore.
-      static constexpr std::string_view kSnapshotDelimiter =
+      static constexpr absl::string_view kSnapshotDelimiter =
           "\n\n\n"
           "============ SNAPSHOT RESTORE POINT ============\n"
           "Lines above are pre-snapshot.\n"
@@ -408,7 +408,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       for (const CuttlefishConfig::InstanceSpecific& ins : config.Instances()) {
         const std::vector<std::string> log_files =
             CF_EXPECT(DirectoryContents(ins.PerInstanceLogPath("")));
-        for (const std::string_view filename : log_files) {
+        for (const absl::string_view filename : log_files) {
           const std::string path = ins.PerInstanceLogPath(filename);
           Fd fd = CF_EXPECT(Fd::Open(path, O_WRONLY | O_APPEND));
           CF_EXPECT(WriteExact(fd, kSnapshotDelimiter));

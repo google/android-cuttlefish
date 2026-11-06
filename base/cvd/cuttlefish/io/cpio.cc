@@ -23,9 +23,10 @@
 #include <charconv>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <system_error>
 #include <utility>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/size_utils.h"
 #include "cuttlefish/io/io.h"
@@ -41,12 +42,12 @@ namespace cuttlefish {
 
 namespace {
 
-constexpr std::string_view kMagicNewc1 = "070701";
-constexpr std::string_view kMagicNewc2 = "070702";
-constexpr std::string_view kMagicOdc = "070707";
-constexpr std::string_view kTrailerName = "TRAILER!!!";
-constexpr std::string_view kBinaryLeMagic = "\xC7\x71";
-constexpr std::string_view kBinaryBeMagic = "\x71\xC7";
+constexpr absl::string_view kMagicNewc1 = "070701";
+constexpr absl::string_view kMagicNewc2 = "070702";
+constexpr absl::string_view kMagicOdc = "070707";
+constexpr absl::string_view kTrailerName = "TRAILER!!!";
+constexpr absl::string_view kBinaryLeMagic = "\xC7\x71";
+constexpr absl::string_view kBinaryBeMagic = "\x71\xC7";
 
 // None of these members are null-terminated.
 struct CpioNewcHeader {
@@ -166,7 +167,7 @@ Result<CpioReader::EntriesMap> CpioReader::ParseNewc(
     CF_EXPECT(PReadExact(reader, reinterpret_cast<char*>(&header),
                          sizeof(header), offset));
 
-    std::string_view magic(header.magic, sizeof(header.magic));
+    absl::string_view magic(header.magic, sizeof(header.magic));
     CF_EXPECT(magic == kMagicNewc1 || magic == kMagicNewc2,
               "Invalid magic in header");
 
@@ -207,7 +208,7 @@ Result<CpioReader::EntriesMap> CpioReader::ParseOdc(
     CF_EXPECT(PReadExact(reader, reinterpret_cast<char*>(&header),
                          sizeof(header), offset));
 
-    std::string_view magic(header.magic, sizeof(header.magic));
+    absl::string_view magic(header.magic, sizeof(header.magic));
     CF_EXPECT_EQ(magic, kMagicOdc, "Invalid magic in header");
 
     uint32_t mode = CF_EXPECT(ParseOctal(header.mode, sizeof(header.mode)));
@@ -247,8 +248,8 @@ Result<CpioReader::EntriesMap> CpioReader::ParseBin(const ReaderSeeker& reader,
     CF_EXPECT(PReadExact(reader, reinterpret_cast<char*>(&header),
                          offsetof(CpioBinHeader, filename), offset));
 
-    std::string_view header_magic(reinterpret_cast<const char*>(&header.magic),
-                                  sizeof(header.magic));
+    absl::string_view header_magic(reinterpret_cast<const char*>(&header.magic),
+                                   sizeof(header.magic));
     CF_EXPECT_EQ(header_magic,
                  file_is_big_endian ? kBinaryBeMagic : kBinaryLeMagic);
 
@@ -284,14 +285,14 @@ Result<CpioReader::EntriesMap> CpioReader::ParseBin(const ReaderSeeker& reader,
 }
 
 Result<std::unique_ptr<ReaderSeeker>> CpioReader::OpenReadOnly(
-    std::string_view path) {
+    absl::string_view path) {
   auto it = entries_.find(path);
   CF_EXPECTF(it != entries_.end(), "File not found in cpio: '{}'", path);
   return std::make_unique<ReadWindowView>(*reader_, it->second.offset,
                                           it->second.size);
 }
 
-Result<uint32_t> CpioReader::FileAttributes(std::string_view path) const {
+Result<uint32_t> CpioReader::FileAttributes(absl::string_view path) const {
   auto it = entries_.find(path);
   CF_EXPECTF(it != entries_.end(), "File not found in cpio: '{}'", path);
   return it->second.mode;

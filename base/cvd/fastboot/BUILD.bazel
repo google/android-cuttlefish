@@ -62,6 +62,7 @@ cc_binary(
         "ANDROID_BASE_UNIQUE_FD_DISABLE_IMPLICIT_CONVERSION",
     ],
     deps = [
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_core//:libcutils",
         "@android_system_core//:liblp",
         "@android_system_core//:libsparse",

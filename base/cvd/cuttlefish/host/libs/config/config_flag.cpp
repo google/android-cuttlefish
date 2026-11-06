@@ -25,7 +25,6 @@
 #include <ostream>
 #include <set>
 #include <string>
-#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -33,6 +32,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "fmt/ranges.h"
 #include "fruit/component.h"
@@ -99,7 +99,7 @@ class ConfigReader : public FlagFeature {
     std::vector<std::string> dir_contents =
         CF_EXPECT(DirectoryContents(config_path));
     for (const std::string& file : dir_contents) {
-      std::string_view local_file(file);
+      absl::string_view local_file(file);
       if (absl::ConsumePrefix(&local_file, "cvd_config_") &&
           absl::ConsumeSuffix(&local_file, ".json")) {
         allowed_config_presets_.emplace(local_file);
@@ -115,7 +115,7 @@ class ConfigReader : public FlagFeature {
 
 // TODO(b/543955575): apply to all flags. Previous attempts hit issues
 // b/554046764
-bool ShouldPadWithUnset(std::string_view flag) {
+bool ShouldPadWithUnset(absl::string_view flag) {
   static constexpr std::array kFlags = {
       "gpu_mode",
   };
@@ -136,7 +136,7 @@ class ConfigFlagImpl : public ConfigFlag {
                       "device/google/cuttlefish/shared/config/config_*.json "
                       "for possible values.")
                 .Getter([this]() { return VectorizedFlagValue(configs_); })
-                .Setter([this](std::string_view arg) -> Result<void> {
+                .Setter([this](absl::string_view arg) -> Result<void> {
                   CF_EXPECT(ChooseConfigs(arg));
                   return {};
                 })) {}
@@ -220,7 +220,7 @@ class ConfigFlagImpl : public ConfigFlag {
   }
 
  private:
-  Result<void> ChooseConfigs(std::string_view value) {
+  Result<void> ChooseConfigs(absl::string_view value) {
     std::vector<std::string> configs = absl::StrSplit(value, ",");
     for (const auto& name : configs) {
       CF_EXPECTF(config_reader_.HasConfig(name),

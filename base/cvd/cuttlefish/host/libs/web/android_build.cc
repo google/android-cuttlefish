@@ -21,7 +21,6 @@
 #include <optional>
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <tuple>
 #include <utility>
 #include <variant>
@@ -29,6 +28,7 @@
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -72,9 +72,9 @@ std::optional<std::string> UrlCacheKey(
 
 // Returns where the name after the last '/' of `path` begins. A parsed path
 // has no leading '/', so a name at the root is the whole path.
-size_t BasenameStart(std::string_view path) {
+size_t BasenameStart(absl::string_view path) {
   const size_t slash = path.rfind('/');
-  return slash == std::string_view::npos ? 0 : slash + 1;
+  return slash == absl::string_view::npos ? 0 : slash + 1;
 }
 
 }  // namespace

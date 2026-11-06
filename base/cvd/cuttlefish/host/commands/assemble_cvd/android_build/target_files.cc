@@ -21,12 +21,12 @@
 #include <optional>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
@@ -47,8 +47,8 @@
 namespace cuttlefish {
 namespace {
 
-static constexpr std::string_view kTargetFilesMatch = "-target_files-";
-static constexpr std::string_view kImgSuffix = ".img";
+static constexpr absl::string_view kTargetFilesMatch = "-target_files-";
+static constexpr absl::string_view kImgSuffix = ".img";
 
 class TargetFilesImpl : public AndroidBuild {
  public:
@@ -73,7 +73,7 @@ class TargetFilesImpl : public AndroidBuild {
   }
 
   Result<std::map<std::string, std::string, std::less<void>>> MiscInfo() {
-    static constexpr std::string_view kMiscInfoTxt = "META/misc_info.txt";
+    static constexpr absl::string_view kMiscInfoTxt = "META/misc_info.txt";
     std::string contents = CF_EXPECT(archive_.MemberContents(kMiscInfoTxt));
     return CF_EXPECT(ParseKeyEqualsValue(contents));
   }
@@ -81,7 +81,7 @@ class TargetFilesImpl : public AndroidBuild {
   // Image files are stored as `IMAGES/*.img` archive members.
   Result<std::set<std::string, std::less<void>>> Images() override {
     std::set<std::string, std::less<void>> partitions;
-    for (std::string_view member : archive_.Members()) {
+    for (absl::string_view member : archive_.Members()) {
       if (!absl::ConsumeSuffix(&member, kImgSuffix)) {
         continue;
       }
@@ -94,7 +94,7 @@ class TargetFilesImpl : public AndroidBuild {
     return partitions;
   }
 
-  Result<std::string> ImageFile(std::string_view name, bool extract) override {
+  Result<std::string> ImageFile(absl::string_view name, bool extract) override {
     std::string member_name = absl::StrCat("IMAGES/", name, kImgSuffix);
     if (extract) {
       return CF_EXPECT(archive_.MemberFilepath(member_name, std::nullopt));
@@ -103,13 +103,13 @@ class TargetFilesImpl : public AndroidBuild {
     }
   }
 
-  Result<void> SetExtractDir(std::string_view dir) override {
+  Result<void> SetExtractDir(absl::string_view dir) override {
     extract_dir_ = dir;
     return {};
   }
 
   Result<std::set<std::string, std::less<void>>> AbPartitions() override {
-    static constexpr std::string_view kAbTxt = "META/ab_partitions.txt";
+    static constexpr absl::string_view kAbTxt = "META/ab_partitions.txt";
     std::string contents = CF_EXPECT(archive_.MemberContents(kAbTxt));
     return absl::StrSplit(contents, "\n", absl::SkipEmpty());
   }

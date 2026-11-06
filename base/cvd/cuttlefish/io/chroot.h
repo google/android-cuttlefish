@@ -18,7 +18,8 @@
 #include <stdint.h>
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/filesystem.h"
 #include "cuttlefish/io/io.h"
@@ -38,23 +39,23 @@ namespace cuttlefish {
 class ChrootReadWriteFilesystem : public ReadWriteFilesystem {
  public:
   ChrootReadWriteFilesystem(ReadWriteFilesystem& real_filesystem,
-                            std::string_view path_prefix);
+                            absl::string_view path_prefix);
 
   Result<std::unique_ptr<ReaderSeeker>> OpenReadOnly(
-      std::string_view path) override;
+      absl::string_view path) override;
 
-  Result<uint32_t> FileAttributes(std::string_view path) const override;
+  Result<uint32_t> FileAttributes(absl::string_view path) const override;
 
   Result<std::unique_ptr<ReaderWriterSeeker>> CreateFile(
-      std::string_view path) override;
+      absl::string_view path) override;
 
-  Result<void> DeleteFile(std::string_view path) override;
+  Result<void> DeleteFile(absl::string_view path) override;
 
   Result<std::unique_ptr<ReaderWriterSeeker>> OpenReadWrite(
-      std::string_view path) override;
+      absl::string_view path) override;
 
  private:
-  Result<std::string> ChrootToRealPath(std::string_view) const;
+  Result<std::string> ChrootToRealPath(absl::string_view) const;
 
   ReadWriteFilesystem* real_filesystem_;
   std::string path_prefix_;

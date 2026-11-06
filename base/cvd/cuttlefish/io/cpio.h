@@ -20,7 +20,8 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/filesystem.h"
 #include "cuttlefish/io/reader_seeker.h"
@@ -37,9 +38,9 @@ class CpioReader : public ReadFilesystem {
       std::unique_ptr<ReaderSeeker> reader);
 
   Result<std::unique_ptr<ReaderSeeker>> OpenReadOnly(
-      std::string_view path) override;
+      absl::string_view path) override;
 
-  Result<uint32_t> FileAttributes(std::string_view path) const override;
+  Result<uint32_t> FileAttributes(absl::string_view path) const override;
 
  private:
   struct FileEntry {

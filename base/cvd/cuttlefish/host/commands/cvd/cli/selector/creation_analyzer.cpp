@@ -20,12 +20,12 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"
@@ -90,7 +90,7 @@ Result<GroupCreationInfo> AnalyzeCreation(const CreationAnalyzerParam& params) {
   const auto it = params.envs.find(kAndroidProductOut);
   if (it != params.envs.end()) {
     product_out_val = it->second;
-    const std::vector<std::string_view> env_product_out =
+    const std::vector<absl::string_view> env_product_out =
         absl::StrSplit(product_out_val, ',');
     if (env_product_out.size() > params.num_instances) {
       LOG(WARNING) << env_product_out.size()

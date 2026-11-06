@@ -16,23 +16,25 @@
 
 #include "cuttlefish/ansi_codes/terminal_colors.h"
 
-#include <string_view>
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
 
 namespace cuttlefish {
 
-std::string_view TerminalColors::Reset() const {
+absl::string_view TerminalColors::Reset() const {
   return is_tty_ ? kAnsiReset : "";
 }
 
-std::string_view TerminalColors::BoldRed() const {
+absl::string_view TerminalColors::BoldRed() const {
   return is_tty_ ? kAnsiRed : "";
 }
 
-std::string_view TerminalColors::Red() const { return is_tty_ ? kAnsiRed : ""; }
+absl::string_view TerminalColors::Red() const {
+  return is_tty_ ? kAnsiRed : "";
+}
 
-std::string_view TerminalColors::Cyan() const {
+absl::string_view TerminalColors::Cyan() const {
   return is_tty_ ? kAnsiCyan : "";
 }
 

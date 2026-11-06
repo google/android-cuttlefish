@@ -18,7 +18,8 @@
 #include <functional>
 #include <ostream>
 #include <set>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/pretty/pretty.h"
 #include "cuttlefish/pretty/struct.h"
@@ -79,7 +80,7 @@ class AndroidBuild {
    * inside the implementation to scan all `AndroidBuild` implementations for
    * any that can provide the file without extracting it.
    */
-  virtual Result<std::string> ImageFile(std::string_view name,
+  virtual Result<std::string> ImageFile(absl::string_view name,
                                         bool extract = true);
 
   /**
@@ -87,7 +88,7 @@ class AndroidBuild {
    * store generated files here, and implementations may extract files here as
    * part of the implementation of other methods.
    */
-  virtual Result<void> SetExtractDir(std::string_view);
+  virtual Result<void> SetExtractDir(absl::string_view);
 
   virtual Result<std::set<std::string, std::less<void>>> AbPartitions();
 

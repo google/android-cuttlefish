@@ -26,6 +26,7 @@ cf_cc_library(
     deps = [
         "//allocd/net:netlink",
         "//linux_headers",
+        "@abseil-cpp//absl/strings:string_view",
         "@googletest//:gtest",
     ],
 )

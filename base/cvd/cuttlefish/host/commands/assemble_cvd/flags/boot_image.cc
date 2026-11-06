@@ -18,11 +18,11 @@
 #include <stddef.h>
 
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "gflags/gflags.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
@@ -38,7 +38,7 @@ DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
 namespace cuttlefish {
 namespace {
 
-static constexpr std::string_view kName = "boot";
+static constexpr absl::string_view kName = "boot";
 
 Result<std::vector<std::string>> Defaults(AndroidBuilds& android_builds) {
   std::vector<std::string> defaults;

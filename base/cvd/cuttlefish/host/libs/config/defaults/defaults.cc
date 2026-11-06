@@ -19,9 +19,9 @@
 #include <map>
 #include <optional>
 #include <string>
-#include <string_view>
 
 #include "absl/container/btree_map.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -36,7 +36,7 @@ Defaults::Defaults(
   }
 }
 
-std::optional<std::string_view> Defaults::Value(std::string_view k) const {
+std::optional<absl::string_view> Defaults::Value(absl::string_view k) const {
   absl::btree_map<std::string, std::string>::const_iterator it =
       defaults_.find(k);
   if (it == defaults_.end()) {
@@ -46,7 +46,7 @@ std::optional<std::string_view> Defaults::Value(std::string_view k) const {
   }
 }
 
-std::optional<bool> Defaults::BoolValue(std::string_view k) const {
+std::optional<bool> Defaults::BoolValue(absl::string_view k) const {
   return Value(k) == "true" ? true : false;
 }
 

@@ -22,9 +22,9 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 
+#include "absl/strings/string_view.h"
 #include "zip.h"
 
 #include "cuttlefish/host/libs/zip/libzip_cc/error.h"
@@ -131,12 +131,12 @@ Result<SeekableZipSource> ReadableZip::GetFile(uint64_t index) const {
 }
 
 Result<std::unique_ptr<ReaderSeeker>> ReadableZip::OpenReadOnly(
-    std::string_view path) {
+    absl::string_view path) {
   SeekableZipSource source = CF_EXPECT(GetFile(std::string(path)));
   return CF_EXPECT(ZipSourceAsReaderSeeker(std::move(source)));
 }
 
-Result<uint32_t> ReadableZip::FileAttributes(std::string_view path) const {
+Result<uint32_t> ReadableZip::FileAttributes(absl::string_view path) const {
   ReadableZipSource source = CF_EXPECT(GetFile(std::string(path)));
   ZipStat stat_out = CF_EXPECT(source.Stat());
   uint64_t index = CF_EXPECT(std::move(stat_out.index));

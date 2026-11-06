@@ -46,6 +46,7 @@ cf_cc_library(
         "//cuttlefish/flag_parser",
         "//cuttlefish/metrics/io:metrics_environment",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 

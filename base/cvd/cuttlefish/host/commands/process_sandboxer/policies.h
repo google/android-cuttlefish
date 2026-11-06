@@ -20,16 +20,16 @@
 #include <ostream>
 #include <set>
 #include <string>
-#include <string_view>
 
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "sandboxed_api/sandbox2/policybuilder.h"
 
 namespace cuttlefish::process_sandboxer {
 
 struct HostInfo {
   absl::Status EnsureOutputDirectoriesExist();
-  std::string HostToolExe(std::string_view exe) const;
+  std::string HostToolExe(absl::string_view exe) const;
   std::string EnvironmentsUdsDir() const;
   std::string InstanceUdsDir() const;
   std::string VsockDeviceDir() const;
@@ -46,7 +46,7 @@ struct HostInfo {
 
 std::ostream& operator<<(std::ostream&, const HostInfo&);
 
-sandbox2::PolicyBuilder BaselinePolicy(const HostInfo&, std::string_view exe);
+sandbox2::PolicyBuilder BaselinePolicy(const HostInfo&, absl::string_view exe);
 
 sandbox2::PolicyBuilder AdbConnectorPolicy(const HostInfo&);
 sandbox2::PolicyBuilder AssembleCvdPolicy(const HostInfo&);
@@ -85,8 +85,8 @@ sandbox2::PolicyBuilder WmediumdGenConfigPolicy(const HostInfo&);
 std::set<std::string> NoPolicy(const HostInfo&);
 
 std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
-    const HostInfo& host_info, std::string_view server_socket_outside_path,
-    std::string_view executable_path);
+    const HostInfo& host_info, absl::string_view server_socket_outside_path,
+    absl::string_view executable_path);
 
 }  // namespace cuttlefish::process_sandboxer
 

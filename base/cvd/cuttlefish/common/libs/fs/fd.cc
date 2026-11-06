@@ -41,7 +41,8 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_format.h"  // IWYU pragma: keep
-#include "fmt/chrono.h"               // IWYU pragma: keep
+#include "absl/strings/string_view.h"
+#include "fmt/chrono.h"  // IWYU pragma: keep
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/scoped_mmap.h"
@@ -173,7 +174,7 @@ Result<Fd, int> Fd::Event(int initval, int flags) {
 }
 #endif
 
-Result<Fd, int> Fd::ShmOpen(std::string_view name, int oflag, int mode) {
+Result<Fd, int> Fd::ShmOpen(absl::string_view name, int oflag, int mode) {
   std::string name_str(name);
   const int fd = TEMP_FAILURE_RETRY(shm_open(name_str.c_str(), oflag, mode));
   CF_EXPECTVF(fd >= 0, errno, "shm_open('{}', {}, {}) failed: {}", name, oflag,
@@ -181,7 +182,7 @@ Result<Fd, int> Fd::ShmOpen(std::string_view name, int oflag, int mode) {
   return Fd(fd, 0);
 }
 
-Result<Fd, int> Fd::MemfdCreate(std::string_view name, unsigned int flags) {
+Result<Fd, int> Fd::MemfdCreate(absl::string_view name, unsigned int flags) {
 #ifdef __linux__
   return Fd(CF_EXPECT(MemfdCreateWrapper(std::string(name), flags)), 0);
 #else
@@ -202,7 +203,7 @@ Result<std::pair<Fd, Fd>, int> Fd::SocketPair(int domain, int type,
   return std::make_pair(Fd(fds[0], 0), Fd(fds[1], 0));
 }
 
-Result<Fd, int> Fd::Open(std::string_view path, int flags, mode_t mode) {
+Result<Fd, int> Fd::Open(absl::string_view path, int flags, mode_t mode) {
   const int fd =
       TEMP_FAILURE_RETRY(open(std::string(path).c_str(), flags, mode));
   CF_EXPECTVF(fd >= 0, errno, "open('{}', {}, {}) failed: {}", path, flags,
@@ -219,11 +220,11 @@ Result<Fd, int> Fd::InotifyFd(void) {
 }
 #endif
 
-Result<Fd, int> Fd::Creat(std::string_view path, mode_t mode) {
+Result<Fd, int> Fd::Creat(absl::string_view path, mode_t mode) {
   return CF_EXPECT(Fd::Open(path, O_CREAT | O_WRONLY | O_TRUNC, mode));
 }
 
-Result<Fd, int> Fd::Fifo(std::string_view path, mode_t mode) {
+Result<Fd, int> Fd::Fifo(absl::string_view path, mode_t mode) {
   struct stat st{};
   std::string path_str(path);
   if (TEMP_FAILURE_RETRY(stat(path_str.c_str(), &st)) == 0) {
@@ -245,7 +246,7 @@ Result<Fd, int> Fd::Socket(int domain, int socket_type, int protocol) {
 }
 
 Result<std::pair<Fd, std::string>, int> Fd::Mkostemp(
-    const std::string_view path, const int flags) {
+    const absl::string_view path, const int flags) {
   // mkostemp replaces the Xs with random selections to make a unique filename
   std::string temp_path = fmt::format("{}XXXXXX", path);
   const int fd = TEMP_FAILURE_RETRY(mkostemp(temp_path.data(), flags));
@@ -256,12 +257,12 @@ Result<std::pair<Fd, std::string>, int> Fd::Mkostemp(
 
 Fd Fd::ErrorFD(int error) { return Fd(-1, error); }
 
-Result<Fd, int> Fd::SocketLocalClient(std::string_view name, bool abstract,
+Result<Fd, int> Fd::SocketLocalClient(absl::string_view name, bool abstract,
                                       int in_type) {
   return CF_EXPECT(SocketLocalClient(name, abstract, in_type, 0));
 }
 
-Result<Fd, int> Fd::SocketLocalClient(std::string_view name, bool abstract,
+Result<Fd, int> Fd::SocketLocalClient(absl::string_view name, bool abstract,
                                       int in_type, int timeout_seconds) {
   std::string name_str(name);
 
@@ -292,7 +293,7 @@ Result<Fd, int> Fd::SocketLocalClient(int port, int type) {
   return rval;
 }
 
-Result<Fd, int> Fd::SocketClient(std::string_view host, int port, int type,
+Result<Fd, int> Fd::SocketClient(absl::string_view host, int port, int type,
                                  std::chrono::seconds timeout) {
   sockaddr_in addr{};
   addr.sin_family = AF_INET;
@@ -310,8 +311,8 @@ Result<Fd, int> Fd::SocketClient(std::string_view host, int port, int type,
   return rval;
 }
 
-Result<Fd, int> Fd::Socket6Client(std::string_view host,
-                                  std::string_view interface, int port,
+Result<Fd, int> Fd::Socket6Client(absl::string_view host,
+                                  absl::string_view interface, int port,
                                   int type, std::chrono::seconds timeout) {
   sockaddr_in6 addr{};
   addr.sin6_family = AF_INET6;
@@ -375,7 +376,7 @@ Result<Fd, int> Fd::SocketLocalServer(int port, int type) {
   return rval;
 }
 
-Result<Fd, int> Fd::SocketLocalServer(std::string_view name, bool abstract,
+Result<Fd, int> Fd::SocketLocalServer(absl::string_view name, bool abstract,
                                       int in_type, mode_t mode) {
   // DO NOT UNLINK addr.sun_path. It does NOT have to be null-terminated.
   // See man 7 unix for more details.
