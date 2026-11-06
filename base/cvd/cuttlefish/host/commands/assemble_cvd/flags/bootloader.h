@@ -23,6 +23,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
+#include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -31,8 +32,8 @@ namespace cuttlefish {
 class BootloaderFlag {
  public:
   static Result<BootloaderFlag> FromGlobalGflags(
-      const std::vector<GuestConfig>&, const SystemImageDirFlag&,
-      const VmManagerFlag&);
+      const FetcherConfigs&, const std::vector<GuestConfig>&,
+      const SystemImageDirFlag&, const VmManagerFlag&);
 
   std::string BootloaderForInstance(size_t instance_index) const;
 

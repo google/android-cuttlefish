@@ -106,6 +106,7 @@ class ConsoleForwarder {
     Result<Fd> pty_fd = Fd::Dup(pty);
     close(pty);
     CHECK(pty_fd.has_value()) << pty_fd.error();
+    CHECK_EQ(pty_fd->SetTerminalRaw(), 0) << pty_fd->StrError();
 
     return std::move(*pty_fd);
   }
