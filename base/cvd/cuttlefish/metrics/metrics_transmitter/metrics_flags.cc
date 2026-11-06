@@ -18,8 +18,9 @@
 
 #include <cstdint>
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/flag_parser/flag.h"
@@ -34,7 +35,7 @@ Flag EnvironmentGflagsCompatFlag(const std::string& name,
                                  ClearcutEnvironment& value) {
   return Flag::StringFlag(name)
       .Getter([&value]() { return EnvironmentToString(value); })
-      .Setter([name, &value](std::string_view arg) -> Result<void> {
+      .Setter([name, &value](absl::string_view arg) -> Result<void> {
         if (arg == kClearcutLocal) {
           value = ClearcutEnvironment::Local;
         } else if (arg == kClearcutStaging) {
@@ -51,7 +52,7 @@ Flag EnvironmentGflagsCompatFlag(const std::string& name,
 Flag Base64GflagsCompatFlag(const std::string& name, std::string& value) {
   return Flag::StringFlag(name)
       .Getter([&value]() { return value; })
-      .Setter([name, &value](std::string_view arg) -> Result<void> {
+      .Setter([name, &value](absl::string_view arg) -> Result<void> {
         std::vector<uint8_t> decoded_out =
             CF_EXPECTF(DecodeBase64(std::string(arg)),
                        "Unable to base64 decode string: '{}'", arg);

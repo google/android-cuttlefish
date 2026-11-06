@@ -20,8 +20,9 @@
 #include <ostream>
 #include <span>
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -48,8 +49,8 @@ class Flag {
   Flag Getter(std::function<std::string()>) &&;
   /* Set the callback for matches. The callback may be invoked multiple times.
    */
-  Flag& Setter(std::function<Result<void>(std::string_view)>) &;
-  Flag Setter(std::function<Result<void>(std::string_view)>) &&;
+  Flag& Setter(std::function<Result<void>(absl::string_view)>) &;
+  Flag Setter(std::function<Result<void>(absl::string_view)>) &&;
   /* Add a callback to validate the parsed flag value. These callbacks are
    * guaranteed to be called after Setter succeeds in the same order they are
    * added. Validation stops when one validator callback fails, remaining
@@ -76,12 +77,12 @@ class Flag {
   /* Calls the flag's setter with the appropriate value if it matches the
    * current argument. Returns the number of arguments consumed by the flag
    * (typically between 0 and 2), with 0 indicating the flag doesn't match. */
-  Result<size_t> Match(std::string_view current_arg,
+  Result<size_t> Match(absl::string_view current_arg,
                        std::span<const std::string> following_args) const;
-  Result<size_t> MatchStringStyleFlag(std::string_view,
+  Result<size_t> MatchStringStyleFlag(absl::string_view,
                                       std::span<const std::string>) const;
-  Result<size_t> MatchBoolStyleFlag(std::string_view) const;
-  Result<void> SetAndValidate(std::string_view) const;
+  Result<size_t> MatchBoolStyleFlag(absl::string_view) const;
+  Result<void> SetAndValidate(absl::string_view) const;
 
   friend void WriteGflagsCompatXml(const Flag&, std::ostream&);
   friend Result<void> ConsumeFlags(const std::vector<Flag>&,
@@ -92,7 +93,7 @@ class Flag {
   std::string help_;
   std::string value_name_hint_ = "VAL";
   std::function<std::string()> getter_ = []() { return ""; };
-  std::function<Result<void>(std::string_view value)> setter_;
+  std::function<Result<void>(absl::string_view value)> setter_;
   std::vector<std::function<Result<void>()>> validators_;
 };
 

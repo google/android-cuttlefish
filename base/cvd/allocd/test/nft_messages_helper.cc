@@ -29,8 +29,9 @@
 #include <sys/socket.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "allocd/net/netlink_request.h"
 
@@ -188,7 +189,7 @@ std::vector<char> BuildErrorReply(int error) {
   return Bytes(req);
 }
 
-std::vector<char> BuildTableReply(std::string_view name) {
+std::vector<char> BuildTableReply(absl::string_view name) {
   NetlinkRequest req(NftType(NFT_MSG_NEWTABLE), 0);
   req.Append(nfgenmsg{
       .nfgen_family = NFPROTO_IPV4,

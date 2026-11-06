@@ -21,13 +21,13 @@
 #include <ranges>
 #include <set>
 #include <string>
-#include <string_view>
 #include <thread>
 #include <unordered_set>
 #include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
 #include "json/value.h"
@@ -138,7 +138,7 @@ Result<SeekableZipSource> AndroidBuildApi::FileReader(
 }
 
 Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
-    std::string_view build_id, std::string_view target) {
+    absl::string_view build_id, absl::string_view target) {
   const std::string url = android_build_url_.GetBuildUrl(build_id, target);
   auto response =
       CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
@@ -181,8 +181,8 @@ Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
 }
 
 Result<bool> AndroidBuildApi::BlockUntilTerminalStatus(
-    std::string_view initial_status, std::string_view build_id,
-    std::string_view target) {
+    absl::string_view initial_status, absl::string_view build_id,
+    absl::string_view target) {
   const std::string url = android_build_url_.GetBuildUrl(build_id, target);
   CF_EXPECTF(!initial_status.empty(),
              "\"{}\" is not a valid branch or build id.", build_id);

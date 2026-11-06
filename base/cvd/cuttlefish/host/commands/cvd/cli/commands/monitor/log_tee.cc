@@ -19,12 +19,12 @@
 #include <cctype>
 #include <cstddef>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -34,30 +34,30 @@
 
 namespace cuttlefish {
 
-Result<LogTeeLine> ParseLogTeeLine(std::string_view line) {
+Result<LogTeeLine> ParseLogTeeLine(absl::string_view line) {
   // Split on any whitespace sequence, ignoring empty results to handle tabs and
   // multiple spaces.
   // Note: We avoid absl::MaxSplits here because it counts delimiter matches
   // *before* absl::SkipWhitespace filters them, which breaks index alignment on
   // double-spaces.
-  std::vector<std::string_view> fields =
+  std::vector<absl::string_view> fields =
       absl::StrSplit(line, absl::ByAnyChar(" \t"), absl::SkipWhitespace());
   CF_EXPECT(fields.size() >= 3, "Failed to parse log_tee line");
 
-  std::string_view date = fields[0];
+  absl::string_view date = fields[0];
   CF_EXPECT(absl::StartsWith(date, "["), "Date does not start with '['");
 
-  std::string_view severity = fields[1];
+  absl::string_view severity = fields[1];
   for (const char c : severity) {
     CF_EXPECT(std::isupper(c), "Invalid severity characters");
   }
 
-  std::string_view subsystem = fields[2];
+  absl::string_view subsystem = fields[2];
   CF_EXPECT(absl::EndsWith(subsystem, "]"), "Subsystem does not end with ']'");
 
   const char* message_start = fields[2].data() + fields[2].size();
   const size_t message_len = line.data() + line.size() - message_start;
-  std::string_view message(message_start, message_len);
+  absl::string_view message(message_start, message_len);
 
   return LogTeeLine{
       .date = date,
@@ -68,7 +68,7 @@ Result<LogTeeLine> ParseLogTeeLine(std::string_view line) {
 }
 
 std::string FormatLogTeeLine(const LogTeeLine& line) {
-  const std::string_view severity_color =
+  const absl::string_view severity_color =
       ToSeverity(line.severity).transform(GetColorForSeverity).value_or("");
 
   return absl::StrCat(kAnsiGreen, line.date, " ", severity_color, line.severity,
@@ -76,11 +76,11 @@ std::string FormatLogTeeLine(const LogTeeLine& line) {
                       line.message);
 }
 
-Result<std::string> ColorLogTeeLine(std::string_view line) {
+Result<std::string> ColorLogTeeLine(absl::string_view line) {
   return FormatLogTeeLine(CF_EXPECT(ParseLogTeeLine(line)));
 }
 
-Result<bool> FilterLogTeeLine(LogSeverity filter, std::string_view line) {
+Result<bool> FilterLogTeeLine(LogSeverity filter, absl::string_view line) {
   const LogTeeLine parsed = CF_EXPECT(ParseLogTeeLine(line));
   LogSeverity line_severity = CF_EXPECT(ToSeverity(parsed.severity));
   return FilterSeverity(filter, line_severity);

@@ -18,8 +18,8 @@
 
 #include <chrono>
 #include <string>
-#include <string_view>
 
+#include "absl/strings/string_view.h"
 #include "fmt/chrono.h"  // IWYU pragma: keep
 #include "fmt/format.h"
 #include "google/protobuf/text_format.h"
@@ -41,8 +41,8 @@ std::string GenerateFilenameSuffix() {
 
 }  // namespace
 
-Result<void> WriteMetricsEvent(std::string_view event_type_label,
-                               std::string_view metrics_directory,
+Result<void> WriteMetricsEvent(absl::string_view event_type_label,
+                               absl::string_view metrics_directory,
                                const CuttlefishLogEvent& cf_log_event) {
   const std::string event_filepath =
       fmt::format("{}/{}_{}_{}.txtpb", metrics_directory, event_type_label,

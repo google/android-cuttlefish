@@ -15,6 +15,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@grpc//:grpc++",
         "@grpc//test/cpp/util:grpc_cli_libs",
         "@grpc//test/cpp/util:grpc_cli_utils",

@@ -20,12 +20,13 @@
 #include <string_view>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<GpuMode> GpuModeFromString(std::string_view mode) {
+Result<GpuMode> GpuModeFromString(absl::string_view mode) {
   if (mode == kGpuModeAuto) {
     return GpuMode::Auto;
   } else if (mode == kGpuModeCustom) {

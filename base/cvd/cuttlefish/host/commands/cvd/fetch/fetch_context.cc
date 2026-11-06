@@ -19,13 +19,13 @@
 #include <unistd.h>
 
 #include <string>
-#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
@@ -61,7 +61,7 @@ using android::base::Dirname;
 
 namespace {
 
-bool IsVbmetaImage(std::string_view path) {
+bool IsVbmetaImage(absl::string_view path) {
   return absl::EndsWith(path, "/vbmeta.img") ||
          absl::EndsWith(path, "/vbmeta_system.img") ||
          absl::EndsWith(path, "/vbmeta_system_dlkm.img") ||
@@ -255,9 +255,9 @@ Result<void> FetchArtifact::DeleteLocalFile() {
     return {};
   }
   CF_EXPECT(RemoveFile(downloaded_path_));
-  std::string_view base_dir =
+  absl::string_view base_dir =
       fetch_build_context_.fetch_context_.target_directories_.root;
-  std::string_view config_name = absl::StripPrefix(downloaded_path_, base_dir);
+  absl::string_view config_name = absl::StripPrefix(downloaded_path_, base_dir);
   config_name = absl::StripPrefix(config_name, "/");
   CF_EXPECT(
       fetch_build_context_.fetch_context_.fetcher_config_.RemoveFileFromConfig(
@@ -268,7 +268,7 @@ Result<void> FetchArtifact::DeleteLocalFile() {
 
 FetchBuildContext::FetchBuildContext(FetchContext& fetch_context,
                                      ::cuttlefish::Build build,
-                                     std::string_view target_directory,
+                                     absl::string_view target_directory,
                                      FileSource file_source,
                                      FetchTracer::Trace trace)
     : fetch_context_(fetch_context),
@@ -311,7 +311,7 @@ FetchArtifact FetchBuildContext::Artifact(std::string artifact_name) {
 
 Result<void> FetchBuildContext::DesparseFiles(std::vector<std::string> files) {
   std::vector<std::string> full_paths;
-  for (const std::string_view file : files) {
+  for (const absl::string_view file : files) {
     full_paths.emplace_back(fmt::format("{}/{}", target_directory_, file));
   }
 

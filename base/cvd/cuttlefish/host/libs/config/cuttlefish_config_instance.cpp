@@ -21,7 +21,6 @@
 #include <fstream>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -29,6 +28,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 #include "google/protobuf/text_format.h"
@@ -1018,7 +1018,7 @@ CuttlefishConfig::InstanceSpecific::extra_bootconfig_args() const {
       (*Dictionary())[kExtraBootconfigArgsInstanced].asString();
   std::vector<std::string> bootconfig;
   if (!extra_bootconfig_args_str.empty()) {
-    for (std::string_view arg :
+    for (absl::string_view arg :
          absl::StrSplit(extra_bootconfig_args_str, ' ')) {
       bootconfig.emplace_back(arg);
     }
@@ -2143,12 +2143,12 @@ void CuttlefishConfig::MutableInstanceSpecific::set_media_configs(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstancePath(
-    std::string_view file_name) const {
+    absl::string_view file_name) const {
   return absl::StrCat(instance_dir(), "/", file_name);
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalPath(
-    std::string_view file_name) const {
+    absl::string_view file_name) const {
   if (file_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerInstancePath(kInternalDirName);
@@ -2158,12 +2158,12 @@ std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalPath(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstanceUdsPath(
-    std::string_view file_name) const {
+    absl::string_view file_name) const {
   return absl::StrCat(instance_uds_dir(), "/", file_name);
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalUdsPath(
-    std::string_view file_name) const {
+    absl::string_view file_name) const {
   if (file_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerInstanceUdsPath(kInternalDirName);
@@ -2173,7 +2173,7 @@ std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalUdsPath(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstanceGrpcSocketPath(
-    std::string_view socket_name) const {
+    absl::string_view socket_name) const {
   if (socket_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerInstanceUdsPath(kGrpcSocketDirName);
@@ -2183,7 +2183,7 @@ std::string CuttlefishConfig::InstanceSpecific::PerInstanceGrpcSocketPath(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstanceLogPath(
-    std::string_view file_name) const {
+    absl::string_view file_name) const {
   if (file_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerInstancePath(kLogDirName);

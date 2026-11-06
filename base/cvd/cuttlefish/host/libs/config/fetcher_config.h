@@ -20,8 +20,8 @@
 #include <mutex>
 #include <ostream>
 #include <string>
-#include <string_view>
 
+#include "absl/strings/string_view.h"
 #include "json/value.h"
 
 #include "cuttlefish/host/libs/config/file_source.h"
@@ -80,7 +80,7 @@ class FetcherConfig {
   std::map<std::string, CvdFile> get_cvd_files() const;
 
   std::string FindCvdFileWithSuffix(FileSource source,
-                                    std::string_view suffix) const;
+                                    absl::string_view suffix) const;
 
   Result<void> RemoveFileFromConfig(const std::string& path);
 

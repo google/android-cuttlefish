@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include <string_view>
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/result/expect.h"
@@ -30,7 +30,7 @@
 namespace cuttlefish {
 namespace {
 
-Result<void> CopyImpl(std::string_view from, std::string_view to) {
+Result<void> CopyImpl(absl::string_view from, absl::string_view to) {
   Fd fd_from = CF_EXPECT(Fd::Open(from, O_RDONLY));
   Fd fd_to = CF_EXPECT(Fd::Open(to, O_WRONLY | O_CREAT | O_TRUNC, 0644));
 
@@ -75,7 +75,7 @@ Result<void> CopyImpl(std::string_view from, std::string_view to) {
 
 }  // namespace
 
-Result<void> Copy(std::string_view from, std::string_view to) {
+Result<void> Copy(absl::string_view from, absl::string_view to) {
   CF_EXPECTF(CopyImpl(from, to), "Failed to copy file '{}' to '{}'", from, to);
   return {};
 }

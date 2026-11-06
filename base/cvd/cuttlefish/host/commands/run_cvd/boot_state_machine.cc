@@ -28,7 +28,6 @@
 #include <optional>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <thread>
 #include <unordered_set>
 #include <vector>
@@ -36,6 +35,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "android-base/file.h"
 #include "fruit/component.h"
@@ -88,7 +88,7 @@ DEFINE_int32(boot_timeout_secs, 600,
 namespace cuttlefish {
 namespace {
 
-Result<void> MoveSelfToCgroup(std::string_view id) {
+Result<void> MoveSelfToCgroup(absl::string_view id) {
   const std::string to_path_file =
       absl::StrCat("/sys/fs/cgroup/vsoc-", id, "-cf/cgroup.procs");
   Fd fd = CF_EXPECT(Fd::Open(to_path_file, O_WRONLY | O_APPEND));

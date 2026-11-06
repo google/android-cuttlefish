@@ -18,12 +18,12 @@
 #include <stddef.h>
 
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "gflags/gflags.h"
 
 #include "cuttlefish/files/file_exists.h"
@@ -40,12 +40,12 @@ DEFINE_string(android_efi_loader, CF_DEFAULTS_ANDROID_EFI_LOADER,
 namespace cuttlefish {
 namespace {
 
-static constexpr std::string_view kName = "/android_efi_loader.efi";
+static constexpr absl::string_view kName = "/android_efi_loader.efi";
 
 std::vector<std::string> DefaultPaths(
     const SystemImageDirFlag& system_image_dirs) {
   std::vector<std::string> paths;
-  for (std::string_view system_image_dir : system_image_dirs.AsVector()) {
+  for (absl::string_view system_image_dir : system_image_dirs.AsVector()) {
     // EFI loader isn't present in the output folder by default and can be only
     // fetched by --android_efi_loader_build in fetch_cvd, so pick it only in
     // case it's present.

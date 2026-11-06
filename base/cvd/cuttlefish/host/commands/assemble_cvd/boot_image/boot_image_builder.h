@@ -17,7 +17,8 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/concat.h"
 #include "cuttlefish/io/io.h"
@@ -27,8 +28,8 @@ namespace cuttlefish {
 
 class BootImageBuilder {
  public:
-  BootImageBuilder& KernelCommandLine(std::string_view) &;
-  BootImageBuilder KernelCommandLine(std::string_view) &&;
+  BootImageBuilder& KernelCommandLine(absl::string_view) &;
+  BootImageBuilder KernelCommandLine(absl::string_view) &&;
 
   BootImageBuilder& Kernel(std::unique_ptr<ReaderSeeker>) &;
   BootImageBuilder Kernel(std::unique_ptr<ReaderSeeker>) &&;

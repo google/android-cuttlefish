@@ -20,6 +20,8 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/strings/string_view.h"
+
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -27,7 +29,7 @@ namespace cuttlefish {
 // Returns the "<scheme>" of a "<scheme>://..." string, or nullopt when it
 // does not begin with one. A scheme starts with a letter and continues with
 // letters, digits, '+', '-' and '.'.
-std::optional<std::string_view> UrlScheme(std::string_view url);
+std::optional<absl::string_view> UrlScheme(absl::string_view url);
 
 struct ParsedUrl {
   std::string authority;  // bucket or host
@@ -39,12 +41,12 @@ struct ParsedUrl {
   bool IsDirectoryForm() const { return path.empty() || path.ends_with('/'); }
 };
 
-Result<ParsedUrl> ParseUrl(std::string_view url);
+Result<ParsedUrl> ParseUrl(absl::string_view url);
 
 // Returns the product named by a "<product>-img-<id>.zip" or
 // "<product>-img.zip" artifact, or nullopt when the name does not follow the
 // Android Build convention.
-std::optional<std::string> DeriveProduct(std::string_view basename);
+std::optional<std::string> DeriveProduct(absl::string_view basename);
 
 // Returns true when the object form names one archive, so that `{selector}`
 // names a member of it rather than a second artifact of the build.
@@ -65,7 +67,7 @@ std::string_view format_as(BuildZipKind kind);
 
 // Returns the name of the `kind` zip of a URL build that holds `object` and
 // nothing else.
-Result<std::string> ResolveUrlZipName(std::string_view object,
+Result<std::string> ResolveUrlZipName(absl::string_view object,
                                       BuildZipKind kind);
 
 // Returns the name of the `kind` zip of a URL build whose complete object

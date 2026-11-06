@@ -18,6 +18,8 @@
 #include <ostream>
 #include <string_view>
 
+#include "absl/strings/string_view.h"
+
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -29,7 +31,7 @@ enum class ExternalNetworkMode {
 };
 
 std::ostream& operator<<(std::ostream&, ExternalNetworkMode);
-Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view);
+Result<ExternalNetworkMode> ParseExternalNetworkMode(absl::string_view);
 
 // For libfmt
 std::string_view format_as(ExternalNetworkMode);

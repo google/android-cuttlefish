@@ -17,13 +17,13 @@
 
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/pretty/numeric.h"  // IWYU pragma: export
 #include "cuttlefish/pretty/pretty.h"
@@ -59,17 +59,17 @@ namespace cuttlefish {
  */
 class PrettyStruct {
  public:
-  explicit PrettyStruct(std::string_view name);
+  explicit PrettyStruct(absl::string_view name);
 
   template <typename T>
-  PrettyStruct& Member(std::string_view name, const T& value) & {
+  PrettyStruct& Member(absl::string_view name, const T& value) & {
     MemberInternal(
         absl::StrCat(name, ": ", Pretty(value, PrettyAdlPlaceholder())));
     return *this;
   }
 
   template <typename T>
-  PrettyStruct Member(std::string_view name, const T& value) && {
+  PrettyStruct Member(absl::string_view name, const T& value) && {
     this->Member(name, value);
     return std::move(*this);
   }
@@ -85,7 +85,7 @@ class PrettyStruct {
   }
 
  private:
-  void MemberInternal(std::string_view);
+  void MemberInternal(absl::string_view);
 
   std::string name_;
   std::vector<std::string> members_;

@@ -25,7 +25,8 @@
 
 #include <array>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/expect.h"
@@ -48,7 +49,7 @@ Result<std::string, int> RealPath(const std::string& path) {
   return CF_EXPECT(RealPath(path.c_str()));
 }
 
-Result<std::string, int> RealPath(std::string_view path) {
+Result<std::string, int> RealPath(absl::string_view path) {
   return CF_EXPECT(RealPath(std::string(path)));
 }
 

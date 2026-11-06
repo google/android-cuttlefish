@@ -22,10 +22,10 @@
 #include <iostream>
 #include <map>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 #include "json/value.h"
 
@@ -49,7 +49,7 @@ usage: cvd ps [--help]
   cvd ps will list the active devices in a clean table format.
 )";
 
-const std::map<PsColumns, std::string_view> kHeaders = {
+const std::map<PsColumns, absl::string_view> kHeaders = {
     {PsColumns::kGroups, "GROUPS"},
     {PsColumns::kNames, "NAMES"},
     {PsColumns::kId, "ID"},
@@ -59,10 +59,10 @@ const std::map<PsColumns, std::string_view> kHeaders = {
     {PsColumns::kWebAccess, "WEB_ACCESS"},
 };
 
-void PrintTable(const std::map<PsColumns, std::string_view>& headers,
+void PrintTable(const std::map<PsColumns, absl::string_view>& headers,
                 const std::vector<PsRow>& rows) {
   std::map<PsColumns, size_t> col_widths;
-  for (const std::pair<const PsColumns, std::string_view>& pair : headers) {
+  for (const std::pair<const PsColumns, absl::string_view>& pair : headers) {
     col_widths[pair.first] = pair.second.size();
   }
 
@@ -74,7 +74,7 @@ void PrintTable(const std::map<PsColumns, std::string_view>& headers,
   }
 
   // Print headers
-  for (const std::pair<const PsColumns, std::string_view>& pair : headers) {
+  for (const std::pair<const PsColumns, absl::string_view>& pair : headers) {
     std::cout << std::left << std::setw(col_widths[pair.first] + 3)
               << pair.second;
   }
@@ -82,7 +82,7 @@ void PrintTable(const std::map<PsColumns, std::string_view>& headers,
 
   // Print rows
   for (const PsRow& row : rows) {
-    for (const std::pair<const PsColumns, std::string_view>& pair : headers) {
+    for (const std::pair<const PsColumns, absl::string_view>& pair : headers) {
       std::string val = "";
       std::map<PsColumns, std::string>::const_iterator it =
           row.find(pair.first);

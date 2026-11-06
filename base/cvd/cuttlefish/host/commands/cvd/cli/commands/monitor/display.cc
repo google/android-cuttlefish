@@ -21,13 +21,13 @@
 
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 
 #include "cuttlefish/ansi_codes/should_color.h"
@@ -75,8 +75,8 @@ void LogMonitorDisplay::DrawBorderedText(const MonitorOutput& output) {
 
   for (const std::string& raw_line : output.lines) {
     std::string sanitized_holder;
-    std::string_view line = raw_line;
-    if (line.find_first_of("\t\r\n") != std::string_view::npos) {
+    absl::string_view line = raw_line;
+    if (line.find_first_of("\t\r\n") != absl::string_view::npos) {
       sanitized_holder = raw_line;
       absl::StrReplaceAll({{"\t", "    "}, {"\r", ""}, {"\n", ""}},
                           &sanitized_holder);
@@ -87,7 +87,7 @@ void LogMonitorDisplay::DrawBorderedText(const MonitorOutput& output) {
   total_lines_drawn_ += 1 + output.lines.size();
 }
 
-void LogMonitorDisplay::FormatAndDrawLine(std::string_view formatted) {
+void LogMonitorDisplay::FormatAndDrawLine(absl::string_view formatted) {
   auto [final_line, visible_len] = TruncateColoredString(formatted, width_ - 2);
   if (visible_len < width_ - 2) {
     absl::StrAppend(&final_line, std::string(width_ - 2 - visible_len, ' '));

@@ -17,7 +17,8 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/concat.h"
 #include "cuttlefish/io/io.h"
@@ -47,14 +48,14 @@ class VendorBootImageBuilder {
   VendorBootImageBuilder& VendorRamdisk(std::unique_ptr<ReaderSeeker>) &;
   VendorBootImageBuilder VendorRamdisk(std::unique_ptr<ReaderSeeker>) &&;
 
-  VendorBootImageBuilder& KernelCommandLine(std::string_view) &;
-  VendorBootImageBuilder KernelCommandLine(std::string_view) &&;
+  VendorBootImageBuilder& KernelCommandLine(absl::string_view) &;
+  VendorBootImageBuilder KernelCommandLine(absl::string_view) &&;
 
   VendorBootImageBuilder& TagsAddr(uint32_t) &;
   VendorBootImageBuilder TagsAddr(uint32_t) &&;
 
-  VendorBootImageBuilder& Name(std::string_view) &;
-  VendorBootImageBuilder Name(std::string_view) &&;
+  VendorBootImageBuilder& Name(absl::string_view) &;
+  VendorBootImageBuilder Name(absl::string_view) &&;
 
   VendorBootImageBuilder& Dtb(std::unique_ptr<ReaderSeeker>) &;
   VendorBootImageBuilder Dtb(std::unique_ptr<ReaderSeeker>) &&;

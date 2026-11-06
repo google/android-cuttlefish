@@ -22,11 +22,11 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <variant>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "bootimg.h"
 
 #include "cuttlefish/io/copy.h"
@@ -142,7 +142,7 @@ std::optional<ReadWindowView> BootImage::Signature() const {
 }
 
 Result<void> BootImage::Unpack(ReadWriteFilesystem& fs) {
-  std::map<std::string_view, ReadWindowView> files = {
+  std::map<absl::string_view, ReadWindowView> files = {
       {"/kernel", Kernel()},
       {"/ramdisk", Ramdisk()},
   };

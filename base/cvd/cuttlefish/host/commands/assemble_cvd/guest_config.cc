@@ -23,7 +23,6 @@
 #include <map>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -32,6 +31,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "google/protobuf/text_format.h"
@@ -199,7 +199,7 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
 
 Result<std::string> MapGetResult(
     const std::map<std::string, std::string, std::less<void>> android_info,
-    std::string_view key) {
+    absl::string_view key) {
   auto it = android_info.find(key);
   CF_EXPECT(it != android_info.end());
   return it->second;
@@ -207,7 +207,7 @@ Result<std::string> MapGetResult(
 
 bool MapHasValue(
     const std::map<std::string, std::string, std::less<void>> android_info,
-    std::string_view key, std::string_view expected_value) {
+    absl::string_view key, absl::string_view expected_value) {
   auto it = android_info.find(key);
   return it == android_info.end() ? false : it->second == expected_value;
 }
@@ -232,7 +232,7 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
   if (const auto res = MapGetResult(info, "gpu_mode_candidates");
       res.has_value()) {
     const std::string& gpu_mode_candidates_str = *res;
-    for (const std::string_view candidate_str :
+    for (const absl::string_view candidate_str :
          absl::StrSplit(gpu_mode_candidates_str, ",")) {
       const GpuMode candidate =
           CF_EXPECTF(GpuModeFromString(candidate_str),

@@ -18,7 +18,8 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 
@@ -27,15 +28,15 @@ namespace {
 
 // https://docs.github.com/en/actions/reference/workflows-and-actions/variables
 // set to "true" when GitHub Actions is running the workflow
-constexpr std::string_view kGitHubActions = "GITHUB_ACTIONS";
+constexpr absl::string_view kGitHubActions = "GITHUB_ACTIONS";
 // holds the owner and repository name
-constexpr std::string_view kGitHubRepository = "GITHUB_REPOSITORY";
+constexpr absl::string_view kGitHubRepository = "GITHUB_REPOSITORY";
 
-constexpr std::string_view kAndroidCuttlefish = "google/android-cuttlefish";
-constexpr std::string_view kCloudAndroidOrchestration =
+constexpr absl::string_view kAndroidCuttlefish = "google/android-cuttlefish";
+constexpr absl::string_view kCloudAndroidOrchestration =
     "google/cloud-android-orchestration";
 
-GitHubRepository ToGitHubRepository(std::string_view gh_env_str) {
+GitHubRepository ToGitHubRepository(absl::string_view gh_env_str) {
   if (gh_env_str == kAndroidCuttlefish) {
     return GitHubRepository::AndroidCuttlefish;
   } else if (gh_env_str == kCloudAndroidOrchestration) {

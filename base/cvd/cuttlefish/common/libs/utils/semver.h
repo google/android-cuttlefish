@@ -17,7 +17,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -31,6 +32,6 @@ struct SemVer {
   std::string build_metadata;
 };
 
-Result<SemVer> ParseSemVer(std::string_view str);
+Result<SemVer> ParseSemVer(absl::string_view str);
 
 }  // namespace cuttlefish

@@ -18,10 +18,10 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/flag_parser/flag.h"
@@ -48,7 +48,7 @@ Result<void> ValidateInstanceNamesOpt(
   if (!instance_names) {
     return {};
   }
-  absl::flat_hash_set<std::string_view> duplication_check;
+  absl::flat_hash_set<absl::string_view> duplication_check;
   for (const auto& instance_name : *instance_names) {
     CF_EXPECT(IsValidInstanceName(instance_name));
     // Check that provided non-empty instance names are unique. Empty names will

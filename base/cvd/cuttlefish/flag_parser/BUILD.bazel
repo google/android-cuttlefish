@@ -22,6 +22,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )
@@ -33,6 +34,7 @@ cf_cc_test(
         ":flag_parser",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -60,5 +62,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )

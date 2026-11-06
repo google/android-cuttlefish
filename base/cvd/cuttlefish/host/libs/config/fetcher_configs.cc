@@ -19,10 +19,10 @@
 #include <stddef.h>
 
 #include <string>
-#include <string_view>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
 #include "cuttlefish/files/file_exists.h"
@@ -32,7 +32,7 @@
 
 namespace cuttlefish {
 
-static constexpr std::string_view kFetcherConfigFile = "fetcher_config.json";
+static constexpr absl::string_view kFetcherConfigFile = "fetcher_config.json";
 
 FetcherConfigs FetcherConfigs::ReadFromDirectories(
     absl::Span<const std::string> directories) {

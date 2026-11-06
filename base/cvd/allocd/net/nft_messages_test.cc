@@ -27,8 +27,9 @@
 #include <stdint.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "allocd/net/netlink_request.h"
 #include "allocd/test/nft_messages_helper.h"
@@ -175,7 +176,7 @@ TEST(NftMessagesTest, NewMasqueradeRuleClearsHostBits) {
 }
 
 class NewMasqueradeRuleInvalidSourceTest
-    : public testing::TestWithParam<std::string_view> {};
+    : public testing::TestWithParam<absl::string_view> {};
 
 TEST_P(NewMasqueradeRuleInvalidSourceTest, IsRejected) {
   EXPECT_THAT(nft::NewMasqueradeRule("cvdalloc_1", "postrouting", GetParam()),

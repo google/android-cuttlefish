@@ -18,7 +18,8 @@
 
 #include <cstddef>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
@@ -27,7 +28,7 @@ struct TruncatedString {
   size_t visible_length;
 };
 
-TruncatedString TruncateColoredString(std::string_view s,
+TruncatedString TruncateColoredString(absl::string_view s,
                                       size_t max_visible_width);
 
 }  // namespace cuttlefish

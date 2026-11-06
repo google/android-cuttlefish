@@ -17,10 +17,10 @@
 #include "cuttlefish/host/commands/assemble_cvd/resolve_instance_files.h"
 
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 #include "gflags/gflags.h"
 
@@ -61,7 +61,7 @@ Result<void> ResolveInstanceFiles(
   std::string comma_str = "";
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
-  std::vector<std::string_view> default_vvmtruststore_file_name =
+  std::vector<absl::string_view> default_vvmtruststore_file_name =
       absl::StrSplit(FLAGS_default_vvmtruststore_file_name, ',');
   for (int instance_index = 0; instance_index < instance_nums.size();
        instance_index++) {

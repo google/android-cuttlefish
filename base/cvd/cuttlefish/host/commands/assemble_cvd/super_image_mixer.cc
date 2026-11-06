@@ -18,13 +18,13 @@
 #include <array>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
@@ -97,7 +97,7 @@ void FindImports(const std::string& archive,
                  const std::string& build_prop_file) {
   auto contents = ExtractArchiveToMemory(archive, build_prop_file);
   for (const auto& line : absl::StrSplit(contents, "\n")) {
-    std::vector<std::string_view> parts = absl::StrSplit(line, ' ');
+    std::vector<absl::string_view> parts = absl::StrSplit(line, ' ');
     if (parts.size() >= 2 && parts[0] == "import") {
       VLOG(0) << build_prop_file << ": " << line;
     }
@@ -114,7 +114,7 @@ bool IsTargetFilesBuildProp(const std::string& filename) {
 }
 
 Result<std::string> GetPartitionNameFromPath(const std::string& path) {
-  std::string_view result(path);
+  absl::string_view result(path);
   CF_EXPECTF(
       absl::ConsumePrefix(&result, "IMAGES/"),
       "target_files filepath {} expected to be in the \"IMAGES\" directory",

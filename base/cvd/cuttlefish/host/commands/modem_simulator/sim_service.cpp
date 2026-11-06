@@ -16,6 +16,7 @@
 #include "cuttlefish/host/commands/modem_simulator/sim_service.h"
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include <tinyxml2.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -177,7 +178,7 @@ XMLElement* SimService::SimFileSystem::AppendNewElementWithText(
 }
 
 /* PinStatus */
-bool SimService::PinStatus::CheckPasswordValid(std::string_view password) {
+bool SimService::PinStatus::CheckPasswordValid(absl::string_view password) {
   for (int i = 0; i < password.size(); i++) {
     int c = (int)password[i];
     if (c >= 48 && c <= 57) {
@@ -189,7 +190,7 @@ bool SimService::PinStatus::CheckPasswordValid(std::string_view password) {
   return true;
 }
 
-bool SimService::PinStatus::VerifyPIN(const std::string_view pin) {
+bool SimService::PinStatus::VerifyPIN(const absl::string_view pin) {
   if (pin.size() < kSimPinSizeRange.first || pin.size() > kSimPinSizeRange.second) {
     return false;
   }
@@ -202,7 +203,7 @@ bool SimService::PinStatus::VerifyPIN(const std::string_view pin) {
     return false;
   }
 
-  std::string_view temp(pin_);
+  absl::string_view temp(pin_);
   if (pin == temp) {  // C++20 remove Operator!=
     pin_remaining_times_ = kSimPinMaxRetryTimes;
     return true;
@@ -212,7 +213,7 @@ bool SimService::PinStatus::VerifyPIN(const std::string_view pin) {
   return false;
 }
 
-bool SimService::PinStatus::VerifyPUK(const std::string_view puk) {
+bool SimService::PinStatus::VerifyPUK(const absl::string_view puk) {
   if (puk.size() != kSimPukSize) {
     return false;
   }
@@ -225,7 +226,7 @@ bool SimService::PinStatus::VerifyPUK(const std::string_view puk) {
     return false;
   }
 
-  std::string_view temp(puk_);
+  absl::string_view temp(puk_);
   if (puk == temp) {  // C++20 remove Operator!=
     pin_remaining_times_ = kSimPinMaxRetryTimes;
     puk_remaining_times_ = kSimPukMaxRetryTimes;
@@ -237,8 +238,8 @@ bool SimService::PinStatus::VerifyPUK(const std::string_view puk) {
 }
 
 bool SimService::PinStatus::ChangePIN(ChangeMode mode,
-                                      const std::string_view pin_or_puk,
-                                      const std::string_view new_pin) {
+                                      const absl::string_view pin_or_puk,
+                                      const absl::string_view new_pin) {
   auto length = new_pin.length();
   if (length < kSimPinSizeRange.first || length > kSimPinSizeRange.second) {
     LOG(ERROR) << "Invalid digit number for PIN";
@@ -266,8 +267,8 @@ bool SimService::PinStatus::ChangePIN(ChangeMode mode,
   return true;
 }
 
-bool SimService::PinStatus::ChangePUK(const std::string_view puk,
-                                      const std::string_view new_puk) {
+bool SimService::PinStatus::ChangePUK(const absl::string_view puk,
+                                      const absl::string_view new_puk) {
   bool result = VerifyPUK(puk);
   if (!result) {
     LOG(ERROR) << "Incorrect PUK or no retry times";
@@ -692,7 +693,7 @@ bool SimService::IsFDNEnabled() {
   return false;
 }
 
-bool SimService::IsFixedDialNumber(std::string_view number) {
+bool SimService::IsFixedDialNumber(absl::string_view number) {
   XMLElement* root = sim_file_system_.GetRootElement();
   if (!root) {
     return false;
@@ -772,7 +773,7 @@ std::string SimService::GetPhoneNumber() {
   return PDUParser::BCDToString(bcd_number);
 }
 
-bool SimService::SetPhoneNumber(std::string_view number) {
+bool SimService::SetPhoneNumber(absl::string_view number) {
   if (number.size() > kMaxNumberSizeBytes) {  // Invalid number length
     return false;
   }
@@ -1073,7 +1074,7 @@ XMLElement* SimService::GetPhoneNumberElement() {
   return SimFileSystem::FindAttribute(ef, "cmd", "B2");
 }
 
-bool SimService::checkPin1AndAdjustSimStatus(std::string_view pin) {
+bool SimService::checkPin1AndAdjustSimStatus(absl::string_view pin) {
   if (pin1_status_.VerifyPIN(pin) == true) {
     sim_status_ = SIM_STATUS_READY;
     OnSimStatusChanged();
@@ -1148,8 +1149,8 @@ void SimService::HandleCSIM_IO(const Client& client,
 }
 
 bool SimService::ChangePin1AndAdjustSimStatus(PinStatus::ChangeMode mode,
-                                              std::string_view pin,
-                                              std::string_view new_pin) {
+                                              absl::string_view pin,
+                                              absl::string_view new_pin) {
   if (pin1_status_.ChangePIN(mode, pin, new_pin) == true) {
     sim_status_ = SIM_STATUS_READY;
     OnSimStatusChanged();
@@ -1186,7 +1187,7 @@ void SimService::HandleChangeOrEnterPIN(const Client& client,
        *    AT+CPIN=pin2
        */
       auto pos = cmd->find(',');
-      if (pos != std::string_view::npos) {  // change pin with new pin
+      if (pos != absl::string_view::npos) {  // change pin with new pin
         auto pin = cmd.GetNextStr(',');
         auto new_pin = *cmd;
 
@@ -1218,7 +1219,7 @@ void SimService::HandleChangeOrEnterPIN(const Client& client,
        *    AT+CPIN=puk,newpin
        */
       auto pos = cmd->find(',');
-      if (pos != std::string_view::npos) {
+      if (pos != absl::string_view::npos) {
         auto puk = cmd.GetNextStr(',');
         auto new_pin = *cmd;
         if (ChangePin1AndAdjustSimStatus(PinStatus::WITH_PUK, puk, new_pin)) {

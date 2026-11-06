@@ -17,10 +17,10 @@
 #include "cuttlefish/pretty/struct.h"
 
 #include <sstream>
-#include <string_view>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 #include "gtest/gtest.h"
 
@@ -29,8 +29,8 @@
 namespace cuttlefish {
 namespace {
 
-void ExpectFormatsTo(const PrettyStruct& ps, const std::string_view expected) {
-  const std::string_view trimmed = absl::StripAsciiWhitespace(expected);
+void ExpectFormatsTo(const PrettyStruct& ps, const absl::string_view expected) {
+  const absl::string_view trimmed = absl::StripAsciiWhitespace(expected);
 
   EXPECT_EQ(absl::StrCat(ps), trimmed);
   EXPECT_EQ(fmt::format("{}", ps), trimmed);

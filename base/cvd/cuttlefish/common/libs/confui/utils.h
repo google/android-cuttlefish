@@ -18,11 +18,11 @@
 #include <algorithm>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <type_traits>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish::confui {
 
@@ -51,7 +51,7 @@ std::string ArgsToString(Args&&... args) {
   return ArgsToStringWithDelim("", std::forward<Args>(args)...);
 }
 
-inline bool IsOnlyDigits(std::string_view src) {
+inline bool IsOnlyDigits(absl::string_view src) {
   return std::all_of(src.begin(), src.end(),
                      [](int c) -> bool { return std::isdigit(c); });
 }

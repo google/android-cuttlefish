@@ -42,6 +42,7 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -117,6 +118,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:thread_looper",
         "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -164,6 +166,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings:string_view",
         "@jsoncpp",
         "@tinyxml2",
     ],
@@ -221,6 +224,7 @@ cf_cc_library(
     hdrs = ["pdu_parser.h"],
     clang_format_enabled = False,
     include_cleaner_enabled = False,
+    deps = ["@abseil-cpp//absl/strings:string_view"],
 )
 
 cf_cc_test(
@@ -261,6 +265,7 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/modem_simulator:modem_service",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 

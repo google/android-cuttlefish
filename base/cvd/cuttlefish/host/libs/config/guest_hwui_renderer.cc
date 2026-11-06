@@ -18,9 +18,9 @@
 
 #include <ostream>
 #include <string>
-#include <string_view>
 
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -41,7 +41,7 @@ std::string ToString(GuestHwuiRenderer renderer) {
   }
 }
 
-Result<GuestHwuiRenderer> ParseGuestHwuiRenderer(std::string_view str) {
+Result<GuestHwuiRenderer> ParseGuestHwuiRenderer(absl::string_view str) {
   if (absl::EqualsIgnoreCase(str, "unknown")) {
     return GuestHwuiRenderer::kUnknown;
   } else if (absl::EqualsIgnoreCase(str, "skiagl")) {

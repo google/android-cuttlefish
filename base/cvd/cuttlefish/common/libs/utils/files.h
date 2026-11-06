@@ -21,8 +21,9 @@
 #include <chrono>
 #include <functional>
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -62,7 +63,7 @@ Result<uid_t> FileOwner(const std::string& path);
 
 // The returned value may contain .. or . if these are present in the path
 // argument.
-std::string AbsolutePath(std::string_view path);
+std::string AbsolutePath(absl::string_view path);
 
 std::string CurrentDirectory();
 
@@ -87,6 +88,6 @@ Result<void> WalkDirectoryFiles(const std::string& dir,
 std::vector<std::string> Path(const std::string& env_name = "PATH");
 
 Result<std::string> Search(const std::vector<std::string>& path,
-                           std::string_view name);
+                           absl::string_view name);
 
 }  // namespace cuttlefish

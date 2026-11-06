@@ -22,10 +22,10 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -44,15 +44,16 @@
 namespace cuttlefish {
 namespace {
 
-Result<bool> FilterLauncherOrLogTee(LogSeverity filter, std::string_view line) {
+Result<bool> FilterLauncherOrLogTee(LogSeverity filter,
+                                    absl::string_view line) {
   if (line.find("log_tee(") != 0) {
     return CF_EXPECT(FilterLauncherLine(filter, line));
   }
   const size_t bracket = line.find(']');
-  if (bracket != std::string_view::npos) {
+  if (bracket != absl::string_view::npos) {
     line.remove_prefix(bracket + 1);
     const size_t first_non_space = line.find_first_not_of(" \t");
-    if (first_non_space != std::string_view::npos) {
+    if (first_non_space != absl::string_view::npos) {
       line.remove_prefix(first_non_space);
     } else {
       line = "";
@@ -61,15 +62,15 @@ Result<bool> FilterLauncherOrLogTee(LogSeverity filter, std::string_view line) {
   return CF_EXPECT(FilterLogTeeLine(filter, line));
 }
 
-Result<std::string> ColorLauncherOrLogTee(std::string_view line) {
+Result<std::string> ColorLauncherOrLogTee(absl::string_view line) {
   if (line.find("log_tee(") != 0) {
     return CF_EXPECT(ColorLauncherLine(line));
   }
   const size_t bracket = line.find(']');
-  if (bracket != std::string_view::npos) {
+  if (bracket != absl::string_view::npos) {
     line.remove_prefix(bracket + 1);
     const size_t first_non_space = line.find_first_not_of(" \t");
-    if (first_non_space != std::string_view::npos) {
+    if (first_non_space != absl::string_view::npos) {
       line.remove_prefix(first_non_space);
     } else {
       line = "";
@@ -114,7 +115,7 @@ std::unique_ptr<MonitorSource> KernelLogMonitorSource(
   std::unique_ptr<ReaderSeeker> io = std::make_unique<Fd>(std::move(*fd));
   return std::make_unique<FileMonitorSource>(
       path, std::move(io), ColorKernelLine,
-      [](std::string_view) { return true; });
+      [](absl::string_view) { return true; });
 }
 
 std::unique_ptr<MonitorSource> LogcatMonitorSource(

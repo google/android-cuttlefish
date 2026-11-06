@@ -24,12 +24,12 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 #include "json/reader.h"
@@ -240,7 +240,7 @@ int CuttlefishConfig::casimir_instance_num() const {
 static constexpr char kCasimirArgs[] = "casimir_args";
 void CuttlefishConfig::set_casimir_args(const std::string& casimir_args) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (std::string_view arg : absl::StrSplit(casimir_args, ' ')) {
+  for (absl::string_view arg : absl::StrSplit(casimir_args, ' ')) {
     if (!arg.empty()) {
       args_json_obj.append(std::string(arg));
     }
@@ -292,7 +292,7 @@ void CuttlefishConfig::set_netsim_connector_instance_num(
 static constexpr char kNetsimArgs[] = "netsim_args";
 void CuttlefishConfig::set_netsim_args(const std::string& netsim_args) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (std::string_view arg :
+  for (absl::string_view arg :
        absl::StrSplit(netsim_args, ' ', absl::SkipEmpty())) {
     args_json_obj.append(std::string(arg));
   }
@@ -310,7 +310,7 @@ static constexpr char kExtraKernelCmdline[] = "extra_kernel_cmdline";
 void CuttlefishConfig::set_extra_kernel_cmdline(
     const std::string& extra_cmdline) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (std::string_view arg : absl::StrSplit(extra_cmdline, ' ')) {
+  for (absl::string_view arg : absl::StrSplit(extra_cmdline, ' ')) {
     args_json_obj.append(std::string(arg));
   }
   (*dictionary_)[kExtraKernelCmdline] = args_json_obj;
@@ -350,7 +350,7 @@ void CuttlefishConfig::set_ap_kernel_image(const std::string& ap_kernel_image) {
 static constexpr char kRootcanalArgs[] = "rootcanal_args";
 void CuttlefishConfig::set_rootcanal_args(const std::string& rootcanal_args) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (std::string_view arg : absl::StrSplit(rootcanal_args, ' ')) {
+  for (absl::string_view arg : absl::StrSplit(rootcanal_args, ' ')) {
     args_json_obj.append(std::string(arg));
   }
   (*dictionary_)[kRootcanalArgs] = args_json_obj;
@@ -510,7 +510,7 @@ std::string CuttlefishConfig::instances_dir() const {
   return AbsolutePath(root_dir() + "/instances");
 }
 
-std::string CuttlefishConfig::InstancesPath(std::string_view file_name) const {
+std::string CuttlefishConfig::InstancesPath(absl::string_view file_name) const {
   return AbsolutePath(absl::StrCat(instances_dir(), "/", file_name));
 }
 
@@ -518,7 +518,7 @@ std::string CuttlefishConfig::assembly_dir() const {
   return AbsolutePath(root_dir() + "/assembly");
 }
 
-std::string CuttlefishConfig::AssemblyPath(std::string_view file_name) const {
+std::string CuttlefishConfig::AssemblyPath(absl::string_view file_name) const {
   return AbsolutePath(absl::StrCat(assembly_dir(), "/", file_name));
 }
 
@@ -531,7 +531,7 @@ std::string CuttlefishConfig::instances_uds_dir() const {
 }
 
 std::string CuttlefishConfig::InstancesUdsPath(
-    std::string_view file_name) const {
+    absl::string_view file_name) const {
   return AbsolutePath(absl::StrCat(instances_uds_dir(), "/", file_name));
 }
 
@@ -540,7 +540,7 @@ std::string CuttlefishConfig::environments_dir() const {
 }
 
 std::string CuttlefishConfig::EnvironmentsPath(
-    std::string_view file_name) const {
+    absl::string_view file_name) const {
   return AbsolutePath(absl::StrCat(environments_dir(), "/", file_name));
 }
 
@@ -553,7 +553,7 @@ std::string CuttlefishConfig::environments_uds_dir() const {
 }
 
 std::string CuttlefishConfig::EnvironmentsUdsPath(
-    std::string_view file_name) const {
+    absl::string_view file_name) const {
   return AbsolutePath(absl::StrCat(environments_uds_dir(), "/", file_name));
 }
 

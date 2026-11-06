@@ -15,6 +15,7 @@ cf_cc_library(
         "//cuttlefish/io:write_exact",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 

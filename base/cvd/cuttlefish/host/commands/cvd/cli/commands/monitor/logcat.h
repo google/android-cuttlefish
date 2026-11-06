@@ -17,7 +17,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/severity.h"
 #include "cuttlefish/result/result_type.h"
@@ -25,18 +26,18 @@
 namespace cuttlefish {
 
 struct LogcatLine {
-  std::string_view date;
-  std::string_view time;
-  std::string_view uid;
-  std::string_view pid;
+  absl::string_view date;
+  absl::string_view time;
+  absl::string_view uid;
+  absl::string_view pid;
   char severity;
-  std::string_view tag;
-  std::string_view message;
+  absl::string_view tag;
+  absl::string_view message;
 };
 
-Result<LogcatLine> ParseLogcatLine(std::string_view line);
+Result<LogcatLine> ParseLogcatLine(absl::string_view line);
 std::string FormatLogcatLine(const LogcatLine& line);
-Result<std::string> ColorLogcatLine(std::string_view line);
-Result<bool> FilterLogcatLine(LogSeverity filter, std::string_view line);
+Result<std::string> ColorLogcatLine(absl::string_view line);
+Result<bool> FilterLogcatLine(LogSeverity filter, absl::string_view line);
 
 }  // namespace cuttlefish

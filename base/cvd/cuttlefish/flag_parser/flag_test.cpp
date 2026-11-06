@@ -18,10 +18,10 @@
 #include "cuttlefish/flag_parser/flag.h"
 
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
@@ -43,7 +43,7 @@ TEST(FlagParser, DuplicateAlias) {
 TEST(FlagParser, RepeatedListFlag) {
   std::vector<std::string> elems;
   auto flag = Flag::StringFlag("myflag");
-  flag.Setter([&elems](std::string_view arg) -> Result<void> {
+  flag.Setter([&elems](absl::string_view arg) -> Result<void> {
     elems.emplace_back(arg);
     return {};
   });

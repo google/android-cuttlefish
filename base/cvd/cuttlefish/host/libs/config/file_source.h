@@ -18,6 +18,8 @@
 #include <ostream>
 #include <string_view>
 
+#include "absl/strings/string_view.h"
+
 namespace cuttlefish {
 
 /**
@@ -44,8 +46,8 @@ enum class FileSource {
   VENDOR_BOOT_IMAGE_BUILD,
 };
 
-FileSource SourceStringToEnum(std::string_view source);
-std::string_view SourceEnumToString(FileSource source);
+FileSource SourceStringToEnum(absl::string_view source);
+absl::string_view SourceEnumToString(FileSource source);
 
 std::ostream& operator<<(std::ostream&, FileSource);
 

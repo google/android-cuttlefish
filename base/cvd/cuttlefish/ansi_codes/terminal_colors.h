@@ -16,17 +16,17 @@
 
 #pragma once
 
-#include <string_view>
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
 class TerminalColors {
  public:
   TerminalColors(bool is_tty) : is_tty_(is_tty) {}
-  std::string_view Reset() const;
-  std::string_view BoldRed() const;
-  std::string_view Red() const;
-  std::string_view Cyan() const;
+  absl::string_view Reset() const;
+  absl::string_view BoldRed() const;
+  absl::string_view Red() const;
+  absl::string_view Cyan() const;
 
  private:
   bool is_tty_;

@@ -17,20 +17,21 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 struct KernelLine {
-  std::string_view timestamp;
-  std::string_view prefix;
-  std::string_view message;
+  absl::string_view timestamp;
+  absl::string_view prefix;
+  absl::string_view message;
 };
 
-Result<KernelLine> ParseKernelLine(std::string_view line);
+Result<KernelLine> ParseKernelLine(absl::string_view line);
 std::string FormatKernelLine(const KernelLine& line);
-Result<std::string> ColorKernelLine(std::string_view line);
+Result<std::string> ColorKernelLine(absl::string_view line);
 
 }  // namespace cuttlefish

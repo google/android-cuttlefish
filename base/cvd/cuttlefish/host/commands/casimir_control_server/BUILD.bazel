@@ -20,6 +20,7 @@ cf_cc_binary(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@gflags",
         "@grpc//:grpc++",
         "@grpc//:grpc++_reflection",

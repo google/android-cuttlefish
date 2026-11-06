@@ -21,11 +21,11 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
 #include "gmock/gmock.h"
@@ -92,12 +92,12 @@ std::string ServiceAccountJson() {
 
 // The scope a service account asks for travels inside the base64url claim set
 // of the assertion it signs.
-std::string AssertionClaims(std::string_view body) {
+std::string AssertionClaims(absl::string_view body) {
   size_t assertion = body.find("assertion=");
-  if (assertion == std::string_view::npos) {
+  if (assertion == absl::string_view::npos) {
     return "";
   }
-  std::vector<std::string_view> parts =
+  std::vector<absl::string_view> parts =
       absl::StrSplit(body.substr(assertion), '.');
   if (parts.size() < 2) {
     return "";

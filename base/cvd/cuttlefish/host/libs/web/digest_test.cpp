@@ -16,10 +16,10 @@
 #include "cuttlefish/host/libs/web/digest.h"
 
 #include <string>
-#include <string_view>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -40,7 +40,7 @@ constexpr char kEmptySha256[] =
     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
 std::string WriteFile(const TemporaryDir& directory,
-                      std::string_view contents) {
+                      absl::string_view contents) {
   std::string path = absl::StrCat(directory.path, "/artifact");
   EXPECT_THAT(WriteNewFile(path, contents), IsOk());
   return path;

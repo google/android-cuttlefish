@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include <string_view>
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
@@ -27,10 +27,10 @@ Result<void> InitializeDataImage(const CuttlefishConfig::InstanceSpecific&);
 Result<void> InitializeEspImage(const CuttlefishConfig&,
                                 const CuttlefishConfig::InstanceSpecific&);
 
-Result<void> CreateBlankEmptyImage(std::string_view image, int num_mb);
+Result<void> CreateBlankEmptyImage(absl::string_view image, int num_mb);
 
-Result<void> CreateBlankExt4Image(std::string_view image, int num_mb);
+Result<void> CreateBlankExt4Image(absl::string_view image, int num_mb);
 
-Result<void> CreateBlankSdcardImage(std::string_view image, int num_mb);
+Result<void> CreateBlankSdcardImage(absl::string_view image, int num_mb);
 
 }  // namespace cuttlefish

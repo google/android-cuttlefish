@@ -18,9 +18,10 @@
 #include <functional>
 #include <mutex>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
@@ -36,13 +37,13 @@ class FakeHttpClient : public HttpClient {
   void SetResponse(std::string data, std::string url = "");
   void SetResponse(HttpResponse<std::string> response, std::string url = "");
   void SetResponse(Handler handler, std::string url = "");
-  bool RequestMade(std::string_view url) const;
+  bool RequestMade(absl::string_view url) const;
   // Returns response's status code.
   Result<HttpResponse<void>> DownloadToCallback(
       HttpRequest request, HttpClient::ResultDataCallback callback) override;
 
  private:
-  const Handler* FindHandler(std::string_view url) const;
+  const Handler* FindHandler(absl::string_view url) const;
 
   mutable std::mutex mutex_;
   std::unordered_map<std::string, Handler> responses_;

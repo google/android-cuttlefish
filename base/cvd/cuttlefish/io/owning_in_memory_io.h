@@ -16,8 +16,9 @@
 #pragma once
 
 #include <shared_mutex>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/in_memory_io.h"
 
@@ -27,7 +28,7 @@ class OwningInMemoryIo : public InMemoryIo {
  public:
   OwningInMemoryIo();
   OwningInMemoryIo(std::vector<char> data);
-  OwningInMemoryIo(std::string_view);
+  OwningInMemoryIo(absl::string_view);
 
  private:
   std::vector<char> data_;

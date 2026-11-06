@@ -20,6 +20,7 @@ cf_cc_library(
     name = "metrics_environment",
     srcs = ["metrics_environment.cc"],
     hdrs = ["metrics_environment.h"],
+    deps = ["@abseil-cpp//absl/strings:string_view"],
 )
 
 cf_cc_library(
@@ -45,6 +46,7 @@ cf_cc_library(
         "//cuttlefish/files:write_new_file",
         "//cuttlefish/metrics/external_proto:cf_log_cc_proto",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@protobuf",
     ],
@@ -60,6 +62,7 @@ cf_cc_library(
         "//cuttlefish/metrics/io:enabled",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )

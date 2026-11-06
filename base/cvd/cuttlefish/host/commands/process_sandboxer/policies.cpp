@@ -23,12 +23,12 @@
 #include <ostream>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
+#include "absl/strings/string_view.h"
 #include "sandboxed_api/sandbox2/policy.h"
 #include "sandboxed_api/sandbox2/policybuilder.h"
 #include "sandboxed_api/util/fileops.h"
@@ -71,7 +71,7 @@ std::string HostInfo::EnvironmentsUdsDir() const {
   return JoinPath(tmp_dir, "cf_env_1000");
 }
 
-std::string HostInfo::HostToolExe(std::string_view exe) const {
+std::string HostInfo::HostToolExe(absl::string_view exe) const {
   return JoinPath(host_artifacts_path, "bin", exe);
 }
 
@@ -101,8 +101,8 @@ std::ostream& operator<<(std::ostream& out, const HostInfo& host) {
 }
 
 std::unique_ptr<sandbox2::Policy> PolicyForExecutable(
-    const HostInfo& host, std::string_view server_socket_outside_path,
-    std::string_view executable) {
+    const HostInfo& host, absl::string_view server_socket_outside_path,
+    absl::string_view executable) {
   using Builder = sandbox2::PolicyBuilder(const HostInfo&);
   absl::flat_hash_map<std::string, Builder*> builders;
 

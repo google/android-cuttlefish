@@ -24,7 +24,6 @@
 #include <optional>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -32,6 +31,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -56,9 +56,9 @@ std::set<std::string> GetSupportedFlags(const std::string& go_binary_path) {
   std::string err;
   RunWithManagedStdio(std::move(command), nullptr, &out, &err);
   // "casdownloader -help" outputs to stderr.
-  std::vector<std::string_view> lines =
+  std::vector<absl::string_view> lines =
       absl::StrSplit(err, '\n', absl::SkipEmpty());
-  for (std::string_view& line : lines) {
+  for (absl::string_view& line : lines) {
     // Sample help output line: "  -version=false: Print version information"
     if (line.find("  -") != std::string::npos) {
       size_t start = line.find("  -") + 3;

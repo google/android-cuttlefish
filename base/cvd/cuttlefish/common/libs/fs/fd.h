@@ -43,9 +43,9 @@
 #include <chrono>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "android-base/cmsg.h"
 
 #include "cuttlefish/common/libs/fs/scoped_mmap.h"
@@ -102,36 +102,36 @@ class Fd : public ReaderWriterSeeker {
   // Fcntl or Dup functions.
 
   static Result<Fd, int> Accept(const Fd& listener);
-  static Result<Fd, int> Creat(std::string_view path, mode_t mode);
+  static Result<Fd, int> Creat(absl::string_view path, mode_t mode);
   static Result<Fd, int> Dup(int unmanaged_fd);
-  static Result<Fd, int> Fifo(std::string_view pathname, mode_t mode);
-  static Result<Fd, int> MemfdCreate(std::string_view name,
+  static Result<Fd, int> Fifo(absl::string_view pathname, mode_t mode);
+  static Result<Fd, int> MemfdCreate(absl::string_view name,
                                      unsigned int flags = 0);
   static Result<std::pair<Fd, std::string>, int> Mkostemp(
-      std::string_view path, int flags = O_CLOEXEC);
-  static Result<Fd, int> Open(std::string_view pathname, int flags,
+      absl::string_view path, int flags = O_CLOEXEC);
+  static Result<Fd, int> Open(absl::string_view pathname, int flags,
                               mode_t mode = 0);
   static Result<std::pair<Fd, Fd>, int> Pipe();
   static Result<std::pair<Fd, Fd>, int> SocketPair(int domain, int type,
                                                    int protocol);
   static Result<Fd, int> Socket(int domain, int socket_type, int protocol);
   static Result<Fd, int> Socket6Client(
-      std::string_view host, std::string_view interface, int port, int type,
+      absl::string_view host, absl::string_view interface, int port, int type,
       std::chrono::seconds timeout = std::chrono::seconds(0));
   static Result<Fd, int> SocketClient(
-      std::string_view host, int port, int type,
+      absl::string_view host, int port, int type,
       std::chrono::seconds timeout = std::chrono::seconds(0));
-  static Result<Fd, int> SocketLocalClient(std::string_view name,
+  static Result<Fd, int> SocketLocalClient(absl::string_view name,
                                            bool is_abstract, int in_type);
-  static Result<Fd, int> SocketLocalClient(std::string_view name,
+  static Result<Fd, int> SocketLocalClient(absl::string_view name,
                                            bool is_abstract, int in_type,
                                            int timeout_seconds);
   static Result<Fd, int> SocketLocalClient(int port, int type);
-  static Result<Fd, int> SocketLocalServer(std::string_view name,
+  static Result<Fd, int> SocketLocalServer(absl::string_view name,
                                            bool is_abstract, int in_type,
                                            mode_t mode);
   static Result<Fd, int> SocketLocalServer(int port, int type);
-  static Result<Fd, int> ShmOpen(std::string_view name, int oflag, int mode);
+  static Result<Fd, int> ShmOpen(absl::string_view name, int oflag, int mode);
 
 #ifdef __linux__
   static Result<Fd, int> Event(int initval = 0, int flags = 0);

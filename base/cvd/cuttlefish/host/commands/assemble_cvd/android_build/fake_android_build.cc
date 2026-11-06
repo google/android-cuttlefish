@@ -19,10 +19,10 @@
 #include <map>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/pretty/map.h"       // IWYU pragma: keep
 #include "cuttlefish/pretty/optional.h"  // IWYU pragma: keep
@@ -55,7 +55,7 @@ Result<std::set<std::string, std::less<void>>> FakeAndroidBuild::Images() {
   return keys;
 }
 
-Result<std::string> FakeAndroidBuild::ImageFile(std::string_view name,
+Result<std::string> FakeAndroidBuild::ImageFile(absl::string_view name,
                                                 bool extract) {
   CF_EXPECT(images_.has_value());
   auto it = images_->find(name);
@@ -72,29 +72,29 @@ Result<std::string> FakeAndroidBuild::ImageFile(std::string_view name,
   return CF_ERR("missing");
 }
 
-void FakeAndroidBuild::AddExtractedImage(std::string_view image,
-                                         std::string_view path) {
+void FakeAndroidBuild::AddExtractedImage(absl::string_view image,
+                                         absl::string_view path) {
   if (!images_.has_value()) {
     images_ = {{}};
   }
   (*images_)[std::string(image)] = {ImageStatus::kExtracted, std::string(path)};
 }
 
-void FakeAndroidBuild::AddUnextractedImage(std::string_view image) {
+void FakeAndroidBuild::AddUnextractedImage(absl::string_view image) {
   if (!images_.has_value()) {
     images_ = {{}};
   }
   (*images_)[std::string(image)] = {ImageStatus::kUnextracted, ""};
 }
 
-void FakeAndroidBuild::AddMissingImage(std::string_view image) {
+void FakeAndroidBuild::AddMissingImage(absl::string_view image) {
   if (!images_.has_value()) {
     images_ = {{}};
   }
   (*images_)[std::string(image)] = {ImageStatus::kMissing, ""};
 }
 
-Result<void> FakeAndroidBuild::SetExtractDir(std::string_view extract_dir) {
+Result<void> FakeAndroidBuild::SetExtractDir(absl::string_view extract_dir) {
   extract_dir_ = extract_dir;
   return {};
 }
@@ -154,7 +154,7 @@ void FakeAndroidBuild::SetPhysicalPartitions(
   physical_partitions_ = std::move(partitions);
 }
 
-std::string_view ImageStatusToStringView(
+absl::string_view ImageStatusToStringView(
     FakeAndroidBuild::ImageStatus image_status) {
   switch (image_status) {
     case FakeAndroidBuild::ImageStatus::kExtracted:

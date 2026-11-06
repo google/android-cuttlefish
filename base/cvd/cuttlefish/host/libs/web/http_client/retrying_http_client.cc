@@ -20,11 +20,11 @@
 #include <chrono>
 #include <memory>
 #include <optional>
-#include <string_view>
 #include <thread>
 
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
@@ -36,7 +36,7 @@ std::chrono::seconds GetRetryAfter(const HttpResponse<void>& response,
                                    std::chrono::milliseconds default_value) {
   std::chrono::seconds retry_after =
       std::chrono::duration_cast<std::chrono::seconds>(default_value);
-  std::optional<std::string_view> retry_after_str =
+  std::optional<absl::string_view> retry_after_str =
       HeaderValue(response.headers, kRetryAfterHeaderName);
   if (retry_after_str) {
     int value;

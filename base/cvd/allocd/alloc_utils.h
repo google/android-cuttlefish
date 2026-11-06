@@ -19,7 +19,8 @@
 #include <stdint.h>
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -41,34 +42,36 @@ struct GatewayConfig {
 Result<std::string> IptablesPath();
 Result<std::string> DnsmasqPath();
 
-bool CreateTap(std::string_view name);
+bool CreateTap(absl::string_view name);
 
 #ifdef __linux__
 Result<void> ValidateTapInterfaceIsUsable(const std::string& interface_name);
 #endif
 
-bool DestroyIface(std::string_view name);
+bool DestroyIface(absl::string_view name);
 
-bool DestroyBridge(std::string_view name);
+bool DestroyBridge(absl::string_view name);
 
-bool CreateMobileIface(std::string_view name, uint16_t id,
-                       std::string_view ipaddr);
-bool DestroyMobileIface(std::string_view name, uint16_t id,
-                        std::string_view ipaddr);
+bool CreateMobileIface(absl::string_view name, uint16_t id,
+                       absl::string_view ipaddr);
+bool DestroyMobileIface(absl::string_view name, uint16_t id,
+                        absl::string_view ipaddr);
 
-bool CreateEthernetIface(std::string_view name, std::string_view bridge_name);
-bool DestroyEthernetIface(std::string_view name);
-void CleanupEthernetIface(std::string_view name);
+bool CreateEthernetIface(absl::string_view name, absl::string_view bridge_name);
+bool DestroyEthernetIface(absl::string_view name);
+void CleanupEthernetIface(absl::string_view name);
 
-bool SetupBridgeGateway(std::string_view name, std::string_view ipaddr);
-void CleanupBridgeGateway(std::string_view name, std::string_view ipaddr,
+bool SetupBridgeGateway(absl::string_view name, absl::string_view ipaddr);
+void CleanupBridgeGateway(absl::string_view name, absl::string_view ipaddr,
                           const GatewayConfig& config);
 
-bool CreateEthernetBridgeIface(std::string_view name, std::string_view ipaddr);
-bool DestroyEthernetBridgeIface(std::string_view name, std::string_view ipaddr);
+bool CreateEthernetBridgeIface(absl::string_view name,
+                               absl::string_view ipaddr);
+bool DestroyEthernetBridgeIface(absl::string_view name,
+                                absl::string_view ipaddr);
 
-bool StartDnsmasq(std::string_view bridge_name, std::string_view gateway,
-                  std::string_view dhcp_range);
-bool StopDnsmasq(std::string_view name);
+bool StartDnsmasq(absl::string_view bridge_name, absl::string_view gateway,
+                  absl::string_view dhcp_range);
+bool StopDnsmasq(absl::string_view name);
 
 }  // namespace cuttlefish

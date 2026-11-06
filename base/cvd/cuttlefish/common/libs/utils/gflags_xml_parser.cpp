@@ -17,9 +17,9 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "libxml/parser.h"
 
 #include "cuttlefish/result/result.h"
@@ -27,7 +27,7 @@
 namespace cuttlefish {
 
 Result<std::vector<GflagDescription>> ParseGflagsXmlHelp(
-    std::string_view xml_help) {
+    absl::string_view xml_help) {
   std::unique_ptr<xmlDoc, void (*)(xmlDocPtr)> doc(
       xmlReadMemory(xml_help.data(), xml_help.size(), nullptr, nullptr, 0),
       xmlFreeDoc);

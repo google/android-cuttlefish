@@ -46,6 +46,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "//linux_headers",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -59,6 +60,7 @@ cf_cc_test(
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "//linux_headers",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -75,6 +77,7 @@ cf_cc_library(
         ":nft_messages",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 

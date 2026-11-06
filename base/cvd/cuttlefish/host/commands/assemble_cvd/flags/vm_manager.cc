@@ -15,10 +15,10 @@
  */
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/utils/host_info.h"
@@ -41,7 +41,7 @@ Result<VmManagerFlag> VmManagerFlag::FromGlobalGflags(
                  "All instance target architectures should be the same");
   }
 
-  std::vector<std::string_view> vm_manager_str_vec =
+  std::vector<absl::string_view> vm_manager_str_vec =
       absl::StrSplit(FLAGS_vm_manager, ',');
 
   VmmMode default_vmm = IsHostCompatible(guest_configs[0].target_arch)
@@ -49,7 +49,7 @@ Result<VmManagerFlag> VmManagerFlag::FromGlobalGflags(
                             : VmmMode::kQemu;
 
   std::vector<VmmMode> vmm_vec;
-  for (std::string_view vmm_str : vm_manager_str_vec) {
+  for (absl::string_view vmm_str : vm_manager_str_vec) {
     vmm_vec.emplace_back(vmm_str.empty() ? default_vmm
                                          : CF_EXPECT(ParseVmm(vmm_str)));
   }

@@ -22,12 +22,12 @@
 #include <mutex>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/ascii.h"
+#include "absl/strings/string_view.h"
 #include "curl/curl.h"
 #include "curl/easy.h"
 #include "curl/header.h"
@@ -72,7 +72,7 @@ std::optional<std::string> CaBundlePath() {
 }
 
 std::string TrimWhitespace(const char* data, const size_t size) {
-  std::string_view converted(data, size);
+  absl::string_view converted(data, size);
   return std::string(absl::StripAsciiWhitespace(converted));
 }
 

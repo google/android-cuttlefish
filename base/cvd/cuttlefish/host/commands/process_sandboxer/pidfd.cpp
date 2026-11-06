@@ -31,7 +31,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -45,6 +44,7 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 #include "sandboxed_api/util/fileops.h"
 
@@ -148,7 +148,7 @@ absl::StatusOr<std::vector<std::pair<FDCloser, int>>> PidFd::AllFds() {
   for (dirent* ent = readdir(dir.get()); ent; ent = readdir(dir.get())) {
     int other_fd;
     // `d_name` is guaranteed to be null terminated
-    std::string_view name{ent->d_name};
+    absl::string_view name{ent->d_name};
     if (name == "." || name == "..") {
       continue;
     }
@@ -221,7 +221,7 @@ static absl::StatusOr<std::vector<pid_t>> FindChildPids(pid_t pid) {
 
   while (dirent* ent = readdir(dir.get())) {
     // `d_name` is guaranteed to be null terminated
-    std::string_view name = ent->d_name;
+    absl::string_view name = ent->d_name;
     if (name == "." || name == "..") {
       continue;
     }
@@ -235,7 +235,7 @@ static absl::StatusOr<std::vector<pid_t>> FindChildPids(pid_t pid) {
 
     std::string children_str;
     std::getline(children_stream, children_str);
-    for (std::string_view child_str : absl::StrSplit(children_str, ' ')) {
+    for (absl::string_view child_str : absl::StrSplit(children_str, ' ')) {
       if (child_str.empty()) {
         continue;
       }

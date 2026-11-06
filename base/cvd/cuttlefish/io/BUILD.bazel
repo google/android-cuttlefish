@@ -17,6 +17,7 @@ cf_cc_library(
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -101,6 +102,7 @@ cf_cc_library(
         "//cuttlefish/io:reader_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -201,6 +203,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -215,6 +218,7 @@ cf_cc_library(
         "//cuttlefish/io:reader_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -316,6 +320,7 @@ cf_cc_test(
         "//cuttlefish/io:writer",
         "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -332,6 +337,7 @@ cf_cc_library(
         "//cuttlefish/posix:stat",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -341,6 +347,7 @@ cf_cc_library(
     hdrs = ["owning_in_memory_io.h"],
     deps = [
         "//cuttlefish/io:in_memory_io",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -351,6 +358,7 @@ cf_cc_test(
         "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/result:result_matchers",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -427,6 +435,7 @@ cf_cc_library(
         "//cuttlefish/io:disjoint_range_set",
         "//cuttlefish/io:disjoint_range_set_cc_proto",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -467,6 +476,7 @@ cf_cc_library(
         "//cuttlefish/io:writer",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 

@@ -19,9 +19,9 @@
 #include <map>
 #include <optional>
 #include <string>
-#include <string_view>
 
 #include "absl/container/btree_map.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -33,8 +33,8 @@ class Defaults {
   Defaults(std::map<std::string, std::string, std::less<void>> defaults);
   static Result<Defaults> FromFile(const std::string& path);
 
-  std::optional<std::string_view> Value(std::string_view k) const;
-  std::optional<bool> BoolValue(std::string_view k) const;
+  std::optional<absl::string_view> Value(absl::string_view k) const;
+  std::optional<bool> BoolValue(absl::string_view k) const;
 
  private:
   absl::btree_map<std::string, std::string> defaults_;

@@ -26,6 +26,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -166,5 +167,6 @@ cf_cc_library(
         "//cuttlefish/io:write_exact",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )

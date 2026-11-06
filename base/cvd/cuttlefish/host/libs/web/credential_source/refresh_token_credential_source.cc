@@ -19,13 +19,13 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "json/value.h"
 #include "json/writer.h"
@@ -68,19 +68,20 @@ RefreshTokenCredentialSource::FromOauth2ClientFile(
     std::string client_id = "";
     std::string client_secret = "";
     std::string refresh_token = "";
-    for (std::string_view line :
+    for (absl::string_view line :
          absl::StrSplit(oauth_contents, '\n', absl::SkipEmpty())) {
-      static constexpr std::string_view kClientIdPrefix = "client_id =";
+      static constexpr absl::string_view kClientIdPrefix = "client_id =";
       if (absl::ConsumePrefix(&line, kClientIdPrefix)) {
         client_id = std::string(absl::StripAsciiWhitespace(line));
         continue;
       }
-      static constexpr std::string_view kClientSecretPrefix = "client_secret =";
+      static constexpr absl::string_view kClientSecretPrefix =
+          "client_secret =";
       if (absl::ConsumePrefix(&line, kClientSecretPrefix)) {
         client_secret = std::string(absl::StripAsciiWhitespace(line));
         continue;
       }
-      static constexpr std::string_view kRefreshTokenPrefix =
+      static constexpr absl::string_view kRefreshTokenPrefix =
           "gs_oauth2_refresh_token =";
       if (absl::ConsumePrefix(&line, kRefreshTokenPrefix)) {
         refresh_token = std::string(absl::StripAsciiWhitespace(line));

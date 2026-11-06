@@ -23,7 +23,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -36,6 +35,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "sandboxed_api/util/fileops.h"
 #include "sandboxed_api/util/path.h"
 
@@ -65,9 +65,9 @@ using sapi::file::CleanPath;
 using sapi::file::JoinPath;
 using sapi::file_util::fileops::FDCloser;
 
-std::optional<std::string_view> FromEnv(const std::string& name) {
+std::optional<absl::string_view> FromEnv(const std::string& name) {
   char* value = getenv(name.c_str());
-  return value == NULL ? std::optional<std::string_view>() : value;
+  return value == NULL ? std::optional<absl::string_view>() : value;
 }
 
 absl::Status ProcessSandboxerMain(int argc, char** argv) {
@@ -109,7 +109,7 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
 
   // TODO: schuffelen - try to guess these from the cvd_internal_start arguments
 
-  std::optional<std::string_view> home = FromEnv("HOME");
+  std::optional<absl::string_view> home = FromEnv("HOME");
 
   // CleanPath will set empty strings to ".", so consider that the unset value.
   if (host.assembly_dir == "." && home.has_value()) {
@@ -132,7 +132,7 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
         CleanPath(JoinPath(*home, "cuttlefish", "instances", "cvd-1"));
   }
 
-  std::optional<std::string_view> product_out = FromEnv("ANDROID_PRODUCT_OUT");
+  std::optional<absl::string_view> product_out = FromEnv("ANDROID_PRODUCT_OUT");
 
   if (host.guest_image_path == ".") {
     if (product_out.has_value()) {
@@ -142,7 +142,7 @@ absl::Status ProcessSandboxerMain(int argc, char** argv) {
     }
   }
 
-  std::optional<std::string_view> host_out = FromEnv("ANDROID_HOST_OUT");
+  std::optional<absl::string_view> host_out = FromEnv("ANDROID_HOST_OUT");
 
   if (host.host_artifacts_path == ".") {
     if (host_out.has_value()) {

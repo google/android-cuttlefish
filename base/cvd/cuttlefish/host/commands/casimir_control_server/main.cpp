@@ -25,6 +25,7 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/escaping.h"
+#include "absl/strings/string_view.h"
 #include "gflags/gflags.h"
 #include "google/protobuf/empty.pb.h"
 #include "grpcpp/ext/proto_server_reflection_plugin.h"
@@ -215,7 +216,7 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
       std::vector<uint8_t> bytes =
           CF_EXPECT(device_->SendApdu(id, std::move(apdu_bytes[i])),
                     "Failed to send APDU bytes");
-      std::string resp = absl::BytesToHexString(std::string_view(
+      std::string resp = absl::BytesToHexString(absl::string_view(
           reinterpret_cast<const char*>(bytes.data()), bytes.size()));
       response->add_response_hex_strings(std::move(resp));
     }

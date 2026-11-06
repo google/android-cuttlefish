@@ -17,8 +17,9 @@
 
 #include <memory>
 #include <optional>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/result/result.h"
@@ -38,7 +39,7 @@ enum class LogSeverity : int {
 };
 
 std::string FromSeverity(LogSeverity severity);
-Result<LogSeverity> ToSeverity(std::string_view value);
+Result<LogSeverity> ToSeverity(absl::string_view value);
 
 std::string StripColorCodes(const std::string& str);
 

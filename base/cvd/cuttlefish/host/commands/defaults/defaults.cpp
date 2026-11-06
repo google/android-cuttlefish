@@ -20,7 +20,6 @@
 #include <map>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -28,6 +27,7 @@
 #include "absl/flags/parse.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
@@ -45,7 +45,7 @@ ABSL_FLAG(std::optional<std::string>, static_defaults_when, std::nullopt,
 namespace cuttlefish {
 namespace {
 
-Result<std::string> MetadataValue(std::string_view key) {
+Result<std::string> MetadataValue(absl::string_view key) {
   std::string url = absl::StrFormat(
       "http://metadata.google.internal/computeMetadata/v1/%s", key);
   const auto client = CurlHttpClient();

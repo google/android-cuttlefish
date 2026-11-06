@@ -19,9 +19,9 @@
 #include <stddef.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "fmt/base.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
@@ -53,7 +53,7 @@ struct CacheArguments {
   bool json_formatted = false;
 };
 
-Result<Action> ToAction(std::string_view key) {
+Result<Action> ToAction(absl::string_view key) {
   if (key == "empty") {
     return Action::Empty;
   } else if (key == "info") {

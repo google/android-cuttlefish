@@ -21,8 +21,8 @@
 #include <unistd.h>
 
 #include <string>
-#include <string_view>
 
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -34,7 +34,7 @@ namespace {
 
 constexpr size_t kGigabyte = size_t{1} << 30;
 
-std::string WriteFileOfSize(const std::string& dir, std::string_view name,
+std::string WriteFileOfSize(const std::string& dir, absl::string_view name,
                             size_t size) {
   std::string path = dir + "/" + std::string(name);
   EXPECT_TRUE(android::base::WriteStringToFile(std::string(size, 'x'), path))
@@ -90,7 +90,7 @@ TEST(DiskUsageTest, FifoIsAnError) {
 
 TEST(DiskUsageTest, SymlinkArgumentIsFollowed) {
   constexpr size_t kSize = 12345;
-  constexpr std::string_view kName = "file";
+  constexpr absl::string_view kName = "file";
   TemporaryDir dir;
   WriteFileOfSize(dir.path, kName, kSize);
   const std::string link = dir.path + std::string("/link");
@@ -127,7 +127,7 @@ TEST(DiskUsageTest, HardLinkIsCountedOnce) {
 
 TEST(DiskUsageTest, SymlinkInDirectoryIsNotFollowed) {
   constexpr size_t kSize = 1000;
-  constexpr std::string_view kName = "a";
+  constexpr absl::string_view kName = "a";
   TemporaryDir dir;
   const std::string root = dir.path;
   WriteFileOfSize(root, kName, kSize);

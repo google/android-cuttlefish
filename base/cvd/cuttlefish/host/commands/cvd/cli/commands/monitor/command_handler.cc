@@ -20,8 +20,9 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -80,11 +81,11 @@ std::vector<HelpParagraph> CvdMonitorCommandHandler::Description() const {
 
 Result<std::vector<Flag>> CvdMonitorCommandHandler::Flags(
     const CommandRequest&) {
-  auto set_severity = [this](std::string_view severity) -> Result<void> {
+  auto set_severity = [this](absl::string_view severity) -> Result<void> {
     flags_.severity_ = CF_EXPECT(ToSeverity(severity));
     return {};
   };
-  auto set_error = [this](std::string_view) -> Result<void> {
+  auto set_error = [this](absl::string_view) -> Result<void> {
     flags_.severity_ = LogSeverity::Error;
     return {};
   };

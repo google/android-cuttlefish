@@ -17,13 +17,14 @@
 
 #include <source_location>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
 /* Best-effort attempt to extract the bare function name from a signature. */
 std::string FunctionName(std::string function_signature);
-std::string FunctionName(std::string_view function_signature);
+std::string FunctionName(absl::string_view function_signature);
 std::string FunctionName(const char* function_signature);
 std::string FunctionName(
     std::source_location location = std::source_location::current());

@@ -17,7 +17,8 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -30,6 +31,6 @@ struct UrlParts {
   std::string query;
 };
 
-Result<UrlParts> SplitUrl(std::string_view url);
+Result<UrlParts> SplitUrl(absl::string_view url);
 
 }  // namespace cuttlefish

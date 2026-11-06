@@ -23,7 +23,6 @@
 #include <chrono>
 #include <map>
 #include <string>
-#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -34,6 +33,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -251,7 +251,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnSensorsMessage(const uint8_t *msg, size_t size) override {
     std::string msgstr(msg, msg + size);
-    std::vector<std::string_view> xyz = absl::StrSplit(msgstr, ' ');
+    std::vector<absl::string_view> xyz = absl::StrSplit(msgstr, ' ');
 
     if (xyz.size() != 3) {
       LOG(WARNING) << "Invalid rotation angles: Expected 3, received "

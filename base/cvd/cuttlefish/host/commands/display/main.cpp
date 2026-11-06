@@ -18,11 +18,11 @@
 #include <optional>
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include "absl/base/no_destructor.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -157,7 +157,7 @@ Result<int> DoRemove(std::vector<std::string>& args) {
   const std::vector<Flag> remove_displays_flags = {
       Flag::StringFlag(kDisplayFlag)
           .Help("Display id of a display to remove.")
-          .Setter([&](std::string_view arg) -> Result<void> {
+          .Setter([&](absl::string_view arg) -> Result<void> {
             displays.emplace_back(arg);
             return {};
           }),

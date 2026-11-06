@@ -22,6 +22,9 @@
 #include <sstream>
 #include <string>
 #include <thread>
+
+#include "absl/strings/string_view.h"
+
 namespace cuttlefish {
 
 static const std::string kWithoutServiceCenterAddress     = "00";
@@ -51,7 +54,7 @@ bool PDUParser::DecodePDU(std::string& pdu) {
     return false;
   }
 
-  std::string_view pdu_view = pdu;
+  absl::string_view pdu_view = pdu;
   size_t pos = 0;
 
   /* 1. SMSC Address Length: 1 byte */
@@ -294,7 +297,7 @@ std::string PDUParser::BCDToString(std::string& data) {
 }
 
 // This function is a reverse of the function PDUParser::BCDToString
-std::string PDUParser::StringToBCD(std::string_view data) {
+std::string PDUParser::StringToBCD(absl::string_view data) {
   std::string dst;
   if (data.empty()) {
     return "";

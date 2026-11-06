@@ -19,9 +19,9 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <string_view>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/files/file_exists.h"
@@ -32,15 +32,15 @@
 namespace cuttlefish {
 namespace {
 
-constexpr std::string_view kNoticeFilename = "PRIVACY_NOTICE.txt";
+constexpr absl::string_view kNoticeFilename = "PRIVACY_NOTICE.txt";
 
-constexpr std::string_view kTermsAndPrivacyNotice =
+constexpr absl::string_view kTermsAndPrivacyNotice =
     "By using this Android Virtual Device, you agree to Google Terms of "
     "Service (https://policies.google.com/terms). The Google Privacy Policy "
     "(https://policies.google.com/privacy) describes how Google handles "
     "information generated as you use Google services.";
 
-constexpr std::string_view kMetricsEnabledNotice =
+constexpr absl::string_view kMetricsEnabledNotice =
     "This will automatically send diagnostic information to Google, such as "
     "crash reports and usage data from the host machine managing the Android "
     "Virtual Device.";

@@ -31,7 +31,6 @@
 #include <set>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -40,6 +39,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/injector.h"
@@ -159,7 +159,7 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
     }
     return output_map;
   }
-  std::vector<std::string_view> tokens =
+  std::vector<absl::string_view> tokens =
       absl::StrSplit(webrtc_device_id_flag, ',', absl::SkipEmpty());
   CF_EXPECT(tokens.size() == 1 || tokens.size() == instance_nums.size(),
             "--webrtc_device_ids provided " << tokens.size()
@@ -169,7 +169,7 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
                                             << " is expected.");
   CF_EXPECT(!tokens.empty(), "--webrtc_device_ids is ill-formatted");
 
-  std::vector<std::string_view> device_ids;
+  std::vector<absl::string_view> device_ids;
   if (tokens.size() != instance_nums.size()) {
     /* this is only possible when tokens.size() == 1
      * and instance_nums.size() > 1. The token must include {num}
@@ -180,7 +180,7 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
               "If one webrtc_device_ids is given for multiple instances, "
                   << " {num} should be included in webrtc_device_id.");
     device_ids =
-        std::vector<std::string_view>(instance_nums.size(), tokens.front());
+        std::vector<absl::string_view>(instance_nums.size(), tokens.front());
   }
 
   if (tokens.size() == instance_nums.size()) {
@@ -190,7 +190,7 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
 
   auto itr = device_ids.begin();
   for (const auto num : instance_nums) {
-    std::string_view device_id_view(itr->data(), itr->size());
+    absl::string_view device_id_view(itr->data(), itr->size());
     output_map[num] =
         absl::StrReplaceAll(device_id_view, {{"{num}", std::to_string(num)}});
     ++itr;
@@ -216,12 +216,12 @@ Result<std::vector<bool>> GetFlagBoolValueForInstances(
     const std::string& flag_values, int32_t instances_size,
     const std::string& flag_name,
     const std::map<std::string, std::string>& name_to_default_value) {
-  std::vector<std::string_view> flag_vec = absl::StrSplit(flag_values, ",");
+  std::vector<absl::string_view> flag_vec = absl::StrSplit(flag_values, ",");
   std::vector<bool> value_vec(instances_size);
 
   auto default_value_it = name_to_default_value.find(flag_name);
   CF_EXPECT(default_value_it != name_to_default_value.end());
-  std::vector<std::string_view> default_value_vec =
+  std::vector<absl::string_view> default_value_vec =
       absl::StrSplit(default_value_it->second, ",");
 
   for (int instance_index = 0; instance_index < instances_size;
@@ -231,7 +231,7 @@ Result<std::vector<bool>> GetFlagBoolValueForInstances(
     } else {
       if (flag_vec[instance_index] == "unset" ||
           flag_vec[instance_index] == "\"unset\"") {
-        std::string_view default_value = default_value_vec[0];
+        absl::string_view default_value = default_value_vec[0];
         if (instance_index < default_value_vec.size()) {
           default_value = default_value_vec[instance_index];
         }
@@ -250,12 +250,12 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
     const std::string& flag_values, int32_t instances_size,
     const std::string& flag_name,
     const std::map<std::string, std::string>& name_to_default_value) {
-  std::vector<std::string_view> flag_vec = absl::StrSplit(flag_values, ",");
+  std::vector<absl::string_view> flag_vec = absl::StrSplit(flag_values, ",");
   std::vector<int> value_vec(instances_size);
 
   auto default_value_it = name_to_default_value.find(flag_name);
   CF_EXPECT(default_value_it != name_to_default_value.end());
-  std::vector<std::string_view> default_value_vec =
+  std::vector<absl::string_view> default_value_vec =
       absl::StrSplit(default_value_it->second, ",");
 
   for (int instance_index = 0; instance_index < instances_size;
@@ -265,7 +265,7 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
     } else {
       if (flag_vec[instance_index] == "unset" ||
           flag_vec[instance_index] == "\"unset\"") {
-        std::string_view default_value = default_value_vec[0];
+        absl::string_view default_value = default_value_vec[0];
         if (instance_index < default_value_vec.size()) {
           default_value = default_value_vec[instance_index];
         }
@@ -290,12 +290,12 @@ Result<std::vector<std::string>> GetFlagStrValueForInstances(
   if (instances_size == 1) {
     return std::vector<std::string>{flag_values};
   }
-  std::vector<std::string_view> flag_vec = absl::StrSplit(flag_values, ",");
+  std::vector<absl::string_view> flag_vec = absl::StrSplit(flag_values, ",");
   std::vector<std::string> value_vec(instances_size);
 
   auto default_value_it = name_to_default_value.find(flag_name);
   CF_EXPECT(default_value_it != name_to_default_value.end());
-  std::vector<std::string_view> default_value_vec =
+  std::vector<absl::string_view> default_value_vec =
       absl::StrSplit(default_value_it->second, ",");
 
   for (int instance_index = 0; instance_index < instances_size;
@@ -305,7 +305,7 @@ Result<std::vector<std::string>> GetFlagStrValueForInstances(
     } else {
       if (flag_vec[instance_index] == "unset" ||
           flag_vec[instance_index] == "\"unset\"") {
-        std::string_view default_value = default_value_vec[0];
+        absl::string_view default_value = default_value_vec[0];
         if (instance_index < default_value_vec.size()) {
           default_value = default_value_vec[instance_index];
         }

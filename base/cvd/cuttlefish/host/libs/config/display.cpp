@@ -18,12 +18,12 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/flag_parser/flag.h"
@@ -50,12 +50,12 @@ Result<std::optional<CuttlefishConfig::DisplayConfig>> ParseDisplayConfig(
 
   std::unordered_map<std::string, std::string> props;
 
-  for (std::string_view pair : absl::StrSplit(flag, ',')) {
-    const std::vector<std::string_view> keyvalue = absl::StrSplit(pair, '=');
+  for (absl::string_view pair : absl::StrSplit(flag, ',')) {
+    const std::vector<absl::string_view> keyvalue = absl::StrSplit(pair, '=');
     CF_EXPECT_EQ(keyvalue.size(), 2,
                  "Invalid display flag key-value: \"" << flag << "\"");
-    std::string_view prop_key = keyvalue[0];
-    std::string_view prop_val = keyvalue[1];
+    absl::string_view prop_key = keyvalue[0];
+    absl::string_view prop_val = keyvalue[1];
     props.emplace(prop_key, prop_val);
   }
 
@@ -122,7 +122,7 @@ ParseDisplayConfigsFromArgs(std::vector<std::string>& args) {
           .Help(kDisplayHelp),
       Flag::StringFlag(kDisplayFlag)
           .Help(kDisplayHelp)
-          .Setter([&](std::string_view arg) -> Result<void> {
+          .Setter([&](absl::string_view arg) -> Result<void> {
             repeated_display_flag_values.emplace_back(arg);
             return {};
           }),

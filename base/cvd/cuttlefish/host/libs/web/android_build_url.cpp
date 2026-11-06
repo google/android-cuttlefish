@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 #include "fmt/ostream.h"
@@ -34,40 +35,40 @@ namespace {
 
 class UrlBuilder {
  public:
-  static UrlBuilder GetLatestBuildCandidateUrl(std::string_view api_base) {
+  static UrlBuilder GetLatestBuildCandidateUrl(absl::string_view api_base) {
     return UrlBuilder(fmt::format("{}/builds", api_base));
   }
 
-  static UrlBuilder GetBuildBaseUrl(std::string_view api_base,
-                                    std::string_view id,
-                                    std::string_view target) {
+  static UrlBuilder GetBuildBaseUrl(absl::string_view api_base,
+                                    absl::string_view id,
+                                    absl::string_view target) {
     return UrlBuilder(fmt::format("{}/builds/{}/{}", api_base, UrlEscape(id),
                                   UrlEscape(target)));
   }
 
-  static UrlBuilder GetArtifactBaseUrl(std::string_view api_base,
-                                       std::string_view id,
-                                       std::string_view target) {
+  static UrlBuilder GetArtifactBaseUrl(absl::string_view api_base,
+                                       absl::string_view id,
+                                       absl::string_view target) {
     return UrlBuilder(fmt::format("{}/builds/{}/{}/attempts/latest/artifacts",
                                   api_base, UrlEscape(id), UrlEscape(target)));
   }
 
-  static UrlBuilder GetArtifactDownloadBaseUrl(std::string_view api_base,
-                                               std::string_view id,
-                                               std::string_view target,
-                                               std::string_view artifact) {
+  static UrlBuilder GetArtifactDownloadBaseUrl(absl::string_view api_base,
+                                               absl::string_view id,
+                                               absl::string_view target,
+                                               absl::string_view artifact) {
     return UrlBuilder(fmt::format(
         "{}/builds/{}/{}/attempts/latest/artifacts/{}/url", api_base,
         UrlEscape(id), UrlEscape(target), UrlEscape(artifact)));
   }
 
-  void AddQueryParameter(std::string_view key, std::string_view value) {
+  void AddQueryParameter(absl::string_view key, absl::string_view value) {
     // key is not escaped because it should be a fixed parameter of the AB API
     query_string_.push_back(fmt::format("{}={}", key, UrlEscape(value)));
   }
 
-  void AddApiKeyAndProjectId(std::string_view api_key,
-                             std::string_view project_id) {
+  void AddApiKeyAndProjectId(absl::string_view api_key,
+                             absl::string_view project_id) {
     if (!api_key.empty()) {
       AddQueryParameter("key", api_key);
     }
@@ -134,9 +135,8 @@ AndroidBuildUrl::AndroidBuildUrl(std::string api_base_url, std::string api_key,
       api_key_(std::move(api_key)),
       project_id_(std::move(project_id)) {}
 
-std::string AndroidBuildUrl::GetLatestBuildCandidateUrl(std::string_view branch,
-                                                        std::string_view target,
-                                                        SafeLevel safe_level) {
+std::string AndroidBuildUrl::GetLatestBuildCandidateUrl(
+    absl::string_view branch, absl::string_view target, SafeLevel safe_level) {
   UrlBuilder builder = UrlBuilder::GetLatestBuildCandidateUrl(api_base_url_);
   builder.AddQueryParameter("buildAttemptStatus", "complete");
   builder.AddQueryParameter("buildType", "submitted");
@@ -152,8 +152,8 @@ std::string AndroidBuildUrl::GetLatestBuildCandidateUrl(std::string_view branch,
   return builder.GetUrl();
 }
 
-std::string AndroidBuildUrl::GetBuildUrl(std::string_view id,
-                                         std::string_view target) {
+std::string AndroidBuildUrl::GetBuildUrl(absl::string_view id,
+                                         absl::string_view target) {
   UrlBuilder builder = UrlBuilder::GetBuildBaseUrl(api_base_url_, id, target);
   builder.AddApiKeyAndProjectId(api_key_, project_id_);
 
@@ -161,9 +161,9 @@ std::string AndroidBuildUrl::GetBuildUrl(std::string_view id,
 }
 
 std::string AndroidBuildUrl::GetArtifactUrl(
-    std::string_view id, std::string_view target,
+    absl::string_view id, absl::string_view target,
     const std::vector<std::string>& artifact_filenames,
-    std::string_view page_token) {
+    absl::string_view page_token) {
   UrlBuilder builder =
       UrlBuilder::GetArtifactBaseUrl(api_base_url_, id, target);
   builder.AddQueryParameter("pageSize", "100");  // maximum value allowed by API
@@ -179,9 +179,9 @@ std::string AndroidBuildUrl::GetArtifactUrl(
   return builder.GetUrl();
 }
 
-std::string AndroidBuildUrl::GetArtifactDownloadUrl(std::string_view id,
-                                                    std::string_view target,
-                                                    std::string_view artifact) {
+std::string AndroidBuildUrl::GetArtifactDownloadUrl(
+    absl::string_view id, absl::string_view target,
+    absl::string_view artifact) {
   UrlBuilder builder = UrlBuilder::GetArtifactDownloadBaseUrl(api_base_url_, id,
                                                               target, artifact);
   builder.AddApiKeyAndProjectId(api_key_, project_id_);

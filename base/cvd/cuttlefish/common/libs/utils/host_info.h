@@ -19,6 +19,8 @@
 #include <string>
 #include <string_view>
 
+#include "absl/strings/string_view.h"
+
 namespace cuttlefish {
 
 enum class Arch {
@@ -29,7 +31,7 @@ enum class Arch {
   X86_64,
 };
 
-std::string_view ArchToStringView(Arch);
+absl::string_view ArchToStringView(Arch);
 std::ostream& operator<<(std::ostream&, Arch);
 
 template <typename Sink>

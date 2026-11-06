@@ -20,8 +20,9 @@
 #include <string.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/writer.h"
 #include "cuttlefish/result/expect.h"
@@ -50,7 +51,7 @@ Result<void, int> WriteExact(Writer& writer, const std::string& str) {
   return {};
 }
 
-Result<void, int> WriteExact(Writer& writer, const std::string_view str) {
+Result<void, int> WriteExact(Writer& writer, const absl::string_view str) {
   CF_EXPECT(WriteExact(writer, str.data(), str.size()));
   return {};
 }

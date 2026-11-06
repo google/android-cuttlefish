@@ -19,8 +19,9 @@
 #include <unistd.h>
 
 #include <optional>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result_type.h"
 
@@ -28,7 +29,7 @@ namespace cuttlefish {
 
 int BeginElevatedPrivileges();
 int DropPrivileges(uid_t orig);
-Result<void> ValidateCvdallocBinary(std::string_view path);
+Result<void> ValidateCvdallocBinary(absl::string_view path);
 
 class ScopedPrivileges {
  public:

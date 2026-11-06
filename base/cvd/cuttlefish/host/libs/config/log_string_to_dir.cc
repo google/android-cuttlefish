@@ -19,10 +19,10 @@
 #include <stddef.h>
 
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -32,7 +32,8 @@
 namespace cuttlefish {
 
 Result<void> LogStringToDir(const CuttlefishConfig::InstanceSpecific& instance,
-                            std::string_view name, std::string_view contents) {
+                            absl::string_view name,
+                            absl::string_view contents) {
   std::string file = instance.PerInstanceLogPath(name);
 
   Result<Fd> fd_res = Fd::Open(file, O_CREAT | O_EXCL | O_RDWR, 0644);

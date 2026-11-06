@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "liblp/liblp.h"
 #include "liblp/metadata_format.h"
 
@@ -115,7 +116,7 @@ PrettyStruct Pretty(const LpMetadataPartitionGroup& metadata_partition_group,
 
 PrettyStruct Pretty(const LpMetadataBlockDevice& block_device,
                     PrettyAdlPlaceholder) {
-  std::string_view partition_name(
+  absl::string_view partition_name(
       block_device.partition_name,
       sizeof(block_device.partition_name) / sizeof(char));
   return PrettyStruct("LpMetadataBlockDevice")

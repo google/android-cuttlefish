@@ -20,8 +20,9 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
@@ -65,7 +66,7 @@ Result<void> AddFileAt(WritableZip& zip, const std::string& fs_path,
   return {};
 }
 
-Result<void> ExtractFile(ReadableZip& zip, std::string_view zip_path,
+Result<void> ExtractFile(ReadableZip& zip, absl::string_view zip_path,
                          const std::string& host_path) {
   std::unique_ptr<ReaderSeeker> reader = CF_EXPECT(zip.OpenReadOnly(zip_path));
   CF_EXPECT(reader.get());

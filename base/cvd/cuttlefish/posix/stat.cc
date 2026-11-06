@@ -21,7 +21,8 @@
 #include <unistd.h>
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
@@ -41,7 +42,7 @@ Result<struct stat, int> Stat(const std::string& path) {
   return CF_EXPECT(Stat(path.c_str()));
 }
 
-Result<struct stat, int> Stat(std::string_view path) {
+Result<struct stat, int> Stat(absl::string_view path) {
   return CF_EXPECT(Stat(std::string(path)));
 }
 
@@ -56,7 +57,7 @@ Result<struct stat, int> Lstat(const std::string& path) {
   return CF_EXPECT(Lstat(path.c_str()));
 }
 
-Result<struct stat, int> Lstat(std::string_view path) {
+Result<struct stat, int> Lstat(absl::string_view path) {
   return CF_EXPECT(Lstat(std::string(path)));
 }
 

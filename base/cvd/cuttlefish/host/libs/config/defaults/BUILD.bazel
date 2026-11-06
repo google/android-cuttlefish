@@ -13,5 +13,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/result",
         "@abseil-cpp//absl/container:btree",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )

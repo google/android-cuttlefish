@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <string_view>
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/metrics/external_proto/cf_log.pb.h"
 #include "cuttlefish/result/result.h"
@@ -24,7 +24,7 @@
 namespace cuttlefish {
 
 Result<void> WriteMetricsEvent(
-    std::string_view event_type_label, std::string_view metrics_directory,
+    absl::string_view event_type_label, absl::string_view metrics_directory,
     const logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent&
         cf_log_event);
 

@@ -18,6 +18,8 @@
 #include <ostream>
 #include <string_view>
 
+#include "absl/strings/string_view.h"
+
 namespace cuttlefish {
 
 enum class DeviceType {
@@ -33,8 +35,8 @@ enum class DeviceType {
 };
 
 // Parse device type android-info.txt config field.
-DeviceType ParseDeviceType(std::string_view type_name);
-std::string_view DeviceTypeToStringView(DeviceType);
+DeviceType ParseDeviceType(absl::string_view type_name);
+absl::string_view DeviceTypeToStringView(DeviceType);
 
 std::ostream& operator<<(std::ostream&, DeviceType);
 

@@ -19,6 +19,8 @@
 #include <string>
 #include <string_view>
 
+#include "absl/strings/string_view.h"
+
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -32,7 +34,7 @@ enum class VmmMode {
 
 std::ostream& operator<<(std::ostream&, VmmMode);
 std::string ToString(VmmMode mode);
-Result<VmmMode> ParseVmm(std::string_view);
+Result<VmmMode> ParseVmm(absl::string_view);
 
 bool VmManagerIsCrosvm(VmmMode);
 bool VmManagerIsQemu(VmmMode);

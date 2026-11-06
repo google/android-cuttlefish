@@ -21,10 +21,10 @@
 #include <sys/types.h>
 
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -108,7 +108,7 @@ std::string GetFsType(const std::string& path) {
     return "";
   }
 
-  static constexpr std::string_view kTypePrefix = "TYPE=\"";
+  static constexpr absl::string_view kTypePrefix = "TYPE=\"";
 
   size_t type_begin = blkid_out->find(kTypePrefix);
   if (type_begin == std::string::npos) {
@@ -157,7 +157,7 @@ static Result<DataImageAction> ChooseDataImageAction(
 
 }  // namespace
 
-Result<void> CreateBlankEmptyImage(std::string_view image, int num_mb) {
+Result<void> CreateBlankEmptyImage(absl::string_view image, int num_mb) {
   VLOG(0) << "Creating " << image;
 
   uint64_t image_size_bytes = static_cast<uint64_t>(num_mb) << 20;
@@ -168,13 +168,13 @@ Result<void> CreateBlankEmptyImage(std::string_view image, int num_mb) {
   return {};
 }
 
-Result<void> CreateBlankExt4Image(std::string_view image, int num_mb) {
+Result<void> CreateBlankExt4Image(absl::string_view image, int num_mb) {
   CF_EXPECT(CreateBlankEmptyImage(image, num_mb));
   CF_EXPECT_EQ(Execute({"/sbin/mkfs.ext4", std::string(image)}), 0);
   return {};
 }
 
-Result<void> CreateBlankSdcardImage(std::string_view image, int num_mb) {
+Result<void> CreateBlankSdcardImage(absl::string_view image, int num_mb) {
   off_t image_size_bytes = static_cast<off_t>(num_mb) << 20;
   // Reserve 1MB in the image for the MBR and padding, to simulate what
   // other OSes do by default when partitioning a drive

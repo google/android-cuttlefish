@@ -16,8 +16,9 @@
 #pragma once
 
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
@@ -95,7 +96,7 @@ ssize_t ReadExactBinary(SharedFD fd, T* binary_data) {
  * -1 is returned. If not detected, 0 is returned with errno unchanged.
  *
  */
-ssize_t WriteAll(SharedFD fd, std::string_view buf);
+ssize_t WriteAll(SharedFD fd, absl::string_view buf);
 
 /**
  * Writes to fd until writing all bytes in buf.
@@ -167,6 +168,6 @@ bool SendAll(SharedFD sock, const void* buf, size_t size,
  * If a Send error is encountered, returns false. Some data may have already
  * been written to 'sock' at that point.
  */
-bool SendAll(SharedFD sock, std::string_view msg, int flags = MSG_NOSIGNAL);
+bool SendAll(SharedFD sock, absl::string_view msg, int flags = MSG_NOSIGNAL);
 
 }  // namespace cuttlefish

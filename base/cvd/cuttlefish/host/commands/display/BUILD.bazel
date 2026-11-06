@@ -20,5 +20,6 @@ cf_cc_binary(
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
         "@abseil-cpp//absl/base:no_destructor",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )

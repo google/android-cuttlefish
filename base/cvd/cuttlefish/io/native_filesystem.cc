@@ -19,7 +19,8 @@
 #include <stdint.h>
 
 #include <memory>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/io/io.h"
@@ -32,27 +33,28 @@
 namespace cuttlefish {
 
 Result<std::unique_ptr<ReaderWriterSeeker>> NativeFilesystem::CreateFile(
-    std::string_view path) {
+    absl::string_view path) {
   return std::make_unique<Fd>(
       CF_EXPECT(Fd::Open(path, O_CLOEXEC | O_CREAT | O_EXCL | O_RDWR, 0644)));
 }
 
-Result<uint32_t> NativeFilesystem::FileAttributes(std::string_view path) const {
+Result<uint32_t> NativeFilesystem::FileAttributes(
+    absl::string_view path) const {
   return CF_EXPECT(Stat(path)).st_mode;
 }
 
-Result<void> NativeFilesystem::DeleteFile(std::string_view path) {
+Result<void> NativeFilesystem::DeleteFile(absl::string_view path) {
   CF_EXPECT(RemoveFile(path));
   return {};
 }
 
 Result<std::unique_ptr<ReaderSeeker>> NativeFilesystem::OpenReadOnly(
-    std::string_view path) {
+    absl::string_view path) {
   return std::make_unique<Fd>(CF_EXPECT(Fd::Open(path, O_CLOEXEC | O_RDONLY)));
 }
 
 Result<std::unique_ptr<ReaderWriterSeeker>> NativeFilesystem::OpenReadWrite(
-    std::string_view path) {
+    absl::string_view path) {
   return std::make_unique<Fd>(CF_EXPECT(Fd::Open(path, O_CLOEXEC | O_RDWR)));
 }
 

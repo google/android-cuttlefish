@@ -18,10 +18,10 @@
 #include <stddef.h>
 
 #include <string>
-#include <string_view>
 #include <unordered_set>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 
 namespace cuttlefish {
@@ -39,7 +39,7 @@ BooleanFlag IsBoolArg(const std::string& argument,
   // we only deal with special bool case: -flag, --flag, -noflag, --noflag
   // and convert to -flag=true, --flag=true, -flag=false, --flag=false
   // others not in this format just return false
-  std::string_view name = argument;
+  absl::string_view name = argument;
   if (!absl::ConsumePrefix(&name, "-")) {
     return {false, false, ""};
   }
@@ -52,7 +52,7 @@ BooleanFlag IsBoolArg(const std::string& argument,
 
   // Validate it is part of the set
   std::string result_name(name);
-  std::string_view new_name = result_name;
+  absl::string_view new_name = result_name;
   if (result_name.empty()) {
     return {false, false, ""};
   }

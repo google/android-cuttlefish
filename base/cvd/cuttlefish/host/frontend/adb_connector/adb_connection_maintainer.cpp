@@ -23,11 +23,11 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/recv_all.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -70,7 +70,7 @@ std::string MakeGetStateMessage(const std::string& address) {
 // Response will either be OKAY or FAIL
 constexpr char kAdbOkayStatusResponse[] = "OKAY";
 constexpr size_t kAdbStatusResponseLength = sizeof kAdbOkayStatusResponse - 1;
-constexpr std::string_view kAdbUnauthorizedMsg = "device unauthorized.";
+constexpr absl::string_view kAdbUnauthorizedMsg = "device unauthorized.";
 // adb sends the length of what is to follow as a 4 characters string of hex
 // digits
 constexpr size_t kAdbMessageLengthLength = 4;

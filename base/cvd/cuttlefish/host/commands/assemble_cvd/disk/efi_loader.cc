@@ -18,8 +18,9 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -27,7 +28,7 @@
 
 namespace cuttlefish {
 
-static constexpr std::string_view kName = "android_esp";
+static constexpr absl::string_view kName = "android_esp";
 
 std::optional<EfiLoaderImage> EfiLoaderImage::Create(
     const CuttlefishConfig::InstanceSpecific& instance) {

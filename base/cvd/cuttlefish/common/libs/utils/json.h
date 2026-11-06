@@ -16,9 +16,9 @@
 #pragma once
 
 #include <string>
-#include <string_view>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "json/value.h"
 
 #include "cuttlefish/io/reader.h"
@@ -26,7 +26,7 @@
 
 namespace cuttlefish {
 
-Result<Json::Value> ParseJson(std::string_view input);
+Result<Json::Value> ParseJson(absl::string_view input);
 
 Result<Json::Value> LoadFromFile(Reader& json_reader);
 Result<Json::Value> LoadFromFile(const std::string& path_to_file);

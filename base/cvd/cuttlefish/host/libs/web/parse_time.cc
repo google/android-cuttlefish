@@ -21,14 +21,15 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<std::chrono::system_clock::time_point> ParseTime(std::string_view str) {
+Result<std::chrono::system_clock::time_point> ParseTime(absl::string_view str) {
   std::stringstream stream = std::stringstream(std::string(str));
   tm time_tm = {};
   stream >> std::get_time(&time_tm, "%Y-%m-%dT%H:%M:%S");

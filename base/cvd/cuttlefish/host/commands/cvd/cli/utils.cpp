@@ -30,13 +30,13 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
@@ -214,7 +214,7 @@ Result<std::vector<Flag>> GetSiblingCommandFlags(
     const std::unordered_map<std::string, std::string>& env,
     std::vector<std::string> args) {
   // Remove help-like flags to ensure --helpxml takes effect
-  std::erase_if(args, [](std::string_view arg) {
+  std::erase_if(args, [](absl::string_view arg) {
     if (!absl::ConsumePrefix(&arg, "-")) {
       // Must have at least one "-"
       return false;
@@ -249,7 +249,7 @@ Result<std::vector<Flag>> GetSiblingCommandFlags(
                           ? Flag::BoolFlag(desc.name)
                           : Flag::StringFlag(desc.name))
         // Add setter and getter that won't crash
-        .Setter([](std::string_view) -> Result<void> { return {}; })
+        .Setter([](absl::string_view) -> Result<void> { return {}; })
         // The getter always returns the current value reported by the internal
         // binary so the help message is accurate.
         .Getter([value = desc.current_value]() { return value; })
@@ -276,7 +276,8 @@ Result<TerminalSize> GetTerminalSize() {
 
 std::vector<std::string> ExpandProductPaths(const std::string& product_path,
                                             size_t num_instances) {
-  const std::vector<std::string_view> split = absl::StrSplit(product_path, ',');
+  const std::vector<absl::string_view> split =
+      absl::StrSplit(product_path, ',');
   std::vector<std::string> expanded;
   expanded.reserve(num_instances);
   for (size_t i = 0; i < num_instances; i++) {

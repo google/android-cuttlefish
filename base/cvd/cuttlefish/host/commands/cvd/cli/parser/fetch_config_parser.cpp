@@ -17,12 +17,12 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/fetch_config_parser.h"
 
 #include <string>
-#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
 
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
@@ -60,7 +60,7 @@ bool ShouldFetch(const Instance& instance) {
 }
 
 Result<std::string> GetFetchBuildString(const std::string& strVal) {
-  std::string_view view = strVal;
+  absl::string_view view = strVal;
   if (absl::ConsumePrefix(&view, kFetchPrefix)) {
     CF_EXPECTF(!view.empty(),
                "\"{}\" prefixed build string was not followed by a value",

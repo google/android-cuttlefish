@@ -19,8 +19,9 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "allocd/net/nfnetlink_socket.h"
 #include "cuttlefish/result/result.h"
@@ -33,15 +34,15 @@ class NftNatTable {
  public:
   // Fails if a table with this name already exists.
   static Result<NftNatTable> Create(
-      std::string_view name,
+      absl::string_view name,
       const std::vector<std::string>& masquerade_sources);
   static Result<NftNatTable> Create(
-      std::unique_ptr<NfnetlinkSocket> socket, std::string_view name,
+      std::unique_ptr<NfnetlinkSocket> socket, absl::string_view name,
       const std::vector<std::string>& masquerade_sources);
 
-  static Result<bool> Exists(std::string_view name);
+  static Result<bool> Exists(absl::string_view name);
   // For tests to pass in a fake socket.
-  static Result<bool> Exists(NfnetlinkSocket& socket, std::string_view name);
+  static Result<bool> Exists(NfnetlinkSocket& socket, absl::string_view name);
 
   ~NftNatTable();
 
@@ -51,7 +52,7 @@ class NftNatTable {
   NftNatTable& operator=(const NftNatTable& t) = delete;
 
  private:
-  NftNatTable(std::unique_ptr<NfnetlinkSocket> socket, std::string_view name);
+  NftNatTable(std::unique_ptr<NfnetlinkSocket> socket, absl::string_view name);
 
   // The kernel deletes the table when this socket closes.
   std::unique_ptr<NfnetlinkSocket> socket_;

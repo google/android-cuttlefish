@@ -25,11 +25,11 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/directory_exists.h"
@@ -40,10 +40,10 @@
 namespace cuttlefish {
 namespace {
 
-constexpr std::string_view kLogFilePrefix = "cvd_";
-constexpr std::string_view kLogFileSuffix = ".log";
+constexpr absl::string_view kLogFilePrefix = "cvd_";
+constexpr absl::string_view kLogFileSuffix = ".log";
 
-bool IsNotLogFile(std::string_view name) {
+bool IsNotLogFile(absl::string_view name) {
   const bool prefix_match = absl::StartsWith(name, kLogFilePrefix);
   const bool suffix_match = absl::EndsWith(name, kLogFileSuffix);
   return !(prefix_match && suffix_match);

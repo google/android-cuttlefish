@@ -31,7 +31,6 @@
 #include <optional>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -45,6 +44,7 @@
 #include "absl/log/log_sink_registry.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 #include "android-base/threads.h"
 #include "fmt/format.h"
@@ -62,7 +62,7 @@ using android::base::GetThreadId;
 namespace cuttlefish {
 namespace {
 
-std::string ToUpper(std::string_view input) {
+std::string ToUpper(absl::string_view input) {
   std::string output(input);
   std::transform(output.begin(), output.end(), output.begin(),
                  [](unsigned char ch) { return std::toupper(ch); });
@@ -279,7 +279,7 @@ std::string FromSeverity(LogSeverity severity) {
   return "Unexpected severity";
 }
 
-Result<LogSeverity> ToSeverity(std::string_view value) {
+Result<LogSeverity> ToSeverity(absl::string_view value) {
   const std::unordered_map<std::string, LogSeverity> string_to_severity{
       {"VERBOSE", LogSeverity::Verbose}, {"DEBUG", LogSeverity::Debug},
       {"INFO", LogSeverity::Info},       {"WARNING", LogSeverity::Warning},

@@ -54,6 +54,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@jsoncpp",
     ],
@@ -168,6 +169,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:instance_manager",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@jsoncpp",
     ],
@@ -438,6 +440,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@jsoncpp",
     ],
 )

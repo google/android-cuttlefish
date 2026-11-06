@@ -14,6 +14,7 @@ cf_cc_library(
     hdrs = ["interface.h"],
     deps = [
         "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -41,6 +42,7 @@ cf_cc_library(
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -62,5 +64,6 @@ cf_cc_binary(
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )

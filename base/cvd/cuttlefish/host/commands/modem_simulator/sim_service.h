@@ -17,6 +17,8 @@
 
 #include <tinyxml2.h>
 
+#include "absl/strings/string_view.h"
+
 #include "cuttlefish/host/commands/modem_simulator/modem_service.h"
 
 namespace cuttlefish {
@@ -64,10 +66,10 @@ class SimService : public ModemService, public std::enable_shared_from_this<SimS
   void SavePinStateToIccProfile();
   void SaveFacilityLockToIccProfile();
   bool IsFDNEnabled();
-  bool IsFixedDialNumber(std::string_view number);
+  bool IsFixedDialNumber(absl::string_view number);
   XMLElement* GetIccProfile();
   std::string GetPhoneNumber();
-  bool SetPhoneNumber(std::string_view number);
+  bool SetPhoneNumber(absl::string_view number);
 
   enum SimStatus {
     SIM_STATUS_ABSENT = 0,
@@ -200,21 +202,21 @@ class SimService : public ModemService, public std::enable_shared_from_this<SimS
     int pin_remaining_times_;
     int puk_remaining_times_;
 
-    bool CheckPasswordValid(std::string_view password);
+    bool CheckPasswordValid(absl::string_view password);
 
-    bool VerifyPIN(std::string_view pin);
-    bool VerifyPUK(std::string_view puk);
-    bool ChangePIN(ChangeMode mode, std::string_view pin_or_puk,
-                   std::string_view new_pin);
-    bool ChangePUK(std::string_view puk, std::string_view new_puk);
+    bool VerifyPIN(absl::string_view pin);
+    bool VerifyPUK(absl::string_view puk);
+    bool ChangePIN(ChangeMode mode, absl::string_view pin_or_puk,
+                   absl::string_view new_pin);
+    bool ChangePUK(absl::string_view puk, absl::string_view new_puk);
   };
   PinStatus pin1_status_;
   PinStatus pin2_status_;
 
-  bool checkPin1AndAdjustSimStatus(std::string_view password);
+  bool checkPin1AndAdjustSimStatus(absl::string_view password);
   bool ChangePin1AndAdjustSimStatus(PinStatus::ChangeMode mode,
-                                    std::string_view pin,
-                                    std::string_view new_pin);
+                                    absl::string_view pin,
+                                    absl::string_view new_pin);
 
   /*  FacilityLock */
   struct FacilityLock {

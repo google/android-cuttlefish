@@ -20,8 +20,9 @@
 #include <stdint.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "allocd/net/netlink_request.h"
 
@@ -68,7 +69,7 @@ uint16_t NftType(uint16_t message);
 
 std::vector<char> BuildErrorReply(int error);
 
-std::vector<char> BuildTableReply(std::string_view name);
+std::vector<char> BuildTableReply(absl::string_view name);
 std::vector<char> Concat(std::vector<char> a, const std::vector<char>& b);
 
 }  // namespace cuttlefish::nft_test
