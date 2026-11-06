@@ -1,0 +1,34 @@
+name: 'Build host tools on macOS'
+description: >
+  Compile-only portability check. Builds the subset of the minimal host
+  package that is expected to compile on macOS; nothing runs there yet.
+runs:
+  using: "composite"
+  steps:
+  - name: Vendor git dependencies
+    run: tools/buildutils/vendor_git_repos.sh
+    shell: bash
+  - name: Build host tools
+    # Listed explicitly rather than via //cuttlefish/package/minimal:cvd
+    # because that package also ships adb and mkfs.fat, whose
+    # dependencies are Linux-only.
+    run: |
+      cd base/cvd && bazel build --disk_cache=$HOME/bazel-disk-cache \
+        --keep_going \
+        //cuttlefish/host/commands/assemble_cvd \
+        //cuttlefish/host/commands/console_forwarder \
+        //cuttlefish/host/commands/cvd \
+        //cuttlefish/host/commands/echo_server \
+        //cuttlefish/host/commands/gnss_grpc_proxy \
+        //cuttlefish/host/commands/kernel_log_monitor \
+        //cuttlefish/host/commands/logcat_receiver \
+        //cuttlefish/host/commands/run_cvd \
+        //cuttlefish/host/commands/screen_recording_server \
+        //cuttlefish/host/commands/secure_env \
+        //cuttlefish/host/commands/sensors_simulator \
+        //cuttlefish/host/commands/start:cvd_internal_start \
+        //cuttlefish/host/commands/status:cvd_internal_status \
+        //cuttlefish/host/commands/stop:cvd_internal_stop \
+        //cuttlefish/host/commands/tcp_connector \
+        //cuttlefish/host/frontend/adb_connector
+    shell: bash

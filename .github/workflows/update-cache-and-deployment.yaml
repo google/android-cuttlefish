@@ -87,6 +87,30 @@ jobs:
         writable: true
     - name: Run cvd unit tests
       uses: ./.github/actions/run-cvd-unit-tests
+  update-bazel-cache-for-darwin:
+    if: inputs.update-cache
+    strategy:
+      fail-fast: false
+      matrix:
+        # Keep in sync with darwin.yaml.
+        runner: [macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
+    - name: Mount bazel cache
+      uses: ./.github/actions/mount-bazel-cache
+      with:
+        action-name: build-darwin
+        writable: true
+    - name: Mount Bazel vendor cache
+      uses: ./.github/actions/mount-bazel-vendor-cache
+      with:
+        writable: true
+    - name: Build host tools on macOS
+      uses: ./.github/actions/build-darwin
   update-bazel-9-vendor-cache:
     if: inputs.update-cache
     runs-on: ubuntu-24.04
