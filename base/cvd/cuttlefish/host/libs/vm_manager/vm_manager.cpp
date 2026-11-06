@@ -53,13 +53,7 @@ static std::unique_ptr<VmManager> Allocate(VmmMode mode, Arch arch) {
 }
 
 std::unique_ptr<VmManager> GetVmManager(VmmMode vmm_mode, Arch arch) {
-  std::unique_ptr<VmManager> vmm = Allocate(vmm_mode, arch);
-  if (vmm != nullptr && !vmm->IsSupported()) {
-    LOG(ERROR) << "VM manager " << vmm_mode
-               << " is not supported on this machine.";
-    return {};
-  }
-  return vmm;
+  return Allocate(vmm_mode, arch);
 }
 
 Result<std::unordered_map<std::string, std::string>>
@@ -116,8 +110,9 @@ VmManagerComponent() {
       .registerProvider([](const CuttlefishConfig& config,
                            const CuttlefishConfig::InstanceSpecific& instance) {
         auto vmm = GetVmManager(config.vm_manager(), instance.target_arch());
-        CHECK(vmm) << "Invalid VMM/Arch: \"" << config.vm_manager() << "\""
-                   << (int)instance.target_arch() << "\"";
+        CHECK(vmm && vmm->IsSupported())
+            << "Invalid or unsupported VMM/Arch: \"" << config.vm_manager()
+            << "\"" << (int)instance.target_arch() << "\"";
         return vmm.release();  // fruit takes ownership of raw pointers
       })
       .addMultibinding<CommandSource, VmmCommands>()
