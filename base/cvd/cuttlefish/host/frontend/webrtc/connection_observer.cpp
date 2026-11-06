@@ -53,9 +53,7 @@
 namespace cuttlefish {
 
 /**
- * connection observer implementation for regular android mode.
- * i.e. when it is not in the confirmation UI mode (or TEE),
- * the control flow will fall back to this ConnectionObserverForAndroid
+ * Connection observer that forwards client input to the Android guest.
  */
 class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
  public:
