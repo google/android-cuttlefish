@@ -16,6 +16,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/cvd/common"
@@ -63,15 +64,41 @@ func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 				t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %w", err)
 			}
 
-			if _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-ctl", "--list-devices"); err != nil {
-				t.Fatalf("v4l2-ctl --list-devices failed: %w", err)
+			out, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-ctl", "--list-devices")
+			if err != nil {
+				t.Fatalf("v4l2-ctl --list-devices failed: %v", err)
+			}
+			videoNode, err := findVideoNode(out.Stdout, "emulated_camera")
+			if err != nil {
+				t.Fatal(err)
 			}
 
-			if _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-compliance", "-d1", "-s"); err != nil {
-				t.Fatalf("v4l2-compliance failed: %w", err)
+			if _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-compliance", "-d", videoNode, "-s"); err != nil {
+				t.Fatalf("v4l2-compliance failed: %v", err)
 			}
 		})
 	}
 }
 
-
+// findVideoNode returns the first /dev/videoN node listed under the `v4l2-ctl --list-devices`
+// entry whose card name contains cardName, e.g.:
+//
+//	emulated_camera (platform:virtio-media):
+//		/dev/video0
+//
+// Multiple cameras can be attached, but for now this test only exercises the first one.
+func findVideoNode(listDevicesOutput, cardName string) (string, error) {
+	cardMatched := false
+	for _, line := range strings.Split(listDevicesOutput, "\n") {
+		trimmed := strings.TrimSpace(line)
+		switch {
+		case trimmed == "":
+			cardMatched = false
+		case !strings.HasPrefix(line, "\t"):
+			cardMatched = strings.Contains(trimmed, cardName)
+		case cardMatched && strings.HasPrefix(trimmed, "/dev/video"):
+			return trimmed, nil
+		}
+	}
+	return "", fmt.Errorf("%q device not found in guest:\n%s", cardName, listDevicesOutput)
+}
