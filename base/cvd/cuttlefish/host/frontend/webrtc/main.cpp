@@ -493,8 +493,7 @@ int CuttlefishMain() {
   std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer;
   if (instance.lights_server_port()) {
     lights_observer = std::make_shared<webrtc_streaming::LightsObserver>(
-        instance.lights_server_port(), instance.vsock_guest_cid(),
-        instance.vhost_user_vsock());
+        instance.lights_server_port(), instance.vsock_guest_cid());
     lights_observer->Start();
   }
 
@@ -531,8 +530,7 @@ int CuttlefishMain() {
 
   if (instance.camera_server_port()) {
     auto camera_controller = streamer->AddCamera(instance.camera_server_port(),
-                                                 instance.vsock_guest_cid(),
-                                                 instance.vhost_user_vsock());
+                                                 instance.vsock_guest_cid());
     observer_factory->SetCameraHandler(camera_controller);
     streamer->SetHardwareSpec("camera_passthrough", true);
   }

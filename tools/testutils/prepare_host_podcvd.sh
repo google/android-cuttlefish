@@ -90,8 +90,8 @@ if [[ "${PKG_DIR}" == "" ]] || ! [[ -d "${PKG_DIR}" ]]; then
 fi
 
 install_pkgs "${PKG_DIR}" cuttlefish-podcvd
-load_kernel_modules kvm vhost-vsock vhost-net bridge
-grant_device_access vhost-vsock vhost-net kvm
+load_kernel_modules kvm vhost-net bridge
+grant_device_access vhost-net kvm
 if [[ "${TEST_USER}" != "" ]]; then
   create_test_user "${TEST_USER}" "${EXTRA_GROUPS}"
   setup_user_runtime_dir "${TEST_USER}"

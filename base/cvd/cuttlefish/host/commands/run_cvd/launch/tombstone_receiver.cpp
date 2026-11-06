@@ -17,7 +17,6 @@
 
 #include <sys/stat.h>
 
-#include <optional>
 #include <utility>
 
 #include "absl/log/log.h"
@@ -46,11 +45,8 @@ Result<MonitorCommand> TombstoneReceiver(
   }
 
   auto port = instance.tombstone_receiver_port();
-  Fd socket = CF_EXPECT(
-      Fd::VsockServer(port, SOCK_STREAM,
-                      instance.vhost_user_vsock()
-                          ? std::make_optional(instance.vsock_guest_cid())
-                          : std::nullopt));
+  Fd socket =
+      CF_EXPECT(Fd::VsockServer(port, SOCK_STREAM, instance.vsock_guest_cid()));
 
   return Command(TombstoneReceiverBinary())
       .AddParameter("-server_fd=", std::move(socket))

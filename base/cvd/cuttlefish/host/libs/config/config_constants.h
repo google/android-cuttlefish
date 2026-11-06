@@ -64,7 +64,6 @@ inline constexpr int kDefaultInstance = 1;
 
 inline constexpr char kVhostUserVsockModeAuto[] = "auto";
 inline constexpr char kVhostUserVsockModeTrue[] = "true";
-inline constexpr char kVhostUserVsockModeFalse[] = "false";
 
 inline constexpr char kGpuVhostUserModeAuto[] = "auto";
 inline constexpr char kGpuVhostUserModeOn[] = "on";

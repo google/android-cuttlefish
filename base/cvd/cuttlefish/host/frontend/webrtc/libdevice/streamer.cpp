@@ -16,10 +16,6 @@
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/streamer.h"
 
-#include <json/json.h>
-#include "absl/log/check.h"
-#include "absl/log/log.h"
-
 #include <api/audio_codecs/audio_decoder_factory.h>
 #include <api/audio_codecs/audio_encoder_factory.h>
 #include <api/audio_codecs/builtin_audio_decoder_factory.h>
@@ -30,8 +26,12 @@
 #include <api/video_codecs/builtin_video_encoder_factory.h>
 #include <api/video_codecs/video_decoder_factory.h>
 #include <api/video_codecs/video_encoder_factory.h>
+#include <json/json.h>
 #include <media/base/video_broadcaster.h>
 #include <pc/video_track_source.h>
+
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/audio_device.h"
 #include "cuttlefish/host/frontend/webrtc/libcommon/peer_connection_utils.h"
@@ -136,10 +136,10 @@ class AudioDeviceModuleWrapper : public AudioSource {
 
 }  // namespace
 
-
-class Streamer::Impl : public ServerConnectionObserver,
-                       public PeerConnectionBuilder,
-                       public std::enable_shared_from_this<ServerConnectionObserver> {
+class Streamer::Impl
+    : public ServerConnectionObserver,
+      public PeerConnectionBuilder,
+      public std::enable_shared_from_this<ServerConnectionObserver> {
  public:
   std::shared_ptr<ClientHandler> CreateClientHandler(int client_id);
 
@@ -246,55 +246,53 @@ std::shared_ptr<VideoSink> Streamer::AddDisplay(const std::string& label,
                                                 int width, int height, int dpi,
                                                 bool touch_enabled) {
   // Usually called from an application thread
-  return impl_->signal_thread_->BlockingCall(
-      [this, &label, width, height, dpi,
-       touch_enabled]() -> std::shared_ptr<VideoSink> {
-        if (impl_->displays_.count(label)) {
-          LOG(ERROR) << "Display with same label already exists: " << label;
-          return nullptr;
-        }
-        rtc::scoped_refptr<VideoTrackSourceImpl> source(
-            new rtc::RefCountedObject<VideoTrackSourceImpl>(width, height));
-        impl_->displays_[label] = {width, height, dpi, touch_enabled, source};
+  return impl_->signal_thread_->BlockingCall([this, &label, width, height, dpi,
+                                              touch_enabled]()
+                                                 -> std::shared_ptr<VideoSink> {
+    if (impl_->displays_.count(label)) {
+      LOG(ERROR) << "Display with same label already exists: " << label;
+      return nullptr;
+    }
+    rtc::scoped_refptr<VideoTrackSourceImpl> source(
+        new rtc::RefCountedObject<VideoTrackSourceImpl>(width, height));
+    impl_->displays_[label] = {width, height, dpi, touch_enabled, source};
 
-        auto video_track = impl_->peer_connection_factory_->CreateVideoTrack(
-            label, source.get());
+    auto video_track =
+        impl_->peer_connection_factory_->CreateVideoTrack(label, source.get());
 
-        for (auto& [_, client] : impl_->clients_) {
-          client->AddDisplay(video_track, label);
-        }
+    for (auto& [_, client] : impl_->clients_) {
+      client->AddDisplay(video_track, label);
+    }
 
-        if (impl_->recording_manager_) {
-          rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source2 =
-              source;
-          auto deleter = [](webrtc::VideoTrackSourceInterface* source) {
-            source->Release();
-          };
-          std::shared_ptr<webrtc::VideoTrackSourceInterface> source_shared(
-              source2.release(), deleter);
-          impl_->recording_manager_->AddSource(width, height, source_shared, label);
-        }
+    if (impl_->recording_manager_) {
+      rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source2 = source;
+      auto deleter = [](webrtc::VideoTrackSourceInterface* source) {
+        source->Release();
+      };
+      std::shared_ptr<webrtc::VideoTrackSourceInterface> source_shared(
+          source2.release(), deleter);
+      impl_->recording_manager_->AddSource(width, height, source_shared, label);
+    }
 
-        return std::shared_ptr<VideoSink>(
-            new VideoTrackSourceImplSinkWrapper(source));
-      });
+    return std::shared_ptr<VideoSink>(
+        new VideoTrackSourceImplSinkWrapper(source));
+  });
 }
 
 bool Streamer::RemoveDisplay(const std::string& label) {
   // Usually called from an application thread
-  return impl_->signal_thread_->BlockingCall(
-      [this, &label]() -> bool {
-        if (impl_->recording_manager_) {
-          impl_->recording_manager_->RemoveSource(label);
-        }
+  return impl_->signal_thread_->BlockingCall([this, &label]() -> bool {
+    if (impl_->recording_manager_) {
+      impl_->recording_manager_->RemoveSource(label);
+    }
 
-        for (auto& [_, client] : impl_->clients_) {
-          client->RemoveDisplay(label);
-        }
+    for (auto& [_, client] : impl_->clients_) {
+      client->RemoveDisplay(label);
+    }
 
-        impl_->displays_.erase(label);
-        return true;
-      });
+    impl_->displays_.erase(label);
+    return true;
+  });
 }
 
 bool Streamer::AddTouchpad(const std::string& label, int width, int height) {
@@ -332,10 +330,8 @@ std::shared_ptr<AudioSource> Streamer::GetAudioSource() {
   return impl_->audio_device_module_;
 }
 
-CameraController* Streamer::AddCamera(unsigned int port, unsigned int cid,
-                                      bool vhost_user) {
-  impl_->camera_streamer_ =
-      std::make_unique<CameraStreamer>(port, cid, vhost_user);
+CameraController* Streamer::AddCamera(unsigned int port, unsigned int cid) {
+  impl_->camera_streamer_ = std::make_unique<CameraStreamer>(port, cid);
   return impl_->camera_streamer_.get();
 }
 
@@ -374,9 +370,8 @@ void Streamer::Register(std::weak_ptr<OperatorObserver> observer) {
   // Usually called from an application thread
   // No need to block the calling thread on this, the observer will be notified
   // when the connection is established.
-  impl_->signal_thread_->PostTask([this, observer]() {
-    impl_->Register(observer);
-  });
+  impl_->signal_thread_->PostTask(
+      [this, observer]() { impl_->Register(observer); });
 }
 
 void Streamer::Unregister() {
@@ -748,4 +743,3 @@ void Streamer::Impl::SetupCameraForClient(int client_id) {
 
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish
-

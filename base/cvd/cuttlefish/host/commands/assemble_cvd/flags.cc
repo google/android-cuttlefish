@@ -731,7 +731,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       absl::StrSplit(FLAGS_straced_host_executables, ',', absl::SkipEmpty()));
 
   tmp_config_obj.set_kvm_path(FLAGS_kvm_path);
-  tmp_config_obj.set_vhost_vsock_path(FLAGS_vhost_vsock_path);
+  CF_EXPECT(FLAGS_vhost_vsock_path.empty(),
+            "--vhost_vsock_path is no longer supported; Cuttlefish always uses "
+            "vhost-device-vsock");
 
   // Environment specific configs
   // Currently just setting for the default environment
@@ -912,24 +914,15 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       }
     }
 
-    if (vhost_user_vsock_vec[instance_index] == kVhostUserVsockModeAuto) {
-      instance.set_vhost_user_vsock(
-          guest_configs[instance_index].vhost_user_vsock ||
-          VmManagerIsCrosvm(tmp_config_obj) || VmManagerIsQemu(tmp_config_obj));
-    } else if (vhost_user_vsock_vec[instance_index] ==
-               kVhostUserVsockModeTrue) {
+    CF_EXPECTF(
+        vhost_user_vsock_vec[instance_index] == kVhostUserVsockModeAuto ||
+            vhost_user_vsock_vec[instance_index] == kVhostUserVsockModeTrue,
+        "--vhost_user_vsock should be 'auto' or 'true', but got '{}'",
+        vhost_user_vsock_vec[instance_index]);
+    if (vhost_user_vsock_vec[instance_index] == kVhostUserVsockModeTrue) {
       CF_EXPECT(
           VmManagerIsCrosvm(tmp_config_obj) || VmManagerIsQemu(tmp_config_obj),
           "For now, only crosvm and qemu support vhost_user_vsock");
-      instance.set_vhost_user_vsock(true);
-    } else if (vhost_user_vsock_vec[instance_index] ==
-               kVhostUserVsockModeFalse) {
-      instance.set_vhost_user_vsock(false);
-    } else {
-      return CF_ERRF(
-          "--vhost_user_vsock should be one of 'auto', 'true', 'false', but "
-          "got '{}'",
-          vhost_user_vsock_vec[instance_index]);
     }
 
     if (enable_pkvm_vec[instance_index]) {

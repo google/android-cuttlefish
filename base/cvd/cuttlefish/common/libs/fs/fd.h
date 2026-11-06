@@ -49,7 +49,6 @@
 #include "android-base/cmsg.h"
 
 #include "cuttlefish/common/libs/fs/scoped_mmap.h"
-#include "cuttlefish/common/libs/fs/vm_sockets.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -137,31 +136,11 @@ class Fd : public ReaderWriterSeeker {
   static Result<Fd, int> Event(int initval = 0, int flags = 0);
   static Result<Fd, int> InotifyFd();
 #endif
-  // Usages outside of Linux without vhost-user-vsock use AF_VSOCK and fail
-  // with EAFNOSUPPORT.
-  // For binding in vsock, svm_cid from `cid` param would be either
-  // VMADDR_CID_ANY, VMADDR_CID_LOCAL, VMADDR_CID_HOST or their own CID, and it
-  // is used for indicating connections which it accepts from.
-  //  * VMADDR_CID_ANY: accept from any
-  //  * VMADDR_CID_LOCAL: accept from local
-  //  * VMADDR_CID_HOST: accept from child vm
-  //  * their own CID: accept from parent vm
-  // With vhost-user-vsock, it is basically similar to VMADDR_CID_HOST, but for
-  // now it has limitations that it should bind to a specific socket file which
-  // is for a certain cid. So for vhost-user-vsock, we need to specify the
-  // expected client's cid. That's why vhost_user_vsock_listening_cid is
-  // necessary.
-  // TODO: combining them when vhost-user-vsock impl supports a kind of
-  // VMADDR_CID_HOST
   static std::string GetVhostUserVsockServerAddr(
       unsigned int port, int vhost_user_vsock_listening_cid);
   static std::string GetVhostUserVsockClientAddr(int cid);
-  static Result<Fd, int> VsockServer(
-      unsigned int port, int type,
-      std::optional<int> vhost_user_vsock_listening_cid,
-      unsigned int cid = VMADDR_CID_ANY);
-  static Result<Fd, int> VsockServer(
-      int type, std::optional<int> vhost_user_vsock_listening_cid);
+  static Result<Fd, int> VsockServer(unsigned int port, int type,
+                                     int vhost_user_vsock_listening_cid);
 
   Result<void, int> Bind(const struct sockaddr* addr, socklen_t addrlen);
   Result<void, int> Connect(const struct sockaddr* addr, socklen_t addrlen);
@@ -192,10 +171,6 @@ class Fd : public ReaderWriterSeeker {
 
   int GetErrno() const { return errno_; }
   int GetSockName(struct sockaddr* addr, socklen_t* addrlen);
-
-#ifdef __linux__
-  unsigned int VsockServerPort();
-#endif
 
   int Ioctl(int request, void* val = nullptr);
   bool IsOpen() const { return fd_ != -1; }

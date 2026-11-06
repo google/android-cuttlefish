@@ -245,47 +245,28 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
   return Fd::SocketLocalServer(name, abstract, in_type, mode).value_or(Fd());
 }
 
-#ifdef __linux__
-SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
-                               bool vhost_user) {
-  if (vhost_user) {
-    // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock
-    auto client = SharedFD::SocketLocalClient(
-        Fd::GetVhostUserVsockClientAddr(cid), false /* abstract */, type);
-    const std::string msg = fmt::format("connect {}\n", port);
-    SendAll(client, msg);
+SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type) {
+  // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock
+  auto client = SharedFD::SocketLocalClient(
+      Fd::GetVhostUserVsockClientAddr(cid), false /* abstract */, type);
+  const std::string msg = fmt::format("connect {}\n", port);
+  SendAll(client, msg);
 
-    const std::string expected_res = fmt::format("OK {}\n", port);
-    std::string actual_res(expected_res.length(), ' ');
-    if (ReadExact(client, &actual_res) != expected_res.length()) {
-      client->Close();
-      LOG(ERROR) << "cannot connect to " << cid << ":" << port;
-      return client;
-    }
-    if (actual_res != expected_res) {
-      client->Close();
-      LOG(ERROR) << "response from server: " << actual_res << ", but expect "
-                 << expected_res;
-      return client;
-    }
+  const std::string expected_res = fmt::format("OK {}\n", port);
+  std::string actual_res(expected_res.length(), ' ');
+  if (ReadExact(client, &actual_res) != expected_res.length()) {
+    client->Close();
+    LOG(ERROR) << "cannot connect to " << cid << ":" << port;
     return client;
   }
-  auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
-  if (!vsock->IsOpen()) {
-    return vsock;
+  if (actual_res != expected_res) {
+    client->Close();
+    LOG(ERROR) << "response from server: " << actual_res << ", but expect "
+               << expected_res;
+    return client;
   }
-  sockaddr_vm addr{};
-  addr.svm_family = AF_VSOCK;
-  addr.svm_port = port;
-  addr.svm_cid = cid;
-  auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
-  Result<void, int> connect_res = vsock->Connect(casted_addr, sizeof(addr));
-  if (!connect_res.has_value()) {
-    return SharedFD::ErrorFD(*connect_res.error());
-  }
-  return vsock;
+  return client;
 }
-#endif
 
 SharedFD WeakFD::lock() const {
   auto locked_file_instance = value_.lock();

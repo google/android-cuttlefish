@@ -859,20 +859,14 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("timestamp=on");
 
 #ifdef __linux__
-  if (instance.vhost_user_vsock()) {
-    const std::string vhost_socket =
-        fmt::format("{}/vsock_{}_{}/vhost.socket", TempDir(),
-                    instance.vsock_guest_cid(), getuid());
-    qemu_cmd.AddParameter("-chardev");
-    qemu_cmd.AddParameter("socket,id=char_vsock,path=", vhost_socket);
-    qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter(
-        "vhost-user-vsock-pci-non-transitional,chardev=char_vsock");
-  } else {
-    qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter("vhost-vsock-pci-non-transitional,guest-cid=",
-                          instance.vsock_guest_cid());
-  }
+  const std::string vhost_socket =
+      fmt::format("{}/vsock_{}_{}/vhost.socket", TempDir(),
+                  instance.vsock_guest_cid(), getuid());
+  qemu_cmd.AddParameter("-chardev");
+  qemu_cmd.AddParameter("socket,id=char_vsock,path=", vhost_socket);
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter(
+      "vhost-user-vsock-pci-non-transitional,chardev=char_vsock");
 #endif
 
   qemu_cmd.AddParameter("-device");
