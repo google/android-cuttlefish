@@ -63,8 +63,10 @@ if [ x"$has_backports" != x"" ]; then
 else
     KERNEL_ABI="6.18.15+deb13-arm64"
     KERNEL_DEB_VERSION="6.18.15-1~bpo13+1"
-    retry apt-get -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" -o Acquire::Retries=5 update
-    retry apt-get install -y -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" -o Acquire::Retries=5 \
+    retry apt-get -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" \
+        -o Acquire::Retries=5 -o Acquire::http::Pipeline-Depth=0 -o Acquire::https::Pipeline-Depth=0 update
+    retry apt-get install -y -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" \
+        -o Acquire::Retries=5 -o Acquire::http::Pipeline-Depth=0 -o Acquire::https::Pipeline-Depth=0 \
         "linux-image-${KERNEL_ABI}=${KERNEL_DEB_VERSION}" \
         "linux-headers-${KERNEL_ABI}=${KERNEL_DEB_VERSION}" || exit 1
 fi
@@ -90,9 +92,11 @@ elif [ x"$nvidia_gpu" != x"" ]; then
         DEBIAN_FRONTEND=noninteractive apt-get install -y -t "${DEBIAN_DISTRIBUTION}-backports" -q --force-yes firmware-misc-nonfree
     else
         NVIDIA_DEB_VERSION="550.163.01-4~bpo13+1"
-        retry apt-get -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" -o Acquire::Retries=5 update
+        retry apt-get -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" \
+            -o Acquire::Retries=5 -o Acquire::http::Pipeline-Depth=0 -o Acquire::https::Pipeline-Depth=0 update
         retry env DEBIAN_FRONTEND=noninteractive apt-get install -y -q -o Dir::Etc::SourceParts="${DEBIAN_SNAPSHOT_DIR}" \
-            -o Acquire::Retries=5 -t ${DEBIAN_DISTRIBUTION}-backports \
+            -o Acquire::Retries=5 -o Acquire::http::Pipeline-Depth=0 -o Acquire::https::Pipeline-Depth=0 \
+            -t ${DEBIAN_DISTRIBUTION}-backports \
             "nvidia-open-kernel-dkms=${NVIDIA_DEB_VERSION}" \
             "nvidia-driver=${NVIDIA_DEB_VERSION}" || exit 1
         DEBIAN_FRONTEND=noninteractive apt-get install -y -q firmware-misc-nonfree
