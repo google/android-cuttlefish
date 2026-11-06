@@ -46,6 +46,7 @@ cf_cc_test(
 cf_cc_library(
     name = "cf_endian",
     hdrs = ["cf_endian.h"],
+    deps = ["@android_system_libbase//:endian"],
 )
 
 cf_cc_library(

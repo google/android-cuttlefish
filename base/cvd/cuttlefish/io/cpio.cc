@@ -15,7 +15,6 @@
 
 #include "cuttlefish/io/cpio.h"
 
-#include <endian.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -28,6 +27,7 @@
 
 #include "absl/strings/string_view.h"
 
+#include "cuttlefish/common/libs/utils/cf_endian.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
