@@ -37,11 +37,13 @@ namespace cuttlefish {
 DisplayHandler::DisplayHandler(
     webrtc_streaming::Streamer& streamer, ScreenshotHandler& screenshot_handler,
     ScreenConnector& screen_connector,
-    std::optional<std::unique_ptr<CompositionManager>> composition_manager)
+    std::optional<std::unique_ptr<CompositionManager>> composition_manager,
+    std::chrono::milliseconds repeat_interval)
     : composition_manager_(std::move(composition_manager)),
       streamer_(streamer),
       screenshot_handler_(screenshot_handler),
-      screen_connector_(screen_connector) {
+      screen_connector_(screen_connector),
+      repeat_interval_(repeat_interval) {
   // Initialize the thread after the rest of the class
   frame_repeater_ = std::thread([this]() { RepeatFramesPeriodically(); });
   screen_connector_.SetCallback(GetScreenConnectorCallback());
@@ -205,8 +207,7 @@ void DisplayHandler::RepeatFramesPeriodically() {
   // SendBuffers can be called from multiple threads simultaneously, locking
   // here avoids injecting frames with the timestamps in the wrong order and
   // protects writing the BufferInfo timestamps.
-  const std::chrono::milliseconds kRepeatingInterval(20);
-  auto next_send = std::chrono::system_clock::now() + kRepeatingInterval;
+  auto next_send = std::chrono::system_clock::now() + repeat_interval_;
   while (true) {
     {
       std::unique_lock lock(repeater_state_mutex_);
@@ -241,8 +242,7 @@ void DisplayHandler::RepeatFramesPeriodically() {
       auto time_stamp = std::chrono::system_clock::now();
 
       for (auto& [display_number, buffer_info] : display_last_buffers_) {
-        if (time_stamp >
-            buffer_info->last_sent_time_stamp + kRepeatingInterval) {
+        if (time_stamp > buffer_info->last_sent_time_stamp + repeat_interval_) {
           if (composition_manager_.has_value() && buffer_info->buffer) {
             composition_manager_.value()->ComposeFrame(display_number,
                                                        buffer_info->buffer);
@@ -254,10 +254,10 @@ void DisplayHandler::RepeatFramesPeriodically() {
     SendBuffers(buffers);
     {
       std::lock_guard last_buffers_lock(last_buffers_mutex_);
-      next_send = std::chrono::system_clock::now() + kRepeatingInterval;
+      next_send = std::chrono::system_clock::now() + repeat_interval_;
       for (const auto& [_, buffer_info] : display_last_buffers_) {
         next_send = std::min(
-            next_send, buffer_info->last_sent_time_stamp + kRepeatingInterval);
+            next_send, buffer_info->last_sent_time_stamp + repeat_interval_);
       }
     }
   }
