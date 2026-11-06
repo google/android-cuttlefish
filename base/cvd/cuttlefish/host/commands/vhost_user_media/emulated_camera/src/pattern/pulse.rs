@@ -46,8 +46,12 @@ impl FramePattern for Pulse {
         let half_y_len = (width * height / 2) as usize;
         let u_plane = vec![u; (width * height / 4) as usize];
         let v_plane = vec![v; (width * height / 4) as usize];
-        sink_y.write_all(&vec![y_top; half_y_len]).map_err(|_| libc::EIO)?;
-        sink_y.write_all(&vec![y_bottom; half_y_len]).map_err(|_| libc::EIO)?;
+        sink_y
+            .write_all(&vec![y_top; half_y_len])
+            .map_err(|_| libc::EIO)?;
+        sink_y
+            .write_all(&vec![y_bottom; half_y_len])
+            .map_err(|_| libc::EIO)?;
         sink_u.write_all(&u_plane).map_err(|_| libc::EIO)?;
         sink_v.write_all(&v_plane).map_err(|_| libc::EIO)?;
         Ok(())

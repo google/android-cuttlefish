@@ -133,9 +133,11 @@ impl CaptureClock {
     /// Returns the number of dropped ticks if execution was delayed longer than an entire interval
     pub fn advance(&mut self) -> u64 {
         let now = Instant::now();
-        let target = self.stream_start + Duration::from_nanos(
-            self.ticks_count.saturating_mul(self.interval.as_nanos() as u64),
-        );
+        let target = self.stream_start
+            + Duration::from_nanos(
+                self.ticks_count
+                    .saturating_mul(self.interval.as_nanos() as u64),
+            );
 
         let mut dropped = 0;
         if now > target + self.interval {
@@ -151,9 +153,11 @@ impl CaptureClock {
         }
 
         self.ticks_count += 1;
-        self.next_tick = self.stream_start + Duration::from_nanos(
-            self.ticks_count.saturating_mul(self.interval.as_nanos() as u64),
-        );
+        self.next_tick = self.stream_start
+            + Duration::from_nanos(
+                self.ticks_count
+                    .saturating_mul(self.interval.as_nanos() as u64),
+            );
 
         dropped
     }
@@ -233,7 +237,10 @@ impl CaptureProcessor {
 
     fn handle_cmd(&mut self, cmd: ChannelCmd) {
         match cmd {
-            ChannelCmd::StartCapture { width: w, height: h } => {
+            ChannelCmd::StartCapture {
+                width: w,
+                height: h,
+            } => {
                 self.width = w;
                 self.height = h;
                 self.streaming = true;
