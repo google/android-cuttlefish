@@ -95,25 +95,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	sourceImage := sourceImageMap[arch.GceArch()][debianVersion]
-	if srcExists, err := h.ImageExists(debianSourceImageProject, sourceImage); err != nil || !srcExists {
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Fatalf("source image %q does not exist in project %q", sourceImage, debianSourceImageProject)
-	}
-
-	if exists, err := h.ImageExists(project, imageName); err != nil || exists {
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Fatalf("image %q already exists in project %q", imageName, project)
-	}
-
 	buildImageOpts := gce.BuildImageOpts{
 		Arch:               arch.GceArch(),
 		SourceImageProject: debianSourceImageProject,
-		SourceImage:        sourceImage,
+		SourceImage:        sourceImageMap[arch.GceArch()][debianVersion],
 		ImageName:          imageName,
 		ModifyFunc: func(project, zone, insName string) error {
 			if err := gce.UploadBashScript(project, zone, insName, "install_kernel_main.sh", scripts.InstallKernelMain); err != nil {
