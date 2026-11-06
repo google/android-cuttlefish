@@ -1,3 +1,4 @@
+etc/apt/apt.conf.d/95cuttlefish-integration-gigabyte-arm64 etc/apt/apt.conf.d
 etc/ntpsec/ntp.d/google-time-server.conf etc/ntpsec/ntp.d
 etc/security/limits.d/95-cuttlefish-integration-gigabyte-arm64-nofile.conf etc/security/limits.d
 usr/bin/gig_amp_fix_nm_config usr/bin
