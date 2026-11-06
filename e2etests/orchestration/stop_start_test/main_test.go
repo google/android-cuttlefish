@@ -69,7 +69,7 @@ func TestStopStart(t *testing.T) {
 					"download_img_zip": true
         },
         "streaming": {
-          "device_id": "cvd-1"
+          "device_id": "cvd-2"
         }
       }
     ]
@@ -86,6 +86,29 @@ func TestStopStart(t *testing.T) {
 		t.Fatal(err)
 	}
 	cvds, err := srv.ListCVDs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(cvdStatus(cvds), []string{"Running", "Running"}); diff != "" {
+		t.Fatalf("status mismatch (-want +got):\n%s", diff)
+	}
+
+	secondInstanceName := cvds[1].Name
+	if err := srv.StopInstance("cvd_1", secondInstanceName); err != nil {
+		t.Fatal(err)
+	}
+	cvds, err = srv.ListCVDs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(cvdStatus(cvds), []string{"Running", "Stopped"}); diff != "" {
+		t.Fatalf("status mismatch (-want +got):\n%s", diff)
+	}
+
+	if err := srv.StartInstance("cvd_1", secondInstanceName, &hoapi.StartCVDRequest{}); err != nil {
+		t.Fatal(err)
+	}
+	cvds, err = srv.ListCVDs()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,9 +140,9 @@ func TestStopStart(t *testing.T) {
 }
 
 func cvdStatus(cvds []*hoapi.CVD) []string {
-    res := make([]string, len(cvds))
-	  for i, v := range cvds {
-        res[i] = v.Status
-    }
-		return res
+	res := make([]string, len(cvds))
+	for i, v := range cvds {
+		res[i] = v.Status
+	}
+	return res
 }

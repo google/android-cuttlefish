@@ -323,7 +323,7 @@ func (i *Instance) Stop() error {
 
 func (i *Instance) Start(opts StartOptions) error {
 	args := i.selectorArgs()
-	args = append(args, "start", "--report_anonymous_usage_stats=y")
+	args = append(args, "start")
 	args = append(args, opts.toArgs()...)
 	_, err := i.cli.exec(CVDBin, args...)
 	return err
@@ -531,11 +531,10 @@ func (g *Group) Remove() error {
 }
 
 type StartOptions struct {
-	SnapshotPath     string
-	KernelImage      string
-	InitramfsImage   string
-	BootloaderRom    string
-	ReportUsageStats bool
+	SnapshotPath   string
+	KernelImage    string
+	InitramfsImage string
+	BootloaderRom  string
 }
 
 func (o *StartOptions) toArgs() []string {
@@ -552,17 +551,12 @@ func (o *StartOptions) toArgs() []string {
 	if o.BootloaderRom != "" {
 		args = append(args, "--bootloader", o.BootloaderRom)
 	}
-	if o.ReportUsageStats {
-		args = append(args, "--report_anonymous_usage_stats=y")
-	} else {
-		args = append(args, "--report_anonymous_usage_stats=n")
-	}
 	return args
 }
 
 func (g *Group) Start(opts StartOptions) error {
 	args := g.selectorArgs()
-	args = append(args, "start", "--report_anonymous_usage_stats=y")
+	args = append(args, "start")
 	args = append(args, opts.toArgs()...)
 	_, err := g.cli.exec(CVDBin, args...)
 	return err

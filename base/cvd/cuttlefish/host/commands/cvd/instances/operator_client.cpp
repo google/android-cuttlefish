@@ -31,6 +31,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/result.h"
@@ -38,13 +39,15 @@
 namespace cuttlefish {
 
 namespace {
-Result<Json::Value> BuildPreRegistrationMsg(const LocalInstanceGroup& group) {
+Result<Json::Value> BuildPreRegistrationMsg(
+    const LocalInstanceGroup& group,
+    const std::vector<LocalInstance>& instances) {
   Json::Value msg;
   msg["message_type"] = "pre-register";
   msg["group_name"] = group.GroupName();
   msg["owner"] = CF_EXPECT(CurrentUserName());
   Json::Value devices(Json::arrayValue);
-  for (const auto& instance : group.Instances()) {
+  for (const LocalInstance& instance : instances) {
     Json::Value dev;
     dev["id"] = instance.WebRtcDeviceId();
     dev["name"] = instance.Name();
@@ -77,18 +80,28 @@ Result<std::unique_ptr<OperatorControlConn>> OperatorControlConn::Create(
  * Pre-registers an instance group with the operator
  */
 Result<void> OperatorControlConn::Preregister(const LocalInstanceGroup& group) {
-  Json::Value pre_registration_msg = CF_EXPECT(BuildPreRegistrationMsg(group));
+  return Preregister(group, group.Instances());
+}
+
+Result<void> OperatorControlConn::Preregister(
+    const LocalInstanceGroup& group,
+    const std::vector<LocalInstance>& instances) {
+  const Json::Value pre_registration_msg =
+      CF_EXPECT(BuildPreRegistrationMsg(group, instances));
   CF_EXPECT(WriteExact(*conn_, pre_registration_msg.toStyledString()),
             "Failed to send pre-registration message to operator");
-  Json::Value response =
+  const Json::Value response =
       CF_EXPECT(RecvMsg(conn_), "Error receiving pre-registration response");
 
   std::stringstream error_messages;
   bool errors_found = false;
-  for (const auto& res : CF_EXPECT(GetArrayValues<Json::Value>(response, {}))) {
-    auto id = CF_EXPECT(GetValue<std::string>(res, {"id"}));
-    auto status = CF_EXPECT(GetValue<std::string>(res, {"status"}));
-    auto message = CF_EXPECT(GetValue<std::string>(res, {"message"}));
+  for (const Json::Value& res :
+       CF_EXPECT(GetArrayValues<Json::Value>(response, {}))) {
+    const std::string id = CF_EXPECT(GetValue<std::string>(res, {"id"}));
+    const std::string status =
+        CF_EXPECT(GetValue<std::string>(res, {"status"}));
+    const std::string message =
+        CF_EXPECT(GetValue<std::string>(res, {"message"}));
     if (status != "accepted") {
       fmt::print(error_messages, "\nid: {}, status: {}, message: {}", id,
                  status, message);
