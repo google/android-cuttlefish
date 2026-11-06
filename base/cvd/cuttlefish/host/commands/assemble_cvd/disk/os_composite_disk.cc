@@ -76,7 +76,8 @@ Result<DiskBuilder> OsCompositeDiskBuilder(
           .CrosvmPath(instance.crosvm_binary())
           .ConfigPath(instance.PerInstancePath("os_composite_disk_config.txt"))
           .ReadOnly(FLAGS_use_overlay)
-          .ResumeIfPossible(FLAGS_resume);
+          .ResumeIfPossible(FLAGS_resume)
+          .ProtectUserData(true);
   if (instance.boot_flow() == BootFlow::ChromeOsDisk) {
     return builder.EntireDisk(instance.chromeos_disk())
         .CompositeDiskPath(instance.chromeos_disk());
