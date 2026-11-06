@@ -43,6 +43,20 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "create_or_reuse_and_drain_fifo",
+    srcs = ["create_or_reuse_and_drain_fifo.cc"],
+    hdrs = ["create_or_reuse_and_drain_fifo.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/posix:stat",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:temp_failure_retry",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "directory_contents",
     srcs = ["directory_contents.cc"],
     hdrs = ["directory_contents.h"],

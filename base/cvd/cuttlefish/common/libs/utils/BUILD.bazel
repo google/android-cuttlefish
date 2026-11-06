@@ -129,7 +129,6 @@ cf_cc_library(
         "//cuttlefish/posix:remove",
         "//cuttlefish/posix:rename",
         "//cuttlefish/posix:stat",
-        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",

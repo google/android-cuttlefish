@@ -30,7 +30,7 @@
 #include "fruit/macro.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/create_or_reuse_and_drain_fifo.h"
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
 #include "cuttlefish/host/commands/run_cvd/launch/input_paths_provider.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
