@@ -138,7 +138,7 @@ Result<ParsedFlags> GetParsedFlags() {
     }
     if (!guest_configs.empty() && parsed_flags.vm_manager) {
       Result<BootloaderFlag> bootloader_flag_result =
-          BootloaderFlag::FromGlobalGflags(guest_configs,
+          BootloaderFlag::FromGlobalGflags(fetcher_configs, guest_configs,
                                            parsed_flags.system_image_dir,
                                            *parsed_flags.vm_manager);
       if (bootloader_flag_result) {
