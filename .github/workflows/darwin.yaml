@@ -1,0 +1,40 @@
+name: Darwin
+
+# Compile-only check that the host tools still build on macOS.
+# Nothing runs on macOS yet; this only catches portability regressions.
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-darwin:
+    strategy:
+      fail-fast: false
+      matrix:
+        # Add macos-15 (arm64) once GitHub's capacity for it is stable;
+        # as of 2026-11 those jobs mostly time out in the queue.
+        runner: [macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
+    - name: Mount Bazel cache
+      uses: ./.github/actions/mount-bazel-cache
+      with:
+        action-name: build-darwin
+    - name: Mount Bazel vendor cache
+      uses: ./.github/actions/mount-bazel-vendor-cache
+    - name: Build host tools on macOS
+      uses: ./.github/actions/build-darwin
