@@ -16,8 +16,13 @@
 
 #pragma once
 
+#include <compare>
 #include <cstdint>
+#include <map>
+#include <memory>
 #include <mutex>
+#include <optional>
+#include <vector>
 
 #include "cuttlefish/host/commands/virtual_tuner_daemon/VirtualTuner.pb.h"
 
@@ -29,24 +34,62 @@ struct TunerStateSnapshot {
   uint32_t frequency_hz = 0;
   uint32_t hd_subchannel = 0;
   bool is_playing = false;
+  bool station_present = false;
+  std::shared_ptr<const std::vector<int16_t>> station_wav_samples;
 };
 
 class TunerState {
  public:
-  TunerState() = default;
+  TunerState();
 
   void SetTune(RadioBand band, uint32_t frequency_hz, uint32_t hd_subchannel);
   void Stop();
+  void SetStationWav(RadioBand band, uint32_t frequency_hz,
+                     uint32_t hd_subchannel, std::vector<int16_t> wav_samples);
+
+  std::vector<StationProgram> GetStations(std::optional<RadioBand> band) const;
+  std::optional<StationProgram> FindStation(RadioBand band,
+                                            uint32_t frequency_hz,
+                                            uint32_t hd_subchannel) const;
+  std::optional<StationProgram> Seek(RadioBand band,
+                                     uint32_t start_frequency_hz,
+                                     uint32_t start_hd_subchannel,
+                                     bool direction_up,
+                                     bool skip_subchannel) const;
+  StationProgram UpsertStation(StationProgram station);
+  bool RemoveStation(RadioBand band, uint32_t frequency_hz,
+                     std::optional<uint32_t> hd_subchannel,
+                     uint64_t dab_sid_ext);
 
   TunerStateSnapshot GetSnapshot() const;
+  TunerStatus GetStatus() const;
   uint32_t GetFrequency() const;
   RadioBand GetBand() const;
   uint32_t GetSubchannel() const;
   bool IsPlaying() const;
 
  private:
+  struct StationKey {
+    RadioBand band = RadioBand::FM;
+    uint32_t frequency_hz = 0;
+    uint32_t hd_subchannel = 0;
+    uint64_t dab_sid_ext = 0;
+    uint32_t dab_ensemble = 0;
+
+    auto operator<=>(const StationKey&) const = default;
+  };
+
+  std::optional<StationProgram> FindStationLocked(RadioBand band,
+                                                  uint32_t frequency_hz,
+                                                  uint32_t hd_subchannel) const;
+  void RecomputeSubchannelBitmaskLocked(RadioBand band, uint32_t frequency_hz);
+
   mutable std::mutex mutex_;
   TunerStateSnapshot state_;
+  std::optional<StationProgram> current_station_;
+  std::map<StationKey, StationProgram> stations_;
+  std::map<StationKey, std::shared_ptr<const std::vector<int16_t>>>
+      station_wav_samples_;
 };
 
 }  // namespace virtualtuner
