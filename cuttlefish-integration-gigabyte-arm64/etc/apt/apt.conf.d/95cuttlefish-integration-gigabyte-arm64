@@ -1,0 +1,3 @@
+Acquire::Retries "5";
+Acquire::http::Pipeline-Depth "0";
+Acquire::https::Pipeline-Depth "0";
