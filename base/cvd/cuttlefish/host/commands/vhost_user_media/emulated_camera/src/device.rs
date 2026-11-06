@@ -548,12 +548,9 @@ where
             let streaming = Arc::new(Mutex::new(false));
             let (capture_completed_tx, capture_completed_rx) = std::sync::mpsc::channel();
 
-            let channel = CaptureChannel::new(
-                session_id,
-                self.controls.clone(),
-                capture_completed_tx,
-            )
-            .context("Failed to initialize capture channel")?;
+            let channel =
+                CaptureChannel::new(session_id, self.controls.clone(), capture_completed_tx)
+                    .context("Failed to initialize capture channel")?;
 
             let buffers_clone = Arc::clone(&buffers);
             let streaming_clone = Arc::clone(&streaming);
@@ -573,9 +570,12 @@ where
                                 sequence: ev.sequence,
                             });
                             let v4l2_buf = buf.v4l2_buffer.clone();
-                            evt_queue_clone.lock().unwrap().send_event(V4l2Event::DequeueBuffer(
-                                DequeueBufferEvent::new(session_id, v4l2_buf),
-                            ));
+                            evt_queue_clone
+                                .lock()
+                                .unwrap()
+                                .send_event(V4l2Event::DequeueBuffer(DequeueBufferEvent::new(
+                                    session_id, v4l2_buf,
+                                )));
                         }
                     }
                 })
@@ -1380,9 +1380,9 @@ where
                             if let Ok(event) =
                                 Self::ctrl_event(&self.controls, bindings::V4L2_CID_GAIN)
                             {
-                                self.evt_queue.lock().unwrap().send_event(
-                                    V4l2Event::Event(SessionEvent::new(session.id, event)),
-                                );
+                                self.evt_queue.lock().unwrap().send_event(V4l2Event::Event(
+                                    SessionEvent::new(session.id, event),
+                                ));
                             }
                         }
                     }
