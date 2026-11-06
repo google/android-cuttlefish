@@ -16,8 +16,6 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/sd_card.h"
 
-#include <string>
-
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
@@ -38,11 +36,9 @@ Result<void> InitializeSdCard(
   CF_EXPECTF(CreateBlankSdcardImage(instance.sdcard_path(),
                                     instance.blank_sdcard_image_mb()),
              "Failed to create '{}'", instance.sdcard_path());
-  if (VmManagerIsQemu(config)) {
-    const std::string crosvm_path = instance.crosvm_binary();
-    CF_EXPECT(Qcow2Image::Create(config.vm_manager(), crosvm_path,
-                                 instance.sdcard_path(),
-                                 instance.sdcard_overlay_path()));
+  if (VmManagerIsQemu(config) && !instance.vhost_user_block()) {
+    CF_EXPECT(Qcow2Image::CreateByQemuImg(instance.sdcard_path(),
+                                          instance.sdcard_overlay_path()));
   }
   return {};
 }

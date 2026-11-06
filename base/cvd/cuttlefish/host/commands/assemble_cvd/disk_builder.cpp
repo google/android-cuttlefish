@@ -149,11 +149,24 @@ DiskBuilder DiskBuilder::ReadOnly(bool read_only) && {
   return *this;
 }
 
+DiskBuilder& DiskBuilder::VhostUserBlock(bool vhost_user_block) & {
+  vhost_user_block_ = vhost_user_block;
+  return *this;
+}
+DiskBuilder DiskBuilder::VhostUserBlock(bool vhost_user_block) && {
+  vhost_user_block_ = vhost_user_block;
+  return std::move(*this);
+}
+
 Result<std::string> DiskBuilder::TextConfig() {
   std::ostringstream disk_conf;
 
   CF_EXPECT(vm_manager_ != VmmMode::kUnknown, "Missing vm_manager");
   disk_conf << vm_manager_ << "\n";
+  disk_conf << "read_only=" << read_only_ << "\n";
+  if (VmManagerIsQemu(vm_manager_)) {
+    disk_conf << "vhost_user_block=" << vhost_user_block_ << "\n";
+  }
 
   CF_EXPECT(!partitions_.empty() ^ !entire_disk_.empty(),
             "Specify either partitions or a whole disk");
@@ -211,8 +224,8 @@ Result<bool> DiskBuilder::BuildCompositeDiskIfNecessary() {
   }
 
   CF_EXPECT(vm_manager_ != VmmMode::kUnknown);
-  // TODO: b/346855591 - run with QEMU when crosvm block device is integrated
-  if (VmManagerIsCrosvm(vm_manager_)) {
+  if (VmManagerIsCrosvm(vm_manager_) ||
+      (VmManagerIsQemu(vm_manager_) && vhost_user_block_)) {
     CF_EXPECT(!header_path_.empty(), "No header path");
     CF_EXPECT(!footer_path_.empty(), "No footer path");
     CF_EXPECT(CreateOrUpdateCompositeDisk(
@@ -257,9 +270,13 @@ Result<bool> DiskBuilder::BuildOverlayIfNecessary() {
     return false;
   }
 
-  CF_EXPECT(!crosvm_path_.empty(), "crosvm binary missing");
-  CF_EXPECT(Qcow2Image::Create(vm_manager_, crosvm_path_, composite_disk_path_,
-                               overlay_path_));
+  if (VmManagerIsCrosvm(vm_manager_) ||
+      (VmManagerIsQemu(vm_manager_) && vhost_user_block_)) {
+    CF_EXPECT(Qcow2Image::CreateByCrosvm(crosvm_path_, composite_disk_path_,
+                                         overlay_path_));
+  } else {
+    CF_EXPECT(Qcow2Image::CreateByQemuImg(composite_disk_path_, overlay_path_));
+  }
 
   return true;
 #endif

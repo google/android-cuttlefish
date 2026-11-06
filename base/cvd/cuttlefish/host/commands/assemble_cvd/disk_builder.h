@@ -59,6 +59,9 @@ class DiskBuilder {
   DiskBuilder& ReadOnly(bool read_only) &;
   DiskBuilder ReadOnly(bool read_only) &&;
 
+  DiskBuilder& VhostUserBlock(bool vhost_user_block) &;
+  DiskBuilder VhostUserBlock(bool vhost_user_block) &&;
+
   Result<bool> WillRebuildCompositeDisk();
   /** Returns `true` if the file was actually rebuilt. */
   Result<bool> BuildCompositeDiskIfNecessary();
@@ -79,6 +82,7 @@ class DiskBuilder {
   std::string overlay_path_;
   bool resume_if_possible_ = true;
   bool read_only_ = true;
+  bool vhost_user_block_ = false;
 };
 
 }  // namespace cuttlefish

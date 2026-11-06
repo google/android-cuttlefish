@@ -265,6 +265,28 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "disk_builder_test",
+    srcs = ["disk_builder_test.cc"],
+    copts = COPTS + [
+        "-Wno-packed-non-pod",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:cf_endian",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/assemble_cvd:disk_builder",
+        "//cuttlefish/host/libs/config:vmm_mode",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:composite_disk",
+        "//cuttlefish/host/libs/image_aggregator:qcow2",
+        "//cuttlefish/io:write_exact",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@android_system_libbase//:file_logging",
+    ],
+)
+
 cf_cc_library(
     name = "disk_image_flags_vectorization",
     srcs = ["disk_image_flags_vectorization.cc"],

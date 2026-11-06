@@ -102,10 +102,14 @@ Result<InstanceCompositeDisk> InstanceCompositeDisk::Create(
           .ResumeIfPossible(FLAGS_resume);
   CF_EXPECT(persistent_disk_builder.BuildCompositeDiskIfNecessary());
 
+  // Keep persistent_composite.img as a flat ~1.3 MB raw image on QEMU rather
+  // than a bare CDISK descriptor: crosvm's CompositeDiskFile omits
+  // _disk_spec_file from AsRawDescriptors and drops it in to_async_disk(),
+  // closing the accepted vhost-user socket fd across minijail fork.
   std::string overlay_path =
       instance.PerInstancePath("persistent_composite_overlay.img");
   persistent_disk_builder.OverlayPath(overlay_path);
-  if (VmManagerIsQemu(config)) {
+  if (VmManagerIsQemu(config) && !instance.vhost_user_block()) {
     CF_EXPECT(persistent_disk_builder.BuildOverlayIfNecessary());
   }
   return InstanceCompositeDisk();

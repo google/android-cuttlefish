@@ -17,15 +17,19 @@
 #include "cuttlefish/host/libs/image_aggregator/qcow2.h"
 
 #include <fcntl.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <sys/types.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/cf_endian.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
@@ -53,23 +57,44 @@ struct __attribute__((packed)) QcowHeader {
 
 static_assert(sizeof(QcowHeader) == 72);
 
-Command QemuImgCommand(const std::string& backing_file,
-                       const std::string& output_overlay_path) {
+Result<std::string> DetectQemuBackingFormat(const std::string& backing_file) {
+  Fd fd = CF_EXPECT(Fd::Open(backing_file, O_CLOEXEC | O_RDONLY));
+  const off_t size = fd.LSeek(0, SEEK_END);
+  CF_EXPECTF(size >= 0, "Failed to seek backing file '{}'", backing_file);
+  char magic[15] = {};
+  const size_t to_read =
+      std::min<size_t>(sizeof(magic), static_cast<size_t>(size));
+  if (to_read > 0) {
+    CF_EXPECT(PReadExact(fd, magic, to_read, 0));
+  }
+  const std::string_view magic_sv(magic, to_read);
+  constexpr std::string_view kCompositeMagic = "composite_disk\x1d";
+  CF_EXPECT(!magic_sv.starts_with(kCompositeMagic),
+            "qemu-img cannot use a crosvm composite_disk backing file");
+  if (magic_sv.starts_with(Qcow2Image::MagicString())) {
+    return "qcow2";
+  }
+  return "raw";
+}
+
+Command QemuImgCommand(std::string_view backing_format,
+                       std::string_view backing_file,
+                       std::string_view output_overlay_path) {
   return Command("qemu-img")
       .AddParameter("create")
       .AddParameter("-q")
       .AddParameter("-f")
       .AddParameter("qcow2")
       .AddParameter("-F")
-      .AddParameter("raw")
+      .AddParameter(backing_format)
       .AddParameter("-b")
       .AddParameter(backing_file)
       .AddParameter(output_overlay_path);
 }
 
 Command CrosvmCreateQcow2Command(const std::string& crosvm_path,
-                                 const std::string& backing_file,
-                                 const std::string& output_overlay_path) {
+                                 std::string_view backing_file,
+                                 std::string_view output_overlay_path) {
   return Command(crosvm_path)
       .AddParameter("create_qcow2")
       .AddParameter("--backing-file")
@@ -83,17 +108,23 @@ struct Qcow2Image::Impl {
   QcowHeader header_;
 };
 
-Result<Qcow2Image> Qcow2Image::Create(VmmMode vm_manager,
-                                      const std::string& crosvm_path,
-                                      const std::string& backing_file,
-                                      std::string output_overlay_path) {
-  Command create_cmd = VmManagerIsQemu(vm_manager)
-                           ? QemuImgCommand(backing_file, output_overlay_path)
-                           : CrosvmCreateQcow2Command(crosvm_path, backing_file,
-                                                      output_overlay_path);
-
+Result<Qcow2Image> Qcow2Image::CreateByCrosvm(const std::string& crosvm_path,
+                                              const std::string& backing_file,
+                                              std::string output_overlay_path) {
+  CF_EXPECT(!crosvm_path.empty(), "crosvm binary missing");
+  Command create_cmd =
+      CrosvmCreateQcow2Command(crosvm_path, backing_file, output_overlay_path);
   CF_EXPECT(RunAndCaptureStdout(std::move(create_cmd)));
+  return CF_EXPECT(OpenExisting(std::move(output_overlay_path)));
+}
 
+Result<Qcow2Image> Qcow2Image::CreateByQemuImg(
+    const std::string& backing_file, std::string output_overlay_path) {
+  const std::string backing_format =
+      CF_EXPECT(DetectQemuBackingFormat(backing_file));
+  Command create_cmd =
+      QemuImgCommand(backing_format, backing_file, output_overlay_path);
+  CF_EXPECT(RunAndCaptureStdout(std::move(create_cmd)));
   return CF_EXPECT(OpenExisting(std::move(output_overlay_path)));
 }
 
