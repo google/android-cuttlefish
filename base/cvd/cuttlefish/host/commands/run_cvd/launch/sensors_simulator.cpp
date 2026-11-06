@@ -17,8 +17,8 @@
 
 #include <string>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/fs/fd.h"
+#include "cuttlefish/files/create_or_reuse_and_drain_fifo.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -30,8 +30,10 @@
 namespace cuttlefish {
 namespace {
 
-Result<SharedFD> CreateFifo(const std::string& path) {
-  return CreateOrReuseAndDrainFifo(path, 0660);
+Result<Fd> Fifo(const CuttlefishConfig::InstanceSpecific& instance,
+                const std::string& internal_path) {
+  return CF_EXPECT(CreateOrReuseAndDrainFifo(
+      instance.PerInstanceInternalPath(internal_path), 0660));
 }
 
 }  // namespace
@@ -40,24 +42,19 @@ Result<MonitorCommand> SensorsSimulator(
     const CuttlefishConfig::InstanceSpecific& instance,
     AutoSensorsSocketPair::Type& sensors_socket_pair,
     KernelLogPipeProvider& kernel_log_pipe_provider) {
-  auto control_to_guest_fd = CF_EXPECT(CreateFifo(
-      instance.PerInstanceInternalPath("sensors_control_fifo_vm.in")));
-  auto control_from_guest_fd = CF_EXPECT(CreateFifo(
-      instance.PerInstanceInternalPath("sensors_control_fifo_vm.out")));
-  auto data_to_guest_fd = CF_EXPECT(
-      CreateFifo(instance.PerInstanceInternalPath("sensors_data_fifo_vm.in")));
-  auto data_from_guest_fd = CF_EXPECT(
-      CreateFifo(instance.PerInstanceInternalPath("sensors_data_fifo_vm.out")));
-  Command command(SensorsSimulatorBinary());
-  command.AddParameter("--control_from_guest_fd=", control_from_guest_fd)
-      .AddParameter("--control_to_guest_fd=", control_to_guest_fd)
-      .AddParameter("--data_from_guest_fd=", data_from_guest_fd)
-      .AddParameter("--data_to_guest_fd=", data_to_guest_fd)
+  return Command(SensorsSimulatorBinary())
+      .AddParameter("--control_from_guest_fd=",
+                    CF_EXPECT(Fifo(instance, "sensors_control_fifo_vm.out")))
+      .AddParameter("--control_to_guest_fd=",
+                    CF_EXPECT(Fifo(instance, "sensors_control_fifo_vm.in")))
+      .AddParameter("--data_from_guest_fd=",
+                    CF_EXPECT(Fifo(instance, "sensors_data_fifo_vm.out")))
+      .AddParameter("--data_to_guest_fd=",
+                    CF_EXPECT(Fifo(instance, "sensors_data_fifo_vm.in")))
       .AddParameter("--webrtc_fd=", sensors_socket_pair->webrtc_socket)
       .AddParameter("-kernel_events_fd=",
                     kernel_log_pipe_provider.KernelLogPipe())
       .AddParameter("--device_type=", static_cast<int>(instance.device_type()));
-  return command;
 }
 
 }  // namespace cuttlefish

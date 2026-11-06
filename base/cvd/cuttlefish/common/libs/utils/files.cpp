@@ -56,7 +56,6 @@
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/stat.h"
-#include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
 #ifdef __APPLE__
@@ -343,33 +342,6 @@ Result<std::string> Search(const std::vector<std::string>& path,
     }
   }
   return CF_ERRF("Not found: '{}', path '{}'", name, absl::StrJoin(path, ":"));
-}
-
-Result<Fd> CreateOrReuseAndDrainFifo(const std::string& path, mode_t mode) {
-  Result<struct stat> st = Stat(path);
-  if (st.has_value()) {
-    CF_EXPECTF(S_ISFIFO(st->st_mode), "File at '{}' exists but is not a FIFO",
-               path);
-  } else {
-    CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
-               "Failed to mkfifo('{}', {:o}): {}", path, mode, StrError());
-  }
-
-  Fd ret = CF_EXPECT(Fd::Open(path, O_RDWR));
-
-  if (st.has_value()) {
-    int flags = ret.Fcntl(F_GETFL, 0);
-    if (flags >= 0) {
-      ret.Fcntl(F_SETFL, flags | O_NONBLOCK);
-      char buf[4096];
-      while (ret.Read(buf, sizeof(buf)).value_or(0) > 0) {
-        // Reading while there is data to read
-      }
-      ret.Fcntl(F_SETFL, flags);
-    }
-  }
-
-  return ret;
 }
 
 }  // namespace cuttlefish
