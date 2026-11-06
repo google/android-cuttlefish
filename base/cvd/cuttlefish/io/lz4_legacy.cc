@@ -15,7 +15,6 @@
 
 #include "cuttlefish/io/lz4_legacy.h"
 
-#include <endian.h>
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>
@@ -27,6 +26,7 @@
 
 #include "lz4.h"
 
+#include "cuttlefish/common/libs/utils/cf_endian.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/io/reader.h"

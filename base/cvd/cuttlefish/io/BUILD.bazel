@@ -94,6 +94,7 @@ cf_cc_library(
     srcs = ["cpio.cc"],
     hdrs = ["cpio.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:cf_endian",
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/io",
         "//cuttlefish/io:filesystem",
@@ -293,6 +294,7 @@ cf_cc_library(
     srcs = ["lz4_legacy.cc"],
     hdrs = ["lz4_legacy.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:cf_endian",
         "//cuttlefish/io",
         "//cuttlefish/io:read_exact",
         "//cuttlefish/io:reader",

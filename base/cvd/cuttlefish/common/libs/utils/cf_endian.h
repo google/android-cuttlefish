@@ -15,7 +15,11 @@
 
 #pragma once
 
-#include <endian.h>
+#if __has_include(<endian.h>)
+#include <endian.h>  // IWYU pragma: export
+#else
+#include <android-base/endian.h>  // IWYU pragma: export
+#endif
 #include <inttypes.h>
 
 // The utilities in android-base/endian.h still require the use of regular int
