@@ -1469,7 +1469,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       AndroidEfiLoaderFlag::FromGlobalGflags(system_image_dir, vm_manager_flag);
 
   BootloaderFlag bootloader = CF_EXPECT(BootloaderFlag::FromGlobalGflags(
-      guest_configs, system_image_dir, vm_manager_flag));
+      fetcher_configs, guest_configs, system_image_dir, vm_manager_flag));
 
   CF_EXPECT(DiskImageFlagsVectorization(
       tmp_config_obj, fetcher_configs, efi_loader, boot_image, bootloader,

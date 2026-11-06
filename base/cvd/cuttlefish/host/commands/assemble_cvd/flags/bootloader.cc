@@ -33,6 +33,9 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/fetcher_configs.h"
+#include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/result/result.h"
 
@@ -59,6 +62,7 @@ constexpr std::string_view ArchDirName(Arch arch) {
 
 /* Device bootloader flag, `--bootloader` */
 Result<BootloaderFlag> BootloaderFlag::FromGlobalGflags(
+    const FetcherConfigs& fetcher_configs,
     const std::vector<GuestConfig>& guest_configs,
     const SystemImageDirFlag& system_image_dir,
     const VmManagerFlag& vm_manager) {
@@ -91,15 +95,27 @@ Result<BootloaderFlag> BootloaderFlag::FromGlobalGflags(
 
   std::vector<std::string> bootloaders;
   for (size_t instance = 0; instance < guest_configs.size(); instance++) {
+    std::string_view arch = ArchDirName(guest_configs[instance].target_arch);
+    std::string vmm_path = DefaultHostArtifactsPath(
+        fmt::format("etc/bootloader_{}/bootloader.{}", arch, vmm));
+    std::string fetched_bootloader;
+    if (instance < fetcher_configs.Size()) {
+      fetched_bootloader =
+          fetcher_configs.ForInstance(instance).FindCvdFileWithSuffix(
+              FileSource::BOOTLOADER_BUILD, "bootloader");
+    }
     // /bootloader isn't present in the output folder by default and can be only
-    // fetched by `--bootloader` in fetch_cvd, so pick it only in case it is
-    // present.
+    // fetched by `--bootloader_build` in fetch_cvd, except in prebuilt img zips
+    // where /bootloader is built for crosvm. Prefer bootloader.qemu under QEMU
+    // unless a bootloader build was explicitly fetched.
     std::string path = system_image_dir.ForIndex(instance) + "/bootloader";
-    if (!FileExists(path)) {
-      std::string_view arch = ArchDirName(guest_configs[instance].target_arch);
-      std::string rel_path =
-          fmt::format("etc/bootloader_{}/bootloader.{}", arch, vmm);
-      path = DefaultHostArtifactsPath(rel_path);
+    if (!fetched_bootloader.empty() && FileExists(fetched_bootloader)) {
+      path = std::move(fetched_bootloader);
+    } else if (vm_manager.Mode() == VmmMode::kQemu) {
+      path = std::move(vmm_path);
+      CF_EXPECT(FileExists(path));
+    } else if (!FileExists(path)) {
+      path = std::move(vmm_path);
       CF_EXPECT(FileExists(path));
     }
     bootloaders.emplace_back(std::move(path));
