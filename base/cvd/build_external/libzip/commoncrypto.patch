@@ -1,0 +1,37 @@
+diff --git a/BUILD b/BUILD
+--- a/BUILD
++++ b/BUILD
+@@ -29,11 +29,20 @@ cmake(
+         "BUILD_REGRESS": "OFF",
+         "BUILD_TOOLS": "OFF",
+         "ENABLE_BZIP2": "OFF",
+-        "ENABLE_COMMONCRYPTO": "OFF",
+         "ENABLE_GNUTLS": "OFF",
+         "ENABLE_MBEDTLS": "OFF",
+         "ENABLE_WINDOWS_CRYPTO": "OFF",
+-    },
++    } | select({
++        # On macOS, find_package(OpenSSL) picks up the system's OpenSSL 3
++        # headers, which don't match the BoringSSL we link against.
++        "@platforms//os:macos": {
++            "ENABLE_COMMONCRYPTO": "ON",
++            "ENABLE_OPENSSL": "OFF",
++        },
++        "//conditions:default": {
++            "ENABLE_COMMONCRYPTO": "OFF",
++        },
++    }),
+     env = {
+         "CMAKE_BUILD_TYPE": "Release",
+         "CMAKE_BUILD_PARALLEL_LEVEL": "4",
+diff --git a/MODULE.bazel b/MODULE.bazel
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -2,6 +2,7 @@ module(
+     name = "libzip",
+     version = "1.10.1",
+ )
++bazel_dep(name = "platforms", version = "0.0.10")
+ bazel_dep(name = "boringssl", version = "0.0.0-20240530-2db0eb3")
+ bazel_dep(name = "rules_license", version = "0.0.8")
+ bazel_dep(name = "rules_foreign_cc", version = "0.10.1")
