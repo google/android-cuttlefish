@@ -26,6 +26,7 @@
 
 #include <cstdlib>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -112,6 +113,15 @@ Result<std::pair<int, int>> GetQemuVersion(const std::string& qemu_binary) {
   std::vector<std::string> qemu_version_bits =
       absl::StrSplit(qemu_version_output, '.');
   return {{std::stoi(qemu_version_bits[0]), std::stoi(qemu_version_bits[1])}};
+}
+
+bool QemuSupportsHelpToken(const std::string& qemu_binary, std::string_view opt,
+                           std::string_view arg, std::string_view token) {
+  Command cmd(qemu_binary);
+  cmd.AddParameter("-machine").AddParameter("none");
+  cmd.AddParameter(opt).AddParameter(arg);
+  Result<std::string> out = RunAndCaptureStdout(std::move(cmd));
+  return out.has_value() && out->find(token) != std::string::npos;
 }
 
 }  // namespace
@@ -348,6 +358,11 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
                                    << ") not a multiple of 1MB");
   }
 
+  const bool arm_pmem_supported =
+      is_arm &&
+      (access_kregistry_size_bytes > 0 || hwcomposer_pmem_size_bytes > 0) &&
+      QemuSupportsHelpToken(qemu_binary, "-device", "help", "virtio-pmem-pci");
+
   qemu_cmd.AddParameter("-name");
   qemu_cmd.AddParameter("guest=", instance.instance_name(),
                         ",debug-threads=on");
@@ -400,10 +415,13 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
                         ",id=vm_ram");
 
   qemu_cmd.AddParameter("-m");
-  auto maxmem = instance.memory_mb() +
-                (access_kregistry_size_bytes / 1024 / 1024) +
-                (hwcomposer_pmem_size_bytes / 1024 / 1024) +
-                (is_x86 ? pstore_size_bytes / 1024 / 1024 : 0);
+  auto pmem_mb = (is_x86 || arm_pmem_supported)
+                     ? ((access_kregistry_size_bytes / 1024 / 1024) +
+                        (hwcomposer_pmem_size_bytes / 1024 / 1024))
+                     : 0;
+  auto maxmem = instance.memory_mb() + pmem_mb +
+                (is_x86 ? pstore_size_bytes / 1024 / 1024 : 0) +
+                (pmem_mb > 0 ? 16 : 0);
   auto slots = is_x86 ? ",slots=2" : "";
   qemu_cmd.AddParameter("size=", instance.memory_mb(), "M", ",maxmem=", maxmem,
                         "M", slots);
@@ -715,9 +733,9 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("nvdimm,memdev=objpmem0,id=ramoops");
   }
 
-  // QEMU does not implement virtio-pmem-pci for ARM64 or RISC-V yet; restore
-  // this when the device has been added
-  if (is_x86) {
+  // QEMU does not implement virtio-pmem-pci for RISC-V yet; restore this when
+  // the device has been added
+  if (is_x86 || arm_pmem_supported) {
     if (access_kregistry_size_bytes > 0) {
       qemu_cmd.AddParameter("-object");
       qemu_cmd.AddParameter(
