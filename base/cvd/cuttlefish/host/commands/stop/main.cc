@@ -161,8 +161,8 @@ int StopInstance(const CuttlefishConfig& config,
   const Result<void> result = CleanStopInstance(instance, wait_for_launcher);
   if (!result.has_value()) {
     LOG(ERROR) << "Clean stop failed: " << result.error();
-    return FallBackStop(
-        DirsForInstance(config, instance, include_assembly_dir));
+    return FallBackStop(DirsForInstance(
+        config, instance, /*include_assembly_dir=*/include_assembly_dir));
   }
 
   return 0;
@@ -261,8 +261,9 @@ int StopCvdMain(const int32_t wait_for_launcher, const bool clear_instance_dirs,
         std::launch::async,
         [&instance, &config, &wait_for_launcher, &clear_instance_dirs,
          stopping_all_instances]() -> int {
-          const int exit_status = StopInstance(
-              *config, instance, wait_for_launcher, stopping_all_instances);
+          const int exit_status =
+              StopInstance(*config, instance, wait_for_launcher,
+                           /*include_assembly_dir=*/stopping_all_instances);
           if (clear_instance_dirs && DirectoryExists(instance.instance_dir())) {
             LOG(INFO) << "Deleting instance dir " << instance.instance_dir();
             if (!RecursivelyRemoveDirectory(instance.instance_dir())

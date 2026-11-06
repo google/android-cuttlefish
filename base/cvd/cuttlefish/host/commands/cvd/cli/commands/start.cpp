@@ -250,14 +250,6 @@ Result<void> SymlinkPreviousConfig(const std::string& group_home_dir) {
   return {};
 }
 
-Result<std::unique_ptr<OperatorControlConn>> PreregisterGroup(
-    const LocalInstanceGroup& group) {
-  std::unique_ptr<OperatorControlConn> operator_conn =
-      CF_EXPECT(OperatorControlConn::Create());
-  CF_EXPECT(operator_conn->Preregister(group));
-  return operator_conn;
-}
-
 Result<std::unique_ptr<OperatorControlConn>> PreregisterInstances(
     const LocalInstanceGroup& group,
     const std::vector<LocalInstance>& instances) {
@@ -567,14 +559,14 @@ std::vector<std::string> CvdStartCommandHandler::CmdList() const {
 
 Result<void> CvdStartCommandHandler::LaunchDevice(
     Command launch_command, LocalInstanceGroup& group,
-    const std::unordered_map<std::string, std::string>& envs,
-    const CommandRequest& request) {
+    const std::vector<LocalInstance>& instances) {
   // Don't destroy the returned object until after the devices have started, it
   // holds a connection to the orchestrator that ensures the devices remain
   // pre-registered there. If the connection is lost before the devices register
   // themselves the pre-registration is lost and group information won't be
   // shown in the UI.
-  auto conn_res = PreregisterGroup(group);
+  const Result<std::unique_ptr<OperatorControlConn>> conn_res =
+      PreregisterInstances(group, instances);
   if (!conn_res.has_value()) {
     LOG(ERROR) << "Failed to pre-register devices with operator, group "
                   "information won't show in the UI: "
@@ -587,14 +579,27 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
   GatherVmStartMetrics(group);
 
   // NOLINTNEXTLINE(misc-include-cleaner)
-  siginfo_t infop = CF_EXPECT(subprocess_waiter_.Wait());
+  const siginfo_t infop = CF_EXPECT(subprocess_waiter_.Wait());
   // NOLINTNEXTLINE(misc-include-cleaner)
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
     LOG(INFO) << "Device launch failed, cleaning up";
     GatherVmBootFailedMetrics(group);
-    // run_cvd processes may be still running in background
-    // the order of the following operations should be kept
-    CF_EXPECT(CvdResetGroup(group));
+    if (instances.size() < group.Instances().size()) {
+      std::vector<unsigned> ids;
+      ids.reserve(instances.size());
+      for (const LocalInstance& instance : instances) {
+        ids.push_back(instance.Id());
+      }
+      const Result<void> stop_res = instance_manager_.StopInstanceGroup(
+          group, InstanceDirActionOnStop::Keep, std::chrono::seconds(5), ids);
+      if (!stop_res.has_value()) {
+        LOG(ERROR) << "Failed to stop failed instance(s): " << stop_res.error();
+      }
+    } else {
+      // run_cvd processes may be still running in background
+      // the order of the following operations should be kept
+      CF_EXPECT(CvdResetGroup(group));
+    }
   }
   CF_EXPECT(CheckProcessExitedNormally(infop));
   GatherVmBootCompleteMetrics(group);
@@ -616,8 +621,8 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
     LOG(ERROR) << "Failed to symlink the config file at system wide home: "
                << symlink_config_res.error();
   }
-  Result<void> start_res =
-      LaunchDevice(std::move(command), group, envs, request);
+  const Result<void> start_res =
+      LaunchDevice(std::move(command), group, group.Instances());
   if (!start_res.has_value()) {
     group.SetAllStates(cvd::INSTANCE_STATE_BOOT_FAILED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
@@ -632,7 +637,6 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
     const CommandRequest& request) {
   const std::string bin_path = group.HostArtifactsPath() + "/bin/run_cvd";
   std::unordered_map<std::string, std::string> run_cvd_envs = request.Env();
-  run_cvd_envs.erase(kCuttlefishConfigEnvVarName);
   run_cvd_envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.Id());
   run_cvd_envs["HOME"] = group.HomeDir();
   run_cvd_envs[kAndroidHostOut] = group.HostArtifactsPath();
@@ -678,37 +682,8 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
   group.SetStartTime(CvdServerClock::now());
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
-  const Result<std::unique_ptr<OperatorControlConn>> conn_res =
-      PreregisterInstances(group, {instance});
-  if (!conn_res.has_value()) {
-    LOG(ERROR) << "Failed to pre-register instance with operator, group "
-                  "information won't show in the UI: "
-               << conn_res.error();
-  }
-  VLOG(0) << "launch command: " << command;
-
-  const Result<void> start_res = [&]() -> Result<void> {
-    CF_EXPECT(subprocess_waiter_.Setup(command));
-    GatherVmStartMetrics(group);
-
-    // NOLINTNEXTLINE(misc-include-cleaner)
-    const siginfo_t infop = CF_EXPECT(subprocess_waiter_.Wait());
-    // NOLINTNEXTLINE(misc-include-cleaner)
-    if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
-      LOG(INFO) << "Instance launch failed, cleaning up";
-      GatherVmBootFailedMetrics(group);
-      const Result<void> stop_res = instance_manager_.StopInstanceGroup(
-          group, InstanceDirActionOnStop::Keep, std::chrono::seconds(5),
-          {instance.Id()});
-      if (!stop_res.has_value()) {
-        LOG(ERROR) << "Failed to stop failed instance: " << stop_res.error();
-      }
-    }
-    CF_EXPECT(CheckProcessExitedNormally(infop));
-    GatherVmBootCompleteMetrics(group);
-    return {};
-  }();
-
+  const Result<void> start_res =
+      LaunchDevice(std::move(command), group, {instance});
   if (!start_res.has_value()) {
     set_instance_state(cvd::INSTANCE_STATE_BOOT_FAILED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
