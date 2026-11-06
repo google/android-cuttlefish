@@ -29,6 +29,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/io/fake_pread_pwrite.h"
+#include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -85,16 +86,23 @@ ZipSourceWriter::~ZipSourceWriter() {
   }
 }
 
-Result<uint64_t> ZipSourceWriter::Write(const void* data, uint64_t length) {
+Result<void> ZipSourceWriter::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
+
+Result<uint64_t, int> ZipSourceWriter::Write(const void* data,
+                                             uint64_t length) {
   std::lock_guard lock(mutex_);
 
-  CF_EXPECT_NE(data, nullptr);
-  CF_EXPECT_NE(source_, nullptr);
-
-  zip_source_t* raw_source = CF_EXPECT(source_->raw_.get());
+  CF_EXPECTVF(data != nullptr, EINVAL, "Write(..., {}) failed", length);
+  CF_EXPECTVF(source_ != nullptr, EBADF, "Write(..., {}) failed", length);
+  zip_source_t* raw_source =
+      CF_EXPECTVF(source_->raw_.get(), EBADF, "Write(..., {}) failed", length);
 
   int64_t written = zip_source_write(raw_source, data, length);
-  CF_EXPECT_GE(written, 0, ZipErrorString(raw_source));
+  CF_EXPECTVF(written >= 0, ZipErrno(raw_source), "Write(..., {}) failed: {}",
+              length, ZipErrorString(raw_source));
   return static_cast<uint64_t>(written);
 }
 
@@ -110,10 +118,14 @@ Result<uint64_t, int> ZipSourceWriter::SeekEnd(int64_t offset) {
   return CF_EXPECT(Seek(offset, SEEK_END));
 }
 
-Result<uint64_t> ZipSourceWriter::PWrite(const void* data, uint64_t count,
-                                         uint64_t offset) {
+Result<uint64_t, int> ZipSourceWriter::PWrite(const void* data, uint64_t count,
+                                              uint64_t offset) {
   auto& non_const = const_cast<ZipSourceWriter&>(*this);
   return CF_EXPECT(FakePWrite(non_const, data, count, offset));
+}
+
+Result<void> ZipSourceWriter::Truncate(uint64_t size) {
+  return CF_ERR("Unimplemented");
 }
 
 Result<void> ZipSourceWriter::Finalize(ZipSourceWriter writer) {

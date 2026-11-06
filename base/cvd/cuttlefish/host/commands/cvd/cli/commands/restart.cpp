@@ -18,12 +18,14 @@
 
 #include <chrono>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
+#include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/result/result.h"
 
@@ -89,9 +91,21 @@ Result<void> CvdDeviceRestartCommandHandler::Handle(
         instance.Id());
   }
 
-  CF_EXPECT(
+  Result<void> restart_res =
       instance.Restart(std::chrono::seconds(options.wait_for_launcher_seconds),
-                       std::chrono::seconds(options.boot_timeout_seconds)));
+                       std::chrono::seconds(options.boot_timeout_seconds));
+  for (auto& inst : group.Instances()) {
+    if (inst.Id() == instance.Id()) {
+      inst.SetState(restart_res.has_value() ? cvd::INSTANCE_STATE_RUNNING
+                                            : cvd::INSTANCE_STATE_BOOT_FAILED);
+      break;
+    }
+  }
+  auto update_res = instance_manager_.UpdateInstanceGroup(group);
+  if (!restart_res.has_value()) {
+    CF_EXPECT(std::move(restart_res));
+  }
+  CF_EXPECT(std::move(update_res));
   return {};
 }
 

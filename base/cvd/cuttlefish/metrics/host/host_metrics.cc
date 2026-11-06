@@ -17,25 +17,30 @@
 #include "cuttlefish/metrics/host/host_metrics.h"
 
 #include <optional>
-#include <string_view>
 
-#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/metrics/host/gce_environment.h"
 #include "cuttlefish/metrics/host/github_environment.h"
 #include "cuttlefish/metrics/host/invoker.h"
+#include "cuttlefish/metrics/host/kokoro_environment.h"
+#include "cuttlefish/metrics/io/unique_id_file.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
-
-constexpr std::string_view kUserVariable = "USER";
 
 Result<Environment> GetEnvironment() {
   const std::optional<GitHubRepository> github_environment =
       DetectGitHubRepository();
   if (github_environment) {
     return *github_environment;
+  }
+
+  // must be called before GCE detection, because it is a special case of GCE
+  const std::optional<KokoroEnvironment> kokoroEnvironment =
+      CF_EXPECT(DetectKokoroEnvironment());
+  if (kokoroEnvironment) {
+    return *kokoroEnvironment;
   }
 
   const std::optional gce_environment = CF_EXPECT(DetectGceEnvironment());
@@ -52,7 +57,7 @@ Result<HostMetrics> GetHostMetrics() {
   return HostMetrics{.os = GetHostInfo(),
                      .invoker = GetInvoker(),
                      .environment = CF_EXPECT(GetEnvironment()),
-                     .username = StringFromEnv(kUserVariable, "")};
+                     .user_id = ReadUserIdFile().value_or("")};
 }
 
 }  // namespace cuttlefish

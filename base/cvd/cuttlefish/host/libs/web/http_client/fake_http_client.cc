@@ -76,7 +76,7 @@ const FakeHttpClient::Handler* FakeHttpClient::FindHandler(
 }
 
 Result<HttpResponse<void>> FakeHttpClient::DownloadToCallback(
-    HttpRequest request, HttpClient::DataCallback callback) {
+    HttpRequest request, HttpClient::ResultDataCallback callback) {
   std::lock_guard lock(mutex_);
   requested_urls_.push_back(request.url);
   CF_EXPECT(callback(nullptr, 0));

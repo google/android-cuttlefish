@@ -22,3 +22,11 @@ operator_https_port=1443
 # else, it uses web pages which is generated during the build
 # Defaults to ""
 # operator_webui_url=
+#
+# Path to an executable that prints an InfraConfig JSON object on stdout,
+# used to obtain ICE servers (STUN/TURN) at runtime.
+# The operator falls back to the static configuration if the executable is
+# missing, fails, or produces output that does not parse.
+# Empty means no delegate is used.
+# Defaults to ""
+# operator_infra_config_delegate=

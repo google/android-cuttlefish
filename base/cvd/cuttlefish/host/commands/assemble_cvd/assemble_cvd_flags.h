@@ -44,7 +44,6 @@ DECLARE_vec(hwcomposer);
 DECLARE_vec(gpu_capture_binary);
 DECLARE_vec(enable_gpu_udmabuf);
 DECLARE_vec(gpu_renderer_features);
-DECLARE_vec(gpu_context_types);
 DECLARE_vec(guest_hwui_renderer);
 
 DECLARE_vec(guest_renderer_preload);
@@ -66,7 +65,6 @@ DECLARE_bool(enable_host_uwb);
 DECLARE_int32(pica_instance_num);
 DECLARE_vec(netsim);
 
-DECLARE_vec(netsim_bt);
 DECLARE_vec(netsim_uwb);
 DECLARE_vec(netsim_nfc);
 DECLARE_vec(netsim_modem);
@@ -121,6 +119,7 @@ DECLARE_vec(ril_dns);
 DECLARE_vec(kgdb);
 
 DECLARE_vec(start_gnss_proxy);
+DECLARE_vec(start_webrtc);
 
 DECLARE_vec(gnss_file_path);
 
@@ -181,11 +180,9 @@ DECLARE_vec(crosvm_use_balloon);
 
 DECLARE_vec(crosvm_use_rng);
 
-DECLARE_vec(crosvm_simple_media_device);
-
-DECLARE_vec(crosvm_v4l2_proxy);
-
 DECLARE_vec(use_pmem);
+
+DECLARE_vec(crosvm_hugepages);
 
 DECLARE_vec(crosvm_acpi_table);
 DECLARE_vec(crosvm_device_tree_overlay);

@@ -74,11 +74,6 @@ DEFINE_vec(
     "be a semicolon separated list of \"<feature name>:[enabled|disabled]\""
     "pairs.");
 
-DEFINE_vec(gpu_context_types, CF_DEFAULTS_GPU_CONTEXT_TYPES,
-           "A colon separated list of virtio-gpu context types.  Only valid "
-           "with --gpu_mode=custom."
-           " For example \"--gpu_context_types=cross_domain:gfxstream\"");
-
 DEFINE_vec(
     guest_hwui_renderer, CF_DEFAULTS_GUEST_HWUI_RENDERER,
     "The default renderer that HWUI should use, one of {skiagl, skiavk}.");
@@ -110,7 +105,8 @@ DEFINE_vec(
     "to the device console and typing in \"boot\".");
 DEFINE_vec(enable_host_bluetooth,
            fmt::format("{}", CF_DEFAULTS_ENABLE_HOST_BLUETOOTH),
-           "Enable the rootcanal which is Bluetooth emulator in the host.");
+           "Enable host-side Bluetooth emulation. Always on except with "
+           "qemu, where it can be turned off.");
 DEFINE_int32(
     rootcanal_instance_num, CF_DEFAULTS_ROOTCANAL_INSTANCE_NUM,
     "If it is greater than 0, use an existing rootcanal instance which is "
@@ -136,8 +132,8 @@ DEFINE_int32(pica_instance_num, CF_DEFAULTS_ENABLE_PICA_INSTANCE_NUM,
 
 DEFINE_vec(netsim, fmt::format("{}", CF_DEFAULTS_NETSIM),
            "[Experimental] Connect all radios to netsim.");
-DEFINE_vec(netsim_bt, fmt::format("{}", CF_DEFAULTS_NETSIM_BT),
-           "Connect Bluetooth radio to netsim.");
+DEFINE_vec(netsim_bt, "true",
+           "(Deprecated, Bluetooth radio is always connected to netsim)");
 DEFINE_vec(netsim_uwb, fmt::format("{}", CF_DEFAULTS_NETSIM_UWB),
            "[Experimental] Connect Uwb radio to netsim.");
 DEFINE_vec(netsim_nfc, fmt::format("{}", CF_DEFAULTS_NETSIM_NFC),
@@ -177,7 +173,8 @@ DEFINE_string(
     "With sandbox'ed crosvm, overrieds the security comp policy directory");
 
 DEFINE_vec(start_webrtc, fmt::format("{}", CF_DEFAULTS_START_WEBRTC),
-           "(Deprecated, webrtc is enabled depending on the VMM)");
+           "Whether to start the webrtc streamer. Ignored with a warning "
+           "when --vm_manager=crosvm, which requires it.");
 
 DEFINE_vec(webrtc_assets_dir, CF_DEFAULTS_WEBRTC_ASSETS_DIR,
            "Path to WebRTC webpage assets.");
@@ -375,19 +372,15 @@ DEFINE_vec(crosvm_use_rng, "true",
            "Controls the crosvm --no-rng flag"
            "The flag is given if crosvm_use_rng is false");
 
-DEFINE_vec(crosvm_simple_media_device, "false",
-           "Controls the crosvm --simple-media-device flag"
-           "The flag is given if crosvm_simple_media_device is true.");
-
-DEFINE_vec(
-    crosvm_v4l2_proxy, CF_DEFAULTS_CROSVM_V4L2_PROXY,
-    "Controls the crosvm --v4l2-proxy flag"
-    "The flag is given if crosvm_v4l2_proxy is set with a valid string "
-    "literal. "
-    "When this flag is set, crosvm_simple_media_device becomes ineffective.");
-
 DEFINE_vec(use_pmem, "true",
            "Make this flag false to disable pmem with crosvm");
+
+DEFINE_vec(crosvm_hugepages, "true",
+           "Pass --hugepages to crosvm, which asks the host kernel to back "
+           "guest memory with transparent huge pages. Guest memory is shared "
+           "memory, so this has no effect unless the host's "
+           "/sys/kernel/mm/transparent_hugepage/shmem_enabled is advise, "
+           "within_size or always.");
 
 DEFINE_vec(crosvm_acpi_table, "",
            "Passed directly to crosvm as --acpi-table. "

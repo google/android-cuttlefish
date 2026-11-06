@@ -16,7 +16,6 @@
 
 #include "cuttlefish/files/copy_with_attributes.h"
 
-#include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -35,7 +34,7 @@ Result<void> CopyWithAttributes(const std::string& from,
   CF_EXPECTF(Copy(from, to), "Failed to copy '{}' to '{}'", from, to);
   mode_t mode = CF_EXPECT(Stat(from)).st_mode;
   CF_EXPECTF(chmod(to.c_str(), mode) >= 0, "Failed to chmod '{}': {}", to,
-             StrError(errno));
+             StrError());
   return {};
 }
 

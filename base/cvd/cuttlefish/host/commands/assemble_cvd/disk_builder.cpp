@@ -258,8 +258,8 @@ Result<bool> DiskBuilder::BuildOverlayIfNecessary() {
   }
 
   CF_EXPECT(!crosvm_path_.empty(), "crosvm binary missing");
-  CF_EXPECT(
-      Qcow2Image::Create(crosvm_path_, composite_disk_path_, overlay_path_));
+  CF_EXPECT(Qcow2Image::Create(vm_manager_, crosvm_path_, composite_disk_path_,
+                               overlay_path_));
 
   return true;
 #endif

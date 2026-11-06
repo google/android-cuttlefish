@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/image_aggregator/disk_image.h"
 #include "cuttlefish/result/result.h"
 
@@ -37,11 +38,11 @@ class Qcow2Image : public DiskImage {
   /**
    * Generate a qcow overlay backed by a given implementation file.
    *
-   * The crosvm binary at `crosvm_path` is used to generate an overlay file at
-   * `output_overlay_path` that functions as an overlay on the file at
-   * `backing_file`.
+   * An overlay file at `output_overlay_path` is generated that functions as
+   * an overlay on the file at `backing_file`.
    */
-  static Result<Qcow2Image> Create(const std::string& crosvm_path,
+  static Result<Qcow2Image> Create(VmmMode vm_manager,
+                                   const std::string& crosvm_path,
                                    const std::string& backing_file,
                                    std::string output_overlay_path);
   static Result<Qcow2Image> OpenExisting(std::string path);

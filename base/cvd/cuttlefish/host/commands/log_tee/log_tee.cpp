@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <errno.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdint.h>
 #ifdef __linux__
@@ -94,10 +94,10 @@ int main(int argc, char** argv) {
   sigemptyset(&mask);
   sigaddset(&mask, SIGINT);
   CHECK_EQ(sigprocmask(SIG_BLOCK, &mask, nullptr), 0)
-      << "sigprocmask failed: " << StrError(errno);
+      << "sigprocmask failed: " << StrError();
 #ifdef __linux__
   int sfd = signalfd(-1, &mask, 0);
-  CHECK(sfd >= 0) << "signalfd failed: " << StrError(errno);
+  CHECK(sfd >= 0) << "signalfd failed: " << StrError();
   auto int_fd = cuttlefish::SharedFD::Dup(sfd);
   close(sfd);
 #endif
@@ -105,13 +105,13 @@ int main(int argc, char** argv) {
   auto poll_fds = std::vector<cuttlefish::PollSharedFd>{
       cuttlefish::PollSharedFd{
           .fd = log_fd,
-          .events = POLL_IN,
+          .events = POLLIN,  // NOLINT(misc-include-cleaner): poll.h
           .revents = 0,
       },
 #ifdef __linux__
       cuttlefish::PollSharedFd{
           .fd = int_fd,
-          .events = POLL_IN,
+          .events = POLLIN,  // NOLINT(misc-include-cleaner): poll.h
           .revents = 0,
       },
 #endif
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
     // are finished. Then, we could just read until EOF. However that would
     // require more work elsewhere in cuttlefish.
     CHECK(cuttlefish::SharedFD::Poll(poll_fds, /*timeout=*/-1) >= 0)
-        << "poll failed: " << StrError(errno);
+        << "poll failed: " << StrError();
     if (poll_fds[0].revents) {
       chars_read = log_fd->Read(buf, sizeof(buf));
       if (!chars_read.has_value()) {

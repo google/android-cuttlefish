@@ -8,3 +8,21 @@ cf_build_test(
     name = "toolchain_build_test",
     srcs = ["toolchain.MODULE.bazel"],
 )
+
+platform(
+    name = "platform_amd64_musl",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+        "@zig_sdk//libc:musl",
+    ],
+)
+
+platform(
+    name = "platform_arm64_musl",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+        "@zig_sdk//libc:musl",
+    ],
+)

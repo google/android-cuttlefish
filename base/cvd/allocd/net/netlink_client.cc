@@ -145,7 +145,9 @@ bool NetlinkClientImpl::OpenNetlink(int type) {
   address_.nl_family = AF_NETLINK;
   address_.nl_groups = 0;
 
-  netlink_fd_->Bind(reinterpret_cast<sockaddr*>(&address_), sizeof(address_));
+  // TODO(schuffelen): diagnose unused result
+  (void)netlink_fd_->Bind(reinterpret_cast<sockaddr*>(&address_),
+                          sizeof(address_));
 
   return true;
 }

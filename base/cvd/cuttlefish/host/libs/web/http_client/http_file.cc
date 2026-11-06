@@ -45,7 +45,7 @@ Result<HttpResponse<std::string>> HttpGetToFile(
   uint64_t total_dl = 0;
   uint64_t last_log = 0;
   auto callback = [path, &temp_path, &stream, &total_dl, &last_log](
-                      char* data, size_t size) -> bool {
+                      char* data, size_t size) -> Result<void> {
     // On a retry due to a server error, the download will be called from the
     // beginning. The download should be initialized / reset at the nullptr /
     // "beginning of download" case, which can come multiple times.
@@ -57,14 +57,12 @@ Result<HttpResponse<std::string>> HttpGetToFile(
       }
       total_dl = 0;
       last_log = 0;
-      Result<std::pair<SharedFD, std::string>> res = SharedFD::Mkostemp(path);
-      if (!res.has_value()) {
-        LOG(ERROR) << "Can't make temp file: " << res.error();
-        return false;
-      }
-      temp_path = res->second;
-      stream = std::make_unique<SharedFDOstream>(res->first);
-      return !stream->fail();
+      std::pair<SharedFD, std::string> res =
+          CF_EXPECT(SharedFD::Mkostemp(path));
+      temp_path = res.second;
+      stream = std::make_unique<SharedFDOstream>(res.first);
+      CF_EXPECT(!stream->fail());
+      return {};
     }
     total_dl += size;
     if (total_dl / 2 >= last_log) {
@@ -72,7 +70,8 @@ Result<HttpResponse<std::string>> HttpGetToFile(
       last_log = total_dl;
     }
     stream->write(data, size);
-    return !stream->fail();
+    CF_EXPECT(!stream->fail());
+    return {};
   };
 
   HttpRequest request = {

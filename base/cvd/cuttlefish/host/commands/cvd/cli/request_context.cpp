@@ -42,7 +42,9 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/load_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/login.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/logs.h"
+#ifdef __linux__
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/command_handler.h"
+#endif
 #include "cuttlefish/host/commands/cvd/cli/commands/power_btn.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/powerwash.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/ps.h"
@@ -160,8 +162,10 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
       std::make_unique<CvdDevicePowerBtnCommandHandler>(instance_manager));
   request_handlers_.emplace_back(
       std::make_unique<CvdDevicePowerwashCommandHandler>(instance_manager));
+#ifdef __linux__
   request_handlers_.emplace_back(
       std::make_unique<CvdMonitorCommandHandler>(instance_manager));
+#endif
   request_handlers_.emplace_back(
       std::make_unique<CvdDeviceRestartCommandHandler>(instance_manager));
   request_handlers_.emplace_back(

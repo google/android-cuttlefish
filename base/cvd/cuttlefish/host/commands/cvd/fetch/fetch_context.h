@@ -27,6 +27,7 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
@@ -117,13 +118,14 @@ std::ostream& operator<<(std::ostream&, const FetchBuildContext&);
  */
 class FetchContext {
  public:
-  FetchContext(BuildApi&, const TargetDirectories&, const Builds&,
-               FetcherConfig&, FetchTracer&);
+  FetchContext(BuildApi<BuildString, Build>&, const TargetDirectories&,
+               const Builds&, FetcherConfig&, FetchTracer&);
 
   std::optional<FetchBuildContext> DefaultBuild();
   std::optional<FetchBuildContext> SystemBuild();
   std::optional<FetchBuildContext> KernelBuild();
   std::optional<FetchBuildContext> BootBuild();
+  std::optional<FetchBuildContext> VendorBootImageBuild();
   std::optional<FetchBuildContext> BootloaderBuild();
   std::optional<FetchBuildContext> AndroidEfiLoaderBuild();
   std::optional<FetchBuildContext> OtaToolsBuild();
@@ -133,7 +135,7 @@ class FetchContext {
   friend class FetchArtifact;
   friend class FetchBuildContext;
 
-  BuildApi& build_api_;
+  BuildApi<BuildString, Build>& build_api_;
   const TargetDirectories& target_directories_;
   const Builds& builds_;
   FetcherConfig& fetcher_config_;

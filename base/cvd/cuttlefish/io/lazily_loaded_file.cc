@@ -33,7 +33,7 @@
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/io/disjoint_range_set.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/serialize_disjoint_range_set.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"

@@ -24,8 +24,7 @@
 
 namespace cuttlefish {
 
-AbgrBuffer::AbgrBuffer(
-    std::shared_ptr<cuttlefish::PackedVideoFrameBuffer> buffer)
+AbgrBuffer::AbgrBuffer(std::shared_ptr<cuttlefish::VideoFrameBuffer> buffer)
     : buffer_(std::move(buffer)) {}
 
 int AbgrBuffer::width() const { return buffer_->width(); }

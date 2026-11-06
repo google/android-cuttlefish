@@ -47,6 +47,7 @@
 #include "cuttlefish/host/frontend/webrtc/tuner_audio_source.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_command_channel.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_commands.pb.h"
+#include "cuttlefish/host/libs/audio/channel_layout.h"
 #include "cuttlefish/host/libs/audio_connector/server.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
@@ -201,24 +202,6 @@ Result<void> ControlLoop(SharedFD control_socket,
   }
 }
 
-AudioChannelsLayout ConvertChannelLayout(
-    ::cuttlefish::config::Audio_ChannelLayout layout) {
-  using ChannelLayout = ::cuttlefish::config::Audio_ChannelLayout;
-
-  switch (layout) {
-    case ChannelLayout::Audio_ChannelLayout_MONO:
-      return AudioChannelsLayout::Mono;
-    case ChannelLayout::Audio_ChannelLayout_STEREO:
-      return AudioChannelsLayout::Stereo;
-    case ChannelLayout::Audio_ChannelLayout_SURROUND51:
-      return AudioChannelsLayout::Surround51;
-    default:
-      VLOG(0) << "Unsupported channel layout: " << layout;
-  }
-
-  return AudioChannelsLayout::Stereo;
-}
-
 uint32_t ConvertSampleRate(::cuttlefish::config::Audio_SampleRate rate) {
   using SampleRate = ::cuttlefish::config::Audio_SampleRate;
   switch (rate) {
@@ -249,6 +232,8 @@ cuttlefish::AudioStreamSettings ParseAudioStreamSettings(
   if (stream.has_controls()) {
     const auto& controls = stream.controls();
     settings.has_mute_control = controls.mute_control_enabled();
+    settings.has_duck_control = controls.duck_control_enabled();
+    settings.has_fade_balance_control = controls.fade_balance_control_enabled();
     if (controls.has_volume_control()) {
       const auto& volume = controls.volume_control();
       settings.master_volume_control = {{
@@ -570,9 +555,6 @@ int CuttlefishMain() {
     user_friendly_gpu_mode = "Lavapipe (Guest GPU Rendering)";
   } else if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
     user_friendly_gpu_mode = "SwiftShader (Guest CPU Rendering)";
-  } else if (instance.gpu_mode() == GpuMode::DrmVirgl) {
-    user_friendly_gpu_mode =
-        "VirglRenderer (Accelerated Rendering using Host OpenGL)";
   } else if (instance.gpu_mode() == GpuMode::Gfxstream) {
     user_friendly_gpu_mode =
         "Gfxstream (Accelerated Rendering using Host OpenGL and Vulkan)";

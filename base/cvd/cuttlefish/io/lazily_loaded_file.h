@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

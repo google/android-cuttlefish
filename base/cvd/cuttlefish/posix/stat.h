@@ -28,4 +28,8 @@ Result<struct stat, int> Stat(const char*);
 Result<struct stat, int> Stat(const std::string&);
 Result<struct stat, int> Stat(std::string_view);
 
+Result<struct stat, int> Lstat(const char*);
+Result<struct stat, int> Lstat(const std::string&);
+Result<struct stat, int> Lstat(std::string_view);
+
 }  // namespace cuttlefish

@@ -1,4 +1,0 @@
-f2fs-tools-1.0.0 Tue Aug 14, 2012 KST
-    * The first release of f2fs-tools.
-f2fs-tools-1.0.1 Tue Jun 04, 2013 KST
-    * Added fsck and dump for f2fs-tools.

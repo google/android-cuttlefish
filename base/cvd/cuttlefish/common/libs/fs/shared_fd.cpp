@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include <sys/file.h>
 #include <sys/mman.h>
-#include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
@@ -44,6 +43,7 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
 #include "cuttlefish/result/result.h"
 
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
@@ -148,7 +148,7 @@ SharedFD SharedFD::Dup(int unmanaged_fd) {
 
 bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   int fds[2];
-#ifdef __linux__
+#ifndef __APPLE__
   int rval = pipe2(fds, O_CLOEXEC);
 #else
   int rval = pipe(fds);
@@ -160,12 +160,6 @@ bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   }
   return false;
 }
-
-#ifdef __linux__
-SharedFD SharedFD::ShmOpen(const std::string& name, int oflag, int mode) {
-  return Fd::ShmOpen(name, oflag, mode).value_or(Fd());
-}
-#endif
 
 SharedFD SharedFD::MemfdCreateWithData(const std::string& name,
                                        const std::string& data,
@@ -198,7 +192,7 @@ Result<std::pair<SharedFD, SharedFD>> SharedFD::SocketPair(int domain, int type,
                                                            int protocol) {
   SharedFD a, b;
   if (!SharedFD::SocketPair(domain, type, protocol, &a, &b)) {
-    return CF_ERR("socketpair failed: " << ::cuttlefish::StrError(errno));
+    return CF_ERR("socketpair failed: " << ::cuttlefish::StrError());
   }
   return std::make_pair(std::move(a), std::move(b));
 }
@@ -285,8 +279,9 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
   addr.svm_port = port;
   addr.svm_cid = cid;
   auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
-  if (vsock->Connect(casted_addr, sizeof(addr)) == -1) {
-    return SharedFD::ErrorFD(vsock->GetErrno());
+  Result<void, int> connect_res = vsock->Connect(casted_addr, sizeof(addr));
+  if (!connect_res.has_value()) {
+    return SharedFD::ErrorFD(*connect_res.error());
   }
   return vsock;
 }

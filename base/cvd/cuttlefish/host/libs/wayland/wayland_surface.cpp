@@ -17,7 +17,6 @@
 #include "cuttlefish/host/libs/wayland/wayland_surface.h"
 
 #include <stdint.h>
-#include <sys/mman.h>
 
 #include <mutex>
 
@@ -28,7 +27,6 @@
 
 #include "cuttlefish/host/libs/wayland/wayland_dmabuf.h"
 #include "cuttlefish/host/libs/wayland/wayland_surfaces.h"
-#include "cuttlefish/host/libs/wayland/wayland_utils.h"
 
 namespace wayland {
 namespace {
@@ -78,66 +76,59 @@ void Surface::Commit() {
     const uint32_t display_number = *state_.virtio_gpu_metadata_.scanout_id;
 
     struct wl_shm_buffer* shm_buffer = wl_shm_buffer_get(state_.current_buffer);
-
-    uint32_t buffer_w = 0;
-    uint32_t buffer_h = 0;
-    uint32_t buffer_drm_format = 0;
-    uint32_t buffer_stride_bytes = 0;
-    uint8_t* buffer_pixels = nullptr;
-    uint32_t buffer_size = 0;
+    DmabufBuffer* dmabuf_buffer = (shm_buffer == nullptr)
+                                      ? GetDmabufBuffer(state_.current_buffer)
+                                      : nullptr;
+    CHECK(shm_buffer != nullptr || dmabuf_buffer != nullptr);
 
     if (shm_buffer != nullptr) {
       wl_shm_buffer_begin_access(shm_buffer);
-      buffer_w = wl_shm_buffer_get_width(shm_buffer);
+
+      const int32_t buffer_w = wl_shm_buffer_get_width(shm_buffer);
       CHECK(buffer_w == state_.region.w);
-      buffer_h = wl_shm_buffer_get_height(shm_buffer);
+      const int32_t buffer_h = wl_shm_buffer_get_height(shm_buffer);
       CHECK(buffer_h == state_.region.h);
-      buffer_drm_format = GetDrmFormat(wl_shm_buffer_get_format(shm_buffer));
-      buffer_stride_bytes = wl_shm_buffer_get_stride(shm_buffer);
-      buffer_pixels =
-          reinterpret_cast<uint8_t*>(wl_shm_buffer_get_data(shm_buffer));
-    } else {
-      CHECK(IsDmabufResource(state_.current_buffer));
-      Dmabuf* dmabuf = GetUserData<Dmabuf>(state_.current_buffer);
-      buffer_w = dmabuf->width;
-      buffer_h = dmabuf->height;
-      const DmabufParams& dmabuf_params = dmabuf->params;
+      const int32_t buffer_stride_bytes = wl_shm_buffer_get_stride(shm_buffer);
+      const uint32_t buffer_drm_format =
+          GetDrmFormat(wl_shm_buffer_get_format(shm_buffer));
 
-      CHECK(dmabuf_params.planes.size() == 1);
-      const DmabufPlane& dmabuf_plane = dmabuf_params.planes.begin()->second;
-
-      if (dmabuf_plane.fd.ok()) {
-        buffer_drm_format = dmabuf->format;
-        buffer_stride_bytes = dmabuf_plane.stride;
-        buffer_size = buffer_h * buffer_stride_bytes;
-        // TODO: Refactor to not have `PROT_WRITE`.
-        auto mapped = mmap(nullptr, buffer_size, PROT_READ, MAP_SHARED,
-                           dmabuf_plane.fd, 0);
-        if (mapped != MAP_FAILED) {
-          buffer_pixels = reinterpret_cast<uint8_t*>(mapped);
-        } else {
-          PLOG(ERROR) << "Failed to mmap dmabuf.";
-        }
+      if (!state_.has_notified_surface_create) {
+        surfaces_.HandleSurfaceCreated(display_number, buffer_w, buffer_h);
+        state_.has_notified_surface_create = true;
       }
-    }
 
-    if (!state_.has_notified_surface_create) {
-      surfaces_.HandleSurfaceCreated(display_number, buffer_w, buffer_h);
-      state_.has_notified_surface_create = true;
-    }
+      uint8_t* buffer_pixels =
+          reinterpret_cast<uint8_t*>(wl_shm_buffer_get_data(shm_buffer));
 
-    if (buffer_pixels != nullptr) {
       surfaces_.HandleSurfaceFrame(display_number, buffer_w, buffer_h,
                                    buffer_drm_format, buffer_stride_bytes,
                                    buffer_pixels);
-    }
 
-    if (shm_buffer != nullptr) {
       wl_shm_buffer_end_access(shm_buffer);
-    } else {
-      if (buffer_pixels != nullptr) {
-        munmap(buffer_pixels, buffer_size);
+    } else if (dmabuf_buffer != nullptr) {
+      DmabufBufferBeginAccess(dmabuf_buffer);
+
+      const int32_t buffer_w = dmabuf_buffer->width;
+      CHECK(buffer_w == state_.region.w);
+      const int32_t buffer_h = dmabuf_buffer->height;
+      CHECK(buffer_h == state_.region.h);
+      const int32_t buffer_stride_bytes =
+          static_cast<int32_t>(dmabuf_buffer->stride);
+      const uint32_t buffer_drm_format = dmabuf_buffer->format;
+
+      if (!state_.has_notified_surface_create) {
+        surfaces_.HandleSurfaceCreated(display_number, buffer_w, buffer_h);
+        state_.has_notified_surface_create = true;
       }
+
+      uint8_t* buffer_pixels =
+          dmabuf_buffer->mapped_ptr + dmabuf_buffer->offset;
+
+      surfaces_.HandleSurfaceFrame(display_number, buffer_w, buffer_h,
+                                   buffer_drm_format, buffer_stride_bytes,
+                                   buffer_pixels);
+
+      DmabufBufferEndAccess(dmabuf_buffer);
     }
   }
 

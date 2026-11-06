@@ -15,13 +15,11 @@
 
 #include "cuttlefish/io/read_window_view.h"
 
-#include <memory>
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/io/in_memory.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result_matchers.h"
 
@@ -29,15 +27,15 @@ namespace cuttlefish {
 namespace {
 
 TEST(ReadWindowViewTest, ReadString) {
-  std::unique_ptr<ReaderSeeker> underlying = InMemoryIo("(hello)");
-  ReadWindowView window = ReadWindowView(*underlying, 1, 5);
+  OwningInMemoryIo underlying("(hello)");
+  ReadWindowView window = ReadWindowView(underlying, 1, 5);
 
   EXPECT_THAT(ReadToString(window), IsOkAndValue("hello"));
 }
 
 TEST(ReadWindowViewTest, ReadStringAfterSeekPointerMoves) {
-  std::unique_ptr<ReaderSeeker> underlying = InMemoryIo("(hello)");
-  ReadWindowView window = ReadWindowView(*underlying, 1, 5);
+  OwningInMemoryIo underlying("(hello)");
+  ReadWindowView window = ReadWindowView(underlying, 1, 5);
 
   EXPECT_THAT(window.SeekSet(2), IsOkAndValue(2));
   EXPECT_THAT(ReadToString(window), IsOkAndValue("llo"));

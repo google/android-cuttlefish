@@ -58,7 +58,7 @@ CvdInstanceDatabaseTest::CvdInstanceDatabaseTest()
       db_backing_fd_(mkstemp(db_backing_path_.data())),
       db_(db_backing_path_) {
   if (db_backing_fd_ < 0) {
-    SetErrorCode(ErrorCode::kFileError, StrError(errno));
+    SetErrorCode(ErrorCode::kFileError, StrError());
   }
   InitWorkspace() && InitMockAndroidHostOut();
 }

@@ -16,27 +16,14 @@
 
 #pragma once
 
-#include <pwd.h>
 #include <stdint.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
-#include <optional>
 #include <string>
 #include <string_view>
 
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-// Wireless network prefix
-inline constexpr char kWirelessIp[] = "192.168.96";
-// Mobile network prefix
-inline constexpr char kMobileIp[] = "192.168.97";
-// Ethernet network prefix
-inline constexpr char kEthernetIp[] = "192.168.98";
-// permission bits for socket
-inline constexpr int kSocketMode = 0666;
 
 // Max ID an interface can have
 // Note: Interface names only have 2 digits in addition to the username prefix
@@ -51,10 +38,8 @@ struct GatewayConfig {
   bool has_iptable = false;
 };
 
-int RunExternalCommand(const std::string& command);
 Result<std::string> IptablesPath();
 Result<std::string> DnsmasqPath();
-std::optional<std::string> GetUserName(uid_t uid);
 
 bool CreateTap(std::string_view name);
 

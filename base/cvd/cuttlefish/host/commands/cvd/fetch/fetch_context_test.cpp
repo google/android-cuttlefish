@@ -29,12 +29,13 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/files/write_new_file.h"
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 #include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
@@ -49,7 +50,7 @@ using ::testing::HasSubstr;
 using ::testing::Key;
 using ::testing::Not;
 
-class MockBuildApi : public BuildApi {
+class MockBuildApi : public BuildApi<BuildString, Build> {
  public:
   MOCK_METHOD(Result<Build>, GetBuild, (const BuildString&), (override));
   MOCK_METHOD(Result<std::string>, DownloadFile,
@@ -151,7 +152,7 @@ constexpr char kImgZip[] = "product-img-123.zip";
 
 // Delivers every artifact as an already-extracted directory, the way the CAS
 // downloader does with `prefer-uncompressed`.
-class UncompressedBuildApi : public BuildApi {
+class UncompressedBuildApi : public BuildApi<BuildString, Build> {
  public:
   Result<Build> GetBuild(const BuildString&) override {
     return CF_ERR("Not implemented");
@@ -227,6 +228,23 @@ TEST_F(FetchArtifactDirectoryTest, ExtractAllLinksDirectoryContents) {
   EXPECT_THAT(files, Contains(Key("nested/file.txt")));
   EXPECT_THAT(files, Not(Contains(Key(kImgZip))));
   EXPECT_EQ(files.at("super.img").archive_source, kImgZip);
+}
+
+// b/571068789: the downloaded directory may be a download cache entry, so
+// padding the extracted vbmeta image must not modify it.
+TEST_F(FetchArtifactDirectoryTest, ExtractAllPadsVbmetaWithoutModifyingSource) {
+  std::optional<FetchBuildContext> build = context_.DefaultBuild();
+  ASSERT_TRUE(build.has_value());
+  FetchArtifact img_zip = build->Artifact(kImgZip);
+
+  ASSERT_THAT(img_zip.Download(), IsOk());
+  ASSERT_THAT(img_zip.ExtractAll(), IsOk());
+
+  const std::string vbmeta = "vbmeta";
+  EXPECT_THAT(ReadFileContents(Root() + "/vbmeta.img"),
+              IsOkAndValue(vbmeta + std::string(65536 - vbmeta.size(), '\0')));
+  EXPECT_THAT(ReadFileContents(Root() + "/" + kImgZip + "/vbmeta.img"),
+              IsOkAndValue(vbmeta));
 }
 
 TEST_F(FetchArtifactDirectoryTest, DeleteLocalFileRemovesDirectory) {

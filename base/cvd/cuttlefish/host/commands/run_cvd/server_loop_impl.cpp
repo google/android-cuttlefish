@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 
-#include <errno.h>
 #include <stddef.h>
 #include <unistd.h>
 #include <utime.h>
@@ -51,10 +50,11 @@
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
+#include "cuttlefish/host/libs/image_aggregator/qcow2.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/strerror.h"
-#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/proc_file_utils.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -78,18 +78,15 @@ std::ostream& operator<<(std::ostream& out,
   return out << format_as(status);
 }
 
-bool ServerLoopImpl::CreateQcowOverlay(const std::string& crosvm_path,
+bool ServerLoopImpl::CreateQcowOverlay(VmmMode vm_manager,
+                                       const std::string& crosvm_path,
                                        const std::string& backing_file,
                                        const std::string& output_overlay_path) {
-  Command crosvm_qcow2_cmd(crosvm_path);
-  crosvm_qcow2_cmd.AddParameter("create_qcow2");
-  crosvm_qcow2_cmd.AddParameter("--backing-file");
-  crosvm_qcow2_cmd.AddParameter(backing_file);
-  crosvm_qcow2_cmd.AddParameter(output_overlay_path);
-  int success = crosvm_qcow2_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(ERROR) << "Unable to run crosvm create_qcow2. Exited with status "
-               << success;
+  Result<Qcow2Image> overlay = Qcow2Image::Create(
+      vm_manager, crosvm_path, backing_file, output_overlay_path);
+  if (!overlay.has_value()) {
+    LOG(ERROR) << "Unable to create qcow2 overlay: "
+               << overlay.error().FormatForEnv();
     return false;
   }
   return true;
@@ -467,8 +464,8 @@ bool ServerLoopImpl::PowerwashFiles() {
     const std::string& composite_disk_path = overlay_file.composite_disk_path;
 
     unlink(overlay_path.c_str());
-    if (!CreateQcowOverlay(instance_.crosvm_binary(), composite_disk_path,
-                           overlay_path)) {
+    if (!CreateQcowOverlay(config_.vm_manager(), instance_.crosvm_binary(),
+                           composite_disk_path, overlay_path)) {
       LOG(ERROR) << "CreateQcowOverlay failed";
       return false;
     }
@@ -477,7 +474,7 @@ bool ServerLoopImpl::PowerwashFiles() {
     // where otherwise the composite disk looks older than the member partitions
     // which were regenerated above.
     if (utime(composite_disk_path.c_str(), nullptr) < 0) {
-      LOG(ERROR) << "Failed to update composite disk time" << StrError(errno);
+      LOG(ERROR) << "Failed to update composite disk time" << StrError();
     }
   }
 
@@ -510,7 +507,12 @@ void ServerLoopImpl::RestartRunCvd(int notification_fd) {
   argv[argv_vec.size()] = reboot_notification.data();
   argv[argv_vec.size() + 1] = nullptr;
 
-  execv("/proc/self/exe", argv.get());
+  Result<std::string> exe = GetExecutablePath(getpid());
+  if (!exe.has_value()) {
+    LOG(ERROR) << "Cannot find own executable: " << exe.error().FormatForEnv();
+    return;
+  }
+  execv(exe->c_str(), argv.get());
   // execve should not return, so something went wrong.
   PLOG(ERROR) << "execv returned: ";
 }

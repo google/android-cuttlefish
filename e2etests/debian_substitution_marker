@@ -216,13 +216,13 @@ symlinks: {
 }
 
 symlinks: {
-  target: "/usr/lib/cuttlefish-common/bin/vhu_media_emulated_camera_splane"
-  link_name: "bin/vhu_media_emulated_camera_splane"
+  target: "/usr/lib/cuttlefish-common/bin/vhu_media_emulated_camera_mplane"
+  link_name: "bin/vhu_media_emulated_camera_mplane"
 }
 
 symlinks: {
-  target: "/usr/lib/cuttlefish-common/bin/vhu_media_emulated_camera_mplane"
-  link_name: "bin/vhu_media_emulated_camera_mplane"
+  target: "/usr/lib/cuttlefish-common/bin/vhu_media_emulated_camera_mplane_external"
+  link_name: "bin/vhu_media_emulated_camera_mplane_external"
 }
 
 symlinks: {

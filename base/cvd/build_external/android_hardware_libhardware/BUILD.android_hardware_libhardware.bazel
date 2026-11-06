@@ -1,0 +1,23 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "keymaster",
+    hdrs = [
+        "include_all/hardware/hardware.h",
+        "include_all/hardware/hw_auth_token.h",
+        "include_all/hardware/keymaster1.h",
+        "include_all/hardware/keymaster2.h",
+        "include_all/hardware/keymaster_common.h",
+        "include_all/hardware/keymaster_defs.h",
+    ],
+    features = ["parse_headers"],
+    strip_include_prefix = "include_all",
+    deps = [
+        "@android_system_core//:libcutils",
+        "@android_system_core//:libsystem",
+    ],
+)

@@ -25,6 +25,7 @@ include_dir=$(echo "${tmpdir}/usr/src/linux-headers-*/include")
 cd ${include_dir}
 find -type f -not -name Kbuild | colrm 1 2 | grep $(echo "
 ^uapi/linux/if_link.h$\|
+^uapi/linux/netfilter/nf_tables.h$\|
 ^uapi/linux/netlink.h$\|
 ^uapi/linux/nl80211.h$
 " | tr -d '\n') | while IFS= read -r line; do

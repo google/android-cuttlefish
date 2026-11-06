@@ -15,7 +15,6 @@ vhost_user_input_crates.annotation(
 
 vhost_user_input_crates.from_cargo(
     name = "vhost_user_input_crates",
-    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
     manifests = [
         "//cuttlefish/host/commands/vhost_user_input:Cargo.toml",
     ],

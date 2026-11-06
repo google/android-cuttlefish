@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "cuttlefish/flag_parser/flag.h"
-#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 #include "cuttlefish/result/result.h"
 
@@ -40,6 +40,7 @@ struct VectorFlags {
   std::vector<std::optional<BuildString>> system_build;
   std::vector<std::optional<BuildString>> kernel_build;
   std::vector<std::optional<BuildString>> boot_build;
+  std::vector<std::optional<BuildString>> vendor_boot_image_build;
   std::vector<std::optional<BuildString>> bootloader_build;
   std::vector<std::optional<BuildString>> android_efi_loader_build;
   std::vector<std::optional<BuildString>> otatools_build;

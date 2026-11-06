@@ -16,6 +16,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/posix:temp_failure_retry",
         "//cuttlefish/result",
     ],
 )
@@ -23,17 +24,26 @@ cf_cc_library(
 cf_cc_library(
     name = "fd",
     srcs = ["fd.cc"],
-    hdrs = ["fd.h"],
+    hdrs = [
+        "fd.h",
+        "vm_sockets.h",
+    ],
     include_cleaner_enabled = False,
+    linkopts = select({
+        "@platforms//os:linux": ["-lrt"],  # for shm_open
+        "//conditions:default": [],
+    }),
     deps = [
         "//cuttlefish/common/libs/fs:scoped_mmap",
-        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:known_paths",
         "//cuttlefish/io",
         "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:temp_failure_retry",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings:str_format",
         "@android_system_libbase//:cmsg",
         "@fmt",
     ],
@@ -51,13 +61,10 @@ cf_cc_library(
         "shared_select.h",
     ],
     include_cleaner_enabled = False,
-    linkopts = select({
-        "@platforms//os:linux": ["-lrt"],
-        "//conditions:default": [],
-    }),
     deps = [
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:temp_failure_retry",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",

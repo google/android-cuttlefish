@@ -12,7 +12,6 @@ cf_cc_library(
     hdrs = ["gce_environment.h"],
     deps = [
         "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/web/http_client:curl_global_init",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
         "//cuttlefish/host/libs/web/http_client:http_string",
         "//cuttlefish/result",
@@ -33,11 +32,12 @@ cf_cc_library(
     srcs = ["host_metrics.cc"],
     hdrs = ["host_metrics.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/metrics/host:gce_environment",
         "//cuttlefish/metrics/host:github_environment",
         "//cuttlefish/metrics/host:invoker",
+        "//cuttlefish/metrics/host:kokoro_environment",
+        "//cuttlefish/metrics/io:unique_id_file",
         "//cuttlefish/result",
     ],
 )
@@ -47,4 +47,15 @@ cf_cc_library(
     srcs = ["invoker.cc"],
     hdrs = ["invoker.h"],
     deps = ["//cuttlefish/common/libs/utils:environment"],
+)
+
+cf_cc_library(
+    name = "kokoro_environment",
+    srcs = ["kokoro_environment.cc"],
+    hdrs = ["kokoro_environment.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/metrics/host:gce_environment",
+        "//cuttlefish/result",
+    ],
 )

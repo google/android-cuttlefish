@@ -26,8 +26,8 @@ class Writer : public virtual IoVisitable {
  public:
   virtual ~Writer() = default;
 
-  // Has the semantics of write(2)
-  virtual Result<uint64_t> Write(const void* buf, uint64_t count) = 0;
+  // Has the semantics of write(2).
+  virtual Result<uint64_t, int> Write(const void* buf, uint64_t count) = 0;
 };
 
 }  // namespace cuttlefish

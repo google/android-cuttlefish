@@ -15,11 +15,11 @@
  */
 #include "cuttlefish/posix/readlink.h"
 
+#include <errno.h>
+#include <stddef.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <cerrno>
-#include <cstddef>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -34,7 +34,7 @@ Result<std::string, int> ReadLink(const char* path) {
   while (true) {
     ssize_t size = readlink(path, buf.data(), buf.size());
     CF_EXPECTVF(size != -1, errno, "readlink('{}') failed: {}", path,
-                StrError(errno));
+                StrError());
     if (static_cast<size_t>(size) < buf.size()) {
       return std::string(buf.data(), size);
     }

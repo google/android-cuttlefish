@@ -35,7 +35,7 @@ cf_cc_library(
     hdrs = ["bluetooth_connector.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:create_or_reuse_and_drain_fifo",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
@@ -151,8 +151,8 @@ cf_cc_library(
     hdrs = ["gnss_grpc_proxy.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:in_sandbox",
+        "//cuttlefish/files:create_or_reuse_and_drain_fifo",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
@@ -287,7 +287,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:create_or_reuse_and_drain_fifo",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/config:config_utils",
@@ -307,7 +307,7 @@ cf_cc_library(
     hdrs = ["nfc_connector.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:create_or_reuse_and_drain_fifo",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
@@ -404,7 +404,7 @@ cf_cc_library(
     hdrs = ["secure_env.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:create_or_reuse_and_drain_fifo",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
@@ -420,8 +420,8 @@ cf_cc_library(
     srcs = ["sensors_simulator.cpp"],
     hdrs = ["sensors_simulator.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/files:create_or_reuse_and_drain_fifo",
         "//cuttlefish/host/commands/run_cvd/launch:sensors_socket_pair",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
@@ -461,12 +461,12 @@ cf_cc_library(
     hdrs = ["streamer.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:create_or_reuse_and_drain_fifo",
         "//cuttlefish/host/commands/run_cvd:reporting",
         "//cuttlefish/host/commands/run_cvd/launch:enable_multitouch",
         "//cuttlefish/host/commands/run_cvd/launch:input_paths_provider",
         "//cuttlefish/host/commands/run_cvd/launch:sensors_socket_pair",
+        "//cuttlefish/host/commands/run_cvd/launch:virtual_tuner_server",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:custom_actions",
@@ -474,6 +474,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
+        "//cuttlefish/metrics/host:invoker",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/process:command",
         "//cuttlefish/process:subprocess",
@@ -492,17 +493,20 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
-        "//cuttlefish/common/libs/utils:socket2socket_proxy",
         "//cuttlefish/common/libs/utils:wait_for_unix_socket",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/vm_manager",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/process:command",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@fruit",
-    ],
+    ] + select({
+        "@platforms//os:linux": ["//cuttlefish/common/libs/utils:socket2socket_proxy"],
+        "//conditions:default": [],
+    }),
 )
 
 cf_cc_library(
@@ -528,7 +532,7 @@ cf_cc_library(
     hdrs = ["uwb_connector.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:create_or_reuse_and_drain_fifo",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/feature",
@@ -557,7 +561,7 @@ cf_cc_library(
     srcs = ["vhost_device_vsock.cpp"],
     hdrs = ["vhost_device_vsock.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:known_paths",
         "//cuttlefish/common/libs/utils:wait_for_unix_socket",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config:config_utils",
@@ -586,6 +590,23 @@ cf_cc_library(
         "//cuttlefish/process:command",
         "//cuttlefish/result",
         "@fruit",
+    ],
+)
+
+cf_cc_library(
+    name = "virtual_tuner_server",
+    srcs = ["virtual_tuner_server.cpp"],
+    hdrs = ["virtual_tuner_server.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
+        "//cuttlefish/host/libs/audio:channel_layout",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/host/libs/feature",
+        "//cuttlefish/process:command",
+        "//cuttlefish/result",
+        "@fmt",
     ],
 )
 

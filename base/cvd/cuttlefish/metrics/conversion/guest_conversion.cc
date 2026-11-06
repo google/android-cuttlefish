@@ -22,6 +22,7 @@
 
 #include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/metrics/external_proto/cf_flags.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_guest.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_metrics_event_v2.pb.h"
@@ -36,6 +37,8 @@ using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishFlags_DataPolicy;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishFlags_GpuMode;
+using logs::proto::wireless::android::cuttlefish::events::
+    CuttlefishFlags_VmmMode;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishGuest;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishGuest_EventType;
@@ -66,9 +69,6 @@ CuttlefishFlags_GpuMode ConvertGpuMode(GpuMode mode) {
     case GpuMode::Custom:
       return CuttlefishFlags_GpuMode::
           CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_CUSTOM;
-    case GpuMode::DrmVirgl:
-      return CuttlefishFlags_GpuMode::
-          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_VIRGL_RENDERER;
     case GpuMode::Gfxstream:
       return CuttlefishFlags_GpuMode::
           CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM;
@@ -116,6 +116,23 @@ CuttlefishGuest_EventType ConvertDeviceEventType(DeviceEventType event_type) {
   }
 }
 
+CuttlefishFlags_VmmMode ConvertVmmMode(VmmMode vmm_mode) {
+  switch (vmm_mode) {
+    case VmmMode::kUnknown:
+      return CuttlefishFlags_VmmMode::
+          CuttlefishFlags_VmmMode_CUTTLEFISH_GUEST_VMM_TYPE_UNSPECIFIED;
+    case VmmMode::kCrosvm:
+      return CuttlefishFlags_VmmMode::
+          CuttlefishFlags_VmmMode_CUTTLEFISH_GUEST_VMM_TYPE_CROSVM;
+    case VmmMode::kQemu:
+      return CuttlefishFlags_VmmMode::
+          CuttlefishFlags_VmmMode_CUTTLEFISH_GUEST_VMM_TYPE_QEMU;
+    case VmmMode::kGem5:
+      return CuttlefishFlags_VmmMode::
+          CuttlefishFlags_VmmMode_CUTTLEFISH_GUEST_VMM_TYPE_GEM5;
+  }
+}
+
 }  // namespace
 
 void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
@@ -128,6 +145,10 @@ void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
   guest.set_guest_os_version(guest_metrics.os_version);
 
   CuttlefishFlags& flags = *guest.mutable_flags();
+  flags.set_boot_image_specified(
+      guest_metrics.flag_metrics.boot_image_specified);
+  flags.set_bootloader_specified(
+      guest_metrics.flag_metrics.bootloader_specified);
   flags.set_cpus(guest_metrics.flag_metrics.cpus);
   flags.set_daemon(guest_metrics.flag_metrics.daemon);
   flags.set_data_policy(
@@ -135,7 +156,9 @@ void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
   flags.set_extra_kernel_cmdline(
       guest_metrics.flag_metrics.extra_kernel_cmdline);
   flags.set_gpu_mode_requested(
-      ConvertGpuMode(guest_metrics.flag_metrics.gpu_mode));
+      ConvertGpuMode(guest_metrics.flag_metrics.gpu_mode_requested));
+  flags.set_gpu_mode_used(
+      ConvertGpuMode(guest_metrics.flag_metrics.gpu_mode_used));
   flags.set_guest_enforce_security(
       guest_metrics.flag_metrics.guest_enforce_security);
   flags.set_memory_mb(guest_metrics.flag_metrics.memory_mb);
@@ -149,6 +172,7 @@ void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
       guest_metrics.flag_metrics.system_image_dir_specified);
   flags.set_vendor_boot_image_specified(
       guest_metrics.flag_metrics.vendor_boot_image_specified);
+  flags.set_vmm_mode(ConvertVmmMode(guest_metrics.flag_metrics.vmm_mode));
 }
 
 }  // namespace cuttlefish

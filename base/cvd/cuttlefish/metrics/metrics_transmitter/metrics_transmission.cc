@@ -19,7 +19,6 @@
 #include <memory>
 #include <string>
 
-#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_string.h"
@@ -56,7 +55,6 @@ Result<void> PostRequest(HttpClient& http_client, const std::string& output,
 Result<void> TransmitMetricsEvent(
     const wireless_android_play_playlog::LogRequest& log_request,
     ClearcutEnvironment environment) {
-  CurlGlobalInit curl_global_init;
   std::unique_ptr<HttpClient> http_client =
       CurlHttpClient(/*use_logging_debug_function=*/true);
   CF_EXPECT(http_client.get() != nullptr,

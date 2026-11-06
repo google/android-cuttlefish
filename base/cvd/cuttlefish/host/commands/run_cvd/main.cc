@@ -65,6 +65,7 @@
 #include "cuttlefish/host/commands/run_cvd/launch/vhal_proxy_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/vhost_device_vsock.h"
 #include "cuttlefish/host/commands/run_cvd/launch/vhost_user_media_devices.h"
+#include "cuttlefish/host/commands/run_cvd/launch/virtual_tuner_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
@@ -166,6 +167,7 @@ fruit::Component<> runCvdComponent(
       .install(WmediumdServerComponent)
       .install(launchStreamerComponent)
       .install(AutoCmd<VhalProxyServer>::Component)
+      .install(AutoCmd<VirtualTunerServer>::Component)
       .install(Ti50EmulatorComponent)
       .install(VhostUserMediaDevicesComponent)
 #endif

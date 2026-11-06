@@ -52,7 +52,6 @@ const urlLoadConfig = `
       }
     }
   ],
-  "netsim_bt": false,
   "metrics": {
     "enable": true
   },
@@ -105,7 +104,7 @@ func TestCvdLoadHttpsObjectBuild(t *testing.T) {
 	config := fmt.Sprintf(urlLoadConfig, base+"/"+imgZip, base+"/"+hostPackageName)
 	if err := c.CVDCreateWithConfigFile(e2etests.LoadArgs{
 		LoadConfig: config,
-		Env:        map[string]string{"CURL_CA_BUNDLE": certpath},
+		Env:        map[string]string{"CURL_CA_BUNDLE": certpath, "HOME": t.TempDir()},
 	}); err != nil {
 		t.Fatal(err)
 	}

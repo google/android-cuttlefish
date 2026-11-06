@@ -59,7 +59,6 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/web/http_client:curl_global_init",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
         "//cuttlefish/host/libs/web/http_client:http_string",
         "//cuttlefish/metrics/external_proto:clientanalytics_cc_proto",

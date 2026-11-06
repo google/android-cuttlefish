@@ -27,8 +27,8 @@
 
 #include "fmt/format.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/scoped_mmap.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 
@@ -44,15 +44,14 @@ void* DisplayRingBuffer::GetAddress() { return shm_.get(); };
 
 Result<std::unique_ptr<DisplayRingBuffer>> DisplayRingBuffer::Create(
     const std::string& name, int size) {
-  SharedFD sfd =
-      SharedFD::ShmOpen(name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-
-  CF_EXPECTF(sfd->IsOpen(), "Display buffer create failed {}", sfd->StrError());
+  Fd fd = CF_EXPECT(
+      Fd::ShmOpen(name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR),
+      "Display buffer create failed");
 
   // TODO(schuffelen): Handle unused result
-  Result<void> unused = sfd->Truncate(size);
+  Result<void> unused = fd.Truncate(size);
 
-  ScopedMMap smm = sfd->MMap(NULL, size, PROT_WRITE, MAP_SHARED, 0);
+  ScopedMMap smm = fd.MMap(NULL, size, PROT_WRITE, MAP_SHARED, 0);
 
   return std::unique_ptr<DisplayRingBuffer>(
       new DisplayRingBuffer(name, true, std::move(smm)));
@@ -68,11 +67,11 @@ DisplayRingBuffer::~DisplayRingBuffer() {
 // Allowing optional in the case the buffer doesn't yet exist.
 std::optional<std::unique_ptr<DisplayRingBuffer>> DisplayRingBuffer::ShmemGet(
     const std::string& name, int size) {
-  SharedFD sfd = SharedFD::ShmOpen(name, O_RDWR, S_IRUSR | S_IWUSR);
-  if (!sfd->IsOpen()) {
+  Result<Fd, int> fd = Fd::ShmOpen(name, O_RDWR, S_IRUSR | S_IWUSR);
+  if (!fd.has_value()) {
     return std::nullopt;
   }
-  ScopedMMap smm = sfd->MMap(NULL, size, PROT_WRITE, MAP_SHARED, 0);
+  ScopedMMap smm = fd->MMap(NULL, size, PROT_WRITE, MAP_SHARED, 0);
 
   if (smm.get() == nullptr) {
     return std::nullopt;
@@ -90,12 +89,17 @@ DisplayRingBufferHeader* DisplayRingBuffer::Header() {
   return reinterpret_cast<DisplayRingBufferHeader*>(GetAddress());
 }
 
-uint8_t* DisplayRingBuffer::WriteNextFrame(uint8_t* frame_data, int size) {
+uint8_t* DisplayRingBuffer::WriteNextFrame(const uint8_t* frame_data,
+                                           int stride, int width, int height) {
   int new_frame_index =
       (Header()->last_valid_frame_index_ + 1) % kNumberOfRingBufferFrames;
 
   uint8_t* frame_memory_address = ComputeFrameAddressForIndex(new_frame_index);
-  memcpy(frame_memory_address, frame_data, size);
+  const int row_bytes = width * Header()->bpp_;
+  for (int y = 0; y < height; ++y) {
+    memcpy(frame_memory_address + y * row_bytes, frame_data + y * stride,
+           row_bytes);
+  }
 
   Header()->last_valid_frame_index_ = new_frame_index;
   return frame_memory_address;
@@ -151,10 +155,13 @@ Result<void> DisplayRingBufferManager::CreateLocalDisplayBuffer(
 }
 
 uint8_t* DisplayRingBufferManager::WriteFrame(int vm_index, int display_index,
-                                              uint8_t* frame_data, int size) {
+                                              const uint8_t* frame_data,
+                                              int stride, int width,
+                                              int height) {
   auto buffer_key = std::make_pair(vm_index, display_index);
   if (display_buffer_cache_.count(buffer_key)) {
-    return display_buffer_cache_[buffer_key]->WriteNextFrame(frame_data, size);
+    return display_buffer_cache_[buffer_key]->WriteNextFrame(frame_data, stride,
+                                                             width, height);
   }
   // It's possible to request a write to buffer that doesn't yet exist.
   return nullptr;

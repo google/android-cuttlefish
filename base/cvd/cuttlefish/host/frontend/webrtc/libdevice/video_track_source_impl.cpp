@@ -16,38 +16,14 @@
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/video_track_source_impl.h"
 
-#include <drm/drm_fourcc.h>
 #include <api/video/video_frame_buffer.h>
+
+#include <utility>
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/abgr_buffer.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
-
-namespace {
-
-class VideoFrameWrapper : public webrtc::I420BufferInterface {
- public:
-  VideoFrameWrapper(
-      std::shared_ptr<::cuttlefish::PlanarVideoFrameBuffer> frame_buffer)
-      : frame_buffer_(frame_buffer) {}
-  ~VideoFrameWrapper() override = default;
-  int width() const override { return frame_buffer_->width(); }
-  int height() const override { return frame_buffer_->height(); }
-
-  int StrideY() const override { return frame_buffer_->StrideY(); }
-  int StrideU() const override { return frame_buffer_->StrideU(); }
-  int StrideV() const override { return frame_buffer_->StrideV(); }
-
-  const uint8_t *DataY() const override { return frame_buffer_->DataY(); }
-  const uint8_t *DataU() const override { return frame_buffer_->DataU(); }
-  const uint8_t *DataV() const override { return frame_buffer_->DataV(); }
-
- private:
-  std::shared_ptr<::cuttlefish::PlanarVideoFrameBuffer> frame_buffer_;
-};
-
-}  // namespace
 
 VideoTrackSourceImpl::VideoTrackSourceImpl(int width, int height)
     : webrtc::VideoTrackSource(false), width_(width), height_(height) {}
@@ -62,42 +38,24 @@ void VideoTrackSourceImpl::OnFrame(std::shared_ptr<VideoFrameBuffer> frame,
   }
   last_timestamp_us_ = timestamp_us;
 
-  rtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer;
+  rtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer(
+      new rtc::RefCountedObject<AbgrBuffer>(std::move(frame)));
 
-  uint32_t fmt = frame->PixelFormat();
-  if (fmt == DRM_FORMAT_ABGR8888 || fmt == DRM_FORMAT_XBGR8888 ||
-      fmt == DRM_FORMAT_ARGB8888 || fmt == DRM_FORMAT_XRGB8888) {
-      auto packed =
-          std::dynamic_pointer_cast<PackedVideoFrameBuffer>(frame);
-      if (packed) {
-        buffer = rtc::scoped_refptr<webrtc::VideoFrameBuffer>(
-            new rtc::RefCountedObject<AbgrBuffer>(packed));
-      }
-  } else {
-      auto planar =
-          std::dynamic_pointer_cast<PlanarVideoFrameBuffer>(frame);
-      if (planar) {
-        buffer = rtc::scoped_refptr<webrtc::VideoFrameBuffer>(
-            new rtc::RefCountedObject<VideoFrameWrapper>(planar));
-      }
-  }
-
-  auto video_frame =
-      webrtc::VideoFrame::Builder()
-          .set_video_frame_buffer(buffer)
-          .set_timestamp_us(timestamp_us)
-          .build();
+  auto video_frame = webrtc::VideoFrame::Builder()
+                         .set_video_frame_buffer(buffer)
+                         .set_timestamp_us(timestamp_us)
+                         .build();
   broadcaster_.OnFrame(video_frame);
 }
 
-bool VideoTrackSourceImpl::GetStats(Stats *stats) {
+bool VideoTrackSourceImpl::GetStats(Stats* stats) {
   stats->input_height = height_;
   stats->input_width = width_;
   return true;
 }
 
 bool VideoTrackSourceImpl::SupportsEncodedOutput() const { return false; }
-rtc::VideoSourceInterface<webrtc::VideoFrame> *VideoTrackSourceImpl::source() {
+rtc::VideoSourceInterface<webrtc::VideoFrame>* VideoTrackSourceImpl::source() {
   return &broadcaster_;
 }
 

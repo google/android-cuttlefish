@@ -210,7 +210,7 @@ impl VirtioMediaEventQueue for EventQueue {
 pub struct VhuMediaBackend<
     S: VirtioMediaDeviceSession,
     D: for<'a> VirtioMediaDevice<Reader<'a>, Writer<'a>>,
-    F: Fn(EventQueue, HostMemoryMapper) -> D,
+    F: Fn(EventQueue, HostMemoryMapper, GuestMemoryLoadGuard<GuestMemoryMmap>) -> D,
 > {
     backend: Option<Backend>,
     config: VirtioMediaDeviceConfig,
@@ -227,7 +227,7 @@ impl<S, D, F> VhuMediaBackend<S, D, F>
 where
     S: VirtioMediaDeviceSession + Send + Sync,
     D: for<'a> VirtioMediaDevice<Reader<'a>, Writer<'a>, Session = S> + Send + Sync,
-    F: Fn(EventQueue, HostMemoryMapper) -> D + Send + Sync,
+    F: Fn(EventQueue, HostMemoryMapper, GuestMemoryLoadGuard<GuestMemoryMmap>) -> D + Send + Sync,
 {
     pub fn new(config: VirtioMediaDeviceConfig, create_device_fn: F) -> Self {
         let mut backend = VhuMediaBackend {
@@ -388,7 +388,7 @@ impl<S, D, F> VhostUserBackendMut for VhuMediaBackend<S, D, F>
 where
     S: VirtioMediaDeviceSession + Send + Sync,
     D: for<'a> VirtioMediaDevice<Reader<'a>, Writer<'a>, Session = S> + Sync + Send,
-    F: Fn(EventQueue, HostMemoryMapper) -> D + Sync + Send,
+    F: Fn(EventQueue, HostMemoryMapper, GuestMemoryLoadGuard<GuestMemoryMmap>) -> D + Sync + Send,
 {
     type Vring = VringRwLock;
     type Bitmap = ();
@@ -471,7 +471,7 @@ where
                     .clone();
                 let event_queue = EventQueue {
                     vring: vring.clone(),
-                    mem: mem,
+                    mem: mem.clone(),
                 };
                 const HOST_MAPPER_RANGE: u64 = 1 << 32;
                 let allocator = vm_allocator::AddressAllocator::new(0, HOST_MAPPER_RANGE - 1)
@@ -482,7 +482,7 @@ where
                     .ok_or(io::Error::new(io::ErrorKind::Other, "missing backend"))?
                     .clone();
                 let host_mapper = HostMemoryMapper::new(backend, allocator);
-                self.device = Some((self.create_device_fn)(event_queue, host_mapper));
+                self.device = Some((self.create_device_fn)(event_queue, host_mapper, mem));
             }
             _ => {
                 return Err(VhuMediaBackendError::HandleEventUnknown.into());

@@ -1,0 +1,126 @@
+diff --git a/vhost-device-vsock/src/vhu_vsock_thread.rs b/vhost-device-vsock/src/vhu_vsock_thread.rs
+index 4582921..047b980 100644
+--- a/vhost-device-vsock/src/vhu_vsock_thread.rs
++++ b/vhost-device-vsock/src/vhu_vsock_thread.rs
+@@ -389,10 +389,6 @@ impl VhostUserVsockThread {
+                 self.thread_backend.listener_map.entry(fd)
+             {
+                 // New connection from the host
+-                if evset.bits() != epoll::Events::EPOLLIN.bits() {
+-                    // Has to be EPOLLIN as it was not connected previously
+-                    return;
+-                }
+                 let mut stream = match self.thread_backend.stream_map.remove(&fd) {
+                     Some(s) => s,
+                     None => {
+@@ -400,6 +396,11 @@ impl VhostUserVsockThread {
+                         return;
+                     }
+                 };
++                if !evset.contains(epoll::Events::EPOLLIN) {
++                    // Has to include EPOLLIN as it was not connected previously
++                    let _ = Self::epoll_unregister(self.epoll_file.as_raw_fd(), fd);
++                    return;
++                }
+ 
+                 match stream {
+                     #[cfg(feature = "backend_vsock")]
+@@ -412,6 +413,7 @@ impl VhostUserVsockThread {
+                             Ok(port) => port,
+                             Err(err) => {
+                                 warn!("Error while parsing \"connect PORT\n\" command: {err:?}");
++                                let _ = Self::epoll_unregister(self.epoll_file.as_raw_fd(), fd);
+                                 return;
+                             }
+                         };
+@@ -421,6 +423,7 @@ impl VhostUserVsockThread {
+                             Ok(lp) => lp,
+                             Err(err) => {
+                                 warn!("Error while allocating local port: {err:?}");
++                                let _ = Self::epoll_unregister(self.epoll_file.as_raw_fd(), fd);
+                                 return;
+                             }
+                         };
+@@ -473,8 +476,13 @@ impl VhostUserVsockThread {
+                 // established with the guest
+                 Self::epoll_unregister(self.epoll_file.as_raw_fd(), fd).unwrap();
+ 
+-                // Enqueue a read request
+-                conn.rx_queue.enqueue(RxOps::Rw);
++                if conn.connect {
++                    // Enqueue a read request
++                    conn.rx_queue.enqueue(RxOps::Rw);
++                } else {
++                    // Host peer closed or wrote data before guest accepted connection
++                    conn.rx_queue.enqueue(RxOps::Reset);
++                }
+                 self.thread_backend
+                     .backend_rxq
+                     .push_back(ConnMapKey::new(conn.local_port, conn.peer_port));
+@@ -1085,6 +1093,15 @@ mod tests {
+ 
+         t.mem = Some(mem.clone());
+ 
++        // A host client that disconnects before sending "connect PORT\n" must
++        // be removed from stream_map rather than leaking its fd.
++        let uds_aborted = UnixStream::connect(&vsock_path).unwrap();
++        t.process_backend_evt(EventSet::empty());
++        assert_eq!(t.thread_backend.stream_map.len(), 1);
++        drop(uds_aborted);
++        t.process_backend_evt(EventSet::empty());
++        assert!(t.thread_backend.stream_map.is_empty());
++
+         let mut uds = UnixStream::connect(vsock_path).unwrap();
+         t.process_backend_evt(EventSet::empty());
+ 
+diff --git a/vhost-device-vsock/src/vsock_conn.rs b/vhost-device-vsock/src/vsock_conn.rs
+index 6f095bc..4e49ad2 100644
+--- a/vhost-device-vsock/src/vsock_conn.rs
++++ b/vhost-device-vsock/src/vsock_conn.rs
+@@ -233,9 +233,12 @@ impl<S: AsRawFd + ReadVolatile + Write + WriteVolatile + IsHybridVsock> VsockCon
+             VSOCK_OP_RESPONSE => {
+                 if self.stream.is_hybrid_vsock() {
+                     // Confirmation for a host initiated connection
+-                    // TODO: Handle stream write error in a better manner
+                     let response = format!("OK {}\n", self.peer_port);
+-                    self.stream.write_all(response.as_bytes()).unwrap();
++                    if let Err(err) = self.stream.write_all(response.as_bytes()) {
++                        log::debug!("Error writing confirmation to stream: {err:?}");
++                        self.rx_queue.enqueue(RxOps::Reset);
++                        return Ok(());
++                    }
+                 }
+                 self.connect = true;
+                 if VhostUserVsockThread::epoll_register(
+@@ -412,6 +415,7 @@ mod tests {
+         collections::VecDeque,
+         io::{Read, Result as IoResult},
+         ops::Deref,
++        os::unix::net::UnixStream,
+         sync::{Arc, Mutex},
+     };
+ 
+@@ -911,5 +915,23 @@ mod tests {
+         let shutdown_response = conn_local.send_pkt(&pkt);
+         shutdown_response.unwrap();
+         assert!(conn_local.rx_queue.contains(RxOps::Reset.bitmask()));
++
++        // VSOCK_OP_RESPONSE when host peer closed before guest accepted:
++        // must enqueue RxOps::Reset instead of panicking on BrokenPipe.
++        let (host_unix, backend_unix) = UnixStream::pair().unwrap();
++        drop(host_unix);
++        let mut conn_aborted = VsockConnection::new_local_init(
++            crate::thread_backend::StreamType::Unix(backend_unix),
++            VSOCK_HOST_CID,
++            5000,
++            3,
++            5001,
++            -1,
++            CONN_TX_BUF_SIZE,
++        );
++        pkt.set_op(VSOCK_OP_RESPONSE);
++        conn_aborted.send_pkt(&pkt).unwrap();
++        assert!(!conn_aborted.connect);
++        assert!(conn_aborted.rx_queue.contains(RxOps::Reset.bitmask()));
+     }
+ }

@@ -8,22 +8,19 @@ cf_cc_library(
     name = "boot_state_machine",
     srcs = ["boot_state_machine.cc"],
     hdrs = ["boot_state_machine.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_server",
         "//cuttlefish/host/commands/kernel_log_monitor:utils",
         "//cuttlefish/host/commands/openwrt_control_server:libopenwrt_control_server",
         "//cuttlefish/host/commands/openwrt_control_server:openwrt_control_server_cc_proto",
+        "//cuttlefish/host/commands/run_cvd:daemonize_launcher",
         "//cuttlefish/host/commands/run_cvd:validate",
+        "//cuttlefish/host/commands/run_cvd:wattson_rebalance_threads",
         "//cuttlefish/host/libs/command_util",
-        "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -40,8 +37,41 @@ cf_cc_library(
         "@android_system_libbase//:file_logging",
         "@fruit",
         "@gflags",
-        "@grpc",
         "@grpc//:grpc++",
+    ],
+)
+
+cf_cc_library(
+    name = "daemonize_launcher",
+    srcs = ["daemonize_launcher.cc"],
+    hdrs = ["daemonize_launcher.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/run_cvd:wattson_rebalance_threads",
+        "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
+cf_cc_library(
+    name = "move_threads_to_cgroup",
+    srcs = ["move_threads_to_cgroup.cc"],
+    hdrs = ["move_threads_to_cgroup.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/io:write_exact",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -49,7 +79,6 @@ cf_cc_library(
     name = "reporting",
     srcs = ["reporting.cpp"],
     hdrs = ["reporting.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/ansi_codes",
         "//cuttlefish/ansi_codes:should_color",
@@ -61,7 +90,6 @@ cf_cc_library(
 cf_cc_binary(
     name = "run_cvd",
     srcs = ["main.cc"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
@@ -102,13 +130,13 @@ cf_cc_binary(
         "//cuttlefish/host/commands/run_cvd/launch:vhal_proxy_server",
         "//cuttlefish/host/commands/run_cvd/launch:vhost_device_vsock",
         "//cuttlefish/host/commands/run_cvd/launch:vhost_user_media_devices",
+        "//cuttlefish/host/commands/run_cvd/launch:virtual_tuner_server",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/config/adb",
         "//cuttlefish/host/libs/config/fastboot",
         "//cuttlefish/host/libs/feature",
@@ -133,7 +161,6 @@ cf_cc_library(
         "server_loop_impl_webrtc.cpp",
     ],
     hdrs = ["server_loop.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
@@ -154,13 +181,13 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/feature:inject",
+        "//cuttlefish/host/libs/image_aggregator:qcow2",
         "//cuttlefish/host/libs/process_monitor",
-        "//cuttlefish/host/libs/vm_manager",
-        "//cuttlefish/io:string",
         "//cuttlefish/posix:remove",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/process:command",
         "//cuttlefish/process:execute",
+        "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/process:subprocess_options",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
@@ -176,11 +203,9 @@ cf_cc_library(
     name = "validate",
     srcs = ["validate.cpp"],
     hdrs = ["validate.h"],
-    depend_on_what_you_use_enabled = False,
     deps = [
         "//allocd:alloc_utils",
         "//cuttlefish/common/libs/utils:in_sandbox",
-        "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:external_network_mode",
         "//cuttlefish/host/libs/vm_manager",
@@ -189,5 +214,17 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "wattson_rebalance_threads",
+    srcs = ["wattson_rebalance_threads.cc"],
+    hdrs = ["wattson_rebalance_threads.h"],
+    deps = [
+        "//cuttlefish/files:directory_contents",
+        "//cuttlefish/host/commands/run_cvd:move_threads_to_cgroup",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
 )

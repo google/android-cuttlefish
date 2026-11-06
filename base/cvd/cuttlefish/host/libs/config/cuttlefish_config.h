@@ -105,8 +105,13 @@ class CuttlefishConfig {
   };
 
   struct TouchpadConfig {
+    enum class Type {
+      kTouchpad,
+      kTouchNavigation,
+    };
     int width;
     int height;
+    Type type = Type::kTouchpad;
 
     static Json::Value Serialize(
         const CuttlefishConfig::TouchpadConfig& config);
@@ -115,15 +120,20 @@ class CuttlefishConfig {
 
   enum class MediaType {
     kUnknown = 0,
-    kV4l2EmulatedCameraSPlane,
     kV4l2EmulatedCameraMPlane,
     kV4l2Proxy,
     kV4l2StreamProxy,
+    kV4l2EmulatedCameraMPlaneExternal,
   };
 
   struct MediaConfig {
     MediaType type;
     std::string lens_facing;
+
+    struct V4l2ProxyConfig {
+      std::string device_path;
+    };
+    std::optional<V4l2ProxyConfig> v4l2_proxy;
 
     struct V4l2StreamProxyConfig {
       std::string input_path;
@@ -402,9 +412,8 @@ class CuttlefishConfig {
 
     bool crosvm_use_balloon() const;
     bool crosvm_use_rng() const;
-    bool crosvm_simple_media_device() const;
-    std::string crosvm_v4l2_proxy() const;
     bool use_pmem() const;
+    bool crosvm_hugepages() const;
     bool enable_pkvm() const;
     std::string crosvm_acpi_table() const;
     std::string crosvm_device_tree_overlay() const;
@@ -466,6 +475,7 @@ class CuttlefishConfig {
     std::optional<std::string> custom_keyboard_config() const;
     const Json::Value& domkey_mapping_config() const;
     bool enable_gnss_grpc_proxy() const;
+    bool enable_webrtc() const;
     bool enable_bootanimation() const;
     bool enable_usb() const;
     std::vector<std::string> extra_bootconfig_args() const;
@@ -596,6 +606,8 @@ class CuttlefishConfig {
     bool enable_vhal_proxy_server() const;
     int vhal_proxy_server_port() const;
 
+    int virtual_tuner_server_port() const;
+
     int audio_output_streams_count() const;
     std::optional<::cuttlefish::config::Audio> audio_settings() const;
 
@@ -660,9 +672,8 @@ class CuttlefishConfig {
     void set_ap_boot_flow(APBootFlow flow);
     void set_crosvm_use_balloon(bool use_balloon);
     void set_crosvm_use_rng(bool use_rng);
-    void set_crosvm_simple_media_device(bool simple_media_device);
-    void set_crosvm_v4l2_proxy(std::string v4l2_proxy);
     void set_use_pmem(bool use_pmem);
+    void set_crosvm_hugepages(bool hugepages);
     void set_enable_pkvm(bool enable_pkvm);
     void set_crosvm_acpi_table(const std::string& acpi_table);
     void set_crosvm_device_tree_overlay(const std::string& device_tree_overlay);
@@ -709,6 +720,7 @@ class CuttlefishConfig {
         const std::string& domkey_mapping_config_json_path);
     void set_enable_usb(bool enable);
     void set_enable_gnss_grpc_proxy(bool enable_gnss_grpc_proxy);
+    void set_enable_webrtc(bool enable_webrtc);
     void set_enable_bootanimation(bool enable_bootanimation);
     void set_extra_bootconfig_args(const std::string& extra_bootconfig_args);
     void set_record_screen(bool record_screen);
@@ -834,6 +846,8 @@ class CuttlefishConfig {
 
     void set_enable_vhal_proxy_server(bool enable_vhal_proxy_server);
     void set_vhal_proxy_server_port(int port);
+
+    void set_virtual_tuner_server_port(int port);
 
     void set_audio_output_streams_count(int count);
     void set_audio_settings(const ::cuttlefish::config::Audio& audio_settings);

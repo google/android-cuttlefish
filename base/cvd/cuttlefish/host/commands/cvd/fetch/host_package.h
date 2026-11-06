@@ -20,6 +20,7 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 #include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/result/result.h"
 
@@ -30,8 +31,9 @@ namespace cuttlefish {
 std::string HostPackageName(const Build& build);
 
 Result<void> FetchHostPackage(
-    BuildApi& build_api, const Build& build, const std::string& target_dir,
-    bool keep_archives, const std::vector<std::string>& host_substitutions,
+    BuildApi<BuildString, Build>& build_api, const Build& build,
+    const std::string& target_dir, bool keep_archives,
+    const std::vector<std::string>& host_substitutions,
     FetchTracer::Trace trace);
 
 }  // namespace cuttlefish

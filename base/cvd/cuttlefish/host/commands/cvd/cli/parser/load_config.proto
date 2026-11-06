@@ -50,10 +50,12 @@ message EnvironmentSpecification {
   // deprecated v1 metrics enabling field, is not read/used
   optional Metrics metrics = 3;
   optional Common common = 4;
-  optional bool netsim_bt = 5;
+  // deprecated, netsim_bt is always enabled and is not read/used
+  optional bool netsim_bt = 5 [deprecated = true];
   optional bool netsim_uwb = 6;
   repeated string netsim_args = 7;
   optional bool netsim_modem = 8;
+  optional bool netsim_nfc = 9;
 }
 
 // TODO: chadreynolds - when we can make breaking changes and update, use this
@@ -63,10 +65,12 @@ message EnvironmentOptions {
   // deprecated v1 metrics enabling field, is not read/used
   optional Metrics metrics = 2;
   optional Common common = 3;
-  optional bool netsim_bt = 4;
+  // deprecated, netsim_bt is always enabled and is not read/used
+  optional bool netsim_bt = 4 [deprecated = true];
   optional bool netsim_uwb = 5;
   repeated string netsim_args = 6;
   optional bool netsim_modem = 7;
+  optional bool netsim_nfc = 8;
 }
 
 message Common {
@@ -83,6 +87,9 @@ message Fetch {
   optional bool keep_downloaded_archives = 5;
   optional string api_base_url = 6;
   optional string project_id = 7;
+  // Whether `cvd fetch` keeps downloaded artifacts in its local file cache.
+  // When unset, `cvd fetch` uses its own default.
+  optional bool enable_caching = 8;
 }
 
 message Instance {
@@ -136,6 +143,10 @@ message Display {
   repeated DisplayOverlay overlays = 5;
 }
 
+message DiskArtifacts {
+  optional string vendor_boot = 1;
+}
+
 message Disk {
   optional string default_build = 1;
   optional Super super_partition = 2 [json_name = "super"];
@@ -143,6 +154,7 @@ message Disk {
   optional bool download_target_files_zip = 4;
   optional uint32 blank_data_image_mb = 5;
   optional string otatools = 6;
+  optional DiskArtifacts disk_artifacts = 7;
 }
 
 message Super {
@@ -164,16 +176,16 @@ message Media {
 }
 
 message MediaDevice {
+  // Field 1 was `v4l2_emulated_camera_splane`, which has been removed.
+  reserved 1;
+  reserved "v4l2_emulated_camera_splane";
   oneof device {
-    V4l2EmulatedCameraSplane v4l2_emulated_camera_splane = 1;
     V4l2EmulatedCameraMplane v4l2_emulated_camera_mplane = 2;
     V4l2Proxy v4l2_proxy = 3;
     V4l2StreamProxy v4l2_stream_proxy = 5;
   }
   optional string lens_facing = 4;
 }
-
-message V4l2EmulatedCameraSplane {}
 
 message V4l2EmulatedCameraMplane {}
 
@@ -207,9 +219,8 @@ message Vm {
 }
 
 message Crosvm {
+  reserved 2, 3;
   optional bool enable_sandbox = 1;
-  optional bool simple_media_device = 2;
-  optional string v4l2_proxy = 3;
   optional string vhost_user_vsock = 4;
 }
 

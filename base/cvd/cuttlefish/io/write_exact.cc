@@ -15,6 +15,7 @@
 
 #include "cuttlefish/io/write_exact.h"
 
+#include <errno.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -28,32 +29,33 @@
 
 namespace cuttlefish {
 
-Result<void> WriteExact(Writer& writer, const char* buf, size_t size) {
+Result<void, int> WriteExact(Writer& writer, const char* buf, size_t size) {
   while (size > 0) {
     size_t data_written = CF_EXPECT(writer.Write((const void*)buf, size));
-    CF_EXPECT_GT(data_written, 0, "Write returned 0 before completing");
+    CF_EXPECTVF(data_written > 0, EIO,
+                "Write returned 0 before completing, still have {}", size);
     buf += data_written;
     size -= data_written;
   }
   return {};
 }
 
-Result<void> WriteExact(Writer& writer, const char* buf) {
+Result<void, int> WriteExact(Writer& writer, const char* buf) {
   CF_EXPECT(WriteExact(writer, buf, strlen(buf)));
   return {};
 }
 
-Result<void> WriteExact(Writer& writer, const std::string& str) {
+Result<void, int> WriteExact(Writer& writer, const std::string& str) {
   CF_EXPECT(WriteExact(writer, str.data(), str.size()));
   return {};
 }
 
-Result<void> WriteExact(Writer& writer, const std::string_view str) {
+Result<void, int> WriteExact(Writer& writer, const std::string_view str) {
   CF_EXPECT(WriteExact(writer, str.data(), str.size()));
   return {};
 }
 
-Result<void> WriteExact(Writer& writer, const std::vector<char>& vec) {
+Result<void, int> WriteExact(Writer& writer, const std::vector<char>& vec) {
   CF_EXPECT(WriteExact(writer, vec.data(), vec.size()));
   return {};
 }

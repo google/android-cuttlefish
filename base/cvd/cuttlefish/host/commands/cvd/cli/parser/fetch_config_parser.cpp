@@ -28,7 +28,9 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
-#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/http_build_string.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/result/result.h"
 
@@ -40,15 +42,14 @@ using cvd::config::Instance;
 
 namespace {
 
-constexpr std::string_view kFetchPrefix = "@ab/";
-
 bool ShouldFetch(const Instance& instance) {
   const auto& boot = instance.boot();
   const auto& disk = instance.disk();
 
   for (const auto& value :
        {disk.default_build(), disk.super_partition().system(),
-        boot.kernel().build(), boot.build(), boot.bootloader().build(),
+        disk.disk_artifacts().vendor_boot(), boot.kernel().build(),
+        boot.build(), boot.bootloader().build(),
         boot.android_efi_loader().build(), disk.otatools()}) {
     // expects non-prefixed build strings already converted to empty strings
     if (!value.empty()) {
@@ -92,6 +93,10 @@ Result<Instance> RemoveNonPrefixedBuildStrings(const Instance& instance) {
   auto& system = *disk.mutable_super_partition()->mutable_system();
   system = CF_EXPECT(GetFetchBuildString(system));
 
+  std::string& vendor_boot =
+      *disk.mutable_disk_artifacts()->mutable_vendor_boot();
+  vendor_boot = CF_EXPECT(GetFetchBuildString(vendor_boot));
+
   auto& boot = *result.mutable_boot();
   boot.set_build(CF_EXPECT(GetFetchBuildString(boot.build())));
 
@@ -134,6 +139,10 @@ static std::string AndroidEfiLoaderBuild(const Instance& instance) {
 
 static std::string OtaToolsBuild(const Instance& instance) {
   return instance.disk().otatools();
+}
+
+static std::string VendorBootImageBuild(const Instance& instance) {
+  return instance.disk().disk_artifacts().vendor_boot();
 }
 
 static bool DownloadImgZip(const Instance& instance) {
@@ -204,6 +213,10 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
     auto value = fetch_config.api_base_url();
     result.emplace_back(GenerateFlag("api_base_url", std::move(value)));
   }
+  if (fetch_config.has_enable_caching()) {
+    result.emplace_back(
+        GenerateFlag("enable_caching", fetch_config.enable_caching()));
+  }
   result.emplace_back(GenerateFlag("host_package_build", host_package_build));
 
   result.emplace_back(
@@ -222,6 +235,8 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
       "android_efi_loader_build", fetch_instances, AndroidEfiLoaderBuild));
   result.emplace_back(
       GenerateInstanceFlag("otatools_build", fetch_instances, OtaToolsBuild));
+  result.emplace_back(GenerateInstanceFlag(
+      "vendor_boot_image_build", fetch_instances, VendorBootImageBuild));
   result.emplace_back(GenerateInstanceFlag("download_img_zip", fetch_instances,
                                            DownloadImgZip));
   result.emplace_back(GenerateInstanceFlag(

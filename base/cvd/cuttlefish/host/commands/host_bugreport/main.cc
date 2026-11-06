@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <errno.h>
 #include <stdlib.h>
 
 #include <string>
@@ -28,6 +27,7 @@
 #include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/files/directory_contents.h"
@@ -66,11 +66,15 @@ Result<void> AddNetsimdLogs(WritableZip& archive) {
                         : fmt::format("{}/android-{}/netsimd", TempDir(), user);
   CF_EXPECTF(DirectoryExists(dir),
              "netsimd logs directory: `{}` does not exist.", dir);
-  auto names = CF_EXPECTF(DirectoryContents(dir),
-                          "Cannot read from netsimd directory `{}`", dir);
-  for (const auto& name : names) {
-    LogError(AddFileAt(archive, dir + "/" + name, "netsimd/" + name));
-  }
+  // netsimd nests capture files under `pcap/`, so this has to recurse.
+  CF_EXPECT(WalkDirectoryFiles(
+      dir, [&archive, &dir](const std::string& path) -> Result<void> {
+        // Logged rather than returned: an error here would abort the walk and
+        // drop the remaining netsimd logs.
+        LogError(
+            AddFileAt(archive, path, "netsimd/" + path.substr(dir.size() + 1)));
+        return {};
+      }));
   return {};
 }
 
@@ -115,7 +119,7 @@ Result<void> AddAdbBugreport(const CuttlefishConfig::InstanceSpecific& instance,
   // TODO(b/359657254) Create the `adb bugreport` asynchronously.
   std::string device_br_dir = TempDir() + "/cvd_dbrXXXXXX";
   CF_EXPECTF(mkdtemp(device_br_dir.data()) != nullptr, "mkdtemp failed: '{}'",
-             StrError(errno));
+             StrError());
   CF_EXPECT(CreateDeviceBugreport(instance, device_br_dir),
             "Failed to create device bugreport");
   auto names = CF_EXPECT(DirectoryContents(device_br_dir),

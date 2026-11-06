@@ -41,7 +41,7 @@ apt-get install -y \
   libc6-dev \
   pkg-config
 
-nvidia_version=570.158.01
+nvidia_version=580.196.07
 
 wget -q https://us.download.nvidia.com/tesla/${nvidia_version}/NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run
 chmod a+x NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run

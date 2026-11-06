@@ -1,0 +1,101 @@
+diff --git a/vhost-device-vsock/src/thread_backend.rs b/vhost-device-vsock/src/thread_backend.rs
+index 3d71d58..41662be 100644
+--- a/vhost-device-vsock/src/thread_backend.rs
++++ b/vhost-device-vsock/src/thread_backend.rs
+@@ -265,14 +265,15 @@ impl VsockThreadBackend {
+     /// - `Err(Error::EmptyBackendRxQ) if there was no available data
+     pub fn recv_pkt<B: BitmapSlice>(&mut self, pkt: &mut VsockPacket<B>) -> Result<()> {
+         // Pop an event from the backend_rxq
+-        let key = self.backend_rxq.pop_front().ok_or(Error::EmptyBackendRxQ)?;
+-        let conn = match self.conn_map.get_mut(&key) {
+-            Some(conn) => conn,
+-            None => {
+-                // assume that the connection does not exist
+-                return Ok(());
++        let key = loop {
++            let k = self.backend_rxq.pop_front().ok_or(Error::EmptyBackendRxQ)?;
++            if let Some(conn) = self.conn_map.get(&k) {
++                if conn.rx_queue.pending_rx() {
++                    break k;
++                }
+             }
+         };
++        let conn = self.conn_map.get_mut(&key).unwrap();
+ 
+         if conn.rx_queue.peek() == Some(RxOps::Reset) {
+             // Handle RST events here
+@@ -310,6 +311,10 @@ impl VsockThreadBackend {
+         // Handle other packet types per connection
+         conn.recv_pkt(pkt)?;
+ 
++        if conn.rx_queue.pending_rx() {
++            self.backend_rxq.push_back(key);
++        }
++
+         Ok(())
+     }
+ 
+@@ -590,13 +595,38 @@ mod tests {
+         packet.set_op(VSOCK_OP_REQUEST);
+         vtp.send_pkt(&packet).unwrap();
+ 
++        // Push a stale key ahead of the active connection and queue a second
++        // RxOp on the active connection while keeping a single entry for it in
++        // backend_rxq. recv_pkt must skip the stale key, deliver the first op
++        // (VSOCK_OP_RESPONSE), and re-queue the active key for the remaining op.
++        let key = ConnMapKey::new(VSOCK_PEER_PORT, 0);
++        vtp.conn_map
++            .get_mut(&key)
++            .unwrap()
++            .rx_queue
++            .enqueue(RxOps::CreditUpdate);
++        vtp.backend_rxq.push_front(ConnMapKey::new(9999, 9999));
++
++        vtp.recv_pkt(&mut packet).unwrap();
++        assert_eq!(packet.op(), crate::vhu_vsock::VSOCK_OP_RESPONSE);
++        assert!(vtp.pending_rx());
++
++        // Restore packet fields overwritten by recv_pkt for subsequent send_pkt calls.
++        packet.set_src_cid(CID);
++        packet.set_dst_cid(VSOCK_HOST_CID);
++        packet.set_src_port(0);
++        packet.set_dst_port(VSOCK_PEER_PORT);
++
+         packet.set_op(VSOCK_OP_RW);
+         vtp.send_pkt(&packet).unwrap();
+ 
+         packet.set_op(VSOCK_OP_RST);
+         vtp.send_pkt(&packet).unwrap();
+ 
+-        vtp.recv_pkt(&mut packet).unwrap();
++        assert_eq!(
++            vtp.recv_pkt(&mut packet).unwrap_err().to_string(),
++            Error::EmptyBackendRxQ.to_string()
++        );
+ 
+         // TODO: it is a nop for now
+         vtp.enq_rst();
+diff --git a/vhost-device-vsock/src/vhu_vsock_thread.rs b/vhost-device-vsock/src/vhu_vsock_thread.rs
+index 74b05e8..4582921 100644
+--- a/vhost-device-vsock/src/vhu_vsock_thread.rs
++++ b/vhost-device-vsock/src/vhu_vsock_thread.rs
+@@ -451,6 +451,9 @@ impl VhostUserVsockThread {
+                             if cnt > 0 {
+                                 conn.fwd_cnt += Wrapping(cnt as u32);
+                                 conn.rx_queue.enqueue(RxOps::CreditUpdate);
++                                self.thread_backend
++                                    .backend_rxq
++                                    .push_back(ConnMapKey::new(conn.local_port, conn.peer_port));
+                             } else {
+                                 // If no remaining data to flush, try to disable EPOLLOUT
+                                 if Self::epoll_modify(epoll_fd, fd, epoll::Events::EPOLLIN).is_err()
+@@ -458,9 +461,6 @@ impl VhostUserVsockThread {
+                                     error!("Failed to disable EPOLLOUT");
+                                 }
+                             }
+-                            self.thread_backend
+-                                .backend_rxq
+-                                .push_back(ConnMapKey::new(conn.local_port, conn.peer_port));
+                         }
+                         Err(e) => {
+                             log::debug!("Error: {e:?}");

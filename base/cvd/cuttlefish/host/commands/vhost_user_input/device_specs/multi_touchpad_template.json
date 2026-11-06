@@ -2,8 +2,7 @@
   "name": "Cuttlefish Vhost User Multitouch_Touchpad %INDEX%",
   "serial_name": "virtio-multi-touch-touchpad-%INDEX%",
   "properties": {
-    "INPUT_PROP_POINTER": 0,
-    "INPUT_PROP_BUTTONPAD": 2
+    %PROPERTIES%
   },
   "events": [
     {

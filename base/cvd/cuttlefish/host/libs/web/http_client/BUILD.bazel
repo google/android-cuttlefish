@@ -10,6 +10,7 @@ cf_cc_library(
     name = "curl_global_init",
     srcs = ["curl_global_init.cpp"],
     hdrs = ["curl_global_init.h"],
+    visibility = ["//visibility:private"],
     deps = ["@curl"],
 )
 
@@ -21,6 +22,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
+        "//cuttlefish/host/libs/web/http_client:curl_share",
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
@@ -30,10 +33,22 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "curl_share",
+    srcs = ["curl_share.cc"],
+    hdrs = ["curl_share.h"],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
+        "@abseil-cpp//absl/log:check",
+        "@curl",
+    ],
+)
+
+cf_cc_library(
     name = "curl_url",
     srcs = ["curl_url.cc"],
     hdrs = ["curl_url.h"],
     deps = [
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
         "//cuttlefish/result",
         "@curl",
     ],
@@ -69,6 +84,18 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result",
         "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "http_client_pool",
+    srcs = ["http_client_pool.cc"],
+    hdrs = ["http_client_pool.h"],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log:check",
     ],
 )
 
@@ -144,6 +171,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -165,5 +194,8 @@ cf_cc_library(
     name = "url_escape",
     srcs = ["url_escape.cc"],
     hdrs = ["url_escape.h"],
-    deps = ["@curl"],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
+        "@curl",
+    ],
 )

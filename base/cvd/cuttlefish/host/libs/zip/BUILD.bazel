@@ -12,8 +12,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
-        "//cuttlefish/io",
         "//cuttlefish/io:length",
+        "//cuttlefish/io:reader_seeker",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
     ],
@@ -26,8 +26,8 @@ cf_cc_test(
         "//cuttlefish/host/libs/zip:buffered_zip_source",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
-        "//cuttlefish/io:in_memory",
-        "//cuttlefish/result",
+        "//cuttlefish/io:owning_in_memory_io",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
     ],
 )
@@ -40,8 +40,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
         "//cuttlefish/host/libs/zip/libzip_cc:stat",
-        "//cuttlefish/io",
         "//cuttlefish/io:lazily_loaded_file",
+        "//cuttlefish/io:reader_seeker",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
     ],
@@ -83,7 +83,7 @@ cf_cc_test(
         "//cuttlefish/host/libs/zip:zip_over_ranges",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
-        "//cuttlefish/io",
+        "//cuttlefish/io:reader_seeker",
         "//cuttlefish/io:string",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
@@ -95,15 +95,26 @@ cf_cc_library(
     srcs = ["zip_file.cc"],
     hdrs = ["zip_file.h"],
     deps = [
-        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
-        "//cuttlefish/io",
         "//cuttlefish/io:copy",
         "//cuttlefish/io:native_filesystem",
+        "//cuttlefish/io:reader_seeker",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
+    ],
+)
+
+cf_cc_test(
+    name = "zip_file_test",
+    srcs = ["zip_file_test.cc"],
+    deps = [
+        "//cuttlefish/host/libs/zip:zip_file",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
     ],
 )
 

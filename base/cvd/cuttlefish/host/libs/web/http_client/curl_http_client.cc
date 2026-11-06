@@ -34,6 +34,8 @@
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/files/file_exists.h"
+#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
+#include "cuttlefish/host/libs/web/http_client/curl_share.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/result/result.h"
@@ -108,9 +110,15 @@ int LoggingCurlDebugFunction(CURL*, curl_infotype type, char* data, size_t size,
   return 0;
 }
 
+struct CurlCallbackData {
+  HttpClient::ResultDataCallback* cpp_callback;
+  Result<void> response;
+};
+
 size_t curl_to_function_cb(char* ptr, size_t, size_t nmemb, void* userdata) {
-  HttpClient::DataCallback* callback = (HttpClient::DataCallback*)userdata;
-  if (!(*callback)(ptr, nmemb)) {
+  auto data = reinterpret_cast<CurlCallbackData*>(userdata);
+  data->response = (*data->cpp_callback)(ptr, nmemb);
+  if (!data->response.has_value()) {
     return 0;  // Signals error to curl
   }
   return nmemb;
@@ -142,10 +150,16 @@ class CurlClient : public HttpClient {
       return;
     }
   }
+  CurlClient(CurlShare& share, const bool use_logging_debug_function)
+      : CurlClient(use_logging_debug_function) {
+    if (curl_ != nullptr && share.Raw()) {
+      curl_easy_setopt(curl_, CURLOPT_SHARE, share.Raw());
+    }
+  }
   ~CurlClient() { curl_easy_cleanup(curl_); }
 
   Result<HttpResponse<void>> DownloadToCallback(
-      HttpRequest request, DataCallback callback) override {
+      HttpRequest request, ResultDataCallback callback) override {
     std::lock_guard<std::mutex> lock(mutex_);
     VLOG(0) << "Downloading '" << ScrubUrl(request.url) << "'";
     CF_EXPECT(
@@ -180,7 +194,11 @@ class CurlClient : public HttpClient {
     curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
     curl_easy_setopt(curl_, CURLOPT_URL, request.url.c_str());
     curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, curl_to_function_cb);
-    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &callback);
+    CurlCallbackData data = {
+        .cpp_callback = &callback,
+        .response = {},
+    };
+    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &data);
     char error_buf[CURL_ERROR_SIZE];
     curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
     curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
@@ -189,6 +207,7 @@ class CurlClient : public HttpClient {
       curl_easy_setopt(curl_, CURLOPT_DEBUGFUNCTION, LoggingCurlDebugFunction);
     }
     CURLcode res = curl_easy_perform(curl_);
+    CF_EXPECT(std::move(data.response), "Error in callback");
     CF_EXPECT(res == CURLE_OK,
               "curl_easy_perform() failed. "
                   << "Code was \"" << res << "\". "
@@ -212,6 +231,7 @@ class CurlClient : public HttpClient {
   }
 
  private:
+  const CurlGlobalInit ensure_init_;
   CURL* curl_;
   std::mutex mutex_;
   bool use_logging_debug_function_;
@@ -221,6 +241,11 @@ class CurlClient : public HttpClient {
 
 std::unique_ptr<HttpClient> CurlHttpClient(bool use_logging_debug_function) {
   return std::make_unique<CurlClient>(use_logging_debug_function);
+}
+
+std::unique_ptr<HttpClient> CurlHttpClient(CurlShare& share,
+                                           bool use_logging_debug_function) {
+  return std::make_unique<CurlClient>(share, use_logging_debug_function);
 }
 
 }  // namespace cuttlefish

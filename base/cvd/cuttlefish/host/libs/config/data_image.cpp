@@ -27,8 +27,6 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/files/copy.h"
@@ -41,6 +39,7 @@
 #include "cuttlefish/host/libs/config/esp/make_fat_image.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/execute.h"
@@ -193,9 +192,8 @@ Result<void> CreateBlankSdcardImage(std::string_view image, int num_mb) {
       }},
       .boot_signature = {0x55, 0xAA},
   };
-  SharedFD fd = CF_EXPECT(Fd::Open(image, O_RDWR));
-  CF_EXPECTF(WriteAllBinary(fd, &mbr) == sizeof(MasterBootRecord),
-             "Writing MBR to '{}' failed: '{}'", image, fd->StrError());
+  Fd fd = CF_EXPECT(Fd::Open(image, O_RDWR));
+  CF_EXPECTF(WriteExactBinary(fd, mbr), "Writing MBR to '{}' failed", image);
   return {};
 }
 

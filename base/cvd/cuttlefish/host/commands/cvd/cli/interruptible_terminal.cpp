@@ -16,9 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
 
-#include <errno.h>
 #include <stdint.h>
-#include <sys/eventfd.h>
 
 #include <mutex>
 #include <optional>
@@ -34,9 +32,6 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-InterruptibleTerminal::InterruptibleTerminal()
-    : interrupt_event_fd_(Fd::Event().value_or(Fd())) {}
 
 // only up to one thread can call this function
 Result<std::string> InterruptibleTerminal::ReadLine() {
@@ -54,7 +49,6 @@ Result<std::string> InterruptibleTerminal::ReadLine() {
   SharedFDSet read_set;
   std::string line_buf;
   while (true) {
-    read_set.Set(interrupt_event_fd_);
     read_set.Set(stdin_fd);
     int num_fds = Select(&read_set, nullptr, nullptr, nullptr);
 
@@ -66,13 +60,8 @@ Result<std::string> InterruptibleTerminal::ReadLine() {
     CF_EXPECT(interrupted_ == false, "Interrupted");
     CF_EXPECTF(num_fds >= 0,
                "Select call to read the user input returned error: {}",
-               StrError(errno));
+               StrError());
 
-    if (read_set.IsSet(interrupt_event_fd_)) {
-      eventfd_t val;
-      CF_EXPECT_EQ(interrupt_event_fd_->EventfdRead(&val), 0);
-      return CF_ERR("Terminal input interrupted.");
-    }
     CF_EXPECT(read_set.IsSet(stdin_fd));
     char c = 0;
     const char end_of_transmission = 4;

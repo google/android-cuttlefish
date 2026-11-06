@@ -15,10 +15,12 @@
  */
 
 #include <string>
+#include <vector>
 
 #include "gtest/gtest.h"
 
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -114,6 +116,126 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImageFullJson) {
   EXPECT_TRUE(FindConfig(*serialized_data,
                          R"(--data_policy=always_create,always_create)"))
       << "data_policy flag is missing or wrongly formatted";
+}
+
+TEST(BootFlagsParserTest, VendorBootRemoteOverrideEmitsNoVendorBootImageFlag) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "vendor_boot": "@ab/git_main/cf_x86_64_auto{vendor_boot-debug.img}"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  const std::vector<std::string> serialized_data =
+      CF_ASSERT(LaunchCvdParserTester(json_configs));
+  EXPECT_FALSE(FindConfig(serialized_data, "--vendor_boot_image="));
+}
+
+TEST(BootFlagsParserTest, VendorBootLocalOverrideSingleInstance) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "vendor_boot": "/path/to/vendor_boot.img"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  const std::vector<std::string> serialized_data =
+      CF_ASSERT(LaunchCvdParserTester(json_configs));
+  EXPECT_TRUE(FindConfig(serialized_data,
+                         "--vendor_boot_image=/path/to/vendor_boot.img"));
+}
+
+TEST(BootFlagsParserTest, VendorBootLocalOverrideMultiInstancePartial) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "disk": {
+            }
+        },
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "vendor_boot": "/path/to/vendor_boot.img"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  const std::vector<std::string> serialized_data =
+      CF_ASSERT(LaunchCvdParserTester(json_configs));
+  EXPECT_TRUE(FindConfig(serialized_data,
+                         "--vendor_boot_image=,/path/to/vendor_boot.img"));
+}
+
+TEST(BootFlagsParserTest, VendorBootLocalOverrideMultiInstanceFull) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "vendor_boot": "/path/to/first/vendor_boot.img"
+                }
+            }
+        },
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "vendor_boot": "/path/to/second/vendor_boot.img"
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  const std::vector<std::string> serialized_data =
+      CF_ASSERT(LaunchCvdParserTester(json_configs));
+  EXPECT_TRUE(FindConfig(
+      serialized_data,
+      "--vendor_boot_image=/path/to/first/vendor_boot.img,/path/to/second/"
+      "vendor_boot.img"));
 }
 
 }  // namespace cuttlefish

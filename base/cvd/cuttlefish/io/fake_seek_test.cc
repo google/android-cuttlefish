@@ -24,6 +24,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "cuttlefish/io/visitable.h"
+#include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_matchers.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -34,6 +36,11 @@ class ReadFromVector : public ReaderFakeSeeker {
  public:
   ReadFromVector(std::vector<char> data)
       : ReaderFakeSeeker(data.size()), data_(data) {}
+
+  Result<void> Visit(IoVisitor& visitor) override {
+    CF_EXPECT(visitor.Accept(*this));
+    return {};
+  }
 
   Result<uint64_t> PRead(void* buf, uint64_t count,
                          uint64_t offset) const override {

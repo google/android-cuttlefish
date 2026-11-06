@@ -118,7 +118,7 @@ fn start_backend(config: Config) -> Result<()> {
         let backend_config = config.clone();
         let backend = Arc::new(RwLock::new(VhuMediaBackend::new(
             device_config,
-            move |event_queue, host_mapper| {
+            move |event_queue, host_mapper, _guest_mem| {
                 crate::device::V4l2Stream::new(event_queue, host_mapper, backend_config.clone())
             },
         )));

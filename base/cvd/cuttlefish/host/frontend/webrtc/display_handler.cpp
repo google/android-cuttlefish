@@ -243,13 +243,9 @@ void DisplayHandler::RepeatFramesPeriodically() {
       for (auto& [display_number, buffer_info] : display_last_buffers_) {
         if (time_stamp >
             buffer_info->last_sent_time_stamp + kRepeatingInterval) {
-          if (composition_manager_.has_value()) {
-            auto planar = std::dynamic_pointer_cast<PlanarVideoFrameBuffer>(
-                buffer_info->buffer);
-            if (planar) {
-              composition_manager_.value()->ComposeFrame(display_number,
-                                                         planar);
-            }
+          if (composition_manager_.has_value() && buffer_info->buffer) {
+            composition_manager_.value()->ComposeFrame(display_number,
+                                                       buffer_info->buffer);
           }
           buffers[display_number] = buffer_info;
         }

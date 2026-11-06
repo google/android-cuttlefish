@@ -31,8 +31,11 @@
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/is_directory_empty.h"
 #include "cuttlefish/files/recursively_remove_directory.h"
+#include "cuttlefish/files/write_new_file.h"
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/http_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
@@ -52,7 +55,7 @@ constexpr char kContentsSha256[] =
 
 // Records where the caching layer asked for each download and writes the bytes
 // a real API would have written.
-class RecordingBuildApi : public BuildApi {
+class RecordingBuildApi : public BuildApi<BuildString, Build> {
  public:
   Result<Build> GetBuild(const BuildString&) override {
     return CF_ERR("not used");
@@ -183,7 +186,7 @@ TEST_F(CachingBuildApiTests, DownloadFileChecksTheCachedDigestFail) {
 
 // Writes each artifact as a directory, as the CAS downloader does with
 // `prefer-uncompressed`.
-class UncompressedBuildApi : public BuildApi {
+class UncompressedBuildApi : public BuildApi<BuildString, Build> {
  public:
   Result<Build> GetBuild(const BuildString&) override {
     return CF_ERR("not used");

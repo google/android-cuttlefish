@@ -28,6 +28,7 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -100,7 +101,7 @@ Result<siginfo_t> Subprocess::Wait(int options) {
     pid_ = -1;
   }
   CF_EXPECT_EQ(retval, 0,
-               "Lost track of process " << tracked << ": " << StrError(errno));
+               "Lost track of process " << tracked << ": " << StrError());
   return infop;
 }
 

@@ -49,12 +49,12 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
 #include "cuttlefish/process/subprocess.h"
 #include "cuttlefish/process/subprocess_options.h"
 #include "cuttlefish/result/result.h"
 
 #ifdef __linux__
-#include <linux/prctl.h>
 #include <sys/prctl.h>
 #endif
 
@@ -293,22 +293,15 @@ Subprocess Command::Start(SubprocessOptions options) const {
       }
     }
     if (working_directory_->IsOpen()) {
-      if (working_directory_->Fchdir() != 0) {
-        exit(-errno);
+      Result<void, int> fchdir_res = working_directory_->Fchdir();
+      if (!fchdir_res.has_value()) {
+        exit(-*fchdir_res.error());
       }
     }
-    int rval;
     const char* executable = executable_ ? executable_->c_str() : cmd[0];
-#ifdef __linux__
-    rval = execvpe(executable, const_cast<char* const*>(cmd.data()),
-                   const_cast<char* const*>(envp.data()));
-#elif defined(__APPLE__)
-    rval = execve(executable, const_cast<char* const*>(cmd.data()),
-                  const_cast<char* const*>(envp.data()));
-#else
-#error "Unsupported architecture"
-#endif
-    // No need to check for error, execvpe/execve don't return on success.
+    environ = const_cast<char**>(envp.data());
+    int rval = execvp(executable, const_cast<char* const*>(cmd.data()));
+    // No need to check for error, execvp doesn't return on success.
     exit(rval);
   }
   if (pid == -1) {

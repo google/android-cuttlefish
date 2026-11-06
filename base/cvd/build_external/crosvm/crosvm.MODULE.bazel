@@ -1,6 +1,6 @@
 # this needs to be at parity with with build_external/crosvm/crosvm.config.toml
 CROSVM_REMOTE = "https://chromium.googlesource.com/crosvm/crosvm"
-CROSVM_REV = "fd4df63707aee57092a28db63bc1ff8945c76058"
+CROSVM_REV = "597fa65c644c3880e2eba24a6708ab93b3321d4a"
 
 # note that this won't use the same source checkout as the git_repository directive below
 #
@@ -35,6 +35,7 @@ crosvm_bin.spec(
     ],
     # TODO: schuffelen - fix the sandbox
     git = CROSVM_REMOTE,
+    repositories = ["crosvm_bin"],
     rev = CROSVM_REV,
 )
 
@@ -42,6 +43,7 @@ crosvm_bin.annotation(
     crate = "crosvm",
     gen_all_binaries = True,
     patch_args = ["-p1"],
+    repositories = ["crosvm_bin"],
     deps = [
         "@@//:gbm",
         "@@//:gfxstream_backend_import",
@@ -57,6 +59,7 @@ crosvm_bin.annotation(
 
 crosvm_bin.annotation(
     crate = "rutabaga_gfx",
+    gen_build_script = "off",
     crate_features = [
         "gbm",
         "virgl_renderer",
@@ -72,22 +75,15 @@ crosvm_bin.annotation(
         "-Clink-arg=-Wl,-rpath,$$ORIGIN",
         "-Clink-arg=-Wl,-rpath,$$ORIGIN/../lib64",
     ],
-    build_script_env = {
-        # Disable the build script from trying to automatically locate
-        # Gfxstream, gbm, and virglrenderer as the deps are directly provided above.
-        "CARGO_FEATURE_GBM_STUB": "bloh",
-        "CARGO_FEATURE_GFXSTREAM_STUB": "blah",
-        "CARGO_FEATURE_VIRGL_RENDERER_STUB": "bleh",
-    },
     patch_args = ["-p1"],
     patches = [
-        "@//build_external/crosvm:PATCH.rutabaga_gfx_build_rs.patch",
         "@//build_external/crosvm:PATCH.rutabaga_gfx_rendernode.patch",
         "@//build_external/crosvm:PATCH.rutabaga_gfx_mod_rs.patch",
         "@//build_external/crosvm:PATCH.rutabaga_gfx_minigbm_rs.patch",
         "@//build_external/crosvm:PATCH.rutabaga_gfx_minigbm_bindings_rs.patch",
         "@//build_external/crosvm:PATCH.rutabaga_gfx_gralloc_rs.patch",
     ],
+    repositories = ["crosvm_bin"],
 )
 
 crosvm_bin.annotation(
@@ -95,6 +91,7 @@ crosvm_bin.annotation(
     build_script_data_glob = ["seccomp/**"],
     build_script_data = ["@@//:compile_seccomp_policy_exe"],
     build_script_env = {"COMPILE_SECCOMP_POLICY": "$(execpath @@//:compile_seccomp_policy_exe)"},
+    repositories = ["crosvm_bin"],
 )
 
 # minijail-sys/build.rs invokes `make` to build the minijail C library, so all
@@ -110,6 +107,7 @@ crosvm_bin.annotation(
     # crates_universe checks out only a subdirectory of the repository, so the
     # file paths in this patch are relative to that directory.
     patches = ["@//build_external/crosvm:PATCH.minijail-sys_build_rs.patch"],
+    repositories = ["crosvm_bin"],
 )
 
 # Disable the `path` directives for the generated code as they end up with
@@ -120,6 +118,7 @@ crosvm_bin.annotation(
     # crates_universe checks out only a subdirectory of the repository, so the
     # file paths in this patch are relative to that directory.
     patches = ["@//build_external/crosvm:PATCH.proto_build_tools.patch"],
+    repositories = ["crosvm_bin"],
 )
 
 crosvm_bin.from_specs(

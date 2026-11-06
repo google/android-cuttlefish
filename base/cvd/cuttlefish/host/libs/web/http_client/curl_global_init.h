@@ -20,10 +20,11 @@ namespace cuttlefish {
 class CurlGlobalInit {
  public:
   CurlGlobalInit();
-  // Could be made movable, but not currently needed
-  CurlGlobalInit(CurlGlobalInit&) = delete;
+  CurlGlobalInit(const CurlGlobalInit&);
+  CurlGlobalInit(CurlGlobalInit&&);
   ~CurlGlobalInit();
-  CurlGlobalInit& operator=(CurlGlobalInit&) = delete;
+  CurlGlobalInit& operator=(const CurlGlobalInit&) = default;
+  CurlGlobalInit& operator=(CurlGlobalInit&&) = default;
 };
 
 }  // namespace cuttlefish

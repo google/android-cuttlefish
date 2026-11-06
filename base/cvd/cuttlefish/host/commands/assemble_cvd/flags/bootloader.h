@@ -36,10 +36,14 @@ class BootloaderFlag {
 
   std::string BootloaderForInstance(size_t instance_index) const;
 
+  bool IsDefaultForIndex(size_t index) const;
+
  private:
-  BootloaderFlag(std::vector<std::string> bootloaders);
+  BootloaderFlag(std::vector<std::string> bootloaders,
+                 std::vector<bool> is_default_values);
 
   std::vector<std::string> bootloaders_;
+  std::vector<bool> is_default_values_;
 };
 
 }  // namespace cuttlefish

@@ -11,8 +11,6 @@ casimir_crates.from_cargo(
     manifests = [
         "@casimir//:Cargo.toml",
     ],
-    # Needed because it shares the extension with crosvm
-    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
     host_tools = "@rust_host_tools_nightly",
 )
 use_repo(casimir_crates, "casimir_crates")

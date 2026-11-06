@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -35,6 +34,7 @@
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 #include "cuttlefish/host/commands/cvdalloc/sem.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -102,7 +102,7 @@ Result<int> CvdallocMain(int argc, char* argv[]) {
   SharedFD sock = CF_EXPECT(Fd::Dup(absl::GetFlag(FLAGS_socket)));
   int r = TEMP_FAILURE_RETRY(close(absl::GetFlag(FLAGS_socket)));
   if (r == -1) {
-    return CF_ERRNO("close: " << StrError(errno));
+    return CF_ERRNO("close: " << StrError());
   }
 
   absl::Cleanup shutdown = [sock]() { sock->Shutdown(SHUT_RDWR); };
@@ -115,13 +115,13 @@ Result<int> CvdallocMain(int argc, char* argv[]) {
   absl::Cleanup drop_privileges = [orig]() {
     int r = DropPrivileges(orig);
     if (r == -1) {
-      LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << StrError(errno);
+      LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << StrError();
     }
   };
 
   r = BeginElevatedPrivileges();
   if (r == -1) {
-    return CF_ERRF("Couldn't elevate permissions: {}", StrError(errno));
+    return CF_ERRF("Couldn't elevate permissions: {}", StrError());
   }
 
   absl::Cleanup teardown = [id]() {

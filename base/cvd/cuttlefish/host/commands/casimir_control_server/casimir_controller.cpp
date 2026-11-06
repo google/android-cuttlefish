@@ -19,6 +19,7 @@
 #include <endian.h>
 #include <fcntl.h>
 #include <math.h>
+#include <poll.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -286,14 +287,14 @@ Result<std::shared_ptr<std::vector<uint8_t>>> CasimirController::ReadExact(
       0) {
     PollSharedFd poll_fd = {
         .fd = sock_,
-        .events = EPOLLIN,
+        .events = POLLIN,  // NOLINT(misc-include-cleaner): poll.h
         .revents = 0,
     };
     int res = sock_.Poll(
         &poll_fd, 1,
         std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
     CF_EXPECT_GE(res, 0, "Failed to poll on the casimir socket");
-    CF_EXPECT_EQ(poll_fd.revents, EPOLLIN,
+    CF_EXPECT_EQ(poll_fd.revents, POLLIN,  // NOLINT(misc-include-cleaner)
                  "Unexpected poll result for reading");
 
     // Nonblocking read, so don't need to care about timeout.

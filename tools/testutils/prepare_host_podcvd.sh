@@ -89,8 +89,6 @@ if [[ "${PKG_DIR}" == "" ]] || ! [[ -d "${PKG_DIR}" ]]; then
   exit 1
 fi
 
-sudo apt-get update
-
 install_pkgs "${PKG_DIR}" cuttlefish-podcvd
 load_kernel_modules kvm vhost-vsock vhost-net bridge
 grant_device_access vhost-vsock vhost-net kvm

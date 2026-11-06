@@ -74,10 +74,19 @@ cf_cc_library(
     srcs = ["disk_usage.cpp"],
     hdrs = ["disk_usage.h"],
     deps = [
-        "//cuttlefish/process:command",
-        "//cuttlefish/process:managed_stdio",
+        "//cuttlefish/files:directory_contents",
+        "//cuttlefish/posix:stat",
         "//cuttlefish/result",
-        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "disk_usage_test",
+    srcs = ["disk_usage_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:disk_usage",
+        "//cuttlefish/result:result_matchers",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
@@ -85,11 +94,9 @@ cf_cc_library(
     name = "environment",
     srcs = [
         "environment.cpp",
-        "known_paths.cpp",
     ],
     hdrs = [
         "environment.h",
-        "known_paths.h",
     ],
 )
 
@@ -106,12 +113,8 @@ cf_cc_library(
     name = "files",
     srcs = ["files.cpp"],
     hdrs = ["files.h"],
-    target_compatible_with = [
-        "@platforms//os:linux",  # SEEK_DATA
-    ],
     deps = [
         ":environment",
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:users",
@@ -126,7 +129,6 @@ cf_cc_library(
         "//cuttlefish/posix:remove",
         "//cuttlefish/posix:rename",
         "//cuttlefish/posix:stat",
-        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
@@ -234,6 +236,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "known_paths",
+    srcs = [
+        "known_paths.cpp",
+    ],
+    hdrs = [
+        "known_paths.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+    ],
+)
+
+cf_cc_library(
     name = "network",
     srcs = ["network.cpp"],
     hdrs = ["network.h"],
@@ -323,6 +338,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/result",
         "@abseil-cpp//absl/base:log_severity",
@@ -335,7 +351,6 @@ cf_cc_library(
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
         "@android_system_libbase//:file_logging",
-        "@android_system_libbase//:macros",
         "@android_system_libbase//:threads",
         "@fmt",
     ],
@@ -380,9 +395,10 @@ cf_cc_test(
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:unix_sockets",
         "//cuttlefish/io:string",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/result",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
-        "@abseil-cpp//absl/log:check",
     ],
 )
 
@@ -408,6 +424,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/io:write_exact",
         "@abseil-cpp//absl/log",
         "@jsoncpp",
     ],
@@ -419,12 +436,14 @@ cf_cc_library(
     hdrs = ["wait_for_file.h"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:inotify",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/result",
         "@android_system_libbase//:file_logging",
         "@android_system_libbase//:unique_fd",
-    ],
+    ] + select({
+        "@platforms//os:linux": ["//cuttlefish/common/libs/utils:inotify"],
+        "//conditions:default": [],
+    }),
 )
 
 cf_cc_library(
@@ -435,9 +454,11 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:wait_for_file",
         "//cuttlefish/files:file_is_socket",
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
     ],
 )

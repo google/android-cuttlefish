@@ -27,7 +27,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image_builder.h"
 #include "cuttlefish/io/concat.h"
-#include "cuttlefish/io/in_memory.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/io/read_window_view.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/result/assert.h"
@@ -53,13 +53,13 @@ TEST(VendorBootImageTest, AllFieldsSet) {
           .PageSize(kPageSize)
           .KernelAddr(kKernelAddr)
           .RamdiskAddr(kRamdiskAddr)
-          .VendorRamdisk(InMemoryIo(kVendorRamdisk))
+          .VendorRamdisk(std::make_unique<OwningInMemoryIo>(kVendorRamdisk))
           .KernelCommandLine(kKernelCommandLine)
           .TagsAddr(kTagsAddr)
           .Name(kName)
-          .Dtb(InMemoryIo(kDtb))
+          .Dtb(std::make_unique<OwningInMemoryIo>(kDtb))
           .DtbAddr(kDtbAddr)
-          .Bootconfig(InMemoryIo(kBootconfig));
+          .Bootconfig(std::make_unique<OwningInMemoryIo>(kBootconfig));
   ConcatReaderSeeker image = CF_ASSERT(builder.BuildV4());
 
   VendorBootImage parsed = CF_ASSERT(VendorBootImage::Read(
@@ -69,16 +69,12 @@ TEST(VendorBootImageTest, AllFieldsSet) {
   EXPECT_EQ(parsed.KernelAddr(), kKernelAddr);
   EXPECT_EQ(parsed.RamdiskAddr(), kRamdiskAddr);
 
-  ReadWindowView vendor_ramdisk = parsed.VendorRamdisk();
-  EXPECT_THAT(ReadToString(vendor_ramdisk), IsOkAndValue(kVendorRamdisk));
-
+  EXPECT_THAT(ReadToString(parsed.VendorRamdisk()),
+              IsOkAndValue(kVendorRamdisk));
   EXPECT_EQ(parsed.KernelCommandLine(), kKernelCommandLine);
   EXPECT_EQ(parsed.TagsAddr(), kTagsAddr);
   EXPECT_EQ(parsed.Name(), kName);
-
-  ReadWindowView dtb = parsed.Dtb();
-  EXPECT_THAT(ReadToString(dtb), IsOkAndValue(kDtb));
-
+  EXPECT_THAT(ReadToString(parsed.Dtb()), IsOkAndValue(kDtb));
   EXPECT_EQ(parsed.DtbAddr(), kDtbAddr);
 
   std::optional<ReadWindowView> bootconfig = parsed.Bootconfig();
@@ -100,16 +96,14 @@ TEST(VendorBootImageTest, NoFieldsSet) {
             VendorBootImageBuilder::kDefaultBaseAddress +
                 VendorBootImageBuilder::kDefaultRamdiskOffset);
 
-  ReadWindowView vendor_ramdisk = parsed.VendorRamdisk();
-  EXPECT_THAT(ReadToString(vendor_ramdisk), IsOkAndValue(""));
+  EXPECT_THAT(ReadToString(parsed.VendorRamdisk()), IsOkAndValue(""));
 
   EXPECT_EQ(parsed.KernelCommandLine(), "");
   EXPECT_EQ(parsed.TagsAddr(), VendorBootImageBuilder::kDefaultBaseAddress +
                                    VendorBootImageBuilder::kDefaultTagsOffset);
   EXPECT_EQ(parsed.Name(), "");
 
-  ReadWindowView dtb = parsed.Dtb();
-  EXPECT_THAT(ReadToString(dtb), IsOkAndValue(""));
+  EXPECT_THAT(ReadToString(parsed.Dtb()), IsOkAndValue(""));
 
   EXPECT_EQ(parsed.DtbAddr(), VendorBootImageBuilder::kDefaultBaseAddress +
                                   VendorBootImageBuilder::kDefaultDtbOffset);

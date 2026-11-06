@@ -43,6 +43,20 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "create_or_reuse_and_drain_fifo",
+    srcs = ["create_or_reuse_and_drain_fifo.cc"],
+    hdrs = ["create_or_reuse_and_drain_fifo.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/posix:stat",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:temp_failure_retry",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "directory_contents",
     srcs = ["directory_contents.cc"],
     hdrs = ["directory_contents.h"],
@@ -129,5 +143,28 @@ cf_cc_library(
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
+    ],
+)
+
+cf_cc_library(
+    name = "sparse_file_sizes",
+    srcs = ["sparse_file_sizes.cc"],
+    hdrs = ["sparse_file_sizes.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
+cf_cc_library(
+    name = "write_new_file",
+    srcs = ["write_new_file.cc"],
+    hdrs = ["write_new_file.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/io:write_exact",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
 )

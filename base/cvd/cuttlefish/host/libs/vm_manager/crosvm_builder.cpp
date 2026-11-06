@@ -93,7 +93,11 @@ Result<void> CrosvmBuilder::AddCpus(const Json::Value& vcpu_config_json) {
 }
 
 void CrosvmBuilder::AddCpus(size_t cpus) {
-  command_.AddParameter("--cpus=", cpus);
+  if (HostArch() == Arch::Arm64) {
+    command_.AddParameter("--cpus=", cpus, ",sve=[auto=true]");
+  } else {
+    command_.AddParameter("--cpus=", cpus);
+  }
 }
 
 void CrosvmBuilder::AddHvcSink() {
@@ -152,14 +156,12 @@ void CrosvmBuilder::AddSerial(const std::string& output,
                         ",type=file,path=", output, ",input=", input);
 }
 
-#ifdef __linux__
 void CrosvmBuilder::AddTap(const std::string& tap_name,
                            std::optional<std::string_view> mac,
                            const std::optional<pci::Address>& pci) {
   command_.AddParameter("--net=tap-name=", tap_name, MacCrosvmArgument(mac),
                         FormatPciArgument(pci));
 }
-#endif
 
 void CrosvmBuilder::AddVhostUser(const std::string& type,
                                  const std::string& socket_path,

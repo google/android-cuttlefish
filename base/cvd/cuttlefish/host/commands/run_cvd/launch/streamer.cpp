@@ -15,10 +15,8 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/streamer.h"
 
-#include <errno.h>
 #include <sys/socket.h>
 
-#include <optional>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -32,11 +30,11 @@
 #include "fruit/macro.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/environment.h"
-#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/create_or_reuse_and_drain_fifo.h"
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
 #include "cuttlefish/host/commands/run_cvd/launch/input_paths_provider.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
+#include "cuttlefish/host/commands/run_cvd/launch/virtual_tuner_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -47,6 +45,7 @@
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
+#include "cuttlefish/metrics/host/invoker.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/subprocess.h"
@@ -78,7 +77,7 @@ std::vector<Command> LaunchCustomActionServers(
     if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &webrtc_socket,
                               &action_server_socket)) {
       LOG(ERROR) << "Unable to create custom action server socket pair: "
-                 << StrError(errno);
+                 << StrError();
       continue;
     }
 
@@ -141,6 +140,10 @@ class StreamerSockets : public virtual SetupFeature {
     cmd.AddParameter("-frame_server_fd=", frames_server_);
     if (instance_.enable_audio()) {
       cmd.AddParameter("--audio_server_fd=", audio_server_);
+      if (HasVirtualTunerStream(instance_)) {
+        cmd.AddParameter("--tuner_pcm_socket_path=",
+                         VirtualTunerPcmSocketPath(instance_));
+      }
     }
     cmd.AddParameter("--confui_in_fd=", confui_in_fd_);
     cmd.AddParameter("--confui_out_fd=", confui_out_fd_);
@@ -221,7 +224,7 @@ class WebRtcServer : public virtual CommandSource,
       return {};
     }
     std::string url;
-    if (StringFromEnv("CVD_INVOKER").value_or("") == "podcvd") {
+    if (GetInvoker() == Invoker::Podcvd) {
       // Container image used by podcvd always contains `cuttlefish-user` debian
       // package. URL starting with `https://localhost:1443` is required as port
       // 1443 in the container is exposed via port forwarding. When printing
@@ -278,7 +281,8 @@ class WebRtcServer : public virtual CommandSource,
   // SetupFeature
   bool Enabled() const override {
     return sockets_.Enabled() && instance_.gpu_mode() != GpuMode::None &&
-           (VmManagerIsCrosvm(config_) || VmManagerIsQemu(config_));
+           (VmManagerIsCrosvm(config_) || VmManagerIsQemu(config_)) &&
+           instance_.enable_webrtc();
   }
 
  private:

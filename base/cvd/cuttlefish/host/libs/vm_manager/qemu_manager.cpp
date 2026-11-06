@@ -32,11 +32,13 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
+#include "fmt/format.h"
 #include "vulkan/vulkan.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
+#include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -151,20 +153,6 @@ QemuManager::ConfigureGraphics(
         {"androidboot.hardware.vulkan", "pastel"},
         // OpenGL ES 3.1
         {"androidboot.opengles.version", "196609"},
-    };
-  } else if (gpu_mode == GpuMode::DrmVirgl) {
-    bootconfig_args = {
-        {"androidboot.cpuvulkan.version", "0"},
-        {"androidboot.hardware.gralloc", "minigbm"},
-        {"androidboot.hardware.hwcomposer", "ranchu"},
-        {"androidboot.hardware.hwcomposer.mode", "client"},
-        {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
-        {"androidboot.hardware.hwcomposer.display_framebuffer_format",
-         instance.guest_uses_bgra_framebuffers() ? "bgra" : "rgba"},
-        {"androidboot.hardware.egl", "mesa"},
-        // No "hardware" Vulkan support, yet
-        // OpenGL ES 3.0
-        {"androidboot.opengles.version", "196608"},
     };
   } else if (IsGfxstreamMode(gpu_mode)) {
     const std::string gles_impl =
@@ -377,10 +365,15 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   if (instance.mte()) {
     machine += ",mte=on";
   }
+  machine += ",usb=off";
+#ifdef __linux__
+  machine += ",dump-guest-core=off";  // Uses MADV_DONTDUMP; Linux only.
+#endif
+  machine += ",memory-backend=vm_ram";
   qemu_cmd.AddParameter("-machine");
-  qemu_cmd.AddParameter(machine,
-                        ",usb=off,dump-guest-core=off,memory-backend=vm_ram");
+  qemu_cmd.AddParameter(machine);
 
+  bool uses_host_cpu_flag = false;
   if (IsHostCompatible(arch_)) {
     qemu_cmd.AddParameter("-accel");
     std::string accel = "tcg";
@@ -389,8 +382,10 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     if (!config.kvm_path().empty()) {
       accel += ",device=" + config.kvm_path();
     }
+    uses_host_cpu_flag = true;
 #elif defined(__APPLE__)
     accel = "hvf";
+    uses_host_cpu_flag = true;
 #endif
     qemu_cmd.AddParameter(accel);
   }
@@ -450,13 +445,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("chardev=charmonitor,id=monitor,mode=control");
 
   const GpuMode gpu_mode = instance.gpu_mode();
-  if (gpu_mode == GpuMode::DrmVirgl) {
-    qemu_cmd.AddParameter("-display");
-    qemu_cmd.AddParameter("egl-headless");
-
-    qemu_cmd.AddParameter("-vnc");
-    qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
-  } else if (IsGuestRenderingMode(gpu_mode) || IsGfxstreamMode(gpu_mode)) {
+  if (IsGuestRenderingMode(gpu_mode) || IsGfxstreamMode(gpu_mode)) {
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
   } else {
@@ -474,8 +463,6 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     std::string gpu_device;
     if (gpu_mode == GpuMode::GuestSwiftshader || qemu_version.first < 6) {
       gpu_device = "virtio-gpu-pci";
-    } else if (gpu_mode == GpuMode::DrmVirgl) {
-      gpu_device = "virtio-gpu-gl-pci";
     } else if (gpu_mode == GpuMode::Gfxstream) {
       gpu_device =
           "virtio-gpu-rutabaga,x-gfxstream-gles=on,gfxstream-vulkan=on,"
@@ -768,7 +755,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-keyboard-pci,disable-legacy=on");
 
-  // device padding for unsupported "switches" input
+#ifdef __linux__
   qemu_cmd.AddParameter("-chardev");
   qemu_cmd.AddParameter("socket,path=", SwitchesSocketPath(instance),
                         ",id=switches0");
@@ -780,6 +767,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
                         ",id=rotary0");
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("vhost-user-input-pci,chardev=rotary0");
+#endif
 
   auto vhost_net = instance.vhost_net() ? ",vhost=on" : "";
 
@@ -856,7 +844,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   if (is_x86 || is_arm) {
     qemu_cmd.AddParameter("-cpu");
-    qemu_cmd.AddParameter(IsHostCompatible(arch_) ? "host" : "max");
+    qemu_cmd.AddParameter(uses_host_cpu_flag ? "host" : "max");
   }
 
   // Explicitly enable the optional extensions of interest, in case the default
@@ -871,9 +859,20 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("timestamp=on");
 
 #ifdef __linux__
-  qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("vhost-vsock-pci-non-transitional,guest-cid=",
-                        instance.vsock_guest_cid());
+  if (instance.vhost_user_vsock()) {
+    const std::string vhost_socket =
+        fmt::format("{}/vsock_{}_{}/vhost.socket", TempDir(),
+                    instance.vsock_guest_cid(), getuid());
+    qemu_cmd.AddParameter("-chardev");
+    qemu_cmd.AddParameter("socket,id=char_vsock,path=", vhost_socket);
+    qemu_cmd.AddParameter("-device");
+    qemu_cmd.AddParameter(
+        "vhost-user-vsock-pci-non-transitional,chardev=char_vsock");
+  } else {
+    qemu_cmd.AddParameter("-device");
+    qemu_cmd.AddParameter("vhost-vsock-pci-non-transitional,guest-cid=",
+                          instance.vsock_guest_cid());
+  }
 #endif
 
   qemu_cmd.AddParameter("-device");

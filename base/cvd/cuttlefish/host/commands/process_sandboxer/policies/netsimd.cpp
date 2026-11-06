@@ -15,10 +15,10 @@
  */
 
 #include <linux/filter.h>
-#include <linux/prctl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/mman.h>
+#include <sys/prctl.h>
 #include <sys/socket.h>
 #include <syscall.h>
 
@@ -37,7 +37,6 @@ using sapi::file::JoinPath;
 
 sandbox2::PolicyBuilder NetsimdPolicy(const HostInfo& host) {
   return BaselinePolicy(host, host.HostToolExe("netsimd"))
-      .AddDirectory(JoinPath(host.host_artifacts_path, "bin", "netsim-ui"))
       .AddDirectory(JoinPath(host.runtime_dir, "internal"), /* is_ro= */ false)
       .AddDirectory(host.tmp_dir, /* is_ro= */ false)
       .AddFile("/dev/urandom")  // For gRPC

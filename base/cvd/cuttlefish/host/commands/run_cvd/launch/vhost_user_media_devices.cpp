@@ -74,9 +74,9 @@ class VhostUserMediaDevices : public CommandSource {
         binary_path = VhostUserMediaEmulatedCameraMPlaneBinary();
         cmd.emplace(NewCommand(binary_path, instance_.media_socket_path(index),
                                config.lens_facing));
-      } else if (config.type ==
-                 CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane) {
-        binary_path = VhostUserMediaEmulatedCameraSPlaneBinary();
+      } else if (config.type == CuttlefishConfig::MediaType::
+                                    kV4l2EmulatedCameraMPlaneExternal) {
+        binary_path = VhostUserMediaEmulatedCameraMPlaneExternalBinary();
         cmd.emplace(NewCommand(binary_path, instance_.media_socket_path(index),
                                config.lens_facing));
       } else if (config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy) {

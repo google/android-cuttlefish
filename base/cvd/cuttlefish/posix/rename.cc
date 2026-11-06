@@ -15,8 +15,9 @@
  */
 #include "cuttlefish/posix/rename.h"
 
-#include <cerrno>
-#include <cstdio>
+#include <errno.h>
+#include <stdio.h>
+
 #include <string>
 #include <string_view>
 
@@ -27,8 +28,7 @@ namespace cuttlefish {
 
 Result<void, int> Rename(const char* oldpath, const char* newpath) {
   CF_EXPECTVF(rename(oldpath, newpath) >= 0, errno,
-              "rename('{}', '{}') failed: {}", oldpath, newpath,
-              StrError(errno));
+              "rename('{}', '{}') failed: {}", oldpath, newpath, StrError());
   return {};
 }
 

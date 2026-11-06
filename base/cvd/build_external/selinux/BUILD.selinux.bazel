@@ -104,8 +104,8 @@ cc_library(
     strip_include_prefix = "libselinux/include",
     deps = [
         ":libsepol_headers",
-        "@android_system_logging//:liblog",
         "@android_system_core//:libcutils",
+        "@android_system_logging//:liblog",
         "@pcre2",
     ],
 )
@@ -274,6 +274,21 @@ cc_library(
         "libsepol/include",
     ],
     strip_include_prefix = "libsepol/include",
+)
+
+cc_binary(
+    name = "secilc",
+    srcs = [
+        "secilc/secilc.c",
+    ],
+    local_defines = [
+        "ANDROID",
+    ],
+    deps = [
+        ":libsepol",
+        ":libsepol_cil_headers",
+        ":libsepol_headers",
+    ],
 )
 
 cc_binary(

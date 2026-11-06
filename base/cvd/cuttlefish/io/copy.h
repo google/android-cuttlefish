@@ -17,9 +17,9 @@
 
 #include <stddef.h>
 
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/writer.h"
+#include "cuttlefish/io/writer_seeker.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
@@ -28,6 +28,7 @@ namespace cuttlefish {
 // either. This means if either has seek pointers set somewhere in the middle of
 // the data, reading and writing starts from that point.
 Result<void> Copy(Reader&, Writer&, size_t buffer_size = 1 << 26);
+Result<void> Copy(Reader&&, Writer&, size_t buffer_size = 1 << 26);
 
 // Moves data from the Reader to the WriterSeeker. Uses heuristics to detect
 // large chunks of zeroes, and performs forward seeks on the output rather than

@@ -22,28 +22,9 @@
 
 namespace cuttlefish {
 
-Result<void> Seeker::Visit(IoVisitor& visitor) {
-  CF_EXPECT(visitor.Accept(*this));
-  return {};
-}
-
-Result<void> ReaderSeeker::Visit(IoVisitor& visitor) {
-  CF_EXPECT(visitor.Accept(*this));
-  return {};
-}
-
-Result<void> WriterSeeker::Visit(IoVisitor& visitor) {
-  CF_EXPECT(visitor.Accept(*this));
-  return {};
-}
-
 Result<void> ReaderWriterSeeker::Visit(IoVisitor& visitor) {
   CF_EXPECT(visitor.Accept(*this));
   return {};
-}
-
-Result<void> WriterSeeker::Truncate(uint64_t size) {
-  return CF_ERR("Unimplemented");
 }
 
 Result<void> ReaderWriterSeeker::Truncate(uint64_t size) {

@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 
-#include <errno.h>
+#include <fcntl.h>  // IWYU pragma: keep: FD_CLOEXEC without SOCK_CLOEXEC
 #include <signal.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -33,6 +33,7 @@
 
 #include "cuttlefish/common/libs/utils/signals.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -63,8 +64,7 @@ void RunnerLoop(const int read_end) {
     auto bytes_read =
         TEMP_FAILURE_RETRY(recv(read_end, &signal, sizeof(signal), 0));
     if (bytes_read < 0) {
-      LOG(ERROR) << "Failed to receive signal from handler: "
-                 << StrError(errno);
+      LOG(ERROR) << "Failed to receive signal from handler: " << StrError();
       // This is unrecoverable, so stop running (this is unlikely)
       break;
     }
@@ -111,11 +111,24 @@ void SignalHandler(int signal) {
 
 Result<void> StartHandling() {
   int fds[2];
-  auto res = TEMP_FAILURE_RETRY(
-      socketpair(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC, 0, fds));
+#ifdef SOCK_CLOEXEC
+  constexpr int type = SOCK_SEQPACKET | SOCK_CLOEXEC;
+#else
+  constexpr int type = SOCK_SEQPACKET;
+#endif
+  auto res = TEMP_FAILURE_RETRY(socketpair(AF_UNIX, type, 0, fds));
   if (res != 0) {
     return CF_ERRNO("Failed to create socket pair for interrupt handler: ");
   }
+#ifndef SOCK_CLOEXEC
+  for (int fd : fds) {
+    if (fcntl(fd, F_SETFD, FD_CLOEXEC) != 0) {
+      close(fds[0]);
+      close(fds[1]);
+      return CF_ERRNO("Failed to set FD_CLOEXEC on the interrupt socket: ");
+    }
+  }
+#endif
   const int read_end = fds[0];
   const int write_end = fds[1];
   shutdown(read_end, SHUT_WR);

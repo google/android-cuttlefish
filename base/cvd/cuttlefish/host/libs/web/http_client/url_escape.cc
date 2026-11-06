@@ -20,9 +20,12 @@
 
 #include "curl/curl.h"
 
+#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
+
 namespace cuttlefish {
 
 std::string UrlEscape(std::string_view text) {
+  const CurlGlobalInit init_curl;
   char* escaped_str = curl_escape(text.data(), text.size());
   std::string ret{escaped_str};
   curl_free(escaped_str);

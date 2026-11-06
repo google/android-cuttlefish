@@ -26,36 +26,54 @@
 #define DEFAULT_BLANK_DATA_IMAGE_SIZE "unset"
 
 namespace cuttlefish {
+namespace {
 
 using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
 
+std::string VendorBootImageFlag(const Instance& instance) {
+  const std::string& vendor_boot =
+      instance.disk().disk_artifacts().vendor_boot();
+  if (!vendor_boot.starts_with(kFetchPrefix)) {
+    return vendor_boot;
+  }
+  return "";
+}
+
+}  // namespace
+
 std::vector<std::string> GenerateDiskFlags(
     const EnvironmentSpecification& config) {
-  std::vector<std::string> data_image_mbs;
-  std::vector<std::string> data_policies;
-  if (std::none_of(config.instances().cbegin(), config.instances().cend(),
-                   [](const auto& instance) {
-                     return instance.disk().has_blank_data_image_mb();
-                   })) {
-    return {};
-  }
-  for (const auto& instance : config.instances()) {
-    const auto& disk = instance.disk();
-    if (disk.has_blank_data_image_mb()) {
-      data_image_mbs.emplace_back(std::to_string(disk.blank_data_image_mb()));
-      data_policies.emplace_back(
-          DataImagePolicyString(DataImagePolicy::AlwaysCreate));
-    } else {
-      data_image_mbs.emplace_back(DEFAULT_BLANK_DATA_IMAGE_SIZE);
-      data_policies.emplace_back(
-          DataImagePolicyString(DataImagePolicy::UseExisting));
+  std::vector<std::string> flags;
+  if (std::any_of(config.instances().cbegin(), config.instances().cend(),
+                  [](const Instance& instance) {
+                    return instance.disk().has_blank_data_image_mb();
+                  })) {
+    std::vector<std::string> data_image_mbs;
+    std::vector<std::string> data_policies;
+    for (const Instance& instance : config.instances()) {
+      const cvd::config::Disk& disk = instance.disk();
+      if (disk.has_blank_data_image_mb()) {
+        data_image_mbs.emplace_back(std::to_string(disk.blank_data_image_mb()));
+        data_policies.emplace_back(
+            DataImagePolicyString(DataImagePolicy::AlwaysCreate));
+      } else {
+        data_image_mbs.emplace_back(DEFAULT_BLANK_DATA_IMAGE_SIZE);
+        data_policies.emplace_back(
+            DataImagePolicyString(DataImagePolicy::UseExisting));
+      }
     }
+    flags.emplace_back(GenerateVecFlag("blank_data_image_mb", data_image_mbs));
+    flags.emplace_back(GenerateVecFlag("data_policy", data_policies));
   }
-  return std::vector<std::string>{
-      GenerateVecFlag("blank_data_image_mb", data_image_mbs),
-      GenerateVecFlag("data_policy", data_policies),
-  };
+  if (std::any_of(config.instances().cbegin(), config.instances().cend(),
+                  [](const Instance& instance) {
+                    return !VendorBootImageFlag(instance).empty();
+                  })) {
+    flags.emplace_back(
+        GenerateInstanceFlag("vendor_boot_image", config, VendorBootImageFlag));
+  }
+  return flags;
 }
 
 }  // namespace cuttlefish

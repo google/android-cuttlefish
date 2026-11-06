@@ -26,6 +26,7 @@
 #include <cinttypes>
 #include <cstring>
 #include <ctime>
+#include <iterator>
 #include <limits>
 #include <optional>
 #include <sstream>
@@ -45,14 +46,13 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
 #include "android-base/file.h"
-#include "android-base/macros.h"
 #include "android-base/threads.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/process/proc_file_utils.h"
 #include "cuttlefish/result/result.h"
 
@@ -141,7 +141,7 @@ std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
 
   static const char log_characters[] = "VDIWEF";
   static_assert(
-      arraysize(log_characters) - 1 == static_cast<int>(LogSeverity::Fatal) + 1,
+      std::size(log_characters) - 1 == static_cast<int>(LogSeverity::Fatal) + 1,
       "Mismatch in size of log_characters and values in LogSeverity");
   char severity_char = log_characters[static_cast<int>(severity)];
   std::string line_prefix;
@@ -248,11 +248,10 @@ class LogSink : public absl::LogSink {
         break;
     }
     if (severity >= destination_.severity) {
-      if (destination_.target->IsATTY()) {
-        WriteAll(destination_.target, output_string);
-      } else {
-        WriteAll(destination_.target, StripColorCodes(output_string));
-      }
+      (void)WriteExact(*destination_.target,
+                       destination_.target->IsATTY()
+                           ? output_string
+                           : StripColorCodes(output_string));
     }
   }
 

@@ -16,7 +16,6 @@
 #include "allocd/net/netlink_request.h"
 
 #include <linux/if_addr.h>
-#include <linux/if_link.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <net/if.h>  // IWYU pragma: keep // IFF_UP
@@ -27,7 +26,6 @@
 #include <unistd.h>
 
 #include <algorithm>
-#include <array>
 #include <string>
 #include <utility>
 #include <vector>
@@ -99,11 +97,6 @@ void NetlinkRequest::AddAddrInfo(int32_t if_index, int prefix_len) {
   ad_info->ifa_flags = IFA_F_PERMANENT | IFA_F_SECONDARY;
   ad_info->ifa_scope = 0;
   ad_info->ifa_index = if_index;
-}
-
-void NetlinkRequest::AddMacAddress(
-    const std::array<unsigned char, 6>& address) {
-  AppendTag(IFLA_ADDRESS, address.data(), 6);
 }
 
 void NetlinkRequest::AddInAddr(uint16_t type, in_addr_t* addr) {

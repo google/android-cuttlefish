@@ -26,7 +26,11 @@
 
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
-#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/directory_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/http_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/gcs_build_api.h"
 #include "cuttlefish/host/libs/web/http_build_api.h"
@@ -80,9 +84,9 @@ TEST_F(CompositeBuildApiTests, GetBuildRoutesByStringAlternativeSuccess) {
   EXPECT_THAT(device, IsError());
   EXPECT_TRUE(http_client_.RequestMade(kAndroidBuildHost));
 
-  EXPECT_THAT(api_.GetBuild(DirectoryBuildString{
+  EXPECT_THAT(api_.GetBuild(BuildString(DirectoryBuildString{
                   .paths = std::vector<std::string>{directory_.path},
-                  .target = "target"}),
+                  .target = "target"})),
               IsOkAndValue(VariantWith<DirectoryBuild>(_)));
 
   Result<Build> gcs = api_.GetBuild(GcsBuildString{.url = "gs://bucket/dist/"});

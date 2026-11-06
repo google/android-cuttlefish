@@ -18,11 +18,14 @@
 #include <stdint.h>
 
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/seeker.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 Result<uint64_t> Length(Seeker&);
+Result<uint64_t> Length(Seeker&&);
 Result<uint64_t> Length(ReaderWriterSeeker&);
+Result<uint64_t> Length(ReaderWriterSeeker&&);
 
 }  // namespace cuttlefish

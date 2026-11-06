@@ -15,11 +15,15 @@
  */
 #include "cuttlefish/posix/strerror.h"
 
+#include <errno.h>
+
 #include <string>
 
 #include "absl/status/status.h"
 
 namespace cuttlefish {
+
+std::string StrError() { return StrError(errno); }
 
 std::string StrError(int error_num) {
   // https://github.com/abseil/abseil-cpp/issues/942#issuecomment-1373988505

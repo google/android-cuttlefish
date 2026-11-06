@@ -142,7 +142,9 @@ std::string AndroidBuildUrl::GetLatestBuildCandidateUrl(std::string_view branch,
   builder.AddQueryParameter("buildType", "submitted");
   builder.AddQueryParameter("pageSize", "1");
   builder.AddQueryParameter("successful", "true");
-  builder.AddQueryParameter("safeLevel", format_as(safe_level));
+  if (safe_level != SafeLevel::kSafeLevelUnspecified) {
+    builder.AddQueryParameter("safeLevel", format_as(safe_level));
+  }
   builder.AddQueryParameter("branches", branch);
   builder.AddQueryParameter("targets", target);
   builder.AddApiKeyAndProjectId(api_key_, project_id_);

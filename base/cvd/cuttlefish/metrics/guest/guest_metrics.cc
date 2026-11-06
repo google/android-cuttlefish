@@ -34,11 +34,15 @@ Result<std::vector<GuestMetrics>> GetGuestMetrics(const Guests& guests) {
   for (int i = 0; i < guests.guest_infos.size(); i++) {
     const std::string boot_image_path =
         fmt::format("{}/boot.img", guests.guest_infos[i].product_out);
+    // allow failure here because the boot image is not always available when a
+    // device group is created
+    // for example, in `cvd create --config_file` cases
+    std::string os_version =
+        ReadAndroidVersionFromBootImage(boot_image_path).value_or("");
+
     result.emplace_back(GuestMetrics{
         .instance_id = guests.guest_infos[i].instance_id,
-        .os_version = CF_EXPECTF(
-            ReadAndroidVersionFromBootImage(boot_image_path),
-            "Failed to read guest os version from '{}'.", boot_image_path),
+        .os_version = os_version,
         .event_type = guests.event_type,
         .flag_metrics = CF_EXPECT(GetFlagMetrics(guests.parsed_flags, i)),
     });

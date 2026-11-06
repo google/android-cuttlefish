@@ -26,7 +26,10 @@ namespace cuttlefish {
 namespace {
 
 constexpr std::string_view kAcloud = "acloud";
+constexpr std::string_view kCvdr = "cvdr";
 constexpr std::string_view kHostOrchestrator = "host_orchestrator";
+constexpr std::string_view kLaunchCvd = "launch_cvd";
+constexpr std::string_view kPodcvd = "podcvd";
 constexpr std::string_view kInvokerVariable = "CVD_INVOKER";
 
 }  // namespace
@@ -38,8 +41,14 @@ Invoker GetInvoker() {
     return Invoker::None;
   } else if (invoker_value == kAcloud) {
     return Invoker::Acloud;
+  } else if (invoker_value == kCvdr) {
+    return Invoker::Cvdr;
   } else if (invoker_value == kHostOrchestrator) {
     return Invoker::HostOrchestrator;
+  } else if (invoker_value == kLaunchCvd) {
+    return Invoker::LaunchCvd;
+  } else if (invoker_value == kPodcvd) {
+    return Invoker::Podcvd;
   } else {
     return Invoker::Unknown;
   }

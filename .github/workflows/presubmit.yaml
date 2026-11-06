@@ -206,12 +206,6 @@ jobs:
   run-cvd-unit-tests:
     runs-on: ubuntu-24.04-64core
     steps:
-    - name: Free disk space
-      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be  # v1.3.1
-      with:
-        large-packages: false
-        swap-storage: false
-        tool-cache: true
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
       with:
@@ -220,6 +214,8 @@ jobs:
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "run-cvd-unit-tests"
+    - name: Mount Bazel vendor cache
+      uses: ./.github/actions/mount-bazel-vendor-cache
     - name: Run cvd unit tests
       uses: ./.github/actions/run-cvd-unit-tests
     - name: Upload test logs
@@ -252,6 +248,10 @@ jobs:
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
       with:
         persist-credentials: false
+    - name: Mount Bazel vendor cache
+      uses: ./.github/actions/mount-bazel-vendor-cache
+      with:
+        bazel-version: "9"
     - name: Check bazel 9 readiness
       uses: ./.github/actions/bazel-9-readiness
   build-debian-package-amd64:
@@ -271,6 +271,8 @@ jobs:
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "build-debian-packages"
+    - name: Mount Bazel vendor cache
+      uses: ./.github/actions/mount-bazel-vendor-cache
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
     - name: Build debs_amd64.tar
@@ -296,6 +298,8 @@ jobs:
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "build-debian-packages"
+    - name: Mount Bazel vendor cache
+      uses: ./.github/actions/mount-bazel-vendor-cache
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
     - name: Build debs_arm64.tar

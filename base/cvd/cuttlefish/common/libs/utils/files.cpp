@@ -16,14 +16,10 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 
-#ifdef __linux__
-#include <linux/fs.h>
-#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -46,8 +42,6 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
@@ -62,7 +56,6 @@
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/stat.h"
-#include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
 #ifdef __APPLE__
@@ -227,12 +220,10 @@ bool MakeFileExecutable(const std::string& path) {
 Result<std::chrono::system_clock::time_point> FileModificationTime(
     const std::string& path) {
   struct stat st = CF_EXPECT(Stat(path));
-#ifdef __linux__
-  std::chrono::seconds seconds(st.st_mtim.tv_sec);
-#elif defined(__APPLE__)
+#ifdef __APPLE__
   std::chrono::seconds seconds(st.st_mtimespec.tv_sec);
 #else
-#error "Unsupported operating system"
+  std::chrono::seconds seconds(st.st_mtim.tv_sec);
 #endif
   return std::chrono::system_clock::time_point(seconds);
 }
@@ -271,16 +262,6 @@ Result<std::string> ReadFileContents(const std::string& path) {
   Fd file = CF_EXPECT(Fd::Open(path, O_RDONLY));
   return CF_EXPECT(ReadToString(file));
 }
-Result<void> WriteNewFile(const std::string& filepath, std::string_view content,
-                          mode_t mode) {
-  SharedFD file_fd =
-      CF_EXPECT(Fd::Open(filepath, O_CREAT | O_EXCL | O_WRONLY, mode));
-  const auto written_size = WriteAll(file_fd, content);
-  CF_EXPECTF(written_size == content.size(),
-             "Failed to write all content to file. Error:\n",
-             file_fd->StrError());
-  return {};
-}
 
 std::string CurrentDirectory() {
   std::vector<char> process_wd(1 << 12, ' ');
@@ -294,55 +275,6 @@ std::string CurrentDirectory() {
   }
   // Will find the null terminator and size the string appropriately.
   return std::string(process_wd.data());
-}
-
-FileSizes SparseFileSizes(const std::string& path) {
-  SharedFD fd = Fd::Open(path, O_RDONLY).value_or(Fd());
-  if (!fd->IsOpen()) {
-    LOG(ERROR) << "Could not open \"" << path << "\": " << fd->StrError();
-    return {};
-  }
-  off_t farthest_seek = fd->LSeek(0, SEEK_END);
-  VLOG(1) << "Farthest seek: " << farthest_seek;
-  if (farthest_seek == -1) {
-    LOG(ERROR) << "Could not lseek in \"" << path << "\": " << fd->StrError();
-    return {};
-  }
-  off_t data_bytes = 0;
-  off_t offset = 0;
-  while (offset < farthest_seek) {
-    off_t new_offset = fd->LSeek(offset, SEEK_HOLE);
-    if (new_offset == -1) {
-      // ENXIO is returned when there are no more blocks of this type coming.
-      if (fd->GetErrno() == ENXIO) {
-        break;
-      } else {
-        LOG(ERROR) << "Could not lseek in \"" << path
-                   << "\": " << fd->StrError();
-        return {};
-      }
-    } else {
-      data_bytes += new_offset - offset;
-      offset = new_offset;
-    }
-    if (offset >= farthest_seek) {
-      break;
-    }
-    new_offset = fd->LSeek(offset, SEEK_DATA);
-    if (new_offset == -1) {
-      // ENXIO is returned when there are no more blocks of this type coming.
-      if (fd->GetErrno() == ENXIO) {
-        break;
-      } else {
-        LOG(ERROR) << "Could not lseek in \"" << path
-                   << "\": " << fd->StrError();
-        return {};
-      }
-    } else {
-      offset = new_offset;
-    }
-  }
-  return (FileSizes){.sparse_size = farthest_seek, .disk_size = data_bytes};
 }
 
 Result<std::string> FindFile(const std::string& path,
@@ -376,6 +308,23 @@ Result<void> WalkDirectory(const std::string& dir,
   return {};
 }
 
+Result<void> WalkDirectoryFiles(const std::string& dir,
+                                const WalkDirectoryCallback& callback) {
+  for (const std::string& filename : CF_EXPECT(DirectoryContents(dir))) {
+    auto file_path = dir + "/";
+    file_path.append(filename);
+    // Checking the link itself rather than its target keeps a symlink loop
+    // from trapping the walk. A symlink to a directory is reported to the
+    // callback like any other non-directory entry.
+    if (DirectoryExists(file_path, /* follow_symlinks= */ false)) {
+      CF_EXPECT(WalkDirectoryFiles(file_path, callback));
+    } else {
+      CF_EXPECT(callback(file_path));
+    }
+  }
+  return {};
+}
+
 std::vector<std::string> Path(const std::string& env_name) {
   // TODO: Assumes a SUS system. Elsewhere we may need to change the delimiter.
   // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap08.html
@@ -393,34 +342,6 @@ Result<std::string> Search(const std::vector<std::string>& path,
     }
   }
   return CF_ERRF("Not found: '{}', path '{}'", name, absl::StrJoin(path, ":"));
-}
-
-Result<SharedFD> CreateOrReuseAndDrainFifo(const std::string& path,
-                                           mode_t mode) {
-  Result<struct stat> st = Stat(path);
-  if (st.has_value()) {
-    CF_EXPECTF(S_ISFIFO(st->st_mode), "File at '{}' exists but is not a FIFO",
-               path);
-  } else {
-    CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
-               "Failed to mkfifo('{}', {:o}): {}", path, mode, StrError(errno));
-  }
-
-  Fd ret = CF_EXPECT(Fd::Open(path, O_RDWR));
-
-  if (st.has_value()) {
-    int flags = ret.Fcntl(F_GETFL, 0);
-    if (flags >= 0) {
-      ret.Fcntl(F_SETFL, flags | O_NONBLOCK);
-      char buf[4096];
-      while (ret.Read(buf, sizeof(buf)).value_or(0) > 0) {
-        // Reading while there is data to read
-      }
-      ret.Fcntl(F_SETFL, flags);
-    }
-  }
-
-  return ret;
 }
 
 }  // namespace cuttlefish

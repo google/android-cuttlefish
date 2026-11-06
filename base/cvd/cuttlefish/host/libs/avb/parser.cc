@@ -24,8 +24,8 @@
 
 #include "libavb/libavb.h"
 
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 

@@ -33,7 +33,7 @@ namespace cuttlefish {
 Result<void, int> RemoveFile(const char* file) {
   VLOG(0) << "Removing file " << file;
   CF_EXPECTVF(remove(file) == 0, errno, "remove('{}') error: {}", file,
-              StrError(errno));
+              StrError());
   return {};
 }
 

@@ -17,6 +17,12 @@ Checks: &checks >-
   readability-redundant-control-flow,
   readability-string-compare,
 
+# Musl doesn't allow apps to use <linux/prctl.h>, and glibc includes this
+# header indirectly via <sys/prctl.h>, so just disable the validation for
+# these headers
+CheckOptions:
+  misc-include-cleaner.IgnoreHeaders: 'linux/prctl\.h;sys/prctl\.h'
+
 # Using the bazel clang-tidy helper, warnings are not shown from files that
 # don't have any errors.  "*" here treats everything from `Checks` as an error,
 # and from there some exclusions are added.

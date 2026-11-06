@@ -50,9 +50,8 @@
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
-#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
@@ -116,7 +115,8 @@ Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
 }
 
 Result<std::optional<Build>> GetBuildHelper(
-    BuildApi& build_api, const std::optional<BuildString>& build_source,
+    BuildApi<BuildString, Build>& build_api,
+    const std::optional<BuildString>& build_source,
     const std::string& fallback_target) {
   if (!build_source) {
     return std::nullopt;
@@ -126,7 +126,7 @@ Result<std::optional<Build>> GetBuildHelper(
                    "Unable to create build from (" << source << ")");
 }
 
-Result<Builds> GetBuilds(BuildApi& build_api,
+Result<Builds> GetBuilds(BuildApi<BuildString, Build>& build_api,
                          const BuildStrings& build_sources) {
   return Builds{
       .default_build = CF_EXPECT(GetBuildHelper(
@@ -137,6 +137,9 @@ Result<Builds> GetBuilds(BuildApi& build_api,
           GetBuildHelper(build_api, build_sources.kernel_build, "kernel")),
       .boot = CF_EXPECT(GetBuildHelper(build_api, build_sources.boot_build,
                                        "gki_x86_64-user")),
+      .vendor_boot_image = CF_EXPECT(
+          GetBuildHelper(build_api, build_sources.vendor_boot_image_build,
+                         kDefaultBuildTarget)),
       .bootloader = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.bootloader_build, "u-boot_crosvm_x86_64")),
       .android_efi_loader = CF_EXPECT(
@@ -150,7 +153,7 @@ Result<Builds> GetBuilds(BuildApi& build_api,
   };
 }
 
-Result<void> UpdateTargetsWithBuilds(BuildApi& build_api,
+Result<void> UpdateTargetsWithBuilds(BuildApi<BuildString, Build>& build_api,
                                      std::vector<Target>& targets) {
   for (auto& target : targets) {
     target.builds = CF_EXPECT(GetBuilds(build_api, target.build_strings));
@@ -158,7 +161,7 @@ Result<void> UpdateTargetsWithBuilds(BuildApi& build_api,
   return {};
 }
 
-Result<Build> GetHostBuild(BuildApi& build_api,
+Result<Build> GetHostBuild(BuildApi<BuildString, Build>& build_api,
                            const HostToolsTarget& host_target,
                            const std::optional<Build>& fallback_host_build) {
   std::optional<Build> host_package_build = CF_EXPECT(
@@ -241,15 +244,25 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
   if (!context.Artifact("misc_info.txt").Download().has_value()) {
     VLOG(0) << "Failed to download misc_info.txt, continuing";
   }
+  const bool download_target_files =
+      has_system_build || flags.download_target_files_zip;
+  const bool use_target_files =
+      download_target_files || flags.dynamic_super_image;
   if (flags.download_img_zip) {
     LOG(INFO) << "Downloading image zip for " << context;
     const std::string img_zip_name =
         CF_EXPECT(context.GetBuildZipName(BuildZipKind::kImages));
     std::string img_zip_artifact_name = img_zip_name;
     if (IsSignedBuild(context.Build())) {
-      img_zip_artifact_name = kSignedPrefix + img_zip_artifact_name;
-      LOG(INFO) << "Attempting to fetch SIGNED default image zip: "
-                << img_zip_artifact_name;
+      if (!use_target_files) {
+        img_zip_artifact_name = kSignedPrefix + img_zip_artifact_name;
+        LOG(INFO) << "Attempting to fetch SIGNED default image zip: "
+                  << img_zip_artifact_name;
+      } else {
+        LOG(INFO) << "Signed build is available, but using the unsigned "
+                     "build because other unsigned builds will be used "
+                     "to mix a new super image.";
+      }
     }
     FetchArtifact img_zip = context.Artifact(img_zip_artifact_name);
     CF_EXPECT(img_zip.Download());
@@ -258,9 +271,7 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
       CF_EXPECT(img_zip.DeleteLocalFile());
     }
   }
-  const bool download_target_files =
-      has_system_build || flags.download_target_files_zip;
-  if (download_target_files || flags.dynamic_super_image) {
+  if (use_target_files) {
     const std::string target_files_name =
         CF_EXPECT(context.GetBuildZipName(BuildZipKind::kTargetFiles));
     FetchArtifact target_files = context.Artifact(target_files_name);
@@ -377,6 +388,26 @@ Result<void> FetchBootTarget(FetchBuildContext& context,
   return {};
 }
 
+Result<void> FetchVendorBootImageTarget(FetchBuildContext& context,
+                                        const bool keep_downloaded_archives) {
+  if (const std::optional<std::string> filepath = context.GetFilepath();
+      filepath.has_value()) {
+    LOG(INFO) << "Downloading " << *filepath << " to vendor_boot.img for "
+              << context;
+    CF_EXPECT(context.Artifact(*filepath).DownloadTo("vendor_boot.img"));
+  } else {
+    LOG(INFO) << "Extracting vendor_boot.img from image zip for " << context;
+    FetchArtifact img_zip = context.Artifact(
+        CF_EXPECT(context.GetBuildZipName(BuildZipKind::kImages)));
+    CF_EXPECT(img_zip.Download());
+    CF_EXPECT(img_zip.ExtractOne("vendor_boot.img"));
+    if (!keep_downloaded_archives) {
+      CF_EXPECT(img_zip.DeleteLocalFile());
+    }
+  }
+  return {};
+}
+
 Result<void> FetchBootloaderTarget(FetchBuildContext& context) {
   if (std::optional<std::string> filepath = context.GetFilepath()) {
     CF_EXPECT(context.Artifact(*filepath).DownloadTo("bootloader"));
@@ -487,6 +518,11 @@ Result<void> FetchTarget(FetchContext& fetch_context,
     CF_EXPECT(FetchTestSuitesTarget(*ctx, keep_downloaded_archives));
   }
 
+  if (std::optional<FetchBuildContext> context =
+          fetch_context.VendorBootImageBuild()) {
+    CF_EXPECT(FetchVendorBootImageTarget(*context, keep_downloaded_archives));
+  }
+
   return {};
 }
 
@@ -499,7 +535,6 @@ Result<FetchResult> Fetch(const FetchFlags& flags,
   setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);
   setenv("ANDROID_ROOT", "/", /* overwrite */ 0);
 #endif
-  CurlGlobalInit curl_init;
 
   Downloaders downloaders = CF_EXPECT(Downloaders::Create(
       flags.build_api_flags, flags.target_directory, cache_base_path));

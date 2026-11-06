@@ -16,8 +16,6 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 
-#include <errno.h>
-
 #include <string>
 
 #include "absl/log/log.h"
@@ -92,7 +90,7 @@ Result<void> RepackSuperAndVbmeta(
     } else {
       CF_EXPECTF(Copy(instance.super_image(), new_super_img),
                  "Failed to copy super image '{}' to '{}': '{}'",
-                 instance.super_image(), new_super_img, StrError(errno));
+                 instance.super_image(), new_super_img, StrError());
     }
   }
 

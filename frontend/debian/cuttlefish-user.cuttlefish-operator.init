@@ -86,6 +86,9 @@ start() {
   if [[ -n "${operator_listen_address}" ]]; then
     args+=(--listen_addr="${operator_listen_address}")
   fi
+  if [[ -n "${operator_infra_config_delegate}" ]]; then
+    args+=(--infra_config_delegate="${operator_infra_config_delegate}")
+  fi
 
   start-stop-daemon --start \
     --pidfile "${PIDFILE}" \

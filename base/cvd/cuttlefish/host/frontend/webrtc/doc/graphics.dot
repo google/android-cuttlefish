@@ -5,7 +5,7 @@ digraph {
     browser [label = "Browser"]
     vnc_client [label = "VNC Client"]
   }
-  host_renderer [label = < <font color="blue">gfxstream</font> / virglrenderer >]
+  host_renderer [label = < <font color="blue">gfxstream</font>>]
   run_cvd
   wayland_socket [label = "internal/frames.sock", shape = "rectangle"]
   webrtc [label = < <b>webrtc</b> >, penwidth = 2]

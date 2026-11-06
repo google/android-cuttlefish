@@ -18,7 +18,9 @@
 
 #include <errno.h>
 #include <limits.h>
+#ifdef __linux__
 #include <linux/limits.h>
+#endif
 #include <stdlib.h>
 
 #include <array>
@@ -38,7 +40,7 @@ Result<std::string, int> RealPath(const char* path) {
     res = realpath(path, buffer.data());
   } while (res == nullptr && errno == EINTR);
   CF_EXPECTVF(res != nullptr, errno, "realpath('{}') failed: {}", path,
-              StrError(errno));
+              StrError());
   return std::string(buffer.data());
 }
 

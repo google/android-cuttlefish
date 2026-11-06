@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -51,11 +50,11 @@
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
-#include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
+#include "cuttlefish/process/proc_file_utils.h"
 #include "cuttlefish/process/subprocess.h"
 
 namespace cuttlefish {
@@ -206,22 +205,19 @@ Result<void> LinkLogs2InstanceDir(
 }
 
 bool ParentIsCvd() {
-  const std::string ppid_path = absl::StrCat("/proc/", getppid());
-  const std::string exe_link = absl::StrCat(ppid_path, "/exe");
-  const Result<std::string> exe_path = ReadLink(exe_link);
+  const pid_t ppid = getppid();
+  const Result<std::string> exe_path = GetExecutablePath(ppid);
   if (exe_path.has_value()) {
     return exe_path->ends_with("/cvd");
   }
-  const std::string cmdline_path = absl::StrCat(ppid_path, "/cmdline");
-  Result<std::string> cmdline_res = ReadFileContents(cmdline_path);
-  CHECK(cmdline_res.has_value()) << cmdline_res.error();
-  std::vector<std::string> cmdline = absl::StrSplit(*cmdline_res, '\0');
-  CHECK(!cmdline.empty());
-  return cmdline[0] == "cvd" || cmdline[0].ends_with("/cvd");
+  Result<std::vector<std::string>> cmdline = GetCmdArgs(ppid);
+  CHECK(cmdline.has_value()) << cmdline.error();
+  CHECK(!cmdline->empty());
+  return cmdline->front() == "cvd" || cmdline->front().ends_with("/cvd");
 }
 
 std::string CvdPath() {
-  const Result<std::string> exe_path_res = ReadLink("/proc/self/exe");
+  const Result<std::string> exe_path_res = GetExecutablePath(getpid());
   CHECK(exe_path_res.has_value()) << exe_path_res.error();
   std::string_view exe_path = *exe_path_res;
   CHECK(absl::ConsumeSuffix(&exe_path, "/cvd_internal_start"));
@@ -250,7 +246,7 @@ void ExecCvd(std::vector<std::string> args) {
   const int enable_overwrite = 1;
   const int return_value =
       setenv(invoker_name.c_str(), invoker_value.c_str(), enable_overwrite);
-  CHECK(return_value == 0) << StrError(errno);
+  CHECK(return_value == 0) << StrError();
 
   const std::string cvd_path = CvdPath();
   execv(cvd_path.c_str(), args_cstr.data());

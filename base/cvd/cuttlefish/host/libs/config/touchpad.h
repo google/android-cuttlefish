@@ -29,6 +29,8 @@ constexpr const char kTouchpadHelp[] =
     "properties:\n"
     " 'width': required, width of the touchpad in pixels\n"
     " 'height': required, height of the touchpad in pixels\n"
+    " 'type': optional, 'touchpad' or 'touch_navigation' (default "
+    "'touchpad')\n"
     ". Example usage: \n"
     "--touchpad=width=640,height=480\n";
 

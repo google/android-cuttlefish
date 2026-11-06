@@ -124,3 +124,17 @@ cc_library(
         "@android_system_logging//:liblog",
     ],
 )
+
+cc_library(
+    name = "libsystem",
+    hdrs = [
+        "libsystem/include/system/graphics.h",
+        "libsystem/include/system/graphics-base.h",
+        "libsystem/include/system/graphics-base-v1.0.h",
+        "libsystem/include/system/graphics-base-v1.1.h",
+        "libsystem/include/system/graphics-base-v1.2.h",
+        "libsystem/include/system/graphics-sw.h",
+    ],
+    features = ["parse_headers"],
+    strip_include_prefix = "libsystem/include",
+)

@@ -200,13 +200,9 @@ gfxstream::expected<Ok, vk::Result> PopulateVulkanExternalMemoryHostQuirkImpl(
     ::gfxstream::proto::GraphicsAvailability* availability) {
   auto vk = GFXSTREAM_EXPECT(Vk::Load());
 
-  ::gfxstream::proto::VulkanAvailability* vulkanAvailability =
-      availability->mutable_vulkan();
-
   auto physicalDevices = VK_EXPECT_RV(vk.instance().enumeratePhysicalDevices());
   for (uint32_t i = 0; i < physicalDevices.size(); i++) {
     auto& physicalDevice = physicalDevices[i];
-    auto* outPhysicalDevice = vulkanAvailability->mutable_physical_devices(i);
 
     const auto exts =
         VK_EXPECT_RV(physicalDevice.enumerateDeviceExtensionProperties());
@@ -220,10 +216,12 @@ gfxstream::expected<Ok, vk::Result> PopulateVulkanExternalMemoryHostQuirkImpl(
       continue;
     }
 
+#if defined(__linux__)
+    auto* outPhysicalDevice =
+        availability->mutable_vulkan()->mutable_physical_devices(i);
     auto* quirks = outPhysicalDevice->mutable_quirks()
                        ->mutable_external_memory_host_quirks();
 
-#if defined(__linux__)
     const auto shmResult = CheckImportingSharedMemory(physicalDevice);
     if (shmResult.has_value()) {
       quirks->set_can_import_shm(true);

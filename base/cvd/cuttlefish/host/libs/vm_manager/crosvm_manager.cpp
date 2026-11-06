@@ -112,19 +112,6 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.vulkan", "pastel"},
         {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
     };
-  } else if (instance.gpu_mode() == GpuMode::DrmVirgl) {
-    bootconfig_args = {
-        {"androidboot.cpuvulkan.version", "0"},
-        {"androidboot.hardware.gralloc", "minigbm"},
-        {"androidboot.hardware.hwcomposer", "ranchu"},
-        {"androidboot.hardware.hwcomposer.mode", "client"},
-        {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
-        {"androidboot.hardware.hwcomposer.display_framebuffer_format",
-         instance.guest_uses_bgra_framebuffers() ? "bgra" : "rgba"},
-        {"androidboot.hardware.egl", "mesa"},
-        // No "hardware" Vulkan support, yet
-        {"androidboot.opengles.version", "196608"},  // OpenGL ES 3.0
-    };
   } else if (IsGfxstreamMode(instance.gpu_mode())) {
     const std::string gles_impl =
         IsGfxstreamGuestAngleMode(instance.gpu_mode()) ? "angle" : "emulation";
@@ -550,10 +537,6 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
   if (IsGuestRenderingMode(gpu_mode)) {
     crosvm_cmd->AddParameter("--gpu=", gpu_displays_string, "backend=2D",
                              gpu_common_string);
-  } else if (gpu_mode == GpuMode::DrmVirgl) {
-    crosvm_cmd->AddParameter("--gpu=", gpu_displays_string,
-                             "backend=virglrenderer,context-types=virgl2",
-                             gpu_common_3d_string);
   } else if (gpu_mode == GpuMode::Gfxstream) {
     crosvm_cmd->AddParameter(
         "--gpu=", gpu_displays_string,
@@ -691,15 +674,6 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--no-rng");
   }
 
-  if (instance.crosvm_simple_media_device()) {
-    crosvm_cmd.Cmd().AddParameter("--simple-media-device");
-  }
-
-  if (!instance.crosvm_v4l2_proxy().empty()) {
-    crosvm_cmd.Cmd().AddParameter("--v4l2-proxy=",
-                                  instance.crosvm_v4l2_proxy());
-  }
-
   if (instance.gdb_port() > 0) {
     CF_EXPECT(instance.cpus() == 1, "CPUs must be 1 for crosvm gdb mode");
     crosvm_cmd.Cmd().AddParameter("--gdb=", instance.gdb_port());
@@ -730,6 +704,11 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   // crosvm_cmd.Cmd().AddParameter("--null-audio");
   crosvm_cmd.Cmd().AddParameter("--mem=", instance.memory_mb());
+  // Guest memory is a memfd, so this is a no-op unless the host enables
+  // transparent huge pages for shared memory.
+  if (instance.crosvm_hugepages()) {
+    crosvm_cmd.Cmd().AddParameter("--hugepages");
+  }
   if (instance.mte()) {
     crosvm_cmd.Cmd().AddParameter("--mte");
   }
@@ -1051,13 +1030,18 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   for (int index = 0; index < instance.media_configs().size(); index++) {
     auto config = instance.media_configs()[index];
-    if (config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraSPlane ||
-        config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane ||
+    if (config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlane ||
+        config.type ==
+            CuttlefishConfig::MediaType::kV4l2EmulatedCameraMPlaneExternal ||
         config.type == CuttlefishConfig::MediaType::kV4l2StreamProxy) {
       crosvm_cmd.Cmd().AddParameter("--vhost-user=type=media,socket=",
                                     instance.media_socket_path(index));
     } else if (config.type == CuttlefishConfig::MediaType::kV4l2Proxy) {
-      crosvm_cmd.Cmd().AddParameter("--v4l2-proxy=", "/dev/video0");
+      CF_EXPECT(config.v4l2_proxy.has_value() &&
+                    !config.v4l2_proxy->device_path.empty(),
+                "Missing v4l2_proxy device_path");
+      crosvm_cmd.Cmd().AddParameter("--v4l2-proxy=",
+                                    config.v4l2_proxy->device_path);
     }
   }
 
@@ -1142,7 +1126,7 @@ Result<bool> CrosvmManager::WaitForRestoreComplete(SharedFD stop_fd) const {
     std::vector<PollSharedFd> poll = {{.fd = stop_fd, .events = POLLIN}};
     const int result = SharedFD::Poll(poll, 50 /* ms */);
     // Check for errors.
-    CF_EXPECTF(result >= 0, "failed to wait on stop_fd: {}", StrError(errno));
+    CF_EXPECTF(result >= 0, "failed to wait on stop_fd: {}", StrError());
     // Check if pipe became readable or closed.
     if (result > 0) {
       return false;

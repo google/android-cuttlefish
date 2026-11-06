@@ -97,6 +97,7 @@ class Mcu : public vm_manager::VmmDependencyCommand {
       return {};
     }
 
+#ifdef __linux__
     auto control = instance_.mcu()["control"]["path"];
     if (control.type() == Json::stringValue) {
       CF_EXPECT(
@@ -108,6 +109,9 @@ class Mcu : public vm_manager::VmmDependencyCommand {
           WaitForFile(mcu_dir_ + "/" + uart0.asString(), MCU_START_TIMEOUT));
     }
     return {};
+#else
+    return CF_ERR("Cannot start the MCU emulator outside of Linux.");
+#endif
   }
 
  private:

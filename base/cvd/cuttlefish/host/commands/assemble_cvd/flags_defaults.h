@@ -72,8 +72,6 @@
 #define CF_DEFAULTS_SECCOMP_POLICY_DIR cuttlefish::GetSeccompPolicyDir()
 #define CF_DEFAULTS_ENABLE_SANDBOX false
 #define CF_DEFAULTS_ENABLE_VIRTIOFS false
-#define CF_DEFAULTS_CROSVM_V4L2_PROXY ""
-#define CF_DEFAULTS_CROSVM_SIMPLE_MEDIA_DEVICE false
 
 // Qemu default parameters
 #define CF_DEFAULTS_QEMU_BINARY_DIR cuttlefish::DefaultQemuBinaryDir()
@@ -172,7 +170,6 @@
 #define CF_DEFAULTS_RIL_DNS "8.8.8.8"
 // Default network handler
 #define CF_DEFAULTS_NETSIM false
-#define CF_DEFAULTS_NETSIM_BT true
 #define CF_DEFAULTS_NETSIM_UWB true
 #define CF_DEFAULTS_NETSIM_NFC false
 #define CF_DEFAULTS_NETSIM_MODEM false
@@ -223,7 +220,7 @@
 #define CF_DEFAULTS_ENABLE_JCARD_SIMULATOR false
 
 // Streaming default parameters
-#define CF_DEFAULTS_START_WEBRTC false
+#define CF_DEFAULTS_START_WEBRTC true
 #define CF_DEFAULTS_WEBRTC_DEVICE_ID "cvd-{num}"
 #define CF_DEFAULTS_WEBRTC_ASSETS_DIR \
   cuttlefish::DefaultHostArtifactsPath("usr/share/webrtc/assets")

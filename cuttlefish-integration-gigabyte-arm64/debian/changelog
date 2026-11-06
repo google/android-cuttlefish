@@ -1,8 +1,16 @@
-cuttlefish-integration-gigabyte-arm64 (1.58.0) UNRELEASED; urgency=medium
+cuttlefish-integration-gigabyte-arm64 (1.59.0) UNRELEASED; urgency=medium
 
   * 
 
- -- Cody Schuffelen <schuffelen@google.com>  Fri, 28 Aug 2026 15:30:12 -0700
+ -- Ram Muthiah <rammuthiah@google.com>  Wed, 04 Nov 2026 22:06:40 +0000
+
+cuttlefish-integration-gigabyte-arm64 (1.58.0) unstable; urgency=medium
+
+  * Fill in the 1.57.0 changelog by @Databean in https://github.com/google/android-cuttlefish/pull/3116
+  * Start development on 1.58.0 by @Databean in https://github.com/google/android-cuttlefish/pull/3117
+  * gigabyte-ampere-cloud-installer/regenerate-initramfs.sh: generate more image by @grandpaul in https://github.com/google/android-cuttlefish/pull/3278
+
+ -- Ram Muthiah <rammuthiah@google.com>  Wed, 04 Nov 2026 22:06:39 +0000
 
 cuttlefish-integration-gigabyte-arm64 (1.57.0) unstable; urgency=medium
 

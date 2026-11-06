@@ -18,44 +18,17 @@
 #include <stdint.h>
 
 #include "cuttlefish/io/reader.h"
+#include "cuttlefish/io/reader_seeker.h"
+#include "cuttlefish/io/seeker.h"
 #include "cuttlefish/io/visitable.h"
 #include "cuttlefish/io/writer.h"
+#include "cuttlefish/io/writer_seeker.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 class ConcatReaderSeeker;
 class ReadWindowView;
-
-class Seeker : public virtual IoVisitable {
- public:
-  virtual ~Seeker() = default;
-
-  Result<void> Visit(IoVisitor&) override;
-  // Has the semantics of lseek(2) with SEEK_SET
-  virtual Result<uint64_t, int> SeekSet(uint64_t offset) = 0;
-  // Has the semantics of lseek(2) with SEEK_CUR
-  virtual Result<uint64_t, int> SeekCur(int64_t offset) = 0;
-  // Has the semantics of lseek(2) with SEEK_END
-  virtual Result<uint64_t, int> SeekEnd(int64_t offset) = 0;
-};
-
-class ReaderSeeker : public Reader, public Seeker {
- public:
-  Result<void> Visit(IoVisitor&) override;
-  // Has the semantics of pread(2)
-  virtual Result<uint64_t> PRead(void* buf, uint64_t count,
-                                 uint64_t offset) const = 0;
-};
-
-class WriterSeeker : public Writer, public Seeker {
- public:
-  Result<void> Visit(IoVisitor&) override;
-  // Has the semantics of pwrite(2)
-  virtual Result<uint64_t> PWrite(const void* buf, uint64_t count,
-                                  uint64_t offset) = 0;
-  virtual Result<void> Truncate(uint64_t size);
-};
 
 class ReaderWriterSeeker : public ReaderSeeker, public WriterSeeker {
  public:
@@ -64,14 +37,14 @@ class ReaderWriterSeeker : public ReaderSeeker, public WriterSeeker {
   Result<void> Visit(IoVisitor&) override;
 
   Result<uint64_t> Read(void* buf, uint64_t count) override = 0;
-  Result<uint64_t> Write(const void* buf, uint64_t count) override = 0;
+  Result<uint64_t, int> Write(const void* buf, uint64_t count) override = 0;
   Result<uint64_t, int> SeekSet(uint64_t offset) override = 0;
   Result<uint64_t, int> SeekCur(int64_t offset) override = 0;
   Result<uint64_t, int> SeekEnd(int64_t offset) override = 0;
   Result<uint64_t> PRead(void* buf, uint64_t count,
                          uint64_t offset) const override = 0;
-  Result<uint64_t> PWrite(const void* buf, uint64_t count,
-                          uint64_t offset) override = 0;
+  Result<uint64_t, int> PWrite(const void* buf, uint64_t count,
+                               uint64_t offset) override = 0;
   Result<void> Truncate(uint64_t size) override;
 };
 

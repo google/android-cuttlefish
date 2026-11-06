@@ -21,6 +21,8 @@
 
 #include "cuttlefish/io/fake_seek.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader_seeker.h"
+#include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
@@ -36,8 +38,10 @@ class ConcatReaderSeeker : public ReaderFakeSeeker {
   static Result<ConcatReaderSeeker> Create(
       std::vector<std::unique_ptr<ReaderSeeker>>);
 
-  virtual Result<uint64_t> PRead(void* buf, uint64_t count,
-                                 uint64_t offset) const;
+  Result<void> Visit(IoVisitor&) override;
+
+  Result<uint64_t> PRead(void* buf, uint64_t count,
+                         uint64_t offset) const override;
 
  private:
   explicit ConcatReaderSeeker(

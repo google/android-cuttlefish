@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/libs/zip/zip_file.h"
 
-#include <errno.h>
 #include <stdint.h>
 #include <sys/stat.h>
 
@@ -24,13 +23,13 @@
 #include <string_view>
 #include <utility>
 
-#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 #include "cuttlefish/io/copy.h"
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/native_filesystem.h"
+#include "cuttlefish/io/reader_seeker.h"
+#include "cuttlefish/io/writer_seeker.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -53,7 +52,14 @@ Result<void> AddFile(WritableZip& zip, const std::string& fs_path) {
 
 Result<void> AddFileAt(WritableZip& zip, const std::string& fs_path,
                        const std::string& zip_path) {
-  CF_EXPECTF(FileExists(fs_path), "No file in the filesystem at '{}'", fs_path);
+  // libzip does not read the source until `WritableZip::Finalize`, where a
+  // directory fails with EISDIR and a FIFO can block indefinitely. libzip then
+  // rolls back and discards the *entire* archive, so reject anything that is
+  // not a regular file here, where the error can only lose this one entry.
+  struct stat file_stat;
+  CF_EXPECTF(stat(fs_path.c_str(), &file_stat) == 0,
+             "No file in the filesystem at '{}'", fs_path);
+  CF_EXPECTF(S_ISREG(file_stat.st_mode), "'{}' is not a regular file", fs_path);
   ReadableZipSource source = CF_EXPECT(WritableZipSource::FromFile(fs_path));
   CF_EXPECT(zip.AddFile(zip_path, std::move(source)));
   return {};
@@ -78,7 +84,7 @@ Result<void> ExtractFile(ReadableZip& zip, std::string_view zip_path,
     if (*attr == 0) {
       *attr = 0640;
     }
-    CF_EXPECT_EQ(chmod(host_path.c_str(), *attr), 0, StrError(errno));
+    CF_EXPECT_EQ(chmod(host_path.c_str(), *attr), 0, StrError());
   }
   return {};
 }

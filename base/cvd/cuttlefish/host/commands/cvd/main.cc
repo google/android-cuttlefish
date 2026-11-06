@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <errno.h>
 #include <stdlib.h>
 #include <sys/resource.h>
 #include <time.h>
@@ -115,7 +114,7 @@ void IncreaseFileLimit() {
   struct rlimit old_lim;
   // Get old limits
   if (getrlimit(RLIMIT_NOFILE, &old_lim) != 0) {
-    LOG(WARNING) << "Unable to get file limit (" << StrError(errno)
+    LOG(WARNING) << "Unable to get file limit (" << StrError()
                  << "), virtual devices may not work properly if the limit is "
                     "set too low";
     return;
@@ -126,7 +125,7 @@ void IncreaseFileLimit() {
   old_lim.rlim_cur = old_lim.rlim_max;
   // Set limits
   if (setrlimit(RLIMIT_NOFILE, &old_lim) != 0) {
-    LOG(WARNING) << "Unable to set file limit (" << StrError(errno)
+    LOG(WARNING) << "Unable to set file limit (" << StrError()
                  << "), virtual devices may not work properly if the limit is "
                     "set too low";
   }

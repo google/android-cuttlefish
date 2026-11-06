@@ -25,16 +25,28 @@ namespace cuttlefish {
  * Builds the matrix used to mix a stream's source channels into a sink's
  * destination channels.
  *
- * Each source channel is mapped to the destination channel of the same index
- * and scaled by `volume`. Channels present on only one side are dropped.
+ * By default each source channel is mapped to the destination channel of the
+ * same index and scaled by `volume`; channels present on only one side are
+ * dropped. When `fade` or `balance` is not neutral, mono, stereo and 5.1
+ * sources are instead downmixed following ITU-R BS.775 and attenuated per
+ * cabin quadrant; any other layout keeps the direct mapping. A mono sink
+ * ignores `balance`, as it has a single speaker.
+ *
+ * Note that for sources whose channel count differs from the sink's the two
+ * mappings are not continuous: moving a control away from neutral switches
+ * from dropping the extra channels to downmixing them.
  *
  * @param dst_channels Destination sink channels (e.g. 2 for a stereo sink)
  * @param src_channels Source stream channels (e.g. 6 for 5.1 surround)
- * @param volume Master stream volume [0.0 - 1.0]
+ * @param volume Master stream volume, from 0.0 to 1.0
+ * @param fade Front/rear fader, from -1.0 (rear only) to 1.0 (front only)
+ * @param balance Left/right balance, from -1.0 (left only) to 1.0 (right only)
  * @return Mixing coefficients, indexed [destination channel][source channel]
  */
 std::vector<std::vector<float>> BuildChannelMixingMatrix(uint8_t dst_channels,
                                                          uint8_t src_channels,
-                                                         float volume);
+                                                         float volume,
+                                                         float fade,
+                                                         float balance);
 
 }  // namespace cuttlefish

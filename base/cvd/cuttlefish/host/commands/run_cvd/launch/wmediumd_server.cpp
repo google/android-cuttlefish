@@ -57,6 +57,7 @@ class ValidateWmediumdService : public SetupFeature {
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
+#ifdef __linux__
     if (!environment_.wmediumd_api_server_socket().empty()) {
       CF_EXPECT(
           WaitForUnixSocket(environment_.wmediumd_api_server_socket(), 30));
@@ -64,6 +65,9 @@ class ValidateWmediumdService : public SetupFeature {
     CF_EXPECT(WaitForUnixSocket(environment_.vhost_user_mac80211_hwsim(), 30));
 
     return {};
+#else
+    return CF_ERR("Cannot start wmediumd outside of Linux.");
+#endif
   }
 
  private:
@@ -105,11 +109,15 @@ bool WmediumdServer::Enabled() const {
 
 Result<void> WmediumdServer::WaitForAvailability() {
   if (Enabled()) {
+#ifdef __linux__
     if (!environment_.wmediumd_api_server_socket().empty()) {
       CF_EXPECT(
           WaitForUnixSocket(environment_.wmediumd_api_server_socket(), 30));
     }
     CF_EXPECT(WaitForUnixSocket(environment_.vhost_user_mac80211_hwsim(), 30));
+#else
+    return CF_ERR("Cannot start wmediumd outside of Linux.");
+#endif
   }
 
   return {};

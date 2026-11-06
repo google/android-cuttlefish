@@ -55,13 +55,15 @@ VendorBootImageFlag VendorBootImageFlag::FromGlobalGflags(
 }
 
 std::string VendorBootImageFlag::VendorBootImageForIndex(size_t index) const {
-  if (vendor_boot_images_.empty()) {
-    return system_image_dir_.ForIndex(index) + "/vendor_boot.img";
-  } else if (index < vendor_boot_images_.size()) {
-    return vendor_boot_images_[index];
-  } else {
-    return vendor_boot_images_[0];
+  if (!vendor_boot_images_.empty()) {
+    const std::string& image = index < vendor_boot_images_.size()
+                                   ? vendor_boot_images_[index]
+                                   : vendor_boot_images_[0];
+    if (!image.empty()) {
+      return image;
+    }
   }
+  return system_image_dir_.ForIndex(index) + "/vendor_boot.img";
 }
 
 bool VendorBootImageFlag::IsDefault() const {

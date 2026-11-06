@@ -24,7 +24,6 @@
 #include <string_view>
 #include <vector>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -56,8 +55,6 @@ Result<std::string> RenameFile(const std::string& current_filepath,
                                const std::string& target_filepath);
 std::string ReadFile(const std::string& file);
 Result<std::string> ReadFileContents(const std::string& path);
-Result<void> WriteNewFile(const std::string& filepath, std::string_view content,
-                          mode_t mode = S_IRWXU | S_IRGRP | S_IROTH);
 bool MakeFileExecutable(const std::string& path);
 Result<std::chrono::system_clock::time_point> FileModificationTime(
     const std::string& path);
@@ -69,12 +66,6 @@ std::string AbsolutePath(std::string_view path);
 
 std::string CurrentDirectory();
 
-struct FileSizes {
-  off_t sparse_size;
-  off_t disk_size;
-};
-FileSizes SparseFileSizes(const std::string& path);
-
 // Find file with name |target_name| under directory |path|, return path to
 // found file(if any)
 Result<std::string> FindFile(const std::string& path,
@@ -82,15 +73,20 @@ Result<std::string> FindFile(const std::string& path,
 
 using WalkDirectoryCallback = std::function<Result<void>(const std::string&)>;
 
+// Invokes `callback` on every entry beneath `dir`, recursively. Note that the
+// callback receives directories as well as files.
 Result<void> WalkDirectory(const std::string& dir,
                            const WalkDirectoryCallback& callback);
+
+// Like `WalkDirectory`, but only invokes `callback` on entries that are not
+// directories. Symlinked directories are not descended into, so a symlink loop
+// cannot trap the walk.
+Result<void> WalkDirectoryFiles(const std::string& dir,
+                                const WalkDirectoryCallback& callback);
 
 std::vector<std::string> Path(const std::string& env_name = "PATH");
 
 Result<std::string> Search(const std::vector<std::string>& path,
                            std::string_view name);
-
-Result<SharedFD> CreateOrReuseAndDrainFifo(const std::string& path,
-                                           mode_t mode);
 
 }  // namespace cuttlefish

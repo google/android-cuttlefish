@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "cuttlefish/io/concat.h"
 #include "cuttlefish/io/io.h"

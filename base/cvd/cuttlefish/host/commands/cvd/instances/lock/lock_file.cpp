@@ -41,7 +41,7 @@ namespace cuttlefish {
 static Result<void> SetStatus(SharedFD& fd, const InUseState state) {
   CF_EXPECT(fd->LSeek(0, SEEK_SET) == 0, fd->StrError());
   char state_char = static_cast<char>(state);
-  CF_EXPECT(fd->Write(&state_char, 1) == 1, fd->StrError());
+  CF_EXPECT(fd->Write(&state_char, 1) == 1u, fd->StrError());
   return {};
 }
 

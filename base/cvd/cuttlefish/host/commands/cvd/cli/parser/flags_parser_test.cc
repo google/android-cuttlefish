@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "gtest/gtest.h"
 
@@ -117,7 +118,7 @@ TEST(FlagsParserTest, ParseBasicJsonTwoInstances) {
       << "num_instances flag is missing or wrongly formatted";
 }
 
-TEST(FlagsParserTest, ParseMediaSplaneSingleInstance) {
+TEST(FlagsParserTest, ParseMediaMplaneTwoDevices) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -126,40 +127,10 @@ TEST(FlagsParserTest, ParseMediaSplaneSingleInstance) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_splane": {}
-              }
-            ]
-          }
-        }
-    ]
-}
-  )"""";
-
-  Json::Value json_configs;
-  std::string json_text(test_string);
-
-  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
-      << "Invalid Json string";
-  auto serialized_data = LaunchCvdParserTester(json_configs);
-  ASSERT_THAT(serialized_data, IsOk());
-  EXPECT_TRUE(
-      FindConfig(*serialized_data, "--media=v4l2_emulated_camera_splane"))
-      << "media flag is missing or wrongly formatted";
-}
-
-TEST(FlagsParserTest, ParseMediaSplaneTwoDevices) {
-  const char* test_string = R""""(
-{
-    "instances" :
-    [
-        {
-          "media": {
-            "devices": [
-              {
-                "v4l2_emulated_camera_splane": {}
+                "v4l2_emulated_camera_mplane": {}
               },
               {
-                "v4l2_emulated_camera_splane": {}
+                "v4l2_emulated_camera_mplane": {}
               }
             ]
           }
@@ -176,7 +147,7 @@ TEST(FlagsParserTest, ParseMediaSplaneTwoDevices) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_EQ(std::count(serialized_data->begin(), serialized_data->end(),
-                       "--media=v4l2_emulated_camera_splane"),
+                       "--media=v4l2_emulated_camera_mplane"),
             2);
 }
 
@@ -239,6 +210,38 @@ TEST(FlagsParserTest, ParseMediaV4l2Proxy) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
 
   ASSERT_THAT(serialized_data, IsOk());
+  EXPECT_TRUE(FindConfig(*serialized_data,
+                         "--media=v4l2_proxy:device_path=/dev/video0"))
+      << "media flag is missing or wrongly formatted";
+}
+
+TEST(FlagsParserTest, ParseMediaV4l2ProxyDefaultDevicePath) {
+  const char* test_string = R""""(
+{
+    "instances" :
+    [
+        {
+          "media": {
+            "devices": [
+              {
+                "v4l2_proxy": {
+                }
+              }
+            ]
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+
+  auto serialized_data = LaunchCvdParserTester(json_configs);
+
+  ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data, "--media=v4l2_proxy"))
       << "media flag is missing or wrongly formatted";
 }
@@ -252,7 +255,7 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesBothWithDevices) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_splane": {},
+                "v4l2_emulated_camera_mplane": {},
                 "lens_facing": "BACK"
               }
             ]
@@ -262,7 +265,7 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesBothWithDevices) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_splane": {},
+                "v4l2_emulated_camera_mplane": {},
                 "lens_facing": "FRONT"
               }
             ]
@@ -282,8 +285,8 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesBothWithDevices) {
 
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(FindConfig(*serialized_data,
-                         "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"
-                         "v4l2_emulated_camera_splane:lens_facing=FRONT"))
+                         "--media=v4l2_emulated_camera_mplane:lens_facing=BACK,"
+                         "v4l2_emulated_camera_mplane:lens_facing=FRONT"))
       << "media flag is missing or wrongly formatted";
 }
 
@@ -296,11 +299,11 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesMultipleRepeatedDevices) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_splane": {},
+                "v4l2_emulated_camera_mplane": {},
                 "lens_facing": "FRONT"
               },
               {
-                "v4l2_emulated_camera_splane": {},
+                "v4l2_emulated_camera_mplane": {},
                 "lens_facing": "BACK"
               }
             ]
@@ -310,11 +313,11 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesMultipleRepeatedDevices) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_splane": {},
+                "v4l2_emulated_camera_mplane": {},
                 "lens_facing": "FRONT"
               },
               {
-                "v4l2_emulated_camera_splane": {},
+                "v4l2_emulated_camera_mplane": {},
                 "lens_facing": "BACK"
               }
             ]
@@ -335,12 +338,12 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesMultipleRepeatedDevices) {
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data,
-                 "--media=v4l2_emulated_camera_splane:lens_facing=FRONT,"
-                 "v4l2_emulated_camera_splane:lens_facing=FRONT"))
+                 "--media=v4l2_emulated_camera_mplane:lens_facing=FRONT,"
+                 "v4l2_emulated_camera_mplane:lens_facing=FRONT"))
       << "First media flag is missing or wrongly formatted";
   EXPECT_TRUE(FindConfig(*serialized_data,
-                         "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"
-                         "v4l2_emulated_camera_splane:lens_facing=BACK"))
+                         "--media=v4l2_emulated_camera_mplane:lens_facing=BACK,"
+                         "v4l2_emulated_camera_mplane:lens_facing=BACK"))
       << "Second media flag is missing or wrongly formatted";
 }
 
@@ -353,7 +356,7 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesOnlyFirstHasDevice) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_splane": {},
+                "v4l2_emulated_camera_mplane": {},
                 "lens_facing": "BACK"
               }
             ]
@@ -376,7 +379,7 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesOnlyFirstHasDevice) {
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data,
-                 "--media=v4l2_emulated_camera_splane:lens_facing=BACK,"))
+                 "--media=v4l2_emulated_camera_mplane:lens_facing=BACK,"))
       << "media flag is missing or wrongly formatted";
 }
 
@@ -391,7 +394,7 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesOnlySecondHasDevice) {
           "media": {
             "devices": [
               {
-                "v4l2_emulated_camera_splane": {},
+                "v4l2_emulated_camera_mplane": {},
                 "lens_facing": "FRONT"
               }
             ]
@@ -412,8 +415,30 @@ TEST(FlagsParserTest, ParseMediaTwoInstancesOnlySecondHasDevice) {
   ASSERT_THAT(serialized_data, IsOk());
   EXPECT_TRUE(
       FindConfig(*serialized_data,
-                 "--media=,v4l2_emulated_camera_splane:lens_facing=FRONT"))
+                 "--media=,v4l2_emulated_camera_mplane:lens_facing=FRONT"))
       << "media flag is missing or wrongly formatted";
+}
+
+TEST(DiskArtifactsValidationTest, EmptyVendorBootBuildFails) {
+  const std::string test_string = R""""(
+{
+    "instances": [
+        {
+          "disk": {
+            "disk_artifacts": {
+              "vendor_boot": ""
+            }
+          }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  EXPECT_TRUE(ParseJsonString(json_text, json_configs))
+      << "Invalid Json string";
+  EXPECT_THAT(LaunchCvdParserTester(json_configs), IsError());
 }
 
 }  // namespace

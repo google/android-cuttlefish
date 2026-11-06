@@ -551,7 +551,13 @@ where
             .config
             .format
             .plane_sizes(self.config.input_width, self.config.input_height);
+
         let num_planes = plane_sizes.len();
+
+        // TODO(b/573210339): Remove after v4lr2 uprev to v0.0.8
+        if num_planes > bindings::VIDEO_MAX_PLANES as usize {
+            return Err(libc::EINVAL);
+        }
 
         state.buffers = (0..count)
             .map(|i| -> Result<Buffer, i32> {

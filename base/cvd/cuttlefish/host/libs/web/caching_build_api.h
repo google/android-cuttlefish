@@ -18,13 +18,14 @@
 #include <string>
 
 #include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-class CachingBuildApi : public BuildApi {
+class CachingBuildApi : public BuildApi<BuildString, Build> {
  public:
   CachingBuildApi(BuildApi& build_api, std::string cache_base_path);
 

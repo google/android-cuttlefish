@@ -48,7 +48,6 @@
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/common/libs/utils/container.h"
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
@@ -69,6 +68,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/extra_kernel_cmdline.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/gpu_context_types.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/gpu_mode.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
@@ -475,7 +475,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // netsim flags allow all radios or selecting a specific radio
   std::vector<bool> netsim_all_radios_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim));
-  std::vector<bool> netsim_bt_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_bt));
   std::vector<bool> netsim_uwb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_uwb));
   bool any_netsim_uwb = std::any_of(
       netsim_uwb_vec.begin(), netsim_uwb_vec.end(), [](bool e) { return e; });
@@ -485,11 +484,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> netsim_modem_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_modem));
 
-  bool any_not_netsim_bt = false;
   bool any_not_netsim_uwb = false;
   bool any_not_netsim_nfc = false;
   for (int32_t i = 0; i < instances_size; ++i) {
-    any_not_netsim_bt |= !netsim_all_radios_vec[i] && !netsim_bt_vec[i];
     any_not_netsim_uwb |= !netsim_all_radios_vec[i] && !netsim_uwb_vec[i];
     any_not_netsim_nfc |= !netsim_all_radios_vec[i] && !netsim_nfc_vec[i];
   }
@@ -557,6 +554,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> enable_usb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_usb));
   std::vector<bool> start_gnss_proxy_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(start_gnss_proxy));
+  std::vector<bool> start_webrtc_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(start_webrtc));
   std::vector<bool> enable_bootanimation_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_bootanimation));
 
@@ -602,8 +601,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_vhost_user_mode));
   std::vector<std::string> gpu_renderer_features_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_renderer_features));
-  std::vector<std::string> gpu_context_types_vec =
-      CF_EXPECT(GET_FLAG_STR_VALUE(gpu_context_types));
+  GpuContextTypesFlag gpu_context_types_values =
+      CF_EXPECT(GpuContextTypesFlag::FromGlobalGflags());
   std::vector<std::string> guest_hwui_renderer_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(guest_hwui_renderer));
   std::vector<std::string> guest_renderer_preload_vec =
@@ -653,11 +652,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_balloon));
   std::vector<bool> use_rng_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_rng));
-  std::vector<bool> simple_media_device_vec =
-      CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_simple_media_device));
-  std::vector<std::string> v4l2_proxy_vec =
-      CF_EXPECT(GET_FLAG_STR_VALUE(crosvm_v4l2_proxy));
   std::vector<bool> use_pmem_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_pmem));
+  const std::vector<bool> hugepages_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_hugepages));
   std::vector<std::string> device_external_network_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(device_external_network));
 
@@ -817,10 +814,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_crosvm_use_balloon(use_balloon_vec[instance_index]);
     instance.set_crosvm_use_rng(use_rng_vec[instance_index]);
-    instance.set_crosvm_simple_media_device(
-        simple_media_device_vec[instance_index]);
-    instance.set_crosvm_v4l2_proxy(v4l2_proxy_vec[instance_index]);
     instance.set_use_pmem(use_pmem_vec[instance_index]);
+    instance.set_crosvm_hugepages(hugepages_vec[instance_index]);
     instance.set_bootconfig_supported(
         guest_configs[instance_index].bootconfig_supported);
     instance.set_enable_mouse(guest_configs[instance_index].mouse_supported);
@@ -839,6 +834,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_enable_audio(enable_audio_vec[instance_index]);
     instance.set_enable_usb(enable_usb_vec[instance_index]);
     instance.set_enable_gnss_grpc_proxy(start_gnss_proxy_vec[instance_index]);
+    bool enable_webrtc = start_webrtc_vec[instance_index];
+    if (!enable_webrtc && tmp_config_obj.vm_manager() == VmmMode::kCrosvm) {
+      // This is an error, but warn as to not break existing configs.
+      LOG(WARNING) << "Ignoring --start_webrtc=false: crosvm requires "
+                      "the webrtc streamer";
+      enable_webrtc = true;
+    }
+    instance.set_enable_webrtc(enable_webrtc);
     instance.set_enable_bootanimation(enable_bootanimation_vec[instance_index]);
 
     instance.set_extra_bootconfig_args(
@@ -910,22 +913,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     if (vhost_user_vsock_vec[instance_index] == kVhostUserVsockModeAuto) {
-      std::set<Arch> default_on_arch = {Arch::Arm64};
-      if (guest_configs[instance_index].vhost_user_vsock) {
-        instance.set_vhost_user_vsock(true);
-      } else if (VmManagerIsCrosvm(tmp_config_obj) &&
-                 (default_on_arch.find(
-                      guest_configs[instance_index].target_arch) !=
-                      default_on_arch.end() ||
-                  StringFromEnv("CVD_INVOKER").value_or("") == "podcvd")) {
-        instance.set_vhost_user_vsock(true);
-      } else {
-        instance.set_vhost_user_vsock(false);
-      }
+      instance.set_vhost_user_vsock(
+          guest_configs[instance_index].vhost_user_vsock ||
+          VmManagerIsCrosvm(tmp_config_obj) || VmManagerIsQemu(tmp_config_obj));
     } else if (vhost_user_vsock_vec[instance_index] ==
                kVhostUserVsockModeTrue) {
-      CF_EXPECT_EQ(tmp_config_obj.vm_manager(), VmmMode::kCrosvm,
-                   "For now, only crosvm supports vhost_user_vsock");
+      CF_EXPECT(
+          VmManagerIsCrosvm(tmp_config_obj) || VmManagerIsQemu(tmp_config_obj),
+          "For now, only crosvm and qemu support vhost_user_vsock");
       instance.set_vhost_user_vsock(true);
     } else if (vhost_user_vsock_vec[instance_index] ==
                kVhostUserVsockModeFalse) {
@@ -1109,7 +1104,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // crosvm should create fifos for Bluetooth
     bool enable_host_bluetooth = enable_host_bluetooth_vec[instance_index];
     bool is_netsim_all = netsim_all_radios_vec[instance_index];
-    bool is_bt_netsim = is_netsim_all || netsim_bt_vec[instance_index];
+    bool is_bt_netsim = !VmManagerIsQemu(tmp_config_obj) || is_netsim_all ||
+                        enable_host_bluetooth;
     // or is_bt_netsim is here for backwards compatibility only
     instance.set_has_bluetooth(enable_host_bluetooth || is_bt_netsim);
     // rootcanal and bt_connector should handle Bluetooth (instead of netsim)
@@ -1140,6 +1136,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         enable_vhal_proxy_server_vec[instance_index]);
     instance.set_vhal_proxy_server_port(
         cuttlefish::vhal_proxy_server::kDefaultEthPort + num - 1);
+    instance.set_virtual_tuner_server_port(7000 + num - 1);
 
     uint8_t ethernet_mac[6] = {};
     uint8_t mobile_mac[6] = {};
@@ -1172,10 +1169,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_has_vulkan_venus_apex(
         guest_configs[instance_index].has_vulkan_venus_apex);
 
-    const GpuMode gpu_mode = CF_EXPECT(SelectGpuMode(
-        gpu_mode_values.ForIndex(instance_index), vm_manager_flag.Mode(),
-        guest_configs[instance_index], gpu_context_types_vec[instance_index],
-        graphics_availability));
+    const GpuMode gpu_mode = CF_EXPECT(
+        SelectGpuMode(gpu_mode_values.ForIndex(instance_index),
+                      vm_manager_flag.Mode(), guest_configs[instance_index],
+                      gpu_context_types_values.ForIndex(instance_index),
+                      graphics_availability));
     instance.set_gpu_mode(gpu_mode);
 
 #ifdef __APPLE__
@@ -1222,15 +1220,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     instance.set_hwcomposer(hwcomposer_vec[instance_index]);
-    if (!hwcomposer_vec[instance_index].empty()) {
-      if (hwcomposer_vec[instance_index] == kHwComposerRanchu) {
-        CF_EXPECT(gpu_mode != GpuMode::DrmVirgl,
-                  "ranchu hwcomposer not supported with --gpu_mode=drm_virgl");
-      }
-    }
-
     if (hwcomposer_vec[instance_index] == kHwComposerAuto) {
-      if (gpu_mode == GpuMode::DrmVirgl || gpu_mode == GpuMode::Venus) {
+      if (gpu_mode == GpuMode::Venus) {
         instance.set_hwcomposer(kHwComposerDrm);
       } else if (gpu_mode == GpuMode::None) {
         instance.set_hwcomposer(kHwComposerNone);
@@ -1241,7 +1232,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_enable_gpu_udmabuf(enable_gpu_udmabuf_vec[instance_index]);
 
-    instance.set_gpu_context_types(gpu_context_types_vec[instance_index]);
+    instance.set_gpu_context_types(
+        gpu_context_types_values.ForIndex(instance_index));
     instance.set_guest_vulkan_driver(guest_vulkan_driver_vec[instance_index]);
 
     instance.set_guest_uses_bgra_framebuffers(
@@ -1352,8 +1344,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     tmp_config_obj.set_sig_server_proxy_port(port);
     instance.set_start_netsim(is_first_instance && is_any_netsim);
 
-    instance.set_start_rootcanal(is_first_instance && any_not_netsim_bt &&
-                                 (FLAGS_rootcanal_instance_num <= 0));
+    instance.set_start_rootcanal(false);
 
     instance.set_start_casimir(is_first_instance && any_not_netsim_nfc &&
                                FLAGS_casimir_instance_num <= 0);

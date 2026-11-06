@@ -35,13 +35,16 @@
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#ifdef __linux__
 #include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
+#endif
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
@@ -121,7 +124,11 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
   Result<void> ResetGPIO() const {
     // Write '1' to 'gpioPltRst' to initialize the emulator.
     std::string gpio_sock = instance_.PerInstancePath("gpioPltRst");
+#ifdef __linux__
     CF_EXPECT(WaitForUnixSocket(gpio_sock, 30));
+#else
+    return CF_ERR("Cannot start the ti50 emulator outside of Linux.");
+#endif
 
     // Wait for the emulator's internal state to be initialized.
     // Since the emulator polls the socket at 100 ms intervals before
@@ -130,12 +137,9 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
     // https://crrev.com/7447dbd20aee11809e89e04bb2fcb2a1476febe1/tpm2-simulator/tpm_executor_ti50_impl.cc#171
     sleep(1);
 
-    SharedFD cl = SharedFD::SocketLocalClient(gpio_sock, false, SOCK_STREAM);
-    if (!cl->IsOpen()) {
-      return CF_ERR("Failed to connect to gpioPltRst");
-    }
-    uint64_t written = CF_EXPECT(cl->Write("1", 1));
-    CF_EXPECT_EQ(written, 1);
+    Fd cl = CF_EXPECT(Fd::SocketLocalClient(gpio_sock, false, SOCK_STREAM),
+                      "Failed to connect to gpioPltRst");
+    CF_EXPECT(WriteExact(cl, "1"));
 
     LOG(INFO) << "ti50 emulator: reset GPIO!";
     return {};
@@ -145,12 +149,15 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
     // Connects to direct_tpm_fifo socket, which is a bi-directional Unix domain
     // socket.
     std::string fifo_sock = instance_.PerInstancePath("direct_tpm_fifo");
+#ifdef __linux__
     CF_EXPECT(WaitForUnixSocket(fifo_sock, 30));
+#else
+    return CF_ERR("Cannot start the ti50 emulator outside of Linux.");
+#endif
 
-    auto cl = SharedFD::SocketLocalClient(fifo_sock, false, SOCK_STREAM);
-    if (!cl->IsOpen()) {
-      return CF_ERR("Failed to connect to direct_tpm_fifo");
-    }
+    SharedFD cl =
+        CF_EXPECT(Fd::SocketLocalClient(fifo_sock, false, SOCK_STREAM),
+                  "Failed to connect to direct_tpm_fifo");
 
     const uint32_t kMaxRetryCount = 5;
     // TPM2_Startup command with SU_CLEAR
@@ -161,8 +168,7 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
                                          0x0a, 0x00, 0x00, 0x00, 0x00};
     ssize_t expected_response_size = sizeof(kExpectedResponse);
     for (int i = 0; i < kMaxRetryCount; i++) {
-      CF_EXPECT_EQ(WriteAll(cl, (char*)kTpm2StartupCmd, cmd_size), cmd_size,
-                   "failed to write TPM2_startup command");
+      CF_EXPECT(WriteExact(*cl, (char*)kTpm2StartupCmd, cmd_size));
 
       // Read a response.
       // First, read a 2-byte tag and 4-byte size.
@@ -208,7 +214,9 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
   const CuttlefishConfig::InstanceSpecific instance_;
   LogTeeCreator& log_tee_;
 
+#ifdef __linux__
   std::unique_ptr<ProxyServer> socket_proxy_;
+#endif
 
   SharedFD ctrl_sock_;
   SharedFD gpio_sock_;

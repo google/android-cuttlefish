@@ -30,6 +30,8 @@ frontend/src/operator/webui/src/environments/version.ts
 /bazel-*
 /**/bazel-*
 MODULE.bazel.lock
+# Bazel vendor directory, see --vendor_dir in base/cvd/.bazelrc.
+/base/cvd/vendor_src/
 
 /tools/baseimage/create_gce_x86_64_image
 

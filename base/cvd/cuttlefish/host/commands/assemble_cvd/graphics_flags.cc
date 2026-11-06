@@ -291,12 +291,6 @@ GetGpuModeRequirementsMap() {
               /*no requirements*/ {},
           },
           {
-              GpuMode::DrmVirgl,
-              {
-                  kHostGlesAvailable,
-              },
-          },
-          {
               GpuMode::Gfxstream,
               {
                   kGuestSupportsGfxstream,
@@ -379,10 +373,6 @@ std::vector<GpuMode> GetGpuModeCandidates(const GuestConfig& guest_config) {
              "Assuming the historically accepted modes.";
 
   std::vector<GpuMode> gpu_mode_candidates;
-  if (guest_config.prefer_drm_virgl_when_supported) {
-    gpu_mode_candidates.push_back(GpuMode::DrmVirgl);
-  }
-
   if (EnableHostRenderingByDefault()) {
     gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngle);
     gpu_mode_candidates.push_back(GpuMode::Gfxstream);
@@ -888,9 +878,8 @@ Result<GpuMode> SelectGpuMode(
   (void)gpu_context_types;
   (void)graphics_availability;
 
-  CF_EXPECT(given_gpu_mode == GpuMode::Auto ||
+  CF_EXPECT(requested_gpu_mode == GpuMode::Auto ||
             requested_gpu_mode == GpuMode::GuestSwiftshader ||
-            requested_gpu_mode == GpuMode::DrmVirgl ||
             requested_gpu_mode == GpuMode::None);
   if (requested_gpu_mode == GpuMode::Auto) {
     return GpuMode::GuestSwiftshader;

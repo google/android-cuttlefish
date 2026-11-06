@@ -54,7 +54,6 @@ func TestCvdLoad(t *testing.T) {
       }
     }
   ],
-  "netsim_bt": false,
   "metrics": {
     "enable": true
   },
@@ -100,7 +99,6 @@ func TestCvdLoad(t *testing.T) {
       }
     }
   ],
-  "netsim_bt": false,
   "metrics": {
     "enable": true
   },
@@ -159,7 +157,6 @@ func TestCvdLoad(t *testing.T) {
       }
     }
   ],
-  "netsim_bt": false,
   "metrics": {
     "enable": true
   },
@@ -177,6 +174,7 @@ func TestCvdLoad(t *testing.T) {
 
 			err := c.CVDCreateWithConfigFile(e2etests.LoadArgs{
 				LoadConfig: tc.loadconfig,
+        Env:        map[string]string{"HOME": t.TempDir()},
 			})
 			if err != nil {
 				t.Fatal(err)

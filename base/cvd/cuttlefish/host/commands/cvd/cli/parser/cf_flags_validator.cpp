@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_flags_validator.h"
 
 #include <sstream>
+#include <string>
 
 #include "google/protobuf/util/json_util.h"
 #include "json/value.h"
@@ -25,9 +26,29 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+namespace {
 
+using cvd::config::DiskArtifacts;
 using cvd::config::EnvironmentSpecification;
+using cvd::config::Instance;
 using google::protobuf::util::JsonStringToMessage;
+
+Result<void> ValidateDiskArtifacts(
+    const EnvironmentSpecification& launch_config) {
+  for (const Instance& instance : launch_config.instances()) {
+    if (instance.disk().has_disk_artifacts()) {
+      const DiskArtifacts& disk_artifacts = instance.disk().disk_artifacts();
+      if (disk_artifacts.has_vendor_boot()) {
+        CF_EXPECT(!disk_artifacts.vendor_boot().empty(),
+                  "disk_artifacts vendor_boot build must not be empty");
+      }
+    }
+  }
+
+  return {};
+}
+
+}  // namespace
 
 Result<EnvironmentSpecification> ValidateCfConfigs(const Json::Value& root) {
   std::stringstream json_as_stringstream;
@@ -37,6 +58,7 @@ Result<EnvironmentSpecification> ValidateCfConfigs(const Json::Value& root) {
   EnvironmentSpecification launch_config;
   auto status = JsonStringToMessage(json_str, &launch_config);
   CF_EXPECTF(status.ok(), "{}", status.ToString());
+  CF_EXPECT(ValidateDiskArtifacts(launch_config));
 
   return launch_config;
 }

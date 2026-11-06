@@ -18,6 +18,8 @@
 #include <stdint.h>
 
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader_seeker.h"
+#include "cuttlefish/io/seeker.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -30,8 +32,16 @@ Result<uint64_t> Length(Seeker& seeker) {
   return end;
 }
 
+Result<uint64_t> Length(Seeker&& seeker) {
+  return CF_EXPECT(Length(static_cast<Seeker&>(seeker)));
+}
+
 Result<uint64_t> Length(ReaderWriterSeeker& seeker) {
   return CF_EXPECT(Length(static_cast<ReaderSeeker&>(seeker)));
+}
+
+Result<uint64_t> Length(ReaderWriterSeeker&& seeker) {
+  return CF_EXPECT(Length(static_cast<ReaderWriterSeeker&>(seeker)));
 }
 
 }  // namespace cuttlefish

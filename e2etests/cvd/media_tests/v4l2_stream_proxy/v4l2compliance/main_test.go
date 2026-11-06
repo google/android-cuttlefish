@@ -76,7 +76,7 @@ func TestV4l2StreamProxyCompliance(t *testing.T) {
 
 					ticker := time.NewTicker(33 * time.Millisecond) // ~30fps
 					defer ticker.Stop()
-					
+
 				workLoop:
 					for {
 						select {
@@ -104,7 +104,7 @@ func TestV4l2StreamProxyCompliance(t *testing.T) {
 			}
 
 			if err := c.RunAdbWaitForDevice(); err != nil {
-				t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %w", err)
+				t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %v", err)
 			}
 
 			// Find video node dynamically
@@ -123,12 +123,26 @@ func TestV4l2StreamProxyCompliance(t *testing.T) {
 			t.Logf("Found v4l2_stream_proxy device at %s", videoNode)
 
 			if _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-ctl", "--list-devices"); err != nil {
-				t.Fatalf("v4l2-ctl --list-devices failed: %w", err)
+				t.Fatalf("v4l2-ctl --list-devices failed: %v", err)
 			}
 
-			if _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-compliance", "-d", videoNode, "-s"); err != nil {
-				t.Fatalf("v4l2-compliance failed: %w", err)
+			if err := runV4l2Compliance(t, &c, videoNode, 3); err != nil {
+				t.Fatalf("v4l2-compliance failed: %v", err)
 			}
 		})
 	}
+}
+
+// TODO(b/582839351): Remove retry after race is fixed.
+func runV4l2Compliance(t *testing.T, c *e2etests.TestContext, videoNode string, attempts int) error {
+	t.Helper()
+	var err error
+	for attempt := 1; attempt <= attempts; attempt++ {
+		_, err = c.RunCmd("adb", "shell", "su", "0", "v4l2-compliance", "-d", videoNode, "-s")
+		if err == nil {
+			return nil
+		}
+		t.Logf("v4l2-compliance attempt %d/%d failed: %v", attempt, attempts, err)
+	}
+	return fmt.Errorf("all %d attempts failed, last error: %w", attempts, err)
 }

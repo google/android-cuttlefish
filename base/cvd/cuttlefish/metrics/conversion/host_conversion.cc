@@ -22,11 +22,13 @@
 #include "cuttlefish/metrics/external_proto/cf_gce_environment.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_github_actions_environment.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_host.pb.h"
+#include "cuttlefish/metrics/external_proto/cf_kokoro_environment.pb.h"
 #include "cuttlefish/metrics/external_proto/cf_metrics_event_v2.pb.h"
 #include "cuttlefish/metrics/host/gce_environment.h"
 #include "cuttlefish/metrics/host/github_environment.h"
 #include "cuttlefish/metrics/host/host_metrics.h"
 #include "cuttlefish/metrics/host/invoker.h"
+#include "cuttlefish/metrics/host/kokoro_environment.h"
 
 namespace cuttlefish {
 namespace {
@@ -41,6 +43,8 @@ using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishHost_Invoker;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost_OsType;
+using logs::proto::wireless::android::cuttlefish::events::
+    CuttlefishKokoroEnvironment;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
 
 CuttlefishHost_OsType ConvertHostOs(const HostInfo& host_info) {
@@ -74,12 +78,21 @@ CuttlefishHost_Invoker ConvertInvoker(const Invoker invoker) {
     case Invoker::Acloud:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_ACLOUD;
+    case Invoker::Cvdr:
+      return CuttlefishHost_Invoker::
+          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_CVDR;
     case Invoker::HostOrchestrator:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_HOST_ORCHESTRATOR;
+    case Invoker::LaunchCvd:
+      return CuttlefishHost_Invoker::
+          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_LAUNCH_CVD;
     case Invoker::None:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_NONE;
+    case Invoker::Podcvd:
+      return CuttlefishHost_Invoker::
+          CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_PODCVD;
     case Invoker::Unknown:
       return CuttlefishHost_Invoker::
           CuttlefishHost_Invoker_CUTTLEFISH_HOST_INVOKER_UNSPECIFIED;
@@ -115,6 +128,12 @@ struct PopulateEnvironment {
     github.set_repository(ConvertGitHubRepository(repository));
   }
 
+  void operator()(const KokoroEnvironment& environment) {
+    CuttlefishKokoroEnvironment& kokoro = *host.mutable_kokoro();
+    kokoro.set_numeric_project_id(environment.numeric_project_id);
+    kokoro.set_zone(environment.zone);
+  }
+
   void operator()(const UnknownEnvironment&) {}
 };
 
@@ -131,6 +150,7 @@ void PopulateCuttlefishHost(MetricsEventV2& metrics_event,
   host.set_host_os(ConvertHostOs(host_metrics.os));
   host.set_host_os_version(host_metrics.os.release);
   host.set_invoker(ConvertInvoker(host_metrics.invoker));
+  host.set_user_id(host_metrics.user_id);
   PopulateCuttlefishHostEnvironment(host, host_metrics.environment);
 }
 

@@ -24,20 +24,21 @@
 #include "cuttlefish/metrics/host/gce_environment.h"
 #include "cuttlefish/metrics/host/github_environment.h"
 #include "cuttlefish/metrics/host/invoker.h"
+#include "cuttlefish/metrics/host/kokoro_environment.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 struct UnknownEnvironment {};
 
-using Environment =
-    std::variant<GceEnvironment, GitHubRepository, UnknownEnvironment>;
+using Environment = std::variant<GceEnvironment, GitHubRepository,
+                                 KokoroEnvironment, UnknownEnvironment>;
 
 struct HostMetrics {
   HostInfo os;
   Invoker invoker;
   Environment environment;
-  std::string username;
+  std::string user_id;
 };
 
 Result<HostMetrics> GetHostMetrics();

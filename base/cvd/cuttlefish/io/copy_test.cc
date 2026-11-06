@@ -15,14 +15,12 @@
 
 #include "cuttlefish/io/copy.h"
 
-#include <memory>
 #include <vector>
 
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/io/in_memory.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/result/result_matchers.h"
 
@@ -32,14 +30,14 @@ namespace {
 TEST(CopyTest, CopySmallBuffer) {
   std::vector<char> data = {1, 2, 3, 4, 5};
 
-  std::unique_ptr<ReaderWriterSeeker> in = InMemoryIo(data);
-  std::unique_ptr<ReaderWriterSeeker> out = InMemoryIo();
+  OwningInMemoryIo in(data);
+  OwningInMemoryIo out;
 
-  EXPECT_THAT(Copy(*in, *out), IsOk());
+  EXPECT_THAT(Copy(in, out), IsOk());
 
   std::vector<char> data_out(data.size());
 
-  EXPECT_THAT(PReadExact(*out, data_out.data(), data_out.size(), 0), IsOk());
+  EXPECT_THAT(PReadExact(out, data_out.data(), data_out.size(), 0), IsOk());
   EXPECT_EQ(data, data_out);
 }
 

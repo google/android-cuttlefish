@@ -120,15 +120,17 @@ func (ModemSimulatorSimType) EnumDescriptor() ([]byte, []int) {
 }
 
 type EnvironmentSpecification struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Instances     []*Instance            `protobuf:"bytes,1,rep,name=instances,proto3" json:"instances,omitempty"`
-	Fetch         *Fetch                 `protobuf:"bytes,2,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
-	Metrics       *Metrics               `protobuf:"bytes,3,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
-	Common        *Common                `protobuf:"bytes,4,opt,name=common,proto3,oneof" json:"common,omitempty"`
-	NetsimBt      *bool                  `protobuf:"varint,5,opt,name=netsim_bt,json=netsimBt,proto3,oneof" json:"netsim_bt,omitempty"`
-	NetsimUwb     *bool                  `protobuf:"varint,6,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
-	NetsimArgs    []string               `protobuf:"bytes,7,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
-	NetsimModem   *bool                  `protobuf:"varint,8,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Instances []*Instance            `protobuf:"bytes,1,rep,name=instances,proto3" json:"instances,omitempty"`
+	Fetch     *Fetch                 `protobuf:"bytes,2,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
+	Metrics   *Metrics               `protobuf:"bytes,3,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
+	Common    *Common                `protobuf:"bytes,4,opt,name=common,proto3,oneof" json:"common,omitempty"`
+	// Deprecated: Marked as deprecated in cuttlefish/host/commands/cvd/cli/parser/load_config.proto.
+	NetsimBt      *bool    `protobuf:"varint,5,opt,name=netsim_bt,json=netsimBt,proto3,oneof" json:"netsim_bt,omitempty"`
+	NetsimUwb     *bool    `protobuf:"varint,6,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
+	NetsimArgs    []string `protobuf:"bytes,7,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
+	NetsimModem   *bool    `protobuf:"varint,8,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
+	NetsimNfc     *bool    `protobuf:"varint,9,opt,name=netsim_nfc,json=netsimNfc,proto3,oneof" json:"netsim_nfc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -191,6 +193,7 @@ func (x *EnvironmentSpecification) GetCommon() *Common {
 	return nil
 }
 
+// Deprecated: Marked as deprecated in cuttlefish/host/commands/cvd/cli/parser/load_config.proto.
 func (x *EnvironmentSpecification) GetNetsimBt() bool {
 	if x != nil && x.NetsimBt != nil {
 		return *x.NetsimBt
@@ -219,15 +222,24 @@ func (x *EnvironmentSpecification) GetNetsimModem() bool {
 	return false
 }
 
+func (x *EnvironmentSpecification) GetNetsimNfc() bool {
+	if x != nil && x.NetsimNfc != nil {
+		return *x.NetsimNfc
+	}
+	return false
+}
+
 type EnvironmentOptions struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Fetch         *Fetch                 `protobuf:"bytes,1,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
-	Metrics       *Metrics               `protobuf:"bytes,2,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
-	Common        *Common                `protobuf:"bytes,3,opt,name=common,proto3,oneof" json:"common,omitempty"`
-	NetsimBt      *bool                  `protobuf:"varint,4,opt,name=netsim_bt,json=netsimBt,proto3,oneof" json:"netsim_bt,omitempty"`
-	NetsimUwb     *bool                  `protobuf:"varint,5,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
-	NetsimArgs    []string               `protobuf:"bytes,6,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
-	NetsimModem   *bool                  `protobuf:"varint,7,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Fetch   *Fetch                 `protobuf:"bytes,1,opt,name=fetch,proto3,oneof" json:"fetch,omitempty"`
+	Metrics *Metrics               `protobuf:"bytes,2,opt,name=metrics,proto3,oneof" json:"metrics,omitempty"`
+	Common  *Common                `protobuf:"bytes,3,opt,name=common,proto3,oneof" json:"common,omitempty"`
+	// Deprecated: Marked as deprecated in cuttlefish/host/commands/cvd/cli/parser/load_config.proto.
+	NetsimBt      *bool    `protobuf:"varint,4,opt,name=netsim_bt,json=netsimBt,proto3,oneof" json:"netsim_bt,omitempty"`
+	NetsimUwb     *bool    `protobuf:"varint,5,opt,name=netsim_uwb,json=netsimUwb,proto3,oneof" json:"netsim_uwb,omitempty"`
+	NetsimArgs    []string `protobuf:"bytes,6,rep,name=netsim_args,json=netsimArgs,proto3" json:"netsim_args,omitempty"`
+	NetsimModem   *bool    `protobuf:"varint,7,opt,name=netsim_modem,json=netsimModem,proto3,oneof" json:"netsim_modem,omitempty"`
+	NetsimNfc     *bool    `protobuf:"varint,8,opt,name=netsim_nfc,json=netsimNfc,proto3,oneof" json:"netsim_nfc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -283,6 +295,7 @@ func (x *EnvironmentOptions) GetCommon() *Common {
 	return nil
 }
 
+// Deprecated: Marked as deprecated in cuttlefish/host/commands/cvd/cli/parser/load_config.proto.
 func (x *EnvironmentOptions) GetNetsimBt() bool {
 	if x != nil && x.NetsimBt != nil {
 		return *x.NetsimBt
@@ -307,6 +320,13 @@ func (x *EnvironmentOptions) GetNetsimArgs() []string {
 func (x *EnvironmentOptions) GetNetsimModem() bool {
 	if x != nil && x.NetsimModem != nil {
 		return *x.NetsimModem
+	}
+	return false
+}
+
+func (x *EnvironmentOptions) GetNetsimNfc() bool {
+	if x != nil && x.NetsimNfc != nil {
+		return *x.NetsimNfc
 	}
 	return false
 }
@@ -371,6 +391,7 @@ type Fetch struct {
 	KeepDownloadedArchives *bool                  `protobuf:"varint,5,opt,name=keep_downloaded_archives,json=keepDownloadedArchives,proto3,oneof" json:"keep_downloaded_archives,omitempty"`
 	ApiBaseUrl             *string                `protobuf:"bytes,6,opt,name=api_base_url,json=apiBaseUrl,proto3,oneof" json:"api_base_url,omitempty"`
 	ProjectId              *string                `protobuf:"bytes,7,opt,name=project_id,json=projectId,proto3,oneof" json:"project_id,omitempty"`
+	EnableCaching          *bool                  `protobuf:"varint,8,opt,name=enable_caching,json=enableCaching,proto3,oneof" json:"enable_caching,omitempty"`
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
@@ -445,6 +466,13 @@ func (x *Fetch) GetProjectId() string {
 		return *x.ProjectId
 	}
 	return ""
+}
+
+func (x *Fetch) GetEnableCaching() bool {
+	if x != nil && x.EnableCaching != nil {
+		return *x.EnableCaching
+	}
+	return false
 }
 
 type Instance struct {
@@ -931,6 +959,50 @@ func (x *Display) GetOverlays() []*DisplayOverlay {
 	return nil
 }
 
+type DiskArtifacts struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VendorBoot    *string                `protobuf:"bytes,1,opt,name=vendor_boot,json=vendorBoot,proto3,oneof" json:"vendor_boot,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DiskArtifacts) Reset() {
+	*x = DiskArtifacts{}
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DiskArtifacts) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DiskArtifacts) ProtoMessage() {}
+
+func (x *DiskArtifacts) ProtoReflect() protoreflect.Message {
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DiskArtifacts.ProtoReflect.Descriptor instead.
+func (*DiskArtifacts) Descriptor() ([]byte, []int) {
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *DiskArtifacts) GetVendorBoot() string {
+	if x != nil && x.VendorBoot != nil {
+		return *x.VendorBoot
+	}
+	return ""
+}
+
 type Disk struct {
 	state                  protoimpl.MessageState `protogen:"open.v1"`
 	DefaultBuild           *string                `protobuf:"bytes,1,opt,name=default_build,json=defaultBuild,proto3,oneof" json:"default_build,omitempty"`
@@ -939,13 +1011,14 @@ type Disk struct {
 	DownloadTargetFilesZip *bool                  `protobuf:"varint,4,opt,name=download_target_files_zip,json=downloadTargetFilesZip,proto3,oneof" json:"download_target_files_zip,omitempty"`
 	BlankDataImageMb       *uint32                `protobuf:"varint,5,opt,name=blank_data_image_mb,json=blankDataImageMb,proto3,oneof" json:"blank_data_image_mb,omitempty"`
 	Otatools               *string                `protobuf:"bytes,6,opt,name=otatools,proto3,oneof" json:"otatools,omitempty"`
+	DiskArtifacts          *DiskArtifacts         `protobuf:"bytes,7,opt,name=disk_artifacts,json=diskArtifacts,proto3,oneof" json:"disk_artifacts,omitempty"`
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
 
 func (x *Disk) Reset() {
 	*x = Disk{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[11]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -957,7 +1030,7 @@ func (x *Disk) String() string {
 func (*Disk) ProtoMessage() {}
 
 func (x *Disk) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[11]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -970,7 +1043,7 @@ func (x *Disk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Disk.ProtoReflect.Descriptor instead.
 func (*Disk) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{11}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Disk) GetDefaultBuild() string {
@@ -1015,6 +1088,13 @@ func (x *Disk) GetOtatools() string {
 	return ""
 }
 
+func (x *Disk) GetDiskArtifacts() *DiskArtifacts {
+	if x != nil {
+		return x.DiskArtifacts
+	}
+	return nil
+}
+
 type Super struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	System        *string                `protobuf:"bytes,1,opt,name=system,proto3,oneof" json:"system,omitempty"`
@@ -1024,7 +1104,7 @@ type Super struct {
 
 func (x *Super) Reset() {
 	*x = Super{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[12]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1036,7 +1116,7 @@ func (x *Super) String() string {
 func (*Super) ProtoMessage() {}
 
 func (x *Super) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[12]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1049,7 +1129,7 @@ func (x *Super) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Super.ProtoReflect.Descriptor instead.
 func (*Super) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{12}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Super) GetSystem() string {
@@ -1070,7 +1150,7 @@ type Security struct {
 
 func (x *Security) Reset() {
 	*x = Security{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[13]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1082,7 +1162,7 @@ func (x *Security) String() string {
 func (*Security) ProtoMessage() {}
 
 func (x *Security) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[13]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1095,7 +1175,7 @@ func (x *Security) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Security.ProtoReflect.Descriptor instead.
 func (*Security) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{13}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Security) GetSerialNumber() string {
@@ -1128,7 +1208,7 @@ type Streaming struct {
 
 func (x *Streaming) Reset() {
 	*x = Streaming{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[14]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1140,7 +1220,7 @@ func (x *Streaming) String() string {
 func (*Streaming) ProtoMessage() {}
 
 func (x *Streaming) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[14]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1153,7 +1233,7 @@ func (x *Streaming) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Streaming.ProtoReflect.Descriptor instead.
 func (*Streaming) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{14}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *Streaming) GetDeviceId() string {
@@ -1172,7 +1252,7 @@ type Media struct {
 
 func (x *Media) Reset() {
 	*x = Media{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[15]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1184,7 +1264,7 @@ func (x *Media) String() string {
 func (*Media) ProtoMessage() {}
 
 func (x *Media) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[15]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1197,7 +1277,7 @@ func (x *Media) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Media.ProtoReflect.Descriptor instead.
 func (*Media) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{15}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *Media) GetDevices() []*MediaDevice {
@@ -1211,7 +1291,6 @@ type MediaDevice struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Device:
 	//
-	//	*MediaDevice_V4L2EmulatedCameraSplane
 	//	*MediaDevice_V4L2EmulatedCameraMplane
 	//	*MediaDevice_V4L2Proxy
 	//	*MediaDevice_V4L2StreamProxy
@@ -1223,7 +1302,7 @@ type MediaDevice struct {
 
 func (x *MediaDevice) Reset() {
 	*x = MediaDevice{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[16]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1235,7 +1314,7 @@ func (x *MediaDevice) String() string {
 func (*MediaDevice) ProtoMessage() {}
 
 func (x *MediaDevice) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[16]
+	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1248,21 +1327,12 @@ func (x *MediaDevice) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MediaDevice.ProtoReflect.Descriptor instead.
 func (*MediaDevice) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{16}
+	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *MediaDevice) GetDevice() isMediaDevice_Device {
 	if x != nil {
 		return x.Device
-	}
-	return nil
-}
-
-func (x *MediaDevice) GetV4L2EmulatedCameraSplane() *V4L2EmulatedCameraSplane {
-	if x != nil {
-		if x, ok := x.Device.(*MediaDevice_V4L2EmulatedCameraSplane); ok {
-			return x.V4L2EmulatedCameraSplane
-		}
 	}
 	return nil
 }
@@ -1305,10 +1375,6 @@ type isMediaDevice_Device interface {
 	isMediaDevice_Device()
 }
 
-type MediaDevice_V4L2EmulatedCameraSplane struct {
-	V4L2EmulatedCameraSplane *V4L2EmulatedCameraSplane `protobuf:"bytes,1,opt,name=v4l2_emulated_camera_splane,json=v4l2EmulatedCameraSplane,proto3,oneof"`
-}
-
 type MediaDevice_V4L2EmulatedCameraMplane struct {
 	V4L2EmulatedCameraMplane *V4L2EmulatedCameraMplane `protobuf:"bytes,2,opt,name=v4l2_emulated_camera_mplane,json=v4l2EmulatedCameraMplane,proto3,oneof"`
 }
@@ -1321,49 +1387,11 @@ type MediaDevice_V4L2StreamProxy struct {
 	V4L2StreamProxy *V4L2StreamProxy `protobuf:"bytes,5,opt,name=v4l2_stream_proxy,json=v4l2StreamProxy,proto3,oneof"`
 }
 
-func (*MediaDevice_V4L2EmulatedCameraSplane) isMediaDevice_Device() {}
-
 func (*MediaDevice_V4L2EmulatedCameraMplane) isMediaDevice_Device() {}
 
 func (*MediaDevice_V4L2Proxy) isMediaDevice_Device() {}
 
 func (*MediaDevice_V4L2StreamProxy) isMediaDevice_Device() {}
-
-type V4L2EmulatedCameraSplane struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *V4L2EmulatedCameraSplane) Reset() {
-	*x = V4L2EmulatedCameraSplane{}
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *V4L2EmulatedCameraSplane) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*V4L2EmulatedCameraSplane) ProtoMessage() {}
-
-func (x *V4L2EmulatedCameraSplane) ProtoReflect() protoreflect.Message {
-	mi := &file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use V4L2EmulatedCameraSplane.ProtoReflect.Descriptor instead.
-func (*V4L2EmulatedCameraSplane) Descriptor() ([]byte, []int) {
-	return file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDescGZIP(), []int{17}
-}
 
 type V4L2EmulatedCameraMplane struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1676,13 +1704,11 @@ func (*Vm_Gem5) isVm_Vmm() {}
 func (*Vm_Qemu) isVm_Vmm() {}
 
 type Crosvm struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	EnableSandbox     *bool                  `protobuf:"varint,1,opt,name=enable_sandbox,json=enableSandbox,proto3,oneof" json:"enable_sandbox,omitempty"`
-	SimpleMediaDevice *bool                  `protobuf:"varint,2,opt,name=simple_media_device,json=simpleMediaDevice,proto3,oneof" json:"simple_media_device,omitempty"`
-	V4L2Proxy         *string                `protobuf:"bytes,3,opt,name=v4l2_proxy,json=v4l2Proxy,proto3,oneof" json:"v4l2_proxy,omitempty"`
-	VhostUserVsock    *string                `protobuf:"bytes,4,opt,name=vhost_user_vsock,json=vhostUserVsock,proto3,oneof" json:"vhost_user_vsock,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	EnableSandbox  *bool                  `protobuf:"varint,1,opt,name=enable_sandbox,json=enableSandbox,proto3,oneof" json:"enable_sandbox,omitempty"`
+	VhostUserVsock *string                `protobuf:"bytes,4,opt,name=vhost_user_vsock,json=vhostUserVsock,proto3,oneof" json:"vhost_user_vsock,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Crosvm) Reset() {
@@ -1720,20 +1746,6 @@ func (x *Crosvm) GetEnableSandbox() bool {
 		return *x.EnableSandbox
 	}
 	return false
-}
-
-func (x *Crosvm) GetSimpleMediaDevice() bool {
-	if x != nil && x.SimpleMediaDevice != nil {
-		return *x.SimpleMediaDevice
-	}
-	return false
-}
-
-func (x *Crosvm) GetV4L2Proxy() string {
-	if x != nil && x.V4L2Proxy != nil {
-		return *x.V4L2Proxy
-	}
-	return ""
 }
 
 func (x *Crosvm) GetVhostUserVsock() string {
@@ -2103,18 +2115,20 @@ var File_cuttlefish_host_commands_cvd_cli_parser_load_config_proto protoreflect.
 
 const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "" +
 	"\n" +
-	"9cuttlefish/host/commands/cvd/cli/parser/load_config.proto\x12\x15cuttlefish.cvd.config\"\xeb\x03\n" +
+	"9cuttlefish/host/commands/cvd/cli/parser/load_config.proto\x12\x15cuttlefish.cvd.config\"\xa2\x04\n" +
 	"\x18EnvironmentSpecification\x12=\n" +
 	"\tinstances\x18\x01 \x03(\v2\x1f.cuttlefish.cvd.config.InstanceR\tinstances\x127\n" +
 	"\x05fetch\x18\x02 \x01(\v2\x1c.cuttlefish.cvd.config.FetchH\x00R\x05fetch\x88\x01\x01\x12=\n" +
 	"\ametrics\x18\x03 \x01(\v2\x1e.cuttlefish.cvd.config.MetricsH\x01R\ametrics\x88\x01\x01\x12:\n" +
-	"\x06common\x18\x04 \x01(\v2\x1d.cuttlefish.cvd.config.CommonH\x02R\x06common\x88\x01\x01\x12 \n" +
-	"\tnetsim_bt\x18\x05 \x01(\bH\x03R\bnetsimBt\x88\x01\x01\x12\"\n" +
+	"\x06common\x18\x04 \x01(\v2\x1d.cuttlefish.cvd.config.CommonH\x02R\x06common\x88\x01\x01\x12$\n" +
+	"\tnetsim_bt\x18\x05 \x01(\bB\x02\x18\x01H\x03R\bnetsimBt\x88\x01\x01\x12\"\n" +
 	"\n" +
 	"netsim_uwb\x18\x06 \x01(\bH\x04R\tnetsimUwb\x88\x01\x01\x12\x1f\n" +
 	"\vnetsim_args\x18\a \x03(\tR\n" +
 	"netsimArgs\x12&\n" +
-	"\fnetsim_modem\x18\b \x01(\bH\x05R\vnetsimModem\x88\x01\x01B\b\n" +
+	"\fnetsim_modem\x18\b \x01(\bH\x05R\vnetsimModem\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"netsim_nfc\x18\t \x01(\bH\x06R\tnetsimNfc\x88\x01\x01B\b\n" +
 	"\x06_fetchB\n" +
 	"\n" +
 	"\b_metricsB\t\n" +
@@ -2122,17 +2136,20 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\n" +
 	"_netsim_btB\r\n" +
 	"\v_netsim_uwbB\x0f\n" +
-	"\r_netsim_modem\"\xa6\x03\n" +
+	"\r_netsim_modemB\r\n" +
+	"\v_netsim_nfc\"\xdd\x03\n" +
 	"\x12EnvironmentOptions\x127\n" +
 	"\x05fetch\x18\x01 \x01(\v2\x1c.cuttlefish.cvd.config.FetchH\x00R\x05fetch\x88\x01\x01\x12=\n" +
 	"\ametrics\x18\x02 \x01(\v2\x1e.cuttlefish.cvd.config.MetricsH\x01R\ametrics\x88\x01\x01\x12:\n" +
-	"\x06common\x18\x03 \x01(\v2\x1d.cuttlefish.cvd.config.CommonH\x02R\x06common\x88\x01\x01\x12 \n" +
-	"\tnetsim_bt\x18\x04 \x01(\bH\x03R\bnetsimBt\x88\x01\x01\x12\"\n" +
+	"\x06common\x18\x03 \x01(\v2\x1d.cuttlefish.cvd.config.CommonH\x02R\x06common\x88\x01\x01\x12$\n" +
+	"\tnetsim_bt\x18\x04 \x01(\bB\x02\x18\x01H\x03R\bnetsimBt\x88\x01\x01\x12\"\n" +
 	"\n" +
 	"netsim_uwb\x18\x05 \x01(\bH\x04R\tnetsimUwb\x88\x01\x01\x12\x1f\n" +
 	"\vnetsim_args\x18\x06 \x03(\tR\n" +
 	"netsimArgs\x12&\n" +
-	"\fnetsim_modem\x18\a \x01(\bH\x05R\vnetsimModem\x88\x01\x01B\b\n" +
+	"\fnetsim_modem\x18\a \x01(\bH\x05R\vnetsimModem\x88\x01\x01\x12\"\n" +
+	"\n" +
+	"netsim_nfc\x18\b \x01(\bH\x06R\tnetsimNfc\x88\x01\x01B\b\n" +
 	"\x06_fetchB\n" +
 	"\n" +
 	"\b_metricsB\t\n" +
@@ -2140,13 +2157,14 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\n" +
 	"_netsim_btB\r\n" +
 	"\v_netsim_uwbB\x0f\n" +
-	"\r_netsim_modem\"t\n" +
+	"\r_netsim_modemB\r\n" +
+	"\v_netsim_nfc\"t\n" +
 	"\x06Common\x12\"\n" +
 	"\n" +
 	"group_name\x18\x01 \x01(\tH\x00R\tgroupName\x88\x01\x01\x12&\n" +
 	"\fhost_package\x18\x02 \x01(\tH\x01R\vhostPackage\x88\x01\x01B\r\n" +
 	"\v_group_nameB\x0f\n" +
-	"\r_host_package\"\x9f\x03\n" +
+	"\r_host_package\"\xde\x03\n" +
 	"\x05Fetch\x12\x1c\n" +
 	"\aapi_key\x18\x01 \x01(\tH\x00R\x06apiKey\x88\x01\x01\x120\n" +
 	"\x11credential_source\x18\x02 \x01(\tH\x01R\x10credentialSource\x88\x01\x01\x129\n" +
@@ -2155,14 +2173,16 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\fapi_base_url\x18\x06 \x01(\tH\x04R\n" +
 	"apiBaseUrl\x88\x01\x01\x12\"\n" +
 	"\n" +
-	"project_id\x18\a \x01(\tH\x05R\tprojectId\x88\x01\x01B\n" +
+	"project_id\x18\a \x01(\tH\x05R\tprojectId\x88\x01\x01\x12*\n" +
+	"\x0eenable_caching\x18\b \x01(\bH\x06R\renableCaching\x88\x01\x01B\n" +
 	"\n" +
 	"\b_api_keyB\x14\n" +
 	"\x12_credential_sourceB\x1c\n" +
 	"\x1a_wait_retry_period_secondsB\x1b\n" +
 	"\x19_keep_downloaded_archivesB\x0f\n" +
 	"\r_api_base_urlB\r\n" +
-	"\v_project_idJ\x04\b\x04\x10\x05\"\xd7\x05\n" +
+	"\v_project_idB\x11\n" +
+	"\x0f_enable_cachingJ\x04\b\x04\x10\x05\"\xd7\x05\n" +
 	"\bInstance\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tH\x00R\x04name\x88\x01\x01\x12.\n" +
 	"\x02vm\x18\x02 \x01(\v2\x19.cuttlefish.cvd.config.VmH\x01R\x02vm\x88\x01\x01\x124\n" +
@@ -2231,20 +2251,26 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\x06_widthB\t\n" +
 	"\a_heightB\x06\n" +
 	"\x04_dpiB\x15\n" +
-	"\x13_refresh_rate_hertz\"\xb5\x03\n" +
+	"\x13_refresh_rate_hertz\"E\n" +
+	"\rDiskArtifacts\x12$\n" +
+	"\vvendor_boot\x18\x01 \x01(\tH\x00R\n" +
+	"vendorBoot\x88\x01\x01B\x0e\n" +
+	"\f_vendor_boot\"\x9a\x04\n" +
 	"\x04Disk\x12(\n" +
 	"\rdefault_build\x18\x01 \x01(\tH\x00R\fdefaultBuild\x88\x01\x01\x12A\n" +
 	"\x0fsuper_partition\x18\x02 \x01(\v2\x1c.cuttlefish.cvd.config.SuperH\x01R\x05super\x88\x01\x01\x12-\n" +
 	"\x10download_img_zip\x18\x03 \x01(\bH\x02R\x0edownloadImgZip\x88\x01\x01\x12>\n" +
 	"\x19download_target_files_zip\x18\x04 \x01(\bH\x03R\x16downloadTargetFilesZip\x88\x01\x01\x122\n" +
 	"\x13blank_data_image_mb\x18\x05 \x01(\rH\x04R\x10blankDataImageMb\x88\x01\x01\x12\x1f\n" +
-	"\botatools\x18\x06 \x01(\tH\x05R\botatools\x88\x01\x01B\x10\n" +
+	"\botatools\x18\x06 \x01(\tH\x05R\botatools\x88\x01\x01\x12P\n" +
+	"\x0edisk_artifacts\x18\a \x01(\v2$.cuttlefish.cvd.config.DiskArtifactsH\x06R\rdiskArtifacts\x88\x01\x01B\x10\n" +
 	"\x0e_default_buildB\x12\n" +
 	"\x10_super_partitionB\x13\n" +
 	"\x11_download_img_zipB\x1c\n" +
 	"\x1a_download_target_files_zipB\x16\n" +
 	"\x14_blank_data_image_mbB\v\n" +
-	"\t_otatools\"/\n" +
+	"\t_otatoolsB\x11\n" +
+	"\x0f_disk_artifacts\"/\n" +
 	"\x05Super\x12\x1b\n" +
 	"\x06system\x18\x01 \x01(\tH\x00R\x06system\x88\x01\x01B\t\n" +
 	"\a_system\"\xe3\x01\n" +
@@ -2260,9 +2286,8 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\n" +
 	"_device_id\"E\n" +
 	"\x05Media\x12<\n" +
-	"\adevices\x18\x01 \x03(\v2\".cuttlefish.cvd.config.MediaDeviceR\adevices\"\xca\x03\n" +
+	"\adevices\x18\x01 \x03(\v2\".cuttlefish.cvd.config.MediaDeviceR\adevices\"\xfb\x02\n" +
 	"\vMediaDevice\x12p\n" +
-	"\x1bv4l2_emulated_camera_splane\x18\x01 \x01(\v2/.cuttlefish.cvd.config.V4l2EmulatedCameraSplaneH\x00R\x18v4l2EmulatedCameraSplane\x12p\n" +
 	"\x1bv4l2_emulated_camera_mplane\x18\x02 \x01(\v2/.cuttlefish.cvd.config.V4l2EmulatedCameraMplaneH\x00R\x18v4l2EmulatedCameraMplane\x12A\n" +
 	"\n" +
 	"v4l2_proxy\x18\x03 \x01(\v2 .cuttlefish.cvd.config.V4l2ProxyH\x00R\tv4l2Proxy\x12T\n" +
@@ -2270,8 +2295,7 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\vlens_facing\x18\x04 \x01(\tH\x01R\n" +
 	"lensFacing\x88\x01\x01B\b\n" +
 	"\x06deviceB\x0e\n" +
-	"\f_lens_facing\"\x1a\n" +
-	"\x18V4l2EmulatedCameraSplane\"\x1a\n" +
+	"\f_lens_facingJ\x04\b\x01\x10\x02R\x1bv4l2_emulated_camera_splane\"\x1a\n" +
 	"\x18V4l2EmulatedCameraMplane\"A\n" +
 	"\tV4l2Proxy\x12$\n" +
 	"\vdevice_path\x18\x01 \x01(\tH\x00R\n" +
@@ -2308,17 +2332,12 @@ const file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_rawDesc = "
 	"\x05_uuidB\f\n" +
 	"\n" +
 	"_page_sizeB\x0e\n" +
-	"\f_enable_pkvm\"\x8b\x02\n" +
+	"\f_enable_pkvm\"\x97\x01\n" +
 	"\x06Crosvm\x12*\n" +
-	"\x0eenable_sandbox\x18\x01 \x01(\bH\x00R\renableSandbox\x88\x01\x01\x123\n" +
-	"\x13simple_media_device\x18\x02 \x01(\bH\x01R\x11simpleMediaDevice\x88\x01\x01\x12\"\n" +
-	"\n" +
-	"v4l2_proxy\x18\x03 \x01(\tH\x02R\tv4l2Proxy\x88\x01\x01\x12-\n" +
-	"\x10vhost_user_vsock\x18\x04 \x01(\tH\x03R\x0evhostUserVsock\x88\x01\x01B\x11\n" +
-	"\x0f_enable_sandboxB\x16\n" +
-	"\x14_simple_media_deviceB\r\n" +
-	"\v_v4l2_proxyB\x13\n" +
-	"\x11_vhost_user_vsock\"\x06\n" +
+	"\x0eenable_sandbox\x18\x01 \x01(\bH\x00R\renableSandbox\x88\x01\x01\x12-\n" +
+	"\x10vhost_user_vsock\x18\x04 \x01(\tH\x01R\x0evhostUserVsock\x88\x01\x01B\x11\n" +
+	"\x0f_enable_sandboxB\x13\n" +
+	"\x11_vhost_user_vsockJ\x04\b\x02\x10\x03J\x04\b\x03\x10\x04\"\x06\n" +
 	"\x04Gem5\"\x06\n" +
 	"\x04Qemu\"\xbb\x02\n" +
 	"\fCustomAction\x12(\n" +
@@ -2388,13 +2407,13 @@ var file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_goTypes = []a
 	(*Vsock)(nil),                    // 10: cuttlefish.cvd.config.Vsock
 	(*Graphics)(nil),                 // 11: cuttlefish.cvd.config.Graphics
 	(*Display)(nil),                  // 12: cuttlefish.cvd.config.Display
-	(*Disk)(nil),                     // 13: cuttlefish.cvd.config.Disk
-	(*Super)(nil),                    // 14: cuttlefish.cvd.config.Super
-	(*Security)(nil),                 // 15: cuttlefish.cvd.config.Security
-	(*Streaming)(nil),                // 16: cuttlefish.cvd.config.Streaming
-	(*Media)(nil),                    // 17: cuttlefish.cvd.config.Media
-	(*MediaDevice)(nil),              // 18: cuttlefish.cvd.config.MediaDevice
-	(*V4L2EmulatedCameraSplane)(nil), // 19: cuttlefish.cvd.config.V4l2EmulatedCameraSplane
+	(*DiskArtifacts)(nil),            // 13: cuttlefish.cvd.config.DiskArtifacts
+	(*Disk)(nil),                     // 14: cuttlefish.cvd.config.Disk
+	(*Super)(nil),                    // 15: cuttlefish.cvd.config.Super
+	(*Security)(nil),                 // 16: cuttlefish.cvd.config.Security
+	(*Streaming)(nil),                // 17: cuttlefish.cvd.config.Streaming
+	(*Media)(nil),                    // 18: cuttlefish.cvd.config.Media
+	(*MediaDevice)(nil),              // 19: cuttlefish.cvd.config.MediaDevice
 	(*V4L2EmulatedCameraMplane)(nil), // 20: cuttlefish.cvd.config.V4l2EmulatedCameraMplane
 	(*V4L2Proxy)(nil),                // 21: cuttlefish.cvd.config.V4l2Proxy
 	(*V4L2StreamProxy)(nil),          // 22: cuttlefish.cvd.config.V4l2StreamProxy
@@ -2418,12 +2437,12 @@ var file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_depIdxs = []i
 	4,  // 6: cuttlefish.cvd.config.EnvironmentOptions.common:type_name -> cuttlefish.cvd.config.Common
 	23, // 7: cuttlefish.cvd.config.Instance.vm:type_name -> cuttlefish.cvd.config.Vm
 	7,  // 8: cuttlefish.cvd.config.Instance.boot:type_name -> cuttlefish.cvd.config.Boot
-	15, // 9: cuttlefish.cvd.config.Instance.security:type_name -> cuttlefish.cvd.config.Security
-	13, // 10: cuttlefish.cvd.config.Instance.disk:type_name -> cuttlefish.cvd.config.Disk
+	16, // 9: cuttlefish.cvd.config.Instance.security:type_name -> cuttlefish.cvd.config.Security
+	14, // 10: cuttlefish.cvd.config.Instance.disk:type_name -> cuttlefish.cvd.config.Disk
 	11, // 11: cuttlefish.cvd.config.Instance.graphics:type_name -> cuttlefish.cvd.config.Graphics
-	16, // 12: cuttlefish.cvd.config.Instance.streaming:type_name -> cuttlefish.cvd.config.Streaming
+	17, // 12: cuttlefish.cvd.config.Instance.streaming:type_name -> cuttlefish.cvd.config.Streaming
 	9,  // 13: cuttlefish.cvd.config.Instance.connectivity:type_name -> cuttlefish.cvd.config.Connectivity
-	17, // 14: cuttlefish.cvd.config.Instance.media:type_name -> cuttlefish.cvd.config.Media
+	18, // 14: cuttlefish.cvd.config.Instance.media:type_name -> cuttlefish.cvd.config.Media
 	8,  // 15: cuttlefish.cvd.config.Boot.kernel:type_name -> cuttlefish.cvd.config.Build
 	8,  // 16: cuttlefish.cvd.config.Boot.bootloader:type_name -> cuttlefish.cvd.config.Build
 	8,  // 17: cuttlefish.cvd.config.Boot.android_efi_loader:type_name -> cuttlefish.cvd.config.Build
@@ -2431,9 +2450,9 @@ var file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_depIdxs = []i
 	1,  // 19: cuttlefish.cvd.config.Connectivity.modem_simulator_sim_type:type_name -> cuttlefish.cvd.config.ModemSimulatorSimType
 	12, // 20: cuttlefish.cvd.config.Graphics.displays:type_name -> cuttlefish.cvd.config.Display
 	31, // 21: cuttlefish.cvd.config.Display.overlays:type_name -> cuttlefish.cvd.config.DisplayOverlay
-	14, // 22: cuttlefish.cvd.config.Disk.super_partition:type_name -> cuttlefish.cvd.config.Super
-	18, // 23: cuttlefish.cvd.config.Media.devices:type_name -> cuttlefish.cvd.config.MediaDevice
-	19, // 24: cuttlefish.cvd.config.MediaDevice.v4l2_emulated_camera_splane:type_name -> cuttlefish.cvd.config.V4l2EmulatedCameraSplane
+	15, // 22: cuttlefish.cvd.config.Disk.super_partition:type_name -> cuttlefish.cvd.config.Super
+	13, // 23: cuttlefish.cvd.config.Disk.disk_artifacts:type_name -> cuttlefish.cvd.config.DiskArtifacts
+	19, // 24: cuttlefish.cvd.config.Media.devices:type_name -> cuttlefish.cvd.config.MediaDevice
 	20, // 25: cuttlefish.cvd.config.MediaDevice.v4l2_emulated_camera_mplane:type_name -> cuttlefish.cvd.config.V4l2EmulatedCameraMplane
 	21, // 26: cuttlefish.cvd.config.MediaDevice.v4l2_proxy:type_name -> cuttlefish.cvd.config.V4l2Proxy
 	22, // 27: cuttlefish.cvd.config.MediaDevice.v4l2_stream_proxy:type_name -> cuttlefish.cvd.config.V4l2StreamProxy
@@ -2472,8 +2491,8 @@ func file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_init() {
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[12].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[13].OneofWrappers = []any{}
 	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[14].OneofWrappers = []any{}
-	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[16].OneofWrappers = []any{
-		(*MediaDevice_V4L2EmulatedCameraSplane)(nil),
+	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[15].OneofWrappers = []any{}
+	file_cuttlefish_host_commands_cvd_cli_parser_load_config_proto_msgTypes[17].OneofWrappers = []any{
 		(*MediaDevice_V4L2EmulatedCameraMplane)(nil),
 		(*MediaDevice_V4L2Proxy)(nil),
 		(*MediaDevice_V4L2StreamProxy)(nil),

@@ -22,62 +22,56 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/io/copy.h"
-#include "cuttlefish/io/filesystem.h"
-#include "cuttlefish/io/in_memory.h"
+#include "cuttlefish/io/in_memory_fs.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/io/string.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 namespace {
 
 TEST(ChrootTest, CreateFileOutsideChroot) {
-  std::unique_ptr<ReadWriteFilesystem> real_filesystem = InMemoryFilesystem();
-  ASSERT_NE(real_filesystem.get(), nullptr);
+  InMemoryFilesystem base_filesystem;
 
-  Result<std::unique_ptr<ReaderWriterSeeker>> file_a =
-      real_filesystem->CreateFile("/my_dir/file_a");
-  ASSERT_THAT(file_a, IsOk());
-  ASSERT_THAT(Copy(*InMemoryIo("data"), **file_a), IsOk());
+  std::unique_ptr<ReaderWriterSeeker> file_a =
+      CF_ASSERT(base_filesystem.CreateFile("/my_dir/file_a"));
+  ASSERT_THAT(Copy(OwningInMemoryIo("data"), *file_a), IsOk());
 
-  ChrootReadWriteFilesystem chroot(*real_filesystem, "/my_dir");
-  Result<std::unique_ptr<ReaderWriterSeeker>> chroot_a =
-      chroot.OpenReadWrite("/file_a");
-  ASSERT_THAT(chroot_a, IsOk());
-  ASSERT_THAT(ReadToString(**chroot_a), IsOkAndValue("data"));
+  ChrootReadWriteFilesystem chroot(base_filesystem, "/my_dir");
+  std::unique_ptr<ReaderWriterSeeker> chroot_a =
+      CF_ASSERT(chroot.OpenReadWrite("/file_a"));
+
+  ASSERT_THAT(ReadToString(*chroot_a), IsOkAndValue("data"));
 }
 
 TEST(ChrootTest, CreateFileInsideChroot) {
-  std::unique_ptr<ReadWriteFilesystem> real_filesystem = InMemoryFilesystem();
-  ASSERT_NE(real_filesystem.get(), nullptr);
+  InMemoryFilesystem base_filesystem;
 
-  ChrootReadWriteFilesystem chroot(*real_filesystem, "/my_dir");
-  Result<std::unique_ptr<ReaderWriterSeeker>> chroot_b =
-      chroot.CreateFile("/file_b");
-  ASSERT_THAT(Copy(*InMemoryIo("data"), **chroot_b), IsOk());
-  ASSERT_THAT(chroot_b, IsOk());
+  ChrootReadWriteFilesystem chroot(base_filesystem, "/my_dir");
+  std::unique_ptr<ReaderWriterSeeker> chroot_b =
+      CF_ASSERT(chroot.CreateFile("/file_b"));
+  ASSERT_THAT(Copy(OwningInMemoryIo("data"), *chroot_b), IsOk());
 
-  Result<std::unique_ptr<ReaderWriterSeeker>> file_b =
-      real_filesystem->OpenReadWrite("/my_dir/file_b");
-  ASSERT_THAT(file_b, IsOk());
-  ASSERT_THAT(ReadToString(**file_b), IsOkAndValue("data"));
+  std::unique_ptr<ReaderWriterSeeker> file_b =
+      CF_ASSERT(base_filesystem.OpenReadWrite("/my_dir/file_b"));
+
+  ASSERT_THAT(ReadToString(*file_b), IsOkAndValue("data"));
 }
 
 TEST(ChrootTest, PathsRestrainedToPrefix) {
-  std::unique_ptr<ReadWriteFilesystem> real_filesystem = InMemoryFilesystem();
-  ASSERT_NE(real_filesystem.get(), nullptr);
+  InMemoryFilesystem base_filesystem;
 
-  Result<std::unique_ptr<ReaderWriterSeeker>> file_a =
-      real_filesystem->CreateFile("/my_dir/file_a");
-  ASSERT_THAT(file_a, IsOk());
-  ASSERT_THAT(Copy(*InMemoryIo("data"), **file_a), IsOk());
+  std::unique_ptr<ReaderWriterSeeker> file_a =
+      CF_ASSERT(base_filesystem.CreateFile("/my_dir/file_a"));
+  ASSERT_THAT(Copy(OwningInMemoryIo("data"), *file_a), IsOk());
 
-  ChrootReadWriteFilesystem chroot(*real_filesystem, "/my_dir");
-  Result<std::unique_ptr<ReaderWriterSeeker>> chroot_a =
-      chroot.OpenReadWrite("/../../.././file_a");
-  ASSERT_THAT(chroot_a, IsOk());
-  ASSERT_THAT(ReadToString(**chroot_a), IsOkAndValue("data"));
+  ChrootReadWriteFilesystem chroot(base_filesystem, "/my_dir");
+  std::unique_ptr<ReaderWriterSeeker> chroot_a =
+      CF_ASSERT(chroot.OpenReadWrite("/../../.././file_a"));
+
+  ASSERT_THAT(ReadToString(*chroot_a), IsOkAndValue("data"));
 }
 
 }  // namespace

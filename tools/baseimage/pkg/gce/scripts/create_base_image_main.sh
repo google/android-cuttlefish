@@ -26,8 +26,12 @@ sudo apt-get upgrade -y
 # Avoids blocking "Default mirror not found" popup prompt when pbuilder is installed.
 echo "pbuilder        pbuilder/mirrorsite     string  https://deb.debian.org/debian" | sudo debconf-set-selections
 
-kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -l | grep '^ii' | \
-  awk '{print $2}' | grep '^linux-image-[0-9]' | head -n1 | sed 's/linux-image-//')
+query_kmodver() {
+  sudo chroot /mnt/image/ /usr/bin/dpkg -l | grep '^ii' | \
+    awk '{print $2}' | grep '^linux-image-[0-9]' | sort -V | tail -n1 | sed 's/linux-image-//'
+}
+
+kmodver_begin=$(query_kmodver)
 echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
 
 # Make sure we don't update the kernel image or headers during this process
@@ -91,6 +95,16 @@ sudo cp install_nvidia.sh /mnt/image/
 sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh
 sudo rm /mnt/image/install_nvidia.sh
 
+# GPU support for containers.
+sudo chroot /mnt/image /usr/bin/apt install -y gpg
+sudo chroot /mnt/image /usr/bin/wget -qO- https://nvidia.github.io/libnvidia-container/gpgkey \
+  | sudo chroot /mnt/image /usr/bin/gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+sudo tee /mnt/image/etc/apt/sources.list.d/nvidia-container-toolkit.list >/dev/null <<'EOF'
+deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/deb/$(ARCH) /
+EOF
+sudo chroot /mnt/image /usr/bin/apt update
+sudo chroot /mnt/image /usr/bin/apt install -y nvidia-container-toolkit
+
 # Vulkan loader
 sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1
 
@@ -108,8 +122,36 @@ sudo tee /mnt/image/etc/sysctl.d/80-nsjail.conf >/dev/null <<EOF
 kernel.unprivileged_userns_clone=1
 EOF
 
-kmodver_end=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
-  cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
+# Problem: On N4D (AMD Zen 5) VMs, Linux 6.12 (6.12.49 and later, as in
+# Debian 13) mitigates SRSO (CVE-2023-20569) with an IBPB on every VMEXIT,
+# which makes nested Cuttlefish boots significantly slower. Linux 6.1
+# (Debian 12) reports these CPUs as not affected. GCE does not expose the
+# cheaper BpSpecReduce mitigation to N4D guests.
+# Workaround: Disable the SRSO mitigation on images with Linux 6.12 or newer.
+# This assumes each host serves a single user or test; hosts shared by
+# different users or tests (e.g. bare metal) should delete the drop-in, run
+# update-grub and reboot (or do this while building a derived image).
+# Trade-offs and measurements: b/578987884.
+# TODO(b/578987884): Remove once GCE exposes BpSpecReduce (CPUID 0x80000021
+# EAX[31]) to N4D guests, so that the kernel selects "Mitigation: Reduced
+# Speculation" instead.
+if [[ "${arch}" == "amd64" ]] && dpkg --compare-versions "${kmodver_begin}" ge 6.12; then
+  sudo tee /mnt/image/etc/default/grub.d/90_cuttlefish_srso.cfg >/dev/null <<'EOF'
+# Added by Cuttlefish tools/baseimage to disable the SRSO mitigation; see
+# b/578987884. Hosts shared by different users or tests need it: delete
+# this file, run update-grub and reboot.
+GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT spec_rstack_overflow=off"
+EOF
+  sudo chroot /mnt/image /usr/sbin/update-grub
+  if ! sudo grep -q 'spec_rstack_overflow=off' /mnt/image/boot/grub/grub.cfg; then
+    echo "spec_rstack_overflow=off is missing from /boot/grub/grub.cfg"
+    exit 1
+  fi
+else
+  echo "Skipping the SRSO drop-in (arch ${arch}, kernel ${kmodver_begin})"
+fi
+
+kmodver_end=$(query_kmodver)
 echo "IMAGE ENDS WITH KERNEL: ${kmodver_end}"
 
 if [ "${kmodver_begin}" != "${kmodver_end}" ]; then

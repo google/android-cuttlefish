@@ -219,16 +219,20 @@ std::string VhostUserInputBinary() {
   return HostBinaryPath("cf_vhost_user_input");
 }
 
-std::string VhostUserMediaEmulatedCameraSPlaneBinary() {
-  return HostBinaryPath("vhu_media_emulated_camera_splane");
-}
-
 std::string VhostUserMediaEmulatedCameraMPlaneBinary() {
   return HostBinaryPath("vhu_media_emulated_camera_mplane");
 }
 
+std::string VhostUserMediaEmulatedCameraMPlaneExternalBinary() {
+  return HostBinaryPath("vhu_media_emulated_camera_mplane_external");
+}
+
 std::string VhostUserMediaV4l2StreamProxyBinary() {
   return HostBinaryPath("vhu_media_v4l2_stream_proxy");
+}
+
+std::string VirtualTunerDaemonBinary() {
+  return HostBinaryPath("virtual_tuner_daemon");
 }
 
 }  // namespace cuttlefish
