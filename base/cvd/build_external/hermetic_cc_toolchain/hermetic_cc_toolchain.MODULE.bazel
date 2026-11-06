@@ -1,0 +1,8 @@
+# hermetic_cc_toolchain fails the fetch on hosts outside its Zig release
+# table, and the globally registered zig toolchains drag it into every cc
+# build. Make the repo inert here rather than bump Zig under the musl work.
+single_version_override(
+    module_name = "hermetic_cc_toolchain",
+    patch_strip = 1,
+    patches = ["@//build_external/hermetic_cc_toolchain:unsupported_host.patch"],
+)

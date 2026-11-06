@@ -1,0 +1,42 @@
+diff --git a/toolchain/defs.bzl b/toolchain/defs.bzl
+index 602a42d..8690a09 100644
+--- a/toolchain/defs.bzl
++++ b/toolchain/defs.bzl
+@@ -60,6 +60,26 @@ are. Thus we need a bit of your collaboration to get to the bottom of it.
+ After commenting on the issue, `rm -fr {cache_prefix}` and re-run your command.
+ """
+ 
++_unsupported_host_build = """
++package(
++    default_visibility = ["//visibility:public"],
++)
++
++constraint_setting(
++    name = "unsupported_host_setting",
++)
++
++constraint_value(
++    name = "exec_os",
++    constraint_setting = ":unsupported_host_setting",
++)
++
++alias(
++    name = "exec_cpu",
++    actual = "@platforms//:incompatible",
++)
++"""
++
+ def toolchains(
+         version = VERSION,
+         url_formats = [],
+@@ -147,6 +167,10 @@ def _zig_repository_impl(repository_ctx):
+     host_platform = "{}-{}".format(host_os, host_arch)
+     exec_platform = "{}-{}".format(exec_os, exec_arch)
+ 
++    if host_platform not in repository_ctx.attr.host_platform_sha256:
++        repository_ctx.file("BUILD", _unsupported_host_build)
++        return
++
+     zig_sha256 = repository_ctx.attr.host_platform_sha256[host_platform]
+     zig_ext = repository_ctx.attr.host_platform_ext[host_platform]
+     format_vars = {
