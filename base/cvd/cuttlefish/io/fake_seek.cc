@@ -27,7 +27,7 @@ namespace cuttlefish {
 ReaderFakeSeeker::ReaderFakeSeeker(uint64_t length)
     : seek_pos_(0), length_(length) {}
 
-Result<uint64_t> ReaderFakeSeeker::Read(void* buf, uint64_t count) {
+Result<uint64_t, int> ReaderFakeSeeker::Read(void* buf, uint64_t count) {
   uint64_t data_read = CF_EXPECT(PRead(buf, count, seek_pos_));
   seek_pos_ += data_read;
   return data_read;

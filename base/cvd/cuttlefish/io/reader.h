@@ -27,7 +27,7 @@ class Reader : public virtual IoVisitable {
   virtual ~Reader() = default;
 
   // Has the semantics of read(2)
-  virtual Result<uint64_t> Read(void* buf, uint64_t count) = 0;
+  virtual Result<uint64_t, int> Read(void* buf, uint64_t count) = 0;
 };
 
 }  // namespace cuttlefish

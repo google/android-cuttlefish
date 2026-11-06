@@ -40,8 +40,8 @@ class ConcatReaderSeeker : public ReaderFakeSeeker {
 
   Result<void> Visit(IoVisitor&) override;
 
-  Result<uint64_t> PRead(void* buf, uint64_t count,
-                         uint64_t offset) const override;
+  Result<uint64_t, int> PRead(void* buf, uint64_t count,
+                              uint64_t offset) const override;
 
  private:
   explicit ConcatReaderSeeker(

@@ -26,25 +26,25 @@
 
 namespace cuttlefish {
 
-Result<void> ReadExact(Reader&, char* buf, size_t size);
+Result<void, int> ReadExact(Reader&, char* buf, size_t size);
 
 template <typename T>
-Result<T> ReadExactBinary(Reader& reader) {
+Result<T, int> ReadExactBinary(Reader& reader) {
   T data;
   char* const data_char = reinterpret_cast<char*>(&data);
   CF_EXPECT(ReadExact(reader, data_char, sizeof(data)));
   return data;
 }
 
-Result<void> PReadExact(const ReaderSeeker&, char* buf, size_t size,
-                        uint64_t offset);
+Result<void, int> PReadExact(const ReaderSeeker&, char* buf, size_t size,
+                             uint64_t offset);
 
 // Similar to ReadExact, but returns false instead of an error if zero bytes are
 // read because of EOF. A partial read is still an error.
-Result<bool> ReadExactOrEof(Reader&, char* buf, size_t size);
+Result<bool, int> ReadExactOrEof(Reader&, char* buf, size_t size);
 
 template <typename T>
-Result<T> PReadExactBinary(const ReaderSeeker& reader, uint64_t offset) {
+Result<T, int> PReadExactBinary(const ReaderSeeker& reader, uint64_t offset) {
   T data;
   char* const data_char = reinterpret_cast<char*>(&data);
   CF_EXPECT(PReadExact(reader, data_char, sizeof(data), offset));
@@ -52,7 +52,7 @@ Result<T> PReadExactBinary(const ReaderSeeker& reader, uint64_t offset) {
 }
 
 template <typename T>
-Result<std::optional<T>> ReadExactBinaryOrEof(Reader& reader) {
+Result<std::optional<T>, int> ReadExactBinaryOrEof(Reader& reader) {
   T data;
   char* data_char = reinterpret_cast<char*>(&data);
   if (!CF_EXPECT(ReadExactOrEof(reader, data_char, sizeof(data)))) {

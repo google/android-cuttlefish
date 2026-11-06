@@ -42,8 +42,8 @@ class ReadFromVector : public ReaderFakeSeeker {
     return {};
   }
 
-  Result<uint64_t> PRead(void* buf, uint64_t count,
-                         uint64_t offset) const override {
+  Result<uint64_t, int> PRead(void* buf, uint64_t count,
+                              uint64_t offset) const override {
     offset = std::min<uint64_t>(data_.size(), offset);
     if (offset + count >= data_.size()) {
       count = data_.size() - offset;
