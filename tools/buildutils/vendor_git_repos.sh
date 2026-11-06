@@ -35,10 +35,13 @@ readonly ATTEMPTS="${VENDOR_ATTEMPTS:-3}"
 cd "${CVD_DIR}"
 
 # Every `name = "..."` that appears inside a `git_repository(...)` block.
-shopt -s globstar nullglob
-mapfile -t repos < <(
-  sed -n '/^git_repository(/,/^)/{s/^ *name = "\([^"]*\)".*/\1/p}' \
-    MODULE.bazel build_external/**/*.MODULE.bazel | sort -u
+repos=()
+while IFS= read -r repo; do
+  repos+=("${repo}")
+done < <(
+  find MODULE.bazel build_external -name '*.MODULE.bazel' -print0 \
+    | xargs -0 sed -n '/^git_repository(/,/^)/{s/^ *name = "\([^"]*\)".*/\1/p;}' \
+    | sort -u
 )
 if [[ ${#repos[@]} -eq 0 ]]; then
   >&2 echo "No git_repository rules found under ${CVD_DIR}"
