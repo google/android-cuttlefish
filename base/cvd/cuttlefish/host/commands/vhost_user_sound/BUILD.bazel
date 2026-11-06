@@ -1,0 +1,18 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@vhost_user_sound_crates//:defs.bzl", "aliases", "all_crate_deps")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+rust_binary(
+    name = "cf_vhost_user_sound",
+    srcs = [
+        "src/convert.rs",
+        "src/main.rs",
+        "src/virtio_snd.rs",
+    ],
+    aliases = aliases(),
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    deps = all_crate_deps(normal = True),
+)
