@@ -26,7 +26,6 @@
 #include "cuttlefish/host/frontend/webrtc/libdevice/connection_observer.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/lights_observer.h"
 #include "cuttlefish/host/frontend/webrtc/sensors_handler.h"
-#include "cuttlefish/host/libs/confui/host_virtual_input.h"
 #include "cuttlefish/host/libs/input_connector/input_connector.h"
 
 namespace cuttlefish {
