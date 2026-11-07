@@ -1,3 +1,9 @@
+cuttlefish-common (1.58.1) unstable; urgency=medium
+
+  * run_cvd: Use offset index for touchpad capture server sockets by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3545
+
+ -- Ram Muthiah <rammuthiah@google.com>  Sat, 07 Nov 2026 19:50:00 +0000
+
 cuttlefish-common (1.58.0) unstable; urgency=medium
 
   * Fill in the 1.57.0 changelog by @Databean in https://github.com/google/android-cuttlefish/pull/3116
