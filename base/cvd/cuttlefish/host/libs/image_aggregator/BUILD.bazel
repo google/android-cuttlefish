@@ -1,6 +1,6 @@
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
-load("//cuttlefish/bazel:rules.bzl", "COPTS", "cf_build_test", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "COPTS", "cf_build_test", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -172,11 +172,27 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:cf_endian",
-        "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
         "//cuttlefish/io:read_exact",
         "//cuttlefish/process:command",
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
+    ],
+)
+
+cf_cc_test(
+    name = "qcow2_test",
+    srcs = ["qcow2_test.cc"],
+    copts = COPTS + [
+        "-Wno-packed-non-pod",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:cf_endian",
+        "//cuttlefish/host/libs/image_aggregator:qcow2",
+        "//cuttlefish/io:write_exact",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@android_system_libbase//:file_logging",
     ],
 )

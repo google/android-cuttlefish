@@ -988,11 +988,27 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         blank_data_image_mb_values.ForIndex(instance_index));
     instance.set_gdb_port(gdb_port_vec[instance_index]);
     instance.set_fail_fast(fail_fast_vec[instance_index]);
-    if (vhost_user_block_vec[instance_index]) {
-      CF_EXPECT_EQ(tmp_config_obj.vm_manager(), VmmMode::kCrosvm,
-                   "vhost-user block only supported on crosvm");
+    bool vhost_user_block = vhost_user_block_vec[instance_index];
+    if (vhost_user_block) {
+      CF_EXPECT(
+          VmManagerIsCrosvm(tmp_config_obj) || VmManagerIsQemu(tmp_config_obj),
+          "vhost-user block only supported on crosvm and qemu");
+      const std::string& crosvm_bin = crosvm_binary_vec[instance_index];
+      const bool crosvm_usable = !crosvm_bin.empty() &&
+                                 !DirectoryExists(crosvm_bin) &&
+                                 CanAccess(crosvm_bin, X_OK);
+      if (VmManagerIsQemu(tmp_config_obj) && !crosvm_usable) {
+        CF_EXPECTF(
+            gflags::GetCommandLineFlagInfoOrDie("vhost_user_block").is_default,
+            "--vhost_user_block=true requires an executable crosvm binary at "
+            "'{}'",
+            crosvm_bin);
+        LOG(WARNING) << "crosvm binary unavailable at '" << crosvm_bin
+                     << "'; falling back to native QEMU virtio-blk";
+        vhost_user_block = false;
+      }
     }
-    instance.set_vhost_user_block(vhost_user_block_vec[instance_index]);
+    instance.set_vhost_user_block(vhost_user_block);
 
     std::optional<std::vector<CuttlefishConfig::DisplayConfig>>
         binding_displays_configs;
@@ -1296,8 +1312,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
           "persistent_composite.img";
 #else
       const std::string persistent_composite_img_base =
-          VmManagerIsQemu(tmp_config_obj) ? "persistent_composite_overlay.img"
-                                          : "persistent_composite.img";
+          (VmManagerIsQemu(tmp_config_obj) && !vhost_user_block)
+              ? "persistent_composite_overlay.img"
+              : "persistent_composite.img";
 #endif
       auto path =
           const_instance.PerInstancePath(persistent_composite_img_base.data());
@@ -1308,7 +1325,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     bool sdcard = use_sdcard_vec[instance_index];
     if (sdcard) {
-      if (VmManagerIsQemu(tmp_config_obj)) {
+      if (VmManagerIsQemu(tmp_config_obj) && !vhost_user_block) {
         virtual_disk_paths.push_back(const_instance.sdcard_overlay_path());
       } else {
         virtual_disk_paths.push_back(const_instance.sdcard_path());
@@ -1511,6 +1528,15 @@ Result<void> SetDefaultFlagsForCrosvm(
   return {};
 }
 
+namespace {
+
+void SetDefaultFlagsForQemu() {
+  SetCommandLineOptionWithMode("vhost_user_block", "true",
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+}
+
+}  // namespace
+
 void SetDefaultFlagsForGem5() {
   // TODO: Add support for gem5 gpu models
   SetCommandLineOptionWithMode("gpu_mode",
@@ -1556,6 +1582,7 @@ Result<void> SetFlagDefaultsForVmm(
 
   switch (vm_manager_flag.Mode()) {
     case VmmMode::kQemu:
+      SetDefaultFlagsForQemu();
       break;
     case VmmMode::kCrosvm:
       CF_EXPECT(SetDefaultFlagsForCrosvm(system_image_dir, guest_configs,

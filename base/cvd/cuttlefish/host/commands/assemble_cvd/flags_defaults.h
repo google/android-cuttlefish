@@ -252,8 +252,8 @@
 // Whether to exit when heuristics predict the boot will not complete
 #define CF_DEFAULTS_FAIL_FAST true
 
-// Whether to use the crosvm vhost-user block device implementation with QEMU
-// TODO: b/346855591 - default to `true`
+// Whether to use the crosvm vhost-user block device implementation (enabled by
+// default for QEMU in SetDefaultFlagsForQemu)
 #define CF_DEFAULTS_VHOST_USER_BLOCK false
 
 // Virtual Cpufreq default configuration path
