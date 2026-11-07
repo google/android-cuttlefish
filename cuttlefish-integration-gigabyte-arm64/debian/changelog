@@ -1,3 +1,10 @@
+cuttlefish-integration-gigabyte-arm64 (1.57.14) unstable; urgency=medium
+
+  * gigabyte-ampere-cuttlefish-installer: Retry snapshot apt updates and installs in preseed by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3529
+  * Configure apt retries and disable HTTP/HTTPS pipelining for ARM hosts by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3539
+
+ -- Ram Muthiah <rammuthiah@google.com>  Sat, 07 Nov 2026 19:55:00 +0000
+
 cuttlefish-integration-gigabyte-arm64 (1.57.13) unstable; urgency=medium
 
   * N/A
