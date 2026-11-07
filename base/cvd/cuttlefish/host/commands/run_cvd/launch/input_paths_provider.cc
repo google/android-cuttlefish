@@ -328,9 +328,9 @@ class VhostInputDevices : public CommandSource, public InputPathsProvider {
     }
     touchpad_sockets_.reserve(instance_.touchpad_configs().size());
     for (int i = 0; i < instance_.touchpad_configs().size(); ++i) {
-      int idx = touchscreen_sockets_.size() + i;
+      const int idx = touchscreen_sockets_.size() + i;
       touchpad_sockets_.emplace_back(
-          CF_EXPECTF(NewDeviceSockets(instance_.touch_capture_server_path(i),
+          CF_EXPECTF(NewDeviceSockets(instance_.touch_capture_server_path(idx),
                                       instance_.touch_events_server_path(idx),
                                       instance_.touch_socket_path(idx)),
                      "Failed to setup sockets for touchpad {}", i));
