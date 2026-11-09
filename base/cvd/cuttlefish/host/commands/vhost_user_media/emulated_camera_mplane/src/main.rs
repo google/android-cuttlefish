@@ -19,7 +19,7 @@ mod userptr;
 use std::path::PathBuf;
 
 use clap::Parser;
-use emulated_camera::LensFacing;
+use emulated_camera::{FrameSource, LensFacing};
 use thiserror::Error;
 
 use crate::userptr::UserPtrHandler;
@@ -89,6 +89,7 @@ fn main() -> Result<()> {
         &config.socket_path,
         CARD_NAME,
         config.lens_facing,
+        FrameSource::EmulatedScene,
         |_mapper, guest_mem| UserPtrHandler::new(guest_mem),
     )?;
     Ok(())

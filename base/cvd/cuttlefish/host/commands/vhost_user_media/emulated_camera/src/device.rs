@@ -21,6 +21,7 @@ use std::sync::{Arc, Mutex};
 use crate::capture_channel::CaptureChannel;
 use crate::format::Yuv420m;
 use crate::memory::{BufferMemoryHandler, QbufRequest, QueuedBuffer};
+use crate::emulated_scene::EmulatedScene;
 use crate::pattern::FramePattern;
 use crate::pattern::julia_set::JuliaSet;
 use crate::pattern::pulse::Pulse;
@@ -185,6 +186,29 @@ impl CameraControls {
     }
 }
 
+static EMULATED_SCENE: EmulatedScene = EmulatedScene {
+    hour: EmulatedScene::DEFAULT_HOUR,
+};
+
+/// What the camera renders into capture buffers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FrameSource {
+    /// Basic test patterns.
+    TestPatterns,
+    /// Emulated physical scene.
+    EmulatedScene,
+}
+
+impl FrameSource {
+    /// Frame generator for this source given the current controls.
+    pub(crate) fn generator(self, controls: &CameraControls) -> &'static dyn FramePattern {
+        match self {
+            FrameSource::TestPatterns => controls.test_pattern.generator(),
+            FrameSource::EmulatedScene => &EMULATED_SCENE,
+        }
+    }
+}
+
 /// Formats an ASCII name for a `v4l2_query_ext_ctrl` or `v4l2_querymenu` response, NUL-padding
 /// the remainder of the 32-byte array. If `name` is longer than 31 bytes it is truncated and
 /// the last byte is still forced to NUL.
@@ -340,6 +364,8 @@ pub struct EmulatedCamera<Q: VirtioMediaEventQueue, M: BufferMemoryHandler> {
     evt_queue: Arc<Mutex<Q>>,
     /// Camera controls (gain, lens facing, test pattern).
     controls: CameraControls,
+    /// What is rendered into capture buffers.
+    frame_source: FrameSource,
     /// Width of the video.
     width: u32,
     /// Height of the video.
@@ -351,12 +377,18 @@ where
     Q: VirtioMediaEventQueue + Send + 'static,
     M: BufferMemoryHandler,
 {
-    pub fn new(evt_queue: Q, buffer_memory_handler: M, lens_facing: LensFacing) -> Self {
+    pub fn new(
+        evt_queue: Q,
+        buffer_memory_handler: M,
+        lens_facing: LensFacing,
+        frame_source: FrameSource,
+    ) -> Self {
         Self {
             buffer_memory_handler,
             active_session: None,
             evt_queue: Arc::new(Mutex::new(evt_queue)),
             controls: CameraControls::new(lens_facing),
+            frame_source,
             width: WIDTH,
             height: HEIGHT,
         }
@@ -548,9 +580,13 @@ where
             let streaming = Arc::new(Mutex::new(false));
             let (capture_completed_tx, capture_completed_rx) = std::sync::mpsc::channel();
 
-            let channel =
-                CaptureChannel::new(session_id, self.controls.clone(), capture_completed_tx)
-                    .context("Failed to initialize capture channel")?;
+            let channel = CaptureChannel::new(
+                session_id,
+                self.controls.clone(),
+                self.frame_source,
+                capture_completed_tx,
+            )
+            .context("Failed to initialize capture channel")?;
 
             let buffers_clone = Arc::clone(&buffers);
             let streaming_clone = Arc::clone(&streaming);

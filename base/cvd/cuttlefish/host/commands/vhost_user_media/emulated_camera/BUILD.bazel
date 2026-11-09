@@ -8,6 +8,7 @@ rust_library(
     srcs = [
         "src/capture_channel.rs",
         "src/device.rs",
+        "src/emulated_scene.rs",
         "src/format.rs",
         "src/lib.rs",
         "src/memory.rs",
