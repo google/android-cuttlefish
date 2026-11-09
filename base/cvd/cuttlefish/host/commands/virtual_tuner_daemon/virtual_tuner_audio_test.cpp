@@ -20,12 +20,14 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <numbers>
 #include <span>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -336,6 +338,41 @@ TEST_F(PcmStreamServerTest, StopIsIdempotent) {
   server.Stop();
   server.Stop();
   EXPECT_FALSE(server.IsRunning());
+}
+
+TEST_F(PcmStreamServerTest, StopUnblocksStalledClientWithFullSendBuffer) {
+  TunerState state;
+  state.SetTune(RadioBand::FM, 88500000, 0);
+
+  PcmStreamServer server(state, CreateServerSocket());
+  ASSERT_TRUE(server.Start().has_value());
+
+  SharedFD client =
+      SharedFD::SocketLocalClient(socket_path_, false, SOCK_STREAM);
+  ASSERT_TRUE(client->IsOpen()) << client->StrError();
+
+  // Never read from `client` so the kernel socket send buffer (~212 KB, ~13
+  // chunks) fills up and `StreamClient` blocks waiting for writability.
+  std::this_thread::sleep_for(std::chrono::milliseconds(1300));
+
+  const auto stop_start = std::chrono::steady_clock::now();
+  server.Stop();
+  const auto stop_elapsed = std::chrono::steady_clock::now() - stop_start;
+
+  EXPECT_FALSE(server.IsRunning());
+  EXPECT_LT(stop_elapsed, std::chrono::milliseconds(500));
+  client->Close();
+}
+
+TEST_F(PcmStreamServerTest, RepeatedStartStopWithoutClients) {
+  TunerState state;
+  PcmStreamServer server(state, CreateServerSocket());
+  for (int i = 0; i < 10; ++i) {
+    ASSERT_TRUE(server.Start().has_value()) << "iteration " << i;
+    EXPECT_TRUE(server.IsRunning());
+    server.Stop();
+    EXPECT_FALSE(server.IsRunning());
+  }
 }
 
 }  // namespace
