@@ -18,13 +18,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"path/filepath"
+	"slices"
 	"testing"
 )
 
 type hostManager struct {
 	CuttlefishContainerManager
-	containers map[string]ContainerListEntry
-	failCreate bool
+	containers  map[string]ContainerListEntry
+	failCreate  bool
+	execResults map[string]execResult
+}
+
+type execResult struct {
+	wantCmd []string
+	fail    bool
 }
 
 func (h hostManager) ImageExists(_ context.Context, _ string) (bool, error) {
@@ -41,7 +50,22 @@ func (h hostManager) CreateAndStartContainer(
 	if h.failCreate {
 		return "", errors.New("failed to create container")
 	}
-	return "", nil
+	return "created_container_id", nil
+}
+
+func (h hostManager) ExecOnContainer(
+	_ context.Context, ctr string, cmd []string, _ io.Reader, _, _ io.Writer) error {
+	e := h.execResults[ctr]
+	if e.fail {
+		return errors.New("exec failed")
+	}
+	if e.wantCmd == nil {
+		return nil
+	}
+	if !slices.Equal(e.wantCmd, cmd) {
+		return errors.New("exec failed")
+	}
+	return nil
 }
 
 func (h hostManager) StopAndRemoveContainer(_ context.Context, ctr string) error {
@@ -148,6 +172,89 @@ func TestDeleteToolingHost(t *testing.T) {
 			if gotErr := err != nil; gotErr != tc.wantErr {
 				t.Errorf("DeleteToolingHost(%+v) error = %v; want error %v",
 					tc.ccm, err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestExecFetchCmdOnDisposableHost(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	targetDir := t.TempDir()
+
+	tests := []struct {
+		name    string
+		ccm     hostManager
+		args    []string
+		wantErr bool
+	}{
+		{
+			name: "success",
+			ccm: hostManager{
+				containers: map[string]ContainerListEntry{"created_container_id": {}},
+				execResults: map[string]execResult{
+					"created_container_id": {
+						wantCmd: []string{
+							"cvd",
+							"fetch",
+							"--default_build=aosp-main/aosp_cf_x86_64_phone-userdebug",
+							"--target_directory=" + targetDir,
+						},
+					},
+				},
+			},
+			args: []string{
+				"fetch",
+				"--default_build=aosp-main/aosp_cf_x86_64_phone-userdebug",
+				"--target_directory=" + targetDir,
+			},
+		},
+		{
+			name: "missing target directory",
+			ccm: hostManager{
+				containers: map[string]ContainerListEntry{"created_container_id": {}},
+			},
+			args: []string{
+				"fetch",
+				"--default_build=aosp-main/aosp_cf_x86_64_phone-userdebug",
+			},
+			wantErr: true,
+		},
+		{
+			name: "nonexistent target directory",
+			ccm: hostManager{
+				containers: map[string]ContainerListEntry{"created_container_id": {}},
+			},
+			args: []string{
+				"fetch",
+				"--default_build=aosp-main/aosp_cf_x86_64_phone-userdebug",
+				"--target_directory=" + filepath.Join(targetDir, "missing"),
+			},
+			wantErr: true,
+		},
+		{
+			name: "fetch failure",
+			ccm: hostManager{
+				containers:  map[string]ContainerListEntry{"created_container_id": {}},
+				execResults: map[string]execResult{"created_container_id": {fail: true}},
+			},
+			args: []string{
+				"fetch",
+				"--default_build=aosp-main/aosp_cf_x86_64_phone-userdebug",
+				"--target_directory=" + targetDir,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cvdArgs, err := ParseCvdArgs(tc.args)
+			if err != nil {
+				t.Fatalf("ParseCvdArgs(%q) failed: %v", tc.args, err)
+			}
+			err = ExecFetchCmdOnDisposableHost(tc.ccm, cvdArgs)
+			if gotErr := err != nil; gotErr != tc.wantErr {
+				t.Errorf("ExecFetchCmdOnDisposableHost(%+v, %q) error = %v; want error %v",
+					tc.ccm, tc.args, err, tc.wantErr)
 			}
 		})
 	}
