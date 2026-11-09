@@ -27,13 +27,13 @@
 #include <ostream>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <utility>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
@@ -71,7 +71,7 @@ for PART_NUM in $PART_LIST; do
 done;
 )";
 
-void WritePausedEntrypoint(std::string_view entrypoint,
+void WritePausedEntrypoint(absl::string_view entrypoint,
                            const CuttlefishConfig::InstanceSpecific& instance,
                            std::ostream& env) {
   if (instance.pause_in_bootloader()) {

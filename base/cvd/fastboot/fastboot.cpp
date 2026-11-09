@@ -69,6 +69,7 @@
 #include <sparse/sparse.h>
 #include <zip.h>
 
+#include "absl/strings/string_view.h"
 #include "bootimg_utils.h"
 #include "constants.h"
 #include "diagnose_usb.h"
@@ -1515,7 +1516,7 @@ static void do_fetch(const std::string& partition, const std::string& slot_overr
 // to the new image to flash, and return value is the real partition name to flash.
 static std::string repack_ramdisk(const char* pname, struct fastboot_buffer* buf,
                                   fastboot::IFastBootDriver* fb) {
-    std::string_view pname_sv{pname};
+    absl::string_view pname_sv{pname};
     struct fastboot_buffer dtb_buf = {.sz = 0, .fd = unique_fd(-1)};
 
     if (!android::base::StartsWith(pname_sv, "vendor_boot:") &&

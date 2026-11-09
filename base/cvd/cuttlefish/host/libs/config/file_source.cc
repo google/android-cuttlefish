@@ -20,10 +20,11 @@
 #include <string_view>
 
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
-FileSource SourceStringToEnum(std::string_view source) {
+FileSource SourceStringToEnum(absl::string_view source) {
   if (absl::EqualsIgnoreCase(source, "default_build")) {
     return FileSource::DEFAULT_BUILD;
   } else if (absl::EqualsIgnoreCase(source, "system_build")) {
@@ -53,7 +54,7 @@ FileSource SourceStringToEnum(std::string_view source) {
   }
 }
 
-std::string_view SourceEnumToString(FileSource source) {
+absl::string_view SourceEnumToString(FileSource source) {
   if (source == FileSource::DEFAULT_BUILD) {
     return "default_build";
   } else if (source == FileSource::SYSTEM_BUILD) {

@@ -31,12 +31,12 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <string_view>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 
 #include "allocd/alloc_driver.h"
@@ -50,17 +50,17 @@ namespace cuttlefish {
 
 namespace {
 
-Result<unsigned int> Index(std::string_view ifname) {
+Result<unsigned int> Index(absl::string_view ifname) {
   unsigned int index = if_nametoindex(std::string(ifname).c_str());
   CF_EXPECT(index != 0, "Index: " << ifname);
   return index;
 }
 
-int Prefix(std::string_view textual_netmask) {
+int Prefix(absl::string_view textual_netmask) {
   // Currently, the netmask argument is provided as, e.g., "/24".
   // TODO: Consider passing the number of prefix bits numerically, which
   // would require API changes across all drivers.
-  std::string_view netmask = textual_netmask;
+  absl::string_view netmask = textual_netmask;
   CHECK(absl::ConsumePrefix(&netmask, "/"));
 
   int prefix;
@@ -71,7 +71,7 @@ int Prefix(std::string_view textual_netmask) {
 
 }  // namespace
 
-Result<void> AddTapIface(std::string_view name) {
+Result<void> AddTapIface(absl::string_view name) {
   Fd tunfd = CF_EXPECT(Fd::Open("/dev/net/tun", O_RDWR | O_CLOEXEC),
                        "AddTapIface: open");
 
@@ -95,7 +95,7 @@ Result<void> AddTapIface(std::string_view name) {
   return {};
 }
 
-Result<void> ShutdownIface(std::string_view name) {
+Result<void> ShutdownIface(absl::string_view name) {
   VLOG(0) << "ShutdownIface: " << name;
   auto factory = NetlinkClientFactory::Default();
   std::unique_ptr<NetlinkClient> nl = factory->New(NETLINK_ROUTE);
@@ -109,7 +109,7 @@ Result<void> ShutdownIface(std::string_view name) {
   return {};
 }
 
-Result<void> BringUpIface(std::string_view name) {
+Result<void> BringUpIface(absl::string_view name) {
   VLOG(0) << "BringUpIface: " << name;
   auto factory = NetlinkClientFactory::Default();
   std::unique_ptr<NetlinkClient> nl = factory->New(NETLINK_ROUTE);
@@ -122,8 +122,8 @@ Result<void> BringUpIface(std::string_view name) {
   return {};
 }
 
-Result<void> AddGateway(std::string_view name, std::string_view gateway,
-                        std::string_view netmask) {
+Result<void> AddGateway(absl::string_view name, absl::string_view gateway,
+                        absl::string_view netmask) {
   VLOG(0) << "AddGateway: " << name << ", " << gateway << netmask;
   auto index = Index(name);
   PCHECK(index.has_value()) << "Index: " << name;
@@ -141,8 +141,8 @@ Result<void> AddGateway(std::string_view name, std::string_view gateway,
   return {};
 }
 
-Result<void> DestroyGateway(std::string_view name, std::string_view gateway,
-                            std::string_view netmask) {
+Result<void> DestroyGateway(absl::string_view name, absl::string_view gateway,
+                            absl::string_view netmask) {
   VLOG(0) << "DestroyGateway: " << name << ", " << gateway << netmask;
   auto index = Index(name);
   if (!index.has_value()) {
@@ -162,8 +162,8 @@ Result<void> DestroyGateway(std::string_view name, std::string_view gateway,
   return {};
 }
 
-Result<void> LinkTapToBridge(std::string_view tap_name,
-                             std::string_view bridge_name) {
+Result<void> LinkTapToBridge(absl::string_view tap_name,
+                             absl::string_view bridge_name) {
   VLOG(0) << "LinkTapToBridge: " << tap_name << ", " << bridge_name;
   auto tap_index = Index(tap_name);
   PCHECK(tap_index.has_value()) << "Index: " << tap_name;
@@ -181,7 +181,7 @@ Result<void> LinkTapToBridge(std::string_view tap_name,
   return {};
 }
 
-Result<void> DeleteIface(std::string_view name) {
+Result<void> DeleteIface(absl::string_view name) {
   VLOG(0) << "DeleteIface: " << name;
   auto index = Index(name);
   if (!index.has_value()) {
@@ -198,7 +198,7 @@ Result<void> DeleteIface(std::string_view name) {
   return {};
 }
 
-Result<bool> BridgeExists(std::string_view name) {
+Result<bool> BridgeExists(absl::string_view name) {
   VLOG(0) << "BridgeExists: " << name;
   auto index = Index(name);
   if (!index.has_value()) {
@@ -209,13 +209,13 @@ Result<bool> BridgeExists(std::string_view name) {
   return true;
 }
 
-Result<bool> BridgeInUse(std::string_view name) {
+Result<bool> BridgeInUse(absl::string_view name) {
   return Execute({"sh", "-c",
                   absl::StrCat("[ $(ip link show master ", name,
                                " | wc -l) -ne 0 ]")}) == 0;
 }
 
-Result<void> CreateBridge(std::string_view name) {
+Result<void> CreateBridge(absl::string_view name) {
   VLOG(0) << "CreateBridge: " << name;
   auto factory = NetlinkClientFactory::Default();
   std::unique_ptr<NetlinkClient> nl = factory->New(NETLINK_ROUTE);
@@ -239,8 +239,8 @@ Result<void> CreateBridge(std::string_view name) {
   return {};
 }
 
-Result<void> IptableConfig(std::string_view iptables_path,
-                           std::string_view network, bool add) {
+Result<void> IptableConfig(absl::string_view iptables_path,
+                           absl::string_view network, bool add) {
   // TODO: Use NETLINK_NETFILTER.
   CF_EXPECT(Execute({std::string(iptables_path), "-t", "nat", add ? "-A" : "-D",
                      "POSTROUTING", "-s", std::string(network), "-j",

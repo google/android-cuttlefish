@@ -19,7 +19,8 @@
 #include <unistd.h>
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -38,7 +39,8 @@ Result<void, int> Symlink(const std::string& target,
   return {};
 }
 
-Result<void, int> Symlink(std::string_view target, std::string_view linkpath) {
+Result<void, int> Symlink(absl::string_view target,
+                          absl::string_view linkpath) {
   CF_EXPECT(Symlink(std::string(target), std::string(linkpath)));
   return {};
 }

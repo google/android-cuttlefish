@@ -19,6 +19,8 @@
 #include <string>
 #include <string_view>
 
+#include "absl/strings/string_view.h"
+
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -36,20 +38,20 @@ enum class GpuMode {
   None,
 };
 
-inline constexpr std::string_view kGpuModeAuto = "auto";
-inline constexpr std::string_view kGpuModeCustom = "custom";
-inline constexpr std::string_view kGpuModeGfxstream = "gfxstream";
-inline constexpr std::string_view kGpuModeGfxstreamGuestAngle =
+inline constexpr absl::string_view kGpuModeAuto = "auto";
+inline constexpr absl::string_view kGpuModeCustom = "custom";
+inline constexpr absl::string_view kGpuModeGfxstream = "gfxstream";
+inline constexpr absl::string_view kGpuModeGfxstreamGuestAngle =
     "gfxstream_guest_angle";
-inline constexpr std::string_view kGpuModeGfxstreamGuestAngleHostLavapipe =
+inline constexpr absl::string_view kGpuModeGfxstreamGuestAngleHostLavapipe =
     "gfxstream_guest_angle_host_lavapipe";
-inline constexpr std::string_view kGpuModeGfxstreamGuestAngleHostSwiftshader =
+inline constexpr absl::string_view kGpuModeGfxstreamGuestAngleHostSwiftshader =
     "gfxstream_guest_angle_host_swiftshader";
-inline constexpr std::string_view kGpuModeVenus = "venus";
-inline constexpr std::string_view kGpuModeGuestLavapipe = "guest_lavapipe";
-inline constexpr std::string_view kGpuModeGuestSwiftshader =
+inline constexpr absl::string_view kGpuModeVenus = "venus";
+inline constexpr absl::string_view kGpuModeGuestLavapipe = "guest_lavapipe";
+inline constexpr absl::string_view kGpuModeGuestSwiftshader =
     "guest_swiftshader";
-inline constexpr std::string_view kGpuModeNone = "none";
+inline constexpr absl::string_view kGpuModeNone = "none";
 
 template <typename Sink>
 void AbslStringify(Sink& sink, GpuMode mode) {
@@ -87,7 +89,7 @@ void AbslStringify(Sink& sink, GpuMode mode) {
   }
 }
 
-Result<GpuMode> GpuModeFromString(std::string_view mode);
+Result<GpuMode> GpuModeFromString(absl::string_view mode);
 std::string GpuModeString(GpuMode mode);
 std::string_view format_as(GpuMode mode);  // For libfmt
 

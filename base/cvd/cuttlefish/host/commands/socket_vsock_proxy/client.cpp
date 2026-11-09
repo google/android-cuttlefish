@@ -17,13 +17,13 @@
 
 #include <chrono>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -43,7 +43,7 @@ SharedFD StartIpv4(const std::string& host, int port,
 
 SharedFD StartIpv6(const std::string& host, int port,
                    std::chrono::seconds timeout) {
-  const std::vector<std::string_view> host_parsed =
+  const std::vector<absl::string_view> host_parsed =
       absl::StrSplit(host, '%', absl::SkipEmpty());
   const auto host_interface_tokens_count = host_parsed.size();
 
@@ -51,8 +51,8 @@ SharedFD StartIpv6(const std::string& host, int port,
       << "Cannot parse passed host " << host
       << " to extract the network interface separated by %";
 
-  std::string_view host_name;
-  std::string_view interface_name;
+  absl::string_view host_name;
+  absl::string_view interface_name;
   if (host_parsed.size() == 2) {
     host_name = host_parsed[0];
     interface_name = host_parsed[1];

@@ -38,6 +38,7 @@ cf_cc_library(
         "//cuttlefish/pretty",
         "//cuttlefish/pretty:struct",
         "//cuttlefish/pretty:vector",
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_core//:liblp",
     ],
 )

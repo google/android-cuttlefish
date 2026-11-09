@@ -14,6 +14,7 @@ cf_cc_library(
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:file_logging",
     ],
 )
@@ -54,6 +55,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/flag_parser",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -82,6 +84,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -204,6 +207,7 @@ cf_cc_library(
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:file_logging",
         "@fmt",
     ],

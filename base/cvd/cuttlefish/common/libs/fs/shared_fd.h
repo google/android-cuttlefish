@@ -44,9 +44,10 @@
 #include <chrono>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/result/result.h"
@@ -142,7 +143,7 @@ class SharedFD {
                                       const std::string& data,
                                       unsigned int flags = 0);
   static Result<std::pair<SharedFD, std::string>> Mkostemp(
-      std::string_view path, int flags = O_CLOEXEC);
+      absl::string_view path, int flags = O_CLOEXEC);
   static int Poll(PollSharedFd* fds, size_t num_fds, int timeout);
   static int Poll(std::vector<PollSharedFd>& fds, int timeout);
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,

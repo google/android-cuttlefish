@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include "absl/strings/string_view.h"
+
 #include "cuttlefish/host/commands/modem_simulator/modem_service.h"
 #include "cuttlefish/host/commands/modem_simulator/network_service.h"
 #include "cuttlefish/host/commands/modem_simulator/sim_service.h"
@@ -76,7 +78,7 @@ class CallService : public ModemService, public std::enable_shared_from_this<Cal
         is_multi_party(false),
         can_present_number(true) {}
 
-    CallStatus(const std::string_view number)
+    CallStatus(const absl::string_view number)
         : call_state(CALL_STATE_INCOMING),
           is_mobile_terminated(true),
           is_international(false),

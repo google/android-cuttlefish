@@ -21,12 +21,12 @@
 #include <optional>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "gflags/gflags.h"
 
 #include "cuttlefish/flag_parser/flag.h"
@@ -67,7 +67,7 @@ static Result<std::vector<int32_t>> ParseInstanceNums(
     return {};
   }
   std::vector<int32_t> instance_nums;
-  std::vector<std::string_view> split_str =
+  std::vector<absl::string_view> split_str =
       absl::StrSplit(instance_nums_str, ',');
   std::set<int32_t> duplication_check_set;
   for (const auto& instance_num_str : split_str) {

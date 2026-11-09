@@ -21,11 +21,11 @@
 
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "fmt/format.h"
 
@@ -135,7 +135,7 @@ std::string InstanceLocksPath() {
   return absl::StrFormat("%s/%s/", CvdDir(), "lock");
 }
 
-Result<std::string> GroupDirFromHome(std::string_view dir) {
+Result<std::string> GroupDirFromHome(absl::string_view dir) {
   std::string per_user_dir = PerUserDir();
   // Just in case it has a / at the end, ignore result
   while (absl::ConsumeSuffix(&dir, "/")) {

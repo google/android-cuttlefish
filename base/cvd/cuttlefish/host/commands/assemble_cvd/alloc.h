@@ -20,12 +20,14 @@
 #include <optional>
 #include <string>
 
+#include "absl/strings/string_view.h"
+
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-constexpr std::string_view kDefaultInterfacePrefix = "cvd";
+constexpr absl::string_view kDefaultInterfacePrefix = "cvd";
 
 struct IfaceData {
   std::string name;

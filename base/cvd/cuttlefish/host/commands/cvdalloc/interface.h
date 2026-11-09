@@ -16,13 +16,14 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
-constexpr std::string_view kCvdallocInterfacePrefix = "cvd-pi";
-constexpr std::string_view kCvdallocEthernetBridgeName = "cvd-pi-ebr";
-constexpr std::string_view kCvdallocWirelessBridgeName = "cvd-pi-wbr";
+constexpr absl::string_view kCvdallocInterfacePrefix = "cvd-pi";
+constexpr absl::string_view kCvdallocEthernetBridgeName = "cvd-pi-ebr";
+constexpr absl::string_view kCvdallocWirelessBridgeName = "cvd-pi-wbr";
 constexpr char kCvdallocMobileIpPrefix[] = "192.168.144";
 constexpr char kCvdallocWirelessIpPrefix[] = "192.168.160";
 constexpr char kCvdallocWirelessApIpPrefix[] = "192.168.176";

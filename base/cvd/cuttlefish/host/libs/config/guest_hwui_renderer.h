@@ -17,7 +17,8 @@
 
 #include <ostream>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -30,6 +31,6 @@ enum class GuestHwuiRenderer {
 };
 std::ostream& operator<<(std::ostream&, GuestHwuiRenderer);
 std::string ToString(GuestHwuiRenderer renderer);
-Result<GuestHwuiRenderer> ParseGuestHwuiRenderer(std::string_view);
+Result<GuestHwuiRenderer> ParseGuestHwuiRenderer(absl::string_view);
 
 }  // namespace cuttlefish

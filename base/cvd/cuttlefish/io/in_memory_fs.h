@@ -22,8 +22,9 @@
 #include <memory>
 #include <shared_mutex>
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/filesystem.h"
 #include "cuttlefish/io/io.h"
@@ -36,17 +37,17 @@ namespace cuttlefish {
 class InMemoryFilesystem : public ReadWriteFilesystem {
  public:
   Result<std::unique_ptr<ReaderSeeker>> OpenReadOnly(
-      std::string_view path) override;
+      absl::string_view path) override;
 
-  Result<uint32_t> FileAttributes(std::string_view path) const override;
+  Result<uint32_t> FileAttributes(absl::string_view path) const override;
 
   Result<std::unique_ptr<ReaderWriterSeeker>> CreateFile(
-      std::string_view path) override;
+      absl::string_view path) override;
 
-  Result<void> DeleteFile(std::string_view path) override;
+  Result<void> DeleteFile(absl::string_view path) override;
 
   Result<std::unique_ptr<ReaderWriterSeeker>> OpenReadWrite(
-      std::string_view path) override;
+      absl::string_view path) override;
 
  private:
   // TODO: schuffelen - add per-file mutexes

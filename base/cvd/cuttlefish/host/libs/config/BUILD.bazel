@@ -39,6 +39,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@fruit",
         "@gflags",
@@ -104,6 +105,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fruit",
         "@jsoncpp",
     ],
@@ -142,6 +144,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@jsoncpp",
         "@protobuf",
@@ -173,6 +176,7 @@ cf_cc_library(
         "//cuttlefish/process:managed_stdio",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -184,6 +188,7 @@ cf_cc_library(
     hdrs = [
         "data_image_policy.h",
     ],
+    deps = ["@abseil-cpp//absl/strings:string_view"],
 )
 
 cf_cc_library(
@@ -197,6 +202,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -214,6 +220,7 @@ cf_cc_library(
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -224,6 +231,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -248,6 +256,7 @@ cf_cc_library(
         "//cuttlefish/pretty:struct",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:file_logging",
     ],
 )
@@ -262,6 +271,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:file_logging",
         "@jsoncpp",
     ],
@@ -278,6 +288,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@abseil-cpp//absl/types:span",
     ],
 )
@@ -288,6 +299,7 @@ cf_cc_library(
     hdrs = ["file_source.h"],
     deps = [
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -302,6 +314,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -312,6 +325,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -331,6 +345,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -356,6 +371,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@gflags",
     ],
 )
@@ -390,6 +406,7 @@ cf_cc_library(
         "//cuttlefish/io:write_exact",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -436,7 +453,9 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result",
         "@abseil-cpp//absl/base:no_destructor",
+        "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -450,6 +469,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -460,6 +480,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -472,6 +493,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:parseint",
     ],
 )

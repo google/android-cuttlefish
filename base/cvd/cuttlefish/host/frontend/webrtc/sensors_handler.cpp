@@ -21,9 +21,9 @@
 #include <mutex>
 #include <sstream>
 #include <string>
-#include <string_view>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/sensors/sensors.h"
 
@@ -42,7 +42,7 @@ SensorsHandler::SensorsHandler(SharedFD sensors_fd)
 SensorsHandler::~SensorsHandler() {}
 
 Result<void> SensorsHandler::SendCommand(uint32_t cmd,
-                                         std::string_view payload) {
+                                         absl::string_view payload) {
   size_t size = payload.size();
   transport::ManagedMessage request = CF_EXPECT(
       transport::CreateMessage(cmd, size),

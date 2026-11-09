@@ -18,9 +18,9 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 
+#include "absl/strings/string_view.h"
 #include "curl/curl.h"
 #include "curl/urlapi.h"
 
@@ -44,7 +44,7 @@ std::optional<std::string> Part(const CURLU* url, CURLUPart part) {
 
 }  // namespace
 
-Result<UrlParts> SplitUrl(std::string_view url) {
+Result<UrlParts> SplitUrl(absl::string_view url) {
   const CurlGlobalInit init_curl;
 
   ManagedCurlUrl handle(curl_url(), curl_url_cleanup);

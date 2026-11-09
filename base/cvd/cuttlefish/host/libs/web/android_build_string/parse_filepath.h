@@ -17,14 +17,15 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 Result<std::pair<std::string, std::optional<std::string>>> ParseFilepath(
-    std::string_view build_string);
+    absl::string_view build_string);
 
 }  // namespace cuttlefish

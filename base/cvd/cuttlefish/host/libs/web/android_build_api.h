@@ -18,9 +18,10 @@
 #include <chrono>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <unordered_set>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
@@ -70,11 +71,11 @@ class AndroidBuildApi : public BuildApi<DeviceBuildString, DeviceBuild> {
     SafeLevel safe_level;
   };
 
-  Result<BuildInfo> GetBuildInfo(std::string_view build_id,
-                                 std::string_view target);
-  Result<bool> BlockUntilTerminalStatus(std::string_view initial_status,
-                                        std::string_view build_id,
-                                        std::string_view target);
+  Result<BuildInfo> GetBuildInfo(absl::string_view build_id,
+                                 absl::string_view target);
+  Result<bool> BlockUntilTerminalStatus(absl::string_view initial_status,
+                                        absl::string_view build_id,
+                                        absl::string_view target);
   Result<std::vector<std::string>> Headers();
 
   Result<std::optional<CandidateBuild>> LatestBuildCandidate(

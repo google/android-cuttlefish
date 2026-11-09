@@ -17,11 +17,11 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 
 #include "cuttlefish/files/directory_exists.h"
@@ -46,7 +46,7 @@ Result<std::unique_ptr<AndroidBuild>> TryDirectory(
   return CF_EXPECT(CombinedAndroidBuild("AndroidDistBuild", std::move(builds)));
 }
 
-bool IsRoot(std::string_view dir) { return dir == "/" || dir.empty(); }
+bool IsRoot(absl::string_view dir) { return dir == "/" || dir.empty(); }
 
 }  // namespace
 

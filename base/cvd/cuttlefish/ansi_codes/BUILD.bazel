@@ -10,6 +10,7 @@ cf_cc_library(
     hdrs = ["ansi_codes.h"],
     deps = [
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -28,5 +29,6 @@ cf_cc_library(
     hdrs = ["terminal_colors.h"],
     deps = [
         "//cuttlefish/ansi_codes",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )

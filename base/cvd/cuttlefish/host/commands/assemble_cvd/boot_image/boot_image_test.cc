@@ -20,9 +20,9 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 
+#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -39,10 +39,10 @@ namespace {
 
 TEST(BootImageTest, AllFieldsSet) {
   static constexpr uint32_t kOsVersion = 123;
-  static constexpr std::string_view kKernelCmdLine = "kernel cmd line";
-  static constexpr std::string_view kKernel = "kernel";
-  static constexpr std::string_view kRamdisk = "ramdisk";
-  static constexpr std::string_view kSignature = "signature";
+  static constexpr absl::string_view kKernelCmdLine = "kernel cmd line";
+  static constexpr absl::string_view kKernel = "kernel";
+  static constexpr absl::string_view kRamdisk = "ramdisk";
+  static constexpr absl::string_view kSignature = "signature";
 
   ConcatReaderSeeker image =
       CF_ASSERT(BootImageBuilder()

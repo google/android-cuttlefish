@@ -20,9 +20,9 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 
 #include "absl/cleanup/cleanup.h"
+#include "absl/strings/string_view.h"
 #include "gtest/gtest.h"
 
 namespace cuttlefish {
@@ -90,7 +90,7 @@ TEST(EnvironmentTest, StringFromEnvCharPtrDefaultFallback) {
 TEST(EnvironmentTest, StringFromEnvStringView) {
   const std::string env_name_str = "TEST_ENV_VAR_STRING_VIEW";
   const std::string env_value = "test_value";
-  std::string_view env_name = env_name_str;
+  absl::string_view env_name = env_name_str;
 
   setenv(env_name_str.c_str(), env_value.c_str(), 1);
   absl::Cleanup cleanup = [&env_name_str]() { unsetenv(env_name_str.c_str()); };
@@ -104,7 +104,7 @@ TEST(EnvironmentTest, StringFromEnvStringViewDefault) {
   const std::string env_name_str = "TEST_ENV_VAR_STRING_VIEW_DEFAULT";
   const std::string env_value = "test_value";
   const std::string def_value = "default_value";
-  std::string_view env_name = env_name_str;
+  absl::string_view env_name = env_name_str;
 
   setenv(env_name_str.c_str(), env_value.c_str(), 1);
   absl::Cleanup cleanup = [&env_name_str]() { unsetenv(env_name_str.c_str()); };
@@ -115,7 +115,7 @@ TEST(EnvironmentTest, StringFromEnvStringViewDefault) {
 TEST(EnvironmentTest, StringFromEnvStringViewDefaultFallback) {
   const std::string env_name_str = "TEST_ENV_VAR_STRING_VIEW_DEFAULT_FALLBACK";
   const std::string def_value = "default_value";
-  std::string_view env_name = env_name_str;
+  absl::string_view env_name = env_name_str;
 
   EXPECT_EQ(StringFromEnv(env_name, def_value), def_value);
 }

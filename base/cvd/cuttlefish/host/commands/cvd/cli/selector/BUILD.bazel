@@ -21,6 +21,7 @@ cf_cc_library(
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -85,6 +86,8 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/selector:selector_constants",
         "//cuttlefish/host/commands/cvd/instances:device_name",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/container:flat_hash_set",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 

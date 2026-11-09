@@ -16,10 +16,11 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
-std::string UrlEscape(std::string_view);
+std::string UrlEscape(absl::string_view);
 
 }  // namespace cuttlefish

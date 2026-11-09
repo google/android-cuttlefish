@@ -19,10 +19,10 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
@@ -33,15 +33,15 @@
 namespace cuttlefish {
 namespace {
 
-constexpr std::string_view kDetectUrl = "metadata.google.internal";
-constexpr std::string_view kDetectHeader = "Metadata-Flavor";
-constexpr std::string_view kExpectedDetectHeaderValue = "Google";
+constexpr absl::string_view kDetectUrl = "metadata.google.internal";
+constexpr absl::string_view kDetectHeader = "Metadata-Flavor";
+constexpr absl::string_view kExpectedDetectHeaderValue = "Google";
 
 // https://docs.cloud.google.com/compute/docs/metadata/predefined-metadata-keys
-constexpr std::string_view kGceMetadataUrlBase =
+constexpr absl::string_view kGceMetadataUrlBase =
     "http://metadata.google.internal/computeMetadata/v1";
-constexpr std::string_view kNumericProjectId = "project/numeric-project-id";
-constexpr std::string_view kZone = "instance/zone";
+constexpr absl::string_view kNumericProjectId = "project/numeric-project-id";
+constexpr absl::string_view kZone = "instance/zone";
 
 // https://docs.cloud.google.com/compute/docs/instances/detect-compute-engine
 Result<bool> IsGceEnvironment(HttpClient& http_client) {
@@ -61,7 +61,7 @@ Result<bool> IsGceEnvironment(HttpClient& http_client) {
 
 // https://docs.cloud.google.com/compute/docs/metadata/querying-metadata
 Result<std::string> QueryGceMetadata(HttpClient& http_client,
-                                     std::string_view metadata_key) {
+                                     absl::string_view metadata_key) {
   const std::vector<std::string> required_metadata_query_header = {
       fmt::format("{}: {}", kDetectHeader, kExpectedDetectHeaderValue)};
   const std::string url =
@@ -74,7 +74,7 @@ Result<std::string> QueryGceMetadata(HttpClient& http_client,
   return response.data;
 }
 
-Result<std::string> GetZoneValue(std::string_view response_string) {
+Result<std::string> GetZoneValue(absl::string_view response_string) {
   std::vector<std::string> components = absl::StrSplit(response_string, "/");
   CF_EXPECTF(
       components.size() == 4 && components[0] == "projects" &&

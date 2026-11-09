@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "fmt/base.h"
 #include "fmt/ostream.h"
 #include "json/value.h"
@@ -60,7 +61,7 @@ Result<Json::Value> RecvMsg(SharedFD fd) {
   uint64_t data_read = CF_EXPECT(fd->Read(buf.data(), buf.size()));
   CF_EXPECT(data_read != 0,
             "The operator closed the connection without responding");
-  return CF_EXPECT(ParseJson(std::string_view(buf.data(), data_read)),
+  return CF_EXPECT(ParseJson(absl::string_view(buf.data(), data_read)),
                    "Failed to parse operator response");
 }
 }  // namespace

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include <string_view>
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish::vhal_proxy_server {
 
 // Host-side VHAL GRPC server ethernet address.
-constexpr std::string_view kEthAddr = "192.168.98.1";
+constexpr absl::string_view kEthAddr = "192.168.98.1";
 
 // Host-side VHAL GRPC server default ethernet port, if there are multiple
 // VHAL server instances (by default, a new instance is created for launch_cvd

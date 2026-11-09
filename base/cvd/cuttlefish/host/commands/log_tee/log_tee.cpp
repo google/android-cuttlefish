@@ -29,6 +29,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 #include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -143,7 +144,7 @@ int main(int argc, char** argv) {
         break;
       }
       std::string trimmed(
-          absl::StripAsciiWhitespace(std::string_view(buf, *chars_read)));
+          absl::StripAsciiWhitespace(absl::string_view(buf, *chars_read)));
       // Newlines inside `trimmed` are handled by the android logging code.
       // These checks attempt to determine the log severity coming from crosvm.
       // There is no guarantee of success all the time since log line boundaries

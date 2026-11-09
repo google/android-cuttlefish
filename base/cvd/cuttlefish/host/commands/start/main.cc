@@ -19,7 +19,6 @@
 #include <optional>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -29,6 +28,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
 #include "gflags/gflags.h"
@@ -219,7 +219,7 @@ bool ParentIsCvd() {
 std::string CvdPath() {
   const Result<std::string> exe_path_res = GetExecutablePath(getpid());
   CHECK(exe_path_res.has_value()) << exe_path_res.error();
-  std::string_view exe_path = *exe_path_res;
+  absl::string_view exe_path = *exe_path_res;
   CHECK(absl::ConsumeSuffix(&exe_path, "/cvd_internal_start"));
   return absl::StrCat(exe_path, "/cvd");
 }
@@ -351,7 +351,7 @@ int CvdInternalStartMain(int argc, char** argv) {
   }
 
   std::string conf_path;
-  for (std::string_view line :
+  for (absl::string_view line :
        absl::StrSplit(*assembler_output, '\n', absl::SkipEmpty())) {
     if (absl::EndsWith(line, "cuttlefish_config.json")) {
       conf_path = line;

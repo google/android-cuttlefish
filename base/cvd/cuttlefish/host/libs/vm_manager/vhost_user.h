@@ -16,7 +16,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/process/command.h"
@@ -31,7 +32,7 @@ struct VhostUserDeviceCommands {
 };
 
 Result<VhostUserDeviceCommands> VhostUserBlockDevice(
-    const CuttlefishConfig& config, int num, std::string_view disk_path);
+    const CuttlefishConfig& config, int num, absl::string_view disk_path);
 
 Result<VhostUserDeviceCommands> VhostUserNetDevice(
     const CuttlefishConfig& config, const std::string& name,

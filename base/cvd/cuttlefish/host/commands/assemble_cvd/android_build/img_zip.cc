@@ -21,10 +21,10 @@
 #include <optional>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "google/protobuf/text_format.h"
 
@@ -45,8 +45,8 @@
 namespace cuttlefish {
 namespace {
 
-static constexpr std::string_view kImgMatch = "-img-";
-static constexpr std::string_view kImgSuffix = ".img";
+static constexpr absl::string_view kImgMatch = "-img-";
+static constexpr absl::string_view kImgSuffix = ".img";
 
 class ImgZipImpl : public AndroidBuild {
  public:
@@ -72,7 +72,7 @@ class ImgZipImpl : public AndroidBuild {
 
   Result<std::set<std::string, std::less<void>>> Images() override {
     std::set<std::string, std::less<void>> partitions;
-    for (std::string_view member : archive_.Members()) {
+    for (absl::string_view member : archive_.Members()) {
       if (!absl::ConsumeSuffix(&member, kImgSuffix)) {
         continue;
       }
@@ -82,7 +82,7 @@ class ImgZipImpl : public AndroidBuild {
     return partitions;
   }
 
-  Result<std::string> ImageFile(std::string_view name, bool extract) override {
+  Result<std::string> ImageFile(absl::string_view name, bool extract) override {
     std::string member_name = absl::StrCat(name, kImgSuffix);
     if (extract) {
       return CF_EXPECT(archive_.MemberFilepath(member_name, std::nullopt));
@@ -91,7 +91,7 @@ class ImgZipImpl : public AndroidBuild {
     }
   }
 
-  Result<void> SetExtractDir(std::string_view dir) override {
+  Result<void> SetExtractDir(absl::string_view dir) override {
     extract_dir_ = dir;
     return {};
   }

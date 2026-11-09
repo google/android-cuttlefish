@@ -20,11 +20,11 @@
 #include <optional>
 #include <regex>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "android-base/parseint.h"
 
 #include "cuttlefish/flag_parser/flag.h"
@@ -151,7 +151,7 @@ ParseMediaConfigsFromArgs(std::vector<std::string>& args, int num_instances) {
   const std::vector<Flag> media_flags = {
       Flag::StringFlag(kMediaFlag)
           .Help(kMediaHelp)
-          .Setter([&](std::string_view arg) -> Result<void> {
+          .Setter([&](absl::string_view arg) -> Result<void> {
             repeated_media_flag_values.emplace_back(arg);
             return {};
           }),
@@ -164,7 +164,7 @@ ParseMediaConfigsFromArgs(std::vector<std::string>& args, int num_instances) {
   std::vector<std::vector<CuttlefishConfig::MediaConfig>> configs(
       num_instances);
   for (const std::string& flag_val : repeated_media_flag_values) {
-    const std::vector<std::string_view> per_instance =
+    const std::vector<absl::string_view> per_instance =
         absl::StrSplit(flag_val, ',');
     CF_EXPECTF(per_instance.size() == static_cast<size_t>(num_instances),
                "Invalid media flag, number of comma separated values ({}) does "

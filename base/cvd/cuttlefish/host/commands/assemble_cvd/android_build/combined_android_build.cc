@@ -19,11 +19,11 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/pretty/result.h"  // IWYU pragma: keep: overloads
@@ -62,7 +62,7 @@ class CombinedAndroidBuildImpl : public AndroidBuild {
     return CF_EXPECT(MergeSuccessful(&AndroidBuild::Images));
   }
 
-  Result<std::string> ImageFile(std::string_view name, bool extract) override {
+  Result<std::string> ImageFile(absl::string_view name, bool extract) override {
     Result<std::string> res;
 
     // If the file is already extracted somewhere, prefer that version.
@@ -83,7 +83,7 @@ class CombinedAndroidBuildImpl : public AndroidBuild {
                    static_cast<AndroidBuild&>(*this));
   }
 
-  Result<void> SetExtractDir(std::string_view dir) override {
+  Result<void> SetExtractDir(absl::string_view dir) override {
     bool one_succeeded = false;
     Result<void> res;
     for (const std::unique_ptr<AndroidBuild>& build : builds_) {

@@ -26,6 +26,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/strings/string_view.h"
 #include "vulkan/vulkan.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
@@ -44,7 +45,7 @@ namespace vm_manager {
 
 // TODO(schuffelen): Deduplicate with BuildVhostUserGpu
 Result<VhostUserDeviceCommands> VhostUserBlockDevice(
-    const CuttlefishConfig& config, int num, std::string_view disk_path) {
+    const CuttlefishConfig& config, int num, absl::string_view disk_path) {
   const auto& instance = config.ForDefaultInstance();
 
   CF_EXPECT(instance.vhost_user_block(), "Feature is not enabled");

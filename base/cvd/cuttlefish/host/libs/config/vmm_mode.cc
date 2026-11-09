@@ -21,6 +21,7 @@
 #include <string_view>
 
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -32,7 +33,7 @@ std::ostream& operator<<(std::ostream& out, VmmMode vmm) {
   return out << format_as(vmm);
 }
 
-Result<VmmMode> ParseVmm(std::string_view str) {
+Result<VmmMode> ParseVmm(absl::string_view str) {
   if (absl::EqualsIgnoreCase(str, "crosvm")) {
     return VmmMode::kCrosvm;
   } else if (absl::EqualsIgnoreCase(str, "gem5")) {

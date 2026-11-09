@@ -20,8 +20,9 @@
 #include <optional>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/pretty/struct.h"
@@ -43,13 +44,13 @@ class FakeAndroidBuild : public AndroidBuild {
   PrettyStruct Pretty() override;
 
   Result<std::set<std::string, std::less<void>>> Images() override;
-  Result<std::string> ImageFile(std::string_view name,
+  Result<std::string> ImageFile(absl::string_view name,
                                 bool extract = true) override;
-  void AddExtractedImage(std::string_view image, std::string_view path);
-  void AddUnextractedImage(std::string_view image);
-  void AddMissingImage(std::string_view image);
+  void AddExtractedImage(absl::string_view image, absl::string_view path);
+  void AddUnextractedImage(absl::string_view image);
+  void AddMissingImage(absl::string_view image);
 
-  Result<void> SetExtractDir(std::string_view) override;
+  Result<void> SetExtractDir(absl::string_view) override;
 
   Result<std::set<std::string, std::less<void>>> AbPartitions() override;
   void SetAbPartitions(std::set<std::string, std::less<void>>);
@@ -79,7 +80,7 @@ class FakeAndroidBuild : public AndroidBuild {
   std::optional<std::set<std::string, std::less<void>>> physical_partitions_;
 };
 
-std::string_view ImageStatusToStringView(FakeAndroidBuild::ImageStatus);
+absl::string_view ImageStatusToStringView(FakeAndroidBuild::ImageStatus);
 
 template <typename Sink>
 void AbslStringify(Sink& sink, FakeAndroidBuild::ImageStatus image_status) {

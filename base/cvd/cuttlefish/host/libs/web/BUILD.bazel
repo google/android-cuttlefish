@@ -22,6 +22,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )
@@ -63,6 +64,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:file_logging",
         "@fmt",
         "@jsoncpp",
@@ -73,6 +75,7 @@ cf_cc_library(
     name = "android_build_api_key",
     srcs = ["android_build_api_key.cc"],
     hdrs = ["android_build_api_key.h"],
+    deps = ["@abseil-cpp//absl/strings:string_view"],
 )
 
 cf_cc_test(
@@ -96,6 +99,7 @@ cf_cc_library(
     hdrs = ["android_build_url.h"],
     deps = [
         "//cuttlefish/host/libs/web/http_client:url_escape",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )
@@ -179,6 +183,7 @@ cf_cc_library(
         "//cuttlefish/flag_parser",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )
@@ -236,6 +241,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@boringssl//:crypto",
     ],
 )
@@ -248,6 +254,7 @@ cf_cc_test(
         "//cuttlefish/host/libs/web:digest",
         "//cuttlefish/result:result_matchers",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:file_logging",
     ],
 )
@@ -297,6 +304,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@jsoncpp",
     ],
@@ -385,6 +393,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:url_escape",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@jsoncpp",
     ],
@@ -409,6 +418,7 @@ cf_cc_library(
         "//cuttlefish/process:execute",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
         "@jsoncpp",
         "@zlib",
@@ -422,6 +432,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -455,6 +466,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )
@@ -473,6 +485,7 @@ cf_cc_test(
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:file_logging",
     ],
 )
@@ -486,6 +499,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )
@@ -497,5 +511,6 @@ cf_cc_test(
         "//cuttlefish/host/libs/web:url_namespace",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )

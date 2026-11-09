@@ -20,12 +20,12 @@
 #include <map>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "fmt/format.h"
 #include "json/value.h"
@@ -170,7 +170,7 @@ Result<void> VerifyArtifact(const GcsBuild& build,
 
 Result<Json::Value> ResponseJson(const HttpResponse<Json::Value>& response,
                                  const GcsBuild& build, bool authenticated) {
-  std::string_view hint;
+  absl::string_view hint;
   if (!authenticated && (response.http_code == kUnauthorized ||
                          response.http_code == kForbidden)) {
     hint = kAnonymousHint;
@@ -221,7 +221,7 @@ Result<std::map<std::string, GcsObjectInfo>> GcsBuildApi::ListContents(
     for (const Json::Value& item : json["items"]) {
       const std::string object =
           CF_EXPECT(GetValue<std::string>(item, {"name"}));
-      std::string_view name = object;
+      absl::string_view name = object;
       // The prefix itself is listed when a placeholder object created it.
       if (!absl::ConsumePrefix(&name, build.prefix) || name.empty()) {
         continue;

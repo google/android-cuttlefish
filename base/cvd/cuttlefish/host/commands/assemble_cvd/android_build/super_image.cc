@@ -25,12 +25,12 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "liblp/liblp.h"
 #include "liblp/metadata_format.h"
@@ -48,18 +48,18 @@
 namespace cuttlefish {
 namespace {
 
-bool HasSlotSuffix(const std::string_view name) {
+bool HasSlotSuffix(const absl::string_view name) {
   return absl::EndsWith(name, "_a") || absl::EndsWith(name, "_b");
 }
 
-std::string WithoutSlotSuffix(std::string_view name) {
+std::string WithoutSlotSuffix(absl::string_view name) {
   absl::ConsumeSuffix(&name, "_a");
   absl::ConsumeSuffix(&name, "_b");
   return std::string(name);
 }
 
 Result<std::vector<LpMetadataExtent>> PartitionExtents(
-    const android::fs_mgr::LpMetadata& metadata, std::string_view name) {
+    const android::fs_mgr::LpMetadata& metadata, absl::string_view name) {
   for (const LpMetadataPartition& partition : metadata.partitions) {
     std::string partition_name = android::fs_mgr::GetPartitionName(partition);
     bool exact_match = name == partition_name;
@@ -127,7 +127,7 @@ class SuperImageAsBuildImpl : public AndroidBuild {
     return CF_EXPECT(LogicalPartitions());
   }
 
-  Result<std::string> ImageFile(std::string_view name, bool extract) override {
+  Result<std::string> ImageFile(absl::string_view name, bool extract) override {
     if (auto it = extracted_.find(name); it != extracted_.end()) {
       return it->second;
     }
@@ -154,7 +154,7 @@ class SuperImageAsBuildImpl : public AndroidBuild {
     return extract_path;
   }
 
-  Result<void> SetExtractDir(std::string_view extract_dir) override {
+  Result<void> SetExtractDir(absl::string_view extract_dir) override {
     extract_dir_ = extract_dir;
     return {};
   }
@@ -169,7 +169,7 @@ class SuperImageAsBuildImpl : public AndroidBuild {
   }
 
   Result<std::set<std::string, std::less<void>>> PartitionsInGroup(
-      std::string_view match) {
+      absl::string_view match) {
     std::set<std::string, std::less<void>> ret;
     for (const LpMetadataPartition& partition : super_metadata_->partitions) {
       CF_EXPECT_LE(partition.group_index, super_metadata_->groups.size());
@@ -212,8 +212,8 @@ class SuperImageAsBuildImpl : public AndroidBuild {
 
 Result<std::unique_ptr<android::fs_mgr::LpMetadata>> SuperImageFromAndroidBuild(
     AndroidBuild& build) {
-  static constexpr std::string_view kSuperEmpty = "super_empty";
-  static constexpr std::string_view kSuper = "super";
+  static constexpr absl::string_view kSuperEmpty = "super_empty";
+  static constexpr absl::string_view kSuper = "super";
   // Prefer an already extracted file, then prefer extracting super_empty since
   // it is smaller.
   Result<std::string> path;

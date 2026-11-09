@@ -23,11 +23,11 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -319,7 +319,7 @@ Result<std::set<std::string>> LocalInstance::InputDevices() const {
       "/internal";
   std::vector<std::string> files = CF_EXPECT(DirectoryContents(uds_dir));
   std::set<std::string> event_devices;
-  for (std::string_view file : files) {
+  for (absl::string_view file : files) {
     if (absl::ConsumeSuffix(&file, ".events.in") ||
         absl::ConsumeSuffix(&file, ".events.out")) {
       event_devices.emplace(file);

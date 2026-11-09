@@ -21,9 +21,10 @@
 
 #include <initializer_list>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/result/result.h"
@@ -78,9 +79,9 @@ class CommandRequestBuilder {
   }
 
   CommandRequestBuilder& AddArguments(
-      std::initializer_list<std::string_view>) &;
+      std::initializer_list<absl::string_view>) &;
   CommandRequestBuilder AddArguments(
-      std::initializer_list<std::string_view>) &&;
+      std::initializer_list<absl::string_view>) &&;
 
   CommandRequestBuilder& SetSelectorOptions(
       selector::SelectorOptions selectors) & {

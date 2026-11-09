@@ -16,7 +16,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result_type.h"
 
@@ -24,6 +25,6 @@ namespace cuttlefish {
 
 Result<void, int> RemoveFile(const char* file);
 Result<void, int> RemoveFile(const std::string& file);
-Result<void, int> RemoveFile(std::string_view file);
+Result<void, int> RemoveFile(absl::string_view file);
 
 }  // namespace cuttlefish

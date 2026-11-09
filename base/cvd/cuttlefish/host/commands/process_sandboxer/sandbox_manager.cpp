@@ -36,7 +36,6 @@
 #include <optional>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -52,6 +51,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "absl/types/span.h"
 #pragma clang diagnostic push
@@ -82,7 +82,7 @@ using sapi::file_util::fileops::FDCloser;
 
 namespace {
 
-std::string ServerSocketOutsidePath(std::string_view runtime_dir) {
+std::string ServerSocketOutsidePath(absl::string_view runtime_dir) {
   return JoinPath(runtime_dir, "/", "server.sock");
 }
 

@@ -20,16 +20,17 @@
 #include <stdint.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 Result<std::string> EncodeBase64(const void* _data, size_t size);
-Result<std::string> EncodeBase64(std::string_view);
+Result<std::string> EncodeBase64(absl::string_view);
 
-Result<std::vector<uint8_t>> DecodeBase64(std::string_view data);
+Result<std::vector<uint8_t>> DecodeBase64(absl::string_view data);
 
 }  // namespace cuttlefish

@@ -20,12 +20,12 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/pretty/map.h"     // IWYU pragma: keep: overloads
@@ -70,14 +70,14 @@ class MetadataFromMiscInfo : public AndroidBuild {
 
  private:
   Result<std::set<std::string, std::less<void>>> PartitionsMatchingGroup(
-      std::string_view match) {
+      absl::string_view match) {
     std::string groups_key = "super_partition_groups";
     auto groups_it = misc_info_.find(groups_key);
     CF_EXPECTF(groups_it != misc_info_.end(), "Could not find entry for '{}'",
                groups_key);
 
-    std::string_view matching_group;
-    for (std::string_view group :
+    absl::string_view matching_group;
+    for (absl::string_view group :
          absl::StrSplit(groups_it->second, " ", absl::SkipEmpty())) {
       if (absl::StrContains(group, match)) {
         matching_group = group;

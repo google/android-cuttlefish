@@ -18,8 +18,9 @@
 #include <optional>
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
@@ -95,7 +96,7 @@ class FetchBuildContext {
   friend class FetchContext;
 
   FetchBuildContext(class FetchContext&, ::cuttlefish::Build,
-                    std::string_view target_directory, FileSource,
+                    absl::string_view target_directory, FileSource,
                     FetchTracer::Trace);
 
   Result<void> DesparseFiles(std::vector<std::string> files);

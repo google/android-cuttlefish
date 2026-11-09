@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include "absl/strings/string_view.h"
+
 #include "cuttlefish/host/commands/modem_simulator/channel_monitor.h"
 #include "cuttlefish/host/commands/modem_simulator/modem_service.h"
 #include "cuttlefish/host/commands/modem_simulator/nvram_config.h"
@@ -49,7 +51,7 @@ class ModemSimulator : public VirtualModemSimulator {
   }
 
   void SetTimeZone(std::string timezone);
-  bool SetPhoneNumber(std::string_view number);
+  bool SetPhoneNumber(absl::string_view number);
 
  private:
   int32_t modem_id_;

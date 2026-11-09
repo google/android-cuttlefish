@@ -19,5 +19,6 @@ cf_cc_binary(
         "@abseil-cpp//absl/flags:parse",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )

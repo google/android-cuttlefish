@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <string_view>
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/metrics/external_proto/cf_metrics_event_v2.pb.h"
 #include "cuttlefish/metrics/guest/guest_metrics.h"
@@ -30,6 +30,6 @@ using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
 
 void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
                              const GuestMetrics& guest_metrics,
-                             std::string_view session_id);
+                             absl::string_view session_id);
 
 }  // namespace cuttlefish

@@ -18,7 +18,6 @@
 #include <optional>
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -26,6 +25,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 #include "fruit/component.h"
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
@@ -232,7 +232,7 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
                     "this build variable is empty then the custom action "
                     "config will be empty as well.")
                 .Getter([this]() { return custom_action_config_[0]; })
-                .Setter([this](std::string_view arg) -> Result<void> {
+                .Setter([this](absl::string_view arg) -> Result<void> {
                   if (!arg.empty() && (arg == "unset" || arg == "\"unset\"")) {
                     custom_action_config_.push_back(
                         DefaultCustomActionConfig());
@@ -254,7 +254,7 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
                       "prefer --custom_action_config to specify a custom "
                       "config file on the command line. Actions in this flag "
                       "are combined with actions in --custom_action_config.")
-                .Setter([this](std::string_view arg) -> Result<void> {
+                .Setter([this](absl::string_view arg) -> Result<void> {
                   // Load the custom action from the --config preset file.
                   if (arg == "unset" || arg == "\"unset\"") {
                     AddEmptyJsonCustomActionConfigs();

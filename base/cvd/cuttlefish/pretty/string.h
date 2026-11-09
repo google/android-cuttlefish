@@ -16,7 +16,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/pretty/pretty.h"
 
@@ -25,7 +26,7 @@ namespace cuttlefish {
 /** Strings are quoted to distinguish them from other text. */
 
 // Necessary for operator overloading precedence on Pretty<...>()
-std::string Pretty(const std::string_view& value,
+std::string Pretty(const absl::string_view& value,
                    PrettyAdlPlaceholder unused = PrettyAdlPlaceholder());
 
 std::string Pretty(const char* const& value,

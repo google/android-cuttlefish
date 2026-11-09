@@ -20,9 +20,9 @@
 #include <optional>
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <utility>
 
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "fmt/ostream.h"
 
@@ -37,13 +37,13 @@ namespace {
 
 // Returns the digest of a "#sha256=<64 hex digits>" fragment, or nullopt when
 // `fragment` is anything else.
-std::optional<std::string_view> Sha256FragmentDigest(
-    std::string_view fragment) {
+std::optional<absl::string_view> Sha256FragmentDigest(
+    absl::string_view fragment) {
   constexpr size_t kHexDigits = 64;
   if (!absl::ConsumePrefix(&fragment, "#sha256=") ||
       fragment.size() != kHexDigits ||
       fragment.find_first_not_of("0123456789abcdefABCDEF") !=
-          std::string_view::npos) {
+          absl::string_view::npos) {
     return std::nullopt;
   }
   return fragment;
@@ -52,11 +52,11 @@ std::optional<std::string_view> Sha256FragmentDigest(
 // A URL build string's '{selector}', when it has one, must be complete and
 // must end the string. Checked before `ParseFilepath`, which allows a
 // selector anywhere and discards whatever follows it.
-bool HasSelectorSuffix(std::string_view build_string) {
+bool HasSelectorSuffix(absl::string_view build_string) {
   const size_t open_bracket = build_string.find('{');
   const size_t close_bracket = build_string.find('}');
-  if (open_bracket == std::string_view::npos) {
-    return close_bracket == std::string_view::npos;
+  if (open_bracket == absl::string_view::npos) {
+    return close_bracket == absl::string_view::npos;
   }
   return close_bracket + 1 == build_string.size() &&
          close_bracket > open_bracket + 1;
@@ -65,13 +65,13 @@ bool HasSelectorSuffix(std::string_view build_string) {
 // A fragment is a suffix by definition, so a '#' anywhere else is an error
 // rather than something silently kept in the URL. What follows the '#' is not
 // quoted back, as it can hold a query string.
-Result<std::pair<std::string_view, std::optional<std::string_view>>>
-ParseSha256Fragment(std::string_view build_string) {
+Result<std::pair<absl::string_view, std::optional<absl::string_view>>>
+ParseSha256Fragment(absl::string_view build_string) {
   const size_t fragment_start = build_string.find('#');
-  if (fragment_start == std::string_view::npos) {
+  if (fragment_start == absl::string_view::npos) {
     return {{build_string, std::nullopt}};
   }
-  const std::optional<std::string_view> digest =
+  const std::optional<absl::string_view> digest =
       Sha256FragmentDigest(build_string.substr(fragment_start));
   CF_EXPECTF(digest.has_value(),
              "The only fragment a URL build string may carry is a trailing "
@@ -82,8 +82,8 @@ ParseSha256Fragment(std::string_view build_string) {
 
 }  // namespace
 
-Result<UrlBuildString> ParseUrlBuildString(std::string_view scheme,
-                                           std::string_view build_string) {
+Result<UrlBuildString> ParseUrlBuildString(absl::string_view scheme,
+                                           absl::string_view build_string) {
   CF_EXPECTF(scheme == "gs" || scheme == "https",
              "Unsupported URL scheme '{}'.  The supported URL schemes are "
              "'gs://' and 'https://' (cleartext 'http://' is not).  Input: "
@@ -92,7 +92,7 @@ Result<UrlBuildString> ParseUrlBuildString(std::string_view scheme,
   // The format reserves ',' because build strings travel in comma separated
   // lists, where a URL holding one would be split into pieces that each parse
   // as some other kind of build string.
-  CF_EXPECTF(build_string.find(',') == std::string_view::npos,
+  CF_EXPECTF(build_string.find(',') == absl::string_view::npos,
              "URL build strings cannot contain a comma, which the format "
              "reserves because build strings travel in comma separated "
              "lists.  Input: '{}'",

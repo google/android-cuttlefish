@@ -21,11 +21,11 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/ascii.h"
 #include "absl/strings/escaping.h"
+#include "absl/strings/string_view.h"
 #include "openssl/base.h"
 #include "openssl/digest.h"
 #include "openssl/sha.h"
@@ -66,7 +66,7 @@ Result<std::vector<uint8_t>> DigestFile(const std::string& path,
 
 std::string HexDigest(const uint8_t* value, size_t size) {
   return absl::BytesToHexString(
-      std::string_view(reinterpret_cast<const char*>(value), size));
+      absl::string_view(reinterpret_cast<const char*>(value), size));
 }
 
 }  // namespace
@@ -76,14 +76,14 @@ Result<std::string> Sha256File(const std::string& path) {
   return HexDigest(value.data(), value.size());
 }
 
-std::string Sha256Hex(std::string_view data) {
+std::string Sha256Hex(absl::string_view data) {
   uint8_t value[SHA256_DIGEST_LENGTH];
   SHA256(reinterpret_cast<const uint8_t*>(data.data()), data.size(), value);
   return HexDigest(value, sizeof(value));
 }
 
-Result<void> VerifySha256(const std::string& path, std::string_view expected,
-                          std::string_view artifact_name) {
+Result<void> VerifySha256(const std::string& path, absl::string_view expected,
+                          absl::string_view artifact_name) {
   const std::string actual = CF_EXPECT(Sha256File(path));
   CF_EXPECT_EQ(actual, absl::AsciiStrToLower(expected),
                "'" << artifact_name << "' does not have the expected sha256.");
@@ -91,8 +91,8 @@ Result<void> VerifySha256(const std::string& path, std::string_view expected,
 }
 
 Result<void> VerifyMd5(const std::string& path,
-                       std::string_view expected_base64,
-                       std::string_view artifact_name) {
+                       absl::string_view expected_base64,
+                       absl::string_view artifact_name) {
   const std::vector<uint8_t> value = CF_EXPECT(DigestFile(path, EVP_md5()));
   const std::string actual =
       CF_EXPECT(EncodeBase64(value.data(), value.size()));

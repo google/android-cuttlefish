@@ -16,8 +16,9 @@
 #pragma once
 
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -37,6 +38,6 @@ struct GflagDescription {
   bool operator==(const GflagDescription&) const = default;
 };
 Result<std::vector<GflagDescription>> ParseGflagsXmlHelp(
-    std::string_view xml_help);
+    absl::string_view xml_help);
 
 }  // namespace cuttlefish

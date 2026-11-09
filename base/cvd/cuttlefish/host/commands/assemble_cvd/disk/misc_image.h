@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "absl/strings/string_view.h"
+
 #include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
@@ -24,7 +26,7 @@ namespace cuttlefish {
 
 class MiscImage : public ImageFile {
  public:
-  static constexpr std::string_view kName = "misc";
+  static constexpr absl::string_view kName = "misc";
 
   MiscImage(const CuttlefishConfig::InstanceSpecific&);
 

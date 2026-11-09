@@ -33,7 +33,6 @@
 #include <set>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -44,6 +43,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -143,19 +143,19 @@ void Command::BuildParameter(std::stringstream* stream, bool arg) {
   *stream << (arg ? "true" : "false");
 }
 
-Command& Command::AddEnvironmentVariable(std::string_view env_var,
-                                         std::string_view value) & {
+Command& Command::AddEnvironmentVariable(absl::string_view env_var,
+                                         absl::string_view value) & {
   env_.emplace_back(absl::StrCat(env_var, "=", value));
   return *this;
 }
 
-Command Command::AddEnvironmentVariable(std::string_view env_var,
-                                        std::string_view value) && {
+Command Command::AddEnvironmentVariable(absl::string_view env_var,
+                                        absl::string_view value) && {
   AddEnvironmentVariable(env_var, value);
   return std::move(*this);
 }
 
-Command& Command::UnsetFromEnvironment(std::string_view env_var) & {
+Command& Command::UnsetFromEnvironment(absl::string_view env_var) & {
   const std::string test_value = absl::StrCat(env_var, "=");
   for (auto it = env_.begin(); it != env_.end();) {
     if (absl::StartsWith(*it, test_value)) {
@@ -167,7 +167,7 @@ Command& Command::UnsetFromEnvironment(std::string_view env_var) & {
   return *this;
 }
 
-Command Command::UnsetFromEnvironment(std::string_view env_var) && {
+Command Command::UnsetFromEnvironment(absl::string_view env_var) && {
   return std::move(UnsetFromEnvironment(env_var));
 }
 
@@ -329,7 +329,7 @@ std::ostream& operator<<(std::ostream& out, const Command& command) {
                                           "CUTTLEFISH_CONFIG_FILE",
                                           "CUTTLEFISH_INSTANCE"};
   for (const std::string& env_var : command.env_) {
-    std::vector<std::string_view> env_split =
+    std::vector<absl::string_view> env_split =
         absl::StrSplit(env_var, absl::MaxSplits('=', 1));
     if (!env_split.empty() && Contains(to_show, env_split.front())) {
       out << env_var << " ";
@@ -339,7 +339,7 @@ std::ostream& operator<<(std::ostream& out, const Command& command) {
 }
 
 std::string Command::ToString() const {
-  std::vector<std::string_view> elements;
+  std::vector<absl::string_view> elements;
   elements.reserve(command_.size() + env_.size());
   elements.insert(elements.end(), env_.begin(), env_.end());
   elements.insert(elements.end(), command_.begin(), command_.end());

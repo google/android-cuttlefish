@@ -20,7 +20,8 @@
 #include <sys/stat.h>
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/io/write_exact.h"
@@ -29,8 +30,8 @@
 
 namespace cuttlefish {
 
-Result<void> WriteNewFile(const std::string& filepath, std::string_view content,
-                          mode_t mode) {
+Result<void> WriteNewFile(const std::string& filepath,
+                          absl::string_view content, mode_t mode) {
   Fd fd = CF_EXPECT(Fd::Open(filepath, O_CREAT | O_EXCL | O_WRONLY, mode));
   CF_EXPECT(WriteExact(fd, content));
   return {};

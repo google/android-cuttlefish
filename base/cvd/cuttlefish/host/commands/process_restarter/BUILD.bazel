@@ -22,6 +22,7 @@ cf_cc_binary(
         "//cuttlefish/process:subprocess_options",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )

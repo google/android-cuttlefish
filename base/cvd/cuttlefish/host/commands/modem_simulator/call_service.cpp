@@ -16,6 +16,7 @@
 #include "cuttlefish/host/commands/modem_simulator/call_service.h"
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 
 #include <chrono>
 #include <iostream>
@@ -139,18 +140,18 @@ void CallService::HandleDial(const Client& client, const std::string& command) {
    * Emergency dial:  ATDnumber@[category],#[clir];
    */
   auto pos = cmd->find_last_of('@');
-  if (pos != std::string_view::npos) {
+  if (pos != absl::string_view::npos) {
     emergency_number = true;
     number = cmd->substr(1, pos -1); // Skip 'D' and ignore category, clir
   } else {  // Remove 'i' or 'I' or ';'
     pos = cmd->find_last_of('i');
-    if (pos == std::string_view::npos) {
+    if (pos == absl::string_view::npos) {
       pos = cmd->find_last_of('I');
-      if (pos == std::string_view::npos) {
+      if (pos == absl::string_view::npos) {
         pos = cmd->find_last_of(';');
       }
     }
-    if (pos == std::string_view::npos) {
+    if (pos == absl::string_view::npos) {
       number = cmd->substr(1);
     } else {
       number = cmd->substr(1, pos -1);

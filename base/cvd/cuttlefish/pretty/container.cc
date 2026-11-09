@@ -17,16 +17,16 @@
 
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
-void PrettyContainerType::MemberInternal(std::string_view line) {
+void PrettyContainerType::MemberInternal(absl::string_view line) {
   members_.emplace_back(absl::StrReplaceAll(line, {{"\n", "\n  "}}));
 }
 

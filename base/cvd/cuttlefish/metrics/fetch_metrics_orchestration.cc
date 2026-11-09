@@ -18,9 +18,9 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -36,7 +36,7 @@
 namespace cuttlefish {
 namespace {
 
-MetricsInput GetFetchMetricsInput(std::string_view target_directory) {
+MetricsInput GetFetchMetricsInput(absl::string_view target_directory) {
   return MetricsInput{
       .metrics_directory = fmt::format("{}/{}", target_directory, "metrics"),
   };

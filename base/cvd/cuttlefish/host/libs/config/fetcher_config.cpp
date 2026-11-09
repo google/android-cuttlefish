@@ -22,12 +22,12 @@
 #include <mutex>
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
 #include "json/reader.h"
@@ -209,7 +209,7 @@ std::map<std::string, CvdFile> FetcherConfig::get_cvd_files() const {
 }
 
 std::string FetcherConfig::FindCvdFileWithSuffix(
-    FileSource source, std::string_view suffix) const {
+    FileSource source, absl::string_view suffix) const {
   std::scoped_lock lock(*mutex_);
 
   if (!dictionary_.isMember(kCvdFiles)) {
@@ -248,7 +248,7 @@ Result<CvdFile> BuildFetcherConfigMember(
     FileSource purpose, std::string build_id, std::string build_target,
     std::string path, std::string directory_prefix, std::string archive_source,
     std::string archive_path) {
-  std::string_view local_path(path);
+  absl::string_view local_path(path);
   if (!absl::ConsumePrefix(&local_path, directory_prefix)) {
     LOG(ERROR) << "Failed to remove prefix " << directory_prefix << " from "
                << local_path;

@@ -23,6 +23,8 @@
 #include <bootimg.h>
 #include <libavb/libavb.h>
 
+#include "absl/strings/string_view.h"
+
 namespace {
 
 using android::base::Result;
@@ -296,7 +298,7 @@ inline uint32_t round_up(uint32_t value, uint32_t page_size) {
     for (; idx < size; idx++, entry++) {
         auto entry_name_c_str = reinterpret_cast<const char*>(entry->ramdisk_name);
         auto entry_name_len = strnlen(entry_name_c_str, VENDOR_RAMDISK_NAME_SIZE);
-        std::string_view entry_name(entry_name_c_str, entry_name_len);
+        absl::string_view entry_name(entry_name_c_str, entry_name_len);
         if (entry_name == ramdisk_name) {
             if (ret != nullptr) {
                 return Errorf("Multiple vendor ramdisk '{}' found, name should be unique",

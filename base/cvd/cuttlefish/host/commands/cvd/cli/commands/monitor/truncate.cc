@@ -18,16 +18,16 @@
 
 #include <cstddef>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
 
 namespace cuttlefish {
 
-TruncatedString TruncateColoredString(std::string_view s,
+TruncatedString TruncateColoredString(absl::string_view s,
                                       size_t max_visible_width) {
   std::string result;
   result.reserve(s.size());

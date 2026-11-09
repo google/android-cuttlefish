@@ -21,13 +21,13 @@
 #include <list>
 #include <map>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -46,8 +46,8 @@ namespace {
 
 Result<void> InsertNewPair(
     std::map<std::string, std::string, std::less<void>>& map,
-    std::string_view key_equals_value) {
-  std::pair<std::string_view, std::string_view> pair =
+    absl::string_view key_equals_value) {
+  std::pair<absl::string_view, absl::string_view> pair =
       absl::StrSplit(key_equals_value, absl::MaxSplits('=', 1));
   CF_EXPECT(!pair.first.empty());
   CF_EXPECT(!pair.second.empty());
@@ -98,10 +98,10 @@ class Args {
       package_file_symlink_to_package_file_;
 };
 
-std::string GetRelativePathForLink(std::string_view target_path,
-                                   std::string_view link_path) {
-  std::list<std::string_view> target = absl::StrSplit(target_path, "/");
-  std::list<std::string_view> link = absl::StrSplit(link_path, "/");
+std::string GetRelativePathForLink(absl::string_view target_path,
+                                   absl::string_view link_path) {
+  std::list<absl::string_view> target = absl::StrSplit(target_path, "/");
+  std::list<absl::string_view> link = absl::StrSplit(link_path, "/");
   while (!target.empty() && !link.empty() && *target.begin() == *link.begin()) {
     target.pop_front();
     link.pop_front();

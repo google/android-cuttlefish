@@ -16,9 +16,9 @@
 #include "cuttlefish/io/owning_in_memory_io.h"
 
 #include <string>
-#include <string_view>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -29,7 +29,7 @@ namespace cuttlefish {
 TEST(OwningInMemoryIoTest, WriteSeek) {
   OwningInMemoryIo instance;
 
-  constexpr std::string_view str = "hello";
+  constexpr absl::string_view str = "hello";
   ASSERT_THAT(instance.Write(str.data(), str.size()), IsOkAndValue(str.size()));
 
   ASSERT_THAT(instance.SeekCur(-2), IsOkAndValue(str.size() - 2));
@@ -40,7 +40,7 @@ TEST(OwningInMemoryIoTest, WriteSeek) {
 TEST(OwningInMemoryIoTest, WriteSeekRead) {
   OwningInMemoryIo instance;
 
-  constexpr std::string_view str = "hello";
+  constexpr absl::string_view str = "hello";
   ASSERT_THAT(instance.Write(str.data(), str.size()), IsOkAndValue(str.size()));
 
   ASSERT_THAT(instance.SeekSet(0), IsOkAndValue(0));
@@ -55,7 +55,7 @@ TEST(OwningInMemoryIoTest, WriteSeekRead) {
 TEST(OwningInMemoryIoTest, WriteAtReadAt) {
   OwningInMemoryIo instance;
 
-  constexpr std::string_view str = "hello";
+  constexpr absl::string_view str = "hello";
   ASSERT_THAT(instance.PWrite(str.data(), str.size(), 2),
               IsOkAndValue(str.size()));
 
@@ -63,13 +63,13 @@ TEST(OwningInMemoryIoTest, WriteAtReadAt) {
   ASSERT_THAT(instance.PRead(data_read.data(), str.size() + 1, 1),
               IsOkAndValue(str.size() + 1));
 
-  ASSERT_EQ(absl::StrCat(std::string_view("\0", 1), str), data_read);
+  ASSERT_EQ(absl::StrCat(absl::string_view("\0", 1), str), data_read);
 }
 
 TEST(OwningInMemoryIoTest, WriteWriteReadAt) {
   OwningInMemoryIo instance;
 
-  constexpr std::string_view str = "hello";
+  constexpr absl::string_view str = "hello";
   ASSERT_THAT(instance.Write(str.data(), str.size()), IsOkAndValue(str.size()));
   ASSERT_THAT(instance.Write(str.data(), str.size()), IsOkAndValue(str.size()));
 

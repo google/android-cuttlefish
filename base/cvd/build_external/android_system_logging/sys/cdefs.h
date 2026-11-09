@@ -16,9 +16,10 @@
 
 /* <sys/cdefs.h> is a glibc-internal header that apps shouldn't use, but
  * unfortunately android_system_logging does. to enable compilation with
- * musl, redefine only the macros used here.
+ * musl, redefine only the macros used here. Probe for the host's header
+ * rather than assume that !glibc means musl.
  */
-#ifdef __GLIBC__
+#if __has_include_next(<sys/cdefs.h>)
 # include_next <sys/cdefs.h>
 #else
 # ifdef __cplusplus
@@ -28,9 +29,12 @@
 #  define __BEGIN_DECLS
 #  define __END_DECLS
 # endif
- /* This is really from unistd.h, but overriding that header in
-  * android_system_logging has consequences for downstream, so do it here
-  */
+#endif
+/* This is really from unistd.h, but overriding that header in
+ * android_system_logging has consequences for downstream, so do it here.
+ * Only glibc and bionic define it.
+ */
+#ifndef TEMP_FAILURE_RETRY
 # define TEMP_FAILURE_RETRY(expression)           \
   (__extension__                                  \
     ({ long int __result;                         \

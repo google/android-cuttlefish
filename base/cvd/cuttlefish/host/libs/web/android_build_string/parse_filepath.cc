@@ -19,8 +19,9 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
@@ -28,8 +29,8 @@
 namespace cuttlefish {
 
 Result<std::pair<std::string, std::optional<std::string>>> ParseFilepath(
-    std::string_view build_string) {
-  std::string_view remaining_build_string = build_string;
+    absl::string_view build_string) {
+  absl::string_view remaining_build_string = build_string;
   std::optional<std::string> filepath;
   size_t open_bracket = build_string.find('{');
   size_t close_bracket = build_string.find('}');
@@ -41,13 +42,14 @@ Result<std::pair<std::string, std::optional<std::string>>> ParseFilepath(
       "Open or close curly bracket exists without its complement in \"{}\"",
       build_string);
   if (has_open && has_close) {
-    std::string_view remaining_substring = build_string.substr(0, open_bracket);
+    absl::string_view remaining_substring =
+        build_string.substr(0, open_bracket);
     CF_EXPECTF(
         !remaining_substring.empty(),
         "The build string excluding filepath cannot be empty.  Input: {}",
         build_string);
     size_t filepath_start = open_bracket + 1;
-    std::string_view filepath_substring =
+    absl::string_view filepath_substring =
         build_string.substr(filepath_start, close_bracket - filepath_start);
     CF_EXPECTF(
         !filepath_substring.empty(),

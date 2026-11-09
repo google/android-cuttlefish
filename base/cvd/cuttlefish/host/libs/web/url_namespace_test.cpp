@@ -17,9 +17,9 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -49,11 +49,11 @@ TEST(UrlSchemeTests, NonSchemesFail) {
 
 TEST(ParseUrlTests, DecompositionSuccess) {
   struct TestCase {
-    std::string_view url;
-    std::string_view authority;
-    std::string_view path;
+    absl::string_view url;
+    absl::string_view authority;
+    absl::string_view path;
     bool directory_form;
-    std::string_view query;
+    absl::string_view query;
   };
   const TestCase cases[] = {
       {"gs://bucket/dist/", "bucket", "dist/", true, ""},

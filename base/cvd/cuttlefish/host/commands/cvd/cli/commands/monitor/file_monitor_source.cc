@@ -25,13 +25,13 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
@@ -57,7 +57,7 @@ struct FileData {
 
 Result<FileData> GetLastNLines(
     ReaderSeeker& rs, size_t n,
-    std::function<Result<bool>(std::string_view)>& filter_line,
+    std::function<Result<bool>(absl::string_view)>& filter_line,
     std::string name) {
   FileData ret;
   ret.total_size = CF_EXPECT(rs.SeekEnd(0));
@@ -75,14 +75,14 @@ Result<FileData> GetLastNLines(
     CF_EXPECT(ReadExact(rs, chunk.data(), to_read));
 
     accumulated_data = chunk + accumulated_data;
-    std::vector<std::string_view> lines =
+    std::vector<absl::string_view> lines =
         absl::StrSplit(accumulated_data, '\n');
     if (lines.empty()) {
       continue;
     }
     auto it = lines.begin();
     it++;  // ignore the first line, it may be partially read
-    auto predicate = [&filter_line](std::string_view line) {
+    auto predicate = [&filter_line](absl::string_view line) {
       return line.empty() || !filter_line(line).value_or(false);
     };
     auto end = std::remove_if(it, lines.end(), predicate);
@@ -107,8 +107,8 @@ Result<FileData> GetLastNLines(
 
 FileMonitorSource::FileMonitorSource(
     std::string path, std::unique_ptr<ReaderSeeker> file_io,
-    std::function<Result<std::string>(std::string_view)> colorize_line,
-    std::function<Result<bool>(std::string_view)> filter_line)
+    std::function<Result<std::string>(absl::string_view)> colorize_line,
+    std::function<Result<bool>(absl::string_view)> filter_line)
     : path_(std::move(path)),
       file_io_(std::move(file_io)),
       colorize_line_(std::move(colorize_line)),

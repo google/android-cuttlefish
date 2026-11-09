@@ -19,10 +19,10 @@
 #include <memory>
 #include <set>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 
 #include "cuttlefish/files/directory_contents.h"
@@ -36,7 +36,7 @@
 namespace cuttlefish {
 namespace {
 
-static constexpr std::string_view kImgSuffix = ".img";
+static constexpr absl::string_view kImgSuffix = ".img";
 
 class AndroidProductDirImpl : public AndroidBuild {
  public:
@@ -52,7 +52,7 @@ class AndroidProductDirImpl : public AndroidBuild {
 
   Result<std::set<std::string, std::less<void>>> Images() override {
     std::set<std::string, std::less<void>> images;
-    for (std::string_view member : CF_EXPECT(DirectoryContents(path_))) {
+    for (absl::string_view member : CF_EXPECT(DirectoryContents(path_))) {
       if (!absl::ConsumeSuffix(&member, kImgSuffix)) {
         continue;
       }
@@ -61,7 +61,7 @@ class AndroidProductDirImpl : public AndroidBuild {
     return images;
   }
 
-  Result<std::string> ImageFile(std::string_view name, bool) override {
+  Result<std::string> ImageFile(absl::string_view name, bool) override {
     std::string image_path = absl::StrCat(path_, "/", name, kImgSuffix);
     CF_EXPECT(FileExists(image_path));
     return image_path;

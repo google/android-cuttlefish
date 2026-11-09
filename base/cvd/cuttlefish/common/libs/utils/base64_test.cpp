@@ -19,9 +19,9 @@
 #include <stdint.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -50,7 +50,7 @@ TEST(Base64Test, DecodeNonMult3) {
 
 TEST(Base64Test, DecodeStringViewSubstring) {
   std::vector<uint8_t> expected{'f', 'o', 'o', 'b', 'a', 'r'};
-  std::string_view sv = "Zm9vYmFyEXTRA";
+  absl::string_view sv = "Zm9vYmFyEXTRA";
   sv = sv.substr(0, 8);
   ASSERT_THAT(DecodeBase64(sv), IsOkAndValue(expected));
 }

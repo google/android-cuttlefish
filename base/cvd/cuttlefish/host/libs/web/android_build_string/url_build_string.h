@@ -17,7 +17,8 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result_type.h"
 
@@ -32,8 +33,8 @@ struct UrlBuildString {
   auto operator<=>(const UrlBuildString&) const = default;
 };
 
-Result<UrlBuildString> ParseUrlBuildString(std::string_view scheme,
-                                           std::string_view build_string);
+Result<UrlBuildString> ParseUrlBuildString(absl::string_view scheme,
+                                           absl::string_view build_string);
 
 std::ostream& operator<<(std::ostream& out, const UrlBuildString& build_string);
 

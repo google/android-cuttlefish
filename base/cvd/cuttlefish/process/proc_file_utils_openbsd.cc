@@ -22,11 +22,11 @@
 
 #include <iterator>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -168,8 +168,8 @@ Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
   std::vector<pid_t> output_pids;
   for (const struct kinfo_proc& kp : CF_EXPECT(KinfoProcs(uid))) {
     // p_comm is the executable's basename, truncated to _MAXCOMLEN - 1.
-    std::string_view comm(kp.p_comm);
-    std::string_view name(exec_name);
+    absl::string_view comm(kp.p_comm);
+    absl::string_view name(exec_name);
     if (name.size() >= sizeof(kp.p_comm)) {
       name = name.substr(0, sizeof(kp.p_comm) - 1);
     }

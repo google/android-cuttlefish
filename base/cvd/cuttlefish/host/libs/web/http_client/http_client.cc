@@ -19,13 +19,15 @@
 #include <stddef.h>
 
 #include <optional>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 namespace {
 
-bool EqualsCaseInsensitive(const std::string_view a, const std::string_view b) {
+bool EqualsCaseInsensitive(const absl::string_view a,
+                           const absl::string_view b) {
   if (a.size() != b.size()) {
     return false;
   }
@@ -41,8 +43,8 @@ bool EqualsCaseInsensitive(const std::string_view a, const std::string_view b) {
 
 HttpClient::~HttpClient() = default;
 
-std::optional<std::string_view> HeaderValue(
-    const std::vector<HttpHeader>& headers, std::string_view header_name) {
+std::optional<absl::string_view> HeaderValue(
+    const std::vector<HttpHeader>& headers, absl::string_view header_name) {
   for (const HttpHeader& header : headers) {
     if (EqualsCaseInsensitive(header.name, header_name)) {
       return header.value;

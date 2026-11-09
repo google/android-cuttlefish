@@ -18,10 +18,10 @@
 #include <stdint.h>
 
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
+#include "absl/strings/string_view.h"
 #include "libavb/libavb.h"
 
 #include "cuttlefish/io/read_exact.h"
@@ -56,7 +56,7 @@ namespace cuttlefish {
   return AvbParser(std::move(vbmeta));
 }
 
-Result<std::string> AvbParser::LookupProperty(std::string_view key) const {
+Result<std::string> AvbParser::LookupProperty(absl::string_view key) const {
   const char* property = avb_property_lookup(vbmeta_.data(), vbmeta_.size(),
                                              key.data(), key.size(), nullptr);
   CF_EXPECT_NE(property, nullptr);

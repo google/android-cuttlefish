@@ -38,6 +38,7 @@ cf_cc_library(
         "//cuttlefish/metrics/external_proto:cf_metrics_event_v2_cc_proto",
         "//cuttlefish/metrics/guest:device_event_type",
         "//cuttlefish/metrics/guest:guest_metrics",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )

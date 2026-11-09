@@ -31,11 +31,11 @@
 #include <sys/socket.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "allocd/net/netlink_request.h"
 #include "cuttlefish/posix/strerror.h"
@@ -60,7 +60,7 @@ uint32_t PrefixLengthToMask(int prefix_length) {
 }
 
 // Returns a base address and netmask.
-Result<Ipv4Network> ParseIpv4Network(std::string_view cidr) {
+Result<Ipv4Network> ParseIpv4Network(absl::string_view cidr) {
   const std::vector<std::string> parts = absl::StrSplit(cidr, '/');
   CF_EXPECTF(parts.size() == 2, "Expected <address>/<prefix length>, got '{}'",
              cidr);
@@ -118,7 +118,7 @@ void AddUint32BigEndian(NetlinkRequest& req, uint16_t type, uint32_t value) {
   req.AddInt(type, htonl(value));
 }
 
-void AddString(NetlinkRequest& req, uint16_t type, std::string_view value) {
+void AddString(NetlinkRequest& req, uint16_t type, absl::string_view value) {
   req.AddString(type, std::string(value));
 }
 
@@ -136,7 +136,7 @@ void AddNestedDataValue(NetlinkRequest& req, uint16_t type, in_addr_t value) {
 //   cmp       End this rule unless the register equals the network address.
 //   masq      Masquerade the packet.
 
-void BeginExpression(NetlinkRequest& req, std::string_view name) {
+void BeginExpression(NetlinkRequest& req, absl::string_view name) {
   req.PushList(NFTA_LIST_ELEM | NLA_F_NESTED);
   AddString(req, NFTA_EXPR_NAME, name);
   req.PushList(NFTA_EXPR_DATA | NLA_F_NESTED);
@@ -217,7 +217,7 @@ Result<std::vector<Reply>> UnpackReplies(const std::vector<char>& reply_bytes) {
 
 }  // namespace
 
-NetlinkRequest NewTable(std::string_view name) {
+NetlinkRequest NewTable(absl::string_view name) {
   NetlinkRequest req =
       CreateNftRequest(NFT_MSG_NEWTABLE, NLM_F_CREATE | NLM_F_EXCL);
   AddString(req, NFTA_TABLE_NAME, name);
@@ -225,13 +225,13 @@ NetlinkRequest NewTable(std::string_view name) {
   return req;
 }
 
-NetlinkRequest DeleteTable(std::string_view name) {
+NetlinkRequest DeleteTable(absl::string_view name) {
   NetlinkRequest req = CreateNftRequest(NFT_MSG_DELTABLE, 0);
   AddString(req, NFTA_TABLE_NAME, name);
   return req;
 }
 
-NetlinkRequest NewNatChain(std::string_view table, std::string_view chain) {
+NetlinkRequest NewNatChain(absl::string_view table, absl::string_view chain) {
   NetlinkRequest req = CreateNftRequest(NFT_MSG_NEWCHAIN, NLM_F_CREATE);
   AddString(req, NFTA_CHAIN_TABLE, table);
   AddString(req, NFTA_CHAIN_NAME, chain);
@@ -243,9 +243,9 @@ NetlinkRequest NewNatChain(std::string_view table, std::string_view chain) {
   return req;
 }
 
-Result<NetlinkRequest> NewMasqueradeRule(std::string_view table,
-                                         std::string_view chain,
-                                         std::string_view source_cidr) {
+Result<NetlinkRequest> NewMasqueradeRule(absl::string_view table,
+                                         absl::string_view chain,
+                                         absl::string_view source_cidr) {
   const Ipv4Network network = CF_EXPECT(ParseIpv4Network(source_cidr));
   NetlinkRequest req =
       CreateNftRequest(NFT_MSG_NEWRULE, NLM_F_CREATE | NLM_F_APPEND);
@@ -284,7 +284,7 @@ Result<void> CheckReplies(const std::vector<char>& reply_bytes) {
   return {};
 }
 
-std::vector<char> GetTable(std::string_view name) {
+std::vector<char> GetTable(absl::string_view name) {
   NetlinkRequest req = CreateNftRequest(NFT_MSG_GETTABLE, 0);
   AddString(req, NFTA_TABLE_NAME, name);
   std::vector<char> bytes;

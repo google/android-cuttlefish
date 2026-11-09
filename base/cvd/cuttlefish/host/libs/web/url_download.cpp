@@ -22,12 +22,12 @@
 
 #include <algorithm>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/ascii.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "fmt/format.h"
 
@@ -119,7 +119,7 @@ Result<void> RemoveOtherPartialFiles(const std::string& path) {
   const std::vector<std::string> names =
       CF_EXPECT(DirectoryContents(directory));
   for (const std::string& name : names) {
-    std::string_view hash = name;
+    absl::string_view hash = name;
     if (!absl::ConsumePrefix(&hash, prefix) ||
         !absl::ConsumeSuffix(&hash, ".part") ||
         hash.size() != kVersionHashLength ||
@@ -140,7 +140,8 @@ Result<void> RemoveOtherPartialFiles(const std::string& path) {
 
 }  // namespace
 
-std::string PartialFilePath(const std::string& path, std::string_view version) {
+std::string PartialFilePath(const std::string& path,
+                            absl::string_view version) {
   return fmt::format("{}.{}.part", path,
                      Sha256Hex(version).substr(0, kVersionHashLength));
 }

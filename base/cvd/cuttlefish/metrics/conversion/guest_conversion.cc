@@ -16,8 +16,7 @@
 
 #include "cuttlefish/metrics/conversion/guest_conversion.h"
 
-#include <string_view>
-
+#include "absl/strings/string_view.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/host/libs/config/data_image_policy.h"
@@ -137,7 +136,7 @@ CuttlefishFlags_VmmMode ConvertVmmMode(VmmMode vmm_mode) {
 
 void PopulateCuttlefishGuest(MetricsEventV2& metrics_event,
                              const GuestMetrics& guest_metrics,
-                             std::string_view session_id) {
+                             absl::string_view session_id) {
   CuttlefishGuest& guest = *metrics_event.add_guest();
   guest.set_event_type(ConvertDeviceEventType(guest_metrics.event_type));
   guest.set_guest_id(

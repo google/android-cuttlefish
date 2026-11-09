@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
@@ -91,7 +92,7 @@ Result<std::optional<ChromeOsBuildArtifacts>> LuciBuildApi::GetBuildArtifacts(
     json_builder["builder"] = builder.builder;
   }
 
-  static constexpr std::string_view kBuildbucketUrl =
+  static constexpr absl::string_view kBuildbucketUrl =
       "https://cr-buildbucket.appspot.com/prpc/buildbucket.v2.Builds";
   auto url = fmt::format("{}/SearchBuilds?format=json", kBuildbucketUrl);
 
@@ -103,8 +104,8 @@ Result<std::optional<ChromeOsBuildArtifacts>> LuciBuildApi::GetBuildArtifacts(
   if (!response.HttpSuccess()) {
     return {};
   }
-  constexpr std::string_view kPreventXssiPrefix = ")]}'\n";
-  std::string_view response_data = response.data;
+  constexpr absl::string_view kPreventXssiPrefix = ")]}'\n";
+  absl::string_view response_data = response.data;
   CF_EXPECT(absl::ConsumePrefix(&response_data, kPreventXssiPrefix));
   auto response_json = CF_EXPECT(ParseJson(response_data));
 
@@ -140,7 +141,7 @@ Result<std::optional<ChromeOsBuildArtifacts>> LuciBuildApi::GetBuildArtifacts(
 Result<void> LuciBuildApi::DownloadArtifact(const std::string& artifact_link,
                                             const std::string& artifact_file,
                                             const std::string& target_path) {
-  std::string_view trim_link = artifact_link;
+  absl::string_view trim_link = artifact_link;
   CF_EXPECT(absl::ConsumePrefix(&trim_link, "gs://"));
   std::vector<std::string_view> path_fragments = absl::StrSplit(trim_link, '/');
   CF_EXPECT(!path_fragments.empty());

@@ -20,7 +20,8 @@
 #include <functional>
 #include <map>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -31,19 +32,19 @@ class CompositeSuperImageBuilder {
   CompositeSuperImageBuilder& BlockDeviceSize(uint64_t) &;
   CompositeSuperImageBuilder BlockDeviceSize(uint64_t) &&;
 
-  CompositeSuperImageBuilder& SystemPartition(std::string_view name,
-                                              std::string_view host_path) &;
-  CompositeSuperImageBuilder SystemPartition(std::string_view name,
-                                             std::string_view host_path) &&;
+  CompositeSuperImageBuilder& SystemPartition(absl::string_view name,
+                                              absl::string_view host_path) &;
+  CompositeSuperImageBuilder SystemPartition(absl::string_view name,
+                                             absl::string_view host_path) &&;
 
-  CompositeSuperImageBuilder& VendorPartition(std::string_view name,
-                                              std::string_view host_path) &;
-  CompositeSuperImageBuilder VendorPartition(std::string_view name,
-                                             std::string_view host_path) &&;
+  CompositeSuperImageBuilder& VendorPartition(absl::string_view name,
+                                              absl::string_view host_path) &;
+  CompositeSuperImageBuilder VendorPartition(absl::string_view name,
+                                             absl::string_view host_path) &&;
 
-  Result<std::string> WriteToDirectory(std::string_view output_dir,
-                                       std::string_view file_name,
-                                       std::string_view header_name);
+  Result<std::string> WriteToDirectory(absl::string_view output_dir,
+                                       absl::string_view file_name,
+                                       absl::string_view header_name);
 
  private:
   size_t size_ = 0;

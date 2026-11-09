@@ -19,12 +19,12 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 #include "fmt/core.h"
 #include "json/value.h"
 
@@ -198,7 +198,7 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
 std::string HumanFriendlyStateName(cvd::InstanceState state) {
   std::string name = cvd::InstanceState_Name(state);
   // Drop the enum name prefix
-  std::string_view prefix = "INSTANCE_STATE_";
+  absl::string_view prefix = "INSTANCE_STATE_";
   if (absl::StartsWith(name, prefix)) {
     name = name.substr(prefix.size());
   }

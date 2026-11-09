@@ -18,8 +18,8 @@
 #include <map>
 #include <sstream>
 #include <string>
-#include <string_view>
 
+#include "absl/strings/string_view.h"
 #include "google/protobuf/util/json_util.h"
 #include "json/value.h"
 
@@ -37,7 +37,7 @@ using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
 
 // Definition of phone instance template in Json format
-static constexpr std::string_view kPhoneInstanceTemplate = R""""(
+static constexpr absl::string_view kPhoneInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 4096
@@ -55,7 +55,7 @@ static constexpr std::string_view kPhoneInstanceTemplate = R""""(
   )"""";
 
 // Definition of tablet instance template in Json format
-static constexpr std::string_view kTabletInstanceTemplate = R""""(
+static constexpr absl::string_view kTabletInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 4096
@@ -73,7 +73,7 @@ static constexpr std::string_view kTabletInstanceTemplate = R""""(
   )"""";
 
 // Definition of tablet instance template in Json format
-static constexpr std::string_view kTvInstanceTemplate = R""""(
+static constexpr absl::string_view kTvInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 2048
@@ -91,7 +91,7 @@ static constexpr std::string_view kTvInstanceTemplate = R""""(
   )"""";
 
 // Definition of tablet instance template in Json format
-static constexpr std::string_view kWearableInstanceTemplate = R""""(
+static constexpr absl::string_view kWearableInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 1536,
@@ -110,7 +110,7 @@ static constexpr std::string_view kWearableInstanceTemplate = R""""(
   )"""";
 
 // Definition of auto instance template in Json format
-static constexpr std::string_view kAutoInstanceTemplate = R""""(
+static constexpr absl::string_view kAutoInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 4096
@@ -133,7 +133,7 @@ static constexpr std::string_view kAutoInstanceTemplate = R""""(
   )"""";
 
 // Definition of auto instance template in Json format
-static constexpr std::string_view kSlimInstanceTemplate = R""""(
+static constexpr absl::string_view kSlimInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 2048,
@@ -152,7 +152,7 @@ static constexpr std::string_view kSlimInstanceTemplate = R""""(
   )"""";
 
 // Definition of go instance template in Json format
-static constexpr std::string_view kGoInstanceTemplate = R""""(
+static constexpr absl::string_view kGoInstanceTemplate = R""""(
 {
     "vm": {
         "memory_mb": 2048
@@ -169,7 +169,7 @@ static constexpr std::string_view kGoInstanceTemplate = R""""(
 }
   )"""";
 
-static constexpr std::string_view kFoldableInstanceTemplate = R""""(
+static constexpr absl::string_view kFoldableInstanceTemplate = R""""(
 {
     "vm": {
             "memory_mb": 4096,
@@ -235,7 +235,7 @@ static constexpr std::string_view kFoldableInstanceTemplate = R""""(
 static Result<Json::Value> LoadTemplateByName(
     const std::string& template_name) {
   static auto* kSupportedTemplatesKeyMap =
-      new std::map<std::string_view, std::string_view>{
+      new std::map<absl::string_view, absl::string_view>{
           {"phone", kPhoneInstanceTemplate},
           {"tablet", kTabletInstanceTemplate},
           {"tv", kTvInstanceTemplate},

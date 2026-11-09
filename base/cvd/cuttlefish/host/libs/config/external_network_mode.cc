@@ -21,6 +21,7 @@
 #include <string_view>
 
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -30,7 +31,7 @@ std::ostream& operator<<(std::ostream& out, ExternalNetworkMode net) {
   return out << format_as(net);
 }
 
-Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
+Result<ExternalNetworkMode> ParseExternalNetworkMode(absl::string_view str) {
   if (absl::EqualsIgnoreCase(str, "tap")) {
     return ExternalNetworkMode::kTap;
   } else if (absl::EqualsIgnoreCase(str, "slirp")) {

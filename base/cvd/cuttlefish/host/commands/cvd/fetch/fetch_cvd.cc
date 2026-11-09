@@ -30,6 +30,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/archive.h"
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -292,10 +293,10 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
       CF_EXPECT(target_files.ExtractOneTo("META/ab_partitions.txt",
                                           "default/ab_partitions.txt"));
 
-      std::vector<std::string_view> ab_files =
+      std::vector<absl::string_view> ab_files =
           absl::StrSplit(ab_partitions_contents, '\n');
       ab_files.emplace_back("super_empty");
-      for (std::string_view ab_file : ab_files) {
+      for (absl::string_view ab_file : ab_files) {
         if (ab_file.empty()) {
           continue;
         }
@@ -337,10 +338,10 @@ Result<void> FetchSystemTarget(FetchBuildContext& context,
       }
     }
 
-    static constexpr std::string_view kSystemImageFiles[] = {
+    static constexpr absl::string_view kSystemImageFiles[] = {
         "init_boot", "product", "pvmfw", "system_ext", "vbmeta_system",
     };
-    for (std::string_view system_image : kSystemImageFiles) {
+    for (absl::string_view system_image : kSystemImageFiles) {
       std::string member = fmt::format("IMAGES/{}.img", system_image);
       std::string rename_to = fmt::format("{}.img", system_image);
       if (!target_files.ExtractOneTo(member, rename_to).has_value()) {

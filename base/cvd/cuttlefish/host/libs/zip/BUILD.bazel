@@ -104,6 +104,7 @@ cf_cc_library(
         "//cuttlefish/io:writer_seeker",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -143,6 +144,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@fmt",
     ],
 )

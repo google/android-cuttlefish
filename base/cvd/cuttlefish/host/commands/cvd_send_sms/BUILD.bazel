@@ -60,5 +60,6 @@ cf_cc_test(
         "//cuttlefish/result:result_matchers",
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )

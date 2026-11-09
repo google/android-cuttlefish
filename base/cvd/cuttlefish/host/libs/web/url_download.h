@@ -19,8 +19,9 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
@@ -37,7 +38,7 @@ struct UrlDownload {
 };
 
 // Returns where a download of `version` to `path` keeps its partial file.
-std::string PartialFilePath(const std::string& path, std::string_view version);
+std::string PartialFilePath(const std::string& path, absl::string_view version);
 
 // Returns whether `path` still names the file `fd` holds open. A download
 // that another process finished renames its partial file away, so whoever was

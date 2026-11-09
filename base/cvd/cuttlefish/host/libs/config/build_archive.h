@@ -21,7 +21,8 @@
 #include <ostream>
 #include <set>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
@@ -43,7 +44,7 @@ class BuildArchive {
  public:
   static Result<BuildArchive> FromFetcherConfig(const FetcherConfig&,
                                                 FileSource,
-                                                std::string_view archive_name);
+                                                absl::string_view archive_name);
   static Result<BuildArchive> FromZip(ReadableZip);
   static Result<BuildArchive> FromZipPath(const std::string&);
 
@@ -67,10 +68,10 @@ class BuildArchive {
    * - There was a failure to extract the file member.
    */
   Result<std::string> MemberFilepath(
-      std::string_view member_name,
-      std::optional<std::string_view> extract_dir);
+      absl::string_view member_name,
+      std::optional<absl::string_view> extract_dir);
 
-  Result<std::string> MemberContents(std::string_view name);
+  Result<std::string> MemberContents(absl::string_view name);
 
   friend PrettyStruct Pretty(const BuildArchive&, PrettyAdlPlaceholder unused);
 

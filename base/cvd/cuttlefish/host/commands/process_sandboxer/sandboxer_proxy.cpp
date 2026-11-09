@@ -24,11 +24,11 @@
 #include <cstring>
 #include <iostream>
 #include <string>
-#include <string_view>
 
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/host/commands/process_sandboxer/proxy_common.h"
 
@@ -45,7 +45,7 @@ T UnwrapStatusOr(absl::StatusOr<T> status_or) {
 }
 
 template <typename T>
-absl::StatusOr<T> AtoiOr(std::string_view str) {
+absl::StatusOr<T> AtoiOr(absl::string_view str) {
   T out;
   if (!absl::SimpleAtoi(str, &out)) {
     return absl::InvalidArgumentError("Not an integer");

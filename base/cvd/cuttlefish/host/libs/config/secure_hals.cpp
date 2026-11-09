@@ -18,11 +18,11 @@
 #include <cctype>
 #include <set>
 #include <string>
-#include <string_view>
-#include <unordered_map>
 
 #include "absl/base/no_destructor.h"
+#include "absl/container/flat_hash_map.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -31,8 +31,8 @@ using absl::NoDestructor;
 namespace cuttlefish {
 namespace {
 
-NoDestructor<std::unordered_map<std::string_view, SecureHal>> kMapping([] {
-  return std::unordered_map<std::string_view, SecureHal>{
+NoDestructor<absl::flat_hash_map<absl::string_view, SecureHal>> kMapping([] {
+  return absl::flat_hash_map<absl::string_view, SecureHal>{
       {"keymint", SecureHal::kHostKeymintSecure},
       {"host_secure_keymint", SecureHal::kHostKeymintSecure},
       {"host_keymint_secure", SecureHal::kHostKeymintSecure},
@@ -70,7 +70,7 @@ Result<SecureHal> ParseSecureHal(std::string mode) {
 
 Result<std::set<SecureHal>> ParseSecureHals(const std::string& hals) {
   std::set<SecureHal> args_set;
-  for (std::string_view hal :
+  for (absl::string_view hal :
        absl::StrSplit(hals, absl::ByAnyChar(",:;|/\\+"), absl::SkipEmpty())) {
     args_set.emplace(CF_EXPECT(ParseSecureHal(std::string(hal))));
   }

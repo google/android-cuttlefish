@@ -23,18 +23,18 @@
 #include <ostream>
 #include <span>
 #include <string>
-#include <string_view>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include "absl/cleanup/cleanup.h"
+#include "absl/container/flat_hash_set.h"
 #include "absl/log/check.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -45,7 +45,7 @@ namespace cuttlefish {
 namespace {
 
 // Removes "--" or "-" from the beginning. Returns true if it removed something.
-bool ConsumeDashes(std::string_view& flag_arg) {
+bool ConsumeDashes(absl::string_view& flag_arg) {
   if (!absl::ConsumePrefix(&flag_arg, "-")) {
     return false;
   }
@@ -53,14 +53,14 @@ bool ConsumeDashes(std::string_view& flag_arg) {
   return true;
 }
 
-bool MatchNormalized(std::string_view str1, std::string_view str2) {
+bool MatchNormalized(absl::string_view str1, absl::string_view str2) {
   const std::string n1 = absl::StrReplaceAll(str1, {{"-", "_"}});
   const std::string n2 = absl::StrReplaceAll(str2, {{"-", "_"}});
   return n1 == n2;
 }
 
-std::string DefaultValueNameHint(std::string_view name) {
-  std::vector<std::string_view> parts =
+std::string DefaultValueNameHint(absl::string_view name) {
+  std::vector<absl::string_view> parts =
       absl::StrSplit(name, absl::ByAnyChar("-_"), absl::SkipEmpty());
   if (parts.empty()) {
     return "VAL";
@@ -107,11 +107,11 @@ Flag Flag::Getter(std::function<std::string()> getter) && {
   return std::move(Getter(getter));
 }
 
-Flag& Flag::Setter(std::function<Result<void>(std::string_view)> setter) & {
+Flag& Flag::Setter(std::function<Result<void>(absl::string_view)> setter) & {
   setter_ = std::move(setter);
   return *this;
 }
-Flag Flag::Setter(std::function<Result<void>(std::string_view)> setter) && {
+Flag Flag::Setter(std::function<Result<void>(absl::string_view)> setter) && {
   return std::move(Setter(setter));
 }
 
@@ -157,7 +157,7 @@ void Flag::ValidateAlias(const std::string& alias) {
   CHECK(!Contains(aliases_, alias)) << "Duplicate flag alias: " << alias;
 }
 
-Result<size_t> Flag::Match(std::string_view current_arg,
+Result<size_t> Flag::Match(absl::string_view current_arg,
                            std::span<const std::string> following_args) const {
   switch (style_) {
     case Style::String:
@@ -168,7 +168,7 @@ Result<size_t> Flag::Match(std::string_view current_arg,
 }
 
 Result<size_t> Flag::MatchStringStyleFlag(
-    std::string_view current_arg,
+    absl::string_view current_arg,
     std::span<const std::string> following_args) const {
   if (!ConsumeDashes(current_arg)) {
     // Doesn't begin with "-"
@@ -193,7 +193,7 @@ Result<size_t> Flag::MatchStringStyleFlag(
   return 0;
 }
 
-Result<size_t> Flag::MatchBoolStyleFlag(std::string_view current_arg) const {
+Result<size_t> Flag::MatchBoolStyleFlag(absl::string_view current_arg) const {
   if (!ConsumeDashes(current_arg)) {
     // Doesn't begin with "-"
     return 0;
@@ -215,7 +215,7 @@ Result<size_t> Flag::MatchBoolStyleFlag(std::string_view current_arg) const {
   return 0;
 }
 
-Result<void> Flag::SetAndValidate(std::string_view value) const {
+Result<void> Flag::SetAndValidate(absl::string_view value) const {
   CF_EXPECT(setter_(value));
   for (auto& validator : validators_) {
     CF_EXPECT(validator());
@@ -237,9 +237,9 @@ std::ostream& operator<<(std::ostream& out, const Flag& flag) {
 Result<void> ConsumeFlags(const std::vector<Flag>& flags,
                           std::vector<std::string>& args,
                           ConsumeFlagsOpts opts) {
-  std::unordered_set<std::string_view> aliases;
+  absl::flat_hash_set<absl::string_view> aliases;
   for (const Flag& flag : flags) {
-    for (std::string_view alias : flag.aliases_) {
+    for (absl::string_view alias : flag.aliases_) {
       const auto [_, inserted] = aliases.insert(alias);
       CF_EXPECTF(!!inserted,
                  "Ambiguous argument parsing possible: '--{}' could be matched "

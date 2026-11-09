@@ -9,4 +9,5 @@ cf_cc_library(
     hdrs = [
         "vhal_proxy_server_eth_addr.h",
     ],
+    deps = ["@abseil-cpp//absl/strings:string_view"],
 )

@@ -21,8 +21,9 @@
 #include <unistd.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -46,7 +47,7 @@ Result<std::string, int> ReadLink(const std::string& path) {
   return CF_EXPECT(ReadLink(path.c_str()));
 }
 
-Result<std::string, int> ReadLink(std::string_view path) {
+Result<std::string, int> ReadLink(absl::string_view path) {
   return CF_EXPECT(ReadLink(std::string(path)));
 }
 

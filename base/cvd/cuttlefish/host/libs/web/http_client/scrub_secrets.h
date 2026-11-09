@@ -16,7 +16,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
@@ -24,6 +25,6 @@ std::string ScrubSecrets(const std::string& data);
 
 // Returns `url` without its query string or fragment, both of which can
 // carry credentials such as the signature of a pre-signed URL.
-std::string ScrubUrl(std::string_view url);
+std::string ScrubUrl(absl::string_view url);
 
 }  // namespace cuttlefish

@@ -21,6 +21,8 @@
 #include <sstream>
 #include <string>
 
+#include "absl/strings/string_view.h"
+
 #include "cuttlefish/host/commands/cvd/cli/commands/monitor/monitor_source.h"
 
 namespace cuttlefish {
@@ -78,7 +80,7 @@ class LogMonitorDisplay {
    * logcat, kernel), applies color formatting, truncates to fit the display
    * width, pads with spaces, and adds borders.
    */
-  void FormatAndDrawLine(std::string_view formatted);
+  void FormatAndDrawLine(absl::string_view formatted);
 
   size_t width_;
   std::stringstream ss_;

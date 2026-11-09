@@ -16,7 +16,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -26,6 +27,6 @@ namespace cuttlefish {
 Result<void, int> Symlink(const char* target, const char* linkpath);
 Result<void, int> Symlink(const std::string& target,
                           const std::string& linkpath);
-Result<void, int> Symlink(std::string_view target, std::string_view linkpath);
+Result<void, int> Symlink(absl::string_view target, absl::string_view linkpath);
 
 }  // namespace cuttlefish

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 #include <string>
-#include <string_view>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 #include "allocd/alloc_driver.h"
 #include "cuttlefish/process/execute.h"
@@ -24,28 +24,28 @@
 
 namespace cuttlefish {
 
-Result<void> AddTapIface(std::string_view name) {
+Result<void> AddTapIface(absl::string_view name) {
   CF_EXPECT(Execute({"ip", "tuntap", "add", "dev", std::string(name), "mode",
                      "tap", "group", kCvdNetworkGroupName, "vnet_hdr"}) == 0,
             "AddTapIface");
   return {};
 }
 
-Result<void> ShutdownIface(std::string_view name) {
+Result<void> ShutdownIface(absl::string_view name) {
   CF_EXPECT(
       Execute({"ip", "link", "set", "dev", std::string(name), "down"}) == 0,
       "ShutdownIface");
   return {};
 }
 
-Result<void> BringUpIface(std::string_view name) {
+Result<void> BringUpIface(absl::string_view name) {
   CF_EXPECT(Execute({"ip", "link", "set", "dev", std::string(name), "up"}) == 0,
             "ShutdownIface");
   return {};
 }
 
-Result<void> AddGateway(std::string_view name, std::string_view gateway,
-                        std::string_view netmask) {
+Result<void> AddGateway(absl::string_view name, absl::string_view gateway,
+                        absl::string_view netmask) {
   CF_EXPECT(
       Execute({"ip", "addr", "add", std::string(gateway) + std::string(netmask),
                "broadcast", "+", "dev", std::string(name)}) == 0,
@@ -53,8 +53,8 @@ Result<void> AddGateway(std::string_view name, std::string_view gateway,
   return {};
 }
 
-Result<void> DestroyGateway(std::string_view name, std::string_view gateway,
-                            std::string_view netmask) {
+Result<void> DestroyGateway(absl::string_view name, absl::string_view gateway,
+                            absl::string_view netmask) {
   CF_EXPECT(
       Execute({"ip", "addr", "del", std::string(gateway) + std::string(netmask),
                "broadcast", "+", "dev", std::string(name)}) == 0,
@@ -62,39 +62,39 @@ Result<void> DestroyGateway(std::string_view name, std::string_view gateway,
   return {};
 }
 
-Result<void> LinkTapToBridge(std::string_view tap_name,
-                             std::string_view bridge_name) {
+Result<void> LinkTapToBridge(absl::string_view tap_name,
+                             absl::string_view bridge_name) {
   CF_EXPECT(Execute({"ip", "link", "set", "dev", std::string(tap_name),
                      "master", std::string(bridge_name)}) == 0,
             "LinkTapToBridge");
   return {};
 }
 
-Result<void> DeleteIface(std::string_view name) {
+Result<void> DeleteIface(absl::string_view name) {
   CF_EXPECT(Execute({"ip", "link", "delete", std::string(name)}) == 0,
             "DeleteIface");
   return {};
 }
 
-Result<bool> BridgeExists(std::string_view name) {
+Result<bool> BridgeExists(absl::string_view name) {
   return Execute({"ip", "link", "show", std::string(name)}) == 0;
 }
 
-Result<bool> BridgeInUse(std::string_view name) {
+Result<bool> BridgeInUse(absl::string_view name) {
   return Execute({"sh", "-c",
                   absl::StrCat("[ $(ip link show master ", name,
                                " | wc -l) -ne 0 ]")}) == 0;
 }
 
-Result<void> CreateBridge(std::string_view name) {
+Result<void> CreateBridge(absl::string_view name) {
   CF_EXPECT(Execute({"ip", "link", "add", "name", std::string(name), "type",
                      "bridge", "forward_delay", "0", "stp_state", "0"}) == 0,
             "CreateBridge");
   return {};
 }
 
-Result<void> IptableConfig(std::string_view iptables_path,
-                           std::string_view network, bool add) {
+Result<void> IptableConfig(absl::string_view iptables_path,
+                           absl::string_view network, bool add) {
   CF_EXPECT(Execute({std::string(iptables_path), "-t", "nat", add ? "-A" : "-D",
                      "POSTROUTING", "-s", std::string(network), "-j",
                      "MASQUERADE"}) == 0,

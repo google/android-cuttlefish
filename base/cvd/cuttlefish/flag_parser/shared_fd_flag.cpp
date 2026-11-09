@@ -18,9 +18,9 @@
 #include <unistd.h>
 
 #include <string>
-#include <string_view>
 
 #include "absl/strings/numbers.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -31,7 +31,7 @@ namespace cuttlefish {
 
 Flag SharedFDFlag(const std::string& name, SharedFD& out) {
   return Flag::StringFlag(name).Setter(
-      [&out, name](std::string_view arg) -> Result<void> {
+      [&out, name](absl::string_view arg) -> Result<void> {
         int raw_fd;
         CF_EXPECTF(absl::SimpleAtoi(arg, &raw_fd),
                    "Failed to parse value \"{}\" for fd flag \"--{}\"", arg,

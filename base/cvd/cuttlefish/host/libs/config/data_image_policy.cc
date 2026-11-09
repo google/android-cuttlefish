@@ -17,20 +17,21 @@
 #include "cuttlefish/host/libs/config/data_image_policy.h"
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
 namespace {
 
-constexpr std::string_view kAlwaysCreate = "always_create";
-constexpr std::string_view kResizeUpTo = "resize_up_to";
-constexpr std::string_view kUnknown = "unknown";
-constexpr std::string_view kUseExisting = "use_existing";
+constexpr absl::string_view kAlwaysCreate = "always_create";
+constexpr absl::string_view kResizeUpTo = "resize_up_to";
+constexpr absl::string_view kUnknown = "unknown";
+constexpr absl::string_view kUseExisting = "use_existing";
 
 }  // namespace
 
-DataImagePolicy DataImagePolicyFromString(std::string_view policy) {
+DataImagePolicy DataImagePolicyFromString(absl::string_view policy) {
   if (policy == kAlwaysCreate) {
     return DataImagePolicy::AlwaysCreate;
   } else if (policy == kResizeUpTo) {

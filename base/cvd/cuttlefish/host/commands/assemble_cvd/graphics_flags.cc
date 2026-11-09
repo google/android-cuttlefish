@@ -20,7 +20,6 @@
 
 #include <functional>
 #include <ostream>
-#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -31,6 +30,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 #include "fmt/base.h"
 #include "fmt/ostream.h"
@@ -60,7 +60,7 @@ namespace {
 
 struct AggregatingErrorCollector : public google::protobuf::io::ErrorCollector {
   void RecordError(int /* line */, int /* column */,
-                   const std::string_view message) override {
+                   const absl::string_view message) override {
     if (!error_message.empty()) {
       absl::StrAppend(&error_message, "; ");
     }
@@ -68,7 +68,7 @@ struct AggregatingErrorCollector : public google::protobuf::io::ErrorCollector {
   }
 
   void RecordWarning(int /* line */, int /* column */,
-                     const std::string_view /* message */) override {
+                     const absl::string_view /* message */) override {
     // Ignore warnings
   }
 
@@ -108,8 +108,8 @@ using MeetsRequirementFunc = std::function<bool(const CommonState& common)>;
 
 struct RequirementWithReason {
   MeetsRequirementFunc func;
-  std::string_view success_explanation;
-  std::string_view failure_explanation;
+  absl::string_view success_explanation;
+  absl::string_view failure_explanation;
 };
 
 const std::unordered_map<GpuMode, std::vector<RequirementWithReason>>&
@@ -450,20 +450,20 @@ Result<std::unordered_map<std::string, bool>> ParseGfxstreamRendererFlag(
     const std::string& gpu_renderer_features_arg) {
   std::unordered_map<std::string, bool> features;
 
-  for (const std::string_view feature :
+  for (const absl::string_view feature :
        absl::StrSplit(gpu_renderer_features_arg, ';')) {
     if (feature.empty()) {
       continue;
     }
 
-    const std::vector<std::string_view> feature_parts =
+    const std::vector<absl::string_view> feature_parts =
         absl::StrSplit(feature, ':');
     CF_EXPECT(feature_parts.size() == 2,
               "Failed to parse renderer features from --gpu_renderer_features="
                   << gpu_renderer_features_arg);
 
-    const std::string_view feature_name = feature_parts[0];
-    const std::string_view feature_enabled = feature_parts[1];
+    const absl::string_view feature_name = feature_parts[0];
+    const absl::string_view feature_enabled = feature_parts[1];
     CF_EXPECT(feature_enabled == "enabled" || feature_enabled == "disabled",
               "Failed to parse renderer features from --gpu_renderer_features="
                   << gpu_renderer_features_arg);
@@ -858,7 +858,7 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
   }
 
   VLOG(0) << "Host Graphics Availability:";
-  for (std::string_view line :
+  for (absl::string_view line :
        absl::StrSplit(graphics_availability_content, '\n')) {
     VLOG(0) << line;
   }

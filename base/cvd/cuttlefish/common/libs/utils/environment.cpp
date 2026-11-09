@@ -20,7 +20,8 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
@@ -36,7 +37,7 @@ std::optional<std::string> StringFromEnv(const std::string& varname) {
   return StringFromEnv(varname.c_str());
 }
 
-std::optional<std::string> StringFromEnv(std::string_view varname) {
+std::optional<std::string> StringFromEnv(absl::string_view varname) {
   return StringFromEnv(std::string(varname).c_str());
 }
 
@@ -49,7 +50,8 @@ std::string StringFromEnv(const std::string& varname,
   return StringFromEnv(varname.c_str(), defval);
 }
 
-std::string StringFromEnv(std::string_view varname, const std::string& defval) {
+std::string StringFromEnv(absl::string_view varname,
+                          const std::string& defval) {
   return StringFromEnv(std::string(varname).c_str(), defval);
 }
 

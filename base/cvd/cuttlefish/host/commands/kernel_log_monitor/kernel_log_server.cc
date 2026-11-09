@@ -22,13 +22,13 @@
 #include <sys/types.h>
 
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -41,8 +41,8 @@ namespace cuttlefish::monitor {
 namespace {
 
 constexpr struct {
-  std::string_view match;   // Substring to match in the kernel logs
-  std::string_view prefix;  // Prefix value to output, describing the entry
+  absl::string_view match;   // Substring to match in the kernel logs
+  absl::string_view prefix;  // Prefix value to output, describing the entry
 } kInformationalPatterns[] = {
     {"U-Boot ", "GUEST_UBOOT_VERSION: "},
     {"] Linux version ", "GUEST_KERNEL_VERSION: "},
@@ -56,9 +56,9 @@ enum EventFormat {
 };
 
 constexpr struct {
-  std::string_view stage;  // substring in the log identifying the stage
-  Event event;             // emitted when the stage is encountered
-  EventFormat format;      // how the log message is formatted
+  absl::string_view stage;  // substring in the log identifying the stage
+  Event event;              // emitted when the stage is encountered
+  EventFormat format;       // how the log message is formatted
 } kStageTable[] = {
     {kBootStartedMessage, Event::BootStarted, kBare},
     {kBootPendingMessage, Event::BootPending, kPrefix},
@@ -164,7 +164,7 @@ bool KernelLogServer::HandleIncomingMessage() {
             // Expect space-separated key=value pairs in the log message.
             const std::vector<std::string> fields =
                 absl::StrSplit(line_.substr(pos + stage.size()), ' ');
-            for (std::string_view field : fields) {
+            for (absl::string_view field : fields) {
               field = absl::StripAsciiWhitespace(field);
               if (field.empty()) {
                 // Expected; absl::StrSplit() always returns at least

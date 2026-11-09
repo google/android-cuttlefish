@@ -16,8 +16,8 @@
 #pragma once
 
 #include <mutex>
-#include <string_view>
 
+#include "absl/strings/string_view.h"
 #include "fruit/fruit.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -46,7 +46,7 @@ class Cvdalloc : public vm_manager::VmmDependencyCommand {
 
  private:
   Result<void> ResultSetup() override;
-  Result<void> BinaryIsValid(std::string_view path);
+  Result<void> BinaryIsValid(absl::string_view path);
   Result<void> IsUsable() const;
   StopperResult Stop();
 

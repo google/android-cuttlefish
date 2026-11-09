@@ -18,8 +18,9 @@
 #include <stdint.h>
 
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/writer.h"
 #include "cuttlefish/result/expect.h"
@@ -32,7 +33,7 @@ Result<void, int> WriteExact(Writer&,
                              const char* buf);  // Assumes null termination
 Result<void, int> WriteExact(Writer&, const std::string&);
 Result<void, int> WriteExact(Writer&, const std::vector<char>&);
-Result<void, int> WriteExact(Writer&, std::string_view);
+Result<void, int> WriteExact(Writer&, absl::string_view);
 
 template <typename T>
 Result<void, int> WriteExactBinary(Writer& writer, const T& data) {

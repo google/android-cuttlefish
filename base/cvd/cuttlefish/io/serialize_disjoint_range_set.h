@@ -15,7 +15,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/disjoint_range_set.h"
 #include "cuttlefish/result/result.h"
@@ -24,6 +25,6 @@ namespace cuttlefish {
 
 std::string Serialize(const DisjointRangeSet&);
 
-Result<DisjointRangeSet> DeserializeDisjointRangeSet(std::string_view);
+Result<DisjointRangeSet> DeserializeDisjointRangeSet(absl::string_view);
 
 }  // namespace cuttlefish

@@ -19,11 +19,11 @@
 #include <chrono>
 #include <iostream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/numbers.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "json/value.h"
 
@@ -75,7 +75,7 @@ Args:
 
 )";
 
-Result<unsigned> IdFromInstanceNameFlag(std::string_view name_or_id) {
+Result<unsigned> IdFromInstanceNameFlag(absl::string_view name_or_id) {
   absl::ConsumePrefix(&name_or_id, kCvdNamePrefix);
   unsigned id;
   CF_EXPECT(absl::SimpleAtoi(std::string(name_or_id), &id),

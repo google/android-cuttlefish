@@ -18,11 +18,11 @@
 
 #include <cstddef>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -32,7 +32,7 @@
 
 namespace cuttlefish {
 
-Result<LauncherLine> ParseLauncherLine(std::string_view line) {
+Result<LauncherLine> ParseLauncherLine(absl::string_view line) {
   // clang-format off
   // Sample line for reference:
   // kernel_log_monitor(4089384)  I 05-15 16:39:26 4089384 4089384 kernel_log_server.cc:153] VIRTUAL_DEVICE_BOOT_COMPLETED
@@ -43,15 +43,15 @@ Result<LauncherLine> ParseLauncherLine(std::string_view line) {
   // Note: We avoid absl::MaxSplits here because it counts delimiter matches
   // *before* absl::SkipWhitespace filters them, which breaks index alignment on
   // double-spaces.
-  std::vector<std::string_view> fields =
+  std::vector<absl::string_view> fields =
       absl::StrSplit(line, absl::ByAnyChar(" \t"), absl::SkipWhitespace());
 
   CF_EXPECT(fields.size() > 7, "Failed to parse Launcher line");
 
   // Extract process name from fields[0] (e.g., "kernel_log_monitor(4089384)")
-  std::string_view proc_name = fields[0];
+  absl::string_view proc_name = fields[0];
   const size_t paren = proc_name.find('(');
-  if (paren != std::string_view::npos) {
+  if (paren != absl::string_view::npos) {
     proc_name = proc_name.substr(0, paren);
   }
 
@@ -62,7 +62,7 @@ Result<LauncherLine> ParseLauncherLine(std::string_view line) {
   // This preserves any internal spacing within the unstructured message.
   const char* message_start = fields[7].data();
   const size_t message_len = line.data() + line.size() - message_start;
-  std::string_view message(message_start, message_len);
+  absl::string_view message(message_start, message_len);
 
   return LauncherLine{
       .proc_name = proc_name,
@@ -77,20 +77,20 @@ Result<LauncherLine> ParseLauncherLine(std::string_view line) {
 }
 
 std::string FormatLauncherLine(const LauncherLine& line) {
-  const std::string_view verb_color = CharToLogSeverity(line.severity)
-                                          .transform(GetColorForSeverity)
-                                          .value_or("");
+  const absl::string_view verb_color = CharToLogSeverity(line.severity)
+                                           .transform(GetColorForSeverity)
+                                           .value_or("");
   return absl::StrCat(kAnsiGreen, line.date, " ", line.time, " ", verb_color,
                       line.pid, " ", line.tid, " ",
-                      std::string_view(&line.severity, 1), " ", kAnsiYellow,
+                      absl::string_view(&line.severity, 1), " ", kAnsiYellow,
                       line.proc_name, ": ", kAnsiReset, line.message);
 }
 
-Result<std::string> ColorLauncherLine(std::string_view line) {
+Result<std::string> ColorLauncherLine(absl::string_view line) {
   return FormatLauncherLine(CF_EXPECT(ParseLauncherLine(line)));
 }
 
-Result<bool> FilterLauncherLine(LogSeverity filter, std::string_view line) {
+Result<bool> FilterLauncherLine(LogSeverity filter, absl::string_view line) {
   LauncherLine parsed = CF_EXPECT(ParseLauncherLine(line));
   LogSeverity line_severity = CF_EXPECT(CharToLogSeverity(parsed.severity));
   return FilterSeverity(filter, line_severity);

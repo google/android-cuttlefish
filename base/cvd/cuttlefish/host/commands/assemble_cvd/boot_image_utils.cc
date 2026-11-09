@@ -28,12 +28,12 @@
 #include <optional>
 #include <regex>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -155,7 +155,7 @@ Result<void> RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
 }
 
 bool IsCpioArchive(const std::string& path) {
-  static constexpr std::string_view CPIO_MAGIC = "070701";
+  static constexpr absl::string_view CPIO_MAGIC = "070701";
   Fd fd = Fd::Open(path, O_RDONLY).value_or(Fd());
   std::array<char, CPIO_MAGIC.size()> buf{};
   if (fd.Read(buf.data(), buf.size()) != CPIO_MAGIC.size()) {

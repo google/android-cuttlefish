@@ -17,8 +17,9 @@
 #include <stdint.h>
 
 #include <string>
-#include <string_view>
 #include <utility>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/disjoint_range_set.h"
 #include "cuttlefish/io/disjoint_range_set.pb.h"
@@ -36,7 +37,7 @@ std::string Serialize(const DisjointRangeSet& range_set) {
   return proto.SerializeAsString();
 }
 
-Result<DisjointRangeSet> DeserializeDisjointRangeSet(std::string_view data) {
+Result<DisjointRangeSet> DeserializeDisjointRangeSet(absl::string_view data) {
   DisjointRangeList proto;
   CF_EXPECT(proto.ParseFromString(data));
   DisjointRangeSet set;

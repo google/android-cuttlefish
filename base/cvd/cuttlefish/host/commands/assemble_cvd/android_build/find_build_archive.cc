@@ -17,11 +17,11 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/host/libs/config/build_archive.h"
@@ -34,7 +34,7 @@
 namespace cuttlefish {
 namespace {
 
-bool NameMatches(std::string_view name, std::string_view pattern) {
+bool NameMatches(absl::string_view name, absl::string_view pattern) {
   return absl::EndsWith(name, ".zip") && absl::StrContains(name, pattern);
 }
 
@@ -42,13 +42,13 @@ bool NameMatches(std::string_view name, std::string_view pattern) {
 
 Result<BuildArchive> FindBuildArchive(const FetcherConfig& config,
                                       FileSource source,
-                                      std::string_view pattern) {
+                                      absl::string_view pattern) {
   std::optional<std::string> archive_name;
   for (const auto& [file_name, cvd_file] : config.get_cvd_files()) {
     if (cvd_file.source != source) {
       continue;
     }
-    for (std::string_view name :
+    for (absl::string_view name :
          {cvd_file.archive_source, cvd_file.file_path}) {
       if (NameMatches(name, pattern)) {
         CF_EXPECTF(!archive_name.has_value() || *archive_name == name,
@@ -64,12 +64,12 @@ Result<BuildArchive> FindBuildArchive(const FetcherConfig& config,
 }
 
 Result<BuildArchive> FindBuildArchive(const std::string& directory_path,
-                                      std::string_view pattern) {
+                                      absl::string_view pattern) {
   std::vector<std::string> contents =
       CF_EXPECT(DirectoryContents(directory_path));
 
   std::optional<std::string> archive_name;
-  for (std::string_view member : contents) {
+  for (absl::string_view member : contents) {
     if (!NameMatches(member, pattern)) {
       continue;
     }

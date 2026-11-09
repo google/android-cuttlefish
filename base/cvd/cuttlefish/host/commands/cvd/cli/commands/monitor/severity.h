@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <string_view>
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/result/result_type.h"
@@ -25,7 +25,7 @@ namespace cuttlefish {
 
 Result<LogSeverity> CharToLogSeverity(char severity);
 
-std::string_view GetColorForSeverity(LogSeverity);
+absl::string_view GetColorForSeverity(LogSeverity);
 bool FilterSeverity(LogSeverity filter, LogSeverity test);
 
 }  // namespace cuttlefish

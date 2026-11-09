@@ -16,7 +16,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result_type.h"
 
@@ -24,6 +25,6 @@ namespace cuttlefish {
 
 Result<std::string, int> RealPath(const char* path);
 Result<std::string, int> RealPath(const std::string& path);
-Result<std::string, int> RealPath(std::string_view path);
+Result<std::string, int> RealPath(absl::string_view path);
 
 }  // namespace cuttlefish

@@ -16,14 +16,15 @@
 #include "cuttlefish/host/libs/web/android_build_api_key.h"
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 namespace {
 
 // only provides access to already public resources from V4 Android Build API
 // for example, AOSP builds from ci.android.com
-constexpr std::string_view kApiKey = "AIzaSyBIelMvbjtNkpa5O96eqbm_IuSUA5WsO14";
+constexpr absl::string_view kApiKey = "AIzaSyBIelMvbjtNkpa5O96eqbm_IuSUA5WsO14";
 
 }  // namespace
 

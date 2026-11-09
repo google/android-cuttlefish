@@ -17,12 +17,12 @@
 #include <libyuv.h>
 
 #include <memory>
-#include <string_view>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "fruit/fruit.h"
 #include "gflags/gflags.h"
 #include "google/protobuf/text_format.h"
@@ -52,11 +52,8 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
-#include "cuttlefish/host/libs/confui/host_mode_ctrl.h"
-#include "cuttlefish/host/libs/confui/host_server.h"
 #include "cuttlefish/host/libs/input_connector/input_connector.h"
 #include "cuttlefish/host/libs/screen_connector/composition_manager.h"
-#include "cuttlefish/host/libs/screen_connector/screen_connector.h"
 
 DEFINE_bool(multitouch, true,
             "Whether to send multi-touch or single-touch events");
@@ -79,9 +76,11 @@ DEFINE_int32(kernel_log_events_fd, -1,
              "An fd to listen on for kernel log events.");
 DEFINE_int32(command_fd, -1, "An fd to listen to for control messages");
 DEFINE_int32(confui_in_fd, -1,
-             "Confirmation UI virtio-console from host to guest");
+             "UNUSED - Kept to support webRTC and run_cvd with different "
+             "versions after the confirmation UI removal");
 DEFINE_int32(confui_out_fd, -1,
-             "Confirmation UI virtio-console from guest to host");
+             "UNUSED - Kept to support webRTC and run_cvd with different "
+             "versions after the confirmation UI removal");
 DEFINE_string(action_servers, "",
               "A comma-separated list of server_name:fd pairs, "
               "where each entry corresponds to one custom action server.");
@@ -133,23 +132,6 @@ fruit::Component<CustomActionConfigProvider> WebRtcComponent() {
       .install(ConfigFlagPlaceholder)
       .install(CustomActionsComponent);
 };
-
-fruit::Component<ScreenConnector<DisplayHandler::WebRtcScProcessedFrame>,
-                 confui::HostServer, confui::HostVirtualInput>
-CreateConfirmationUIComponent(int* frames_fd, bool* frames_are_rgba,
-                              confui::PipeConnectionPair* pipe_io_pair,
-                              InputConnector* input_connector) {
-  using ScreenConnector = DisplayHandler::ScreenConnector;
-  return fruit::createComponent()
-      .bindInstance<fruit::Annotated<WaylandScreenConnector::FramesFd, int>>(
-          *frames_fd)
-      .bindInstance<
-          fruit::Annotated<WaylandScreenConnector::FramesAreRgba, bool>>(
-          *frames_are_rgba)
-      .bindInstance(*pipe_io_pair)
-      .bind<ScreenConnectorFrameRenderer, ScreenConnector>()
-      .bindInstance(*input_connector);
-}
 
 Result<void> ControlLoop(SharedFD control_socket,
                          DisplayHandler& display_handler,
@@ -338,7 +320,7 @@ int CuttlefishMain() {
       << "Only one of --touch_fds or --touch_server_paths can be used at a "
          "time";
   if (!FLAGS_touch_fds.empty()) {
-    std::vector<std::string_view> touch_fds =
+    std::vector<absl::string_view> touch_fds =
         absl::StrSplit(FLAGS_touch_fds, ',');
     CHECK_EQ(touch_fds.size(),
              display_count + instance.touchpad_configs().size())
@@ -447,29 +429,18 @@ int CuttlefishMain() {
   auto sensors_fd = cuttlefish::SharedFD::Dup(FLAGS_sensors_fd);
   close(FLAGS_sensors_fd);
 
-  confui::PipeConnectionPair conf_ui_comm_fd_pair{
-      .from_guest_ = SharedFD::Dup(FLAGS_confui_out_fd),
-      .to_guest_ = SharedFD::Dup(FLAGS_confui_in_fd)};
-  close(FLAGS_confui_in_fd);
-  close(FLAGS_confui_out_fd);
+  if (FLAGS_confui_in_fd >= 0) {
+    close(FLAGS_confui_in_fd);
+  }
+  if (FLAGS_confui_out_fd >= 0) {
+    close(FLAGS_confui_out_fd);
+  }
 
-  int frames_fd = FLAGS_frame_server_fd;
-  bool frames_are_rgba = !instance.guest_uses_bgra_framebuffers();
-  fruit::Injector<ScreenConnector<DisplayHandler::WebRtcScProcessedFrame>,
-                  confui::HostServer, confui::HostVirtualInput>
-      conf_ui_components_injector(CreateConfirmationUIComponent,
-                                  std::addressof(frames_fd),
-                                  std::addressof(frames_are_rgba),
-                                  &conf_ui_comm_fd_pair, input_connector.get());
-  auto& screen_connector =
-      conf_ui_components_injector.get<DisplayHandler::ScreenConnector&>();
+  const int frames_fd = FLAGS_frame_server_fd;
+  const bool frames_are_rgba = !instance.guest_uses_bgra_framebuffers();
 
   auto client_server = ClientFilesServer::New(FLAGS_client_dir);
   CHECK(client_server) << "Failed to initialize client files server";
-  auto& host_confui_server =
-      conf_ui_components_injector.get<confui::HostServer&>();
-  auto& confui_virtual_input =
-      conf_ui_components_injector.get<confui::HostVirtualInput&>();
 
   StreamerConfig streamer_config;
 
@@ -501,7 +472,7 @@ int CuttlefishMain() {
   webrtc_streaming::SensorsHandler sensors_handler(sensors_fd);
 
   auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
-      confui_virtual_input, kernel_logs_event_handler, sensors_handler,
+      *input_connector, kernel_logs_event_handler, sensors_handler,
       lights_observer);
 
   RecordingManager recording_manager;
@@ -526,7 +497,7 @@ int CuttlefishMain() {
   }
 
   auto display_handler = std::make_shared<DisplayHandler>(
-      *streamer, screenshot_handler, screen_connector,
+      *streamer, screenshot_handler, frames_fd, frames_are_rgba,
       std::move(composition_manager));
 
   if (instance.camera_server_port()) {
@@ -570,7 +541,7 @@ int CuttlefishMain() {
 
   // Parse the -action_servers flag, storing a map of action server name -> fd
   std::map<std::string, int> action_server_fds;
-  for (const std::string_view action_server :
+  for (const absl::string_view action_server :
        absl::StrSplit(FLAGS_action_servers, ',')) {
     if (action_server.empty()) {
       continue;
@@ -655,7 +626,6 @@ int CuttlefishMain() {
   if (audio_handler) {
     audio_handler->Start();
   }
-  host_confui_server.Start();
 
   if (instance.record_screen()) {
     VLOG(1) << "Waiting for recording manager initializing.";

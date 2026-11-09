@@ -19,6 +19,7 @@ cf_cc_library(
         "//cuttlefish/io:reader_seeker",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@mkbootimg//:bootimg_header",
     ],
 )
@@ -34,6 +35,7 @@ cf_cc_library(
         "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/io:reader_seeker",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/strings:string_view",
         "@mkbootimg//:bootimg_header",
     ],
 )
@@ -50,6 +52,7 @@ cf_cc_test(
         "//cuttlefish/io:string",
         "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )
 
@@ -80,6 +83,7 @@ cf_cc_library(
         "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/io:reader_seeker",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/strings:string_view",
         "@mkbootimg//:bootimg_header",
     ],
 )
@@ -96,5 +100,6 @@ cf_cc_test(
         "//cuttlefish/io:string",
         "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings:string_view",
     ],
 )

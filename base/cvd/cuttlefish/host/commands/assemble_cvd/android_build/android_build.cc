@@ -19,7 +19,8 @@
 #include <ostream>
 #include <set>
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/pretty/pretty.h"
 #include "cuttlefish/pretty/struct.h"
@@ -31,13 +32,13 @@ Result<std::set<std::string, std::less<void>>> AndroidBuild::Images() {
   return CF_ERRF("Unimplemented for '{}'", *this);
 }
 
-Result<std::string> AndroidBuild::ImageFile(std::string_view name,
+Result<std::string> AndroidBuild::ImageFile(absl::string_view name,
                                             bool extract) {
   return CF_ERRF("Unimplemented for '{}': (name = '{}', extract = {})", *this,
                  name, extract);
 }
 
-Result<void> AndroidBuild::SetExtractDir(std::string_view) { return {}; }
+Result<void> AndroidBuild::SetExtractDir(absl::string_view) { return {}; }
 
 Result<std::set<std::string, std::less<void>>> AndroidBuild::AbPartitions() {
   return CF_ERRF("Unimplemented for '{}'", *this);

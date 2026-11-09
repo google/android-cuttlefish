@@ -18,9 +18,9 @@
 
 #include <cstddef>
 #include <string>
-#include <string_view>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/ansi_codes/ansi_codes.h"
 #include "cuttlefish/result/expect.h"
@@ -30,7 +30,7 @@ namespace cuttlefish {
 
 namespace {
 
-size_t FindKernelColonOutsideParens(const std::string_view s,
+size_t FindKernelColonOutsideParens(const absl::string_view s,
                                     const size_t start_pos) {
   int paren_depth = 0;
   for (size_t i = start_pos; i < s.size(); ++i) {
@@ -44,22 +44,22 @@ size_t FindKernelColonOutsideParens(const std::string_view s,
       return i;
     }
   }
-  return std::string_view::npos;
+  return absl::string_view::npos;
 }
 
 }  // namespace
 
-Result<KernelLine> ParseKernelLine(std::string_view line) {
+Result<KernelLine> ParseKernelLine(absl::string_view line) {
   KernelLine result;
 
   CF_EXPECT(!line.empty(), "Line empty");
   CF_EXPECT(line[0] == '[', "Not a bracket");
   const size_t bracket = line.find(']');
-  CF_EXPECT(bracket != std::string_view::npos, "No closing bracket");
+  CF_EXPECT(bracket != absl::string_view::npos, "No closing bracket");
   result.timestamp = line.substr(0, bracket + 1);
 
   const size_t colon = FindKernelColonOutsideParens(line, bracket + 1);
-  if (colon == std::string_view::npos) {
+  if (colon == absl::string_view::npos) {
     result.prefix = "";
     result.message = line.substr(bracket + 1);
   } else {
@@ -75,7 +75,7 @@ std::string FormatKernelLine(const KernelLine& line) {
                       kAnsiReset, line.message);
 }
 
-Result<std::string> ColorKernelLine(std::string_view line) {
+Result<std::string> ColorKernelLine(absl::string_view line) {
   return FormatKernelLine(CF_EXPECT(ParseKernelLine(line)));
 }
 

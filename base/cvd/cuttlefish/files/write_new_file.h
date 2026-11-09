@@ -19,13 +19,15 @@
 #include <sys/types.h>
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<void> WriteNewFile(const std::string& filepath, std::string_view content,
+Result<void> WriteNewFile(const std::string& filepath,
+                          absl::string_view content,
                           mode_t mode = S_IRWXU | S_IRGRP | S_IROTH);
 
 }  // namespace cuttlefish

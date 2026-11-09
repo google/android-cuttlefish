@@ -29,7 +29,6 @@
 #include <sstream>
 #include <stack>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -37,6 +36,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
 #include "json/value.h"
@@ -63,10 +63,10 @@ using cvd::config::EnvironmentSpecification;
 
 namespace {
 
-constexpr std::string_view kOverrideSeparator = ":";
-constexpr std::string_view kCredentialSourceOverride =
+constexpr absl::string_view kOverrideSeparator = ":";
+constexpr absl::string_view kCredentialSourceOverride =
     "fetch.credential_source";
-constexpr std::string_view kProjectIDOverride = "fetch.project_id";
+constexpr absl::string_view kProjectIDOverride = "fetch.project_id";
 
 bool IsLocalBuild(std::string path) { return absl::StartsWith(path, "/"); }
 
@@ -81,7 +81,7 @@ Flag GflagsCompatFlagOverride(
         }
         return absl::StrJoin(formatted, ",");
       })
-      .Setter([&overrides](std::string_view arg) -> Result<void> {
+      .Setter([&overrides](absl::string_view arg) -> Result<void> {
         size_t separator_index = arg.find(kOverrideSeparator);
         CF_EXPECTF(separator_index != std::string::npos,
                    "Unable to find separator \"{}\" in input \"{}\"",
@@ -221,7 +221,7 @@ Result<Json::Value> GetOverriddenConfig(
 
 EnvironmentSpecification FillEmptyInstanceNames(
     EnvironmentSpecification env_spec) {
-  std::set<std::string_view> used;
+  std::set<absl::string_view> used;
   for (const auto& instance : env_spec.instances()) {
     if (instance.name().empty()) {
       continue;
@@ -259,7 +259,7 @@ std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags) {
           .Help("Source of credentials to access the Android Build Server API. "
                 "Can be left empty in most cases, see the help for `login` and "
                 "`fetch` for details.")
-          .Setter([&load_flags](std::string_view arg) -> Result<void> {
+          .Setter([&load_flags](absl::string_view arg) -> Result<void> {
             CF_EXPECTF(
                 load_flags.overrides.count(kCredentialSourceOverride) == 0,
                 "Specifying both --override={} and the "
@@ -279,7 +279,7 @@ std::vector<Flag> BuildCvdLoadFlags(LoadFlags& load_flags) {
       Flag::StringFlag("project_id")
           .Help("Google Cloud Project ID for Android Build "
                 "Server API access and quotas.")
-          .Setter([&load_flags](std::string_view arg) -> Result<void> {
+          .Setter([&load_flags](absl::string_view arg) -> Result<void> {
             CF_EXPECTF(load_flags.overrides.count(kProjectIDOverride) == 0,
                        "Specifying both --override={} and the --project_id "
                        "flag is not allowed.",

@@ -28,6 +28,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "android-base/file.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -62,7 +63,7 @@ bool IsTrue(std::string value) {
 
 static Result<std::string> SearchFilesInPath(
     const std::string& dir_path, const std::vector<std::string>& files) {
-  for (std::string_view bin : files) {
+  for (absl::string_view bin : files) {
     const std::string file_path = absl::StrCat(dir_path, "/", bin);
     if (!FileExists(file_path)) {
       continue;

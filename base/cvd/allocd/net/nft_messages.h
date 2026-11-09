@@ -17,8 +17,9 @@
 #ifndef ALLOCD_NET_NFT_MESSAGES_H_
 #define ALLOCD_NET_NFT_MESSAGES_H_
 
-#include <string_view>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "allocd/net/netlink_request.h"
 #include "cuttlefish/result/result.h"
@@ -33,20 +34,20 @@ namespace cuttlefish::nft {
 // Corresponds to create table ip <name> with flags owner.
 // Fails if <name> already exists.
 // The kernel deletes the table when the socket that created it closes.
-NetlinkRequest NewTable(std::string_view name);
+NetlinkRequest NewTable(absl::string_view name);
 
 // Corresponds to delete table ip <name>.
-NetlinkRequest DeleteTable(std::string_view name);
+NetlinkRequest DeleteTable(absl::string_view name);
 
 // Corresponds to add chain ip <table> <chain>
 //   with type nat hook postrouting priority srcnat.
-NetlinkRequest NewNatChain(std::string_view table, std::string_view chain);
+NetlinkRequest NewNatChain(absl::string_view table, absl::string_view chain);
 
 // Corresponds to add rule ip <table> <chain>
 //   ip saddr <source_cidr> masquerade.
-Result<NetlinkRequest> NewMasqueradeRule(std::string_view table,
-                                         std::string_view chain,
-                                         std::string_view source_cidr);
+Result<NetlinkRequest> NewMasqueradeRule(absl::string_view table,
+                                         absl::string_view chain,
+                                         absl::string_view source_cidr);
 
 // Wraps the changes in batch begin and end messages.
 std::vector<char> Batch(const std::vector<NetlinkRequest>& changes);
@@ -58,7 +59,7 @@ Result<void> CheckReplies(const std::vector<char>& reply_bytes);
 // The kernel rejects these inside a batch, so they return bytes ready to send.
 
 // Corresponds to list table ip <name>.
-std::vector<char> GetTable(std::string_view name);
+std::vector<char> GetTable(absl::string_view name);
 
 // Returns whether GetTable's reply says the table exists.
 Result<bool> TableExistsFromReply(const std::vector<char>& reply_bytes);

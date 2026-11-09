@@ -18,8 +18,9 @@
 
 #include <functional>
 #include <mutex>
-#include <string_view>
 #include <unordered_map>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/sensors/sensors.h"
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
@@ -41,7 +42,7 @@ class SensorsHandler {
   void RemoveMotionUpdatedCallback(int subscriber_id);
 
  private:
-  Result<void> SendCommand(uint32_t cmd, std::string_view payload);
+  Result<void> SendCommand(uint32_t cmd, absl::string_view payload);
   Result<std::string> GetSensorsData(sensors::SensorsMask mask);
   void NotifyMotionUpdated();
 

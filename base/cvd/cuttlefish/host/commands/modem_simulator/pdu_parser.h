@@ -16,7 +16,8 @@
 #pragma once
 
 #include <string>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 namespace cuttlefish {
 
@@ -33,7 +34,7 @@ class PDUParser {
   std::string GetPhoneNumberFromAddress();
 
   static std::string BCDToString(std::string& data);
-  static std::string StringToBCD(std::string_view data);
+  static std::string StringToBCD(absl::string_view data);
 
  private:
   bool DecodePDU(std::string& pdu);

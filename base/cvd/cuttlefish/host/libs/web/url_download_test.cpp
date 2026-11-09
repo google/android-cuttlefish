@@ -21,13 +21,13 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
 #include "gmock/gmock.h"
@@ -60,11 +60,11 @@ constexpr size_t kSize = 16;
 std::optional<std::pair<size_t, size_t>> RequestedRange(
     const std::vector<std::string>& headers) {
   for (const std::string& header : headers) {
-    std::string_view range = header;
+    absl::string_view range = header;
     if (!absl::ConsumePrefix(&range, kRangePrefix)) {
       continue;
     }
-    const std::vector<std::string_view> ends = absl::StrSplit(range, '-');
+    const std::vector<absl::string_view> ends = absl::StrSplit(range, '-');
     size_t start = 0;
     size_t last = 0;
     EXPECT_EQ(ends.size(), 2);
@@ -78,12 +78,12 @@ std::optional<std::pair<size_t, size_t>> RequestedRange(
 class UrlDownloadTests : public ::testing::Test {
  protected:
   std::string Path() const { return absl::StrCat(directory_.path, "/img.zip"); }
-  std::string PartPath(std::string_view version = kVersion) const {
+  std::string PartPath(absl::string_view version = kVersion) const {
     return PartialFilePath(Path(), version);
   }
 
   void WritePart(const std::string& contents,
-                 std::string_view version = kVersion) {
+                 absl::string_view version = kVersion) {
     ASSERT_THAT(WriteNewFile(PartPath(version), contents), IsOk());
   }
 

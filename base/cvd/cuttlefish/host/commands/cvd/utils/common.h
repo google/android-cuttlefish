@@ -17,8 +17,9 @@
 #pragma once
 
 #include <string>
-#include <string_view>
 #include <unordered_map>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -46,7 +47,7 @@ std::string InstanceDatabasePath();
 
 std::string InstanceLocksPath();
 
-Result<std::string> GroupDirFromHome(std::string_view group_home_dir);
+Result<std::string> GroupDirFromHome(absl::string_view group_home_dir);
 
 std::string AssemblyDirFromHome(const std::string& group_home_dir);
 

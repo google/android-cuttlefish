@@ -21,9 +21,10 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/in_memory_io.h"
 #include "cuttlefish/io/io.h"
@@ -34,17 +35,17 @@
 namespace cuttlefish {
 
 Result<std::unique_ptr<ReaderSeeker>> InMemoryFilesystem::OpenReadOnly(
-    std::string_view path) {
+    absl::string_view path) {
   return CF_EXPECT(OpenReadWrite(path));
 }
 
 Result<uint32_t> InMemoryFilesystem::FileAttributes(
-    std::string_view path) const {
+    absl::string_view path) const {
   return 0644;
 }
 
 Result<std::unique_ptr<ReaderWriterSeeker>> InMemoryFilesystem::CreateFile(
-    std::string_view path) {
+    absl::string_view path) {
   std::lock_guard lock(mutex_);
   auto [it, inserted] =
       files_.try_emplace(std::string(path), std::vector<char>{});
@@ -52,7 +53,7 @@ Result<std::unique_ptr<ReaderWriterSeeker>> InMemoryFilesystem::CreateFile(
   return std::make_unique<class InMemoryIo>(it->second, mutex_);
 }
 
-Result<void> InMemoryFilesystem::DeleteFile(std::string_view path) {
+Result<void> InMemoryFilesystem::DeleteFile(absl::string_view path) {
   std::lock_guard lock(mutex_);
   auto it = files_.find(path);
   CF_EXPECTF(it != files_.end(), "No such file '{}'", path);
@@ -61,7 +62,7 @@ Result<void> InMemoryFilesystem::DeleteFile(std::string_view path) {
 }
 
 Result<std::unique_ptr<ReaderWriterSeeker>> InMemoryFilesystem::OpenReadWrite(
-    std::string_view path) {
+    absl::string_view path) {
   std::lock_guard lock(mutex_);
   auto it = files_.find(path);
   CF_EXPECTF(it != files_.end(), "'{}' does not exist", path);

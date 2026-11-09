@@ -20,12 +20,12 @@
 #include <chrono>
 #include <mutex>
 #include <string>
-#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/string_view.h"
 #include "fruit/component.h"
 #include "fruit/fruit_forward_decls.h"
 
@@ -100,7 +100,7 @@ Result<void> Cvdalloc::ResultSetup() {
   return {};
 }
 
-Result<void> Cvdalloc::BinaryIsValid(std::string_view path) {
+Result<void> Cvdalloc::BinaryIsValid(absl::string_view path) {
   CF_EXPECT(Stat(path));
   CF_EXPECT(ValidateCvdallocBinary(path));
   return {};

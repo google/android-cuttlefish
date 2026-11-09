@@ -18,7 +18,8 @@
 #include <stdint.h>
 
 #include <memory>
-#include <string_view>
+
+#include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result_type.h"
@@ -30,20 +31,20 @@ class ReadFilesystem {
   virtual ~ReadFilesystem() = default;
 
   virtual Result<std::unique_ptr<ReaderSeeker>> OpenReadOnly(
-      std::string_view path) = 0;
+      absl::string_view path) = 0;
 
-  virtual Result<uint32_t> FileAttributes(std::string_view path) const = 0;
+  virtual Result<uint32_t> FileAttributes(absl::string_view path) const = 0;
 };
 
 class ReadWriteFilesystem : public ReadFilesystem {
  public:
   virtual Result<std::unique_ptr<ReaderWriterSeeker>> CreateFile(
-      std::string_view path) = 0;
+      absl::string_view path) = 0;
 
-  virtual Result<void> DeleteFile(std::string_view path) = 0;
+  virtual Result<void> DeleteFile(absl::string_view path) = 0;
 
   virtual Result<std::unique_ptr<ReaderWriterSeeker>> OpenReadWrite(
-      std::string_view path) = 0;
+      absl::string_view path) = 0;
 };
 
 }  // namespace cuttlefish
