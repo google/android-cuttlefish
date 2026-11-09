@@ -19,11 +19,13 @@
 #include "absl/log/log.h"
 #include "gflags/gflags.h"
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd_send_id_disclosure/cellular_identifier_disclosure_command_builder.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/io/write_exact.h"
+#include "cuttlefish/io/writer.h"
+#include "cuttlefish/result/result_type.h"
 
 DEFINE_int32(instance_num, cuttlefish::GetInstance(),
              "Which instance to read the configs from");
@@ -42,7 +44,7 @@ DEFINE_string(plmn, "001001",
 namespace cuttlefish {
 namespace {
 
-void SendDisclosure(SharedFD fd) {
+void SendDisclosure(Writer& out) {
   std::string command =
       fmt::format("REM{}{}", FLAGS_modem_num,
                   GetATCommand(FLAGS_plmn, FLAGS_identifier,
@@ -50,11 +52,9 @@ void SendDisclosure(SharedFD fd) {
 
   VLOG(0) << "Attempting to send command: " << command;
 
-  long written = WriteAll(fd, command);
-  if (written != command.size()) {
-    LOG(FATAL) << "Failed to write data to shared fd. Tried to write "
-               << command.size() << " bytes, but only wrote " << written
-               << " bytes.";
+  Result<void, int> write_res = WriteExact(out, command);
+  if (!write_res.has_value()) {
+    LOG(FATAL) << "Failed to write data: " << write_res.error();
   }
 }
 
@@ -72,10 +72,14 @@ int SendIdDisclosureMain(int argc, char** argv) {
       fmt::format("modem_simulator{}", cf_config.modem_simulator_host_id());
 
   LOG(INFO) << "Connecting over local socket: " << socket_name;
-  SharedFD modem_simulator_fd =
-      cuttlefish::SharedFD::SocketLocalClient(socket_name, true, SOCK_STREAM);
+  Result<Fd, int> modem_simulator_fd =
+      Fd::SocketLocalClient(socket_name, true, SOCK_STREAM);
+  if (!modem_simulator_fd.has_value()) {
+    LOG(FATAL) << "Failed to connect to modem simulator: "
+               << modem_simulator_fd.error();
+  }
 
-  SendDisclosure(modem_simulator_fd);
+  SendDisclosure(*modem_simulator_fd);
 
   return 0;
 }

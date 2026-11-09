@@ -22,20 +22,21 @@
 #include <poll.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <sys/types.h>
 
 #include <chrono>
+#include <limits>
 #include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/casimir_control_server/crc.h"
 #include "cuttlefish/host/commands/casimir_control_server/packet_runtime.h"
 #include "cuttlefish/host/commands/casimir_control_server/rf_packets.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -261,19 +262,11 @@ CasimirController::SendBroadcast(std::vector<uint8_t> data, std::string type,
 
 Result<void> CasimirController::Write(const RfPacketBuilder& rf_packet) {
   std::vector<uint8_t> raw_bytes = rf_packet.SerializeToBytes();
-  uint16_t header_bytes_le = htole16(raw_bytes.size());
-  ssize_t written = WriteAll(sock_, reinterpret_cast<char*>(&header_bytes_le),
-                             sizeof(header_bytes_le));
-  CF_EXPECT_EQ(written, sizeof(header_bytes_le),
-               "Failed to write packet header to casimir socket, errno="
-                   << sock_->GetErrno());
-
-  written = WriteAll(sock_, reinterpret_cast<char*>(raw_bytes.data()),
-                     raw_bytes.size());
-  CF_EXPECT_EQ(written, raw_bytes.size(),
-               "Failed to write packet payload to casimir socket, errno="
-                   << sock_->GetErrno());
-
+  CF_EXPECT_LE(raw_bytes.size(), std::numeric_limits<uint16_t>::max());
+  CF_EXPECT(WriteExactBinary<uint16_t>(*sock_, htole16(raw_bytes.size())),
+            "Failed to write packet header to casimir socket");
+  CF_EXPECT(WriteExact(*sock_, raw_bytes),
+            "Failed to write packet payload to casimir socket");
   return {};
 }
 

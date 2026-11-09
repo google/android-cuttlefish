@@ -45,6 +45,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/cvd_send_sms:pdu_format_builder",
+        "//cuttlefish/io:write_exact",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
         "@icu//icu4c/source/common:schriter",
         "@icu//icu4c/source/common:utypes",

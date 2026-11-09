@@ -13,9 +13,12 @@ cf_cc_binary(
     include_cleaner_enabled = False,
     deps = [
         ":libcvd_id_disclosure_builder",
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/io:write_exact",
+        "//cuttlefish/io:writer",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
         "@gflags",
     ],

@@ -29,10 +29,12 @@
 namespace cuttlefish {
 
 Result<void, int> WriteExact(Writer&, const char* buf, size_t size);
+Result<void, int> WriteExact(Writer&, const uint8_t* buf, size_t size);
 Result<void, int> WriteExact(Writer&,
                              const char* buf);  // Assumes null termination
 Result<void, int> WriteExact(Writer&, const std::string&);
 Result<void, int> WriteExact(Writer&, const std::vector<char>&);
+Result<void, int> WriteExact(Writer&, const std::vector<uint8_t>&);
 Result<void, int> WriteExact(Writer&, absl::string_view);
 
 template <typename T>
