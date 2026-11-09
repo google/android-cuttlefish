@@ -19,8 +19,10 @@
 #include <atomic>
 #include <condition_variable>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <mutex>
+#include <span>
 #include <thread>
 #include <vector>
 
@@ -55,11 +57,15 @@ class PcmStreamServer {
 
   void AcceptLoop();
   void StreamClient(ClientSession& session);
+  // Sends `samples` to `client_fd`. Returns whether the client remains
+  // connected (including when interrupted by server shutdown).
+  bool SendChunk(const SharedFD& client_fd, std::span<const int16_t> samples);
   void ReapFinishedClients();
 
   TunerState& tuner_state_;
   std::atomic<bool> is_running_ = false;
   SharedFD server_fd_;
+  SharedFD stop_fd_;
   std::thread accept_thread_;
   std::mutex clients_mutex_;
   std::vector<std::unique_ptr<ClientSession>> clients_;

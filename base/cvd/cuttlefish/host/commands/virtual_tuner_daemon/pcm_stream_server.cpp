@@ -16,15 +16,21 @@
 
 #include "cuttlefish/host/commands/virtual_tuner_daemon/pcm_stream_server.h"
 
+#include <fcntl.h>
+#include <sys/poll.h>
+#include <sys/types.h>
+
 #include <atomic>
 #include <cerrno>
 #include <chrono>
+#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <ratio>
+#include <span>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -32,7 +38,6 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/audio_generator.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/tuner_state.h"
@@ -62,6 +67,14 @@ Result<void> PcmStreamServer::Start() {
 
   CF_EXPECT(server_fd_->IsOpen(),
             "Failed to start PCM streaming server: server_fd is not open");
+  const int flags = server_fd_->Fcntl(F_GETFL, 0);
+  CF_EXPECT(flags >= 0,
+            "Failed to get flags on server_fd: " << server_fd_->StrError());
+  CF_EXPECT(
+      server_fd_->Fcntl(F_SETFL, flags | O_NONBLOCK) == 0,
+      "Failed to set O_NONBLOCK on server_fd: " << server_fd_->StrError());
+  stop_fd_ = CF_EXPECT(Fd::Event(0, EFD_NONBLOCK),
+                       "Failed to create stop eventfd for PCM server");
 
   LOG(INFO) << "PCM streaming server running with inherited server fd.";
   is_running_ = true;
@@ -70,15 +83,18 @@ Result<void> PcmStreamServer::Start() {
 }
 
 void PcmStreamServer::Stop() {
-  if (!is_running_.exchange(false)) {
-    return;
+  {
+    std::lock_guard<std::mutex> lock(stop_mutex_);
+    if (!is_running_.exchange(false)) {
+      return;
+    }
+    stop_cv_.notify_all();
   }
 
-  if (server_fd_->IsOpen()) {
-    server_fd_->Shutdown(SHUT_RDWR);
-    server_fd_->Close();
+  if (stop_fd_->IsOpen() && stop_fd_->EventfdWrite(1) != 0) {
+    LOG(ERROR) << "Failed to signal PCM server stop eventfd: "
+               << stop_fd_->StrError();
   }
-  stop_cv_.notify_all();
   if (accept_thread_.joinable()) {
     accept_thread_.join();
   }
@@ -88,32 +104,62 @@ void PcmStreamServer::Stop() {
     std::lock_guard<std::mutex> lock(clients_mutex_);
     sessions.swap(clients_);
   }
-  for (const auto& session : sessions) {
+  for (std::unique_ptr<ClientSession>& session : sessions) {
+    if (session->thread.joinable()) {
+      session->thread.join();
+    }
     if (session->fd->IsOpen()) {
       session->fd->Shutdown(SHUT_RDWR);
       session->fd->Close();
     }
   }
-  for (auto& session : sessions) {
-    if (session->thread.joinable()) {
-      session->thread.join();
-    }
+  if (stop_fd_->IsOpen()) {
+    stop_fd_->Close();
   }
 
   LOG(INFO) << "PCM streaming server stopped.";
 }
 
 void PcmStreamServer::AcceptLoop() {
+  constexpr size_t kServerPollIndex = 0;
+  constexpr size_t kStopPollIndex = 1;
+  std::vector<PollSharedFd> poll_fds = {
+      {.fd = server_fd_, .events = POLLIN, .revents = 0},
+      {.fd = stop_fd_, .events = POLLIN, .revents = 0},
+  };
+
   while (is_running_) {
-    SharedFD client_fd = Fd::Accept(*server_fd_).value_or(Fd());
-    if (!is_running_) {
+    poll_fds[kServerPollIndex].revents = 0;
+    poll_fds[kStopPollIndex].revents = 0;
+    const int poll_res = SharedFD::Poll(poll_fds, /*timeout=*/-1);
+    if (poll_res < 0) {
+      LOG(ERROR) << "Failed to poll on PCM server socket: errno=" << errno;
       break;
     }
-    if (!client_fd->IsOpen()) {
-      LOG(ERROR) << "Accept failed on PCM server socket: "
-                 << client_fd->StrError();
+    if (poll_fds[kStopPollIndex].revents != 0 || !is_running_) {
+      break;
+    }
+    if ((poll_fds[kServerPollIndex].revents & (POLLERR | POLLHUP | POLLNVAL)) !=
+        0) {
+      LOG(ERROR) << "Unexpected poll revents on PCM server socket: "
+                 << poll_fds[kServerPollIndex].revents;
+      break;
+    }
+    if ((poll_fds[kServerPollIndex].revents & POLLIN) == 0) {
       continue;
     }
+
+    Result<Fd, int> client_res = Fd::Accept(*server_fd_);
+    if (!client_res.has_value()) {
+      const int accept_err = client_res.error().Value();
+      if (accept_err == EAGAIN || accept_err == EWOULDBLOCK) {
+        continue;
+      }
+      LOG(ERROR) << "Accept failed on PCM server socket: "
+                 << client_res.error();
+      continue;
+    }
+    SharedFD client_fd(std::move(*client_res));
 
     std::lock_guard<std::mutex> lock(clients_mutex_);
     ReapFinishedClients();
@@ -145,6 +191,50 @@ void PcmStreamServer::ReapFinishedClients() {
   });
 }
 
+bool PcmStreamServer::SendChunk(const SharedFD& client_fd,
+                                std::span<const int16_t> samples) {
+  constexpr size_t kClientPollIndex = 0;
+  constexpr size_t kStopPollIndex = 1;
+  std::vector<PollSharedFd> poll_fds = {
+      {.fd = client_fd, .events = POLLOUT, .revents = 0},
+      {.fd = stop_fd_, .events = POLLIN, .revents = 0},
+  };
+
+  const char* cursor = reinterpret_cast<const char*>(samples.data());
+  size_t remaining = samples.size_bytes();
+  while (remaining > 0 && is_running_) {
+    const ssize_t written =
+        client_fd->Send(cursor, remaining, MSG_NOSIGNAL | MSG_DONTWAIT);
+    if (written > 0) {
+      cursor += written;
+      remaining -= static_cast<size_t>(written);
+      continue;
+    }
+    if (written == 0) {
+      return false;
+    }
+    const int err = client_fd->GetErrno();
+    if (err != EAGAIN && err != EWOULDBLOCK) {
+      return false;
+    }
+
+    poll_fds[kClientPollIndex].revents = 0;
+    poll_fds[kStopPollIndex].revents = 0;
+    const int poll_res = SharedFD::Poll(poll_fds, /*timeout=*/-1);
+    if (poll_res < 0) {
+      return false;
+    }
+    if (poll_fds[kStopPollIndex].revents != 0) {
+      break;
+    }
+    if ((poll_fds[kClientPollIndex].revents & (POLLERR | POLLHUP | POLLNVAL)) !=
+        0) {
+      return false;
+    }
+  }
+  return remaining == 0 || !is_running_;
+}
+
 void PcmStreamServer::StreamClient(ClientSession& session) {
   const SharedFD& client_fd = session.fd;
   AudioGenerator generator;
@@ -152,7 +242,7 @@ void PcmStreamServer::StreamClient(ClientSession& session) {
 
   const auto write_next_chunk = [&]() -> bool {
     generator.GenerateChunk(buffer, tuner_state_.GetSnapshot());
-    return SendAll(client_fd, buffer.data(), buffer.size() * sizeof(int16_t));
+    return SendChunk(client_fd, buffer);
   };
 
   bool connected = true;
@@ -188,6 +278,10 @@ void PcmStreamServer::StreamClient(ClientSession& session) {
     connected = write_next_chunk();
   }
 
+  if (client_fd->IsOpen()) {
+    client_fd->Shutdown(SHUT_RDWR);
+    client_fd->Close();
+  }
   LOG(INFO) << "PCM client disconnected.";
   session.finished.store(true, std::memory_order_release);
 }
