@@ -161,22 +161,6 @@ bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   return false;
 }
 
-SharedFD SharedFD::MemfdCreateWithData(const std::string& name,
-                                       const std::string& data,
-                                       unsigned int flags) {
-  SharedFD memfd = Fd::MemfdCreate(name, flags).value_or(Fd());
-  if (WriteAll(memfd, data) != data.size()) {
-    return ErrorFD(errno);
-  }
-  if (memfd->LSeek(0, SEEK_SET) != 0) {
-    return ErrorFD(memfd->GetErrno());
-  }
-  if (!memfd->Chmod(0700)) {
-    return ErrorFD(memfd->GetErrno());
-  }
-  return memfd;
-}
-
 bool SharedFD::SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                           SharedFD* fd1) {
   Result<std::pair<Fd, Fd>> res = Fd::SocketPair(domain, type, protocol);

@@ -139,9 +139,6 @@ class SharedFD {
   // All SharedFDs have the O_CLOEXEC flag after creation. To remove use the
   // Fcntl or Dup functions.
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
-  static SharedFD MemfdCreateWithData(const std::string& name,
-                                      const std::string& data,
-                                      unsigned int flags = 0);
   static Result<std::pair<SharedFD, std::string>> Mkostemp(
       absl::string_view path, int flags = O_CLOEXEC);
   static int Poll(PollSharedFd* fds, size_t num_fds, int timeout);
