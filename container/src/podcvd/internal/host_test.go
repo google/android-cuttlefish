@@ -123,3 +123,32 @@ func TestCreateToolingHost(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteToolingHost(t *testing.T) {
+	tests := []struct {
+		name    string
+		ccm     hostManager
+		wantErr bool
+	}{
+		{
+			name: "success",
+			ccm:  hostManager{containers: map[string]ContainerListEntry{"tooling": {}}},
+		},
+		{
+			name: "failure",
+			ccm: hostManager{
+				containers: map[string]ContainerListEntry{ContainerName("cvd_1"): {}},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := DeleteToolingHost(tc.ccm)
+			if gotErr := err != nil; gotErr != tc.wantErr {
+				t.Errorf("DeleteToolingHost(%+v) error = %v; want error %v",
+					tc.ccm, err, tc.wantErr)
+			}
+		})
+	}
+}
