@@ -16,6 +16,7 @@ package internal
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 )
@@ -23,6 +24,24 @@ import (
 type hostManager struct {
 	CuttlefishContainerManager
 	containers map[string]ContainerListEntry
+	failCreate bool
+}
+
+func (h hostManager) ImageExists(_ context.Context, _ string) (bool, error) {
+	return true, nil
+}
+
+func (h hostManager) ContainerExists(_ context.Context, name string) (bool, error) {
+	_, ok := h.containers[name]
+	return ok, nil
+}
+
+func (h hostManager) CreateAndStartContainer(
+	_ context.Context, _ []string, _ string) (string, error) {
+	if h.failCreate {
+		return "", errors.New("failed to create container")
+	}
+	return "", nil
 }
 
 func (h hostManager) StopAndRemoveContainer(_ context.Context, ctr string) error {
@@ -61,6 +80,45 @@ func TestDeleteCuttlefishHost(t *testing.T) {
 			if gotErr := err != nil; gotErr != tc.wantErr {
 				t.Errorf("DeleteCuttlefishHost(%+v, %q) error = %v; want error %v",
 					tc.ccm, tc.groupName, err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestCreateToolingHost(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+
+	tests := []struct {
+		name    string
+		ccm     hostManager
+		wantErr bool
+	}{
+		{
+			name: "existing",
+			ccm: hostManager{
+				containers: map[string]ContainerListEntry{"tooling": {}},
+				failCreate: true,
+			},
+		},
+		{
+			name: "new",
+			ccm:  hostManager{},
+		},
+		{
+			name: "failure",
+			ccm: hostManager{
+				containers: map[string]ContainerListEntry{ContainerName("cvd_1"): {}},
+				failCreate: true,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := CreateToolingHost(tc.ccm)
+			if gotErr := err != nil; gotErr != tc.wantErr {
+				t.Errorf("CreateToolingHost(%+v) error = %v; want error %v",
+					tc.ccm, err, tc.wantErr)
 			}
 		})
 	}
