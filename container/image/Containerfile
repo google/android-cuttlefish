@@ -24,6 +24,7 @@ WORKDIR /root
 RUN set -x
 RUN apt update
 RUN apt install -y --no-install-recommends \
+    busybox-syslogd \
     ca-certificates \
     curl \
     default-jre-headless \

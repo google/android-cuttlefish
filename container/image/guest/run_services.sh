@@ -5,6 +5,9 @@ if [[ "${USE_GCE_METADATA}" == "true" ]]; then
     >> /etc/default/cuttlefish-host_orchestrator
 fi
 
+# Android T host packages ship crosvm with syslog dependency.
+service busybox-syslogd start
+
 service nginx start
 service cuttlefish-host-resources start
 service cuttlefish-operator start
