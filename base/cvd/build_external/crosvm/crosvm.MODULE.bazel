@@ -122,6 +122,19 @@ crosvm_bin.annotation(
     repositories = ["crosvm_bin"],
 )
 
+# TODO b/582753512
+# Include a copy of the necessary kernel headers to compile the v4l2r crate on
+# potentially older kernels. This can be removed when v4l2r addresses it
+# (https://github.com/Gnurou/v4l2r/issues/58)
+crosvm_bin.annotation(
+    crate = "v4l2r",
+    build_script_data = ["@@//build_external/crosvm:v4l2_headers"],
+    build_script_env = {
+        "V4L2R_VIDEODEV2_H_PATH": "$${pwd}/build_external/crosvm/include",
+    },
+    repositories = ["crosvm_bin"],
+)
+
 crosvm_bin.from_specs(
     name = "crosvm_bin",
     cargo_config = "@//build_external/crosvm:crosvm.config.toml",
