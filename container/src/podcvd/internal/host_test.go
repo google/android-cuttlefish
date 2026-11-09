@@ -19,7 +19,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"testing"
 )
@@ -33,11 +35,16 @@ type hostManager struct {
 
 type execResult struct {
 	wantCmd []string
+	output  string
 	fail    bool
 }
 
 func (h hostManager) ImageExists(_ context.Context, _ string) (bool, error) {
 	return true, nil
+}
+
+func (h hostManager) ListContainers(_ context.Context, _ bool) ([]ContainerListEntry, error) {
+	return slices.Collect(maps.Values(h.containers)), nil
 }
 
 func (h hostManager) ContainerExists(_ context.Context, name string) (bool, error) {
@@ -54,7 +61,7 @@ func (h hostManager) CreateAndStartContainer(
 }
 
 func (h hostManager) ExecOnContainer(
-	_ context.Context, ctr string, cmd []string, _ io.Reader, _, _ io.Writer) error {
+	_ context.Context, ctr string, cmd []string, _ io.Reader, stdout, _ io.Writer) error {
 	e := h.execResults[ctr]
 	if e.fail {
 		return errors.New("exec failed")
@@ -65,6 +72,7 @@ func (h hostManager) ExecOnContainer(
 	if !slices.Equal(e.wantCmd, cmd) {
 		return errors.New("exec failed")
 	}
+	io.WriteString(stdout, e.output)
 	return nil
 }
 
@@ -255,6 +263,129 @@ func TestExecFetchCmdOnDisposableHost(t *testing.T) {
 			if gotErr := err != nil; gotErr != tc.wantErr {
 				t.Errorf("ExecFetchCmdOnDisposableHost(%+v, %q) error = %v; want error %v",
 					tc.ccm, tc.args, err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestExecOnAllCuttlefishHosts(t *testing.T) {
+	t.Setenv(envClientID, "")
+
+	tests := []struct {
+		name           string
+		ccm            hostManager
+		subcommandArgs []string
+		want           []HostExecResult
+		wantErr        bool
+	}{
+		{
+			name: "fleet",
+			ccm: hostManager{
+				containers: map[string]ContainerListEntry{
+					ContainerName("cvd_1"): {
+						Labels: map[string]string{"created_by": "podcvd", "group_name": "cvd_1"},
+						Ports:  []PortBinding{{IP: "192.168.80.1", PrivatePort: 1443}},
+					},
+					ContainerName("cvd_2"): {
+						Labels: map[string]string{"created_by": "podcvd", "group_name": "cvd_2"},
+						Ports:  []PortBinding{{IP: "192.168.80.2", PrivatePort: 1443}},
+					},
+				},
+				execResults: map[string]execResult{
+					ContainerName("cvd_1"): {
+						wantCmd: []string{"cvd", "fleet"},
+						output:  `{"groups":[{"group_name":"cvd_1"}]}`,
+					},
+					ContainerName("cvd_2"): {
+						wantCmd: []string{"cvd", "fleet"},
+						output:  `{"groups":[{"group_name":"cvd_2"}]}`,
+					},
+				},
+			},
+			subcommandArgs: []string{"cvd", "fleet"},
+			want: []HostExecResult{
+				{
+					GroupName: "cvd_1",
+					IP:        "192.168.80.1",
+					Stdout:    []byte(`{"groups":[{"group_name":"cvd_1"}]}`),
+				},
+				{
+					GroupName: "cvd_2",
+					IP:        "192.168.80.2",
+					Stdout:    []byte(`{"groups":[{"group_name":"cvd_2"}]}`),
+				},
+			},
+		},
+		{
+			name: "ps",
+			ccm: hostManager{
+				containers: map[string]ContainerListEntry{
+					ContainerName("cvd_1"): {
+						Labels: map[string]string{"created_by": "podcvd", "group_name": "cvd_1"},
+						Ports:  []PortBinding{{IP: "192.168.80.1", PrivatePort: 1443}},
+					},
+					ContainerName("cvd_2"): {
+						Labels: map[string]string{"created_by": "podcvd", "group_name": "cvd_2"},
+						Ports:  []PortBinding{{IP: "192.168.80.2", PrivatePort: 1443}},
+					},
+				},
+				execResults: map[string]execResult{
+					ContainerName("cvd_1"): {
+						wantCmd: []string{"cvd", "ps"},
+						output:  "GROUP   STATUS\ncvd_1   Running\n",
+					},
+					ContainerName("cvd_2"): {
+						wantCmd: []string{"cvd", "ps"},
+						output:  "GROUP   STATUS\ncvd_2   Stopped\n",
+					},
+				},
+			},
+			subcommandArgs: []string{"cvd", "ps"},
+			want: []HostExecResult{
+				{
+					GroupName: "cvd_1",
+					IP:        "192.168.80.1",
+					Stdout:    []byte("GROUP   STATUS\ncvd_1   Running\n"),
+				},
+				{
+					GroupName: "cvd_2",
+					IP:        "192.168.80.2",
+					Stdout:    []byte("GROUP   STATUS\ncvd_2   Stopped\n"),
+				},
+			},
+		},
+		{
+			name: "failure",
+			ccm: hostManager{
+				containers: map[string]ContainerListEntry{
+					ContainerName("cvd_1"): {
+						Labels: map[string]string{"created_by": "podcvd", "group_name": "cvd_1"},
+						Ports:  []PortBinding{{IP: "192.168.80.1", PrivatePort: 1443}},
+					},
+				},
+				execResults: map[string]execResult{ContainerName("cvd_1"): {fail: true}},
+			},
+			subcommandArgs: []string{"cvd", "ps"},
+			wantErr:        true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := ExecOnAllCuttlefishHosts(tc.ccm, tc.subcommandArgs, io.Discard)
+			if tc.wantErr {
+				if err == nil {
+					t.Errorf("ExecOnAllCuttlefishHosts(%+v, %q) succeeded; want error",
+						tc.ccm, tc.subcommandArgs)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("ExecOnAllCuttlefishHosts(%+v, %q) failed: %v",
+					tc.ccm, tc.subcommandArgs, err)
+			}
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("ExecOnAllCuttlefishHosts(%+v, %q) = %+v; want %+v",
+					tc.ccm, tc.subcommandArgs, got, tc.want)
 			}
 		})
 	}
