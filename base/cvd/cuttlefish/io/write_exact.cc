@@ -17,6 +17,7 @@
 
 #include <errno.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 #include <string>
@@ -41,6 +42,11 @@ Result<void, int> WriteExact(Writer& writer, const char* buf, size_t size) {
   return {};
 }
 
+Result<void, int> WriteExact(Writer& writer, const uint8_t* buf, size_t size) {
+  CF_EXPECT(WriteExact(writer, reinterpret_cast<const char*>(buf), size));
+  return {};
+}
+
 Result<void, int> WriteExact(Writer& writer, const char* buf) {
   CF_EXPECT(WriteExact(writer, buf, strlen(buf)));
   return {};
@@ -57,6 +63,11 @@ Result<void, int> WriteExact(Writer& writer, const absl::string_view str) {
 }
 
 Result<void, int> WriteExact(Writer& writer, const std::vector<char>& vec) {
+  CF_EXPECT(WriteExact(writer, vec.data(), vec.size()));
+  return {};
+}
+
+Result<void, int> WriteExact(Writer& writer, const std::vector<uint8_t>& vec) {
   CF_EXPECT(WriteExact(writer, vec.data(), vec.size()));
   return {};
 }

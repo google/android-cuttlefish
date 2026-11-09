@@ -21,9 +21,10 @@
 
 #include "absl/log/log.h"
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvd_send_sms/pdu_format_builder.h"
+#include "cuttlefish/io/write_exact.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -47,9 +48,10 @@ bool SmsSender::Send(const std::string& sms_body,
   // https://cs.android.com/android/platform/superproject/+/master:device/google/cuttlefish/host/commands/modem_simulator/main.cpp;l=151;drc=cbfe7dba44bfea95049152b828c1a5d35c9e0522
   std::string at_command = "REM" + std::to_string(modem_id) +
                            "AT+REMOTESMS=" + pdu_format_str + "\r";
-  if (WriteAll(modem_simulator_client_fd_, at_command) != at_command.size()) {
-    LOG(ERROR) << "Error writing to socket: "
-               << modem_simulator_client_fd_->StrError();
+  Result<void, int> write_res =
+      WriteExact(*modem_simulator_client_fd_, at_command);
+  if (!write_res.has_value()) {
+    LOG(ERROR) << "Error writing to socket: " << write_res.error();
     return false;
   }
   return true;
