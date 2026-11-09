@@ -135,7 +135,8 @@ int SharedFD::Poll(PollSharedFd* fds, size_t num_fds, int timeout) {
     native_pollfds[i].events = fds[i].events;
     native_pollfds[i].revents = 0;
   }
-  int ret = poll(native_pollfds.data(), native_pollfds.size(), timeout);
+  int ret = TEMP_FAILURE_RETRY(
+      poll(native_pollfds.data(), native_pollfds.size(), timeout));
   for (size_t i = 0; i < num_fds; i++) {
     fds[i].revents = native_pollfds[i].revents;
   }
