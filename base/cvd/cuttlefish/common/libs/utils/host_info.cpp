@@ -69,7 +69,7 @@ Arch HostArch(absl::string_view arch_str) {
 }
 
 Os HostOs(absl::string_view os_str) {
-  if (os_str == "GNU/Linux") {
+  if (os_str == "Linux") {
     return Os::Linux;
   }
   return Os::Unknown;
