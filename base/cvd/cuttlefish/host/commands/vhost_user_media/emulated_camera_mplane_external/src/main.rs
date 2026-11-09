@@ -21,7 +21,7 @@ mod mmap;
 use std::path::PathBuf;
 
 use clap::Parser;
-use emulated_camera::LensFacing;
+use emulated_camera::{FrameSource, LensFacing};
 
 use crate::mmap::MmapHandler;
 
@@ -55,6 +55,7 @@ fn main() -> emulated_camera::Result<()> {
         &args.socket_path,
         CARD_NAME,
         LensFacing::External,
+        FrameSource::TestPatterns,
         |mapper, _guest_mem| MmapHandler::new(mapper),
     )
 }

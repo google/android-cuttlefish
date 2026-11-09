@@ -18,7 +18,7 @@ use std::io::Write;
 use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
 use std::time::{Duration, Instant};
 
-use crate::device::{CameraControls, TestPattern};
+use crate::device::{CameraControls, FrameSource};
 use crate::format::Yuv420m;
 
 /// Where a capture request is rendered.
@@ -167,6 +167,7 @@ impl CaptureClock {
 pub struct CaptureProcessor {
     session_id: u32,
     controls: CameraControls,
+    frame_source: FrameSource,
     width: u32,
     height: u32,
     streaming: bool,
@@ -180,11 +181,13 @@ impl CaptureProcessor {
     pub fn new(
         session_id: u32,
         initial_controls: CameraControls,
+        frame_source: FrameSource,
         completion_tx: Sender<CaptureCompletedEvent>,
     ) -> Self {
         Self {
             session_id,
             controls: initial_controls,
+            frame_source,
             width: 640,
             height: 480,
             streaming: false,
@@ -270,7 +273,7 @@ impl CaptureProcessor {
                 Ok([sink_y, sink_u, sink_v]) => {
                     if let Err(e) = Self::write_pattern(
                         seq as u64,
-                        self.controls.test_pattern,
+                        self.frame_source,
                         &self.controls,
                         self.width,
                         self.height,
@@ -313,7 +316,7 @@ impl CaptureProcessor {
 
     fn write_pattern(
         iteration: u64,
-        test_pattern: TestPattern,
+        frame_source: FrameSource,
         controls: &CameraControls,
         width: u32,
         height: u32,
@@ -321,8 +324,8 @@ impl CaptureProcessor {
         sink_u: &mut dyn Write,
         sink_v: &mut dyn Write,
     ) -> AnyhowResult<()> {
-        test_pattern
-            .generator()
+        frame_source
+            .generator(controls)
             .write(iteration, controls, width, height, sink_y, sink_u, sink_v)
             .map_err(|e| anyhow::anyhow!("Pattern generator write error: errno {}", e))
     }
@@ -337,12 +340,14 @@ impl CaptureChannel {
     pub fn new(
         session_id: u32,
         initial_controls: CameraControls,
+        frame_source: FrameSource,
         completion_tx: Sender<CaptureCompletedEvent>,
     ) -> AnyhowResult<Self> {
         log::info!("channel: new");
         let (cmd_tx, cmd_rx) = std::sync::mpsc::channel();
 
-        let mut processor = CaptureProcessor::new(session_id, initial_controls, completion_tx);
+        let mut processor =
+            CaptureProcessor::new(session_id, initial_controls, frame_source, completion_tx);
 
         std::thread::Builder::new()
             .name(format!("channel-{}", session_id))

@@ -32,12 +32,14 @@ use vm_memory::{GuestMemoryAtomic, GuestMemoryLoadGuard, GuestMemoryMmap};
 
 pub mod capture_channel;
 pub mod device;
+pub mod emulated_scene;
 pub mod format;
 pub mod memory;
 pub mod pattern;
 
 pub use capture_channel::CaptureSink;
-pub use device::{CameraControls, EmulatedCamera, Gain, LensFacing, TestPattern};
+pub use device::{CameraControls, EmulatedCamera, FrameSource, Gain, LensFacing, TestPattern};
+pub use emulated_scene::EmulatedScene;
 pub use format::Yuv420m;
 pub use memory::{BufferMemoryHandler, QbufRequest, QueuedBuffer};
 
@@ -76,6 +78,7 @@ pub fn serve<M, F>(
     socket_path: &Path,
     card_name: &str,
     lens_facing: LensFacing,
+    frame_source: FrameSource,
     create_buffer_memory_handler: F,
 ) -> Result<()>
 where
@@ -95,6 +98,7 @@ where
                     event_queue,
                     create_buffer_memory_handler(host_mapper, guest_mem),
                     lens_facing,
+                    frame_source,
                 )
             },
         )));
