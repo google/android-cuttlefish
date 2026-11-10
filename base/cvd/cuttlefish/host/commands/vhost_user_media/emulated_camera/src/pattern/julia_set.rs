@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use super::FramePattern;
-use crate::device::CameraControls;
+use crate::render_params::RenderParams;
 use std::io::Write;
 
 /// Escape-time iterations spent on each pixel.
@@ -45,7 +45,7 @@ impl FramePattern for JuliaSet {
         &self,
         iteration: u64,
         // Gain is intentionally ignored for Julia Set to preserve the intended escape-time gradient contrast.
-        _controls: &CameraControls,
+        _params: &RenderParams,
         width: u32,
         height: u32,
         sink_y: &mut dyn Write,

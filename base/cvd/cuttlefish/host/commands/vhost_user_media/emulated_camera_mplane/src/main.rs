@@ -19,7 +19,8 @@ mod userptr;
 use std::path::PathBuf;
 
 use clap::Parser;
-use emulated_camera::{FrameSource, LensFacing};
+use emulated_camera::controls::{GainControl, LensFacingControl, TestPatternControl};
+use emulated_camera::{Control, ControlSet, FrameSource, LensFacing};
 use thiserror::Error;
 
 use crate::userptr::UserPtrHandler;
@@ -72,6 +73,14 @@ impl TryFrom<CmdLineArgs> for Config {
     }
 }
 
+fn controls(lens_facing: LensFacing) -> Vec<Box<dyn Control>> {
+    vec![
+        Box::new(LensFacingControl::new(lens_facing)),
+        Box::new(GainControl::new()),
+        Box::new(TestPatternControl::new()),
+    ]
+}
+
 fn init_logging(verbosity: log::LevelFilter) {
     env_logger::builder()
         .format_timestamp_secs()
@@ -85,11 +94,12 @@ fn main() -> Result<()> {
     init_logging(args.verbosity);
 
     let config = Config::try_from(args)?;
+    let lens_facing = config.lens_facing;
     emulated_camera::serve(
         &config.socket_path,
         CARD_NAME,
-        config.lens_facing,
         FrameSource::EmulatedScene,
+        move || ControlSet::new(controls(lens_facing)),
         |_mapper, guest_mem| UserPtrHandler::new(guest_mem),
     )?;
     Ok(())

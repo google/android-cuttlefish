@@ -31,17 +31,23 @@ use virtio_media::v4l2r::ioctl::Capabilities;
 use vm_memory::{GuestMemoryAtomic, GuestMemoryLoadGuard, GuestMemoryMmap};
 
 pub mod capture_channel;
+pub mod control;
+pub mod controls;
 pub mod device;
 pub mod emulated_scene;
 pub mod format;
 pub mod memory;
 pub mod pattern;
+pub mod render_params;
 
 pub use capture_channel::CaptureSink;
-pub use device::{CameraControls, EmulatedCamera, FrameSource, Gain, LensFacing, TestPattern};
+pub use control::{Control, ControlDescriptor, ControlSet};
+pub use controls::LensFacing;
+pub use device::{EmulatedCamera, FrameSource};
 pub use emulated_scene::EmulatedScene;
 pub use format::Yuv420m;
 pub use memory::{BufferMemoryHandler, QbufRequest, QueuedBuffer};
+pub use render_params::{Gain, RenderParams, TestPattern};
 
 /// Errors returned by [`serve`].
 #[derive(Debug, Error)]
@@ -74,15 +80,16 @@ fn device_config(card_name: &str) -> VirtioMediaDeviceConfig {
 /// `card_name` is reported to the guest through `VIDIOC_QUERYCAP`. When the main VM shuts down
 /// the daemon exits gracefully; this function then re-creates it so that the backend survives
 /// VM restarts without having to be started again manually. It therefore only returns on error.
-pub fn serve<M, F>(
+pub fn serve<M, C, F>(
     socket_path: &Path,
     card_name: &str,
-    lens_facing: LensFacing,
     frame_source: FrameSource,
+    create_control_set: C,
     create_buffer_memory_handler: F,
 ) -> Result<()>
 where
     M: BufferMemoryHandler,
+    C: Fn() -> ControlSet + Clone + Send + Sync + 'static,
     F: Fn(HostMemoryMapper, GuestMemoryLoadGuard<GuestMemoryMmap>) -> M
         + Clone
         + Send
@@ -90,6 +97,7 @@ where
         + 'static,
 {
     loop {
+        let create_control_set = create_control_set.clone();
         let create_buffer_memory_handler = create_buffer_memory_handler.clone();
         let backend = Arc::new(RwLock::new(VhuMediaBackend::new(
             device_config(card_name),
@@ -97,7 +105,7 @@ where
                 EmulatedCamera::new(
                     event_queue,
                     create_buffer_memory_handler(host_mapper, guest_mem),
-                    lens_facing,
+                    create_control_set(),
                     frame_source,
                 )
             },

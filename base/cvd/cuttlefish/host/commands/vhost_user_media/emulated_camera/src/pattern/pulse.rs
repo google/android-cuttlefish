@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use super::FramePattern;
-use crate::device::{CameraControls, Gain};
+use crate::render_params::{Gain, RenderParams};
 use std::io::Write;
 
 /// Fills the frame with two horizontal color bands that cycle as frames are produced.
@@ -23,7 +23,7 @@ impl FramePattern for Pulse {
     fn write(
         &self,
         iteration: u64,
-        controls: &CameraControls,
+        params: &RenderParams,
         width: u32,
         height: u32,
         sink_y: &mut dyn Write,
@@ -38,7 +38,7 @@ impl FramePattern for Pulse {
         // Apply gain to the luma channel.
         // Gain::MIN (100) represents 1.0x gain. Higher values scale the brightness.
         // We clamp the result to 255.0 to avoid overflow.
-        let gain_scale = controls.gain.value() as f32 / Gain::MIN as f32;
+        let gain_scale = params.gain.value() as f32 / Gain::MIN as f32;
         let y_top = ((base_y_top as f32) * gain_scale).min(255.0) as u8;
         let y_bottom = ((base_y_bottom as f32) * gain_scale).min(255.0) as u8;
         let u = ((sequence + 64) % 256) as u8;

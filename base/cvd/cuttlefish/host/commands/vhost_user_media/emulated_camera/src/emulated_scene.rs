@@ -14,7 +14,7 @@
 
 //! Minimal port of the Android emulated camera scene `https://cs.android.com/android/platform/superproject/main/+/main:hardware/google/camera/devices/EmulatedCamera/hwl/EmulatedScene.h`
 
-use crate::device::{CameraControls, Gain};
+use crate::render_params::{Gain, RenderParams};
 use crate::pattern::FramePattern;
 use std::io::Write;
 
@@ -517,14 +517,14 @@ impl FramePattern for EmulatedScene {
     fn write(
         &self,
         iteration: u64,
-        controls: &CameraControls,
+        params: &RenderParams,
         width: u32,
         height: u32,
         sink_y: &mut dyn Write,
         sink_u: &mut dyn Write,
         sink_v: &mut dyn Write,
     ) -> Result<(), i32> {
-        let (palette, time_since_idx_ns) = self.palette(iteration, controls.gain);
+        let (palette, time_since_idx_ns) = self.palette(iteration, params.gain);
         let mapping = Mapping::new(width, height, time_since_idx_ns);
 
         // Precomputed frame column -> scene column (0..20) mapping, so scene_col() does not have

@@ -21,7 +21,8 @@ mod mmap;
 use std::path::PathBuf;
 
 use clap::Parser;
-use emulated_camera::{FrameSource, LensFacing};
+use emulated_camera::controls::{GainControl, LensFacingControl, TestPatternControl};
+use emulated_camera::{Control, ControlSet, FrameSource, LensFacing};
 
 use crate::mmap::MmapHandler;
 
@@ -39,6 +40,14 @@ struct CmdLineArgs {
     verbosity: log::LevelFilter,
 }
 
+fn controls() -> Vec<Box<dyn Control>> {
+    vec![
+        Box::new(LensFacingControl::new(LensFacing::External)),
+        Box::new(GainControl::new()),
+        Box::new(TestPatternControl::new()),
+    ]
+}
+
 fn init_logging(verbosity: log::LevelFilter) {
     env_logger::builder()
         .format_timestamp_secs()
@@ -54,8 +63,8 @@ fn main() -> emulated_camera::Result<()> {
     emulated_camera::serve(
         &args.socket_path,
         CARD_NAME,
-        LensFacing::External,
         FrameSource::TestPatterns,
+        || ControlSet::new(controls()),
         |mapper, _guest_mem| MmapHandler::new(mapper),
     )
 }

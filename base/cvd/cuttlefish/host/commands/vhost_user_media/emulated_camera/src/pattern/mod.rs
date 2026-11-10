@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::device::CameraControls;
+use crate::render_params::RenderParams;
 use std::io::Write;
 
 pub mod julia_set;
@@ -33,7 +33,7 @@ pub trait FramePattern {
     fn write(
         &self,
         iteration: u64,
-        controls: &CameraControls,
+        params: &RenderParams,
         width: u32,
         height: u32,
         sink_y: &mut dyn Write,
@@ -45,12 +45,12 @@ pub trait FramePattern {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::device::{Gain, LensFacing};
+    use crate::render_params::Gain;
 
     /// Renders a few frames across supported resolutions and checks that each plane
     /// is exactly the expected size. A short write would leave stale bytes in the guest buffer.
     fn assert_plane_sizes(pattern: &dyn FramePattern) {
-        let controls = CameraControls::new(LensFacing::Front);
+        let controls = RenderParams::default();
         let resolutions: [(u32, u32); 4] = [(320, 240), (640, 480), (1280, 720), (1920, 1080)];
         for (width, height) in resolutions {
             for iteration in [0u64, 1, 255, 4096] {
@@ -82,7 +82,7 @@ mod tests {
 
     #[test]
     fn pulse_applies_gain_scaling() {
-        let mut controls = CameraControls::new(LensFacing::Front);
+        let mut controls = RenderParams::default();
         controls.gain = Gain::new(200).unwrap(); // 2.0x gain
 
         let mut plane_y = Vec::new();
@@ -135,7 +135,7 @@ mod tests {
     #[test]
     fn julia_set_keeps_animating_after_a_long_run() {
         let far_out = 50_000_000u64;
-        let controls = CameraControls::new(LensFacing::Front);
+        let controls = RenderParams::default();
         let luma_at = |iteration: u64| {
             let mut plane_y = Vec::new();
             let mut plane_u = Vec::new();
