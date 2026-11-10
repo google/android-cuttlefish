@@ -79,7 +79,8 @@ qemu-system-x86_64 "$@" \
   -device qemu-xhci,id=xhci \
   -drive if=pflash,format=raw,readonly=on,file=disks/bootloader.qemu \
   -drive if=pflash,format=raw,file=disks/pflash.img,snapshot=on \
-  -msg timestamp=on 2> "qemu-$label.err" &
+  -msg timestamp=on -d guest_errors,cpu_reset -D "qemu-$label.dbg" \
+  2> "qemu-$label.err" &
 qemu=$!
 
 finish() {
