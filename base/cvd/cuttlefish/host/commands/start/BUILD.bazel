@@ -47,7 +47,6 @@ cf_cc_binary(
         "@abseil-cpp//absl/strings:string_view",
         "@gflags",
         "@jsoncpp",
-        "@libxml2",
     ],
 )
 
