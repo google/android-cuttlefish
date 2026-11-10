@@ -20,8 +20,11 @@
 #include <cstdint>
 #include <random>
 #include <span>
+#include <string>
+#include <vector>
 
 #include "cuttlefish/host/commands/virtual_tuner_daemon/tuner_state.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace virtualtuner {
@@ -43,18 +46,28 @@ inline constexpr size_t kChunkSizeBytes = kChunkFrames * kFrameSizeBytes;
 // noise is played.
 double StationToneHz(const TunerStateSnapshot& snapshot);
 
+// Reads and parses 16-bit signed little-endian PCM samples at kSampleRate Hz
+// from a mono or kChannels-channel RIFF/WAVE file on the host.
+Result<std::vector<int16_t>> ParseWavBytes(std::span<const uint8_t> wav_bytes);
+Result<void> ValidateWavFile(const std::string& wav_path);
+Result<std::vector<int16_t>> LoadWavFile(const std::string& wav_path);
+
 class AudioGenerator {
  public:
   AudioGenerator();
 
   // Fills `samples` with silence while the tuner is stopped, white noise when
-  // no station is broadcasting on the tuned frequency, and the station tone
+  // no station is broadcasting on the tuned frequency, and the station audio
+  // (looping `snapshot.station_wav_path` if set, or the station tone)
   // otherwise.
   void GenerateChunk(std::span<int16_t> samples,
                      const TunerStateSnapshot& snapshot);
 
  private:
   std::minstd_rand rng_;
+  std::string active_wav_path_;
+  std::vector<int16_t> active_wav_samples_;
+  size_t wav_cursor_ = 0;
   // Kept across chunks so the tone stays continuous.
   double phase_ = 0.0;
 };

@@ -66,7 +66,10 @@ cf_cc_library(
         ":virtual_tuner_cc_proto",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/result",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -98,6 +101,7 @@ cf_cc_library(
         ":tuner_state",
         ":virtual_tuner_audio",
         ":virtual_tuner_cc_proto",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
         "@grpc//:grpc++",
     ],
