@@ -52,5 +52,6 @@ cf_cc_binary(
         "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:file_logging",
         "@fmt",
+        "@gflags",
     ],
 )
