@@ -28,6 +28,7 @@
 #include "cuttlefish/host/commands/virtual_tuner_daemon/VirtualTuner.pb.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/audio_generator.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/tuner_state.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace virtualtuner {
@@ -117,6 +118,27 @@ VirtualTunerServiceImpl::VirtualTunerServiceImpl(TunerState& tuner_state)
       tuner_state_.RemoveStation(request->band(), request->frequency_hz(),
                                  hd_subchannel, request->dab_sid_ext());
   response->set_removed(removed);
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerServiceImpl::SetStationAudio(
+    ::grpc::ServerContext*, const SetStationAudioRequest* request,
+    SetStationAudioResponse*) {
+  if (request->frequency_hz() == 0) {
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                          "frequency_hz must be non-zero");
+  }
+
+  if (!request->wav_path().empty()) {
+    Result<void> valid = ValidateWavFile(request->wav_path());
+    if (!valid.has_value()) {
+      return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                            valid.error().Message());
+    }
+  }
+
+  tuner_state_.SetStationWavPath(request->band(), request->frequency_hz(),
+                                 request->hd_subchannel(), request->wav_path());
   return ::grpc::Status::OK;
 }
 

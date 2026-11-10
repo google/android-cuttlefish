@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <chrono>
+#include <cstdint>
 #include <functional>
 #include <string>
 #include <vector>
@@ -56,6 +57,7 @@ Result<std::string> RenameFile(const std::string& current_filepath,
                                const std::string& target_filepath);
 std::string ReadFile(const std::string& file);
 Result<std::string> ReadFileContents(const std::string& path);
+Result<std::vector<uint8_t>> ReadBinaryFileContents(const std::string& path);
 bool MakeFileExecutable(const std::string& path);
 Result<std::chrono::system_clock::time_point> FileModificationTime(
     const std::string& path);

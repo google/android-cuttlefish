@@ -167,6 +167,10 @@ void TunerState::SetTune(RadioBand band, uint32_t frequency_hz,
   state_.is_playing = true;
   current_station_ = FindStationLocked(band, frequency_hz, hd_subchannel);
   state_.station_present = current_station_.has_value();
+  auto wav_it =
+      station_wav_paths_.find(StationKey{band, frequency_hz, hd_subchannel, 0});
+  state_.station_wav_path =
+      (wav_it != station_wav_paths_.end()) ? wav_it->second : "";
 }
 
 void TunerState::Stop() {
@@ -174,7 +178,25 @@ void TunerState::Stop() {
   state_.frequency_hz = 0;
   state_.is_playing = false;
   state_.station_present = false;
+  state_.station_wav_path.clear();
   current_station_.reset();
+}
+
+void TunerState::SetStationWavPath(RadioBand band, uint32_t frequency_hz,
+                                   uint32_t hd_subchannel,
+                                   std::string wav_path) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  const StationKey key{band, frequency_hz, hd_subchannel, 0};
+  if (wav_path.empty()) {
+    station_wav_paths_.erase(key);
+  } else {
+    station_wav_paths_[key] = wav_path;
+  }
+  if (state_.is_playing && state_.band == band &&
+      state_.frequency_hz == frequency_hz &&
+      state_.hd_subchannel == hd_subchannel) {
+    state_.station_wav_path = std::move(wav_path);
+  }
 }
 
 std::vector<StationProgram> TunerState::GetStations(
