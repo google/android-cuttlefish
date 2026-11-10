@@ -1,8 +1,9 @@
 name: Darwin qemu probe
 
-# Experiment: how long does a TCG-only boot take on a hosted macOS
-# runner? Boots a stock Debian cloud image to its login prompt and
-# reports the time. Does not build or use cuttlefish at all.
+# Experiment: does HVF work on a hosted macOS runner, and how long does
+# a boot take with and without it? Boots a stock Debian cloud image to
+# its login prompt under each accelerator and reports the times. Does
+# not build or use cuttlefish at all.
 
 on:
   pull_request:
@@ -42,32 +43,46 @@ jobs:
           https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2
         qemu-img info disk.qcow2
       shell: bash
-    - name: Boot under TCG to the login prompt
+    - name: Boot to the login prompt under each accelerator
       run: |
-        start=$(date +%s)
-        qemu-system-x86_64 -accel tcg -machine q35 -cpu max \
-          -smp "$(sysctl -n hw.ncpu)" -m 2048 \
-          -drive file=disk.qcow2,if=virtio \
-          -netdev user,id=n0 -device virtio-net-pci,netdev=n0 \
-          -display none -serial file:serial.log &
-        qemu=$!
-        # Fail after an hour so the job budget is not spent waiting.
-        for _ in $(seq 3600); do
-          if grep -q 'login:' serial.log 2>/dev/null; then
-            echo "login prompt after $(( $(date +%s) - start ))s"
-            kill "$qemu"
-            exit 0
-          fi
-          if ! kill -0 "$qemu" 2>/dev/null; then
-            echo "qemu exited before the login prompt"
-            break
-          fi
-          sleep 1
-        done
-        kill "$qemu" 2>/dev/null || true
-        exit 1
+        # boot <accel> <cpu>: prints the time to the login prompt, or
+        # why it did not get there. Returns 1 on failure.
+        boot() {
+          local start; start=$(date +%s)
+          rm -f "serial-$1.log"
+          qemu-system-x86_64 -accel "$1" -machine q35 -cpu "$2" \
+            -smp "$(sysctl -n hw.ncpu)" -m 2048 \
+            -drive file=disk.qcow2,if=virtio -snapshot \
+            -netdev user,id=n0 -device virtio-net-pci,netdev=n0 \
+            -display none -serial "file:serial-$1.log" 2> "qemu-$1.err" &
+          local qemu=$!
+          # Fail after 20 minutes so the job budget is not spent waiting.
+          for _ in $(seq 1200); do
+            if grep -q 'login:' "serial-$1.log" 2>/dev/null; then
+              echo "$1: login prompt after $(( $(date +%s) - start ))s"
+              kill "$qemu"
+              return 0
+            fi
+            if ! kill -0 "$qemu" 2>/dev/null; then
+              echo "$1: qemu exited before the login prompt:"
+              cat "qemu-$1.err"
+              return 1
+            fi
+            sleep 1
+          done
+          echo "$1: no login prompt after 20 minutes"
+          kill "$qemu" 2>/dev/null || true
+          return 1
+        }
+        # HVF may not work inside the runner VM even though the kernel
+        # reports hv_support; that is one of the things being measured.
+        boot hvf host || true
+        boot tcg max
       shell: bash
-    - name: Serial log
+    - name: Serial logs
       if: always()
-      run: cat serial.log 2>/dev/null || true
+      run: |
+        for f in serial-*.log; do
+          echo "::group::$f"; cat "$f"; echo "::endgroup::"
+        done
       shell: bash
