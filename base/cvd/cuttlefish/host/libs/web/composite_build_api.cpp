@@ -21,12 +21,12 @@
 #include <variant>
 
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/directory_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/http_build_string.h"
+#include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/directory_build_api.h"
 #include "cuttlefish/host/libs/web/gcs_build_api.h"
 #include "cuttlefish/host/libs/web/http_build_api.h"
@@ -35,9 +35,9 @@
 
 namespace cuttlefish {
 
-CompositeBuildApi::CompositeBuildApi(std::unique_ptr<AndroidBuildApi> android,
-                                     std::unique_ptr<GcsBuildApi> gcs,
-                                     std::unique_ptr<HttpBuildApi> http)
+CompositeBuildApi::CompositeBuildApi(
+    std::unique_ptr<BuildApi<DeviceBuildString, DeviceBuild>> android,
+    std::unique_ptr<GcsBuildApi> gcs, std::unique_ptr<HttpBuildApi> http)
     : android_(std::move(android)),
       gcs_(std::move(gcs)),
       http_(std::move(http)) {}
