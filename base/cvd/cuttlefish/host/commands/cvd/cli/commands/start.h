@@ -18,10 +18,12 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
 #include "cuttlefish/process/command.h"
@@ -48,10 +50,8 @@ class CvdStartCommandHandler : public CvdCommandHandler {
                                     LocalInstanceGroup& group,
                                     const CommandRequest& request);
 
-  Result<void> LaunchDevice(
-      Command command, LocalInstanceGroup& group,
-      const std::unordered_map<std::string, std::string>& envs,
-      const CommandRequest& request);
+  Result<void> LaunchDevice(Command command, LocalInstanceGroup& group,
+                            const std::vector<LocalInstance>& instances);
 
   Result<void> LaunchDeviceInterruptible(
       Command command, LocalInstanceGroup& group,

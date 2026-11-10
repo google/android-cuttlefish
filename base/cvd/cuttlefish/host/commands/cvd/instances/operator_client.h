@@ -18,8 +18,10 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/result/result.h"
 
@@ -40,6 +42,12 @@ class OperatorControlConn {
    * Pre-registers an instance group with the operator
    */
   Result<void> Preregister(const LocalInstanceGroup& group);
+
+  /**
+   * Pre-registers specific instances from a group with the operator
+   */
+  Result<void> Preregister(const LocalInstanceGroup& group,
+                           const std::vector<LocalInstance>& instances);
 
  private:
   OperatorControlConn(SharedFD conn) : conn_(conn) {}
