@@ -56,10 +56,11 @@ jobs:
           base/cvd/cuttlefish/host/libs/web/android_build_api_key.cc | tr -d '"')
         api=https://androidbuild-pa.googleapis.com/v4
         target=aosp_cf_x86_64_only_phone-userdebug
+        product=${target%-userdebug}
         build=$(curl -fsS "$api/builds?buildAttemptStatus=complete&buildType=submitted&pageSize=1&successful=true&branches=aosp-android-latest-release&targets=$target&key=$key" \
           | python3 -c 'import json, sys; print(json.load(sys.stdin)["builds"][0]["buildId"])')
         echo "build $build"
-        url=$(curl -fsS "$api/builds/$build/$target/attempts/latest/artifacts/$target-img-$build.zip/url?key=$key" \
+        url=$(curl -fsS "$api/builds/$build/$target/attempts/latest/artifacts/$product-img-$build.zip/url?key=$key" \
           | python3 -c 'import json, sys; print(json.load(sys.stdin)["signedUrl"])')
         curl -fsSLo img.zip "$url"
         unzip -q img.zip boot.img vendor_boot.img
@@ -118,6 +119,7 @@ jobs:
     - name: Serial logs
       if: always()
       run: |
+        shopt -s nullglob
         for f in serial-*.log; do
           echo "::group::$f"; cat "$f"; echo "::endgroup::"
         done
