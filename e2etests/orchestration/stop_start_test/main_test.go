@@ -28,7 +28,7 @@ import (
 
 const baseURL = "http://0.0.0.0:2080"
 
-func TestStopStart(t *testing.T) {
+func TestGroupStopStart(t *testing.T) {
 	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	t.Cleanup(func() {
 		if err := common.CollectHOLogs(baseURL); err != nil {
@@ -105,6 +105,98 @@ func TestStopStart(t *testing.T) {
 	}
 
 	if err := srv.StartGroup("cvd_1", &hoapi.StartCVDRequest{}); err != nil {
+		t.Fatal(err)
+	}
+	cvds, err = srv.ListCVDs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(cvdStatus(cvds), []string{"Running", "Running"}); diff != "" {
+		t.Fatalf("status mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestSingleInstanceStopStart(t *testing.T) {
+	srv := hoclient.NewHostOrchestratorClient(baseURL)
+	if err := srv.Reset(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := common.CollectHOLogs(baseURL); err != nil {
+			log.Printf("failed to collect HO logs: %s", err)
+		}
+	})
+	config := `
+  {
+    "instances": [
+      {
+        "vm": {
+          "crosvm": {
+            "enable_sandbox": false
+          },
+          "memory_mb": 8192,
+          "setupwizard_mode": "OPTIONAL",
+          "cpus": 8
+        },
+        "disk": {
+          "default_build": "@ab/aosp-android-latest-release/aosp_cf_x86_64_only_phone-userdebug",
+          "download_img_zip": true
+        },
+        "streaming": {
+          "device_id": "cvd-1"
+        }
+      },
+      {
+        "vm": {
+          "crosvm": {
+            "enable_sandbox": false
+          },
+          "memory_mb": 8192,
+          "setupwizard_mode": "OPTIONAL",
+          "cpus": 8
+        },
+        "disk": {
+          "default_build": "@ab/aosp-android-latest-release/aosp_cf_x86_64_only_phone-userdebug",
+          "download_img_zip": true
+        },
+        "streaming": {
+          "device_id": "cvd-2"
+        }
+      }
+    ]
+  }
+  `
+	envConfig := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(config), &envConfig); err != nil {
+		t.Fatal(err)
+	}
+	createReq := &hoapi.CreateCVDRequest{
+		EnvConfig: envConfig,
+	}
+	if _, err := srv.CreateCVD(createReq, &hoclient.AccessTokenBuildAPICreds{}); err != nil {
+		t.Fatal(err)
+	}
+	cvds, err := srv.ListCVDs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(cvdStatus(cvds), []string{"Running", "Running"}); diff != "" {
+		t.Fatalf("status mismatch (-want +got):\n%s", diff)
+	}
+
+	secondInstance := cvds[1]
+	if err := srv.StopInstance(secondInstance.Group, secondInstance.Name); err != nil {
+		t.Fatal(err)
+	}
+	cvds, err = srv.ListCVDs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(cvdStatus(cvds), []string{"Running", "Stopped"}); diff != "" {
+		t.Fatalf("status mismatch (-want +got):\n%s", diff)
+	}
+
+	if err := srv.StartInstance(secondInstance.Group, secondInstance.Name, &hoapi.StartCVDRequest{}); err != nil {
 		t.Fatal(err)
 	}
 	cvds, err = srv.ListCVDs()

@@ -16,6 +16,7 @@ load("@rules_go//go:def.bzl", "go_test")
 
 go_test(
     name = "stop_start_test_test",
+    size = "large",
     srcs = ["main_test.go"],
     deps = [
         "//orchestration/common",
