@@ -1,0 +1,73 @@
+name: Darwin qemu probe
+
+# Experiment: how long does a TCG-only boot take on a hosted macOS
+# runner? Boots a stock Debian cloud image to its login prompt and
+# reports the time. Does not build or use cuttlefish at all.
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  qemu-probe:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+    - name: Install qemu
+      run: brew install qemu
+      shell: bash
+    - name: Describe the runner
+      run: |
+        sysctl -n machdep.cpu.brand_string hw.ncpu hw.memsize
+        sysctl kern.hv_support || true
+        qemu-system-x86_64 --version
+        qemu-system-x86_64 -accel help
+      shell: bash
+    - name: Fetch a Debian cloud image
+      run: |
+        curl -fsSLo disk.qcow2 \
+          https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2
+        qemu-img info disk.qcow2
+      shell: bash
+    - name: Boot under TCG to the login prompt
+      run: |
+        start=$(date +%s)
+        qemu-system-x86_64 -accel tcg -machine q35 -cpu max \
+          -smp "$(sysctl -n hw.ncpu)" -m 2048 \
+          -drive file=disk.qcow2,if=virtio \
+          -netdev user,id=n0 -device virtio-net-pci,netdev=n0 \
+          -display none -serial file:serial.log &
+        qemu=$!
+        # Fail after an hour so the job budget is not spent waiting.
+        for _ in $(seq 3600); do
+          if grep -q 'login:' serial.log 2>/dev/null; then
+            echo "login prompt after $(( $(date +%s) - start ))s"
+            kill "$qemu"
+            exit 0
+          fi
+          if ! kill -0 "$qemu" 2>/dev/null; then
+            echo "qemu exited before the login prompt"
+            break
+          fi
+          sleep 1
+        done
+        kill "$qemu" 2>/dev/null || true
+        exit 1
+      shell: bash
+    - name: Serial log
+      if: always()
+      run: cat serial.log 2>/dev/null || true
+      shell: bash
