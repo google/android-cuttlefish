@@ -19,6 +19,8 @@
 #include "absl/log/log.h"
 #include "gflags/gflags.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 #include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/host/commands/sensors_simulator/sensors_hal_proxy.h"
@@ -46,7 +48,6 @@ namespace sensors {
 namespace {
 
 static constexpr char kReqMisFormatted[] = "The request is mis-formatted.";
-static constexpr char kFdNotOpen[] = "Unable to connect: ";
 
 Result<void> ProcessWebrtcRequest(transport::SharedFdChannel& channel,
                                   SensorsSimulator& sensors_simulator) {
@@ -95,36 +96,30 @@ Result<void> ProcessWebrtcRequest(transport::SharedFdChannel& channel,
   return {};
 }
 
-int SensorsSimulatorMain(int argc, char** argv) {
+Result<Fd> DupAndClose(int fd) {
+  Fd ret = CF_EXPECT(Fd::Dup(fd), "Unable to connect");
+  close(fd);
+  return ret;
+}
+
+Result<void> SensorsSimulatorMain(int argc, char** argv) {
   DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  SharedFD webrtc_fd = SharedFD::Dup(FLAGS_webrtc_fd);
-  close(FLAGS_webrtc_fd);
-  if (!webrtc_fd->IsOpen()) {
-    LOG(FATAL) << kFdNotOpen << webrtc_fd->StrError();
-  }
-  SharedFD control_from_guest_fd = SharedFD::Dup(FLAGS_control_from_guest_fd);
-  close(FLAGS_control_from_guest_fd);
-  if (!control_from_guest_fd->IsOpen()) {
-    LOG(FATAL) << kFdNotOpen << control_from_guest_fd->StrError();
-  }
-  SharedFD control_to_guest_fd = SharedFD::Dup(FLAGS_control_to_guest_fd);
-  close(FLAGS_control_to_guest_fd);
-  if (!control_to_guest_fd->IsOpen()) {
-    LOG(FATAL) << kFdNotOpen << control_to_guest_fd->StrError();
-  }
-  SharedFD data_from_guest_fd = SharedFD::Dup(FLAGS_data_from_guest_fd);
-  close(FLAGS_data_from_guest_fd);
-  if (!data_from_guest_fd->IsOpen()) {
-    LOG(FATAL) << kFdNotOpen << data_from_guest_fd->StrError();
-  }
-  SharedFD data_to_guest_fd = SharedFD::Dup(FLAGS_data_to_guest_fd);
-  close(FLAGS_data_to_guest_fd);
-  if (!data_to_guest_fd->IsOpen()) {
-    LOG(FATAL) << kFdNotOpen << data_to_guest_fd->StrError();
-  }
-  SharedFD kernel_events_fd = SharedFD::Dup(FLAGS_kernel_events_fd);
-  close(FLAGS_kernel_events_fd);
+
+  SharedFD webrtc_fd = CF_EXPECT(DupAndClose(FLAGS_webrtc_fd));
+
+  SharedFD control_from_guest_fd =
+      CF_EXPECT(DupAndClose(FLAGS_control_from_guest_fd));
+
+  SharedFD control_to_guest_fd =
+      CF_EXPECT(DupAndClose(FLAGS_control_to_guest_fd));
+
+  SharedFD data_from_guest_fd =
+      CF_EXPECT(DupAndClose(FLAGS_data_from_guest_fd));
+
+  SharedFD data_to_guest_fd = CF_EXPECT(DupAndClose(FLAGS_data_to_guest_fd));
+
+  SharedFD kernel_events_fd = CF_EXPECT(DupAndClose(FLAGS_kernel_events_fd));
 
   transport::SharedFdChannel channel(webrtc_fd, webrtc_fd);
 
@@ -139,7 +134,7 @@ int SensorsSimulatorMain(int argc, char** argv) {
       LOG(ERROR) << result.error();
     }
   }
-  return 0;
+  return {};
 }
 
 }  // namespace
@@ -148,5 +143,11 @@ int SensorsSimulatorMain(int argc, char** argv) {
 }  // namespace cuttlefish
 
 int main(int argc, char* argv[]) {
-  return cuttlefish::sensors::SensorsSimulatorMain(argc, argv);
+  cuttlefish::Result<void> res =
+      cuttlefish::sensors::SensorsSimulatorMain(argc, argv);
+  if (!res.has_value()) {
+    LOG(ERROR) << res.error();
+    return -1;
+  }
+  return 0;
 }
