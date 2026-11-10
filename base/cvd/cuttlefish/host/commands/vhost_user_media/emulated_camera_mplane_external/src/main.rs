@@ -21,8 +21,8 @@ mod mmap;
 use std::path::PathBuf;
 
 use clap::Parser;
-use emulated_camera::controls::{GainControl, LensFacingControl, TestPatternControl};
-use emulated_camera::{Control, ControlSet, FrameSource, LensFacing};
+use emulated_camera::controls::TestPatternControl;
+use emulated_camera::{Control, ControlSet, FrameSource};
 
 use crate::mmap::MmapHandler;
 
@@ -41,11 +41,7 @@ struct CmdLineArgs {
 }
 
 fn controls() -> Vec<Box<dyn Control>> {
-    vec![
-        Box::new(LensFacingControl::new(LensFacing::External)),
-        Box::new(GainControl::new()),
-        Box::new(TestPatternControl::new()),
-    ]
+    vec![Box::new(TestPatternControl::new())]
 }
 
 fn init_logging(verbosity: log::LevelFilter) {
