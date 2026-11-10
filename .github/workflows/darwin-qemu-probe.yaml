@@ -56,8 +56,9 @@ jobs:
       shell: bash
     - name: Assemble the disks
       # assemble_cvd needs qemu-img for the overlays it makes anyway,
-      # and only accepts qemu_cli if cuttlefish-common's capability
-      # query says so. The runner has neither, so stand both in.
+      # only accepts qemu_cli if cuttlefish-common's capability query
+      # says so, and chgrps a directory to cuttlefish-common's
+      # cvdnetwork group. The runner has none of these, so stand them in.
       # Bluetooth is turned off because there is no rootcanal to talk
       # to, and the checker flag too because this release's
       # assemble_cvd does not derive it from that yet.
@@ -68,15 +69,17 @@ jobs:
         printf '#!/bin/sh\nexit 0\n' \
           | sudo tee /usr/lib/cuttlefish-common/bin/capability_query.py
         sudo chmod +x /usr/lib/cuttlefish-common/bin/capability_query.py
+        sudo groupadd cvdnetwork
+        sudo usermod -aG cvdnetwork "$USER"
         cd /mnt/cf
         export HOME=/mnt/cf/home ANDROID_HOST_OUT=/mnt/cf/host \
           ANDROID_PRODUCT_OUT=/mnt/cf/images
         mkdir "$HOME"
-        host/bin/assemble_cvd --vm_manager=qemu_cli \
+        sg cvdnetwork -c "host/bin/assemble_cvd --vm_manager=qemu_cli \
           --gpu_mode=guest_swiftshader --use_overlay=false \
           --enable_host_bluetooth=false --netsim_bt=false \
           --extra_bootconfig_args=androidboot.cuttlefish_service_bluetooth_checker=false \
-          --system_image_dir=/mnt/cf/images < /dev/null
+          --system_image_dir=/mnt/cf/images < /dev/null"
         instance=$HOME/cuttlefish/instances/cvd-1
         # The composite is written out in full; most of it is zeros.
         fallocate -d "$instance/os_composite.img"
