@@ -53,6 +53,8 @@ cf_cc_binary(
     deps = [
         ":libsensors_hal_proxy",
         ":libsensors_simulator",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/transport",
         "//cuttlefish/common/libs/utils:device_type",
         "//cuttlefish/host/libs/config:logging",
