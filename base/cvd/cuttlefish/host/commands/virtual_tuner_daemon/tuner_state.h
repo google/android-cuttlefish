@@ -21,6 +21,7 @@
 #include <map>
 #include <mutex>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "cuttlefish/host/commands/virtual_tuner_daemon/VirtualTuner.pb.h"
@@ -34,6 +35,7 @@ struct TunerStateSnapshot {
   uint32_t hd_subchannel = 0;
   bool is_playing = false;
   bool station_present = false;
+  std::string station_wav_path;
 };
 
 class TunerState {
@@ -42,6 +44,8 @@ class TunerState {
 
   void SetTune(RadioBand band, uint32_t frequency_hz, uint32_t hd_subchannel);
   void Stop();
+  void SetStationWavPath(RadioBand band, uint32_t frequency_hz,
+                         uint32_t hd_subchannel, std::string wav_path);
 
   std::vector<StationProgram> GetStations(std::optional<RadioBand> band) const;
   std::optional<StationProgram> FindStation(RadioBand band,
@@ -84,6 +88,7 @@ class TunerState {
   TunerStateSnapshot state_;
   std::optional<StationProgram> current_station_;
   std::map<StationKey, StationProgram> stations_;
+  std::map<StationKey, std::string> station_wav_paths_;
 };
 
 }  // namespace virtualtuner

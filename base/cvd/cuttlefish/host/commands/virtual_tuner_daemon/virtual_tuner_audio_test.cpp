@@ -23,6 +23,8 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
+#include <ios>
 #include <numbers>
 #include <span>
 #include <string>
@@ -211,6 +213,87 @@ TEST(AudioGeneratorTest, ChunkCarriesStationTone) {
 
   EXPECT_GT(TonePower(buffer, StationToneHz(kiss_fm)),
             100.0 * TonePower(buffer, StationToneHz(koit)));
+}
+
+std::vector<uint8_t> BuildStereoTestWav(std::span<const int16_t> samples) {
+  const uint32_t data_bytes =
+      static_cast<uint32_t>(samples.size() * sizeof(int16_t));
+  const uint32_t riff_size = 36u + data_bytes;
+  std::vector<uint8_t> bytes;
+  auto push_bytes = [&](const void* ptr, size_t n) {
+    const auto* p = static_cast<const uint8_t*>(ptr);
+    bytes.insert(bytes.end(), p, p + n);
+  };
+  auto push_u16 = [&](uint16_t v) {
+    bytes.push_back(static_cast<uint8_t>(v & 0xFFu));
+    bytes.push_back(static_cast<uint8_t>((v >> 8) & 0xFFu));
+  };
+  auto push_u32 = [&](uint32_t v) {
+    push_u16(static_cast<uint16_t>(v & 0xFFFFu));
+    push_u16(static_cast<uint16_t>((v >> 16) & 0xFFFFu));
+  };
+
+  push_bytes("RIFF", 4);
+  push_u32(riff_size);
+  push_bytes("WAVE", 4);
+  push_bytes("fmt ", 4);
+  push_u32(16u);
+  push_u16(1u);
+  push_u16(static_cast<uint16_t>(kChannels));
+  push_u32(static_cast<uint32_t>(kSampleRate));
+  push_u32(static_cast<uint32_t>(kSampleRate * kFrameSizeBytes));
+  push_u16(static_cast<uint16_t>(kFrameSizeBytes));
+  push_u16(16u);
+  push_bytes("data", 4);
+  push_u32(data_bytes);
+  for (int16_t sample : samples) {
+    push_u16(static_cast<uint16_t>(sample));
+  }
+  return bytes;
+}
+
+TEST(AudioGeneratorTest, ParseWavBytesAndLoopTunedStationWavPath) {
+  const std::vector<int16_t> expected_samples = {1000, -1000, 2000, -2000};
+  const std::vector<uint8_t> wav_bytes = BuildStereoTestWav(expected_samples);
+
+  Result<std::vector<int16_t>> parsed = ParseWavBytes(wav_bytes);
+  ASSERT_TRUE(parsed.has_value()) << parsed.error().FormatForEnv();
+  EXPECT_EQ(*parsed, expected_samples);
+
+  std::string dir_template = "/tmp/cf_virtual_tuner_wav_XXXXXX";
+  ASSERT_NE(::mkdtemp(dir_template.data()), nullptr);
+  const std::string wav_path = dir_template + "/station.wav";
+  {
+    std::ofstream out(wav_path, std::ios::out | std::ios::binary);
+    out.write(reinterpret_cast<const char*>(wav_bytes.data()),
+              wav_bytes.size());
+  }
+
+  EXPECT_TRUE(ValidateWavFile(wav_path).has_value());
+  EXPECT_FALSE(ValidateWavFile(dir_template + "/missing.wav").has_value());
+
+  const std::string bad_wav_path = dir_template + "/bad.wav";
+  {
+    std::ofstream out(bad_wav_path, std::ios::out | std::ios::binary);
+    out.write("NOT_A_WAV", 9);
+  }
+  EXPECT_FALSE(ValidateWavFile(bad_wav_path).has_value());
+
+  TunerState state;
+  state.SetStationWavPath(RadioBand::FM, 96500000, 0, wav_path);
+  state.SetTune(RadioBand::FM, 96500000, 0);
+  EXPECT_EQ(state.GetSnapshot().station_wav_path, wav_path);
+
+  AudioGenerator generator;
+  std::vector<int16_t> chunk(8, 0);
+  generator.GenerateChunk(chunk, state.GetSnapshot());
+  const std::vector<int16_t> expected_looped = {1000, -1000, 2000, -2000,
+                                                1000, -1000, 2000, -2000};
+  EXPECT_EQ(chunk, expected_looped);
+
+  ::unlink(bad_wav_path.c_str());
+  ::unlink(wav_path.c_str());
+  ::rmdir(dir_template.c_str());
 }
 
 class PcmStreamServerTest : public ::testing::Test {

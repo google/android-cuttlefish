@@ -19,7 +19,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <cstdint>
 #include <fstream>
+#include <ios>
 #include <string>
 #include <thread>
 #include <vector>
@@ -205,6 +207,54 @@ TEST_F(FilesTests, EnsureDirectoryExistsConcurrentCallsSucceed) {
   struct stat st = {};
   ASSERT_EQ(stat(base.c_str(), &st), 0);
   EXPECT_EQ(st.st_mode & 0777, 0777u);
+}
+
+TEST(FilesTest, ReadBinaryFileContentsReadsArbitraryBytes) {
+  TemporaryDir temp_dir;
+  const std::string file_path = absl::StrCat(temp_dir.path, "/binary.bin");
+  const std::vector<uint8_t> expected = {0x52, 0x49, 0x46, 0x46, 0x00,
+                                         0xFF, 0x80, 0x7F, 0x01};
+  {
+    std::ofstream out(file_path, std::ios::out | std::ios::binary);
+    out.write(reinterpret_cast<const char*>(expected.data()), expected.size());
+  }
+
+  Result<std::vector<uint8_t>> actual = ReadBinaryFileContents(file_path);
+  EXPECT_THAT(actual, IsOkAndValue(expected));
+}
+
+TEST(FilesTest, ReadBinaryFileContentsEmptyFileReturnsEmptyVector) {
+  TemporaryDir temp_dir;
+  const std::string file_path = absl::StrCat(temp_dir.path, "/empty.bin");
+  {
+    std::ofstream out(file_path, std::ios::out | std::ios::binary);
+  }
+
+  Result<std::vector<uint8_t>> actual = ReadBinaryFileContents(file_path);
+  EXPECT_THAT(actual, IsOkAndValue(std::vector<uint8_t>{}));
+}
+
+TEST(FilesTest, ReadBinaryFileContentsSpansMultipleChunks) {
+  TemporaryDir temp_dir;
+  const std::string file_path = absl::StrCat(temp_dir.path, "/large.bin");
+  std::vector<uint8_t> expected((2 << 16) + 1234);
+  for (size_t i = 0; i < expected.size(); ++i) {
+    expected[i] = static_cast<uint8_t>((i * 31 + 7) & 0xFF);
+  }
+  {
+    std::ofstream out(file_path, std::ios::out | std::ios::binary);
+    out.write(reinterpret_cast<const char*>(expected.data()), expected.size());
+  }
+
+  Result<std::vector<uint8_t>> actual = ReadBinaryFileContents(file_path);
+  EXPECT_THAT(actual, IsOkAndValue(expected));
+}
+
+TEST(FilesTest, ReadBinaryFileContentsMissingFileReturnsError) {
+  TemporaryDir temp_dir;
+  Result<std::vector<uint8_t>> actual =
+      ReadBinaryFileContents(absl::StrCat(temp_dir.path, "/missing.bin"));
+  EXPECT_THAT(actual, IsError());
 }
 
 }  // namespace cuttlefish
