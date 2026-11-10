@@ -51,7 +51,8 @@ class CvdStartCommandHandler : public CvdCommandHandler {
                                     const CommandRequest& request);
 
   Result<void> LaunchDevice(Command command, LocalInstanceGroup& group,
-                            const std::vector<LocalInstance>& instances);
+                            const std::vector<LocalInstance>& instances,
+                            const CommandRequest& request);
 
   Result<void> LaunchDeviceInterruptible(
       Command command, LocalInstanceGroup& group,

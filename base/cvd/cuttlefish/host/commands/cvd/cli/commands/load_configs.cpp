@@ -83,11 +83,8 @@ Result<CommandRequest> BuildStartCommand(const CommandRequest& request,
   return CF_EXPECT(
       CommandRequestBuilder()
           .SetEnv(env)
-          /* cvd load will always create instances in daemon mode (to be
-           independent of terminal) and will enable reporting automatically
-           (to run automatically without question during launch)
-           */
-          .AddArguments({"cvd", "start", "--daemon", system_build_arg})
+          // --daemon=true form to avoid gflags parsing error for b/584001015
+          .AddArguments({"cvd", "start", "--daemon=true", system_build_arg})
           .AddArguments(cvd_flags.launch_cvd_flags)
           .SetSelectorOptions(std::move(selector_options))
           .Build());
