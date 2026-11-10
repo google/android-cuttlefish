@@ -15,17 +15,15 @@
 use anyhow::{Context, Result as AnyhowResult};
 use std::io::Result as IoResult;
 use std::os::fd::BorrowedFd;
-use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 use crate::capture_channel::CaptureChannel;
+use crate::control::ControlSet;
+use crate::emulated_scene::EmulatedScene;
 use crate::format::Yuv420m;
 use crate::memory::{BufferMemoryHandler, QbufRequest, QueuedBuffer};
-use crate::emulated_scene::EmulatedScene;
 use crate::pattern::FramePattern;
-use crate::pattern::julia_set::JuliaSet;
-use crate::pattern::pulse::Pulse;
-use crate::pattern::smpte::SmpteBars;
+use crate::render_params::RenderParams;
 
 use v4l2r::QueueType;
 use v4l2r::bindings;
@@ -56,136 +54,6 @@ use virtio_media::protocol::SgEntry;
 use virtio_media::protocol::V4l2Event;
 use virtio_media::protocol::V4l2Ioctl;
 
-/// Rust equivalent of the V4L2_CTRL_ID2WHICH C preprocessor macro.
-/// Extracts the control class ID from a control ID by masking out the lower 16 bits
-/// and any reserved top bits (uses mask 0x0fff0000).
-/// See: https://www.kernel.org/doc/html/latest/userspace-api/media/v4l/control.html
-const fn v4l2_ctrl_id2which(id: u32) -> u32 {
-    id & 0x0fff0000
-}
-
-/// https://developer.android.com/reference/android/hardware/camera2/CameraMetadata#LENS_FACING_FRONT
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum LensFacing {
-    Front = 0,
-    Back = 1,
-    External = 2,
-}
-
-impl FromStr for LensFacing {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "FRONT" => Ok(LensFacing::Front),
-            "BACK" => Ok(LensFacing::Back),
-            "EXTERNAL" => Ok(LensFacing::External),
-            _ => Err(format!(
-                "Invalid lens facing: {}. Expected FRONT, BACK, or EXTERNAL",
-                s
-            )),
-        }
-    }
-}
-
-/// Encapsulates the camera gain value.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Gain(i32);
-
-impl Gain {
-    pub const MIN: i32 = 100;
-    pub const MAX: i32 = 1600;
-    pub const DEFAULT: i32 = 100;
-
-    pub fn new(value: i32) -> Result<Self, libc::c_int> {
-        if value < Self::MIN || value > Self::MAX {
-            Err(libc::ERANGE)
-        } else {
-            Ok(Gain(value))
-        }
-    }
-
-    pub fn value(&self) -> i32 {
-        self.0
-    }
-}
-
-impl Default for Gain {
-    fn default() -> Self {
-        Gain(Self::DEFAULT)
-    }
-}
-
-/// Test pattern selectable through `V4L2_CID_TEST_PATTERN`.
-///
-/// The discriminants double as the menu indices reported by `VIDIOC_QUERYMENU`, so they
-/// must stay contiguous and start at [`TestPattern::MIN`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TestPattern {
-    Pulse = 0,
-    SmpteBars = 1,
-    JuliaSet = 2,
-}
-
-impl TestPattern {
-    /// Lowest menu index, reported as `minimum` for `V4L2_CID_TEST_PATTERN`.
-    const MIN: i32 = TestPattern::Pulse as i32;
-    /// Highest menu index, reported as `maximum` for `V4L2_CID_TEST_PATTERN`.
-    const MAX: i32 = TestPattern::JuliaSet as i32;
-    /// Pattern selected until the guest asks for something else.
-    const DEFAULT: TestPattern = TestPattern::Pulse;
-
-    /// Human readable name reported by `VIDIOC_QUERYMENU`.
-    fn name(self) -> &'static str {
-        match self {
-            TestPattern::Pulse => "Pulse",
-            TestPattern::SmpteBars => "SMPTE + Bouncing Box",
-            TestPattern::JuliaSet => "Animated Julia Set",
-        }
-    }
-
-    /// Frame generator backing this pattern.
-    pub(crate) fn generator(self) -> &'static dyn FramePattern {
-        match self {
-            TestPattern::Pulse => &Pulse,
-            TestPattern::SmpteBars => &SmpteBars,
-            TestPattern::JuliaSet => &JuliaSet,
-        }
-    }
-}
-
-impl TryFrom<i32> for TestPattern {
-    /// Raw `errno` reported to the guest for an out-of-range menu index.
-    type Error = i32;
-
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(TestPattern::Pulse),
-            1 => Ok(TestPattern::SmpteBars),
-            2 => Ok(TestPattern::JuliaSet),
-            _ => Err(libc::ERANGE),
-        }
-    }
-}
-
-/// State of all camera controls.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CameraControls {
-    pub lens_facing: LensFacing,
-    pub gain: Gain,
-    pub test_pattern: TestPattern,
-}
-
-impl CameraControls {
-    pub fn new(lens_facing: LensFacing) -> Self {
-        Self {
-            lens_facing,
-            gain: Gain::default(),
-            test_pattern: TestPattern::DEFAULT,
-        }
-    }
-}
-
 static EMULATED_SCENE: EmulatedScene = EmulatedScene {
     hour: EmulatedScene::DEFAULT_HOUR,
 };
@@ -200,23 +68,13 @@ pub enum FrameSource {
 }
 
 impl FrameSource {
-    /// Frame generator for this source given the current controls.
-    pub(crate) fn generator(self, controls: &CameraControls) -> &'static dyn FramePattern {
+    /// Frame generator for this source given the current render parameters.
+    pub(crate) fn generator(self, params: &RenderParams) -> &'static dyn FramePattern {
         match self {
-            FrameSource::TestPatterns => controls.test_pattern.generator(),
+            FrameSource::TestPatterns => params.test_pattern.generator(),
             FrameSource::EmulatedScene => &EMULATED_SCENE,
         }
     }
-}
-
-/// Formats an ASCII name for a `v4l2_query_ext_ctrl` or `v4l2_querymenu` response, NUL-padding
-/// the remainder of the 32-byte array. If `name` is longer than 31 bytes it is truncated and
-/// the last byte is still forced to NUL.
-fn ctrl_name(name: &str) -> [u8; 32] {
-    let mut out = [0u8; 32];
-    let copy_len = std::cmp::min(name.len(), 31);
-    out[..copy_len].copy_from_slice(&name.as_bytes()[..copy_len]);
-    out
 }
 
 /// Current status of a buffer.
@@ -349,7 +207,8 @@ impl<A> VirtioMediaDeviceSession for EmulatedCameraSession<A> {
 /// This implementation looks forward to have feature parity with existing Android Guest Emulated
 /// camera https://cs.android.com/android/platform/superproject/main/+/main:hardware/google/camera/devices/EmulatedCamera/
 ///
-/// `M` decides how buffers are backed, see [`BufferMemoryHandler`].
+/// `M` decides how buffers are backed, see [`BufferMemoryHandler`]. The V4L2 controls exposed
+/// to the guest are whatever the backend registered in its [`ControlSet`].
 pub struct EmulatedCamera<Q: VirtioMediaEventQueue, M: BufferMemoryHandler> {
     /// Memory handler of the capture buffers.
     buffer_memory_handler: M,
@@ -362,8 +221,8 @@ pub struct EmulatedCamera<Q: VirtioMediaEventQueue, M: BufferMemoryHandler> {
     active_session: Option<u32>,
     /// Queue used to send events to the guest.
     evt_queue: Arc<Mutex<Q>>,
-    /// Camera controls (gain, lens facing, test pattern).
-    controls: CameraControls,
+    /// V4L2 controls exposed to the guest.
+    controls: ControlSet,
     /// What is rendered into capture buffers.
     frame_source: FrameSource,
     /// Width of the video.
@@ -380,14 +239,14 @@ where
     pub fn new(
         evt_queue: Q,
         buffer_memory_handler: M,
-        lens_facing: LensFacing,
+        controls: ControlSet,
         frame_source: FrameSource,
     ) -> Self {
         Self {
             buffer_memory_handler,
             active_session: None,
             evt_queue: Arc::new(Mutex::new(evt_queue)),
-            controls: CameraControls::new(lens_facing),
+            controls,
             frame_source,
             width: WIDTH,
             height: HEIGHT,
@@ -413,155 +272,19 @@ where
         Ok(Buffer::new(v4l2_buffer, allocation))
     }
 
-    fn lens_facing_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
-        let lens_facing = self.controls.lens_facing;
-        bindings::v4l2_query_ext_ctrl {
-            id: CID_LENS_FACING,
-            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER,
-            name: ctrl_name("LENS_FACING").map(|b| b as i8),
-            minimum: LensFacing::Front as i64,
-            maximum: LensFacing::External as i64,
-            step: 1,
-            default_value: lens_facing as i64,
-            flags: bindings::V4L2_CTRL_FLAG_READ_ONLY,
-            elems: 1,
-            elem_size: std::mem::size_of::<u32>() as u32,
-            ..Default::default()
-        }
-    }
-
-    fn gain_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
-        let name_str = "Gain";
-        let mut name = [0u8; 32];
-        name[0..name_str.len()].copy_from_slice(name_str.as_bytes());
-        bindings::v4l2_query_ext_ctrl {
-            id: bindings::V4L2_CID_GAIN,
-            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER,
-            name: name.map(|b| b as i8),
-            minimum: Gain::MIN as i64,
-            maximum: Gain::MAX as i64,
-            step: 1,
-            default_value: Gain::DEFAULT as i64,
-            flags: 0,
-            elems: 1,
-            elem_size: std::mem::size_of::<i32>() as u32,
-            ..Default::default()
-        }
-    }
-
-    fn user_class_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
-        let name_str = "User Controls";
-        let mut name = [0u8; 32];
-        name[0..name_str.len()].copy_from_slice(name_str.as_bytes());
-        bindings::v4l2_query_ext_ctrl {
-            id: bindings::V4L2_CID_USER_CLASS,
-            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_CTRL_CLASS,
-            name: name.map(|b| b as i8),
-            // V4L2 standard requires control class headers to be marked as both RO and WO.
-            flags: bindings::V4L2_CTRL_FLAG_READ_ONLY | bindings::V4L2_CTRL_FLAG_WRITE_ONLY,
-            ..Default::default()
-        }
-    }
-
-    fn camera_class_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
-        let name_str = "Camera Controls";
-        let mut name = [0u8; 32];
-        name[0..name_str.len()].copy_from_slice(name_str.as_bytes());
-        bindings::v4l2_query_ext_ctrl {
-            id: bindings::V4L2_CID_CAMERA_CLASS,
-            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_CTRL_CLASS,
-            name: name.map(|b| b as i8),
-            // V4L2 standard requires control class headers to be marked as both RO and WO.
-            flags: bindings::V4L2_CTRL_FLAG_READ_ONLY | bindings::V4L2_CTRL_FLAG_WRITE_ONLY,
-            ..Default::default()
-        }
-    }
-
-    fn image_proc_class_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
-        bindings::v4l2_query_ext_ctrl {
-            id: bindings::V4L2_CID_IMAGE_PROC_CLASS,
-            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_CTRL_CLASS,
-            name: ctrl_name("Image Processing Controls").map(|b| b as i8),
-            minimum: 0,
-            maximum: 0,
-            step: 0,
-            default_value: 0,
-            // A control class holds no value of its own, so it can be neither read nor
-            // written. This mirrors what `v4l2_ctrl_fill()` does in the kernel.
-            flags: bindings::V4L2_CTRL_FLAG_READ_ONLY | bindings::V4L2_CTRL_FLAG_WRITE_ONLY,
-            elems: 1,
-            elem_size: std::mem::size_of::<u32>() as u32,
-            ..Default::default()
-        }
-    }
-
-    fn test_pattern_query_ext_ctrl(&self) -> bindings::v4l2_query_ext_ctrl {
-        bindings::v4l2_query_ext_ctrl {
-            id: bindings::V4L2_CID_TEST_PATTERN,
-            type_: bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_MENU,
-            name: ctrl_name("Test Pattern").map(|b| b as i8),
-            minimum: TestPattern::MIN as i64,
-            maximum: TestPattern::MAX as i64,
-            step: 1,
-            default_value: TestPattern::DEFAULT as i64,
-            flags: 0,
-            elems: 1,
-            elem_size: std::mem::size_of::<u32>() as u32,
-            ..Default::default()
-        }
-    }
-
-    /// Builds the `V4L2_EVENT_CTRL` payload describing the current state of `id`.
-    fn ctrl_event(controls: &CameraControls, id: u32) -> IoctlResult<bindings::v4l2_event> {
-        let mut event = bindings::v4l2_event {
-            type_: bindings::V4L2_EVENT_CTRL,
-            id,
-            ..Default::default()
-        };
-        match id {
-            CID_LENS_FACING => {
-                event.u.ctrl.type_ = bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER;
-                event.u.ctrl.__bindgen_anon_1.value = controls.lens_facing as i32;
-                event.u.ctrl.minimum = LensFacing::Front as i32;
-                event.u.ctrl.maximum = LensFacing::External as i32;
-                event.u.ctrl.step = 1;
-                event.u.ctrl.default_value = LensFacing::Front as i32;
-            }
-            bindings::V4L2_CID_GAIN => {
-                event.u.ctrl.type_ = bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER;
-                event.u.ctrl.__bindgen_anon_1.value = controls.gain.value();
-                event.u.ctrl.minimum = Gain::MIN;
-                event.u.ctrl.maximum = Gain::MAX;
-                event.u.ctrl.step = 1;
-                event.u.ctrl.default_value = Gain::DEFAULT;
-            }
-            bindings::V4L2_CID_TEST_PATTERN => {
-                event.u.ctrl.type_ = bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_MENU;
-                event.u.ctrl.__bindgen_anon_1.value = controls.test_pattern as i32;
-                event.u.ctrl.minimum = TestPattern::MIN;
-                event.u.ctrl.maximum = TestPattern::MAX;
-                event.u.ctrl.step = 1;
-                event.u.ctrl.default_value = TestPattern::DEFAULT as i32;
-            }
-            _ => return Err(libc::EINVAL),
-        }
-        // Listeners gate on this mask, so an event without it is silently ignored.
-        event.u.ctrl.changes = bindings::V4L2_EVENT_CTRL_CH_VALUE;
-        Ok(event)
-    }
-
-    /// Applies `pattern`, signalling subscribers if the value actually changed.
-    fn set_test_pattern(&mut self, session_id: u32, pattern: TestPattern) -> IoctlResult<()> {
-        if self.controls.test_pattern == pattern {
-            return Ok(());
-        }
-        self.controls.test_pattern = pattern;
-        let event = Self::ctrl_event(&self.controls, bindings::V4L2_CID_TEST_PATTERN)?;
+    /// Broadcasts `event` to the guest on behalf of `session_id`.
+    fn send_event(&self, session_id: u32, event: bindings::v4l2_event) {
         self.evt_queue
             .lock()
             .unwrap()
             .send_event(V4l2Event::Event(SessionEvent::new(session_id, event)));
-        Ok(())
+    }
+
+    /// Pushes the current control state to the frame generators of `session`.
+    fn sync_render_params(&self, session: &EmulatedCameraSession<M::Allocation>) {
+        let _ = session
+            .channel
+            .set_render_params(self.controls.render_params());
     }
 }
 
@@ -582,7 +305,7 @@ where
 
             let channel = CaptureChannel::new(
                 session_id,
-                self.controls.clone(),
+                self.controls.render_params(),
                 self.frame_source,
                 capture_completed_tx,
             )
@@ -675,10 +398,6 @@ where
         self.buffer_memory_handler.munmap(guest_addr)
     }
 }
-
-// Use an offset for virtio-media custom camera class control id values.
-const CID_OFFSET: u32 = bindings::V4L2_CID_CAMERA_CLASS_BASE + 0x100;
-const CID_LENS_FACING: u32 = CID_OFFSET + 1;
 
 const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
@@ -1139,38 +858,8 @@ where
         flags: QueryCtrlFlags,
     ) -> IoctlResult<bindings::v4l2_query_ext_ctrl> {
         let requested_id: u32 = unsafe { std::mem::transmute(id) };
-
-        if flags.contains(QueryCtrlFlags::NEXT) {
-            if requested_id < bindings::V4L2_CID_USER_CLASS {
-                return Ok(self.user_class_query_ext_ctrl());
-            } else if requested_id < bindings::V4L2_CID_GAIN {
-                return Ok(self.gain_query_ext_ctrl());
-            } else if requested_id < bindings::V4L2_CID_CAMERA_CLASS {
-                return Ok(self.camera_class_query_ext_ctrl());
-            } else if requested_id < CID_LENS_FACING {
-                return Ok(self.lens_facing_query_ext_ctrl());
-            } else if requested_id < bindings::V4L2_CID_IMAGE_PROC_CLASS {
-                return Ok(self.image_proc_class_query_ext_ctrl());
-            } else if requested_id < bindings::V4L2_CID_TEST_PATTERN {
-                return Ok(self.test_pattern_query_ext_ctrl());
-            }
-        } else {
-            match requested_id {
-                bindings::V4L2_CID_USER_CLASS => return Ok(self.user_class_query_ext_ctrl()),
-                bindings::V4L2_CID_GAIN => return Ok(self.gain_query_ext_ctrl()),
-                bindings::V4L2_CID_CAMERA_CLASS => return Ok(self.camera_class_query_ext_ctrl()),
-                CID_LENS_FACING => return Ok(self.lens_facing_query_ext_ctrl()),
-                bindings::V4L2_CID_IMAGE_PROC_CLASS => {
-                    return Ok(self.image_proc_class_query_ext_ctrl());
-                }
-                bindings::V4L2_CID_TEST_PATTERN => {
-                    return Ok(self.test_pattern_query_ext_ctrl());
-                }
-                _ => {}
-            }
-        }
-
-        Err(libc::EINVAL)
+        self.controls
+            .query_ext_ctrl(requested_id, flags.contains(QueryCtrlFlags::NEXT))
     }
 
     fn querymenu(
@@ -1179,36 +868,11 @@ where
         id: u32,
         index: u32,
     ) -> IoctlResult<bindings::v4l2_querymenu> {
-        if id != bindings::V4L2_CID_TEST_PATTERN {
-            return Err(libc::EINVAL);
-        }
-        // Menu indices are the `TestPattern` discriminants, so the enum decides the range.
-        let pattern = i32::try_from(index)
-            .ok()
-            .and_then(|index| TestPattern::try_from(index).ok())
-            .ok_or(libc::EINVAL)?;
-
-        Ok(bindings::v4l2_querymenu {
-            id,
-            index,
-            __bindgen_anon_1: bindings::v4l2_querymenu__bindgen_ty_1 {
-                name: ctrl_name(pattern.name()),
-            },
-            ..Default::default()
-        })
+        self.controls.querymenu(id, index)
     }
 
     fn g_ctrl(&mut self, _session: &Self::Session, id: u32) -> IoctlResult<bindings::v4l2_control> {
-        let value = match id {
-            CID_LENS_FACING => self.controls.lens_facing as i32,
-            bindings::V4L2_CID_GAIN => self.controls.gain.value(),
-            bindings::V4L2_CID_TEST_PATTERN => self.controls.test_pattern as i32,
-            bindings::V4L2_CID_USER_CLASS
-            | bindings::V4L2_CID_CAMERA_CLASS
-            | bindings::V4L2_CID_IMAGE_PROC_CLASS => return Err(libc::EACCES),
-            _ => return Err(libc::EINVAL),
-        };
-        Ok(bindings::v4l2_control { id, value })
+        self.controls.g_ctrl(id)
     }
 
     fn s_ctrl(
@@ -1217,38 +881,12 @@ where
         id: u32,
         value: i32,
     ) -> IoctlResult<bindings::v4l2_control> {
-        match id {
-            CID_LENS_FACING
-            | bindings::V4L2_CID_USER_CLASS
-            | bindings::V4L2_CID_CAMERA_CLASS
-            | bindings::V4L2_CID_IMAGE_PROC_CLASS => Err(libc::EACCES),
-            bindings::V4L2_CID_GAIN => {
-                let gain = Gain::new(value)?;
-                if self.controls.gain != gain {
-                    self.controls.gain = gain;
-                    let event = Self::ctrl_event(&self.controls, bindings::V4L2_CID_GAIN)?;
-                    self.evt_queue
-                        .lock()
-                        .unwrap()
-                        .send_event(V4l2Event::Event(SessionEvent::new(session.id, event)));
-                    let _ = session.channel.set_controls(self.controls.clone());
-                }
-                Ok(bindings::v4l2_control {
-                    id,
-                    value: gain.value(),
-                })
-            }
-            bindings::V4L2_CID_TEST_PATTERN => {
-                let pattern = TestPattern::try_from(value)?;
-                self.set_test_pattern(session.id, pattern)?;
-                let _ = session.channel.set_controls(self.controls.clone());
-                Ok(bindings::v4l2_control {
-                    id,
-                    value: pattern as i32,
-                })
-            }
-            _ => Err(libc::EINVAL),
+        let outcome = self.controls.s_ctrl(id, value)?;
+        if let Some(event) = outcome.event {
+            self.send_event(session.id, event);
         }
+        self.sync_render_params(session);
+        Ok(outcome.control)
     }
 
     fn g_ext_ctrls(
@@ -1259,66 +897,7 @@ where
         ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
         _user_regions: Vec<Vec<SgEntry>>,
     ) -> IoctlResult<()> {
-        // Validate control class. Also handles class support queries when count == 0.
-        match which {
-            CtrlWhich::Current | CtrlWhich::Default => {}
-            CtrlWhich::Class(class) => {
-                if class != bindings::V4L2_CTRL_CLASS_USER
-                    && class != bindings::V4L2_CTRL_CLASS_CAMERA
-                    && class != bindings::V4L2_CTRL_CLASS_IMAGE_PROC
-                {
-                    ctrls.error_idx = ctrls.count;
-                    return Err(libc::EINVAL);
-                }
-            }
-            _ => {
-                ctrls.error_idx = ctrls.count;
-                return Err(libc::EINVAL);
-            }
-        }
-
-        // Ensure all requested controls belong to the selected class.
-        if let CtrlWhich::Class(class_id) = which {
-            for ctrl in ctrl_array.iter() {
-                if v4l2_ctrl_id2which(ctrl.id) != class_id {
-                    ctrls.error_idx = ctrls.count;
-                    return Err(libc::EINVAL);
-                }
-            }
-        }
-
-        // Process controls. Class controls are write-only headers and must fail on read.
-        for ctrl in ctrl_array.iter_mut() {
-            match ctrl.id {
-                bindings::V4L2_CID_USER_CLASS
-                | bindings::V4L2_CID_CAMERA_CLASS
-                | bindings::V4L2_CID_IMAGE_PROC_CLASS => {
-                    ctrls.error_idx = ctrls.count;
-                    return Err(libc::EACCES);
-                }
-                bindings::V4L2_CID_GAIN => {
-                    ctrl.__bindgen_anon_1.value = match which {
-                        CtrlWhich::Default => Gain::DEFAULT,
-                        _ => self.controls.gain.value(),
-                    };
-                }
-                CID_LENS_FACING => {
-                    ctrl.__bindgen_anon_1.value = self.controls.lens_facing as i32;
-                }
-                bindings::V4L2_CID_TEST_PATTERN => {
-                    ctrl.__bindgen_anon_1.value = match which {
-                        CtrlWhich::Default => TestPattern::DEFAULT as i32,
-                        _ => self.controls.test_pattern as i32,
-                    };
-                }
-                _ => {
-                    ctrls.error_idx = ctrls.count;
-                    return Err(libc::EINVAL);
-                }
-            }
-        }
-        ctrls.error_idx = ctrls.count;
-        Ok(())
+        self.controls.g_ext_ctrls(which, ctrls, ctrl_array)
     }
 
     fn try_ext_ctrls(
@@ -1329,66 +908,7 @@ where
         ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
         _user_regions: Vec<Vec<SgEntry>>,
     ) -> IoctlResult<()> {
-        // Validate control class. Setting defaults is not allowed for TRY/SET.
-        match which {
-            CtrlWhich::Current => {}
-            CtrlWhich::Class(class) => {
-                if class != bindings::V4L2_CTRL_CLASS_USER
-                    && class != bindings::V4L2_CTRL_CLASS_CAMERA
-                    && class != bindings::V4L2_CTRL_CLASS_IMAGE_PROC
-                {
-                    ctrls.error_idx = ctrls.count;
-                    return Err(libc::EINVAL);
-                }
-            }
-            _ => {
-                ctrls.error_idx = ctrls.count;
-                return Err(libc::EINVAL);
-            }
-        }
-
-        // Ensure all requested controls belong to the selected class.
-        if let CtrlWhich::Class(class_id) = which {
-            for (idx, ctrl) in ctrl_array.iter().enumerate() {
-                if v4l2_ctrl_id2which(ctrl.id) != class_id {
-                    ctrls.error_idx = idx as u32;
-                    return Err(libc::EINVAL);
-                }
-            }
-        }
-
-        // Validate control values. Class controls are read-only headers and must fail on write/try.
-        for (idx, ctrl) in ctrl_array.iter_mut().enumerate() {
-            match ctrl.id {
-                bindings::V4L2_CID_USER_CLASS
-                | bindings::V4L2_CID_CAMERA_CLASS
-                | bindings::V4L2_CID_IMAGE_PROC_CLASS
-                | CID_LENS_FACING => {
-                    ctrls.error_idx = idx as u32;
-                    return Err(libc::EACCES);
-                }
-                bindings::V4L2_CID_GAIN => {
-                    let value = unsafe { ctrl.__bindgen_anon_1.value };
-                    if let Err(err) = Gain::new(value) {
-                        ctrls.error_idx = idx as u32;
-                        return Err(err);
-                    }
-                }
-                bindings::V4L2_CID_TEST_PATTERN => {
-                    let value = unsafe { ctrl.__bindgen_anon_1.value };
-                    if let Err(err) = TestPattern::try_from(value) {
-                        ctrls.error_idx = idx as u32;
-                        return Err(err);
-                    }
-                }
-                _ => {
-                    ctrls.error_idx = idx as u32;
-                    return Err(libc::EINVAL);
-                }
-            }
-        }
-        ctrls.error_idx = ctrls.count;
-        Ok(())
+        self.controls.try_ext_ctrls(which, ctrls, ctrl_array)
     }
 
     fn s_ext_ctrls(
@@ -1397,43 +917,13 @@ where
         which: CtrlWhich,
         ctrls: &mut bindings::v4l2_ext_controls,
         ctrl_array: &mut Vec<bindings::v4l2_ext_control>,
-        user_regions: Vec<Vec<SgEntry>>,
+        _user_regions: Vec<Vec<SgEntry>>,
     ) -> IoctlResult<()> {
-        // Validate control class, selection, and values via try_ext_ctrls.
-        if let Err(err) = self.try_ext_ctrls(session, which, ctrls, ctrl_array, user_regions) {
-            ctrls.error_idx = ctrls.count;
-            return Err(err);
+        let events = self.controls.s_ext_ctrls(which, ctrls, ctrl_array)?;
+        for event in events {
+            self.send_event(session.id, event);
         }
-
-        // Apply control values. Class controls are read-only headers and must fail on write/try.
-        for ctrl in ctrl_array.iter_mut() {
-            match ctrl.id {
-                bindings::V4L2_CID_GAIN => {
-                    let value = unsafe { ctrl.__bindgen_anon_1.value };
-                    if let Ok(gain) = Gain::new(value) {
-                        if self.controls.gain != gain {
-                            self.controls.gain = gain;
-                            if let Ok(event) =
-                                Self::ctrl_event(&self.controls, bindings::V4L2_CID_GAIN)
-                            {
-                                self.evt_queue.lock().unwrap().send_event(V4l2Event::Event(
-                                    SessionEvent::new(session.id, event),
-                                ));
-                            }
-                        }
-                    }
-                }
-                bindings::V4L2_CID_TEST_PATTERN => {
-                    let value = unsafe { ctrl.__bindgen_anon_1.value };
-                    if let Ok(pattern) = TestPattern::try_from(value) {
-                        self.set_test_pattern(session.id, pattern)?;
-                    }
-                }
-                _ => {}
-            }
-        }
-        let _ = session.channel.set_controls(self.controls.clone());
-        ctrls.error_idx = ctrls.count;
+        self.sync_render_params(session);
         Ok(())
     }
 
@@ -1447,23 +937,12 @@ where
             return Err(libc::EINVAL);
         }
         match event {
-            V4l2EventType::Ctrl(id) => match id {
-                CID_LENS_FACING | bindings::V4L2_CID_GAIN | bindings::V4L2_CID_TEST_PATTERN => {
-                    let ctrl_event = Self::ctrl_event(&self.controls, id)?;
-                    self.evt_queue
-                        .lock()
-                        .unwrap()
-                        .send_event(V4l2Event::Event(SessionEvent::new(session.id, ctrl_event)));
-                    Ok(())
+            V4l2EventType::Ctrl(id) => {
+                if let Some(initial) = self.controls.subscribe_ctrl_event(id)? {
+                    self.send_event(session.id, initial);
                 }
-                bindings::V4L2_CID_USER_CLASS
-                | bindings::V4L2_CID_CAMERA_CLASS
-                | bindings::V4L2_CID_IMAGE_PROC_CLASS => {
-                    // Subscription succeeds, but we do not send any initial event.
-                    Ok(())
-                }
-                _ => Err(libc::EINVAL),
-            },
+                Ok(())
+            }
             _ => Err(libc::EINVAL),
         }
     }
@@ -1473,58 +952,10 @@ where
         _session: &mut Self::Session,
         event: bindings::v4l2_event_subscription,
     ) -> IoctlResult<()> {
-        return if event.type_ == bindings::V4L2_EVENT_CTRL
-            && (event.id == CID_LENS_FACING
-                || event.id == bindings::V4L2_CID_GAIN
-                || event.id == bindings::V4L2_CID_TEST_PATTERN
-                || event.id == bindings::V4L2_CID_USER_CLASS
-                || event.id == bindings::V4L2_CID_CAMERA_CLASS
-                || event.id == bindings::V4L2_CID_IMAGE_PROC_CLASS)
-        {
+        if event.type_ == bindings::V4L2_EVENT_CTRL && self.controls.knows(event.id) {
             Ok(())
         } else {
             Err(libc::EINVAL)
-        };
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    /// Every index between `MIN` and `MAX` is advertised as a menu entry, so each one has
-    /// to map back to a pattern with a name and a generator.
-    #[test]
-    fn every_advertised_menu_index_maps_to_a_pattern() {
-        for value in TestPattern::MIN..=TestPattern::MAX {
-            let pattern = TestPattern::try_from(value).expect("advertised index must be valid");
-            assert_eq!(pattern as i32, value);
-            assert!(!pattern.name().is_empty());
         }
-    }
-
-    #[test]
-    fn out_of_range_menu_index_is_rejected() {
-        assert_eq!(
-            TestPattern::try_from(TestPattern::MIN - 1),
-            Err(libc::ERANGE)
-        );
-        assert_eq!(
-            TestPattern::try_from(TestPattern::MAX + 1),
-            Err(libc::ERANGE)
-        );
-    }
-
-    #[test]
-    fn ctrl_name_is_nul_padded() {
-        let name = ctrl_name("Test Pattern");
-        assert_eq!(&name[..12], b"Test Pattern");
-        assert!(name[12..].iter().all(|byte| *byte == 0));
-    }
-
-    #[test]
-    fn ctrl_name_truncates_and_stays_nul_terminated() {
-        let name = ctrl_name("This control name is definitely far too long to fit");
-        assert_eq!(name[31], 0);
     }
 }

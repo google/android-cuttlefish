@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use super::FramePattern;
-use crate::device::CameraControls;
+use crate::render_params::RenderParams;
 use std::io::Write;
 
 const SMPTE_COLOR_WHITE: (u8, u8, u8) = (180, 128, 128);
@@ -49,7 +49,7 @@ impl FramePattern for SmpteBars {
         &self,
         iteration: u64,
         // Gain is intentionally ignored for SMPTE bars to preserve exact YUV color calibration values.
-        _controls: &CameraControls,
+        _params: &RenderParams,
         width: u32,
         height: u32,
         sink_y: &mut dyn Write,

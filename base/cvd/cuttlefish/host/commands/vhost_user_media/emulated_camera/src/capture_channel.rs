@@ -18,8 +18,9 @@ use std::io::Write;
 use std::sync::mpsc::{Receiver, RecvTimeoutError, Sender};
 use std::time::{Duration, Instant};
 
-use crate::device::{CameraControls, FrameSource};
+use crate::device::FrameSource;
 use crate::format::Yuv420m;
+use crate::render_params::RenderParams;
 
 /// Where a capture request is rendered.
 pub trait CaptureSink: Send + Sync {
@@ -48,8 +49,8 @@ pub enum ChannelCmd {
     StopCapture,
     /// Enqueue a capture request into the channel's request queue.
     Queue(CaptureRequest),
-    /// Update channel controls (e.g. pattern, gain).
-    SetControls(CameraControls),
+    /// Update the render parameters (e.g. pattern, gain).
+    SetRenderParams(RenderParams),
     /// Terminate capture worker thread.
     Shutdown,
 }
@@ -166,7 +167,7 @@ impl CaptureClock {
 /// Generate capture data.
 pub struct CaptureProcessor {
     session_id: u32,
-    controls: CameraControls,
+    params: RenderParams,
     frame_source: FrameSource,
     width: u32,
     height: u32,
@@ -180,13 +181,13 @@ pub struct CaptureProcessor {
 impl CaptureProcessor {
     pub fn new(
         session_id: u32,
-        initial_controls: CameraControls,
+        initial_params: RenderParams,
         frame_source: FrameSource,
         completion_tx: Sender<CaptureCompletedEvent>,
     ) -> Self {
         Self {
             session_id,
-            controls: initial_controls,
+            params: initial_params,
             frame_source,
             width: 640,
             height: 480,
@@ -257,8 +258,8 @@ impl CaptureProcessor {
             ChannelCmd::Queue(req) => {
                 self.pending_requests.push_back(req);
             }
-            ChannelCmd::SetControls(c) => {
-                self.controls = c;
+            ChannelCmd::SetRenderParams(params) => {
+                self.params = params;
             }
             ChannelCmd::Shutdown => unreachable!(),
         }
@@ -274,7 +275,7 @@ impl CaptureProcessor {
                     if let Err(e) = Self::write_pattern(
                         seq as u64,
                         self.frame_source,
-                        &self.controls,
+                        &self.params,
                         self.width,
                         self.height,
                         sink_y,
@@ -317,7 +318,7 @@ impl CaptureProcessor {
     fn write_pattern(
         iteration: u64,
         frame_source: FrameSource,
-        controls: &CameraControls,
+        params: &RenderParams,
         width: u32,
         height: u32,
         sink_y: &mut dyn Write,
@@ -325,8 +326,8 @@ impl CaptureProcessor {
         sink_v: &mut dyn Write,
     ) -> AnyhowResult<()> {
         frame_source
-            .generator(controls)
-            .write(iteration, controls, width, height, sink_y, sink_u, sink_v)
+            .generator(params)
+            .write(iteration, params, width, height, sink_y, sink_u, sink_v)
             .map_err(|e| anyhow::anyhow!("Pattern generator write error: errno {}", e))
     }
 }
@@ -339,7 +340,7 @@ pub struct CaptureChannel {
 impl CaptureChannel {
     pub fn new(
         session_id: u32,
-        initial_controls: CameraControls,
+        initial_params: RenderParams,
         frame_source: FrameSource,
         completion_tx: Sender<CaptureCompletedEvent>,
     ) -> AnyhowResult<Self> {
@@ -347,7 +348,7 @@ impl CaptureChannel {
         let (cmd_tx, cmd_rx) = std::sync::mpsc::channel();
 
         let mut processor =
-            CaptureProcessor::new(session_id, initial_controls, frame_source, completion_tx);
+            CaptureProcessor::new(session_id, initial_params, frame_source, completion_tx);
 
         std::thread::Builder::new()
             .name(format!("channel-{}", session_id))
@@ -372,9 +373,9 @@ impl CaptureChannel {
         self.send_cmd(ChannelCmd::Queue(CaptureRequest { buffer_id, sink }))
     }
 
-    /// Updates channel controls (e.g. test pattern, gain).
-    pub fn set_controls(&self, controls: CameraControls) -> AnyhowResult<()> {
-        self.send_cmd(ChannelCmd::SetControls(controls))
+    /// Updates the render parameters (e.g. test pattern, gain).
+    pub fn set_render_params(&self, params: RenderParams) -> AnyhowResult<()> {
+        self.send_cmd(ChannelCmd::SetRenderParams(params))
     }
 
     /// Signals the processor thread to terminate.
