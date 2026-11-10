@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/libs/config/config_utils.h"
 
-#include <cstdlib>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -29,12 +28,10 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/random.h"
 #include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
-#include "cuttlefish/process/execute.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -192,21 +189,6 @@ bool IsValidAndroidHostOutPath(const std::string& path) {
   std::string internal_start_bin_path = path + "/bin/cvd_internal_start";
   std::string launch_cvd_bin_path = path + "/bin/launch_cvd";
   return FileExists(internal_start_bin_path) || FileExists(launch_cvd_bin_path);
-}
-
-// In practice this is mostly validating that the `cuttlefish-base` debian
-// package is installed, which implies that more things are present like the
-// predefined network setup.
-bool HostSupportsQemuCli() {
-  static bool supported =
-#ifdef __linux__
-      InSandbox() ||
-      Execute({"/usr/lib/cuttlefish-common/bin/capability_query.py",
-               "qemu_cli"}) == 0;
-#else
-      true;
-#endif
-  return supported;
 }
 
 std::string GetSeccompPolicyDir() {

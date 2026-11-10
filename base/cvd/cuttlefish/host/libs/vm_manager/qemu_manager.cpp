@@ -128,7 +128,7 @@ bool QemuSupportsHelpToken(const std::string& qemu_binary, std::string_view opt,
 
 QemuManager::QemuManager(Arch arch) : arch_(arch) {}
 
-bool QemuManager::IsSupported() { return HostSupportsQemuCli(); }
+bool QemuManager::IsSupported() { return true; }
 
 Result<std::unordered_map<std::string, std::string>>
 QemuManager::ConfigureGraphics(

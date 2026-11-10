@@ -56,9 +56,6 @@ std::string DefaultEnvironmentPath(const std::string& environment_key,
                                    const std::string& subpath);
 bool IsValidAndroidHostOutPath(const std::string& path);
 
-// Whether the host supports qemu
-bool HostSupportsQemuCli();
-
 // Whether to use our local QEMU prebuilt
 bool UseQemuPrebuilt();
 
