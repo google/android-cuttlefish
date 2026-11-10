@@ -2,8 +2,9 @@ name: Darwin qemu probe
 
 # Experiment: does HVF work on a hosted macOS runner, and how long does
 # a boot take with and without it? Boots a stock Debian cloud image to
-# its login prompt under each accelerator and reports the times. Does
-# not build or use cuttlefish at all.
+# its login prompt, and a cuttlefish kernel and ramdisk to first-stage
+# init, under each accelerator and reports the times. Does not build
+# or use the cuttlefish host tools.
 
 on:
   pull_request:
@@ -27,6 +28,10 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
     - name: Install qemu
       run: brew install qemu
       shell: bash
@@ -43,41 +48,72 @@ jobs:
           https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2
         qemu-img info disk.qcow2
       shell: bash
-    - name: Boot to the login prompt under each accelerator
+    - name: Fetch a cuttlefish kernel and ramdisk
+      # Same build API and key as cvd fetch; only boot.img and
+      # vendor_boot.img are pulled out of the image zip.
       run: |
-        # boot <accel> <cpu>: prints the time to the login prompt, or
-        # why it did not get there. Returns 1 on failure.
+        key=$(grep -o '"AIza[^"]*"' \
+          base/cvd/cuttlefish/host/libs/web/android_build_api_key.cc | tr -d '"')
+        api=https://androidbuild-pa.googleapis.com/v4
+        target=aosp_cf_x86_64_only_phone-userdebug
+        build=$(curl -fsS "$api/builds?buildAttemptStatus=complete&buildType=submitted&pageSize=1&successful=true&branches=aosp-android-latest-release&targets=$target&key=$key" \
+          | python3 -c 'import json, sys; print(json.load(sys.stdin)["builds"][0]["buildId"])')
+        echo "build $build"
+        url=$(curl -fsS "$api/builds/$build/$target/attempts/latest/artifacts/$target-img-$build.zip/url?key=$key" \
+          | python3 -c 'import json, sys; print(json.load(sys.stdin)["signedUrl"])')
+        curl -fsSLo img.zip "$url"
+        unzip -q img.zip boot.img vendor_boot.img
+        curl -fsS 'https://android.googlesource.com/platform/system/tools/mkbootimg/+/refs/heads/main/unpack_bootimg.py?format=TEXT' \
+          | base64 -d > unpack_bootimg.py
+        python3 unpack_bootimg.py --boot_img boot.img --out boot
+        python3 unpack_bootimg.py --boot_img vendor_boot.img --out vendor_boot
+        cat vendor_boot/vendor_ramdisk* boot/ramdisk > initramfs
+        ls -l boot vendor_boot initramfs
+      shell: bash
+    - name: Boot under each accelerator
+      run: |
+        # boot <label> <regex> <qemu args...>: prints the time until the
+        # serial console matches the regex, or why it did not get there.
+        # Returns 1 on failure.
         boot() {
+          local label=$1 pattern=$2; shift 2
           local start; start=$(date +%s)
-          rm -f "serial-$1.log"
-          qemu-system-x86_64 -accel "$1" -machine q35 -cpu "$2" \
-            -smp "$(sysctl -n hw.ncpu)" -m 2048 \
-            -drive file=disk.qcow2,if=virtio -snapshot \
-            -netdev user,id=n0 -device virtio-net-pci,netdev=n0 \
-            -display none -serial "file:serial-$1.log" 2> "qemu-$1.err" &
+          rm -f "serial-$label.log"
+          qemu-system-x86_64 -machine q35 -smp "$(sysctl -n hw.ncpu)" \
+            -m 2048 -display none -no-reboot \
+            -serial "file:serial-$label.log" "$@" 2> "qemu-$label.err" &
           local qemu=$!
-          # Fail after 20 minutes so the job budget is not spent waiting.
-          for _ in $(seq 1200); do
-            if grep -q 'login:' "serial-$1.log" 2>/dev/null; then
-              echo "$1: login prompt after $(( $(date +%s) - start ))s"
+          # Give up after 10 minutes so the job budget is not spent waiting.
+          for _ in $(seq 600); do
+            if grep -Eq "$pattern" "serial-$label.log" 2>/dev/null; then
+              echo "$label: '$pattern' after $(( $(date +%s) - start ))s"
               kill "$qemu"
               return 0
             fi
             if ! kill -0 "$qemu" 2>/dev/null; then
-              echo "$1: qemu exited before the login prompt:"
-              cat "qemu-$1.err"
+              echo "$label: qemu exited before '$pattern':"
+              cat "qemu-$label.err"
               return 1
             fi
             sleep 1
           done
-          echo "$1: no login prompt after 20 minutes"
+          echo "$label: no '$pattern' after 10 minutes"
           kill "$qemu" 2>/dev/null || true
           return 1
         }
+        debian=(-drive file=disk.qcow2,if=virtio -snapshot
+                -netdev user,id=n0 -device virtio-net-pci,netdev=n0)
+        # No disks, so first-stage init is as far as this can get.
+        android=(-kernel boot/kernel -initrd initramfs
+                 -append "console=ttyS0 androidboot.hardware=cutf_cvm")
         # HVF may not work inside the runner VM even though the kernel
         # reports hv_support; that is one of the things being measured.
-        boot hvf host || true
-        boot tcg max
+        boot debian-hvf 'login:' -accel hvf -cpu host "${debian[@]}" || true
+        boot debian-tcg 'login:' -accel tcg -cpu max "${debian[@]}"
+        boot android-hvf 'init first stage started' \
+          -accel hvf -cpu host "${android[@]}" || true
+        boot android-tcg 'init first stage started' \
+          -accel tcg -cpu max "${android[@]}"
       shell: bash
     - name: Serial logs
       if: always()
