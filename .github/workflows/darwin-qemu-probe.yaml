@@ -49,8 +49,8 @@ jobs:
         qemu-img info disk.qcow2
       shell: bash
     - name: Fetch a cuttlefish kernel and ramdisk
-      # Same build API and key as cvd fetch; only boot.img and
-      # vendor_boot.img are pulled out of the image zip.
+      # Same build API and key as cvd fetch; only the boot images are
+      # pulled out of the image zip.
       run: |
         key=$(grep -o '"AIza[^"]*"' \
           base/cvd/cuttlefish/host/libs/web/android_build_api_key.cc | tr -d '"')
@@ -63,30 +63,37 @@ jobs:
         url=$(curl -fsS "$api/builds/$build/$target/attempts/latest/artifacts/$product-img-$build.zip/url?key=$key" \
           | python3 -c 'import json, sys; print(json.load(sys.stdin)["signedUrl"])')
         curl -fsSLo img.zip "$url"
-        unzip -q img.zip boot.img vendor_boot.img
+        unzip -q img.zip boot.img init_boot.img vendor_boot.img
         curl -fsS 'https://android.googlesource.com/platform/system/tools/mkbootimg/+/refs/heads/main/unpack_bootimg.py?format=TEXT' \
           | base64 -d > unpack_bootimg.py
         python3 unpack_bootimg.py --boot_img boot.img --out boot
+        python3 unpack_bootimg.py --boot_img init_boot.img --out init_boot
         python3 unpack_bootimg.py --boot_img vendor_boot.img --out vendor_boot
-        cat vendor_boot/vendor_ramdisk* boot/ramdisk > initramfs
-        ls -l boot vendor_boot initramfs
+        cat vendor_boot/vendor_ramdisk* init_boot/ramdisk > initramfs
+        ls -l boot init_boot vendor_boot initramfs
       shell: bash
     - name: Boot under each accelerator
       run: |
-        # boot <label> <regex> <qemu args...>: prints the time until the
-        # serial console matches the regex, or why it did not get there.
+        # boot <label> <regex> <qemu args...>: prints the time until a
+        # console matches the regex, or why it did not get there. The
+        # ISA serial port and a virtio console each log to a file; the
+        # cuttlefish kernel only uses the former for earlycon.
         # Returns 1 on failure.
         boot() {
           local label=$1 pattern=$2; shift 2
           local start; start=$(date +%s)
-          rm -f "serial-$label.log"
+          rm -f "serial-$label.log" "hvc-$label.log"
           qemu-system-x86_64 -machine q35 -smp "$(sysctl -n hw.ncpu)" \
             -m 2048 -display none -no-reboot \
-            -serial "file:serial-$label.log" "$@" 2> "qemu-$label.err" &
+            -serial "file:serial-$label.log" \
+            -device virtio-serial-pci \
+            -chardev "file,id=hvc,path=hvc-$label.log" \
+            -device virtconsole,chardev=hvc "$@" 2> "qemu-$label.err" &
           local qemu=$!
           # Give up after 10 minutes so the job budget is not spent waiting.
           for _ in $(seq 600); do
-            if grep -Eq "$pattern" "serial-$label.log" 2>/dev/null; then
+            if grep -Eq "$pattern" "serial-$label.log" "hvc-$label.log" \
+                2>/dev/null; then
               echo "$label: '$pattern' after $(( $(date +%s) - start ))s"
               kill "$qemu"
               return 0
@@ -104,9 +111,11 @@ jobs:
         }
         debian=(-drive file=disk.qcow2,if=virtio -snapshot
                 -netdev user,id=n0 -device virtio-net-pci,netdev=n0)
-        # No disks, so first-stage init is as far as this can get.
+        # No disks, so first-stage init is as far as this can get. The
+        # console arguments are the ones cuttlefish itself uses with qemu.
         android=(-kernel boot/kernel -initrd initramfs
-                 -append "console=ttyS0 androidboot.hardware=cutf_cvm")
+                 -append "console=hvc0 earlycon=uart8250,io,0x3f8 panic=-1
+                          androidboot.hardware=cutf_cvm")
         # HVF may not work inside the runner VM even though the kernel
         # reports hv_support; that is one of the things being measured.
         boot debian-hvf 'login:' -accel hvf -cpu host "${debian[@]}" || true
@@ -120,7 +129,7 @@ jobs:
       if: always()
       run: |
         shopt -s nullglob
-        for f in serial-*.log; do
+        for f in serial-*.log hvc-*.log; do
           echo "::group::$f"; cat "$f"; echo "::endgroup::"
         done
       shell: bash
