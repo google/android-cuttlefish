@@ -280,6 +280,32 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "fallback_build_api",
+    hdrs = ["fallback_build_api.h"],
+    deps = [
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
+cf_cc_test(
+    name = "fallback_build_api_test",
+    srcs = ["fallback_build_api_test.cpp"],
+    deps = [
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/web:fallback_build_api",
+        "//cuttlefish/host/libs/web/android_build_string:device_build_string",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
     name = "gcs_build_api",
     srcs = ["gcs_build_api.cpp"],
     hdrs = ["gcs_build_api.h"],
