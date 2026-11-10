@@ -10,6 +10,7 @@ rust_binary(
     srcs = [
         "src/convert.rs",
         "src/main.rs",
+        "src/vhu_buffer.rs",
         "src/virtio_snd.rs",
     ],
     aliases = aliases(),
