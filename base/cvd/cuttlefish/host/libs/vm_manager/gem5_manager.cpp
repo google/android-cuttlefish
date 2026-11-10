@@ -230,7 +230,7 @@ void GenerateGem5File(const CuttlefishConfig& config,
 
 Gem5Manager::Gem5Manager(Arch arch) : arch_(arch) {}
 
-bool Gem5Manager::IsSupported() { return HostSupportsQemuCli(); }
+bool Gem5Manager::IsSupported() { return true; }
 
 Result<std::unordered_map<std::string, std::string>>
 Gem5Manager::ConfigureGraphics(

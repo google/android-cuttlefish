@@ -71,13 +71,7 @@ constexpr int kBlockPciDeviceNum = 0x13;
 
 }  // namespace
 
-bool CrosvmManager::IsSupported() {
-#ifdef __ANDROID__
-  return true;
-#else
-  return HostSupportsQemuCli();
-#endif
-}
+bool CrosvmManager::IsSupported() { return true; }
 
 Result<std::unordered_map<std::string, std::string>>
 CrosvmManager::ConfigureGraphics(
