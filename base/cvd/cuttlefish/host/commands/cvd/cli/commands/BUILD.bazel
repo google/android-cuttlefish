@@ -419,6 +419,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
+        "@gflags",
     ] + select({
         "@platforms//os:linux": ["//cuttlefish/host/commands/cvd/cli/commands/monitor"],
         "//conditions:default": [],

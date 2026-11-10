@@ -45,6 +45,7 @@
 #include "absl/strings/str_split.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -373,6 +374,23 @@ bool CanBypassToSingleInstance(const LocalInstance& instance,
   return true;
 }
 
+void ParseFlagsForMetrics(const CommandRequest& request) {
+  std::vector<std::string> args = {"cvd", request.Subcommand()};
+  args.insert(args.end(), request.SubcommandArguments().begin(),
+              request.SubcommandArguments().end());
+
+  std::vector<char*> pseudo_argv;
+  for (std::string& arg : args) {
+    pseudo_argv.push_back(arg.data());
+  }
+  int argc = pseudo_argv.size();
+  auto argv = pseudo_argv.data();
+
+  gflags::AllowCommandLineReparsing();  // Support future non-gflags flags
+  gflags::ParseCommandLineNonHelpFlags(&argc, &argv,
+                                       /* remove_flags */ false);
+}
+
 }  // namespace
 
 CvdStartCommandHandler::CvdStartCommandHandler(
@@ -559,7 +577,8 @@ std::vector<std::string> CvdStartCommandHandler::CmdList() const {
 
 Result<void> CvdStartCommandHandler::LaunchDevice(
     Command launch_command, LocalInstanceGroup& group,
-    const std::vector<LocalInstance>& instances) {
+    const std::vector<LocalInstance>& instances,
+    const CommandRequest& request) {
   // Don't destroy the returned object until after the devices have started, it
   // holds a connection to the orchestrator that ensures the devices remain
   // pre-registered there. If the connection is lost before the devices register
@@ -576,6 +595,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
 
   CF_EXPECT(subprocess_waiter_.Setup(launch_command));
 
+  ParseFlagsForMetrics(request);
   GatherVmStartMetrics(group);
 
   // NOLINTNEXTLINE(misc-include-cleaner)
@@ -622,7 +642,7 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
                << symlink_config_res.error();
   }
   const Result<void> start_res =
-      LaunchDevice(std::move(command), group, group.Instances());
+      LaunchDevice(std::move(command), group, group.Instances(), request);
   if (!start_res.has_value()) {
     group.SetAllStates(cvd::INSTANCE_STATE_BOOT_FAILED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
@@ -683,7 +703,7 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
   const Result<void> start_res =
-      LaunchDevice(std::move(command), group, {instance});
+      LaunchDevice(std::move(command), group, {instance}, request);
   if (!start_res.has_value()) {
     set_instance_state(cvd::INSTANCE_STATE_BOOT_FAILED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
