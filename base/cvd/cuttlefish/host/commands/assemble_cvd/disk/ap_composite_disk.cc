@@ -56,7 +56,7 @@ DiskBuilder ApCompositeDiskBuilder(
   return DiskBuilder()
       .ReadOnly(FLAGS_use_overlay)
       .Partitions(GetApCompositeDiskConfig(config, instance))
-      .VmManager(config.vm_manager())
+      .VmmSupportsCompositeDisks(VmManagerIsCrosvm(config))
       .CrosvmPath(instance.crosvm_binary())
       .ConfigPath(instance.PerInstancePath("ap_composite_disk_config.txt"))
       .HeaderPath(instance.PerInstancePath("ap_composite_gpt_header.img"))

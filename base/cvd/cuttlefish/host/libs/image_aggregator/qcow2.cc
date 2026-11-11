@@ -21,11 +21,12 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/cf_endian.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
+#include "cuttlefish/host/libs/image_aggregator/disk_image.h"
 #include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
@@ -53,23 +54,16 @@ struct __attribute__((packed)) QcowHeader {
 
 static_assert(sizeof(QcowHeader) == 72);
 
-Command QemuImgCommand(const std::string& backing_file,
-                       const std::string& output_overlay_path) {
-  return Command("qemu-img")
-      .AddParameter("create")
-      .AddParameter("-q")
-      .AddParameter("-f")
-      .AddParameter("qcow2")
-      .AddParameter("-F")
-      .AddParameter("raw")
-      .AddParameter("-b")
-      .AddParameter(backing_file)
-      .AddParameter(output_overlay_path);
-}
+}  // namespace
 
-Command CrosvmCreateQcow2Command(const std::string& crosvm_path,
-                                 const std::string& backing_file,
-                                 const std::string& output_overlay_path) {
+struct Qcow2Image::Impl {
+  QcowHeader header_;
+};
+
+Result<Command> Qcow2Image::CreateByCrosvmCommand(
+    const std::string& crosvm_path, std::string_view backing_file,
+    std::string_view output_overlay_path) {
+  CF_EXPECT(!crosvm_path.empty(), "crosvm binary missing");
   return Command(crosvm_path)
       .AddParameter("create_qcow2")
       .AddParameter("--backing-file")
@@ -77,23 +71,37 @@ Command CrosvmCreateQcow2Command(const std::string& crosvm_path,
       .AddParameter(output_overlay_path);
 }
 
-}  // namespace
+Result<Command> Qcow2Image::CreateByQemuImgCommand(
+    const DiskImage& backing_image, std::string_view backing_file,
+    std::string_view output_overlay_path) {
+  const std::string backing_format = CF_EXPECT(backing_image.QemuImgName());
+  return Command("qemu-img")
+      .AddParameter("create")
+      .AddParameter("-q")
+      .AddParameter("-f")
+      .AddParameter("qcow2")
+      .AddParameter("-F")
+      .AddParameter(backing_format)
+      .AddParameter("-b")
+      .AddParameter(backing_file)
+      .AddParameter(output_overlay_path);
+}
 
-struct Qcow2Image::Impl {
-  QcowHeader header_;
-};
-
-Result<Qcow2Image> Qcow2Image::Create(VmmMode vm_manager,
-                                      const std::string& crosvm_path,
-                                      const std::string& backing_file,
-                                      std::string output_overlay_path) {
-  Command create_cmd = VmManagerIsQemu(vm_manager)
-                           ? QemuImgCommand(backing_file, output_overlay_path)
-                           : CrosvmCreateQcow2Command(crosvm_path, backing_file,
-                                                      output_overlay_path);
-
+Result<Qcow2Image> Qcow2Image::CreateByCrosvm(const std::string& crosvm_path,
+                                              const std::string& backing_file,
+                                              std::string output_overlay_path) {
+  Command create_cmd = CF_EXPECT(
+      CreateByCrosvmCommand(crosvm_path, backing_file, output_overlay_path));
   CF_EXPECT(RunAndCaptureStdout(std::move(create_cmd)));
+  return CF_EXPECT(OpenExisting(std::move(output_overlay_path)));
+}
 
+Result<Qcow2Image> Qcow2Image::CreateByQemuImg(
+    const DiskImage& backing_image, const std::string& backing_file,
+    std::string output_overlay_path) {
+  Command create_cmd = CF_EXPECT(
+      CreateByQemuImgCommand(backing_image, backing_file, output_overlay_path));
+  CF_EXPECT(RunAndCaptureStdout(std::move(create_cmd)));
   return CF_EXPECT(OpenExisting(std::move(output_overlay_path)));
 }
 
@@ -125,6 +133,8 @@ Result<uint64_t> Qcow2Image::VirtualSizeBytes() const {
 
   return impl_->header_.size.as_uint64_t();
 }
+
+Result<std::string> Qcow2Image::QemuImgName() const { return "qcow2"; }
 
 Qcow2Image::Qcow2Image(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
 

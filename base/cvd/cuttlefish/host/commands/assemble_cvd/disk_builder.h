@@ -15,10 +15,10 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
 
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 #include "cuttlefish/result/result.h"
 
@@ -41,8 +41,8 @@ class DiskBuilder {
   DiskBuilder& CrosvmPath(std::string crosvm_path) &;
   DiskBuilder CrosvmPath(std::string crosvm_path) &&;
 
-  DiskBuilder& VmManager(VmmMode vm_manager) &;
-  DiskBuilder VmManager(VmmMode vm_manager) &&;
+  DiskBuilder& VmmSupportsCompositeDisks(bool vmm_supports_composite_disks) &;
+  DiskBuilder VmmSupportsCompositeDisks(bool vmm_supports_composite_disks) &&;
 
   DiskBuilder& ConfigPath(std::string config_path) &;
   DiskBuilder ConfigPath(std::string config_path) &&;
@@ -72,7 +72,7 @@ class DiskBuilder {
   std::string entire_disk_;
   std::string header_path_;
   std::string footer_path_;
-  VmmMode vm_manager_ = VmmMode::kUnknown;
+  std::optional<bool> vmm_supports_composite_disks_;
   std::string crosvm_path_;
   std::string config_path_;
   std::string composite_disk_path_;

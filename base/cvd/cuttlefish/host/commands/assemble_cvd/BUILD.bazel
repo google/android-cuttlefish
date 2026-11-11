@@ -262,11 +262,28 @@ cf_cc_library(
     hdrs = ["disk_builder.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
+        "//cuttlefish/host/libs/image_aggregator:image_from_file",
         "//cuttlefish/host/libs/image_aggregator:qcow2",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@android_system_libbase//:file_logging",
+    ],
+)
+
+cf_cc_test(
+    name = "disk_builder_test",
+    srcs = ["disk_builder_test.cc"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/assemble_cvd:disk_builder",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:composite_disk",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
+        "//cuttlefish/host/libs/image_aggregator:image_from_file",
+        "//cuttlefish/result:assert",
+        "//cuttlefish/result:result_matchers",
         "@android_system_libbase//:file_logging",
     ],
 )
@@ -377,6 +394,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/commands/assemble_cvd/flags:use_cvdalloc",
         "//cuttlefish/host/commands/assemble_cvd/flags:vendor_boot_image",
+        "//cuttlefish/host/commands/assemble_cvd/flags:vhost_user_block",
         "//cuttlefish/host/commands/assemble_cvd/flags:vm_manager",
         "//cuttlefish/host/commands/cvdalloc:interface",
         "//cuttlefish/host/libs/config:ap_boot_flow",

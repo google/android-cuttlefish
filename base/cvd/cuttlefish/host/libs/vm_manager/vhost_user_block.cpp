@@ -67,14 +67,12 @@ Result<VhostUserDeviceCommands> VhostUserBlockDevice(
     return res ? StopperResult::kSuccess : StopperResult::kFailure;
   }));
 
-  const std::string crosvm_path = config.crosvm_binary();
-
   CrosvmBuilder block_device_cmd;
 
   // NOTE: The "main" crosvm process returns a kCrosvmVmResetExitCode when the
   // guest exits but the "block" crosvm just exits cleanly with 0 after the
   // "main" crosvm disconnects.
-  block_device_cmd.ApplyProcessRestarter(config.crosvm_binary(),
+  block_device_cmd.ApplyProcessRestarter(instance.crosvm_binary(),
                                          /*first_time_argument=*/"",
                                          /*exit_code=*/0);
 

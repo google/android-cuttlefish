@@ -419,9 +419,6 @@ DEFINE_vec(
     fail_fast, CF_DEFAULTS_FAIL_FAST ? "true" : "false",
     "Whether to exit when a heuristic predicts the boot will not complete");
 
-DEFINE_vec(vhost_user_block, CF_DEFAULTS_VHOST_USER_BLOCK ? "true" : "false",
-           "(experimental) use crosvm vhost-user block device implementation ");
-
 DEFINE_string(early_tmp_dir, cuttlefish::TempDir(),
               "Parent directory to use for temporary files in early startup");
 

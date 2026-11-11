@@ -17,6 +17,8 @@
 
 #include <stdint.h>
 
+#include <string>
+
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -29,6 +31,9 @@ class DiskImage {
 
   /* The size (in bytes) of the disk when mounted inside a virtual machine. */
   virtual Result<uint64_t> VirtualSizeBytes() const = 0;
+
+  /* The format name recognized by `qemu-img -F`. */
+  virtual Result<std::string> QemuImgName() const = 0;
 };
 
 }  // namespace cuttlefish

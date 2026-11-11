@@ -66,6 +66,10 @@ Result<uint64_t> CompositeDiskImage::VirtualSizeBytes() const {
   return cdisk_.length();
 }
 
+Result<std::string> CompositeDiskImage::QemuImgName() const {
+  return CF_ERR("qemu-img does not support composite disk images");
+}
+
 CompositeDiskImage::CompositeDiskImage(CompositeDisk cdisk)
     : cdisk_(std::move(cdisk)) {}
 

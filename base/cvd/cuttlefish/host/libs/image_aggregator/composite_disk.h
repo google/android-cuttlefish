@@ -45,6 +45,7 @@ class CompositeDiskImage : public DiskImage {
   static std::string MagicString();
 
   Result<uint64_t> VirtualSizeBytes() const override;
+  Result<std::string> QemuImgName() const override;
 
   const CompositeDisk& GetCompositeDisk() const { return cdisk_; }
 

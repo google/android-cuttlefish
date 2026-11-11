@@ -50,6 +50,7 @@ class AndroidSparseImage : public DiskImage {
   static std::string MagicString();
 
   Result<uint64_t> VirtualSizeBytes() const override;
+  Result<std::string> QemuImgName() const override;
 
  private:
   struct Impl;
