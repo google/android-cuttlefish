@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+#include <string.h>
+#include <unistd.h>
+
+#include <sstream>
 #include <string>
 
 #include "absl/log/log.h"
@@ -21,12 +25,15 @@
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/sensors/sensors.h"
 #include "cuttlefish/common/libs/transport/channel.h"
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 #include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/host/commands/sensors_simulator/sensors_hal_proxy.h"
 #include "cuttlefish/host/commands/sensors_simulator/sensors_simulator.h"
 #include "cuttlefish/host/libs/config/logging.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 DEFINE_int32(control_from_guest_fd, -1,
              "Sensors control virtio-console from guest to host");
