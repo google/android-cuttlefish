@@ -21,6 +21,7 @@
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/transport/channel.h"
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 #include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/host/commands/sensors_simulator/sensors_hal_proxy.h"
@@ -49,7 +50,7 @@ namespace {
 
 static constexpr char kReqMisFormatted[] = "The request is mis-formatted.";
 
-Result<void> ProcessWebrtcRequest(transport::SharedFdChannel& channel,
+Result<void> ProcessWebrtcRequest(transport::Channel& channel,
                                   SensorsSimulator& sensors_simulator) {
   auto request =
       CF_EXPECT(channel.ReceiveMessage(), "Couldn't receive message.");
@@ -106,13 +107,12 @@ Result<void> SensorsSimulatorMain(int argc, char** argv) {
   DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  transport::SharedFdChannel channel(CF_EXPECT(DupAndClose(FLAGS_webrtc_fd)));
+  transport::SharedFdChannel webrtc_channel(
+      CF_EXPECT(DupAndClose(FLAGS_webrtc_fd)));
 
-  SharedFD control_from_guest_fd =
-      CF_EXPECT(DupAndClose(FLAGS_control_from_guest_fd));
-
-  SharedFD control_to_guest_fd =
-      CF_EXPECT(DupAndClose(FLAGS_control_to_guest_fd));
+  transport::SharedFdChannel control_channel(
+      CF_EXPECT(DupAndClose(FLAGS_control_from_guest_fd)),
+      CF_EXPECT(DupAndClose(FLAGS_control_to_guest_fd)));
 
   SharedFD data_from_guest_fd =
       CF_EXPECT(DupAndClose(FLAGS_data_from_guest_fd));
@@ -126,11 +126,11 @@ Result<void> SensorsSimulatorMain(int argc, char** argv) {
 
   auto device_type = static_cast<DeviceType>(FLAGS_device_type);
   SensorsSimulator sensors_simulator(device_type == DeviceType::Auto);
-  SensorsHalProxy sensors_hal_proxy(
-      control_from_guest_fd, control_to_guest_fd, data_from_guest_fd,
-      data_to_guest_fd, kernel_events_fd, sensors_simulator, device_type);
+  SensorsHalProxy sensors_hal_proxy(control_channel, data_from_guest_fd,
+                                    data_to_guest_fd, kernel_events_fd,
+                                    sensors_simulator, device_type);
   while (true) {
-    auto result = ProcessWebrtcRequest(channel, sensors_simulator);
+    auto result = ProcessWebrtcRequest(webrtc_channel, sensors_simulator);
     if (!result.has_value()) {
       LOG(ERROR) << result.error();
     }

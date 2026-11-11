@@ -22,6 +22,8 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/transport/channel.h"
+
 namespace cuttlefish {
 namespace sensors {
 
@@ -80,7 +82,7 @@ Result<std::string> SensorIdToName(int id) {
   }
 }
 
-Result<void> SendResponseHelper(transport::SharedFdChannel& channel,
+Result<void> SendResponseHelper(transport::Channel& channel,
                                 const std::string& msg) {
   size_t size = msg.size();
   int cmd = sensors::kUpdateHal;
@@ -91,7 +93,7 @@ Result<void> SendResponseHelper(transport::SharedFdChannel& channel,
   return {};
 }
 
-Result<void> ProcessHalRequest(transport::SharedFdChannel& channel,
+Result<void> ProcessHalRequest(transport::Channel& channel,
                                std::atomic<bool>& hal_activated,
                                uint32_t mask) {
   transport::ManagedMessage request =
@@ -158,15 +160,13 @@ SensorsMask HostEnabledSensors(DeviceType device_type) {
 
 }  // namespace
 
-SensorsHalProxy::SensorsHalProxy(SharedFD control_from_guest_fd,
-                                 SharedFD control_to_guest_fd,
+SensorsHalProxy::SensorsHalProxy(transport::Channel& control_channel,
                                  SharedFD data_from_guest_fd,
                                  SharedFD data_to_guest_fd,
                                  SharedFD kernel_events_fd,
                                  SensorsSimulator& sensors_simulator,
                                  DeviceType device_type)
-    : control_channel_(std::move(control_from_guest_fd),
-                       std::move(control_to_guest_fd)),
+    : control_channel_(control_channel),
       data_channel_(std::move(data_from_guest_fd), std::move(data_to_guest_fd)),
       kernel_events_fd_(std::move(kernel_events_fd)),
       sensors_simulator_(sensors_simulator) {
