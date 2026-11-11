@@ -20,85 +20,29 @@ import (
 	"github.com/google/android-cuttlefish/e2etests/cvd/common"
 )
 
+// Injected at link time via `x_defs` in BUILD.bazel.
+var (
+	branch string
+	target string
+)
+
 func TestLaunchCvd(t *testing.T) {
-	testcases := []struct {
-		name   string
-		branch string
-		target string
-	}{
-		{
-			name:   "GitMainPhone",
-			branch: "git_main",
-			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
-		},
-		{
-			name:   "AospMainPhone",
-			branch: "aosp-android-latest-release",
-			target: "aosp_cf_x86_64_only_phone-userdebug",
-		},
-		{
-			name:   "Aosp14GsiPhone",
-			branch: "aosp-android14-gsi",
-			target: "aosp_cf_x86_64_phone-userdebug",
-		},
-		{
-			name:   "Aosp13GsiPhone",
-			branch: "aosp-android13-gsi",
-			target: "aosp_cf_x86_64_phone-userdebug",
-		},
-		{
-			name:   "Aosp12GsiPhone",
-			branch: "aosp-android12-gsi",
-			target: "aosp_cf_x86_64_phone-userdebug",
-		},
-		{
-			name:   "GitMainAuto",
-			branch: "git_main-throttled-nightly",
-			target: "aosp_cf_x86_64_auto-trunk_staging-userdebug",
-		},
-		{
-			name:   "Car16Auto",
-			branch: "git_android16-car-release",
-			target: "aosp_cf_x86_64_auto-userdebug",
-		},
-		{
-			name:   "Car17Auto",
-			branch: "git_android17-car-release",
-			target: "aosp_cf_x86_64_auto-userdebug",
-		},
-		{
-			name:   "GitSwCarDevSdvCore",
-			branch: "git_main-swcar-dev",
-			target: "aosp_cf_x86_64_sdv_core-trunk_staging-userdebug",
-		},
-		{
-			name:   "GitSwCarDevSdvMedia",
-			branch: "git_main-swcar-dev",
-			target: "aosp_cf_x86_64_sdv_media-trunk_staging-userdebug",
-		},
-		{
-			name:   "Aosp11GsiPhone",
-			branch: "aosp-android11-gsi",
-			target: "aosp_cf_x86_64_only_phone-userdebug",
-		},
+	if branch == "" || target == "" {
+		t.Fatalf("branch and target must be set via x_defs in BUILD.bazel (branch=%q, target=%q)", branch, target)
 	}
+
 	c := e2etests.TestContext{}
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			c.SetUp(t)
-			defer c.TearDown()
+	c.SetUp(t)
+	defer c.TearDown()
 
-			if _, err := c.CVDFetch(e2etests.FetchArgs{
-				DefaultBuildBranch: tc.branch,
-				DefaultBuildTarget: tc.target,
-			}); err != nil {
-				t.Fatal(err)
-			}
+	if _, err := c.CVDFetch(e2etests.FetchArgs{
+		DefaultBuildBranch: branch,
+		DefaultBuildTarget: target,
+	}); err != nil {
+		t.Fatal(err)
+	}
 
-			if err := c.LaunchCVD(e2etests.CreateArgs{}); err != nil {
-				t.Fatal(err)
-			}
-
-		})
+	if err := c.LaunchCVD(e2etests.CreateArgs{}); err != nil {
+		t.Fatal(err)
 	}
 }
