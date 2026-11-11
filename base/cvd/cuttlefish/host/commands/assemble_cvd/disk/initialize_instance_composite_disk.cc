@@ -93,7 +93,8 @@ Result<InstanceCompositeDisk> InstanceCompositeDisk::Create(
           .Partitions(PersistentCompositeDiskConfig(instance, bootloader_env,
                                                     bootconfig_partition, frp,
                                                     persistent_vbmeta))
-          .VmManager(config.vm_manager())
+          .VmmSupportsCompositeDisks(VmManagerIsCrosvm(config) ||
+                                     instance.vhost_user_block())
           .CrosvmPath(instance.crosvm_binary())
           .ConfigPath(ipath("persistent_composite_disk_config.txt"))
           .HeaderPath(ipath("persistent_composite_gpt_header.img"))
@@ -127,7 +128,7 @@ Result<std::optional<ApCompositeDisk>> ApCompositeDisk::Create(
           .ReadOnly(false)
           .Partitions(
               PersistentAPCompositeDiskConfig(instance, *ap_persistent_vbmeta))
-          .VmManager(config.vm_manager())
+          .VmmSupportsCompositeDisks(VmManagerIsCrosvm(config))
           .CrosvmPath(instance.crosvm_binary())
           .ConfigPath(ipath("ap_persistent_composite_disk_config.txt"))
           .HeaderPath(ipath("ap_persistent_composite_gpt_header.img"))

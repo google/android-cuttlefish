@@ -88,10 +88,6 @@ class ServerLoopImpl : public ServerLoop,
   void DeleteFifos();
   bool PowerwashFiles();
   void RestartRunCvd(int notification_fd);
-  static bool CreateQcowOverlay(VmmMode vm_manager,
-                                const std::string& crosvm_path,
-                                const std::string& backing_file,
-                                const std::string& output_overlay_path);
   Result<void> SuspendGuest();
   Result<void> ResumeGuest();
 

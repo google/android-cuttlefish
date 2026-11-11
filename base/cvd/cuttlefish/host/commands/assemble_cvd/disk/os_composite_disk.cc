@@ -72,7 +72,8 @@ Result<DiskBuilder> OsCompositeDiskBuilder(
     AndroidBuild& android_build, const SystemImageDirFlag& system_image_dir) {
   auto builder =
       DiskBuilder()
-          .VmManager(config.vm_manager())
+          .VmmSupportsCompositeDisks(VmManagerIsCrosvm(config) ||
+                                     instance.vhost_user_block())
           .CrosvmPath(instance.crosvm_binary())
           .ConfigPath(instance.PerInstancePath("os_composite_disk_config.txt"))
           .ReadOnly(FLAGS_use_overlay)
