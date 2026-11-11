@@ -31,19 +31,14 @@
 
 namespace cuttlefish {
 
-Result<void, int> WriteExact(Writer& writer, const char* buf, size_t size) {
+Result<void, int> WriteExact(Writer& writer, const void* buf, size_t size) {
   while (size > 0) {
-    size_t data_written = CF_EXPECT(writer.Write((const void*)buf, size));
+    size_t data_written = CF_EXPECT(writer.Write(buf, size));
     CF_EXPECTVF(data_written > 0, EIO,
                 "Write returned 0 before completing, still have {}", size);
-    buf += data_written;
+    buf = reinterpret_cast<const uint8_t*>(buf) + data_written;
     size -= data_written;
   }
-  return {};
-}
-
-Result<void, int> WriteExact(Writer& writer, const uint8_t* buf, size_t size) {
-  CF_EXPECT(WriteExact(writer, reinterpret_cast<const char*>(buf), size));
   return {};
 }
 

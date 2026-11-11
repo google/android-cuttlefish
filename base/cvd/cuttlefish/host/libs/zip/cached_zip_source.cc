@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/libs/zip/cached_zip_source.h"
 
-#include <stddef.h>
 #include <stdint.h>
 
 #include <memory>
@@ -36,7 +35,7 @@ namespace {
 
 class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
  public:
-  CachedZipSourceCallbacks(LazilyLoadedFile source, size_t size)
+  CachedZipSourceCallbacks(LazilyLoadedFile source, const uint64_t size)
       : source_(std::move(source)), size_(size) {}
 
   bool Close() override {
@@ -49,13 +48,9 @@ class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
     return true;
   }
 
-  int64_t Read(char* data, uint64_t len) override {
+  int64_t Read(char* const data, const uint64_t len) override {
     VLOG(1) << "Reading " << len;
-    if (Result<void> res = source_.Seek(offset_); !res.has_value()) {
-      LOG(ERROR) << res.error();
-      return -1;
-    }
-    Result<size_t> res = source_.Read(data, len);
+    const Result<uint64_t, int> res = source_.PRead(data, len, offset_);
     if (res.has_value()) {
       offset_ += *res;
       return *res;
@@ -67,7 +62,7 @@ class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
 
   uint64_t Size() override { return size_; }
 
-  bool SetOffset(int64_t offset) override {
+  bool SetOffset(const int64_t offset) override {
     VLOG(1) << "Setting offset to " << offset;
     offset_ = offset;
     return true;
@@ -77,8 +72,8 @@ class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
 
  private:
   LazilyLoadedFile source_;
-  size_t offset_ = 0;
-  const size_t size_;
+  uint64_t offset_ = 0;
+  const uint64_t size_;
 };
 
 }  // namespace
@@ -86,7 +81,7 @@ class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
 Result<SeekableZipSource> CacheZipSource(SeekableZipSource inner,
                                          std::string file_path) {
   ZipStat zip_stat = CF_EXPECT(inner.Stat());
-  size_t size = CF_EXPECT(std::move(zip_stat.size));
+  const uint64_t size = CF_EXPECT(std::move(zip_stat.size));
 
   std::unique_ptr<ReaderSeeker> reader =
       CF_EXPECT(ZipSourceAsReaderSeeker(std::move(inner)));
