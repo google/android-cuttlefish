@@ -21,7 +21,7 @@
 #include <thread>
 
 #include "cuttlefish/common/libs/sensors/sensors.h"
-#include "cuttlefish/common/libs/transport/channel_sharedfd.h"
+#include "cuttlefish/common/libs/transport/channel.h"
 #include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
@@ -33,8 +33,7 @@ namespace sensors {
 class SensorsHalProxy {
  public:
   SensorsHalProxy(transport::Channel& control_channel,
-                  SharedFD data_from_guest_fd, SharedFD data_to_guest_fd,
-                  SharedFD kernel_events_fd,
+                  transport::Channel& data_channel, SharedFD kernel_events_fd,
                   SensorsSimulator& sensors_simulator, DeviceType device_type);
 
  private:
@@ -44,7 +43,7 @@ class SensorsHalProxy {
   std::thread data_reporter_thread_;
   std::thread reboot_monitor_thread_;
   transport::Channel& control_channel_;
-  transport::SharedFdChannel data_channel_;
+  transport::Channel& data_channel_;
   SharedFD kernel_events_fd_;
   SensorsSimulator& sensors_simulator_;
   std::atomic<bool> hal_activated_ = false;
