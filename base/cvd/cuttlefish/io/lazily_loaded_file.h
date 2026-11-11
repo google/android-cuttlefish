@@ -15,26 +15,30 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include <memory>
 #include <string>
 
+#include "cuttlefish/io/fake_seek.h"
 #include "cuttlefish/io/reader_seeker.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/io/visitable.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-class LazilyLoadedFile {
+class LazilyLoadedFile : public ReaderFakeSeeker {
  public:
-  static Result<LazilyLoadedFile> Create(std::string filename, size_t size,
+  static Result<LazilyLoadedFile> Create(std::string filename, uint64_t size,
                                          std::unique_ptr<ReaderSeeker>);
 
   LazilyLoadedFile(LazilyLoadedFile&&);
   ~LazilyLoadedFile();
   LazilyLoadedFile& operator=(LazilyLoadedFile&&);
 
-  Result<size_t> Read(char*, size_t);
-  Result<void> Seek(size_t);
+  Result<void> Visit(IoVisitor&) override;
+  Result<uint64_t, int> PRead(void* buf, uint64_t count,
+                              uint64_t offset) const override;
 
  private:
   struct Impl;

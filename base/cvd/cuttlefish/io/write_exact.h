@@ -28,8 +28,7 @@
 
 namespace cuttlefish {
 
-Result<void, int> WriteExact(Writer&, const char* buf, size_t size);
-Result<void, int> WriteExact(Writer&, const uint8_t* buf, size_t size);
+Result<void, int> WriteExact(Writer&, const void* buf, size_t size);
 Result<void, int> WriteExact(Writer&,
                              const char* buf);  // Assumes null termination
 Result<void, int> WriteExact(Writer&, const std::string&);

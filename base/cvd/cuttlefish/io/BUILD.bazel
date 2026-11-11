@@ -256,12 +256,16 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/io",
         "//cuttlefish/io:disjoint_range_set",
+        "//cuttlefish/io:fake_seek",
+        "//cuttlefish/io:pwrite_exact",
         "//cuttlefish/io:reader_seeker",
         "//cuttlefish/io:serialize_disjoint_range_set",
         "//cuttlefish/io:string",
-        "//cuttlefish/io:write_exact",
-        "//cuttlefish/result",
+        "//cuttlefish/io:visitable",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -360,6 +364,18 @@ cf_cc_test(
         "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/result:result_matchers",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+    ],
+)
+
+cf_cc_library(
+    name = "pwrite_exact",
+    srcs = ["pwrite_exact.cc"],
+    hdrs = ["pwrite_exact.h"],
+    deps = [
+        "//cuttlefish/io:writer_seeker",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings:string_view",
     ],
 )
