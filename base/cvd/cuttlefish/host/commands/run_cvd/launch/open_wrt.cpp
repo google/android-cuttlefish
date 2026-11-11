@@ -109,8 +109,8 @@ class OpenWrt : public CommandSource {
     ap_cmd.Cmd().AddParameter("--core-scheduling=false");
 
     if (!environment_.vhost_user_mac80211_hwsim().empty()) {
-      ap_cmd.Cmd().AddParameter("--vhost-user=mac80211-hwsim,socket=",
-                                environment_.vhost_user_mac80211_hwsim());
+      ap_cmd.AddVhostUser("mac80211-hwsim",
+                          environment_.vhost_user_mac80211_hwsim());
     }
     if (environment_.enable_wifi() && instance_.enable_tap_devices() &&
         !InSandbox()) {
