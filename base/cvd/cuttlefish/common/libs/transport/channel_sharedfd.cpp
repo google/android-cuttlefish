@@ -25,6 +25,7 @@
 
 #include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/transport/channel.h"
@@ -33,6 +34,15 @@
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish::transport {
+
+SharedFdChannel::SharedFdChannel(Fd input_output)
+    : input_(std::move(input_output)), output_(input_) {}
+
+SharedFdChannel::SharedFdChannel(SharedFD input_output)
+    : input_(input_output), output_(input_output) {}
+
+SharedFdChannel::SharedFdChannel(Fd input, Fd output)
+    : input_(std::move(input)), output_(std::move(output)) {}
 
 SharedFdChannel::SharedFdChannel(SharedFD input, SharedFD output)
     : input_(std::move(input)), output_(std::move(output)) {}

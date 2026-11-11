@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/transport/channel.h"
 
@@ -23,7 +24,11 @@ namespace cuttlefish::transport {
 
 class SharedFdChannel : public Channel {
  public:
-  SharedFdChannel(SharedFD input, SharedFD output);
+  explicit SharedFdChannel(Fd input_output);
+  explicit SharedFdChannel(Fd input, Fd output);
+  explicit SharedFdChannel(SharedFD input_output);
+  explicit SharedFdChannel(SharedFD input, SharedFD output);
+
   Result<void> SendRequest(RawMessage& message) override;
   Result<void> SendResponse(RawMessage& message) override;
   Result<ManagedMessage> ReceiveMessage() override;
