@@ -226,14 +226,14 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       std::unique_ptr<virtio_snd_pcm_info[]> reply(
           new virtio_snd_pcm_info[info_count]);
       StreamInfoCommand cmd(start_id, info_count, reply.get());
-      VLOG(0) << "VIRTIO_SND_PCM_INFO: start=" << start_id
+      VLOG(1) << "VIRTIO_SND_PCM_INFO: start=" << start_id
               << ", count=" << info_count;
 
       executor.StreamsInfo(cmd);
       return CmdReply(cmd.status(), reply.get(), info_count * sizeof(reply[0]));
     }
     case AudioCommandType::VIRTIO_SND_R_PCM_SET_PARAMS: {
-      VLOG(0) << "IVRTIO_SND_R_PCM_SET_PARAM";
+      VLOG(1) << "IVRTIO_SND_R_PCM_SET_PARAM";
       if (recv_size < sizeof(virtio_snd_pcm_set_params)) {
         LOG(ERROR) << "Received SET_PARAMS message is too small: " << recv_size;
         return false;
@@ -257,7 +257,7 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       auto pcm_op_msg = reinterpret_cast<const virtio_snd_pcm_hdr*>(cmd_hdr);
       StreamControlCommand cmd(AudioCommandType::VIRTIO_SND_R_PCM_PREPARE,
                                pcm_op_msg->stream_id.as_uint32_t());
-      VLOG(0) << "VRTIO_SND_R_PCM_PREPARE: stream_id="
+      VLOG(1) << "VRTIO_SND_R_PCM_PREPARE: stream_id="
               << pcm_op_msg->stream_id.as_uint32_t();
       executor.PrepareStream(cmd);
       return CmdReply(cmd.status());
@@ -270,7 +270,7 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       auto pcm_op_msg = reinterpret_cast<const virtio_snd_pcm_hdr*>(cmd_hdr);
       StreamControlCommand cmd(AudioCommandType::VIRTIO_SND_R_PCM_RELEASE,
                                pcm_op_msg->stream_id.as_uint32_t());
-      VLOG(0) << "VRTIO_SND_R_PCM_RELEASE: stream_id="
+      VLOG(1) << "VRTIO_SND_R_PCM_RELEASE: stream_id="
               << pcm_op_msg->stream_id.as_uint32_t();
       executor.ReleaseStream(cmd);
       return CmdReply(cmd.status());
@@ -284,7 +284,7 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       uint32_t stream_id = pcm_op_msg->stream_id.as_uint32_t();
       StreamControlCommand cmd(AudioCommandType::VIRTIO_SND_R_PCM_START,
                                stream_id);
-      VLOG(0) << "VRTIO_SND_R_PCM_START: stream_id=" << stream_id;
+      VLOG(1) << "VRTIO_SND_R_PCM_START: stream_id=" << stream_id;
       frame_counters_[stream_id] = {0, 1};
       executor.StartStream(cmd);
       return CmdReply(cmd.status());
@@ -297,7 +297,7 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       auto pcm_op_msg = reinterpret_cast<const virtio_snd_pcm_hdr*>(cmd_hdr);
       StreamControlCommand cmd(AudioCommandType::VIRTIO_SND_R_PCM_STOP,
                                pcm_op_msg->stream_id.as_uint32_t());
-      VLOG(0) << "VRTIO_SND_R_PCM_STOP: stream_id="
+      VLOG(1) << "VRTIO_SND_R_PCM_STOP: stream_id="
               << pcm_op_msg->stream_id.as_uint32_t();
       executor.StopStream(cmd);
       return CmdReply(cmd.status());
@@ -313,7 +313,7 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       std::unique_ptr<virtio_snd_chmap_info[]> reply(
           new virtio_snd_chmap_info[info_count]);
       ChmapInfoCommand cmd(start_id, info_count, reply.get());
-      VLOG(0) << "VRTIO_SND_R_CHMAP_INFO: start_id=" << start_id
+      VLOG(1) << "VRTIO_SND_R_CHMAP_INFO: start_id=" << start_id
               << ", count=" << info_count;
 
       executor.ChmapsInfo(cmd);
@@ -330,7 +330,7 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       std::unique_ptr<virtio_snd_jack_info[]> reply(
           new virtio_snd_jack_info[info_count]);
       JackInfoCommand cmd(start_id, info_count, reply.get());
-      VLOG(0) << "VRTIO_SND_R_JACK_INFO: start_id=" << start_id
+      VLOG(1) << "VRTIO_SND_R_JACK_INFO: start_id=" << start_id
               << ", count=" << info_count;
 
       executor.JacksInfo(cmd);
@@ -341,7 +341,7 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       return CmdReply(AudioStatus::VIRTIO_SND_S_NOT_SUPP);
     case AudioCommandType::VIRTIO_SND_R_CTL_INFO: {
       if (recv_size < sizeof(virtio_snd_query_info)) {
-        VLOG(0) << "Received QUERY_INFO message is too small: " << recv_size;
+        LOG(ERROR) << "Received QUERY_INFO message is too small: " << recv_size;
         return false;
       }
       const auto& query_info =
@@ -350,7 +350,7 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
       const auto start_id = query_info.start_id.as_uint32_t();
       std::vector<virtio_snd_ctl_info> reply(info_count);
       ControlInfoCommand cmd(start_id, info_count, reply.data());
-      VLOG(0) << "VIRTIO_SND_R_CTL_INFO: start_id=" << start_id
+      VLOG(1) << "VIRTIO_SND_R_CTL_INFO: start_id=" << start_id
               << ", count=" << info_count;
 
       executor.ControlsInfo(cmd);
@@ -359,7 +359,7 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
     }
     case AudioCommandType::VIRTIO_SND_R_CTL_READ: {
       if (recv_size < sizeof(virtio_snd_ctl_hdr)) {
-        VLOG(0) << "Received CTL_READ message is too small: " << recv_size;
+        LOG(ERROR) << "Received CTL_READ message is too small: " << recv_size;
         return false;
       }
       const auto& ctl_hdr =
@@ -373,7 +373,7 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
     case AudioCommandType::VIRTIO_SND_R_CTL_WRITE: {
       constexpr auto kHdrSize = sizeof(virtio_snd_ctl_hdr);
       if (recv_size < sizeof(virtio_snd_ctl_value) + kHdrSize) {
-        VLOG(0) << "Received CTL_WRITE message is too small: " << recv_size;
+        LOG(ERROR) << "Received CTL_WRITE message is too small: " << recv_size;
         return false;
       }
       const auto& ctl_hdr =
@@ -409,7 +409,7 @@ bool AudioClientConnection::ReceivePlayback(AudioServerExecutor& executor) {
   const uint32_t stream_id = msg_hdr->io_xfer.stream_id.as_uint32_t();
   auto& [frame_count, log_at] = frame_counters_[stream_id];
   if (++frame_count >= log_at) {
-    VLOG(0) << "Stream id=" << stream_id << ": " << frame_count << " frames";
+    VLOG(1) << "Stream id=" << stream_id << ": " << frame_count << " frames";
     log_at *= 16;
   }
   TxBuffer buffer(
@@ -435,7 +435,7 @@ bool AudioClientConnection::ReceiveCapture(AudioServerExecutor& executor) {
   const uint32_t stream_id = msg_hdr->io_xfer.stream_id.as_uint32_t();
   auto& [frame_count, log_at] = frame_counters_[stream_id];
   if (++frame_count >= log_at) {
-    VLOG(0) << "Stream id=" << stream_id << ": " << frame_count << " frames";
+    VLOG(1) << "Stream id=" << stream_id << ": " << frame_count << " frames";
     log_at *= 16;
   }
   RxBuffer buffer(
