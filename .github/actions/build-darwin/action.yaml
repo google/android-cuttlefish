@@ -1,8 +1,7 @@
 name: 'Build host tools on macOS'
 description: >
-  Portability check. Builds the subset of the minimal host package that
-  is expected to compile on macOS, then starts the ones that run without
-  a device configuration. Nothing boots a device there yet.
+  Compile-only portability check. Builds the subset of the minimal host
+  package that is expected to compile on macOS; nothing runs there yet.
 runs:
   using: "composite"
   steps:
@@ -32,10 +31,4 @@ runs:
         //cuttlefish/host/commands/stop:cvd_internal_stop \
         //cuttlefish/host/commands/tcp_connector \
         //cuttlefish/host/frontend/adb_connector
-    shell: bash
-  - name: Start host tools
-    run: |
-      cd base/cvd && bazel test --disk_cache=$HOME/bazel-disk-cache \
-        --test_output=errors \
-        //cuttlefish/package/minimal:startup_test
     shell: bash

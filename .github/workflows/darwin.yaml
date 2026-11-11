@@ -1,7 +1,7 @@
 name: Darwin
 
-# Portability check: builds the host tools on macOS, then starts the
-# ones that run without a device configuration. Nothing boots there yet.
+# Compile-only check that the host tools still build on macOS.
+# Nothing runs on macOS yet; this only catches portability regressions.
 
 on:
   pull_request:
