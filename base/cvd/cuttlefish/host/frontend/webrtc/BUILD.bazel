@@ -39,7 +39,7 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         ":libcuttlefish_webrtc_commands_proto",
-        "//cuttlefish/common/libs/transport",
+        "//cuttlefish/common/libs/transport:channel_sharedfd",
     ],
 )
 
@@ -357,7 +357,7 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/sensors",
-        "//cuttlefish/common/libs/transport",
+        "//cuttlefish/common/libs/transport:channel_sharedfd",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
@@ -420,7 +420,7 @@ cf_cc_binary(
         ":libcuttlefish_webrtc_tuner_audio_source",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/sensors",
-        "//cuttlefish/common/libs/transport",
+        "//cuttlefish/common/libs/transport:channel_sharedfd",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:size_utils",
