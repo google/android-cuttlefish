@@ -178,44 +178,6 @@ jobs:
         kill "$cvd_pid" 2>/dev/null || true
         exit $rc
       shell: bash
-    - name: cvd_internal_start, if cvd create failed
-      if: failure()
-      run: |
-        pkill -f "$CF/" || true
-        pkill qemu-system-x86_64 || true
-        export HOME=${CF_HOME}2 ANDROID_HOST_OUT=$CF/fetch \
-          ANDROID_PRODUCT_OUT=$CF/fetch
-        mkdir -p "$HOME"
-        cd "$HOME"
-        qemu_dir=$(dirname "$(command -v qemu-system-x86_64)")
-        # shellcheck disable=SC2086
-        "$CF/fetch/bin/cvd_internal_start" --daemon=false \
-          --system_image_dir="$CF/fetch" --qemu_binary_dir="$qemu_dir" \
-          $CF_FLAGS < /dev/null > "$CF/internal-start.log" 2>&1 &
-        pid=$!
-        start=$(date +%s)
-        rc=1
-        for _ in $(seq 240); do
-          if grep -qs VIRTUAL_DEVICE_BOOT_COMPLETED "$CF/internal-start.log" \
-              "$HOME"/cuttlefish_runtime/logs/launcher.log \
-              "$HOME"/cuttlefish_runtime/kernel.log; then
-            echo "boot completed after $(( $(date +%s) - start ))s"
-            rc=0
-            break
-          fi
-          if ! kill -0 "$pid" 2>/dev/null; then
-            echo "cvd_internal_start exited after $(( $(date +%s) - start ))s"
-            break
-          fi
-          sleep 10
-        done
-        tail -n 60 "$CF/internal-start.log"
-        ps -axo pid,ppid,etime,command | grep -E 'cf/|qemu-system' \
-          | grep -v grep | cut -c1-200 || true
-        kill "$pid" 2>/dev/null || true
-        pkill qemu-system-x86_64 || true
-        exit $rc
-      shell: bash
     - name: Logs
       if: always()
       run: |
