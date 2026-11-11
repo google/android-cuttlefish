@@ -39,7 +39,6 @@
 #include "cuttlefish/host/libs/web/android_build_api_key.h"
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
-#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
@@ -73,13 +72,11 @@ Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
 AndroidBuildApi::AndroidBuildApi(HttpClient& http_client,
                                  AndroidBuildUrl& android_build_url,
                                  CredentialSource* credential_source,
-                                 const std::chrono::seconds retry_period,
-                                 CasDownloader* cas_downloader)
+                                 const std::chrono::seconds retry_period)
     : http_client_(http_client),
       android_build_url_(android_build_url),
       credential_source_(credential_source),
-      retry_period_(retry_period),
-      cas_downloader_(cas_downloader) {}
+      retry_period_(retry_period) {}
 
 Result<DeviceBuild> AndroidBuildApi::GetBuild(
     const DeviceBuildString& build_string) {
@@ -332,40 +329,11 @@ Result<void> AndroidBuildApi::ArtifactToFile(const DeviceBuild& build,
   return {};
 }
 
-Result<std::string> AndroidBuildApi::DownloadTargetFileFromCas(
-    const DeviceBuild& build, const std::string& target_directory,
-    const std::string& artifact_name) {
-  CF_EXPECT(cas_downloader_ != nullptr, "CAS downloading is not enabled.");
-  LOG(INFO) << "Download from CAS: '" << artifact_name << "'";
-  std::string target_filepath =
-      ConstructTargetFilepath(target_directory, artifact_name);
-  DigestsFetcher digests_fetcher =
-      [&build, &target_directory,
-       this](std::string filename) -> Result<std::string> {
-    CF_EXPECTF(DownloadArtifact(build, target_directory, filename),
-               "Failed to download '{}' from AB.", filename);
-    return ConstructTargetFilepath(target_directory, filename);
-  };
-  CF_EXPECT(cas_downloader_->DownloadFile(build, artifact_name,
-                                          target_directory, digests_fetcher));
-
-  return {target_filepath};
-}
-
 Result<std::string> AndroidBuildApi::DownloadTargetFile(
     const DeviceBuild& build, const std::string& target_directory,
     const std::string& artifact_name) {
   std::string target_filepath =
       ConstructTargetFilepath(target_directory, artifact_name);
-  if (cas_downloader_ != nullptr &&
-      artifact_name.find("-img-") != std::string::npos) {
-    Result<std::string> result =
-        DownloadTargetFileFromCas(build, target_directory, artifact_name);
-    if (result.has_value()) {
-      return {target_filepath};
-    }
-    // Fallback to download from AB.
-  }
   CF_EXPECT(EnsureDirectoryExists(
       std::string(android::base::Dirname(target_filepath))));
   CF_EXPECT(ArtifactToFile(build, artifact_name, target_filepath),

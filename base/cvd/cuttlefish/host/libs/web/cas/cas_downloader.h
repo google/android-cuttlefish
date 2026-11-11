@@ -15,7 +15,6 @@
 
 #pragma once
 
-#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -24,7 +23,10 @@
 #include "json/value.h"
 
 #include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
+#include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -54,46 +56,70 @@ struct CasIdentifier {
   std::string filename;
 };
 
-// A callback function provided by the caller of CasDownloader::DownloadFile to
-// fetch digests or other artifacts not available on cas. The callback function
-// takes the path of the artifact on AB and returns the local path of the
-// downloaded file.
-using DigestsFetcher = std::function<Result<std::string>(std::string)>;
+// The name of the file, published with each Android Build build, that lists
+// the CAS digests of the build's artifacts.
+inline constexpr char kCasDigestsFilename[] = "cas_digests.json";
 
-// A c++ wrapper for the CAS downloader binary.
-// Example:
-//   std::unique_ptr<CasDownloader> casdownloader =
-//       CF_EXPECT(CasDownloader::Create(cas_downloader_flags,
-//                                       service_account_filepath),
-//                 "Failed to create CasDownloader.");
-//   CF_EXPECT(casClient->DownloadFile(device_build, artifact_name,
-//                                     target_dir, digests_fetcher),
-//             "Failed to download file from CAS.");
+// Downloads the artifacts of Android Build builds from CAS, as a C++ wrapper
+// for the CAS downloader binary.
 //
-class CasDownloader {
+// Only the "-img-" artifacts of a build are downloaded through CAS, and only
+// as whole artifacts: every other request fails. It is meant to go ahead of an
+// API that serves the rest, such as the Android Build API. The digests of a
+// build's artifacts are read from its cas_digests.json, which `digests_source`
+// downloads.
+//
+// Example:
+//   std::unique_ptr<CasDownloader> cas_downloader =
+//       CF_EXPECT(CasDownloader::Create(cas_downloader_flags,
+//                                       service_account_filepath,
+//                                       android_build_api));
+//   FallbackBuildApi<DeviceBuildString, DeviceBuild> build_api({
+//       cas_downloader.get(),
+//       &android_build_api,
+//   });
+//   CF_EXPECT(build_api.DownloadFile(device_build, target_dir, artifact_name));
+//
+class CasDownloader : public BuildApi<DeviceBuildString, DeviceBuild> {
  public:
-  CasDownloader(std::string downloader_path, std::vector<std::string> flags,
+  // `digests_source` must outlive this object.
+  CasDownloader(BuildApi<DeviceBuildString, DeviceBuild>& digests_source,
+                std::string downloader_path, std::vector<std::string> flags,
                 bool prefer_uncompressed = false);
   static Result<std::unique_ptr<CasDownloader>> Create(
       const CasDownloaderFlags& cas_downloader_flags,
-      const std::string& service_account_filepath);
-  virtual ~CasDownloader() = default;
-  virtual Result<void> DownloadFile(
-      const DeviceBuild& build, const std::string& artifact_name,
-      const std::string& target_directory,
-      const DigestsFetcher& digests_fetcher,
-      const std::optional<std::string>& stats_filepath = std::nullopt);
+      const std::string& service_account_filepath,
+      BuildApi<DeviceBuildString, DeviceBuild>& digests_source);
+  ~CasDownloader() override = default;
+
+  // CAS cannot resolve build strings; always fails.
+  Result<DeviceBuild> GetBuild(const DeviceBuildString& build_string) override;
+
+  Result<std::string> DownloadFile(const DeviceBuild& build,
+                                   const std::string& target_directory,
+                                   const std::string& artifact_name) override;
+  // As above, and also has the CAS downloader write its download statistics
+  // to `stats_filepath` when set.
+  Result<std::string> DownloadFile(
+      const DeviceBuild& build, const std::string& target_directory,
+      const std::string& artifact_name,
+      const std::optional<std::string>& stats_filepath);
+
+  // CAS cannot serve parts of an artifact; always fails.
+  Result<SeekableZipSource> FileReader(
+      const DeviceBuild& build, const std::string& artifact_name) override;
 
  private:
   static Result<std::unique_ptr<CasDownloader>> CreateImpl(
       const CasDownloaderFlags& cas_downloader_flags,
-      const std::string& service_account_filepath);
+      const std::string& service_account_filepath,
+      BuildApi<DeviceBuildString, DeviceBuild>& digests_source);
 
-  Result<CasIdentifier> GetCasIdentifier(const std::string& build_id,
-                                         const std::string& build_target,
-                                         const std::string& artifact_name,
-                                         const DigestsFetcher& digests_fetcher);
+  Result<CasIdentifier> GetCasIdentifier(const DeviceBuild& build,
+                                         const std::string& target_directory,
+                                         const std::string& artifact_name);
 
+  BuildApi<DeviceBuildString, DeviceBuild>& digests_source_;
   std::string downloader_path_;
   std::vector<std::string> flags_;
   bool prefer_uncompressed_;

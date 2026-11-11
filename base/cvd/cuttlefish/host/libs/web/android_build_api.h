@@ -28,7 +28,6 @@
 #include "cuttlefish/host/libs/web/android_build_string/directory_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/build_api.h"
-#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
@@ -44,8 +43,7 @@ class AndroidBuildApi : public BuildApi<DeviceBuildString, DeviceBuild> {
   AndroidBuildApi(
       HttpClient& http_client, AndroidBuildUrl& android_build_url,
       CredentialSource* credential_source = nullptr,
-      std::chrono::seconds retry_period = std::chrono::seconds::zero(),
-      CasDownloader* cas_downloader = nullptr);
+      std::chrono::seconds retry_period = std::chrono::seconds::zero());
 
   Result<DeviceBuild> GetBuild(const DeviceBuildString& build_string) override;
 
@@ -97,15 +95,11 @@ class AndroidBuildApi : public BuildApi<DeviceBuildString, DeviceBuild> {
   Result<std::string> DownloadTargetFile(const DeviceBuild& build,
                                          const std::string& target_directory,
                                          const std::string& artifact_name);
-  Result<std::string> DownloadTargetFileFromCas(
-      const DeviceBuild& build, const std::string& target_directory,
-      const std::string& artifact_name);
 
   HttpClient& http_client_;
   AndroidBuildUrl& android_build_url_;
   CredentialSource* credential_source_;
   std::chrono::seconds retry_period_;
-  CasDownloader* cas_downloader_;
 };
 
 }  // namespace cuttlefish

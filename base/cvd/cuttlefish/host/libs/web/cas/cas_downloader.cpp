@@ -38,7 +38,10 @@
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
+#include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
@@ -46,6 +49,9 @@
 
 namespace cuttlefish {
 namespace {
+
+// Only artifacts whose name contains this are downloaded through CAS.
+constexpr char kCasArtifactMarker[] = "-img-";
 
 std::set<std::string> GetSupportedFlags(const std::string& go_binary_path) {
   std::set<std::string> flags;
@@ -291,8 +297,10 @@ Result<bool> HasConfigFile(const FlagValue<std::string>& config_filepath_flag) {
 
 Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
     const CasDownloaderFlags& cas_downloader_flags,
-    const std::string& service_account_filepath) {
-  auto result = CreateImpl(cas_downloader_flags, service_account_filepath);
+    const std::string& service_account_filepath,
+    BuildApi<DeviceBuildString, DeviceBuild>& digests_source) {
+  auto result = CreateImpl(cas_downloader_flags, service_account_filepath,
+                           digests_source);
   if (result.has_value()) {
     return result;
   }
@@ -306,7 +314,8 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
 
 Result<std::unique_ptr<CasDownloader>> CasDownloader::CreateImpl(
     const CasDownloaderFlags& cas_downloader_flags,
-    const std::string& service_account_filepath) {
+    const std::string& service_account_filepath,
+    BuildApi<DeviceBuildString, DeviceBuild>& digests_source) {
   // Start with values from the FlagValue wrappers (these contain defaults
   // and reflect any CLI-provided values via .user_provided()).
   std::string downloader_path = cas_downloader_flags.downloader_path.value();
@@ -415,8 +424,8 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::CreateImpl(
     cas_flags.push_back("-" + std::string(kFlagUseAdc));
   }
 
-  return std::unique_ptr<CasDownloader>(
-      new CasDownloader{downloader_path, cas_flags, prefer_uncompressed});
+  return std::unique_ptr<CasDownloader>(new CasDownloader{
+      digests_source, downloader_path, cas_flags, prefer_uncompressed});
 }
 
 void AppendBuildInfoToInvocationId(const DeviceBuild& build,
@@ -441,23 +450,41 @@ void AppendBuildInfoToInvocationId(const DeviceBuild& build,
   }
 }
 
-CasDownloader::CasDownloader(std::string downloader_path,
-                             std::vector<std::string> flags,
-                             bool prefer_uncompressed)
-    : downloader_path_(std::move(downloader_path)),
+CasDownloader::CasDownloader(
+    BuildApi<DeviceBuildString, DeviceBuild>& digests_source,
+    std::string downloader_path, std::vector<std::string> flags,
+    bool prefer_uncompressed)
+    : digests_source_(digests_source),
+      downloader_path_(std::move(downloader_path)),
       flags_(std::move(flags)),
       prefer_uncompressed_(prefer_uncompressed) {}
 
-Result<void> CasDownloader::DownloadFile(
-    const DeviceBuild& build, const std::string& artifact_name,
-    const std::string& target_directory, const DigestsFetcher& digests_fetcher,
+Result<DeviceBuild> CasDownloader::GetBuild(const DeviceBuildString&) {
+  return CF_ERR("CAS cannot resolve build strings.");
+}
+
+Result<std::string> CasDownloader::DownloadFile(
+    const DeviceBuild& build, const std::string& target_directory,
+    const std::string& artifact_name) {
+  return CF_EXPECT(
+      DownloadFile(build, target_directory, artifact_name, std::nullopt));
+}
+
+Result<std::string> CasDownloader::DownloadFile(
+    const DeviceBuild& build, const std::string& target_directory,
+    const std::string& artifact_name,
     const std::optional<std::string>& stats_filepath) {
+  // Checked before anything else: requests for other artifacts must not touch
+  // the state below, as they may come from other threads.
+  CF_EXPECTF(absl::StrContains(artifact_name, kCasArtifactMarker),
+             "CAS only downloads '{}' artifacts, not '{}'.", kCasArtifactMarker,
+             artifact_name);
+  LOG(INFO) << "Download from CAS: '" << artifact_name << "'";
+  const std::string target_filepath =
+      ConstructTargetFilepath(target_directory, artifact_name);
   std::string download_directory = target_directory;
-  // Extract build id and target from DeviceBuild
-  const std::string& build_id = build.id;
-  const std::string& build_target = build.target;
-  CasIdentifier cas_identifier = CF_EXPECT(
-      GetCasIdentifier(build_id, build_target, artifact_name, digests_fetcher));
+  CasIdentifier cas_identifier =
+      CF_EXPECT(GetCasIdentifier(build, target_directory, artifact_name));
   std::string filename = cas_identifier.filename;
   // Uncompressed artifacts have the prefix "_chunked_dir_".
   if (filename.find("_chunked_dir_") == 0) {
@@ -472,9 +499,16 @@ Result<void> CasDownloader::DownloadFile(
     return CF_ERRF("Failed to download file with CAS downloader ({}).",
                    ret_code);
   };
-  CF_EXPECT(FileExists(target_directory + "/" + artifact_name),
+  CF_EXPECT(FileExists(target_filepath),
             "Failed to download file with CAS downloader.");
-  return {};
+  return target_filepath;
+}
+
+Result<SeekableZipSource> CasDownloader::FileReader(
+    const DeviceBuild&, const std::string& artifact_name) {
+  return CF_ERRF(
+      "CAS cannot read parts of '{}'; it only downloads whole files.",
+      artifact_name);
 }
 
 inline std::string ConstructBuildDesc(const std::string& build_id,
@@ -483,12 +517,14 @@ inline std::string ConstructBuildDesc(const std::string& build_id,
 }
 
 Result<CasIdentifier> CasDownloader::GetCasIdentifier(
-    const std::string& build_id, const std::string& build_target,
-    const std::string& artifact_name, const DigestsFetcher& digests_fetcher) {
-  std::string build_desc = ConstructBuildDesc(build_id, build_target);
+    const DeviceBuild& build, const std::string& target_directory,
+    const std::string& artifact_name) {
+  std::string build_desc = ConstructBuildDesc(build.id, build.target);
   if (build_desc != build_desc_) {
-    const std::string digests_filename = "cas_digests.json";
-    std::string digests_filepath = CF_EXPECT(digests_fetcher(digests_filename));
+    std::string digests_filepath =
+        CF_EXPECTF(digests_source_.DownloadFile(build, target_directory,
+                                                kCasDigestsFilename),
+                   "Failed to download '{}'.", kCasDigestsFilename);
     Json::Value cas_digests = CF_EXPECT(ParseJson(ReadFile(digests_filepath)));
     if (Result<void, int> res = RemoveFile(digests_filepath);
         !res.has_value()) {
