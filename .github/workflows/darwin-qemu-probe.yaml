@@ -7,11 +7,9 @@ name: Darwin qemu probe
 # and those disks to VIRTUAL_DEVICE_BOOT_COMPLETED, under each
 # accelerator, and reports the times. Does not build the host tools.
 
+# Parked while darwin-boot-probe.yaml is being iterated on.
 on:
-  pull_request:
-  push:
-    branches-ignore:
-      - main
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
