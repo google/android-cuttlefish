@@ -375,6 +375,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "vhost_user_block",
+    srcs = ["vhost_user_block.cc"],
+    hdrs = ["vhost_user_block.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
+        "//cuttlefish/host/commands/assemble_cvd/flags:vm_manager",
+        "//cuttlefish/result",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "vm_manager",
     srcs = ["vm_manager.cc"],
     hdrs = ["vm_manager.h"],

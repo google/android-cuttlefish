@@ -350,6 +350,8 @@ cf_cc_library(
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
+        "//cuttlefish/host/libs/image_aggregator:image_from_file",
         "//cuttlefish/host/libs/image_aggregator:qcow2",
         "//cuttlefish/result",
     ],

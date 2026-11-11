@@ -16,6 +16,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 
 #include <chrono>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -25,8 +26,9 @@
 #include "android-base/file.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
+#include "cuttlefish/host/libs/image_aggregator/disk_image.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
 #include "cuttlefish/host/libs/image_aggregator/qcow2.h"
 #include "cuttlefish/result/result.h"
 
@@ -95,13 +97,15 @@ DiskBuilder DiskBuilder::CrosvmPath(std::string crosvm_path) && {
   return *this;
 }
 
-DiskBuilder& DiskBuilder::VmManager(VmmMode vm_manager) & {
-  vm_manager_ = std::move(vm_manager);
+DiskBuilder& DiskBuilder::VmmSupportsCompositeDisks(
+    bool vmm_supports_composite_disks) & {
+  vmm_supports_composite_disks_ = vmm_supports_composite_disks;
   return *this;
 }
-DiskBuilder DiskBuilder::VmManager(VmmMode vm_manager) && {
-  vm_manager_ = std::move(vm_manager);
-  return *this;
+DiskBuilder DiskBuilder::VmmSupportsCompositeDisks(
+    bool vmm_supports_composite_disks) && {
+  vmm_supports_composite_disks_ = vmm_supports_composite_disks;
+  return std::move(*this);
 }
 
 DiskBuilder& DiskBuilder::ConfigPath(std::string config_path) & {
@@ -152,8 +156,11 @@ DiskBuilder DiskBuilder::ReadOnly(bool read_only) && {
 Result<std::string> DiskBuilder::TextConfig() {
   std::ostringstream disk_conf;
 
-  CF_EXPECT(vm_manager_ != VmmMode::kUnknown, "Missing vm_manager");
-  disk_conf << vm_manager_ << "\n";
+  CF_EXPECT(vmm_supports_composite_disks_.has_value(),
+            "Missing vmm_supports_composite_disks");
+  disk_conf << "vmm_supports_composite_disks=" << *vmm_supports_composite_disks_
+            << "\n";
+  disk_conf << "read_only=" << read_only_ << "\n";
 
   CF_EXPECT(!partitions_.empty() ^ !entire_disk_.empty(),
             "Specify either partitions or a whole disk");
@@ -210,9 +217,9 @@ Result<bool> DiskBuilder::BuildCompositeDiskIfNecessary() {
     return false;
   }
 
-  CF_EXPECT(vm_manager_ != VmmMode::kUnknown);
-  // TODO: b/346855591 - run with QEMU when crosvm block device is integrated
-  if (VmManagerIsCrosvm(vm_manager_)) {
+  CF_EXPECT(vmm_supports_composite_disks_.has_value(),
+            "Missing vmm_supports_composite_disks");
+  if (*vmm_supports_composite_disks_) {
     CF_EXPECT(!header_path_.empty(), "No header path");
     CF_EXPECT(!footer_path_.empty(), "No footer path");
     CF_EXPECT(CreateOrUpdateCompositeDisk(
@@ -257,9 +264,18 @@ Result<bool> DiskBuilder::BuildOverlayIfNecessary() {
     return false;
   }
 
-  CF_EXPECT(!crosvm_path_.empty(), "crosvm binary missing");
-  CF_EXPECT(Qcow2Image::Create(vm_manager_, crosvm_path_, composite_disk_path_,
-                               overlay_path_));
+  CF_EXPECT(vmm_supports_composite_disks_.has_value(),
+            "Missing vmm_supports_composite_disks");
+  if (*vmm_supports_composite_disks_) {
+    CF_EXPECT(!crosvm_path_.empty(), "crosvm binary missing");
+    CF_EXPECT(Qcow2Image::CreateByCrosvm(crosvm_path_, composite_disk_path_,
+                                         overlay_path_));
+  } else {
+    std::unique_ptr<DiskImage> backing_image =
+        CF_EXPECT(ImageFromFile(composite_disk_path_));
+    CF_EXPECT(Qcow2Image::CreateByQemuImg(*backing_image, composite_disk_path_,
+                                          overlay_path_));
+  }
 
   return true;
 #endif
