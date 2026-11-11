@@ -657,8 +657,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   if (config.virtio_mac80211_hwsim() &&
       !environment.vhost_user_mac80211_hwsim().empty()) {
-    crosvm_cmd.Cmd().AddParameter("--vhost-user=mac80211-hwsim,socket=",
-                                  environment.vhost_user_mac80211_hwsim());
+    crosvm_cmd.AddVhostUser("mac80211-hwsim",
+                            environment.vhost_user_mac80211_hwsim());
   }
 
   if (!instance.crosvm_use_balloon()) {
