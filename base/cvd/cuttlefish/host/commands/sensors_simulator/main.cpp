@@ -106,7 +106,7 @@ Result<void> SensorsSimulatorMain(int argc, char** argv) {
   DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  SharedFD webrtc_fd = CF_EXPECT(DupAndClose(FLAGS_webrtc_fd));
+  transport::SharedFdChannel channel(CF_EXPECT(DupAndClose(FLAGS_webrtc_fd)));
 
   SharedFD control_from_guest_fd =
       CF_EXPECT(DupAndClose(FLAGS_control_from_guest_fd));
@@ -119,9 +119,10 @@ Result<void> SensorsSimulatorMain(int argc, char** argv) {
 
   SharedFD data_to_guest_fd = CF_EXPECT(DupAndClose(FLAGS_data_to_guest_fd));
 
-  SharedFD kernel_events_fd = CF_EXPECT(DupAndClose(FLAGS_kernel_events_fd));
-
-  transport::SharedFdChannel channel(webrtc_fd, webrtc_fd);
+  SharedFD kernel_events_fd;
+  if (FLAGS_kernel_events_fd >= 0) {
+    kernel_events_fd = CF_EXPECT(DupAndClose(FLAGS_kernel_events_fd));
+  }
 
   auto device_type = static_cast<DeviceType>(FLAGS_device_type);
   SensorsSimulator sensors_simulator(device_type == DeviceType::Auto);
