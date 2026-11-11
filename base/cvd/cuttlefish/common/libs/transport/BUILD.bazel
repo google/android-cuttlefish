@@ -17,7 +17,7 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "transport",
+    name = "channel_sharedfd",
     srcs = ["channel_sharedfd.cpp"],
     hdrs = ["channel_sharedfd.h"],
     deps = [

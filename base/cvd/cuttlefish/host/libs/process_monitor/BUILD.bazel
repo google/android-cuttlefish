@@ -14,8 +14,8 @@ cf_cc_library(
     ],
     include_cleaner_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/transport",
         "//cuttlefish/common/libs/transport:channel",
+        "//cuttlefish/common/libs/transport:channel_sharedfd",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:known_paths",

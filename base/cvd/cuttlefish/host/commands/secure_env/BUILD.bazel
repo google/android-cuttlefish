@@ -13,7 +13,7 @@ cf_cc_binary(
         ":suspend_resume_handler",
         ":worker_thread_loop_body",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/transport",
+        "//cuttlefish/common/libs/transport:channel_sharedfd",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_server",
         "//cuttlefish/host/commands/kernel_log_monitor:utils",
         "//cuttlefish/host/commands/secure_env/oemlock",
