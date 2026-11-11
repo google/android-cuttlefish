@@ -90,9 +90,8 @@ Result<void> ProcessWebrtcRequest(transport::Channel& channel,
                 "Can't send request for cmd: " << cmd);
       break;
     }
-    default: {
+    default:
       return CF_ERR("Unsupported cmd: " << cmd);
-    }
   }
   return {};
 }
@@ -123,13 +122,14 @@ Result<void> SensorsSimulatorMain(int argc, char** argv) {
     kernel_events_fd = CF_EXPECT(DupAndClose(FLAGS_kernel_events_fd));
   }
 
-  DeviceType device_type = static_cast<DeviceType>(FLAGS_device_type);
+  const DeviceType device_type = static_cast<DeviceType>(FLAGS_device_type);
   SensorsSimulator sensors_simulator(device_type == DeviceType::Auto);
   SensorsHalProxy sensors_hal_proxy(control_channel, data_channel,
                                     kernel_events_fd, sensors_simulator,
                                     device_type);
   while (true) {
-    auto result = ProcessWebrtcRequest(webrtc_channel, sensors_simulator);
+    const Result<void> result =
+        ProcessWebrtcRequest(webrtc_channel, sensors_simulator);
     if (!result.has_value()) {
       LOG(ERROR) << result.error();
     }
