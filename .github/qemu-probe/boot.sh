@@ -64,8 +64,6 @@ qemu-system-x86_64 "$@" \
   -serial "file:serial-$label.log" \
   -device virtio-serial-pci-non-transitional,max_ports=31,id=virtio-serial \
   "${hvcs[@]}" "${disks[@]}" \
-  -object memory-backend-file,id=objpmem0,share=on,mem-path=disks/pstore,size=2097152 \
-  -device nvdimm,memdev=objpmem0,id=ramoops \
   "${pmems[@]}" \
   -object rng-random,id=objrng0,filename=/dev/urandom \
   -device virtio-rng-pci-non-transitional,rng=objrng0,id=rng0,max-bytes=1024,period=2000 \
@@ -80,7 +78,7 @@ qemu-system-x86_64 "$@" \
   -drive if=pflash,format=raw,readonly=on,file=disks/bootloader.qemu \
   -drive if=pflash,format=raw,file=disks/pflash.img,snapshot=on \
   -msg timestamp=on -d guest_errors,cpu_reset -D "qemu-$label.dbg" \
-  2> "qemu-$label.err" &
+  > "qemu-$label.err" 2>&1 &
 qemu=$!
 
 finish() {

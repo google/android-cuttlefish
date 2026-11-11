@@ -62,7 +62,9 @@ jobs:
       # Bluetooth is turned off because there is no rootcanal to talk
       # to, and the checker flag too because this release's
       # assemble_cvd does not derive it from that yet. keep_bootcon
-      # keeps dmesg on the serial log after hvc0 takes over.
+      # keeps dmesg on the serial log after hvc0 takes over. ramoops is
+      # off because qemu's HVF emulator aborts on the kernel's first
+      # MOVSXD from the nvdimm behind it.
       run: |
         sudo apt-get update -q
         sudo apt-get install -y -q qemu-utils
@@ -80,7 +82,7 @@ jobs:
           --gpu_mode=guest_swiftshader --use_overlay=false \
           --enable_host_bluetooth=false --netsim_bt=false \
           --extra_bootconfig_args=androidboot.cuttlefish_service_bluetooth_checker=false \
-          --extra_kernel_cmdline=keep_bootcon \
+          --extra_kernel_cmdline='keep_bootcon ramoops.mem_size=0' \
           --system_image_dir=/mnt/cf/images < /dev/null"
         instance=$HOME/cuttlefish/instances/cvd-1
         # The composite is written out in full; most of it is zeros.
