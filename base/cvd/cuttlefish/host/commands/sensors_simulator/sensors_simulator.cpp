@@ -16,8 +16,17 @@
 
 #include "cuttlefish/host/commands/sensors_simulator/sensors_simulator.h"
 
-#include <cmath>
+#include <math.h>
+
+#include <chrono>
+#include <mutex>
+#include <sstream>
+#include <string>
 #include <utility>
+
+#include "Eigen/Dense"
+
+#include "cuttlefish/common/libs/sensors/sensors.h"
 
 namespace cuttlefish {
 namespace sensors {
