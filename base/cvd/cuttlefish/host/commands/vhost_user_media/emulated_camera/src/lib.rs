@@ -34,19 +34,22 @@ pub mod capture_channel;
 pub mod control;
 pub mod controls;
 pub mod device;
-pub mod emulated_scene;
 pub mod format;
+pub mod isp;
 pub mod memory;
 pub mod pattern;
+pub mod pipeline;
 pub mod render_params;
+pub mod scene;
+pub mod sensor;
 
 pub use capture_channel::CaptureSink;
 pub use control::{Control, ControlDescriptor, ControlSet};
 pub use controls::LensFacing;
 pub use device::{EmulatedCamera, FrameSource};
-pub use emulated_scene::EmulatedScene;
 pub use format::Yuv420m;
 pub use memory::{BufferMemoryHandler, QbufRequest, QueuedBuffer};
+pub use pipeline::Pipeline;
 pub use render_params::{Gain, RenderParams, TestPattern};
 
 /// Errors returned by [`serve`].

@@ -19,9 +19,10 @@ use std::sync::{Arc, Mutex};
 
 use crate::capture_channel::CaptureChannel;
 use crate::control::ControlSet;
-use crate::emulated_scene::EmulatedScene;
 use crate::format::Yuv420m;
 use crate::memory::{BufferMemoryHandler, QbufRequest, QueuedBuffer};
+use crate::pipeline::Pipeline;
+use crate::sensor::Sensor;
 use crate::pattern::FramePattern;
 use crate::render_params::RenderParams;
 
@@ -54,8 +55,11 @@ use virtio_media::protocol::SgEntry;
 use virtio_media::protocol::V4l2Event;
 use virtio_media::protocol::V4l2Ioctl;
 
-static EMULATED_SCENE: EmulatedScene = EmulatedScene {
-    hour: EmulatedScene::DEFAULT_HOUR,
+static PIPELINE: Pipeline = Pipeline {
+    sensor: Sensor {
+        hour: Sensor::DEFAULT_HOUR,
+        exposure_s: Sensor::DEFAULT_EXPOSURE_S,
+    },
 };
 
 /// What the camera renders into capture buffers.
@@ -72,7 +76,7 @@ impl FrameSource {
     pub(crate) fn generator(self, params: &RenderParams) -> &'static dyn FramePattern {
         match self {
             FrameSource::TestPatterns => params.test_pattern.generator(),
-            FrameSource::EmulatedScene => &EMULATED_SCENE,
+            FrameSource::EmulatedScene => &PIPELINE,
         }
     }
 }
