@@ -38,7 +38,10 @@ impl FramePattern for Pipeline {
         sink_u: &mut dyn Write,
         sink_v: &mut dyn Write,
     ) -> Result<(), i32> {
-        let isp = Isp { gain: params.gain };
+        let isp = Isp {
+            gain: params.gain,
+            crop: params.crop,
+        };
         isp.process(&self.sensor, iteration, width, height, sink_y, sink_u, sink_v)
     }
 }
