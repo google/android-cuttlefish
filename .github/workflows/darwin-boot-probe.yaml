@@ -163,6 +163,9 @@ jobs:
         export HOME=$CF_HOME CVD_FORCE_SUBSTITUTE=true
         # No cvdnetwork group or other host package setup here.
         export CVD_IN_SANDBOX=1
+        # The instance's sockets go under TMPDIR, and the runner's is
+        # too long for a unix socket path.
+        export TMPDIR=/tmp
         # In sandbox mode assemble_cvd appends to this log but expects
         # the sandboxer to have created it.
         mkdir -p "$HOME/cuttlefish/instances/cvd-1/logs"
