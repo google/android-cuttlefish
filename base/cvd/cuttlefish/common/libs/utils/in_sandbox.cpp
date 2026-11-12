@@ -15,10 +15,16 @@
  */
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 
+#include <stdlib.h>
 #include <unistd.h>
 
 namespace cuttlefish {
 
-bool InSandbox() { return access("/manager.sock", F_OK) == 0; }
+bool InSandbox() {
+  // The variable is for hosts without the cuttlefish packages' setup,
+  // such as test runners.
+  return access("/manager.sock", F_OK) == 0 ||
+         getenv("CVD_IN_SANDBOX") != nullptr;
+}
 
 }  // namespace cuttlefish

@@ -146,6 +146,8 @@ jobs:
     - name: cvd create
       run: |
         export HOME=$CF_HOME CVD_FORCE_SUBSTITUTE=true
+        # No cvdnetwork group or other host package setup here.
+        export CVD_IN_SANDBOX=1
         export PATH="$CF/pkg/cuttlefish-common/bin:$PATH"
         cd "$HOME"
         qemu_dir=$(dirname "$(command -v qemu-system-x86_64)")
@@ -158,8 +160,8 @@ jobs:
         rc=1
         for _ in $(seq 240); do
           if grep -qs VIRTUAL_DEVICE_BOOT_COMPLETED "$CF/cvd-create.log" \
-              "$HOME"/cuttlefish_runtime/logs/launcher.log \
-              "$HOME"/cuttlefish_runtime/kernel.log; then
+              "$HOME"/cuttlefish/instances/*/logs/launcher.log \
+              "$HOME"/cuttlefish/instances/*/kernel.log; then
             echo "boot completed after $(( $(date +%s) - start ))s"
             rc=0
             break
