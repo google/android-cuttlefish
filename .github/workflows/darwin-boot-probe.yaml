@@ -73,7 +73,7 @@ jobs:
       shell: bash
     - name: Install qemu and mkfs.fat
       run: |
-        brew install qemu dosfstools
+        brew install qemu dosfstools lz4
         qemu-system-x86_64 --version
         brew list dosfstools
       shell: bash
