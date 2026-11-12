@@ -22,18 +22,13 @@ cf_cc_library(
     features = ["-layering_check"],
     include_cleaner_enabled = False,
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/commands/gnss_grpc_proxy:libcvd_gnss_grpc_proxy",
         "//cuttlefish/host/libs/location:string_parse",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@grpc",
         "@grpc//:grpc++",
-        "@grpc//:grpc++_reflection",
-        "@jsoncpp",
         "@libxml2",
-        "@protobuf",
     ],
 )
 
