@@ -44,6 +44,7 @@ env:
     --enable_bootanimation=false
     --cpus=4 --memory_mb=4096
     --boot_timeout_secs=1800
+    --use_overlay=false
 
 jobs:
   boot:
@@ -225,13 +226,14 @@ jobs:
           body=$(tr -d '\000' < "$2" | { grep -av "$3" || true; } \
             | tail -n 40 \
             | cut -c1-240 | python3 -c 'import sys
-        t = sys.stdin.read().replace("%", "%25").replace("\r", "")
+        # GitHub keeps only the first 4096 characters.
+        t = sys.stdin.read()[-3800:].replace("%", "%25").replace("\r", "")
         print(t.replace("\n", "%0A"))')
           echo "::notice title=$1::$body"
         }
         logs=$CF_HOME/cuttlefish/instances/cvd-1/logs
         note cvd-create "$CF/cvd-create.log" 'Not substituted\| [VD] '
-        note launcher "$logs/launcher.log" 'command.cc:313\|^androidboot'
+        note launcher "$logs/launcher.log" 'command.cc:313\|bootconfig.cpp:98'
         note kernel "$CF_HOME/cuttlefish/instances/cvd-1/kernel.log" '^$'
         for f in "$HOME"/Library/Logs/DiagnosticReports/*.ips; do
           grep -a '"symbol"' "$f" | head -n 40 > "$CF/ips.txt" || true
