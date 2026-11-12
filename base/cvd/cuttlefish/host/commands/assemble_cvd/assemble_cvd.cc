@@ -477,7 +477,12 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     CF_EXPECT(CleanPriorFiles(preserving, clean_dirs),
               "Failed to clean prior files");
 
+#ifdef __linux__
     std::string default_group = "cvdnetwork";
+#else
+    // Only the Linux host packages create cvdnetwork.
+    std::string default_group;
+#endif
     const mode_t default_mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
 
     for (const std::string& dir : RequiredDirectories(config)) {
