@@ -173,6 +173,9 @@ jobs:
         export PATH="$CF/pkg/cuttlefish-common/bin:$PATH"
         cd "$HOME"
         qemu_dir=$(dirname "$(command -v qemu-system-x86_64)")
+        # stop_cvd's fallback kills the process groups of whatever
+        # has the instance's files open; keep the runner out of them.
+        set -m
         # shellcheck disable=SC2086
         cvd create --host_path="$CF/fetch" --product_path="$CF/fetch" \
           --daemon=false --qemu_binary_dir="$qemu_dir" $CF_FLAGS \
@@ -180,7 +183,19 @@ jobs:
         cvd_pid=$!
         start=$(date +%s)
         rc=1
-        for _ in $(seq 240); do
+        for i in $(seq 240); do
+          # Annotations survive losing the runner; the log doesn't.
+          case $i in 6|30|60|90|120|150|180|210)
+            klog=$(tail -n 3 "$HOME"/cuttlefish/instances/*/kernel.log \
+              2>/dev/null | tr -d '\000\r' | cut -c1-200 | tr '\n' '|' \
+              || true)
+            echo "::notice title=progress $(( i / 6 ))m::$(uptime)" \
+              "%0Adisk $(df -h /tmp | tail -n 1)" \
+              "%0Ainstance $(du -sh "$HOME/cuttlefish" | cut -f1)" \
+              "%0A$(memory_pressure | tail -n 1)" \
+              "%0A$(ps -axo %cpu,rss,comm -r | sed -n 2,5p | tr '\n' '|')" \
+              "%0A${klog//%/%25}" ;;
+          esac
           if grep -qs VIRTUAL_DEVICE_BOOT_COMPLETED "$CF/cvd-create.log" \
               "$HOME"/cuttlefish/instances/*/logs/launcher.log \
               "$HOME"/cuttlefish/instances/*/kernel.log; then
@@ -198,8 +213,6 @@ jobs:
         cvd fleet || true
         ps -axo pid,ppid,etime,command | grep -E 'cf/|qemu-system' \
           | grep -v grep | cut -c1-200 || true
-        cvd stop || true
-        kill "$cvd_pid" 2>/dev/null || true
         exit $rc
       shell: bash
     - name: Logs
@@ -254,3 +267,14 @@ jobs:
         path: /tmp/cf/logs
         if-no-files-found: warn
         retention-days: 7
+    # Last, so that a stop that goes wrong can't take the logs with it.
+    - name: Stop the device
+      if: always()
+      run: |
+        export HOME=$CF_HOME CVD_IN_SANDBOX=1 TMPDIR=/tmp
+        export PATH="$CF/pkg/cuttlefish-common/bin:$PATH"
+        cd "$HOME"
+        cvd stop || true
+        ps -axo pid,pgid,etime,command | grep -E 'cf/|qemu-system' \
+          | grep -v grep | cut -c1-200 || true
+      shell: bash
