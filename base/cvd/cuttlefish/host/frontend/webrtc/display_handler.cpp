@@ -146,8 +146,8 @@ DisplayHandler::~DisplayHandler() {
     }
 
     std::map<uint32_t, std::shared_ptr<BufferInfo>> send_buffers;
-    const std::chrono::system_clock::time_point now =
-        std::chrono::system_clock::now();
+    const std::chrono::steady_clock::time_point now =
+        std::chrono::steady_clock::now();
     {
       std::lock_guard<std::mutex> lock(last_buffers_mutex_);
       for (auto& [display_number, buffer] : pending) {
@@ -202,8 +202,9 @@ void DisplayHandler::SendBuffers(
   // here avoids injecting frames with the timestamps in the wrong order and
   // protects writing the BufferInfo timestamps.
   std::lock_guard<std::mutex> lock(send_mutex_);
-  auto time_stamp = std::chrono::system_clock::now();
-  int64_t time_stamp_since_epoch =
+  const std::chrono::steady_clock::time_point time_stamp =
+      std::chrono::steady_clock::now();
+  const int64_t time_stamp_since_epoch =
       std::chrono::duration_cast<std::chrono::microseconds>(
           time_stamp.time_since_epoch())
           .count();
@@ -223,7 +224,8 @@ void DisplayHandler::RepeatFramesPeriodically() {
   // SendBuffers can be called from multiple threads simultaneously, locking
   // here avoids injecting frames with the timestamps in the wrong order and
   // protects writing the BufferInfo timestamps.
-  auto next_send = std::chrono::system_clock::now() + repeat_interval_;
+  std::chrono::steady_clock::time_point next_send =
+      std::chrono::steady_clock::now() + repeat_interval_;
   while (true) {
     {
       std::unique_lock lock(repeater_state_mutex_);
@@ -255,7 +257,8 @@ void DisplayHandler::RepeatFramesPeriodically() {
     std::map<uint32_t, std::shared_ptr<BufferInfo>> buffers;
     {
       std::lock_guard last_buffers_lock(last_buffers_mutex_);
-      auto time_stamp = std::chrono::system_clock::now();
+      const std::chrono::steady_clock::time_point time_stamp =
+          std::chrono::steady_clock::now();
 
       for (auto& [display_number, buffer_info] : display_last_buffers_) {
         if (time_stamp > buffer_info->last_sent_time_stamp + repeat_interval_) {
@@ -270,7 +273,7 @@ void DisplayHandler::RepeatFramesPeriodically() {
     SendBuffers(buffers);
     {
       std::lock_guard last_buffers_lock(last_buffers_mutex_);
-      next_send = std::chrono::system_clock::now() + repeat_interval_;
+      next_send = std::chrono::steady_clock::now() + repeat_interval_;
       for (const auto& [_, buffer_info] : display_last_buffers_) {
         next_send = std::min(
             next_send, buffer_info->last_sent_time_stamp + repeat_interval_);

@@ -57,7 +57,7 @@ class DisplayHandler {
 
  private:
   struct BufferInfo {
-    std::chrono::system_clock::time_point last_sent_time_stamp;
+    std::chrono::steady_clock::time_point last_sent_time_stamp;
     std::shared_ptr<VideoFrameBuffer> buffer;
   };
   enum class RepeaterState {
