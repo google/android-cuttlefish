@@ -394,10 +394,20 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   // qemu doesn't send the memory mappings necessary for the backend to access
   // the virtqueues.
   qemu_cmd.AddParameter("-object");
+#ifdef __APPLE__
+  /*
+   * No vhost-user devices there, and every write to a shared file
+   * mapping goes to disk, which slows the guest to a crawl.
+   */
+  qemu_cmd.AddParameter("memory-backend-ram,size=", instance.memory_mb(), "M",
+                        ",id=vm_ram");
+#else
+  qemu_cmd.AddParameter("-object");
   qemu_cmd.AddParameter("memory-backend-file,size=", instance.memory_mb(), "M",
                         ",prealloc=on,share=on,mem-path=",
                         instance.PerInstanceInternalPath("qemu.mem"),
                         ",id=vm_ram");
+#endif
 
   qemu_cmd.AddParameter("-m");
   auto maxmem = instance.memory_mb() +
