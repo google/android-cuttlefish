@@ -162,6 +162,10 @@ jobs:
         export HOME=$CF_HOME CVD_FORCE_SUBSTITUTE=true
         # No cvdnetwork group or other host package setup here.
         export CVD_IN_SANDBOX=1
+        # In sandbox mode assemble_cvd appends to this log but expects
+        # the sandboxer to have created it.
+        mkdir -p "$HOME/cuttlefish/instances/cvd-1/logs"
+        touch "$HOME/cuttlefish/instances/cvd-1/logs/launcher.log"
         export PATH="$CF/pkg/cuttlefish-common/bin:$PATH"
         cd "$HOME"
         qemu_dir=$(dirname "$(command -v qemu-system-x86_64)")
@@ -199,6 +203,8 @@ jobs:
       run: |
         shopt -s nullglob
         mkdir -p "$CF/logs"
+        # Give macOS time to write crash reports.
+        sleep 15
         n=0
         for f in "$CF"/*.log /tmp/cfh*/cuttlefish/assembly/*.log \
             /tmp/cfh*/cuttlefish/instances/*/logs/* \
@@ -210,8 +216,26 @@ jobs:
           n=$((n + 1))
           cp "$f" "$CF/logs/$n-$(basename "$f")"
           echo "::group::$f"
-          tail -n 400 "$f"
+          tail -n 400 "$f" | tr -d '\000'
           echo "::endgroup::"
+        done
+        # Annotations can be read without signing in, unlike the log.
+        note() {
+          [ -f "$2" ] || return 0
+          body=$(tr -d '\000' < "$2" | { grep -av "$3" || true; } \
+            | tail -n 40 \
+            | cut -c1-240 | python3 -c 'import sys
+        t = sys.stdin.read().replace("%", "%25").replace("\r", "")
+        print(t.replace("\n", "%0A"))')
+          echo "::notice title=$1::$body"
+        }
+        logs=$CF_HOME/cuttlefish/instances/cvd-1/logs
+        note cvd-create "$CF/cvd-create.log" 'Not substituted\| [VD] '
+        note launcher "$logs/launcher.log" 'command.cc:313\|^androidboot'
+        note kernel "$CF_HOME/cuttlefish/instances/cvd-1/kernel.log" '^$'
+        for f in "$HOME"/Library/Logs/DiagnosticReports/*.ips; do
+          grep -a '"symbol"' "$f" | head -n 40 > "$CF/ips.txt" || true
+          note "$(basename "$f")" "$CF/ips.txt" '^$'
         done
         find /tmp/cfh* /var/tmp/cvd -maxdepth 5 2>/dev/null | head -300 \
           || true
