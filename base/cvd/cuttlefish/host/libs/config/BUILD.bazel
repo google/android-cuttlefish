@@ -75,6 +75,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:random",
         "//cuttlefish/files:directory_contents",
+        "//cuttlefish/files:directory_exists",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/result",

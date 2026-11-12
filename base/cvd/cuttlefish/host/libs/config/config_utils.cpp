@@ -30,6 +30,7 @@
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/random.h"
 #include "cuttlefish/files/directory_contents.h"
+#include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/result/result.h"
@@ -135,7 +136,8 @@ bool UseQemuPrebuilt() {
 #else
   const std::string target_prod_str = StringFromEnv("TARGET_PRODUCT", "");
   if (!Contains(target_prod_str, "arm")) {
-    return true;
+    return DirectoryExists(HostBinaryDir() + "/" + HostArchStr() +
+                           "-linux-gnu/qemu");
   }
   return false;
 #endif

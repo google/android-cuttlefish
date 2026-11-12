@@ -31,6 +31,23 @@ go_test(
 )
 
 go_test(
+    name = "cvd_create_qemu_test",
+    size = "large",
+    srcs = ["qemu_test.go"],
+    tags = [
+        "exclusive",
+        "external",
+        "no-sandbox",
+        "podcvd_excluded",
+        "requires_ab",
+        "supports-graceful-termination",
+    ],
+    deps = [
+        "//cvd/common",
+    ],
+)
+
+go_test(
     name = "cvd_create_substitute_only",
     size = "large",
     srcs = ["substitute_only.go"],
