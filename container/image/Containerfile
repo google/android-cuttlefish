@@ -28,6 +28,8 @@ RUN apt install -y --no-install-recommends \
     ca-certificates \
     curl \
     default-jre-headless \
+    libasound2t64 \
+    libpulse0 \
     libvulkan1 \
     mesa-utils \
     nginx \
