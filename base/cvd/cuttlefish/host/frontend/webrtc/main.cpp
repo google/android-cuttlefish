@@ -642,7 +642,7 @@ int CuttlefishMain() {
 
 int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
-  rtc::LogMessage::LogToDebug(rtc::LS_WARNING);
+  webrtc::LogMessage::LogToDebug(webrtc::LS_WARNING);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
   return cuttlefish::CuttlefishMain();
 }

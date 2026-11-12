@@ -1,9 +1,18 @@
 diff --git modules/video_coding/codecs/av1/dav1d_decoder.cc modules/video_coding/codecs/av1/dav1d_decoder.cc
 --- modules/video_coding/codecs/av1/dav1d_decoder.cc
 +++ modules/video_coding/codecs/av1/dav1d_decoder.cc
-@@ -30,4 +30,4 @@
+@@ -30,9 +30,9 @@
  #include "modules/video_coding/include/video_error_codes.h"
  #include "rtc_base/logging.h"
+-#include "third_party/dav1d/libdav1d/include/dav1d/common.h"
+-#include "third_party/dav1d/libdav1d/include/dav1d/data.h"
 -#include "third_party/dav1d/libdav1d/include/dav1d/dav1d.h"
+-#include "third_party/dav1d/libdav1d/include/dav1d/headers.h"
+-#include "third_party/dav1d/libdav1d/include/dav1d/picture.h"
++#include <dav1d/common.h>
++#include <dav1d/data.h>
 +#include <dav1d/dav1d.h>
- #include "libyuv/convert.h"
++#include <dav1d/headers.h>
++#include <dav1d/picture.h>
+ 
+ namespace webrtc {

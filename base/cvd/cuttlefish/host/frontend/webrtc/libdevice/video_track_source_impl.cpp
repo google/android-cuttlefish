@@ -38,8 +38,8 @@ void VideoTrackSourceImpl::OnFrame(std::shared_ptr<VideoFrameBuffer> frame,
   }
   last_timestamp_us_ = timestamp_us;
 
-  rtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer(
-      new rtc::RefCountedObject<AbgrBuffer>(std::move(frame)));
+  webrtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer(
+      new webrtc::RefCountedObject<AbgrBuffer>(std::move(frame)));
 
   auto video_frame = webrtc::VideoFrame::Builder()
                          .set_video_frame_buffer(buffer)
@@ -55,7 +55,8 @@ bool VideoTrackSourceImpl::GetStats(Stats* stats) {
 }
 
 bool VideoTrackSourceImpl::SupportsEncodedOutput() const { return false; }
-rtc::VideoSourceInterface<webrtc::VideoFrame>* VideoTrackSourceImpl::source() {
+webrtc::VideoSourceInterface<webrtc::VideoFrame>*
+VideoTrackSourceImpl::source() {
   return &broadcaster_;
 }
 

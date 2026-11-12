@@ -113,7 +113,7 @@ void RecordingManager::StartSingleRecorder(const std::string& label) {
     return;
   }
 
-  int recording_time = rtc::TimeMillis();
+  int recording_time = webrtc::TimeMillis();
   std::string recording_path =
       fmt::format("{}recording_{}_{}_{}.webm", recording_directory_,
                   instance_name_, label, recording_time);

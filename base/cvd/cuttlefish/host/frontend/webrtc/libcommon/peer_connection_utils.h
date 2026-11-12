@@ -24,25 +24,23 @@
 namespace cuttlefish {
 namespace webrtc_streaming {
 
-Result<std::unique_ptr<rtc::Thread>> CreateAndStartThread(
+Result<std::unique_ptr<webrtc::Thread>> CreateAndStartThread(
     const std::string& name);
 
-Result<rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>>
+Result<webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>>
 CreatePeerConnectionFactory(
-    rtc::Thread* network_thread, rtc::Thread* worker_thread,
-    rtc::Thread* signal_thread,
-    rtc::scoped_refptr<webrtc::AudioDeviceModule> audio_device_module);
+    webrtc::Thread* network_thread, webrtc::Thread* signal_thread,
+    webrtc::scoped_refptr<webrtc::AudioDeviceModule> audio_device_module);
 
 // TODO(b/263528313): Use a packet socket factory instead of a port range.
-Result<rtc::scoped_refptr<webrtc::PeerConnectionInterface>>
+Result<webrtc::scoped_refptr<webrtc::PeerConnectionInterface>>
 CreatePeerConnection(
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
+    webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
         peer_connection_factory,
-    webrtc::PeerConnectionDependencies dependencies,
-    uint16_t min_port, uint16_t max_port,
+    webrtc::PeerConnectionDependencies dependencies, uint16_t min_port,
+    uint16_t max_port,
     const std::vector<webrtc::PeerConnectionInterface::IceServer>&
         per_connection_servers);
 
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish
-
