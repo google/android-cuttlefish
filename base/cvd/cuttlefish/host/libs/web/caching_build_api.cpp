@@ -15,6 +15,9 @@
 
 #include "cuttlefish/host/libs/web/caching_build_api.h"
 
+#include <stdint.h>
+
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -32,8 +35,9 @@
 #include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/digest.h"
-#include "cuttlefish/host/libs/zip/cached_zip_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/lazily_loaded_file.h"
+#include "cuttlefish/io/length.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -133,9 +137,12 @@ Result<std::string> CachingBuildApi::DownloadFile(
                               kOverwriteExistingFile));
 }
 
-Result<SeekableZipSource> CachingBuildApi::FileReader(
+Result<std::unique_ptr<ReaderSeeker>> CachingBuildApi::FileReader(
     const Build& build, const std::string& artifact) {
-  SeekableZipSource source = CF_EXPECT(build_api_.FileReader(build, artifact));
+  std::unique_ptr<ReaderSeeker> source =
+      CF_EXPECT(build_api_.FileReader(build, artifact));
+  CF_EXPECT(source.get());
+
   const std::optional<std::string> build_key = BuildCacheKey(build, artifact);
   if (!build_key.has_value()) {
     WarnUnversioned(build, artifact);
@@ -144,8 +151,13 @@ Result<SeekableZipSource> CachingBuildApi::FileReader(
   const std::string build_cache =
       fmt::format("{}/{}", cache_base_path_, *build_key);
   CF_EXPECT(EnsureDirectoryExists(build_cache));
-  return CF_EXPECT(CacheZipSource(
-      std::move(source), ConstructTargetFilepath(build_cache, artifact)));
+  const uint64_t size = CF_EXPECT(Length(*source));
+
+  std::string path = ConstructTargetFilepath(build_cache, artifact);
+  LazilyLoadedFile lazy = CF_EXPECT(
+      LazilyLoadedFile::Create(std::move(path), size, std::move(source)));
+
+  return std::make_unique<LazilyLoadedFile>(std::move(lazy));
 }
 
 }  // namespace cuttlefish

@@ -31,7 +31,7 @@
 #include "cuttlefish/host/libs/zip/zip_over_ranges.h"
 #include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/string.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -43,27 +43,21 @@ TEST(RemoteZipTest, TwoFiles) {
   std::map<std::string, std::string> zip_contents = {
       std::make_pair("a.txt", "abc"), std::make_pair("b.txt", "def")};
 
-  Result<ZipOverRanges> zip_handler = ZipOverRanges::Create(zip_contents);
-  ASSERT_THAT(zip_handler, IsOk());
+  http_client.SetResponse(CF_ASSERT(ZipOverRanges::Create(zip_contents)));
 
-  http_client.SetResponse(std::move(*zip_handler));
+  SeekableZipSource src = CF_ASSERT(ZipSourceFromUrl(http_client, "url", {}));
+  ReadableZip remote_zip = CF_ASSERT(ReadableZip::FromSource(std::move(src)));
 
-  Result<SeekableZipSource> source = ZipSourceFromUrl(http_client, "url", {});
-  ASSERT_THAT(source, IsOk());
-  Result<ReadableZip> remote_zip = ReadableZip::FromSource(std::move(*source));
-  ASSERT_THAT(remote_zip, IsOk());
+  std::unique_ptr<ReaderSeeker> file_a =
+      CF_ASSERT(remote_zip.OpenReadOnly("a.txt"));
+  ASSERT_TRUE(file_a.get());
 
-  Result<std::unique_ptr<ReaderSeeker>> file_a =
-      remote_zip->OpenReadOnly("a.txt");
-  ASSERT_THAT(file_a, IsOk());
-  ASSERT_NE(file_a->get(), nullptr);
-  ASSERT_THAT(ReadToString(**file_a), IsOkAndValue("abc"));
+  ASSERT_THAT(ReadToString(*file_a), IsOkAndValue("abc"));
 
-  Result<std::unique_ptr<ReaderSeeker>> file_b =
-      remote_zip->OpenReadOnly("b.txt");
-  ASSERT_THAT(file_b, IsOk());
-  ASSERT_NE(file_b->get(), nullptr);
-  ASSERT_THAT(ReadToString(**file_b), IsOkAndValue("def"));
+  std::unique_ptr<ReaderSeeker> file_b =
+      CF_ASSERT(remote_zip.OpenReadOnly("b.txt"));
+  ASSERT_TRUE(file_b);
+  ASSERT_THAT(ReadToString(*file_b), IsOkAndValue("def"));
 }
 
 }  // namespace

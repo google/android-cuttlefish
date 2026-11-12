@@ -16,10 +16,8 @@
 #include "cuttlefish/host/libs/zip/buffered_zip_source.h"
 
 #include <stddef.h>
-#include <stdint.h>
 
 #include <memory>
-#include <utility>
 #include <vector>
 
 #include "gmock/gmock-matchers.h"
@@ -45,68 +43,10 @@ constexpr size_t kCommonBufferSize = 8;
 constexpr size_t kCommonReadSize = 4;
 
 TEST(BufferedZipSourceTest, ManySmallReads) {
-  std::vector<uint8_t> data_in;
-  for (int i = 0; i < kPrimeUnderlyingDataSize; i++) {
-    data_in.push_back(i);
-  }
-  WritableZipSource data_source =
-      CF_ASSERT(WritableZipSource::BorrowData(data_in.data(), data_in.size()));
-
-  SeekableZipSource buffered =
-      CF_ASSERT(BufferZipSource(std::move(data_source), kPrimeBufferSize));
-
-  SeekingZipSourceReader reader = CF_ASSERT(buffered.Reader());
-
-  std::vector<uint8_t> data_out(data_in.size() + kPrimeReadSize);
-  size_t read_offset = 0;
-  while (true) {
-    uint8_t* ptr = &data_out[read_offset];
-    size_t amount_read = CF_ASSERT(reader.Read(ptr, kPrimeReadSize));
-    if (amount_read == 0) {
-      break;
-    }
-    read_offset += amount_read;
-  }
-  data_out.resize(read_offset);
-  EXPECT_EQ(data_in, data_out);
-}
-
-// Worst case for triggering re-reads
-TEST(BufferedZipSourceTest, ReadBackwards) {
-  std::vector<uint8_t> data_in;
-  for (int i = 0; i < kCommonUnderlyingDataSize; i++) {
-    data_in.push_back(i);
-  }
-  WritableZipSource data_source =
-      CF_ASSERT(WritableZipSource::BorrowData(data_in.data(), data_in.size()));
-
-  SeekableZipSource buffered =
-      CF_ASSERT(BufferZipSource(std::move(data_source), kCommonBufferSize));
-
-  SeekingZipSourceReader reader = CF_ASSERT(buffered.Reader());
-
-  std::vector<uint8_t> data_out(data_in.size());
-  size_t read_offset = data_out.size() - kCommonReadSize;
-  while (true) {
-    ASSERT_THAT(reader.SeekSet(read_offset), IsOk());
-    uint8_t* ptr = &data_out[read_offset];
-    ASSERT_THAT(reader.Read(ptr, kCommonReadSize),
-                IsOkAndValue(kCommonReadSize));
-    if (read_offset == 0) {
-      break;
-    }
-    read_offset -= kCommonReadSize;
-  }
-  EXPECT_EQ(data_in, data_out);
-}
-
-TEST(BufferedZipSourceTest, ManySmallReadsInMemoryIo) {
   std::vector<char> data_in;
   for (int i = 0; i < kPrimeUnderlyingDataSize; i++) {
     data_in.push_back(i);
   }
-  WritableZipSource data_source =
-      CF_ASSERT(WritableZipSource::BorrowData(data_in.data(), data_in.size()));
 
   SeekableZipSource buffered = CF_ASSERT(BufferZipSource(
       std::make_unique<OwningInMemoryIo>(data_in), kPrimeBufferSize));
@@ -124,6 +64,33 @@ TEST(BufferedZipSourceTest, ManySmallReadsInMemoryIo) {
     read_offset += amount_read;
   }
   data_out.resize(read_offset);
+  EXPECT_EQ(data_in, data_out);
+}
+
+// Worst case for triggering re-reads
+TEST(BufferedZipSourceTest, ReadBackwards) {
+  std::vector<char> data_in;
+  for (int i = 0; i < kCommonUnderlyingDataSize; i++) {
+    data_in.push_back(i);
+  }
+
+  SeekableZipSource buffered = CF_ASSERT(BufferZipSource(
+      std::make_unique<OwningInMemoryIo>(data_in), kCommonBufferSize));
+
+  SeekingZipSourceReader reader = CF_ASSERT(buffered.Reader());
+
+  std::vector<char> data_out(data_in.size());
+  size_t read_offset = data_out.size() - kCommonReadSize;
+  while (true) {
+    ASSERT_THAT(reader.SeekSet(read_offset), IsOk());
+    char* ptr = &data_out[read_offset];
+    ASSERT_THAT(reader.Read(ptr, kCommonReadSize),
+                IsOkAndValue(kCommonReadSize));
+    if (read_offset == 0) {
+      break;
+    }
+    read_offset -= kCommonReadSize;
+  }
   EXPECT_EQ(data_in, data_out);
 }
 

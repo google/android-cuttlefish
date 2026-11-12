@@ -15,6 +15,7 @@
 
 #include "cuttlefish/host/libs/web/fallback_build_api.h"
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -25,8 +26,8 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
@@ -49,9 +50,7 @@ class FakeBackend : public BuildApi<DeviceBuildString, DeviceBuild> {
 
   Result<DeviceBuild> GetBuild(const DeviceBuildString& build_string) override {
     calls.push_back("GetBuild");
-    if (!succeeds_) {
-      return CF_ERRF("{} cannot resolve builds", name_);
-    }
+    CF_EXPECTF(!!succeeds_, "{} cannot resolve builds", name_);
     return DeviceBuild{.id = name_, .target = *build_string.target};
   }
 
@@ -59,20 +58,15 @@ class FakeBackend : public BuildApi<DeviceBuildString, DeviceBuild> {
                                    const std::string& target_directory,
                                    const std::string& artifact_name) override {
     calls.push_back("DownloadFile");
-    if (!succeeds_) {
-      return CF_ERRF("{} cannot download '{}'", name_, artifact_name);
-    }
+    CF_EXPECTF(!!succeeds_, "{} cannot download '{}'", name_, artifact_name);
     return name_ + ":" + target_directory + "/" + artifact_name;
   }
 
-  Result<SeekableZipSource> FileReader(
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
       const DeviceBuild&, const std::string& artifact_name) override {
     calls.push_back("FileReader");
-    if (!succeeds_) {
-      return CF_ERRF("{} cannot read '{}'", name_, artifact_name);
-    }
-    return CF_EXPECT(
-        WritableZipSource::BorrowData(contents_.data(), contents_.size()));
+    CF_EXPECTF(!!succeeds_, "{} cannot read '{}'", name_, artifact_name);
+    return std::make_unique<OwningInMemoryIo>(kContents);
   }
 
   std::vector<std::string> calls;
@@ -80,7 +74,6 @@ class FakeBackend : public BuildApi<DeviceBuildString, DeviceBuild> {
  private:
   std::string name_;
   bool succeeds_;
-  std::string contents_ = kContents;
 };
 
 DeviceBuildString TestBuildString() {

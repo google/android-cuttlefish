@@ -30,11 +30,13 @@
 #include "cuttlefish/host/libs/web/android_build_string/http_build_string.h"
 #include "cuttlefish/host/libs/web/http_client/fake_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/zip/buffered_zip_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/zip_over_ranges.h"
 #include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/string.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
@@ -294,13 +296,15 @@ TEST(HttpBuildApiTests, FileReaderReadsTheObjectSuccess) {
   Result<HttpBuild> build = api.GetBuild(build_string);
   ASSERT_THAT(build, IsOk());
 
-  Result<SeekableZipSource> source = api.FileReader(*build, "phone-img-1.zip");
-  ASSERT_THAT(source, IsOk());
-  Result<ReadableZip> zip = ReadableZip::FromSource(std::move(*source));
-  ASSERT_THAT(zip, IsOk());
-  Result<std::unique_ptr<ReaderSeeker>> member = zip->OpenReadOnly("boot.img");
-  ASSERT_THAT(member, IsOk());
-  EXPECT_THAT(ReadToString(**member), IsOkAndValue("boot bytes"));
+  std::unique_ptr<ReaderSeeker> source =
+      CF_ASSERT(api.FileReader(*build, "phone-img-1.zip"));
+  SeekableZipSource zip_source =
+      CF_ASSERT(BufferZipSource(std::move(source), 1));
+  ReadableZip zip = CF_ASSERT(ReadableZip::FromSource(std::move(zip_source)));
+  std::unique_ptr<ReaderSeeker> member =
+      CF_ASSERT(zip.OpenReadOnly("boot.img"));
+  ASSERT_TRUE(member.get());
+  EXPECT_THAT(ReadToString(*member), IsOkAndValue("boot bytes"));
 
   EXPECT_TRUE(http_client.RequestMade(kSignedUrl));
   EXPECT_FALSE(authorized);
@@ -322,13 +326,15 @@ TEST(HttpBuildApiTests, FileReaderReadsAnOriginThatRejectsHeadSuccess) {
   Result<HttpBuild> build = api.GetBuild(build_string);
   ASSERT_THAT(build, IsOk());
 
-  Result<SeekableZipSource> source = api.FileReader(*build, "phone-img-1.zip");
-  ASSERT_THAT(source, IsOk());
-  Result<ReadableZip> zip = ReadableZip::FromSource(std::move(*source));
-  ASSERT_THAT(zip, IsOk());
-  Result<std::unique_ptr<ReaderSeeker>> member = zip->OpenReadOnly("boot.img");
-  ASSERT_THAT(member, IsOk());
-  EXPECT_THAT(ReadToString(**member), IsOkAndValue("boot bytes"));
+  std::unique_ptr<ReaderSeeker> source =
+      CF_ASSERT(api.FileReader(*build, "phone-img-1.zip"));
+  SeekableZipSource zip_source =
+      CF_ASSERT(BufferZipSource(std::move(source), 1));
+  ReadableZip zip = CF_ASSERT(ReadableZip::FromSource(std::move(zip_source)));
+  std::unique_ptr<ReaderSeeker> member =
+      CF_ASSERT(zip.OpenReadOnly("boot.img"));
+  ASSERT_TRUE(member.get());
+  EXPECT_THAT(ReadToString(*member), IsOkAndValue("boot bytes"));
   EXPECT_EQ(zip_handler->HeadRequests(), 1);
 }
 

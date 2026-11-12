@@ -21,7 +21,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <optional>
 #include <utility>
 #include <vector>
 
@@ -47,19 +46,6 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
 
     callbacks->size_ = CF_EXPECT(Length(*data_provider));
     callbacks->data_provider_ = std::move(data_provider);
-
-    return callbacks;
-  }
-
-  static Result<std::unique_ptr<BufferedZipSourceCallbacks>> Create(
-      SeekableZipSource source, size_t buffer_size) {
-    std::unique_ptr<BufferedZipSourceCallbacks> callbacks(
-        new BufferedZipSourceCallbacks(buffer_size));
-
-    callbacks->source_ = std::move(source);
-    callbacks->data_provider_ = std::make_unique<SeekingZipSourceReader>(
-        CF_EXPECT(callbacks->source_->Reader()));
-    callbacks->size_ = CF_EXPECT(Length(*callbacks->data_provider_));
 
     return callbacks;
   }
@@ -141,7 +127,6 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
       : buffer_(buffer_size) {}
 
   std::unique_ptr<ReaderSeeker> data_provider_;
-  std::optional<SeekableZipSource> source_;
   std::vector<char> buffer_;
   uint64_t size_ = 0;
   int64_t offset_ = 0;
@@ -160,15 +145,7 @@ Result<SeekableZipSource> BufferZipSource(
   return CF_EXPECT(SeekableZipSource::FromCallbacks(std::move(callbacks)));
 }
 
-Result<SeekableZipSource> BufferZipSource(SeekableZipSource source,
-                                          size_t buffer_size) {
-  std::unique_ptr<BufferedZipSourceCallbacks> callbacks = CF_EXPECT(
-      BufferedZipSourceCallbacks::Create(std::move(source), buffer_size));
-
-  return CF_EXPECT(SeekableZipSource::FromCallbacks(std::move(callbacks)));
-}
-
-Result<ReadableZip> BufferAndOpenZip(SeekableZipSource source) {
+Result<ReadableZip> BufferAndOpenZip(std::unique_ptr<ReaderSeeker> source) {
   SeekableZipSource buffered =
       CF_EXPECT(BufferZipSource(std::move(source), 1 << 26));
 

@@ -15,6 +15,7 @@
 
 #include "cuttlefish/host/libs/web/build_api_zip.h"
 
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -23,14 +24,15 @@
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/zip/buffered_zip_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 Result<ReadableZip> OpenZip(BuildApi<BuildString, Build>& build_api,
                             const Build& build, const std::string& name) {
-  SeekableZipSource source = CF_EXPECT(build_api.FileReader(build, name));
+  std::unique_ptr<ReaderSeeker> source =
+      CF_EXPECT(build_api.FileReader(build, name));
 
   return CF_EXPECT(BufferAndOpenZip(std::move(source)));
 }

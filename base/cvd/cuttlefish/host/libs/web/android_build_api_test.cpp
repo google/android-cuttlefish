@@ -15,6 +15,7 @@
 
 #include "cuttlefish/host/libs/web/android_build_api.h"
 
+#include <memory>
 #include <string>
 
 #include "gmock/gmock.h"
@@ -24,8 +25,8 @@
 #include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/http_client/fake_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/io/reader_seeker.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -51,14 +52,12 @@ TEST(AndroidBuildApiTest, FileReader) {
   http_client.SetResponse(res, "http://zip-url");
 
   DeviceBuild build = {.id = "123", .target = "test"};
-  Result<SeekableZipSource> source = api.FileReader(build, "a.zip");
-  ASSERT_THAT(source, IsOk());
-
-  Result<SeekingZipSourceReader> reader = source->Reader();
-  ASSERT_THAT(reader, IsOk());
+  std::unique_ptr<ReaderSeeker> source =
+      CF_ASSERT(api.FileReader(build, "a.zip"));
+  ASSERT_TRUE(source.get());
 
   char buf[4] = {};
-  ASSERT_THAT(reader->Read(buf, 3), IsOkAndValue(3));
+  ASSERT_THAT(source->Read(buf, 3), IsOkAndValue(3));
   EXPECT_STREQ(buf, "abc");
 
   EXPECT_TRUE(http_client.RequestMade(

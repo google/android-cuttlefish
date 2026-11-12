@@ -17,6 +17,8 @@
 
 #include <stddef.h>
 
+#include <memory>
+
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/io/reader_seeker.h"
@@ -26,9 +28,7 @@ namespace cuttlefish {
 
 Result<SeekableZipSource> BufferZipSource(std::unique_ptr<ReaderSeeker>,
                                           size_t buffer_size);
-Result<SeekableZipSource> BufferZipSource(SeekableZipSource,
-                                          size_t buffer_size);
 
-Result<ReadableZip> BufferAndOpenZip(SeekableZipSource);
+Result<ReadableZip> BufferAndOpenZip(std::unique_ptr<ReaderSeeker>);
 
 }  // namespace cuttlefish

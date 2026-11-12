@@ -19,7 +19,9 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <algorithm>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -52,6 +54,11 @@ class RemoteZip : public SeekableZipSourceCallback {
     return true;
   }
   int64_t Read(char* zip_data, uint64_t zip_len) override {
+    if (zip_len == 0 || offset_ >= size_) {
+      return 0;
+    }
+    zip_len = std::min(zip_len, size_ - offset_);
+
     uint64_t already_read = 0;
 
     auto cb = [&already_read, &zip_data, &zip_len](
@@ -119,20 +126,13 @@ Result<uint64_t> GetSizeIfSupportsRangeRequests(
 
 Result<SeekableZipSource> ZipSourceFromUrl(HttpClient& http_client,
                                            const std::string& url,
-                                           std::vector<std::string> headers) {
-  uint64_t size =
-      CF_EXPECT(GetSizeIfSupportsRangeRequests(http_client, url, headers));
-
-  return CF_EXPECT(
-      ZipSourceFromUrl(http_client, url, std::move(headers), size));
-}
-
-Result<SeekableZipSource> ZipSourceFromUrl(HttpClient& http_client,
-                                           const std::string& url,
                                            std::vector<std::string> headers,
-                                           uint64_t size) {
+                                           std::optional<uint64_t> size) {
+  if (!size.has_value()) {
+    size = CF_EXPECT(GetSizeIfSupportsRangeRequests(http_client, url, headers));
+  }
   std::unique_ptr<RemoteZip> callbacks =
-      std::make_unique<RemoteZip>(http_client, url, size, std::move(headers));
+      std::make_unique<RemoteZip>(http_client, url, *size, std::move(headers));
   CF_EXPECT(callbacks.get());
 
   return CF_EXPECT(SeekableZipSource::FromCallbacks(std::move(callbacks)));

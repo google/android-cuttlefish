@@ -15,12 +15,13 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -34,8 +35,8 @@ class CachingBuildApi : public BuildApi<BuildString, Build> {
                                    const std::string& target_directory,
                                    const std::string& artifact_name) override;
 
-  Result<SeekableZipSource> FileReader(const Build&,
-                                       const std::string& artifact) override;
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
+      const Build&, const std::string& artifact) override;
 
  private:
   BuildApi& build_api_;

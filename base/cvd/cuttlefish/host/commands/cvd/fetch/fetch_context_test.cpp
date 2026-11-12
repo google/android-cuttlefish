@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 
@@ -38,7 +39,7 @@
 #include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/url_namespace.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
@@ -56,7 +57,7 @@ class MockBuildApi : public BuildApi<BuildString, Build> {
   MOCK_METHOD(Result<std::string>, DownloadFile,
               (const Build&, const std::string&, const std::string&),
               (override));
-  MOCK_METHOD(Result<SeekableZipSource>, FileReader,
+  MOCK_METHOD(Result<std::unique_ptr<ReaderSeeker>>, FileReader,
               (const Build&, const std::string&), (override));
 };
 
@@ -170,8 +171,8 @@ class UncompressedBuildApi : public BuildApi<BuildString, Build> {
     return dir;
   }
 
-  Result<SeekableZipSource> FileReader(const Build&,
-                                       const std::string&) override {
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
+      const Build&, const std::string&) override {
     return CF_ERR("Not implemented");
   }
 };

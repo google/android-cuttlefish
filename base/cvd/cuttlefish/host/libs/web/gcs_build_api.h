@@ -16,6 +16,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -24,7 +25,7 @@
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -41,7 +42,7 @@ class GcsBuildApi : public BuildApi<GcsBuildString, GcsBuild> {
                                    const std::string& target_directory,
                                    const std::string& artifact_name) override;
 
-  Result<SeekableZipSource> FileReader(
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
       const GcsBuild& build, const std::string& artifact_name) override;
 
  private:

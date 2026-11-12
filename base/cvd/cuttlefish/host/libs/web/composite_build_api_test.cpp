@@ -35,7 +35,6 @@
 #include "cuttlefish/host/libs/web/gcs_build_api.h"
 #include "cuttlefish/host/libs/web/http_build_api.h"
 #include "cuttlefish/host/libs/web/http_client/fake_http_client.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
@@ -120,22 +119,21 @@ TEST_F(CompositeBuildApiTests, DownloadFileRoutesByBuildAlternativeSuccess) {
 }
 
 TEST_F(CompositeBuildApiTests, FileReaderRoutesByBuildAlternativeSuccess) {
-  Result<SeekableZipSource> device =
-      api_.FileReader(DeviceBuild{.id = "1", .target = "target"}, "a.zip");
-  EXPECT_THAT(device, IsError());
+  EXPECT_THAT(
+      api_.FileReader(DeviceBuild{.id = "1", .target = "target"}, "a.zip"),
+      IsError());
   EXPECT_TRUE(http_client_.RequestMade(kAndroidBuildHost));
 
   EXPECT_THAT(api_.FileReader(LocalBuild(), "a.zip"),
               IsErrorAndMessage(HasSubstr("a.zip")));
 
-  Result<SeekableZipSource> gcs = api_.FileReader(ListedGcsBuild(), "a.txt");
-  EXPECT_THAT(gcs, IsError());
+  EXPECT_THAT(api_.FileReader(ListedGcsBuild(), "a.txt"), IsError());
   EXPECT_TRUE(http_client_.RequestMade(kStorageHost));
 
-  Result<SeekableZipSource> http = api_.FileReader(
-      *HttpBuild::FromBuildString(HttpBuildString{.url = kObjectUrl}),
-      "img.zip");
-  EXPECT_THAT(http, IsError());
+  EXPECT_THAT(api_.FileReader(*HttpBuild::FromBuildString(
+                                  HttpBuildString{.url = kObjectUrl}),
+                              "img.zip"),
+              IsError());
   EXPECT_TRUE(http_client_.RequestMade(kObjectUrl));
 }
 

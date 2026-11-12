@@ -25,7 +25,7 @@
 #include "cuttlefish/host/libs/web/directory_build_api.h"
 #include "cuttlefish/host/libs/web/gcs_build_api.h"
 #include "cuttlefish/host/libs/web/http_build_api.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -67,15 +67,15 @@ class CompositeBuildApi : public BuildApi<BuildString, Build>,
                                    const std::string& target_directory,
                                    const std::string& artifact_name) override;
 
-  Result<SeekableZipSource> FileReader(
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
       const Build& build, const std::string& artifact_name) override;
-  Result<SeekableZipSource> FileReader(
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
       const DeviceBuild& build, const std::string& artifact_name) override;
-  Result<SeekableZipSource> FileReader(
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
       const DirectoryBuild& build, const std::string& artifact_name) override;
-  Result<SeekableZipSource> FileReader(
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
       const GcsBuild& build, const std::string& artifact_name) override;
-  Result<SeekableZipSource> FileReader(
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
       const HttpBuild& build, const std::string& artifact_name) override;
 
  private:
