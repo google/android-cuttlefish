@@ -3,8 +3,9 @@ FROM mirror.gcr.io/library/debian:bookworm-20250811 AS base
 ENV DEBIAN_FRONTEND=noninteractive
 ENV OVERRIDE_BAZEL_WRAPPER_DOWNLOAD_DIR=/tmp/cw_bazel
 
-RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y sudo systemd init systemd-journal-remote nginx jq adb
+RUN apt-get update && apt-get upgrade -y && \
+  apt-get install -y sudo systemd init systemd-journal-remote nginx jq adb \
+  qemu-system-arm qemu-system-x86 qemu-utils
 
 # Packages needed to run CTS
 RUN apt-get install -y aapt

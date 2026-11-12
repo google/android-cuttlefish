@@ -1,6 +1,7 @@
 //cvd/bugreport_tests:bugreport_tests
 //cvd/bugreport_tests:bugreport_tests_with_substitution
 //cvd/common:common_test
+//cvd/cvd_create_tests:cvd_create_qemu_test
 //cvd/cvd_create_tests:cvd_create_substitute_only
 //cvd/cvd_create_tests:cvd_create_tests
 //cvd/cvd_create_tests:cvd_create_tests_additional_substitution

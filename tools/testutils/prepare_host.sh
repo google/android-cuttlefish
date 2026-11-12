@@ -68,6 +68,9 @@ if [[ "${PKG_DIR}" == "" ]] || ! [[ -d "${PKG_DIR}" ]]; then
   exit 1
 fi
 
+sudo apt-get update
+sudo apt-get install -y qemu-system-arm qemu-system-x86 qemu-utils
+
 install_pkgs "${PKG_DIR}" cuttlefish-base cuttlefish-metrics cuttlefish-user
 
 check_service_started cuttlefish-host-resources
