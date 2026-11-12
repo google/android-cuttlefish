@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -24,7 +25,7 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/web/build_api.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -63,11 +64,12 @@ class FallbackBuildApi : public BuildApi<StringType, BuildType> {
     }));
   }
 
-  Result<SeekableZipSource> FileReader(
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
       const BuildType& build, const std::string& artifact_name) override {
-    return CF_EXPECT(FirstSuccess<SeekableZipSource>([&](Backend& backend) {
-      return backend.FileReader(build, artifact_name);
-    }));
+    return CF_EXPECT(
+        FirstSuccess<std::unique_ptr<ReaderSeeker>>([&](Backend& backend) {
+          return backend.FileReader(build, artifact_name);
+        }));
   }
 
  private:

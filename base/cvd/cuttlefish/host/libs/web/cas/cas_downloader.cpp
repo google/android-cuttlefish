@@ -41,7 +41,7 @@
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
@@ -504,7 +504,7 @@ Result<std::string> CasDownloader::DownloadFile(
   return target_filepath;
 }
 
-Result<SeekableZipSource> CasDownloader::FileReader(
+Result<std::unique_ptr<ReaderSeeker>> CasDownloader::FileReader(
     const DeviceBuild&, const std::string& artifact_name) {
   return CF_ERRF(
       "CAS cannot read parts of '{}'; it only downloads whole files.",

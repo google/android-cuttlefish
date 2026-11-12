@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -26,19 +27,12 @@
 
 namespace cuttlefish {
 
-/* Creates a read-only zip archive that downloads files on-demand from a remote
- * URL. It requires and validates the remote web server supports HTTP range
- * requests. `headers` are passed through when making HTTP requests to the
- * `HttpClient`. */
-Result<SeekableZipSource> ZipSourceFromUrl(HttpClient&, const std::string& url,
-                                           std::vector<std::string> headers);
-
-/* Creates a read-only zip archive that downloads files on-demand from a remote
- * URL, for a caller that already knows the object's `size` and that the remote
- * web server supports HTTP range requests. Makes no request to check either.
- * `headers` are passed through when making HTTP requests to the
- * `HttpClient`. */
-Result<SeekableZipSource> ZipSourceFromUrl(HttpClient&, const std::string& url,
-                                           std::vector<std::string> headers,
-                                           uint64_t size);
+/* Creates a read-only zip archive that downloads files from a remote URL.
+ *
+ * If `size` is known, assumes the remote side supports HTTP range requests.
+ * Otherwise, uses a `HEAD` request to validate both. `headers` are passed
+ * through when making HTTP requests to the `HttpClient`. */
+Result<SeekableZipSource> ZipSourceFromUrl(
+    HttpClient&, const std::string& url, std::vector<std::string> headers,
+    std::optional<uint64_t> size = std::nullopt);
 }  // namespace cuttlefish

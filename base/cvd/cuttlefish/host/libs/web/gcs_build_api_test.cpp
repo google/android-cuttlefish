@@ -32,11 +32,13 @@
 #include "cuttlefish/host/libs/web/credential_source/fixed_credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/fake_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/zip/buffered_zip_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/zip_over_ranges.h"
 #include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/string.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
@@ -296,13 +298,15 @@ TEST(GcsBuildApiTests, FileReaderReadsTheNamedArtifactSuccess) {
   Result<GcsBuild> build = api.GetBuild(build_string);
   ASSERT_THAT(build, IsOk());
 
-  Result<SeekableZipSource> source = api.FileReader(*build, "phone-img-1.zip");
-  ASSERT_THAT(source, IsOk());
-  Result<ReadableZip> zip = ReadableZip::FromSource(std::move(*source));
-  ASSERT_THAT(zip, IsOk());
-  Result<std::unique_ptr<ReaderSeeker>> member = zip->OpenReadOnly("boot.img");
-  ASSERT_THAT(member, IsOk());
-  EXPECT_THAT(ReadToString(**member), IsOkAndValue("boot bytes"));
+  std::unique_ptr<ReaderSeeker> source =
+      CF_ASSERT(api.FileReader(*build, "phone-img-1.zip"));
+  SeekableZipSource zip_source =
+      CF_ASSERT(BufferZipSource(std::move(source), 1));
+  ReadableZip zip = CF_ASSERT(ReadableZip::FromSource(std::move(zip_source)));
+  std::unique_ptr<ReaderSeeker> member =
+      CF_ASSERT(zip.OpenReadOnly("boot.img"));
+  ASSERT_TRUE(member.get());
+  EXPECT_THAT(ReadToString(*member), IsOkAndValue("boot bytes"));
   EXPECT_TRUE(http_client.RequestMade(kMediaUrl));
   EXPECT_TRUE(http_client.RequestMade("&generation=1"));
   // The listing reported the size, so the reader has nothing left to ask.
@@ -325,13 +329,15 @@ TEST(GcsBuildApiTests, FileReaderReadsOneGenerationOfAnObjectSuccess) {
   Result<GcsBuild> build = api.GetBuild(build_string);
   ASSERT_THAT(build, IsOk());
 
-  Result<SeekableZipSource> source = api.FileReader(*build, "phone-img-1.zip");
-  ASSERT_THAT(source, IsOk());
-  Result<ReadableZip> zip = ReadableZip::FromSource(std::move(*source));
-  ASSERT_THAT(zip, IsOk());
-  Result<std::unique_ptr<ReaderSeeker>> member = zip->OpenReadOnly("boot.img");
-  ASSERT_THAT(member, IsOk());
-  EXPECT_THAT(ReadToString(**member), IsOkAndValue("boot bytes"));
+  std::unique_ptr<ReaderSeeker> source =
+      CF_ASSERT(api.FileReader(*build, "phone-img-1.zip"));
+  SeekableZipSource zip_source =
+      CF_ASSERT(BufferZipSource(std::move(source), 1));
+  ReadableZip zip = CF_ASSERT(ReadableZip::FromSource(std::move(zip_source)));
+  std::unique_ptr<ReaderSeeker> member =
+      CF_ASSERT(zip.OpenReadOnly("boot.img"));
+  ASSERT_TRUE(member.get());
+  EXPECT_THAT(ReadToString(*member), IsOkAndValue("boot bytes"));
   // Every range of the read names the version the probe reported.
   EXPECT_TRUE(zip_handler->RangeRequestMade());
   EXPECT_TRUE(http_client.RequestMade("&generation=17"));

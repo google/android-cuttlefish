@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -47,6 +48,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/remote_zip.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -274,7 +276,8 @@ Result<std::string> GcsBuildApi::DownloadFile(
   CF_EXPECT(EnsureDirectoryExists(target_directory));
 
   if (IsArchiveMember(build.object, build.filepath, artifact_name)) {
-    SeekableZipSource source = CF_EXPECT(FileReader(build, *build.object));
+    std::unique_ptr<ReaderSeeker> source =
+        CF_EXPECT(FileReader(build, *build.object));
     ReadableZip zip = CF_EXPECT(BufferAndOpenZip(std::move(source)));
     CF_EXPECTF(ExtractFile(zip, artifact_name, dest_path),
                "Could not read '{}' out of '{}'.", artifact_name, build.id);
@@ -295,15 +298,14 @@ Result<std::string> GcsBuildApi::DownloadFile(
   return dest_path;
 }
 
-Result<SeekableZipSource> GcsBuildApi::FileReader(
+Result<std::unique_ptr<ReaderSeeker>> GcsBuildApi::FileReader(
     const GcsBuild& build, const std::string& artifact_name) {
   const std::string url = CF_EXPECT(ArtifactUrl(build, artifact_name));
   std::vector<std::string> headers = CF_EXPECT(Headers());
-  if (std::optional<uint64_t> size = ArtifactSize(build, artifact_name)) {
-    return CF_EXPECT(
-        ZipSourceFromUrl(http_client_, url, std::move(headers), *size));
-  }
-  return CF_EXPECT(ZipSourceFromUrl(http_client_, url, std::move(headers)));
+  const std::optional<uint64_t> size = ArtifactSize(build, artifact_name);
+  SeekableZipSource source =
+      CF_EXPECT(ZipSourceFromUrl(http_client_, url, std::move(headers), size));
+  return CF_EXPECT(ZipSourceAsReaderSeeker(std::move(source)));
 }
 
 }  // namespace cuttlefish

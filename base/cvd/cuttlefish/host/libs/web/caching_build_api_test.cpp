@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -37,8 +38,8 @@
 #include "cuttlefish/host/libs/web/android_build_string/gcs_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_string/http_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
+#include "cuttlefish/io/owning_in_memory_io.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
@@ -71,14 +72,12 @@ class RecordingBuildApi : public BuildApi<BuildString, Build> {
     return path;
   }
 
-  Result<SeekableZipSource> FileReader(const Build&,
-                                       const std::string&) override {
-    return CF_EXPECT(
-        WritableZipSource::BorrowData(contents.data(), contents.size()));
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
+      const Build&, const std::string&) override {
+    return std::make_unique<OwningInMemoryIo>(kContents);
   }
 
   std::vector<std::string> directories;
-  std::string contents = kContents;
 };
 
 class CachingBuildApiTests : public ::testing::Test {
@@ -203,8 +202,8 @@ class UncompressedBuildApi : public BuildApi<BuildString, Build> {
     return path;
   }
 
-  Result<SeekableZipSource> FileReader(const Build&,
-                                       const std::string&) override {
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
+      const Build&, const std::string&) override {
     return CF_ERR("not used");
   }
 

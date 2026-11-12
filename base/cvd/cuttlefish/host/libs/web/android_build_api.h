@@ -16,6 +16,7 @@
 #pragma once
 
 #include <chrono>
+#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_set>
@@ -25,12 +26,11 @@
 
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
-#include "cuttlefish/host/libs/web/android_build_string/directory_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/credential_source/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -51,7 +51,7 @@ class AndroidBuildApi : public BuildApi<DeviceBuildString, DeviceBuild> {
                                    const std::string& target_directory,
                                    const std::string& artifact_name) override;
 
-  Result<SeekableZipSource> FileReader(
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
       const DeviceBuild&, const std::string& artifact_name) override;
 
  private:

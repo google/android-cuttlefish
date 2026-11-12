@@ -26,7 +26,7 @@
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -106,7 +106,7 @@ class CasDownloader : public BuildApi<DeviceBuildString, DeviceBuild> {
       const std::optional<std::string>& stats_filepath);
 
   // CAS cannot serve parts of an artifact; always fails.
-  Result<SeekableZipSource> FileReader(
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
       const DeviceBuild& build, const std::string& artifact_name) override;
 
  private:

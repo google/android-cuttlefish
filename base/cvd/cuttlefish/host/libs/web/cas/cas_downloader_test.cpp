@@ -40,7 +40,7 @@
 #include "cuttlefish/host/libs/web/android_build_string/device_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
@@ -82,8 +82,8 @@ class FakeDigestsSource : public BuildApi<DeviceBuildString, DeviceBuild> {
     return CF_EXPECT(fetch(artifact_name));
   }
 
-  Result<SeekableZipSource> FileReader(const DeviceBuild&,
-                                       const std::string&) override {
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
+      const DeviceBuild&, const std::string&) override {
     return CF_ERR("not used");
   }
 

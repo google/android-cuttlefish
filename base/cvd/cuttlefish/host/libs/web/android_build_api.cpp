@@ -17,12 +17,14 @@
 
 #include <algorithm>
 #include <chrono>
+#include <memory>
 #include <optional>
 #include <ranges>
 #include <set>
 #include <string>
 #include <thread>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
@@ -46,6 +48,7 @@
 #include "cuttlefish/host/libs/web/parse_time.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/remote_zip.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -127,11 +130,13 @@ Result<std::string> AndroidBuildApi::DownloadArtifact(
   return DownloadTargetFile(build, target_directory, artifact_name);
 }
 
-Result<SeekableZipSource> AndroidBuildApi::FileReader(
+Result<std::unique_ptr<ReaderSeeker>> AndroidBuildApi::FileReader(
     const DeviceBuild& build, const std::string& artifact_name) {
   std::string url = CF_EXPECT(GetArtifactDownloadUrl(build, artifact_name));
   std::vector<std::string> headers = CF_EXPECT(Headers());
-  return CF_EXPECT(ZipSourceFromUrl(http_client_, url, headers));
+  SeekableZipSource source =
+      CF_EXPECT(ZipSourceFromUrl(http_client_, url, headers));
+  return CF_EXPECT(ZipSourceAsReaderSeeker(std::move(source)));
 }
 
 Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(

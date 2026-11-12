@@ -33,33 +33,6 @@ cf_cc_test(
 )
 
 cf_cc_library(
-    name = "cached_zip_source",
-    srcs = ["cached_zip_source.cc"],
-    hdrs = ["cached_zip_source.h"],
-    deps = [
-        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
-        "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
-        "//cuttlefish/host/libs/zip/libzip_cc:stat",
-        "//cuttlefish/io:lazily_loaded_file",
-        "//cuttlefish/io:reader_seeker",
-        "//cuttlefish/result",
-        "@abseil-cpp//absl/log",
-    ],
-)
-
-cf_cc_test(
-    name = "cached_zip_source_test",
-    srcs = ["cached_zip_source_test.cc"],
-    deps = [
-        "//cuttlefish/host/libs/zip:cached_zip_source",
-        "//cuttlefish/host/libs/zip:zip_string",
-        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
-        "//cuttlefish/result",
-        "//cuttlefish/result:result_matchers",
-    ],
-)
-
-cf_cc_library(
     name = "remote_zip",
     srcs = ["remote_zip.cc"],
     hdrs = ["remote_zip.h"],
@@ -85,7 +58,7 @@ cf_cc_test(
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/io:reader_seeker",
         "//cuttlefish/io:string",
-        "//cuttlefish/result",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
     ],
 )

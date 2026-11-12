@@ -16,6 +16,8 @@
 #include "cuttlefish/host/libs/web/directory_build_api.h"
 
 #include <dirent.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <memory>
@@ -26,13 +28,13 @@
 
 #include "android-base/file.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string/directory_build_string.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
+#include "cuttlefish/posix/stat.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
 
@@ -67,13 +69,16 @@ Result<std::string> DirectoryBuildApi::DownloadArtifact(
   return DownloadTargetFile(build, target_directory, artifact_name);
 }
 
-Result<SeekableZipSource> DirectoryBuildApi::FileReader(
+Result<std::unique_ptr<ReaderSeeker>> DirectoryBuildApi::FileReader(
     const DirectoryBuild& build, const std::string& artifact_name) {
   for (const std::string& path : build.paths) {
-    std::string zip_path_attempt = path + "/" + artifact_name;
-    if (FileExists(zip_path_attempt)) {
-      return CF_EXPECT(WritableZipSource::FromFile(zip_path_attempt));
+    const std::string zip_path_attempt = path + "/" + artifact_name;
+    Result<struct stat, int> path_stat_res = Stat(zip_path_attempt);
+    if (!path_stat_res.has_value() || S_ISDIR(path_stat_res->st_mode)) {
+      continue;
     }
+    return std::make_unique<Fd>(
+        CF_EXPECT(Fd::Open(zip_path_attempt, O_RDONLY)));
   }
   return CF_ERRF("Could not find '{}'", artifact_name);
 }
@@ -94,14 +99,15 @@ Result<std::unordered_set<std::string>> DirectoryBuildApi::Artifacts(
 
 Result<void> DirectoryBuildApi::ArtifactToFile(const DirectoryBuild& build,
                                                const std::string& artifact,
-                                               const std::string& path) {
-  for (const auto& path : build.paths) {
-    auto source = path + "/" + artifact;
-    if (!FileExists(source)) {
+                                               const std::string& out_path) {
+  for (const std::string& build_path : build.paths) {
+    const std::string source = build_path + "/" + artifact;
+    Result<struct stat, int> path_stat_res = Stat(source);
+    if (!path_stat_res.has_value() || S_ISDIR(path_stat_res->st_mode)) {
       continue;
     }
-    unlink(path.c_str());
-    CF_EXPECT(Symlink(source, path));
+    unlink(out_path.c_str());
+    CF_EXPECT(Symlink(source, out_path));
     return {};
   }
   return CF_ERR("Could not find artifact \"" << artifact << "\" in build \""

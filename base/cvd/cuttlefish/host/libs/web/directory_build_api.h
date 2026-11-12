@@ -15,14 +15,15 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/android_build_string/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_string/directory_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -40,7 +41,7 @@ class DirectoryBuildApi
                                    const std::string& target_directory,
                                    const std::string& artifact_name) override;
 
-  Result<SeekableZipSource> FileReader(
+  Result<std::unique_ptr<ReaderSeeker>> FileReader(
       const DirectoryBuild&, const std::string& artifact_name) override;
 
  private:
@@ -50,7 +51,7 @@ class DirectoryBuildApi
 
   Result<void> ArtifactToFile(const DirectoryBuild& build,
                               const std::string& artifact,
-                              const std::string& path);
+                              const std::string& out_path);
 
   Result<std::string> DownloadArtifact(const DirectoryBuild& build,
                                        const std::string& target_directory,

@@ -15,9 +15,10 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
@@ -32,7 +33,7 @@ class BuildApi {
       const BuildType& build, const std::string& target_directory,
       const std::string& artifact_name) = 0;
 
-  virtual Result<SeekableZipSource> FileReader(
+  virtual Result<std::unique_ptr<ReaderSeeker>> FileReader(
       const BuildType&, const std::string& artifact_name) = 0;
 };
 
