@@ -1,15 +1,12 @@
-From 6c37ae754e3d73b62a3763e388a7d17e2bbe07bf Mon Sep 17 00:00:00 2001
-From: HONG Yifan <elsk@google.com>
-Date: Thu, 31 Jul 2025 01:09:02 +0000
-Subject: [PATCH 3/5] Make rootcanal_proto public.
+From f911bc9de442cdfd3a849924d230a6a8590255e3 Mon Sep 17 00:00:00 2001
+Subject: [PATCH 2/4] Make rootcanal_proto public
 
-Used by netsim.
 ---
  BUILD | 1 +
  1 file changed, 1 insertion(+)
 
 diff --git a/BUILD b/BUILD
-index c2c25fe..2c2f1d6 100644
+index 7ae8735..2542248 100644
 --- a/BUILD
 +++ b/BUILD
 @@ -25,6 +25,7 @@ proto_library(
@@ -20,6 +17,3 @@ index c2c25fe..2c2f1d6 100644
  )
  
  cc_proto_library(
--- 
-2.51.0.rc1.167.g924127e9c0-goog
-
