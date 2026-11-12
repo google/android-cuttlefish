@@ -13,11 +13,12 @@
 // limitations under the License.
 
 //! The image signal processor: turns the photo-electrons read out of the [`crate::sensor`]
-//! into encoded YUV 4:2:0 planes.
+//! into encoded YUV 4:2:0 planes, scaled from the crop window of the active array.
 
+use std::cmp::Ordering;
 use std::io::Write;
 
-use crate::render_params::Gain;
+use crate::render_params::{Crop, Gain};
 use crate::scene::{NUM_MATERIALS, SCENE, SCENE_WIDTH};
 use crate::sensor::{MAX_RAW_VALUE, Mapping, SATURATION_ELECTRONS, Sensor};
 
@@ -71,33 +72,93 @@ fn electrons_to_yuv(electrons: [u32; 3], gain: Gain) -> YCbCr {
 /// Per-material YCbCr, indexed by `Material as usize`.
 type Palette = [YCbCr; NUM_MATERIALS];
 
-/// Writes a YUV 4:2:0 frame, looking up every pixel's material through `mapping`.
+/// Trims `crop` to the aspect ratio of a `width`x`height` frame, keeping its center.
+///
+/// E.g. the whole 1280x960 active array into a 1280x720 frame: the crop is taller than the
+/// frame, so 120 rows are dropped at the top and at the bottom, (0, 0, 1280x960) becomes
+/// (0, 120, 1280x720):
+///
+/// ```text
+///          crop                 frame                  result
+///   ┌─────────────────┐                          ┌ ─ ─ ─ ─ ─ ─ ─ ─ ┐  dropped
+///   │                 │   ┌─────────────────┐    ├─────────────────┤
+///   │                 │   │                 │    │                 │
+///   │     1280x960    │   │     1280x720    │    │     1280x720    │
+///   │                 │   │                 │    │                 │
+///   │                 │   └─────────────────┘    ├─────────────────┤
+///   └─────────────────┘                          └ ─ ─ ─ ─ ─ ─ ─ ─ ┘  dropped
+/// ```
+fn fit_aspect(crop: Crop, width: u32, height: u32) -> Crop {
+    let mut new_left = crop.left;
+    let mut new_top = crop.top;
+    let mut new_width = crop.width;
+    let mut new_height = crop.height;
+
+    // Compare the aspect ratios of the crop and the frame.
+    match (crop.width * height).cmp(&(crop.height * width)) {
+        Ordering::Greater => {
+            // The aspect ratio of the crop is bigger: reduce the width and move left to keep
+            // the crop centered.
+            new_width = crop.height * width / height;
+            new_left += (crop.width - new_width) / 2;
+        }
+        Ordering::Less => {
+            // The aspect ratio of the crop is smaller: reduce the height and move top to keep
+            // the crop centered.
+            new_height = crop.width * height / width;
+            new_top += (crop.height - new_height) / 2;
+        }
+        Ordering::Equal => {
+            // Same aspect ratio: nothing to trim.
+        }
+    }
+
+    Crop {
+        left: new_left,
+        top: new_top,
+        width: new_width,
+        height: new_height,
+    }
+}
+
+/// Writes a YUV 4:2:0 frame scaled from the `crop` window of the active array, looking up
+/// every pixel's material through `mapping`.
 fn raster_420(
     mapping: &Mapping,
     palette: &Palette,
+    crop: Crop,
     width: u32,
     height: u32,
     sink_y: &mut dyn Write,
     sink_u: &mut dyn Write,
     sink_v: &mut dyn Write,
 ) -> Result<(), i32> {
+    // Frame column -> active array column, scaled into the crop window.
+    let array_col = |frame_col: u32| -> i32 {
+        (crop.left + (frame_col as u64 * crop.width as u64 / width as u64) as u32) as i32
+    };
+    let array_row = |frame_row: u32| -> i32 {
+        (crop.top + (frame_row as u64 * crop.height as u64 / height as u64) as u32) as i32
+    };
+
     // Precomputed frame column -> scene column (0..20) mapping, so scene_col() does not have
-    // to run again for every row; in a 640x480 frame, e.g. scene_cols_mapping[10] == 0,
-    // scene_cols_mapping[250] == 7, scene_cols_mapping[639] == 19.
-    let scene_cols_mapping: Vec<usize> =
-        (0..width as i32).map(|frame_col| mapping.scene_col(frame_col)).collect();
+    // to run again for every row; in a 640x480 frame of the full active array, e.g.
+    // scene_cols_mapping[10] == 0, scene_cols_mapping[250] == 7, scene_cols_mapping[639] == 19.
+    let scene_cols_mapping: Vec<usize> = (0..width)
+        .map(|frame_col| mapping.scene_col(array_col(frame_col)))
+        .collect();
 
     let mut luma_row = vec![0u8; width as usize];
     let mut cb_row = vec![0u8; (width / 2) as usize];
     let mut cr_row = vec![0u8; (width / 2) as usize];
 
-    for frame_row in 0..height as i32 {
+    for frame_row in 0..height {
         // 4:2:0: chroma is sampled on even rows and even columns only.
         let has_chroma = frame_row % 2 == 0;
 
-        // Get the scene row this frame row falls into (0..20); in a 640x480 frame, e.g.
-        // frame row 10 -> scene row 2, frame row 300 -> scene row 11.
-        let scene_row = mapping.scene_row(frame_row);
+        // Get the scene row this frame row falls into (0..20); in a 640x480 frame of the full
+        // active array, e.g. frame row 10 -> scene row 2, frame row 300 -> scene row 11.
+        let scene_row = mapping.scene_row(array_row(frame_row));
 
         for frame_col in 0..width as usize {
             let scene_col = scene_cols_mapping[frame_col];
@@ -124,10 +185,28 @@ fn raster_420(
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Isp {
     pub gain: Gain,
+    pub crop: Crop,
 }
 
 impl Isp {
     /// Reads frame `iteration` out of `sensor` and writes it as YUV 4:2:0 planes.
+    ///
+    /// E.g. a 320x240 (4:3) crop at (480, 360) into a 640x480 (4:3) frame: the frame pixel
+    /// (fx, fy) looks at the array pixel (480 + fx / 2, 360 + fy / 2), every array pixel of the
+    /// crop becomes 2x2 frame pixels and the tiles a, b, c, d fill the frame:
+    ///
+    /// ```text
+    ///       active array 1280x960                     frame 640x480
+    ///   ┌────────────────────────────┐             ┌───────┬───────┐
+    ///   │                            │             │       │       │
+    ///   │         320x240            │             │   a   │   b   │
+    ///   │         ┌─────┐            │             │       │       │
+    ///   │         │ a b │            │  ────────▶  ├───────┼───────┤
+    ///   │         │ c d │            │             │       │       │
+    ///   │         └─────┘            │             │   c   │   d   │
+    ///   │                            │             │       │       │
+    ///   └────────────────────────────┘             └───────┴───────┘
+    /// ```
     pub fn process(
         &self,
         sensor: &Sensor,
@@ -146,7 +225,10 @@ impl Isp {
             *yuv = electrons_to_yuv(e, self.gain);
         }
 
-        let mapping = sensor.readout(width, height, time_since_idx_ns);
-        raster_420(&mapping, &palette, width, height, sink_y, sink_u, sink_v)
+        let mapping = sensor.readout(time_since_idx_ns);
+        let fitted_crop = fit_aspect(self.crop, width, height);
+        raster_420(
+            &mapping, &palette, fitted_crop, width, height, sink_y, sink_u, sink_v,
+        )
     }
 }

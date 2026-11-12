@@ -51,9 +51,13 @@ pub const MAX_RAW_VALUE: u32 = 4000;
 /// Photo-electrons (R, G, B) collected for each material, indexed by `Material as usize`.
 pub type MaterialElectrons = [[u32; 3]; NUM_MATERIALS];
 
-/// Maps frame rows and columns onto scene rows and columns (0..20).
+/// Size of the active pixel array; frames are scaled down from a window of it.
+pub const ACTIVE_ARRAY_WIDTH: u32 = 1280;
+pub const ACTIVE_ARRAY_HEIGHT: u32 = 960;
+
+/// Maps active array rows and columns onto scene rows and columns (0..20).
 pub struct Mapping {
-    /// Frame pixels per scene row/column.
+    /// Active array pixels per scene row/column.
     map_div: i32,
     offset_x: i32,
     offset_y: i32,
@@ -62,8 +66,8 @@ pub struct Mapping {
 }
 
 impl Mapping {
-    fn new(width: u32, height: u32, time_since_idx_ns: f32) -> Self {
-        let (width, height) = (width as i32, height as i32);
+    fn new(time_since_idx_ns: f32) -> Self {
+        let (width, height) = (ACTIVE_ARRAY_WIDTH as i32, ACTIVE_ARRAY_HEIGHT as i32);
         let map_div = if width > height {
             width / (SCENE_WIDTH as i32 + 1) + 1
         } else {
@@ -90,14 +94,14 @@ impl Mapping {
     }
 
     #[inline]
-    pub fn scene_col(&self, frame_col: i32) -> usize {
-        ((frame_col + self.offset_x + self.handshake_x) / self.map_div)
+    pub fn scene_col(&self, array_col: i32) -> usize {
+        ((array_col + self.offset_x + self.handshake_x) / self.map_div)
             .clamp(0, SCENE_WIDTH as i32 - 1) as usize
     }
 
     #[inline]
-    pub fn scene_row(&self, frame_row: i32) -> usize {
-        ((frame_row + self.offset_y + self.handshake_y) / self.map_div)
+    pub fn scene_row(&self, array_row: i32) -> usize {
+        ((array_row + self.offset_y + self.handshake_y) / self.map_div)
             .clamp(0, SCENE_HEIGHT as i32 - 1) as usize
     }
 }
@@ -174,9 +178,9 @@ impl Sensor {
         out
     }
 
-    /// Maps each pixel of a `width`x`height` frame to the scene row/column it is looking at, at
-    /// scene time `time_since_idx_ns`.
-    pub fn readout(&self, width: u32, height: u32, time_since_idx_ns: f32) -> Mapping {
-        Mapping::new(width, height, time_since_idx_ns)
+    /// Maps each pixel of the active array to the scene row/column it is looking at, at scene
+    /// time `time_since_idx_ns`.
+    pub fn readout(&self, time_since_idx_ns: f32) -> Mapping {
+        Mapping::new(time_since_idx_ns)
     }
 }
