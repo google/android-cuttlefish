@@ -72,6 +72,5 @@ cc_binary(
         "@googletest//:gtest",
         "@libzip",
         "@mkbootimg//:bootimg_header",
-        "@zlib",
     ],
 )

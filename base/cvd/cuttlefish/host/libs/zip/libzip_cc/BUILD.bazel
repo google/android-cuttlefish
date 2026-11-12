@@ -23,7 +23,6 @@ cf_cc_library(
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings:string_view",
         "@libzip",
-        "@zlib",
     ],
 )
 
@@ -66,7 +65,6 @@ cf_cc_library(
         "//cuttlefish/io",
         "//cuttlefish/result",
         "@libzip",
-        "@zlib",
     ],
 )
 
@@ -88,7 +86,6 @@ cf_cc_library(
         "//cuttlefish/io:visitable",
         "//cuttlefish/result",
         "@libzip",
-        "@zlib",
     ],
 )
 
@@ -117,6 +114,5 @@ cf_cc_library(
         "//cuttlefish/io:writer_seeker",
         "//cuttlefish/result",
         "@libzip",
-        "@zlib",
     ],
 )
