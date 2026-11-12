@@ -66,8 +66,11 @@ jobs:
       # In //cuttlefish/package/minimal but not in the list above.
       run: |
         cd base/cvd
-        for target in //cuttlefish/host/commands/control_env_proxy_server \
-            //cuttlefish/host/graphics_detector @avb//:avbtool.py; do
+        # avbtool.py first: building only a source file removes the
+        # bazel-bin link, and the next build puts it back.
+        for target in @avb//:avbtool.py \
+            //cuttlefish/host/commands/control_env_proxy_server \
+            //cuttlefish/host/graphics_detector; do
           bazel build --disk_cache=$HOME/bazel-disk-cache "$target" \
             || echo "::warning::$target does not build"
         done
