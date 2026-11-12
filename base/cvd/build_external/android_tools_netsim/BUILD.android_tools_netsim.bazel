@@ -39,6 +39,16 @@ pdl_rust(
     out = "arp_packets.rs",
 )
 
+# netsim still consumes the legacy rust backend output (pdl-runtime 0.3.x),
+# which rootcanal's newer pdlc no longer emits, so generate it here with
+# netsim's own pdlc.
+pdl_rust(
+    name = "rootcanal_link_layer_rust_gen",
+    src = "@rootcanal//packets:link_layer_packets.pdl",
+    out = "link_layer_packets.rs",
+    output_format = "rust_legacy",
+)
+
 # HACK to have a unified OUT_DIR
 collect_files_in_dir(
     name = "libnetsim_packets_out_dir",
@@ -48,7 +58,7 @@ collect_files_in_dir(
         ":netsim_llc_rust_gen",
         ":netsim_mac80211_hwsim_rust_gen",
         ":netsim_netlink_rust_gen",
-        "@rootcanal//packets:link_layer_packets_rs",
+        ":rootcanal_link_layer_rust_gen",
     ],
     out = "libnetsim_packets_out_dir",
 )
@@ -234,11 +244,11 @@ cc_library(
     name = "netsim_daemon_ffi_cc_library",
     srcs = ["netsim-daemon/src/ffi.rs.cc"],
     hdrs = ["netsim-daemon/src/ffi.rs.h"],
+    linkstatic = True,
     deps = [
         ":lib-netsim",
     ],
     alwayslink = True,
-    linkstatic = True,
 )
 
 rust_library(
@@ -282,8 +292,8 @@ cc_binary(
     deps = [
         ":lib-netsim",
         ":libnetsim_daemon",
-        ":netsim_daemon_ffi_cc_library",
         ":netsim_cc_proto",
+        ":netsim_daemon_ffi_cc_library",
         "@grpc//:grpc++",
         "@netsim_crates//:grpcio-sys",
         "@rootcanal//:librootcanal",

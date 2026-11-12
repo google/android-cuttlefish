@@ -1,0 +1,23 @@
+From b147e0fd3c2206cb2040dd32f1bb350c961d7a92 Mon Sep 17 00:00:00 2001
+Subject: [PATCH 3/4] Export link_layer_packets.pdl
+
+---
+ packets/BUILD | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/packets/BUILD b/packets/BUILD
+index 62585b3..373c7df 100644
+--- a/packets/BUILD
++++ b/packets/BUILD
+@@ -4,7 +4,10 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
+ load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
+ 
+ package(default_visibility = ["//visibility:public"])
+-exports_files(["hci_packets.pdl"])
++exports_files([
++    "hci_packets.pdl",
++    "link_layer_packets.pdl",
++])
+ 
+ alias(
+     name = "pdlc",

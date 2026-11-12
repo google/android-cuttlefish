@@ -1,26 +1,16 @@
-From 62e9e86e8eda397023b5077ae0acd384dda4419e Mon Sep 17 00:00:00 2001
-From: HONG Yifan <elsk@google.com>
-Date: Tue, 19 Aug 2025 18:50:18 +0000
-Subject: [PATCH 5/5] Define librootcanal_ffi.so and librootcanal libraries.
+From b15065591665511e38c0dcd10066f8a8d28ded13 Mon Sep 17 00:00:00 2001
+Subject: [PATCH 4/4] Define librootcanal_ffi.so and librootcanal libraries
 
-librootcanal_ffi.so becomes a cc_library instead of cc_binary.
-
-Expose librootcanal, which is like rootcanal but excluding the main
-file.
-
-This ensured that we can have cc_binary depending on it.
-
-Bug: b/402294843
 ---
  BUILD | 34 +++++++++++++++++++++++++++++-----
  1 file changed, 29 insertions(+), 5 deletions(-)
 
 diff --git a/BUILD b/BUILD
-index 2c2f1d6..fc26477 100644
+index 2542248..fc2103f 100644
 --- a/BUILD
 +++ b/BUILD
-@@ -107,9 +107,8 @@ rust_static_library(
-     ],
+@@ -33,9 +33,8 @@ cc_proto_library(
+     deps = [":rootcanal_proto"],
  )
  
 -cc_binary(
@@ -30,7 +20,7 @@ index 2c2f1d6..fc26477 100644
      srcs = [
          "include/crypto/crypto.h",
          "include/hci/address.h",
-@@ -161,6 +160,7 @@ cc_binary(
+@@ -93,6 +92,7 @@ cc_binary(
          "include",
          "rust/include",
      ],
@@ -38,7 +28,7 @@ index 2c2f1d6..fc26477 100644
      visibility = ["//visibility:public"],
      deps = [
          ":rootcanal_config",
-@@ -173,10 +173,9 @@ cc_binary(
+@@ -105,10 +105,9 @@ cc_binary(
      ],
  )
  
@@ -51,7 +41,7 @@ index 2c2f1d6..fc26477 100644
          "desktop/test_environment.cc",
          "desktop/test_environment.h",
          "include/crypto/crypto.h",
-@@ -286,3 +285,28 @@ cc_binary(
+@@ -224,3 +223,28 @@ cc_binary(
      # breaks the device registration
      # features = ["-thin_lto"],
  )
@@ -62,7 +52,7 @@ index 2c2f1d6..fc26477 100644
 +        "desktop/root_canal_main.cc",
 +    ],
 +    copts = [
-+        "-std=c++17",
++        "-std=c++20",
 +        "-Wno-c99-designator",
 +        "-Wno-google3-literal-operator",
 +        "-Wno-pessimizing-move",
@@ -80,6 +70,3 @@ index 2c2f1d6..fc26477 100644
 +        ":librootcanal",
 +    ],
 +)
--- 
-2.51.0.rc1.167.g924127e9c0-goog
-
