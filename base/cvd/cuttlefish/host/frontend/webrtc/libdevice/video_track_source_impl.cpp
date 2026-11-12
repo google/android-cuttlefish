@@ -30,11 +30,12 @@ VideoTrackSourceImpl::VideoTrackSourceImpl(int width, int height)
 
 void VideoTrackSourceImpl::OnFrame(std::shared_ptr<VideoFrameBuffer> frame,
                                    int64_t timestamp_us) {
-  // Ensure strictly monotonic timestamps to prevent WebRTC from dropping
-  // frames with "Same/old NTP timestamp" errors. This can happen when
-  // frames arrive in bursts faster than system clock resolution.
-  if (timestamp_us <= last_timestamp_us_) {
-    timestamp_us = last_timestamp_us_ + 1;
+  // Ensure strictly monotonic timestamps at millisecond resolution to prevent
+  // WebRTC from dropping frames with "Same/old NTP timestamp" errors, since
+  // WebRTC computes NTP timestamps from render_time_ms() (timestamp_us / 1000).
+  constexpr int64_t kUsPerMs = 1000;
+  if (timestamp_us / kUsPerMs <= last_timestamp_us_ / kUsPerMs) {
+    timestamp_us = last_timestamp_us_ + kUsPerMs;
   }
   last_timestamp_us_ = timestamp_us;
 
