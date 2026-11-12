@@ -6,7 +6,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/google/android-cuttlefish/frontend/src/host_orchestrator v0.0.0-20241030000315-e864bdae6e57
 	github.com/google/android-cuttlefish/frontend/src/liboperator v0.0.0-20240822182916-7bea0dafdbde
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/pion/logging v0.2.2
 	github.com/pion/webrtc/v3 v3.3.4
