@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "sframe",
+    build_file = "@//build_external/sframe:BUILD.sframe.bazel",
+    commit = "6a37f061f4eda0c6594c91ecf99b5ff498c8c124",
+    remote = "https://github.com/cisco/sframe.git",
+)

@@ -33,8 +33,8 @@ int AbgrBuffer::height() const { return buffer_->height(); }
 const uint8_t* AbgrBuffer::Data() const { return buffer_->Data(); }
 int AbgrBuffer::Stride() const { return buffer_->Stride(); }
 
-rtc::scoped_refptr<webrtc::I420BufferInterface> AbgrBuffer::ToI420() {
-  rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer =
+webrtc::scoped_refptr<webrtc::I420BufferInterface> AbgrBuffer::ToI420() {
+  webrtc::scoped_refptr<webrtc::I420Buffer> i420_buffer =
       webrtc::I420Buffer::Create(width(), height());
 
   uint32_t format = buffer_->PixelFormat();

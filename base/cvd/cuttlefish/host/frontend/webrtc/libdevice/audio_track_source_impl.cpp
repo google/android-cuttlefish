@@ -45,8 +45,8 @@ void AudioTrackSourceImpl::RemoveSink(webrtc::AudioTrackSinkInterface* sink) {
   sinks_.erase(sink);
 }
 
-const cricket::AudioOptions AudioTrackSourceImpl::options() const {
-  return cricket::AudioOptions();
+const webrtc::AudioOptions AudioTrackSourceImpl::options() const {
+  return webrtc::AudioOptions();
 }
 
 void AudioTrackSourceImpl::OnFrame(const AudioFrameBuffer& frame,

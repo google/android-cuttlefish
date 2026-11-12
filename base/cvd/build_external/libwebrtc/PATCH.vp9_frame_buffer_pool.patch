@@ -1,0 +1,12 @@
+--- modules/video_coding/codecs/vp9/vp9_frame_buffer_pool.cc
++++ modules/video_coding/codecs/vp9/vp9_frame_buffer_pool.cc
+@@ -42,5 +42,7 @@
+   data_.SetSize(size);
+   // libvpx requires the frame buffer callback to zero the memory it hands out.
+   if (size > old_size) {
+-    absl::c_fill(std::span(data_).subspan(old_size), 0);
++    // absl::c_fill takes a non-const lvalue reference (C&) in BCR's abseil-cpp
++    // and cannot bind to the temporary std::span rvalue returned by subspan().
++    std::fill(data_.data() + old_size, data_.data() + size, 0);
+   }
+ }

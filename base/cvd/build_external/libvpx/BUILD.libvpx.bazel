@@ -163,6 +163,7 @@ libvpx_arm64_neon_dotprod_c_srcs = [
     "vpx_dsp/arm/sad4d_neon_dotprod.c",
     "vpx_dsp/arm/sad_neon_dotprod.c",
     "vpx_dsp/arm/sse_neon_dotprod.c",
+    "vpx_dsp/arm/subpel_variance_neon_dotprod.c",
     "vpx_dsp/arm/variance_neon_dotprod.c",
     "vpx_dsp/arm/vpx_convolve8_neon_dotprod.c",
 ]
@@ -292,6 +293,7 @@ libvpx_x86_64_avx2_c_srcs = [
     "vpx_dsp/x86/avg_intrin_avx2.c",
     "vpx_dsp/x86/avg_pred_avx2.c",
     "vpx_dsp/x86/highbd_convolve_avx2.c",
+    "vpx_dsp/x86/highbd_intrapred_intrin_avx2.c",
     "vpx_dsp/x86/highbd_quantize_intrin_avx2.c",
     "vpx_dsp/x86/highbd_sad4d_avx2.c",
     "vpx_dsp/x86/highbd_sad_avx2.c",
@@ -307,7 +309,9 @@ libvpx_x86_64_avx2_c_srcs = [
 ]
 
 libvpx_x86_64_avx512_c_srcs = [
+    "vpx_dsp/x86/highbd_intrapred_intrin_avx512.c",
     "vpx_dsp/x86/sad4d_avx512.c",
+    "vpx_dsp/x86/sad_avx512.c",
 ]
 
 libvpx_x86_64_c_srcs = libvpx_generic_c_srcs + [

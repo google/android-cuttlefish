@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/composite_encoder_factory.h"
 
+#include <optional>
 #include <set>
 #include <string>
 
@@ -49,11 +50,12 @@ class CompositeEncoderFactory : public webrtc::VideoEncoderFactory {
     return all_formats;
   }
 
-  std::unique_ptr<webrtc::VideoEncoder> CreateVideoEncoder(
+  std::unique_ptr<webrtc::VideoEncoder> Create(
+      const webrtc::Environment& env,
       const webrtc::SdpVideoFormat& format) override {
     for (EncoderProvider* provider : registry_->GetProviders()) {
       Result<std::unique_ptr<webrtc::VideoEncoder>> result =
-          provider->CreateEncoder(format);
+          provider->CreateEncoder(env, format);
       if (result.has_value() && *result) {
         LOG(INFO) << "Created encoder for " << format.ToString()
                   << " using provider: " << provider->GetName();
@@ -68,7 +70,8 @@ class CompositeEncoderFactory : public webrtc::VideoEncoderFactory {
 
   CodecSupport QueryCodecSupport(
       const webrtc::SdpVideoFormat& format,
-      absl::optional<std::string> scalability_mode) const override {
+      std::optional<std::string> scalability_mode,
+      std::optional<webrtc::Resolution> resolution) const override {
     for (const EncoderProvider* provider : registry_->GetProviders()) {
       for (const webrtc::SdpVideoFormat& supported :
            provider->GetSupportedFormats()) {
