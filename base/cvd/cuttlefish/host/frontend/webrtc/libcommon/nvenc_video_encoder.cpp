@@ -410,7 +410,7 @@ Result<void> NvencVideoEncoder::EncodeInner(
                                        << frame.width() << "x"
                                        << frame.height());
 
-  rtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer =
+  webrtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer =
       frame.video_frame_buffer();
   CF_EXPECT(buffer->type() == webrtc::VideoFrameBuffer::Type::kNative,
             "Non-native buffer type: " << static_cast<int>(buffer->type()));
@@ -524,7 +524,7 @@ Result<void> NvencVideoEncoder::EncodeInner(
         lock_bs.bitstreamSizeInBytes));
     encoded_image._encodedWidth = width_;
     encoded_image._encodedHeight = height_;
-    encoded_image.SetTimestamp(frame.timestamp());
+    encoded_image.SetRtpTimestamp(frame.rtp_timestamp());
     encoded_image.ntp_time_ms_ = frame.ntp_time_ms();
     encoded_image.capture_time_ms_ = frame.render_time_ms();
     encoded_image.rotation_ = frame.rotation();

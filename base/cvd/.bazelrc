@@ -16,6 +16,7 @@ build --per_file_copt=cuttlefish/host/frontend/webrtc/libcommon/connection_contr
 build --per_file_copt=cuttlefish/host/frontend/webrtc/libcommon/utils\.cpp$@-Wno-thread-safety-reference-return
 build --per_file_copt=cuttlefish/host/frontend/webrtc/libcommon/utils\.h$@-Wno-thread-safety-reference-return
 build --per_file_copt=cuttlefish/host/frontend/webrtc/libdevice/data_channels\.cpp$@-Wno-thread-safety-reference-return
+build --per_file_copt=cuttlefish/host/frontend/webrtc/.*\.(cpp|h)$@-Wno-nullability-completeness
 # files with warnings that come from generated files either directly or indirectly through their includes
 build --per_file_copt=.*/cuttlefish/host/commands/casimir_control_server/casimir_control\.grpc\.pb\.cc$@-Wno-deprecated-declarations
 build --per_file_copt=.*/cuttlefish/host/commands/casimir_control_server/casimir_control\.grpc\.pb\.h$@-Wno-deprecated-declarations

@@ -31,7 +31,7 @@
 namespace cuttlefish {
 namespace webrtc_streaming {
 
-class CameraStreamer : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
+class CameraStreamer : public webrtc::VideoSinkInterface<webrtc::VideoFrame>,
                        public CameraController {
  public:
   CameraStreamer(unsigned int port, unsigned int cid, bool vhost_user);
@@ -63,7 +63,7 @@ class CameraStreamer : public rtc::VideoSinkInterface<webrtc::VideoFrame>,
   std::string settings_buffer_;
   std::mutex frame_mutex_;
   std::mutex onframe_mutex_;
-  rtc::scoped_refptr<webrtc::I420Buffer> scaled_frame_;
+  webrtc::scoped_refptr<webrtc::I420Buffer> scaled_frame_;
   unsigned int cid_;
   unsigned int port_;
   bool vhost_user_;

@@ -6,6 +6,13 @@ http_archive = use_repo_rule(
 http_archive(
     name = "dav1d",
     build_file = "@//build_external/dav1d:BUILD.dav1d.bazel",
+    strip_prefix = "dav1d-1.5.4",
+    urls = [
+        "https://mirrors.ocf.berkeley.edu/videolan-ftp/dav1d/1.5.4/dav1d-1.5.4.tar.xz",
+        "https://ftp.osuosl.org/pub/videolan/dav1d/1.5.4/dav1d-1.5.4.tar.xz",
+        "https://downloads.videolan.org/pub/videolan/dav1d/1.5.4/dav1d-1.5.4.tar.xz",
+    ],
+    sha256 = "686616b7c69eb88d44459391ab25cac13b6647a3b288835c5784e71c1514a5c5",
     patch_cmds = [
         # Generate config.h with a dav1d-specific name to avoid
         # shadowing other libraries' config.h (e.g., libsrtp2) via
@@ -39,7 +46,7 @@ ENDOFFILE""",
         """cat > dav1d_vcs_version.h << 'ENDOFFILE'
 #ifndef DAV1D_VCS_VERSION_H_
 #define DAV1D_VCS_VERSION_H_
-#define DAV1D_VERSION "1.5.3"
+#define DAV1D_VERSION "1.5.4"
 #endif
 ENDOFFILE""",
         # Generate version.h in the public headers directory
@@ -60,17 +67,11 @@ ENDOFFILE""",
         # Patch #include "common/..." to #include "src/common/..."
         # in all source and header files under src/ (including the
         # just-moved src/common/ headers themselves).
-        "find src -name '*.c' -o -name '*.h' | xargs sed -i 's|#include \"common/|#include \"src/common/|g'",
+        "find src -name '*.c' -o -name '*.h' | xargs sed -i.bak 's|#include \"common/|#include \"src/common/|g'",
         # Rename config.h and vcs_version.h includes to the
         # dav1d-prefixed names to match the generated files above.
-        "find src -name '*.c' -o -name '*.h' | xargs sed -i 's|#include \"config.h\"|#include \"dav1d_config.h\"|g'",
-        "find src -name '*.c' -o -name '*.h' | xargs sed -i 's|#include \"vcs_version.h\"|#include \"dav1d_vcs_version.h\"|g'",
-    ],
-    sha256 = "732010aa5ef461fa93355ed2c6c5fedb48ddc4b74e697eaabe8907eaeb943011",
-    strip_prefix = "dav1d-1.5.3",
-    urls = [
-        "https://mirrors.ocf.berkeley.edu/videolan-ftp/dav1d/1.5.3/dav1d-1.5.3.tar.xz",
-        "https://ftp.osuosl.org/pub/videolan/dav1d/1.5.3/dav1d-1.5.3.tar.xz",
-        "https://downloads.videolan.org/pub/videolan/dav1d/1.5.3/dav1d-1.5.3.tar.xz",
+        "find src -name '*.c' -o -name '*.h' | xargs sed -i.bak 's|#include \"config.h\"|#include \"dav1d_config.h\"|g'",
+        "find src -name '*.c' -o -name '*.h' | xargs sed -i.bak 's|#include \"vcs_version.h\"|#include \"dav1d_vcs_version.h\"|g'",
+        "find src -name '*.bak' -delete",
     ],
 )

@@ -2,7 +2,7 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
-# dav1d 1.5.3 AV1 decoder (BSD-2-Clause). Pure C, no ASM, 8-bit only.
+# dav1d 1.5.4 AV1 decoder (BSD-2-Clause). Pure C, no ASM, 8-bit only.
 #
 # Internal headers (include/common/, include/compat/) are moved into
 # src/ by patch_cmds in dav1d.MODULE.bazel to avoid leaking -isystem

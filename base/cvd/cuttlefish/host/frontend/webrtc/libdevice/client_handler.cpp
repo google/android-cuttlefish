@@ -33,8 +33,8 @@ namespace webrtc_streaming {
 // This class hides away that complexity and allows to set up sinks only once.
 class ClientVideoTrackImpl : public ClientVideoTrackInterface {
  public:
-  void AddOrUpdateSink(rtc::VideoSinkInterface<webrtc::VideoFrame> *sink,
-                       const rtc::VideoSinkWants &wants) override {
+  void AddOrUpdateSink(webrtc::VideoSinkInterface<webrtc::VideoFrame> *sink,
+                       const webrtc::VideoSinkWants &wants) override {
     sink_ = sink;
     wants_ = wants;
     if (video_track_) {
@@ -57,8 +57,8 @@ class ClientVideoTrackImpl : public ClientVideoTrackInterface {
 
  private:
   webrtc::VideoTrackInterface* video_track_;
-  rtc::VideoSinkInterface<webrtc::VideoFrame> *sink_ = nullptr;
-  rtc::VideoSinkWants wants_ = {};
+  webrtc::VideoSinkInterface<webrtc::VideoFrame> *sink_ = nullptr;
+  webrtc::VideoSinkWants wants_ = {};
 };
 
 std::shared_ptr<ClientHandler> ClientHandler::Create(
@@ -89,10 +89,10 @@ ClientHandler::~ClientHandler() {
   controller_.Shutdown();
 }
 
-rtc::scoped_refptr<webrtc::RtpSenderInterface>
+webrtc::scoped_refptr<webrtc::RtpSenderInterface>
 ClientHandler::AddTrackToConnection(
-    rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
-    rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection,
+    webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
+    webrtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection,
     const std::string &label) {
   if (!peer_connection) {
     return nullptr;
@@ -130,7 +130,7 @@ ClientHandler::AddTrackToConnection(
 }
 
 bool ClientHandler::AddDisplay(
-    rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track,
+    webrtc::scoped_refptr<webrtc::VideoTrackInterface> video_track,
     const std::string &label) {
   auto [it, inserted] = displays_.emplace(label, DisplayTrackAndSender{
                                                      .track = video_track,
@@ -167,7 +167,7 @@ bool ClientHandler::RemoveDisplay(const std::string &label) {
 }
 
 bool ClientHandler::AddAudio(
-    rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track,
+    webrtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track,
     const std::string &label) {
   audio_streams_.emplace_back(audio_track, label);
   auto peer_connection = controller_.peer_connection();
@@ -187,7 +187,7 @@ Result<void> ClientHandler::SendMessage(const Json::Value &msg) {
   return {};
 }
 
-Result<rtc::scoped_refptr<webrtc::PeerConnectionInterface>>
+Result<webrtc::scoped_refptr<webrtc::PeerConnectionInterface>>
 ClientHandler::Build(
     webrtc::PeerConnectionObserver &observer,
     const std::vector<webrtc::PeerConnectionInterface::IceServer>
@@ -285,12 +285,12 @@ void ClientHandler::OnConnectionStateChange(
 }
 
 void ClientHandler::OnDataChannel(
-    rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) {
+    webrtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) {
   data_channels_handler_.OnDataChannelOpen(data_channel);
 }
 
 void ClientHandler::OnTrack(
-    rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
+    webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
   auto track = transceiver->receiver()->track();
   if (track && track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
     // It's ok to take the raw pointer here because we make sure to unset it
@@ -300,7 +300,7 @@ void ClientHandler::OnTrack(
   }
 }
 void ClientHandler::OnRemoveTrack(
-    rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
+    webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
   auto track = receiver->track();
   if (track && track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
     // this only unsets if the track matches the one already in store

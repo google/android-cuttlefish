@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "api/environment/environment.h"
 #include "api/video_codecs/builtin_video_decoder_factory.h"
 #include "api/video_codecs/sdp_video_format.h"
 #include "api/video_codecs/video_decoder.h"
@@ -56,9 +57,10 @@ class BuiltinDecoderProvider : public DecoderProvider {
   }
 
   Result<std::unique_ptr<webrtc::VideoDecoder>> CreateDecoder(
+      const webrtc::Environment& env,
       const webrtc::SdpVideoFormat& format) const override {
     std::unique_ptr<webrtc::VideoDecoder> decoder =
-        factory_->CreateVideoDecoder(format);
+        factory_->Create(env, format);
     CF_EXPECT(decoder != nullptr,
               "Builtin decoder failed to create " << format.name);
     return decoder;

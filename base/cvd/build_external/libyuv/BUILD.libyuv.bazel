@@ -14,6 +14,10 @@ cc_library(
         "@platforms//cpu:arm64": glob(["source/*neon*.cc"]),
         "//conditions:default": [],
     }),
+    defines = [
+        "LIBYUV_DISABLE_SME",
+        "LIBYUV_DISABLE_SVE",
+    ],
     hdrs = glob([
         "include/libyuv/*.h",
         "include/libyuv.h",

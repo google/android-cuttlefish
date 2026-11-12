@@ -32,7 +32,7 @@ class AbgrBuffer : public webrtc::VideoFrameBuffer {
   int width() const override;
   int height() const override;
 
-  rtc::scoped_refptr<webrtc::I420BufferInterface> ToI420() override;
+  webrtc::scoped_refptr<webrtc::I420BufferInterface> ToI420() override;
 
   const uint8_t* Data() const;
   int Stride() const;

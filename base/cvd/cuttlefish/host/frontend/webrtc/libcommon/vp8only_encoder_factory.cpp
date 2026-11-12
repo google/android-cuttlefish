@@ -36,9 +36,9 @@ std::vector<webrtc::SdpVideoFormat> VP8OnlyEncoderFactory::GetSupportedFormats()
   return ret;
 }
 
-std::unique_ptr<webrtc::VideoEncoder> VP8OnlyEncoderFactory::CreateVideoEncoder(
-    const webrtc::SdpVideoFormat& format) {
-  return inner_->CreateVideoEncoder(format);
+std::unique_ptr<webrtc::VideoEncoder> VP8OnlyEncoderFactory::Create(
+    const webrtc::Environment& env, const webrtc::SdpVideoFormat& format) {
+  return inner_->Create(env, format);
 }
 
 std::unique_ptr<webrtc::VideoEncoderFactory::EncoderSelectorInterface>

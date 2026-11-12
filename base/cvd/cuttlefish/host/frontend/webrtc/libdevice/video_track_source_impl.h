@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <media/base/video_broadcaster.h>
+#include <api/video/video_broadcaster.h>
 #include <pc/video_track_source.h>
 
 #include <mutex>
@@ -53,18 +53,18 @@ class VideoTrackSourceImpl : public webrtc::VideoTrackSource {
   bool SupportsEncodedOutput() const override;
   void GenerateKeyFrame() override {}
   void AddEncodedSink(
-      rtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink) override {}
+      webrtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink) override {}
   void RemoveEncodedSink(
-      rtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink) override {}
+      webrtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink) override {}
 
-  rtc::VideoSourceInterface<webrtc::VideoFrame>* source() override;
+  webrtc::VideoSourceInterface<webrtc::VideoFrame>* source() override;
 
  private:
   int width_;
   int height_;
   std::mutex timestamp_mutex_;
   int64_t last_timestamp_us_ = 0;  // Ensure strictly monotonic timestamps
-  rtc::VideoBroadcaster broadcaster_;
+  webrtc::VideoBroadcaster broadcaster_;
 };
 
 // Wraps a VideoTrackSourceImpl as an implementation of the VideoSink interface.
@@ -77,7 +77,8 @@ class VideoTrackSourceImplSinkWrapper : public VideoSink {
  public:
   virtual ~VideoTrackSourceImplSinkWrapper() = default;
 
-  VideoTrackSourceImplSinkWrapper(rtc::scoped_refptr<VideoTrackSourceImpl> obj)
+  VideoTrackSourceImplSinkWrapper(
+      webrtc::scoped_refptr<VideoTrackSourceImpl> obj)
       : track_source_impl_(obj) {}
 
   void OnFrame(std::shared_ptr<VideoFrameBuffer> frame,
@@ -86,7 +87,7 @@ class VideoTrackSourceImplSinkWrapper : public VideoSink {
   }
 
  private:
-  rtc::scoped_refptr<VideoTrackSourceImpl> track_source_impl_;
+  webrtc::scoped_refptr<VideoTrackSourceImpl> track_source_impl_;
 };
 
 }  // namespace webrtc_streaming

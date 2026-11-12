@@ -32,21 +32,19 @@
 namespace cuttlefish {
 namespace webrtc_streaming {
 
-Result<std::unique_ptr<rtc::Thread>> CreateAndStartThread(
+Result<std::unique_ptr<webrtc::Thread>> CreateAndStartThread(
     const std::string& name) {
-  auto thread = rtc::Thread::CreateWithSocketServer();
+  auto thread = webrtc::Thread::CreateWithSocketServer();
   CF_EXPECTF(thread.get(), "Failed to create \"{}\" thread", name);
   thread->SetName(name, nullptr);
   CF_EXPECTF(thread->Start(), "Failed to start \"{}\" thread", name);
   return thread;
 }
 
-Result<rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>>
+Result<webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>>
 CreatePeerConnectionFactory(
-    rtc::Thread* network_thread, rtc::Thread* worker_thread,
-    rtc::Thread* signal_thread,
-    rtc::scoped_refptr<webrtc::AudioDeviceModule> audio_device_module) {
-
+    webrtc::Thread* network_thread, webrtc::Thread* signal_thread,
+    webrtc::scoped_refptr<webrtc::AudioDeviceModule> audio_device_module) {
   VLOG(1) << "Available encoder providers:";
   for (EncoderProvider* provider :
        EncoderProviderRegistry::Get().GetProviders()) {
@@ -76,9 +74,9 @@ CreatePeerConnectionFactory(
       video_encoder_factory->GetSupportedFormats();
   std::vector<webrtc::SdpVideoFormat> decoder_formats =
       video_decoder_factory->GetSupportedFormats();
-  LOG(INFO) << "PeerConnectionFactory: "
-            << encoder_formats.size() << " encoder format(s), "
-            << decoder_formats.size() << " decoder format(s)";
+  LOG(INFO) << "PeerConnectionFactory: " << encoder_formats.size()
+            << " encoder format(s), " << decoder_formats.size()
+            << " decoder format(s)";
   for (const webrtc::SdpVideoFormat& fmt : encoder_formats) {
     VLOG(1) << "  encoder: " << fmt.ToString();
   }
@@ -87,12 +85,11 @@ CreatePeerConnectionFactory(
   }
 
   auto peer_connection_factory = webrtc::CreatePeerConnectionFactory(
-      network_thread, worker_thread, signal_thread, audio_device_module,
+      network_thread, signal_thread, audio_device_module,
       webrtc::CreateBuiltinAudioEncoderFactory(),
       webrtc::CreateBuiltinAudioDecoderFactory(),
-      std::move(video_encoder_factory),
-      std::move(video_decoder_factory), nullptr /* audio_mixer */,
-      nullptr /* audio_processing */);
+      std::move(video_encoder_factory), std::move(video_decoder_factory),
+      nullptr /* audio_mixer */, nullptr /* audio_processing */);
   CF_EXPECT(peer_connection_factory.get(),
             "Failed to create peer connection factory");
 
@@ -105,12 +102,12 @@ CreatePeerConnectionFactory(
   return peer_connection_factory;
 }
 
-Result<rtc::scoped_refptr<webrtc::PeerConnectionInterface>>
+Result<webrtc::scoped_refptr<webrtc::PeerConnectionInterface>>
 CreatePeerConnection(
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
+    webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
         peer_connection_factory,
-    webrtc::PeerConnectionDependencies dependencies,
-    uint16_t min_port, uint16_t max_port,
+    webrtc::PeerConnectionDependencies dependencies, uint16_t min_port,
+    uint16_t max_port,
     const std::vector<webrtc::PeerConnectionInterface::IceServer>& servers) {
   webrtc::PeerConnectionInterface::RTCConfiguration config;
   config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
