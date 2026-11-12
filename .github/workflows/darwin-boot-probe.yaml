@@ -43,6 +43,7 @@ env:
     --console=false
     --enable_bootanimation=false
     --cpus=4 --memory_mb=4096
+    --boot_timeout_secs=1800
 
 jobs:
   boot:
@@ -66,7 +67,7 @@ jobs:
       run: |
         cd base/cvd
         for target in //cuttlefish/host/commands/control_env_proxy_server \
-            //cuttlefish/host/graphics_detector; do
+            //cuttlefish/host/graphics_detector @avb//:avbtool.py; do
           bazel build --disk_cache=$HOME/bazel-disk-cache "$target" \
             || echo "::warning::$target does not build"
         done
@@ -98,6 +99,16 @@ jobs:
           fi
         done
         ln -s "$(brew --prefix dosfstools)/sbin/mkfs.fat" "$pkg/bin/mkfs.fat"
+        # The fetched avbtool.py is a Linux executable, not a script.
+        avbtool=$(find -L "$(bazel info output_base)/external" -maxdepth 2 \
+          -name avbtool.py | head -1)
+        if [ -n "$avbtool" ]; then
+          cp "$avbtool" "$pkg/bin/avbtool.py"
+          chmod +x "$pkg/bin/avbtool.py"
+          head -1 "$pkg/bin/avbtool.py"
+        else
+          echo "::warning::no avbtool.py"
+        fi
         ls -l "$pkg/bin"
         file "$pkg/bin/cvd"
         "$pkg/bin/cvd" version || true
