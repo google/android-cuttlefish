@@ -30,7 +30,7 @@
 #include <api/video_codecs/builtin_video_encoder_factory.h>
 #include <api/video_codecs/video_decoder_factory.h>
 #include <api/video_codecs/video_encoder_factory.h>
-#include <media/base/video_broadcaster.h>
+#include <api/video/video_broadcaster.h>
 #include <pc/video_track_source.h>
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/audio_device.h"
@@ -91,7 +91,7 @@ struct DisplayDescriptor {
   int height;
   int dpi;
   bool touch_enabled;
-  rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source;
+  webrtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source;
 };
 
 struct TouchpadDescriptor {
@@ -116,7 +116,7 @@ struct OperatorServerConfig {
 class AudioDeviceModuleWrapper : public AudioSource {
  public:
   AudioDeviceModuleWrapper(
-      rtc::scoped_refptr<CfAudioDeviceModule> device_module)
+      webrtc::scoped_refptr<CfAudioDeviceModule> device_module)
       : device_module_(device_module) {}
   int GetMoreAudioData(void* data, int bytes_per_sample,
                        int samples_per_channel, int num_channels,
@@ -126,12 +126,12 @@ class AudioDeviceModuleWrapper : public AudioSource {
                                             sample_rate, muted);
   }
 
-  rtc::scoped_refptr<CfAudioDeviceModule> device_module() {
+  webrtc::scoped_refptr<CfAudioDeviceModule> device_module() {
     return device_module_;
   }
 
  private:
-  rtc::scoped_refptr<CfAudioDeviceModule> device_module_;
+  webrtc::scoped_refptr<CfAudioDeviceModule> device_module_;
 };
 
 }  // namespace
@@ -159,7 +159,7 @@ class Streamer::Impl : public ServerConnectionObserver,
   void HandleClientMessage(const Json::Value& server_message);
 
   // PeerConnectionBuilder
-  Result<rtc::scoped_refptr<webrtc::PeerConnectionInterface>> Build(
+  Result<webrtc::scoped_refptr<webrtc::PeerConnectionInterface>> Build(
       webrtc::PeerConnectionObserver& observer,
       const std::vector<webrtc::PeerConnectionInterface::IceServer>&
           per_connection_servers) override;
@@ -170,14 +170,13 @@ class Streamer::Impl : public ServerConnectionObserver,
   OperatorServerConfig operator_config_;
   std::unique_ptr<ServerConnection> server_connection_;
   std::shared_ptr<ConnectionObserverFactory> connection_observer_factory_;
-  rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
+  webrtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
       peer_connection_factory_;
-  std::unique_ptr<rtc::Thread> network_thread_;
-  std::unique_ptr<rtc::Thread> worker_thread_;
-  std::unique_ptr<rtc::Thread> signal_thread_;
+  std::unique_ptr<webrtc::Thread> network_thread_;
+  std::unique_ptr<webrtc::Thread> signal_thread_;
   std::map<std::string, DisplayDescriptor> displays_;
   std::map<std::string, TouchpadDescriptor> touchpads_;
-  std::map<std::string, rtc::scoped_refptr<AudioTrackSourceImpl>>
+  std::map<std::string, webrtc::scoped_refptr<AudioTrackSourceImpl>>
       audio_sources_;
   std::map<int, std::shared_ptr<ClientHandler>> clients_;
   std::weak_ptr<OperatorObserver> operator_observer_;
@@ -197,7 +196,7 @@ Streamer::Streamer(std::unique_ptr<Streamer::Impl> impl)
 std::unique_ptr<Streamer> Streamer::Create(
     const StreamerConfig& cfg, RecordingManager& recording_manager,
     std::shared_ptr<ConnectionObserverFactory> connection_observer_factory) {
-  rtc::LogMessage::LogToDebug(rtc::LS_ERROR);
+  webrtc::LogMessage::LogToDebug(webrtc::LS_ERROR);
 
   std::unique_ptr<Streamer::Impl> impl(new Streamer::Impl());
   impl->config_ = cfg;
@@ -211,13 +210,6 @@ std::unique_ptr<Streamer> Streamer::Create(
   }
   impl->network_thread_ = std::move(*network_thread_result);
 
-  auto worker_thread_result = CreateAndStartThread("worker-thread");
-  if (!worker_thread_result.has_value()) {
-    LOG(ERROR) << worker_thread_result.error();
-    return nullptr;
-  }
-  impl->worker_thread_ = std::move(*worker_thread_result);
-
   auto signal_thread_result = CreateAndStartThread("signal-thread");
   if (!signal_thread_result.has_value()) {
     LOG(ERROR) << signal_thread_result.error();
@@ -226,12 +218,12 @@ std::unique_ptr<Streamer> Streamer::Create(
   impl->signal_thread_ = std::move(*signal_thread_result);
 
   impl->audio_device_module_ = std::make_shared<AudioDeviceModuleWrapper>(
-      rtc::scoped_refptr<CfAudioDeviceModule>(
-          new rtc::RefCountedObject<CfAudioDeviceModule>()));
+      webrtc::scoped_refptr<CfAudioDeviceModule>(
+          new webrtc::RefCountedObject<CfAudioDeviceModule>()));
 
   auto result = CreatePeerConnectionFactory(
-      impl->network_thread_.get(), impl->worker_thread_.get(),
-      impl->signal_thread_.get(), impl->audio_device_module_->device_module());
+      impl->network_thread_.get(), impl->signal_thread_.get(),
+      impl->audio_device_module_->device_module());
 
   if (!result.has_value()) {
     LOG(ERROR) << result.error();
@@ -253,19 +245,19 @@ std::shared_ptr<VideoSink> Streamer::AddDisplay(const std::string& label,
           LOG(ERROR) << "Display with same label already exists: " << label;
           return nullptr;
         }
-        rtc::scoped_refptr<VideoTrackSourceImpl> source(
-            new rtc::RefCountedObject<VideoTrackSourceImpl>(width, height));
+        webrtc::scoped_refptr<VideoTrackSourceImpl> source(
+            new webrtc::RefCountedObject<VideoTrackSourceImpl>(width, height));
         impl_->displays_[label] = {width, height, dpi, touch_enabled, source};
 
         auto video_track = impl_->peer_connection_factory_->CreateVideoTrack(
-            label, source.get());
+            source, label);
 
         for (auto& [_, client] : impl_->clients_) {
           client->AddDisplay(video_track, label);
         }
 
         if (impl_->recording_manager_) {
-          rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source2 =
+          webrtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source2 =
               source;
           auto deleter = [](webrtc::VideoTrackSourceInterface* source) {
             source->Release();
@@ -320,8 +312,8 @@ std::shared_ptr<AudioSink> Streamer::AddAudioStream(const std::string& label) {
                      << label;
           return nullptr;
         }
-        rtc::scoped_refptr<AudioTrackSourceImpl> source(
-            new rtc::RefCountedObject<AudioTrackSourceImpl>());
+        webrtc::scoped_refptr<AudioTrackSourceImpl> source(
+            new webrtc::RefCountedObject<AudioTrackSourceImpl>());
         impl_->audio_sources_[label] = source;
         return std::shared_ptr<AudioSink>(
             new AudioTrackSourceImplSinkWrapper(source));
@@ -659,7 +651,7 @@ std::shared_ptr<ClientHandler> Streamer::Impl::CreateClientHandler(
     auto& video_source = entry.second.source;
 
     auto video_track =
-        peer_connection_factory_->CreateVideoTrack(label, video_source.get());
+        peer_connection_factory_->CreateVideoTrack(video_source, label);
     client_handler->AddDisplay(video_track, label);
   }
 
@@ -674,7 +666,7 @@ std::shared_ptr<ClientHandler> Streamer::Impl::CreateClientHandler(
   return client_handler;
 }
 
-Result<rtc::scoped_refptr<webrtc::PeerConnectionInterface>>
+Result<webrtc::scoped_refptr<webrtc::PeerConnectionInterface>>
 Streamer::Impl::Build(
     webrtc::PeerConnectionObserver& observer,
     const std::vector<webrtc::PeerConnectionInterface::IceServer>&
@@ -741,7 +733,7 @@ void Streamer::Impl::SetupCameraForClient(int client_id) {
     auto camera_track = client_handler->GetCameraStream();
     if (camera_track) {
       camera_track->AddOrUpdateSink(camera_streamer_.get(),
-                                    rtc::VideoSinkWants());
+                                    webrtc::VideoSinkWants());
     }
   }
 }

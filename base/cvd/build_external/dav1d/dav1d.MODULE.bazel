@@ -6,13 +6,13 @@ http_archive = use_repo_rule(
 http_archive(
     name = "dav1d",
     build_file = "@//build_external/dav1d:BUILD.dav1d.bazel",
-    strip_prefix = "dav1d-1.5.3",
+    strip_prefix = "dav1d-1.5.4",
     urls = [
-        "https://mirrors.ocf.berkeley.edu/videolan-ftp/dav1d/1.5.3/dav1d-1.5.3.tar.xz",
-        "https://ftp.osuosl.org/pub/videolan/dav1d/1.5.3/dav1d-1.5.3.tar.xz",
-        "https://downloads.videolan.org/pub/videolan/dav1d/1.5.3/dav1d-1.5.3.tar.xz",
+        "https://mirrors.ocf.berkeley.edu/videolan-ftp/dav1d/1.5.4/dav1d-1.5.4.tar.xz",
+        "https://ftp.osuosl.org/pub/videolan/dav1d/1.5.4/dav1d-1.5.4.tar.xz",
+        "https://downloads.videolan.org/pub/videolan/dav1d/1.5.4/dav1d-1.5.4.tar.xz",
     ],
-    sha256 = "732010aa5ef461fa93355ed2c6c5fedb48ddc4b74e697eaabe8907eaeb943011",
+    sha256 = "686616b7c69eb88d44459391ab25cac13b6647a3b288835c5784e71c1514a5c5",
     patch_cmds = [
         # Generate config.h with a dav1d-specific name to avoid
         # shadowing other libraries' config.h (e.g., libsrtp2) via
@@ -46,7 +46,7 @@ ENDOFFILE""",
         """cat > dav1d_vcs_version.h << 'ENDOFFILE'
 #ifndef DAV1D_VCS_VERSION_H_
 #define DAV1D_VCS_VERSION_H_
-#define DAV1D_VERSION "1.5.3"
+#define DAV1D_VERSION "1.5.4"
 #endif
 ENDOFFILE""",
         # Generate version.h in the public headers directory

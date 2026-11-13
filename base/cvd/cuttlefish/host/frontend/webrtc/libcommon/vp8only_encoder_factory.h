@@ -28,7 +28,8 @@ class VP8OnlyEncoderFactory : public webrtc::VideoEncoderFactory {
 
   std::vector<webrtc::SdpVideoFormat> GetSupportedFormats() const override;
 
-  std::unique_ptr<webrtc::VideoEncoder> CreateVideoEncoder(
+  std::unique_ptr<webrtc::VideoEncoder> Create(
+      const webrtc::Environment& env,
       const webrtc::SdpVideoFormat& format) override;
 
   std::unique_ptr<EncoderSelectorInterface> GetEncoderSelector() const override;

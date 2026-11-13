@@ -259,18 +259,18 @@ void ConnectionController::OnSetRemoteDescriptionComplete(
 // these pointers with scoped_refptr.
 webrtc::CreateSessionDescriptionObserver*
 ConnectionController::ThisAsCreateSDPObserver() {
-  return new rtc::RefCountedObject<
+  return new webrtc::RefCountedObject<
       CreateSessionDescriptionObserverIntermediate>(*this);
 }
 webrtc::SetSessionDescriptionObserver*
 ConnectionController::ThisAsSetSDPObserver() {
-  return new rtc::RefCountedObject<SetSessionDescriptionObserverIntermediate>(
-      *this);
+  return new webrtc::RefCountedObject<
+      SetSessionDescriptionObserverIntermediate>(*this);
 }
-rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface>
+webrtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface>
 ConnectionController::ThisAsSetRemoteSDPObserver() {
-  return rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface>(
-      new rtc::RefCountedObject<SetRemoteDescriptionObserverIntermediate>(
+  return webrtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface>(
+      new webrtc::RefCountedObject<SetRemoteDescriptionObserverIntermediate>(
           *this));
 }
 
@@ -317,19 +317,19 @@ void ConnectionController::OnSignalingChange(
 
 // Triggered when media is received on a new stream from remote peer.
 void ConnectionController::OnAddStream(
-    rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {
+    webrtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {
   VLOG(1) << "Stream added: " << stream->id();
 }
 
 // Triggered when a remote peer closes a stream.
 void ConnectionController::OnRemoveStream(
-    rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {
+    webrtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {
   VLOG(1) << "Stream removed: " << stream->id();
 }
 
 // Triggered when a remote peer opens a data channel.
 void ConnectionController::OnDataChannel(
-    rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) {
+    webrtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) {
   observer_.OnDataChannel(data_channel);
 }
 
@@ -435,8 +435,7 @@ void ConnectionController::OnIceCandidateError(const std::string& address,
 }
 
 // Ice candidates have been removed.
-void ConnectionController::OnIceCandidatesRemoved(
-    const std::vector<cricket::Candidate>&) {
+void ConnectionController::OnIceCandidateRemoved(const webrtc::IceCandidate*) {
   // ignore
 }
 
@@ -449,7 +448,7 @@ void ConnectionController::OnIceCandidatesRemoved(
 // specified in section 2.2.8.2.5 of the "Set the RTCSessionDescription"
 // algorithm: https://w3c.github.io/webrtc-pc/#set-description
 void ConnectionController::OnTrack(
-    rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
+    webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
   observer_.OnTrack(transceiver);
 }
 
@@ -461,7 +460,7 @@ void ConnectionController::OnTrack(
 // will have changed direction to either sendonly or inactive.
 // https://w3c.github.io/webrtc-pc/#process-remote-track-removal
 void ConnectionController::OnRemoveTrack(
-    rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
+    webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
   observer_.OnRemoveTrack(receiver);
 }
 

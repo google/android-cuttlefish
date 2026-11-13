@@ -1,0 +1,13 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "sframe",
+    build_file = "@//build_external/sframe:BUILD.sframe.bazel",
+    commit = "6a37f061f4eda0c6594c91ecf99b5ff498c8c124",
+    patch_cmds = [
+        "sed -i 's|@SFRAME_CXX_NAMESPACE@|sframe|g' cmake/namespace.h.in",
+        "cp cmake/namespace.h.in include/sframe/namespace.h",
+        "sed -i 's|<namespace.h>|\"sframe/namespace.h\"|g' include/sframe/*.h",
+    ],
+    remote = "https://github.com/cisco/sframe.git",
+)

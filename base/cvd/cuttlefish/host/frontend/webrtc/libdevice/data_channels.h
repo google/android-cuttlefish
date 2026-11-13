@@ -40,7 +40,7 @@ class DataChannelHandlers {
   ~DataChannelHandlers();
 
   void OnDataChannelOpen(
-      rtc::scoped_refptr<webrtc::DataChannelInterface> channel);
+      webrtc::scoped_refptr<webrtc::DataChannelInterface> channel);
 
  private:
   std::unique_ptr<DataChannelHandler> input_;

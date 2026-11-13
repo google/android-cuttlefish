@@ -33,7 +33,7 @@ namespace webrtc_streaming {
 class PeerConnectionBuilder {
  public:
   virtual ~PeerConnectionBuilder() = default;
-  virtual Result<rtc::scoped_refptr<webrtc::PeerConnectionInterface>> Build(
+  virtual Result<webrtc::scoped_refptr<webrtc::PeerConnectionInterface>> Build(
       webrtc::PeerConnectionObserver& observer,
       const std::vector<webrtc::PeerConnectionInterface::IceServer>&
           per_connection_servers) = 0;
@@ -65,13 +65,13 @@ class ConnectionController : public webrtc::PeerConnectionObserver {
 
     // Called when new media tracks are added to the peer connection.
     virtual void OnTrack(
-        rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) = 0;
+        webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) = 0;
     // Called when media tracks are removed from the peer connection.
     virtual void OnRemoveTrack(
-        rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) = 0;
+        webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) = 0;
     // Called when a data channel is added to the peer connection.
     virtual void OnDataChannel(
-        rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) = 0;
+        webrtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) = 0;
   };
 
   ConnectionController(PeerSignalingHandler& sig_handler,
@@ -92,7 +92,7 @@ class ConnectionController : public webrtc::PeerConnectionObserver {
   // the function returns, but that's not guaranteed.
   void HandleSignalingMessage(const Json::Value& msg);
 
-  rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection() {
+  webrtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection() {
     return peer_connection_;
   }
 
@@ -100,11 +100,11 @@ class ConnectionController : public webrtc::PeerConnectionObserver {
   void OnSignalingChange(
       webrtc::PeerConnectionInterface::SignalingState new_state) override;
   void OnAddStream(
-      rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
+      webrtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
   void OnRemoveStream(
-      rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
-  void OnDataChannel(
-      rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) override;
+      webrtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
+  void OnDataChannel(webrtc::scoped_refptr<webrtc::DataChannelInterface>
+                         data_channel) override;
   void OnRenegotiationNeeded() override;
   void OnStandardizedIceConnectionChange(
       webrtc::PeerConnectionInterface::IceConnectionState new_state) override;
@@ -116,8 +116,7 @@ class ConnectionController : public webrtc::PeerConnectionObserver {
   void OnIceCandidateError(const std::string& address, int port,
                            const std::string& url, int error_code,
                            const std::string& error_text) override;
-  void OnIceCandidatesRemoved(
-      const std::vector<cricket::Candidate>& candidates) override;
+  void OnIceCandidateRemoved(const webrtc::IceCandidate* candidate) override;
   // The following can be overridden but are not needed by either the device or
   // client at the moement. void OnIceConnectionReceivingChange(bool receiving)
   // override; void OnIceSelectedCandidatePairChanged( const
@@ -126,10 +125,10 @@ class ConnectionController : public webrtc::PeerConnectionObserver {
   // const std::vector<rtc::scoped_refptr<webrtc::MediaStreamInterface>>&
   // streams) override;
   // void OnInterestingUsage(int usage_pattern) override;
-  void OnTrack(
-      rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
+  void OnTrack(webrtc::scoped_refptr<webrtc::RtpTransceiverInterface>
+                   transceiver) override;
   void OnRemoveTrack(
-      rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
+      webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
 
   void Shutdown() { shutting_down_ = true; }
 
@@ -155,7 +154,7 @@ class ConnectionController : public webrtc::PeerConnectionObserver {
 
   webrtc::CreateSessionDescriptionObserver* ThisAsCreateSDPObserver();
   webrtc::SetSessionDescriptionObserver* ThisAsSetSDPObserver();
-  rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface>
+  webrtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface>
   ThisAsSetRemoteSDPObserver();
 
   Result<void> OnCreateSDPSuccess(webrtc::SessionDescriptionInterface* desc);
@@ -169,7 +168,7 @@ class ConnectionController : public webrtc::PeerConnectionObserver {
   Observer& observer_;
 
   bool shutting_down_;
-  rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
+  webrtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
   std::vector<std::unique_ptr<webrtc::IceCandidateInterface>>
       pending_ice_candidates_;
 

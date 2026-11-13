@@ -152,7 +152,7 @@
 #define PACKAGE_NAME "libsrtp2"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libsrtp2 2.4.0-pre"
+#define PACKAGE_STRING "libsrtp2 2.8.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libsrtp2"
@@ -161,7 +161,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.4.0-pre"
+#define PACKAGE_VERSION "2.8.1"
 
 /* The size of `unsigned long', as computed by sizeof. */
 #define SIZEOF_UNSIGNED_LONG 8

@@ -41,7 +41,7 @@ class DataChannelHandler : public webrtc::DataChannelObserver {
 
  protected:
   // Provide access to the underlying data channel and the connection observer.
-  virtual rtc::scoped_refptr<webrtc::DataChannelInterface> channel() = 0;
+  virtual webrtc::scoped_refptr<webrtc::DataChannelInterface> channel() = 0;
   virtual std::shared_ptr<ConnectionObserver> observer() = 0;
 
   // Subclasses must override this to process messages.
@@ -391,7 +391,7 @@ template <typename H>
 class DataChannelHandlerImpl : public H {
  public:
   DataChannelHandlerImpl(
-      rtc::scoped_refptr<webrtc::DataChannelInterface> channel,
+      webrtc::scoped_refptr<webrtc::DataChannelInterface> channel,
       std::shared_ptr<ConnectionObserver> observer)
       : channel_(channel), observer_(observer) {
     channel->RegisterObserver(this);
@@ -400,13 +400,13 @@ class DataChannelHandlerImpl : public H {
 
  protected:
   // DataChannelHandler implementation
-  rtc::scoped_refptr<webrtc::DataChannelInterface> channel() override {
+  webrtc::scoped_refptr<webrtc::DataChannelInterface> channel() override {
     return channel_;
   }
   std::shared_ptr<ConnectionObserver> observer() override { return observer_; }
 
  private:
-  rtc::scoped_refptr<webrtc::DataChannelInterface> channel_;
+  webrtc::scoped_refptr<webrtc::DataChannelInterface> channel_;
   std::shared_ptr<ConnectionObserver> observer_;
 };
 
@@ -414,7 +414,7 @@ class DataChannelHandlerImpl : public H {
 
 bool DataChannelHandler::Send(const uint8_t *msg, size_t size, bool binary) {
   webrtc::DataBuffer buffer(
-      rtc::CopyOnWriteBuffer(absl::MakeSpan(msg, size)), binary);
+      webrtc::CopyOnWriteBuffer(absl::MakeSpan(msg, size)), binary);
   // TODO (b/185832105): When the SCTP channel is congested data channel
   // messages are buffered up to 16MB, when the buffer is full the channel
   // is abruptly closed. Keep track of the buffered data to avoid losing the
@@ -453,7 +453,7 @@ DataChannelHandlers::DataChannelHandlers(
 DataChannelHandlers::~DataChannelHandlers() {}
 
 void DataChannelHandlers::OnDataChannelOpen(
-    rtc::scoped_refptr<webrtc::DataChannelInterface> channel) {
+    webrtc::scoped_refptr<webrtc::DataChannelInterface> channel) {
   auto label = channel->label();
   VLOG(1) << "Data channel connected: " << label;
   if (label == kInputChannelLabel) {

@@ -1,0 +1,40 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(
+    default_visibility = [
+        "//visibility:public",
+    ],
+)
+
+cc_library(
+    name = "sframe",
+    srcs = [
+        "src/crypto.cpp",
+        "src/crypto.h",
+        "src/crypto_boringssl.cpp",
+        "src/header.cpp",
+        "src/header.h",
+        "src/result.cpp",
+        "src/sframe.cpp",
+    ],
+    hdrs = [
+        "include/sframe/map.h",
+        "include/sframe/namespace.h",
+        "include/sframe/result.h",
+        "include/sframe/sframe.h",
+        "include/sframe/span.h",
+        "include/sframe/vector.h",
+    ],
+    copts = [
+        "-std=c++20",
+    ],
+    defines = [
+        "BORINGSSL",
+    ],
+    includes = [
+        "include",
+    ],
+    deps = [
+        "@boringssl//:crypto",
+    ],
+)

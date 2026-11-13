@@ -2,11 +2,15 @@ git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "g
 
 git_repository(
     name = "libwebrtc",
-    commit = "e093c481bf8fd8e141fee4c007d63da488ce0ef5",
+    commit = "95554e4a0c5c343fdc989387d9d0ce18e2a2294b",
     build_file = "@//build_external/libwebrtc:BUILD.libwebrtc.bazel",
     remote = "https://webrtc.googlesource.com/src/",
     patches = [
         "@//build_external/libwebrtc:PATCH.third_party_libyuv.patch",
         "@//build_external/libwebrtc:PATCH.dav1d_include.patch",
+    ],
+    patch_cmds = [
+        "sed -i 's/absl::c_fill(std::span(data_).subspan(old_size), 0)/std::fill(data_.data() + old_size, data_.data() + size, 0)/' modules/video_coding/codecs/vp9/vp9_frame_buffer_pool.cc",
+        "sed -i 's/#define API_SCOPED_REFPTR_H_/#define API_SCOPED_REFPTR_H_\\n#pragma clang diagnostic ignored \"-Wnullability-completeness\"/' api/scoped_refptr.h",
     ],
 )

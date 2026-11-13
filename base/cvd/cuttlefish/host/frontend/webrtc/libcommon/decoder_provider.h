@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "api/environment/environment.h"
 #include "api/video_codecs/sdp_video_format.h"
 #include "api/video_codecs/video_decoder.h"
 
@@ -43,6 +44,7 @@ class DecoderProvider {
   virtual bool IsAvailable() const = 0;
   virtual std::vector<webrtc::SdpVideoFormat> GetSupportedFormats() const = 0;
   virtual Result<std::unique_ptr<webrtc::VideoDecoder>> CreateDecoder(
+      const webrtc::Environment& env,
       const webrtc::SdpVideoFormat& format) const = 0;
 
   // Descending: higher priority sorts first.

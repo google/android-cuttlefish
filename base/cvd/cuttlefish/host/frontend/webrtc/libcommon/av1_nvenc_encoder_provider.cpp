@@ -97,6 +97,7 @@ class Av1NvencEncoderProvider : public EncoderProvider {
   }
 
   Result<std::unique_ptr<webrtc::VideoEncoder>> CreateEncoder(
+      const webrtc::Environment& env,
       const webrtc::SdpVideoFormat& format) const override {
     if (!available_) {
       return CF_ERR("NVENC AV1 not available");

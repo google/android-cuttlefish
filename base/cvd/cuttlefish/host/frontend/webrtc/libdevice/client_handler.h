@@ -62,11 +62,11 @@ class ClientHandler : public ConnectionController::Observer,
       std::function<void(bool)> on_connection_changed_cb);
   ~ClientHandler() override;
 
-  bool AddDisplay(rtc::scoped_refptr<webrtc::VideoTrackInterface> track,
+  bool AddDisplay(webrtc::scoped_refptr<webrtc::VideoTrackInterface> track,
                   const std::string& label);
   bool RemoveDisplay(const std::string& label);
 
-  bool AddAudio(rtc::scoped_refptr<webrtc::AudioTrackInterface> track,
+  bool AddAudio(webrtc::scoped_refptr<webrtc::AudioTrackInterface> track,
                 const std::string& label);
 
   ClientVideoTrackInterface* GetCameraStream();
@@ -77,11 +77,11 @@ class ClientHandler : public ConnectionController::Observer,
   void OnConnectionStateChange(
       Result<webrtc::PeerConnectionInterface::PeerConnectionState> new_state) override;
   void OnDataChannel(
-      rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) override;
+      webrtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) override;
   void OnTrack(
-      rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
+      webrtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
   void OnRemoveTrack(
-      rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
+      webrtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
 
   // PeerSignalingHandling implementation
   Result<void> SendMessage(const Json::Value& msg) override;
@@ -89,7 +89,7 @@ class ClientHandler : public ConnectionController::Observer,
   // PeerConnectionBuilder implementation
   // Delegates on its own pc builder to create the pc and then adds the displays
   // and other streams as required.
-  Result<rtc::scoped_refptr<webrtc::PeerConnectionInterface>> Build(
+  Result<webrtc::scoped_refptr<webrtc::PeerConnectionInterface>> Build(
       webrtc::PeerConnectionObserver& observer,
       const std::vector<webrtc::PeerConnectionInterface::IceServer>&
           per_connection_servers) override;
@@ -105,9 +105,9 @@ class ClientHandler : public ConnectionController::Observer,
 
   void LogAndReplyError(const std::string& error_msg) const;
 
-  rtc::scoped_refptr<webrtc::RtpSenderInterface> AddTrackToConnection(
-      rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
-      rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection,
+  webrtc::scoped_refptr<webrtc::RtpSenderInterface> AddTrackToConnection(
+      webrtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,
+      webrtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection,
       const std::string& label);
 
   int client_id_;
@@ -119,12 +119,12 @@ class ClientHandler : public ConnectionController::Observer,
   DataChannelHandlers data_channels_handler_;
   std::unique_ptr<ClientVideoTrackImpl> camera_track_;
   struct DisplayTrackAndSender {
-    rtc::scoped_refptr<webrtc::VideoTrackInterface> track;
-    rtc::scoped_refptr<webrtc::RtpSenderInterface> sender;
+    webrtc::scoped_refptr<webrtc::VideoTrackInterface> track;
+    webrtc::scoped_refptr<webrtc::RtpSenderInterface> sender;
   };
   std::map<std::string, DisplayTrackAndSender> displays_;
   std::vector<
-      std::pair<rtc::scoped_refptr<webrtc::AudioTrackInterface>, std::string>>
+      std::pair<webrtc::scoped_refptr<webrtc::AudioTrackInterface>, std::string>>
       audio_streams_;
 };
 
@@ -132,8 +132,8 @@ class ClientVideoTrackInterface {
  public:
   virtual ~ClientVideoTrackInterface() = default;
   virtual void AddOrUpdateSink(
-      rtc::VideoSinkInterface<webrtc::VideoFrame>* sink,
-      const rtc::VideoSinkWants& wants) = 0;
+      webrtc::VideoSinkInterface<webrtc::VideoFrame>* sink,
+      const webrtc::VideoSinkWants& wants) = 0;
 };
 
 }  // namespace webrtc_streaming
