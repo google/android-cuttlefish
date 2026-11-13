@@ -72,6 +72,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "remove_file_if_exists",
+    srcs = ["remove_file_if_exists.cc"],
+    hdrs = ["remove_file_if_exists.h"],
+    deps = [
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings:string_view",
+    ],
+)
+
+cf_cc_library(
     name = "stat",
     srcs = ["stat.cc"],
     hdrs = ["stat.h"],
