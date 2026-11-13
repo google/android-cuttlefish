@@ -1141,15 +1141,18 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     uint8_t ethernet_mac[6] = {};
     uint8_t mobile_mac[6] = {};
     uint8_t wifi_mac[6] = {};
+    uint8_t adb_mac[6] = {};
     uint8_t ethernet_ipv6[16] = {};
     GenerateEthMacForInstance(num - 1, ethernet_mac);
     GenerateMobileMacForInstance(num - 1, mobile_mac);
     GenerateWifiMacForInstance(num - 1, wifi_mac);
+    GenerateAdbMacForInstance(num - 1, adb_mac);
     GenerateCorrespondingIpv6ForMac(ethernet_mac, ethernet_ipv6);
 
     instance.set_ethernet_mac(MacAddressToString(ethernet_mac));
     instance.set_mobile_mac(MacAddressToString(mobile_mac));
     instance.set_wifi_mac(MacAddressToString(wifi_mac));
+    instance.set_adb_mac(MacAddressToString(adb_mac));
     instance.set_ethernet_ipv6(Ipv6ToString(ethernet_ipv6));
 
     instance.set_tombstone_receiver_port(calc_vsock_port(6600));

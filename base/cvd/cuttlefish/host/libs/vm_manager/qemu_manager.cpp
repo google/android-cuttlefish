@@ -32,7 +32,6 @@
 #include <vector>
 
 #include "absl/log/log.h"
-#include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "fmt/format.h"
 #include "vulkan/vulkan.h"
@@ -861,13 +860,10 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
           instance.wifi_mac());
     }
     if (adb_over_nic) {
-      // The MAC follows the instance's scheme (00:1a:11:eX:cf:NN) with the
-      // next free X.
-      // TODO: Generate this alongside the other MAC addresses.
       qemu_cmd.AddParameter("-device");
       qemu_cmd.AddParameter(
           "virtio-net-pci-non-transitional,netdev=hostnet3,id=net3,mac=",
-          absl::StrReplaceAll(instance.wifi_mac(), {{":e2:", ":e3:"}}));
+          instance.adb_mac());
     }
   }
 
