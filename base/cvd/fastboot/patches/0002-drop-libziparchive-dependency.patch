@@ -1,0 +1,182 @@
+diff --git b/base/cvd/fastboot/fastboot.cpp a/base/cvd/fastboot/fastboot.cpp
+index 1c52da238..41472c286 100644
+--- b/base/cvd/fastboot/fastboot.cpp
++++ a/base/cvd/fastboot/fastboot.cpp
+@@ -67,7 +67,7 @@
+ #include <liblp/super_layout_builder.h>
+ #include <platform_tools_version.h>
+ #include <sparse/sparse.h>
+-#include <ziparchive/zip_archive.h>
++#include <zip.h>
+ 
+ #include "bootimg_utils.h"
+ #include "constants.h"
+@@ -713,25 +713,40 @@ static std::vector<char> LoadBootableImage(const std::string& kernel, const std:
+     return out;
+ }
+ 
+-static bool UnzipToMemory(ZipArchiveHandle zip, const std::string& entry_name,
++static zip_int64_t ExtractToBuffer(zip_file_t *zip_file, std::vector<char>& out) {
++    zip_int64_t bytes_read;
++    zip_uint64_t pos = 0;
++    while ((bytes_read = zip_fread(zip_file, &out[pos], out.size() - pos)) > 0) {
++        pos += bytes_read;
++    }
++    return bytes_read;
++}
++
++static bool UnzipToMemory(unique_zip_t& zip, const char *entry_name,
+                           std::vector<char>* out) {
+-    ZipEntry64 zip_entry;
+-    if (FindEntry(zip, entry_name, &zip_entry) != 0) {
+-        fprintf(stderr, "archive does not contain '%s'\n", entry_name.c_str());
++    auto zip_file = zip_fopen(zip.get(), entry_name, 0);
++    if (!zip_file) {
++        fprintf(stderr, "archive does not contain '%s'\n", entry_name);
+         return false;
+     }
+ 
+-    if (zip_entry.uncompressed_length > std::numeric_limits<size_t>::max()) {
+-        die("entry '%s' is too large: %" PRIu64, entry_name.c_str(), zip_entry.uncompressed_length);
++    zip_stat_t zstat;
++    zip_stat_init(&zstat);
++    if (zip_stat(zip.get(), entry_name, 0, &zstat) < 0 || !(zstat.valid & ZIP_STAT_SIZE)) {
++        die("size of entry '%s' could not be determined\n", entry_name);
+     }
+-    out->resize(zip_entry.uncompressed_length);
++    if (zstat.size > std::numeric_limits<size_t>::max()) {
++        die("entry '%s' is too large: %" PRIu64, entry_name, zstat.size);
++    }
++    out->resize(zstat.size);
+ 
+-    fprintf(stderr, "extracting %s (%zu MB) to RAM...\n", entry_name.c_str(),
++    fprintf(stderr, "extracting %s (%zu MB) to RAM...\n", entry_name,
+             out->size() / 1024 / 1024);
+ 
+-    int error =
+-            ExtractToMemory(zip, &zip_entry, reinterpret_cast<uint8_t*>(out->data()), out->size());
+-    if (error != 0) die("failed to extract '%s': %s", entry_name.c_str(), ErrorCodeString(error));
++    if (ExtractToBuffer(zip_file, *out) < 0) {
++        auto error = zip_file_get_error(zip_file);
++        die("failed to extract '%s': %s", entry_name, zip_error_strerror(error));
++    }
+ 
+     return true;
+ }
+@@ -787,22 +802,47 @@ static int make_temporary_fd(const char* what) {
+ 
+ #endif
+ 
+-static unique_fd UnzipToFile(ZipArchiveHandle zip, const char* entry_name) {
++static unique_fd UnzipToFile(unique_zip_t& zip, const char* entry_name) {
+     unique_fd fd(make_temporary_fd(entry_name));
+ 
+-    ZipEntry64 zip_entry;
+-    if (FindEntry(zip, entry_name, &zip_entry) != 0) {
++    auto zip_file = zip_fopen(zip.get(), entry_name, 0);
++    if (!zip_file) {
+         fprintf(stderr, "archive does not contain '%s'\n", entry_name);
+         errno = ENOENT;
+         return unique_fd();
+     }
+ 
++    zip_stat_t zstat;
++    zip_stat_init(&zstat);
++    if (zip_stat(zip.get(), entry_name, 0, &zstat) < 0 || !(zstat.valid & ZIP_STAT_SIZE)) {
++        die("size of entry '%s' could not be determined\n", entry_name);
++    }
++
+     fprintf(stderr, "extracting %s (%" PRIu64 " MB) to disk...", entry_name,
+-            zip_entry.uncompressed_length / 1024 / 1024);
++            zstat.size / 1024 / 1024);
++
+     double start = now();
+-    int error = ExtractEntryToFile(zip, &zip_entry, fd.get());
+-    if (error != 0) {
+-        die("\nfailed to extract '%s': %s", entry_name, ErrorCodeString(error));
++    while (true) {
++        // Emulate libziparchive, which uses a 32kB read/write buffer
++        const size_t kBufSize = 32768;
++        std::vector<char> out(kBufSize);
++        auto bytes_read = ExtractToBuffer(zip_file, out);
++        if (bytes_read < 0) {
++            auto error = zip_file_get_error(zip_file);
++            die("\nfailed to extract '%s': %s", entry_name, zip_error_strerror(error));
++        }
++        if (bytes_read == 0) {
++            break;
++        }
++
++        ssize_t bytes_written;
++        size_t pos = 0;
++        while ((bytes_written = write(fd.get(), &out[pos], out.size() - pos)) > 0) {
++            pos += bytes_written;
++        }
++        if (bytes_written != 0) {
++            die("\nfailed to write '%s': %s", entry_name, strerror(errno));
++        }
+     }
+ 
+     if (lseek(fd.get(), 0, SEEK_SET) != 0) {
+@@ -1954,7 +1994,7 @@ void FlashAllTool::AddFlashTasks(const std::vector<std::pair<const Image*, std::
+ }
+ 
+ bool ZipImageSource::ReadFile(const std::string& name, std::vector<char>* out) const {
+-    return UnzipToMemory(zip_, name, out);
++    return UnzipToMemory(zip_, name.c_str(), out);
+ }
+ 
+ unique_fd ZipImageSource::OpenFile(const std::string& name) const {
+@@ -1962,16 +2002,16 @@ unique_fd ZipImageSource::OpenFile(const std::string& name) const {
+ }
+ 
+ static void do_update(const char* filename, FlashingPlan* fp) {
+-    ZipArchiveHandle zip;
+-    int error = OpenArchive(filename, &zip);
+-    if (error != 0) {
+-        die("failed to open zip file '%s': %s", filename, ErrorCodeString(error));
++    int err;
++    unique_zip_t zip(zip_open(filename, ZIP_RDONLY, &err), zip_close);
++    if (err != 0) {
++        zip_error_t error;
++        zip_error_init_with_code(&error, err);
++        die("failed to open zip file '%s': %s", filename, zip_error_strerror(&error));
+     }
+     fp->source.reset(new ZipImageSource(zip));
+     FlashAllTool tool(fp);
+     tool.Flash();
+-
+-    CloseArchive(zip);
+ }
+ 
+ bool LocalImageSource::ReadFile(const std::string& name, std::vector<char>* out) const {
+diff --git b/base/cvd/fastboot/fastboot.h a/base/cvd/fastboot/fastboot.h
+index 6a4997049..f68f70100 100644
+--- b/base/cvd/fastboot/fastboot.h
++++ a/base/cvd/fastboot/fastboot.h
+@@ -40,7 +40,9 @@
+ #include "result.h"
+ #include "socket.h"
+ #include "util.h"
+-#include "ziparchive/zip_archive.h"
++#include <zip.h>
++
++using unique_zip_t = std::unique_ptr<zip_t, decltype(&zip_close)>;
+ 
+ class FastBootTool {
+   public:
+@@ -135,12 +137,12 @@ class FlashAllTool {
+ 
+ class ZipImageSource final : public ImageSource {
+   public:
+-    explicit ZipImageSource(ZipArchiveHandle zip) : zip_(zip) {}
++    explicit ZipImageSource(unique_zip_t& zip) : zip_(zip) {}
+     bool ReadFile(const std::string& name, std::vector<char>* out) const override;
+     unique_fd OpenFile(const std::string& name) const override;
+ 
+   private:
+-    ZipArchiveHandle zip_;
++    unique_zip_t& zip_;
+ };
+ 
+ class LocalImageSource final : public ImageSource {
