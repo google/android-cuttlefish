@@ -59,6 +59,11 @@ class DiskBuilder {
   DiskBuilder& ReadOnly(bool read_only) &;
   DiskBuilder ReadOnly(bool read_only) &&;
 
+  /** The overlay holds user data: when resuming, refuse to replace an
+   * existing, non-empty overlay instead of silently recreating it. */
+  DiskBuilder& ProtectUserData(bool protect_user_data) &;
+  DiskBuilder ProtectUserData(bool protect_user_data) &&;
+
   Result<bool> WillRebuildCompositeDisk();
   /** Returns `true` if the file was actually rebuilt. */
   Result<bool> BuildCompositeDiskIfNecessary();
@@ -79,6 +84,7 @@ class DiskBuilder {
   std::string overlay_path_;
   bool resume_if_possible_ = true;
   bool read_only_ = true;
+  bool protect_user_data_ = false;
 };
 
 }  // namespace cuttlefish
