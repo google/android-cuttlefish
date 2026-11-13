@@ -26,10 +26,10 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/io/in_memory_fs.h"
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/reader_seeker.h"
+#include "cuttlefish/io/reader_writer_seeker.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/io/writer.h"

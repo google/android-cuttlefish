@@ -41,7 +41,6 @@
 #endif
 
 #include <chrono>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -50,7 +49,8 @@
 
 #include "cuttlefish/common/libs/fs/scoped_mmap.h"
 #include "cuttlefish/common/libs/fs/vm_sockets.h"
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader_writer_seeker.h"
+#include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result_type.h"
 
 /**
@@ -162,6 +162,8 @@ class Fd : public ReaderWriterSeeker {
       unsigned int cid = VMADDR_CID_ANY);
   static Result<Fd, int> VsockServer(
       int type, std::optional<int> vhost_user_vsock_listening_cid);
+
+  Result<void> Visit(IoVisitor&) override;
 
   Result<void, int> Bind(const struct sockaddr* addr, socklen_t addrlen);
   Result<void, int> Connect(const struct sockaddr* addr, socklen_t addrlen);

@@ -20,7 +20,8 @@
 #include <shared_mutex>
 #include <vector>
 
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/reader_writer_seeker.h"
+#include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
@@ -28,6 +29,8 @@ namespace cuttlefish {
 class InMemoryIo : public ReaderWriterSeeker {
  public:
   InMemoryIo(std::vector<char>& data, std::shared_mutex& mutex);
+
+  Result<void> Visit(IoVisitor&) override;
 
   Result<uint64_t, int> Read(void* buf, uint64_t count) override;
 
@@ -44,6 +47,8 @@ class InMemoryIo : public ReaderWriterSeeker {
 
   Result<uint64_t, int> PWrite(const void* buf, uint64_t count,
                                uint64_t offset) override;
+
+  Result<void> Truncate(uint64_t size) override;
 
  private:
   // Must be called with the lock held for reading or writing

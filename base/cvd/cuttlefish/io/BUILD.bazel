@@ -11,9 +11,9 @@ cf_cc_library(
     srcs = ["chroot.cc"],
     hdrs = ["chroot.h"],
     deps = [
-        "//cuttlefish/io",
         "//cuttlefish/io:filesystem",
         "//cuttlefish/io:reader_seeker",
+        "//cuttlefish/io:reader_writer_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings",
@@ -25,11 +25,11 @@ cf_cc_test(
     name = "chroot_test",
     srcs = ["chroot_test.cc"],
     deps = [
-        "//cuttlefish/io",
         "//cuttlefish/io:chroot",
         "//cuttlefish/io:copy",
         "//cuttlefish/io:in_memory_fs",
         "//cuttlefish/io:owning_in_memory_io",
+        "//cuttlefish/io:reader_writer_seeker",
         "//cuttlefish/io:string",
         "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
@@ -130,6 +130,7 @@ cf_cc_library(
         "//cuttlefish/io:read_window_view",
         "//cuttlefish/io:reader",
         "//cuttlefish/io:reader_seeker",
+        "//cuttlefish/io:reader_writer_seeker",
         "//cuttlefish/io:seeker",
         "//cuttlefish/io:writer",
         "//cuttlefish/io:writer_seeker",
@@ -213,10 +214,10 @@ cf_cc_library(
     srcs = ["in_memory_fs.cc"],
     hdrs = ["in_memory_fs.h"],
     deps = [
-        "//cuttlefish/io",
         "//cuttlefish/io:filesystem",
         "//cuttlefish/io:in_memory_io",
         "//cuttlefish/io:reader_seeker",
+        "//cuttlefish/io:reader_writer_seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings:string_view",
@@ -229,22 +230,24 @@ cf_cc_library(
     hdrs = ["in_memory_io.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:reader_writer_seeker",
+        "//cuttlefish/io:visitable",
+        "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
 )
 
 cf_cc_library(
     name = "io",
-    srcs = ["io.cc"],
     hdrs = ["io.h"],
     deps = [
         "//cuttlefish/io:reader",
         "//cuttlefish/io:reader_seeker",
+        "//cuttlefish/io:reader_writer_seeker",
         "//cuttlefish/io:seeker",
         "//cuttlefish/io:visitable",
         "//cuttlefish/io:writer",
         "//cuttlefish/io:writer_seeker",
-        "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
 )
@@ -271,8 +274,8 @@ cf_cc_library(
     srcs = ["length.cc"],
     hdrs = ["length.h"],
     deps = [
-        "//cuttlefish/io",
         "//cuttlefish/io:reader_seeker",
+        "//cuttlefish/io:reader_writer_seeker",
         "//cuttlefish/io:seeker",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
@@ -311,12 +314,12 @@ cf_cc_test(
     name = "lz4_legacy_test",
     srcs = ["lz4_legacy_test.cc"],
     deps = [
-        "//cuttlefish/io",
         "//cuttlefish/io:in_memory_fs",
         "//cuttlefish/io:lz4_legacy",
         "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/io:reader",
         "//cuttlefish/io:reader_seeker",
+        "//cuttlefish/io:reader_writer_seeker",
         "//cuttlefish/io:string",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/io:writer",
@@ -332,9 +335,9 @@ cf_cc_library(
     hdrs = ["native_filesystem.h"],
     deps = [
         "//cuttlefish/common/libs/fs:fd",
-        "//cuttlefish/io",
         "//cuttlefish/io:filesystem",
         "//cuttlefish/io:reader_seeker",
+        "//cuttlefish/io:reader_writer_seeker",
         "//cuttlefish/posix:remove",
         "//cuttlefish/posix:stat",
         "//cuttlefish/result:expect",
@@ -348,7 +351,11 @@ cf_cc_library(
     srcs = ["owning_in_memory_io.cc"],
     hdrs = ["owning_in_memory_io.h"],
     deps = [
+        "//cuttlefish/io",
         "//cuttlefish/io:in_memory_io",
+        "//cuttlefish/io:visitable",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings:string_view",
     ],
 )
@@ -416,6 +423,17 @@ cf_cc_library(
     deps = [
         "//cuttlefish/io:reader",
         "//cuttlefish/io:seeker",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
+    name = "reader_writer_seeker",
+    hdrs = ["reader_writer_seeker.h"],
+    deps = [
+        "//cuttlefish/io:reader_seeker",
+        "//cuttlefish/io:visitable",
+        "//cuttlefish/io:writer_seeker",
         "//cuttlefish/result:result_type",
     ],
 )

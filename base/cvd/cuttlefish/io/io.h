@@ -19,6 +19,7 @@
 
 #include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/reader_seeker.h"
+#include "cuttlefish/io/reader_writer_seeker.h"
 #include "cuttlefish/io/seeker.h"
 #include "cuttlefish/io/visitable.h"
 #include "cuttlefish/io/writer.h"
@@ -29,24 +30,6 @@ namespace cuttlefish {
 
 class ConcatReaderSeeker;
 class ReadWindowView;
-
-class ReaderWriterSeeker : public ReaderSeeker, public WriterSeeker {
- public:
-  // Members redeclared to avoid compilation errors like "non-static member
-  // 'Xyz' found in multiple base-class subobjects"
-  Result<void> Visit(IoVisitor&) override;
-
-  Result<uint64_t, int> Read(void* buf, uint64_t count) override = 0;
-  Result<uint64_t, int> Write(const void* buf, uint64_t count) override = 0;
-  Result<uint64_t, int> SeekSet(uint64_t offset) override = 0;
-  Result<uint64_t, int> SeekCur(int64_t offset) override = 0;
-  Result<uint64_t, int> SeekEnd(int64_t offset) override = 0;
-  Result<uint64_t, int> PRead(void* buf, uint64_t count,
-                              uint64_t offset) const override = 0;
-  Result<uint64_t, int> PWrite(const void* buf, uint64_t count,
-                               uint64_t offset) override = 0;
-  Result<void> Truncate(uint64_t size) override;
-};
 
 /**
  * Defines callbacks which receive the runtime type of an IoVisitable.
