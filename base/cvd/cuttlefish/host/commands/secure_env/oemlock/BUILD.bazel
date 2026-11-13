@@ -25,7 +25,7 @@ cf_cc_library(
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/security:oemlock",
-        "//cuttlefish/common/libs/transport",
+        "//cuttlefish/common/libs/transport:channel",
         "//cuttlefish/host/commands/secure_env/oemlock",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",

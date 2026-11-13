@@ -14,16 +14,26 @@
  * limitations under the License.
  */
 
+#include <string.h>
+#include <unistd.h>
+
+#include <sstream>
 #include <string>
 
 #include "absl/log/log.h"
 #include "gflags/gflags.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/sensors/sensors.h"
+#include "cuttlefish/common/libs/transport/channel.h"
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 #include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/host/commands/sensors_simulator/sensors_hal_proxy.h"
 #include "cuttlefish/host/commands/sensors_simulator/sensors_simulator.h"
 #include "cuttlefish/host/libs/config/logging.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 DEFINE_int32(control_from_guest_fd, -1,
              "Sensors control virtio-console from guest to host");
@@ -46,9 +56,8 @@ namespace sensors {
 namespace {
 
 static constexpr char kReqMisFormatted[] = "The request is mis-formatted.";
-static constexpr char kFdNotOpen[] = "Unable to connect: ";
 
-Result<void> ProcessWebrtcRequest(transport::SharedFdChannel& channel,
+Result<void> ProcessWebrtcRequest(transport::Channel& channel,
                                   SensorsSimulator& sensors_simulator) {
   auto request =
       CF_EXPECT(channel.ReceiveMessage(), "Couldn't receive message.");
@@ -88,58 +97,51 @@ Result<void> ProcessWebrtcRequest(transport::SharedFdChannel& channel,
                 "Can't send request for cmd: " << cmd);
       break;
     }
-    default: {
+    default:
       return CF_ERR("Unsupported cmd: " << cmd);
-    }
   }
   return {};
 }
 
-int SensorsSimulatorMain(int argc, char** argv) {
+Result<Fd> DupAndClose(int fd) {
+  Fd ret = CF_EXPECT(Fd::Dup(fd), "Unable to connect");
+  close(fd);
+  return ret;
+}
+
+Result<void> SensorsSimulatorMain(int argc, char** argv) {
   DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  SharedFD webrtc_fd = SharedFD::Dup(FLAGS_webrtc_fd);
-  close(FLAGS_webrtc_fd);
-  if (!webrtc_fd->IsOpen()) {
-    LOG(FATAL) << kFdNotOpen << webrtc_fd->StrError();
-  }
-  SharedFD control_from_guest_fd = SharedFD::Dup(FLAGS_control_from_guest_fd);
-  close(FLAGS_control_from_guest_fd);
-  if (!control_from_guest_fd->IsOpen()) {
-    LOG(FATAL) << kFdNotOpen << control_from_guest_fd->StrError();
-  }
-  SharedFD control_to_guest_fd = SharedFD::Dup(FLAGS_control_to_guest_fd);
-  close(FLAGS_control_to_guest_fd);
-  if (!control_to_guest_fd->IsOpen()) {
-    LOG(FATAL) << kFdNotOpen << control_to_guest_fd->StrError();
-  }
-  SharedFD data_from_guest_fd = SharedFD::Dup(FLAGS_data_from_guest_fd);
-  close(FLAGS_data_from_guest_fd);
-  if (!data_from_guest_fd->IsOpen()) {
-    LOG(FATAL) << kFdNotOpen << data_from_guest_fd->StrError();
-  }
-  SharedFD data_to_guest_fd = SharedFD::Dup(FLAGS_data_to_guest_fd);
-  close(FLAGS_data_to_guest_fd);
-  if (!data_to_guest_fd->IsOpen()) {
-    LOG(FATAL) << kFdNotOpen << data_to_guest_fd->StrError();
-  }
-  SharedFD kernel_events_fd = SharedFD::Dup(FLAGS_kernel_events_fd);
-  close(FLAGS_kernel_events_fd);
 
-  transport::SharedFdChannel channel(webrtc_fd, webrtc_fd);
+  transport::SharedFdChannel webrtc_channel(
+      CF_EXPECT(DupAndClose(FLAGS_webrtc_fd)));
 
-  auto device_type = static_cast<DeviceType>(FLAGS_device_type);
+  transport::SharedFdChannel control_channel(
+      CF_EXPECT(DupAndClose(FLAGS_control_from_guest_fd)),
+      CF_EXPECT(DupAndClose(FLAGS_control_to_guest_fd)));
+
+  transport::SharedFdChannel data_channel(
+      CF_EXPECT(DupAndClose(FLAGS_data_from_guest_fd)),
+      CF_EXPECT(DupAndClose(FLAGS_data_to_guest_fd)));
+
+  SharedFD kernel_events_fd;
+  if (FLAGS_kernel_events_fd >= 0) {
+    kernel_events_fd = CF_EXPECT(DupAndClose(FLAGS_kernel_events_fd));
+  }
+
+  const DeviceType device_type = static_cast<DeviceType>(FLAGS_device_type);
   SensorsSimulator sensors_simulator(device_type == DeviceType::Auto);
-  SensorsHalProxy sensors_hal_proxy(
-      control_from_guest_fd, control_to_guest_fd, data_from_guest_fd,
-      data_to_guest_fd, kernel_events_fd, sensors_simulator, device_type);
+  SensorsHalProxy sensors_hal_proxy(control_channel, data_channel,
+                                    kernel_events_fd, sensors_simulator,
+                                    device_type);
   while (true) {
-    auto result = ProcessWebrtcRequest(channel, sensors_simulator);
+    const Result<void> result =
+        ProcessWebrtcRequest(webrtc_channel, sensors_simulator);
     if (!result.has_value()) {
       LOG(ERROR) << result.error();
     }
   }
-  return 0;
+  return {};
 }
 
 }  // namespace
@@ -148,5 +150,11 @@ int SensorsSimulatorMain(int argc, char** argv) {
 }  // namespace cuttlefish
 
 int main(int argc, char* argv[]) {
-  return cuttlefish::sensors::SensorsSimulatorMain(argc, argv);
+  cuttlefish::Result<void> res =
+      cuttlefish::sensors::SensorsSimulatorMain(argc, argv);
+  if (!res.has_value()) {
+    LOG(ERROR) << res.error();
+    return -1;
+  }
+  return 0;
 }

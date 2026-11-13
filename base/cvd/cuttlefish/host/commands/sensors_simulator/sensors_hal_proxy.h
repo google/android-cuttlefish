@@ -20,11 +20,10 @@
 #include <mutex>
 #include <thread>
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/sensors/sensors.h"
-#include "cuttlefish/common/libs/transport/channel_sharedfd.h"
+#include "cuttlefish/common/libs/transport/channel.h"
 #include "cuttlefish/common/libs/utils/device_type.h"
-#include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
-#include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
 #include "cuttlefish/host/commands/sensors_simulator/sensors_simulator.h"
 
 namespace cuttlefish {
@@ -32,9 +31,8 @@ namespace sensors {
 
 class SensorsHalProxy {
  public:
-  SensorsHalProxy(SharedFD control_from_guest_fd, SharedFD control_to_guest_fd,
-                  SharedFD data_from_guest_fd, SharedFD data_to_guest_fd,
-                  SharedFD kernel_events_fd,
+  SensorsHalProxy(transport::Channel& control_channel,
+                  transport::Channel& data_channel, SharedFD kernel_events_fd,
                   SensorsSimulator& sensors_simulator, DeviceType device_type);
 
  private:
@@ -43,8 +41,8 @@ class SensorsHalProxy {
   std::thread req_responder_thread_;
   std::thread data_reporter_thread_;
   std::thread reboot_monitor_thread_;
-  transport::SharedFdChannel control_channel_;
-  transport::SharedFdChannel data_channel_;
+  transport::Channel& control_channel_;
+  transport::Channel& data_channel_;
   SharedFD kernel_events_fd_;
   SensorsSimulator& sensors_simulator_;
   std::atomic<bool> hal_activated_ = false;

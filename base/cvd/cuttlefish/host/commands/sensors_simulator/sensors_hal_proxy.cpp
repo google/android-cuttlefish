@@ -16,11 +16,32 @@
 
 #include "cuttlefish/host/commands/sensors_simulator/sensors_hal_proxy.h"
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include <atomic>
+#include <chrono>
 #include <mutex>
+#include <optional>
+#include <sstream>
 #include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/sensors/sensors.h"
+#include "cuttlefish/common/libs/transport/channel.h"
+#include "cuttlefish/common/libs/utils/device_type.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
+#include "cuttlefish/host/commands/sensors_simulator/sensors_simulator.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace sensors {
@@ -80,18 +101,18 @@ Result<std::string> SensorIdToName(int id) {
   }
 }
 
-Result<void> SendResponseHelper(transport::SharedFdChannel& channel,
+Result<void> SendResponseHelper(transport::Channel& channel,
                                 const std::string& msg) {
   size_t size = msg.size();
   int cmd = sensors::kUpdateHal;
   transport::ManagedMessage response = CF_EXPECT(
       transport::CreateMessage(cmd, msg.size()), "Failed to allocate message.");
-  std::memcpy(response->payload, msg.data(), size);
+  memcpy(response->payload, msg.data(), size);
   CF_EXPECT(channel.SendResponse(*response), "Can't update sensor HAL.");
   return {};
 }
 
-Result<void> ProcessHalRequest(transport::SharedFdChannel& channel,
+Result<void> ProcessHalRequest(transport::Channel& channel,
                                std::atomic<bool>& hal_activated,
                                uint32_t mask) {
   transport::ManagedMessage request =
@@ -107,8 +128,7 @@ Result<void> ProcessHalRequest(transport::SharedFdChannel& channel,
 }
 
 Result<void> UpdateSensorsHal(const std::string& sensors_data,
-                              transport::SharedFdChannel& channel,
-                              uint32_t mask) {
+                              transport::Channel& channel, uint32_t mask) {
   std::vector<std::string> reports;
   std::string report;
   std::stringstream sensors_data_stream(sensors_data);
@@ -158,16 +178,13 @@ SensorsMask HostEnabledSensors(DeviceType device_type) {
 
 }  // namespace
 
-SensorsHalProxy::SensorsHalProxy(SharedFD control_from_guest_fd,
-                                 SharedFD control_to_guest_fd,
-                                 SharedFD data_from_guest_fd,
-                                 SharedFD data_to_guest_fd,
+SensorsHalProxy::SensorsHalProxy(transport::Channel& control_channel,
+                                 transport::Channel& data_channel,
                                  SharedFD kernel_events_fd,
                                  SensorsSimulator& sensors_simulator,
                                  DeviceType device_type)
-    : control_channel_(std::move(control_from_guest_fd),
-                       std::move(control_to_guest_fd)),
-      data_channel_(std::move(data_from_guest_fd), std::move(data_to_guest_fd)),
+    : control_channel_(control_channel),
+      data_channel_(data_channel),
       kernel_events_fd_(std::move(kernel_events_fd)),
       sensors_simulator_(sensors_simulator) {
   const SensorsMask host_enabled_sensors = HostEnabledSensors(device_type);
