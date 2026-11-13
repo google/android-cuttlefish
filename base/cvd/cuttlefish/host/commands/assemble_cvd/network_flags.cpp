@@ -126,7 +126,8 @@ class NetConfig {
     bool ret = false;
     getifaddrs(&ifa_list);
     for (ifa = ifa_list; ifa; ifa = ifa->ifa_next) {
-      if (strcmp(ifa->ifa_name, interface.c_str()) == 0 &&
+      if (ifa->ifa_addr != nullptr &&
+          strcmp(ifa->ifa_name, interface.c_str()) == 0 &&
           ifa->ifa_addr->sa_family == AF_INET) {
         ret = ParseInterfaceAttributes(ifa);
         break;
@@ -146,10 +147,10 @@ Result<void> ConfigureNetworkSettings(
   // We can't introspect the tap interfaces using cvdalloc because
   // they're not set up yet. However, we can expect the following
   // instance to address scheme for the mtap interfaces.
-  bool crosvm_slirp =
-      VmManagerIsCrosvm(config) &&
+  bool vmm_slirp =
+      (VmManagerIsCrosvm(config) || VmManagerIsQemu(config)) &&
       const_instance.external_network_mode() == ExternalNetworkMode::kSlirp;
-  if (const_instance.use_cvdalloc() || crosvm_slirp) {
+  if (const_instance.use_cvdalloc() || vmm_slirp) {
     int num;
     CF_EXPECT(absl::SimpleAtoi(const_instance.id(), &num));
 

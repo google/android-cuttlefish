@@ -31,6 +31,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:host_tools_version",
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/log_names",
+        "//cuttlefish/posix:remove_file_if_exists",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/posix:symlink",
         "//cuttlefish/process:command",
