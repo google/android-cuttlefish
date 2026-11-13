@@ -139,8 +139,8 @@ message Display {
 }
 
 message DiceHandover {
-  // The path of the dice handover file, can be a file in default_build.
-  // TODO: support remote build artifact, like `@ab/...`.
+  // The path of the dice handover file, can be a file in default_build,
+  // or a remote build artifact, like `@ab/...`.
   string build = 1;
   // Hexadecimal number with 0x prefix, the base address of the mapping.
   string addr = 2;

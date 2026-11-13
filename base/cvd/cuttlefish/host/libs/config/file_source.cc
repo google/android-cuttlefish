@@ -48,6 +48,8 @@ FileSource SourceStringToEnum(std::string_view source) {
     return FileSource::TEST_SUITES_BUILD;
   } else if (absl::EqualsIgnoreCase(source, "vendor_boot_image_build")) {
     return FileSource::VENDOR_BOOT_IMAGE_BUILD;
+  } else if (absl::EqualsIgnoreCase(source, "dice_handover_build")) {
+    return FileSource::DICE_HANDOVER_BUILD;
   } else {
     return FileSource::UNKNOWN_PURPOSE;
   }
@@ -78,6 +80,8 @@ std::string_view SourceEnumToString(FileSource source) {
     return "test_suites_build";
   } else if (source == FileSource::VENDOR_BOOT_IMAGE_BUILD) {
     return "vendor_boot_image_build";
+  } else if (source == FileSource::DICE_HANDOVER_BUILD) {
+    return "dice_handover_build";
   } else {
     return "unknown";
   }

@@ -405,6 +405,16 @@ std::optional<FetchBuildContext> FetchContext::VendorBootImageBuild() {
   }
 }
 
+std::optional<FetchBuildContext> FetchContext::DiceHandoverBuild() {
+  if (builds_.dice_handover) {
+    return FetchBuildContext(
+        *this, *builds_.dice_handover, target_directories_.root,
+        FileSource::DICE_HANDOVER_BUILD, tracer_.NewTrace("Dice Handover"));
+  } else {
+    return {};
+  }
+}
+
 std::optional<FetchBuildContext> FetchContext::BootloaderBuild() {
   if (builds_.bootloader) {
     return FetchBuildContext(

@@ -41,6 +41,8 @@ using cvd::config::Instance;
 // page aligned, and 64K is a multiple of every supported guest page size
 // (4K, 16K and 64K), so the same size works on all platforms.
 inline constexpr char kDiceHandoverMappingSize[] = "0x10000";
+inline constexpr std::string_view kFetchedDiceHandoverFilename =
+    "dice_handover";
 
 inline constexpr char kFlagCrosvmAcpiTable[] = "crosvm_acpi_table";
 inline constexpr char kFlagCrosvmDeviceTreeOverlay[] =
@@ -55,20 +57,6 @@ std::string VendorBootImageFlag(const Instance& instance) {
     return vendor_boot;
   }
   return "";
-}
-
-// Returns the dice handover of the instance if it should be passed to
-// assemble_cvd, or nullptr otherwise.
-// TODO: b/544996625 - Support fetching a remote (`@ab/...`) dice handover
-// build with cvd fetch; it is skipped in the launch flags until then.
-const DiceHandover* LocalDiceHandover(const Instance& instance) {
-  const cvd::config::DiskArtifacts& artifacts =
-      instance.disk().disk_artifacts();
-  if (!artifacts.has_dice_handover() ||
-      artifacts.dice_handover().build().starts_with(kFetchPrefix)) {
-    return nullptr;
-  }
-  return &artifacts.dice_handover();
 }
 
 bool IsPrefixedHex(std::string_view value) {
@@ -113,32 +101,39 @@ Result<void> ValidateDiceHandover(const DiceHandover& dice_handover) {
 }
 
 Result<std::string> CrosvmAcpiTable(const Instance& instance) {
-  const DiceHandover* dice_handover = LocalDiceHandover(instance);
-  if (dice_handover == nullptr) {
+  const cvd::config::DiskArtifacts& artifacts =
+      instance.disk().disk_artifacts();
+  if (!artifacts.has_dice_handover()) {
     return "";
   }
-  return dice_handover->acpi_table();
+  return artifacts.dice_handover().acpi_table();
 }
 
 Result<std::string> CrosvmDeviceTreeOverlay(const Instance& instance) {
-  const DiceHandover* dice_handover = LocalDiceHandover(instance);
-  if (dice_handover == nullptr) {
+  const cvd::config::DiskArtifacts& artifacts =
+      instance.disk().disk_artifacts();
+  if (!artifacts.has_dice_handover()) {
     return "";
   }
-  return dice_handover->device_tree_overlay();
+  return artifacts.dice_handover().device_tree_overlay();
 }
 
 // Base64-encode before GenerateVecFlag joins the per-instance values with
 // commas: a file-backed mapping natively contains commas and would otherwise
 // be split across instances by assemble_cvd.
 Result<std::string> CrosvmFileBackedMappingBase64(const Instance& instance) {
-  const DiceHandover* dice_handover = LocalDiceHandover(instance);
-  if (dice_handover == nullptr) {
+  const cvd::config::DiskArtifacts& artifacts =
+      instance.disk().disk_artifacts();
+  if (!artifacts.has_dice_handover()) {
     return CF_EXPECT(EncodeBase64(""));
   }
-  return CF_EXPECT(EncodeBase64(
-      fmt::format("path={},addr={},size={}", dice_handover->build(),
-                  dice_handover->addr(), kDiceHandoverMappingSize)));
+  const DiceHandover& dice_handover = artifacts.dice_handover();
+  const std::string_view path = dice_handover.build().starts_with(kFetchPrefix)
+                                    ? kFetchedDiceHandoverFilename
+                                    : std::string_view(dice_handover.build());
+  return CF_EXPECT(EncodeBase64(fmt::format("path={},addr={},size={}", path,
+                                            dice_handover.addr(),
+                                            kDiceHandoverMappingSize)));
 }
 
 }  // namespace
@@ -180,28 +175,29 @@ Result<std::vector<std::string>> GenerateDiskFlags(
     flags.emplace_back(
         GenerateInstanceFlag("vendor_boot_image", config, VendorBootImageFlag));
   }
-  if (std::any_of(
-          config.instances().cbegin(), config.instances().cend(),
-          [](const Instance& instance) {
-            const DiceHandover* dice_handover = LocalDiceHandover(instance);
-            return dice_handover != nullptr && dice_handover->has_acpi_table();
-          })) {
+  if (std::any_of(config.instances().cbegin(), config.instances().cend(),
+                  [](const Instance& instance) {
+                    const cvd::config::DiskArtifacts& artifacts =
+                        instance.disk().disk_artifacts();
+                    return artifacts.has_dice_handover() &&
+                           artifacts.dice_handover().has_acpi_table();
+                  })) {
     flags.emplace_back(CF_EXPECT(
         ResultInstanceFlag(kFlagCrosvmAcpiTable, config, CrosvmAcpiTable)));
   }
   if (std::any_of(config.instances().cbegin(), config.instances().cend(),
                   [](const Instance& instance) {
-                    const DiceHandover* dice_handover =
-                        LocalDiceHandover(instance);
-                    return dice_handover != nullptr &&
-                           dice_handover->has_device_tree_overlay();
+                    const cvd::config::DiskArtifacts& artifacts =
+                        instance.disk().disk_artifacts();
+                    return artifacts.has_dice_handover() &&
+                           artifacts.dice_handover().has_device_tree_overlay();
                   })) {
     flags.emplace_back(CF_EXPECT(ResultInstanceFlag(
         kFlagCrosvmDeviceTreeOverlay, config, CrosvmDeviceTreeOverlay)));
   }
   if (std::any_of(config.instances().cbegin(), config.instances().cend(),
                   [](const Instance& instance) {
-                    return LocalDiceHandover(instance) != nullptr;
+                    return instance.disk().disk_artifacts().has_dice_handover();
                   })) {
     flags.emplace_back(
         CF_EXPECT(ResultInstanceFlag(kFlagCrosvmFileBackedMappingBase64, config,

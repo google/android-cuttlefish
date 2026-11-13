@@ -126,6 +126,7 @@ class FetchContext {
   std::optional<FetchBuildContext> KernelBuild();
   std::optional<FetchBuildContext> BootBuild();
   std::optional<FetchBuildContext> VendorBootImageBuild();
+  std::optional<FetchBuildContext> DiceHandoverBuild();
   std::optional<FetchBuildContext> BootloaderBuild();
   std::optional<FetchBuildContext> AndroidEfiLoaderBuild();
   std::optional<FetchBuildContext> OtaToolsBuild();

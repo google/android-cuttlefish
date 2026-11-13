@@ -28,6 +28,7 @@ struct Builds {
   std::optional<Build> kernel;
   std::optional<Build> boot;
   std::optional<Build> vendor_boot_image;
+  std::optional<Build> dice_handover;
   std::optional<Build> bootloader;
   std::optional<Build> android_efi_loader;
   std::optional<Build> otatools;

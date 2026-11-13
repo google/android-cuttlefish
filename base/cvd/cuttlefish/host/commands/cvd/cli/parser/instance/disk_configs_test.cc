@@ -488,7 +488,7 @@ TEST(BootFlagsParserTest, DiceHandoverMixedFirmwareTables) {
                          "Hg5ZDFkMzAwMCxzaXplPTB4MTAwMDA="));
 }
 
-TEST(BootFlagsParserTest, DiceHandoverRemoteBuildEmitsNoCrosvmFlags) {
+TEST(BootFlagsParserTest, DiceHandoverRemoteBuildEmitsCrosvmFlags) {
   const char* test_string = R""""(
 {
     "instances" :
@@ -515,10 +515,15 @@ TEST(BootFlagsParserTest, DiceHandoverRemoteBuildEmitsNoCrosvmFlags) {
       << "Invalid Json string";
   const std::vector<std::string> serialized_data =
       CF_ASSERT(LaunchCvdParserTester(json_configs));
-  EXPECT_FALSE(FindConfig(serialized_data, "--crosvm_acpi_table="));
+  EXPECT_TRUE(
+      FindConfig(serialized_data, "--crosvm_acpi_table=acpi_table_dice.img"));
   EXPECT_FALSE(FindConfig(serialized_data, "--crosvm_device_tree_overlay="));
-  EXPECT_FALSE(
-      FindConfig(serialized_data, "--crosvm_file_backed_mapping_base64="));
+  // base64("path=dice_handover,addr=0x9D1C3000,size=0x10000")
+  EXPECT_TRUE(
+      FindConfig(serialized_data,
+                 "--crosvm_file_backed_mapping_base64="
+                 "cGF0aD1kaWNlX2hhbmRvdmVyLGFkZHI9MHg5RDFDMzAwMCxzaXplPT"
+                 "B4MTAwMDA="));
 }
 
 TEST(BootFlagsParserTest, DiceHandoverRemoteBuildIsValidated) {

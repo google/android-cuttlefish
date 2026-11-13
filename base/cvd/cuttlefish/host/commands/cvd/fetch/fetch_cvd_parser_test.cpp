@@ -78,4 +78,19 @@ TEST(FetchCvdParserTests, ParsesVendorBootImageBuildFlag) {
               Eq(std::optional<std::string>("vendor_boot-debug.img")));
 }
 
+TEST(FetchCvdParserTests, ParsesDiceHandoverBuildFlag) {
+  std::vector<std::string> args = {
+      std::string(kTargetDirectory),
+      std::string(kDefaultBuild),
+      "--dice_handover_build=git_main/"
+      "cf_x86_64_auto{dice_handover_instance1}",
+  };
+
+  FetchFlags flags = CF_ASSERT(FetchFlags::Parse(args));
+  ASSERT_EQ(flags.vector_flags.dice_handover_build.size(), 1);
+  ASSERT_TRUE(flags.vector_flags.dice_handover_build[0].has_value());
+  EXPECT_THAT(GetFilepath(*flags.vector_flags.dice_handover_build[0]),
+              Eq(std::optional<std::string>("dice_handover_instance1")));
+}
+
 }  // namespace cuttlefish

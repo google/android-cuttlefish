@@ -48,7 +48,8 @@ bool ShouldFetch(const Instance& instance) {
 
   for (const auto& value :
        {disk.default_build(), disk.super_partition().system(),
-        disk.disk_artifacts().vendor_boot(), boot.kernel().build(),
+        disk.disk_artifacts().vendor_boot(),
+        disk.disk_artifacts().dice_handover().build(), boot.kernel().build(),
         boot.build(), boot.bootloader().build(),
         boot.android_efi_loader().build(), disk.otatools()}) {
     // expects non-prefixed build strings already converted to empty strings
@@ -97,6 +98,13 @@ Result<Instance> RemoveNonPrefixedBuildStrings(const Instance& instance) {
       *disk.mutable_disk_artifacts()->mutable_vendor_boot();
   vendor_boot = CF_EXPECT(GetFetchBuildString(vendor_boot));
 
+  if (disk.disk_artifacts().has_dice_handover()) {
+    std::string& dice_handover = *disk.mutable_disk_artifacts()
+                                      ->mutable_dice_handover()
+                                      ->mutable_build();
+    dice_handover = CF_EXPECT(GetFetchBuildString(dice_handover));
+  }
+
   auto& boot = *result.mutable_boot();
   boot.set_build(CF_EXPECT(GetFetchBuildString(boot.build())));
 
@@ -143,6 +151,10 @@ static std::string OtaToolsBuild(const Instance& instance) {
 
 static std::string VendorBootImageBuild(const Instance& instance) {
   return instance.disk().disk_artifacts().vendor_boot();
+}
+
+static std::string DiceHandoverBuild(const Instance& instance) {
+  return instance.disk().disk_artifacts().dice_handover().build();
 }
 
 static bool DownloadImgZip(const Instance& instance) {
@@ -233,6 +245,8 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
       GenerateInstanceFlag("otatools_build", fetch_instances, OtaToolsBuild));
   result.emplace_back(GenerateInstanceFlag(
       "vendor_boot_image_build", fetch_instances, VendorBootImageBuild));
+  result.emplace_back(GenerateInstanceFlag("dice_handover_build",
+                                           fetch_instances, DiceHandoverBuild));
   result.emplace_back(GenerateInstanceFlag("download_img_zip", fetch_instances,
                                            DownloadImgZip));
   result.emplace_back(GenerateInstanceFlag(

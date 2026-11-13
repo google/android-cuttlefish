@@ -413,4 +413,61 @@ TEST(FetchConfigParserTests,
               IsOkAndValue(std::vector<std::string>()));
 }
 
+TEST(FetchConfigParserTests, DiceHandoverBuildOnlySuccess) {
+  const char* test_string = R""""(
+{
+    "instances": [
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "dice_handover": {
+                        "build": "@ab/branch/target{dice_handover_instance1}",
+                        "addr": "0x9D1C3000",
+                        "acpi_table": "acpi_table_dice.img"
+                    }
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  ASSERT_TRUE(ParseJsonString(json_text, json_configs));
+
+  const std::vector<std::string> flags =
+      CF_ASSERT(FetchCvdParserTester(json_configs));
+  EXPECT_TRUE(FindConfig(flags,
+                         "--dice_handover_build=branch/"
+                         "target{dice_handover_instance1}"));
+}
+
+TEST(FetchConfigParserTests, LocalDiceHandoverProducesNoFetchFlagsSuccess) {
+  const char* test_string = R""""(
+{
+    "instances": [
+        {
+            "disk": {
+                "disk_artifacts": {
+                    "dice_handover": {
+                        "build": "/path/to/dice_handover",
+                        "addr": "0x9D1C3000",
+                        "acpi_table": "acpi_table_dice.img"
+                    }
+                }
+            }
+        }
+    ]
+}
+  )"""";
+
+  Json::Value json_configs;
+  std::string json_text(test_string);
+  ASSERT_TRUE(ParseJsonString(json_text, json_configs));
+
+  EXPECT_THAT(FetchCvdParserTester(json_configs),
+              IsOkAndValue(std::vector<std::string>()));
+}
+
 }  // namespace cuttlefish

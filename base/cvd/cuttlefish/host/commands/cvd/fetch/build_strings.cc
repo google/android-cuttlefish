@@ -29,6 +29,7 @@ BuildStrings BuildStrings::Create(const VectorFlags& flags, const int index) {
       .boot_build = GetOptional(flags.boot_build, index),
       .vendor_boot_image_build =
           GetOptional(flags.vendor_boot_image_build, index),
+      .dice_handover_build = GetOptional(flags.dice_handover_build, index),
       .bootloader_build = GetOptional(flags.bootloader_build, index),
       .android_efi_loader_build =
           GetOptional(flags.android_efi_loader_build, index),

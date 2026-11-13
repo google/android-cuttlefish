@@ -140,6 +140,8 @@ Result<Builds> GetBuilds(BuildApi<BuildString, Build>& build_api,
       .vendor_boot_image = CF_EXPECT(
           GetBuildHelper(build_api, build_sources.vendor_boot_image_build,
                          kDefaultBuildTarget)),
+      .dice_handover = CF_EXPECT(GetBuildHelper(
+          build_api, build_sources.dice_handover_build, kDefaultBuildTarget)),
       .bootloader = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.bootloader_build, "u-boot_crosvm_x86_64")),
       .android_efi_loader = CF_EXPECT(
@@ -408,6 +410,14 @@ Result<void> FetchVendorBootImageTarget(FetchBuildContext& context,
   return {};
 }
 
+Result<void> FetchDiceHandoverTarget(FetchBuildContext& context) {
+  std::string filepath = context.GetFilepath().value_or("dice_handover");
+  LOG(INFO) << "Downloading " << filepath << " to dice_handover for "
+            << context;
+  CF_EXPECT(context.Artifact(filepath).DownloadTo("dice_handover"));
+  return {};
+}
+
 Result<void> FetchBootloaderTarget(FetchBuildContext& context) {
   if (std::optional<std::string> filepath = context.GetFilepath()) {
     CF_EXPECT(context.Artifact(*filepath).DownloadTo("bootloader"));
@@ -521,6 +531,11 @@ Result<void> FetchTarget(FetchContext& fetch_context,
   if (std::optional<FetchBuildContext> context =
           fetch_context.VendorBootImageBuild()) {
     CF_EXPECT(FetchVendorBootImageTarget(*context, keep_downloaded_archives));
+  }
+
+  if (std::optional<FetchBuildContext> context =
+          fetch_context.DiceHandoverBuild()) {
+    CF_EXPECT(FetchDiceHandoverTarget(*context));
   }
 
   return {};

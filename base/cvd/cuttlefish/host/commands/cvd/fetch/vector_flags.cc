@@ -49,6 +49,9 @@ std::vector<Flag> VectorFlags::Flags() {
       GflagsCompatFlag("vendor_boot_image_build", this->vendor_boot_image_build)
           .Help("source for the vendor_boot image"));
   flags.emplace_back(
+      GflagsCompatFlag("dice_handover_build", this->dice_handover_build)
+          .Help("source for the dice handover artifact"));
+  flags.emplace_back(
       GflagsCompatFlag("bootloader_build", this->bootloader_build)
           .Help("source for the bootloader target"));
   flags.emplace_back(GflagsCompatFlag("android_efi_loader_build",
@@ -88,11 +91,11 @@ Result<int> VectorFlags::NumberOfBuilds() const {
   for (const auto& flag_size :
        {this->default_build.size(), this->system_build.size(),
         this->kernel_build.size(), this->boot_build.size(),
-        this->vendor_boot_image_build.size(), this->bootloader_build.size(),
-        this->android_efi_loader_build.size(), this->otatools_build.size(),
-        this->test_suites_build.size(), this->chrome_os_build.size(),
-        this->boot_artifact.size(), this->download_img_zip.size(),
-        this->download_target_files_zip.size(),
+        this->vendor_boot_image_build.size(), this->dice_handover_build.size(),
+        this->bootloader_build.size(), this->android_efi_loader_build.size(),
+        this->otatools_build.size(), this->test_suites_build.size(),
+        this->chrome_os_build.size(), this->boot_artifact.size(),
+        this->download_img_zip.size(), this->download_target_files_zip.size(),
         this->target_subdirectory.size()}) {
     if (flag_size == 0) {
       // a size zero flag vector means the flag was not given
