@@ -32,6 +32,7 @@
 #include "absl/strings/string_view.h"
 #include "android-base/file.h"
 #include "fmt/format.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/ansi_codes/should_color.h"
 #include "cuttlefish/ansi_codes/terminal_colors.h"
@@ -235,6 +236,9 @@ int main(int argc, char** argv) {
   srand(time(NULL));
 
   std::vector<std::string> all_args(argv, argv + argc);
+  // needed for metrics flag value gathering
+  gflags::AllowCommandLineReparsing();  // allow cvd flags to not fail parsing
+  gflags::ParseCommandLineFlags(&argc, &argv, /* remove_flags */ false);
 
   std::optional<std::string> log_file = cuttlefish::InitializeLogs(all_args);
 
