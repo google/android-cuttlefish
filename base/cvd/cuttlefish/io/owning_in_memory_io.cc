@@ -21,6 +21,10 @@
 #include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/in_memory_io.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/visitable.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -31,5 +35,10 @@ OwningInMemoryIo::OwningInMemoryIo(std::vector<char> data)
 
 OwningInMemoryIo::OwningInMemoryIo(absl::string_view data)
     : InMemoryIo(data_, mutex_), data_(data.begin(), data.end()) {}
+
+Result<void> OwningInMemoryIo::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
 
 }  // namespace cuttlefish

@@ -17,6 +17,7 @@ cf_cc_library(
         "//cuttlefish/io:read_exact",
         "//cuttlefish/io:read_window_view",
         "//cuttlefish/io:reader_seeker",
+        "//cuttlefish/io:reader_writer_seeker",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:string_view",

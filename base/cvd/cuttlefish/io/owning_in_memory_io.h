@@ -21,6 +21,8 @@
 #include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/in_memory_io.h"
+#include "cuttlefish/io/visitable.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -29,6 +31,8 @@ class OwningInMemoryIo : public InMemoryIo {
   OwningInMemoryIo();
   OwningInMemoryIo(std::vector<char> data);
   OwningInMemoryIo(absl::string_view);
+
+  Result<void> Visit(IoVisitor&) override;
 
  private:
   std::vector<char> data_;

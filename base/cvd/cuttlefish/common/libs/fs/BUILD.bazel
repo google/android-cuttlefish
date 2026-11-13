@@ -37,6 +37,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs:scoped_mmap",
         "//cuttlefish/common/libs/utils:known_paths",
         "//cuttlefish/io",
+        "//cuttlefish/io:reader_writer_seeker",
+        "//cuttlefish/io:visitable",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/posix:temp_failure_retry",
         "//cuttlefish/result:expect",

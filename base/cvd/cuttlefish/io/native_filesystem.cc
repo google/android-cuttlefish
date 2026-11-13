@@ -23,8 +23,8 @@
 #include "absl/strings/string_view.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/reader_seeker.h"
+#include "cuttlefish/io/reader_writer_seeker.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/stat.h"
 #include "cuttlefish/result/expect.h"
