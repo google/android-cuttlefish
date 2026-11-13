@@ -1,0 +1,109 @@
+/*
+ * Copyright (C) 2026 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#pragma once
+
+#include <stdint.h>
+
+#include <memory>
+#include <vector>
+
+#include "vulkan/vulkan_core.h"
+
+#include "cuttlefish/host/libs/gpu/rgba_to_nv12.h"
+#include "cuttlefish/host/libs/gpu/vulkan_av1_dpb.h"
+#include "cuttlefish/host/libs/gpu/vulkan_av1_encode_commands.h"
+#include "cuttlefish/host/libs/gpu/vulkan_av1_encode_settings.h"
+#include "cuttlefish/host/libs/gpu/vulkan_av1_session_setup.h"
+#include "cuttlefish/host/libs/gpu/vulkan_video_context.h"
+#include "cuttlefish/result/result.h"
+
+namespace cuttlefish {
+
+// One encoded frame, with the sequence header in front of a key frame.
+struct VulkanAv1EncodedFrame {
+  std::vector<uint8_t> bitstream;
+  bool key_frame = false;
+};
+
+// Where the driver placed a frame's bitstream in the output buffer, as the
+// encode feedback query reports it.
+struct VulkanBitstreamRange {
+  uint32_t offset = 0;
+  uint32_t size = 0;
+};
+
+// Hardware AV1 encoder built on VK_KHR_video_encode_av1.
+//
+// Takes packed RGBA frames and converts them to NV12, with a compute shader
+// where the device supports it and on the host otherwise. The frame reaches
+// the encode source image through a copy on the compute queue, since a video
+// encode queue need not accept copy commands. Encodes low delay P frames that
+// reference LAST_FRAME only, with the reconstructed pictures ping-ponging
+// between two DPB slots. Used from one thread.
+class VulkanAv1EncodeSession {
+ public:
+  static Result<std::unique_ptr<VulkanAv1EncodeSession>> Create(
+      const VulkanAv1SessionConfig& config);
+
+  ~VulkanAv1EncodeSession();
+
+  VulkanAv1EncodeSession(const VulkanAv1EncodeSession&) = delete;
+  VulkanAv1EncodeSession& operator=(const VulkanAv1EncodeSession&) = delete;
+
+  // The coded extent in use, which is the frame size rounded up to the
+  // driver's alignment.
+  VkExtent2D coded_extent() const { return settings_.coded_extent; }
+
+  // Encodes one frame at the given rate control target. The frame is a key
+  // frame when one is requested or when there is nothing to predict from.
+  Result<VulkanAv1EncodedFrame> EncodeFrame(const uint8_t* pixels,
+                                            const Nv12ConversionParams& params,
+                                            bool key_frame_requested,
+                                            int32_t bitrate_bps,
+                                            uint32_t framerate);
+
+ private:
+  VulkanAv1EncodeSession(std::shared_ptr<VulkanVideoContext> context,
+                         const VulkanAv1EncodeSettings& settings,
+                         VulkanAv1SessionResources resources);
+
+  Result<VkSemaphore> Upload(const uint8_t* pixels,
+                             const Nv12ConversionParams& params);
+  Result<VkSemaphore> UploadForShader(const uint8_t* pixels,
+                                      const Nv12ConversionParams& params);
+  Result<void> FlushStaging();
+  // Host conversion path: copies the converted frame from the staging buffer
+  // into the encode source image on the compute queue, signalling the copy
+  // semaphore.
+  Result<void> SubmitStagingCopy();
+  Result<void> SubmitAndWait(VkSemaphore wait_semaphore);
+  Result<VulkanBitstreamRange> ReadBitstreamRange();
+  // Applies what a submitted frame changed. Called only after the device
+  // accepted the submission, so a failed encode leaves the DPB and the rate
+  // control state as they were.
+  void CommitFrame(const VulkanFrameCommit& commit);
+
+  std::shared_ptr<VulkanVideoContext> context_;
+  VulkanAv1EncodeSettings settings_;
+  VulkanAv1SessionResources resources_;
+  Av1DpbPingPong dpb_;
+  uint64_t frame_count_ = 0;
+  int32_t active_bitrate_bps_ = 0;
+  uint32_t active_framerate_ = 0;
+};
+
+}  // namespace cuttlefish
