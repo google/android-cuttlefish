@@ -71,6 +71,7 @@ type AddrInfo struct {
 	Family    string `json:"family"`
 	Local     string `json:"local"`
 	Prefixlen int    `json:"prefixlen"`
+	Broadcast string `json:"broadcast"`
 	Scope     string `json:"scope"`
 }
 
@@ -95,6 +96,21 @@ func (hs HostState) PrimaryIPv4(ifname string) string {
 		for _, ai := range a.AddrInfo {
 			if ai.Family == "inet" {
 				return fmt.Sprintf("%s/%d", ai.Local, ai.Prefixlen)
+			}
+		}
+	}
+	return ""
+}
+
+// the broadcast address of PrimaryIPv4, or ""
+func (hs HostState) PrimaryIPv4Broadcast(ifname string) string {
+	for _, a := range hs.Addrs {
+		if a.Ifname != ifname {
+			continue
+		}
+		for _, ai := range a.AddrInfo {
+			if ai.Family == "inet" {
+				return ai.Broadcast
 			}
 		}
 	}

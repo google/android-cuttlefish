@@ -26,6 +26,7 @@ import (
 type netIface struct {
 	Name   string
 	Addr   string // primary IPv4 CIDR, "" if none
+	Brd    string // broadcast address of Addr, "" if none
 	Master string // bridge it is enslaved to, "" if none
 	Tun    bool   // tap opened with vnet_hdr
 }
@@ -42,12 +43,12 @@ type phaseState struct {
 func instance1State() phaseState {
 	return phaseState{
 		Ifaces: []netIface{
-			{Name: "cvd-pi-ebr", Addr: "192.168.192.1/24"},
-			{Name: "cvd-pi-wbr", Addr: "192.168.160.1/24"},
+			{Name: "cvd-pi-ebr", Addr: "192.168.192.1/24", Brd: "192.168.192.255"},
+			{Name: "cvd-pi-wbr", Addr: "192.168.160.1/24", Brd: "192.168.160.255"},
 			{Name: "cvd-pi-etap1", Master: "cvd-pi-ebr", Tun: true},
 			{Name: "cvd-pi-wtap1", Master: "cvd-pi-wbr", Tun: true},
-			{Name: "cvd-pi-mtap1", Addr: "192.168.144.1/30", Tun: true},
-			{Name: "cvd-pi-wifiap1", Addr: "192.168.176.1/30", Tun: true},
+			{Name: "cvd-pi-mtap1", Addr: "192.168.144.1/30", Brd: "192.168.144.3", Tun: true},
+			{Name: "cvd-pi-wifiap1", Addr: "192.168.176.1/30", Brd: "192.168.176.3", Tun: true},
 		},
 		NftTables: []common.NftTable{{Family: "ip", Name: "cvdalloc_1", Flags: []string{"owner"}}},
 		NftChains: []common.NftChain{
@@ -105,6 +106,7 @@ func observe(t *testing.T, s *common.Sandbox) phaseState {
 		got.Ifaces = append(got.Ifaces, netIface{
 			Name:   l.Ifname,
 			Addr:   hs.PrimaryIPv4(l.Ifname),
+			Brd:    hs.PrimaryIPv4Broadcast(l.Ifname),
 			Master: l.Master,
 			Tun:    l.Kind() == "tun" && l.VnetHdr(),
 		})

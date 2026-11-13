@@ -7,14 +7,7 @@ package(
 
 string_flag(
     name = "driver",
-    build_setting_default = "iproute2",
-)
-
-config_setting(
-    name = "netlink",
-    flag_values = {
-        ":driver": "netlink",
-    },
+    build_setting_default = "netlink",
 )
 
 config_setting(
@@ -29,8 +22,8 @@ cf_cc_library(
     srcs = ["alloc_utils.cpp"],
     hdrs = ["alloc_utils.h"],
     deps = select({
-        ":netlink": [":alloc_netlink"],
-        "//conditions:default": [":alloc_iproute2"],
+        ":iproute2": [":alloc_iproute2"],
+        "//conditions:default": [":alloc_netlink"],
     }) + [
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:files",

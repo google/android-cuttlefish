@@ -57,6 +57,7 @@ cf_cc_binary(
         "//allocd/net:nft_nat_table",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/posix:temp_failure_retry",
         "//cuttlefish/result:expect",
