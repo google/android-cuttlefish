@@ -26,6 +26,7 @@
 #include <unistd.h>
 
 #include <chrono>
+#include <cstdint>
 #include <fstream>
 #include <ios>
 #include <iosfwd>
@@ -261,6 +262,18 @@ Result<std::string> ReadFileContents(const std::string& path) {
   CF_EXPECTF(FileExists(path), "The file at '{}' does not exist.", path);
   Fd file = CF_EXPECT(Fd::Open(path, O_RDONLY));
   return CF_EXPECT(ReadToString(file));
+}
+
+Result<std::vector<uint8_t>> ReadBinaryFileContents(const std::string& path) {
+  CF_EXPECTF(FileExists(path), "The file at '{}' does not exist.", path);
+  Fd file = CF_EXPECT(Fd::Open(path, O_RDONLY));
+  std::vector<uint8_t> contents;
+  std::vector<uint8_t> buf(1 << 16);
+  uint64_t data_read = 0;
+  while ((data_read = CF_EXPECT(file.Read(buf.data(), buf.size()))) > 0) {
+    contents.insert(contents.end(), buf.begin(), buf.begin() + data_read);
+  }
+  return contents;
 }
 
 std::string CurrentDirectory() {

@@ -18,7 +18,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <cstdint>
 #include <fstream>
+#include <ios>
 #include <string>
 #include <vector>
 
@@ -164,6 +166,27 @@ TEST(FilesTest, SearchFileNotFoundReturnsError) {
 
   auto result = Search({temp_dir}, "search_non_existent_file");
   EXPECT_FALSE(result.has_value());
+}
+
+TEST(FilesTest, ReadBinaryFileContentsReadsArbitraryBytes) {
+  TemporaryDir temp_dir;
+  const std::string file_path = absl::StrCat(temp_dir.path, "/binary.bin");
+  const std::vector<uint8_t> expected = {0x52, 0x49, 0x46, 0x46, 0x00,
+                                         0xFF, 0x80, 0x7F, 0x01};
+  {
+    std::ofstream out(file_path, std::ios::out | std::ios::binary);
+    out.write(reinterpret_cast<const char*>(expected.data()), expected.size());
+  }
+
+  Result<std::vector<uint8_t>> actual = ReadBinaryFileContents(file_path);
+  EXPECT_THAT(actual, IsOkAndValue(expected));
+}
+
+TEST(FilesTest, ReadBinaryFileContentsMissingFileReturnsError) {
+  TemporaryDir temp_dir;
+  Result<std::vector<uint8_t>> actual =
+      ReadBinaryFileContents(absl::StrCat(temp_dir.path, "/missing.bin"));
+  EXPECT_THAT(actual, IsError());
 }
 
 }  // namespace cuttlefish
