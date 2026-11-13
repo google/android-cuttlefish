@@ -88,6 +88,10 @@ void GenerateWifiMacForInstance(int index, uint8_t out[6]) {
   GenerateMacForInstance(index, 0xe2, out);
 }
 
+void GenerateAdbMacForInstance(int index, uint8_t out[6]) {
+  GenerateMacForInstance(index, 0xe3, out);
+}
+
 /**
  * Linux uses mac to generate link-local IPv6 address following:
  *
