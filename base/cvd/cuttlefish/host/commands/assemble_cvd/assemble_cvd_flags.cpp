@@ -267,7 +267,8 @@ DEFINE_vec(vhost_net, fmt::format("{}", CF_DEFAULTS_VHOST_NET),
            "Enable vhost acceleration of networking");
 
 DEFINE_vec(vhost_user_vsock, fmt::format("{}", CF_DEFAULTS_VHOST_USER_VSOCK),
-           "Enable vhost-user-vsock");
+           "(Deprecated) Enable vhost-user-vsock; only 'auto' and 'true' are "
+           "supported");
 
 DEFINE_string(
     vhost_user_mac80211_hwsim, CF_DEFAULTS_VHOST_USER_MAC80211_HWSIM,
@@ -436,8 +437,8 @@ DEFINE_string(kvm_path, "",
               "Device node file used to create VMs. Uses a default if empty.");
 
 DEFINE_string(vhost_vsock_path, "",
-              "Device node file for the kernel vhost-vsock implementation. "
-              "Uses a default if empty. Ignored for QEMU.");
+              "(Deprecated) Device node file for the kernel vhost-vsock "
+              "implementation.");
 
 DEFINE_string(assembly_dir, CF_DEFAULTS_ASSEMBLY_DIR,
               "A directory to put generated files common between instances");

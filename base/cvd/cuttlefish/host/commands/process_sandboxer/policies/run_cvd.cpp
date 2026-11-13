@@ -118,8 +118,7 @@ sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo& host) {
                 LABEL(&labels, cf_setsockopt_end),
             };
           })
-      .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW),
-                                        JEQ32(AF_VSOCK, ALLOW)})
+      .AddPolicyOnSyscall(__NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW)})
       .AllowChmod()
       .AllowDup()
       .AllowEventFd()

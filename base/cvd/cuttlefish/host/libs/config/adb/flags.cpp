@@ -98,10 +98,9 @@ class AdbConfigFlagImpl : public AdbConfigFlag {
   static constexpr char mode_help[] =
       "Mode for ADB connection."
       "'vsock_tunnel' for a TCP connection tunneled through vsock, "
-      "'native_vsock' for a  direct connection to the guest ADB over "
-      "vsock, 'vsock_half_tunnel' for a TCP connection forwarded to "
+      "'vsock_half_tunnel' for a TCP connection forwarded to "
       "the guest ADB server, or a comma separated list of types as in "
-      "'native_vsock,vsock_half_tunnel'";
+      "'vsock_tunnel,vsock_half_tunnel'";
 
   AdbConfig& config_;
   ConfigFlag& config_flag_;

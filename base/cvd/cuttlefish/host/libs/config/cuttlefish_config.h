@@ -242,9 +242,6 @@ class CuttlefishConfig {
   std::string kvm_path() const;
   void set_kvm_path(const std::string&);
 
-  std::string vhost_vsock_path() const;
-  void set_vhost_vsock_path(const std::string&);
-
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
@@ -492,7 +489,6 @@ class CuttlefishConfig {
     // Kernel and bootloader logging
     bool enable_kernel_log() const;
     bool vhost_net() const;
-    bool vhost_user_vsock() const;
     int openthread_node_id() const;
 
     // Mobile network info (RIL)
@@ -752,7 +748,6 @@ class CuttlefishConfig {
     void set_qemu_binary_dir(const std::string& qemu_binary_dir);
 
     void set_vhost_net(bool vhost_net);
-    void set_vhost_user_vsock(bool vhost_user_vsock);
 
     void set_openthread_node_id(int node_id);
 

@@ -15,7 +15,6 @@
  */
 
 #include <fcntl.h>
-#include <linux/vm_sockets.h>
 #include <signal.h>
 #include <unistd.h>
 
@@ -28,6 +27,7 @@
 #include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/vm_sockets.h"
 #include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
@@ -75,12 +75,12 @@ DEFINE_int32(stop_event_id, -1,
              "kernel_log_server.h) that we will listen to stop proxy");
 DEFINE_bool(restore, false,
             "Wait on the restore_adbd_pipe instead of the initial start event");
-DEFINE_bool(vhost_user_vsock, false, "A flag to user vhost_user_vsock");
+DEFINE_bool(vhost_user_vsock, true,
+            "(Deprecated) A flag to use vhost_user_vsock");
 
 namespace cuttlefish {
 namespace socket_proxy {
 namespace {
-static bool use_vhost_vsock() { return FLAGS_vhost_user_vsock; }
 static std::unique_ptr<Server> BuildServer() {
   if (FLAGS_server_fd >= 0) {
     return std::make_unique<DupServer>(FLAGS_server_fd);
@@ -99,10 +99,8 @@ static std::unique_ptr<Server> BuildServer() {
     CHECK(FLAGS_server_vsock_port != 0)
         << "Must specify -server_vsock_port or -server_fd with "
            "-server_type=vsock flag";
-    if (use_vhost_vsock()) {
-      CHECK(FLAGS_server_vsock_id > VMADDR_CID_HOST)
-          << "Must specify --server_vsock_id with --vhost_user_vsock=true flag";
-    }
+    CHECK(FLAGS_server_vsock_id > VMADDR_CID_HOST)
+        << "Must specify --server_vsock_id with --server_type=vsock";
   }
 
   std::unique_ptr<Server> server = nullptr;
@@ -112,10 +110,8 @@ static std::unique_ptr<Server> BuildServer() {
                                          TCP_SERVER_START_RETRIES_COUNT,
                                          TCP_SERVER_RETRIES_DELAY);
   } else if (FLAGS_server_type == TRANSPORT_VSOCK) {
-    server = std::make_unique<VsockServer>(
-        FLAGS_server_vsock_port, use_vhost_vsock()
-                                     ? std::make_optional(FLAGS_server_vsock_id)
-                                     : std::nullopt);
+    server = std::make_unique<VsockServer>(FLAGS_server_vsock_port,
+                                           FLAGS_server_vsock_id);
   } else {
     LOG(FATAL) << "Unknown server type: " << FLAGS_server_type;
   }
@@ -144,8 +140,8 @@ static std::unique_ptr<Client> BuildClient() {
     client = std::make_unique<TcpClient>(
         FLAGS_client_tcp_host, FLAGS_client_tcp_port, TCP_CLIENT_TIMEOUT);
   } else if (FLAGS_client_type == TRANSPORT_VSOCK) {
-    client = std::make_unique<VsockClient>(
-        FLAGS_client_vsock_id, FLAGS_client_vsock_port, use_vhost_vsock());
+    client = std::make_unique<VsockClient>(FLAGS_client_vsock_id,
+                                           FLAGS_client_vsock_port);
   } else {
     LOG(FATAL) << "Unknown client type: " << FLAGS_client_type;
   }

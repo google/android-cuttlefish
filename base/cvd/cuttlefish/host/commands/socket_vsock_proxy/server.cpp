@@ -20,7 +20,6 @@
 
 #include <chrono>
 #include <limits>
-#include <optional>
 #include <set>
 #include <string>
 #include <thread>
@@ -83,7 +82,7 @@ std::string TcpServer::Describe() const {
   return fmt::format("tcp: {}", port_);
 }
 
-VsockServer::VsockServer(int port, std::optional<int> vhost_user_vsock_cid)
+VsockServer::VsockServer(int port, int vhost_user_vsock_cid)
     : port_(port), vhost_user_vsock_cid_(vhost_user_vsock_cid) {}
 
 Result<SharedFD> VsockServer::Start() {
@@ -106,7 +105,7 @@ Result<SharedFD> VsockServer::Start() {
 }
 
 std::string VsockServer::Describe() const {
-  return fmt::format("vsock: {}", port_);
+  return fmt::format("vsock: {}:{}", vhost_user_vsock_cid_, port_);
 }
 
 DupServer::DupServer(int fd) : fd_(fd), sfd_(SharedFD::Dup(fd_)) { close(fd); }

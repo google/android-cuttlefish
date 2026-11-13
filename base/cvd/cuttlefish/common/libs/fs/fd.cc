@@ -414,41 +414,11 @@ Result<Fd, int> Fd::SocketLocalServer(absl::string_view name, bool abstract,
   return rval;
 }
 
-Result<Fd, int> Fd::VsockServer(
-    unsigned int port, int type,
-    std::optional<int> vhost_user_vsock_listening_cid, unsigned int cid) {
-  if (vhost_user_vsock_listening_cid) {
-    return CF_EXPECT(Fd::SocketLocalServer(
-        GetVhostUserVsockServerAddr(port, *vhost_user_vsock_listening_cid),
-        false /* abstract */, type, 0666 /* mode */));
-  }
-
-#ifdef __linux__
-  Fd vsock = CF_EXPECT(Fd::Socket(AF_VSOCK, type, 0));
-
-  sockaddr_vm addr{};
-  addr.svm_family = AF_VSOCK;
-  addr.svm_port = port;
-  addr.svm_cid = cid;
-  auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
-  CF_EXPECTF(vsock.Bind(casted_addr, sizeof(addr)), "Port {}", port);
-
-  if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
-    CF_EXPECT(vsock.Listen(4));
-  }
-  return vsock;
-#else
-  (void)cid;
-  return CF_ERRVF(
-      EAFNOSUPPORT,
-      "Bind failed port {}: vsock is not supported on this platform", port);
-#endif
-}
-
-Result<Fd, int> Fd::VsockServer(
-    int type, std::optional<int> vhost_user_vsock_listening_cid) {
-  return CF_EXPECT(
-      VsockServer(VMADDR_PORT_ANY, type, vhost_user_vsock_listening_cid));
+Result<Fd, int> Fd::VsockServer(unsigned int port, int type,
+                                int vhost_user_vsock_listening_cid) {
+  return CF_EXPECT(Fd::SocketLocalServer(
+      GetVhostUserVsockServerAddr(port, vhost_user_vsock_listening_cid),
+      false /* abstract */, type, 0666 /* mode */));
 }
 
 std::string Fd::GetVhostUserVsockServerAddr(
@@ -767,15 +737,6 @@ int Fd::GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
 
   return TEMP_FAILURE_RETRY(getsockname(fd_, addr, addrlen));
 }
-
-#ifdef __linux__
-unsigned int Fd::VsockServerPort() {
-  struct sockaddr_vm vm_socket;
-  socklen_t length = sizeof(vm_socket);
-  GetSockName(reinterpret_cast<struct sockaddr*>(&vm_socket), &length);
-  return vm_socket.svm_port;
-}
-#endif
 
 int Fd::Ioctl(int request, void* val) {
   LocalErrno record_errno(errno_);

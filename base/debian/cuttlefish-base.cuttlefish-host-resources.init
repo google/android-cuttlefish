@@ -390,10 +390,8 @@ start() {
     if test -f /.dockerenv; then
         chown root:kvm /dev/kvm
         chown root:cvdnetwork /dev/vhost-net
-        chown root:cvdnetwork /dev/vhost-vsock
         chmod ug+rw /dev/kvm
         chmod ug+rw /dev/vhost-net
-        chmod ug+rw /dev/vhost-vsock
     fi
 
     # Try to preload the Nvidia modeset kernel module.

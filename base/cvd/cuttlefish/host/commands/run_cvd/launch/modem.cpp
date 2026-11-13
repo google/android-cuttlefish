@@ -82,10 +82,7 @@ Result<std::optional<MonitorCommand>> ModemSimulator(
     ports = ports.substr(pos + 1);
 
     Fd modem_sim_socket = CF_EXPECT(
-        Fd::VsockServer(port, SOCK_STREAM,
-                        instance.vhost_user_vsock()
-                            ? std::make_optional(instance.vsock_guest_cid())
-                            : std::nullopt),
+        Fd::VsockServer(port, SOCK_STREAM, instance.vsock_guest_cid()),
         " (try `cvd reset`, or `pkill run_cvd` and `pkill crosvm`)");
     sockets.emplace_back(std::move(modem_sim_socket));
   }

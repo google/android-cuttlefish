@@ -32,7 +32,7 @@ sandbox2::PolicyBuilder SocketVsockProxyPolicy(const HostInfo& host) {
       .AddFile(host.cuttlefish_config_path)
       .AddPolicyOnSyscall(
           __NR_socket, {ARG_32(0), JEQ32(AF_UNIX, ALLOW), JEQ32(AF_INET, ALLOW),
-                        JEQ32(AF_INET6, ALLOW), JEQ32(AF_VSOCK, ALLOW)})
+                        JEQ32(AF_INET6, ALLOW)})
       .Allow(sandbox2::UnrestrictedNetworking())
       .AllowEventFd()
       .AllowFork()  // `clone` for multithreading

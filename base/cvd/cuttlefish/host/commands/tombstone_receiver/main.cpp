@@ -86,7 +86,7 @@ int TombstoneReceiverMain(int argc, char** argv) {
 
   CHECK(server_fd->IsOpen()) << "Did not receive a server fd";
 
-  VLOG(0) << "Host is starting server on port " << server_fd->VsockServerPort();
+  VLOG(0) << "Host is starting tombstone receiver server";
 
   // Server loop
   while (true) {

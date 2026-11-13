@@ -21,7 +21,6 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/vm_sockets.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -36,17 +35,13 @@ std::optional<MonitorCommand> VhalProxyServer(
     return {};
   }
   int port = instance.vhal_proxy_server_port();
-  Command command = Command(VhalProxyServerBinary())
-                        .AddParameter(VhalProxyServerConfig())
-                        .AddParameter(fmt::format(
-                            "{}:{}", vhal_proxy_server::kEthAddr, port));
-  if (instance.vhost_user_vsock()) {
-    command.AddParameter(fmt::format(
-        "unix://{}",
-        Fd::GetVhostUserVsockServerAddr(port, instance.vsock_guest_cid())));
-  } else {
-    command.AddParameter(fmt::format("vsock:{}:{}", VMADDR_CID_HOST, port));
-  }
+  Command command =
+      Command(VhalProxyServerBinary())
+          .AddParameter(VhalProxyServerConfig())
+          .AddParameter(fmt::format("{}:{}", vhal_proxy_server::kEthAddr, port))
+          .AddParameter(
+              fmt::format("unix://{}", Fd::GetVhostUserVsockServerAddr(
+                                           port, instance.vsock_guest_cid())));
   return command;
 }
 

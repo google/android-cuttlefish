@@ -183,9 +183,6 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
   }
 
   const auto& virtualization_config = proto_config.virtualization();
-  if (virtualization_config.has_vhost_user_vsock()) {
-    guest_config.vhost_user_vsock = virtualization_config.vhost_user_vsock();
-  }
   if (virtualization_config.has_ti50_emulator_path()) {
     guest_config.ti50_emulator = virtualization_config.ti50_emulator_path();
   }
@@ -268,7 +265,6 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
   guest_config.supports_bgra_framebuffers =
       MapHasValue(info, "supports_bgra_framebuffers", "true");
 
-  guest_config.vhost_user_vsock = MapHasValue(info, "vhost_user_vsock", "true");
   guest_config.ti50_emulator = MapGetResult(info, "ti50_emulator").value_or("");
 
   if (const Result<std::string> res =
@@ -319,7 +315,6 @@ PrettyStruct Pretty(const GuestConfig& config, PrettyAdlPlaceholder) {
       .Member("gfxstream_supported", config.gfxstream_supported)
       .Member("gfxstream_gl_program_binary_link_status_supported",
               config.gfxstream_gl_program_binary_link_status_supported)
-      .Member("vhost_user_vsock", config.vhost_user_vsock)
       .Member("supports_bgra_framebuffers", config.supports_bgra_framebuffers)
       .Member("mouse_supported", config.mouse_supported)
       .Member("gamepad_supported", config.gamepad_supported)

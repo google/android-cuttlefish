@@ -311,7 +311,6 @@ case "$*" in
 --device /dev/kvm:/dev/kvm:rwm \
 --device /dev/net/tun:/dev/net/tun:rwm \
 --device /dev/vhost-net:/dev/vhost-net:rwm \
---device /dev/vhost-vsock:/dev/vhost-vsock:rwm \
 -e CVD_INVOKER=podcvd "*"--label created_by=podcvd \
 --label group_name=cvd_1 \
 --name d10f7d5f996b \
@@ -320,7 +319,6 @@ case "$*" in
 --device /dev/kvm:/dev/kvm:rwm \
 --device /dev/net/tun:/dev/net/tun:rwm \
 --device /dev/vhost-net:/dev/vhost-net:rwm \
---device /dev/vhost-vsock:/dev/vhost-vsock:rwm \
 -e CVD_INVOKER=podcvd "*"--label created_by=podcvd \
 `+imageName+`") echo 9b8e7f6a5c4d ;;
 *) exit 1 ;;

@@ -42,7 +42,6 @@ struct GuestConfig {
   bool gfxstream_gl_program_binary_link_status_supported = false;
   bool guest_lavapipe_supported = false;
   bool venus_supported = false;
-  bool vhost_user_vsock = false;
   bool supports_bgra_framebuffers = false;
   bool mouse_supported = false;
   bool gamepad_supported = false;

@@ -118,7 +118,7 @@ sandbox2::PolicyBuilder WebRtcPolicy(const HostInfo& host) {
           __NR_socket, {ARG_32(0), JEQ32(AF_INET, ALLOW), JEQ32(AF_UNIX, ALLOW),
                         JEQ32(AF_INET6, ALLOW),
                         // webrtc/rtc_base/ifaddrs_android.cc
-                        JEQ32(AF_NETLINK, ALLOW), JEQ32(AF_VSOCK, ALLOW)})
+                        JEQ32(AF_NETLINK, ALLOW)})
       .Allow(sandbox2::UnrestrictedNetworking())
       .AllowEpoll()
       .AllowEpollWait()

@@ -25,7 +25,6 @@
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/fs/vm_sockets.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 #include "cuttlefish/host/libs/audio/channel_layout.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -57,15 +56,12 @@ std::optional<config::Audio::PCMDevice::Stream> VirtualTunerStream(
 }
 
 // Returns the address the daemon's gRPC server listens on for the guest radio
-// HAL: this instance's vhost-user vsock socket, or a host AF_VSOCK port.
+// HAL: this instance's vhost-user vsock socket.
 std::string ControlServerAddress(
     const CuttlefishConfig::InstanceSpecific& instance) {
   const int port = instance.virtual_tuner_server_port();
-  if (instance.vhost_user_vsock()) {
-    return fmt::format("unix://{}", Fd::GetVhostUserVsockServerAddr(
-                                        port, instance.vsock_guest_cid()));
-  }
-  return fmt::format("vsock:{}:{}", VMADDR_CID_HOST, port);
+  return fmt::format("unix://{}", Fd::GetVhostUserVsockServerAddr(
+                                      port, instance.vsock_guest_cid()));
 }
 
 }  // namespace

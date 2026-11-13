@@ -30,8 +30,6 @@ AdbMode StringToAdbMode(absl::string_view mode_cased) {
     return AdbMode::VsockTunnel;
   } else if (mode == "vsock_half_tunnel") {
     return AdbMode::VsockHalfTunnel;
-  } else if (mode == "native_vsock") {
-    return AdbMode::NativeVsock;
   } else {
     return AdbMode::Unknown;
   }
@@ -43,8 +41,6 @@ std::string AdbModeToString(AdbMode mode) {
       return "vsock_tunnel";
     case AdbMode::VsockHalfTunnel:
       return "vsock_half_tunnel";
-    case AdbMode::NativeVsock:
-      return "native_vsock";
     case AdbMode::Unknown:  // fall through
     default:
       return "unknown";
