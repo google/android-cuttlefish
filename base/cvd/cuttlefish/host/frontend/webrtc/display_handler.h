@@ -27,9 +27,9 @@
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/video_sink.h"
 #include "cuttlefish/host/frontend/webrtc/screenshot_handler.h"
+#include "cuttlefish/host/libs/screen_connector/frame_source.h"
 #include "cuttlefish/host/libs/screen_connector/ring_buffer_manager.h"
 #include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
-#include "cuttlefish/host/libs/wayland/wayland_server.h"
 
 namespace cuttlefish {
 class CompositionManager;
@@ -42,8 +42,8 @@ class DisplayHandler {
  public:
   DisplayHandler(
       webrtc_streaming::Streamer& streamer,
-      ScreenshotHandler& screenshot_handler, int wayland_socket_fd,
-      bool wayland_frames_are_rgba,
+      ScreenshotHandler& screenshot_handler,
+      std::unique_ptr<FrameSource> frame_source,
       std::optional<std::unique_ptr<CompositionManager>> composition_manager);
   ~DisplayHandler();
 
@@ -71,7 +71,7 @@ class DisplayHandler {
       display_sinks_;
   webrtc_streaming::Streamer& streamer_;
   ScreenshotHandler& screenshot_handler_;
-  std::unique_ptr<wayland::WaylandServer> wayland_server_;
+  std::unique_ptr<FrameSource> frame_source_;
   std::map<uint32_t, std::shared_ptr<VideoFrameBuffer>> pending_buffers_;
   std::mutex next_frame_mutex_;
   std::condition_variable next_frame_cv_;

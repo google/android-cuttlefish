@@ -52,8 +52,11 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
+#include "cuttlefish/host/libs/display_server/display_server_frame_source.h"
 #include "cuttlefish/host/libs/input_connector/input_connector.h"
 #include "cuttlefish/host/libs/screen_connector/composition_manager.h"
+#include "cuttlefish/host/libs/screen_connector/frame_source.h"
+#include "cuttlefish/host/libs/screen_connector/wayland_frame_source.h"
 
 DEFINE_bool(multitouch, true,
             "Whether to send multi-touch or single-touch events");
@@ -496,8 +499,19 @@ int CuttlefishMain() {
     }
   }
 
+  std::unique_ptr<FrameSource> frame_source;
+  if (instance.enable_display_server()) {
+    // cvd_display_server terminates crosvm's wayland display socket and
+    // forwards the frames over its own socket.
+    frame_source = std::make_unique<display_server::DisplayServerFrameSource>(
+        instance.DisplayServerSocketPath());
+  } else {
+    frame_source =
+        std::make_unique<WaylandFrameSource>(frames_fd, frames_are_rgba);
+  }
+
   auto display_handler = std::make_shared<DisplayHandler>(
-      *streamer, screenshot_handler, frames_fd, frames_are_rgba,
+      *streamer, screenshot_handler, std::move(frame_source),
       std::move(composition_manager));
 
   if (instance.camera_server_port()) {
