@@ -50,6 +50,7 @@
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
+#include "cuttlefish/posix/remove_file_if_exists.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/process/command.h"
@@ -152,6 +153,7 @@ const std::unordered_set<std::string>& BoolFlags() {
       "enable_modem_simulator",
       "enable_pkvm",
       "enable_sandbox",
+      "enable_tap_devices",
       "enable_usb",
       "enable_virtiofs",
       "experimental_build_super_image",
@@ -179,13 +181,17 @@ Result<void> LinkLogs2InstanceDir(
     const CuttlefishConfig::InstanceSpecific& instance) {
   CF_EXPECT(EnsureDirectoryExists(instance.PerInstanceLogPath("")));
 
-  CF_EXPECT(Symlink(config_path, instance.PerInstanceLogPath(
-                                     android::base::Basename(config_path))));
+  const std::string cfg_link =
+      instance.PerInstanceLogPath(android::base::Basename(config_path));
+  CF_EXPECT(RemoveFileIfExists(cfg_link));
+  CF_EXPECT(Symlink(config_path, cfg_link));
 
   std::string assemble_cvd_logs = config.AssemblyPath(kLogNameAssembleCvd);
   if (FileExists(assemble_cvd_logs)) {
-    CF_EXPECT(Symlink(assemble_cvd_logs,
-                      instance.PerInstanceLogPath(kLogNameAssembleCvd)));
+    const std::string assemble_link =
+        instance.PerInstanceLogPath(kLogNameAssembleCvd);
+    CF_EXPECT(RemoveFileIfExists(assemble_link));
+    CF_EXPECT(Symlink(assemble_cvd_logs, assemble_link));
   }
 
   std::string images_dir = instance.images_dir();
@@ -197,8 +203,9 @@ Result<void> LinkLogs2InstanceDir(
         fmt::format("{}/{}", android::base::Dirname(images_dir), kLogNameFetch);
   }
   if (FileExists(fetch_log)) {
-    CF_EXPECT(Symlink(AbsolutePath(fetch_log),
-                      instance.PerInstanceLogPath(kLogNameFetch)));
+    const std::string fetch_link = instance.PerInstanceLogPath(kLogNameFetch);
+    CF_EXPECT(RemoveFileIfExists(fetch_link));
+    CF_EXPECT(Symlink(AbsolutePath(fetch_log), fetch_link));
   }
 
   return {};

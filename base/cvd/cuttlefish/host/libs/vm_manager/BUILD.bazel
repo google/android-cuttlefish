@@ -61,6 +61,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/feature:inject",
         "//cuttlefish/posix:remove",
+        "//cuttlefish/posix:remove_file_if_exists",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/process:command",
         "//cuttlefish/process:execute",

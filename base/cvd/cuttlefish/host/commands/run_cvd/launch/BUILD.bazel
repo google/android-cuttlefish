@@ -560,6 +560,7 @@ cf_cc_library(
     srcs = ["vhost_device_vsock.cpp"],
     hdrs = ["vhost_device_vsock.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:known_paths",
         "//cuttlefish/common/libs/utils:wait_for_unix_socket",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
@@ -568,6 +569,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/vm_manager",
+        "//cuttlefish/posix:remove_file_if_exists",
         "//cuttlefish/process:command",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",

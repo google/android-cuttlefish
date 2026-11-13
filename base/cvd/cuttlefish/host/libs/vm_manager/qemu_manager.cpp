@@ -49,6 +49,7 @@
 #include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
+#include "cuttlefish/posix/remove_file_if_exists.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
@@ -369,13 +370,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   std::string machine = is_x86 ? "pc,nvdimm=on" : "virt";
   if (is_arm) {
-    if (IsHostCompatible(arch_)) {
-      machine += ",gic-version=3";
-    } else {
-      // QEMU doesn't support GICv3 with TCG yet
-      machine += ",gic-version=2";
-      CF_EXPECT(instance.cpus() <= 8, "CPUs must be no more than 8 with GICv2");
-    }
+    machine += ",gic-version=3";
   }
   if (instance.mte()) {
     machine += ",mte=on";
@@ -455,15 +450,18 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-boot");
   qemu_cmd.AddParameter("strict=on");
 
+  const std::string monitor_path = GetMonitorPath(config);
+  CF_EXPECT(RemoveFileIfExists(monitor_path));
   qemu_cmd.AddParameter("-chardev");
-  qemu_cmd.AddParameter("socket,id=charmonitor,path=", GetMonitorPath(config),
+  qemu_cmd.AddParameter("socket,id=charmonitor,path=", monitor_path,
                         ",server=on,wait=off");
 
   qemu_cmd.AddParameter("-mon");
   qemu_cmd.AddParameter("chardev=charmonitor,id=monitor,mode=control");
 
   const GpuMode gpu_mode = instance.gpu_mode();
-  if (IsGuestRenderingMode(gpu_mode) || IsGfxstreamMode(gpu_mode)) {
+  if ((IsGuestRenderingMode(gpu_mode) && !instance.enable_webrtc()) ||
+      IsGfxstreamMode(gpu_mode)) {
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
   } else {
@@ -769,13 +767,16 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("socket,path=", SwitchesSocketPath(instance),
                         ",id=switches0");
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("vhost-user-input-pci,chardev=switches0");
+  qemu_cmd.AddParameter(
+      "vhost-user-input-pci,chardev=switches0,indirect_desc=off,"
+      "queue_reset=off");
 
   qemu_cmd.AddParameter("-chardev");
   qemu_cmd.AddParameter("socket,path=", RotarySocketPath(instance),
                         ",id=rotary0");
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("vhost-user-input-pci,chardev=rotary0");
+  qemu_cmd.AddParameter(
+      "vhost-user-input-pci,chardev=rotary0,indirect_desc=off,queue_reset=off");
 #endif
 
   auto vhost_net = instance.vhost_net() ? ",vhost=on" : "";
@@ -808,15 +809,23 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       break;
     case cuttlefish::ExternalNetworkMode::kSlirp: {
       has_network_devices = true;
-      const std::string net =
-          fmt::format("{}/{}", instance.ril_ipaddr(), instance.ril_prefixlen());
       const std::string& host = instance.ril_gateway();
       qemu_cmd.AddParameter("-netdev");
       // TODO(schuffelen): `dns` needs to match the first `nameserver` in
       // `/etc/resolv.conf`. Implement something that generalizes beyond
       // gLinux.
-      qemu_cmd.AddParameter("user,id=hostnet0,net=", net, ",host=", host,
-                            ",dns=127.0.0.1");
+      const size_t last_dot = host.rfind('.');
+      if (instance.ril_prefixlen() >= 30 && last_dot != std::string::npos) {
+        qemu_cmd.AddParameter("user,id=hostnet0,net=", host.substr(0, last_dot),
+                              ".0/24,host=", host,
+                              ",dhcpstart=", instance.ril_ipaddr(),
+                              ",dns=127.0.0.1");
+      } else {
+        const std::string net = fmt::format("{}/{}", instance.ril_ipaddr(),
+                                            instance.ril_prefixlen());
+        qemu_cmd.AddParameter("user,id=hostnet0,net=", net, ",host=", host,
+                              ",dns=127.0.0.1");
+      }
 
       qemu_cmd.AddParameter("-netdev");
       qemu_cmd.AddParameter("user,id=hostnet1,net=10.0.1.1/24,dns=8.8.4.4");

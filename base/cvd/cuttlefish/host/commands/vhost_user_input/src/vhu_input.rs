@@ -21,7 +21,7 @@ use crate::event_source::EventSource;
 use crate::vio_input::{trim_to_event_size_multiple, VirtioInputConfig};
 
 const VIRTIO_INPUT_NUM_QUEUES: usize = 2;
-const VIRTIO_INPUT_MAX_QUEUE_SIZE: usize = 256;
+const VIRTIO_INPUT_MAX_QUEUE_SIZE: usize = 1024;
 const FEATURES: u64 = 1 << VIRTIO_F_VERSION_1
     | 1 << VIRTIO_F_NOTIFY_ON_EMPTY
     | 1 << VIRTIO_RING_F_EVENT_IDX
