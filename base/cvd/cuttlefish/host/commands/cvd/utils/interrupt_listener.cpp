@@ -62,7 +62,7 @@ void RunnerLoop(const int read_end) {
   for (;;) {
     int signal;
     auto bytes_read =
-        TEMP_FAILURE_RETRY(recv(read_end, &signal, sizeof(signal), 0));
+        TEMP_FAILURE_RETRY(recv(read_end, &signal, sizeof(signal), MSG_WAITALL));
     if (bytes_read < 0) {
       LOG(ERROR) << "Failed to receive signal from handler: " << StrError();
       // This is unrecoverable, so stop running (this is unlikely)
@@ -114,7 +114,9 @@ Result<void> StartHandling() {
 #ifdef SOCK_CLOEXEC
   constexpr int type = SOCK_SEQPACKET | SOCK_CLOEXEC;
 #else
-  constexpr int type = SOCK_SEQPACKET;
+  // macOS has no SOCK_SEQPACKET for AF_UNIX. SOCK_DGRAM would not report
+  // the write end closing, which StopHandling relies on.
+  constexpr int type = SOCK_STREAM;
 #endif
   auto res = TEMP_FAILURE_RETRY(socketpair(AF_UNIX, type, 0, fds));
   if (res != 0) {

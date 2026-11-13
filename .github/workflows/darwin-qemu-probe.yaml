@@ -1,0 +1,212 @@
+name: Darwin qemu probe
+
+# Experiment: does HVF work on a hosted macOS runner, and how long does
+# an Android boot take with and without it? A Linux job assembles the
+# cuttlefish disks with assemble_cvd from a cuttlefish release build;
+# the macOS job boots a stock Debian cloud image to its login prompt,
+# and those disks to VIRTUAL_DEVICE_BOOT_COMPLETED, under each
+# accelerator, and reports the times. Does not build the host tools.
+
+# Parked while darwin-boot-probe.yaml is being iterated on.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
+    - name: Fetch a cuttlefish build
+      # Same build API and key as cvd fetch. The host package is for
+      # Linux, which is why assembly happens here and not on the Mac.
+      run: |
+        key=$(grep -o '"AIza[^"]*"' \
+          base/cvd/cuttlefish/host/libs/web/android_build_api_key.cc | tr -d '"')
+        api=https://androidbuild-pa.googleapis.com/v4
+        target=aosp_cf_x86_64_only_phone-userdebug
+        product=${target%-userdebug}
+        build=$(curl -fsS "$api/builds?buildAttemptStatus=complete&buildType=submitted&pageSize=1&successful=true&branches=aosp-android-latest-release&targets=$target&key=$key" \
+          | python3 -c 'import json, sys; print(json.load(sys.stdin)["builds"][0]["buildId"])')
+        echo "build $build"
+        # The composite disk is written out in full, 17 GB, which does
+        # not fit on the root disk.
+        sudo mkdir /mnt/cf && sudo chown "$USER" /mnt/cf
+        mkdir /mnt/cf/host /mnt/cf/images
+        for artifact in cvd-host_package.tar.gz $product-img-$build.zip; do
+          url=$(curl -fsS "$api/builds/$build/$target/attempts/latest/artifacts/$artifact/url?key=$key" \
+            | python3 -c 'import json, sys; print(json.load(sys.stdin)["signedUrl"])')
+          curl -fsSLo "/mnt/cf/$artifact" "$url"
+        done
+        tar -xzf /mnt/cf/cvd-host_package.tar.gz -C /mnt/cf/host
+        unzip -q "/mnt/cf/$product-img-$build.zip" -d /mnt/cf/images
+        rm /mnt/cf/*.tar.gz /mnt/cf/*.zip
+      shell: bash
+    - name: Assemble the disks
+      # assemble_cvd needs qemu-img for the overlays it makes anyway,
+      # only accepts qemu_cli if cuttlefish-common's capability query
+      # says so, and chgrps a directory to cuttlefish-common's
+      # cvdnetwork group. The runner has none of these, so stand them in.
+      # Bluetooth is turned off because there is no rootcanal to talk
+      # to, and the checker flag too because this release's
+      # assemble_cvd does not derive it from that yet. keep_bootcon
+      # keeps dmesg on the serial log after hvc0 takes over. ramoops is
+      # off because qemu's HVF emulator aborts on the kernel's first
+      # MOVSXD from the nvdimm behind it.
+      run: |
+        sudo apt-get update -q
+        sudo apt-get install -y -q qemu-utils
+        sudo mkdir -p /usr/lib/cuttlefish-common/bin
+        printf '#!/bin/sh\nexit 0\n' \
+          | sudo tee /usr/lib/cuttlefish-common/bin/capability_query.py
+        sudo chmod +x /usr/lib/cuttlefish-common/bin/capability_query.py
+        sudo groupadd cvdnetwork
+        sudo usermod -aG cvdnetwork "$USER"
+        cd /mnt/cf
+        export HOME=/mnt/cf/home ANDROID_HOST_OUT=/mnt/cf/host \
+          ANDROID_PRODUCT_OUT=/mnt/cf/images
+        mkdir "$HOME"
+        sg cvdnetwork -c "host/bin/assemble_cvd --vm_manager=qemu_cli \
+          --gpu_mode=guest_swiftshader --use_overlay=false \
+          --enable_host_bluetooth=false --netsim_bt=false \
+          --extra_bootconfig_args=androidboot.cuttlefish_service_bluetooth_checker=false \
+          --extra_kernel_cmdline='keep_bootcon ramoops.mem_size=0' \
+          --system_image_dir=/mnt/cf/images < /dev/null"
+        instance=$HOME/cuttlefish/instances/cvd-1
+        # The composite is written out in full; most of it is zeros.
+        fallocate -d "$instance/os_composite.img"
+        mkdir disks
+        mv "$instance"/{os_composite,persistent_composite,sdcard,pflash}.img \
+          "$instance"/{pstore,access-kregistry,hwcomposer-pmem} disks
+        cp host/etc/bootloader_x86_64/bootloader.qemu \
+          "$instance/cuttlefish_config.json" disks
+        tar -S -I 'zstd -T0' -cf "$GITHUB_WORKSPACE/disks.tar.zst" disks
+        ls -l "$GITHUB_WORKSPACE/disks.tar.zst"
+      shell: bash
+    - name: Upload the disks
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
+      with:
+        name: cuttlefish-disks
+        path: disks.tar.zst
+        compression-level: 0
+        retention-days: 1
+  qemu-probe:
+    needs: assemble
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
+    - name: Install qemu
+      run: brew install qemu
+      shell: bash
+    - name: Describe the runner
+      run: |
+        sysctl -n machdep.cpu.brand_string hw.ncpu hw.memsize
+        sysctl kern.hv_support || true
+        qemu-system-x86_64 --version
+        qemu-system-x86_64 -accel help
+        df -h .
+      shell: bash
+    - name: Fetch a Debian cloud image
+      run: |
+        curl -fsSLo disk.qcow2 \
+          https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2
+        qemu-img info disk.qcow2
+      shell: bash
+    - name: Download the disks
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
+      with:
+        name: cuttlefish-disks
+    - name: Unpack the disks
+      # zstd comes with qemu. bsdtar keeps the holes.
+      run: |
+        zstd -dc disks.tar.zst | tar -xf -
+        rm disks.tar.zst
+        ls -l disks
+        du -sh disks
+      shell: bash
+    - name: Boot Debian under each accelerator
+      run: |
+        # boot <label> <qemu args...>: prints the time until the serial
+        # console shows a login prompt, or why it did not get there.
+        boot() {
+          local label=$1; shift
+          local start; start=$(date +%s)
+          qemu-system-x86_64 -machine q35 -smp "$(sysctl -n hw.ncpu)" \
+            -m 2048 -display none -no-reboot \
+            -serial "file:serial-$label.log" \
+            -drive file=disk.qcow2,if=virtio -snapshot \
+            -netdev user,id=n0 -device virtio-net-pci,netdev=n0 \
+            "$@" 2> "qemu-$label.err" &
+          local qemu=$!
+          # Give up after 10 minutes so the job budget is not spent waiting.
+          for _ in $(seq 600); do
+            if grep -q 'login:' "serial-$label.log" 2>/dev/null; then
+              echo "$label: login prompt after $(( $(date +%s) - start ))s"
+              kill "$qemu"
+              return 0
+            fi
+            if ! kill -0 "$qemu" 2>/dev/null; then
+              echo "$label: qemu exited before the login prompt:"
+              cat "qemu-$label.err"
+              return 1
+            fi
+            sleep 1
+          done
+          echo "$label: no login prompt after 10 minutes"
+          kill "$qemu" 2>/dev/null || true
+          return 1
+        }
+        # HVF may not work inside the runner VM even though the kernel
+        # reports hv_support; that is one of the things being measured.
+        boot debian-hvf -accel hvf -cpu host || true
+        boot debian-tcg -accel tcg -cpu max
+      shell: bash
+    - name: Boot Android under each accelerator
+      run: |
+        .github/qemu-probe/boot.sh android-hvf 1200 -accel hvf -cpu host || true
+        .github/qemu-probe/boot.sh android-tcg 1800 -accel tcg -cpu max
+      shell: bash
+    - name: Logs
+      if: always()
+      run: |
+        shopt -s nullglob
+        for f in serial-*.log kernel-*.log responder-*.log qemu-*.err; do
+          echo "::group::$f"; cat "$f"; echo "::endgroup::"
+        done
+        # Every cpu reset dumps the full register state; the artifact
+        # has it all, only the last one is interesting here.
+        for f in qemu-*.dbg; do
+          echo "::group::$f"; tail -n 80 "$f"; echo "::endgroup::"
+        done
+      shell: bash
+    - name: Upload the logs
+      if: always()
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
+      with:
+        name: qemu-probe-logs-${{ matrix.runner }}
+        path: |
+          serial-*.log
+          kernel-*.log
+          logcat-*.log
+          responder-*.log
+          qemu-*.err
+          qemu-*.dbg
+        retention-days: 7

@@ -369,7 +369,10 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
       Command ikconfig_cmd = Command(HostBinaryPath("extract-ikconfig"))
                                  .AddParameter(kernel_image_path)
                                  .UnsetFromEnvironment("PATH")
-                                 .AddEnvironmentVariable("PATH", env_path);
+                                 .AddEnvironmentVariable("PATH", env_path)
+                                 // BSD tr rejects binary input in UTF-8.
+                                 .UnsetFromEnvironment("LC_ALL")
+                                 .AddEnvironmentVariable("LC_ALL", "C");
 
       const std::string config =
           CF_EXPECT(RunAndCaptureStdout(std::move(ikconfig_cmd)));
