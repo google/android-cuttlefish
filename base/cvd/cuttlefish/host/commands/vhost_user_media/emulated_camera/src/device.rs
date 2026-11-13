@@ -21,15 +21,16 @@ use crate::capture_channel::CaptureChannel;
 use crate::control::ControlSet;
 use crate::format::Yuv420m;
 use crate::memory::{BufferMemoryHandler, QbufRequest, QueuedBuffer};
-use crate::pipeline::Pipeline;
-use crate::sensor::Sensor;
 use crate::pattern::FramePattern;
-use crate::render_params::RenderParams;
+use crate::pipeline::Pipeline;
+use crate::render_params::{Crop, RenderParams};
+use crate::sensor::Sensor;
 
 use v4l2r::QueueType;
 use v4l2r::bindings;
 use v4l2r::bindings::v4l2_fmtdesc;
 use v4l2r::bindings::v4l2_format;
+use v4l2r::bindings::v4l2_rect;
 use v4l2r::bindings::v4l2_requestbuffers;
 use v4l2r::ioctl::BufferCapabilities;
 use v4l2r::ioctl::BufferField;
@@ -38,6 +39,9 @@ use v4l2r::ioctl::CtrlId;
 use v4l2r::ioctl::CtrlWhich;
 use v4l2r::ioctl::EventType as V4l2EventType;
 use v4l2r::ioctl::QueryCtrlFlags;
+use v4l2r::ioctl::SelectionFlags;
+use v4l2r::ioctl::SelectionTarget;
+use v4l2r::ioctl::SelectionType;
 use v4l2r::ioctl::SubscribeEventFlags;
 use v4l2r::ioctl::V4l2Buffer;
 use v4l2r::memory::MemoryType;
@@ -229,6 +233,8 @@ pub struct EmulatedCamera<Q: VirtioMediaEventQueue, M: BufferMemoryHandler> {
     controls: ControlSet,
     /// What is rendered into capture buffers.
     frame_source: FrameSource,
+    /// Crop window of the sensor active array, set through `VIDIOC_S_SELECTION`.
+    crop: Crop,
     /// Width of the video.
     width: u32,
     /// Height of the video.
@@ -252,6 +258,7 @@ where
             evt_queue: Arc::new(Mutex::new(evt_queue)),
             controls,
             frame_source,
+            crop: Crop::default(),
             width: WIDTH,
             height: HEIGHT,
         }
@@ -284,11 +291,17 @@ where
             .send_event(V4l2Event::Event(SessionEvent::new(session_id, event)));
     }
 
+    /// Current control and selection state, as seen by the frame generators.
+    fn render_params(&self) -> RenderParams {
+        RenderParams {
+            crop: self.crop,
+            ..self.controls.render_params()
+        }
+    }
+
     /// Pushes the current control state to the frame generators of `session`.
     fn sync_render_params(&self, session: &EmulatedCameraSession<M::Allocation>) {
-        let _ = session
-            .channel
-            .set_render_params(self.controls.render_params());
+        let _ = session.channel.set_render_params(self.render_params());
     }
 }
 
@@ -309,7 +322,7 @@ where
 
             let channel = CaptureChannel::new(
                 session_id,
-                self.controls.render_params(),
+                self.render_params(),
                 self.frame_source,
                 capture_completed_tx,
             )
@@ -415,6 +428,17 @@ const INPUTS: [bindings::v4l2_input; 1] = [bindings::v4l2_input {
     type_: bindings::V4L2_INPUT_TYPE_CAMERA,
     ..unsafe { std::mem::zeroed() }
 }];
+
+impl From<Crop> for v4l2_rect {
+    fn from(crop: Crop) -> Self {
+        v4l2_rect {
+            left: crop.left as i32,
+            top: crop.top as i32,
+            width: crop.width,
+            height: crop.height,
+        }
+    }
+}
 
 fn default_fmtdesc(queue: QueueType) -> v4l2_fmtdesc {
     v4l2_fmtdesc {
@@ -929,6 +953,50 @@ where
         }
         self.sync_render_params(session);
         Ok(())
+    }
+
+    fn g_selection(
+        &mut self,
+        _session: &Self::Session,
+        sel_type: SelectionType,
+        sel_target: SelectionTarget,
+    ) -> IoctlResult<v4l2_rect> {
+        if sel_type != SelectionType::Capture {
+            return Err(libc::EINVAL);
+        }
+        if self.frame_source != FrameSource::EmulatedScene {
+            return Err(libc::EINVAL);
+        }
+        let crop = match sel_target {
+            SelectionTarget::Crop => self.crop,
+            SelectionTarget::CropDefault | SelectionTarget::CropBounds => Crop::FULL,
+            _ => return Err(libc::EINVAL),
+        };
+        Ok(crop.into())
+    }
+
+    fn s_selection(
+        &mut self,
+        session: &mut Self::Session,
+        sel_type: SelectionType,
+        sel_target: SelectionTarget,
+        sel_rect: v4l2_rect,
+        _sel_flags: SelectionFlags,
+    ) -> IoctlResult<v4l2_rect> {
+        if sel_type != SelectionType::Capture || sel_target != SelectionTarget::Crop {
+            return Err(libc::EINVAL);
+        }
+        if self.frame_source != FrameSource::EmulatedScene {
+            return Err(libc::EINVAL);
+        }
+        self.crop = Crop::new(sel_rect.left, sel_rect.top, sel_rect.width, sel_rect.height);
+        log::info!(
+            "s_selection: requested {:?}, set crop to {:?}",
+            sel_rect,
+            self.crop
+        );
+        self.sync_render_params(session);
+        Ok(self.crop.into())
     }
 
     fn subscribe_event(

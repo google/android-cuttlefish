@@ -23,6 +23,7 @@ use crate::pattern::FramePattern;
 use crate::pattern::julia_set::JuliaSet;
 use crate::pattern::pulse::Pulse;
 use crate::pattern::smpte::SmpteBars;
+use crate::sensor::{ACTIVE_ARRAY_HEIGHT, ACTIVE_ARRAY_WIDTH};
 
 /// Encapsulates the camera gain value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -110,6 +111,71 @@ impl TryFrom<i32> for TestPattern {
     }
 }
 
+/// Window of the sensor active array, in active array pixels.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Crop {
+    pub left: u32,
+    pub top: u32,
+    pub width: u32,
+    pub height: u32,
+}
+
+impl Crop {
+    /// Largest zoom factor.
+    pub const MAX_ZOOM: u32 = 4;
+
+    /// Smallest crop size: the active array divided by `MAX_ZOOM` on each side.
+    pub const MIN_WIDTH: u32 = ACTIVE_ARRAY_WIDTH / Self::MAX_ZOOM;
+    pub const MIN_HEIGHT: u32 = ACTIVE_ARRAY_HEIGHT / Self::MAX_ZOOM;
+    /// Largest crop size: the whole active array.
+    pub const MAX_WIDTH: u32 = ACTIVE_ARRAY_WIDTH;
+    pub const MAX_HEIGHT: u32 = ACTIVE_ARRAY_HEIGHT;
+
+    /// The whole active array.
+    pub const FULL: Crop = Crop {
+        left: 0,
+        top: 0,
+        width: Self::MAX_WIDTH,
+        height: Self::MAX_HEIGHT,
+    };
+
+    /// Closest valid crop to the requested one: inside the 1280x960 active array and no
+    /// smaller than the array divided by `MAX_ZOOM` (4) on each side, 320x240.
+    /// E.g. a 600x100 crop at (1000, -50) sticks out at the top and the right and is too
+    /// short; it becomes a 600x240 crop at (680, 0):
+    ///
+    /// ```text
+    ///              requested                            result
+    ///                     ┌─────────┐
+    ///   ┌─────────────────┼────┐    │           ┌───────────┬─────────┐
+    ///   │                 └────┼────┘           │           │         │
+    ///   │    active array      │                │           └─────────┤
+    ///   │                      │                │    active array     │
+    ///   │                      │                │                     │
+    ///   └──────────────────────┘                └─────────────────────┘
+    /// ```
+    pub fn new(left: i32, top: i32, width: u32, height: u32) -> Crop {
+        // The size must be between the smallest and the largest crop size.
+        let new_width = width.clamp(Self::MIN_WIDTH, Self::MAX_WIDTH);
+        let new_height = height.clamp(Self::MIN_HEIGHT, Self::MAX_HEIGHT);
+        // The position must keep the crop inside the active array.
+        let new_left = left.clamp(0, (Self::MAX_WIDTH - new_width) as i32) as u32;
+        let new_top = top.clamp(0, (Self::MAX_HEIGHT - new_height) as i32) as u32;
+        Crop {
+            left: new_left,
+            top: new_top,
+            width: new_width,
+            height: new_height,
+        }
+    }
+}
+
+impl Default for Crop {
+    fn default() -> Self {
+        Self::FULL
+    }
+}
+
 /// Everything the frame generators need to know about the current control state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct RenderParams {
@@ -117,4 +183,7 @@ pub struct RenderParams {
     pub gain: Gain,
     /// Pattern rendered by [`crate::device::FrameSource::TestPatterns`].
     pub test_pattern: TestPattern,
+    /// Window of the sensor active array rendered by
+    /// [`crate::device::FrameSource::EmulatedScene`].
+    pub crop: Crop,
 }
