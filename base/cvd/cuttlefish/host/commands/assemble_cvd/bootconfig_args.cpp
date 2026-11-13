@@ -270,6 +270,20 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
         instance.modem_simulator_ports();
   }
 
+  if (!instance.ril_ipaddr().empty()) {
+    bootconfig_args["androidboot.ril_ipaddr"] = instance.ril_ipaddr();
+  }
+  if (!instance.ril_gateway().empty()) {
+    bootconfig_args["androidboot.ril_gateway"] = instance.ril_gateway();
+  }
+  if (!instance.ril_dns().empty()) {
+    bootconfig_args["androidboot.ril_dns"] = instance.ril_dns();
+  }
+  if (instance.ril_prefixlen() > 0) {
+    bootconfig_args["androidboot.ril_prefixlen"] =
+        std::to_string(instance.ril_prefixlen());
+  }
+
   // Once all Cuttlefish kernel versions are at least 5.15, filename encryption
   // will not need to be set conditionally. HCTR2 will always be available.
   // At that point fstab.cf.f2fs.cts and fstab.cf.ext4.cts can be removed.
