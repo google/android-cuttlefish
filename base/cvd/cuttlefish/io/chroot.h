@@ -22,8 +22,8 @@
 #include "absl/strings/string_view.h"
 
 #include "cuttlefish/io/filesystem.h"
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/reader_seeker.h"
+#include "cuttlefish/io/reader_writer_seeker.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {

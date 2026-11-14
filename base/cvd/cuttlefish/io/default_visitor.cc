@@ -20,6 +20,7 @@
 #include "cuttlefish/io/read_window_view.h"
 #include "cuttlefish/io/reader.h"
 #include "cuttlefish/io/reader_seeker.h"
+#include "cuttlefish/io/reader_writer_seeker.h"
 #include "cuttlefish/io/seeker.h"
 #include "cuttlefish/io/writer.h"
 #include "cuttlefish/io/writer_seeker.h"

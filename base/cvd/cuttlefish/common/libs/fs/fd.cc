@@ -47,6 +47,7 @@
 
 #include "cuttlefish/common/libs/fs/scoped_mmap.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
 #include "cuttlefish/result/expect.h"
@@ -462,6 +463,11 @@ std::string Fd::GetVhostUserVsockServerAddr(
 std::string Fd::GetVhostUserVsockClientAddr(int cid) {
   // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock_{}
   return fmt::format("{}/vsock_{}_{}/vm.vsock", TempDir(), cid, getuid());
+}
+
+Result<void> Fd::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
 }
 
 bool Fd::CopyFrom(Fd& in, size_t length, Fd* stop) {

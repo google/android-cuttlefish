@@ -23,12 +23,20 @@
 #include <shared_mutex>
 #include <vector>
 
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/visitable.h"
+#include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 InMemoryIo::InMemoryIo(std::vector<char>& data, std::shared_mutex& mutex)
     : data_(data), mutex_(mutex) {}
+
+Result<void> InMemoryIo::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
 
 Result<uint64_t, int> InMemoryIo::Read(void* buf, uint64_t count) {
   std::lock_guard lock(mutex_);
@@ -90,6 +98,11 @@ Result<uint64_t, int> InMemoryIo::PWrite(const void* buf, uint64_t count,
     memcpy(&data_[offset], buf, count);
   }
   return count;
+}
+
+Result<void> InMemoryIo::Truncate(uint64_t size) {
+  data_.resize(size, 0);
+  return {};
 }
 
 // Must be called with the lock held for reading or writing
