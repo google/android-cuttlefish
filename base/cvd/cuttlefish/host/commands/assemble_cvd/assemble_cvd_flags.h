@@ -199,8 +199,6 @@ DECLARE_string(straced_host_executables);
 
 DECLARE_vec(fail_fast);
 
-DECLARE_vec(vhost_user_block);
-
 DECLARE_string(early_tmp_dir);
 
 DECLARE_vec(enable_tap_devices);

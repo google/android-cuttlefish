@@ -182,6 +182,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/feature:inject",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
+        "//cuttlefish/host/libs/image_aggregator:image_from_file",
         "//cuttlefish/host/libs/image_aggregator:qcow2",
         "//cuttlefish/host/libs/process_monitor",
         "//cuttlefish/posix:remove",

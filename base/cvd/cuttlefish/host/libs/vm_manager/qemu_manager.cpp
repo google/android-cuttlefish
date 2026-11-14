@@ -704,7 +704,9 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
                             ",path=", socket_path);
       qemu_cmd.AddParameter("-device");
       qemu_cmd.AddParameter(
-          "vhost-user-blk-pci-non-transitional,chardev=vhost-user-block-", i);
+          "vhost-user-blk-pci-non-transitional,chardev=vhost-user-block-", i,
+          ",id=virtio-disk", i, ",queue-size=256",
+          (i == 0 ? ",bootindex=1" : ""));
     } else {
       qemu_cmd.AddParameter("-drive");
       qemu_cmd.AddParameter("file=", disk, ",if=none,id=drive-virtio-disk", i,

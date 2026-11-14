@@ -44,6 +44,8 @@ RawImage& RawImage::operator=(RawImage&& other) {
 
 Result<uint64_t> RawImage::VirtualSizeBytes() const { return size_; }
 
+Result<std::string> RawImage::QemuImgName() const { return "raw"; }
+
 RawImage::RawImage(uint64_t size) : size_(size) {}
 
 }  // namespace cuttlefish

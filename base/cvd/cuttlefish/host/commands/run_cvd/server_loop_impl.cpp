@@ -50,6 +50,8 @@
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
+#include "cuttlefish/host/libs/image_aggregator/disk_image.h"
+#include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
 #include "cuttlefish/host/libs/image_aggregator/qcow2.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 #include "cuttlefish/posix/remove.h"
@@ -78,19 +80,25 @@ std::ostream& operator<<(std::ostream& out,
   return out << format_as(status);
 }
 
-bool ServerLoopImpl::CreateQcowOverlay(VmmMode vm_manager,
-                                       const std::string& crosvm_path,
-                                       const std::string& backing_file,
-                                       const std::string& output_overlay_path) {
-  Result<Qcow2Image> overlay = Qcow2Image::Create(
-      vm_manager, crosvm_path, backing_file, output_overlay_path);
-  if (!overlay.has_value()) {
-    LOG(ERROR) << "Unable to create qcow2 overlay: "
-               << overlay.error().FormatForEnv();
-    return false;
+namespace {
+
+Result<void> CreateQcowOverlay(const std::string& crosvm_path,
+                               const std::string& backing_file,
+                               const std::string& output_overlay_path,
+                               bool use_crosvm) {
+  if (use_crosvm) {
+    CF_EXPECT(Qcow2Image::CreateByCrosvm(crosvm_path, backing_file,
+                                         output_overlay_path));
+  } else {
+    std::unique_ptr<DiskImage> backing_image =
+        CF_EXPECT(ImageFromFile(backing_file));
+    CF_EXPECT(Qcow2Image::CreateByQemuImg(*backing_image, backing_file,
+                                          output_overlay_path));
   }
-  return true;
+  return {};
 }
+
+}  // namespace
 
 ServerLoopImpl::ServerLoopImpl(
     const CuttlefishConfig& config,
@@ -446,25 +454,34 @@ bool ServerLoopImpl::PowerwashFiles() {
   struct OverlayFile {
     std::string name;
     std::string composite_disk_path;
+    bool use_crosvm;
 
-    OverlayFile(std::string name, std::string composite_disk_path)
+    OverlayFile(std::string name, std::string composite_disk_path,
+                bool use_crosvm)
         : name(std::move(name)),
-          composite_disk_path(std::move(composite_disk_path)) {}
+          composite_disk_path(std::move(composite_disk_path)),
+          use_crosvm(use_crosvm) {}
   };
-  std::vector<OverlayFile> overlay_files{
-      OverlayFile("overlay.img", instance_.os_composite_disk_path())};
+  std::vector<OverlayFile> overlay_files{OverlayFile(
+      "overlay.img", instance_.os_composite_disk_path(),
+      VmManagerIsCrosvm(config_) ||
+          (VmManagerIsQemu(config_) && instance_.vhost_user_block()))};
   if (instance_.ap_boot_flow() != APBootFlow::None) {
-    overlay_files.emplace_back(
-        OverlayFile("ap_overlay.img", instance_.ap_composite_disk_path()));
+    overlay_files.emplace_back(OverlayFile("ap_overlay.img",
+                                           instance_.ap_composite_disk_path(),
+                                           VmManagerIsCrosvm(config_)));
   }
   for (const auto& overlay_file : overlay_files) {
     std::string overlay_path = instance_.PerInstancePath(overlay_file.name);
     const std::string& composite_disk_path = overlay_file.composite_disk_path;
 
     unlink(overlay_path.c_str());
-    if (!CreateQcowOverlay(config_.vm_manager(), instance_.crosvm_binary(),
-                           composite_disk_path, overlay_path)) {
-      LOG(ERROR) << "CreateQcowOverlay failed";
+    Result<void> overlay_res =
+        CreateQcowOverlay(instance_.crosvm_binary(), composite_disk_path,
+                          overlay_path, overlay_file.use_crosvm);
+    if (!overlay_res.has_value()) {
+      LOG(ERROR) << "CreateQcowOverlay failed: "
+                 << overlay_res.error().FormatForEnv();
       return false;
     }
 

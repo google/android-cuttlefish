@@ -82,6 +82,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/use_cvdalloc.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vhost_user_block.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
@@ -670,8 +671,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   std::vector<bool> fail_fast_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(fail_fast));
 
-  std::vector<bool> vhost_user_block_vec =
-      CF_EXPECT(GET_FLAG_BOOL_VALUE(vhost_user_block));
+  VhostUserBlockFlag vhost_user_block_values =
+      CF_EXPECT(VhostUserBlockFlag::FromGlobalGflags(vm_manager_flag));
 
   McuConfigPathFlag mcu_config_paths = McuConfigPathFlag::FromGlobalGflags();
 
@@ -998,11 +999,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         blank_data_image_mb_values.ForIndex(instance_index));
     instance.set_gdb_port(gdb_port_vec[instance_index]);
     instance.set_fail_fast(fail_fast_vec[instance_index]);
-    if (vhost_user_block_vec[instance_index]) {
-      CF_EXPECT_EQ(tmp_config_obj.vm_manager(), VmmMode::kCrosvm,
-                   "vhost-user block only supported on crosvm");
-    }
-    instance.set_vhost_user_block(vhost_user_block_vec[instance_index]);
+    instance.set_vhost_user_block(
+        vhost_user_block_values.ForIndex(instance_index));
 
     std::optional<std::vector<CuttlefishConfig::DisplayConfig>>
         binding_displays_configs;
@@ -1318,7 +1316,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     bool sdcard = use_sdcard_vec[instance_index];
     if (sdcard) {
-      if (VmManagerIsQemu(tmp_config_obj)) {
+      if (VmManagerIsQemu(tmp_config_obj) &&
+          !const_instance.vhost_user_block()) {
         virtual_disk_paths.push_back(const_instance.sdcard_overlay_path());
       } else {
         virtual_disk_paths.push_back(const_instance.sdcard_path());

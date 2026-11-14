@@ -150,4 +150,8 @@ Result<uint64_t> AndroidSparseImage::VirtualSizeBytes() const {
                          /* crc= */ true);
 }
 
+Result<std::string> AndroidSparseImage::QemuImgName() const {
+  return CF_ERR("qemu-img does not support Android sparse images");
+}
+
 }  // namespace cuttlefish

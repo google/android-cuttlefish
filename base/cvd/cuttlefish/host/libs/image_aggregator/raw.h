@@ -35,6 +35,7 @@ class RawImage : public DiskImage {
   RawImage& operator=(RawImage&&);
 
   Result<uint64_t> VirtualSizeBytes() const override;
+  Result<std::string> QemuImgName() const override;
 
  private:
   static Result<RawImage> OpenExisting(const std::string& path);
