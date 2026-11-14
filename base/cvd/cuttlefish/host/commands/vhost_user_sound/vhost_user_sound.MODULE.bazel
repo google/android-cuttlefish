@@ -2,10 +2,9 @@ vhost_user_sound_crates = use_extension("@rules_rust//crate_universe:extensions.
 vhost_user_sound_crates.from_cargo(
     name = "vhost_user_sound_crates",
     cargo_config = "@//build_external/crosvm:crosvm.config.toml",
+    host_tools = "@rust_host_tools_nightly",
     manifests = [
         "//cuttlefish/host/commands/vhost_user_sound:Cargo.toml",
     ],
-    host_tools = "@rust_host_tools_nightly",
 )
 use_repo(vhost_user_sound_crates, "vhost_user_sound_crates")
-

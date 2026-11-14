@@ -1,5 +1,6 @@
 # this needs to be at parity with with build_external/crosvm/crosvm.config.toml
 CROSVM_REMOTE = "https://chromium.googlesource.com/crosvm/crosvm"
+
 CROSVM_REV = "597fa65c644c3880e2eba24a6708ab93b3321d4a"
 
 # note that this won't use the same source checkout as the git_repository directive below
@@ -9,10 +10,8 @@ CROSVM_REV = "597fa65c644c3880e2eba24a6708ab93b3321d4a"
 #
 # See https://bazelbuild.github.io/rules_rust/crate_universe_bzlmod.html
 crosvm_bin = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
-
 crosvm_bin.spec(
     artifact = "bin",
-    package = "crosvm",
     default_features = False,
     features = [
         "android-sparse",
@@ -35,46 +34,34 @@ crosvm_bin.spec(
     ],
     # TODO: schuffelen - fix the sandbox
     git = CROSVM_REMOTE,
+    package = "crosvm",
     repositories = ["crosvm_bin"],
     rev = CROSVM_REV,
 )
-
 crosvm_bin.annotation(
     crate = "crosvm",
     gen_all_binaries = True,
     patch_args = ["-p1"],
     repositories = ["crosvm_bin"],
-    deps = [
-        "@@//:gbm",
-        "@@//:gfxstream_backend_import",
-        "@@//:virglrenderer_import",
-    ],
     rustc_flags = [
         # Look for shared libraries in the same directory as the binary,
         # or in the adjacent lib64 directory.
         "-Clink-arg=-Wl,-rpath,$$ORIGIN",
         "-Clink-arg=-Wl,-rpath,$$ORIGIN/../lib64",
     ],
-)
-
-crosvm_bin.annotation(
-    crate = "rutabaga_gfx",
-    gen_build_script = "off",
-    crate_features = [
-        "gbm",
-        "virgl_renderer",
-    ],
     deps = [
         "@@//:gbm",
         "@@//:gfxstream_backend_import",
         "@@//:virglrenderer_import",
     ],
-    rustc_flags = [
-        # Look for shared libraries in the same directory as this object,
-        # or in the adjacent lib64 directory.
-        "-Clink-arg=-Wl,-rpath,$$ORIGIN",
-        "-Clink-arg=-Wl,-rpath,$$ORIGIN/../lib64",
+)
+crosvm_bin.annotation(
+    crate = "rutabaga_gfx",
+    crate_features = [
+        "gbm",
+        "virgl_renderer",
     ],
+    gen_build_script = "off",
     patch_args = ["-p1"],
     patches = [
         "@//build_external/crosvm:PATCH.rutabaga_gfx_rendernode.patch",
@@ -84,13 +71,23 @@ crosvm_bin.annotation(
         "@//build_external/crosvm:PATCH.rutabaga_gfx_gralloc_rs.patch",
     ],
     repositories = ["crosvm_bin"],
+    rustc_flags = [
+        # Look for shared libraries in the same directory as this object,
+        # or in the adjacent lib64 directory.
+        "-Clink-arg=-Wl,-rpath,$$ORIGIN",
+        "-Clink-arg=-Wl,-rpath,$$ORIGIN/../lib64",
+    ],
+    deps = [
+        "@@//:gbm",
+        "@@//:gfxstream_backend_import",
+        "@@//:virglrenderer_import",
+    ],
 )
-
 crosvm_bin.annotation(
-    crate = "jail",
-    build_script_data_glob = ["seccomp/**"],
     build_script_data = ["@@//:compile_seccomp_policy_exe"],
+    build_script_data_glob = ["seccomp/**"],
     build_script_env = {"COMPILE_SECCOMP_POLICY": "$(execpath @@//:compile_seccomp_policy_exe)"},
+    crate = "jail",
     repositories = ["crosvm_bin"],
 )
 
@@ -100,9 +97,9 @@ crosvm_bin.annotation(
 # directories above, so we grab them from the submodule checkout in our crosvm
 # git_repository.
 crosvm_bin.annotation(
-    crate = "minijail-sys",
     build_script_data = ["@@//:minijail_sources"],
     build_script_rundir = "external/+_repo_rules+crosvm/third_party/minijail",
+    crate = "minijail-sys",
     patch_args = ["-p1"],
     # crates_universe checks out only a subdirectory of the repository, so the
     # file paths in this patch are relative to that directory.
@@ -120,7 +117,6 @@ crosvm_bin.annotation(
     patches = ["@//build_external/crosvm:PATCH.proto_build_tools.patch"],
     repositories = ["crosvm_bin"],
 )
-
 crosvm_bin.from_specs(
     name = "crosvm_bin",
     cargo_config = "@//build_external/crosvm:crosvm.config.toml",
@@ -128,7 +124,6 @@ crosvm_bin.from_specs(
     # Executable dependencies are an unstable cargo feature.
     host_tools = "@rust_host_tools_nightly",
 )
-
 use_repo(crosvm_bin, "crosvm_bin")
 
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
@@ -137,11 +132,11 @@ git_repository(
     name = "crosvm",
     build_file = "@//build_external/crosvm:BUILD.crosvm.bazel",
     commit = CROSVM_REV,
-    remote = CROSVM_REMOTE,
     init_submodules = True,
     patch_args = ["-p1"],
     patches = [
         "@//build_external/crosvm:PATCH.minijail-sys_common_mk.patch",
         "@//build_external/crosvm:PATCH.minijail_gen_constants.patch",
     ],
+    remote = CROSVM_REMOTE,
 )

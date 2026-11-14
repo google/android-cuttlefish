@@ -6,18 +6,17 @@ vhost_user_input_crates = use_extension("@rules_rust//crate_universe:extensions.
 # script and link system zlib instead.
 vhost_user_input_crates.annotation(
     crate = "libz-sys",
+    crate_features = ["libc"],
     gen_build_script = "off",
     rustc_flags = [
         "-lz",
     ],
-    crate_features = ["libc"],
 )
-
 vhost_user_input_crates.from_cargo(
     name = "vhost_user_input_crates",
+    host_tools = "@rust_host_tools_nightly",
     manifests = [
         "//cuttlefish/host/commands/vhost_user_input:Cargo.toml",
     ],
-    host_tools = "@rust_host_tools_nightly",
 )
 use_repo(vhost_user_input_crates, "vhost_user_input_crates")
