@@ -5,11 +5,6 @@ git_override(
     #commit = "b2649cb3ee6bd70828a17e50beb16591e6066288", # 1.22.0
     #remote = "https://gitlab.freedesktop.org/wayland/wayland.git",
     commit = "02aa185fc20e2d9fb0ffee4aaf792ae07addce29",
-    remote = "https://android.googlesource.com/platform/external/wayland.git",
-    patch_strip = 1,
-    patches = [
-        "@//build_external/wayland:PATCH.wayland.wayland_config.patch",
-    ],
     patch_cmds = [
         """cat << 'EOF' > MODULE.bazel
 module(
@@ -23,4 +18,9 @@ bazel_dep(name = "rules_cc", version = "0.2.19")
 EOF
 """,
     ],
+    patch_strip = 1,
+    patches = [
+        "@//build_external/wayland:PATCH.wayland.wayland_config.patch",
+    ],
+    remote = "https://android.googlesource.com/platform/external/wayland.git",
 )

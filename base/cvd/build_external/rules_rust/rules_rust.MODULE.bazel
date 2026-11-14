@@ -6,7 +6,7 @@
 # TODO: drop once the change is upstreamed in rules_rust.
 single_version_override(
     module_name = "rules_rust",
-    version = "0.68.1",
     patch_strip = 1,
     patches = ["@//build_external/rules_rust:0001-crate_universe-share-git-checkouts.patch"],
+    version = "0.68.1",
 )

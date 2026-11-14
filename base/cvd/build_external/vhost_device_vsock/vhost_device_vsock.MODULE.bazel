@@ -1,5 +1,4 @@
 vhost_device_vsock_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
-
 vhost_device_vsock_crates.spec(
     artifact = "bin",
     git = "https://github.com/rust-vmm/vhost-device.git",
@@ -7,7 +6,6 @@ vhost_device_vsock_crates.spec(
     repositories = ["vhost_device_vsock_crates"],
     rev = "ec31e650e4f6c9d903487c4267fe5b5411b638b8",
 )
-
 vhost_device_vsock_crates.annotation(
     crate = "vhost-device-vsock",
     gen_all_binaries = True,
@@ -19,10 +17,8 @@ vhost_device_vsock_crates.annotation(
     ],
     repositories = ["vhost_device_vsock_crates"],
 )
-
 vhost_device_vsock_crates.from_specs(
     name = "vhost_device_vsock_crates",
     host_tools = "@rust_host_tools_nightly",
 )
-
 use_repo(vhost_device_vsock_crates, "vhost_device_vsock_crates")

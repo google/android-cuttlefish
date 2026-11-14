@@ -1,4 +1,5 @@
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+
 rust_host_tools = use_extension("@rules_rust//rust:extensions.bzl", "rust_host_tools")
 
 rust.toolchain(

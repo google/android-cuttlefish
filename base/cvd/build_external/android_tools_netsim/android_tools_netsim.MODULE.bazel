@@ -1,21 +1,10 @@
 netsim_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 netsim_crates.spec(
+    features = ["openssl"],
     package = "grpcio-sys",
     version = "0.13.0",
-    features = ["openssl"],
 )
 netsim_crates.annotation(
-    crate = "grpcio-sys",
-    gen_build_script = "off",
-
-    # Mimic build.rs to use grpc from bazel_dep()
-    deps = [
-        ":grpc_wrap",
-        "@@//build_external/grpcio-sys:gpr_log_stub",
-    ],
-    rustc_env = {
-        "BINDING_PATH": "$(execpath bindings/bindings.rs)",
-    },
     additive_build_file_content = """
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
@@ -32,18 +21,30 @@ cc_library(
     deps = ["@@//build_external/grpcio-sys:grpc_wrap_deps"],
 )
 """,
+    crate = "grpcio-sys",
+    gen_build_script = "off",
+    rustc_env = {
+        "BINDING_PATH": "$(execpath bindings/bindings.rs)",
+    },
+
+    # Mimic build.rs to use grpc from bazel_dep()
+    deps = [
+        ":grpc_wrap",
+        "@@//build_external/grpcio-sys:gpr_log_stub",
+    ],
 )
 netsim_crates.spec(
-    package = "pica",
     git = "https://github.com/google/pica/",
-    rev = "dbcb4e93c352b11bdc7c746665f2fa05bae0f251",  # 0.1.12,
+    package = "pica",
     repositories = ["netsim_crates"],
+    rev = "dbcb4e93c352b11bdc7c746665f2fa05bae0f251",  # 0.1.12,
 )
 netsim_crates.annotation(
     crate = "pica",
     gen_all_binaries = True,
     repositories = ["netsim_crates"],
 )
+
 # b/413182531 no need to specify .spec() for pdl-compiler because it is already
 # in rootcanal's MODULE.bazel.
 netsim_crates.annotation(
@@ -53,24 +54,27 @@ netsim_crates.annotation(
 )
 netsim_crates.spec(
     package = "openssl",
-    version = "0.10.73",
     repositories = ["netsim_crates"],
+    version = "0.10.73",
 )
 netsim_crates.spec(
-    package = "openssl-sys",
-    version = "0.9.109",
     features = ["bindgen"],
+    package = "openssl-sys",
     repositories = ["netsim_crates"],
+    version = "0.9.109",
 )
 netsim_crates.annotation(
-    crate = "openssl",
     build_script_env = {
         "DEP_OPENSSL_BORINGSSL": "1",
     },
+    crate = "openssl",
     repositories = ["netsim_crates"],
 )
 netsim_crates.annotation(
-    crate = "openssl-sys",
+    build_script_data = [
+        "@@//build_external/android_tools_netsim:openssl_lib_dir",
+        "@@//build_external/android_tools_netsim:openssl_include_dir",
+    ],
     build_script_env = {
         "OPENSSL_LIB_DIR": "$(execpath @@//build_external/android_tools_netsim:openssl_lib_dir)",
         "OPENSSL_INCLUDE_DIR": "$(execpath @@//build_external/android_tools_netsim:openssl_include_dir)",
@@ -79,14 +83,13 @@ netsim_crates.annotation(
         # for FFI
         "OPENSSL_LIBS": "ssl_internal:crypto_internal",
     },
-    build_script_data = [
-        "@@//build_external/android_tools_netsim:openssl_lib_dir",
-        "@@//build_external/android_tools_netsim:openssl_include_dir",
-    ],
+    crate = "openssl-sys",
     repositories = ["netsim_crates"],
 )
 netsim_crates.from_cargo(
     name = "netsim_crates",
+    cargo_lockfile = "@android_tools_netsim//:rust/Cargo.lock",
+    host_tools = "@rust_host_tools_nightly",
     manifests = [
         "@android_tools_netsim//:rust/Cargo.toml",
         "@android_tools_netsim//:rust/capture/Cargo.toml",
@@ -99,10 +102,7 @@ netsim_crates.from_cargo(
         "@android_tools_netsim//:rust/packets/Cargo.toml",
         "@android_tools_netsim//:rust/proto/Cargo.toml",
     ],
-    cargo_lockfile = "@android_tools_netsim//:rust/Cargo.lock",
-    host_tools = "@rust_host_tools_nightly",
 )
-
 use_repo(netsim_crates, "netsim_crates")
 
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
@@ -111,7 +111,7 @@ git_repository(
     name = "android_tools_netsim",
     build_file = "@//build_external/android_tools_netsim:BUILD.android_tools_netsim.bazel",
     commit = "efabf7cb7e63b7466f79e9171907ed1e746ef1a3",
-    remote = "https://android.googlesource.com/platform/tools/netsim",
+    patch_args = ["-p1"],
     patches = [
         "@//build_external/android_tools_netsim:0001-Drop-pica-from-daemon-Cargo.toml.patch",
         "@//build_external/android_tools_netsim:0002-Fix-build-with-tungstenite-0.26.0.patch",
@@ -120,5 +120,5 @@ git_repository(
         "@//build_external/android_tools_netsim:0005-Fix-conflict-for-v-between-vsock-and-verbose-args.patch",
         "@//build_external/android_tools_netsim:0006-Lock-zip-0.6.6-in-Cargo.lock.patch",
     ],
-    patch_args = ["-p1"],
+    remote = "https://android.googlesource.com/platform/tools/netsim",
 )

@@ -1,17 +1,17 @@
 casimir_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 casimir_crates.annotation(
-    crate = "grpcio-sys",
-    version = "0.13.0",
     additive_build_file_content = """
 load("@rules_cc//cc:defs.bzl", "cc_library")
 """,
+    crate = "grpcio-sys",
+    version = "0.13.0",
 )
 casimir_crates.from_cargo(
     name = "casimir_crates",
+    host_tools = "@rust_host_tools_nightly",
     manifests = [
         "@casimir//:Cargo.toml",
     ],
-    host_tools = "@rust_host_tools_nightly",
 )
 use_repo(casimir_crates, "casimir_crates")
 
