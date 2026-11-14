@@ -18,6 +18,7 @@
 #include <unistd.h>
 
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -29,6 +30,7 @@
 #include "fruit/fruit_forward_decls.h"
 #include "fruit/macro.h"
 
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
@@ -38,6 +40,7 @@
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/posix/remove_file_if_exists.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/result/result.h"
 
@@ -92,6 +95,16 @@ Result<std::vector<MonitorCommand>> VhostDeviceVsock::Commands() {
     std::string isolation_groups = "";
     if (!i.vsock_guest_group().empty()) {
       isolation_groups = ",groups=" + i.vsock_guest_group();
+    }
+
+    if (VmManagerIsQemu(cfconfig_)) {
+      std::string vsock_dir = fmt::format("{}/vsock_{}_{}", TempDir(),
+                                          i.vsock_guest_cid(), getuid());
+      CF_EXPECT(EnsureDirectoryExists(vsock_dir, 0700));
+      for (std::string_view sock_name : {"vhost.socket", "vm.vsock"}) {
+        CF_EXPECT(
+            RemoveFileIfExists(fmt::format("{}/{}", vsock_dir, sock_name)));
+      }
     }
 
     auto param = fmt::format(
