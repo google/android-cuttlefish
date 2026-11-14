@@ -76,20 +76,24 @@ func (c *PolledClient) ToDevice(msg interface{}) error {
 	return c.device.Send(msg)
 }
 
-// Gets count messages from the device, skipping the first start messages
+// Gets count messages from the device, skipping the first start messages.
+// start is clamped to [0, len(messages)]. A negative count returns all
+// remaining messages, and count is clamped to the number of remaining
+// messages, so any input returns a valid slice.
 func (c *PolledClient) GetMessages(start int, count int) []interface{} {
 	c.msgMtx.Lock()
 	defer c.msgMtx.Unlock()
-	if count < 0 {
+	if start < 0 {
+		start = 0
+	}
+	if start > len(c.messages) {
+		start = len(c.messages)
+	}
+	if count < 0 || count > len(c.messages)-start {
 		count = len(c.messages) - start
 	}
-	end := start + count
-	if end > len(c.messages) {
-		end = len(c.messages)
-		count = end - start
-	}
 	ret := make([]interface{}, count)
-	copy(ret, c.messages[start:end])
+	copy(ret, c.messages[start:start+count])
 	return ret
 }
 

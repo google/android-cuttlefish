@@ -15,6 +15,7 @@
 package operator
 
 import (
+	"math"
 	"math/rand"
 	"testing"
 )
@@ -75,6 +76,43 @@ func TestMessages(t *testing.T) {
 	msgs = c.GetMessages(1, 1)
 	if len(msgs) != 1 && msgs[0] != "msg2" {
 		t.Error("Failed to return message range: ", msgs)
+	}
+}
+
+func TestGetMessagesBounds(t *testing.T) {
+	ps := NewPolledSet()
+	c := ps.NewConnection(newDevice("d1", nil, 0, ""))
+	c.Send("msg1")
+	c.Send("msg2")
+	c.Send("msg3")
+
+	// Negative start is clamped to the beginning of the buffer.
+	if msgs := c.GetMessages(-1, -1); len(msgs) != 3 ||
+		msgs[0] != "msg1" || msgs[1] != "msg2" || msgs[2] != "msg3" {
+		t.Errorf("negative start: got %v, want [msg1 msg2 msg3]", msgs)
+	}
+	// Negative start with an explicit count skips nothing.
+	if msgs := c.GetMessages(-1, 1); len(msgs) != 1 || msgs[0] != "msg1" {
+		t.Errorf("negative start with count: got %v, want [msg1]", msgs)
+	}
+	// start past the end of the buffer returns an empty slice.
+	if msgs := c.GetMessages(10, -1); len(msgs) != 0 {
+		t.Errorf("start past end: got %d messages, want 0", len(msgs))
+	}
+	if msgs := c.GetMessages(10, 2); len(msgs) != 0 {
+		t.Errorf("start past end with count: got %d messages, want 0", len(msgs))
+	}
+	// A count larger than the remaining messages is clamped.
+	if msgs := c.GetMessages(2, 100); len(msgs) != 1 || msgs[0] != "msg3" {
+		t.Errorf("oversized count: got %v, want [msg3]", msgs)
+	}
+	// Very large values must not overflow or panic.
+	if msgs := c.GetMessages(math.MaxInt, math.MaxInt); len(msgs) != 0 {
+		t.Errorf("max start and count: got %d messages, want 0", len(msgs))
+	}
+	if msgs := c.GetMessages(0, math.MaxInt); len(msgs) != 3 ||
+		msgs[0] != "msg1" || msgs[2] != "msg3" {
+		t.Errorf("max count: got %v, want [msg1 msg2 msg3]", msgs)
 	}
 }
 
