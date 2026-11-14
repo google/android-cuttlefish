@@ -316,6 +316,7 @@ class CuttlefishConfig {
     std::string ethernet_bridge_name() const;
     std::string ethernet_mac() const;
     std::string ethernet_ipv6() const;
+    std::string adb_mac() const;
     bool has_bluetooth() const;
     // Bluetooth is enabled by bt_connector and rootcanal
     bool enable_host_bluetooth_connector() const;
@@ -650,6 +651,7 @@ class CuttlefishConfig {
     void set_ethernet_bridge_name(const std::string& set_ethernet_bridge_name);
     void set_ethernet_mac(const std::string& mac);
     void set_ethernet_ipv6(const std::string& ip);
+    void set_adb_mac(const std::string& mac);
     void set_has_bluetooth(bool has_bluetooth);
     void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
     void set_enable_host_uwb_connector(bool enable_host_uwb);

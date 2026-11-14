@@ -1596,6 +1596,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_wifi_mac(
   (*Dictionary())[kWifiMac] = mac;
 }
 
+static constexpr char kAdbMac[] = "adb_mac";
+std::string CuttlefishConfig::InstanceSpecific::adb_mac() const {
+  return (*Dictionary())[kAdbMac].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_adb_mac(
+    const std::string& mac) {
+  (*Dictionary())[kAdbMac] = mac;
+}
+
 static constexpr char kUseBridgedWifiTap[] = "use_bridged_wifi_tap";
 bool CuttlefishConfig::InstanceSpecific::use_bridged_wifi_tap() const {
   return (*Dictionary())[kUseBridgedWifiTap].asBool();
