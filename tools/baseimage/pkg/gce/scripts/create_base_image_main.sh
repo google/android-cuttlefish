@@ -131,6 +131,14 @@ sudo tee /mnt/image/etc/sysctl.d/80-nsjail.conf >/dev/null <<EOF
 kernel.unprivileged_userns_clone=1
 EOF
 
+# Let crosvm --hugepages back guest RAM with 2 MiB pages. defer avoids
+# direct-compaction stalls when many VMs run on a fragmented host.
+sudo mkdir -p /mnt/image/etc/tmpfiles.d
+sudo tee /mnt/image/etc/tmpfiles.d/cuttlefish-thp.conf >/dev/null <<EOF
+w- /sys/kernel/mm/transparent_hugepage/shmem_enabled - - - - advise
+w- /sys/kernel/mm/transparent_hugepage/defrag - - - - defer
+EOF
+
 # Problem: On N4D (AMD Zen 5) VMs, Linux 6.12 (6.12.49 and later, as in
 # Debian 13) mitigates SRSO (CVE-2023-20569) with an IBPB on every VMEXIT,
 # which makes nested Cuttlefish boots significantly slower. Linux 6.1
