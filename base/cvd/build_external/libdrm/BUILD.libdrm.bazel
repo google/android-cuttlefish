@@ -33,7 +33,7 @@ genrule(
     name = "gen_generated_static_table_fourcc_h",
     srcs = ["include/drm/drm_fourcc.h"],
     outs = ["generated_static_table_fourcc.h"],
-    cmd = "python3 $(location :gen_table_fourcc_py) $(location include/drm/drm_fourcc.h) $@",
+    cmd = "$(location :gen_table_fourcc_py) $(location include/drm/drm_fourcc.h) $@",
     tools = [":gen_table_fourcc_py"],
 )
 
