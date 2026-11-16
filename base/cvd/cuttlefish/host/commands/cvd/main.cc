@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -97,8 +98,11 @@ LogSeverity CvdVerbosityOption(std::vector<std::string>& all_args) {
 }
 
 Result<void> EnsureCvdDirectoriesExist() {
-  // This is accessed by all users.
+  // These are accessed by all users.
   CF_EXPECT(EnsureDirectoryExists(CvdDir(), 0777));
+  (void)chmod(CvdDir().c_str(), 0777);
+  CF_EXPECT(EnsureDirectoryExists(InstanceLocksPath(), 0777));
+  (void)chmod(InstanceLocksPath().c_str(), 0777);
   // This is where the instance database resides.
   CF_EXPECT(EnsureDirectoryExists(PerUserDir(), 0750));
 
