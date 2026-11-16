@@ -77,6 +77,10 @@ impl ControlDescriptor {
         self.type_ == bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER64
     }
 
+    fn is_integer_menu(&self) -> bool {
+        self.type_ == bindings::v4l2_ctrl_type_V4L2_CTRL_TYPE_INTEGER_MENU
+    }
+
     fn elem_size(&self) -> u32 {
         if self.is_64bit() {
             std::mem::size_of::<i64>() as u32
@@ -108,6 +112,11 @@ pub trait Control: Send + Sync {
 
     /// Name of menu entry `index`, `None` if there is no such entry.
     fn menu_name(&self, _index: u32) -> Option<&'static str> {
+        None
+    }
+
+    /// Value of integer menu entry `index`, `None` if there is no such entry.
+    fn menu_value(&self, _index: u32) -> Option<i64> {
         None
     }
 
@@ -257,16 +266,20 @@ impl ControlSet {
 
     /// `VIDIOC_QUERYMENU`.
     pub fn querymenu(&self, id: u32, index: u32) -> IoctlResult<bindings::v4l2_querymenu> {
-        let name = self
-            .find(id)
-            .and_then(|control| control.menu_name(index))
-            .ok_or(libc::EINVAL)?;
+        let control = self.find(id).ok_or(libc::EINVAL)?;
+        let entry = if control.descriptor().is_integer_menu() {
+            let value = control.menu_value(index).ok_or(libc::EINVAL)?;
+            bindings::v4l2_querymenu__bindgen_ty_1 { value }
+        } else {
+            let name = control.menu_name(index).ok_or(libc::EINVAL)?;
+            bindings::v4l2_querymenu__bindgen_ty_1 {
+                name: ctrl_name(name),
+            }
+        };
         Ok(bindings::v4l2_querymenu {
             id,
             index,
-            __bindgen_anon_1: bindings::v4l2_querymenu__bindgen_ty_1 {
-                name: ctrl_name(name),
-            },
+            __bindgen_anon_1: entry,
             ..Default::default()
         })
     }

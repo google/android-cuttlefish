@@ -19,7 +19,7 @@ mod userptr;
 use std::path::PathBuf;
 
 use clap::Parser;
-use emulated_camera::controls::{GainControl, LensFacingControl};
+use emulated_camera::controls::{ExposureBiasControl, GainControl, LensFacingControl};
 use emulated_camera::{Control, ControlSet, FrameSource, LensFacing};
 use thiserror::Error;
 
@@ -77,6 +77,7 @@ fn controls(lens_facing: LensFacing) -> Vec<Box<dyn Control>> {
     vec![
         Box::new(LensFacingControl::new(lens_facing)),
         Box::new(GainControl::new()),
+        Box::new(ExposureBiasControl::new()),
     ]
 }
 

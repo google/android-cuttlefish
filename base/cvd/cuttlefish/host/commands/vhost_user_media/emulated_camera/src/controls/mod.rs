@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod exposure_bias;
 pub mod gain;
 pub mod lens_facing;
 pub mod test_pattern;
 
+pub use exposure_bias::ExposureBiasControl;
 pub use gain::GainControl;
 pub use lens_facing::{CID_LENS_FACING, LensFacing, LensFacingControl};
 pub use test_pattern::TestPatternControl;
