@@ -289,8 +289,8 @@ cf_cc_test(
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:system_image_dir_path_resolution",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
         "@abseil-cpp//absl/strings",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
