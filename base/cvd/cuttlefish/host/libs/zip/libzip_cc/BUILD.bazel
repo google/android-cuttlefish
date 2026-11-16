@@ -9,7 +9,6 @@ cf_cc_library(
     srcs = ["archive.cc"],
     hdrs = ["archive.h"],
     features = ["-layering_check"],  # libzip
-    linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
     deps = [
         "//cuttlefish/host/libs/zip/libzip_cc:error",
@@ -31,7 +30,6 @@ cf_cc_library(
     srcs = ["error.cc"],
     hdrs = ["error.h"],
     features = ["-layering_check"],  # libzip
-    linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
     visibility = ["//visibility:private"],
     deps = [
@@ -44,7 +42,6 @@ cf_cc_library(
     name = "managed",
     hdrs = ["managed.h"],
     features = ["-layering_check"],  # libzip
-    linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
     visibility = ["//visibility:private"],
     deps = ["@libzip"],
@@ -55,7 +52,6 @@ cf_cc_library(
     srcs = ["readable_source.cc"],
     hdrs = ["readable_source.h"],
     features = ["-layering_check"],  # libzip
-    linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
     deps = [
         "//cuttlefish/host/libs/zip/libzip_cc:error",
@@ -73,7 +69,6 @@ cf_cc_library(
     srcs = ["seekable_source.cc"],
     hdrs = ["seekable_source.h"],
     features = ["-layering_check"],  # libzip
-    linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
     deps = [
         "//cuttlefish/host/libs/zip/libzip_cc:error",
@@ -104,7 +99,6 @@ cf_cc_library(
     srcs = ["writable_source.cc"],
     hdrs = ["writable_source.h"],
     features = ["-layering_check"],  # libzip
-    linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
     deps = [
         "//cuttlefish/host/libs/zip/libzip_cc:error",
