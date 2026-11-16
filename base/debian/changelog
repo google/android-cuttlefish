@@ -1,3 +1,9 @@
+cuttlefish-common (1.57.15) unstable; urgency=medium
+
+  * cvd: Use 0777 permissions on shared instance locks directory by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3593
+
+ -- Ram Muthiah <rammuthiah@google.com>  Mon, 16 Nov 2026 05:08:00 +0000
+
 cuttlefish-common (1.57.14) unstable; urgency=medium
 
   * N/A
