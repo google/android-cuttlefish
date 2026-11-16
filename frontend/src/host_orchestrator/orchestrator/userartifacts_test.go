@@ -371,6 +371,65 @@ func TestExtractArtifactFailsWithTarSymlinkEscape(t *testing.T) {
 	}
 }
 
+func TestExtractArtifactFailsWithTarAbsoluteSymlink(t *testing.T) {
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
+	archive, err := createTarGz(tempDir, map[string]archiveEntry{"sneak": {Symlink: "/etc/passwd"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := updateAndExtractArtifact(t, archive); err == nil {
+		t.Fatal("Expected an error")
+	}
+}
+
+func TestExtractArtifactFailsWithTarAbsoluteEntry(t *testing.T) {
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
+	archive, err := createTarGz(tempDir, map[string]archiveEntry{"/etc/passwd": {Content: "owned"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := updateAndExtractArtifact(t, archive); err == nil {
+		t.Fatal("Expected an error")
+	}
+}
+
+func TestExtractArtifactFailsWithZipAbsoluteEntry(t *testing.T) {
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
+	archive, err := createZip(tempDir, map[string]string{"/etc/passwd": "owned"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := updateAndExtractArtifact(t, archive); err == nil {
+		t.Fatal("Expected an error")
+	}
+}
+
+func TestExtractArtifactSucceedsWithTarRelativeSymlinkInsideDst(t *testing.T) {
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
+	archive, err := createTarGz(tempDir, map[string]archiveEntry{
+		"target.txt": {Content: "hello"},
+		"link.txt":   {Symlink: "target.txt"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	extractedDir, err := updateAndExtractArtifact(t, archive)
+	if err != nil {
+		t.Fatalf("Expected no error, got: %v", err)
+	}
+	got, err := os.ReadFile(filepath.Join(extractedDir, "link.txt"))
+	if err != nil {
+		t.Fatalf("Expected symlink to be readable after extraction, got: %v", err)
+	}
+	if string(got) != "hello" {
+		t.Fatalf("got %q, want %q", string(got), "hello")
+	}
+}
+
 func TestChunkStateUpdateSucceedsForSeparatedChunks(t *testing.T) {
 	cs := NewChunkState(100)
 	cs.Update(0, 10)
