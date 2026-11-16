@@ -38,10 +38,15 @@ impl FramePattern for Pipeline {
         sink_u: &mut dyn Write,
         sink_v: &mut dyn Write,
     ) -> Result<(), i32> {
+        // The exposure bias lengthens or shortens the exposure, as auto-exposure would.
+        let sensor = Sensor {
+            exposure_s: self.sensor.exposure_s * params.exposure_bias.factor(),
+            ..self.sensor
+        };
         let isp = Isp {
             gain: params.gain,
             crop: params.crop,
         };
-        isp.process(&self.sensor, iteration, width, height, sink_y, sink_u, sink_v)
+        isp.process(&sensor, iteration, width, height, sink_y, sink_u, sink_v)
     }
 }

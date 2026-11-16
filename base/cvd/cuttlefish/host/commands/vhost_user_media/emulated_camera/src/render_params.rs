@@ -53,6 +53,47 @@ impl Default for Gain {
     }
 }
 
+/// Exposure bias, also called exposure compensation.
+///
+/// EV stands for exposure value: +1 EV doubles the light reaching the sensor, -1 EV halves it,
+/// 0 EV leaves the exposure as is. The value is stored in EV millis, thousandths of an EV.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ExposureBias(i32);
+
+impl ExposureBias {
+    /// -3 EV to +3 EV in half EV steps.
+    pub const MIN: i32 = -3000;
+    pub const MAX: i32 = 3000;
+    pub const STEP: i32 = 500;
+    pub const DEFAULT: i32 = 0;
+
+    pub fn new(ev_millis: i32) -> Result<Self, libc::c_int> {
+        if ev_millis < Self::MIN || ev_millis > Self::MAX || ev_millis % Self::STEP != 0 {
+            return Err(libc::ERANGE);
+        }
+        Ok(ExposureBias(ev_millis))
+    }
+
+    pub fn ev_millis(&self) -> i32 {
+        self.0
+    }
+
+    pub fn ev(&self) -> f32 {
+        self.0 as f32 / 1000.0
+    }
+
+    /// Exposure multiplier, 2 to the power of the EV.
+    pub fn factor(&self) -> f32 {
+        2f32.powf(self.ev())
+    }
+}
+
+impl Default for ExposureBias {
+    fn default() -> Self {
+        ExposureBias(Self::DEFAULT)
+    }
+}
+
 /// Test pattern selectable through `V4L2_CID_TEST_PATTERN`.
 ///
 /// The discriminants double as the menu indices reported by `VIDIOC_QUERYMENU`, so they
@@ -181,6 +222,8 @@ impl Default for Crop {
 pub struct RenderParams {
     /// Luma scaling, `Gain::MIN` is 1.0x.
     pub gain: Gain,
+    /// Exposure bias applied by [`crate::device::FrameSource::EmulatedScene`].
+    pub exposure_bias: ExposureBias,
     /// Pattern rendered by [`crate::device::FrameSource::TestPatterns`].
     pub test_pattern: TestPattern,
     /// Window of the sensor active array rendered by

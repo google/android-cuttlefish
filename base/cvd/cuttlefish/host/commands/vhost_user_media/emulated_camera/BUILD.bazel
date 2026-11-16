@@ -8,6 +8,7 @@ rust_library(
     srcs = [
         "src/capture_channel.rs",
         "src/control.rs",
+        "src/controls/exposure_bias.rs",
         "src/controls/gain.rs",
         "src/controls/lens_facing.rs",
         "src/controls/mod.rs",
