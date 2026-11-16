@@ -54,7 +54,7 @@ Result<std::string> InstanceLockFileManager::LockFilePath(
     unsigned instance_num) {
   std::stringstream path;
   path << instance_locks_path_;
-  CF_EXPECT(EnsureDirectoryExists(path.str()));
+  CF_EXPECT(EnsureDirectoryExists(path.str(), 0777));
   path << "local-instance-" << instance_num << ".lock";
   return path.str();
 }
