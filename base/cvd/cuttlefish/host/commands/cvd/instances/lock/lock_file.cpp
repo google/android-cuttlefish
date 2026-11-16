@@ -102,15 +102,15 @@ bool LockFile::operator<(const LockFile& other) const {
 
 Result<Fd> LockFileManager::OpenLockFile(const std::string& file_path) {
   auto parent_dir = android::base::Dirname(file_path);
-  CF_EXPECT(EnsureDirectoryExists(parent_dir));
+  CF_EXPECT(EnsureDirectoryExists(parent_dir, 0777));
+  int result = chmod(parent_dir.c_str(), 0777);
+  if (result) {
+    VLOG(0) << "failed: chmod 777 " << parent_dir;
+  }
   Fd fd = CF_EXPECT(Fd::Open(file_path.data(), O_CREAT | O_RDWR, 0666));
-  int result = chmod(file_path.c_str(), 0666);
+  result = chmod(file_path.c_str(), 0666);
   if (result) {
     VLOG(0) << "failed: chmod 666 " << file_path;
-  }
-  result = chmod(parent_dir.c_str(), 0755);
-  if (result) {
-    VLOG(0) << "failed: chmod 755 " << parent_dir;
   }
   return fd;
 }
