@@ -409,10 +409,19 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   // qemu doesn't send the memory mappings necessary for the backend to access
   // the virtqueues.
   qemu_cmd.AddParameter("-object");
+#ifdef __APPLE__
+  /*
+   * No vhost-user devices there, and a guest on a shared file mapping
+   * is several times slower under HVF.
+   */
+  qemu_cmd.AddParameter("memory-backend-ram,size=", instance.memory_mb(), "M",
+                        ",id=vm_ram");
+#else
   qemu_cmd.AddParameter("memory-backend-file,size=", instance.memory_mb(), "M",
                         ",prealloc=on,share=on,mem-path=",
                         instance.PerInstanceInternalPath("qemu.mem"),
                         ",id=vm_ram");
+#endif
 
   qemu_cmd.AddParameter("-m");
   auto pmem_mb = (is_x86 || arm_pmem_supported)
