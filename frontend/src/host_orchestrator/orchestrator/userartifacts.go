@@ -311,14 +311,108 @@ func extractFile(dst string, src string) error {
 	return nil
 }
 
-// isSafeToExtract reports whether target (already joined onto dst) stays within
-// dst, rejecting paths that escape via ".." components or an absolute path
-func isSafeToExtract(dst string, target string) bool {
-	rel, err := filepath.Rel(dst, target)
-	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))
+func checkNoSymlinkParents(absDst string, entryName string, target string) error {
+	rel, err := filepath.Rel(absDst, filepath.Dir(target))
+	if err != nil {
+		return err
+	}
+	if rel != "." {
+		cur := absDst
+		for _, part := range strings.Split(rel, string(os.PathSeparator)) {
+			cur = filepath.Join(cur, part)
+			info, err := os.Lstat(cur)
+			if os.IsNotExist(err) {
+				break
+			}
+			if err != nil {
+				return err
+			}
+			if info.Mode()&os.ModeSymlink != 0 {
+				return fmt.Errorf("archive entry %q traverses symlink %q", entryName, cur)
+			}
+		}
+	}
+	return nil
+}
+
+// resolveExtractTarget resolves entryName inside absDst and ensures it is a
+// strict descendant of absDst and does not traverse through an existing symlink
+// parent directory.
+func resolveExtractTarget(absDst string, entryName string) (string, error) {
+	if filepath.IsAbs(entryName) {
+		return "", fmt.Errorf("archive entry %q must not be an absolute path", entryName)
+	}
+	target := filepath.Join(absDst, entryName)
+	if !strings.HasPrefix(target, absDst+string(os.PathSeparator)) {
+		return "", fmt.Errorf("archive entry %q escapes the extraction directory", entryName)
+	}
+	if err := checkNoSymlinkParents(absDst, entryName, target); err != nil {
+		return "", err
+	}
+	return target, nil
+}
+
+// resolveExtractTargetAllowRoot resolves entryName inside absDst, allowing
+// absDst itself as the target, and ensures it does not escape absDst or
+// traverse through an existing symlink parent directory.
+func resolveExtractTargetAllowRoot(absDst string, entryName string) (string, error) {
+	if !filepath.IsAbs(entryName) && filepath.Join(absDst, entryName) == absDst {
+		return absDst, nil
+	}
+	return resolveExtractTarget(absDst, entryName)
+}
+
+// evalSymlinksAllowMissing resolves symlinks along path even if the leaf (or
+// trailing components) do not exist on disk yet.
+func evalSymlinksAllowMissing(path string) (string, error) {
+	resolved, err := filepath.EvalSymlinks(path)
+	if err == nil {
+		return resolved, nil
+	}
+	if !os.IsNotExist(err) {
+		return "", err
+	}
+	var tail []string
+	cur := path
+	for {
+		parent := filepath.Dir(cur)
+		if parent == cur {
+			return "", os.ErrNotExist
+		}
+		tail = append(tail, filepath.Base(cur))
+		cur = parent
+		resolved, evalErr := filepath.EvalSymlinks(cur)
+		if evalErr == nil {
+			for i := len(tail) - 1; i >= 0; i-- {
+				resolved = filepath.Join(resolved, tail[i])
+			}
+			return resolved, nil
+		}
+		if !os.IsNotExist(evalErr) {
+			return "", evalErr
+		}
+	}
+}
+
+func extractTarRegFile(target string, r io.Reader, mode os.FileMode) error {
+	f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, mode)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = io.Copy(f, r)
+	return err
 }
 
 func untar(dst string, src string) error {
+	absDst, err := filepath.Abs(dst)
+	if err != nil {
+		return err
+	}
+	realDst, err := filepath.EvalSymlinks(absDst)
+	if err != nil {
+		return err
+	}
 	r, err := os.Open(src)
 	if err != nil {
 		return err
@@ -341,12 +435,15 @@ func untar(dst string, src string) error {
 		if header == nil {
 			continue
 		}
-		target := filepath.Join(dst, header.Name)
-		if !isSafeToExtract(dst, target) {
-			return fmt.Errorf("archive entry %q escapes the extraction directory", header.Name)
-		}
 		switch header.Typeflag {
 		case tar.TypeDir:
+			target, err := resolveExtractTargetAllowRoot(realDst, header.Name)
+			if err != nil {
+				return err
+			}
+			if target == realDst {
+				continue
+			}
 			if _, err := os.Stat(target); err != nil {
 				oldmask := syscall.Umask(0)
 				err := os.MkdirAll(target, 0774)
@@ -356,23 +453,34 @@ func untar(dst string, src string) error {
 				}
 			}
 		case tar.TypeReg:
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			target, err := resolveExtractTarget(realDst, header.Name)
 			if err != nil {
 				return err
 			}
-			if _, err := io.Copy(f, tr); err != nil {
+			if err := extractTarRegFile(target, tr, os.FileMode(header.Mode)); err != nil {
 				return err
 			}
-			f.Close()
 		case tar.TypeSymlink:
-			linkTarget := header.Linkname
-			if !filepath.IsAbs(linkTarget) {
-				linkTarget = filepath.Join(filepath.Dir(target), linkTarget)
+			target, err := resolveExtractTarget(realDst, header.Name)
+			if err != nil {
+				return err
 			}
-			if !isSafeToExtract(dst, linkTarget) {
+			if filepath.IsAbs(header.Linkname) {
+				return fmt.Errorf("symlink entry %q has absolute target %q", header.Name, header.Linkname)
+			}
+			linkTarget, err := evalSymlinksAllowMissing(filepath.Join(filepath.Dir(target), header.Linkname))
+			if err != nil {
+				return err
+			}
+			rel, err := filepath.Rel(realDst, linkTarget)
+			if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
 				return fmt.Errorf("symlink entry %q targets outside the extraction directory", header.Name)
 			}
-			if err := os.Symlink(header.Linkname, target); err != nil {
+			relLink, err := filepath.Rel(filepath.Dir(target), linkTarget)
+			if err != nil {
+				return err
+			}
+			if err := os.Symlink(relLink, target); err != nil {
 				return err
 			}
 		}
@@ -380,6 +488,10 @@ func untar(dst string, src string) error {
 }
 
 func unzip(dstDir string, src string) error {
+	absDst, err := filepath.Abs(dstDir)
+	if err != nil {
+		return err
+	}
 	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
@@ -407,9 +519,9 @@ func unzip(dstDir string, src string) error {
 		if f.Mode().IsDir() {
 			continue
 		}
-		target := filepath.Join(dstDir, f.Name)
-		if !isSafeToExtract(dstDir, target) {
-			return fmt.Errorf("archive entry %q escapes the extraction directory", f.Name)
+		target, err := resolveExtractTarget(absDst, f.Name)
+		if err != nil {
+			return err
 		}
 		if err := extractTo(target, f); err != nil {
 			return err
