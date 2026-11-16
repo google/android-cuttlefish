@@ -111,7 +111,9 @@ void SignalHandler(int signal) {
 
 Result<void> StartHandling() {
   int fds[2];
-#ifdef SOCK_CLOEXEC
+#ifdef __APPLE__
+  constexpr int type = SOCK_STREAM;
+#elif defined(SOCK_CLOEXEC)
   constexpr int type = SOCK_SEQPACKET | SOCK_CLOEXEC;
 #else
   constexpr int type = SOCK_SEQPACKET;
