@@ -17,8 +17,13 @@
 
 #include <unistd.h>
 
+#include <cstdlib>
+
 namespace cuttlefish {
 
-bool InSandbox() { return access("/manager.sock", F_OK) == 0; }
+bool InSandbox() {
+  return access("/manager.sock", F_OK) == 0 ||
+         std::getenv("CVD_IN_SANDBOX") != nullptr;
+}
 
 }  // namespace cuttlefish
