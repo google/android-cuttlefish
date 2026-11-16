@@ -29,12 +29,6 @@ BASE_DIR=$(pwd)
 LIBVPX_SRC_DIR=$(realpath "$1")
 LIBVPX_CONFIG_DIR="$BASE_DIR/config"
 
-# Clean files from previous make.
-function make_clean {
-  make clean > /dev/null
-  rm -f libvpx_srcs.txt
-}
-
 # Lint a pair of vpx_config.h and vpx_config.asm to make sure they match.
 # $1 - Header file directory.
 function lint_config {
@@ -109,7 +103,6 @@ function gen_config_files {
   $LIBVPX_SRC_DIR/build/make/version.sh "$LIBVPX_SRC_DIR" vpx_version.h
 
   cp vpx_config.* vpx_version.h $LIBVPX_CONFIG_DIR/$1
-  make_clean
   rm -rf vpx_config.* vpx_version.h
 }
 
