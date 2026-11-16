@@ -1,9 +1,15 @@
 name: 'Gigabyte Cloud installer first-boot with qemu'
 
+outputs:
+  console-lines:
+    description: "Number of lines in the initial boot console log"
+    value: ${{ steps.first-boot.outputs.console-lines }}
+
 runs:
   using: "composite"
   steps:
   - name: Cloud image first boot with qemu
+    id: first-boot
     working-directory: ./gigabyte-ampere-cloud-installer
     shell: bash
     run: |
@@ -13,7 +19,7 @@ runs:
       CONSOLELINES=$(cat console_001_p1.log | wc -l)
       cat console_001_p1.log
       grep "login:" console_001_p1.log > /dev/null
-      echo "CONSOLELINES=${CONSOLELINES}" >> $GITHUB_ENV
+      echo "console-lines=${CONSOLELINES}" >> "$GITHUB_OUTPUT"
   - name: Wait for post install script finish
     working-directory: ./gigabyte-ampere-cloud-installer
     shell: bash

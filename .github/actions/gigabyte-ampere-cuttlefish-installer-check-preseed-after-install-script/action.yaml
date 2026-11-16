@@ -41,15 +41,12 @@ runs:
     run: |
       mkdir -p /root/debian-snapshot
       cp -f preseed/debian-snapshot.list /root/debian-snapshot/
-  - name: Check nVidia GPU emulation
-    shell: bash
-    run: echo "EMULATE_NVIDIA_GPU=${{ inputs.emulate-nvidia }}" >> $GITHUB_ENV
-  - name: Check AMD GPU emulation
-    shell: bash
-    run: echo "EMULATE_AMD_GPU=${{ inputs.emulate-amd }}" >> $GITHUB_ENV
   - name: Running tests
     working-directory: ./gigabyte-ampere-cuttlefish-installer
     shell: bash
+    env:
+      EMULATE_NVIDIA_GPU: ${{ inputs.emulate-nvidia }}
+      EMULATE_AMD_GPU: ${{ inputs.emulate-amd }}
     run: |
       ./tests/test-after-install-script-kernel.sh
       sh after_install_1_kernel.sh
