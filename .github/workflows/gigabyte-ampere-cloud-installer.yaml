@@ -175,8 +175,11 @@ jobs:
         partx uboot_qemu_disk1.img | grep esp
         partx uboot_qemu_disk1.img | grep pvlina
     - name: Cloud image first boot with qemu
+      id: test-first-boot
       uses: ./.github/actions/gigabyte-ampere-cloud-installer-test-first-boot
     - name: Shutdown qemu
+      env:
+        CONSOLELINES: ${{ steps.test-first-boot.outputs.console-lines }}
       run: |
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
         while ! grep "reboot: Power down" console_001.log; do sleep 30; done
@@ -235,8 +238,11 @@ jobs:
         partx uboot_qemu_disk1.img | grep esp
         partx uboot_qemu_disk1.img | grep pvlina
     - name: Cloud image first boot with qemu
+      id: test-first-boot
       uses: ./.github/actions/gigabyte-ampere-cloud-installer-test-first-boot
     - name: Shutdown qemu
+      env:
+        CONSOLELINES: ${{ steps.test-first-boot.outputs.console-lines }}
       run: |
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
         while ! grep "reboot: Power down" console_001.log; do sleep 30; done
@@ -295,8 +301,11 @@ jobs:
         partx uboot_qemu_disk1.img | grep esp
         partx uboot_qemu_disk1.img | grep pvlina
     - name: Cloud image first boot with qemu
+      id: test-first-boot
       uses: ./.github/actions/gigabyte-ampere-cloud-installer-test-first-boot
     - name: Shutdown qemu
+      env:
+        CONSOLELINES: ${{ steps.test-first-boot.outputs.console-lines }}
       run: |
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
         while ! grep "reboot: Power down" console_001.log; do sleep 30; done
@@ -357,8 +366,11 @@ jobs:
         partx uboot_qemu_disk1.img
         partx uboot_qemu_disk1.img | grep pvlina
     - name: Cloud image first boot with qemu
+      id: test-first-boot
       uses: ./.github/actions/gigabyte-ampere-cloud-installer-test-first-boot
     - name: Shutdown qemu
+      env:
+        CONSOLELINES: ${{ steps.test-first-boot.outputs.console-lines }}
       run: |
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
         while ! grep "reboot: Power down" console_001.log; do sleep 30; done
@@ -415,6 +427,7 @@ jobs:
         partx uboot_qemu_disk1.img | grep esp
         partx uboot_qemu_disk1.img | grep pvlina
     - name: Cloud image first boot with qemu
+      id: test-first-boot
       uses: ./.github/actions/gigabyte-ampere-cloud-installer-test-first-boot
     - name: Download Cuttlefish
       run: |
@@ -450,6 +463,8 @@ jobs:
       run: |
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'update-alternatives --display iptables' | grep "link currently points to /usr/sbin/iptables-legacy"
     - name: Shutdown qemu
+      env:
+        CONSOLELINES: ${{ steps.test-first-boot.outputs.console-lines }}
       run: |
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
         while ! grep "reboot: Power down" console_001.log; do sleep 30; done
@@ -492,6 +507,7 @@ jobs:
         partx uboot_qemu_disk1.img | grep esp
         partx uboot_qemu_disk1.img | grep pvlina
     - name: Cloud image first boot with qemu
+      id: test-first-boot
       uses: ./.github/actions/gigabyte-ampere-cloud-installer-test-first-boot
     - name: Download Cuttlefish
       run: |
@@ -503,6 +519,8 @@ jobs:
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'curl http://localhost:4080/cvds -v --retry 6 --retry-all-errors --retry-delay 10'
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'curl http://localhost:4080/cvds -v' | tr -d '[:space:]' | grep -xq '{"cvds":\[\]}'
     - name: Shutdown qemu
+      env:
+        CONSOLELINES: ${{ steps.test-first-boot.outputs.console-lines }}
       run: |
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
         while ! grep "reboot: Power down" console_001.log; do sleep 30; done
