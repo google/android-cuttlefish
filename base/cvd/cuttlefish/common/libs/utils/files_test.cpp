@@ -16,10 +16,12 @@
 #include "cuttlefish/common/libs/utils/files.h"
 
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "absl/cleanup/cleanup.h"
@@ -164,6 +166,45 @@ TEST(FilesTest, SearchFileNotFoundReturnsError) {
 
   auto result = Search({temp_dir}, "search_non_existent_file");
   EXPECT_FALSE(result.has_value());
+}
+
+TEST_F(FilesTests, EnsureDirectoryExistsSetsRequestedModeDespiteUmask) {
+  const mode_t old_umask = umask(0022);
+  absl::Cleanup restore_umask = [old_umask]() { umask(old_umask); };
+
+  const std::string shared_dir = std::string(temp_dir_.path) + "/shared/lock";
+  EXPECT_THAT(EnsureDirectoryExists(shared_dir, 0777), IsOk());
+
+  struct stat st = {};
+  ASSERT_EQ(stat(shared_dir.c_str(), &st), 0);
+  EXPECT_EQ(st.st_mode & 0777, 0777u);
+}
+
+TEST_F(FilesTests, EnsureDirectoryExistsFailsWhenRegularFileExists) {
+  const std::string file_path = src_dir_ + "/file1.txt";
+  EXPECT_THAT(EnsureDirectoryExists(file_path, 0777), IsError());
+}
+
+TEST_F(FilesTests, EnsureDirectoryExistsConcurrentCallsSucceed) {
+  const std::string base = std::string(temp_dir_.path) + "/concurrent/a/b/c/d";
+  constexpr size_t kNumThreads = 32;
+  std::vector<std::thread> threads;
+  std::vector<Result<void>> results(kNumThreads);
+  threads.reserve(kNumThreads);
+  for (size_t i = 0; i < kNumThreads; ++i) {
+    threads.emplace_back([&base, &results, i]() {
+      results[i] = EnsureDirectoryExists(base, 0777);
+    });
+  }
+  for (std::thread& t : threads) {
+    t.join();
+  }
+  for (size_t i = 0; i < kNumThreads; ++i) {
+    EXPECT_THAT(results[i], IsOk());
+  }
+  struct stat st = {};
+  ASSERT_EQ(stat(base.c_str(), &st), 0);
+  EXPECT_EQ(st.st_mode & 0777, 0777u);
 }
 
 }  // namespace cuttlefish

@@ -148,7 +148,12 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
     CF_EXPECT(EnsureDirectoryExists(parent_dir, mode, group_name));
   }
   VLOG(1) << "Setting up " << directory_path;
-  if (mkdir(directory_path.c_str(), mode) < 0 && errno != EEXIST) {
+  if (mkdir(directory_path.c_str(), mode) < 0) {
+    if (errno == EEXIST) {
+      CF_EXPECTF(DirectoryExists(directory_path, /* follow_symlinks */ true),
+                 "\"{}\" exists and is not a directory", directory_path);
+      return {};
+    }
     return CF_ERRNO("Failed to create directory: \"" << directory_path << "\""
                                                      << strerror(errno));
   }
