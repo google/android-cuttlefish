@@ -21,7 +21,6 @@ Build-Depends: bazelisk [amd64 arm64],
                libgoogle-glog-dev,
                libgtest-dev,
                libjsoncpp-dev,
-               liblzma-dev,
                libopus-dev,
                libprotobuf-c-dev,
                libprotobuf-dev,
@@ -33,8 +32,7 @@ Build-Depends: bazelisk [amd64 arm64],
                libz3-dev,
                pkgconf,
                protobuf-compiler,
-               uuid-dev,
-               xxd
+               uuid-dev
 Standards-Version: 4.5.0
 Rules-Requires-Root: no
 
@@ -63,7 +61,6 @@ Depends: adduser,
          libgflags-dev,
          libgl1,
          libjsoncpp-dev,
-         liblzma5,
          libprotobuf-dev,
          libsrtp2-1,
          libssl-dev,
