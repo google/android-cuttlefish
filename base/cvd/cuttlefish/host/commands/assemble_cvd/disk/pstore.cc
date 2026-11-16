@@ -26,6 +26,10 @@ namespace cuttlefish {
 
 Result<void> InitializePstore(
     const CuttlefishConfig::InstanceSpecific& instance) {
+#ifdef __APPLE__
+  // QEMU's HVF can't decode the guest's accesses to the nvdimm.
+  return {};
+#endif
   if (FileExists(PstorePath(instance))) {
     return {};
   }

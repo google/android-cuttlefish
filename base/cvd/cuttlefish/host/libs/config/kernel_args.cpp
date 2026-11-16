@@ -87,11 +87,14 @@ std::vector<std::string> VmManagerKernelCmdline(
       // this feature is not supported on aarch64
       // check guest's /proc/iomem when you need to change mem_address or
       // mem_size
+      // No pstore nvdimm on macOS; see InitializePstore.
+#ifndef __APPLE__
       vm_manager_cmdline.push_back("ramoops.mem_address=0x150000000");
       vm_manager_cmdline.push_back("ramoops.mem_size=0x200000");
       vm_manager_cmdline.push_back("ramoops.console_size=0x80000");
       vm_manager_cmdline.push_back("ramoops.record_size=0x80000");
       vm_manager_cmdline.push_back("ramoops.dump_oops=1");
+#endif
     }
   }
 
