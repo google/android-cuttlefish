@@ -143,7 +143,7 @@ jobs:
     - name: Setup apt
       run: apt update -y && apt upgrade -y
     - name: Install dependencies
-      run: apt install -y git golang
+      run: apt install -y git && tools/buildutils/installgolang.sh
     - name: Go version
       run: go version
     - name: Run gofmt check
@@ -175,19 +175,21 @@ jobs:
     steps:
     - name: Setup apt
       run: apt update -y && apt upgrade -y
-    - name: Install dependencies
-      run: apt install -y git golang
+    - name: Install git
+      run: apt install -y git
     - name: Setup git
       run: |
         git --version
         # Fixes fatal: detected dubious ownership in repository at '/__w/android-cuttlefish/android-cuttlefish'
         git config --global --add safe.directory /__w/android-cuttlefish/android-cuttlefish
-    - name: Go version
-      run: go version
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
       with:
         persist-credentials: false
+    - name: Install go
+      run: tools/buildutils/installgolang.sh
+    - name: Go version
+      run: go version
     - name: Install swag
       run: go install github.com/swaggo/swag/cmd/swag@v1.16.5
     - name: Run swag check

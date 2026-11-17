@@ -9,9 +9,13 @@ function install_debuild_dependencies() {
 
 REPO_DIR="$(realpath "$(dirname "$0")/../..")"
 INSTALL_BAZEL="$(dirname $0)/installbazel.sh"
+INSTALL_GO="$(dirname $0)/installgolang.sh"
 BUILD_PACKAGE="$(dirname $0)/build_package.sh"
 
 command -v bazel &> /dev/null || sudo "${INSTALL_BAZEL}"
+# Always use the pinned Go toolchain; the distro one is too old for the
+# frontend dependencies.
+sudo "${INSTALL_GO}"
 install_debuild_dependencies
 
 # "${BUILD_PACKAGE}" "${REPO_DIR}/container" $@
