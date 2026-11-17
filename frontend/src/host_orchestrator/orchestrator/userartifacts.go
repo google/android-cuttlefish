@@ -21,7 +21,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -156,7 +155,7 @@ func (m *UserArtifactsManagerImpl) ExtractArtifact(checksum string) error {
 	if err != nil {
 		return err
 	}
-	workDir, err := ioutil.TempDir(m.WorkDir, "")
+	workDir, err := os.MkdirTemp(m.WorkDir, "")
 	if err != nil {
 		return err
 	}
@@ -288,7 +287,7 @@ func (m *UserArtifactsManagerImpl) getFilePath(checksum string) (string, error) 
 	} else if !exists {
 		return "", operator.NewNotFoundError(fmt.Sprintf("user artifact(checksum:%q) not found", checksum), nil)
 	}
-	if entries, err := ioutil.ReadDir(dir); err != nil {
+	if entries, err := os.ReadDir(dir); err != nil {
 		return "", fmt.Errorf("failed to read directory where user artifact located: %w", err)
 	} else if len(entries) != 1 || entries[0].IsDir() {
 		return "", fmt.Errorf("directory where user artifact located should contain a single file only")
