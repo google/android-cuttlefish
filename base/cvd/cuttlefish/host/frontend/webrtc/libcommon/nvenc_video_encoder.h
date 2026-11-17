@@ -27,6 +27,7 @@
 #include "api/video_codecs/sdp_video_format.h"
 #include "api/video_codecs/video_encoder.h"
 #include "modules/video_coding/include/video_codec_interface.h"
+#include "modules/video_coding/svc/scalable_video_controller.h"
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/nvenc_encoder_config.h"
 #include "cuttlefish/host/libs/gpu/cuda_context.h"
@@ -113,6 +114,7 @@ class NvencVideoEncoder : public webrtc::VideoEncoder {
   int height_ = 0;
   size_t rgba_pitch_ = 0;
 
+  std::unique_ptr<webrtc::ScalableVideoController> svc_controller_;
   webrtc::EncodedImageCallback* callback_ = nullptr;
 };
 

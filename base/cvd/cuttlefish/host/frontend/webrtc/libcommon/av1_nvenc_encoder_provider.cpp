@@ -36,7 +36,9 @@ namespace {
 
 // Codec-specific NVENC configuration for AV1.
 
-void Av1ApplyDefaults(NV_ENC_CONFIG* config) {
+uint32_t Av1NumTileColumns(int width) { return width >= 1024 ? 2u : 1u; }
+
+void Av1ApplyDefaults(NV_ENC_CONFIG* config, int width, int /*height*/) {
   NV_ENC_CONFIG_AV1& av1 = config->encodeCodecConfig.av1Config;
   av1.outputAnnexBFormat = 0;  // OBU format required for WebRTC.
   av1.disableSeqHdr = 0;
@@ -44,8 +46,9 @@ void Av1ApplyDefaults(NV_ENC_CONFIG* config) {
   av1.chromaFormatIDC = 1;           // YUV 4:2:0.
   av1.inputPixelBitDepthMinus8 = 0;  // 8-bit input.
   av1.pixelBitDepthMinus8 = 0;       // 8-bit output.
-  av1.numTileColumns = 1;
+  av1.numTileColumns = Av1NumTileColumns(width);
   av1.numTileRows = 1;
+  av1.numFwdRefs = NV_ENC_NUM_REF_FRAMES_1;
   av1.tier = NV_ENC_TIER_AV1_0;
   av1.level = NV_ENC_LEVEL_AV1_AUTOSELECT;
   av1.idrPeriod = config->gopLength;
@@ -53,7 +56,8 @@ void Av1ApplyDefaults(NV_ENC_CONFIG* config) {
 
 void Av1SetPicParams(NV_ENC_PIC_PARAMS* params) {
   // AV1 requires tile configuration on every frame.
-  params->codecPicParams.av1PicParams.numTileColumns = 1;
+  params->codecPicParams.av1PicParams.numTileColumns =
+      Av1NumTileColumns(static_cast<int>(params->inputWidth));
   params->codecPicParams.av1PicParams.numTileRows = 1;
 }
 
