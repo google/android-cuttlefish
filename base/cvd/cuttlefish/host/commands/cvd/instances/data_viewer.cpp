@@ -16,6 +16,10 @@
 
 #include "cuttlefish/host/commands/cvd/instances/data_viewer.h"
 
+#include <fcntl.h>
+#include <signal.h>
+#include <unistd.h>
+
 #include <string>
 #include <utility>
 
@@ -23,13 +27,15 @@
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/signals.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
 
 namespace cuttlefish {
 
 Result<SharedFD> DataViewer::LockBackingFile(int op) const {
-  Fd fd = CF_EXPECT(Fd::Open(backing_file_, O_CREAT | O_RDWR, 0640));
+  Fd fd =
+      CF_EXPECT(Fd::Open(backing_file_, O_CREAT | O_RDWR | O_CLOEXEC, 0640));
   CF_EXPECTF(fd.Flock(op),
              "Failed to acquire lock for instance database backing file: {}",
              fd.StrError());
@@ -48,6 +54,15 @@ Result<void> DataViewer::StoreData(SharedFD fd,
                                    const cvd::PersistentData& data) {
   std::string str;
   CF_EXPECT(data.SerializeToString(&str), "Failed to serialize data");
+  // Block signals while writing to the instance database file. This reduces
+  // the chances of corrupting the file.
+  sigset_t all_signals;
+  sigfillset(&all_signals);
+  SignalMasker blocker(all_signals);
+  // Overwrite the file contents, don't append.
+  CF_EXPECTF(fd->Truncate(0), "Failed to truncate fd: {}", fd->StrError());
+  CF_EXPECTF(fd->LSeek(0, SEEK_SET) >= 0, "Failed to seek to 0: {}",
+             fd->StrError());
   CF_EXPECT(WriteExact(*fd, str), "Failed to write to backing file");
   return {};
 }

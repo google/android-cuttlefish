@@ -47,6 +47,19 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "data_viewer_test",
+    srcs = ["data_viewer_test.cpp"],
+    deps = [
+        ":cvd_persistent_data",
+        ":data_viewer",
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
 cf_cc_library(
     name = "device_name",
     srcs = ["device_name.cpp"],
