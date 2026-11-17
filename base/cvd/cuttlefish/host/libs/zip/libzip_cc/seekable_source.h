@@ -22,7 +22,6 @@
 
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
@@ -34,8 +33,7 @@ class SeekableZipSource : public ReadableZipSource {
   friend class ReadableZip;
   friend class WritableZipSource;
 
-  static Result<SeekableZipSource> FromCallbacks(
-      std::unique_ptr<SeekableZipSourceCallback>);
+  static Result<SeekableZipSource> FromCallbacks(std::unique_ptr<ReaderSeeker>);
 
   SeekableZipSource(SeekableZipSource&&) = default;
   ~SeekableZipSource() override = default;
@@ -54,9 +52,9 @@ class SeekingZipSourceReader : public ZipSourceReader, public ReaderSeeker {
  public:
   friend class SeekableZipSource;
 
-  SeekingZipSourceReader(SeekingZipSourceReader&&);
-  ~SeekingZipSourceReader() override;
-  SeekingZipSourceReader& operator=(SeekingZipSourceReader&&);
+  SeekingZipSourceReader(SeekingZipSourceReader&&) = default;
+  ~SeekingZipSourceReader() override = default;
+  SeekingZipSourceReader& operator=(SeekingZipSourceReader&&) = default;
 
   Result<void> Visit(IoVisitor&) override;
 

@@ -18,21 +18,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <memory>
 #include <mutex>
 
-#include "zip.h"
-
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-int64_t HandleCallback(ReadableZipSourceCallback& callbacks, zip_error_t* error,
-                       void* data, uint64_t len, zip_source_cmd_t cmd);
 
 class ReadableZipSource {
  public:
@@ -41,9 +34,6 @@ class ReadableZipSource {
   friend class ZipSourceReader;
   friend class SeekingZipSourceReader;
   friend class ZipSourceWriter;
-
-  static Result<ReadableZipSource> FromCallbacks(
-      std::unique_ptr<ReadableZipSourceCallback>);
 
   // Can be safely called with a subclass type.
   ReadableZipSource(ReadableZipSource&&);

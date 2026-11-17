@@ -23,9 +23,9 @@
 
 namespace cuttlefish {
 
-Result<uint64_t> Length(Seeker&);
-Result<uint64_t> Length(Seeker&&);
-Result<uint64_t> Length(ReaderWriterSeeker&);
-Result<uint64_t> Length(ReaderWriterSeeker&&);
+Result<uint64_t, int> Length(Seeker&);
+Result<uint64_t, int> Length(Seeker&&);
+Result<uint64_t, int> Length(ReaderWriterSeeker&);
+Result<uint64_t, int> Length(ReaderWriterSeeker&&);
 
 }  // namespace cuttlefish

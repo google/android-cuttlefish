@@ -11,11 +11,13 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
-        "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
+        "//cuttlefish/io",
+        "//cuttlefish/io:fake_seek",
         "//cuttlefish/io:length",
+        "//cuttlefish/io:read_exact",
         "//cuttlefish/io:reader_seeker",
+        "//cuttlefish/io:visitable",
         "//cuttlefish/result",
-        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -40,7 +42,9 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_probe",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
-        "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
+        "//cuttlefish/io",
+        "//cuttlefish/io:fake_seek",
+        "//cuttlefish/io:visitable",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@fmt",

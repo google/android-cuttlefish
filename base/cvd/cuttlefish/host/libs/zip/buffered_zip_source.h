@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <stdint.h>
 
 #include <memory>
 
@@ -27,7 +27,7 @@
 namespace cuttlefish {
 
 Result<SeekableZipSource> BufferZipSource(std::unique_ptr<ReaderSeeker>,
-                                          size_t buffer_size);
+                                          uint64_t buffer_size);
 
 Result<ReadableZip> BufferAndOpenZip(std::unique_ptr<ReaderSeeker>);
 

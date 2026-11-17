@@ -19,7 +19,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -29,34 +28,12 @@
 
 #include "cuttlefish/host/libs/zip/libzip_cc/error.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
-
-struct ReadableCallbackSource {
-  ReadableCallbackSource(std::unique_ptr<ReadableZipSourceCallback> callbacks)
-      : callbacks_(std::move(callbacks)), error_(NewZipError()) {}
-
-  std::unique_ptr<ReadableZipSourceCallback> callbacks_;
-  ManagedZipError error_;
-};
-
-// https://libzip.org/documentation/zip_source_function.html
-int64_t ReadableZipSourceCallbackFn(void* userdata, void* data, uint64_t len,
-                                    zip_source_cmd_t cmd) {
-  ReadableCallbackSource* source =
-      reinterpret_cast<ReadableCallbackSource*>(userdata);
-  if (cmd == ZIP_SOURCE_FREE) {
-    delete source;
-    return 0;
-  }
-  return HandleCallback(*source->callbacks_, source->error_.get(), data, len,
-                        cmd);
-}
 
 std::optional<ZipCompression> CompressionFromRaw(uint16_t method) {
   switch (method) {
@@ -78,65 +55,6 @@ std::optional<ZipCompression> CompressionFromRaw(uint16_t method) {
 }
 
 }  // namespace
-
-int64_t HandleCallback(ReadableZipSourceCallback& callbacks, zip_error_t* error,
-                       void* data, uint64_t len, zip_source_cmd_t cmd) {
-  switch (cmd) {
-    case ZIP_SOURCE_CLOSE: {
-      bool callback_res = callbacks.Close();
-      if (!callback_res) {
-        zip_error_set(error, ZIP_ER_CLOSE, errno);
-      }
-      return callback_res ? 0 : -1;
-    }
-    case ZIP_SOURCE_ERROR:
-      return zip_error_to_data(error, data, len);
-    case ZIP_SOURCE_OPEN: {
-      bool callback_res = callbacks.Open();
-      if (!callback_res) {
-        zip_error_set(error, ZIP_ER_OPEN, errno);
-      }
-      return callback_res ? 0 : -1;
-    }
-    case ZIP_SOURCE_READ: {
-      int64_t callback_res = callbacks.Read(reinterpret_cast<char*>(data), len);
-      if (callback_res < 0) {
-        zip_error_set(error, ZIP_ER_READ, errno);
-      }
-      return callback_res;
-    }
-    case ZIP_SOURCE_STAT: {
-      zip_stat_t* stat_out = ZIP_SOURCE_GET_ARGS(zip_stat_t, data, len, error);
-      zip_stat_init(stat_out);
-      stat_out->valid = ZIP_STAT_SIZE;
-      stat_out->size = callbacks.Size();
-      return 0;
-    }
-    case ZIP_SOURCE_SUPPORTS:
-      return zip_source_make_command_bitmap(
-          ZIP_SOURCE_CLOSE, ZIP_SOURCE_ERROR, ZIP_SOURCE_FREE, ZIP_SOURCE_OPEN,
-          ZIP_SOURCE_READ, ZIP_SOURCE_STAT, ZIP_SOURCE_SUPPORTS, -1);
-    default:
-      zip_error_set(error, ZIP_ER_OPNOTSUPP, EINVAL);
-      return -1;
-  }
-}
-
-Result<ReadableZipSource> ReadableZipSource::FromCallbacks(
-    std::unique_ptr<ReadableZipSourceCallback> callbacks) {
-  CF_EXPECT(callbacks.get());
-
-  std::unique_ptr<ReadableCallbackSource> wrapped_source =
-      std::make_unique<ReadableCallbackSource>(std::move(callbacks));
-
-  ManagedZipError error = NewZipError();
-  ManagedZipSource source(zip_source_function_create(
-      ReadableZipSourceCallbackFn, wrapped_source.release(), error.get()));
-
-  CF_EXPECT(source.get(), ZipErrorString(error.get()));
-
-  return ReadableZipSource(std::move(source));
-}
 
 // These have to be defined in the `.cc` file to avoid linker errors because of
 // bazel weirdness around cmake files.

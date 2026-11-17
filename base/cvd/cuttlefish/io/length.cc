@@ -25,22 +25,22 @@
 
 namespace cuttlefish {
 
-Result<uint64_t> Length(Seeker& seeker) {
+Result<uint64_t, int> Length(Seeker& seeker) {
   uint64_t current_pos = CF_EXPECT(seeker.SeekCur(0));
   uint64_t end = CF_EXPECT(seeker.SeekEnd(0));
   CF_EXPECT(seeker.SeekSet(current_pos));
   return end;
 }
 
-Result<uint64_t> Length(Seeker&& seeker) {
+Result<uint64_t, int> Length(Seeker&& seeker) {
   return CF_EXPECT(Length(static_cast<Seeker&>(seeker)));
 }
 
-Result<uint64_t> Length(ReaderWriterSeeker& seeker) {
+Result<uint64_t, int> Length(ReaderWriterSeeker& seeker) {
   return CF_EXPECT(Length(static_cast<ReaderSeeker&>(seeker)));
 }
 
-Result<uint64_t> Length(ReaderWriterSeeker&& seeker) {
+Result<uint64_t, int> Length(ReaderWriterSeeker&& seeker) {
   return CF_EXPECT(Length(static_cast<ReaderWriterSeeker&>(seeker)));
 }
 
