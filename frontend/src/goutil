@@ -15,8 +15,12 @@ export GOCACHE=/tmp/go/go-build
 GOBIN=go
 if ! command -v go &> /dev/null
 then
-  GOBIN=/usr/lib/go-1.13/bin/go
+  # Pinned toolchain installed by tools/buildutils/installgolang.sh
+  GOBIN=/usr/local/go/bin/go
 fi
+
+# Never download a different toolchain at build time.
+export GOTOOLCHAIN=local
 
 version=`$GOBIN version | { read _ _ v _; echo ${v#go}; }`
 

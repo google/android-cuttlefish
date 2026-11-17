@@ -5,12 +5,6 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 0  # keep security updates only
-    ignore:
-      # Block bumps that require Go 1.21+ / 1.25+ in host_orchestrator/go.mod
-      - dependency-name: "google.golang.org/grpc"
-        versions: [">=1.63.0"]
-      - dependency-name: "golang.org/x/net"
-        versions: [">=0.21.0"]
     cooldown:
       default-days: 7
 
