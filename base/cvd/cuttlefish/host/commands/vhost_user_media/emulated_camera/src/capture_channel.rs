@@ -41,12 +41,20 @@ pub struct CaptureCompletedEvent {
     pub sequence: u32,
 }
 
+/// Completion message sent from the capture processor to the completion listener.
+pub enum CaptureCompletion {
+    /// A capture frame completed.
+    Completed(CaptureCompletedEvent),
+    /// Capture has stopped and all prior completions have been flushed.
+    Stopped(Sender<()>),
+}
+
 /// Control commands sent to the capture channel worker thread.
 pub enum ChannelCmd {
     /// Start capturing at the given resolution.
     StartCapture { width: u32, height: u32 },
-    /// Stop capturing and flush pending requests.
-    StopCapture,
+    /// Stop capturing, flush pending requests, and ack when drained.
+    StopCapture { ack_tx: Sender<()> },
     /// Enqueue a capture request into the channel's request queue.
     Queue(CaptureRequest),
     /// Update the render parameters (e.g. pattern, gain).
@@ -174,7 +182,7 @@ pub struct CaptureProcessor {
     streaming: bool,
     iteration: u64,
     pending_requests: VecDeque<CaptureRequest>,
-    completion_tx: Sender<CaptureCompletedEvent>,
+    completion_tx: Sender<CaptureCompletion>,
     clock: CaptureClock,
 }
 
@@ -183,7 +191,7 @@ impl CaptureProcessor {
         session_id: u32,
         initial_params: RenderParams,
         frame_source: FrameSource,
-        completion_tx: Sender<CaptureCompletedEvent>,
+        completion_tx: Sender<CaptureCompletion>,
     ) -> Self {
         Self {
             session_id,
@@ -251,9 +259,10 @@ impl CaptureProcessor {
                 self.iteration = 0;
                 self.clock.start();
             }
-            ChannelCmd::StopCapture => {
+            ChannelCmd::StopCapture { ack_tx } => {
                 self.streaming = false;
                 self.pending_requests.clear();
+                let _ = self.completion_tx.send(CaptureCompletion::Stopped(ack_tx));
             }
             ChannelCmd::Queue(req) => {
                 self.pending_requests.push_back(req);
@@ -291,10 +300,12 @@ impl CaptureProcessor {
                     e
                 ),
             }
-            let _ = self.completion_tx.send(CaptureCompletedEvent {
-                buffer_id: req.buffer_id,
-                sequence: seq,
-            });
+            let _ = self.completion_tx.send(CaptureCompletion::Completed(
+                CaptureCompletedEvent {
+                    buffer_id: req.buffer_id,
+                    sequence: seq,
+                },
+            ));
         } else {
             log::trace!(
                 "Channel {}: capture tick underrun (sequence {}, no request queued)",
@@ -342,7 +353,7 @@ impl CaptureChannel {
         session_id: u32,
         initial_params: RenderParams,
         frame_source: FrameSource,
-        completion_tx: Sender<CaptureCompletedEvent>,
+        completion_tx: Sender<CaptureCompletion>,
     ) -> AnyhowResult<Self> {
         log::info!("channel: new");
         let (cmd_tx, cmd_rx) = std::sync::mpsc::channel();
@@ -363,9 +374,14 @@ impl CaptureChannel {
         self.send_cmd(ChannelCmd::StartCapture { width, height })
     }
 
-    /// Stops capturing on this channel and flushes queued requests.
+    /// Stops capturing on this channel, flushes queued requests, and blocks until the
+    /// completion listener drains all prior completion events.
     pub fn stop_capture(&self) -> AnyhowResult<()> {
-        self.send_cmd(ChannelCmd::StopCapture)
+        let (ack_tx, ack_rx) = std::sync::mpsc::channel();
+        self.send_cmd(ChannelCmd::StopCapture { ack_tx })?;
+        ack_rx
+            .recv()
+            .context("Capture completion listener disconnected while stopping capture")
     }
 
     /// Queues a capture request for `buffer_id` into the capture channel.
