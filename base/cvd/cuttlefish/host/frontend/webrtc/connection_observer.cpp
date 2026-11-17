@@ -73,9 +73,12 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
         sensors_handler_(sensors_handler),
         lights_observer_(lights_observer) {}
   virtual ~ConnectionObserverImpl() {
-    auto display_handler = weak_display_handler_.lock();
-    if (display_handler) {
-      display_handler->RemoveDisplayClient();
+    if (is_connected_) {
+      const std::shared_ptr<DisplayHandler> display_handler =
+          weak_display_handler_.lock();
+      if (display_handler) {
+        display_handler->RemoveDisplayClient();
+      }
     }
     if (kernel_log_subscription_id_ != -1) {
       kernel_log_events_handler_.Unsubscribe(kernel_log_subscription_id_);
@@ -83,9 +86,13 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   }
 
   void OnConnected() override {
-    auto display_handler = weak_display_handler_.lock();
-    if (display_handler) {
-      display_handler->AddDisplayClient();
+    if (!is_connected_) {
+      is_connected_ = true;
+      const std::shared_ptr<DisplayHandler> display_handler =
+          weak_display_handler_.lock();
+      if (display_handler) {
+        display_handler->AddDisplayClient();
+      }
     }
     SendLastFrameAsync(/*all displays*/ std::nullopt);
   }
@@ -455,6 +462,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer_;
   int sensors_subscription_id = -1;
   int lights_subscription_id_ = -1;
+  bool is_connected_ = false;
 };
 
 CfConnectionObserverFactory::CfConnectionObserverFactory(
