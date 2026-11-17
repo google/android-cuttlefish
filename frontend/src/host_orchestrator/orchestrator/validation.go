@@ -24,10 +24,21 @@ import (
 
 var snapshotIDRegex = regexp.MustCompile(`^([-_a-z0-9]+)$`)
 
+// User artifacts are identified by the lowercase hex-encoded SHA256 checksum of their content.
+var userArtifactChecksumRegex = regexp.MustCompile(`^[0-9a-f]{64}$`)
+
 func ValidateSnapshotID(v string) error {
 	if !snapshotIDRegex.MatchString(v) {
 		return operator.NewBadRequestError(
 			"invalid snapshot id value", fmt.Errorf("%s does not match %s", v, snapshotIDRegex))
+	}
+	return nil
+}
+
+func ValidateUserArtifactChecksum(v string) error {
+	if !userArtifactChecksumRegex.MatchString(v) {
+		return operator.NewBadRequestError(
+			"invalid user artifact checksum value", fmt.Errorf("%s does not match %s", v, userArtifactChecksumRegex))
 	}
 	return nil
 }

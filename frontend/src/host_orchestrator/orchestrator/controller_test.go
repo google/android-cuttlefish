@@ -475,7 +475,7 @@ func TestListImageDirectoriesIsHandled(t *testing.T) {
 
 func TestUpdateImageDirectoryIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
-	body, err := json.Marshal(apiv1.UpdateImageDirectoryRequest{UserArtifactChecksum: "aaa"})
+	body, err := json.Marshal(apiv1.UpdateImageDirectoryRequest{UserArtifactChecksum: strings.Repeat("a", 64)})
 	if err != nil {
 		t.Fatal(err)
 	}
