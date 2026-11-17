@@ -16,7 +16,6 @@ package libhoclient
 
 import (
 	"crypto/sha256"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -238,10 +237,12 @@ func (c *HostOrchestratorClientImpl) ConnectWebRTC(device string, observer wclie
 func (c *HostOrchestratorClientImpl) ConnectADBWebSocket(device string) (*websocket.Conn, error) {
 	// Connect to the ADB proxy WebSocket endpoint for the device under the host.
 	//   wss://127.0.0.1:8080/v1/zones/local/hosts/.../devices/cvd-1-1/adb
-	dialer := websocket.Dialer{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
+	dialer := websocket.Dialer{}
+	// Reuse the TLS configuration of the HTTP client so both connections share the same trust settings.
+	if c.HTTPHelper.Client != nil {
+		if transport, ok := c.HTTPHelper.Client.Transport.(*http.Transport); ok {
+			dialer.TLSClientConfig = transport.TLSClientConfig
+		}
 	}
 	if c.ProxyURL != "" {
 		proxyURL, err := url.Parse(c.ProxyURL)
