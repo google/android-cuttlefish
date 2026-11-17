@@ -40,12 +40,3 @@ func ValidateCreateSnapshotRequest(r *apiv1.CreateSnapshotRequest) error {
 	}
 	return nil
 }
-
-func ValidateStartCVDRequest(r *apiv1.StartCVDRequest) error {
-	if r.SnapshotID != "" {
-		if err := ValidateSnapshotID(r.SnapshotID); err != nil {
-			return operator.NewBadRequestError("invalid request", err)
-		}
-	}
-	return nil
-}

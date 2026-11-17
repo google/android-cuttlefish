@@ -52,11 +52,11 @@ func NewStartCVDInstanceAction(opts StartCVDInstanceActionOpts) *StartCVDInstanc
 }
 
 func (a *StartCVDInstanceAction) Run() (apiv1.Operation, error) {
-	if err := ValidateStartCVDRequest(a.req); err != nil {
-		return apiv1.Operation{}, err
-	}
 	opts := cvd.StartOptions{}
 	if a.req.SnapshotID != "" {
+		if err := ValidateSnapshotID(a.req.SnapshotID); err != nil {
+			return apiv1.Operation{}, operator.NewBadRequestError("invalid request", err)
+		}
 		path := filepath.Join(a.paths.SnapshotsRootDir, a.req.SnapshotID)
 		if ok, err := fileExist(path); !ok {
 			if err != nil {
