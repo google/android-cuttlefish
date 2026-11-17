@@ -43,6 +43,8 @@ class CudaContext {
   ~CudaContext();
 
   CUcontext get() const { return ctx_; }
+  const CudaFunctions* cuda() const { return cuda_; }
+  std::recursive_mutex& mutex() const { return mutex_; }
 
  private:
   CudaContext(CUcontext ctx, int device_id, const CudaFunctions* cuda);
@@ -50,12 +52,15 @@ class CudaContext {
   CUcontext ctx_;
   int device_id_;
   const CudaFunctions* cuda_;
+  mutable std::recursive_mutex mutex_;
 };
 
-// RAII push/pop for a CUDA context on the current thread.
+// RAII lock and push/pop for a CUDA context on the current thread.
 class ScopedCudaContext {
  public:
-  ScopedCudaContext(CUcontext ctx, const CudaFunctions* cuda);
+  explicit ScopedCudaContext(const CudaContext& context);
+  ScopedCudaContext(CUcontext ctx, const CudaFunctions* cuda,
+                    std::recursive_mutex* mutex = nullptr);
   ~ScopedCudaContext();
 
   bool ok() const { return push_succeeded_; }
@@ -66,6 +71,7 @@ class ScopedCudaContext {
   ScopedCudaContext& operator=(ScopedCudaContext&&) = delete;
 
  private:
+  std::unique_lock<std::recursive_mutex> lock_;
   const CudaFunctions* cuda_ = nullptr;
   bool push_succeeded_ = false;
 };

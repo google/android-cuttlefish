@@ -52,8 +52,11 @@ Result<CudaLibrary> LoadCuda() {
                        reinterpret_cast<void**>(&f.cuDeviceGetName)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuDevicePrimaryCtxRetain",
                        reinterpret_cast<void**>(&f.cuDevicePrimaryCtxRetain)));
-  CF_EXPECT(LoadSymbol(lib.handle, "cuDevicePrimaryCtxRelease",
+  CF_EXPECT(LoadSymbol(lib.handle, "cuDevicePrimaryCtxRelease_v2",
                        reinterpret_cast<void**>(&f.cuDevicePrimaryCtxRelease)));
+  CF_EXPECT(
+      LoadSymbol(lib.handle, "cuDevicePrimaryCtxSetFlags_v2",
+                 reinterpret_cast<void**>(&f.cuDevicePrimaryCtxSetFlags)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuCtxPushCurrent_v2",
                        reinterpret_cast<void**>(&f.cuCtxPushCurrent)));
   CF_EXPECT(LoadSymbol(lib.handle, "cuCtxPopCurrent_v2",
