@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/libs/gpu/cuda_context.h"
 
+#include <utility>
+
 #include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/gpu/cuda_loader.h"
@@ -61,6 +63,12 @@ std::shared_ptr<CudaContext> CudaContext::Get(int device_id) {
   device_name[0] = '\0';
   cuda->cuDeviceGetName(device_name, sizeof(device_name), device);
 
+  res = cuda->cuDevicePrimaryCtxSetFlags(device, CU_CTX_SCHED_BLOCKING_SYNC);
+  if (res != CUDA_SUCCESS) {
+    LOG(WARNING) << "cuDevicePrimaryCtxSetFlags failed for device " << device_id
+                 << ": " << static_cast<int>(res);
+  }
+
   CUcontext ctx;
   res = cuda->cuDevicePrimaryCtxRetain(&ctx, device);
   if (res != CUDA_SUCCESS) {
@@ -78,10 +86,10 @@ std::shared_ptr<CudaContext> CudaContext::Get(int device_id) {
 }
 
 Result<ScopedCudaContext> CudaContext::Acquire(int device_id) {
-  std::shared_ptr<CudaContext> ctx = Get(device_id);
+  const std::shared_ptr<CudaContext> ctx = Get(device_id);
   CF_EXPECT(ctx != nullptr,
             "Failed to get CUDA context for device " << device_id);
-  ScopedCudaContext scope(ctx->get(), ctx->cuda_);
+  ScopedCudaContext scope(*ctx);
   CF_EXPECT(scope.ok(), "Failed to push CUDA context");
   return scope;
 }
@@ -100,16 +108,27 @@ CudaContext::~CudaContext() {
   }
 }
 
-ScopedCudaContext::ScopedCudaContext(CUcontext ctx, const CudaFunctions* cuda)
+ScopedCudaContext::ScopedCudaContext(const CudaContext& context)
+    : ScopedCudaContext(context.get(), context.cuda(), &context.mutex()) {}
+
+ScopedCudaContext::ScopedCudaContext(CUcontext ctx, const CudaFunctions* cuda,
+                                     std::recursive_mutex* mutex)
     : cuda_(cuda), push_succeeded_(false) {
   if (ctx == nullptr || cuda == nullptr) {
     LOG(ERROR) << "ScopedCudaContext: null context or CUDA functions";
     return;
   }
 
-  CUresult res = cuda_->cuCtxPushCurrent(ctx);
+  if (mutex != nullptr) {
+    lock_ = std::unique_lock<std::recursive_mutex>(*mutex);
+  }
+
+  const CUresult res = cuda_->cuCtxPushCurrent(ctx);
   if (res != CUDA_SUCCESS) {
     LOG(ERROR) << "cuCtxPushCurrent failed: " << res;
+    if (lock_.owns_lock()) {
+      lock_.unlock();
+    }
     return;
   }
 
@@ -117,7 +136,9 @@ ScopedCudaContext::ScopedCudaContext(CUcontext ctx, const CudaFunctions* cuda)
 }
 
 ScopedCudaContext::ScopedCudaContext(ScopedCudaContext&& other)
-    : cuda_(other.cuda_), push_succeeded_(other.push_succeeded_) {
+    : lock_(std::move(other.lock_)),
+      cuda_(other.cuda_),
+      push_succeeded_(other.push_succeeded_) {
   other.push_succeeded_ = false;
 }
 

@@ -31,6 +31,7 @@ struct CudaFunctions {
   CUresult (*cuDeviceGetName)(char*, int, CUdevice);
   CUresult (*cuDevicePrimaryCtxRetain)(CUcontext*, CUdevice);
   CUresult (*cuDevicePrimaryCtxRelease)(CUdevice);
+  CUresult (*cuDevicePrimaryCtxSetFlags)(CUdevice, unsigned int);
   CUresult (*cuCtxPushCurrent)(CUcontext);
   CUresult (*cuCtxPopCurrent)(CUcontext*);
   CUresult (*cuStreamCreate)(CUstream*, unsigned int);

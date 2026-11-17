@@ -46,6 +46,12 @@ std::vector<GUID> LoadSupportedCodecGuids(int device_id) {
     return {};
   }
 
+  ScopedCudaContext cuda_scope(*context);
+  if (!cuda_scope.ok()) {
+    LOG(WARNING) << "NVENC capabilities: failed to push CUDA context";
+    return {};
+  }
+
   NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS open_params = {
       NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER};
   open_params.device = context->get();

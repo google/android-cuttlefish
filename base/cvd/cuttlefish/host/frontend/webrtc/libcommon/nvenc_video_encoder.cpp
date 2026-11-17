@@ -64,7 +64,31 @@ int32_t NvencVideoEncoder::Release() {
 }
 
 void NvencVideoEncoder::DestroyEncoder() {
-  if (encoder_) {
+  if (shared_context_ && cuda_) {
+    ScopedCudaContext scope(*shared_context_);
+    if (!scope.ok()) {
+      LOG(WARNING) << "Failed to push CUDA context during cleanup";
+    }
+    if (encoder_) {
+      if (nvenc_input_buffer_) {
+        nvenc_funcs_->nvEncUnregisterResource(encoder_.get(),
+                                              nvenc_input_buffer_);
+        nvenc_input_buffer_ = nullptr;
+      }
+      if (nvenc_output_bitstream_) {
+        nvenc_funcs_->nvEncDestroyBitstreamBuffer(encoder_.get(),
+                                                  nvenc_output_bitstream_);
+        nvenc_output_bitstream_ = nullptr;
+      }
+      encoder_.reset();
+    }
+    if (scope.ok()) {
+      if (d_rgba_buffer_) cuda_->cuMemFree(d_rgba_buffer_);
+      if (cuda_stream_) cuda_->cuStreamDestroy(cuda_stream_);
+    }
+    d_rgba_buffer_ = 0;
+    cuda_stream_ = nullptr;
+  } else if (encoder_) {
     if (nvenc_input_buffer_) {
       nvenc_funcs_->nvEncUnregisterResource(encoder_.get(),
                                             nvenc_input_buffer_);
@@ -76,18 +100,6 @@ void NvencVideoEncoder::DestroyEncoder() {
       nvenc_output_bitstream_ = nullptr;
     }
     encoder_.reset();
-  }
-
-  if (cuda_context_ && cuda_) {
-    ScopedCudaContext scope(cuda_context_, cuda_);
-    if (scope.ok()) {
-      if (d_rgba_buffer_) cuda_->cuMemFree(d_rgba_buffer_);
-      if (cuda_stream_) cuda_->cuStreamDestroy(cuda_stream_);
-    } else {
-      LOG(WARNING) << "Failed to push CUDA context during cleanup";
-    }
-    d_rgba_buffer_ = 0;
-    cuda_stream_ = nullptr;
   }
 
   shared_context_.reset();
@@ -132,6 +144,7 @@ int NvencVideoEncoder::InitEncode(
   Result<void> cuda_result = InitCuda();
   if (!cuda_result.has_value()) {
     LOG(ERROR) << "InitCuda failed: " << cuda_result.error();
+    DestroyEncoder();
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
 
@@ -139,6 +152,7 @@ int NvencVideoEncoder::InitEncode(
   Result<void> nvenc_result = InitNvenc();
   if (!nvenc_result.has_value()) {
     LOG(ERROR) << "InitNvenc failed: " << nvenc_result.error();
+    DestroyEncoder();
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
 
@@ -154,10 +168,10 @@ Result<void> NvencVideoEncoder::InitCuda() {
             "Failed to get CUDA context for device " << kGpuDeviceId);
   cuda_context_ = shared_context_->get();
 
-  ScopedCudaContext scope(cuda_context_, cuda_);
+  ScopedCudaContext scope(*shared_context_);
   CF_EXPECT(scope.ok(), "Failed to push CUDA context");
 
-  CUresult err = cuda_->cuStreamCreate(&cuda_stream_, 0);
+  CUresult err = cuda_->cuStreamCreate(&cuda_stream_, CU_STREAM_NON_BLOCKING);
   CF_EXPECT(err == CUDA_SUCCESS,
             "cuStreamCreate failed: " << GetCudaErrorStr(cuda_, err));
 
@@ -172,6 +186,9 @@ Result<void> NvencVideoEncoder::InitCuda() {
 
 Result<void> NvencVideoEncoder::InitNvenc() {
   nvenc_funcs_ = CF_EXPECT(TryLoadNvenc(), "NVENC not available");
+
+  ScopedCudaContext scope(*shared_context_);
+  CF_EXPECT(scope.ok(), "Failed to push CUDA context");
 
   NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS open_params = {
       NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER};
@@ -293,11 +310,16 @@ void NvencVideoEncoder::SetRates(const RateControlParameters& parameters) {
 
   int32_t new_bitrate = bitrate_bps_;
   if (parameters.bitrate.get_sum_bps() != 0) {
-    int32_t requested = static_cast<int32_t>(parameters.bitrate.get_sum_bps());
-    new_bitrate = std::max(requested, config_.min_bitrate_bps);
-    new_bitrate = std::min(new_bitrate, config_.max_bitrate_bps);
+    const int32_t requested =
+        static_cast<int32_t>(parameters.bitrate.get_sum_bps());
+    new_bitrate = std::min(std::max(requested, config_.min_bitrate_bps),
+                           config_.max_bitrate_bps);
   }
-  uint32_t new_framerate = static_cast<uint32_t>(parameters.framerate_fps);
+
+  uint32_t new_framerate = framerate_;
+  if (parameters.framerate_fps > 0) {
+    new_framerate = static_cast<uint32_t>(parameters.framerate_fps);
+  }
 
   if (new_bitrate != bitrate_bps_ || new_framerate != framerate_) {
     bitrate_bps_ = new_bitrate;
@@ -307,8 +329,14 @@ void NvencVideoEncoder::SetRates(const RateControlParameters& parameters) {
 }
 
 void NvencVideoEncoder::Reconfigure(const RateControlParameters& parameters) {
-  if (!encoder_) {
+  if (!encoder_ || !shared_context_) {
     LOG(WARNING) << "Reconfigure called but encoder not initialized";
+    return;
+  }
+
+  ScopedCudaContext scope(*shared_context_);
+  if (!scope.ok()) {
+    LOG(ERROR) << "Reconfigure: failed to push CUDA context";
     return;
   }
 
@@ -357,120 +385,135 @@ int32_t NvencVideoEncoder::Encode(
 Result<void> NvencVideoEncoder::EncodeInner(
     const webrtc::VideoFrame& frame,
     const std::vector<webrtc::VideoFrameType>* frame_types) {
+  if (frame_types && !frame_types->empty() &&
+      (*frame_types)[0] == webrtc::VideoFrameType::kEmptyFrame) {
+    return {};
+  }
+
   CF_EXPECT(frame.width() == width_ && frame.height() == height_,
             "Resolution changed from " << width_ << "x" << height_ << " to "
                                        << frame.width() << "x"
                                        << frame.height());
-
-  ScopedCudaContext cuda_scope(cuda_context_, cuda_);
-  CF_EXPECT(cuda_scope.ok(), "Failed to push CUDA context");
 
   rtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer =
       frame.video_frame_buffer();
   CF_EXPECT(buffer->type() == webrtc::VideoFrameBuffer::Type::kNative,
             "Non-native buffer type: " << static_cast<int>(buffer->type()));
 
-  AbgrBuffer* rgba_buf = static_cast<AbgrBuffer*>(buffer.get());
-  uint32_t pixel_format = rgba_buf->PixelFormat();
+  AbgrBuffer* const rgba_buf = static_cast<AbgrBuffer*>(buffer.get());
+  const uint32_t pixel_format = rgba_buf->PixelFormat();
 
-  bool is_argb = (pixel_format == DRM_FORMAT_ARGB8888 ||
-                  pixel_format == DRM_FORMAT_XRGB8888);
-  bool is_abgr = (pixel_format == DRM_FORMAT_ABGR8888 ||
-                  pixel_format == DRM_FORMAT_XBGR8888);
+  const bool is_argb = (pixel_format == DRM_FORMAT_ARGB8888 ||
+                        pixel_format == DRM_FORMAT_XRGB8888);
+  const bool is_abgr = (pixel_format == DRM_FORMAT_ABGR8888 ||
+                        pixel_format == DRM_FORMAT_XBGR8888);
   CF_EXPECT(is_argb || is_abgr,
             "Unsupported pixel format: 0x" << std::hex << pixel_format);
 
-  if (!input_resource_registered_) {
-    CF_EXPECT(RegisterInputResource(pixel_format));
-  }
+  webrtc::EncodedImage encoded_image;
+  {
+    CF_EXPECT(shared_context_ != nullptr, "CUDA context is null");
+    ScopedCudaContext cuda_scope(*shared_context_);
+    CF_EXPECT(cuda_scope.ok(), "Failed to push CUDA context");
 
-  CF_EXPECT(pixel_format == registered_pixel_format_,
-            "Pixel format changed unexpectedly");
+    if (!input_resource_registered_) {
+      CF_EXPECT(RegisterInputResource(pixel_format));
+    }
 
-  // Upload RGBA data to GPU
-  const uint8_t* src_data = rgba_buf->Data();
-  int src_stride = rgba_buf->Stride();
+    CF_EXPECT(pixel_format == registered_pixel_format_,
+              "Pixel format changed unexpectedly");
 
-  CUDA_MEMCPY2D copy_desc = {};
-  copy_desc.srcMemoryType = CU_MEMORYTYPE_HOST;
-  copy_desc.srcHost = src_data;
-  copy_desc.srcPitch = src_stride;
-  copy_desc.dstMemoryType = CU_MEMORYTYPE_DEVICE;
-  copy_desc.dstDevice = d_rgba_buffer_;
-  copy_desc.dstPitch = rgba_pitch_;
-  copy_desc.WidthInBytes = width_ * 4;
-  copy_desc.Height = height_;
+    // Upload RGBA data to GPU
+    const uint8_t* const src_data = rgba_buf->Data();
+    const int src_stride = rgba_buf->Stride();
 
-  CUresult cuda_err = cuda_->cuMemcpy2DAsync(&copy_desc, cuda_stream_);
-  CF_EXPECT(cuda_err == CUDA_SUCCESS,
-            "cuMemcpy2DAsync failed: " << GetCudaErrorStr(cuda_, cuda_err));
+    CUDA_MEMCPY2D copy_desc = {};
+    copy_desc.srcMemoryType = CU_MEMORYTYPE_HOST;
+    copy_desc.srcHost = src_data;
+    copy_desc.srcPitch = src_stride;
+    copy_desc.dstMemoryType = CU_MEMORYTYPE_DEVICE;
+    copy_desc.dstDevice = d_rgba_buffer_;
+    copy_desc.dstPitch = rgba_pitch_;
+    copy_desc.WidthInBytes = width_ * 4;
+    copy_desc.Height = height_;
 
-  cuda_err = cuda_->cuStreamSynchronize(cuda_stream_);
-  CF_EXPECT(cuda_err == CUDA_SUCCESS,
-            "cuStreamSynchronize failed: " << GetCudaErrorStr(cuda_, cuda_err));
+    CUresult cuda_err = cuda_->cuMemcpy2DAsync(&copy_desc, cuda_stream_);
+    CF_EXPECT(cuda_err == CUDA_SUCCESS,
+              "cuMemcpy2DAsync failed: " << GetCudaErrorStr(cuda_, cuda_err));
 
-  // Map input resource
-  NV_ENC_MAP_INPUT_RESOURCE map_input = {NV_ENC_MAP_INPUT_RESOURCE_VER};
-  map_input.registeredResource = nvenc_input_buffer_;
-  NVENCSTATUS status =
-      nvenc_funcs_->nvEncMapInputResource(encoder_.get(), &map_input);
-  CF_EXPECT(status == NV_ENC_SUCCESS,
-            "nvEncMapInputResource failed: " << status);
+    cuda_err = cuda_->cuStreamSynchronize(cuda_stream_);
+    CF_EXPECT(
+        cuda_err == CUDA_SUCCESS,
+        "cuStreamSynchronize failed: " << GetCudaErrorStr(cuda_, cuda_err));
 
-  // Encode picture
-  NV_ENC_PIC_PARAMS pic_params = {NV_ENC_PIC_PARAMS_VER};
-  pic_params.pictureStruct = NV_ENC_PIC_STRUCT_FRAME;
-  pic_params.inputBuffer = map_input.mappedResource;
-  pic_params.bufferFmt = nvenc_input_format_;
-  pic_params.inputWidth = width_;
-  pic_params.inputHeight = height_;
-  pic_params.outputBitstream = nvenc_output_bitstream_;
-  pic_params.inputPitch = rgba_pitch_;
+    // Map input resource
+    NV_ENC_MAP_INPUT_RESOURCE map_input = {NV_ENC_MAP_INPUT_RESOURCE_VER};
+    map_input.registeredResource = nvenc_input_buffer_;
+    NVENCSTATUS status =
+        nvenc_funcs_->nvEncMapInputResource(encoder_.get(), &map_input);
+    CF_EXPECT(status == NV_ENC_SUCCESS,
+              "nvEncMapInputResource failed: " << status);
 
-  config_.set_pic_params(&pic_params);
+    // Encode picture
+    NV_ENC_PIC_PARAMS pic_params = {NV_ENC_PIC_PARAMS_VER};
+    pic_params.pictureStruct = NV_ENC_PIC_STRUCT_FRAME;
+    pic_params.inputBuffer = map_input.mappedResource;
+    pic_params.bufferFmt = nvenc_input_format_;
+    pic_params.inputWidth = width_;
+    pic_params.inputHeight = height_;
+    pic_params.outputBitstream = nvenc_output_bitstream_;
+    pic_params.inputPitch = rgba_pitch_;
 
-  if (frame_types && !frame_types->empty() &&
-      (*frame_types)[0] == webrtc::VideoFrameType::kVideoFrameKey) {
-    pic_params.encodePicFlags |= NV_ENC_PIC_FLAG_FORCEIDR;
-  }
+    config_.set_pic_params(&pic_params);
 
-  status = nvenc_funcs_->nvEncEncodePicture(encoder_.get(), &pic_params);
-  if (status != NV_ENC_SUCCESS) {
+    if (frame_types && !frame_types->empty() &&
+        (*frame_types)[0] == webrtc::VideoFrameType::kVideoFrameKey) {
+      pic_params.encodePicFlags |= NV_ENC_PIC_FLAG_FORCEIDR;
+    }
+
+    status = nvenc_funcs_->nvEncEncodePicture(encoder_.get(), &pic_params);
+    if (status != NV_ENC_SUCCESS) {
+      nvenc_funcs_->nvEncUnmapInputResource(encoder_.get(),
+                                            map_input.mappedResource);
+      return CF_ERR("nvEncEncodePicture failed: " << status);
+    }
+
+    // Unmap input
     nvenc_funcs_->nvEncUnmapInputResource(encoder_.get(),
                                           map_input.mappedResource);
-    return CF_ERR("nvEncEncodePicture failed: " << status);
+
+    // Retrieve bitstream
+    NV_ENC_LOCK_BITSTREAM lock_bs = {NV_ENC_LOCK_BITSTREAM_VER};
+    lock_bs.outputBitstream = nvenc_output_bitstream_;
+    lock_bs.doNotWait = 0;
+
+    status = nvenc_funcs_->nvEncLockBitstream(encoder_.get(), &lock_bs);
+    CF_EXPECT(status == NV_ENC_SUCCESS,
+              "nvEncLockBitstream failed: " << status);
+
+    // Create copies the data, so we can unlock immediately after.
+    encoded_image.SetEncodedData(webrtc::EncodedImageBuffer::Create(
+        static_cast<uint8_t*>(lock_bs.bitstreamBufferPtr),
+        lock_bs.bitstreamSizeInBytes));
+    encoded_image._encodedWidth = width_;
+    encoded_image._encodedHeight = height_;
+    encoded_image.SetTimestamp(frame.timestamp());
+    encoded_image.ntp_time_ms_ = frame.ntp_time_ms();
+    encoded_image.capture_time_ms_ = frame.render_time_ms();
+    encoded_image.rotation_ = frame.rotation();
+    encoded_image.content_type_ = webrtc::VideoContentType::UNSPECIFIED;
+    encoded_image.timing_.flags = webrtc::VideoSendTiming::kInvalid;
+    encoded_image._frameType = (lock_bs.pictureType == NV_ENC_PIC_TYPE_IDR ||
+                                lock_bs.pictureType == NV_ENC_PIC_TYPE_I)
+                                   ? webrtc::VideoFrameType::kVideoFrameKey
+                                   : webrtc::VideoFrameType::kVideoFrameDelta;
+
+    nvenc_funcs_->nvEncUnlockBitstream(encoder_.get(), nvenc_output_bitstream_);
   }
-
-  // Unmap input
-  nvenc_funcs_->nvEncUnmapInputResource(encoder_.get(),
-                                        map_input.mappedResource);
-
-  // Retrieve bitstream
-  NV_ENC_LOCK_BITSTREAM lock_bs = {NV_ENC_LOCK_BITSTREAM_VER};
-  lock_bs.outputBitstream = nvenc_output_bitstream_;
-  lock_bs.doNotWait = 0;
-
-  status = nvenc_funcs_->nvEncLockBitstream(encoder_.get(), &lock_bs);
-  CF_EXPECT(status == NV_ENC_SUCCESS, "nvEncLockBitstream failed: " << status);
-
-  // Create copies the data, so we can unlock immediately after.
-  webrtc::EncodedImage encoded_image;
-  encoded_image.SetEncodedData(webrtc::EncodedImageBuffer::Create(
-      static_cast<uint8_t*>(lock_bs.bitstreamBufferPtr),
-      lock_bs.bitstreamSizeInBytes));
-  encoded_image._encodedWidth = width_;
-  encoded_image._encodedHeight = height_;
-  encoded_image.SetTimestamp(frame.timestamp());
-  encoded_image.ntp_time_ms_ = frame.ntp_time_ms();
-  encoded_image._frameType = (lock_bs.pictureType == NV_ENC_PIC_TYPE_IDR ||
-                              lock_bs.pictureType == NV_ENC_PIC_TYPE_I)
-                                 ? webrtc::VideoFrameType::kVideoFrameKey
-                                 : webrtc::VideoFrameType::kVideoFrameDelta;
-
-  nvenc_funcs_->nvEncUnlockBitstream(encoder_.get(), nvenc_output_bitstream_);
 
   webrtc::CodecSpecificInfo codec_specific = {};
   codec_specific.codecType = config_.webrtc_codec_type;
+  codec_specific.end_of_picture = true;
 
   callback_->OnEncodedImage(encoded_image, &codec_specific);
 
