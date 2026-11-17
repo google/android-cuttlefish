@@ -16,7 +16,7 @@ on:
         required: false
 
 concurrency:
-  group: '${{ github.workflow }}-plan-execute-${{ github.event_name }}-${{ github.event.pull_request.number }}'
+  group: '${{ github.workflow }}-plan-execute-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number }}'
   cancel-in-progress: true
 
 defaults:
@@ -55,8 +55,8 @@ jobs:
         env:
           EVENT_NAME: '${{ github.event_name }}'
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
-          IS_PULL_REQUEST: '${{ !!github.event.pull_request }}'
-          ISSUE_NUMBER: '${{ github.event.pull_request.number }}'
+          IS_PULL_REQUEST: 'true'
+          ISSUE_NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
           REPOSITORY: '${{ github.repository }}'
           ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
         with:
@@ -73,9 +73,7 @@ jobs:
           use_vertex_ai: '${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}'
           upload_artifacts: '${{ vars.UPLOAD_ARTIFACTS }}'
           workflow_name: 'gemini-plan-execute'
-          # Assistant workflows can be triggered by comments on either Issues or PRs.
-          # We explicitly map both fields so the CLI can correctly categorize the interaction.
-          github_pr_number: '${{ github.event.pull_request.number }}'
+          github_pr_number: '${{ github.event.pull_request.number || github.event.issue.number }}'
           settings: |-
             {
               "model": {
