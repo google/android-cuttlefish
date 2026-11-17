@@ -20,18 +20,20 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <map>
 #include <memory>
 #include <mutex>
 #include <utility>
 
+#include "absl/base/no_destructor.h"
 #include "zip.h"
 
 #include "cuttlefish/host/libs/zip/libzip_cc/error.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/io/fake_pread_pwrite.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/length.h"
 #include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result.h"
@@ -39,24 +41,39 @@
 namespace cuttlefish {
 namespace {
 
-struct SeekableCallbackSource {
-  SeekableCallbackSource(std::unique_ptr<SeekableZipSourceCallback> callbacks)
+struct CallbackUserdata {
+  CallbackUserdata(std::unique_ptr<ReaderSeeker> callbacks)
       : callbacks_(std::move(callbacks)), error_(NewZipError()) {}
 
-  std::unique_ptr<SeekableZipSourceCallback> callbacks_;
+  std::unique_ptr<ReaderSeeker> callbacks_;
   ManagedZipError error_;
 };
 
-int64_t HandleCallback(SeekableZipSourceCallback& callbacks, zip_error_t* error,
-                       void* data, uint64_t len, zip_source_cmd_t cmd) {
+Result<int64_t, int> HandleCallback(ReaderSeeker& callbacks, zip_error_t* error,
+                                    void* data, uint64_t len,
+                                    zip_source_cmd_t cmd) {
   switch (cmd) {
+    case ZIP_SOURCE_CLOSE:
+    case ZIP_SOURCE_OPEN:
+      CF_EXPECT(callbacks.SeekSet(0));
+      return 0;
+    case ZIP_SOURCE_READ:
+      return CF_EXPECT(callbacks.Read(reinterpret_cast<char*>(data), len));
+    case ZIP_SOURCE_STAT: {
+      zip_stat_t* stat_out = ZIP_SOURCE_GET_ARGS(zip_stat_t, data, len, error);
+      CF_EXPECTV(stat_out != nullptr, EINVAL, "invalid zip_stat_t");
+      zip_stat_init(stat_out);
+      stat_out->valid = ZIP_STAT_SIZE;
+      stat_out->size = CF_EXPECT(Length(callbacks));
+      return sizeof(zip_stat_t);
+    }
     case ZIP_SOURCE_SEEK: {
-      int64_t new_offset = zip_source_seek_compute_offset(
-          callbacks.Offset(), callbacks.Size(), data, len, error);
-      if (!callbacks.SetOffset(new_offset)) {
-        zip_error_set(error, ZIP_ER_SEEK, errno);
-        return -1;
-      }
+      int64_t current_offset = CF_EXPECT(callbacks.SeekCur(0));
+      uint64_t size = CF_EXPECT(Length(callbacks));
+      int64_t new_offset = zip_source_seek_compute_offset(current_offset, size,
+                                                          data, len, error);
+      CF_EXPECTV(new_offset >= 0, EINVAL, "invalid offset");
+      CF_EXPECT(callbacks.SeekSet(new_offset));
       return 0;
     }
     case ZIP_SOURCE_SUPPORTS:
@@ -65,24 +82,43 @@ int64_t HandleCallback(SeekableZipSourceCallback& callbacks, zip_error_t* error,
           ZIP_SOURCE_READ, ZIP_SOURCE_SEEK, ZIP_SOURCE_STAT,
           ZIP_SOURCE_SUPPORTS, ZIP_SOURCE_TELL, -1);
     case ZIP_SOURCE_TELL:
-      return callbacks.Offset();
+      return CF_EXPECT(callbacks.SeekCur(0));
     default:
-      return HandleCallback(static_cast<ReadableZipSourceCallback&>(callbacks),
-                            error, data, len, cmd);
+      return CF_ERRVF(EOPNOTSUPP, "Unknown operation {}", int(cmd));
   }
 }
 
 // https://libzip.org/documentation/zip_source_function.html
 int64_t SeekableZipSourceCallbackFn(void* userdata, void* data, uint64_t len,
                                     zip_source_cmd_t cmd) {
-  SeekableCallbackSource* source =
-      reinterpret_cast<SeekableCallbackSource*>(userdata);
+  CallbackUserdata* source = reinterpret_cast<CallbackUserdata*>(userdata);
   if (cmd == ZIP_SOURCE_FREE) {
     delete source;
     return 0;
+  } else if (cmd == ZIP_SOURCE_ERROR) {
+    return zip_error_to_data(source->error_.get(), data, len);
   }
-  return HandleCallback(*source->callbacks_, source->error_.get(), data, len,
-                        cmd);
+  zip_error_set(source->error_.get(), ZIP_ER_OK, 0);
+  // TODO(schuffelen): Hang on to this value to propagate to wrapper functions
+  Result<int64_t, int> res =
+      HandleCallback(*source->callbacks_, source->error_.get(), data, len, cmd);
+  if (res.has_value()) {
+    return res.value();
+  } else if (res.error().Value() == EOPNOTSUPP) {
+    zip_error_set(source->error_.get(), ZIP_ER_OPNOTSUPP, EOPNOTSUPP);
+    return -1;
+  }
+  static absl::NoDestructor<std::map<zip_source_cmd_t, int>> kCodeMap({
+      {ZIP_SOURCE_CLOSE, ZIP_ER_CLOSE},
+      {ZIP_SOURCE_OPEN, ZIP_ER_OPEN},
+      {ZIP_SOURCE_READ, ZIP_ER_READ},
+      {ZIP_SOURCE_SEEK, ZIP_ER_SEEK},
+      {ZIP_SOURCE_TELL, ZIP_ER_TELL},
+  });
+  auto err_it = kCodeMap->find(cmd);
+  int zip_err_code = err_it == kCodeMap->end() ? ZIP_ER_INVAL : err_it->second;
+  zip_error_set(source->error_.get(), zip_err_code, *res.error());
+  return -1;
 }
 
 class ZipSourceAsReaderSeekerImpl : public ReaderSeeker {
@@ -125,18 +161,20 @@ class ZipSourceAsReaderSeekerImpl : public ReaderSeeker {
 }  // namespace
 
 Result<SeekableZipSource> SeekableZipSource::FromCallbacks(
-    std::unique_ptr<SeekableZipSourceCallback> callbacks) {
+    std::unique_ptr<ReaderSeeker> callbacks) {
   CF_EXPECT(callbacks.get());
 
-  std::unique_ptr<SeekableCallbackSource> wrapped_source =
-      std::make_unique<SeekableCallbackSource>(std::move(callbacks));
+  std::unique_ptr<CallbackUserdata> userdata =
+      std::make_unique<CallbackUserdata>(std::move(callbacks));
 
   ManagedZipError error = NewZipError();
   ManagedZipSource source(zip_source_function_create(
-      SeekableZipSourceCallbackFn, wrapped_source.release(), error.get()));
+      SeekableZipSourceCallbackFn, userdata.get(), error.get()));
 
   CF_EXPECT(source.get(), ZipErrorString(error.get()));
 
+  userdata.release();  // Owned by source if zip_source_function_create succeeds
+  // Even though `release` is here, the `delete` path is with ZIP_SOURCE_FREE.
   return SeekableZipSource(std::move(source));
 }
 
@@ -150,12 +188,6 @@ Result<SeekingZipSourceReader> SeekableZipSource::Reader() {
 
 SeekableZipSource::SeekableZipSource(ManagedZipSource raw)
     : ReadableZipSource(std::move(raw)) {}
-
-SeekingZipSourceReader::SeekingZipSourceReader(SeekingZipSourceReader&&) =
-    default;
-SeekingZipSourceReader::~SeekingZipSourceReader() = default;
-SeekingZipSourceReader& SeekingZipSourceReader::operator=(
-    SeekingZipSourceReader&&) = default;
 
 Result<void> SeekingZipSourceReader::Visit(IoVisitor& visitor) {
   CF_EXPECT(visitor.Accept(static_cast<ReaderSeeker&>(*this)));
@@ -188,13 +220,17 @@ Result<uint64_t, int> SeekingZipSourceReader::Seek(int64_t offset, int whence) {
   zip_source_t* raw_source = CF_EXPECTVF(source_->raw_.get(), EBADF,
                                          "Seek({}, {}) failed", offset, whence);
 
-  CF_EXPECTVF(zip_source_seek(raw_source, offset, whence) == 0,
-              ZipErrno(raw_source), "zip_source_seek(..., {}, {}) failed: {}",
-              offset, whence, ZipErrorString(raw_source));
+  if (zip_source_seek(raw_source, offset, whence) != 0) {
+    return CF_ERRVF(ZipErrno(raw_source),
+                    "zip_source_seek(..., {}, {}) failed: {}", offset, whence,
+                    ZipErrorString(raw_source));
+  }
 
   int64_t tell = zip_source_tell(raw_source);
-  CF_EXPECTVF(tell >= 0, ZipErrno(raw_source),
-              "zip_source_tell(...) failed: {}", ZipErrorString(raw_source));
+  if (tell < 0) {
+    return CF_ERRVF(ZipErrno(raw_source), "zip_source_tell(...) failed: {}",
+                    ZipErrorString(raw_source));
+  }
 
   return tell;
 }

@@ -16,6 +16,7 @@
 #include "cuttlefish/host/libs/zip/buffered_zip_source.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include <memory>
 #include <vector>
@@ -57,7 +58,7 @@ TEST(BufferedZipSourceTest, ManySmallReads) {
   size_t read_offset = 0;
   while (true) {
     char* ptr = &data_out[read_offset];
-    size_t amount_read = CF_ASSERT(reader.Read(ptr, kPrimeReadSize));
+    uint64_t amount_read = CF_ASSERT(reader.Read(ptr, kPrimeReadSize));
     if (amount_read == 0) {
       break;
     }

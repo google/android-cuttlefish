@@ -33,81 +33,69 @@
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_probe.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
+#include "cuttlefish/io/fake_seek.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
 
-class RemoteZip : public SeekableZipSourceCallback {
+class RemoteZip : public ReaderFakeSeeker {
  public:
   RemoteZip(HttpClient& http_client, std::string url, uint64_t size,
             std::vector<std::string> headers)
-      : http_client_(http_client),
+      : ReaderFakeSeeker(size),
+        http_client_(http_client),
         url_(std::move(url)),
         size_(size),
         headers_(std::move(headers)) {}
 
-  bool Close() override { return true; }
-  bool Open() override {
-    offset_ = 0;
-    return true;
+  Result<void> Visit(IoVisitor& visitor) override {
+    CF_EXPECT(visitor.Accept(*this));
+    return {};
   }
-  int64_t Read(char* zip_data, uint64_t zip_len) override {
-    if (zip_len == 0 || offset_ >= size_) {
+
+  Result<uint64_t, int> PRead(void* data, uint64_t len,
+                              uint64_t offset) const override {
+    if (len == 0 || offset >= size_) {
       return 0;
     }
-    zip_len = std::min(zip_len, size_ - offset_);
+    len = std::min(len, size_ - offset);
 
     uint64_t already_read = 0;
 
-    auto cb = [&already_read, &zip_data, &zip_len](
-                  char* http_data, size_t http_len) -> Result<void> {
+    auto cb = [&already_read, &data, &len](char* http_data,
+                                           size_t http_len) -> Result<void> {
       if (http_data == nullptr) {
         already_read = 0;
         return {};
       }
-      CF_EXPECT_LE(http_len + already_read, zip_len);
-      memcpy(zip_data + already_read, http_data, http_len);
+      CF_EXPECT_LE(http_len + already_read, len);
+      memcpy(reinterpret_cast<char*>(data) + already_read, http_data, http_len);
       already_read += http_len;
       return {};
     };
     std::vector<std::string> headers = headers_;
     headers.push_back(
-        fmt::format("Range: bytes={}-{}", offset_, offset_ + zip_len - 1));
+        fmt::format("Range: bytes={}-{}", offset, offset + len - 1));
     VLOG(1) << "Requesting " << headers.back();
     HttpRequest request = {
         .method = HttpMethod::kGet,
         .url = url_,
         .headers = headers,
     };
-    Result<HttpResponse<void>> res =
-        http_client_.DownloadToCallback(request, cb);
-    if (!res.has_value() || !res->HttpSuccess() || already_read != zip_len) {
-      if (!res.has_value()) {
-        LOG(ERROR) << res.error();
-      } else if (!res->HttpSuccess()) {
-        LOG(ERROR) << "HTTP code: " << res->http_code;
-      } else {
-        LOG(ERROR) << already_read << " != " << zip_len;
-      }
-      errno = EIO;
-      return -1;
-    }
-    offset_ += already_read;
+    HttpResponse<void> res =
+        CF_EXPECTV(http_client_.DownloadToCallback(request, cb), EIO,
+                   "HTTP library issue");
+    CF_EXPECTVF(res.HttpSuccess(), EIO, "unexpected code: {}", res.http_code);
+    CF_EXPECTVF(already_read == len, EIO, "{} != {}", already_read, len);
     return already_read;
   }
-  bool SetOffset(int64_t offset) override {
-    offset_ = offset;
-    return true;
-  }
-  int64_t Offset() override { return offset_; }
-  uint64_t Size() override { return size_; }
 
  private:
   HttpClient& http_client_;
   std::string url_;
-  uint64_t offset_ = 0;
   uint64_t size_ = 0;
   std::vector<std::string> headers_;
 };

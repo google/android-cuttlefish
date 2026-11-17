@@ -21,123 +21,111 @@
 
 #include <algorithm>
 #include <memory>
+#include <mutex>
+#include <shared_mutex>
 #include <utility>
 #include <vector>
 
-#include "absl/log/log.h"
-
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
+#include "cuttlefish/io/fake_seek.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/length.h"
+#include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/io/reader_seeker.h"
+#include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
 
-class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
+class BufferedZipSourceCallbacks : public ReaderFakeSeeker {
  public:
   static Result<std::unique_ptr<BufferedZipSourceCallbacks>> Create(
-      std::unique_ptr<ReaderSeeker> data_provider, size_t buffer_size) {
+      std::unique_ptr<ReaderSeeker> data_provider, uint64_t buffer_size) {
     CF_EXPECT(data_provider.get());
-    std::unique_ptr<BufferedZipSourceCallbacks> callbacks(
-        new BufferedZipSourceCallbacks(buffer_size));
 
-    callbacks->size_ = CF_EXPECT(Length(*data_provider));
+    uint64_t backing_size = CF_EXPECT(Length(*data_provider));
+    buffer_size = std::min(buffer_size, backing_size);
+
+    std::unique_ptr<BufferedZipSourceCallbacks> callbacks(
+        new BufferedZipSourceCallbacks(buffer_size, backing_size));
+
     callbacks->data_provider_ = std::move(data_provider);
 
     return callbacks;
   }
 
-  bool Close() override {
-    offset_ = 0;
-    buffer_remaining_ = 0;
-    offset_in_buffer_ = 0;
-    buffer_remaining_ = 0;
+  Result<void> Visit(IoVisitor& visitor) override {
+    CF_EXPECT(visitor.Accept(*this));
+    return {};
+  }
 
-    return true;
+  Result<uint64_t, int> PRead(void* data, uint64_t len,
+                              uint64_t offset) const override {
+    BufferedZipSourceCallbacks* mut =
+        const_cast<BufferedZipSourceCallbacks*>(this);
+    return CF_EXPECT(mut->PReadMut(data, len, offset));
   }
-  bool Open() override {
-    offset_ = 0;
-    buffer_remaining_ = 0;
-    offset_in_buffer_ = 0;
-    buffer_remaining_ = 0;
-
-    return data_provider_->SeekSet(0).has_value();
-  }
-  int64_t Read(char* data, uint64_t len) override {
-    if (len > buffer_.size()) {
-      buffer_remaining_ = 0;
-      if (!data_provider_->SeekSet(offset_).has_value()) {
-        return false;
-      }
-      VLOG(1) << "Bypassing buffer, reading " << len;
-      if (Result<uint64_t> read_len = data_provider_->Read(data, len);
-          read_len.has_value()) {
-        offset_ += *read_len;
-        return *read_len;
-      } else {
-        return -1;
-      }
-    }
-    if (buffer_remaining_ > 0) {
-      size_t to_read = std::min<size_t>(len, buffer_remaining_);
-      memcpy(data, &buffer_[offset_in_buffer_], to_read);
-      buffer_remaining_ -= to_read;
-      offset_in_buffer_ += to_read;
-      offset_ += to_read;
-      return to_read;
-    }
-    uint64_t buffer_fill = buffer_.size();
-    if (offset_ + buffer_fill > size_) {
-      buffer_fill = size_ - offset_;
-    }
-    if (buffer_fill == 0) {
-      return 0;
-    }
-    if (!data_provider_->SeekSet(offset_).has_value()) {
-      return -1;
-    }
-    VLOG(1) << "Filling buffer with " << buffer_fill;
-    Result<size_t> data_provider_read =
-        data_provider_->Read(buffer_.data(), buffer_fill);
-    if (!data_provider_read.has_value()) {
-      return -1;
-    }
-    buffer_remaining_ = *data_provider_read;
-    offset_in_buffer_ = 0;
-    return Read(data, len);
-  }
-  uint64_t Size() override { return size_; }
-  bool SetOffset(int64_t new_offset) override {
-    if (new_offset >= offset_ && new_offset < offset_ + buffer_remaining_) {
-      offset_in_buffer_ += new_offset - offset_;
-      buffer_remaining_ -= new_offset - offset_;
-    } else {
-      buffer_remaining_ = 0;
-    }
-    offset_ = new_offset;
-    return true;
-  }
-  int64_t Offset() override { return offset_; }
 
  private:
-  explicit BufferedZipSourceCallbacks(size_t buffer_size)
-      : buffer_(buffer_size) {}
+  explicit BufferedZipSourceCallbacks(uint64_t buffer_size,
+                                      uint64_t backing_size)
+      : ReaderFakeSeeker(backing_size),
+        buffer_(buffer_size),
+        backing_size_(backing_size) {}
+
+  Result<uint64_t, int> PReadMut(void* data, uint64_t len, uint64_t offset) {
+    if (offset >= backing_size_ || len == 0) {
+      return 0;
+    }
+    len = std::min(len, backing_size_ - offset);
+    if (len > buffer_.size()) {
+      return CF_EXPECT(data_provider_->PRead(data, len, offset));
+    }
+    {  // If data can be read from the buffer, can share read access
+      std::shared_lock lock(mutex_);
+      if (uint64_t buf_read = ReadBufLocked(data, len, offset); buf_read > 0) {
+        return buf_read;
+      }
+    }
+    {  // If we need to load new data, get exclusive access to fill the buffer
+      std::lock_guard lock(mutex_);
+      // Another thread may have loaded data we want between the unlock / lock
+      if (uint64_t buf_rd = ReadBufLocked(data, len, offset); buf_rd > 0) {
+        return buf_rd;
+      }  // We need new data.
+      buf_begin_ = std::min(backing_size_ - buffer_.size(), offset);
+      has_data_ = false;  // If PReadExact fails, assume buffer_ is corrupted.
+      CF_EXPECT(PReadExact(*data_provider_, buffer_.data(), buffer_.size(),
+                           buf_begin_));
+      has_data_ = true;
+      return ReadBufLocked(data, len, offset);
+    }
+  }
+
+  uint64_t ReadBufLocked(void* data, uint64_t len, uint64_t off) {
+    if (!has_data_ || off < buf_begin_ || off >= buf_begin_ + buffer_.size()) {
+      return 0;
+    }
+    uint64_t buf_offset = off - buf_begin_;
+    uint64_t buf_read_len = std::min(len, buffer_.size() - buf_offset);
+    memcpy(data, &buffer_[buf_offset], buf_read_len);
+    return buf_read_len;
+  }
 
   std::unique_ptr<ReaderSeeker> data_provider_;
+  std::shared_mutex mutex_;
+  bool has_data_ = false;
   std::vector<char> buffer_;
-  uint64_t size_ = 0;
-  int64_t offset_ = 0;
-  size_t offset_in_buffer_ = 0;
-  size_t buffer_remaining_ = 0;
+  uint64_t backing_size_ = 0;
+  uint64_t buf_begin_ = 0;
 };
 
 }  // namespace
 
 Result<SeekableZipSource> BufferZipSource(
-    std::unique_ptr<ReaderSeeker> data_provider, size_t buffer_size) {
+    std::unique_ptr<ReaderSeeker> data_provider, uint64_t buffer_size) {
   std::unique_ptr<BufferedZipSourceCallbacks> callbacks =
       CF_EXPECT(BufferedZipSourceCallbacks::Create(std::move(data_provider),
                                                    buffer_size));

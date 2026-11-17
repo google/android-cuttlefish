@@ -56,7 +56,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
-        "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
         "//cuttlefish/host/libs/zip/libzip_cc:stat",
         "//cuttlefish/io",
         "//cuttlefish/result",
@@ -74,12 +73,13 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
-        "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
         "//cuttlefish/io",
         "//cuttlefish/io:fake_pread_pwrite",
+        "//cuttlefish/io:length",
         "//cuttlefish/io:reader_seeker",
         "//cuttlefish/io:visitable",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/base:no_destructor",
         "@libzip",
     ],
 )
@@ -87,11 +87,6 @@ cf_cc_library(
 cf_cc_library(
     name = "stat",
     hdrs = ["stat.h"],
-)
-
-cf_cc_library(
-    name = "source_callback",
-    hdrs = ["source_callback.h"],
 )
 
 cf_cc_library(
