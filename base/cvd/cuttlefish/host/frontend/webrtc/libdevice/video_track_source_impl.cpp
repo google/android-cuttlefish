@@ -34,10 +34,13 @@ void VideoTrackSourceImpl::OnFrame(std::shared_ptr<VideoFrameBuffer> frame,
   // WebRTC from dropping frames with "Same/old NTP timestamp" errors, since
   // WebRTC computes NTP timestamps from render_time_ms() (timestamp_us / 1000).
   constexpr int64_t kUsPerMs = 1000;
-  if (timestamp_us / kUsPerMs <= last_timestamp_us_ / kUsPerMs) {
-    timestamp_us = last_timestamp_us_ + kUsPerMs;
+  {
+    std::lock_guard<std::mutex> lock(timestamp_mutex_);
+    if (timestamp_us / kUsPerMs <= last_timestamp_us_ / kUsPerMs) {
+      timestamp_us = last_timestamp_us_ + kUsPerMs;
+    }
+    last_timestamp_us_ = timestamp_us;
   }
-  last_timestamp_us_ = timestamp_us;
 
   rtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer(
       new rtc::RefCountedObject<AbgrBuffer>(std::move(frame)));
