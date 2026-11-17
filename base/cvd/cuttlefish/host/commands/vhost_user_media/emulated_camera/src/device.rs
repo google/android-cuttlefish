@@ -407,7 +407,7 @@ const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 const FRAME_RATE: u32 = 30;
 
-const SUPPORTED_SIZES: [(u32, u32); 3] = [(320, 240), (640, 480), (1280, 720)];
+const SUPPORTED_SIZES: [(u32, u32); 4] = [(320, 240), (640, 480), (1280, 720), (1920, 1080)];
 
 const INPUTS: [bindings::v4l2_input; 1] = [bindings::v4l2_input {
     index: 0,
