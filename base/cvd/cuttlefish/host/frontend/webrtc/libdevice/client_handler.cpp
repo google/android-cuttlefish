@@ -109,8 +109,12 @@ ClientHandler::AddTrackToConnection(
   // Set higher bitrate limits for video tracks to improve quality at higher
   // resolutions. Without this, WebRTC defaults to conservative per-track
   // limits that cause poor quality even when bandwidth is available.
+  // Also preserve native display resolution under load so WebRTC never adapts
+  // codec dimensions away from the native ABGR frame dimensions.
   if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-    auto params = sender->GetParameters();
+    webrtc::RtpParameters params = sender->GetParameters();
+    params.degradation_preference =
+        webrtc::DegradationPreference::MAINTAIN_RESOLUTION;
     for (auto& encoding : params.encodings) {
       encoding.min_bitrate_bps = 500000;      // 500 kbps
       encoding.max_bitrate_bps = 15000000;    // 15 Mbps per track
