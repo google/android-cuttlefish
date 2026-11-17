@@ -18,6 +18,8 @@
 
 #include <string.h>
 
+#include <memory>
+
 namespace cuttlefish {
 
 CvdAbgrVideoFrameBuffer::CvdAbgrVideoFrameBuffer(int width, int height,
@@ -27,10 +29,14 @@ CvdAbgrVideoFrameBuffer::CvdAbgrVideoFrameBuffer(int width, int height,
       height_(height),
       format_(format),
       stride_(stride),
-      data_(data, data + height * stride) {}
+      size_(static_cast<std::size_t>(height) * stride),
+      data_(new uint8_t[size_]) {
+  memcpy(data_.get(), data, size_);
+}
 
 std::unique_ptr<VideoFrameBuffer> CvdAbgrVideoFrameBuffer::Clone() const {
-  return std::make_unique<CvdAbgrVideoFrameBuffer>(*this);
+  return std::make_unique<CvdAbgrVideoFrameBuffer>(width_, height_, format_,
+                                                   stride_, data_.get());
 }
 
 }  // namespace cuttlefish

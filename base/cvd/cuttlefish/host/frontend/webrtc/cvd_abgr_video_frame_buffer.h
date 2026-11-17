@@ -16,9 +16,10 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
-#include <vector>
+#include <memory>
 
 #include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
 
@@ -33,9 +34,9 @@ class CvdAbgrVideoFrameBuffer : public VideoFrameBuffer {
   int width() const override { return width_; }
   int height() const override { return height_; }
 
-  uint8_t* Data() const override { return const_cast<uint8_t*>(data_.data()); }
+  uint8_t* Data() const override { return data_.get(); }
   int Stride() const override { return stride_; }
-  std::size_t DataSize() const override { return data_.size(); }
+  std::size_t DataSize() const override { return size_; }
   uint32_t PixelFormat() const override { return format_; }
 
   std::unique_ptr<VideoFrameBuffer> Clone() const override;
@@ -45,7 +46,8 @@ class CvdAbgrVideoFrameBuffer : public VideoFrameBuffer {
   int height_;
   uint32_t format_;
   int stride_;
-  std::vector<uint8_t> data_;
+  std::size_t size_;
+  std::unique_ptr<uint8_t[]> data_;
 };
 
 }  // namespace cuttlefish
