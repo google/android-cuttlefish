@@ -126,6 +126,7 @@ class ClientHandler : public ConnectionController::Observer,
   std::vector<
       std::pair<rtc::scoped_refptr<webrtc::AudioTrackInterface>, std::string>>
       audio_streams_;
+  bool connected_once_ = false;
 };
 
 class ClientVideoTrackInterface {

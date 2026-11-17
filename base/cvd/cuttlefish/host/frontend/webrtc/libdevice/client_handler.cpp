@@ -257,11 +257,15 @@ void ClientHandler::OnConnectionStateChange(
     case webrtc::PeerConnectionInterface::PeerConnectionState::kConnected:
       VLOG(1) << "Client " << client_id_ << ": WebRTC connected";
       observer_->OnConnected();
-      on_connection_changed_cb_(true);
+      if (!connected_once_) {
+        connected_once_ = true;
+        on_connection_changed_cb_(true);
+      }
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kDisconnected:
-      VLOG(1) << "Client " << client_id_ << ": Connection disconnected";
-      Close();
+      LOG(WARNING) << "Client " << client_id_
+                   << ": Connection transiently disconnected, waiting for ICE "
+                      "recovery";
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kFailed:
       LOG(ERROR) << "Client " << client_id_ << ": Connection failed";
