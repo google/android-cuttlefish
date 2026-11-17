@@ -1,3 +1,4 @@
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
@@ -57,6 +58,25 @@ cf_cc_test(
     deps = [
         "//cuttlefish/result:function_name",
         "//cuttlefish/result:result_type",
+    ],
+)
+
+cc_shared_library(
+    name = "result_shared",
+    dynamic_deps = [
+        "//:absl_shared",
+        "//:fmt_shared",
+    ],
+    shared_lib_name = "libcuttlefish_bazel_result.so",
+    user_link_flags = [
+        "-Wl,-rpath,$ORIGIN/",
+    ],
+    deps = [
+        ":error_type",
+        ":result",
+        "//cuttlefish/ansi_codes",
+        "//cuttlefish/ansi_codes:should_color",
+        "//cuttlefish/common/libs/utils:environment",
     ],
 )
 

@@ -1,3 +1,4 @@
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
@@ -106,6 +107,50 @@ cf_cc_library(
         "@abseil-cpp//absl/strings:string_view",
         "@fruit",
         "@jsoncpp",
+    ],
+)
+
+cc_shared_library(
+    name = "cuttlefish_config_shared",
+    dynamic_deps = [
+        "//:absl_shared",
+        "//:fmt_shared",
+        "//:grpc_protobuf_shared",
+        "//:jsoncpp_shared",
+        "//cuttlefish/common/libs/fs:fs_shared",
+        "//cuttlefish/common/libs/utils:files_shared",
+        "//cuttlefish/result:result_shared",
+    ],
+    exports_filter = [
+        "//cuttlefish/common/libs/utils:__subpackages__",
+        "//cuttlefish/host/commands/assemble_cvd:__subpackages__",
+        "//cuttlefish/host/libs/config:__subpackages__",
+        "//cuttlefish/host/libs/log_names:__subpackages__",
+        "//cuttlefish/process:__subpackages__",
+    ],
+    shared_lib_name = "libcuttlefish_bazel_host_config.so",
+    user_link_flags = [
+        "-Wl,-rpath,$ORIGIN/",
+    ],
+    deps = [
+        ":config_constants",
+        ":config_fragment",
+        ":config_utils",
+        ":cuttlefish_config",
+        ":data_image_policy",
+        ":external_network_mode",
+        ":gpu_mode",
+        ":guest_hwui_renderer",
+        ":guest_renderer_preload",
+        ":mte",
+        ":secure_hals",
+        ":vmm_mode",
+        "//cuttlefish/common/libs/utils:device_type",
+        "//cuttlefish/common/libs/utils:flags_validator",
+        "//cuttlefish/common/libs/utils:host_info",
+        "//cuttlefish/common/libs/utils:random",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
+        "//cuttlefish/host/libs/log_names",
     ],
 )
 

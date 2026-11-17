@@ -124,6 +124,13 @@ cf_cc_binary(
     name = "process_sandboxer",
     srcs = ["main.cpp"],
     depend_on_what_you_use_enabled = False,
+    dynamic_deps = select({
+        "@platforms//os:linux": [
+            "//:absl_shared",
+            "//:grpc_protobuf_shared",
+        ],
+        "//conditions:default": [],
+    }),
     include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:logs",

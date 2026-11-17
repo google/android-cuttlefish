@@ -13,5 +13,14 @@ COPTS = [
     "-Werror=thread-safety-analysis",
 ]
 
-LINKOPTS = [
-]
+LINKOPTS = select({
+    "@platforms//os:linux": [
+        "-Wl,-rpath,$ORIGIN/../lib64",
+        "-Wl,-rpath,$ORIGIN/../lib",
+    ],
+    "@platforms//os:macos": [
+        "-Wl,-rpath,@loader_path/../lib64",
+        "-Wl,-rpath,@loader_path/../lib",
+    ],
+    "//conditions:default": [],
+})

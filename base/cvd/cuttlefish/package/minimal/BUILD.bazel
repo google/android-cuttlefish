@@ -46,6 +46,19 @@ package_files(
         "etc/cvd_config/cvd_config_tablet.json": "//cuttlefish/host/commands/assemble_cvd/config_json:config_tablet.json",
         "etc/cvd_config/cvd_config_tv.json": "//cuttlefish/host/commands/assemble_cvd/config_json:config_tv.json",
         "etc/cvd_config/cvd_config_wear.json": "//cuttlefish/host/commands/assemble_cvd/config_json:config_wear.json",
-    },
+    } | select({
+        "@platforms//os:linux": {
+            "lib64/libcuttlefish_bazel_absl.so": "//:absl_shared",
+            "lib64/libcuttlefish_bazel_boringssl.so": "//:boringssl_shared",
+            "lib64/libcuttlefish_bazel_host_config.so": "//cuttlefish/host/libs/config:cuttlefish_config_shared",
+            "lib64/libcuttlefish_bazel_files.so": "//cuttlefish/common/libs/utils:files_shared",
+            "lib64/libcuttlefish_bazel_fmt.so": "//:fmt_shared",
+            "lib64/libcuttlefish_bazel_fs.so": "//cuttlefish/common/libs/fs:fs_shared",
+            "lib64/libcuttlefish_bazel_grpc_protobuf.so": "//:grpc_protobuf_shared",
+            "lib64/libcuttlefish_bazel_jsoncpp.so": "//:jsoncpp_shared",
+            "lib64/libcuttlefish_bazel_result.so": "//cuttlefish/result:result_shared",
+        },
+        "//conditions:default": {},
+    }),
     visibility = ["//:android_cuttlefish"],
 )
