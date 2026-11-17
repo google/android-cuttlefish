@@ -53,7 +53,7 @@ struct NvencEncoderConfig {
   int32_t max_bitrate_bps;
 
   // Called once during InitNvenc after preset loading.
-  void (*apply_defaults)(NV_ENC_CONFIG* config);
+  void (*apply_defaults)(NV_ENC_CONFIG* config, int width, int height);
 
   // Called per frame before nvEncEncodePicture. Must not clobber
   // encodePicFlags.

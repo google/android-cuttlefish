@@ -22,7 +22,10 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include "api/video/render_resolution.h"
+#include "api/video/video_bitrate_allocation.h"
 #include "modules/video_coding/include/video_error_codes.h"
+#include "modules/video_coding/svc/scalable_video_controller_no_layering.h"
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/abgr_buffer.h"
 #include "cuttlefish/host/libs/gpu/cuda_loader.h"
@@ -107,6 +110,7 @@ void NvencVideoEncoder::DestroyEncoder() {
   input_resource_registered_ = false;
   registered_pixel_format_ = 0;
   nvenc_input_format_ = NV_ENC_BUFFER_FORMAT_UNDEFINED;
+  svc_controller_.reset();
 
   inited_ = false;
 }
@@ -138,6 +142,14 @@ int NvencVideoEncoder::InitEncode(
 
   if (bitrate_bps_ < config_.min_bitrate_bps) {
     bitrate_bps_ = config_.min_bitrate_bps;
+  }
+
+  if (config_.webrtc_codec_type == webrtc::kVideoCodecAV1) {
+    svc_controller_ =
+        std::make_unique<webrtc::ScalableVideoControllerNoLayering>();
+    webrtc::VideoBitrateAllocation allocation;
+    allocation.SetBitrate(0, 0, bitrate_bps_);
+    svc_controller_->OnRatesUpdated(allocation);
   }
 
   VLOG(1) << "Initializing CUDA...";
@@ -241,7 +253,7 @@ Result<void> NvencVideoEncoder::InitNvenc() {
   stored_encode_config_.rcParams.vbvInitialDelay = bitrate_bps_;
   stored_encode_config_.rcParams.zeroReorderDelay = 1;
 
-  config_.apply_defaults(&stored_encode_config_);
+  config_.apply_defaults(&stored_encode_config_, width_, height_);
 
   stored_init_params_.encodeConfig = &stored_encode_config_;
 
@@ -314,6 +326,9 @@ void NvencVideoEncoder::SetRates(const RateControlParameters& parameters) {
         static_cast<int32_t>(parameters.bitrate.get_sum_bps());
     new_bitrate = std::min(std::max(requested, config_.min_bitrate_bps),
                            config_.max_bitrate_bps);
+    if (svc_controller_) {
+      svc_controller_->OnRatesUpdated(parameters.bitrate);
+    }
   }
 
   uint32_t new_framerate = framerate_;
@@ -410,6 +425,7 @@ Result<void> NvencVideoEncoder::EncodeInner(
   CF_EXPECT(is_argb || is_abgr,
             "Unsupported pixel format: 0x" << std::hex << pixel_format);
 
+  std::vector<webrtc::ScalableVideoController::LayerFrameConfig> layer_frames;
   webrtc::EncodedImage encoded_image;
   {
     CF_EXPECT(shared_context_ != nullptr, "CUDA context is null");
@@ -466,8 +482,19 @@ Result<void> NvencVideoEncoder::EncodeInner(
 
     config_.set_pic_params(&pic_params);
 
-    if (frame_types && !frame_types->empty() &&
-        (*frame_types)[0] == webrtc::VideoFrameType::kVideoFrameKey) {
+    bool force_keyframe =
+        frame_types && !frame_types->empty() &&
+        (*frame_types)[0] == webrtc::VideoFrameType::kVideoFrameKey;
+    if (svc_controller_) {
+      layer_frames = svc_controller_->NextFrameConfig(force_keyframe);
+      if (layer_frames.empty()) {
+        nvenc_funcs_->nvEncUnmapInputResource(encoder_.get(),
+                                              map_input.mappedResource);
+        return {};
+      }
+      force_keyframe = force_keyframe || layer_frames[0].IsKeyframe();
+    }
+    if (force_keyframe) {
       pic_params.encodePicFlags |= NV_ENC_PIC_FLAG_FORCEIDR;
     }
 
@@ -507,6 +534,10 @@ Result<void> NvencVideoEncoder::EncodeInner(
                                 lock_bs.pictureType == NV_ENC_PIC_TYPE_I)
                                    ? webrtc::VideoFrameType::kVideoFrameKey
                                    : webrtc::VideoFrameType::kVideoFrameDelta;
+    if (encoded_image._frameType == webrtc::VideoFrameType::kVideoFrameKey &&
+        !layer_frames.empty()) {
+      layer_frames[0].Keyframe();
+    }
 
     nvenc_funcs_->nvEncUnlockBitstream(encoder_.get(), nvenc_output_bitstream_);
   }
@@ -514,6 +545,18 @@ Result<void> NvencVideoEncoder::EncodeInner(
   webrtc::CodecSpecificInfo codec_specific = {};
   codec_specific.codecType = config_.webrtc_codec_type;
   codec_specific.end_of_picture = true;
+  if (svc_controller_ && !layer_frames.empty()) {
+    const bool is_keyframe =
+        encoded_image._frameType == webrtc::VideoFrameType::kVideoFrameKey;
+    codec_specific.generic_frame_info =
+        svc_controller_->OnEncodeDone(layer_frames[0]);
+    if (is_keyframe && codec_specific.generic_frame_info) {
+      codec_specific.template_structure =
+          svc_controller_->DependencyStructure();
+      codec_specific.template_structure->resolutions = {
+          webrtc::RenderResolution(width_, height_)};
+    }
+  }
 
   callback_->OnEncodedImage(encoded_image, &codec_specific);
 
