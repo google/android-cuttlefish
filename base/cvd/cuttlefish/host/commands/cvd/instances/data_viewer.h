@@ -23,6 +23,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <utility>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/signals.h"
@@ -69,24 +70,33 @@ class DataViewer {
   Result<R> WithExclusiveLock(
       std::function<Result<R>(cvd::PersistentData&)> task) {
     DeadlockProtector dp(*this);
-    auto fd = CF_EXPECT(LockBackingFile(LOCK_SH));
+    auto fd = CF_EXPECT(LockBackingFile(LOCK_EX));
     auto data = CF_EXPECT(LoadData(fd));
     auto res = task(data);
     if (!res.has_value()) {
       // Don't update if there is an error
       return res;
     }
-    // Block signals while writing to the instance database file. This reduces
-    // the chances of corrupting the file.
-    sigset_t all_signals;
-    sigfillset(&all_signals);
-    SignalMasker blocker(all_signals);
-    // Overwrite the file contents, don't append
-    CF_EXPECTF(fd->Truncate(0), "Failed to truncate fd: {}", fd->StrError());
-    CF_EXPECTF(fd->LSeek(0, SEEK_SET) >= 0, "Failed to seek to 0: {}",
-               fd->StrError());
     CF_EXPECT(StoreData(fd, data));
     return res;
+  }
+
+  /**
+   * Like `WithExclusiveLock`, except the backing file is only truncated and
+   * rewritten when the second element of the returned pair is `true`
+   * (indicating `data` was modified).
+   */
+  template <typename R>
+  Result<R> WithConditionalExclusiveLock(
+      std::function<Result<std::pair<R, bool>>(cvd::PersistentData&)> task) {
+    DeadlockProtector dp(*this);
+    auto fd = CF_EXPECT(LockBackingFile(LOCK_EX));
+    auto data = CF_EXPECT(LoadData(fd));
+    auto [value, modified] = CF_EXPECT(task(data));
+    if (modified) {
+      CF_EXPECT(StoreData(fd, data));
+    }
+    return std::move(value);
   }
 
  private:
