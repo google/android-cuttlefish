@@ -16,7 +16,6 @@ package orchestrator
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -117,9 +116,9 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 	return nil
 }
 
-// See https://pkg.go.dev/io/ioutil@go1.13.15#TempFile
+// See https://pkg.go.dev/os#CreateTemp
 func createTempFile(pattern string, data string, mode os.FileMode) (*os.File, error) {
-	file, err := ioutil.TempFile("", pattern)
+	file, err := os.CreateTemp("", pattern)
 	if err != nil {
 		return nil, err
 	}

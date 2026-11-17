@@ -21,7 +21,6 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -59,7 +58,7 @@ func TestUpdateArtifactWithSingleChunkSucceeds(t *testing.T) {
 	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
 		t.Fatal(err)
 	}
-	b, err := ioutil.ReadFile(filepath.Join(rootDir, checksum, testFileName))
+	b, err := os.ReadFile(filepath.Join(rootDir, checksum, testFileName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,7 +157,7 @@ func TestUpdateArtifactWithMultipleSerialChunkSucceeds(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	b, err := ioutil.ReadFile(filepath.Join(rootDir, checksum, testFileName))
+	b, err := os.ReadFile(filepath.Join(rootDir, checksum, testFileName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +188,7 @@ func TestUpdateArtifactWithMultipleParallelChunkSucceeds(t *testing.T) {
 		}(chunk)
 	}
 	wg.Wait()
-	b, err := ioutil.ReadFile(filepath.Join(rootDir, checksum, testFileName))
+	b, err := os.ReadFile(filepath.Join(rootDir, checksum, testFileName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -295,7 +294,7 @@ func TestExtractArtifactFailsWithInvalidFileFormat(t *testing.T) {
 	tempDir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, tempDir)
 	archive := filepath.Join(tempDir, testFileName)
-	if err := ioutil.WriteFile(archive, []byte(testFileData), 0644); err != nil {
+	if err := os.WriteFile(archive, []byte(testFileData), 0644); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := updateAndExtractArtifact(t, archive); err == nil {
@@ -559,7 +558,7 @@ func getContents(dir string) (map[string]string, error) {
 		}
 		if relPath, err := filepath.Rel(dir, path); err != nil {
 			return err
-		} else if content, err := ioutil.ReadFile(path); err != nil {
+		} else if content, err := os.ReadFile(path); err != nil {
 			return err
 		} else {
 			contents[relPath] = string(content)
@@ -573,7 +572,7 @@ func getContents(dir string) (map[string]string, error) {
 }
 
 func createZip(dir string, contents map[string]string) (string, error) {
-	zipFile, err := ioutil.TempFile(dir, "*.zip")
+	zipFile, err := os.CreateTemp(dir, "*.zip")
 	if err != nil {
 		return "", err
 	}
@@ -624,7 +623,7 @@ type archiveEntry struct {
 }
 
 func createTarGz(dir string, contents map[string]archiveEntry) (string, error) {
-	tarFile, err := ioutil.TempFile(dir, "*.tar.gz")
+	tarFile, err := os.CreateTemp(dir, "*.tar.gz")
 	if err != nil {
 		return "", err
 	}
@@ -702,7 +701,7 @@ func updateArtifact(t *testing.T, archivePath string) (*UserArtifactsManagerImpl
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := ioutil.ReadFile(archivePath)
+	data, err := os.ReadFile(archivePath)
 	if err != nil {
 		t.Fatal(err)
 	}
