@@ -124,9 +124,11 @@ Result<ParsedFlags> GetParsedFlags() {
     std::vector<GuestConfig> guest_configs;
     if (parsed_flags.boot_image && parsed_flags.super_image &&
         parsed_flags.vendor_boot) {
-      guest_configs = CF_EXPECT(GetGuestConfigs(
-          fetcher_configs, *parsed_flags.boot_image, *parsed_flags.super_image,
-          parsed_flags.system_image_dir, *parsed_flags.vendor_boot));
+      guest_configs = GetGuestConfigs(fetcher_configs, *parsed_flags.boot_image,
+                                      *parsed_flags.super_image,
+                                      parsed_flags.system_image_dir,
+                                      *parsed_flags.vendor_boot)
+                          .value_or(std::vector<GuestConfig>());
     }
 
     if (!guest_configs.empty()) {
