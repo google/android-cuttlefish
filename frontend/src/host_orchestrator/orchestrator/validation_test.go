@@ -43,6 +43,31 @@ func TestValidateSnapshotID(t *testing.T) {
 	}
 }
 
+func TestValidateUserArtifactChecksum(t *testing.T) {
+	var inputs = []struct {
+		val   string
+		fails bool
+	}{
+		{"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", false},
+		{"0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF", true},
+		{"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde", true},
+		{"../0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcd", true},
+		{"", true},
+	}
+
+	for _, i := range inputs {
+
+		err := ValidateUserArtifactChecksum(i.val)
+
+		if i.fails && err == nil {
+			t.Fatalf("expected error, got %s", err)
+		}
+		if !i.fails && err != nil {
+			t.Fatalf("expected <ni>, got %s", err)
+		}
+	}
+}
+
 func TestValidateCreateSnapshotRequest(t *testing.T) {
 	var inputs = []struct {
 		val   *apiv1.CreateSnapshotRequest

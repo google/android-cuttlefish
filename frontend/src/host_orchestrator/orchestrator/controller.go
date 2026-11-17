@@ -950,6 +950,9 @@ func (h *updateImageDirectoryHandler) Handle(r *http.Request) (interface{}, erro
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
+	if err := ValidateUserArtifactChecksum(req.UserArtifactChecksum); err != nil {
+		return nil, err
+	}
 	dir := h.uadr.ExtractedArtifactPath(req.UserArtifactChecksum)
 	if exists, err := dirExists(dir); err != nil {
 		return nil, fmt.Errorf("failed to check existence of directory: %w", err)
