@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <atomic>
@@ -46,15 +47,15 @@ class DisplayRingBuffer {
  public:
   ~DisplayRingBuffer();
   static Result<std::unique_ptr<DisplayRingBuffer>> Create(
-      const std::string& name, int size);
+      const std::string& name, size_t size);
   // Allowing optional in the case the buffer doesn't yet exist.
   static std::optional<std::unique_ptr<DisplayRingBuffer>> ShmemGet(
-      const std::string& name, int size);
+      const std::string& name, size_t size);
 
   void* GetAddress();
 
-  uint8_t* WriteNextFrame(const uint8_t* frame_data, int stride, int width,
-                          int height);
+  uint8_t* WriteNextFrame(const uint8_t* frame_data, size_t stride,
+                          size_t width, size_t height);
   uint8_t* CurrentFrame();
   uint8_t* ComputeFrameAddressForIndex(uint32_t index);
 
@@ -72,12 +73,13 @@ class DisplayRingBufferManager {
  public:
   DisplayRingBufferManager(int vm_index, std::string group_uuid);
   Result<void> CreateLocalDisplayBuffer(int vm_index, int display_index,
-                                        int display_width, int display_height);
+                                        size_t display_width,
+                                        size_t display_height);
   uint8_t* WriteFrame(int vm_index, int display_index,
-                      const uint8_t* frame_data, int stride, int width,
-                      int height);
-  uint8_t* ReadFrame(int vm_index, int display_index, int frame_width,
-                     int frame_height);
+                      const uint8_t* frame_data, size_t stride, size_t width,
+                      size_t height);
+  uint8_t* ReadFrame(int vm_index, int display_index, size_t frame_width,
+                     size_t frame_height);
 
  private:
   std::string MakeLayerName(int display_index, int vm_index = -1);
