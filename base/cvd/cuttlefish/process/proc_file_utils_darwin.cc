@@ -16,6 +16,7 @@
 
 #include <errno.h>
 #include <libproc.h>
+#include <signal.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -169,5 +170,7 @@ Result<ProcInfo> ExtractProcInfo(const pid_t pid) {
 Result<pid_t> Ppid(const pid_t pid) {
   return CF_EXPECT(KinfoProc(pid)).kp_eproc.e_ppid;
 }
+
+bool ProcessAlive(const pid_t pid) { return kill(pid, 0) == 0; }
 
 }  // namespace cuttlefish

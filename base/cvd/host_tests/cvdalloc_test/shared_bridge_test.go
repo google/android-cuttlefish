@@ -21,10 +21,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-// Start two instances, stop one, and check that the shared bridges, gateways
-// and dnsmasq are untouched.
-func TestCvdallocSharedBridgeRelease(t *testing.T) {
-	wantBoth := phaseState{
+func bothInstancesState() phaseState {
+	return phaseState{
 		Ifaces: []netIface{
 			{Name: "cvd-pi-ebr", Addr: "192.168.192.1/24", Brd: "192.168.192.255"},
 			{Name: "cvd-pi-wbr", Addr: "192.168.160.1/24", Brd: "192.168.160.255"},
@@ -51,8 +49,10 @@ func TestCvdallocSharedBridgeRelease(t *testing.T) {
 		},
 		DnsmasqIfaces: []string{"cvd-pi-ebr", "cvd-pi-wbr"},
 	}
+}
 
-	wantOnlyTwo := phaseState{
+func onlyInstance2State() phaseState {
+	return phaseState{
 		Ifaces: []netIface{
 			{Name: "cvd-pi-ebr", Addr: "192.168.192.1/24", Brd: "192.168.192.255"},
 			{Name: "cvd-pi-wbr", Addr: "192.168.160.1/24", Brd: "192.168.160.255"},
@@ -70,7 +70,11 @@ func TestCvdallocSharedBridgeRelease(t *testing.T) {
 		},
 		DnsmasqIfaces: []string{"cvd-pi-ebr", "cvd-pi-wbr"},
 	}
+}
 
+// Start two instances, stop one, and check that the shared bridges, gateways
+// and dnsmasq are untouched.
+func TestCvdallocSharedBridgeRelease(t *testing.T) {
 	opts := cmpOptions()
 
 	s := common.NewSandbox(t)
@@ -85,14 +89,14 @@ func TestCvdallocSharedBridgeRelease(t *testing.T) {
 	if err != nil {
 		t.Fatalf("start instance 2: %v", err)
 	}
-	if diff := cmp.Diff(wantBoth, observe(t, s), opts); diff != "" {
+	if diff := cmp.Diff(bothInstancesState(), observe(t, s), opts); diff != "" {
 		t.Errorf("host state with both instances (-want +got):\n%s", diff)
 	}
 
 	if err := c.StopInstance(inst1); err != nil {
 		t.Fatalf("stop instance 1: %v", err)
 	}
-	if diff := cmp.Diff(wantOnlyTwo, observe(t, s), opts); diff != "" {
+	if diff := cmp.Diff(onlyInstance2State(), observe(t, s), opts); diff != "" {
 		t.Errorf("host state after releasing instance 1 (-want +got):\n%s", diff)
 	}
 

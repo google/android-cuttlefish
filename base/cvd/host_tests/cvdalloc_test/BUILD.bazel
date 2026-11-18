@@ -18,6 +18,7 @@ go_test(
     name = "cvdalloc_test",
     size = "large",
     srcs = [
+        "crash_test.go",
         "main_test.go",
         "shared_bridge_test.go",
     ],

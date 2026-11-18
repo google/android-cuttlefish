@@ -32,6 +32,7 @@
 #include "allocd/net/nft_nat_table.h"
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 #include "cuttlefish/host/commands/cvdalloc/sem.h"
@@ -102,6 +103,38 @@ Result<NftNatTable> CreateNatTable(int id) {
       });
 }
 
+constexpr const char* kTapKinds[] = {"mtap", "wtap", "wifiap", "etap"};
+
+// TODO: Move this platform-specific check into the allocd drivers.
+bool OwnerAlive(int id) {
+  const Result<bool> alive = NftNatTable::Exists(NatTableName(id));
+  if (!alive.has_value()) {
+    LOG(WARNING) << "cvdalloc: assuming id " << id
+                 << " is alive, cannot check: " << alive.error().Message();
+    return true;
+  }
+  return *alive;
+}
+
+void RemoveStaleTaps() {
+  for (int id = 1; id <= static_cast<int>(kMaxIfaceNameId); ++id) {
+    std::vector<std::string> taps;
+    for (const char* kind : kTapKinds) {
+      std::string name = CvdallocInterfaceName(kind, id);
+      if (NetworkInterfaceExists(name)) {
+        taps.push_back(std::move(name));
+      }
+    }
+    if (taps.empty() || OwnerAlive(id)) {
+      continue;
+    }
+    for (const std::string& tap : taps) {
+      LOG(INFO) << "cvdalloc: removing stale interface " << tap;
+      DestroyIface(tap);
+    }
+  }
+}
+
 }  // namespace
 
 Result<int> CvdallocMain(int argc, char* argv[]) {
@@ -128,6 +161,7 @@ Result<int> CvdallocMain(int argc, char* argv[]) {
   // Elevate before creating the table and taps, so they're cleaned up before
   // privileges are dropped.
   const ScopedPrivileges privileges = CF_EXPECT(ScopedPrivileges::Elevate());
+  RemoveStaleTaps();
   // Create the table before the taps and delete it after them. If another
   // cvdalloc is using this id, we stop here before touching its taps.
   const NftNatTable nat = CF_EXPECT(CreateNatTable(id));

@@ -15,6 +15,7 @@
  */
 
 #include <fcntl.h>
+#include <stddef.h>
 #include <sys/stat.h>  // IWYU pragma: keep
 #include <sys/types.h>
 #include <unistd.h>
@@ -251,6 +252,21 @@ Result<pid_t> Ppid(const pid_t pid) {
     return static_cast<pid_t>(ppid);
   }
   return CF_ERR("Status file does not have PPid: line in the right format");
+}
+
+bool ProcessAlive(const pid_t pid) {
+  const Result<std::string> stat =
+      ReadFileContents(fmt::format("/proc/{}/stat", pid));
+  if (!stat.has_value()) {
+    return false;
+  }
+  // The command name can contain ')', so search from the end.
+  const size_t comm_end = stat->rfind(')');
+  if (comm_end == std::string::npos || comm_end + 2 >= stat->size()) {
+    return false;
+  }
+  const char state = (*stat)[comm_end + 2];
+  return state != 'Z' && state != 'X';
 }
 
 }  // namespace cuttlefish

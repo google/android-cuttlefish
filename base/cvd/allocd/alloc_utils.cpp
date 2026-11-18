@@ -19,13 +19,15 @@
 #include <net/if.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/types.h>
 
-#include <fstream>
+#include <optional>
 #include <sstream>
 #include <string>
 
 #include "absl/base/no_destructor.h"
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
@@ -36,6 +38,7 @@
 #include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/process/execute.h"
+#include "cuttlefish/process/proc_file_utils.h"
 #include "cuttlefish/result/result.h"
 
 #ifdef __linux__
@@ -53,6 +56,31 @@ Result<std::string> SearchForDnsmasq() {
   }
 
   return CF_EXPECT(Search({"/usr/sbin", "/sbin"}, "dnsmasq"));
+}
+
+std::string DnsmasqPidFile(absl::string_view bridge_name) {
+  return absl::StrCat(CvdDir(), "/cuttlefish-dnsmasq-", bridge_name, ".pid");
+}
+
+std::optional<pid_t> ReadDnsmasqPid(absl::string_view bridge_name) {
+  const Result<std::string> contents =
+      ReadFileContents(DnsmasqPidFile(bridge_name));
+  pid_t pid = 0;
+  if (!contents.has_value() || !absl::SimpleAtoi(*contents, &pid) || pid <= 0) {
+    return std::nullopt;
+  }
+  return pid;
+}
+
+bool DnsmasqAlive(absl::string_view bridge_name) {
+  const std::optional<pid_t> pid = ReadDnsmasqPid(bridge_name);
+  return pid.has_value() && ProcessAlive(*pid);
+}
+
+bool StartBridgeDnsmasq(absl::string_view bridge_name,
+                        absl::string_view ipaddr) {
+  return StartDnsmasq(bridge_name, absl::StrFormat("%s.1", ipaddr),
+                      absl::StrFormat("%s.2,%s.255", ipaddr, ipaddr));
 }
 
 }  // namespace
@@ -199,7 +227,6 @@ bool SetupBridgeGateway(absl::string_view bridge_name,
   GatewayConfig config{false, false};
   auto gateway = absl::StrFormat("%s.1", ipaddr);
   auto netmask = "/24";
-  auto dhcp_range = absl::StrFormat("%s.2,%s.255", ipaddr, ipaddr);
 
   if (!AddGateway(bridge_name, gateway, netmask).has_value()) {
     return false;
@@ -207,7 +234,7 @@ bool SetupBridgeGateway(absl::string_view bridge_name,
 
   config.has_gateway = true;
 
-  if (!StartDnsmasq(bridge_name, gateway, dhcp_range)) {
+  if (!StartBridgeDnsmasq(bridge_name, ipaddr)) {
     CleanupBridgeGateway(bridge_name, ipaddr, config);
     return false;
   }
@@ -250,31 +277,23 @@ bool StartDnsmasq(absl::string_view bridge_name, absl::string_view gateway,
               absl::StrCat("--dhcp-option=option:dns-server,", dns_servers),
               absl::StrCat("--dhcp-option=option6:dns-server,", dns6_servers),
               "--conf-file=",
-              absl::StrCat("--pid-file=", CvdDir(), "/cuttlefish-dnsmasq-",
-                           bridge_name, ".pid"),
+              absl::StrCat("--pid-file=", DnsmasqPidFile(bridge_name)),
               absl::StrCat("--dhcp-leasefile=", CvdDir(),
                            "/cuttlefish-dnsmasq-", bridge_name, ".leases"),
               "--dhcp-no-override"}) == 0;
 }
 
 bool StopDnsmasq(absl::string_view name) {
-  std::ifstream file;
-  std::string filename =
-      absl::StrCat(CvdDir(), "/cuttlefish-dnsmasq-", name, ".pid");
   LOG(INFO) << "stopping dnsmasq for interface: " << name;
-  file.open(filename);
-  if (!file.is_open()) {
-    LOG(INFO) << "dnsmasq file:" << filename
-              << " could not be opened, assume dnsmasq has already stopped";
+  const std::optional<pid_t> pid = ReadDnsmasqPid(name);
+  if (!pid.has_value()) {
+    LOG(INFO) << "dnsmasq file:" << DnsmasqPidFile(name)
+              << " is missing or empty, assume dnsmasq has already stopped";
     return true;
   }
 
-  std::string pid;
-  file >> pid;
-  file.close();
-
   // TODO: Let's use kill(2) instead of subjecting ourselves to this.
-  bool ret = Execute({"kill", pid}) == 0;
+  const bool ret = Execute({"kill", std::to_string(*pid)}) == 0;
   if (ret) {
     LOG(INFO) << "dnsmasq for:" << name << "successfully stopped";
   } else {
@@ -287,8 +306,12 @@ bool CreateEthernetBridgeIface(absl::string_view name,
                                absl::string_view ipaddr) {
   auto exists = BridgeExists(name);
   if (exists.has_value() && *exists) {
-    LOG(INFO) << "Bridge " << name << " exists already, doing nothing.";
-    return true;
+    LOG(INFO) << "Bridge " << name << " exists already, reusing it.";
+    if (DnsmasqAlive(name)) {
+      return true;
+    }
+    LOG(INFO) << "Restarting dnsmasq for bridge " << name;
+    return StartBridgeDnsmasq(name, ipaddr);
   }
 
   if (!CreateBridge(name).has_value()) {

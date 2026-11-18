@@ -30,6 +30,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/process:execute",
+        "//cuttlefish/process:proc_file_utils",
         "//cuttlefish/result",
         "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/log",
