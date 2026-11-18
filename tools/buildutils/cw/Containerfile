@@ -4,15 +4,11 @@ FROM ${BASE_IMAGE} AS base
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt update -y && apt upgrade -y
-RUN apt install -y sudo devscripts
+RUN apt install -y sudo
 
 # DO NOT INSTALL custom packages here!
-# Only install packages found in https://github.com/google/android-cuttlefish/blob/main/tools/buildutils/build_packages.sh
 
-COPY ./tools/buildutils/installbazel.sh /installbazel.sh
-RUN /installbazel.sh && rm /installbazel.sh
-
-COPY ./tools/buildutils/installgolang.sh /installgolang.sh
-RUN /installgolang.sh && rm /installgolang.sh
+COPY ./tools/buildutils/ /buildutils/
+RUN /buildutils/setup_build_env.sh && rm -rf /buildutils
 
 ENTRYPOINT ["tools/buildutils/cw/entrypoint.sh"]
