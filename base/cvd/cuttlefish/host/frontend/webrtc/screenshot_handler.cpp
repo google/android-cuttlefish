@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/frontend/webrtc/screenshot_handler.h"
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <strings.h>
@@ -42,7 +43,7 @@ Result<std::vector<uint8_t>> FrameToRgb(
     const std::shared_ptr<VideoFrameBuffer>& frame) {
   const int width = frame->width();
   const int height = frame->height();
-  std::vector<uint8_t> rgb_frame(width * height * 3, 0);
+  std::vector<uint8_t> rgb_frame(static_cast<size_t>(width) * height * 3, 0);
 
   const uint32_t format = frame->PixelFormat();
   int convert_res = -1;
@@ -93,7 +94,8 @@ Result<void> PngScreenshot(const std::shared_ptr<VideoFrameBuffer>& frame,
   png_write_info(png_ptr, info_ptr);
 
   for (int y = 0; y < height; ++y) {
-    png_write_row(png_ptr, rgb_frame.data() + y * width * 3);
+    png_write_row(png_ptr,
+                  rgb_frame.data() + static_cast<size_t>(y) * width * 3);
   }
 
   // Finalize
@@ -120,9 +122,12 @@ Result<void> JpegScreenshot(const std::shared_ptr<VideoFrameBuffer>& frame,
   const int stride_uv =
       (((width + 1) / 2 + kStrideAlignment - 1) / kStrideAlignment) *
       kStrideAlignment;
-  std::vector<uint8_t> y_plane(stride_y * height + kPlanePadding);
-  std::vector<uint8_t> u_plane(stride_uv * ((height + 1) / 2) + kPlanePadding);
-  std::vector<uint8_t> v_plane(stride_uv * ((height + 1) / 2) + kPlanePadding);
+  std::vector<uint8_t> y_plane(static_cast<size_t>(stride_y) * height +
+                               kPlanePadding);
+  std::vector<uint8_t> u_plane(
+      static_cast<size_t>(stride_uv) * ((height + 1) / 2) + kPlanePadding);
+  std::vector<uint8_t> v_plane(
+      static_cast<size_t>(stride_uv) * ((height + 1) / 2) + kPlanePadding);
 
   const uint32_t format = frame->PixelFormat();
   int convert_res = -1;
@@ -191,14 +196,14 @@ Result<void> JpegScreenshot(const std::shared_ptr<VideoFrameBuffer>& frame,
     // If the image height is not a multiple of kScanRows it will be padded with
     // rows from the previous iteration.
     for (int r = 0; r < kScanRows && r + row < cinfo.image_height; ++r) {
-      int offset = (row + r) * stride_y;
+      size_t offset = static_cast<size_t>(row + r) * stride_y;
       y_rows[r] = &y_plane[offset];
     }
     for (int r = 0;
          r < kScanRows / 2 && r + row / 2 < (cinfo.image_height + 1) / 2; ++r) {
-      int offset_u = (row / 2 + r) * stride_uv;
+      size_t offset_u = static_cast<size_t>(row / 2 + r) * stride_uv;
       u_rows[r] = &u_plane[offset_u];
-      int offset_v = (row / 2 + r) * stride_uv;
+      size_t offset_v = static_cast<size_t>(row / 2 + r) * stride_uv;
       v_rows[r] = &v_plane[offset_v];
     }
     jpeg_write_raw_data(&cinfo, rows, kScanRows);
