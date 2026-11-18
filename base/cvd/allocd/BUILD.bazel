@@ -7,14 +7,7 @@ package(
 
 string_flag(
     name = "driver",
-    build_setting_default = "iproute2",
-)
-
-config_setting(
-    name = "netlink",
-    flag_values = {
-        ":driver": "netlink",
-    },
+    build_setting_default = "netlink",
 )
 
 config_setting(
@@ -29,8 +22,8 @@ cf_cc_library(
     srcs = ["alloc_utils.cpp"],
     hdrs = ["alloc_utils.h"],
     deps = select({
-        ":netlink": [":alloc_netlink"],
-        "//conditions:default": [":alloc_iproute2"],
+        ":iproute2": [":alloc_iproute2"],
+        "//conditions:default": [":alloc_netlink"],
     }) + [
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:files",
@@ -58,10 +51,31 @@ cf_cc_library(
     ],
 )
 
-cf_cc_library(
+alias(
     name = "alloc_netlink",
+    actual = select({
+        "@platforms//os:linux": ":alloc_netlink_linux",
+        "//conditions:default": ":alloc_netlink_dummy",
+    }),
+)
+
+cf_cc_library(
+    name = "alloc_netlink_dummy",
+    srcs = ["alloc_netlink_dummy.cpp"],
+    hdrs = ["alloc_driver.h"],
+    deps = [
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings:string_view",
+    ],
+)
+
+cf_cc_library(
+    name = "alloc_netlink_linux",
     srcs = ["alloc_netlink.cpp"],
     hdrs = ["alloc_driver.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
     deps = [
         "//allocd/net:netlink",
         "//cuttlefish/common/libs/fs:fd",
