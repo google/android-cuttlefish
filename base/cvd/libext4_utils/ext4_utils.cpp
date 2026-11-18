@@ -284,7 +284,9 @@ int read_ext(int fd, int verbose) {
     ret = lseek(fd, info.len, SEEK_SET);
     if (ret < 0) critical_error_errno("failed to seek to end of input image");
 
-    ret = lseek(fd, info.block_size * (aux_info.first_data_block + 1), SEEK_SET);
+    off_t bg_desc_offset =
+        static_cast<off_t>(info.block_size) * (aux_info.first_data_block + 1);
+    ret = lseek(fd, bg_desc_offset, SEEK_SET);
     if (ret < 0) critical_error_errno("failed to seek to block group descriptors");
 
     read_block_group_descriptors(fd);
