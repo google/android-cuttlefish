@@ -27,6 +27,7 @@
 
 #include "cuttlefish/host/libs/screen_connector/composition_manager.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <map>
@@ -52,12 +53,12 @@ static const int kAlphaIdx = 3;
 
 namespace cuttlefish {
 
-void alpha_blend_layer(uint8_t* frame_pixels, uint32_t h, uint32_t w,
-                       uint32_t stride, uint8_t* overlay) {
+void alpha_blend_layer(uint8_t* frame_pixels, size_t h, size_t w, size_t stride,
+                       uint8_t* overlay) {
   uint8_t* src = overlay;
-  for (uint32_t y = 0; y < h; y++) {
+  for (size_t y = 0; y < h; y++) {
     uint8_t* dst = frame_pixels + y * stride;
-    for (uint32_t x = 0; x < w; x++) {
+    for (size_t x = 0; x < w; x++) {
       float a = ((float)src[kAlphaIdx]) / 255.0f;
       float a_inv = 1.0f - a;
       dst[kRedIdx] = (uint8_t)((src[kRedIdx] * a) + (dst[kRedIdx] * a_inv));
@@ -231,8 +232,9 @@ void CompositionManager::ComposeFrame(
 
 uint8_t* CompositionManager::AlphaBlendLayers(uint8_t* frame_pixels,
                                               int display_number,
-                                              int frame_width, int frame_height,
-                                              uint32_t frame_stride_bytes) {
+                                              size_t frame_width,
+                                              size_t frame_height,
+                                              size_t frame_stride_bytes) {
   if (cfg_overlays_.count(display_number) == 0) {
     return frame_pixels;
   }
@@ -264,7 +266,7 @@ uint8_t* CompositionManager::AlphaBlendLayers(uint8_t* frame_pixels,
 }
 
 void CompositionManager::ComposeFrame(
-    int display, int width, int height,
+    int display, size_t width, size_t height,
     std::shared_ptr<VideoFrameBuffer> buffer) {
   uint8_t* shmem_local_display = display_ring_buffer_manager_.ReadFrame(
       cluster_index_, display, width, height);
@@ -272,14 +274,15 @@ void CompositionManager::ComposeFrame(
   if (frame_work_buffer_.find(display) == frame_work_buffer_.end()) {
     frame_work_buffer_[display] = std::vector<uint8_t>(width * height * 4);
   }
-  const int tmp_stride = width * 4;
+  const size_t tmp_stride = width * 4;
   uint8_t* tmp_buffer = frame_work_buffer_[display].data();
   memcpy(tmp_buffer, shmem_local_display, width * height * 4);
 
   AlphaBlendLayers(tmp_buffer, display, width, height, tmp_stride);
 
-  libyuv::CopyPlane(tmp_buffer, tmp_stride, buffer->Data(), buffer->Stride(),
-                    width * 4, height);
+  libyuv::CopyPlane(tmp_buffer, static_cast<int>(tmp_stride), buffer->Data(),
+                    buffer->Stride(), static_cast<int>(width * 4),
+                    static_cast<int>(height));
 }
 
 }  // namespace cuttlefish

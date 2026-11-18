@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <map>
@@ -74,9 +75,10 @@ class CompositionManager {
   };
   static std::map<int, std::vector<CompositionManager::DisplayOverlay>>
   ParseOverlays(std::vector<std::string> overlay_items);
-  uint8_t* AlphaBlendLayers(uint8_t* frame_pixels, int display, int frame_width,
-                            int frame_height, uint32_t frame_stride_bytes);
-  void ComposeFrame(int display, int width, int height,
+  uint8_t* AlphaBlendLayers(uint8_t* frame_pixels, int display,
+                            size_t frame_width, size_t frame_height,
+                            size_t frame_stride_bytes);
+  void ComposeFrame(int display, size_t width, size_t height,
                     std::shared_ptr<VideoFrameBuffer> buffer);
   DisplayRingBufferManager display_ring_buffer_manager_;
   int cluster_index_;

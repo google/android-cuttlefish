@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/libs/screen_connector/ring_buffer_manager.h"
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,8 +34,8 @@
 namespace cuttlefish {
 
 namespace {
-constexpr int kNumberOfRingBufferFrames = 3;
-inline int RingBufferMemorySize(int w, int h) {
+constexpr size_t kNumberOfRingBufferFrames = 3;
+inline size_t RingBufferMemorySize(size_t w, size_t h) {
   return sizeof(DisplayRingBufferHeader) +
          ((w * h * 4) * kNumberOfRingBufferFrames);
 }
@@ -43,7 +44,7 @@ inline int RingBufferMemorySize(int w, int h) {
 void* DisplayRingBuffer::GetAddress() { return shm_.get(); };
 
 Result<std::unique_ptr<DisplayRingBuffer>> DisplayRingBuffer::Create(
-    const std::string& name, int size) {
+    const std::string& name, size_t size) {
   Fd fd = CF_EXPECT(
       Fd::ShmOpen(name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR),
       "Display buffer create failed");
@@ -66,7 +67,7 @@ DisplayRingBuffer::~DisplayRingBuffer() {
 
 // Allowing optional in the case the buffer doesn't yet exist.
 std::optional<std::unique_ptr<DisplayRingBuffer>> DisplayRingBuffer::ShmemGet(
-    const std::string& name, int size) {
+    const std::string& name, size_t size) {
   Result<Fd, int> fd = Fd::ShmOpen(name, O_RDWR, S_IRUSR | S_IWUSR);
   if (!fd.has_value()) {
     return std::nullopt;
@@ -90,13 +91,14 @@ DisplayRingBufferHeader* DisplayRingBuffer::Header() {
 }
 
 uint8_t* DisplayRingBuffer::WriteNextFrame(const uint8_t* frame_data,
-                                           int stride, int width, int height) {
-  int new_frame_index =
+                                           size_t stride, size_t width,
+                                           size_t height) {
+  uint32_t new_frame_index =
       (Header()->last_valid_frame_index_ + 1) % kNumberOfRingBufferFrames;
 
   uint8_t* frame_memory_address = ComputeFrameAddressForIndex(new_frame_index);
-  const int row_bytes = width * Header()->bpp_;
-  for (int y = 0; y < height; ++y) {
+  const size_t row_bytes = width * Header()->bpp_;
+  for (size_t y = 0; y < height; ++y) {
     memcpy(frame_memory_address + y * row_bytes, frame_data + y * stride,
            row_bytes);
   }
@@ -110,9 +112,9 @@ uint8_t* DisplayRingBuffer::CurrentFrame() {
 }
 
 uint8_t* DisplayRingBuffer::ComputeFrameAddressForIndex(uint32_t index) {
-  int frame_memory_index =
-      (index *
-       (Header()->display_width_ * Header()->display_height_ * Header()->bpp_));
+  size_t frame_memory_index = static_cast<size_t>(index) *
+                              Header()->display_width_ *
+                              Header()->display_height_ * Header()->bpp_;
   return ((uint8_t*)GetAddress()) + sizeof(DisplayRingBufferHeader) +
          frame_memory_index;
 }
@@ -130,7 +132,8 @@ DisplayRingBufferManager::DisplayRingBufferManager(int vm_index,
     : local_group_index_(vm_index), group_uuid_(group_uuid) {}
 
 Result<void> DisplayRingBufferManager::CreateLocalDisplayBuffer(
-    int vm_index, int display_index, int display_width, int display_height) {
+    int vm_index, int display_index, size_t display_width,
+    size_t display_height) {
   auto buffer_key = std::make_pair(vm_index, display_index);
 
   if (!display_buffer_cache_.count(buffer_key)) {
@@ -147,7 +150,8 @@ Result<void> DisplayRingBufferManager::CreateLocalDisplayBuffer(
     // and compute valid frame addresses for reading / writing frame data.
     DisplayRingBufferHeader* dbi =
         (DisplayRingBufferHeader*)shmem_local_display;
-    dbi->set(display_width, display_height, 4, 0);
+    dbi->set(static_cast<uint32_t>(display_width),
+             static_cast<uint32_t>(display_height), 4, 0);
 
     display_buffer_cache_[buffer_key] = std::move(shm_buffer);
   }
@@ -156,8 +160,8 @@ Result<void> DisplayRingBufferManager::CreateLocalDisplayBuffer(
 
 uint8_t* DisplayRingBufferManager::WriteFrame(int vm_index, int display_index,
                                               const uint8_t* frame_data,
-                                              int stride, int width,
-                                              int height) {
+                                              size_t stride, size_t width,
+                                              size_t height) {
   auto buffer_key = std::make_pair(vm_index, display_index);
   if (display_buffer_cache_.count(buffer_key)) {
     return display_buffer_cache_[buffer_key]->WriteNextFrame(frame_data, stride,
@@ -168,8 +172,8 @@ uint8_t* DisplayRingBufferManager::WriteFrame(int vm_index, int display_index,
 }
 
 uint8_t* DisplayRingBufferManager::ReadFrame(int vm_index, int display_index,
-                                             int frame_width,
-                                             int frame_height) {
+                                             size_t frame_width,
+                                             size_t frame_height) {
   auto buffer_key = std::make_pair(vm_index, display_index);
 
   // If this buffer was read successfully in the past, that valid pointer is
