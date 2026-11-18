@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/graphics_detector/image.h"
 
+#include <cstddef>
 #include <fstream>
 #include <ostream>
 
@@ -45,15 +46,15 @@ gfxstream::expected<RGBAImage, std::string> LoadRGBAFromBitmapFile(
                                  ": invalid bitmap file?");
   }
 
-  auto ReadUint16AtByte = [&](const uint32_t offset) {
+  auto ReadUint16AtByte = [&](const size_t offset) {
     return *reinterpret_cast<uint16_t*>(&bitmapBytes[offset]);
   };
-  auto ReadUint32AtByte = [&](const uint32_t offset) {
+  auto ReadUint32AtByte = [&](const size_t offset) {
     return *reinterpret_cast<uint32_t*>(&bitmapBytes[offset]);
   };
 
-  uint32_t w = ReadUint32AtByte(18);
-  uint32_t h = ReadUint32AtByte(22);
+  size_t w = ReadUint32AtByte(18);
+  size_t h = ReadUint32AtByte(22);
 
   uint32_t planes = ReadUint16AtByte(26);
   if (planes != 1) {
@@ -76,8 +77,8 @@ gfxstream::expected<RGBAImage, std::string> LoadRGBAFromBitmapFile(
   out.height = h;
   out.pixels.reserve(w * h * 4);
 
-  uint32_t bitmapHeadersSize = ReadUint32AtByte(10);
-  uint32_t bitmapPixelsOffset = bitmapHeadersSize;
+  size_t bitmapHeadersSize = ReadUint32AtByte(10);
+  size_t bitmapPixelsOffset = bitmapHeadersSize;
 
   auto GetChannel = [](uint32_t pixel, uint32_t channelMask) {
     if (channelMask == 0) {
@@ -95,10 +96,10 @@ gfxstream::expected<RGBAImage, std::string> LoadRGBAFromBitmapFile(
     }
   };
 
-  for (uint32_t y = 0; y < h; y++) {
-    uint32_t flippedY = h - y - 1;
-    for (uint32_t x = 0; x < w; x++) {
-      uint32_t pixelOffset = (flippedY * w * 4) + (x * 4);
+  for (size_t y = 0; y < h; y++) {
+    size_t flippedY = h - y - 1;
+    for (size_t x = 0; x < w; x++) {
+      size_t pixelOffset = (flippedY * w * 4) + (x * 4);
       uint32_t pixel = ReadUint32AtByte(bitmapPixelsOffset + pixelOffset);
 
       uint8_t r = GetChannel(pixel, rChannelMask);
@@ -122,7 +123,7 @@ gfxstream::expected<RGBAImage, std::string> LoadRGBAFromBitmapFile(
 //   rgbaPixels[2] = B for x:0 y:0
 //   rgbaPixels[3] = A for x:0 y:0
 gfxstream::expected<Ok, std::string> SaveRGBAToBitmapFile(
-    uint32_t w, uint32_t h, const uint8_t* rgbaPixels,
+    size_t w, size_t h, const uint8_t* rgbaPixels,
     const std::string& filename) {
   std::ofstream bitmap(filename, std::ofstream::out | std::ofstream::binary);
   if (!bitmap.is_open()) {
@@ -153,8 +154,8 @@ gfxstream::expected<Ok, std::string> SaveRGBAToBitmapFile(
   WriteCharAsBytes(0);                    // reserved 2
   WriteUint32AsBytes(bitmapHeadersSize);  // offset to actual pixel data
   WriteUint32AsBytes(bitmapDibHeaderSize);
-  WriteUint32AsBytes(w);
-  WriteUint32AsBytes(h);
+  WriteUint32AsBytes(static_cast<uint32_t>(w));
+  WriteUint32AsBytes(static_cast<uint32_t>(h));
   WriteUint16AsBytes(1);                 // number of planes
   WriteUint16AsBytes(32);                // bits per pixel
   WriteUint32AsBytes(0x03);              // compression/format
@@ -175,11 +176,11 @@ gfxstream::expected<Ok, std::string> SaveRGBAToBitmapFile(
   WriteUint32AsBytes(0);  // "win"
   WriteUint32AsBytes(0);  // "win"
 
-  uint32_t stribeBytes = w * 4;
-  for (uint32_t currentY = 0; currentY < h; currentY++) {
-    uint32_t flippedY = h - currentY - 1;
+  size_t stribeBytes = w * 4;
+  for (size_t currentY = 0; currentY < h; currentY++) {
+    size_t flippedY = h - currentY - 1;
     const uint8_t* currentPixel = rgbaPixels + (stribeBytes * flippedY);
-    for (uint32_t currentX = 0; currentX < w; currentX++) {
+    for (size_t currentX = 0; currentX < w; currentX++) {
       WriteAsBytes(*currentPixel);
       ++currentPixel;
       WriteAsBytes(*currentPixel);
@@ -202,14 +203,14 @@ gfxstream::expected<YUV420Image, std::string> LoadYUV420FromBitmapFile(
   return ConvertRGBA8888ToYUV420(rgbaImage);
 }
 
-RGBAImage FillWithColor(uint32_t width, uint32_t height, uint8_t red,
-                        uint8_t green, uint8_t blue, uint8_t alpha) {
+RGBAImage FillWithColor(size_t width, size_t height, uint8_t red, uint8_t green,
+                        uint8_t blue, uint8_t alpha) {
   RGBAImage out;
   out.width = width;
   out.height = height;
   out.pixels.reserve(width * height * 4);
-  for (uint32_t y = 0; y < height; y++) {
-    for (uint32_t x = 0; x < width; x++) {
+  for (size_t y = 0; y < height; y++) {
+    for (size_t x = 0; x < width; x++) {
       out.pixels.push_back(red);
       out.pixels.push_back(green);
       out.pixels.push_back(blue);
@@ -249,8 +250,8 @@ void ConvertRGBA8888PixelToYUV(const uint8_t r, const uint8_t g,
 }  // namespace
 
 YUV420Image ConvertRGBA8888ToYUV420(const RGBAImage& rgbaImage) {
-  const uint32_t w = rgbaImage.width;
-  const uint32_t h = rgbaImage.height;
+  const size_t w = rgbaImage.width;
+  const size_t h = rgbaImage.height;
 
   YUV420Image yuvImage;
   yuvImage.width = w;
@@ -260,8 +261,8 @@ YUV420Image ConvertRGBA8888ToYUV420(const RGBAImage& rgbaImage) {
   yuvImage.v.reserve((w / 2) * (h / 2));
 
   const auto* input = rgbaImage.pixels.data();
-  for (uint32_t y = 0; y < h; y++) {
-    for (uint32_t x = 0; x < w; x++) {
+  for (size_t y = 0; y < h; y++) {
+    for (size_t x = 0; x < w; x++) {
       const uint8_t r = *input;
       ++input;
       const uint8_t g = *input;
@@ -309,8 +310,8 @@ bool PixelsAreSimilar(uint32_t pixel1, uint32_t pixel2) {
 
 gfxstream::expected<Ok, std::vector<PixelDiff>> CompareImages(
     const RGBAImage& expected, const RGBAImage& actual) {
-  const uint32_t width = expected.width;
-  const uint32_t height = expected.height;
+  const size_t width = expected.width;
+  const size_t height = expected.height;
 
   constexpr const uint32_t kMaxReportedIncorrectPixels = 10;
 
@@ -321,8 +322,8 @@ gfxstream::expected<Ok, std::vector<PixelDiff>> CompareImages(
 
   std::vector<PixelDiff> pixelDiffs;
 
-  for (uint32_t y = 0; y < width; y++) {
-    for (uint32_t x = 0; x < height; x++) {
+  for (size_t y = 0; y < width; y++) {
+    for (size_t x = 0; x < height; x++) {
       const uint32_t expectedPixel = expectedPixels[y * height + x];
       const uint32_t actualPixel = actualPixels[y * height + x];
       if (!PixelsAreSimilar(expectedPixel, actualPixel)) {
