@@ -18,6 +18,11 @@
 
 set -e
 
+if command -v bazel &> /dev/null; then
+  echo "bazel already installed"
+  exit 0
+fi
+
 BAZELISK_VERSION=v1.29.0
 
 ARCH=$(uname -m)
