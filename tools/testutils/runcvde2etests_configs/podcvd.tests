@@ -18,9 +18,6 @@
 //cvd/graphics_tests/gfxstream_guest_angle_host_lavapipe:graphics_tests
 //cvd/graphics_tests/gfxstream_guest_angle_host_swiftshader:graphics_tests
 //cvd/logs_tests:logs_tests
-//cvd/media_tests/cts:media_tests
-//cvd/media_tests/v4l2_stream_proxy/v4l2compliance:media_tests
-//cvd/media_tests/v4l2compliance:media_tests
 //cvd/metrics_create_tests:metrics_create_tests
 //cvd/metrics_load_tests:metrics_load_tests
 //cvd/networking_tests:networking_tests
