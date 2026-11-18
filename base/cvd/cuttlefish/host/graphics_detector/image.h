@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -24,20 +25,20 @@
 namespace gfxstream {
 
 struct RGBAImage {
-  uint32_t width;
-  uint32_t height;
+  size_t width;
+  size_t height;
   std::vector<uint8_t> pixels;
 };
 gfxstream::expected<RGBAImage, std::string> LoadRGBAFromBitmapFile(
     const std::string& filename);
 
 gfxstream::expected<Ok, std::string> SaveRGBAToBitmapFile(
-    uint32_t w, uint32_t h, const uint8_t* rgbaPixels,
+    size_t w, size_t h, const uint8_t* rgbaPixels,
     const std::string& filename = "");
 
 struct YUV420Image {
-  uint32_t width;
-  uint32_t height;
+  size_t width;
+  size_t height;
   std::vector<uint8_t> y;
   std::vector<uint8_t> u;
   std::vector<uint8_t> v;
@@ -45,14 +46,14 @@ struct YUV420Image {
 gfxstream::expected<YUV420Image, std::string> LoadYUV420FromBitmapFile(
     const std::string& filename);
 
-RGBAImage FillWithColor(uint32_t width, uint32_t height, uint8_t red,
-                        uint8_t green, uint8_t blue, uint8_t alpha);
+RGBAImage FillWithColor(size_t width, size_t height, uint8_t red, uint8_t green,
+                        uint8_t blue, uint8_t alpha);
 
 YUV420Image ConvertRGBA8888ToYUV420(const RGBAImage& image);
 
 struct PixelDiff {
-  uint32_t x;
-  uint32_t y;
+  size_t x;
+  size_t y;
   uint8_t expectedR;
   uint8_t expectedG;
   uint8_t expectedB;
