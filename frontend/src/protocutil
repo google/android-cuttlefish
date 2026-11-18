@@ -9,6 +9,6 @@ PROTOC_DST_DIR="src"
 
 export PATH="$PATH:/tmp/go/bin"
 
-$GOUTIL . install google.golang.org/protobuf/cmd/protoc-gen-go@v1.31
-$GOUTIL . install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
+$GOUTIL . install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+$GOUTIL . install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
 protoc -I=$PROTOC_SRC_DIR --go_out $PROTOC_DST_DIR --go-grpc_out $PROTOC_DST_DIR $PROTOC_SRC_DIR/*.proto
