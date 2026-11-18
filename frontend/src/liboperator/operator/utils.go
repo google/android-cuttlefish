@@ -74,5 +74,5 @@ func ConnectControlEnvProxyServer(devId string, pool *DevicePool) (*grpc.ClientC
 	if !ok {
 		return nil, errors.New("ControlEnvProxyServer path not found")
 	}
-	return grpc.Dial("unix://"+serverPath, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	return grpc.NewClient("unix://"+serverPath, grpc.WithTransportCredentials(insecure.NewCredentials()))
 }
