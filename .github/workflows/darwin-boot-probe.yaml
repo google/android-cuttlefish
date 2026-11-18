@@ -1,0 +1,262 @@
+name: Darwin boot probe
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CF: /tmp/cf
+  # Short, because unix socket paths are limited to 104 bytes on macOS.
+  CF_HOME: /tmp/cfh
+  CF_FLAGS: >-
+    --vm_manager=qemu_cli
+    --gpu_mode=guest_swiftshader
+    --start_webrtc=false
+    --device_external_network=slirp
+    --enable_tap_devices=false
+    --use_cvdalloc=false
+    --enable_host_bluetooth=false --netsim_bt=false
+    --enable_host_nfc=false
+    --enable_host_uwb=false --netsim_uwb=false
+    --enable_wifi=false
+    --enable_modem_simulator=false
+    --enable_audio=false
+    --vhost_user_block=false
+    --vhost_user_vsock=false
+    --enable_usb=false
+    --adb_mode=none
+    --proxy_fastboot=false
+    --ap_rootfs_image= --ap_kernel_image=
+    --report_anonymous_usage_stats=n
+    --console=false
+    --enable_bootanimation=false
+    --cpus=4 --memory_mb=4096
+    --boot_timeout_secs=1800
+    --use_overlay=false
+
+jobs:
+  boot:
+    if: github.repository_owner == 'google'
+    runs-on: macos-15-intel
+    timeout-minutes: 150
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+      with:
+        persist-credentials: false
+    - name: Mount Bazel cache
+      uses: ./.github/actions/mount-bazel-cache
+      with:
+        action-name: build-darwin
+    - name: Mount Bazel vendor cache
+      uses: ./.github/actions/mount-bazel-vendor-cache
+    - name: Build host tools on macOS
+      uses: ./.github/actions/build-darwin
+    - name: Try the rest of the minimal package
+      # In //cuttlefish/package/minimal but not in the list above.
+      run: |
+        cd base/cvd
+        # avbtool.py first: building only a source file removes the
+        # bazel-bin link, and the next build puts it back.
+        for target in @avb//:avbtool.py \
+            //cuttlefish/host/commands/control_env_proxy_server \
+            //cuttlefish/host/graphics_detector; do
+          bazel build --disk_cache=$HOME/bazel-disk-cache "$target" \
+            || echo "::warning::$target does not build"
+        done
+      shell: bash
+    - name: Install qemu and mkfs.fat
+      run: |
+        brew install qemu dosfstools lz4
+        qemu-system-x86_64 --version
+        brew list dosfstools
+      shell: bash
+    - name: Package the macOS host tools
+      # cvd only runs from a path ending in cuttlefish-common/bin/cvd.
+      run: |
+        pkg=$CF/pkg/cuttlefish-common
+        mkdir -p "$pkg/bin"
+        cd base/cvd
+        for name in adb_connector assemble_cvd console_forwarder \
+            control_env_proxy_server cvd cvd_internal_start \
+            cvd_internal_status cvd_internal_stop echo_server \
+            gnss_grpc_proxy graphics_detector kernel_log_monitor \
+            logcat_receiver run_cvd screen_recording_server secure_env \
+            sensors_simulator tcp_connector; do
+          bin=$(find -L bazel-bin/cuttlefish/host -type f -name "$name" \
+            -perm +111 | head -1)
+          if [ -n "$bin" ]; then
+            cp "$bin" "$pkg/bin/$name"
+          else
+            echo "::warning::no macOS build of $name"
+          fi
+        done
+        ln -s "$(brew --prefix dosfstools)/sbin/mkfs.fat" "$pkg/bin/mkfs.fat"
+        # The rest of //cuttlefish/package/minimal: not built, just files.
+        src=cuttlefish/host/commands
+        cp "$src/extract_ikconfig/extract-ikconfig.sh" \
+          "$pkg/bin/extract-ikconfig"
+        chmod +x "$pkg/bin/extract-ikconfig"
+        mkdir -p "$pkg/etc/cvd_config"
+        for f in "$src"/assemble_cvd/config_json/config_*.json; do
+          cp "$f" "$pkg/etc/cvd_config/cvd_$(basename "$f")"
+        done
+        for bits in 2048 4096; do
+          key=$src/assemble_cvd/avb_testkey/testkey_rsa$bits
+          cp "$key.pem" "$pkg/etc/cvd_avb_testkey_rsa$bits.pem"
+          cp "$key.avbpubkey" "$pkg/etc/cvd_rsa$bits.avbpubkey"
+        done
+        avbtool=$(find -L "$(bazel info output_base)/external" -maxdepth 2 \
+          -name avbtool.py | head -1)
+        if [ -n "$avbtool" ]; then
+          cp "$avbtool" "$pkg/bin/avbtool.py"
+          chmod +x "$pkg/bin/avbtool.py"
+          head -1 "$pkg/bin/avbtool.py"
+        else
+          echo "::warning::no avbtool.py"
+        fi
+        ls -l "$pkg/bin"
+        file "$pkg/bin/cvd"
+        "$pkg/bin/cvd" version || true
+      shell: bash
+    - name: Fetch an Android build
+      # The build's own host package is for Linux; use ours alone. It
+      # has no bootloader, so fetch the one that package ships: the
+      # latest u-boot stops at its prompt here.
+      run: |
+        mkdir -p "$CF_HOME"
+        HOME=$CF_HOME "$CF/pkg/cuttlefish-common/bin/cvd" fetch \
+          --default_build=aosp-android-latest-release/aosp_cf_x86_64_only_phone-userdebug \
+          --bootloader_build=15108624/u-boot_qemu_x86_64 \
+          --target_directory="$CF/fetch" --host_substitutions=only
+        ls -l "$CF/fetch" "$CF/fetch/bin"
+        df -h /tmp
+      shell: bash
+    - name: cvd create
+      run: |
+        export HOME=$CF_HOME CVD_FORCE_SUBSTITUTE=true
+        # No cvdnetwork group or other host package setup here.
+        export CVD_IN_SANDBOX=1
+        # The instance's sockets go under TMPDIR, and the runner's is
+        # too long for a unix socket path.
+        export TMPDIR=/tmp
+        # In sandbox mode assemble_cvd appends to this log but expects
+        # the sandboxer to have created it.
+        mkdir -p "$HOME/cuttlefish/instances/cvd-1/logs"
+        touch "$HOME/cuttlefish/instances/cvd-1/logs/launcher.log"
+        export PATH="$CF/pkg/cuttlefish-common/bin:$PATH"
+        cd "$HOME"
+        qemu_dir=$(dirname "$(command -v qemu-system-x86_64)")
+        # stop_cvd's fallback kills the process groups of whatever
+        # has the instance's files open; keep the runner out of them.
+        set -m
+        # shellcheck disable=SC2086
+        cvd create --host_path="$CF/fetch" --product_path="$CF/fetch" \
+          --daemon=false --qemu_binary_dir="$qemu_dir" $CF_FLAGS \
+          > "$CF/cvd-create.log" 2>&1 &
+        cvd_pid=$!
+        start=$(date +%s)
+        rc=1
+        for i in $(seq 240); do
+          # Annotations survive losing the runner; the log doesn't.
+          case $i in 6|30|60|90|120|150|180|210)
+            klog=$(tail -n 3 "$HOME"/cuttlefish/instances/*/kernel.log \
+              2>/dev/null | tr -d '\000\r' | cut -c1-200 | tr '\n' '|' \
+              || true)
+            echo "::notice title=progress $(( i / 6 ))m::$(uptime)" \
+              "%0Adisk $(df -h /tmp | tail -n 1)" \
+              "%0Ainstance $(du -sh "$HOME/cuttlefish" | cut -f1)" \
+              "%0A$(memory_pressure | tail -n 1)" \
+              "%0A$(ps -axo %cpu,rss,comm -r | sed -n 2,5p | tr '\n' '|')" \
+              "%0A${klog//%/%25}" ;;
+          esac
+          if grep -qs VIRTUAL_DEVICE_BOOT_COMPLETED "$CF/cvd-create.log" \
+              "$HOME"/cuttlefish/instances/*/logs/launcher.log \
+              "$HOME"/cuttlefish/instances/*/kernel.log; then
+            echo "boot completed after $(( $(date +%s) - start ))s"
+            rc=0
+            break
+          fi
+          if ! kill -0 "$cvd_pid" 2>/dev/null; then
+            echo "cvd create exited after $(( $(date +%s) - start ))s"
+            break
+          fi
+          sleep 10
+        done
+        tail -n 60 "$CF/cvd-create.log"
+        cvd fleet || true
+        ps -axo pid,ppid,etime,command | grep -E 'cf/|qemu-system' \
+          | grep -v grep | cut -c1-200 || true
+        exit $rc
+      shell: bash
+    - name: Logs
+      if: always()
+      run: |
+        shopt -s nullglob
+        mkdir -p "$CF/logs"
+        # Give macOS time to write crash reports.
+        sleep 15
+        n=0
+        for f in "$CF"/*.log /tmp/cfh*/cuttlefish/assembly/*.log \
+            /tmp/cfh*/cuttlefish/instances/*/logs/* \
+            /tmp/cfh*/cuttlefish/instances/*/kernel.log \
+            /tmp/cfh*/cuttlefish/instances/*/*.json \
+            /var/tmp/cvd/*/*/*.log /var/tmp/cvd/*.log \
+            "$HOME"/Library/Logs/DiagnosticReports/*; do
+          [ -f "$f" ] || continue
+          n=$((n + 1))
+          cp "$f" "$CF/logs/$n-$(basename "$f")"
+          echo "::group::$f"
+          tail -n 400 "$f" | tr -d '\000'
+          echo "::endgroup::"
+        done
+        # Annotations can be read without signing in, unlike the log.
+        note() {
+          [ -f "$2" ] || return 0
+          body=$(tr -d '\000' < "$2" | { grep -av "$3" || true; } \
+            | tail -n 40 \
+            | cut -c1-240 | python3 -c 'import sys
+        # GitHub keeps only the first 4096 characters.
+        t = sys.stdin.read()[-3800:].replace("%", "%25").replace("\r", "")
+        print(t.replace("\n", "%0A"))')
+          echo "::notice title=$1::$body"
+        }
+        logs=$CF_HOME/cuttlefish/instances/cvd-1/logs
+        note cvd-create "$CF/cvd-create.log" 'Not substituted\| [VD] '
+        note launcher "$logs/launcher.log" 'command.cc:313\|bootconfig.cpp:98'
+        note kernel "$CF_HOME/cuttlefish/instances/cvd-1/kernel.log" '^$'
+        for f in "$HOME"/Library/Logs/DiagnosticReports/*.ips; do
+          grep -a '"symbol"' "$f" | head -n 40 > "$CF/ips.txt" || true
+          note "$(basename "$f")" "$CF/ips.txt" '^$'
+        done
+        find /tmp/cfh* /var/tmp/cvd -maxdepth 5 2>/dev/null | head -300 \
+          || true
+      shell: bash
+    - name: Upload the logs
+      if: always()
+      continue-on-error: true
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6
+      with:
+        name: darwin-boot-probe-logs
+        path: /tmp/cf/logs
+        if-no-files-found: warn
+        retention-days: 7
+    # Last, so that a stop that goes wrong can't take the logs with it.
+    - name: Stop the device
+      if: always()
+      run: |
+        export HOME=$CF_HOME CVD_IN_SANDBOX=1 TMPDIR=/tmp
+        export PATH="$CF/pkg/cuttlefish-common/bin:$PATH"
+        cd "$HOME"
+        cvd stop || true
+        ps -axo pid,pgid,etime,command | grep -E 'cf/|qemu-system' \
+          | grep -v grep | cut -c1-200 || true
+      shell: bash
