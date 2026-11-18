@@ -22,13 +22,8 @@ fi
 # Never download a different toolchain at build time.
 export GOTOOLCHAIN=local
 
-version=`$GOBIN version | { read _ _ v _; echo ${v#go}; }`
-
-if [[ "$version" > "1.15" ]]; then
-  # Temporary solution until https://github.com/golang/go/issues/28194 is fixed
-  # in order to retry failed fetch requests.
-  # GOPROXY fallback was added in Go 1.15
-  export GOPROXY="proxy.golang.org|proxy.golang.org|direct"
-fi
+# Temporary solution until https://github.com/golang/go/issues/28194 is fixed
+# in order to retry failed fetch requests.
+export GOPROXY="proxy.golang.org|proxy.golang.org|direct"
 
 $GOBIN "$@"
