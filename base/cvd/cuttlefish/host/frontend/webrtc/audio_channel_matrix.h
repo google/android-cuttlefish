@@ -41,12 +41,11 @@ namespace cuttlefish {
  * @param volume Master stream volume, from 0.0 to 1.0
  * @param fade Front/rear fader, from -1.0 (rear only) to 1.0 (front only)
  * @param balance Left/right balance, from -1.0 (left only) to 1.0 (right only)
+ * @param ducked Whether to attenuate the stream by -14 dB (0.2x)
  * @return Mixing coefficients, indexed [destination channel][source channel]
  */
-std::vector<std::vector<float>> BuildChannelMixingMatrix(uint8_t dst_channels,
-                                                         uint8_t src_channels,
-                                                         float volume,
-                                                         float fade,
-                                                         float balance);
+std::vector<std::vector<float>> BuildChannelMixingMatrix(
+    uint8_t dst_channels, uint8_t src_channels, float volume, float fade,
+    float balance, bool ducked);
 
 }  // namespace cuttlefish

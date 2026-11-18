@@ -30,6 +30,7 @@ namespace {
 
 constexpr float kMinus3dB = 0.7071f;  // Center and surround channels
 constexpr float kMinus6dB = 0.5f;     // LFE and stereo-to-mono
+constexpr float kDuckedGain = 0.2f;   // -14 dB attenuation for ducked streams
 
 constexpr uint8_t kMono = GetChannelsCount(AudioChannelsLayout::Mono);
 constexpr uint8_t kStereo = GetChannelsCount(AudioChannelsLayout::Stereo);
@@ -51,15 +52,17 @@ std::vector<std::vector<float>> BuildDirectMappingMatrix(uint8_t dst_channels,
 
 }  // namespace
 
-std::vector<std::vector<float>> BuildChannelMixingMatrix(uint8_t dst_channels,
-                                                         uint8_t src_channels,
-                                                         float volume,
-                                                         float fade,
-                                                         float balance) {
+std::vector<std::vector<float>> BuildChannelMixingMatrix(
+    uint8_t dst_channels, uint8_t src_channels, float volume, float fade,
+    float balance, bool ducked) {
   CHECK(volume >= 0) << "volume can't be negative";
   CHECK(fade >= -1.0f && fade <= 1.0f) << "fade must be within [-1, 1]";
   CHECK(balance >= -1.0f && balance <= 1.0f)
       << "balance must be within [-1, 1]";
+
+  if (ducked) {
+    volume *= kDuckedGain;
+  }
 
   // Keep the legacy behavior until this feature is stable.
   if (fade == 0.0f && balance == 0.0f) {
