@@ -621,7 +621,7 @@ int FastBootDriver::SparseWriteCallback(std::vector<char>& tpbuf, const char* da
     }
     total += nbytes;
 
-    if (len - total > 0) {  // We have residual data to save for next time
+    if (total < len) {  // We have residual data to save for next time
         tpbuf.assign(data + total, data + len);
     }
 
