@@ -2,21 +2,11 @@
 
 set -e -x
 
-function install_debuild_dependencies() {
-  echo "Installing debuild dependencies"
-  sudo apt-get install -y devscripts config-package-dev debhelper-compat equivs
-}
-
 REPO_DIR="$(realpath "$(dirname "$0")/../..")"
-INSTALL_BAZEL="$(dirname $0)/installbazel.sh"
-INSTALL_GO="$(dirname $0)/installgolang.sh"
+SETUP_BUILD_ENV="$(dirname $0)/setup_build_env.sh"
 BUILD_PACKAGE="$(dirname $0)/build_package.sh"
 
-command -v bazel &> /dev/null || sudo "${INSTALL_BAZEL}"
-# Always use the pinned Go toolchain; the distro one is too old for the
-# frontend dependencies.
-sudo "${INSTALL_GO}"
-install_debuild_dependencies
+"${SETUP_BUILD_ENV}"
 
 # "${BUILD_PACKAGE}" "${REPO_DIR}/container" $@
 "${BUILD_PACKAGE}" "${REPO_DIR}/base" $@
