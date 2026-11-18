@@ -86,4 +86,7 @@ Result<std::unordered_map<std::string, std::string>> GetEnvs(pid_t pid);
 
 Result<pid_t> Ppid(pid_t pid);
 
+// On Linux a zombie counts as dead, unlike with kill(pid, 0).
+bool ProcessAlive(pid_t pid);
+
 }  // namespace cuttlefish

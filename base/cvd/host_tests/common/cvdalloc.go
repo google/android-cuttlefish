@@ -167,6 +167,30 @@ func (c *Cvdalloc) StopInstance(inst *Instance) error {
 	return nil
 }
 
+// KillInstance SIGKILLs cvdalloc, as a crash would.
+func (c *Cvdalloc) KillInstance(inst *Instance) error {
+	pid, err := inst.cvdallocPid()
+	if err != nil {
+		return err
+	}
+	if err := syscall.Kill(pid, syscall.SIGKILL); err != nil {
+		return fmt.Errorf("killing cvdalloc id=%d: %w", inst.ID, err)
+	}
+	inst.conn.Close()
+	// nsenter exits with the signal that killed cvdalloc
+	inst.cmd.Wait()
+	return nil
+}
+
+func (i *Instance) cvdallocPid() (int, error) {
+	// nsenter forks to enter the pid namespace, so cvdalloc is its child
+	pid, err := childPid(i.cmd.Process.Pid)
+	if err != nil {
+		return 0, fmt.Errorf("finding cvdalloc id=%d: %w", i.ID, err)
+	}
+	return pid, nil
+}
+
 func (i *Instance) kill() {
 	i.conn.Close()
 	if i.cmd.Process != nil {
@@ -216,4 +240,33 @@ func CvdallocDnsmasqIfaces(s *Sandbox) []string {
 	}
 	sort.Strings(ifaces)
 	return ifaces
+}
+
+func cvdallocDnsmasqPidFile(iface string) string {
+	return fmt.Sprintf("%s/cuttlefish-dnsmasq-%s.pid", cvdallocRunDir, iface)
+}
+
+// KillCvdallocDnsmasq SIGKILLs iface's dnsmasq, leaving its pidfile behind.
+func KillCvdallocDnsmasq(s *Sandbox, iface string) error {
+	_, err := s.Run("sh", "-c", fmt.Sprintf("kill -9 $(cat %s)", cvdallocDnsmasqPidFile(iface)))
+	if err != nil {
+		return fmt.Errorf("killing dnsmasq for %s: %w", iface, err)
+	}
+	return nil
+}
+
+// CvdallocDnsmasqAlive reports whether the dnsmasq for iface is running.
+// Zombies count as dead, since the sandbox doesn't reap orphans.
+func CvdallocDnsmasqAlive(s *Sandbox, iface string) bool {
+	out, err := s.Run("sh", "-c", fmt.Sprintf("cat /proc/$(cat %s)/stat", cvdallocDnsmasqPidFile(iface)))
+	if err != nil {
+		return false
+	}
+	// the command name can contain ')', so search from the end
+	commEnd := strings.LastIndex(out.Stdout, ")")
+	if commEnd < 0 || commEnd+2 >= len(out.Stdout) {
+		return false
+	}
+	state := out.Stdout[commEnd+2]
+	return state != 'Z' && state != 'X'
 }
