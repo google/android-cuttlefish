@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -135,6 +139,41 @@ void RemoveStaleTaps() {
   }
 }
 
+// Raw, since SharedFD isn't async-signal-safe.
+int signal_pipe_write_fd = -1;
+
+void ForwardSignal(int signum) {
+  const int saved_errno = errno;
+  const char byte = static_cast<char>(signum);
+  // A full pipe already has a signal pending.
+  const ssize_t ignored = write(signal_pipe_write_fd, &byte, sizeof(byte));
+  (void)ignored;
+  errno = saved_errno;
+}
+
+constexpr int kForwardedSignals[] = {SIGTERM, SIGINT, SIGHUP};
+
+Result<SharedFD> ForwardSignalsToPipe() {
+  int pipe_fds[2];
+  CF_EXPECTF(pipe2(pipe_fds, O_CLOEXEC | O_NONBLOCK) == 0, "pipe2: {}",
+             StrError());
+  signal_pipe_write_fd = pipe_fds[1];
+  const SharedFD read_end = CF_EXPECT(Fd::Dup(pipe_fds[0]));
+  close(pipe_fds[0]);
+
+  struct sigaction action = {};
+  action.sa_handler = ForwardSignal;
+  // Subprocess::Wait doesn't retry waitpid on EINTR, and a failed Execute makes
+  // BridgeInUse report a bridge as free.
+  action.sa_flags = SA_RESTART;
+  sigemptyset(&action.sa_mask);
+  for (const int signum : kForwardedSignals) {
+    CF_EXPECTF(sigaction(signum, &action, nullptr) == 0, "sigaction({}): {}",
+               signum, StrError());
+  }
+  return read_end;
+}
+
 }  // namespace
 
 Result<int> CvdallocMain(int argc, char* argv[]) {
@@ -158,6 +197,8 @@ Result<int> CvdallocMain(int argc, char* argv[]) {
 
   absl::Cleanup shutdown = [sock]() { sock->Shutdown(SHUT_RDWR); };
 
+  const SharedFD signals = CF_EXPECT(ForwardSignalsToPipe());
+
   // Elevate before creating the table and taps, so they're cleaned up before
   // privileges are dropped.
   const ScopedPrivileges privileges = CF_EXPECT(ScopedPrivileges::Elevate());
@@ -179,8 +220,13 @@ Result<int> CvdallocMain(int argc, char* argv[]) {
 
   LOG(INFO) << "cvdalloc: waiting to teardown";
 
-  CF_EXPECT(cvdalloc::Wait(sock, cvdalloc::kSemNoTimeout));
+  const std::optional<int> signum =
+      CF_EXPECT(cvdalloc::Wait(sock, cvdalloc::kSemNoTimeout, signals));
   std::move(teardown).Invoke();
+  if (signum.has_value()) {
+    LOG(ERROR) << "cvdalloc: terminated by signal " << *signum;
+    return 1;
+  }
   CF_EXPECT(cvdalloc::Post(sock));
 
   return 0;

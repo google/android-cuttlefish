@@ -16,6 +16,7 @@
 #pragma once
 
 #include <chrono>
+#include <optional>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/result/result_type.h"
@@ -39,5 +40,13 @@ Result<void> Post(SharedFD socket);
  * can be successfully read from.
  */
 Result<void> Wait(SharedFD socket, std::chrono::seconds timeout);
+
+/*
+ * Like Wait, but also returns when a signal number can be read from signals.
+ *
+ * Returns that signal number, or nullopt if the socket was read instead.
+ */
+Result<std::optional<int>> Wait(SharedFD socket, std::chrono::seconds timeout,
+                                SharedFD signals);
 
 }  // namespace cuttlefish::cvdalloc
