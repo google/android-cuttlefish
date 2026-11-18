@@ -6,9 +6,14 @@ Android Virtual Device (AVD) that targets both locally hosted Linux x86/arm64
 and remotely hosted Google Compute Engine (GCE) instances rather than physical
 hardware.
 
+## Developing the host tools
+
+To build and run the host tools directly from source, see
+[Getting started](docs/GettingStarted.md).
+
 ## Debian packages
 
-The following debian packages are provided:
+This repository builds the following Debian packages:
 
 * `cuttlefish-base` - Creates static resources needed by the Cuttlefish devices
 * `cuttlefish-user` - Provides a local web server that enables interactions with
@@ -20,10 +25,10 @@ Google Compute Engine
 * `cuttlefish-common` - [DEPRECATED] Provided for compatibility only, it's a
 metapackage that depends on `cuttlefish-base` and `cuttlefish-user`
 
-### Download from Artifact Registry
+### Installing the packages
 
-To register the apt repository on Artifact Registry, please execute command
-below.
+`cuttlefish-base`, `cuttlefish-user`, and `cuttlefish-orchestration` are
+published to an apt repository on Artifact Registry. Register it with:
 
 ```bash
 sudo curl -fsSL https://us-apt.pkg.dev/doc/repo-signing-key.gpg \
@@ -34,46 +39,32 @@ echo "deb https://us-apt.pkg.dev/projects/android-cuttlefish-artifacts android-c
 sudo apt update
 ```
 
-Afterwards, debian packages are available to download via `apt install`. Noting
-that only `cuttlefish-base`, `cuttlefish-user`, and `cuttlefish-orchestration`
-are deployed to Artifact Registry.
+Cuttlefish requires only `cuttlefish-base`, but `cuttlefish-user` is
+recommended for a better user experience.
 
 ```bash
-sudo apt install cuttlefish-base cuttlefish-user cuttlefish-orchestration
+sudo apt install cuttlefish-base cuttlefish-user
+sudo usermod -aG kvm,cvdnetwork,render $USER
 ```
 
-### Build and install manually
+The last command adds the user to the groups necessary to run the
+Cuttlefish Virtual Device. No reboot or new login is needed; `cvd` picks up
+the new group membership itself.
 
-The packages can be built with the following script:
+### Building the packages
+
+The packages can be built from this repository with:
 
 ```bash
 tools/buildutils/build_packages.sh
 ```
 
-Cuttlefish requires only `cuttlefish-base` to be installed, but `cuttlefish-user`
-is recommended to enjoy a better user experience. These can be installed after
-building with the following commands:
+The resulting `.deb` files can be installed with `sudo apt install ./<file>`
+in place of the Artifact Registry packages above.
 
-```bash
-sudo apt install ./cuttlefish-base_*.deb ./cuttlefish-user_*.deb
-sudo usermod -aG kvm,cvdnetwork,render $USER
-sudo reboot
-```
+## See also
 
-The last two commands above add the user to the groups necessary to run the Cuttlefish 
-Virtual Device and reboot the machine to trigger the installation of additional
-kernel modules and apply udev rules.
-
-## Google Compute Engine
-
-The following script can be used to build a host image for Google Compute Engine:
-
-    device/google/cuttlefish/tools/create_base_image.go
-
-[Check out the AOSP tree](https://source.android.com/setup/build/downloading)
-to obtain the script.
-
-## Container images
-
-Please read [container/README.md](container/README.md) to know how to build and
-use docker or podman image containing Cuttlefish debian packages.
+* [Container images](container/README.md) with the Cuttlefish packages
+  preinstalled, for use with docker or podman.
+* [Google Compute Engine images](tools/baseimage/README.md) for running
+  Cuttlefish on GCE.
