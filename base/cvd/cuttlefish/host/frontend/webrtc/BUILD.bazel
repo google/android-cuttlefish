@@ -113,6 +113,14 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "audio_channel_matrix_test",
+    srcs = ["audio_channel_matrix_test.cpp"],
+    deps = [
+        ":libcuttlefish_webrtc_audio_channel_matrix",
+    ],
+)
+
 cf_cc_library(
     name = "libcuttlefish_webrtc_audio_mixer",
     srcs = ["audio_mixer.cpp"],

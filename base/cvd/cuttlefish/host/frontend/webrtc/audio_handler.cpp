@@ -94,9 +94,6 @@ struct IntegerRange {
   uint32_t step = 0;
 };
 
-// Attenuation applied to a ducked stream (-14 dB).
-constexpr float kDuckedGain = 0.2f;
-
 constexpr int32_t kFadeBalanceMin = -100;
 constexpr int32_t kFadeBalanceMax = 100;
 constexpr IntegerRange kFadeBalanceRange = {
@@ -722,6 +719,7 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
   float volume = 0;
   float fade = 0;
   float balance = 0;
+  bool ducked = false;
   {
     auto& stream_desc = stream_descs_[stream_id];
     std::lock_guard<std::mutex> lock(stream_desc.mtx);
@@ -735,18 +733,17 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
       buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());
       return;
     }
-    if (stream_desc.ducked) {
-      volume *= kDuckedGain;
-    }
 
     sample_rate = stream_desc.sample_rate;
     channels = stream_desc.channels;
     bits_per_channel = stream_desc.bits_per_sample;
     fade = stream_desc.fade;
     balance = stream_desc.balance;
+    ducked = stream_desc.ducked;
   }
   audio_mixer_->OnPlayback(stream_id, sample_rate, channels, bits_per_channel,
-                           volume, fade, balance, buffer.get(), buffer.len());
+                           volume, fade, balance, ducked, buffer.get(),
+                           buffer.len());
   buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());
 }
 
