@@ -125,17 +125,22 @@ Result<void> BringUpIface(absl::string_view name) {
 Result<void> AddGateway(absl::string_view name, absl::string_view gateway,
                         absl::string_view netmask) {
   VLOG(0) << "AddGateway: " << name << ", " << gateway << netmask;
-  auto index = Index(name);
-  PCHECK(index.has_value()) << "Index: " << name;
+  const unsigned int index = CF_EXPECT(Index(name));
 
   auto factory = NetlinkClientFactory::Default();
   std::unique_ptr<NetlinkClient> nl = factory->New(NETLINK_ROUTE);
 
+  const int prefix = Prefix(netmask);
   NetlinkRequest req(RTM_NEWADDR, NLM_F_REQUEST | NLM_F_ACK);
-  req.AddAddrInfo(*index, Prefix(netmask));
+  req.AddAddrInfo(index, prefix);
   in_addr_t inaddr = inet_addr(std::string(gateway).c_str());
   req.AddInAddr(IFA_LOCAL, &inaddr);    // NOLINT(misc-include-cleaner): netlink
   req.AddInAddr(IFA_ADDRESS, &inaddr);  // NOLINT(misc-include-cleaner): netlink
+  // Same as iproute2's "broadcast +".
+  if (prefix <= 30) {
+    in_addr_t broadcast = inaddr | htonl(UINT32_MAX >> prefix);
+    req.AddInAddr(IFA_BROADCAST, &broadcast);  // NOLINT(misc-include-cleaner)
+  }
 
   CF_EXPECT(nl->Send(req), "AddGateway");
   return {};
@@ -165,17 +170,15 @@ Result<void> DestroyGateway(absl::string_view name, absl::string_view gateway,
 Result<void> LinkTapToBridge(absl::string_view tap_name,
                              absl::string_view bridge_name) {
   VLOG(0) << "LinkTapToBridge: " << tap_name << ", " << bridge_name;
-  auto tap_index = Index(tap_name);
-  PCHECK(tap_index.has_value()) << "Index: " << tap_name;
-  auto bridge_index = Index(bridge_name);
-  PCHECK(bridge_index.has_value()) << "Index: " << bridge_name;
+  const unsigned int tap_index = CF_EXPECT(Index(tap_name));
+  const unsigned int bridge_index = CF_EXPECT(Index(bridge_name));
 
   auto factory = NetlinkClientFactory::Default();
   std::unique_ptr<NetlinkClient> nl = factory->New(NETLINK_ROUTE);
 
   NetlinkRequest req(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_ACK);
-  req.AddIfInfo(*tap_index, true);
-  req.AddInt(IFLA_MASTER, *bridge_index);
+  req.AddIfInfo(tap_index, true);
+  req.AddInt(IFLA_MASTER, bridge_index);
 
   CF_EXPECT(nl->Send(req), "LinkTapToBridge");
   return {};
