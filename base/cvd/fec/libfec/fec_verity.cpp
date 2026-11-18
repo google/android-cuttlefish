@@ -244,11 +244,11 @@ int hashtree_info::verify_tree(const fec_handle *f, const uint8_t *root) {
                     padded_digest_length_);
 
     uint64_t hash_data_offset = data_offset;
-    uint32_t hash_data_blocks = 0;
+    uint64_t hash_data_blocks = 0;
     /* calculate the size and offset for the data hashes */
     for (uint32_t i = 1; i < levels; ++i) {
-        uint32_t blocks = hashes[levels - i];
-        debug("%u hash blocks on level %u", blocks, levels - i);
+        uint64_t blocks = hashes[levels - i];
+        debug("%" PRIu64 " hash blocks on level %u", blocks, levels - i);
 
         hash_data_offset = data_offset;
         hash_data_blocks = blocks;
@@ -259,43 +259,44 @@ int hashtree_info::verify_tree(const fec_handle *f, const uint8_t *root) {
     check(hash_data_blocks);
     check(hash_data_blocks <= hash_size / FEC_BLOCKSIZE);
 
+    uint64_t hash_data_size = hash_data_blocks * FEC_BLOCKSIZE;
     check(hash_data_offset);
-    check(hash_data_offset <= UINT64_MAX - (hash_data_blocks * FEC_BLOCKSIZE));
+    check(hash_data_offset <= UINT64_MAX - hash_data_size);
     check(hash_data_offset < f->data_size);
-    check(hash_data_offset + hash_data_blocks * FEC_BLOCKSIZE <= f->data_size);
+    check(hash_data_offset + hash_data_size <= f->data_size);
+    check(hash_data_size <= PTRDIFF_MAX);
 
     /* copy data hashes to memory in case they are corrupted, so we don't
        have to correct them every time they are needed */
-    std::vector<uint8_t> data_hashes(hash_data_blocks * FEC_BLOCKSIZE, 0);
+    std::vector<uint8_t> data_hashes(static_cast<size_t>(hash_data_size), 0);
 
     /* validate the rest of the hash tree */
     data_offset = hash_offset + FEC_BLOCKSIZE;
 
     std::vector<uint8_t> buffer(padded_digest_length_, 0);
     for (uint32_t i = 1; i < levels; ++i) {
-        uint32_t blocks = hashes[levels - i];
+        uint64_t blocks = hashes[levels - i];
 
-        for (uint32_t j = 0; j < blocks; ++j) {
+        for (uint64_t j = 0; j < blocks; ++j) {
+            uint64_t curr_hash_offset = hash_offset + j * padded_digest_length_;
+            uint64_t curr_data_offset = data_offset + j * FEC_BLOCKSIZE;
+
             /* ecc reads are very I/O intensive, so read raw hash tree and do
                error correcting only if it doesn't validate */
-            if (!raw_pread(f->fd, buffer.data(), padded_digest_length_,
-                           hash_offset + j * padded_digest_length_) ||
-                !raw_pread(f->fd, data, FEC_BLOCKSIZE,
-                           data_offset + j * FEC_BLOCKSIZE)) {
+            if (!raw_pread(f->fd, buffer.data(), padded_digest_length_, curr_hash_offset) ||
+                !raw_pread(f->fd, data, FEC_BLOCKSIZE, curr_data_offset)) {
                 error("failed to read hashes: %s", strerror(errno));
                 return -1;
             }
 
             if (!check_block_hash(buffer.data(), data)) {
                 /* try to correct */
-                if (!ecc_read_hashes(const_cast<fec_handle *>(f),
-                                     hash_offset + j * padded_digest_length_,
-                                     buffer.data(),
-                                     data_offset + j * FEC_BLOCKSIZE, data) ||
+                if (!ecc_read_hashes(const_cast<fec_handle*>(f), curr_hash_offset, buffer.data(),
+                                     curr_data_offset, data) ||
                     !check_block_hash(buffer.data(), data)) {
                     error("invalid hash tree: hash_offset %" PRIu64
                           ", "
-                          "data_offset %" PRIu64 ", block %u",
+                          "data_offset %" PRIu64 ", block %" PRIu64,
                           hash_offset, data_offset, j);
                     return -1;
                 }
@@ -304,9 +305,8 @@ int hashtree_info::verify_tree(const fec_handle *f, const uint8_t *root) {
                    mode */
                 if (f->mode & O_RDWR) {
                     if (!raw_pwrite(f->fd, buffer.data(), padded_digest_length_,
-                                    hash_offset + j * padded_digest_length_) ||
-                        !raw_pwrite(f->fd, data, FEC_BLOCKSIZE,
-                                    data_offset + j * FEC_BLOCKSIZE)) {
+                                    curr_hash_offset) ||
+                        !raw_pwrite(f->fd, data, FEC_BLOCKSIZE, curr_data_offset)) {
                         error("failed to write hashes: %s", strerror(errno));
                         return -1;
                     }
@@ -314,8 +314,7 @@ int hashtree_info::verify_tree(const fec_handle *f, const uint8_t *root) {
             }
 
             if (blocks == hash_data_blocks) {
-                std::copy(data, data + FEC_BLOCKSIZE,
-                          data_hashes.begin() + j * FEC_BLOCKSIZE);
+                std::copy(data, data + FEC_BLOCKSIZE, data_hashes.begin() + j * FEC_BLOCKSIZE);
             }
         }
 
