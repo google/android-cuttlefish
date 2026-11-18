@@ -25,6 +25,6 @@ sudo apt-get install -y \
   config-package-dev \
   debhelper-compat equivs
 
-command -v bazel &> /dev/null || sudo "${SCRIPT_DIR}/installbazel.sh"
+sudo "${SCRIPT_DIR}/installbazel.sh"
 
 sudo "${SCRIPT_DIR}/installgolang.sh"
