@@ -124,3 +124,23 @@ func TestCvdallocRestartsDeadDnsmasqOnReuse(t *testing.T) {
 	}
 	checkReleased(t, s, base)
 }
+
+// SIGTERM must tear down, but exit nonzero so it isn't taken for a clean stop.
+func TestCvdallocTerminatesOnSignal(t *testing.T) {
+	s := common.NewSandbox(t)
+	c := common.NewCvdalloc(t, s)
+	base := snapshot(t, s)
+
+	inst, err := c.StartInstance(1)
+	if err != nil {
+		t.Fatalf("start instance 1: %v", err)
+	}
+	code, err := c.TerminateInstance(inst)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code != 1 {
+		t.Errorf("exit code after SIGTERM = %d, want 1", code)
+	}
+	checkReleased(t, s, base)
+}

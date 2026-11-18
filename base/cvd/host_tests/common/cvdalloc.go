@@ -182,6 +182,31 @@ func (c *Cvdalloc) KillInstance(inst *Instance) error {
 	return nil
 }
 
+// TerminateInstance SIGTERMs cvdalloc and returns its exit code.
+func (c *Cvdalloc) TerminateInstance(inst *Instance) (int, error) {
+	pid, err := inst.cvdallocPid()
+	if err != nil {
+		return 0, err
+	}
+	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
+		return 0, fmt.Errorf("terminating cvdalloc id=%d: %w", inst.ID, err)
+	}
+	done := make(chan struct{})
+	go func() {
+		inst.cmd.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(cvdallocTeardownTimeout):
+		inst.cmd.Process.Kill()
+		<-done
+		return 0, fmt.Errorf("cvdalloc id=%d did not exit within %v of SIGTERM%s", inst.ID, cvdallocTeardownTimeout, inst.stderrSuffix())
+	}
+	inst.conn.Close()
+	return inst.cmd.ProcessState.ExitCode(), nil
+}
+
 func (i *Instance) cvdallocPid() (int, error) {
 	// nsenter forks to enter the pid namespace, so cvdalloc is its child
 	pid, err := childPid(i.cmd.Process.Pid)
