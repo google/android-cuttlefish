@@ -13,10 +13,5 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 0
-    ignore:
-      - dependency-name: "golang.org/x/crypto"
-        versions: [">=0.50.0"]
-      - dependency-name: "golang.org/x/net"
-        versions: [">=0.52.0"]
     cooldown:
       default-days: 7
