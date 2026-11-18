@@ -48,6 +48,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: 'Trust workspace for Gemini CLI'
+        env:
+          WORKSPACE: '${{ github.workspace }}'
+        run: |-
+          mkdir -p "${HOME}/.gemini"
+          jq -n --arg dir "${WORKSPACE}" '{($dir): "TRUST_FOLDER"}' > "${HOME}/.gemini/trustedFolders.json"
+
       - name: 'Run Gemini pull request review'
         uses: 'google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489' # v0, ratchet:exclude
         id: 'gemini_pr_review'
