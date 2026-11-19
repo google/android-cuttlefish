@@ -524,6 +524,11 @@ pub fn validate_pcm_parameters(
     );
 
     ensure!(
+        params.period_bytes != 0 && params.buffer_bytes != 0,
+        "Zero length buffers are not allowed"
+    );
+
+    ensure!(
         params.buffer_bytes % params.period_bytes == 0,
         "Buffer bytes not a multiple of period bytes: {} / {}",
         params.buffer_bytes,
