@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -26,6 +27,7 @@
 #include "fmt/core.h"
 #include "fmt/format.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -92,7 +94,8 @@ Result<CommandRequest> BuildStartCommand(const CommandRequest& request,
 
 Result<LocalInstanceGroup> CreateGroup(
     InstanceManager& instance_manager, const std::string& base_dir,
-    const EnvironmentSpecification& env_spec) {
+    const EnvironmentSpecification& env_spec,
+    std::optional<Fd>* out_in_progress_lock) {
   InstanceGroupParams group_params{
       .group_name = env_spec.common().group_name(),
   };
@@ -103,7 +106,8 @@ Result<LocalInstanceGroup> CreateGroup(
   }
   return CF_EXPECT(instance_manager.CreateInstanceGroup(
       std::move(group_params),
-      CF_EXPECT(GetGroupCreationDirectories(base_dir, env_spec))));
+      CF_EXPECT(GetGroupCreationDirectories(base_dir, env_spec)),
+      out_in_progress_lock));
 }
 
 }  // namespace
@@ -164,9 +168,11 @@ Result<void> LoadConfigsCommand::Handle(const CommandRequest& request) {
       });
   auto listener_handle = CF_EXPECT(std::move(push_result));
 
+  std::optional<Fd> in_progress_lock;
   group_creation_mtx.lock();
   // Don't use CF_EXPECT here or the mutex will be left locked.
-  auto group_res = CreateGroup(instance_manager_, flags_.base_dir, env_spec);
+  auto group_res = CreateGroup(instance_manager_, flags_.base_dir, env_spec,
+                               &in_progress_lock);
   if (group_res.has_value()) {
     // Have to initialize the group_name variable before releasing the mutex.
     group_name = (*group_res).GroupName();
@@ -174,9 +180,15 @@ Result<void> LoadConfigsCommand::Handle(const CommandRequest& request) {
   group_creation_mtx.unlock();
   auto group = CF_EXPECT(std::move(group_res));
 
-  auto cvd_flags = CF_EXPECT(ParseCvdConfigs(env_spec, group));
+  Result<CvdFlags> cvd_flags_res = ParseCvdConfigs(env_spec, group);
+  if (!cvd_flags_res.has_value()) {
+    group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
+    (void)instance_manager_.UpdateInstanceGroup(group);
+  }
+  CvdFlags cvd_flags = CF_EXPECT(std::move(cvd_flags_res));
 
-  auto res = LoadGroup(request, group, std::move(cvd_flags));
+  auto res = LoadGroup(request, group, std::move(cvd_flags),
+                       std::move(in_progress_lock));
   if (!res.has_value()) {
     auto first_instance_state = group.Instances()[0].State();
     // The failure could have occurred during prepare(fetch) or start
@@ -194,7 +206,8 @@ Result<void> LoadConfigsCommand::Handle(const CommandRequest& request) {
 
 Result<void> LoadConfigsCommand::LoadGroup(const CommandRequest& request,
                                            LocalInstanceGroup& group,
-                                           CvdFlags cvd_flags) {
+                                           CvdFlags cvd_flags,
+                                           std::optional<Fd> in_progress_lock) {
   auto mkdir_res =
       EnsureDirectoryExists(group.HomeDir(), 0775, /* group_name */ "");
   if (!mkdir_res.has_value()) {
@@ -226,7 +239,8 @@ Result<void> LoadConfigsCommand::LoadGroup(const CommandRequest& request,
   CommandRequest start_cmd =
       CF_EXPECT(BuildStartCommand(request, cvd_flags, group));
   std::unique_ptr<CvdCommandHandler> start_handler =
-      std::make_unique<CvdStartCommandHandler>(instance_manager_);
+      std::make_unique<CvdStartCommandHandler>(instance_manager_,
+                                               std::move(in_progress_lock));
   CF_EXPECT(start_handler->Handle(start_cmd));
   return {};
 }

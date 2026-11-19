@@ -18,8 +18,10 @@
 
 #include <stddef.h>
 
+#include <functional>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -60,9 +62,33 @@ class InstanceDatabase {
    */
   Result<void> AddInstanceGroup(LocalInstanceGroup group);
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
+  struct GroupStateUpdate {
+    LocalInstanceGroup snapshot;
+    std::unordered_map<unsigned, cvd::InstanceState> updated_states;
+    std::function<bool()> precondition;
+  };
+
+  // Atomically updates instance states across one or more groups in a single
+  // exclusive database lock acquisition. Each entry in `updates` is applied iff
+  // the stored group still matches `snapshot` and satisfies `precondition`.
+  Result<bool> BatchCompareAndUpdateInstanceStates(
+      const std::vector<GroupStateUpdate>& updates);
+
+  // Convenience wrapper around `BatchCompareAndUpdateInstanceStates` for a
+  // single group.
+  Result<bool> CompareAndUpdateInstanceStates(
+      const LocalInstanceGroup& snapshot,
+      const std::unordered_map<unsigned, cvd::InstanceState>& updated_states,
+      std::function<bool()> precondition = nullptr);
 
   Result<std::vector<LocalInstanceGroup>> InstanceGroups() const;
   Result<bool> RemoveInstanceGroup(const std::string& group_name);
+  // Removes `group` if it still matches `group` in the database, has no active
+  // instances, and satisfies `precondition` (if provided) under the exclusive
+  // database lock.
+  Result<bool> RemoveInstanceGroup(
+      const LocalInstanceGroup& group,
+      std::function<bool()> precondition = nullptr);
   /**
    * Empties the database and returns the recently deleted instance groups.
    */

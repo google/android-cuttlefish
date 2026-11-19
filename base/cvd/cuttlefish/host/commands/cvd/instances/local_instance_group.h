@@ -33,7 +33,8 @@ class LocalInstanceGroup {
  public:
   class Builder {
    public:
-    Builder(std::string group_name);
+    explicit Builder(std::string group_name);
+    Builder(std::string group_name, const std::string& base_root_dir);
 
     Builder& AddInstance(unsigned id) &;
     Builder& AddInstance(unsigned id, std::string name) &;
