@@ -60,6 +60,8 @@ class LocalInstance {
   std::string AssemblyDirectory() const;
 
   bool IsActive() const;
+  bool CanConnectToLauncherMonitor(
+      std::chrono::seconds timeout = std::chrono::seconds(1)) const;
   // Contacts run_cvd to query the instance status. Returns a JSON object with
   // a description of the instance properties. Waits for run_cvd to respond for
   // at most timeout seconds.

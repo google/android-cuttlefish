@@ -406,5 +406,42 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
   EXPECT_EQ(find_res->Instances()[1].State(), cvd::INSTANCE_STATE_STARTING);
 }
 
+TEST_F(CvdInstanceDatabaseTest, CompareAndUpdateInstanceStatesUsesSnapshotCas) {
+  if (!SetUpOk()) {
+    GTEST_SKIP() << Error().msg;
+  }
+  auto& db = GetDb();
+
+  Result<LocalInstanceGroup> grp_res =
+      LocalInstanceGroup::Builder("cas_grp").AddInstance(1, "ins1").Build();
+  ASSERT_THAT(grp_res, IsOk());
+  ASSERT_THAT(db.AddInstanceGroup(*grp_res), IsOk());
+
+  Result<LocalInstanceGroup> stale_snapshot =
+      db.FindGroup({.group_name = "cas_grp"});
+  ASSERT_THAT(stale_snapshot, IsOk());
+
+  // Advance state in DB to RUNNING via an independent lookup
+  // (`LocalInstanceGroup` shares `group_proto_` across shallow copies), then
+  // verify CAS against the stale PREPARING snapshot is a no-op while CAS
+  // against RUNNING succeeds.
+  Result<LocalInstanceGroup> running = db.FindGroup({.group_name = "cas_grp"});
+  ASSERT_THAT(running, IsOk());
+  running->SetAllStates(cvd::INSTANCE_STATE_RUNNING);
+  ASSERT_THAT(db.UpdateInstanceGroup(*running), IsOk());
+
+  ASSERT_THAT(db.CompareAndUpdateInstanceStates(
+                  *stale_snapshot, {{1, cvd::INSTANCE_STATE_STOPPED}}),
+              IsOkAndValue(false));
+  ASSERT_THAT(db.CompareAndUpdateInstanceStates(
+                  *running, {{1, cvd::INSTANCE_STATE_STOPPED}}),
+              IsOkAndValue(true));
+
+  Result<LocalInstanceGroup> final_grp =
+      db.FindGroup({.group_name = "cas_grp"});
+  ASSERT_THAT(final_grp, IsOk());
+  EXPECT_EQ(final_grp->Instances()[0].State(), cvd::INSTANCE_STATE_STOPPED);
+}
+
 }  // namespace selector
 }  // namespace cuttlefish

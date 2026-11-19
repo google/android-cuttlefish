@@ -26,6 +26,7 @@
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/files/recursively_remove_directory.h"
@@ -172,6 +173,38 @@ TEST(LocalinstanceTest,
   ASSERT_FALSE(overlong_res.has_value());
   EXPECT_THAT(overlong_res.error().Message(),
               testing::HasSubstr("exceeds AF_UNIX limit"));
+}
+
+TEST(LocalinstanceTest, CanConnectToLauncherMonitorConnectsToLiveSocket) {
+  ScopedShortTempDir tmp;
+  ASSERT_FALSE(tmp.Root().empty());
+
+  std::string home = absl::StrCat(tmp.Root(), "/live_home");
+  std::string uds_dir = absl::StrCat(tmp.Root(), "/uds");
+  std::string uds_inst_dir = absl::StrCat(uds_dir, "/cvd-4");
+  ASSERT_THAT(EnsureDirectoryExists(home), IsOk());
+  ASSERT_THAT(EnsureDirectoryExists(uds_inst_dir), IsOk());
+
+  Result<LocalInstanceGroup> group = BuildGroupWithHome(
+      absl::StrCat(tmp.Root(), "/live_db.binpb"), "grp_live", home, 4);
+  ASSERT_THAT(group, IsOk());
+
+  EXPECT_FALSE(group->Instances()[0].CanConnectToLauncherMonitor(
+      std::chrono::seconds(1)));
+
+  std::string config_path = absl::StrCat(home, "/.cuttlefish_config.json");
+  ASSERT_THAT(
+      WriteNewFile(config_path,
+                   absl::StrCat("{\"instances_uds_dir\":\"", uds_dir, "\"}\n")),
+      IsOk());
+
+  std::string sock_path = absl::StrCat(uds_inst_dir, "/launcher_monitor.sock");
+  Result<Fd, int> server_sock = Fd::SocketLocalServer(
+      sock_path, /*is_abstract=*/false, SOCK_STREAM, 0600);
+  ASSERT_TRUE(server_sock.has_value());
+
+  EXPECT_TRUE(group->Instances()[0].CanConnectToLauncherMonitor(
+      std::chrono::seconds(1)));
 }
 
 TEST(LocalinstanceTest, MetricsSetupRecreatesWipedDirectoryWithoutAborting) {
