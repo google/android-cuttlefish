@@ -4,3 +4,6 @@ python.toolchain(
     ignore_root_user_error = True,
     python_version = "3.12",
 )
+
+rules_python_config = use_extension("@rules_python//python/extensions:config.bzl", "config")
+rules_python_config.explicit_init_py(default = True)
