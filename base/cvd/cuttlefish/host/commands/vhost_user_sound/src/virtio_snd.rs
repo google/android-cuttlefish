@@ -56,14 +56,16 @@ impl Into<Le32> for VirtioSndRequest {
     }
 }
 
-/* jack event types */
 #[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndEventCode {
+    /* jack event types */
     JackConnected = 0x1000,
     JackDisconnected,
+    /* PCM event types */
     PcmPeriodElapsed = 0x1100,
     PcmXrun,
+    /* control element event types */
     CtlNotify = 0x1200,
 }
 
