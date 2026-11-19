@@ -1,3 +1,11 @@
 #!/bin/sh
+set -e
 
-dpkg-divert --package cuttlefish-defaults --add --rename /usr/lib/cuttlefish-common/etc/cf_defaults
+case "$1" in
+  install|upgrade)
+    dpkg-divert --package cuttlefish-defaults --add --rename \
+      /usr/lib/cuttlefish-common/etc/cf_defaults
+    ;;
+esac
+
+#DEBHELPER#
