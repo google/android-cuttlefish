@@ -18,7 +18,7 @@ go_library(
         "//src/liboperator/api/v1:api",
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_gorilla_websocket//:websocket",
-        "@com_github_pion_webrtc_v3//:webrtc",
+        "@com_github_pion_webrtc_v4//:webrtc",
     ],
 )
 

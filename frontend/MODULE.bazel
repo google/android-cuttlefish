@@ -21,7 +21,7 @@ use_repo(
     "com_github_gorilla_mux",
     "com_github_gorilla_websocket",
     "com_github_pion_logging",
-    "com_github_pion_webrtc_v3",
+    "com_github_pion_webrtc_v4",
     "org_golang_google_grpc",
     "org_golang_google_protobuf",
 )
