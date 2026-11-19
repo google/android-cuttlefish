@@ -31,6 +31,7 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <string>
@@ -394,8 +395,10 @@ void ParseFlagsForMetrics(const CommandRequest& request) {
 }  // namespace
 
 CvdStartCommandHandler::CvdStartCommandHandler(
-    InstanceManager& instance_manager)
-    : instance_manager_(instance_manager) {
+    InstanceManager& instance_manager,
+    std::optional<Fd> preacquired_in_progress_lock)
+    : instance_manager_(instance_manager),
+      preacquired_in_progress_lock_(std::move(preacquired_in_progress_lock)) {
   own_flags_.daemon = true;
   own_flags_.print_group_format = isatty(0) ? "human" : "json";
 }
@@ -414,9 +417,31 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
       request.Selectors().instance_names->size() == 1) {
     auto [instance, group] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request));
+    std::optional<Fd> local_lock;
+    if (!preacquired_in_progress_lock_.has_value()) {
+      local_lock =
+          CF_EXPECT(InstanceManager::AcquireGroupInProgressLock(group));
+    }
+    group = CF_EXPECT(instance_manager_.RefreshInstanceGroupState(
+        group, /*caller_holds_in_progress_lock=*/true));
+    bool found_instance = false;
+    for (const LocalInstance& refreshed_inst : group.Instances()) {
+      if (refreshed_inst.Id() == instance.Id()) {
+        instance = refreshed_inst;
+        found_instance = true;
+        break;
+      }
+    }
+    CF_EXPECT(found_instance == true,
+              "Selected instance no longer exists in group");
 
     if (CanBypassToSingleInstance(instance, group, subcmd_args)) {
-      CF_EXPECT(LaunchSingleInstance(instance, group, request));
+      std::optional<Fd> lock = preacquired_in_progress_lock_.has_value()
+                                   ? std::move(preacquired_in_progress_lock_)
+                                   : std::move(local_lock);
+      preacquired_in_progress_lock_.reset();
+      CF_EXPECT(
+          LaunchSingleInstance(instance, group, request, std::move(lock)));
       return {};
     } else {
       VLOG(1) << "Cannot bypass to single instance start. Proceeding with "
@@ -431,9 +456,19 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
       CF_EXPECT(selector::SelectGroup(instance_manager_, request),
                 "Failed to select group to start, did you mean 'cvd create'?");
 
+  std::optional<Fd> in_progress_lock = std::move(preacquired_in_progress_lock_);
+  preacquired_in_progress_lock_.reset();
+  if (!in_progress_lock.has_value()) {
+    in_progress_lock =
+        CF_EXPECT(InstanceManager::AcquireGroupInProgressLock(group));
+  }
+  group = CF_EXPECT(instance_manager_.RefreshInstanceGroupState(
+      group, /*caller_holds_in_progress_lock=*/true));
+
   CF_EXPECT(!group.HasActiveInstances(),
             "Selected instance group is already started, use `cvd create` to "
             "create a new one.");
+  CF_EXPECT(instance_manager_.EnsureInstanceLocksInUse(group));
 
   std::unordered_map<std::string, std::string> envs = request.Env();
 
@@ -461,8 +496,10 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   Command command = CF_EXPECT(ConstructCvdNonHelpCommand(
       bin, group, subcmd_args, envs, request, memfd));
 
+  std::mutex group_mutex;
   Result<std::unique_ptr<InterruptListenerHandle>> handle_res =
-      PushInterruptListener([this, &group, stop_monitor](int signal) {
+      PushInterruptListener([this, &group, &group_mutex,
+                             stop_monitor](int signal) {
         LOG(WARNING) << strsignal(signal) << " signal received, cleanning up";
         stop_monitor();
         Result<void> interrupt_res = subprocess_waiter_.Interrupt();
@@ -473,38 +510,45 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
                         "run `cvd reset` to ensure a clean state";
         }
 
-        group.SetAllStates(cvd::INSTANCE_STATE_CANCELLED);
-        Result<void> update_res = instance_manager_.UpdateInstanceGroup(group);
-        if (!update_res.has_value()) {
-          LOG(ERROR) << "Failed to update group status: " << update_res.error();
+        {
+          std::lock_guard lock(group_mutex);
+          group.SetAllStates(cvd::INSTANCE_STATE_CANCELLED);
+          Result<void> update_res =
+              instance_manager_.UpdateInstanceGroup(group);
+          if (!update_res.has_value()) {
+            LOG(ERROR) << "Failed to update group status: "
+                       << update_res.error();
+          }
         }
         // It's technically possible for the group's state to be set to
-        // "running" before abort has a chance to run, but that can only happen
-        // if the instances are indeed running, so it's OK.
+        // "running" before abort has a chance to run, but that can only
+        // happen if the instances are indeed running, so it's OK.
 
         std::abort();
       });
 
   std::unique_ptr<InterruptListenerHandle> listener_handle =
       CF_EXPECT(std::move(handle_res));
-  group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
-  group.SetStartTime(CvdServerClock::now());
-  CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+  {
+    std::lock_guard lock(group_mutex);
+    group.SetAllStates(cvd::INSTANCE_STATE_STARTING);
+    group.SetStartTime(CvdServerClock::now());
+    CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+  }
 
   Result<void> monitor_res;
 #ifdef __linux__
   std::thread monitor_thread;
 
   if (!own_flags_.daemon) {
-    const LocalInstance& instance = *group.Instances().begin();
-    const std::string assemble_log =
-        absl::StrCat(instance.AssemblyDirectory(), "/", kLogNameAssembleCvd);
+    const LocalInstance first_instance = *group.Instances().begin();
+    const std::string assemble_log = absl::StrCat(
+        first_instance.AssemblyDirectory(), "/", kLogNameAssembleCvd);
     (void)RemoveFile(assemble_log);
-    for (const auto& log : CF_EXPECT(instance.LogsFilenames())) {
+    for (const auto& log : CF_EXPECT(first_instance.LogsFilenames())) {
       (void)RemoveFile(log);
     }
-    monitor_thread = std::thread([&group, stop_read, &monitor_res]() {
-      const LocalInstance& first_instance = *group.Instances().begin();
+    monitor_thread = std::thread([first_instance, stop_read, &monitor_res]() {
       monitor_res = MonitorLogs(first_instance, stop_read);
     });
   }
@@ -523,8 +567,8 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   };
 #endif
 
-  Result<void> launch_res =
-      LaunchDeviceInterruptible(std::move(command), group, envs, request);
+  Result<void> launch_res = LaunchDeviceInterruptible(
+      std::move(command), group, group_mutex, envs, request);
 
   if (!launch_res.has_value()) {
     if (!own_flags_.daemon) {
@@ -536,8 +580,12 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
     return launch_res;
   }
 
-  group.SetAllStates(cvd::INSTANCE_STATE_RUNNING);
-  CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+  {
+    std::lock_guard lock(group_mutex);
+    group.SetAllStates(cvd::INSTANCE_STATE_RUNNING);
+    CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+  }
+  in_progress_lock.reset();
 
   if (!own_flags_.daemon) {
     listener_handle.reset();
@@ -627,7 +675,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
 }
 
 Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
-    Command command, LocalInstanceGroup& group,
+    Command command, LocalInstanceGroup& group, std::mutex& group_mutex,
     const std::unordered_map<std::string, std::string>& envs,
     const CommandRequest& request) {
   // cvd_internal_start uses the config from the previous invocation to
@@ -644,6 +692,7 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
   const Result<void> start_res =
       LaunchDevice(std::move(command), group, group.Instances(), request);
   if (!start_res.has_value()) {
+    std::lock_guard lock(group_mutex);
     group.SetAllStates(cvd::INSTANCE_STATE_BOOT_FAILED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
     return start_res;
@@ -654,7 +703,9 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
 
 Result<void> CvdStartCommandHandler::LaunchSingleInstance(
     LocalInstance& instance, LocalInstanceGroup& group,
-    const CommandRequest& request) {
+    const CommandRequest& request, std::optional<Fd> in_progress_lock) {
+  CF_EXPECT(instance_manager_.EnsureInstanceLocksInUse(group));
+
   const std::string bin_path = group.HostArtifactsPath() + "/bin/run_cvd";
   std::unordered_map<std::string, std::string> run_cvd_envs = request.Env();
   run_cvd_envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.Id());
@@ -699,7 +750,6 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
   };
 
   set_instance_state(cvd::INSTANCE_STATE_STARTING);
-  group.SetStartTime(CvdServerClock::now());
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
   const Result<void> start_res =
@@ -712,6 +762,7 @@ Result<void> CvdStartCommandHandler::LaunchSingleInstance(
 
   set_instance_state(cvd::INSTANCE_STATE_RUNNING);
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+  in_progress_lock.reset();
 
   const Json::Value group_json = CF_EXPECT(group.FetchStatus());
   std::cout << group_json.toStyledString();
