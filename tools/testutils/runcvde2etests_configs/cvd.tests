@@ -5,7 +5,9 @@
 //cvd/cvd_create_tests:cvd_create_substitute_only
 //cvd/cvd_create_tests:cvd_create_tests
 //cvd/cvd_create_tests:cvd_create_tests_additional_substitution
-//cvd/cvd_load_tests:cvd_load_tests
+//cvd/cvd_load_tests:aosp_main_x64_phone
+//cvd/cvd_load_tests:git_main_x64_phone
+//cvd/cvd_load_tests:git_sw_car_dev_sdv
 //cvd/cvd_logspam_tests:cvd_logspam_tests
 //cvd/cvd_logspam_tests:cvd_logspam_tests_additional_substitution
 //cvd/cvd_powerwash_tests:cvd_powerwash_tests
