@@ -17,7 +17,6 @@ package internal
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -525,9 +524,6 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 func ensureOperatorHealthy(ip string) error {
 	client := &http.Client{
 		Timeout: time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
 	}
 	const retryCount = 10
 	const retryInterval = time.Second
