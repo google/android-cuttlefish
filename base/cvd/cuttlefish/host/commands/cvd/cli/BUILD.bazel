@@ -121,7 +121,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/files:copy",
@@ -131,7 +130,6 @@ cf_cc_library(
         "//cuttlefish/flag_parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:help_format",
-        "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/cli/commands:bugreport",
         "//cuttlefish/host/commands/cvd/cli/commands:cache",
         "//cuttlefish/host/commands/cvd/cli/commands:clear",
@@ -160,7 +158,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:version",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
-        "//cuttlefish/host/commands/cvd/cli/selector",
         "//cuttlefish/host/commands/cvd/cli/selector:creation_analyzer",
         "//cuttlefish/host/commands/cvd/cli/selector:num_instances_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
@@ -172,6 +169,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/commands/cvd/utils:interrupt_listener",
+        "//cuttlefish/posix:readlink",
         "//cuttlefish/posix:realpath",
         "//cuttlefish/posix:remove",
         "//cuttlefish/posix:strerror",
@@ -184,6 +182,34 @@ cf_cc_library(
         "@platforms//os:linux": ["//cuttlefish/host/commands/cvd/cli/commands/monitor:command_handler"],
         "//conditions:default": [],
     }),
+)
+
+cf_cc_test(
+    name = "create_test",
+    srcs = ["create_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/files:directory_exists",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/files:write_new_file",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:nesting_commands",
+        "//cuttlefish/host/commands/cvd/cli/commands:remove",
+        "//cuttlefish/host/commands/cvd/cli/commands:start",
+        "//cuttlefish/host/commands/cvd/cli/commands:stop",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances:instance_manager",
+        "//cuttlefish/host/commands/cvd/instances/lock",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings",
+    ],
 )
 
 cf_cc_library(
