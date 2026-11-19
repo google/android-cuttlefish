@@ -92,9 +92,7 @@ func (c *PolledClient) GetMessages(start int, count int) []interface{} {
 	if count < 0 || count > len(c.messages)-start {
 		count = len(c.messages) - start
 	}
-	ret := make([]interface{}, count)
-	copy(ret, c.messages[start:start+count])
-	return ret
+	return append([]interface{}{}, c.messages[start:start+count]...)
 }
 
 func (c *PolledClient) Id() string {
