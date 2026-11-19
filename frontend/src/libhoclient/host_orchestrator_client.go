@@ -29,7 +29,7 @@ import (
 	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	opapi "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 	"github.com/gorilla/websocket"
-	"github.com/pion/webrtc/v3"
+	"github.com/pion/webrtc/v4"
 )
 
 type ApiCallError struct {
