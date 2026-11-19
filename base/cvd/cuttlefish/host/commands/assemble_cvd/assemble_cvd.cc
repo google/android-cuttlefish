@@ -461,6 +461,22 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       // run without the overlay, then we want to keep this until userdata.img
       // was externally replaced.
       creating_os_disk &= FLAGS_use_overlay;
+
+      // Never silently wipe a device that already holds user data. A
+      // deliberate reset is still possible with `cvd powerwash` or
+      // --resume=false.
+      if (creating_os_disk && FLAGS_resume) {
+        for (const auto& instance : config.Instances()) {
+          const std::string overlay = instance.PerInstancePath("overlay.img");
+          CF_EXPECTF(!FileHasContent(overlay),
+                     "Refusing to start: the disk inputs for '{}' changed "
+                     "since the last run, and resuming would wipe the "
+                     "existing user data in '{}'. Nothing was deleted. Use "
+                     "`cvd powerwash` or --resume=false to reset this device "
+                     "deliberately.",
+                     instance.instance_dir(), overlay);
+        }
+      }
     }
 
     std::set<std::string> preserving =
