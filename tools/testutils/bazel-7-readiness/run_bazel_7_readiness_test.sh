@@ -1,27 +1,48 @@
-#!/usr/bin/sh
+#!/bin/sh
 set -e
 
-DEB_HOST_MULTIARCH=`dpkg-architecture -qDEB_HOST_MULTIARCH`
-HOME1=`mktemp -d`
-CACHE1=`mktemp -d`
-MOCKREPOS=`mktemp -d`
-python3 `pwd`/tools/testutils/bazel-7-readiness/generate_mock_repos.py ${MOCKREPOS}
+REPO_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
+DEB_HOST_MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
+WORKDIR=$(mktemp -d)
+HOME1="${WORKDIR}/home"
+CACHE1="${WORKDIR}/cache"
+MOCKREPOS="${WORKDIR}/mock_repos"
+CVD_WORK="${WORKDIR}/cvd"
 
-echo "#WORKSPACE" > base/cvd/WORKSPACE
-mkdir -p ${MOCKREPOS}/googleapis/google/rpc
-ln -sf /usr/lib/python3/dist-packages/google/rpc/status.proto ${MOCKREPOS}/googleapis/google/rpc/status.proto
-ln -sf /usr/lib/python3/dist-packages/google/rpc/code.proto ${MOCKREPOS}/googleapis/google/rpc/code.proto
+cleanup() {
+  if [ -d "${CVD_WORK}" ]; then
+    (cd "${CVD_WORK}" && env HOME="${HOME1}" bazel shutdown >/dev/null 2>&1 || true)
+  fi
+  rm -rf "${WORKDIR}"
+}
+trap cleanup EXIT
 
-OVERRIDE_ARGS=`cat ${MOCKREPOS}/override_args.txt`
+mkdir -p "${HOME1}" "${CACHE1}" "${MOCKREPOS}" "${CVD_WORK}"
+tar -C "${REPO_ROOT}/base/cvd" --exclude='bazel-*' -cf - . | tar -C "${CVD_WORK}" -xf -
 
-cd base/cvd
-trap "env HOME=${HOME1} bazel shutdown || true" EXIT
+python3 "${REPO_ROOT}/tools/testutils/bazel-7-readiness/generate_mock_repos.py" "${MOCKREPOS}" "${CVD_WORK}"
 
-env HOME=${HOME1} bazel build \
-  --nobuild --linkopt="-Wl,--build-id=sha1" --spawn_strategy=local \
+echo "#WORKSPACE" > "${CVD_WORK}/WORKSPACE"
+mkdir -p "${MOCKREPOS}/googleapis/google/rpc"
+ln -sf /usr/lib/python3/dist-packages/google/rpc/status.proto "${MOCKREPOS}/googleapis/google/rpc/status.proto"
+ln -sf /usr/lib/python3/dist-packages/google/rpc/code.proto "${MOCKREPOS}/googleapis/google/rpc/code.proto"
+
+OVERRIDE_ARGS=$(cat "${MOCKREPOS}/override_args.txt")
+SYS_RULE_OVERRIDES=""
+for rule in shell license proto; do
+  if [ -d "/usr/share/bazel/rules/${rule}" ]; then
+    SYS_RULE_OVERRIDES="${SYS_RULE_OVERRIDES} --override_module=rules_${rule}=/usr/share/bazel/rules/${rule}"
+  fi
+done
+
+cd "${CVD_WORK}"
+env HOME="${HOME1}" bazel build \
+  --nobuild \
+  --linkopt="-Wl,--build-id=sha1" \
+  --spawn_strategy=local \
   --verbose_failures \
   --sandbox_debug \
-  --repository_cache=${CACHE1} \
+  --repository_cache="${CACHE1}" \
   --strip=never \
   --copt="-g" \
   --copt="-isystem/usr/include/jsoncpp" \
@@ -34,18 +55,10 @@ env HOME=${HOME1} bazel build \
   --linkopt="-Wl,-rpath,/usr/lib/${DEB_HOST_MULTIARCH}/android" \
   --linkopt="-z muldefs" \
   --noenable_workspace \
-  --registry=file://${MOCKREPOS} \
+  --registry="file://${MOCKREPOS}" \
   --check_direct_dependencies=off \
-  --override_module=rules_shell=/usr/share/bazel/rules/shell \
+  ${SYS_RULE_OVERRIDES} \
   ${OVERRIDE_ARGS} \
-  cuttlefish/host/commands/cvd:cvd \
-  cuttlefish/host/commands/cvdalloc:cvdalloc \
-  cuttlefish/host/commands/refresh_groups:cvd_refresh_groups \
-  cuttlefish/host/commands/defaults:cf_defaults \
-  cuttlefish/host/commands/assemble_cvd:assemble_cvd \
-  cuttlefish/host/commands/start:cvd_internal_start \
-  cuttlefish/host/commands/run_cvd:run_cvd \
-  cuttlefish/host/commands/stop:cvd_internal_stop \
-  cuttlefish/host/commands/status:cvd_internal_status \
-  cuttlefish/host/commands/display:cvd_internal_display \
-  cuttlefish/host/commands/host_bugreport:cvd_internal_host_bugreport
+  //cuttlefish/package:cvd \
+  //cuttlefish/package:defaults \
+  //cuttlefish/package:metrics

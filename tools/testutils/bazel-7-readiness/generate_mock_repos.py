@@ -2,138 +2,10 @@
 import ast
 import glob
 import os
+import re
 import shutil
 import stat
 import sys
-
-EMPTY_REPOS = [
-    "apple_support",
-    "buildifier_prebuilt",
-    "buildozer",
-    "dav1d",
-    "depend_on_what_you_use",
-    "gazelle",
-    "glslang",
-    "hedron_compile_commands",
-    "hermetic_cc_toolchain",
-    "nv_codec_headers",
-    "rules_cuda",
-    "rules_foreign_cc",
-    "rules_go",
-    "rules_m4",
-    "rules_nodejs",
-]
-
-PKG_TARGETS = {
-    "abseil-cpp": ["abseil-cpp"],
-    "abseil-cpp/absl/algorithm": ["algorithm"],
-    "abseil-cpp/absl/base": ["base", "log_severity", "no_destructor"],
-    "abseil-cpp/absl/cleanup": ["cleanup"],
-    "abseil-cpp/absl/container": ["btree", "container", "flat_hash_map"],
-    "abseil-cpp/absl/debugging": ["debugging"],
-    "abseil-cpp/absl/flags": ["flag", "flags", "parse"],
-    "abseil-cpp/absl/functional": ["bind_front", "functional"],
-    "abseil-cpp/absl/hash": ["hash"],
-    "abseil-cpp/absl/log": ["check", "globals", "initialize", "log", "log_entry", "log_sink", "log_sink_registry", "vlog_is_on"],
-    "abseil-cpp/absl/memory": ["memory"],
-    "abseil-cpp/absl/meta": ["meta"],
-    "abseil-cpp/absl/numeric": ["numeric"],
-    "abseil-cpp/absl/profiling": ["profiling"],
-    "abseil-cpp/absl/random": ["bit_gen_ref", "distributions", "random"],
-    "abseil-cpp/absl/status": ["status", "statusor"],
-    "abseil-cpp/absl/strings": ["cord", "str_format", "strings"],
-    "abseil-cpp/absl/synchronization": ["synchronization"],
-    "abseil-cpp/absl/time": ["time"],
-    "abseil-cpp/absl/types": ["span", "types"],
-    "abseil-cpp/absl/utility": ["utility"],
-    "android_system_core": ["__subpackages__", "all", "android_system_core", "cutils_android_filesystem_config", "cutils_list", "init", "lib", "libbase", "libcrypto_utils", "libcutils", "libext4_utils", "liblog", "liblp", "libsparse", "libutils", "libziparchive", "simg2img"],
-    "android_system_extras": ["__subpackages__", "all", "android_system_extras", "lib", "libext4_utils", "lpadd", "lpmake"],
-    "android_system_libbase": ["__subpackages__", "all", "android_system_libbase", "cmsg", "collections", "endian", "errno_restorer", "errors", "expected", "file_logging", "format", "lib", "macros", "mapped_file", "no_destructor", "off64_t", "parsebool", "parseint", "parsenetaddress", "posix_strerror_r", "properties", "result", "scopeguard", "stringprintf", "strings", "thread_annotations", "threads", "unique_fd"],
-    "android_system_logging": ["__subpackages__", "all", "android_system_logging", "lib", "liblog"],
-    "android_tools_netsim": ["all", "android_tools_netsim", "lib", "netsim", "netsim-cli", "netsim-daemon", "netsimd"],
-    "arm_optimized_routines": ["all", "arm_optimized_routines", "lib", "string"],
-    "boringssl": ["boringssl", "crypto"],
-    "brotli": ["brotlidec", "brotlienc", "brotli"],
-    "bzip2": ["bzip2"],
-    "c-ares": ["ares", "c-ares"],
-    "casimir": ["Cargo.toml", "all", "casimir", "lib"],
-    "crc32c": ["crc32c"],
-    "crosvm": ["Cargo.lock", "__subpackages__", "all", "compile_seccomp_policy_zip", "crosvm", "crosvm_gpu_display_wayland_protocols", "lib", "libcrosvm", "minijail_sources"],
-    "curl": ["curl"],
-    "cxx.rs": ["codegen", "cxx"],
-    "dosfstools": ["__subpackages__", "all", "dosfstools", "lib", "mkfs.fat"],
-    "e2fsprogs": ["__subpackages__", "all", "e2fsck", "e2fsdroid", "e2fsprogs", "lib", "libext2_com_err_headers", "libext2_uuid", "mke2fs", "resize2fs"],
-    "egl_headers": ["all", "egl_headers", "lib"],
-    "expat": ["__subpackages__", "all", "expat", "lib"],
-    "f2fs_tools": ["__subpackages__", "all", "f2fs_tools", "fsck.f2fs", "lib", "make_f2fs"],
-    "fec_rs": ["all", "fec_rs", "lib", "libfec_rs"],
-    "fmt": ["fmt"],
-    "freetype": ["freetype"],
-    "fruit": ["fruit", "lib", "all"],
-    "gflags": ["gflags"],
-    "gfxstream": ["__subpackages__", "all", "gfxstream", "lib"],
-    "gfxstream/host": ["gfxstream_backend"],
-    "googleapis": ["googleapis"],
-    "googleapis-cc": ["googleapis-cc"],
-    "googletest": ["gtest", "gtest_main", "gmock", "gmock_main"],
-    "grpc": ["grpc++", "grpc", "grpc++_reflection"],
-    "grpc-proto": ["grpc-proto"],
-    "icu": ["icu"],
-    "jsoncpp": ["jsoncpp"],
-    "libarchive": ["libarchive"],
-    "libarchive/cpio": ["cpio"],
-    "libcbor": ["__subpackages__", "all", "cbor", "lib", "libcbor"],
-    "libconfig": ["all", "lib", "libconfig"],
-    "libdrm": ["all", "lib", "libdrm", "libdrm_fourcc"],
-    "libeigen": ["all", "lib", "libeigen"],
-    "libevent": ["event", "libevent"],
-    "libffi": ["all", "lib", "libffi"],
-    "libjpeg_turbo": ["jpeg", "libjpeg_turbo"],
-    "libnl": ["__subpackages__", "all", "lib", "libnl"],
-    "libopenscreen": ["__subpackages__", "all", "lib", "libopenscreen"],
-    "libpffft": ["all", "lib", "libpffft"],
-    "libpng": ["libpng"],
-    "libsrtp2": ["all", "lib", "libsrtp2"],
-    "libusb": ["all", "lib", "libusb"],
-    "libuuid": ["libuuid"],
-    "libvpx": ["__subpackages__", "all", "lib", "libvpx"],
-    "libwebm": ["all", "lib", "libwebm", "mkvmuxer"],
-    "libwebrtc": ["all", "lib", "libwebrtc"],
-    "libwebsockets": ["__subpackages__", "all", "lib", "libwebsockets"],
-    "libxml2": ["libxml2"],
-    "libyuv": ["all", "lib", "libyuv"],
-    "libzip": ["libzip"],
-    "lz4": ["lz4", "lz4_frame"],
-    "lz4/programs": ["lz4"],
-    "mako": ["__subpackages__", "all", "lib", "mako"],
-    "markupsafe": ["all", "lib", "markupsafe"],
-    "mesa": ["__subpackages__", "all", "lib", "mesa", "vk_lavapipe"],
-    "mkbootimg": ["all", "bootimg_header", "lib", "mkbootimg", "mkbootimg.py", "unpack_bootimg", "unpack_bootimg.py"],
-    "ms-tpm-20-ref": ["all", "lib", "ms-tpm-20-ref", "simulator"],
-    "mtools": ["__subpackages__", "all", "lib", "mtools"],
-    "nasm": ["nasm"],
-    "opengl_headers": ["GLES2_headers", "GLES3_headers", "GLES_headers", "__subpackages__", "all", "lib", "opengl_headers"],
-    "pcre2": ["pcre2"],
-    "protobuf/src/google/protobuf/io": ["io", "tokenizer"],
-    "pyyaml": ["all", "lib", "pyyaml", "yaml"],
-    "re2": ["re2"],
-    "rootcanal": ["rootcanal", "rootcanal_proto", "librootcanal"],
-    "rootcanal/packets": ["link_layer_packets_rs"],
-    "sandboxed_api": ["sandboxed_api"],
-    "selinux": ["__subpackages__", "all", "lib", "libselinux", "sefcontext_compile", "selinux"],
-    "spirv_headers": ["all", "lib", "spirv_cpp_headers", "spirv_headers"],
-    "spirv_tools": ["all", "lib", "spirv_tools", "spirv_tools_opt"],
-    "swiftshader": ["all", "lib", "swiftshader", "swiftshader_llvm", "vk_swiftshader"],
-    "tinyxml2": ["tinyxml2"],
-    "tl-expected": ["tl-expected"],
-    "venus_protocol": ["all", "lib", "venus_protocol", "vn_protocol_driver", "vn_protocol_renderer", "vulkan_headers"],
-    "virglrenderer": ["all", "lib", "libvirglrenderer.so.1", "mesa_util", "virgl_render_server", "virglrenderer", "virglrenderer_internal"],
-    "vulkan_headers": ["all", "lib", "vulkan_headers", "vulkan_hpp"],
-    "wayland": ["__subpackages__", "all", "lib", "wayland", "wayland_scanner", "wayland_server"],
-    "wmediumd": ["__subpackages__", "all", "lib", "libwmediumd", "wmediumd", "wmediumd_gen_config"],
-    "xz": ["xz"],
-    "zlib": ["zlib"],
-}
 
 PROTOBUF_BUILD = """\
 load("@rules_proto//proto:defs.bzl", "proto_lang_toolchain", "proto_toolchain", "proto_library")
@@ -156,7 +28,15 @@ proto_toolchain(name = "proto_toolchain", proto_compiler = ":protoc")
 )
 
 CUSTOM_FILES = {
-    "aspect_bazel_lib/lib/expand_template.bzl": "def expand_template(**kwargs):\n    pass\n",
+    "aspect_bazel_lib/lib/expand_template.bzl": """\
+def expand_template(name, template, out, substitutions = {}, **kwargs):
+    native.genrule(
+        name = name,
+        srcs = [template],
+        outs = [out],
+        cmd = "cp $< $@",
+    )
+""",
     "aspect_rules_lint/format/defs.bzl": "def format_test(**kwargs):\n    pass\n",
     "aspect_rules_lint/lint/buildifier.bzl": "def lint_buildifier_aspect(**kwargs):\n    return None\n",
     "aspect_rules_lint/lint/clang_tidy.bzl": "def lint_clang_tidy_aspect(**kwargs):\n    return None\n",
@@ -171,6 +51,7 @@ alias(name = "all", actual = ":libavb", visibility = ["//visibility:public"])
 """,
     "avb/avbtool.py": "#!/usr/bin/env python3\n",
     "avb/MODULE.bazel": 'module(name = "avb")\nbazel_dep(name = "boringssl")\nbazel_dep(name = "rules_cc")\n',
+    "bazel_features/features.bzl": "bazel_features = struct(globals = struct(), external_deps = struct(extension_metadata_has_reproducible = True))\n",
     "buildifier_prebuilt/BUILD": 'package(default_visibility = ["//visibility:public"])\nfilegroup(name = "buildifier")\n',
     "buildifier_prebuilt/defs.bzl": """\
 def _dummy_repo_impl(ctx):
@@ -228,7 +109,6 @@ toolchains = module_extension(implementation = _impl)
     "rules_cuda/cuda/extensions.bzl": """\
 def _dummy_repo_impl(ctx):
     ctx.file("BUILD.bazel", \"\"\"\\
-load("@rules_cc//cc:defs.bzl", "cc_library")
 package(default_visibility = ["//visibility:public"])
 cc_library(name = "cudart_headers")
 \"\"\")
@@ -298,6 +178,20 @@ def cc_grpc_library(name, srcs = [], deps = [], **kwargs):
     "protobuf/protobuf_deps.bzl": "def protobuf_deps():\n    pass\n",
     "protobuf/protoc.sh": "#!/bin/sh\n",
     "rules_flex/flex/flex.bzl": "def flex_cc_library(**kwargs):\n    pass\n",
+    "rules_python/python/config_settings/BUILD": """\
+load(":defs.bzl", "string_flag")
+package(default_visibility = ["//visibility:public"])
+string_flag(name = "bootstrap_impl", build_setting_default = "system_python")
+""",
+    "rules_python/python/config_settings/defs.bzl": """\
+def _impl(ctx):
+    return []
+
+string_flag = rule(
+    implementation = _impl,
+    build_setting = config.string(flag = True),
+)
+""",
     "rules_proto_grpc_cpp/defs.bzl": "def cpp_grpc_library(**kwargs):\n    pass\n",
     "rules_proto_grpc_go/defs.bzl": """\
 def go_proto_compile(**kwargs): pass
@@ -306,7 +200,8 @@ def go_proto_library(**kwargs): pass
 def go_grpc_library(**kwargs): pass
 """,
     "rules_rust/rust/defs.bzl": """\
-def rust_binary(**kwargs): pass
+def rust_binary(name, **kwargs):
+    native.genrule(name = name, outs = [name + "_stub"], executable = True, cmd = "touch $@")
 def rust_library(**kwargs): pass
 def rust_static_library(**kwargs): pass
 def rust_test(**kwargs): pass
@@ -331,13 +226,63 @@ rust_host_tools = module_extension(
     tag_classes = {"host_tools": tag_class(attrs = {"name": attr.string(), "version": attr.string()})},
 )
 """,
-    "rules_rust/crate_universe/extensions.bzl": """\
+    "toolchains_llvm/toolchain/extensions/llvm.bzl": """\
+def _dummy_repo_impl(ctx):
+    ctx.file("BUILD", "")
+    ctx.file("WORKSPACE", "")
+
+_dummy_repo = repository_rule(implementation = _dummy_repo_impl)
+
+def _impl(module_ctx):
+    _dummy_repo(name = "llvm_toolchain")
+
+llvm = module_extension(
+    implementation = _impl,
+    tag_classes = {"toolchain": tag_class(attrs = {"llvm_version": attr.string()})},
+)
+""",
+}
+
+LABEL_RE = re.compile(r"^@([A-Za-z0-9_.-]+)(?://([A-Za-z0-9_./-]*))?(?::([A-Za-z0-9_./+-]+))?$")
+
+# Repos provided by system packages or handled by module extensions (not overridden as empty modules).
+SYSTEM_OR_EXTENSION_REPOS = {
+    "bazel_skylib",
+    "bazel_tools",
+    "cc_compatibility_proxy",
+    "com_github_google_go_cmp",
+    "cuda",
+    "llvm_toolchain",
+    "platforms",
+    "rules_cc",
+    "rules_license",
+    "rules_proto",
+    "rules_shell",
+    "rust_host_tools_nightly",
+    "zig_sdk",
+}
+
+
+def make_crate_universe_bzl(crate_targets):
+    rules = "\n".join(
+        f'genrule(name = "{t}", outs = ["{t}_bin"], executable = True, cmd = "touch $@")'
+        for t in sorted(crate_targets)
+    )
+    return f"""\
 def _dummy_repo_impl(ctx):
     ctx.file("BUILD.bazel", \"\"\"\\
-load("@rules_cc//cc:defs.bzl", "cc_library")
 package(default_visibility = ["//visibility:public"])
-cc_library(name = "crosvm__crosvm")
-cc_library(name = "vhost-device-vsock__vhost-device-vsock")
+{rules}
+\"\"\")
+    ctx.file("defs.bzl", \"\"\"\\
+def aliases(**kwargs):
+    return {{}}
+
+def all_crate_deps(**kwargs):
+    return []
+
+def crate_deps(*args, **kwargs):
+    return []
 \"\"\")
     ctx.file("WORKSPACE", "")
 
@@ -352,8 +297,8 @@ def _impl(ctx):
 
 crate = module_extension(
     implementation = _impl,
-    tag_classes = {
-        "spec": tag_class(attrs = {
+    tag_classes = {{
+        "spec": tag_class(attrs = {{
             "artifact": attr.string(),
             "default_features": attr.bool(),
             "features": attr.string_list(),
@@ -362,8 +307,8 @@ crate = module_extension(
             "repositories": attr.string_list(),
             "rev": attr.string(),
             "version": attr.string(),
-        }),
-        "annotation": tag_class(attrs = {
+        }}),
+        "annotation": tag_class(attrs = {{
             "additive_build_file_content": attr.string(),
             "build_script_data": attr.string_list(),
             "build_script_data_glob": attr.string_list(),
@@ -380,47 +325,43 @@ crate = module_extension(
             "rustc_env": attr.string_dict(),
             "rustc_flags": attr.string_list(),
             "version": attr.string(),
-        }),
-        "from_specs": tag_class(attrs = {
+        }}),
+        "from_specs": tag_class(attrs = {{
             "cargo_config": attr.string(),
             "cargo_lockfile": attr.string(),
             "host_tools": attr.string(),
             "name": attr.string(),
-        }),
-        "from_cargo": tag_class(attrs = {
+        }}),
+        "from_cargo": tag_class(attrs = {{
             "cargo_config": attr.string(),
+            "cargo_lockfile": attr.string(),
             "host_tools": attr.string(),
             "manifests": attr.string_list(),
             "name": attr.string(),
-        }),
-    },
+        }}),
+    }},
 )
-""",
-    "toolchains_llvm/toolchain/extensions/llvm.bzl": """\
-def _dummy_repo_impl(ctx):
-    ctx.file("BUILD", "")
-    ctx.file("WORKSPACE", "")
+"""
 
-_dummy_repo = repository_rule(implementation = _dummy_repo_impl)
-
-def _impl(ctx):
-    _dummy_repo(name = "llvm_toolchain")
-
-llvm = module_extension(
-    implementation = _impl,
-    tag_classes = {"toolchain": tag_class(attrs = {"llvm_version": attr.string()})},
-)
-""",
-}
 
 def main():
-    target_dir = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), "mock_repos")
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-    repos = set(EMPTY_REPOS)
-    packages = set()
+    if len(sys.argv) < 2:
+        print("Usage: generate_mock_repos.py <target_dir> [cvd_root]", file=sys.stderr)
+        sys.exit(1)
 
-    pkg_targets = {pkg: set(targets) for pkg, targets in PKG_TARGETS.items()}
-    for build_file in glob.glob(os.path.join(repo_root, "base/cvd/build_external/*/BUILD.*.bazel")):
+    target_dir = sys.argv[1]
+    if len(sys.argv) >= 3:
+        cvd_root = os.path.abspath(sys.argv[2])
+    else:
+        cvd_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../base/cvd"))
+
+    repos = set()
+    packages = set()
+    pkg_targets = {}
+    crate_targets = {"crosvm__crosvm", "vhost-device-vsock__vhost-device-vsock", "pica__pica"}
+
+    # 1. Discover targets from base/cvd/build_external/*/BUILD.*.bazel
+    for build_file in glob.glob(os.path.join(cvd_root, "build_external/*/BUILD.*.bazel")):
         repo = os.path.basename(os.path.dirname(build_file))
         if f"{repo}/BUILD" in CUSTOM_FILES:
             continue
@@ -437,16 +378,64 @@ def main():
                     if kw.arg == "name" and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, str):
                         names.add(kw.value.value)
 
+    # 2. Discover external @repo//pkg:target references from all BUILD.bazel / .bzl files under cvd_root
+    build_and_bzl_files = (
+        glob.glob(os.path.join(cvd_root, "**/BUILD.bazel"), recursive=True)
+        + glob.glob(os.path.join(cvd_root, "**/BUILD"), recursive=True)
+        + glob.glob(os.path.join(cvd_root, "**/*.bzl"), recursive=True)
+    )
+    for fpath in build_and_bzl_files:
+        try:
+            with open(fpath, "r") as f:
+                tree = ast.parse(f.read(), filename=fpath)
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                m = LABEL_RE.match(node.value)
+                if not m:
+                    continue
+                repo, pkg, target = m.group(1), m.group(2), m.group(3)
+                if repo in SYSTEM_OR_EXTENSION_REPOS:
+                    continue
+                if repo.endswith("_crates"):
+                    if target:
+                        crate_targets.add(target)
+                    continue
+                full_pkg = f"{repo}/{pkg}" if pkg else repo
+                if f"{full_pkg}/BUILD" in CUSTOM_FILES:
+                    continue
+                if target is None:
+                    target = pkg.split("/")[-1] if pkg else repo
+                names = pkg_targets.setdefault(full_pkg, set())
+                names.add(target)
+                names.add(full_pkg.split("/")[-1])
+
+    # 3. Generate BUILD files for discovered external packages
+    mock_bzl = """\
+def _mock_target_impl(ctx):
+    f = ctx.actions.declare_file(ctx.attr.name + "_stub")
+    ctx.actions.write(f, "")
+    return [DefaultInfo(files = depset([f])), CcInfo()]
+
+mock_target = rule(implementation = _mock_target_impl)
+"""
     for pkg, targets in pkg_targets.items():
         repos.add(pkg.split("/")[0])
         packages.add(pkg)
         pkg_dir = os.path.join(target_dir, pkg)
         os.makedirs(pkg_dir, exist_ok=True)
+        with open(os.path.join(pkg_dir, "mock.bzl"), "w") as f:
+            f.write(mock_bzl)
         with open(os.path.join(pkg_dir, "BUILD"), "w") as f:
+            f.write('load(":mock.bzl", "mock_target")\n')
             for t in sorted(targets):
-                f.write(f'cc_library(name = "{t}", visibility = ["//visibility:public"])\n')
+                f.write(f'mock_target(name = "{t}", visibility = ["//visibility:public"])\n')
 
-    for rel_path, content in CUSTOM_FILES.items():
+    # 4. Write custom .bzl / BUILD / MODULE.bazel stubs
+    custom_files = dict(CUSTOM_FILES)
+    custom_files["rules_rust/crate_universe/extensions.bzl"] = make_crate_universe_bzl(crate_targets)
+    for rel_path, content in custom_files.items():
         repos.add(rel_path.split("/")[0])
         full_path = os.path.join(target_dir, rel_path)
         dir_path = os.path.dirname(full_path)
@@ -457,6 +446,7 @@ def main():
             os.chmod(full_path, os.stat(full_path).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
         packages.add(os.path.relpath(dir_path, target_dir))
 
+    # 5. Copy system rules_cc and append cc_compatibility_proxy extension
     sys_rules_cc = "/usr/share/bazel/rules/cc"
     if os.path.exists(sys_rules_cc):
         dst_rules_cc = os.path.join(target_dir, "rules_cc")
@@ -482,12 +472,14 @@ def _compatibility_proxy_impl(ctx):
 compatibility_proxy = module_extension(implementation = _compatibility_proxy_impl)
 """)
 
+    # 6. Discover all modules/repos from MODULE.bazel files and normalize Bazel 7-incompatible attrs
     repo_rule_repos = set()
     explicit_bzlmod = set()
     mod_files = (
-        [os.path.join(repo_root, "base/cvd/MODULE.bazel")]
-        + glob.glob(os.path.join(repo_root, "base/cvd/**/*.MODULE.bazel"), recursive=True)
+        [os.path.join(cvd_root, "MODULE.bazel")]
+        + glob.glob(os.path.join(cvd_root, "**/*.MODULE.bazel"), recursive=True)
         + glob.glob(os.path.join(target_dir, "*/MODULE.bazel"))
+        + (["/usr/share/bazel/embedded_tools/MODULE.bazel"] if os.path.exists("/usr/share/bazel/embedded_tools/MODULE.bazel") else [])
     )
     for mod_file in mod_files:
         if not os.path.exists(mod_file):
@@ -513,19 +505,43 @@ compatibility_proxy = module_extension(implementation = _compatibility_proxy_imp
                                 kw.value = ast.List(elts=[ast.Constant(value=f"-p{kw.value.value}")], ctx=ast.Load())
                                 modified = True
                 elif node.func.id == "bazel_dep":
+                    is_dev = any(
+                        kw.arg == "dev_dependency" and isinstance(kw.value, ast.Constant) and kw.value.value is True
+                        for kw in node.keywords
+                    )
+                    if is_dev and mod_file.startswith(target_dir):
+                        continue
                     for kw in node.keywords:
                         if kw.arg == "name" and isinstance(kw.value, ast.Constant):
                             explicit_bzlmod.add(kw.value.value)
+                            if kw.value.value not in SYSTEM_OR_EXTENSION_REPOS:
+                                repos.add(kw.value.value)
                 elif node.func.id in ("single_version_override", "git_override", "archive_override"):
-                    for kw in node.keywords:
-                        if kw.arg == "module_name" and isinstance(kw.value, ast.Constant):
-                            explicit_bzlmod.add(kw.value.value)
-                            repos.add(kw.value.value)
                     if node.func.id in ("git_override", "archive_override"):
                         new_kws = [kw for kw in node.keywords if kw.arg not in ("build_file", "files")]
                         if len(new_kws) != len(node.keywords):
                             node.keywords = new_kws
                             modified = True
+        if any(
+            isinstance(n, ast.Expr) and isinstance(n.value, ast.Call) and isinstance(n.value.func, ast.Name) and n.value.func.id == "register_toolchains"
+            for n in tree.body
+        ):
+            new_body = []
+            for n in tree.body:
+                if (
+                    isinstance(n, ast.Expr)
+                    and isinstance(n.value, ast.Call)
+                    and isinstance(n.value.func, ast.Name)
+                    and n.value.func.id == "register_toolchains"
+                    and any(
+                        isinstance(a, ast.Constant) and isinstance(a.value, str) and ("@zig_sdk" in a.value or "@llvm_toolchain" in a.value)
+                        for a in n.value.args
+                    )
+                ):
+                    modified = True
+                    continue
+                new_body.append(n)
+            tree.body = new_body
         if modified:
             with open(mod_file, "w") as f:
                 f.write(ast.unparse(tree) + "\n")
@@ -543,11 +559,13 @@ compatibility_proxy = module_extension(implementation = _compatibility_proxy_imp
         if not os.path.exists(build_path):
             open(build_path, "w").close()
 
-    bzlmod_modules = (repos - repo_rule_repos) | explicit_bzlmod
+    bzlmod_modules = explicit_bzlmod - SYSTEM_OR_EXTENSION_REPOS
     override_args = []
     if os.path.exists(os.path.join(target_dir, "rules_cc")):
         override_args.append(f"--override_module=rules_cc={os.path.join(target_dir, 'rules_cc')}")
     for r in sorted(repos):
+        if r in SYSTEM_OR_EXTENSION_REPOS:
+            continue
         repo_dir = os.path.join(target_dir, r)
         if r in bzlmod_modules:
             override_args.append(f"--override_module={r}={repo_dir}")
