@@ -51,7 +51,6 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
                                    const std::string& group_name = "");
 Result<void> ChangeGroup(const std::string& path,
                          const std::string& group_name);
-bool CanAccess(const std::string& path, int mode);
 off_t FileSize(const std::string& path);
 Result<std::string> RenameFile(const std::string& current_filepath,
                                const std::string& target_filepath);

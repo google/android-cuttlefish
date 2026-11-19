@@ -110,6 +110,7 @@
 #include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/posix/can_access.h"
 #include "cuttlefish/result/result.h"
 
 #define GET_FLAG_STR_VALUE(name)                                   \
@@ -361,7 +362,7 @@ std::optional<std::string> EnvironmentUdsDir() {
   std::string environments_uds_dir =
       fmt::format("{}/cf_env_{}", TempDir(), getuid());
   if (DirectoryExists(environments_uds_dir) &&
-      !CanAccess(environments_uds_dir, R_OK | W_OK | X_OK)) {
+      !CanAccess(environments_uds_dir, R_OK | W_OK | X_OK).has_value()) {
     return std::nullopt;
   }
   return environments_uds_dir;
@@ -371,7 +372,7 @@ std::optional<std::string> InstancesUdsDir() {
   std::string instances_uds_dir =
       fmt::format("{}/cf_avd_{}", TempDir(), getuid());
   if (DirectoryExists(instances_uds_dir) &&
-      !CanAccess(instances_uds_dir, R_OK | W_OK | X_OK)) {
+      !CanAccess(instances_uds_dir, R_OK | W_OK | X_OK).has_value()) {
     return std::nullopt;
   }
   return instances_uds_dir;

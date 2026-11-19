@@ -5,6 +5,18 @@ package(
 )
 
 cf_cc_library(
+    name = "can_access",
+    srcs = ["can_access.cc"],
+    hdrs = ["can_access.h"],
+    deps = [
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings:string_view",
+    ],
+)
+
+cf_cc_library(
     name = "rename",
     srcs = ["rename.cc"],
     hdrs = ["rename.h"],

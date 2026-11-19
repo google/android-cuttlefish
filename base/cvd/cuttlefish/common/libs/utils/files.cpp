@@ -188,10 +188,6 @@ Result<void> ChangeGroup(const std::string& path,
   return {};
 }
 
-bool CanAccess(const std::string& path, const int mode) {
-  return access(path.c_str(), mode) == 0;
-}
-
 std::string AbsolutePath(absl::string_view path) {
   if (path.empty()) {
     return {};
