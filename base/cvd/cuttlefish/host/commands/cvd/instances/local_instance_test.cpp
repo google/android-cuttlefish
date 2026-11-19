@@ -13,12 +13,103 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
+
+#include <stdlib.h>
+#include <sys/un.h>
+
+#include <chrono>
+#include <optional>
+#include <string>
+
+#include "absl/strings/str_cat.h"
+#include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/files/directory_exists.h"
+#include "cuttlefish/files/recursively_remove_directory.h"
+#include "cuttlefish/files/write_new_file.h"
+#include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
+#include "cuttlefish/host/commands/cvd/instances/data_viewer.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
+#include "cuttlefish/metrics/device_metrics_orchestration.h"
+#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 namespace selector {
+namespace {
+
+class ScopedEnvVar {
+ public:
+  ScopedEnvVar(const char* name, const std::string& value) : name_(name) {
+    if (const char* prev = getenv(name); prev != nullptr) {
+      prev_ = prev;
+    }
+    setenv(name, value.c_str(), 1);
+  }
+
+  ~ScopedEnvVar() {
+    if (prev_.has_value()) {
+      setenv(name_.c_str(), prev_->c_str(), 1);
+    } else {
+      unsetenv(name_.c_str());
+    }
+  }
+
+ private:
+  std::string name_;
+  std::optional<std::string> prev_;
+};
+
+class ScopedShortTempDir {
+ public:
+  ScopedShortTempDir() {
+    std::string tmpl = "/tmp/cf_inst_test.XXXXXX";
+    char* created = mkdtemp(tmpl.data());
+    if (created != nullptr) {
+      root_ = created;
+    }
+  }
+
+  ~ScopedShortTempDir() {
+    if (!root_.empty()) {
+      (void)RecursivelyRemoveDirectory(root_);
+    }
+  }
+
+  const std::string& Root() const { return root_; }
+
+ private:
+  std::string root_;
+};
+
+Result<LocalInstanceGroup> BuildGroupWithHome(const std::string& db_path,
+                                              const std::string& name,
+                                              const std::string& home_dir,
+                                              unsigned id) {
+  DataViewer viewer(db_path);
+  CF_EXPECT(viewer.WithExclusiveLock<void>(
+      [&](cvd::PersistentData& data) -> Result<void> {
+        cvd::InstanceGroup* grp = data.add_instance_groups();
+        grp->set_name(name);
+        grp->set_home_directory(home_dir);
+        grp->set_host_artifacts_path(home_dir);
+        grp->set_product_out_path(home_dir);
+        cvd::Instance* inst = grp->add_instances();
+        inst->set_id(id);
+        inst->set_name(absl::StrCat(id));
+        inst->set_state(cvd::INSTANCE_STATE_RUNNING);
+        return {};
+      }));
+  InstanceDatabase db(db_path);
+  return CF_EXPECT(db.FindGroup({.group_name = name}));
+}
+
+}  // namespace
 
 /**
  * Note that invalid inputs must be tested at the InstanceDatabase level
@@ -45,6 +136,106 @@ TEST(LocalinstanceTest, Fields) {
   EXPECT_EQ(instance.Id(), 3);
   EXPECT_EQ(instance.Name(), "phone");
   EXPECT_EQ(parent_group.Proto().name(), "super");
+}
+
+TEST(LocalinstanceTest,
+     LauncherMonitorRejectsMissingConfigAndLongFallbackPath) {
+  ScopedShortTempDir tmp;
+  ASSERT_FALSE(tmp.Root().empty());
+
+  std::string long_home = absl::StrCat(
+      tmp.Root(),
+      "/very_long_home_directory_exceeding_unix_domain_socket_sun_path_"
+      "limit_0123456789abcdef");
+  std::string fallback_inst_dir =
+      absl::StrCat(long_home, "/cuttlefish/instances/cvd-7");
+  ASSERT_THAT(EnsureDirectoryExists(fallback_inst_dir), IsOk());
+
+  Result<LocalInstanceGroup> group = BuildGroupWithHome(
+      absl::StrCat(tmp.Root(), "/db.binpb"), "grp_long", long_home, 7);
+  ASSERT_THAT(group, IsOk());
+
+  // Missing monitor socket returns a clean error rather than aborting.
+  Result<void> missing_res = group->Instances()[0].Restart(
+      std::chrono::seconds(1), std::chrono::seconds(1));
+  ASSERT_FALSE(missing_res.has_value());
+  EXPECT_THAT(missing_res.error().Message(),
+              testing::HasSubstr("does not exist"));
+
+  // Existing monitor socket whose path exceeds `sizeof(sockaddr_un::sun_path)`
+  // returns a clean error rather than hitting `CHECK_LE(namelen, 108)`.
+  std::string long_sock =
+      absl::StrCat(fallback_inst_dir, "/launcher_monitor.sock");
+  ASSERT_GE(long_sock.size(), sizeof(sockaddr_un::sun_path));
+  ASSERT_THAT(WriteNewFile(long_sock, ""), IsOk());
+  Result<void> overlong_res = group->Instances()[0].Restart(
+      std::chrono::seconds(1), std::chrono::seconds(1));
+  ASSERT_FALSE(overlong_res.has_value());
+  EXPECT_THAT(overlong_res.error().Message(),
+              testing::HasSubstr("exceeds AF_UNIX limit"));
+}
+
+TEST(LocalinstanceTest, CanConnectToLauncherMonitorConnectsToLiveSocket) {
+  ScopedShortTempDir tmp;
+  ASSERT_FALSE(tmp.Root().empty());
+
+  std::string home = absl::StrCat(tmp.Root(), "/live_home");
+  std::string uds_dir = absl::StrCat(tmp.Root(), "/uds");
+  std::string uds_inst_dir = absl::StrCat(uds_dir, "/cvd-4");
+  ASSERT_THAT(EnsureDirectoryExists(home), IsOk());
+  ASSERT_THAT(EnsureDirectoryExists(uds_inst_dir), IsOk());
+
+  Result<LocalInstanceGroup> group = BuildGroupWithHome(
+      absl::StrCat(tmp.Root(), "/live_db.binpb"), "grp_live", home, 4);
+  ASSERT_THAT(group, IsOk());
+
+  EXPECT_FALSE(group->Instances()[0].CanConnectToLauncherMonitor(
+      std::chrono::seconds(1)));
+
+  std::string config_path = absl::StrCat(home, "/.cuttlefish_config.json");
+  ASSERT_THAT(
+      WriteNewFile(config_path,
+                   absl::StrCat("{\"instances_uds_dir\":\"", uds_dir, "\"}\n")),
+      IsOk());
+
+  std::string sock_path = absl::StrCat(uds_inst_dir, "/launcher_monitor.sock");
+  Result<Fd, int> server_sock = Fd::SocketLocalServer(
+      sock_path, /*is_abstract=*/false, SOCK_STREAM, 0600);
+  ASSERT_TRUE(server_sock.has_value());
+
+  EXPECT_TRUE(group->Instances()[0].CanConnectToLauncherMonitor(
+      std::chrono::seconds(1)));
+}
+
+TEST(LocalinstanceTest, MetricsSetupRecreatesWipedDirectoryWithoutAborting) {
+  ScopedShortTempDir tmp;
+  ASSERT_FALSE(tmp.Root().empty());
+
+  std::string home = absl::StrCat(tmp.Root(), "/slot_home");
+  ASSERT_THAT(EnsureDirectoryExists(home), IsOk());
+  ScopedEnvVar transmitter_env(
+      "CUTTLEFISH_METRICS_TRANSMITTER_PATH",
+      absl::StrCat(tmp.Root(), "/no_metrics_transmitter"));
+  ScopedEnvVar xdg_env("XDG_DATA_HOME", absl::StrCat(tmp.Root(), "/xdg_data"));
+  ScopedEnvVar product_out_env("ANDROID_PRODUCT_OUT", home);
+
+  Result<LocalInstanceGroup> group = BuildGroupWithHome(
+      absl::StrCat(tmp.Root(), "/metrics_db.binpb"), "grp_metrics", home, 1);
+  ASSERT_THAT(group, IsOk());
+
+  GatherVmInstantiationMetrics(*group);
+  EXPECT_TRUE(DirectoryExists(group->MetricsDir()));
+
+  // Simulate a caller wiping `$HOME/*` between runs: `GatherVmStartMetrics`
+  // recreates `<HomeDir>/metrics` without crashing, and `GatherVmStopMetrics`
+  // does not abort if `<HomeDir>/metrics` was deleted mid-run.
+  ASSERT_THAT(RecursivelyRemoveDirectory(group->MetricsDir()), IsOk());
+  EXPECT_FALSE(DirectoryExists(group->MetricsDir()));
+  GatherVmStartMetrics(*group);
+  EXPECT_TRUE(DirectoryExists(group->MetricsDir()));
+
+  ASSERT_THAT(RecursivelyRemoveDirectory(group->MetricsDir()), IsOk());
+  GatherVmStopMetrics(*group);
 }
 
 }  // namespace selector

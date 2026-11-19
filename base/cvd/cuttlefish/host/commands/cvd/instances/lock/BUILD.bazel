@@ -1,5 +1,5 @@
 load("//:build_variables.bzl", "COPTS")
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -16,20 +16,33 @@ cf_cc_library(
         "lock_file.h",
     ],
     copts = COPTS + ["-Werror=sign-compare"],
-    depend_on_what_you_use_enabled = False,
-    include_cleaner_enabled = False,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
-        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:in_sandbox",
+        "//cuttlefish/files:directory_contents",
         "//cuttlefish/files:directory_exists",
-        "//cuttlefish/host/commands/cvd/utils:common",
-        "//cuttlefish/posix:remove",
-        "//cuttlefish/posix:strerror",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
-        "@android_system_libbase//:file_logging",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
+    ],
+)
+
+cf_cc_test(
+    name = "instance_lock_test",
+    srcs = ["instance_lock_test.cpp"],
+    deps = [
+        ":lock",
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/files:write_new_file",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings",
     ],
 )

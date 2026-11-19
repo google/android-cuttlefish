@@ -54,6 +54,7 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   }
 
   auto group = CF_EXPECT(selector::SelectGroup(instance_manager_, request));
+  group = CF_EXPECT(instance_manager_.RefreshInstanceGroupState(group));
   CF_EXPECT(group.HasActiveInstances(), "Selected group is not running");
 
   CF_EXPECT(ConsumeFlags(CF_EXPECT(Flags(request)), cmd_args,

@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/instances/instance_database.h"
 
+#include <functional>
 #include <optional>
 #include <set>
 #include <string>
@@ -33,6 +34,7 @@
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/posix/realpath.h"
 
 namespace cuttlefish {
 
@@ -127,7 +129,12 @@ Result<void> InstanceDatabase::AddInstanceGroup(LocalInstanceGroup group) {
     CF_EXPECTF(IsValidInstanceName(instance_proto.name()),
                "instance_name \"{}\" is invalid", instance_proto.name());
   }
-  auto add_res = viewer_.WithExclusiveLock<void>([&group](
+  std::optional<std::string> new_real_home;
+  if (Result<std::string> resolved = RealPath(group.HomeDir());
+      resolved.has_value()) {
+    new_real_home = std::move(*resolved);
+  }
+  auto add_res = viewer_.WithExclusiveLock<void>([&group, &new_real_home](
                                                      cvd::PersistentData& data)
                                                      -> Result<void> {
     if (group.group_proto_->name().empty()) {
@@ -140,8 +147,17 @@ Result<void> InstanceDatabase::AddInstanceGroup(LocalInstanceGroup group) {
     for (const auto& existing_group : data.instance_groups()) {
       CF_EXPECT_NE(existing_group.home_directory(),
                    group.group_proto_->home_directory(),
-                   "An instance group already exists with HOME directory: {}"
+                   "An instance group already exists with HOME directory: "
                        << group.group_proto_->home_directory());
+      if (new_real_home.has_value()) {
+        Result<std::string> existing_real_home =
+            RealPath(existing_group.home_directory());
+        if (existing_real_home.has_value()) {
+          CF_EXPECT_NE(*existing_real_home, *new_real_home,
+                       "An instance group already exists with HOME directory: "
+                           << *new_real_home);
+        }
+      }
     }
     std::unordered_map<uint32_t, std::string> ids_to_name_map;
     for (const auto& group_proto : data.instance_groups()) {
@@ -186,19 +202,118 @@ Result<void> InstanceDatabase::UpdateInstanceGroup(
   return {};
 }
 
+Result<bool> InstanceDatabase::BatchCompareAndUpdateInstanceStates(
+    const std::vector<GroupStateUpdate>& updates) {
+  if (updates.empty()) {
+    return false;
+  }
+  return viewer_.WithConditionalExclusiveLock<bool>(
+      [&updates](cvd::PersistentData& data) -> Result<std::pair<bool, bool>> {
+        bool any_updated = false;
+        for (const GroupStateUpdate& update : updates) {
+          if (update.updated_states.empty()) {
+            continue;
+          }
+          const cvd::InstanceGroup& expected = update.snapshot.Proto();
+          for (cvd::InstanceGroup& group_proto :
+               *data.mutable_instance_groups()) {
+            if (group_proto.name() != expected.name() ||
+                group_proto.home_directory() != expected.home_directory() ||
+                group_proto.start_time_sec() != expected.start_time_sec() ||
+                group_proto.instances_size() != expected.instances_size()) {
+              continue;
+            }
+            bool states_match = true;
+            for (int i = 0; i < group_proto.instances_size(); ++i) {
+              const cvd::Instance& inst = group_proto.instances(i);
+              const cvd::Instance& expected_inst = expected.instances(i);
+              if (inst.id() != expected_inst.id() ||
+                  inst.state() != expected_inst.state()) {
+                states_match = false;
+                break;
+              }
+            }
+            if (!states_match) {
+              break;
+            }
+            if (update.precondition && !update.precondition()) {
+              break;
+            }
+            for (int i = 0; i < group_proto.instances_size(); ++i) {
+              cvd::Instance* inst = group_proto.mutable_instances(i);
+              auto state_it = update.updated_states.find(inst->id());
+              if (state_it != update.updated_states.end() &&
+                  inst->state() != state_it->second) {
+                inst->set_state(state_it->second);
+                any_updated = true;
+              }
+            }
+            break;
+          }
+        }
+        return std::make_pair(any_updated, any_updated);
+      });
+}
+
+Result<bool> InstanceDatabase::CompareAndUpdateInstanceStates(
+    const LocalInstanceGroup& snapshot,
+    const std::unordered_map<unsigned, cvd::InstanceState>& updated_states,
+    std::function<bool()> precondition) {
+  if (updated_states.empty()) {
+    return false;
+  }
+  std::vector<GroupStateUpdate> batch;
+  batch.push_back(GroupStateUpdate{
+      .snapshot = snapshot,
+      .updated_states = updated_states,
+      .precondition = std::move(precondition),
+  });
+  return BatchCompareAndUpdateInstanceStates(batch);
+}
+
 Result<bool> InstanceDatabase::RemoveInstanceGroup(
     const std::string& group_name) {
-  return viewer_.WithExclusiveLock<bool>([&group_name](
-                                             cvd::PersistentData& data) {
-    auto mutable_groups = data.mutable_instance_groups();
-    for (auto it = mutable_groups->begin(); it != mutable_groups->end(); ++it) {
-      if (it->name() == group_name) {
-        mutable_groups->erase(it);
-        return true;
-      }
-    }
-    return false;
-  });
+  return viewer_.WithConditionalExclusiveLock<bool>(
+      [&group_name](
+          cvd::PersistentData& data) -> Result<std::pair<bool, bool>> {
+        auto mutable_groups = data.mutable_instance_groups();
+        for (auto it = mutable_groups->begin(); it != mutable_groups->end();
+             ++it) {
+          if (it->name() == group_name) {
+            mutable_groups->erase(it);
+            return std::make_pair(true, true);
+          }
+        }
+        return std::make_pair(false, false);
+      });
+}
+
+Result<bool> InstanceDatabase::RemoveInstanceGroup(
+    const LocalInstanceGroup& group, std::function<bool()> precondition) {
+  return viewer_.WithConditionalExclusiveLock<bool>(
+      [&group, &precondition](
+          cvd::PersistentData& data) -> Result<std::pair<bool, bool>> {
+        auto mutable_groups = data.mutable_instance_groups();
+        for (auto it = mutable_groups->begin(); it != mutable_groups->end();
+             ++it) {
+          if (it->name() != group.GroupName() ||
+              it->home_directory() != group.HomeDir() ||
+              it->start_time_sec() != group.Proto().start_time_sec()) {
+            continue;
+          }
+          LocalInstanceGroup existing =
+              CF_EXPECT(LocalInstanceGroup::Create(*it));
+          CF_EXPECT(!existing.HasActiveInstances(),
+                    "Group still contains active instances");
+          if (precondition) {
+            CF_EXPECT(precondition() == true,
+                      "Group transition is currently in progress");
+          }
+          mutable_groups->erase(it);
+          return std::make_pair(true, true);
+        }
+        return std::make_pair(false, false);
+      });
 }
 
 Result<std::vector<LocalInstanceGroup>> InstanceDatabase::FindGroups(

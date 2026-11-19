@@ -2,6 +2,28 @@
 
 set -e
 
+ensure_cvd_root_dir() {
+    target_dir="$1"
+    target_mode="$2"
+    tries=0
+    while [ "${tries}" -lt 10 ]; do
+        if mkdir -m "${target_mode}" "${target_dir}" 2>/dev/null; then
+            chown -h 0:0 "${target_dir}"
+            chmod "${target_mode}" "${target_dir}"
+            return 0
+        fi
+        chown -h 0:0 "${target_dir}" 2>/dev/null || true
+        if [ ! -L "${target_dir}" ] && [ -d "${target_dir}" ] && \
+           [ "$(stat -c '%u' "${target_dir}" 2>/dev/null)" = "0" ]; then
+            chmod "${target_mode}" "${target_dir}"
+            return 0
+        fi
+        rm -rf -- "${target_dir}"
+        tries=$((tries + 1))
+    done
+    return 1
+}
+
 case "$1" in
     (configure)
     # unlink if it's a symlink
@@ -14,8 +36,25 @@ case "$1" in
     fi
     # guarantees it's a directory
     mkdir -p /var/empty
-    mkdir -p /var/tmp/cvd/lock
-    chmod 0777 /var/tmp/cvd /var/tmp/cvd/lock
+    ensure_cvd_root_dir /var/tmp/cvd 1777
+    ensure_cvd_root_dir /var/tmp/cvd/lock 0755
+
+    find /var/tmp/cvd/lock -mindepth 1 -maxdepth 1 \
+        \( -type l -o ! -type f -o -links +1 \) -exec rm -rf -- {} +
+
+    old_umask="$(umask)"
+    umask 0111
+    i=1
+    while [ "${i}" -le 1000 ]; do
+        lock_file="/var/tmp/cvd/lock/local-instance-${i}.lock"
+        if [ ! -e "${lock_file}" ]; then
+            : > "${lock_file}"
+        fi
+        i=$((i + 1))
+    done
+    umask "${old_umask}"
+    find /var/tmp/cvd/lock -maxdepth 1 -type f -name 'local-instance-*.lock' \
+        ! -perm 0666 -exec chmod 0666 {} +
     if ! getent group cvdnetwork > /dev/null 2>&1
     then
         addgroup --system cvdnetwork
