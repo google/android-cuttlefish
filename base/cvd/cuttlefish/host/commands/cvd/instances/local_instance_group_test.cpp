@@ -82,5 +82,35 @@ TEST_F(LocalInstanceGroupUnitTest, SearchById) {
   }
 }
 
+TEST_F(LocalInstanceGroupUnitTest,
+       BuilderProducesDistinctPureDigitBaseDirBasenamesForPodcvd) {
+  Result<LocalInstanceGroup> g1 =
+      LocalInstanceGroup::Builder("grp1", "/var/tmp/cvd/0")
+          .AddInstance(1)
+          .Build();
+  Result<LocalInstanceGroup> g2 =
+      LocalInstanceGroup::Builder("grp2", "/var/tmp/cvd/0")
+          .AddInstance(2)
+          .Build();
+  ASSERT_THAT(g1, IsOk());
+  ASSERT_THAT(g2, IsOk());
+  EXPECT_NE(g1->BaseDir(), g2->BaseDir());
+
+  // `podcvd` translates `/var/tmp/cvd/<uid>/<base>` via
+  // `/var/tmp/cvd/[0-9]+/[0-9]+`, so the basename must consist strictly of
+  // ASCII digits with no underscores or non-numeric suffixes.
+  for (const LocalInstanceGroup& grp : {*g1, *g2}) {
+    const std::string base = grp.BaseDir();
+    const std::string prefix = "/var/tmp/cvd/0/";
+    ASSERT_EQ(base.rfind(prefix, 0), 0u);
+    const std::string leaf = base.substr(prefix.size());
+    ASSERT_FALSE(leaf.empty());
+    for (char ch : leaf) {
+      EXPECT_GE(ch, '0');
+      EXPECT_LE(ch, '9');
+    }
+  }
+}
+
 }  // namespace selector
 }  // namespace cuttlefish

@@ -74,6 +74,7 @@ Result<void> RemoveCvdCommandHandler::Handle(const CommandRequest& request) {
     return CF_ERR(NoGroupMessage(request));
   }
   auto group = CF_EXPECT(selector::SelectGroup(instance_manager_, request));
+  group = CF_EXPECT(instance_manager_.RefreshInstanceGroupState(group));
 
   Result<void> stop_res = StopGroup(group);
   if (!stop_res.has_value()) {
@@ -82,7 +83,9 @@ Result<void> RemoveCvdCommandHandler::Handle(const CommandRequest& request) {
                   "kill any remaining device processes.";
   }
 
-  CF_EXPECT(instance_manager_.RemoveInstanceGroup(group));
+  bool removed = CF_EXPECT(instance_manager_.RemoveInstanceGroup(group));
+  CF_EXPECT(removed == true,
+            "Instance group no longer exists or changed concurrently");
 
   return {};
 }
