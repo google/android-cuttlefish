@@ -94,12 +94,12 @@ Result<MetricsData> GatherDeviceMetrics(
 }
 
 Result<void> RunMetrics(const DeviceMetricsInput& metrics_input) {
-  ScopedLogger logger =
-      CreateLogger(metrics_input.base_input.metrics_directory);
   CF_EXPECTF(FileExists(metrics_input.base_input.metrics_directory),
              "Metrics directory({}) does not exist.  Perhaps metrics were not "
              "initialized?",
              metrics_input.base_input.metrics_directory);
+  ScopedLogger logger =
+      CreateLogger(metrics_input.base_input.metrics_directory);
 
   const std::string event_type_label =
       DeviceEventTypeString(metrics_input.guests.event_type);
@@ -146,6 +146,16 @@ void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
   if (!metrics_input_result.has_value()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_input_result.error().FormatForEnv());
+    return;
+  }
+  // This call should be redundant in typical execution flow, but covers the
+  // case where runtime files are wiped between instantiation and some future
+  // start event (possibly a reboot).
+  Result<void> metrics_setup_result =
+      SetUpMetrics(metrics_input_result->base_input.metrics_directory);
+  if (!metrics_setup_result.has_value()) {
+    VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
+                           metrics_setup_result.error().FormatForEnv());
     return;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
