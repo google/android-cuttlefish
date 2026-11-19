@@ -19,11 +19,9 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include <algorithm>
-#include <cctype>
-#include <cstdlib>
-#include <cstring>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -38,8 +36,8 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/files/copy.h"
@@ -56,14 +54,14 @@
 #include "cuttlefish/host/commands/cvd/cli/help_format.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/num_instances_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_constants.h"
-#include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/posix/readlink.h"
 #include "cuttlefish/posix/realpath.h"
 #include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/strerror.h"
@@ -129,11 +127,12 @@ Result<void> StartGroup(
     const LocalInstanceGroup& group,
     const std::vector<std::string>& subcmd_args,
     const std::unordered_map<std::string, std::string>& envs,
-    InstanceManager& instance_manager) {
+    InstanceManager& instance_manager, std::optional<Fd> in_progress_lock) {
   const CommandRequest start_cmd =
       CF_EXPECT(CreateStartCommand(group, subcmd_args, envs));
   std::unique_ptr<CvdCommandHandler> start_handler =
-      std::make_unique<CvdStartCommandHandler>(instance_manager);
+      std::make_unique<CvdStartCommandHandler>(instance_manager,
+                                               std::move(in_progress_lock));
   CF_EXPECT(start_handler->Handle(start_cmd));
   return {};
 }
@@ -173,9 +172,16 @@ Result<void> EnsureSymlink(const std::string& target, const std::string link) {
   return {};
 }
 
-Result<bool> IsDefaultGroup(const CommandRequest& request) {
-  return StringFromEnv("HOME", "") == CF_EXPECT(SystemWideUserHome()) &&
-         !request.Selectors().HasOptions();
+Result<bool> IsDefaultGroup(
+    const std::unordered_map<std::string, std::string>& envs,
+    const CommandRequest& request, const LocalInstanceGroup& group) {
+  if (request.Selectors().HasOptions() ||
+      !DirectoryExists(group.HomeDir(), /*follow_symlinks=*/false)) {
+    return false;
+  }
+  std::string sys_home = CF_EXPECT(SystemWideUserHome());
+  auto home_it = envs.find("HOME");
+  return home_it == envs.end() || home_it->second == sys_home;
 }
 
 // For backward compatibility, we add extra symlink in home dir
@@ -263,31 +269,129 @@ bool IsDeviceRunning(const LocalInstanceGroup& group) {
   return std::ranges::any_of(group.Instances(), &LocalInstance::IsActive);
 }
 
+// `InstanceManager::CreateInstanceGroup` creates `group.HomeDir()` as a real
+// directory for default-HOME groups and as a symlink to the user-provided path
+// when a custom `HOME` was requested.
+bool HasCustomHome(const LocalInstanceGroup& group) {
+  return !DirectoryExists(group.HomeDir(), /*follow_symlinks=*/false);
+}
+
+std::optional<std::string> GroupCustomHome(const LocalInstanceGroup& group) {
+  if (!HasCustomHome(group)) {
+    return std::nullopt;
+  }
+  if (Result<std::string> real_home = RealPath(group.HomeDir());
+      real_home.has_value()) {
+    return std::move(*real_home);
+  }
+  if (Result<std::string, int> link_target = ReadLink(group.HomeDir());
+      link_target.has_value()) {
+    return absl::StartsWith(*link_target, "/")
+               ? AbsolutePath(*link_target)
+               : AbsolutePath(
+                     fmt::format("{}/{}", group.BaseDir(), *link_target));
+  }
+  return group.HomeDir();
+}
+
+bool InstancesMatch(
+    const LocalInstanceGroup& group, const size_t num_instances,
+    const std::vector<uint32_t>& requested_ids,
+    const std::optional<std::vector<std::string>>& requested_names) {
+  if (group.Instances().size() != num_instances) {
+    return false;
+  }
+  for (size_t i = 0; i < requested_ids.size(); ++i) {
+    if (group.Instances()[i].Id() != requested_ids[i]) {
+      return false;
+    }
+  }
+  if (requested_names.has_value()) {
+    if (requested_names->size() != num_instances) {
+      return false;
+    }
+    for (size_t i = 0; i < num_instances; ++i) {
+      if (group.Instances()[i].Name() != (*requested_names)[i]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool GroupHasAllInstanceNames(const LocalInstanceGroup& group,
+                              const std::vector<std::string>& requested_names) {
+  for (const std::string& requested_name : requested_names) {
+    if (group.FindByInstanceName(requested_name).empty()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool GroupOverlapsRequestedIds(const LocalInstanceGroup& group,
+                               const std::vector<uint32_t>& requested_ids) {
+  for (const LocalInstance& instance : group.Instances()) {
+    if (Contains(requested_ids, instance.Id())) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Result<bool> MatchPaths(const LocalInstanceGroup& group,
                         const std::string& target_host,
                         const std::vector<std::string>& target_products) {
-  const std::string real_group_host =
-      CF_EXPECT(RealPath(group.HostArtifactsPath()));
   const std::string real_target_host = CF_EXPECT(RealPath(target_host));
-
-  if (real_group_host != real_target_host) {
+  Result<std::string> real_group_host = RealPath(group.HostArtifactsPath());
+  if (!real_group_host.has_value() || *real_group_host != real_target_host) {
     return false;
   }
 
   const std::vector<std::string> group_products =
       absl::StrSplit(group.ProductOutPath(), ',');
-
-  std::vector<std::string> real_group_products;
-  for (const auto& path : group_products) {
-    real_group_products.push_back(CF_EXPECT(RealPath(path)));
+  if (group_products.size() != target_products.size()) {
+    return false;
   }
 
-  std::vector<std::string> real_target_products;
-  for (const auto& path : target_products) {
-    real_target_products.push_back(CF_EXPECT(RealPath(path)));
+  for (size_t i = 0; i < target_products.size(); ++i) {
+    const std::string real_target_product =
+        CF_EXPECT(RealPath(target_products[i]));
+    Result<std::string> real_group_product = RealPath(group_products[i]);
+    if (!real_group_product.has_value() ||
+        *real_group_product != real_target_product) {
+      return false;
+    }
   }
 
-  return real_group_products == real_target_products;
+  return true;
+}
+
+std::vector<LocalInstanceGroup> FindSlotGroups(
+    const std::vector<LocalInstanceGroup>& groups,
+    const std::optional<std::string>& target_custom_home,
+    const std::vector<uint32_t>& requested_ids,
+    const std::optional<std::vector<std::string>>& requested_names) {
+  std::vector<LocalInstanceGroup> slot_groups;
+  for (const LocalInstanceGroup& group : groups) {
+    std::optional<std::string> group_custom_home = GroupCustomHome(group);
+    bool overlaps_ids = GroupOverlapsRequestedIds(group, requested_ids);
+    bool belongs_to_slot = false;
+    if (target_custom_home.has_value()) {
+      belongs_to_slot =
+          (group_custom_home == target_custom_home) || overlaps_ids;
+    } else if (!requested_ids.empty()) {
+      belongs_to_slot = overlaps_ids;
+    } else {
+      belongs_to_slot = !group_custom_home.has_value() &&
+                        (!requested_names.has_value() ||
+                         GroupHasAllInstanceNames(group, *requested_names));
+    }
+    if (belongs_to_slot) {
+      slot_groups.push_back(group);
+    }
+  }
+  return slot_groups;
 }
 
 }  // namespace
@@ -296,36 +400,139 @@ CvdCreateCommandHandler::CvdCreateCommandHandler(
     InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
-Result<std::optional<LocalInstanceGroup>>
+Result<std::optional<CvdCreateCommandHandler::GroupWithLock>>
+CvdCreateCommandHandler::FindReusableGroupByName(
+    const std::string& group_name,
+    const std::optional<std::string>& target_custom_home,
+    const std::string& target_host,
+    const std::vector<std::string>& target_products,
+    const std::optional<std::vector<std::string>>& requested_names) {
+  const std::vector<LocalInstanceGroup> named_groups =
+      CF_EXPECT(instance_manager_.FindGroups({.group_name = group_name}));
+  if (named_groups.empty()) {
+    return std::nullopt;
+  }
+  CF_EXPECT_EQ(named_groups.size(), 1u,
+               "Unclear which group to reuse, try `cvd reset -y`");
+  LocalInstanceGroup candidate = named_groups[0];
+  Fd lock = CF_EXPECT(InstanceManager::AcquireGroupInProgressLock(candidate));
+  candidate = CF_EXPECT(instance_manager_.RefreshInstanceGroupState(
+      std::move(candidate), /*caller_holds_in_progress_lock=*/true));
+  CF_EXPECT(!IsDeviceRunning(candidate),
+            "Group is already running, try `cvd stop`");
+  bool home_matches = (GroupCustomHome(candidate) == target_custom_home);
+  bool paths_match =
+      home_matches &&
+      CF_EXPECT(MatchPaths(candidate, target_host, target_products));
+  CF_EXPECT(paths_match == true,
+            "Trying to change the host paths on an existing group");
+  CF_EXPECT(
+      InstancesMatch(candidate, num_instances_parser_.NumInstances(),
+                     num_instances_parser_.InstanceIds(), requested_names),
+      "Trying to change the instances on an existing group");
+  CF_EXPECT(instance_manager_.EnsureInstanceLocksInUse(candidate));
+  return GroupWithLock{
+      .group = std::move(candidate),
+      .in_progress_lock = std::move(lock),
+  };
+}
+
+Result<std::optional<CvdCreateCommandHandler::GroupWithLock>>
 CvdCreateCommandHandler::FindReusableGroup(
     const selector::SelectorOptions& selectors,
-    const std::unordered_map<std::string, std::string>& envs) {
-  InstanceDatabase::Filter filter =
-      selector::BuildFilterFromSelectors(selectors);
+    const GroupCreationInfo& creation_info) {
+  std::optional<std::string> target_custom_home;
+  if (creation_info.group_directories.home.has_value()) {
+    target_custom_home =
+        CF_EXPECT(RealPath(*creation_info.group_directories.home));
+  }
+  const std::string& target_host =
+      *creation_info.group_directories.host_artifacts_path;
+  std::vector<std::string> target_products;
+  target_products.reserve(
+      creation_info.group_directories.product_out_paths.size());
+  for (const std::optional<std::string>& product_path :
+       creation_info.group_directories.product_out_paths) {
+    target_products.push_back(*product_path);
+  }
+  const size_t num_instances = num_instances_parser_.NumInstances();
+  const std::vector<uint32_t> requested_ids =
+      num_instances_parser_.InstanceIds();
+
+  if (selectors.group_name.has_value()) {
+    return CF_EXPECT(FindReusableGroupByName(
+        *selectors.group_name, target_custom_home, target_host, target_products,
+        selectors.instance_names));
+  }
 
   const std::vector<LocalInstanceGroup> groups =
-      CF_EXPECT(instance_manager_.FindGroups(filter));
+      CF_EXPECT(instance_manager_.FindGroups({}));
   if (groups.empty()) {
     return std::nullopt;
   }
-  CF_EXPECT_EQ(groups.size(), 1,
-               "Unclear which group to reuse, try `cvd reset -y`");
 
-  auto target_host_it = envs.find(kAndroidHostOut);
-  CF_EXPECT(target_host_it != envs.end());
+  std::vector<LocalInstanceGroup> slot_groups = FindSlotGroups(
+      groups, target_custom_home, requested_ids, selectors.instance_names);
+  if (slot_groups.empty()) {
+    return std::nullopt;
+  }
 
-  auto target_product_it = envs.find(kAndroidProductOut);
-  CF_EXPECT(target_product_it != envs.end());
+  if (!target_custom_home.has_value() && requested_ids.empty()) {
+    CF_EXPECT_EQ(slot_groups.size(), 1u,
+                 "Unclear which group to reuse, try `cvd reset -y`");
+  }
 
-  const std::vector<std::string> target_products = ExpandProductPaths(
-      target_product_it->second, num_instances_parser_.NumInstances());
-  bool match =
-      CF_EXPECT(MatchPaths(groups[0], target_host_it->second, target_products));
-  CF_EXPECT(std::move(match),
-            "Trying to change the host paths on an existing group");
-  CF_EXPECT(!IsDeviceRunning(groups[0]),
-            "Group is already running, try `cvd stop`");
-  return groups[0];
+  for (LocalInstanceGroup& group : slot_groups) {
+    if (IsDeviceRunning(group)) {
+      group = CF_EXPECT(
+          instance_manager_.RefreshInstanceGroupState(std::move(group)));
+    }
+    CF_EXPECT(!IsDeviceRunning(group),
+              "Group is already running, try `cvd stop`");
+  }
+
+  if (slot_groups.size() == 1) {
+    LocalInstanceGroup candidate = slot_groups[0];
+    Fd lock = CF_EXPECT(InstanceManager::AcquireGroupInProgressLock(candidate));
+    candidate = CF_EXPECT(instance_manager_.RefreshInstanceGroupState(
+        std::move(candidate), /*caller_holds_in_progress_lock=*/true));
+    CF_EXPECT(!IsDeviceRunning(candidate),
+              "Group is already running, try `cvd stop`");
+    bool home_matches = (GroupCustomHome(candidate) == target_custom_home);
+    bool paths_match =
+        home_matches &&
+        CF_EXPECT(MatchPaths(candidate, target_host, target_products));
+    bool instances_match = InstancesMatch(
+        candidate, num_instances, requested_ids, selectors.instance_names);
+    if (paths_match && instances_match) {
+      CF_EXPECT(instance_manager_.EnsureInstanceLocksInUse(candidate));
+      return GroupWithLock{
+          .group = std::move(candidate),
+          .in_progress_lock = std::move(lock),
+      };
+    }
+    if (!HasCustomHome(candidate)) {
+      CF_EXPECT(paths_match == true,
+                "Trying to change the host paths on an existing group");
+      CF_EXPECT(instances_match == true,
+                "Trying to change the instances on an existing group");
+    }
+    slot_groups[0] = std::move(candidate);
+  }
+
+  for (const LocalInstanceGroup& group : slot_groups) {
+    CF_EXPECT(HasCustomHome(group),
+              "Refusing to replace default-HOME instance group; try `cvd rm` "
+              "or `cvd reset -y`");
+  }
+  for (LocalInstanceGroup& group : slot_groups) {
+    bool removed =
+        CF_EXPECT(instance_manager_.RemoveInstanceGroup(std::move(group)));
+    CF_EXPECT(removed == true,
+              "Group is already running or changed concurrently, try `cvd "
+              "stop`");
+  }
+  return std::nullopt;
 }
 
 Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
@@ -363,22 +570,44 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   envs[kAndroidHostOut] = AbsolutePath(own_flags_.host_path);
   envs[kAndroidProductOut] = AbsolutePath(own_flags_.product_path);
 
-  std::optional<LocalInstanceGroup> group;
+  GroupCreationInfo creation_info = CF_EXPECT(AnalyzeCreation({
+      .envs = envs,
+      .selectors = request.Selectors(),
+      .num_instances = num_instances_parser_.NumInstances(),
+      .instance_ids = num_instances_parser_.InstanceIds(),
+  }));
+  CF_EXPECT(creation_info.group_directories.host_artifacts_path.has_value());
+  CF_EXPECTF(
+      DirectoryExists(*creation_info.group_directories.host_artifacts_path),
+      "Host artifacts directory '{}' does not exist",
+      *creation_info.group_directories.host_artifacts_path);
+  for (const std::optional<std::string>& product_path :
+       creation_info.group_directories.product_out_paths) {
+    CF_EXPECT(product_path.has_value());
+    CF_EXPECTF(DirectoryExists(*product_path),
+               "Product directory '{}' does not exist", *product_path);
+  }
+
+  std::optional<GroupWithLock> group_with_lock;
   if (own_flags_.reuse) {
-    group = CF_EXPECT(FindReusableGroup(request.Selectors(), envs));
+    CF_EXPECT(instance_manager_.PruneBrokenInstanceGroups());
+    group_with_lock =
+        CF_EXPECT(FindReusableGroup(request.Selectors(), creation_info));
   }
-  if (!group.has_value()) {
-    group = CF_EXPECT(CreateGroup(subcmd_args, envs, request));
+  if (!group_with_lock.has_value()) {
+    group_with_lock = CF_EXPECT(CreateGroup(std::move(creation_info)));
   }
-  CF_EXPECT(group.has_value());
+  CF_EXPECT(group_with_lock.has_value());
 
   if (own_flags_.start) {
-    CF_EXPECT(StartGroup(*group, subcmd_args, envs, instance_manager_));
+    CF_EXPECT(StartGroup(group_with_lock->group, subcmd_args, envs,
+                         instance_manager_,
+                         std::move(group_with_lock->in_progress_lock)));
 
-    if (CF_EXPECT(IsDefaultGroup(request))) {
+    if (CF_EXPECT(IsDefaultGroup(envs, request, group_with_lock->group))) {
       // For backward compatibility, we add extra symlink in system wide home
       // when HOME is NOT overridden and selector flags are NOT given.
-      auto symlink_res = CreateSymlinks(*group);
+      auto symlink_res = CreateSymlinks(group_with_lock->group);
       if (!symlink_res.has_value()) {
         LOG(ERROR) << "Failed to create symlinks for default group: "
                    << symlink_res.error();
@@ -389,30 +618,20 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-Result<LocalInstanceGroup> CvdCreateCommandHandler::CreateGroup(
-    const std::vector<std::string>& subcmd_args,
-    const std::unordered_map<std::string, std::string>& envs,
-    const CommandRequest& request) {
-  GroupCreationInfo creation_info = CF_EXPECT(AnalyzeCreation({
-      .envs = envs,
-      .selectors = request.Selectors(),
-      .num_instances = num_instances_parser_.NumInstances(),
-      .instance_ids = num_instances_parser_.InstanceIds(),
-  }));
-
-  auto groups = CF_EXPECT(instance_manager_.FindGroups(
-      {.group_name = creation_info.group_creation_params.group_name}));
-  CF_EXPECTF(groups.empty(), "Group named '{}' already exists",
-             creation_info.group_creation_params.group_name);
-
+Result<CvdCreateCommandHandler::GroupWithLock>
+CvdCreateCommandHandler::CreateGroup(GroupCreationInfo creation_info) {
+  std::optional<Fd> in_progress_lock;
   LocalInstanceGroup group = CF_EXPECT(instance_manager_.CreateInstanceGroup(
       std::move(creation_info.group_creation_params),
-      std::move(creation_info.group_directories)));
+      std::move(creation_info.group_directories), &in_progress_lock));
 
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
-  return group;
+  return GroupWithLock{
+      .group = std::move(group),
+      .in_progress_lock = std::move(in_progress_lock),
+  };
 }
 
 std::string CvdCreateCommandHandler::SummaryHelp() const {
@@ -513,9 +732,12 @@ std::vector<Flag> CvdCreateCommandHandler::FlagModeFlags(
                          .Help("Whether to start the instance group."));
   flags.emplace_back(
       GflagsCompatFlag("reuse", own_flags_.reuse)
-          .Help("Whether to attempt reusing an existing group. Will fail if "
-                "there are multiple matching groups, or the chosen group has a "
-                "host tools / guest image mismatch."));
+          .Help("Whether to attempt reusing an existing stopped group "
+                "matching the target HOME / instance slot (or replacing a "
+                "stopped custom-HOME slot group if paths or instances "
+                "changed). Fails if the group is running, if multiple "
+                "default-HOME groups match, or if an explicitly selected or "
+                "default-HOME group has a path or instance mismatch."));
   return flags;
 }
 
