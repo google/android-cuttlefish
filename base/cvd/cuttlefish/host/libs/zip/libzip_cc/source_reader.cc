@@ -16,17 +16,18 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/source_reader.h"
 
 #include <errno.h>
-#include <stddef.h>
 #include <stdint.h>
 
 #include <mutex>
+#include <utility>
 
 #include "zip.h"
 
 #include "cuttlefish/host/libs/zip/libzip_cc/error.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/io/io.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -41,20 +42,24 @@ Result<ZipSourceReader> ZipSourceReader::Open(ReadableZipSource& source) {
 ZipSourceReader::ZipSourceReader(ReadableZipSource* source) : source_(source) {}
 
 ZipSourceReader::ZipSourceReader(ZipSourceReader&& other)
-    : source_(other.source_) {
-  other.source_ = nullptr;
-}
+    : source_(std::exchange(other.source_, nullptr)) {}
 
 ZipSourceReader& ZipSourceReader::operator=(ZipSourceReader&& other) {
-  source_ = other.source_;
-  other.source_ = nullptr;
+  if (this == &other) {
+    return *this;
+  }
+  Close();
+  source_ = std::exchange(other.source_, nullptr);
   return *this;
 }
 
-ZipSourceReader::~ZipSourceReader() {
+ZipSourceReader::~ZipSourceReader() { Close(); }
+
+void ZipSourceReader::Close() {
   if (source_ && source_->raw_) {
     zip_source_close(source_->raw_.get());
   }
+  source_ = nullptr;
 }
 
 Result<uint64_t, int> ZipSourceReader::Read(void* data, uint64_t length) {

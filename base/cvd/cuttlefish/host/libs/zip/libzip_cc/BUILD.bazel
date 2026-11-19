@@ -57,7 +57,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:stat",
-        "//cuttlefish/result",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@libzip",
     ],
 )
@@ -94,7 +95,10 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
         "//cuttlefish/io",
-        "//cuttlefish/result",
+        "//cuttlefish/io:reader",
+        "//cuttlefish/io:visitable",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@libzip",
     ],
 )
