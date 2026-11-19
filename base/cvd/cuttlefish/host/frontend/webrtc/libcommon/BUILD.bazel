@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -158,6 +158,75 @@ cf_cc_library(
     alwayslink = True,
 )
 
+cf_cc_library(
+    name = "vulkan_encoder_config",
+    hdrs = ["vulkan_encoder_config.h"],
+    deps = [
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "vulkan_video_encoder",
+    srcs = ["vulkan_video_encoder.cpp"],
+    hdrs = ["vulkan_video_encoder.h"],
+    deps = [
+        ":abgr_buffer",
+        ":vulkan_encoder_config",
+        "//cuttlefish/host/libs/gpu:rgba_to_nv12",
+        "//cuttlefish/host/libs/gpu:vulkan_av1_encode_session",
+        "//cuttlefish/host/libs/gpu:vulkan_av1_encode_settings",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@libdrm//:libdrm_fourcc",
+        "@libwebrtc",
+        "@vulkan_headers",
+    ],
+)
+
+cf_cc_library(
+    name = "av1_vulkan_encoder_provider",
+    srcs = ["av1_vulkan_encoder_provider.cpp"],
+    deps = [
+        ":encoder_provider",
+        ":encoder_provider_registry",
+        ":vulkan_encoder_config",
+        ":vulkan_video_encoder",
+        "//cuttlefish/host/libs/gpu:vulkan_video_context",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@libwebrtc",
+    ],
+    alwayslink = True,
+)
+
+cf_cc_test(
+    name = "vulkan_video_encoder_test",
+    srcs = ["vulkan_video_encoder_test.cpp"],
+    linkstatic = True,  # libvpx inside libwebrtc has undefined symbols
+    deps = [
+        ":vulkan_encoder_config",
+        ":vulkan_video_encoder",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_test(
+    name = "vulkan_video_encoder_round_trip_test",
+    srcs = ["vulkan_video_encoder_round_trip_test.cpp"],
+    linkstatic = True,  # libvpx inside libwebrtc has undefined symbols
+    deps = [
+        ":abgr_buffer",
+        ":vulkan_encoder_config",
+        ":vulkan_video_encoder",
+        "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_cvd_abgr_video_frame_buffer",
+        "//cuttlefish/host/libs/gpu:vulkan_video_context",
+        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
+        "@libdrm//:libdrm_fourcc",
+        "@libwebrtc",
+    ],
+)
+
 # Injection point for future private repo providers.
 # Currently a no-op cc_library. When the public/private repo split
 # happens, replace with a label_flag that points to private repo
@@ -230,6 +299,7 @@ cf_cc_library(
     deps = [
         ":audio_device",
         ":av1_nvenc_encoder_provider",
+        ":av1_vulkan_encoder_provider",
         ":builtin_decoder_provider",
         ":builtin_encoder_provider",
         ":composite_decoder_factory",
