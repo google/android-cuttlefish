@@ -358,7 +358,7 @@ pub enum VirtioSndChmap {
     RightLowFreq,
     BottomCenter,
     BottomLeftCenter,
-    BottomRifhtCenter,
+    BottomRightCenter,
 }
 
 /* maximum possible number of channels */
@@ -397,7 +397,7 @@ pub enum VirtioSndCtlType {
     Integer64,
     Enumerated,
     Bytes,
-    Iec95,
+    Iec958,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
