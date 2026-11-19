@@ -57,7 +57,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:stat",
-        "//cuttlefish/io",
         "//cuttlefish/result",
         "@libzip",
     ],
@@ -73,6 +72,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
+        "//cuttlefish/host/libs/zip/libzip_cc:source_reader",
         "//cuttlefish/io",
         "//cuttlefish/io:fake_pread_pwrite",
         "//cuttlefish/io:length",
@@ -80,6 +80,21 @@ cf_cc_library(
         "//cuttlefish/io:visitable",
         "//cuttlefish/result",
         "@abseil-cpp//absl/base:no_destructor",
+        "@libzip",
+    ],
+)
+
+cf_cc_library(
+    name = "source_reader",
+    srcs = ["source_reader.cc"],
+    hdrs = ["source_reader.h"],
+    features = ["-layering_check"],  # libzip
+    linkstatic = True,  # libzip
+    deps = [
+        "//cuttlefish/host/libs/zip/libzip_cc:error",
+        "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
+        "//cuttlefish/io",
+        "//cuttlefish/result",
         "@libzip",
     ],
 )

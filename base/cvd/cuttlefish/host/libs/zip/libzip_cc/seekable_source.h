@@ -22,6 +22,7 @@
 
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/source_reader.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"

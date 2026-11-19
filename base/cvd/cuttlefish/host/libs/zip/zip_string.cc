@@ -20,6 +20,7 @@
 
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/source_reader.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
