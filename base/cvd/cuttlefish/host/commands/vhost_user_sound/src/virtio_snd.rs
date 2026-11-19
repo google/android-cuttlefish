@@ -512,13 +512,13 @@ pub fn validate_pcm_parameters(
     );
 
     ensure!(
-        (1u64 << params.format) & pcm_info.formats.get() != 0,
+        1u64.unbounded_shl(params.format.into()) & pcm_info.formats.get() != 0,
         "Unsupported format: {}",
         params.format
     );
 
     ensure!(
-        (1u64 << params.rate) & pcm_info.rates.get() != 0,
+        1u64.unbounded_shl(params.rate.into()) & pcm_info.rates.get() != 0,
         "Unsupported frame rate: {}",
         params.rate
     );
@@ -534,8 +534,8 @@ pub fn validate_pcm_parameters(
     // validated against the pcm config, so this will result in a 0 if and only if the pcm config
     // includes an invalid format.
     let frame_size_bits =
-        params.channels as u32 * bits_per_sample(params.format.try_into()?) as u32;
-    let period_bits = 8 * params.period_bytes.get();
+        params.channels as u64 * bits_per_sample(params.format.try_into()?) as u64;
+    let period_bits = 8 * params.period_bytes.get() as u64;
     ensure!(
         period_bits % frame_size_bits == 0,
         "Period bytes is not a multiple of frame size: {} bits / {} bits",
