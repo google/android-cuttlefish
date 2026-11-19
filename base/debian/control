@@ -104,7 +104,8 @@ Depends: cuttlefish-base,
          qemu-system-x86 (>= 2.8.0),
          qemu-system-misc (>= 2.8.0),
          qemu-utils,
-         ${misc:Depends}
+         ${misc:Depends},
+         ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}
 Conflicts: ${diverted-files}
 Provides: ${diverted-files}
@@ -122,7 +123,8 @@ Description: May potentially enable new or experimental cuttlefish
 Package: cuttlefish-metrics
 Architecture: any
 Depends: cuttlefish-base,
-         ${misc:Depends}
+         ${misc:Depends},
+         ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}
 Description: Enables metrics transmissions to Google.
  Enables metrics transmission tools for Cuttlefish Android Virtual Devices.
