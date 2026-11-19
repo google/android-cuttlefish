@@ -16,10 +16,13 @@
 
 #pragma once
 
+#include <mutex>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -32,7 +35,8 @@ namespace cuttlefish {
 
 class CvdStartCommandHandler : public CvdCommandHandler {
  public:
-  CvdStartCommandHandler(InstanceManager& instance_manager);
+  CvdStartCommandHandler(InstanceManager& instance_manager,
+                         std::optional<Fd> preacquired_in_progress_lock = {});
 
   Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override;
@@ -48,14 +52,15 @@ class CvdStartCommandHandler : public CvdCommandHandler {
  private:
   Result<void> LaunchSingleInstance(LocalInstance& instance,
                                     LocalInstanceGroup& group,
-                                    const CommandRequest& request);
+                                    const CommandRequest& request,
+                                    std::optional<Fd> in_progress_lock);
 
   Result<void> LaunchDevice(Command command, LocalInstanceGroup& group,
                             const std::vector<LocalInstance>& instances,
                             const CommandRequest& request);
 
   Result<void> LaunchDeviceInterruptible(
-      Command command, LocalInstanceGroup& group,
+      Command command, LocalInstanceGroup& group, std::mutex& group_mutex,
       const std::unordered_map<std::string, std::string>& envs,
       const CommandRequest& request);
 
@@ -63,6 +68,7 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   std::vector<Flag> BuildOwnFlags();
 
   InstanceManager& instance_manager_;
+  std::optional<Fd> preacquired_in_progress_lock_;
   SubprocessWaiter subprocess_waiter_;
   struct {
     std::vector<std::string> host_substitutions;

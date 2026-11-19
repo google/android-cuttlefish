@@ -17,6 +17,8 @@
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 
 #include <algorithm>
+#include <atomic>
+#include <cstdint>
 #include <functional>
 #include <iterator>
 #include <set>
@@ -47,9 +49,17 @@ std::vector<LocalInstance> Filter(
   return ret;
 }
 
-std::string DefaultBaseDir() {
-  auto time = std::chrono::system_clock::now().time_since_epoch().count();
-  return fmt::format("{}/{}", PerUserDir(), time);
+std::string DefaultBaseDir(const std::string& base_root_dir) {
+  static std::atomic<int64_t> last_time{0};
+  const int64_t now =
+      std::chrono::system_clock::now().time_since_epoch().count();
+  int64_t prev = last_time.load(std::memory_order_relaxed);
+  int64_t chosen = std::max(now, prev + 1);
+  while (!last_time.compare_exchange_weak(prev, chosen,
+                                          std::memory_order_relaxed)) {
+    chosen = std::max(now, prev + 1);
+  }
+  return fmt::format("{}/{}", base_root_dir, chosen);
 }
 
 std::string HomeDirFromBase(const std::string& base_dir) {
@@ -94,7 +104,11 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Create(
 }
 
 LocalInstanceGroup::Builder::Builder(std::string group_name)
-    : base_dir_(DefaultBaseDir()) {
+    : Builder(std::move(group_name), PerUserDir()) {}
+
+LocalInstanceGroup::Builder::Builder(std::string group_name,
+                                     const std::string& base_root_dir)
+    : base_dir_(DefaultBaseDir(base_root_dir)) {
   group_proto_.set_name(std::move(group_name));
   group_proto_.set_home_directory(HomeDirFromBase(base_dir_));
   group_proto_.set_host_artifacts_path(HostArtifactsDirFromBase(base_dir_));

@@ -116,6 +116,11 @@ bool LocalInstance::IsActive() const {
   return false;
 }
 
+bool LocalInstance::CanConnectToLauncherMonitor(
+    std::chrono::seconds timeout) const {
+  return GetLauncherMonitor(timeout).has_value();
+}
+
 Result<Json::Value> LocalInstance::FetchStatus(std::chrono::seconds timeout) {
   return CF_EXPECT(FetchInstanceStatus(*this, timeout));
 }
