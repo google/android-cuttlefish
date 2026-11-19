@@ -18,6 +18,7 @@
 
 #include <android-base/file.h>
 #include <fmt/format.h>
+#include <sys/un.h>
 
 #include <fstream>
 #include <memory>
@@ -278,13 +279,18 @@ Result<SharedFD> LocalInstance::GetLauncherMonitor(
   // under /tmp, and store this path in the config. Older instances just put
   // them in the instance directory.
   std::string uds_dir = InstanceDirectory();
-  Json::Value config = CF_EXPECT(ReadJsonConfig());
-  if (config.isMember("instances_uds_dir") &&
-      config["instances_uds_dir"].isString()) {
-    uds_dir =
-        fmt::format("{}/cvd-{}", config["instances_uds_dir"].asString(), Id());
+  if (Result<Json::Value> config = ReadJsonConfig();
+      config.has_value() && config->isMember("instances_uds_dir") &&
+      (*config)["instances_uds_dir"].isString()) {
+    uds_dir = fmt::format("{}/cvd-{}",
+                          (*config)["instances_uds_dir"].asString(), Id());
   }
   std::string monitor_path = uds_dir + "/launcher_monitor.sock";
+  CF_EXPECTF(FileExists(monitor_path),
+             "Launcher monitor socket ({}) does not exist", monitor_path);
+  CF_EXPECTF(monitor_path.size() < sizeof(sockaddr_un::sun_path),
+             "Launcher monitor socket path ({}) exceeds AF_UNIX limit",
+             monitor_path);
   SharedFD monitor = SharedFD::SocketLocalClient(monitor_path, false,
                                                  SOCK_STREAM, timeout.count());
   CF_EXPECTF(monitor->IsOpen(),

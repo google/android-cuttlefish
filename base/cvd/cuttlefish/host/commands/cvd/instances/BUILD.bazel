@@ -228,7 +228,19 @@ cf_cc_test(
 cf_cc_test(
     name = "local_instance_test",
     srcs = ["local_instance_test.cpp"],
-    deps = ["//cuttlefish/host/commands/cvd/instances"],
+    deps = [
+        ":cvd_persistent_data",
+        ":data_viewer",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:directory_exists",
+        "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/files:write_new_file",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/metrics:device_metrics_orchestration",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings",
+    ],
 )
 
 cf_cc_library(
