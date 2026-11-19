@@ -297,9 +297,9 @@ static int install_app_incremental(int argc, const char** argv, bool wait, bool 
 
     auto files = incremental::Files{argv + first_apk, argv + last_apk + 1};
     if (silent) {
-        // For a silent installation we want to do the lightweight check first and bail early and
-        // quietly if it fails.
-        if (!incremental::can_install(files)) {
+        // For a silent installation we want to do the lightweight check first and return early if
+        // we shouldn't use incremental install for the given files.
+        if (!incremental::should_use_incremental_by_default(files)) {
             return -1;
         }
     }

@@ -89,6 +89,31 @@ void config_auto_connect_services() {
 
 }  // namespace
 
+bool adb_DNSServiceShouldAutoConnect(std::string_view reg_type, std::string_view service_name) {
+    config_auto_connect_services();
+
+    // Try to auto-connect to any "_adb" or "_adb-tls-connect" services excluding emulator services.
+    std::optional<int> index = adb_DNSServiceIndexByName(reg_type);
+    if (!index) {
+        VLOG(MDNS) << "Unknown index for '" << reg_type << "'";
+        return false;
+    }
+
+    if (!g_autoconn_allowedlist.contains(*index)) {
+        VLOG(MDNS) << "Auto-connect for reg_type '" << reg_type << "' disabled";
+        return false;
+    }
+    // Ignore adb-EMULATOR* service names, as it interferes with the
+    // emulator ports that are already connected.
+    if (android::base::StartsWith(service_name, "adb-EMULATOR")) {
+        VLOG(MDNS) << "Ignoring emulator transport service [" << service_name << "]";
+        return false;
+    }
+    return true;
+}
+
+#endif  // ADB_HOST
+
 std::optional<int> adb_DNSServiceIndexByName(std::string_view reg_type) {
     for (int i = 0; i < kNumADBDNSServices; ++i) {
         if (!strncmp(reg_type.data(), kADBDNSServices[i], strlen(kADBDNSServices[i]))) {
@@ -97,27 +122,3 @@ std::optional<int> adb_DNSServiceIndexByName(std::string_view reg_type) {
     }
     return std::nullopt;
 }
-
-bool adb_DNSServiceShouldAutoConnect(std::string_view reg_type, std::string_view service_name) {
-    config_auto_connect_services();
-
-    // Try to auto-connect to any "_adb" or "_adb-tls-connect" services excluding emulator services.
-    std::optional<int> index = adb_DNSServiceIndexByName(reg_type);
-    if (!index ||
-        (index != kADBTransportServiceRefIndex && index != kADBSecureConnectServiceRefIndex)) {
-        return false;
-    }
-    if (!g_autoconn_allowedlist.contains(*index)) {
-        D("Auto-connect for reg_type '%s' disabled", reg_type.data());
-        return false;
-    }
-    // Ignore adb-EMULATOR* service names, as it interferes with the
-    // emulator ports that are already connected.
-    if (android::base::StartsWith(service_name, "adb-EMULATOR")) {
-        LOG(INFO) << "Ignoring emulator transport service [" << service_name << "]";
-        return false;
-    }
-    return true;
-}
-
-#endif  // ADB_HOST

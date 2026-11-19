@@ -27,7 +27,9 @@ namespace incremental {
 using Files = std::vector<std::string>;
 using Args = std::vector<std::string_view>;
 
-bool can_install(const Files& files);
+// Returns true if incremental installation should be used by default for the given set of files.
+bool should_use_incremental_by_default(const Files& files);
+
 std::optional<Process> install(const Files& files, const Args& passthrough_args, bool silent);
 
 }  // namespace incremental

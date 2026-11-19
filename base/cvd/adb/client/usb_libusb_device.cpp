@@ -203,10 +203,12 @@ bool LibUsbDevice::FindAdbInterface() {
         return false;
     }
 
-    if (device_desc->bDeviceClass != LIBUSB_CLASS_PER_INTERFACE) {
-        // Assume that all Android devices have the device class set to per interface.
-        // TODO: Is this assumption valid?
-        VLOG(USB) << "skipping device with incorrect class at " << device_address_;
+    if (device_desc->bDeviceClass != LIBUSB_CLASS_PER_INTERFACE &&
+        device_desc->bDeviceClass != LIBUSB_CLASS_MISCELLANEOUS) {
+        // Assume that all Android devices have the device class set to per interface or
+        // miscellaneous.
+        VLOG(USB) << "skipping device with incorrect class '" << device_desc->bDeviceClass
+                  << "' at " << device_address_;
         return false;
     }
 

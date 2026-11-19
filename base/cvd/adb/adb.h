@@ -198,15 +198,11 @@ void put_apacket(apacket* p);
 #define ADB_DBC_CLASS 0xDC
 #define ADB_DBC_SUBCLASS 0x2
 
-bool connect_emulator(int port);
-int connect_emulator_arbitrary_ports(int console_port, int adb_port, std::string* error);
-
 extern const char* adb_device_banner;
 
 #define CHUNK_SIZE (64 * 1024)
 
-// Argument delimeter for adb abb command.
-#define ABB_ARG_DELIMETER ('\0')
+#define ABB_ARG_DELIMITER ('\0')
 
 #if !ADB_HOST
 #define USB_FFS_ADB_PATH "/dev/usb-ffs/adb/"
@@ -254,6 +250,8 @@ void adb_wait_for_device_initialization();
 // When ssh-forwarding to a remote adb server, kill-server is almost never what you actually want,
 // and unfortunately, many other tools issue it. This adds a knob to reject kill-servers.
 void adb_set_reject_kill_server(bool reject);
+
+bool is_usb_enabled();
 #endif
 
 void usb_init();

@@ -75,7 +75,11 @@ std::optional<MdnsInstance> mdns_parse_instance_name(std::string_view name) {
 }
 
 bool is_enabled() {
-    return !getenv("ADB_MDNS") || strcmp(getenv("ADB_MDNS"), "0") != 0;
+    return false;
+}
+
+bool should_use_openscreen() {
+    return false;
 }
 
 }  // namespace mdns

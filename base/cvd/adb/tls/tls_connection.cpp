@@ -27,6 +27,7 @@
 #include <openssl/ssl.h>
 
 using android::base::borrowed_fd;
+using namespace std::string_literals;
 
 namespace adb {
 namespace tls {
@@ -61,6 +62,7 @@ class TlsConnectionImpl : public TlsConnection {
 
     static bssl::UniquePtr<X509> X509FromBuffer(bssl::UniquePtr<CRYPTO_BUFFER> buffer);
     static const char* SSLErrorString();
+    static std::string SSL_IO_Error(int error);
     void Invalidate();
     TlsError GetFailureReason(int err);
     const char* RoleToString() { return role_ == Role::Server ? kServerRoleStr : kClientRoleStr; }
@@ -100,19 +102,16 @@ TlsConnectionImpl::~TlsConnectionImpl() {
     }
 }
 
-// static
 const char* TlsConnectionImpl::SSLErrorString() {
     auto sslerr = ERR_peek_last_error();
     return ERR_reason_error_string(sslerr);
 }
 
-// static
 bssl::UniquePtr<EVP_PKEY> TlsConnectionImpl::EvpPkeyFromPEM(std::string_view pem) {
     bssl::UniquePtr<BIO> bio(BIO_new_mem_buf(pem.data(), pem.size()));
     return bssl::UniquePtr<EVP_PKEY>(PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, nullptr));
 }
 
-// static
 bssl::UniquePtr<CRYPTO_BUFFER> TlsConnectionImpl::BufferFromPEM(std::string_view pem) {
     bssl::UniquePtr<BIO> bio(BIO_new_mem_buf(pem.data(), pem.size()));
     char* name = nullptr;
@@ -132,7 +131,6 @@ bssl::UniquePtr<CRYPTO_BUFFER> TlsConnectionImpl::BufferFromPEM(std::string_view
     return ret;
 }
 
-// static
 bssl::UniquePtr<X509> TlsConnectionImpl::X509FromBuffer(bssl::UniquePtr<CRYPTO_BUFFER> buffer) {
     if (!buffer) {
         return nullptr;
@@ -140,13 +138,11 @@ bssl::UniquePtr<X509> TlsConnectionImpl::X509FromBuffer(bssl::UniquePtr<CRYPTO_B
     return bssl::UniquePtr<X509>(X509_parse_from_buffer(buffer.get()));
 }
 
-// static
 int TlsConnectionImpl::SSLSetCertVerifyCb(X509_STORE_CTX* ctx, void* opaque) {
     auto* p = reinterpret_cast<TlsConnectionImpl*>(opaque);
     return p->cert_verify_cb_(ctx);
 }
 
-// static
 int TlsConnectionImpl::SSLSetCertCb(SSL* ssl, void* opaque) {
     auto* p = reinterpret_cast<TlsConnectionImpl*>(opaque);
     return p->set_cert_cb_(ssl);
@@ -317,6 +313,62 @@ std::vector<uint8_t> TlsConnectionImpl::ReadFully(size_t size) {
     return buf;
 }
 
+std::string TlsConnectionImpl::SSL_IO_Error(int error) {
+    switch (error) {
+        case SSL_ERROR_NONE: {
+            return "SSL_ERROR_NONE: nothing read but not an error?";
+        }
+        case SSL_ERROR_SSL: {
+            return "SSL_ERROR_SSL: '"s + SSLErrorString() + "'";
+        }
+        case SSL_ERROR_WANT_READ: {
+            return "SSL_ERROR_WANT_READ";
+        }
+        case SSL_ERROR_WANT_WRITE: {
+            return "SSL_ERROR_WANT_WRITE";
+        }
+        case SSL_ERROR_WANT_X509_LOOKUP: {
+            return "SSL_ERROR_WANT_X509_LOOKUP";
+        }
+        case SSL_ERROR_SYSCALL: {
+            return "SSL_ERROR_SYSCALL: '"s + strerror(errno) + "'";
+        }
+        case SSL_ERROR_ZERO_RETURN: {
+            return "SSL_ERROR_ZERO_RETURN";
+        }
+        case SSL_ERROR_WANT_CONNECT: {
+            return "SSL_ERROR_WANT_CONNECT";
+        }
+        case SSL_ERROR_WANT_ACCEPT: {
+            return "SSL_ERROR_WANT_ACCEPT";
+        }
+        case SSL_ERROR_WANT_CHANNEL_ID_LOOKUP: {
+            return "SSL_ERROR_WANT_CHANNEL_ID_LOOKUP";
+        }
+        case SSL_ERROR_PENDING_SESSION: {
+            return "SSL_ERROR_PENDING_SESSION";
+        }
+        case SSL_ERROR_PENDING_CERTIFICATE: {
+            return "SSL_ERROR_PENDING_CERTIFICATE";
+        }
+        case SSL_ERROR_WANT_PRIVATE_KEY_OPERATION: {
+            return "SSL_ERROR_WANT_PRIVATE_KEY_OPERATION";
+        }
+        case SSL_ERROR_PENDING_TICKET: {
+            return "SSL_ERROR_PENDING_TICKET";
+        }
+        case SSL_ERROR_EARLY_DATA_REJECTED: {
+            return "SSL_ERROR_EARLY_DATA_REJECTED";
+        }
+        case SSL_ERROR_WANT_CERTIFICATE_VERIFY: {
+            return "SSL_ERROR_WANT_CERTIFICATE_VERIFY";
+        }
+        default: {
+            return "Unknown case: "s + std::to_string(error);
+        }
+    }
+}
+
 bool TlsConnectionImpl::ReadFully(void* buf, size_t size) {
     CHECK_GT(size, 0U);
     if (!ssl_) {
@@ -330,7 +382,10 @@ bool TlsConnectionImpl::ReadFully(void* buf, size_t size) {
         int bytes_read =
                 SSL_read(ssl_.get(), p8 + offset, std::min(static_cast<size_t>(INT_MAX), size));
         if (bytes_read <= 0) {
-            LOG(ERROR) << RoleToString() << "SSL_read failed [" << SSLErrorString() << "]";
+            int error = SSL_get_error(ssl_.get(), bytes_read);
+            LOG(ERROR) << RoleToString() << "SSL_read failed [bytes_read=" << bytes_read
+                       << ", io_error=" << SSL_IO_Error(error) << "]";
+
             return false;
         }
         size -= bytes_read;
@@ -350,7 +405,9 @@ bool TlsConnectionImpl::WriteFully(std::string_view data) {
         int bytes_out = SSL_write(ssl_.get(), data.data(),
                                   std::min(static_cast<size_t>(INT_MAX), data.size()));
         if (bytes_out <= 0) {
-            LOG(ERROR) << RoleToString() << "SSL_write failed [" << SSLErrorString() << "]";
+            int error = SSL_get_error(ssl_.get(), bytes_out);
+            LOG(ERROR) << RoleToString() << "SSL_write failed [bytes_out=" << bytes_out
+                       << ", io_error=" << SSL_IO_Error(error) << "]";
             return false;
         }
         data = data.substr(bytes_out);
@@ -359,7 +416,6 @@ bool TlsConnectionImpl::WriteFully(std::string_view data) {
 }
 }  // namespace
 
-// static
 std::unique_ptr<TlsConnection> TlsConnection::Create(TlsConnection::Role role,
                                                      std::string_view cert,
                                                      std::string_view priv_key, borrowed_fd fd) {
@@ -369,7 +425,6 @@ std::unique_ptr<TlsConnection> TlsConnection::Create(TlsConnection::Role role,
     return std::make_unique<TlsConnectionImpl>(role, cert, priv_key, fd);
 }
 
-// static
 bool TlsConnection::SetCertAndKey(SSL* ssl, std::string_view cert, std::string_view priv_key) {
     CHECK(ssl);
     // Note: declaring these in local scope is okay because

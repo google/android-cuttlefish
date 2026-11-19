@@ -152,10 +152,50 @@ static int check(void *_desc, int len, unsigned type, int size)
     return 0;
 }
 
+static int read_sysfs_string(const char *sysfs_name, const char *sysfs_node,
+                             char* buf, int bufsize)
+{
+    char path[80];
+    int fd, n;
+
+    snprintf(path, sizeof(path),
+             "/sys/bus/usb/devices/%s/%s", sysfs_name, sysfs_node);
+    path[sizeof(path) - 1] = '\0';
+
+    fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return -1;
+
+    n = read(fd, buf, bufsize - 1);
+    close(fd);
+
+    if (n < 0)
+        return -1;
+
+    buf[n] = '\0';
+
+    return n;
+}
+
+static int read_sysfs_number(const char *sysfs_name, const char *sysfs_node)
+{
+    char buf[16];
+    int value;
+
+    if (read_sysfs_string(sysfs_name, sysfs_node, buf, sizeof(buf)) < 0)
+        return -1;
+
+    if (sscanf(buf, "%d", &value) != 1)
+        return -1;
+
+    return value;
+}
+
 static int filter_usb_device(char* sysfs_name,
                              char *ptr, int len, int writable,
                              ifc_match_func callback,
-                             int *ept_in_id, int *ept_out_id, int *ifc_id)
+                             int *ept_in_id, int *ept_out_id, int *ifc_id,
+                             int *cfg_id, int *alt_ifc_id)
 {
     struct usb_device_descriptor *dev;
     struct usb_config_descriptor *cfg;
@@ -164,7 +204,6 @@ static int filter_usb_device(char* sysfs_name,
     struct usb_ifc_info info;
 
     int in, out;
-    unsigned i;
     unsigned e;
 
     if (check(ptr, len, USB_DT_DEVICE, USB_DT_DEVICE_SIZE))
@@ -173,11 +212,35 @@ static int filter_usb_device(char* sysfs_name,
     len -= dev->bLength;
     ptr += dev->bLength;
 
-    if (check(ptr, len, USB_DT_CONFIG, USB_DT_CONFIG_SIZE))
+    *cfg_id = read_sysfs_number(sysfs_name, "bConfigurationValue");
+    if (*cfg_id == -1)
         return -1;
-    cfg = (struct usb_config_descriptor *)ptr;
-    len -= cfg->bLength;
-    ptr += cfg->bLength;
+
+    // Find the active configuration
+    do {
+        if (check(ptr, len, USB_DT_CONFIG, USB_DT_CONFIG_SIZE))
+            return -1;
+        cfg = (struct usb_config_descriptor *)ptr;
+        if (cfg->bConfigurationValue == *cfg_id) {
+            // This is the configuration we are looking for
+            len -= cfg->bLength;
+            ptr += cfg->bLength;
+            break;
+        }
+        // Skip this configuration
+        len -= cfg->wTotalLength;
+        ptr += cfg->wTotalLength;
+    } while (1);
+
+    // There is less data then it should be based on config descriptor.
+    if (len < cfg->wTotalLength - cfg->bLength) {
+        DBG("Config %d has 0x%x bytes length, but only 0x%x bytes are left\n",
+            cfg->bConfigurationValue, cfg->wTotalLength, len + cfg->bLength);
+        return -1;
+    }
+
+    // At this point, only interfaces within active configuration are interesting.
+    len = cfg->wTotalLength - cfg->bLength;
 
     info.dev_vendor = dev->idVendor;
     info.dev_product = dev->idProduct;
@@ -196,40 +259,25 @@ static int filter_usb_device(char* sysfs_name,
      */
     info.serial_number[0] = '\0';
     if (dev->iSerialNumber) {
-        char path[80];
-        int fd;
+        int chars_read = read_sysfs_string(sysfs_name, "serial", info.serial_number,
+                                           sizeof(info.serial_number) - 1);
 
-        snprintf(path, sizeof(path),
-                 "/sys/bus/usb/devices/%s/serial", sysfs_name);
-        path[sizeof(path) - 1] = '\0';
-
-        fd = open(path, O_RDONLY);
-        if (fd >= 0) {
-            int chars_read = read(fd, info.serial_number,
-                                  sizeof(info.serial_number) - 1);
-            close(fd);
-
-            if (chars_read <= 0)
-                info.serial_number[0] = '\0';
-            else if (info.serial_number[chars_read - 1] == '\n') {
-                // strip trailing newline
-                info.serial_number[chars_read - 1] = '\0';
-            }
+        if (chars_read > 0 && info.serial_number[chars_read - 1] == '\n') {
+            // strip trailing newline
+            info.serial_number[chars_read - 1] = '\0';
         }
     }
 
-    for(i = 0; i < cfg->bNumInterfaces; i++) {
-
-        while (len > 0) {
-	        struct usb_descriptor_header *hdr = (struct usb_descriptor_header *)ptr;
-            if (check(hdr, len, USB_DT_INTERFACE, USB_DT_INTERFACE_SIZE) == 0)
-                break;
+    while (len > 0) {
+        struct usb_descriptor_header *hdr = (struct usb_descriptor_header *)ptr;
+        if (check(hdr, len, USB_DT_INTERFACE, USB_DT_INTERFACE_SIZE)) {
+            // This code parses only standard interfaces, skip everything else
+            // (e.g interface association descriptor).
             len -= hdr->bLength;
             ptr += hdr->bLength;
+            DBG("Skip interface of type 0x%02x\n", hdr->bDescriptorType);
+            continue;
         }
-
-        if (len <= 0)
-            return -1;
 
         ifc = (struct usb_interface_descriptor *)ptr;
         len -= ifc->bLength;
@@ -291,50 +339,12 @@ static int filter_usb_device(char* sysfs_name,
             *ept_in_id = in;
             *ept_out_id = out;
             *ifc_id = ifc->bInterfaceNumber;
+            *alt_ifc_id = ifc->bAlternateSetting;
             return 0;
         }
     }
 
     return -1;
-}
-
-static int read_sysfs_string(const char *sysfs_name, const char *sysfs_node,
-                             char* buf, int bufsize)
-{
-    char path[80];
-    int fd, n;
-
-    snprintf(path, sizeof(path),
-             "/sys/bus/usb/devices/%s/%s", sysfs_name, sysfs_node);
-    path[sizeof(path) - 1] = '\0';
-
-    fd = open(path, O_RDONLY);
-    if (fd < 0)
-        return -1;
-
-    n = read(fd, buf, bufsize - 1);
-    close(fd);
-
-    if (n < 0)
-        return -1;
-
-    buf[n] = '\0';
-
-    return n;
-}
-
-static int read_sysfs_number(const char *sysfs_name, const char *sysfs_node)
-{
-    char buf[16];
-    int value;
-
-    if (read_sysfs_string(sysfs_name, sysfs_node, buf, sizeof(buf)) < 0)
-        return -1;
-
-    if (sscanf(buf, "%d", &value) != 1)
-        return -1;
-
-    return value;
 }
 
 /* Given the name of a USB device in sysfs, get the name for the same
@@ -362,7 +372,7 @@ static std::unique_ptr<usb_handle> find_usb_device(const char* base, ifc_match_f
     std::unique_ptr<usb_handle> usb;
     char devname[64];
     char desc[1024];
-    int n, in, out, ifc;
+    int n, in, out, ifc, cfg, alt_ifc;
 
     struct dirent *de;
     int fd;
@@ -389,7 +399,8 @@ static std::unique_ptr<usb_handle> find_usb_device(const char* base, ifc_match_f
 
             n = read(fd, desc, sizeof(desc));
 
-            if (filter_usb_device(de->d_name, desc, n, writable, callback, &in, &out, &ifc) == 0) {
+            if (filter_usb_device(de->d_name, desc, n, writable, callback,
+                                  &in, &out, &ifc, &cfg, &alt_ifc) == 0) {
                 usb.reset(new usb_handle());
                 strcpy(usb->fname, devname);
                 usb->ep_in = in;
@@ -401,6 +412,26 @@ static std::unique_ptr<usb_handle> find_usb_device(const char* base, ifc_match_f
                     close(fd);
                     usb.reset();
                     continue;
+                }
+                if (read_sysfs_number(de->d_name, "bConfigurationValue") != cfg) {
+                    // Someone changed configuration before we claimed the interface
+                    close(fd);
+                    usb.reset();
+                    continue;
+                }
+                // Select alternate setting if it is not default.
+                if (alt_ifc != 0) {
+                    struct usbdevfs_setinterface set_ifc = {
+                        .interface = (unsigned int)ifc,
+                        .altsetting = (unsigned int)alt_ifc,
+                    };
+
+                    n = ioctl(fd, USBDEVFS_SETINTERFACE, &set_ifc);
+                    if (n != 0) {
+                        close(fd);
+                        usb.reset();
+                        continue;
+                    }
                 }
             } else {
                 close(fd);

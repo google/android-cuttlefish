@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <inttypes.h>
 #include <stdlib.h>
 
 #include <string>
@@ -47,6 +46,8 @@ bool should_flash_in_userspace(const android::fs_mgr::LpMetadata& metadata,
 bool is_sparse_file(android::base::borrowed_fd fd);
 int64_t get_file_size(android::base::borrowed_fd fd);
 std::string fb_fix_numeric_var(std::string var);
+bool split_file(int fd, int64_t max_size, std::vector<SparsePtr>* out);
+bool split_file(sparse_file* s, int64_t max_size, std::vector<SparsePtr>* out);
 
 class ImageSource {
   public:

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "adb_wifi.h"
+#include "client/adb_wifi.h"
 
 #include <fstream>
 #include <random>
@@ -26,6 +26,7 @@
 #include <android-base/file.h>
 #include <android-base/parsenetaddress.h>
 #include "client/pairing/pairing_client.h"
+#include "client/transport_mdns.h"
 
 #include "adb_auth.h"
 #include "adb_known_hosts.pb.h"
@@ -36,6 +37,8 @@
 
 using adbwifi::pairing::PairingClient;
 using namespace adb::crypto;
+
+KnownWifiHostsFile known_wifi_hosts_file [[clang::no_destroy]];
 
 struct PairingResultWaiter {
     std::mutex mutex_;
@@ -94,44 +97,39 @@ bool SafeReplaceFile(std::string_view old_file, std::string_view new_file) {
     return true;
 }
 
-std::string get_user_known_hosts_path() {
-    return adb_get_android_dir_path() + OS_PATH_SEPARATOR + "adb_known_hosts.pb";
-}
+adb::proto::AdbKnownHosts KnownWifiHostsFile::Load() {
+    adb::proto::AdbKnownHosts known_hosts;
 
-bool load_known_hosts_from_file(const std::string& path, adb::proto::AdbKnownHosts& known_hosts) {
     // Check for file existence.
     struct stat buf;
-    if (stat(path.c_str(), &buf) == -1) {
-        LOG(INFO) << "Known hosts file [" << path << "] does not exist...";
-        return false;
+    if (stat(keystore_path_.c_str(), &buf) == -1) {
+        return known_hosts;
     }
 
-    std::ifstream file(path, std::ios::binary);
+    std::ifstream file(keystore_path_, std::ios::binary);
     if (!file) {
-        PLOG(ERROR) << "Unable to open [" << path << "].";
-        return false;
+        PLOG(ERROR) << "Unable to open [" << keystore_path_ << "].";
+        return known_hosts;
     }
 
     if (!known_hosts.ParseFromIstream(&file)) {
-        PLOG(ERROR) << "Failed to parse [" << path << "]. Deleting it as it may be corrupted.";
-        adb_unlink(path.c_str());
-        return false;
+        PLOG(ERROR) << "Failed to parse [" << keystore_path_
+                    << "]. Deleting it as it may be corrupted.";
+        adb_unlink(keystore_path_.c_str());
+        return known_hosts;
     }
 
-    return true;
+    return known_hosts;
 }
 
-static bool write_known_host_to_file(std::string& known_host) {
-    std::string path = get_user_known_hosts_path();
-    if (path.empty()) {
-        PLOG(ERROR) << "Error getting user known hosts filename";
-        return false;
-    }
+void KnownWifiHostsFile::Clear() {
+    adb_unlink(keystore_path_.c_str());
+}
 
-    adb::proto::AdbKnownHosts known_hosts;
-    load_known_hosts_from_file(path, known_hosts);
+bool KnownWifiHostsFile::AddKnownHost(const std::string& host) {
+    auto known_hosts = Load();
     auto* host_info = known_hosts.add_host_infos();
-    host_info->set_guid(known_host);
+    host_info->set_guid(host);
 
     std::unique_ptr<TemporaryFile> temp_file(new TemporaryFile(adb_get_android_dir_path()));
     if (temp_file->fd == -1) {
@@ -148,30 +146,29 @@ static bool write_known_host_to_file(std::string& known_host) {
     temp_file.reset();
 
     // Replace the existing adb_known_hosts with the new one
-    if (!SafeReplaceFile(path, temp_file_name.c_str())) {
+    if (!SafeReplaceFile(keystore_path_, temp_file_name.c_str())) {
         LOG(ERROR) << "Failed to replace old adb_known_hosts";
         adb_unlink(temp_file_name.c_str());
         return false;
     }
-    chmod(path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP);
+    chmod(keystore_path_.c_str(), S_IRUSR | S_IWUSR | S_IRGRP);
 
     return true;
 }
 
-bool adb_wifi_is_known_host(const std::string& host) {
-    std::string path = get_user_known_hosts_path();
-    if (path.empty()) {
-        PLOG(ERROR) << "Error getting user known hosts filename";
-        return false;
-    }
+KnownWifiHostsFile::KnownWifiHostsFile()
+    : keystore_path_(adb_get_android_dir_path() + OS_PATH_SEPARATOR + "adb_known_hosts.pb") {}
 
-    adb::proto::AdbKnownHosts known_hosts;
-    if (!load_known_hosts_from_file(path, known_hosts)) {
-        return false;
-    }
-
+bool KnownWifiHostsFile::IsKnownHost(const std::string& host) {
+    auto known_hosts = Load();
     for (const auto& host_info : known_hosts.host_infos()) {
-        if (host == host_info.guid()) {
+        // Android devices have a bug where they can register a service instance before
+        // unregistering the previous one. This leads to mdns duplicates. We can mitigate this issue
+        // by detecting them (a duplicate is automatically created by the mDNS stack with a suffix
+        // " (X)" where X is an integer to dedup). Testing for start_with instead of == does the
+        // trick. This workaround can be deleted once b/432299214 and b/421363980 fixes have been
+        // out for a few years.
+        if (host.starts_with(host_info.guid())) {
             return true;
         }
     }
@@ -200,7 +197,7 @@ void adb_wifi_pair_device(const std::string& host, const std::string& password,
     auto priv_key = adb_auth_get_user_privkey();
     auto x509_cert = GenerateX509Certificate(priv_key.get());
     if (!x509_cert) {
-        LOG(ERROR) << "Unable to create X509 certificate for pairing";
+        response = "Unable to create X509 certificate for pairing";
         return;
     }
     auto cert_str = X509ToPEMString(x509_cert.get());
@@ -249,7 +246,8 @@ void adb_wifi_pair_device(const std::string& host, const std::string& password,
     response = "Successfully paired to " + host + " [guid=" + device_guid + "]";
 
     // Write to adb_known_hosts
-    write_known_host_to_file(device_guid);
+    known_wifi_hosts_file.AddKnownHost(device_guid);
+
     // Try to auto-connect.
     adb_secure_connect_by_service_name(device_guid);
 }

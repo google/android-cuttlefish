@@ -60,6 +60,7 @@ using namespace std::string_literals;
 #include "adb_host.pb.h"
 #include "adb_install.h"
 #include "adb_io.h"
+#include "adb_known_hosts.pb.h"
 #include "adb_unique_fd.h"
 #include "adb_utils.h"
 #include "app_processes.pb.h"
@@ -807,7 +808,7 @@ static int adb_abb(int argc, const char** argv) {
     constexpr bool empty_command = false;
 
     std::vector<const char*> args(argv + optind, argv + argc);
-    std::string service_string = "abb:" + android::base::Join(args, ABB_ARG_DELIMETER);
+    std::string service_string = "abb:" + android::base::Join(args, ABB_ARG_DELIMITER);
 
     D("abb -e 0x%x [%*.s]\n", escape_char, static_cast<int>(service_string.size()),
       service_string.data());
@@ -1053,6 +1054,15 @@ static bool wait_for_device(const char* service,
 
 static bool adb_root(const char* command) {
     std::string error;
+    std::string state;
+
+    // Query current state (e.g. device, recovery) for subsequent "wait-for"
+    // reference.
+    if (!adb_query(format_host_command("get-state"), &state, &error)) {
+        fprintf(stderr, "get-state error: %s\n", error.c_str());
+        return false;
+    }
+    state = android::base::Trim(state);
 
     TransportId transport_id;
     unique_fd fd(adb_connect(&transport_id, android::base::StringPrintf("%s:", command), &error));
@@ -1100,8 +1110,10 @@ static bool adb_root(const char* command) {
     // Wait for the device to come back.
     // If we were using a specific transport ID, there's nothing we can wait for.
     if (previous_id == 0) {
+        std::string wait_for_command = "wait-for-" + state;
+        D("wait for device to come back (%s)", wait_for_command.c_str());
         adb_set_transport(previous_type, previous_serial, 0);
-        wait_for_device("wait-for-device", 12000ms);
+        wait_for_device(wait_for_command.c_str(), 12000ms);
     }
 
     return true;
@@ -1955,17 +1967,31 @@ int adb_commandline(int argc, const char** argv) {
             }
             printf("List of discovered mdns services\n");
             return adb_query_command("host:mdns:services");
+        } else if (!strcmp(argv[0], "list-known-hosts")) {
+            if (argc != 2) {
+                error_exit("mdns %s takes two arguments", argv[0]);
+            }
+
+            std::string service = "host:"s + HostServices::kListMdnsKnownHosts;
+            if (!strcmp(argv[1], "--proto-binary")) {
+                return adb_connect_command(service);
+            } else if (!strcmp(argv[1], "--proto-text")) {
+                ProtoBinaryToText<adb::proto::AdbKnownHosts> callback("\nKnown mDNS hosts:\n");
+                return adb_connect_command(service, nullptr, &callback);
+            } else {
+                error_exit("unknown mdns command [%s] flag '%s'", argv[0], argv[1]);
+            }
         } else if (!strcmp(argv[0], "track-services")) {
             if (argc != 2) {
-                error_exit("mdns %s take two arguments", argv[0]);
+                error_exit("mdns %s takes two arguments", argv[0]);
             }
 
             std::string service = "host:"s + HostServices::kTrackMdnsServices;
             if (!strcmp(argv[1], "--proto-binary")) {
-                adb_connect_command(service);
+                return adb_connect_command(service);
             } else if (!strcmp(argv[1], "--proto-text")) {
                 ProtoBinaryToText<adb::proto::MdnsServices> callback("\nServices:\n");
-                adb_connect_command(service, nullptr, &callback);
+                return adb_connect_command(service, nullptr, &callback);
             } else {
                 error_exit("unknown mdns command [%s] flag '%s'", argv[0], argv[1]);
             }
@@ -2182,11 +2208,11 @@ int adb_commandline(int argc, const char** argv) {
             }
         }
     } else if (!strcmp(argv[0], "inc-server")) {
-        if (argc < 4) {
+        if (argc < 3) {
 #ifdef _WIN32
-            error_exit("usage: adb inc-server CONNECTION_HANDLE OUTPUT_HANDLE FILE1 FILE2 ...");
+            error_exit("usage: adb inc-server CONNECTION_HANDLE OUTPUT_HANDLE [FILE1 FILE2 ...]");
 #else
-            error_exit("usage: adb inc-server CONNECTION_FD OUTPUT_FD FILE1 FILE2 ...");
+            error_exit("usage: adb inc-server CONNECTION_FD OUTPUT_FD [FILE1 FILE2 ...]");
 #endif
         }
         int connection_fd = atoi(argv[1]);

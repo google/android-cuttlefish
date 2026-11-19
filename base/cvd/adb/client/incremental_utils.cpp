@@ -123,7 +123,7 @@ static inline bool skip_bytes_with_size(borrowed_fd fd, std::string* error) {
     }
     int32_t size = int32_t(le32toh(*le_size));
     if (size < 0) {
-        *error = std::format("Invalid sze {}", size);
+        *error = std::format("Invalid size {}", size);
         return false;
     }
     if (adb_lseek(fd, size, SEEK_CUR) < 0) {

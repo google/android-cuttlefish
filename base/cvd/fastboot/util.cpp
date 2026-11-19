@@ -29,10 +29,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
+#include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
@@ -117,4 +118,69 @@ std::string fb_fix_numeric_var(std::string var) {
     // This code used to use strtol with base 16.
     if (!android::base::StartsWith(var, "0x")) var = "0x" + var;
     return var;
+}
+
+bool split_file(int fd, int64_t max_size, std::vector<SparsePtr>* out) {
+    if (max_size < 0 || max_size > std::numeric_limits<uint32_t>::max()) {
+        LOG(ERROR) << "invalid max size: " << max_size;
+        return false;
+    }
+
+    SparsePtr s(sparse_file_import(fd, true, false), sparse_file_destroy);
+    if (!s) {
+        int64_t size = get_file_size(fd);
+        int block_size;
+        if (size % 4096 == 0) {
+            block_size = 4096;
+        } else if (size % 512 == 0) {
+            block_size = 512;
+        } else {
+            // Resparsing this file will fail, since it is unaligned. libsparse
+            // will either infinite loop or error out.
+            LOG(ERROR) << "File size " << size
+                       << " is unaligned, and greater than the maximum download size " << max_size
+                       << ", unable to resparse for transfer.";
+            return false;
+        }
+
+        if (lseek(fd, 0, SEEK_SET) < 0) {
+            PLOG(ERROR) << "lseek failed";
+            return false;
+        }
+
+        s = SparsePtr(sparse_file_new(block_size, size), sparse_file_destroy);
+        if (!s || sparse_file_read(s.get(), fd, SPARSE_READ_MODE_NORMAL, false) < 0) {
+            LOG(ERROR) << "Failed to read file into sparse buffer";
+            return false;
+        }
+    }
+
+    // We're now guaranteed to have a sparse file. If the sparse len < download size, don't split.
+    int64_t sparse_len = sparse_file_len(s.get(), false, false);
+    if (sparse_len <= max_size) {
+        out->emplace_back(std::move(s));
+        return true;
+    }
+
+    return split_file(s.get(), max_size, out);
+}
+
+bool split_file(sparse_file* s, int64_t max_size, std::vector<SparsePtr>* out) {
+    const int files = sparse_file_resparse(s, max_size, nullptr, 0);
+    if (files < 0) {
+        LOG(ERROR) << "Failed to compute resparse boundaries";
+        return false;
+    }
+
+    auto temp = std::make_unique<sparse_file*[]>(files);
+    const int rv = sparse_file_resparse(s, max_size, temp.get(), files);
+    if (rv < 0) {
+        LOG(ERROR) << "Failed to resparse";
+        return false;
+    }
+
+    for (int i = 0; i < files; i++) {
+        out->emplace_back(temp[i], sparse_file_destroy);
+    }
+    return true;
 }

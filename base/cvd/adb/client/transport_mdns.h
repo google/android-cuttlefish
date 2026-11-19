@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2025 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,10 @@
 #include <optional>
 #include <string>
 
-#include "adb.h"
+#include "discovered_services.h"
 
-#if ADB_HOST
+// Whatever mdns engine is used, this is the sole entry point into ADB.
+void OnServiceReceiverResult(const ServiceInfo& info, ServiceInfoState state);
 
-void adb_wifi_pair_device(const std::string& host, const std::string& password,
-                          std::string& response);
-bool adb_wifi_is_known_host(const std::string& host);
-
-#else  // !ADB_HOST
-
-struct AdbdAuthContext;
-
-void adbd_wifi_init(AdbdAuthContext* ctx);
-void adbd_wifi_secure_connect(atransport* t);
-void adbd_send_tls_server_port(uint16_t port);
-
-#endif
+std::optional<ServiceInfo> mdns_get_connect_service_info(const std::string& name);
+std::optional<ServiceInfo> mdns_get_pairing_service_info(const std::string& name);

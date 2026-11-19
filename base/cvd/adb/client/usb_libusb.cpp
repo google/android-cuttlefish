@@ -65,7 +65,7 @@ void LibUsbConnection::HandleStop(const std::string& reason) {
     // layer. If a connection is detached it has merely been requested to stop transmitting and
     // release its resources.
     if (detached_) {
-        VLOG(USB) << "Not reporting error '" << reason << "' because device " << transport_->serial
+        VLOG(USB) << "Not reporting error '" << reason << "' because device " << transport_->name
                   << " is detached";
     } else {
         OnError(reason);

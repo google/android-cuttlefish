@@ -23,6 +23,7 @@
 #include <memory>
 
 #include <openssl/rsa.h>
+#include <openssl/stack.h>
 
 /* AUTH packets first argument */
 /* Request */

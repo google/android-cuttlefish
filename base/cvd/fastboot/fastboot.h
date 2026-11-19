@@ -59,9 +59,7 @@ enum fb_buffer_type {
 };
 
 struct fastboot_buffer {
-    fb_buffer_type type;
     fb_buffer_type file_type;
-    std::vector<SparsePtr> files;
     int64_t sz;
     unique_fd fd;
     int64_t image_size;
@@ -119,6 +117,7 @@ class FlashAllTool {
     std::vector<std::unique_ptr<Task>> CollectTasks();
 
   private:
+    void DumpInfo();
     void CheckRequirements();
     void DetermineSlot();
     void CollectImages();
@@ -153,15 +152,16 @@ class LocalImageSource final : public ImageSource {
 
 char* get_android_product_out();
 bool should_flash_in_userspace(const ImageSource* source, const std::string& partition_name);
-bool is_userspace_fastboot();
+bool is_userspace_fastboot(fastboot::IFastBootDriver* fb);
 void do_flash(const char* pname, const char* fname, const bool apply_vbmeta,
               const FlashingPlan* fp);
-void do_for_partitions(const std::string& part, const std::string& slot,
-                       const std::function<void(const std::string&)>& func, bool force_slot);
+void do_for_partitions(fastboot::IFastBootDriver* fb, const std::string& part,
+                       const std::string& slot, const std::function<void(const std::string&)>& func,
+                       bool force_slot);
 std::string find_item(const std::string& item);
-void reboot_to_userspace_fastboot();
+void reboot_to_userspace_fastboot(fastboot::IFastBootDriver* fb);
 void syntax_error(const char* fmt, ...);
-std::string get_current_slot();
+std::string get_current_slot(fastboot::IFastBootDriver* fb);
 
 // Code for Parsing fastboot-info.txt
 bool CheckFastbootInfoRequirements(const std::vector<std::string>& command,
@@ -186,12 +186,16 @@ struct NetworkSerial {
 
 Result<NetworkSerial, FastbootError> ParseNetworkSerial(const std::string& serial);
 std::string GetPartitionName(const ImageEntry& entry, const std::string& current_slot_);
-void flash_partition_files(const std::string& partition, const std::vector<SparsePtr>& files);
+// Flash a single large sparse file to specified partition
+void flash_partition(const FlashingPlan* fp, const std::string& partition, SparsePtr sparse_file);
+// Flash a set of sparse files to specified partition, each sparse file should
+// not exceed sparse limit of the device
+void flash_partition_files(fastboot::IFastBootDriver* fb, const std::string& partition,
+                           const std::vector<SparsePtr>& files);
 int64_t get_sparse_limit(int64_t size, const FlashingPlan* fp);
-std::vector<SparsePtr> resparse_file(sparse_file* s, int64_t max_size);
 
 bool supports_AB(fastboot::IFastBootDriver* fb);
-bool is_logical(const std::string& partition);
+bool is_logical(fastboot::IFastBootDriver* fb, const std::string& partition);
 void fb_perform_format(const std::string& partition, int skip_if_not_supported,
                        const std::string& type_override, const std::string& size_override,
                        const unsigned fs_options, const FlashingPlan* fp);

@@ -59,8 +59,7 @@ namespace fastboot {
 
 /*************************** PUBLIC *******************************/
 FastBootDriver::FastBootDriver(std::unique_ptr<Transport> transport,
-                               DriverCallbacks driver_callbacks,
-                               bool no_checks)
+                               DriverCallbacks driver_callbacks, bool no_checks)
     : transport_(std::move(transport)),
       prolog_(std::move(driver_callbacks.prolog)),
       epilog_(std::move(driver_callbacks.epilog)),
@@ -68,8 +67,7 @@ FastBootDriver::FastBootDriver(std::unique_ptr<Transport> transport,
       text_(std::move(driver_callbacks.text)),
       disable_checks_(no_checks) {}
 
-FastBootDriver::~FastBootDriver() {
-}
+FastBootDriver::~FastBootDriver() {}
 
 RetCode FastBootDriver::Boot(std::string* response, std::vector<std::string>* info) {
     return RawCommand(FB_CMD_BOOT, "Booting", response, info);
@@ -133,7 +131,7 @@ RetCode FastBootDriver::SnapshotUpdateCommand(const std::string& command, std::s
     prolog_(StringPrintf("Snapshot %s", command.c_str()));
     std::string raw = FB_CMD_SNAPSHOT_UPDATE ":" + command;
     auto result = RawCommand(raw, response, info);
-    epilog_(result);
+    epilog_(result, crash_on_error_);
     return result;
 }
 
@@ -150,15 +148,6 @@ RetCode FastBootDriver::FlashPartition(const std::string& partition, android::ba
                                        uint32_t size) {
     RetCode ret;
     if ((ret = Download(partition, fd, size))) {
-        return ret;
-    }
-    return Flash(partition);
-}
-
-RetCode FastBootDriver::FlashPartition(const std::string& partition, sparse_file* s, uint32_t size,
-                                       size_t current, size_t total) {
-    RetCode ret;
-    if ((ret = Download(partition, s, size, current, total, false))) {
         return ret;
     }
     return Flash(partition);
@@ -190,7 +179,7 @@ RetCode FastBootDriver::Download(const std::string& name, android::base::borrowe
                                  std::vector<std::string>* info) {
     prolog_(StringPrintf("Sending '%s' (%zu KB)", name.c_str(), size / 1024));
     auto result = Download(fd, size, response, info);
-    epilog_(result);
+    epilog_(result, crash_on_error_);
     return result;
 }
 
@@ -221,7 +210,7 @@ RetCode FastBootDriver::Download(const std::string& name, const std::vector<char
                                  std::string* response, std::vector<std::string>* info) {
     prolog_(StringPrintf("Sending '%s' (%zu KB)", name.c_str(), buf.size() / 1024));
     auto result = Download(buf, response, info);
-    epilog_(result);
+    epilog_(result, crash_on_error_);
     return result;
 }
 
@@ -253,7 +242,7 @@ RetCode FastBootDriver::Download(const std::string& partition, struct sparse_fil
     prolog_(StringPrintf("Sending sparse '%s' %zu/%zu (%u KB)", partition.c_str(), current, total,
                          size / 1024));
     auto result = Download(s, use_crc, response, info);
-    epilog_(result);
+    epilog_(result, crash_on_error_);
     return result;
 }
 
@@ -301,7 +290,7 @@ RetCode FastBootDriver::Upload(const std::string& outfile, std::string* response
                                std::vector<std::string>* info) {
     prolog_("Uploading '" + outfile + "'");
     auto result = UploadInner(outfile, response, info);
-    epilog_(result);
+    epilog_(result, crash_on_error_);
     return result;
 }
 
@@ -331,7 +320,7 @@ RetCode FastBootDriver::RunAndReadBuffer(
     while (current_offset < total_size) {
         uint64_t remaining = total_size - current_offset;
         uint64_t chunk_size = std::min(buf_size, remaining);
-        if ((ret = ReadBuffer(data.data(), chunk_size)) != SUCCESS) {
+        if ((ret = ReadFully(data.data(), chunk_size)) != SUCCESS) {
             return ret;
         }
         if ((ret = write_fn(data.data(), chunk_size)) != SUCCESS) {
@@ -366,6 +355,25 @@ RetCode FastBootDriver::UploadInner(const std::string& outfile, std::string* res
 RetCode FastBootDriver::FetchToFd(const std::string& partition, android::base::borrowed_fd fd,
                                   int64_t offset, int64_t size, std::string* response,
                                   std::vector<std::string>* info) {
+    if (fd.get() < 0) {
+        return BAD_ARG;
+    }
+    return Fetch(
+            partition,
+            [&](const char* data, uint64_t size) {
+                if (!android::base::WriteFully(fd, data, size)) {
+                    error_ = android::base::StringPrintf("Cannot write: %s", strerror(errno));
+                    return IO_ERROR;
+                }
+                return SUCCESS;
+            },
+            offset, size, response, info);
+}
+
+RetCode FastBootDriver::Fetch(const std::string& partition,
+                              const std::function<RetCode(const char*, uint64_t)>& write_fn,
+                              int64_t offset, int64_t size, std::string* response,
+                              std::vector<std::string>* info) {
     prolog_(android::base::StringPrintf("Fetching %s (offset=%" PRIx64 ", size=%" PRIx64 ")",
                                         partition.c_str(), offset, size));
     std::string cmd = FB_CMD_FETCH ":" + partition;
@@ -375,14 +383,8 @@ RetCode FastBootDriver::FetchToFd(const std::string& partition, android::base::b
             cmd += android::base::StringPrintf(":0x%08" PRIx64, size);
         }
     }
-    RetCode ret = RunAndReadBuffer(cmd, response, info, [&](const char* data, uint64_t size) {
-        if (!android::base::WriteFully(fd, data, size)) {
-            error_ = android::base::StringPrintf("Cannot write: %s", strerror(errno));
-            return IO_ERROR;
-        }
-        return SUCCESS;
-    });
-    epilog_(ret);
+    RetCode ret = RunAndReadBuffer(cmd, response, info, write_fn);
+    epilog_(ret, crash_on_error_);
     return ret;
 }
 
@@ -430,7 +432,7 @@ RetCode FastBootDriver::RawCommand(const std::string& cmd, const std::string& me
                                    int* dsize) {
     prolog_(message);
     auto result = RawCommand(cmd, response, info, dsize);
-    epilog_(result);
+    epilog_(result, crash_on_error_);
     return result;
 }
 
@@ -538,7 +540,7 @@ RetCode FastBootDriver::SendBuffer(android::base::borrowed_fd fd, size_t size) {
     while (remaining) {
         // Memory map the file
         size_t len = std::min(remaining, MAX_MAP_SIZE);
-        auto mapping{android::base::MappedFile::FromFd(fd, offset, len, PROT_READ)};
+        auto mapping{android::base::MappedFile::FromOsHandle(fd.get(), offset, len, PROT_READ)};
         if (!mapping) {
             error_ = "Creating filemap failed";
             return IO_ERROR;
@@ -580,16 +582,19 @@ RetCode FastBootDriver::SendBuffer(const void* buf, size_t size) {
     return SUCCESS;
 }
 
-RetCode FastBootDriver::ReadBuffer(void* buf, size_t size) {
-    // Read the buffer
-    ssize_t tmp = transport_->Read(buf, size);
-
-    if (tmp < 0) {
-        error_ = ErrnoStr("Read from device failed in ReadBuffer()");
-        return IO_ERROR;
-    } else if (static_cast<size_t>(tmp) != size) {
-        error_ = android::base::StringPrintf("Failed to read all %zu bytes", size);
-        return IO_ERROR;
+RetCode FastBootDriver::ReadFully(void* buf, size_t size) {
+    size_t left = size;
+    while (left > 0) {
+        ssize_t n = transport_->Read(buf, left);
+        if (n < 0) {
+            error_ = ErrnoStr("Read from device failed in ReadFully()");
+            return IO_ERROR;
+        } else if (n == 0) {
+            error_ = android::base::StringPrintf("Failed to read all %zu bytes", size);
+            return IO_ERROR;
+        }
+        left -= n;
+        buf = static_cast<uint8_t*>(buf) + n;
     }
 
     return SUCCESS;

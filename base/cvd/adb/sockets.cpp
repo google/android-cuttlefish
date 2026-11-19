@@ -470,7 +470,7 @@ asocket* create_local_service_socket(std::string_view name, atransport* transpor
     int fd_value = fd.get();
     asocket* s = create_local_socket(std::move(fd));
     s->transport = transport;
-    VLOG(SERVICES) << "LS(" << s->id << "): bound to '" << name << "' via " << fd_value;
+    VLOG(SOCKETS) << "LS(" << s->id << "): bound to '" << name << "' via " << fd_value;
 
 #if !ADB_HOST
     if ((name.starts_with("root:") && getuid() != 0 && __android_log_is_debuggable()) ||
@@ -567,7 +567,7 @@ void connect_to_remote(asocket* s, std::string_view destination) {
     D("Connect_to_remote call RS(%d) fd=%d", s->id, s->fd);
     apacket* p = get_apacket();
 
-    LOG(VERBOSE) << "LS(" << s->id << ": connect(" << destination << ")";
+    VLOG(ADB) << "LS(" << s->id << ": connect(" << destination << ")";
     p->msg.command = A_OPEN;
     p->msg.arg0 = s->id;
 
@@ -859,7 +859,7 @@ static int smart_socket_enqueue(asocket* s, apacket::payload_type data) {
 
         switch (host_request_result) {
             case HostRequestResult::Handled:
-                LOG(VERBOSE) << "SS(" << s->id << "): handled host service '" << service << "'";
+                VLOG(SERVICES) << "SS(" << s->id << "): handled host service '" << service << "'";
                 goto fail;
 
             case HostRequestResult::SwitchedTransport:
@@ -878,7 +878,8 @@ static int smart_socket_enqueue(asocket* s, apacket::payload_type data) {
         // TODO: Convert to string_view.
         s2 = host_service_to_socket(service, serial, transport_id);
         if (s2 == nullptr) {
-            LOG(VERBOSE) << "SS(" << s->id << "): couldn't create host service '" << service << "'";
+            VLOG(SERVICES) << "SS(" << s->id << "): couldn't create host service '" << service
+                           << "'";
             std::string msg = std::string("unknown host service '") + std::string(service) + "'";
             SendFail(s->peer->fd, msg);
             goto fail;

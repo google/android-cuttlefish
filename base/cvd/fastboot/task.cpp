@@ -13,19 +13,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+
 #include "task.h"
 
-#include "fastboot_driver.h"
-
-#include <android-base/logging.h>
+#include <android-base/file.h>
 #include <android-base/parseint.h>
+#include <android-base/unique_fd.h>
 
 #include "fastboot.h"
+#include "fastboot_driver_interface.h"
 #include "filesystem.h"
+#include "liblp/builder.h"
+#include "liblp/liblp.h"
+#include "liblp/metadata_format.h"
+#include "sparse/sparse.h"
 #include "super_flash_helper.h"
 #include "util.h"
 
+// Need to include logging.h after fastboot.h, due to ERROR macro conflict
+// clang-format off
+#include <android-base/logging.h>
+// clang-format on
+
 using namespace std::string_literals;
+
 FlashTask::FlashTask(const std::string& slot, const std::string& pname, const std::string& fname,
                      const bool apply_vbmeta, const FlashingPlan* fp)
     : pname_(pname), fname_(fname), slot_(slot), apply_vbmeta_(apply_vbmeta), fp_(fp) {}
@@ -40,20 +51,29 @@ bool FlashTask::IsDynamicPartition(const ImageSource* source, const FlashTask* t
 }
 
 void FlashTask::Run() {
+    const auto is_fastbootd = is_userspace_fastboot(fp_->fb);
+
     auto flash = [&](const std::string& partition) {
-        if (should_flash_in_userspace(fp_->source.get(), partition) && !is_userspace_fastboot() &&
-            !fp_->force_flash) {
-            die("The partition you are trying to flash is dynamic, and "
-                "should be flashed via fastbootd. Please run:\n"
-                "\n"
-                "    fastboot reboot fastboot\n"
-                "\n"
-                "And try again. If you are intentionally trying to "
-                "overwrite a fixed partition, use --force.");
+        const bool is_dynamic_partition = should_flash_in_userspace(fp_->source.get(), partition);
+        // fastbootd should be able to flash both static and dynamic
+        // partitions, just flash it
+        if (is_fastbootd) {
+            do_flash(partition.c_str(), fname_.c_str(), apply_vbmeta_, fp_);
+            return;
         }
-        do_flash(partition.c_str(), fname_.c_str(), apply_vbmeta_, fp_);
+        if (!is_dynamic_partition || fp_->force_flash) {
+            do_flash(partition.c_str(), fname_.c_str(), apply_vbmeta_, fp_);
+            return;
+        }
+        die("The partition you are trying to flash is dynamic, and "
+            "should be flashed via fastbootd. Please run:\n"
+            "\n"
+            "    fastboot reboot fastboot\n"
+            "\n"
+            "And try again. If you are intentionally trying to "
+            "overwrite a fixed partition, use --force.");
     };
-    do_for_partitions(pname_, slot_, flash, true);
+    do_for_partitions(fp_->fb, pname_, slot_, flash, true);
 }
 
 std::string FlashTask::ToString() const {
@@ -67,7 +87,7 @@ std::string FlashTask::ToString() const {
 std::string FlashTask::GetPartitionAndSlot() const {
     auto slot = slot_;
     if (slot.empty()) {
-        slot = get_current_slot();
+        slot = get_current_slot(fp_->fb);
     }
     if (slot.empty()) {
         return pname_;
@@ -84,8 +104,8 @@ RebootTask::RebootTask(const FlashingPlan* fp, const std::string& reboot_target)
 
 void RebootTask::Run() {
     if (reboot_target_ == "fastboot") {
-        if (!is_userspace_fastboot()) {
-            reboot_to_userspace_fastboot();
+        if (!is_userspace_fastboot(fp_->fb)) {
+            reboot_to_userspace_fastboot(fp_->fb);
             fp_->fb->WaitForDisconnect();
         }
     } else if (reboot_target_ == "recovery") {
@@ -122,13 +142,15 @@ void OptimizedFlashSuperTask::Run() {
     // it will map in all of the embedded fds.
     std::vector<SparsePtr> files;
     if (int limit = get_sparse_limit(super_size_, fp_)) {
-        files = resparse_file(sparse_layout_.get(), limit);
+        if (!split_file(sparse_layout_.get(), limit, &files)) {
+            LOG(FATAL) << "Failed to resparse super partition";
+        }
     } else {
         files.emplace_back(std::move(sparse_layout_));
     }
 
     // Send the data to the device.
-    flash_partition_files(super_name_, files);
+    flash_partition_files(fp_->fb, super_name_, files);
 }
 
 std::string OptimizedFlashSuperTask::ToString() const {
@@ -247,8 +269,8 @@ void UpdateSuperTask::Run() {
     if (fd < 0) {
         return;
     }
-    if (!is_userspace_fastboot()) {
-        reboot_to_userspace_fastboot();
+    if (!is_userspace_fastboot(fp_->fb)) {
+        reboot_to_userspace_fastboot(fp_->fb);
     }
 
     std::string super_name;
@@ -273,11 +295,11 @@ ResizeTask::ResizeTask(const FlashingPlan* fp, const std::string& pname, const s
 
 void ResizeTask::Run() {
     auto resize_partition = [this](const std::string& partition) -> void {
-        if (is_logical(partition)) {
+        if (is_logical(fp_->fb, partition)) {
             fp_->fb->ResizePartition(partition, size_);
         }
     };
-    do_for_partitions(pname_, slot_, resize_partition, false);
+    do_for_partitions(fp_->fb, pname_, slot_, resize_partition, false);
 }
 
 std::string ResizeTask::ToString() const {
