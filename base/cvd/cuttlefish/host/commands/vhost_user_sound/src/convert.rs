@@ -1,7 +1,7 @@
 use anyhow::{bail, Result};
 use zerocopy::byteorder::little_endian::{F32 as LeF32, F64 as LeF64, U16 as Le16};
 
-use crate::virtio_snd::*;
+use crate::virtio_snd::VirtioSndPcmFormat;
 
 pub fn convert_to_s16(input_format: VirtioSndPcmFormat, buffer: &[u8]) -> Result<Vec<i16>> {
     Ok(match input_format {
@@ -210,8 +210,11 @@ fn range_shift(value: u16) -> i16 {
 
 // Returns a reference to the most significant M bytes of an N-byte little endian value.
 // Panics if M > N.
-fn most_significant_bytes_le<const N: usize, const M: usize>(arr: &[u8; N]) -> &[u8; M] {
-    arr.last_chunk::<M>().unwrap()
+fn most_significant_bytes_le<const M: usize, const N: usize>(arr: &[u8; M]) -> &[u8; N] {
+    const {
+        assert!(M >= N);
+    }
+    arr.last_chunk::<N>().unwrap()
 }
 
 fn convert_s8_sample_to_s16(sample: &[u8; 1]) -> i16 {
@@ -279,11 +282,17 @@ fn convert_u20_sample_to_s16(sample: &[u8; 4]) -> i16 {
 }
 
 fn convert_s24_sample_to_s16(sample: &[u8; 4]) -> i16 {
-    Le16::from_bytes(*most_significant_bytes_le(sample)).get() as i16
+    Le16::from_bytes(*most_significant_bytes_le(
+        sample.first_chunk::<3>().unwrap(),
+    ))
+    .get() as i16
 }
 
 fn convert_u24_sample_to_s16(sample: &[u8; 4]) -> i16 {
-    let as_u16 = Le16::from_bytes(*most_significant_bytes_le(sample)).get();
+    let as_u16 = Le16::from_bytes(*most_significant_bytes_le(
+        sample.first_chunk::<3>().unwrap(),
+    ))
+    .get();
     range_shift(as_u16)
 }
 
