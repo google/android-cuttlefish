@@ -1,8 +1,9 @@
-cuttlefish-integration-gigabyte-arm64 (1.59.0) UNRELEASED; urgency=medium
+cuttlefish-integration-gigabyte-arm64 (1.59.0) unstable; urgency=medium
 
-  * 
+  * Start development on 1.59.0 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3521
+  * Configure apt retries and disable HTTP/HTTPS pipelining for ARM hosts by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3539
 
- -- Ram Muthiah <rammuthiah@google.com>  Wed, 04 Nov 2026 22:06:40 +0000
+ -- Arjun Dhaliwal <arjundhaliwal@google.com>  Thu, 19 Nov 2026 11:15:31 -0800
 
 cuttlefish-integration-gigabyte-arm64 (1.58.0) unstable; urgency=medium
 

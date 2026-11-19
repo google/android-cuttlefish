@@ -1,8 +1,24 @@
-cuttlefish-frontend (1.59.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.59.0) unstable; urgency=medium
 
-  * 
+  * Start development on 1.59.0 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3521
+  * Fix single-instance start after stop in multi-instance groups by @SuperStrongDinosaur in https://github.com/google/android-cuttlefish/pull/3514
+  * Remove unused Go dependencies from frontend and container by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3574
+  * Update Go dependencies while preserving Go 1.19/1.24/1.25 compatibility by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3576
+  * Bump the npm_and_yarn group across 1 directory with 16 updates by @dependabot[bot] in https://github.com/google/android-cuttlefish/pull/3582
+  * Upgrade operator webui to Angular 22 by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3591
+  * Update Bazel module dependencies via Dependabot by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3586
+  * Fix tests in frontend operator webui by @edman in https://github.com/google/android-cuttlefish/pull/2918
+  * Add dark mode support to the frontend operator webui by @edman in https://github.com/google/android-cuttlefish/pull/2920
+  * Pin the Go toolchain used to build the frontend packages by @ser-io in https://github.com/google/android-cuttlefish/pull/3610
+  * Address golang security findings by @ser-io in https://github.com/google/android-cuttlefish/pull/3616
+  * Fix slice panic in PolledClient.GetMessages for out-of-range start/count by @rootkiller6788 in https://github.com/google/android-cuttlefish/pull/3063
+  * host_orchestrator: fix go/zipslip and go/unsafe-unzip-symlink in userartifacts by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3599
+  * Remove the Go version check from goutil by @ser-io in https://github.com/google/android-cuttlefish/pull/3623
+  * Address golang security alerts by @ser-io in https://github.com/google/android-cuttlefish/pull/3625
+  * Fix golang code quality findings by @ser-io in https://github.com/google/android-cuttlefish/pull/3615
+  * libhoclient,e2etests: migrate pion/webrtc from v3 to v4 by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3633
 
- -- Ram Muthiah <rammuthiah@google.com>  Wed, 04 Nov 2026 22:06:40 +0000
+ -- Arjun Dhaliwal <arjundhaliwal@google.com>  Thu, 19 Nov 2026 11:15:31 -0800
 
 cuttlefish-frontend (1.58.0) unstable; urgency=medium
 
