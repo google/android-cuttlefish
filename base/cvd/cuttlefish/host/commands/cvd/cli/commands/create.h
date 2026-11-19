@@ -18,13 +18,18 @@
 
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/num_instances_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -48,17 +53,25 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
     bool reuse;
   };
 
+  struct GroupWithLock {
+    LocalInstanceGroup group;
+    std::optional<Fd> in_progress_lock;
+  };
+
   std::vector<Flag> ConfigFileModeFlags();
   std::vector<Flag> FlagModeFlags(
       const std::unordered_map<std::string, std::string>& env,
       const selector::SelectorOptions&);
-  Result<std::optional<LocalInstanceGroup>> FindReusableGroup(
+  Result<std::optional<GroupWithLock>> FindReusableGroupByName(
+      const std::string& group_name,
+      const std::optional<std::string>& target_custom_home,
+      const std::string& target_host,
+      const std::vector<std::string>& target_products,
+      const std::optional<std::vector<std::string>>& requested_names);
+  Result<std::optional<GroupWithLock>> FindReusableGroup(
       const selector::SelectorOptions& selectors,
-      const std::unordered_map<std::string, std::string>& envs);
-  Result<LocalInstanceGroup> CreateGroup(
-      const std::vector<std::string>& subcmd_args,
-      const std::unordered_map<std::string, std::string>& envs,
-      const CommandRequest& request);
+      const selector::GroupCreationInfo& creation_info);
+  Result<GroupWithLock> CreateGroup(selector::GroupCreationInfo creation_info);
 
   InstanceManager& instance_manager_;
   CreateFlags own_flags_;
