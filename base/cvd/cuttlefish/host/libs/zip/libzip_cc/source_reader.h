@@ -15,15 +15,14 @@
 
 #pragma once
 
-#include <stddef.h>
 #include <stdint.h>
 
 #include <mutex>
 
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
-#include "cuttlefish/io/io.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/io/reader.h"
+#include "cuttlefish/io/visitable.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
@@ -43,15 +42,14 @@ class ZipSourceReader : public Reader {
 
   Result<void> Visit(IoVisitor&) override;
 
- protected:
-  std::recursive_mutex mutex_;
-
  private:
   friend class SeekingZipSourceReader;
 
   ZipSourceReader(ReadableZipSource*);
+  void Close();
 
   ReadableZipSource* source_;
+  std::recursive_mutex mutex_;
 };
 
 }  // namespace cuttlefish

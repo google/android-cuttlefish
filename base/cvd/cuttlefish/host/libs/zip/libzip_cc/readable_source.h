@@ -15,23 +15,14 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
-
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 class ReadableZipSource {
  public:
-  friend class ReadableZip;
-  friend class WritableZip;
-  friend class ZipSourceReader;
-  friend class SeekingZipSourceReader;
-  friend class ZipSourceWriter;
-
   // Can be safely called with a subclass type.
   ReadableZipSource(ReadableZipSource&&);
   virtual ~ReadableZipSource();
@@ -40,10 +31,18 @@ class ReadableZipSource {
 
   Result<ZipStat> Stat();
 
- protected:
-  ManagedZipSource raw_;
+ private:
+  friend class ReadableZip;
+  friend class SeekableZipSource;
+  friend class SeekingZipSourceReader;
+  friend class WritableZip;
+  friend class WritableZipSource;
+  friend class ZipSourceReader;
+  friend class ZipSourceWriter;
 
   ReadableZipSource(ManagedZipSource);
+
+  ManagedZipSource raw_;
 };
 
 }  // namespace cuttlefish
