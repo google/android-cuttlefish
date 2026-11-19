@@ -1,8 +1,16 @@
-cuttlefish-container (1.59.0) UNRELEASED; urgency=medium
+cuttlefish-container (1.59.0) unstable; urgency=medium
 
-  * 
+  * Start development on 1.59.0 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3521
+  * Refresh podcvd and container docs by @0405ysj in https://github.com/google/android-cuttlefish/pull/3532
+  * podcvd: Add unit tests for host.go by @0405ysj in https://github.com/google/android-cuttlefish/pull/3548
+  * Run a syslogd in the orchestration container. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3551
+  * Remove unused Go dependencies from frontend and container by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3574
+  * Update Go dependencies while preserving Go 1.19/1.24/1.25 compatibility by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3576
+  * Add libraries to the container for qemu. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3575
+  * Recognize the Oxygenation container invoker. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3566
+  * podcvd: Use default HTTP client for operator health check by @0405ysj in https://github.com/google/android-cuttlefish/pull/3635
 
- -- Ram Muthiah <rammuthiah@google.com>  Wed, 04 Nov 2026 22:06:40 +0000
+ -- Arjun Dhaliwal <arjundhaliwal@google.com>  Thu, 19 Nov 2026 11:15:31 -0800
 
 cuttlefish-container (1.58.0) unstable; urgency=medium
 

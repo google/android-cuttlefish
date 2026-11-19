@@ -1,8 +1,84 @@
-cuttlefish-common (1.59.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.59.0) unstable; urgency=medium
 
-  * 
+  * Start development on 1.59.0 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3521
+  * cvd: Add netsim_nfc to the environment specification by @AlpineOolong in https://github.com/google/android-cuttlefish/pull/3510
+  * More uses of WriteExact by @Databean in https://github.com/google/android-cuttlefish/pull/3519
+  * Move WriteNewFile to its own source file. by @Databean in https://github.com/google/android-cuttlefish/pull/3522
+  * Update dmabuf handling in wayland server by @jmacnak in https://github.com/google/android-cuttlefish/pull/3432
+  * Fix the remaining unused variables off Linux. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3513
+  * Add a new invoker to the metrics proto. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3516
+  * Avoid bare uses of procfs and implement proc_file_utils for some platforms. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3460
+  * Extract CreateOrReuseAndDrainFifo to a separate file by @Databean in https://github.com/google/android-cuttlefish/pull/3531
+  * Use V4L2_MEMORY_USERPTR in emulated_camera_mplane by @ser-io in https://github.com/google/android-cuttlefish/pull/3530
+  * Bump curl to 8.22.0.bcr.3. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3528
+  * Musl / Zig support by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3523
+  * vhost_user_media: `cargo fmt` by @ser-io in https://github.com/google/android-cuttlefish/pull/3533
+  * Spell string_view the absl way. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3527
+  * Remove the host confirmation UI implementation by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3473
+  * Make the zig toolchain inert on unsupported hosts. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3542
+  * Use __has_include_next over platform symbols. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3543
+  * Add a macOS build workflow. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3549
+  * Return errno from failed Read/PRead calls by @Databean in https://github.com/google/android-cuttlefish/pull/3482
+  * Import @android_system_keymaster by @Databean in https://github.com/google/android-cuttlefish/pull/3465
+  * Minimal port of the Android emulated camera scene. by @ser-io in https://github.com/google/android-cuttlefish/pull/3552
+  * Delete `SharedFD::MemfdCreateWithData` by @Databean in https://github.com/google/android-cuttlefish/pull/3553
+  * run_cvd: Use offset index for touchpad capture server sockets by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3545
+  * Remove unused teeui, freetype, and libcbor dependencies by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3536
+  * qemu: fix bootloader selection and console PTY echo by @wiseguy325 in https://github.com/google/android-cuttlefish/pull/3537
+  * qemu: enable virtio-pmem-pci on ARM64 when supported by @wiseguy325 in https://github.com/google/android-cuttlefish/pull/3538
+  * cvd: Remove unused @libxml2 dependency from cvd_internal_start by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3556
+  * Fix host OS detection by @cjreynol in https://github.com/google/android-cuttlefish/pull/3554
+  * vhost-user-sound implementation placeholder by @jemoreira in https://github.com/google/android-cuttlefish/pull/3509
+  * Use WriteExact and Fd in more places by @Databean in https://github.com/google/android-cuttlefish/pull/3555
+  * Bump rules_buf to 0.6.1. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3535
+  * Remove the check to capability_query.py by @Databean in https://github.com/google/android-cuttlefish/pull/3560
+  * Refactor controls by @ser-io in https://github.com/google/android-cuttlefish/pull/3559
+  * Replace cvdalloc's iptables NAT with a per-instance nftables table by @dxapd in https://github.com/google/android-cuttlefish/pull/3506
+  * Fix single-instance start after stop in multi-instance groups by @SuperStrongDinosaur in https://github.com/google/android-cuttlefish/pull/3514
+  * Bump rootcanal to v1.13.0 by @ser-io in https://github.com/google/android-cuttlefish/pull/3577
+  * Make LazilyLoadedFile implement ReaderSeeker by @Databean in https://github.com/google/android-cuttlefish/pull/3568
+  * cvd_internal_start: Re-enable layering_check and clean up deps by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3571
+  * cvd: Remove unused target dependencies in location, libzip_cc, and fastboot by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3572
+  * build: Remove unused googleapis-cc and grpc-proto module dependencies by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3573
+  * More rules for agents by @Databean in https://github.com/google/android-cuttlefish/pull/3505
+  * Update Go dependencies while preserving Go 1.19/1.24/1.25 compatibility by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3576
+  * emulated_camera: Organize the scene renderer into scene, sensor and I… by @ser-io in https://github.com/google/android-cuttlefish/pull/3570
+  * Use a netdev for adb in qemu without vsock. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3564
+  * Recognize the Oxygenation container invoker. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3566
+  * Export per-instance RIL network config to bootconfig by @augustinlss in https://github.com/google/android-cuttlefish/pull/3579
+  * Make CasDownloader implement BuildApi by @frankfeng579 in https://github.com/google/android-cuttlefish/pull/3565
+  * Update Ti50 emulation support by @jettr in https://github.com/google/android-cuttlefish/pull/3507
+  * Cap mac80211-hwsim vhost-user queue size at 256 by @sameer in https://github.com/google/android-cuttlefish/pull/3583
+  * Split ReaderWriterSeeker out of io.h by @Databean in https://github.com/google/android-cuttlefish/pull/3589
+  * base: Support CrosVM auto-detection of MTE support by @ptosi in https://github.com/google/android-cuttlefish/pull/3017
+  * cvd: Use 0777 permissions on shared instance locks directory by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3593
+  * Generate the adb NIC's MAC like the other MACs. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3584
+  * qemu: clean up stale sockets and fix slirp networking by @wiseguy325 in https://github.com/google/android-cuttlefish/pull/3569
+  * Update Bazel module dependencies via Dependabot by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3586
+  * webrtc: Make the frame repeat interval configurable by @nihaopaul in https://github.com/google/android-cuttlefish/pull/3413
+  * Run gflags parsing for metrics data gathering by @cjreynol in https://github.com/google/android-cuttlefish/pull/3561
+  * Fd cleanups: Make Listen private by @Databean in https://github.com/google/android-cuttlefish/pull/3199
+  * `sensors_simulator` and `transport` refactoring by @Databean in https://github.com/google/android-cuttlefish/pull/3562
+  * emulated_camera: Add digital zoom through the V4L2 selection API by @ser-io in https://github.com/google/android-cuttlefish/pull/3585
+  * qemu: stream disks via vhost-user-blk by default by @wiseguy325 in https://github.com/google/android-cuttlefish/pull/3544
+  * Return unique_ptr<ReaderSeeker> from BuildApi::FileReader by @Databean in https://github.com/google/android-cuttlefish/pull/3600
+  * [webRTC] Fix screen freezing and other minor fixes by @jemoreira in https://github.com/google/android-cuttlefish/pull/3614
+  * Slightly reduce the number of host dependencies for builds. by @3405691582 in https://github.com/google/android-cuttlefish/pull/3596
+  * Boot test for Darwin runners by @3405691582 in https://github.com/google/android-cuttlefish/pull/3558
+  * virtual_tuner_daemon: Add station table, RDS metadata, seek and per-station WAV file playback by @abinba in https://github.com/google/android-cuttlefish/pull/3526
+  * graphics_detector: use size_t for image dimensions and coordinates by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3626
+  * screen_connector: use size_t for frame dimensions, strides, and buffer sizes by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3627
+  * emulated_camera: Add exposure bias through V4L2_CID_AUTO_EXPOSURE_BIAS by @ser-io in https://github.com/google/android-cuttlefish/pull/3613
+  * webrtc: widen screenshot buffer size and offset arithmetic to size_t by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3628
+  * qemu: add E2E boot CI coverage and system QEMU fallback by @wiseguy325 in https://github.com/google/android-cuttlefish/pull/3603
+  * Sync CodeQL fixes from Android (fastboot, ext4_utils, libfec) by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3630
+  * Upgrade libwebrtc to M157 and update dependencies by @adelva1984 in https://github.com/google/android-cuttlefish/pull/3567
+  * assemble_cvd: support relative paths for crosvm_acpi_table, crosvm_device_tree_overlay, and crosvm_file_backed_mapping by @erjiaqing in https://github.com/google/android-cuttlefish/pull/3234
+  * cvd: Acquire exclusive flock in DataViewer::WithExclusiveLock by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3606
+  * Add a script to update the forks of AOSP sources by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1818
+  * emulated_camera: Add 1920x1080 to SUPPORTED_SIZES by @chihchiachen in https://github.com/google/android-cuttlefish/pull/3632
 
- -- Ram Muthiah <rammuthiah@google.com>  Wed, 04 Nov 2026 22:06:40 +0000
+ -- Arjun Dhaliwal <arjundhaliwal@google.com>  Thu, 19 Nov 2026 11:15:31 -0800
 
 cuttlefish-common (1.58.0) unstable; urgency=medium
 
