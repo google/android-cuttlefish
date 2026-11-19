@@ -16,13 +16,29 @@
 
 #include "cuttlefish/host/graphics_detector/graphics_detector_vk_external_memory_host.h"
 
-#include "cuttlefish/host/graphics_detector/vulkan.h"
-
 #if defined(__linux__)
 #include <sys/mman.h>
+#include <sys/types.h>
 #include <syscall.h>
 #include <unistd.h>
 #endif
+
+#include <vulkan/vulkan_core.h>
+
+#include <cerrno>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
+#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_to_string.hpp>
+
+#include "cuttlefish/host/graphics_detector/expected.h"
+#include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
+#include "cuttlefish/host/graphics_detector/vulkan.h"
 
 namespace gfxstream {
 namespace {

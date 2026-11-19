@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/graphics_detector/subprocess.h"
 
-#include <dlfcn.h>
 #include <errno.h>
 #include <poll.h>
 #include <signal.h>
@@ -27,11 +26,15 @@
 #include <sys/syscall.h>
 #endif
 
+#include <chrono>
 #include <condition_variable>
 #include <functional>
 #include <mutex>
+#include <string>
 #include <thread>
+#include <utility>
 
+#include "cuttlefish/host/graphics_detector/expected.h"
 #include "cuttlefish/posix/temp_failure_retry.h"  // IWYU pragma: keep
 
 namespace gfxstream {
@@ -55,7 +58,7 @@ class ScopedCloser {
   bool mEnabled = false;
 };
 
-int PidfdOpen(pid_t pid) {
+int PidfdOpen(pid_t pid) {  // NOLINT(misc-include-cleaner): <sys/types.h>
 #if defined(__linux__)
   // There is no glibc wrapper for pidfd_open.
 #ifndef SYS_pidfd_open
@@ -70,19 +73,21 @@ int PidfdOpen(pid_t pid) {
 }
 
 gfxstream::expected<Ok, std::string> WaitForChild(pid_t pid) {
-  siginfo_t info;
+  siginfo_t info;  // NOLINT(misc-include-cleaner): <signal.h>
+  // NOLINTNEXTLINE(misc-include-cleaner): <sys/wait.h>
   if (TEMP_FAILURE_RETRY(waitid(P_PID, pid, &info, WEXITED | WNOWAIT)) != 0) {
     return gfxstream::unexpected("Error from waitid(): " +
                                  std::string(strerror(errno)));
   }
-  if (info.si_pid != pid) {
+  if (info.si_pid != pid) {  // NOLINT(misc-include-cleaner): <signal.h>
     return gfxstream::unexpected(
         "Error from waitid(): returned different pid.");
   }
   if (info.si_code != CLD_EXITED) {
     return gfxstream::unexpected(
         "Failed to wait for subprocess: terminated by signal " +
-        std::to_string(info.si_status));
+        std::to_string(
+            info.si_status));  // NOLINT(misc-include-cleaner): <signal.h>
   }
   return Ok{};
 }
@@ -125,10 +130,12 @@ gfxstream::expected<Ok, std::string> WaitForChildWithTimeout(
     WaitForChild(pid);
   });
 
+  // NOLINTNEXTLINE(misc-include-cleaner): <poll.h>
   struct pollfd poll_info = {
       .fd = pidfd,
-      .events = POLLIN,
+      .events = POLLIN,  // NOLINT(misc-include-cleaner): <poll.h>
   };
+  // NOLINTNEXTLINE(misc-include-cleaner): <poll.h>
   int ret = TEMP_FAILURE_RETRY(poll(&poll_info, 1, timeout.count()));
   close(pidfd);
 

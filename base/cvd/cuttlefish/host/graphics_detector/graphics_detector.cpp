@@ -16,6 +16,12 @@
 
 #include "cuttlefish/host/graphics_detector/graphics_detector.h"
 
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "cuttlefish/host/graphics_detector/expected.h"
+#include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector_gl.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector_vk.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector_vk_external_memory_host.h"

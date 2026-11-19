@@ -16,8 +16,18 @@
 
 #include "cuttlefish/host/graphics_detector/graphics_detector_vk_precision_qualifiers_on_yuv_samplers.h"
 
+#include <vulkan/vulkan_core.h>
+
+#include <cstdint>
+#include <string>
+#include <utility>
 #include <vector>
 
+#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_to_string.hpp>
+
+#include "cuttlefish/host/graphics_detector/expected.h"
+#include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/graphics_detector/image.h"
 #include "cuttlefish/host/graphics_detector/vulkan.h"
 
@@ -70,8 +80,8 @@ gfxstream::expected<bool, vk::Result> CanHandlePrecisionQualifierWithYuvSampler(
   VK_EXPECT_RESULT(vk.LoadYuvImage(
       sampledImage.image, textureWidth, textureHeight, textureDataYuv.y,
       textureDataYuv.u, textureDataYuv.v,
-      /*currentLayout=*/vk::ImageLayout::eTransferDstOptimal,
-      /*returnedLayout=*/vk::ImageLayout::eShaderReadOnlyOptimal));
+      /*current_layout=*/vk::ImageLayout::eTransferDstOptimal,
+      /*returned_layout=*/vk::ImageLayout::eShaderReadOnlyOptimal));
 
   Vk::FramebufferWithAttachments framebuffer = VK_EXPECT(vk.CreateFramebuffer(
       textureWidth, textureHeight,

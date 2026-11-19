@@ -16,6 +16,13 @@
 
 #include "cuttlefish/host/graphics_detector/graphics_detector_vk.h"
 
+#include <string>
+
+#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_to_string.hpp>
+
+#include "cuttlefish/host/graphics_detector/expected.h"
+#include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/graphics_detector/vulkan.h"
 
 namespace gfxstream {

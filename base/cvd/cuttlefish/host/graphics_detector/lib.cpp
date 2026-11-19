@@ -19,6 +19,9 @@
 #include <dlfcn.h>
 
 #include <string>
+#include <utility>
+
+#include "cuttlefish/host/graphics_detector/expected.h"
 
 namespace gfxstream {
 

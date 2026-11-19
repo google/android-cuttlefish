@@ -16,11 +16,23 @@
 
 #include "cuttlefish/host/graphics_detector/vulkan.h"
 
+#include <vulkan/vulkan_core.h>
+
+#include <cstdint>
+#include <cstring>
+#include <functional>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
+#include <vulkan/vulkan.hpp>
+
+#include "cuttlefish/host/graphics_detector/expected.h"
+
+// NOLINTNEXTLINE(misc-include-cleaner): <vulkan/vulkan.hpp>
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 namespace gfxstream {
@@ -28,6 +40,7 @@ namespace {
 
 constexpr const bool kEnableValidationLayers = false;
 
+// NOLINTNEXTLINE(misc-include-cleaner): <vulkan/vulkan_core.h>
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(
     vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
     vk::DebugUtilsMessageTypeFlagsEXT,
@@ -98,18 +111,19 @@ gfxstream::expected<Vk::BufferWithMemory, vk::Result> DoCreateBuffer(
 
 /*static*/
 gfxstream::expected<Vk, vk::Result> Vk::Load(
-    const std::vector<std::string>& requestedInstanceExtensions,
-    const std::vector<std::string>& requestedInstanceLayers,
-    const std::vector<std::string>& requestedDeviceExtensions) {
+    const std::vector<std::string>& instance_extensions,
+    const std::vector<std::string>& instance_layers,
+    const std::vector<std::string>& device_extensions) {
   vk::detail::DynamicLoader loader;
 
+  // NOLINTNEXTLINE(misc-include-cleaner): <vulkan/vulkan.hpp>
   VULKAN_HPP_DEFAULT_DISPATCHER.init(
       loader.getProcAddress<PFN_vkGetInstanceProcAddr>(
           "vkGetInstanceProcAddr"));
 
   std::vector<const char*> requestedInstanceExtensionsChars;
-  requestedInstanceExtensionsChars.reserve(requestedInstanceExtensions.size());
-  for (const auto& e : requestedInstanceExtensions) {
+  requestedInstanceExtensionsChars.reserve(instance_extensions.size());
+  for (const auto& e : instance_extensions) {
     requestedInstanceExtensionsChars.push_back(e.c_str());
   }
   if (kEnableValidationLayers) {
@@ -118,8 +132,8 @@ gfxstream::expected<Vk, vk::Result> Vk::Load(
   }
 
   std::vector<const char*> requestedInstanceLayersChars;
-  requestedInstanceLayersChars.reserve(requestedInstanceLayers.size());
-  for (const auto& l : requestedInstanceLayers) {
+  requestedInstanceLayersChars.reserve(instance_layers.size());
+  for (const auto& l : instance_layers) {
     requestedInstanceLayersChars.push_back(l.c_str());
   }
 
@@ -142,6 +156,7 @@ gfxstream::expected<Vk, vk::Result> Vk::Load(
 
   auto instance = VK_EXPECT_RV(vk::createInstanceUnique(instanceCreateInfo));
 
+  // NOLINTNEXTLINE(misc-include-cleaner): <vulkan/vulkan.hpp>
   VULKAN_HPP_DEFAULT_DISPATCHER.init(*instance);
 
   std::optional<vk::UniqueDebugUtilsMessengerEXT> debugMessenger;
@@ -181,8 +196,8 @@ gfxstream::expected<Vk, vk::Result> Vk::Load(
   bool ycbcr_conversion_needed = false;
 
   std::vector<const char*> requestedDeviceExtensionsChars;
-  requestedDeviceExtensionsChars.reserve(requestedDeviceExtensions.size());
-  for (const auto& e : requestedDeviceExtensions) {
+  requestedDeviceExtensionsChars.reserve(device_extensions.size());
+  for (const auto& e : device_extensions) {
     if (e == std::string(VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME)) {
       // The interface of VK_KHR_sampler_ycbcr_conversion was promoted to core
       // in Vulkan 1.1 but the feature/functionality is still optional. Check
@@ -228,9 +243,6 @@ gfxstream::expected<Vk, vk::Result> Vk::Load(
       .pNext = &device_enable_features,
       .queueCreateInfoCount = 1,
       .pQueueCreateInfos = &device_queue_create_info,
-      .enabledLayerCount =
-          static_cast<uint32_t>(requestedInstanceLayersChars.size()),
-      .ppEnabledLayerNames = requestedInstanceLayersChars.data(),
       .enabledExtensionCount =
           static_cast<uint32_t>(requestedDeviceExtensionsChars.size()),
       .ppEnabledExtensionNames = requestedDeviceExtensionsChars.data(),
@@ -260,24 +272,24 @@ gfxstream::expected<Vk, vk::Result> Vk::Load(
 }
 
 gfxstream::expected<Vk::BufferWithMemory, vk::Result> Vk::CreateBuffer(
-    vk::DeviceSize bufferSize, vk::BufferUsageFlags bufferUsages,
-    vk::MemoryPropertyFlags bufferMemoryProperties) {
-  return DoCreateBuffer(mPhysicalDevice, mDevice, bufferSize, bufferUsages,
-                        bufferMemoryProperties);
+    vk::DeviceSize buffer_size, vk::BufferUsageFlags buffer_usages,
+    vk::MemoryPropertyFlags buffer_memory_properties) {
+  return DoCreateBuffer(mPhysicalDevice, mDevice, buffer_size, buffer_usages,
+                        buffer_memory_properties);
 }
 
 gfxstream::expected<Vk::BufferWithMemory, vk::Result> Vk::CreateBufferWithData(
-    vk::DeviceSize bufferSize, vk::BufferUsageFlags bufferUsages,
-    vk::MemoryPropertyFlags bufferMemoryProperties,
+    vk::DeviceSize buffer_size, vk::BufferUsageFlags buffer_usages,
+    vk::MemoryPropertyFlags buffer_memory_properties,
     const uint8_t* buffer_data) {
   auto buffer = VK_EXPECT(CreateBuffer(
-      bufferSize, bufferUsages | vk::BufferUsageFlagBits::eTransferDst,
-      bufferMemoryProperties));
+      buffer_size, buffer_usages | vk::BufferUsageFlagBits::eTransferDst,
+      buffer_memory_properties));
 
   void* mapped = VK_EXPECT_RV(
       mDevice->mapMemory(*mStagingBufferMemory, 0, kStagingBufferSize));
 
-  std::memcpy(mapped, buffer_data, bufferSize);
+  std::memcpy(mapped, buffer_data, buffer_size);
 
   mDevice->unmapMemory(*mStagingBufferMemory);
 
@@ -286,7 +298,7 @@ gfxstream::expected<Vk::BufferWithMemory, vk::Result> Vk::CreateBufferWithData(
         vk::BufferCopy{
             .srcOffset = 0,
             .dstOffset = 0,
-            .size = bufferSize,
+            .size = buffer_size,
         },
     };
     cmd->copyBuffer(*mStagingBuffer, *buffer.buffer, regions);
@@ -298,8 +310,8 @@ gfxstream::expected<Vk::BufferWithMemory, vk::Result> Vk::CreateBufferWithData(
 
 gfxstream::expected<Vk::ImageWithMemory, vk::Result> Vk::CreateImage(
     uint32_t width, uint32_t height, vk::Format format,
-    vk::ImageUsageFlags usages, vk::MemoryPropertyFlags memoryProperties,
-    vk::ImageLayout returnedLayout) {
+    vk::ImageUsageFlags usages, vk::MemoryPropertyFlags memory_properties,
+    vk::ImageLayout returned_layout) {
   const vk::ImageCreateInfo imageCreateInfo = {
       .imageType = vk::ImageType::e2D,
       .format = format,
@@ -321,7 +333,7 @@ gfxstream::expected<Vk::ImageWithMemory, vk::Result> Vk::CreateImage(
 
   const auto memoryRequirements = mDevice->getImageMemoryRequirements(*image);
   const uint32_t memoryIndex = GetMemoryType(
-      mPhysicalDevice, memoryRequirements.memoryTypeBits, memoryProperties);
+      mPhysicalDevice, memoryRequirements.memoryTypeBits, memory_properties);
 
   const vk::MemoryAllocateInfo imageMemoryAllocateInfo = {
       .allocationSize = memoryRequirements.size,
@@ -361,7 +373,7 @@ gfxstream::expected<Vk::ImageWithMemory, vk::Result> Vk::CreateImage(
             .srcAccessMask = {},
             .dstAccessMask = vk::AccessFlagBits::eTransferWrite,
             .oldLayout = vk::ImageLayout::eUndefined,
-            .newLayout = returnedLayout,
+            .newLayout = returned_layout,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .image = *image,
@@ -395,15 +407,15 @@ gfxstream::expected<Vk::ImageWithMemory, vk::Result> Vk::CreateImage(
 
 gfxstream::expected<std::vector<uint8_t>, vk::Result> Vk::DownloadImage(
     uint32_t width, uint32_t height, const vk::UniqueImage& image,
-    vk::ImageLayout currentLayout, vk::ImageLayout returnedLayout) {
+    vk::ImageLayout current_layout, vk::ImageLayout returned_layout) {
   VK_EXPECT_RESULT(DoCommandsImmediate([&](vk::UniqueCommandBuffer& cmd) {
-    if (currentLayout != vk::ImageLayout::eTransferSrcOptimal) {
+    if (current_layout != vk::ImageLayout::eTransferSrcOptimal) {
       const std::vector<vk::ImageMemoryBarrier> imageMemoryBarriers = {
           vk::ImageMemoryBarrier{
               .srcAccessMask = vk::AccessFlagBits::eMemoryRead |
                                vk::AccessFlagBits::eMemoryWrite,
               .dstAccessMask = vk::AccessFlagBits::eTransferRead,
-              .oldLayout = currentLayout,
+              .oldLayout = current_layout,
               .newLayout = vk::ImageLayout::eTransferSrcOptimal,
               .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
               .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -456,14 +468,14 @@ gfxstream::expected<std::vector<uint8_t>, vk::Result> Vk::DownloadImage(
     cmd->copyImageToBuffer(*image, vk::ImageLayout::eTransferSrcOptimal,
                            *mStagingBuffer, regions);
 
-    if (returnedLayout != vk::ImageLayout::eTransferSrcOptimal) {
+    if (returned_layout != vk::ImageLayout::eTransferSrcOptimal) {
       const std::vector<vk::ImageMemoryBarrier> imageMemoryBarriers = {
           vk::ImageMemoryBarrier{
               .srcAccessMask = vk::AccessFlagBits::eTransferRead,
               .dstAccessMask = vk::AccessFlagBits::eMemoryRead |
                                vk::AccessFlagBits::eMemoryWrite,
               .oldLayout = vk::ImageLayout::eTransferSrcOptimal,
-              .newLayout = returnedLayout,
+              .newLayout = returned_layout,
               .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
               .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
               .image = *image,
@@ -504,7 +516,8 @@ gfxstream::expected<std::vector<uint8_t>, vk::Result> Vk::DownloadImage(
 
 gfxstream::expected<Vk::YuvImageWithMemory, vk::Result> Vk::CreateYuvImage(
     uint32_t width, uint32_t height, vk::ImageUsageFlags usages,
-    vk::MemoryPropertyFlags memoryProperties, vk::ImageLayout layout) {
+    vk::MemoryPropertyFlags memory_properties,
+    vk::ImageLayout returned_layout) {
   const vk::SamplerYcbcrConversionCreateInfo conversionCreateInfo = {
       .format = vk::Format::eG8B8R83Plane420Unorm,
       .ycbcrModel = vk::SamplerYcbcrModelConversion::eYcbcr601,
@@ -570,7 +583,7 @@ gfxstream::expected<Vk::YuvImageWithMemory, vk::Result> Vk::CreateYuvImage(
   const auto memoryRequirements = mDevice->getImageMemoryRequirements(*image);
 
   const uint32_t memoryIndex = GetMemoryType(
-      mPhysicalDevice, memoryRequirements.memoryTypeBits, memoryProperties);
+      mPhysicalDevice, memoryRequirements.memoryTypeBits, memory_properties);
 
   const vk::MemoryAllocateInfo imageMemoryAllocateInfo = {
       .allocationSize = memoryRequirements.size,
@@ -611,7 +624,7 @@ gfxstream::expected<Vk::YuvImageWithMemory, vk::Result> Vk::CreateYuvImage(
             .srcAccessMask = {},
             .dstAccessMask = vk::AccessFlagBits::eTransferWrite,
             .oldLayout = vk::ImageLayout::eUndefined,
-            .newLayout = layout,
+            .newLayout = returned_layout,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .image = *image,
@@ -647,30 +660,30 @@ gfxstream::expected<Vk::YuvImageWithMemory, vk::Result> Vk::CreateYuvImage(
 
 vk::Result Vk::LoadYuvImage(const vk::UniqueImage& image, uint32_t width,
                             uint32_t height,
-                            const std::vector<uint8_t>& imageDataY,
-                            const std::vector<uint8_t>& imageDataU,
-                            const std::vector<uint8_t>& imageDataV,
-                            vk::ImageLayout currentLayout,
-                            vk::ImageLayout returnedLayout) {
+                            const std::vector<uint8_t>& image_data_y,
+                            const std::vector<uint8_t>& image_data_u,
+                            const std::vector<uint8_t>& image_data_v,
+                            vk::ImageLayout current_layout,
+                            vk::ImageLayout returned_layout) {
   auto* mapped = reinterpret_cast<uint8_t*>(VK_TRY_RV(
       mDevice->mapMemory(*mStagingBufferMemory, 0, kStagingBufferSize)));
 
   const VkDeviceSize yOffset = 0;
-  const VkDeviceSize uOffset = imageDataY.size();
-  const VkDeviceSize vOffset = imageDataY.size() + imageDataU.size();
-  std::memcpy(mapped + yOffset, imageDataY.data(), imageDataY.size());
-  std::memcpy(mapped + uOffset, imageDataU.data(), imageDataU.size());
-  std::memcpy(mapped + vOffset, imageDataV.data(), imageDataV.size());
+  const VkDeviceSize uOffset = image_data_y.size();
+  const VkDeviceSize vOffset = image_data_y.size() + image_data_u.size();
+  std::memcpy(mapped + yOffset, image_data_y.data(), image_data_y.size());
+  std::memcpy(mapped + uOffset, image_data_u.data(), image_data_u.size());
+  std::memcpy(mapped + vOffset, image_data_v.data(), image_data_v.size());
   mDevice->unmapMemory(*mStagingBufferMemory);
 
   return DoCommandsImmediate([&](vk::UniqueCommandBuffer& cmd) {
-    if (currentLayout != vk::ImageLayout::eTransferDstOptimal) {
+    if (current_layout != vk::ImageLayout::eTransferDstOptimal) {
       const std::vector<vk::ImageMemoryBarrier> imageMemoryBarriers = {
           vk::ImageMemoryBarrier{
               .srcAccessMask = vk::AccessFlagBits::eMemoryRead |
                                vk::AccessFlagBits::eMemoryWrite,
               .dstAccessMask = vk::AccessFlagBits::eTransferWrite,
-              .oldLayout = currentLayout,
+              .oldLayout = current_layout,
               .newLayout = vk::ImageLayout::eTransferDstOptimal,
               .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
               .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -773,14 +786,14 @@ vk::Result Vk::LoadYuvImage(const vk::UniqueImage& image, uint32_t width,
                            vk::ImageLayout::eTransferDstOptimal,
                            imageCopyRegions);
 
-    if (returnedLayout != vk::ImageLayout::eTransferDstOptimal) {
+    if (returned_layout != vk::ImageLayout::eTransferDstOptimal) {
       const std::vector<vk::ImageMemoryBarrier> imageMemoryBarriers = {
           vk::ImageMemoryBarrier{
               .srcAccessMask = vk::AccessFlagBits::eTransferWrite,
               .dstAccessMask = vk::AccessFlagBits::eMemoryRead |
                                vk::AccessFlagBits::eMemoryWrite,
               .oldLayout = vk::ImageLayout::eTransferDstOptimal,
-              .newLayout = returnedLayout,
+              .newLayout = returned_layout,
               .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
               .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
               .image = *image,
@@ -807,12 +820,13 @@ vk::Result Vk::LoadYuvImage(const vk::UniqueImage& image, uint32_t width,
 }
 
 gfxstream::expected<Vk::FramebufferWithAttachments, vk::Result>
-Vk::CreateFramebuffer(uint32_t width, uint32_t height, vk::Format color_format,
-                      vk::Format depth_format) {
+Vk::CreateFramebuffer(uint32_t width, uint32_t height,
+                      vk::Format colorAttachmentFormat,
+                      vk::Format depthAttachmentFormat) {
   std::optional<Vk::ImageWithMemory> colorAttachment;
-  if (color_format != vk::Format::eUndefined) {
+  if (colorAttachmentFormat != vk::Format::eUndefined) {
     colorAttachment =
-        GFXSTREAM_EXPECT(CreateImage(width, height, color_format,
+        GFXSTREAM_EXPECT(CreateImage(width, height, colorAttachmentFormat,
                                      vk::ImageUsageFlagBits::eColorAttachment |
                                          vk::ImageUsageFlagBits::eTransferSrc,
                                      vk::MemoryPropertyFlagBits::eDeviceLocal,
@@ -820,9 +834,9 @@ Vk::CreateFramebuffer(uint32_t width, uint32_t height, vk::Format color_format,
   }
 
   std::optional<Vk::ImageWithMemory> depthAttachment;
-  if (depth_format != vk::Format::eUndefined) {
+  if (depthAttachmentFormat != vk::Format::eUndefined) {
     depthAttachment = GFXSTREAM_EXPECT(
-        CreateImage(width, height, depth_format,
+        CreateImage(width, height, depthAttachmentFormat,
                     vk::ImageUsageFlagBits::eDepthStencilAttachment |
                         vk::ImageUsageFlagBits::eTransferSrc,
                     vk::MemoryPropertyFlagBits::eDeviceLocal,
@@ -832,9 +846,9 @@ Vk::CreateFramebuffer(uint32_t width, uint32_t height, vk::Format color_format,
   std::vector<vk::AttachmentDescription> attachments;
 
   std::optional<vk::AttachmentReference> colorAttachment_reference;
-  if (color_format != vk::Format::eUndefined) {
+  if (colorAttachmentFormat != vk::Format::eUndefined) {
     attachments.push_back(vk::AttachmentDescription{
-        .format = color_format,
+        .format = colorAttachmentFormat,
         .samples = vk::SampleCountFlagBits::e1,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
@@ -851,9 +865,9 @@ Vk::CreateFramebuffer(uint32_t width, uint32_t height, vk::Format color_format,
   }
 
   std::optional<vk::AttachmentReference> depthAttachment_reference;
-  if (depth_format != vk::Format::eUndefined) {
+  if (depthAttachmentFormat != vk::Format::eUndefined) {
     attachments.push_back(vk::AttachmentDescription{
-        .format = depth_format,
+        .format = depthAttachmentFormat,
         .samples = vk::SampleCountFlagBits::e1,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
@@ -878,14 +892,14 @@ Vk::CreateFramebuffer(uint32_t width, uint32_t height, vk::Format color_format,
       .dstAccessMask = vk::AccessFlagBits::eInputAttachmentRead,
       .dependencyFlags = vk::DependencyFlagBits::eByRegion,
   };
-  if (color_format != vk::Format::eUndefined) {
+  if (colorAttachmentFormat != vk::Format::eUndefined) {
     dependency.srcStageMask |=
         vk::PipelineStageFlagBits::eColorAttachmentOutput;
     dependency.dstStageMask |=
         vk::PipelineStageFlagBits::eColorAttachmentOutput;
     dependency.srcAccessMask |= vk::AccessFlagBits::eColorAttachmentWrite;
   }
-  if (depth_format != vk::Format::eUndefined) {
+  if (depthAttachmentFormat != vk::Format::eUndefined) {
     dependency.srcStageMask |=
         vk::PipelineStageFlagBits::eColorAttachmentOutput;
     dependency.dstStageMask |=
@@ -903,11 +917,11 @@ Vk::CreateFramebuffer(uint32_t width, uint32_t height, vk::Format color_format,
       .pDepthStencilAttachment = nullptr,
       .pPreserveAttachments = nullptr,
   };
-  if (color_format != vk::Format::eUndefined) {
+  if (colorAttachmentFormat != vk::Format::eUndefined) {
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &*colorAttachment_reference;
   }
-  if (depth_format != vk::Format::eUndefined) {
+  if (depthAttachmentFormat != vk::Format::eUndefined) {
     subpass.pDepthStencilAttachment = &*depthAttachment_reference;
   }
 

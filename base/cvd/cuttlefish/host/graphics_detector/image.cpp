@@ -16,9 +16,16 @@
 
 #include "cuttlefish/host/graphics_detector/image.h"
 
+#include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <fstream>
-#include <ostream>
+#include <iterator>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "cuttlefish/host/graphics_detector/expected.h"
 
 namespace gfxstream {
 
