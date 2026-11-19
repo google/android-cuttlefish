@@ -226,15 +226,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "is_google_corp",
-    srcs = ["is_google_corp.cpp"],
-    hdrs = ["is_google_corp.h"],
-    deps = [
-        "//cuttlefish/files:directory_exists",
-    ],
-)
-
-cf_cc_library(
     name = "json",
     srcs = ["json.cpp"],
     hdrs = ["json.h"],
