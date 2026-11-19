@@ -10,7 +10,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "@com_github_pion_logging//:logging",
-        "@com_github_pion_webrtc_v3//:webrtc",
+        "@com_github_pion_webrtc_v4//:webrtc",
     ],
 )
 
@@ -18,5 +18,5 @@ go_test(
     name = "webrtcclient_test",
     srcs = ["client_test.go"],
     embed = [":webrtcclient"],
-    deps = ["@com_github_pion_webrtc_v3//:webrtc"],
+    deps = ["@com_github_pion_webrtc_v4//:webrtc"],
 )
