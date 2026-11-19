@@ -10,7 +10,7 @@ on:
   pull_request_review:
     types:
       - 'submitted'
-  pull_request:
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
     types:
       - 'opened'
 
@@ -39,12 +39,15 @@ jobs:
           env | grep '^DEBUG_'
 
   dispatch:
-    # For PRs: only if not from a fork
+    # For PRs: only if not from a fork or authored by OWNER/MEMBER/COLLABORATOR
     # For comments: only if user types @gemini-cli and is OWNER/MEMBER/COLLABORATOR (and on a PR for issue_comment)
     if: |-
       (
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.head.repo.fork == false
+        github.event_name == 'pull_request_target' &&
+        (
+          github.event.pull_request.head.repo.fork == false ||
+          contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
+        )
       ) || (
         github.event.sender.type == 'User' &&
         (github.event_name != 'issue_comment' || github.event.issue.pull_request != null) &&
@@ -83,7 +86,7 @@ jobs:
             const request = process.env.REQUEST;
             core.setOutput('request', request);
 
-            if (eventType === 'pull_request.opened') {
+            if (eventType === 'pull_request.opened' || eventType === 'pull_request_target.opened') {
               core.setOutput('command', 'review');
             } else if (request.startsWith("@gemini-cli /review")) {
               core.setOutput('command', 'review');
