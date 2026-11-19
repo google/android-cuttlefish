@@ -423,7 +423,6 @@ cf_cc_library(
     name = "vsock_connection",
     srcs = ["vsock_connection.cpp"],
     hdrs = ["vsock_connection.h"],
-    clang_tidy_enabled = False,  # TODO: b/403278821 - fix warnings and re-enable after migration work
     target_compatible_with = [
         "@platforms//os:linux",
     ],
