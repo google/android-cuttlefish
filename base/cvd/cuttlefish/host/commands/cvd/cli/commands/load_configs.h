@@ -17,6 +17,7 @@
 
 #include <string>
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -48,7 +49,8 @@ class LoadConfigsCommand : public CvdCommandHandler {
 
  private:
   Result<void> LoadGroup(const CommandRequest& request,
-                         LocalInstanceGroup& group, CvdFlags cvd_flags);
+                         LocalInstanceGroup& group, CvdFlags cvd_flags,
+                         SharedFD& in_progress_lock);
 
   InstanceManager& instance_manager_;
   LoadFlags flags_;

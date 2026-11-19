@@ -111,6 +111,12 @@ func TestStaticResourcesInit(t *testing.T) {
 				t.Fatalf("start: %v", err)
 			}
 
+			if out, err := s.Run("stat", "-c", "%a", "/var/tmp/cvd", "/var/tmp/cvd/lock", "/var/tmp/cvd/lock/local-instance-1.lock", "/var/tmp/cvd/lock/local-instance-1000.lock"); err != nil {
+				t.Errorf("lock files missing after start: %v", err)
+			} else if diff := cmp.Diff("1777\n755\n666\n666\n", out.Stdout); diff != "" {
+				t.Errorf("unexpected lock permissions (-want +got):\n%s", diff)
+			}
+
 			if diff := cmp.Diff(tc.want, observe(t, s), opts); diff != "" {
 				t.Errorf("host state after start (-want +got):\n%s", diff)
 			}

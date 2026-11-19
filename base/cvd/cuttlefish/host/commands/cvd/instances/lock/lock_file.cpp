@@ -16,7 +16,13 @@
 
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 
+#include <errno.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <sys/file.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <algorithm>
 #include <cstring>
@@ -27,23 +33,43 @@
 #include <vector>
 
 #include "absl/log/log.h"
-#include "android-base/file.h"
+#include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+#include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/files/directory_exists.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+namespace {
 
-static Result<void> SetStatus(SharedFD& fd, const InUseState state) {
+bool DefaultCreateLocksOnDemand() {
+#ifdef __linux__
+  return InSandbox();
+#else
+  return true;
+#endif
+}
+
+Result<void> SetStatus(SharedFD& fd, const InUseState state) {
+  CF_EXPECT(fd->Truncate(0));
   CF_EXPECT(fd->LSeek(0, SEEK_SET) == 0, fd->StrError());
-  char state_char = static_cast<char>(state);
-  CF_EXPECT(fd->Write(&state_char, 1) == 1u, fd->StrError());
+  std::string payload = state == InUseState::kInUse
+                            ? absl::StrCat("I ", geteuid(), "\n")
+                            : std::string("N\n");
+  CF_EXPECT(fd->Write(payload.data(), payload.size()) ==
+                static_cast<uint64_t>(payload.size()),
+            fd->StrError());
   return {};
 }
+
+}  // namespace
 
 LockFile::LockFileReleaser::LockFileReleaser(const SharedFD& fd,
                                              const std::string& lock_file_path)
@@ -82,6 +108,22 @@ Result<InUseState> LockFile::Status() const {
   }
 }
 
+Result<std::optional<uid_t>> LockFile::HolderUid() const {
+  CF_EXPECT(fd_->LSeek(0, SEEK_SET) == 0, fd_->StrError());
+  char buf[64] = {};
+  size_t bytes_read = CF_EXPECT(fd_->Read(buf, sizeof(buf) - 1));
+  absl::string_view content(buf, bytes_read);
+  (void)absl::ConsumeSuffix(&content, "\n");
+  if (!absl::ConsumePrefix(&content, "I ")) {
+    return std::nullopt;
+  }
+  unsigned parsed_uid = 0;
+  if (!absl::SimpleAtoi(content, &parsed_uid)) {
+    return std::nullopt;
+  }
+  return static_cast<uid_t>(parsed_uid);
+}
+
 Result<void> LockFile::Status(InUseState state) {
   CF_EXPECT(SetStatus(fd_, state));
   return {};
@@ -100,35 +142,51 @@ bool LockFile::operator<(const LockFile& other) const {
                            other.LockFilePath().size())) < 0);
 }
 
+LockFileManager::LockFileManager()
+    : create_missing_locks_(DefaultCreateLocksOnDemand()) {}
+
+LockFileManager::LockFileManager(bool create_missing_locks)
+    : create_missing_locks_(create_missing_locks) {}
+
 Result<Fd> LockFileManager::OpenLockFile(const std::string& file_path) {
-  auto parent_dir = android::base::Dirname(file_path);
-  CF_EXPECT(EnsureDirectoryExists(parent_dir, 0777));
-  int result = chmod(parent_dir.c_str(), 0777);
-  if (result) {
-    VLOG(0) << "failed: chmod 777 " << parent_dir;
+  return LockFileManager().OpenLockFileWithPolicy(file_path);
+}
+
+Result<Fd> LockFileManager::OpenLockFileWithPolicy(
+    const std::string& file_path) const {
+  Result<Fd, int> fd = Fd::Open(file_path, O_RDWR | O_CLOEXEC);
+  if (fd.has_value()) {
+    return std::move(*fd);
   }
-  Fd fd = CF_EXPECT(Fd::Open(file_path.data(), O_CREAT | O_RDWR, 0666));
-  result = chmod(file_path.c_str(), 0666);
-  if (result) {
-    VLOG(0) << "failed: chmod 666 " << file_path;
+  if (*fd.error() == ENOENT && create_missing_locks_) {
+    const size_t slash = file_path.find_last_of('/');
+    if (slash != std::string::npos && slash > 0) {
+      CF_EXPECT(EnsureDirectoryExists(file_path.substr(0, slash), 0755));
+    }
+    return CF_EXPECT(Fd::Open(file_path, O_CREAT | O_RDWR | O_CLOEXEC, 0666));
   }
-  return fd;
+  return CF_EXPECTF(
+      std::move(fd),
+      "Failed to open lock file '{}' (ensure cuttlefish-host-resources "
+      "service is running)",
+      file_path);
 }
 
 Result<LockFile> LockFileManager::AcquireLock(
     const std::string& lock_file_path) {
-  SharedFD fd = CF_EXPECT(OpenLockFile(lock_file_path));
+  SharedFD fd = CF_EXPECT(OpenLockFileWithPolicy(lock_file_path));
   CF_EXPECT(fd->Flock(LOCK_EX));
   return LockFile(fd, lock_file_path);
 }
 
 Result<std::optional<LockFile>> LockFileManager::TryAcquireLock(
     const std::string& lock_file_path) {
-  SharedFD fd = CF_EXPECT(OpenLockFile(lock_file_path));
+  SharedFD fd = CF_EXPECT(OpenLockFileWithPolicy(lock_file_path));
   Result<void, int> flock_result = fd->Flock(LOCK_EX | LOCK_NB);
   if (flock_result) {
     return std::optional<LockFile>(LockFile(fd, lock_file_path));
-  } else if (!flock_result && *flock_result.error() == EWOULDBLOCK) {
+  } else if (!flock_result && (*flock_result.error() == EWOULDBLOCK ||
+                               *flock_result.error() == EAGAIN)) {
     return {};
   }
   CF_EXPECT(std::move(flock_result));

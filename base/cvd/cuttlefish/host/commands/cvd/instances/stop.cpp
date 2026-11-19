@@ -16,30 +16,29 @@
 
 #include "cuttlefish/host/commands/cvd/instances/stop.h"
 
+#include <errno.h>
 #include <signal.h>
 #include <unistd.h>
 
-#include <iostream>  // std::endl
-#include <sstream>
+#include <optional>
+#include <set>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
 #include "android-base/file.h"
 #include "fmt/core.h"
 #include "fmt/ranges.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/files/directory_contents.h"
-#include "cuttlefish/files/directory_exists.h"
-#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/run_cvd_proc_collector.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
-#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
@@ -65,11 +64,17 @@ static Command CreateStopCvdCommand(
   return command;
 }
 
-Result<void> RunStopCvdAll(bool clear_runtime_dirs) {
+Result<std::set<unsigned>> RunStopCvdAll(bool clear_runtime_dirs) {
   std::vector<GroupProcInfo> group_infos = CF_EXPECT(CollectRunCvdGroups());
   LOG(INFO) << "Found " << group_infos.size()
             << " untracked running instance groups";
+  std::set<unsigned> instance_ids;
   for (const GroupProcInfo& group_info : group_infos) {
+    for (const auto& [id, _] : group_info.instances_) {
+      if (id > 0) {
+        instance_ids.insert(id);
+      }
+    }
     auto stop_cvd_result = RunStopCvd(StopCvdParams{
         .bin_path = group_info.stop_cvd_path_,
         .home_dir = group_info.home_,
@@ -81,7 +86,7 @@ Result<void> RunStopCvdAll(bool clear_runtime_dirs) {
       continue;
     }
   }
-  return {};
+  return instance_ids;
 }
 
 static bool IsStillRunCvd(const pid_t pid) {
@@ -127,36 +132,41 @@ Result<void> SendSignal(const GroupProcInfo& group_info) {
   return {};
 }
 
-Result<void> DeleteLockFile(const GroupProcInfo& group_info) {
-  const std::string lock_dir = InstanceLocksPath();
-  std::string lock_file_prefix = lock_dir;
-  lock_file_prefix.append("/local-instance-");
-
+Result<void> ResetInstanceLocks(const std::set<unsigned>& instance_ids) {
+  InstanceLockFileManager lock_manager(InstanceLocksPath());
   bool all_success = true;
-  const auto& instances = group_info.instances_;
-  for (const auto& [id, _] : instances) {
-    std::stringstream lock_file_path_stream;
-    lock_file_path_stream << lock_file_prefix << id << ".lock";
-    auto lock_file_path = lock_file_path_stream.str();
-    if (FileExists(lock_file_path) && !DirectoryExists(lock_file_path)) {
-      if (Result<void, int> res = RemoveFile(lock_file_path); res.has_value()) {
-        VLOG(0) << "Reset the lock file: " << lock_file_path;
-      } else {
-        all_success = false;
-        LOG(ERROR) << "Failed to remove the lock file '" << lock_file_path
-                   << "': " << res.error();
-      }
+  for (unsigned id : instance_ids) {
+    if (id == 0) {
+      continue;
+    }
+    if (Result<void> res = lock_manager.RemoveLockFile(id); res.has_value()) {
+      VLOG(0) << "Reset instance lock: " << id;
+    } else {
+      all_success = false;
+      LOG(ERROR) << "Failed to reset lock file for instance " << id << ": "
+                 << res.error();
     }
   }
   CF_EXPECT(all_success == true);
   return {};
 }
 
+Result<void> ResetGroupLocks(const GroupProcInfo& group_info) {
+  std::set<unsigned> instance_ids;
+  for (const auto& [id, _] : group_info.instances_) {
+    if (id > 0) {
+      instance_ids.insert(id);
+    }
+  }
+  CF_EXPECT(ResetInstanceLocks(instance_ids));
+  return {};
+}
+
 Result<void> ForcefullyStopGroup(const GroupProcInfo& group) {
   auto signal_res = SendSignal(group);
-  auto delete_res = DeleteLockFile(group);
-  if (!delete_res.has_value()) {
-    LOG(ERROR) << "Tried to delete instance lock file for the group rooted at "
+  auto reset_res = ResetGroupLocks(group);
+  if (!reset_res.has_value()) {
+    LOG(ERROR) << "Tried to reset instance lock file for the group rooted at "
                   "HOME="
                << group.home_ << " but failed.";
   }
@@ -167,56 +177,63 @@ Result<void> ForcefullyStopGroup(const GroupProcInfo& group) {
   return {};
 }
 
-Result<void> KillAllRunCvds() {
+Result<std::set<unsigned>> KillAllRunCvds() {
   auto run_cvd_pids = CF_EXPECT(CollectRunCvdProcesses());
+  std::set<unsigned> killed_ids;
   if (run_cvd_pids.empty()) {
-    return {};
+    return killed_ids;
   }
   LOG(INFO) << run_cvd_pids.size()
             << " run_cvd processes still remain, will stop forcefully";
   for (pid_t group_pid : run_cvd_pids) {
-    if (Result<void> result = SendSignal(group_pid); !result.has_value()) {
+    std::optional<unsigned> candidate_id;
+    if (Result<std::unordered_map<std::string, std::string>> envs =
+            GetEnvs(group_pid);
+        envs.has_value()) {
+      if (auto it = envs->find(kCuttlefishInstanceEnvVarName);
+          it != envs->end()) {
+        unsigned id = 0;
+        if (absl::SimpleAtoi(it->second, &id) && id > 0) {
+          candidate_id = id;
+        }
+      }
+    }
+    Result<void> result = SendSignal(group_pid);
+    if (!result.has_value()) {
       LOG(ERROR) << result.error();
     }
-  }
-  return {};
-}
-
-Result<void> DeleteAllOwnedInstanceLocks() {
-  const std::string lock_dir = InstanceLocksPath();
-  uid_t own_uid = geteuid();
-  for (const std::string& lock_file : CF_EXPECT(DirectoryContents(lock_dir))) {
-    std::string lock_file_path = fmt::format("{}/{}", lock_dir, lock_file);
-    Result<uid_t> file_uid_res = FileOwner(lock_file_path);
-    if (!file_uid_res.has_value()) {
-      LOG(ERROR) << "Failed to obtain owner of '" << lock_file_path << "'";
-      continue;
-    }
-    if (*file_uid_res != own_uid) {
-      VLOG(1) << "Skipped '" << lock_file_path
-              << "' because it's not owned by current user";
-      continue;
-    }
-    if (Result<void, int> res = RemoveFile(lock_file_path); !res.has_value()) {
-      LOG(ERROR) << res.error();
+    if (candidate_id.has_value() &&
+        (result.has_value() || (kill(group_pid, 0) != 0 && errno == ESRCH))) {
+      killed_ids.insert(*candidate_id);
     }
   }
-  return {};
+  return killed_ids;
 }
 
 }  // namespace
 
 Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs) {
-  if (Result<void> res = RunStopCvdAll(clear_runtime_dirs); !res.has_value()) {
+  std::set<unsigned> untracked_ids;
+  if (Result<std::set<unsigned>> res = RunStopCvdAll(clear_runtime_dirs);
+      res.has_value()) {
+    untracked_ids.insert(res->begin(), res->end());
+  } else {
     LOG(ERROR) << res.error();
   }
 
-  if (Result<void> res = KillAllRunCvds(); !res.has_value()) {
+  if (Result<std::set<unsigned>> res = KillAllRunCvds(); res.has_value()) {
+    untracked_ids.insert(res->begin(), res->end());
+  } else {
     LOG(ERROR) << res.error();
   }
 
-  if (Result<void> res = DeleteAllOwnedInstanceLocks(); !res.has_value()) {
+  if (Result<void> res = ResetInstanceLocks(untracked_ids); !res.has_value()) {
     LOG(ERROR) << res.error();
+  }
+
+  InstanceLockFileManager lock_manager(InstanceLocksPath());
+  if (Result<void> res = lock_manager.ResetAllOwnedLocks(); !res.has_value()) {
+    LOG(ERROR) << "Failed to reset owned instance locks: " << res.error();
   }
 
   return {};

@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
@@ -56,12 +57,39 @@ class InstanceManager {
     std::vector<std::optional<std::string>> product_out_paths;
   };
   InstanceManager(InstanceLockFileManager&, InstanceDatabase& instance_db);
+  InstanceManager(InstanceLockFileManager&, InstanceDatabase& instance_db,
+                  std::string base_root_dir);
+
+  // Acquires an exclusive non-blocking flock on `<BaseDir>/in_progress.lock`
+  // to guard an in-progress prepare or boot transition against concurrent
+  // state refreshes and duplicate starts.
+  static Result<SharedFD> AcquireGroupInProgressLock(
+      const LocalInstanceGroup& group);
+  // Returns true if another open file description currently holds an exclusive
+  // flock on `<BaseDir>/in_progress.lock`.
+  static bool IsGroupTransitionInProgress(const LocalInstanceGroup& group);
 
   Result<bool> HasInstanceGroups() const;
+  // Creates and registers an instance group. If `out_in_progress_lock` is
+  // non-null, acquires `in_progress.lock` before inserting the group into
+  // `instance_db_` so no unlocked `PREPARING`/`STOPPED` window exists.
   Result<LocalInstanceGroup> CreateInstanceGroup(
-      InstanceGroupParams group_params, GroupDirectories group_directories);
+      InstanceGroupParams group_params, GroupDirectories group_directories,
+      SharedFD* out_in_progress_lock = nullptr);
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
   Result<bool> RemoveInstanceGroup(LocalInstanceGroup group);
+  // Acquires all instance ID lock files for `group` and marks them
+  // `InUseState::kInUse`.
+  Result<void> EnsureInstanceLocksInUse(const LocalInstanceGroup& group);
+  // Reconciles `group`'s persisted states against live launcher monitor sockets
+  // and `run_cvd` processes. Set `caller_holds_in_progress_lock` to true when
+  // the caller already holds `AcquireGroupInProgressLock(group)`.
+  Result<LocalInstanceGroup> RefreshInstanceGroupState(
+      LocalInstanceGroup group, bool caller_holds_in_progress_lock = false);
+  Result<void> RefreshInstanceGroups();
+  // Refreshes all groups and removes inactive groups whose backing directories
+  // (`HomeDir`, `HostArtifactsPath`, or `ProductOutPath`) no longer exist.
+  Result<void> PruneBrokenInstanceGroups();
 
   // Stops and removes all known instance instance groups
   Result<void> Clear();
@@ -98,6 +126,7 @@ class InstanceManager {
 
   InstanceLockFileManager& lock_manager_;
   InstanceDatabase& instance_db_;
+  std::string base_root_dir_;
 };
 
 }  // namespace cuttlefish
