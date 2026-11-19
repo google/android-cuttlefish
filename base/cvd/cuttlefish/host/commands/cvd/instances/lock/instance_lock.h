@@ -15,10 +15,13 @@
  */
 #pragma once
 
+#include <sys/types.h>
+
 #include <optional>
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -29,6 +32,7 @@ class InstanceLockFile {
  public:
   unsigned Instance() const;
   Result<InUseState> Status() const;
+  Result<std::optional<uid_t>> HolderUid() const;
   Result<void> Status(InUseState);
 
  private:
@@ -40,20 +44,26 @@ class InstanceLockFile {
 class InstanceLockFileManager {
  public:
   InstanceLockFileManager(std::string instance_locks_path);
+  InstanceLockFileManager(std::string instance_locks_path,
+                          bool create_missing_locks);
 
   Result<InstanceLockFile> AcquireLock(unsigned instance_num);
   Result<InstanceLockFile> AcquireUnusedLock();
 
-  // TODO: This routine should  be removed and replaced with allocd
-  // The caller must check if the instance_num belongs to the user, before
-  // calling this. It is a quick fix for b/316824572
+  // Marks the pre-created lock file for `instance_num` as `kNotInUse` while
+  // holding its exclusive flock if not held by a different UID.
   Result<void> RemoveLockFile(unsigned instance_num);
 
+  // Resets all unheld lock files in `instance_locks_path_` recorded as held by
+  // `geteuid()` back to `kNotInUse`.
+  Result<void> ResetAllOwnedLocks();
+
  private:
-  Result<std::string> LockFilePath(unsigned instance_num);
+  std::string LockFilePath(unsigned instance_num) const;
   Result<std::optional<InstanceLockFile>> TryAcquireLock(unsigned instance_num);
 
   std::string instance_locks_path_;
+  bool create_missing_locks_;
   LockFileManager lock_file_manager_;
 };
 

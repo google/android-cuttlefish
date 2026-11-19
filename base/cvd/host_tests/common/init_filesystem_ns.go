@@ -36,7 +36,8 @@ func (s *Sandbox) setupFilesystem() error {
 			"mount --bind %q /etc/group; "+
 			"mount -t tmpfs tmpfs /etc/default; "+
 			": > /etc/default/cuttlefish-host-resources; "+
-			"mount -t tmpfs tmpfs /run",
+			"mount -t tmpfs tmpfs /run; "+
+			"mount -t tmpfs tmpfs /var/tmp",
 		nsPath, grpPath)
 	_, err := s.Run("sh", "-c", script)
 	return err
