@@ -10,7 +10,9 @@ def _openssl_sys_env_impl(ctx):
     for src in ctx.attr.deps:
         for linker_input in src[CcInfo].linking_context.linker_inputs.to_list():
             for library in linker_input.libraries:
-                libs.append(library.pic_static_library)
+                lib = library.pic_static_library or library.static_library
+                if lib:
+                    libs.append(lib)
 
         compilation_context = src[CcInfo].compilation_context
         all_include_directories_depsets.append(compilation_context.includes)
