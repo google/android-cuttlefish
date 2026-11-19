@@ -100,7 +100,7 @@ pub struct VirtioSndEvent {
     pub data: Le32,
 }
 
-#[derive(Clone, Copy, Debug, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum VirtioSndDirection {
     Output = 0,
@@ -400,7 +400,7 @@ pub enum VirtioSndCtlType {
     Iec95,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndCtlAccess {
     Read = 0,
@@ -478,7 +478,7 @@ pub struct VirtioSndCtlTlv {
     /* value: [Le32; length], */
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndCtlEvtMask {
     Value = 0,
