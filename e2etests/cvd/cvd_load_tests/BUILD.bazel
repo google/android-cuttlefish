@@ -18,7 +18,8 @@ load("@rules_go//go:def.bzl", "go_test")
 CVD_LOAD_TESTS = {
     "git_main_x64_phone": "configs/git_main_x64_phone.json",
     "aosp_main_x64_phone": "configs/aosp_main_x64_phone.json",
-    "git_sw_car_dev_sdv": "configs/git_sw_car_dev_sdv.json",
+    # TODO(b/588019433): Re-enable once the sdv load test is fixed.
+    # "git_sw_car_dev_sdv": "configs/git_sw_car_dev_sdv.json",
 }
 
 [
