@@ -1,3 +1,9 @@
+cuttlefish-integration-gigabyte-arm64 (1.60.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Arjun Dhaliwal <arjundhaliwal@google.com>  Thu, 19 Nov 2026 11:15:32 -0800
+
 cuttlefish-integration-gigabyte-arm64 (1.59.0) unstable; urgency=medium
 
   * Start development on 1.59.0 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/3521
