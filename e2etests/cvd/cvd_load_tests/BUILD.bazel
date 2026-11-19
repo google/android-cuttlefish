@@ -14,18 +14,31 @@
 
 load("@rules_go//go:def.bzl", "go_test")
 
-go_test(
-    name = "cvd_load_tests",
-    srcs = ["main_test.go"],
-    deps = [
-        "//cvd/common:common",
-    ],
-    size = "large",
-    tags = [
-        "exclusive",
-        "external",
-        "no-sandbox",
-        "requires_ab",
-        "supports-graceful-termination",
-    ],
-)
+# name -> load config file
+CVD_LOAD_TESTS = {
+    "git_main_x64_phone": "configs/git_main_x64_phone.json",
+    "aosp_main_x64_phone": "configs/aosp_main_x64_phone.json",
+    "git_sw_car_dev_sdv": "configs/git_sw_car_dev_sdv.json",
+}
+
+[
+    go_test(
+        name = name,
+        size = "large",
+        srcs = ["main_test.go"],
+        data = [config],
+        env = {"CVD_LOAD_CONFIG": "$(rlocationpath %s)" % config},
+        tags = [
+            "exclusive",
+            "external",
+            "no-sandbox",
+            "requires_ab",
+            "supports-graceful-termination",
+        ],
+        deps = [
+            "//cvd/common",
+            "@rules_go//go/runfiles",
+        ],
+    )
+    for name, config in CVD_LOAD_TESTS.items()
+]

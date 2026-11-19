@@ -15,170 +15,37 @@
 package main
 
 import (
-	"fmt"
+	"os"
 	"testing"
 
+	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/google/android-cuttlefish/e2etests/cvd/common"
 )
 
 func TestCvdLoad(t *testing.T) {
-	testcases := []struct {
-		name       string
-		loadconfig string
-	}{
-		{
-			name: "GitMainX64Phone",
-			loadconfig: `
-{
-  "instances": [
-    {
-      "name": "ins-1",
-      "disk": {
-        "default_build": "@ab\/git_main\/aosp_cf_x86_64_only_phone-trunk_staging-userdebug"
-      },
-      "vm": {
-        "cpus": 4,
-        "memory_mb": 4096,
-        "setupwizard_mode": "REQUIRED"
-      },
-      "graphics": {
-        "displays": [
-          {
-            "width": 720,
-            "height": 1280,
-            "dpi": 140,
-            "refresh_rate_hertz": 60
-          }
-        ],
-        "record_screen": false
-      }
-    }
-  ],
-  "metrics": {
-    "enable": true
-  },
-  "common": {
-    "host_package": "@ab\/git_main\/aosp_cf_x86_64_only_phone-trunk_staging-userdebug"
-  }
-}`,
-		},
-		{
-			name: "AospMainX64Phone",
-			loadconfig: `
-{
-  "instances": [
-    {
-      "name": "ins-1",
-      "disk": {
-        "default_build": "@ab\/aosp-android-latest-release\/aosp_cf_x86_64_only_phone-userdebug",
-        "super": {
-          "system": "@ab\/aosp-android-latest-release\/aosp_cf_x86_64_only_phone-userdebug"
-        }
-      },
-      "boot": {
-        "kernel": {
-          "build": "@ab\/aosp_kernel-common-android16-6.12\/kernel_virt_x86_64"
-        },
-        "build": "@ab\/aosp-android-latest-release\/aosp_cf_x86_64_only_phone-userdebug"
-      },
-      "vm": {
-        "cpus": 4,
-        "memory_mb": 4096,
-        "setupwizard_mode": "REQUIRED"
-      },
-      "graphics": {
-        "displays": [
-          {
-            "width": 720,
-            "height": 1280,
-            "dpi": 140,
-            "refresh_rate_hertz": 60
-          }
-        ],
-        "record_screen": false
-      }
-    }
-  ],
-  "metrics": {
-    "enable": true
-  },
-  "common": {
-    "host_package": "@ab\/aosp-android-latest-release\/aosp_cf_x86_64_only_phone-userdebug"
-  }
-}`,
-		},
-		{
-			name: "GitSwCarDevSdv",
-			loadconfig: `
-{
-  "instances": [
-    {
-      "name": "ins-1",
-      "vm": {
-        "cpus": 2,
-        "memory_mb": 2048
-      },
-      "boot": {
-        "extra_bootconfig_args": "androidboot.sdv.instance_name=instance1 androidboot.virt.address=3 androidboot.sdv.boot_mode=unlocked"
-      },
-      "security": {
-        "guest_enforce_security": false
-      },
-      "disk": {
-        "default_build": "@ab\/git_main-swcar-dev\/aosp_cf_x86_64_sdv_core-trunk_staging-userdebug"
-      },
-      "graphics": {
-        "gpu_mode": "none"
-      }
-    },
-    {
-      "name": "ins-2",
-      "vm": {
-        "cpus": 4,
-        "memory_mb": 4096
-      },
-      "boot": {
-        "extra_bootconfig_args": "androidboot.sdv.instance_name=instance2 androidboot.virt.address=4 androidboot.sdv.boot_mode=unlocked"
-      },
-      "security": {
-        "guest_enforce_security": false
-      },
-      "disk": {
-        "default_build": "@ab\/git_main-swcar-dev\/aosp_cf_x86_64_sdv_media-trunk_staging-userdebug"
-      },
-      "graphics": {
-        "displays": [
-          {
-            "width": 1920,
-            "height": 1080
-          }
-        ],
-        "gpu_mode": "gfxstream_guest_angle_host_swiftshader"
-      }
-    }
-  ],
-  "metrics": {
-    "enable": true
-  },
-  "common": {
-    "host_package": "@ab\/git_main-swcar-dev\/aosp_cf_x86_64_sdv_media-trunk_staging-userdebug"
-  }
-}`,
-		},
+	// Set per target via `env` in BUILD.bazel.
+	rlocation := os.Getenv("CVD_LOAD_CONFIG")
+	if rlocation == "" {
+		t.Fatal("CVD_LOAD_CONFIG environment variable is not set")
 	}
-	c := e2etests.TestContext{}
-	for _, tc := range testcases {
-		t.Run(fmt.Sprintf("BUILD=%s", tc.name), func(t *testing.T) {
-			c.SetUp(t)
-			defer c.TearDown()
+	configpath, err := runfiles.Rlocation(rlocation)
+	if err != nil {
+		t.Fatalf("failed to find load config runfile from %s: %v", rlocation, err)
+	}
+	loadconfig, err := os.ReadFile(configpath)
+	if err != nil {
+		t.Fatalf("failed to read load config from %s: %v", configpath, err)
+	}
 
-			err := c.CVDCreateWithConfigFile(e2etests.LoadArgs{
-				LoadConfig: tc.loadconfig,
-        Env:        map[string]string{"HOME": t.TempDir()},
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-		})
+	c := e2etests.TestContext{}
+	c.SetUp(t)
+	defer c.TearDown()
+
+	err = c.CVDCreateWithConfigFile(e2etests.LoadArgs{
+		LoadConfig: string(loadconfig),
+		Env:        map[string]string{"HOME": t.TempDir()},
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }
