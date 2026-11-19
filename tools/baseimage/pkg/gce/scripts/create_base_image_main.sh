@@ -90,6 +90,15 @@ sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-x86
 sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-arm
 sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-misc
 
+# Problem: qemu-system-{x86,arm,misc} Recommends pull in Debian edk2 firmware
+# packages (ovmf, qemu-efi-*), which Cuttlefish never uses and which remain
+# unpatched for CVE-2026-111497 in trixie (b/584040953).
+edk2_pkgs=$(sudo chroot /mnt/image /usr/bin/dpkg -l 'ovmf*' 'qemu-efi-*' 2>/dev/null | awk '/^ii/ {print $2}' || true)
+if [[ -n "${edk2_pkgs}" ]]; then
+  echo "Purging unused EDK2 packages: ${edk2_pkgs}"
+  sudo chroot /mnt/image /usr/bin/apt-get purge -y ${edk2_pkgs}
+fi
+
 # Install GPU driver dependencies
 sudo cp install_nvidia.sh /mnt/image/
 sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh
