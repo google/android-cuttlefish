@@ -16,7 +16,16 @@
 
 #include "cuttlefish/host/graphics_detector/egl.h"
 
-#include "GLES/gl.h"
+#include <EGL/egl.h>
+#include <EGL/eglplatform.h>
+#include <GLES/glplatform.h>
+
+#include <string>
+#include <utility>
+
+#include "cuttlefish/host/graphics_detector/egl_funcs.h"
+#include "cuttlefish/host/graphics_detector/expected.h"
+#include "cuttlefish/host/graphics_detector/lib.h"
 
 namespace gfxstream {
 namespace {

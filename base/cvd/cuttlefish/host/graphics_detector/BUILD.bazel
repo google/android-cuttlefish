@@ -49,7 +49,6 @@ cf_cc_binary(
         "vulkan.cpp",
         "vulkan.h",
     ],
-    clang_tidy_enabled = False,
     copts = COPTS + [
         "-DVULKAN_HPP_ASSERT_ON_RESULT=",
         "-DVULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1",

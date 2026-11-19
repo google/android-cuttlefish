@@ -18,7 +18,10 @@
 
 #include <dlfcn.h>
 
+#include <string>
+
 #include "cuttlefish/host/graphics_detector/expected.h"
+#include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 
 namespace gfxstream {
 
