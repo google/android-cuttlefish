@@ -16,23 +16,22 @@
 
 #include "cuttlefish/common/libs/utils/vsock_connection.h"
 
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/types.h>
+#include <sys/time.h>  // IWYU pragma: keep: struct timeval
 
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <future>
 #include <memory>
 #include <mutex>
-#include <new>
-#include <ostream>
+#include <optional>
 #include <string>
-#include <tuple>
-#include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
-#include "json/json.h"
+#include "json/reader.h"
+#include "json/value.h"
+#include "json/writer.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -42,7 +41,7 @@
 
 namespace cuttlefish {
 
-VsockConnection::~VsockConnection() { Disconnect(); }
+VsockConnection::~VsockConnection() { VsockConnection::Disconnect(); }
 
 std::future<bool> VsockConnection::ConnectAsync(
     unsigned int port, unsigned int cid,
@@ -90,6 +89,7 @@ bool VsockConnection::DataAvailable() {
   std::lock_guard<std::recursive_mutex> write_lock(write_mutex_);
 
   read_set.Set(fd_);
+  // NOLINTNEXTLINE(misc-include-cleaner): struct timeval
   struct timeval timeout = {0, 0};
   return Select(&read_set, nullptr, nullptr, &timeout) > 0;
 }

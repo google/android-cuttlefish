@@ -20,6 +20,7 @@
 #include <functional>
 #include <future>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
