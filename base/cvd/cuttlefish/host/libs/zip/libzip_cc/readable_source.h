@@ -43,10 +43,6 @@ class ReadableZipSource {
 
   Result<ZipStat> Stat();
 
-  /* Returns a RAII instance that puts this instance in an "open for reading"
-   * state. Can fail. Should not outlive this instance. */
-  Result<class ZipSourceReader> Reader();
-
  protected:
   ManagedZipSource raw_;
 
@@ -56,8 +52,8 @@ class ReadableZipSource {
 /* A `ReadableZipSource` in an "open for reading" state. */
 class ZipSourceReader : public Reader {
  public:
-  friend class ReadableZipSource;
-  friend class SeekingZipSourceReader;
+  /* Makes the source "open for reading." Should not outlive the source. */
+  static Result<ZipSourceReader> Open(ReadableZipSource&);
 
   ZipSourceReader(ZipSourceReader&&);
   virtual ~ZipSourceReader();
@@ -73,6 +69,8 @@ class ZipSourceReader : public Reader {
   std::recursive_mutex mutex_;
 
  private:
+  friend class SeekingZipSourceReader;
+
   ZipSourceReader(ReadableZipSource*);
 
   ReadableZipSource* source_;

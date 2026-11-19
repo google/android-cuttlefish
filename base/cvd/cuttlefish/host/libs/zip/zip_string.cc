@@ -27,7 +27,7 @@
 namespace cuttlefish {
 
 Result<std::string> ReadToString(ReadableZipSource& source) {
-  ZipSourceReader reader = CF_EXPECT(source.Reader());
+  ZipSourceReader reader = CF_EXPECT(ZipSourceReader::Open(source));
   return CF_EXPECT(ReadToString(reader));
 }
 

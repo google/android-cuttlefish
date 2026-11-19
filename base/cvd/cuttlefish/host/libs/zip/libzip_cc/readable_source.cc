@@ -56,6 +56,8 @@ std::optional<ZipCompression> CompressionFromRaw(uint16_t method) {
 
 }  // namespace
 
+ReadableZipSource::ReadableZipSource(ManagedZipSource raw)
+    : raw_(std::move(raw)) {}
 // These have to be defined in the `.cc` file to avoid linker errors because of
 // bazel weirdness around cmake files.
 ReadableZipSource::ReadableZipSource(ReadableZipSource&&) = default;
@@ -90,16 +92,13 @@ Result<ZipStat> ReadableZipSource::Stat() {
   return ret;
 }
 
-Result<ZipSourceReader> ReadableZipSource::Reader() {
-  zip_source_t* raw_source = CF_EXPECT(raw_.get());
+Result<ZipSourceReader> ZipSourceReader::Open(ReadableZipSource& source) {
+  zip_source_t* raw_source = CF_EXPECT(source.raw_.get());
 
   CF_EXPECT_EQ(zip_source_open(raw_source), 0, ZipErrorString(raw_source));
 
-  return ZipSourceReader(this);
+  return ZipSourceReader(&source);
 }
-
-ReadableZipSource::ReadableZipSource(ManagedZipSource raw)
-    : raw_(std::move(raw)) {}
 
 ZipSourceReader::ZipSourceReader(ReadableZipSource* source) : source_(source) {}
 
