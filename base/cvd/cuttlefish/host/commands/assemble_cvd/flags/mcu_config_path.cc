@@ -31,6 +31,7 @@
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/posix/can_access.h"
 #include "cuttlefish/result/result.h"
 
 DEFINE_string(mcu_config_path, CF_DEFAULTS_MCU_CONFIG_PATH,
@@ -40,7 +41,7 @@ namespace cuttlefish {
 
 McuConfigPathFlag McuConfigPathFlag::FromGlobalGflags() {
   std::string default_path = DefaultHostArtifactsPath("etc/mcu_config.json");
-  if (!CanAccess(default_path, R_OK)) {
+  if (!CanAccess(default_path, R_OK).has_value()) {
     default_path = CF_DEFAULTS_MCU_CONFIG_PATH;
   }
 
