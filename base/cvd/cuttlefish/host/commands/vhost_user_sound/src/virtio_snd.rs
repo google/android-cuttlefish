@@ -124,7 +124,7 @@ pub struct VirtioSndInfo {
 
 #[derive(Copy, Clone, Debug, FromBytes, Immutable, IntoBytes)]
 #[repr(C)]
-pub struct virtio_snd_jack_hdr {
+pub struct VirtioSndJackHdr {
     pub hdr: VirtioSndHdr,
     pub jack_id: Le32,
 }
@@ -147,7 +147,7 @@ pub struct VirtioSndJackInfo {
 #[derive(Copy, Clone, Debug, FromBytes, Immutable, IntoBytes)]
 #[repr(C)]
 pub struct VirtioSndJackRemap {
-    pub hdr: virtio_snd_jack_hdr, /* .code = VirtioSndRequest::JackRemap */
+    pub hdr: VirtioSndJackHdr, /* .code = VirtioSndRequest::JackRemap */
     pub association: Le32,
     pub sequence: Le32,
 }
