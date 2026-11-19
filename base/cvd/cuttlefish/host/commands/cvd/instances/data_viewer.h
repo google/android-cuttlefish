@@ -17,6 +17,7 @@
 #pragma once
 
 #include <signal.h>
+#include <sys/file.h>
 
 #include <functional>
 #include <mutex>
