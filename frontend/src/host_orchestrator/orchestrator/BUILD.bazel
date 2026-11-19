@@ -45,9 +45,6 @@ go_test(
     srcs = [
         "controller_test.go",
         "imagedirectories_test.go",
-        "injectinputeventsaction_test.go",
-        "listcvdsaction_test.go",
-        "listeventdevicesaction_test.go",
         "operation_test.go",
         "userartifacts_test.go",
         "validation_test.go",
