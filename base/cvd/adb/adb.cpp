@@ -579,7 +579,7 @@ void handle_packet(apacket* p, atransport* t) {
                     local_socket_ack(s, acked_bytes);
                 } else {
                     D("Invalid A_OKAY(%d,%d), expected A_OKAY(%d,%d) on transport %s", p->msg.arg0,
-                      p->msg.arg1, s->peer->id, p->msg.arg1, t->serial.c_str());
+                      p->msg.arg1, s->peer->id, p->msg.arg1, t->name.c_str());
                 }
             } else {
                 // When receiving A_OKAY from device for A_OPEN request, the host server may
@@ -606,7 +606,7 @@ void handle_packet(apacket* p, atransport* t) {
                  */
                 if (p->msg.arg0 == 0 && s->peer && s->peer->transport != t) {
                     D("Invalid A_CLSE(0, %u) from transport %s, expected transport %s", p->msg.arg1,
-                      t->serial.c_str(), s->peer->transport->serial.c_str());
+                      t->name.c_str(), s->peer->transport->name.c_str());
                 } else {
                     s->close(s);
                 }
@@ -1252,6 +1252,10 @@ void adb_set_reject_kill_server(bool value) {
     g_reject_kill_server = value;
 }
 
+bool is_usb_enabled() {
+    return !getenv("ADB_USB") || strcmp(getenv("ADB_USB"), "0") != 0;
+}
+
 static bool handle_mdns_request(std::string_view service, int reply_fd) {
     if (!android::base::ConsumePrefix(&service, "mdns:")) {
         return false;
@@ -1352,15 +1356,28 @@ HostRequestResult handle_host_request(std::string_view service, TransportType ty
 
     if (service == "server-status") {
         adb::proto::AdbServerStatus status;
-        if (is_libusb_enabled()) {
-            status.set_usb_backend(adb::proto::AdbServerStatus::LIBUSB);
+
+        if (is_usb_enabled()) {
+            if (is_libusb_enabled()) {
+                status.set_usb_backend(adb::proto::AdbServerStatus::LIBUSB);
+            } else {
+                status.set_usb_backend(adb::proto::AdbServerStatus::NATIVE);
+            }
         } else {
-            status.set_usb_backend(adb::proto::AdbServerStatus::NATIVE);
+            status.set_usb_backend(adb::proto::AdbServerStatus::USB_DISABLED);
         }
         status.set_usb_backend_forced(getenv("ADB_LIBUSB") != nullptr);
 
-        status.set_mdns_backend(adb::proto::AdbServerStatus::OPENSCREEN);
-        status.set_mdns_backend_forced(false);
+        if (mdns::is_enabled()) {
+            if (mdns::should_use_openscreen()) {
+                status.set_mdns_backend(adb::proto::AdbServerStatus::OPENSCREEN);
+            } else {
+                status.set_mdns_backend(adb::proto::AdbServerStatus::LIBADBMDNS);
+            }
+        } else {
+            status.set_mdns_backend(adb::proto::AdbServerStatus::MDNS_DISABLED);
+        }
+        status.set_mdns_backend_forced(getenv("ADB_MDNS_OPENSCREEN") != nullptr);
 
         status.set_version(std::string(PLATFORM_TOOLS_VERSION));
         status.set_build(android::build::GetBuildNumber());
@@ -1371,7 +1388,7 @@ HostRequestResult handle_host_request(std::string_view service, TransportType ty
         status.set_trace_level(get_trace_setting());
         status.set_mdns_enabled(mdns::is_enabled());
         status.set_keystore_path(adb_auth_get_userkey_path());
-        status.set_known_hosts_path(get_user_known_hosts_path());
+        status.set_known_hosts_path(known_wifi_hosts_file.KeyStorePath());
 
         std::string server_status_string;
         status.SerializeToString(&server_status_string);
@@ -1485,7 +1502,7 @@ HostRequestResult handle_host_request(std::string_view service, TransportType ty
                 s->transport ? s->transport
                              : acquire_one_transport(type, serial, transport_id, nullptr, &error);
         if (t) {
-            SendOkay(reply_fd, !t->serial.empty() ? t->serial : "unknown");
+            SendOkay(reply_fd, !t->name.empty() ? t->name : "unknown");
         } else {
             SendFail(reply_fd, error);
         }
@@ -1522,7 +1539,10 @@ HostRequestResult handle_host_request(std::string_view service, TransportType ty
         if (!ParseUint(&port, service)) {
           LOG(ERROR) << "received invalid port for emulator: " << service;
         } else {
-            connect_emulator(port);
+            // We are running on the fdevent thread. Connect is a long operation which
+            // can potentially block 10s until connection is established. We must run
+            // it on another thread.
+            std::thread([=] { connect_emulator(port); }).detach();
         }
 
         /* we don't even need to send a reply */

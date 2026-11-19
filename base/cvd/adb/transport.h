@@ -319,8 +319,12 @@ class atransport : public enable_weak_from_this<atransport> {
     bool online = false;
     TransportType type = kTransportAny;
 
-    // Used to identify transports for clients.
-    std::string serial;
+    // Uniquely identify a transport, the name can be freely picked. Default values:
+    // USB: The serial-number of the device (43081FDAS000ST)
+    // TCP: IP:PORT (192.168.86.43:5555)
+    // TLS: Domain Name (adb-43081FDAS000ST-XKzA7F._adb-tls-connect._tcp)
+    std::string name;
+
     std::string product;
     std::string model;
     std::string device;
@@ -350,7 +354,7 @@ class atransport : public enable_weak_from_this<atransport> {
     char token[TOKEN_SIZE] = {};
     size_t failed_auth_attempts = 0;
 
-    std::string serial_name() const { return !serial.empty() ? serial : "<unknown>"; }
+    std::string serial_name() const { return !name.empty() ? name : "<unknown>"; }
 
     void update_version(int version, size_t payload);
     int get_protocol_version() const;
@@ -465,15 +469,15 @@ bool transport_server_owns_device(std::string_view dev_path, std::string_view se
 
 /*
  * Obtain a transport from the available transports.
- * If serial is non-null then only the device with that serial will be chosen.
+ * If transport_name is non-null then only the device with that name will be chosen.
  * If transport_id is non-zero then only the device with that transport ID will be chosen.
  * If multiple devices/emulators would match, *is_ambiguous (if non-null)
  * is set to true and nullptr returned.
  * If no suitable transport is found, error is set and nullptr returned.
  */
-atransport* acquire_one_transport(TransportType type, const char* serial, TransportId transport_id,
-                                  bool* is_ambiguous, std::string* error_out,
-                                  bool accept_any_state = false);
+atransport* acquire_one_transport(TransportType type, const char* transport_name,
+                                  TransportId transport_id, bool* is_ambiguous,
+                                  std::string* error_out, bool accept_any_state = false);
 void kick_transport(atransport* t, bool reset = false);
 void update_transports();
 
@@ -485,7 +489,7 @@ void init_reconnect_handler();
 void init_mdns_transport_discovery();
 
 #if ADB_HOST
-atransport* find_transport(const char* serial);
+atransport* find_transport(const char* transport_name);
 
 void kick_all_tcp_devices();
 #endif
@@ -503,7 +507,7 @@ void register_transport(atransport* transport);
 #if ADB_HOST
 void init_usb_transport(atransport* t, usb_handle* usb);
 
-void register_libusb_transport(std::shared_ptr<Connection> connection, const char* serial,
+void register_libusb_transport(std::shared_ptr<Connection> connection, const char* transport_name,
                                const char* devpath, unsigned writable);
 
 void register_usb_transport(usb_handle* h, const char* serial, const char* devpath,
@@ -511,16 +515,21 @@ void register_usb_transport(usb_handle* h, const char* serial, const char* devpa
 
 // This should only be used for transports with connection_state == kCsNoPerm.
 void unregister_usb_transport(usb_handle* usb);
-#endif
 
+bool connect_emulator(int port);
+int connect_emulator_arbitrary_ports(int console_port, int adb_port, std::string* error);
 /* Connect to a network address and register it as a device */
 void connect_device(const std::string& address, std::string* response);
 
-/* initialize a transport object's func pointers and state */
-int init_socket_transport(atransport* t, unique_fd s, int port, bool is_emulator);
+#endif
 
-/* cause new transports to be init'd and added to the list */
-bool register_socket_transport(unique_fd s, std::string serial, int port, bool is_emulator,
+/* initialize a transport object's func pointers and state */
+int init_socket_transport(atransport* t, unique_fd fd, int port, bool is_emulator);
+
+// Cause new transports to be init'd and added to the list.
+// The transport name uniquely identify a transport. An attempt to register a transport with a name
+// already present in our pending/established list will be rejected.
+bool register_socket_transport(unique_fd s, std::string transport_name, int port, bool is_emulator,
                                atransport::ReconnectCallback reconnect, bool use_tls,
                                int* error = nullptr);
 

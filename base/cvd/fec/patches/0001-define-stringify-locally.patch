@@ -1,0 +1,14 @@
+--- a/base/cvd/fec/libfec/fec_private.h
++++ b/base/cvd/fec/libfec/fec_private.h
+@@ -29,8 +29,10 @@
+ #include <string>
+ #include <vector>
+ 
+-#include <android-base/stringify.h>
+ #include <android-base/threads.h>
++
++#define STRINGIFY_INNER(x) #x
++#define STRINGIFY(x) STRINGIFY_INNER(x)
+ #include <crypto_utils/android_pubkey.h>
+ #include <fec/ecc.h>
+ #include <fec/io.h>

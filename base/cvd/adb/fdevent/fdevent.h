@@ -31,6 +31,7 @@
 #include <variant>
 
 #include <android-base/thread_annotations.h>
+#include <android-base/threads.h>
 
 #include "adb_unique_fd.h"
 
@@ -109,14 +110,6 @@ struct fdevent_context {
     // terminate_loop_ to determine whether to stop.
     virtual void Loop() = 0;
 
-    // Assert that the caller is executing in the context of the execution
-    // thread that invoked Loop().
-    void CheckLooperThread() const;
-
-    // Assert that the caller is NOT executing in the context of the execution
-    // thread that invoked Loop().
-    void CheckNotLooperThread() const;
-
     // Queue an operation to be run on the looper thread.
     void Run(std::function<void()> fn);
 
@@ -124,11 +117,16 @@ struct fdevent_context {
     void TerminateLoop();
     virtual size_t InstalledCount() = 0;
 
+    std::optional<uint64_t> looper_thread_id_ = std::nullopt;
+
   protected:
     // Interrupt the run loop.
     virtual void Interrupt() = 0;
 
-    std::optional<uint64_t> looper_thread_id_ = std::nullopt;
+    // Assert that the caller is executing in the context of the execution
+    // thread that invoked Loop().
+    void CheckLooperThread() const;
+
     std::atomic<bool> terminate_loop_ = false;
 
     std::map<int, fdevent> installed_fdevents_;
@@ -154,12 +152,6 @@ void fdevent_del(fdevent *fde, unsigned events);
 void fdevent_set_timeout(fdevent* fde, std::optional<std::chrono::milliseconds> timeout);
 void fdevent_loop();
 
-// Delegates to the member function that checks for the initialization
-// of Loop() so that fdevent_context requests can be serially processed
-// by the global instance robustly.
-void fdevent_check_looper();
-void fdevent_check_not_looper();
-
 // Queue an operation to run on the looper event thread.
 void fdevent_run_on_looper(std::function<void()> fn);
 
@@ -167,5 +159,21 @@ void fdevent_run_on_looper(std::function<void()> fn);
 void fdevent_terminate_loop();
 size_t fdevent_installed_count();
 void fdevent_reset();
+
+fdevent_context* fdevent_get_ambient();
+
+// We use macro so _FILE_ and _FUNCTION_ get the proper value if the check fails.
+
+// Assert that the caller is executing in the context of the execution
+// thread that invoked Loop().
+#define CHECK_LOOPER_THREAD()                     \
+    if (fdevent_get_ambient()->looper_thread_id_) \
+    CHECK_EQ(*fdevent_get_ambient()->looper_thread_id_, android::base::GetThreadId())
+
+// Assert that the caller is NOT executing in the context of the execution
+// thread that invoked Loop().
+#define CHECK_NOT_LOOPER_THREAD()                 \
+    if (fdevent_get_ambient()->looper_thread_id_) \
+    CHECK_NE(*fdevent_get_ambient()->looper_thread_id_, android::base::GetThreadId())
 
 #endif

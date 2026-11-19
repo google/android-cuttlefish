@@ -210,7 +210,7 @@ int read_and_dump(borrowed_fd fd, bool use_shell_protocol = false,
 // Connects to the device "abb" service with |command| and returns the fd.
 template <typename ContainerT>
 unique_fd send_abb_exec_command(const ContainerT& command_args, std::string* error) {
-    std::string service_string = "abb_exec:" + android::base::Join(command_args, ABB_ARG_DELIMETER);
+    std::string service_string = "abb_exec:" + android::base::Join(command_args, ABB_ARG_DELIMITER);
 
     unique_fd fd(adb_connect(service_string, error));
     if (fd < 0) {

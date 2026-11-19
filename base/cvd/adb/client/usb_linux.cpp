@@ -24,6 +24,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <linux/netlink.h>
 #include <linux/usb/ch9.h>
 #include <linux/usbdevice_fs.h>
 #include <linux/version.h>
@@ -31,8 +32,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <sys/time.h>
 #include <sys/sysmacros.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -49,7 +50,9 @@
 #include <android-base/strings.h>
 
 #include "adb.h"
+#include "adb_unique_fd.h"
 #include "transport.h"
+#include "usb_linux_netlink.h"
 
 using namespace std::chrono_literals;
 using namespace std::literals;
@@ -109,18 +112,6 @@ static int is_known_device(std::string_view dev_name) {
     return 0;
 }
 
-static void kick_disconnected_devices() {
-    std::lock_guard<std::mutex> lock(g_usb_handles_mutex);
-    // kick any devices in the device list that were not found in the device scan
-    for (usb_handle* usb : g_usb_handles) {
-        if (!usb->mark) {
-            usb_kick(usb);
-        } else {
-            usb->mark = false;
-        }
-    }
-}
-
 static inline bool contains_non_digit(const char* name) {
     while (*name) {
         if (!isdigit(*name++)) return true;
@@ -128,188 +119,196 @@ static inline bool contains_non_digit(const char* name) {
     return false;
 }
 
-static void find_usb_device(const std::string& base,
-                            void (*register_device_callback)(const char*, const char*,
-                                                             unsigned char, unsigned char, int, int,
-                                                             unsigned, size_t)) {
-    std::unique_ptr<DIR, int(*)(DIR*)> bus_dir(opendir(base.c_str()), closedir);
-    if (!bus_dir) return;
+// USB device processing can come from the initial scan but also from the netlink event,
+// when that USB device has been plugged. The former is not a problem but there is a
+// race condition with the later. udev will create an entry in /dev/bus/usb that is owned
+// by root before being given permission to other users to read it. If we try to open too fast
+// we will get a EACCES (permission denied) error. To solve this problem  we retry a few time
+// to open before giving up
+static int unix_open_retry(const std::string& path, int flags) {
+    const int max_attempts = 3;
+    int fd = -1;
 
-    dirent* de;
-    while ((de = readdir(bus_dir.get())) != nullptr) {
-        if (contains_non_digit(de->d_name)) continue;
+    for (int i = 0; i < max_attempts; ++i) {
+        fd = unix_open(path, flags);
 
-        std::string bus_name = base + "/" + de->d_name;
-
-        std::unique_ptr<DIR, int(*)(DIR*)> dev_dir(opendir(bus_name.c_str()), closedir);
-        if (!dev_dir) continue;
-
-        while ((de = readdir(dev_dir.get()))) {
-            unsigned char devdesc[4096];
-            unsigned char* bufptr = devdesc;
-            unsigned char* bufend;
-            struct usb_device_descriptor* device;
-            struct usb_config_descriptor* config;
-            struct usb_interface_descriptor* interface;
-            struct usb_endpoint_descriptor *ep1, *ep2;
-            unsigned zero_mask = 0;
-            size_t max_packet_size = 0;
-
-            if (contains_non_digit(de->d_name)) continue;
-
-            std::string dev_name = bus_name + "/" + de->d_name;
-            if (is_known_device(dev_name)) {
-                continue;
-            }
-
-            int fd = unix_open(dev_name, O_RDONLY | O_CLOEXEC);
-            if (fd == -1) {
-                continue;
-            }
-
-            size_t desclength = unix_read(fd, devdesc, sizeof(devdesc));
-            bufend = bufptr + desclength;
-
-                // should have device and configuration descriptors, and atleast two endpoints
-            if (desclength < USB_DT_DEVICE_SIZE + USB_DT_CONFIG_SIZE) {
-                D("desclength %zu is too small", desclength);
-                unix_close(fd);
-                continue;
-            }
-
-            device = (struct usb_device_descriptor*)bufptr;
-            bufptr += USB_DT_DEVICE_SIZE;
-
-            if((device->bLength != USB_DT_DEVICE_SIZE) || (device->bDescriptorType != USB_DT_DEVICE)) {
-                unix_close(fd);
-                continue;
-            }
-
-            DBGX("[ %s is V:%04x P:%04x ]\n", dev_name.c_str(), device->idVendor,
-                 device->idProduct);
-
-            // should have config descriptor next
-            config = (struct usb_config_descriptor *)bufptr;
-            bufptr += USB_DT_CONFIG_SIZE;
-            if (config->bLength != USB_DT_CONFIG_SIZE || config->bDescriptorType != USB_DT_CONFIG) {
-                D("usb_config_descriptor not found");
-                unix_close(fd);
-                continue;
-            }
-
-                // loop through all the descriptors and look for the ADB interface
-            while (bufptr < bufend) {
-                unsigned char length = bufptr[0];
-                unsigned char type = bufptr[1];
-
-                if (type == USB_DT_INTERFACE) {
-                    interface = (struct usb_interface_descriptor *)bufptr;
-                    bufptr += length;
-
-                    if (length != USB_DT_INTERFACE_SIZE) {
-                        D("interface descriptor has wrong size");
-                        break;
-                    }
-
-                    DBGX("bInterfaceClass: %d,  bInterfaceSubClass: %d,"
-                         "bInterfaceProtocol: %d, bNumEndpoints: %d\n",
-                         interface->bInterfaceClass, interface->bInterfaceSubClass,
-                         interface->bInterfaceProtocol, interface->bNumEndpoints);
-
-                    if (interface->bNumEndpoints == 2 &&
-                        is_adb_interface(interface->bInterfaceClass, interface->bInterfaceSubClass,
-                                         interface->bInterfaceProtocol)) {
-                        struct stat st;
-                        char pathbuf[128];
-                        char link[256];
-                        char *devpath = nullptr;
-
-                        DBGX("looking for bulk endpoints\n");
-                            // looks like ADB...
-                        ep1 = (struct usb_endpoint_descriptor *)bufptr;
-                        bufptr += USB_DT_ENDPOINT_SIZE;
-                            // For USB 3.0 SuperSpeed devices, skip potential
-                            // USB 3.0 SuperSpeed Endpoint Companion descriptor
-                        if (bufptr+2 <= devdesc + desclength &&
-                            bufptr[0] == USB_DT_SS_EP_COMP_SIZE &&
-                            bufptr[1] == USB_DT_SS_ENDPOINT_COMP) {
-                            bufptr += USB_DT_SS_EP_COMP_SIZE;
-                        }
-                        ep2 = (struct usb_endpoint_descriptor *)bufptr;
-                        bufptr += USB_DT_ENDPOINT_SIZE;
-                        if (bufptr+2 <= devdesc + desclength &&
-                            bufptr[0] == USB_DT_SS_EP_COMP_SIZE &&
-                            bufptr[1] == USB_DT_SS_ENDPOINT_COMP) {
-                            bufptr += USB_DT_SS_EP_COMP_SIZE;
-                        }
-
-                        if (bufptr > devdesc + desclength ||
-                            ep1->bLength != USB_DT_ENDPOINT_SIZE ||
-                            ep1->bDescriptorType != USB_DT_ENDPOINT ||
-                            ep2->bLength != USB_DT_ENDPOINT_SIZE ||
-                            ep2->bDescriptorType != USB_DT_ENDPOINT) {
-                            D("endpoints not found");
-                            break;
-                        }
-
-                            // both endpoints should be bulk
-                        if (ep1->bmAttributes != USB_ENDPOINT_XFER_BULK ||
-                            ep2->bmAttributes != USB_ENDPOINT_XFER_BULK) {
-                            D("bulk endpoints not found");
-                            continue;
-                        }
-                            /* aproto 01 needs 0 termination */
-                        if (interface->bInterfaceProtocol == ADB_PROTOCOL) {
-                            max_packet_size = ep1->wMaxPacketSize;
-                            zero_mask = ep1->wMaxPacketSize - 1;
-                        }
-
-                            // we have a match.  now we just need to figure out which is in and which is out.
-                        unsigned char local_ep_in, local_ep_out;
-                        if (ep1->bEndpointAddress & USB_ENDPOINT_DIR_MASK) {
-                            local_ep_in = ep1->bEndpointAddress;
-                            local_ep_out = ep2->bEndpointAddress;
-                        } else {
-                            local_ep_in = ep2->bEndpointAddress;
-                            local_ep_out = ep1->bEndpointAddress;
-                        }
-
-                            // Determine the device path
-                        if (!fstat(fd, &st) && S_ISCHR(st.st_mode)) {
-                            snprintf(pathbuf, sizeof(pathbuf), "/sys/dev/char/%d:%d",
-                                     major(st.st_rdev), minor(st.st_rdev));
-                            ssize_t link_len = readlink(pathbuf, link, sizeof(link) - 1);
-                            if (link_len > 0) {
-                                link[link_len] = '\0';
-                                const char* slash = strrchr(link, '/');
-                                if (slash) {
-                                    snprintf(pathbuf, sizeof(pathbuf),
-                                             "usb:%s", slash + 1);
-                                    devpath = pathbuf;
-                                }
-                            }
-                        }
-
-                        register_device_callback(dev_name.c_str(), devpath, local_ep_in,
-                                                 local_ep_out, interface->bInterfaceNumber,
-                                                 device->iSerialNumber, zero_mask, max_packet_size);
-                        break;
-                    }
-                } else if (!length) {
-                    // Specific Corsair USB hubs seen in the wild report a zero-length
-                    // descriptor (resulting in an uninitialized descriptor
-                    // type: https://issuetracker.google.com/302212871).
-                    // If we don't give up here, we'll never make progress.
-                    D("interface descriptor has 0 length. type: %d", type);
-                    break;
-                } else {
-                    bufptr += length;
-                }
-            } // end of while
-
-            unix_close(fd);
+        if (fd != -1) {
+            VLOG(USB) << "USB device opened:'" << path << "' (" << (i + 1) << " attempts)";
+            return fd;  // Success
         }
+
+        // Retry only if permission is denied (udev hasn't chmod'd yet)
+        if (errno == EACCES && i < max_attempts - 1) {
+            std::this_thread::sleep_for(200ms);
+            continue;
+        }
+
+        // If it's a different error (like ENOENT), don't bother retrying
+        break;
     }
+
+    return -1;
+}
+
+static void process_usb_device(const std::string& dev_name,
+                               void (*register_device_callback)(const char*, const char*,
+                                                                unsigned char, unsigned char, int,
+                                                                int, unsigned, size_t)) {
+    VLOG(USB) << "USB device found: " << dev_name;
+    if (is_known_device(dev_name)) {
+        VLOG(USB) << "USB device already known: " << dev_name;
+        return;
+    }
+
+    int fd = unix_open_retry(dev_name, O_RDONLY | O_CLOEXEC);
+    if (fd == -1) {
+        VLOG(USB) << "Failed to open usb device: " << dev_name << ": " << strerror(errno);
+        return;
+    }
+
+    unsigned char devdesc[4096];
+    size_t desclength = unix_read(fd, devdesc, sizeof(devdesc));
+    unsigned char* bufptr = devdesc;
+    unsigned char* bufend = bufptr + desclength;
+
+    bufend = bufptr + desclength;
+
+    // should have device and configuration descriptors, and at least two endpoints
+    if (desclength < USB_DT_DEVICE_SIZE + USB_DT_CONFIG_SIZE) {
+        VLOG(USB) << "USB device descriptor too small";
+        unix_close(fd);
+        return;
+    }
+
+    struct usb_device_descriptor* device = (struct usb_device_descriptor*)bufptr;
+    bufptr += USB_DT_DEVICE_SIZE;
+
+    if ((device->bLength != USB_DT_DEVICE_SIZE) || (device->bDescriptorType != USB_DT_DEVICE)) {
+        unix_close(fd);
+        return;
+    }
+
+    DBGX("[ %s is V:%04x P:%04x ]\n", dev_name.c_str(), device->idVendor, device->idProduct);
+
+    // should have config descriptor next
+    struct usb_config_descriptor* config = (struct usb_config_descriptor*)bufptr;
+    bufptr += USB_DT_CONFIG_SIZE;
+    if (config->bLength != USB_DT_CONFIG_SIZE || config->bDescriptorType != USB_DT_CONFIG) {
+        VLOG(USB) << "usb_config_descriptor not found";
+        unix_close(fd);
+        return;
+    }
+
+    // loop through all the descriptors and look for the ADB interface
+    while (bufptr < bufend) {
+        unsigned char length = bufptr[0];
+        unsigned char type = bufptr[1];
+
+        if (type == USB_DT_INTERFACE) {
+            struct usb_interface_descriptor* interface = (struct usb_interface_descriptor*)bufptr;
+            bufptr += length;
+
+            if (length != USB_DT_INTERFACE_SIZE) {
+                D("interface descriptor has wrong size");
+                break;
+            }
+
+            DBGX("bInterfaceClass: %d,  bInterfaceSubClass: %d,"
+                 "bInterfaceProtocol: %d, bNumEndpoints: %d\n",
+                 interface->bInterfaceClass, interface->bInterfaceSubClass,
+                 interface->bInterfaceProtocol, interface->bNumEndpoints);
+
+            if (interface->bNumEndpoints == 2 &&
+                is_adb_interface(interface->bInterfaceClass, interface->bInterfaceSubClass,
+                                 interface->bInterfaceProtocol)) {
+                struct stat st;
+                char pathbuf[128];
+                char link[256];
+                char* devpath = nullptr;
+
+                DBGX("looking for bulk endpoints\n");
+                // looks like ADB...
+                struct usb_endpoint_descriptor* ep1 = (struct usb_endpoint_descriptor*)bufptr;
+                bufptr += USB_DT_ENDPOINT_SIZE;
+                // For USB 3.0 SuperSpeed devices, skip potential
+                // USB 3.0 SuperSpeed Endpoint Companion descriptor
+                if (bufptr + 2 <= devdesc + desclength && bufptr[0] == USB_DT_SS_EP_COMP_SIZE &&
+                    bufptr[1] == USB_DT_SS_ENDPOINT_COMP) {
+                    bufptr += USB_DT_SS_EP_COMP_SIZE;
+                }
+                struct usb_endpoint_descriptor* ep2 = (struct usb_endpoint_descriptor*)bufptr;
+                bufptr += USB_DT_ENDPOINT_SIZE;
+                if (bufptr + 2 <= devdesc + desclength && bufptr[0] == USB_DT_SS_EP_COMP_SIZE &&
+                    bufptr[1] == USB_DT_SS_ENDPOINT_COMP) {
+                    bufptr += USB_DT_SS_EP_COMP_SIZE;
+                }
+
+                if (bufptr > devdesc + desclength || ep1->bLength != USB_DT_ENDPOINT_SIZE ||
+                    ep1->bDescriptorType != USB_DT_ENDPOINT ||
+                    ep2->bLength != USB_DT_ENDPOINT_SIZE ||
+                    ep2->bDescriptorType != USB_DT_ENDPOINT) {
+                    D("endpoints not found");
+                    break;
+                }
+
+                // both endpoints should be bulk
+                if (ep1->bmAttributes != USB_ENDPOINT_XFER_BULK ||
+                    ep2->bmAttributes != USB_ENDPOINT_XFER_BULK) {
+                    D("bulk endpoints not found");
+                    continue;
+                }
+                /* aproto 01 needs 0 termination */
+                size_t max_packet_size = 0;
+                unsigned zero_mask = 0;
+
+                if (interface->bInterfaceProtocol == ADB_PROTOCOL) {
+                    max_packet_size = ep1->wMaxPacketSize;
+                    zero_mask = ep1->wMaxPacketSize - 1;
+                }
+
+                // we have a match.  now we just need to figure out which is in and which is out.
+                unsigned char local_ep_in, local_ep_out;
+                if (ep1->bEndpointAddress & USB_ENDPOINT_DIR_MASK) {
+                    local_ep_in = ep1->bEndpointAddress;
+                    local_ep_out = ep2->bEndpointAddress;
+                } else {
+                    local_ep_in = ep2->bEndpointAddress;
+                    local_ep_out = ep1->bEndpointAddress;
+                }
+
+                // Determine the device path
+                if (!fstat(fd, &st) && S_ISCHR(st.st_mode)) {
+                    snprintf(pathbuf, sizeof(pathbuf), "/sys/dev/char/%d:%d", major(st.st_rdev),
+                             minor(st.st_rdev));
+                    ssize_t link_len = readlink(pathbuf, link, sizeof(link) - 1);
+                    if (link_len > 0) {
+                        link[link_len] = '\0';
+                        const char* slash = strrchr(link, '/');
+                        if (slash) {
+                            snprintf(pathbuf, sizeof(pathbuf), "usb:%s", slash + 1);
+                            devpath = pathbuf;
+                        }
+                    }
+                }
+
+                register_device_callback(dev_name.c_str(), devpath, local_ep_in, local_ep_out,
+                                         interface->bInterfaceNumber, device->iSerialNumber,
+                                         zero_mask, max_packet_size);
+                break;
+            }
+        } else if (!length) {
+            // Specific Corsair USB hubs seen in the wild report a zero-length
+            // descriptor (resulting in an uninitialized descriptor
+            // type: https://issuetracker.google.com/302212871).
+            // If we don't give up here, we'll never make progress.
+            D("interface descriptor has 0 length. type: %d", type);
+            break;
+        } else {
+            bufptr += length;
+        }
+    }  // end of while
+
+    unix_close(fd);
 }
 
 static int usb_bulk_write(usb_handle* h, const void* data, int len) {
@@ -619,16 +618,104 @@ static void register_device(const char* dev_name, const char* dev_path, unsigned
     register_usb_transport(done_usb, serial.c_str(), dev_path, done_usb->writeable);
 }
 
+// Perform one manual scan of /dev/bus/usb to find devices already plugged in
+static void scan_usb_devices(void (*register_device_callback)(const char*, const char*,
+                                                              unsigned char, unsigned char, int,
+                                                              int, unsigned, size_t)) {
+    VLOG(USB) << "Scanning for USB devices...";
+    std::string base = "/dev/bus/usb";
+    std::unique_ptr<DIR, int (*)(DIR*)> bus_dir(opendir(base.c_str()), closedir);
+    if (!bus_dir) {
+        LOG(WARNING) << "Failed to open bus directory '" << base << "': " << strerror(errno);
+        return;
+    }
+
+    dirent* de;
+    while ((de = readdir(bus_dir.get())) != nullptr) {
+        if (contains_non_digit(de->d_name)) {
+            continue;
+        }
+        std::string bus_name = base + "/" + de->d_name;
+        std::unique_ptr<DIR, int (*)(DIR*)> dev_dir(opendir(bus_name.c_str()), closedir);
+        if (!dev_dir) {
+            continue;
+        }
+        dirent* de2;
+        while ((de2 = readdir(dev_dir.get()))) {
+            if (contains_non_digit(de2->d_name)) {
+                continue;
+            }
+            process_usb_device(bus_name + "/" + de2->d_name, register_device_callback);
+        }
+    }
+}
+
 static void device_poll_thread() {
     adb_thread_setname("device poll");
-    D("Created device thread");
-    while (true) {
-        // TODO: Use inotify.
-        find_usb_device("/dev/bus/usb", register_device);
-        adb_notify_device_scan_complete();
-        kick_disconnected_devices();
-        std::this_thread::sleep_for(1s);
+    VLOG(USB) << "USB device poll thread started";
+
+    // Initial Scan
+    scan_usb_devices(register_device);
+    adb_notify_device_scan_complete();
+
+    // Set up netlink to get add/remove events
+    unique_fd fd{socket(AF_NETLINK, SOCK_RAW, NETLINK_KOBJECT_UEVENT)};
+    if (fd == -1) {
+        LOG(WARNING) << "Failed to open netlink socket: " << strerror(errno);
+        return;
     }
+
+    sockaddr_nl sa = {.nl_family = AF_NETLINK, .nl_groups = 1};
+    if (bind(fd.get(), (sockaddr*)&sa, sizeof(sa)) < 0) {
+        LOG(WARNING) << "Failed to bind netlink socket: " << strerror(errno);
+        return;
+    }
+
+    char buffer[4096];
+    while (true) {
+        ssize_t len = TEMP_FAILURE_RETRY(recv(fd.get(), buffer, sizeof(buffer) - 1, 0));
+        if (len < 0) {
+            LOG(ERROR) << "Netlink socket recv has failed: " << strerror(errno);
+            break;
+        }
+        NetlinkMessage msg(buffer, len);
+
+        if (!msg.has_attr("SUBSYSTEM", "usb")) {
+            LOG(WARNING) << "Netlink: SUBSYSTEM not found";
+            continue;
+        }
+
+        // We also receive "add" for "usb_interface" but we only look for whole device.
+        if (!msg.has_attr("DEVTYPE", "usb_device")) {
+            LOG(WARNING) << "Netlink: DEVTYPE not found";
+            continue;
+        }
+
+        std::string dev_name = "/dev/" + msg.attr("DEVNAME");
+        if (dev_name.empty()) {
+            LOG(WARNING) << "Netlink: usb_device DEVNAME not found";
+            continue;
+        }
+
+        if (msg.has_attr("ACTION", "add")) {
+            VLOG(USB) << "Netlink: USB Device Added: " << dev_name;
+            process_usb_device(dev_name, register_device);
+            continue;
+        }
+
+        if (msg.has_attr("ACTION", "remove")) {
+            VLOG(USB) << "Netlink: USB Device Removed: " << dev_name;
+            std::lock_guard<std::mutex> lock(g_usb_handles_mutex);
+            for (usb_handle* usb : g_usb_handles) {
+                if (usb->path == dev_name) {
+                    usb_kick(usb);
+                    break;
+                }
+            }
+            continue;
+        }
+    }
+    VLOG(USB) << "USB device poll thread stopped";
 }
 
 void usb_init() {

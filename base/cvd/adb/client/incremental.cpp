@@ -36,6 +36,7 @@
 #include <openssl/base64.h>
 
 #include "adb_install.h"
+#include "adb_io.h"
 #include "adb_unique_fd.h"
 #include "commandline.h"
 #include "incremental_utils.h"
@@ -44,6 +45,12 @@
 using namespace std::literals;
 
 namespace incremental {
+
+enum class CheckPolicy {
+    NORMAL,
+    // Allows missing signatures for files that would normally require a v4 signature.
+    ALLOW_MISSING_SIGNATURES,
+};
 
 // Used to be sent as arguments via install-incremental, to describe the IncrementalServer database.
 class ISDatabaseEntry {
@@ -189,7 +196,7 @@ static std::optional<std::pair<unique_fd, size_t>> open_and_get_size(const std::
 // - For unsigned files in the list, the caller is expected to send them through stdin before
 //   streaming the signed ones, in the order specified by the list.
 static std::optional<std::vector<std::unique_ptr<ISDatabaseEntry>>> build_database(
-        const Files& files, std::string* error) {
+        const Files& files, CheckPolicy check_policy, std::string* error) {
     std::unordered_map<std::string, std::pair<std::vector<char>, int32_t>> signatures_by_file;
 
     for (const std::string& file : files) {
@@ -198,8 +205,13 @@ static std::optional<std::vector<std::unique_ptr<ISDatabaseEntry>>> build_databa
             return {};
         }
         if (requires_v4_signature(file) && signature_and_tree_size->first.empty()) {
-            *error = std::format("V4 signature missing for '{}'", file);
-            return {};
+            std::string error_msg = std::format("V4 signature missing for '{}'", file);
+            if (check_policy == CheckPolicy::ALLOW_MISSING_SIGNATURES) {
+                fprintf(stderr, "%s.\n", error_msg.c_str());
+            } else {
+                *error = std::move(error_msg);
+                return {};
+            }
         }
         signatures_by_file[file] = std::move(*signature_and_tree_size);
     }
@@ -258,7 +270,7 @@ static std::optional<std::vector<std::unique_ptr<ISDatabaseEntry>>> build_databa
 }
 
 // Opens a connection and sends install-incremental to the device along with the database.
-// Returns a socket FD connected to the `abb` deamon on device, where writes to it go to `pm`
+// Returns a socket FD connected to the `abb` daemon on device, where writes to it go to `pm`
 // shell's stdin and reads from it come from `pm` shell's stdout.
 static std::optional<unique_fd> connect_and_send_database(
         const std::vector<std::unique_ptr<ISDatabaseEntry>>& database, const Args& passthrough_args,
@@ -280,7 +292,7 @@ static std::optional<unique_fd> connect_and_send_database(
     return connection_fd;
 }
 
-bool can_install(const Files& files) {
+bool should_use_incremental_by_default(const Files& files) {
     for (const auto& file : files) {
         struct stat st;
         if (stat(file.c_str(), &st)) {
@@ -327,12 +339,23 @@ static bool wait_for_installation(int read_fd, std::string* error) {
     static constexpr int kMaxMessageSize = 256;
     std::string child_stdout;
     child_stdout.resize(kMaxMessageSize);
-    int bytes_read = adb_read(read_fd, child_stdout.data(), kMaxMessageSize);
-    if (bytes_read < 0) {
+    if (!ReadFdExactly(read_fd, child_stdout.data(), kMaxMessageSize) && errno != 0) {
         *error = std::format("Failed to read output: {}", strerror(errno));
         return false;
     }
-    child_stdout.resize(bytes_read);
+    // Truncate to '\0'. `ReadFdExactly` reads until the end of the steam and leaves the remaining
+    // bytes in the buffer unchanged, which were default-initialized ('\0') by
+    // `std::string::resize`.
+    size_t len = child_stdout.find('\0');
+    if (len != std::string::npos) {
+        child_stdout.resize(len);
+    }
+
+    printf("%s", child_stdout.c_str());
+    if (!child_stdout.ends_with('\n')) {
+        printf("\n");
+    }
+
     // wait till installation either succeeds or fails
     if (child_stdout.find("Success") != std::string::npos) {
         return true;
@@ -342,17 +365,15 @@ static bool wait_for_installation(int read_fd, std::string* error) {
     if (begin_itr != std::string::npos) {
         auto end_itr = child_stdout.rfind("]");
         if (end_itr != std::string::npos && end_itr >= begin_itr) {
-            *error = std::format(
-                    "Install failed: {}",
-                    std::string_view(child_stdout).substr(begin_itr, end_itr - begin_itr + 1));
+            *error = "Install failed";
             return false;
         }
     }
-    if (bytes_read == kMaxMessageSize) {
-        *error = std::format("Output too long: {}", child_stdout);
+    if (child_stdout.length() == kMaxMessageSize) {
+        *error = "Output too long";
         return false;
     }
-    *error = std::format("Failed to parse output: {}", child_stdout);
+    *error = "Failed to parse output";
     return false;
 }
 
@@ -366,15 +387,15 @@ static std::optional<Process> start_inc_server_and_stream_signed_files(
         return {};
     }
     auto [pipe_read_fd, pipe_write_fd] = print_fds;
-    auto fd_cleaner = android::base::make_scope_guard([&] {
-        adb_close(pipe_read_fd);
-        adb_close(pipe_write_fd);
-    });
+    auto read_fd_cleaner = android::base::make_scope_guard([&] { adb_close(pipe_read_fd); });
+    auto write_fd_cleaner = android::base::make_scope_guard([&] { adb_close(pipe_write_fd); });
     close_on_exec(pipe_read_fd);
 
     // We spawn an incremental server that will be up until all blocks have been fed to the
     // Package Manager. This could take a long time depending on the size of the files to
     // stream so we use a process able to outlive adb.
+    // Note that there might not be any signed files in the database, in which case we still need
+    // to spawn the server to process the output from `pm`.
     std::vector<std::string> args{
             "inc-server",
             std::to_string(cast_handle_to_int(adb_get_os_handle(connection_fd.get()))),
@@ -396,6 +417,9 @@ static std::optional<Process> start_inc_server_and_stream_signed_files(
         *error = "adb: failed to fork";
         return {};
     }
+    // Close the write FD, so that reads on the read FD returns as soon as the child process exits.
+    adb_close(pipe_write_fd);
+    write_fd_cleaner.Disable();
     auto server_killer = android::base::make_scope_guard([&] { child.kill(); });
 
     // Block until the Package Manager has received enough blocks to declare the installation
@@ -410,10 +434,10 @@ static std::optional<Process> start_inc_server_and_stream_signed_files(
     return child;
 }
 
-std::optional<Process> install(const Files& files, const Args& passthrough_args,
-                               std::string* error) {
+static std::optional<Process> install(const Files& files, const Args& passthrough_args,
+                                      CheckPolicy check_policy, std::string* error) {
     std::optional<std::vector<std::unique_ptr<ISDatabaseEntry>>> database =
-            build_database(files, error);
+            build_database(files, check_policy, error);
     if (!database.has_value()) {
         return {};
     }
@@ -430,7 +454,9 @@ std::optional<Process> install(const Files& files, const Args& passthrough_args,
 
 std::optional<Process> install(const Files& files, const Args& passthrough_args, bool silent) {
     std::string error;
-    std::optional<Process> res = install(files, passthrough_args, &error);
+    std::optional<Process> res =
+            install(files, passthrough_args,
+                    silent ? CheckPolicy::NORMAL : CheckPolicy::ALLOW_MISSING_SIGNATURES, &error);
     if (!res.has_value() && !silent) {
         fprintf(stderr, "%s.\n", error.c_str());
     }

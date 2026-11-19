@@ -333,12 +333,12 @@ struct weak_ptr {
     }
 
     T* get() const {
-        fdevent_check_looper();
+        CHECK_LOOPER_THREAD();
         return ptr_;
     }
 
     void reset(T* ptr = nullptr) {
-        fdevent_check_looper();
+        CHECK_LOOPER_THREAD();
 
         if (ptr == ptr_) {
             return;
@@ -364,7 +364,7 @@ template <typename T>
 struct enable_weak_from_this {
     ~enable_weak_from_this() {
         if (!weak_ptrs_.empty()) {
-            fdevent_check_looper();
+            CHECK_LOOPER_THREAD();
             for (auto& weak : weak_ptrs_) {
                 weak->ptr_ = nullptr;
             }

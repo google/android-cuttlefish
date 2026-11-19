@@ -1,0 +1,28 @@
+--- a/base/cvd/adb/sysdeps.h
++++ b/base/cvd/adb/sysdeps.h
+@@ -606,7 +606,7 @@
+     return _fd_set_error_str(socket_inaddr_any_server(port, type), error);
+ }
+ 
+-static int get_adb_connect_timeout() {
++[[maybe_unused]] static int get_adb_connect_timeout() {
+     // Problematic pull services encountered (e.g.: chrome://inspect/#devices) tend to default
+     // to pulling every 1s. Defaulting to 500ms gives enough time to fdevent to process packets
+     // between the time these services hit us.
+@@ -614,15 +614,7 @@
+ }
+ 
+ inline int network_local_client(const char* name, int namespace_id, int type, std::string* error) {
+-    int timeout = get_adb_connect_timeout();
+-    // As a failsafe for the new socket_local_client_timeout, we revert to the legacy version if
+-    // no timeout is requested.
+-    if (timeout == -1) {
+-        return _fd_set_error_str(socket_local_client(name, namespace_id, type), error);
+-    } else {
+-        return _fd_set_error_str(socket_local_client_timeout(name, namespace_id, type, timeout),
+-                                 error);
+-    }
++    return _fd_set_error_str(socket_local_client(name, namespace_id, type), error);
+ }
+ 
+ inline int network_local_server(const char* name, int namespace_id, int type, std::string* error) {

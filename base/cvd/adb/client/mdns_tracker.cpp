@@ -38,7 +38,7 @@ static std::list<MdnsTracker*> mdns_trackers [[clang::no_destroy]];
 static std::string list_mdns_services() {
     adb::proto::MdnsServices services;
 
-    mdns::discovered_services.ForAllServices([&](const mdns::ServiceInfo& service) {
+    mdns::discovered_services.ForAllServices([&](const ServiceInfo& service) {
         adb::proto::MdnsService* s = nullptr;
 
         if (service.service == ADB_FULL_MDNS_SERVICE_TYPE(ADB_MDNS_SERVICE_TYPE)) {
@@ -49,7 +49,7 @@ static std::string list_mdns_services() {
             s = pair->mutable_service();
         } else if (service.service == ADB_FULL_MDNS_SERVICE_TYPE(ADB_MDNS_TLS_CONNECT_TYPE)) {
             auto* tls = services.add_tls();
-            tls->set_known_device(adb_wifi_is_known_host(service.instance));
+            tls->set_known_device(known_wifi_hosts_file.IsKnownHost(service.instance));
             s = tls->mutable_service();
         } else {
             LOG(WARNING) << "Unknown service type: " << service;
@@ -60,15 +60,31 @@ static std::string list_mdns_services() {
         s->set_service(service.service);
         s->set_port(service.port);
 
-        s->set_ipv4(service.v4_address_string());
-        auto ipv6 = s->add_ipv6();
-        ipv6->append(service.v6_address_string());
+        if (service.v4_address.has_value()) {
+            s->set_ipv4(service.v4_address_string());
+        }
+
+        for (auto& address : service.v6_addresses) {
+            auto ipv6 = s->add_ipv6();
+            ipv6->append(address.to_string());
+        }
+
+        s->set_mdns_service_version(service.attributes.contains("v") ? service.attributes.at("v")
+                                                                     : "1");
+
+        s->set_hostname(service.hostname);
 
         if (service.attributes.contains("name")) {
             s->set_product_model(service.attributes.at("name"));
         }
         if (service.attributes.contains("api")) {
             s->set_build_version_sdk_full(service.attributes.at("api"));
+        }
+        if (service.attributes.contains("given_name")) {
+            s->set_given_name(service.attributes.at("given_name"));
+        }
+        if (service.attributes.contains("serial")) {
+            s->set_serial(service.attributes.at("serial"));
         }
     });
 
@@ -78,7 +94,7 @@ static std::string list_mdns_services() {
 }
 
 static void mdns_tracker_close(asocket* socket) {
-    fdevent_check_looper();
+    CHECK_LOOPER_THREAD();
     auto* tracker = reinterpret_cast<MdnsTracker*>(socket);
     asocket* peer = socket->peer;
 
@@ -92,14 +108,14 @@ static void mdns_tracker_close(asocket* socket) {
 }
 
 static int device_tracker_enqueue(asocket* socket, apacket::payload_type) {
-    fdevent_check_looper();
+    CHECK_LOOPER_THREAD();
     /* you can't read from a device tracker, close immediately */
     mdns_tracker_close(socket);
     return -1;
 }
 
 static int mdns_tracker_send(const MdnsTracker* tracker, const std::string& string) {
-    fdevent_check_looper();
+    CHECK_LOOPER_THREAD();
     asocket* peer = tracker->socket_.peer;
 
     apacket::payload_type data;
@@ -112,7 +128,7 @@ static int mdns_tracker_send(const MdnsTracker* tracker, const std::string& stri
 }
 
 static void mdns_tracker_ready(asocket* socket) {
-    fdevent_check_looper();
+    CHECK_LOOPER_THREAD();
     auto* tracker = reinterpret_cast<MdnsTracker*>(socket);
 
     // We want to send the service list when the tracker connects
@@ -124,7 +140,7 @@ static void mdns_tracker_ready(asocket* socket) {
 }
 
 asocket* create_mdns_tracker() {
-    fdevent_check_looper();
+    CHECK_LOOPER_THREAD();
     auto* tracker = new MdnsTracker();
     VLOG(MDNS) << "mdns tracker created";
 

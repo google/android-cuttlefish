@@ -113,6 +113,7 @@ static void setup_trace_mask() {
         return;
     }
 
+    // LINT.IfChange
     std::unordered_map<std::string, int> trace_flags = {
             {"1", -1},
             {"all", -1},
@@ -133,6 +134,7 @@ static void setup_trace_mask() {
             {"mdns", MDNS},
             {"mdns-stack", MDNS_STACK},
     };
+    // LINT.ThenChange(packages/modules/adb/docs/user/adb.1.md)
 
     // Make sure we check for ALL enum in AdbTrace.
     size_t num_flags = trace_flags.size() - 2;

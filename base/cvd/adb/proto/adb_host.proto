@@ -66,12 +66,15 @@ message AdbServerStatus {
         UNKNOWN_USB = 0;
         NATIVE = 1;
         LIBUSB = 2;
+        USB_DISABLED = 3;
     }
 
     enum MdnsBackend {
         UNKNOWN_MDNS = 0;
         BONJOUR = 1;
         OPENSCREEN = 2;
+        LIBADBMDNS = 3;
+        MDNS_DISABLED = 4;
      }
 
      UsbBackend usb_backend = 1;
@@ -134,6 +137,18 @@ message MdnsService {
 
     // Comes from device property "ro.build.version.sdk_full"
     optional string build_version_sdk_full = 8;
+
+    // The name of the device, e.g. "Foo's Pixel 10".
+    optional string given_name = 9;
+
+    // Comes from device property "ro.serialno"
+    optional string serial = 10;
+
+    // Used by clients to manage changes to the MdnsService.
+    optional string mdns_service_version = 11;
+
+    // The local hostname the service is advertised under.
+    optional string hostname = 12;
 }
 
 

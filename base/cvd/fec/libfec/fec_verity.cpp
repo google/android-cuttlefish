@@ -373,7 +373,7 @@ static int parse_table(fec_handle *f, uint64_t offset, uint32_t size, bool useec
     for (const auto& token : tokens) {
         switch (i++) {
         case 0: /* version */
-            if (token != stringify(VERITY_TABLE_VERSION)) {
+            if (token != STRINGIFY(VERITY_TABLE_VERSION)) {
                 error("unsupported verity table version: %s", token.c_str());
                 return -1;
             }
@@ -381,7 +381,7 @@ static int parse_table(fec_handle *f, uint64_t offset, uint32_t size, bool useec
         case 3: /* data_block_size */
         case 4: /* hash_block_size */
             /* assume 4 KiB block sizes for everything */
-            if (token != stringify(FEC_BLOCKSIZE)) {
+            if (token != STRINGIFY(FEC_BLOCKSIZE)) {
                 error("unsupported verity block size: %s", token.c_str());
                 return -1;
             }
@@ -436,7 +436,7 @@ static int parse_table(fec_handle *f, uint64_t offset, uint32_t size, bool useec
 
     if (i < VERITY_TABLE_ARGS) {
         error("not enough arguments in verity table: %d; expected at least "
-            stringify(VERITY_TABLE_ARGS), i);
+            STRINGIFY(VERITY_TABLE_ARGS), i);
         return -1;
     }
 
@@ -512,8 +512,8 @@ static int validate_header(const fec_handle *f, const verity_header *header,
     if (header->length < VERITY_MIN_TABLE_SIZE ||
         header->length > VERITY_MAX_TABLE_SIZE) {
         error("invalid verity table size: %u; expected ["
-            stringify(VERITY_MIN_TABLE_SIZE) ", "
-            stringify(VERITY_MAX_TABLE_SIZE) ")", header->length);
+            STRINGIFY(VERITY_MIN_TABLE_SIZE) ", "
+            STRINGIFY(VERITY_MAX_TABLE_SIZE) ")", header->length);
         return -1;
     }
 

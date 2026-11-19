@@ -1,15 +1,15 @@
 --- a/base/cvd/adb/client/incremental_utils.cpp
 +++ b/base/cvd/adb/client/incremental_utils.cpp
-@@ -21,8 +21,6 @@
+@@ -30,8 +30,6 @@
  #include <android-base/endian.h>
  #include <android-base/mapped_file.h>
  #include <android-base/strings.h>
 -#include <ziparchive/zip_archive.h>
 -#include <ziparchive/zip_writer.h>
  
- #include <algorithm>
- #include <array>
-@@ -38,10 +36,6 @@ using namespace std::literals;
+ #include "adb_io.h"
+ #include "adb_trace.h"
+@@ -41,10 +39,6 @@
  
  namespace incremental {
  
@@ -20,7 +20,7 @@
  Size verity_tree_blocks_for_file(Size fileSize) {
      if (fileSize == 0) {
          return 0;
-@@ -144,16 +138,6 @@ static T valueAt(borrowed_fd fd, off64_t offset) {
+@@ -194,16 +188,6 @@
      return t;
  }
  
@@ -37,7 +37,7 @@
  template <class T>
  static void unduplicate(std::vector<T>& v) {
      std::unordered_set<T> uniques(v.size());
-@@ -162,231 +146,9 @@ static void unduplicate(std::vector<T>& v) {
+@@ -212,230 +196,9 @@
              v.end());
  }
  
@@ -174,17 +174,16 @@
 -    return zip;
 -}
 -
--static std::pair<ZipArchiveHandle, std::unique_ptr<android::base::MappedFile>> openZipArchive(
+-static std::pair<ZipArchiveHandle, std::optional<android::base::MappedFile>> openZipArchive(
 -        borrowed_fd fd, Size fileSize) {
 -#ifndef __LP64__
 -    if (fileSize >= INT_MAX) {
--        return {openZipArchiveFd(fd), nullptr};
+-        return {openZipArchiveFd(fd), std::nullopt};
 -    }
 -#endif
--    auto mapping =
--            android::base::MappedFile::FromOsHandle(adb_get_os_handle(fd), 0, fileSize, PROT_READ);
+-    auto mapping = android::base::MappedFile::Create(adb_get_os_handle(fd), 0, fileSize, PROT_READ);
 -    if (!mapping) {
--        D("%s failed at FromOsHandle: %d", __func__, errno);
+-        D("%s failed at MappedFile::Create: %d", __func__, errno);
 -        return {};
 -    }
 -    ZipArchiveHandle zip;

@@ -22,6 +22,8 @@ cc_binary(
         "filesystem.h",
         "fs.cpp",
         "fs.h",
+        "h2h_workaround.cpp",
+        "h2h_workaround.h",
         "libstorage_literals/storage_literals/storage_literals.h",
         "main.cpp",
         "result.h",

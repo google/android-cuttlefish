@@ -30,12 +30,15 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <cutils/sockets.h>
+#include "android-base/file.h"
 
 #include "adb.h"
 #include "adb_io.h"
 #include "adb_unique_fd.h"
 #include "adb_utils.h"
-#include "adb_wifi.h"
+#if ADB_HOST
+#include "client/adb_wifi.h"
+#endif
 #include "services.h"
 #include "socket_spec.h"
 #include "sysdeps.h"
@@ -140,6 +143,8 @@ void connect_emulator(const std::string& port_spec, std::string* response) {
 }
 
 static void connect_service(unique_fd fd, std::string host) {
+    CHECK_NOT_LOOPER_THREAD();
+
     std::string response;
     if (!strncmp(host.c_str(), "emu:", 4)) {
         connect_emulator(host.c_str() + 4, &response);
@@ -154,6 +159,7 @@ static void connect_service(unique_fd fd, std::string host) {
 static void pair_service(unique_fd fd, std::string host, std::string password) {
     std::string response;
     adb_wifi_pair_device(host, password, response);
+    VLOG(MDNS) << "Pairing response: '" << response << "'";
     if (android::base::StartsWith(response, "Successful")) {
         SendProtocolString(fd.get(), response);
     } else {
@@ -252,6 +258,13 @@ static void wait_service(unique_fd fd, std::string serial, TransportId transport
 #endif
 
 #if ADB_HOST
+
+static void list_mdns_known_hosts(const unique_fd& fd) {
+    std::string response;
+    android::base::ReadFileToString(known_wifi_hosts_file.KeyStorePath(), &response);
+    SendProtocolString(fd.get(), response);
+}
+
 asocket* host_service_to_socket(std::string_view name, std::string_view serial,
                                 TransportId transport_id) {
     if (name == "track-devices") {
@@ -285,6 +298,10 @@ asocket* host_service_to_socket(std::string_view name, std::string_view serial,
         return create_local_socket(std::move(fd));
     } else if (android::base::ConsumePrefix(&name, HostServices::kTrackMdnsServices)) {
         return create_mdns_tracker();
+    } else if (android::base::ConsumePrefix(&name, HostServices::kListMdnsKnownHosts)) {
+        unique_fd fd = create_service_thread(
+                "list-mdns-known-hosts", std::bind(list_mdns_known_hosts, std::placeholders::_1));
+        return create_local_socket(std::move(fd));
     }
     return nullptr;
 }

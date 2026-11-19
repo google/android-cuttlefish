@@ -30,6 +30,9 @@
 #include <vector>
 
 #include <android-base/threads.h>
+
+#define STRINGIFY_INNER(x) #x
+#define STRINGIFY(x) STRINGIFY_INNER(x)
 #include <crypto_utils/android_pubkey.h>
 #include <fec/ecc.h>
 #include <fec/io.h>
@@ -171,11 +174,6 @@ extern int verity_parse_header(fec_handle *f, uint64_t offset);
 #ifndef unlikely
     #define unlikely(x) __builtin_expect(!!(x), 0)
     #define likely(x)   __builtin_expect(!!(x), 1)
-#endif
-
-#ifndef stringify
-    #define __stringify(x) #x
-    #define stringify(x) __stringify(x)
 #endif
 
 /*  warnings, errors, debug output */

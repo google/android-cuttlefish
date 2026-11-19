@@ -18,6 +18,48 @@
 
 #include "adb_trace.h"
 
+#include <algorithm>
+
+std::ostream& operator<<(std::ostream& os, const ServiceInfo& info) {
+    os << info.instance << "." << info.service << ":" << info.port << "";
+    return os;
+}
+
+// Parse a key/value from a TXT record. Format expected is "key=value"
+std::tuple<bool, std::string, std::string> ServiceInfo::ParseTxtKeyValue(const std::string& kv) {
+    auto split_loc = std::ranges::find(kv, static_cast<uint8_t>('='));
+    if (split_loc == kv.end()) {
+        return {false, "", ""};
+    }
+    std::string key;
+    std::string value;
+
+    key.assign(kv.begin(), split_loc);
+    if (split_loc + 1 != kv.end()) {
+        value.assign(split_loc + 1, kv.end());
+    }
+
+    if (key.empty()) {
+        return {false, key, value};
+    }
+    return {true, key, value};
+}
+
+std::unordered_map<std::string, std::string> ServiceInfo::ParseTxt(
+        const std::vector<std::vector<uint8_t>>& txt) {
+    std::unordered_map<std::string, std::string> kv;
+    for (auto& in_kv : txt) {
+        std::string skv = std::string(in_kv.begin(), in_kv.end());
+        auto [valid, key, value] = ParseTxtKeyValue(skv);
+        if (!valid) {
+            VLOG(MDNS) << "Bad TXT value '" << skv << "'";
+            continue;
+        }
+        kv[key] = value;
+    }
+    return kv;
+}
+
 namespace mdns {
 DiscoveredServices discovered_services [[clang::no_destroy]];
 
@@ -31,10 +73,46 @@ void DiscoveredServices::ServiceCreated(const ServiceInfo& service_info) {
     services_[fq_name(service_info)] = service_info;
 }
 
-void DiscoveredServices::ServiceUpdated(const ServiceInfo& service_info) {
+bool DiscoveredServices::ServiceUpdated(const ServiceInfo& service_info) {
     std::lock_guard lock(services_mutex_);
-    VLOG(MDNS) << "Service update " << service_info;
-    services_[fq_name(service_info)] = service_info;
+
+    const auto key = fq_name(service_info);
+    if (!services_.contains(key)) {
+        services_[key] = service_info;
+        return true;
+    }
+
+    auto& current_service = services_[key];
+    bool updated = false;
+
+    if (service_info.v4_address.has_value() &&
+        service_info.v4_address != current_service.v4_address) {
+        current_service.v4_address = service_info.v4_address;
+        updated = true;
+    }
+
+    for (auto& new_address : service_info.v6_addresses) {
+        if (!current_service.v6_addresses.contains(new_address)) {
+            updated = true;
+            current_service.v6_addresses.insert(new_address);
+        }
+    }
+
+    if (service_info.port != current_service.port) {
+        current_service.port = service_info.port;
+        updated = true;
+    }
+
+    if (service_info.attributes != current_service.attributes) {
+        current_service.attributes = service_info.attributes;
+        updated = true;
+    }
+
+    if (updated) {
+        VLOG(MDNS) << "Service update " << service_info;
+    }
+
+    return updated;
 }
 
 void DiscoveredServices::ServiceDeleted(const ServiceInfo& service_info) {

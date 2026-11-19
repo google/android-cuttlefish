@@ -29,19 +29,25 @@
 #include "adb_utils.h"
 
 // Return the console authentication command for the emulator, if needed
-static std::string adb_construct_auth_command() {
+static std::string adb_construct_auth_command(const std::string& adb_homedir_path) {
     static const char auth_token_filename[] = ".emulator_console_auth_token";
 
-    std::string auth_token_path = adb_get_homedir_path();
+    std::string auth_token_path = adb_homedir_path;
     auth_token_path += OS_PATH_SEPARATOR;
     auth_token_path += auth_token_filename;
 
     // read the token
     std::string token;
-    if (!android::base::ReadFileToString(auth_token_path, &token)
-        || token.empty()) {
-        // we either can't read the file, or it doesn't exist, or it's empty -
+    if (!android::base::ReadFileToString(auth_token_path, &token)) {
+        // we either can't read the file, or it doesn't exist -
         // either way we won't add any authentication command.
+        return {};
+    }
+
+    token = android::base::Trim(token);
+    if (token.empty()) {
+        // if the file is empty or just whitespace, we won't add any
+        // authentication command.
         return {};
     }
 
@@ -50,6 +56,10 @@ static std::string adb_construct_auth_command() {
     command += token;
     command += '\n';
     return command;
+}
+
+static std::string adb_construct_auth_command() {
+    return adb_construct_auth_command(adb_get_homedir_path());
 }
 
 // Return the console port of the currently connected emulator (if any) or -1 if

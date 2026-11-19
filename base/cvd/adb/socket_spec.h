@@ -27,11 +27,18 @@ extern bool gListenAll;
 bool is_socket_spec(std::string_view spec);
 bool is_local_socket_spec(std::string_view spec);
 
-bool socket_spec_connect(unique_fd* fd, std::string_view address, int* port, std::string* serial,
-                         std::string* error);
+// Connect to 'address'.
+// - fd (out): The file descriptor of the connection.
+// - address (in) : Can be IP:PORT, or a HOSTNAME (even .local) to resolve.
+// - port (out): port the connection was established on.
+// - transport_name (out): name of the transport_name (see Transport::name).
+// - error (out): error string if the function returns false.
+bool socket_spec_connect(unique_fd* fd, std::string_view address, int* port,
+                         std::string* transport_name, std::string* error);
+
 int socket_spec_listen(std::string_view spec, std::string* error, int* resolved_tcp_port = nullptr);
 
 bool parse_tcp_socket_spec(std::string_view spec, std::string* hostname, int* port,
-                           std::string* serial, std::string* error);
+                           std::string* canonical_address, std::string* error);
 
 int get_host_socket_spec_port(std::string_view spec, std::string* error);

@@ -53,4 +53,6 @@ std::optional<MdnsInstance> mdns_parse_instance_name(std::string_view name);
 
 // Return true if mdns backend is enabled
 bool is_enabled();
+
+bool should_use_openscreen();
 }  // namespace mdns

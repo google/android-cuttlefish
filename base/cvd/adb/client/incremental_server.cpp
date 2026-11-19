@@ -327,7 +327,13 @@ bool IncrementalServer::SkipToRequest(void* buffer, size_t* size, bool blocking)
             continue;
         }
 
-        D("Failed to read from fd %d: %d. Exit", adb_fd_.get(), errno);
+        // Nothing was read. Remove the padding added before the read.
+        buffer_.resize(bsize);
+        if (r == 0) {
+            D("Disconnected from fd %d. Exit", adb_fd_.get());
+        } else {
+            D("Failed to read from fd %d: %d. Exit", adb_fd_.get(), errno);
+        }
         break;
     }
     // socket is closed. print remaining messages
@@ -705,9 +711,6 @@ static std::pair<unique_fd, int64_t> open_signature(int64_t file_size, const cha
 bool serve(int connection_fd, int output_fd, int argc, const char** argv) {
     auto connection_ufd = unique_fd(connection_fd);
     auto output_ufd = unique_fd(output_fd);
-    if (argc <= 0) {
-        error_exit("inc-server: must specify at least one file.");
-    }
 
     std::vector<File> files;
     files.reserve(argc);

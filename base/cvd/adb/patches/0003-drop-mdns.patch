@@ -1,0 +1,66 @@
+--- a/base/cvd/adb/client/mdns_utils.cpp
++++ b/base/cvd/adb/client/mdns_utils.cpp
+@@ -75,17 +75,11 @@
+ }
+ 
+ bool is_enabled() {
+-    return !getenv("ADB_MDNS") || strcmp(getenv("ADB_MDNS"), "0") != 0;
++    return false;
+ }
+ 
+-// Historically, this env variable was a boolean used to disable openscreen.
+-// It has evolved into an enum to select the mdns backend
+-// 0 = Bonjour (deprecated)
+-// 1 = Openscreen
+-// 2 = Adbmdns
+ bool should_use_openscreen() {
+-    const char* mdns_osp = getenv("ADB_MDNS_OPENSCREEN");
+-    return mdns_osp != nullptr && strcmp(mdns_osp, "1") == 0;
++    return false;
+ }
+ 
+ }  // namespace mdns
+--- a/base/cvd/adb/client/transport_mdns.cpp
++++ b/base/cvd/adb/client/transport_mdns.cpp
+@@ -37,11 +37,8 @@
+ #include "adb_trace.h"
+ #include "adb_utils.h"
+ #include "adb_wifi.h"
+-#include "client/adbmdns/adbmdns.h"
+-#include "client/adbmdns/adbmdns_bridge.h"
+ #include "client/discovered_services.h"
+ #include "client/mdns_utils.h"
+-#include "client/openscreen/mdns_service.h"
+ #include "fdevent/fdevent.h"
+ #include "mdns_tracker.h"
+ #include "sysdeps.h"
+@@ -132,11 +129,7 @@
+ /////////////////////////////////////////////////////////////////////////////////
+ 
+ void init_mdns_transport_discovery() {
+-    if (mdns::should_use_openscreen()) {
+-        StartOpenScreenDiscovery();
+-    } else {
+-        StartAdbMdnsDiscovery();
+-    }
++    VLOG(MDNS) << "mdns discovery is disabled in this build";
+ }
+ 
+ bool adb_secure_connect_by_service_name(const std::string& instance_name) {
+@@ -148,15 +141,7 @@
+ }
+ 
+ std::string mdns_check() {
+-    if (!mdns::is_enabled()) {
+-        return "ERROR: mdns discovery disabled";
+-    }
+-
+-    if (mdns::should_use_openscreen()) {
+-        return "mdns daemon version [Openscreen discovery 0.0.0]";
+-    }
+-
+-    return "mdns daemon version [adb discovery 0.0.0]";
++    return "ERROR: mdns discovery disabled";
+ }
+ 
+ std::string mdns_list_discovered_services() {
