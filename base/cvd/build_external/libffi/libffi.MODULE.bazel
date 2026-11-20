@@ -13,7 +13,7 @@ archive_override(
         "linux-x86/fficonfig.h": "@//build_external/libffi/linux-x86:fficonfig.h",
         "linux-x86/ffitarget.h": "@//build_external/libffi/linux-x86:ffitarget.h",
     },
-    integrity = "sha256-cvunkicD3fp6Ao1ROsFahcjVTI1n9V+lpIAohdxlIFY=",
-    strip_prefix = "libffi-3.3",
-    urls = ["https://github.com/libffi/libffi/releases/download/v3.3/libffi-3.3.tar.gz"],
+    integrity = "sha256-86MIKiOzfCk6T80QUxR7Nx8v+R+n6hsqUuM1Z2usgtw=",
+    strip_prefix = "libffi-3.5.2",
+    urls = ["https://github.com/libffi/libffi/releases/download/v3.5.2/libffi-3.5.2.tar.gz"],
 )
