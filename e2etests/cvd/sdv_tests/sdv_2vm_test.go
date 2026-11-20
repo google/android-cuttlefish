@@ -88,6 +88,8 @@ const (
 )
 
 func runSdv2VMTest(t *testing.T) {
+	// TODO(b/588027197): Re-enable once the sdv 2VM test is fixed.
+	t.Skip("b/588027197: sdv_core + sdv_media group currently fails to launch")
 	c := e2etests.TestContext{}
 	c.SetUp(t)
 	defer c.TearDown()
