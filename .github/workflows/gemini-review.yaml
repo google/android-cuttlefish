@@ -203,4 +203,7 @@ jobs:
             [
               "https://github.com/gemini-cli-extensions/security.git"
             ]
-          prompt: '/security:analyze-github-pr'
+          prompt: |
+            /security:analyze-github-pr
+
+            Note: Use pull_request_review_write (with method "create" to create a pending review, and method "submit_pending" with event "COMMENT" to submit it) instead of create_pending_pull_request_review and submit_pending_pull_request_review.
