@@ -44,6 +44,7 @@ jobs:
     if: |-
       (
         github.event_name == 'pull_request_target' &&
+        vars.GEMINI_AUTO_REVIEW == 'true' &&
         (
           github.event.pull_request.head.repo.fork == false ||
           contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
