@@ -414,6 +414,10 @@ jobs:
           runner-index: 3
           runners-total: 3
   e2e-tests-orchestration-runner-special:
+    # This runner is meant for tests that require a special host orchestrator
+    # configuration (e.g. a modified /etc/default/cuttlefish-host_orchestrator).
+    # Do NOT use it to run flaky tests; create a new specific runner for that
+    # purpose instead.
     runs-on: ubuntu-24.04
     needs: [e2e-tests-orchestration-build-image]
     steps:
@@ -437,32 +441,6 @@ jobs:
         sudo podman info
         sudo podman load --quiet -i android-cuttlefish-e2etest.tar && rm android-cuttlefish-e2etest.tar
         mkdir -p -m 777 /tmp/cw_bazel
-        # Run flaky tests.
-        #
-        # Flaky tests would be executed in clean container everytime, rather than using `cvd reset`
-        # in a tainted container.
-        sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-        targets=$(sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output query --noshow_progress 'attr(flaky, 1, orchestration/...)' | sort)
-        echo "FLAKY TARGETS:"                                                                                                                                                                                              
-        echo "${targets}"                                                                                                                                                                                                  
-        echo ""
-        readonly ATTEMPTS=3
-        for t in ${targets}; do
-          echo "Executing target: ${t}"
-          attempt=1
-          while [[ ${attempt} -le ${ATTEMPTS} ]]; do                                                                                                                                                                       
-            echo "Attempt: ${attempt} of ${ATTEMPTS}"
-            sudo podman rm -f tester
-            sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-            sudo podman exec --user=testrunner tester bazel --output_user_root=/tmp/cw_bazel/output test --test_timeout 600 --sandbox_writable_path=/home/testrunner --flaky_test_attempts=1 ${t} && break || true 
-            attempt=$((attempt+1))                                                                                                                                                                                         
-          done
-          if [[ ${attempt} -gt ${ATTEMPTS}  ]]; then
-            # Every previous attempt failed.
-            exit 1
-          fi
-        done
-        sudo podman rm -f tester
         # Run verify_access_token_test
         sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
         sleep 30s # Add delay before restarting cuttlefish-host_orchestrator service.
