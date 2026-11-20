@@ -374,9 +374,15 @@ jobs:
       with:
         name: android-cuttlefish-e2etest-image-tar
         path: android-cuttlefish-e2etest.tar
-  e2e-tests-orchestration-runner-1:
+  e2e-tests-orchestration-runner:
+    name: e2e-tests-orchestration-runner-${{ matrix.index }}
     runs-on: ubuntu-24.04
     needs: [e2e-tests-orchestration-build-image]
+    strategy:
+      # Keep running the other shards when one fails.
+      fail-fast: false
+      matrix:
+        index: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
@@ -385,99 +391,8 @@ jobs:
       - name: Run tests
         uses: ./.github/actions/run-cw-sharded-e2e-test
         with:
-          runner-index: 1
-          runners-total: 8
-  e2e-tests-orchestration-runner-2:
-    runs-on: ubuntu-24.04
-    needs: [e2e-tests-orchestration-build-image]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
-        with:
-          persist-credentials: false
-      - name: Run tests
-        uses: ./.github/actions/run-cw-sharded-e2e-test
-        with:
-          runner-index: 2
-          runners-total: 8
-  e2e-tests-orchestration-runner-3:
-    runs-on: ubuntu-24.04
-    needs: [e2e-tests-orchestration-build-image]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
-        with:
-          persist-credentials: false
-      - name: Run tests
-        uses: ./.github/actions/run-cw-sharded-e2e-test
-        with:
-          runner-index: 3
-          runners-total: 8
-  e2e-tests-orchestration-runner-4:
-    runs-on: ubuntu-24.04
-    needs: [e2e-tests-orchestration-build-image]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
-        with:
-          persist-credentials: false
-      - name: Run tests
-        uses: ./.github/actions/run-cw-sharded-e2e-test
-        with:
-          runner-index: 4
-          runners-total: 8
-  e2e-tests-orchestration-runner-5:
-    runs-on: ubuntu-24.04
-    needs: [e2e-tests-orchestration-build-image]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
-        with:
-          persist-credentials: false
-      - name: Run tests
-        uses: ./.github/actions/run-cw-sharded-e2e-test
-        with:
-          runner-index: 5
-          runners-total: 8
-  e2e-tests-orchestration-runner-6:
-    runs-on: ubuntu-24.04
-    needs: [e2e-tests-orchestration-build-image]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
-        with:
-          persist-credentials: false
-      - name: Run tests
-        uses: ./.github/actions/run-cw-sharded-e2e-test
-        with:
-          runner-index: 6
-          runners-total: 8
-  e2e-tests-orchestration-runner-7:
-    runs-on: ubuntu-24.04
-    needs: [e2e-tests-orchestration-build-image]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
-        with:
-          persist-credentials: false
-      - name: Run tests
-        uses: ./.github/actions/run-cw-sharded-e2e-test
-        with:
-          runner-index: 7
-          runners-total: 8
-  e2e-tests-orchestration-runner-8:
-    runs-on: ubuntu-24.04
-    needs: [e2e-tests-orchestration-build-image]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
-        with:
-          persist-credentials: false
-      - name: Run tests
-        uses: ./.github/actions/run-cw-sharded-e2e-test
-        with:
-          runner-index: 8
-          runners-total: 8
+          runner-index: ${{ matrix.index }}
+          runners-total: ${{ strategy.job-total }}
   e2e-tests-orchestration-runner-special:
     # This runner is meant for tests that require a special host orchestrator
     # configuration (e.g. a modified /etc/default/cuttlefish-host_orchestrator).
@@ -616,14 +531,7 @@ jobs:
       - build-docker-image-amd64
       - build-docker-image-arm64
       - e2e-tests-orchestration-build-image
-      - e2e-tests-orchestration-runner-1
-      - e2e-tests-orchestration-runner-2
-      - e2e-tests-orchestration-runner-3
-      - e2e-tests-orchestration-runner-4
-      - e2e-tests-orchestration-runner-5
-      - e2e-tests-orchestration-runner-6
-      - e2e-tests-orchestration-runner-7
-      - e2e-tests-orchestration-runner-8
+      - e2e-tests-orchestration-runner
       - e2e-tests-orchestration-runner-special
       - docker-image-check
       - podman-image-check
