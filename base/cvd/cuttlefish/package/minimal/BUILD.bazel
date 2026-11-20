@@ -1,3 +1,4 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//cuttlefish/package:rules.bzl", "package_executable", "package_files")
 
 package_executable(
@@ -48,4 +49,30 @@ package_files(
         "etc/cvd_config/cvd_config_wear.json": "//cuttlefish/host/commands/assemble_cvd/config_json:config_wear.json",
     },
     visibility = ["//:android_cuttlefish"],
+)
+
+sh_test(
+    name = "startup_test",
+    srcs = ["startup_test.sh"],
+    data = [
+        "//cuttlefish/host/commands/assemble_cvd",
+        "//cuttlefish/host/commands/cvd",
+        "//cuttlefish/host/commands/echo_server",
+        "//cuttlefish/host/commands/run_cvd",
+        "//cuttlefish/host/commands/screen_recording_server",
+        "//cuttlefish/host/commands/status:cvd_internal_status",
+        "//cuttlefish/host/commands/stop:cvd_internal_stop",
+    ],
+    env = {
+        "ASSEMBLE_CVD": "$(rootpath //cuttlefish/host/commands/assemble_cvd)",
+        "CVD": "$(rootpath //cuttlefish/host/commands/cvd)",
+        "CVD_INTERNAL_STATUS": "$(rootpath //cuttlefish/host/commands/status:cvd_internal_status)",
+        "CVD_INTERNAL_STOP": "$(rootpath //cuttlefish/host/commands/stop:cvd_internal_stop)",
+        "ECHO_SERVER": "$(rootpath //cuttlefish/host/commands/echo_server)",
+        "RUN_CVD": "$(rootpath //cuttlefish/host/commands/run_cvd)",
+        "SCREEN_RECORDING_SERVER": "$(rootpath //cuttlefish/host/commands/screen_recording_server)",
+    },
+    # cvd aborts if /var/tmp/cvd exists but is not writable, as it is in
+    # the sandbox on a machine that has run cvd before.
+    tags = ["no-sandbox"],
 )
