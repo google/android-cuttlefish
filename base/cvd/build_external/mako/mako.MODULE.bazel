@@ -3,6 +3,6 @@ git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "g
 git_repository(
     name = "mako",
     build_file = "@//build_external/mako:BUILD.mako.bazel",
-    commit = "51505647100b7cf20a79b496bc12dec379ac9cdc",  # 1.3.0
+    commit = "6b833ae06fc8866b89ea7939e5d36dd71699cf05",  # 1.4.3 (rel_1_4_3)
     remote = "https://github.com/sqlalchemy/mako",
 )
