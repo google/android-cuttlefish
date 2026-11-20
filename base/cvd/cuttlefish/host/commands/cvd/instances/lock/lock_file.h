@@ -15,6 +15,8 @@
  */
 #pragma once
 
+#include <sys/types.h>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -65,6 +67,7 @@ class LockFile {
  public:
   const auto& LockFilePath() const { return lock_file_path_; }
   Result<InUseState> Status() const;
+  Result<std::optional<uid_t>> HolderUid() const;
   Result<void> Status(InUseState);
 
   // to put this into a set
@@ -80,7 +83,8 @@ class LockFile {
 
 class LockFileManager {
  public:
-  LockFileManager() = default;
+  LockFileManager();
+  explicit LockFileManager(bool create_missing_locks);
 
   Result<LockFile> AcquireLock(const std::string& lock_file_path);
 
@@ -88,6 +92,11 @@ class LockFileManager {
       const std::string& lock_file_path);
 
   static Result<Fd> OpenLockFile(const std::string& file_path);
+
+ private:
+  Result<Fd> OpenLockFileWithPolicy(const std::string& file_path) const;
+
+  bool create_missing_locks_;
 };
 
 }  // namespace cuttlefish

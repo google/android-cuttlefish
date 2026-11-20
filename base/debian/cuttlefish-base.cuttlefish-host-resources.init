@@ -376,7 +376,61 @@ create_static_interfaces() {
     done
 }
 
+ensure_cvd_root_dir() {
+    local target_dir="$1"
+    local target_mode="$2"
+    local tries=0
+    while [ "${tries}" -lt 10 ]; do
+        if mkdir -m "${target_mode}" "${target_dir}" 2>/dev/null; then
+            chown -h 0:0 "${target_dir}"
+            chmod "${target_mode}" "${target_dir}"
+            return 0
+        fi
+        chown -h 0:0 "${target_dir}" 2>/dev/null || true
+        if [ ! -L "${target_dir}" ] && [ -d "${target_dir}" ] && \
+           [ "$(stat -c '%u' "${target_dir}" 2>/dev/null)" = "0" ]; then
+            chmod "${target_mode}" "${target_dir}"
+            return 0
+        fi
+        rm -rf -- "${target_dir}"
+        tries=$((tries + 1))
+    done
+    return 1
+}
+
+setup_cvd_lock_files() {
+    local lock_dir="/var/tmp/cvd/lock"
+    local num_locks=1000
+    if [ "${num_cvd_accounts}" -gt "${num_locks}" ]; then
+        num_locks="${num_cvd_accounts}"
+    fi
+
+    ensure_cvd_root_dir /var/tmp/cvd 1777 || return 1
+    ensure_cvd_root_dir "${lock_dir}" 0755 || return 1
+
+    find "${lock_dir}" -mindepth 1 -maxdepth 1 \
+        \( -type l -o ! -type f -o -links +1 \) -exec rm -rf -- {} +
+
+    local old_umask
+    old_umask="$(umask)"
+    umask 0111
+    local i=1
+    local lock_file=""
+    while [ "${i}" -le "${num_locks}" ]; do
+        lock_file="${lock_dir}/local-instance-${i}.lock"
+        if [ ! -e "${lock_file}" ]; then
+            : > "${lock_file}"
+        fi
+        i=$((i + 1))
+    done
+    umask "${old_umask}"
+    find "${lock_dir}" -maxdepth 1 -type f -name 'local-instance-*.lock' \
+        ! -perm 0666 -exec chmod 0666 {} +
+}
+
 start() {
+    setup_cvd_lock_files || exit 1
+
     # Enable ip forwarding
     echo 1 > /proc/sys/net/ipv4/ip_forward
     echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
