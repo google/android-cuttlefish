@@ -45,7 +45,7 @@ func TestMetricsLoad(t *testing.T) {
 	defer c.TearDown()
 
 	err := c.CVDCreateWithConfigFile(e2etests.LoadArgs{
-		LoadConfig: `
+		ConfigFile: e2etests.CreateLoadConfigFile(t, `
 {
   "instances": [
     {
@@ -86,8 +86,7 @@ func TestMetricsLoad(t *testing.T) {
   "common": {
     "host_package": "@ab\/aosp-android-latest-release\/aosp_cf_x86_64_only_phone-userdebug"
   }
-}`,
-	Env: map[string]string{"HOME": t.TempDir()},
+}`),
 	})
 	if err != nil {
 		t.Fatal(err)
