@@ -94,7 +94,7 @@ Result<void> CvdEnvMain(int argc, char** argv) {
     }
   }
   if (!args.empty()) {
-    CF_EXPECT(args[0] == kServiceControlEnvProxy, "Prohibited service name");
+    CF_EXPECT(args[0] != kServiceControlEnvProxy, "Prohibited service name");
   }
 
   const auto* config = CuttlefishConfig::Get();
