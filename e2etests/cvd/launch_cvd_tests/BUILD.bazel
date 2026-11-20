@@ -12,46 +12,70 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_go//go:def.bzl", "go_test")
+load(":def.bzl", "launch_cvd_test")
 
-IMPORTPATH = "github.com/google/android-cuttlefish/e2etests/cvd/launch_cvd_tests"
+launch_cvd_test(
+    name = "git_main_phone",
+    branch = "git_main",
+    target = "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+)
 
-# name -> (branch, target)
-LAUNCH_CVD_TESTS = {
-    "git_main_phone": ("git_main", "aosp_cf_x86_64_only_phone-trunk_staging-userdebug"),
-    "aosp_main_phone": ("aosp-android-latest-release", "aosp_cf_x86_64_only_phone-userdebug"),
-    "aosp14_gsi_phone": ("aosp-android14-gsi", "aosp_cf_x86_64_phone-userdebug"),
-    "aosp13_gsi_phone": ("aosp-android13-gsi", "aosp_cf_x86_64_phone-userdebug"),
-    "aosp12_gsi_phone": ("aosp-android12-gsi", "aosp_cf_x86_64_phone-userdebug"),
-    "git_main_auto": ("git_main-throttled-nightly", "aosp_cf_x86_64_auto-trunk_staging-userdebug"),
-    "car16_auto": ("git_android16-car-release", "aosp_cf_x86_64_auto-userdebug"),
-    "car17_auto": ("git_android17-car-release", "aosp_cf_x86_64_auto-userdebug"),
-    "git_sw_car_dev_sdv_core": ("git_main-swcar-dev", "aosp_cf_x86_64_sdv_core-trunk_staging-userdebug"),
-    "git_sw_car_dev_sdv_media": ("git_main-swcar-dev", "aosp_cf_x86_64_sdv_media-trunk_staging-userdebug"),
-    "aosp11_gsi_phone": ("aosp-android11-gsi", "aosp_cf_x86_64_only_phone-userdebug"),
-}
+launch_cvd_test(
+    name = "aosp_main_phone",
+    branch = "aosp-android-latest-release",
+    target = "aosp_cf_x86_64_only_phone-userdebug",
+)
 
-[
-    go_test(
-        name = name,
-        size = "large",
-        srcs = ["main_test.go"],
-        importpath = IMPORTPATH,
-        tags = [
-            "exclusive",
-            "external",
-            "no-sandbox",
-            "podcvd_excluded",
-            "requires_ab",
-            "supports-graceful-termination",
-        ],
-        x_defs = {
-            IMPORTPATH + ".branch": branch,
-            IMPORTPATH + ".target": target,
-        },
-        deps = [
-            "//cvd/common",
-        ],
-    )
-    for name, (branch, target) in LAUNCH_CVD_TESTS.items()
-]
+launch_cvd_test(
+    name = "aosp14_gsi_phone",
+    branch = "aosp-android14-gsi",
+    target = "aosp_cf_x86_64_phone-userdebug",
+)
+
+launch_cvd_test(
+    name = "aosp13_gsi_phone",
+    branch = "aosp-android13-gsi",
+    target = "aosp_cf_x86_64_phone-userdebug",
+)
+
+launch_cvd_test(
+    name = "aosp12_gsi_phone",
+    branch = "aosp-android12-gsi",
+    target = "aosp_cf_x86_64_phone-userdebug",
+)
+
+launch_cvd_test(
+    name = "aosp11_gsi_phone",
+    branch = "aosp-android11-gsi",
+    target = "aosp_cf_x86_64_only_phone-userdebug",
+)
+
+launch_cvd_test(
+    name = "git_main_auto",
+    branch = "git_main-throttled-nightly",
+    target = "aosp_cf_x86_64_auto-trunk_staging-userdebug",
+)
+
+launch_cvd_test(
+    name = "car16_auto",
+    branch = "git_android16-car-release",
+    target = "aosp_cf_x86_64_auto-userdebug",
+)
+
+launch_cvd_test(
+    name = "car17_auto",
+    branch = "git_android17-car-release",
+    target = "aosp_cf_x86_64_auto-userdebug",
+)
+
+launch_cvd_test(
+    name = "git_sw_car_dev_sdv_core",
+    branch = "git_main-swcar-dev",
+    target = "aosp_cf_x86_64_sdv_core-trunk_staging-userdebug",
+)
+
+launch_cvd_test(
+    name = "git_sw_car_dev_sdv_media",
+    branch = "git_main-swcar-dev",
+    target = "aosp_cf_x86_64_sdv_media-trunk_staging-userdebug",
+)
