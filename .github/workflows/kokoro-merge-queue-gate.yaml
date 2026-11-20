@@ -1,0 +1,97 @@
+name: Kokoro merge queue gate
+
+# Kokoro posts `kokoro_*` commit statuses. On pull requests it runs on demand
+# (via the `kokoro:run` / `kokoro:force-run` labels); on the merge queue's
+# `gh-readonly-queue/*` branches it runs automatically.
+#
+# Required status checks are enforced both on the PR head (to enqueue) and on
+# the queue commit (to merge), so requiring the raw `kokoro_*` contexts would
+# force Kokoro to run on every PR revision. Instead, require this single check:
+# it is skipped on pull requests (which satisfies a required check) and, on
+# merge queue commits, waits for the expected `kokoro_*` statuses and fails if
+# any of them failed. Kokoro therefore gates merging to main, but never
+# entering the merge queue.
+
+on:
+  # Needed so the check is reported (as skipped) on PR heads; a required
+  # check that never reports would block enqueueing.
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  kokoro-merge-queue-gate:
+    name: kokoro-merge-queue-gate
+    if: github.event_name == 'merge_group'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 300  # 5 hours
+    permissions:
+      contents: read
+      statuses: read
+    env:
+      # !!! IMPORTANT: this list must be kept in sync with the Kokoro
+      # !!! continuous_* jobs. A Kokoro job missing from this list does NOT
+      # !!! gate merging; a job listed here that no longer exists blocks
+      # !!! merging forever (until the 5 hour timeout).
+      REQUIRED_CONTEXTS: >-
+        kokoro_gpu
+        kokoro_podcvd
+        kokoro_podcvd_gpu
+        kokoro_cvd_e2etest_build
+        kokoro_cvd_e2etest_runner_1
+        kokoro_cvd_e2etest_runner_2
+        kokoro_cvd_e2etest_runner_3
+        kokoro_cvd_e2etest_runner_4
+        kokoro_cvd_e2etest_runner_5
+        kokoro_cvd_e2etest_runner_6
+        kokoro_cvd_e2etest_runner_7
+        kokoro_cvd_e2etest_runner_8
+        kokoro_deb13_cvd_e2etest_build
+        kokoro_deb13_cvd_e2etest_runner_1
+        kokoro_deb13_cvd_e2etest_runner_2
+        kokoro_deb13_cvd_e2etest_runner_3
+        kokoro_deb13_cvd_e2etest_runner_4
+        kokoro_deb13_cvd_e2etest_runner_5
+        kokoro_deb13_cvd_e2etest_runner_6
+        kokoro_deb13_cvd_e2etest_runner_7
+        kokoro_deb13_cvd_e2etest_runner_8
+      POLL_INTERVAL_SECONDS: 120
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      COMMIT_SHA: ${{ github.sha }}
+    steps:
+      - name: Wait for Kokoro statuses on the merge queue commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Waiting for Kokoro statuses on ${COMMIT_SHA}"
+          while true; do
+            # The combined status endpoint returns only the latest status per
+            # context, so re-runs of a Kokoro job supersede earlier results.
+            statuses="$(gh api --paginate "repos/${GH_REPO}/commits/${COMMIT_SHA}/status" \
+              --jq '.statuses[] | "\(.context) \(.state)"')"
+
+            failed=""
+            pending=""
+            for ctx in ${REQUIRED_CONTEXTS}; do
+              state="$(awk -v c="${ctx}" '$1 == c { print $2 }' <<< "${statuses}")"
+              case "${state}" in
+                success) ;;
+                failure|error) failed+=" ${ctx}=${state}" ;;
+                *) pending+=" ${ctx}=${state:-missing}" ;;
+              esac
+            done
+
+            if [[ -n "${failed}" ]]; then
+              echo "::error::Kokoro failed on the merge queue commit:${failed}"
+              exit 1
+            fi
+            if [[ -z "${pending}" ]]; then
+              echo "All required Kokoro contexts succeeded."
+              exit 0
+            fi
+            echo "$(date -u +%FT%TZ) still waiting on:${pending}"
+            sleep "${POLL_INTERVAL_SECONDS}"
+          done
