@@ -17,6 +17,7 @@
 #pragma once
 
 #include <compare>
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <mutex>
@@ -28,6 +29,10 @@
 
 namespace cuttlefish {
 namespace virtualtuner {
+
+inline constexpr uint32_t kMaxHdSubchannel = 7;
+inline constexpr size_t kMaxStations = 1024;
+inline constexpr size_t kMaxStationProgramBytes = 16 * 1024;
 
 struct TunerStateSnapshot {
   RadioBand band = RadioBand::FM;
@@ -56,7 +61,7 @@ class TunerState {
                                      uint32_t start_hd_subchannel,
                                      bool direction_up,
                                      bool skip_subchannel) const;
-  StationProgram UpsertStation(StationProgram station);
+  std::optional<StationProgram> UpsertStation(StationProgram station);
   bool RemoveStation(RadioBand band, uint32_t frequency_hz,
                      std::optional<uint32_t> hd_subchannel,
                      uint64_t dab_sid_ext);

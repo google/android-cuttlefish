@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -296,6 +297,99 @@ TEST(AudioGeneratorTest, ParseWavBytesAndLoopTunedStationWavPath) {
   ::unlink(bad_wav_path.c_str());
   ::unlink(wav_path.c_str());
   ::rmdir(dir_template.c_str());
+}
+
+class WavFileTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    std::string dir_template = "/tmp/cf_virtual_tuner_wav_sec_XXXXXX";
+    ASSERT_NE(::mkdtemp(dir_template.data()), nullptr);
+    temp_dir_ = dir_template;
+  }
+
+  void TearDown() override {
+    for (const std::string& path : created_files_) {
+      ::unlink(path.c_str());
+    }
+    for (const std::string& path : created_dirs_) {
+      ::rmdir(path.c_str());
+    }
+    if (!temp_dir_.empty()) {
+      ::rmdir(temp_dir_.c_str());
+    }
+  }
+
+  std::string WriteValidWav(const std::string& name,
+                            std::span<const int16_t> samples) {
+    const std::string path = temp_dir_ + "/" + name;
+    const std::vector<uint8_t> wav_bytes = BuildStereoTestWav(samples);
+    std::ofstream out(path, std::ios::out | std::ios::binary);
+    out.write(reinterpret_cast<const char*>(wav_bytes.data()),
+              wav_bytes.size());
+    created_files_.push_back(path);
+    return path;
+  }
+
+  std::string temp_dir_;
+  std::vector<std::string> created_files_;
+  std::vector<std::string> created_dirs_;
+};
+
+TEST_F(WavFileTest, LoadsRegularFile) {
+  const std::vector<int16_t> expected = {1200, -1200, 2400, -2400};
+  const std::string wav_path = WriteValidWav("regular.wav", expected);
+
+  EXPECT_TRUE(ValidateWavFile(wav_path).has_value());
+  Result<std::vector<int16_t>> loaded = LoadWavFile(wav_path);
+  ASSERT_TRUE(loaded.has_value()) << loaded.error().FormatForEnv();
+  EXPECT_EQ(*loaded, expected);
+}
+
+TEST_F(WavFileTest, RejectsRelativePath) {
+  EXPECT_FALSE(ValidateWavFile("relative/station.wav").has_value());
+  EXPECT_FALSE(LoadWavFile("relative/station.wav").has_value());
+}
+
+TEST_F(WavFileTest, RejectsSymlink) {
+  const std::vector<int16_t> samples = {1000, -1000, 2000, -2000};
+  const std::string target_path = WriteValidWav("target.wav", samples);
+  const std::string link_path = temp_dir_ + "/symlink.wav";
+  ASSERT_EQ(::symlink(target_path.c_str(), link_path.c_str()), 0);
+  created_files_.push_back(link_path);
+
+  EXPECT_FALSE(ValidateWavFile(link_path).has_value());
+  EXPECT_FALSE(LoadWavFile(link_path).has_value());
+}
+
+TEST_F(WavFileTest, RejectsFifoWithoutBlocking) {
+  const std::string fifo_path = temp_dir_ + "/pipe.wav";
+  ASSERT_EQ(::mkfifo(fifo_path.c_str(), 0600), 0);
+  created_files_.push_back(fifo_path);
+
+  EXPECT_FALSE(ValidateWavFile(fifo_path).has_value());
+  EXPECT_FALSE(LoadWavFile(fifo_path).has_value());
+}
+
+TEST_F(WavFileTest, RejectsDirectoryAndDeviceNode) {
+  const std::string sub_dir = temp_dir_ + "/subdir";
+  ASSERT_EQ(::mkdir(sub_dir.c_str(), 0700), 0);
+  created_dirs_.push_back(sub_dir);
+
+  EXPECT_FALSE(ValidateWavFile(sub_dir).has_value());
+  EXPECT_FALSE(LoadWavFile(sub_dir).has_value());
+  EXPECT_FALSE(ValidateWavFile("/dev/zero").has_value());
+  EXPECT_FALSE(LoadWavFile("/dev/zero").has_value());
+}
+
+TEST_F(WavFileTest, RejectsFileOverSizeLimit) {
+  const std::vector<int16_t> samples = {1000, -1000, 2000, -2000};
+  const std::string wav_path = WriteValidWav("oversized.wav", samples);
+  ASSERT_EQ(
+      ::truncate(wav_path.c_str(), static_cast<off_t>(kMaxWavFileBytes + 1)),
+      0);
+
+  EXPECT_FALSE(ValidateWavFile(wav_path).has_value());
+  EXPECT_FALSE(LoadWavFile(wav_path).has_value());
 }
 
 class PcmStreamServerTest : public ::testing::Test {

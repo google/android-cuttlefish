@@ -28,6 +28,8 @@ namespace virtualtuner {
 class VirtualTunerServiceImpl final : public VirtualTuner::Service {
  public:
   explicit VirtualTunerServiceImpl(TunerState& tuner_state);
+  VirtualTunerServiceImpl(const VirtualTunerServiceImpl&) = delete;
+  VirtualTunerServiceImpl& operator=(const VirtualTunerServiceImpl&) = delete;
 
   ::grpc::Status Tune(::grpc::ServerContext* context,
                       const TuneRequest* request,
@@ -56,10 +58,6 @@ class VirtualTunerServiceImpl final : public VirtualTuner::Service {
   ::grpc::Status RemoveStation(::grpc::ServerContext* context,
                                const RemoveStationRequest* request,
                                RemoveStationResponse* response) override;
-
-  ::grpc::Status SetStationAudio(::grpc::ServerContext* context,
-                                 const SetStationAudioRequest* request,
-                                 SetStationAudioResponse* response) override;
 
  private:
   TunerState& tuner_state_;

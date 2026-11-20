@@ -18,6 +18,8 @@
 
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <vector>
 
@@ -98,6 +100,41 @@ TEST(TunerStateTest, UpsertAndRemoveStationUpdatesPresence) {
 
   EXPECT_TRUE(state.RemoveStation(RadioBand::FM, 88500000, std::nullopt, 0));
   EXPECT_FALSE(state.GetSnapshot().station_present);
+}
+
+TEST(TunerStateTest, EnforcesStationTableCapAndClearsWavPathOnRemove) {
+  TunerState state;
+  state.SetStationWavPath(RadioBand::FM, 96500000, 0, "/tmp/koit.wav");
+  state.SetTune(RadioBand::FM, 96500000, 0);
+  EXPECT_EQ(state.GetSnapshot().station_wav_path, "/tmp/koit.wav");
+  EXPECT_TRUE(state.RemoveStation(RadioBand::FM, 96500000, 0, 0));
+  EXPECT_TRUE(state.GetSnapshot().station_wav_path.empty());
+
+  // Out-of-range HD subchannel must not trigger shift UB.
+  StationProgram high_hd;
+  high_hd.set_band(RadioBand::FM);
+  high_hd.set_frequency_hz(91100000);
+  high_hd.set_hd_subchannel(32);
+  EXPECT_TRUE(state.UpsertStation(high_hd).has_value());
+
+  const size_t existing = state.GetStations(std::nullopt).size();
+  for (size_t i = existing; i < kMaxStations; ++i) {
+    StationProgram s;
+    s.set_band(RadioBand::FM);
+    s.set_frequency_hz(108100000 + static_cast<uint32_t>(i) * 1000);
+    ASSERT_TRUE(state.UpsertStation(s).has_value());
+  }
+  StationProgram overflow;
+  overflow.set_band(RadioBand::FM);
+  overflow.set_frequency_hz(200000000);
+  EXPECT_FALSE(state.UpsertStation(overflow).has_value());
+
+  // Updating an existing station still succeeds at capacity.
+  StationProgram existing_update;
+  existing_update.set_band(RadioBand::FM);
+  existing_update.set_frequency_hz(94900000);
+  existing_update.set_program_name("Updated Wild 94.9");
+  EXPECT_TRUE(state.UpsertStation(existing_update).has_value());
 }
 
 TEST(TunerStateTest, StopResetsState) {
