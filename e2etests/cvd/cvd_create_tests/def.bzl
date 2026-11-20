@@ -16,47 +16,29 @@
 
 load("@rules_go//go:def.bzl", "go_test")
 
-TAGS = [
-    "exclusive",
-    "external",
-    "no-sandbox",
-    "requires_ab",
-    "supports-graceful-termination",
-]
-
 def cvd_create_test(name, branch, target):
-    """Defines the `cvd create` e2e tests for one branch/target pair.
-
-    Two targets are created: `<name>`, which runs against the host package
-    fetched from the build, and `<name>_additional_substitution`, which
-    additionally substitutes the locally built debian packages.
+    """Defines a `cvd fetch` + `cvd create` e2e test for one branch/target pair.
 
     Args:
-      name: Base name of the test targets.
+      name: Name of the test target.
       branch: Android Build branch to fetch from.
       target: Android Build target to fetch.
     """
-
-    # Unqualified keys are resolved against the test's own import path.
-    x_defs = {
-        "branch": branch,
-        "target": target,
-    }
     go_test(
         name = name,
         size = "large",
         srcs = ["main_test.go"],
-        tags = TAGS,
-        x_defs = x_defs,
-        deps = ["//cvd/common"],
-    )
-    go_test(
-        name = name + "_additional_substitution",
-        size = "large",
-        srcs = ["main_test.go"],
-        data = ["//:debian_substitution_marker"],
-        env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(rlocationpath //:debian_substitution_marker)"},
-        tags = TAGS,
-        x_defs = x_defs,
+        tags = [
+            "exclusive",
+            "external",
+            "no-sandbox",
+            "requires_ab",
+            "supports-graceful-termination",
+        ],
+        # Unqualified keys are resolved against the test's own import path.
+        x_defs = {
+            "branch": branch,
+            "target": target,
+        },
         deps = ["//cvd/common"],
     )
