@@ -64,15 +64,15 @@ jobs:
           REPOSITORY: '${{ github.repository }}'
           ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
           GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'
-          # Workaround for simple-git rejecting GIT_CONFIG_SYSTEM when cloning extensions.
-          GIT_CONFIG_SYSTEM: ''
         with:
           gcp_location: '${{ vars.GOOGLE_CLOUD_LOCATION }}'
           gcp_project_id: '${{ vars.GOOGLE_CLOUD_PROJECT }}'
           gcp_service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
           gcp_workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}'
           gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
-          gemini_cli_version: '${{ vars.GEMINI_CLI_VERSION }}'
+          # Pin to 0.69.0 (uses simple-git 3.36.0) to avoid 0.70.0 simple-git 4.0.2
+          # GIT_CONFIG_SYSTEM / allowUnsafeConfigPaths error when cloning extensions.
+          gemini_cli_version: "${{ vars.GEMINI_CLI_VERSION || '0.69.0' }}"
           gemini_debug: '${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}'
           gemini_model: '${{ vars.GEMINI_MODEL }}'
           google_api_key: '${{ secrets.GOOGLE_API_KEY }}'
@@ -137,15 +137,15 @@ jobs:
           REPOSITORY: '${{ github.repository }}'
           ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
           GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'
-          # Workaround for simple-git rejecting GIT_CONFIG_SYSTEM when cloning extensions.
-          GIT_CONFIG_SYSTEM: ''
         with:
           gcp_location: '${{ vars.GOOGLE_CLOUD_LOCATION }}'
           gcp_project_id: '${{ vars.GOOGLE_CLOUD_PROJECT }}'
           gcp_service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
           gcp_workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}'
           gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
-          gemini_cli_version: '${{ vars.GEMINI_CLI_VERSION }}'
+          # Pin to 0.69.0 (uses simple-git 3.36.0) to avoid 0.70.0 simple-git 4.0.2
+          # GIT_CONFIG_SYSTEM / allowUnsafeConfigPaths error when cloning extensions.
+          gemini_cli_version: "${{ vars.GEMINI_CLI_VERSION || '0.69.0' }}"
           gemini_debug: '${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}'
           gemini_model: '${{ vars.GEMINI_MODEL }}'
           google_api_key: '${{ secrets.GOOGLE_API_KEY }}'
