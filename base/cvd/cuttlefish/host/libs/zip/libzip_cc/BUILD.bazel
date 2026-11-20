@@ -11,6 +11,7 @@ cf_cc_library(
     features = ["-layering_check"],  # libzip
     linkstatic = True,  # libzip
     deps = [
+        ":reader_seeker_io",
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",

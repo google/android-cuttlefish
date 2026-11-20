@@ -30,6 +30,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/error.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/reader_seeker_io.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
@@ -133,7 +134,7 @@ Result<SeekableZipSource> ReadableZip::GetFile(uint64_t index) const {
 Result<std::unique_ptr<ReaderSeeker>> ReadableZip::OpenReadOnly(
     absl::string_view path) {
   SeekableZipSource source = CF_EXPECT(GetFile(std::string(path)));
-  return CF_EXPECT(ZipSourceAsReaderSeeker(std::move(source)));
+  return CF_EXPECT(ZipReaderSeekerIo::UniquePtr(std::move(source)));
 }
 
 Result<uint32_t> ReadableZip::FileAttributes(absl::string_view path) const {
