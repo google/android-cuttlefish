@@ -52,7 +52,8 @@ TEST(BufferedZipSourceTest, ManySmallReads) {
   SeekableZipSource buffered = CF_ASSERT(BufferZipSource(
       std::make_unique<OwningInMemoryIo>(data_in), kPrimeBufferSize));
 
-  SeekingZipSourceReader reader = CF_ASSERT(buffered.Reader());
+  SeekingZipSourceReader reader =
+      CF_ASSERT(SeekingZipSourceReader::Open(buffered));
 
   std::vector<char> data_out(data_in.size() + kPrimeReadSize);
   size_t read_offset = 0;
@@ -78,7 +79,8 @@ TEST(BufferedZipSourceTest, ReadBackwards) {
   SeekableZipSource buffered = CF_ASSERT(BufferZipSource(
       std::make_unique<OwningInMemoryIo>(data_in), kCommonBufferSize));
 
-  SeekingZipSourceReader reader = CF_ASSERT(buffered.Reader());
+  SeekingZipSourceReader reader =
+      CF_ASSERT(SeekingZipSourceReader::Open(buffered));
 
   std::vector<char> data_out(data_in.size());
   size_t read_offset = data_out.size() - kCommonReadSize;
@@ -98,7 +100,7 @@ TEST(BufferedZipSourceTest, ReadBackwards) {
 TEST(BufferedZipSourceTest, OpenMissingFileFails) {
   WritableZipSource source = CF_ASSERT(WritableZipSource::FromFile(
       testing::TempDir() + "/file_does_not_exist.zip"));
-  EXPECT_THAT(source.Reader(), IsError());
+  EXPECT_THAT(SeekingZipSourceReader::Open(source), IsError());
 }
 
 }  // namespace

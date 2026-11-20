@@ -178,12 +178,13 @@ Result<SeekableZipSource> SeekableZipSource::FromCallbacks(
   return SeekableZipSource(std::move(source));
 }
 
-Result<SeekingZipSourceReader> SeekableZipSource::Reader() {
-  zip_source_t* raw_source = CF_EXPECT(raw_.get());
+Result<SeekingZipSourceReader> SeekingZipSourceReader::Open(
+    SeekableZipSource& reader) {
+  zip_source_t* raw_source = CF_EXPECT(reader.raw_.get());
 
   CF_EXPECT_EQ(zip_source_open(raw_source), 0, ZipErrorString(raw_source));
 
-  return SeekingZipSourceReader(this);
+  return SeekingZipSourceReader(&reader);
 }
 
 SeekableZipSource::SeekableZipSource(ManagedZipSource raw)
@@ -248,7 +249,8 @@ Result<std::unique_ptr<ReaderSeeker>> ZipSourceAsReaderSeeker(
       std::make_unique<SeekableZipSource>(std::move(inner));
   CF_EXPECT(unique_inner.get());
 
-  SeekingZipSourceReader reader = CF_EXPECT(unique_inner->Reader());
+  SeekingZipSourceReader reader =
+      CF_EXPECT(SeekingZipSourceReader::Open(*unique_inner));
 
   return std::make_unique<ZipSourceAsReaderSeekerImpl>(std::move(unique_inner),
                                                        std::move(reader));
