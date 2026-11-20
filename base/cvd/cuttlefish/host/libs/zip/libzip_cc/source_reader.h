@@ -46,6 +46,7 @@ class ZipSourceReader : public Reader {
   friend class SeekingZipSourceReader;
 
   ZipSourceReader(ReadableZipSource*);
+
   void Close();
 
   ReadableZipSource* source_;
