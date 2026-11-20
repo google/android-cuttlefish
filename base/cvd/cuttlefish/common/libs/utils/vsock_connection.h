@@ -39,7 +39,6 @@ class VsockConnection {
                                  std::optional<int> vhost_user_vsock_cid);
   void SetDisconnectCallback(std::function<void()> callback);
 
-  bool IsConnected_Unguarded();
   bool IsConnected();
   bool DataAvailable();
   int32_t Read();
@@ -63,6 +62,7 @@ class VsockConnection {
                     unsigned int num_strides, int stride_size);
 
  protected:
+  std::recursive_mutex state_mutex_;
   std::recursive_mutex read_mutex_;
   std::recursive_mutex write_mutex_;
   std::function<void()> disconnect_callback_;
