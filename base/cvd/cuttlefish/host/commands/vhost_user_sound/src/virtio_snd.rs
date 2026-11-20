@@ -14,7 +14,7 @@ pub struct VirtioSndConfig {
     pub controls: Le32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndRequest {
     /* jack control request types */
@@ -56,7 +56,7 @@ impl Into<Le32> for VirtioSndRequest {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndEventCode {
     /* jack event types */
@@ -70,7 +70,7 @@ pub enum VirtioSndEventCode {
 }
 
 /* common status codes */
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndStatus {
     Ok = 0x8000,
@@ -100,7 +100,7 @@ pub struct VirtioSndEvent {
     pub data: Le32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum VirtioSndDirection {
     Output = 0,
@@ -160,7 +160,7 @@ pub struct VirtioSndPcmHdr {
 }
 
 /* supported PCM stream features */
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum VirtioSndPcmFeature {
     ShmemHost = 0,
@@ -171,7 +171,7 @@ pub enum VirtioSndPcmFeature {
 }
 
 /* supported PCM sample formats */
-#[derive(Clone, Copy, Debug, Default, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum VirtioSndPcmFormat {
     /* analog formats (width / physical width) */
@@ -235,7 +235,7 @@ pub fn bits_per_sample(format: VirtioSndPcmFormat) -> usize {
 }
 
 /* supported PCM frame rates */
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum VirtioSndPcmRate {
     R5512 = 0,
@@ -319,7 +319,7 @@ pub struct VirtioSndPcmStatus {
 }
 
 /* standard channel position definition */
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum VirtioSndChmap {
     None = 0,
@@ -380,7 +380,7 @@ pub struct VirtioSndCtlHdr {
     pub control_id: Le32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndCtlRole {
     Undefined = 0,
@@ -389,7 +389,7 @@ pub enum VirtioSndCtlRole {
     Gain,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndCtlType {
     Boolean = 0,
@@ -400,7 +400,7 @@ pub enum VirtioSndCtlType {
     Iec958,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndCtlAccess {
     Read = 0,
@@ -478,7 +478,7 @@ pub struct VirtioSndCtlTlv {
     /* value: [Le32; length], */
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndCtlEvtMask {
     Value = 0,
