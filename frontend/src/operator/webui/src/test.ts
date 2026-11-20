@@ -8,11 +8,11 @@ import {
   platformBrowserDynamicTesting,
 } from '@angular/platform-browser-dynamic/testing';
 
-@NgModule({ providers: [ provideZoneChangeDetection() ] })
+@NgModule({providers: [provideZoneChangeDetection()]})
 export class ZoneChangeDetectionModule {}
 
 // First, initialize the Angular testing environment.
 getTestBed().initTestEnvironment(
   [ZoneChangeDetectionModule, BrowserDynamicTestingModule],
-  platformBrowserDynamicTesting()
+  platformBrowserDynamicTesting(),
 );

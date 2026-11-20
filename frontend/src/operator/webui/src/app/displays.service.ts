@@ -2,6 +2,13 @@ import {Injectable, inject} from '@angular/core';
 import {BehaviorSubject, Subject, merge} from 'rxjs';
 import {map, mergeMap} from 'rxjs/operators';
 import {DeviceService} from './device.service';
+import {DisplayInfo} from '../../../intercept/js/server_connector';
+
+export interface DeviceDisplayInfo {
+  device_id: string;
+  displays: DisplayInfo[];
+  rotation?: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -20,10 +27,17 @@ export class DisplaysService {
   private visibleDeviceIds: string[] = [];
   private visibleDevicesChanged = new Subject<void>();
 
-  private deviceVisibilityInfos = merge(this.devices, this.visibleDevicesChanged.pipe(mergeMap(() => this.devices))).pipe(map(devices => devices.map(({ device_id: deviceId }) => {
-    return { id: deviceId, visible: this.isVisibleDevice(deviceId) };
-  })));
-  private displayInfoChanged = new Subject<any>();
+  private deviceVisibilityInfos = merge(
+    this.devices,
+    this.visibleDevicesChanged.pipe(mergeMap(() => this.devices)),
+  ).pipe(
+    map(devices =>
+      devices.map(({device_id: deviceId}) => {
+        return {id: deviceId, visible: this.isVisibleDevice(deviceId)};
+      }),
+    ),
+  );
+  private displayInfoChanged = new Subject<DeviceDisplayInfo>();
 
   toggleVisibility(deviceId: string): void {
     if (this.isVisibleDevice(deviceId)) {
@@ -47,7 +61,7 @@ export class DisplaysService {
     return this.displayInfoChanged.asObservable();
   }
 
-  onDeviceDisplayInfo(deviceDisplays: any) {
+  onDeviceDisplayInfo(deviceDisplays: DeviceDisplayInfo) {
     if (deviceDisplays.displays.length === 0) return;
 
     this.displayInfoChanged.next(deviceDisplays);
@@ -61,7 +75,7 @@ export class DisplaysService {
 
   private removeFromVisibleDevices(removedDevice: string) {
     this.visibleDeviceIds = this.visibleDeviceIds.filter(
-      visibleDevice => visibleDevice !== removedDevice
+      visibleDevice => visibleDevice !== removedDevice,
     );
   }
 }

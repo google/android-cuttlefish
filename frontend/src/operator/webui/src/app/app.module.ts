@@ -19,8 +19,7 @@ import {KtdGridModule} from '@katoid/angular-grid-layout';
 import {RouterModule} from '@angular/router';
 
 @NgModule({providers: [provideZoneChangeDetection()]})
-export class ZoneChangeDetectionModule {
-}
+export class ZoneChangeDetectionModule {}
 
 @NgModule({
   declarations: [
