@@ -9,7 +9,7 @@ module(
     version = "0.1",
 )
 
-bazel_dep(name = "boringssl", version = "0.20260813.0")
+bazel_dep(name = "boringssl", version = "0.20261105.0")
 bazel_dep(name = "rules_cc", version = "0.2.19")
 EOF
 """,

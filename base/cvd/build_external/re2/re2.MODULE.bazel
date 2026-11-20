@@ -1,6 +1,4 @@
 single_version_override(
     module_name = "re2",
-    patch_strip = 1,
-    patches = ["@//build_external/re2:bazel9.patch"],
-    version = "2024-07-02.bcr.1",
+    version = "2025-11-05.bcr.1",
 )
