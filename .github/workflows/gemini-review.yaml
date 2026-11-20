@@ -70,8 +70,7 @@ jobs:
           gcp_service_account: '${{ vars.SERVICE_ACCOUNT_EMAIL }}'
           gcp_workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}'
           gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
-          # Pin to 0.69.0 (uses simple-git 3.36.0) to avoid 0.70.0 simple-git 4.0.2
-          # GIT_CONFIG_SYSTEM / allowUnsafeConfigPaths error when cloning extensions.
+          # Pin to 0.69.0 (uses simple-git 3.36.0) to avoid 0.70.0 regressions.
           gemini_cli_version: "${{ vars.GEMINI_CLI_VERSION || '0.69.0' }}"
           gemini_debug: '${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}'
           gemini_model: '${{ vars.GEMINI_MODEL }}'
@@ -101,7 +100,7 @@ jobs:
                     "--rm",
                     "-e",
                     "GITHUB_PERSONAL_ACCESS_TOKEN",
-                    "ghcr.io/github/github-mcp-server:v0.27.0"
+                    "ghcr.io/github/github-mcp-server:v2.2.0"
                   ],
                   "includeTools": [
                     "add_comment_to_pending_review",
@@ -123,11 +122,7 @@ jobs:
                 ]
               }
             }
-          extensions: |
-            [
-              "https://github.com/gemini-cli-extensions/code-review"
-            ]
-          prompt: '/pr-code-review'
+          prompt: '/gemini-review'
       - name: 'Run Gemini security analysis review'
         uses: 'google-github-actions/run-gemini-cli@f77273f4c914e4bf38440cf36a0369cb64a37489' # v0, ratchet:exclude
         id: 'gemini_security_analysis'
@@ -174,7 +169,7 @@ jobs:
                     "--rm",
                     "-e",
                     "GITHUB_PERSONAL_ACCESS_TOKEN",
-                    "ghcr.io/github/github-mcp-server:v0.27.0"
+                    "ghcr.io/github/github-mcp-server:v2.2.0"
                   ],
                   "includeTools": [
                     "add_comment_to_pending_review",
