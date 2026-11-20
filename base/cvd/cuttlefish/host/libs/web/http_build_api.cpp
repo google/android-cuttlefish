@@ -30,6 +30,7 @@
 #include "cuttlefish/host/libs/web/url_namespace.h"
 #include "cuttlefish/host/libs/zip/buffered_zip_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/reader_seeker_io.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/remote_zip.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
@@ -108,7 +109,7 @@ Result<std::unique_ptr<ReaderSeeker>> HttpBuildApi::FileReader(
   const std::string url = CF_EXPECT(ArtifactUrl(build, artifact_name));
   SeekableZipSource source = CF_EXPECT(
       ZipSourceFromUrl(http_client_, url, {}, build.object_info.size));
-  return CF_EXPECT(ZipSourceAsReaderSeeker(std::move(source)));
+  return CF_EXPECT(ZipReaderSeekerIo::UniquePtr(std::move(source)));
 }
 
 }  // namespace cuttlefish

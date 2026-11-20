@@ -46,6 +46,7 @@
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
 #include "cuttlefish/host/libs/web/parse_time.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/reader_seeker_io.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/remote_zip.h"
 #include "cuttlefish/io/reader_seeker.h"
@@ -136,7 +137,7 @@ Result<std::unique_ptr<ReaderSeeker>> AndroidBuildApi::FileReader(
   std::vector<std::string> headers = CF_EXPECT(Headers());
   SeekableZipSource source =
       CF_EXPECT(ZipSourceFromUrl(http_client_, url, headers));
-  return CF_EXPECT(ZipSourceAsReaderSeeker(std::move(source)));
+  return CF_EXPECT(ZipReaderSeekerIo::UniquePtr(std::move(source)));
 }
 
 Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
