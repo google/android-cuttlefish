@@ -22,61 +22,53 @@ import (
 	"github.com/google/android-cuttlefish/e2etests/cvd/common"
 )
 
+// Injected at link time via `x_defs` in def.bzl.
+var (
+	branch string
+	target string
+)
+
+const mediaType = "v4l2_emulated_camera_mplane_external"
+
 func TestEmulatedCameraV4l2Compliance(t *testing.T) {
-	testcases := []struct {
-		branch    string
-		target    string
-		mediaType string
-	}{
-		{
-			branch:    "git_main",
-			target:    "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
-			mediaType: "v4l2_emulated_camera_mplane_external",
-		},
-		{
-			branch:    "git_main-throttled-nightly",
-			target:    "aosp_cf_x86_64_auto-trunk_staging-userdebug",
-			mediaType: "v4l2_emulated_camera_mplane_external",
-		},
+	if branch == "" || target == "" {
+		t.Fatalf("branch and target must be set via x_defs in def.bzl (branch=%q, target=%q)", branch, target)
 	}
+
 	c := e2etests.TestContext{}
-	for _, tc := range testcases {
-		t.Run(fmt.Sprintf("BUILD=%s/%s", tc.branch, tc.target), func(t *testing.T) {
-			c.SetUp(t)
-			defer c.TearDown()
+	c.SetUp(t)
+	defer c.TearDown()
 
-			if _, err := c.CVDFetch(e2etests.FetchArgs{
-				DefaultBuildBranch: tc.branch,
-				DefaultBuildTarget: tc.target,
-			}); err != nil {
-				t.Fatal(err)
-			}
+	if _, err := c.CVDFetch(e2etests.FetchArgs{
+		DefaultBuildBranch: branch,
+		DefaultBuildTarget: target,
+	}); err != nil {
+		t.Fatal(err)
+	}
 
-			if _, err := c.CVDCreate(e2etests.CreateArgs{
-				Args: []string{
-					fmt.Sprintf("--media=%s", tc.mediaType),
-				},
-			}); err != nil {
-				t.Fatal(err)
-			}
+	if _, err := c.CVDCreate(e2etests.CreateArgs{
+		Args: []string{
+			fmt.Sprintf("--media=%s", mediaType),
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
 
-			if err := c.RunAdbWaitForDevice(); err != nil {
-				t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %w", err)
-			}
+	if err := c.RunAdbWaitForDevice(); err != nil {
+		t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %v", err)
+	}
 
-			out, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-ctl", "--list-devices")
-			if err != nil {
-				t.Fatalf("v4l2-ctl --list-devices failed: %v", err)
-			}
-			videoNode, err := findVideoNode(out.Stdout, "emulated_camera")
-			if err != nil {
-				t.Fatal(err)
-			}
+	out, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-ctl", "--list-devices")
+	if err != nil {
+		t.Fatalf("v4l2-ctl --list-devices failed: %v", err)
+	}
+	videoNode, err := findVideoNode(out.Stdout, "emulated_camera")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-			if _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-compliance", "-d", videoNode, "-s"); err != nil {
-				t.Fatalf("v4l2-compliance failed: %v", err)
-			}
-		})
+	if _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-compliance", "-d", videoNode, "-s"); err != nil {
+		t.Fatalf("v4l2-compliance failed: %v", err)
 	}
 }
 
