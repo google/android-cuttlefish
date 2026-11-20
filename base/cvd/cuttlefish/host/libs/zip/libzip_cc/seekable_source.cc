@@ -121,43 +121,6 @@ int64_t SeekableZipSourceCallbackFn(void* userdata, void* data, uint64_t len,
   return -1;
 }
 
-class ZipSourceAsReaderSeekerImpl : public ReaderSeeker {
- public:
-  ZipSourceAsReaderSeekerImpl(std::unique_ptr<SeekableZipSource> source,
-                              SeekingZipSourceReader reader)
-      : source_(std::move(source)), reader_(std::move(reader)) {}
-
-  Result<void> Visit(IoVisitor& visitor) override {
-    CF_EXPECT(visitor.Accept(*this));
-    return {};
-  }
-
-  Result<uint64_t, int> Read(void* buf, uint64_t size) override {
-    return CF_EXPECT(reader_.Read(buf, size));
-  }
-
-  Result<uint64_t, int> SeekSet(uint64_t offset) override {
-    return CF_EXPECT(reader_.SeekSet(offset));
-  }
-
-  Result<uint64_t, int> SeekCur(int64_t offset) override {
-    return CF_EXPECT(reader_.SeekCur(offset));
-  }
-
-  Result<uint64_t, int> SeekEnd(int64_t offset) override {
-    return CF_EXPECT(reader_.SeekEnd(offset));
-  }
-
-  Result<uint64_t, int> PRead(void* buf, uint64_t count,
-                              uint64_t offset) const override {
-    return CF_EXPECT(reader_.PRead(buf, count, offset));
-  }
-
- private:
-  std::unique_ptr<SeekableZipSource> source_;
-  SeekingZipSourceReader reader_;
-};
-
 }  // namespace
 
 Result<SeekableZipSource> SeekableZipSource::FromCallbacks(
@@ -241,19 +204,6 @@ Result<uint64_t, int> SeekingZipSourceReader::PRead(void* buf, uint64_t count,
   auto& non_const = const_cast<SeekingZipSourceReader&>(*this);
   std::lock_guard lock(non_const.mutex_);
   return CF_EXPECT(FakePRead(non_const, buf, count, offset));
-}
-
-Result<std::unique_ptr<ReaderSeeker>> ZipSourceAsReaderSeeker(
-    SeekableZipSource inner) {
-  std::unique_ptr<SeekableZipSource> unique_inner =
-      std::make_unique<SeekableZipSource>(std::move(inner));
-  CF_EXPECT(unique_inner.get());
-
-  SeekingZipSourceReader reader =
-      CF_EXPECT(SeekingZipSourceReader::Open(*unique_inner));
-
-  return std::make_unique<ZipSourceAsReaderSeekerImpl>(std::move(unique_inner),
-                                                       std::move(reader));
 }
 
 }  // namespace cuttlefish
