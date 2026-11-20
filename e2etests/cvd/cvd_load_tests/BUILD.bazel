@@ -12,34 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_go//go:def.bzl", "go_test")
+load(":def.bzl", "cvd_load_test")
 
-# name -> load config file
-CVD_LOAD_TESTS = {
-    "git_main_x64_phone": "configs/git_main_x64_phone.json",
-    "aosp_main_x64_phone": "configs/aosp_main_x64_phone.json",
-    # TODO(b/588019433): Re-enable once the sdv load test is fixed.
-    # "git_sw_car_dev_sdv": "configs/git_sw_car_dev_sdv.json",
-}
+cvd_load_test(
+    name = "git_main_x64_phone",
+    config = "configs/git_main_x64_phone.json",
+)
 
-[
-    go_test(
-        name = name,
-        size = "large",
-        srcs = ["main_test.go"],
-        data = [config],
-        env = {"CVD_LOAD_CONFIG": "$(rlocationpath %s)" % config},
-        tags = [
-            "exclusive",
-            "external",
-            "no-sandbox",
-            "requires_ab",
-            "supports-graceful-termination",
-        ],
-        deps = [
-            "//cvd/common",
-            "@rules_go//go/runfiles",
-        ],
-    )
-    for name, config in CVD_LOAD_TESTS.items()
-]
+cvd_load_test(
+    name = "aosp_main_x64_phone",
+    config = "configs/aosp_main_x64_phone.json",
+)
+
+# TODO(b/588019433): Re-enable once the sdv load test is fixed.
+# cvd_load_test(
+#     name = "git_sw_car_dev_sdv",
+#     config = "configs/git_sw_car_dev_sdv.json",
+# )
