@@ -71,7 +71,7 @@ jobs:
           gemini_api_key: '${{ secrets.GEMINI_API_KEY }}'
           # Pin to 0.69.0 (uses simple-git 3.36.0) to avoid 0.70.0 regressions.
           gemini_cli_version: "${{ vars.GEMINI_CLI_VERSION || '0.69.0' }}"
-          gemini_debug: '${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}'
+          gemini_debug: '${{ fromJSON(vars.GEMINI_DEBUG || false) || runner.debug == '\''1'\'' }}'
           gemini_model: '${{ vars.GEMINI_MODEL }}'
           google_api_key: '${{ secrets.GOOGLE_API_KEY }}'
           use_gemini_code_assist: '${{ vars.GOOGLE_GENAI_USE_GCA }}'
@@ -138,7 +138,7 @@ jobs:
           # Pin to 0.69.0 (uses simple-git 3.36.0) to avoid 0.70.0 simple-git 4.0.2
           # GIT_CONFIG_SYSTEM / allowUnsafeConfigPaths error when cloning extensions.
           gemini_cli_version: "${{ vars.GEMINI_CLI_VERSION || '0.69.0' }}"
-          gemini_debug: '${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}'
+          gemini_debug: '${{ fromJSON(vars.GEMINI_DEBUG || false) || runner.debug == '\''1'\'' }}'
           gemini_model: '${{ vars.GEMINI_MODEL }}'
           google_api_key: '${{ secrets.GOOGLE_API_KEY }}'
           use_gemini_code_assist: '${{ vars.GOOGLE_GENAI_USE_GCA }}'
