@@ -19,6 +19,7 @@
 #include <optional>
 #include <string>
 
+#include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/result/result.h"
@@ -37,8 +38,10 @@ std::string VirtualTunerPcmSocketPath(
 
 // Returns the command that starts virtual_tuner_daemon, or nullopt if the
 // guest has no virtual_tuner stream. Creates the PCM listening socket that
-// webRTC connects to.
+// webRTC connects to and registers the host-only gRPC control socket for
+// `cvd env`.
 Result<std::optional<MonitorCommand>> VirtualTunerServer(
-    const CuttlefishConfig::InstanceSpecific& instance);
+    const CuttlefishConfig::InstanceSpecific& instance,
+    GrpcSocketCreator& grpc_socket);
 
 }  // namespace cuttlefish

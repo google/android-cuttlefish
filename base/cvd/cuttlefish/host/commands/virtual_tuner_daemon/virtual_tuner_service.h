@@ -21,6 +21,7 @@
 #include "cuttlefish/host/commands/virtual_tuner_daemon/VirtualTuner.grpc.pb.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/VirtualTuner.pb.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/tuner_state.h"
+#include "cuttlefish/host/commands/virtual_tuner_daemon/virtual_tuner_handler.h"
 
 namespace cuttlefish {
 namespace virtualtuner {
@@ -60,7 +61,7 @@ class VirtualTunerServiceImpl final : public VirtualTuner::Service {
                                RemoveStationResponse* response) override;
 
  private:
-  TunerState& tuner_state_;
+  VirtualTunerHandler handler_;
 };
 
 }  // namespace virtualtuner

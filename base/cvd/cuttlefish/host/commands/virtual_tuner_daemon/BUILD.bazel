@@ -88,6 +88,23 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "virtual_tuner_handler",
+    srcs = [
+        "virtual_tuner_handler.cpp",
+    ],
+    hdrs = [
+        "virtual_tuner_handler.h",
+    ],
+    deps = [
+        ":tuner_state",
+        ":virtual_tuner_audio",
+        ":virtual_tuner_cc_proto",
+        "@abseil-cpp//absl/log",
+        "@grpc//:grpc++",
+    ],
+)
+
+cf_cc_library(
     name = "virtual_tuner_service",
     srcs = [
         "virtual_tuner_service.cpp",
@@ -98,9 +115,27 @@ cf_cc_library(
     deps = [
         ":libcvd_virtual_tuner",
         ":tuner_state",
+        ":virtual_tuner_cc_proto",
+        ":virtual_tuner_handler",
+        "@grpc//:grpc++",
+    ],
+)
+
+cf_cc_library(
+    name = "virtual_tuner_control_service",
+    srcs = [
+        "virtual_tuner_control_service.cpp",
+    ],
+    hdrs = [
+        "virtual_tuner_control_service.h",
+    ],
+    deps = [
+        ":libcvd_virtual_tuner",
+        ":tuner_state",
         ":virtual_tuner_audio",
         ":virtual_tuner_cc_proto",
-        "@abseil-cpp//absl/log",
+        ":virtual_tuner_handler",
+        "//cuttlefish/result:result_type",
         "@grpc//:grpc++",
     ],
 )
@@ -113,7 +148,9 @@ cf_cc_test(
     deps = [
         ":libcvd_virtual_tuner",
         ":tuner_state",
+        ":virtual_tuner_audio",
         ":virtual_tuner_cc_proto",
+        ":virtual_tuner_control_service",
         ":virtual_tuner_service",
         "@grpc//:grpc++",
     ],
@@ -127,6 +164,7 @@ cf_cc_binary(
     deps = [
         ":tuner_state",
         ":virtual_tuner_audio",
+        ":virtual_tuner_control_service",
         ":virtual_tuner_service",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/flag_parser",

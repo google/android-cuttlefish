@@ -27,6 +27,7 @@
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/vm_sockets.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
+#include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/libs/audio/channel_layout.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -80,7 +81,8 @@ std::string VirtualTunerPcmSocketPath(
 }
 
 Result<std::optional<MonitorCommand>> VirtualTunerServer(
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    const CuttlefishConfig::InstanceSpecific& instance,
+    GrpcSocketCreator& grpc_socket) {
   const std::optional<config::Audio::PCMDevice::Stream> tuner =
       VirtualTunerStream(instance);
   if (!tuner.has_value()) {
@@ -102,6 +104,8 @@ Result<std::optional<MonitorCommand>> VirtualTunerServer(
   // socket created here, as for the PCM socket, would avoid that, but
   // grpc::ServerBuilder only listens on addresses it binds itself.
   command.AddParameter("--server_address=", ControlServerAddress(instance))
+      .AddParameter("--grpc_uds_path=",
+                    grpc_socket.CreateGrpcSocket("VirtualTunerControlServer"))
       .AddParameter("--pcm_server_fd=", std::move(pcm_server))
       .AddParameter("--pcm_channels=", channels);
   // Not critical: if the daemon exits, the device keeps running without tuner

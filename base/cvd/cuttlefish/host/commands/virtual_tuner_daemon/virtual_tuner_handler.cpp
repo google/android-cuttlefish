@@ -1,0 +1,133 @@
+/*
+ * Copyright (C) 2026 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "cuttlefish/host/commands/virtual_tuner_daemon/virtual_tuner_handler.h"
+
+#include <grpcpp/support/status.h>
+
+#include <cstdint>
+#include <optional>
+#include <utility>
+
+#include "absl/log/log.h"
+
+#include "cuttlefish/host/commands/virtual_tuner_daemon/VirtualTuner.pb.h"
+#include "cuttlefish/host/commands/virtual_tuner_daemon/audio_generator.h"
+#include "cuttlefish/host/commands/virtual_tuner_daemon/tuner_state.h"
+
+namespace cuttlefish {
+namespace virtualtuner {
+
+VirtualTunerHandler::VirtualTunerHandler(TunerState& tuner_state)
+    : tuner_state_(tuner_state) {}
+
+::grpc::Status VirtualTunerHandler::Tune(const TuneRequest& request,
+                                         TuneResponse& response) {
+  if (request.hd_subchannel() > kMaxHdSubchannel) {
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                          "hd_subchannel must be in 0..7");
+  }
+  tuner_state_.SetTune(request.band(), request.frequency_hz(),
+                       request.hd_subchannel());
+
+  VLOG(0) << "Tune request received: Band=" << RadioBand_Name(request.band())
+          << "(" << request.band() << "), Freq=" << request.frequency_hz()
+          << " Hz, HD=" << request.hd_subchannel() << ", station tone "
+          << StationToneHz(tuner_state_.GetSnapshot()) << " Hz";
+
+  response.set_success(true);
+  response.set_message("Tuned successfully");
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerHandler::Stop(StopResponse& response) {
+  VLOG(0) << "Stop request received. Stopping tuner audio...";
+  tuner_state_.Stop();
+
+  response.set_success(true);
+  response.set_message("Stopped successfully");
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerHandler::GetStatus(
+    GetStatusResponse& response) const {
+  *response.mutable_status() = tuner_state_.GetStatus();
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerHandler::GetStations(
+    const GetStationsRequest& request, GetStationsResponse& response) const {
+  std::optional<RadioBand> band;
+  if (request.has_band()) {
+    band = request.band();
+  }
+  for (StationProgram& station : tuner_state_.GetStations(band)) {
+    *response.add_stations() = std::move(station);
+  }
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerHandler::Seek(const SeekRequest& request,
+                                         SeekResponse& response) const {
+  std::optional<StationProgram> found =
+      tuner_state_.Seek(request.band(), request.start_frequency_hz(),
+                        request.start_hd_subchannel(), request.direction_up(),
+                        request.skip_subchannel());
+  if (found.has_value()) {
+    *response.mutable_station() = std::move(*found);
+  }
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerHandler::UpsertStation(
+    const UpsertStationRequest& request, UpsertStationResponse& response) {
+  if (request.station().frequency_hz() == 0) {
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                          "frequency_hz must be non-zero");
+  }
+  if (request.station().hd_subchannel() > kMaxHdSubchannel) {
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                          "hd_subchannel must be in 0..7");
+  }
+  if (request.station().ByteSizeLong() > kMaxStationProgramBytes) {
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                          "station metadata exceeds size limit");
+  }
+  std::optional<StationProgram> upserted =
+      tuner_state_.UpsertStation(request.station());
+  if (!upserted.has_value()) {
+    return ::grpc::Status(::grpc::StatusCode::RESOURCE_EXHAUSTED,
+                          "station table is full");
+  }
+  *response.mutable_station() = std::move(*upserted);
+  return ::grpc::Status::OK;
+}
+
+::grpc::Status VirtualTunerHandler::RemoveStation(
+    const RemoveStationRequest& request, RemoveStationResponse& response) {
+  std::optional<uint32_t> hd_subchannel;
+  if (request.has_hd_subchannel()) {
+    hd_subchannel = request.hd_subchannel();
+  }
+  const bool removed =
+      tuner_state_.RemoveStation(request.band(), request.frequency_hz(),
+                                 hd_subchannel, request.dab_sid_ext());
+  response.set_removed(removed);
+  return ::grpc::Status::OK;
+}
+
+}  // namespace virtualtuner
+}  // namespace cuttlefish
