@@ -98,7 +98,7 @@ void WaylandServer::ServerLoop(int fd, bool frames_are_rgba) {
   wl_display_destroy(server_state_->display_);
 }
 
-void WaylandServer::SetFrameCallback(Surfaces::FrameCallback callback) {
+void WaylandServer::SetFrameCallback(FrameCallback callback) {
   server_state_->surfaces_.SetFrameCallback(std::move(callback));
 }
 

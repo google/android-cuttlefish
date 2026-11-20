@@ -42,13 +42,6 @@ class Surfaces {
   Surfaces(Surfaces&& rhs) = delete;
   Surfaces& operator=(Surfaces&& rhs) = delete;
 
-  using FrameCallback = std::function<void(uint32_t /*display_number*/,       //
-                                           uint32_t /*frame_width*/,          //
-                                           uint32_t /*frame_height*/,         //
-                                           uint32_t /*frame_fourcc_format*/,  //
-                                           uint32_t /*frame_stride_bytes*/,   //
-                                           uint8_t* /*frame_bytes*/)>;
-
   void SetFrameCallback(FrameCallback callback);
 
   void SetDisplayEventCallback(DisplayEventCallback callback);
