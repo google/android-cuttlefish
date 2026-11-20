@@ -37,6 +37,10 @@ inline constexpr size_t kFrameSizeBytes = kChannels * kBytesPerSample;
 inline constexpr size_t kChunkFrames = 4096;
 inline constexpr size_t kChunkSizeBytes = kChunkFrames * kFrameSizeBytes;
 
+// Largest station WAV file the daemon reads, about 5.8 minutes of 48 kHz
+// 16-bit stereo audio. The whole file is held in memory while tuned.
+inline constexpr uint64_t kMaxWavFileBytes = uint64_t{64} << 20;
+
 // Tone that identifies the tuned station, so that stations can be told apart
 // by ear and by FFT. AM: 300 Hz at 530 kHz plus 0.5 Hz per kHz (300..885 Hz).
 // FM: 1000 Hz at 87.5 MHz plus 10 Hz per 100 kHz (1000..3050 Hz); each HD

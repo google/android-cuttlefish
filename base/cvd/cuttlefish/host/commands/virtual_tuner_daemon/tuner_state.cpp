@@ -271,11 +271,16 @@ std::optional<StationProgram> TunerState::Seek(RadioBand band,
   return (it != candidates.rend()) ? *it : candidates.back();
 }
 
-StationProgram TunerState::UpsertStation(StationProgram station) {
+std::optional<StationProgram> TunerState::UpsertStation(
+    StationProgram station) {
   std::lock_guard<std::mutex> lock(mutex_);
   const StationKey key{station.band(), station.frequency_hz(),
                        station.hd_subchannel(), station.dab_sid_ext(),
                        station.dab_ensemble()};
+  if (stations_.find(key) == stations_.end() &&
+      stations_.size() >= kMaxStations) {
+    return std::nullopt;
+  }
   stations_[key] = station;
   if (station.has_hd_subchannel()) {
     RecomputeSubchannelBitmaskLocked(station.band(), station.frequency_hz());
@@ -304,6 +309,13 @@ bool TunerState::RemoveStation(RadioBand band, uint32_t frequency_hz,
         (!hd_subchannel.has_value() || s.hd_subchannel() == *hd_subchannel);
     const bool match_dab = (dab_sid_ext == 0 || s.dab_sid_ext() == dab_sid_ext);
     if (match_band && match_freq && match_hd && match_dab) {
+      station_wav_paths_.erase(
+          StationKey{s.band(), s.frequency_hz(), s.hd_subchannel(), 0});
+      if (state_.is_playing && state_.band == s.band() &&
+          state_.frequency_hz == s.frequency_hz() &&
+          state_.hd_subchannel == s.hd_subchannel()) {
+        state_.station_wav_path.clear();
+      }
       it = stations_.erase(it);
       removed = true;
     } else {
@@ -337,7 +349,8 @@ void TunerState::RecomputeSubchannelBitmaskLocked(RadioBand band,
   int32_t mask = 0;
   for (const auto& [key, station] : stations_) {
     if (station.band() == band && station.frequency_hz() == frequency_hz &&
-        station.has_hd_subchannel()) {
+        station.has_hd_subchannel() &&
+        station.hd_subchannel() <= kMaxHdSubchannel) {
       mask |= (1 << station.hd_subchannel());
     }
   }

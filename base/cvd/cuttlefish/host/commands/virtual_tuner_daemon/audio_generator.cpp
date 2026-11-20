@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/virtual_tuner_daemon/audio_generator.h"
 
 #include <fcntl.h>
+#include <sys/stat.h>
 
 #include <algorithm>
 #include <array>
@@ -36,7 +37,6 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/VirtualTuner.pb.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/tuner_state.h"
 #include "cuttlefish/result/expect.h"
@@ -104,10 +104,35 @@ Result<void> PReadBytes(const Fd& file, uint64_t offset,
   while (total < out.size()) {
     const uint64_t read = CF_EXPECT(
         file.PRead(out.data() + total, out.size() - total, offset + total));
-    CF_EXPECT(read > 0, "Unexpected EOF while reading WAV header");
+    CF_EXPECT(read > 0, "Unexpected EOF while reading WAV file");
     total += read;
   }
   return {};
+}
+
+struct WavFile {
+  Fd fd;
+  uint64_t size = 0;
+};
+
+// O_NONBLOCK keeps open() from blocking on a FIFO, and O_NOFOLLOW rejects a
+// symlink in the last path component. fstat() runs on the opened file, so the
+// type and size checks apply to the file that is actually read.
+Result<WavFile> OpenWavFile(const std::string& wav_path) {
+  CF_EXPECTF(!wav_path.empty() && wav_path.front() == '/',
+             "WAV file path '{}' must be an absolute path", wav_path);
+  Fd fd = CF_EXPECTF(
+      Fd::Open(wav_path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK),
+      "Failed to open WAV file '{}'", wav_path);
+  const struct stat st = CF_EXPECT(fd.Fstat());
+  CF_EXPECTF(S_ISREG(st.st_mode), "WAV file '{}' is not a regular file",
+             wav_path);
+  CF_EXPECTF(
+      st.st_size >= 0 && static_cast<uint64_t>(st.st_size) <= kMaxWavFileBytes,
+      "WAV file '{}' is {} bytes, over the {} byte limit", wav_path, st.st_size,
+      kMaxWavFileBytes);
+  return WavFile{.fd = std::move(fd),
+                 .size = static_cast<uint64_t>(st.st_size)};
 }
 
 struct WavHeader {
@@ -139,7 +164,7 @@ Result<WavHeader> ParseWavHeader(size_t total_size,
     const uint32_t chunk_size = ReadLe32(chunk_header, 4);
     const size_t payload_offset = offset + kChunkHeaderBytes;
     CF_EXPECTF(chunk_size <= total_size - payload_offset,
-               "Truncated '{}' chunk in WAV payload", chunk_id);
+               "Truncated chunk at offset {} in WAV payload", offset);
 
     if (chunk_id == "fmt ") {
       std::vector<uint8_t> fmt_payload(chunk_size);
@@ -200,6 +225,9 @@ double StationToneHz(const TunerStateSnapshot& snapshot) {
 }
 
 Result<std::vector<int16_t>> ParseWavBytes(std::span<const uint8_t> wav_bytes) {
+  CF_EXPECTF(wav_bytes.size() <= kMaxWavFileBytes,
+             "WAV payload is {} bytes, over the {} byte limit",
+             wav_bytes.size(), kMaxWavFileBytes);
   const WavHeader header = CF_EXPECT(ParseWavHeader(
       wav_bytes.size(),
       [wav_bytes](size_t offset, std::span<uint8_t> out) -> Result<void> {
@@ -225,21 +253,20 @@ Result<std::vector<int16_t>> ParseWavBytes(std::span<const uint8_t> wav_bytes) {
 }
 
 Result<void> ValidateWavFile(const std::string& wav_path) {
-  Fd file = CF_EXPECTF(Fd::Open(wav_path, O_RDONLY),
-                       "Failed to open WAV file '{}'", wav_path);
-  const uint64_t file_size = CF_EXPECT(file.SeekEnd(0));
+  WavFile file = CF_EXPECT(OpenWavFile(wav_path));
   CF_EXPECT(ParseWavHeader(
-      file_size,
+      file.size,
       [&file](size_t offset, std::span<uint8_t> out) -> Result<void> {
-        return PReadBytes(file, offset, out);
+        return PReadBytes(file.fd, offset, out);
       }));
   return {};
 }
 
 Result<std::vector<int16_t>> LoadWavFile(const std::string& wav_path) {
-  std::vector<uint8_t> contents =
-      CF_EXPECTF(ReadBinaryFileContents(wav_path),
-                 "Failed to read WAV file '{}'", wav_path);
+  WavFile file = CF_EXPECT(OpenWavFile(wav_path));
+  std::vector<uint8_t> contents(file.size);
+  CF_EXPECTF(PReadBytes(file.fd, 0, contents), "Failed to read WAV file '{}'",
+             wav_path);
   return ParseWavBytes(contents);
 }
 
