@@ -12,23 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_go//go:def.bzl", "go_test")
+load(":def.bzl", "v4l2_compliance_test")
 
-go_test(
-    name = "media_tests",
-    size = "large",
-    srcs = ["main_test.go"],
-    data = ["//:debian_substitution_marker"],
-    env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(rlocationpath //:debian_substitution_marker)"},
-    tags = [
-        "exclusive",
-        "external",
-        "no-sandbox",
-        "podcvd_excluded",
-        "requires_ab",
-        "supports-graceful-termination",
-    ],
-    deps = [
-        "//cvd/common",
-    ],
+v4l2_compliance_test(
+    name = "git_main_phone",
+    branch = "git_main",
+    target = "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+)
+
+v4l2_compliance_test(
+    name = "git_main_auto",
+    branch = "git_main-throttled-nightly",
+    target = "aosp_cf_x86_64_auto-trunk_staging-userdebug",
 )
