@@ -3,7 +3,6 @@
 This is a bazel workspace.
 
 ## Git Workflow
-- Please add an "Assisted-by:" tag to git commits you create with the format: `Assisted-by: AGENTNAME:MODELVERSION`
 - After modifying BUILD.bazel files, please format them with `buildozer '//cuttlefish/...:__pkg__' format`
 - Every commit should be validated. Please validate changes by running `bazel build //...` and `bazel test //...`.
 - To fix clang-format tests, run the `clang-format` executable directly.
