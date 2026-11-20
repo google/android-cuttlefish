@@ -230,12 +230,12 @@ Result<std::chrono::system_clock::time_point> FileModificationTime(
   return std::chrono::system_clock::time_point(seconds);
 }
 
-Result<std::string> RenameFile(const std::string& current_filepath,
-                               const std::string& target_filepath) {
+Result<void> RenameFile(const std::string& current_filepath,
+                        const std::string& target_filepath) {
   if (current_filepath != target_filepath) {
     CF_EXPECT(Rename(current_filepath, target_filepath));
   }
-  return target_filepath;
+  return {};
 }
 
 std::string ReadFile(const std::string& file) {
