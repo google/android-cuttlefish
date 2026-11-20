@@ -322,37 +322,46 @@ func (tc *TestContext) CVDPowerwash() error {
 	return nil
 }
 
+// Environment variables set when running `cvd create --config_file`.
+type LoadEnvVariables struct {
+	// Sets the CURL_CA_BUNDLE environment variable.
+	CurlCABundle string
+}
+
 // Common parameters for `cvd create --config_file`.
 type LoadArgs struct {
-	LoadConfig string
-	Env        map[string]string
+	ConfigFile   string
+	EnvVariables LoadEnvVariables
+}
+
+func CreateLoadConfigFile(t *testing.T, contents string) string {
+	t.Helper()
+	configpath := path.Join(t.TempDir(), "cvd_load_config.json")
+	if err := os.WriteFile(configpath, []byte(contents), 0644); err != nil {
+		t.Fatalf("failed to write load config to %s: %v", configpath, err)
+	}
+	return configpath
 }
 
 // Performs `cvd create --config_file`.
-func (tc *TestContext) CVDCreateWithConfigFile(load LoadArgs) error {
-	configpath := path.Join(tc.tempdir, "cvd_load_config.json")
-
-	log.Printf("Writing config to %s", configpath)
-
-	err := os.WriteFile(configpath, []byte(load.LoadConfig), os.ModePerm)
-	if err != nil {
-		log.Printf("Failed to write load config to file: %w", err)
-		return err
-	}
-
+func (tc *TestContext) CVDCreateWithConfigFile(args LoadArgs) error {
 	log.Printf("Creating instance(s) via `cvd create --config_file`...")
 	loadCmd := []string{
 		tc.TargetBin(),
 		"create",
-		"--config_file=" + configpath,
+		"--config_file=" + args.ConfigFile,
 		"--base_directory=" + tc.tempdir,
 	}
 	credentialArg := os.Getenv("CREDENTIAL_SOURCE")
 	if credentialArg != "" {
 		loadCmd = append(loadCmd, fmt.Sprintf("--credential_source=%s", credentialArg))
 	}
-	if _, err := tc.RunCmdWithEnv(loadCmd, load.Env); err != nil {
-		log.Printf("Failed to perform `cvd create --config_file`: %w", err)
+	env := map[string]string{"HOME": tc.t.TempDir()}
+	if args.EnvVariables.CurlCABundle != "" {
+		env["CURL_CA_BUNDLE"] = args.EnvVariables.CurlCABundle
+	}
+	if _, err := tc.RunCmdWithEnv(loadCmd, env); err != nil {
+		log.Printf("Failed to perform `cvd create --config_file`: %v", err)
 		return err
 	}
 	log.Printf("Created instance(s) via `cvd create --config_file`!")

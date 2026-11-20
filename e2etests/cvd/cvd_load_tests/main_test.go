@@ -32,19 +32,12 @@ func TestCvdLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to find load config runfile from %s: %v", rlocation, err)
 	}
-	loadconfig, err := os.ReadFile(configpath)
-	if err != nil {
-		t.Fatalf("failed to read load config from %s: %v", configpath, err)
-	}
 
 	c := e2etests.TestContext{}
 	c.SetUp(t)
 	defer c.TearDown()
 
-	err = c.CVDCreateWithConfigFile(e2etests.LoadArgs{
-		LoadConfig: string(loadconfig),
-		Env:        map[string]string{"HOME": t.TempDir()},
-	})
+	err = c.CVDCreateWithConfigFile(e2etests.LoadArgs{ConfigFile: configpath})
 	if err != nil {
 		t.Fatal(err)
 	}

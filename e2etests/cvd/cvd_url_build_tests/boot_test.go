@@ -103,8 +103,8 @@ func TestCvdLoadHttpsObjectBuild(t *testing.T) {
 
 	config := fmt.Sprintf(urlLoadConfig, base+"/"+imgZip, base+"/"+hostPackageName)
 	if err := c.CVDCreateWithConfigFile(e2etests.LoadArgs{
-		LoadConfig: config,
-		Env:        map[string]string{"CURL_CA_BUNDLE": certpath, "HOME": t.TempDir()},
+		ConfigFile:   e2etests.CreateLoadConfigFile(t, config),
+		EnvVariables: e2etests.LoadEnvVariables{CurlCABundle: certpath},
 	}); err != nil {
 		t.Fatal(err)
 	}
