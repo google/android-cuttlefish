@@ -21,7 +21,7 @@ defaults:
 jobs:
   debugger:
     if: |-
-      ${{ fromJSON(vars.GEMINI_DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}
+      ${{ fromJSON(vars.GEMINI_DEBUG || false) || runner.debug == '1' }}
     runs-on: 'ubuntu-latest'
     permissions:
       contents: 'read'
