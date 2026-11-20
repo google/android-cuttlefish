@@ -1,4 +1,4 @@
-github.com/bazelbuild/rules_go v0.65.0 h1:oHAvkNIMaOhguFSCHi0bCoUhz2390srk4U0rTn9mqBc=
-github.com/bazelbuild/rules_go v0.65.0/go.mod h1:xfi7fis5FXCWYcI1W3egOzRBoz+Yi5AeFV7MbCtdmj8=
+github.com/bazelbuild/rules_go v0.64.2 h1:bBzVLLT/gSQ+bhE7V1rQDQRBIcQgbv0kZrVCjELBE/Q=
+github.com/bazelbuild/rules_go v0.64.2/go.mod h1:fGJXke4qp7Xq27y1oZ7Qib3rhk5Ar3T1/A9jxOtkcH8=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
