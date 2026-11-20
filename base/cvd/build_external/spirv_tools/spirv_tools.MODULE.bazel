@@ -2,7 +2,7 @@ git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "g
 
 git_repository(
     name = "spirv_tools",
-    commit = "85f222ec591863853ea603ce190ea508c7255568",
+    commit = "ef96ed763b43b59b33b31b362f09a02b729fa1c9",  # vulkan-sdk-1.4.363.0
     patch_args = ["-p1"],
     patches = [
         "//build_external/spirv_tools:bazel9.patch",

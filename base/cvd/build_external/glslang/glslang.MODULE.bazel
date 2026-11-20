@@ -3,6 +3,6 @@ git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "g
 git_repository(
     name = "glslang",
     build_file = "@//build_external/glslang:BUILD.glslang.bazel",
-    commit = "76038dbb8708236407e121fa11e99a96377b88ad",
+    commit = "e1b562a8bed273a02f30b59b66a5d499793cede5",  # vulkan-sdk-1.4.363.0
     remote = "https://github.com/KhronosGroup/glslang",
 )
