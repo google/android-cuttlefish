@@ -24,4 +24,6 @@
 //cvd/logs_tests:logs_tests
 //cvd/metrics_create_tests:metrics_create_tests
 //cvd/metrics_load_tests:metrics_load_tests
-//cvd/networking_tests:networking_tests
+//cvd/networking_tests:aosp_main_phone
+//cvd/networking_tests:git_main_phone
+//cvd/networking_tests:git_main_phone_cvdalloc

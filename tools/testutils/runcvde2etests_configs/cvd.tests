@@ -38,9 +38,12 @@
 //cvd/logs_tests:logs_tests
 //cvd/media_tests/cts:media_tests
 //cvd/media_tests/v4l2_stream_proxy/v4l2compliance:media_tests
-//cvd/media_tests/v4l2compliance:media_tests
+//cvd/media_tests/v4l2compliance:git_main_auto
+//cvd/media_tests/v4l2compliance:git_main_phone
 //cvd/metrics_create_tests:metrics_create_tests
 //cvd/metrics_load_tests:metrics_load_tests
-//cvd/networking_tests:networking_tests
+//cvd/networking_tests:aosp_main_phone
+//cvd/networking_tests:git_main_phone
+//cvd/networking_tests:git_main_phone_cvdalloc
 //cvd/sdv_tests:sdv_tests
 
