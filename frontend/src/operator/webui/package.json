@@ -42,5 +42,8 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "gts": "^6.0.2",
     "typescript": "~6.0.0"
+  },
+  "overrides": {
+    "tmp": "^0.2.7"
   }
 }
