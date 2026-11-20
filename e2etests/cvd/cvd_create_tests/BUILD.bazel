@@ -13,21 +13,36 @@
 # limitations under the License.
 
 load("@rules_go//go:def.bzl", "go_test")
+load(":def.bzl", "cvd_create_test")
 
-go_test(
-    name = "cvd_create_tests",
-    size = "large",
-    srcs = ["main_test.go"],
-    tags = [
-        "exclusive",
-        "external",
-        "no-sandbox",
-        "requires_ab",
-        "supports-graceful-termination",
-    ],
-    deps = [
-        "//cvd/common",
-    ],
+cvd_create_test(
+    name = "aosp_main_phone",
+    branch = "aosp-android-latest-release",
+    target = "aosp_cf_x86_64_only_phone-userdebug",
+)
+
+cvd_create_test(
+    name = "git_main_phone",
+    branch = "git_main",
+    target = "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+)
+
+cvd_create_test(
+    name = "git_main_auto",
+    branch = "git_main-throttled-nightly",
+    target = "aosp_cf_x86_64_auto-trunk_staging-userdebug",
+)
+
+cvd_create_test(
+    name = "git_sw_car_dev_sdv_core",
+    branch = "git_main-swcar-dev",
+    target = "aosp_cf_x86_64_sdv_core-trunk_staging-userdebug",
+)
+
+cvd_create_test(
+    name = "git_sw_car_dev_sdv_media",
+    branch = "git_main-swcar-dev",
+    target = "aosp_cf_x86_64_sdv_media-trunk_staging-userdebug",
 )
 
 go_test(
@@ -51,24 +66,6 @@ go_test(
     name = "cvd_create_substitute_only",
     size = "large",
     srcs = ["substitute_only.go"],
-    tags = [
-        "exclusive",
-        "external",
-        "no-sandbox",
-        "requires_ab",
-        "supports-graceful-termination",
-    ],
-    deps = [
-        "//cvd/common",
-    ],
-)
-
-go_test(
-    name = "cvd_create_tests_additional_substitution",
-    size = "large",
-    srcs = ["main_test.go"],
-    data = ["//:debian_substitution_marker"],
-    env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(rlocationpath //:debian_substitution_marker)"},
     tags = [
         "exclusive",
         "external",
