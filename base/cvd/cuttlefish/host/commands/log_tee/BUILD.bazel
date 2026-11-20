@@ -9,6 +9,19 @@ cf_build_test(name = "log_tee_build_test")
 cf_cc_binary(
     name = "log_tee",
     srcs = ["log_tee.cpp"],
+    dynamic_deps = select({
+        "@platforms//os:linux": [
+            "//:absl_shared",
+            "//:fmt_shared",
+            "//:grpc_protobuf_shared",
+            "//:jsoncpp_shared",
+            "//cuttlefish/common/libs/fs:fs_shared",
+            "//cuttlefish/common/libs/utils:files_shared",
+            "//cuttlefish/host/libs/config:cuttlefish_config_shared",
+            "//cuttlefish/result:result_shared",
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:tee_logging",

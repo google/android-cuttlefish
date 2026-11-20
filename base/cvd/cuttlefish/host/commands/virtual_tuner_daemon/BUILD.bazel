@@ -126,6 +126,20 @@ cf_cc_binary(
     srcs = [
         "main.cpp",
     ],
+    dynamic_deps = select({
+        "@platforms//os:linux": [
+            "//:absl_shared",
+            "//:boringssl_shared",
+            "//:fmt_shared",
+            "//:grpc_protobuf_shared",
+            "//:jsoncpp_shared",
+            "//cuttlefish/common/libs/fs:fs_shared",
+            "//cuttlefish/common/libs/utils:files_shared",
+            "//cuttlefish/host/libs/config:cuttlefish_config_shared",
+            "//cuttlefish/result:result_shared",
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         ":tuner_state",
         ":virtual_tuner_audio",

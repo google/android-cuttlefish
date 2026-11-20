@@ -1,3 +1,4 @@
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("//cuttlefish/bazel:rules.bzl", "cf_build_test", "cf_cc_library", "cf_cc_test")
 
 package(
@@ -49,6 +50,33 @@ cf_cc_library(
         "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:cmsg",
         "@fmt",
+    ],
+)
+
+cc_shared_library(
+    name = "fs_shared",
+    dynamic_deps = [
+        "//:absl_shared",
+        "//:fmt_shared",
+        "//cuttlefish/result:result_shared",
+    ],
+    exports_filter = [
+        "//cuttlefish/io:__subpackages__",
+        "@android_system_libbase//:__subpackages__",
+        "@android_system_logging//:__subpackages__",
+    ],
+    shared_lib_name = "libcuttlefish_bazel_fs.so",
+    user_link_flags = [
+        "-Wl,-rpath,$ORIGIN/",
+    ],
+    deps = [
+        ":fd",
+        ":fs",
+        ":scoped_mmap",
+        "//cuttlefish/common/libs/utils:known_paths",
+        "//cuttlefish/posix:strerror",
+        "@android_system_libbase//:cmsg",
+        "@android_system_libbase//:file_logging",
     ],
 )
 
