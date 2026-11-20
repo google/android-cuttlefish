@@ -1,4 +1,9 @@
-import {Component, HostListener, Injectable, ChangeDetectionStrategy} from '@angular/core';
+import {
+  Component,
+  HostListener,
+  Injectable,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import {DisplaysService} from './displays.service';
 import {ThemeService} from './theme.service';

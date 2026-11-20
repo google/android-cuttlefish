@@ -6,7 +6,7 @@ import {DomSanitizer} from '@angular/platform-browser';
 import {DeviceInfo} from './device-info-interface';
 import {DeviceItem, DeviceGroup, DeviceFilter} from './device-item.interface';
 
-function isLegacyDevice(device: DeviceItem) : boolean {
+function isLegacyDevice(device: DeviceItem): boolean {
   return !device || !device.owner || !device.group_name || !device.name;
 }
 
@@ -23,59 +23,60 @@ export class DeviceService {
 
   private devices = this.filterSubject.pipe(
     combineLatestWith(this.refreshSubject),
-    mergeMap(([filter, _]) => this.fetchDevices(filter)),
-    shareReplay(1)
+    mergeMap(([filter]) => this.fetchDevices(filter)),
+    shareReplay(1),
   );
 
-  private deviceGroups = this.devices.pipe(map(this.groupsFromDeviceList))
+  private deviceGroups = this.devices.pipe(map(this.groupsFromDeviceList));
 
   private legacyDevices = this.devices.pipe(map(this.legacyFromDeviceList));
 
   private fetchDevices(filter: DeviceFilter) {
     let params = new HttpParams();
     if (filter.groupId !== null) {
-      params = params.set("groupId", filter.groupId);
+      params = params.set('groupId', filter.groupId);
     }
     if (filter.owner !== null) {
-      params = params.set("owner", filter.owner);
+      params = params.set('owner', filter.owner);
     }
     return this.httpClient
-      .get<DeviceItem[]>(`./devices`, {params: params})
+      .get<DeviceItem[]>('./devices', {params: params})
       .pipe(map(this.sortDevices));
   }
 
   private groupsFromDeviceList(devices: DeviceItem[]) {
     devices = devices.filter(d => !isLegacyDevice(d));
     const ownersCount = new Set(devices.map(d => d.owner)).size;
-    let groupsByDisplayName = new Map<string, DeviceGroup>();
+    const groupsByDisplayName = new Map<string, DeviceGroup>();
     for (const device of devices) {
-      const groupDisplayName = ownersCount > 1 ?
-          device.owner + ':' + device.group_name :
-          device.group_name;
+      const groupDisplayName =
+        ownersCount > 1
+          ? device.owner + ':' + device.group_name
+          : device.group_name;
       let group = groupsByDisplayName.get(groupDisplayName);
       if (!group) {
         group = {
           owner: device.owner,
           name: device.group_name,
           displayName: groupDisplayName,
-          devices: []
+          devices: [],
         };
         groupsByDisplayName.set(groupDisplayName, group);
       }
       group.devices.push(device);
     }
-    return [...groupsByDisplayName.values()].sort(
-        (g1, g2) => g1.displayName.localeCompare(
-            g2.displayName, undefined, {numeric: true}));
+    return [...groupsByDisplayName.values()].sort((g1, g2) =>
+      g1.displayName.localeCompare(g2.displayName, undefined, {numeric: true}),
+    );
   }
 
   private legacyFromDeviceList(devices: DeviceItem[]) {
-    return devices.filter(isLegacyDevice)
+    return devices.filter(isLegacyDevice);
   }
 
   private sortDevices(devices: DeviceItem[]) {
     return devices.sort((a: DeviceItem, b: DeviceItem) =>
-      a['device_id'].localeCompare(b['device_id'], undefined, {numeric: true})
+      a['device_id'].localeCompare(b['device_id'], undefined, {numeric: true}),
     );
   }
 

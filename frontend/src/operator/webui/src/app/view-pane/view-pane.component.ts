@@ -1,4 +1,14 @@
-import {Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, inject, DOCUMENT, ChangeDetectionStrategy} from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  AfterViewInit,
+  ViewChild,
+  ElementRef,
+  inject,
+  DOCUMENT,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import {DisplaysService} from '../displays.service';
 import {
   asyncScheduler,
@@ -15,7 +25,7 @@ import {
   KtdGridLayoutItem,
   ktdGridCompact,
 } from '@katoid/angular-grid-layout';
-import {DisplayInfo} from '../../../../intercept/js/server_connector'
+import {DisplayInfo} from '../../../../intercept/js/server_connector';
 
 interface DeviceGridItem extends KtdGridLayoutItem {
   id: string;
@@ -46,16 +56,15 @@ interface DeviceGridItemUpdate {
   styleUrls: ['./view-pane.component.scss'],
 })
 export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
-  @ViewChild(KtdGridComponent, { static: true })
+  @ViewChild(KtdGridComponent, {static: true})
   grid!: KtdGridComponent;
-  @ViewChild('viewPane', { static: true })
+  @ViewChild('viewPane', {static: true})
   viewPane!: ElementRef;
   resizeSubscription!: Subscription;
   resizeObserver!: ResizeObserver;
 
   displaysService = inject(DisplaysService);
   document = inject<Document>(DOCUMENT);
-
 
   cols$ = new BehaviorSubject<number>(0);
   cols = 0;
@@ -77,10 +86,8 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly displayTitleHeight = 48;
 
   // Note this is constant because displays appear on a single horizontal row.
-  private readonly totalVerticalSpacing
-      = this.panelTitleHeight
-      + this.displayTitleHeight
-      + this.displayMargin;
+  private readonly totalVerticalSpacing =
+    this.panelTitleHeight + this.displayTitleHeight + this.displayMargin;
 
   private totalHorizontalSpacing(item: DeviceGridItem): number {
     const controlPanelDefaultButtonsWidth = 62;
@@ -120,7 +127,7 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
   ngAfterViewInit(): void {
     this.resizeSubscription = merge(
       fromEvent(window, 'resize'),
-      fromEvent(window, 'orientationchange')
+      fromEvent(window, 'orientationchange'),
     )
       .pipe(debounceTime(50))
       .subscribe(() => {
@@ -133,59 +140,71 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
     this.resizeObserver.unobserve(this.viewPane.nativeElement);
   }
 
-  private visibleDevicesChanged: Observable<DeviceGridItemUpdate[]> = this.displaysService.getDeviceVisibilities().pipe(map(deviceVisibilityInfos => deviceVisibilityInfos.map(info => {
-    return {
-      values: {
-        ...this.createDeviceGridItem(info.id),
-        visible: info.visible,
-      },
-      overwrites: ['visible'],
-      source: this.visibleDeviceSource,
-    };
-  })));
-  private displayInfoChanged: Observable<DeviceGridItemUpdate[]> = this.displaysService.getDisplayInfoChanged().pipe(map(displayInfo => {
-    const updateValues = this.createDeviceGridItem(displayInfo.device_id);
-    const overwrites = [];
-    if (displayInfo.displays.length !== 0) {
-      let w = 0, h = 0;
-      displayInfo.displays.forEach((d: DisplayInfo) => {
-        w += d.width;
-        h = Math.max(d.height, h);
-      });
-      updateValues.display_width = w;
-      updateValues.display_height = h;
-      overwrites.push('display_width');
-      overwrites.push('display_height');
-      // Display service occasionally sends a dummy update - do not
-      // overwrite display count in that case.
-      if (displayInfo.displays[0].width !== 0) {
-        updateValues.display_count = displayInfo.displays.length;
-        overwrites.push('display_count');
-      }
-    }
-    return [
-      {
-        values: updateValues,
-        overwrites: overwrites,
-        source: this.displayInfoSource,
-      },
-    ];
-  }));
-  private layoutUpdated: Observable<DeviceGridItemUpdate[]> = this.layoutUpdated$.pipe(map(newLayout => {
-    return newLayout.map(layoutItem => {
-      const updateValues = this.createDeviceGridItem(layoutItem.id);
-      const overwrites = ['x', 'y', 'w', 'h'];
-      updateValues.x = layoutItem.x;
-      updateValues.y = layoutItem.y;
-      updateValues.w = layoutItem.w;
-      updateValues.h = layoutItem.h;
-      return {
-        values: updateValues,
-        overwrites: overwrites,
-        source: this.layoutUpdateSource,
-      };
-    });
-  }));
+  private visibleDevicesChanged: Observable<DeviceGridItemUpdate[]> =
+    this.displaysService.getDeviceVisibilities().pipe(
+      map(deviceVisibilityInfos =>
+        deviceVisibilityInfos.map(info => {
+          return {
+            values: {
+              ...this.createDeviceGridItem(info.id),
+              visible: info.visible,
+            },
+            overwrites: ['visible'],
+            source: this.visibleDeviceSource,
+          };
+        }),
+      ),
+    );
+  private displayInfoChanged: Observable<DeviceGridItemUpdate[]> =
+    this.displaysService.getDisplayInfoChanged().pipe(
+      map(displayInfo => {
+        const updateValues = this.createDeviceGridItem(displayInfo.device_id);
+        const overwrites = [];
+        if (displayInfo.displays.length !== 0) {
+          let w = 0,
+            h = 0;
+          displayInfo.displays.forEach((d: DisplayInfo) => {
+            w += d.width;
+            h = Math.max(d.height, h);
+          });
+          updateValues.display_width = w;
+          updateValues.display_height = h;
+          overwrites.push('display_width');
+          overwrites.push('display_height');
+          // Display service occasionally sends a dummy update - do not
+          // overwrite display count in that case.
+          if (displayInfo.displays[0].width !== 0) {
+            updateValues.display_count = displayInfo.displays.length;
+            overwrites.push('display_count');
+          }
+        }
+        return [
+          {
+            values: updateValues,
+            overwrites: overwrites,
+            source: this.displayInfoSource,
+          },
+        ];
+      }),
+    );
+  private layoutUpdated: Observable<DeviceGridItemUpdate[]> =
+    this.layoutUpdated$.pipe(
+      map(newLayout => {
+        return newLayout.map(layoutItem => {
+          const updateValues = this.createDeviceGridItem(layoutItem.id);
+          const overwrites = ['x', 'y', 'w', 'h'];
+          updateValues.x = layoutItem.x;
+          updateValues.y = layoutItem.y;
+          updateValues.w = layoutItem.w;
+          updateValues.h = layoutItem.h;
+          return {
+            values: updateValues,
+            overwrites: overwrites,
+            source: this.layoutUpdateSource,
+          };
+        });
+      }),
+    );
 
   private adjustNewLayout(item: DeviceGridItem): DeviceGridItem {
     if (item.display_width === null || item.display_height === null)
@@ -199,16 +218,16 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const zoom = Math.min(
       (item.w - this.totalHorizontalSpacing(item)) / item.display_width,
-      (item.h - this.totalVerticalSpacing) / item.display_height
+      (item.h - this.totalVerticalSpacing) / item.display_height,
     );
 
     item.w = Math.max(
       this.minPanelWidth,
-      zoom * item.display_width + this.totalHorizontalSpacing(item)
+      zoom * item.display_width + this.totalHorizontalSpacing(item),
     );
     item.h = Math.max(
       this.minPanelHeight,
-      zoom * item.display_height + this.totalVerticalSpacing
+      zoom * item.display_height + this.totalVerticalSpacing,
     );
     item.zoom = zoom;
 
@@ -230,11 +249,11 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
 
       item.w = Math.max(
         this.minPanelWidth,
-        zoom * item.display_width + this.totalHorizontalSpacing(item)
+        zoom * item.display_width + this.totalHorizontalSpacing(item),
       );
       item.h = Math.max(
         this.minPanelHeight,
-        zoom * item.display_height + this.totalVerticalSpacing
+        zoom * item.display_height + this.totalVerticalSpacing,
       );
     }
 
@@ -243,15 +262,18 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private placeNewItem(
     item: DeviceGridItem,
-    layout: DeviceGridItem[]
+    layout: DeviceGridItem[],
   ): DeviceGridItem {
     const lastItemY = Math.max(...layout.map(obj => obj.y), 0);
     const bottomBorder = Math.max(...layout.map(obj => obj.y + obj.h), 0);
     const lastRowLayout = layout.filter(obj => obj.y === lastItemY);
-    const rightBorder = Math.max(...lastRowLayout.map(obj => obj.x + obj.w), 0)
+    const rightBorder = Math.max(...lastRowLayout.map(obj => obj.x + obj.w), 0);
 
-    if (this.displaysService.addVertically$.value
-        || rightBorder + item.w > this.cols) {  // Stack vertically
+    if (
+      this.displaysService.addVertically$.value ||
+      rightBorder + item.w > this.cols
+    ) {
+      // Stack vertically
       item.x = 0;
       item.y = bottomBorder;
     } else {
@@ -268,57 +290,77 @@ export class ViewPaneComponent implements OnInit, OnDestroy, AfterViewInit {
     return item;
   }
 
-  resultLayout: Observable<DeviceGridItem[]> = merge(this.visibleDevicesChanged, this.displayInfoChanged, this.layoutUpdated).pipe(scan((currentLayout: DeviceGridItem[], updateInfos: DeviceGridItemUpdate[]) => {
-    const layoutById = new Map(currentLayout.map(item => [item.id, item]));
-    updateInfos.forEach(updateItem => {
-      const id = updateItem.values.id;
-      let item = layoutById.has(id)
-        ? layoutById.get(id)!
-        : updateItem.values;
-        updateItem.overwrites.forEach(prop => {
-          // Ignore force show display message when display size is already set
-          if ((prop === 'display_width' || prop === 'display_height')
-              && item[prop] !== null && item[prop] !== this.freeScale
-            && updateItem.values[prop] === this.freeScale) {
+  resultLayout: Observable<DeviceGridItem[]> = merge(
+    this.visibleDevicesChanged,
+    this.displayInfoChanged,
+    this.layoutUpdated,
+  ).pipe(
+    scan(
+      (
+        currentLayout: DeviceGridItem[],
+        updateInfos: DeviceGridItemUpdate[],
+      ) => {
+        const layoutById = new Map(currentLayout.map(item => [item.id, item]));
+        updateInfos.forEach(updateItem => {
+          const id = updateItem.values.id;
+          let item = layoutById.has(id)
+            ? layoutById.get(id)!
+            : updateItem.values;
+          updateItem.overwrites.forEach(prop => {
+            // Ignore force show display message when display size is already set
+            if (
+              (prop === 'display_width' || prop === 'display_height') &&
+              item[prop] !== null &&
+              item[prop] !== this.freeScale &&
+              updateItem.values[prop] === this.freeScale
+            ) {
               return;
             }
             item[prop] = updateItem.values[prop]!;
-        });
-        switch (updateItem.source) {
-          case this.visibleDeviceSource: {
-            if (!item.placed && item.visible) {
-              // When a new item is set visible
-              item = this.placeNewItem(item, currentLayout);
+          });
+          switch (updateItem.source) {
+            case this.visibleDeviceSource: {
+              if (!item.placed && item.visible) {
+                // When a new item is set visible
+                item = this.placeNewItem(item, currentLayout);
+              }
+              break;
             }
-            break;
+            case this.layoutUpdateSource: {
+              // When layout is changed
+              item = this.adjustNewLayout(item);
+              break;
+            }
+            case this.displayInfoSource: {
+              // When device display info is changed
+              item = this.adjustDisplayInfo(item);
+              break;
+            }
           }
-          case this.layoutUpdateSource: {
-            // When layout is changed
-            item = this.adjustNewLayout(item);
-            break;
-          }
-          case this.displayInfoSource: {
-            // When device display info is changed
-            item = this.adjustDisplayInfo(item);
-            break;
-          }
-        }
-        layoutById.set(id, item);
-    });
+          layoutById.set(id, item);
+        });
 
-    return Array.from(layoutById, ([, value]) => value);
-  }, []), map(items => {
-    const visibleItems = items.filter(item => item.visible);
-    return this.packItems(visibleItems);
-  }));
+        return Array.from(layoutById, ([, value]) => value);
+      },
+      [],
+    ),
+    map(items => {
+      const visibleItems = items.filter(item => item.visible);
+      return this.packItems(visibleItems);
+    }),
+  );
 
   private packItems(items: DeviceGridItem[]): DeviceGridItem[] {
     const vertCompacted = ktdGridCompact(items, 'vertical', this.cols);
-    const bothCompacted = ktdGridCompact(vertCompacted, 'horizontal', this.cols);
+    const bothCompacted = ktdGridCompact(
+      vertCompacted,
+      'horizontal',
+      this.cols,
+    );
     const compactedMap = new Map(bothCompacted.map(item => [item.id, item]));
     return items.map(item => {
       const compacted = compactedMap.get(item.id);
-      return compacted ? { ...item, ...compacted } : item;
+      return compacted ? {...item, ...compacted} : item;
     });
   }
 

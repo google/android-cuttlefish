@@ -43,7 +43,7 @@ describe('ThemeService', () => {
       queryListener = undefined;
       removeEventListenerSpy = jasmine.createSpy('removeEventListener');
 
-      spyOn(window, 'matchMedia').and.callFake((query: string) => {
+      spyOn(window, 'matchMedia').and.callFake(() => {
         return {
           matches: false,
           addEventListener: (

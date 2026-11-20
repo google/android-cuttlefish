@@ -23,13 +23,16 @@ export class DevicePaneComponent {
 
   ngOnInit(): void {
     this.router.events
-        .pipe(
-            filter(event => event instanceof NavigationEnd),
-            mergeMap(() => this.activatedRoute.queryParams))
-        .subscribe(params => this.deviceService.setDeviceFilter({
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        mergeMap(() => this.activatedRoute.queryParams),
+      )
+      .subscribe(params =>
+        this.deviceService.setDeviceFilter({
           owner: params['owner'] ?? null,
-          groupId: params['groupId'] ?? null
-        }));
+          groupId: params['groupId'] ?? null,
+        }),
+      );
 
     this.deviceService.refresh();
   }
@@ -39,7 +42,7 @@ export class DevicePaneComponent {
   }
 
   showAll(): void {
-    let show = (device: DeviceItem) => {
+    const show = (device: DeviceItem) => {
       console.log(device);
       if (!this.displaysService.isVisibleDevice(device.device_id)) {
         this.displaysService.toggleVisibility(device.device_id);
