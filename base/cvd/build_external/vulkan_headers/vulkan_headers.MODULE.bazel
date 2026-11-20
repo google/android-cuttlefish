@@ -3,6 +3,6 @@ git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "g
 git_repository(
     name = "vulkan_headers",
     build_file = "@//build_external/vulkan_headers:BUILD.vulkan_headers.bazel",
-    commit = "8d6039a455a7ecc7d2a592ff97f62db4e59b70bf",  # v1.4.356
+    commit = "6802bb4733b63ed5efd3adb308a6c885ef180ea1",  # vulkan-sdk-1.4.363.0
     remote = "https://github.com/KhronosGroup/Vulkan-Headers.git",
 )
