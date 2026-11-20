@@ -40,10 +40,6 @@ class SeekableZipSource : public ReadableZipSource {
   ~SeekableZipSource() override = default;
   SeekableZipSource& operator=(SeekableZipSource&&) = default;
 
-  /* Returns a RAII instance that puts this instance in an "open for reading"
-   * state. Can fail. Should not outlive this instance. */
-  Result<class SeekingZipSourceReader> Reader();
-
  protected:
   SeekableZipSource(ManagedZipSource);
 };
@@ -51,7 +47,8 @@ class SeekableZipSource : public ReadableZipSource {
 /* A `SeekableZipSource` in an "open for reading" state. */
 class SeekingZipSourceReader : public ZipSourceReader, public ReaderSeeker {
  public:
-  friend class SeekableZipSource;
+  /* Makes the source "open for reading." Should not outlive the source. */
+  static Result<SeekingZipSourceReader> Open(SeekableZipSource&);
 
   SeekingZipSourceReader(SeekingZipSourceReader&&) = default;
   ~SeekingZipSourceReader() override = default;
@@ -68,9 +65,9 @@ class SeekingZipSourceReader : public ZipSourceReader, public ReaderSeeker {
   Result<uint64_t, int> SeekEnd(int64_t offset) override;
 
  private:
-  Result<uint64_t, int> Seek(int64_t offset, int whence);
-
   SeekingZipSourceReader(SeekableZipSource*);
+
+  Result<uint64_t, int> Seek(int64_t offset, int whence);
 };
 
 Result<std::unique_ptr<ReaderSeeker>> ZipSourceAsReaderSeeker(

@@ -85,7 +85,8 @@ Result<void> ResumeDownload(HttpClient& http_client,
   }
   SeekableZipSource source = CF_EXPECT(
       ZipSourceFromUrl(http_client, download.url, std::move(headers), size));
-  SeekingZipSourceReader reader = CF_EXPECT(source.Reader());
+  SeekingZipSourceReader reader =
+      CF_EXPECT(SeekingZipSourceReader::Open(source));
   CF_EXPECT(reader.SeekSet(offset));
 
   std::vector<char> buffer(std::min(kReadSize, size - offset));
