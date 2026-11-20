@@ -52,8 +52,8 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
 Result<void> ChangeGroup(const std::string& path,
                          const std::string& group_name);
 off_t FileSize(const std::string& path);
-Result<std::string> RenameFile(const std::string& current_filepath,
-                               const std::string& target_filepath);
+Result<void> RenameFile(const std::string& current_filepath,
+                        const std::string& target_filepath);
 std::string ReadFile(const std::string& file);
 Result<std::string> ReadFileContents(const std::string& path);
 Result<std::vector<uint8_t>> ReadBinaryFileContents(const std::string& path);
