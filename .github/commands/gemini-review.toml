@@ -131,7 +131,7 @@ Apply these severities consistently:
 
 ### Step 3: Submit the Review on GitHub
 
-1. **Create Pending Review:** Call `create_pending_pull_request_review`. Ignore errors like "can only have one pending review per pull request" and proceed to the next step.
+1. **Create Pending Review:** Call `pull_request_review_write` with `method: "create"` (and omit `event` to create a pending review). Ignore errors like "can only have one pending review per pull request" and proceed to the next step.
 
 2. **Add Comments and Suggestions:** For each formulated review comment, call `add_comment_to_pending_review`.
 
@@ -151,7 +151,7 @@ Apply these severities consistently:
         {{SEVERITY}} {{COMMENT_TEXT}}
         </COMMENT>
 
-3. **Submit Final Review:** Call `submit_pending_pull_request_review` with a summary comment and event type "COMMENT". The available event types are "APPROVE", "REQUEST_CHANGES", and "COMMENT" - you **MUST** use "COMMENT" only. **DO NOT** use "APPROVE" or "REQUEST_CHANGES" event types. The summary comment **MUST** use this exact markdown format:
+3. **Submit Final Review:** Call `pull_request_review_write` with `method: "submit_pending"`, a summary `body`, and `event: "COMMENT"`. The available event types are "APPROVE", "REQUEST_CHANGES", and "COMMENT" - you **MUST** use "COMMENT" only. **DO NOT** use "APPROVE" or "REQUEST_CHANGES" event types. The summary comment **MUST** use this exact markdown format:
 
     <SUMMARY>
 
