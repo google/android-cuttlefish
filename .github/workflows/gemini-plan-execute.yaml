@@ -37,7 +37,7 @@ jobs:
         id: 'mint_identity_token'
         if: |-
           ${{ vars.APP_ID }}
-        uses: 'actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf' # ratchet:actions/create-github-app-token@v2
+        uses: 'actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc' # ratchet:actions/create-github-app-token@v3.4.0
         with:
           app-id: '${{ vars.APP_ID }}'
           private-key: '${{ secrets.APP_PRIVATE_KEY }}'
@@ -45,7 +45,7 @@ jobs:
           permission-pull-requests: 'write'
 
       - name: 'Checkout Code'
-        uses: 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' # v4, ratchet:exclude
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1, ratchet:exclude
         with:
           persist-credentials: false
 
