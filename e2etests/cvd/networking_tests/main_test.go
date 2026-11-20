@@ -15,7 +15,7 @@
 package main
 
 import (
-	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -23,68 +23,57 @@ import (
 	e2etests "github.com/google/android-cuttlefish/e2etests/cvd/common"
 )
 
+// Injected at link time via `x_defs` in def.bzl.
+var (
+	branch string
+	target string
+	// Kept as a string rather than a bool so an unset value can be detected.
+	useCvdalloc string
+)
+
 func TestDeviceNetworking(t *testing.T) {
-	testcases := []struct {
-		name       string
-		branch     string
-		target     string
-		createArgs e2etests.CreateArgs
-	}{
-		{
-			branch: "aosp-android-latest-release",
-			target: "aosp_cf_x86_64_only_phone-userdebug",
-		},
-		{
-			branch: "git_main",
-			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
-		},
-		{
-			name:   "cvdalloc",
-			branch: "git_main",
-			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
-			createArgs: e2etests.CreateArgs{
-				Args: []string{"--use_cvdalloc=true"},
-			},
-		},
+	if branch == "" || target == "" || useCvdalloc == "" {
+		t.Fatalf("branch, target and useCvdalloc must be set via x_defs in def.bzl (branch=%q, target=%q, useCvdalloc=%q)", branch, target, useCvdalloc)
 	}
+	cvdalloc, err := strconv.ParseBool(useCvdalloc)
+	if err != nil {
+		t.Fatalf("invalid useCvdalloc value %q: %v", useCvdalloc, err)
+	}
+
 	c := e2etests.TestContext{}
-	for _, tc := range testcases {
-		testName := fmt.Sprintf("BUILD=%s/%s", tc.branch, tc.target)
-		if tc.name != "" {
-			testName = fmt.Sprintf("%s_CONFIG=%s", testName, tc.name)
-		}
-		t.Run(testName, func(t *testing.T) {
-			c.SetUp(t)
-			defer c.TearDown()
+	c.SetUp(t)
+	defer c.TearDown()
 
-			t.Log("Fetching remote build...")
-			if _, err := c.CVDFetch(e2etests.FetchArgs{
-				DefaultBuildBranch: tc.branch,
-				DefaultBuildTarget: tc.target,
-			}); err != nil {
-				t.Fatal(err)
-			}
-
-			t.Log("Launching Cuttlefish...")
-			if _, err := c.CVDCreate(tc.createArgs); err != nil {
-				t.Fatal(err)
-			}
-
-			t.Log("Waiting for device via ADB...")
-			if err := c.RunAdbWaitForDevice(); err != nil {
-				t.Fatal(err)
-			}
-
-			pingIP := "8.8.8.8"
-
-			t.Logf("Polling for network connectivity to host IP %s (up to 60s)...", pingIP)
-			if !pollPing(&c, t, pingIP) {
-				logDiagnostics(&c, t)
-				t.Fatal("Failed to establish network connectivity to host")
-			}
-			t.Log("Network is working successfully on Cuttlefish!")
-		})
+	t.Log("Fetching remote build...")
+	if _, err := c.CVDFetch(e2etests.FetchArgs{
+		DefaultBuildBranch: branch,
+		DefaultBuildTarget: target,
+	}); err != nil {
+		t.Fatal(err)
 	}
+
+	t.Log("Launching Cuttlefish...")
+	createArgs := e2etests.CreateArgs{}
+	if cvdalloc {
+		createArgs.Args = append(createArgs.Args, "--use_cvdalloc=true")
+	}
+	if _, err := c.CVDCreate(createArgs); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("Waiting for device via ADB...")
+	if err := c.RunAdbWaitForDevice(); err != nil {
+		t.Fatal(err)
+	}
+
+	pingIP := "8.8.8.8"
+
+	t.Logf("Polling for network connectivity to host IP %s (up to 60s)...", pingIP)
+	if !pollPing(&c, t, pingIP) {
+		logDiagnostics(&c, t)
+		t.Fatal("Failed to establish network connectivity to host")
+	}
+	t.Log("Network is working successfully on Cuttlefish!")
 }
 
 // Polls the guest to ping the host IP until success or timeout (60s).
