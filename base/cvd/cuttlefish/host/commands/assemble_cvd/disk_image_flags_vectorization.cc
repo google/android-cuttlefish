@@ -22,6 +22,7 @@
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 
+#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/android_efi_loader.h"
@@ -218,6 +219,7 @@ Result<void> DiskImageFlagsVectorization(
     if ((VmManagerIsCrosvm(config.vm_manager()) ||
          VmManagerIsQemu(config.vm_manager())) &&
         const_instance.boot_flow() == BootFlow::Android &&
+        const_instance.target_arch() != Arch::Arm &&
         FileExists(prebuilt_esp_image)) {
       instance.set_android_esp_image(prebuilt_esp_image);
     }

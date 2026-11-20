@@ -242,7 +242,9 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   std::string qemu_binary = instance.qemu_binary_dir();
   switch (arch_) {
     case Arch::Arm:
-      qemu_binary += "/qemu-system-arm";
+      qemu_binary += FileExists(qemu_binary + "/qemu-system-arm")
+                         ? "/qemu-system-arm"
+                         : "/qemu-system-aarch64";
       break;
     case Arch::Arm64:
       qemu_binary += "/qemu-system-aarch64";
@@ -890,7 +892,13 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   if (is_x86 || is_arm) {
     qemu_cmd.AddParameter("-cpu");
-    qemu_cmd.AddParameter(uses_host_cpu_flag ? "host" : "max");
+    if (uses_host_cpu_flag) {
+      qemu_cmd.AddParameter("host");
+    } else if (arch_ == Arch::Arm) {
+      qemu_cmd.AddParameter("cortex-a15");
+    } else {
+      qemu_cmd.AddParameter("max");
+    }
   }
 
   // Explicitly enable the optional extensions of interest, in case the default
