@@ -109,7 +109,8 @@ Result<bool> InstanceDatabase::IsEmpty() const {
 Result<std::vector<LocalInstanceGroup>> InstanceDatabase::Clear() {
   return viewer_.WithExclusiveLock<std::vector<LocalInstanceGroup>>(
       [](cvd::PersistentData& data) -> Result<std::vector<LocalInstanceGroup>> {
-        auto copy = data.instance_groups();
+        std::vector<cvd::InstanceGroup> copy(data.instance_groups().begin(),
+                                             data.instance_groups().end());
         data.clear_instance_groups();
         std::vector<LocalInstanceGroup> groups;
         for (const auto& group_proto : copy) {
