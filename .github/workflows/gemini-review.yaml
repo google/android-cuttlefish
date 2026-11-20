@@ -84,7 +84,7 @@ jobs:
           settings: |-
             {
               "model": {
-                "maxSessionTurns": 25
+                "maxSessionTurns": 100
               },
               "telemetry": {
                 "enabled": true,
@@ -114,6 +114,10 @@ jobs:
               },
               "tools": {
                 "core": [
+                  "read_file",
+                  "list_directory",
+                  "glob",
+                  "search_file_content",
                   "run_shell_command(cat)",
                   "run_shell_command(echo)",
                   "run_shell_command(grep)",
@@ -183,6 +187,10 @@ jobs:
               },
               "tools": {
                 "core": [
+                  "read_file",
+                  "list_directory",
+                  "glob",
+                  "search_file_content",
                   "run_shell_command(cat)",
                   "run_shell_command(echo)",
                   "run_shell_command(grep)",
