@@ -598,6 +598,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
+        "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/audio:channel_layout",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",

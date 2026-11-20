@@ -16,7 +16,10 @@
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
+#include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/security/server_credentials.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <cstddef>
 #include <cstdlib>
@@ -33,6 +36,7 @@
 #include "cuttlefish/host/commands/virtual_tuner_daemon/audio_generator.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/pcm_stream_server.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/tuner_state.h"
+#include "cuttlefish/host/commands/virtual_tuner_daemon/virtual_tuner_control_service.h"
 #include "cuttlefish/host/commands/virtual_tuner_daemon/virtual_tuner_service.h"
 #include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/result/expect.h"
@@ -44,6 +48,7 @@ namespace {
 
 struct DaemonFlags {
   std::string server_address;
+  std::string grpc_uds_path;
   SharedFD pcm_server_fd;
   size_t pcm_channels = kChannels;
 };
@@ -53,8 +58,12 @@ Result<DaemonFlags> GetFlagValues(int argc, char** argv) {
   std::vector<Flag> flags;
   flags.emplace_back(
       GflagsCompatFlag("server_address", flag_values.server_address)
-          .Help("gRPC listening server address (e.g. "
-                "unix:/tmp/vsock_3_1000/vm.vsock_7010)"));
+          .Help("Guest-facing gRPC listening server address (e.g. "
+                "unix:///tmp/vsock_3_1000/vm.vsock_7010)"));
+  flags.emplace_back(
+      GflagsCompatFlag("grpc_uds_path", flag_values.grpc_uds_path)
+          .Help("Optional Unix domain socket path for the host-only cvd env "
+                "control server"));
   // run_cvd creates the listening socket before starting WebRTC, which
   // connects to it only once.
   flags.emplace_back(
@@ -79,11 +88,10 @@ Result<DaemonFlags> GetFlagValues(int argc, char** argv) {
   return flag_values;
 }
 
-// Builds and starts the gRPC control server on `server_address`. `service`
-// must outlive the returned server.
-Result<std::unique_ptr<::grpc::Server>> StartControlServer(
-    const std::string& server_address, VirtualTunerServiceImpl& service) {
-  ::grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+// Builds and starts a gRPC server on `server_address`. `service` must outlive
+// the returned server.
+Result<std::unique_ptr<::grpc::Server>> StartGrpcServer(
+    const std::string& server_address, ::grpc::Service& service) {
   ::grpc::ServerBuilder builder;
 
   builder.RegisterService(&service);
@@ -102,7 +110,7 @@ Result<void> VirtualTunerDaemonMain(int argc, char** argv) {
 
   DaemonFlags flag_values = CF_EXPECT(GetFlagValues(argc, argv));
 
-  VLOG(0) << "Virtual Tuner gRPC Control Server starting on address: "
+  VLOG(0) << "Virtual Tuner guest gRPC server starting on address: "
           << flag_values.server_address;
 
   TunerState tuner_state;
@@ -111,12 +119,33 @@ Result<void> VirtualTunerDaemonMain(int argc, char** argv) {
   PcmStreamServer pcm_server(tuner_state, flag_values.pcm_server_fd);
   CF_EXPECT(pcm_server.Start());
 
-  VirtualTunerServiceImpl service(tuner_state);
-  std::unique_ptr<::grpc::Server> server =
-      CF_EXPECT(StartControlServer(flag_values.server_address, service));
+  ::grpc::EnableDefaultHealthCheckService(true);
+  ::grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+
+  VirtualTunerServiceImpl guest_service(tuner_state);
+  std::unique_ptr<::grpc::Server> guest_server =
+      CF_EXPECT(StartGrpcServer(flag_values.server_address, guest_service));
+
+  VirtualTunerControlServiceImpl control_service(tuner_state);
+  std::unique_ptr<::grpc::Server> control_server;
+  if (!flag_values.grpc_uds_path.empty()) {
+    ::unlink(flag_values.grpc_uds_path.c_str());
+    const std::string control_address = "unix:" + flag_values.grpc_uds_path;
+    VLOG(0) << "Virtual Tuner host control server starting on address: "
+            << control_address;
+    control_server =
+        CF_EXPECT(StartGrpcServer(control_address, control_service));
+    if (::chmod(flag_values.grpc_uds_path.c_str(), 0600) != 0) {
+      LOG(WARNING) << "Failed to chmod 0600 on " << flag_values.grpc_uds_path;
+    }
+  }
 
   VLOG(0) << "Virtual Tuner Daemon is fully initialized and running.";
-  server->Wait();
+  guest_server->Wait();
+  if (control_server != nullptr) {
+    control_server->Shutdown();
+    ::unlink(flag_values.grpc_uds_path.c_str());
+  }
   return {};
 }
 
