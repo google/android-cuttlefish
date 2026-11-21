@@ -25,6 +25,7 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/seeking_source_reader.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 #include "cuttlefish/io/owning_in_memory_io.h"
 #include "cuttlefish/result/assert.h"

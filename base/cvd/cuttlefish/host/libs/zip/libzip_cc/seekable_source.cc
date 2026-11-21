@@ -16,13 +16,10 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 
 #include <errno.h>
-#include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #include <map>
 #include <memory>
-#include <mutex>
 #include <utility>
 
 #include "absl/base/no_destructor.h"
@@ -31,11 +28,8 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/error.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
-#include "cuttlefish/io/fake_pread_pwrite.h"
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/length.h"
 #include "cuttlefish/io/reader_seeker.h"
-#include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -141,69 +135,7 @@ Result<SeekableZipSource> SeekableZipSource::FromCallbacks(
   return SeekableZipSource(std::move(source));
 }
 
-Result<SeekingZipSourceReader> SeekingZipSourceReader::Open(
-    SeekableZipSource& reader) {
-  zip_source_t* raw_source = CF_EXPECT(reader.raw_.get());
-
-  CF_EXPECT_EQ(zip_source_open(raw_source), 0, ZipErrorString(raw_source));
-
-  return SeekingZipSourceReader(&reader);
-}
-
 SeekableZipSource::SeekableZipSource(ManagedZipSource raw)
     : ReadableZipSource(std::move(raw)) {}
-
-Result<void> SeekingZipSourceReader::Visit(IoVisitor& visitor) {
-  CF_EXPECT(visitor.Accept(static_cast<ReaderSeeker&>(*this)));
-  return {};
-}
-
-Result<uint64_t, int> SeekingZipSourceReader::SeekSet(uint64_t offset) {
-  return CF_EXPECT(Seek(offset, SEEK_SET));
-}
-
-Result<uint64_t, int> SeekingZipSourceReader::SeekCur(int64_t offset) {
-  return CF_EXPECT(Seek(offset, SEEK_CUR));
-}
-
-Result<uint64_t, int> SeekingZipSourceReader::SeekEnd(int64_t offset) {
-  return CF_EXPECT(Seek(offset, SEEK_END));
-}
-
-Result<uint64_t, int> SeekingZipSourceReader::Read(void* data,
-                                                   uint64_t length) {
-  return CF_EXPECT(ZipSourceReader::Read(data, length));
-}
-
-SeekingZipSourceReader::SeekingZipSourceReader(SeekableZipSource* ptr)
-    : ZipSourceReader(ptr) {}
-
-Result<uint64_t, int> SeekingZipSourceReader::Seek(int64_t offset, int whence) {
-  std::lock_guard lock(mutex_);
-  CF_EXPECTVF(source_ != nullptr, EBADF, "Seek({}, {}) failed", offset, whence);
-  zip_source_t* raw_source = CF_EXPECTVF(source_->raw_.get(), EBADF,
-                                         "Seek({}, {}) failed", offset, whence);
-
-  if (zip_source_seek(raw_source, offset, whence) != 0) {
-    return CF_ERRVF(ZipErrno(raw_source),
-                    "zip_source_seek(..., {}, {}) failed: {}", offset, whence,
-                    ZipErrorString(raw_source));
-  }
-
-  int64_t tell = zip_source_tell(raw_source);
-  if (tell < 0) {
-    return CF_ERRVF(ZipErrno(raw_source), "zip_source_tell(...) failed: {}",
-                    ZipErrorString(raw_source));
-  }
-
-  return tell;
-}
-
-Result<uint64_t, int> SeekingZipSourceReader::PRead(void* buf, uint64_t count,
-                                                    uint64_t offset) const {
-  auto& non_const = const_cast<SeekingZipSourceReader&>(*this);
-  std::lock_guard lock(non_const.mutex_);
-  return CF_EXPECT(FakePRead(non_const, buf, count, offset));
-}
 
 }  // namespace cuttlefish

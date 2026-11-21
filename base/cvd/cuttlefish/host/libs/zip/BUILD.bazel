@@ -27,6 +27,7 @@ cf_cc_test(
     deps = [
         "//cuttlefish/host/libs/zip:buffered_zip_source",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/host/libs/zip/libzip_cc:seeking_source_reader",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
         "//cuttlefish/io:owning_in_memory_io",
         "//cuttlefish/result:assert",

@@ -21,6 +21,7 @@
 #include <utility>
 
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/seeking_source_reader.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/visitable.h"
 #include "cuttlefish/result/expect.h"

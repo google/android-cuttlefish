@@ -15,15 +15,10 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
-
 #include <memory>
 
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/source_reader.h"
-#include "cuttlefish/io/io.h"
 #include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/result/result.h"
 
@@ -42,32 +37,6 @@ class SeekableZipSource : public ReadableZipSource {
 
  protected:
   SeekableZipSource(ManagedZipSource);
-};
-
-/* A `SeekableZipSource` in an "open for reading" state. */
-class SeekingZipSourceReader : public ZipSourceReader, public ReaderSeeker {
- public:
-  /* Makes the source "open for reading." Should not outlive the source. */
-  static Result<SeekingZipSourceReader> Open(SeekableZipSource&);
-
-  SeekingZipSourceReader(SeekingZipSourceReader&&) = default;
-  ~SeekingZipSourceReader() override = default;
-  SeekingZipSourceReader& operator=(SeekingZipSourceReader&&) = default;
-
-  Result<void> Visit(IoVisitor&) override;
-
-  Result<uint64_t, int> Read(void* data, uint64_t length) override;
-  Result<uint64_t, int> PRead(void* buf, uint64_t count,
-                              uint64_t offset) const override;
-
-  Result<uint64_t, int> SeekSet(uint64_t offset) override;
-  Result<uint64_t, int> SeekCur(int64_t offset) override;
-  Result<uint64_t, int> SeekEnd(int64_t offset) override;
-
- private:
-  SeekingZipSourceReader(SeekableZipSource*);
-
-  Result<uint64_t, int> Seek(int64_t offset, int whence);
 };
 
 }  // namespace cuttlefish
