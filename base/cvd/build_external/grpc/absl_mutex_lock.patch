@@ -1,0 +1,276 @@
+diff --git a/include/grpcpp/completion_queue.h b/include/grpcpp/completion_queue.h
+--- a/include/grpcpp/completion_queue.h
++++ b/include/grpcpp/completion_queue.h
+@@ -387,20 +387,20 @@
+   void RegisterServer(const grpc::Server* server) {
+     (void)server;
+ #ifndef NDEBUG
+-    grpc::internal::MutexLock l(&server_list_mutex_);
++    grpc::internal::MutexLock l(server_list_mutex_);
+     server_list_.push_back(server);
+ #endif
+   }
+   void UnregisterServer(const grpc::Server* server) {
+     (void)server;
+ #ifndef NDEBUG
+-    grpc::internal::MutexLock l(&server_list_mutex_);
++    grpc::internal::MutexLock l(server_list_mutex_);
+     server_list_.remove(server);
+ #endif
+   }
+   bool ServerListEmpty() const {
+ #ifndef NDEBUG
+-    grpc::internal::MutexLock l(&server_list_mutex_);
++    grpc::internal::MutexLock l(server_list_mutex_);
+     return server_list_.empty();
+ #endif
+     return true;
+diff --git a/include/grpcpp/support/client_callback.h b/include/grpcpp/support/client_callback.h
+--- a/include/grpcpp/support/client_callback.h
++++ b/include/grpcpp/support/client_callback.h
+@@ -490,7 +490,7 @@
+     start_ops_.FillOps(&call_);
+ 
+     {
+-      grpc::internal::MutexLock lock(&start_mu_);
++      grpc::internal::MutexLock lock(start_mu_);
+ 
+       if (backlog_.read_ops) {
+         read_ops_.FillOps(&call_);
+@@ -516,7 +516,7 @@
+     read_ops_.RecvMessage(msg);
+     callbacks_outstanding_.fetch_add(1, std::memory_order_relaxed);
+     if (GPR_UNLIKELY(!started_.load(std::memory_order_acquire))) {
+-      grpc::internal::MutexLock lock(&start_mu_);
++      grpc::internal::MutexLock lock(start_mu_);
+       if (GPR_LIKELY(!started_.load(std::memory_order_relaxed))) {
+         backlog_.read_ops = true;
+         return;
+@@ -544,7 +544,7 @@
+     }
+ 
+     if (GPR_UNLIKELY(!started_.load(std::memory_order_acquire))) {
+-      grpc::internal::MutexLock lock(&start_mu_);
++      grpc::internal::MutexLock lock(start_mu_);
+       if (GPR_LIKELY(!started_.load(std::memory_order_relaxed))) {
+         backlog_.write_ops = true;
+         return;
+@@ -569,7 +569,7 @@
+       corked_write_needed_ = false;
+     }
+     if (GPR_UNLIKELY(!started_.load(std::memory_order_acquire))) {
+-      grpc::internal::MutexLock lock(&start_mu_);
++      grpc::internal::MutexLock lock(start_mu_);
+       if (GPR_LIKELY(!started_.load(std::memory_order_relaxed))) {
+         backlog_.writes_done_ops = true;
+         return;
+@@ -771,7 +771,7 @@
+     read_ops_.set_core_cq_tag(&read_tag_);
+ 
+     {
+-      grpc::internal::MutexLock lock(&start_mu_);
++      grpc::internal::MutexLock lock(start_mu_);
+       if (backlog_.read_ops) {
+         read_ops_.FillOps(&call_);
+       }
+@@ -791,7 +791,7 @@
+     read_ops_.RecvMessage(msg);
+     callbacks_outstanding_.fetch_add(1, std::memory_order_relaxed);
+     if (GPR_UNLIKELY(!started_.load(std::memory_order_acquire))) {
+-      grpc::internal::MutexLock lock(&start_mu_);
++      grpc::internal::MutexLock lock(start_mu_);
+       if (GPR_LIKELY(!started_.load(std::memory_order_relaxed))) {
+         backlog_.read_ops = true;
+         return;
+@@ -917,7 +917,7 @@
+     start_ops_.FillOps(&call_);
+ 
+     {
+-      grpc::internal::MutexLock lock(&start_mu_);
++      grpc::internal::MutexLock lock(start_mu_);
+ 
+       if (backlog_.write_ops) {
+         write_ops_.FillOps(&call_);
+@@ -956,7 +956,7 @@
+     }
+ 
+     if (GPR_UNLIKELY(!started_.load(std::memory_order_acquire))) {
+-      grpc::internal::MutexLock lock(&start_mu_);
++      grpc::internal::MutexLock lock(start_mu_);
+       if (GPR_LIKELY(!started_.load(std::memory_order_relaxed))) {
+         backlog_.write_ops = true;
+         return;
+@@ -984,7 +984,7 @@
+     }
+ 
+     if (GPR_UNLIKELY(!started_.load(std::memory_order_acquire))) {
+-      grpc::internal::MutexLock lock(&start_mu_);
++      grpc::internal::MutexLock lock(start_mu_);
+       if (GPR_LIKELY(!started_.load(std::memory_order_relaxed))) {
+         backlog_.writes_done_ops = true;
+         return;
+diff --git a/include/grpcpp/support/server_callback.h b/include/grpcpp/support/server_callback.h
+--- a/include/grpcpp/support/server_callback.h
++++ b/include/grpcpp/support/server_callback.h
+@@ -291,7 +291,7 @@
+     ServerCallbackReaderWriter<Request, Response>* stream =
+         stream_.load(std::memory_order_acquire);
+     if (stream == nullptr) {
+-      grpc::internal::MutexLock l(&stream_mu_);
++      grpc::internal::MutexLock l(stream_mu_);
+       stream = stream_.load(std::memory_order_relaxed);
+       if (stream == nullptr) {
+         backlog_.send_initial_metadata_wanted = true;
+@@ -309,7 +309,7 @@
+     ServerCallbackReaderWriter<Request, Response>* stream =
+         stream_.load(std::memory_order_acquire);
+     if (stream == nullptr) {
+-      grpc::internal::MutexLock l(&stream_mu_);
++      grpc::internal::MutexLock l(stream_mu_);
+       stream = stream_.load(std::memory_order_relaxed);
+       if (stream == nullptr) {
+         backlog_.read_wanted = req;
+@@ -339,7 +339,7 @@
+     ServerCallbackReaderWriter<Request, Response>* stream =
+         stream_.load(std::memory_order_acquire);
+     if (stream == nullptr) {
+-      grpc::internal::MutexLock l(&stream_mu_);
++      grpc::internal::MutexLock l(stream_mu_);
+       stream = stream_.load(std::memory_order_relaxed);
+       if (stream == nullptr) {
+         backlog_.write_wanted = resp;
+@@ -368,7 +368,7 @@
+     ServerCallbackReaderWriter<Request, Response>* stream =
+         stream_.load(std::memory_order_acquire);
+     if (stream == nullptr) {
+-      grpc::internal::MutexLock l(&stream_mu_);
++      grpc::internal::MutexLock l(stream_mu_);
+       stream = stream_.load(std::memory_order_relaxed);
+       if (stream == nullptr) {
+         backlog_.write_and_finish_wanted = true;
+@@ -403,7 +403,7 @@
+     ServerCallbackReaderWriter<Request, Response>* stream =
+         stream_.load(std::memory_order_acquire);
+     if (stream == nullptr) {
+-      grpc::internal::MutexLock l(&stream_mu_);
++      grpc::internal::MutexLock l(stream_mu_);
+       stream = stream_.load(std::memory_order_relaxed);
+       if (stream == nullptr) {
+         backlog_.finish_wanted = true;
+@@ -451,7 +451,7 @@
+   // customization point.
+   virtual void InternalBindStream(
+       ServerCallbackReaderWriter<Request, Response>* stream) {
+-    grpc::internal::MutexLock l(&stream_mu_);
++    grpc::internal::MutexLock l(stream_mu_);
+ 
+     if (GPR_UNLIKELY(backlog_.send_initial_metadata_wanted)) {
+       stream->SendInitialMetadata();
+@@ -506,7 +506,7 @@
+     ServerCallbackReader<Request>* reader =
+         reader_.load(std::memory_order_acquire);
+     if (reader == nullptr) {
+-      grpc::internal::MutexLock l(&reader_mu_);
++      grpc::internal::MutexLock l(reader_mu_);
+       reader = reader_.load(std::memory_order_relaxed);
+       if (reader == nullptr) {
+         backlog_.send_initial_metadata_wanted = true;
+@@ -519,7 +519,7 @@
+     ServerCallbackReader<Request>* reader =
+         reader_.load(std::memory_order_acquire);
+     if (reader == nullptr) {
+-      grpc::internal::MutexLock l(&reader_mu_);
++      grpc::internal::MutexLock l(reader_mu_);
+       reader = reader_.load(std::memory_order_relaxed);
+       if (reader == nullptr) {
+         backlog_.read_wanted = req;
+@@ -532,7 +532,7 @@
+     ServerCallbackReader<Request>* reader =
+         reader_.load(std::memory_order_acquire);
+     if (reader == nullptr) {
+-      grpc::internal::MutexLock l(&reader_mu_);
++      grpc::internal::MutexLock l(reader_mu_);
+       reader = reader_.load(std::memory_order_relaxed);
+       if (reader == nullptr) {
+         backlog_.finish_wanted = true;
+@@ -556,7 +556,7 @@
+   // customization point.
+   virtual void InternalBindReader(ServerCallbackReader<Request>* reader)
+       ABSL_LOCKS_EXCLUDED(reader_mu_) {
+-    grpc::internal::MutexLock l(&reader_mu_);
++    grpc::internal::MutexLock l(reader_mu_);
+ 
+     if (GPR_UNLIKELY(backlog_.send_initial_metadata_wanted)) {
+       reader->SendInitialMetadata();
+@@ -594,7 +594,7 @@
+     ServerCallbackWriter<Response>* writer =
+         writer_.load(std::memory_order_acquire);
+     if (writer == nullptr) {
+-      grpc::internal::MutexLock l(&writer_mu_);
++      grpc::internal::MutexLock l(writer_mu_);
+       writer = writer_.load(std::memory_order_relaxed);
+       if (writer == nullptr) {
+         backlog_.send_initial_metadata_wanted = true;
+@@ -611,7 +611,7 @@
+     ServerCallbackWriter<Response>* writer =
+         writer_.load(std::memory_order_acquire);
+     if (writer == nullptr) {
+-      grpc::internal::MutexLock l(&writer_mu_);
++      grpc::internal::MutexLock l(writer_mu_);
+       writer = writer_.load(std::memory_order_relaxed);
+       if (writer == nullptr) {
+         backlog_.write_wanted = resp;
+@@ -626,7 +626,7 @@
+     ServerCallbackWriter<Response>* writer =
+         writer_.load(std::memory_order_acquire);
+     if (writer == nullptr) {
+-      grpc::internal::MutexLock l(&writer_mu_);
++      grpc::internal::MutexLock l(writer_mu_);
+       writer = writer_.load(std::memory_order_relaxed);
+       if (writer == nullptr) {
+         backlog_.write_and_finish_wanted = true;
+@@ -645,7 +645,7 @@
+     ServerCallbackWriter<Response>* writer =
+         writer_.load(std::memory_order_acquire);
+     if (writer == nullptr) {
+-      grpc::internal::MutexLock l(&writer_mu_);
++      grpc::internal::MutexLock l(writer_mu_);
+       writer = writer_.load(std::memory_order_relaxed);
+       if (writer == nullptr) {
+         backlog_.finish_wanted = true;
+@@ -668,7 +668,7 @@
+   // customization point.
+   virtual void InternalBindWriter(ServerCallbackWriter<Response>* writer)
+       ABSL_LOCKS_EXCLUDED(writer_mu_) {
+-    grpc::internal::MutexLock l(&writer_mu_);
++    grpc::internal::MutexLock l(writer_mu_);
+ 
+     if (GPR_UNLIKELY(backlog_.send_initial_metadata_wanted)) {
+       writer->SendInitialMetadata();
+@@ -712,7 +712,7 @@
+   void StartSendInitialMetadata() ABSL_LOCKS_EXCLUDED(call_mu_) {
+     ServerCallbackUnary* call = call_.load(std::memory_order_acquire);
+     if (call == nullptr) {
+-      grpc::internal::MutexLock l(&call_mu_);
++      grpc::internal::MutexLock l(call_mu_);
+       call = call_.load(std::memory_order_relaxed);
+       if (call == nullptr) {
+         backlog_.send_initial_metadata_wanted = true;
+@@ -727,7 +727,7 @@
+   void Finish(grpc::Status s) ABSL_LOCKS_EXCLUDED(call_mu_) {
+     ServerCallbackUnary* call = call_.load(std::memory_order_acquire);
+     if (call == nullptr) {
+-      grpc::internal::MutexLock l(&call_mu_);
++      grpc::internal::MutexLock l(call_mu_);
+       call = call_.load(std::memory_order_relaxed);
+       if (call == nullptr) {
+         backlog_.finish_wanted = true;
+@@ -749,7 +749,7 @@
+   // customization point.
+   virtual void InternalBindCall(ServerCallbackUnary* call)
+       ABSL_LOCKS_EXCLUDED(call_mu_) {
+-    grpc::internal::MutexLock l(&call_mu_);
++    grpc::internal::MutexLock l(call_mu_);
+ 
+     if (GPR_UNLIKELY(backlog_.send_initial_metadata_wanted)) {
+       call->SendInitialMetadata();
