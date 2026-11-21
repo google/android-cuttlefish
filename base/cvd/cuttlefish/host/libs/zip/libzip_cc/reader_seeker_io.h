@@ -51,9 +51,10 @@ class ZipReaderSeekerIo : public ReaderSeeker {
                               uint64_t offset) const override;
 
  private:
-  explicit ZipReaderSeekerIo(SeekingZipSourceReader);
+  explicit ZipReaderSeekerIo(std::unique_ptr<SeekableZipSource>,
+                             SeekingZipSourceReader);
 
-  std::unique_ptr<SeekableZipSource> source_;
+  std::unique_ptr<SeekableZipSource> source_;  // Order matters for destructor
   SeekingZipSourceReader reader_;
 };
 

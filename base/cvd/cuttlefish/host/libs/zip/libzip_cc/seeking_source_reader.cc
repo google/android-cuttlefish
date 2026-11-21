@@ -30,17 +30,18 @@
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/visitable.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 Result<SeekingZipSourceReader> SeekingZipSourceReader::Open(
-    SeekableZipSource& reader) {
-  zip_source_t* raw_source = CF_EXPECT(reader.raw_.get());
+    SeekableZipSource& source) {
+  zip_source_t* raw_source = CF_EXPECT(source.raw_.get());
 
   CF_EXPECT_EQ(zip_source_open(raw_source), 0, ZipErrorString(raw_source));
 
-  return SeekingZipSourceReader(&reader);
+  return SeekingZipSourceReader(&source);
 }
 
 Result<void> SeekingZipSourceReader::Visit(IoVisitor& visitor) {

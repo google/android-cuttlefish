@@ -44,7 +44,7 @@ class WritableZipSource : public SeekableZipSource {
 
   /* Returns a RAII instance that puts this instance in an "open for writing"
    * state. Can fail. Should not outlive this instance. Cannot be used at the
-   * same time as the `Reader()` method from superclasses. */
+   * same time as the Reader types paired with superclasses. */
   Result<class ZipSourceWriter> Writer();
 
  protected:

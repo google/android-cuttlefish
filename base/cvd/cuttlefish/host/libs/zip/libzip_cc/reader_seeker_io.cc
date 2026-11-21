@@ -32,12 +32,11 @@ namespace cuttlefish {
 Result<ZipReaderSeekerIo> ZipReaderSeekerIo::New(SeekableZipSource source) {
   std::unique_ptr<SeekableZipSource> unique_src =
       std::make_unique<SeekableZipSource>(std::move(source));
-  CF_EXPECT(unique_src.get());
 
-  ZipReaderSeekerIo ret(CF_EXPECT(SeekingZipSourceReader::Open(*unique_src)));
-  ret.source_ = std::move(unique_src);
+  SeekingZipSourceReader reader =
+      CF_EXPECT(SeekingZipSourceReader::Open(*unique_src));
 
-  return ret;
+  return ZipReaderSeekerIo(std::move(unique_src), std::move(reader));
 }
 
 Result<std::unique_ptr<ZipReaderSeekerIo>> ZipReaderSeekerIo::UniquePtr(
@@ -45,8 +44,9 @@ Result<std::unique_ptr<ZipReaderSeekerIo>> ZipReaderSeekerIo::UniquePtr(
   return std::make_unique<ZipReaderSeekerIo>(CF_EXPECT(New(std::move(src))));
 }
 
-ZipReaderSeekerIo::ZipReaderSeekerIo(SeekingZipSourceReader reader)
-    : reader_(std::move(reader)) {}
+ZipReaderSeekerIo::ZipReaderSeekerIo(std::unique_ptr<SeekableZipSource> source,
+                                     SeekingZipSourceReader reader)
+    : source_(std::move(source)), reader_(std::move(reader)) {}
 
 ZipReaderSeekerIo& ZipReaderSeekerIo::operator=(ZipReaderSeekerIo&& other) {
   if (this != &other) {

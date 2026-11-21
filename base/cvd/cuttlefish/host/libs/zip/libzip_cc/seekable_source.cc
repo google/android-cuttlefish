@@ -30,7 +30,8 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/io/length.h"
 #include "cuttlefish/io/reader_seeker.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace {
