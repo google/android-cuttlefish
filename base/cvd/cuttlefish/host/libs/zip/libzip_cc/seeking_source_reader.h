@@ -21,7 +21,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/source_reader.h"
 #include "cuttlefish/io/reader_seeker.h"
 #include "cuttlefish/io/visitable.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
