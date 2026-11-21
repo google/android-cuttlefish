@@ -15,7 +15,9 @@
  */
 #pragma once
 
-#include <fmt/core.h>
+#include <string>
+
+#include "fmt/format.h"
 
 namespace cuttlefish {
 namespace pci {

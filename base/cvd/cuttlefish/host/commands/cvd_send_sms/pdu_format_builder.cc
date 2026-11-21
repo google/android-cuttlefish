@@ -29,7 +29,6 @@
 #include "unicode/uchriter.h"
 #include "unicode/umachine.h"
 #include "unicode/unistr.h"
-#include "unicode/urename.h"
 #include "unicode/ustring.h"  // IWYU pragma: keep: u_strToUTF8
 #include "unicode/utypes.h"
 

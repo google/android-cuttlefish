@@ -191,5 +191,6 @@ cc_binary(
         "@lz4//:lz4_frame",
         "@protobuf",
         "@protobuf//src/google/protobuf/io",
+        "@zstd",
     ],
 )
