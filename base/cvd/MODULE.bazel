@@ -64,6 +64,7 @@ bazel_dep(name = "toolchains_llvm", version = "1.6.0")
 bazel_dep(name = "wayland")
 bazel_dep(name = "xz", version = "5.4.5.bcr.9")  # this is normally an indirect dependency, but for bazel 9 we need a higher version
 bazel_dep(name = "zlib", version = "1.4")
+bazel_dep(name = "zstd", version = "1.5.7.bcr.1")
 
 include("//build_external:build_external.MODULE.bazel")
 include("//cuttlefish/host/commands/append_squashfs_overlay:append_squashfs_overlay.MODULE.bazel")
