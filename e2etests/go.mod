@@ -3,15 +3,15 @@ module github.com/google/android-cuttlefish/e2etests
 go 1.25.0
 
 require (
-	github.com/bazelbuild/rules_go v0.60.0
-	github.com/google/android-cuttlefish/frontend/src/host_orchestrator v0.0.0-20241030000315-e864bdae6e57
-	github.com/google/android-cuttlefish/frontend/src/libhoclient v0.0.0-20241107001638-0f3f55c85e33
+	github.com/bazelbuild/rules_go v0.64.2
+	github.com/google/android-cuttlefish/frontend/src/host_orchestrator v0.0.0-00010101000000-000000000000
+	github.com/google/android-cuttlefish/frontend/src/libhoclient v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.7.0
 )
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
-	github.com/google/android-cuttlefish/frontend/src/liboperator v0.0.0-20240822182916-7bea0dafdbde // indirect
+	github.com/google/android-cuttlefish/frontend/src/liboperator v0.0.0-00010101000000-000000000000 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/pion/datachannel v1.6.4 // indirect
@@ -34,7 +34,7 @@ require (
 	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/time v0.14.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
 )
 
 replace github.com/google/android-cuttlefish/frontend/src/libhoclient => ../frontend/src/libhoclient
