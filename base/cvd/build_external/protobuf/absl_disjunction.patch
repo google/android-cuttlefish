@@ -1,0 +1,82 @@
+diff --git a/src/google/protobuf/port.h b/src/google/protobuf/port.h
+diff --git a/src/google/protobuf/port.h b/src/google/protobuf/port.h
+--- a/src/google/protobuf/port.h
++++ b/src/google/protobuf/port.h
+@@ -221,27 +221,27 @@
+ // Helpers for identifying our supported types.
+ template <typename T>
+ struct is_supported_integral_type
+-    : absl::disjunction<std::is_same<T, int32_t>, std::is_same<T, uint32_t>,
++    : std::disjunction<std::is_same<T, int32_t>, std::is_same<T, uint32_t>,
+                         std::is_same<T, int64_t>, std::is_same<T, uint64_t>,
+                         std::is_same<T, bool>> {};
+ 
+ template <typename T>
+ struct is_supported_floating_point_type
+-    : absl::disjunction<std::is_same<T, float>, std::is_same<T, double>> {};
++    : std::disjunction<std::is_same<T, float>, std::is_same<T, double>> {};
+ 
+ template <typename T>
+ struct is_supported_string_type
+-    : absl::disjunction<std::is_same<T, std::string>> {};
++    : std::disjunction<std::is_same<T, std::string>> {};
+ 
+ template <typename T>
+ struct is_supported_scalar_type
+-    : absl::disjunction<is_supported_integral_type<T>,
++    : std::disjunction<is_supported_integral_type<T>,
+                         is_supported_floating_point_type<T>,
+                         is_supported_string_type<T>> {};
+ 
+ template <typename T>
+ struct is_supported_message_type
+-    : absl::disjunction<std::is_base_of<MessageLite, T>> {
++    : std::disjunction<std::is_base_of<MessageLite, T>> {
+   static constexpr auto force_complete_type = sizeof(T);
+ };
+ 
+diff --git a/src/google/protobuf/map.h b/src/google/protobuf/map.h
+diff --git a/src/google/protobuf/map.h b/src/google/protobuf/map.h
+--- a/src/google/protobuf/map.h
++++ b/src/google/protobuf/map.h
+@@ -1109,12 +1109,12 @@
+     static_assert(alignof(internal::NodeBase) >= alignof(mapped_type),
+                   "Alignment of mapped type is too high.");
+     static_assert(
+-        absl::disjunction<internal::is_supported_integral_type<key_type>,
++        std::disjunction<internal::is_supported_integral_type<key_type>,
+                           internal::is_supported_string_type<key_type>,
+                           internal::is_internal_map_key_type<key_type>>::value,
+         "We only support integer, string, or designated internal key "
+         "types.");
+-    static_assert(absl::disjunction<
++    static_assert(std::disjunction<
+                       internal::is_supported_scalar_type<mapped_type>,
+                       is_proto_enum<mapped_type>,
+                       internal::is_supported_message_type<mapped_type>,
+diff --git a/src/google/protobuf/repeated_field.h b/src/google/protobuf/repeated_field.h
+diff --git a/src/google/protobuf/repeated_field.h b/src/google/protobuf/repeated_field.h
+--- a/src/google/protobuf/repeated_field.h
++++ b/src/google/protobuf/repeated_field.h
+@@ -268,7 +268,7 @@
+                 "We do not support reference value types.");
+   static constexpr PROTOBUF_ALWAYS_INLINE void StaticValidityCheck() {
+     static_assert(
+-        absl::disjunction<internal::is_supported_integral_type<Element>,
++        std::disjunction<internal::is_supported_integral_type<Element>,
+                           internal::is_supported_floating_point_type<Element>,
+                           std::is_same<absl::Cord, Element>,
+                           std::is_same<UnknownField, Element>,
+diff --git a/src/google/protobuf/repeated_ptr_field.h b/src/google/protobuf/repeated_ptr_field.h
+diff --git a/src/google/protobuf/repeated_ptr_field.h b/src/google/protobuf/repeated_ptr_field.h
+--- a/src/google/protobuf/repeated_ptr_field.h
++++ b/src/google/protobuf/repeated_ptr_field.h
+@@ -990,7 +990,7 @@
+                 "We do not support reference value types.");
+   static constexpr PROTOBUF_ALWAYS_INLINE void StaticValidityCheck() {
+     static_assert(
+-        absl::disjunction<
++        std::disjunction<
+             internal::is_supported_string_type<Element>,
+             internal::is_supported_message_type<Element>>::value,
+         "We only support string and Message types in RepeatedPtrField.");
