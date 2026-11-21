@@ -39,6 +39,7 @@
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/seeking_source_reader.h"
 #include "cuttlefish/host/libs/zip/remote_zip.h"
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/posix/remove.h"

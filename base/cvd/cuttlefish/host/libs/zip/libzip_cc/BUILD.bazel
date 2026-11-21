@@ -70,6 +70,7 @@ cf_cc_library(
     hdrs = ["reader_seeker_io.h"],
     deps = [
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/host/libs/zip/libzip_cc:seeking_source_reader",
         "//cuttlefish/io",
         "//cuttlefish/io:reader_seeker",
         "//cuttlefish/io:visitable",
@@ -88,14 +89,29 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
+        "//cuttlefish/io:length",
+        "//cuttlefish/io:reader_seeker",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/base:no_destructor",
+        "@libzip",
+    ],
+)
+
+cf_cc_library(
+    name = "seeking_source_reader",
+    srcs = ["seeking_source_reader.cc"],
+    hdrs = ["seeking_source_reader.h"],
+    features = ["-layering_check"],  # libzip
+    linkstatic = True,  # libzip
+    deps = [
+        "//cuttlefish/host/libs/zip/libzip_cc:error",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:source_reader",
         "//cuttlefish/io",
         "//cuttlefish/io:fake_pread_pwrite",
-        "//cuttlefish/io:length",
         "//cuttlefish/io:reader_seeker",
         "//cuttlefish/io:visitable",
         "//cuttlefish/result",
-        "@abseil-cpp//absl/base:no_destructor",
         "@libzip",
     ],
 )
@@ -133,6 +149,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/io",
+        "//cuttlefish/io:fake_pread_pwrite",
         "//cuttlefish/io:visitable",
         "//cuttlefish/io:writer_seeker",
         "//cuttlefish/result",
