@@ -14,7 +14,7 @@ pub struct VirtioSndConfig {
     pub controls: Le32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndRequest {
     /* jack control request types */
@@ -56,19 +56,21 @@ impl Into<Le32> for VirtioSndRequest {
     }
 }
 
-/* jack event types */
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndEventCode {
+    /* jack event types */
     JackConnected = 0x1000,
     JackDisconnected,
+    /* PCM event types */
     PcmPeriodElapsed = 0x1100,
     PcmXrun,
+    /* control element event types */
     CtlNotify = 0x1200,
 }
 
 /* common status codes */
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndStatus {
     Ok = 0x8000,
@@ -98,7 +100,7 @@ pub struct VirtioSndEvent {
     pub data: Le32,
 }
 
-#[derive(Clone, Copy, Debug, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum VirtioSndDirection {
     Output = 0,
@@ -122,7 +124,7 @@ pub struct VirtioSndInfo {
 
 #[derive(Copy, Clone, Debug, FromBytes, Immutable, IntoBytes)]
 #[repr(C)]
-pub struct virtio_snd_jack_hdr {
+pub struct VirtioSndJackHdr {
     pub hdr: VirtioSndHdr,
     pub jack_id: Le32,
 }
@@ -145,7 +147,7 @@ pub struct VirtioSndJackInfo {
 #[derive(Copy, Clone, Debug, FromBytes, Immutable, IntoBytes)]
 #[repr(C)]
 pub struct VirtioSndJackRemap {
-    pub hdr: virtio_snd_jack_hdr, /* .code = VirtioSndRequest::JackRemap */
+    pub hdr: VirtioSndJackHdr, /* .code = VirtioSndRequest::JackRemap */
     pub association: Le32,
     pub sequence: Le32,
 }
@@ -158,7 +160,7 @@ pub struct VirtioSndPcmHdr {
 }
 
 /* supported PCM stream features */
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum VirtioSndPcmFeature {
     ShmemHost = 0,
@@ -169,7 +171,7 @@ pub enum VirtioSndPcmFeature {
 }
 
 /* supported PCM sample formats */
-#[derive(Clone, Copy, Debug, Default, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum VirtioSndPcmFormat {
     /* analog formats (width / physical width) */
@@ -233,7 +235,7 @@ pub fn bits_per_sample(format: VirtioSndPcmFormat) -> usize {
 }
 
 /* supported PCM frame rates */
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum VirtioSndPcmRate {
     R5512 = 0,
@@ -317,7 +319,7 @@ pub struct VirtioSndPcmStatus {
 }
 
 /* standard channel position definition */
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u8)]
 pub enum VirtioSndChmap {
     None = 0,
@@ -356,7 +358,7 @@ pub enum VirtioSndChmap {
     RightLowFreq,
     BottomCenter,
     BottomLeftCenter,
-    BottomRifhtCenter,
+    BottomRightCenter,
 }
 
 /* maximum possible number of channels */
@@ -378,7 +380,7 @@ pub struct VirtioSndCtlHdr {
     pub control_id: Le32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndCtlRole {
     Undefined = 0,
@@ -387,7 +389,7 @@ pub enum VirtioSndCtlRole {
     Gain,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndCtlType {
     Boolean = 0,
@@ -395,10 +397,10 @@ pub enum VirtioSndCtlType {
     Integer64,
     Enumerated,
     Bytes,
-    Iec95,
+    Iec958,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndCtlAccess {
     Read = 0,
@@ -476,7 +478,7 @@ pub struct VirtioSndCtlTlv {
     /* value: [Le32; length], */
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
 #[repr(u32)]
 pub enum VirtioSndCtlEvtMask {
     Value = 0,
@@ -510,15 +512,20 @@ pub fn validate_pcm_parameters(
     );
 
     ensure!(
-        (1u64 << params.format) & pcm_info.formats.get() != 0,
+        1u64.unbounded_shl(params.format.into()) & pcm_info.formats.get() != 0,
         "Unsupported format: {}",
         params.format
     );
 
     ensure!(
-        (1u64 << params.rate) & pcm_info.rates.get() != 0,
+        1u64.unbounded_shl(params.rate.into()) & pcm_info.rates.get() != 0,
         "Unsupported frame rate: {}",
         params.rate
+    );
+
+    ensure!(
+        params.period_bytes != 0 && params.buffer_bytes != 0,
+        "Zero length buffers are not allowed"
     );
 
     ensure!(
@@ -532,8 +539,8 @@ pub fn validate_pcm_parameters(
     // validated against the pcm config, so this will result in a 0 if and only if the pcm config
     // includes an invalid format.
     let frame_size_bits =
-        params.channels as u32 * bits_per_sample(params.format.try_into()?) as u32;
-    let period_bits = 8 * params.period_bytes.get();
+        params.channels as u64 * bits_per_sample(params.format.try_into()?) as u64;
+    let period_bits = 8 * params.period_bytes.get() as u64;
     ensure!(
         period_bits % frame_size_bits == 0,
         "Period bytes is not a multiple of frame size: {} bits / {} bits",
