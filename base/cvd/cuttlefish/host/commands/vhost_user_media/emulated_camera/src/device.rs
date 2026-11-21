@@ -17,7 +17,7 @@ use std::io::Result as IoResult;
 use std::os::fd::BorrowedFd;
 use std::sync::{Arc, Mutex};
 
-use crate::capture_channel::CaptureChannel;
+use crate::capture_channel::{CaptureChannel, CaptureCompletion};
 use crate::control::ControlSet;
 use crate::format::Yuv420m;
 use crate::memory::{BufferMemoryHandler, QbufRequest, QueuedBuffer};
@@ -335,23 +335,32 @@ where
             let capture_completed_thread = std::thread::Builder::new()
                 .name(format!("capture-completed-thread{}", session_id))
                 .spawn(move || {
-                    while let Ok(ev) = capture_completed_rx.recv() {
-                        let is_streaming = *streaming_clone.lock().unwrap();
-                        if !is_streaming {
-                            continue;
-                        }
-                        let mut buffers = buffers_clone.lock().unwrap();
-                        if let Some(buf) = buffers.get_mut(ev.buffer_id) {
-                            buf.set_state(BufferState::Outgoing {
-                                sequence: ev.sequence,
-                            });
-                            let v4l2_buf = buf.v4l2_buffer.clone();
-                            evt_queue_clone
-                                .lock()
-                                .unwrap()
-                                .send_event(V4l2Event::DequeueBuffer(DequeueBufferEvent::new(
-                                    session_id, v4l2_buf,
-                                )));
+                    while let Ok(msg) = capture_completed_rx.recv() {
+                        match msg {
+                            CaptureCompletion::Completed(ev) => {
+                                let is_streaming = *streaming_clone.lock().unwrap();
+                                if !is_streaming {
+                                    continue;
+                                }
+                                let mut buffers = buffers_clone.lock().unwrap();
+                                if let Some(buf) = buffers.get_mut(ev.buffer_id) {
+                                    if !matches!(buf.state, BufferState::Incoming) {
+                                        continue;
+                                    }
+                                    buf.set_state(BufferState::Outgoing {
+                                        sequence: ev.sequence,
+                                    });
+                                    let v4l2_buf = buf.v4l2_buffer.clone();
+                                    evt_queue_clone.lock().unwrap().send_event(
+                                        V4l2Event::DequeueBuffer(DequeueBufferEvent::new(
+                                            session_id, v4l2_buf,
+                                        )),
+                                    );
+                                }
+                            }
+                            CaptureCompletion::Stopped(ack_tx) => {
+                                let _ = ack_tx.send(());
+                            }
                         }
                     }
                 })
@@ -659,14 +668,16 @@ where
             _ => (),
         }
 
-        let mut buffers = session.buffers.lock().unwrap();
-
         // Reqbufs(0) is an implicit streamoff.
         if count == 0 {
             self.active_session = None;
             *session.streaming.lock().unwrap() = false;
             let _ = session.channel.stop_capture();
-        } else {
+        }
+
+        let mut buffers = session.buffers.lock().unwrap();
+
+        if count > 0 {
             for buffer in buffers.iter_mut() {
                 buffer.set_state(BufferState::New);
             }
