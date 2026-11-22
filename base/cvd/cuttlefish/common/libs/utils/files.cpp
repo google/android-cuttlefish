@@ -161,9 +161,15 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
     return {};
   }
 
-  CF_EXPECTF(chmod(directory_path.c_str(), mode) == 0,
-             "Failed to set permission on {}: {}", directory_path,
-             strerror(errno));
+  absl::string_view open_path = directory_path;
+  while (open_path.size() > 1 && open_path.back() == '/') {
+    open_path.remove_suffix(1);
+  }
+  Fd dir_fd = CF_EXPECTF(
+      Fd::Open(open_path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC),
+      "Failed to open directory \"{}\"", directory_path);
+  CF_EXPECTF(dir_fd.Chmod(mode), "Failed to set permission on {}: {}",
+             directory_path, dir_fd.StrError());
 
   if (!group_name.empty()) {
     CF_EXPECT(ChangeGroup(directory_path, group_name));
