@@ -74,6 +74,18 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "ensure_owned_directory_exists",
+    srcs = ["ensure_owned_directory_exists.cc"],
+    hdrs = ["ensure_owned_directory_exists.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "file_device_id",
     srcs = ["file_device_id.cc"],
     hdrs = ["file_device_id.h"],
