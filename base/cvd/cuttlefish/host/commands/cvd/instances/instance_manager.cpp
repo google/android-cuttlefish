@@ -199,9 +199,9 @@ Result<bool> InstanceManager::RemoveInstanceGroup(LocalInstanceGroup group) {
     if (instance.Id() == 0) {
       continue;
     }
-    if (auto res = lock_manager_.RemoveLockFile(instance.Id());
+    if (auto res = lock_manager_.ResetLockFile(instance.Id());
         !res.has_value()) {
-      LOG(ERROR) << "Failed to remove instance id lock: " << res.error();
+      LOG(ERROR) << "Failed to reset instance id lock: " << res.error();
     }
   }
   CF_EXPECT(RemoveGroupDirectory(group));
@@ -280,10 +280,9 @@ Result<void> InstanceManager::Clear() {
       if (instance.Id() <= 0) {
         continue;
       }
-      auto res = lock_manager_.RemoveLockFile(instance.Id());
+      auto res = lock_manager_.ResetLockFile(instance.Id());
       if (!res.has_value()) {
-        LOG(ERROR) << "Failed to remove lock file for instance: "
-                   << res.error();
+        LOG(ERROR) << "Failed to reset lock file for instance: " << res.error();
       }
     }
     std::string runtime_link = group.HomeDir() + "/cuttlefish_runtime";
@@ -301,15 +300,21 @@ Result<void> InstanceManager::Clear() {
   return {};
 }
 
+Result<void> InstanceManager::ForcefullyStopGroup(
+    const unsigned any_id_in_group) {
+  CF_EXPECT(cuttlefish::ForcefullyStopGroup(any_id_in_group, lock_manager_));
+  return {};
+}
+
 Result<void> InstanceManager::Reset() {
   CF_EXPECT(Clear());
-  CF_EXPECT(KillAllCuttlefishInstances(false));
+  CF_EXPECT(KillAllCuttlefishInstances(false, lock_manager_));
   return {};
 }
 
 Result<void> InstanceManager::ResetAndClearInstanceDirs() {
   CF_EXPECT(Clear());
-  CF_EXPECT(KillAllCuttlefishInstances(true));
+  CF_EXPECT(KillAllCuttlefishInstances(true, lock_manager_));
   return {};
 }
 

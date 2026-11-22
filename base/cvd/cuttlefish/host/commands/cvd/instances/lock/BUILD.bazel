@@ -1,5 +1,5 @@
 load("//:build_variables.bzl", "COPTS")
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -22,14 +22,32 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/files:directory_exists",
+        "//cuttlefish/files:directory_contents",
+        "//cuttlefish/files:file_exists",
         "//cuttlefish/host/commands/cvd/utils:common",
-        "//cuttlefish/posix:remove",
-        "//cuttlefish/posix:strerror",
+        "//cuttlefish/io:string",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:string_view",
         "@android_system_libbase//:file_logging",
+    ],
+)
+
+cf_cc_test(
+    name = "instance_lock_test",
+    srcs = ["instance_lock_test.cpp"],
+    deps = [
+        ":lock",
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/files:file_exists",
+        "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/files:write_new_file",
+        "//cuttlefish/result",
+        "//cuttlefish/result:assert",
+        "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings",
     ],
 )

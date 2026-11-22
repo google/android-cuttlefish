@@ -73,7 +73,6 @@
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/instances/operator_client.h"
-#include "cuttlefish/host/commands/cvd/instances/stop.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
@@ -260,13 +259,14 @@ Result<std::unique_ptr<OperatorControlConn>> PreregisterInstances(
   return operator_conn;
 }
 
-Result<void> CvdResetGroup(const LocalInstanceGroup& group) {
+Result<void> CvdResetGroup(const LocalInstanceGroup& group,
+                           InstanceManager& instance_manager) {
   // We can't run stop_cvd here. It may hang forever, and doesn't make sense
   // to interrupt it.
   const auto& instances = group.Instances();
   CF_EXPECT(!instances.empty());
   const auto& first_instance = *instances.begin();
-  CF_EXPECT(ForcefullyStopGroup(first_instance.Id()));
+  CF_EXPECT(instance_manager.ForcefullyStopGroup(first_instance.Id()));
   return {};
 }
 
@@ -618,7 +618,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
     } else {
       // run_cvd processes may be still running in background
       // the order of the following operations should be kept
-      CF_EXPECT(CvdResetGroup(group));
+      CF_EXPECT(CvdResetGroup(group, instance_manager_));
     }
   }
   CF_EXPECT(CheckProcessExitedNormally(infop));
