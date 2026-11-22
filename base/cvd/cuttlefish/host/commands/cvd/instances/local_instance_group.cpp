@@ -173,6 +173,10 @@ void LocalInstanceGroup::SetStartTime(TimeStamp time) {
   group_proto_->set_start_time_sec(CvdServerClock::to_time_t(time));
 }
 
+LocalInstanceGroup LocalInstanceGroup::Clone() const {
+  return LocalInstanceGroup(*group_proto_);
+}
+
 LocalInstanceGroup::LocalInstanceGroup(const cvd::InstanceGroup& group_proto)
     : group_proto_(new cvd::InstanceGroup(group_proto)) {
   for (auto& instance : *group_proto_->mutable_instances()) {
@@ -236,6 +240,16 @@ std::vector<std::string> LocalInstanceGroup::GroupLogBasenames() {
   };
 }
 
+Json::Value LocalInstanceGroup::BuildStatusJson(
+    Json::Value instances_json) const {
+  Json::Value group_json;
+  group_json["group_name"] = GroupName();
+  group_json["metrics_dir"] = MetricsDir();
+  group_json["start_time"] = Format(StartTime());
+  group_json["instances"] = std::move(instances_json);
+  return group_json;
+}
+
 Result<Json::Value> LocalInstanceGroup::FetchStatus(
     std::chrono::seconds timeout) {
   Json::Value instances_json(Json::arrayValue);
@@ -243,12 +257,7 @@ Result<Json::Value> LocalInstanceGroup::FetchStatus(
     auto instance_status_json = CF_EXPECT(instance.FetchStatus(timeout));
     instances_json.append(instance_status_json);
   }
-  Json::Value group_json;
-  group_json["group_name"] = GroupName();
-  group_json["metrics_dir"] = MetricsDir();
-  group_json["start_time"] = Format(StartTime());
-  group_json["instances"] = instances_json;
-  return group_json;
+  return BuildStatusJson(std::move(instances_json));
 }
 
 }  // namespace cuttlefish

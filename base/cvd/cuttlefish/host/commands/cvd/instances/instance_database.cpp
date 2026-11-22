@@ -230,7 +230,12 @@ Result<bool> InstanceDatabase::BatchCompareAndUpdateInstanceStates(
             for (int i = 0; i < group_proto.instances_size(); ++i) {
               const cvd::Instance& inst = group_proto.instances(i);
               const cvd::Instance& expected_inst = expected.instances(i);
-              if (inst.id() != expected_inst.id() ||
+              if (inst.id() != expected_inst.id()) {
+                states_match = false;
+                break;
+              }
+              if (update.updated_states.find(inst.id()) !=
+                      update.updated_states.end() &&
                   inst.state() != expected_inst.state()) {
                 states_match = false;
                 break;

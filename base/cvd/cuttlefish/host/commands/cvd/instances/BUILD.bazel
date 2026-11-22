@@ -98,6 +98,7 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:instance_database_helper",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
     ],
 )
@@ -215,6 +216,25 @@ cf_cc_library(
         "@android_system_libbase//:file_logging",
         "@fmt",
         "@jsoncpp",
+    ],
+)
+
+cf_cc_test(
+    name = "instance_manager_test",
+    srcs = ["instance_manager_test.cpp"],
+    deps = [
+        ":cvd_persistent_data",
+        ":instance_manager",
+        ":instances",
+        "//cuttlefish/common/libs/fs:fd",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/files:recursively_remove_directory",
+        "//cuttlefish/files:write_new_file",
+        "//cuttlefish/host/commands/cvd/instances/lock",
+        "//cuttlefish/result",
+        "//cuttlefish/result:assert",
+        "//cuttlefish/result:result_matchers",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

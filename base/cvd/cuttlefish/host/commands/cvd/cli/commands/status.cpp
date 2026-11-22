@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -34,6 +35,7 @@
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/result/result.h"
 
@@ -126,12 +128,17 @@ Result<std::string> CvdStatusCommandHandler::DetailedHelp(
 
 CvdStatusCommandHandler::CvdStatusCommandHandler(
     InstanceManager& instance_manager)
-    : instance_manager_(instance_manager) {}
+    : CvdStatusCommandHandler(instance_manager, std::cout) {}
+
+CvdStatusCommandHandler::CvdStatusCommandHandler(
+    InstanceManager& instance_manager, std::ostream& out)
+    : instance_manager_(instance_manager), out_(out) {}
 
 Result<void> CvdStatusCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> cmd_args = request.SubcommandArguments();
   StatusCommandOptions flags = CF_EXPECT(ParseFlags(cmd_args));
 
+  CF_EXPECT(instance_manager_.PruneBrokenInstanceGroups());
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_ERR(NoGroupMessage(request));
   }
@@ -142,33 +149,65 @@ Result<void> CvdStatusCommandHandler::Handle(const CommandRequest& request) {
         "flag of the same name and can't be used at the same time.");
   }
 
-  Json::Value status_array(Json::arrayValue);
+  Json::Value status_output(Json::arrayValue);
+  const std::chrono::seconds timeout(flags.wait_for_launcher_seconds);
 
   if (!request.Selectors().instance_names && flags.instance_name.empty()) {
-    // No attempt at selecting an instance, get group status instead
     LocalInstanceGroup group =
         CF_EXPECT(selector::SelectGroup(instance_manager_, request));
-    status_array = CF_EXPECT(group.FetchStatus(
-        std::chrono::seconds(flags.wait_for_launcher_seconds)));
-    // TODO: b/471069557 - diagnose unused
-    Result<void> unused = instance_manager_.UpdateInstanceGroup(group);
+    const LocalInstanceGroup before = group.Clone();
+    Result<Json::Value> group_status = group.FetchStatus(timeout);
+    if (!group_status.has_value()) {
+      CF_EXPECT(instance_manager_.PruneBrokenInstanceGroups());
+      std::vector<LocalInstanceGroup> reloaded = CF_EXPECT(
+          instance_manager_.FindGroups({.group_name = group.GroupName()}));
+      if (reloaded.empty()) {
+        if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
+          return CF_ERR(NoGroupMessage(request));
+        }
+        return CF_ERR("No instance groups available");
+      }
+      group = std::move(reloaded.front());
+      if (!group.HasActiveInstances()) {
+        group_status = group.FetchStatus(timeout);
+      }
+    }
+    status_output = CF_EXPECT(std::move(group_status));
+    (void)instance_manager_.PersistInstanceStates(before, group);
   } else {
-    std::pair<LocalInstance, LocalInstanceGroup> pair =
+    auto [instance, group] =
         flags.instance_name.empty()
             ? CF_EXPECT(selector::SelectInstance(instance_manager_, request))
             : CF_EXPECT(instance_manager_.FindInstanceWithGroup(
                   {.instance_id = CF_EXPECT(
                        IdFromInstanceNameFlag(flags.instance_name))}));
-    LocalInstance instance = pair.first;
-    LocalInstanceGroup group = pair.second;
-    status_array.append(CF_EXPECT(instance.FetchStatus(
-        std::chrono::seconds(flags.wait_for_launcher_seconds))));
-    // TODO: b/471069557 - diagnose unused
-    Result<void> unused = instance_manager_.UpdateInstanceGroup(group);
+    const LocalInstanceGroup before = group.Clone();
+    Result<Json::Value> instance_status = instance.FetchStatus(timeout);
+    if (!instance_status.has_value()) {
+      CF_EXPECT(instance_manager_.PruneBrokenInstanceGroups());
+      std::vector<LocalInstanceGroup> reloaded = CF_EXPECT(
+          instance_manager_.FindGroups({.group_name = group.GroupName()}));
+      if (reloaded.empty()) {
+        if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
+          return CF_ERR(NoGroupMessage(request));
+        }
+        return CF_ERR("No instances available");
+      }
+      group = std::move(reloaded.front());
+      Result<LocalInstance> refreshed = group.FindInstanceById(instance.Id());
+      if (!refreshed.has_value()) {
+        return CF_ERR("No instances available");
+      }
+      if (!refreshed->IsActive()) {
+        instance_status = refreshed->FetchStatus(timeout);
+      }
+    }
+    status_output.append(CF_EXPECT(std::move(instance_status)));
+    (void)instance_manager_.PersistInstanceStates(before, group);
   }
 
   if (flags.print) {
-    std::cout << status_array.toStyledString();
+    out_ << status_output.toStyledString();
   }
 
   return {};
