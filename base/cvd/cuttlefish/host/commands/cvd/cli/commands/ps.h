@@ -16,8 +16,10 @@
 
 #pragma once
 
+#include <iosfwd>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -39,7 +41,8 @@ using PsRow = std::map<PsColumns, std::string>;
 
 class CvdPsCommandHandler : public CvdCommandHandler {
  public:
-  CvdPsCommandHandler(InstanceManager& instance_manager);
+  explicit CvdPsCommandHandler(InstanceManager& instance_manager);
+  CvdPsCommandHandler(InstanceManager& instance_manager, std::ostream& out);
 
   Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override;
@@ -52,9 +55,7 @@ class CvdPsCommandHandler : public CvdCommandHandler {
 
  private:
   InstanceManager& instance_manager_;
-
-  PsRow InstanceToRow(const LocalInstanceGroup& group,
-                      LocalInstance& instance) const;
+  std::ostream& out_;
 };
 
 }  // namespace cuttlefish

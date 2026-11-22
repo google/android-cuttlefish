@@ -16,7 +16,9 @@
 
 #pragma once
 
+#include <iosfwd>
 #include <string>
+#include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
@@ -28,7 +30,8 @@ class CommandRequest;
 
 class CvdFleetCommandHandler : public CvdCommandHandler {
  public:
-  CvdFleetCommandHandler(InstanceManager& instance_manager);
+  explicit CvdFleetCommandHandler(InstanceManager& instance_manager);
+  CvdFleetCommandHandler(InstanceManager& instance_manager, std::ostream& out);
 
   Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override;
@@ -41,6 +44,7 @@ class CvdFleetCommandHandler : public CvdCommandHandler {
 
  private:
   InstanceManager& instance_manager_;
+  std::ostream& out_;
 };
 
 }  // namespace cuttlefish
