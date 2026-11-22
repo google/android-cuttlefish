@@ -19,8 +19,6 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include <iostream>  // std::endl
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -31,15 +29,11 @@
 #include "fmt/ranges.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/files/directory_contents.h"
-#include "cuttlefish/files/directory_exists.h"
-#include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/run_cvd_proc_collector.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
-#include "cuttlefish/posix/remove.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/process/command.h"
 #include "cuttlefish/process/managed_stdio.h"
@@ -127,36 +121,29 @@ Result<void> SendSignal(const GroupProcInfo& group_info) {
   return {};
 }
 
-Result<void> DeleteLockFile(const GroupProcInfo& group_info) {
-  const std::string lock_dir = InstanceLocksPath();
-  std::string lock_file_prefix = lock_dir;
-  lock_file_prefix.append("/local-instance-");
-
+Result<void> ResetGroupLocks(const GroupProcInfo& group_info,
+                             InstanceLockFileManager& lock_manager) {
   bool all_success = true;
-  const auto& instances = group_info.instances_;
-  for (const auto& [id, _] : instances) {
-    std::stringstream lock_file_path_stream;
-    lock_file_path_stream << lock_file_prefix << id << ".lock";
-    auto lock_file_path = lock_file_path_stream.str();
-    if (FileExists(lock_file_path) && !DirectoryExists(lock_file_path)) {
-      if (Result<void, int> res = RemoveFile(lock_file_path); res.has_value()) {
-        VLOG(0) << "Reset the lock file: " << lock_file_path;
-      } else {
-        all_success = false;
-        LOG(ERROR) << "Failed to remove the lock file '" << lock_file_path
-                   << "': " << res.error();
-      }
+  for (const auto& [id, unused] : group_info.instances_) {
+    if (id == 0) {
+      continue;
+    }
+    if (Result<void> res = lock_manager.ResetLockFile(id); !res.has_value()) {
+      all_success = false;
+      LOG(ERROR) << "Failed to reset lock file for instance " << id << ": "
+                 << res.error();
     }
   }
   CF_EXPECT(all_success == true);
   return {};
 }
 
-Result<void> ForcefullyStopGroup(const GroupProcInfo& group) {
-  auto signal_res = SendSignal(group);
-  auto delete_res = DeleteLockFile(group);
-  if (!delete_res.has_value()) {
-    LOG(ERROR) << "Tried to delete instance lock file for the group rooted at "
+Result<void> ForcefullyStopGroup(const GroupProcInfo& group,
+                                 InstanceLockFileManager& lock_manager) {
+  Result<void> signal_res = SendSignal(group);
+  const Result<void> reset_res = ResetGroupLocks(group, lock_manager);
+  if (!reset_res.has_value()) {
+    LOG(ERROR) << "Tried to reset instance lock file for the group rooted at "
                   "HOME="
                << group.home_ << " but failed.";
   }
@@ -182,31 +169,10 @@ Result<void> KillAllRunCvds() {
   return {};
 }
 
-Result<void> DeleteAllOwnedInstanceLocks() {
-  const std::string lock_dir = InstanceLocksPath();
-  uid_t own_uid = geteuid();
-  for (const std::string& lock_file : CF_EXPECT(DirectoryContents(lock_dir))) {
-    std::string lock_file_path = fmt::format("{}/{}", lock_dir, lock_file);
-    Result<uid_t> file_uid_res = FileOwner(lock_file_path);
-    if (!file_uid_res.has_value()) {
-      LOG(ERROR) << "Failed to obtain owner of '" << lock_file_path << "'";
-      continue;
-    }
-    if (*file_uid_res != own_uid) {
-      VLOG(1) << "Skipped '" << lock_file_path
-              << "' because it's not owned by current user";
-      continue;
-    }
-    if (Result<void, int> res = RemoveFile(lock_file_path); !res.has_value()) {
-      LOG(ERROR) << res.error();
-    }
-  }
-  return {};
-}
-
 }  // namespace
 
-Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs) {
+Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs,
+                                        InstanceLockFileManager& lock_manager) {
   if (Result<void> res = RunStopCvdAll(clear_runtime_dirs); !res.has_value()) {
     LOG(ERROR) << res.error();
   }
@@ -215,20 +181,21 @@ Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs) {
     LOG(ERROR) << res.error();
   }
 
-  if (Result<void> res = DeleteAllOwnedInstanceLocks(); !res.has_value()) {
+  if (Result<void> res = lock_manager.ResetAllOwnedLocks(); !res.has_value()) {
     LOG(ERROR) << res.error();
   }
 
   return {};
 }
 
-Result<void> ForcefullyStopGroup(const uid_t any_id_in_group) {
+Result<void> ForcefullyStopGroup(const uid_t any_id_in_group,
+                                 InstanceLockFileManager& lock_manager) {
   for (const GroupProcInfo& group_info : CF_EXPECT(CollectRunCvdGroups())) {
     if (!Contains(group_info.instances_,
                   static_cast<unsigned>(any_id_in_group))) {
       continue;
     }
-    CF_EXPECT(ForcefullyStopGroup(group_info));
+    CF_EXPECT(ForcefullyStopGroup(group_info, lock_manager));
   }
   // run_cvd is not created yet as.. ctrl+C was in assembly phase, etc
   return {};
