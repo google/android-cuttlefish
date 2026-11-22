@@ -154,6 +154,7 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/files:are_hard_linked",
+        "//cuttlefish/files:ensure_owned_directory_exists",
         "//cuttlefish/files:file_exists",
         "//cuttlefish/files:is_directory_empty",
         "//cuttlefish/result",

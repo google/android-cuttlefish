@@ -39,6 +39,7 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/files/ensure_owned_directory_exists.h"
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/flag_parser/gflags_compat.h"
 #include "cuttlefish/host/commands/cvd/cli/log_files.h"
@@ -98,12 +99,12 @@ LogSeverity CvdVerbosityOption(std::vector<std::string>& all_args) {
 
 Result<void> EnsureCvdDirectoriesExist() {
   // These are accessed by all users.
-  CF_EXPECT(EnsureDirectoryExists(CvdDir(), 0777));
-  (void)chmod(CvdDir().c_str(), 0777);
+  CF_EXPECT(EnsureDirectoryExists(CvdDir(), 01777));
   CF_EXPECT(EnsureDirectoryExists(InstanceLocksPath(), 0777));
   (void)chmod(InstanceLocksPath().c_str(), 0777);
-  // This is where the instance database resides.
-  CF_EXPECT(EnsureDirectoryExists(PerUserDir(), 0750));
+  // These hold the per-user instance database and CLI logs.
+  CF_EXPECT(EnsureOwnedDirectoryExists(PerUserDir(), 0750));
+  CF_EXPECT(EnsureOwnedDirectoryExists(CvdUserLogDir(), 0750));
 
   return {};
 }
@@ -218,7 +219,7 @@ std::optional<std::string> InitializeLogs(std::vector<std::string>& all_args) {
       isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
 
   std::vector<std::string> log_files;
-  if (EnsureDirectoryExists(CvdUserLogDir(), 0777).has_value()) {
+  if (EnsureCvdDirectoriesExist().has_value()) {
     log_files.push_back(GetCvdLogFileName(CvdUserLogDir()));
   } else {
     std::cerr << "File logging disabled, could not create " << CvdUserLogDir()
@@ -226,7 +227,9 @@ std::optional<std::string> InitializeLogs(std::vector<std::string>& all_args) {
   }
   LogToStderrAndFiles(log_files, "", metadata_level, verbosity);
 
-  (void)PruneLogsDirectory(CvdUserLogDir());
+  if (!log_files.empty()) {
+    (void)PruneLogsDirectory(CvdUserLogDir());
+  }
 
   return log_files.empty() ? std::optional<std::string>() : log_files[0];
 }
