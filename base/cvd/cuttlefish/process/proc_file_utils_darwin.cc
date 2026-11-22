@@ -115,8 +115,6 @@ Result<std::vector<pid_t>> CollectPids(const uid_t uid) {
 }
 
 Result<std::vector<std::string>> GetCmdArgs(const pid_t pid) {
-  uid_t owner = CF_EXPECT(OwnerUid(pid));
-  CF_EXPECT_EQ(owner, getuid());
   return CF_EXPECT(GetProcStrings(pid)).argv;
 }
 

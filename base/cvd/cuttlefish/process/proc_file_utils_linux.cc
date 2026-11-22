@@ -144,8 +144,6 @@ Result<std::vector<pid_t>> CollectPids(const uid_t uid) {
 
 Result<std::vector<std::string>> GetCmdArgs(const pid_t pid) {
   std::string cmdline_file_path = PidDirPath(pid) + "/cmdline";
-  auto owner = CF_EXPECT(FileOwnerUid(cmdline_file_path));
-  CF_EXPECT(getuid() == owner);
   std::string contents = CF_EXPECT(ReadAll(cmdline_file_path));
   return absl::StrSplit(contents, '\0', absl::SkipEmpty());
 }
