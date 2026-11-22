@@ -52,13 +52,12 @@ struct IdAndPerInstanceName {
 // Adds more information to the json object returned by cvd_internal_status,
 // including some that cvd_internal_status normally returns but doesn't when the
 // instance is not running.
-void OverrideInstanceJson(const LocalInstance& instance,
-                          Json::Value& instance_json) {
+Json::Value OverrideInstanceJson(const LocalInstance& instance,
+                                 Json::Value instance_json) {
   instance_json["instance_name"] = instance.Name();
   instance_json["status"] = HumanFriendlyStateName(instance.State());
   instance_json["assembly_dir"] = instance.AssemblyDirectory();
   instance_json["instance_dir"] = instance.InstanceDirectory();
-  instance_json["instance_name"] = instance.Name();
   if (instance.IsActive()) {
     // Only running instances have id > 0, these values only make sense for
     // running instances.
@@ -68,6 +67,7 @@ void OverrideInstanceJson(const LocalInstance& instance,
     instance_json["webrtc_device_id"] = instance.WebRtcDeviceId();
     instance_json["adb_port"] = instance.AdbPort();
   }
+  return instance_json;
 }
 
 Result<std::string> GetBin(const std::string& host_artifacts_path) {
@@ -83,11 +83,7 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
   // time.
   if (instance.State() != cvd::INSTANCE_STATE_RUNNING &&
       instance.State() != cvd::INSTANCE_STATE_UNREACHABLE) {
-    Json::Value instance_json;
-    instance_json["instance_name"] = instance.Name();
-    instance_json["status"] = HumanFriendlyStateName(instance.State());
-    OverrideInstanceJson(instance, instance_json);
-    return instance_json;
+    return OverrideInstanceJson(instance, Json::Value(Json::objectValue));
   }
 
   const auto working_dir = CurrentDirectory();
@@ -185,14 +181,20 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
     instance_status_json = json_array[0];
   }
 
-  if (res != 0) {
+  if (res == 0) {
+    instance.SetState(cvd::INSTANCE_STATE_RUNNING);
+  } else {
     LOG(ERROR) << "Status tool exited with code " << res;
     instance.SetState(cvd::INSTANCE_STATE_UNREACHABLE);
     instance_status_json["warning"] = "cvd status failed";
   }
-  OverrideInstanceJson(instance, instance_status_json);
+  return OverrideInstanceJson(instance, std::move(instance_status_json));
+}
 
-  return instance_status_json;
+Json::Value FormatUnreachableInstanceStatus(const LocalInstance& instance) {
+  Json::Value instance_status_json(Json::objectValue);
+  instance_status_json["warning"] = "cvd status failed";
+  return OverrideInstanceJson(instance, std::move(instance_status_json));
 }
 
 std::string HumanFriendlyStateName(cvd::InstanceState state) {

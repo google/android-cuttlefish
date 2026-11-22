@@ -19,6 +19,9 @@
 #include <sys/types.h>
 
 #include <chrono>
+#include <string>
+
+#include "json/value.h"
 
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
@@ -30,6 +33,10 @@ namespace cuttlefish {
 // respond within the given timeout.
 Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
                                         std::chrono::seconds timeout);
+
+// Formats the fallback instance status JSON object emitted when
+// `cvd_internal_status` fails for an unreachable instance.
+Json::Value FormatUnreachableInstanceStatus(const LocalInstance& instance);
 
 // The most important thing this function does is turn "INSTANCE_STATE_RUNNING"
 // into "Running". Some external tools (like the host orchestrator) already
