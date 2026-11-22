@@ -33,6 +33,7 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/files/are_hard_linked.h"
+#include "cuttlefish/files/ensure_owned_directory_exists.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/files/is_directory_empty.h"
 #include "cuttlefish/result/result.h"
@@ -174,12 +175,38 @@ TEST_F(FilesTests, EnsureDirectoryExistsSetsRequestedModeDespiteUmask) {
   const mode_t old_umask = umask(0022);
   absl::Cleanup restore_umask = [old_umask]() { umask(old_umask); };
 
-  const std::string shared_dir = std::string(temp_dir_.path) + "/shared/lock";
-  EXPECT_THAT(EnsureDirectoryExists(shared_dir, 0777), IsOk());
+  const std::string shared_dir = std::string(temp_dir_.path) + "/shared/cvd";
+  EXPECT_THAT(EnsureDirectoryExists(shared_dir + "/", 01777), IsOk());
 
   struct stat st = {};
-  ASSERT_EQ(stat(shared_dir.c_str(), &st), 0);
-  EXPECT_EQ(st.st_mode & 0777, 0777u);
+  ASSERT_EQ(lstat(shared_dir.c_str(), &st), 0);
+  EXPECT_EQ(st.st_mode & 07777, 01777u);
+}
+
+TEST_F(FilesTests,
+       EnsureOwnedDirectoryExistsRepairsModeAndRejectsSymlinkOrForeignOwner) {
+  const std::string owned_dir = std::string(temp_dir_.path) + "/owned";
+  ASSERT_EQ(mkdir(owned_dir.c_str(), 0777), 0);
+  ASSERT_EQ(chmod(owned_dir.c_str(), 0777), 0);
+
+  ASSERT_THAT(EnsureOwnedDirectoryExists(owned_dir, 0750), IsOk());
+  struct stat st = {};
+  ASSERT_EQ(lstat(owned_dir.c_str(), &st), 0);
+  EXPECT_EQ(st.st_mode & 07777, 0750u);
+
+  EXPECT_THAT(EnsureOwnedDirectoryExists(owned_dir, 0750, geteuid() + 1),
+              IsError());
+
+  const std::string target_dir = std::string(temp_dir_.path) + "/target";
+  const std::string link_dir = std::string(temp_dir_.path) + "/owned_link";
+  ASSERT_EQ(mkdir(target_dir.c_str(), 0700), 0);
+  ASSERT_EQ(chmod(target_dir.c_str(), 0700), 0);
+  ASSERT_EQ(symlink(target_dir.c_str(), link_dir.c_str()), 0);
+
+  EXPECT_THAT(EnsureOwnedDirectoryExists(link_dir, 0777), IsError());
+  EXPECT_THAT(EnsureOwnedDirectoryExists(link_dir + "/", 0777), IsError());
+  ASSERT_EQ(lstat(target_dir.c_str(), &st), 0);
+  EXPECT_EQ(st.st_mode & 07777, 0700u);
 }
 
 TEST_F(FilesTests, EnsureDirectoryExistsFailsWhenRegularFileExists) {
