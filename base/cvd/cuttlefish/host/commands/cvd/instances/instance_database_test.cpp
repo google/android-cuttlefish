@@ -27,6 +27,7 @@
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database_helper.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
 
 /*
@@ -455,6 +456,37 @@ TEST_F(CvdInstanceDatabaseTest, CompareAndUpdateInstanceStatesUsesSnapshotCas) {
   EXPECT_THAT(db.CompareAndUpdateInstanceStates(
                   *final_grp, {{1, cvd::INSTANCE_STATE_RUNNING}}),
               IsOkAndValue(false));
+}
+
+TEST_F(CvdInstanceDatabaseTest,
+       CompareAndUpdateInstanceStatesChecksOnlyUpdatedInstances) {
+  if (!SetUpOk()) {
+    GTEST_SKIP() << Error().msg;
+  }
+  auto& db = GetDb();
+
+  LocalInstanceGroup grp = CF_ASSERT(LocalInstanceGroup::Builder("multi_cas")
+                                         .AddInstance(1, "ins1")
+                                         .AddInstance(2, "ins2")
+                                         .Build());
+  grp.SetAllStates(cvd::INSTANCE_STATE_RUNNING);
+  ASSERT_THAT(db.AddInstanceGroup(grp), IsOk());
+
+  LocalInstanceGroup snapshot = grp.Clone();
+  ASSERT_THAT(db.CompareAndUpdateInstanceStates(
+                  snapshot, {{1, cvd::INSTANCE_STATE_STOPPED}}),
+              IsOkAndValue(true));
+  // Updating instance 2 against the earlier snapshot still succeeds because
+  // instance 2's expected state (`RUNNING`) matches even though instance 1
+  // changed to `STOPPED`.
+  ASSERT_THAT(db.CompareAndUpdateInstanceStates(
+                  snapshot, {{2, cvd::INSTANCE_STATE_UNREACHABLE}}),
+              IsOkAndValue(true));
+
+  LocalInstanceGroup stored =
+      CF_ASSERT(db.FindGroup({.group_name = "multi_cas"}));
+  EXPECT_EQ(stored.Instances()[0].State(), cvd::INSTANCE_STATE_STOPPED);
+  EXPECT_EQ(stored.Instances()[1].State(), cvd::INSTANCE_STATE_UNREACHABLE);
 }
 
 }  // namespace selector

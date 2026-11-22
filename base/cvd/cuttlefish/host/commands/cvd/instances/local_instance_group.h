@@ -53,6 +53,10 @@ class LocalInstanceGroup {
   LocalInstanceGroup(const LocalInstanceGroup&) = default;
   LocalInstanceGroup& operator=(const LocalInstanceGroup&) = default;
 
+  // Returns an independent deep copy of the group and its underlying proto
+  // (unlike copy construction, which shares `group_proto_`).
+  LocalInstanceGroup Clone() const;
+
   const std::string& GroupName() const { return group_proto_->name(); }
   const std::string& HomeDir() const { return group_proto_->home_directory(); }
   const std::string& HostArtifactsPath() const {
@@ -90,6 +94,8 @@ class LocalInstanceGroup {
    */
   std::vector<LocalInstance> FindByInstanceName(
       const std::string& instance_name) const;
+  // Formats group-level status metadata wrapping `instances_json`.
+  Json::Value BuildStatusJson(Json::Value instances_json) const;
   // Fetches status from all instances in the group. Waits for run_cvd to
   // respond for at most timeout seconds for each instance.
   Result<Json::Value> FetchStatus(

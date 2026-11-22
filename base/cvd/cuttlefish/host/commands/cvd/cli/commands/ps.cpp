@@ -21,6 +21,7 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <ostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -59,7 +60,8 @@ const std::map<PsColumns, absl::string_view> kHeaders = {
     {PsColumns::kWebAccess, "WEB_ACCESS"},
 };
 
-void PrintTable(const std::map<PsColumns, absl::string_view>& headers,
+void PrintTable(std::ostream& out,
+                const std::map<PsColumns, absl::string_view>& headers,
                 const std::vector<PsRow>& rows) {
   std::map<PsColumns, size_t> col_widths;
   for (const std::pair<const PsColumns, absl::string_view>& pair : headers) {
@@ -75,10 +77,9 @@ void PrintTable(const std::map<PsColumns, absl::string_view>& headers,
 
   // Print headers
   for (const std::pair<const PsColumns, absl::string_view>& pair : headers) {
-    std::cout << std::left << std::setw(col_widths[pair.first] + 3)
-              << pair.second;
+    out << std::left << std::setw(col_widths[pair.first] + 3) << pair.second;
   }
-  std::cout << "\n";
+  out << "\n";
 
   // Print rows
   for (const PsRow& row : rows) {
@@ -89,16 +90,57 @@ void PrintTable(const std::map<PsColumns, absl::string_view>& headers,
       if (it != row.end()) {
         val = it->second;
       }
-      std::cout << std::left << std::setw(col_widths[pair.first] + 3) << val;
+      out << std::left << std::setw(col_widths[pair.first] + 3) << val;
     }
-    std::cout << "\n";
+    out << "\n";
   }
+}
+
+// Formats a single `cvd ps` table row; `status_json` may be `nullptr` if the
+// group status response lacked a corresponding instance entry.
+PsRow InstanceToRow(const LocalInstanceGroup& group,
+                    const LocalInstance& instance,
+                    const Json::Value* status_json) {
+  PsRow row;
+
+  row[PsColumns::kGroups] = group.GroupName();
+  row[PsColumns::kNames] = instance.Name();
+  row[PsColumns::kId] = std::to_string(instance.Id());
+
+  std::string status_str = "Unknown (Fetch Failed)";
+  std::string adb_serial_str = "-";
+  std::string web_access_str = "-";
+
+  if (status_json != nullptr) {
+    status_str = (*status_json)["status"].asString();
+
+    if (instance.IsActive()) {
+      if (status_json->isMember("adb_port")) {
+        adb_serial_str =
+            fmt::format("localhost:{}", (*status_json)["adb_port"].asInt());
+      }
+      if (status_json->isMember("web_access")) {
+        web_access_str = (*status_json)["web_access"].asString();
+      }
+    }
+  }
+
+  row[PsColumns::kStatus] = status_str;
+  row[PsColumns::kCreated] = Format(group.StartTime());
+  row[PsColumns::kAdbSerial] = adb_serial_str;
+  row[PsColumns::kWebAccess] = web_access_str;
+
+  return row;
 }
 
 }  // namespace
 
 CvdPsCommandHandler::CvdPsCommandHandler(InstanceManager& instance_manager)
-    : instance_manager_(instance_manager) {}
+    : CvdPsCommandHandler(instance_manager, std::cout) {}
+
+CvdPsCommandHandler::CvdPsCommandHandler(InstanceManager& instance_manager,
+                                         std::ostream& out)
+    : instance_manager_(instance_manager), out_(out) {}
 
 std::vector<std::string> CvdPsCommandHandler::CmdList() const {
   return {kPsSubcmd};
@@ -116,56 +158,49 @@ Result<void> CvdPsCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
   CF_EXPECT(ConsumeFlags({}, args, {.fail_on_unexpected_argument = true}));
 
+  CF_EXPECT(instance_manager_.PruneBrokenInstanceGroups());
   std::vector<LocalInstanceGroup> all_groups =
       CF_EXPECT(instance_manager_.FindGroups({}));
 
   std::vector<PsRow> rows;
 
   for (LocalInstanceGroup& group : all_groups) {
+    const LocalInstanceGroup before = group.Clone();
+    std::vector<PsRow> group_rows;
+    bool any_fetch_failed = false;
     for (LocalInstance& instance : group.Instances()) {
-      rows.push_back(InstanceToRow(group, instance));
+      Result<Json::Value> status_res = instance.FetchStatus();
+      if (!status_res.has_value()) {
+        any_fetch_failed = true;
+      }
+      group_rows.push_back(InstanceToRow(
+          group, instance, status_res.has_value() ? &*status_res : nullptr));
     }
+    if (!any_fetch_failed) {
+      (void)instance_manager_.PersistInstanceStates(before, group);
+      for (PsRow& row : group_rows) {
+        rows.push_back(std::move(row));
+      }
+      continue;
+    }
+    CF_EXPECT(instance_manager_.PruneBrokenInstanceGroups());
+    std::vector<LocalInstanceGroup> reloaded = CF_EXPECT(
+        instance_manager_.FindGroups({.group_name = group.GroupName()}));
+    if (reloaded.empty() || reloaded.front().HomeDir() != group.HomeDir()) {
+      continue;
+    }
+    LocalInstanceGroup latest = std::move(reloaded.front());
+    const LocalInstanceGroup latest_before = latest.Clone();
+    for (LocalInstance& instance : latest.Instances()) {
+      Result<Json::Value> status_res = instance.FetchStatus();
+      rows.push_back(InstanceToRow(
+          latest, instance, status_res.has_value() ? &*status_res : nullptr));
+    }
+    (void)instance_manager_.PersistInstanceStates(latest_before, latest);
   }
 
-  PrintTable(kHeaders, rows);
+  PrintTable(out_, kHeaders, rows);
   return {};
-}
-
-PsRow CvdPsCommandHandler::InstanceToRow(const LocalInstanceGroup& group,
-                                         LocalInstance& instance) const {
-  PsRow row;
-
-  row[PsColumns::kGroups] = group.GroupName();
-  row[PsColumns::kNames] = instance.Name();
-  row[PsColumns::kId] = std::to_string(instance.Id());
-
-  // Fetch live status
-  const Result<Json::Value> status_json_res = instance.FetchStatus();
-  std::string status_str = "Unknown (Fetch Failed)";
-  std::string adb_serial_str = "-";
-  std::string web_access_str = "-";
-
-  if (status_json_res.has_value()) {
-    const Json::Value status_json = *status_json_res;
-    status_str = status_json["status"].asString();
-
-    if (instance.IsActive()) {
-      if (status_json.isMember("adb_port")) {
-        adb_serial_str =
-            fmt::format("localhost:{}", status_json["adb_port"].asInt());
-      }
-      if (status_json.isMember("web_access")) {
-        web_access_str = status_json["web_access"].asString();
-      }
-    }
-  }
-
-  row[PsColumns::kStatus] = status_str;
-  row[PsColumns::kCreated] = Format(group.StartTime());
-  row[PsColumns::kAdbSerial] = adb_serial_str;
-  row[PsColumns::kWebAccess] = web_access_str;
-
-  return row;
 }
 
 }  // namespace cuttlefish

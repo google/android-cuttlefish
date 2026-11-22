@@ -62,6 +62,7 @@ class InstanceManager {
                   InstanceDatabase& instance_db);
   InstanceManager(InstanceLockFileManager* lock_manager,
                   InstanceDatabase& instance_db, std::string base_root_dir);
+  virtual ~InstanceManager() = default;
 
   // Acquires an exclusive non-blocking flock on `<BaseDir>/in_progress.lock`
   // to guard an in-progress prepare or boot transition against concurrent
@@ -71,7 +72,7 @@ class InstanceManager {
   // flock on `<BaseDir>/in_progress.lock`.
   static bool IsGroupTransitionInProgress(const LocalInstanceGroup& group);
 
-  Result<bool> HasInstanceGroups() const;
+  virtual Result<bool> HasInstanceGroups() const;
   // Creates and registers an instance group. If `out_in_progress_lock` is
   // non-null, acquires `in_progress.lock` before inserting the group into
   // `instance_db_` so no unlocked `PREPARING`/`STOPPED` window exists.
@@ -86,12 +87,17 @@ class InstanceManager {
   // Reconciles `group`'s persisted states against live launcher monitor sockets
   // and `run_cvd` processes. Set `caller_holds_in_progress_lock` to true when
   // the caller already holds `AcquireGroupInProgressLock(group)`.
-  Result<LocalInstanceGroup> RefreshInstanceGroupState(
+  virtual Result<LocalInstanceGroup> RefreshInstanceGroupState(
       LocalInstanceGroup group, bool caller_holds_in_progress_lock = false);
-  Result<void> RefreshInstanceGroups();
+  virtual Result<void> RefreshInstanceGroups();
   // Refreshes all groups and removes inactive groups whose backing directories
   // (`HomeDir`, `HostArtifactsPath`, or `ProductOutPath`) no longer exist.
-  Result<void> PruneBrokenInstanceGroups();
+  virtual Result<void> PruneBrokenInstanceGroups();
+  // Persists `RUNNING <-> UNREACHABLE` in-memory state transitions observed
+  // between `before` and `after` to the database if `before` still matches and
+  // no group transition is active.
+  virtual Result<void> PersistInstanceStates(const LocalInstanceGroup& before,
+                                             const LocalInstanceGroup& after);
 
   // Stops and removes all known instance instance groups
   Result<void> Clear();
@@ -100,14 +106,15 @@ class InstanceManager {
   Result<void> Reset();
   Result<void> ResetAndClearInstanceDirs();
 
-  Result<std::vector<LocalInstanceGroup>> FindGroups(
+  virtual Result<std::vector<LocalInstanceGroup>> FindGroups(
       const InstanceDatabase::Filter& filter) const;
-  Result<LocalInstanceGroup> FindGroup(
+  virtual Result<LocalInstanceGroup> FindGroup(
       const InstanceDatabase::Filter& filter) const;
 
-  Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceWithGroup(
-      const InstanceDatabase::Filter& filter) const;
-  Result<std::vector<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>>
+  virtual Result<std::pair<LocalInstance, LocalInstanceGroup>>
+  FindInstanceWithGroup(const InstanceDatabase::Filter& filter) const;
+  virtual Result<
+      std::vector<std::pair<LocalInstanceGroup, std::vector<LocalInstance>>>>
   FindInstances(const InstanceDatabase::Filter& filter) const;
 
   // Stops the device by asking it over the control socket. If launcher_timeout

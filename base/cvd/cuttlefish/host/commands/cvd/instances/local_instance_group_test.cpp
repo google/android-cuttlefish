@@ -112,5 +112,18 @@ TEST_F(LocalInstanceGroupUnitTest,
   }
 }
 
+TEST_F(LocalInstanceGroupUnitTest, CloneProducesIndependentProtoCopy) {
+  Result<LocalInstanceGroup> orig =
+      LocalInstanceGroup::Builder("clone_grp", "/var/tmp/cvd/0")
+          .AddInstance(1)
+          .Build();
+  ASSERT_THAT(orig, IsOk());
+  orig->SetAllStates(cvd::INSTANCE_STATE_RUNNING);
+
+  LocalInstanceGroup copy = orig->Clone();
+  orig->SetAllStates(cvd::INSTANCE_STATE_STOPPED);
+  EXPECT_EQ(copy.Instances()[0].State(), cvd::INSTANCE_STATE_RUNNING);
+}
+
 }  // namespace selector
 }  // namespace cuttlefish

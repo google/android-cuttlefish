@@ -17,14 +17,20 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/fleet.h"
 
 #include <iostream>
+#include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "json/value.h"
 
 #include "cuttlefish/flag_parser/flag.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
+#include "cuttlefish/host/commands/cvd/instances/status_fetcher.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -42,7 +48,11 @@ usage: cvd fleet [--help]
 
 CvdFleetCommandHandler::CvdFleetCommandHandler(
     InstanceManager& instance_manager)
-    : instance_manager_(instance_manager) {}
+    : CvdFleetCommandHandler(instance_manager, std::cout) {}
+
+CvdFleetCommandHandler::CvdFleetCommandHandler(
+    InstanceManager& instance_manager, std::ostream& out)
+    : instance_manager_(instance_manager), out_(out) {}
 
 std::vector<std::string> CvdFleetCommandHandler::CmdList() const {
   return {kFleetSubcmd};
@@ -61,15 +71,47 @@ Result<void> CvdFleetCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
   CF_EXPECT(ConsumeFlags({}, args, {.fail_on_unexpected_argument = true}));
 
-  auto all_groups = CF_EXPECT(instance_manager_.FindGroups({}));
+  CF_EXPECT(instance_manager_.PruneBrokenInstanceGroups());
+  std::vector<LocalInstanceGroup> all_groups =
+      CF_EXPECT(instance_manager_.FindGroups({}));
   Json::Value groups_json(Json::arrayValue);
-  for (auto& group : all_groups) {
-    groups_json.append(CF_EXPECT(group.FetchStatus()));
+  for (LocalInstanceGroup& group : all_groups) {
+    const LocalInstanceGroup before = group.Clone();
+    Result<Json::Value> group_status = group.FetchStatus();
+    if (group_status.has_value()) {
+      (void)instance_manager_.PersistInstanceStates(before, group);
+      groups_json.append(std::move(*group_status));
+      continue;
+    }
+    CF_EXPECT(instance_manager_.PruneBrokenInstanceGroups());
+    std::vector<LocalInstanceGroup> reloaded = CF_EXPECT(
+        instance_manager_.FindGroups({.group_name = group.GroupName()}));
+    if (reloaded.empty() || reloaded.front().HomeDir() != group.HomeDir()) {
+      continue;
+    }
+    LocalInstanceGroup latest = std::move(reloaded.front());
+    if (!latest.HasActiveInstances()) {
+      groups_json.append(CF_EXPECT(latest.FetchStatus()));
+      continue;
+    }
+    const LocalInstanceGroup latest_before = latest.Clone();
+    Json::Value instances_json(Json::arrayValue);
+    for (LocalInstance& instance : latest.Instances()) {
+      Result<Json::Value> inst_status = instance.FetchStatus();
+      if (inst_status.has_value()) {
+        instances_json.append(std::move(*inst_status));
+      } else {
+        instance.SetState(cvd::INSTANCE_STATE_UNREACHABLE);
+        instances_json.append(FormatUnreachableInstanceStatus(instance));
+      }
+    }
+    (void)instance_manager_.PersistInstanceStates(latest_before, latest);
+    groups_json.append(latest.BuildStatusJson(std::move(instances_json)));
   }
   Json::Value output_json(Json::objectValue);
-  output_json["groups"] = groups_json;
+  output_json["groups"] = std::move(groups_json);
 
-  std::cout << output_json.toStyledString();
+  out_ << output_json.toStyledString();
 
   return {};
 }

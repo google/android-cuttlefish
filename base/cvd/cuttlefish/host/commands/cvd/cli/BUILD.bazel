@@ -212,6 +212,61 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "fake_instance_manager",
+    testonly = True,
+    hdrs = ["fake_instance_manager.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances:instance_manager",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_test(
+    name = "fleet_test",
+    srcs = ["fleet_test.cpp"],
+    deps = [
+        ":fake_instance_manager",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/host/commands/cvd/cli/commands:fleet",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/result:assert",
+        "//cuttlefish/result:result_matchers",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_test(
+    name = "ps_test",
+    srcs = ["ps_test.cpp"],
+    deps = [
+        ":fake_instance_manager",
+        "//cuttlefish/host/commands/cvd/cli/commands:ps",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/result:assert",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_test(
+    name = "status_test",
+    srcs = ["status_test.cpp"],
+    deps = [
+        ":fake_instance_manager",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/host/commands/cvd/cli/commands:status",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/result:assert",
+        "//cuttlefish/result:result_matchers",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
     name = "utils",
     srcs = ["utils.cpp"],
     hdrs = ["utils.h"],

@@ -22,7 +22,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <optional>
@@ -315,6 +317,17 @@ Result<std::string> StopBin(const std::string& host_android_out) {
   return CF_EXPECT(HostToolTarget(host_android_out).GetStopBinName());
 }
 
+constexpr int kMaxDyingWaitAttempts = 15;
+constexpr auto kDyingWaitPollInterval = std::chrono::milliseconds(10);
+
+bool HasDyingBrokenGroup(const std::vector<LocalInstanceGroup>& groups) {
+  return std::any_of(
+      groups.begin(), groups.end(), [](const LocalInstanceGroup& group) {
+        return group.HasActiveInstances() && !IsGroupBackingDirsIntact(group) &&
+               !InstanceManager::IsGroupTransitionInProgress(group);
+      });
+}
+
 }  // namespace
 
 InstanceManager::InstanceManager(InstanceLockFileManager* lock_manager,
@@ -588,12 +601,11 @@ Result<bool> InstanceManager::RemoveInstanceGroup(LocalInstanceGroup group) {
   CF_EXPECT(!IsGroupTransitionInProgress(group),
             "Group transition is currently in progress");
 
-  bool removed = CF_EXPECT(instance_db_.RemoveInstanceGroup(
-      group, [&group]() { return !IsGroupTransitionInProgress(group); }));
-  if (!removed) {
-    return false;
-  }
-
+  // Acquire instance locks in ascending ID order prior to acquiring the
+  // database lock, matching `CreateInstanceGroup`'s lock order so a concurrent
+  // `CreateInstanceGroup` cannot allocate and mark `<id>` `kInUse` before we
+  // reset `<id>` to `kNotInUse`.
+  std::vector<InstanceLockFile> held_locks;
   if (lock_manager_ != nullptr) {
     std::set<unsigned> sorted_ids;
     for (const LocalInstance& instance : group.Instances()) {
@@ -601,11 +613,33 @@ Result<bool> InstanceManager::RemoveInstanceGroup(LocalInstanceGroup group) {
         sorted_ids.insert(instance.Id());
       }
     }
+    held_locks.reserve(sorted_ids.size());
     for (unsigned id : sorted_ids) {
-      if (Result<void> res = lock_manager_->ResetLockFile(id);
+      Result<InstanceLockFile> lock = lock_manager_->AcquireLock(id);
+      if (!lock.has_value()) {
+        LOG(ERROR) << "Failed to acquire instance id lock " << id
+                   << " before group removal: " << lock.error();
+        continue;
+      }
+      held_locks.push_back(std::move(*lock));
+    }
+  }
+
+  bool removed = CF_EXPECT(instance_db_.RemoveInstanceGroup(
+      group, [&group]() { return !IsGroupTransitionInProgress(group); }));
+  if (!removed) {
+    return false;
+  }
+
+  for (InstanceLockFile& lock : held_locks) {
+    Result<InUseState> status = lock.Status();
+    Result<std::optional<uid_t>> holder = lock.HolderUid();
+    if (status.has_value() && *status == InUseState::kInUse &&
+        holder.has_value() && holder->value_or(geteuid()) == geteuid()) {
+      if (Result<void> res = lock.Status(InUseState::kNotInUse);
           !res.has_value()) {
-        LOG(ERROR) << "Failed to reset instance id lock " << id << ": "
-                   << res.error();
+        LOG(ERROR) << "Failed to release instance id lock " << lock.Instance()
+                   << ": " << res.error();
       }
     }
   }
@@ -652,19 +686,53 @@ Result<void> InstanceManager::PruneBrokenInstanceGroups() {
   CF_EXPECT(RefreshInstanceGroups());
   std::vector<LocalInstanceGroup> groups =
       CF_EXPECT(instance_db_.FindGroups({}));
+  for (int attempt = 0;
+       attempt < kMaxDyingWaitAttempts && HasDyingBrokenGroup(groups);
+       ++attempt) {
+    std::this_thread::sleep_for(kDyingWaitPollInterval);
+    CF_EXPECT(RefreshInstanceGroups());
+    groups = CF_EXPECT(instance_db_.FindGroups({}));
+  }
   for (LocalInstanceGroup& group : groups) {
-    if (group.HasActiveInstances()) {
+    if (group.HasActiveInstances() || IsGroupBackingDirsIntact(group)) {
       continue;
     }
-    if (!IsGroupBackingDirsIntact(group)) {
-      LOG(INFO) << "Pruning inactive instance group '" << group.GroupName()
-                << "' with missing backing directories";
-      Result<bool> remove_res = RemoveInstanceGroup(std::move(group));
-      if (!remove_res.has_value()) {
-        LOG(WARNING) << "Failed to prune broken instance group: "
-                     << remove_res.error();
-      }
+    LOG(INFO) << "Pruning inactive instance group '" << group.GroupName()
+              << "' with missing backing directories";
+    Result<bool> remove_res = RemoveInstanceGroup(std::move(group));
+    if (!remove_res.has_value()) {
+      LOG(WARNING) << "Failed to prune broken instance group: "
+                   << remove_res.error();
     }
+  }
+  return {};
+}
+
+Result<void> InstanceManager::PersistInstanceStates(
+    const LocalInstanceGroup& before, const LocalInstanceGroup& after) {
+  std::unordered_map<unsigned, cvd::InstanceState> updates;
+  for (size_t i = 0;
+       i < before.Instances().size() && i < after.Instances().size(); ++i) {
+    const LocalInstance& prev = before.Instances()[i];
+    const LocalInstance& curr = after.Instances()[i];
+    if (prev.Id() != curr.Id() || prev.State() == curr.State()) {
+      continue;
+    }
+    const bool marked_unreachable =
+        prev.State() == cvd::INSTANCE_STATE_RUNNING &&
+        curr.State() == cvd::INSTANCE_STATE_UNREACHABLE;
+    const bool recovered_running =
+        prev.State() == cvd::INSTANCE_STATE_UNREACHABLE &&
+        curr.State() == cvd::INSTANCE_STATE_RUNNING;
+    if (marked_unreachable || recovered_running) {
+      updates.emplace(curr.Id(), curr.State());
+    }
+  }
+  if (!updates.empty()) {
+    (void)CF_EXPECT(instance_db_.CompareAndUpdateInstanceStates(
+        before, updates, [&before]() {
+          return !InstanceManager::IsGroupTransitionInProgress(before);
+        }));
   }
   return {};
 }
