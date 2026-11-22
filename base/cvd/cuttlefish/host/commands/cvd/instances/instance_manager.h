@@ -87,6 +87,8 @@ class InstanceManager {
       std::chrono::seconds launcher_timeout = std::chrono::seconds(5),
       const std::vector<unsigned>& instance_nums = {});
 
+  Result<void> ForcefullyStopGroup(unsigned any_id_in_group);
+
  private:
   struct InternalInstanceDesc {
     InstanceLockFile lock_file;

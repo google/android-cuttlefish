@@ -16,32 +16,41 @@
 
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <sys/file.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include <algorithm>
-#include <cstring>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
+#include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+#include "absl/strings/strip.h"
 #include "android-base/file.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/files/directory_exists.h"
+#include "cuttlefish/io/string.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 static Result<void> SetStatus(SharedFD& fd, const InUseState state) {
-  CF_EXPECT(fd->LSeek(0, SEEK_SET) == 0, fd->StrError());
-  char state_char = static_cast<char>(state);
-  CF_EXPECT(fd->Write(&state_char, 1) == 1u, fd->StrError());
+  CF_EXPECT(fd->Truncate(0));
+  if (state == InUseState::kInUse) {
+    CF_EXPECT(fd->LSeek(0, SEEK_SET) == 0, fd->StrError());
+    CF_EXPECT(WriteExact(*fd, absl::StrCat("I ", geteuid())));
+  }
   return {};
 }
 
@@ -82,22 +91,21 @@ Result<InUseState> LockFile::Status() const {
   }
 }
 
+Result<std::optional<uid_t>> LockFile::HolderUid() const {
+  SharedFD fd = fd_;
+  CF_EXPECT(fd->LSeek(0, SEEK_SET) == 0, fd->StrError());
+  const std::string data = CF_EXPECT(ReadToString(*fd));
+  absl::string_view sv = absl::StripAsciiWhitespace(data);
+  uid_t uid = 0;
+  if (absl::ConsumePrefix(&sv, "I ") && absl::SimpleAtoi(sv, &uid)) {
+    return uid;
+  }
+  return std::nullopt;
+}
+
 Result<void> LockFile::Status(InUseState state) {
   CF_EXPECT(SetStatus(fd_, state));
   return {};
-}
-
-bool LockFile::operator<(const LockFile& other) const {
-  if (this == std::addressof(other)) {
-    return false;
-  }
-  if (LockFilePath() == other.LockFilePath()) {
-    return fd_ < other.fd_;
-  }
-  // operator< for std::string will be gone as of C++20
-  return (strncmp(lock_file_path_.data(), other.LockFilePath().data(),
-                  std::max(lock_file_path_.size(),
-                           other.LockFilePath().size())) < 0);
 }
 
 Result<Fd> LockFileManager::OpenLockFile(const std::string& file_path) {
@@ -133,24 +141,6 @@ Result<std::optional<LockFile>> LockFileManager::TryAcquireLock(
   }
   CF_EXPECT(std::move(flock_result));
   return {};
-}
-
-// Replicates tempfile.gettempdir() in Python
-std::string TempDir() {
-  std::vector<std::string> try_dirs = {
-      StringFromEnv("TMPDIR", ""),
-      StringFromEnv("TEMP", ""),
-      StringFromEnv("TMP", ""),
-      "/tmp",
-      "/var/tmp",
-      "/usr/tmp",
-  };
-  for (const auto& try_dir : try_dirs) {
-    if (DirectoryExists(try_dir)) {
-      return try_dir;
-    }
-  }
-  return CurrentDirectory();
 }
 
 }  // namespace cuttlefish

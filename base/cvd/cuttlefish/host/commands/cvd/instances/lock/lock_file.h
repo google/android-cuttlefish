@@ -15,6 +15,8 @@
  */
 #pragma once
 
+#include <sys/types.h>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -29,9 +31,6 @@ enum class InUseState : char {
   kInUse = 'I',
   kNotInUse = 'N',
 };
-
-// Replicates tempfile.gettempdir() in Python
-std::string TempDir();
 
 // This class is not thread safe.
 class LockFile {
@@ -65,10 +64,9 @@ class LockFile {
  public:
   const auto& LockFilePath() const { return lock_file_path_; }
   Result<InUseState> Status() const;
+  // Returns the UID recorded with kInUse, or nullopt if unused or unattributed.
+  Result<std::optional<uid_t>> HolderUid() const;
   Result<void> Status(InUseState);
-
-  // to put this into a set
-  bool operator<(const LockFile& other) const;
 
  private:
   LockFile(SharedFD fd, const std::string& lock_file_path);
