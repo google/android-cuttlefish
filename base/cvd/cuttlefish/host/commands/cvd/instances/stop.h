@@ -20,6 +20,7 @@
 
 #include <string>
 
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -28,9 +29,11 @@ namespace cuttlefish {
  * Runs stop_cvd for all cuttlefish instances found based on run_cvd processes,
  * and send SIGKILL to the run_cvd processes.
  */
-Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs);
+Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs,
+                                        InstanceLockFileManager& lock_manager);
 
-Result<void> ForcefullyStopGroup(uid_t any_id_in_group);
+Result<void> ForcefullyStopGroup(uid_t any_id_in_group,
+                                 InstanceLockFileManager& lock_manager);
 
 struct StopCvdParams {
   std::string bin_path;

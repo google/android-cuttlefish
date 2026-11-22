@@ -15,10 +15,13 @@
  */
 #pragma once
 
+#include <sys/types.h>
+
 #include <optional>
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -29,6 +32,8 @@ class InstanceLockFile {
  public:
   unsigned Instance() const;
   Result<InUseState> Status() const;
+  // Returns the UID recorded with kInUse, or nullopt if unused or unattributed.
+  Result<std::optional<uid_t>> HolderUid() const;
   Result<void> Status(InUseState);
 
  private:
@@ -44,10 +49,10 @@ class InstanceLockFileManager {
   Result<InstanceLockFile> AcquireLock(unsigned instance_num);
   Result<InstanceLockFile> AcquireUnusedLock();
 
-  // TODO: This routine should  be removed and replaced with allocd
-  // The caller must check if the instance_num belongs to the user, before
-  // calling this. It is a quick fix for b/316824572
-  Result<void> RemoveLockFile(unsigned instance_num);
+  // Resets an owned or unattributed lock to kNotInUse in place (never unlinks).
+  Result<void> ResetLockFile(unsigned instance_num);
+  // Resets all locks owned by the current effective UID to kNotInUse in place.
+  Result<void> ResetAllOwnedLocks();
 
  private:
   Result<std::string> LockFilePath(unsigned instance_num);
