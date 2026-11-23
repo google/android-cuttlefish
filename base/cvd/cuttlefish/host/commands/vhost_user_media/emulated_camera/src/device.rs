@@ -91,7 +91,7 @@ enum BufferState {
     /// Buffer has just been created (or streamed off) and not been used yet.
     New,
     /// Buffer has been QBUF'd by the driver but not yet processed.
-    Incoming,
+    Incoming { qbuf_serial: u32 },
     /// Buffer has been processed and is ready for dequeue.
     Outgoing {
         /// Sequence of the generated frame.
@@ -165,7 +165,7 @@ impl<A> Buffer<A> {
                 self.set_bytes_used_to_zero();
                 flags.remove(BufferFlags::QUEUED | BufferFlags::ERROR);
             }
-            BufferState::Incoming => {
+            BufferState::Incoming { .. } => {
                 self.set_bytes_used_to_zero();
                 flags.insert(BufferFlags::QUEUED);
                 flags.remove(BufferFlags::ERROR);
@@ -206,6 +206,8 @@ pub struct EmulatedCameraSession<A> {
     buffers: Arc<Mutex<Vec<Buffer<A>>>>,
     /// Is the session currently streaming?
     streaming: Arc<Mutex<bool>>,
+    /// Serial of the last QBUF on this session, tagging its capture request.
+    last_qbuf_serial: u32,
     /// Virtual capture channel driving capture and frame pacing for this session.
     channel: CaptureChannel,
     /// Handle to the capture completed listener thread.
@@ -350,6 +352,29 @@ where
                         }
                         let mut buffers = buffers_clone.lock().unwrap();
                         if let Some(buf) = buffers.get_mut(ev.buffer_id) {
+                            let BufferState::Incoming { qbuf_serial } = buf.state else {
+                                log::debug!(
+                                    "Session {}: buffer {} is not queued, dropping completion (qbuf_serial {}, sequence {}, state {:?})",
+                                    session_id,
+                                    ev.buffer_id,
+                                    ev.qbuf_serial,
+                                    ev.sequence,
+                                    buf.state
+                                );
+                                continue;
+                            };
+                            // Every QBUF gets exactly one DQBUF.
+                            if qbuf_serial != ev.qbuf_serial {
+                                log::debug!(
+                                    "Session {}: buffer {} was queued again (qbuf_serial {}), dropping stale completion (qbuf_serial {}, sequence {})",
+                                    session_id,
+                                    ev.buffer_id,
+                                    qbuf_serial,
+                                    ev.qbuf_serial,
+                                    ev.sequence
+                                );
+                                continue;
+                            }
                             buf.set_state(BufferState::Outgoing {
                                 sequence: ev.sequence,
                                 failed: ev.error.is_some(),
@@ -370,6 +395,7 @@ where
                 id: session_id,
                 buffers,
                 streaming,
+                last_qbuf_serial: 0,
                 channel,
                 capture_completed_thread: Some(capture_completed_thread),
             })
@@ -733,7 +759,7 @@ where
         let mut buffers = session.buffers.lock().unwrap();
         let host_buffer = buffers.get_mut(buffer_idx).ok_or(libc::EINVAL)?;
         // Attempt to queue already queued buffer.
-        if matches!(host_buffer.state, BufferState::Incoming) {
+        if matches!(host_buffer.state, BufferState::Incoming { .. }) {
             return Err(libc::EINVAL);
         }
 
@@ -749,14 +775,17 @@ where
         )?;
         host_buffer.v4l2_buffer = buffer;
 
-        host_buffer.set_state(BufferState::Incoming);
+        let qbuf_serial = session.last_qbuf_serial.wrapping_add(1);
+        host_buffer.set_state(BufferState::Incoming { qbuf_serial });
         let buffer = host_buffer.v4l2_buffer.clone();
         drop(buffers);
 
         session
             .channel
-            .queue_buffer(buffer_idx, sink)
+            .queue_buffer(qbuf_serial, buffer_idx, sink)
             .map_err(|_| libc::EIO)?;
+
+        session.last_qbuf_serial = qbuf_serial;
 
         Ok(buffer)
     }
