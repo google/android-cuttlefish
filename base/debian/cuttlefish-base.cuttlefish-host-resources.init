@@ -376,7 +376,88 @@ create_static_interfaces() {
     done
 }
 
+ensure_root_dir() {
+    dir="$1"
+    mode="$2"
+    for _ in 1 2 3; do
+        if [ -L "${dir}" ] || { [ -e "${dir}" ] && [ ! -d "${dir}" ]; }; then
+            rm -f "${dir}" || return 1
+        fi
+        mkdir -p "${dir}" || return 1
+        chown -h 0:0 "${dir}" || return 1
+        # Check after chown -h so a non-root owner cannot swap the entry
+        # inside sticky /var/tmp between the type check and chmod.
+        if [ ! -L "${dir}" ] && [ -d "${dir}" ]; then
+            chmod "${mode}" "${dir}" || return 1
+            return 0
+        fi
+        rm -f "${dir}" || return 1
+    done
+    return 1
+}
+
+setup_cvd_lock_files() {
+    case "${num_cvd_accounts}" in
+        ''|*[!0-9]*)
+            return 1
+            ;;
+    esac
+    num_locks="${num_cvd_accounts}"
+    if [ "${allocate_static_resources}" != "1" ] && [ "${num_locks}" -lt 63 ]; then
+        # cvdalloc dynamically allocates up to kMaxIfaceNameId (63) instances.
+        num_locks=63
+    fi
+    if [ "${num_locks}" -le 0 ]; then
+        return 1
+    fi
+
+    # Avoid transiently dropping /var/tmp/cvd to 0755 on restarts when both
+    # directories are already root-owned.
+    if [ ! -L /var/tmp/cvd ] && [ -d /var/tmp/cvd ] &&
+       [ "$(stat -c %u /var/tmp/cvd)" = "0" ] &&
+       [ ! -L /var/tmp/cvd/lock ] && [ -d /var/tmp/cvd/lock ] &&
+       [ "$(stat -c %u /var/tmp/cvd/lock)" = "0" ]; then
+        ensure_root_dir /var/tmp/cvd 1777 || return 1
+        ensure_root_dir /var/tmp/cvd/lock 0755 || return 1
+    else
+        # Secure /var/tmp/cvd as 0755 root:root until /var/tmp/cvd/lock is
+        # root-owned, then restore 1777 immediately so sticky bit protects it
+        # and early failures below cannot leave /var/tmp/cvd stuck at 0755.
+        ensure_root_dir /var/tmp/cvd 0755 || return 1
+        ensure_root_dir /var/tmp/cvd/lock 0755 || return 1
+        chmod 1777 /var/tmp/cvd || return 1
+    fi
+
+    # Remove unsafe entries (symlinks, directories, special files, hardlinks)
+    # left over from a previously world-writable /var/tmp/cvd/lock, and repair
+    # permissions on existing regular lock files.
+    for entry in /var/tmp/cvd/lock/* /var/tmp/cvd/lock/.[!.]* /var/tmp/cvd/lock/..?*; do
+        [ -e "${entry}" ] || [ -L "${entry}" ] || continue
+        if [ -L "${entry}" ] || [ ! -f "${entry}" ] || [ "$(stat -c %h "${entry}")" -ne 1 ]; then
+            rm -rf -- "${entry}" || return 1
+        else
+            case "${entry}" in
+                /var/tmp/cvd/lock/local-instance-*.lock)
+                    chown -h 0:0 -- "${entry}" || return 1
+                    chmod 0666 -- "${entry}" || return 1
+                    ;;
+            esac
+        fi
+    done
+
+    for i in $(seq "${num_locks}"); do
+        lock_file="/var/tmp/cvd/lock/local-instance-${i}.lock"
+        if [ ! -e "${lock_file}" ]; then
+            : > "${lock_file}" || return 1
+        fi
+        chown -h 0:0 "${lock_file}" || return 1
+        chmod 0666 "${lock_file}" || return 1
+    done
+}
+
 start() {
+    setup_cvd_lock_files || exit 1
+
     # Enable ip forwarding
     echo 1 > /proc/sys/net/ipv4/ip_forward
     echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
