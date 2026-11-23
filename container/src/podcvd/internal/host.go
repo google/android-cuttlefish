@@ -406,7 +406,7 @@ func createAndStartContainer(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) (
 		productOut = currentDir
 	}
 	podcvdRootDir := "/var/tmp/podcvd"
-	if err := os.MkdirAll(podcvdRootDir, 0777); err != nil {
+	if err := os.MkdirAll(podcvdRootDir, 0777|os.ModeSticky); err != nil {
 		return "", fmt.Errorf("failed to create podcvd root dir: %w", err)
 	}
 	baseDir, exists := cvdArgs.GetStringFlagValueOnSubCommandArgs("base_directory")
