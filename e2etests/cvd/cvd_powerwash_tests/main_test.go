@@ -49,16 +49,16 @@ func TestCvdPowerwash(t *testing.T) {
 			}
 
 			if err := c.RunAdbWaitForDevice(); err != nil {
-				t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %w", err)
+				t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %v", err)
 			}
 
 			const tmpFile = "/data/local/tmp/foo"
 			if _, err := c.RunCmd("adb", "shell", "touch", tmpFile); err != nil {
-				t.Fatalf("failed to create %s: %w", tmpFile, err)
+				t.Fatalf("failed to create %s: %v", tmpFile, err)
 			}
 
 			if _, err := c.RunCmd("adb", "shell", "stat", tmpFile); err != nil {
-				t.Fatal("failed to verify %s created: %w", err)
+				t.Fatalf("failed to verify %s created: %v", tmpFile, err)
 			}
 
 			if err := c.CVDPowerwash(); err != nil {
@@ -66,7 +66,7 @@ func TestCvdPowerwash(t *testing.T) {
 			}
 
 			if _, err := c.RunCmd("adb", "shell", "stat", tmpFile); err == nil {
-				t.Fatal("failed to powerwash, %s still exists")
+				t.Fatalf("failed to powerwash, %s still exists", tmpFile)
 			}
 		})
 	}

@@ -92,6 +92,7 @@ func VerifyLogsEndpoint(srvURL, group, name string) error {
 		if err != nil {
 			return err
 		}
+		res.Body.Close()
 		if res.StatusCode != http.StatusOK {
 			return fmt.Errorf("get %q failed with status code: %d", v, res.StatusCode)
 		}
