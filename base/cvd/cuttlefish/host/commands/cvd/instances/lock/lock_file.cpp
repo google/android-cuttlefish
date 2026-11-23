@@ -34,11 +34,9 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
-#include "android-base/file.h"
 
 #include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/io/string.h"
 #include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/result.h"
@@ -109,18 +107,11 @@ Result<void> LockFile::Status(InUseState state) {
 }
 
 Result<Fd> LockFileManager::OpenLockFile(const std::string& file_path) {
-  auto parent_dir = android::base::Dirname(file_path);
-  CF_EXPECT(EnsureDirectoryExists(parent_dir, 0777));
-  int result = chmod(parent_dir.c_str(), 0777);
-  if (result) {
-    VLOG(0) << "failed: chmod 777 " << parent_dir;
-  }
-  Fd fd = CF_EXPECT(Fd::Open(file_path.data(), O_CREAT | O_RDWR, 0666));
-  result = chmod(file_path.c_str(), 0666);
-  if (result) {
-    VLOG(0) << "failed: chmod 666 " << file_path;
-  }
-  return fd;
+  return CF_EXPECTF(
+      Fd::Open(file_path, O_RDWR | O_CLOEXEC | O_NOFOLLOW),
+      "Failed to open lock file '{}' (ensure cuttlefish-host-resources "
+      "service is running)",
+      file_path);
 }
 
 Result<LockFile> LockFileManager::AcquireLock(

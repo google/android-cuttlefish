@@ -20,18 +20,14 @@
 #include <unistd.h>
 
 #include <optional>
-#include <sstream>
 #include <string>
 #include <utility>
 
 #include "absl/log/log.h"
-#include "absl/strings/numbers.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
-#include "absl/strings/strip.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/files/directory_contents.h"
 #include "cuttlefish/files/file_exists.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/result/result.h"
@@ -45,35 +41,33 @@ InstanceLockFile::InstanceLockFile(LockFile&& lock_file,
 unsigned InstanceLockFile::Instance() const { return instance_num_; }
 
 Result<InUseState> InstanceLockFile::Status() const {
-  auto in_use_state = CF_EXPECT(lock_file_.Status());
-  return in_use_state;
+  return CF_EXPECT(lock_file_.Status());
 }
 
 Result<std::optional<uid_t>> InstanceLockFile::HolderUid() const {
   return CF_EXPECT(lock_file_.HolderUid());
 }
 
-Result<void> InstanceLockFile::Status(InUseState state) {
+Result<void> InstanceLockFile::Status(const InUseState state) {
   CF_EXPECT(lock_file_.Status(state));
   return {};
 }
 
 InstanceLockFileManager::InstanceLockFileManager(
     std::string instance_locks_path)
-    : instance_locks_path_(std::move(instance_locks_path)) {};
+    : instance_locks_path_(std::move(instance_locks_path)) {}
 
-Result<std::string> InstanceLockFileManager::LockFilePath(
-    unsigned instance_num) {
-  std::stringstream path;
-  path << instance_locks_path_;
-  CF_EXPECT(EnsureDirectoryExists(path.str(), 0777));
-  path << "local-instance-" << instance_num << ".lock";
-  return path.str();
+std::string InstanceLockFileManager::LockFilePath(
+    const unsigned instance_num) const {
+  const absl::string_view slash =
+      absl::EndsWith(instance_locks_path_, "/") ? "" : "/";
+  return absl::StrCat(instance_locks_path_, slash, "local-instance-",
+                      instance_num, ".lock");
 }
 
 Result<void> InstanceLockFileManager::ResetLockFile(
     const unsigned instance_num) {
-  if (!FileExists(CF_EXPECT(LockFilePath(instance_num)))) {
+  if (!FileExists(LockFilePath(instance_num))) {
     return {};
   }
   InstanceLockFile lock = CF_EXPECT(AcquireLock(instance_num));
@@ -85,20 +79,8 @@ Result<void> InstanceLockFileManager::ResetLockFile(
 }
 
 Result<void> InstanceLockFileManager::ResetAllOwnedLocks() {
-  if (!FileExists(instance_locks_path_)) {
-    return {};
-  }
   const uid_t self_uid = geteuid();
-  for (const std::string& name :
-       CF_EXPECT(DirectoryContents(instance_locks_path_))) {
-    absl::string_view id_str(name);
-    unsigned i = 0;
-    if (!absl::ConsumePrefix(&id_str, "local-instance-") ||
-        !absl::ConsumeSuffix(&id_str, ".lock") ||
-        !absl::SimpleAtoi(id_str, &i) || i == 0 ||
-        absl::StrCat("local-instance-", i, ".lock") != name) {
-      continue;
-    }
+  for (unsigned i = 1; FileExists(LockFilePath(i)); ++i) {
     Result<std::optional<InstanceLockFile>> lock = TryAcquireLock(i);
     if (!lock.has_value()) {
       LOG(WARNING) << "Failed to inspect lock " << i << ": " << lock.error();
@@ -124,27 +106,44 @@ Result<void> InstanceLockFileManager::ResetAllOwnedLocks() {
 }
 
 Result<InstanceLockFile> InstanceLockFileManager::AcquireUnusedLock() {
-  for (unsigned i = 1;; i++) {
-    auto lock = CF_EXPECT(TryAcquireLock(i));
-    if (lock && CF_EXPECT(lock->Status()) == InUseState::kNotInUse) {
-      return *lock;
+  for (unsigned i = 1;; ++i) {
+    if (!FileExists(LockFilePath(i))) {
+      if (i == 1) {
+        CF_EXPECT(TryAcquireLock(1));
+      }
+      return CF_ERRF("No unused instance locks available in '{}'",
+                     instance_locks_path_);
+    }
+    Result<std::optional<InstanceLockFile>> lock = TryAcquireLock(i);
+    if (!lock.has_value()) {
+      LOG(WARNING) << "Skipping lock " << i << ": " << lock.error();
+      continue;
+    }
+    if (!*lock) {
+      continue;
+    }
+    const Result<InUseState> status = (*lock)->Status();
+    if (!status.has_value()) {
+      LOG(WARNING) << "Skipping lock " << i << ": " << status.error();
+      continue;
+    }
+    if (*status == InUseState::kNotInUse) {
+      return std::move(**lock);
     }
   }
 }
 
 Result<InstanceLockFile> InstanceLockFileManager::AcquireLock(
-    unsigned instance_num) {
-  const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
+    const unsigned instance_num) {
   LockFile lock_file =
-      CF_EXPECT(lock_file_manager_.AcquireLock(lock_file_path));
+      CF_EXPECT(lock_file_manager_.AcquireLock(LockFilePath(instance_num)));
   return InstanceLockFile(std::move(lock_file), instance_num);
 }
 
 Result<std::optional<InstanceLockFile>> InstanceLockFileManager::TryAcquireLock(
-    unsigned instance_num) {
-  const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
+    const unsigned instance_num) {
   std::optional<LockFile> lock_file_opt =
-      CF_EXPECT(lock_file_manager_.TryAcquireLock(lock_file_path));
+      CF_EXPECT(lock_file_manager_.TryAcquireLock(LockFilePath(instance_num)));
   if (!lock_file_opt) {
     return std::nullopt;
   }

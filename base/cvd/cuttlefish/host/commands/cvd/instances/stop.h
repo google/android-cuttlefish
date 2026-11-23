@@ -30,10 +30,10 @@ namespace cuttlefish {
  * and send SIGKILL to the run_cvd processes.
  */
 Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs,
-                                        InstanceLockFileManager& lock_manager);
+                                        InstanceLockFileManager* lock_manager);
 
 Result<void> ForcefullyStopGroup(uid_t any_id_in_group,
-                                 InstanceLockFileManager& lock_manager);
+                                 InstanceLockFileManager* lock_manager);
 
 struct StopCvdParams {
   std::string bin_path;

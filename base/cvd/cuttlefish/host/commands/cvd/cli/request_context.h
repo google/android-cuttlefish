@@ -22,14 +22,13 @@
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
-#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 class RequestContext {
  public:
-  RequestContext(InstanceManager& instance_manager, InstanceLockFileManager&);
+  explicit RequestContext(InstanceManager& instance_manager);
 
   Result<CvdCommandHandler*> Handler(const CommandRequest& request);
 

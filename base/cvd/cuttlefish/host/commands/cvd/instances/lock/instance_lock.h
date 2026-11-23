@@ -42,9 +42,14 @@ class InstanceLockFile {
   const unsigned instance_num_;
 };
 
+// Coordinates instance locks via pre-created host lock files.
 class InstanceLockFileManager {
  public:
-  InstanceLockFileManager(std::string instance_locks_path);
+  explicit InstanceLockFileManager(std::string instance_locks_path);
+  InstanceLockFileManager(const InstanceLockFileManager&) = delete;
+  InstanceLockFileManager& operator=(const InstanceLockFileManager&) = delete;
+  InstanceLockFileManager(InstanceLockFileManager&&) = default;
+  InstanceLockFileManager& operator=(InstanceLockFileManager&&) = default;
 
   Result<InstanceLockFile> AcquireLock(unsigned instance_num);
   Result<InstanceLockFile> AcquireUnusedLock();
@@ -55,7 +60,7 @@ class InstanceLockFileManager {
   Result<void> ResetAllOwnedLocks();
 
  private:
-  Result<std::string> LockFilePath(unsigned instance_num);
+  std::string LockFilePath(unsigned instance_num) const;
   Result<std::optional<InstanceLockFile>> TryAcquireLock(unsigned instance_num);
 
   std::string instance_locks_path_;

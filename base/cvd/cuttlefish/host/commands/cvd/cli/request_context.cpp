@@ -59,7 +59,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/stop.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/version.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
-#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -131,8 +130,7 @@ void HandleNoMatches(
 
 }  //  namespace
 
-RequestContext::RequestContext(InstanceManager& instance_manager,
-                               InstanceLockFileManager& lock_file_manager) {
+RequestContext::RequestContext(InstanceManager& instance_manager) {
   request_handlers_.emplace_back(std::make_unique<CvdCacheCommandHandler>());
 
   request_handlers_.emplace_back(
