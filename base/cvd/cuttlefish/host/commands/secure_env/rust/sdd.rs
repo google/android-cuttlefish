@@ -170,7 +170,7 @@ impl keyblob::SecureDeletionSecretManager for HostSddManager {
         // Save the secure deletion secret on disk.
         if let Err(e) = write_sdd_file(&self.data) {
             // Restore cached state.
-            self.data.secure_deletion_secrets.insert(slot_id, secret).unwrap();
+            self.data.secure_deletion_secrets.insert(slot_id, secret);
             return Err(e);
         }
         Ok(())
