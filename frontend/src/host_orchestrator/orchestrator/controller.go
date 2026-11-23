@@ -877,7 +877,11 @@ func (h *uploadUserArtifactHandler) Handle(r *http.Request) (interface{}, error)
 		SizeBytes:     fheader.Size,
 		FileSizeBytes: fileSizeBytes,
 	}
-	return nil, h.m.UpdateArtifact(mux.Vars(r)["checksum"], chunk)
+	checksum := mux.Vars(r)["checksum"]
+	if err := ValidateUserArtifactChecksum(checksum); err != nil {
+		return nil, err
+	}
+	return nil, h.m.UpdateArtifact(checksum, chunk)
 }
 
 type statUserArtifactHandler struct {
@@ -885,7 +889,11 @@ type statUserArtifactHandler struct {
 }
 
 func (h *statUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
-	return h.m.StatArtifact(mux.Vars(r)["checksum"])
+	checksum := mux.Vars(r)["checksum"]
+	if err := ValidateUserArtifactChecksum(checksum); err != nil {
+		return nil, err
+	}
+	return h.m.StatArtifact(checksum)
 }
 
 type extractUserArtifactHandler struct {
@@ -894,9 +902,13 @@ type extractUserArtifactHandler struct {
 }
 
 func (h *extractUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
+	checksum := mux.Vars(r)["checksum"]
+	if err := ValidateUserArtifactChecksum(checksum); err != nil {
+		return nil, err
+	}
 	op := h.om.New()
 	go func() {
-		err := h.uam.ExtractArtifact(mux.Vars(r)["checksum"])
+		err := h.uam.ExtractArtifact(checksum)
 		if opErr := h.om.Complete(op.Name, &OperationResult{Error: err}); opErr != nil {
 			log.Printf("error completing operation %q: %v\n", op.Name, opErr)
 		}
