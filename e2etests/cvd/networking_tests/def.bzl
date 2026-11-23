@@ -27,11 +27,6 @@ def networking_test(name, branch, target, use_cvdalloc):
         name = name,
         size = "large",
         srcs = ["main_test.go"],
-        data = [
-            "main_test.go",
-            "//:debian_substitution_marker",
-        ],
-        env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(rlocationpath //:debian_substitution_marker)"},
         tags = [
             "exclusive",
             "external",
