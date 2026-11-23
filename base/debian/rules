@@ -82,8 +82,16 @@ override_dh_installinit:
 
 .PHONY: override_dh_installsystemd
 override_dh_installsystemd:
+	# cuttlefish-base.conf only excludes paths from cleanup. Install it after
+	# dh_installsystemd, which would otherwise add a systemd dependency and
+	# `systemd-tmpfiles --create` postinst calls for it.
+	rm -rf debian/cuttlefish-base/usr/lib/tmpfiles.d
 	dh_installsystemd --name=cuttlefish-host-resources
 	dh_installsystemd
+	if [ -d debian/cuttlefish-base ]; then \
+		install -D -m 0644 host/packages/cuttlefish-base/usr/lib/tmpfiles.d/cuttlefish-base.conf \
+			debian/cuttlefish-base/usr/lib/tmpfiles.d/cuttlefish-base.conf; \
+	fi
 
 .PHONY: cf_bazel_build
 cf_bazel_build:

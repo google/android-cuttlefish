@@ -17,7 +17,10 @@ load("@rules_go//go:def.bzl", "go_test")
 go_test(
     name = "static_resources_init_test",
     size = "large",
-    srcs = ["main_test.go"],
+    srcs = [
+        "lock_files_test.go",
+        "main_test.go",
+    ],
     data = [
         "@cuttlefish_debian//:cuttlefish-base.cuttlefish-host-resources.init",
     ],
