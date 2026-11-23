@@ -421,7 +421,7 @@ Result<Fd, int> Fd::VsockServer(
   if (vhost_user_vsock_listening_cid) {
     return CF_EXPECT(Fd::SocketLocalServer(
         GetVhostUserVsockServerAddr(port, *vhost_user_vsock_listening_cid),
-        false /* abstract */, type, 0666 /* mode */));
+        false /* abstract */, type, 0600 /* mode */));
   }
 
 #ifdef __linux__
