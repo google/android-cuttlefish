@@ -121,7 +121,7 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        RUN_ID=$(gh run list --workflow "Workflow for Cloud init image for Cuttlefish" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+        RUN_ID=$(gh run list --workflow "Workflow for Cloud init image for Cuttlefish" --branch main --event push --status success --limit 1 --json databaseId --jq '.[0].databaseId')
         echo "Found Run ID is : ${RUN_ID}"
         echo "target_id=$RUN_ID" >> $GITHUB_OUTPUT
     - name: Download artifact
