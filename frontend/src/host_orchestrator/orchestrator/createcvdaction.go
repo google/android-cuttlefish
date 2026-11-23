@@ -96,6 +96,7 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	if err != nil {
 		return nil, err
 	}
+	defer os.Remove(configFile.Name())
 	opts := cvd.LoadOpts{
 		BuildAPIBaseURL: a.buildAPIBaseURL,
 		Credentials:     a.fetchCredentials,
