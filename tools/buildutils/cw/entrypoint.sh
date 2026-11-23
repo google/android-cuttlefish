@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # Copyright (C) 2025 The Android Open Source Project
 #
@@ -16,6 +17,6 @@
 
 # This configuration setting is required for building frontend package on the
 # docker instance.
-git config --global --add safe.directory ${PWD}
+git config --global --add safe.directory "${PWD}"
 
-tools/buildutils/build_package.sh $@
+tools/buildutils/build_package.sh "$@"

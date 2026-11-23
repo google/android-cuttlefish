@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # This shell script exists for building container images.
 # Container image includes HO(Host Orchestrator) inside,
 # so it could execute CF instance with API in HO.
 
-script_location=`realpath -s $(dirname ${BASH_SOURCE[0]})`
-android_cuttlefish_root_dir=$(realpath -s $script_location/../..)
+script_location=$(realpath -s "$(dirname "${BASH_SOURCE[0]}")")
+android_cuttlefish_root_dir=$(realpath -s "${script_location}/../..")
 
 usage() {
   echo "usage: $0 [-t <tag>] [-m <mode>] [-c <container_type>] [-M]"
@@ -80,7 +81,7 @@ esac
 
 case "${container_type}" in
   docker)
-    DOCKER_BUILDKIT=1
+    export DOCKER_BUILDKIT=1
     ;;
   podman)
     ;;
@@ -90,7 +91,7 @@ case "${container_type}" in
     exit 1
 esac
 
-pushd $android_cuttlefish_root_dir
+pushd "${android_cuttlefish_root_dir}"
 "${container_type}" build \
   --force-rm \
   --no-cache \

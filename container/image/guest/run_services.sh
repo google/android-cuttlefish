@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-if [[ "${USE_GCE_METADATA}" == "true" ]]; then
+if [[ "${USE_GCE_METADATA:-}" == "true" ]]; then
   echo "build_api_credentials_use_gce_metadata=true" \
     >> /etc/default/cuttlefish-host_orchestrator
 fi
 
-if [[ -n "${CVD_INVOKER}" ]]; then
+if [[ -n "${CVD_INVOKER:-}" ]]; then
   printf 'export CVD_INVOKER=%q\n' "${CVD_INVOKER}" \
     >> /etc/default/cuttlefish-host_orchestrator
 fi
