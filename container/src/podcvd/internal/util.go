@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"golang.org/x/sys/unix"
 )
@@ -33,6 +34,7 @@ func Ipv4AddressesByGroupNames(ccm CuttlefishContainerManager, nonRunningCtrs bo
 		if lastErr == nil {
 			break
 		}
+		time.Sleep(100 * time.Millisecond)
 	}
 	if lastErr != nil {
 		return nil, fmt.Errorf("failed to list containers: %w", lastErr)
