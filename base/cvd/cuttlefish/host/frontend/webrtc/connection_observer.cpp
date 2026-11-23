@@ -427,22 +427,26 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   void SendLastFrameAsync(std::optional<uint32_t> display_number) {
     auto display_handler = weak_display_handler_.lock();
     if (display_handler) {
-      std::thread th([this, display_number]() {
-        // The encoder in libwebrtc won't drop 5 consecutive frames due to frame
-        // size, so we make sure at least 5 frames are sent every time a client
-        // connects to ensure they receive at least one.
-        constexpr int kNumFrames = 5;
-        constexpr int kMillisPerFrame = 16;
-        for (int i = 0; i < kNumFrames; ++i) {
-          auto display_handler = weak_display_handler_.lock();
-          display_handler->SendLastFrame(display_number);
+      std::thread th(
+          [weak_display_handler = weak_display_handler_, display_number]() {
+            // The encoder in libwebrtc won't drop 5 consecutive frames due to
+            // frame size, so we make sure at least 5 frames are sent every
+            // time a client connects to ensure they receive at least one.
+            constexpr int kNumFrames = 5;
+            constexpr int kMillisPerFrame = 16;
+            for (int i = 0; i < kNumFrames; ++i) {
+              auto display_handler = weak_display_handler.lock();
+              if (!display_handler) {
+                return;
+              }
+              display_handler->SendLastFrame(display_number);
 
-          if (i < kNumFrames - 1) {
-            std::this_thread::sleep_for(
-                std::chrono::milliseconds(kMillisPerFrame));
-          }
-        }
-      });
+              if (i < kNumFrames - 1) {
+                std::this_thread::sleep_for(
+                    std::chrono::milliseconds(kMillisPerFrame));
+              }
+            }
+          });
       th.detach();
     }
   }
