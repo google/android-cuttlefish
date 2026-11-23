@@ -98,6 +98,20 @@ func TestUpdateArtifactFailsWithInvalidInput(t *testing.T) {
 			FileSizeBytes: int64(len(testFileData)),
 			File:          strings.NewReader(testFileData),
 		},
+		"EmptyFileName": {
+			Name:          "",
+			OffsetBytes:   0,
+			SizeBytes:     int64(len(testFileData)),
+			FileSizeBytes: int64(len(testFileData)),
+			File:          strings.NewReader(testFileData),
+		},
+		"FileNameWithDirectory": {
+			Name:          "../" + testFileName,
+			OffsetBytes:   0,
+			SizeBytes:     int64(len(testFileData)),
+			FileSizeBytes: int64(len(testFileData)),
+			File:          strings.NewReader(testFileData),
+		},
 	}
 	for name, chunk := range chunks {
 		t.Run(name, func(t *testing.T) {
