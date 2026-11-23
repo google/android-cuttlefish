@@ -320,7 +320,7 @@ Result<std::shared_ptr<std::vector<uint8_t>>> CasimirController::ReadRfPacket(
   auto res = CF_EXPECT(ReadExact(sizeof(uint16_t), timeout),
                        "Failed to read RF packet header");
   slice packet_size_slice(res);
-  int16_t packet_size = packet_size_slice.read_le<uint16_t>();
+  uint16_t packet_size = packet_size_slice.read_le<uint16_t>();
 
   auto current_time = std::chrono::steady_clock::now();
   timeout -= std::chrono::duration_cast<std::chrono::microseconds>(
