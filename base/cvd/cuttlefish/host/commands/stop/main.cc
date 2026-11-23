@@ -15,7 +15,6 @@
  */
 
 #include <dirent.h>
-#include <inttypes.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -26,7 +25,6 @@
 #include <iostream>
 #include <memory>
 #include <set>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -35,6 +33,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -47,6 +46,8 @@
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/process/command.h"
+#include "cuttlefish/process/managed_stdio.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -95,20 +96,21 @@ std::set<std::string> DirsForInstance(
 
 // Gets a set of the possible process groups of a previous launch
 std::set<pid_t> GetCandidateProcessGroups(const std::set<std::string>& dirs) {
-  std::stringstream cmd;
-  cmd << "lsof -t 2>/dev/null";
+  Command cmd("lsof");
+  cmd.AddParameter("-t");
   for (const auto& dir : dirs) {
-    cmd << " +D " << dir;
+    cmd.AddParameter("+D");
+    cmd.AddParameter(dir);
   }
-  std::string cmd_str = cmd.str();
-  std::shared_ptr<FILE> cmd_out(popen(cmd_str.c_str(), "r"), pclose);
-  if (!cmd_out) {
-    LOG(ERROR) << "Unable to execute '" << cmd_str << "': " << StrError();
-    return {};
-  }
-  int64_t pid;
+  std::string stdout_str;
+  RunWithManagedStdio(std::move(cmd), nullptr, &stdout_str, nullptr);
   std::set<pid_t> ret{};
-  while (fscanf(cmd_out.get(), "%" PRId64, &pid) != EOF) {
+  for (absl::string_view line :
+       absl::StrSplit(stdout_str, '\n', absl::SkipEmpty())) {
+    int64_t pid = 0;
+    if (!absl::SimpleAtoi(line, &pid)) {
+      continue;
+    }
     pid_t pgid = getpgid(static_cast<pid_t>(pid));
     if (pgid < 0) {
       LOG(ERROR) << "Unable to get process group of " << pid << ": "
