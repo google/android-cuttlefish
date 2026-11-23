@@ -55,7 +55,10 @@ class InstanceManager {
     std::optional<std::string> host_artifacts_path;
     std::vector<std::optional<std::string>> product_out_paths;
   };
-  InstanceManager(InstanceLockFileManager&, InstanceDatabase& instance_db);
+  // `lock_manager` may be null in sandboxed or non-Linux environments where
+  // host-resources lock files are not used.
+  InstanceManager(InstanceLockFileManager* lock_manager,
+                  InstanceDatabase& instance_db);
 
   Result<bool> HasInstanceGroups() const;
   Result<LocalInstanceGroup> CreateInstanceGroup(
@@ -91,14 +94,15 @@ class InstanceManager {
 
  private:
   struct InternalInstanceDesc {
-    InstanceLockFile lock_file;
+    unsigned id;
+    std::optional<InstanceLockFile> lock_file;
     std::optional<std::string> name;
   };
 
   Result<std::vector<InternalInstanceDesc>> AllocateAndLockInstanceIds(
       std::vector<InstanceParams> instances);
 
-  InstanceLockFileManager& lock_manager_;
+  InstanceLockFileManager* lock_manager_;
   InstanceDatabase& instance_db_;
 };
 
