@@ -87,6 +87,8 @@ Result<void> OutputMetrics(absl::string_view event_type_label,
     const CuttlefishLogEvent cf_log_event =
         BuildCuttlefishLogEvent(metrics_data);
     CF_EXPECT(TransmitMetrics(TransmitterPath(), cf_log_event));
+    // transmission is before writing the events to make the existence of the
+    // event files a signal that event was fully processed
     CF_EXPECT(
         WriteMetricsEvent(event_type_label, metrics_directory, cf_log_event));
   }
