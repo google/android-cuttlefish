@@ -214,6 +214,7 @@ bool VsockConnection::Write(const std::vector<char>& data) {
 
 // Message format is buffer size followed by buffer data
 bool VsockConnection::WriteMessage(const std::string& data) {
+  std::lock_guard<std::recursive_mutex> lock(write_mutex_);
   return Write(data.size()) && Write(data.c_str(), data.length());
 }
 
