@@ -27,6 +27,7 @@ runs:
         protobuf-compiler \
         xxd
       wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2_amd64.deb
+      echo "d2597b5aec92a930cf549e1b429ad892595813e72ec7814685ea146a9fb715e5  libtinfo5_6.3-2_amd64.deb" | sha256sum -c -
       sudo dpkg -i libtinfo5_6.3-2_amd64.deb
     shell: bash
   - name: Install bazel
