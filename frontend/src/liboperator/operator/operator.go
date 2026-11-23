@@ -345,7 +345,7 @@ func PreRegister(c *JSONUnix, pool *DevicePool, msg *apiv1.PreRegisterMsg) {
 		var err error
 		for err == nil {
 			var ignored interface{}
-			err = c.Recv(ignored)
+			err = c.Recv(&ignored)
 		}
 		ch <- true
 	}(c, closeCh)
@@ -555,7 +555,11 @@ func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		return
 	}
 
-	devInfo := dev.privateData.(map[string]interface{})
+	devInfo, ok := dev.privateData.(map[string]interface{})
+	if !ok {
+		http.Error(w, "Invalid device info", http.StatusInternalServerError)
+		return
+	}
 	openwrtDevId, ok := devInfo["openwrt_device_id"].(string)
 	if !ok {
 		http.Error(w, "Device obtaining Openwrt not found", http.StatusNotFound)
@@ -569,8 +573,12 @@ func openwrt(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		return
 	}
 
-	url, _ := url.Parse("http://" + openwrtAddr)
-	proxy := httputil.NewSingleHostReverseProxy(url)
+	targetURL, err := url.Parse("http://" + openwrtAddr)
+	if err != nil {
+		http.Error(w, "Invalid Openwrt address", http.StatusBadGateway)
+		return
+	}
+	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		log.Printf("request %q failed: proxy error: %v", r.Method+" "+r.URL.Path, err)
 		w.Header().Add("x-cutf-proxy", "op-openwrt")
@@ -591,16 +599,19 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 		return
 	}
 
-	devInfo := dev.privateData.(map[string]interface{})
-
 	// Find adb port for the device.
 	adbPort := dev.Descriptor.ADBPort
 	if adbPort == 0 {
 		// ADB port might not be set if the device isn't started by cvd,
 		// some newer versions set it in the device info, make one last
 		// ditch attempt at finding it.
-		if adb_port, ok := devInfo["adb_port"]; ok {
-			adbPort = int(adb_port.(float64))
+		devInfo, ok := dev.privateData.(map[string]interface{})
+		if !ok {
+			http.Error(w, "Cannot find adb port for the device", http.StatusNotFound)
+			return
+		}
+		if adb_port, ok := devInfo["adb_port"].(float64); ok {
+			adbPort = int(adb_port)
 		} else {
 			http.Error(w, "Cannot find adb port for the device", http.StatusNotFound)
 			return
@@ -611,6 +622,7 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	tcpConn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%v", adbPort))
 	if err != nil {
 		log.Print("Error while connect to ADB: ", err)
+		http.Error(w, "Failed to connect to ADB", http.StatusBadGateway)
 		return
 	}
 	defer tcpConn.Close()
@@ -807,6 +819,7 @@ func forward(w http.ResponseWriter, r *http.Request, polledSet *PolledSet) {
 	if err := conn.ToDevice(cMsg); err != nil {
 		log.Println("Failed to send message to device: ", err)
 		http.Error(w, "Device disconnected", http.StatusNotFound)
+		return
 	}
 	ReplyJSONOK(w, "ok")
 }
