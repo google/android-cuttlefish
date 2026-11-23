@@ -20,6 +20,8 @@
 
 #include <linux/input.h>
 
+#include <algorithm>
+#include <array>
 #include <chrono>
 #include <map>
 #include <string>
@@ -222,8 +224,16 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
       //   - Format:   command:button_state
       //   - Example:  my_button:down
       std::string action_server_message = command + ":" + button_state;
-      WriteAll(commands_to_custom_action_servers_[command],
-               action_server_message.c_str(), 128);
+      std::array<char, 128> buf{};
+      if (action_server_message.size() >= buf.size()) {
+        LOG(WARNING) << "Custom action message too long: "
+                     << action_server_message.size() << " bytes";
+        return;
+      }
+      std::copy(action_server_message.begin(), action_server_message.end(),
+                buf.begin());
+      WriteAll(commands_to_custom_action_servers_[command], buf.data(),
+               buf.size());
     } else {
       LOG(WARNING) << "Unsupported control command: " << command << " ("
                    << button_state << ")";
@@ -265,12 +275,11 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     }
 
     double x, y, z;
-    CHECK(absl::SimpleAtod(xyz.at(0), &x))
-        << "X rotation value must be a double";
-    CHECK(absl::SimpleAtod(xyz.at(1), &y))
-        << "Y rotation value must be a double";
-    CHECK(absl::SimpleAtod(xyz.at(2), &z))
-        << "Z rotation value must be a double";
+    if (!absl::SimpleAtod(xyz.at(0), &x) || !absl::SimpleAtod(xyz.at(1), &y) ||
+        !absl::SimpleAtod(xyz.at(2), &z)) {
+      LOG(WARNING) << "Invalid rotation angles: non-numeric value";
+      return;
+    }
     Result<void> result = sensors_handler_.SetMotion(x, y, z);
     if (!result.has_value()) {
       LOG(ERROR) << "Failed to set motion: " << result.error();
@@ -311,9 +320,13 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
       return;
     }
 
-    float longitude = std::stod(inputs.at(0));
-    float latitude = std::stod(inputs.at(1));
-    float elevation = std::stod(inputs.at(2));
+    float longitude, latitude, elevation;
+    if (!absl::SimpleAtof(inputs.at(0), &longitude) ||
+        !absl::SimpleAtof(inputs.at(1), &latitude) ||
+        !absl::SimpleAtof(inputs.at(2), &elevation)) {
+      LOG(WARNING) << "Invalid location values: non-numeric input";
+      return;
+    }
     location_handler_->HandleMessage(longitude, latitude, elevation);
   }
 
