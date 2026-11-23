@@ -1,11 +1,11 @@
 diff --git a/common/build_info/BUILD.bazel b/common/build_info/BUILD.bazel
 --- a/common/build_info/BUILD.bazel
 +++ b/common/build_info/BUILD.bazel
-@@ -16,6 +16,6 @@ cc_library(
+@@ -15,6 +15,6 @@ cc_library(
      linkopts = GFXSTREAM_HOST_LINKOPTS,
-     local_defines = [
+     local_defines = GFXSTREAM_HOST_DEFINES + [
          "GFXSTREAM_BUILD_INFO_USE_CUSTOM_STRING=1",
 -        "GFXSTREAM_BUILD_INFO_CUSTOM_STRING_VALUE=\"\\\"Bazel Build\\\"\"",
-+        "GFXSTREAM_BUILD_INFO_CUSTOM_STRING_VALUE=\"\\\"Cuttlefish Github Gfxstream Build ececb7a28b4e9fd12700cee5d5e4976e81ac60c1\\\"\"",
++        "GFXSTREAM_BUILD_INFO_CUSTOM_STRING_VALUE=\"\\\"Cuttlefish Github Gfxstream Build 513f2e424dbc183b8adf9c884099220ae18b9f97\\\"\"",
      ],
  )
