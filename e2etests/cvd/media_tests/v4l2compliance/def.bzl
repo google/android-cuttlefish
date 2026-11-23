@@ -26,8 +26,6 @@ def v4l2_compliance_test(name, branch, target):
         name = name,
         size = "large",
         srcs = ["main_test.go"],
-        data = ["//:debian_substitution_marker"],
-        env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(rlocationpath //:debian_substitution_marker)"},
         tags = [
             "exclusive",
             "external",
