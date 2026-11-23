@@ -98,7 +98,7 @@ Result<std::string> StopBin(const std::string& host_android_out) {
 
 }  // namespace
 
-InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager,
+InstanceManager::InstanceManager(InstanceLockFileManager* lock_manager,
                                  InstanceDatabase& instance_db)
     : lock_manager_(lock_manager), instance_db_(instance_db) {}
 
@@ -121,8 +121,6 @@ Result<std::vector<InstanceManager::InternalInstanceDesc>>
 InstanceManager::AllocateAndLockInstanceIds(
     std::vector<InstanceParams> instances) {
   std::set<unsigned> requested;
-  std::vector<InstanceLockFile> requested_lock_files;
-  // Acquire requested locks first
   for (const auto& instance : instances) {
     if (instance.instance_id.has_value()) {
       unsigned id = instance.instance_id.value();
@@ -132,8 +130,45 @@ InstanceManager::AllocateAndLockInstanceIds(
       CF_EXPECTF(std::move(inserted),
                  "Requested instance ids must be distinct, but {} is repeated",
                  id);
+    }
+  }
+  if (lock_manager_ == nullptr) {
+    std::set<unsigned> used_ids = requested;
+    for (const LocalInstanceGroup& group :
+         CF_EXPECT(instance_db_.FindGroups({}))) {
+      for (const LocalInstance& instance : group.Instances()) {
+        used_ids.insert(instance.Id());
+      }
+    }
+    std::vector<InternalInstanceDesc> ret;
+    ret.reserve(instances.size());
+    unsigned next_id = 1;
+    for (auto& instance : instances) {
+      unsigned id;
+      if (instance.instance_id.has_value()) {
+        id = *instance.instance_id;
+      } else {
+        while (used_ids.count(next_id) > 0) {
+          ++next_id;
+        }
+        id = next_id++;
+        used_ids.insert(id);
+      }
+      ret.emplace_back(InternalInstanceDesc{
+          .id = id,
+          .lock_file = std::nullopt,
+          .name = std::move(instance.per_instance_name),
+      });
+    }
+    return ret;
+  }
+
+  std::vector<InstanceLockFile> requested_lock_files;
+  // Acquire requested locks first
+  for (const auto& instance : instances) {
+    if (instance.instance_id.has_value()) {
       requested_lock_files.emplace_back(
-          CF_EXPECT(lock_manager_.AcquireLock(id)));
+          CF_EXPECT(lock_manager_->AcquireLock(*instance.instance_id)));
     }
   }
   std::vector<InternalInstanceDesc> ret;
@@ -142,14 +177,19 @@ InstanceManager::AllocateAndLockInstanceIds(
   for (auto& instance : instances) {
     if (instance.instance_id.has_value()) {
       CF_EXPECT(requested_it != requested_lock_files.end());
+      unsigned id = requested_it->Instance();
       ret.emplace_back(InternalInstanceDesc{
+          .id = id,
           .lock_file = std::move(*requested_it),
           .name = std::move(instance.per_instance_name),
       });
       ++requested_it;
     } else {
+      InstanceLockFile lock = CF_EXPECT(lock_manager_->AcquireUnusedLock());
+      unsigned id = lock.Instance();
       ret.emplace_back(InternalInstanceDesc{
-          .lock_file = CF_EXPECT(lock_manager_.AcquireUnusedLock()),
+          .id = id,
+          .lock_file = std::move(lock),
           .name = std::move(instance.per_instance_name),
       });
     }
@@ -169,10 +209,9 @@ Result<LocalInstanceGroup> InstanceManager::CreateInstanceGroup(
   LocalInstanceGroup::Builder group_builder(std::move(group_params.group_name));
   for (const auto& instance_desc : instance_descs) {
     if (instance_desc.name.has_value()) {
-      group_builder.AddInstance(instance_desc.lock_file.Instance(),
-                                instance_desc.name.value());
+      group_builder.AddInstance(instance_desc.id, instance_desc.name.value());
     } else {
-      group_builder.AddInstance(instance_desc.lock_file.Instance());
+      group_builder.AddInstance(instance_desc.id);
     }
   }
   LocalInstanceGroup group = CF_EXPECT(group_builder.Build());
@@ -184,7 +223,9 @@ Result<LocalInstanceGroup> InstanceManager::CreateInstanceGroup(
 
   CF_EXPECT(instance_db_.AddInstanceGroup(group));
   for (auto& instance_desc : instance_descs) {
-    CF_EXPECT(instance_desc.lock_file.Status(InUseState::kInUse));
+    if (instance_desc.lock_file.has_value()) {
+      CF_EXPECT(instance_desc.lock_file->Status(InUseState::kInUse));
+    }
   }
 
   GatherVmInstantiationMetrics(group);
@@ -195,13 +236,15 @@ Result<LocalInstanceGroup> InstanceManager::CreateInstanceGroup(
 Result<bool> InstanceManager::RemoveInstanceGroup(LocalInstanceGroup group) {
   CF_EXPECT(!group.HasActiveInstances(),
             "Group still contains active instances");
-  for (auto& instance : group.Instances()) {
-    if (instance.Id() == 0) {
-      continue;
-    }
-    if (auto res = lock_manager_.ResetLockFile(instance.Id());
-        !res.has_value()) {
-      LOG(ERROR) << "Failed to reset instance id lock: " << res.error();
+  if (lock_manager_ != nullptr) {
+    for (auto& instance : group.Instances()) {
+      if (instance.Id() == 0) {
+        continue;
+      }
+      if (auto res = lock_manager_->ResetLockFile(instance.Id());
+          !res.has_value()) {
+        LOG(ERROR) << "Failed to reset instance id lock: " << res.error();
+      }
     }
   }
   CF_EXPECT(RemoveGroupDirectory(group));
@@ -276,13 +319,16 @@ Result<void> InstanceManager::Clear() {
         LOG(ERROR) << stop_result.error();
       }
     }
-    for (auto instance : group.Instances()) {
-      if (instance.Id() <= 0) {
-        continue;
-      }
-      auto res = lock_manager_.ResetLockFile(instance.Id());
-      if (!res.has_value()) {
-        LOG(ERROR) << "Failed to reset lock file for instance: " << res.error();
+    if (lock_manager_ != nullptr) {
+      for (auto instance : group.Instances()) {
+        if (instance.Id() <= 0) {
+          continue;
+        }
+        auto res = lock_manager_->ResetLockFile(instance.Id());
+        if (!res.has_value()) {
+          LOG(ERROR) << "Failed to reset lock file for instance: "
+                     << res.error();
+        }
       }
     }
     std::string runtime_link = group.HomeDir() + "/cuttlefish_runtime";

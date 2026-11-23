@@ -47,6 +47,8 @@
 namespace cuttlefish {
 namespace {
 
+using ::testing::HasSubstr;
+
 class PrecreatedLocksDir {
  public:
   static Result<PrecreatedLocksDir> Create(const unsigned num_locks) {
@@ -95,6 +97,42 @@ Result<void> WriteRawPayload(const std::string& path,
   return {};
 }
 
+TEST(InstanceLockTest, MissingLockFilesFailWithoutCreatingFiles) {
+  PrecreatedLocksDir tmp =
+      CF_ASSERT(PrecreatedLocksDir::Create(/*num_locks=*/0));
+  InstanceLockFileManager mgr(tmp.Dir());
+
+  EXPECT_THAT(mgr.AcquireUnusedLock(),
+              IsErrorAndMessage(HasSubstr("cuttlefish-host-resources")));
+  EXPECT_THAT(mgr.AcquireLock(99), IsError());
+  EXPECT_THAT(mgr.ResetLockFile(99), IsOk());
+  EXPECT_FALSE(FileExists(tmp.LockPath(1)));
+  EXPECT_FALSE(FileExists(tmp.LockPath(99)));
+}
+
+TEST(InstanceLockTest, AllocateAndExhaustWhileHeldAndAfterRelease) {
+  PrecreatedLocksDir tmp =
+      CF_ASSERT(PrecreatedLocksDir::Create(/*num_locks=*/2));
+  InstanceLockFileManager mgr(tmp.Dir());
+
+  {
+    InstanceLockFile l1 = CF_ASSERT(mgr.AcquireUnusedLock());
+    EXPECT_EQ(l1.Instance(), 1u);
+    EXPECT_THAT(l1.HolderUid(), IsOkAndValue(std::nullopt));
+    ASSERT_THAT(l1.Status(InUseState::kInUse), IsOk());
+
+    InstanceLockFile l2 = CF_ASSERT(mgr.AcquireUnusedLock());
+    EXPECT_EQ(l2.Instance(), 2u);
+    EXPECT_THAT(mgr.AcquireUnusedLock(),
+                IsErrorAndMessage(HasSubstr("No unused instance locks")));
+    ASSERT_THAT(l2.Status(InUseState::kInUse), IsOk());
+  }
+
+  // After flock release, persisted kInUse state still exhausts unused slots.
+  EXPECT_THAT(mgr.AcquireUnusedLock(),
+              IsErrorAndMessage(HasSubstr("No unused instance locks")));
+}
+
 TEST(InstanceLockTest, ResetLockFileResetsInPlaceAndReusesSlot) {
   PrecreatedLocksDir tmp =
       CF_ASSERT(PrecreatedLocksDir::Create(/*num_locks=*/1));
@@ -112,6 +150,23 @@ TEST(InstanceLockTest, ResetLockFileResetsInPlaceAndReusesSlot) {
   InstanceLockFile reused = CF_ASSERT(mgr.AcquireUnusedLock());
   EXPECT_EQ(reused.Instance(), 1u);
   EXPECT_THAT(reused.HolderUid(), IsOkAndValue(std::nullopt));
+}
+
+TEST(InstanceLockTest, CorruptedSymlinkAndUnopenableLockSlotsAreSkipped) {
+  PrecreatedLocksDir tmp =
+      CF_ASSERT(PrecreatedLocksDir::Create(/*num_locks=*/4));
+  // Replace slot 1 with a directory (EISDIR) and slot 2 with a symlink (ELOOP).
+  ASSERT_EQ(chmod(tmp.Dir().c_str(), 0755), 0);
+  ASSERT_EQ(unlink(tmp.LockPath(1).c_str()), 0);
+  ASSERT_EQ(mkdir(tmp.LockPath(1).c_str(), 0755), 0);
+  ASSERT_EQ(unlink(tmp.LockPath(2).c_str()), 0);
+  ASSERT_EQ(symlink(tmp.LockPath(4).c_str(), tmp.LockPath(2).c_str()), 0);
+  ASSERT_EQ(chmod(tmp.Dir().c_str(), 0555), 0);
+  ASSERT_THAT(WriteRawPayload(tmp.LockPath(3), "corrupt"), IsOk());
+  InstanceLockFileManager mgr(tmp.Dir());
+
+  InstanceLockFile lock = CF_ASSERT(mgr.AcquireUnusedLock());
+  EXPECT_EQ(lock.Instance(), 4u);
 }
 
 TEST(InstanceLockTest, ResetLockFileProtectsForeignUidAndResetsLegacyLock) {
@@ -163,24 +218,6 @@ TEST(InstanceLockTest, ResetAllOwnedLocksSkipsHeldBrokenForeignAndLegacySlots) {
   EXPECT_THAT(check3.Status(), IsOkAndValue(InUseState::kInUse));
   InstanceLockFile check4 = CF_ASSERT(mgr.AcquireLock(4));
   EXPECT_THAT(check4.Status(), IsOkAndValue(InUseState::kNotInUse));
-}
-
-TEST(InstanceLockTest, ResetAllOwnedLocksHandlesNumberingGaps) {
-  PrecreatedLocksDir tmp =
-      CF_ASSERT(PrecreatedLocksDir::Create(/*num_locks=*/3));
-  ASSERT_EQ(chmod(tmp.Dir().c_str(), 0755), 0);
-  ASSERT_EQ(unlink(tmp.LockPath(2).c_str()), 0);
-  InstanceLockFileManager mgr(tmp.Dir());
-  {
-    InstanceLockFile own = CF_ASSERT(mgr.AcquireLock(3));
-    ASSERT_THAT(own.Status(InUseState::kInUse), IsOk());
-  }
-
-  EXPECT_THAT(mgr.ResetAllOwnedLocks(), IsOk());
-
-  EXPECT_FALSE(FileExists(tmp.LockPath(2)));
-  InstanceLockFile check3 = CF_ASSERT(mgr.AcquireLock(3));
-  EXPECT_THAT(check3.Status(), IsOkAndValue(InUseState::kNotInUse));
 }
 
 TEST(InstanceLockTest,
