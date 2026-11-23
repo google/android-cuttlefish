@@ -15,10 +15,11 @@
 package operator
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
+	"math/big"
 	"strings"
 	"sync"
 	"time"
@@ -107,14 +108,13 @@ func (c *PolledClient) ClientId() int {
 type PolledSet struct {
 	connections map[string]*PolledClient
 	mapMtx      sync.Mutex
-	rand        *rand.Rand
 }
 
 func (s *PolledSet) NewConnection(d *Device) *PolledClient {
 	s.mapMtx.Lock()
 	defer s.mapMtx.Unlock()
 	for {
-		id := randStr(64, s.rand)
+		id := randStr(64)
 		if _, ok := s.connections[id]; !ok {
 			conn := &PolledClient{
 				id:        id,
@@ -144,17 +144,21 @@ func (s *PolledSet) Destroy(id string) {
 func NewPolledSet() *PolledSet {
 	return &PolledSet{
 		connections: make(map[string]*PolledClient),
-		rand:        rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
 // The available characters for the connection ids
 const runes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func randStr(l int, r *rand.Rand) string {
+func randStr(l int) string {
 	var s strings.Builder
+	max := big.NewInt(int64(len(runes)))
 	for i := 0; i < l; i++ {
-		s.WriteByte(runes[r.Intn(len(runes))])
+		n, err := rand.Int(rand.Reader, max)
+		if err != nil {
+			panic(fmt.Sprintf("crypto/rand failed: %v", err))
+		}
+		s.WriteByte(runes[n.Int64()])
 	}
 	return s.String()
 }

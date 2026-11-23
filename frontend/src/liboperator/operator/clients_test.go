@@ -16,7 +16,6 @@ package operator
 
 import (
 	"math"
-	"math/rand"
 	"testing"
 )
 
@@ -126,13 +125,12 @@ func TestDestroy(t *testing.T) {
 }
 
 func TestRandStr(t *testing.T) {
-	r := rand.New(rand.NewSource(1))
-	s1 := randStr(1, r)
+	s1 := randStr(1)
 	if len(s1) != 1 {
 		t.Error("Returned string of wrong length")
 	}
-	s1 = randStr(100, r)
-	s2 := randStr(100, r)
+	s1 = randStr(100)
+	s2 := randStr(100)
 	if s1 == s2 {
 		// The probability of this happening without a bug is 1 in 62^100
 		t.Error("randStr returned two equal strings of len 100")
