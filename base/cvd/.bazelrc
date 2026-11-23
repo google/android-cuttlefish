@@ -101,9 +101,9 @@ build:fastbuild --copt=-fsanitize=return
 build:fastbuild --linkopt=-fsanitize=return
 
 # Returning null pointer from a function which is declared to never return null.
-build:dbg--copt=-fsanitize=returns-nonnull-attribute
+build:dbg --copt=-fsanitize=returns-nonnull-attribute
 build:dbg --linkopt=-fsanitize=returns-nonnull-attribute
-build:fastbuild--copt=-fsanitize=returns-nonnull-attribute
+build:fastbuild --copt=-fsanitize=returns-nonnull-attribute
 build:fastbuild --linkopt=-fsanitize=returns-nonnull-attribute
 
 # If control flow reaches an unreachable program point.
