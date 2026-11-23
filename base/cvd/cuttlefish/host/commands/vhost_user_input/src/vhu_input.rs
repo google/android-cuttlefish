@@ -107,7 +107,25 @@ impl<S: EventSource> VhostUserBackendMut for VhostUserInput<S> {
     fn get_config(&self, offset: u32, size: u32) -> Vec<u8> {
         trace!("get_config: offset={}, size={}", offset, size);
         match self.config.get_raw() {
-            Ok(raw_config) => raw_config[offset as usize..(offset + size) as usize].to_vec(),
+            Ok(raw_config) => {
+                let start = offset as usize;
+                let Some(end) = start.checked_add(size as usize) else {
+                    error!("get_config overflow: offset={}, size={}", offset, size);
+                    return vec![];
+                };
+                match raw_config.get(start..end) {
+                    Some(slice) => slice.to_vec(),
+                    None => {
+                        error!(
+                            "get_config out of bounds: offset={}, size={}, len={}",
+                            offset,
+                            size,
+                            raw_config.len()
+                        );
+                        vec![]
+                    }
+                }
+            }
             Err(e) => {
                 error!("Failed to get valid config: {:?}", e);
                 vec![0u8; size as usize]
@@ -263,7 +281,15 @@ impl<S: EventSource> VhostUserInput<S> {
                 let mut reader = avail_desc
                     .reader(&mem)
                     .context("Failed to get readable buffers")?;
+                const MAX_STATUS_BYTES: usize = 4096;
                 let bytes = reader.available_bytes();
+                if bytes > MAX_STATUS_BYTES {
+                    return Err(IoError::new(
+                        IoErrorKind::InvalidInput,
+                        format!("Status queue buffer too large: {} bytes", bytes),
+                    )
+                    .into());
+                }
                 let mut buf = vec![0u8; bytes];
                 reader.read_exact(&mut buf)?;
                 self.event_source.send_status_feedback(buf);
