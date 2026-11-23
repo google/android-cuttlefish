@@ -16,11 +16,6 @@
 #include "cuttlefish/process/proc_file_utils.h"
 
 #include <sys/types.h>
-#ifdef __linux__
-#include <errno.h>
-#include <sys/prctl.h>
-#include <sys/wait.h>
-#endif
 #include <unistd.h>
 
 #include <string>
@@ -33,6 +28,12 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
+
+#ifdef __linux__
+#include <errno.h>
+#include <sys/prctl.h>
+#include <sys/wait.h>
+#endif
 
 namespace cuttlefish {
 namespace {
