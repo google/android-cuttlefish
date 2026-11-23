@@ -548,11 +548,11 @@ func (c *HostOrchestratorClientImpl) DownloadScreenRecording(groupName, instance
 		return err
 	}
 	defer res.Body.Close()
-	if _, err := io.Copy(dst, res.Body); err != nil {
-		return err
-	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		return &ApiCallError{ErrorMsg: opapi.ErrorMsg{Error: res.Status}}
+	}
+	if _, err := io.Copy(dst, res.Body); err != nil {
+		return err
 	}
 	return nil
 }
@@ -745,11 +745,11 @@ func (c *HostOrchestratorClientImpl) CreateBugReport(group string, opts CreateBu
 		return err
 	}
 	defer res.Body.Close()
-	if _, err := io.Copy(dst, res.Body); err != nil {
-		return err
-	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		return &ApiCallError{ErrorMsg: opapi.ErrorMsg{Error: res.Status}}
+	}
+	if _, err := io.Copy(dst, res.Body); err != nil {
+		return err
 	}
 	return nil
 }
@@ -783,11 +783,11 @@ func (c *JournalGatewaydClient) PullHOLogs(dst io.Writer) error {
 		return err
 	}
 	defer res.Body.Close()
-	if _, err := io.Copy(dst, res.Body); err != nil {
-		return err
-	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		return &StatusCodeError{Code: res.StatusCode}
+	}
+	if _, err := io.Copy(dst, res.Body); err != nil {
+		return err
 	}
 	return nil
 }
