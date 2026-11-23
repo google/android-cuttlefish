@@ -22,14 +22,13 @@
 
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
-#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 class Cvd {
  public:
-  Cvd(InstanceManager&, InstanceLockFileManager&);
+  explicit Cvd(InstanceManager&);
 
   Result<void> HandleCommand(
       const std::vector<std::string>& cvd_process_args,
@@ -42,7 +41,6 @@ class Cvd {
 
  private:
   InstanceManager& instance_manager_;
-  InstanceLockFileManager& lock_file_manager_;
 };
 
 }  // namespace cuttlefish

@@ -28,16 +28,13 @@
 #include "cuttlefish/host/commands/cvd/cli/request_context.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
-#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/libs/vm_manager/host_configuration.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Cvd::Cvd(InstanceManager& instance_manager,
-         InstanceLockFileManager& lock_file_manager)
-    : instance_manager_(instance_manager),
-      lock_file_manager_(lock_file_manager) {}
+Cvd::Cvd(InstanceManager& instance_manager)
+    : instance_manager_(instance_manager) {}
 
 static Result<void> EnforceHostConfigured() {
   std::vector<vm_manager::HostConfigurationAction> actions =
@@ -57,7 +54,7 @@ Result<void> Cvd::HandleCommand(
                     .SetSelectorOptions(std::move(selector_args))
                     .Build());
 
-  RequestContext context(instance_manager_, lock_file_manager_);
+  RequestContext context(instance_manager_);
   CvdCommandHandler* handler = CF_EXPECT(context.Handler(request));
 
   if (CF_EXPECT(HasHelpFlag(request.SubcommandArguments()))) {

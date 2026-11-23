@@ -139,13 +139,15 @@ Result<void> ResetGroupLocks(const GroupProcInfo& group_info,
 }
 
 Result<void> ForcefullyStopGroup(const GroupProcInfo& group,
-                                 InstanceLockFileManager& lock_manager) {
+                                 InstanceLockFileManager* lock_manager) {
   Result<void> signal_res = SendSignal(group);
-  const Result<void> reset_res = ResetGroupLocks(group, lock_manager);
-  if (!reset_res.has_value()) {
-    LOG(ERROR) << "Tried to reset instance lock file for the group rooted at "
-                  "HOME="
-               << group.home_ << " but failed.";
+  if (lock_manager != nullptr) {
+    const Result<void> reset_res = ResetGroupLocks(group, *lock_manager);
+    if (!reset_res.has_value()) {
+      LOG(ERROR) << "Tried to reset instance lock file for the group rooted at "
+                    "HOME="
+                 << group.home_ << " but failed.";
+    }
   }
   CF_EXPECTF(std::move(signal_res),
              "Tried SIGKILL to a group of run_cvd processes rooted at "
@@ -172,7 +174,7 @@ Result<void> KillAllRunCvds() {
 }  // namespace
 
 Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs,
-                                        InstanceLockFileManager& lock_manager) {
+                                        InstanceLockFileManager* lock_manager) {
   if (Result<void> res = RunStopCvdAll(clear_runtime_dirs); !res.has_value()) {
     LOG(ERROR) << res.error();
   }
@@ -181,15 +183,18 @@ Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs,
     LOG(ERROR) << res.error();
   }
 
-  if (Result<void> res = lock_manager.ResetAllOwnedLocks(); !res.has_value()) {
-    LOG(ERROR) << res.error();
+  if (lock_manager != nullptr) {
+    if (Result<void> res = lock_manager->ResetAllOwnedLocks();
+        !res.has_value()) {
+      LOG(ERROR) << res.error();
+    }
   }
 
   return {};
 }
 
 Result<void> ForcefullyStopGroup(const uid_t any_id_in_group,
-                                 InstanceLockFileManager& lock_manager) {
+                                 InstanceLockFileManager* lock_manager) {
   for (const GroupProcInfo& group_info : CF_EXPECT(CollectRunCvdGroups())) {
     if (!Contains(group_info.instances_,
                   static_cast<unsigned>(any_id_in_group))) {

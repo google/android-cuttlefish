@@ -16,7 +16,6 @@
 
 #include <stdlib.h>
 #include <sys/resource.h>
-#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -38,6 +37,7 @@
 #include "cuttlefish/ansi_codes/terminal_colors.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/files/ensure_owned_directory_exists.h"
 #include "cuttlefish/flag_parser/flag.h"
@@ -98,10 +98,8 @@ LogSeverity CvdVerbosityOption(std::vector<std::string>& all_args) {
 }
 
 Result<void> EnsureCvdDirectoriesExist() {
-  // These are accessed by all users.
+  // This is accessed by all users.
   CF_EXPECT(EnsureDirectoryExists(CvdDir(), 01777));
-  CF_EXPECT(EnsureDirectoryExists(InstanceLocksPath(), 0777));
-  (void)chmod(InstanceLocksPath().c_str(), 0777);
   // These hold the per-user instance database and CLI logs.
   CF_EXPECT(EnsureOwnedDirectoryExists(PerUserDir(), 0750));
   CF_EXPECT(EnsureOwnedDirectoryExists(CvdUserLogDir(), 0750));
@@ -158,9 +156,19 @@ Result<void> CvdMain(std::vector<std::string> all_args) {
   IncreaseFileLimit();
 
   InstanceDatabase instance_db(InstanceDatabasePath());
-  InstanceLockFileManager instance_lockfile_manager(InstanceLocksPath());
-  InstanceManager instance_manager(instance_lockfile_manager, instance_db);
-  Cvd cvd(instance_manager, instance_lockfile_manager);
+  std::optional<InstanceLockFileManager> instance_lockfile_manager;
+#ifdef __linux__
+  constexpr bool kHasHostResourcesLocks = true;
+#else
+  constexpr bool kHasHostResourcesLocks = false;
+#endif
+  if (kHasHostResourcesLocks && !InSandbox()) {
+    instance_lockfile_manager.emplace(InstanceLocksPath());
+  }
+  InstanceManager instance_manager(
+      instance_lockfile_manager ? &*instance_lockfile_manager : nullptr,
+      instance_db);
+  Cvd cvd(instance_manager);
   if (android::base::Basename(all_args[0]) == "cvd") {
     CF_EXPECT(cvd.HandleCvdCommand(all_args, env));
     return {};
