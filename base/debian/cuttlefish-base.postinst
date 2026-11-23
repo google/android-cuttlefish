@@ -14,8 +14,6 @@ case "$1" in
     fi
     # guarantees it's a directory
     mkdir -p /var/empty
-    mkdir -p /var/tmp/cvd/lock
-    chmod 1777 /var/tmp/cvd /var/tmp/cvd/lock
     if ! getent group cvdnetwork > /dev/null 2>&1
     then
         addgroup --system cvdnetwork
