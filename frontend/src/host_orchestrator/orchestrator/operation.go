@@ -114,9 +114,11 @@ func (m *MapOM) ListRunning() []apiv1.Operation {
 	defer m.mutex.RUnlock()
 	result := []apiv1.Operation{}
 	for _, v := range m.operations {
+		v.mutex.RLock()
 		if !v.op.Done {
 			result = append(result, v.op)
 		}
+		v.mutex.RUnlock()
 	}
 	return result
 }
@@ -152,6 +154,9 @@ func (m *MapOM) Complete(name string, result *OperationResult) error {
 	}
 	entry.mutex.Lock()
 	defer entry.mutex.Unlock()
+	if entry.op.Done {
+		return fmt.Errorf("operation %q is already completed", name)
+	}
 	entry.op.Done = true
 	entry.result = result
 	close(entry.done)

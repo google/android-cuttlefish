@@ -960,8 +960,9 @@ func (h *updateImageDirectoryHandler) Handle(r *http.Request) (interface{}, erro
 		dir = h.uadr.UpdatedArtifactPath(req.UserArtifactChecksum)
 	}
 	op := h.om.New()
+	id := mux.Vars(r)["id"]
 	go func() {
-		err := h.idm.UpdateImageDirectory(mux.Vars(r)["id"], dir)
+		err := h.idm.UpdateImageDirectory(id, dir)
 		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
 			log.Printf("error completing operation %q: %v\n", op.Name, err)
 		}
@@ -976,8 +977,9 @@ type deleteImageDirectoryHandler struct {
 
 func (h *deleteImageDirectoryHandler) Handle(r *http.Request) (interface{}, error) {
 	op := h.om.New()
+	id := mux.Vars(r)["id"]
 	go func() {
-		err := h.idm.DeleteImageDirectory(mux.Vars(r)["id"])
+		err := h.idm.DeleteImageDirectory(id)
 		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
 			log.Printf("error completing operation %q: %v\n", op.Name, err)
 		}

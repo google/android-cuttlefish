@@ -110,13 +110,15 @@ func ExecFetchCmdOnDisposableHost(ccm CuttlefishContainerManager, cvdArgs *CvdAr
 	if err != nil {
 		return fmt.Errorf("failed to create and start container: %w", err)
 	}
+	defer func() {
+		if rmErr := ccm.StopAndRemoveContainer(context.Background(), containerID); rmErr != nil {
+			log.Printf("failed to stop and remove disposable container %q: %v", containerID, rmErr)
+		}
+	}()
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
 	if err := ccm.ExecOnContainer(context.Background(), containerID, args, os.Stdin, os.Stdout, os.Stderr); err != nil {
 		return fmt.Errorf("failed to execute fetch command on the container: %w", err)
-	}
-	if err := ccm.StopAndRemoveContainer(context.Background(), containerID); err != nil {
-		return fmt.Errorf("failed to stop and remove container: %w", err)
 	}
 	return nil
 }
@@ -535,7 +537,7 @@ func ensureOperatorHealthy(ip string) error {
 			lastErr = fmt.Errorf("failed to check health of operator: %w", err)
 			continue
 		}
-		defer resp.Body.Close()
+		resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
 			lastErr = fmt.Errorf("operator returned status: %d", resp.StatusCode)
 			continue

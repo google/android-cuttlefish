@@ -61,7 +61,7 @@ func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 			}
 
 			if err := c.RunAdbWaitForDevice(); err != nil {
-				t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %w", err)
+				t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %v", err)
 			}
 
 			out, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-ctl", "--list-devices")

@@ -263,9 +263,11 @@ func (rb *HTTPRequestBuilder) doWithRetries(retryOpts RetryOptions) (*http.Respo
 		}
 	}
 	if err := rb.helper.dumpResponse(res); err != nil {
+		res.Body.Close()
 		return nil, err
 	}
 	if isIn(res.StatusCode, retryOpts.StatusCodes) {
+		res.Body.Close()
 		return nil, fmt.Errorf("max wait elapsed: response status code: %d", res.StatusCode)
 	}
 	return res, nil
@@ -474,6 +476,7 @@ func (w *uploadChunkWorker) Start() <-chan error {
 
 func (w *uploadChunkWorker) upload(job uploadChunkJob) error {
 	ctx, cancel := context.WithCancel(w.ctx)
+	defer cancel()
 	pipeReader, pipeWriter := io.Pipe()
 	writer := multipart.NewWriter(pipeWriter)
 	go func() {

@@ -130,7 +130,10 @@ func main() {
 
 	r := operator.CreateHttpHandlers(pool, polledSet, infraConfigProvider, maybeIntercept)
 	if *webUiUrlStr != "" {
-		webUiUrl, _ := url.Parse(*webUiUrlStr)
+		webUiUrl, err := url.Parse(*webUiUrlStr)
+		if err != nil {
+			log.Fatalf("Invalid webui URL %q: %v", *webUiUrlStr, err)
+		}
 		proxy := httputil.NewSingleHostReverseProxy(webUiUrl)
 		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 			log.Printf("request %q failed: proxy error: %v", r.Method+" "+r.URL.Path, err)

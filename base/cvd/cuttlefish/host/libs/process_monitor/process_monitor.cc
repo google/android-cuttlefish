@@ -116,7 +116,7 @@ Result<void> MonitorLoop(std::atomic_bool& running,
                          std::vector<MonitorEntry>& monitored) {
   while (running.load()) {
     int wstatus;
-    pid_t pid = wait(&wstatus);
+    pid_t pid = TEMP_FAILURE_RETRY(wait(&wstatus));
     CF_EXPECTF(pid != -1, "Wait failed: {}", StrError());
     if (!WIFSIGNALED(wstatus) && !WIFEXITED(wstatus)) {
       VLOG(0) << "Unexpected status from wait: " << wstatus << " for pid "
@@ -126,7 +126,9 @@ Result<void> MonitorLoop(std::atomic_bool& running,
     if (!running.load()) {  // Avoid extra restarts near the end
       break;
     }
-    auto matches = [pid](const auto& it) { return it.proc->pid() == pid; };
+    auto matches = [pid](const auto& it) {
+      return it.proc && it.proc->pid() == pid;
+    };
     std::unique_lock lock(properties_mutex);
     auto it = std::find_if(monitored.begin(), monitored.end(), matches);
     if (it == monitored.end()) {
@@ -317,7 +319,7 @@ Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
       running.store(false);
       // Wake up the wait() loop by giving it an exited child process
       if (fork() == 0) {
-        std::exit(0);
+        _exit(0);
       }
       // will break the for-loop as running is now false
       continue;

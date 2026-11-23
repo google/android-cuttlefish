@@ -32,6 +32,7 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "fmt/format.h"
 #include "vulkan/vulkan.h"
@@ -71,6 +72,10 @@ std::string GetMonitorPath(const CuttlefishConfig& config) {
 
 StopperResult Stop() {
   auto config = CuttlefishConfig::Get();
+  if (!config) {
+    LOG(ERROR) << "CuttlefishConfig not available";
+    return StopperResult::kFailure;
+  }
   auto monitor_path = GetMonitorPath(*config);
   auto monitor_sock =
       SharedFD::SocketLocalClient(monitor_path.c_str(), false, SOCK_STREAM);
@@ -80,13 +85,15 @@ StopperResult Stop() {
     return StopperResult::kFailure;
   }
   char msg[] = "{\"execute\":\"qmp_capabilities\"}{\"execute\":\"quit\"}";
+  const char* ptr = msg;
   ssize_t len = sizeof(msg) - 1;
   while (len > 0) {
-    Result<uint64_t> tmp = monitor_sock->Write(msg, len);
+    Result<uint64_t> tmp = monitor_sock->Write(ptr, len);
     if (!tmp.has_value()) {
       LOG(ERROR) << "Error writing to socket: " << monitor_sock->StrError();
       return StopperResult::kFailure;
     }
+    ptr += *tmp;
     len -= *tmp;
   }
   // Log the reply
@@ -115,7 +122,13 @@ Result<std::pair<int, int>> GetQemuVersion(const std::string& qemu_binary) {
 
   std::vector<std::string> qemu_version_bits =
       absl::StrSplit(qemu_version_output, '.');
-  return {{std::stoi(qemu_version_bits[0]), std::stoi(qemu_version_bits[1])}};
+  CF_EXPECT_GE(qemu_version_bits.size(), 2u,
+               "Unexpected QEMU version output: " << qemu_version_output);
+  int major = 0;
+  int minor = 0;
+  CF_EXPECT(absl::SimpleAtoi(qemu_version_bits[0], &major));
+  CF_EXPECT(absl::SimpleAtoi(qemu_version_bits[1], &minor));
+  return {{major, minor}};
 }
 
 bool QemuSupportsHelpToken(const std::string& qemu_binary, std::string_view opt,

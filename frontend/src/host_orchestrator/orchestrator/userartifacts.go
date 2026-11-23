@@ -25,7 +25,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
@@ -159,6 +158,7 @@ func (m *UserArtifactsManagerImpl) ExtractArtifact(checksum string) error {
 	if err != nil {
 		return err
 	}
+	defer os.RemoveAll(workDir)
 	if err := os.Chmod(workDir, 0755); err != nil {
 		return fmt.Errorf("failed to grant read permission at %q: %w", dir, err)
 	}
@@ -202,6 +202,9 @@ func writeChunk(filename string, chunk UserArtifactChunk) error {
 	}
 	if _, err := io.Copy(f, chunk.File); err != nil {
 		return fmt.Errorf("failed to copy chunk into working file: %w", err)
+	}
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("failed to close working file: %w", err)
 	}
 	return nil
 }
@@ -445,10 +448,10 @@ func untar(dst string, src string) error {
 				continue
 			}
 			if _, err := os.Stat(target); err != nil {
-				oldmask := syscall.Umask(0)
-				err := os.MkdirAll(target, 0774)
-				syscall.Umask(oldmask)
-				if err != nil {
+				if err := os.MkdirAll(target, 0774); err != nil {
+					return err
+				}
+				if err := os.Chmod(target, 0774); err != nil {
 					return err
 				}
 			}

@@ -311,6 +311,8 @@ func formatLogsList(output string) string {
 	return strings.Join(lines, "\n")
 }
 
+var cvdLogsPathRegex = regexp.MustCompile(`/var/tmp/cvd/[0-9]+/[0-9]+`)
+
 func handleLogsExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
@@ -328,8 +330,7 @@ func handleLogsExecution(ccm CuttlefishContainerManager, cvdArgs *CvdArgs) error
 	if err != nil {
 		return err
 	}
-	regex := regexp.MustCompile(`/var/tmp/cvd/[0-9]+/[0-9]+`)
-	translatedOutput := regex.ReplaceAllString(stdoutBuf.String(), podcvdBaseDir)
+	translatedOutput := cvdLogsPathRegex.ReplaceAllString(stdoutBuf.String(), podcvdBaseDir)
 	if Isatty(os.Stdout.Fd()) {
 		translatedOutput = formatLogsList(translatedOutput)
 	}
