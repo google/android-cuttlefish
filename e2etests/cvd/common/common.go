@@ -177,13 +177,21 @@ func (tc *TestContext) TempDir() string {
 
 // Common parameters passed to `cvd fetch`.
 type FetchArgs struct {
-	BootloaderBuildBranch string
-	BootloaderBuildTarget string
-	DefaultBuildBranch    string
-	DefaultBuildTarget    string
-	SubstituteOnly        bool
-	TestSuiteBuildBranch  string
-	TestSuiteBuildTarget  string
+	AndroidEfiLoaderBuildBranch   string
+	AndroidEfiLoaderBuildTarget   string
+	AndroidEfiLoaderBuildArtifact string
+	BootArtifact                  string
+	BootBuildBranch               string
+	BootBuildTarget               string
+	BootloaderBuildBranch         string
+	BootloaderBuildTarget         string
+	DefaultBuildBranch            string
+	DefaultBuildTarget            string
+	KernelBuildBranch             string
+	KernelBuildTarget             string
+	SubstituteOnly                bool
+	TestSuiteBuildBranch          string
+	TestSuiteBuildTarget          string
 }
 
 // Common parameters passed to `cvd create`.
@@ -206,8 +214,24 @@ func (tc *TestContext) CVDFetch(args FetchArgs) (CommandOutput, error) {
 		fmt.Sprintf("--default_build=%s/%s", args.DefaultBuildBranch, args.DefaultBuildTarget),
 		fmt.Sprintf("--target_directory=%s", tc.tempdir),
 	}
+	if args.AndroidEfiLoaderBuildBranch != "" && args.AndroidEfiLoaderBuildTarget != "" {
+		efiBuild := fmt.Sprintf("%s/%s", args.AndroidEfiLoaderBuildBranch, args.AndroidEfiLoaderBuildTarget)
+		if args.AndroidEfiLoaderBuildArtifact != "" {
+			efiBuild = fmt.Sprintf("%s{%s}", efiBuild, args.AndroidEfiLoaderBuildArtifact)
+		}
+		fetchCmd = append(fetchCmd, fmt.Sprintf("--android_efi_loader_build=%s", efiBuild))
+	}
+	if args.BootBuildBranch != "" && args.BootBuildTarget != "" {
+		fetchCmd = append(fetchCmd, fmt.Sprintf("--boot_build=%s/%s", args.BootBuildBranch, args.BootBuildTarget))
+	}
+	if args.BootArtifact != "" {
+		fetchCmd = append(fetchCmd, fmt.Sprintf("--boot_artifact=%s", args.BootArtifact))
+	}
 	if args.BootloaderBuildBranch != "" && args.BootloaderBuildTarget != "" {
 		fetchCmd = append(fetchCmd, fmt.Sprintf("--bootloader_build=%s/%s", args.BootloaderBuildBranch, args.BootloaderBuildTarget))
+	}
+	if args.KernelBuildBranch != "" && args.KernelBuildTarget != "" {
+		fetchCmd = append(fetchCmd, fmt.Sprintf("--kernel_build=%s/%s", args.KernelBuildBranch, args.KernelBuildTarget))
 	}
 	if args.TestSuiteBuildBranch != "" && args.TestSuiteBuildTarget != "" {
 		fetchCmd = append(fetchCmd, fmt.Sprintf("--test_suites_build=%s/%s", args.TestSuiteBuildBranch, args.TestSuiteBuildTarget))

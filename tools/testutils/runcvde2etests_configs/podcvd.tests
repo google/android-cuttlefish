@@ -1,3 +1,6 @@
+//cvd/boot_flow_tests:bootloader_crosvm
+//cvd/boot_flow_tests:efi_loader_crosvm
+//cvd/boot_flow_tests:kernel_mix_crosvm
 //cvd/bugreport_tests:bugreport_tests
 //cvd/bugreport_tests:bugreport_tests_with_substitution
 //cvd/common:common_test
