@@ -34,11 +34,20 @@ pub struct CaptureRequest {
     pub sink: Box<dyn CaptureSink>,
 }
 
+#[derive(Debug)]
+pub enum CaptureError {
+    /// Error accessing the planes of the capture sink.
+    Sink(std::io::Error),
+    /// Errno returned by the frame generator.
+    Render(i32),
+}
+
 /// Event emitted by the capture channel when a request has been completed.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 pub struct CaptureCompletedEvent {
     pub buffer_id: usize,
     pub sequence: u32,
+    pub error: Option<CaptureError>,
 }
 
 /// Control commands sent to the capture channel worker thread.
@@ -270,30 +279,10 @@ impl CaptureProcessor {
         self.iteration += 1;
 
         if let Some(mut req) = self.pending_requests.pop_front() {
-            match req.sink.planes() {
-                Ok([sink_y, sink_u, sink_v]) => {
-                    if let Err(e) = Self::write_pattern(
-                        seq as u64,
-                        self.frame_source,
-                        &self.params,
-                        self.width,
-                        self.height,
-                        sink_y,
-                        sink_u,
-                        sink_v,
-                    ) {
-                        log::warn!("Channel {}: write_pattern failed: {:#}", self.session_id, e);
-                    }
-                }
-                Err(e) => log::warn!(
-                    "Channel {}: failed to access capture planes: {:#}",
-                    self.session_id,
-                    e
-                ),
-            }
             let _ = self.completion_tx.send(CaptureCompletedEvent {
                 buffer_id: req.buffer_id,
                 sequence: seq,
+                error: self.render(seq as u64, req.sink.as_mut()).err(),
             });
         } else {
             log::trace!(
@@ -315,20 +304,20 @@ impl CaptureProcessor {
         Ok(())
     }
 
-    fn write_pattern(
-        iteration: u64,
-        frame_source: FrameSource,
-        params: &RenderParams,
-        width: u32,
-        height: u32,
-        sink_y: &mut dyn Write,
-        sink_u: &mut dyn Write,
-        sink_v: &mut dyn Write,
-    ) -> AnyhowResult<()> {
-        frame_source
-            .generator(params)
-            .write(iteration, params, width, height, sink_y, sink_u, sink_v)
-            .map_err(|e| anyhow::anyhow!("Pattern generator write error: errno {}", e))
+    fn render(&self, iteration: u64, sink: &mut dyn CaptureSink) -> Result<(), CaptureError> {
+        let [sink_y, sink_u, sink_v] = sink.planes().map_err(CaptureError::Sink)?;
+        self.frame_source
+            .generator(&self.params)
+            .write(
+                iteration,
+                &self.params,
+                self.width,
+                self.height,
+                sink_y,
+                sink_u,
+                sink_v,
+            )
+            .map_err(CaptureError::Render)
     }
 }
 

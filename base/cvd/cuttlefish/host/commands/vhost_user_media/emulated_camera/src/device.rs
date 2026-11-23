@@ -96,6 +96,8 @@ enum BufferState {
     Outgoing {
         /// Sequence of the generated frame.
         sequence: u32,
+        /// Whether generating the frame failed.
+        failed: bool,
     },
 }
 
@@ -161,14 +163,20 @@ impl<A> Buffer<A> {
         match state {
             BufferState::New => {
                 self.set_bytes_used_to_zero();
-                flags &= !BufferFlags::QUEUED;
+                flags.remove(BufferFlags::QUEUED | BufferFlags::ERROR);
             }
             BufferState::Incoming => {
                 self.set_bytes_used_to_zero();
-                flags |= BufferFlags::QUEUED;
+                flags.insert(BufferFlags::QUEUED);
+                flags.remove(BufferFlags::ERROR);
             }
-            BufferState::Outgoing { sequence } => {
-                self.set_bytes_used_to_length();
+            BufferState::Outgoing { sequence, failed } => {
+                if failed {
+                    self.set_bytes_used_to_zero();
+                } else {
+                    self.set_bytes_used_to_length();
+                }
+                flags.set(BufferFlags::ERROR, failed);
                 self.v4l2_buffer.set_sequence(sequence);
                 let mut ts = libc::timespec {
                     tv_sec: 0,
@@ -182,7 +190,7 @@ impl<A> Buffer<A> {
                     tv_sec: ts.tv_sec as bindings::__time_t,
                     tv_usec: (ts.tv_nsec / 1000) as bindings::__time_t,
                 });
-                flags &= !BufferFlags::QUEUED;
+                flags.remove(BufferFlags::QUEUED);
             }
         }
         self.v4l2_buffer.set_flags(flags);
@@ -344,6 +352,7 @@ where
                         if let Some(buf) = buffers.get_mut(ev.buffer_id) {
                             buf.set_state(BufferState::Outgoing {
                                 sequence: ev.sequence,
+                                failed: ev.error.is_some(),
                             });
                             let v4l2_buf = buf.v4l2_buffer.clone();
                             evt_queue_clone
