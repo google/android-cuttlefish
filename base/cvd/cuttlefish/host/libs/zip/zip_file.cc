@@ -85,7 +85,7 @@ Result<void> ExtractFile(ReadableZip& zip, absl::string_view zip_path,
     if (*attr == 0) {
       *attr = 0640;
     }
-    CF_EXPECT_EQ(chmod(host_path.c_str(), *attr), 0, StrError());
+    CF_EXPECT_EQ(chmod(host_path.c_str(), *attr & 0777), 0, StrError());
   }
   return {};
 }
