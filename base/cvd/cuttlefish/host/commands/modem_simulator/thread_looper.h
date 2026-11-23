@@ -27,6 +27,7 @@ namespace cuttlefish {
 
 template <typename T>
 std::function<void()> makeSafeCallback(T* me, std::function<void(T*)> f) {
+  // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
   return [f, me] {
     if (me) {
       f(me);

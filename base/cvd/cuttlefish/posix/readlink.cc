@@ -17,7 +17,6 @@
 
 #include <errno.h>
 #include <stddef.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include <string>
@@ -33,7 +32,8 @@ namespace cuttlefish {
 Result<std::string, int> ReadLink(const char* path) {
   std::vector<char> buf(4096);
   while (true) {
-    ssize_t size = readlink(path, buf.data(), buf.size());
+    ssize_t size =  // NOLINT(misc-include-cleaner)
+        readlink(path, buf.data(), buf.size());
     CF_EXPECTVF(size != -1, errno, "readlink('{}') failed: {}", path,
                 StrError());
     if (static_cast<size_t>(size) < buf.size()) {

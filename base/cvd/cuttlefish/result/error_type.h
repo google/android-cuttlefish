@@ -126,7 +126,7 @@ class StackTraceError {
   }
 
  private:
-  ValueOrBool value_;
+  ValueOrBool value_{};
   std::vector<StackTraceEntry> stack_;
 };
 

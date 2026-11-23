@@ -77,7 +77,7 @@ const std::unordered_map<config::GpuMode, GpuMode>& GetGpuModeMap() {
           {config::GpuMode::GPU_MODE_GUEST_SWIFTSHADER,
            GpuMode::GuestSwiftshader},
           {config::GpuMode::GPU_MODE_NONE, GpuMode::None},
-      };
+  };
   return *kGpuModeMap;
 }
 

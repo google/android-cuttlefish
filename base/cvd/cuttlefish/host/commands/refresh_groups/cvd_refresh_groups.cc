@@ -50,6 +50,7 @@ int main(int argc, char** argv) {
     perror("initgroups failed");
     return 1;
   }
+  // NOLINTNEXTLINE(clang-analyzer-optin.taint.GenericTaint)
   execv(argv[1], argv + 2);
   perror("execvp failed");
   return 1;

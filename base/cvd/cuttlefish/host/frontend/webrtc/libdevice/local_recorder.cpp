@@ -70,7 +70,7 @@ class LocalRecorder::Display
   LocalRecorder::Impl& impl_;
   std::shared_ptr<webrtc::VideoTrackSourceInterface> source_;
   std::unique_ptr<webrtc::VideoEncoder> video_encoder_;
-  uint64_t video_track_number_;
+  uint64_t video_track_number_ = 0;
 
   // TODO(schuffelen): Use a WebRTC task queue?
   std::thread encoder_thread_;
@@ -161,7 +161,6 @@ void LocalRecorder::AddDisplay(
   source->AddOrUpdateSink(display.get(), webrtc::VideoSinkWants{});
 
   webrtc::VideoCodec codec{};
-  memset(&codec, 0, sizeof(codec));
   codec.codecType = webrtc::kVideoCodecVP8;
   codec.width = width;
   codec.height = height;

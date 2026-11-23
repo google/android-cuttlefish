@@ -28,7 +28,7 @@ namespace cuttlefish {
 /* `--use_cvdalloc` flag */
 class UseCvdallocFlag : public FlagBase<bool> {
  public:
-  static Result<UseCvdallocFlag> FromGlobalGflags(const Defaults &defaults);
+  static Result<UseCvdallocFlag> FromGlobalGflags(const Defaults& defaults);
   ~UseCvdallocFlag() override = default;
 
  private:

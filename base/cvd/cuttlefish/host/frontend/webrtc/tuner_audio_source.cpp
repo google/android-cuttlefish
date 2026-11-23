@@ -17,7 +17,7 @@
 #include "cuttlefish/host/frontend/webrtc/tuner_audio_source.h"
 
 #include <sys/socket.h>  // IWYU pragma: keep
-#include <sys/types.h>
+#include <sys/types.h>   // NOLINT(misc-include-cleaner)
 
 #include <cerrno>
 #include <cstddef>
@@ -132,6 +132,7 @@ void TunerAudioSource::DrainSocket() {
   }
   uint8_t chunk[kReadChunkBytes];
   while (true) {
+    // NOLINTNEXTLINE(misc-include-cleaner)
     const ssize_t bytes_read = fd_->Recv(chunk, sizeof(chunk), MSG_DONTWAIT);
     if (bytes_read > 0) {
       fifo_.insert(fifo_.end(), chunk, chunk + bytes_read);

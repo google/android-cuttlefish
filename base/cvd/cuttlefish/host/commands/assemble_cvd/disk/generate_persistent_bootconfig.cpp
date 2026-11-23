@@ -17,7 +17,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 
 #include <fcntl.h>
-#include <sys/types.h>
+#include <sys/types.h>  // NOLINT(misc-include-cleaner)
 
 #include <functional>
 #include <map>
@@ -104,7 +104,7 @@ Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
                                 << "` failed:" << bootconfig_fd.StrError());
 
   if (VmManagerIsGem5(config)) {
-    const off_t bootconfig_size_bytes_gem5 =
+    const off_t bootconfig_size_bytes_gem5 =  // NOLINT(misc-include-cleaner)
         AlignToPowerOf2(bootconfig.size(), PARTITION_SIZE_SHIFT);
     CF_EXPECT(bootconfig_fd.Truncate(bootconfig_size_bytes_gem5));
     bootconfig_fd.Close();

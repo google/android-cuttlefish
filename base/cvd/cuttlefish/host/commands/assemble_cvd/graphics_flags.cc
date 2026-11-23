@@ -356,7 +356,7 @@ GetGpuModeRequirementsMap() {
               GpuMode::None,
               /*no requirements*/ {},
           },
-      };
+  };
   return *kGpuModeRequirements;
 };
 

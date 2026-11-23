@@ -19,7 +19,7 @@
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <sys/types.h>
+#include <sys/types.h>  // NOLINT(misc-include-cleaner)
 
 #include <string>
 #include <utility>
@@ -138,7 +138,7 @@ bool KernelLogServer::HandleIncomingMessage() {
   }
 
   // Detect VIRTUAL_DEVICE_BOOT_*
-  for (ssize_t i = 0; i < *ret; i++) {
+  for (ssize_t i = 0; i < *ret; i++) {  // NOLINT(misc-include-cleaner)
     if ('\n' == buf[i]) {
       for (auto& [match, prefix] : kInformationalPatterns) {
         auto pos = line_.find(match);

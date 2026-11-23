@@ -49,7 +49,7 @@ using controlenvproxyserver::ListServicesReply;
 using controlenvproxyserver::TypeInformationReply;
 using controlenvproxyserver::TypeInformationRequest;
 using google::protobuf::Empty;
-using google::protobuf::RepeatedPtrField;
+using google::protobuf::RepeatedPtrField;  // NOLINT(misc-include-cleaner)
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;

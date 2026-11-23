@@ -66,6 +66,7 @@ cc_library(
         "-std=c11",
         "-D_GNU_SOURCE",
         "-DBITDEPTH=8",
+        "-Wno-incompatible-pointer-types",
     ],
     # No `includes` — internal headers resolve via -iquote only.
     deps = [":dav1d_api"],

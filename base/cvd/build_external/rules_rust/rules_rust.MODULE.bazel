@@ -7,6 +7,9 @@
 single_version_override(
     module_name = "rules_rust",
     patch_strip = 1,
-    patches = ["@//build_external/rules_rust:0001-crate_universe-share-git-checkouts.patch"],
+    patches = [
+        "@//build_external/rules_rust:0001-crate_universe-share-git-checkouts.patch",
+        "@//build_external/rules_rust:0002-cargo_build_script-pwd-flags-resource-dir.patch",
+    ],
     version = "0.68.1",
 )

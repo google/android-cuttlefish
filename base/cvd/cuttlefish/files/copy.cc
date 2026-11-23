@@ -19,7 +19,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <sys/types.h>
 
 #include "absl/strings/string_view.h"
 

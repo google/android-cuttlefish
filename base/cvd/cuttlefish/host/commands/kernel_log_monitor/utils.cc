@@ -17,7 +17,7 @@
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
 
 #include <stddef.h>
-#include <sys/types.h>
+#include <sys/types.h>  // NOLINT(misc-include-cleaner)
 
 #include <optional>
 #include <string>
@@ -37,6 +37,7 @@ namespace cuttlefish::monitor {
 
 Result<std::optional<ReadEventResult>> ReadEvent(SharedFD fd) {
   size_t length;
+  // NOLINTNEXTLINE(misc-include-cleaner)
   ssize_t bytes_read = ReadExactBinary(fd, &length);
 
   CF_EXPECTF(bytes_read >= 0, "Failed reading length: '{}'", fd->StrError());

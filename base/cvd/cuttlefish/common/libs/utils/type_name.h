@@ -43,7 +43,7 @@ constexpr std::string_view ExtractName(std::string_view name) {
     name = name.substr(begin + type_prefix.size());
   }
 
-  if (name.size() > 0 && name[0] == '&') {
+  if (!name.empty() && name[0] == '&') {
     name = name.substr(1);
   }
 
