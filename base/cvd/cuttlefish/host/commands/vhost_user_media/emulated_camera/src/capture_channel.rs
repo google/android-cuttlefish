@@ -30,6 +30,7 @@ pub trait CaptureSink: Send + Sync {
 
 /// A capture request submitted to the channel for processing.
 pub struct CaptureRequest {
+    pub qbuf_serial: u32,
     pub buffer_id: usize,
     pub sink: Box<dyn CaptureSink>,
 }
@@ -45,6 +46,7 @@ pub enum CaptureError {
 /// Event emitted by the capture channel when a request has been completed.
 #[derive(Debug)]
 pub struct CaptureCompletedEvent {
+    pub qbuf_serial: u32,
     pub buffer_id: usize,
     pub sequence: u32,
     pub error: Option<CaptureError>,
@@ -280,6 +282,7 @@ impl CaptureProcessor {
 
         if let Some(mut req) = self.pending_requests.pop_front() {
             let _ = self.completion_tx.send(CaptureCompletedEvent {
+                qbuf_serial: req.qbuf_serial,
                 buffer_id: req.buffer_id,
                 sequence: seq,
                 error: self.render(seq as u64, req.sink.as_mut()).err(),
@@ -353,13 +356,24 @@ impl CaptureChannel {
     }
 
     /// Stops capturing on this channel and flushes queued requests.
+    ///
+    /// TODO(b/537805477#comment8): Block until the render in progress is done.
     pub fn stop_capture(&self) -> AnyhowResult<()> {
         self.send_cmd(ChannelCmd::StopCapture)
     }
 
     /// Queues a capture request for `buffer_id` into the capture channel.
-    pub fn queue_buffer(&self, buffer_id: usize, sink: Box<dyn CaptureSink>) -> AnyhowResult<()> {
-        self.send_cmd(ChannelCmd::Queue(CaptureRequest { buffer_id, sink }))
+    pub fn queue_buffer(
+        &self,
+        qbuf_serial: u32,
+        buffer_id: usize,
+        sink: Box<dyn CaptureSink>,
+    ) -> AnyhowResult<()> {
+        self.send_cmd(ChannelCmd::Queue(CaptureRequest {
+            qbuf_serial,
+            buffer_id,
+            sink,
+        }))
     }
 
     /// Updates the render parameters (e.g. test pattern, gain).
