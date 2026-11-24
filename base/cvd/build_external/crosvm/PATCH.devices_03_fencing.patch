@@ -1,0 +1,577 @@
+From 84eb1161c77e7116fac08629511aa2e0e2063ad6 Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Sat, 21 Nov 2026 10:05:59 -0800
+Subject: [PATCH] WIP: gpu: fencing
+
+Pass fence metadata into process_gpu_command(), return GpuFenceResult to
+indicate immediate vs deferred descriptor completion, and centralize
+timeline deferral and signaling on FenceState.
+
+Bug: b/577098280
+---
+ devices/src/virtio/gpu/mod.rs        | 294 ++++++++++++++++++++++++-----------
+ devices/src/virtio/gpu/virtio_gpu.rs |  55 +++++--
+ 2 files changed, 243 insertions(+), 106 deletions(-)
+
+diff --git a/devices/src/virtio/gpu/mod.rs b/devices/src/virtio/gpu/mod.rs
+index 4eaf155b9..8d13bfd12 100644
+--- a/devices/src/virtio/gpu/mod.rs
++++ b/devices/src/virtio/gpu/mod.rs
+@@ -130,6 +130,27 @@ pub struct VirtioScanoutBlobData {
+ enum VirtioGpuRing {
+     Global,
+     ContextSpecific { ctx_id: u32, ring_idx: u8 },
++    DisplayFlip { flip_id: u64 },
++}
++
++impl VirtioGpuRing {
++    fn from_rutabaga_fence(fence: &RutabagaFence) -> Self {
++        match fence.flags & VIRTIO_GPU_FLAG_INFO_RING_IDX {
++            0 => VirtioGpuRing::Global,
++            _ => VirtioGpuRing::ContextSpecific {
++                ctx_id: fence.ctx_id,
++                ring_idx: fence.ring_idx,
++            },
++        }
++    }
++}
++
++enum GpuFenceResult {
++    SignalFence,
++    DeferSignalingFence {
++        ring: VirtioGpuRing,
++        fence_id: u64,
++    },
+ }
+ 
+ struct FenceDescriptor {
+@@ -157,6 +178,72 @@ struct FenceStateSnapshot {
+ }
+ 
+ impl FenceState {
++    fn is_completed(&self, ring: &VirtioGpuRing, fence_id: u64) -> bool {
++        match ring {
++            VirtioGpuRing::DisplayFlip { .. } => false,
++            _ => fence_id <= *self.completed_fences.get(ring).unwrap_or(&0),
++        }
++    }
++
++    /// Adds `desc_chain` to the pending descriptors on `ring` unless `fence_id` has already
++    /// completed on that timeline, in which case `Some(ReturnDescriptor)` is returned for
++    /// immediate completion.
++    fn defer_descriptor(
++        &mut self,
++        ring: VirtioGpuRing,
++        fence_id: u64,
++        desc_chain: DescriptorChain,
++        len: u32,
++    ) -> Option<ReturnDescriptor> {
++        if self.is_completed(&ring, fence_id) {
++            return Some(ReturnDescriptor { desc_chain, len });
++        }
++
++        self.descs.push(FenceDescriptor {
++            ring,
++            fence_id,
++            desc_chain,
++            len,
++        });
++        None
++    }
++
++    /// Signals completion up to `completed_fence_id` on `ring`, returning any matching pending
++    /// descriptors to `queue`. Returns `true` if at least one descriptor was returned.
++    fn signal_ring(
++        &mut self,
++        ring: VirtioGpuRing,
++        completed_fence_id: u64,
++        queue: &dyn QueueReader,
++    ) -> bool {
++        let mut signal = false;
++        let mut i = 0;
++        while i < self.descs.len() {
++            let completed = match (&self.descs[i].ring, &ring) {
++                (
++                    VirtioGpuRing::DisplayFlip { flip_id: desc_flip },
++                    VirtioGpuRing::DisplayFlip { flip_id },
++                ) => desc_flip == flip_id,
++                (desc_ring, target_ring) => {
++                    desc_ring == target_ring && self.descs[i].fence_id <= completed_fence_id
++                }
++            };
++            if completed {
++                let completed_desc = self.descs.remove(i);
++                queue.add_used(completed_desc.desc_chain, completed_desc.len);
++                signal = true;
++            } else {
++                i += 1;
++            }
++        }
++
++        if !matches!(ring, VirtioGpuRing::DisplayFlip { .. }) {
++            self.completed_fences.insert(ring, completed_fence_id);
++        }
++
++        signal
++    }
++
+     fn snapshot(&self) -> FenceStateSnapshot {
+         assert!(self.descs.is_empty(), "can't snapshot with pending fences");
+         FenceStateSnapshot {
+@@ -304,42 +391,13 @@ where
+     Q: QueueReader + Send + Clone + 'static,
+ {
+     RutabagaFenceHandler::new(move |completed_fence: RutabagaFence| {
+-        let mut signal = false;
+-
+         if let Some(ref fence_handler_resources) = *fence_handler_resources.lock() {
+-            // Limits the lifetime of `fence_state`:
+-            {
+-                let ring = match completed_fence.flags & VIRTIO_GPU_FLAG_INFO_RING_IDX {
+-                    0 => VirtioGpuRing::Global,
+-                    _ => VirtioGpuRing::ContextSpecific {
+-                        ctx_id: completed_fence.ctx_id,
+-                        ring_idx: completed_fence.ring_idx,
+-                    },
+-                };
+-
+-                let mut fence_state = fence_state.lock();
+-                // TODO(dverkamp): use `drain_filter()` when it is stabilized
+-                let mut i = 0;
+-                while i < fence_state.descs.len() {
+-                    if fence_state.descs[i].ring == ring
+-                        && fence_state.descs[i].fence_id <= completed_fence.fence_id
+-                    {
+-                        let completed_desc = fence_state.descs.remove(i);
+-                        fence_handler_resources
+-                            .ctrl_queue
+-                            .add_used(completed_desc.desc_chain, completed_desc.len);
+-                        signal = true;
+-                    } else {
+-                        i += 1;
+-                    }
+-                }
+-
+-                // Update the last completed fence for this context
+-                fence_state
+-                    .completed_fences
+-                    .insert(ring, completed_fence.fence_id);
+-            }
+-
++            let ring = VirtioGpuRing::from_rutabaga_fence(&completed_fence);
++            let signal = fence_state.lock().signal_ring(
++                ring,
++                completed_fence.fence_id,
++                &fence_handler_resources.ctrl_queue,
++            );
+             if signal {
+                 fence_handler_resources.ctrl_queue.signal_used();
+             }
+@@ -396,15 +454,46 @@ impl Frontend {
+         self.virtio_gpu.process_gpu_control_command(cmd)
+     }
+ 
++    fn finalize_rutabaga_fence(
++        &mut self,
++        mut resp: VirtioGpuResult,
++        fence: Option<RutabagaFence>,
++    ) -> (VirtioGpuResult, GpuFenceResult) {
++        let fence_result = match fence {
++            Some(fence) => match self.virtio_gpu.create_fence(fence) {
++                Ok(_) => {
++                    let ring = VirtioGpuRing::from_rutabaga_fence(&fence);
++                    if self.fence_state.lock().is_completed(&ring, fence.fence_id) {
++                        GpuFenceResult::SignalFence
++                    } else {
++                        GpuFenceResult::DeferSignalingFence {
++                            ring,
++                            fence_id: fence.fence_id,
++                        }
++                    }
++                }
++                Err(fence_resp) => {
++                    warn!("create_fence {} -> {:?}", fence.fence_id, fence_resp);
++                    resp = Err(fence_resp);
++                    GpuFenceResult::SignalFence
++                }
++            },
++            None => GpuFenceResult::SignalFence,
++        };
++
++        (resp, fence_result)
++    }
++
+     fn process_gpu_command(
+         &mut self,
+         mem: &GuestMemory,
+         cmd: GpuCommand,
+         reader: &mut Reader,
+-    ) -> VirtioGpuResult {
++        fence: Option<RutabagaFence>,
++    ) -> (VirtioGpuResult, GpuFenceResult) {
+         self.virtio_gpu.force_ctx_0();
+ 
+-        match cmd {
++        let resp = match cmd {
+             GpuCommand::GetDisplayInfo(_) => Ok(GpuResponse::OkDisplayInfo(
+                 self.virtio_gpu.display_info().to_vec(),
+             )),
+@@ -437,7 +526,22 @@ impl Frontend {
+                 None,
+             ),
+             GpuCommand::ResourceFlush(info) => {
+-                self.virtio_gpu.flush_resource(info.resource_id.to_native())
++                return match self
++                    .virtio_gpu
++                    .flush_resource_with_flip(info.resource_id.to_native(), fence.is_some())
++                {
++                    Ok(flip_id) => {
++                        let fence_result = match (fence, flip_id) {
++                            (Some(fence), Some(flip_id)) => GpuFenceResult::DeferSignalingFence {
++                                ring: VirtioGpuRing::DisplayFlip { flip_id },
++                                fence_id: fence.fence_id,
++                            },
++                            _ => GpuFenceResult::SignalFence,
++                        };
++                        (Ok(GpuResponse::OkNoData), fence_result)
++                    }
++                    Err(e) => (Err(e), GpuFenceResult::SignalFence),
++                };
+             }
+             GpuCommand::TransferToHost2d(info) => {
+                 let resource_id = info.resource_id.to_native();
+@@ -462,7 +566,10 @@ impl Frontend {
+                                 let len = entry.length.to_native() as usize;
+                                 vecs.push((addr, len))
+                             }
+-                            Err(_) => return Err(GpuResponse::ErrUnspec),
++                            Err(_) => {
++                                return self
++                                    .finalize_rutabaga_fence(Err(GpuResponse::ErrUnspec), fence)
++                            }
+                         }
+                     }
+                     self.virtio_gpu
+@@ -602,7 +709,7 @@ impl Frontend {
+ 
+                 let entry_count = info.nr_entries.to_native();
+                 if reader.available_bytes() == 0 && entry_count > 0 {
+-                    return Err(GpuResponse::ErrUnspec);
++                    return self.finalize_rutabaga_fence(Err(GpuResponse::ErrUnspec), fence);
+                 }
+ 
+                 let mut vecs = Vec::with_capacity(entry_count as usize);
+@@ -613,7 +720,10 @@ impl Frontend {
+                             let len = entry.length.to_native() as usize;
+                             vecs.push((addr, len))
+                         }
+-                        Err(_) => return Err(GpuResponse::ErrUnspec),
++                        Err(_) => {
++                            return self
++                                .finalize_rutabaga_fence(Err(GpuResponse::ErrUnspec), fence);
++                        }
+                     }
+                 }
+ 
+@@ -642,7 +752,7 @@ impl Frontend {
+                     VIRTIO_GPU_FORMAT_R8G8B8A8_UNORM => DrmFormat::new(b'A', b'B', b'2', b'4'),
+                     _ => {
+                         error!("unrecognized virtio-gpu format {}", virtio_gpu_format);
+-                        return Err(GpuResponse::ErrUnspec);
++                        return self.finalize_rutabaga_fence(Err(GpuResponse::ErrUnspec), fence);
+                     }
+                 };
+ 
+@@ -690,7 +800,9 @@ impl Frontend {
+                 self.virtio_gpu.resource_unmap_blob(resource_id)
+             }
+             GpuCommand::GetEdid(info) => self.virtio_gpu.get_edid(info.scanout.to_native()),
+-        }
++        };
++
++        self.finalize_rutabaga_fence(resp, fence)
+     }
+ 
+     /// Processes virtio messages on `queue`.
+@@ -706,6 +818,23 @@ impl Frontend {
+         signal_used
+     }
+ 
++    /// Completes any pending `VirtioGpuRing::DisplayFlip` descriptors whose buffers have been
++    /// released by the display compositor.
++    pub fn complete_display_flips(&mut self, queue: &dyn QueueReader) -> bool {
++        let completed_flips = self.virtio_gpu.take_completed_display_flips();
++        if completed_flips.is_empty() {
++            return false;
++        }
++
++        let mut signal = false;
++        let mut fence_state = self.fence_state.lock();
++        for flip_id in completed_flips {
++            signal |= fence_state.signal_ring(VirtioGpuRing::DisplayFlip { flip_id }, 0, queue);
++        }
++
++        signal
++    }
++
+     fn process_descriptor(
+         &mut self,
+         mem: &GuestMemory,
+@@ -714,17 +843,30 @@ impl Frontend {
+         let reader = &mut desc_chain.reader;
+         let writer = &mut desc_chain.writer;
+         let mut resp = Err(GpuResponse::ErrUnspec);
++        let mut fence_result = GpuFenceResult::SignalFence;
+         let mut gpu_cmd = None;
++        let mut fence_opt = None;
+         let mut len = 0;
+         match GpuCommand::decode(reader) {
+             Ok(cmd) => {
+-                resp = self.process_gpu_command(mem, cmd, reader);
++                let ctrl_hdr = cmd.ctrl_hdr();
++                if writer.available_bytes() != 0
++                    && ctrl_hdr.flags.to_native() & VIRTIO_GPU_FLAG_FENCE != 0
++                {
++                    fence_opt = Some(RutabagaFence {
++                        flags: ctrl_hdr.flags.to_native(),
++                        fence_id: ctrl_hdr.fence_id.to_native(),
++                        ctx_id: ctrl_hdr.ctx_id.to_native(),
++                        ring_idx: ctrl_hdr.ring_idx,
++                    });
++                }
++                (resp, fence_result) = self.process_gpu_command(mem, cmd, reader, fence_opt);
+                 gpu_cmd = Some(cmd);
+             }
+             Err(e) => debug!("descriptor decode error: {}", e),
+         }
+ 
+-        let mut gpu_response = match resp {
++        let gpu_response = match resp {
+             Ok(gpu_response) => gpu_response,
+             Err(gpu_response) => {
+                 if let Some(gpu_cmd) = gpu_cmd {
+@@ -738,33 +880,10 @@ impl Frontend {
+         };
+ 
+         if writer.available_bytes() != 0 {
+-            let mut fence_id = 0;
+-            let mut ctx_id = 0;
+-            let mut flags = 0;
+-            let mut ring_idx = 0;
+-            if let Some(cmd) = gpu_cmd {
+-                let ctrl_hdr = cmd.ctrl_hdr();
+-                if ctrl_hdr.flags.to_native() & VIRTIO_GPU_FLAG_FENCE != 0 {
+-                    flags = ctrl_hdr.flags.to_native();
+-                    fence_id = ctrl_hdr.fence_id.to_native();
+-                    ctx_id = ctrl_hdr.ctx_id.to_native();
+-                    ring_idx = ctrl_hdr.ring_idx;
+-
+-                    let fence = RutabagaFence {
+-                        flags,
+-                        fence_id,
+-                        ctx_id,
+-                        ring_idx,
+-                    };
+-                    gpu_response = match self.virtio_gpu.create_fence(fence) {
+-                        Ok(_) => gpu_response,
+-                        Err(fence_resp) => {
+-                            warn!("create_fence {} -> {:?}", fence_id, fence_resp);
+-                            fence_resp
+-                        }
+-                    };
+-                }
+-            }
++            let (flags, fence_id, ctx_id, ring_idx) = match fence_opt {
++                Some(fence) => (fence.flags, fence.fence_id, fence.ctx_id, fence.ring_idx),
++                None => (0, 0, 0, 0),
++            };
+ 
+             // Prepare the response now, even if it is going to wait until
+             // fence is complete.
+@@ -773,25 +892,11 @@ impl Frontend {
+                 Err(e) => debug!("ctrl queue response encode error: {}", e),
+             }
+ 
+-            if flags & VIRTIO_GPU_FLAG_FENCE != 0 {
+-                let ring = match flags & VIRTIO_GPU_FLAG_INFO_RING_IDX {
+-                    0 => VirtioGpuRing::Global,
+-                    _ => VirtioGpuRing::ContextSpecific { ctx_id, ring_idx },
+-                };
+-
+-                // In case the fence is signaled immediately after creation, don't add a return
+-                // FenceDescriptor.
+-                let mut fence_state = self.fence_state.lock();
+-                if fence_id > *fence_state.completed_fences.get(&ring).unwrap_or(&0) {
+-                    fence_state.descs.push(FenceDescriptor {
+-                        ring,
+-                        fence_id,
+-                        desc_chain,
+-                        len,
+-                    });
+-
+-                    return None;
+-                }
++            if let GpuFenceResult::DeferSignalingFence { ring, fence_id } = fence_result {
++                return self
++                    .fence_state
++                    .lock()
++                    .defer_descriptor(ring, fence_id, desc_chain, len);
+             }
+ 
+             // No fence (or already completed fence), respond now.
+@@ -1343,6 +1448,13 @@ impl Worker {
+                 signal_used_ctrl = true;
+             }
+ 
++            if self
++                .state
++                .complete_display_flips(&activation_resources.ctrl_queue)
++            {
++                signal_used_ctrl = true;
++            }
++
+             // Process the entire control queue before the resource bridge in case a resource is
+             // created or destroyed by the control queue. Processing the resource bridge first may
+             // lead to a race condition.
+diff --git a/devices/src/virtio/gpu/virtio_gpu.rs b/devices/src/virtio/gpu/virtio_gpu.rs
+index ca8adee93..c4aef9f36 100644
+--- a/devices/src/virtio/gpu/virtio_gpu.rs
++++ b/devices/src/virtio/gpu/virtio_gpu.rs
+@@ -405,23 +405,24 @@ impl VirtioGpuScanout {
+         display: &Rc<RefCell<GpuDisplay>>,
+         resource: &mut VirtioGpuResource,
+         rutabaga: &mut Rutabaga,
+-    ) -> VirtioGpuResult {
++        flip_id: Option<u64>,
++    ) -> Result<bool, GpuResponse> {
+         let surface_id = match self.surface_id {
+             Some(id) => id,
+-            _ => return Ok(OkNoData),
++            _ => return Ok(false),
+         };
+ 
+         if let Some(import_id) =
+             VirtioGpuScanout::import_resource_to_display(display, surface_id, resource, rutabaga)
+         {
+-            display
++            let async_flip = display
+                 .borrow_mut()
+-                .flip_to(surface_id, import_id, None, None, None)
++                .flip_to_with_id(surface_id, import_id, flip_id.unwrap_or(0))
+                 .map_err(|e| {
+                     error!("flip_to failed: {:#}", e);
+                     ErrUnspec
+                 })?;
+-            return Ok(OkNoData);
++            return Ok(async_flip);
+         }
+ 
+         // Import failed, fall back to a copy.
+@@ -429,7 +430,7 @@ impl VirtioGpuScanout {
+ 
+         // Prevent overwriting a buffer that is currently being used by the compositor.
+         if display.next_buffer_in_use(surface_id) {
+-            return Ok(OkNoData);
++            return Ok(false);
+         }
+ 
+         let fb = display
+@@ -446,7 +447,7 @@ impl VirtioGpuScanout {
+         rutabaga.transfer_read(0, resource.resource_id, transfer, Some(buf))?;
+ 
+         display.flip(surface_id);
+-        Ok(OkNoData)
++        Ok(false)
+     }
+ 
+     fn import_resource_to_display(
+@@ -535,6 +536,7 @@ pub struct VirtioGpu {
+     udmabuf_driver: Option<UdmabufDriver>,
+     snapshot_scratch_directory: Option<PathBuf>,
+     deferred_snapshot_load: Option<VirtioGpuSnapshot>,
++    next_flip_id: u64,
+ }
+ 
+ // Only the 2D mode is supported. Notes on `VirtioGpu` fields:
+@@ -645,6 +647,7 @@ impl VirtioGpu {
+             udmabuf_driver,
+             deferred_snapshot_load: None,
+             snapshot_scratch_directory,
++            next_flip_id: 1,
+         })
+     }
+ 
+@@ -792,6 +795,11 @@ impl VirtioGpu {
+         ProcessDisplayResult::Success
+     }
+ 
++    /// Drains any flip IDs whose display buffers have been released by the compositor.
++    pub fn take_completed_display_flips(&mut self) -> Vec<u64> {
++        self.display.borrow_mut().take_completed_flips()
++    }
++
+     /// Sets the given resource id as the source of scanout to the display.
+     pub fn set_scanout(
+         &mut self,
+@@ -811,13 +819,24 @@ impl VirtioGpu {
+ 
+     /// If the resource is the scanout resource, flush it to the display.
+     pub fn flush_resource(&mut self, resource_id: u32) -> VirtioGpuResult {
++        self.flush_resource_with_flip(resource_id, false)
++            .map(|_| OkNoData)
++    }
++
++    /// If the resource is the scanout resource, flush it to the display, optionally tracking
++    /// asynchronous buffer release via a flip ID when `want_async_flip` is true.
++    pub fn flush_resource_with_flip(
++        &mut self,
++        resource_id: u32,
++        want_async_flip: bool,
++    ) -> Result<Option<u64>, GpuResponse> {
+         if resource_id == 0 {
+-            return Ok(OkNoData);
++            return Ok(None);
+         }
+ 
+         #[cfg(windows)]
+         match self.rutabaga.resource_flush(resource_id) {
+-            Ok(_) => return Ok(OkNoData),
++            Ok(_) => return Ok(None),
+             Err(RutabagaError::MagmaGpuError(RutabagaUnsupported)) => {}
+             Err(e) => return Err(ErrRutabaga(e)),
+         }
+@@ -830,20 +849,30 @@ impl VirtioGpu {
+         // `resource_id` has already been verified to be non-zero
+         let resource_id = match NonZeroU32::new(resource_id) {
+             Some(id) => Some(id),
+-            None => return Ok(OkNoData),
++            None => return Ok(None),
+         };
+ 
++        let mut pending_flip_id = None;
+         for scanout in self.scanouts.values_mut() {
+             if scanout.resource_id == resource_id {
+-                scanout.flush(&self.display, resource, &mut self.rutabaga)?;
++                let flip_id = if want_async_flip {
++                    let id = self.next_flip_id;
++                    self.next_flip_id = self.next_flip_id.wrapping_add(1).max(1);
++                    Some(id)
++                } else {
++                    None
++                };
++                if scanout.flush(&self.display, resource, &mut self.rutabaga, flip_id)? {
++                    pending_flip_id = flip_id;
++                }
+             }
+         }
+         if self.cursor_scanout.resource_id == resource_id {
+             self.cursor_scanout
+-                .flush(&self.display, resource, &mut self.rutabaga)?;
++                .flush(&self.display, resource, &mut self.rutabaga, None)?;
+         }
+ 
+-        Ok(OkNoData)
++        Ok(pending_flip_id)
+     }
+ 
+     /// Updates the cursor's memory to the given resource_id, and sets its position to the given

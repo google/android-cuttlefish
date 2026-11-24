@@ -1,0 +1,99 @@
+From e6f2c621475d1452558a5d36b0c9882e65258ee6 Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Mon, 23 Nov 2026 09:58:49 -0800
+Subject: [PATCH] gpu: bind mount host runtime paths in render server jail
+
+Mount /dev/shm, a /tmp tmpfs, /etc, and host build / LD_LIBRARY_PATH
+roots into the gpu_render_server minijail and canonicalize the render
+server path so broccolini and host Vulkan/gfxstream libraries resolve
+inside the sandbox.
+
+Bug: b/577098280
+---
+ src/crosvm/sys/linux/gpu.rs | 59 +++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 57 insertions(+), 2 deletions(-)
+
+diff --git a/src/crosvm/sys/linux/gpu.rs b/src/crosvm/sys/linux/gpu.rs
+index de9648d8a..4f132c6b0 100644
+--- a/src/crosvm/sys/linux/gpu.rs
++++ b/src/crosvm/sys/linux/gpu.rs
+@@ -295,6 +295,12 @@ pub fn start_gpu_render_server(
+     let (server_socket, client_socket) =
+         UnixSeqpacket::pair().context("failed to create render server socket")?;
+ 
++    #[allow(unused_mut)]
++    let mut cmd = render_server_parameters
++        .path
++        .canonicalize()
++        .unwrap_or_else(|_| render_server_parameters.path.clone());
++
+     let (jail, cache_info) = if let Some(jail_config) = cfg.jail_config.as_ref() {
+         let mut config = SandboxConfig::new(jail_config, "gpu_render_server");
+         // Allow changes made externally take effect immediately to allow shaders to be dynamically
+@@ -349,6 +355,57 @@ pub fn start_gpu_render_server(
+             }
+         }
+ 
++        let dev_shm_path = Path::new("/dev/shm");
++        if dev_shm_path.exists() {
++            jail.mount_bind(dev_shm_path, dev_shm_path, true)?;
++        }
++
++        jail.mount_with_data(
++            Path::new("none"),
++            Path::new("/tmp"),
++            "tmpfs",
++            (libc::MS_NOSUID | libc::MS_NODEV) as usize,
++            "size=67108864",
++        )?;
++
++        let etc_path = Path::new("/etc");
++        if etc_path.exists() {
++            jail.mount_bind(etc_path, etc_path, false)?;
++        }
++
++        let mut mounted_roots = Vec::new();
++        if let Ok(exe_path) = std::env::current_exe() {
++            let mut root_candidate = exe_path.parent();
++            while let Some(dir) = root_candidate {
++                let name = dir.file_name().and_then(|n| n.to_str()).unwrap_or("");
++                if name == "bin" || name.ends_with("-linux-gnu") {
++                    root_candidate = dir.parent();
++                } else {
++                    break;
++                }
++            }
++            if let Some(host_root) = root_candidate {
++                if host_root.exists() && host_root != Path::new("/") {
++                    jail.mount_bind(host_root, host_root, false)?;
++                    mounted_roots.push(host_root.to_path_buf());
++                }
++            }
++        }
++        if let Ok(ld_lib_path) = std::env::var("LD_LIBRARY_PATH") {
++            for entry in ld_lib_path.split(':').filter(|s| !s.is_empty()) {
++                let p = Path::new(entry);
++                if p.is_absolute()
++                    && p.exists()
++                    && !p.starts_with("/usr")
++                    && !p.starts_with("/lib")
++                    && !mounted_roots.iter().any(|r| p.starts_with(r))
++                {
++                    jail.mount_bind(p, p, false)?;
++                    mounted_roots.push(p.to_path_buf());
++                }
++            }
++        }
++
+         (jail, Some(cache_info))
+     } else {
+         (Minijail::new().context("failed to create jail")?, None)
+@@ -360,8 +417,6 @@ pub fn start_gpu_render_server(
+         libc::STDERR_FILENO,
+     ];
+ 
+-    #[allow(unused_mut)]
+-    let mut cmd = render_server_parameters.path.clone();
+     #[cfg(feature = "appimage")]
+     if let Ok(appdir) = std::env::var("APPDIR") {
+         if let Ok(rel_path) = cmd.strip_prefix("/") {

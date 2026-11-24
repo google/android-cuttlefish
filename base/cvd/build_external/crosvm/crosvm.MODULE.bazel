@@ -1,7 +1,11 @@
 # this needs to be at parity with with build_external/crosvm/crosvm.config.toml
 CROSVM_REMOTE = "https://chromium.googlesource.com/crosvm/crosvm"
 
-CROSVM_REV = "597fa65c644c3880e2eba24a6708ab93b3321d4a"
+CROSVM_REV = "7644716341320502d04d9b9e96d8bed591bb0c16"
+
+RUTABAGA_REMOTE = "https://github.com/magma-gpu/rutabaga_gfx.git"
+
+RUTABAGA_REV = "aefe66714318166a778920d26598ed93aa212578"
 
 # note that this won't use the same source checkout as the git_repository directive below
 #
@@ -38,10 +42,33 @@ crosvm_bin.spec(
     repositories = ["crosvm_bin"],
     rev = CROSVM_REV,
 )
+crosvm_bin.spec(
+    artifact = "bin",
+    features = [
+        "gfxstream",
+        "virgl_renderer",
+        "vulkano",
+    ],
+    git = RUTABAGA_REMOTE,
+    package = "broccolini",
+    repositories = ["crosvm_bin"],
+    rev = RUTABAGA_REV,
+)
+crosvm_bin.spec(
+    features = [
+        "gbm",
+        "gfxstream",
+        "virgl_renderer",
+        "vulkano",
+    ],
+    git = RUTABAGA_REMOTE,
+    package = "rutabaga_gfx",
+    repositories = ["crosvm_bin"],
+    rev = RUTABAGA_REV,
+)
 crosvm_bin.annotation(
-    crate = "crosvm",
+    crate = "broccolini",
     gen_all_binaries = True,
-    patch_args = ["-p1"],
     repositories = ["crosvm_bin"],
     rustc_flags = [
         # Look for shared libraries in the same directory as the binary,
@@ -56,23 +83,17 @@ crosvm_bin.annotation(
     ],
 )
 crosvm_bin.annotation(
-    crate = "rutabaga_gfx",
-    crate_features = [
-        "gbm",
-        "virgl_renderer",
-    ],
-    gen_build_script = "off",
+    crate = "crosvm",
+    gen_all_binaries = True,
     patch_args = ["-p1"],
     patches = [
-        "@//build_external/crosvm:PATCH.rutabaga_gfx_rendernode.patch",
-        "@//build_external/crosvm:PATCH.rutabaga_gfx_mod_rs.patch",
-        "@//build_external/crosvm:PATCH.rutabaga_gfx_minigbm_rs.patch",
-        "@//build_external/crosvm:PATCH.rutabaga_gfx_minigbm_bindings_rs.patch",
-        "@//build_external/crosvm:PATCH.rutabaga_gfx_gralloc_rs.patch",
+        "@//build_external/crosvm:PATCH.crosvm_01_nvidia_device_nodes.patch",
+        "@//build_external/crosvm:PATCH.crosvm_02_render_server_runtime_mounts.patch",
+        "@//build_external/crosvm:PATCH.crosvm_03_remote_context_types.patch",
     ],
     repositories = ["crosvm_bin"],
     rustc_flags = [
-        # Look for shared libraries in the same directory as this object,
+        # Look for shared libraries in the same directory as the binary,
         # or in the adjacent lib64 directory.
         "-Clink-arg=-Wl,-rpath,$$ORIGIN",
         "-Clink-arg=-Wl,-rpath,$$ORIGIN/../lib64",
@@ -84,10 +105,64 @@ crosvm_bin.annotation(
     ],
 )
 crosvm_bin.annotation(
+    crate = "devices",
+    patch_args = ["-p2"],
+    patches = [
+        "@//build_external/crosvm:PATCH.devices_01_prefer_descriptor_for_dmabufs.patch",
+        "@//build_external/crosvm:PATCH.devices_02_remote_context_types.patch",
+        "@//build_external/crosvm:PATCH.devices_03_fencing.patch",
+    ],
+    repositories = ["crosvm_bin"],
+)
+crosvm_bin.annotation(
+    crate = "gpu_display",
+    patch_args = ["-p2"],
+    patches = [
+        "@//build_external/crosvm:PATCH.gpu_display_01_fencing.patch",
+    ],
+    repositories = ["crosvm_bin"],
+)
+crosvm_bin.annotation(
+    crate = "rutabaga_gfx",
+    gen_build_script = "off",
+    override_target_lib = "@//build_external/crosvm:rutabaga_gfx",
+    repositories = ["crosvm_bin"],
+    version = "=0.1.80",
+)
+crosvm_bin.annotation(
+    crate = "rutabaga_gfx",
+    crate_features = [
+        "gbm",
+        "gfxstream",
+        "virgl_renderer",
+        "vulkano",
+    ],
+    gen_build_script = "off",
+    repositories = ["crosvm_bin"],
+    rustc_flags = [
+        "--cfg=gfxstream_unstable",
+        # Look for shared libraries in the same directory as this object,
+        # or in the adjacent lib64 directory.
+        "-Clink-arg=-Wl,-rpath,$$ORIGIN",
+        "-Clink-arg=-Wl,-rpath,$$ORIGIN/../lib64",
+    ],
+    version = "=0.1.85",
+    deps = [
+        "@@//:gbm",
+        "@@//:gfxstream_backend_import",
+        "@@//:virglrenderer_import",
+    ],
+)
+crosvm_bin.annotation(
     build_script_data = ["@@//:compile_seccomp_policy_exe"],
     build_script_data_glob = ["seccomp/**"],
     build_script_env = {"COMPILE_SECCOMP_POLICY": "$(execpath @@//:compile_seccomp_policy_exe)"},
     crate = "jail",
+    patch_args = ["-p2"],
+    patches = [
+        "@//build_external/crosvm:PATCH.jail_01_inline_gpu_common_policy.patch",
+        "@//build_external/crosvm:PATCH.jail_02_broccolini_seccomp_policy.patch",
+    ],
     repositories = ["crosvm_bin"],
 )
 
@@ -120,7 +195,6 @@ crosvm_bin.annotation(
 crosvm_bin.from_specs(
     name = "crosvm_bin",
     cargo_config = "@//build_external/crosvm:crosvm.config.toml",
-    cargo_lockfile = "@crosvm//:Cargo.lock",
     # Executable dependencies are an unstable cargo feature.
     host_tools = "@rust_host_tools_nightly",
 )

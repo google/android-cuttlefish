@@ -1,0 +1,214 @@
+From fe420676b769350e1438a35a040e9c5c3ddec7f6 Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Mon, 23 Nov 2026 09:51:46 -0800
+Subject: [PATCH] gpu: update gpu_render_server.policy for broccolini
+
+Relax argument-filtered rules from gpu_common.policy (madvise, mprotect,
+mmap, ioctl, fcntl, prctl, tgkill) and add rules for broccolini and
+Vulkan drivers on x86_64 and aarch64.
+
+Bug: b/577098280
+---
+ jail/seccomp/aarch64/gpu_render_server.policy | 62 ++++++++++++++++++++----
+ jail/seccomp/x86_64/gpu_render_server.policy  | 69 +++++++++++++++++++++++----
+ 2 files changed, 112 insertions(+), 19 deletions(-)
+
+diff --git a/jail/seccomp/aarch64/gpu_render_server.policy b/jail/seccomp/aarch64/gpu_render_server.policy
+index c8b360ae0..eef59f87a 100644
+--- a/jail/seccomp/aarch64/gpu_render_server.policy
++++ b/jail/seccomp/aarch64/gpu_render_server.policy
+@@ -26,7 +26,7 @@ io_uring_setup: 1
+ io_uring_register: 1
+ io_uring_enter: 1
+ kill: 1
+-madvise: arg2 == MADV_DONTNEED || arg2 == MADV_DONTDUMP || arg2 == MADV_REMOVE || arg2 == MADV_MERGEABLE || arg2 == MADV_FREE || arg2 == MADV_GUARD_INSTALL || arg2 == MADV_GUARD_REMOVE || arg2 == MADV_HUGEPAGE
++madvise: 1
+ membarrier: 1
+ # memfd_create is used for sharing memory with wayland.
+ # For normal use case, we allow arg1 == MFD_CLOEXEC|MFD_ALLOW_SEALING, with or without MFD_NOEXEC_SEAL.
+@@ -73,16 +73,12 @@ newfstatat: 1
+ getdents64: 1
+ sysinfo: 1
+ fstatfs: 1
+-prctl: arg0 == PR_SET_NAME || arg0 == PR_GET_NAME || arg0 == PR_SET_VMA || arg0 == PR_SET_PDEATHSIG || arg0 == PR_GET_AUXV
+-
+-# 0x6400 == DRM_IOCTL_BASE, 0x8000 = KBASE_IOCTL_TYPE (mali), 0x40086200 = DMA_BUF_IOCTL_SYNC, 0x40087543 == UDMABUF_CREATE_LIST
+-# (from vmm-swap below) 0xc018aa3f == UFFDIO_API, 0xaa00 == USERFAULTFD_IOC_NEW
+-# (from wl_device) arg1 == FIONBIO || arg1 == DMA_BUF_IOCTL_SYNC || arg1 == SYNC_IOC_FILE_INFO || arg1 & DRM_IOCTL_BASE
+-ioctl: arg1 & 0x6400 || arg1 & 0x8000 || arg1 == 0x40086200 || arg1 == 0x40087543 || arg1 == 0xc018aa3f || arg1 == 0xaa00 || arg1 == 0x5421 || arg1 == 0x40086200 || arg1 == 0xc0383e04 || arg1 & 0x6400
++prctl: 1
++ioctl: 1
+ 
+ ## mmap/mprotect differ from the common_device.policy
+-mmap: arg2 == PROT_READ|PROT_WRITE || arg2 == PROT_NONE || arg2 == PROT_READ|PROT_EXEC || arg2 == PROT_WRITE || arg2 == PROT_READ
+-mprotect: arg2 == PROT_READ|PROT_WRITE || arg2 == PROT_NONE || arg2 == PROT_READ
++mmap: 1
++mprotect: 1
+ openat: 1
+ 
+ ## Rules specific to pvr
+@@ -112,3 +108,51 @@ userfaultfd: 1
+ 
+ ## Rules for mali shader dump (debug workflow)
+ mkdirat: 1
++
++# Rules for broccolini
++clone: 1
++getpeername: 1
++getpgid: 1
++getppid: 1
++getrlimit: 1
++getsockname: 1
++prlimit64: 1
++set_tid_address: 1
++setsockopt: 1
++signalfd4: 1
++socket: arg0 == AF_UNIX
++socketpair: arg0 == AF_UNIX
++wait4: 1
++waitid: 1
++
++# Rules for Vulkan drivers
++capget: 1
++fallocate: 1
++fchmod: 1
++fchmodat: 1
++fdatasync: 1
++flock: 1
++fsync: 1
++getpriority: 1
++getresgid: 1
++getresuid: 1
++inotify_add_watch: 1
++inotify_init1: 1
++inotify_rm_watch: 1
++msync: 1
++pread64: 1
++preadv2: 1
++pwrite64: 1
++pwritev2: 1
++renameat: 1
++renameat2: 1
++sched_get_priority_max: 1
++sched_get_priority_min: 1
++sched_getparam: 1
++sched_getscheduler: 1
++sched_setparam: 1
++shmat: 1
++shmctl: 1
++shmdt: 1
++shmget: 1
++statfs: 1
+diff --git a/jail/seccomp/x86_64/gpu_render_server.policy b/jail/seccomp/x86_64/gpu_render_server.policy
+index 2d3ca1066..20853ed33 100644
+--- a/jail/seccomp/x86_64/gpu_render_server.policy
++++ b/jail/seccomp/x86_64/gpu_render_server.policy
+@@ -27,7 +27,7 @@ io_uring_setup: 1
+ io_uring_register: 1
+ io_uring_enter: 1
+ kill: 1
+-madvise: arg2 == MADV_DONTNEED || arg2 == MADV_DONTDUMP || arg2 == MADV_REMOVE || arg2 == MADV_MERGEABLE || arg2 == MADV_FREE || arg2 == MADV_GUARD_INSTALL || arg2 == MADV_GUARD_REMOVE
++madvise: 1
+ membarrier: 1
+ # memfd_create is used for sharing memory with wayland.
+ # For normal use case, we allow arg1 == MFD_CLOEXEC|MFD_ALLOW_SEALING, with or without MFD_NOEXEC_SEAL.
+@@ -58,7 +58,7 @@ sendmsg: 1
+ sendto: 1
+ set_robust_list: 1
+ sigaltstack: 1
+-tgkill: arg2 == SIGABRT
++tgkill: 1
+ time: 1
+ write: 1
+ writev: 1
+@@ -67,29 +67,26 @@ unlinkat: 1
+ 
+ # Rules specific to gpu
+ connect: 1
+-# 1033 is F_ADD_SEALS, 1034 is F_GET_SEALS
+-fcntl: arg1 == F_DUPFD_CLOEXEC || arg1 == F_GETFD || arg1 == F_SETFD || \
+-       arg1 == F_GETFL || arg1 == F_SETFL || arg1 == 1033 || arg1 == 1034
++fcntl: 1
+ fstat: 1
+ getdents: 1
+ getdents64: 1
+ geteuid: 1
+ getrandom: 1
+ getuid: 1
+-# 0x40086200 = DMA_BUF_IOCTL_SYNC, 0x6400 == DRM_IOCTL_BASE, 0x40087543 == UDMABUF_CREATE_LIST
+-ioctl: arg1 == FIONBIO || arg1 == FIOCLEX || arg1 == 0x40086200 || arg1 & 0x6400 || arg1 == 0x40087543 || arg1 == 0x5421 || arg1 == 0xc0383e04 || arg1 == 0xc018aa3f || arg1 == 0xaa00
++ioctl: 1
+ lseek: 1
+ lstat: 1
+ # mmap/mprotect/open/openat differ from the common_device.policy
+-mmap: arg2 == PROT_READ|PROT_WRITE || arg2 == PROT_NONE || arg2 == PROT_READ|PROT_EXEC || arg2 == PROT_WRITE || arg2 == PROT_READ
+-mprotect: arg2 == PROT_READ|PROT_WRITE || arg2 == PROT_NONE || arg2 == PROT_READ
++mmap: 1
++mprotect: 1
+ open: 1
+ openat: 1
+ stat: 1
+ statx: 1
+ sysinfo: 1
+ fstatfs: 1
+-prctl: arg0 == PR_SET_NAME || arg0 == PR_GET_NAME || arg0 == PR_SET_VMA || arg0 == PR_SET_PDEATHSIG || arg0 == PR_GET_AUXV
++prctl: 1
+ 
+ # Required for perfetto tracing
+ # fcntl: arg1 == F_SETFD || arg1 == F_GETFL || arg1 == F_SETFL (merged above)
+@@ -122,3 +119,55 @@ getegid: 1
+ userfaultfd: 1
+ # 0xc018aa3f == UFFDIO_API, 0xaa00 == USERFAULTFD_IOC_NEW
+ # ioctl: arg1 == 0xc018aa3f || arg1 == 0xaa00
++
++# Rules for broccolini
++arch_prctl: 1
++clone: 1
++dup3: 1
++getpeername: 1
++getpgid: 1
++getpgrp: 1
++getppid: 1
++getrlimit: 1
++getsockname: 1
++pipe: 1
++prlimit64: 1
++set_tid_address: 1
++setsockopt: 1
++signalfd4: 1
++socket: arg0 == AF_UNIX
++socketpair: arg0 == AF_UNIX
++wait4: 1
++waitid: 1
++
++# Rules for Vulkan drivers
++capget: 1
++chmod: 1
++faccessat: 1
++faccessat2: 1
++fchmod: 1
++fchmodat: 1
++fdatasync: 1
++fsync: 1
++getpriority: 1
++getresgid: 1
++getresuid: 1
++mkdirat: 1
++msync: 1
++pread64: 1
++preadv2: 1
++pwrite64: 1
++pwritev2: 1
++renameat: 1
++renameat2: 1
++rmdir: 1
++sched_get_priority_max: 1
++sched_get_priority_min: 1
++sched_getparam: 1
++sched_getscheduler: 1
++sched_setparam: 1
++shmat: 1
++shmctl: 1
++shmdt: 1
++shmget: 1
++statfs: 1

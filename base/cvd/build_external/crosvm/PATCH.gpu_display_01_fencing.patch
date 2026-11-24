@@ -1,0 +1,292 @@
+From 84eb1161c77e7116fac08629511aa2e0e2063ad6 Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Sat, 21 Nov 2026 10:05:59 -0800
+Subject: [PATCH] WIP: gpu: fencing (gpu_display)
+
+Track asynchronous Wayland dmabuf buffer release via flip IDs in
+gpu_display.
+
+Bug: b/577098280
+---
+ gpu_display/src/display_wl.c      | 73 +++++++++++++++++++++++++++++++++++++--
+ gpu_display/src/dwl.rs            |  8 ++++-
+ gpu_display/src/gpu_display_wl.rs | 21 ++++++++++-
+ gpu_display/src/lib.rs            | 37 ++++++++++++++++++++
+ 4 files changed, 136 insertions(+), 3 deletions(-)
+
+diff --git a/gpu_display/src/display_wl.c b/gpu_display/src/display_wl.c
+index 73a954cc3..9d08a9d10 100644
+--- a/gpu_display/src/display_wl.c
++++ b/gpu_display/src/display_wl.c
+@@ -109,6 +109,10 @@ struct dwl_context {
+ 	size_t event_read_pos;
+ 	size_t event_write_pos;
+ 
++	uint64_t completed_flip_cbuf[EVENT_BUF_SIZE];
++	size_t completed_flip_read_pos;
++	size_t completed_flip_write_pos;
++
+ 	dwl_error_callback_type error_callback;
+ };
+ 
+@@ -122,6 +126,7 @@ struct dwl_dmabuf {
+ 	uint32_t height;
+ 	uint32_t import_id;
+ 	bool in_use;
++	uint64_t flip_id;
+ 	struct wl_buffer *buffer;
+ 	struct dwl_context *context;
+ };
+@@ -135,6 +140,7 @@ struct dwl_surface {
+ 	struct wp_viewport *viewport;
+ 	struct wp_virtio_gpu_surface_metadata_v1 *virtio_gpu_surface_metadata;
+ 	struct wl_subsurface *subsurface;
++	struct dwl_dmabuf *prev_dmabuf;
+ 	uint32_t width;
+ 	uint32_t height;
+ 	uint32_t surface_id;
+@@ -273,6 +279,18 @@ static void dwl_context_push_event(struct dwl_context *self,
+ 		self->event_write_pos = 0;
+ }
+ 
++static void dwl_context_push_completed_flip(struct dwl_context *self,
++					    uint64_t flip_id)
++{
++	if (!self || flip_id == 0)
++		return;
++
++	self->completed_flip_cbuf[self->completed_flip_write_pos] = flip_id;
++
++	if (++self->completed_flip_write_pos == EVENT_BUF_SIZE)
++		self->completed_flip_write_pos = 0;
++}
++
+ static void wl_keyboard_enter(void *data, struct wl_keyboard *wl_keyboard,
+ 			      uint32_t serial, struct wl_surface *surface,
+ 			      struct wl_array *keys)
+@@ -832,6 +850,11 @@ static void dmabuf_buffer_release(void *data, struct wl_buffer *buffer)
+ 	(void)buffer;
+ 
+ 	dmabuf->in_use = false;
++	if (dmabuf->flip_id != 0) {
++		dwl_context_push_completed_flip(dmabuf->context,
++						dmabuf->flip_id);
++		dmabuf->flip_id = 0;
++	}
+ }
+ 
+ static const struct wl_buffer_listener dmabuf_buffer_listener = {
+@@ -930,8 +953,21 @@ struct dwl_dmabuf *dwl_context_dmabuf_new(struct dwl_context *self,
+ 
+ void dwl_dmabuf_destroy(struct dwl_dmabuf **self)
+ {
++	if ((*self)->flip_id != 0) {
++		dwl_context_push_completed_flip((*self)->context,
++						(*self)->flip_id);
++		(*self)->flip_id = 0;
++	}
++	size_t i;
++	for (i = 0; i < MAX_BUFFER_COUNT; i++) {
++		struct dwl_surface *surface = (*self)->context->surfaces[i];
++		if (surface && surface->prev_dmabuf == *self) {
++			surface->prev_dmabuf = NULL;
++		}
++	}
+ 	dwl_context_remove_dmabuf((*self)->context, (*self)->import_id);
+ 	wl_buffer_destroy((*self)->buffer);
++	wl_display_flush((*self)->context->display);
+ 	free(*self);
+ 	*self = NULL;
+ }
+@@ -1260,20 +1296,35 @@ void dwl_surface_flip(struct dwl_surface *self, size_t buffer_index)
+ 	self->buffer_use_bit_mask |= 1 << buffer_index;
+ }
+ 
+-void dwl_surface_flip_to(struct dwl_surface *self, uint32_t import_id)
++bool dwl_surface_flip_to(struct dwl_surface *self, uint32_t import_id,
++			 uint64_t flip_id)
+ {
+ 	// Surface and dmabuf have to exist in same context.
+ 	struct dwl_dmabuf *dmabuf = dwl_context_get_dmabuf(self->context,
+ 							   import_id);
+ 	if (!dmabuf)
+-		return;
++		return false;
+ 
+ 	if (self->width != dmabuf->width || self->height != dmabuf->height)
+-		return;
++		return false;
++
++	bool wait_for_prev = false;
++	if (self->wl_surface && self->prev_dmabuf &&
++	    self->prev_dmabuf->in_use && flip_id != 0) {
++		if (self->prev_dmabuf->flip_id != 0) {
++			dwl_context_push_completed_flip(
++			    self->context, self->prev_dmabuf->flip_id);
++		}
++		self->prev_dmabuf->flip_id = flip_id;
++		wait_for_prev = true;
++	}
++
+ 	wl_surface_attach(self->wl_surface, dmabuf->buffer, 0, 0);
+ 	wl_surface_damage(self->wl_surface, 0, 0, self->width, self->height);
+ 	dwl_surface_commit(self);
+ 	dmabuf->in_use = true;
++	self->prev_dmabuf = dmabuf;
++	return wait_for_prev;
+ }
+ 
+ bool dwl_surface_close_requested(const struct dwl_surface *self)
+@@ -1313,6 +1364,22 @@ void dwl_context_next_event(struct dwl_context *self, struct dwl_event *event)
+ 		self->event_read_pos = 0;
+ }
+ 
++bool dwl_context_pending_completed_flips(const struct dwl_context *self)
++{
++	return self->completed_flip_write_pos != self->completed_flip_read_pos;
++}
++
++uint64_t dwl_context_next_completed_flip(struct dwl_context *self)
++{
++	uint64_t flip_id =
++	    self->completed_flip_cbuf[self->completed_flip_read_pos];
++
++	if (++self->completed_flip_read_pos == EVENT_BUF_SIZE)
++		self->completed_flip_read_pos = 0;
++
++	return flip_id;
++}
++
+ void dwl_surface_set_scanout_id(struct dwl_surface *self, uint32_t scanout_id)
+ {
+ 	if (self->virtio_gpu_surface_metadata) {
+diff --git a/gpu_display/src/dwl.rs b/gpu_display/src/dwl.rs
+index 4831248ae..78e6c76e3 100644
+--- a/gpu_display/src/dwl.rs
++++ b/gpu_display/src/dwl.rs
+@@ -157,7 +157,7 @@ extern "C" {
+     pub fn dwl_surface_flip(self_: *mut dwl_surface, buffer_index: usize);
+ }
+ extern "C" {
+-    pub fn dwl_surface_flip_to(self_: *mut dwl_surface, import_id: u32);
++    pub fn dwl_surface_flip_to(self_: *mut dwl_surface, import_id: u32, flip_id: u64) -> bool;
+ }
+ extern "C" {
+     pub fn dwl_surface_close_requested(self_: *const dwl_surface) -> bool;
+@@ -174,6 +174,12 @@ extern "C" {
+ extern "C" {
+     pub fn dwl_context_next_event(self_: *mut dwl_context, event: *mut dwl_event);
+ }
++extern "C" {
++    pub fn dwl_context_pending_completed_flips(self_: *const dwl_context) -> bool;
++}
++extern "C" {
++    pub fn dwl_context_next_completed_flip(self_: *mut dwl_context) -> u64;
++}
+ extern "C" {
+     pub fn dwl_surface_set_scanout_id(self_: *mut dwl_surface, scanout_id: u32);
+ }
+diff --git a/gpu_display/src/gpu_display_wl.rs b/gpu_display/src/gpu_display_wl.rs
+index d7b16f63b..9bc3635ea 100644
+--- a/gpu_display/src/gpu_display_wl.rs
++++ b/gpu_display/src/gpu_display_wl.rs
+@@ -171,10 +171,17 @@ impl GpuDisplaySurface for WaylandSurface {
+     ) -> anyhow::Result<Waitable> {
+         // SAFETY:
+         // Safe because only a valid surface and import_id is used.
+-        unsafe { dwl_surface_flip_to(self.surface(), import_id) };
++        unsafe { dwl_surface_flip_to(self.surface(), import_id, 0) };
+         Ok(Waitable::signaled())
+     }
+ 
++    fn flip_to_with_id(&mut self, import_id: u32, flip_id: u64) -> anyhow::Result<bool> {
++        // SAFETY:
++        // Safe because only a valid surface and import_id is used.
++        let pending = unsafe { dwl_surface_flip_to(self.surface(), import_id, flip_id) };
++        Ok(pending)
++    }
++
+     fn commit(&mut self) -> GpuDisplayResult<()> {
+         // SAFETY:
+         // Safe because only a valid surface is used.
+@@ -300,6 +307,18 @@ impl DisplayT for DisplayWl {
+         unsafe { dwl_context_pending_events(self.ctx()) }
+     }
+ 
++    fn take_completed_flips(&mut self) -> Vec<u64> {
++        let mut completed = Vec::new();
++        // SAFETY:
++        // Safe because self.ctx() is a valid dwl_context pointer.
++        unsafe {
++            while dwl_context_pending_completed_flips(self.ctx()) {
++                completed.push(dwl_context_next_completed_flip(self.ctx()));
++            }
++        }
++        completed
++    }
++
+     fn next_event(&mut self) -> GpuDisplayResult<u64> {
+         let ev = self.pop_event();
+         let descriptor = ev.surface_descriptor as u64;
+diff --git a/gpu_display/src/lib.rs b/gpu_display/src/lib.rs
+index bea90e4ee..e0294294e 100644
+--- a/gpu_display/src/lib.rs
++++ b/gpu_display/src/lib.rs
+@@ -247,6 +247,14 @@ trait GpuDisplaySurface {
+         Ok(Waitable::signaled())
+     }
+ 
++    /// Puts the specified import_id on the screen with an optional async completion flip_id.
++    /// Returns true if the display backend will signal completion of `flip_id` asynchronously via
++    /// `take_completed_flips()`.
++    fn flip_to_with_id(&mut self, import_id: u32, _flip_id: u64) -> anyhow::Result<bool> {
++        self.flip_to(import_id, None, None, None)?;
++        Ok(false)
++    }
++
+     /// Commits the surface to the compositor.
+     fn commit(&mut self) -> GpuDisplayResult<()> {
+         Ok(())
+@@ -298,6 +306,11 @@ trait DisplayT: AsRawDescriptor {
+         false
+     }
+ 
++    /// Returns any flip IDs whose display buffers have been released by the compositor.
++    fn take_completed_flips(&mut self) -> Vec<u64> {
++        Vec::new()
++    }
++
+     /// Sends any pending commands to the compositor.
+     fn flush(&self) {
+         // no-op
+@@ -701,6 +714,30 @@ impl GpuDisplay {
+             .context("failed in flip on GpuDisplaySurface")
+     }
+ 
++    /// Changes the visible contents of the identified surface to that of the identified imported
++    /// buffer, associating `flip_id` with its release if supported by the display backend.
++    /// Returns `Ok(true)` if `flip_id` will be reported asynchronously via `take_completed_flips()`.
++    pub fn flip_to_with_id(
++        &mut self,
++        surface_id: u32,
++        import_id: u32,
++        flip_id: u64,
++    ) -> anyhow::Result<bool> {
++        let surface = self
++            .surfaces
++            .get_mut(&surface_id)
++            .ok_or(GpuDisplayError::InvalidSurfaceId)?;
++
++        surface
++            .flip_to_with_id(import_id, flip_id)
++            .context("failed in flip_to_with_id on GpuDisplaySurface")
++    }
++
++    /// Drains any flip IDs that have completed since the last call.
++    pub fn take_completed_flips(&mut self) -> Vec<u64> {
++        self.inner.take_completed_flips()
++    }
++
+     /// Sets the mouse mode used on this surface.
+     pub fn set_mouse_mode(
+         &mut self,

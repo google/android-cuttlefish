@@ -1,0 +1,60 @@
+From 44af19cec3e81ebe64819e34cd8a9d3c0359daad Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Fri, 20 Nov 2026 15:51:36 -0800
+Subject: [PATCH] gpu: add remote-context-types flag to route capsets to
+ broccolini
+
+Add remote-context-types (remote_capset_mask) to GpuParameters so
+capsets in remote-context-types are passed to broccolini
+(--context-types and --renderer-features) and routed via ZygoteChannel
+to run in isolated worker processes, while capsets in context-types
+continue to run in-process within the virtio-gpu device.
+
+Bug: b/577098280
+---
+ devices/src/virtio/gpu/mod.rs        | 3 ++-
+ devices/src/virtio/gpu/parameters.rs | 3 +++
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/devices/src/virtio/gpu/mod.rs b/devices/src/virtio/gpu/mod.rs
+index 598b52901..4eaf155b9 100644
+--- a/devices/src/virtio/gpu/mod.rs
++++ b/devices/src/virtio/gpu/mod.rs
+@@ -946,6 +946,7 @@ fn build_rutabaga(
+     };
+ 
+     RutabagaBuilder::new(gpu_parameters.capset_mask, fence_handler)
++        .set_remote_capset_mask(gpu_parameters.remote_capset_mask)
+         .set_default_component(rutabaga_component)
+         .set_display_width(display_width)
+         .set_display_height(display_height)
+@@ -1533,7 +1534,7 @@ impl Gpu {
+             gpu_display_wait_descriptor_ctrl_wr,
+             #[cfg(windows)]
+             gpu_display_wait_descriptor_ctrl_rd: Some(gpu_display_wait_descriptor_ctrl_rd),
+-            capset_mask: gpu_parameters.capset_mask,
++            capset_mask: gpu_parameters.capset_mask | gpu_parameters.remote_capset_mask,
+             #[cfg(any(target_os = "android", target_os = "linux"))]
+             gpu_cgroup_path: gpu_cgroup_path.cloned(),
+             snapshot_scratch_directory: gpu_parameters.snapshot_scratch_path.clone(),
+diff --git a/devices/src/virtio/gpu/parameters.rs b/devices/src/virtio/gpu/parameters.rs
+index 3000f1289..b61ba9c20 100644
+--- a/devices/src/virtio/gpu/parameters.rs
++++ b/devices/src/virtio/gpu/parameters.rs
+@@ -80,6 +80,8 @@ pub struct GpuParameters {
+     pub pci_bar_size: u64,
+     #[serde(rename = "context-types", with = "serde_capset_mask")]
+     pub capset_mask: u64,
++    #[serde(rename = "remote-context-types", with = "serde_capset_mask")]
++    pub remote_capset_mask: u64,
+     // enforce that blob resources MUST be exportable as file descriptors
+     pub external_blob: bool,
+     pub system_blob: bool,
+@@ -118,6 +120,7 @@ impl Default for GpuParameters {
+             pci_bar_size: (1 << 33),
+             udmabuf: false,
+             capset_mask: 0,
++            remote_capset_mask: 0,
+             external_blob: false,
+             system_blob: false,
+             fixed_blob_mapping: false,

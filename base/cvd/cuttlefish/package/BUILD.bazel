@@ -48,6 +48,7 @@ package_files(
         "bin/adb_connector": "//cuttlefish/host/frontend/adb_connector",
         "bin/assemble_cvd": "//cuttlefish/host/commands/assemble_cvd",
         "bin/avbtool.py": "@avb//:avbtool.py",
+        "bin/broccolini": "//build_external/crosvm:broccolini_bin_opt",
         "bin/casimir_control_server": "//cuttlefish/host/commands/casimir_control_server",
         "bin/casimir": "@casimir",
         "bin/cf_vhost_user_input": "//cuttlefish/host/commands/vhost_user_input:cf_vhost_user_input",
