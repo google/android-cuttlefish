@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -25,8 +26,6 @@ class VideoTrackSourceInterface;
 
 namespace cuttlefish {
 namespace webrtc_streaming {
-
-class VideoTrackSourceImpl;
 
 class LocalRecorder {
  public:
