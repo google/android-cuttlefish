@@ -18,9 +18,17 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <future>
 #include <list>
+#include <map>
+#include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
@@ -54,7 +62,9 @@ class LocalRecorder::Display
         << "LocalRecorder::Display destroyed before calling Stop()";
   }
 
-  void EncoderLoop();
+  std::unique_ptr<webrtc::VideoEncoder> InitializeEncoder(size_t width,
+                                                          size_t height);
+  void EncoderLoop(std::unique_ptr<webrtc::VideoEncoder> video_encoder);
   void Stop();
 
   // VideoSinkInterface
@@ -69,15 +79,14 @@ class LocalRecorder::Display
 
   LocalRecorder::Impl& impl_;
   std::shared_ptr<webrtc::VideoTrackSourceInterface> source_;
-  std::unique_ptr<webrtc::VideoEncoder> video_encoder_;
-  uint64_t video_track_number_;
+  uint64_t video_track_number_ = 0;
 
   // TODO(schuffelen): Use a WebRTC task queue?
   std::thread encoder_thread_;
   std::condition_variable encoder_queue_signal_;
   std::mutex encode_queue_mutex_;
   std::list<webrtc::VideoFrame> encode_queue_;
-  std::atomic_bool encoder_running_ = true;
+  std::atomic_bool encoder_running_ = false;
 };
 
 class LocalRecorder::Impl {
@@ -128,10 +137,13 @@ void LocalRecorder::AddDisplay(
 
   std::lock_guard lock(impl_->mkv_mutex_);
 
-  auto existing_display = impl_->displays_.find(label);
+  const auto existing_display = impl_->displays_.find(label);
   if (existing_display != impl_->displays_.end()) {
-    auto display = existing_display->second.get();
+    Display* const display = existing_display->second.get();
     CHECK(display);
+    if (display->source_ && display->source_ != source) {
+      display->source_->RemoveSink(display);
+    }
     display->source_ = source;
     source->AddOrUpdateSink(display, webrtc::VideoSinkWants{});
     return;
@@ -146,47 +158,32 @@ void LocalRecorder::AddDisplay(
     return;
   }
 
-  display->video_encoder_ = impl_->encoder_factory_->Create(
-      webrtc::CreateEnvironment(), webrtc::SdpVideoFormat("VP8"));
-  if (!display->video_encoder_) {
-    LOG(ERROR) << "Could not create vp8 video encoder";
+  std::promise<bool> init_promise;
+  std::future<bool> init_future = init_promise.get_future();
+
+  display->encoder_thread_ =
+      std::thread([display_ptr = display.get(), width, height,
+                   promise = std::move(init_promise)]() mutable {
+        std::unique_ptr<webrtc::VideoEncoder> video_encoder =
+            display_ptr->InitializeEncoder(width, height);
+        const bool initialized = video_encoder != nullptr;
+        if (initialized) {
+          display_ptr->encoder_running_ = true;
+        }
+        promise.set_value(initialized);
+        if (initialized) {
+          display_ptr->EncoderLoop(std::move(video_encoder));
+        }
+      });
+
+  if (!init_future.get()) {
+    if (display->encoder_thread_.joinable()) {
+      display->encoder_thread_.join();
+    }
     return;
   }
-  auto rc =
-      display->video_encoder_->RegisterEncodeCompleteCallback(display.get());
-  if (rc != 0) {
-    LOG(ERROR) << "Could not register encode complete callback";
-    return;
-  }
+
   source->AddOrUpdateSink(display.get(), webrtc::VideoSinkWants{});
-
-  webrtc::VideoCodec codec{};
-  codec.codecType = webrtc::kVideoCodecVP8;
-  codec.width = width;
-  codec.height = height;
-  codec.startBitrate = 1000;  // kilobits/sec
-  codec.maxBitrate = 2000;
-  codec.minBitrate = 0;
-  codec.maxFramerate = 60;
-  codec.active = true;
-  codec.qpMax = 56;  // kDefaultMaxQp from simulcast_encoder_adapter.cc
-  codec.mode = webrtc::VideoCodecMode::kScreensharing;
-  codec.expect_encode_from_texture = false;
-  *codec.VP8() = webrtc::VideoEncoder::GetDefaultVp8Settings();
-
-  webrtc::VideoEncoder::Capabilities capabilities(false);
-  webrtc::VideoEncoder::Settings settings(capabilities, 1, 1 << 20);
-
-  rc = display->video_encoder_->InitEncode(&codec, settings);
-  if (rc != 0) {
-    LOG(ERROR) << "Failed to InitEncode";
-    return;
-  }
-
-  display->encoder_running_ = true;
-  display->encoder_thread_ = std::thread(
-      [](Display* display) { display->EncoderLoop(); }, display.get());
-
   impl_->displays_[label] = std::move(display);
 }
 
@@ -211,10 +208,54 @@ void LocalRecorder::Display::OnFrame(const webrtc::VideoFrame& frame) {
   encoder_queue_signal_.notify_one();
 }
 
-void LocalRecorder::Display::EncoderLoop() {
+std::unique_ptr<webrtc::VideoEncoder> LocalRecorder::Display::InitializeEncoder(
+    size_t width, size_t height) {
+  std::unique_ptr<webrtc::VideoEncoder> video_encoder =
+      impl_.encoder_factory_->Create(webrtc::CreateEnvironment(),
+                                     webrtc::SdpVideoFormat("VP8"));
+  if (!video_encoder) {
+    LOG(ERROR) << "Could not create vp8 video encoder";
+    return nullptr;
+  }
+  const int register_rc = video_encoder->RegisterEncodeCompleteCallback(this);
+  if (register_rc != 0) {
+    LOG(ERROR) << "Could not register encode complete callback";
+    return nullptr;
+  }
+
+  webrtc::VideoCodec codec{};
+  codec.codecType = webrtc::kVideoCodecVP8;
+  codec.width = width;
+  codec.height = height;
+  codec.startBitrate = 1000;  // kilobits/sec
+  codec.maxBitrate = 2000;
+  codec.minBitrate = 0;
+  codec.maxFramerate = 60;
+  codec.active = true;
+  codec.qpMax = 56;  // kDefaultMaxQp from simulcast_encoder_adapter.cc
+  codec.mode = webrtc::VideoCodecMode::kScreensharing;
+  codec.expect_encode_from_texture = false;
+  *codec.VP8() = webrtc::VideoEncoder::GetDefaultVp8Settings();
+
+  const webrtc::VideoEncoder::Capabilities capabilities(false);
+  const webrtc::VideoEncoder::Settings settings(capabilities, 1, 1 << 20);
+
+  const int init_rc = video_encoder->InitEncode(&codec, settings);
+  if (init_rc != 0) {
+    LOG(ERROR) << "Failed to InitEncode";
+    video_encoder->RegisterEncodeCompleteCallback(nullptr);
+    return nullptr;
+  }
+
+  return video_encoder;
+}
+
+void LocalRecorder::Display::EncoderLoop(
+    std::unique_ptr<webrtc::VideoEncoder> video_encoder) {
   int frames_since_keyframe = 0;
   std::chrono::time_point<std::chrono::steady_clock> start_timestamp;
-  auto last_keyframe_time = std::chrono::steady_clock::now();
+  std::chrono::time_point<std::chrono::steady_clock> last_keyframe_time =
+      std::chrono::steady_clock::now();
   while (encoder_running_) {
     std::unique_ptr<webrtc::VideoFrame> frame;
     {
@@ -230,18 +271,21 @@ void LocalRecorder::Display::EncoderLoop() {
       encode_queue_.pop_front();
     }
 
-    auto now = std::chrono::steady_clock::now();
+    const std::chrono::steady_clock::time_point now =
+        std::chrono::steady_clock::now();
     if (start_timestamp.time_since_epoch().count() == 0) {
       start_timestamp = now;
     }
-    auto timestamp_diff = std::chrono::duration_cast<std::chrono::microseconds>(
-        now - start_timestamp);
+    const std::chrono::microseconds timestamp_diff =
+        std::chrono::duration_cast<std::chrono::microseconds>(now -
+                                                              start_timestamp);
     frame->set_timestamp_us(timestamp_diff.count());
     frame->set_rtp_timestamp(timestamp_diff.count() * kRtpTicksPerUs);
 
     std::vector<webrtc::VideoFrameType> types;
-    auto time_since_keyframe = now - last_keyframe_time;
-    const auto min_keyframe_time = std::chrono::seconds(10);
+    const std::chrono::steady_clock::duration time_since_keyframe =
+        now - last_keyframe_time;
+    const std::chrono::seconds min_keyframe_time(10);
     if (frames_since_keyframe > 60 || time_since_keyframe > min_keyframe_time) {
       last_keyframe_time = now;
       frames_since_keyframe = 0;
@@ -249,11 +293,14 @@ void LocalRecorder::Display::EncoderLoop() {
     } else {
       types.push_back(webrtc::VideoFrameType::kVideoFrameDelta);
     }
-    auto rc = video_encoder_->Encode(*frame, &types);
-    if (rc != 0) {
+    const int encode_rc = video_encoder->Encode(*frame, &types);
+    if (encode_rc != 0) {
       LOG(ERROR) << "Failed to encode frame";
     }
   }
+
+  video_encoder->RegisterEncodeCompleteCallback(nullptr);
+  video_encoder->Release();
 }
 
 void LocalRecorder::Display::Stop() {
