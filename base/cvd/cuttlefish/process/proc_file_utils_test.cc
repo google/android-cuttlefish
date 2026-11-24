@@ -19,14 +19,16 @@
 #include <unistd.h>
 
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "absl/cleanup/cleanup.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "cuttlefish/common/libs/fs/fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/assert.h"
 #include "cuttlefish/result/result_matchers.h"
 
 #ifdef __linux__
@@ -59,80 +61,58 @@ TEST(ProcFilePid, CurrentPidCollected) {
 }
 
 TEST(ProcFileCmdArgs, CurrentProcessHasArgs) {
-  Result<std::vector<std::string>> args = GetCmdArgs(getpid());
-  ASSERT_THAT(args, IsOk());
-  EXPECT_THAT(*args, Not(IsEmpty()));
+  std::vector<std::string> args = CF_ASSERT(GetCmdArgs(getpid()));
+  EXPECT_THAT(args, Not(IsEmpty()));
 }
 
 #ifdef __linux__
 TEST(ProcFileCmdArgs, NonDumpableProcessArgsReadable) {
-  Result<std::vector<std::string>> self_args = GetCmdArgs(getpid());
-  ASSERT_THAT(self_args, IsOk());
-  ASSERT_THAT(*self_args, Not(IsEmpty()));
+  std::vector<std::string> self_args = CF_ASSERT(GetCmdArgs(getpid()));
+  ASSERT_THAT(self_args, Not(IsEmpty()));
 
-  int ready_pipe[2] = {-1, -1};
-  int exit_pipe[2] = {-1, -1};
-  ASSERT_EQ(pipe(ready_pipe), 0);
-  absl::Cleanup close_ready = [&ready_pipe]() {
-    if (ready_pipe[0] != -1) {
-      close(ready_pipe[0]);
-    }
-    if (ready_pipe[1] != -1) {
-      close(ready_pipe[1]);
-    }
-  };
-  ASSERT_EQ(pipe(exit_pipe), 0);
-  absl::Cleanup close_exit = [&exit_pipe]() {
-    if (exit_pipe[0] != -1) {
-      close(exit_pipe[0]);
-    }
-    if (exit_pipe[1] != -1) {
-      close(exit_pipe[1]);
-    }
-  };
+  Fd ready_read;
+  Fd ready_write;
+  std::tie(ready_read, ready_write) = CF_ASSERT(Fd::Pipe());
+  Fd exit_read;
+  Fd exit_write;
+  std::tie(exit_read, exit_write) = CF_ASSERT(Fd::Pipe());
 
   pid_t child = fork();
   ASSERT_GE(child, 0);
   if (child == 0) {
-    close(ready_pipe[0]);
-    close(exit_pipe[1]);
+    ready_read.Close();
+    exit_write.Close();
     if (prctl(PR_SET_DUMPABLE, 0, 0, 0, 0) != 0) {
       _exit(1);
     }
     char ready = '1';
-    if (write(ready_pipe[1], &ready, 1) != 1) {
+    if (ready_write.Write(&ready, 1).value_or(0) != 1) {
       _exit(2);
     }
-    close(ready_pipe[1]);
+    ready_write.Close();
     char done = 0;
-    (void)read(exit_pipe[0], &done, 1);
-    close(exit_pipe[0]);
+    (void)exit_read.Read(&done, 1);
+    exit_read.Close();
     _exit(0);
   }
 
-  close(ready_pipe[1]);
-  ready_pipe[1] = -1;
-  close(exit_pipe[0]);
-  exit_pipe[0] = -1;
-  absl::Cleanup reap_child = [child, &exit_pipe]() {
-    if (exit_pipe[1] != -1) {
-      close(exit_pipe[1]);
-      exit_pipe[1] = -1;
-    }
+  ready_write.Close();
+  exit_read.Close();
+  absl::Cleanup reap_child = [child, &exit_write]() {
+    exit_write.Close();
     int status = 0;
     while (waitpid(child, &status, 0) == -1 && errno == EINTR) {
     }
   };
 
   char ready = 0;
-  ASSERT_EQ(read(ready_pipe[0], &ready, 1), 1);
+  ASSERT_EQ(CF_ASSERT(ready_read.Read(&ready, 1)), 1);
 
   if (geteuid() != 0) {
     EXPECT_THAT(GetExecutablePath(child), IsError());
   }
-  Result<std::vector<std::string>> child_args = GetCmdArgs(child);
-  ASSERT_THAT(child_args, IsOk());
-  EXPECT_EQ(*child_args, *self_args);
+  std::vector<std::string> child_args = CF_ASSERT(GetCmdArgs(child));
+  EXPECT_EQ(child_args, self_args);
 }
 #endif
 
