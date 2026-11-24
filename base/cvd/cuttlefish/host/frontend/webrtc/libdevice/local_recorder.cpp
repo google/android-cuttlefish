@@ -161,7 +161,6 @@ void LocalRecorder::AddDisplay(
   source->AddOrUpdateSink(display.get(), webrtc::VideoSinkWants{});
 
   webrtc::VideoCodec codec{};
-  memset(&codec, 0, sizeof(codec));
   codec.codecType = webrtc::kVideoCodecVP8;
   codec.width = width;
   codec.height = height;
