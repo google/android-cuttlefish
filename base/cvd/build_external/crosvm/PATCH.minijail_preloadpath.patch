@@ -1,0 +1,13 @@
+diff --git a/third_party/minijail/Makefile b/third_party/minijail/Makefile
+index c27df6f..5e9150b 100644
+--- a/third_party/minijail/Makefile
++++ b/third_party/minijail/Makefile
+@@ -6,7 +6,7 @@ include common.mk
+ 
+ LIBDIR ?= /lib
+ PRELOADNAME = libminijailpreload.so
+-PRELOADPATH = "$(LIBDIR)/$(PRELOADNAME)"
++PRELOADPATH = "$(PRELOADNAME)"
+ CPPFLAGS += -DPRELOADPATH='$(PRELOADPATH)'
+ 
+ # Paths to newuidmap/newgidmap helpers for unprivileged ID mapping fallback.

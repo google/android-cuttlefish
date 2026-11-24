@@ -7,6 +7,10 @@ RUTABAGA_REMOTE = "https://github.com/magma-gpu/rutabaga_gfx.git"
 
 RUTABAGA_REV = "aefe66714318166a778920d26598ed93aa212578"
 
+MINIJAIL_REMOTE = "https://chromium.googlesource.com/chromiumos/platform/minijail"
+
+MINIJAIL_REV = "7845d89927a82dbdcdee6276837cd0978f69ba19"
+
 # note that this won't use the same source checkout as the git_repository directive below
 #
 # The following `annotation` directives modify the generated bazel rules for
@@ -65,6 +69,12 @@ crosvm_bin.spec(
     package = "rutabaga_gfx",
     repositories = ["crosvm_bin"],
     rev = RUTABAGA_REV,
+)
+crosvm_bin.spec(
+    git = MINIJAIL_REMOTE,
+    package = "minijail-sys",
+    repositories = ["crosvm_bin"],
+    rev = MINIJAIL_REV,
 )
 crosvm_bin.annotation(
     crate = "broccolini",
@@ -172,9 +182,20 @@ crosvm_bin.annotation(
 # directories above, so we grab them from the submodule checkout in our crosvm
 # git_repository.
 crosvm_bin.annotation(
+    additive_build_file_content = """
+genrule(
+    name = "libminijailpreload_so",
+    srcs = [":build_script_build"],
+    outs = ["libminijailpreload.so"],
+    cmd = "cp $(location :build_script_build)/libminijailpreload.so $@",
+)
+""",
     build_script_data = ["@@//:minijail_sources"],
     build_script_rundir = "external/+_repo_rules+crosvm/third_party/minijail",
     crate = "minijail-sys",
+    extra_aliased_targets = {
+        "minijail_sys_libminijailpreload_so": "libminijailpreload_so",
+    },
     patch_args = ["-p1"],
     # crates_universe checks out only a subdirectory of the repository, so the
     # file paths in this patch are relative to that directory.
@@ -211,6 +232,7 @@ git_repository(
     patches = [
         "@//build_external/crosvm:PATCH.minijail-sys_common_mk.patch",
         "@//build_external/crosvm:PATCH.minijail_gen_constants.patch",
+        "@//build_external/crosvm:PATCH.minijail_preloadpath.patch",
     ],
     remote = CROSVM_REMOTE,
 )

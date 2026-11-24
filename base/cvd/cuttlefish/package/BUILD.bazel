@@ -168,6 +168,7 @@ package_files(
         "etc/modem_simulator/files/iccprofile_for_sim1_for_CtsCarrierApiTestCases.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim1_for_CtsCarrierApiTestCases.xml",
         "etc/modem_simulator/files/iccprofile_for_sim1.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim1.xml",
         "etc/modem_simulator/files/numeric_operator.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/numeric_operator.xml",
+        "lib64/libminijailpreload.so": "//build_external/crosvm:libminijailpreload.so",
         "lib64/libvirglrenderer.so.1": "@virglrenderer//:libvirglrenderer.so.1",
         "usr/share/webrtc/assets/client.html": "//cuttlefish/host/frontend/webrtc/html_client:client.html",
         "usr/share/webrtc/assets/controls.css": "//cuttlefish/host/frontend/webrtc/html_client:controls.css",

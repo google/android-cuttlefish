@@ -28,3 +28,9 @@ build_in_opt(
     actual = "@crosvm_bin//:crosvm__crosvm",
     visibility = ["//visibility:public"],
 )
+
+build_in_opt(
+    name = "libminijailpreload.so",
+    actual = "@crosvm_bin//:minijail_sys_libminijailpreload_so",
+    visibility = ["//visibility:public"],
+)
