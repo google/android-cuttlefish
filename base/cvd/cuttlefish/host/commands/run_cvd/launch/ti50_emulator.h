@@ -19,11 +19,15 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
 Ti50EmulatorComponent();
+
+Result<void> ResetTi50Emulator(
+    const CuttlefishConfig::InstanceSpecific& instance);
 
 }  // namespace cuttlefish

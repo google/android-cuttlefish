@@ -123,4 +123,26 @@ Ti50EmulatorComponent() {
       .addMultibinding<SetupFeature, Ti50Emulator>();
 }
 
+Result<void> ResetTi50Emulator(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (instance.ti50_emulator().empty()) {
+    return {};
+  }
+
+  Command reset_cmd(instance.ti50_emulator());
+  reset_cmd.AddParameter("-p=", instance.instance_dir());
+  reset_cmd.AddParameter("reset");
+  reset_cmd.AddParameter("full");
+  reset_cmd.AddParameter("--force");
+
+  std::string stdout_str;
+  std::string stderr_str;
+  const int ret = RunWithManagedStdio(std::move(reset_cmd), nullptr,
+                                      &stdout_str, &stderr_str);
+  CF_EXPECTF(ret == 0, "ti50 emulator reset command failed (exit {}): {} {}",
+             ret, stderr_str, stdout_str);
+  VLOG(0) << "Reset ti50 emulator state in " << instance.instance_dir();
+  return {};
+}
+
 }  // namespace cuttlefish
