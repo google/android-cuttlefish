@@ -41,6 +41,7 @@ impl FramePattern for Pipeline {
         // The exposure bias lengthens or shortens the exposure, as auto-exposure would.
         let sensor = Sensor {
             exposure_s: self.sensor.exposure_s * params.exposure_bias.factor(),
+            stabilized: params.image_stabilization,
             ..self.sensor
         };
         let isp = Isp {

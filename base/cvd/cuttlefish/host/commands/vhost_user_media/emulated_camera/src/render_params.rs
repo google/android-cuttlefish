@@ -229,4 +229,7 @@ pub struct RenderParams {
     /// Window of the sensor active array rendered by
     /// [`crate::device::FrameSource::EmulatedScene`].
     pub crop: Crop,
+    /// Whether [`crate::device::FrameSource::EmulatedScene`] cancels the simulated
+    /// hand-shake motion of the camera.
+    pub image_stabilization: bool,
 }

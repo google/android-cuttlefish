@@ -66,7 +66,7 @@ pub struct Mapping {
 }
 
 impl Mapping {
-    fn new(time_since_idx_ns: f32) -> Self {
+    fn new(time_since_idx_ns: f32, stabilized: bool) -> Self {
         let (width, height) = (ACTIVE_ARRAY_WIDTH as i32, ACTIVE_ARRAY_HEIGHT as i32);
         let map_div = if width > height {
             width / (SCENE_WIDTH as i32 + 1) + 1
@@ -79,6 +79,9 @@ impl Mapping {
         // Shake viewpoint; horizontal and vertical sinusoids at roughly human handshake
         // frequencies.
         let shake = |f1: f32, f2: f32| -> i32 {
+            if stabilized {
+                return 0;
+            }
             ((FREQ1_MAGNITUDE * (f1 * time_since_idx_ns).sin()
                 + FREQ2_MAGNITUDE * (f2 * time_since_idx_ns).sin())
                 * map_div as f32
@@ -112,6 +115,8 @@ pub struct Sensor {
     pub hour: u32,
     /// Exposure time, in seconds.
     pub exposure_s: f32,
+    /// Whether image stabilization cancels the simulated hand-shake motion of the camera.
+    pub stabilized: bool,
 }
 
 impl Default for Sensor {
@@ -119,6 +124,7 @@ impl Default for Sensor {
         Self {
             hour: Self::DEFAULT_HOUR,
             exposure_s: Self::DEFAULT_EXPOSURE_S,
+            stabilized: false,
         }
     }
 }
@@ -181,6 +187,6 @@ impl Sensor {
     /// Maps each pixel of the active array to the scene row/column it is looking at, at scene
     /// time `time_since_idx_ns`.
     pub fn readout(&self, time_since_idx_ns: f32) -> Mapping {
-        Mapping::new(time_since_idx_ns)
+        Mapping::new(time_since_idx_ns, self.stabilized)
     }
 }
