@@ -62,6 +62,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
         "//cuttlefish/host/libs/web/http_client:http_string",
+        "//cuttlefish/host/libs/web/http_client:retrying_http_client",
         "//cuttlefish/metrics/external_proto:clientanalytics_cc_proto",
         "//cuttlefish/metrics/io:metrics_environment",
         "//cuttlefish/result",
