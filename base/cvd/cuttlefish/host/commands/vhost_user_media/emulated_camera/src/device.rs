@@ -63,6 +63,7 @@ static PIPELINE: Pipeline = Pipeline {
     sensor: Sensor {
         hour: Sensor::DEFAULT_HOUR,
         exposure_s: Sensor::DEFAULT_EXPOSURE_S,
+        stabilized: false,
     },
 };
 

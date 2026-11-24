@@ -10,6 +10,7 @@ rust_library(
         "src/control.rs",
         "src/controls/exposure_bias.rs",
         "src/controls/gain.rs",
+        "src/controls/image_stabilization.rs",
         "src/controls/lens_facing.rs",
         "src/controls/mod.rs",
         "src/controls/test_pattern.rs",

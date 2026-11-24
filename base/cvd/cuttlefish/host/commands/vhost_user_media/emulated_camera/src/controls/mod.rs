@@ -14,10 +14,12 @@
 
 pub mod exposure_bias;
 pub mod gain;
+pub mod image_stabilization;
 pub mod lens_facing;
 pub mod test_pattern;
 
 pub use exposure_bias::ExposureBiasControl;
 pub use gain::GainControl;
+pub use image_stabilization::ImageStabilizationControl;
 pub use lens_facing::{CID_LENS_FACING, LensFacing, LensFacingControl};
 pub use test_pattern::TestPatternControl;
