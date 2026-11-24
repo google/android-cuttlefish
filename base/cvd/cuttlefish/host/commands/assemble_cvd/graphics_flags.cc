@@ -446,9 +446,9 @@ Result<std::vector<GpuMode>> GetSupportedGpuModeCandidates(
 const std::string kGfxstreamTransportAsg = "virtio-gpu-asg";
 const std::string kGfxstreamTransportPipe = "virtio-gpu-pipe";
 
-Result<std::unordered_map<std::string, bool>> ParseGfxstreamRendererFlag(
+Result<std::unordered_map<std::string, std::string>> ParseGfxstreamRendererFlag(
     const std::string& gpu_renderer_features_arg) {
-  std::unordered_map<std::string, bool> features;
+  std::unordered_map<std::string, std::string> features;
 
   for (const absl::string_view feature :
        absl::StrSplit(gpu_renderer_features_arg, ';')) {
@@ -458,28 +458,22 @@ Result<std::unordered_map<std::string, bool>> ParseGfxstreamRendererFlag(
 
     const std::vector<absl::string_view> feature_parts =
         absl::StrSplit(feature, ':');
-    CF_EXPECT(feature_parts.size() == 2,
+    CF_EXPECT(feature_parts.size() == 2 && !feature_parts[0].empty() &&
+                  !feature_parts[1].empty(),
               "Failed to parse renderer features from --gpu_renderer_features="
                   << gpu_renderer_features_arg);
 
-    const absl::string_view feature_name = feature_parts[0];
-    const absl::string_view feature_enabled = feature_parts[1];
-    CF_EXPECT(feature_enabled == "enabled" || feature_enabled == "disabled",
-              "Failed to parse renderer features from --gpu_renderer_features="
-                  << gpu_renderer_features_arg);
-
-    features.emplace(feature_name, feature_enabled == "enabled");
+    features[std::string(feature_parts[0])] = std::string(feature_parts[1]);
   }
 
   return features;
 }
 
 std::string GetGfxstreamRendererFeaturesString(
-    const std::unordered_map<std::string, bool>& features) {
+    const std::unordered_map<std::string, std::string>& features) {
   std::vector<std::string> parts;
-  for (const auto& [feature_name, feature_enabled] : features) {
-    parts.push_back(feature_name + ":" +
-                    (feature_enabled ? "enabled" : "disabled"));
+  for (const auto& [feature_name, feature_value] : features) {
+    parts.push_back(feature_name + ":" + feature_value);
   }
   return absl::StrJoin(parts, ",");
 }
@@ -764,16 +758,20 @@ Result<std::string> GetGfxstreamFeatures(
     const std::string& gpu_renderer_features_arg,
     const GuestConfig& guest_config,
     const gfxstream::proto::GraphicsAvailability& availability) {
-  std::unordered_map<std::string, bool> features;
+  std::unordered_map<std::string, std::string> features;
 
   // Apply features from host/mode requirements.
   if (gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
-    features["VulkanUseDedicatedAhbMemoryType"] = true;
+    features["VulkanUseDedicatedAhbMemoryType"] = "enabled";
+  }
+
+  if (IsGfxstreamGuestAngleMode(gpu_mode)) {
+    features["VulkanExternalMemoryMode"] = "DmaBuf";
   }
 
   // Apply features from guest/mode requirements.
   if (guest_config.gfxstream_gl_program_binary_link_status_supported) {
-    features["GlProgramBinaryLinkStatus"] = true;
+    features["GlProgramBinaryLinkStatus"] = "enabled";
   }
 
   if (hwui_renderer == GuestHwuiRenderer::kSkiaVk) {
@@ -789,18 +787,17 @@ Result<std::string> GetGfxstreamFeatures(
             : !HasMultipleGraphicsQueues(availability);
 
     if (needs_multi_queue_emulation) {
-      features["VulkanVirtualQueue"] = true;
+      features["VulkanVirtualQueue"] = "enabled";
     }
   }
 
   // Apply feature overrides from --gpu_renderer_features.
   const auto feature_overrides =
       CF_EXPECT(ParseGfxstreamRendererFlag(gpu_renderer_features_arg));
-  for (const auto& [feature_name, feature_enabled] : feature_overrides) {
+  for (const auto& [feature_name, feature_value] : feature_overrides) {
     VLOG(0) << "GPU renderer feature " << feature_name << " overridden to "
-            << (feature_enabled ? "enabled" : "disabled")
-            << " via command line argument.";
-    features[feature_name] = feature_enabled;
+            << feature_value << " via command line argument.";
+    features[feature_name] = feature_value;
   }
 
   // Convert features back to a string for passing to the VMM.

@@ -541,8 +541,10 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
   } else if (IsGfxstreamGuestAngleMode(gpu_mode)) {
     crosvm_cmd->AddParameter(
         "--gpu=", gpu_displays_string,
-        "context-types=gfxstream-vulkan:gfxstream-composer",
+        "remote-context-types=gfxstream-vulkan:cross-domain",
         gpu_common_3d_string);
+    crosvm_cmd->AddParameter("--gpu-render-server=path=",
+                             HostBinaryPath("broccolini"));
   } else if (gpu_mode == GpuMode::Custom) {
     crosvm_cmd->AddParameter("--gpu=", gpu_displays_string,
                              "context-types=" + instance.gpu_context_types(),
