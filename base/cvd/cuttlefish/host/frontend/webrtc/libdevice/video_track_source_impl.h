@@ -16,10 +16,17 @@
 
 #pragma once
 
-#include <api/video/video_broadcaster.h>
-#include <pc/video_track_source.h>
-
+#include <cstdint>
+#include <memory>
 #include <mutex>
+#include <optional>
+
+#include "api/media_stream_interface.h"
+#include "api/video/recordable_encoded_frame.h"
+#include "api/video/video_broadcaster.h"
+#include "api/video/video_frame.h"
+#include "api/video/video_sink_interface.h"
+#include "api/video_track_source_constraints.h"
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/video_sink.h"
 
@@ -37,12 +44,31 @@ namespace webrtc_streaming {
 //   - Enforces strictly monotonic timestamps to prevent frame drops
 //   - Broadcasts frames to all registered WebRTC sinks
 //
-// Thread safety: OnFrame() may be called from any thread after construction.
-class VideoTrackSourceImpl : public webrtc::VideoTrackSource {
+// Thread safety: OnFrame(), AddOrUpdateSink(), and RemoveSink() may be called
+// from any thread after construction via the thread-safe VideoBroadcaster.
+class VideoTrackSourceImpl : public webrtc::VideoTrackSourceInterface {
  public:
   VideoTrackSourceImpl(int width, int height);
 
   void OnFrame(std::shared_ptr<VideoFrameBuffer> frame, int64_t timestamp_us);
+
+  // MediaSourceInterface implementation
+  SourceState state() const override;
+  bool remote() const override;
+
+  // NotifierInterface implementation
+  void RegisterObserver(webrtc::ObserverInterface* observer) override;
+  void UnregisterObserver(webrtc::ObserverInterface* observer) override;
+
+  // VideoSourceInterface implementation
+  void AddOrUpdateSink(webrtc::VideoSinkInterface<webrtc::VideoFrame>* sink,
+                       const webrtc::VideoSinkWants& wants) override;
+  void RemoveSink(
+      webrtc::VideoSinkInterface<webrtc::VideoFrame>* sink) override;
+
+  // VideoTrackSourceInterface implementation
+  bool is_screencast() const override;
+  std::optional<bool> needs_denoising() const override;
 
   // Returns false if no stats are available, e.g, for a remote source, or a
   // source which has not seen its first frame yet.
@@ -53,15 +79,17 @@ class VideoTrackSourceImpl : public webrtc::VideoTrackSource {
   bool SupportsEncodedOutput() const override;
   void GenerateKeyFrame() override {}
   void AddEncodedSink(
-      webrtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink) override {}
+      webrtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink)
+      override {}
   void RemoveEncodedSink(
-      webrtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink) override {}
-
-  webrtc::VideoSourceInterface<webrtc::VideoFrame>* source() override;
+      webrtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink)
+      override {}
+  void ProcessConstraints(
+      const webrtc::VideoTrackSourceConstraints& constraints) override;
 
  private:
-  int width_;
-  int height_;
+  const int width_;
+  const int height_;
   std::mutex timestamp_mutex_;
   int64_t last_timestamp_us_ = 0;  // Ensure strictly monotonic timestamps
   webrtc::VideoBroadcaster broadcaster_;

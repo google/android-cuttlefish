@@ -16,9 +16,19 @@
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/video_track_source_impl.h"
 
-#include <api/video/video_frame_buffer.h>
-
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <optional>
 #include <utility>
+
+#include "api/media_stream_interface.h"
+#include "api/scoped_refptr.h"
+#include "api/video/video_frame.h"
+#include "api/video/video_frame_buffer.h"
+#include "api/video/video_sink_interface.h"
+#include "api/video_track_source_constraints.h"
+#include "rtc_base/ref_counted_object.h"
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/abgr_buffer.h"
 
@@ -26,7 +36,7 @@ namespace cuttlefish {
 namespace webrtc_streaming {
 
 VideoTrackSourceImpl::VideoTrackSourceImpl(int width, int height)
-    : webrtc::VideoTrackSource(false), width_(width), height_(height) {}
+    : width_(width), height_(height) {}
 
 void VideoTrackSourceImpl::OnFrame(std::shared_ptr<VideoFrameBuffer> frame,
                                    int64_t timestamp_us) {
@@ -42,14 +52,43 @@ void VideoTrackSourceImpl::OnFrame(std::shared_ptr<VideoFrameBuffer> frame,
     last_timestamp_us_ = timestamp_us;
   }
 
-  webrtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer(
+  const webrtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer(
       new webrtc::RefCountedObject<AbgrBuffer>(std::move(frame)));
 
-  auto video_frame = webrtc::VideoFrame::Builder()
-                         .set_video_frame_buffer(buffer)
-                         .set_timestamp_us(timestamp_us)
-                         .build();
+  const webrtc::VideoFrame video_frame = webrtc::VideoFrame::Builder()
+                                             .set_video_frame_buffer(buffer)
+                                             .set_timestamp_us(timestamp_us)
+                                             .build();
   broadcaster_.OnFrame(video_frame);
+}
+
+VideoTrackSourceImpl::SourceState VideoTrackSourceImpl::state() const {
+  return SourceState::kLive;
+}
+
+bool VideoTrackSourceImpl::remote() const { return false; }
+
+void VideoTrackSourceImpl::RegisterObserver(
+    webrtc::ObserverInterface* /*observer*/) {}
+
+void VideoTrackSourceImpl::UnregisterObserver(
+    webrtc::ObserverInterface* /*observer*/) {}
+
+void VideoTrackSourceImpl::AddOrUpdateSink(
+    webrtc::VideoSinkInterface<webrtc::VideoFrame>* sink,
+    const webrtc::VideoSinkWants& wants) {
+  broadcaster_.AddOrUpdateSink(sink, wants);
+}
+
+void VideoTrackSourceImpl::RemoveSink(
+    webrtc::VideoSinkInterface<webrtc::VideoFrame>* sink) {
+  broadcaster_.RemoveSink(sink);
+}
+
+bool VideoTrackSourceImpl::is_screencast() const { return false; }
+
+std::optional<bool> VideoTrackSourceImpl::needs_denoising() const {
+  return std::nullopt;
 }
 
 bool VideoTrackSourceImpl::GetStats(Stats* stats) {
@@ -59,9 +98,10 @@ bool VideoTrackSourceImpl::GetStats(Stats* stats) {
 }
 
 bool VideoTrackSourceImpl::SupportsEncodedOutput() const { return false; }
-webrtc::VideoSourceInterface<webrtc::VideoFrame>*
-VideoTrackSourceImpl::source() {
-  return &broadcaster_;
+
+void VideoTrackSourceImpl::ProcessConstraints(
+    const webrtc::VideoTrackSourceConstraints& constraints) {
+  broadcaster_.ProcessConstraints(constraints);
 }
 
 }  // namespace webrtc_streaming
