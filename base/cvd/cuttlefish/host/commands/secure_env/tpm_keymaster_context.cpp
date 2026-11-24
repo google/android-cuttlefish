@@ -222,7 +222,18 @@ keymaster_error_t TpmKeymasterContext::UpgradeKeyBlob(
       UpgradeIntegerTag(keymaster::TAG_OS_PATCHLEVEL, os_patchlevel_,
                         &key->hw_enforced(), &set_changed);
 
-  if (!update_os || !update_patchlevel) {
+  auto update_vendor_patchlevel =
+      !vendor_patchlevel_.has_value() ||
+      UpgradeIntegerTag(keymaster::TAG_VENDOR_PATCHLEVEL, *vendor_patchlevel_,
+                        &key->hw_enforced(), &set_changed);
+
+  auto update_boot_patchlevel =
+      !boot_patchlevel_.has_value() ||
+      UpgradeIntegerTag(keymaster::TAG_BOOT_PATCHLEVEL, *boot_patchlevel_,
+                        &key->hw_enforced(), &set_changed);
+
+  if (!update_os || !update_patchlevel || !update_vendor_patchlevel ||
+      !update_boot_patchlevel) {
     LOG(ERROR) << "One of the version fields would have been a downgrade. "
                << "Not allowed.";
     return KM_ERROR_INVALID_ARGUMENT;
