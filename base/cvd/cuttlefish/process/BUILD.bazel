@@ -104,9 +104,10 @@ cf_cc_test(
     name = "proc_file_utils_test",
     srcs = ["proc_file_utils_test.cc"],
     deps = [
+        "//cuttlefish/common/libs/fs:fd",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/process:proc_file_utils",
-        "//cuttlefish/result",
+        "//cuttlefish/result:assert",
         "//cuttlefish/result:result_matchers",
         "@abseil-cpp//absl/cleanup",
     ],
